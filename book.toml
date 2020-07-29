@@ -1,0 +1,10 @@
+[book]
+authors = ["huhn511"]
+language = "en"
+multilingual = false
+src = "./docs"
+title = "identity"
+
+[build]
+build-dir = "book"
+create-missing = false
