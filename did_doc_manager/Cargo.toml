@@ -3,6 +3,7 @@ name = "did_doc_manager"
 version = "0.1.0"
 authors = ["IOTA Identity"]
 edition = "2018"
+description = "An implementation of the Decentralized Identifiers (DID) standard"
 readme = "README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 license = "Apache-2.0"

@@ -3,6 +3,7 @@ name = "did_integration"
 version = "0.1.0"
 authors = ["IOTA Identity"]
 edition = "2018"
+description = "A DID to ledger intergration library for IOTA"
 readme = "README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 license = "Apache-2.0"
