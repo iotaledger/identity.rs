@@ -25,6 +25,7 @@ members = [
 ]
 
 [dependencies]
+# alias the other crates
 account = {version = "0.1", package = "identity_account", path = "identity_account"}
 communication = {version = "0.1", package = "identity_communication", path = "identity_communication"}
 resolver = {version = "0.1", package = "identity_resolver", path = "identity_resolver"}
