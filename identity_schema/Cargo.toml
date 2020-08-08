@@ -6,7 +6,7 @@ edition = "2018"
 description = "A library for VC schema validation"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-license = "Apache-2.0"
+license = "Apache-2.0/MIT"
 keywords = ["iota", "tangle", "identity"]
 homepage = "https://www.iota.org"
 

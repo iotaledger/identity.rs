@@ -1,3 +1,17 @@
+[package]
+name = "iota-identity"
+version = "0.1.0"
+authors = ["IOTA Identity"]
+edition = "2018"
+license = "Apache-2.0/MIT"
+readme = "README.md"
+keywords = ["iota", "identity"]
+description = "A rust implementation of identity for IOTA and other systems"
+
+
+[lib]
+name = "iota_identity"
+
 [workspace]
 
 members = [
@@ -9,3 +23,12 @@ members = [
     "identity_integration",
     "identity_vc"
 ]
+
+[dependencies]
+account = {version = "0.1", package = "identity_account", path = "identity_account"}
+communication = {version = "0.1", package = "identity_communication", path = "identity_communication"}
+resolver = {version = "0.1", package = "identity_resolver", path = "identity_resolver"}
+schema = {version = "0.1", package = "identity_schema", path = "identity_schema"}
+doc_manager = {version = "0.1", package = "identity_doc_manager", path = "identity_doc_manager"}
+vc = {version = "0.1", package = "identity_vc", path = "identity_vc"}
+integration = {version = "0.1", package = "identity_integration", path = "identity_integration"}
