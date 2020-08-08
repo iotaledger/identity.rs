@@ -1,11 +1,11 @@
 [workspace]
 
 members = [
-    "did_account",
-    "did_communication",
-    "did_resolver",
-    "did_schema",
-    "did_doc_manager",
-    "did_integration",
-    "did_vc"
+    "identity_account",
+    "identity_communication",
+    "identity_resolver",
+    "identity_schema",
+    "identity_doc_manager",
+    "identity_integration",
+    "identity_vc"
 ]

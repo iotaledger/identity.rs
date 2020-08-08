@@ -1,9 +1,9 @@
 [package]
-name = "did_schema"
+name = "identity_resolver"
 version = "0.1.0"
 authors = ["IOTA Identity"]
 edition = "2018"
-description = "A library for VC schema validation"
+description = "Did Resolution Library"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 license = "Apache-2.0"

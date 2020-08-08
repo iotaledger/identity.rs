@@ -1,9 +1,9 @@
 [package]
-name = "did_resolver"
+name = "identity_vc"
 version = "0.1.0"
 authors = ["IOTA Identity"]
 edition = "2018"
-description = "Did Resolution Library"
+description = "A library for Verifiable Credentials"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 license = "Apache-2.0"
