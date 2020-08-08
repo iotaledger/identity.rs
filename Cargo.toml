@@ -1,0 +1,11 @@
+[workspace]
+
+members = [
+    "identity_account",
+    "identity_communication",
+    "identity_resolver",
+    "identity_schema",
+    "identity_doc_manager",
+    "identity_integration",
+    "identity_vc"
+]
