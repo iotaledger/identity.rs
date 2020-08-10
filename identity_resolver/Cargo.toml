@@ -13,3 +13,12 @@ homepage = "https://www.iota.org"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# serialization
+serde = {version = "1.0", features = ["derive"]}
+
+# parser combinator
+nom = "5.1"
