@@ -1,3 +1,4 @@
+use crate::did_parser::parse;
 use std::fmt::{self, Display, Formatter};
 
 const LEADING_TOKENS: &'static str = "did";
@@ -55,6 +56,13 @@ impl DID {
         }
 
         did
+    }
+
+    pub fn parse_from_str<T>(input: T) -> crate::Result<Self>
+    where
+        T: ToString,
+    {
+        parse(input)
     }
 
     /// Method to add params to the DID.  
@@ -147,7 +155,7 @@ impl Display for DID {
         write!(
             f,
             "{}:{}:{}{}{}{}{}",
-            LEADING_TOKENS, self.method_name, formatted_ids, prms, frag, path_segs, query
+            LEADING_TOKENS, self.method_name, formatted_ids, prms, path_segs, query, frag
         )
     }
 }
@@ -247,12 +255,53 @@ mod test {
             ]),
             Some(vec!["some_path".into()]),
             Some("some_query".into()),
-            Some("a_fragement".into()),
+            Some("a_fragment".into()),
         );
 
         assert_eq!(
             format!("{}", did),
-            "did:iota:123456;param=a;param=b#a_fragement/some_path?some_query"
+            "did:iota:123456;param=a;param=b/some_path?some_query#a_fragment"
         );
+    }
+
+    #[test]
+    fn test_parser() {
+        let did = DID::parse_from_str("did:iota:123456;param=a;param=b/some_path?some_query#a_fragment").unwrap();
+        let param_a = Param::new(("param".into(), Some("a".into())));
+        let param_b = Param::new(("param".into(), Some("b".into())));
+
+        assert_eq!(
+            format!("{}", did),
+            "did:iota:123456;param=a;param=b/some_path?some_query#a_fragment"
+        );
+        assert_eq!(
+            did,
+            DID {
+                method_name: "iota".into(),
+                id_segments: vec!["123456".into()],
+                params: Some(vec![param_a, param_b]),
+                path_segments: Some(vec!["some_path".into()]),
+                query: Some("some_query".into()),
+                fragment: Some("a_fragment".into())
+            }
+        );
+    }
+
+    #[test]
+    fn test_multiple_paths() {
+        let did = DID::parse_from_str("did:iota:123456/some_path_a/some_path_b").unwrap();
+
+        assert_eq!(format!("{}", did), "did:iota:123456/some_path_a/some_path_b");
+        assert_eq!(
+            did,
+            DID {
+                method_name: "iota".into(),
+                id_segments: vec!["123456".into()],
+                params: None,
+                path_segments: Some(vec!["some_path_a".into(), "some_path_b".into()]),
+                query: None,
+                fragment: None,
+            }
+        )
     }
 }
