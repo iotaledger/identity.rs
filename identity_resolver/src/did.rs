@@ -1,14 +1,15 @@
 use std::fmt::{self, Display, Formatter};
 
-/// the leading method tokens.
 const LEADING_TOKENS: &'static str = "did";
 
 /// Decentralized identity structure.  
 #[derive(Debug, PartialEq, Eq, Default)]
 pub struct DID {
     pub method_name: String,
-    pub specific_id: String,
+    pub id_segments: Vec<String>,
     pub params: Option<Vec<Param>>,
+    pub path_segments: Vec<String>,
+    pub query: Option<String>,
     pub fragment: Option<String>,
 }
 
@@ -21,22 +22,31 @@ pub struct Param {
 
 impl DID {
     /// Creates a new DID. `params` and `fragment` are both optional.
-    pub fn new(name: String, id: String, params: Option<Vec<Param>>, fragment: Option<String>) -> crate::Result<Self> {
+    pub fn new(
+        name: String,
+        id_segments: Vec<String>,
+        params: Option<Vec<(String, Option<String>)>>,
+        path_segments: Vec<String>,
+        query: Option<String>,
+        fragment: Option<String>,
+    ) -> Self {
         let mut did = DID {
             method_name: name,
-            specific_id: id,
+            id_segments: id_segments,
             ..Default::default()
         };
 
-        if let Some(_) = params {
-            did.params = params;
+        if let Some(prms) = params {
+            let ps: Vec<Param> = prms.into_iter().map(|pms| Param::new(pms)).collect();
+
+            did.params = Some(ps);
         };
 
         if let Some(_) = fragment {
             did.fragment = fragment;
         };
 
-        Ok(did)
+        did
     }
 
     /// Method to add params to the DID.  
@@ -61,13 +71,10 @@ impl DID {
 
 impl Param {
     /// Creates a new Param struct.
-    fn new(params: (String, String)) -> crate::Result<Self> {
+    fn new(params: (String, Option<String>)) -> Self {
         let (name, value) = params;
 
-        Ok(Param {
-            name,
-            value: Some(value),
-        })
+        Param { name, value }
     }
 }
 
@@ -94,10 +101,40 @@ impl Display for DID {
             None => String::new(),
         };
 
+        let formatted_ids = format!(
+            "{}",
+            self.id_segments
+                .iter()
+                .map(ToString::to_string)
+                .fold(&mut String::new(), |acc, p| {
+                    if !acc.is_empty() {
+                        acc.push_str(":");
+                    }
+                    acc.push_str(&p);
+
+                    acc
+                })
+        );
+
+        let path_segs = format!(
+            "{}",
+            self.path_segments
+                .iter()
+                .map(ToString::to_string)
+                .fold(&mut String::new(), |acc, p| {
+                    if !acc.is_empty() {
+                        acc.push_str("/");
+                    }
+                    acc.push_str(&p);
+
+                    acc
+                })
+        );
+
         write!(
             f,
-            "{}:{}:{}{}{}",
-            LEADING_TOKENS, self.method_name, self.specific_id, prms, frag
+            "{}:{}:{}{}{}{}",
+            LEADING_TOKENS, self.method_name, formatted_ids, prms, frag, path_segs
         )
     }
 }
@@ -120,16 +157,30 @@ mod test {
 
     #[test]
     fn test_create_did() {
-        let did = DID::new("iota".into(), "123456".into(), None, None).unwrap();
+        let did = DID::new("iota".into(), vec!["123456".into()], None, vec![], None, None);
 
-        assert_eq!(did.specific_id, "123456",);
+        assert_eq!(did.id_segments, vec!["123456"]);
         assert_eq!(did.method_name, "iota");
         assert_eq!(format!("{}", did), "did:iota:123456");
     }
 
     #[test]
+    fn test_multiple_ids() {
+        let did = DID::new(
+            "iota".into(),
+            vec!["123456".into(), "789011".into()],
+            Some(vec![("name".into(), Some("value".into()))]),
+            vec![],
+            None,
+            None,
+        );
+
+        assert_eq!(format!("{}", did), "did:iota:123456:789011;name=value");
+    }
+
+    #[test]
     fn test_param() {
-        let param = Param::new(("name".into(), "value".into())).unwrap();
+        let param = Param::new(("name".into(), Some("value".into())));
 
         assert_eq!(param.name, "name");
         assert_eq!(param.value, Some(String::from("value")));
@@ -138,7 +189,7 @@ mod test {
 
     #[test]
     fn test_frag() {
-        let mut did = DID::new("iota".into(), "123456".into(), None, None).unwrap();
+        let mut did = DID::new("iota".into(), vec!["123456".into()], None, vec![], None, None);
 
         did.add_fragment("a-fragment".into());
 
@@ -148,15 +199,25 @@ mod test {
 
     #[test]
     fn test_params() {
-        let param_a = Param::new(("param".into(), "a".into())).unwrap();
-        let param_b = Param::new(("param".into(), "b".into())).unwrap();
+        let param_a = Param::new(("param".into(), Some("a".into())));
+        let param_b = Param::new(("param".into(), Some("b".into())));
         let params = Some(vec![param_a.clone(), param_b.clone()]);
-        let mut did = DID::new("iota".into(), "123456".into(), params.clone(), None).unwrap();
+        let mut did = DID::new(
+            "iota".into(),
+            vec!["123456".into()],
+            Some(vec![
+                ("param".into(), Some("a".into())),
+                ("param".into(), Some("b".into())),
+            ]),
+            vec![],
+            None,
+            None,
+        );
 
         assert_eq!(format!("{}", did), "did:iota:123456;param=a;param=b");
         assert_eq!(did.params, params);
 
-        let param_c = Param::new(("param".into(), "c".into())).unwrap();
+        let param_c = Param::new(("param".into(), Some("c".into())));
         let params = vec![param_c.clone()];
         did.add_params(params);
 
