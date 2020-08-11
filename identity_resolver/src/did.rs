@@ -8,7 +8,7 @@ pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
     pub params: Option<Vec<Param>>,
-    pub path_segments: Vec<String>,
+    pub path_segments: Option<Vec<String>>,
     pub query: Option<String>,
     pub fragment: Option<String>,
 }
@@ -26,7 +26,7 @@ impl DID {
         name: String,
         id_segments: Vec<String>,
         params: Option<Vec<(String, Option<String>)>>,
-        path_segments: Vec<String>,
+        path_segments: Option<Vec<String>>,
         query: Option<String>,
         fragment: Option<String>,
     ) -> Self {
@@ -45,6 +45,14 @@ impl DID {
         if let Some(_) = fragment {
             did.fragment = fragment;
         };
+
+        if let Some(_) = path_segments {
+            did.path_segments = path_segments;
+        }
+
+        if let Some(_) = query {
+            did.query = query;
+        }
 
         did
     }
@@ -116,12 +124,10 @@ impl Display for DID {
                 })
         );
 
-        let path_segs = format!(
-            "{}",
-            self.path_segments
-                .iter()
-                .map(ToString::to_string)
-                .fold(&mut String::new(), |acc, p| {
+        let path_segs = match &self.path_segments {
+            Some(segs) => format!(
+                "/{}",
+                segs.iter().map(ToString::to_string).fold(&mut String::new(), |acc, p| {
                     if !acc.is_empty() {
                         acc.push_str("/");
                     }
@@ -129,12 +135,19 @@ impl Display for DID {
 
                     acc
                 })
-        );
+            ),
+            None => String::new(),
+        };
+
+        let query = match &self.query {
+            Some(q) => format!("?{}", q),
+            None => String::new(),
+        };
 
         write!(
             f,
-            "{}:{}:{}{}{}{}",
-            LEADING_TOKENS, self.method_name, formatted_ids, prms, frag, path_segs
+            "{}:{}:{}{}{}{}{}",
+            LEADING_TOKENS, self.method_name, formatted_ids, prms, frag, path_segs, query
         )
     }
 }
@@ -157,7 +170,7 @@ mod test {
 
     #[test]
     fn test_create_did() {
-        let did = DID::new("iota".into(), vec!["123456".into()], None, vec![], None, None);
+        let did = DID::new("iota".into(), vec!["123456".into()], None, None, None, None);
 
         assert_eq!(did.id_segments, vec!["123456"]);
         assert_eq!(did.method_name, "iota");
@@ -170,7 +183,7 @@ mod test {
             "iota".into(),
             vec!["123456".into(), "789011".into()],
             Some(vec![("name".into(), Some("value".into()))]),
-            vec![],
+            None,
             None,
             None,
         );
@@ -189,7 +202,7 @@ mod test {
 
     #[test]
     fn test_frag() {
-        let mut did = DID::new("iota".into(), vec!["123456".into()], None, vec![], None, None);
+        let mut did = DID::new("iota".into(), vec!["123456".into()], None, None, None, None);
 
         did.add_fragment("a-fragment".into());
 
@@ -209,7 +222,7 @@ mod test {
                 ("param".into(), Some("a".into())),
                 ("param".into(), Some("b".into())),
             ]),
-            vec![],
+            None,
             None,
             None,
         );
@@ -222,5 +235,24 @@ mod test {
         did.add_params(params);
 
         assert_eq!(did.params, Some(vec![param_a, param_b, param_c]));
+    }
+    #[test]
+    fn test_full_did() {
+        let did = DID::new(
+            "iota".into(),
+            vec!["123456".into()],
+            Some(vec![
+                ("param".into(), Some("a".into())),
+                ("param".into(), Some("b".into())),
+            ]),
+            Some(vec!["some_path".into()]),
+            Some("some_query".into()),
+            Some("a_fragement".into()),
+        );
+
+        assert_eq!(
+            format!("{}", did),
+            "did:iota:123456;param=a;param=b#a_fragement/some_path?some_query"
+        );
     }
 }
