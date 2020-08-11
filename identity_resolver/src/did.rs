@@ -30,7 +30,7 @@ impl DID {
         path_segments: Option<Vec<String>>,
         query: Option<String>,
         fragment: Option<String>,
-    ) -> Self {
+    ) -> crate::Result<Self> {
         let mut did = DID {
             method_name: name,
             id_segments: id_segments,
@@ -38,7 +38,10 @@ impl DID {
         };
 
         if let Some(prms) = params {
-            let ps: Vec<Param> = prms.into_iter().map(|pms| Param::new(pms)).collect();
+            let ps: Vec<Param> = prms
+                .into_iter()
+                .map(|pms| Param::new(pms).expect("Format of Param is incorrect"))
+                .collect();
 
             did.params = Some(ps);
         };
@@ -55,7 +58,7 @@ impl DID {
             did.query = query;
         }
 
-        did
+        Ok(did)
     }
 
     pub fn parse_from_str<T>(input: T) -> crate::Result<Self>
@@ -104,10 +107,16 @@ impl DID {
 
 impl Param {
     /// Creates a new Param struct.
-    pub fn new(params: (String, Option<String>)) -> Self {
+    pub fn new(params: (String, Option<String>)) -> crate::Result<Self> {
         let (name, value) = params;
 
-        Param { name, value }
+        if name == String::new() {
+            Err(crate::Error::FormatError(
+                "Format of the params is incorrect or empty".into(),
+            ))
+        } else {
+            Ok(Param { name, value })
+        }
     }
 }
 
@@ -192,10 +201,11 @@ impl Display for Param {
 #[cfg(test)]
 mod test {
     use super::*;
+    use totems::assert_err;
 
     #[test]
     fn test_create_did() {
-        let did = DID::new("iota".into(), vec!["123456".into()], None, None, None, None);
+        let did = DID::new("iota".into(), vec!["123456".into()], None, None, None, None).unwrap();
 
         assert_eq!(did.id_segments, vec!["123456"]);
         assert_eq!(did.method_name, "iota");
@@ -211,14 +221,15 @@ mod test {
             None,
             None,
             None,
-        );
+        )
+        .unwrap();
 
         assert_eq!(format!("{}", did), "did:iota:123456:789011;name=value");
     }
 
     #[test]
     fn test_param() {
-        let param = Param::new(("name".into(), Some("value".into())));
+        let param = Param::new(("name".into(), Some("value".into()))).unwrap();
 
         assert_eq!(param.name, "name");
         assert_eq!(param.value, Some(String::from("value")));
@@ -227,7 +238,7 @@ mod test {
 
     #[test]
     fn test_frag() {
-        let mut did = DID::new("iota".into(), vec!["123456".into()], None, None, None, None);
+        let mut did = DID::new("iota".into(), vec!["123456".into()], None, None, None, None).unwrap();
 
         did.add_fragment("a-fragment".into());
 
@@ -237,8 +248,8 @@ mod test {
 
     #[test]
     fn test_params() {
-        let param_a = Param::new(("param".into(), Some("a".into())));
-        let param_b = Param::new(("param".into(), Some("b".into())));
+        let param_a = Param::new(("param".into(), Some("a".into()))).unwrap();
+        let param_b = Param::new(("param".into(), Some("b".into()))).unwrap();
         let params = Some(vec![param_a.clone(), param_b.clone()]);
         let mut did = DID::new(
             "iota".into(),
@@ -250,12 +261,13 @@ mod test {
             None,
             None,
             None,
-        );
+        )
+        .unwrap();
 
         assert_eq!(format!("{}", did), "did:iota:123456;param=a;param=b");
         assert_eq!(did.params, params);
 
-        let param_c = Param::new(("param".into(), Some("c".into())));
+        let param_c = Param::new(("param".into(), Some("c".into()))).unwrap();
         let params = vec![param_c.clone()];
         did.add_params(params);
 
@@ -273,7 +285,8 @@ mod test {
             Some(vec!["some_path".into()]),
             Some("some_query".into()),
             Some("a_fragment".into()),
-        );
+        )
+        .unwrap();
 
         assert_eq!(
             format!("{}", did),
@@ -284,8 +297,8 @@ mod test {
     #[test]
     fn test_parser() {
         let did = DID::parse_from_str("did:iota:123456;param=a;param=b/some_path?some_query#a_fragment").unwrap();
-        let param_a = Param::new(("param".into(), Some("a".into())));
-        let param_b = Param::new(("param".into(), Some("b".into())));
+        let param_a = Param::new(("param".into(), Some("a".into()))).unwrap();
+        let param_b = Param::new(("param".into(), Some("b".into()))).unwrap();
 
         assert_eq!(
             format!("{}", did),
@@ -320,5 +333,20 @@ mod test {
                 fragment: None,
             }
         )
+    }
+
+    #[test]
+    fn test_parsing_contraints() {
+        let did = DID::parse_from_str("did:IOTA:12345");
+
+        assert_err!(did);
+
+        let did = DID::parse_from_str("did:iota:%$^@1234");
+
+        assert_err!(did);
+
+        let did = DID::parse_from_str("x:iota:123456");
+
+        assert_err!(did);
     }
 }
