@@ -1,7 +1,7 @@
 use pest::{iterators::Pairs, Parser};
 use pest_derive::*;
 
-use crate::did::DID;
+use crate::did::{Param, DID};
 
 #[derive(Parser)]
 #[grammar = "did.pest"]
@@ -21,22 +21,18 @@ where
 }
 
 fn parse_pairs(pairs: Pairs<Rule>) -> crate::Result<DID> {
-    let mut name: String = String::new();
-    let mut id_segs: Vec<String> = Vec::new();
-    let mut params: Option<Vec<(String, Option<String>)>> = None;
-    let mut prms: Vec<(String, Option<String>)> = Vec::new();
-    let mut path_segments: Option<Vec<String>> = None;
+    let mut prms: Vec<Param> = Vec::new();
     let mut path_segs: Vec<String> = Vec::new();
-    let mut query: Option<String> = None;
-    let mut frag: Option<String> = None;
+
+    let mut did = DID::default();
 
     for pair in pairs {
         match pair.as_rule() {
             Rule::method_name => {
-                name = pair.as_str().to_string();
+                did.method_name = pair.as_str().to_string();
             }
             Rule::id_segment => {
-                id_segs.push(pair.as_str().to_string());
+                did.id_segments.push(pair.as_str().to_string());
             }
             Rule::param => {
                 let mut inner = pair.into_inner();
@@ -44,29 +40,29 @@ fn parse_pairs(pairs: Pairs<Rule>) -> crate::Result<DID> {
 
                 match inner.next() {
                     Some(val) => {
-                        prms.push((name.as_str().to_string(), Some(val.as_str().to_string())));
+                        prms.push(Param::new((name.as_str().to_string(), Some(val.as_str().to_string()))));
                     }
                     None => {
-                        prms.push((name.as_str().to_string(), None));
+                        prms.push(Param::new((name.as_str().to_string(), None)));
                     }
                 }
             }
             Rule::path_segment => {
                 path_segs.push(pair.as_str().to_string());
             }
-            Rule::query => query = Some(pair.as_str().to_string()),
-            Rule::fragment => frag = Some(pair.as_str().to_string()),
+            Rule::query => did.add_query(pair.as_str().to_string()),
+            Rule::fragment => did.add_fragment(pair.as_str().to_string()),
             _ => {}
         }
     }
 
     if !prms.is_empty() {
-        params = Some(prms);
+        did.add_params(prms);
     }
 
     if !path_segs.is_empty() {
-        path_segments = Some(path_segs);
+        did.add_path_segments(path_segs);
     }
 
-    Ok(DID::new(name, id_segs, params, path_segments, query, frag))
+    Ok(did)
 }

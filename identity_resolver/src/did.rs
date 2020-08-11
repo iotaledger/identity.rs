@@ -79,6 +79,23 @@ impl DID {
         self.params = Some(ps.clone());
     }
 
+    pub fn add_path_segments(&mut self, path_segment: Vec<String>) {
+        let ps = match &mut self.path_segments {
+            Some(p) => {
+                p.extend(path_segment);
+
+                p
+            }
+            None => &path_segment,
+        };
+
+        self.path_segments = Some(ps.clone());
+    }
+
+    pub fn add_query(&mut self, query: String) {
+        self.query = Some(query);
+    }
+
     /// Method to add a fragment to the DID.  
     pub fn add_fragment(&mut self, fragment: String) {
         self.fragment = Some(fragment);
@@ -87,7 +104,7 @@ impl DID {
 
 impl Param {
     /// Creates a new Param struct.
-    fn new(params: (String, Option<String>)) -> Self {
+    pub fn new(params: (String, Option<String>)) -> Self {
         let (name, value) = params;
 
         Param { name, value }
