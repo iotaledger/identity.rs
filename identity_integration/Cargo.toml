@@ -13,3 +13,13 @@ homepage = "https://www.iota.org"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# error handling
+anyhow = "1.0"
+
+# IOTA
+iota-core = { git = "https://github.com/iotaledger/iota.rs", rev = "5eb9fd170f77b24b8c989acbf64ecca31ea48fb8" }
+iota-conversion =  "0.5.1"
+
+[dev-dependencies]
+smol-potat = "0.3.3"
+smol = {version = "0.1.18", features = ["tokio02"] }
