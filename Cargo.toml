@@ -4,7 +4,7 @@ members = [
     "identity_communication",
     "identity_resolver",
     "identity_schema",
-    "identity_doc_manager",
+    "identity_core",
     "identity_integration",
     "identity_vc"
 ]
