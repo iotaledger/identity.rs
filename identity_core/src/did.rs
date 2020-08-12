@@ -360,7 +360,14 @@ mod test {
 
         let did_str = format!("did:iota:{}", s);
 
-        Some(DID::parse_from_str(did_str).unwrap())
+        if !DID::parse_from_str(did_str).is_ok() {
+            return None;
+        }
+
+        match DID::new("iota".into(), vec![s.into()], None, None, None, None) {
+            Ok(d) => Some(d),
+            Err(_) => None,
+        }
     }
 
     fn wrapper_did_name(s: &str) -> Option<DID> {
@@ -370,7 +377,38 @@ mod test {
 
         let did_str = format!("did:{}:12345678", s);
 
-        Some(DID::parse_from_str(did_str).unwrap())
+        if !DID::parse_from_str(did_str).is_ok() {
+            return None;
+        }
+
+        match DID::new(s.into(), vec!["12345678".into()], None, None, None, None) {
+            Ok(d) => Some(d),
+            Err(_) => None,
+        }
+    }
+
+    fn wrapper_did_params(n: &str, v: &str) -> Option<DID> {
+        if !n.is_ascii() || !v.is_ascii() {
+            return None;
+        }
+
+        let did_str = format!("did:iota:12345678;{}={}", n, v);
+
+        if !DID::parse_from_str(did_str).is_ok() {
+            return None;
+        }
+
+        match DID::new(
+            "iota".into(),
+            vec!["12345678".into()],
+            Some(vec![(n.into(), Some(v.into()))]),
+            None,
+            None,
+            None,
+        ) {
+            Ok(d) => Some(d),
+            Err(_) => None,
+        }
     }
 
     proptest! {
@@ -383,6 +421,11 @@ mod test {
         #[test]
         fn prop_parse_did_name(s in "[a-z]+") {
             wrapper_did_name(&s);
+        }
+
+        #[test]
+        fn prop_parse_did_params(n in "[\\w\\d.=:-]+", v in "[\\w\\d.=:-]*") {
+            wrapper_did_params(&n, &v);
         }
     }
 }
