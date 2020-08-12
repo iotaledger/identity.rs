@@ -10,10 +10,10 @@ type DIDTuple = (String, Option<String>);
 pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
-    pub params: Option<Vec<Param>>,
-    pub path_segments: Option<Vec<String>>,
-    pub query: Option<String>,
-    pub fragment: Option<String>,
+    params: Option<Vec<Param>>,
+    path_segments: Option<Vec<String>>,
+    query: Option<String>,
+    fragment: Option<String>,
 }
 
 /// DID Params struct.
@@ -60,6 +60,9 @@ impl DID {
             did.query = query;
         }
 
+        // constrain DID parameters with parser.
+        DID::parse_from_str(format!("{}", did))?;
+
         Ok(did)
     }
 
@@ -84,6 +87,7 @@ impl DID {
         self.params = Some(ps.clone());
     }
 
+    /// add path segments to the current DID.
     pub fn add_path_segments(&mut self, path_segment: Vec<String>) {
         let ps = match &mut self.path_segments {
             Some(p) => {
@@ -97,6 +101,7 @@ impl DID {
         self.path_segments = Some(ps.clone());
     }
 
+    /// add a query to the DID.
     pub fn add_query(&mut self, query: String) {
         self.query = Some(query);
     }
@@ -300,8 +305,6 @@ mod test {
     #[test]
     fn test_parser() {
         let did = DID::parse_from_str("did:iota:123456;param=a;param=b/some_path?some_query#a_fragment").unwrap();
-        let param_a = Param::new(("param".into(), Some("a".into()))).unwrap();
-        let param_b = Param::new(("param".into(), Some("b".into()))).unwrap();
 
         assert_eq!(
             format!("{}", did),
@@ -309,14 +312,18 @@ mod test {
         );
         assert_eq!(
             did,
-            DID {
-                method_name: "iota".into(),
-                id_segments: vec!["123456".into()],
-                params: Some(vec![param_a, param_b]),
-                path_segments: Some(vec!["some_path".into()]),
-                query: Some("some_query".into()),
-                fragment: Some("a_fragment".into())
-            }
+            DID::new(
+                "iota".into(),
+                vec!["123456".into()],
+                Some(vec![
+                    ("param".into(), Some("a".into())),
+                    ("param".into(), Some("b".into()))
+                ]),
+                Some(vec!["some_path".into()]),
+                Some("some_query".into()),
+                Some("a_fragment".into())
+            )
+            .unwrap()
         );
     }
 
@@ -327,14 +334,15 @@ mod test {
         assert_eq!(format!("{}", did), "did:iota:123456/some_path_a/some_path_b");
         assert_eq!(
             did,
-            DID {
-                method_name: "iota".into(),
-                id_segments: vec!["123456".into()],
-                params: None,
-                path_segments: Some(vec!["some_path_a".into(), "some_path_b".into()]),
-                query: None,
-                fragment: None,
-            }
+            DID::new(
+                "iota".into(),
+                vec!["123456".into()],
+                None,
+                Some(vec!["some_path_a".into(), "some_path_b".into()]),
+                None,
+                None,
+            )
+            .unwrap()
         )
     }
 
@@ -424,7 +432,7 @@ mod test {
     // Property Based Testing for the DID Parser and DID implementation.
     proptest! {
         // set proptest config to run a certain amount of cases.
-        #![proptest_config(ProptestConfig::with_cases(1000))]
+        #![proptest_config(ProptestConfig::with_cases(10000))]
         #[test]
         // Run cases that match the regex and are ascii as the id_segment.  Check if the parser accepts them and if the DID can be created with them.
         fn prop_parse_did_id_seg(s in "[a-z0-9A-Z._-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
