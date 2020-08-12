@@ -1,3 +1,4 @@
+use anyhow::Result as AnyhowResult;
 use thiserror::Error as DeriveError;
 
 use pest::error::Error as PestError;
@@ -14,4 +15,4 @@ pub enum Error {
 }
 
 /// Crate result type.
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = AnyhowResult<T, Error>;
