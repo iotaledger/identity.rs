@@ -1,7 +1,7 @@
 use crate::did_parser::parse;
 use std::fmt::{self, Display, Formatter};
 
-const LEADING_TOKENS: &'static str = "did";
+const LEADING_TOKENS: &str = "did";
 
 type DIDTuple = (String, Option<String>);
 
@@ -35,7 +35,7 @@ impl DID {
     ) -> crate::Result<Self> {
         let mut did = DID {
             method_name: name,
-            id_segments: id_segments,
+            id_segments,
             ..Default::default()
         };
 
@@ -48,16 +48,16 @@ impl DID {
             did.params = Some(ps);
         };
 
-        if let Some(_) = fragment {
-            did.fragment = fragment;
+        if let Some(frag) = fragment {
+            did.add_fragment(frag);
         };
 
-        if let Some(_) = path_segments {
-            did.path_segments = path_segments;
+        if let Some(path) = path_segments {
+            did.add_path_segments(path);
         }
 
-        if let Some(_) = query {
-            did.query = query;
+        if let Some(qry) = query {
+            did.add_query(qry);
         }
 
         // constrain DID parameters with parser.
@@ -151,7 +151,7 @@ impl Display for DID {
         };
 
         let formatted_ids = format!(
-            "{}",
+            ":{}",
             self.id_segments
                 .iter()
                 .map(ToString::to_string)
@@ -187,7 +187,7 @@ impl Display for DID {
 
         write!(
             f,
-            "{}:{}:{}{}{}{}{}",
+            "{}:{}{}{}{}{}{}",
             LEADING_TOKENS, self.method_name, formatted_ids, prms, path_segs, query, frag
         )
     }

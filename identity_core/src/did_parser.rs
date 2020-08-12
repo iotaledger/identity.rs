@@ -15,8 +15,8 @@ where
     let pairs = DIDParser::parse(Rule::did, &*input_str);
 
     match pairs {
-        Ok(p) => return Ok(parse_pairs(p)?),
-        Err(e) => return Err(crate::Error::ParseError(e)),
+        Ok(p) => Ok(parse_pairs(p)?),
+        Err(e) => Err(crate::Error::ParseError(e)),
     }
 }
 
@@ -32,7 +32,7 @@ fn parse_pairs(pairs: Pairs<Rule>) -> crate::Result<DID> {
                 did.method_name = pair.as_str().to_string();
             }
             Rule::id_segment => {
-                if pair.as_str().to_string() == String::new() {
+                if pair.as_str() == String::new() {
                     return Err(crate::Error::FormatError(
                         "Format of id_segment is wrong or empty".into(),
                     ));
