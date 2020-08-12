@@ -354,13 +354,9 @@ mod test {
     }
 
     fn wrapper_did_id_seg(s: &str) -> Option<DID> {
-        if !s.is_ascii() {
-            return None;
-        }
-
         let did_str = format!("did:iota:{}", s);
 
-        if !DID::parse_from_str(did_str).is_ok() {
+        if let Err(_) = DID::parse_from_str(&did_str) {
             return None;
         }
 
@@ -371,13 +367,9 @@ mod test {
     }
 
     fn wrapper_did_name(s: &str) -> Option<DID> {
-        if !s.is_ascii() {
-            return None;
-        }
-
         let did_str = format!("did:{}:12345678", s);
 
-        if !DID::parse_from_str(did_str).is_ok() {
+        if let Err(_) = DID::parse_from_str(&did_str) {
             return None;
         }
 
@@ -388,13 +380,9 @@ mod test {
     }
 
     fn wrapper_did_params(n: &str, v: &str) -> Option<DID> {
-        if !n.is_ascii() || !v.is_ascii() {
-            return None;
-        }
-
         let did_str = format!("did:iota:12345678;{}={}", n, v);
 
-        if !DID::parse_from_str(did_str).is_ok() {
+        if let Err(_) = DID::parse_from_str(did_str) {
             return None;
         }
 
@@ -412,19 +400,19 @@ mod test {
     }
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(1000))]
         #[test]
-        fn prop_parse_did_id_seg(s in "[a-z\\d]+") {
+        fn prop_parse_did_id_seg(s in "[a-z0-9A-Z.-_]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
+            println!("{}", s);
             wrapper_did_id_seg(&s);
         }
 
         #[test]
-        fn prop_parse_did_name(s in "[a-z]+") {
+        fn prop_parse_did_name(s in "[a-z0-9]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
             wrapper_did_name(&s);
         }
 
         #[test]
-        fn prop_parse_did_params(n in "[\\w\\d.=:-]+", v in "[\\w\\d.=:-]*") {
+        fn prop_parse_did_params(n in "[a-zA-Z0-9.=:-]+", v in "[a-zA-Z0-9.=:-]*".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
             wrapper_did_params(&n, &v);
         }
     }
