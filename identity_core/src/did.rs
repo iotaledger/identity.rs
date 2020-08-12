@@ -421,34 +421,42 @@ mod test {
         Some(DID::new("iota".into(), vec!["12345678".into()], None, None, None, Some(f.into())).unwrap())
     }
 
+    // Property Based Testing for the DID Parser and DID implementation.
     proptest! {
+        // set proptest config to run a certain amount of cases.
         #![proptest_config(ProptestConfig::with_cases(1000))]
         #[test]
+        // Run cases that match the regex and are ascii as the id_segment.  Check if the parser accepts them and if the DID can be created with them.
         fn prop_parse_did_id_seg(s in "[a-z0-9A-Z._-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
             wrapper_did_id_seg(&s);
         }
 
         #[test]
+        // Run cases that match the regex and are ascii as the method_name.  Check if the parser accepts them and if the DID can be created with them.
         fn prop_parse_did_name(s in "[a-z0-9]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
             wrapper_did_name(&s);
         }
 
         #[test]
+        // Run cases that match the regex and are ascii as the params.  Check if the parser accepts them and if the DID can be created with them.
         fn prop_parse_did_params(n in "[a-zA-Z0-9.=:-]+", v in "[a-zA-Z0-9.=:-]*".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
             wrapper_did_params(&n, &v);
         }
 
         #[test]
+        // Run cases that match the regex and are ascii as the path_segments.  Check if the parser accepts them and if the DID can be created with them.
         fn prop_parse_did_path(p in "[a-zA-Z0-9._!~$&'()*+;,=:@-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
             wrapper_did_path(&p);
         }
 
         #[test]
+        // Run cases that match the regex and are ascii as the query.  Check if the parser accepts them and if the DID can be created with them.
         fn prop_parse_did_query(q in "[a-zA-Z0-9._!~$&'()*+;,=/?:@-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
             wrapper_did_query(&q);
         }
 
         #[test]
+        // Run cases that match the regex and are ascii as the fragment.  Check if the parser accepts them and if the DID can be created with them.
         fn prop_parse_did_frag(f in "[a-zA-Z0-9._!~$&'()*+;,=/?:@-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
             wrapper_did_frag(&f);
         }
