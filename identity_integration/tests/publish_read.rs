@@ -5,7 +5,7 @@ use identity_integration::tangle_writer::TangleWriter;
 async fn test_publish_read() {
   smol::run(async {
     let node = String::from("https://nodes.comnet.thetangle.org:443");
-    let did_root_address = "GVORZ9SIIP9RCYMREUIXXVPQIPHVCNPQ9HZWYKFWYWZRE9JQKG9REPKIASHUUECPSQO9JT9XNMVKWYGVA";
+    let did_root_address = "XVORZ9SIIP9RCYMREUIXXVPQIPHVCNPQ9HZWYKFWYWZRE9JQKG9REPKIASHUUECPSQO9JT9XNMVKWYGVA";
     // 1. Publish demo DID Document to the Tangle
     let tangle_writer = TangleWriter {
       node: node.clone(),
