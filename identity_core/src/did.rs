@@ -3,6 +3,8 @@ use std::fmt::{self, Display, Formatter};
 
 const LEADING_TOKENS: &'static str = "did";
 
+pub type DID_Tuple = (String, Option<String>);
+
 /// Decentralized identity structure.  
 #[derive(Debug, PartialEq, Eq, Default)]
 pub struct DID {
@@ -26,7 +28,7 @@ impl DID {
     pub fn new(
         name: String,
         id_segments: Vec<String>,
-        params: Option<Vec<(String, Option<String>)>>,
+        params: Option<Vec<DID_Tuple>>,
         path_segments: Option<Vec<String>>,
         query: Option<String>,
         fragment: Option<String>,
@@ -107,7 +109,7 @@ impl DID {
 
 impl Param {
     /// Creates a new Param struct.
-    pub fn new(params: (String, Option<String>)) -> crate::Result<Self> {
+    pub fn new(params: DID_Tuple) -> crate::Result<Self> {
         let (name, value) = params;
 
         if name == String::new() {
