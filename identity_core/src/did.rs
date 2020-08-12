@@ -363,10 +363,26 @@ mod test {
         Some(DID::parse_from_str(did_str).unwrap())
     }
 
+    fn wrapper_did_name(s: &str) -> Option<DID> {
+        if !s.is_ascii() {
+            return None;
+        }
+
+        let did_str = format!("did:{}:12345678", s);
+
+        Some(DID::parse_from_str(did_str).unwrap())
+    }
+
     proptest! {
+        #![proptest_config(ProptestConfig::with_cases(1000))]
         #[test]
         fn prop_parse_did_id_seg(s in "[a-z\\d]+") {
             wrapper_did_id_seg(&s);
+        }
+
+        #[test]
+        fn prop_parse_did_name(s in "[a-z]+") {
+            wrapper_did_name(&s);
         }
     }
 }
