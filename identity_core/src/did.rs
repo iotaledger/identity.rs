@@ -203,6 +203,7 @@ impl Display for Param {
 #[cfg(test)]
 mod test {
     use super::*;
+    use proptest::prelude::*;
     use totems::assert_err;
 
     #[test]
@@ -350,5 +351,22 @@ mod test {
         let did = DID::parse_from_str("x:iota:123456");
 
         assert_err!(did);
+    }
+
+    fn wrapper_did_id_seg(s: &str) -> Option<DID> {
+        if !s.is_ascii() {
+            return None;
+        }
+
+        let did_str = format!("did:iota:{}", s);
+
+        Some(DID::parse_from_str(did_str).unwrap())
+    }
+
+    proptest! {
+        #[test]
+        fn prop_parse_did_id_seg(s in "[a-z\\d]+") {
+            wrapper_did_id_seg(&s);
+        }
     }
 }

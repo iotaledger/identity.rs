@@ -27,3 +27,4 @@ pest_derive = "2.1"
 [dev-dependencies]
 # assertion macros
 totems = "0.2.7"
+proptest = "0.10"
