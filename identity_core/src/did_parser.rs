@@ -5,7 +5,7 @@ use crate::did::{Param, DID};
 
 #[derive(Parser)]
 #[grammar = "did.pest"]
-pub struct DIDParser;
+struct DIDParser;
 
 pub fn parse<T>(input: T) -> crate::Result<DID>
 where
