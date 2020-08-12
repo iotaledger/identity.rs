@@ -356,53 +356,40 @@ mod test {
     fn wrapper_did_id_seg(s: &str) -> Option<DID> {
         let did_str = format!("did:iota:{}", s);
 
-        if let Err(_) = DID::parse_from_str(&did_str) {
-            return None;
-        }
+        DID::parse_from_str(&did_str).unwrap();
 
-        match DID::new("iota".into(), vec![s.into()], None, None, None, None) {
-            Ok(d) => Some(d),
-            Err(_) => None,
-        }
+        Some(DID::new("iota".into(), vec![s.into()], None, None, None, None).unwrap())
     }
 
     fn wrapper_did_name(s: &str) -> Option<DID> {
         let did_str = format!("did:{}:12345678", s);
 
-        if let Err(_) = DID::parse_from_str(&did_str) {
-            return None;
-        }
+        DID::parse_from_str(&did_str).unwrap();
 
-        match DID::new(s.into(), vec!["12345678".into()], None, None, None, None) {
-            Ok(d) => Some(d),
-            Err(_) => None,
-        }
+        Some(DID::new(s.into(), vec!["12345678".into()], None, None, None, None).unwrap())
     }
 
     fn wrapper_did_params(n: &str, v: &str) -> Option<DID> {
         let did_str = format!("did:iota:12345678;{}={}", n, v);
 
-        if let Err(_) = DID::parse_from_str(did_str) {
-            return None;
-        }
+        DID::parse_from_str(did_str).unwrap();
 
-        match DID::new(
-            "iota".into(),
-            vec!["12345678".into()],
-            Some(vec![(n.into(), Some(v.into()))]),
-            None,
-            None,
-            None,
-        ) {
-            Ok(d) => Some(d),
-            Err(_) => None,
-        }
+        Some(
+            DID::new(
+                "iota".into(),
+                vec!["12345678".into()],
+                Some(vec![(n.into(), Some(v.into()))]),
+                None,
+                None,
+                None,
+            )
+            .unwrap(),
+        )
     }
 
     proptest! {
         #[test]
-        fn prop_parse_did_id_seg(s in "[a-z0-9A-Z.-_]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
-            println!("{}", s);
+        fn prop_parse_did_id_seg(s in "[a-z0-9A-Z._-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
             wrapper_did_id_seg(&s);
         }
 
