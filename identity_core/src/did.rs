@@ -387,6 +387,24 @@ mod test {
         )
     }
 
+    fn wrapper_did_path(p: &str) -> Option<DID> {
+        let did_str = format!("did:iota:12345678/{}", p);
+
+        DID::parse_from_str(did_str).unwrap();
+
+        Some(
+            DID::new(
+                "iota".into(),
+                vec!["12345678".into()],
+                None,
+                Some(vec![p.into()]),
+                None,
+                None,
+            )
+            .unwrap(),
+        )
+    }
+
     fn wrapper_did_query(q: &str) -> Option<DID> {
         let did_str = format!("did:iota:12345678?{}", q);
 
@@ -395,7 +413,16 @@ mod test {
         Some(DID::new("iota".into(), vec!["12345678".into()], None, None, Some(q.into()), None).unwrap())
     }
 
+    fn wrapper_did_frag(f: &str) -> Option<DID> {
+        let did_str = format!("did:iota:12345678#{}", f);
+
+        DID::parse_from_str(did_str).unwrap();
+
+        Some(DID::new("iota".into(), vec!["12345678".into()], None, None, None, Some(f.into())).unwrap())
+    }
+
     proptest! {
+        #![proptest_config(ProptestConfig::with_cases(1000))]
         #[test]
         fn prop_parse_did_id_seg(s in "[a-z0-9A-Z._-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
             wrapper_did_id_seg(&s);
@@ -412,8 +439,18 @@ mod test {
         }
 
         #[test]
-        fn prop_parse_did_query(q in "[a-zA-Z0-9._!~$&'()*+;,=:@/?-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
+        fn prop_parse_did_path(p in "[a-zA-Z0-9._!~$&'()*+;,=:@-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
+            wrapper_did_path(&p);
+        }
+
+        #[test]
+        fn prop_parse_did_query(q in "[a-zA-Z0-9._!~$&'()*+;,=/?:@-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
             wrapper_did_query(&q);
+        }
+
+        #[test]
+        fn prop_parse_did_frag(f in "[a-zA-Z0-9._!~$&'()*+;,=/?:@-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
+            wrapper_did_frag(&f);
         }
     }
 }
