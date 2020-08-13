@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::utils::{context::Context, subject::Subject};
+use crate::utils::{Context, Subject};
 
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Service {

@@ -1,4 +1,7 @@
-use serde::{Deserialize, Serialize};
+use serde::{
+    de::{self, Deserialize, Deserializer, Visitor},
+    ser::{Serialize, Serializer},
+};
 use std::fmt::{self, Display, Formatter};
 
 use crate::did_parser::parse;
@@ -8,7 +11,7 @@ const LEADING_TOKENS: &str = "did";
 type DIDTuple = (String, Option<String>);
 
 /// Decentralized identity structure.  
-#[derive(Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Default)]
 pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
@@ -19,7 +22,7 @@ pub struct DID {
 }
 
 /// DID Params struct.
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Param {
     pub name: String,
     pub value: Option<String>,
@@ -204,5 +207,45 @@ impl Display for Param {
         };
 
         write!(f, "{}{}", self.name, val)
+    }
+}
+
+impl<'de> Deserialize<'de> for DID {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct DIDVisitor;
+
+        impl<'de> Visitor<'de> for DIDVisitor {
+            type Value = DID;
+
+            fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                formatter.write_str("DID String")
+            }
+
+            fn visit_str<V>(self, value: &str) -> Result<DID, V>
+            where
+                V: de::Error,
+            {
+                match DID::parse_from_str(value) {
+                    Ok(d) => Ok(d),
+                    Err(e) => Err(de::Error::custom(e.to_string())),
+                }
+            }
+        }
+
+        deserializer.deserialize_any(DIDVisitor)
+    }
+}
+
+impl Serialize for DID {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let s = format!("{}", self);
+
+        serializer.serialize_str(s.as_str())
     }
 }

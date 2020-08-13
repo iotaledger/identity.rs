@@ -8,12 +8,17 @@ use std::{
 };
 
 #[derive(Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct Subject(DID);
 
 impl Subject {
     pub fn new(s: String) -> crate::Result<Self> {
         let did = DID::parse_from_str(&s)?;
 
+        Ok(Subject(did))
+    }
+
+    pub fn from_did(did: DID) -> crate::Result<Self> {
         Ok(Subject(did))
     }
 }

@@ -1,5 +1,6 @@
 use identity_core::did::{Param, DID};
 use proptest::prelude::*;
+use serde_test::{assert_tokens, Token};
 use totems::assert_err;
 
 #[test]
@@ -150,6 +151,33 @@ fn test_parsing_contraints() {
     let did = DID::parse_from_str("x:iota:123456");
 
     assert_err!(did);
+}
+
+#[test]
+fn test_serde() {
+    let did = DID::parse_from_str("did:iota:12345").unwrap();
+
+    assert_tokens(&did, &[Token::String("did:iota:12345")]);
+
+    let did = DID::new(
+        "iota".into(),
+        vec!["123456".into()],
+        Some(vec![
+            ("param".into(), Some("a".into())),
+            ("param".into(), Some("b".into())),
+        ]),
+        Some(vec!["some_path".into()]),
+        Some("some_query".into()),
+        Some("a_fragment".into()),
+    )
+    .unwrap();
+
+    assert_tokens(
+        &did,
+        &[Token::String(
+            "did:iota:123456;param=a;param=b/some_path?some_query#a_fragment",
+        )],
+    )
 }
 
 fn wrapper_did_id_seg(s: &str) -> Option<DID> {

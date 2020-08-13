@@ -33,3 +33,6 @@ totems = "0.2.7"
 
 # generative/property testing
 proptest = "0.10"
+
+# serde testing
+serde_test = "1.0"
