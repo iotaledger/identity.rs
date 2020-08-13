@@ -2,10 +2,7 @@ use crate::did::DID;
 
 use serde::{Deserialize, Serialize};
 
-use std::{
-    hash::{Hash, Hasher},
-    str::FromStr,
-};
+use std::str::FromStr;
 
 #[derive(Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 #[serde(transparent)]
@@ -20,16 +17,6 @@ impl Subject {
 
     pub fn from_did(did: DID) -> crate::Result<Self> {
         Ok(Subject(did))
-    }
-}
-
-impl Hash for Subject {
-    fn hash<T>(&self, state: &mut T)
-    where
-        T: Hasher,
-    {
-        let s = self.0.to_string();
-        s.hash(state);
     }
 }
 
