@@ -1,14 +1,17 @@
 use std::str::FromStr;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum PublicKeyTypes {
     UnknownKey,
     Ed25519Key,
     RSAKey,
-    EcdsaSecp265K1Key,
+    Ed25519VerificationKey,
 }
 
-pub enum KeyEncoding {
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+pub enum KeyEncodingType {
     Unknown,
     Pem,
     Jwk,
@@ -20,9 +23,10 @@ pub enum KeyEncoding {
     EthereumAddress,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PublicKey {
     key_type: PublicKeyTypes,
-    encoding_type: KeyEncoding,
+    encoding_type: KeyEncodingType,
     key_data: Vec<u8>,
     reference: bool,
 }
@@ -33,26 +37,26 @@ impl Default for PublicKeyTypes {
     }
 }
 
-impl Default for KeyEncoding {
+impl Default for KeyEncodingType {
     fn default() -> Self {
-        KeyEncoding::Unknown
+        KeyEncodingType::Unknown
     }
 }
 
-impl FromStr for KeyEncoding {
+impl FromStr for KeyEncodingType {
     type Err = crate::Error;
 
-    fn from_str(s: &str) -> crate::Result<KeyEncoding> {
+    fn from_str(s: &str) -> crate::Result<KeyEncodingType> {
         match s {
-            "unknown" => Ok(KeyEncoding::Unknown),
-            "pem" => Ok(KeyEncoding::Pem),
-            "jwk" => Ok(KeyEncoding::Jwk),
-            "hex" => Ok(KeyEncoding::Hex),
-            "base64" => Ok(KeyEncoding::Base64),
-            "base58" => Ok(KeyEncoding::Base58),
-            "multibase" => Ok(KeyEncoding::Multibase),
-            "iota" => Ok(KeyEncoding::IotaAddress),
-            "ethereum" => Ok(KeyEncoding::EthereumAddress),
+            "unknown" => Ok(KeyEncodingType::Unknown),
+            "pem" => Ok(KeyEncodingType::Pem),
+            "jwk" => Ok(KeyEncodingType::Jwk),
+            "hex" => Ok(KeyEncodingType::Hex),
+            "base64" => Ok(KeyEncodingType::Base64),
+            "base58" => Ok(KeyEncodingType::Base58),
+            "multibase" => Ok(KeyEncodingType::Multibase),
+            "iota" => Ok(KeyEncodingType::IotaAddress),
+            "ethereum" => Ok(KeyEncodingType::EthereumAddress),
             _ => Err(crate::Error::KeyFormatError),
         }
     }

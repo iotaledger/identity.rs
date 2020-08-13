@@ -1,6 +1,8 @@
 use std::str::FromStr;
 
-#[derive(Debug, Default, PartialEq, Eq)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Context(Vec<String>);
 
 impl Context {

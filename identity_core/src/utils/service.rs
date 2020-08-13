@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
+
 use crate::utils::{context::Context, subject::Subject};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Service {
     pub context: Context,
     pub id: Subject,

@@ -1,12 +1,14 @@
-use crate::did_parser::parse;
+use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display, Formatter};
+
+use crate::did_parser::parse;
 
 const LEADING_TOKENS: &str = "did";
 
 type DIDTuple = (String, Option<String>);
 
 /// Decentralized identity structure.  
-#[derive(Debug, PartialEq, Eq, Default)]
+#[derive(Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
@@ -17,7 +19,7 @@ pub struct DID {
 }
 
 /// DID Params struct.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Param {
     pub name: String,
     pub value: Option<String>,

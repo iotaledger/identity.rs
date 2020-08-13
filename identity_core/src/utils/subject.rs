@@ -1,8 +1,13 @@
 use crate::did::DID;
 
-use std::hash::{Hash, Hasher};
+use serde::{Deserialize, Serialize};
 
-#[derive(Eq, PartialEq, Debug)]
+use std::{
+    hash::{Hash, Hasher},
+    str::FromStr,
+};
+
+#[derive(Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct Subject(DID);
 
 impl Subject {
@@ -20,5 +25,13 @@ impl Hash for Subject {
     {
         let s = self.0.to_string();
         s.hash(state);
+    }
+}
+
+impl FromStr for Subject {
+    type Err = crate::Error;
+
+    fn from_str(s: &str) -> crate::Result<Self> {
+        Ok(Subject(DID::parse_from_str(s)?))
     }
 }

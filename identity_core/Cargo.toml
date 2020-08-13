@@ -24,6 +24,9 @@ serde = {version = "1.0", features = ["derive"]}
 pest = "2.1"
 pest_derive = "2.1"
 
+# timestamps
+chrono = { version = "0.4", features = ["serde"] }
+
 [dev-dependencies]
 # assertion macros
 totems = "0.2.7"
