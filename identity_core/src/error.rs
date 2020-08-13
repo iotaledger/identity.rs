@@ -12,6 +12,8 @@ pub enum Error {
     FormatError(String),
     #[error("Parse Error: {0}")]
     ParseError(#[from] PestError<Rule>),
+    #[error("Key Format Error: This Key encoding type is not supported")]
+    KeyFormatError,
 }
 
 /// Crate result type.

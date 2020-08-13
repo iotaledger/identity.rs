@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum PublicKeyTypes {
     UnknownKey,
@@ -34,5 +36,24 @@ impl Default for PublicKeyTypes {
 impl Default for KeyEncoding {
     fn default() -> Self {
         KeyEncoding::Unknown
+    }
+}
+
+impl FromStr for KeyEncoding {
+    type Err = crate::Error;
+
+    fn from_str(s: &str) -> crate::Result<KeyEncoding> {
+        match s {
+            "unknown" => Ok(KeyEncoding::Unknown),
+            "pem" => Ok(KeyEncoding::Pem),
+            "jwk" => Ok(KeyEncoding::Jwk),
+            "hex" => Ok(KeyEncoding::Hex),
+            "base64" => Ok(KeyEncoding::Base64),
+            "base58" => Ok(KeyEncoding::Base58),
+            "multibase" => Ok(KeyEncoding::Multibase),
+            "iota" => Ok(KeyEncoding::IotaAddress),
+            "ethereum" => Ok(KeyEncoding::EthereumAddress),
+            _ => Err(crate::Error::KeyFormatError),
+        }
     }
 }
