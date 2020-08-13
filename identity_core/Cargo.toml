@@ -28,9 +28,6 @@ pest_derive = "2.1"
 chrono = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
-# assertion macros
-totems = "0.2.7"
-
 # generative/property testing
 proptest = "0.10"
 

@@ -1,7 +1,6 @@
 use identity_core::did::{Param, DID};
 use proptest::prelude::*;
 use serde_test::{assert_tokens, Token};
-use totems::assert_err;
 
 #[test]
 fn test_create_did() {
@@ -142,15 +141,15 @@ fn test_multiple_paths() {
 fn test_parsing_contraints() {
     let did = DID::parse_from_str("did:IOTA:12345");
 
-    assert_err!(did);
+    assert!(did.is_err());
 
     let did = DID::parse_from_str("did:iota:%$^@1234");
 
-    assert_err!(did);
+    assert!(did.is_err());
 
     let did = DID::parse_from_str("x:iota:123456");
 
-    assert_err!(did);
+    assert!(did.is_err());
 }
 
 #[test]
