@@ -2,7 +2,7 @@ use crate::did::DID;
 
 use std::hash::{Hash, Hasher};
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Debug)]
 pub struct Subject(DID);
 
 impl Subject {

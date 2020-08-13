@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq)]
 pub struct Context(Vec<String>);
 
 impl Context {
