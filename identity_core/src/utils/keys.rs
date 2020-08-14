@@ -39,7 +39,7 @@ pub struct PublicKey {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum VerificationMethod {
     Reference(String),
-    Embedded(PublicKey),
+    Embedded(Box<PublicKey>),
 }
 
 impl Default for PublicKeyTypes {
