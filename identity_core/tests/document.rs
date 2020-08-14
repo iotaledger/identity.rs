@@ -3,7 +3,7 @@ use identity_core::{did::DID, document::DIDDocument, utils::Context};
 use std::str::FromStr;
 
 #[test]
-fn parse_document() {
+fn test_parse_document() {
     let json_str = r#"
     {
         "@context": ["https://w3id.org/did/v1", "https://w3id.org/security/v1"],

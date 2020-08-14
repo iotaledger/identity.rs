@@ -31,7 +31,7 @@ pub enum KeyEncodingType {
     EthereumAddress,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct PublicKey {
     pub id: Subject,
     pub key_type: PublicKeyTypes,
@@ -39,6 +39,25 @@ pub struct PublicKey {
     pub encoding_type: KeyEncodingType,
     pub key_data: String,
     pub reference: bool,
+}
+
+impl PublicKey {
+    pub fn new(
+        id: String,
+        key_type: String,
+        controller: String,
+        encoding: String,
+        data: String,
+    ) -> crate::Result<Self> {
+        Ok(PublicKey {
+            id: Subject::new(id)?,
+            key_type: PublicKeyTypes::from_str(&key_type)?,
+            controller: Subject::new(controller)?,
+            encoding_type: KeyEncodingType::from_str(&encoding)?,
+            key_data: data,
+            reference: false,
+        })
+    }
 }
 
 impl Default for PublicKeyTypes {
@@ -86,6 +105,22 @@ impl FromStr for PublicKeyTypes {
             "EcdsaSecp256k1RecoveryMethod2020" => Ok(Self::EcdsaSecp256k1RecoveryMethod2020),
             "SchnorrSecp256k1VerificationKey2019" => Ok(Self::SchnorrSecp256k1VerificationKey2019),
             _ => Err(crate::Error::KeyTypeError),
+        }
+    }
+}
+
+impl ToString for PublicKeyTypes {
+    fn to_string(&self) -> String {
+        match self {
+            PublicKeyTypes::RsaVerificationKey2018 => "RsaVerificationKey2018".into(),
+            PublicKeyTypes::Ed25519VerificationKey2018 => "Ed25519VerificationKey2018".into(),
+            PublicKeyTypes::EcdsaSecp256k1VerificationKey2019 => "Secp256k1VerificationKey2018".into(),
+            PublicKeyTypes::JsonWebKey2020 => "JsonWebKey2020".into(),
+            PublicKeyTypes::GpgVerificationKey2020 => "GpgVerificationKey2020".into(),
+            PublicKeyTypes::X25519KeyAgreementKey2019 => "X25519KeyAgreementKey2019".into(),
+            PublicKeyTypes::EcdsaSecp256k1RecoveryMethod2020 => "X25519KeyAgreementKey2019".into(),
+            PublicKeyTypes::SchnorrSecp256k1VerificationKey2019 => "SchnorrSecp256k1VerificationKey2019".into(),
+            PublicKeyTypes::UnknownKey => "".into(),
         }
     }
 }
