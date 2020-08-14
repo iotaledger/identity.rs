@@ -1,10 +1,4 @@
-use identity_core::{
-    did::DID,
-    document::DIDDocument,
-    utils::{Context, PublicKey},
-};
-use proptest::prelude::*;
-use serde_test::{assert_tokens, Token};
+use identity_core::{did::DID, document::DIDDocument, utils::Context};
 
 use std::str::FromStr;
 

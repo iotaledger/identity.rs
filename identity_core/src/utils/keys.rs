@@ -102,7 +102,6 @@ impl ToString for KeyEncodingType {
             KeyEncodingType::IotaAddress => "iotaAdress".into(),
             KeyEncodingType::EthereumAddress => "ethereumAdress".into(),
             KeyEncodingType::Multibase => "publicKeyMultibase".into(),
-            _ => String::new(),
         }
     }
 }

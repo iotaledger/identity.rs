@@ -1,4 +1,4 @@
-use crate::utils::{KeyEncodingType, PublicKey, PublicKeyTypes, Subject};
+use crate::utils::{KeyEncodingType, PublicKey, Subject};
 
 use serde::{
     de::{self, Deserialize, Deserializer, MapAccess, Visitor},
