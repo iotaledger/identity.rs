@@ -2,13 +2,15 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
+use crate::utils::Subject;
+
 #[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub enum PublicKeyTypes {
+    Ed25519Key,
+    RsaKey,
+    EcdsaSecpKey,
     UnknownKey,
-    Ed25519VerificationKey2018,
-    RsaVerificationKey2018,
-    EcdsaSecp256k1VerificationKey2018,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
@@ -26,9 +28,11 @@ pub enum KeyEncodingType {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PublicKey {
+    id: Subject,
     key_type: PublicKeyTypes,
+    controller: Subject,
     encoding_type: KeyEncodingType,
-    key_data: Vec<u8>,
+    key_data: String,
     reference: bool,
 }
 
@@ -59,6 +63,19 @@ impl FromStr for KeyEncodingType {
             "iotaAdress" => Ok(KeyEncodingType::IotaAddress),
             "ethereumAdress" => Ok(KeyEncodingType::EthereumAddress),
             _ => Err(crate::Error::KeyFormatError),
+        }
+    }
+}
+
+impl FromStr for PublicKeyTypes {
+    type Err = crate::Error;
+
+    fn from_str(s: &str) -> crate::Result<Self> {
+        match s {
+            "RsaVerificationKey2018" => Ok(Self::RsaKey),
+            "Ed25519VerificationKey2018" => Ok(Self::Ed25519Key),
+            "Secp256k1VerificationKey2018" => Ok(Self::EcdsaSecpKey),
+            _ => Err(crate::Error::KeyTypeError),
         }
     }
 }
