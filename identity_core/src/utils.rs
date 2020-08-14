@@ -1,5 +1,5 @@
 mod context;
-pub(crate) mod helpers;
+pub mod helpers;
 mod keyparse;
 mod keys;
 mod service;

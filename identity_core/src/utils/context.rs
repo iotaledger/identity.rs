@@ -10,6 +10,9 @@ use serde::{
 pub struct Context(Vec<String>);
 
 impl Context {
+    pub fn new(inner: Vec<String>) -> Self {
+        Self(inner)
+    }
     pub fn as_inner(&self) -> &Vec<String> {
         &self.0
     }

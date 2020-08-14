@@ -27,3 +27,9 @@ impl FromStr for Subject {
         Ok(Subject(DID::parse_from_str(s)?))
     }
 }
+
+impl From<DID> for Subject {
+    fn from(did: DID) -> Self {
+        Subject::from_did(did).expect("unable to convert Did to Subject")
+    }
+}
