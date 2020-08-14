@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use std::str::FromStr;
 
-#[derive(Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct Subject(DID);
 

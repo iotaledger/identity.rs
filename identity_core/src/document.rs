@@ -2,7 +2,7 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, str::FromStr};
 
-use crate::utils::{Context, PublicKey, Service, Subject};
+use crate::utils::{Context, PublicKey, Service, Subject, VerificationMethod};
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct DIDDocument {
@@ -11,7 +11,7 @@ pub struct DIDDocument {
     created: String,
     updated: String,
     public_keys: Vec<PublicKey>,
-    authentications: Vec<PublicKey>,
+    authentications: Vec<VerificationMethod>,
     services: Vec<Service>,
     metadata: HashMap<String, String>,
 }

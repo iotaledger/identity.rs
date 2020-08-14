@@ -26,7 +26,7 @@ pub enum KeyEncodingType {
     EthereumAddress,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PublicKey {
     id: Subject,
     key_type: PublicKeyTypes,
@@ -34,6 +34,12 @@ pub struct PublicKey {
     encoding_type: KeyEncodingType,
     key_data: String,
     reference: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum VerificationMethod {
+    Reference(String),
+    Embedded(PublicKey),
 }
 
 impl Default for PublicKeyTypes {

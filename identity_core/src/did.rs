@@ -11,7 +11,7 @@ const LEADING_TOKENS: &str = "did";
 type DIDTuple = (String, Option<String>);
 
 /// Decentralized identity structure.  
-#[derive(Debug, PartialEq, Eq, Default)]
+#[derive(Debug, PartialEq, Eq, Default, Clone)]
 pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
