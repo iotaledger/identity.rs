@@ -1,19 +1,24 @@
 use std::str::FromStr;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize as DeriveD, Serialize as DeriveS};
 
 use crate::utils::Subject;
 
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy, DeriveD, DeriveS)]
 #[serde(rename_all = "PascalCase")]
 pub enum PublicKeyTypes {
-    Ed25519Key,
-    RsaKey,
-    EcdsaSecpKey,
+    Ed25519VerificationKey2018,
+    RsaVerificationKey2018,
+    EcdsaSecp256k1VerificationKey2019,
+    JsonWebKey2020,
+    GpgVerificationKey2020,
+    X25519KeyAgreementKey2019,
+    EcdsaSecp256k1RecoveryMethod2020,
+    SchnorrSecp256k1VerificationKey2019,
     UnknownKey,
 }
 
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy, DeriveD, DeriveS)]
 pub enum KeyEncodingType {
     Unknown,
     Pem,
@@ -26,20 +31,14 @@ pub enum KeyEncodingType {
     EthereumAddress,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct PublicKey {
-    id: Subject,
-    key_type: PublicKeyTypes,
-    controller: Subject,
-    encoding_type: KeyEncodingType,
-    key_data: String,
-    reference: bool,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum VerificationMethod {
-    Reference(String),
-    Embedded(Box<PublicKey>),
+    pub id: Subject,
+    pub key_type: PublicKeyTypes,
+    pub controller: Subject,
+    pub encoding_type: KeyEncodingType,
+    pub key_data: String,
+    pub reference: bool,
 }
 
 impl Default for PublicKeyTypes {
@@ -78,10 +77,32 @@ impl FromStr for PublicKeyTypes {
 
     fn from_str(s: &str) -> crate::Result<Self> {
         match s {
-            "RsaVerificationKey2018" => Ok(Self::RsaKey),
-            "Ed25519VerificationKey2018" => Ok(Self::Ed25519Key),
-            "Secp256k1VerificationKey2018" => Ok(Self::EcdsaSecpKey),
+            "RsaVerificationKey2018" => Ok(Self::RsaVerificationKey2018),
+            "Ed25519VerificationKey2018" => Ok(Self::Ed25519VerificationKey2018),
+            "Secp256k1VerificationKey2018" => Ok(Self::EcdsaSecp256k1VerificationKey2019),
+            "JsonWebKey2020" => Ok(Self::JsonWebKey2020),
+            "GpgVerificationKey2020" => Ok(Self::GpgVerificationKey2020),
+            "X25519KeyAgreementKey2019" => Ok(Self::X25519KeyAgreementKey2019),
+            "EcdsaSecp256k1RecoveryMethod2020" => Ok(Self::EcdsaSecp256k1RecoveryMethod2020),
+            "SchnorrSecp256k1VerificationKey2019" => Ok(Self::SchnorrSecp256k1VerificationKey2019),
             _ => Err(crate::Error::KeyTypeError),
+        }
+    }
+}
+
+impl ToString for KeyEncodingType {
+    fn to_string(&self) -> String {
+        match self {
+            KeyEncodingType::Unknown => "publicKeyUnknown".into(),
+            KeyEncodingType::Pem => "publicKeyPem".into(),
+            KeyEncodingType::Jwk => "publicKeyJwk".into(),
+            KeyEncodingType::Base64 => "publicKeyBase64".into(),
+            KeyEncodingType::Base58 => "publicKeyBase58".into(),
+            KeyEncodingType::Hex => "publicKeyHex".into(),
+            KeyEncodingType::IotaAddress => "iotaAdress".into(),
+            KeyEncodingType::EthereumAddress => "ethereumAdress".into(),
+            KeyEncodingType::Multibase => "publicKeyMultibase".into(),
+            _ => String::new(),
         }
     }
 }

@@ -16,6 +16,8 @@ pub enum Error {
     KeyFormatError,
     #[error("Key Type Error: This key type is not supported")]
     KeyTypeError,
+    #[error("Json Error: {0}")]
+    SerdeError(#[from] serde_json::Error),
 }
 
 /// Crate result type.

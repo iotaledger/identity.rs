@@ -1,5 +1,0 @@
-pct_encoded = { "%" ~ ASCII_HEX_DIGIT ~ ASCII_HEX_DIGIT }
-shard_char = { path_char | "/" | "?" }
-path_char = { ASCII_ALPHA | ASCII_DIGIT | "-" | "." | "_" | 
-              "!" | "~" | "$" | "&" | "'" | "(" | ")" | "*" | "+" |
-              ";" | "," | "=" | ":" | "@" | pct_encoded}
