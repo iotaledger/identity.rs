@@ -16,9 +16,14 @@ homepage = "https://www.iota.org"
 # error handling
 anyhow = "1.0"
 
+# serialization
+serde = "1.0"
+serde_json = "1.0"
+
 # IOTA
 iota-core = { git = "https://github.com/iotaledger/iota.rs", rev = "5eb9fd170f77b24b8c989acbf64ecca31ea48fb8" }
 iota-conversion =  "0.5.1"
+identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "feat/resolver-did-parser"}
 
 [dev-dependencies]
 smol-potat = "0.3.3"

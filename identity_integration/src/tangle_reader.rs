@@ -15,7 +15,7 @@ pub struct TangleReader {
 }
 
 impl TangleReader {
-  pub async fn fetch(&self, address: &str) -> Result<String, Box<dyn std::error::Error>> {
+  pub async fn fetch(&self, address: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let iota = iota::ClientBuilder::new().node(&self.node)?.build()?;
 
     let address = Address::from_inner_unchecked(TryteBuf::try_from_str(address).unwrap().as_trits().encode());
@@ -61,30 +61,19 @@ impl TangleReader {
       }
     }
 
-    //get the message from a random bundle
-    let random_key = bundles.keys().next().unwrap();
-    let bundle = bundles.get(random_key).unwrap();
+    // Convert messages to ascii
+    let mut messages = Vec::new();
+    for (_, bundle) in bundles.iter_mut() {
+      let trytes_coll: Vec<String> = bundle
+        .iter()
+        .map(|t| t.payload().to_inner().as_i8_slice().trytes().unwrap())
+        .collect();
 
-    let trytes_coll: Vec<String> = bundle
-      .iter()
-      .map(|t| {
-        t.payload()
-          .to_inner()
-          .as_i8_slice()
-          .trytes()
-          .unwrap()
-          .trim_end_matches('9')
-          .to_string()
-      })
-      .collect();
-
-    let message = match trytes_converter::to_string(&trytes_coll.concat()) {
-      Ok(m) => m,
-      Err(e) => {
-        println!("Error: trytes_converter.to_string()\n\t{}", e);
-        std::process::exit(1);
+      if let Ok(message) = trytes_converter::to_string(&trytes_coll.concat()) {
+        messages.push(message);
       }
-    };
-    Ok(message)
+    }
+
+    Ok(messages)
   }
 }

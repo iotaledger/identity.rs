@@ -1,4 +1,5 @@
 use anyhow::Result;
+pub use iota::client::builder::Network as iota_network;
 use iota::{
   client::Transfer,
   crypto::ternary::sponge::{CurlP81, Sponge},
@@ -7,6 +8,28 @@ use iota::{
   transaction::bundled::{Address, BundledTransaction, BundledTransactionField, Index},
 };
 use iota_conversion::Trinary;
+use serde::{Deserialize, Serialize};
+use std::fmt;
+use std::time::SystemTime;
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct DIDMessage {
+  // signature: Signature,?
+  pub payload: Payload,
+  pub address: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub enum Payload {
+  DIDDocument(String),
+  DIDDocumentDifferences(String),
+}
+
+impl fmt::Display for Payload {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "{:?}", self)
+  }
+}
 
 #[derive(Clone)]
 pub struct TangleWriter {
@@ -15,15 +38,26 @@ pub struct TangleWriter {
   // Add the sent trytes here?
 }
 
+fn serialize_did_message(did_message: &DIDMessage) -> Result<String> {
+  Ok(serde_json::to_string(&did_message)?)
+}
+
 impl TangleWriter {
-  pub async fn publish_document(&self, address: &str, did_document: Option<String>) -> Result<Vec<BundledTransaction>> {
-    // Get address from did_document or external diff chain?
+  pub async fn publish_document(&self, did_message: &DIDMessage) -> Result<Vec<BundledTransaction>> {
+    // Get address from did_document?
+    // Diff chain address in did_document?
     // Is it possible to get the address from the did_document after an auth change?
+    let serialzed_did_message = serialize_did_message(&did_message)?;
     let mut transfers = Vec::new();
     transfers.push(Transfer {
-      address: Address::from_inner_unchecked(TryteBuf::try_from_str(address).unwrap().as_trits().encode()),
+      address: Address::from_inner_unchecked(
+        TryteBuf::try_from_str(&did_message.address)
+          .unwrap()
+          .as_trits()
+          .encode(),
+      ),
       value: 0,
-      message: did_document,
+      message: Some(serialzed_did_message),
       tag: None,
     });
 
@@ -31,21 +65,22 @@ impl TangleWriter {
     let iota = iota::ClientBuilder::new()
       .node(&self.node)?
       // Investigate why this doesn't work, would be better than setting mwm
-      // .network(iota::client::builder::Network::Comnet)
+      .network(self.network.clone())
       .build()?;
 
-    // Send the actual transaction
+    // Send the transaction
     let res = iota
       .send(None)
       .transfers(transfers)
-      .min_weight_magnitude(10)
+      // .min_weight_magnitude(10)
       .send()
       .await?;
 
+    // Wait with res until confirmed?
     Ok(res)
   }
 
-  pub async fn promote(&self, tx: &str) -> Result<String, Box<dyn std::error::Error>> {
+  pub async fn promote(&self, tail_transaction: Hash) -> Result<String, Box<dyn std::error::Error>> {
     let mut transfers = Vec::new();
     transfers.push(Transfer {
       address: Address::from_inner_unchecked(
@@ -70,15 +105,13 @@ impl TangleWriter {
     let tips = iota.get_transactions_to_approve().depth(2).send().await?;
     let attached_trytes = iota
       .attach_to_tangle()
-      .trunk_transaction(&Hash::from_inner_unchecked(
-        TryteBuf::try_from_str(tx).unwrap().as_trits().encode(),
-      ))
+      .trunk_transaction(&tail_transaction)
       .branch_transaction(&tips.branch_transaction)
       .trytes(&[prepared_transfers[0].clone()])
       .send()
       .await?;
 
-    iota.broadcast_transactions(&attached_trytes.trytes).await.unwrap();
+    iota.broadcast_transactions(&attached_trytes.trytes).await?;
     Ok(
       prepared_transfers[0]
         .bundle()
@@ -108,13 +141,19 @@ impl TangleWriter {
 
     let trytes = iota.get_trytes(&response.hashes).await?;
 
+    // Use local time to ignore txs with a timestamp in the future, because if there is one that is much time ahead, it will always be selected
+    let time = SystemTime::now()
+      .duration_since(SystemTime::UNIX_EPOCH)
+      .unwrap()
+      .as_secs();
+
     let mut tail_txs = trytes
       .trytes
       .iter()
-      .filter(|tx| tx.index() == &Index::from_inner_unchecked(0))
+      .filter(|tx| tx.index() == &Index::from_inner_unchecked(0) && tx.get_timestamp() < time)
       .collect::<Vec<&BundledTransaction>>();
 
-    //sort txs based on attachment timestamp
+    // Sort txs based on attachment timestamp
     tail_txs.sort_by(|a, b| b.get_timestamp().cmp(&a.get_timestamp()));
 
     let tail_txs_hashes: Vec<Hash> = tail_txs
@@ -123,16 +162,16 @@ impl TangleWriter {
         let mut curl = CurlP81::new();
         let mut trits = TritBuf::<T1B1Buf>::zeros(BundledTransaction::trit_len());
         tx.into_trits_allocated(&mut trits);
-        return Hash::from_inner_unchecked(curl.digest(&trits).unwrap());
+        Hash::from_inner_unchecked(curl.digest(&trits).unwrap())
       })
       .collect();
 
+    // Get confirmation status
     let inclusion_states = iota
       .get_inclusion_states()
       .transactions(&tail_txs_hashes)
       .send()
       .await?;
-    println!("Inclusion states: {:?}", inclusion_states.states);
 
     Ok((tail_txs_hashes[0], inclusion_states.states.contains(&true)))
   }
