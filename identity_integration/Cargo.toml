@@ -25,6 +25,9 @@ iota-core = { git = "https://github.com/iotaledger/iota.rs", rev = "5eb9fd170f77
 iota-conversion =  "0.5.1"
 identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "feat/resolver-did-parser"}
 
+# hash
+blake2 = "0.9.0"
+
 [dev-dependencies]
 smol-potat = "0.3.3"
 smol = {version = "0.1.18", features = ["tokio02"] }

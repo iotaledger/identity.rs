@@ -1,4 +1,5 @@
-use identity_core::document::DIDDocument;
+use identity_core::{did::DID, did_parser::parse, document::DIDDocument};
+use identity_integration::did_helper::did_iota_address;
 use identity_integration::tangle_reader::TangleReader;
 use identity_integration::tangle_writer::{iota_network, DIDMessage, Payload, TangleWriter};
 
@@ -6,7 +7,8 @@ use identity_integration::tangle_writer::{iota_network, DIDMessage, Payload, Tan
 async fn test_publish_read() {
   smol::run(async {
     let node = String::from("https://nodes.comnet.thetangle.org:443");
-    let did_root_address = "XVORZASIIP9RCYMREUIXXVPQIPHVCNPQXHZVYKFWYCZRX9JQKG9REPKIASAUUECOSQO9JT9XNMVKWYGVA";
+    let did_root_address =
+      did_iota_address(DID::parse_from_str("did:iota:123456789abcdefghi").unwrap().id_segments[0]).unwrap();
     // 1. Publish demo DID document to the Tangle
     let tangle_writer = TangleWriter {
       node: node.clone(),
@@ -24,10 +26,13 @@ async fn test_publish_read() {
     };
     let _bundle_trytes = tangle_writer.publish_document(&did_message).await.unwrap();
 
-    // Get confirmation status, promote and reattach
-    // let (tx_hash, _confirmed) = tangle_writer.is_confirmed(*bundle_trytes[0].bundle()).await.unwrap();
-    // tangle_writer.promote(tx_hash).await.unwrap();
-    // tangle_writer.reattach(bundle_trytes).await.unwrap();
+    // Get confirmation status, promote or reattach
+    // let (tail_hash, _confirmed) = tangle_writer.is_confirmed(*bundle_trytes[0].bundle()).await.unwrap();
+    // if let Some(tail_hash) = tail_hash {
+    //   tangle_writer.promote(tail_hash).await.unwrap();
+    // } else {
+    //   tangle_writer.reattach(bundle_trytes).await.unwrap();
+    // }
 
     // 2. Fetch messages from DID root address
     let tangle_reader = TangleReader { node: node };

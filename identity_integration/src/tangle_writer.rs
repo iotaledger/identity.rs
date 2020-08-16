@@ -131,15 +131,24 @@ impl TangleWriter {
     Ok(reattached[0].bundle().to_inner().as_i8_slice().trytes().unwrap())
   }
 
-  pub async fn is_confirmed(&self, bundle: Hash) -> Result<(Hash, bool), Box<dyn std::error::Error>> {
+  // Returns confirmation status and latest tail tx that can be used to promote
+  pub async fn is_confirmed(&self, bundle: Hash) -> Result<(Option<Hash>, bool), Box<dyn std::error::Error>> {
     let iota = iota::ClientBuilder::new()
       .node(&self.node)?
       .network(self.network.clone())
       .build()?;
-
+    // We could store everything locally and rely on this information, then we don't need to get the transactions
+    // In that case we wouldn't notice if someone else reattaches our bundle, but should be no problem because it can get confirmed multiple times
     let response = iota.find_transactions().bundles(&[bundle]).send().await?;
 
     let trytes = iota.get_trytes(&response.hashes).await?;
+
+    // Get all tail txs
+    let tail_txs = trytes
+      .trytes
+      .iter()
+      .filter(|tx| tx.index() == &Index::from_inner_unchecked(0))
+      .collect::<Vec<&BundledTransaction>>();
 
     // Use local time to ignore txs with a timestamp in the future, because if there is one that is much time ahead, it will always be selected
     let time = SystemTime::now()
@@ -147,14 +156,17 @@ impl TangleWriter {
       .unwrap()
       .as_secs();
 
-    let mut tail_txs = trytes
+    let mut filtered_tail_txs = trytes
       .trytes
       .iter()
-      .filter(|tx| tx.index() == &Index::from_inner_unchecked(0) && tx.get_timestamp() < time)
+      // tx.get_timestamp() > time-140 to check if it's not too old already
+      .filter(|tx| {
+        tx.index() == &Index::from_inner_unchecked(0) && tx.get_timestamp() < time && tx.get_timestamp() > time - 140
+      })
       .collect::<Vec<&BundledTransaction>>();
 
     // Sort txs based on attachment timestamp
-    tail_txs.sort_by(|a, b| b.get_timestamp().cmp(&a.get_timestamp()));
+    filtered_tail_txs.sort_by(|a, b| b.get_timestamp().cmp(&a.get_timestamp()));
 
     let tail_txs_hashes: Vec<Hash> = tail_txs
       .iter()
@@ -172,7 +184,6 @@ impl TangleWriter {
       .transactions(&tail_txs_hashes)
       .send()
       .await?;
-
-    Ok((tail_txs_hashes[0], inclusion_states.states.contains(&true)))
+    Ok((filtered_tail_txs.first(), inclusion_states.states.contains(&true)))
   }
 }
