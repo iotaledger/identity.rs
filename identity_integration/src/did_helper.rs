@@ -1,15 +1,9 @@
 use blake2::{Blake2b, Digest};
-// use bee_ternary::tryte::TryteBuf;
 use iota::ternary::TryteBuf;
 use std::convert::TryInto;
 
-fn main() {
-  let address = did_iota_address(String::from("123456789abcdefghi"));
-  println!("{}", address);
-}
-
 // Make this a method of did?
-fn did_iota_address(did: String) -> String {
+pub fn did_iota_address(did: String) -> String {
   let mut hasher = Blake2b::new();
   hasher.update(did.as_bytes());
   let hash = hasher.finalize();

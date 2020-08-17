@@ -5,7 +5,7 @@ use iota::{
   crypto::ternary::sponge::{CurlP81, Sponge},
   crypto::ternary::Hash,
   ternary::{T1B1Buf, TritBuf, TryteBuf},
-  transaction::bundled::{Address, BundledTransaction, BundledTransactionField, Index},
+  transaction::bundled::{Address, BundledTransaction, BundledTransactionField, Index, Tag},
 };
 use iota_conversion::Trinary;
 use serde::{Deserialize, Serialize};
@@ -58,7 +58,15 @@ impl TangleWriter {
       ),
       value: 0,
       message: Some(serialzed_did_message),
-      tag: None,
+      tag: Some(
+        Tag::try_from_inner(
+          TryteBuf::try_from_str("DID999999999999999999999999")
+            .unwrap()
+            .as_trits()
+            .encode(),
+        )
+        .unwrap(),
+      ),
     });
 
     // Create a client instance
@@ -167,6 +175,15 @@ impl TangleWriter {
 
     // Sort txs based on attachment timestamp
     filtered_tail_txs.sort_by(|a, b| b.get_timestamp().cmp(&a.get_timestamp()));
+    let tail_tx_for_promotion = match filtered_tail_txs.first() {
+      Some(tx) => {
+        let mut curl = CurlP81::new();
+        let mut trits = TritBuf::<T1B1Buf>::zeros(BundledTransaction::trit_len());
+        tx.into_trits_allocated(&mut trits);
+        Some(Hash::from_inner_unchecked(curl.digest(&trits).unwrap()))
+      }
+      None => None,
+    };
 
     let tail_txs_hashes: Vec<Hash> = tail_txs
       .iter()
@@ -184,6 +201,6 @@ impl TangleWriter {
       .transactions(&tail_txs_hashes)
       .send()
       .await?;
-    Ok((filtered_tail_txs.first(), inclusion_states.states.contains(&true)))
+    Ok((tail_tx_for_promotion, inclusion_states.states.contains(&true)))
   }
 }
