@@ -72,6 +72,20 @@ impl Default for KeyEncodingType {
     }
 }
 
+impl FromStr for PublicKey {
+    type Err = crate::Error;
+
+    fn from_str(s: &str) -> crate::Result<PublicKey> {
+        Ok(serde_json::from_str(s)?)
+    }
+}
+
+impl ToString for PublicKey {
+    fn to_string(&self) -> String {
+        serde_json::to_string(self).expect("Unable to serialize Public Key")
+    }
+}
+
 impl FromStr for KeyEncodingType {
     type Err = crate::Error;
 

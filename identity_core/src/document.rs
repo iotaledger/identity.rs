@@ -87,7 +87,7 @@ mod test {
         let mut did_doc =
             DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
         let service = Service::new(
-            "https://w3id.org/did/v1".into(),
+            vec!["https://w3id.org/did/v1".into()],
             "did:into:123#edv".into(),
             "EncryptedDataVault".into(),
             "https://edv.example.com/".into(),
@@ -109,7 +109,13 @@ mod test {
         did_doc_2.add_service(service);
         did_doc_2.add_key_pair(public_key);
 
-        // timestamps will not be equal.
+        // timestamps will not be equal but partialeq will ignore them for testing.
         assert_eq!(did_doc, did_doc_2);
+
+        let jstr1 = serde_json::to_string(&did_doc).unwrap();
+        let jstr2 = serde_json::to_string(&did_doc_2).unwrap();
+
+        // Timestamps will cause the two strings to fail to match.
+        assert_ne!(jstr1, jstr2);
     }
 }

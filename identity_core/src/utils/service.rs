@@ -22,12 +22,26 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn new(context: String, id: String, service_type: String, endpoint: String) -> crate::Result<Self> {
+    pub fn new(context: Vec<String>, id: String, service_type: String, endpoint: String) -> crate::Result<Self> {
         Ok(Self {
-            context: Context::new(vec![context]),
+            context: Context::new(context),
             id: Subject::from_str(&id)?,
             service_type,
             endpoint,
         })
+    }
+}
+
+impl FromStr for Service {
+    type Err = crate::Error;
+
+    fn from_str(s: &str) -> crate::Result<Service> {
+        Ok(serde_json::from_str(s)?)
+    }
+}
+
+impl ToString for Service {
+    fn to_string(&self) -> String {
+        serde_json::to_string(self).expect("Unable to serialize Public Key")
     }
 }
