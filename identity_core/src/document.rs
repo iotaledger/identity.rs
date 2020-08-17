@@ -111,11 +111,5 @@ mod test {
 
         // timestamps will not be equal but partialeq will ignore them for testing.
         assert_eq!(did_doc, did_doc_2);
-
-        let jstr1 = serde_json::to_string(&did_doc).unwrap();
-        let jstr2 = serde_json::to_string(&did_doc_2).unwrap();
-
-        // Timestamps will cause the two strings to fail to match.
-        assert_ne!(jstr1, jstr2);
     }
 }
