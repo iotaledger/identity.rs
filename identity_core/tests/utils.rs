@@ -1,4 +1,4 @@
-updause identity_core::{
+use identity_core::{
     did::DID,
     utils::{Context, PublicKey, Service, Subject},
 };
