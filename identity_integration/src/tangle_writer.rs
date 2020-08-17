@@ -47,7 +47,7 @@ impl TangleWriter {
     // Get address from did_document?
     // Diff chain address in did_document?
     // Is it possible to get the address from the did_document after an auth change?
-    let serialzed_did_message = serialize_did_message(&did_message)?;
+    let serialzed_did_message = serialize_did_message(did_message)?;
     let mut transfers = Vec::new();
     transfers.push(Transfer {
       address: Address::from_inner_unchecked(

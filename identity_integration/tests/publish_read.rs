@@ -9,7 +9,7 @@ async fn test_publish_read() {
     // let node = String::from("https://nodes.comnet.thetangle.org:443");
     let node = String::from("http://localhost:14265");
     let did_root_address =
-      did_iota_address(DID::parse_from_str("did:iota:123456789abcdefghi").unwrap().id_segments[0].clone());
+      did_iota_address(&DID::parse_from_str("did:iota:123456789abcdefghi").unwrap().id_segments[0]);
     // 1. Publish demo DID document to the Tangle
     let tangle_writer = TangleWriter {
       node: node.clone(),

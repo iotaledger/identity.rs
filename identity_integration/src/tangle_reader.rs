@@ -25,7 +25,7 @@ impl TangleReader {
     // Order transaction to bundles
     let mut bundles = HashMap::new();
     let mut transactions = HashMap::new();
-    for tx in txs.trytes.iter() {
+    for tx in &txs.trytes {
       let mut curl = CurlP81::new();
       let mut trits = TritBuf::<T1B1Buf>::zeros(BundledTransaction::trit_len());
       tx.into_trits_allocated(&mut trits);
@@ -39,7 +39,7 @@ impl TangleReader {
       }
     }
 
-    for (_, bundle) in bundles.iter_mut() {
+    for bundle in bundles.values_mut() {
       for index in 0..*bundle[0].last_index().to_inner() {
         if let Some(trunk_transaction) = transactions.get(&Hash::from_inner_unchecked(
           TritBuf::from_i8s(bundle[index].trunk().to_inner().as_i8_slice()).unwrap(),
@@ -63,7 +63,7 @@ impl TangleReader {
 
     // Convert messages to ascii
     let mut messages = Vec::new();
-    for (_, bundle) in bundles.iter_mut() {
+    for bundle in bundles.values_mut() {
       let trytes_coll: Vec<String> = bundle
         .iter()
         .map(|t| t.payload().to_inner().as_i8_slice().trytes().unwrap())
