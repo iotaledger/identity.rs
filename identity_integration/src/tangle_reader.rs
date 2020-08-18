@@ -1,10 +1,14 @@
 use anyhow::Result;
 use iota::{
-    crypto::ternary::sponge::{CurlP81, Sponge},
-    crypto::ternary::Hash,
+    crypto::ternary::{
+        sponge::{CurlP81, Sponge},
+        Hash,
+    },
     ternary::{T1B1Buf, TritBuf, TryteBuf},
-    transaction::bundled::{Address, BundledTransaction, BundledTransactionField, Index},
-    transaction::Vertex,
+    transaction::{
+        bundled::{Address, BundledTransaction, BundledTransactionField, Index},
+        Vertex,
+    },
 };
 use iota_conversion::{trytes_converter, Trinary};
 use std::collections::HashMap;

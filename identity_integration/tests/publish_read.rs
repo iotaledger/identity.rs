@@ -1,7 +1,9 @@
 use identity_core::{did::DID, document::DIDDocument};
-use identity_integration::did_helper::did_iota_address;
-use identity_integration::tangle_reader::TangleReader;
-use identity_integration::tangle_writer::{iota_network, DIDMessage, Payload, TangleWriter};
+use identity_integration::{
+    did_helper::did_iota_address,
+    tangle_reader::TangleReader,
+    tangle_writer::{iota_network, DIDMessage, Payload, TangleWriter},
+};
 
 #[smol_potat::test]
 async fn test_publish_read() {

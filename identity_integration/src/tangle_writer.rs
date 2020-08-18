@@ -2,15 +2,16 @@ use anyhow::Result;
 pub use iota::client::builder::Network as iota_network;
 use iota::{
     client::Transfer,
-    crypto::ternary::sponge::{CurlP81, Sponge},
-    crypto::ternary::Hash,
+    crypto::ternary::{
+        sponge::{CurlP81, Sponge},
+        Hash,
+    },
     ternary::{T1B1Buf, TritBuf, TryteBuf},
     transaction::bundled::{Address, BundledTransaction, BundledTransactionField, Index, Tag},
 };
 use iota_conversion::Trinary;
 use serde::{Deserialize, Serialize};
-use std::fmt;
-use std::time::SystemTime;
+use std::{fmt, time::SystemTime};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct DIDMessage {
@@ -144,7 +145,8 @@ impl TangleWriter {
             .network(self.network.clone())
             .build()?;
         // We could store everything locally and rely on this information, then we don't need to get the transactions
-        // In that case we wouldn't notice if someone else reattaches our bundle, but should be no problem because it can get confirmed multiple times
+        // In that case we wouldn't notice if someone else reattaches our bundle, but should be no problem because it
+        // can get confirmed multiple times
         let response = iota.find_transactions().bundles(&[bundle]).send().await?;
 
         let trytes = iota.get_trytes(&response.hashes).await?;
@@ -156,7 +158,8 @@ impl TangleWriter {
             .filter(|tx| tx.index() == &Index::from_inner_unchecked(0))
             .collect::<Vec<&BundledTransaction>>();
 
-        // Use local time to ignore txs with a timestamp in the future, because if there is one that is much time ahead, it will always be selected
+        // Use local time to ignore txs with a timestamp in the future, because if there is one that is much time ahead,
+        // it will always be selected
         let time = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
