@@ -33,7 +33,7 @@ impl fmt::Display for Payload {
 
 #[derive(Clone)]
 pub struct TangleWriter {
-  pub node: String,
+  pub nodes: Vec<&'static str>,
   pub network: iota::client::builder::Network,
   // Add the sent trytes here?
 }
@@ -71,7 +71,7 @@ impl TangleWriter {
 
     // Create a client instance
     let iota = iota::ClientBuilder::new()
-      .node(&self.node)?
+      .nodes(&self.nodes)?
       // Investigate why this doesn't work, would be better than setting mwm
       .network(self.network.clone())
       .build()?;
@@ -105,7 +105,7 @@ impl TangleWriter {
     });
 
     let iota = iota::ClientBuilder::new()
-      .node(&self.node)?
+      .nodes(&self.nodes)?
       .network(self.network.clone())
       .build()?;
 
@@ -132,7 +132,7 @@ impl TangleWriter {
 
   pub async fn reattach(&self, trytes: Vec<BundledTransaction>) -> Result<String, Box<dyn std::error::Error>> {
     let iota = iota::ClientBuilder::new()
-      .node(&self.node)?
+      .nodes(&self.nodes)?
       .network(self.network.clone())
       .build()?;
     let reattached = iota.send_trytes().trytes(trytes).depth(2).send().await?;
@@ -142,7 +142,7 @@ impl TangleWriter {
   // Returns confirmation status and latest tail tx that can be used to promote
   pub async fn is_confirmed(&self, bundle: Hash) -> Result<(Option<Hash>, bool), Box<dyn std::error::Error>> {
     let iota = iota::ClientBuilder::new()
-      .node(&self.node)?
+      .nodes(&self.nodes)?
       .network(self.network.clone())
       .build()?;
     // We could store everything locally and rely on this information, then we don't need to get the transactions

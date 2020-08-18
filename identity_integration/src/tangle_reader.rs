@@ -11,12 +11,12 @@ use std::collections::HashMap;
 
 #[derive(Clone)]
 pub struct TangleReader {
-  pub node: String,
+  pub nodes: Vec<&'static str>,
 }
 
 impl TangleReader {
   pub async fn fetch(&self, address: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-    let iota = iota::ClientBuilder::new().node(&self.node)?.build()?;
+    let iota = iota::ClientBuilder::new().nodes(&self.nodes)?.build()?;
 
     let address = Address::from_inner_unchecked(TryteBuf::try_from_str(address).unwrap().as_trits().encode());
 
