@@ -1,31 +1,24 @@
-use serde::{
-    ser::{Serialize, SerializeStruct, Serializer},
-    Deserialize, Serialize as DSerialize,
-};
+use serde::{Deserialize, Serialize};
 
 use std::str::FromStr;
 
-use crate::utils::{
-    helpers::{string_or_list, string_or_struct},
-    Context, Subject,
-};
+use crate::utils::{Context, Subject};
 
-#[derive(Debug, Eq, PartialEq, Deserialize, DSerialize, Clone)]
+#[derive(Debug, Eq, PartialEq, Deserialize, Serialize, Clone)]
 pub struct Service {
     #[serde(default)]
     pub id: Subject,
     #[serde(rename = "type")]
     pub service_type: String,
-    #[serde(rename = "serviceEndpoint", deserialize_with = "string_or_struct")]
+    #[serde(rename = "serviceEndpoint")]
     pub endpoint: ServiceEndpoint,
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct ServiceEndpoint {
-    #[serde(rename = "@context", deserialize_with = "string_or_list", default)]
-    context: Context,
-    endpoint_type: Option<String>,
-    instances: Option<Vec<String>>,
+    pub context: Context,
+    pub endpoint_type: Option<String>,
+    pub instances: Option<Vec<String>>,
 }
 
 impl Service {
@@ -72,11 +65,7 @@ impl FromStr for ServiceEndpoint {
     type Err = crate::Error;
 
     fn from_str(s: &str) -> crate::Result<ServiceEndpoint> {
-        Ok(ServiceEndpoint {
-            context: Context::from_str(s)?,
-            endpoint_type: None,
-            instances: None,
-        })
+        Ok(serde_json::from_str(s)?)
     }
 }
 
@@ -86,41 +75,31 @@ impl ToString for ServiceEndpoint {
     }
 }
 
-impl Serialize for ServiceEndpoint {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        if self.instances == None && self.endpoint_type == None {
-            self.context.serialize(serializer)
-        } else {
-            let mut se = serializer.serialize_struct("", 3)?;
-            se.serialize_field("@context", &self.context)?;
-            se.serialize_field("type", &self.endpoint_type)?;
-            se.serialize_field("instances", &self.instances)?;
-            se.end()
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
     fn test_service_endpoint() {
-        let endpoint = ServiceEndpoint {
-            context: Context::from_str("https://schema.identity.foundation/hub").unwrap(),
-            endpoint_type: Some("AgentService".into()),
-            instances: Some(vec!["did:example:456".into(), "did:example:789".into()]),
-        };
+        let se1 = ServiceEndpoint::new("some_endpoint".into(), None, None).unwrap();
+        let se2 = ServiceEndpoint::new(
+            "some_endpoint".into(),
+            Some("test".into()),
+            Some(vec!["test".into(), "test".into()]),
+        )
+        .unwrap();
 
-        let endpoint = ServiceEndpoint {
-            context: Context::from_str("https://schema.identity.foundation/hub").unwrap(),
-            endpoint_type: None,
-            instances: None,
-        };
+        println!("{:?}", se1);
+        println!("{}", se1.to_string());
+        println!("{:?}", se2);
+        println!("{}", se2.to_string());
 
-        println!("{}", endpoint.to_string())
+        let rstr = r#"{
+        "@context": "https://schema.identity.foundation/hub",
+        "type": "UserHubEndpoint",
+        "instances": ["did:example:456", "did:example:789"]
+      }"#;
+
+        println!("{:?}", ServiceEndpoint::from_str(rstr).unwrap());
     }
 }

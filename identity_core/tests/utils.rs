@@ -97,9 +97,8 @@ fn test_public_key() {
 }
 
 #[test]
-fn test_service() {
+fn test_service_with_no_endpoint_body() {
     let raw_str = r#"{
-        "@context": "https://w3id.org/did/v1",
         "id": "did:into:123#edv",
         "type": "EncryptedDataVault",
         "serviceEndpoint": "https://edv.example.com/"
@@ -111,6 +110,39 @@ fn test_service() {
         "https://edv.example.com/".into(),
         None,
         None,
+    )
+    .unwrap();
+
+    let service_2: Service = Service::from_str(raw_str).unwrap();
+
+    assert_eq!(service, service_2);
+
+    let res = serde_json::to_string(&service).unwrap();
+
+    assert_eq!(res, service_2.to_string());
+}
+
+#[test]
+fn test_service_with_body() {
+    let raw_str = r#"
+    {
+        "id": "did:example:123456789abcdefghi#hub",
+        "type": "IdentityHub",
+        "publicKey": "did:example:123456789abcdefghi#key-1",
+        "serviceEndpoint": {
+          "@context": "https://schema.identity.foundation/hub",
+          "type": "UserHubEndpoint",
+          "instances": ["did:example:456", "did:example:789"]
+        }
+    }
+        "#;
+
+    let service = Service::new(
+        "did:example:123456789abcdefghi#hub".into(),
+        "IdentityHub".into(),
+        "https://schema.identity.foundation/hub".into(),
+        Some("UserHubEndpoint".into()),
+        Some(vec!["did:example:456".into(), "did:example:789".into()]),
     )
     .unwrap();
 
