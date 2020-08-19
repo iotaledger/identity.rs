@@ -19,6 +19,7 @@ pub struct TangleReader {
 }
 
 impl TangleReader {
+    /// Returns all messages from an address
     pub async fn fetch(&self, address: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
         let iota = iota::ClientBuilder::new().nodes(&self.nodes)?.build()?;
 

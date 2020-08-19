@@ -3,6 +3,7 @@ use iota::ternary::TryteBuf;
 use std::convert::TryInto;
 
 // Make this a method of did?
+/// Returns an address from a did segment
 pub fn did_iota_address(did: &str) -> String {
     let mut hasher = Blake2b::new();
     hasher.update(did.as_bytes());

@@ -44,6 +44,7 @@ fn serialize_did_message(did_message: &DIDMessage) -> Result<String> {
 }
 
 impl TangleWriter {
+    /// Publishes DID document to the Tangle
     pub async fn publish_document(&self, did_message: &DIDMessage) -> Result<Vec<BundledTransaction>> {
         // Get address from did_document?
         // Diff chain address in did_document?
@@ -88,7 +89,7 @@ impl TangleWriter {
         // Wait with res until confirmed?
         Ok(res)
     }
-
+    /// Promotes a transaction to get it faster confirmed
     pub async fn promote(&self, tail_transaction: Hash) -> Result<String, Box<dyn std::error::Error>> {
         let mut transfers = Vec::new();
         transfers.push(Transfer {
@@ -129,6 +130,7 @@ impl TangleWriter {
             .unwrap())
     }
 
+    /// Reattaches a bundle in case the first attachment failed or didn't get confirmed
     pub async fn reattach(&self, trytes: Vec<BundledTransaction>) -> Result<String, Box<dyn std::error::Error>> {
         let iota = iota::ClientBuilder::new()
             .nodes(&self.nodes)?
@@ -138,7 +140,7 @@ impl TangleWriter {
         Ok(reattached[0].bundle().to_inner().as_i8_slice().trytes().unwrap())
     }
 
-    // Returns confirmation status and latest tail tx that can be used to promote
+    /// Returns confirmation status and latest tail tx that can be used to promote
     pub async fn is_confirmed(&self, bundle: Hash) -> Result<(Option<Hash>, bool), Box<dyn std::error::Error>> {
         let iota = iota::ClientBuilder::new()
             .nodes(&self.nodes)?
