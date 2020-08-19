@@ -4,7 +4,7 @@ use serde::{Deserialize as DeriveD, Serialize as DeriveS};
 
 use crate::utils::Subject;
 
-#[derive(Debug, PartialEq, Clone, Copy, DeriveD, DeriveS)]
+#[derive(Debug, PartialEq, Clone, DeriveD, DeriveS)]
 #[serde(rename_all = "PascalCase")]
 pub enum PublicKeyTypes {
     Ed25519VerificationKey2018,
@@ -16,6 +16,7 @@ pub enum PublicKeyTypes {
     EcdsaSecp256k1RecoveryMethod2020,
     SchnorrSecp256k1VerificationKey2019,
     UnknownKey,
+    CustomKey(String),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, DeriveD, DeriveS)]
@@ -134,6 +135,7 @@ impl ToString for PublicKeyTypes {
             PublicKeyTypes::X25519KeyAgreementKey2019 => "X25519KeyAgreementKey2019".into(),
             PublicKeyTypes::EcdsaSecp256k1RecoveryMethod2020 => "X25519KeyAgreementKey2019".into(),
             PublicKeyTypes::SchnorrSecp256k1VerificationKey2019 => "SchnorrSecp256k1VerificationKey2019".into(),
+            PublicKeyTypes::CustomKey(s) => s.clone(),
             PublicKeyTypes::UnknownKey => "".into(),
         }
     }
