@@ -4,6 +4,8 @@ use std::str::FromStr;
 
 use crate::utils::{Context, Subject};
 
+/// Describes a `Service` in a `DIDDocument` type. Contains an `id`, `service_type` and `endpoint`.  The `endpoint` can
+/// be represented as a `String` or a `ServiceEndpoint` in json.
 #[derive(Debug, Eq, PartialEq, Deserialize, Serialize, Clone)]
 pub struct Service {
     #[serde(default)]
@@ -14,6 +16,9 @@ pub struct Service {
     pub endpoint: ServiceEndpoint,
 }
 
+/// Describes the `ServiceEndpoint` struct type. Contains a required `context` and two optional fields: `endpoint_type`
+/// and `instances`.  If neither `instances` nor `endpoint_type` is specified, the `ServiceEndpoint` is represented as a
+/// String in json using the `context`.
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct ServiceEndpoint {
     pub context: Context,
@@ -22,6 +27,8 @@ pub struct ServiceEndpoint {
 }
 
 impl Service {
+    /// Creates a new `Service` given a `id`, `service_type`, `endpoint`, `endpoint_type`, and `instances`.
+    /// `endpoint_type`, and `instances` are optional.
     pub fn new(
         id: String,
         service_type: String,
@@ -38,6 +45,8 @@ impl Service {
 }
 
 impl ServiceEndpoint {
+    /// Builds a new `ServiceEndpoint` given an `endpoint`, `endpoint_type`, and `instances`. `endpoint_type`, and
+    /// `instances` are optional.
     pub fn new(endpoint: String, endpoint_type: Option<String>, instances: Option<Vec<String>>) -> crate::Result<Self> {
         Ok(ServiceEndpoint {
             context: Context::from_str(&endpoint)?,
@@ -72,34 +81,5 @@ impl FromStr for ServiceEndpoint {
 impl ToString for ServiceEndpoint {
     fn to_string(&self) -> String {
         serde_json::to_string(self).expect("Unable to serialize the Service Endpoint struct")
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_service_endpoint() {
-        let se1 = ServiceEndpoint::new("some_endpoint".into(), None, None).unwrap();
-        let se2 = ServiceEndpoint::new(
-            "some_endpoint".into(),
-            Some("test".into()),
-            Some(vec!["test".into(), "test".into()]),
-        )
-        .unwrap();
-
-        println!("{:?}", se1);
-        println!("{}", se1.to_string());
-        println!("{:?}", se2);
-        println!("{}", se2.to_string());
-
-        let rstr = r#"{
-        "@context": "https://schema.identity.foundation/hub",
-        "type": "UserHubEndpoint",
-        "instances": ["did:example:456", "did:example:789"]
-      }"#;
-
-        println!("{:?}", ServiceEndpoint::from_str(rstr).unwrap());
     }
 }

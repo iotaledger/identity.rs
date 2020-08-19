@@ -4,8 +4,8 @@ use serde::{Deserialize as DeriveD, Serialize as DeriveS};
 
 use crate::utils::Subject;
 
-#[derive(Debug, PartialEq, Clone, DeriveD, DeriveS)]
-#[serde(rename_all = "PascalCase")]
+/// Public Key type enum. Can also contain a custom key type specified by the CustomKey field.
+#[derive(Debug, PartialEq, Clone)]
 pub enum PublicKeyTypes {
     Ed25519VerificationKey2018,
     RsaVerificationKey2018,
@@ -119,7 +119,8 @@ impl FromStr for PublicKeyTypes {
             "X25519KeyAgreementKey2019" => Ok(Self::X25519KeyAgreementKey2019),
             "EcdsaSecp256k1RecoveryMethod2020" => Ok(Self::EcdsaSecp256k1RecoveryMethod2020),
             "SchnorrSecp256k1VerificationKey2019" => Ok(Self::SchnorrSecp256k1VerificationKey2019),
-            _ => Err(crate::Error::KeyTypeError),
+            "UnknownKey" => Ok(Self::UnknownKey),
+            x => Ok(Self::CustomKey(x.into())),
         }
     }
 }
@@ -135,7 +136,7 @@ impl ToString for PublicKeyTypes {
             PublicKeyTypes::X25519KeyAgreementKey2019 => "X25519KeyAgreementKey2019".into(),
             PublicKeyTypes::EcdsaSecp256k1RecoveryMethod2020 => "X25519KeyAgreementKey2019".into(),
             PublicKeyTypes::SchnorrSecp256k1VerificationKey2019 => "SchnorrSecp256k1VerificationKey2019".into(),
-            PublicKeyTypes::CustomKey(s) => s.clone(),
+            PublicKeyTypes::CustomKey(s) => s.into(),
             PublicKeyTypes::UnknownKey => "".into(),
         }
     }

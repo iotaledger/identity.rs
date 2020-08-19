@@ -74,9 +74,9 @@ fn test_public_key() {
     let raw_str = r#"
     {
         "id":"did:iota:123456789abcdefghi#keys-1",
-        "type":"Ed25519VerificationKey2018","controller":
-        "did:iota:pqrstuvwxyz0987654321","publicKeyBase58":
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+        "type":"Ed25519VerificationKey2018",
+        "controller":"did:iota:pqrstuvwxyz0987654321",
+        "publicKeyBase58":"H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
     }
     "#;
     let pk_t = PublicKey::from_str(raw_str).unwrap();
@@ -93,6 +93,34 @@ fn test_public_key() {
 
     let res = serde_json::to_string(&pk).unwrap();
 
+    assert_eq!(res, pk_t.to_string());
+}
+
+#[test]
+fn test_custom_key_type() {
+    let raw_str = r#"
+    {
+        "id":"did:iota:123456789abcdefghi#keys-1",
+        "type": "SomeKeyType",
+        "controller":"did:iota:pqrstuvwxyz0987654321",
+        "publicKeyBase58":"H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+    }
+    "#;
+
+    let pk_t = PublicKey::from_str(raw_str).unwrap();
+
+    let pk = PublicKey::new(
+        "did:iota:123456789abcdefghi#keys-1".into(),
+        "SomeKeyType".into(),
+        "did:iota:pqrstuvwxyz0987654321".into(),
+        "publicKeyBase58".into(),
+        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+    )
+    .unwrap();
+
+    assert_eq!(pk, pk_t);
+
+    let res = serde_json::to_string(&pk).unwrap();
     assert_eq!(res, pk_t.to_string());
 }
 

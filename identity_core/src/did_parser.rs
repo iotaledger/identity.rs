@@ -3,10 +3,12 @@ use pest_derive::*;
 
 use crate::did::{Param, DID};
 
+/// a derived parser for the `DID` struct.  Rules are derived from the `did.pest` file using the `pest` crate.
 #[derive(Parser)]
 #[grammar = "did.pest"]
 struct DIDParser;
 
+/// parses a `ToString` type into a `DID` if it follows the proper format.  
 pub fn parse<T>(input: T) -> crate::Result<DID>
 where
     T: ToString,
@@ -20,6 +22,7 @@ where
     }
 }
 
+/// The innner parsing method for the `DIDParser`.
 fn parse_pairs(pairs: Pairs<Rule>) -> crate::Result<DID> {
     let mut prms: Vec<Param> = Vec::new();
     let mut path_segs: Vec<String> = Vec::new();
@@ -27,6 +30,7 @@ fn parse_pairs(pairs: Pairs<Rule>) -> crate::Result<DID> {
     let mut did = DID::default();
 
     for pair in pairs {
+        // match the rules from the did.pest file.
         match pair.as_rule() {
             Rule::method_name => {
                 did.method_name = pair.as_str().to_string();

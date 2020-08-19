@@ -8,9 +8,10 @@ use crate::did_parser::parse;
 
 const LEADING_TOKENS: &str = "did";
 
+/// An aliased tuple the converts into a `Param` type.
 type DIDTuple = (String, Option<String>);
 
-/// Decentralized identity structure.  
+/// a Decentralized identity structure.  
 #[derive(Debug, PartialEq, Eq, Default, Clone)]
 pub struct DID {
     pub method_name: String,
@@ -21,7 +22,7 @@ pub struct DID {
     pub fragment: Option<String>,
 }
 
-/// DID Params struct.
+/// a DID Params struct.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Param {
     pub name: String,
@@ -210,6 +211,7 @@ impl Display for Param {
     }
 }
 
+/// deserialize logic for the `DID` type.
 impl<'de> Deserialize<'de> for DID {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -239,6 +241,7 @@ impl<'de> Deserialize<'de> for DID {
     }
 }
 
+/// serialize logic for the `DID` type.
 impl Serialize for DID {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

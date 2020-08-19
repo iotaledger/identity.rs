@@ -10,16 +10,20 @@ use std::{
     str::FromStr,
 };
 
+/// The Json fields for the `ServiceEndpoint`.
 enum Field {
     Context,
     Type,
     Instances,
 }
 
+/// A visitor for the service endpoint values.
 struct ServiceEndpointVisitor;
 
+/// A visitor for the service endpoint keys.
 struct FieldVisitor;
 
+/// Deserialize logic for the `ServiceEndpoint` type.
 impl<'de> Deserialize<'de> for ServiceEndpoint {
     fn deserialize<D>(deserializer: D) -> Result<ServiceEndpoint, D::Error>
     where
@@ -29,6 +33,7 @@ impl<'de> Deserialize<'de> for ServiceEndpoint {
     }
 }
 
+/// Deserialize logic for the `Field` type.
 impl<'de> Deserialize<'de> for Field {
     fn deserialize<D>(deserializer: D) -> Result<Field, D::Error>
     where
@@ -38,6 +43,7 @@ impl<'de> Deserialize<'de> for Field {
     }
 }
 
+/// Visitor logic for the `ServiceEndpointVisitor` to deserialize the `ServiceEndpoint`.
 impl<'de> Visitor<'de> for ServiceEndpointVisitor {
     type Value = ServiceEndpoint;
 
@@ -45,6 +51,7 @@ impl<'de> Visitor<'de> for ServiceEndpointVisitor {
         formatter.write_str("Expecting a string or a Service Endpoint Struct")
     }
 
+    /// If given a &str use this logic to create a `ServiceEndpoint`.
     fn visit_str<E>(self, value: &str) -> Result<ServiceEndpoint, E>
     where
         E: de::Error,
@@ -55,6 +62,7 @@ impl<'de> Visitor<'de> for ServiceEndpointVisitor {
         })
     }
 
+    /// given a map, use this logic to create a `ServiceEndpoint`.
     fn visit_map<M>(self, mut map: M) -> Result<ServiceEndpoint, M::Error>
     where
         M: MapAccess<'de>,
@@ -96,6 +104,7 @@ impl<'de> Visitor<'de> for ServiceEndpointVisitor {
     }
 }
 
+/// Visitor logic for the `FieldVisitor` to deserialize the `Field` type.
 impl<'de> Visitor<'de> for FieldVisitor {
     type Value = Field;
 
@@ -103,6 +112,7 @@ impl<'de> Visitor<'de> for FieldVisitor {
         formatter.write_str("Expected `@context`, `type`, or `instances`")
     }
 
+    /// If given a &str use this logic to create a `Field`.
     fn visit_str<E>(self, value: &str) -> Result<Field, E>
     where
         E: de::Error,
@@ -116,6 +126,7 @@ impl<'de> Visitor<'de> for FieldVisitor {
     }
 }
 
+/// Serialize the `ServiceEndpoint`.
 impl Serialize for ServiceEndpoint {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

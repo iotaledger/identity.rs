@@ -1,8 +1,8 @@
-use crate::utils::{KeyEncodingType, PublicKey, Subject};
+use crate::utils::{KeyEncodingType, PublicKey, PublicKeyTypes};
 
 use serde::{
     de::{self, Deserialize, Deserializer, MapAccess, Visitor},
-    ser::{Serialize, SerializeStruct, Serializer},
+    ser::{Serialize, SerializeStruct, SerializeTupleVariant, Serializer},
 };
 
 use std::{
@@ -17,8 +17,19 @@ enum Field {
     Key(KeyEncodingType),
 }
 
+struct KeyTypeVisitor;
+
 struct PublicKeyVisitor;
 struct FieldVisitor;
+
+impl<'de> Deserialize<'de> for PublicKeyTypes {
+    fn deserialize<D>(deserializer: D) -> Result<PublicKeyTypes, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_any(KeyTypeVisitor)
+    }
+}
 
 impl<'de> Deserialize<'de> for PublicKey {
     fn deserialize<D>(deserializer: D) -> Result<PublicKey, D::Error>
@@ -37,21 +48,27 @@ impl<'de> Deserialize<'de> for Field {
         deserializer.deserialize_any(FieldVisitor)
     }
 }
+
+impl<'de> Visitor<'de> for KeyTypeVisitor {
+    type Value = PublicKeyTypes;
+
+    fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+        formatter.write_str("Expecting Key Type")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<PublicKeyTypes, E>
+    where
+        E: de::Error,
+    {
+        Ok(PublicKeyTypes::from_str(value).unwrap())
+    }
+}
+
 impl<'de> Visitor<'de> for PublicKeyVisitor {
     type Value = PublicKey;
 
     fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
         formatter.write_str("Expecting DID Public Key Struct")
-    }
-
-    fn visit_str<E>(self, value: &str) -> Result<PublicKey, E>
-    where
-        E: de::Error,
-    {
-        Ok(PublicKey {
-            id: Subject::from_str(value).unwrap(),
-            ..Default::default()
-        })
     }
 
     fn visit_map<M>(self, mut map: M) -> Result<PublicKey, M::Error>
@@ -133,6 +150,40 @@ impl<'de> Visitor<'de> for FieldVisitor {
                     Err(de::Error::unknown_field(value, &[]))
                 }
             }
+        }
+    }
+}
+
+impl Serialize for PublicKeyTypes {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match *self {
+            PublicKeyTypes::Ed25519VerificationKey2018 => {
+                serializer.serialize_unit_variant("PublicKeyTypes", 0, "Ed25519VerificationKey2018")
+            }
+            PublicKeyTypes::RsaVerificationKey2018 => {
+                serializer.serialize_unit_variant("PublicKeyTypes", 1, "RsaVerificationKey2018")
+            }
+            PublicKeyTypes::EcdsaSecp256k1VerificationKey2019 => {
+                serializer.serialize_unit_variant("PublicKeyTypes", 2, "EcdsaSecp256k1VerificationKey2019")
+            }
+            PublicKeyTypes::JsonWebKey2020 => serializer.serialize_unit_variant("PublicKeyTypes", 3, "JsonWebKey2020"),
+            PublicKeyTypes::GpgVerificationKey2020 => {
+                serializer.serialize_unit_variant("PublicKeyTypes", 4, "GpgVerificationKey2020")
+            }
+            PublicKeyTypes::X25519KeyAgreementKey2019 => {
+                serializer.serialize_unit_variant("PublicKeyTypes", 5, "X25519KeyAgreementKey2019")
+            }
+            PublicKeyTypes::EcdsaSecp256k1RecoveryMethod2020 => {
+                serializer.serialize_unit_variant("PublicKeyTypes", 6, "EcdsaSecp256k1RecoveryMethod2020")
+            }
+            PublicKeyTypes::SchnorrSecp256k1VerificationKey2019 => {
+                serializer.serialize_unit_variant("PublicKeyTypes", 7, "SchnorrSecp256k1VerificationKey2019")
+            }
+            PublicKeyTypes::UnknownKey => serializer.serialize_unit_variant("PublicKeyTypes", 8, "UnknownKey"),
+            PublicKeyTypes::CustomKey(ref s) => serializer.serialize_str(s),
         }
     }
 }
