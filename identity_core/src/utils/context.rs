@@ -5,7 +5,7 @@ use serde::{
     Deserialize,
 };
 
-#[derive(Debug, Default, PartialEq, Eq, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
 #[serde(transparent)]
 pub struct Context(Vec<String>);
 
@@ -25,6 +25,13 @@ impl Context {
         self.0.push(s);
 
         Ok(self.clone())
+    }
+}
+
+/// Default context to "https://www.w3.org/ns/did/v1" as per the standard.
+impl Default for Context {
+    fn default() -> Self {
+        Context(vec!["https://www.w3.org/ns/did/v1".into()])
     }
 }
 

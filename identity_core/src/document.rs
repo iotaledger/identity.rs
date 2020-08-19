@@ -7,7 +7,7 @@ use crate::utils::{helpers::string_or_list, Context, PublicKey, Service, Subject
 #[cfg_attr(not(test), derive(PartialEq))]
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct DIDDocument {
-    #[serde(rename = "@context", deserialize_with = "string_or_list")]
+    #[serde(rename = "@context", deserialize_with = "string_or_list", default)]
     pub context: Context,
     pub id: Subject,
     #[serde(skip_serializing_if = "String::is_empty", default)]
@@ -23,14 +23,26 @@ pub struct DIDDocument {
 }
 
 impl DIDDocument {
+    /// Takes in the `context` and `id` as strings and creates a `DIDDocument` struct.  The `context` field may be an
+    /// empty string in which case it will default to "https://www.w3.org/ns/did/v1"
     pub fn new(context: String, id: String) -> crate::Result<Self> {
-        Ok(DIDDocument {
-            context: Context::from_str(&context)?,
-            id: Subject::from_str(&id)?,
-            created: Utc::now().to_string(),
-            updated: Utc::now().to_string(),
-            ..Default::default()
-        })
+        if context == String::new() {
+            Ok(DIDDocument {
+                context: Context::default(),
+                id: Subject::from_str(&id)?,
+                created: Utc::now().to_string(),
+                updated: Utc::now().to_string(),
+                ..Default::default()
+            })
+        } else {
+            Ok(DIDDocument {
+                context: Context::from_str(&context)?,
+                id: Subject::from_str(&id)?,
+                created: Utc::now().to_string(),
+                updated: Utc::now().to_string(),
+                ..Default::default()
+            })
+        }
     }
 
     pub fn context(&self) -> &Vec<String> {
