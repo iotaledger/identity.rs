@@ -5,22 +5,28 @@ use serde::{
     Deserialize,
 };
 
+/// A context type.  Contains a Vector of Strings which describe the DID context.
 #[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
 #[serde(transparent)]
 pub struct Context(Vec<String>);
 
 impl Context {
+    /// creates a new context.  requires an `inner` value.
     pub fn new(inner: Vec<String>) -> Self {
         Self(inner)
     }
+
+    /// gets the inner value of the context.
     pub fn as_inner(&self) -> &Vec<String> {
         &self.0
     }
 
+    /// checks if the context is empty.
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
 
+    /// add a context to an existing context.
     pub fn add_context(&mut self, s: String) -> crate::Result<Self> {
         self.0.push(s);
 

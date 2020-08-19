@@ -5,6 +5,7 @@ use serde::{
 
 use std::{fmt, marker::PhantomData, str::FromStr};
 
+/// deserializes the data into either a List or a String depending on how many elements are in the data.
 pub fn string_or_list<'de, T, D>(deserializer: D) -> Result<T, D::Error>
 where
     T: Deserialize<'de> + FromStr<Err = crate::Error>,

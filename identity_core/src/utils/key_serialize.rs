@@ -2,7 +2,7 @@ use crate::utils::{KeyEncodingType, PublicKey, PublicKeyTypes};
 
 use serde::{
     de::{self, Deserialize, Deserializer, MapAccess, Visitor},
-    ser::{Serialize, SerializeStruct, SerializeTupleVariant, Serializer},
+    ser::{Serialize, SerializeStruct, Serializer},
 };
 
 use std::{
@@ -10,6 +10,7 @@ use std::{
     str::FromStr,
 };
 
+/// fields used in the public key deserialization.
 enum Field {
     Subject,
     Type,
@@ -17,9 +18,12 @@ enum Field {
     Key(KeyEncodingType),
 }
 
+/// the key type visitor that allows custom keys to be added and parsed.
 struct KeyTypeVisitor;
 
+/// The Public key visitor which parses the `PublicKey` struct.
 struct PublicKeyVisitor;
+/// The Field visitor which setups the different json keys for the `PublicKey` type.
 struct FieldVisitor;
 
 impl<'de> Deserialize<'de> for PublicKeyTypes {
@@ -60,7 +64,7 @@ impl<'de> Visitor<'de> for KeyTypeVisitor {
     where
         E: de::Error,
     {
-        Ok(PublicKeyTypes::from_str(value).unwrap())
+        Ok(PublicKeyTypes::from_str(value).expect("Couldn't parse the String into a Public Key"))
     }
 }
 

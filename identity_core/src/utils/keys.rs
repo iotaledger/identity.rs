@@ -19,6 +19,7 @@ pub enum PublicKeyTypes {
     CustomKey(String),
 }
 
+/// Encoding method used for the specified public key.
 #[derive(Debug, PartialEq, Clone, Copy, DeriveD, DeriveS)]
 pub enum KeyEncodingType {
     Unknown,
@@ -32,6 +33,8 @@ pub enum KeyEncodingType {
     EthereumAddress,
 }
 
+/// Public key struct that contains `id`, `key_type`, `controller`, `encoding_type`, `key_data` and `reference`.
+/// `reference` defines whether or not the PublicKey is a reference.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct PublicKey {
     pub id: Subject,
@@ -43,6 +46,8 @@ pub struct PublicKey {
 }
 
 impl PublicKey {
+    /// creates a new public key instance using `id`, `key_type`, `controller`, `encoding`, and `data`. `reference` is
+    /// set to false by default.
     pub fn new(
         id: String,
         key_type: String,
