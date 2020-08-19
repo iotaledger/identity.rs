@@ -1,5 +1,5 @@
 use serde::{
-    de::{self, SeqAccess, Visitor},
+    de::{self, MapAccess, SeqAccess, Visitor},
     Deserialize, Deserializer,
 };
 
@@ -10,32 +10,67 @@ where
     T: Deserialize<'de> + FromStr<Err = crate::Error>,
     D: Deserializer<'de>,
 {
-    struct StringOrList<T>(PhantomData<fn() -> T>);
+    deserializer.deserialize_any(StringOrList(PhantomData))
+}
 
-    impl<'de, T> Visitor<'de> for StringOrList<T>
-    where
-        T: Deserialize<'de> + FromStr<Err = crate::Error>,
-    {
-        type Value = T;
+pub fn string_or_struct<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+where
+    T: Deserialize<'de> + FromStr<Err = crate::Error>,
+    D: Deserializer<'de>,
+{
+    deserializer.deserialize_any(StringOrStruct(PhantomData))
+}
 
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("string or list")
-        }
+struct StringOrList<T>(PhantomData<fn() -> T>);
 
-        fn visit_str<E>(self, value: &str) -> Result<T, E>
-        where
-            E: de::Error,
-        {
-            Ok(FromStr::from_str(value).unwrap())
-        }
+struct StringOrStruct<T>(PhantomData<fn() -> T>);
 
-        fn visit_seq<S>(self, seq: S) -> Result<T, S::Error>
-        where
-            S: SeqAccess<'de>,
-        {
-            Deserialize::deserialize(de::value::SeqAccessDeserializer::new(seq))
-        }
+impl<'de, T> Visitor<'de> for StringOrList<T>
+where
+    T: Deserialize<'de> + FromStr<Err = crate::Error>,
+{
+    type Value = T;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("string or list")
     }
 
-    deserializer.deserialize_any(StringOrList(PhantomData))
+    fn visit_str<E>(self, value: &str) -> Result<T, E>
+    where
+        E: de::Error,
+    {
+        Ok(FromStr::from_str(value).unwrap())
+    }
+
+    fn visit_seq<S>(self, seq: S) -> Result<T, S::Error>
+    where
+        S: SeqAccess<'de>,
+    {
+        Deserialize::deserialize(de::value::SeqAccessDeserializer::new(seq))
+    }
+}
+
+impl<'de, T> Visitor<'de> for StringOrStruct<T>
+where
+    T: Deserialize<'de> + FromStr<Err = crate::Error>,
+{
+    type Value = T;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("string or map")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<T, E>
+    where
+        E: de::Error,
+    {
+        Ok(FromStr::from_str(value).unwrap())
+    }
+
+    fn visit_map<M>(self, map: M) -> Result<T, M::Error>
+    where
+        M: MapAccess<'de>,
+    {
+        Deserialize::deserialize(de::value::MapAccessDeserializer::new(map))
+    }
 }

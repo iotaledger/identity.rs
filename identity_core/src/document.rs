@@ -99,10 +99,11 @@ mod test {
         let mut did_doc =
             DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
         let service = Service::new(
-            vec!["https://w3id.org/did/v1".into()],
             "did:into:123#edv".into(),
             "EncryptedDataVault".into(),
             "https://edv.example.com/".into(),
+            None,
+            None,
         )
         .unwrap();
         did_doc.add_service(service.clone());
@@ -123,5 +124,7 @@ mod test {
 
         // timestamps will not be equal but partialeq will ignore them for testing.
         assert_eq!(did_doc, did_doc_2);
+
+        println!("{}", did_doc.to_string())
     }
 }

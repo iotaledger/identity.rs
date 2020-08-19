@@ -106,10 +106,11 @@ fn test_service() {
     }"#;
 
     let service = Service::new(
-        vec!["https://w3id.org/did/v1".into()],
         "did:into:123#edv".into(),
         "EncryptedDataVault".into(),
         "https://edv.example.com/".into(),
+        None,
+        None,
     )
     .unwrap();
 
