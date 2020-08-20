@@ -2,6 +2,7 @@ use identity_core::{did::DID, document::DIDDocument, utils::Context};
 
 use std::str::FromStr;
 
+/// Test a full Did document from String.
 #[test]
 fn test_parse_document() {
     let json_str = r#"

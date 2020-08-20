@@ -93,6 +93,7 @@ impl FromStr for DIDDocument {
 mod test {
     use super::*;
 
+    /// PartialEq without comparing the Timestamps.
     impl PartialEq for DIDDocument {
         fn eq(&self, other: &Self) -> bool {
             self.context == other.context
@@ -102,6 +103,7 @@ mod test {
         }
     }
 
+    /// test doc creation via the `DIDDocument::new` method.
     #[test]
     fn test_doc_creation() {
         let mut did_doc =
@@ -132,7 +134,5 @@ mod test {
 
         // timestamps will not be equal but partialeq will ignore them for testing.
         assert_eq!(did_doc, did_doc_2);
-
-        println!("{}", did_doc.to_string())
     }
 }

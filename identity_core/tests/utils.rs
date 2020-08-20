@@ -5,6 +5,7 @@ use identity_core::{
 
 use std::str::FromStr;
 
+/// Test Context::new
 #[test]
 fn test_context() {
     let raw_str = r#"["https://w3id.org/did/v1","https://w3id.org/security/v1"]"#;
@@ -18,6 +19,7 @@ fn test_context() {
     assert_eq!(string, raw_str);
 }
 
+/// Test building a Subject from a did string.
 #[test]
 fn test_subject_from_string() {
     let raw_str = r#""did:iota:123456789abcdefghi""#;
@@ -28,6 +30,7 @@ fn test_subject_from_string() {
     assert_eq!(string, raw_str);
 }
 
+/// Test building a subject from a DID structure.
 #[test]
 fn test_subject_from_did() {
     let did = DID::new(
@@ -48,6 +51,7 @@ fn test_subject_from_did() {
     assert_eq!(res, string);
 }
 
+/// Test Subject from a DID using the From Trait.
 #[test]
 fn test_subject_from() {
     let did = DID::new(
@@ -69,6 +73,7 @@ fn test_subject_from() {
     assert_eq!(res, string);
 }
 
+/// Test public key structure from String and with PublicKey::new
 #[test]
 fn test_public_key() {
     let raw_str = r#"
@@ -96,6 +101,7 @@ fn test_public_key() {
     assert_eq!(res, pk_t.to_string());
 }
 
+/// Test the custom PublicKeyType to see if it works as expected.  
 #[test]
 fn test_custom_key_type() {
     let raw_str = r#"
@@ -124,6 +130,7 @@ fn test_custom_key_type() {
     assert_eq!(res, pk_t.to_string());
 }
 
+/// Test service without ServiceEndpoint body.
 #[test]
 fn test_service_with_no_endpoint_body() {
     let raw_str = r#"{
@@ -150,6 +157,7 @@ fn test_service_with_no_endpoint_body() {
     assert_eq!(res, service_2.to_string());
 }
 
+/// Test Service with a ServiceEndpoint Body.
 #[test]
 fn test_service_with_body() {
     let raw_str = r#"
