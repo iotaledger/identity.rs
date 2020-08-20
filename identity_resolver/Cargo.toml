@@ -13,3 +13,17 @@ homepage = "https://www.iota.org"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# serialization
+serde = "1.0"
+serde_json = "1.0"
+
+identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "feat/resolver-did-parser"}
+identity_integration = {git = "https://github.com/iotaledger/identity.rs", branch = "feat/did-ledger-integration"}
+
+[dev-dependencies]
+smol-potat = "0.3.3"
+smol = {version = "0.1.18", features = ["tokio02"] }
