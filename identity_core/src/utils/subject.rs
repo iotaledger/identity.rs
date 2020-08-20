@@ -21,6 +21,11 @@ impl Subject {
     pub fn from_did(did: DID) -> crate::Result<Self> {
         Ok(Subject(did))
     }
+
+    /// retrieves the `DID` from the `Subject`.
+    pub fn to_did(&self) -> crate::Result<DID> {
+        Ok(self.0.clone())
+    }
 }
 
 impl FromStr for Subject {

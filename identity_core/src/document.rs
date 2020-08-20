@@ -2,7 +2,10 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, str::FromStr};
 
-use crate::utils::{helpers::string_or_list, Context, PublicKey, Service, Subject};
+use crate::{
+    did::DID,
+    utils::{helpers::string_or_list, Context, PublicKey, Service, Subject},
+};
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
 /// `public_key`, services and metadata.  Only `context` and `id` are required to create a DID document.
@@ -69,6 +72,11 @@ impl DIDDocument {
     /// updates the `updated` fields time.
     pub fn update_time(&mut self) {
         self.updated = Utc::now().to_string();
+    }
+
+    /// derive the did from the document.
+    pub fn derive_did(&self) -> crate::Result<DID> {
+        self.id.to_did()
     }
 }
 
