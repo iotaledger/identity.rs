@@ -11,7 +11,7 @@ mod tests {
     fn same_address() {
         assert_eq!(
             did_iota_address("123456789abcdefghi"),
-            String::from("TBCIWFJ9VBBDN9IGEEKCLCCBIDCDWCGIAIZ9AFHCZBDFCGQBLFQGXBSAKATAVA9GPDCDOHZDQ9I9XGACE")
+            String::from("HAKHECNDWCVBYFUFXAFICCWEVASGMAY9GDDGJITFMBNAMEUHOBQE9ESFJBFC9HMBHAKHECNDWCVBYFUFX")
         );
     }
 }

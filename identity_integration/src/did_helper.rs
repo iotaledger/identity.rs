@@ -1,14 +1,15 @@
-use blake2::{Blake2b, Digest};
+use blake2::{Blake2s, Digest};
 use iota::ternary::TryteBuf;
 use std::convert::TryInto;
 
 // Make this a method of did?
 /// Returns an address from a did segment
 pub fn did_iota_address(did: &str) -> String {
-    let mut hasher = Blake2b::new();
+    let mut hasher = Blake2s::new();
     hasher.update(did.as_bytes());
     let hash = hasher.finalize();
-    let trytes = bytes_to_trytes(&hash[..]);
+    let duplicated = [hash, hash].concat();
+    let trytes = bytes_to_trytes(&duplicated);
     trytes.to_string()[0..81].to_string()
 }
 

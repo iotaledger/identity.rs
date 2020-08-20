@@ -27,7 +27,7 @@ impl TangleReader {
 
         let response = iota.find_transactions().addresses(&[address]).send().await?;
         let txs = iota.get_trytes(&response.hashes).await?;
-        // Order transaction to bundles
+        // Order transactions to bundles
         let mut bundles = HashMap::new();
         let mut transactions = HashMap::new();
         for tx in &txs.trytes {
