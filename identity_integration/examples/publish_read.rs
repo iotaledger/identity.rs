@@ -9,11 +9,13 @@ use identity_integration::{
     tangle_writer::{iota_network, DIDMessage, Payload, TangleWriter},
 };
 use iota_conversion::Trinary;
+use smol::Timer;
+use std::time::Duration;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
     let nodes = vec!["http://localhost:14265", "https://nodes.comnet.thetangle.org:443"];
-    let did = "did:iota:123456789abcdefghij";
+    let did = "did:iota:123456789abcdefghi";
     let did_address = did_iota_address(&DID::parse_from_str(did).unwrap().id_segments[0]);
     // 1. Publish DID document to the Tangle
     let tangle_writer = TangleWriter {
@@ -26,7 +28,7 @@ async fn main() -> Result<()> {
         // payload: Payload::DIDDocument(String::from("Document")),
         address: did_address.clone(),
     };
-    let tail_transaction = tangle_writer.publish_document(&did_message).await.unwrap();
+    let mut tail_transaction = tangle_writer.publish_document(&did_message).await.unwrap();
 
     println!(
         "DID document published: https://comnet.thetangle.org/transaction/{}",
@@ -34,10 +36,23 @@ async fn main() -> Result<()> {
     );
     // Get confirmation status, promote if unconfirmed, this needs to be done until it's confirmed or older than 150
     // seconds, then a new transaction needs to be sent
-    let confirmed = tangle_writer.is_confirmed(tail_transaction).await.unwrap();
-    if !confirmed {
-        tangle_writer.promote(tail_transaction).await.unwrap();
+    Timer::after(Duration::from_secs(10)).await;
+    let mut j = 0;
+    while !tangle_writer.is_confirmed(tail_transaction).await.unwrap() {
+        j += 1;
+        Timer::after(Duration::from_secs(10)).await;
+        let promotehash = tangle_writer.promote(tail_transaction).await.unwrap();
+        println!("Promoted: https://comnet.thetangle.org/transaction/{}", promotehash);
+        // Send the document again if the previous transaction didn't get confirmed after 150 seconds
+        if j % 15 == 0 {
+            tail_transaction = tangle_writer.publish_document(&did_message).await.unwrap();
+            println!(
+                "DID document published again: https://comnet.thetangle.org/transaction/{}",
+                tail_transaction.as_i8_slice().trytes().unwrap()
+            );
+        }
     }
+    println!("Transaction got confirmed!");
 
     // 2. Fetch messages from DID root address
     let tangle_reader = TangleReader { nodes: nodes };
