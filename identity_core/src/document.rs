@@ -10,7 +10,7 @@ use crate::{
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
 /// `public_key`, services and metadata.  Only `context` and `id` are required to create a DID document.
 #[cfg_attr(not(test), derive(PartialEq))]
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct DIDDocument {
     #[serde(rename = "@context", deserialize_with = "string_or_list", default)]
     pub context: Context,
