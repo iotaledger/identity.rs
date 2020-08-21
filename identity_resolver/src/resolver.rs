@@ -1,11 +1,7 @@
-use anyhow::Result as AnyhowResult;
+use chrono::prelude::*;
+use chrono::DateTime;
 use identity_core::{did::DID, document::DIDDocument};
-use identity_integration::{
-    did_helper::did_iota_address,
-    tangle_reader::TangleReader,
-    tangle_writer::{DIDMessage, Payload},
-};
-use thiserror::Error;
+use identity_integration::{did_helper::did_iota_address, tangle_reader::TangleReader};
 
 pub struct ResolutionMetadata {}
 
@@ -14,7 +10,7 @@ pub struct Resolver {
 }
 impl Resolver {
     /// Resolve a DID document
-    pub async fn resolve(&self, did: DID, _resolution_metadata: ResolutionMetadata) -> Result<DIDDocument> {
+    pub async fn resolve(&self, did: DID, _resolution_metadata: ResolutionMetadata) -> crate::Result<DIDDocument> {
         let reader = TangleReader {
             nodes: self.nodes.clone(),
         };
@@ -22,18 +18,29 @@ impl Resolver {
             .fetch(&did_iota_address(&DID::parse_from_str(did).unwrap().id_segments[0]))
             .await
             .unwrap();
-        let fetched_did_message: DIDMessage = serde_json::from_str(&messages[0]).unwrap();
-        if let Payload::DIDDocument(doc) = fetched_did_message.payload {
-            Ok(doc)
+
+        let mut documents: Vec<DIDDocument> = messages
+            .iter()
+            .filter_map(|s| {
+                if let Ok(payload) = serde_json::from_str::<DIDDocument>(&s) {
+                    Some(payload)
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        documents.sort_by(|a, b| {
+            b.updated
+                .parse::<DateTime<Utc>>()
+                .unwrap()
+                .cmp(&a.updated.parse::<DateTime<Utc>>().unwrap())
+        });
+
+        if documents.len() > 0 {
+            Ok(documents.remove(0))
         } else {
-            Err(Error::DocumentNotFound)
+            Err(crate::Error::DocumentNotFound)
         }
     }
 }
-#[derive(Debug, Error)]
-pub enum Error {
-    /// Didn't found a document
-    #[error("Resolve Error: No document found")]
-    DocumentNotFound,
-}
-pub type Result<T> = AnyhowResult<T, Error>;
