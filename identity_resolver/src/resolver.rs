@@ -42,7 +42,7 @@ impl Resolver {
                 .cmp(&a.updated.parse::<DateTime<Utc>>().expect("Parsing time failed"))
         });
 
-        if documents.len() > 0 {
+        if !documents.is_empty() {
             Ok(documents.remove(0))
         } else {
             Err(crate::Error::DocumentNotFound)
