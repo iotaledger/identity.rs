@@ -1,7 +1,5 @@
 ![banner](./.meta/identity_banner.png)
 
-<h2 align="center">A framework for dezentralized identity applications on IOTA.</h2>
-
 <p align="center">
   <a href="https://discord.iota.org/" style="text-decoration:none;"><img src="https://img.shields.io/badge/Discord-9cf.svg?logo=discord" alt="Discord"></a>
   <a href="https://iota.stackexchange.com/" style="text-decoration:none;"><img src="https://img.shields.io/badge/StackExchange-9cf.svg?logo=stackexchange" alt="StackExchange"></a>
@@ -39,12 +37,15 @@ At the current state, the framework is not fit for any projects, however as the 
 **Current Stage: 0**
 
 **Stage 1: DID (Q4 2020)**
+
 As the DID standard is implemented and the IOTA ledger is integrated the first experimentations are possible. DIDs can be created, updated and ownership can be proven. This allows simple experimentations where ownership of an identity is the main requirement. 
 
 **Stage 2: Verifiable Credentials (Q4 2020)**
+
 With the Verifiable Credentials standard implemented, not only ownership can be proven, but also other attributes. At this stage PoCs are possible similarly to [Selv](https://selv.iota.org). However, the communications between actors are not yet implemented, identities are not easily recognized nor are credential layouts standardized. Real-world applications are possible at this stage (after audit), but require extra effort.
 
 **Stage 3: Communication Standardization (Q1 2021)**
+
 Once the communications between DID actors have been implemented, any application using identity can communicate out-of-the-box in an interoperable manner. This makes applications easier to develop, yet as mentioned in Stage 2, identities are still not easily recognized nor are the credential layouts standarized. Real-world applications are therefore easier to develop (after audit), but scaling the application outside of a consortium is difficult.
 
 Stage 4: TBD
