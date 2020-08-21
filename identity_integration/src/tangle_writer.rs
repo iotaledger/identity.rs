@@ -34,11 +34,14 @@ pub struct TangleWriter {
 }
 
 impl TangleWriter {
+    pub fn new(nodes: Vec<&'static str>, network: iota::client::builder::Network) -> Self {
+        Self { nodes, network }
+    }
     /// Publishes DID document to the Tangle
     pub async fn publish_document(&self, did_document: &Payload) -> Result<Hash> {
         let (address, message) = match did_document {
             Payload::DIDDocument(document) => (
-                did_iota_address(&document.id.to_did().unwrap().id_segments[0]),
+                did_iota_address(&document.id.to_did()?.id_segments[0]),
                 document.to_string(),
             ),
             Payload::DIDDocumentDifferences(document) => (did_iota_address(&document), document.into()),
@@ -47,17 +50,16 @@ impl TangleWriter {
         // Is it possible to get the address from the did_document after an auth change?
         // let serialzed_did_message = serde_json::to_string(&did_document.to_string())?;
         let transfers = vec![Transfer {
-            address: Address::from_inner_unchecked(TryteBuf::try_from_str(&address).unwrap().as_trits().encode()),
+            address: Address::from_inner_unchecked(TryteBuf::try_from_str(&address)?.as_trits().encode()),
             value: 0,
             message: Some(message),
             tag: Some(
                 Tag::try_from_inner(
-                    TryteBuf::try_from_str("DID999999999999999999999999")
-                        .unwrap()
+                    TryteBuf::try_from_str("DID999999999999999999999999")?
                         .as_trits()
                         .encode(),
                 )
-                .unwrap(),
+                .expect("Can't convert tag"),
             ),
         }];
 
@@ -73,10 +75,10 @@ impl TangleWriter {
         let mut curl = CurlP81::new();
         let mut trits = TritBuf::<T1B1Buf>::zeros(BundledTransaction::trit_len());
         bundle[0].into_trits_allocated(&mut trits);
-        Ok(Hash::from_inner_unchecked(curl.digest(&trits).unwrap()))
+        Ok(Hash::from_inner_unchecked(curl.digest(&trits)?))
     }
     /// Promotes a transaction to get it faster confirmed
-    pub async fn promote(&self, tail_transaction: Hash) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn promote(&self, tail_transaction: Hash) -> Result<String> {
         let iota = iota::ClientBuilder::new()
             .nodes(&self.nodes)?
             .network(self.network.clone())
@@ -85,8 +87,7 @@ impl TangleWriter {
             address: Address::from_inner_unchecked(
                 TryteBuf::try_from_str(&String::from(
                     "PROMOTEADDRESSPROMOTEADDRESSPROMOTEADDRESSPROMOTEADDRESSPROMOTEADDRESSPROMOTEADDR",
-                ))
-                .unwrap()
+                ))?
                 .as_trits()
                 .encode(),
             ),
@@ -111,11 +112,11 @@ impl TangleWriter {
             .to_inner()
             .as_i8_slice()
             .trytes()
-            .unwrap())
+            .expect("Couldn't get Trytes"))
     }
 
     /// Returns confirmation status
-    pub async fn is_confirmed(&self, tail_transaction: Hash) -> Result<bool, Box<dyn std::error::Error>> {
+    pub async fn is_confirmed(&self, tail_transaction: Hash) -> Result<bool> {
         let iota = iota::ClientBuilder::new()
             .nodes(&self.nodes)?
             .network(self.network.clone())

@@ -16,43 +16,40 @@ use std::{str::FromStr, time::Duration};
 async fn main() -> Result<()> {
     let nodes = vec!["http://localhost:14265", "https://nodes.comnet.thetangle.org:443"];
     let did = "did:iota:123456789abcdefghi";
-    let did_address = did_iota_address(&DID::parse_from_str(did).unwrap().id_segments[0]);
-    let did_document = DIDDocument::new("https://www.w3.org/ns/did/v1".into(), did.into()).unwrap();
+    let did_address = did_iota_address(&DID::parse_from_str(did)?.id_segments[0]);
+    let did_document = DIDDocument::new("https://www.w3.org/ns/did/v1".into(), did.into())?;
     let did_payload = Payload::DIDDocument(did_document);
     // 1. Publish DID document to the Tangle
-    let tangle_writer = TangleWriter {
-        nodes: nodes.clone(),
-        network: iota_network::Comnet,
-    };
+    let tangle_writer = TangleWriter::new(nodes.clone(), iota_network::Comnet);
 
-    let mut tail_transaction = tangle_writer.publish_document(&did_payload).await.unwrap();
+    let mut tail_transaction = tangle_writer.publish_document(&did_payload).await?;
     println!(
         "DID document published: https://comnet.thetangle.org/transaction/{}",
-        tail_transaction.as_i8_slice().trytes().unwrap()
+        tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
     );
     // Get confirmation status, promote if unconfirmed, this needs to be done until it's confirmed or older than 150
     // seconds, then a new transaction needs to be sent
     Timer::after(Duration::from_secs(5)).await;
     let mut j = 0;
-    while !tangle_writer.is_confirmed(tail_transaction).await.unwrap() {
+    while !tangle_writer.is_confirmed(tail_transaction).await? {
         j += 1;
         Timer::after(Duration::from_secs(5)).await;
-        let promotehash = tangle_writer.promote(tail_transaction).await.unwrap();
+        let promotehash = tangle_writer.promote(tail_transaction).await?;
         println!("Promoted: https://comnet.thetangle.org/transaction/{}", promotehash);
         // Send the document again if the previous transaction didn't get confirmed after 150 seconds
         if j % 30 == 0 {
-            tail_transaction = tangle_writer.publish_document(&did_payload).await.unwrap();
+            tail_transaction = tangle_writer.publish_document(&did_payload).await?;
             println!(
                 "DID document published again: https://comnet.thetangle.org/transaction/{}",
-                tail_transaction.as_i8_slice().trytes().unwrap()
+                tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
             );
         }
     }
     println!("Transaction got confirmed!");
 
     // 2. Fetch messages from DID address
-    let tangle_reader = TangleReader { nodes: nodes };
-    let received_message = tangle_reader.fetch(&did_address).await.unwrap();
+    let tangle_reader = TangleReader::new(nodes);
+    let received_message = tangle_reader.fetch(&did_address).await?;
     let fetched_did_document = DIDDocument::from_str(&received_message[0])?;
     println!("Document from the Tangle: {:?}", fetched_did_document);
     // Check if sent message is the same as the received one

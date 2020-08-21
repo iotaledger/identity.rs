@@ -29,8 +29,8 @@ pub fn bytes_to_trytes(input: &[u8]) -> TryteBuf {
             _ => unreachable!(),
         };
 
-        trytes.push(first.try_into().unwrap());
-        trytes.push(second.try_into().unwrap());
+        trytes.push(first.try_into().expect("Tryteconversion failed"));
+        trytes.push(second.try_into().expect("Tryteconversion failed"));
     }
     trytes
 }
