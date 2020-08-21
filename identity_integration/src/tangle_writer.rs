@@ -1,3 +1,4 @@
+use crate::did_helper::did_iota_address;
 use anyhow::Result;
 use identity_core::document::DIDDocument;
 pub use iota::client::builder::Network as iota_network;
@@ -13,13 +14,6 @@ use iota::{
 use iota_conversion::Trinary;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct DIDMessage {
-    // signature: Signature,?
-    pub payload: Payload,
-    pub address: String,
-}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum Payload {
@@ -41,20 +35,21 @@ pub struct TangleWriter {
 
 impl TangleWriter {
     /// Publishes DID document to the Tangle
-    pub async fn publish_document(&self, did_message: &DIDMessage) -> Result<Hash> {
-        // Get address from did_document?
+    pub async fn publish_document(&self, did_document: &Payload) -> Result<Hash> {
+        let (address, message) = match did_document {
+            Payload::DIDDocument(document) => (
+                did_iota_address(&document.id.to_did().unwrap().id_segments[0]),
+                document.to_string(),
+            ),
+            Payload::DIDDocumentDifferences(document) => (did_iota_address(&document), document.into()),
+        };
         // Diff chain address in did_document?
         // Is it possible to get the address from the did_document after an auth change?
-        let serialzed_did_message = serde_json::to_string(&did_message)?;
+        // let serialzed_did_message = serde_json::to_string(&did_document.to_string())?;
         let transfers = vec![Transfer {
-            address: Address::from_inner_unchecked(
-                TryteBuf::try_from_str(&did_message.address)
-                    .unwrap()
-                    .as_trits()
-                    .encode(),
-            ),
+            address: Address::from_inner_unchecked(TryteBuf::try_from_str(&address).unwrap().as_trits().encode()),
             value: 0,
-            message: Some(serialzed_did_message),
+            message: Some(message),
             tag: Some(
                 Tag::try_from_inner(
                     TryteBuf::try_from_str("DID999999999999999999999999")
