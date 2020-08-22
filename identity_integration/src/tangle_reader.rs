@@ -31,54 +31,7 @@ impl TangleReader {
         let response = iota.find_transactions().addresses(&[address]).send().await?;
         let txs = iota.get_trytes(&response.hashes).await?;
         // Order transactions to bundles
-        let mut bundles = HashMap::new();
-        let mut transactions = HashMap::new();
-        for tx in &txs.trytes {
-            let mut curl = CurlP81::new();
-            let mut trits = TritBuf::<T1B1Buf>::zeros(BundledTransaction::trit_len());
-            tx.into_trits_allocated(&mut trits);
-            let tx_hash = Hash::from_inner_unchecked(curl.digest(&trits)?);
-
-            if tx.index() == &Index::from_inner_unchecked(0) {
-                // Distinguish between tail transactions, because message can be changed at reattachments
-                bundles.insert(tx_hash, vec![tx]);
-            } else {
-                transactions.insert(tx_hash, tx);
-            }
-        }
-
-        for bundle in bundles.values_mut() {
-            for index in 0..*bundle[0].last_index().to_inner() {
-                if let Some(trunk_transaction) = transactions.get(&Hash::from_inner_unchecked(
-                    TritBuf::from_i8s(bundle[index].trunk().to_inner().as_i8_slice())
-                        .expect("Can't get TritBuf from i8_slice"),
-                )) {
-                    bundle.push(trunk_transaction);
-                } else {
-                    println!(
-                        "Trunk transaction not found: https://comnet.thetangle.org/transaction/{}",
-                        bundle[index]
-                            .trunk()
-                            .to_inner()
-                            .as_i8_slice()
-                            .trytes()
-                            .expect("Couldn't get Trytes")
-                    );
-                }
-            }
-            // Check if all transactions are there
-            if bundle.len() != *bundle[0].last_index().to_inner() + 1 {
-                println!(
-                    "Not all transactions for {} are known",
-                    bundle[0]
-                        .bundle()
-                        .to_inner()
-                        .as_i8_slice()
-                        .trytes()
-                        .expect("Couldn't get Trytes")
-                );
-            }
-        }
+        let mut bundles = sort_txs_to_bundles(txs.trytes)?;
 
         // Convert messages to ascii
         let mut messages = Vec::new();
@@ -101,4 +54,57 @@ impl TangleReader {
 
         Ok(messages)
     }
+}
+
+/// Sorts transactions to bundles by tail transactions
+fn sort_txs_to_bundles(trytes: Vec<BundledTransaction>) -> Result<HashMap<Hash, Vec<BundledTransaction>>> {
+    let mut bundles = HashMap::new();
+    let mut transactions = HashMap::new();
+    for tx in trytes {
+        let mut curl = CurlP81::new();
+        let mut trits = TritBuf::<T1B1Buf>::zeros(BundledTransaction::trit_len());
+        tx.into_trits_allocated(&mut trits);
+        let tx_hash = Hash::from_inner_unchecked(curl.digest(&trits)?);
+        if tx.index() == &Index::from_inner_unchecked(0) {
+            // Distinguish between tail transactions, because the content can be changed at reattachments
+            bundles.insert(tx_hash, vec![tx]);
+        } else {
+            transactions.insert(tx_hash, tx);
+        }
+    }
+    for bundle in bundles.values_mut() {
+        for index in 0..*bundle[0].last_index().to_inner() {
+            if let Some(trunk_transaction) = transactions.get(&Hash::from_inner_unchecked(
+                TritBuf::from_i8s(bundle[index].trunk().to_inner().as_i8_slice())
+                    .expect("Can't get TritBuf from i8_slice"),
+            )) {
+                bundle.push(trunk_transaction.clone());
+            }
+            // Debug
+            // else {
+            //     println!(
+            //         "Trunk transaction not found: https://comnet.thetangle.org/transaction/{}",
+            //         bundle[index]
+            //             .trunk()
+            //             .to_inner()
+            //             .as_i8_slice()
+            //             .trytes()
+            //             .expect("Couldn't get Trytes")
+            //     );
+            // }
+        }
+        // Debug check if all transactions are there
+        // if bundle.len() != *bundle[0].last_index().to_inner() + 1 {
+        //     println!(
+        //         "Not all transactions for {} are known",
+        //         bundle[0]
+        //             .bundle()
+        //             .to_inner()
+        //             .as_i8_slice()
+        //             .trytes()
+        //             .expect("Couldn't get Trytes")
+        //     );
+        // }
+    }
+    Ok(bundles)
 }
