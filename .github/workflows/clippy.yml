@@ -15,17 +15,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [identity_account, identity_communication, identity_doc_manager, identity_integration, identity_resolver, identity_schema, identity_vc]
+        project:
+          [
+            identity_account,
+            identity_communication,
+            identity_core,
+            identity_integration,
+            identity_resolver,
+            identity_schema,
+            identity_vc,
+          ]
 
     steps:
       - uses: actions/checkout@v2
       - name: Install clippy with stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-            profile: minimal
-            toolchain: stable
-            override: true
-            components: clippy
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: clippy
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
