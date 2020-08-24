@@ -41,7 +41,7 @@ impl TangleWriter {
     pub async fn publish_document(&self, did_document: &Payload) -> Result<Hash> {
         let (address, message) = match did_document {
             Payload::DIDDocument(document) => (
-                did_iota_address(&document.id.to_did()?.id_segments[0]),
+                did_iota_address(&document.derive_did()?.id_segments[0]),
                 document.to_string(),
             ),
             Payload::DIDDocumentDifferences(document) => (did_iota_address(&document), document.into()),

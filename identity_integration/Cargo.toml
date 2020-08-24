@@ -15,6 +15,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 # error handling
 anyhow = "1.0"
+thiserror = "1.0"
 
 # serialization
 serde = "1.0"

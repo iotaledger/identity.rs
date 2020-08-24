@@ -23,15 +23,22 @@ impl TangleReader {
         Self { nodes }
     }
     /// Returns all messages from an address
-    pub async fn fetch(&self, address: &str) -> Result<Vec<String>> {
+    pub async fn fetch(&self, address: &str) -> crate::Result<Vec<String>> {
         let iota = iota::ClientBuilder::new().nodes(&self.nodes)?.build()?;
 
         let address = Address::from_inner_unchecked(TryteBuf::try_from_str(address)?.as_trits().encode());
 
         let response = iota.find_transactions().addresses(&[address]).send().await?;
         let txs = iota.get_trytes(&response.hashes).await?;
+        if txs.trytes.is_empty() {
+            return Err(crate::Error::TransactionsNotFound);
+        }
         // Order transactions to bundles
-        let mut bundles = sort_txs_to_bundles(txs.trytes)?;
+        let mut bundles = sort_txs_to_bundles(txs.trytes).map_err(|_| crate::Error::TransactionSortingFailed)?;
+
+        if bundles.keys().len() == 0 {
+            return Err(crate::Error::MissingTailTransaction);
+        }
 
         // Convert messages to ascii
         let mut messages = Vec::new();
