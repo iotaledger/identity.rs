@@ -1,11 +1,12 @@
 use std::str::FromStr;
 
 use serde::{Deserialize as DeriveD, Serialize as DeriveS};
+use serde_diff::SerdeDiff;
 
 use crate::utils::Subject;
 
 /// Public Key type enum. Can also contain a custom key type specified by the CustomKey field.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, SerdeDiff)]
 pub enum PublicKeyTypes {
     Ed25519VerificationKey2018,
     RsaVerificationKey2018,
@@ -20,7 +21,7 @@ pub enum PublicKeyTypes {
 }
 
 /// Encoding method used for the specified public key.
-#[derive(Debug, PartialEq, Clone, Copy, DeriveD, DeriveS)]
+#[derive(Debug, PartialEq, Clone, Copy, DeriveD, DeriveS, SerdeDiff)]
 pub enum KeyEncodingType {
     Unknown,
     Pem,
@@ -35,7 +36,7 @@ pub enum KeyEncodingType {
 
 /// Public key struct that contains `id`, `key_type`, `controller`, `encoding_type`, `key_data` and `reference`.
 /// `reference` defines whether or not the PublicKey is a reference.
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq, SerdeDiff)]
 pub struct PublicKey {
     pub id: Subject,
     pub key_type: PublicKeyTypes,

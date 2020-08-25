@@ -1,7 +1,9 @@
 use serde::{
     de::{self, Deserialize, Deserializer, Visitor},
     ser::{Serialize, Serializer},
+    Deserialize as DDeserialize, Serialize as DSerialize,
 };
+use serde_diff::SerdeDiff;
 use std::fmt::{self, Display, Formatter};
 
 use crate::did_parser::parse;
@@ -12,7 +14,7 @@ const LEADING_TOKENS: &str = "did";
 type DIDTuple = (String, Option<String>);
 
 /// a Decentralized identity structure.  
-#[derive(Debug, PartialEq, Eq, Default, Clone)]
+#[derive(Debug, PartialEq, Eq, Default, Clone, SerdeDiff)]
 pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
@@ -23,7 +25,7 @@ pub struct DID {
 }
 
 /// a DID Params struct.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, SerdeDiff, DDeserialize, DSerialize)]
 pub struct Param {
     pub name: String,
     pub value: Option<String>,

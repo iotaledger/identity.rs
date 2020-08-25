@@ -1,5 +1,6 @@
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
+use serde_diff::SerdeDiff;
 use std::{collections::HashMap, str::FromStr};
 
 use crate::{
@@ -9,7 +10,7 @@ use crate::{
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
 /// `public_key`, services and metadata.  Only `context` and `id` are required to create a DID document.
-#[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq, SerdeDiff)]
 pub struct DIDDocument {
     #[serde(rename = "@context", deserialize_with = "string_or_list", default)]
     pub context: Context,
@@ -96,6 +97,7 @@ impl FromStr for DIDDocument {
 #[cfg(test)]
 mod test {
     use super::*;
+    use serde_diff::{Apply, Diff};
 
     /// test doc creation via the `DIDDocument::new` method.
     #[test]
@@ -130,5 +132,35 @@ mod test {
 
         // did_doc has timestamps while did_doc_2 does not.
         assert_ne!(did_doc, did_doc_2);
+    }
+
+    #[test]
+    fn test_diff() {
+        let mut old = DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
+        let mut new = DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
+        let service = Service::new(
+            "did:into:123#edv".into(),
+            "EncryptedDataVault".into(),
+            "https://edv.example.com/".into(),
+            None,
+            None,
+        )
+        .unwrap();
+        new.add_service(service.clone());
+        let public_key = PublicKey::new(
+            "did:iota:123456789abcdefghi#keys-1".into(),
+            "RsaVerificationKey2018".into(),
+            "did:iota:123456789abcdefghi".into(),
+            "publicKeyBase58".into(),
+            "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        )
+        .unwrap();
+        new.add_key_pair(public_key.clone());
+
+        let json_diff = serde_json::to_string(&Diff::serializable(&old, &new)).unwrap();
+        let mut deserializer = serde_json::Deserializer::from_str(&json_diff);
+        Apply::apply(&mut deserializer, &mut old).unwrap();
+
+        assert_eq!(old.to_string(), new.to_string());
     }
 }
