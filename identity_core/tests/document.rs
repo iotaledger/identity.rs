@@ -87,10 +87,7 @@ fn test_doc_creation() {
 #[test]
 fn test_doc_diff() {
     // old doc
-    let mut old = DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into())
-        .unwrap()
-        .init_timestamps()
-        .unwrap();
+    let mut old = DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
     // new doc.
     let mut new = DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
     let service = Service::new(
@@ -111,8 +108,6 @@ fn test_doc_diff() {
     )
     .unwrap();
     new.add_key_pair(public_key.clone());
-
-    let new = new.init_timestamps().unwrap();
 
     // diff the two docs and create a json string of the diff.
     let json_diff = serde_json::to_string(&Diff::serializable(&old, &new)).unwrap();
