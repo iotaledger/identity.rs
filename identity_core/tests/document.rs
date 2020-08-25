@@ -107,7 +107,7 @@ fn test_doc_diff() {
         "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
     )
     .unwrap();
-    new.add_key_pair(public_key.clone());
+    new.add_key_pair(public_key);
 
     // diff the two docs and create a json string of the diff.
     let json_diff = serde_json::to_string(&Diff::serializable(&old, &new)).unwrap();
