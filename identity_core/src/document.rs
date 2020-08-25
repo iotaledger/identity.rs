@@ -53,12 +53,12 @@ impl DIDDocument {
     }
 
     /// sets a new `service` of type `Service` into the `DIDDocument`.
-    pub fn add_service(&mut self, service: Service) {
+    pub fn update_service(&mut self, service: Service) {
         self.services.push(service);
     }
 
     /// sets a new `key_pair` of type `PublicKey` into the `DIDDocument`.
-    pub fn add_key_pair(&mut self, key_pair: PublicKey) {
+    pub fn add_new_public_key(&mut self, key_pair: PublicKey) {
         self.public_key.push(key_pair);
     }
 
@@ -69,6 +69,13 @@ impl DIDDocument {
 
     pub fn update_time(&mut self) {
         self.updated = Some(Utc::now().to_string());
+    }
+
+    pub fn supply_metadata(self, metadata: HashMap<String, String>) -> crate::Result<Self> {
+        Ok(DIDDocument {
+            metadata: metadata,
+            ..self
+        })
     }
 
     /// initialize the `created` and `updated` timestamps to publish the did document.  Returns the did document with
