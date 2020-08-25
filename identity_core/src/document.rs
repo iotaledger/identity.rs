@@ -16,6 +16,7 @@ pub struct DIDDocument {
     pub context: Context,
     pub id: Subject,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde_diff(skip)]
     pub created: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub updated: Option<String>,
