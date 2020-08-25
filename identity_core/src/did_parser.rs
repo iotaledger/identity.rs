@@ -22,7 +22,7 @@ where
     }
 }
 
-/// The innner parsing method for the `DIDParser`.
+/// The inner parsing method for the `DIDParser`.
 fn parse_pairs(pairs: Pairs<Rule>) -> crate::Result<DID> {
     let mut prms: Vec<Param> = Vec::new();
     let mut path_segs: Vec<String> = Vec::new();
