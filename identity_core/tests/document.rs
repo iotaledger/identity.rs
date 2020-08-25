@@ -98,7 +98,7 @@ fn test_doc_diff() {
         None,
     )
     .unwrap();
-    new.update_service(service.clone());
+    new.update_service(service);
     let public_key = PublicKey::new(
         "did:iota:123456789abcdefghi#keys-1".into(),
         "RsaVerificationKey2018".into(),
@@ -354,7 +354,7 @@ fn test_doc_metadata() {
     metadata.insert("some".into(), "metadata".into());
     metadata.insert("some_more".into(), "metadata_stuff".into());
 
-    let doc = doc.supply_metadata(metadata.clone()).unwrap();
+    let doc = doc.supply_metadata(metadata).unwrap();
 
     let res_doc = DIDDocument::from_str(result_str).unwrap();
 
