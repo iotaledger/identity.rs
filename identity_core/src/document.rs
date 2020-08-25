@@ -67,15 +67,15 @@ impl DIDDocument {
         self.id.to_did()
     }
 
+    /// Updates the `updated` time for the `DIDDocument`.
     pub fn update_time(&mut self) {
         self.updated = Some(Utc::now().to_string());
     }
 
+    /// Inserts `metadata` into the `DIDDocument` body.  The metadata must be a HashMap<String, String> where the keys
+    /// are json keys and values are the json values.
     pub fn supply_metadata(self, metadata: HashMap<String, String>) -> crate::Result<Self> {
-        Ok(DIDDocument {
-            metadata: metadata,
-            ..self
-        })
+        Ok(DIDDocument { metadata, ..self })
     }
 
     /// initialize the `created` and `updated` timestamps to publish the did document.  Returns the did document with
