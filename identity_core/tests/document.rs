@@ -345,8 +345,6 @@ fn test_doc_metadata() {
     }
     "#;
 
-    let metadata_diff_str = r#"[{"Enter":{"Field":"metadata"}},{"AddKey":"some_more"},{"Value":"metadata_stuff"},{"AddKey":"some"},{"Value":"metadata"},"Exit"]"#;
-
     let doc = DIDDocument::from_str(json_str);
 
     assert!(doc.is_ok());
@@ -361,30 +359,4 @@ fn test_doc_metadata() {
     let res_doc = DIDDocument::from_str(result_str).unwrap();
 
     assert_eq!(doc, res_doc);
-
-    let mut did_doc = DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
-    let service = Service::new(
-        "did:into:123#edv".into(),
-        "EncryptedDataVault".into(),
-        "https://edv.example.com/".into(),
-        None,
-        None,
-    )
-    .unwrap();
-    did_doc.update_service(service);
-    let public_key = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "RsaVerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
-    )
-    .unwrap();
-    did_doc.add_new_public_key(public_key);
-
-    let did_doc_w_metadata = did_doc.clone().supply_metadata(metadata).unwrap();
-
-    let json_diff = serde_json::to_string(&Diff::serializable(&did_doc, &did_doc_w_metadata)).unwrap();
-
-    assert_eq!(metadata_diff_str, json_diff);
 }
