@@ -9,16 +9,15 @@ use crate::{
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
 /// `public_key`, services and metadata.  Only `context` and `id` are required to create a DID document.
-#[cfg_attr(not(test), derive(PartialEq))]
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq)]
 pub struct DIDDocument {
     #[serde(rename = "@context", deserialize_with = "string_or_list", default)]
     pub context: Context,
     pub id: Subject,
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub created: String,
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub updated: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated: Option<String>,
     #[serde(rename = "publicKey", skip_serializing_if = "Vec::is_empty", default)]
     pub public_key: Vec<PublicKey>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
@@ -35,16 +34,12 @@ impl DIDDocument {
             Ok(DIDDocument {
                 context: Context::default(),
                 id: Subject::from_str(&id)?,
-                created: Utc::now().to_string(),
-                updated: Utc::now().to_string(),
                 ..Default::default()
             })
         } else {
             Ok(DIDDocument {
                 context: Context::from_str(&context)?,
                 id: Subject::from_str(&id)?,
-                created: Utc::now().to_string(),
-                updated: Utc::now().to_string(),
                 ..Default::default()
             })
         }
@@ -58,25 +53,26 @@ impl DIDDocument {
     /// sets a new `service` of type `Service` into the `DIDDocument`.
     pub fn add_service(&mut self, service: Service) {
         self.services.push(service);
-
-        self.update_time();
     }
 
     /// sets a new `key_pair` of type `PublicKey` into the `DIDDocument`.
     pub fn add_key_pair(&mut self, key_pair: PublicKey) {
         self.public_key.push(key_pair);
-
-        self.update_time();
-    }
-
-    /// updates the `updated` fields time.
-    pub fn update_time(&mut self) {
-        self.updated = Utc::now().to_string();
     }
 
     /// derive the did from the document.
     pub fn derive_did(&self) -> crate::Result<DID> {
         self.id.to_did()
+    }
+
+    /// initialize the `created` and `updated` timestamps to publish the did document.  Returns the did document with
+    /// these timestamps.
+    pub fn init_timestamps(self) -> crate::Result<Self> {
+        Ok(DIDDocument {
+            created: Some(Utc::now().to_string()),
+            updated: Some(Utc::now().to_string()),
+            ..self
+        })
     }
 }
 
@@ -100,16 +96,6 @@ impl FromStr for DIDDocument {
 #[cfg(test)]
 mod test {
     use super::*;
-
-    /// PartialEq without comparing the Timestamps.
-    impl PartialEq for DIDDocument {
-        fn eq(&self, other: &Self) -> bool {
-            self.context == other.context
-                && self.id == other.id
-                && self.public_key == other.public_key
-                && self.services == other.services
-        }
-    }
 
     /// test doc creation via the `DIDDocument::new` method.
     #[test]
@@ -140,7 +126,9 @@ mod test {
         did_doc_2.add_service(service);
         did_doc_2.add_key_pair(public_key);
 
-        // timestamps will not be equal but partialeq will ignore them for testing.
-        assert_eq!(did_doc, did_doc_2);
+        let did_doc = did_doc.init_timestamps().unwrap();
+
+        // did_doc has timestamps while did_doc_2 does not.
+        assert_ne!(did_doc, did_doc_2);
     }
 }
