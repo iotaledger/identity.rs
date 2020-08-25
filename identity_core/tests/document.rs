@@ -120,3 +120,168 @@ fn test_doc_diff() {
     // check to see that the old and new docs cotain all of the same fields.
     assert_eq!(new.to_string(), old.to_string());
 }
+
+#[test]
+fn test_doc_diff_timestamps() {
+    let json_str_2 = r#"
+    {
+        "@context": ["https://w3id.org/did/v1", "https://w3id.org/security/v1"],
+        "id": "did:iota:123456789abcdefghi",
+        "updated": "2020-08-25 21:47:28.344412100 UTC",
+        "publicKey": [{
+            "id": "did:iota:123456789abcdefghi#keys-1",
+            "type": "RsaVerificationKey2018",
+            "controller": "did:iota:123456789abcdefghi",
+            "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
+        }, {
+            "id": "did:iota:123456789abcdefghi#keys-2",
+            "type": "Ed25519VerificationKey2018",
+            "controller": "did:iota:pqrstuvwxyz0987654321",
+            "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+        }, {
+            "id": "did:iota:123456789abcdefghi#keys-3",
+            "type": "EcdsaSecp256k1VerificationKey2019",
+            "controller": "did:iota:123456789abcdefghi",
+            "publicKeyHex": "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
+        }]
+    }
+    "#;
+
+    let mut doc1 = DIDDocument::default();
+
+    let doc2 = DIDDocument::from_str(json_str_2);
+
+    let mut doc2 = doc2.unwrap();
+    doc2.update_time();
+    let diff = Diff::serializable(&doc1, &doc2);
+
+    let json_diff = serde_json::to_string(&diff).unwrap();
+
+    let mut deserializer = serde_json::Deserializer::from_str(&json_diff);
+
+    Apply::apply(&mut deserializer, &mut doc1).unwrap();
+
+    assert_eq!(doc1.to_string(), doc2.to_string());
+}
+
+#[test]
+fn test_diff_strings() {
+    let diff_str = r#"
+    [
+    {
+        "Enter": {
+            "Field": "context"
+        }
+    },
+    {
+        "Enter": {
+            "FieldIndex": 0
+        }
+    },
+    {
+        "Enter": {
+            "CollectionIndex": 0
+        }
+    },
+    {
+        "Value": "https://w3id.org/did/v1"
+    },
+    "Exit",
+    "Exit",
+    {
+        "Enter": {
+            "Field": "id"
+        }
+    },
+    {
+        "Enter": {
+            "FieldIndex": 0
+        }
+    },
+    {
+        "Enter": {
+            "Field": "method_name"
+        }
+    },
+    {
+        "Value": "iota"
+    },
+    {
+        "Enter": {
+            "Field": "id_segments"
+        }
+    },
+    {
+        "Enter": "AddToCollection"
+    },
+    {
+        "Value": "123456789abcdefghi"
+    },
+    "Exit",
+    "Exit",
+    "Exit",
+    {
+        "Enter": {
+            "Field": "public_key"
+        }
+    },
+    {
+        "Enter": "AddToCollection"
+    },
+    {
+        "Value": {
+            "id": "did:iota:123456789abcdefghi#keys-1",
+            "type": "RsaVerificationKey2018",
+            "controller": "did:iota:123456789abcdefghi",
+            "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+        }
+    },
+    "Exit",
+    {
+        "Enter": {
+            "Field": "services"
+        }
+    },
+    {
+        "Enter": "AddToCollection"
+    },
+    {
+        "Value": {
+            "id": "did:into:123#edv",
+            "type": "EncryptedDataVault",
+            "serviceEndpoint": "https://edv.example.com/"
+        }
+    },
+    "Exit"
+    ]  
+    "#;
+
+    let def_doc = DIDDocument::default();
+
+    let mut doc = DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
+    let service = Service::new(
+        "did:into:123#edv".into(),
+        "EncryptedDataVault".into(),
+        "https://edv.example.com/".into(),
+        None,
+        None,
+    )
+    .unwrap();
+    doc.add_service(service.clone());
+    let public_key = PublicKey::new(
+        "did:iota:123456789abcdefghi#keys-1".into(),
+        "RsaVerificationKey2018".into(),
+        "did:iota:123456789abcdefghi".into(),
+        "publicKeyBase58".into(),
+        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+    )
+    .unwrap();
+    doc.add_key_pair(public_key);
+
+    let json_diff = serde_json::to_string(&Diff::serializable(&def_doc, &doc)).unwrap();
+
+    println!("{}", json_diff);
+
+    // remove newlines and spaces from the diff_str.
+    assert_eq!(json_diff, diff_str.replace("\n", "").replace(" ", ""))
+}

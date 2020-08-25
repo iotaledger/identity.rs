@@ -67,6 +67,10 @@ impl DIDDocument {
         self.id.to_did()
     }
 
+    pub fn update_time(&mut self) {
+        self.updated = Some(Utc::now().to_string());
+    }
+
     /// initialize the `created` and `updated` timestamps to publish the did document.  Returns the did document with
     /// these timestamps.
     pub fn init_timestamps(self) -> crate::Result<Self> {
