@@ -55,27 +55,22 @@ impl Resolver {
 }
 
 fn get_id_and_nodes(did_segments: &[String], nodes: NetworkNodes) -> crate::Result<(String, Vec<&'static str>)> {
-    match did_segments[0] {
-        _ if did_segments[0] == "dev" => {
-            if let NetworkNodes::Dev(nodes) = nodes {
-                Ok((did_segments.last().expect("Failed to get id_segment").into(), nodes))
-            } else {
-                Err(crate::Error::NetworkNodeError)
-            }
-        }
-        _ if did_segments[0] == "com" => {
-            if let NetworkNodes::Com(nodes) = nodes {
-                Ok((did_segments.last().expect("Failed to get id_segment").into(), nodes))
-            } else {
-                Err(crate::Error::NetworkNodeError)
-            }
-        }
-        _ => {
-            if let NetworkNodes::Main(nodes) = nodes {
-                Ok((did_segments.last().expect("Failed to get id_segment").into(), nodes))
-            } else {
-                Err(crate::Error::NetworkNodeError)
-            }
-        }
+    let nodes: Vec<&'static str> = match did_segments[0] {
+        _ if did_segments[0] == "dev" => match nodes {
+            NetworkNodes::Dev(nodes) => nodes,
+            _ => return Err(crate::Error::NetworkNodeError),
+        },
+        _ if did_segments[0] == "com" => match nodes {
+            NetworkNodes::Com(nodes) => nodes,
+            _ => return Err(crate::Error::NetworkNodeError),
+        },
+        _ => match nodes {
+            NetworkNodes::Main(nodes) => nodes,
+            _ => return Err(crate::Error::NetworkNodeError),
+        },
+    };
+    if nodes.is_empty() {
+        return Err(crate::Error::NetworkNodeError);
     }
+    Ok((did_segments.last().expect("Failed to get id_segment").into(), nodes))
 }
