@@ -14,7 +14,7 @@ const LEADING_TOKENS: &str = "did";
 type DIDTuple = (String, Option<String>);
 
 /// a Decentralized identity structure.  
-#[derive(Debug, PartialEq, Eq, Default, Clone, SerdeDiff)]
+#[derive(Debug, PartialEq, Default, Eq, Clone, SerdeDiff)]
 pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
@@ -25,7 +25,7 @@ pub struct DID {
 }
 
 /// a DID Params struct.
-#[derive(Debug, PartialEq, Eq, Clone, SerdeDiff, DDeserialize, DSerialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Default, SerdeDiff, DDeserialize, DSerialize)]
 pub struct Param {
     pub name: String,
     pub value: Option<String>,
@@ -48,10 +48,7 @@ impl DID {
         };
 
         if let Some(prms) = params {
-            let ps: Vec<Param> = prms
-                .into_iter()
-                .map(|pms| Param::new(pms).expect("Format of Param is incorrect"))
-                .collect();
+            let ps: Vec<Param> = prms.into_iter().map(|pms| pms.into()).collect();
 
             did.params = Some(ps);
         };
@@ -117,21 +114,6 @@ impl DID {
     /// Method to add a fragment to the DID.  
     pub fn add_fragment(&mut self, fragment: String) {
         self.fragment = Some(fragment);
-    }
-}
-
-impl Param {
-    /// Creates a new Param struct.
-    pub fn new(params: DIDTuple) -> crate::Result<Self> {
-        let (name, value) = params;
-
-        if name == String::new() {
-            Err(crate::Error::FormatError(
-                "Format of the params is incorrect or empty".into(),
-            ))
-        } else {
-            Ok(Param { name, value })
-        }
     }
 }
 
@@ -252,5 +234,13 @@ impl Serialize for DID {
         let s = format!("{}", self);
 
         serializer.serialize_str(s.as_str())
+    }
+}
+
+impl From<DIDTuple> for Param {
+    fn from(tuple: DIDTuple) -> Param {
+        let (name, value) = tuple;
+
+        Param { name, value }
     }
 }

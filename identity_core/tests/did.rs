@@ -31,7 +31,8 @@ fn test_multiple_ids() {
 /// test the DID Param struct.
 #[test]
 fn test_param() {
-    let param = Param::new(("name".into(), Some("value".into()))).unwrap();
+    let param = ("name".into(), Some("value".into()));
+    let param = Param::from(param);
 
     assert_eq!(param.name, "name");
     assert_eq!(param.value, Some(String::from("value")));
@@ -52,8 +53,8 @@ fn test_frag() {
 /// test the params in a DID.
 #[test]
 fn test_params() {
-    let param_a = Param::new(("param".into(), Some("a".into()))).unwrap();
-    let param_b = Param::new(("param".into(), Some("b".into()))).unwrap();
+    let param_a = Param::from(("param".into(), Some("a".into())));
+    let param_b = Param::from(("param".into(), Some("b".into())));
     let params = Some(vec![param_a.clone(), param_b.clone()]);
     let mut did = DID::new(
         "iota".into(),
@@ -71,7 +72,7 @@ fn test_params() {
     assert_eq!(format!("{}", did), "did:iota:123456;param=a;param=b");
     assert_eq!(did.params, params);
 
-    let param_c = Param::new(("param".into(), Some("c".into()))).unwrap();
+    let param_c = Param::from(("param".into(), Some("c".into())));
     let params = vec![param_c.clone()];
     did.add_params(params);
 
