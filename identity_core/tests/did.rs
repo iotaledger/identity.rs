@@ -107,7 +107,7 @@ fn test_path_did() {
 fn test_full_did() {
     let param_a = Param::from(("param".into(), Some("a".into())));
     let param_b = Param::from(("param".into(), Some("b".into())));
-    let params = Some(vec![param_a.clone(), param_b.clone()]);
+    let params = Some(vec![param_a, param_b]);
 
     let did = DID {
         method_name: "iota".into(),
@@ -197,7 +197,7 @@ fn test_serde() {
 
     let param_a = Param::from(("param".into(), Some("a".into())));
     let param_b = Param::from(("param".into(), Some("b".into())));
-    let params = Some(vec![param_a.clone(), param_b.clone()]);
+    let params = Some(vec![param_a, param_b]);
 
     let did = DID {
         method_name: "iota".into(),

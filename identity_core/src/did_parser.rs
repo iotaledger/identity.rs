@@ -49,10 +49,10 @@ fn parse_pairs(pairs: Pairs<Rule>) -> crate::Result<DID> {
 
                 match inner.next() {
                     Some(val) => {
-                        prms.push((name.as_str().to_string(), Some(val.as_str().to_string())).into());
+                        prms.push(Param::from((name.as_str().to_string(), Some(val.as_str().to_string()))));
                     }
                     None => {
-                        prms.push((name.as_str().to_string(), None).into());
+                        prms.push(Param::from((name.as_str().to_string(), None)));
                     }
                 }
             }
