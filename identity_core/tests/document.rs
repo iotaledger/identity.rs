@@ -70,12 +70,12 @@ fn test_doc_creation() {
         "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
     )
     .unwrap();
-    did_doc.add_new_public_key(public_key.clone());
+    did_doc.update_public_key(public_key.clone());
 
     let mut did_doc_2 =
         DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
     did_doc_2.update_service(service);
-    did_doc_2.add_new_public_key(public_key);
+    did_doc_2.update_public_key(public_key);
 
     let did_doc = did_doc.init_timestamps().unwrap();
 
@@ -107,7 +107,7 @@ fn test_doc_diff() {
         "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
     )
     .unwrap();
-    new.add_new_public_key(public_key);
+    new.update_public_key(public_key);
 
     // diff the two docs and create a json string of the diff.
     let json_diff = serde_json::to_string(&Diff::serializable(&old, &new)).unwrap();
@@ -276,7 +276,7 @@ fn test_diff_strings() {
         "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
     )
     .unwrap();
-    doc.add_new_public_key(public_key);
+    doc.update_public_key(public_key);
 
     let json_diff = serde_json::to_string(&Diff::serializable(&def_doc, &doc)).unwrap();
 

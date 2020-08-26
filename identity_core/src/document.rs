@@ -57,9 +57,19 @@ impl DIDDocument {
         self.services.push(service);
     }
 
+    /// remove all of the services from the `DIDDocument`.
+    pub fn clear_services(&mut self) {
+        self.services.clear();
+    }
+
     /// sets a new `key_pair` of type `PublicKey` into the `DIDDocument`.
-    pub fn add_new_public_key(&mut self, key_pair: PublicKey) {
+    pub fn update_public_key(&mut self, key_pair: PublicKey) {
         self.public_key.push(key_pair);
+    }
+
+    /// remove all of the public keys from the `DIDDocument`.
+    pub fn clear_public_keys(&mut self) {
+        self.public_key.clear();
     }
 
     /// derive the did from the document.
