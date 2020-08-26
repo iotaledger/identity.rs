@@ -1,5 +1,4 @@
-use chrono::prelude::*;
-use chrono::DateTime;
+use chrono::{prelude::*, DateTime};
 use identity_core::{did::DID, document::DIDDocument};
 use identity_integration::{did_helper::did_iota_address, tangle_reader::TangleReader};
 
@@ -14,12 +13,11 @@ impl Resolver {
     }
     /// Resolve a DID document
     pub async fn resolve(&self, did: DID, _resolution_metadata: ResolutionMetadata) -> crate::Result<DIDDocument> {
+        let did = DID::parse_from_str(did)?;
         let reader = TangleReader::new(self.nodes.clone());
         let messages = reader
             .fetch(&did_iota_address(
-                &DID::parse_from_str(did)
-                    .map_err(|_| crate::Error::DIDParsingError)?
-                    .id_segments[0],
+                &did.id_segments.last().expect("Failed to get id_segment"),
             ))
             .await
             .map_err(|_| crate::Error::FetchingError)?;

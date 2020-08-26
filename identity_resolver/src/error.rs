@@ -8,8 +8,11 @@ pub enum Error {
     /// Fetching data from the Tangle failed
     #[error("Fetching Error: No data from nodes")]
     FetchingError,
-    /// DID parsing error
-    #[error("Parsing Error: Can't parse DID")]
-    DIDParsingError,
+    /// Node parsing Error
+    #[error("Parsing Error: Can't parse node URL")]
+    NodeURLParsingError,
+    /// identity_core Error
+    #[error("identity_core Error: {0}")]
+    IdentityCoreError(#[from] identity_core::Error),
 }
 pub type Result<T> = AnyhowResult<T, Error>;
