@@ -12,12 +12,16 @@ fn main() -> Result<()> {
       let file: File = File::open(path)?;
       let data: VerifiableCredential = from_reader(file)?;
 
+      data.validate()?;
+
       println!("{}", to_string(&data)?);
     }
     "test-presentation" => {
       let path: &Path = Path::new(&args[2]);
       let file: File = File::open(path)?;
       let data: VerifiablePresentation = from_reader(file)?;
+
+      data.validate()?;
 
       println!("{}", to_string(&data)?);
     }
