@@ -162,13 +162,13 @@ pub fn validate_timestamp(name: &'static str, timestamp: &str) -> Result<()> {
 /// from dynamic data.
 ///
 /// NOTE: Base context and type are automatically included.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct CredentialBuilder {
   context: Vec<Context>,
   id: Option<URI>,
   types: Vec<String>,
   credential_subject: Vec<Object>,
-  issuer: Issuer,
+  issuer: Option<Issuer>,
   issuance_date: String,
   expiration_date: Option<String>,
   credential_status: Vec<Object>,
@@ -180,13 +180,13 @@ pub struct CredentialBuilder {
 }
 
 impl CredentialBuilder {
-  pub fn new(issuer: impl Into<Issuer>) -> Self {
+  pub fn new() -> Self {
     Self {
       context: vec![Credential::BASE_CONTEXT.into()],
       id: None,
       types: vec![Credential::BASE_TYPE.into()],
       credential_subject: Vec::new(),
-      issuer: issuer.into(),
+      issuer: None,
       issuance_date: String::new(),
       expiration_date: None,
       credential_status: Vec::new(),
@@ -229,7 +229,7 @@ impl CredentialBuilder {
   }
 
   pub fn issuer(mut self, value: impl Into<Issuer>) -> Self {
-    self.issuer = value.into();
+    self.issuer = Some(value.into());
     self
   }
 
@@ -280,7 +280,7 @@ impl CredentialBuilder {
       id: self.id,
       types: self.types.into(),
       credential_subject: self.credential_subject.into(),
-      issuer: self.issuer,
+      issuer: self.issuer.ok_or_else(|| anyhow!("Missing issuer"))?,
       issuance_date: self.issuance_date,
       expiration_date: self.expiration_date,
       credential_status: None,
@@ -321,5 +321,11 @@ impl CredentialBuilder {
     self
       .build()
       .map(|credential| VerifiableCredential::new(credential, proof))
+  }
+}
+
+impl Default for CredentialBuilder {
+  fn default() -> Self {
+    Self::new()
   }
 }

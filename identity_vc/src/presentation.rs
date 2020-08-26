@@ -2,8 +2,8 @@ use anyhow::Result;
 
 use crate::{
   common::{Context, Object, OneOrMany, URI},
-  credential::{validate_context, validate_credential, validate_types, validate_uri},
-  verifiable::VerifiableCredential,
+  credential::{validate_context, validate_credential, validate_types, validate_uri, Credential},
+  verifiable::{VerifiableCredential, VerifiablePresentation},
 };
 
 /// A `Presentation` represents a bundle of one or more `VerifiableCredential`s.
@@ -62,5 +62,121 @@ impl Presentation {
     }
 
     Ok(())
+  }
+}
+
+// =============================================================================
+// Presentation Builder
+// =============================================================================
+
+/// A convenience for constructing a `Presentation` or `VerifiablePresentation`
+/// from dynamic data.
+///
+/// NOTE: Base context and type are automatically included.
+#[derive(Debug)]
+pub struct PresentationBuilder {
+  context: Vec<Context>,
+  id: Option<URI>,
+  types: Vec<String>,
+  verifiable_credential: Vec<VerifiableCredential>,
+  holder: Option<URI>,
+  refresh_service: Vec<Object>,
+  terms_of_use: Vec<Object>,
+  properties: Object,
+}
+
+impl PresentationBuilder {
+  pub fn new() -> Self {
+    Self {
+      context: vec![Credential::BASE_CONTEXT.into()],
+      id: None,
+      types: vec![Presentation::BASE_TYPE.into()],
+      verifiable_credential: Vec::new(),
+      holder: None,
+      refresh_service: Vec::new(),
+      terms_of_use: Vec::new(),
+      properties: Default::default(),
+    }
+  }
+
+  pub fn context(mut self, value: impl Into<Context>) -> Self {
+    let value: Context = value.into();
+
+    if !matches!(value, Context::URI(ref uri) if uri == Credential::BASE_CONTEXT) {
+      self.context.push(value);
+    }
+
+    self
+  }
+
+  pub fn id(mut self, value: impl Into<URI>) -> Self {
+    self.id = Some(value.into());
+    self
+  }
+
+  pub fn type_(mut self, value: impl Into<String>) -> Self {
+    let value: String = value.into();
+
+    if value != Presentation::BASE_TYPE {
+      self.types.push(value);
+    }
+
+    self
+  }
+
+  pub fn credential(mut self, value: impl Into<VerifiableCredential>) -> Self {
+    self.verifiable_credential.push(value.into());
+    self
+  }
+
+  pub fn holder(mut self, value: impl Into<URI>) -> Self {
+    self.holder = Some(value.into());
+    self
+  }
+
+  pub fn refresh_service(mut self, value: impl Into<Object>) -> Self {
+    self.refresh_service.push(value.into());
+    self
+  }
+
+  pub fn terms_of_use(mut self, value: impl Into<Object>) -> Self {
+    self.terms_of_use.push(value.into());
+    self
+  }
+
+  pub fn properties(mut self, value: impl Into<Object>) -> Self {
+    self.properties = value.into();
+    self
+  }
+
+  /// Consumes the `PresentationBuilder`, returning a valid `Presentation`
+  pub fn build(self) -> Result<Presentation> {
+    let mut presentation: Presentation = Presentation {
+      context: self.context.into(),
+      id: self.id,
+      types: self.types.into(),
+      verifiable_credential: self.verifiable_credential.into(),
+      holder: self.holder,
+      refresh_service: None,
+      terms_of_use: None,
+      properties: self.properties,
+    };
+
+    presentation.validate()?;
+
+    Ok(presentation)
+  }
+
+  /// Consumes the `PresentationBuilder`, returning a valid `VerifiablePresentation`
+  pub fn build_verifiable(self, proof: impl Into<OneOrMany<Object>>) -> Result<VerifiablePresentation> {
+    self
+      .build()
+      .map(|credential| VerifiablePresentation::new(credential, proof))
+  }
+}
+
+impl Default for PresentationBuilder {
+  fn default() -> Self {
+    Self::new()
   }
 }
