@@ -29,21 +29,16 @@ pub struct DIDDocument {
 }
 
 impl DIDDocument {
-    /// Takes in the `context` and `id` as strings and creates a new `DIDDocument` struct.  The `context` field may be
-    /// an empty string in which case it will default to "https://www.w3.org/ns/did/v1"
-    pub fn new(context: String, id: String) -> crate::Result<Self> {
-        if context == String::new() {
-            Ok(DIDDocument {
-                context: Context::default(),
-                id: Subject::from_str(&id)?,
-                ..Default::default()
-            })
-        } else {
-            Ok(DIDDocument {
-                context: Context::from_str(&context)?,
-                id: Subject::from_str(&id)?,
-                ..Default::default()
-            })
+    /// Initialize the DIDDocument.
+    pub fn init(self) -> Self {
+        DIDDocument {
+            context: self.context,
+            id: self.id,
+            created: self.created,
+            updated: self.updated,
+            public_key: self.public_key,
+            services: self.services,
+            metadata: self.metadata,
         }
     }
 
@@ -85,7 +80,7 @@ impl DIDDocument {
     /// Inserts `metadata` into the `DIDDocument` body.  The metadata must be a HashMap<String, String> where the keys
     /// are json keys and values are the json values.
     pub fn supply_metadata(self, metadata: HashMap<String, String>) -> crate::Result<Self> {
-        Ok(DIDDocument { metadata, ..self })
+        Ok(DIDDocument { metadata, ..self }.init())
     }
 
     /// initialize the `created` and `updated` timestamps to publish the did document.  Returns the did document with
@@ -95,7 +90,8 @@ impl DIDDocument {
             created: Some(Utc::now().to_string()),
             updated: Some(Utc::now().to_string()),
             ..self
-        })
+        }
+        .init())
     }
 }
 

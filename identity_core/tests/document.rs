@@ -1,7 +1,7 @@
 use identity_core::{
     did::DID,
     document::DIDDocument,
-    utils::{Context, PublicKey, Service},
+    utils::{Context, PublicKey, Service, Subject},
 };
 
 use std::str::FromStr;
@@ -59,7 +59,12 @@ fn test_parse_document() {
 /// test doc creation via the `DIDDocument::new` method.
 #[test]
 fn test_doc_creation() {
-    let mut did_doc = DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
+    let mut did_doc = DIDDocument {
+        context: Context::from("https://w3id.org/did/v1"),
+        id: Subject::from("did:iota:123456789abcdefghi"),
+        ..Default::default()
+    }
+    .init();
     let service = Service::new(
         "did:into:123#edv".into(),
         "EncryptedDataVault".into(),
@@ -79,8 +84,12 @@ fn test_doc_creation() {
     .unwrap();
     did_doc.update_public_key(public_key.clone());
 
-    let mut did_doc_2 =
-        DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
+    let mut did_doc_2 = DIDDocument {
+        context: Context::from("https://w3id.org/did/v1"),
+        id: Subject::from("did:iota:123456789abcdefghi"),
+        ..Default::default()
+    }
+    .init();
     did_doc_2.update_service(service);
     did_doc_2.update_public_key(public_key);
 
@@ -94,9 +103,19 @@ fn test_doc_creation() {
 #[test]
 fn test_doc_diff() {
     // old doc
-    let mut old = DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
+    let mut old = DIDDocument {
+        context: Context::from("https://w3id.org/did/v1"),
+        id: Subject::from("did:iota:123456789abcdefghi"),
+        ..Default::default()
+    }
+    .init();
     // new doc.
-    let mut new = DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
+    let mut new = DIDDocument {
+        context: Context::from("https://w3id.org/did/v1"),
+        id: Subject::from("did:iota:123456789abcdefghi"),
+        ..Default::default()
+    }
+    .init();
     let service = Service::new(
         "did:into:123#edv".into(),
         "EncryptedDataVault".into(),
@@ -265,7 +284,12 @@ fn test_diff_strings() {
 
     let def_doc = DIDDocument::default();
 
-    let mut doc = DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
+    let mut doc = DIDDocument {
+        context: Context::from("https://w3id.org/did/v1"),
+        id: Subject::from("did:iota:123456789abcdefghi"),
+        ..Default::default()
+    }
+    .init();
     let service = Service::new(
         "did:into:123#edv".into(),
         "EncryptedDataVault".into(),

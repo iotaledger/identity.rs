@@ -68,3 +68,9 @@ impl Serialize for Context {
         }
     }
 }
+
+impl From<&str> for Context {
+    fn from(s: &str) -> Context {
+        Context(vec![s.into()])
+    }
+}

@@ -43,3 +43,11 @@ impl From<DID> for Subject {
         Subject::from_did(did).expect("unable to convert Did to Subject")
     }
 }
+
+impl From<&str> for Subject {
+    fn from(s: &str) -> Self {
+        let did = DID::parse_from_str(s).expect("Unable to parse DID for Subject");
+
+        Subject::from_did(did).expect("unable to convert Did to Subject")
+    }
+}
