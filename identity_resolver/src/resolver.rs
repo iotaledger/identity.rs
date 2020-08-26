@@ -5,20 +5,26 @@ use identity_integration::{did_helper::did_iota_address, tangle_reader::TangleRe
 pub struct ResolutionMetadata {}
 
 pub struct Resolver {
-    pub nodes: Vec<&'static str>,
+    pub nodes: NetworkNodes,
 }
+#[derive(Clone, Debug)]
+pub enum NetworkNodes {
+    Main(Vec<&'static str>),
+    Com(Vec<&'static str>),
+    Dev(Vec<&'static str>),
+}
+
 impl Resolver {
-    pub fn new(nodes: Vec<&'static str>) -> Self {
+    pub fn new(nodes: NetworkNodes) -> Self {
         Self { nodes }
     }
     /// Resolve a DID document
     pub async fn resolve(&self, did: DID, _resolution_metadata: ResolutionMetadata) -> crate::Result<DIDDocument> {
         let did = DID::parse_from_str(did)?;
-        let reader = TangleReader::new(self.nodes.clone());
+        let (did_id, nodes) = get_id_and_nodes(&did.id_segments, self.nodes.clone())?;
+        let reader = TangleReader::new(nodes.to_vec());
         let messages = reader
-            .fetch(&did_iota_address(
-                &did.id_segments.last().expect("Failed to get id_segment"),
-            ))
+            .fetch(&did_iota_address(&did_id))
             .await
             .map_err(|_| crate::Error::FetchingError)?;
 
@@ -44,6 +50,32 @@ impl Resolver {
             Ok(documents.remove(0))
         } else {
             Err(crate::Error::DocumentNotFound)
+        }
+    }
+}
+
+fn get_id_and_nodes(did_segments: &[String], nodes: NetworkNodes) -> crate::Result<(String, Vec<&'static str>)> {
+    match did_segments[0] {
+        _ if did_segments[0] == "dev" => {
+            if let NetworkNodes::Dev(nodes) = nodes {
+                Ok((did_segments.last().expect("Failed to get id_segment").into(), nodes))
+            } else {
+                Err(crate::Error::NetworkNodeError)
+            }
+        }
+        _ if did_segments[0] == "com" => {
+            if let NetworkNodes::Com(nodes) = nodes {
+                Ok((did_segments.last().expect("Failed to get id_segment").into(), nodes))
+            } else {
+                Err(crate::Error::NetworkNodeError)
+            }
+        }
+        _ => {
+            if let NetworkNodes::Main(nodes) = nodes {
+                Ok((did_segments.last().expect("Failed to get id_segment").into(), nodes))
+            } else {
+                Err(crate::Error::NetworkNodeError)
+            }
         }
     }
 }

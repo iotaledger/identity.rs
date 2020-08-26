@@ -11,6 +11,9 @@ pub enum Error {
     /// Node parsing Error
     #[error("Parsing Error: Can't parse node URL")]
     NodeURLParsingError,
+    /// Node Error
+    #[error("Node Error: Can't find a node for the selected network")]
+    NetworkNodeError,
     /// identity_core Error
     #[error("identity_core Error: {0}")]
     IdentityCoreError(#[from] identity_core::Error),
