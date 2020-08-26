@@ -43,10 +43,17 @@ fn test_parse_document() {
         "https://w3id.org/did/v1".into(),
         "https://w3id.org/security/v1".into(),
     ]);
-    let id = DID::new("iota".into(), vec!["123456789abcdefghi".into()], None, None, None, None).unwrap();
+
+    let did = DID {
+        method_name: "iota".into(),
+        id_segments: vec!["123456789abcdefghi".into()],
+        ..Default::default()
+    }
+    .init()
+    .unwrap();
 
     assert_eq!(doc.context, ctx);
-    assert_eq!(doc.id, id.into());
+    assert_eq!(doc.id, did.into());
 }
 
 /// test doc creation via the `DIDDocument::new` method.

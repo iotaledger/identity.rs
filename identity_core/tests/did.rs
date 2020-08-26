@@ -5,7 +5,13 @@ use serde_test::{assert_tokens, Token};
 /// test did creation from DID::new
 #[test]
 fn test_create_did() {
-    let did = DID::new("iota".into(), vec!["123456".into()], None, None, None, None).unwrap();
+    let did = DID {
+        method_name: "iota".into(),
+        id_segments: vec!["123456".into()],
+        ..Default::default()
+    }
+    .init()
+    .unwrap();
 
     assert_eq!(did.id_segments, vec!["123456"]);
     assert_eq!(did.method_name, "iota");
@@ -15,14 +21,13 @@ fn test_create_did() {
 /// test a did with multiple id segments.
 #[test]
 fn test_multiple_ids() {
-    let did = DID::new(
-        "iota".into(),
-        vec!["123456".into(), "789011".into()],
-        Some(vec![("name".into(), Some("value".into()))]),
-        None,
-        None,
-        None,
-    )
+    let did = DID {
+        method_name: "iota".into(),
+        id_segments: vec!["123456".into(), "789011".into()],
+        params: Some(vec![Param::from(("name".into(), Some("value".into())))]),
+        ..Default::default()
+    }
+    .init()
     .unwrap();
 
     assert_eq!(format!("{}", did), "did:iota:123456:789011;name=value");
@@ -42,7 +47,13 @@ fn test_param() {
 /// test a did with a fragment.
 #[test]
 fn test_frag() {
-    let mut did = DID::new("iota".into(), vec!["123456".into()], None, None, None, None).unwrap();
+    let mut did = DID {
+        method_name: "iota".into(),
+        id_segments: vec!["123456".into()],
+        ..Default::default()
+    }
+    .init()
+    .unwrap();
 
     did.add_fragment("a-fragment".into());
 
@@ -56,17 +67,14 @@ fn test_params() {
     let param_a = Param::from(("param".into(), Some("a".into())));
     let param_b = Param::from(("param".into(), Some("b".into())));
     let params = Some(vec![param_a.clone(), param_b.clone()]);
-    let mut did = DID::new(
-        "iota".into(),
-        vec!["123456".into()],
-        Some(vec![
-            ("param".into(), Some("a".into())),
-            ("param".into(), Some("b".into())),
-        ]),
-        None,
-        None,
-        None,
-    )
+
+    let mut did = DID {
+        method_name: "iota".into(),
+        id_segments: vec!["123456".into()],
+        params: params.clone(),
+        ..Default::default()
+    }
+    .init()
     .unwrap();
 
     assert_eq!(format!("{}", did), "did:iota:123456;param=a;param=b");
@@ -82,14 +90,13 @@ fn test_params() {
 /// test a did with path strings.
 #[test]
 fn test_path_did() {
-    let did = DID::new(
-        "iota".into(),
-        vec!["123456".into()],
-        None,
-        Some(vec!["a".into(), "simple".into(), "path".into()]),
-        None,
-        None,
-    )
+    let did = DID {
+        method_name: "iota".into(),
+        id_segments: vec!["123456".into()],
+        path_segments: Some(vec!["a".into(), "simple".into(), "path".into()]),
+        ..Default::default()
+    }
+    .init()
     .unwrap();
 
     assert_eq!(format!("{}", did), "did:iota:123456/a/simple/path");
@@ -98,17 +105,19 @@ fn test_path_did() {
 /// test a full did with a query, fragment, path and params.
 #[test]
 fn test_full_did() {
-    let did = DID::new(
-        "iota".into(),
-        vec!["123456".into()],
-        Some(vec![
-            ("param".into(), Some("a".into())),
-            ("param".into(), Some("b".into())),
-        ]),
-        Some(vec!["some_path".into()]),
-        Some("some_query".into()),
-        Some("a_fragment".into()),
-    )
+    let param_a = Param::from(("param".into(), Some("a".into())));
+    let param_b = Param::from(("param".into(), Some("b".into())));
+    let params = Some(vec![param_a.clone(), param_b.clone()]);
+
+    let did = DID {
+        method_name: "iota".into(),
+        id_segments: vec!["123456".into()],
+        params,
+        path_segments: Some(vec!["some_path".into()]),
+        query: Some("some_query".into()),
+        fragment: Some("a_fragment".into()),
+    }
+    .init()
     .unwrap();
 
     assert_eq!(
@@ -128,17 +137,18 @@ fn test_parser() {
     );
     assert_eq!(
         did,
-        DID::new(
-            "iota".into(),
-            vec!["123456".into()],
-            Some(vec![
-                ("param".into(), Some("a".into())),
-                ("param".into(), Some("b".into()))
+        DID {
+            method_name: "iota".into(),
+            id_segments: vec!["123456".into()],
+            params: Some(vec![
+                ("param".into(), Some("a".into())).into(),
+                ("param".into(), Some("b".into())).into()
             ]),
-            Some(vec!["some_path".into()]),
-            Some("some_query".into()),
-            Some("a_fragment".into())
-        )
+            path_segments: Some(vec!["some_path".into()]),
+            query: Some("some_query".into()),
+            fragment: Some("a_fragment".into()),
+        }
+        .init()
         .unwrap()
     );
 }
@@ -151,14 +161,13 @@ fn test_multiple_paths() {
     assert_eq!(format!("{}", did), "did:iota:123456/some_path_a/some_path_b");
     assert_eq!(
         did,
-        DID::new(
-            "iota".into(),
-            vec!["123456".into()],
-            None,
-            Some(vec!["some_path_a".into(), "some_path_b".into()]),
-            None,
-            None,
-        )
+        DID {
+            method_name: "iota".into(),
+            id_segments: vec!["123456".into()],
+            path_segments: Some(vec!["some_path_a".into(), "some_path_b".into()]),
+            ..Default::default()
+        }
+        .init()
         .unwrap()
     )
 }
@@ -186,17 +195,19 @@ fn test_serde() {
 
     assert_tokens(&did, &[Token::String("did:iota:12345")]);
 
-    let did = DID::new(
-        "iota".into(),
-        vec!["123456".into()],
-        Some(vec![
-            ("param".into(), Some("a".into())),
-            ("param".into(), Some("b".into())),
-        ]),
-        Some(vec!["some_path".into()]),
-        Some("some_query".into()),
-        Some("a_fragment".into()),
-    )
+    let param_a = Param::from(("param".into(), Some("a".into())));
+    let param_b = Param::from(("param".into(), Some("b".into())));
+    let params = Some(vec![param_a.clone(), param_b.clone()]);
+
+    let did = DID {
+        method_name: "iota".into(),
+        id_segments: vec!["123456".into()],
+        params,
+        path_segments: Some(vec!["some_path".into()]),
+        query: Some("some_query".into()),
+        fragment: Some("a_fragment".into()),
+    }
+    .init()
     .unwrap();
 
     assert_tokens(
@@ -213,7 +224,15 @@ fn wrapper_did_id_seg(s: &str) -> Option<DID> {
 
     DID::parse_from_str(&did_str).unwrap();
 
-    Some(DID::new("iota".into(), vec![s.into()], None, None, None, None).unwrap())
+    Some(
+        DID {
+            method_name: "iota".into(),
+            id_segments: vec![s.into()],
+            ..Default::default()
+        }
+        .init()
+        .unwrap(),
+    )
 }
 
 /// logic for the did method name prop test.
@@ -222,7 +241,15 @@ fn wrapper_did_name(s: &str) -> Option<DID> {
 
     DID::parse_from_str(&did_str).unwrap();
 
-    Some(DID::new(s.into(), vec!["12345678".into()], None, None, None, None).unwrap())
+    Some(
+        DID {
+            method_name: s.into(),
+            id_segments: vec!["12345678".into()],
+            ..Default::default()
+        }
+        .init()
+        .unwrap(),
+    )
 }
 
 /// logic for the did params prop test.
@@ -232,14 +259,13 @@ fn wrapper_did_params(n: &str, v: &str) -> Option<DID> {
     DID::parse_from_str(did_str).unwrap();
 
     Some(
-        DID::new(
-            "iota".into(),
-            vec!["12345678".into()],
-            Some(vec![(n.into(), Some(v.into()))]),
-            None,
-            None,
-            None,
-        )
+        DID {
+            method_name: "iota".into(),
+            id_segments: vec!["12345678".into()],
+            params: Some(vec![(n.into(), Some(v.into())).into()]),
+            ..Default::default()
+        }
+        .init()
         .unwrap(),
     )
 }
@@ -251,14 +277,13 @@ fn wrapper_did_path(p: &str) -> Option<DID> {
     DID::parse_from_str(did_str).unwrap();
 
     Some(
-        DID::new(
-            "iota".into(),
-            vec!["12345678".into()],
-            None,
-            Some(vec![p.into()]),
-            None,
-            None,
-        )
+        DID {
+            method_name: "iota".into(),
+            id_segments: vec!["12345678".into()],
+            path_segments: Some(vec![p.into()]),
+            ..Default::default()
+        }
+        .init()
         .unwrap(),
     )
 }
@@ -269,7 +294,16 @@ fn wrapper_did_query(q: &str) -> Option<DID> {
 
     DID::parse_from_str(did_str).unwrap();
 
-    Some(DID::new("iota".into(), vec!["12345678".into()], None, None, Some(q.into()), None).unwrap())
+    Some(
+        DID {
+            method_name: "iota".into(),
+            id_segments: vec!["12345678".into()],
+            query: Some(q.into()),
+            ..Default::default()
+        }
+        .init()
+        .unwrap(),
+    )
 }
 
 /// logic for the did fragment prop test.
@@ -278,7 +312,16 @@ fn wrapper_did_frag(f: &str) -> Option<DID> {
 
     DID::parse_from_str(did_str).unwrap();
 
-    Some(DID::new("iota".into(), vec!["12345678".into()], None, None, None, Some(f.into())).unwrap())
+    Some(
+        DID {
+            method_name: "iota".into(),
+            id_segments: vec!["12345678".into()],
+            fragment: Some(f.into()),
+            ..Default::default()
+        }
+        .init()
+        .unwrap(),
+    )
 }
 
 // Property Based Testing for the DID Parser and DID implementation.

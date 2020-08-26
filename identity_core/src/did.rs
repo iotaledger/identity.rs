@@ -32,43 +32,18 @@ pub struct Param {
 }
 
 impl DID {
-    /// Creates a new DID. `params` and `fragment` are both optional.
-    pub fn new(
-        name: String,
-        id_segments: Vec<String>,
-        params: Option<Vec<DIDTuple>>,
-        path_segments: Option<Vec<String>>,
-        query: Option<String>,
-        fragment: Option<String>,
-    ) -> crate::Result<Self> {
-        let mut did = DID {
-            method_name: name,
-            id_segments,
-            ..Default::default()
+    /// Initializes the DID struct with the filled out fields. Also runs parse_from_str to validate the fields.
+    pub fn init(self) -> crate::Result<DID> {
+        let did = DID {
+            method_name: self.method_name,
+            id_segments: self.id_segments,
+            params: self.params,
+            fragment: self.fragment,
+            path_segments: self.path_segments,
+            query: self.query,
         };
 
-        if let Some(prms) = params {
-            let ps: Vec<Param> = prms.into_iter().map(|pms| pms.into()).collect();
-
-            did.params = Some(ps);
-        };
-
-        if let Some(frag) = fragment {
-            did.add_fragment(frag);
-        };
-
-        if let Some(path) = path_segments {
-            did.add_path_segments(path);
-        }
-
-        if let Some(qry) = query {
-            did.add_query(qry);
-        }
-
-        // constrain DID parameters with parser.
-        DID::parse_from_str(format!("{}", did))?;
-
-        Ok(did)
+        DID::parse_from_str(did)
     }
 
     pub fn parse_from_str<T>(input: T) -> crate::Result<Self>

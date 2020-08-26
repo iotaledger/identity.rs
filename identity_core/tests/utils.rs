@@ -33,14 +33,13 @@ fn test_subject_from_string() {
 /// Test building a subject from a DID structure.
 #[test]
 fn test_subject_from_did() {
-    let did = DID::new(
-        "iota".into(),
-        vec!["123456".into(), "789011".into()],
-        Some(vec![("name".into(), Some("value".into()))]),
-        None,
-        None,
-        None,
-    )
+    let did = DID {
+        method_name: "iota".into(),
+        id_segments: vec!["123456".into(), "789011".into()],
+        params: Some(vec![("name".into(), Some("value".into())).into()]),
+        ..Default::default()
+    }
+    .init()
     .unwrap();
 
     let string = format!("\"{}\"", did.to_string());
@@ -54,14 +53,13 @@ fn test_subject_from_did() {
 /// Test Subject from a DID using the From Trait.
 #[test]
 fn test_subject_from() {
-    let did = DID::new(
-        "iota".into(),
-        vec!["123456".into(), "789011".into()],
-        Some(vec![("name".into(), Some("value".into()))]),
-        None,
-        None,
-        None,
-    )
+    let did = DID {
+        method_name: "iota".into(),
+        id_segments: vec!["123456".into(), "789011".into()],
+        params: Some(vec![("name".into(), Some("value".into())).into()]),
+        ..Default::default()
+    }
+    .init()
     .unwrap();
 
     let string = format!("\"{}\"", did.to_string());
