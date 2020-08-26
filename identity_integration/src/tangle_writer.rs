@@ -1,5 +1,4 @@
 use crate::did_helper::did_iota_address;
-use anyhow::Result;
 use identity_core::document::DIDDocument;
 pub use iota::client::builder::Network as iota_network;
 use iota::{
@@ -38,10 +37,16 @@ impl TangleWriter {
         Self { nodes, network }
     }
     /// Publishes DID document to the Tangle
-    pub async fn publish_document(&self, did_document: &Payload) -> Result<Hash> {
+    pub async fn publish_document(&self, did_document: &Payload) -> crate::Result<Hash> {
         let (address, message) = match did_document {
             Payload::DIDDocument(document) => (
-                did_iota_address(&document.derive_did()?.id_segments[0]),
+                did_iota_address(
+                    &document
+                        .derive_did()?
+                        .id_segments
+                        .last()
+                        .expect("Failed to get id_segment"),
+                ),
                 document.to_string(),
             ),
             Payload::DIDDocumentDifferences(document) => (did_iota_address(&document), document.into()),
@@ -77,8 +82,8 @@ impl TangleWriter {
         bundle[0].into_trits_allocated(&mut trits);
         Ok(Hash::from_inner_unchecked(curl.digest(&trits)?))
     }
-    /// Promotes a transaction to get it faster confirmed
-    pub async fn promote(&self, tail_transaction: Hash) -> Result<String> {
+    /// Promotes a transaction to get it confirmed faster
+    pub async fn promote(&self, tail_transaction: Hash) -> crate::Result<String> {
         let iota = iota::ClientBuilder::new()
             .nodes(&self.nodes)?
             .network(self.network.clone())
@@ -116,7 +121,7 @@ impl TangleWriter {
     }
 
     /// Returns confirmation status
-    pub async fn is_confirmed(&self, tail_transaction: Hash) -> Result<bool> {
+    pub async fn is_confirmed(&self, tail_transaction: Hash) -> crate::Result<bool> {
         let iota = iota::ClientBuilder::new()
             .nodes(&self.nodes)?
             .network(self.network.clone())

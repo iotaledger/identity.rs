@@ -1,4 +1,3 @@
-use anyhow::Result;
 use iota::{
     crypto::ternary::{
         sponge::{CurlP81, Sponge},
@@ -34,7 +33,7 @@ impl TangleReader {
             return Err(crate::Error::TransactionsNotFound);
         }
         // Order transactions to bundles
-        let mut bundles = sort_txs_to_bundles(txs.trytes).map_err(|_| crate::Error::TransactionSortingFailed)?;
+        let mut bundles = sort_txs_to_bundles(txs.trytes)?;
 
         if bundles.keys().len() == 0 {
             return Err(crate::Error::MissingTailTransaction);
@@ -64,7 +63,7 @@ impl TangleReader {
 }
 
 /// Sorts transactions to bundles by tail transactions
-fn sort_txs_to_bundles(trytes: Vec<BundledTransaction>) -> Result<HashMap<Hash, Vec<BundledTransaction>>> {
+fn sort_txs_to_bundles(trytes: Vec<BundledTransaction>) -> crate::Result<HashMap<Hash, Vec<BundledTransaction>>> {
     let mut bundles = HashMap::new();
     let mut transactions = HashMap::new();
     for tx in trytes {

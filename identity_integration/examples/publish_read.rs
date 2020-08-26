@@ -17,7 +17,13 @@ async fn main() -> Result<()> {
     let nodes = vec!["http://localhost:14265", "https://nodes.comnet.thetangle.org:443"];
     let did = "did:iota:123456789abcdefghi";
     let did_document = DIDDocument::new("https://www.w3.org/ns/did/v1".into(), did.into())?;
-    let did_address = did_iota_address(&did_document.derive_did()?.id_segments[0]);
+    let did_address = did_iota_address(
+        &did_document
+            .derive_did()?
+            .id_segments
+            .last()
+            .expect("Failed to get id_segment"),
+    );
     let did_payload = Payload::DIDDocument(did_document);
     // 1. Publish DID document to the Tangle
     let tangle_writer = TangleWriter::new(nodes.clone(), iota_network::Comnet);

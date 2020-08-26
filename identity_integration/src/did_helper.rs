@@ -2,18 +2,18 @@ use blake2::{Blake2s, Digest};
 use iota::ternary::TryteBuf;
 use std::convert::TryInto;
 
-// Make this a method of did?
 /// Returns an address from a did segment
 pub fn did_iota_address(did: &str) -> String {
     let mut hasher = Blake2s::new();
     hasher.update(did.as_bytes());
     let hash = hasher.finalize();
     let duplicated = [hash, hash].concat();
+    // for bee byte-tryte conversion
+    // let i8slice: &[i8] = unsafe { std::slice::from_raw_parts(duplicated.as_ptr() as *const i8, duplicated.len()) };
     let trytes = bytes_to_trytes(&duplicated);
     trytes.to_string()[0..81].to_string()
 }
 
-// Import from iota.rs?
 /// Converts a sequence of bytes to trytes
 pub fn bytes_to_trytes(input: &[u8]) -> TryteBuf {
     let mut trytes = TryteBuf::with_capacity(input.len() * 2);
