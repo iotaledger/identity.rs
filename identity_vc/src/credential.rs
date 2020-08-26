@@ -1,7 +1,10 @@
 use anyhow::Result;
 use chrono::DateTime;
 
-use crate::common::{Context, Issuer, Object, OneOrMany, URI};
+use crate::{
+  common::{Context, Issuer, Object, OneOrMany, URI},
+  verifiable::VerifiableCredential,
+};
 
 /// A `Credential` represents a set of claims describing an entity.
 ///
@@ -109,6 +112,18 @@ pub fn validate_subject(subjects: &OneOrMany<Object>) -> Result<()> {
   // Each subject is defined as one or more properties - no empty objects
   for subject in subjects.iter() {
     ensure!(!subject.is_empty(), "Invalid credential subject (empty)");
+  }
+
+  Ok(())
+}
+
+pub fn validate_credential(credentials: &OneOrMany<VerifiableCredential>) -> Result<()> {
+  // Presentations MUST have an least one verifiable credential
+  ensure!(!credentials.is_empty(), "Not enough credentials");
+
+  // All verifiable credentials MUST be valid (structurally)
+  for credential in credentials.iter() {
+    credential.validate()?;
   }
 
   Ok(())

@@ -2,6 +2,7 @@ use anyhow::Result;
 
 use crate::{
   common::{Context, Object, OneOrMany, URI},
+  credential::{validate_context, validate_credential, validate_types, validate_uri},
   verifiable::VerifiableCredential,
 };
 
@@ -45,4 +46,21 @@ pub struct Presentation {
 
 impl Presentation {
   pub const BASE_TYPE: &'static str = "VerifiablePresentation";
+
+  pub fn validate(&self) -> Result<()> {
+    validate_context(&self.context)?;
+
+    if let Some(ref id) = self.id {
+      validate_uri(id)?;
+    }
+
+    validate_types(&self.types, Self::BASE_TYPE)?;
+    validate_credential(&self.verifiable_credential)?;
+
+    if let Some(ref holder) = self.holder {
+      validate_uri(holder)?;
+    }
+
+    Ok(())
+  }
 }
