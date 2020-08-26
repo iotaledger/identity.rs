@@ -74,3 +74,9 @@ impl From<&str> for Context {
         Context(vec![s.into()])
     }
 }
+
+impl From<String> for Context {
+    fn from(s: String) -> Context {
+        Context(vec![s])
+    }
+}
