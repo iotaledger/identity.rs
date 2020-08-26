@@ -21,6 +21,12 @@ pub enum Error {
     /// bee_ternary Error
     #[error("Sorting Error: Couldn't sort transactions to bundles")]
     TransactionSortingFailed,
+    /// Node Error
+    #[error("Node Error: Network specified in the DID isn't used")]
+    NetworkNodeError,
+    /// did_diff Error
+    #[error("did_diff Error: DIDDocumentDifferences isn't supported yet")]
+    DiffNotSupported,
 }
 
 impl From<Infallible> for Error {

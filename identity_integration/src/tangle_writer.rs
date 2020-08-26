@@ -28,36 +28,37 @@ impl fmt::Display for Payload {
 
 #[derive(Clone)]
 pub struct TangleWriter {
-    pub nodes: Vec<&'static str>,
-    pub network: iota::client::builder::Network,
+    iota: iota::Client,
+    network: iota::client::builder::Network,
 }
 
 impl TangleWriter {
-    pub fn new(nodes: Vec<&'static str>, network: iota::client::builder::Network) -> Self {
-        Self { nodes, network }
+    pub fn new(nodes: Vec<&'static str>, network: iota::client::builder::Network) -> crate::Result<Self> {
+        let iota = iota::ClientBuilder::new()
+            .nodes(&nodes)?
+            .network(network.clone())
+            .build()?;
+        Ok(Self { iota, network })
     }
     /// Publishes DID document to the Tangle
     pub async fn publish_document(&self, did_document: &Payload) -> crate::Result<Hash> {
-        let (address, message) = match did_document {
-            Payload::DIDDocument(document) => (
-                did_iota_address(
-                    &document
-                        .derive_did()?
-                        .id_segments
-                        .last()
-                        .expect("Failed to get id_segment"),
-                ),
-                document.to_string(),
-            ),
-            Payload::DIDDocumentDifferences(document) => (did_iota_address(&document), document.into()),
+        let document = match did_document {
+            Payload::DIDDocument(document) => (document),
+            Payload::DIDDocumentDifferences(_) => return Err(crate::Error::DiffNotSupported),
         };
+        let id_segments = document.derive_did()?.id_segments;
+        // Check if correct network
+        check_network(id_segments.clone(), &self.network)?;
+
+        let address = did_iota_address(id_segments.last().expect("Failed to get id_segment"));
+
         // Diff chain address in did_document?
         // Is it possible to get the address from the did_document after an auth change?
         // let serialzed_did_message = serde_json::to_string(&did_document.to_string())?;
         let transfers = vec![Transfer {
             address: Address::from_inner_unchecked(TryteBuf::try_from_str(&address)?.as_trits().encode()),
             value: 0,
-            message: Some(message),
+            message: Some(document.to_string()),
             tag: Some(
                 Tag::try_from_inner(
                     TryteBuf::try_from_str("DID999999999999999999999999")?
@@ -68,14 +69,8 @@ impl TangleWriter {
             ),
         }];
 
-        // Create a client instance
-        let iota = iota::ClientBuilder::new()
-            .nodes(&self.nodes)?
-            .network(self.network.clone())
-            .build()?;
-
         // Send the transaction
-        let bundle = iota.send(None).transfers(transfers).send().await?;
+        let bundle = self.iota.send(None).transfers(transfers).send().await?;
 
         let mut curl = CurlP81::new();
         let mut trits = TritBuf::<T1B1Buf>::zeros(BundledTransaction::trit_len());
@@ -84,10 +79,6 @@ impl TangleWriter {
     }
     /// Promotes a transaction to get it confirmed faster
     pub async fn promote(&self, tail_transaction: Hash) -> crate::Result<String> {
-        let iota = iota::ClientBuilder::new()
-            .nodes(&self.nodes)?
-            .network(self.network.clone())
-            .build()?;
         let transfers = vec![Transfer {
             address: Address::from_inner_unchecked(
                 TryteBuf::try_from_str(&String::from(
@@ -101,9 +92,10 @@ impl TangleWriter {
             tag: None,
         }];
 
-        let prepared_transfers = iota.prepare_transfers(None).transfers(transfers).build().await?;
-        let tips = iota.get_transactions_to_approve().depth(2).send().await?;
-        let attached_trytes = iota
+        let prepared_transfers = self.iota.prepare_transfers(None).transfers(transfers).build().await?;
+        let tips = self.iota.get_transactions_to_approve().depth(2).send().await?;
+        let attached_trytes = self
+            .iota
             .attach_to_tangle()
             .trunk_transaction(&tail_transaction)
             .branch_transaction(&tips.branch_transaction)
@@ -111,7 +103,7 @@ impl TangleWriter {
             .send()
             .await?;
 
-        iota.broadcast_transactions(&attached_trytes.trytes).await?;
+        self.iota.broadcast_transactions(&attached_trytes.trytes).await?;
         Ok(prepared_transfers[0]
             .bundle()
             .to_inner()
@@ -122,17 +114,31 @@ impl TangleWriter {
 
     /// Returns confirmation status
     pub async fn is_confirmed(&self, tail_transaction: Hash) -> crate::Result<bool> {
-        let iota = iota::ClientBuilder::new()
-            .nodes(&self.nodes)?
-            .network(self.network.clone())
-            .build()?;
-
         // Get confirmation status
-        let inclusion_states = iota
+        let inclusion_states = self
+            .iota
             .get_inclusion_states()
             .transactions(&[tail_transaction])
             .send()
             .await?;
         Ok(inclusion_states.states.contains(&true))
     }
+}
+
+fn check_network(id_segments: Vec<String>, network: &iota_network) -> crate::Result<()> {
+    match id_segments[0] {
+        _ if id_segments[0] == "dev" => match network {
+            iota_network::Devnet => {}
+            _ => return Err(crate::Error::NetworkNodeError),
+        },
+        _ if id_segments[0] == "com" => match network {
+            iota_network::Comnet => {}
+            _ => return Err(crate::Error::NetworkNodeError),
+        },
+        _ => match network {
+            iota_network::Mainnet => {}
+            _ => return Err(crate::Error::NetworkNodeError),
+        },
+    };
+    Ok(())
 }
