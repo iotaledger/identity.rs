@@ -153,3 +153,173 @@ pub fn validate_timestamp(name: &'static str, timestamp: &str) -> Result<()> {
     Err(error) => bail!("Invalid {} ({})", name, error),
   }
 }
+
+// =============================================================================
+// Credential Builder
+// =============================================================================
+
+/// A convenience for constructing a `Credential` or `VerifiableCredential`
+/// from dynamic data.
+///
+/// NOTE: Base context and type are automatically included.
+#[derive(Clone, Debug)]
+pub struct CredentialBuilder {
+  context: Vec<Context>,
+  id: Option<URI>,
+  types: Vec<String>,
+  credential_subject: Vec<Object>,
+  issuer: Issuer,
+  issuance_date: String,
+  expiration_date: Option<String>,
+  credential_status: Vec<Object>,
+  credential_schema: Vec<Object>,
+  refresh_service: Vec<Object>,
+  terms_of_use: Vec<Object>,
+  evidence: Vec<Object>,
+  properties: Object,
+}
+
+impl CredentialBuilder {
+  pub fn new(issuer: impl Into<Issuer>) -> Self {
+    Self {
+      context: vec![Credential::BASE_CONTEXT.into()],
+      id: None,
+      types: vec![Credential::BASE_TYPE.into()],
+      credential_subject: Vec::new(),
+      issuer: issuer.into(),
+      issuance_date: String::new(),
+      expiration_date: None,
+      credential_status: Vec::new(),
+      credential_schema: Vec::new(),
+      refresh_service: Vec::new(),
+      terms_of_use: Vec::new(),
+      evidence: Vec::new(),
+      properties: Default::default(),
+    }
+  }
+
+  pub fn context(mut self, value: impl Into<Context>) -> Self {
+    let value: Context = value.into();
+
+    if !matches!(value, Context::URI(ref uri) if uri == Credential::BASE_CONTEXT) {
+      self.context.push(value);
+    }
+
+    self
+  }
+
+  pub fn id(mut self, value: impl Into<URI>) -> Self {
+    self.id = Some(value.into());
+    self
+  }
+
+  pub fn type_(mut self, value: impl Into<String>) -> Self {
+    let value: String = value.into();
+
+    if value != Credential::BASE_TYPE {
+      self.types.push(value);
+    }
+
+    self
+  }
+
+  pub fn subject(mut self, value: impl Into<Object>) -> Self {
+    self.credential_subject.push(value.into());
+    self
+  }
+
+  pub fn issuer(mut self, value: impl Into<Issuer>) -> Self {
+    self.issuer = value.into();
+    self
+  }
+
+  pub fn issuance_date(mut self, value: impl Into<String>) -> Self {
+    self.issuance_date = value.into();
+    self
+  }
+
+  pub fn expiration_date(mut self, value: impl Into<String>) -> Self {
+    self.expiration_date = Some(value.into());
+    self
+  }
+
+  pub fn credential_status(mut self, value: impl Into<Object>) -> Self {
+    self.credential_status.push(value.into());
+    self
+  }
+
+  pub fn credential_schema(mut self, value: impl Into<Object>) -> Self {
+    self.credential_schema.push(value.into());
+    self
+  }
+
+  pub fn refresh_service(mut self, value: impl Into<Object>) -> Self {
+    self.refresh_service.push(value.into());
+    self
+  }
+
+  pub fn terms_of_use(mut self, value: impl Into<Object>) -> Self {
+    self.terms_of_use.push(value.into());
+    self
+  }
+
+  pub fn evidence(mut self, value: impl Into<Object>) -> Self {
+    self.evidence.push(value.into());
+    self
+  }
+
+  pub fn properties(mut self, value: impl Into<Object>) -> Self {
+    self.properties = value.into();
+    self
+  }
+
+  /// Consumes the `CredentialBuilder`, returning a valid `Credential`
+  pub fn build(self) -> Result<Credential> {
+    let mut credential: Credential = Credential {
+      context: self.context.into(),
+      id: self.id,
+      types: self.types.into(),
+      credential_subject: self.credential_subject.into(),
+      issuer: self.issuer,
+      issuance_date: self.issuance_date,
+      expiration_date: self.expiration_date,
+      credential_status: None,
+      credential_schema: None,
+      refresh_service: None,
+      terms_of_use: None,
+      evidence: None,
+      properties: self.properties,
+    };
+
+    if !self.credential_status.is_empty() {
+      credential.credential_status = Some(self.credential_status.into());
+    }
+
+    if !self.credential_schema.is_empty() {
+      credential.credential_schema = Some(self.credential_schema.into());
+    }
+
+    if !self.refresh_service.is_empty() {
+      credential.refresh_service = Some(self.refresh_service.into());
+    }
+
+    if !self.terms_of_use.is_empty() {
+      credential.terms_of_use = Some(self.terms_of_use.into());
+    }
+
+    if !self.evidence.is_empty() {
+      credential.evidence = Some(self.evidence.into());
+    }
+
+    credential.validate()?;
+
+    Ok(credential)
+  }
+
+  /// Consumes the `CredentialBuilder`, returning a valid `VerifiableCredential`
+  pub fn build_verifiable(self, proof: impl Into<OneOrMany<Object>>) -> Result<VerifiableCredential> {
+    self
+      .build()
+      .map(|credential| VerifiableCredential::new(credential, proof))
+  }
+}

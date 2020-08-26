@@ -22,3 +22,12 @@ impl Issuer {
     }
   }
 }
+
+impl<T> From<T> for Issuer
+where
+  T: Into<URI>,
+{
+  fn from(other: T) -> Self {
+    Self::URI(other.into())
+  }
+}
