@@ -162,6 +162,14 @@ impl PresentationBuilder {
       properties: self.properties,
     };
 
+    if !self.refresh_service.is_empty() {
+      presentation.refresh_service = Some(self.refresh_service.into());
+    }
+
+    if !self.terms_of_use.is_empty() {
+      presentation.terms_of_use = Some(self.terms_of_use.into());
+    }
+
     presentation.validate()?;
 
     Ok(presentation)
