@@ -22,7 +22,7 @@ impl TangleReader {
         Self { nodes }
     }
     /// Returns all messages from an address
-    pub async fn fetch(&self, address: &str) -> crate::Result<HashMap<Hash, String>> {
+    pub async fn fetch(&self, address: &str) -> crate::Result<HashMap<String, String>> {
         let iota = iota::ClientBuilder::new().nodes(&self.nodes)?.build()?;
 
         let address = Address::from_inner_unchecked(TryteBuf::try_from_str(address)?.as_trits().encode());
@@ -54,7 +54,7 @@ impl TangleReader {
                 .collect();
 
             if let Ok(message) = trytes_converter::to_string(&trytes_coll.concat()) {
-                messages.insert(*txhash, message);
+                messages.insert(txhash.clone(), message);
             }
         }
 
@@ -63,14 +63,18 @@ impl TangleReader {
 }
 
 /// Sorts transactions to bundles by tail transactions
-fn sort_txs_to_bundles(trytes: Vec<BundledTransaction>) -> crate::Result<HashMap<Hash, Vec<BundledTransaction>>> {
+fn sort_txs_to_bundles(trytes: Vec<BundledTransaction>) -> crate::Result<HashMap<String, Vec<BundledTransaction>>> {
     let mut bundles = HashMap::new();
     let mut transactions = HashMap::new();
     for tx in trytes {
         let mut curl = CurlP81::new();
         let mut trits = TritBuf::<T1B1Buf>::zeros(BundledTransaction::trit_len());
         tx.into_trits_allocated(&mut trits);
-        let tx_hash = Hash::from_inner_unchecked(curl.digest(&trits)?);
+        let tx_hash = Hash::from_inner_unchecked(curl.digest(&trits)?)
+            .as_trits()
+            .as_i8_slice()
+            .trytes()
+            .expect("Couldn't get Trytes");
         if tx.index() == &Index::from_inner_unchecked(0) {
             // Distinguish between tail transactions, because the content can be changed at reattachments
             bundles.insert(tx_hash, vec![tx]);
@@ -80,10 +84,14 @@ fn sort_txs_to_bundles(trytes: Vec<BundledTransaction>) -> crate::Result<HashMap
     }
     for bundle in bundles.values_mut() {
         for index in 0..*bundle[0].last_index().to_inner() {
-            if let Some(trunk_transaction) = transactions.get(&Hash::from_inner_unchecked(
-                TritBuf::from_i8s(bundle[index].trunk().to_inner().as_i8_slice())
-                    .expect("Can't get TritBuf from i8_slice"),
-            )) {
+            if let Some(trunk_transaction) = transactions.get(
+                &bundle[index]
+                    .trunk()
+                    .to_inner()
+                    .as_i8_slice()
+                    .trytes()
+                    .expect("Couldn't get Trytes"),
+            ) {
                 bundle.push(trunk_transaction.clone());
             }
             // Debug
