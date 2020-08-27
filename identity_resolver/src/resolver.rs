@@ -1,4 +1,3 @@
-use chrono::{prelude::*, DateTime};
 use identity_core::{did::DID, document::DIDDocument};
 use identity_integration::{did_helper::did_iota_address, tangle_reader::TangleReader};
 
@@ -30,7 +29,7 @@ impl Resolver {
 
         let mut documents: Vec<DIDDocument> = messages
             .iter()
-            .filter_map(|msg| {
+            .filter_map(|(_tailhash, msg)| {
                 if let Ok(payload) = serde_json::from_str::<DIDDocument>(&msg) {
                     Some(payload)
                 } else {
@@ -38,19 +37,13 @@ impl Resolver {
                 }
             })
             .collect();
-
-        documents.sort_by(|a, b| {
-            b.updated
-                .parse::<DateTime<Utc>>()
-                .expect("Parsing time failed")
-                .cmp(&a.updated.parse::<DateTime<Utc>>().expect("Parsing time failed"))
-        });
-
-        if !documents.is_empty() {
-            Ok(documents.remove(0))
-        } else {
-            Err(crate::Error::DocumentNotFound)
+        if documents.is_empty() {
+            return Err(crate::Error::DocumentNotFound);
         }
+
+        documents.sort_by(|a, b| b.updated.cmp(&a.updated));
+
+        Ok(documents.remove(0))
     }
 }
 

@@ -21,10 +21,7 @@ anyhow = "1.0"
 serde = "1.0"
 serde_json = "1.0"
 
-# timestamps
-chrono = { version = "0.4", features = ["serde"] }
-
-identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "feat/resolver-did-parser"}
+identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "feat/diff-document"}
 identity_integration = {git = "https://github.com/iotaledger/identity.rs", branch = "feat/did-ledger-integration"}
 
 [dev-dependencies]
