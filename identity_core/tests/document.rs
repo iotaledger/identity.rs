@@ -471,7 +471,7 @@ fn test_auth() {
 
     let auth1 = Authentication::Method("did:iota:123456789abcdefghi#keys-1".into());
     let auth2 = Authentication::Method("did:iota:123456789abcdefghi#biometric-1".into());
-    let auth3 = Authentication::PublicKey(auth_key);
+    let auth3 = Authentication::Key(auth_key);
 
     doc_2.update_auth(auth1);
     doc_2.update_auth(auth2);
