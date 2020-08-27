@@ -17,5 +17,8 @@ pub enum Error {
     /// identity_core Error
     #[error("identity_core Error: {0}")]
     IdentityCoreError(#[from] identity_core::Error),
+    /// identity_integration Error
+    #[error("identity_core Error: {0}")]
+    IdentityIntegrationError(#[from] identity_integration::Error),
 }
 pub type Result<T> = AnyhowResult<T, Error>;
