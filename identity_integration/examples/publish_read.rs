@@ -65,7 +65,8 @@ async fn main() -> Result<()> {
     // 2. Fetch messages from DID address
     let tangle_reader = TangleReader::new(nodes);
     let received_message = tangle_reader.fetch(&did_address).await?;
-    let fetched_did_document = DIDDocument::from_str(&received_message[0])?;
+    let fetched_did_document =
+        DIDDocument::from_str(&received_message.values().cloned().next().expect("Couldn't get message"))?;
     println!("Document from the Tangle: {:?}", fetched_did_document);
     // Check if sent message is the same as the received one
     if let Payload::DIDDocument(doc) = did_payload {

@@ -22,7 +22,7 @@ impl TangleReader {
         Self { nodes }
     }
     /// Returns all messages from an address
-    pub async fn fetch(&self, address: &str) -> crate::Result<Vec<String>> {
+    pub async fn fetch(&self, address: &str) -> crate::Result<HashMap<Hash, String>> {
         let iota = iota::ClientBuilder::new().nodes(&self.nodes)?.build()?;
 
         let address = Address::from_inner_unchecked(TryteBuf::try_from_str(address)?.as_trits().encode());
@@ -33,15 +33,15 @@ impl TangleReader {
             return Err(crate::Error::TransactionsNotFound);
         }
         // Order transactions to bundles
-        let mut bundles = sort_txs_to_bundles(txs.trytes)?;
+        let bundles = sort_txs_to_bundles(txs.trytes)?;
 
         if bundles.keys().len() == 0 {
-            return Err(crate::Error::MissingTailTransaction);
+            return Err(crate::Error::MissingTransactions);
         }
 
         // Convert messages to ascii
-        let mut messages = Vec::new();
-        for bundle in bundles.values_mut() {
+        let mut messages = HashMap::new();
+        for (txhash, bundle) in bundles.iter() {
             let trytes_coll: Vec<String> = bundle
                 .iter()
                 .map(|t| {
@@ -54,7 +54,7 @@ impl TangleReader {
                 .collect();
 
             if let Ok(message) = trytes_converter::to_string(&trytes_coll.concat()) {
-                messages.push(message);
+                messages.insert(*txhash, message);
             }
         }
 
@@ -112,5 +112,10 @@ fn sort_txs_to_bundles(trytes: Vec<BundledTransaction>) -> crate::Result<HashMap
         //     );
         // }
     }
-    Ok(bundles)
+    // Remove incomplete bundles
+    let complete_bundles = bundles
+        .into_iter()
+        .filter(|(_, bundle)| bundle.len() == *bundle[0].last_index().to_inner() + 1)
+        .collect();
+    Ok(complete_bundles)
 }

@@ -7,8 +7,8 @@ pub enum Error {
     #[error("Fetching Error: No transactions found for this DID")]
     TransactionsNotFound,
     /// Didn't get any tail transactions
-    #[error("Fetching Error: Couldn't get any tail transactions")]
-    MissingTailTransaction,
+    #[error("Fetching Error: Couldn't find transactions")]
+    MissingTransactions,
     /// iota.rs Error
     #[error("iota.rs Error: {0}")]
     IotarsError(#[from] iota::client::error::Error),
