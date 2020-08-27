@@ -22,7 +22,7 @@ pub enum Error {
     #[error("Sorting Error: Couldn't sort transactions to bundles")]
     TransactionSortingFailed,
     /// Node Error
-    #[error("Node Error: Network specified in the DID isn't used")]
+    #[error("Node Error: Wrong network specified")]
     NetworkNodeError,
     /// did_diff Error
     #[error("did_diff Error: DIDDocumentDifferences isn't supported yet")]

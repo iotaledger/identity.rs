@@ -2,7 +2,10 @@
 //! cargo run --example publish_read
 
 use anyhow::Result;
-use identity_core::document::DIDDocument;
+use identity_core::{
+    document::DIDDocument,
+    utils::{Context, Subject},
+};
 use identity_integration::{
     did_helper::did_iota_address,
     tangle_reader::TangleReader,
@@ -16,7 +19,13 @@ use std::{str::FromStr, time::Duration};
 async fn main() -> Result<()> {
     let nodes = vec!["http://localhost:14265", "https://nodes.comnet.thetangle.org:443"];
     let did = "did:iota:com:123456789abcdefghi";
-    let did_document = DIDDocument::new("https://www.w3.org/ns/did/v1".into(), did.into())?;
+    let did_document = DIDDocument {
+        context: Context::from("https://www.w3.org/ns/did/v1"),
+        id: Subject::from(did),
+        ..Default::default()
+    }
+    .init()
+    .init_timestamps()?;
     let did_address = did_iota_address(
         &did_document
             .derive_did()?
