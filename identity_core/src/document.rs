@@ -5,7 +5,7 @@ use std::{collections::HashMap, str::FromStr};
 
 use crate::{
     did::DID,
-    utils::{helpers::string_or_list, Context, PublicKey, Service, Subject},
+    utils::{helpers::string_or_list, Authentication, Context, PublicKey, Service, Subject},
 };
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
@@ -22,6 +22,8 @@ pub struct DIDDocument {
     pub updated: Option<String>,
     #[serde(rename = "publicKey", skip_serializing_if = "Vec::is_empty", default)]
     pub public_key: Vec<PublicKey>,
+    #[serde(rename = "authentication", skip_serializing_if = "Vec::is_empty", default)]
+    pub auth: Vec<Authentication>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub services: Vec<Service>,
     #[serde(flatten)]
@@ -37,6 +39,7 @@ impl DIDDocument {
             created: self.created,
             updated: self.updated,
             public_key: self.public_key,
+            auth: self.auth,
             services: self.services,
             metadata: self.metadata,
         }
@@ -65,6 +68,14 @@ impl DIDDocument {
     /// remove all of the public keys from the `DIDDocument`.
     pub fn clear_public_keys(&mut self) {
         self.public_key.clear();
+    }
+
+    pub fn update_auth(&mut self, auth: Authentication) {
+        self.auth.push(auth);
+    }
+
+    pub fn clear_auth(&mut self) {
+        self.auth.clear();
     }
 
     /// derive the did from the document.
