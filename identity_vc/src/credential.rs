@@ -5,6 +5,8 @@ use crate::{
     Context, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, Object, OneOrMany,
     RefreshService, TermsOfUse, Timestamp, Value, URI,
   },
+  error::Error,
+  utils::validate_credential_structure,
   verifiable::VerifiableCredential,
 };
 
@@ -70,93 +72,7 @@ impl Credential {
   pub const BASE_TYPE: &'static str = "VerifiableCredential";
 
   pub fn validate(&self) -> Result<()> {
-    validate_context(&self.context)?;
-
-    if let Some(ref id) = self.id {
-      validate_uri(id)?;
-    }
-
-    validate_types(&self.types, Self::BASE_TYPE)?;
-    validate_subject(&self.credential_subject)?;
-    validate_uri(self.issuer.uri())?;
-    validate_timestamp("issuance date", &self.issuance_date)?;
-
-    if let Some(ref timestamp) = self.expiration_date {
-      validate_timestamp("expiration date", timestamp)?;
-    }
-
-    Ok(())
-  }
-}
-
-pub fn validate_context(context: &OneOrMany<Context>) -> Result<()> {
-  // Credentials/Presentations MUST have at least one context item
-  ensure!(!context.is_empty(), "Not enough context items");
-
-  // The first item MUST be a URI with the value of the base context
-  match context.get(0) {
-    Some(Context::URI(uri)) if uri == Credential::BASE_CONTEXT => Ok(()),
-    Some(_) => bail!("Invalid base context"),
-    None => unreachable!(),
-  }
-}
-
-pub fn validate_types(types: &OneOrMany<String>, base: &'static str) -> Result<()> {
-  // Credentials/Presentations MUST have at least one type
-  ensure!(!types.is_empty(), "Not enough types");
-
-  // The set of types MUST contain the base type
-  ensure!(types.contains(&base.into()), "Missing base type");
-
-  Ok(())
-}
-
-pub fn validate_subject(subjects: &OneOrMany<Object>) -> Result<()> {
-  // A credential MUST have at least one subject
-  ensure!(!subjects.is_empty(), "Not enough subjects");
-
-  // Each subject is defined as one or more properties - no empty objects
-  for subject in subjects.iter() {
-    ensure!(!subject.is_empty(), "Invalid credential subject (empty)");
-  }
-
-  Ok(())
-}
-
-pub fn validate_credential(credentials: &OneOrMany<VerifiableCredential>) -> Result<()> {
-  // Presentations MUST have an least one verifiable credential
-  ensure!(!credentials.is_empty(), "Not enough credentials");
-
-  // All verifiable credentials MUST be valid (structurally)
-  for credential in credentials.iter() {
-    credential.validate()?;
-  }
-
-  Ok(())
-}
-
-pub fn validate_uri(uri: &URI) -> Result<()> {
-  const KNOWN: [&str; 4] = ["did:", "urn:", "http:", "https:"];
-
-  // TODO: Proper URI validation
-  ensure!(
-    KNOWN.iter().any(|scheme| uri.starts_with(scheme)),
-    "Invalid URI `{}`",
-    uri.as_str(),
-  );
-
-  Ok(())
-}
-
-// Validate the timestamp format according to RFC 3339
-//
-// Ref: https://tools.ietf.org/html/rfc3339
-pub fn validate_timestamp(name: &'static str, timestamp: &str) -> Result<()> {
-  ensure!(!timestamp.is_empty(), "Invalid {} (empty)", name);
-
-  match DateTime::parse_from_rfc3339(timestamp) {
-    Ok(_) => Ok(()),
-    Err(error) => bail!("Invalid {} ({})", name, error),
+    validate_credential_structure(self)
   }
 }
 
