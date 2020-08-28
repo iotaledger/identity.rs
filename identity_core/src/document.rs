@@ -85,50 +85,62 @@ impl DIDDocument {
         self.public_key.clear();
     }
 
+    /// sets in a new `auth` of type `Authentication` into the `DIDDocument`.
     pub fn update_auth(&mut self, auth: Authentication) {
         self.auth.push(auth);
     }
 
+    /// remove all of the authentications from the `DIDDocument`.
     pub fn clear_auth(&mut self) {
         self.auth.clear();
     }
 
+    /// sets in a new `assert` of type `Authentication` into the `DIDDocument`.
     pub fn update_assert(&mut self, assert: Authentication) {
         self.assert.push(assert);
     }
 
+    /// remove all of the assertion methods from the `DIDDocument`.
     pub fn clear_assert(&mut self) {
         self.assert.clear();
     }
 
+    /// sets in a new `verification` of type `Authentication` into the `DIDDocument`.
     pub fn update_verification(&mut self, verification: Authentication) {
         self.verification.push(verification);
     }
 
+    /// remove all of the verification methods from the `DIDDocument`.
     pub fn clear_verification(&mut self) {
         self.verification.clear();
     }
 
+    /// sets in a new `delegation` of type `Authentication` into the `DIDDocument`.
     pub fn update_delegation(&mut self, delegation: Authentication) {
         self.auth.push(delegation);
     }
 
+    /// remove all of the capability delegations from the `DIDDocument`.
     pub fn clear_delegation(&mut self) {
         self.auth.clear();
     }
 
+    /// sets in a new `invocation` of type `Authentication` into the `DIDDocument`.
     pub fn update_invocation(&mut self, invocation: Authentication) {
         self.auth.push(invocation);
     }
 
+    /// remove all of the capability invocations from the `DIDDocument`.
     pub fn clear_invocation(&mut self) {
         self.auth.clear();
     }
 
+    /// sets in a new `agreement` of type `Authentication` into the `DIDDocument`.
     pub fn update_agreement(&mut self, agreement: Authentication) {
         self.agreement.push(agreement);
     }
 
+    /// remove all of the key agreements from the `DIDDocument`.
     pub fn clear_agreement(&mut self) {
         self.agreement.clear();
     }
