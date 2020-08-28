@@ -145,7 +145,7 @@ impl DIDDocument {
         self.agreement.clear();
     }
 
-    /// derive the did from the document.
+    /// get the ID from the Document as a DID.
     pub fn derive_did(&self) -> crate::Result<DID> {
         self.id.to_did()
     }
