@@ -1,15 +1,17 @@
 use anyhow::Result;
-use chrono::DateTime;
 
 use crate::{
-  common::{Context, Issuer, Object, OneOrMany, URI},
+  common::{
+    Context, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, Object, OneOrMany,
+    RefreshService, TermsOfUse, Timestamp, Value, URI,
+  },
   verifiable::VerifiableCredential,
 };
 
 /// A `Credential` represents a set of claims describing an entity.
 ///
 /// `Credential`s can be combined with `Proof`s to create `VerifiableCredential`s.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Credential {
   /// A set of URIs or `Object`s describing the applicable JSON-LD contexts.
   ///
@@ -27,32 +29,36 @@ pub struct Credential {
   /// don't have any immediate plans to do so.
   #[serde(rename = "type")]
   pub types: OneOrMany<String>,
-  /// One or more `Object`s representing the credential subject(s).
+  /// One or more `Object`s representing the `Credential` subject(s).
   #[serde(rename = "credentialSubject")]
-  pub credential_subject: OneOrMany<Object>,
-  /// A reference to the issuer of the credential.
+  pub credential_subject: OneOrMany<CredentialSubject>,
+  /// A reference to the issuer of the `Credential`.
   pub issuer: Issuer,
-  /// The date and time the credential becomes valid.
+  /// The date and time the `Credential` becomes valid.
   #[serde(rename = "issuanceDate")]
-  pub issuance_date: String,
-  /// The date and time the credential is no longer considered valid.
+  pub issuance_date: Timestamp,
+  /// The date and time the `Credential` is no longer considered valid.
   #[serde(rename = "expirationDate", skip_serializing_if = "Option::is_none")]
-  pub expiration_date: Option<String>,
+  pub expiration_date: Option<Timestamp>,
   /// TODO
   #[serde(rename = "credentialStatus", skip_serializing_if = "Option::is_none")]
-  pub credential_status: Option<OneOrMany<Object>>,
+  pub credential_status: Option<OneOrMany<CredentialStatus>>,
   /// TODO
   #[serde(rename = "credentialSchema", skip_serializing_if = "Option::is_none")]
-  pub credential_schema: Option<OneOrMany<Object>>,
+  pub credential_schema: Option<OneOrMany<CredentialSchema>>,
   /// TODO
   #[serde(rename = "refreshService", skip_serializing_if = "Option::is_none")]
-  pub refresh_service: Option<OneOrMany<Object>>,
-  /// The terms of use issued by the credential issuer
+  pub refresh_service: Option<OneOrMany<RefreshService>>,
+  /// The terms of use issued by the `Credential` issuer
   #[serde(rename = "termsOfUse", skip_serializing_if = "Option::is_none")]
-  pub terms_of_use: Option<OneOrMany<Object>>,
+  pub terms_of_use: Option<OneOrMany<TermsOfUse>>,
   /// TODO
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub evidence: Option<OneOrMany<Object>>,
+  pub evidence: Option<OneOrMany<Evidence>>,
+  /// Indicates that the `Credential` must only be contained within a
+  /// `Presentation` with a proof issued from the `Credential` subject.
+  #[serde(rename = "nonTransferable", skip_serializing_if = "Option::is_none")]
+  pub non_transferable: Option<Value>,
   /// Miscellaneous properties.
   #[serde(flatten)]
   pub properties: Object,
@@ -167,15 +173,16 @@ pub struct CredentialBuilder {
   context: Vec<Context>,
   id: Option<URI>,
   types: Vec<String>,
-  credential_subject: Vec<Object>,
+  credential_subject: Vec<CredentialSubject>,
   issuer: Option<Issuer>,
-  issuance_date: String,
-  expiration_date: Option<String>,
-  credential_status: Vec<Object>,
-  credential_schema: Vec<Object>,
-  refresh_service: Vec<Object>,
-  terms_of_use: Vec<Object>,
-  evidence: Vec<Object>,
+  issuance_date: Timestamp,
+  expiration_date: Option<Timestamp>,
+  credential_status: Vec<CredentialStatus>,
+  credential_schema: Vec<CredentialSchema>,
+  refresh_service: Vec<RefreshService>,
+  terms_of_use: Vec<TermsOfUse>,
+  evidence: Vec<Evidence>,
+  non_transferable: Option<Value>,
   properties: Object,
 }
 
@@ -187,13 +194,14 @@ impl CredentialBuilder {
       types: vec![Credential::BASE_TYPE.into()],
       credential_subject: Vec::new(),
       issuer: None,
-      issuance_date: String::new(),
+      issuance_date: Default::default(),
       expiration_date: None,
       credential_status: Vec::new(),
       credential_schema: Vec::new(),
       refresh_service: Vec::new(),
       terms_of_use: Vec::new(),
       evidence: Vec::new(),
+      non_transferable: None,
       properties: Default::default(),
     }
   }
@@ -288,6 +296,7 @@ impl CredentialBuilder {
       refresh_service: None,
       terms_of_use: None,
       evidence: None,
+      non_transferable: self.non_transferable,
       properties: self.properties,
     };
 
