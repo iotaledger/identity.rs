@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use crate::{
-  common::{Context, Object, OneOrMany, URI},
+  common::{Context, Object, OneOrMany, RefreshService, TermsOfUse, URI},
   credential::{validate_context, validate_credential, validate_types, validate_uri, Credential},
   verifiable::{VerifiableCredential, VerifiablePresentation},
 };
@@ -9,7 +9,7 @@ use crate::{
 /// A `Presentation` represents a bundle of one or more `VerifiableCredential`s.
 ///
 /// `Presentation`s can be combined with `Proof`s to create `VerifiablePresentation`s.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Presentation {
   /// A set of URIs or `Object`s describing the applicable JSON-LD contexts.
   ///
@@ -35,10 +35,10 @@ pub struct Presentation {
   pub holder: Option<URI>,
   /// TODO
   #[serde(rename = "refreshService", skip_serializing_if = "Option::is_none")]
-  pub refresh_service: Option<OneOrMany<Object>>,
+  pub refresh_service: Option<OneOrMany<RefreshService>>,
   /// The terms of use issued by the presentation holder
   #[serde(rename = "termsOfUse", skip_serializing_if = "Option::is_none")]
-  pub terms_of_use: Option<OneOrMany<Object>>,
+  pub terms_of_use: Option<OneOrMany<TermsOfUse>>,
   /// Miscellaneous properties.
   #[serde(flatten)]
   pub properties: Object,
@@ -80,8 +80,8 @@ pub struct PresentationBuilder {
   types: Vec<String>,
   verifiable_credential: Vec<VerifiableCredential>,
   holder: Option<URI>,
-  refresh_service: Vec<Object>,
-  terms_of_use: Vec<Object>,
+  refresh_service: Vec<RefreshService>,
+  terms_of_use: Vec<TermsOfUse>,
   properties: Object,
 }
 
