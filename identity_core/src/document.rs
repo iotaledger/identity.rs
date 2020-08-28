@@ -24,6 +24,16 @@ pub struct DIDDocument {
     pub public_key: Vec<PublicKey>,
     #[serde(rename = "authentication", skip_serializing_if = "Vec::is_empty", default)]
     pub auth: Vec<Authentication>,
+    #[serde(rename = "assertionMethod", skip_serializing_if = "Vec::is_empty", default)]
+    pub assert: Vec<Authentication>,
+    #[serde(rename = "verificationMethod", skip_serializing_if = "Vec::is_empty", default)]
+    pub verification: Vec<Authentication>,
+    #[serde(rename = "capabilityDelegation", skip_serializing_if = "Vec::is_empty", default)]
+    pub delegation: Vec<Authentication>,
+    #[serde(rename = "capabilityInvocation", skip_serializing_if = "Vec::is_empty", default)]
+    pub invocation: Vec<Authentication>,
+    #[serde(rename = "keyAgreement", skip_serializing_if = "Vec::is_empty", default)]
+    pub agreement: Vec<Authentication>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub services: Vec<Service>,
     #[serde(flatten)]
@@ -40,6 +50,11 @@ impl DIDDocument {
             updated: self.updated,
             public_key: self.public_key,
             auth: self.auth,
+            assert: self.assert,
+            verification: self.verification,
+            delegation: self.delegation,
+            invocation: self.invocation,
+            agreement: self.agreement,
             services: self.services,
             metadata: self.metadata,
         }
@@ -76,6 +91,46 @@ impl DIDDocument {
 
     pub fn clear_auth(&mut self) {
         self.auth.clear();
+    }
+
+    pub fn update_assert(&mut self, assert: Authentication) {
+        self.assert.push(assert);
+    }
+
+    pub fn clear_assert(&mut self) {
+        self.assert.clear();
+    }
+
+    pub fn update_verification(&mut self, verification: Authentication) {
+        self.verification.push(verification);
+    }
+
+    pub fn clear_verification(&mut self) {
+        self.verification.clear();
+    }
+
+    pub fn update_delegation(&mut self, delegation: Authentication) {
+        self.auth.push(delegation);
+    }
+
+    pub fn clear_delegation(&mut self) {
+        self.auth.clear();
+    }
+
+    pub fn update_invocation(&mut self, invocation: Authentication) {
+        self.auth.push(invocation);
+    }
+
+    pub fn clear_invocation(&mut self) {
+        self.auth.clear();
+    }
+
+    pub fn update_agreement(&mut self, agreement: Authentication) {
+        self.agreement.push(agreement);
+    }
+
+    pub fn clear_agreement(&mut self) {
+        self.agreement.clear();
     }
 
     /// derive the did from the document.
