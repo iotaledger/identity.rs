@@ -98,11 +98,6 @@ impl PresentationBuilder {
     self
   }
 
-  pub fn id(mut self, value: impl Into<URI>) -> Self {
-    self.id = Some(value.into());
-    self
-  }
-
   pub fn type_(mut self, value: impl Into<String>) -> Self {
     let value: String = value.into();
 
@@ -113,30 +108,15 @@ impl PresentationBuilder {
     self
   }
 
-  pub fn credential(mut self, value: impl Into<VerifiableCredential>) -> Self {
-    self.verifiable_credential.push(value.into());
-    self
-  }
+  impl_builder_setter!(id, id, Option<URI>);
+  impl_builder_setter!(credential, verifiable_credential, Vec<VerifiableCredential>);
+  impl_builder_setter!(holder, holder, Option<URI>);
+  impl_builder_setter!(refresh, refresh_service, Vec<RefreshService>);
+  impl_builder_setter!(terms_of_use, terms_of_use, Vec<TermsOfUse>);
+  impl_builder_setter!(properties, properties, Object);
 
-  pub fn holder(mut self, value: impl Into<URI>) -> Self {
-    self.holder = Some(value.into());
-    self
-  }
-
-  pub fn refresh_service(mut self, value: impl Into<Object>) -> Self {
-    self.refresh_service.push(value.into());
-    self
-  }
-
-  pub fn terms_of_use(mut self, value: impl Into<Object>) -> Self {
-    self.terms_of_use.push(value.into());
-    self
-  }
-
-  pub fn properties(mut self, value: impl Into<Object>) -> Self {
-    self.properties = value.into();
-    self
-  }
+  impl_builder_try_setter!(try_refresh_service, refresh_service, Vec<RefreshService>);
+  impl_builder_try_setter!(try_terms_of_use, terms_of_use, Vec<TermsOfUse>);
 
   /// Consumes the `PresentationBuilder`, returning a valid `Presentation`
   pub fn build(self) -> Result<Presentation> {

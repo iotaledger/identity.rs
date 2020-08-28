@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use std::{
-  ops::{Deref, DerefMut},
+  ops::Deref,
   convert::TryFrom
 };
 

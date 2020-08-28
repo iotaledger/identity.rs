@@ -132,11 +132,6 @@ impl CredentialBuilder {
     self
   }
 
-  pub fn id(mut self, value: impl Into<URI>) -> Self {
-    self.id = Some(value.into());
-    self
-  }
-
   pub fn type_(mut self, value: impl Into<String>) -> Self {
     let value: String = value.into();
 
@@ -147,55 +142,27 @@ impl CredentialBuilder {
     self
   }
 
-  pub fn subject(mut self, value: impl Into<Object>) -> Self {
-    self.credential_subject.push(value.into());
-    self
-  }
+  impl_builder_setter!(id, id, Option<URI>);
+  impl_builder_setter!(subject, credential_subject, Vec<CredentialSubject>);
+  impl_builder_setter!(issuer, issuer, Option<Issuer>);
+  impl_builder_setter!(issuance_date, issuance_date, Timestamp);
+  impl_builder_setter!(expiration_date, expiration_date, Option<Timestamp>);
+  impl_builder_setter!(status, credential_status, Vec<CredentialStatus>);
+  impl_builder_setter!(schema, credential_schema, Vec<CredentialSchema>);
+  impl_builder_setter!(refresh, refresh_service, Vec<RefreshService>);
+  impl_builder_setter!(terms_of_use, terms_of_use, Vec<TermsOfUse>);
+  impl_builder_setter!(evidence, evidence, Vec<Evidence>);
+  impl_builder_setter!(non_transferable, non_transferable, Option<Value>);
+  impl_builder_setter!(properties, properties, Object);
 
-  pub fn issuer(mut self, value: impl Into<Issuer>) -> Self {
-    self.issuer = Some(value.into());
-    self
-  }
-
-  pub fn issuance_date(mut self, value: impl Into<String>) -> Self {
-    self.issuance_date = value.into();
-    self
-  }
-
-  pub fn expiration_date(mut self, value: impl Into<String>) -> Self {
-    self.expiration_date = Some(value.into());
-    self
-  }
-
-  pub fn credential_status(mut self, value: impl Into<Object>) -> Self {
-    self.credential_status.push(value.into());
-    self
-  }
-
-  pub fn credential_schema(mut self, value: impl Into<Object>) -> Self {
-    self.credential_schema.push(value.into());
-    self
-  }
-
-  pub fn refresh_service(mut self, value: impl Into<Object>) -> Self {
-    self.refresh_service.push(value.into());
-    self
-  }
-
-  pub fn terms_of_use(mut self, value: impl Into<Object>) -> Self {
-    self.terms_of_use.push(value.into());
-    self
-  }
-
-  pub fn evidence(mut self, value: impl Into<Object>) -> Self {
-    self.evidence.push(value.into());
-    self
-  }
-
-  pub fn properties(mut self, value: impl Into<Object>) -> Self {
-    self.properties = value.into();
-    self
-  }
+  impl_builder_try_setter!(try_subject, credential_subject, Vec<CredentialSubject>);
+  impl_builder_try_setter!(try_issuance_date, issuance_date, Timestamp);
+  impl_builder_try_setter!(try_expiration_date, expiration_date, Option<Timestamp>);
+  impl_builder_try_setter!(try_status, credential_status, Vec<CredentialStatus>);
+  impl_builder_try_setter!(try_schema, credential_schema, Vec<CredentialSchema>);
+  impl_builder_try_setter!(try_refresh_service, refresh_service, Vec<RefreshService>);
+  impl_builder_try_setter!(try_terms_of_use, terms_of_use, Vec<TermsOfUse>);
+  impl_builder_try_setter!(try_evidence, evidence, Vec<Evidence>);
 
   /// Consumes the `CredentialBuilder`, returning a valid `Credential`
   pub fn build(self) -> Result<Credential> {
