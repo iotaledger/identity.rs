@@ -5,7 +5,7 @@ use crate::{
   presentation::Presentation,
 };
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct VerifiablePresentation {
   #[serde(flatten)]
   presentation: Presentation,

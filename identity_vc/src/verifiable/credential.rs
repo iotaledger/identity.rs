@@ -5,7 +5,7 @@ use crate::{
   credential::Credential,
 };
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct VerifiableCredential {
   #[serde(flatten)]
   credential: Credential,
