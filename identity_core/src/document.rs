@@ -117,22 +117,22 @@ impl DIDDocument {
 
     /// sets in a new `delegation` of type `Authentication` into the `DIDDocument`.
     pub fn update_delegation(&mut self, delegation: Authentication) {
-        self.auth.push(delegation);
+        self.delegation.push(delegation);
     }
 
     /// remove all of the capability delegations from the `DIDDocument`.
     pub fn clear_delegation(&mut self) {
-        self.auth.clear();
+        self.delegation.clear();
     }
 
     /// sets in a new `invocation` of type `Authentication` into the `DIDDocument`.
     pub fn update_invocation(&mut self, invocation: Authentication) {
-        self.auth.push(invocation);
+        self.invocation.push(invocation);
     }
 
     /// remove all of the capability invocations from the `DIDDocument`.
     pub fn clear_invocation(&mut self) {
-        self.auth.clear();
+        self.invocation.clear();
     }
 
     /// sets in a new `agreement` of type `Authentication` into the `DIDDocument`.
