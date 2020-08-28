@@ -1,10 +1,14 @@
-use std::{collections::HashMap, fmt, ops::Deref};
+use std::{
+  collections::HashMap,
+  fmt,
+  ops::{Deref, DerefMut},
+};
 
 use crate::common::Value;
 
 type Inner = HashMap<String, Value>;
 
-// An immutable String -> Value `HashMap`
+// An String -> Value `HashMap` wrapper
 #[derive(Clone, Default, PartialEq, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(transparent)]
@@ -27,6 +31,12 @@ impl Deref for Object {
 
   fn deref(&self) -> &Self::Target {
     &self.0
+  }
+}
+
+impl DerefMut for Object {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.0
   }
 }
 
