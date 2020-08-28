@@ -70,6 +70,12 @@ where
   }
 }
 
+impl<T> Default for OneOrMany<T> {
+  fn default() -> Self {
+    Self::Many(Vec::new())
+  }
+}
+
 impl<T> From<T> for OneOrMany<T> {
   fn from(other: T) -> Self {
     Self::One(other)

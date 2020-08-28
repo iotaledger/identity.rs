@@ -1,13 +1,19 @@
 use std::{fmt, ops::Deref};
 
-/// A "spec-compliant" URI - possibly a DID.
+/// A simple wrapper for URIs adhering to RFC 3986
 ///
-/// TODO: Parse/validate and represent this an *ACTUAL* URI.
+/// TODO: Parse/Validate according to RFC 3986
 /// TODO: impl From<DID> for URI
 #[derive(Clone, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(transparent)]
-pub struct URI(String);
+pub struct URI(pub(crate) String);
+
+impl URI {
+  pub fn into_inner(self) -> String {
+    self.0
+  }
+}
 
 impl fmt::Debug for URI {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

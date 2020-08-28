@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::common::Object;
+use crate::common::{Object, URI};
 
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
@@ -65,6 +65,12 @@ impl From<&'_ str> for Value {
 impl From<String> for Value {
   fn from(other: String) -> Self {
     Self::String(other)
+  }
+}
+
+impl From<URI> for Value {
+  fn from(other: URI) -> Self {
+    Self::String(other.0)
   }
 }
 
