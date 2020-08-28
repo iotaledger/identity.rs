@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use crate::{
-  common::{Context, Object, OneOrMany, RefreshService, TermsOfUse, URI},
+  common::{Context, Object, OneOrMany, RefreshService, TermsOfUse, URI, Value},
   credential::Credential,
   error::Error,
   utils::validate_presentation_structure,
@@ -105,6 +105,11 @@ impl PresentationBuilder {
       self.types.push(value);
     }
 
+    self
+  }
+
+  pub fn property(mut self, key: impl Into<String>, value: impl Into<Value>) -> Self {
+    self.properties.insert(key.into(), value.into());
     self
   }
 

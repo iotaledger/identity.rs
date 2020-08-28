@@ -38,24 +38,6 @@ impl From<bool> for Value {
   }
 }
 
-impl From<u64> for Value {
-  fn from(other: u64) -> Self {
-    Self::Number(Number::UInt(other))
-  }
-}
-
-impl From<i64> for Value {
-  fn from(other: i64) -> Self {
-    Self::Number(Number::SInt(other))
-  }
-}
-
-impl From<f64> for Value {
-  fn from(other: f64) -> Self {
-    Self::Number(Number::Float(other))
-  }
-}
-
 impl From<&'_ str> for Value {
   fn from(other: &'_ str) -> Self {
     Self::String(other.into())
@@ -71,6 +53,12 @@ impl From<String> for Value {
 impl From<URI> for Value {
   fn from(other: URI) -> Self {
     Self::String(other.0)
+  }
+}
+
+impl<T> From<T> for Value where T: Into<Number> {
+  fn from(other: T) -> Self {
+    Self::Number(other.into())
   }
 }
 
@@ -106,3 +94,25 @@ impl fmt::Debug for Number {
     }
   }
 }
+
+macro_rules! impl_number_primitive {
+  ($src:ty, $ident:ident) => {
+    impl_number_primitive!($src as $src, $ident);
+  };
+  ($src:ty as $dst:ty, $ident:ident) => {
+    impl From<$src> for Number {
+      fn from(other: $src) -> Self {
+        Self::$ident(other as $dst)
+      }
+    }
+  };
+  ($($src:ty),* as $dst:ty, $ident:ident) => {
+    $(
+      impl_number_primitive!($src as $dst, $ident);
+    )*
+  };
+}
+
+impl_number_primitive!(u8, u16, u32, u64 as u64, UInt);
+impl_number_primitive!(i8, i16, i32, i64 as i64, SInt);
+impl_number_primitive!(f32, f64 as f64, Float);

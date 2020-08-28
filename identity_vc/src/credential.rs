@@ -142,6 +142,11 @@ impl CredentialBuilder {
     self
   }
 
+  pub fn property(mut self, key: impl Into<String>, value: impl Into<Value>) -> Self {
+    self.properties.insert(key.into(), value.into());
+    self
+  }
+
   impl_builder_setter!(id, id, Option<URI>);
   impl_builder_setter!(subject, credential_subject, Vec<CredentialSubject>);
   impl_builder_setter!(issuer, issuer, Option<Issuer>);
