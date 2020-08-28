@@ -1,8 +1,5 @@
 use chrono::{DateTime, Utc};
-use std::{
-  ops::Deref,
-  convert::TryFrom
-};
+use std::{convert::TryFrom, ops::Deref};
 
 use crate::error::Error;
 

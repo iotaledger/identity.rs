@@ -1,6 +1,6 @@
+use chrono::ParseError as ChronoError;
 use std::result::Result as StdResult;
 use thiserror::Error as ThisError;
-use chrono::ParseError as ChronoError;
 
 #[derive(Debug, ThisError)]
 pub enum Error {
