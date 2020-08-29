@@ -19,6 +19,7 @@ use std::fmt;
 pub struct Differences {
     pub did: DID,
     pub diff: String,
+    pub time: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
