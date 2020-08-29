@@ -219,7 +219,7 @@ fn test_serde() {
 }
 
 /// logic for the id segment prop test.
-fn wrapper_did_id_seg(s: &str) -> Option<DID> {
+fn inner_did_id_seg(s: &str) -> Option<DID> {
     let did_str = format!("did:iota:{}", s);
 
     DID::parse_from_str(&did_str).unwrap();
@@ -236,7 +236,7 @@ fn wrapper_did_id_seg(s: &str) -> Option<DID> {
 }
 
 /// logic for the did method name prop test.
-fn wrapper_did_name(s: &str) -> Option<DID> {
+fn inner_did_name(s: &str) -> Option<DID> {
     let did_str = format!("did:{}:12345678", s);
 
     DID::parse_from_str(&did_str).unwrap();
@@ -253,7 +253,7 @@ fn wrapper_did_name(s: &str) -> Option<DID> {
 }
 
 /// logic for the did params prop test.
-fn wrapper_did_params(n: &str, v: &str) -> Option<DID> {
+fn inner_did_params(n: &str, v: &str) -> Option<DID> {
     let did_str = format!("did:iota:12345678;{}={}", n, v);
 
     DID::parse_from_str(did_str).unwrap();
@@ -271,7 +271,7 @@ fn wrapper_did_params(n: &str, v: &str) -> Option<DID> {
 }
 
 /// logic for the did path prop test.
-fn wrapper_did_path(p: &str) -> Option<DID> {
+fn inner_did_path(p: &str) -> Option<DID> {
     let did_str = format!("did:iota:12345678/{}", p);
 
     DID::parse_from_str(did_str).unwrap();
@@ -289,7 +289,7 @@ fn wrapper_did_path(p: &str) -> Option<DID> {
 }
 
 /// logic for the did query prop test.
-fn wrapper_did_query(q: &str) -> Option<DID> {
+fn inner_did_query(q: &str) -> Option<DID> {
     let did_str = format!("did:iota:12345678?{}", q);
 
     DID::parse_from_str(did_str).unwrap();
@@ -307,7 +307,7 @@ fn wrapper_did_query(q: &str) -> Option<DID> {
 }
 
 /// logic for the did fragment prop test.
-fn wrapper_did_frag(f: &str) -> Option<DID> {
+fn inner_did_frag(f: &str) -> Option<DID> {
     let did_str = format!("did:iota:12345678#{}", f);
 
     DID::parse_from_str(did_str).unwrap();
@@ -331,36 +331,36 @@ proptest! {
     #[test]
     // Run cases that match the regex and are ascii as the id_segment.  Check if the parser accepts them and if the DID can be created with them.
     fn prop_parse_did_id_seg(s in "[a-z0-9A-Z._-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
-        wrapper_did_id_seg(&s);
+        inner_did_id_seg(&s);
     }
 
     #[test]
     // Run cases that match the regex and are ascii as the method_name.  Check if the parser accepts them and if the DID can be created with them.
     fn prop_parse_did_name(s in "[a-z0-9]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
-        wrapper_did_name(&s);
+        inner_did_name(&s);
     }
 
     #[test]
     // Run cases that match the regex and are ascii as the params.  Check if the parser accepts them and if the DID can be created with them.
     fn prop_parse_did_params(n in "[a-zA-Z0-9.=:-]+", v in "[a-zA-Z0-9.=:-]*".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
-        wrapper_did_params(&n, &v);
+        inner_did_params(&n, &v);
     }
 
     #[test]
     // Run cases that match the regex and are ascii as the path_segments.  Check if the parser accepts them and if the DID can be created with them.
     fn prop_parse_did_path(p in "[a-zA-Z0-9._!~$&'()*+;,=:@-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
-        wrapper_did_path(&p);
+        inner_did_path(&p);
     }
 
     #[test]
     // Run cases that match the regex and are ascii as the query.  Check if the parser accepts them and if the DID can be created with them.
     fn prop_parse_did_query(q in "[a-zA-Z0-9._!~$&'()*+;,=/?:@-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
-        wrapper_did_query(&q);
+        inner_did_query(&q);
     }
 
     #[test]
     // Run cases that match the regex and are ascii as the fragment.  Check if the parser accepts them and if the DID can be created with them.
     fn prop_parse_did_frag(f in "[a-zA-Z0-9._!~$&'()*+;,=/?:@-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
-        wrapper_did_frag(&f);
+        inner_did_frag(&f);
     }
 }
