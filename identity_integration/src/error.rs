@@ -18,15 +18,15 @@ pub enum Error {
     /// identity_core Error
     #[error("identity_core Error: {0}")]
     IdentityCoreError(#[from] identity_core::Error),
+    /// serde_json Error
+    #[error("serde_json Error: {0}")]
+    SerdeJsonError(#[from] serde_json::Error),
     /// bee_ternary Error
     #[error("Sorting Error: Couldn't sort transactions to bundles")]
     TransactionSortingFailed,
     /// Node Error
     #[error("Node Error: Wrong network specified")]
     NetworkNodeError,
-    /// did_diff Error
-    #[error("did_diff Error: DIDDocumentDifferences isn't supported yet")]
-    DiffNotSupported,
 }
 
 impl From<Infallible> for Error {

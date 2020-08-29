@@ -1,4 +1,5 @@
 use crate::did_helper::did_iota_address;
+use identity_core::did::DID;
 use identity_core::document::DIDDocument;
 pub use iota::client::builder::Network as iota_network;
 use iota::{
@@ -15,9 +16,15 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct Differences {
+    pub did: DID,
+    pub diff: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum Payload {
     DIDDocument(DIDDocument),
-    DIDDocumentDifferences(String),
+    DIDDocumentDifferences(Differences),
 }
 
 impl fmt::Display for Payload {
@@ -42,11 +49,17 @@ impl TangleWriter {
     }
     /// Publishes DID document to the Tangle
     pub async fn publish_document(&self, did_document: &Payload) -> crate::Result<Hash> {
+        let id_segments;
         let document = match did_document {
-            Payload::DIDDocument(document) => (document),
-            Payload::DIDDocumentDifferences(_) => return Err(crate::Error::DiffNotSupported),
+            Payload::DIDDocument(document) => {
+                id_segments = document.derive_did()?.id_segments;
+                document.to_string()
+            }
+            Payload::DIDDocumentDifferences(differences) => {
+                id_segments = differences.did.id_segments.clone();
+                serde_json::to_string(&differences)?
+            }
         };
-        let id_segments = document.derive_did()?.id_segments;
         // Check if correct network
         check_network(id_segments.clone(), &self.network)?;
 
@@ -58,7 +71,7 @@ impl TangleWriter {
         let transfers = vec![Transfer {
             address: Address::from_inner_unchecked(TryteBuf::try_from_str(&address)?.as_trits().encode()),
             value: 0,
-            message: Some(document.to_string()),
+            message: Some(document),
             tag: Some(
                 Tag::try_from_inner(
                     TryteBuf::try_from_str("DID999999999999999999999999")?
