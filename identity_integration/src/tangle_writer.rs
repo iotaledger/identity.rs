@@ -1,6 +1,5 @@
 use crate::did_helper::did_iota_address;
-use identity_core::did::DID;
-use identity_core::document::DIDDocument;
+use identity_core::{did::DID, document::DIDDocument};
 pub use iota::client::builder::Network as iota_network;
 use iota::{
     client::Transfer,
