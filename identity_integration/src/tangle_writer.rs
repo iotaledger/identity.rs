@@ -142,15 +142,15 @@ fn check_network(id_segments: Vec<String>, network: &iota_network) -> crate::Res
     match id_segments[0] {
         _ if id_segments[0] == "dev" => match network {
             iota_network::Devnet => {}
-            _ => return Err(crate::Error::NetworkNodeError),
+            _ => return Err(crate::Error::NetworkNodeError("dev")),
         },
         _ if id_segments[0] == "com" => match network {
             iota_network::Comnet => {}
-            _ => return Err(crate::Error::NetworkNodeError),
+            _ => return Err(crate::Error::NetworkNodeError("com")),
         },
         _ => match network {
             iota_network::Mainnet => {}
-            _ => return Err(crate::Error::NetworkNodeError),
+            _ => return Err(crate::Error::NetworkNodeError("main")),
         },
     };
     Ok(())

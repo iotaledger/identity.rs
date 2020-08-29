@@ -25,8 +25,8 @@ pub enum Error {
     #[error("Sorting Error: Couldn't sort transactions to bundles")]
     TransactionSortingFailed,
     /// Node Error
-    #[error("Node Error: Wrong network specified")]
-    NetworkNodeError,
+    #[error("Node Error: Wrong network specified, DID requires {0:?}")]
+    NetworkNodeError(&'static str),
 }
 
 impl From<Infallible> for Error {
