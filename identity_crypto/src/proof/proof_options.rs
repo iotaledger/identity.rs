@@ -1,4 +1,8 @@
-use crate::identity_core::Timestamp;
+use crate::{
+  error::Result,
+  identity_core::{Object, Timestamp},
+  proof::ProofDocument,
+};
 
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -12,4 +16,10 @@ pub struct ProofOptions {
   pub nonce: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub domain: Option<String>,
+}
+
+impl ProofDocument for ProofOptions {
+  fn to_object(&self) -> Result<Object> {
+    todo!("ProofOptions -> Object")
+  }
 }
