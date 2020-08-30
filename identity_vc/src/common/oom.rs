@@ -83,8 +83,12 @@ impl<T> From<T> for OneOrMany<T> {
 }
 
 impl<T> From<Vec<T>> for OneOrMany<T> {
-  fn from(other: Vec<T>) -> Self {
-    Self::Many(other)
+  fn from(mut other: Vec<T>) -> Self {
+    if other.len() == 1 {
+      Self::One(other.pop().expect("infallible"))
+    } else {
+      Self::Many(other)
+    }
   }
 }
 
