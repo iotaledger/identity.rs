@@ -17,6 +17,9 @@ homepage = "https://www.iota.org"
 thiserror = "1.0"
 anyhow = "1.0"
 
+# serialization
+serde = { version = "1.0", features = ["derive"] }
+
 # utilities
 hex = "0.4"
 zeroize = "1.1"
