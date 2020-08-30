@@ -1,24 +1,32 @@
-use chrono::{DateTime, Utc};
-use std::{convert::TryFrom, ops::Deref};
+use chrono::{DateTime, SecondsFormat, Utc};
+use std::{convert::TryFrom, fmt, ops::Deref};
 
 use crate::error::Error;
 
 type Inner = DateTime<Utc>;
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(transparent)]
 pub struct Timestamp(Inner);
 
 impl Timestamp {
+  pub fn now() -> Self {
+    Self(Utc::now())
+  }
+
   pub fn into_inner(self) -> Inner {
     self.0
+  }
+
+  pub fn to_rfc3339(&self) -> String {
+    self.0.to_rfc3339_opts(SecondsFormat::Secs, true)
   }
 }
 
 impl Default for Timestamp {
   fn default() -> Self {
-    Self(Utc::now())
+    Self::now()
   }
 }
 
@@ -50,5 +58,17 @@ impl TryFrom<&'_ str> for Timestamp {
       Ok(datetime) => Ok(Self(datetime.into())),
       Err(error) => Err(Error::InvalidTimestamp(error)),
     }
+  }
+}
+
+impl fmt::Debug for Timestamp {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "{:?}", self.to_rfc3339())
+  }
+}
+
+impl fmt::Display for Timestamp {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "{}", self.to_rfc3339())
   }
 }
