@@ -26,6 +26,13 @@ impl KeyPair {
   }
 }
 
+impl Drop for KeyPair {
+  fn drop(&mut self) {
+    self.public.zeroize();
+    self.secret.zeroize();
+  }
+}
+
 impl Zeroize for KeyPair {
   fn zeroize(&mut self) {
     self.public.zeroize();
