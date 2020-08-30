@@ -13,3 +13,5 @@ homepage = "https://www.iota.org"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+hex = "0.4"
+zeroize = "1.1"
