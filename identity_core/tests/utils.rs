@@ -74,14 +74,8 @@ fn test_subject_from() {
 /// Test public key structure from String and with PublicKey::new
 #[test]
 fn test_public_key() {
-    let raw_str = r#"
-    {
-        "id":"did:iota:123456789abcdefghi#keys-1",
-        "type":"Ed25519VerificationKey2018",
-        "controller":"did:iota:pqrstuvwxyz0987654321",
-        "publicKeyBase58":"H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-    }
-    "#;
+    let raw_str = include_str!("public_key.json");
+
     let pk_t = PublicKey::from_str(raw_str).unwrap();
     let pk = PublicKey::new(
         "did:iota:123456789abcdefghi#keys-1".into(),
@@ -102,14 +96,7 @@ fn test_public_key() {
 /// Test the custom PublicKeyType to see if it works as expected.  
 #[test]
 fn test_custom_key_type() {
-    let raw_str = r#"
-    {
-        "id":"did:iota:123456789abcdefghi#keys-1",
-        "type": "SomeKeyType",
-        "controller":"did:iota:pqrstuvwxyz0987654321",
-        "publicKeyBase58":"H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-    }
-    "#;
+    let raw_str = include_str!("custom_key.json");
 
     let pk_t = PublicKey::from_str(raw_str).unwrap();
 
@@ -131,11 +118,7 @@ fn test_custom_key_type() {
 /// Test service without ServiceEndpoint body.
 #[test]
 fn test_service_with_no_endpoint_body() {
-    let raw_str = r#"{
-        "id": "did:into:123#edv",
-        "type": "EncryptedDataVault",
-        "serviceEndpoint": "https://edv.example.com/"
-    }"#;
+    let raw_str = include_str!("service_test.json");
 
     let service = Service::new(
         "did:into:123#edv".into(),
@@ -158,18 +141,7 @@ fn test_service_with_no_endpoint_body() {
 /// Test Service with a ServiceEndpoint Body.
 #[test]
 fn test_service_with_body() {
-    let raw_str = r#"
-    {
-        "id": "did:example:123456789abcdefghi#hub",
-        "type": "IdentityHub",
-        "publicKey": "did:example:123456789abcdefghi#key-1",
-        "serviceEndpoint": {
-          "@context": "https://schema.identity.foundation/hub",
-          "type": "UserHubEndpoint",
-          "instances": ["did:example:456", "did:example:789"]
-        }
-    }
-        "#;
+    let raw_str = include_str!("service_endpoint.json");
 
     let service = Service::new(
         "did:example:123456789abcdefghi#hub".into(),

@@ -1,0 +1,13 @@
+{
+    "id": "did:example:123456789abcdefghi#hub",
+    "type": "IdentityHub",
+    "publicKey": "did:example:123456789abcdefghi#key-1",
+    "serviceEndpoint": {
+        "@context": "https://schema.identity.foundation/hub",
+        "type": "UserHubEndpoint",
+        "instances": [
+            "did:example:456",
+            "did:example:789"
+        ]
+    }
+}

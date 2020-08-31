@@ -11,28 +11,7 @@ use serde_diff::{Apply, Diff};
 /// Test a full Did document from String.
 #[test]
 fn test_parse_document() {
-    let json_str = r#"
-    {
-        "@context": ["https://w3id.org/did/v1", "https://w3id.org/security/v1"],
-        "id": "did:iota:123456789abcdefghi",
-        "publicKey": [{
-            "id": "did:iota:123456789abcdefghi#keys-1",
-            "type": "RsaVerificationKey2018",
-            "controller": "did:iota:123456789abcdefghi",
-            "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
-        }, {
-            "id": "did:iota:123456789abcdefghi#keys-2",
-            "type": "Ed25519VerificationKey2018",
-            "controller": "did:iota:pqrstuvwxyz0987654321",
-            "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-        }, {
-            "id": "did:iota:123456789abcdefghi#keys-3",
-            "type": "EcdsaSecp256k1VerificationKey2019",
-            "controller": "did:iota:123456789abcdefghi",
-            "publicKeyHex": "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
-        }]
-    }
-    "#;
+    let json_str = include_str!("doc_example.json");
 
     let doc = DIDDocument::from_str(json_str);
 
@@ -149,29 +128,7 @@ fn test_doc_diff() {
 
 #[test]
 fn test_doc_diff_timestamps() {
-    let json_str = r#"
-    {
-        "@context": ["https://w3id.org/did/v1", "https://w3id.org/security/v1"],
-        "id": "did:iota:123456789abcdefghi",
-        "updated": "2020-08-31T05:46:33.559590+00:00Z",
-        "publicKey": [{
-            "id": "did:iota:123456789abcdefghi#keys-1",
-            "type": "RsaVerificationKey2018",
-            "controller": "did:iota:123456789abcdefghi",
-            "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
-        }, {
-            "id": "did:iota:123456789abcdefghi#keys-2",
-            "type": "Ed25519VerificationKey2018",
-            "controller": "did:iota:pqrstuvwxyz0987654321",
-            "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-        }, {
-            "id": "did:iota:123456789abcdefghi#keys-3",
-            "type": "EcdsaSecp256k1VerificationKey2019",
-            "controller": "did:iota:123456789abcdefghi",
-            "publicKeyHex": "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
-        }]
-    }
-    "#;
+    let json_str = include_str!("doc_example.json");
 
     let mut doc1 = DIDDocument::default();
 
@@ -192,95 +149,7 @@ fn test_doc_diff_timestamps() {
 
 #[test]
 fn test_diff_strings() {
-    let diff_str = r#"
-    [
-    {
-        "Enter": {
-            "Field": "context"
-        }
-    },
-    {
-        "Enter": {
-            "FieldIndex": 0
-        }
-    },
-    {
-        "Enter": {
-            "CollectionIndex": 0
-        }
-    },
-    {
-        "Value": "https://w3id.org/did/v1"
-    },
-    "Exit",
-    "Exit",
-    {
-        "Enter": {
-            "Field": "id"
-        }
-    },
-    {
-        "Enter": {
-            "FieldIndex": 0
-        }
-    },
-    {
-        "Enter": {
-            "Field": "method_name"
-        }
-    },
-    {
-        "Value": "iota"
-    },
-    {
-        "Enter": {
-            "Field": "id_segments"
-        }
-    },
-    {
-        "Enter": "AddToCollection"
-    },
-    {
-        "Value": "123456789abcdefghi"
-    },
-    "Exit",
-    "Exit",
-    "Exit",
-    {
-        "Enter": {
-            "Field": "public_key"
-        }
-    },
-    {
-        "Enter": "AddToCollection"
-    },
-    {
-        "Value": {
-            "id": "did:iota:123456789abcdefghi#keys-1",
-            "type": "RsaVerificationKey2018",
-            "controller": "did:iota:123456789abcdefghi",
-            "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-        }
-    },
-    "Exit",
-    {
-        "Enter": {
-            "Field": "services"
-        }
-    },
-    {
-        "Enter": "AddToCollection"
-    },
-    {
-        "Value": {
-            "id": "did:into:123#edv",
-            "type": "EncryptedDataVault",
-            "serviceEndpoint": "https://edv.example.com/"
-        }
-    },
-    "Exit"
-    ]  
-    "#;
+    let diff_str = include_str!("diff_example.json");
 
     let def_doc = DIDDocument::default();
 
@@ -319,62 +188,8 @@ fn test_diff_strings() {
 fn test_doc_metadata() {
     use std::collections::HashMap;
 
-    let json_str = r#"
-    {
-        "@context": ["https://w3id.org/did/v1", "https://w3id.org/security/v1"],
-        "id": "did:iota:123456789abcdefghi",
-        "updated": "2020-08-31T05:46:33.559590+00:00Z",
-        "publicKey": [{
-            "id": "did:iota:123456789abcdefghi#keys-1",
-            "type": "RsaVerificationKey2018",
-            "controller": "did:iota:123456789abcdefghi",
-            "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
-        }, {
-            "id": "did:iota:123456789abcdefghi#keys-2",
-            "type": "Ed25519VerificationKey2018",
-            "controller": "did:iota:pqrstuvwxyz0987654321",
-            "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-        }, {
-            "id": "did:iota:123456789abcdefghi#keys-3",
-            "type": "EcdsaSecp256k1VerificationKey2019",
-            "controller": "did:iota:123456789abcdefghi",
-            "publicKeyHex": "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
-        }]
-    }
-    "#;
-
-    let result_str = r#"
-    {
-        "@context": [
-            "https://w3id.org/did/v1",
-            "https://w3id.org/security/v1"
-        ],
-        "id": "did:iota:123456789abcdefghi",
-        "updated": "2020-08-31T05:46:33.559590+00:00Z",
-        "publicKey": [
-            {
-                "id": "did:iota:123456789abcdefghi#keys-1",
-                "type": "RsaVerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
-            },
-            {
-                "id": "did:iota:123456789abcdefghi#keys-2",
-                "type": "Ed25519VerificationKey2018",
-                "controller": "did:iota:pqrstuvwxyz0987654321",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-            },
-            {
-                "id": "did:iota:123456789abcdefghi#keys-3",
-                "type": "EcdsaSecp256k1VerificationKey2019",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyHex": "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
-            }
-        ],
-        "some_more": "metadata_stuff",
-        "some": "metadata"
-    }
-    "#;
+    let json_str = include_str!("doc_example.json");
+    let result_str = include_str!("doc_metadata.json");
 
     let doc = DIDDocument::from_str(json_str);
 
