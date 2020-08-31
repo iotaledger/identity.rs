@@ -1,7 +1,8 @@
+use identity_core::common::Object;
+
 use crate::{
   canonicalize::{CanonicalJSON, Canonicalize},
   error::Result,
-  identity_core::Object,
   key::{KeyGenerator, KeyPair, PublicKey, SecretKey},
 };
 

@@ -33,3 +33,6 @@ hex = "0.4"
 lazy_static = "1.4"
 rand = "0.7"
 zeroize = "1.1"
+
+identity_core = { path = "../identity_core" }
+# identity_core = { git = "https://github.com/iotaledger/identity.rs", branch = "feat/common-core-types" }

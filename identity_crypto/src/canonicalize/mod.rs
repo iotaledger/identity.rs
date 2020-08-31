@@ -1,10 +1,8 @@
 use cjson::to_vec;
+use identity_core::common::Object;
 use serde_json::to_value;
 
-use crate::{
-  error::{Error, Result},
-  identity_core::Object,
-};
+use crate::error::{Error, Result};
 
 pub trait Canonicalize {
   fn canonicalize(object: Object) -> Result<Vec<u8>>;

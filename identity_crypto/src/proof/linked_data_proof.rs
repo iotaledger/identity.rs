@@ -1,7 +1,6 @@
-use crate::{
-  identity_core::{Object, Timestamp},
-  proof::ProofOptions,
-};
+use identity_core::common::{Object, Timestamp};
+
+use crate::proof::ProofOptions;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct LinkedDataProof {

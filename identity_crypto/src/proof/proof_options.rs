@@ -1,9 +1,6 @@
-use crate::{
-  error::Result,
-  identity_core::{Object, Timestamp},
-  proof::ProofDocument,
-  utils::convert,
-};
+use identity_core::common::{Object, Timestamp};
+
+use crate::{error::Result, proof::ProofDocument, utils::convert};
 
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]

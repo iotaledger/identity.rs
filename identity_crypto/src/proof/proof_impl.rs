@@ -1,6 +1,7 @@
+use identity_core::common::{Object, Timestamp};
+
 use crate::{
   error::{Error, Result},
-  identity_core::{Object, Timestamp},
   key::{KeyGenerator, KeyPair, PublicKey, SecretKey},
   proof::{LinkedDataProof, ProofDocument, ProofOptions},
   signature::SignatureSuite,
