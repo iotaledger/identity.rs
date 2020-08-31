@@ -19,6 +19,7 @@ pub mod prelude {
       Context, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, OneOrMany, RefreshService,
       TermsOfUse, URI,
     },
+    error::{Error, Result},
     credential::{Credential, CredentialBuilder},
     presentation::{Presentation, PresentationBuilder},
     verifiable::{VerifiableCredential, VerifiablePresentation},
