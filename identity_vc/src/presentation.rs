@@ -1,4 +1,9 @@
 use identity_core::common::{Object, Value};
+use identity_crypto::{
+  error::Result as CryptoResult,
+  proof::{LinkedDataProof, ProofDocument},
+  utils::convert,
+};
 use serde_json::{from_str, to_string};
 
 use crate::{
@@ -60,6 +65,12 @@ impl Presentation {
 
   pub fn to_json(&self) -> Result<String> {
     to_string(self).map_err(Error::EncodeJSON)
+  }
+}
+
+impl ProofDocument for Presentation {
+  fn to_object(&self) -> CryptoResult<Object> {
+    convert(self)
   }
 }
 
@@ -159,7 +170,7 @@ impl PresentationBuilder {
   }
 
   /// Consumes the `PresentationBuilder`, returning a valid `VerifiablePresentation`
-  pub fn build_verifiable(self, proof: impl Into<OneOrMany<Object>>) -> Result<VerifiablePresentation> {
+  pub fn build_verifiable(self, proof: impl Into<OneOrMany<LinkedDataProof>>) -> Result<VerifiablePresentation> {
     self
       .build()
       .map(|credential| VerifiablePresentation::new(credential, proof))

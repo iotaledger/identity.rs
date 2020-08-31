@@ -1,4 +1,9 @@
 use identity_core::common::{Object, Timestamp, Value};
+use identity_crypto::{
+  error::Result as CryptoResult,
+  proof::{LinkedDataProof, ProofDocument},
+  utils::convert,
+};
 use serde_json::{from_str, to_string};
 
 use crate::{
@@ -82,6 +87,12 @@ impl Credential {
 
   pub fn to_json(&self) -> Result<String> {
     to_string(self).map_err(Error::EncodeJSON)
+  }
+}
+
+impl ProofDocument for Credential {
+  fn to_object(&self) -> CryptoResult<Object> {
+    convert(self)
   }
 }
 
@@ -223,7 +234,7 @@ impl CredentialBuilder {
   }
 
   /// Consumes the `CredentialBuilder`, returning a valid `VerifiableCredential`
-  pub fn build_verifiable(self, proof: impl Into<OneOrMany<Object>>) -> Result<VerifiableCredential> {
+  pub fn build_verifiable(self, proof: impl Into<OneOrMany<LinkedDataProof>>) -> Result<VerifiableCredential> {
     self
       .build()
       .map(|credential| VerifiableCredential::new(credential, proof))

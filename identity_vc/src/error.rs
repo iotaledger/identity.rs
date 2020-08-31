@@ -1,4 +1,6 @@
 use chrono::ParseError as ChronoError;
+use identity_core::Error as CoreError;
+use identity_crypto::error::Error as CryptoError;
 use std::result::Result as StdResult;
 use thiserror::Error as ThisError;
 
@@ -26,6 +28,10 @@ pub enum Error {
   DecodeJSON(serde_json::Error),
   #[error("Failed to encode JSON: {0}")]
   EncodeJSON(serde_json::Error),
+  #[error(transparent)]
+  CoreError(#[from] CoreError),
+  #[error(transparent)]
+  CryptoError(#[from] CryptoError),
 }
 
 pub type Result<T> = StdResult<T, Error>;

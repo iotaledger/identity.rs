@@ -14,6 +14,10 @@ homepage = "https://www.iota.org"
 name = "vc_test_suite"
 path = "bin/vc_test_suite.rs"
 
+[[bin]]
+name = "credential"
+path = "bin/credential.rs"
+
 [dependencies]
 # error handling
 thiserror = "1.0"
@@ -28,3 +32,4 @@ serde_cbor = "0.11"
 chrono = { version = "0.4", features = ["serde"] }
 
 identity_core = { git = "https://github.com/iotaledger/identity.rs", branch = "feat/common-core-types" }
+identity_crypto = { git = "https://github.com/iotaledger/identity.rs", branch = "feat/identity-crypto" }

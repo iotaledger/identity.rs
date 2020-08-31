@@ -1,3 +1,4 @@
 mod validation;
+mod verification;
 
-pub use self::validation::*;
+pub use self::{validation::*, verification::*};
