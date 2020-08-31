@@ -74,3 +74,9 @@ impl ToString for ServiceEndpoint {
         serde_json::to_string(self).expect("Unable to serialize the Service Endpoint struct")
     }
 }
+
+impl From<&str> for ServiceEndpoint {
+    fn from(s: &str) -> Self {
+        serde_json::from_str(s).expect("Unable to parse string")
+    }
+}
