@@ -8,6 +8,9 @@ use crate::{
   signature::SignatureSuite,
 };
 
+/// An implementation of the 2019 Ecdsa Secp256k1 Signature Suite
+///
+/// Ref: https://w3c-ccg.github.io/lds-ecdsa-secp256k1-2019/
 #[derive(Clone, Copy, Debug)]
 pub struct EcdsaSecp256k1;
 
