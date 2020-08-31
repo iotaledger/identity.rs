@@ -181,7 +181,7 @@ fn test_diff_strings() {
     let json_diff = serde_json::to_string(&Diff::serializable(&def_doc, &doc)).unwrap();
 
     // remove newlines and spaces from the diff_str.
-    assert_eq!(json_diff, diff_str.replace("\n", "").replace(" ", ""))
+    assert_eq!(json_diff, diff_str.replace("\n", "").replace(" ", "").replace("\r", ""))
 }
 
 #[test]
