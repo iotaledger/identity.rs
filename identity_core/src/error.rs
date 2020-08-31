@@ -25,7 +25,7 @@ pub enum Error {
     SerdeError(#[from] serde_json::Error),
     /// Error caused when parsing an invalid timestamp.
     #[error("Timestamp Error: {0}")]
-    InvalidTimestamp(ChronoError),
+    InvalidTimestamp(#[from] ChronoError),
 }
 
 /// The main crate result type derived from the `anyhow::Result` type.
