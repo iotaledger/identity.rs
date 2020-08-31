@@ -1,9 +1,9 @@
-use anyhow::Result;
+use identity_core::common::{Object, Value};
 
 use crate::{
-  common::{Context, Object, OneOrMany, RefreshService, TermsOfUse, URI, Value},
+  common::{Context, OneOrMany, RefreshService, TermsOfUse, URI},
   credential::Credential,
-  error::Error,
+  error::Result,
   utils::validate_presentation_structure,
   verifiable::{VerifiableCredential, VerifiablePresentation},
 };

@@ -1,6 +1,7 @@
+use identity_core::common::Object;
 use std::fmt;
 
-use crate::common::{Object, URI};
+use crate::common::URI;
 
 /// A reference to a JSON-LD context
 #[derive(Clone, PartialEq, Deserialize, Serialize)]

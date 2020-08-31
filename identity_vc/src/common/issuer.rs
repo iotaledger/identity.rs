@@ -1,4 +1,6 @@
-use crate::common::{Object, URI};
+use identity_core::common::Object;
+
+use crate::common::URI;
 
 /// TODO:
 ///   - Deserialize single URI into object-style layout

@@ -1,9 +1,7 @@
-use anyhow::Result;
-
 use crate::{
   common::{Context, OneOrMany, URI},
   credential::Credential,
-  error::Error,
+  error::{Error, Result},
   presentation::Presentation,
 };
 
@@ -21,17 +19,15 @@ pub fn validate_credential_structure(credential: &Credential) -> Result<()> {
   validate_uri("Credential issuer", credential.issuer.uri())?;
 
   // Credentials MUST have at least one subject
-  ensure!(
-    !credential.credential_subject.is_empty(),
-    Error::MissingCredentialSubject
-  );
+  if credential.credential_subject.is_empty() {
+    return Err(Error::MissingCredentialSubject);
+  }
 
   // Each subject is defined as one or more properties - no empty objects
   for subject in credential.credential_subject.iter() {
-    ensure!(
-      subject.id.is_some() || !subject.properties.is_empty(),
-      Error::InvalidCredentialSubject
-    );
+    if subject.id.is_none() && subject.properties.is_empty() {
+      return Err(Error::InvalidCredentialSubject);
+    }
   }
 
   Ok(())
@@ -59,7 +55,9 @@ pub fn validate_presentation_structure(presentation: &Presentation) -> Result<()
 }
 
 pub fn validate_types(name: &'static str, base: &str, types: &OneOrMany<String>) -> Result<()> {
-  ensure!(types.contains(&base.into()), Error::MissingBaseType(name));
+  if !types.contains(&base.into()) {
+    return Err(Error::MissingBaseType(name));
+  }
 
   Ok(())
 }
@@ -68,8 +66,8 @@ pub fn validate_context(name: &'static str, context: &OneOrMany<Context>) -> Res
   // The first Credential/Presentation context MUST be a URI representing the base context
   match context.get(0) {
     Some(Context::URI(uri)) if uri == Credential::BASE_CONTEXT => Ok(()),
-    Some(_) => bail!(Error::InvalidBaseContext(name)),
-    None => bail!(Error::MissingBaseContext(name)),
+    Some(_) => Err(Error::InvalidBaseContext(name)),
+    None => Err(Error::MissingBaseContext(name)),
   }
 }
 
@@ -77,10 +75,9 @@ pub fn validate_uri(name: &'static str, uri: &URI) -> Result<()> {
   const KNOWN: [&str; 4] = ["did:", "urn:", "http:", "https:"];
 
   // TODO: Proper URI validation
-  ensure!(
-    KNOWN.iter().any(|scheme| uri.starts_with(scheme)),
-    Error::InvalidURI(name),
-  );
+  if !KNOWN.iter().any(|scheme| uri.starts_with(scheme)) {
+    return Err(Error::InvalidURI(name));
+  }
 
   Ok(())
 }

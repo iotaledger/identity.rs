@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate identity_vc;
+extern crate identity_core;
 
 #[macro_use]
 mod macros;

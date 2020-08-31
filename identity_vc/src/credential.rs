@@ -1,11 +1,11 @@
-use anyhow::Result;
+use identity_core::common::{Object, Timestamp, Value};
 
 use crate::{
   common::{
-    Context, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, Object, OneOrMany,
-    RefreshService, TermsOfUse, Timestamp, Value, URI,
+    Context, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, OneOrMany, RefreshService,
+    TermsOfUse, URI,
   },
-  error::Error,
+  error::{Error, Result},
   utils::validate_credential_structure,
   verifiable::VerifiableCredential,
 };
@@ -176,7 +176,7 @@ impl CredentialBuilder {
       id: self.id,
       types: self.types.into(),
       credential_subject: self.credential_subject.into(),
-      issuer: self.issuer.ok_or_else(|| anyhow!("Missing issuer"))?,
+      issuer: self.issuer.ok_or_else(|| Error::MissingCredentialIssuer)?,
       issuance_date: self.issuance_date,
       expiration_date: self.expiration_date,
       credential_status: None,

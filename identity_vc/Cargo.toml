@@ -26,3 +26,5 @@ serde_cbor = "0.11"
 
 # timestamps
 chrono = { version = "0.4", features = ["serde"] }
+
+identity_core = { git = "https://github.com/iotaledger/identity.rs", branch = "feat/common-core-types" }

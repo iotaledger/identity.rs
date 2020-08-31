@@ -4,7 +4,7 @@ use thiserror::Error as ThisError;
 
 #[derive(Debug, ThisError)]
 pub enum Error {
-  #[error("Can't convert `Object` to `{0}`")]
+  #[error("Cannot convert `Object` to `{0}`")]
   BadObjectConversion(&'static str),
   #[error("Missing base type for {0}")]
   MissingBaseType(&'static str),
@@ -20,6 +20,8 @@ pub enum Error {
   MissingCredentialSubject,
   #[error("Invalid `Credential` subject")]
   InvalidCredentialSubject,
+  #[error("Missing `Credential` issuer")]
+  MissingCredentialIssuer,
 }
 
 pub type Result<T> = StdResult<T, Error>;

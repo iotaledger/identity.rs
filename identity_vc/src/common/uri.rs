@@ -29,12 +29,15 @@ impl Deref for URI {
   }
 }
 
-impl<T> From<T> for URI
-where
-  T: Into<String>,
-{
-  fn from(other: T) -> Self {
+impl From<&'_ str> for URI {
+  fn from(other: &'_ str) -> Self {
     Self(other.into())
+  }
+}
+
+impl From<String> for URI {
+  fn from(other: String) -> Self {
+    Self(other)
   }
 }
 
