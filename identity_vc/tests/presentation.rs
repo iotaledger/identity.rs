@@ -56,7 +56,10 @@ fn test_builder_valid() {
 #[test]
 #[should_panic = "Invalid URI for Presentation id"]
 fn test_builder_invalid_id_fmt() {
-  PresentationBuilder::new().id("foo").build().unwrap();
+  PresentationBuilder::new()
+    .id("foo")
+    .build()
+    .unwrap_or_else(|error| panic!("{}", error));
 }
 
 #[test]
@@ -66,38 +69,38 @@ fn test_builder_invalid_holder_fmt() {
     .id("did:iota:123")
     .holder("d00m")
     .build()
-    .unwrap();
+    .unwrap_or_else(|error| panic!("{}", error));
 }
 
 #[test]
-#[should_panic = "Can't convert `Object` to `RefreshService`"]
+#[should_panic = "Cannot convert `Object` to `RefreshService`"]
 fn test_builder_invalid_refresh_service_missing_id() {
   PresentationBuilder::new()
     .id("did:iota:123")
     .try_refresh_service(object!(type: "RefreshServiceType"))
-    .unwrap()
+    .unwrap_or_else(|error| panic!("{}", error))
     .build()
-    .unwrap();
+    .unwrap_or_else(|error| panic!("{}", error));
 }
 
 #[test]
-#[should_panic = "Can't convert `Object` to `RefreshService`"]
+#[should_panic = "Cannot convert `Object` to `RefreshService`"]
 fn test_builder_invalid_refresh_service_missing_type() {
   PresentationBuilder::new()
     .id("did:iota:123")
     .try_refresh_service(object!(id: "did:iota:rsv:123"))
-    .unwrap()
+    .unwrap_or_else(|error| panic!("{}", error))
     .build()
-    .unwrap();
+    .unwrap_or_else(|error| panic!("{}", error));
 }
 
 #[test]
-#[should_panic = "Can't convert `Object` to `TermsOfUse`"]
+#[should_panic = "Cannot convert `Object` to `TermsOfUse`"]
 fn test_builder_invalid_terms_of_use_missing_type() {
   PresentationBuilder::new()
     .id("did:iota:123")
     .try_terms_of_use(object!(id: "did:iota:rsv:123"))
-    .unwrap()
+    .unwrap_or_else(|error| panic!("{}", error))
     .build()
-    .unwrap();
+    .unwrap_or_else(|error| panic!("{}", error));
 }

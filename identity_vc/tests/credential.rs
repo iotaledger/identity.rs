@@ -52,7 +52,10 @@ fn test_builder_valid() {
 #[test]
 #[should_panic = "Missing `Credential` subject"]
 fn test_builder_missing_subjects() {
-  CredentialBuilder::new().issuer("did:issuer").build().unwrap();
+  CredentialBuilder::new()
+    .issuer("did:issuer")
+    .build()
+    .unwrap_or_else(|error| panic!("{}", error));
 }
 
 #[test]
@@ -61,19 +64,19 @@ fn test_builder_invalid_subjects() {
   CredentialBuilder::new()
     .issuer("did:issuer")
     .try_subject(object!())
-    .unwrap()
+    .unwrap_or_else(|error| panic!("{}", error))
     .build()
-    .unwrap();
+    .unwrap_or_else(|error| panic!("{}", error));
 }
 
 #[test]
-#[should_panic = "Missing issuer"]
+#[should_panic = "Missing `Credential` issuer"]
 fn test_builder_missing_issuer() {
   CredentialBuilder::new()
     .try_subject(object!(id: "did:sub"))
-    .unwrap()
+    .unwrap_or_else(|error| panic!("{}", error))
     .build()
-    .unwrap();
+    .unwrap_or_else(|error| panic!("{}", error));
 }
 
 #[test]
@@ -81,8 +84,8 @@ fn test_builder_missing_issuer() {
 fn test_builder_invalid_issuer() {
   CredentialBuilder::new()
     .try_subject(object!(id: "did:sub"))
-    .unwrap()
+    .unwrap_or_else(|error| panic!("{}", error))
     .issuer("foo")
     .build()
-    .unwrap();
+    .unwrap_or_else(|error| panic!("{}", error));
 }
