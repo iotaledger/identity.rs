@@ -1,6 +1,6 @@
 use identity_core::{
     did::DID,
-    utils::{Context, PublicKey, Service, Subject},
+    utils::{Context, KeyData, PublicKey, Service, Subject},
 };
 
 use std::str::FromStr;
@@ -77,12 +77,14 @@ fn test_public_key() {
     let raw_str = include_str!("public_key.json");
 
     let pk_t = PublicKey::from_str(raw_str).unwrap();
+
+    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
     let pk = PublicKey::new(
         "did:iota:123456789abcdefghi#keys-1".into(),
         "Ed25519VerificationKey2018".into(),
         "did:iota:pqrstuvwxyz0987654321".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        key_data,
     )
     .unwrap();
 
@@ -90,28 +92,6 @@ fn test_public_key() {
 
     let res = serde_json::to_string(&pk).unwrap();
 
-    assert_eq!(res, pk_t.to_string());
-}
-
-/// Test the custom PublicKeyType to see if it works as expected.  
-#[test]
-fn test_custom_key_type() {
-    let raw_str = include_str!("custom_key.json");
-
-    let pk_t = PublicKey::from_str(raw_str).unwrap();
-
-    let pk = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "SomeKeyType".into(),
-        "did:iota:pqrstuvwxyz0987654321".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
-    )
-    .unwrap();
-
-    assert_eq!(pk, pk_t);
-
-    let res = serde_json::to_string(&pk).unwrap();
     assert_eq!(res, pk_t.to_string());
 }
 

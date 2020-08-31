@@ -213,9 +213,7 @@ impl Serialize for DID {
 }
 
 impl From<DIDTuple> for Param {
-    fn from(tuple: DIDTuple) -> Param {
-        let (name, value) = tuple;
-
+    fn from((name, value): DIDTuple) -> Param {
         Param { name, value }
     }
 }

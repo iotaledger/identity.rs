@@ -1,7 +1,7 @@
 use identity_core::{
     did::DID,
     document::DIDDocument,
-    utils::{Context, PublicKey, Service, Subject},
+    utils::{Context, KeyData, PublicKey, Service, Subject},
 };
 
 use std::str::FromStr;
@@ -53,12 +53,14 @@ fn test_doc_creation() {
     )
     .unwrap();
     did_doc.update_service(service.clone());
+
+    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
     let public_key = PublicKey::new(
         "did:iota:123456789abcdefghi#keys-1".into(),
         "RsaVerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        key_data,
     )
     .unwrap();
     did_doc.update_public_key(public_key.clone());
@@ -104,12 +106,14 @@ fn test_doc_diff() {
     )
     .unwrap();
     new.update_service(service);
+
+    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
     let public_key = PublicKey::new(
         "did:iota:123456789abcdefghi#keys-1".into(),
         "RsaVerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        key_data,
     )
     .unwrap();
     new.update_public_key(public_key);
@@ -168,12 +172,14 @@ fn test_diff_strings() {
     )
     .unwrap();
     doc.update_service(service);
+
+    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
     let public_key = PublicKey::new(
         "did:iota:123456789abcdefghi#keys-1".into(),
         "RsaVerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        key_data,
     )
     .unwrap();
     doc.update_public_key(public_key);
