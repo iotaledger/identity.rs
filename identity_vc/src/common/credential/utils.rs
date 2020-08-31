@@ -1,6 +1,9 @@
 use identity_core::common::{Object, Value};
 
-use crate::common::OneOrMany;
+use crate::{
+  common::OneOrMany,
+  error::{Error, Result},
+};
 
 pub fn take_object_id(object: &mut Object) -> Option<String> {
   match object.remove("id") {
@@ -10,12 +13,20 @@ pub fn take_object_id(object: &mut Object) -> Option<String> {
   }
 }
 
+pub fn try_take_object_id(name: &'static str, object: &mut Object) -> Result<String> {
+  take_object_id(object).ok_or_else(|| Error::BadObjectConversion(name))
+}
+
 pub fn take_object_type(object: &mut Object) -> Option<OneOrMany<String>> {
   match object.remove("type") {
     Some(Value::String(value)) => Some(value.into()),
     Some(Value::Array(values)) => Some(collect_types(values)),
     Some(_) | None => None,
   }
+}
+
+pub fn try_take_object_type(name: &'static str, object: &mut Object) -> Result<OneOrMany<String>> {
+  take_object_type(object).ok_or_else(|| Error::BadObjectConversion(name))
 }
 
 fn collect_types(values: Vec<Value>) -> OneOrMany<String> {

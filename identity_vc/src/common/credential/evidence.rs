@@ -2,7 +2,7 @@ use identity_core::common::Object;
 use std::convert::TryFrom;
 
 use crate::{
-  common::{take_object_id, take_object_type, OneOrMany},
+  common::{take_object_id, try_take_object_type, OneOrMany},
   error::Error,
 };
 
@@ -26,12 +26,7 @@ impl TryFrom<Object> for Evidence {
     let mut this: Self = Default::default();
 
     this.id = take_object_id(&mut other);
-
-    this.types = match take_object_type(&mut other) {
-      Some(types) => types,
-      None => return Err(Error::BadObjectConversion("Evidence")),
-    };
-
+    this.types = try_take_object_type("Evidence", &mut other)?;
     this.properties = other;
 
     Ok(this)
