@@ -19,6 +19,14 @@ macro_rules! impl_key_bytes {
       pub fn is_empty(&self) -> bool {
         self.0.is_empty()
       }
+
+      pub fn check_length(&self, valid: &[usize]) -> $crate::error::Result<()> {
+        if valid.contains(&self.len()) {
+          Ok(())
+        } else {
+          Err($crate::error::Error::InvalidKeyLength(stringify!($ident)))
+        }
+      }
     }
 
     impl Drop for $ident {

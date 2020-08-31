@@ -1,8 +1,8 @@
 use crate::{
-  signature::SignatureSuite,
   error::Result,
   key::{PublicKey, SecretKey},
   proof::{LinkedDataProof, ProofDocument, ProofOptions},
+  signature::SignatureSuite,
 };
 
 pub struct Proof(Box<dyn SignatureSuite>);

@@ -4,6 +4,10 @@ use crate::{
 };
 
 pub trait SignatureSuite {
+  fn signature_type(&self) -> &'static str;
+
+  fn key_type(&self) -> &'static str;
+
   fn keypair(&self, generator: KeyGenerator) -> Result<KeyPair>;
 
   fn sign(&self, document: &[u8], secret: &SecretKey) -> Result<Vec<u8>>;
