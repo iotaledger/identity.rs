@@ -23,5 +23,8 @@ pub enum Error {
     /// identity_integration Error
     #[error("identity_core Error: {0}")]
     IdentityIntegrationError(#[from] identity_integration::Error),
+    /// serde_json Error
+    #[error("serde_json Error: {0}")]
+    SerdeJsonError(#[from] serde_json::Error),
 }
 pub type Result<T> = AnyhowResult<T, Error>;

@@ -40,12 +40,11 @@ async fn main() -> Result<()> {
         "did:iota:com:123456789abcdefghij".into(),
         "publicKeyBase58".into(),
         "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
-    )
-    .unwrap();
+    )?;
     new.update_public_key(public_key);
     new.update_time();
     // diff the two docs and create a json string of the diff.
-    let json_diff = serde_json::to_string(&Diff::serializable(&old, &new)).unwrap();
+    let json_diff = serde_json::to_string(&Diff::serializable(&old, &new))?;
     let did_payload = Payload::DIDDocumentDifferences(Differences {
         did: new.derive_did()?,
         diff: json_diff.clone(),
@@ -68,7 +67,7 @@ async fn main() -> Result<()> {
 
     let mut deserializer = serde_json::Deserializer::from_str(&json_diff);
     // apply the json string to the old document.
-    Apply::apply(&mut deserializer, &mut old).unwrap();
+    Apply::apply(&mut deserializer, &mut old)?;
     // check to see that the old and new docs cotain all of the same fields.
     assert_eq!(resolution_result.did_document.to_string(), old.to_string());
     Ok(())
