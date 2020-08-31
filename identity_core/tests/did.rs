@@ -326,8 +326,8 @@ fn inner_did_frag(f: &str) -> Option<DID> {
 
 // Property Based Testing for the DID Parser and DID implementation.
 proptest! {
-    // set proptest config to 10000 cases.  10000 values will be passed into the proceeding tests.
-    #![proptest_config(ProptestConfig::with_cases(10000))]
+    // set proptest config to 10000 cases.  1000 values will be passed into the proceeding tests.
+    #![proptest_config(ProptestConfig::with_cases(1000))]
     #[test]
     // Run cases that match the regex and are ascii as the id_segment.  Check if the parser accepts them and if the DID can be created with them.
     fn prop_parse_did_id_seg(s in "[a-z0-9A-Z._-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
