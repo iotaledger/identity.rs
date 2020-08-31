@@ -7,8 +7,8 @@ macro_rules! assert_matches {
 
 #[macro_export]
 macro_rules! timestamp {
-  ($expr:expr) => {{
-    use ::std::convert::TryFrom;
-    ::identity_core::common::Timestamp::try_from($expr).unwrap()
-  }};
+    ($expr:expr) => {{
+        use ::std::convert::TryFrom;
+        ::identity_core::common::Timestamp::try_from($expr).unwrap()
+    }};
 }

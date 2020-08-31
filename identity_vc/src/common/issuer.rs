@@ -8,28 +8,28 @@ use crate::common::URI;
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Issuer {
-  URI(URI),
-  OBJ {
-    id: URI,
-    #[serde(flatten)]
-    object: Object,
-  },
+    URI(URI),
+    OBJ {
+        id: URI,
+        #[serde(flatten)]
+        object: Object,
+    },
 }
 
 impl Issuer {
-  pub fn uri(&self) -> &URI {
-    match self {
-      Self::URI(uri) => uri,
-      Self::OBJ { id, .. } => id,
+    pub fn uri(&self) -> &URI {
+        match self {
+            Self::URI(uri) => uri,
+            Self::OBJ { id, .. } => id,
+        }
     }
-  }
 }
 
 impl<T> From<T> for Issuer
 where
-  T: Into<URI>,
+    T: Into<URI>,
 {
-  fn from(other: T) -> Self {
-    Self::URI(other.into())
-  }
+    fn from(other: T) -> Self {
+        Self::URI(other.into())
+    }
 }
