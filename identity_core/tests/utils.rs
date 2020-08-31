@@ -92,7 +92,7 @@ fn test_public_key() {
         id: "did:iota:123456789abcdefghi#keys-1".into(),
         key_type: "Ed25519VerificationKey2018".into(),
         controller: "did:iota:pqrstuvwxyz0987654321".into(),
-        key_data: key_data,
+        key_data,
         ..Default::default()
     }
     .init();
@@ -145,7 +145,7 @@ fn test_service_with_body() {
     let service = Service {
         id: "did:example:123456789abcdefghi#hub".into(),
         service_type: "IdentityHub".into(),
-        endpoint: endpoint,
+        endpoint,
     };
 
     let service_2: Service = Service::from_str(&raw_str).unwrap();
