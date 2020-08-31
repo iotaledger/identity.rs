@@ -1,3 +1,4 @@
+mod convert;
 mod encode;
 
-pub use self::encode::*;
+pub use self::{convert::*, encode::*};

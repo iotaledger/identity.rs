@@ -32,7 +32,7 @@ impl Canonicalize for CanonicalJSON {
 pub struct URGNA2012;
 
 impl Canonicalize for URGNA2012 {
-  fn canonicalize(object: Object) -> Result<Vec<u8>> {
+  fn canonicalize(_object: Object) -> Result<Vec<u8>> {
     todo!("URGNA2012::canonicalize")
   }
 }
@@ -44,7 +44,7 @@ impl Canonicalize for URGNA2012 {
 pub struct URDNA2015;
 
 impl Canonicalize for URDNA2015 {
-  fn canonicalize(object: Object) -> Result<Vec<u8>> {
+  fn canonicalize(_object: Object) -> Result<Vec<u8>> {
     todo!("URDNA2015::canonicalize")
   }
 }

@@ -54,7 +54,7 @@ impl Proof {
     Ok(LinkedDataProof {
       type_: self.signature_type().into(),
       proof_purpose: options.proof_purpose.expect("infallible"),
-      proof_value: signature.into(),
+      proof_value: signature,
       verification_method: options.verification_method,
       created: options.created.expect("infallible"),
       domain: options.domain,

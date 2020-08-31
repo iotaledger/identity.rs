@@ -2,6 +2,7 @@ use crate::{
   error::Result,
   identity_core::{Object, Timestamp},
   proof::ProofDocument,
+  utils::convert,
 };
 
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -20,6 +21,6 @@ pub struct ProofOptions {
 
 impl ProofDocument for ProofOptions {
   fn to_object(&self) -> Result<Object> {
-    todo!("ProofOptions -> Object")
+    convert(self)
   }
 }
