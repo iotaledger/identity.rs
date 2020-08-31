@@ -3,7 +3,10 @@ use std::{
   sync::{Arc, RwLock},
 };
 
-use crate::{error::Result, proof::Proof};
+use crate::{
+  error::{Error, Result},
+  proof::Proof,
+};
 
 type ProofBuilder = fn() -> Proof;
 type ProofTypes = HashMap<&'static str, ProofBuilder>;
@@ -17,14 +20,27 @@ pub struct ProofManager;
 
 impl ProofManager {
   pub fn add(name: &'static str, builder: ProofBuilder) -> Result<()> {
-    todo!()
+    PROOF_TYPES
+      .write()
+      .map_err(|_| Error::RwLockPoisonedWrite)?
+      .insert(name, builder);
+
+    Ok(())
   }
 
   pub fn all() -> Result<Vec<&'static str>> {
-    todo!()
+    PROOF_TYPES
+      .read()
+      .map_err(|_| Error::RwLockPoisonedRead)
+      .map(|suites| suites.keys().copied().collect())
   }
 
-  pub fn get(name: &str) -> Result<Proof> {
-    todo!()
+  pub fn get(name: &(impl AsRef<str> + ?Sized)) -> Result<Proof> {
+    PROOF_TYPES
+      .read()
+      .map_err(|_| Error::RwLockPoisonedRead)?
+      .get(name.as_ref())
+      .ok_or_else(|| Error::MissingProofType(name.as_ref().into()))
+      .map(|builder| builder())
   }
 }
