@@ -66,3 +66,21 @@ impl From<Object> for Value {
         Value::Object(other.into())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_macro_empty() {
+        assert!(object!().is_empty());
+        assert_eq!(object!(), object!());
+    }
+
+    #[test]
+    fn test_macro_fields() {
+        let object = object!(foo: 1, bar: 2);
+
+        assert_eq!(object.len(), 2);
+        assert_eq!(object["foo"], 1);
+        assert_eq!(object["bar"], 2);
+    }
+}

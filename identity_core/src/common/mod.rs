@@ -1,3 +1,6 @@
+#[macro_use]
+mod macros;
+
 mod object;
 mod timestamp;
 mod value;
