@@ -26,6 +26,7 @@ libsecp256k1 = "0.3"
 sha2 = "0.9"
 
 # utilities
+base64 = "0.12"
 hex = "0.4"
 lazy_static = "1.4"
 rand = "0.7"

@@ -14,6 +14,10 @@ pub enum Error {
   SignError(anyhow::Error),
   #[error(transparent)]
   VerifyError(anyhow::Error),
+  #[error(transparent)]
+  DecodeBase64(#[from] base64::DecodeError),
+  #[error("Invalid Proof Document: {0}")]
+  InvalidProofDocument(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

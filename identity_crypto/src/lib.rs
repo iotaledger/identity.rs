@@ -8,6 +8,7 @@ pub mod error;
 pub mod key;
 pub mod proof;
 pub mod signature;
+pub mod utils;
 
 pub mod identity_core {
   #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
