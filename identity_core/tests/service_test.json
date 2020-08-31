@@ -1,5 +1,0 @@
-{
-    "id": "did:into:123#edv",
-    "type": "EncryptedDataVault",
-    "serviceEndpoint": "https://edv.example.com/"
-}

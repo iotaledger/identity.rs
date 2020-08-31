@@ -5,9 +5,9 @@ use identity_core::{
 
 use std::str::FromStr;
 
-use json::{parse, JsonValue};
+use json::JsonValue;
 
-const JSON_STR: &str = include_str!("auth_example.json");
+const JSON_STR: &str = include_str!("auth.json");
 
 fn setup_json(index: usize) -> String {
     let json_str: JsonValue = json::parse(JSON_STR).unwrap();

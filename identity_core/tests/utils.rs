@@ -5,6 +5,14 @@ use identity_core::{
 
 use std::str::FromStr;
 
+const JSON_STR: &str = include_str!("utils.json");
+
+fn setup_json(key: &str) -> String {
+    let json_str = json::parse(JSON_STR).unwrap();
+
+    json_str[key].to_string()
+}
+
 /// Test Context::new
 #[test]
 fn test_context() {
@@ -74,9 +82,9 @@ fn test_subject_from() {
 /// Test public key structure from String and with PublicKey::new
 #[test]
 fn test_public_key() {
-    let raw_str = include_str!("public_key.json");
+    let raw_str = setup_json("public");
 
-    let pk_t = PublicKey::from_str(raw_str).unwrap();
+    let pk_t = PublicKey::from_str(&raw_str).unwrap();
 
     let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
@@ -98,7 +106,7 @@ fn test_public_key() {
 /// Test service without ServiceEndpoint body.
 #[test]
 fn test_service_with_no_endpoint_body() {
-    let raw_str = include_str!("service_test.json");
+    let raw_str = setup_json("service");
 
     let service = Service::new(
         "did:into:123#edv".into(),
@@ -109,7 +117,7 @@ fn test_service_with_no_endpoint_body() {
     )
     .unwrap();
 
-    let service_2: Service = Service::from_str(raw_str).unwrap();
+    let service_2: Service = Service::from_str(&raw_str).unwrap();
 
     assert_eq!(service, service_2);
 
@@ -121,7 +129,7 @@ fn test_service_with_no_endpoint_body() {
 /// Test Service with a ServiceEndpoint Body.
 #[test]
 fn test_service_with_body() {
-    let raw_str = include_str!("service_endpoint.json");
+    let raw_str = setup_json("endpoint");
 
     let service = Service::new(
         "did:example:123456789abcdefghi#hub".into(),
@@ -132,7 +140,7 @@ fn test_service_with_body() {
     )
     .unwrap();
 
-    let service_2: Service = Service::from_str(raw_str).unwrap();
+    let service_2: Service = Service::from_str(&raw_str).unwrap();
 
     assert_eq!(service, service_2);
 

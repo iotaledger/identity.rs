@@ -8,12 +8,20 @@ use std::str::FromStr;
 
 use serde_diff::{Apply, Diff};
 
+const JSON_STR: &str = include_str!("document.json");
+
+fn setup_json(key: &str) -> String {
+    let json_str = json::parse(JSON_STR).unwrap();
+
+    json_str[key].to_string()
+}
+
 /// Test a full Did document from String.
 #[test]
 fn test_parse_document() {
-    let json_str = include_str!("doc_example.json");
+    let json_str = setup_json("doc");
 
-    let doc = DIDDocument::from_str(json_str);
+    let doc = DIDDocument::from_str(&json_str);
 
     assert!(doc.is_ok());
 
@@ -132,11 +140,11 @@ fn test_doc_diff() {
 
 #[test]
 fn test_doc_diff_timestamps() {
-    let json_str = include_str!("doc_example.json");
+    let json_str = setup_json("doc");
 
     let mut doc1 = DIDDocument::default();
 
-    let doc2 = DIDDocument::from_str(json_str);
+    let doc2 = DIDDocument::from_str(&json_str);
 
     let mut doc2 = doc2.unwrap();
     doc2.update_time();
@@ -153,7 +161,7 @@ fn test_doc_diff_timestamps() {
 
 #[test]
 fn test_diff_strings() {
-    let diff_str = include_str!("diff_example.json");
+    let diff_str = setup_json("diff");
 
     let def_doc = DIDDocument::default();
 
@@ -194,10 +202,10 @@ fn test_diff_strings() {
 fn test_doc_metadata() {
     use std::collections::HashMap;
 
-    let json_str = include_str!("doc_example.json");
-    let result_str = include_str!("doc_metadata.json");
+    let json_str = setup_json("doc");
+    let result_str = setup_json("metadata");
 
-    let doc = DIDDocument::from_str(json_str);
+    let doc = DIDDocument::from_str(&json_str);
 
     assert!(doc.is_ok());
 
@@ -208,7 +216,7 @@ fn test_doc_metadata() {
 
     let doc = doc.supply_metadata(metadata).unwrap();
 
-    let res_doc = DIDDocument::from_str(result_str).unwrap();
+    let res_doc = DIDDocument::from_str(&result_str).unwrap();
 
     assert_eq!(doc, res_doc);
 }
