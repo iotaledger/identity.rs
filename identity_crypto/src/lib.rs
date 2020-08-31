@@ -12,11 +12,10 @@ pub mod signature;
 pub mod utils;
 
 pub mod identity_core {
-  // #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-  pub type Object = std::collections::HashMap<String, Value>;
+  use std::collections::HashMap;
+  use serde_json::Value;
 
-  #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-  pub enum Value {}
+  pub type Object = HashMap<String, Value>;
 
   #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
   pub struct Timestamp;
