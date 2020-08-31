@@ -36,3 +36,6 @@ proptest = "0.10"
 
 # serde testing
 serde_test = "1.0"
+
+# json parsing
+json = "0.12"

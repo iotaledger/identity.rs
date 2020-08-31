@@ -1,47 +1,25 @@
 use identity_core::{
     document::DIDDocument,
-    utils::{Authentication, Context, PublicKey, Subject},
+    utils::{Authentication, Context, KeyData, PublicKey, Subject},
 };
 
 use std::str::FromStr;
 
+use json::{parse, JsonValue};
+
+const JSON_STR: &str = include_str!("auth_example.json");
+
+fn setup_json(index: usize) -> String {
+    let json_str: JsonValue = json::parse(JSON_STR).unwrap();
+
+    json_str[index].to_string()
+}
+
 #[test]
 fn test_auth() {
-    let json_str = r#"
-    {
-        "@context": [
-            "https://w3id.org/did/v1",
-            "https://w3id.org/security/v1"
-        ],
-        "id": "did:iota:123456789abcdefghi",
-        "publicKey": [
-            {
-                "id": "did:iota:123456789abcdefghi#keys-1",
-                "type": "RsaVerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
-            },
-            {
-                "id": "did:iota:123456789abcdefghi#keys-2",
-                "type": "Ed25519VerificationKey2018",
-                "controller": "did:iota:pqrstuvwxyz0987654321",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-            }
-        ],
-        "authentication": [
-            "did:iota:123456789abcdefghi#keys-1",
-            "did:iota:123456789abcdefghi#biometric-1",
-            {
-                "id": "did:iota:123456789abcdefghi#keys-2",
-                "type": "Ed25519VerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-            }
-        ]
-    }
-    "#;
+    let json_str = setup_json(0);
 
-    let doc_1 = DIDDocument::from_str(json_str).unwrap();
+    let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
     let mut doc_2 = DIDDocument {
         context: Context::new(vec![
@@ -52,12 +30,15 @@ fn test_auth() {
         ..Default::default()
     };
 
+    let key_data_1 = KeyData::Pem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
+    let key_data_2 = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+    let auth_key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
     let key1 = PublicKey::new(
         "did:iota:123456789abcdefghi#keys-1".into(),
         "RsaVerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyPem".into(),
-        "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into(),
+        key_data_1,
     )
     .unwrap();
 
@@ -65,8 +46,7 @@ fn test_auth() {
         "did:iota:123456789abcdefghi#keys-2".into(),
         "Ed25519VerificationKey2018".into(),
         "did:iota:pqrstuvwxyz0987654321".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        key_data_2,
     )
     .unwrap();
 
@@ -77,8 +57,7 @@ fn test_auth() {
         "did:iota:123456789abcdefghi#keys-2".into(),
         "Ed25519VerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        auth_key_data,
     )
     .unwrap();
 
@@ -97,41 +76,9 @@ fn test_auth() {
 
 #[test]
 fn test_assertion() {
-    let json_str = r#"
-    {
-        "@context": [
-            "https://w3id.org/did/v1",
-            "https://w3id.org/security/v1"
-        ],
-        "id": "did:iota:123456789abcdefghi",
-        "publicKey": [
-            {
-                "id": "did:iota:123456789abcdefghi#keys-1",
-                "type": "RsaVerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
-            },
-            {
-                "id": "did:iota:123456789abcdefghi#keys-2",
-                "type": "Ed25519VerificationKey2018",
-                "controller": "did:iota:pqrstuvwxyz0987654321",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-            }
-        ],
-        "assertionMethod": [
-            "did:iota:123456789abcdefghi#keys-1",
-            "did:iota:123456789abcdefghi#biometric-1",
-            {
-                "id": "did:iota:123456789abcdefghi#keys-2",
-                "type": "Ed25519VerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-            }
-        ]
-    }
-    "#;
+    let json_str = setup_json(1);
 
-    let doc_1 = DIDDocument::from_str(json_str).unwrap();
+    let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
     let mut doc_2 = DIDDocument {
         context: Context::new(vec![
@@ -142,12 +89,15 @@ fn test_assertion() {
         ..Default::default()
     };
 
+    let key_data_1 = KeyData::Pem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
+    let key_data_2 = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+    let auth_key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
     let key1 = PublicKey::new(
         "did:iota:123456789abcdefghi#keys-1".into(),
         "RsaVerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyPem".into(),
-        "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into(),
+        key_data_1,
     )
     .unwrap();
 
@@ -155,8 +105,7 @@ fn test_assertion() {
         "did:iota:123456789abcdefghi#keys-2".into(),
         "Ed25519VerificationKey2018".into(),
         "did:iota:pqrstuvwxyz0987654321".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        key_data_2,
     )
     .unwrap();
 
@@ -167,8 +116,7 @@ fn test_assertion() {
         "did:iota:123456789abcdefghi#keys-2".into(),
         "Ed25519VerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        auth_key_data,
     )
     .unwrap();
 
@@ -187,41 +135,9 @@ fn test_assertion() {
 
 #[test]
 fn test_verification() {
-    let json_str = r#"
-    {
-        "@context": [
-            "https://w3id.org/did/v1",
-            "https://w3id.org/security/v1"
-        ],
-        "id": "did:iota:123456789abcdefghi",
-        "publicKey": [
-            {
-                "id": "did:iota:123456789abcdefghi#keys-1",
-                "type": "RsaVerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
-            },
-            {
-                "id": "did:iota:123456789abcdefghi#keys-2",
-                "type": "Ed25519VerificationKey2018",
-                "controller": "did:iota:pqrstuvwxyz0987654321",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-            }
-        ],
-        "verificationMethod": [
-            "did:iota:123456789abcdefghi#keys-1",
-            "did:iota:123456789abcdefghi#biometric-1",
-            {
-                "id": "did:iota:123456789abcdefghi#keys-2",
-                "type": "Ed25519VerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-            }
-        ]
-    }
-    "#;
+    let json_str = setup_json(2);
 
-    let doc_1 = DIDDocument::from_str(json_str).unwrap();
+    let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
     let mut doc_2 = DIDDocument {
         context: Context::new(vec![
@@ -232,12 +148,15 @@ fn test_verification() {
         ..Default::default()
     };
 
+    let key_data_1 = KeyData::Pem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
+    let key_data_2 = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+    let auth_key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
     let key1 = PublicKey::new(
         "did:iota:123456789abcdefghi#keys-1".into(),
         "RsaVerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyPem".into(),
-        "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into(),
+        key_data_1,
     )
     .unwrap();
 
@@ -245,8 +164,7 @@ fn test_verification() {
         "did:iota:123456789abcdefghi#keys-2".into(),
         "Ed25519VerificationKey2018".into(),
         "did:iota:pqrstuvwxyz0987654321".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        key_data_2,
     )
     .unwrap();
 
@@ -257,8 +175,7 @@ fn test_verification() {
         "did:iota:123456789abcdefghi#keys-2".into(),
         "Ed25519VerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        auth_key_data,
     )
     .unwrap();
 
@@ -277,41 +194,9 @@ fn test_verification() {
 
 #[test]
 fn test_delegation() {
-    let json_str = r#"
-    {
-        "@context": [
-            "https://w3id.org/did/v1",
-            "https://w3id.org/security/v1"
-        ],
-        "id": "did:iota:123456789abcdefghi",
-        "publicKey": [
-            {
-                "id": "did:iota:123456789abcdefghi#keys-1",
-                "type": "RsaVerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
-            },
-            {
-                "id": "did:iota:123456789abcdefghi#keys-2",
-                "type": "Ed25519VerificationKey2018",
-                "controller": "did:iota:pqrstuvwxyz0987654321",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-            }
-        ],
-        "capabilityDelegation": [
-            "did:iota:123456789abcdefghi#keys-1",
-            "did:iota:123456789abcdefghi#biometric-1",
-            {
-                "id": "did:iota:123456789abcdefghi#keys-2",
-                "type": "Ed25519VerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-            }
-        ]
-    }
-    "#;
+    let json_str = setup_json(3);
 
-    let doc_1 = DIDDocument::from_str(json_str).unwrap();
+    let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
     let mut doc_2 = DIDDocument {
         context: Context::new(vec![
@@ -322,12 +207,15 @@ fn test_delegation() {
         ..Default::default()
     };
 
+    let key_data_1 = KeyData::Pem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
+    let key_data_2 = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+    let auth_key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
     let key1 = PublicKey::new(
         "did:iota:123456789abcdefghi#keys-1".into(),
         "RsaVerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyPem".into(),
-        "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into(),
+        key_data_1,
     )
     .unwrap();
 
@@ -335,8 +223,7 @@ fn test_delegation() {
         "did:iota:123456789abcdefghi#keys-2".into(),
         "Ed25519VerificationKey2018".into(),
         "did:iota:pqrstuvwxyz0987654321".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        key_data_2,
     )
     .unwrap();
 
@@ -347,8 +234,7 @@ fn test_delegation() {
         "did:iota:123456789abcdefghi#keys-2".into(),
         "Ed25519VerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        auth_key_data,
     )
     .unwrap();
 
@@ -367,41 +253,9 @@ fn test_delegation() {
 
 #[test]
 fn test_invocation() {
-    let json_str = r#"
-    {
-        "@context": [
-            "https://w3id.org/did/v1",
-            "https://w3id.org/security/v1"
-        ],
-        "id": "did:iota:123456789abcdefghi",
-        "publicKey": [
-            {
-                "id": "did:iota:123456789abcdefghi#keys-1",
-                "type": "RsaVerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
-            },
-            {
-                "id": "did:iota:123456789abcdefghi#keys-2",
-                "type": "Ed25519VerificationKey2018",
-                "controller": "did:iota:pqrstuvwxyz0987654321",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-            }
-        ],
-        "capabilityInvocation": [
-            "did:iota:123456789abcdefghi#keys-1",
-            "did:iota:123456789abcdefghi#biometric-1",
-            {
-                "id": "did:iota:123456789abcdefghi#keys-2",
-                "type": "Ed25519VerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-            }
-        ]
-    }
-    "#;
+    let json_str = setup_json(4);
 
-    let doc_1 = DIDDocument::from_str(json_str).unwrap();
+    let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
     let mut doc_2 = DIDDocument {
         context: Context::new(vec![
@@ -412,12 +266,15 @@ fn test_invocation() {
         ..Default::default()
     };
 
+    let key_data_1 = KeyData::Pem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
+    let key_data_2 = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+    let auth_key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
     let key1 = PublicKey::new(
         "did:iota:123456789abcdefghi#keys-1".into(),
         "RsaVerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyPem".into(),
-        "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into(),
+        key_data_1,
     )
     .unwrap();
 
@@ -425,8 +282,7 @@ fn test_invocation() {
         "did:iota:123456789abcdefghi#keys-2".into(),
         "Ed25519VerificationKey2018".into(),
         "did:iota:pqrstuvwxyz0987654321".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        key_data_2,
     )
     .unwrap();
 
@@ -437,8 +293,7 @@ fn test_invocation() {
         "did:iota:123456789abcdefghi#keys-2".into(),
         "Ed25519VerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        auth_key_data,
     )
     .unwrap();
 
@@ -457,41 +312,9 @@ fn test_invocation() {
 
 #[test]
 fn test_agreement() {
-    let json_str = r#"
-    {
-        "@context": [
-            "https://w3id.org/did/v1",
-            "https://w3id.org/security/v1"
-        ],
-        "id": "did:iota:123456789abcdefghi",
-        "publicKey": [
-            {
-                "id": "did:iota:123456789abcdefghi#keys-1",
-                "type": "RsaVerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
-            },
-            {
-                "id": "did:iota:123456789abcdefghi#keys-2",
-                "type": "Ed25519VerificationKey2018",
-                "controller": "did:iota:pqrstuvwxyz0987654321",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-            }
-        ],
-        "keyAgreement": [
-            "did:iota:123456789abcdefghi#keys-1",
-            "did:iota:123456789abcdefghi#biometric-1",
-            {
-                "id": "did:iota:123456789abcdefghi#keys-2",
-                "type": "Ed25519VerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-            }
-        ]
-    }
-    "#;
+    let json_str = setup_json(5);
 
-    let doc_1 = DIDDocument::from_str(json_str).unwrap();
+    let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
     let mut doc_2 = DIDDocument {
         context: Context::new(vec![
@@ -502,12 +325,15 @@ fn test_agreement() {
         ..Default::default()
     };
 
+    let key_data_1 = KeyData::Pem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
+    let key_data_2 = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+    let auth_key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
     let key1 = PublicKey::new(
         "did:iota:123456789abcdefghi#keys-1".into(),
         "RsaVerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyPem".into(),
-        "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into(),
+        key_data_1,
     )
     .unwrap();
 
@@ -515,8 +341,7 @@ fn test_agreement() {
         "did:iota:123456789abcdefghi#keys-2".into(),
         "Ed25519VerificationKey2018".into(),
         "did:iota:pqrstuvwxyz0987654321".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        key_data_2,
     )
     .unwrap();
 
@@ -527,8 +352,7 @@ fn test_agreement() {
         "did:iota:123456789abcdefghi#keys-2".into(),
         "Ed25519VerificationKey2018".into(),
         "did:iota:123456789abcdefghi".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        auth_key_data,
     )
     .unwrap();
 
