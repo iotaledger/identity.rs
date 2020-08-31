@@ -115,10 +115,6 @@ impl Proof {
       object.remove(*key);
     }
 
-    self.canonicalize_json(object)
-  }
-
-  fn canonicalize_json(&self, object: Object) -> Result<Vec<u8>> {
-    todo!("Canonicalize JSON")
+    self.0.canonicalize(object)
   }
 }

@@ -16,8 +16,10 @@ pub enum Error {
   VerifyError(anyhow::Error),
   #[error(transparent)]
   DecodeBase64(#[from] base64::DecodeError),
-  #[error("Invalid Proof Document: {0}")]
+  #[error("Invalid proof document: {0}")]
   InvalidProofDocument(String),
+  #[error("Failed to canonicalize document")]
+  InvalidCanonicalization,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

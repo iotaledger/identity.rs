@@ -1,5 +1,7 @@
 use crate::{
+  canonicalize::{CanonicalJSON, Canonicalize},
   error::Result,
+  identity_core::Object,
   key::{KeyGenerator, KeyPair, PublicKey, SecretKey},
 };
 
@@ -15,4 +17,8 @@ pub trait SignatureSuite {
   fn verify(&self, document: &[u8], signature: &[u8], public: &PublicKey) -> Result<bool>;
 
   fn digest(&self, message: &[u8]) -> Result<Vec<u8>>;
+
+  fn canonicalize(&self, object: Object) -> Result<Vec<u8>> {
+    CanonicalJSON::canonicalize(object)
+  }
 }
