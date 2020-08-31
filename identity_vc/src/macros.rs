@@ -21,9 +21,10 @@ macro_rules! impl_builder_setter {
 
 macro_rules! impl_builder_try_setter {
   ($fn:ident, $field:ident, Option<$ty:ty>) => {
-    pub fn $fn<T>(mut self, value: T) -> $crate::error::Result<Self>
+    pub fn $fn<T, U>(mut self, value: T) -> $crate::error::Result<Self>
     where
-      $ty: ::std::convert::TryFrom<T, Error = $crate::error::Error>,
+      $ty: ::std::convert::TryFrom<T, Error = U>,
+      U: Into<$crate::error::Error>,
     {
       use ::std::convert::TryFrom;
       <$ty>::try_from(value)
@@ -35,9 +36,10 @@ macro_rules! impl_builder_try_setter {
     }
   };
   ($fn:ident, $field:ident, Vec<$ty:ty>) => {
-    pub fn $fn<T>(mut self, value: T) -> $crate::error::Result<Self>
+    pub fn $fn<T, U>(mut self, value: T) -> $crate::error::Result<Self>
     where
-      $ty: ::std::convert::TryFrom<T, Error = $crate::error::Error>,
+      $ty: ::std::convert::TryFrom<T, Error = U>,
+      U: Into<$crate::error::Error>,
     {
       use ::std::convert::TryFrom;
       <$ty>::try_from(value)
@@ -49,9 +51,10 @@ macro_rules! impl_builder_try_setter {
     }
   };
   ($fn:ident, $field:ident, $ty:ty) => {
-    pub fn $fn<T>(mut self, value: T) -> $crate::error::Result<Self>
+    pub fn $fn<T, U>(mut self, value: T) -> $crate::error::Result<Self>
     where
-      $ty: ::std::convert::TryFrom<T, Error = $crate::error::Error>,
+      $ty: ::std::convert::TryFrom<T, Error = U>,
+      U: Into<$crate::error::Error>,
     {
       use ::std::convert::TryFrom;
       <$ty>::try_from(value)
