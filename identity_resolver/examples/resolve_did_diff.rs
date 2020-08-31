@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
     let did_payload = Payload::DIDDocumentDifferences(Differences {
         did: new.derive_did()?,
         diff: json_diff.clone(),
-        time: Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true).to_string(),
+        time: Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
     });
     let tail_transaction = tangle_writer.publish_document(&did_payload).await?;
     println!(
