@@ -12,14 +12,17 @@ type Inner = DateTime<Utc>;
 pub struct Timestamp(Inner);
 
 impl Timestamp {
+    /// Creates a new `Timestamp` of the current time.
     pub fn now() -> Self {
         Self(Utc::now())
     }
 
+    /// Consumes the `Timestamp` and returns the inner `DateTime`.
     pub fn into_inner(self) -> Inner {
         self.0
     }
 
+    /// Returns the `Timestamp` as an RFC 3339 `String`.
     pub fn to_rfc3339(&self) -> String {
         self.0.to_rfc3339_opts(SecondsFormat::Secs, true)
     }
