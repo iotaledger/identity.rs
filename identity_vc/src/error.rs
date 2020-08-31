@@ -22,6 +22,10 @@ pub enum Error {
   InvalidCredentialSubject,
   #[error("Missing `Credential` issuer")]
   MissingCredentialIssuer,
+  #[error("Failed to decode JSON: {0}")]
+  DecodeJSON(serde_json::Error),
+  #[error("Failed to encode JSON: {0}")]
+  EncodeJSON(serde_json::Error),
 }
 
 pub type Result<T> = StdResult<T, Error>;

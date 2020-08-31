@@ -1,9 +1,10 @@
 use identity_core::common::{Object, Value};
+use serde_json::{from_str, to_string};
 
 use crate::{
   common::{Context, OneOrMany, RefreshService, TermsOfUse, URI},
   credential::Credential,
-  error::Result,
+  error::{Error, Result},
   utils::validate_presentation_structure,
   verifiable::{VerifiableCredential, VerifiablePresentation},
 };
@@ -51,6 +52,14 @@ impl Presentation {
 
   pub fn validate(&self) -> Result<()> {
     validate_presentation_structure(self)
+  }
+
+  pub fn from_json(json: &(impl AsRef<str> + ?Sized)) -> Result<Self> {
+    from_str(json.as_ref()).map_err(Error::DecodeJSON)
+  }
+
+  pub fn to_json(&self) -> Result<String> {
+    to_string(self).map_err(Error::EncodeJSON)
   }
 }
 
