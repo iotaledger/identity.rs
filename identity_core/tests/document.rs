@@ -1,7 +1,7 @@
 use identity_core::{
     did::DID,
     document::DIDDocument,
-    utils::{Context, KeyData, PublicKey, Service, Subject},
+    utils::{Context, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
 };
 
 use std::str::FromStr;
@@ -52,25 +52,31 @@ fn test_doc_creation() {
         ..Default::default()
     }
     .init();
-    let service = Service::new(
-        "did:into:123#edv".into(),
-        "EncryptedDataVault".into(),
-        "https://edv.example.com/".into(),
-        None,
-        None,
-    )
-    .unwrap();
+    let endpoint = ServiceEndpoint {
+        context: "https://edv.example.com/".into(),
+        ..Default::default()
+    }
+    .init();
+
+    let service = Service {
+        id: "did:into:123#edv".into(),
+        service_type: "EncryptedDataVault".into(),
+        endpoint: endpoint,
+    };
+
     did_doc.update_service(service.clone());
 
     let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
-    let public_key = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "RsaVerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        key_data,
-    )
-    .unwrap();
+    let public_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: key_data,
+        ..Default::default()
+    }
+    .init();
+
     did_doc.update_public_key(public_key.clone());
 
     let mut did_doc_2 = DIDDocument {
@@ -105,25 +111,32 @@ fn test_doc_diff() {
         ..Default::default()
     }
     .init();
-    let service = Service::new(
-        "did:into:123#edv".into(),
-        "EncryptedDataVault".into(),
-        "https://edv.example.com/".into(),
-        None,
-        None,
-    )
-    .unwrap();
+
+    let endpoint = ServiceEndpoint {
+        context: "https://edv.example.com/".into(),
+        ..Default::default()
+    }
+    .init();
+
+    let service = Service {
+        id: "did:into:123#edv".into(),
+        service_type: "EncryptedDataVault".into(),
+        endpoint: endpoint,
+    };
+
     new.update_service(service);
 
     let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
-    let public_key = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "RsaVerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        key_data,
-    )
-    .unwrap();
+    let public_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: key_data,
+        ..Default::default()
+    }
+    .init();
+
     new.update_public_key(public_key);
 
     // diff the two docs and create a json string of the diff.
@@ -171,25 +184,31 @@ fn test_diff_strings() {
         ..Default::default()
     }
     .init();
-    let service = Service::new(
-        "did:into:123#edv".into(),
-        "EncryptedDataVault".into(),
-        "https://edv.example.com/".into(),
-        None,
-        None,
-    )
-    .unwrap();
+    let endpoint = ServiceEndpoint {
+        context: "https://edv.example.com/".into(),
+        ..Default::default()
+    }
+    .init();
+
+    let service = Service {
+        id: "did:into:123#edv".into(),
+        service_type: "EncryptedDataVault".into(),
+        endpoint: endpoint,
+    };
+
     doc.update_service(service);
 
     let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
-    let public_key = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "RsaVerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        key_data,
-    )
-    .unwrap();
+    let public_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: key_data,
+        ..Default::default()
+    }
+    .init();
+
     doc.update_public_key(public_key);
 
     let json_diff = serde_json::to_string(&Diff::serializable(&def_doc, &doc)).unwrap();

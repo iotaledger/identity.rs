@@ -51,22 +51,20 @@ pub struct PublicKey {
     pub key_type: PublicKeyTypes,
     pub controller: Subject,
     #[serde(flatten)]
-    pub encoding_type: KeyData,
+    pub key_data: KeyData,
     #[serde(skip)]
     pub reference: bool,
 }
 
 impl PublicKey {
-    /// creates a new public key instance using `id`, `key_type`, `controller`, and `key_data`. `reference` is
-    /// set to false by default.
-    pub fn new(id: String, key_type: String, controller: String, key_data: KeyData) -> crate::Result<Self> {
-        Ok(PublicKey {
-            id: Subject::new(id)?,
-            key_type: PublicKeyTypes::from_str(&key_type)?,
-            controller: Subject::new(controller)?,
-            encoding_type: key_data,
-            reference: false,
-        })
+    pub fn init(self) -> Self {
+        Self {
+            id: self.id,
+            key_type: self.key_type,
+            controller: self.controller,
+            key_data: self.key_data,
+            reference: self.reference,
+        }
     }
 }
 
@@ -130,22 +128,18 @@ impl ToString for PublicKeyTypes {
     }
 }
 
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_key() {
-        let key_data = KeyData::Base58("ass".into());
-
-        let key = PublicKey::new(
-            "did:into:123".into(),
-            "RsaVerificationKey2018".into(),
-            "did:into:123".into(),
-            key_data,
-        )
-        .unwrap();
-
-        println!("{}", serde_json::to_string(&key).unwrap());
+impl From<&str> for PublicKeyTypes {
+    fn from(s: &str) -> Self {
+        match s {
+            "RsaVerificationKey2018" => Self::RsaVerificationKey2018,
+            "Ed25519VerificationKey2018" => Self::Ed25519VerificationKey2018,
+            "Secp256k1VerificationKey2018" => Self::EcdsaSecp256k1VerificationKey2019,
+            "JsonWebKey2020" => Self::JsonWebKey2020,
+            "GpgVerificationKey2020" => Self::GpgVerificationKey2020,
+            "X25519KeyAgreementKey2019" => Self::X25519KeyAgreementKey2019,
+            "EcdsaSecp256k1RecoveryMethod2020" => Self::EcdsaSecp256k1RecoveryMethod2020,
+            "SchnorrSecp256k1VerificationKey2019" => Self::SchnorrSecp256k1VerificationKey2019,
+            _ => Self::UnknownKey,
+        }
     }
 }

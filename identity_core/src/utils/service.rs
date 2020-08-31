@@ -7,7 +7,7 @@ use serde_diff::SerdeDiff;
 
 /// Describes a `Service` in a `DIDDocument` type. Contains an `id`, `service_type` and `endpoint`.  The `endpoint` can
 /// be represented as a `String` or a `ServiceEndpoint` in json.
-#[derive(Debug, Eq, PartialEq, Deserialize, Serialize, SerdeDiff, Clone)]
+#[derive(Debug, Eq, PartialEq, Deserialize, Serialize, SerdeDiff, Clone, Default)]
 pub struct Service {
     #[serde(default)]
     pub id: Subject,
@@ -28,32 +28,22 @@ pub struct ServiceEndpoint {
 }
 
 impl Service {
-    /// Creates a new `Service` given a `id`, `service_type`, `endpoint`, `endpoint_type`, and `instances`.
-    /// `endpoint_type`, and `instances` are optional.
-    pub fn new(
-        id: String,
-        service_type: String,
-        endpoint: String,
-        endpoint_type: Option<String>,
-        instances: Option<Vec<String>>,
-    ) -> crate::Result<Self> {
-        Ok(Self {
-            id: Subject::from_str(&id)?,
-            service_type,
-            endpoint: ServiceEndpoint::new(endpoint, endpoint_type, instances)?,
-        })
+    pub fn init(self) -> Self {
+        Self {
+            id: self.id,
+            service_type: self.service_type,
+            endpoint: self.endpoint,
+        }
     }
 }
 
 impl ServiceEndpoint {
-    /// Builds a new `ServiceEndpoint` given an `endpoint`, `endpoint_type`, and `instances`. `endpoint_type`, and
-    /// `instances` are optional.
-    pub fn new(endpoint: String, endpoint_type: Option<String>, instances: Option<Vec<String>>) -> crate::Result<Self> {
-        Ok(ServiceEndpoint {
-            context: Context::from_str(&endpoint)?,
-            endpoint_type,
-            instances,
-        })
+    pub fn init(self) -> Self {
+        Self {
+            context: self.context,
+            endpoint_type: self.endpoint_type,
+            instances: self.instances,
+        }
     }
 }
 

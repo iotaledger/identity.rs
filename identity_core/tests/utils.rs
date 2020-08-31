@@ -1,6 +1,6 @@
 use identity_core::{
     did::DID,
-    utils::{Context, KeyData, PublicKey, Service, Subject},
+    utils::{Context, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
 };
 
 use std::str::FromStr;
@@ -88,17 +88,18 @@ fn test_public_key() {
 
     let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
-    let pk = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:pqrstuvwxyz0987654321".into(),
-        key_data,
-    )
-    .unwrap();
+    let public_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:pqrstuvwxyz0987654321".into(),
+        key_data: key_data,
+        ..Default::default()
+    }
+    .init();
 
-    assert_eq!(pk, pk_t);
+    assert_eq!(public_key, pk_t);
 
-    let res = serde_json::to_string(&pk).unwrap();
+    let res = serde_json::to_string(&public_key).unwrap();
 
     assert_eq!(res, pk_t.to_string());
 }
@@ -108,14 +109,17 @@ fn test_public_key() {
 fn test_service_with_no_endpoint_body() {
     let raw_str = setup_json("service");
 
-    let service = Service::new(
-        "did:into:123#edv".into(),
-        "EncryptedDataVault".into(),
-        "https://edv.example.com/".into(),
-        None,
-        None,
-    )
-    .unwrap();
+    let endpoint = ServiceEndpoint {
+        context: "https://edv.example.com/".into(),
+        ..Default::default()
+    }
+    .init();
+
+    let service = Service {
+        id: "did:into:123#edv".into(),
+        service_type: "EncryptedDataVault".into(),
+        endpoint: endpoint,
+    };
 
     let service_2: Service = Service::from_str(&raw_str).unwrap();
 
@@ -131,14 +135,18 @@ fn test_service_with_no_endpoint_body() {
 fn test_service_with_body() {
     let raw_str = setup_json("endpoint");
 
-    let service = Service::new(
-        "did:example:123456789abcdefghi#hub".into(),
-        "IdentityHub".into(),
-        "https://schema.identity.foundation/hub".into(),
-        Some("UserHubEndpoint".into()),
-        Some(vec!["did:example:456".into(), "did:example:789".into()]),
-    )
-    .unwrap();
+    let endpoint = ServiceEndpoint {
+        context: "https://schema.identity.foundation/hub".into(),
+        endpoint_type: Some("UserHubEndpoint".into()),
+        instances: Some(vec!["did:example:456".into(), "did:example:789".into()]),
+    }
+    .init();
+
+    let service = Service {
+        id: "did:example:123456789abcdefghi#hub".into(),
+        service_type: "IdentityHub".into(),
+        endpoint: endpoint,
+    };
 
     let service_2: Service = Service::from_str(&raw_str).unwrap();
 

@@ -34,32 +34,35 @@ fn test_auth() {
     let key_data_2 = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
     let auth_key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
-    let key1 = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "RsaVerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        key_data_1,
-    )
-    .unwrap();
+    let key1 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: key_data_1,
+        ..Default::default()
+    }
+    .init();
 
-    let key2 = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-2".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:pqrstuvwxyz0987654321".into(),
-        key_data_2,
-    )
-    .unwrap();
+    let key2 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-2".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:pqrstuvwxyz0987654321".into(),
+        key_data: key_data_2,
+        ..Default::default()
+    }
+    .init();
+
+    let auth_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-2".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: auth_key_data,
+        ..Default::default()
+    }
+    .init();
 
     doc_2.update_public_key(key1);
     doc_2.update_public_key(key2);
-
-    let auth_key = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-2".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        auth_key_data,
-    )
-    .unwrap();
 
     let auth1 = Authentication::Method("did:iota:123456789abcdefghi#keys-1".into());
     let auth2 = Authentication::Method("did:iota:123456789abcdefghi#biometric-1".into());
@@ -93,32 +96,35 @@ fn test_assertion() {
     let key_data_2 = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
     let auth_key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
-    let key1 = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "RsaVerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        key_data_1,
-    )
-    .unwrap();
+    let key1 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: key_data_1,
+        ..Default::default()
+    }
+    .init();
 
-    let key2 = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-2".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:pqrstuvwxyz0987654321".into(),
-        key_data_2,
-    )
-    .unwrap();
+    let key2 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-2".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:pqrstuvwxyz0987654321".into(),
+        key_data: key_data_2,
+        ..Default::default()
+    }
+    .init();
+
+    let auth_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-2".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: auth_key_data,
+        ..Default::default()
+    }
+    .init();
 
     doc_2.update_public_key(key1);
     doc_2.update_public_key(key2);
-
-    let auth_key = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-2".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        auth_key_data,
-    )
-    .unwrap();
 
     let auth1 = Authentication::Method("did:iota:123456789abcdefghi#keys-1".into());
     let auth2 = Authentication::Method("did:iota:123456789abcdefghi#biometric-1".into());
@@ -152,32 +158,35 @@ fn test_verification() {
     let key_data_2 = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
     let auth_key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
-    let key1 = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "RsaVerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        key_data_1,
-    )
-    .unwrap();
+    let key1 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: key_data_1,
+        ..Default::default()
+    }
+    .init();
 
-    let key2 = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-2".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:pqrstuvwxyz0987654321".into(),
-        key_data_2,
-    )
-    .unwrap();
+    let key2 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-2".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:pqrstuvwxyz0987654321".into(),
+        key_data: key_data_2,
+        ..Default::default()
+    }
+    .init();
+
+    let auth_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-2".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: auth_key_data,
+        ..Default::default()
+    }
+    .init();
 
     doc_2.update_public_key(key1);
     doc_2.update_public_key(key2);
-
-    let auth_key = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-2".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        auth_key_data,
-    )
-    .unwrap();
 
     let auth1 = Authentication::Method("did:iota:123456789abcdefghi#keys-1".into());
     let auth2 = Authentication::Method("did:iota:123456789abcdefghi#biometric-1".into());
@@ -211,32 +220,35 @@ fn test_delegation() {
     let key_data_2 = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
     let auth_key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
-    let key1 = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "RsaVerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        key_data_1,
-    )
-    .unwrap();
+    let key1 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: key_data_1,
+        ..Default::default()
+    }
+    .init();
 
-    let key2 = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-2".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:pqrstuvwxyz0987654321".into(),
-        key_data_2,
-    )
-    .unwrap();
+    let key2 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-2".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:pqrstuvwxyz0987654321".into(),
+        key_data: key_data_2,
+        ..Default::default()
+    }
+    .init();
+
+    let auth_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-2".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: auth_key_data,
+        ..Default::default()
+    }
+    .init();
 
     doc_2.update_public_key(key1);
     doc_2.update_public_key(key2);
-
-    let auth_key = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-2".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        auth_key_data,
-    )
-    .unwrap();
 
     let auth1 = Authentication::Method("did:iota:123456789abcdefghi#keys-1".into());
     let auth2 = Authentication::Method("did:iota:123456789abcdefghi#biometric-1".into());
@@ -270,32 +282,35 @@ fn test_invocation() {
     let key_data_2 = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
     let auth_key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
-    let key1 = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "RsaVerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        key_data_1,
-    )
-    .unwrap();
+    let key1 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: key_data_1,
+        ..Default::default()
+    }
+    .init();
 
-    let key2 = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-2".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:pqrstuvwxyz0987654321".into(),
-        key_data_2,
-    )
-    .unwrap();
+    let key2 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-2".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:pqrstuvwxyz0987654321".into(),
+        key_data: key_data_2,
+        ..Default::default()
+    }
+    .init();
+
+    let auth_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-2".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: auth_key_data,
+        ..Default::default()
+    }
+    .init();
 
     doc_2.update_public_key(key1);
     doc_2.update_public_key(key2);
-
-    let auth_key = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-2".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        auth_key_data,
-    )
-    .unwrap();
 
     let auth1 = Authentication::Method("did:iota:123456789abcdefghi#keys-1".into());
     let auth2 = Authentication::Method("did:iota:123456789abcdefghi#biometric-1".into());
@@ -329,32 +344,35 @@ fn test_agreement() {
     let key_data_2 = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
     let auth_key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
-    let key1 = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "RsaVerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        key_data_1,
-    )
-    .unwrap();
+    let key1 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: key_data_1,
+        ..Default::default()
+    }
+    .init();
 
-    let key2 = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-2".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:pqrstuvwxyz0987654321".into(),
-        key_data_2,
-    )
-    .unwrap();
+    let key2 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-2".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:pqrstuvwxyz0987654321".into(),
+        key_data: key_data_2,
+        ..Default::default()
+    }
+    .init();
+
+    let auth_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-2".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: auth_key_data,
+        ..Default::default()
+    }
+    .init();
 
     doc_2.update_public_key(key1);
     doc_2.update_public_key(key2);
-
-    let auth_key = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-2".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:123456789abcdefghi".into(),
-        auth_key_data,
-    )
-    .unwrap();
 
     let auth1 = Authentication::Method("did:iota:123456789abcdefghi#keys-1".into());
     let auth2 = Authentication::Method("did:iota:123456789abcdefghi#biometric-1".into());
