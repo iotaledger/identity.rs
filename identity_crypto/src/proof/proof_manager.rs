@@ -6,13 +6,37 @@ use std::{
 use crate::{
   error::{Error, Result},
   proof::Proof,
+  signature::{EcdsaSecp256k1, Ed25519},
 };
 
 type ProofBuilder = fn() -> Proof;
 type ProofTypes = HashMap<&'static str, ProofBuilder>;
 
 lazy_static! {
-  static ref PROOF_TYPES: Arc<RwLock<ProofTypes>> = { Arc::new(RwLock::new(HashMap::new())) };
+  static ref PROOF_TYPES: Arc<RwLock<ProofTypes>> = {
+    fn create_ed25519() -> Proof {
+      Proof::new(Ed25519)
+    }
+
+    fn create_ecdsa_secp256k1() -> Proof {
+      Proof::new(EcdsaSecp256k1)
+    }
+
+    let mut types: ProofTypes = HashMap::new();
+
+    // TODO: Register these under a common key? - possibly using an enum with a
+    // flexible/user-friendly FromStr implementation
+
+    types.insert("Ed25519", create_ed25519);
+    types.insert("Ed25519Signature2018", create_ed25519);
+    types.insert("Ed25519VerificationKey2018", create_ed25519);
+
+    types.insert("EcdsaSecp256k1", create_ecdsa_secp256k1);
+    types.insert("EcdsaSecp256k1Signature2019", create_ecdsa_secp256k1);
+    types.insert("EcdsaSecp256k1VerificationKey2019", create_ecdsa_secp256k1);
+
+    Arc::new(RwLock::new(types))
+  };
 }
 
 #[derive(Clone, Copy, Debug)]
