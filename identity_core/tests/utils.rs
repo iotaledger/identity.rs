@@ -118,7 +118,7 @@ fn test_service_with_no_endpoint_body() {
     let service = Service {
         id: "did:into:123#edv".into(),
         service_type: "EncryptedDataVault".into(),
-        endpoint: endpoint,
+        endpoint,
     };
 
     let service_2: Service = Service::from_str(&raw_str).unwrap();

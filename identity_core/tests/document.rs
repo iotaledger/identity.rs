@@ -61,7 +61,7 @@ fn test_doc_creation() {
     let service = Service {
         id: "did:into:123#edv".into(),
         service_type: "EncryptedDataVault".into(),
-        endpoint: endpoint,
+        endpoint,
     };
 
     did_doc.update_service(service.clone());
@@ -72,7 +72,7 @@ fn test_doc_creation() {
         id: "did:iota:123456789abcdefghi#keys-1".into(),
         key_type: "RsaVerificationKey2018".into(),
         controller: "did:iota:123456789abcdefghi".into(),
-        key_data: key_data,
+        key_data,
         ..Default::default()
     }
     .init();
@@ -121,7 +121,7 @@ fn test_doc_diff() {
     let service = Service {
         id: "did:into:123#edv".into(),
         service_type: "EncryptedDataVault".into(),
-        endpoint: endpoint,
+        endpoint,
     };
 
     new.update_service(service);
@@ -132,7 +132,7 @@ fn test_doc_diff() {
         id: "did:iota:123456789abcdefghi#keys-1".into(),
         key_type: "RsaVerificationKey2018".into(),
         controller: "did:iota:123456789abcdefghi".into(),
-        key_data: key_data,
+        key_data,
         ..Default::default()
     }
     .init();
@@ -193,7 +193,7 @@ fn test_diff_strings() {
     let service = Service {
         id: "did:into:123#edv".into(),
         service_type: "EncryptedDataVault".into(),
-        endpoint: endpoint,
+        endpoint,
     };
 
     doc.update_service(service);
@@ -204,7 +204,7 @@ fn test_diff_strings() {
         id: "did:iota:123456789abcdefghi#keys-1".into(),
         key_type: "RsaVerificationKey2018".into(),
         controller: "did:iota:123456789abcdefghi".into(),
-        key_data: key_data,
+        key_data,
         ..Default::default()
     }
     .init();
