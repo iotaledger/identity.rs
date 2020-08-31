@@ -153,7 +153,7 @@ fn test_doc_diff_timestamps() {
     {
         "@context": ["https://w3id.org/did/v1", "https://w3id.org/security/v1"],
         "id": "did:iota:123456789abcdefghi",
-        "updated": "2020-08-25 21:47:28.344412100 UTC",
+        "updated": "2020-08-31T05:46:33.559590+00:00Z",
         "publicKey": [{
             "id": "did:iota:123456789abcdefghi#keys-1",
             "type": "RsaVerificationKey2018",
@@ -323,7 +323,7 @@ fn test_doc_metadata() {
     {
         "@context": ["https://w3id.org/did/v1", "https://w3id.org/security/v1"],
         "id": "did:iota:123456789abcdefghi",
-        "updated": "2020-08-25 21:47:28.344412100 UTC",
+        "updated": "2020-08-31T05:46:33.559590+00:00Z",
         "publicKey": [{
             "id": "did:iota:123456789abcdefghi#keys-1",
             "type": "RsaVerificationKey2018",
@@ -350,7 +350,7 @@ fn test_doc_metadata() {
             "https://w3id.org/security/v1"
         ],
         "id": "did:iota:123456789abcdefghi",
-        "updated": "2020-08-25 21:47:28.344412100 UTC",
+        "updated": "2020-08-31T05:46:33.559590+00:00Z",
         "publicKey": [
             {
                 "id": "did:iota:123456789abcdefghi#keys-1",
