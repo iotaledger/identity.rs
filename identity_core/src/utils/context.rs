@@ -4,9 +4,10 @@ use serde::{
     ser::{Serialize, SerializeSeq, Serializer},
     Deserialize,
 };
+use serde_diff::SerdeDiff;
 
 /// A context type.  Contains a Vector of Strings which describe the DID context.
-#[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Clone, SerdeDiff)]
 #[serde(transparent)]
 pub struct Context(Vec<String>);
 
@@ -65,5 +66,17 @@ impl Serialize for Context {
                 seq.end()
             }
         }
+    }
+}
+
+impl From<&str> for Context {
+    fn from(s: &str) -> Context {
+        Context(vec![s.into()])
+    }
+}
+
+impl From<String> for Context {
+    fn from(s: String) -> Context {
+        Context(vec![s])
     }
 }

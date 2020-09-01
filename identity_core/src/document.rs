@@ -1,26 +1,39 @@
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
+use serde_diff::SerdeDiff;
 use std::{collections::HashMap, str::FromStr};
 
 use crate::{
     did::DID,
-    utils::{helpers::string_or_list, Context, PublicKey, Service, Subject},
+    utils::{helpers::string_or_list, Authentication, Context, PublicKey, Service, Subject},
 };
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
 /// `public_key`, services and metadata.  Only `context` and `id` are required to create a DID document.
-#[cfg_attr(not(test), derive(PartialEq))]
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq, SerdeDiff)]
 pub struct DIDDocument {
     #[serde(rename = "@context", deserialize_with = "string_or_list", default)]
     pub context: Context,
     pub id: Subject,
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub created: String,
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub updated: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde_diff(skip)]
+    pub created: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated: Option<String>,
     #[serde(rename = "publicKey", skip_serializing_if = "Vec::is_empty", default)]
     pub public_key: Vec<PublicKey>,
+    #[serde(rename = "authentication", skip_serializing_if = "Vec::is_empty", default)]
+    pub auth: Vec<Authentication>,
+    #[serde(rename = "assertionMethod", skip_serializing_if = "Vec::is_empty", default)]
+    pub assert: Vec<Authentication>,
+    #[serde(rename = "verificationMethod", skip_serializing_if = "Vec::is_empty", default)]
+    pub verification: Vec<Authentication>,
+    #[serde(rename = "capabilityDelegation", skip_serializing_if = "Vec::is_empty", default)]
+    pub delegation: Vec<Authentication>,
+    #[serde(rename = "capabilityInvocation", skip_serializing_if = "Vec::is_empty", default)]
+    pub invocation: Vec<Authentication>,
+    #[serde(rename = "keyAgreement", skip_serializing_if = "Vec::is_empty", default)]
+    pub agreement: Vec<Authentication>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub services: Vec<Service>,
     #[serde(flatten)]
@@ -28,25 +41,22 @@ pub struct DIDDocument {
 }
 
 impl DIDDocument {
-    /// Takes in the `context` and `id` as strings and creates a new `DIDDocument` struct.  The `context` field may be
-    /// an empty string in which case it will default to "https://www.w3.org/ns/did/v1"
-    pub fn new(context: String, id: String) -> crate::Result<Self> {
-        if context == String::new() {
-            Ok(DIDDocument {
-                context: Context::default(),
-                id: Subject::from_str(&id)?,
-                created: Utc::now().to_string(),
-                updated: Utc::now().to_string(),
-                ..Default::default()
-            })
-        } else {
-            Ok(DIDDocument {
-                context: Context::from_str(&context)?,
-                id: Subject::from_str(&id)?,
-                created: Utc::now().to_string(),
-                updated: Utc::now().to_string(),
-                ..Default::default()
-            })
+    /// Initialize the DIDDocument.
+    pub fn init(self) -> Self {
+        DIDDocument {
+            context: self.context,
+            id: self.id,
+            created: self.created,
+            updated: self.updated,
+            public_key: self.public_key,
+            auth: self.auth,
+            assert: self.assert,
+            verification: self.verification,
+            delegation: self.delegation,
+            invocation: self.invocation,
+            agreement: self.agreement,
+            services: self.services,
+            metadata: self.metadata,
         }
     }
 
@@ -56,27 +66,110 @@ impl DIDDocument {
     }
 
     /// sets a new `service` of type `Service` into the `DIDDocument`.
-    pub fn add_service(&mut self, service: Service) {
+    pub fn update_service(&mut self, service: Service) {
         self.services.push(service);
+    }
 
-        self.update_time();
+    /// remove all of the services from the `DIDDocument`.
+    pub fn clear_services(&mut self) {
+        self.services.clear();
     }
 
     /// sets a new `key_pair` of type `PublicKey` into the `DIDDocument`.
-    pub fn add_key_pair(&mut self, key_pair: PublicKey) {
+    pub fn update_public_key(&mut self, key_pair: PublicKey) {
         self.public_key.push(key_pair);
-
-        self.update_time();
     }
 
-    /// updates the `updated` fields time.
-    pub fn update_time(&mut self) {
-        self.updated = Utc::now().to_string();
+    /// remove all of the public keys from the `DIDDocument`.
+    pub fn clear_public_keys(&mut self) {
+        self.public_key.clear();
     }
 
-    /// derive the did from the document.
+    /// sets in a new `auth` of type `Authentication` into the `DIDDocument`.
+    pub fn update_auth(&mut self, auth: Authentication) {
+        self.auth.push(auth);
+    }
+
+    /// remove all of the authentications from the `DIDDocument`.
+    pub fn clear_auth(&mut self) {
+        self.auth.clear();
+    }
+
+    /// sets in a new `assert` of type `Authentication` into the `DIDDocument`.
+    pub fn update_assert(&mut self, assert: Authentication) {
+        self.assert.push(assert);
+    }
+
+    /// remove all of the assertion methods from the `DIDDocument`.
+    pub fn clear_assert(&mut self) {
+        self.assert.clear();
+    }
+
+    /// sets in a new `verification` of type `Authentication` into the `DIDDocument`.
+    pub fn update_verification(&mut self, verification: Authentication) {
+        self.verification.push(verification);
+    }
+
+    /// remove all of the verification methods from the `DIDDocument`.
+    pub fn clear_verification(&mut self) {
+        self.verification.clear();
+    }
+
+    /// sets in a new `delegation` of type `Authentication` into the `DIDDocument`.
+    pub fn update_delegation(&mut self, delegation: Authentication) {
+        self.delegation.push(delegation);
+    }
+
+    /// remove all of the capability delegations from the `DIDDocument`.
+    pub fn clear_delegation(&mut self) {
+        self.delegation.clear();
+    }
+
+    /// sets in a new `invocation` of type `Authentication` into the `DIDDocument`.
+    pub fn update_invocation(&mut self, invocation: Authentication) {
+        self.invocation.push(invocation);
+    }
+
+    /// remove all of the capability invocations from the `DIDDocument`.
+    pub fn clear_invocation(&mut self) {
+        self.invocation.clear();
+    }
+
+    /// sets in a new `agreement` of type `Authentication` into the `DIDDocument`.
+    pub fn update_agreement(&mut self, agreement: Authentication) {
+        self.agreement.push(agreement);
+    }
+
+    /// remove all of the key agreements from the `DIDDocument`.
+    pub fn clear_agreement(&mut self) {
+        self.agreement.clear();
+    }
+
+    /// get the ID from the Document as a DID.
     pub fn derive_did(&self) -> crate::Result<DID> {
         self.id.to_did()
+    }
+
+    /// Updates the `updated` time for the `DIDDocument`.
+    pub fn update_time(&mut self) {
+        self.updated = Some(Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true));
+    }
+
+    /// Inserts `metadata` into the `DIDDocument` body.  The metadata must be a HashMap<String, String> where the keys
+    /// are json keys and values are the json values.
+    pub fn supply_metadata(self, metadata: HashMap<String, String>) -> crate::Result<Self> {
+        Ok(DIDDocument { metadata, ..self }.init())
+    }
+
+    /// initialize the `created` and `updated` timestamps to publish the did document.  Returns the did document with
+    /// these timestamps.
+    pub fn init_timestamps(self) -> crate::Result<Self> {
+        Ok(DIDDocument {
+            created: Some(Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true)),
+            updated: Some(Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true)),
+            ..self
+        }
+        .init())
     }
 }
 
@@ -94,53 +187,5 @@ impl FromStr for DIDDocument {
     fn from_str(s: &str) -> crate::Result<Self> {
         let doc = serde_json::from_str(s)?;
         Ok(doc)
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    /// PartialEq without comparing the Timestamps.
-    impl PartialEq for DIDDocument {
-        fn eq(&self, other: &Self) -> bool {
-            self.context == other.context
-                && self.id == other.id
-                && self.public_key == other.public_key
-                && self.services == other.services
-        }
-    }
-
-    /// test doc creation via the `DIDDocument::new` method.
-    #[test]
-    fn test_doc_creation() {
-        let mut did_doc =
-            DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
-        let service = Service::new(
-            "did:into:123#edv".into(),
-            "EncryptedDataVault".into(),
-            "https://edv.example.com/".into(),
-            None,
-            None,
-        )
-        .unwrap();
-        did_doc.add_service(service.clone());
-        let public_key = PublicKey::new(
-            "did:iota:123456789abcdefghi#keys-1".into(),
-            "RsaVerificationKey2018".into(),
-            "did:iota:123456789abcdefghi".into(),
-            "publicKeyBase58".into(),
-            "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
-        )
-        .unwrap();
-        did_doc.add_key_pair(public_key.clone());
-
-        let mut did_doc_2 =
-            DIDDocument::new("https://w3id.org/did/v1".into(), "did:iota:123456789abcdefghi".into()).unwrap();
-        did_doc_2.add_service(service);
-        did_doc_2.add_key_pair(public_key);
-
-        // timestamps will not be equal but partialeq will ignore them for testing.
-        assert_eq!(did_doc, did_doc_2);
     }
 }

@@ -3,10 +3,11 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 use crate::utils::{Context, Subject};
+use serde_diff::SerdeDiff;
 
 /// Describes a `Service` in a `DIDDocument` type. Contains an `id`, `service_type` and `endpoint`.  The `endpoint` can
 /// be represented as a `String` or a `ServiceEndpoint` in json.
-#[derive(Debug, Eq, PartialEq, Deserialize, Serialize, Clone)]
+#[derive(Debug, Eq, PartialEq, Deserialize, Serialize, SerdeDiff, Clone, Default)]
 pub struct Service {
     #[serde(default)]
     pub id: Subject,
@@ -19,7 +20,7 @@ pub struct Service {
 /// Describes the `ServiceEndpoint` struct type. Contains a required `context` and two optional fields: `endpoint_type`
 /// and `instances`.  If neither `instances` nor `endpoint_type` is specified, the `ServiceEndpoint` is represented as a
 /// String in json using the `context`.
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Clone, SerdeDiff, Default)]
 pub struct ServiceEndpoint {
     pub context: Context,
     pub endpoint_type: Option<String>,
@@ -27,32 +28,22 @@ pub struct ServiceEndpoint {
 }
 
 impl Service {
-    /// Creates a new `Service` given a `id`, `service_type`, `endpoint`, `endpoint_type`, and `instances`.
-    /// `endpoint_type`, and `instances` are optional.
-    pub fn new(
-        id: String,
-        service_type: String,
-        endpoint: String,
-        endpoint_type: Option<String>,
-        instances: Option<Vec<String>>,
-    ) -> crate::Result<Self> {
-        Ok(Self {
-            id: Subject::from_str(&id)?,
-            service_type,
-            endpoint: ServiceEndpoint::new(endpoint, endpoint_type, instances)?,
-        })
+    pub fn init(self) -> Self {
+        Self {
+            id: self.id,
+            service_type: self.service_type,
+            endpoint: self.endpoint,
+        }
     }
 }
 
 impl ServiceEndpoint {
-    /// Builds a new `ServiceEndpoint` given an `endpoint`, `endpoint_type`, and `instances`. `endpoint_type`, and
-    /// `instances` are optional.
-    pub fn new(endpoint: String, endpoint_type: Option<String>, instances: Option<Vec<String>>) -> crate::Result<Self> {
-        Ok(ServiceEndpoint {
-            context: Context::from_str(&endpoint)?,
-            endpoint_type,
-            instances,
-        })
+    pub fn init(self) -> Self {
+        Self {
+            context: self.context,
+            endpoint_type: self.endpoint_type,
+            instances: self.instances,
+        }
     }
 }
 
@@ -81,5 +72,11 @@ impl FromStr for ServiceEndpoint {
 impl ToString for ServiceEndpoint {
     fn to_string(&self) -> String {
         serde_json::to_string(self).expect("Unable to serialize the Service Endpoint struct")
+    }
+}
+
+impl From<&str> for ServiceEndpoint {
+    fn from(s: &str) -> Self {
+        serde_json::from_str(s).expect("Unable to parse string")
     }
 }

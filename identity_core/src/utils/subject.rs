@@ -1,11 +1,12 @@
 use crate::did::DID;
 
 use serde::{Deserialize, Serialize};
+use serde_diff::SerdeDiff;
 
 use std::str::FromStr;
 
 /// A wrapped `DID` type called a subject.  
-#[derive(Eq, PartialEq, Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Debug, Default, Clone, Serialize, Deserialize, SerdeDiff)]
 #[serde(transparent)]
 pub struct Subject(DID);
 
@@ -40,5 +41,17 @@ impl FromStr for Subject {
 impl From<DID> for Subject {
     fn from(did: DID) -> Self {
         Subject::from_did(did).expect("unable to convert Did to Subject")
+    }
+}
+
+impl From<&str> for Subject {
+    fn from(s: &str) -> Self {
+        Subject::from_str(s).expect("unable to convert Did to Subject")
+    }
+}
+
+impl From<String> for Subject {
+    fn from(s: String) -> Self {
+        Subject::from_str(&s).expect("Unable to convert to Subject")
     }
 }

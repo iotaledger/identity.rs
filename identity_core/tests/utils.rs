@@ -1,9 +1,17 @@
 use identity_core::{
     did::DID,
-    utils::{Context, PublicKey, Service, Subject},
+    utils::{Context, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
 };
 
 use std::str::FromStr;
+
+const JSON_STR: &str = include_str!("utils.json");
+
+fn setup_json(key: &str) -> String {
+    let json_str = json::parse(JSON_STR).unwrap();
+
+    json_str[key].to_string()
+}
 
 /// Test Context::new
 #[test]
@@ -33,14 +41,13 @@ fn test_subject_from_string() {
 /// Test building a subject from a DID structure.
 #[test]
 fn test_subject_from_did() {
-    let did = DID::new(
-        "iota".into(),
-        vec!["123456".into(), "789011".into()],
-        Some(vec![("name".into(), Some("value".into()))]),
-        None,
-        None,
-        None,
-    )
+    let did = DID {
+        method_name: "iota".into(),
+        id_segments: vec!["123456".into(), "789011".into()],
+        params: Some(vec![("name".into(), Some("value".into())).into()]),
+        ..Default::default()
+    }
+    .init()
     .unwrap();
 
     let string = format!("\"{}\"", did.to_string());
@@ -54,14 +61,13 @@ fn test_subject_from_did() {
 /// Test Subject from a DID using the From Trait.
 #[test]
 fn test_subject_from() {
-    let did = DID::new(
-        "iota".into(),
-        vec!["123456".into(), "789011".into()],
-        Some(vec![("name".into(), Some("value".into()))]),
-        None,
-        None,
-        None,
-    )
+    let did = DID {
+        method_name: "iota".into(),
+        id_segments: vec!["123456".into(), "789011".into()],
+        params: Some(vec![("name".into(), Some("value".into())).into()]),
+        ..Default::default()
+    }
+    .init()
     .unwrap();
 
     let string = format!("\"{}\"", did.to_string());
@@ -76,79 +82,46 @@ fn test_subject_from() {
 /// Test public key structure from String and with PublicKey::new
 #[test]
 fn test_public_key() {
-    let raw_str = r#"
-    {
-        "id":"did:iota:123456789abcdefghi#keys-1",
-        "type":"Ed25519VerificationKey2018",
-        "controller":"did:iota:pqrstuvwxyz0987654321",
-        "publicKeyBase58":"H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+    let raw_str = setup_json("public");
+
+    let pk_t = PublicKey::from_str(&raw_str).unwrap();
+
+    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
+    let public_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "Ed25519VerificationKey2018".into(),
+        controller: "did:iota:pqrstuvwxyz0987654321".into(),
+        key_data,
+        ..Default::default()
     }
-    "#;
-    let pk_t = PublicKey::from_str(raw_str).unwrap();
-    let pk = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "Ed25519VerificationKey2018".into(),
-        "did:iota:pqrstuvwxyz0987654321".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
-    )
-    .unwrap();
+    .init();
 
-    assert_eq!(pk, pk_t);
+    assert_eq!(public_key, pk_t);
 
-    let res = serde_json::to_string(&pk).unwrap();
+    let res = serde_json::to_string(&public_key).unwrap();
 
-    assert_eq!(res, pk_t.to_string());
-}
-
-/// Test the custom PublicKeyType to see if it works as expected.  
-#[test]
-fn test_custom_key_type() {
-    let raw_str = r#"
-    {
-        "id":"did:iota:123456789abcdefghi#keys-1",
-        "type": "SomeKeyType",
-        "controller":"did:iota:pqrstuvwxyz0987654321",
-        "publicKeyBase58":"H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-    }
-    "#;
-
-    let pk_t = PublicKey::from_str(raw_str).unwrap();
-
-    let pk = PublicKey::new(
-        "did:iota:123456789abcdefghi#keys-1".into(),
-        "SomeKeyType".into(),
-        "did:iota:pqrstuvwxyz0987654321".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
-    )
-    .unwrap();
-
-    assert_eq!(pk, pk_t);
-
-    let res = serde_json::to_string(&pk).unwrap();
     assert_eq!(res, pk_t.to_string());
 }
 
 /// Test service without ServiceEndpoint body.
 #[test]
 fn test_service_with_no_endpoint_body() {
-    let raw_str = r#"{
-        "id": "did:into:123#edv",
-        "type": "EncryptedDataVault",
-        "serviceEndpoint": "https://edv.example.com/"
-    }"#;
+    let raw_str = setup_json("service");
 
-    let service = Service::new(
-        "did:into:123#edv".into(),
-        "EncryptedDataVault".into(),
-        "https://edv.example.com/".into(),
-        None,
-        None,
-    )
-    .unwrap();
+    let endpoint = ServiceEndpoint {
+        context: "https://edv.example.com/".into(),
+        ..Default::default()
+    }
+    .init();
 
-    let service_2: Service = Service::from_str(raw_str).unwrap();
+    let service = Service {
+        id: "did:into:123#edv".into(),
+        service_type: "EncryptedDataVault".into(),
+        endpoint,
+    };
+
+    let service_2: Service = Service::from_str(&raw_str).unwrap();
 
     assert_eq!(service, service_2);
 
@@ -160,29 +133,22 @@ fn test_service_with_no_endpoint_body() {
 /// Test Service with a ServiceEndpoint Body.
 #[test]
 fn test_service_with_body() {
-    let raw_str = r#"
-    {
-        "id": "did:example:123456789abcdefghi#hub",
-        "type": "IdentityHub",
-        "publicKey": "did:example:123456789abcdefghi#key-1",
-        "serviceEndpoint": {
-          "@context": "https://schema.identity.foundation/hub",
-          "type": "UserHubEndpoint",
-          "instances": ["did:example:456", "did:example:789"]
-        }
+    let raw_str = setup_json("endpoint");
+
+    let endpoint = ServiceEndpoint {
+        context: "https://schema.identity.foundation/hub".into(),
+        endpoint_type: Some("UserHubEndpoint".into()),
+        instances: Some(vec!["did:example:456".into(), "did:example:789".into()]),
     }
-        "#;
+    .init();
 
-    let service = Service::new(
-        "did:example:123456789abcdefghi#hub".into(),
-        "IdentityHub".into(),
-        "https://schema.identity.foundation/hub".into(),
-        Some("UserHubEndpoint".into()),
-        Some(vec!["did:example:456".into(), "did:example:789".into()]),
-    )
-    .unwrap();
+    let service = Service {
+        id: "did:example:123456789abcdefghi#hub".into(),
+        service_type: "IdentityHub".into(),
+        endpoint,
+    };
 
-    let service_2: Service = Service::from_str(raw_str).unwrap();
+    let service_2: Service = Service::from_str(&raw_str).unwrap();
 
     assert_eq!(service, service_2);
 
