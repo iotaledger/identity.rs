@@ -1,16 +1,16 @@
 //! Publish new did document and read it from the tangle
 //! cargo run --example resolve_did_diff
 use anyhow::Result;
-use chrono::prelude::*;
 use identity_core::{
     did::DID,
     document::DIDDocument,
-    utils::{Context, PublicKey, Subject},
+    utils::{Context, KeyData, PublicKey, Subject},
 };
 use identity_integration::tangle_writer::{iota_network, Differences, Payload, TangleWriter};
 use identity_resolver::resolver::{NetworkNodes, ResolutionInputMetadata, Resolver};
 use iota_conversion::Trinary;
 use serde_diff::{Apply, Diff};
+use time::common::Timestamp;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
@@ -34,13 +34,14 @@ async fn main() -> Result<()> {
 
     // updated doc and publish diff
     let mut new = old.clone();
-    let public_key = PublicKey::new(
-        "did:iota:123456789abcdefghij#keys-1".into(),
-        "RsaVerificationKey2018".into(),
-        "did:iota:com:123456789abcdefghij".into(),
-        "publicKeyBase58".into(),
-        "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
-    )?;
+    let public_key = PublicKey {
+        id: "did:iota:123456789abcdefghij#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:com:123456789abcdefghij".into(),
+        key_data: KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into()),
+        ..Default::default()
+    }
+    .init();
     new.update_public_key(public_key);
     new.update_time();
     // diff the two docs and create a json string of the diff.
@@ -48,7 +49,7 @@ async fn main() -> Result<()> {
     let did_payload = Payload::DIDDocumentDifferences(Differences {
         did: new.derive_did()?,
         diff: json_diff.clone(),
-        time: Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
+        time: Timestamp::now().to_rfc3339(),
     });
     let tail_transaction = tangle_writer.publish_document(&did_payload).await?;
     println!(

@@ -1,8 +1,8 @@
-use chrono::prelude::*;
 use identity_core::{did::DID, document::DIDDocument};
 use identity_integration::{did_helper::did_iota_address, tangle_reader::TangleReader, tangle_writer::Differences};
 use serde_diff::Apply;
 use std::{collections::HashMap, time::Instant};
+use time::common::Timestamp;
 
 #[derive(Debug)]
 pub struct ResolutionResult {
@@ -70,9 +70,17 @@ impl Resolver {
         let mut metadata = HashMap::new();
         // Apply diffs
         for (i, diff) in diffs.iter().enumerate() {
-            let mut deserializer = serde_json::Deserializer::from_str(&diff.diff.diff);
-            Apply::apply(&mut deserializer, &mut latest_document.document)?;
-            metadata.insert(format!("diff_tail_transaction {}", i), diff.tailhash.clone());
+            if diff.diff.time
+                > latest_document
+                    .document
+                    .updated
+                    .clone()
+                    .expect("Failed to get updated field")
+            {
+                let mut deserializer = serde_json::Deserializer::from_str(&diff.diff.diff);
+                Apply::apply(&mut deserializer, &mut latest_document.document)?;
+                metadata.insert(format!("diff_tail_transaction {}", i), diff.tailhash.clone());
+            }
         }
 
         metadata.insert("document_tail_transaction".into(), latest_document.tailhash.clone());
@@ -80,7 +88,7 @@ impl Resolver {
             did_document: latest_document.document,
             metadata: ResolutionMetadata {
                 driver_id: "did:iota".into(),
-                retrieved: Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
+                retrieved: Timestamp::now().to_rfc3339(),
                 duration: start_time.elapsed().as_millis(),
             },
             did_document_metadata: metadata,
