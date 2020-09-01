@@ -1,14 +1,11 @@
-use identity_core::{
-    did::{Param, DID},
-    line_error,
-};
+use identity_core::did::{Param, DID};
 use proptest::prelude::*;
 use serde_test::{assert_tokens, Token};
 
 /// test did creation from DID::new
 #[test]
 fn test_create_did() {
-    let did = DID::new("iota".into(), vec!["123456".into()], None, None, None, None).expect(line_error!());
+    let did = DID::new("iota".into(), vec!["123456".into()], None, None, None, None).unwrap();
 
     assert_eq!(did.id_segments, vec!["123456"]);
     assert_eq!(did.method_name, "iota");
@@ -26,7 +23,7 @@ fn test_multiple_ids() {
         None,
         None,
     )
-    .expect(line_error!());
+    .unwrap();
 
     assert_eq!(format!("{}", did), "did:iota:123456:789011;name=value");
 }
@@ -34,7 +31,7 @@ fn test_multiple_ids() {
 /// test the DID Param struct.
 #[test]
 fn test_param() {
-    let param = Param::new(("name".into(), Some("value".into()))).expect(line_error!());
+    let param = Param::new(("name".into(), Some("value".into()))).unwrap();
 
     assert_eq!(param.name, "name");
     assert_eq!(param.value, Some(String::from("value")));
@@ -44,7 +41,7 @@ fn test_param() {
 /// test a did with a fragment.
 #[test]
 fn test_frag() {
-    let mut did = DID::new("iota".into(), vec!["123456".into()], None, None, None, None).expect(line_error!());
+    let mut did = DID::new("iota".into(), vec!["123456".into()], None, None, None, None).unwrap();
 
     did.add_fragment("a-fragment".into());
 
@@ -55,8 +52,8 @@ fn test_frag() {
 /// test the params in a DID.
 #[test]
 fn test_params() {
-    let param_a = Param::new(("param".into(), Some("a".into()))).expect(line_error!());
-    let param_b = Param::new(("param".into(), Some("b".into()))).expect(line_error!());
+    let param_a = Param::new(("param".into(), Some("a".into()))).unwrap();
+    let param_b = Param::new(("param".into(), Some("b".into()))).unwrap();
     let params = Some(vec![param_a.clone(), param_b.clone()]);
     let mut did = DID::new(
         "iota".into(),
@@ -69,12 +66,12 @@ fn test_params() {
         None,
         None,
     )
-    .expect(line_error!());
+    .unwrap();
 
     assert_eq!(format!("{}", did), "did:iota:123456;param=a;param=b");
     assert_eq!(did.params, params);
 
-    let param_c = Param::new(("param".into(), Some("c".into()))).expect(line_error!());
+    let param_c = Param::new(("param".into(), Some("c".into()))).unwrap();
     let params = vec![param_c.clone()];
     did.add_params(params);
 
@@ -92,7 +89,7 @@ fn test_path_did() {
         None,
         None,
     )
-    .expect(line_error!());
+    .unwrap();
 
     assert_eq!(format!("{}", did), "did:iota:123456/a/simple/path");
 }
@@ -111,7 +108,7 @@ fn test_full_did() {
         Some("some_query".into()),
         Some("a_fragment".into()),
     )
-    .expect(line_error!());
+    .unwrap();
 
     assert_eq!(
         format!("{}", did),
@@ -122,8 +119,7 @@ fn test_full_did() {
 /// test the did parser on a full did.
 #[test]
 fn test_parser() {
-    let did =
-        DID::parse_from_str("did:iota:123456;param=a;param=b/some_path?some_query#a_fragment").expect(line_error!());
+    let did = DID::parse_from_str("did:iota:123456;param=a;param=b/some_path?some_query#a_fragment").unwrap();
 
     assert_eq!(
         format!("{}", did),
@@ -142,14 +138,14 @@ fn test_parser() {
             Some("some_query".into()),
             Some("a_fragment".into())
         )
-        .expect(line_error!())
+        .unwrap()
     );
 }
 
 /// test multiple path strings in a DID.
 #[test]
 fn test_multiple_paths() {
-    let did = DID::parse_from_str("did:iota:123456/some_path_a/some_path_b").expect(line_error!());
+    let did = DID::parse_from_str("did:iota:123456/some_path_a/some_path_b").unwrap();
 
     assert_eq!(format!("{}", did), "did:iota:123456/some_path_a/some_path_b");
     assert_eq!(
@@ -162,7 +158,7 @@ fn test_multiple_paths() {
             None,
             None,
         )
-        .expect(line_error!())
+        .unwrap()
     )
 }
 
@@ -185,7 +181,7 @@ fn test_parsing_contraints() {
 /// test DID serialization and deserialization.
 #[test]
 fn test_serde() {
-    let did = DID::parse_from_str("did:iota:12345").expect(line_error!());
+    let did = DID::parse_from_str("did:iota:12345").unwrap();
 
     assert_tokens(&did, &[Token::String("did:iota:12345")]);
 
@@ -200,7 +196,7 @@ fn test_serde() {
         Some("some_query".into()),
         Some("a_fragment".into()),
     )
-    .expect(line_error!());
+    .unwrap();
 
     assert_tokens(
         &did,
@@ -214,25 +210,25 @@ fn test_serde() {
 fn wrapper_did_id_seg(s: &str) -> Option<DID> {
     let did_str = format!("did:iota:{}", s);
 
-    DID::parse_from_str(&did_str).expect(line_error!());
+    DID::parse_from_str(&did_str).unwrap();
 
-    Some(DID::new("iota".into(), vec![s.into()], None, None, None, None).expect(line_error!()))
+    Some(DID::new("iota".into(), vec![s.into()], None, None, None, None).unwrap())
 }
 
 /// logic for the did method name prop test.
 fn wrapper_did_name(s: &str) -> Option<DID> {
     let did_str = format!("did:{}:12345678", s);
 
-    DID::parse_from_str(&did_str).expect(line_error!());
+    DID::parse_from_str(&did_str).unwrap();
 
-    Some(DID::new(s.into(), vec!["12345678".into()], None, None, None, None).expect(line_error!()))
+    Some(DID::new(s.into(), vec!["12345678".into()], None, None, None, None).unwrap())
 }
 
 /// logic for the did params prop test.
 fn wrapper_did_params(n: &str, v: &str) -> Option<DID> {
     let did_str = format!("did:iota:12345678;{}={}", n, v);
 
-    DID::parse_from_str(did_str).expect(line_error!());
+    DID::parse_from_str(did_str).unwrap();
 
     Some(
         DID::new(
@@ -243,7 +239,7 @@ fn wrapper_did_params(n: &str, v: &str) -> Option<DID> {
             None,
             None,
         )
-        .expect(line_error!()),
+        .unwrap(),
     )
 }
 
@@ -251,7 +247,7 @@ fn wrapper_did_params(n: &str, v: &str) -> Option<DID> {
 fn wrapper_did_path(p: &str) -> Option<DID> {
     let did_str = format!("did:iota:12345678/{}", p);
 
-    DID::parse_from_str(did_str).expect(line_error!());
+    DID::parse_from_str(did_str).unwrap();
 
     Some(
         DID::new(
@@ -262,7 +258,7 @@ fn wrapper_did_path(p: &str) -> Option<DID> {
             None,
             None,
         )
-        .expect(line_error!()),
+        .unwrap(),
     )
 }
 
@@ -270,18 +266,18 @@ fn wrapper_did_path(p: &str) -> Option<DID> {
 fn wrapper_did_query(q: &str) -> Option<DID> {
     let did_str = format!("did:iota:12345678?{}", q);
 
-    DID::parse_from_str(did_str).expect(line_error!());
+    DID::parse_from_str(did_str).unwrap();
 
-    Some(DID::new("iota".into(), vec!["12345678".into()], None, None, Some(q.into()), None).expect(line_error!()))
+    Some(DID::new("iota".into(), vec!["12345678".into()], None, None, Some(q.into()), None).unwrap())
 }
 
 /// logic for the did fragment prop test.
 fn wrapper_did_frag(f: &str) -> Option<DID> {
     let did_str = format!("did:iota:12345678#{}", f);
 
-    DID::parse_from_str(did_str).expect(line_error!());
+    DID::parse_from_str(did_str).unwrap();
 
-    Some(DID::new("iota".into(), vec!["12345678".into()], None, None, None, Some(f.into())).expect(line_error!()))
+    Some(DID::new("iota".into(), vec!["12345678".into()], None, None, None, Some(f.into())).unwrap())
 }
 
 // Property Based Testing for the DID Parser and DID implementation.
