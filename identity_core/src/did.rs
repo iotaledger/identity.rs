@@ -1,7 +1,9 @@
 use serde::{
     de::{self, Deserialize, Deserializer, Visitor},
     ser::{Serialize, Serializer},
+    Deserialize as DDeserialize, Serialize as DSerialize,
 };
+use serde_diff::SerdeDiff;
 use std::fmt::{self, Display, Formatter};
 
 use crate::did_parser::parse;
@@ -12,7 +14,7 @@ const LEADING_TOKENS: &str = "did";
 type DIDTuple = (String, Option<String>);
 
 /// a Decentralized identity structure.  
-#[derive(Debug, PartialEq, Eq, Default, Clone)]
+#[derive(Debug, PartialEq, Default, Eq, Clone, SerdeDiff)]
 pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
@@ -23,53 +25,25 @@ pub struct DID {
 }
 
 /// a DID Params struct.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Default, SerdeDiff, DDeserialize, DSerialize)]
 pub struct Param {
     pub name: String,
     pub value: Option<String>,
 }
 
 impl DID {
-    /// Creates a new DID. `params` and `fragment` are both optional.
-    pub fn new(
-        name: String,
-        id_segments: Vec<String>,
-        params: Option<Vec<DIDTuple>>,
-        path_segments: Option<Vec<String>>,
-        query: Option<String>,
-        fragment: Option<String>,
-    ) -> crate::Result<Self> {
-        let mut did = DID {
-            method_name: name,
-            id_segments,
-            ..Default::default()
+    /// Initializes the DID struct with the filled out fields. Also runs parse_from_str to validate the fields.
+    pub fn init(self) -> crate::Result<DID> {
+        let did = DID {
+            method_name: self.method_name,
+            id_segments: self.id_segments,
+            params: self.params,
+            fragment: self.fragment,
+            path_segments: self.path_segments,
+            query: self.query,
         };
 
-        if let Some(prms) = params {
-            let ps: Vec<Param> = prms
-                .into_iter()
-                .map(|pms| Param::new(pms).expect("Format of Param is incorrect"))
-                .collect();
-
-            did.params = Some(ps);
-        };
-
-        if let Some(frag) = fragment {
-            did.add_fragment(frag);
-        };
-
-        if let Some(path) = path_segments {
-            did.add_path_segments(path);
-        }
-
-        if let Some(qry) = query {
-            did.add_query(qry);
-        }
-
-        // constrain DID parameters with parser.
-        DID::parse_from_str(format!("{}", did))?;
-
-        Ok(did)
+        DID::parse_from_str(did)
     }
 
     pub fn parse_from_str<T>(input: T) -> crate::Result<Self>
@@ -115,21 +89,6 @@ impl DID {
     /// Method to add a fragment to the DID.  
     pub fn add_fragment(&mut self, fragment: String) {
         self.fragment = Some(fragment);
-    }
-}
-
-impl Param {
-    /// Creates a new Param struct.
-    pub fn new(params: DIDTuple) -> crate::Result<Self> {
-        let (name, value) = params;
-
-        if name == String::new() {
-            Err(crate::Error::FormatError(
-                "Format of the params is incorrect or empty".into(),
-            ))
-        } else {
-            Ok(Param { name, value })
-        }
     }
 }
 
@@ -250,5 +209,11 @@ impl Serialize for DID {
         let s = format!("{}", self);
 
         serializer.serialize_str(s.as_str())
+    }
+}
+
+impl From<DIDTuple> for Param {
+    fn from((name, value): DIDTuple) -> Param {
+        Param { name, value }
     }
 }
