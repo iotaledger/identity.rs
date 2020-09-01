@@ -57,7 +57,7 @@ async fn main() -> Result<()> {
         tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
     );
 
-    let resolver = Resolver::new(NetworkNodes::Com(nodes));
+    let resolver = Resolver::new(NetworkNodes::Com(nodes))?;
     // Mainnet: did:iota:123456789abcdefghij
     // Comnet: did:iota:com:123456789abcdefghij
     // Devnet: did:iota:dev:123456789abcdefghij

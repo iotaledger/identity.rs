@@ -9,7 +9,7 @@ async fn main() -> Result<()> {
     let resolver = Resolver::new(NetworkNodes::Com(vec![
         "http://localhost:14265",
         "https://nodes.comnet.thetangle.org:443",
-    ]));
+    ]))?;
     // Mainnet: did:iota:123456789abcdefghi
     // Comnet: did:iota:com:123456789abcdefghi
     // Devnet: did:iota:dev:123456789abcdefghi

@@ -50,8 +50,16 @@ struct HashWithDiff {
 }
 
 impl Resolver {
-    pub fn new(nodes: NetworkNodes) -> Self {
-        Self { nodes }
+    pub fn new(nodes: NetworkNodes) -> crate::Result<Self> {
+        let node_vec = match &nodes {
+            NetworkNodes::Com(nodes) => nodes,
+            NetworkNodes::Dev(nodes) => nodes,
+            NetworkNodes::Main(nodes) => nodes,
+        };
+        if node_vec.is_empty() {
+            return Err(crate::Error::NodeError);
+        }
+        Ok(Self { nodes })
     }
     /// Resolve a DID document
     pub async fn resolve(
@@ -59,6 +67,9 @@ impl Resolver {
         did: DID,
         _resolution_metadata: ResolutionInputMetadata,
     ) -> crate::Result<ResolutionResult> {
+        if did.method_name != "iota" {
+            return Err(crate::Error::DIDMethodError);
+        }
         let start_time = Instant::now();
         let (did_id, nodes) = get_id_and_nodes(&did.id_segments, self.nodes.clone())?;
         let reader = TangleReader::new(nodes.to_vec());

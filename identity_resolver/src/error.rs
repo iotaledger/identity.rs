@@ -17,6 +17,9 @@ pub enum Error {
     /// Node Error
     #[error("Node Error: No node available")]
     NodeError,
+    /// DID method Error
+    #[error("DID Error: DID method not supported")]
+    DIDMethodError,
     /// identity_core Error
     #[error("identity_core Error: {0}")]
     IdentityCoreError(#[from] identity_core::Error),
