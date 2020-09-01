@@ -1,3 +1,4 @@
+#[macro_use]
 pub mod common;
 pub mod did;
 pub mod did_parser;

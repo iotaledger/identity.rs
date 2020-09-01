@@ -18,3 +18,14 @@ macro_rules! object {
     }
   };
 }
+
+// create a line error with the file and the line number.  Good for debugging.
+#[macro_export]
+macro_rules! line_error {
+  () => {
+    concat!("Error at ", file!(), ":", line!())
+  };
+  ($str:expr) => {
+    concat!($str, " @", file!(), ":", line!())
+  };
+}
