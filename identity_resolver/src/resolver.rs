@@ -60,7 +60,6 @@ impl Resolver {
         _resolution_metadata: ResolutionInputMetadata,
     ) -> crate::Result<ResolutionResult> {
         let start_time = Instant::now();
-        let did = DID::parse_from_str(did)?;
         let (did_id, nodes) = get_id_and_nodes(&did.id_segments, self.nodes.clone())?;
         let reader = TangleReader::new(nodes.to_vec());
         let messages = reader.fetch(&did_iota_address(&did_id)).await?;
