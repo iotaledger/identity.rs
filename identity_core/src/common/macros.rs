@@ -25,7 +25,7 @@ macro_rules! line_error {
   () => {
     concat!("Error at ", file!(), ":", line!())
   };
-  ($str:expr) => {
-    concat!($str, " @", file!(), ":", line!())
+  ($string:expr) => {
+    concat!($string, " @", file!(), ":", line!())
   };
 }
