@@ -1,4 +1,4 @@
-use identity_core::{common::Timestamp, object};
+use identity_core::{common::Timestamp, line_error, object};
 
 use std::convert::TryFrom;
 
@@ -29,12 +29,12 @@ fn test_macro_fields() {
 #[test]
 fn test_parse_valid() {
     let original = "2020-01-01T00:00:00Z";
-    let timestamp = Timestamp::try_from(original).unwrap();
+    let timestamp = Timestamp::try_from(original).expect(line_error!());
 
     assert_eq!(timestamp.to_rfc3339(), original);
 
     let original = "1980-01-01T12:34:56Z";
-    let timestamp = Timestamp::try_from(original).unwrap();
+    let timestamp = Timestamp::try_from(original).expect(line_error!());
 
     assert_eq!(timestamp.to_rfc3339(), original);
 }
