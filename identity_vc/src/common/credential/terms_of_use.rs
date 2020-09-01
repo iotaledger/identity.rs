@@ -2,7 +2,7 @@ use identity_core::common::Object;
 use std::convert::TryFrom;
 
 use crate::{
-    common::{take_object_id, try_take_object_type, OneOrMany, URI},
+    common::{take_object_id, try_take_object_types, OneOrMany, URI},
     error::Error,
 };
 
@@ -27,7 +27,7 @@ impl TryFrom<Object> for TermsOfUse {
         let mut this: Self = Default::default();
 
         this.id = take_object_id(&mut other).map(Into::into);
-        this.types = try_take_object_type("TermsOfUse", &mut other)?;
+        this.types = try_take_object_types("TermsOfUse", &mut other)?;
         this.properties = other;
 
         Ok(this)

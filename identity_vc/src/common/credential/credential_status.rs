@@ -2,7 +2,7 @@ use identity_core::common::Object;
 use std::convert::TryFrom;
 
 use crate::{
-    common::{try_take_object_id, try_take_object_type, OneOrMany, URI},
+    common::{try_take_object_id, try_take_object_types, OneOrMany, URI},
     error::Error,
 };
 
@@ -25,7 +25,7 @@ impl TryFrom<Object> for CredentialStatus {
         let mut this: Self = Default::default();
 
         this.id = try_take_object_id("CredentialStatus", &mut other)?.into();
-        this.types = try_take_object_type("CredentialStatus", &mut other)?;
+        this.types = try_take_object_types("CredentialStatus", &mut other)?;
         this.properties = other;
 
         Ok(this)
