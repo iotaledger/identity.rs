@@ -18,7 +18,7 @@ pub fn try_take_object_id(name: &'static str, object: &mut Object) -> Result<Str
 
 pub fn take_object_type(object: &mut Object) -> Option<String> {
     match object.remove("type") {
-        Some(Value::String(value)) => Some(value.into()),
+        Some(Value::String(value)) => Some(value),
         Some(_) | None => None,
     }
 }
