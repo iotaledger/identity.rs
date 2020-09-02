@@ -5,7 +5,7 @@ use std::{collections::HashMap, str::FromStr};
 use crate::{
     common::Timestamp,
     did::DID,
-    utils::{helpers::string_or_list, Authentication, Context, Dedup, PublicKey, Service, Subject},
+    utils::{helpers::string_or_list, Authentication, Context, PublicKey, Service, Subject},
 };
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
@@ -43,43 +43,25 @@ pub struct DIDDocument {
 impl DIDDocument {
     /// Initialize the DIDDocument.
     pub fn init(self) -> Self {
-        if self.services.len() > 0 {
-            let mut services = self.services.clone();
+        let mut doc = DIDDocument {
+            context: self.context,
+            id: self.id,
+            created: self.created,
+            updated: self.updated,
+            public_key: self.public_key,
+            auth: self.auth,
+            assert: self.assert,
+            verification: self.verification,
+            delegation: self.delegation,
+            invocation: self.invocation,
+            agreement: self.agreement,
+            metadata: self.metadata,
+            ..Default::default()
+        };
 
-            services.clear_duplicates();
+        self.services.into_iter().for_each(|s| doc.update_service(s));
 
-            DIDDocument {
-                context: self.context,
-                id: self.id,
-                created: self.created,
-                updated: self.updated,
-                public_key: self.public_key,
-                auth: self.auth,
-                assert: self.assert,
-                verification: self.verification,
-                delegation: self.delegation,
-                invocation: self.invocation,
-                agreement: self.agreement,
-                services: services,
-                metadata: self.metadata,
-            }
-        } else {
-            DIDDocument {
-                context: self.context,
-                id: self.id,
-                created: self.created,
-                updated: self.updated,
-                public_key: self.public_key,
-                auth: self.auth,
-                assert: self.assert,
-                verification: self.verification,
-                delegation: self.delegation,
-                invocation: self.invocation,
-                agreement: self.agreement,
-                services: self.services,
-                metadata: self.metadata,
-            }
-        }
+        doc
     }
 
     /// gets the inner value of the `context` from the `DIDDocument`.
@@ -93,7 +75,7 @@ impl DIDDocument {
             .services
             .clone()
             .into_iter()
-            .filter(|s| *s == service)
+            .filter(|s| s.id != service.id)
             .collect::<Vec<Service>>();
 
         services.push(service);
@@ -218,18 +200,5 @@ impl FromStr for DIDDocument {
     fn from_str(s: &str) -> crate::Result<Self> {
         let doc = serde_json::from_str(s)?;
         Ok(doc)
-    }
-}
-
-impl<T: PartialEq + Clone> Dedup<T> for Vec<T> {
-    fn clear_duplicates(&mut self) {
-        let mut already_seen = vec![];
-        self.retain(|item| match already_seen.contains(item) {
-            true => false,
-            _ => {
-                already_seen.push(item.clone());
-                true
-            }
-        })
     }
 }

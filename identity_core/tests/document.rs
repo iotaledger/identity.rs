@@ -64,7 +64,20 @@ fn test_doc_creation() {
         endpoint,
     };
 
+    let endpoint2 = ServiceEndpoint {
+        context: "https://edv.example.com/".into(),
+        ..Default::default()
+    }
+    .init();
+
+    let service2 = Service {
+        id: "did:into:123#edv".into(),
+        service_type: "IdentityHub".into(),
+        endpoint: endpoint2,
+    };
+
     did_doc.update_service(service.clone());
+    did_doc.update_service(service2);
 
     let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
