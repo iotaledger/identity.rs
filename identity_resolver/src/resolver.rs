@@ -1,8 +1,7 @@
-use identity_core::{did::DID, document::DIDDocument};
+use identity_core::{common::Timestamp, did::DID, document::DIDDocument};
 use identity_integration::{did_helper::did_iota_address, tangle_reader::TangleReader, tangle_writer::Differences};
 use serde_diff::Apply;
 use std::{collections::HashMap, time::Instant};
-use time::common::Timestamp;
 
 #[derive(Debug)]
 pub struct ResolutionResult {
