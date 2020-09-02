@@ -5,7 +5,7 @@ use std::{collections::HashMap, str::FromStr};
 use crate::{
     common::Timestamp,
     did::DID,
-    utils::{helpers::string_or_list, Authentication, Context, PublicKey, Service, Subject},
+    utils::{helpers::string_or_list, Authentication, Context, Dedup, PublicKey, Service, Subject},
 };
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
@@ -43,20 +43,42 @@ pub struct DIDDocument {
 impl DIDDocument {
     /// Initialize the DIDDocument.
     pub fn init(self) -> Self {
-        DIDDocument {
-            context: self.context,
-            id: self.id,
-            created: self.created,
-            updated: self.updated,
-            public_key: self.public_key,
-            auth: self.auth,
-            assert: self.assert,
-            verification: self.verification,
-            delegation: self.delegation,
-            invocation: self.invocation,
-            agreement: self.agreement,
-            services: self.services,
-            metadata: self.metadata,
+        if self.services.len() > 0 {
+            let mut services = self.services.clone();
+
+            services.clear_duplicates();
+
+            DIDDocument {
+                context: self.context,
+                id: self.id,
+                created: self.created,
+                updated: self.updated,
+                public_key: self.public_key,
+                auth: self.auth,
+                assert: self.assert,
+                verification: self.verification,
+                delegation: self.delegation,
+                invocation: self.invocation,
+                agreement: self.agreement,
+                services: services,
+                metadata: self.metadata,
+            }
+        } else {
+            DIDDocument {
+                context: self.context,
+                id: self.id,
+                created: self.created,
+                updated: self.updated,
+                public_key: self.public_key,
+                auth: self.auth,
+                assert: self.assert,
+                verification: self.verification,
+                delegation: self.delegation,
+                invocation: self.invocation,
+                agreement: self.agreement,
+                services: self.services,
+                metadata: self.metadata,
+            }
         }
     }
 
@@ -67,7 +89,16 @@ impl DIDDocument {
 
     /// sets a new `service` of type `Service` into the `DIDDocument`.
     pub fn update_service(&mut self, service: Service) {
-        self.services.push(service);
+        let mut services: Vec<Service> = self
+            .services
+            .clone()
+            .into_iter()
+            .filter(|s| *s == service)
+            .collect::<Vec<Service>>();
+
+        services.push(service);
+
+        self.services = services;
     }
 
     /// remove all of the services from the `DIDDocument`.
@@ -187,5 +218,18 @@ impl FromStr for DIDDocument {
     fn from_str(s: &str) -> crate::Result<Self> {
         let doc = serde_json::from_str(s)?;
         Ok(doc)
+    }
+}
+
+impl<T: PartialEq + Clone> Dedup<T> for Vec<T> {
+    fn clear_duplicates(&mut self) {
+        let mut already_seen = vec![];
+        self.retain(|item| match already_seen.contains(item) {
+            true => false,
+            _ => {
+                already_seen.push(item.clone());
+                true
+            }
+        })
     }
 }

@@ -11,3 +11,7 @@ pub use context::Context;
 pub use keys::{KeyData, PublicKey, PublicKeyTypes};
 pub use service::{Service, ServiceEndpoint};
 pub use subject::Subject;
+
+pub trait Dedup<T: PartialEq + Clone> {
+    fn clear_duplicates(&mut self);
+}
