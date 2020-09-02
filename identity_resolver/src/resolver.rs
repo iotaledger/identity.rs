@@ -20,6 +20,7 @@ pub struct ResolutionInputMetadata {
     pub accept: Option<String>,
     pub service_type: Option<String>,
     pub follow_redirect: Option<bool>,
+    include_all_messages: bool,
 }
 impl ResolutionInputMetadata {
     pub fn default() -> Self {
@@ -27,6 +28,7 @@ impl ResolutionInputMetadata {
             accept: None,
             service_type: None,
             follow_redirect: None,
+            include_all_messages: false,
         }
     }
 }
@@ -65,7 +67,7 @@ impl Resolver {
     pub async fn resolve(
         &self,
         did: DID,
-        _resolution_metadata: ResolutionInputMetadata,
+        resolution_metadata: ResolutionInputMetadata,
     ) -> crate::Result<ResolutionResult> {
         if did.method_name != "iota" {
             return Err(crate::Error::DIDMethodError);
@@ -75,9 +77,14 @@ impl Resolver {
         let reader = TangleReader::new(nodes.to_vec());
         let messages = reader.fetch(&did_iota_address(&did_id)).await?;
         let documents = get_ordered_documents(messages.clone(), &did_id)?;
-        let diffs = get_ordered_diffs(messages, &did_id)?;
-        let mut latest_document = documents[0].clone();
+        let diffs = get_ordered_diffs(messages.clone(), &did_id)?;
         let mut metadata = HashMap::new();
+        if resolution_metadata.include_all_messages {
+            for (tailhash, msg) in messages {
+                metadata.insert(tailhash, msg);
+            }
+        }
+        let mut latest_document = documents[0].clone();
         // Apply diffs
         for (i, diff) in diffs.iter().enumerate() {
             if diff.diff.time
