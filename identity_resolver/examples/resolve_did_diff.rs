@@ -2,6 +2,7 @@
 //! cargo run --example resolve_did_diff
 use anyhow::Result;
 use identity_core::{
+    common::Timestamp,
     did::DID,
     document::DIDDocument,
     utils::{Context, KeyData, PublicKey, Subject},
@@ -10,7 +11,6 @@ use identity_integration::tangle_writer::{iota_network, Differences, Payload, Ta
 use identity_resolver::resolver::{NetworkNodes, ResolutionInputMetadata, Resolver};
 use iota_conversion::Trinary;
 use serde_diff::{Apply, Diff};
-use time::common::Timestamp;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
