@@ -17,7 +17,7 @@ pub mod prelude {
     pub use crate::{
         common::{
             Context, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, RefreshService,
-            TermsOfUse, URI,
+            TermsOfUse,
         },
         credential::{Credential, CredentialBuilder},
         error::{Error, Result},

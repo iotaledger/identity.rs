@@ -1,8 +1,8 @@
-use identity_core::common::{Object, OneOrMany, Value};
+use identity_core::common::{Object, OneOrMany, Uri, Value};
 use serde_json::{from_str, to_string};
 
 use crate::{
-    common::{Context, RefreshService, TermsOfUse, URI},
+    common::{Context, RefreshService, TermsOfUse},
     credential::Credential,
     error::{Error, Result},
     utils::validate_presentation_structure,
@@ -21,7 +21,7 @@ pub struct Presentation {
     pub context: OneOrMany<Context>,
     /// A unique `URI` referencing the subject of the presentation.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<URI>,
+    pub id: Option<Uri>,
     /// One or more URIs defining the type of presentation.
     ///
     /// NOTE: The VC spec defines this as a set of URIs BUT they are commonly
@@ -35,7 +35,7 @@ pub struct Presentation {
     pub verifiable_credential: OneOrMany<VerifiableCredential>,
     /// The entity that generated the presentation.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub holder: Option<URI>,
+    pub holder: Option<Uri>,
     /// TODO
     #[serde(rename = "refreshService", skip_serializing_if = "Option::is_none")]
     pub refresh_service: Option<OneOrMany<RefreshService>>,
@@ -74,10 +74,10 @@ impl Presentation {
 #[derive(Debug)]
 pub struct PresentationBuilder {
     context: Vec<Context>,
-    id: Option<URI>,
+    id: Option<Uri>,
     types: Vec<String>,
     verifiable_credential: Vec<VerifiableCredential>,
-    holder: Option<URI>,
+    holder: Option<Uri>,
     refresh_service: Vec<RefreshService>,
     terms_of_use: Vec<TermsOfUse>,
     properties: Object,
@@ -100,7 +100,7 @@ impl PresentationBuilder {
     pub fn context(mut self, value: impl Into<Context>) -> Self {
         let value: Context = value.into();
 
-        if !matches!(value, Context::URI(ref uri) if uri == Credential::BASE_CONTEXT) {
+        if !matches!(value, Context::Uri(ref uri) if uri == Credential::BASE_CONTEXT) {
             self.context.push(value);
         }
 
@@ -122,9 +122,9 @@ impl PresentationBuilder {
         self
     }
 
-    impl_builder_setter!(id, id, Option<URI>);
+    impl_builder_setter!(id, id, Option<Uri>);
     impl_builder_setter!(credential, verifiable_credential, Vec<VerifiableCredential>);
-    impl_builder_setter!(holder, holder, Option<URI>);
+    impl_builder_setter!(holder, holder, Option<Uri>);
     impl_builder_setter!(refresh, refresh_service, Vec<RefreshService>);
     impl_builder_setter!(terms_of_use, terms_of_use, Vec<TermsOfUse>);
     impl_builder_setter!(properties, properties, Object);

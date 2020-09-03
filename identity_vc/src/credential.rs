@@ -1,10 +1,9 @@
-use identity_core::common::{Object, OneOrMany, Timestamp, Value};
+use identity_core::common::{Object, OneOrMany, Timestamp, Uri, Value};
 use serde_json::{from_str, to_string};
 
 use crate::{
     common::{
         Context, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, RefreshService, TermsOfUse,
-        URI,
     },
     error::{Error, Result},
     utils::validate_credential_structure,
@@ -23,7 +22,7 @@ pub struct Credential {
     pub context: OneOrMany<Context>,
     /// A unique `URI` referencing the subject of the credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<URI>,
+    pub id: Option<Uri>,
     /// One or more URIs defining the type of credential.
     ///
     /// NOTE: The VC spec defines this as a set of URIs BUT they are commonly
@@ -96,7 +95,7 @@ impl Credential {
 #[derive(Debug)]
 pub struct CredentialBuilder {
     context: Vec<Context>,
-    id: Option<URI>,
+    id: Option<Uri>,
     types: Vec<String>,
     credential_subject: Vec<CredentialSubject>,
     issuer: Option<Issuer>,
@@ -134,7 +133,7 @@ impl CredentialBuilder {
     pub fn context(mut self, value: impl Into<Context>) -> Self {
         let value: Context = value.into();
 
-        if !matches!(value, Context::URI(ref uri) if uri == Credential::BASE_CONTEXT) {
+        if !matches!(value, Context::Uri(ref uri) if uri == Credential::BASE_CONTEXT) {
             self.context.push(value);
         }
 
@@ -156,7 +155,7 @@ impl CredentialBuilder {
         self
     }
 
-    impl_builder_setter!(id, id, Option<URI>);
+    impl_builder_setter!(id, id, Option<Uri>);
     impl_builder_setter!(subject, credential_subject, Vec<CredentialSubject>);
     impl_builder_setter!(issuer, issuer, Option<Issuer>);
     impl_builder_setter!(issuance_date, issuance_date, Timestamp);

@@ -1,7 +1,7 @@
-use identity_core::common::OneOrMany;
+use identity_core::common::{OneOrMany, Uri};
 
 use crate::{
-    common::{Context, URI},
+    common::Context,
     credential::Credential,
     error::{Error, Result},
     presentation::Presentation,
@@ -67,13 +67,13 @@ pub fn validate_types(name: &'static str, base: &str, types: &OneOrMany<String>)
 pub fn validate_context(name: &'static str, context: &OneOrMany<Context>) -> Result<()> {
     // The first Credential/Presentation context MUST be a URI representing the base context
     match context.get(0) {
-        Some(Context::URI(uri)) if uri == Credential::BASE_CONTEXT => Ok(()),
+        Some(Context::Uri(uri)) if uri == Credential::BASE_CONTEXT => Ok(()),
         Some(_) => Err(Error::InvalidBaseContext(name)),
         None => Err(Error::MissingBaseContext(name)),
     }
 }
 
-pub fn validate_uri(name: &'static str, uri: &URI) -> Result<()> {
+pub fn validate_uri(name: &'static str, uri: &Uri) -> Result<()> {
     const KNOWN: [&str; 4] = ["did:", "urn:", "http:", "https:"];
 
     // TODO: Proper URI validation
@@ -84,7 +84,7 @@ pub fn validate_uri(name: &'static str, uri: &URI) -> Result<()> {
     Ok(())
 }
 
-pub fn validate_opt_uri(name: &'static str, uri: Option<&URI>) -> Result<()> {
+pub fn validate_opt_uri(name: &'static str, uri: Option<&Uri>) -> Result<()> {
     match uri {
         Some(uri) => validate_uri(name, uri),
         None => Ok(()),

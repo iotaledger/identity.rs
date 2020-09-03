@@ -1,8 +1,8 @@
-use identity_core::common::{Object, OneOrMany};
+use identity_core::common::{Object, OneOrMany, Uri};
 use std::convert::TryFrom;
 
 use crate::{
-    common::{try_take_object_id, try_take_object_types, URI},
+    common::{try_take_object_id, try_take_object_types},
     error::Error,
 };
 
@@ -11,7 +11,7 @@ use crate::{
 /// Ref: https://www.w3.org/TR/vc-data-model/#status
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct CredentialStatus {
-    pub id: URI,
+    pub id: Uri,
     #[serde(rename = "type")]
     pub types: OneOrMany<String>,
     #[serde(flatten)]

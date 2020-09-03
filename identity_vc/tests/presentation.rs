@@ -37,8 +37,8 @@ fn test_builder_valid() {
         .unwrap();
 
     assert_eq!(presentation.context.len(), 2);
-    assert_matches!(presentation.context.get(0).unwrap(), Context::URI(ref uri) if uri == Credential::BASE_CONTEXT);
-    assert_matches!(presentation.context.get(1).unwrap(), Context::URI(ref uri) if uri == "https://www.w3.org/2018/credentials/examples/v1");
+    assert_matches!(presentation.context.get(0).unwrap(), Context::Uri(ref uri) if uri == Credential::BASE_CONTEXT);
+    assert_matches!(presentation.context.get(1).unwrap(), Context::Uri(ref uri) if uri == "https://www.w3.org/2018/credentials/examples/v1");
 
     assert_eq!(presentation.id, Some("did:example:id:123".into()));
 

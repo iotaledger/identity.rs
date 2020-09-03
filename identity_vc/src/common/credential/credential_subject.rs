@@ -1,10 +1,7 @@
-use identity_core::common::Object;
+use identity_core::common::{Object, Uri};
 use std::convert::TryFrom;
 
-use crate::{
-    common::{take_object_id, URI},
-    error::Error,
-};
+use crate::{common::take_object_id, error::Error};
 
 /// An entity who is the target of a set of claims.
 ///
@@ -12,7 +9,7 @@ use crate::{
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct CredentialSubject {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<URI>,
+    pub id: Option<Uri>,
     #[serde(flatten)]
     pub properties: Object,
 }

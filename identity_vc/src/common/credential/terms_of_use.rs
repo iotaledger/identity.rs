@@ -1,8 +1,8 @@
-use identity_core::common::{Object, OneOrMany};
+use identity_core::common::{Object, OneOrMany, Uri};
 use std::convert::TryFrom;
 
 use crate::{
-    common::{take_object_id, try_take_object_types, URI},
+    common::{take_object_id, try_take_object_types},
     error::Error,
 };
 
@@ -13,7 +13,7 @@ use crate::{
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct TermsOfUse {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<URI>,
+    pub id: Option<Uri>,
     #[serde(rename = "type")]
     pub types: OneOrMany<String>,
     #[serde(flatten)]

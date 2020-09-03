@@ -1,35 +1,33 @@
-use identity_core::common::Object;
-
-use crate::common::URI;
+use identity_core::common::{Object, Uri};
 
 /// TODO:
-///   - Deserialize single URI into object-style layout
+///   - Deserialize single Uri into object-style layout
 ///   - Replace Enum with plain struct
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Issuer {
-    URI(URI),
-    OBJ {
-        id: URI,
+    Uri(Uri),
+    Obj {
+        id: Uri,
         #[serde(flatten)]
         object: Object,
     },
 }
 
 impl Issuer {
-    pub fn uri(&self) -> &URI {
+    pub fn uri(&self) -> &Uri {
         match self {
-            Self::URI(uri) => uri,
-            Self::OBJ { id, .. } => id,
+            Self::Uri(uri) => uri,
+            Self::Obj { id, .. } => id,
         }
     }
 }
 
 impl<T> From<T> for Issuer
 where
-    T: Into<URI>,
+    T: Into<Uri>,
 {
     fn from(other: T) -> Self {
-        Self::URI(other.into())
+        Self::Uri(other.into())
     }
 }

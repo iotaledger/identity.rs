@@ -25,8 +25,8 @@ fn test_builder_valid() {
         .unwrap();
 
     assert_eq!(credential.context.len(), 3);
-    assert_matches!(credential.context.get(0).unwrap(), Context::URI(ref uri) if uri == Credential::BASE_CONTEXT);
-    assert_matches!(credential.context.get(1).unwrap(), Context::URI(ref uri) if uri == "https://www.w3.org/2018/credentials/examples/v1");
+    assert_matches!(credential.context.get(0).unwrap(), Context::Uri(ref uri) if uri == Credential::BASE_CONTEXT);
+    assert_matches!(credential.context.get(1).unwrap(), Context::Uri(ref uri) if uri == "https://www.w3.org/2018/credentials/examples/v1");
 
     assert_eq!(credential.id, Some("did:example:123".into()));
 

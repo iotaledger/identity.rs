@@ -1,8 +1,8 @@
-use identity_core::common::Object;
+use identity_core::common::{Object, Uri};
 use std::convert::TryFrom;
 
 use crate::{
-    common::{try_take_object_id, try_take_object_type, URI},
+    common::{try_take_object_id, try_take_object_type},
     error::Error,
 };
 
@@ -11,7 +11,7 @@ use crate::{
 /// Ref: https://www.w3.org/TR/vc-data-model/#data-schemas
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct CredentialSchema {
-    pub id: URI,
+    pub id: Uri,
     #[serde(rename = "type")]
     pub type_: String,
     #[serde(flatten)]
