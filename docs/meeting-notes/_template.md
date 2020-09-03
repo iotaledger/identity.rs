@@ -1,4 +1,4 @@
-# 🗓️ Team Identity Meeting Notes - 2020-XX-XX
+# 🗓️ Team Identity Meeting Notes - 2020-09-09
 
 ## 👥 Participants
 - @Thoralf-M
@@ -16,19 +16,19 @@
 
 
 
-## Standup
+### Standup
 
-### What was last week's progress on your project?
+#### What was last week's progress on your project?
 - 
 - 
 - 
 
-### What will be the project's focus this week?
+#### What will be the project's focus this week?
 -
 - 
 - 
 
-## Questions
+### Questions
 
 Q:
 A:
