@@ -7,13 +7,8 @@ pub struct VecDiff<T: Diff>(pub Vec<InnerVec<T>>);
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum InnerVec<T: Diff> {
-    Change {
-        index: usize,
-        item: <T as Diff>::Type,
-    },
-    Remove {
-        count: usize,
-    },
+    Change { index: usize, item: <T as Diff>::Type },
+    Remove { count: usize },
     Add(<T as Diff>::Type),
 }
 
@@ -49,10 +44,7 @@ where
             match (self.get(index), other.get(index)) {
                 (None, None) => panic!("No data to match"),
                 (Some(x), Some(y)) if x == y => {}
-                (Some(x), Some(y)) => changes.push(InnerVec::Change {
-                    index,
-                    item: x.diff(y),
-                }),
+                (Some(x), Some(y)) => changes.push(InnerVec::Change { index, item: x.diff(y) }),
                 (None, Some(x)) => changes.push(InnerVec::Add(x.clone().into_diff())),
                 (Some(_), None) => match changes.last_mut() {
                     Some(InnerVec::Remove { ref mut count }) => *count += 1,

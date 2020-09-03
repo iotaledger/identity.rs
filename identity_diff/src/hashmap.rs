@@ -42,15 +42,7 @@ where
 
 impl<K, V> Diff for HashMap<K, V>
 where
-    K: Clone
-        + Debug
-        + PartialEq
-        + Ord
-        + Hash
-        + Diff
-        + for<'de> Deserialize<'de>
-        + Serialize
-        + Default,
+    K: Clone + Debug + PartialEq + Ord + Hash + Diff + for<'de> Deserialize<'de> + Serialize + Default,
     V: Clone + Debug + PartialEq + Ord + Diff + for<'de> Deserialize<'de> + Serialize + Default,
 {
     type Type = DiffHashMap<K, V>;
@@ -82,16 +74,10 @@ where
             });
         }
         for key in removed_keys {
-            changes.push(InnerValue::Remove {
-                key: (*key).clone(),
-            });
+            changes.push(InnerValue::Remove { key: (*key).clone() });
         }
 
-        DiffHashMap(if changes.is_empty() {
-            None
-        } else {
-            Some(changes)
-        })
+        DiffHashMap(if changes.is_empty() { None } else { Some(changes) })
     }
 
     fn merge(&self, diff: Self::Type) -> Self {
@@ -142,11 +128,7 @@ where
             });
         }
 
-        DiffHashMap(if changes.is_empty() {
-            None
-        } else {
-            Some(changes)
-        })
+        DiffHashMap(if changes.is_empty() { None } else { Some(changes) })
     }
 }
 
@@ -191,11 +173,7 @@ where
                 .field("key", key)
                 .field("value", value)
                 .finish(),
-            Self::Add { key, value } => f
-                .debug_struct("Add")
-                .field("key", key)
-                .field("value", value)
-                .finish(),
+            Self::Add { key, value } => f.debug_struct("Add").field("key", key).field("value", value).finish(),
             Self::Remove { key } => f.debug_struct("Remove").field("key", key).finish(),
         }
     }

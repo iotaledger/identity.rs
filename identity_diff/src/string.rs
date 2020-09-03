@@ -18,7 +18,7 @@ impl Diff for String {
     }
 
     fn merge(&self, diff: Self::Type) -> Self {
-        if let None = diff.0 {
+        if diff.0.is_none() {
             self.to_string()
         } else {
             Self::from_diff(diff)
