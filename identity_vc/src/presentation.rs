@@ -1,8 +1,8 @@
-use identity_core::common::{Object, Value};
+use identity_core::common::{Object, OneOrMany, Value};
 use serde_json::{from_str, to_string};
 
 use crate::{
-    common::{Context, OneOrMany, RefreshService, TermsOfUse, URI},
+    common::{Context, RefreshService, TermsOfUse, URI},
     credential::Credential,
     error::{Error, Result},
     utils::validate_presentation_structure,

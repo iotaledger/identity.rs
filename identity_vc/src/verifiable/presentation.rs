@@ -1,7 +1,7 @@
-use identity_core::common::Object;
+use identity_core::common::{Object, OneOrMany};
 use std::ops::Deref;
 
-use crate::{common::OneOrMany, presentation::Presentation};
+use crate::presentation::Presentation;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct VerifiablePresentation {

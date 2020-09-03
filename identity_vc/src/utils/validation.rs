@@ -1,5 +1,7 @@
+use identity_core::common::OneOrMany;
+
 use crate::{
-    common::{Context, OneOrMany, URI},
+    common::{Context, URI},
     credential::Credential,
     error::{Error, Result},
     presentation::Presentation,

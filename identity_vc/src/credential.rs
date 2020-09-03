@@ -1,10 +1,10 @@
-use identity_core::common::{Object, Timestamp, Value};
+use identity_core::common::{Object, OneOrMany, Timestamp, Value};
 use serde_json::{from_str, to_string};
 
 use crate::{
     common::{
-        Context, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, OneOrMany, RefreshService,
-        TermsOfUse, URI,
+        Context, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, RefreshService, TermsOfUse,
+        URI,
     },
     error::{Error, Result},
     utils::validate_credential_structure,

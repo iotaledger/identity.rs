@@ -16,8 +16,8 @@ pub const RESERVED_PROPERTIES: &[&str] = &["issued", "validFrom", "validUntil"];
 pub mod prelude {
     pub use crate::{
         common::{
-            Context, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, OneOrMany,
-            RefreshService, TermsOfUse, URI,
+            Context, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, RefreshService,
+            TermsOfUse, URI,
         },
         credential::{Credential, CredentialBuilder},
         error::{Error, Result},

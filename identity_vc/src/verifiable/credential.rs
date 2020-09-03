@@ -1,7 +1,7 @@
-use identity_core::common::Object;
+use identity_core::common::{Object, OneOrMany};
 use std::ops::Deref;
 
-use crate::{common::OneOrMany, credential::Credential};
+use crate::credential::Credential;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct VerifiableCredential {

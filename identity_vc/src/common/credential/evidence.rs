@@ -1,8 +1,8 @@
-use identity_core::common::Object;
+use identity_core::common::{Object, OneOrMany};
 use std::convert::TryFrom;
 
 use crate::{
-    common::{take_object_id, try_take_object_types, OneOrMany},
+    common::{take_object_id, try_take_object_types},
     error::Error,
 };
 
