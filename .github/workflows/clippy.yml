@@ -24,6 +24,8 @@ jobs:
             identity_resolver,
             identity_schema,
             identity_vc,
+            identity_derive,
+            identity_diff,
           ]
 
     steps:
