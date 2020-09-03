@@ -54,23 +54,23 @@ macro_rules! impl_diff_on_primitives {
 }
 
 impl_diff_on_primitives! {
-    i8 | I8Diff: Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
-    i16 | I16Diff: Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
-    i32 | I32Diff:   Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
-    i64 | I64Diff:   Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
-    i128 | I128Diff:  Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
-    isize | IsizeDiff: Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    i8 | Diffi8: Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    i16 | Diffi16: Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    i32 | Diffi32:   Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    i64 | Diffi64:   Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    i128 | Diffi128:  Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    isize | DiffiSize: Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
 
-    u8 | U8Diff:    Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
-    u16 | U16Diff:   Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
-    u32 | U32Diff:   Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
-    u64 | U64Diff:   Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
-    u128 | U128Diff:  Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
-    usize | UsizeDiff: Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    u8 | Diffu8:    Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    u16 | Diffu16:   Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    u32 | Diffu32:   Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    u64 | Diffu64:   Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    u128 | Diffu128:  Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    usize | DiffuSize: Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
 
-    f32 | F32Diff:   Clone, Copy, PartialEq, PartialOrd;
-    f64  | F64Diff:   Clone, Copy, PartialEq, PartialOrd;
-    bool | BoolDiff:  Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
-    char | CharDiff:  Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
-    () | UnitDiff:  Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    f32 | DiffF32:   Clone, Copy, PartialEq, PartialOrd;
+    f64  | DiffF64:   Clone, Copy, PartialEq, PartialOrd;
+    bool | Diffbool:  Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    char | Diffchar:  Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
+    () | Diffunit:  Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash;
 }
