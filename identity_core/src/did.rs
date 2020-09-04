@@ -67,7 +67,7 @@ impl DID {
 
     /// add path segments to the current DID.
     pub fn add_path_segments(&mut self, path_segment: Vec<String>) {
-        let qur = match &mut self.path_segments {
+        let ps = match &mut self.path_segments {
             Some(p) => {
                 p.extend(path_segment);
 
@@ -76,7 +76,7 @@ impl DID {
             None => &path_segment,
         };
 
-        self.path_segments = Some(qur.clone());
+        self.path_segments = Some(ps.clone());
     }
 
     /// Method to add a fragment to the DID.  
