@@ -51,7 +51,7 @@ impl DID {
         parse(input)
     }
 
-    /// Method to add params to the DID.
+    /// Method to add a query or query params to the DID.  The `value` field of the `Param` type can be None.
     pub fn add_query(&mut self, query: Vec<Param>) {
         let qur = match &mut self.query {
             Some(v) => {

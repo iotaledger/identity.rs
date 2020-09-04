@@ -24,7 +24,7 @@ where
 
 /// The inner parsing method for the `DIDParser`.
 fn parse_pairs(pairs: Pairs<Rule>) -> crate::Result<DID> {
-    let mut prms: Vec<Param> = Vec::new();
+    let mut params: Vec<Param> = Vec::new();
     let mut path_segs: Vec<String> = Vec::new();
 
     let mut did = DID::default();
@@ -62,7 +62,7 @@ fn parse_pairs(pairs: Pairs<Rule>) -> crate::Result<DID> {
                             }
                         }
                     }
-                    prms.push(param);
+                    params.push(param);
                 }
             }
             Rule::fragment => did.add_fragment(pair.as_str().to_string()),
@@ -70,8 +70,8 @@ fn parse_pairs(pairs: Pairs<Rule>) -> crate::Result<DID> {
         }
     }
 
-    if !prms.is_empty() {
-        did.add_query(prms);
+    if !params.is_empty() {
+        did.add_query(params);
     }
 
     if !path_segs.is_empty() {
