@@ -18,16 +18,15 @@ type DIDTuple = (String, Option<String>);
 pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
-    pub params: Option<Vec<Param>>,
     pub path_segments: Option<Vec<String>>,
-    pub query: Option<String>,
+    pub query: Option<Vec<Param>>,
     pub fragment: Option<String>,
 }
 
 /// a DID Params struct.
 #[derive(Debug, PartialEq, Eq, Clone, Default, SerdeDiff, DDeserialize, DSerialize)]
 pub struct Param {
-    pub name: String,
+    pub key: String,
     pub value: Option<String>,
 }
 
@@ -37,7 +36,6 @@ impl DID {
         let did = DID {
             method_name: self.method_name,
             id_segments: self.id_segments,
-            params: self.params,
             fragment: self.fragment,
             path_segments: self.path_segments,
             query: self.query,
@@ -53,23 +51,23 @@ impl DID {
         parse(input)
     }
 
-    /// Method to add params to the DID.  
-    pub fn add_params(&mut self, params: Vec<Param>) {
-        let ps = match &mut self.params {
+    /// Method to add params to the DID.
+    pub fn add_query(&mut self, query: Vec<Param>) {
+        let qur = match &mut self.query {
             Some(v) => {
-                v.extend(params);
+                v.extend(query);
 
                 v
             }
-            None => &params,
+            None => &query,
         };
 
-        self.params = Some(ps.clone());
+        self.query = Some(qur.clone());
     }
 
     /// add path segments to the current DID.
     pub fn add_path_segments(&mut self, path_segment: Vec<String>) {
-        let ps = match &mut self.path_segments {
+        let qur = match &mut self.path_segments {
             Some(p) => {
                 p.extend(path_segment);
 
@@ -78,12 +76,7 @@ impl DID {
             None => &path_segment,
         };
 
-        self.path_segments = Some(ps.clone());
-    }
-
-    /// add a query to the DID.
-    pub fn add_query(&mut self, query: String) {
-        self.query = Some(query);
+        self.path_segments = Some(qur.clone());
     }
 
     /// Method to add a fragment to the DID.  
@@ -95,21 +88,6 @@ impl DID {
 /// Display trait for the DID struct.
 impl Display for DID {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        let prms = match &self.params {
-            Some(ps) => format!(
-                ";{}",
-                ps.iter().map(ToString::to_string).fold(&mut String::new(), |acc, p| {
-                    if !acc.is_empty() {
-                        acc.push_str(";");
-                    }
-                    acc.push_str(&p);
-
-                    acc
-                })
-            ),
-            None => String::new(),
-        };
-
         let frag = match &self.fragment {
             Some(f) => format!("#{}", f),
             None => String::new(),
@@ -146,14 +124,24 @@ impl Display for DID {
         };
 
         let query = match &self.query {
-            Some(q) => format!("?{}", q),
+            Some(qur) => format!(
+                "?{}",
+                qur.iter().map(ToString::to_string).fold(&mut String::new(), |acc, p| {
+                    if !acc.is_empty() {
+                        acc.push_str("&");
+                    }
+                    acc.push_str(&p);
+
+                    acc
+                })
+            ),
             None => String::new(),
         };
 
         write!(
             f,
-            "{}:{}{}{}{}{}{}",
-            LEADING_TOKENS, self.method_name, formatted_ids, prms, path_segs, query, frag
+            "{}:{}{}{}{}{}",
+            LEADING_TOKENS, self.method_name, formatted_ids, path_segs, query, frag
         )
     }
 }
@@ -166,7 +154,7 @@ impl Display for Param {
             None => String::new(),
         };
 
-        write!(f, "{}{}", self.name, val)
+        write!(f, "{}{}", self.key, val)
     }
 }
 
@@ -213,7 +201,7 @@ impl Serialize for DID {
 }
 
 impl From<DIDTuple> for Param {
-    fn from((name, value): DIDTuple) -> Param {
-        Param { name, value }
+    fn from((key, value): DIDTuple) -> Param {
+        Param { key, value }
     }
 }
