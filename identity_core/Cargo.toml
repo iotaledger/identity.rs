@@ -27,8 +27,7 @@ serde-diff = "0.3.1"
 pest = "2.1"
 pest_derive = "2.1"
 
-# timestamps
-chrono = { version = "0.4", features = ["serde"] }
+identity_common = { path = "../identity_common" }
 
 [dev-dependencies]
 # generative/property testing

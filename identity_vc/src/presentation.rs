@@ -1,5 +1,4 @@
-use identity_core::common::{Object, OneOrMany, Uri, Value};
-use serde_json::{from_str, to_string};
+use identity_common::{Object, OneOrMany, Uri, Value};
 
 use crate::{
     common::{Context, RefreshService, TermsOfUse},
@@ -52,14 +51,6 @@ impl Presentation {
 
     pub fn validate(&self) -> Result<()> {
         validate_presentation_structure(self)
-    }
-
-    pub fn from_json(json: &(impl AsRef<str> + ?Sized)) -> Result<Self> {
-        from_str(json.as_ref()).map_err(Error::DecodeJSON)
-    }
-
-    pub fn to_json(&self) -> Result<String> {
-        to_string(self).map_err(Error::EncodeJSON)
     }
 }
 

@@ -1,4 +1,4 @@
-use identity_core::common::{Object, Uri};
+use identity_common::{Object, Uri};
 
 /// TODO:
 ///   - Deserialize single Uri into object-style layout

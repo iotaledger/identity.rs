@@ -1,5 +1,4 @@
-use identity_core::common::{Object, OneOrMany, Timestamp, Uri, Value};
-use serde_json::{from_str, to_string};
+use identity_common::{Object, OneOrMany, Timestamp, Uri, Value};
 
 use crate::{
     common::{
@@ -73,14 +72,6 @@ impl Credential {
 
     pub fn validate(&self) -> Result<()> {
         validate_credential_structure(self)
-    }
-
-    pub fn from_json(json: &(impl AsRef<str> + ?Sized)) -> Result<Self> {
-        from_str(json.as_ref()).map_err(Error::DecodeJSON)
-    }
-
-    pub fn to_json(&self) -> Result<String> {
-        to_string(self).map_err(Error::EncodeJSON)
     }
 }
 

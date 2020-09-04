@@ -1,22 +1,22 @@
 #[macro_export]
 macro_rules! object {
-  () => {
-    $crate::common::Object::default()
-  };
-  ($($key:ident : $value:expr),* $(,)*) => {
-    {
-      let mut object = ::std::collections::HashMap::new();
+    () => {
+        $crate::object::Object::default()
+    };
+    ($($key:ident : $value:expr),* $(,)*) => {
+        {
+            let mut object = ::std::collections::HashMap::new();
 
-      $(
-        object.insert(
-          stringify!($key).to_string(),
-          $crate::common::Value::from($value),
-        );
-      )*
+        $(
+            object.insert(
+                stringify!($key).to_string(),
+                $crate::value::Value::from($value),
+            );
+        )*
 
-      $crate::common::Object::from(object)
-    }
-  };
+            $crate::object::Object::from(object)
+        }
+    };
 }
 
 // create a line error with the file and the line number.  Good for debugging.
@@ -27,6 +27,21 @@ macro_rules! line_error {
     };
     ($string:expr) => {
         concat!($string, " @", file!(), ":", line!())
+    };
+}
+
+// Creates a constructor function for an error enum
+#[macro_export]
+macro_rules! impl_error_ctor {
+    ($fn:ident, $ident:ident, Into<$ty:ty>) => {
+        pub fn $fn(inner: impl Into<$ty>) -> Self {
+            Self::$ident(inner.into())
+        }
+    };
+    ($fn:ident, $ident:ident, $ty:ty) => {
+        pub fn $fn(inner: $ty) -> Self {
+            Self::$ident(inner)
+        }
     };
 }
 

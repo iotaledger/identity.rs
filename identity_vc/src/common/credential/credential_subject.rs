@@ -1,4 +1,4 @@
-use identity_core::common::{Object, Uri};
+use identity_common::{Object, Uri};
 use std::convert::TryFrom;
 
 use crate::{common::take_object_id, error::Error};

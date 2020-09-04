@@ -1,4 +1,4 @@
-use chrono::prelude::*;
+use identity_common::Timestamp;
 use serde::{Deserialize, Serialize};
 use serde_diff::SerdeDiff;
 use std::{collections::HashMap, str::FromStr};
@@ -152,7 +152,7 @@ impl DIDDocument {
 
     /// Updates the `updated` time for the `DIDDocument`.
     pub fn update_time(&mut self) {
-        self.updated = Some(Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true));
+        self.updated = Some(Timestamp::now().to_string());
     }
 
     /// Inserts `metadata` into the `DIDDocument` body.  The metadata must be a HashMap<String, String> where the keys
@@ -165,8 +165,8 @@ impl DIDDocument {
     /// these timestamps.
     pub fn init_timestamps(self) -> crate::Result<Self> {
         Ok(DIDDocument {
-            created: Some(Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true)),
-            updated: Some(Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true)),
+            created: Some(Timestamp::now().to_string()),
+            updated: Some(Timestamp::now().to_string()),
             ..self
         }
         .init())

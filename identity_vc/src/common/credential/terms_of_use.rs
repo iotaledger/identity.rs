@@ -1,4 +1,4 @@
-use identity_core::common::{Object, OneOrMany, Uri};
+use identity_common::{Object, OneOrMany, Uri};
 use std::convert::TryFrom;
 
 use crate::{

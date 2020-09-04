@@ -1,4 +1,4 @@
-use identity_core::common::{Object, OneOrMany};
+use identity_common::{Object, OneOrMany};
 use std::ops::Deref;
 
 use crate::presentation::Presentation;

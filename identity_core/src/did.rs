@@ -1,3 +1,4 @@
+use identity_common::uri::Uri;
 use serde::{
     de::{self, Deserialize, Deserializer, Visitor},
     ser::{Serialize, Serializer},
@@ -215,5 +216,11 @@ impl Serialize for DID {
 impl From<DIDTuple> for Param {
     fn from((name, value): DIDTuple) -> Param {
         Param { name, value }
+    }
+}
+
+impl From<DID> for Uri {
+    fn from(other: DID) -> Uri {
+        Uri::from(other.to_string())
     }
 }

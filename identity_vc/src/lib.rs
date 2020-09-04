@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate identity_core;
+extern crate identity_common;
 
 #[macro_use]
 extern crate serde;
