@@ -1,8 +1,8 @@
 #[macro_use]
-extern crate serde;
+extern crate identity_core;
 
 #[macro_use]
-mod macros;
+extern crate serde;
 
 pub mod common;
 pub mod credential;
