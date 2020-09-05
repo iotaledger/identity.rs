@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate identity_common;
 
+pub use sha2;
+pub use sha3;
+
 #[macro_use]
 mod macros;
 

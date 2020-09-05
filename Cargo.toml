@@ -8,5 +8,6 @@ members = [
     "identity_core",
     "identity_crypto",
     "identity_integration",
+    "identity_ldp",
     "identity_vc"
 ]
