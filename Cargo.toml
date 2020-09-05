@@ -6,6 +6,7 @@ members = [
     "identity_schema",
     "identity_common",
     "identity_core",
+    "identity_crypto",
     "identity_integration",
     "identity_vc"
 ]
