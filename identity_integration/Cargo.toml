@@ -27,7 +27,8 @@ iota-core = { git = "https://github.com/Thoralf-M/iota.rs", branch = "works" }
 iota-conversion =  "0.5.1"
 
 # identity
-identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
+# identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
+identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "feat(core)/solidify-api-and-diff"}
 
 # hash
 blake2 = "0.9.0"
