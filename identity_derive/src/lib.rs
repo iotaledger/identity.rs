@@ -11,10 +11,11 @@ use syn::{
     Attribute, Data, DeriveInput, Error, Field, Fields, Ident,
 };
 
-use crate::model::InputModel;
+use crate::{model::InputModel, utils::should_ignore};
 
 mod impls;
 mod model;
+mod utils;
 
 #[proc_macro_derive(Diff, attributes(diff))]
 pub fn derive_diff(input: TokenStream) -> TokenStream {
@@ -35,11 +36,11 @@ fn interal(input: DeriveInput) -> TokenStream {
         #debug
         #diff
     };
-    
-    // for debugging. 
-    // println!("{}", diff_typ);
-    // println!("{}", debug);
-    // println!("{}", diff);
+
+    // for debugging.
+    println!("{}", diff_typ);
+    println!("{}", debug);
+    println!("{}", diff);
 
     TokenStream::from(output)
 }

@@ -9,7 +9,10 @@ use syn::{
 
 use std::marker::PhantomData;
 
-use crate::impls::{debug_impl, derive_diff_struct, diff_impl};
+use crate::{
+    impls::{debug_impl, derive_diff_struct, diff_impl},
+    should_ignore,
+};
 
 #[derive(Clone, Debug)]
 pub enum InputModel {
@@ -198,20 +201,20 @@ impl InputEnum {
         variants.iter().for_each(|vars| {
             let mut variant = EVariant::new(&vars.ident);
 
-            vars.fields.iter().enumerate().for_each(|(idx, vs)| {
-                if let Some(ident) = vs.ident.as_ref() {
+            vars.fields.iter().enumerate().for_each(|(idx, fs)| {
+                if let Some(ident) = fs.ident.as_ref() {
                     variant.variant = SVariant::Named;
                     variant.fields.push(DataFields::Named {
                         name: ident.clone(),
-                        typ: vs.ty.clone(),
-                        should_ignore: false,
+                        typ: fs.ty.clone(),
+                        should_ignore: should_ignore(fs),
                     });
                 } else {
                     variant.variant = SVariant::Tuple;
                     variant.fields.push(DataFields::Unnamed {
                         position: Literal::usize_unsuffixed(idx),
-                        typ: vs.ty.clone(),
-                        should_ignore: false,
+                        typ: fs.ty.clone(),
+                        should_ignore: should_ignore(fs),
                     });
                 }
             });
@@ -246,14 +249,14 @@ impl InputStruct {
                 model.fields.push(DataFields::Named {
                     name: ident.clone(),
                     typ: fs.ty.clone(),
-                    should_ignore: false,
+                    should_ignore: should_ignore(fs),
                 });
             } else {
                 model.variant = SVariant::Tuple;
                 model.fields.push(DataFields::Unnamed {
                     position: Literal::usize_unsuffixed(idx),
                     typ: fs.ty.clone(),
-                    should_ignore: false,
+                    should_ignore: should_ignore(fs),
                 });
             }
         });
@@ -315,7 +318,7 @@ impl DataFields {
         if self.should_ignore() {
             quote! {PhantomData<#typ>}
         } else {
-            quote! { Option<<#typ as identity::Diff>::Type> }
+            quote! { Option<<#typ as identity_diff::Diff>::Type> }
         }
     }
 

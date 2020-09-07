@@ -44,6 +44,7 @@ pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
         .collect();
 
     let field_tps: Vec<TokenStream> = fields.iter().map(|field| field.typ_as_tokens()).collect();
+
     match svariant {
         SVariant::Named => {
             let field_names: Vec<&Ident> = fields.iter().map(|field| field.name()).collect();
@@ -60,14 +61,14 @@ pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
         }
         SVariant::Tuple => {
             quote! {
-                #[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize)]
+                #[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize, Default)]
                 pub struct #diff<#(#param_decls),*> (
                     #( #[doc(hidden)] pub(self) #field_tps, )*
                 ) #clause ;
             }
         }
         SVariant::Unit => quote! {
-            #[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize)]
+            #[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize, Default)]
             pub struct #diff<#(#param_decls),*> #clause ;
         },
     }
@@ -245,6 +246,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
 
                 quote! {
                     #S: std::clone::Clone
+                    + std::default::Default
                     + identity_diff::Diff
                     + std::debug::std::fmt::Debug
                     + std::cmp::PartialEq
@@ -292,10 +294,10 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                         }
                     } else {
                         quote! {
-                            #fname: if self.#fname != other.fname {
-                                Some(self.#fname.diff(&other.fname))
-                            } else {
+                            #fname: if self.#fname == other.#fname {
                                 None
+                            } else {
+                                Some(other.#fname.diff(&other.#fname))
                             },
                         }
                     }
@@ -327,7 +329,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                         quote! {#fname: std::marker::PhantomData }
                     } else {
                         quote! {
-                            #fname: Some(#fname.into_diff())
+                            #fname: #fname
                         }
                     }
                 })
@@ -360,8 +362,8 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     #[allow(unused)]
                     fn into_diff(self) -> Self::Type {
                         match self {
-                            Self { #(#fnames),* .. } => {
-                                #diff { #(#fields_into, )* }
+                            Self { #(#fnames,)* .. } => {
+                                #diff { #(#fields_into),* }
                             },
                         }
                     }
