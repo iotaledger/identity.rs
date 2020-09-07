@@ -35,10 +35,10 @@ mod tests {
         if let DereferenceRawResult::Property(prop) = res {
             match *prop {
                 Property::PublicKey(key) => assert_eq!(public_key_object, key),
-                _ => assert!(false),
+                _ => panic!(),
             }
         } else {
-            assert!(false)
+            panic!()
         }
     }
     #[test]
@@ -67,10 +67,10 @@ mod tests {
         if let DereferenceRawResult::Property(prop) = res {
             match *prop {
                 Property::Service(serv) => assert_eq!(service, serv),
-                _ => assert!(false),
+                _ => panic!(),
             }
         } else {
-            assert!(false)
+            panic!()
         }
     }
     #[test]
@@ -97,10 +97,10 @@ mod tests {
         if let DereferenceRawResult::Property(prop) = res {
             match *prop {
                 Property::Authentication(authentication) => assert_eq!(auth, authentication),
-                _ => assert!(false),
+                _ => panic!(),
             }
         } else {
-            assert!(false)
+            panic!()
         }
     }
     #[test]
@@ -132,7 +132,7 @@ mod tests {
         if let DereferenceRawResult::Stringresult(res) = res {
             assert_eq!("https://example.com/messages/8377464/some/path?query#frag", res);
         } else {
-            assert!(false)
+            panic!()
         }
     }
 }
