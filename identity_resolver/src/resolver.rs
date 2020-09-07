@@ -7,13 +7,20 @@ use std::{collections::HashMap, time::Instant};
 pub struct ResolutionResult {
     pub metadata: ResolutionMetadata,
     pub did_document: DIDDocument,
+    pub did_document_string: String,
     pub did_document_metadata: HashMap<String, String>,
 }
+// #[derive(Debug)]
+// pub struct ResolutionResultStream {
+//     pub metadata: ResolutionMetadata,
+//     pub did_document_stream: ByteStream ?,
+//     pub did_document_metadata: HashMap<String, String>,
+// }
 #[derive(Debug)]
 pub struct ResolutionMetadata {
-    driver_id: String,
-    retrieved: String,
-    duration: u128,
+    pub driver_id: String,
+    pub retrieved: String,
+    pub duration: u128,
 }
 pub struct ResolutionInputMetadata {
     pub accept: Option<String>,
@@ -101,7 +108,8 @@ impl Resolver {
 
         metadata.insert("document_tail_transaction".into(), latest_document.tailhash.clone());
         let result = ResolutionResult {
-            did_document: latest_document.document,
+            did_document: latest_document.document.clone(),
+            did_document_string: latest_document.document.to_string(),
             metadata: ResolutionMetadata {
                 driver_id: "did:iota".into(),
                 retrieved: Timestamp::now().to_rfc3339(),
@@ -110,6 +118,10 @@ impl Resolver {
             did_document_metadata: metadata,
         };
         Ok(result)
+    }
+    pub async fn resolve_stream() -> crate::Result<()> {
+        // Todo: return same as resolve() just as stream
+        Ok(())
     }
 }
 

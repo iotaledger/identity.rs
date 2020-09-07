@@ -5,12 +5,12 @@ pub enum Error {
     /// Didn't found a document
     #[error("Resolve Error: No document found")]
     DocumentNotFound,
-    /// Fetching data from the Tangle failed
-    #[error("Fetching Error: No data from nodes")]
-    FetchingError,
     /// Node parsing Error
     #[error("Parsing Error: Can't parse node URL")]
     NodeURLParsingError,
+    /// Dereferencing Error
+    #[error("Dereferencing Error: Couldn't dereference URL")]
+    DereferencingError,
     /// Network node Error
     #[error("Network Error: Wrong network specified, DID requires {0:?}")]
     NetworkNodeError(&'static str),
@@ -29,5 +29,11 @@ pub enum Error {
     /// serde_json Error
     #[error("serde_json Error: {0}")]
     SerdeJsonError(#[from] serde_json::Error),
+    /// Utf8Error
+    #[error("Utf8Error: {0}")]
+    Utf8Error(#[from] std::str::Utf8Error),
+    /// URL Error
+    #[error("URL parse Error: {0}")]
+    URLError(#[from] url::ParseError),
 }
 pub type Result<T> = AnyhowResult<T, Error>;

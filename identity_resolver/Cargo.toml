@@ -22,8 +22,12 @@ serde = "1.0"
 serde_json = "1.0"
 serde-diff = "0.3.1"
 
+percent-encoding = "2.1.0"
+url = "2.1.1"
+
 iota-conversion =  "0.5.1"
-identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
+# identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
+identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "feat(core)/solidify-api-and-diff"}
 identity_integration = {git = "https://github.com/iotaledger/identity.rs", branch = "feat/did-ledger-integration"}
 
 [dev-dependencies]
