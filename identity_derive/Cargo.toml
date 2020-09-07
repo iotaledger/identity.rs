@@ -17,7 +17,9 @@ name = "identity_derive"
 proc-macro = true
 
 [dependencies]
-syn = { version = "1.0", features = [ "full", "parsing" ] }
+syn = { version = "1.0", features = ["extra-traits", "parsing"] }
 proc-macro2 = "1.0"
 quote = "1.0"
 serde_derive = "1.0"
+
+identity_diff = {path = "../identity_diff", version = "0.1.0"}

@@ -14,7 +14,6 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 serde = { version = "1.0", features = [ "derive" ] }
-identity_derive = { path = "../identity_derive" }
 
 [dev-dependencies]
 serde_json = "1.0"
