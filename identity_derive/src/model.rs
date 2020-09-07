@@ -9,6 +9,8 @@ use syn::{
 
 use std::marker::PhantomData;
 
+use crate::impls::{debug_impl, derive_diff_struct, diff_impl};
+
 #[derive(Clone, Debug)]
 pub enum InputModel {
     Enum(InputEnum),
@@ -20,20 +22,20 @@ pub struct InputEnum {
     pub name: Ident,
     pub diff: Ident,
     pub variants: Vec<EVariant>,
-    pub param_decl: Punctuated<GenericParam, Comma>,
+    pub param_decls: Punctuated<GenericParam, Comma>,
     pub params: Punctuated<Ident, Comma>,
     pub clause: WhereClause,
 }
 
 #[derive(Clone, Debug)]
 pub struct InputStruct {
-    variant: SVariant,
-    name: Ident,
-    diff: Ident,
-    fields: Vec<DataFields>,
-    param_decl: Punctuated<GenericParam, Comma>,
-    params: Punctuated<Ident, Comma>,
-    clause: WhereClause,
+    pub variant: SVariant,
+    pub name: Ident,
+    pub diff: Ident,
+    pub fields: Vec<DataFields>,
+    pub param_decls: Punctuated<GenericParam, Comma>,
+    pub params: Punctuated<Ident, Comma>,
+    pub clause: WhereClause,
 }
 
 #[derive(Clone, Debug)]
@@ -129,10 +131,10 @@ impl InputModel {
         }
     }
 
-    pub fn param_decl(&self) -> &Punctuated<GenericParam, Comma> {
+    pub fn param_decls(&self) -> &Punctuated<GenericParam, Comma> {
         match self {
-            Self::Enum(InputEnum { param_decl, .. }) => param_decl,
-            Self::Struct(InputStruct { param_decl, .. }) => param_decl,
+            Self::Enum(InputEnum { param_decls, .. }) => param_decls,
+            Self::Struct(InputStruct { param_decls, .. }) => param_decls,
         }
     }
 
@@ -149,6 +151,27 @@ impl InputModel {
             Self::Struct(InputStruct { clause, .. }) => clause,
         }
     }
+
+    pub fn impl_debug(&self) -> TokenStream {
+        match self {
+            Self::Struct(InputStruct { .. }) => debug_impl(self),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn impl_diff(&self) -> TokenStream {
+        match self {
+            Self::Struct(InputStruct { .. }) => diff_impl(self),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn derive_diff(&self) -> TokenStream {
+        match self {
+            Self::Struct(InputStruct { .. }) => derive_diff_struct(self),
+            _ => unimplemented!(),
+        }
+    }
 }
 
 impl InputEnum {
@@ -157,7 +180,7 @@ impl InputEnum {
             name: input.ident.clone(),
             diff: format_ident!("Diff{}", &input.ident),
             variants: Vec::new(),
-            param_decl: input.generics.params.clone(),
+            param_decls: input.generics.params.clone(),
             params: input
                 .generics
                 .type_params()
@@ -206,7 +229,7 @@ impl InputStruct {
             name: input.ident.clone(),
             diff: format_ident!("Diff{}", &input.ident),
             fields: Vec::new(),
-            param_decl: input.generics.params.clone(),
+            param_decls: input.generics.params.clone(),
             params: input.generics.type_params().map(|tp| tp.ident.clone()).collect(),
             clause: input.generics.where_clause.clone().unwrap_or_else(|| WhereClause {
                 where_token: Token![where](Span::call_site()),
@@ -292,7 +315,7 @@ impl DataFields {
         if self.should_ignore() {
             quote! {PhantomData<#typ>}
         } else {
-            quote! { Option<<$typ as identity::Diff>::Type> }
+            quote! { Option<<#typ as identity::Diff>::Type> }
         }
     }
 
