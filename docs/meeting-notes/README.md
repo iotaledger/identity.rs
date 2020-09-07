@@ -1,10 +1,11 @@
 # Meeting Notes
 
 ## Next Meeting
-Wednesday, 2020-08-17 - 17:00 to 18:00 (CEST) 
-- [Preview](https://github.com/iotaledger/identity.rs/pull/13)
+Wednesday, 2020-09-09 - 17:00 to 18:00 (CEST) 
 
 ## Past Meetings
+- [2020-09-02](./2020-09-02.md)
+- [2020-08-19](./2020-08-19.md)
 - [2020-08-12](./2020-08-12.md)
 - [2020-08-07](./2020-08-07.md)
 - [2020-08-05](./2020-08-05.md)
