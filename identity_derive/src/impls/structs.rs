@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use crate::model::{DataFields, InputModel, InputStruct, SVariant};
 use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::{format_ident, quote};
