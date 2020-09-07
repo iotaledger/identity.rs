@@ -1,4 +1,8 @@
-use identity_core::common::{Object, OneOrMany, Uri, Value};
+use identity_core::{
+    common::{Object, OneOrMany, Uri, Value},
+    impl_builder_setter, impl_builder_try_setter,
+};
+use serde::{Deserialize, Serialize};
 use serde_json::{from_str, to_string};
 
 use crate::{

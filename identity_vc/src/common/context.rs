@@ -1,4 +1,5 @@
 use identity_core::common::{Object, Uri};
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// A reference to a JSON-LD context
