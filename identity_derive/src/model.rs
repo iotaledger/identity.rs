@@ -7,6 +7,8 @@ use syn::{
     Variant, WhereClause,
 };
 
+use std::marker::PhantomData;
+
 #[derive(Clone, Debug)]
 pub enum InputModel {
     Enum(InputEnum),
@@ -15,12 +17,12 @@ pub enum InputModel {
 
 #[derive(Clone, Debug)]
 pub struct InputEnum {
-    name: Ident,
-    diff: Ident,
-    variants: Vec<EVariant>,
-    param_decl: Punctuated<GenericParam, Comma>,
-    params: Punctuated<Ident, Comma>,
-    clause: WhereClause,
+    pub name: Ident,
+    pub diff: Ident,
+    pub variants: Vec<EVariant>,
+    pub param_decl: Punctuated<GenericParam, Comma>,
+    pub params: Punctuated<Ident, Comma>,
+    pub clause: WhereClause,
 }
 
 #[derive(Clone, Debug)]
@@ -82,6 +84,70 @@ impl InputModel {
 
     fn parse_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>) -> Self {
         Self::Enum(InputEnum::parse(input, variants))
+    }
+
+    pub fn contains_struct(&self) -> bool {
+        if let Self::Struct(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn s_variant(&self) -> &SVariant {
+        match self {
+            Self::Enum(InputEnum { name, .. }) => panic!("{} isn't a struct", name),
+            Self::Struct(InputStruct { variant, .. }) => variant,
+        }
+    }
+
+    pub fn e_variants(&self) -> &Vec<EVariant> {
+        match self {
+            Self::Enum(InputEnum { variants, .. }) => variants,
+            Self::Struct(InputStruct { name, .. }) => panic!("{} isn't an Enum", name),
+        }
+    }
+
+    pub fn name(&self) -> &Ident {
+        match self {
+            Self::Enum(InputEnum { name, .. }) => name,
+            Self::Struct(InputStruct { name, .. }) => name,
+        }
+    }
+
+    pub fn diff(&self) -> &Ident {
+        match self {
+            Self::Enum(InputEnum { diff, .. }) => diff,
+            Self::Struct(InputStruct { diff, .. }) => diff,
+        }
+    }
+
+    pub fn params(&self) -> &Punctuated<Ident, Comma> {
+        match self {
+            Self::Enum(InputEnum { params, .. }) => params,
+            Self::Struct(InputStruct { params, .. }) => params,
+        }
+    }
+
+    pub fn param_decl(&self) -> &Punctuated<GenericParam, Comma> {
+        match self {
+            Self::Enum(InputEnum { param_decl, .. }) => param_decl,
+            Self::Struct(InputStruct { param_decl, .. }) => param_decl,
+        }
+    }
+
+    pub fn fields(&self) -> &Vec<DataFields> {
+        match self {
+            Self::Enum(InputEnum { name, .. }) => panic!("{} isn't a Struct", name),
+            Self::Struct(InputStruct { fields, .. }) => fields,
+        }
+    }
+
+    pub fn clause(&self) -> &WhereClause {
+        match self {
+            Self::Enum(InputEnum { clause, .. }) => clause,
+            Self::Struct(InputStruct { clause, .. }) => clause,
+        }
     }
 }
 
@@ -186,6 +252,54 @@ impl EVariant {
             variant: SVariant::Unit,
             name: name.clone(),
             fields: Vec::new(),
+        }
+    }
+}
+
+impl DataFields {
+    pub fn named(&self) -> bool {
+        if let Self::Named { .. } = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn name(&self) -> &Ident {
+        match self {
+            Self::Named { name, .. } => name,
+            Self::Unnamed { .. } => panic!("Positional Field has no name"),
+        }
+    }
+
+    pub fn position(&self) -> &Literal {
+        match self {
+            Self::Named { .. } => panic!("Named fields has no position"),
+            Self::Unnamed { position, .. } => position,
+        }
+    }
+
+    pub fn typ(&self) -> &Type {
+        match self {
+            Self::Named { typ, .. } => typ,
+            Self::Unnamed { typ, .. } => typ,
+        }
+    }
+
+    pub fn typ_as_tokens(&self) -> TokenStream {
+        let typ = self.typ();
+
+        if self.should_ignore() {
+            quote! {PhantomData<#typ>}
+        } else {
+            quote! { Option<<$typ as identity::Diff>::Type> }
+        }
+    }
+
+    pub fn should_ignore(&self) -> bool {
+        match self {
+            Self::Named { should_ignore, .. } => *should_ignore,
+            Self::Unnamed { should_ignore, .. } => *should_ignore,
         }
     }
 }
