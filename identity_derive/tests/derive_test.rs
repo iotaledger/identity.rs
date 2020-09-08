@@ -28,6 +28,9 @@ pub struct BigStruct {
     d: usize,
 }
 
+#[derive(Diff, Debug, Clone, PartialEq, Default)]
+struct TestUnit;
+
 #[test]
 fn test_traditional_struct() {
     let t = Test { a: 10 };
@@ -172,6 +175,21 @@ fn test_big_tuple() {
     let res = t.merge(diff);
 
     let expected = BigTuple(15, vec![5, 6, 7], false, String::from("Some New String"));
+
+    assert_eq!(expected, res);
+}
+
+#[test]
+fn test_unit() {
+    let t = TestUnit;
+
+    let t2 = TestUnit;
+
+    let diff = t.diff(&t2);
+
+    let res = t.merge(diff);
+
+    let expected = TestUnit;
 
     assert_eq!(expected, res);
 }
