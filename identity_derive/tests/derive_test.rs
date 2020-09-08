@@ -15,5 +15,9 @@ fn test_struct() {
 
     let diff = t.diff(&t2);
 
-    println!("{:?}", diff);
+    let t3 = t.merge(diff);
+
+    let expected = Test { a: 2 };
+
+    assert_eq!(expected, t3);
 }
