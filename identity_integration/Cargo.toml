@@ -31,7 +31,7 @@ iota-conversion =  "0.5.1"
 identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "feat(core)/solidify-api-and-diff"}
 
 # hash
-blake2 = "0.9.0"
+multihash = "*"
 
 [dev-dependencies]
 smol-potat = "0.3.3"

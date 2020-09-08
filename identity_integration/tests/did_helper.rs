@@ -5,13 +5,19 @@ mod tests {
     use super::*;
     #[test]
     fn has_81_trytes() {
+        assert_eq!(did_iota_address("").len(), 81);
+        assert_eq!(did_iota_address("123456789").len(), 81);
         assert_eq!(did_iota_address("123456789abcdefghi").len(), 81);
     }
     #[test]
     fn same_address() {
         assert_eq!(
+            did_iota_address("123456789"),
+            String::from("V9HHBGDAYDHCTBQ9OHZBUAQEAAK9VCC9DDQFKFWDBFIBSBLFGC9FJICDTCS9PGQH99999999999999999")
+        );
+        assert_eq!(
             did_iota_address("123456789abcdefghi"),
-            String::from("HAKHECNDWCVBYFUFXAFICCWEVASGMAY9GDDGJITFMBNAMEUHOBQE9ESFJBFC9HMBHAKHECNDWCVBYFUFX")
+            String::from("BAJHBGD9UEU9REX9GAGIE9BIVB9IJFW9OGLCRCT9ODDFFAMCYEEDSCFFADKHNCIH99999999999999999")
         );
     }
 }
