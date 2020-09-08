@@ -176,7 +176,7 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
                 1 => quote! {
                     const NAME: &str = stringify!(#diff);
                     if let Some(field) = &self.0 {
-                        write!(f, "{}({:?})", name, field)
+                        write!(f, "{}({:?})", NAME, field)
                     } else {
                         let field = &None as &Option<()>;
                         write!(f, "{}({:?})", NAME, field)
@@ -316,7 +316,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                             #fname: <#ftyp>::from_diff(
                                 match #fname {
                                     Some(v) => v,
-                                    None => panic!("Invalid Value")
+                                    None => <#ftyp>::default().into_diff()
                                 }
                             )
                         }
@@ -375,7 +375,122 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
             }
         }
         SVariant::Tuple => {
-            quote! { unimplemented!()}
+            let field_typs: Vec<_> = fields.iter().map(|f| f.typ()).collect();
+            let field_max = field_typs.len();
+            let field_markers: Vec<Ident> = (0..field_max).map(|t| format_ident!("field_{}", t)).collect();
+
+            let field_merge: Vec<TokenStream> = fields
+                .iter()
+                .map(|field| {
+                    let pos = field.position();
+                    if field.should_ignore() {
+                        quote! {
+                            self.#pos.clone(),
+                        }
+                    } else {
+                        quote! {
+                            if let Some(v) = diff.#pos {
+                                self.#pos.merge(v)
+                            } else {
+                                self.#pos.clone()
+                            },
+                        }
+                    }
+                })
+                .collect();
+
+            let fields_diff: Vec<TokenStream> = fields
+                .iter()
+                .map(|field| {
+                    let pos = field.position();
+                    if field.should_ignore() {
+                        quote! {
+                            std::marker::PhantomData
+                        }
+                    } else {
+                        quote! {
+                            if self.#pos != other.#pos {
+                                Some(self.#pos.diff(&other.#pos))
+                            } else {
+                                None
+                            },
+                        }
+                    }
+                })
+                .collect();
+
+            let fields_from: Vec<TokenStream> = fields
+                .iter()
+                .enumerate()
+                .map(|(idx, field)| {
+                    let marker = &field_markers[idx];
+                    let typ = field.typ();
+
+                    if field.should_ignore() {
+                        quote! { Default::default() }
+                    } else {
+                        quote! {
+                            <#typ>::from_diff(
+                                match #marker {
+                                    Some(v) => v,
+                                    None => <#typ>::default().into_diff()
+                                }
+                            )
+                        }
+                    }
+                })
+                .collect();
+
+            let fields_into: Vec<TokenStream> = fields
+                .iter()
+                .enumerate()
+                .map(|(idx, field)| {
+                    let marker = &field_markers[idx];
+                    if field.should_ignore() {
+                        quote! { std::marker::PhantomData }
+                    } else {
+                        quote! {
+                            Some(#marker.into_diff())
+                        }
+                    }
+                })
+                .collect();
+
+            quote! {
+                impl<#(#param_decls),*> identity_diff::Diff
+                    for #name<#params>
+                    #clause
+                {
+                    type Type = #diff<#params>;
+
+                    #[allow(unused)]
+                    fn merge(&self, diff: Self::Type) -> Self {
+                        Self( #(#field_merge)* )
+                    }
+
+                    fn diff(&self, other: &Self) -> Self::Type {
+                        #diff( #(#fields_diff),* )
+                    }
+
+                    #[allow(unused)]
+                    fn from_diff(diff: Self::Type) -> Self {
+                        match diff {
+                            #diff ( #(#field_markers),*) => {
+                                Self( #(#fields_from),* )
+                            }
+                        }
+                    }
+
+                    #[allow(unused)]
+                    fn into_diff(self) -> Self::Type {
+                        match self {
+                            Self ( #(#field_markers,)* .. ) => {
+                                #diff ( #(#fields_into),* )
+                            },
+                        }
+                    }
+                }
+            }
         }
         SVariant::Unit => quote! {
             quote! { unimplemented!() }
