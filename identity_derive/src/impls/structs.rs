@@ -493,7 +493,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
             }
         }
         SVariant::Unit => quote! {
-            quote! { unimplemented!() }
+            unimplemented!()
         },
     }
 }
