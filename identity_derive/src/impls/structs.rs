@@ -297,7 +297,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                             #fname: if self.#fname == other.#fname {
                                 None
                             } else {
-                                Some(other.#fname.diff(&other.#fname))
+                                Some(self.#fname.diff(&other.#fname))
                             },
                         }
                     }
