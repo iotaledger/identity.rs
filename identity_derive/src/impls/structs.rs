@@ -243,7 +243,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     #S: std::clone::Clone
                     + std::default::Default
                     + identity_diff::Diff
-                    + std::debug::std::fmt::Debug
+                    + std::fmt::Debug
                     + std::cmp::PartialEq
                     + for<'de> serde::Deserialize<'de>
                     + serde::Serialize

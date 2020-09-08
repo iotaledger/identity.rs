@@ -10,7 +10,7 @@ use syn::{
 use std::marker::PhantomData;
 
 use crate::{
-    impls::{debug_impl, derive_diff_struct, diff_impl},
+    impls::{debug_impl, derive_diff_enum, derive_diff_struct, diff_impl, impl_debug_enum},
     should_ignore,
 };
 
@@ -43,9 +43,9 @@ pub struct InputStruct {
 
 #[derive(Clone, Debug)]
 pub struct EVariant {
-    variant: SVariant,
-    name: Ident,
-    fields: Vec<DataFields>,
+    pub variant: SVariant,
+    pub name: Ident,
+    pub fields: Vec<DataFields>,
 }
 
 #[derive(Clone, Debug)]
@@ -158,7 +158,7 @@ impl InputModel {
     pub fn impl_debug(&self) -> TokenStream {
         match self {
             Self::Struct(InputStruct { .. }) => debug_impl(self),
-            _ => unimplemented!(),
+            Self::Enum(InputEnum { .. }) => impl_debug_enum(self),
         }
     }
 
@@ -172,7 +172,7 @@ impl InputModel {
     pub fn derive_diff(&self) -> TokenStream {
         match self {
             Self::Struct(InputStruct { .. }) => derive_diff_struct(self),
-            _ => unimplemented!(),
+            Self::Enum(InputEnum { .. }) => derive_diff_enum(self),
         }
     }
 }
