@@ -22,7 +22,7 @@ pub fn derive_diff(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let output = interal(input);
 
-    TokenStream::from(output)
+    output
 }
 
 fn interal(input: DeriveInput) -> TokenStream {
