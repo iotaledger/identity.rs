@@ -122,7 +122,7 @@ mod tests {
             service_type: "MessagingService".into(),
             endpoint,
         };
-        did_doc.update_service(service.clone());
+        did_doc.update_service(service);
 
         let res = dereference_raw(
             "did:example:123456789abcdefghi?service=messages&relative-ref=%2Fsome%2Fpath%3Fquery#frag".into(),
