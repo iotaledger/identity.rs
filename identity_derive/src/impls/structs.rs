@@ -298,7 +298,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                                 None
                             } else {
                                 Some(self.#fname.diff(&other.#fname))
-                            },
+                            }
                         }
                     }
                 })
@@ -310,14 +310,14 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     let fname = field.name();
                     let ftyp = field.typ();
                     if field.should_ignore() {
-                        quote! {#fname: Default::default() }
+                        quote! { #fname: Default::default() }
                     } else {
                         quote! {
                             #fname: <#ftyp>::from_diff(
                                 match #fname {
                                     Some(v) => v,
                                     None => <#ftyp>::default().into_diff()
-                                }
+                                },
                             )
                         }
                     }
@@ -346,7 +346,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
 
                     #[allow(unused)]
                     fn merge(&self, diff: Self::Type) -> Self {
-                        Self{ #(#field_merge),* }
+                        Self{ #(#field_merge)* }
                     }
 
                     fn diff(&self, other: &Self) -> Self::Type {
@@ -356,8 +356,8 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     #[allow(unused)]
                     fn from_diff(diff: Self::Type) -> Self {
                         match diff {
-                            #diff { #(#fnames), *} => {
-                                Self{ #(#fields_from, )* }
+                            #diff { #(#fnames),* } => {
+                                Self{ #(#fields_from),* }
                             }
                         }
                     }
@@ -365,9 +365,9 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     #[allow(unused)]
                     fn into_diff(self) -> Self::Type {
                         match self {
-                            Self { #(#fnames,)* .. } => {
+                            Self { #(#fnames),* } => {
                                 #diff { #(#fields_into),* }
-                            },
+                            }
                         }
                     }
                 }
@@ -469,7 +469,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     }
 
                     fn diff(&self, other: &Self) -> Self::Type {
-                        #diff( #(#fields_diff),* )
+                        #diff( #(#fields_diff)* )
                     }
 
                     #[allow(unused)]
