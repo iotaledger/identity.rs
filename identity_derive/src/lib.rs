@@ -38,9 +38,9 @@ fn interal(input: DeriveInput) -> TokenStream {
     };
 
     // for debugging.
-    println!("{}", diff_typ);
-    println!("{}", debug);
-    println!("{}", diff);
+    // println!("{}", diff_typ);
+    // println!("{}", debug);
+    // println!("{}", diff);
 
     TokenStream::from(output)
 }

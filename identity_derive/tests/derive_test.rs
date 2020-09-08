@@ -3,15 +3,17 @@ use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
 
 #[derive(Diff, Debug, Clone, PartialEq, Default)]
-pub struct Test(u32);
+pub struct Test {
+    a: u32,
+}
 
 #[test]
 fn test_struct() {
-    let t = Test(10);
+    let t = Test { a: 10 };
 
-    let t2 = Test(2);
+    let t2 = Test { a: 2 };
 
-    let diff = test.diff(&test_2);
+    let diff = t.diff(&t2);
 
     println!("{:?}", diff);
 }

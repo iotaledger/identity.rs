@@ -314,7 +314,10 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     } else {
                         quote! {
                             #fname: <#ftyp>::from_diff(
-                                #fname
+                                match #fname {
+                                    Some(v) => v,
+                                    None => panic!("Invalid Value")
+                                }
                             )
                         }
                     }
@@ -329,7 +332,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                         quote! {#fname: std::marker::PhantomData }
                     } else {
                         quote! {
-                            #fname: #fname
+                            #fname: Some(#fname.into_diff())
                         }
                     }
                 })
