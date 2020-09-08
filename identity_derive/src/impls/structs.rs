@@ -201,19 +201,14 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
             }
         }
         SVariant::Unit => quote! {
-            quote! {
-            impl<#(#param_decls),*> std::fmt::Debug
-                    for #diff<#params>
+                impl<#(#param_decls),*> std::fmt::Debug for #diff<#params>
                     #clause
                 {
-                    fn fmt(&self, f: &mut std::fmt::Formatter)
-                        -> std::fmt::Result
+                    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
                     {
-                        f.debug_struct(stringify!(#diff))
-                            .finish()
+                        f.debug_struct(stringify!(#diff)).finish()
                     }
                 }
-            }
         },
     }
 }
@@ -493,7 +488,35 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
             }
         }
         SVariant::Unit => quote! {
-            unimplemented!()
+            impl<#(#param_decls),*> identity_diff::Diff
+                    for #name<#params>
+                    #clause
+                {
+                    type Type = #diff<#params>;
+
+                    #[allow(unused)]
+                    fn merge(&self, diff: Self::Type) -> Self {
+                        Self
+                    }
+
+                    fn diff(&self, other: &Self) -> Self::Type {
+                        #diff
+                    }
+
+                    #[allow(unused)]
+                    fn from_diff(diff: Self::Type) -> Self {
+                        match diff {
+                           #diff => Self,
+                        }
+                    }
+
+                    #[allow(unused)]
+                    fn into_diff(self) -> Self::Type {
+                        match self {
+                            Self => #diff,
+                        }
+                    }
+                }
         },
     }
 }
