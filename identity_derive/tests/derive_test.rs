@@ -8,7 +8,7 @@ pub struct Test {
 }
 
 #[test]
-fn test_struct() {
+fn test_traditional_struct() {
     let t = Test { a: 10 };
 
     let t2 = Test { a: 2 };
