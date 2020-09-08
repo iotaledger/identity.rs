@@ -8,6 +8,8 @@ pub enum Error {
     Canonicalize(anyhow::Error),
     #[error("Failed to pre-process document: {0}")]
     PreProcess(anyhow::Error),
+    #[error("Invalid LD Signature: {0}")]
+    InvalidLDSignature(String),
     #[error(transparent)]
     Common(#[from] identity_common::Error),
     #[error(transparent)]

@@ -1,6 +1,6 @@
 use identity_common::Timestamp;
 
-use crate::signature::SignatureOptions;
+use crate::signature::{SignatureData, SignatureOptions};
 
 /// A representation of a linked data signature
 ///
@@ -10,9 +10,6 @@ pub struct LinkedDataSignature {
     /// The digital signature suite that was used to create the signature.
     #[serde(rename = "type")]
     pub proof_type: String,
-    /// The value of the encoded digital signature.
-    #[serde(rename = "proofValue")]
-    pub proof_value: String,
     /// The specific intent for the proof.
     #[serde(rename = "proofPurpose")]
     pub purpose: String,
@@ -25,9 +22,17 @@ pub struct LinkedDataSignature {
     /// mitigate replay attacks.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub nonce: Option<String>,
+    /// The value and misc. properties of the linked data signature.
+    #[serde(flatten)]
+    pub data: SignatureData,
 }
 
 impl LinkedDataSignature {
+    /// Returns the raw (str) value of the signature proof.
+    pub fn proof(&self) -> &str {
+        self.data.value.value()
+    }
+
     /// Copies from the signature to return a new `SignatureOptions` struct.
     pub fn to_options(&self) -> SignatureOptions {
         SignatureOptions {
@@ -35,6 +40,7 @@ impl LinkedDataSignature {
             purpose: Some(self.purpose.clone()),
             domain: self.domain.clone(),
             nonce: self.nonce.clone(),
+            properties: self.data.clone().into(),
         }
     }
 }

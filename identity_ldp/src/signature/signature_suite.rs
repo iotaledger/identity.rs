@@ -5,7 +5,7 @@ use crate::{
     canonicalize::{CanonicalJson, Canonicalize},
     document::LinkedDataDocument,
     error::{Error, Result},
-    signature::{LinkedDataSignature, SignatureOptions},
+    signature::{LinkedDataSignature, SignatureData, SignatureOptions, SignatureValue},
     utils::{decode_b64, encode_b64},
 };
 
@@ -43,7 +43,12 @@ pub trait SignatureSuite: KeyGen + Sign + Verify {
 
     /// Decodes a `String`-encoded signature.
     fn decode_signature(&self, signature: &LinkedDataSignature) -> Result<Vec<u8>> {
-        decode_b64(&signature.proof_value)
+        decode_b64(signature.proof())
+    }
+
+    /// Creates a `SignatureValue` from a raw String.
+    fn to_signature_value(&self, signature: String) -> SignatureValue {
+        SignatureValue::Proof(signature)
     }
 
     /// Creates a `LinkedDataSignature` with the given `document`, `options`,
@@ -82,11 +87,14 @@ pub trait SignatureSuite: KeyGen + Sign + Verify {
     fn to_proof(&self, signature: Vec<u8>, options: SignatureOptions) -> Result<LinkedDataSignature> {
         Ok(LinkedDataSignature {
             proof_type: self.signature().into(),
-            proof_value: self.encode_signature(signature),
             created: options.created.expect("infallible"),
             purpose: options.purpose.unwrap_or_else(|| DEFAULT_PURPOSE.into()),
             domain: options.domain,
             nonce: options.nonce,
+            data: SignatureData {
+                value: self.to_signature_value(self.encode_signature(signature)),
+                properties: options.properties,
+            },
         })
     }
 

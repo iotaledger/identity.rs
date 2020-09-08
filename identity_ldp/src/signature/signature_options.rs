@@ -1,4 +1,4 @@
-use identity_common::Timestamp;
+use identity_common::{Object, Timestamp};
 
 /// Options permitted to create/customize a linked data signature
 ///
@@ -20,4 +20,6 @@ pub struct SignatureOptions {
     pub domain: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub nonce: Option<String>,
+    #[serde(flatten)]
+    pub properties: Object,
 }
