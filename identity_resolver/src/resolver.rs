@@ -6,8 +6,8 @@ use std::{collections::HashMap, time::Instant};
 #[derive(Debug)]
 pub struct ResolutionResult {
     pub metadata: ResolutionMetadata,
-    pub did_document: DIDDocument,
-    pub did_document_string: String,
+    pub did_document: Option<DIDDocument>,
+    pub did_document_string: Option<String>,
     pub did_document_metadata: HashMap<String, String>,
 }
 // #[derive(Debug)]
@@ -21,6 +21,7 @@ pub struct ResolutionMetadata {
     pub driver_id: String,
     pub retrieved: String,
     pub duration: u128,
+    pub input_did: String,
 }
 pub struct ResolutionInputMetadata {
     pub accept: Option<String>,
@@ -79,12 +80,29 @@ impl Resolver {
             return Err(crate::Error::DIDMethodError);
         }
         let start_time = Instant::now();
+        let mut metadata = HashMap::new();
         let (did_id, nodes) = get_id_and_nodes(&did.id_segments, self.nodes.clone())?;
         let reader = TangleReader::new(nodes.to_vec());
-        let messages = reader.fetch(&did_iota_address(&did_id)).await?;
+        // let messages = reader.fetch(&did_iota_address(&did_id)).await?;
+        let messages = match reader.fetch(&did_iota_address(&did_id)).await {
+            Ok(messages) => messages,
+            _ => {
+                metadata.insert("Error".to_string(), "not-found".to_string());
+                return Ok(ResolutionResult {
+                    did_document: None,
+                    did_document_string: None,
+                    metadata: ResolutionMetadata {
+                        driver_id: "did:iota".into(),
+                        retrieved: Timestamp::now().to_rfc3339(),
+                        duration: start_time.elapsed().as_millis(),
+                        input_did: did.to_string(),
+                    },
+                    did_document_metadata: metadata,
+                });
+            }
+        };
         let documents = get_ordered_documents(messages.clone(), &did_id)?;
         let diffs = get_ordered_diffs(messages.clone(), &did_id)?;
-        let mut metadata = HashMap::new();
         if resolution_metadata.include_all_messages {
             for (tailhash, msg) in messages {
                 metadata.insert(tailhash, msg);
@@ -108,12 +126,13 @@ impl Resolver {
 
         metadata.insert("document_tail_transaction".into(), latest_document.tailhash.clone());
         let result = ResolutionResult {
-            did_document: latest_document.document.clone(),
-            did_document_string: latest_document.document.to_string(),
+            did_document: Some(latest_document.document.clone()),
+            did_document_string: Some(latest_document.document.to_string()),
             metadata: ResolutionMetadata {
                 driver_id: "did:iota".into(),
                 retrieved: Timestamp::now().to_rfc3339(),
                 duration: start_time.elapsed().as_millis(),
+                input_did: did.to_string(),
             },
             did_document_metadata: metadata,
         };

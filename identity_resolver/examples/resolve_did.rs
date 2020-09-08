@@ -16,6 +16,8 @@ async fn main() -> Result<()> {
     let did = DID::parse_from_str("did:iota:com:123456789abcdefghij")?;
     let resolution_result = resolver.resolve(did, ResolutionInputMetadata::default()).await?;
     println!("{:#?}", resolution_result);
-    println!("Document: {:?}", resolution_result.did_document);
+    if let Some(document) = resolution_result.did_document {
+        println!("Document: {:?}", document);
+    }
     Ok(())
 }

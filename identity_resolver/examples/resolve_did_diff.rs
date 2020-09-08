@@ -70,6 +70,6 @@ async fn main() -> Result<()> {
     // apply the json string to the old document.
     Apply::apply(&mut deserializer, &mut old)?;
     // check to see that the old and new docs cotain all of the same fields.
-    assert_eq!(resolution_result.did_document.to_string(), old.to_string());
+    assert_eq!(resolution_result.did_document.unwrap().to_string(), old.to_string());
     Ok(())
 }

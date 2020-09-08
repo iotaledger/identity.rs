@@ -45,7 +45,7 @@ impl Dereferencer {
         let resolver_result = resolver
             .resolve(DID::parse_from_str(did_url.clone())?, input_metadata)
             .await?;
-        let deref_result = dereference_raw(did_url, resolver_result.did_document.clone())?;
+        let deref_result = dereference_raw(did_url.clone(), resolver_result.did_document.clone().unwrap())?;
         Ok(DereferenceResult {
             resolver_result,
             dereference_result: deref_result,
@@ -53,6 +53,7 @@ impl Dereferencer {
                 driver_id: "did:iota".into(),
                 retrieved: Timestamp::now().to_rfc3339(),
                 duration: start_time.elapsed().as_millis(),
+                input_did: did_url,
             },
         })
     }
