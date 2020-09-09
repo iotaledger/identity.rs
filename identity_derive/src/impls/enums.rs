@@ -186,7 +186,7 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
                     1 => quote! {{
                         let typ_name = String::new() + stringify!(#diff) + "::" + stringify!(#vname);
 
-                        if let Some(field) = &0_field {
+                        if let Some(field) = &field_0 {
                             write!(f, "{}({:?})", typ_name, field)
                         } else {
                             let field = &None as &Option<()>;
@@ -456,7 +456,10 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
                         } else {
                             quote! {
                                 <#ftyp>::from_diff(
-                                    #fname
+                                    match #fname {
+                                        Some(v) => v,
+                                        None => <#ftyp>::default().into_diff()
+                                    }
                                 )
                             }
                         }
@@ -572,16 +575,14 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
                 });
 
                 diff_bodies.push(quote! {
-                    Ok(Self::Delta::#vname( #(#diff_fvalues),* ))
+                    Self::Type::#vname( #(#diff_fvalues),* )
                 });
 
-                diff_lpatterns.push(quote! {
-                    quote! {_}
-                });
+                diff_lpatterns.push(quote! {_});
 
                 diff_rpatterns.push(quote! { other @ Self::#vname(..) });
                 diff_bodies.push(quote! {
-                    other.clone.into_diff()
+                    other.clone().into_diff()
                 });
             }
             (SVariant::Unit, vname, vfields) => {

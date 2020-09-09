@@ -3,20 +3,21 @@ use identity_diff::Diff;
 
 #[derive(Diff, Debug, Clone, PartialEq)]
 pub enum SomeEnum {
-    Test { a: usize },
+    A,
+    B,
 }
 
 impl Default for SomeEnum {
     fn default() -> Self {
-        Self::Test { a: 0 }
+        Self::A
     }
 }
 
 #[test]
 fn test_enum() {
-    let t = SomeEnum::Test { a: 0 };
+    let t = SomeEnum::A;
 
-    let t2 = SomeEnum::Test { a: 0 };
+    let t2 = SomeEnum::B;
 
     let diff = t.diff(&t2);
 
