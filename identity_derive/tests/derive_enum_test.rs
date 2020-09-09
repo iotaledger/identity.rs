@@ -2,24 +2,186 @@ use identity_derive::Diff;
 use identity_diff::Diff;
 
 #[derive(Diff, Debug, Clone, PartialEq)]
-pub enum SomeEnum {
-    A,
-    B,
+pub enum StructEnum {
+    A { x: usize },
+    B { y: usize },
 }
 
-impl Default for SomeEnum {
+#[derive(Diff, Debug, Clone, PartialEq)]
+pub enum UnitEnum {
+    A,
+    B,
+    C,
+}
+
+#[derive(Diff, Debug, Clone, PartialEq)]
+pub enum TupleEnum {
+    A(usize),
+    B(String),
+    C(usize, usize),
+}
+
+#[derive(Diff, Debug, Clone, PartialEq)]
+pub enum MixedEnum {
+    A,
+    B(usize),
+    C { y: String },
+}
+
+#[derive(Diff, Debug, Clone, PartialEq)]
+pub enum NestedEnum {
+    Nest(InnerEnum),
+}
+
+#[derive(Diff, Debug, Clone, PartialEq)]
+pub enum InnerEnum {
+    Inner { y: InnerStruct },
+}
+
+impl Default for InnerEnum {
     fn default() -> Self {
-        Self::A
+        Self::Inner {
+            y: InnerStruct::default(),
+        }
     }
 }
 
-#[test]
-fn test_enum() {
-    let t = SomeEnum::A;
+#[derive(Diff, Debug, Clone, PartialEq, Default)]
+pub struct InnerStruct {
+    y: usize,
+}
 
-    let t2 = SomeEnum::B;
+#[test]
+fn test_struct_enum() {
+    let t = StructEnum::A { x: 100 };
+
+    let t2 = StructEnum::B { y: 200 };
 
     let diff = t.diff(&t2);
 
-    println!("{:?}", diff);
+    let res = t.merge(diff);
+
+    assert_eq!(t2, res);
+
+    let diff = t2.into_diff();
+
+    assert_eq!(
+        DiffStructEnum::B {
+            y: Some((200 as usize).into_diff())
+        },
+        diff
+    );
+
+    let res = StructEnum::from_diff(diff);
+
+    assert_eq!(StructEnum::B { y: 200 }, res);
+}
+
+#[test]
+fn test_unit_enum() {
+    let t = UnitEnum::A;
+    let t2 = UnitEnum::B;
+
+    let diff = t.diff(&t2);
+
+    let res = t.merge(diff);
+
+    assert_eq!(t2, res);
+
+    let diff = t2.into_diff();
+
+    assert_eq!(DiffUnitEnum::B, diff);
+
+    let res = UnitEnum::from_diff(diff);
+
+    assert_eq!(UnitEnum::B, res);
+}
+
+#[test]
+fn test_tuple_enum() {
+    let t = TupleEnum::A(10);
+    let t2 = TupleEnum::C(20, 30);
+
+    let diff = t.diff(&t2);
+
+    let res = t.merge(diff);
+
+    assert_eq!(t2, res);
+
+    let diff = t2.into_diff();
+
+    assert_eq!(
+        DiffTupleEnum::C(Some((20 as usize).into_diff()), Some((30 as usize).into_diff())),
+        diff
+    );
+
+    let res = TupleEnum::from_diff(diff);
+
+    assert_eq!(TupleEnum::C(20, 30), res);
+}
+
+#[test]
+fn test_mixed_enum() {
+    let t = MixedEnum::B(10);
+    let t2 = MixedEnum::C {
+        y: String::from("test"),
+    };
+
+    let diff = t.diff(&t2);
+
+    let res = t.merge(diff);
+
+    assert_eq!(t2, res);
+
+    let diff = t2.into_diff();
+
+    assert_eq!(
+        DiffMixedEnum::C {
+            y: Some(String::from("test").into_diff())
+        },
+        diff
+    );
+
+    let res = MixedEnum::from_diff(diff);
+
+    assert_eq!(
+        MixedEnum::C {
+            y: String::from("test"),
+        },
+        res
+    );
+}
+
+#[test]
+fn test_nested_enum() {
+    let t = NestedEnum::Nest(InnerEnum::default());
+    let t2 = NestedEnum::Nest(InnerEnum::Inner {
+        y: InnerStruct { y: 10 },
+    });
+
+    let diff = t.diff(&t2);
+
+    let res = t.merge(diff);
+
+    assert_eq!(t2, res);
+
+    let diff = t2.into_diff();
+
+    assert_eq!(
+        DiffNestedEnum::Nest(Some(DiffInnerEnum::Inner {
+            y: Some(DiffInnerStruct {
+                y: Some((10 as usize).into_diff())
+            })
+        })),
+        diff
+    );
+
+    let res = NestedEnum::from_diff(diff);
+
+    assert_eq!(
+        NestedEnum::Nest(InnerEnum::Inner {
+            y: InnerStruct { y: 10 },
+        }),
+        res
+    );
 }
