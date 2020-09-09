@@ -1,10 +1,21 @@
+use identity_common::Object;
 use identity_ldp::LinkedDataSignature;
-use serde_json::from_str;
+use serde_json::{from_str, to_string};
 
 macro_rules! test_parse_lds {
     ($type:expr, $path:expr) => {
-        let signature: LinkedDataSignature = from_str(include_str!($path)).unwrap();
+        let signature_data = include_str!($path);
+        let signature = from_str::<LinkedDataSignature>(signature_data).unwrap();
+        let signature_json = to_string(&signature).unwrap();
+
+        // Ensure we have the expected type of proof
         assert_eq!(signature.proof_type, $type);
+
+        let object_a = from_str::<Object>(signature_data).unwrap();
+        let object_b = from_str::<Object>(&signature_json).unwrap();
+
+        // Ensure nothing was modified during de/serialization
+        assert_eq!(object_a, object_b);
     };
 }
 
