@@ -20,10 +20,10 @@ mod utils;
 #[proc_macro_derive(Diff, attributes(diff))]
 pub fn derive_diff(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-    interal(input)
+    internal(input)
 }
 
-fn interal(input: DeriveInput) -> TokenStream {
+fn internal(input: DeriveInput) -> TokenStream {
     let model: InputModel = InputModel::parse(&input);
     let debug = model.impl_debug();
     let diff = model.impl_diff();

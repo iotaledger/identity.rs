@@ -51,6 +51,16 @@ pub struct InnerStruct {
     y: usize,
 }
 
+#[derive(Diff, Debug, Clone, PartialEq)]
+pub enum EnumWithGeneric<T, S>
+where
+    T: Clone + Default,
+    S: Clone + Default,
+{
+    A(T),
+    B(S),
+}
+
 #[test]
 fn test_struct_enum() {
     let t = StructEnum::A { x: 100 };
@@ -184,4 +194,24 @@ fn test_nested_enum() {
         }),
         res
     );
+}
+
+#[test]
+fn test_enum_with_generics() {
+    let t: EnumWithGeneric<String, usize> = EnumWithGeneric::A(String::from("test"));
+    let t2: EnumWithGeneric<String, usize> = EnumWithGeneric::B(10);
+
+    let diff = t.diff(&t2);
+
+    let res = t.merge(diff);
+
+    assert_eq!(t2, res);
+
+    let diff = t2.into_diff();
+
+    assert_eq!(DiffEnumWithGeneric::B(Some((10 as usize).into_diff())), diff);
+
+    let res = EnumWithGeneric::from_diff(diff);
+
+    assert_eq!(EnumWithGeneric::B(10), res);
 }
