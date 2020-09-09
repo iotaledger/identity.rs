@@ -1,7 +1,7 @@
 use crate::resolver::{NetworkNodes, ResolutionInputMetadata, ResolutionMetadata, ResolutionResult, Resolver};
 use identity_core::{
     common::Timestamp,
-    did::DID,
+    did::{Param, DID},
     document::DIDDocument,
     utils::{Authentication, PublicKey, Service},
 };
@@ -62,33 +62,8 @@ impl Dereferencer {
 pub fn dereference_raw(did_url: String, did_document: DIDDocument) -> crate::Result<DereferenceRawResult> {
     let did_url = DID::parse_from_str(did_url)?;
     if let Some(query) = did_url.clone().query {
-        let mut output_url;
-        let property = get_fragment_property(
-            did_document,
-            query[0]
-                .value
-                .as_ref()
-                .expect("Couldn't get value from DID URL")
-                .to_string(),
-        )?;
-        match property {
-            Property::Service(service) => {
-                let parsed = Url::parse(&service.endpoint.context.as_inner()[0].clone())?;
-                output_url = parsed[..Position::AfterPath].to_string();
-            }
-            _ => return Err(crate::Error::DereferencingError),
-        };
-        if let Some(path_segments) = did_url.clone().path_segments {
-            output_url = format!("{}{}", output_url, path_segments[0].clone());
-        }
-        if query.len() > 1 {
-            let decoded_val = percent_decode_str(&query[1].value.as_ref().expect("Couldn't get value from DID URL"));
-            output_url = format!("{}{}", output_url, decoded_val.decode_utf8()?,);
-        }
-        if let Some(fragment) = did_url.fragment.clone() {
-            output_url = format!("{}#{}", output_url, fragment);
-        };
-        return Ok(DereferenceRawResult::Stringresult(output_url));
+        let service_endpoint_url = service_endpoint_construction(did_url, query, did_document)?;
+        return Ok(DereferenceRawResult::Stringresult(service_endpoint_url));
     }
     if let Some(fragment) = did_url.fragment {
         let property = get_fragment_property(did_document, fragment)?;
@@ -102,6 +77,40 @@ pub enum Property {
     PublicKey(PublicKey),
     Service(Service),
     Authentication(Authentication),
+}
+
+fn service_endpoint_construction(did_url: DID, query: Vec<Param>, did_document: DIDDocument) -> crate::Result<String> {
+    let mut service_endpoint_url = String::new();
+    let mut relative_ref = String::new();
+    for param in query.clone() {
+        if param.key == "service" && !did_document.clone().services.is_empty() {
+            for service in did_document.clone().services {
+                if &service.id.to_did()?.fragment.expect("Couldn't get fragment")
+                    == param.value.as_ref().expect("Couldn't get param value from DID URL")
+                {
+                    let parsed = Url::parse(&service.endpoint.context.as_inner()[0].clone())?;
+                    service_endpoint_url = parsed[..Position::AfterPath].to_string();
+                }
+            }
+        }
+        if param.key == "relative-ref" {
+            let decoded_val = percent_decode_str(&param.value.as_ref().expect("Couldn't get param valuefrom DID URL"));
+            relative_ref = decoded_val.decode_utf8()?.into_owned();
+        }
+    }
+    if let Some(path_segments) = did_url.clone().path_segments {
+        if service_endpoint_url != "" {
+            service_endpoint_url = format!("{}{}", service_endpoint_url, path_segments[0].clone());
+        }
+    }
+    if service_endpoint_url != "" && relative_ref != "" {
+        service_endpoint_url = format!("{}{}", service_endpoint_url, relative_ref);
+    }
+    if let Some(fragment) = did_url.fragment {
+        service_endpoint_url = format!("{}#{}", service_endpoint_url, fragment);
+    };
+
+    Ok(service_endpoint_url)
 }
 
 fn get_fragment_property(did_document: DIDDocument, fragment: String) -> crate::Result<Property> {
