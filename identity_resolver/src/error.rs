@@ -35,5 +35,8 @@ pub enum Error {
     /// URL Error
     #[error("URL parse Error: {0}")]
     URLError(#[from] url::ParseError),
+    /// IO Error
+    #[error("IO Error: {0}")]
+    IOError(#[from] std::io::Error),
 }
 pub type Result<T> = AnyhowResult<T, Error>;

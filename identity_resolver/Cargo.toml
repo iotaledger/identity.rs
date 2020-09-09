@@ -21,6 +21,7 @@ anyhow = "1.0"
 serde = "1.0"
 serde_json = "1.0"
 serde-diff = "0.3.1"
+bytestream = "0.*"
 
 percent-encoding = "2.1.0"
 url = "2.1.1"

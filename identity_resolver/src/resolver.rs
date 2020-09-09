@@ -1,7 +1,8 @@
+use bytestream::*;
 use identity_core::{common::Timestamp, did::DID, document::DIDDocument};
 use identity_integration::{did_helper::did_iota_address, tangle_reader::TangleReader, tangle_writer::Differences};
 use serde_diff::Apply;
-use std::{collections::HashMap, time::Instant};
+use std::{collections::HashMap, io::Write, time::Instant};
 
 #[derive(Debug)]
 pub struct ResolutionResult {
@@ -10,12 +11,11 @@ pub struct ResolutionResult {
     pub did_document_string: Option<String>,
     pub did_document_metadata: HashMap<String, String>,
 }
-// #[derive(Debug)]
-// pub struct ResolutionResultStream {
-//     pub metadata: ResolutionMetadata,
-//     pub did_document_stream: ByteStream ?,
-//     pub did_document_metadata: HashMap<String, String>,
-// }
+#[derive(Debug)]
+pub struct ResolutionResultStream {
+    pub result: ResolutionResult,
+}
+
 #[derive(Debug)]
 pub struct ResolutionMetadata {
     pub driver_id: String,
@@ -138,8 +138,19 @@ impl Resolver {
         };
         Ok(result)
     }
-    pub async fn resolve_stream() -> crate::Result<()> {
-        // Todo: return same as resolve() just as stream
+    pub async fn resolve_stream<W: Write>(
+        &self,
+        did: DID,
+        resolution_metadata: ResolutionInputMetadata,
+        buffer: &mut W,
+    ) -> crate::Result<()> {
+        let res = self.resolve(did, resolution_metadata).await?;
+        match res.did_document_string {
+            Some(document) => {
+                document.write_to(buffer, ByteOrder::BigEndian)?;
+            }
+            _ => return Err(crate::Error::DocumentNotFound),
+        }
         Ok(())
     }
 }
