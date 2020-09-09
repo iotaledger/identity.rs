@@ -10,7 +10,7 @@ use syn::{
 use std::marker::PhantomData;
 
 use crate::{
-    impls::{debug_impl, derive_diff_enum, derive_diff_struct, diff_impl, impl_debug_enum},
+    impls::{debug_impl, derive_diff_enum, derive_diff_struct, diff_impl, impl_debug_enum, impl_diff_enum},
     should_ignore,
 };
 
@@ -165,7 +165,7 @@ impl InputModel {
     pub fn impl_diff(&self) -> TokenStream {
         match self {
             Self::Struct(InputStruct { .. }) => diff_impl(self),
-            _ => unimplemented!(),
+            Self::Enum(InputEnum { .. }) => impl_diff_enum(self),
         }
     }
 

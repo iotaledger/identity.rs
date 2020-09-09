@@ -14,8 +14,7 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
     let diff: &Ident = input.diff();
     let evariants: &Vec<EVariant> = input.e_variants();
 
-    let param_decls = input.param_decls();
-    let params = input.params();
+    let param_decls: &Punctuated<GenericParam, Comma> = input.param_decls();
 
     let clause = quote! {};
 
@@ -66,7 +65,7 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
         .collect();
 
     quote! {
-        #[derive(Clone, PartialEq, Default)]
+        #[derive(Clone, PartialEq)]
         #[derive(serde::Deserialize, serde::Serialize)]
         pub enum #diff<#(#param_decls),*>
             #clause
@@ -80,8 +79,8 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
     let diff: &Ident = input.diff();
     let evariants: &Vec<EVariant> = input.e_variants();
 
-    let param_decls = input.param_decls();
-    let params = input.params();
+    let param_decls: &Punctuated<GenericParam, Comma> = input.param_decls();
+    let params: &Punctuated<Ident, Comma> = input.params();
 
     let param_decls: Vec<TokenStream> = param_decls
         .iter()
@@ -95,6 +94,7 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
 
                 quote! {
                     #S: identity_diff::Diff
+                    + std::fmt::Debug
                     #(+ #bounds)*
                 }
             }
@@ -119,20 +119,20 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
                 let fields: Vec<TokenStream> = fields
                     .iter()
                     .map(|f| {
-                        let n = f.name();
+                        let fname = f.name();
                         let typ = f.typ();
 
                         if f.should_ignore() {
                             quote! {
-                                #buf.field(stringify!(#n), &#n)
+                                #buf.field(stringify!(#fname), &#fname)
                             }
                         } else {
                             quote! {
-                                let nam = stringify!(#n);
-                                if let Some(#vname) = &#vname {
-                                    #buf.field(na, &#vname);
+                                let fname: &'static str = stringify!(#fname);
+                                if let Some(#fname) = &#fname {
+                                    #buf.field(fname, &#fname);
                                 } else {
-                                    #buf.field(na, &None as &Option<#typ>);
+                                    #buf.field(fname, &None as &Option<#typ>);
                                 }
                             }
                         }
@@ -142,7 +142,7 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
                     Self::#vname { #(#fnames),* }
                 });
                 bodies.push(quote! {{
-                    let typ_name = String::new() + stringify!(#diff) + "::" + stringify(#vname);
+                    let typ_name = String::new() + stringify!(#diff) + "::" + stringify!(#vname);
                     let mut #buf = f.debug_struct(&typ_name);
                     #( #fields )*
 
@@ -153,7 +153,7 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
                 let field_typs: Vec<&Type> = vfields.iter().map(|f| f.typ()).collect();
 
                 let field_max = field_typs.len();
-                let field_names: Vec<Ident> = (0..field_max).map(|ident| format_ident!("{}_field", ident)).collect();
+                let field_names: Vec<Ident> = (0..field_max).map(|ident| format_ident!("field_{}", ident)).collect();
 
                 let buf: Ident = format_ident!("buf");
 
@@ -161,7 +161,7 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
                     .iter()
                     .enumerate()
                     .map(|(idx, fld)| {
-                        let fname = format_ident!("{}_field", idx);
+                        let fname = format_ident!("field_{}", idx);
                         let ftyp = fld.typ();
 
                         match field_max {
@@ -183,8 +183,8 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
                     Self::#vname( #(#field_names),* )
                 });
                 bodies.push(match field_max {
-                    1 => quote! {
-                        let typ_name = String::new() + stringify!(#diff) + "::" + stringify(#vname);
+                    1 => quote! {{
+                        let typ_name = String::new() + stringify!(#diff) + "::" + stringify!(#vname);
 
                         if let Some(field) = &0_field {
                             write!(f, "{}({:?})", typ_name, field)
@@ -193,23 +193,23 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
 
                             write!(f, "{}({:?})", typ_name, field);
                         }
-                    },
-                    _ => quote! {
-                        let typ_name = String::new() + stringify!(#diff) + "::" + stringify(#vname);
+                    }},
+                    _ => quote! {{
+                        let typ_name = String::new() + stringify!(#diff) + "::" + stringify!(#vname);
                         let mut #buf = f.debug_tuple(&typ_name);
-                        #( #fields)*
+                        #( #fields )*
                         #buf.finish()
-                    },
+                    }},
                 });
             }
             (SVariant::Unit, vname, _vfields) => {
                 patterns.push(quote! {
                     Self::#vname
                 });
-                bodies.push(quote! {
-                        let typ_name = String::new() + stringify!(#diff) + "::" + stringify(#vname);
-                        f.debug_struct(&typ_name).finish();
-                });
+                bodies.push(quote! {{
+                        let typ_name = String::new() + stringify!(#diff) + "::" + stringify!(#vname);
+                        f.debug_struct(&typ_name).finish()
+                }});
             }
         }
     }
@@ -226,7 +226,8 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
         impl<#(#param_decls),*> std::fmt::Debug for #diff<#params>
             #clause
             {
-                fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
+                {
                     #body
                 }
             }
@@ -255,7 +256,6 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
 
                 quote! {
                     #S: std::clone::Clone
-                    + std::default::Default
                     + identity_diff::Diff
                     + std::fmt::Debug
                     + std::cmp::PartialEq
@@ -270,60 +270,158 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
     let preds: Vec<TokenStream> = clause.predicates.iter().map(|cl| quote! { #cl }).collect();
     let clause = quote! { where #(#preds),* };
 
-    let mut diff_patterns: Vec<TokenStream> = vec![];
-    let mut self_patterns: Vec<TokenStream> = vec![];
-    let mut bodies: Vec<TokenStream> = vec![];
+    let mut merge_rpatterns: Vec<TokenStream> = vec![];
+    let mut merge_lpatterns: Vec<TokenStream> = vec![];
+    let mut merge_bodies: Vec<TokenStream> = vec![];
+
+    let mut diff_rpatterns: Vec<TokenStream> = vec![];
+    let mut diff_lpatterns: Vec<TokenStream> = vec![];
+    let mut diff_bodies: Vec<TokenStream> = vec![];
+
+    let mut from_body = TokenStream::new();
+
+    let mut into_body = TokenStream::new();
 
     for var in evariants.iter() {
         match (var.variant.clone(), &var.name, &var.fields) {
             (SVariant::Named, vname, vfields) => {
                 let fnames: Vec<&Ident> = vfields.iter().map(|f| f.name()).collect();
-
-                let self_names: Vec<Ident> = vfields
+                let from_fassign: Vec<TokenStream> = var
+                    .fields
                     .iter()
-                    .map(|f| f.name())
-                    .map(|ident| format_ident!("self_{}", ident))
-                    .collect();
+                    .map(|f| {
+                        let fname = f.name();
+                        let ftyp = f.typ();
 
-                let diff_names: Vec<Ident> = vfields
-                    .iter()
-                    .map(|f| f.name())
-                    .map(|ident| format_ident!("diff_{}", ident))
-                    .collect();
-
-                let fvalues: Vec<TokenStream> = vfields
-                    .iter()
-                    .zip(self_names)
-                    .zip(diff_names)
-                    .map(|((f, sn), dn)| {
                         if f.should_ignore() {
-                            quote! { #sn.clone() }
+                            quote! {#fname: Default::default()}
                         } else {
                             quote! {
-                                if let Some(diff) = #dn {
-                                    #sn.merge(diff.clone())
+                                #fname: <#ftyp>::from_diff(
+                                    #fname
+                                )
+                            }
+                        }
+                    })
+                    .collect();
+
+                let into_fassign: Vec<TokenStream> = var
+                    .fields
+                    .iter()
+                    .map(|f| {
+                        let fname = f.name();
+
+                        if f.should_ignore() {
+                            quote! { #fname: std::marker::PhantomData }
+                        } else {
+                            quote! {
+                                #fname: Some(#fname.into_diff())
+                            }
+                        }
+                    })
+                    .collect();
+
+                let left_names: Vec<Ident> = vfields
+                    .iter()
+                    .map(|f| f.name())
+                    .map(|ident| format_ident!("left_{}", ident))
+                    .collect();
+
+                let right_names: Vec<Ident> = vfields
+                    .iter()
+                    .map(|f| f.name())
+                    .map(|ident| format_ident!("right_{}", ident))
+                    .collect();
+
+                let merge_fvalues: Vec<TokenStream> = vfields
+                    .iter()
+                    .zip(left_names.iter())
+                    .zip(right_names.iter())
+                    .map(|((f, ln), rn)| {
+                        if f.should_ignore() {
+                            quote! { #ln.clone() }
+                        } else {
+                            quote! {
+                                if let Some(diff) = #rn {
+                                    #ln.merge(diff.clone())
                                 } else {
-                                    #sn.clone()
+                                    #ln.clone()
                                 }
                             }
                         }
                     })
                     .collect();
 
-                self_patterns.push(quote! {
+                let diff_fvalues: Vec<TokenStream> = vfields
+                    .iter()
+                    .zip(left_names.iter())
+                    .zip(right_names.iter())
+                    .map(|((f, ln), rn)| {
+                        if f.should_ignore() {
+                            quote! {
+                                std::marker::PhantomData
+                            }
+                        } else {
+                            quote! {
+                                if #ln == #rn {
+                                    None
+                                } else {
+                                    Some(#ln.diff(#rn))
+                                }
+                            }
+                        }
+                    })
+                    .collect();
+
+                from_body.extend(quote! {
+                    #diff::#vname { #(#fnames),* } => {
+                        Self::#vname { #(#from_fassign),* }
+                    }
+                });
+
+                into_body.extend(quote! {
+                    Self::#vname { #(#fnames),* } => {
+                        #diff::#vname { #(#into_fassign),* }
+                    }
+                });
+
+                merge_lpatterns.push(quote! {
                     Self::#vname {
-                        #(#fnames: #self_names),*
+                        #(#fnames: #left_names),*
                     }
                 });
 
-                diff_patterns.push(quote! {
+                merge_rpatterns.push(quote! {
                     Self::Type::#vname {
-                        #(#fnames: #diff_names),*
+                        #(#fnames: #right_names),*
                     }
                 });
 
-                bodies.push(quote! {
+                merge_bodies.push(quote! {
                     Self::from_diff(diff.clone())
+                });
+
+                diff_lpatterns.push(quote! {
+                    Self::#vname { #(#fnames: #left_names),* }
+                });
+
+                diff_rpatterns.push(quote! {
+                    Self::#vname { #(#fnames: #left_names),* }
+                });
+
+                diff_bodies.push(quote! {
+                    Self::Type::#vname {
+                        #(#fnames: #left_names),*
+                    }
+                });
+
+                diff_lpatterns.push(quote! {
+                    quote! {_}
+                });
+
+                diff_rpatterns.push(quote! { other @ Self::#vname {..} });
+                diff_bodies.push(quote! {
+                    other.clone.into_diff()
                 });
             }
             (SVariant::Tuple, vname, vfields) => {
@@ -331,83 +429,211 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
 
                 let fmax = ftyps.len();
 
-                let self_names: Vec<Ident> = (0..fmax).map(|ident| format_ident!("self_{}", ident)).collect();
+                let fnames: Vec<Ident> = (0..fmax).map(|ident| format_ident!("field_{}", ident)).collect();
 
-                let diff_names: Vec<Ident> = (0..fmax).map(|ident| format_ident!("diff_{}", ident)).collect();
-
-                let fvalues: Vec<TokenStream> = vfields
+                let from_fassign: Vec<TokenStream> = var
+                    .fields
                     .iter()
-                    .zip(self_names.iter())
-                    .zip(diff_names.iter())
-                    .map(|((f, sn), dn)| {
+                    .enumerate()
+                    .map(|(idx, f)| {
+                        let fname = &fnames[idx];
+                        let ftyp = f.typ();
+
                         if f.should_ignore() {
-                            quote! { #sn.clone() }
+                            quote! { Default::default() }
                         } else {
                             quote! {
-                                if let Some(diff) = #dn {
-                                    #sn.merge(diff.clone())
+                                <#ftyp>::from_diff(
+                                    #fname
+                                )
+                            }
+                        }
+                    })
+                    .collect();
+
+                let into_fassign: Vec<TokenStream> = var
+                    .fields
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, f)| {
+                        let fname = &fnames[idx];
+
+                        if f.should_ignore() {
+                            quote! { std::marker::PhantomData }
+                        } else {
+                            quote! {
+                                Some(#fname.into_diff())
+                            }
+                        }
+                    })
+                    .collect();
+
+                let left_names: Vec<Ident> = (0..fmax).map(|ident| format_ident!("left_{}", ident)).collect();
+
+                let right_names: Vec<Ident> = (0..fmax).map(|ident| format_ident!("right_{}", ident)).collect();
+
+                let merge_fvalues: Vec<TokenStream> = vfields
+                    .iter()
+                    .zip(left_names.iter())
+                    .zip(right_names.iter())
+                    .map(|((f, ln), rn)| {
+                        if f.should_ignore() {
+                            quote! { #ln.clone() }
+                        } else {
+                            quote! {
+                                if let Some(diff) = #rn {
+                                    #ln.merge(diff.clone())
                                 } else {
-                                    #sn.clone()
+                                    #ln.clone()
                                 }
                             }
                         }
                     })
                     .collect();
 
-                self_patterns.push(quote! {
+                let diff_fvalues: Vec<TokenStream> = vfields
+                    .iter()
+                    .zip(left_names.iter().zip(right_names.iter()))
+                    .map(|(f, (ln, rn))| {
+                        if f.should_ignore() {
+                            quote! {
+                                std::marker::PhantomData
+                            }
+                        } else {
+                            quote! {
+                                if #ln == #rn {
+                                    None
+                                } else {
+                                    Some(#ln.diff(#rn))
+                                }
+                            }
+                        }
+                    })
+                    .collect();
+
+                from_body.extend(quote! {
+                    #diff::#vname( #(#fnames),* ) => {
+                        Self::#vname( #(#from_fassign),* )
+                    }
+                });
+
+                into_body.extend(quote! {
+                    Self::#vname( #(#fnames),* ) => {
+                        #diff::#vname(
+                            #(#into_fassign),*
+                        )
+                    }
+                });
+
+                merge_lpatterns.push(quote! {
                     Self::#vname(
-                        #(#self_names),*
+                        #(#left_names),*
                     )
                 });
 
-                self_patterns.push(quote! { _ });
+                merge_lpatterns.push(quote! { _ });
 
-                diff_patterns.push(quote! {
+                merge_rpatterns.push(quote! {
                     Self::Type::#vname(
-                        #(#self_names),*
+                        #(#right_names),*
                     )
                 });
 
-                diff_patterns.push(quote! {
+                merge_rpatterns.push(quote! {
                     diff @ Self::Type::#vname(..)
                 });
 
-                bodies.push(quote! {
-                    Self::#vname(#(#fvalues),*)
+                merge_bodies.push(quote! {
+                    Self::#vname(#(#merge_fvalues),*)
                 });
 
-                bodies.push(quote! {
+                merge_bodies.push(quote! {
                     Self::from_diff(diff.clone())
+                });
+
+                diff_lpatterns.push(quote! {
+                    Self::#vname( #(#left_names),* )
+                });
+
+                diff_rpatterns.push(quote! {
+                    Self::#vname( #(#right_names),* )
+                });
+
+                diff_bodies.push(quote! {
+                    Ok(Self::Delta::#vname( #(#diff_fvalues),* ))
+                });
+
+                diff_lpatterns.push(quote! {
+                    quote! {_}
+                });
+
+                diff_rpatterns.push(quote! { other @ Self::#vname(..) });
+                diff_bodies.push(quote! {
+                    other.clone.into_diff()
                 });
             }
             (SVariant::Unit, vname, vfields) => {
-                self_patterns.push(quote! {
+                from_body.extend(quote! {
+                    #diff::#vname => {
+                        Self::#vname
+                    },
+                });
+
+                into_body.extend(quote! {
+                    Self::#vname => {
+                        #diff::#vname
+                    },
+                });
+
+                merge_lpatterns.push(quote! {
                     Self::#vname
                 });
 
-                self_patterns.push(quote! { _ });
-
-                diff_patterns.push(quote! {
+                merge_rpatterns.push(quote! {
                     Self::Type::#vname
                 });
 
-                diff_patterns.push(quote! {
+                merge_lpatterns.push(quote! { _ });
+
+                merge_rpatterns.push(quote! {
                     diff @ Self::Type::#vname
                 });
 
-                bodies.push(quote! {
+                merge_bodies.push(quote! {
                     Self::#vname
                 });
 
-                bodies.push(quote! {
+                merge_bodies.push(quote! {
                     Self::from_diff(diff.clone())
+                });
+
+                diff_lpatterns.push(quote! {
+                    Self::#vname
+                });
+
+                diff_rpatterns.push(quote! {
+                    Self::#vname
+                });
+
+                diff_lpatterns.push(quote! { _ });
+
+                diff_rpatterns.push(quote! {
+                    other @ Self::#vname
+                });
+
+                diff_bodies.push(quote! {
+                    Self::Type::#vname
+                });
+
+                diff_bodies.push(quote! {
+                    other.clone().into_diff()
                 });
             }
         }
     }
 
     quote! {
-        impl<#(param_decls),*> identity_diff::Diff for #name<#params>
+        impl<#(#param_decls),*> identity_diff::Diff for #name<#params>
             #clause
         {
             type Type = #diff<#params>;
@@ -416,22 +642,33 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
             fn merge(&self, diff: Self::Type) -> Self {
                 match(self, &diff) {
                     #(
-                        (#self_patterns, #diff_patterns) => {
-                            #bodies
+                        (#merge_lpatterns, #merge_rpatterns) => {
+                            #merge_bodies
                         },
                     )*
                 }
             }
 
             fn diff(&self, other: &Self) -> Self::Type {
+                match (self, other) {
+                    #(
+                        (#diff_lpatterns, #diff_rpatterns) => { #diff_bodies },
+                    )*
+                }
             }
 
             #[allow(unused)]
             fn from_diff(diff: Self::Type) -> Self {
+                match diff {
+                    #from_body
+                }
             }
 
             #[allow(unused)]
             fn into_diff(self) -> Self::Type {
+                match self {
+                    #into_body
+                }
             }
         }
     }
