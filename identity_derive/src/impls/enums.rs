@@ -26,7 +26,7 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
             GenericParam::Type(typ) => {
                 let S: &Ident = &typ.ident;
 
-                let bounds: Vec<TokenStream> = typ.bounds.iter().map(|tb| quote! { #tb }).collect();
+                let bounds: Vec<TokenStream> = typ.bounds.iter().map(|bound| quote! { #bound }).collect();
 
                 quote! {
                     #S: identity_diff::Diff
@@ -39,26 +39,26 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
     let body: TokenStream = evariants
         .iter()
         .map(|var| {
-            let name = &var.name;
+            let vname = &var.name;
             let typs: Vec<TokenStream> = var.fields.iter().map(|f| f.typ_as_tokens()).collect();
 
             match var.variant {
                 SVariant::Named => {
-                    let names: Vec<&Ident> = var.fields.iter().map(|f| f.name()).collect();
+                    let fnames: Vec<&Ident> = var.fields.iter().map(|f| f.name()).collect();
 
                     quote! {
-                        #name {
+                        #vname {
                             #(
-                                #[doc(hidden)] #names: #typs,
+                                #[doc(hidden)] #fnames: #typs,
                             )*
                         },
                     }
                 }
                 SVariant::Tuple => quote! {
-                    #name( #( #[doc(hidden)] #typs, )* ),
+                    #vname( #( #[doc(hidden)] #typs, )* ),
                 },
                 SVariant::Unit => quote! {
-                    #name,
+                    #vname,
                 },
             }
         })
@@ -190,8 +190,7 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
                             write!(f, "{}({:?})", typ_name, field)
                         } else {
                             let field = &None as &Option<()>;
-
-                            write!(f, "{}({:?})", typ_name, field);
+                            write!(f, "{}({:?})", typ_name, field)
                         }
                     }},
                     _ => quote! {{
@@ -278,9 +277,9 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
     let mut diff_lpatterns: Vec<TokenStream> = vec![];
     let mut diff_bodies: Vec<TokenStream> = vec![];
 
-    let mut from_body = TokenStream::new();
+    let mut from_body: Vec<TokenStream> = vec![];
 
-    let mut into_body = TokenStream::new();
+    let mut into_body: Vec<TokenStream> = vec![];
 
     for var in evariants.iter() {
         match (var.variant.clone(), &var.name, &var.fields) {
@@ -298,7 +297,10 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
                         } else {
                             quote! {
                                 #fname: <#ftyp>::from_diff(
-                                    #fname
+                                    match #fname {
+                                        Some(v) => v,
+                                        None => <#ftyp>::default().into_diff()
+                                    }
                                 )
                             }
                         }
@@ -373,13 +375,13 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
                     })
                     .collect();
 
-                from_body.extend(quote! {
+                from_body.push(quote! {
                     #diff::#vname { #(#fnames),* } => {
                         Self::#vname { #(#from_fassign),* }
                     }
                 });
 
-                into_body.extend(quote! {
+                into_body.push(quote! {
                     Self::#vname { #(#fnames),* } => {
                         #diff::#vname { #(#into_fassign),* }
                     }
@@ -398,6 +400,18 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
                 });
 
                 merge_bodies.push(quote! {
+                    Self::#vname {
+                        #(#fnames: #merge_fvalues),*
+                    }
+                });
+
+                merge_lpatterns.push(quote! {_});
+
+                merge_rpatterns.push(quote! {
+                    diff @Self::Type::#vname {.. }
+                });
+
+                merge_bodies.push(quote! {
                     Self::from_diff(diff.clone())
                 });
 
@@ -406,22 +420,20 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
                 });
 
                 diff_rpatterns.push(quote! {
-                    Self::#vname { #(#fnames: #left_names),* }
+                    Self::#vname { #(#fnames: #right_names),* }
                 });
 
                 diff_bodies.push(quote! {
                     Self::Type::#vname {
-                        #(#fnames: #left_names),*
+                        #(#fnames: #diff_fvalues),*
                     }
                 });
 
-                diff_lpatterns.push(quote! {
-                    quote! {_}
-                });
+                diff_lpatterns.push(quote! { _ });
 
                 diff_rpatterns.push(quote! { other @ Self::#vname {..} });
                 diff_bodies.push(quote! {
-                    other.clone.into_diff()
+                    other.clone().into_diff()
                 });
             }
             (SVariant::Tuple, vname, vfields) => {
@@ -511,13 +523,13 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
                     })
                     .collect();
 
-                from_body.extend(quote! {
+                from_body.push(quote! {
                     #diff::#vname( #(#fnames),* ) => {
                         Self::#vname( #(#from_fassign),* )
                     }
                 });
 
-                into_body.extend(quote! {
+                into_body.push(quote! {
                     Self::#vname( #(#fnames),* ) => {
                         #diff::#vname(
                             #(#into_fassign),*
@@ -531,20 +543,20 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
                     )
                 });
 
-                merge_lpatterns.push(quote! { _ });
-
                 merge_rpatterns.push(quote! {
                     Self::Type::#vname(
                         #(#right_names),*
                     )
                 });
 
-                merge_rpatterns.push(quote! {
-                    diff @ Self::Type::#vname(..)
-                });
-
                 merge_bodies.push(quote! {
                     Self::#vname(#(#merge_fvalues),*)
+                });
+
+                merge_lpatterns.push(quote! { _ });
+
+                merge_rpatterns.push(quote! {
+                    diff @ Self::Type::#vname(..)
                 });
 
                 merge_bodies.push(quote! {
@@ -573,13 +585,13 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
                 });
             }
             (SVariant::Unit, vname, vfields) => {
-                from_body.extend(quote! {
+                from_body.push(quote! {
                     #diff::#vname => {
                         Self::#vname
                     },
                 });
 
-                into_body.extend(quote! {
+                into_body.push(quote! {
                     Self::#vname => {
                         #diff::#vname
                     },
@@ -593,14 +605,14 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
                     Self::Type::#vname
                 });
 
+                merge_bodies.push(quote! {
+                    Self::#vname
+                });
+
                 merge_lpatterns.push(quote! { _ });
 
                 merge_rpatterns.push(quote! {
                     diff @ Self::Type::#vname
-                });
-
-                merge_bodies.push(quote! {
-                    Self::#vname
                 });
 
                 merge_bodies.push(quote! {
@@ -660,14 +672,18 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
             #[allow(unused)]
             fn from_diff(diff: Self::Type) -> Self {
                 match diff {
-                    #from_body
+                    #(
+                        #from_body
+                    )*
                 }
             }
 
             #[allow(unused)]
             fn into_diff(self) -> Self::Type {
                 match self {
-                    #into_body
+                    #(
+                        #into_body
+                    )*
                 }
             }
         }
