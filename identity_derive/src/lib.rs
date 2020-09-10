@@ -25,11 +25,9 @@ fn internal(input: DeriveInput) -> TokenStream {
         #debug
         #diff
     };
-
     // for debugging.
     // println!("{}", diff_typ);
     // println!("{}", debug);
     // println!("{}", diff);
-
     TokenStream::from(output)
 }

@@ -259,7 +259,7 @@ fn parse_evariants(evariants: &[EVariant], diff: &Ident) -> (Vec<TokenStream>, V
 
                         if f.should_ignore() {
                             quote! {
-                                #buf.field(stringify!(#fname), &#fname)
+                                #buf.field(stringify!(#fname), &#fname);
                             }
                         } else {
                             quote! {

@@ -1,5 +1,6 @@
 use identity_derive::Diff;
 use identity_diff::Diff;
+use std::marker::PhantomData;
 
 #[derive(Diff, Debug, Clone, PartialEq, Default)]
 pub struct Test {
@@ -33,6 +34,13 @@ pub struct BigStruct {
 
 #[derive(Diff, Debug, Clone, PartialEq, Default)]
 struct TestUnit;
+
+#[derive(Diff, Debug, Clone, PartialEq)]
+struct TestIgnore {
+    a: usize,
+    #[diff(should_ignore)]
+    b: usize,
+}
 
 #[test]
 fn test_traditional_struct() {
@@ -208,6 +216,20 @@ fn test_big_tuple() {
     let res = t.merge(diff);
 
     let expected = BigTuple(15, vec![5, 6, 7], false, String::from("Some New String"));
+
+    assert_eq!(expected, res);
+}
+
+#[test]
+fn test_ignore_struct() {
+    let t = TestIgnore { a: 10, b: 10 };
+    let t2 = TestIgnore { a: 100, b: 2039123 };
+
+    let diff = t.diff(&t2);
+
+    let res = t.merge(diff);
+
+    let expected = TestIgnore { b: 10, ..t2 };
 
     assert_eq!(expected, res);
 }

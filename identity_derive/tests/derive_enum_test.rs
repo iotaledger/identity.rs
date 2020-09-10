@@ -1,6 +1,8 @@
 use identity_derive::Diff;
 use identity_diff::Diff;
 
+use std::marker::PhantomData;
+
 #[derive(Diff, Debug, Clone, PartialEq)]
 pub enum StructEnum {
     A { x: usize },
@@ -59,6 +61,15 @@ where
 {
     A(T),
     B(S),
+}
+
+#[derive(Diff, Debug, Clone, PartialEq)]
+pub enum IgnoreEnum {
+    A {
+        #[diff(should_ignore)]
+        x: usize,
+        y: usize,
+    },
 }
 
 #[test]
@@ -214,4 +225,18 @@ fn test_enum_with_generics() {
     let res = EnumWithGeneric::from_diff(diff);
 
     assert_eq!(EnumWithGeneric::B(10), res);
+}
+
+#[test]
+fn test_ignore_enum() {
+    let t = IgnoreEnum::A { x: 10, y: 10 };
+    let t2 = IgnoreEnum::A { x: 10239123, y: 20 };
+
+    let diff = t.diff(&t2);
+
+    let res = t.merge(diff);
+
+    let expected = IgnoreEnum::A { y: 20, x: 10 };
+
+    assert_eq!(expected, res)
 }
