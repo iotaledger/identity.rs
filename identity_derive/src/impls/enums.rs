@@ -180,7 +180,7 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
         let (mlp, mrp, mb) = parse_merge(vname, vfields, struct_type.clone());
         let (dlp, drp, db) = parse_diff(vname, vfields, struct_type.clone());
 
-        let (fb, ib) = parse_from_into(var, vname, vfields, diff, struct_type.clone());
+        let (fb, ib) = parse_from_into(var, vname, vfields, diff, struct_type);
 
         merge_lpatterns.extend(mlp);
         merge_rpatterns.extend(mrp);
@@ -240,7 +240,7 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
     }
 }
 
-fn parse_evariants(evariants: &Vec<EVariant>, diff: &Ident) -> (Vec<TokenStream>, Vec<TokenStream>) {
+fn parse_evariants(evariants: &[EVariant], diff: &Ident) -> (Vec<TokenStream>, Vec<TokenStream>) {
     let mut patterns: Vec<TokenStream> = vec![];
     let mut bodies: Vec<TokenStream> = vec![];
 
@@ -352,7 +352,7 @@ fn parse_evariants(evariants: &Vec<EVariant>, diff: &Ident) -> (Vec<TokenStream>
 
 fn parse_merge(
     vname: &Ident,
-    vfields: &Vec<DataFields>,
+    vfields: &[DataFields],
     struct_type: SVariant,
 ) -> (Vec<TokenStream>, Vec<TokenStream>, Vec<TokenStream>) {
     let mut merge_rpatterns: Vec<TokenStream> = vec![];
@@ -509,7 +509,7 @@ fn parse_merge(
 
 fn parse_diff(
     vname: &Ident,
-    vfields: &Vec<DataFields>,
+    vfields: &[DataFields],
 
     struct_type: SVariant,
 ) -> (Vec<TokenStream>, Vec<TokenStream>, Vec<TokenStream>) {
@@ -641,7 +641,7 @@ fn parse_diff(
 fn parse_from_into(
     var: &EVariant,
     vname: &Ident,
-    vfields: &Vec<DataFields>,
+    vfields: &[DataFields],
     diff: &Ident,
     struct_type: SVariant,
 ) -> (Vec<TokenStream>, Vec<TokenStream>) {
@@ -778,7 +778,7 @@ fn parse_from_into(
     (from_body.to_vec(), into_body.to_vec())
 }
 
-fn populate_field_names(vfields: &Vec<DataFields>, fmax: usize, struct_type: SVariant) -> (Vec<Ident>, Vec<Ident>) {
+fn populate_field_names(vfields: &[DataFields], fmax: usize, struct_type: SVariant) -> (Vec<Ident>, Vec<Ident>) {
     match struct_type {
         SVariant::Named => (
             vfields
