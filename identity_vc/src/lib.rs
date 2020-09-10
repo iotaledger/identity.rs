@@ -1,9 +1,3 @@
-#[macro_use]
-extern crate identity_common;
-
-#[macro_use]
-extern crate serde;
-
 pub mod common;
 pub mod credential;
 pub mod error;

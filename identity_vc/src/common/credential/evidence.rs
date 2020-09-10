@@ -1,4 +1,5 @@
 use identity_common::{Object, OneOrMany};
+use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
 use crate::{

@@ -1,4 +1,5 @@
 use identity_common::{Object, Uri};
+use serde::{Deserialize, Serialize};
 
 /// TODO:
 ///   - Deserialize single Uri into object-style layout

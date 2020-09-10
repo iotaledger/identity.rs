@@ -1,9 +1,10 @@
-use identity_common::{Object, OneOrMany, Uri, Value};
+use identity_common::{impl_builder_setter, impl_builder_try_setter, Object, OneOrMany, Uri, Value};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     common::{Context, RefreshService, TermsOfUse},
     credential::Credential,
-    error::{Error, Result},
+    error::Result,
     utils::validate_presentation_structure,
     verifiable::{VerifiableCredential, VerifiablePresentation},
 };

@@ -1,9 +1,7 @@
 #[macro_use]
-extern crate identity_common;
-
-#[macro_use]
 mod macros;
 
+use identity_common::object;
 use identity_vc::prelude::*;
 
 #[test]
