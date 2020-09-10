@@ -1,15 +1,6 @@
-#![allow(unused)]
-
 use proc_macro::TokenStream;
-use quote::{format_ident, quote};
-use syn::{
-    parenthesized, parse,
-    parse::{Parse, ParseStream},
-    parse_macro_input,
-    punctuated::Punctuated,
-    token::Comma,
-    Attribute, Data, DeriveInput, Error, Field, Fields, Ident,
-};
+use quote::quote;
+use syn::{parse_macro_input, DeriveInput};
 
 use crate::{model::InputModel, utils::should_ignore};
 

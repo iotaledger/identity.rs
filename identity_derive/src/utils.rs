@@ -1,5 +1,5 @@
 use proc_macro2::{Delimiter, TokenTree};
-use syn::*;
+use syn::Field;
 
 const PARENS: Delimiter = Delimiter::Parenthesis;
 

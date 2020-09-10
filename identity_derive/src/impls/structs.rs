@@ -1,21 +1,15 @@
 #![allow(non_snake_case)]
 
-use crate::model::{DataFields, InputModel, InputStruct, SVariant};
-use proc_macro2::{Ident, Literal, Span, TokenStream};
+use crate::model::{InputModel, SVariant};
+use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
-use syn::{
-    punctuated::Punctuated, token::Comma, Data, DataEnum, DataStruct, DeriveInput, Fields, GenericParam, Token, Type,
-    Variant, WhereClause,
-};
-
-use identity_diff::Diff;
+use syn::{GenericParam, Type};
 
 pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
     let svariant = input.s_variant();
     let diff = input.diff();
     let fields = input.fields();
     let param_decls = input.param_decls();
-    let params = input.params();
     let clause = input.clause();
     let param_decls: Vec<TokenStream> = param_decls
         .iter()
@@ -111,8 +105,6 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
     let preds: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
     let clause = quote! { where #(#preds),*};
 
-    let field_tps: Vec<TokenStream> = fields.iter().map(|field| field.typ_as_tokens()).collect();
-
     match svariant {
         SVariant::Named => {
             let mut mac = TokenStream::new();
@@ -151,7 +143,8 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
         }
         SVariant::Tuple => {
             let ftyps: Vec<&Type> = fields.iter().map(|field| field.typ()).collect();
-            let count = fields.len();
+
+            let count = ftyps.len();
 
             let mut f_tokens = TokenStream::new();
             let buf = format_ident!("buf");

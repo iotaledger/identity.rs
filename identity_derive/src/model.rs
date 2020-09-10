@@ -1,13 +1,9 @@
-#![allow(unused)]
-
 use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::{
     punctuated::Punctuated, token::Comma, Data, DataEnum, DataStruct, DeriveInput, Fields, GenericParam, Token, Type,
     Variant, WhereClause,
 };
-
-use std::marker::PhantomData;
 
 use crate::{
     impls::{debug_impl, derive_diff_enum, derive_diff_struct, diff_impl, impl_debug_enum, impl_diff_enum},
@@ -89,14 +85,6 @@ impl InputModel {
 
     fn parse_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>) -> Self {
         Self::Enum(InputEnum::parse(input, variants))
-    }
-
-    pub fn contains_struct(&self) -> bool {
-        if let Self::Struct(_) = self {
-            true
-        } else {
-            false
-        }
     }
 
     pub fn s_variant(&self) -> &SVariant {
@@ -283,14 +271,6 @@ impl EVariant {
 }
 
 impl DataFields {
-    pub fn named(&self) -> bool {
-        if let Self::Named { .. } = self {
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn name(&self) -> &Ident {
         match self {
             Self::Named { name, .. } => name,
