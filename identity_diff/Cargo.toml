@@ -13,12 +13,13 @@ homepage = "https://www.iota.org"
 [features]
 default = ["serde_value"]
 serde_value = ["serde_json"]
-
+diff_derive = ["identity_derive"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 serde = { version = "1.0", features = [ "derive" ] }
 serde_json = {version = "1.0", optional = true }
+identity_derive = {version = "0.1.0", path = "../identity_derive", optional = true}
 
 [dev-dependencies]
 serde_json = "1.0"

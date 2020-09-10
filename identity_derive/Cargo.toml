@@ -22,7 +22,6 @@ proc-macro2 = "1.0"
 quote = "1.0"
 serde = "1.0"
 
-identity_diff = {path = "../identity_diff", version = "0.1.0"}
-
 [dev-dependencies]
+identity_diff = {path = "../identity_diff", version = "0.1.0", features = ["diff_derive"]}
 serde_json = "1.0"

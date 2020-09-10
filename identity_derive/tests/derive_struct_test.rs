@@ -1,4 +1,3 @@
-use identity_derive::Diff;
 use identity_diff::Diff;
 
 #[derive(Diff, Debug, Clone, PartialEq, Default)]
