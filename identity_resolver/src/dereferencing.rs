@@ -1,6 +1,5 @@
 use crate::resolver::{NetworkNodes, ResolutionInputMetadata, ResolutionMetadata, ResolutionResult, Resolver};
 use identity_core::{
-    common::Timestamp,
     did::{Param, DID},
     document::DIDDocument,
     utils::{Authentication, PublicKey, Service},
@@ -48,12 +47,9 @@ impl Dereferencer {
             resolver_result,
             dereference_result: deref_result,
             metadata: ResolutionMetadata {
-                driver_id: "did:iota".into(),
-                retrieved: Timestamp::now().to_rfc3339(),
                 duration: start_time.elapsed().as_millis(),
                 input_did: did_url,
-                error: None,
-                content_type: None,
+                ..ResolutionMetadata::default()
             },
         })
     }
