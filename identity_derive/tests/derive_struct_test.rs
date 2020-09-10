@@ -1,6 +1,5 @@
 use identity_derive::Diff;
 use identity_diff::Diff;
-use std::marker::PhantomData;
 
 #[derive(Diff, Debug, Clone, PartialEq, Default)]
 pub struct Test {

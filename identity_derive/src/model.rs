@@ -296,7 +296,7 @@ impl DataFields {
         let typ = self.typ();
 
         if self.should_ignore() {
-            quote! {PhantomData<#typ>}
+            quote! {std::marker::PhantomData<#typ>}
         } else {
             quote! { Option<<#typ as identity_diff::Diff>::Type> }
         }
