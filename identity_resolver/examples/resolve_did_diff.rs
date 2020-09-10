@@ -3,7 +3,6 @@
 use anyhow::Result;
 use identity_core::{
     common::Timestamp,
-    did::DID,
     document::DIDDocument,
     utils::{Context, KeyData, PublicKey, Subject},
 };
@@ -61,8 +60,12 @@ async fn main() -> Result<()> {
     // Mainnet: did:iota:123456789abcdefghij
     // Comnet: did:iota:com:123456789abcdefghij
     // Devnet: did:iota:dev:123456789abcdefghij
-    let did = DID::parse_from_str("did:iota:com:123456789abcdefghij")?;
-    let resolution_result = resolver.resolve(did, ResolutionInputMetadata::default()).await?;
+    let resolution_result = resolver
+        .resolve(
+            "did:iota:com:123456789abcdefghij".into(),
+            ResolutionInputMetadata::default(),
+        )
+        .await?;
     println!("{:#?}", resolution_result);
     println!("Document: {:?}", resolution_result.did_document);
 

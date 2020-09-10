@@ -42,9 +42,7 @@ impl Dereferencer {
     ) -> crate::Result<DereferenceResult> {
         let start_time = Instant::now();
         let resolver = Resolver::new(self.nodes.clone())?;
-        let resolver_result = resolver
-            .resolve(DID::parse_from_str(did_url.clone())?, input_metadata)
-            .await?;
+        let resolver_result = resolver.resolve(did_url.clone(), input_metadata).await?;
         let deref_result = dereference_raw(did_url.clone(), resolver_result.did_document.clone().unwrap())?;
         Ok(DereferenceResult {
             resolver_result,

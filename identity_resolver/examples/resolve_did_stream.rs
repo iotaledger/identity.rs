@@ -2,7 +2,6 @@
 //! cargo run --example resolve_did_stream
 use anyhow::Result;
 use bytestream::*;
-use identity_core::did::DID;
 use identity_resolver::resolver::{NetworkNodes, ResolutionInputMetadata, Resolver};
 use std::io::Cursor;
 
@@ -15,10 +14,13 @@ async fn main() -> Result<()> {
     // Mainnet: did:iota:123456789abcdefghi
     // Comnet: did:iota:com:123456789abcdefghi
     // Devnet: did:iota:dev:123456789abcdefghi
-    let did = DID::parse_from_str("did:iota:com:123456789abcdefghij")?;
     let mut buffer = Vec::<u8>::new();
     resolver
-        .resolve_stream(did, ResolutionInputMetadata::default(), &mut buffer)
+        .resolve_stream(
+            "did:iota:com:123456789abcdefghij".into(),
+            ResolutionInputMetadata::default(),
+            &mut buffer,
+        )
         .await?;
     println!("{:?}", buffer);
     let mut cursor = Cursor::new(buffer);

@@ -73,9 +73,10 @@ impl Resolver {
     /// Resolve a DID document
     pub async fn resolve(
         &self,
-        did: DID,
+        did: String,
         resolution_metadata: ResolutionInputMetadata,
     ) -> crate::Result<ResolutionResult> {
+        let did = DID::parse_from_str(did)?;
         if did.method_name != "iota" {
             return Err(crate::Error::DIDMethodError);
         }
@@ -140,7 +141,7 @@ impl Resolver {
     }
     pub async fn resolve_stream<W: Write>(
         &self,
-        did: DID,
+        did: String,
         resolution_metadata: ResolutionInputMetadata,
         buffer: &mut W,
     ) -> crate::Result<()> {
