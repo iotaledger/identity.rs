@@ -52,6 +52,8 @@ impl Dereferencer {
                 retrieved: Timestamp::now().to_rfc3339(),
                 duration: start_time.elapsed().as_millis(),
                 input_did: did_url,
+                error: None,
+                content_type: None,
             },
         })
     }

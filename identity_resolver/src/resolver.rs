@@ -9,7 +9,7 @@ pub struct ResolutionResult {
     pub metadata: ResolutionMetadata,
     pub did_document: Option<DIDDocument>,
     pub did_document_string: Option<String>,
-    pub did_document_metadata: HashMap<String, String>,
+    pub did_document_metadata: Option<HashMap<String, String>>,
 }
 #[derive(Debug)]
 pub struct ResolutionResultStream {
@@ -22,12 +22,14 @@ pub struct ResolutionMetadata {
     pub retrieved: String,
     pub duration: u128,
     pub input_did: String,
+    pub error: Option<String>,
+    pub content_type: Option<String>,
 }
 pub struct ResolutionInputMetadata {
     pub accept: Option<String>,
     pub service_type: Option<String>,
     pub follow_redirect: Option<bool>,
-    include_all_messages: bool,
+    pub include_all_messages: bool,
 }
 impl ResolutionInputMetadata {
     pub fn default() -> Self {
@@ -76,19 +78,51 @@ impl Resolver {
         did: String,
         resolution_metadata: ResolutionInputMetadata,
     ) -> crate::Result<ResolutionResult> {
-        let did = DID::parse_from_str(did)?;
-        if did.method_name != "iota" {
-            return Err(crate::Error::DIDMethodError);
-        }
+        let start_time = Instant::now();
+        let did = match DID::parse_from_str(did.clone()) {
+            Ok(did) => {
+                if did.method_name != "iota" {
+                    return Ok(ResolutionResult {
+                        did_document: None,
+                        did_document_string: None,
+                        metadata: ResolutionMetadata {
+                            driver_id: "did:iota".into(),
+                            retrieved: Timestamp::now().to_rfc3339(),
+                            duration: start_time.elapsed().as_millis(),
+                            input_did: did.to_string(),
+                            error: Some("invalid-did".to_string()),
+                            content_type: None,
+                        },
+                        did_document_metadata: None,
+                    });
+                }
+
+                did
+            }
+            _ => {
+                return Ok(ResolutionResult {
+                    did_document: None,
+                    did_document_string: None,
+                    metadata: ResolutionMetadata {
+                        driver_id: "did:iota".into(),
+                        retrieved: Timestamp::now().to_rfc3339(),
+                        duration: start_time.elapsed().as_millis(),
+                        input_did: did,
+                        error: Some("invalid-did".to_string()),
+                        content_type: None,
+                    },
+                    did_document_metadata: None,
+                });
+            }
+        };
+
         let start_time = Instant::now();
         let mut metadata = HashMap::new();
         let (did_id, nodes) = get_id_and_nodes(&did.id_segments, self.nodes.clone())?;
         let reader = TangleReader::new(nodes.to_vec());
-        // let messages = reader.fetch(&did_iota_address(&did_id)).await?;
         let messages = match reader.fetch(&did_iota_address(&did_id)).await {
             Ok(messages) => messages,
             _ => {
-                metadata.insert("Error".to_string(), "not-found".to_string());
                 return Ok(ResolutionResult {
                     did_document: None,
                     did_document_string: None,
@@ -97,8 +131,10 @@ impl Resolver {
                         retrieved: Timestamp::now().to_rfc3339(),
                         duration: start_time.elapsed().as_millis(),
                         input_did: did.to_string(),
+                        error: Some("not-found".to_string()),
+                        content_type: None,
                     },
-                    did_document_metadata: metadata,
+                    did_document_metadata: None,
                 });
             }
         };
@@ -126,6 +162,22 @@ impl Resolver {
         }
 
         metadata.insert("document_tail_transaction".into(), latest_document.tailhash.clone());
+        if resolution_metadata.accept != None {
+            let result = ResolutionResult {
+                did_document: Some(latest_document.document.clone()),
+                did_document_string: Some(latest_document.document.to_string()),
+                metadata: ResolutionMetadata {
+                    driver_id: "did:iota".into(),
+                    retrieved: Timestamp::now().to_rfc3339(),
+                    duration: start_time.elapsed().as_millis(),
+                    input_did: did.to_string(),
+                    error: None,
+                    content_type: Some("ByteOrder::BigEndian".into()),
+                },
+                did_document_metadata: Some(metadata),
+            };
+            return Ok(result);
+        }
         let result = ResolutionResult {
             did_document: Some(latest_document.document.clone()),
             did_document_string: Some(latest_document.document.to_string()),
@@ -134,8 +186,10 @@ impl Resolver {
                 retrieved: Timestamp::now().to_rfc3339(),
                 duration: start_time.elapsed().as_millis(),
                 input_did: did.to_string(),
+                error: None,
+                content_type: None,
             },
-            did_document_metadata: metadata,
+            did_document_metadata: Some(metadata),
         };
         Ok(result)
     }
