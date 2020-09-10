@@ -1,3 +1,5 @@
+#![allow(unused_variables)]
+
 use identity_derive::Diff;
 use identity_diff::Diff;
 
