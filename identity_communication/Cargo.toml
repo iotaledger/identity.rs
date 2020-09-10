@@ -13,3 +13,9 @@ homepage = "https://www.iota.org"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# identity
+identity_core = { path = "../identity_core" }
