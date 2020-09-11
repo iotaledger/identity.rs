@@ -260,13 +260,13 @@ fn test_json_diff() {
 
     let diff = t.diff(&t2);
 
-    println!("{:?}", diff);
-
     let json = serde_json::to_string(&diff).unwrap();
-
-    println!("{}", json);
 
     let diff: DiffJsonStruct = serde_json::from_str(&json).unwrap();
 
-    println!("{:?}", diff);
+    let res = t.merge(diff);
+
+    let expected = JsonStruct { c: Some(30), ..t2 };
+
+    assert_eq!(expected, res);
 }
