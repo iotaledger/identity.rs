@@ -49,7 +49,7 @@ pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
                 pub struct #diff<#(#param_decls),*>
                     #clause
                 {
-                    #( #[doc(hidden)] pub(self) #field_names: #field_tps, )*
+                    #( #[doc(hidden)] #[serde(skip_serializing_if = "Option::is_none")] pub(self) #field_names: #field_tps, )*
                 }
             }
         }
@@ -57,7 +57,7 @@ pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
             quote! {
                 #[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize, Default)]
                 pub struct #diff<#(#param_decls),*> (
-                    #( #[doc(hidden)] pub(self) #field_tps, )*
+                    #( #[doc(hidden)] #[serde(skip_serializing_if = "Option::is_none")] pub(self) #field_tps, )*
                 ) #clause ;
             }
         }
@@ -278,7 +278,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     let fname = field.name();
                     if field.should_ignore() {
                         quote! {
-                            #fname: std::marker::PhantomData
+                            #fname: Option::None
                         }
                     } else {
                         quote! {
@@ -317,7 +317,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                 .map(|field| {
                     let fname = field.name();
                     if field.should_ignore() {
-                        quote! { #fname: std::marker::PhantomData }
+                        quote! { #fname: Option::None }
                     } else {
                         quote! {
                             #fname: Some(#fname.into_diff())
@@ -373,7 +373,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     let pos = field.position();
                     if field.should_ignore() {
                         quote! {
-                            self.#pos.clone()
+                            self.#pos.clone(),
                         }
                     } else {
                         quote! {
@@ -381,7 +381,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                                 self.#pos.merge(v)
                             } else {
                                 self.#pos.clone()
-                            }
+                            },
                         }
                     }
                 })
@@ -393,7 +393,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     let pos = field.position();
                     if field.should_ignore() {
                         quote! {
-                            std::marker::PhantomData
+                            Option::None
                         }
                     } else {
                         quote! {
@@ -435,7 +435,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                 .map(|(idx, field)| {
                     let marker = &field_markers[idx];
                     if field.should_ignore() {
-                        quote! { std::marker::PhantomData }
+                        quote! { Option::None }
                     } else {
                         quote! {
                             Some(#marker.into_diff())
@@ -472,7 +472,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     #[allow(unused)]
                     fn into_diff(self) -> Self::Type {
                         match self {
-                            Self ( #(#field_markers,)* .. ) => {
+                            Self ( #(#field_markers),* ) => {
                                 #diff ( #(#fields_into),* )
                             },
                         }

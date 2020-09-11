@@ -1,6 +1,7 @@
 #![allow(unused_variables)]
 
 use identity_diff::Diff;
+use serde::{Deserialize, Serialize};
 
 #[derive(Diff, Debug, Clone, PartialEq)]
 pub enum StructEnum {
@@ -22,7 +23,7 @@ pub enum TupleEnum {
     C(usize, usize),
 }
 
-#[derive(Diff, Debug, Clone, PartialEq)]
+#[derive(Diff, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MixedEnum {
     A,
     B(usize),
@@ -239,4 +240,40 @@ fn test_ignore_enum() {
     let expected = IgnoreEnum::B(String::new(), 30);
 
     assert_eq!(expected, res)
+}
+
+#[test]
+fn test_serde_enum() {
+    let t = MixedEnum::B(10);
+    let t2 = MixedEnum::C {
+        y: String::from("test"),
+    };
+
+    let diff = t.diff(&t2);
+
+    let json = serde_json::to_string(&diff).unwrap();
+
+    let diff = serde_json::from_str(&json).unwrap();
+
+    let res = t.merge(diff);
+
+    assert_eq!(t2, res);
+
+    let diff = t2.into_diff();
+
+    assert_eq!(
+        DiffMixedEnum::C {
+            y: Some(String::from("test").into_diff())
+        },
+        diff
+    );
+
+    let res = MixedEnum::from_diff(diff);
+
+    assert_eq!(
+        MixedEnum::C {
+            y: String::from("test"),
+        },
+        res
+    );
 }

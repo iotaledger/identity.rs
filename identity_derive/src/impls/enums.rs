@@ -44,13 +44,13 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
                     quote! {
                         #vname {
                             #(
-                                #[doc(hidden)] #fnames: #typs,
+                                #[doc(hidden)] #[serde(skip_serializing_if = "Option::is_none")] #fnames: #typs,
                             )*
                         },
                     }
                 }
                 SVariant::Tuple => quote! {
-                    #vname( #( #[doc(hidden)] #typs, )* ),
+                    #vname( #( #[doc(hidden)] #[serde(skip_serializing_if = "Option::is_none")] #typs, )* ),
                 },
                 SVariant::Unit => quote! {
                     #vname,
@@ -530,7 +530,7 @@ fn parse_diff(
                 .map(|((f, ln), rn)| {
                     if f.should_ignore() {
                         quote! {
-                            std::marker::PhantomData
+                            Option::None
                         }
                     } else {
                         quote! {
@@ -578,7 +578,7 @@ fn parse_diff(
                 .map(|(f, (ln, rn))| {
                     if f.should_ignore() {
                         quote! {
-                            std::marker::PhantomData
+                            Option::None
                         }
                     } else {
                         quote! {
@@ -680,7 +680,7 @@ fn parse_from_into(
                     let fname = f.name();
 
                     if f.should_ignore() {
-                        quote! { #fname: std::marker::PhantomData }
+                        quote! { #fname: Option::None }
                     } else {
                         quote! {
                             #fname: Some(#fname.into_diff())
@@ -737,7 +737,7 @@ fn parse_from_into(
                     let fname = &fnames[idx];
 
                     if f.should_ignore() {
-                        quote! { std::marker::PhantomData }
+                        quote! { Option::None }
                     } else {
                         quote! {
                             Some(#fname.into_diff())

@@ -1,4 +1,5 @@
 use identity_diff::Diff;
+use serde::{Deserialize, Serialize};
 
 #[derive(Diff, Debug, Clone, PartialEq, Default)]
 pub struct Test {
@@ -38,6 +39,15 @@ struct TestIgnore {
     a: usize,
     #[diff(should_ignore)]
     b: usize,
+}
+
+#[derive(Diff, Debug, Clone, PartialEq, Default, Deserialize, Serialize)]
+struct JsonStruct {
+    a: usize,
+    b: String,
+    #[diff(should_ignore)]
+    c: Option<i32>,
+    d: Vec<u32>,
 }
 
 #[test]
@@ -230,4 +240,33 @@ fn test_ignore_struct() {
     let expected = TestIgnore { b: 10, ..t2 };
 
     assert_eq!(expected, res);
+}
+
+#[test]
+fn test_json_diff() {
+    let t = JsonStruct {
+        a: 10,
+        b: String::from("test"),
+        c: Some(30),
+        d: vec![20, 30, 1],
+    };
+
+    let t2 = JsonStruct {
+        a: 30,
+        b: String::from("tester"),
+        c: Some(50),
+        d: vec![20, 100],
+    };
+
+    let diff = t.diff(&t2);
+
+    println!("{:?}", diff);
+
+    let json = serde_json::to_string(&diff).unwrap();
+
+    println!("{}", json);
+
+    let diff: DiffJsonStruct = serde_json::from_str(&json).unwrap();
+
+    println!("{:?}", diff);
 }
