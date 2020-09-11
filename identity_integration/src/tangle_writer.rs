@@ -63,7 +63,7 @@ impl TangleWriter {
         // Check if correct network
         check_network(id_segments.clone(), &self.network)?;
 
-        let address = did_iota_address(id_segments.last().expect("Failed to get id_segment"));
+        let address = did_iota_address(id_segments.last().expect("Failed to get id_segment"))?;
 
         // Diff chain address in did_document?
         // Is it possible to get the address from the did_document after an auth change?

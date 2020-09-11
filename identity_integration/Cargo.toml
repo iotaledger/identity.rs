@@ -25,6 +25,7 @@ serde_json = "1.0"
 # iota-core = { git = "https://github.com/iotaledger/iota.rs", rev = "5eb9fd170f77b24b8c989acbf64ecca31ea48fb8" }
 iota-core = { git = "https://github.com/Thoralf-M/iota.rs", branch = "works" }
 iota-conversion =  "0.5.1"
+failure = "0.1.8"
 
 # identity
 # identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
@@ -32,6 +33,7 @@ identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "fe
 
 # hash
 multihash = "*"
+bs58 = "0.3.1"
 
 [dev-dependencies]
 smol-potat = "0.3.3"

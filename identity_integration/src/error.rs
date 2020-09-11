@@ -27,6 +27,9 @@ pub enum Error {
     /// Node Error
     #[error("Node Error: Wrong network specified, DID requires {0:?}")]
     NetworkNodeError(&'static str),
+    /// Tryteconversion Error
+    #[error("Tryteconversion Error: Couldn't convert public key to trytes")]
+    TryteConversionError,
 }
 
 impl From<Infallible> for Error {

@@ -5,19 +5,19 @@ mod tests {
     use super::*;
     #[test]
     fn has_81_trytes() {
-        assert_eq!(did_iota_address("").len(), 81);
-        assert_eq!(did_iota_address("123456789").len(), 81);
-        assert_eq!(did_iota_address("123456789abcdefghi").len(), 81);
+        assert_eq!(did_iota_address("").unwrap().len(), 81);
+        assert_eq!(did_iota_address("123456789").unwrap().len(), 81);
+        assert_eq!(did_iota_address("123456789abcdefghi").unwrap().len(), 81);
     }
     #[test]
     fn same_address() {
         assert_eq!(
-            did_iota_address("123456789"),
-            String::from("V9HHBGDAYDHCTBQ9OHZBUAQEAAK9VCC9DDQFKFWDBFIBSBLFGC9FJICDTCS9PGQH99999999999999999")
+            did_iota_address("123456789").unwrap(),
+            String::from("WAHCTBYCXCABDDICVAQCSCXBQCLBLBBCIDLDZCQCPBFDCBADEDVCACUBFCNBBDRBGCECGDWCHCMDTCZBX")
         );
         assert_eq!(
-            did_iota_address("123456789abcdefghi"),
-            String::from("BAJHBGD9UEU9REX9GAGIE9BIVB9IJFW9OGLCRCT9ODDFFAMCYEEDSCFFADKHNCIH99999999999999999")
+            did_iota_address("123456789abcdefghi").unwrap(),
+            String::from("XAVAUCWBCDTCBBPBOBVCFDBCNBPBZAWBVAICACXCLBPBFDXCQCWACBXBWA9CDDLBTCICWBSCQBTCWCSCN")
         );
     }
 }
