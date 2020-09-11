@@ -90,7 +90,7 @@ fn service_endpoint_construction(did_url: DID, query: Vec<Param>, did_document: 
             }
         }
         if param.key == "relative-ref" {
-            let decoded_val = percent_decode_str(&param.value.as_ref().expect("Couldn't get param valuefrom DID URL"));
+            let decoded_val = percent_decode_str(&param.value.as_ref().expect("Couldn't get param value from DID URL"));
             relative_ref = decoded_val.decode_utf8()?.into_owned();
         }
     }

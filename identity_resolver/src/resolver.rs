@@ -134,7 +134,7 @@ impl Resolver {
         let mut metadata = HashMap::new();
         let (did_id, nodes) = get_id_and_nodes(&did.id_segments, self.nodes.clone())?;
         let reader = TangleReader::new(nodes.to_vec());
-        let messages = match reader.fetch(&did_iota_address(&did_id)).await {
+        let messages = match reader.fetch(&did_iota_address(&did_id)?).await {
             Ok(messages) => messages,
             _ => {
                 return Ok(ResolutionResult {
