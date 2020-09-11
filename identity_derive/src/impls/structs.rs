@@ -278,7 +278,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     let fname = field.name();
                     if field.should_ignore() {
                         quote! {
-                            #fname: std::marker::PhantomData,
+                            #fname: std::marker::PhantomData
                         }
                     } else {
                         quote! {
@@ -317,7 +317,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                 .map(|field| {
                     let fname = field.name();
                     if field.should_ignore() {
-                        quote! {#fname: std::marker::PhantomData }
+                        quote! { #fname: std::marker::PhantomData }
                     } else {
                         quote! {
                             #fname: Some(#fname.into_diff())
@@ -373,7 +373,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     let pos = field.position();
                     if field.should_ignore() {
                         quote! {
-                            self.#pos.clone(),
+                            self.#pos.clone()
                         }
                     } else {
                         quote! {
@@ -381,7 +381,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                                 self.#pos.merge(v)
                             } else {
                                 self.#pos.clone()
-                            },
+                            }
                         }
                     }
                 })
