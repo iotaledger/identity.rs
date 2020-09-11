@@ -4,15 +4,15 @@ use identity_resolver::{
 };
 
 #[smol_potat::test]
-async fn invalid_method() -> Result<()> {
+async fn not_supported_method() -> Result<()> {
     let resolver = Resolver::new(NetworkNodes::Com(vec!["http://localhost:14265"])).unwrap();
     let res = resolver
         .resolve(
-            "did:invalid:com:123456789abcdefghij".into(),
+            "did:test:com:123456789abcdefghij".into(),
             ResolutionInputMetadata::default(),
         )
         .await?;
-    assert_eq!(res.metadata.error.unwrap(), "invalid-did".to_string());
+    assert_eq!(res.metadata.error.unwrap(), "not-supported".to_string());
     Ok(())
 }
 
