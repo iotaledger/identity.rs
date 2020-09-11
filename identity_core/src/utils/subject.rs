@@ -1,12 +1,12 @@
 use crate::did::DID;
 
+use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
-use serde_diff::SerdeDiff;
 
 use std::str::FromStr;
 
 /// A wrapped `DID` type called a subject.  
-#[derive(Eq, PartialEq, Debug, Default, Clone, Serialize, Deserialize, SerdeDiff)]
+#[derive(Eq, PartialEq, Debug, Default, Clone, Serialize, Deserialize, Diff)]
 #[serde(transparent)]
 pub struct Subject(DID);
 

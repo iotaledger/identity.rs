@@ -1,9 +1,9 @@
+use identity_diff::Diff;
 use serde::{
     de::{self, Deserialize, Deserializer, Visitor},
     ser::{Serialize, Serializer},
     Deserialize as DDeserialize, Serialize as DSerialize,
 };
-use serde_diff::SerdeDiff;
 use std::fmt::{self, Display, Formatter};
 
 use crate::did_parser::parse;
@@ -14,7 +14,7 @@ const LEADING_TOKENS: &str = "did";
 type DIDTuple = (String, Option<String>);
 
 /// a Decentralized identity structure.  
-#[derive(Debug, PartialEq, Default, Eq, Clone, SerdeDiff)]
+#[derive(Debug, PartialEq, Default, Eq, Clone, Diff)]
 pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
@@ -24,7 +24,7 @@ pub struct DID {
 }
 
 /// a DID Params struct.
-#[derive(Debug, PartialEq, Eq, Clone, Default, SerdeDiff, DDeserialize, DSerialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Default, Diff, DDeserialize, DSerialize)]
 pub struct Param {
     pub key: String,
     pub value: Option<String>,

@@ -4,7 +4,8 @@ use serde_json::Value;
 use crate::Diff;
 
 #[derive(Clone, Eq, Serialize, Deserialize, PartialEq, Debug)]
-pub struct DiffValue(Option<Value>);
+#[serde(transparent)]
+pub struct DiffValue(#[serde(skip_serializing_if = "Option::is_none")] pub Option<Value>);
 
 impl Default for DiffValue {
     fn default() -> Self {

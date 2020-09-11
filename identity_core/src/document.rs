@@ -1,5 +1,5 @@
+use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
-use serde_diff::SerdeDiff;
 use std::{collections::HashMap, str::FromStr};
 
 use crate::{
@@ -10,13 +10,13 @@ use crate::{
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
 /// `public_key`, services and metadata.  Only `context` and `id` are required to create a DID document.
-#[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq, SerdeDiff)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq, Diff)]
 pub struct DIDDocument {
     #[serde(rename = "@context", deserialize_with = "string_or_list", default)]
     pub context: Context,
     pub id: Subject,
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde_diff(skip)]
+    #[diff(should_ignore)]
     pub created: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub updated: Option<String>,
@@ -183,6 +183,10 @@ impl DIDDocument {
             ..self
         }
         .init())
+    }
+
+    pub fn get_diff_from_str(json: String) -> DiffDIDDocument {
+        serde_json::from_str(&json).unwrap()
     }
 }
 

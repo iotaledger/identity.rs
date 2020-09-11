@@ -8,6 +8,7 @@ use std::{
 };
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum InnerValue<K, V: Diff> {
     Change { key: K, value: <V as Diff>::Type },
     Add { key: K, value: <V as Diff>::Type },
@@ -15,7 +16,10 @@ pub enum InnerValue<K, V: Diff> {
 }
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
-pub struct DiffHashMap<K: Diff, V: Diff>(pub Option<Vec<InnerValue<K, V>>>);
+#[serde(transparent)]
+pub struct DiffHashMap<K: Diff, V: Diff>(
+    #[serde(skip_serializing_if = "Option::is_none")] pub Option<Vec<InnerValue<K, V>>>,
+);
 
 impl<K, V> DiffHashMap<K, V>
 where

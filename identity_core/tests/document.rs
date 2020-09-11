@@ -6,7 +6,7 @@ use identity_core::{
 
 use std::str::FromStr;
 
-use serde_diff::{Apply, Diff};
+use identity_diff::Diff;
 
 const JSON_STR: &str = include_str!("document.json");
 
@@ -111,7 +111,7 @@ fn test_doc_creation() {
 #[test]
 fn test_doc_diff() {
     // old doc
-    let mut old = DIDDocument {
+    let old = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
         id: Subject::from("did:iota:123456789abcdefghi"),
         ..Default::default()
@@ -152,13 +152,9 @@ fn test_doc_diff() {
 
     new.update_public_key(public_key);
 
-    // diff the two docs and create a json string of the diff.
-    let json_diff = serde_json::to_string(&Diff::serializable(&old, &new)).unwrap();
+    let diff = old.diff(&new);
 
-    let mut deserializer = serde_json::Deserializer::from_str(&json_diff);
-
-    // apply the json string to the old document.
-    Apply::apply(&mut deserializer, &mut old).unwrap();
+    let old = old.merge(diff);
 
     // check to see that the old and new docs cotain all of the same fields.
     assert_eq!(new.to_string(), old.to_string());
@@ -168,21 +164,17 @@ fn test_doc_diff() {
 fn test_doc_diff_timestamps() {
     let json_str = setup_json("doc");
 
-    let mut doc1 = DIDDocument::default();
+    let doc1 = DIDDocument::default();
 
     let doc2 = DIDDocument::from_str(&json_str);
 
     let mut doc2 = doc2.unwrap();
     doc2.update_time();
-    let diff = Diff::serializable(&doc1, &doc2);
+    let diff = doc1.diff(&doc2);
 
-    let json_diff = serde_json::to_string(&diff).unwrap();
+    let merge = doc1.merge(diff);
 
-    let mut deserializer = serde_json::Deserializer::from_str(&json_diff);
-
-    Apply::apply(&mut deserializer, &mut doc1).unwrap();
-
-    assert_eq!(doc1.to_string(), doc2.to_string());
+    assert_eq!(merge, doc2);
 }
 
 #[test]
@@ -224,7 +216,11 @@ fn test_diff_strings() {
 
     doc.update_public_key(public_key);
 
-    let json_diff = serde_json::to_string(&Diff::serializable(&def_doc, &doc)).unwrap();
+    let diff = def_doc.diff(&doc);
+
+    let json_diff = serde_json::to_string(&diff).unwrap();
+
+    println!("{}", json_diff);
 
     // remove newlines and spaces from the diff_str.
     assert_eq!(json_diff, diff_str.replace("\n", "").replace(" ", "").replace("\r", ""))

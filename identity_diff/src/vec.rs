@@ -3,9 +3,11 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Formatter, Result as FmtResult};
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct VecDiff<T: Diff>(pub Vec<InnerVec<T>>);
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum InnerVec<T: Diff> {
     Change { index: usize, item: <T as Diff>::Type },
     Remove { count: usize },

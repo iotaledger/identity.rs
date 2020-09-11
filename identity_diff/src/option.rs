@@ -5,6 +5,7 @@ use std::fmt::{Debug, Formatter, Result as FmtResult};
 use crate::Diff;
 
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
+#[serde(untagged)]
 pub enum DiffOption<T: Diff> {
     Some(<T as Diff>::Type),
     None,

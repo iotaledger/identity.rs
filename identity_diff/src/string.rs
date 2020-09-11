@@ -4,7 +4,8 @@ use crate::Diff;
 use std::fmt::{Debug, Formatter, Result as FmtResult};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Default)]
-pub struct DiffString(pub Option<String>);
+#[serde(transparent)]
+pub struct DiffString(#[serde(skip_serializing_if = "Option::is_none")] pub Option<String>);
 
 impl Diff for String {
     type Type = DiffString;
