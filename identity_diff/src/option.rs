@@ -1,11 +1,11 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 
 use std::fmt::{Debug, Formatter, Result as FmtResult};
 
 use crate::Diff;
 
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
-#[serde(untagged)]
+#[serde(untagged, into = "Option<T>", from = "Option<T>")]
 pub enum DiffOption<T: Diff> {
     Some(<T as Diff>::Type),
     None,
@@ -52,7 +52,7 @@ where
 impl<T: Diff> std::fmt::Debug for DiffOption<T> {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         match &self {
-            Self::Some(d) => write!(f, "DiffOption::Some {:#?}", d),
+            Self::Some(d) => write!(f, "DiffOption::Some({:#?})", d),
             Self::None => write!(f, "DiffOption::None"),
         }
     }
@@ -61,6 +61,30 @@ impl<T: Diff> std::fmt::Debug for DiffOption<T> {
 impl<T: Diff> Default for DiffOption<T> {
     fn default() -> Self {
         Self::None
+    }
+}
+
+impl<T> Into<Option<T>> for DiffOption<T>
+where
+    T: Diff,
+{
+    fn into(self) -> Option<T> {
+        match self {
+            DiffOption::Some(s) => Some(Diff::from_diff(s)),
+            DiffOption::None => None,
+        }
+    }
+}
+
+impl<T> From<Option<T>> for DiffOption<T>
+where
+    T: Diff,
+{
+    fn from(opt: Option<T>) -> Self {
+        match opt {
+            Some(s) => DiffOption::Some(s.into_diff()),
+            None => DiffOption::None,
+        }
     }
 }
 
@@ -81,5 +105,12 @@ mod tests {
         let c = a.merge(diff);
 
         assert_eq!(b, c);
+
+        let opt = Some(Some("x".to_owned()));
+        let opt_b = Some(None as Option<String>);
+
+        let diff = opt.diff(&opt_b);
+
+        println!("{:?}", diff);
     }
 }

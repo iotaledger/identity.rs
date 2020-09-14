@@ -185,8 +185,8 @@ impl DIDDocument {
         .init())
     }
 
-    pub fn get_diff_from_str(json: String) -> DiffDIDDocument {
-        serde_json::from_str(&json).unwrap()
+    pub fn get_diff_from_str(json: String) -> crate::Result<DiffDIDDocument> {
+        Ok(serde_json::from_str(&json)?)
     }
 }
 

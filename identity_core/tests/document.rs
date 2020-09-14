@@ -178,7 +178,7 @@ fn test_doc_diff_timestamps() {
 }
 
 #[test]
-fn test_diff_strings() {
+fn test_diff_merge_from_string() {
     let diff_str = setup_json("diff");
 
     let def_doc = DIDDocument::default();
@@ -216,14 +216,11 @@ fn test_diff_strings() {
 
     doc.update_public_key(public_key);
 
-    let diff = def_doc.diff(&doc);
+    let diff = DIDDocument::get_diff_from_str(diff_str).unwrap();
 
-    let json_diff = serde_json::to_string(&diff).unwrap();
+    let res = def_doc.merge(diff);
 
-    println!("{}", json_diff);
-
-    // remove newlines and spaces from the diff_str.
-    assert_eq!(json_diff, diff_str.replace("\n", "").replace(" ", "").replace("\r", ""))
+    assert_eq!(doc, res);
 }
 
 #[test]
