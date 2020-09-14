@@ -1,6 +1,6 @@
 mod hashmap;
 mod macros;
-mod option;
+pub mod option;
 mod string;
 mod traits;
 #[cfg(feature = "serde_value")]

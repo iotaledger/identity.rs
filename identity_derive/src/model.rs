@@ -1,8 +1,8 @@
 use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::{
-    punctuated::Punctuated, token::Comma, Data, DataEnum, DataStruct, DeriveInput, Fields, GenericParam, Token, Type,
-    Variant, WhereClause,
+    punctuated::Punctuated, token::Comma, Data, DataEnum, DataStruct, DeriveInput, Fields, GenericParam, Path,
+    PathSegment, Token, Type, Variant, WhereClause,
 };
 
 use crate::{
@@ -302,10 +302,41 @@ impl DataFields {
         }
     }
 
+    pub fn is_option(&self) -> bool {
+        let typ = self.typ();
+
+        let opt = match typ {
+            syn::Type::Path(typepath) if typepath.qself.is_none() => Some(typepath.path.clone()),
+            _ => None,
+        };
+
+        if let Some(o) = opt {
+            if let Some(_) = extract_option_segment(&o) {
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
+
     pub fn should_ignore(&self) -> bool {
         match self {
             Self::Named { should_ignore, .. } => *should_ignore,
             Self::Unnamed { should_ignore, .. } => *should_ignore,
         }
     }
+}
+
+fn extract_option_segment(path: &Path) -> Option<&PathSegment> {
+    let idents_of_path = path.segments.iter().into_iter().fold(String::new(), |mut acc, v| {
+        acc.push_str(&v.ident.to_string());
+        acc.push('|');
+        acc
+    });
+    vec!["Option|", "std|option|Option|", "core|option|Option|"]
+        .into_iter()
+        .find(|s| &idents_of_path == *s)
+        .and_then(|_| path.segments.last())
 }

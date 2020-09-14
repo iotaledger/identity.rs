@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 use std::fmt::{Debug, Formatter, Result as FmtResult};
 
