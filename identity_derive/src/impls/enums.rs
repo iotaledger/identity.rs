@@ -533,11 +533,21 @@ fn parse_diff(
                             Option::None
                         }
                     } else {
-                        quote! {
-                            if #ln == #rn {
-                                None
-                            } else {
-                                Some(#ln.diff(#rn))
+                        if f.is_option() {
+                            quote! {
+                                if #ln != #rn && *#ln != None && *#rn != None {
+                                    Some(#ln.diff(#rn))
+                                } else {
+                                    None
+                                }
+                            }
+                        } else {
+                            quote! {
+                                if #ln == #rn {
+                                    None
+                                } else {
+                                    Some(#ln.diff(#rn))
+                                }
                             }
                         }
                     }
@@ -581,11 +591,21 @@ fn parse_diff(
                             Option::None
                         }
                     } else {
-                        quote! {
-                            if #ln == #rn {
-                                None
-                            } else {
-                                Some(#ln.diff(#rn))
+                        if f.is_option() {
+                            quote! {
+                                if #ln != #rn && *#ln != None && *#rn != None {
+                                    Some(#ln.diff(#rn))
+                                } else {
+                                    None
+                                }
+                            }
+                        } else {
+                            quote! {
+                                if #ln == #rn {
+                                    None
+                                } else {
+                                    Some(#ln.diff(#rn))
+                                }
                             }
                         }
                     }
@@ -682,8 +702,18 @@ fn parse_from_into(
                     if f.should_ignore() {
                         quote! { #fname: Option::None }
                     } else {
-                        quote! {
-                            #fname: Some(#fname.into_diff())
+                        if f.is_option() {
+                            quote! {
+                                #fname: if let identity_diff::option::DiffOption::Some(_) = #fname.clone().into_diff() {
+                                    Some(#fname.into_diff())
+                                } else {
+                                    None
+                                }
+                            }
+                        } else {
+                            quote! {
+                                #fname: Some(#fname.into_diff())
+                            }
                         }
                     }
                 })
@@ -739,8 +769,18 @@ fn parse_from_into(
                     if f.should_ignore() {
                         quote! { Option::None }
                     } else {
-                        quote! {
-                            Some(#fname.into_diff())
+                        if f.is_option() {
+                            quote! {
+                                if #fname.clone().into_diff() == identity_diff::option::DiffOption::None {
+                                    None
+                                } else {
+                                    Some(#fname.into_diff())
+                                }
+                            }
+                        } else {
+                            quote! {
+                                Some(#fname.into_diff())
+                            }
                         }
                     }
                 })

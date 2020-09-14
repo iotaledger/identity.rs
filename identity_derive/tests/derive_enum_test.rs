@@ -47,6 +47,11 @@ impl Default for InnerEnum {
         }
     }
 }
+#[derive(Diff, Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub enum TestOpt {
+    Inner(Option<usize>),
+    InnerS { a: Option<String> },
+}
 
 #[derive(Diff, Debug, Clone, PartialEq, Default)]
 pub struct InnerStruct {
@@ -276,4 +281,42 @@ fn test_serde_enum() {
         },
         res
     );
+}
+
+#[test]
+fn test_enum_opt() {
+    let t = TestOpt::Inner(None);
+    let t2 = TestOpt::Inner(None);
+
+    let diff1 = t.diff(&t2);
+
+    let diff2 = t2.into_diff();
+
+    assert_eq!(diff1, diff2);
+
+    let t = TestOpt::InnerS { a: None };
+    let diff = t.into_diff();
+
+    let json = serde_json::to_string(&diff).unwrap();
+    let expected = r#"{"InnerS":{}}"#;
+
+    assert_eq!(expected, json);
+
+    let t = TestOpt::InnerS { a: None };
+    let t2 = TestOpt::InnerS { a: None };
+
+    let diff = t.diff(&t2);
+
+    let json = serde_json::to_string(&diff).unwrap();
+
+    assert_eq!(expected, json);
+
+    let t = TestOpt::Inner(None);
+    let t2 = TestOpt::InnerS { a: None };
+
+    let diff = t.diff(&t2);
+
+    let json = serde_json::to_string(&diff).unwrap();
+
+    assert_eq!(expected, json);
 }

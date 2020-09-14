@@ -50,6 +50,15 @@ struct JsonStruct {
     d: Vec<u32>,
 }
 
+#[derive(Diff, Debug, Clone, PartialEq, Default, Deserialize, Serialize)]
+struct TestOpt {
+    a: Option<u32>,
+    b: OptTest,
+}
+
+#[derive(Diff, Debug, Clone, PartialEq, Default, Deserialize, Serialize)]
+struct OptTest(Option<u32>);
+
 #[test]
 fn test_traditional_struct() {
     let t = Test { a: 10 };
@@ -269,4 +278,33 @@ fn test_json_diff() {
     let expected = JsonStruct { c: Some(30), ..t2 };
 
     assert_eq!(expected, res);
+}
+
+#[test]
+fn test_option() {
+    let test_opt_1 = TestOpt::default();
+    let test_opt_2 = TestOpt::default();
+    let diff = test_opt_1.diff(&test_opt_2);
+
+    let json = serde_json::to_string(&diff).unwrap();
+
+    let expected = "{}";
+    assert_eq!(expected, json);
+    let test_opt_3 = TestOpt {
+        a: None,
+        b: OptTest(Some(10)),
+    };
+
+    let diff = test_opt_1.diff(&test_opt_3);
+
+    let json = serde_json::to_string(&diff).unwrap();
+
+    let expected = "{\"b\":10}";
+    assert_eq!(expected, json);
+
+    let diff = test_opt_3.into_diff();
+
+    let json = serde_json::to_string(&diff).unwrap();
+
+    assert_eq!(expected, json);
 }
