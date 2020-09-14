@@ -311,11 +311,7 @@ impl DataFields {
         };
 
         if let Some(o) = opt {
-            if let Some(_) = extract_option_segment(&o) {
-                true
-            } else {
-                false
-            }
+            extract_option_segment(&o).is_some()
         } else {
             false
         }
@@ -330,13 +326,13 @@ impl DataFields {
 }
 
 fn extract_option_segment(path: &Path) -> Option<&PathSegment> {
-    let idents_of_path = path.segments.iter().into_iter().fold(String::new(), |mut acc, v| {
+    let idents_of_path = path.segments.iter().fold(String::new(), |mut acc, v| {
         acc.push_str(&v.ident.to_string());
         acc.push('|');
         acc
     });
     vec!["Option|", "std|option|Option|", "core|option|Option|"]
         .into_iter()
-        .find(|s| &idents_of_path == *s)
+        .find(|s| idents_of_path == *s)
         .and_then(|_| path.segments.last())
 }
