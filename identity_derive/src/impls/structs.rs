@@ -281,11 +281,21 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                             #fname: Option::None
                         }
                     } else {
-                        quote! {
-                            #fname: if self.#fname == other.#fname {
-                                None
-                            } else {
-                                Some(self.#fname.diff(&other.#fname))
+                        if field.is_option() {
+                            quote! {
+                                #fname: if self.#fname == other.#fname || other.#fname == None {
+                                    None
+                                } else {
+                                    Some(self.#fname.diff(&other.#fname))
+                                }
+                            }
+                        } else {
+                            quote! {
+                                #fname: if self.#fname == other.#fname {
+                                    None
+                                } else {
+                                    Some(self.#fname.diff(&other.#fname))
+                                }
                             }
                         }
                     }
@@ -319,8 +329,18 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     if field.should_ignore() {
                         quote! { #fname: Option::None }
                     } else {
-                        quote! {
-                            #fname: Some(#fname.into_diff())
+                        if field.is_option() {
+                            quote! {
+                                #fname: if let identity_diff::option::DiffOption::Some(_) = #fname.clone().into_diff() {
+                                    Some(#fname.into_diff())
+                                } else {
+                                    None
+                                }
+                            }
+                        } else {
+                            quote! {
+                                #fname: Some(#fname.into_diff())
+                            }
                         }
                     }
                 })
@@ -396,12 +416,22 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                             Option::None
                         }
                     } else {
-                        quote! {
-                            if self.#pos != other.#pos {
-                                Some(self.#pos.diff(&other.#pos))
-                            } else {
-                                None
-                            },
+                        if field.is_option() {
+                            quote! {
+                                if self.#pos != other.#pos && other.#pos != None {
+                                    Some(self.#pos.diff(&other.#pos))
+                                } else {
+                                    None
+                                },
+                            }
+                        } else {
+                            quote! {
+                                if self.#pos != other.#pos {
+                                    Some(self.#pos.diff(&other.#pos))
+                                } else {
+                                    None
+                                },
+                            }
                         }
                     }
                 })
@@ -437,8 +467,18 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     if field.should_ignore() {
                         quote! { Option::None }
                     } else {
-                        quote! {
-                            Some(#marker.into_diff())
+                        if field.is_option() {
+                            quote! {
+                                if #marker.clone().into_diff() == identity_diff::option::DiffOption::None {
+                                    None
+                                } else {
+                                    Some(#marker.into_diff())
+                                }
+                            }
+                        } else {
+                            quote! {
+                                Some(#marker.into_diff())
+                            }
                         }
                     }
                 })
@@ -455,7 +495,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     fn merge(&self, diff: Self::Type) -> Self {
                         Self( #(#field_merge)* )
                     }
-
+                    #[allow(unused)]
                     fn diff(&self, other: &Self) -> Self::Type {
                         #diff( #(#fields_diff)* )
                     }
@@ -472,7 +512,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     #[allow(unused)]
                     fn into_diff(self) -> Self::Type {
                         match self {
-                            Self ( #(#field_markers),* ) => {
+                            Self ( #(#field_markers,)* ..) => {
                                 #diff ( #(#fields_into),* )
                             },
                         }

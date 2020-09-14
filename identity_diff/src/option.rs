@@ -105,12 +105,5 @@ mod tests {
         let c = a.merge(diff);
 
         assert_eq!(b, c);
-
-        let opt = Some(Some("x".to_owned()));
-        let opt_b = Some(None as Option<String>);
-
-        let diff = opt.diff(&opt_b);
-
-        println!("{:?}", diff);
     }
 }

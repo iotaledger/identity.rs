@@ -77,8 +77,6 @@
                     "id_segments": [
                         "123456789abcdefghi"
                     ],
-                    "path_segments": null,
-                    "query": null,
                     "fragment": "keys-1"
                 },
                 "key_type": "RsaVerificationKey2018",
@@ -86,10 +84,7 @@
                     "method_name": "iota",
                     "id_segments": [
                         "123456789abcdefghi"
-                    ],
-                    "path_segments": null,
-                    "query": null,
-                    "fragment": null
+                    ]
                 },
                 "key_data": {
                     "Base58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
@@ -104,17 +99,13 @@
                     "id_segments": [
                         "123"
                     ],
-                    "path_segments": null,
-                    "query": null,
                     "fragment": "edv"
                 },
                 "service_type": "EncryptedDataVault",
                 "endpoint": {
                     "context": [
                         "https://edv.example.com/"
-                    ],
-                    "endpoint_type": null,
-                    "instances": null
+                    ]
                 }
             }
         ]
