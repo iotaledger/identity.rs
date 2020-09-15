@@ -1,5 +1,4 @@
 use identity_core::did::DID;
-use identity_core::Result;
 #[derive(Debug, PartialEq, Default, Eq, Clone)]
 pub struct DIDComm {
     pub id: String, // MUST be unique to the sender
@@ -13,7 +12,7 @@ pub struct DIDComm {
 
 impl DIDComm {
     /// Initializes the DIDComm struct with the filled out fields.
-    pub fn init(self) -> Result<DIDComm> {
+    pub fn init(self) -> crate::Result<DIDComm> {
         let did_comm = DIDComm {
             id: self.id,
             comm_type: self.comm_type,
