@@ -7,14 +7,19 @@ use std::{
     iter::empty,
 };
 
+/// Inner value of the `DiffHashMap` type.
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum InnerValue<K, V: Diff> {
+    // Logs if a value has changed between the two types being Diffed.
     Change { key: K, value: <V as Diff>::Type },
+    // Logs an addition.
     Add { key: K, value: <V as Diff>::Type },
+    // Logs a removal.
     Remove { key: K },
 }
 
+/// A `DiffHashMap` type which represents a Diffed `HashMap`.  By default this value is transparent to `serde`.  
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct DiffHashMap<K: Diff, V: Diff>(
@@ -26,6 +31,7 @@ where
     K: Clone + Debug + PartialEq + Ord + Hash + Diff + for<'de> Deserialize<'de> + Serialize,
     V: Clone + Debug + PartialEq + Ord + Diff + for<'de> Deserialize<'de> + Serialize,
 {
+    /// Converts the `DiffHashMap` into an iterator where the Item is the `InnerValue<K, V>`
     pub fn into_iter<'a>(self) -> Box<dyn Iterator<Item = InnerValue<K, V>> + 'a>
     where
         Self: 'a,
@@ -36,6 +42,7 @@ where
         }
     }
 
+    /// Returns the length of the `DiffHashMap`
     pub fn len(&self) -> usize {
         match &self.0 {
             Some(d) => d.len(),
@@ -44,13 +51,16 @@ where
     }
 }
 
+/// Diff Implementation on a HashMap<K, V>
 impl<K, V> Diff for HashMap<K, V>
 where
     K: Clone + Debug + PartialEq + Ord + Hash + Diff + for<'de> Deserialize<'de> + Serialize + Default,
     V: Clone + Debug + PartialEq + Ord + Diff + for<'de> Deserialize<'de> + Serialize + Default,
 {
+    /// the Diff type of the HashMap<K, V>
     type Type = DiffHashMap<K, V>;
 
+    /// Diffs two `HashMaps`; `self` and `other` and creates a `DiffHashMap<K, V>`
     fn diff(&self, other: &Self) -> Self::Type {
         let old: HashSet<&K> = self.keys().collect();
         let new: HashSet<&K> = other.keys().collect();
@@ -84,6 +94,7 @@ where
         DiffHashMap(if changes.is_empty() { None } else { Some(changes) })
     }
 
+    /// Merges the changes in a `DiffHashMap<K, V>`, `diff` with a `HashMap<K, V>`, `self`.
     fn merge(&self, diff: Self::Type) -> Self {
         let mut new = self.clone();
 
@@ -106,6 +117,7 @@ where
         new
     }
 
+    /// Converts a `DiffHashMap<K, V>`, `diff` into a `HashMap<K, V>`.
     fn from_diff(diff: Self::Type) -> Self {
         let mut map = Self::new();
         if let Some(diff) = diff.0 {
@@ -123,6 +135,7 @@ where
         map
     }
 
+    /// Converts a `HashMap<K, V>`, `diff` into a `DiffHashMap<K, V>`.
     fn into_diff(self) -> Self::Type {
         let mut changes: Vec<InnerValue<K, V>> = Vec::new();
         for (key, val) in self {
@@ -136,6 +149,7 @@ where
     }
 }
 
+/// Debug implementation for the `DiffHashMap<K, V>` type.
 impl<K, V> Debug for DiffHashMap<K, V>
 where
     K: Debug + Diff,
@@ -155,6 +169,7 @@ where
     }
 }
 
+/// Default implementation for the `DiffHashMap<K, V>` type.
 impl<K, V> Default for DiffHashMap<K, V>
 where
     K: Default + Diff,
@@ -165,6 +180,7 @@ where
     }
 }
 
+/// Debug implementation for the `InnerValue<K, V>` type.
 impl<K, V> Debug for InnerValue<K, V>
 where
     K: Debug + Diff,
@@ -188,6 +204,7 @@ mod tests {
     use super::*;
     use std::collections::HashMap;
 
+    /// Quickly creates a simple map using `map! { "key" => "value"}
     macro_rules! map {
         ($($key:expr => $val:expr),* $(,)?) => {{
             let mut map = HashMap::new();

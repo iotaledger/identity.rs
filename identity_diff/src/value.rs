@@ -3,19 +3,24 @@ use serde_json::Value;
 
 use crate::Diff;
 
+/// The Diff Type for `serde_json::Value`.
 #[derive(Clone, Eq, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(transparent)]
 pub struct DiffValue(#[serde(skip_serializing_if = "Option::is_none")] pub Option<Value>);
 
+/// A default implementation for `DiffValue`.
 impl Default for DiffValue {
     fn default() -> Self {
         DiffValue(None)
     }
 }
 
+/// The Diff implementation for `serde_json::Value`.
 impl Diff for Value {
+    /// The Diff Type for `serde_json::Value`.
     type Type = DiffValue;
 
+    /// Compares two `serde_json::Value` types; `self`, `diff` and outputs a `DiffValue` type.
     fn diff(&self, other: &Self) -> Self::Type {
         if self == other {
             DiffValue(None)
@@ -24,6 +29,7 @@ impl Diff for Value {
         }
     }
 
+    /// Merges a `DiffValue`; `diff` with `self`; a `serde_json::Value` to create a new `serde_json::Value`.
     fn merge(&self, diff: Self::Type) -> Self {
         if diff.0.is_none() {
             self.clone()
@@ -32,6 +38,7 @@ impl Diff for Value {
         }
     }
 
+    /// Converts from a `diff` of type `DiffValue` to a `serde_json::Value`.
     fn from_diff(diff: Self::Type) -> Self {
         match diff.0 {
             Some(s) => s,
@@ -39,6 +46,7 @@ impl Diff for Value {
         }
     }
 
+    /// converts a `serde_json::Value` to a `DiffValue`.
     fn into_diff(self) -> Self::Type {
         DiffValue(Some(self))
     }

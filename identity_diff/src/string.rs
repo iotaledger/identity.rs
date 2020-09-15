@@ -3,13 +3,17 @@ use serde::{Deserialize, Serialize};
 use crate::Diff;
 use std::fmt::{Debug, Formatter, Result as FmtResult};
 
+/// The Diff Type for a `String` type.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Default)]
 #[serde(transparent)]
 pub struct DiffString(#[serde(skip_serializing_if = "Option::is_none")] pub Option<String>);
 
+/// `Diff` trait implementation for `String`.
 impl Diff for String {
+    /// Diff type for `String`
     type Type = DiffString;
 
+    /// compares two `String` types; `self`, `other` and returns a `DiffString` type.
     fn diff(&self, other: &Self) -> Self::Type {
         if self == other {
             DiffString(None)
@@ -18,6 +22,7 @@ impl Diff for String {
         }
     }
 
+    /// Merges a `DiffString`; `diff` with a `String`; `self`.
     fn merge(&self, diff: Self::Type) -> Self {
         if diff.0.is_none() {
             self.to_string()
@@ -26,6 +31,7 @@ impl Diff for String {
         }
     }
 
+    /// Converts a `DiffString` into a `String` type.
     fn from_diff(diff: Self::Type) -> Self {
         match diff.0 {
             Some(s) => s,
@@ -33,15 +39,17 @@ impl Diff for String {
         }
     }
 
+    /// Converts a `String` into a `DiffString` type.
     fn into_diff(self) -> Self::Type {
         DiffString(Some(self))
     }
 }
 
+/// Debug trait implementation for DiffString.
 impl Debug for DiffString {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         match &self.0 {
-            Some(val) => write!(f, "DiffString {:#?}", val),
+            Some(val) => write!(f, "DiffString({:#?})", val),
             None => write!(f, "DiffString None"),
         }
     }

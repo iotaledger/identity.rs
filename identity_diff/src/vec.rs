@@ -2,23 +2,30 @@ use crate::Diff;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Formatter, Result as FmtResult};
 
+/// The Diff Type for `Vec`.
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct VecDiff<T: Diff>(pub Vec<InnerVec<T>>);
+pub struct DiffVec<T: Diff>(pub Vec<InnerVec<T>>);
 
+/// The Inner value for the `DiffVec` type.  Is `untagged` by default for `serde`.
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum InnerVec<T: Diff> {
+    /// logs a change in a `Vec` type.
     Change { index: usize, item: <T as Diff>::Type },
+    /// Logs a remove event in a `Vec` type.
     Remove { count: usize },
+    /// logs an Add event in a `Vec` type.
     Add(<T as Diff>::Type),
 }
 
-impl<T: Diff> VecDiff<T> {
+impl<T: Diff> DiffVec<T> {
+    /// returns an iterator of `&InnerVec<T>` from a `DiffVec<T>`
     pub fn iter<'d>(&'d self) -> Box<dyn Iterator<Item = &InnerVec<T>> + 'd> {
         Box::new(self.0.iter())
     }
 
+    /// returns an iterator of `InnerVec<T>` from a `DiffVec<T>`
     pub fn into_iter<'d>(self) -> Box<dyn Iterator<Item = InnerVec<T>> + 'd>
     where
         Self: 'd,
@@ -26,17 +33,21 @@ impl<T: Diff> VecDiff<T> {
         Box::new(self.0.into_iter())
     }
 
+    /// Returns the length of the `DiffVec<T>` type.
     pub fn len(&self) -> usize {
         self.0.len()
     }
 }
 
+/// `Diff` trait implementation for `Vec<T>`
 impl<T> Diff for Vec<T>
 where
     T: Clone + Debug + PartialEq + Diff + Default + for<'de> Deserialize<'de> + Serialize,
 {
-    type Type = VecDiff<T>;
+    /// Corresponding Diff Type for `Vec<T>`
+    type Type = DiffVec<T>;
 
+    /// Compares two `Vec<T>` types; `self`, `other` and returns a `DiffVec<T>` type.
     fn diff(&self, other: &Self) -> Self::Type {
         let (l_len, r_len) = (self.len(), other.len());
         let max = usize::max(l_len, r_len);
@@ -55,9 +66,10 @@ where
             }
         }
 
-        VecDiff(changes)
+        DiffVec(changes)
     }
 
+    /// Merges a `DiffVec<T>`; `diff` with `self`; a `Vec<T>` to create a new `Vec<T>`.
     fn merge(&self, diff: Self::Type) -> Self {
         let mut vec: Self = self.clone();
 
@@ -76,6 +88,7 @@ where
         vec
     }
 
+    /// Converts a `DiffVec<T>`; `diff` into a `Vec<T>`.
     fn from_diff(diff: Self::Type) -> Self {
         let mut vec: Vec<T> = vec![];
 
@@ -89,22 +102,25 @@ where
         vec
     }
 
+    /// Converts a `Vec<T>` into a `DiffVec<T>`
     fn into_diff(self) -> Self::Type {
         let mut changes: Vec<InnerVec<T>> = vec![];
         for inner in self {
             changes.push(InnerVec::Add(inner.into_diff()));
         }
-        VecDiff(changes)
+        DiffVec(changes)
     }
 }
 
-impl<T: Diff> Debug for VecDiff<T> {
+/// Debug trait for `DiffVec<T>`
+impl<T: Diff> Debug for DiffVec<T> {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        write!(f, "VecDiff ")?;
+        write!(f, "DiffVec ")?;
         f.debug_list().entries(self.0.iter()).finish()
     }
 }
 
+/// Debug trait for `InnerVec<T>`
 impl<T: Diff> Debug for InnerVec<T> {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         match &self {
@@ -119,15 +135,10 @@ impl<T: Diff> Debug for InnerVec<T> {
     }
 }
 
-impl<T: Diff> Default for VecDiff<T> {
+/// Default trait for `DiffVec<T>`
+impl<T: Diff> Default for DiffVec<T> {
     fn default() -> Self {
-        VecDiff(Vec::new())
-    }
-}
-
-impl<T: Diff> Default for InnerVec<T> {
-    fn default() -> Self {
-        Self::Remove { count: 0 }
+        DiffVec(Vec::new())
     }
 }
 
@@ -144,7 +155,7 @@ mod tests {
 
         let diff = vec_a.diff(&vec_b);
 
-        assert_eq!(diff, VecDiff(vec![]));
+        assert_eq!(diff, DiffVec(vec![]));
 
         let vec_c = vec_a.merge(diff);
 
@@ -152,7 +163,7 @@ mod tests {
 
         let diff = vec_b.diff(&vec_a);
 
-        assert_eq!(diff, VecDiff(vec![]));
+        assert_eq!(diff, DiffVec(vec![]));
 
         let vec_c = vec_b.merge(diff);
 
@@ -168,7 +179,7 @@ mod tests {
 
         assert_eq!(
             diff,
-            VecDiff(vec![
+            DiffVec(vec![
                 InnerVec::Change {
                     index: 0,
                     item: 4i32.into_diff(),
@@ -188,7 +199,7 @@ mod tests {
 
         assert_eq!(
             diff,
-            VecDiff(vec![
+            DiffVec(vec![
                 InnerVec::Change {
                     index: 0,
                     item: 1i32.into_diff(),
@@ -214,7 +225,7 @@ mod tests {
 
         assert_eq!(
             diff,
-            VecDiff(vec![
+            DiffVec(vec![
                 InnerVec::Change {
                     index: 4,
                     item: 6i32.into_diff(),
@@ -235,7 +246,7 @@ mod tests {
 
         assert_eq!(
             diff,
-            VecDiff(vec![
+            DiffVec(vec![
                 InnerVec::Change {
                     index: 4,
                     item: 5i32.into_diff(),

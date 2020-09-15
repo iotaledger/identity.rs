@@ -4,6 +4,8 @@ use std::fmt::{Debug, Formatter, Result as FmtResult};
 
 use crate::Diff;
 
+/// A `DiffOption<T>` type which represents a Diffed `Option<T>`.  By default this value is untagged for `serde`. It
+/// also converts `to` and `from` Option<T> when serialized/deserialized
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[serde(untagged, into = "Option<T>", from = "Option<T>")]
 pub enum DiffOption<T: Diff> {
@@ -11,12 +13,16 @@ pub enum DiffOption<T: Diff> {
     None,
 }
 
+/// `Diff` Implementation for `Option<T>`
 impl<T> Diff for Option<T>
 where
     T: Diff + Clone + Debug + PartialEq + Default + for<'de> Deserialize<'de> + Serialize,
 {
+    /// The Corresponding Diff type for `Option<T>`
     type Type = DiffOption<T>;
 
+    /// Compares two `Option<T>` types; `self` and `other` and finds the Difference between them, returning a
+    /// `DiffOption<T>` type.
     fn diff(&self, other: &Self) -> Self::Type {
         match (self, other) {
             (Some(x), Some(y)) => Self::Type::Some(x.diff(&y)),
@@ -25,6 +31,7 @@ where
         }
     }
 
+    /// Merges a `DiffOption<T>`; `diff` type with an `Option<T>` type; `self`.
     fn merge(&self, diff: Self::Type) -> Self {
         match (self, diff) {
             (None, DiffOption::None) => None,
@@ -34,6 +41,7 @@ where
         }
     }
 
+    /// converts a `DiffOption<T>`; `diff` to an `Option<T>` type.
     fn from_diff(diff: Self::Type) -> Self {
         match diff {
             Self::Type::None => None,
@@ -41,6 +49,7 @@ where
         }
     }
 
+    /// converts a `Option<T>`; `self` to an `DiffOption<T>` type.
     fn into_diff(self) -> Self::Type {
         match self {
             Self::None => DiffOption::None,
@@ -49,6 +58,7 @@ where
     }
 }
 
+/// Debug implementation for `DiffOption<T>`.
 impl<T: Diff> std::fmt::Debug for DiffOption<T> {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         match &self {
@@ -58,12 +68,14 @@ impl<T: Diff> std::fmt::Debug for DiffOption<T> {
     }
 }
 
+/// Default implementation for `DiffOption<T>`.
 impl<T: Diff> Default for DiffOption<T> {
     fn default() -> Self {
         Self::None
     }
 }
 
+/// Into `Option<T>` implementation for `DiffOption<T>`.
 impl<T> Into<Option<T>> for DiffOption<T>
 where
     T: Diff,
@@ -75,7 +87,7 @@ where
         }
     }
 }
-
+/// From `Option<T>` implementation for `DiffOption<T>`.
 impl<T> From<Option<T>> for DiffOption<T>
 where
     T: Diff,
