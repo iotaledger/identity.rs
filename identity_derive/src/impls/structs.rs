@@ -5,12 +5,15 @@ use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use syn::{GenericParam, Type};
 
+/// Derive the difference struct code from the `InputModel`
 pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
+    // setup the relevant fields.
     let svariant = input.s_variant();
     let diff = input.diff();
     let fields = input.fields();
     let param_decls = input.param_decls();
     let clause = input.clause();
+    // set the param declarations.
     let param_decls: Vec<TokenStream> = param_decls
         .iter()
         .map(|tp_decl| match tp_decl {
@@ -37,12 +40,16 @@ pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
         })
         .collect();
 
+    // get the field types as tokens.
     let field_tps: Vec<TokenStream> = fields.iter().map(|field| field.typ_as_tokens()).collect();
 
     match svariant {
+        // for name structs.
         SVariant::Named => {
+            // get te field names
             let field_names: Vec<&Ident> = fields.iter().map(|field| field.name()).collect();
 
+            // generate the Diff struct.
             quote! {
                 #[derive(Clone, PartialEq, Default)]
                 #[derive(serde::Deserialize, serde::Serialize)]
@@ -53,7 +60,9 @@ pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
                 }
             }
         }
+        // for Tuple variant Structs.
         SVariant::Tuple => {
+            // generate the Diff struct.
             quote! {
                 #[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize, Default)]
                 pub struct #diff<#(#param_decls),*> (
@@ -61,14 +70,18 @@ pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
                 ) #clause ;
             }
         }
+        // for unit variant Structs.
         SVariant::Unit => quote! {
+            // generate the Diff struct.
             #[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize, Default)]
             pub struct #diff<#(#param_decls),*> #clause ;
         },
     }
 }
 
+/// Implement the Debug trait on a derived struct.
 pub fn debug_impl(input: &InputModel) -> TokenStream {
+    // collect relevant fields.
     let svariant = input.s_variant();
     let diff = input.diff();
     let fields = input.fields();
@@ -76,6 +89,7 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
     let params = input.params();
     let clause = input.clause();
 
+    // setup param declarations.
     let param_decls: Vec<TokenStream> = param_decls
         .iter()
         .map(|tp_decl| match tp_decl {
@@ -102,11 +116,14 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
         })
         .collect();
 
+    // setup the where clause predicates and the where clause code.
     let preds: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
     let clause = quote! { where #(#preds),*};
 
     match svariant {
+        // name struct
         SVariant::Named => {
+            // create a buffer and generate the logic.
             let mut mac = TokenStream::new();
             let buf: Ident = format_ident!("buf");
             for field in fields.iter() {
@@ -127,6 +144,7 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
                 });
             }
 
+            // generate code.
             quote! {
                 impl<#(#param_decls),*> std::fmt::Debug
                     for #diff<#params>
@@ -141,7 +159,9 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
                     }
             }
         }
+        // Tuple Struct.
         SVariant::Tuple => {
+            // create buffer and logic.
             let ftyps: Vec<&Type> = fields.iter().map(|field| field.typ()).collect();
 
             let count = ftyps.len();
@@ -183,6 +203,7 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
                 },
             };
 
+            // generate code.
             quote! {
                 impl<#(#param_decls),*> std::fmt::Debug for #diff<#params>
                     #clause
@@ -193,6 +214,7 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
                     }
             }
         }
+        // generate code for unit struct.
         SVariant::Unit => quote! {
                 impl<#(#param_decls),*> std::fmt::Debug for #diff<#params>
                     #clause
@@ -206,7 +228,9 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
     }
 }
 
+/// implement Diff for the struct.
 pub fn diff_impl(input: &InputModel) -> TokenStream {
+    // collect relevant fields and generate param declarations.
     let svariant = input.s_variant();
     let name = input.name();
     let diff = input.diff();
@@ -246,12 +270,16 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
         })
         .collect();
 
+    // get predicates and generate where clause.
     let preds: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
     let clause = quote! { where #(#preds),*};
 
     match svariant {
+        // named struct.
         SVariant::Named => {
+            // get field names.
             let fnames: Vec<&Ident> = fields.iter().map(|field| field.name()).collect();
+            // get merge field logic.
             let field_merge: Vec<TokenStream> = fields
                 .iter()
                 .map(|field| {
@@ -272,6 +300,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                 })
                 .collect();
 
+            // get diff field logic.
             let fields_diff: Vec<TokenStream> = fields
                 .iter()
                 .map(|field| {
@@ -300,6 +329,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                 })
                 .collect();
 
+            // get from_diff field logic.
             let fields_from: Vec<TokenStream> = fields
                 .iter()
                 .map(|field| {
@@ -320,6 +350,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                 })
                 .collect();
 
+            // get into_diff field logic.
             let fields_into: Vec<TokenStream> = fields
                 .iter()
                 .map(|field| {
@@ -341,6 +372,8 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     }
                 })
                 .collect();
+
+            // generate body and code.
             quote! {
                 impl<#(#param_decls),*> identity_diff::Diff
                     for #name<#params>
@@ -378,11 +411,14 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
 
             }
         }
+        // Tuple struct.
         SVariant::Tuple => {
+            // get types and create markers for the positioned fields.
             let field_typs: Vec<_> = fields.iter().map(|f| f.typ()).collect();
             let field_max = field_typs.len();
             let field_markers: Vec<Ident> = (0..field_max).map(|t| format_ident!("field_{}", t)).collect();
 
+            // get merge field logic.
             let field_merge: Vec<TokenStream> = fields
                 .iter()
                 .map(|field| {
@@ -403,6 +439,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                 })
                 .collect();
 
+            // get diff field logic.
             let fields_diff: Vec<TokenStream> = fields
                 .iter()
                 .map(|field| {
@@ -431,6 +468,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                 })
                 .collect();
 
+            // get from_diff field logic.
             let fields_from: Vec<TokenStream> = fields
                 .iter()
                 .enumerate()
@@ -453,6 +491,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                 })
                 .collect();
 
+            // get into_diff field logic.
             let fields_into: Vec<TokenStream> = fields
                 .iter()
                 .enumerate()
@@ -476,6 +515,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                 })
                 .collect();
 
+            // generate code for the `Diff` Trait.
             quote! {
                 impl<#(#param_decls),*> identity_diff::Diff
                     for #name<#params>
@@ -512,6 +552,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                 }
             }
         }
+        // generated code for unit structs.
         SVariant::Unit => quote! {
             impl<#(#param_decls),*> identity_diff::Diff
                     for #name<#params>

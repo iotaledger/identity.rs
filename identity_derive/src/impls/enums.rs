@@ -5,7 +5,9 @@ use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use syn::{punctuated::Punctuated, token::Comma, GenericParam, Type, WhereClause};
 
+/// derive a Diff type Enum from an incoming `InputModel`.
 pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
+    // collect appropriate data and generate param declarations.
     let diff: &Ident = input.diff();
     let evariants: &Vec<EVariant> = input.e_variants();
 
@@ -31,6 +33,7 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
         })
         .collect();
 
+    // create the Diff enum body.
     let body: TokenStream = evariants
         .iter()
         .map(|var| {
@@ -38,9 +41,11 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
             let typs: Vec<TokenStream> = var.fields.iter().map(|f| f.typ_as_tokens()).collect();
 
             match var.variant {
+                // for named variant.
                 SVariant::Named => {
                     let fnames: Vec<&Ident> = var.fields.iter().map(|f| f.name()).collect();
 
+                    // generate code.
                     quote! {
                         #vname {
                             #(
@@ -49,9 +54,11 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
                         },
                     }
                 }
+                // generate code for tuple variant.
                 SVariant::Tuple => quote! {
                     #vname( #( #[doc(hidden)] #[serde(skip_serializing_if = "Option::is_none")] #typs, )* ),
                 },
+                // generate code for unit variant.
                 SVariant::Unit => quote! {
                     #vname,
                 },
@@ -59,6 +66,7 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
         })
         .collect();
 
+    // create the main code and insert into the body.
     quote! {
         #[derive(Clone, PartialEq)]
         #[derive(serde::Deserialize, serde::Serialize)]
@@ -70,7 +78,9 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
     }
 }
 
+// implement Debug on the Enum from the `InputModel`.
 pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
+    // collect appropriate data and generate param declarations.
     let diff: &Ident = input.diff();
     let evariants: &Vec<EVariant> = input.e_variants();
 
@@ -96,14 +106,15 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
         })
         .collect();
 
+    // create where clause from predicates.
     let clause: &WhereClause = input.clause();
-
     let predicates: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
-
     let clause = quote! { where #(#predicates),*};
 
+    // get patterns and bodies.
     let (patterns, bodies) = parse_evariants(evariants, diff);
 
+    // create a body.
     let body = quote! {
         match self {
             #(
@@ -112,6 +123,7 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
         }
     };
 
+    // generate code.
     quote! {
         impl<#(#param_decls),*> std::fmt::Debug for #diff<#params>
             #clause
@@ -124,7 +136,9 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
     }
 }
 
+/// derive the `Diff` trait for incoming Enum in `InputModel`.
 pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
+    // collect appropriate data and generate param declarations.
     let name: &Ident = input.name();
     let diff: &Ident = input.diff();
     let evariants: &Vec<EVariant> = input.e_variants();
@@ -157,9 +171,11 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
         })
         .collect();
 
+    // create where clause from predicates.
     let preds: Vec<TokenStream> = clause.predicates.iter().map(|cl| quote! { #cl }).collect();
     let clause = quote! { where #(#preds),* };
 
+    // setup vectors for merge, diff, into_diff and from_diff data.
     let mut merge_rpatterns: Vec<TokenStream> = vec![];
     let mut merge_lpatterns: Vec<TokenStream> = vec![];
     let mut merge_bodies: Vec<TokenStream> = vec![];
@@ -172,14 +188,18 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
 
     let mut into_body: Vec<TokenStream> = vec![];
 
+    // sort through each enum variant to generate data for each function.
     evariants.iter().for_each(|var| {
         let vname = &var.name;
         let vfields = &var.fields;
         let struct_type = var.variant.clone();
 
+        // get merge data.
         let (mlp, mrp, mb) = parse_merge(vname, vfields, struct_type.clone());
+        // get diff data.
         let (dlp, drp, db) = parse_diff(vname, vfields, struct_type.clone());
 
+        // get the from and into data.
         let (fb, ib) = parse_from_into(var, vname, vfields, diff, struct_type);
 
         merge_lpatterns.extend(mlp);
@@ -194,6 +214,7 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
         into_body.extend(ib);
     });
 
+    // generate the code.
     quote! {
         impl<#(#param_decls),*> identity_diff::Diff for #name<#params>
             #clause
@@ -240,17 +261,21 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
     }
 }
 
+/// function that parses and sorts the variants into twp Vec<TokenStream> types.
 fn parse_evariants(evariants: &[EVariant], diff: &Ident) -> (Vec<TokenStream>, Vec<TokenStream>) {
+    // setup vectors for patterns and bodies.
     let mut patterns: Vec<TokenStream> = vec![];
     let mut bodies: Vec<TokenStream> = vec![];
 
     evariants
         .iter()
         .for_each(|var| match (var.variant.clone(), &var.name, &var.fields) {
+            // Named variants.
             (SVariant::Named, vname, fields) => {
                 let fnames: Vec<&Ident> = fields.iter().map(|f| f.name()).collect();
                 let buf: Ident = format_ident!("buf");
 
+                // format fields and create code.
                 let fields: Vec<TokenStream> = fields
                     .iter()
                     .map(|f| {
@@ -273,6 +298,8 @@ fn parse_evariants(evariants: &[EVariant], diff: &Ident) -> (Vec<TokenStream>, V
                         }
                     })
                     .collect();
+
+                // push into patterns and bodies.
                 patterns.push(quote! {
                     Self::#vname { #(#fnames),* }
                 });
@@ -284,7 +311,9 @@ fn parse_evariants(evariants: &[EVariant], diff: &Ident) -> (Vec<TokenStream>, V
                     #buf.finish()
                 }});
             }
+            // Tuple variants.
             (SVariant::Tuple, vname, vfields) => {
+                // setup data.
                 let field_typs: Vec<&Type> = vfields.iter().map(|f| f.typ()).collect();
 
                 let field_max = field_typs.len();
@@ -314,6 +343,7 @@ fn parse_evariants(evariants: &[EVariant], diff: &Ident) -> (Vec<TokenStream>, V
                         }
                     })
                     .collect();
+                // push into patterns and bodies
                 patterns.push(quote! {
                     Self::#vname( #(#field_names),* )
                 });
@@ -336,6 +366,7 @@ fn parse_evariants(evariants: &[EVariant], diff: &Ident) -> (Vec<TokenStream>, V
                     }},
                 });
             }
+            // unit variant.
             (SVariant::Unit, vname, _vfields) => {
                 patterns.push(quote! {
                     Self::#vname
@@ -347,9 +378,11 @@ fn parse_evariants(evariants: &[EVariant], diff: &Ident) -> (Vec<TokenStream>, V
             }
         });
 
+    // return patterns and bodies.
     (patterns.to_vec(), bodies.to_vec())
 }
 
+// parse data to generate the merge functions.
 fn parse_merge(
     vname: &Ident,
     vfields: &[DataFields],
@@ -360,11 +393,14 @@ fn parse_merge(
     let mut merge_bodies: Vec<TokenStream> = vec![];
 
     match struct_type {
+        // named variant.
         SVariant::Named => {
+            // get field names.
             let fnames: Vec<&Ident> = vfields.iter().map(|f| f.name()).collect();
 
             let (left_names, right_names) = populate_field_names(vfields, 0, struct_type);
 
+            // setup merge code.
             let merge_fvalues: Vec<TokenStream> = vfields
                 .iter()
                 .zip(left_names.iter())
@@ -384,6 +420,7 @@ fn parse_merge(
                 })
                 .collect();
 
+            // push merge code into vectors.
             merge_lpatterns.push(quote! {
                 Self::#vname {
                     #(#fnames: #left_names),*
@@ -418,13 +455,16 @@ fn parse_merge(
                 merge_bodies.to_vec(),
             )
         }
+        // tuple variants.
         SVariant::Tuple => {
+            // get field names based on position.
             let ftyps: Vec<&Type> = vfields.iter().map(|f| f.typ()).collect();
 
             let fmax = ftyps.len();
 
             let (left_names, right_names) = populate_field_names(vfields, fmax, struct_type);
 
+            // setup merge logic.
             let merge_fvalues: Vec<TokenStream> = vfields
                 .iter()
                 .zip(left_names.iter())
@@ -444,6 +484,7 @@ fn parse_merge(
                 })
                 .collect();
 
+            // push into vectors.
             merge_lpatterns.push(quote! {
                 Self::#vname(
                     #(#left_names),*
@@ -475,7 +516,9 @@ fn parse_merge(
                 merge_bodies.to_vec(),
             )
         }
+        // unit variants.
         SVariant::Unit => {
+            // push into vectors.
             merge_lpatterns.push(quote! {
                 Self::#vname
             });
@@ -498,6 +541,7 @@ fn parse_merge(
                 Self::from_diff(diff.clone())
             });
 
+            // return generated code.
             (
                 merge_lpatterns.to_vec(),
                 merge_rpatterns.to_vec(),
@@ -507,6 +551,7 @@ fn parse_merge(
     }
 }
 
+/// parses data for the derived diff function.
 fn parse_diff(
     vname: &Ident,
     vfields: &[DataFields],
@@ -518,11 +563,13 @@ fn parse_diff(
     let mut diff_bodies: Vec<TokenStream> = vec![];
 
     match struct_type {
+        // named variant.
         SVariant::Named => {
             let fnames: Vec<&Ident> = vfields.iter().map(|f| f.name()).collect();
 
             let (left_names, right_names) = populate_field_names(vfields, 0, struct_type);
 
+            // setup diff logic.
             let diff_fvalues: Vec<TokenStream> = vfields
                 .iter()
                 .zip(left_names.iter())
@@ -552,6 +599,7 @@ fn parse_diff(
                 })
                 .collect();
 
+            // push into vectors.
             diff_lpatterns.push(quote! {
                 Self::#vname { #(#fnames: #left_names),* }
             });
@@ -573,6 +621,7 @@ fn parse_diff(
                 other.clone().into_diff()
             });
         }
+        // tuple variants.
         SVariant::Tuple => {
             let ftyps: Vec<&Type> = vfields.iter().map(|f| f.typ()).collect();
 
@@ -580,6 +629,7 @@ fn parse_diff(
 
             let (left_names, right_names) = populate_field_names(vfields, fmax, struct_type);
 
+            // setup diff logic.
             let diff_fvalues: Vec<TokenStream> = vfields
                 .iter()
                 .zip(left_names.iter().zip(right_names.iter()))
@@ -608,6 +658,7 @@ fn parse_diff(
                 })
                 .collect();
 
+            // push into vectors.
             diff_lpatterns.push(quote! {
                 Self::#vname( #(#left_names),* )
             });
@@ -627,6 +678,7 @@ fn parse_diff(
                 other.clone().into_diff()
             });
         }
+        // push into vectors for unit variants.
         SVariant::Unit => {
             diff_lpatterns.push(quote! {
                 Self::#vname
@@ -654,6 +706,7 @@ fn parse_diff(
     (diff_lpatterns.to_vec(), diff_rpatterns.to_vec(), diff_bodies.to_vec())
 }
 
+// parse data for from_diff and into_diff functions.
 fn parse_from_into(
     var: &EVariant,
     vname: &Ident,
@@ -665,8 +718,10 @@ fn parse_from_into(
     let mut into_body: Vec<TokenStream> = vec![];
 
     match struct_type {
+        // named structs.
         SVariant::Named => {
             let fnames: Vec<&Ident> = vfields.iter().map(|f| f.name()).collect();
+            // setup from logic.
             let from_fassign: Vec<TokenStream> = var
                 .fields
                 .iter()
@@ -689,6 +744,7 @@ fn parse_from_into(
                 })
                 .collect();
 
+            // setup into logic.
             let into_fassign: Vec<TokenStream> = var
                 .fields
                 .iter()
@@ -713,6 +769,7 @@ fn parse_from_into(
                 })
                 .collect();
 
+            // push into vectors.
             from_body.push(quote! {
                 #diff::#vname { #(#fnames),* } => {
                     Self::#vname { #(#from_fassign),* }
@@ -725,11 +782,13 @@ fn parse_from_into(
                 }
             });
         }
+        // tuple variants.
         SVariant::Tuple => {
             let ftyps: Vec<&Type> = vfields.iter().map(|f| f.typ()).collect();
             let fmax = ftyps.len();
             let fnames: Vec<Ident> = (0..fmax).map(|ident| format_ident!("field_{}", ident)).collect();
 
+            // from logic.
             let from_fassign: Vec<TokenStream> = var
                 .fields
                 .iter()
@@ -753,6 +812,7 @@ fn parse_from_into(
                 })
                 .collect();
 
+            // into logic.
             let into_fassign: Vec<TokenStream> = var
                 .fields
                 .iter()
@@ -778,6 +838,7 @@ fn parse_from_into(
                 })
                 .collect();
 
+            // push code into vectors.
             from_body.push(quote! {
                 #diff::#vname( #(#fnames),* ) => {
                     Self::#vname( #(#from_fassign),* )
@@ -792,6 +853,7 @@ fn parse_from_into(
                 }
             });
         }
+        // setup code for unit variants.
         SVariant::Unit => {
             from_body.push(quote! {
                 #diff::#vname => {
@@ -810,6 +872,7 @@ fn parse_from_into(
     (from_body.to_vec(), into_body.to_vec())
 }
 
+// create field names based on thee size of an enum.
 fn populate_field_names(vfields: &[DataFields], fmax: usize, struct_type: SVariant) -> (Vec<Ident>, Vec<Ident>) {
     match struct_type {
         SVariant::Named => (

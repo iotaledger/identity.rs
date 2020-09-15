@@ -1,49 +1,71 @@
 use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::{
-    punctuated::Punctuated, token::Comma, Data, DataEnum, DataStruct, DeriveInput, Fields, GenericParam, Path,
-    PathSegment, Token, Type, Variant, WhereClause,
+    punctuated::Punctuated, token::Comma, Data, DataEnum, DataStruct, DeriveInput, Fields, GenericParam, Token, Type,
+    Variant, WhereClause,
 };
 
 use crate::{
+    extract_option_segment,
     impls::{debug_impl, derive_diff_enum, derive_diff_struct, diff_impl, impl_debug_enum, impl_diff_enum},
     should_ignore,
 };
 
+/// A model for dealing with the different input from the incoming AST.
 #[derive(Clone, Debug)]
 pub enum InputModel {
     Enum(InputEnum),
     Struct(InputStruct),
 }
 
+/// Sorts attributes regarding incoming Enums.
 #[derive(Clone, Debug)]
 pub struct InputEnum {
+    // name identifier.
     pub name: Ident,
+    // diff identifier.
     pub diff: Ident,
+    // variants for the Enum.
     pub variants: Vec<EVariant>,
+    // generics and traits declarations.
     pub param_decls: Punctuated<GenericParam, Comma>,
+    // generics and trait bounds for the Enum.
     pub params: Punctuated<Ident, Comma>,
+    // where clause for the Enum.
     pub clause: WhereClause,
 }
 
+/// Sorts data regarding incoming Structs.
 #[derive(Clone, Debug)]
 pub struct InputStruct {
+    // struct variant.
     pub variant: SVariant,
+    // struct name.
     pub name: Ident,
+    // struct diff name.
     pub diff: Ident,
+    // struct fields.
     pub fields: Vec<DataFields>,
+    // generics and traits declarations.
     pub param_decls: Punctuated<GenericParam, Comma>,
+    // generics and trait bounds for the Enum.
     pub params: Punctuated<Ident, Comma>,
+    // where clause for the Enum.
     pub clause: WhereClause,
 }
 
+/// Enum variant data.
 #[derive(Clone, Debug)]
 pub struct EVariant {
+    // Struct variant type.
     pub variant: SVariant,
+    // variant name.
     pub name: Ident,
+    // variant fields.
     pub fields: Vec<DataFields>,
 }
 
+/// Struct Variant structure types.
 #[derive(Clone, Debug)]
 pub enum SVariant {
     Named,
@@ -51,42 +73,57 @@ pub enum SVariant {
     Unit,
 }
 
+/// sorts data for fields inside of a struct or enum.
 #[derive(Clone, Debug)]
 pub enum DataFields {
     Named {
+        // field name.
         name: Ident,
+        // field type.
         typ: Type,
+        // should ignore flag.
         should_ignore: bool,
     },
     Unnamed {
+        // field position.
         position: Literal,
+        // field type.
         typ: Type,
+        // should ignore flag.
         should_ignore: bool,
     },
 }
 
 impl InputModel {
+    // parse the `DeriveInput` into an `InputModel`.
     pub fn parse(input: &DeriveInput) -> Self {
         match &input.data {
+            // Check for a struct with fields.
             Data::Struct(DataStruct { fields, .. }) if !fields.is_empty() => Self::parse_struct(input, fields),
+            // check for a unit struct.
             Data::Struct(DataStruct { .. }) => Self::parse_unit(input),
+            // check for an enum.
             Data::Enum(DataEnum { variants, .. }) => Self::parse_enum(input, variants),
             _ => panic!("Data Type not supported"),
         }
     }
 
+    /// parse structs.
     fn parse_struct(input: &DeriveInput, fields: &Fields) -> Self {
         Self::Struct(InputStruct::parse(input, fields))
     }
 
+    /// parse unit structs.
     fn parse_unit(input: &DeriveInput) -> Self {
         Self::Struct(InputStruct::parse_unit(input))
     }
 
+    /// parse enums.
     fn parse_enum(input: &DeriveInput, variants: &Punctuated<Variant, Comma>) -> Self {
         Self::Enum(InputEnum::parse(input, variants))
     }
 
+    /// get struct variant.
     pub fn s_variant(&self) -> &SVariant {
         match self {
             Self::Enum(InputEnum { name, .. }) => panic!("{} isn't a struct", name),
@@ -94,6 +131,7 @@ impl InputModel {
         }
     }
 
+    /// get enum variant.
     pub fn e_variants(&self) -> &Vec<EVariant> {
         match self {
             Self::Enum(InputEnum { variants, .. }) => variants,
@@ -101,6 +139,7 @@ impl InputModel {
         }
     }
 
+    /// get name of struct or enum.
     pub fn name(&self) -> &Ident {
         match self {
             Self::Enum(InputEnum { name, .. }) => name,
@@ -108,6 +147,7 @@ impl InputModel {
         }
     }
 
+    /// get diff name for enum or struct.
     pub fn diff(&self) -> &Ident {
         match self {
             Self::Enum(InputEnum { diff, .. }) => diff,
@@ -115,6 +155,7 @@ impl InputModel {
         }
     }
 
+    /// get the params for the Enum or Struct.
     pub fn params(&self) -> &Punctuated<Ident, Comma> {
         match self {
             Self::Enum(InputEnum { params, .. }) => params,
@@ -122,6 +163,7 @@ impl InputModel {
         }
     }
 
+    /// get the param declarations for the Enum or Struct.
     pub fn param_decls(&self) -> &Punctuated<GenericParam, Comma> {
         match self {
             Self::Enum(InputEnum { param_decls, .. }) => param_decls,
@@ -129,6 +171,7 @@ impl InputModel {
         }
     }
 
+    /// get the fields for the Enum or Struct.
     pub fn fields(&self) -> &Vec<DataFields> {
         match self {
             Self::Enum(InputEnum { name, .. }) => panic!("{} isn't a Struct", name),
@@ -136,6 +179,7 @@ impl InputModel {
         }
     }
 
+    /// Get the where clause.
     pub fn clause(&self) -> &WhereClause {
         match self {
             Self::Enum(InputEnum { clause, .. }) => clause,
@@ -143,6 +187,7 @@ impl InputModel {
         }
     }
 
+    /// Implement the `Debug` trait on Enums and Structs.
     pub fn impl_debug(&self) -> TokenStream {
         match self {
             Self::Struct(InputStruct { .. }) => debug_impl(self),
@@ -150,6 +195,7 @@ impl InputModel {
         }
     }
 
+    /// Implement the `Diff` trait on Enums and Structs.
     pub fn impl_diff(&self) -> TokenStream {
         match self {
             Self::Struct(InputStruct { .. }) => diff_impl(self),
@@ -157,6 +203,7 @@ impl InputModel {
         }
     }
 
+    /// Build the Diff Type for the Enum or Struct.
     pub fn derive_diff(&self) -> TokenStream {
         match self {
             Self::Struct(InputStruct { .. }) => derive_diff_struct(self),
@@ -166,6 +213,7 @@ impl InputModel {
 }
 
 impl InputEnum {
+    /// create a new `InputEnum`.
     pub fn new(input: &DeriveInput) -> Self {
         Self {
             name: input.ident.clone(),
@@ -184,6 +232,7 @@ impl InputEnum {
         }
     }
 
+    /// parse the enum.
     fn parse(input: &DeriveInput, variants: &Punctuated<Variant, Comma>) -> Self {
         let mut model = Self::new(input);
         variants.iter().for_each(|vars| {
@@ -214,6 +263,7 @@ impl InputEnum {
 }
 
 impl InputStruct {
+    /// create a new `InputStruct`.
     pub fn new(input: &DeriveInput) -> Self {
         Self {
             variant: SVariant::Unit,
@@ -229,6 +279,7 @@ impl InputStruct {
         }
     }
 
+    /// parse the ast into for the `InputStruct`.
     fn parse(input: &DeriveInput, fields: &Fields) -> Self {
         let mut model = Self::new(input);
         fields.iter().enumerate().for_each(|(idx, fs)| {
@@ -252,6 +303,7 @@ impl InputStruct {
         model
     }
 
+    /// parse data for a unit struct.
     fn parse_unit(input: &DeriveInput) -> Self {
         let mut model = Self::new(input);
         model.variant = SVariant::Unit;
@@ -261,6 +313,7 @@ impl InputStruct {
 }
 
 impl EVariant {
+    /// create a new enum variant type.
     pub fn new(name: &Ident) -> Self {
         Self {
             variant: SVariant::Unit,
@@ -271,6 +324,7 @@ impl EVariant {
 }
 
 impl DataFields {
+    /// get the field name.
     pub fn name(&self) -> &Ident {
         match self {
             Self::Named { name, .. } => name,
@@ -278,6 +332,7 @@ impl DataFields {
         }
     }
 
+    /// get the field position.
     pub fn position(&self) -> &Literal {
         match self {
             Self::Named { .. } => panic!("Named fields has no position"),
@@ -285,6 +340,7 @@ impl DataFields {
         }
     }
 
+    /// get the field type.
     pub fn typ(&self) -> &Type {
         match self {
             Self::Named { typ, .. } => typ,
@@ -292,6 +348,8 @@ impl DataFields {
         }
     }
 
+    /// get the type of the field wrapped in an `Option<T>` where T = the field type for an ignored field and T is an
+    /// `identity_diff::Diff::Type` for a non-ignored field.
     pub fn typ_as_tokens(&self) -> TokenStream {
         let typ = self.typ();
 
@@ -302,6 +360,7 @@ impl DataFields {
         }
     }
 
+    /// check if the field is an Option to avoid nested Options.
     pub fn is_option(&self) -> bool {
         let typ = self.typ();
 
@@ -317,22 +376,11 @@ impl DataFields {
         }
     }
 
+    /// check to see if the should ignore flag is set for the field.
     pub fn should_ignore(&self) -> bool {
         match self {
             Self::Named { should_ignore, .. } => *should_ignore,
             Self::Unnamed { should_ignore, .. } => *should_ignore,
         }
     }
-}
-
-fn extract_option_segment(path: &Path) -> Option<&PathSegment> {
-    let idents_of_path = path.segments.iter().fold(String::new(), |mut acc, v| {
-        acc.push_str(&v.ident.to_string());
-        acc.push('|');
-        acc
-    });
-    vec!["Option|", "std|option|Option|", "core|option|Option|"]
-        .into_iter()
-        .find(|s| idents_of_path == *s)
-        .and_then(|_| path.segments.last())
 }

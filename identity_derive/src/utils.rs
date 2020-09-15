@@ -1,8 +1,10 @@
 use proc_macro2::{Delimiter, TokenTree};
-use syn::Field;
+
+use syn::{Field, Path, PathSegment};
 
 const PARENS: Delimiter = Delimiter::Parenthesis;
 
+/// checks to see if the `should_ignore` attribute has been put before a field.
 pub fn should_ignore(field: &Field) -> bool {
     let mut ignore = false;
 
@@ -24,4 +26,18 @@ pub fn should_ignore(field: &Field) -> bool {
     });
 
     ignore
+}
+
+/// checks to see if a field's type is `Option`.  This logic is necessary to find cases where fields contain nested
+/// Options and avoid a `Some(None)` case.
+pub fn extract_option_segment(path: &Path) -> Option<&PathSegment> {
+    let idents_of_path = path.segments.iter().fold(String::new(), |mut acc, v| {
+        acc.push_str(&v.ident.to_string());
+        acc.push('|');
+        acc
+    });
+    vec!["Option|", "std|option|Option|", "core|option|Option|"]
+        .into_iter()
+        .find(|s| idents_of_path == *s)
+        .and_then(|_| path.segments.last())
 }
