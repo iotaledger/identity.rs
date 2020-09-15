@@ -1,6 +1,6 @@
 # Identity Communication
 
-Identity Communication or DID Communication (short: DIDComm), describes the communication between People, Organizations and Things ([agents](./identity_communication/agents.md)).
+Identity Communication or DID Communication (short: DIDComm), describes the communication between People, Organizations and Things.
 
 
 ## DIDComm specifics
@@ -31,7 +31,7 @@ Identity Communication or DID Communication (short: DIDComm), describes the comm
 > DIDComm need to be close to email paradigm than a standard web paradigm.
 
 ## Summary
-- Communication between agents
+- Communication standard
 - Uses public key cryptography
     - No certificates from some parties or passworts
 - It’s Interoperable and Transport-agnostic
