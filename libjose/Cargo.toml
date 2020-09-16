@@ -10,18 +10,32 @@ license = "Apache-2.0"
 keywords = ["iota", "tangle", "identity", "jose", "jwa", "jwe", "jwk", "jws", "jwt"]
 homepage = "https://www.iota.org"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 anyhow = { version = "1.0", default-features = false }
 base64 = { version = "0.12", default-features = false }
+cfg-if = { version = "0.1", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 thiserror = { version = "1.0", default-features = false }
 url = { version = "2.1", default-features = false, features = ["serde"] }
+zeroize = { version = "1.1", default-features = false }
+
+# Crypto-related - TODO: [[[ STRONGHOLD ]]]
+libsecp256k1 = { version = "0.3", default-features = false, features = ["hmac"], optional = true }
+lazy_static = { version = "1.4", default-features = false, optional = true }
+rand = { version = "0.7", default-features = false, features = ["getrandom"], optional = true }
+ring = { version = "0.16", default-features = false, optional = true }
 
 [features]
-default = ["std"]
+default = ["std", "crypto-ring"]
+
+crypto-ring = ["ring-core", "secp256k1", "ring/std"]
+crypto-stronghold = []
+
+ring-core = ["lazy_static", "ring"]
+
+secp256k1 = ["k256-core", "libsecp256k1/std"]
+k256-core = ["libsecp256k1", "rand"]
 
 std = [
   "anyhow/std",

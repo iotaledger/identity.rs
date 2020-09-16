@@ -1,5 +1,7 @@
-use core::marker::PhantomData;
-
+use crate::crypto::KeyPair;
+use crate::crypto::PKey;
+use crate::crypto::Public;
+use crate::crypto::Secret;
 use crate::error::Result;
 use crate::jwa::EcdsaAlgorithm;
 use crate::jwa::EddsaAlgorithm;
@@ -10,26 +12,15 @@ use crate::jwk::EdCurve;
 use crate::jwk::HashAlgorithm;
 use crate::jwk::RsaBits;
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Public {}
-
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Secret {}
-
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PKey<T>(PhantomData<T>);
-
-pub type KeyPair = (PKey<Public>, PKey<Secret>);
-
 pub(crate) fn message_digest(
   _algorithm: HashAlgorithm,
   _message: impl AsRef<[u8]>,
 ) -> Result<Vec<u8>> {
-  todo!("message_digest")
+  todo!("[noop] message_digest")
 }
 
 pub(crate) fn ecdsa_generate(_curve: EcCurve) -> Result<KeyPair> {
-  todo!("ecdsa_generate")
+  todo!("[noop] ecdsa_generate")
 }
 
 pub(crate) fn ecdsa_sign(
@@ -37,7 +28,7 @@ pub(crate) fn ecdsa_sign(
   _message: &[u8],
   _key: &PKey<Secret>,
 ) -> Result<Vec<u8>> {
-  todo!("ecdsa_sign")
+  todo!("[noop] ecdsa_sign")
 }
 
 pub(crate) fn ecdsa_verify(
@@ -46,11 +37,11 @@ pub(crate) fn ecdsa_verify(
   _signature: &[u8],
   _key: &PKey<Public>,
 ) -> Result<()> {
-  todo!("ecdsa_verify")
+  todo!("[noop] ecdsa_verify")
 }
 
 pub(crate) fn eddsa_generate(_curve: EdCurve) -> Result<KeyPair> {
-  todo!("eddsa_generate")
+  todo!("[noop] eddsa_generate")
 }
 
 pub(crate) fn eddsa_sign(
@@ -58,7 +49,7 @@ pub(crate) fn eddsa_sign(
   _message: &[u8],
   _key: &PKey<Secret>,
 ) -> Result<Vec<u8>> {
-  todo!("eddsa_sign")
+  todo!("[noop] eddsa_sign")
 }
 
 pub(crate) fn eddsa_verify(
@@ -67,11 +58,11 @@ pub(crate) fn eddsa_verify(
   _signature: &[u8],
   _key: &PKey<Public>,
 ) -> Result<()> {
-  todo!("eddsa_verify")
+  todo!("[noop] eddsa_verify")
 }
 
 pub(crate) fn hmac_generate(_algorithm: HmacAlgorithm) -> Result<PKey<Secret>> {
-  todo!("hmac_generate")
+  todo!("[noop] hmac_generate")
 }
 
 pub(crate) fn hmac_sign(
@@ -79,7 +70,7 @@ pub(crate) fn hmac_sign(
   _message: &[u8],
   _key: &PKey<Secret>,
 ) -> Result<Vec<u8>> {
-  todo!("hmac_sign")
+  todo!("[noop] hmac_sign")
 }
 
 pub(crate) fn hmac_verify(
@@ -88,11 +79,11 @@ pub(crate) fn hmac_verify(
   _signature: &[u8],
   _key: &PKey<Public>,
 ) -> Result<()> {
-  todo!("hmac_verify")
+  todo!("[noop] hmac_verify")
 }
 
 pub(crate) fn rsa_generate(_bits: RsaBits) -> Result<KeyPair> {
-  todo!("rsa_generate")
+  todo!("[noop] rsa_generate")
 }
 
 pub(crate) fn rsa_sign(
@@ -100,7 +91,7 @@ pub(crate) fn rsa_sign(
   _message: &[u8],
   _key: &PKey<Secret>,
 ) -> Result<Vec<u8>> {
-  todo!("rsa_sign")
+  todo!("[noop] rsa_sign")
 }
 
 pub(crate) fn rsa_verify(
@@ -109,5 +100,5 @@ pub(crate) fn rsa_verify(
   _signature: &[u8],
   _key: &PKey<Public>,
 ) -> Result<()> {
-  todo!("rsa_verify")
+  todo!("[noop] rsa_verify")
 }
