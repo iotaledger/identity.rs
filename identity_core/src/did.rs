@@ -4,7 +4,10 @@ use serde::{
     ser::{Serialize, Serializer},
     Deserialize as DDeserialize, Serialize as DSerialize,
 };
-use std::fmt::{self, Display, Formatter};
+use std::{
+    fmt::{self, Display, Formatter},
+    hash::Hash,
+};
 
 use crate::did_parser::parse;
 
@@ -14,7 +17,7 @@ const LEADING_TOKENS: &str = "did";
 type DIDTuple = (String, Option<String>);
 
 /// a Decentralized identity structure.  
-#[derive(Debug, PartialEq, Default, Eq, Clone, Diff)]
+#[derive(Debug, PartialEq, Default, Eq, Clone, Diff, Hash, Ord, PartialOrd)]
 pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
@@ -24,7 +27,7 @@ pub struct DID {
 }
 
 /// a DID Params struct.
-#[derive(Debug, PartialEq, Eq, Clone, Default, Diff, DDeserialize, DSerialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Default, Hash, PartialOrd, Ord, Diff, DDeserialize, DSerialize)]
 pub struct Param {
     pub key: String,
     pub value: Option<String>,

@@ -94,18 +94,20 @@
         ],
         "services": [
             {
-                "id": {
-                    "method_name": "into",
-                    "id_segments": [
-                        "123"
-                    ],
-                    "fragment": "edv"
-                },
-                "service_type": "EncryptedDataVault",
-                "endpoint": {
-                    "context": [
-                        "https://edv.example.com/"
-                    ]
+                "Add": {
+                    "id": {
+                        "method_name": "into",
+                        "id_segments": [
+                            "123"
+                        ],
+                        "fragment": "edv"
+                    },
+                    "service_type": "EncryptedDataVault",
+                    "endpoint": {
+                        "context": [
+                            "https://edv.example.com/"
+                        ]
+                    }
                 }
             }
         ]

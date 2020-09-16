@@ -1,11 +1,14 @@
 use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, str::FromStr};
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
 
 use crate::{
     common::Timestamp,
     did::DID,
-    utils::{helpers::string_or_list, Authentication, Context, PublicKey, Service, Subject},
+    utils::{helpers::string_or_list, Authentication, Context, HasId, IdCompare, PublicKey, Service, Subject},
 };
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
@@ -34,8 +37,8 @@ pub struct DIDDocument {
     pub invocation: Vec<Authentication>,
     #[serde(rename = "keyAgreement", skip_serializing_if = "Vec::is_empty", default)]
     pub agreement: Vec<Authentication>,
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
-    pub services: Vec<Service>,
+    #[serde(skip_serializing_if = "HashSet::is_empty", default)]
+    pub services: HashSet<IdCompare<Service>>,
     #[serde(flatten)]
     pub metadata: HashMap<String, String>,
 }
@@ -59,7 +62,7 @@ impl DIDDocument {
             ..Default::default()
         };
 
-        self.services.into_iter().for_each(|s| doc.update_service(s));
+        self.services.into_iter().for_each(|s| doc.update_service(s.0));
 
         doc
     }
@@ -71,14 +74,15 @@ impl DIDDocument {
 
     /// sets a new `service` of type `Service` into the `DIDDocument`.
     pub fn update_service(&mut self, service: Service) {
-        let mut services: Vec<Service> = self
+        let service = IdCompare::new(service);
+        let mut services: HashSet<IdCompare<Service>> = self
             .services
             .clone()
             .into_iter()
-            .filter(|s| s.id != service.id)
-            .collect::<Vec<Service>>();
+            .filter(|s| s.0.id() != service.0.id())
+            .collect::<HashSet<IdCompare<Service>>>();
 
-        services.push(service);
+        services.insert(service);
 
         self.services = services;
     }

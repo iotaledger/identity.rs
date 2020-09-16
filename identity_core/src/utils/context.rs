@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{hash::Hash, str::FromStr};
 
 use identity_diff::Diff;
 use serde::{
@@ -7,7 +7,7 @@ use serde::{
 };
 
 /// A context type.  Contains a Vector of Strings which describe the DID context.
-#[derive(Debug, PartialEq, Eq, Deserialize, Clone, Diff)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Clone, Hash, Diff, PartialOrd, Ord)]
 #[serde(transparent)]
 pub struct Context(Vec<String>);
 

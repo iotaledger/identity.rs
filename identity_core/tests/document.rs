@@ -92,14 +92,16 @@ fn test_doc_creation() {
 
     did_doc.update_public_key(public_key.clone());
 
-    let did_doc_2 = DIDDocument {
+    let mut did_doc_2 = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
         id: Subject::from("did:iota:123456789abcdefghi"),
-        services: vec![service, service2],
         public_key: vec![public_key],
         ..Default::default()
     }
     .init();
+
+    did_doc_2.update_service(service);
+    did_doc_2.update_service(service2);
 
     let did_doc = did_doc.init_timestamps().unwrap();
 
