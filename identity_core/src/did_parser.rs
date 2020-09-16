@@ -47,9 +47,9 @@ fn parse_pairs(pairs: Pairs<Rule>) -> crate::Result<DID> {
                 path_segs.push(pair.as_str().to_string());
             }
             Rule::query => {
-                let pairs = pair.clone().into_inner();
+                let pairs = pair.into_inner();
                 for pair in pairs {
-                    let mut param = Param { ..Default::default() };
+                    let mut param = Param::default();
                     if let Rule::param = pair.as_rule() {
                         let pair = pair.clone().into_inner();
                         for p in pair {
