@@ -20,9 +20,12 @@ jobs:
         project:
           [
             identity_account,
+            identity_common,
             identity_communication,
             identity_core,
+            identity_crypto,
             identity_integration,
+            identity_ldp,
             identity_resolver,
             identity_schema,
             identity_vc,
