@@ -280,8 +280,8 @@ fn test_realistic_diff() {
         endpoint: endpoint2,
     };
 
-    did_doc.update_service(service.clone());
-    did_doc.update_service(service2.clone());
+    did_doc.update_service(service);
+    did_doc.update_service(service2);
 
     let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
@@ -294,7 +294,8 @@ fn test_realistic_diff() {
     }
     .init();
 
-    did_doc.update_public_key(public_key.clone());
+    did_doc.update_public_key(public_key);
+
     let key_data_1 = KeyData::Pem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
     let key1 = PublicKey {
         id: "did:iota:123456789abcdefghi#keys-1".into(),
