@@ -245,3 +245,80 @@ fn test_doc_metadata() {
 
     assert_eq!(doc, res_doc);
 }
+
+#[test]
+fn test_realistic_diff() {
+    let json_str = setup_json("diff2");
+
+    let mut did_doc = DIDDocument {
+        context: Context::from("https://w3id.org/did/v1"),
+        id: Subject::from("did:iota:123456789abcdefghi"),
+        ..Default::default()
+    }
+    .init();
+    let endpoint = ServiceEndpoint {
+        context: "https://edv.example.com/".into(),
+        ..Default::default()
+    }
+    .init();
+
+    let service = Service {
+        id: "did:into:123#edv".into(),
+        service_type: "EncryptedDataVault".into(),
+        endpoint,
+    };
+
+    let endpoint2 = ServiceEndpoint {
+        context: "https://edv.example.com/".into(),
+        ..Default::default()
+    }
+    .init();
+
+    let service2 = Service {
+        id: "did:into:123#edv".into(),
+        service_type: "IdentityHub".into(),
+        endpoint: endpoint2,
+    };
+
+    did_doc.update_service(service.clone());
+    did_doc.update_service(service2.clone());
+
+    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
+    let public_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data,
+        ..Default::default()
+    }
+    .init();
+
+    did_doc.update_public_key(public_key.clone());
+    let key_data_1 = KeyData::Pem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
+    let key1 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: key_data_1,
+        ..Default::default()
+    }
+    .init();
+
+    let did_doc_2 = DIDDocument {
+        public_key: vec![did_doc.public_key[0].clone(), key1],
+        ..did_doc.clone()
+    };
+
+    let diff = did_doc.diff(&did_doc_2);
+
+    let json = serde_json::to_string(&diff).unwrap();
+
+    assert_eq!(json_str, json);
+
+    let diff = DIDDocument::get_diff_from_str(json).unwrap();
+
+    let new_doc = did_doc.merge(diff);
+
+    assert_eq!(did_doc_2, new_doc);
+}

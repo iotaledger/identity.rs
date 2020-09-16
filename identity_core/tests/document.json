@@ -109,5 +109,29 @@
                 }
             }
         ]
+    },
+    "diff2": {
+        "public_key": [
+            {
+                "id": {
+                    "method_name": "iota",
+                    "id_segments": [
+                        "123456789abcdefghi"
+                    ],
+                    "fragment": "keys-1"
+                },
+                "key_type": "RsaVerificationKey2018",
+                "controller": {
+                    "method_name": "iota",
+                    "id_segments": [
+                        "123456789abcdefghi"
+                    ]
+                },
+                "key_data": {
+                    "Pem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
+                },
+                "reference": false
+            }
+        ]
     }
 }
