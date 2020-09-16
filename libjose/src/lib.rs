@@ -26,4 +26,5 @@ pub mod jwe;
 pub mod jwk;
 pub mod jws;
 pub mod jwt;
+#[doc(hidden)]
 pub mod utils;
