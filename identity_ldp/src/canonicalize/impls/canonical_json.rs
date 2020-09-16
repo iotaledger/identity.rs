@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use canonical_json::to_string;
 use identity_common::Object;
 use serde_json::to_value;

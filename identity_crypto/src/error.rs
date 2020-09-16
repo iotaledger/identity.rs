@@ -1,3 +1,5 @@
+use identity_common::impl_error_ctor;
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Invalid key: `{0}`")]
@@ -23,4 +25,4 @@ impl Error {
     impl_error_ctor!(custom, Custom, Into<anyhow::Error>);
 }
 
-pub type Result<T, E = Error> = std::result::Result<T, E>;
+pub type Result<T, E = Error> = anyhow::Result<T, E>;

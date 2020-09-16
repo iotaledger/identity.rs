@@ -1,4 +1,5 @@
 use identity_common::Timestamp;
+use serde::{Deserialize, Serialize};
 
 use crate::signature::{SignatureData, SignatureOptions};
 

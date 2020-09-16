@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use identity_common::{Object, Timestamp};
 use identity_crypto::{KeyGen, PublicKey, SecretKey, Sign, Verify};
 
