@@ -392,6 +392,8 @@ impl DataFields {
         }
     }
 
+    #[allow(dead_code)]
+    //TODO: Implement from_into logic.
     pub fn from_into(&self) -> bool {
         match self {
             Self::Named { from_into, .. } => *from_into,
