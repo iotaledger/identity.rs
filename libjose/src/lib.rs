@@ -21,7 +21,10 @@
 #[macro_use]
 extern crate serde;
 
+mod crypto;
+
 pub mod error;
+pub mod jwa;
 pub mod jwe;
 pub mod jwk;
 pub mod jws;
