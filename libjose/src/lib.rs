@@ -22,4 +22,5 @@
 extern crate serde;
 
 pub mod jwe;
+pub mod jwk;
 pub mod utils;
