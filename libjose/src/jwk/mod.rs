@@ -2,8 +2,10 @@
 
 mod key;
 mod key_params;
+mod key_set;
 mod key_type;
 
 pub use self::key::*;
 pub use self::key_params::*;
+pub use self::key_set::*;
 pub use self::key_type::*;
