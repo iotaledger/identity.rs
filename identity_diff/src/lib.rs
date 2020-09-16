@@ -5,6 +5,7 @@
 /// `bool`, and `char` types.  Structs and Enums are supported via `identity_derive` and can be composed of any number
 /// of these types.
 mod hashmap;
+mod hashset;
 mod macros;
 pub mod option;
 mod string;
