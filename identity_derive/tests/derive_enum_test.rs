@@ -53,6 +53,12 @@ pub enum TestOpt {
     InnerS { a: Option<String> },
 }
 
+impl Default for TestOpt {
+    fn default() -> Self {
+        TestOpt::Inner(None)
+    }
+}
+
 #[derive(Diff, Debug, Clone, PartialEq, Default)]
 pub struct InnerStruct {
     y: usize,
@@ -76,6 +82,12 @@ pub enum IgnoreEnum {
         y: usize,
     },
     B(#[diff(should_ignore)] String, usize),
+}
+
+#[derive(Diff, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum IntoFrom {
+    Test(#[diff(into_from)] TestOpt),
+    SomeField(#[diff(into_from)] String),
 }
 
 #[test]
@@ -298,6 +310,7 @@ fn test_enum_opt() {
     let diff = t.into_diff();
 
     let json = serde_json::to_string(&diff).unwrap();
+
     let expected = r#"{"InnerS":{}}"#;
 
     assert_eq!(expected, json);
@@ -319,4 +332,17 @@ fn test_enum_opt() {
     let json = serde_json::to_string(&diff).unwrap();
 
     assert_eq!(expected, json);
+}
+
+#[test]
+fn test_into_from() {
+    let t = IntoFrom::SomeField(String::from("Test"));
+
+    let t2 = IntoFrom::Test(TestOpt::Inner(Some(10)));
+
+    let diff = t.diff(&t2);
+
+    let json = serde_json::to_string(&diff).unwrap();
+
+    println!("{}", json);
 }

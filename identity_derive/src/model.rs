@@ -8,7 +8,7 @@ use syn::{
 use crate::{
     extract_option_segment,
     impls::{debug_impl, derive_diff_enum, derive_diff_struct, diff_impl, impl_debug_enum, impl_diff_enum},
-    should_ignore,
+    into_from, should_ignore,
 };
 
 /// A model for dealing with the different input from the incoming AST.
@@ -83,6 +83,8 @@ pub enum DataFields {
         typ: Type,
         // should ignore flag.
         should_ignore: bool,
+        // serialize field into a its non Diff type
+        into_from: bool,
     },
     Unnamed {
         // field position.
@@ -91,6 +93,8 @@ pub enum DataFields {
         typ: Type,
         // should ignore flag.
         should_ignore: bool,
+        // serialize field into a its non Diff type and deserialize field back into its Diff type.
+        into_from: bool,
     },
 }
 
@@ -245,6 +249,7 @@ impl InputEnum {
                         name: ident.clone(),
                         typ: fs.ty.clone(),
                         should_ignore: should_ignore(fs),
+                        into_from: into_from(fs),
                     });
                 } else {
                     variant.variant = SVariant::Tuple;
@@ -252,6 +257,7 @@ impl InputEnum {
                         position: Literal::usize_unsuffixed(idx),
                         typ: fs.ty.clone(),
                         should_ignore: should_ignore(fs),
+                        into_from: into_from(fs),
                     });
                 }
             });
@@ -289,6 +295,7 @@ impl InputStruct {
                     name: ident.clone(),
                     typ: fs.ty.clone(),
                     should_ignore: should_ignore(fs),
+                    into_from: into_from(fs),
                 });
             } else {
                 model.variant = SVariant::Tuple;
@@ -296,6 +303,7 @@ impl InputStruct {
                     position: Literal::usize_unsuffixed(idx),
                     typ: fs.ty.clone(),
                     should_ignore: should_ignore(fs),
+                    into_from: into_from(fs),
                 });
             }
         });
@@ -381,6 +389,13 @@ impl DataFields {
         match self {
             Self::Named { should_ignore, .. } => *should_ignore,
             Self::Unnamed { should_ignore, .. } => *should_ignore,
+        }
+    }
+
+    pub fn into_from(&self) -> bool {
+        match self {
+            Self::Named { into_from, .. } => *into_from,
+            Self::Unnamed { into_from, .. } => *into_from,
         }
     }
 }
