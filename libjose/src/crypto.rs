@@ -7,6 +7,7 @@ use crate::jwa::HmacAlgorithm;
 use crate::jwa::RsaAlgorithm;
 use crate::jwk::EcCurve;
 use crate::jwk::EdCurve;
+use crate::jwk::HashAlgorithm;
 use crate::jwk::RsaBits;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -19,6 +20,13 @@ pub enum Secret {}
 pub struct PKey<T>(PhantomData<T>);
 
 pub type KeyPair = (PKey<Public>, PKey<Secret>);
+
+pub(crate) fn message_digest(
+  _algorithm: HashAlgorithm,
+  _message: impl AsRef<[u8]>,
+) -> Result<Vec<u8>> {
+  todo!("message_digest")
+}
 
 pub(crate) fn ecdsa_generate(_curve: EcCurve) -> Result<KeyPair> {
   todo!("ecdsa_generate")

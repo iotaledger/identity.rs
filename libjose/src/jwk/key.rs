@@ -1,8 +1,18 @@
 use core::iter::FromIterator;
+use serde_json::to_vec;
+use std::collections::BTreeMap;
 use url::Url;
 
+use crate::error::Error;
+use crate::error::Result;
+use crate::jwk::HashAlgorithm;
 use crate::jwk::JwkParams;
+use crate::jwk::JwkParamsEc;
+use crate::jwk::JwkParamsOct;
+use crate::jwk::JwkParamsOkp;
+use crate::jwk::JwkParamsRsa;
 use crate::jwk::JwkType;
+use crate::utils::encode_b64;
 
 /// JSON Web Key.
 ///
@@ -230,5 +240,49 @@ impl Jwk {
   /// Sets the value of the custom JWK properties. Does not assert valid params.
   pub fn set_params_unchecked(&mut self, value: impl Into<JwkParams>) {
     self.params = Some(value.into());
+  }
+
+  /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).
+  ///
+  /// The thumbprint is returned as a base64url-encoded string.
+  pub fn thumbprint_b64(&self, algorithm: HashAlgorithm) -> Result<String> {
+    self
+      .thumbprint_raw(algorithm)
+      .map(|thumbprint| encode_b64(&thumbprint))
+  }
+
+  /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).
+  ///
+  /// The thumbprint is returned as an unencoded vector of bytes.
+  pub fn thumbprint_raw(&self, algorithm: HashAlgorithm) -> Result<Vec<u8>> {
+    let params: &JwkParams = self
+      .params
+      .as_ref()
+      .ok_or_else(|| Error::InvalidJwkFormat(anyhow!("thumbprint")))?;
+
+    let mut data: BTreeMap<&str, &str> = BTreeMap::new();
+
+    data.insert("kty", self.kty.name());
+
+    match params {
+      JwkParams::Ec(JwkParamsEc { crv, x, y, .. }) => {
+        data.insert("crv", crv);
+        data.insert("x", x);
+        data.insert("y", y);
+      }
+      JwkParams::Rsa(JwkParamsRsa { n, e, .. }) => {
+        data.insert("e", e);
+        data.insert("n", n);
+      }
+      JwkParams::Oct(JwkParamsOct { k }) => {
+        data.insert("k", k);
+      }
+      JwkParams::Okp(JwkParamsOkp { crv, x, .. }) => {
+        data.insert("crv", crv);
+        data.insert("x", x);
+      }
+    }
+
+    algorithm.digest(&to_vec(&data)?)
   }
 }

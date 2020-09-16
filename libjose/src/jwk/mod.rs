@@ -3,6 +3,7 @@
 mod ec_curve;
 mod ecx_curve;
 mod ed_curve;
+mod hash_alg;
 mod key;
 mod key_params;
 mod key_set;
@@ -13,6 +14,7 @@ mod traits;
 pub use self::ec_curve::*;
 pub use self::ecx_curve::*;
 pub use self::ed_curve::*;
+pub use self::hash_alg::*;
 pub use self::key::*;
 pub use self::key_params::*;
 pub use self::key_set::*;
