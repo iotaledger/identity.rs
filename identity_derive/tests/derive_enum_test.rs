@@ -86,8 +86,8 @@ pub enum IgnoreEnum {
 
 #[derive(Diff, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum IntoFrom {
-    Test(#[diff(into_from)] TestOpt),
-    SomeField(#[diff(into_from)] String),
+    Test(#[diff(from_into)] TestOpt),
+    SomeField(#[diff(from_into)] String),
 }
 
 #[test]
@@ -335,7 +335,7 @@ fn test_enum_opt() {
 }
 
 #[test]
-fn test_into_from() {
+fn test_from_into() {
     let t = IntoFrom::SomeField(String::from("Test"));
 
     let t2 = IntoFrom::Test(TestOpt::Inner(Some(10)));

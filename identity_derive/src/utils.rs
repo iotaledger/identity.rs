@@ -23,9 +23,9 @@ pub fn should_ignore(field: &Field) -> bool {
     check_attr_on_field(field, "should_ignore")
 }
 
-/// checks to see if the `into_from` attribute has been put before a field.
-pub fn into_from(field: &Field) -> bool {
-    check_attr_on_field(field, "into_from")
+/// checks to see if the `from_into` attribute has been put before a field.
+pub fn from_into(field: &Field) -> bool {
+    check_attr_on_field(field, "from_into")
 }
 
 fn check_attr_on_field(field: &Field, name: &str) -> bool {

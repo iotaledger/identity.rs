@@ -4,7 +4,7 @@ use syn::{parse_macro_input, DeriveInput};
 
 use crate::{
     model::InputModel,
-    utils::{extract_option_segment, into_from, should_ignore},
+    utils::{extract_option_segment, from_into, should_ignore},
 };
 
 mod impls;

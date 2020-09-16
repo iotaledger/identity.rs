@@ -6,9 +6,9 @@ use syn::{
 };
 
 use crate::{
-    extract_option_segment,
+    extract_option_segment, from_into,
     impls::{debug_impl, derive_diff_enum, derive_diff_struct, diff_impl, impl_debug_enum, impl_diff_enum},
-    into_from, should_ignore,
+    should_ignore,
 };
 
 /// A model for dealing with the different input from the incoming AST.
@@ -84,7 +84,7 @@ pub enum DataFields {
         // should ignore flag.
         should_ignore: bool,
         // serialize field into a its non Diff type
-        into_from: bool,
+        from_into: bool,
     },
     Unnamed {
         // field position.
@@ -94,7 +94,7 @@ pub enum DataFields {
         // should ignore flag.
         should_ignore: bool,
         // serialize field into a its non Diff type and deserialize field back into its Diff type.
-        into_from: bool,
+        from_into: bool,
     },
 }
 
@@ -249,7 +249,7 @@ impl InputEnum {
                         name: ident.clone(),
                         typ: fs.ty.clone(),
                         should_ignore: should_ignore(fs),
-                        into_from: into_from(fs),
+                        from_into: from_into(fs),
                     });
                 } else {
                     variant.variant = SVariant::Tuple;
@@ -257,7 +257,7 @@ impl InputEnum {
                         position: Literal::usize_unsuffixed(idx),
                         typ: fs.ty.clone(),
                         should_ignore: should_ignore(fs),
-                        into_from: into_from(fs),
+                        from_into: from_into(fs),
                     });
                 }
             });
@@ -295,7 +295,7 @@ impl InputStruct {
                     name: ident.clone(),
                     typ: fs.ty.clone(),
                     should_ignore: should_ignore(fs),
-                    into_from: into_from(fs),
+                    from_into: from_into(fs),
                 });
             } else {
                 model.variant = SVariant::Tuple;
@@ -303,7 +303,7 @@ impl InputStruct {
                     position: Literal::usize_unsuffixed(idx),
                     typ: fs.ty.clone(),
                     should_ignore: should_ignore(fs),
-                    into_from: into_from(fs),
+                    from_into: from_into(fs),
                 });
             }
         });
@@ -392,10 +392,10 @@ impl DataFields {
         }
     }
 
-    pub fn into_from(&self) -> bool {
+    pub fn from_into(&self) -> bool {
         match self {
-            Self::Named { into_from, .. } => *into_from,
-            Self::Unnamed { into_from, .. } => *into_from,
+            Self::Named { from_into, .. } => *from_into,
+            Self::Unnamed { from_into, .. } => *from_into,
         }
     }
 }
