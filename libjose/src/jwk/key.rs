@@ -6,12 +6,14 @@ use url::Url;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::HashAlgorithm;
+use crate::jwk::JwkOperation;
 use crate::jwk::JwkParams;
 use crate::jwk::JwkParamsEc;
 use crate::jwk::JwkParamsOct;
 use crate::jwk::JwkParamsOkp;
 use crate::jwk::JwkParamsRsa;
 use crate::jwk::JwkType;
+use crate::jwk::JwkUse;
 use crate::utils::encode_b64;
 
 /// JSON Web Key.
@@ -31,14 +33,14 @@ pub struct Jwk {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.2)
   #[serde(rename = "use", skip_serializing_if = "Option::is_none")]
-  use_: Option<String>,
+  use_: Option<JwkUse>,
   /// Key Operations.
   ///
   /// Identifies the operation(s) for which the key is intended to be used.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.3)
   #[serde(skip_serializing_if = "Option::is_none")]
-  key_ops: Option<Vec<String>>,
+  key_ops: Option<Vec<JwkOperation>>,
   /// Algorithm.
   ///
   /// Identifies the algorithm intended for use with the key.
@@ -124,22 +126,22 @@ impl Jwk {
   }
 
   /// Returns the value for the use property (use).
-  pub fn use_(&self) -> Option<&str> {
-    self.use_.as_deref()
+  pub fn use_(&self) -> Option<&JwkUse> {
+    self.use_.as_ref()
   }
 
   /// Sets a value for the key use parameter (use).
-  pub fn set_use(&mut self, value: impl Into<String>) {
+  pub fn set_use(&mut self, value: impl Into<JwkUse>) {
     self.use_ = Some(value.into());
   }
 
   /// Returns the value for the key operations parameter (key_ops).
-  pub fn key_ops(&self) -> Option<&[String]> {
+  pub fn key_ops(&self) -> Option<&[JwkOperation]> {
     self.key_ops.as_deref()
   }
 
   /// Sets values for the key operations parameter (key_ops).
-  pub fn set_key_ops(&mut self, value: impl IntoIterator<Item = impl Into<String>>) {
+  pub fn set_key_ops(&mut self, value: impl IntoIterator<Item = impl Into<JwkOperation>>) {
     self.key_ops = Some(Vec::from_iter(value.into_iter().map(Into::into)));
   }
 

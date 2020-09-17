@@ -2,6 +2,7 @@ use core::iter::FromIterator;
 use url::Url;
 
 use crate::jwe::JweAlgorithm;
+use crate::jwe::JweCompression;
 use crate::jwe::JweEncryption;
 use crate::jwk::Jwk;
 use crate::utils::Empty;
@@ -31,7 +32,7 @@ pub struct JweHeader<T = Empty> {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7516#section-4.1.3)
   #[serde(skip_serializing_if = "Option::is_none")]
-  zip: Option<String>,
+  zip: Option<JweCompression>,
   /// JWK Set URL.
   ///
   /// A JWK Set containing the public key to which the JWE was encrypted; this
@@ -249,12 +250,12 @@ impl<T> JweHeader<T> {
   }
 
   /// Returns the value of the compression claim (zip).
-  pub fn zip(&self) -> Option<&str> {
-    self.zip.as_deref()
+  pub fn zip(&self) -> Option<&JweCompression> {
+    self.zip.as_ref()
   }
 
   /// Sets a value for the compression claim (zip).
-  pub fn set_zip(&mut self, value: impl Into<String>) {
+  pub fn set_zip(&mut self, value: impl Into<JweCompression>) {
     self.zip = Some(value.into());
   }
 

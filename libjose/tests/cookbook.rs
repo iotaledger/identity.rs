@@ -5,6 +5,7 @@
 use libjose::jwk::Jwk;
 use libjose::jwk::JwkParams;
 use libjose::jwk::JwkType;
+use libjose::jwk::JwkUse;
 use serde_json::from_slice;
 
 const FX_JWK_1: &[u8] = include_bytes!("fixtures/cookbook/jwk/3_1_ec_public_key.json");
@@ -25,7 +26,7 @@ fn test_cookbook_jwk_1() {
   let jwk: Jwk = from_slice(FX_JWK_1).unwrap();
   assert_eq!(jwk.kty(), JwkType::Ec);
   assert_eq!(jwk.kid(), Some("bilbo.baggins@hobbiton.example"));
-  assert_eq!(jwk.use_(), Some("sig"));
+  assert_eq!(jwk.use_(), Some(&JwkUse::Signature));
 
   assert_matches!(
     jwk.params().unwrap(),
@@ -48,7 +49,7 @@ fn test_cookbook_jwk_2() {
   let jwk: Jwk = from_slice(FX_JWK_2).unwrap();
   assert_eq!(jwk.kty(), JwkType::Ec);
   assert_eq!(jwk.kid(), Some("bilbo.baggins@hobbiton.example"));
-  assert_eq!(jwk.use_(), Some("sig"));
+  assert_eq!(jwk.use_(), Some(&JwkUse::Signature));
 
   assert_matches!(
     jwk.params().unwrap(),
@@ -76,7 +77,7 @@ fn test_cookbook_jwk_3() {
   let jwk: Jwk = from_slice(FX_JWK_3).unwrap();
   assert_eq!(jwk.kty(), JwkType::Rsa);
   assert_eq!(jwk.kid(), Some("bilbo.baggins@hobbiton.example"));
-  assert_eq!(jwk.use_(), Some("sig"));
+  assert_eq!(jwk.use_(), Some(&JwkUse::Signature));
 
   assert_matches!(
     jwk.params().unwrap(),
@@ -94,7 +95,7 @@ fn test_cookbook_jwk_4() {
   let jwk: Jwk = from_slice(FX_JWK_4).unwrap();
   assert_eq!(jwk.kty(), JwkType::Rsa);
   assert_eq!(jwk.kid(), Some("bilbo.baggins@hobbiton.example"));
-  assert_eq!(jwk.use_(), Some("sig"));
+  assert_eq!(jwk.use_(), Some(&JwkUse::Signature));
 
   assert_matches!(
     jwk.params().unwrap(),
@@ -137,7 +138,7 @@ fn test_cookbook_jwk_5() {
   let jwk: Jwk = from_slice(FX_JWK_5).unwrap();
   assert_eq!(jwk.kty(), JwkType::Oct);
   assert_eq!(jwk.kid(), Some("018c0ae5-4d9b-471b-bfd6-eef314bc7037"));
-  assert_eq!(jwk.use_(), Some("sig"));
+  assert_eq!(jwk.use_(), Some(&JwkUse::Signature));
   assert_eq!(jwk.alg(), Some("HS256"));
 
   assert_matches!(
@@ -151,7 +152,7 @@ fn test_cookbook_jwk_6() {
   let jwk: Jwk = from_slice(FX_JWK_6).unwrap();
   assert_eq!(jwk.kty(), JwkType::Oct);
   assert_eq!(jwk.kid(), Some("1e571774-2e08-40da-8308-e8d68773842d"));
-  assert_eq!(jwk.use_(), Some("enc"));
+  assert_eq!(jwk.use_(), Some(&JwkUse::Encryption));
   assert_eq!(jwk.alg(), Some("A256GCM"));
 
   assert_matches!(
