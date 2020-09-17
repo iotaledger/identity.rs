@@ -271,8 +271,6 @@ pub fn impl_from_into(input: &InputModel) -> TokenStream {
                         #S: std::clone::Clone
                         + std::default::Default
                         + identity_diff::Diff
-                        + std::fmt::Debug
-                        + std::cmp::PartialEq
                         + for<'de> serde::Deserialize<'de>
                         + serde::Serialize
                         #(+ #bounds)*
@@ -285,16 +283,14 @@ pub fn impl_from_into(input: &InputModel) -> TokenStream {
         let clause = quote! { where #(#preds),*};
 
         quote! {
-            impl <#(#param_decls),*> std::convert::From<#name<#params>> for #diff<#params>
-                #clause
+            impl <#(#param_decls),*> std::convert::From<#name<#params>> for #diff<#params> #clause
             {
                 fn from(name: #name<#params>) -> Self {
                     name.into_diff()
                 }
             }
 
-            impl <#(#param_decls),*> std::convert::From<#diff<#params>> for #name<#params>
-                #clause
+            impl <#(#param_decls),*> std::convert::From<#diff<#params>> for #name<#params> #clause
             {
                 fn from(diff: #diff<#params>) -> Self {
                     Self::from_diff(diff)
@@ -350,7 +346,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
 
     // get predicates and generate where clause.
     let preds: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
-    let clause = quote! { where #(#preds),*};
+    let clause = quote! { where #(#preds),* };
 
     match svariant {
         // named struct.
