@@ -11,6 +11,17 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
     let diff: &Ident = input.diff();
     let evariants: &Vec<EVariant> = input.e_variants();
 
+    let serde_attrs = if input.from_into() {
+        let name = input.name();
+        let stype = quote!(#name).to_string();
+
+        quote! {
+            #[serde(from=#stype, into=#stype)]
+        }
+    } else {
+        quote! {}
+    };
+
     let param_decls: &Punctuated<GenericParam, Comma> = input.param_decls();
 
     let clause = quote! {};
@@ -70,6 +81,7 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
     quote! {
         #[derive(Clone, PartialEq)]
         #[derive(serde::Deserialize, serde::Serialize)]
+        #serde_attrs
         pub enum #diff<#(#param_decls),*>
             #clause
             {

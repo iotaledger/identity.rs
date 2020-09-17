@@ -85,9 +85,11 @@ pub enum IgnoreEnum {
 }
 
 #[derive(Diff, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[diff(from_into)]
+#[serde(untagged)]
 pub enum IntoFrom {
-    Test(#[diff(from_into)] TestOpt),
-    SomeField(#[diff(from_into)] String),
+    Test(TestOpt),
+    SomeField(String),
 }
 
 #[test]
@@ -344,5 +346,15 @@ fn test_from_into() {
 
     let json = serde_json::to_string(&diff).unwrap();
 
-    println!("{}", json);
+    let expected = r#"{"Inner":10}"#;
+
+    assert_eq!(expected, json);
+
+    let diff: DiffIntoFrom = serde_json::from_str(&json).unwrap();
+
+    let merge = t2.merge(diff);
+
+    let expected = IntoFrom::Test(TestOpt::Inner(Some(10)));
+
+    assert_eq!(expected, merge);
 }

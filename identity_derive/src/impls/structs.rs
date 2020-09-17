@@ -13,6 +13,17 @@ pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
     let fields = input.fields();
     let param_decls = input.param_decls();
     let clause = input.clause();
+    let serde_attrs = if input.from_into() {
+        let name = input.name();
+        let stype = quote!(#name).to_string();
+
+        quote! {
+            #[serde(from=#stype, into=#stype)]
+        }
+    } else {
+        quote! {}
+    };
+
     // set the param declarations.
     let param_decls: Vec<TokenStream> = param_decls
         .iter()
@@ -53,6 +64,7 @@ pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
             quote! {
                 #[derive(Clone, PartialEq, Default)]
                 #[derive(serde::Deserialize, serde::Serialize)]
+                #serde_attrs
                 pub struct #diff<#(#param_decls),*>
                     #clause
                 {
@@ -65,6 +77,7 @@ pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
             // generate the Diff struct.
             quote! {
                 #[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize, Default)]
+                #serde_attrs
                 pub struct #diff<#(#param_decls),*> (
                     #( #[doc(hidden)] #[serde(skip_serializing_if = "Option::is_none")] pub(self) #field_tps, )*
                 ) #clause ;
@@ -74,6 +87,7 @@ pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
         SVariant::Unit => quote! {
             // generate the Diff struct.
             #[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize, Default)]
+            #serde_attrs
             pub struct #diff<#(#param_decls),*> #clause ;
         },
     }
@@ -225,6 +239,70 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
                     }
                 }
         },
+    }
+}
+
+pub fn impl_from_into(input: &InputModel) -> TokenStream {
+    if input.from_into() {
+        let diff = input.diff();
+        let param_decls = input.param_decls();
+        let params = input.params();
+        let clause = input.clause();
+        let name = input.name();
+        let param_decls: Vec<TokenStream> = param_decls
+            .iter()
+            .map(|tp_decl| match tp_decl {
+                GenericParam::Lifetime(life) => quote! { #life  },
+                GenericParam::Const(consts) => quote! { #consts},
+                GenericParam::Type(typ) => {
+                    let S: &Ident = &typ.ident;
+
+                    let bounds: Vec<TokenStream> = typ
+                        .bounds
+                        .iter()
+                        .map(|bound| {
+                            quote! {
+                                #bound
+                            }
+                        })
+                        .collect();
+
+                    quote! {
+                        #S: std::clone::Clone
+                        + std::default::Default
+                        + identity_diff::Diff
+                        + std::fmt::Debug
+                        + std::cmp::PartialEq
+                        + for<'de> serde::Deserialize<'de>
+                        + serde::Serialize
+                        #(+ #bounds)*
+                    }
+                }
+            })
+            .collect();
+
+        let preds: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
+        let clause = quote! { where #(#preds),*};
+
+        quote! {
+            impl <#(#param_decls),*> std::convert::From<#name<#params>> for #diff<#params>
+                #clause
+            {
+                fn from(name: #name<#params>) -> Self {
+                    name.into_diff()
+                }
+            }
+
+            impl <#(#param_decls),*> std::convert::From<#diff<#params>> for #name<#params>
+                #clause
+            {
+                fn from(diff: #diff<#params>) -> Self {
+                    Self::from_diff(diff)
+                }
+            }
+        }
+    } else {
+        quote! {}
     }
 }
 

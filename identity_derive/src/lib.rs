@@ -4,7 +4,7 @@ use syn::{parse_macro_input, DeriveInput};
 
 use crate::{
     model::InputModel,
-    utils::{extract_option_segment, from_into, should_ignore},
+    utils::{extract_option_segment, parse_from_into, should_ignore},
 };
 
 mod impls;
@@ -29,13 +29,17 @@ fn internal(input: DeriveInput) -> TokenStream {
     // diff trait implementation derivation.
     let diff_typ = model.derive_diff();
 
+    let from_into = model.impl_from_into();
+
     let output = quote! {
         #diff_typ
         #debug
         #diff
+        #from_into
     };
 
     // for debugging.
+    // println!("{}", from_into);
     // println!("{}", diff_typ);
     // println!("{}", debug);
     // println!("{}", diff);

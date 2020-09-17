@@ -59,6 +59,15 @@ struct TestOpt {
 #[derive(Diff, Debug, Clone, PartialEq, Default, Deserialize, Serialize)]
 struct OptTest(Option<u32>);
 
+#[derive(Diff, Debug, Clone, PartialEq, Default, Deserialize, Serialize)]
+#[diff(from_into)]
+struct FromInto {
+    #[serde(rename = "test", default, skip_serializing_if = "Option::is_none")]
+    a: Option<String>,
+    #[serde(rename = "type")]
+    b: Vec<String>,
+}
+
 #[test]
 fn test_traditional_struct() {
     let t = Test { a: 10 };
@@ -305,6 +314,27 @@ fn test_option() {
     let diff = test_opt_3.into_diff();
 
     let json = serde_json::to_string(&diff).unwrap();
+
+    assert_eq!(expected, json);
+}
+
+#[test]
+fn test_from_into() {
+    let t = FromInto {
+        a: Some(String::from("test")),
+        b: vec![String::from("another test")],
+    };
+
+    let t2 = FromInto {
+        a: None,
+        b: vec![String::from("another test"), String::from("test")],
+    };
+
+    let diff = t.diff(&t2);
+
+    let json = serde_json::to_string(&diff).unwrap();
+
+    let expected = r#"{"type":["test"]}"#;
 
     assert_eq!(expected, json);
 }

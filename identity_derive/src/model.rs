@@ -6,9 +6,11 @@ use syn::{
 };
 
 use crate::{
-    extract_option_segment, from_into,
-    impls::{debug_impl, derive_diff_enum, derive_diff_struct, diff_impl, impl_debug_enum, impl_diff_enum},
-    should_ignore,
+    extract_option_segment,
+    impls::{
+        debug_impl, derive_diff_enum, derive_diff_struct, diff_impl, impl_debug_enum, impl_diff_enum, impl_from_into,
+    },
+    parse_from_into, should_ignore,
 };
 
 /// A model for dealing with the different input from the incoming AST.
@@ -33,6 +35,8 @@ pub struct InputEnum {
     pub params: Punctuated<Ident, Comma>,
     // where clause for the Enum.
     pub clause: WhereClause,
+    // should this enum be serialized/deserialized as its non-diff counterpart.
+    pub from_into: bool,
 }
 
 /// Sorts data regarding incoming Structs.
@@ -52,6 +56,8 @@ pub struct InputStruct {
     pub params: Punctuated<Ident, Comma>,
     // where clause for the Enum.
     pub clause: WhereClause,
+    // should this struct be serialized/deserialized as its non-diff counterpart/
+    pub from_into: bool,
 }
 
 /// Enum variant data.
@@ -83,8 +89,6 @@ pub enum DataFields {
         typ: Type,
         // should ignore flag.
         should_ignore: bool,
-        // serialize field into a its non Diff type
-        from_into: bool,
     },
     Unnamed {
         // field position.
@@ -93,8 +97,6 @@ pub enum DataFields {
         typ: Type,
         // should ignore flag.
         should_ignore: bool,
-        // serialize field into a its non Diff type and deserialize field back into its Diff type.
-        from_into: bool,
     },
 }
 
@@ -199,6 +201,13 @@ impl InputModel {
         }
     }
 
+    pub fn impl_from_into(&self) -> TokenStream {
+        match self {
+            Self::Struct(InputStruct { .. }) => impl_from_into(self),
+            Self::Enum(InputEnum { .. }) => impl_from_into(self),
+        }
+    }
+
     /// Implement the `Diff` trait on Enums and Structs.
     pub fn impl_diff(&self) -> TokenStream {
         match self {
@@ -214,11 +223,19 @@ impl InputModel {
             Self::Enum(InputEnum { .. }) => derive_diff_enum(self),
         }
     }
+
+    pub fn from_into(&self) -> bool {
+        match self {
+            Self::Struct(InputStruct { from_into, .. }) => *from_into,
+            Self::Enum(InputEnum { from_into, .. }) => *from_into,
+        }
+    }
 }
 
 impl InputEnum {
     /// create a new `InputEnum`.
     pub fn new(input: &DeriveInput) -> Self {
+        let from_into = parse_from_into(&input);
         Self {
             name: input.ident.clone(),
             diff: format_ident!("Diff{}", &input.ident),
@@ -233,6 +250,7 @@ impl InputEnum {
                 where_token: Token![where](Span::call_site()),
                 predicates: Punctuated::new(),
             }),
+            from_into,
         }
     }
 
@@ -249,7 +267,6 @@ impl InputEnum {
                         name: ident.clone(),
                         typ: fs.ty.clone(),
                         should_ignore: should_ignore(fs),
-                        from_into: from_into(fs),
                     });
                 } else {
                     variant.variant = SVariant::Tuple;
@@ -257,7 +274,6 @@ impl InputEnum {
                         position: Literal::usize_unsuffixed(idx),
                         typ: fs.ty.clone(),
                         should_ignore: should_ignore(fs),
-                        from_into: from_into(fs),
                     });
                 }
             });
@@ -271,6 +287,8 @@ impl InputEnum {
 impl InputStruct {
     /// create a new `InputStruct`.
     pub fn new(input: &DeriveInput) -> Self {
+        let from_into = parse_from_into(&input);
+
         Self {
             variant: SVariant::Unit,
             name: input.ident.clone(),
@@ -282,6 +300,7 @@ impl InputStruct {
                 where_token: Token![where](Span::call_site()),
                 predicates: Punctuated::new(),
             }),
+            from_into,
         }
     }
 
@@ -295,7 +314,6 @@ impl InputStruct {
                     name: ident.clone(),
                     typ: fs.ty.clone(),
                     should_ignore: should_ignore(fs),
-                    from_into: from_into(fs),
                 });
             } else {
                 model.variant = SVariant::Tuple;
@@ -303,7 +321,6 @@ impl InputStruct {
                     position: Literal::usize_unsuffixed(idx),
                     typ: fs.ty.clone(),
                     should_ignore: should_ignore(fs),
-                    from_into: from_into(fs),
                 });
             }
         });
@@ -389,15 +406,6 @@ impl DataFields {
         match self {
             Self::Named { should_ignore, .. } => *should_ignore,
             Self::Unnamed { should_ignore, .. } => *should_ignore,
-        }
-    }
-
-    #[allow(dead_code)]
-    //TODO: Implement from_into logic.
-    pub fn from_into(&self) -> bool {
-        match self {
-            Self::Named { from_into, .. } => *from_into,
-            Self::Unnamed { from_into, .. } => *from_into,
         }
     }
 }
