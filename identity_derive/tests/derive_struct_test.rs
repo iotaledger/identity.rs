@@ -337,4 +337,15 @@ fn test_from_into() {
     let expected = r#"{"type":["test"]}"#;
 
     assert_eq!(expected, json);
+
+    let diff: DiffFromInto = serde_json::from_str(&json).unwrap();
+
+    let merge = t.merge(diff);
+
+    let expected = FromInto {
+        a: Some(String::from("test")),
+        b: vec![String::from("another test"), String::from("test")],
+    };
+
+    assert_eq!(expected, merge);
 }
