@@ -15,13 +15,7 @@ use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;
 use crate::utils::decode_b64_into;
 use crate::utils::encode_b64_into;
-use crate::utils::Empty;
-
-#[derive(Clone, Default, Debug, PartialEq)]
-pub struct JwsRawToken<T = Empty> {
-  pub header: JwsHeader<T>,
-  pub claims: Vec<u8>,
-}
+use crate::jws::JwsRawToken;
 
 /// The JWS Compact Serialization represents digitally signed or MACed
 /// content as a compact, URL-safe string. This string is:
