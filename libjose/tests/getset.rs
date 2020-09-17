@@ -105,4 +105,7 @@ fn test_jwt_claims_getset() {
   test_getset!(JwtClaims, nbf, set_nbf, Option = 123456789);
   test_getset!(JwtClaims, iat, set_iat, Option = 123456789);
   test_getset!(JwtClaims, jti, set_jti, Option = "jwt id");
+  test_getset!(JwtClaims, did, set_did, OptionRef = libjose::jwt::DID("did:example:123456789abcdefghi".into()));
+  test_getset!(JwtClaims, vc, set_vc, OptionRef = libjose::jwt::Credential::Standard);
+  test_getset!(JwtClaims, vp, set_vp, OptionRef = libjose::jwt::Presentation::Standard);
 }

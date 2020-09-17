@@ -2,6 +2,24 @@ use core::iter::FromIterator;
 
 use crate::utils::Empty;
 
+// TODO
+#[derive(Clone, Default, Debug, PartialEq, Deserialize, Serialize)]
+pub struct DID(pub String);
+
+// TODO
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub enum Credential {
+  Standard,
+  Verifiable,
+}
+
+// TODO
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub enum Presentation {
+  Standard,
+  Verifiable,
+}
+
 /// JSON Web Token Claims
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7519#section-4)
@@ -46,6 +64,21 @@ pub struct JwtClaims<T = Empty> {
   /// [More Info](https://tools.ietf.org/html/rfc7519#section-4.1.7)
   #[serde(skip_serializing_if = "Option::is_none")]
   jti: Option<String>, // JWT ID
+  /// Identifies a decentralized digital identity.
+  ///
+  /// [More Info](https://www.w3.org/TR/did-core/)
+  #[serde(skip_serializing_if = "Option::is_none")]
+  did: Option<DID>, // Decentralized Identifier
+  /// Contains the properties of a Verifiable Credential
+  ///
+  /// [More Info](https://w3c.github.io/vc-data-model/#json-web-token)
+  #[serde(skip_serializing_if = "Option::is_none")]
+  vc: Option<Credential>, // Verifiable Credential
+  /// Contains the properties of a Verifiable Presentation
+  ///
+  /// [More Info](https://w3c.github.io/vc-data-model/#json-web-token)
+  #[serde(skip_serializing_if = "Option::is_none")]
+  vp: Option<Presentation>, // Verifiable Presentation
   /// Public/Private Claim Names
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7519#section-4.2)
@@ -64,6 +97,9 @@ impl<T> JwtClaims<T> {
       nbf: None,
       iat: None,
       jti: None,
+      did: None,
+      vc: None,
+      vp: None,
       custom: None,
     }
   }
@@ -136,6 +172,36 @@ impl<T> JwtClaims<T> {
   /// Sets a value for the JWT ID claim (jti).
   pub fn set_jti(&mut self, value: impl Into<String>) {
     self.jti = Some(value.into());
+  }
+
+  /// Returns the value for the JWT DID claim (did).
+  pub fn did(&self) -> Option<&DID> {
+    self.did.as_ref()
+  }
+
+  /// Sets a value for the JWT DID claim (did).
+  pub fn set_did(&mut self, value: impl Into<DID>) {
+    self.did = Some(value.into());
+  }
+
+  /// Returns the value for the JWT verifiable credential claim (vc).
+  pub fn vc(&self) -> Option<&Credential> {
+    self.vc.as_ref()
+  }
+
+  /// Sets a value for the JWT verifiable credential claim (vc).
+  pub fn set_vc(&mut self, value: impl Into<Credential>) {
+    self.vc = Some(value.into());
+  }
+
+  /// Returns the value for the JWT verifiable presentation claim (vp).
+  pub fn vp(&self) -> Option<&Presentation> {
+    self.vp.as_ref()
+  }
+
+  /// Sets a value for the JWT verifiable presentation claim (vp).
+  pub fn set_vp(&mut self, value: impl Into<Presentation>) {
+    self.vp = Some(value.into());
   }
 
   /// Returns a reference to the custom JWT claims.
