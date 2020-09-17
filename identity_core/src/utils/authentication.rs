@@ -6,6 +6,7 @@ use crate::utils::{PublicKey, Subject};
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, PartialEq, Diff, Serialize, Deserialize)]
 #[serde(untagged)]
+#[diff(from_into)]
 pub enum Authentication {
     Method(Subject),
     Key(PublicKey),

@@ -183,8 +183,6 @@ fn test_doc_diff_timestamps() {
 fn test_diff_merge_from_string() {
     let diff_str = setup_json("diff");
 
-    let def_doc = DIDDocument::default();
-
     let mut doc = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
         id: Subject::from("did:iota:123456789abcdefghi"),
@@ -219,6 +217,8 @@ fn test_diff_merge_from_string() {
     doc.update_public_key(public_key);
 
     let diff = DIDDocument::get_diff_from_str(diff_str).unwrap();
+
+    let def_doc = DIDDocument::default();
 
     let res = def_doc.merge(diff);
 

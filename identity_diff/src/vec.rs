@@ -92,10 +92,13 @@ where
     fn from_diff(diff: Self::Type) -> Self {
         let mut vec: Vec<T> = vec![];
 
-        for (index, elm) in diff.0.into_iter().enumerate() {
+        for (_idx, elm) in diff.0.into_iter().enumerate() {
             match elm {
                 InnerVec::Add(add) => vec.push(<T>::from_diff(add)),
-                _ => panic!("Invalid Diff {:?}", index),
+                InnerVec::Change { index: _, item } => {
+                    vec.push(<T>::from_diff(item));
+                }
+                _ => {}
             }
         }
 
@@ -263,4 +266,16 @@ mod tests {
 
         assert_eq!(vec_a, vec_c);
     }
+}
+
+#[test]
+fn test_into_from_diff() {
+    let vec_a = vec![1, 2, 3, 4, 5, 6];
+    let vec_b = vec![2, 3, 4, 3, 2, 1, 10, 20];
+
+    let diff = vec_a.diff(&vec_b);
+
+    let vec = Vec::from_diff(diff);
+
+    assert_eq!(vec, vec_b);
 }

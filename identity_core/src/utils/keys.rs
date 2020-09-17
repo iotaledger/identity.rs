@@ -45,6 +45,7 @@ pub enum KeyData {
 /// Public key struct that contains `id`, `key_type`, `controller`, `encoding_type`, `key_data` and `reference`.
 /// `reference` defines whether or not the PublicKey is a reference.
 #[derive(Debug, Clone, Default, PartialEq, Diff, Deserialize, Serialize)]
+#[diff(from_into)]
 pub struct PublicKey {
     pub id: Subject,
     #[serde(rename = "type")]

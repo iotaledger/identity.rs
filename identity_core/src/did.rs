@@ -18,6 +18,7 @@ type DIDTuple = (String, Option<String>);
 
 /// a Decentralized identity structure.  
 #[derive(Debug, PartialEq, Default, Eq, Clone, Diff, Hash, Ord, PartialOrd)]
+#[diff(from_into)]
 pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
@@ -28,6 +29,7 @@ pub struct DID {
 
 /// a DID Params struct.
 #[derive(Debug, PartialEq, Eq, Clone, Default, Hash, PartialOrd, Ord, Diff, DDeserialize, DSerialize)]
+#[diff(from_into)]
 pub struct Param {
     pub key: String,
     pub value: Option<String>,

@@ -64,50 +64,21 @@
                 "item": "https://w3id.org/did/v1"
             }
         ],
-        "id": {
-            "method_name": "iota",
-            "id_segments": [
-                "123456789abcdefghi"
-            ]
-        },
+        "id": "did:iota:123456789abcdefghi",
         "public_key": [
             {
-                "id": {
-                    "method_name": "iota",
-                    "id_segments": [
-                        "123456789abcdefghi"
-                    ],
-                    "fragment": "keys-1"
-                },
-                "key_type": "RsaVerificationKey2018",
-                "controller": {
-                    "method_name": "iota",
-                    "id_segments": [
-                        "123456789abcdefghi"
-                    ]
-                },
-                "key_data": {
-                    "Base58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-                },
-                "reference": false
+                "id": "did:iota:123456789abcdefghi#keys-1",
+                "type": "RsaVerificationKey2018",
+                "controller": "did:iota:123456789abcdefghi",
+                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
             }
         ],
         "services": [
             {
                 "Add": {
-                    "id": {
-                        "method_name": "into",
-                        "id_segments": [
-                            "123"
-                        ],
-                        "fragment": "edv"
-                    },
-                    "service_type": "EncryptedDataVault",
-                    "endpoint": {
-                        "context": [
-                            "https://edv.example.com/"
-                        ]
-                    }
+                    "id": "did:into:123#edv",
+                    "type": "EncryptedDataVault",
+                    "serviceEndpoint": "https://edv.example.com/"
                 }
             }
         ]
@@ -115,24 +86,10 @@
     "diff2": {
         "public_key": [
             {
-                "id": {
-                    "method_name": "iota",
-                    "id_segments": [
-                        "123456789abcdefghi"
-                    ],
-                    "fragment": "keys-1"
-                },
-                "key_type": "RsaVerificationKey2018",
-                "controller": {
-                    "method_name": "iota",
-                    "id_segments": [
-                        "123456789abcdefghi"
-                    ]
-                },
-                "key_data": {
-                    "Pem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
-                },
-                "reference": false
+                "id": "did:iota:123456789abcdefghi#keys-1",
+                "type": "RsaVerificationKey2018",
+                "controller": "did:iota:123456789abcdefghi",
+                "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
             }
         ]
     }

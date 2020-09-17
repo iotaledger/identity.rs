@@ -8,6 +8,7 @@ use std::{hash::Hash, str::FromStr};
 /// A wrapped `DID` type called a subject.  
 #[derive(Eq, PartialEq, Debug, Default, Clone, Serialize, Deserialize, Diff, Hash, PartialOrd, Ord)]
 #[serde(transparent)]
+#[diff(from_into)]
 pub struct Subject(DID);
 
 impl Subject {

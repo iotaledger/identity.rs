@@ -8,6 +8,7 @@ use identity_diff::Diff;
 /// Describes a `Service` in a `DIDDocument` type. Contains an `id`, `service_type` and `endpoint`.  The `endpoint` can
 /// be represented as a `String` or a `ServiceEndpoint` in json.
 #[derive(Debug, Eq, PartialEq, Deserialize, Serialize, Diff, Clone, Default, Hash, PartialOrd, Ord)]
+#[diff(from_into)]
 pub struct Service {
     #[serde(default)]
     pub id: Subject,
@@ -21,6 +22,7 @@ pub struct Service {
 /// and `instances`.  If neither `instances` nor `endpoint_type` is specified, the `ServiceEndpoint` is represented as a
 /// String in json using the `context`.
 #[derive(Debug, Eq, PartialEq, Clone, Diff, Default, Hash, PartialOrd, Ord)]
+#[diff(from_into)]
 pub struct ServiceEndpoint {
     pub context: Context,
     pub endpoint_type: Option<String>,
