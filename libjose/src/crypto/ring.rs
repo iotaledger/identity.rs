@@ -299,7 +299,7 @@ fn verify_es256k(message: &[u8], signature: &[u8], key: &PKey<Public>) -> Result
   if secp256k1::verify(&msg, &sig, &key) {
     Ok(())
   } else {
-    Err(Error::CryptoError(anyhow!("Invalid Signature: ES256K")))
+    Err(Error::invalid_sig("ES256K"))
   }
 }
 

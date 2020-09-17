@@ -8,8 +8,22 @@ pub enum Error {
   InvalidJson(#[from] serde_json::Error),
   #[error("Invalid JWK Format: {0}")]
   InvalidJwkFormat(anyhow::Error),
+  #[error("Invalid JWS Format: {0}")]
+  InvalidJwsFormat(anyhow::Error),
+  #[error("Invalid Claims: {0}")]
+  InvalidClaims(anyhow::Error),
   #[error("Crypto Error: {0}")]
   CryptoError(anyhow::Error),
+}
+
+impl Error {
+  pub fn invalid_key() -> Self {
+    Self::CryptoError(anyhow!("Invalid Key"))
+  }
+
+  pub fn invalid_sig(algorithm: &'static str) -> Self {
+    Self::CryptoError(anyhow!("Invalid Signature: {}", algorithm))
+  }
 }
 
 #[cfg(feature = "ring-core")]
@@ -22,13 +36,13 @@ impl From<ring::error::Unspecified> for Error {
 #[cfg(feature = "ring-core")]
 impl From<ring::error::KeyRejected> for Error {
   fn from(_: ring::error::KeyRejected) -> Self {
-    Self::CryptoError(anyhow!("Invalid Key"))
+    Self::invalid_key()
   }
 }
 
 #[cfg(feature = "secp256k1")]
 impl From<secp256k1::Error> for Error {
   fn from(_: secp256k1::Error) -> Self {
-    Self::CryptoError(anyhow!("Invalid Signature: ES256K"))
+    Self::invalid_sig("ES256K")
   }
 }
