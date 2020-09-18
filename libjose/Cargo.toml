@@ -21,6 +21,7 @@ url = { version = "2.1", default-features = false, features = ["serde"] }
 zeroize = { version = "1.1", default-features = false }
 
 # Crypto-related - TODO: [[[ STRONGHOLD ]]]
+crypto = { git = "https://github.com/iotaledger/stronghold.rs", branch = "dev" }
 libsecp256k1 = { version = "0.3", default-features = false, features = ["hmac"], optional = true }
 lazy_static = { version = "1.4", default-features = false, optional = true }
 rand = { version = "0.7", default-features = false, features = ["getrandom"], optional = true }

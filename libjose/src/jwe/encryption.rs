@@ -5,6 +5,8 @@ use core::fmt::Result;
 /// Supported algorithms for the JSON Web Encryption `enc` claim.
 ///
 /// [More Info](https://www.iana.org/assignments/jose/jose.xhtml#web-signature-encryption-algorithms)
+///
+/// [ChaCha20-Poly1305 (draft)](https://tools.ietf.org/html/draft-amringer-jose-chacha-01)
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[allow(non_camel_case_types)]
 pub enum JweEncryption {
@@ -23,6 +25,10 @@ pub enum JweEncryption {
   A192GCM,
   /// AES GCM using 256-bit key.
   A256GCM,
+  /// AEAD_CHACHA20_POLY1305 using 96-bit key.
+  C20P,
+  /// AEAD_XCHACHA20_POLY1305 using 192-bit key.
+  XC20P,
 }
 
 impl JweEncryption {
@@ -34,6 +40,8 @@ impl JweEncryption {
       Self::A128GCM => "A128GCM",
       Self::A192GCM => "A192GCM",
       Self::A256GCM => "A256GCM",
+      Self::C20P => "C20P",
+      Self::XC20P => "XC20P",
     }
   }
 }

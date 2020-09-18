@@ -14,6 +14,10 @@ pub enum Error {
   InvalidClaims(anyhow::Error),
   #[error("Crypto Error: {0}")]
   CryptoError(anyhow::Error),
+  #[error("Encode Error: {0}")]
+  EncodeError(anyhow::Error),
+  #[error("Decode Error: {0}")]
+  DecodeError(anyhow::Error),
 }
 
 impl Error {

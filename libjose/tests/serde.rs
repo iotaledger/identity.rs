@@ -40,6 +40,8 @@ fn test_jwe_algorithm_serde() {
   assert_serde!(JweAlgorithm::PBES2_HS256_A128KW, jstr!("PBES2-HS256+A128KW"));
   assert_serde!(JweAlgorithm::PBES2_HS384_A192KW, jstr!("PBES2-HS384+A192KW"));
   assert_serde!(JweAlgorithm::PBES2_HS512_A256KW, jstr!("PBES2-HS512+A256KW"));
+  assert_serde!(JweAlgorithm::ECDH_ES_C20PKW, jstr!("ECDH-ES+C20PKW"));
+  assert_serde!(JweAlgorithm::ECDH_ES_XC20PKW, jstr!("ECDH-ES+XC20PKW"));
 }
 
 #[test]
@@ -56,6 +58,8 @@ fn test_jwe_encryption_serde() {
   assert_serde!(JweEncryption::A128GCM, jstr!("A128GCM"));
   assert_serde!(JweEncryption::A192GCM, jstr!("A192GCM"));
   assert_serde!(JweEncryption::A256GCM, jstr!("A256GCM"));
+  assert_serde!(JweEncryption::C20P, jstr!("C20P"));
+  assert_serde!(JweEncryption::XC20P, jstr!("XC20P"));
 }
 
 #[test]

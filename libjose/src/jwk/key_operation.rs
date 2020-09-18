@@ -12,15 +12,15 @@ use serde::Serializer;
 /// [More Info](https://www.iana.org/assignments/jose/jose.xhtml#web-key-operations)
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum JwkOperation {
-  /// Compute digital signature or MAC.e = )]
+  /// Compute digital signature or MAC.
   Sign,
-  /// Verify digital signature or MAC .)]
+  /// Verify digital signature or MAC.
   Verify,
-  /// Encrypt content .
+  /// Encrypt content.
   Encrypt,
   /// Decrypt content and validate decryption, if applicable.
   Decrypt,
-  /// Encrypt key .
+  /// Encrypt key.
   WrapKey,
   /// Decrypt key and validate decryption, if applicable.
   UnwrapKey,

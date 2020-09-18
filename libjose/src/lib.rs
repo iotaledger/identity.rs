@@ -1,6 +1,6 @@
 //! # jose
 //!
-//! A library for JOSE (JSON Object Signing and Encryption).
+//! A library for JSON Object Signing and Encryption (JOSE).
 //!
 //! ## References
 //! - [IANA JOSE Registry](https://www.iana.org/assignments/jose/jose.xhtml)

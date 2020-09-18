@@ -6,8 +6,8 @@ use serde_json::to_vec;
 
 use crate::error::Error;
 use crate::error::Result;
-use crate::jws::deserialize_compact;
-use crate::jws::serialize_compact;
+use crate::jws::Encoder;
+use crate::jws::Decoder;
 use crate::jws::JwsHeader;
 use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;
@@ -47,20 +47,20 @@ impl<T, U> JwsToken<T, U> {
     &mut self.claims
   }
 
-  pub fn serialize_compact(&self, signer: &dyn JwsSigner) -> Result<String>
+  pub fn encode_compact(&self, signer: &dyn JwsSigner) -> Result<String>
   where
     T: Serialize,
     U: Serialize,
   {
-    serialize_compact(&to_vec(&self.claims)?, &self.header, signer)
+    Encoder::encode_compact(&to_vec(&self.claims)?, &self.header, signer)
   }
 
-  pub fn deserialize_compact(data: impl AsRef<[u8]>, verifier: &dyn JwsVerifier) -> Result<Self>
+  pub fn decode_compact(data: impl AsRef<[u8]>, verifier: &dyn JwsVerifier) -> Result<Self>
   where
     T: DeserializeOwned,
     U: DeserializeOwned,
   {
-    deserialize_compact(data, verifier).and_then(Self::try_from)
+    Decoder::decode_compact(data, verifier).and_then(Self::try_from)
   }
 }
 

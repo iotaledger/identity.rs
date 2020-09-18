@@ -1,3 +1,3 @@
 # libjose
 
-A library for JOSE (JSON Object Signing and Encryption)
+A library for JSON Object Signing and Encryption (JOSE)

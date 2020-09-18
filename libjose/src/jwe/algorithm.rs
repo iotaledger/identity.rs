@@ -5,6 +5,8 @@ use core::fmt::Result;
 /// Supported algorithms for the JSON Web Encryption `alg` claim.
 ///
 /// [More Info](https://www.iana.org/assignments/jose/jose.xhtml#web-signature-encryption-algorithms)
+///
+/// [ChaCha20-Poly1305 (draft)](https://tools.ietf.org/html/draft-amringer-jose-chacha-01)
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[allow(non_camel_case_types)]
 pub enum JweAlgorithm {
@@ -63,6 +65,12 @@ pub enum JweAlgorithm {
   /// PBES2 with HMAC SHA-512 and "A256KW" wrapping.
   #[serde(rename = "PBES2-HS512+A256KW")]
   PBES2_HS512_A256KW,
+  /// ECDH-ES using Concat KDF and CEK wrapped with C20PKW.
+  #[serde(rename = "ECDH-ES+C20PKW")]
+  ECDH_ES_C20PKW,
+  /// ECDH-ES using Concat KDF and CEK wrapped with XC20PKW.
+  #[serde(rename = "ECDH-ES+XC20PKW")]
+  ECDH_ES_XC20PKW,
 }
 
 impl JweAlgorithm {
@@ -87,6 +95,8 @@ impl JweAlgorithm {
       Self::PBES2_HS256_A128KW => "PBES2-HS256+A128KW",
       Self::PBES2_HS384_A192KW => "PBES2-HS384+A192KW",
       Self::PBES2_HS512_A256KW => "PBES2-HS512+A256KW",
+      Self::ECDH_ES_C20PKW => "ECDH-ES+C20PKW",
+      Self::ECDH_ES_XC20PKW => "ECDH-ES+XC20PKW",
     }
   }
 }
