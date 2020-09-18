@@ -12,7 +12,7 @@ use crate::{
 };
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
-/// `public_key`, services and metadata.  Only `context` and `id` are required to create a DID document.
+/// `public_keys`, services and metadata.  Only `context` and `id` are required to create a DID document.
 #[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq, Diff)]
 pub struct DIDDocument {
     #[serde(rename = "@context", deserialize_with = "string_or_list", default)]
@@ -23,8 +23,8 @@ pub struct DIDDocument {
     pub created: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub updated: Option<String>,
-    #[serde(rename = "publicKey", skip_serializing_if = "Vec::is_empty", default)]
-    pub public_key: Vec<PublicKey>,
+    #[serde(rename = "publicKey", skip_serializing_if = "HashSet::is_empty", default)]
+    pub public_keys: HashSet<IdCompare<PublicKey>>,
     #[serde(rename = "authentication", skip_serializing_if = "Vec::is_empty", default)]
     pub auth: Vec<Authentication>,
     #[serde(rename = "assertionMethod", skip_serializing_if = "Vec::is_empty", default)]
@@ -51,7 +51,6 @@ impl DIDDocument {
             id: self.id,
             created: self.created,
             updated: self.updated,
-            public_key: self.public_key,
             auth: self.auth,
             assert: self.assert,
             verification: self.verification,
@@ -62,7 +61,8 @@ impl DIDDocument {
             ..Default::default()
         };
 
-        self.services.into_iter().for_each(|s| doc.update_service(s.0));
+        self.public_keys.into_iter().for_each(|k| doc.update_public_key(k));
+        self.services.into_iter().for_each(|s| doc.update_service(s));
 
         doc
     }
@@ -73,8 +73,7 @@ impl DIDDocument {
     }
 
     /// sets a new `service` of type `Service` into the `DIDDocument`.
-    pub fn update_service(&mut self, service: Service) {
-        let service = IdCompare::new(service);
+    pub fn update_service(&mut self, service: IdCompare<Service>) {
         let mut services: HashSet<IdCompare<Service>> = self
             .services
             .clone()
@@ -93,13 +92,22 @@ impl DIDDocument {
     }
 
     /// sets a new `key_pair` of type `PublicKey` into the `DIDDocument`.
-    pub fn update_public_key(&mut self, key_pair: PublicKey) {
-        self.public_key.push(key_pair);
+    pub fn update_public_key(&mut self, key_pair: IdCompare<PublicKey>) {
+        let mut keys: HashSet<IdCompare<PublicKey>> = self
+            .public_keys
+            .clone()
+            .into_iter()
+            .filter(|k| k.0.id() != key_pair.0.id())
+            .collect::<HashSet<IdCompare<PublicKey>>>();
+
+        keys.insert(key_pair);
+
+        self.public_keys = keys;
     }
 
     /// remove all of the public keys from the `DIDDocument`.
     pub fn clear_public_keys(&mut self) {
-        self.public_key.clear();
+        self.public_keys.clear();
     }
 
     /// sets in a new `auth` of type `Authentication` into the `DIDDocument`.

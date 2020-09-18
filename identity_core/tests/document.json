@@ -65,12 +65,14 @@
             }
         ],
         "id": "did:iota:123456789abcdefghi",
-        "public_key": [
+        "public_keys": [
             {
-                "id": "did:iota:123456789abcdefghi#keys-1",
-                "type": "RsaVerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+                "Add": {
+                    "id": "did:iota:123456789abcdefghi#keys-1",
+                    "type": "RsaVerificationKey2018",
+                    "controller": "did:iota:123456789abcdefghi",
+                    "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+                }
             }
         ],
         "services": [
@@ -84,12 +86,14 @@
         ]
     },
     "diff2": {
-        "public_key": [
+        "public_keys": [
             {
-                "id": "did:iota:123456789abcdefghi#keys-1",
-                "type": "RsaVerificationKey2018",
-                "controller": "did:iota:123456789abcdefghi",
-                "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
+                "Add": {
+                    "id": "did:iota:123456789abcdefghi#keys-1",
+                    "type": "RsaVerificationKey2018",
+                    "controller": "did:iota:123456789abcdefghi",
+                    "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
+                }
             }
         ]
     }

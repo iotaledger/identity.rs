@@ -94,8 +94,7 @@ fn test_public_key() {
         controller: "did:iota:pqrstuvwxyz0987654321".into(),
         key_data,
         ..Default::default()
-    }
-    .init();
+    };
 
     assert_eq!(public_key, pk_t);
 

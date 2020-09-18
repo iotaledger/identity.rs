@@ -4,7 +4,7 @@ use identity_core::{
     utils::{Context, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
 };
 
-use std::str::FromStr;
+use std::{collections::HashSet, str::FromStr};
 
 use identity_diff::Diff;
 
@@ -62,7 +62,8 @@ fn test_doc_creation() {
         id: "did:into:123#edv".into(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
-    };
+    }
+    .init();
 
     let endpoint2 = ServiceEndpoint {
         context: "https://edv.example.com/".into(),
@@ -74,7 +75,8 @@ fn test_doc_creation() {
         id: "did:into:123#edv".into(),
         service_type: "IdentityHub".into(),
         endpoint: endpoint2,
-    };
+    }
+    .init();
 
     did_doc.update_service(service.clone());
     did_doc.update_service(service2.clone());
@@ -92,10 +94,13 @@ fn test_doc_creation() {
 
     did_doc.update_public_key(public_key.clone());
 
+    let mut public_keys = HashSet::new();
+    public_keys.insert(public_key);
+
     let mut did_doc_2 = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
         id: Subject::from("did:iota:123456789abcdefghi"),
-        public_key: vec![public_key],
+        public_keys,
         ..Default::default()
     }
     .init();
@@ -137,7 +142,8 @@ fn test_doc_diff() {
         id: "did:into:123#edv".into(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
-    };
+    }
+    .init();
 
     new.update_service(service);
 
@@ -199,7 +205,8 @@ fn test_diff_merge_from_string() {
         id: "did:into:123#edv".into(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
-    };
+    }
+    .init();
 
     doc.update_service(service);
 
@@ -268,7 +275,8 @@ fn test_realistic_diff() {
         id: "did:into:123#edv".into(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
-    };
+    }
+    .init();
 
     let endpoint2 = ServiceEndpoint {
         context: "https://edv.example.com/".into(),
@@ -280,7 +288,8 @@ fn test_realistic_diff() {
         id: "did:into:123#edv".into(),
         service_type: "IdentityHub".into(),
         endpoint: endpoint2,
-    };
+    }
+    .init();
 
     did_doc.update_service(service);
     did_doc.update_service(service2);
@@ -296,7 +305,7 @@ fn test_realistic_diff() {
     }
     .init();
 
-    did_doc.update_public_key(public_key);
+    did_doc.update_public_key(public_key.clone());
 
     let key_data_1 = KeyData::Pem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
     let key1 = PublicKey {
@@ -308,8 +317,12 @@ fn test_realistic_diff() {
     }
     .init();
 
+    let mut pub_keys = HashSet::new();
+    pub_keys.insert(public_key);
+    pub_keys.insert(key1);
+
     let did_doc_2 = DIDDocument {
-        public_key: vec![did_doc.public_key[0].clone(), key1],
+        public_keys: pub_keys,
         ..did_doc.clone()
     };
 
