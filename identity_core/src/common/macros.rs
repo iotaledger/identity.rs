@@ -51,7 +51,7 @@ macro_rules! set {
     }}}
 }
 
-#[allow(unused_macros)]  
+#[allow(unused_macros)]
 #[macro_export]
 macro_rules! impl_builder_setter {
     ($fn:ident, $field:ident, Option<$ty:ty>) => {
@@ -80,7 +80,7 @@ macro_rules! impl_builder_setter {
     };
 }
 
-#[allow(unused_macros)]  
+#[allow(unused_macros)]
 #[macro_export]
 macro_rules! impl_builder_try_setter {
     ($fn:ident, $field:ident, Option<$ty:ty>) => {
