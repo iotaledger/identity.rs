@@ -6,10 +6,10 @@ use identity_core::{
     document::DIDDocument,
     utils::{Context, KeyData, PublicKey, Subject},
 };
+use identity_diff::Diff;
 use identity_integration::tangle_writer::{iota_network, Differences, Payload, TangleWriter};
 use identity_resolver::resolver::{NetworkNodes, ResolutionInputMetadata, Resolver};
 use iota_conversion::Trinary;
-use serde_diff::{Apply, Diff};
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
@@ -17,7 +17,7 @@ async fn main() -> Result<()> {
     let tangle_writer = TangleWriter::new(nodes.clone(), iota_network::Comnet)?;
 
     // Create and publish first document version
-    let mut old = DIDDocument {
+    let old = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
         id: Subject::from("did:iota:com:123456789abcdefghij"),
         ..Default::default()
@@ -43,11 +43,11 @@ async fn main() -> Result<()> {
     .init();
     new.update_public_key(public_key);
     new.update_time();
-    // diff the two docs and create a json string of the diff.
-    let json_diff = serde_json::to_string(&Diff::serializable(&old, &new))?;
+    // diff the two docs.
+    let diff = old.diff(&new);
     let did_payload = Payload::DIDDocumentDifferences(Differences {
         did: new.derive_did()?,
-        diff: json_diff.clone(),
+        diff: serde_json::to_string(&diff)?,
         time: Timestamp::now().to_rfc3339(),
     });
     let tail_transaction = tangle_writer.publish_document(&did_payload).await?;
@@ -69,9 +69,8 @@ async fn main() -> Result<()> {
     println!("{:#?}", resolution_result);
     println!("Document: {:?}", resolution_result.did_document);
 
-    let mut deserializer = serde_json::Deserializer::from_str(&json_diff);
-    // apply the json string to the old document.
-    Apply::apply(&mut deserializer, &mut old)?;
+    // merge the diff to the old document.
+    let old = old.merge(diff);
     // check to see that the old and new docs cotain all of the same fields.
     assert_eq!(resolution_result.did_document.unwrap().to_string(), old.to_string());
     Ok(())

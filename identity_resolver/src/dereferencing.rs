@@ -81,10 +81,10 @@ fn service_endpoint_construction(did_url: DID, query: Vec<Param>, did_document: 
     for param in query.clone() {
         if param.key == "service" && !did_document.clone().services.is_empty() {
             for service in did_document.clone().services {
-                if &service.id.to_did()?.fragment.expect("Couldn't get fragment")
+                if &service.0.id.to_did()?.fragment.expect("Couldn't get fragment")
                     == param.value.as_ref().expect("Couldn't get param value from DID URL")
                 {
-                    let parsed = Url::parse(&service.endpoint.context.as_inner()[0].clone())?;
+                    let parsed = Url::parse(&service.0.endpoint.context.as_inner()[0].clone())?;
                     service_endpoint_url = parsed[..Position::AfterPath].to_string();
                 }
             }
@@ -111,11 +111,10 @@ fn service_endpoint_construction(did_url: DID, query: Vec<Param>, did_document: 
 
 fn get_fragment_property(did_document: DIDDocument, fragment: String) -> crate::Result<Property> {
     // pub public_key: Vec<PublicKey>,
-    if !did_document.public_key.is_empty() {
-        for property in did_document.public_key {
-            if property.id.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                // println!("Fragment found! {:?}", property);
-                return Ok(Property::PublicKey(property));
+    if !did_document.public_keys.is_empty() {
+        for property in did_document.public_keys {
+            if property.0.id.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
+                return Ok(Property::PublicKey(property.0));
             }
         }
     }
@@ -224,9 +223,8 @@ fn get_fragment_property(did_document: DIDDocument, fragment: String) -> crate::
     // // pub services: Vec<Service>,
     if !did_document.services.is_empty() {
         for property in did_document.services {
-            if property.id.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                // println!("Fragment found! {:?}", property);
-                return Ok(Property::Service(property));
+            if property.0.id.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
+                return Ok(Property::Service(property.0));
             }
         }
     }

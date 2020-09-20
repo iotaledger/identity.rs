@@ -3,7 +3,7 @@ use identity_resolver::dereferencing::{dereference_raw, DereferenceRawResult, Pr
 
 use identity_core::{
     document::DIDDocument,
-    utils::{Authentication, Context, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
+    utils::{Authentication, Context, IdCompare, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
 };
 
 #[cfg(test)]
@@ -34,7 +34,7 @@ mod tests {
         let res = dereference_raw("did:iota:123456789abcdefghi#keys-1".into(), did_doc).unwrap();
         if let DereferenceRawResult::Property(prop) = res {
             match *prop {
-                Property::PublicKey(key) => assert_eq!(public_key_object, key),
+                Property::PublicKey(key) => assert_eq!(public_key_object.0, key),
                 _ => panic!(),
             }
         } else {
@@ -61,7 +61,7 @@ mod tests {
             service_type: "EncryptedDataVault".into(),
             endpoint,
         };
-        did_doc.update_service(service.clone());
+        did_doc.update_service(IdCompare(service.clone()));
 
         let res = dereference_raw("did:iota:123456789abcdefghi#edv".into(), did_doc).unwrap();
         if let DereferenceRawResult::Property(prop) = res {
@@ -91,7 +91,7 @@ mod tests {
             ..Default::default()
         }
         .init();
-        let auth = Authentication::Key(auth_key);
+        let auth = Authentication::Key(auth_key.0);
         did_doc.update_auth(auth.clone());
         let res = dereference_raw("did:iota:123456789abcdefghi#keys-2".into(), did_doc).unwrap();
         if let DereferenceRawResult::Property(prop) = res {
@@ -122,7 +122,7 @@ mod tests {
             service_type: "MessagingService".into(),
             endpoint,
         };
-        did_doc.update_service(service);
+        did_doc.update_service(IdCompare(service));
 
         let res = dereference_raw(
             "did:example:123456789abcdefghi?service=messages&relative-ref=%2Fsome%2Fpath%3Fquery#frag".into(),

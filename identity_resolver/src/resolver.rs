@@ -1,7 +1,7 @@
 use bytestream::*;
 use identity_core::{common::Timestamp, did::DID, document::DIDDocument};
+use identity_diff::Diff;
 use identity_integration::{did_helper::did_iota_address, tangle_reader::TangleReader, tangle_writer::Differences};
-use serde_diff::Apply;
 use std::{collections::HashMap, io::Write, time::Instant};
 
 #[derive(Debug)]
@@ -165,8 +165,8 @@ impl Resolver {
                     .clone()
                     .expect("Failed to get updated field")
             {
-                let mut deserializer = serde_json::Deserializer::from_str(&diff.diff.diff);
-                Apply::apply(&mut deserializer, &mut latest_document.document)?;
+                let diff_document = DIDDocument::get_diff_from_str(diff.diff.diff.clone())?;
+                latest_document.document = latest_document.document.merge(diff_document);
                 metadata.insert(format!("diff_tail_transaction {}", i), diff.tailhash.clone());
             }
         }
