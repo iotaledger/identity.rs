@@ -209,7 +209,7 @@ impl Resolver {
             Some(document) => {
                 document.write_to(buffer, ByteOrder::BigEndian)?;
             }
-            _ => return Err(crate::Error::DocumentNotFound),
+            _ => return Ok(()),
         }
         Ok(())
     }

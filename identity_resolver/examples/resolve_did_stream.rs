@@ -23,8 +23,12 @@ async fn main() -> Result<()> {
         )
         .await?;
     println!("{:?}", buffer);
+    if buffer.is_empty() {
+        print!("Resolution was unsuccessful");
+        return Ok(());
+    }
     let mut cursor = Cursor::new(buffer);
-    let did_document_string = String::read_from(&mut cursor, ByteOrder::BigEndian).unwrap();
+    let did_document_string = String::read_from(&mut cursor, ByteOrder::BigEndian)?;
     println!("{}", did_document_string);
     Ok(())
 }
