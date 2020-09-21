@@ -32,6 +32,13 @@ pest_derive = "2.1"
 # timestamps
 chrono = { version = "0.4", features = ["serde"] }
 
+# hash
+multihash = "*"
+bs58 = "0.3.1"
+
+# ledger-integratioin
+identity_integration = {git = "https://github.com/iotaledger/identity.rs", branch = "feat/did-ledger-integration"}
+
 [dev-dependencies]
 # generative/property testing
 proptest = "0.10"

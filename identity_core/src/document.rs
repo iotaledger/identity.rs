@@ -1,4 +1,7 @@
+use bs58::encode;
 use identity_diff::Diff;
+use identity_integration::tangle_writer::iota_network;
+use multihash::Blake2b256;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
@@ -65,6 +68,37 @@ impl DIDDocument {
         self.services.into_iter().for_each(|s| doc.update_service(s));
 
         doc
+    }
+
+    /// sets the value of the `id` into the `DIDDocument`.
+    pub fn create_id(&mut self, iota_network: iota_network, network_shard: Option<String>) -> crate::Result<()> {
+        if self.id.to_did().unwrap().method_name == "" {
+            if self.public_keys.is_empty() {
+                return Err(crate::Error::NoPublicKeyError);
+            }
+            // we need to get the DID controller public key.
+            // let authentication_key = self.public_keys.get_authentication_key();
+            // iterate and create the id for each key and compare it with the controller id?
+            let authentication_key = match self.public_keys.iter().next() {
+                Some(IdCompare(y)) => y.to_string(),
+                _ => panic!("no key"),
+            };
+            let hash = Blake2b256::digest(authentication_key.as_bytes());
+            let bs58key = encode(&hash.digest()).into_string();
+            let network_string = match iota_network {
+                iota_network::Comnet => "com:".to_string(),
+                iota_network::Devnet => "dev:".to_string(),
+                _ => "".to_string(), // default: "main" also can be written as ""
+            };
+            let shard_string = match network_shard {
+                Some(shard) => format!("{}:", shard),
+                _ => String::new(),
+            };
+            let id_string = format!("did:iota:{}{}{}", network_string, shard_string, bs58key);
+            self.id = Subject::from(id_string);
+        }
+        // else ID already set
+        Ok(())
     }
 
     /// gets the inner value of the `context` from the `DIDDocument`.

@@ -26,6 +26,9 @@ pub enum Error {
     /// Error caused when parsing an invalid timestamp.
     #[error("Timestamp Error: {0}")]
     InvalidTimestamp(#[from] ChronoError),
+    /// Error for when no public_key was set.
+    #[error("ID creation Error: No public_key set")]
+    NoPublicKeyError,
 }
 
 /// The main crate result type derived from the `anyhow::Result` type.

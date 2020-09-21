@@ -3,6 +3,7 @@ use identity_core::{
     document::DIDDocument,
     utils::{Context, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
 };
+use identity_integration::tangle_writer::iota_network;
 
 use std::{collections::HashSet, str::FromStr};
 
@@ -43,7 +44,7 @@ fn test_parse_document() {
     assert_eq!(doc.id, did.into());
 }
 
-/// test doc creation via the `DIDDocument::new` method.
+/// test doc creation.
 #[test]
 fn test_doc_creation() {
     let mut did_doc = DIDDocument {
@@ -337,4 +338,62 @@ fn test_realistic_diff() {
     let new_doc = did_doc.merge(diff);
 
     assert_eq!(did_doc_2, new_doc);
+}
+
+/// test doc with DID creation.
+#[test]
+fn test_doc_with_did_creation() {
+    let mut did_doc = DIDDocument {
+        context: Context::from("https://w3id.org/did/v1"),
+        ..Default::default()
+    }
+    .init();
+
+    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
+    let public_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data,
+        ..Default::default()
+    }
+    .init();
+
+    did_doc.update_public_key(public_key.clone());
+
+    did_doc.create_id(iota_network::Comnet, None).unwrap();
+    assert_eq!(
+        did_doc.derive_did().unwrap().to_string(),
+        "did:iota:com:6NYHoVbfGbYuGVgpbjKX2L7gUMCzfcumLSiS29VU6o9d"
+    );
+}
+
+/// test doc with DID creation and shard.
+#[test]
+fn test_doc_with_did_creation_shard() {
+    let mut did_doc = DIDDocument {
+        context: Context::from("https://w3id.org/did/v1"),
+        ..Default::default()
+    }
+    .init();
+
+    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
+    let public_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data,
+        ..Default::default()
+    }
+    .init();
+
+    did_doc.update_public_key(public_key.clone());
+
+    did_doc.create_id(iota_network::Comnet, Some("shardid".into())).unwrap();
+    assert_eq!(
+        did_doc.derive_did().unwrap().to_string(),
+        "did:iota:com:shardid:6NYHoVbfGbYuGVgpbjKX2L7gUMCzfcumLSiS29VU6o9d"
+    );
 }
