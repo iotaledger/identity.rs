@@ -7,11 +7,10 @@
 //! Run with:
 //!
 //! ```
-//! cargo run --example pack_auth_msg_for_recipients_non_repudiable
+//! cargo run --example pack_auth_msg
 //! ```
 
-use identity_communication::did_comm::{DIDComm};
-use identity_communication::envelope::pack_auth_msg_for_recipients_non_repudiable;
+use identity_communication::{did_comm::DIDComm, envelope::pack_auth_msg_non_repudiable};
 
 fn main() {
     let alice = DIDComm {
@@ -32,10 +31,10 @@ fn main() {
 
     println!("alice: {:?}", alice);
     println!("bob: {:?}", bob);
-    
+
     let message = "I AM A PRIVATE SIGNED MESSAGE";
-    
-    let packedMsg = pack_auth_msg_for_recipients_non_repudiable(message, "bob_public_key".to_string(), alice);
-    
+
+    let packedMsg = pack_auth_msg_non_repudiable(message, "bob_public_key".to_string(), alice);
+
     println!("packedMsg: {:?}", packedMsg);
 }
