@@ -1,6 +1,5 @@
 use bs58::encode;
 use identity_diff::Diff;
-use identity_integration::tangle_writer::iota_network;
 use multihash::Blake2b256;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -11,6 +10,7 @@ use std::{
 use crate::{
     common::Timestamp,
     did::DID,
+    iota_network,
     utils::{helpers::string_or_list, Authentication, Context, HasId, IdCompare, PublicKey, Service, Subject},
 };
 

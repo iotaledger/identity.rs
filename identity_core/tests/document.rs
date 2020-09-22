@@ -1,9 +1,9 @@
 use identity_core::{
     did::DID,
     document::DIDDocument,
+    iota_network,
     utils::{Context, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
 };
-use identity_integration::tangle_writer::iota_network;
 
 use std::{collections::HashSet, str::FromStr};
 
