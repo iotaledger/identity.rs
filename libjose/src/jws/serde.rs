@@ -11,11 +11,11 @@ use serde_json::Value;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jws::JwsHeader;
+use crate::jws::JwsRawToken;
 use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;
 use crate::utils::decode_b64_into;
 use crate::utils::encode_b64_into;
-use crate::jws::JwsRawToken;
 
 // Taken from anyhow: https://github.com/dtolnay/anyhow/blob/master/src/macros.rs#L51
 macro_rules! bail {
@@ -79,7 +79,10 @@ impl Encoder {
     data: impl AsRef<[u8]>,
     header: &JwsHeader<T>,
     signer: &dyn JwsSigner,
-  ) -> Result<String> where T: Serialize {
+  ) -> Result<String>
+  where
+    T: Serialize,
+  {
     encode_components(data, header, signer).map(Components::into_compact)
   }
 
@@ -90,7 +93,10 @@ impl Encoder {
     data: impl AsRef<[u8]>,
     header: &JwsHeader<T>,
     signer: &dyn JwsSigner,
-  ) -> Result<String> where T: Serialize {
+  ) -> Result<String>
+  where
+    T: Serialize,
+  {
     encode_components(data, header, signer).map(Components::into_compact_detached)
   }
 }
@@ -168,8 +174,7 @@ impl Decoder {
   where
     T: DeserializeOwned,
   {
-    decode_compact_components(data, verifier, Some(payload.as_ref()))
-      .map(|(header, _)| header)
+    decode_compact_components(data, verifier, Some(payload.as_ref())).map(|(header, _)| header)
   }
 }
 
@@ -190,7 +195,11 @@ where
   ensure!(split.len() == 3, DecodeError, "Invalid Segments");
 
   // The middle segment should be empty when using detached content
-  ensure!(!detached || split[1].is_empty(), DecodeError, "Invalid Segments");
+  ensure!(
+    !detached || split[1].is_empty(),
+    DecodeError,
+    "Invalid Segments"
+  );
 
   // Extract the base64-encoded components of the token for convenience
   let header_raw: &[u8] = split[0];
@@ -278,16 +287,18 @@ fn extract_b64<T>(header: &JwsHeader<T>) -> Result<bool> {
     (Some(b64), Some(crit)) => {
       // The "crit" param MUST be included and contain "b64".
       // More Info: https://tools.ietf.org/html/rfc7797#section-6
-      ensure!(crit.iter().any(|crit| crit == "b64"), EncodeError, "`crit` Header Parameter Missing `b64`");
+      ensure!(
+        crit.iter().any(|crit| crit == "b64"),
+        EncodeError,
+        "`crit` Header Parameter Missing `b64`"
+      );
 
       Ok(b64)
     }
     (Some(_), None) => {
       bail!("Missing `crit` Header Parameter");
     }
-    (None, _) => {
-      Ok(B64_DEFAULT)
-    }
+    (None, _) => Ok(B64_DEFAULT),
   }
 }
 
@@ -322,7 +333,11 @@ fn extract_unencoded_payload(data: &[u8]) -> Result<&str> {
   // More Info: https://tools.ietf.org/html/rfc7797#section-5.2
   //
   // TODO: Provide a more flexible API for this validaton
-  ensure!(!payload.contains('.'), EncodeError, "Bad Content: Payload Contains `.`");
+  ensure!(
+    !payload.contains('.'),
+    EncodeError,
+    "Bad Content: Payload Contains `.`"
+  );
 
   Ok(payload)
 }

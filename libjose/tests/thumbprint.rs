@@ -1,5 +1,5 @@
+use libjose::jwa::SHA256;
 use libjose::jwk::Jwk;
-use libjose::jwk::SHA256;
 use serde::Deserialize;
 
 const JSON: &[u8] = include_bytes!("fixtures/thumbprint/1.json");

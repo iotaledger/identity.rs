@@ -6,8 +6,8 @@ use serde_json::to_vec;
 
 use crate::error::Error;
 use crate::error::Result;
-use crate::jws::Encoder;
 use crate::jws::Decoder;
+use crate::jws::Encoder;
 use crate::jws::JwsHeader;
 use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;

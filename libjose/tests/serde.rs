@@ -37,9 +37,18 @@ fn test_jwe_algorithm_serde() {
   assert_serde!(JweAlgorithm::A128GCMKW, jstr!("A128GCMKW"));
   assert_serde!(JweAlgorithm::A192GCMKW, jstr!("A192GCMKW"));
   assert_serde!(JweAlgorithm::A256GCMKW, jstr!("A256GCMKW"));
-  assert_serde!(JweAlgorithm::PBES2_HS256_A128KW, jstr!("PBES2-HS256+A128KW"));
-  assert_serde!(JweAlgorithm::PBES2_HS384_A192KW, jstr!("PBES2-HS384+A192KW"));
-  assert_serde!(JweAlgorithm::PBES2_HS512_A256KW, jstr!("PBES2-HS512+A256KW"));
+  assert_serde!(
+    JweAlgorithm::PBES2_HS256_A128KW,
+    jstr!("PBES2-HS256+A128KW")
+  );
+  assert_serde!(
+    JweAlgorithm::PBES2_HS384_A192KW,
+    jstr!("PBES2-HS384+A192KW")
+  );
+  assert_serde!(
+    JweAlgorithm::PBES2_HS512_A256KW,
+    jstr!("PBES2-HS512+A256KW")
+  );
   assert_serde!(JweAlgorithm::ECDH_ES_C20PKW, jstr!("ECDH-ES+C20PKW"));
   assert_serde!(JweAlgorithm::ECDH_ES_XC20PKW, jstr!("ECDH-ES+XC20PKW"));
 }

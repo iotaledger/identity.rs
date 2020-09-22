@@ -5,7 +5,7 @@ use url::Url;
 
 use crate::error::Error;
 use crate::error::Result;
-use crate::jwk::HashAlgorithm;
+use crate::jwa::HashAlgorithm;
 use crate::jwk::JwkOperation;
 use crate::jwk::JwkParams;
 use crate::jwk::JwkParamsEc;
@@ -244,6 +244,10 @@ impl Jwk {
     self.params = Some(value.into());
   }
 
+  // ===========================================================================
+  // Thumbprint
+  // ===========================================================================
+
   /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).
   ///
   /// The thumbprint is returned as a base64url-encoded string.
@@ -287,4 +291,44 @@ impl Jwk {
 
     algorithm.digest(&to_vec(&data)?)
   }
+
+  // ===========================================================================
+  // Validations
+  // ===========================================================================
+
+  pub fn check_use(&self, expected: &JwkUse) -> Result<()> {
+    match self.use_() {
+      Some(value) if value == expected => Ok(()),
+      Some(_) => Err(bad_property_err("use")),
+      None => Ok(()),
+    }
+  }
+
+  pub fn check_ops(&self, expected: &JwkOperation) -> Result<()> {
+    match self.key_ops() {
+      Some(ops) if ops.contains(expected) => Ok(()),
+      Some(_) => Err(bad_property_err("key_ops")),
+      None => Ok(()),
+    }
+  }
+
+  pub fn check_alg(&self, expected: &str) -> Result<()> {
+    match self.alg() {
+      Some(value) if value == expected => Ok(()),
+      Some(_) => Err(bad_property_err("alg")),
+      None => Ok(()),
+    }
+  }
+
+  pub fn check_kty(&self, value: JwkType) -> Result<()> {
+    if self.kty() == value {
+      Ok(())
+    } else {
+      Err(bad_property_err("kty"))
+    }
+  }
+}
+
+fn bad_property_err(name: &'static str) -> Error {
+  Error::InvalidJwkFormat(anyhow!("Bad Property: `{}`", name))
 }

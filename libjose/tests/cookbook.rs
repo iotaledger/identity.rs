@@ -12,7 +12,8 @@ const FX_JWK_1: &[u8] = include_bytes!("fixtures/cookbook/jwk/3_1_ec_public_key.
 const FX_JWK_2: &[u8] = include_bytes!("fixtures/cookbook/jwk/3_2_ec_private_key.json");
 const FX_JWK_3: &[u8] = include_bytes!("fixtures/cookbook/jwk/3_3_rsa_public_key.json");
 const FX_JWK_4: &[u8] = include_bytes!("fixtures/cookbook/jwk/3_4_rsa_private_key.json");
-const FX_JWK_5: &[u8] = include_bytes!("fixtures/cookbook/jwk/3_5_symmetric_key_mac_computation.json");
+const FX_JWK_5: &[u8] =
+  include_bytes!("fixtures/cookbook/jwk/3_5_symmetric_key_mac_computation.json");
 const FX_JWK_6: &[u8] = include_bytes!("fixtures/cookbook/jwk/3_6_symmetric_key_encryption.json");
 
 macro_rules! assert_matches {

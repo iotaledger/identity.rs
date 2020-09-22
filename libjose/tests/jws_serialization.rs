@@ -1,6 +1,6 @@
 use libjose::jwa::HmacAlgorithm::HS512;
-use libjose::jws::Encoder;
 use libjose::jws::Decoder;
+use libjose::jws::Encoder;
 use libjose::jws::JwsAlgorithm;
 use libjose::jws::JwsHeader;
 use libjose::jws::JwsRawToken;
@@ -123,7 +123,8 @@ fn test_detached() {
 
   let payload: Vec<u8> = encode_b64(payload).into_bytes();
   let verifier = HS512.verifier_from_raw(key.as_ref()).unwrap();
-  let deserialized: JwsHeader<Empty> = Decoder::decode_compact_detached(&serialized, &payload, &verifier).unwrap();
+  let deserialized: JwsHeader<Empty> =
+    Decoder::decode_compact_detached(&serialized, &payload, &verifier).unwrap();
   assert_eq!(deserialized.alg(), JwsAlgorithm::HS512);
   assert_eq!(deserialized.kid().unwrap(), "#my-key");
 }
@@ -143,7 +144,8 @@ fn test_detached_unencoded() {
   assert_eq!(segment_count(&serialized), 2);
 
   let verifier = HS512.verifier_from_raw(key.as_ref()).unwrap();
-  let deserialized: JwsHeader<Empty> = Decoder::decode_compact_detached(&serialized, &payload, &verifier).unwrap();
+  let deserialized: JwsHeader<Empty> =
+    Decoder::decode_compact_detached(&serialized, &payload, &verifier).unwrap();
   assert_eq!(deserialized.alg(), JwsAlgorithm::HS512);
   assert_eq!(deserialized.kid().unwrap(), "#my-key");
 }
@@ -165,7 +167,8 @@ fn test_detached_is_truly_detached() {
   let segments: Vec<&str> = serialized.split(".").collect();
   let modified: String = [segments[0], "", segments[2]].join(".");
   let verifier = HS512.verifier_from_raw(key.as_ref()).unwrap();
-  let deserialized: JwsHeader<Empty> = Decoder::decode_compact_detached(&modified, &payload, &verifier).unwrap();
+  let deserialized: JwsHeader<Empty> =
+    Decoder::decode_compact_detached(&modified, &payload, &verifier).unwrap();
   assert_eq!(deserialized.alg(), JwsAlgorithm::HS512);
   assert_eq!(deserialized.kid().unwrap(), "#my-key");
 }
@@ -181,7 +184,8 @@ fn test_detached_signature_invalid() {
   let segments: Vec<&str> = serialized.split(".").collect();
   let modified: String = [segments[0], segments[1], "my-signature"].join(".");
   let verifier = HS512.verifier_from_raw(key.as_ref()).unwrap();
-  let _: JwsHeader<Empty> = Decoder::decode_compact_detached(&modified, &payload, &verifier).unwrap();
+  let _: JwsHeader<Empty> =
+    Decoder::decode_compact_detached(&modified, &payload, &verifier).unwrap();
 }
 
 #[test]
@@ -194,5 +198,6 @@ fn test_detached_payload_invalid() {
   let serialized: String = Encoder::encode_compact_detached(&payload, &header, &signer).unwrap();
   let payload: Vec<u8> = vec![5, 6, 7, 8];
   let verifier = HS512.verifier_from_raw(key.as_ref()).unwrap();
-  let _: JwsHeader<Empty> = Decoder::decode_compact_detached(&serialized, &payload, &verifier).unwrap();
+  let _: JwsHeader<Empty> =
+    Decoder::decode_compact_detached(&serialized, &payload, &verifier).unwrap();
 }

@@ -9,14 +9,20 @@ use crate::crypto::hmac_verify;
 use crate::crypto::PKey;
 use crate::crypto::Public;
 use crate::crypto::Secret;
-use crate::error::Error;
+use crate::error::CryptoError;
 use crate::error::Result;
-use crate::jwk::HashAlgorithm;
+use crate::jwa::HashAlgorithm;
 use crate::jwk::Jwk;
+use crate::jwk::JwkOperation;
+use crate::jwk::JwkParams;
+use crate::jwk::JwkParamsOct;
+use crate::jwk::JwkType;
+use crate::jwk::JwkUse;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;
 use crate::utils::decode_b64;
+use crate::utils::encode_b64;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(non_camel_case_types)]
@@ -54,7 +60,7 @@ impl HmacAlgorithm {
     let data: &[u8] = data.as_ref();
 
     if data.len() < self.hash_alg().size() {
-      return Err(Error::invalid_key());
+      return Err(CryptoError::InvalidKeyFormat(self.name()).into());
     }
 
     Ok(HmacSigner {
@@ -68,7 +74,7 @@ impl HmacAlgorithm {
     let data: Vec<u8> = decode_b64(data.as_ref())?;
 
     if data.len() < self.hash_alg().size() {
-      return Err(Error::invalid_key());
+      return Err(CryptoError::InvalidKeyFormat(self.name()).into());
     }
 
     Ok(HmacSigner {
@@ -78,15 +84,29 @@ impl HmacAlgorithm {
     })
   }
 
-  pub fn signer_from_jwk(self, _data: &Jwk) -> Result<HmacSigner> {
-    todo!("HmacAlgorithm::signer_from_jwk")
+  pub fn signer_from_jwk(self, data: &Jwk) -> Result<HmacSigner> {
+    data.check_use(&JwkUse::Signature)?;
+    data.check_ops(&JwkOperation::Sign)?;
+    data.check_alg(self.name())?;
+    data.check_kty(JwkType::Oct)?;
+
+    let k: Vec<u8> = match data.params() {
+      Some(JwkParams::Oct(JwkParamsOct { k })) => decode_b64(k)?,
+      Some(_) => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+      None => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+    };
+
+    self.signer_from_raw(k).map(|mut signer| {
+      signer.kid = data.kid().map(ToOwned::to_owned);
+      signer
+    })
   }
 
   pub fn verifier_from_raw(self, data: impl AsRef<[u8]>) -> Result<HmacVerifier> {
     let data: &[u8] = data.as_ref();
 
     if data.len() < self.hash_alg().size() {
-      return Err(Error::invalid_key());
+      return Err(CryptoError::InvalidKeyFormat(self.name()).into());
     }
 
     Ok(HmacVerifier {
@@ -100,7 +120,7 @@ impl HmacAlgorithm {
     let data: Vec<u8> = decode_b64(data.as_ref())?;
 
     if data.len() < self.hash_alg().size() {
-      return Err(Error::invalid_key());
+      return Err(CryptoError::InvalidKeyFormat(self.name()).into());
     }
 
     Ok(HmacVerifier {
@@ -110,12 +130,34 @@ impl HmacAlgorithm {
     })
   }
 
-  pub fn verifier_from_jwk(self, _data: &Jwk) -> Result<HmacVerifier> {
-    todo!("HmacAlgorithm::verifier_from_jwk")
+  pub fn verifier_from_jwk(self, data: &Jwk) -> Result<HmacVerifier> {
+    data.check_use(&JwkUse::Signature)?;
+    data.check_ops(&JwkOperation::Verify)?;
+    data.check_alg(self.name())?;
+    data.check_kty(JwkType::Oct)?;
+
+    let k: Vec<u8> = match data.params() {
+      Some(JwkParams::Oct(JwkParamsOct { k })) => decode_b64(k)?,
+      Some(_) => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+      None => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+    };
+
+    self.verifier_from_raw(k).map(|mut signer| {
+      signer.kid = data.kid().map(ToOwned::to_owned);
+      signer
+    })
   }
 
-  pub fn to_jwk(self, _data: impl AsRef<[u8]>) -> Jwk {
-    todo!("HmacAlgorithm::to_jwk")
+  pub fn to_jwk(self, data: impl AsRef<[u8]>) -> Jwk {
+    let mut jwk: Jwk = Jwk::with_kty(JwkType::Oct);
+
+    jwk.set_alg(self.name());
+    jwk.set_use(JwkUse::Signature);
+    jwk.set_key_ops(vec![JwkOperation::Sign, JwkOperation::Verify]);
+    jwk.set_params(JwkParamsOct {
+      k: encode_b64(data),
+    });
+    jwk
   }
 }
 

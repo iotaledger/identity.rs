@@ -1,6 +1,30 @@
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
+pub enum CryptoError {
+  #[error("Invalid Key Format: {0}")]
+  InvalidKeyFormat(&'static str),
+  #[error("Invalid Signature: {0}")]
+  InvalidSignature(&'static str),
+  #[error("Unspecified Error")]
+  Unspecified,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum PemError {
+  #[error("Invalid UTF-8: {0}")]
+  InvalidUtf8(#[from] core::str::Utf8Error),
+  #[error("Invalid PEM Header")]
+  InvalidHeader,
+  #[error("Invalid PEM Footer")]
+  InvalidFooter,
+  #[error("Invalid PEM Header/Footer")]
+  InvalidHeaderFooter,
+  #[error("Invalid PEM Content")]
+  InvalidContent,
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
   #[error("Invalid Base64: {0}")]
   InvalidBase64(#[from] base64::DecodeError),
@@ -10,43 +34,33 @@ pub enum Error {
   InvalidJwkFormat(anyhow::Error),
   #[error("Invalid JWS Format: {0}")]
   InvalidJwsFormat(anyhow::Error),
-  #[error("Invalid Claims: {0}")]
-  InvalidClaims(anyhow::Error),
-  #[error("Crypto Error: {0}")]
-  CryptoError(anyhow::Error),
+  #[error(transparent)]
+  CryptoError(#[from] CryptoError),
+  #[error(transparent)]
+  PemError(#[from] PemError),
   #[error("Encode Error: {0}")]
   EncodeError(anyhow::Error),
   #[error("Decode Error: {0}")]
   DecodeError(anyhow::Error),
 }
 
-impl Error {
-  pub fn invalid_key() -> Self {
-    Self::CryptoError(anyhow!("Invalid Key"))
-  }
-
-  pub fn invalid_sig(algorithm: &'static str) -> Self {
-    Self::CryptoError(anyhow!("Invalid Signature: {}", algorithm))
-  }
-}
-
 #[cfg(feature = "ring-core")]
 impl From<ring::error::Unspecified> for Error {
   fn from(_: ring::error::Unspecified) -> Self {
-    Self::CryptoError(anyhow!("Unspecified"))
+    Self::CryptoError(CryptoError::Unspecified)
   }
 }
 
 #[cfg(feature = "ring-core")]
 impl From<ring::error::KeyRejected> for Error {
   fn from(_: ring::error::KeyRejected) -> Self {
-    Self::invalid_key()
+    Self::CryptoError(CryptoError::InvalidKeyFormat("REJECTED"))
   }
 }
 
 #[cfg(feature = "secp256k1")]
 impl From<secp256k1::Error> for Error {
   fn from(_: secp256k1::Error) -> Self {
-    Self::invalid_sig("ES256K")
+    Self::CryptoError(CryptoError::InvalidSignature("ES256K"))
   }
 }

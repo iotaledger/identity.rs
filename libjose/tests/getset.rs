@@ -68,7 +68,12 @@ fn test_jwe_header_getset() {
 fn test_jwk_getset() {
   test_getset!(Jwk, kty, set_kty, JwkType::Ec);
   test_getset!(Jwk, use_, set_use, OptionRef = JwkUse::Signature);
-  test_getset!(Jwk, key_ops, set_key_ops, Option = vec![JwkOperation::DeriveBits]);
+  test_getset!(
+    Jwk,
+    key_ops,
+    set_key_ops,
+    Option = vec![JwkOperation::DeriveBits]
+  );
   test_getset!(Jwk, alg, set_alg, Option = "algorithm");
   test_getset!(Jwk, kid, set_kid, Option = "key id");
   test_getset!(Jwk, x5u, set_x5u, Url = "https://foo.com/");
@@ -105,7 +110,4 @@ fn test_jwt_claims_getset() {
   test_getset!(JwtClaims, nbf, set_nbf, Option = 123456789);
   test_getset!(JwtClaims, iat, set_iat, Option = 123456789);
   test_getset!(JwtClaims, jti, set_jti, Option = "jwt id");
-  test_getset!(JwtClaims, did, set_did, OptionRef = libjose::jwt::DID("did:example:123456789abcdefghi".into()));
-  test_getset!(JwtClaims, vc, set_vc, OptionRef = libjose::jwt::Credential::Standard);
-  test_getset!(JwtClaims, vp, set_vp, OptionRef = libjose::jwt::Presentation::Standard);
 }

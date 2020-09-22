@@ -18,16 +18,17 @@ use crate::crypto::KeyPair;
 use crate::crypto::PKey;
 use crate::crypto::Public;
 use crate::crypto::Secret;
-use crate::error::Error;
+use crate::error::CryptoError;
 use crate::error::Result;
+use crate::jwa::EcCurve;
 use crate::jwa::EcdsaAlgorithm;
+use crate::jwa::EdCurve;
 use crate::jwa::EddsaAlgorithm;
+use crate::jwa::HashAlgorithm;
 use crate::jwa::HmacAlgorithm;
-use crate::jwa::RsaAlgorithm;
-use crate::jwk::EcCurve;
-use crate::jwk::EdCurve;
-use crate::jwk::HashAlgorithm;
-use crate::jwk::RsaBits;
+use crate::jwa::RsaBits;
+use crate::jwa::RsassaAlgorithm;
+use crate::jwa::RsassaPssAlgorithm;
 
 lazy_static::lazy_static! {
   static ref RANDOM: SystemRandom = SystemRandom::new();
@@ -168,59 +169,78 @@ pub(crate) fn rsa_generate(_bits: RsaBits) -> Result<KeyPair> {
   todo!("rsa_generate(RsaBits)")
 }
 
-pub(crate) fn rsa_sign(
-  algorithm: RsaAlgorithm,
+pub(crate) fn rsassa_sign(
+  algorithm: RsassaAlgorithm,
   message: &[u8],
   key: &PKey<Secret>,
 ) -> Result<Vec<u8>> {
   match algorithm {
-    RsaAlgorithm::RS256 => sign_rsa(&signature::RSA_PKCS1_SHA256, message, key),
-    RsaAlgorithm::RS384 => sign_rsa(&signature::RSA_PKCS1_SHA384, message, key),
-    RsaAlgorithm::RS512 => sign_rsa(&signature::RSA_PKCS1_SHA512, message, key),
-    RsaAlgorithm::PS256 => sign_rsa(&signature::RSA_PSS_SHA256, message, key),
-    RsaAlgorithm::PS384 => sign_rsa(&signature::RSA_PSS_SHA384, message, key),
-    RsaAlgorithm::PS512 => sign_rsa(&signature::RSA_PSS_SHA512, message, key),
+    RsassaAlgorithm::RS256 => sign_rsa(&signature::RSA_PKCS1_SHA256, message, key),
+    RsassaAlgorithm::RS384 => sign_rsa(&signature::RSA_PKCS1_SHA384, message, key),
+    RsassaAlgorithm::RS512 => sign_rsa(&signature::RSA_PKCS1_SHA512, message, key),
   }
 }
 
-pub(crate) fn rsa_verify(
-  algorithm: RsaAlgorithm,
+pub(crate) fn rsassa_verify(
+  algorithm: RsassaAlgorithm,
   message: &[u8],
   signature: &[u8],
   key: &PKey<Public>,
 ) -> Result<()> {
   match algorithm {
-    RsaAlgorithm::RS256 => verify_asymmetric(
+    RsassaAlgorithm::RS256 => verify_asymmetric(
       &signature::RSA_PKCS1_2048_8192_SHA256,
       message,
       signature,
       key,
     ),
-    RsaAlgorithm::RS384 => verify_asymmetric(
+    RsassaAlgorithm::RS384 => verify_asymmetric(
       &signature::RSA_PKCS1_2048_8192_SHA384,
       message,
       signature,
       key,
     ),
-    RsaAlgorithm::RS512 => verify_asymmetric(
+    RsassaAlgorithm::RS512 => verify_asymmetric(
       &signature::RSA_PKCS1_2048_8192_SHA512,
       message,
       signature,
       key,
     ),
-    RsaAlgorithm::PS256 => verify_asymmetric(
+  }
+}
+
+pub(crate) fn rsassa_pss_sign(
+  algorithm: RsassaPssAlgorithm,
+  message: &[u8],
+  key: &PKey<Secret>,
+) -> Result<Vec<u8>> {
+  match algorithm {
+    RsassaPssAlgorithm::PS256 => sign_rsa(&signature::RSA_PSS_SHA256, message, key),
+    RsassaPssAlgorithm::PS384 => sign_rsa(&signature::RSA_PSS_SHA384, message, key),
+    RsassaPssAlgorithm::PS512 => sign_rsa(&signature::RSA_PSS_SHA512, message, key),
+  }
+}
+
+pub(crate) fn rsassa_pss_verify(
+  algorithm: RsassaPssAlgorithm,
+  message: &[u8],
+  signature: &[u8],
+  key: &PKey<Public>,
+) -> Result<()> {
+  match algorithm {
+    RsassaPssAlgorithm::PS256 => verify_asymmetric(
       &signature::RSA_PSS_2048_8192_SHA256,
       message,
       signature,
       key,
     ),
-    RsaAlgorithm::PS384 => verify_asymmetric(
+    RsassaPssAlgorithm::PS384 => verify_asymmetric(
       &signature::RSA_PSS_2048_8192_SHA384,
       message,
       signature,
       key,
     ),
-    RsaAlgorithm::PS512 => verify_asymmetric(
+    RsassaPssAlgorithm::PS512 => verify_asymmetric(
       &signature::RSA_PSS_2048_8192_SHA512,
       message,
       signature,
@@ -230,7 +250,7 @@ pub(crate) fn rsa_verify(
 }
 
 fn sign_ed25519(message: &[u8], key: &PKey<Secret>) -> Result<Vec<u8>> {
-  let key: Ed25519KeyPair = Ed25519KeyPair::from_pkcs8(key.as_ref())?;
+  let key: Ed25519KeyPair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(key.as_ref())?;
   let sig: Signature = key.sign(message);
 
   Ok(sig.as_ref().to_vec())
@@ -299,7 +319,7 @@ fn verify_es256k(message: &[u8], signature: &[u8], key: &PKey<Public>) -> Result
   if secp256k1::verify(&msg, &sig, &key) {
     Ok(())
   } else {
-    Err(Error::invalid_sig("ES256K"))
+    Err(CryptoError::InvalidSignature("ES256K").into())
   }
 }
 

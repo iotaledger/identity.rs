@@ -3,19 +3,20 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
 
-use crate::crypto::ecdsa_generate;
 use crate::crypto::ecdsa_sign;
 use crate::crypto::ecdsa_verify;
 use crate::crypto::PKey;
 use crate::crypto::Public;
 use crate::crypto::Secret;
 use crate::error::Result;
-use crate::jwk::EcCurve;
+use crate::jwa::EcCurve;
 use crate::jwk::Jwk;
-use crate::jwk::JwkKeyPair;
+use crate::jwk::JwkOperation;
+use crate::jwk::JwkUse;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;
+use crate::utils::pem_decode;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(non_camel_case_types)]
@@ -31,6 +32,7 @@ pub enum EcdsaAlgorithm {
 }
 
 impl EcdsaAlgorithm {
+  /// Returns the JWA identifier of the algorithm.
   pub const fn name(self) -> &'static str {
     match self {
       Self::ES256 => "ES256",
@@ -40,6 +42,7 @@ impl EcdsaAlgorithm {
     }
   }
 
+  /// Returns the curve of the algorithm.
   pub const fn curve(self) -> EcCurve {
     match self {
       Self::ES256 => EcCurve::P256,
@@ -49,40 +52,76 @@ impl EcdsaAlgorithm {
     }
   }
 
-  pub fn generate_keypair(self) -> Result<EcdsaKeyPair> {
-    EcdsaKeyPair::generate(self)
+  /// Creates a new `EcdsaSigner` from DER-encoded material in PKCS#8 form.
+  pub fn signer_from_der(self, data: impl AsRef<[u8]>) -> Result<EcdsaSigner> {
+    // TODO: Parse and validate key format
+    Ok(EcdsaSigner {
+      alg: self,
+      key: data.as_ref().into(),
+      kid: None,
+    })
   }
 
-  pub fn keypair_from_der(self, _data: impl AsRef<[u8]>) -> Result<EcdsaKeyPair> {
-    todo!("EcdsaAlgorithm::keypair_from_der")
+  /// Creates a new `EcdsaSigner` from a PEM-encoded document.
+  pub fn signer_from_pem(self, data: impl AsRef<[u8]>) -> Result<EcdsaSigner> {
+    // TODO: Parse and validate key format
+    Ok(EcdsaSigner {
+      alg: self,
+      key: pem_decode(&data).map(|pem| pem.pem_data.into())?,
+      kid: None,
+    })
   }
 
-  pub fn keypair_from_pem(self, _data: impl AsRef<[u8]>) -> Result<EcdsaKeyPair> {
-    todo!("EcdsaAlgorithm::keypair_from_pem")
+  /// Creates a new `EcdsaSigner` from a JSON Web Key.
+  pub fn signer_from_jwk(self, data: &Jwk) -> Result<EcdsaSigner> {
+    data.check_use(&JwkUse::Signature)?;
+    data.check_ops(&JwkOperation::Sign)?;
+    data.check_alg(self.name())?;
+
+    let key: PKey<Secret> = todo!("EcdsaAlgorithm::signer_from_jwk");
+    let kid: Option<String> = data.kid().map(ToOwned::to_owned);
+
+    Ok(EcdsaSigner {
+      alg: self,
+      key,
+      kid,
+    })
   }
 
-  pub fn signer_from_der(self, _data: impl AsRef<[u8]>) -> Result<EcdsaSigner> {
-    todo!("EcdsaAlgorithm::signer_from_der")
+  /// Creates a new `EcdsaVerifier` from DER-encoded material in PKCS#8 form.
+  pub fn verifier_from_der(self, data: impl AsRef<[u8]>) -> Result<EcdsaVerifier> {
+    // TODO: Parse and validate key format
+    Ok(EcdsaVerifier {
+      alg: self,
+      key: data.as_ref().into(),
+      kid: None,
+    })
   }
 
-  pub fn signer_from_jwk(self, _data: &Jwk) -> Result<EcdsaSigner> {
-    todo!("EcdsaAlgorithm::signer_from_jwk")
+  /// Creates a new `EcdsaVerifier` from a PEM-encoded document.
+  pub fn verifier_from_pem(self, data: impl AsRef<[u8]>) -> Result<EcdsaVerifier> {
+    // TODO: Parse and validate key format
+    Ok(EcdsaVerifier {
+      alg: self,
+      key: pem_decode(&data).map(|pem| pem.pem_data.into())?,
+      kid: None,
+    })
   }
 
-  pub fn signer_from_pem(self, _data: impl AsRef<[u8]>) -> Result<EcdsaSigner> {
-    todo!("EcdsaAlgorithm::signer_from_pem")
-  }
+  /// Creates a new `EcdsaVerifier` from a JSON Web Key.
+  pub fn verifier_from_jwk(self, data: &Jwk) -> Result<EcdsaVerifier> {
+    data.check_use(&JwkUse::Signature)?;
+    data.check_ops(&JwkOperation::Verify)?;
+    data.check_alg(self.name())?;
 
-  pub fn verifier_from_der(self, _data: impl AsRef<[u8]>) -> Result<EcdsaVerifier> {
-    todo!("EcdsaAlgorithm::verifier_from_der")
-  }
+    let key: PKey<Public> = todo!("EcdsaAlgorithm::verifier_from_jwk");
+    let kid: Option<String> = data.kid().map(ToOwned::to_owned);
 
-  pub fn verifier_from_jwk(self, _data: &Jwk) -> Result<EcdsaVerifier> {
-    todo!("EcdsaAlgorithm::verifier_from_jwk")
-  }
-
-  pub fn verifier_from_pem(self, _data: impl AsRef<[u8]>) -> Result<EcdsaVerifier> {
-    todo!("EcdsaAlgorithm::verifier_from_pem")
+    Ok(EcdsaVerifier {
+      alg: self,
+      key,
+      kid,
+    })
   }
 }
 
@@ -158,72 +197,5 @@ impl Deref for EcdsaVerifier {
 
   fn deref(&self) -> &Self::Target {
     self
-  }
-}
-
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct EcdsaKeyPair {
-  alg: EcdsaAlgorithm,
-  kid: Option<String>,
-  pkey: PKey<Public>,
-  skey: PKey<Secret>,
-}
-
-impl EcdsaKeyPair {
-  pub fn generate(alg: EcdsaAlgorithm) -> Result<Self> {
-    let (pkey, skey) = ecdsa_generate(alg.curve())?;
-
-    Ok(Self {
-      alg,
-      kid: None,
-      pkey,
-      skey,
-    })
-  }
-
-  pub fn from_der(&self, _data: impl AsRef<[u8]>) -> Result<Self> {
-    todo!("EcdsaKeyPair::from_der")
-  }
-
-  pub fn from_jwk(&self, _data: &Jwk) -> Result<Self> {
-    todo!("EcdsaKeyPair::from_jwk")
-  }
-
-  pub fn from_pem(&self, _data: impl AsRef<[u8]>) -> Result<Self> {
-    todo!("EcdsaKeyPair::from_pem")
-  }
-
-  pub fn to_jwk(&self, _public: bool, _secret: bool) -> Jwk {
-    todo!("EcdsaKeyPair::to_jwk")
-  }
-}
-
-impl JwkKeyPair for EcdsaKeyPair {
-  fn to_public_pem(&self) -> Vec<u8> {
-    todo!("EcdsaKeyPair::to_public_pem")
-  }
-
-  fn to_secret_pem(&self) -> Vec<u8> {
-    todo!("EcdsaKeyPair::to_secret_pem")
-  }
-
-  fn to_public_der(&self) -> Vec<u8> {
-    todo!("EcdsaKeyPair::to_public_der")
-  }
-
-  fn to_secret_der(&self) -> Vec<u8> {
-    todo!("EcdsaKeyPair::to_secret_der")
-  }
-
-  fn to_public_jwk(&self) -> Jwk {
-    self.to_jwk(true, false)
-  }
-
-  fn to_secret_jwk(&self) -> Jwk {
-    self.to_jwk(false, true)
-  }
-
-  fn to_combined_jwk(&self) -> Jwk {
-    self.to_jwk(true, true)
   }
 }

@@ -1,10 +1,5 @@
 use crate::error::Result;
 
-#[derive(
-  Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize,
-)]
-pub struct Empty;
-
 pub fn encode_b64(data: impl AsRef<[u8]>) -> String {
   base64::encode_config(data.as_ref(), base64::URL_SAFE_NO_PAD)
 }

@@ -3,9 +3,13 @@
 mod ecdsa;
 mod eddsa;
 mod hmac;
-mod rsa;
+mod rsassa;
+mod rsassa_pss;
+mod types;
 
 pub use self::ecdsa::*;
 pub use self::eddsa::*;
 pub use self::hmac::*;
-pub use self::rsa::*;
+pub use self::rsassa::*;
+pub use self::rsassa_pss::*;
+pub use self::types::*;
