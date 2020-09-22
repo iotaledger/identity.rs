@@ -25,6 +25,24 @@ pub enum PemError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum ValidationError {
+  #[error("Missing Required Claims: {}", .0.join(", "))]
+  MissingClaims(Vec<&'static str>),
+  #[error("Invalid Audience Claim")]
+  InvalidAudience,
+  #[error("Invalid Issuer Claim")]
+  InvalidIssuer,
+  #[error("Invalid JWT ID Claim")]
+  InvalidTokenId,
+  #[error("Invalid Subject Claim")]
+  InvalidSubject,
+  #[error("Token Expired")]
+  TokenExpired,
+  #[error("Token Not Yet Valid")]
+  TokenNotYetValid,
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
   #[error("Invalid Base64: {0}")]
   InvalidBase64(#[from] base64::DecodeError),
@@ -38,6 +56,8 @@ pub enum Error {
   CryptoError(#[from] CryptoError),
   #[error(transparent)]
   PemError(#[from] PemError),
+  #[error(transparent)]
+  ValidationError(#[from] ValidationError),
   #[error("Encode Error: {0}")]
   EncodeError(anyhow::Error),
   #[error("Decode Error: {0}")]
