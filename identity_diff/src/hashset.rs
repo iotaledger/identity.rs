@@ -22,68 +22,68 @@ where
 {
     type Type = DiffHashSet<T>;
 
-    fn diff(&self, other: &Self) -> Self::Type {
-        DiffHashSet(if self == other {
+    fn diff(&self, other: &Self) -> crate::Result<Self::Type> {
+        Ok(DiffHashSet(if self == other {
             None
         } else {
             let mut val_diffs: Vec<InnerValue<T>> = vec![];
             for add in other.difference(&self) {
-                let add = add.clone().into_diff();
+                let add = add.clone().into_diff()?;
                 val_diffs.push(InnerValue::Add(add));
             }
 
             Some(val_diffs)
-        })
+        }))
     }
 
-    fn merge(&self, diff: Self::Type) -> Self {
+    fn merge(&self, diff: Self::Type) -> crate::Result<Self> {
         match diff.0 {
-            None => self.clone(),
+            None => Ok(self.clone()),
             Some(val_diffs) => {
                 let mut new: Self = self.clone();
                 for val_diff in val_diffs {
                     match val_diff {
                         InnerValue::Add(val) => {
-                            new.insert(<T>::from_diff(val));
+                            new.insert(<T>::from_diff(val)?);
                         }
                         InnerValue::Remove(val) => {
-                            new.remove(&(<T>::from_diff(val)));
+                            new.remove(&(<T>::from_diff(val)?));
                         }
                     }
                 }
-                new
+                Ok(new)
             }
         }
     }
 
-    fn into_diff(self) -> Self::Type {
-        DiffHashSet(if self.is_empty() {
+    fn into_diff(self) -> crate::Result<Self::Type> {
+        Ok(DiffHashSet(if self.is_empty() {
             None
         } else {
             let mut diffs: Vec<InnerValue<T>> = vec![];
             for val in self {
-                diffs.push(InnerValue::Add(val.into_diff()));
+                diffs.push(InnerValue::Add(val.into_diff()?));
             }
             Some(diffs)
-        })
+        }))
     }
 
-    fn from_diff(diff: Self::Type) -> Self {
+    fn from_diff(diff: Self::Type) -> crate::Result<Self> {
         let mut set = Self::new();
         if let Some(vals) = diff.0 {
             for val in vals {
                 match val {
                     InnerValue::Add(val) => {
-                        set.insert(<T>::from_diff(val));
+                        set.insert(<T>::from_diff(val)?);
                     }
                     InnerValue::Remove(val) => {
-                        let val = <T>::from_diff(val);
+                        let val = <T>::from_diff(val)?;
                         set.remove(&val);
                     }
                 }
             }
         }
-        set
+        Ok(set)
     }
 }
 
@@ -169,11 +169,11 @@ mod tests {
             "foo".into(),
         };
 
-        let diff = s.diff(&s1);
+        let diff = s.diff(&s1).unwrap();
         let expected = DiffHashSet(None);
 
         assert_eq!(diff, expected);
-        let s2 = s.merge(diff);
+        let s2 = s.merge(diff).unwrap();
         assert_eq!(s, s2);
         assert_eq!(s1, s2);
     }

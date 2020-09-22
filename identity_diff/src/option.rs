@@ -23,37 +23,37 @@ where
 
     /// Compares two `Option<T>` types; `self` and `other` and finds the Difference between them, returning a
     /// `DiffOption<T>` type.
-    fn diff(&self, other: &Self) -> Self::Type {
+    fn diff(&self, other: &Self) -> crate::Result<Self::Type> {
         match (self, other) {
-            (Some(x), Some(y)) => Self::Type::Some(x.diff(&y)),
-            (None, Some(y)) => Self::Type::Some(y.clone().into_diff()),
-            _ => Self::Type::None,
+            (Some(x), Some(y)) => Ok(Self::Type::Some(x.diff(&y)?)),
+            (None, Some(y)) => Ok(Self::Type::Some(y.clone().into_diff()?)),
+            _ => Ok(Self::Type::None),
         }
     }
 
     /// Merges a `DiffOption<T>`; `diff` type with an `Option<T>` type; `self`.
-    fn merge(&self, diff: Self::Type) -> Self {
+    fn merge(&self, diff: Self::Type) -> crate::Result<Self> {
         match (self, diff) {
-            (None, DiffOption::None) => None,
-            (Some(_), DiffOption::None) => self.clone(),
-            (None, DiffOption::Some(ref d)) => Some(<T>::from_diff(d.clone())),
-            (Some(t), DiffOption::Some(ref d)) => Some(t.merge(d.clone())),
+            (None, DiffOption::None) => Ok(None),
+            (Some(_), DiffOption::None) => Ok(self.clone()),
+            (None, DiffOption::Some(ref d)) => Ok(Some(<T>::from_diff(d.clone())?)),
+            (Some(t), DiffOption::Some(ref d)) => Ok(Some(t.merge(d.clone())?)),
         }
     }
 
     /// converts a `DiffOption<T>`; `diff` to an `Option<T>` type.
-    fn from_diff(diff: Self::Type) -> Self {
+    fn from_diff(diff: Self::Type) -> crate::Result<Self> {
         match diff {
-            Self::Type::None => None,
-            Self::Type::Some(diff) => Some(<T>::from_diff(diff)),
+            Self::Type::None => Ok(None),
+            Self::Type::Some(diff) => Ok(Some(<T>::from_diff(diff)?)),
         }
     }
 
     /// converts a `Option<T>`; `self` to an `DiffOption<T>` type.
-    fn into_diff(self) -> Self::Type {
+    fn into_diff(self) -> crate::Result<Self::Type> {
         match self {
-            Self::None => DiffOption::None,
-            Self::Some(t) => DiffOption::Some(t.into_diff()),
+            Self::None => Ok(DiffOption::None),
+            Self::Some(t) => Ok(DiffOption::Some(t.into_diff()?)),
         }
     }
 }
@@ -82,7 +82,7 @@ where
 {
     fn into(self) -> Option<T> {
         match self {
-            DiffOption::Some(s) => Some(Diff::from_diff(s)),
+            DiffOption::Some(s) => Some(Diff::from_diff(s).expect("Unable to convert from diff")),
             DiffOption::None => None,
         }
     }
@@ -94,7 +94,7 @@ where
 {
     fn from(opt: Option<T>) -> Self {
         match opt {
-            Some(s) => DiffOption::Some(s.into_diff()),
+            Some(s) => DiffOption::Some(s.into_diff().expect("Unable to convert to diff")),
             None => DiffOption::None,
         }
     }
@@ -110,11 +110,11 @@ mod tests {
         let a = Some("A".to_owned());
         let b = Some("B".to_owned());
 
-        let diff = a.diff(&b);
+        let diff = a.diff(&b).unwrap();
 
         assert_eq!(diff, DiffOption::Some(DiffString(Some("B".to_owned()))));
 
-        let c = a.merge(diff);
+        let c = a.merge(diff).unwrap();
 
         assert_eq!(b, c);
     }

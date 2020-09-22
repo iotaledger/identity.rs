@@ -48,7 +48,7 @@ where
     type Type = DiffVec<T>;
 
     /// Compares two `Vec<T>` types; `self`, `other` and returns a `DiffVec<T>` type.
-    fn diff(&self, other: &Self) -> Self::Type {
+    fn diff(&self, other: &Self) -> crate::Result<Self::Type> {
         let (l_len, r_len) = (self.len(), other.len());
         let max = usize::max(l_len, r_len);
         let mut changes: Vec<InnerVec<T>> = vec![];
@@ -57,8 +57,11 @@ where
             match (self.get(index), other.get(index)) {
                 (None, None) => panic!("No data to match"),
                 (Some(x), Some(y)) if x == y => {}
-                (Some(x), Some(y)) => changes.push(InnerVec::Change { index, item: x.diff(y) }),
-                (None, Some(x)) => changes.push(InnerVec::Add(x.clone().into_diff())),
+                (Some(x), Some(y)) => changes.push(InnerVec::Change {
+                    index,
+                    item: x.diff(y)?,
+                }),
+                (None, Some(x)) => changes.push(InnerVec::Add(x.clone().into_diff()?)),
                 (Some(_), None) => match changes.last_mut() {
                     Some(InnerVec::Remove { ref mut count }) => *count += 1,
                     _ => changes.push(InnerVec::Remove { count: 1 }),
@@ -66,52 +69,53 @@ where
             }
         }
 
-        DiffVec(changes)
+        Ok(DiffVec(changes))
     }
 
     /// Merges a `DiffVec<T>`; `diff` with `self`; a `Vec<T>` to create a new `Vec<T>`.
-    fn merge(&self, diff: Self::Type) -> Self {
+    fn merge(&self, diff: Self::Type) -> crate::Result<Self> {
         let mut vec: Self = self.clone();
 
         for change in diff.into_iter() {
             match change {
-                InnerVec::Add(d) => vec.push(<T>::from_diff(d)),
-                InnerVec::Change { index, item } => vec[index] = self[index].merge(item),
+                InnerVec::Add(d) => vec.push(<T>::from_diff(d)?),
+                InnerVec::Change { index, item } => vec[index] = self[index].merge(item)?,
                 InnerVec::Remove { count } => {
                     for _ in 0..count {
-                        vec.pop().expect("Unable to pop from the vector");
+                        vec.pop()
+                            .ok_or(crate::Error::MergeError("Unable to pop value".into()))?;
                     }
                 }
             }
         }
 
-        vec
+        Ok(vec)
     }
 
     /// Converts a `DiffVec<T>`; `diff` into a `Vec<T>`.
-    fn from_diff(diff: Self::Type) -> Self {
+    fn from_diff(diff: Self::Type) -> crate::Result<Self> {
         let mut vec: Vec<T> = vec![];
 
         for (_idx, elm) in diff.0.into_iter().enumerate() {
             match elm {
-                InnerVec::Add(add) => vec.push(<T>::from_diff(add)),
+                InnerVec::Add(add) => vec.push(<T>::from_diff(add)?),
                 InnerVec::Change { index: _, item } => {
-                    vec.push(<T>::from_diff(item));
+                    vec.push(<T>::from_diff(item)?);
                 }
                 _ => {}
             }
         }
 
-        vec
+        Ok(vec)
     }
 
     /// Converts a `Vec<T>` into a `DiffVec<T>`
-    fn into_diff(self) -> Self::Type {
+    fn into_diff(self) -> crate::Result<Self::Type> {
         let mut changes: Vec<InnerVec<T>> = vec![];
         for inner in self {
-            changes.push(InnerVec::Add(inner.into_diff()));
+            changes.push(InnerVec::Add(inner.into_diff()?));
         }
-        DiffVec(changes)
+        Ok(DiffVec(changes))
     }
 }
 
@@ -156,19 +160,19 @@ mod tests {
 
         assert_eq!(vec_a, vec_b);
 
-        let diff = vec_a.diff(&vec_b);
+        let diff = vec_a.diff(&vec_b).unwrap();
 
         assert_eq!(diff, DiffVec(vec![]));
 
-        let vec_c = vec_a.merge(diff);
+        let vec_c = vec_a.merge(diff).unwrap();
 
         assert_eq!(vec_b, vec_c);
 
-        let diff = vec_b.diff(&vec_a);
+        let diff = vec_b.diff(&vec_a).unwrap();
 
         assert_eq!(diff, DiffVec(vec![]));
 
-        let vec_c = vec_b.merge(diff);
+        let vec_c = vec_b.merge(diff).unwrap();
 
         assert_eq!(vec_a, vec_c);
     }
@@ -178,43 +182,43 @@ mod tests {
         let vec_a = vec![1, 2, 3, 4, 5];
         let vec_b = vec![4, 2, 3, 4, 6];
 
-        let diff = vec_a.diff(&vec_b);
+        let diff = vec_a.diff(&vec_b).unwrap();
 
         assert_eq!(
             diff,
             DiffVec(vec![
                 InnerVec::Change {
                     index: 0,
-                    item: 4i32.into_diff(),
+                    item: 4i32.into_diff().unwrap(),
                 },
                 InnerVec::Change {
                     index: 4,
-                    item: 6i32.into_diff(),
+                    item: 6i32.into_diff().unwrap(),
                 }
             ])
         );
 
-        let vec_c = vec_a.merge(diff);
+        let vec_c = vec_a.merge(diff).unwrap();
 
         assert_eq!(vec_b, vec_c);
 
-        let diff = vec_b.diff(&vec_a);
+        let diff = vec_b.diff(&vec_a).unwrap();
 
         assert_eq!(
             diff,
             DiffVec(vec![
                 InnerVec::Change {
                     index: 0,
-                    item: 1i32.into_diff(),
+                    item: 1i32.into_diff().unwrap(),
                 },
                 InnerVec::Change {
                     index: 4,
-                    item: 5i32.into_diff(),
+                    item: 5i32.into_diff().unwrap(),
                 }
             ])
         );
 
-        let vec_c = vec_b.merge(diff);
+        let vec_c = vec_b.merge(diff).unwrap();
 
         assert_eq!(vec_a, vec_c);
     }
@@ -224,45 +228,45 @@ mod tests {
         let vec_a = vec![1, 2, 3, 4, 5, 6];
         let vec_b = vec![1, 2, 3, 4, 6, 7, 8];
 
-        let diff = vec_a.diff(&vec_b);
+        let diff = vec_a.diff(&vec_b).unwrap();
 
         assert_eq!(
             diff,
             DiffVec(vec![
                 InnerVec::Change {
                     index: 4,
-                    item: 6i32.into_diff(),
+                    item: 6i32.into_diff().unwrap(),
                 },
                 InnerVec::Change {
                     index: 5,
-                    item: 7i32.into_diff(),
+                    item: 7i32.into_diff().unwrap(),
                 },
-                InnerVec::Add(8.into_diff())
+                InnerVec::Add(8.into_diff().unwrap())
             ])
         );
 
-        let vec_c = vec_a.merge(diff);
+        let vec_c = vec_a.merge(diff).unwrap();
 
         assert_eq!(vec_b, vec_c);
 
-        let diff = vec_b.diff(&vec_a);
+        let diff = vec_b.diff(&vec_a).unwrap();
 
         assert_eq!(
             diff,
             DiffVec(vec![
                 InnerVec::Change {
                     index: 4,
-                    item: 5i32.into_diff(),
+                    item: 5i32.into_diff().unwrap(),
                 },
                 InnerVec::Change {
                     index: 5,
-                    item: 6i32.into_diff(),
+                    item: 6i32.into_diff().unwrap(),
                 },
                 InnerVec::Remove { count: 1 },
             ])
         );
 
-        let vec_c = vec_b.merge(diff);
+        let vec_c = vec_b.merge(diff).unwrap();
 
         assert_eq!(vec_a, vec_c);
     }
@@ -273,9 +277,9 @@ fn test_into_from_diff() {
     let vec_a = vec![1, 2, 3, 4, 5, 6];
     let vec_b = vec![2, 3, 4, 3, 2, 1, 10, 20];
 
-    let diff = vec_a.diff(&vec_b);
+    let diff = vec_a.diff(&vec_b).unwrap();
 
-    let vec = Vec::from_diff(diff);
+    let vec = Vec::from_diff(diff).unwrap();
 
     assert_eq!(vec, vec_b);
 }

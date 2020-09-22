@@ -16,28 +16,28 @@ macro_rules! impl_diff_on_primitives {
                 type Type = $diff;
 
                 #[inline(always)]
-                fn diff(&self, other: &Self) -> Self::Type {
+                fn diff(&self, other: &Self) -> crate::Result<Self::Type> {
                     other.clone().into_diff()
                 }
 
                 #[inline(always)]
-                fn merge(&self, diff: Self::Type) -> Self {
+                fn merge(&self, diff: Self::Type) -> crate::Result<Self> {
                     Self::from_diff(diff)
                 }
 
                 #[inline(always)]
-                fn from_diff(diff: Self::Type) -> Self {
+                fn from_diff(diff: Self::Type) -> crate::Result<Self> {
                     match diff.0 {
-                        Some(val) => val,
-                        None => Self::default(),
+                        Some(val) => Ok(val),
+                        None => Ok(Self::default()),
                     }
 
 
                 }
 
                 #[inline(always)]
-                fn into_diff(self) -> Self::Type {
-                    $diff(Some(self))
+                fn into_diff(self) -> crate::Result<Self::Type> {
+                    Ok($diff(Some(self)))
                 }
             }
 
