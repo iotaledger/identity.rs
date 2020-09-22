@@ -131,11 +131,7 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
         .collect();
 
     // setup the where clause predicates and the where clause code.
-    let preds: Vec<TokenStream> = clause
-        .predicates
-        .iter()
-        .map(|pred| quote! { #pred })
-        .collect();
+    let preds: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
     let clause = quote! { where #(#preds),*};
 
     match svariant {
@@ -285,11 +281,7 @@ pub fn impl_from_into(input: &InputModel) -> TokenStream {
             })
             .collect();
 
-        let preds: Vec<TokenStream> = clause
-            .predicates
-            .iter()
-            .map(|pred| quote! { #pred })
-            .collect();
+        let preds: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
         let clause = quote! { where #(#preds),*};
 
         quote! {
@@ -355,11 +347,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
         .collect();
 
     // get predicates and generate where clause.
-    let preds: Vec<TokenStream> = clause
-        .predicates
-        .iter()
-        .map(|pred| quote! { #pred })
-        .collect();
+    let preds: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
     let clause = quote! { where #(#preds),* };
 
     match svariant {
@@ -504,9 +492,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
             // get types and create markers for the positioned fields.
             let field_typs: Vec<_> = fields.iter().map(|f| f.typ()).collect();
             let field_max = field_typs.len();
-            let field_markers: Vec<Ident> = (0..field_max)
-                .map(|t| format_ident!("field_{}", t))
-                .collect();
+            let field_markers: Vec<Ident> = (0..field_max).map(|t| format_ident!("field_{}", t)).collect();
 
             // get merge field logic.
             let field_merge: Vec<TokenStream> = fields

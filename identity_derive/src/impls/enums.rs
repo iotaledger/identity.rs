@@ -34,8 +34,7 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
             GenericParam::Type(typ) => {
                 let S: &Ident = &typ.ident;
 
-                let bounds: Vec<TokenStream> =
-                    typ.bounds.iter().map(|bound| quote! { #bound }).collect();
+                let bounds: Vec<TokenStream> = typ.bounds.iter().map(|bound| quote! { #bound }).collect();
 
                 quote! {
                     #S: identity_diff::Diff
@@ -121,11 +120,7 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
 
     // create where clause from predicates.
     let clause: &WhereClause = input.clause();
-    let predicates: Vec<TokenStream> = clause
-        .predicates
-        .iter()
-        .map(|pred| quote! { #pred })
-        .collect();
+    let predicates: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
     let clause = quote! { where #(#predicates),*};
 
     // get patterns and bodies.
@@ -720,11 +715,7 @@ fn parse_diff(
             });
         }
     }
-    (
-        diff_lpatterns.to_vec(),
-        diff_rpatterns.to_vec(),
-        diff_bodies.to_vec(),
-    )
+    (diff_lpatterns.to_vec(), diff_rpatterns.to_vec(), diff_bodies.to_vec())
 }
 
 // parse data for from_diff and into_diff functions.
@@ -807,9 +798,7 @@ fn parse_from_into(
         SVariant::Tuple => {
             let ftyps: Vec<&Type> = vfields.iter().map(|f| f.typ()).collect();
             let fmax = ftyps.len();
-            let fnames: Vec<Ident> = (0..fmax)
-                .map(|ident| format_ident!("field_{}", ident))
-                .collect();
+            let fnames: Vec<Ident> = (0..fmax).map(|ident| format_ident!("field_{}", ident)).collect();
 
             // from logic.
             let from_fassign: Vec<TokenStream> = var
@@ -896,11 +885,7 @@ fn parse_from_into(
 }
 
 // create field names based on thee size of an enum.
-fn populate_field_names(
-    vfields: &[DataFields],
-    fmax: usize,
-    struct_type: SVariant,
-) -> (Vec<Ident>, Vec<Ident>) {
+fn populate_field_names(vfields: &[DataFields], fmax: usize, struct_type: SVariant) -> (Vec<Ident>, Vec<Ident>) {
     match struct_type {
         SVariant::Named => (
             vfields
@@ -915,12 +900,8 @@ fn populate_field_names(
                 .collect(),
         ),
         SVariant::Tuple => (
-            (0..fmax)
-                .map(|ident| format_ident!("left_{}", ident))
-                .collect(),
-            (0..fmax)
-                .map(|ident| format_ident!("right_{}", ident))
-                .collect(),
+            (0..fmax).map(|ident| format_ident!("left_{}", ident)).collect(),
+            (0..fmax).map(|ident| format_ident!("right_{}", ident)).collect(),
         ),
         _ => panic!("Wrong Struct Type!"),
     }

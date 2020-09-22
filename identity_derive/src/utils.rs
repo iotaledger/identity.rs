@@ -23,23 +23,14 @@ pub fn extract_option_segment(path: &Path) -> Option<&PathSegment> {
 /// checks to see if the `should_ignore` attribute has been put before a field.
 pub fn should_ignore(field: &Field) -> bool {
     let find = field.attrs.iter().find(|field| {
-        let attr_seg: Vec<String> = field
-            .path
-            .segments
-            .iter()
-            .map(|seg| format!("{}", seg.ident))
-            .collect();
+        let attr_seg: Vec<String> = field.path.segments.iter().map(|seg| format!("{}", seg.ident)).collect();
 
         let diff_attr = attr_seg == ["diff"];
         let arg_iter = field.tokens.clone().into_iter().next();
 
         let should_ignore = match arg_iter {
             Some(TokenTree::Group(gr)) if gr.delimiter() == PARENS => {
-                let tokens: Vec<String> = gr
-                    .stream()
-                    .into_iter()
-                    .map(|tt| format!("{}", tt))
-                    .collect();
+                let tokens: Vec<String> = gr.stream().into_iter().map(|tt| format!("{}", tt)).collect();
 
                 tokens.contains(&"should_ignore".into())
             }
