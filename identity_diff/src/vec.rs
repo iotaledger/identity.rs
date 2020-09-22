@@ -83,7 +83,7 @@ where
                 InnerVec::Remove { count } => {
                     for _ in 0..count {
                         vec.pop()
-                            .ok_or(crate::Error::MergeError("Unable to pop value".into()))?;
+                            .ok_or_else(|| crate::Error::MergeError("Unable to pop value".into()))?;
                     }
                 }
             }
