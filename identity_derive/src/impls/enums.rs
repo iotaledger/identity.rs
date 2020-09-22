@@ -234,7 +234,7 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
             type Type = #diff<#params>;
 
             #[allow(unused)]
-            fn merge(&self, diff: Self::Type) -> Self {
+            fn merge(&self, diff: Self::Type) -> identity_diff::Result<Self> {
                 match(self, &diff) {
                     #(
                         (#merge_lpatterns, #merge_rpatterns) => {
@@ -244,7 +244,7 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
                 }
             }
 
-            fn diff(&self, other: &Self) -> Self::Type {
+            fn diff(&self, other: &Self) -> identity_diff::Result<Self::Type> {
                 match (self, other) {
                     #(
                         (#diff_lpatterns, #diff_rpatterns) => { #diff_bodies },
@@ -253,7 +253,7 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
             }
 
             #[allow(unused)]
-            fn from_diff(diff: Self::Type) -> Self {
+            fn from_diff(diff: Self::Type) -> identity_diff::Result<Self> {
                 match diff {
                     #(
                         #from_body
@@ -262,7 +262,7 @@ pub fn impl_diff_enum(input: &InputModel) -> TokenStream {
             }
 
             #[allow(unused)]
-            fn into_diff(self) -> Self::Type {
+            fn into_diff(self) -> identity_diff::Result<Self::Type> {
                 match self {
                     #(
                         #into_body
@@ -423,7 +423,7 @@ fn parse_merge(
                     } else {
                         quote! {
                             if let Some(diff) = #rn {
-                                #ln.merge(diff.clone())
+                                #ln.merge(diff.clone())?
                             } else {
                                 #ln.clone()
                             }
@@ -446,15 +446,15 @@ fn parse_merge(
             });
 
             merge_bodies.push(quote! {
-                Self::#vname {
+                Ok(Self::#vname {
                     #(#fnames: #merge_fvalues),*
-                }
+                })
             });
 
             merge_lpatterns.push(quote! {_});
 
             merge_rpatterns.push(quote! {
-                diff @Self::Type::#vname {.. }
+                diff @Self::Type::#vname { .. }
             });
 
             merge_bodies.push(quote! {
@@ -487,7 +487,7 @@ fn parse_merge(
                     } else {
                         quote! {
                             if let Some(diff) = #rn {
-                                #ln.merge(diff.clone())
+                                #ln.merge(diff.clone())?
                             } else {
                                 #ln.clone()
                             }
@@ -510,7 +510,7 @@ fn parse_merge(
             });
 
             merge_bodies.push(quote! {
-                Self::#vname(#(#merge_fvalues),*)
+                Ok(Self::#vname(#(#merge_fvalues),*))
             });
 
             merge_lpatterns.push(quote! { _ });
@@ -540,7 +540,7 @@ fn parse_merge(
             });
 
             merge_bodies.push(quote! {
-                Self::#vname
+                Ok(Self::#vname)
             });
 
             merge_lpatterns.push(quote! { _ });
@@ -594,7 +594,7 @@ fn parse_diff(
                     } else if f.is_option() {
                         quote! {
                             if #ln != #rn && *#ln != None && *#rn != None {
-                                Some(#ln.diff(#rn))
+                                Some(#ln.diff(#rn)?)
                             } else {
                                 None
                             }
@@ -604,7 +604,7 @@ fn parse_diff(
                             if #ln == #rn {
                                 None
                             } else {
-                                Some(#ln.diff(#rn))
+                                Some(#ln.diff(#rn)?)
                             }
                         }
                     }
@@ -621,9 +621,9 @@ fn parse_diff(
             });
 
             diff_bodies.push(quote! {
-                Self::Type::#vname {
+                Ok(Self::Type::#vname {
                     #(#fnames: #diff_fvalues),*
-                }
+                })
             });
 
             diff_lpatterns.push(quote! { _ });
@@ -653,7 +653,7 @@ fn parse_diff(
                     } else if f.is_option() {
                         quote! {
                             if #ln != #rn && *#ln != None && *#rn != None {
-                                Some(#ln.diff(#rn))
+                                Some(#ln.diff(#rn)?)
                             } else {
                                 None
                             }
@@ -663,7 +663,7 @@ fn parse_diff(
                             if #ln == #rn {
                                 None
                             } else {
-                                Some(#ln.diff(#rn))
+                                Some(#ln.diff(#rn)?)
                             }
                         }
                     }
@@ -680,7 +680,7 @@ fn parse_diff(
             });
 
             diff_bodies.push(quote! {
-                Self::Type::#vname( #(#diff_fvalues),* )
+                Ok(Self::Type::#vname( #(#diff_fvalues),* ))
             });
 
             diff_lpatterns.push(quote! {_});
@@ -707,7 +707,7 @@ fn parse_diff(
             });
 
             diff_bodies.push(quote! {
-                Self::Type::#vname
+                Ok(Self::Type::#vname)
             });
 
             diff_bodies.push(quote! {
@@ -748,9 +748,9 @@ fn parse_from_into(
                             #fname: <#ftyp>::from_diff(
                                 match #fname {
                                     Some(v) => v,
-                                    None => <#ftyp>::default().into_diff()
+                                    None => <#ftyp>::default().into_diff()?
                                 }
-                            )
+                            )?
                         }
                     }
                 })
@@ -767,15 +767,15 @@ fn parse_from_into(
                         quote! { #fname: Option::None }
                     } else if f.is_option() {
                         quote! {
-                            #fname: if let identity_diff::option::DiffOption::Some(_) = #fname.clone().into_diff() {
-                                Some(#fname.into_diff())
+                            #fname: if let identity_diff::option::DiffOption::Some(_) = #fname.clone().into_diff()? {
+                                Some(#fname.into_diff()?)
                             } else {
                                 None
                             }
                         }
                     } else {
                         quote! {
-                            #fname: Some(#fname.into_diff())
+                            #fname: Some(#fname.into_diff()?)
                         }
                     }
                 })
@@ -784,13 +784,13 @@ fn parse_from_into(
             // push into vectors.
             from_body.push(quote! {
                 #diff::#vname { #(#fnames),* } => {
-                    Self::#vname { #(#from_fassign),* }
+                    Ok(Self::#vname { #(#from_fassign),* })
                 }
             });
 
             into_body.push(quote! {
                 Self::#vname { #(#fnames),* } => {
-                    #diff::#vname { #(#into_fassign),* }
+                    Ok(#diff::#vname { #(#into_fassign),* })
                 }
             });
         }
@@ -816,9 +816,9 @@ fn parse_from_into(
                             <#ftyp>::from_diff(
                                 match #fname {
                                     Some(v) => v,
-                                    None => <#ftyp>::default().into_diff()
+                                    None => <#ftyp>::default().into_diff()?
                                 }
-                            )
+                            )?
                         }
                     }
                 })
@@ -836,15 +836,15 @@ fn parse_from_into(
                         quote! { Option::None }
                     } else if f.is_option() {
                         quote! {
-                            if #fname.clone().into_diff() == identity_diff::option::DiffOption::None {
+                            if #fname.clone().into_diff()? == identity_diff::option::DiffOption::None {
                                 None
                             } else {
-                                Some(#fname.into_diff())
+                                Some(#fname.into_diff()?)
                             }
                         }
                     } else {
                         quote! {
-                            Some(#fname.into_diff())
+                            Some(#fname.into_diff()?)
                         }
                     }
                 })
@@ -853,29 +853,29 @@ fn parse_from_into(
             // push code into vectors.
             from_body.push(quote! {
                 #diff::#vname( #(#fnames),* ) => {
-                    Self::#vname( #(#from_fassign),* )
+                    Ok(Self::#vname( #(#from_fassign),* ))
                 }
             });
 
             into_body.push(quote! {
                 Self::#vname( #(#fnames),* ) => {
-                    #diff::#vname(
+                    Ok(#diff::#vname(
                         #(#into_fassign),*
-                    )
+                    ))
                 }
             });
         }
         // setup code for unit variants.
         SVariant::Unit => {
             from_body.push(quote! {
-                #diff::#vname => {
-                    Self::#vname
+               #diff::#vname => {
+                    Ok(Self::#vname)
                 },
             });
 
             into_body.push(quote! {
                 Self::#vname => {
-                    #diff::#vname
+                    Ok(#diff::#vname)
                 },
             });
         }
