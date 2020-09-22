@@ -1,4 +1,4 @@
-use identity_communication::did_comm::*;
+use identity_comm::did_comm::*;
 #[test]
 fn test_create_did_comm() {
     let did_comm = DIDComm {

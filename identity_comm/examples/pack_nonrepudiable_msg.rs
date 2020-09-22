@@ -12,7 +12,7 @@
 //! cargo run --example pack_nonrepudiable_msg
 //! ```
 
-use identity_communication::{did_comm::DIDComm, envelope::pack_nonrepudiable_msg};
+use identity_comm::{did_comm::DIDComm, envelope::pack_nonrepudiable_msg};
 
 fn main() {
     let alice = DIDComm {

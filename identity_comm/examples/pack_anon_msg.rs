@@ -11,7 +11,7 @@
 //! cargo run --example pack_anon_msg
 //! ```
 
-use identity_communication::{
+use identity_comm::{
     did_comm::DIDComm,
     envelope::{pack_anon_msg, unpack_message, EncryptionType},
 };

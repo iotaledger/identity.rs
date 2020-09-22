@@ -12,7 +12,7 @@
 //! cargo run --example pack_auth_msg_for_recipients
 //! ```
 
-use identity_communication::{did_comm::DIDComm, envelope::pack_auth_msg};
+use identity_comm::{did_comm::DIDComm, envelope::pack_auth_msg};
 
 fn main() {
     let alice = DIDComm {
