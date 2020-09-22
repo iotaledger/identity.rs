@@ -74,16 +74,7 @@ impl DIDDocument {
 
     /// sets a new `service` of type `Service` into the `DIDDocument`.
     pub fn update_service(&mut self, service: IdCompare<Service>) {
-        let mut services: HashSet<IdCompare<Service>> = self
-            .services
-            .clone()
-            .into_iter()
-            .filter(|s| s.0.id() != service.0.id())
-            .collect::<HashSet<IdCompare<Service>>>();
-
-        services.insert(service);
-
-        self.services = services;
+        self.services.insert(service);
     }
 
     /// remove all of the services from the `DIDDocument`.
@@ -93,16 +84,7 @@ impl DIDDocument {
 
     /// sets a new `key_pair` of type `PublicKey` into the `DIDDocument`.
     pub fn update_public_key(&mut self, key_pair: IdCompare<PublicKey>) {
-        let mut keys: HashSet<IdCompare<PublicKey>> = self
-            .public_keys
-            .clone()
-            .into_iter()
-            .filter(|k| k.0.id() != key_pair.0.id())
-            .collect::<HashSet<IdCompare<PublicKey>>>();
-
-        keys.insert(key_pair);
-
-        self.public_keys = keys;
+        self.public_keys.insert(key_pair);
     }
 
     /// remove all of the public keys from the `DIDDocument`.
