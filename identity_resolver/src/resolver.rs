@@ -1,7 +1,7 @@
 use bytestream::*;
 use identity_core::{common::Timestamp, did::DID, document::DIDDocument};
 use identity_diff::Diff;
-use identity_integration::{did_helper::did_iota_address, tangle_reader::TangleReader, tangle_writer::Differences};
+use identity_integration::{did_helper::get_iota_address, tangle_reader::TangleReader, tangle_writer::Differences};
 use std::{collections::HashMap, io::Write, time::Instant};
 
 #[derive(Debug)]
@@ -132,9 +132,9 @@ impl Resolver {
 
         let start_time = Instant::now();
         let mut metadata = HashMap::new();
-        let (did_id, nodes) = get_id_and_nodes(&did.id_segments, self.nodes.clone())?;
+        let nodes = get_nodes(&did, self.nodes.clone())?;
         let reader = TangleReader::new(nodes.to_vec());
-        let messages = match reader.fetch(&did_iota_address(&did_id)?).await {
+        let messages = match reader.fetch(&get_iota_address(&did)?).await {
             Ok(messages) => messages,
             _ => {
                 return Ok(ResolutionResult {
@@ -148,8 +148,8 @@ impl Resolver {
                 });
             }
         };
-        let documents = get_ordered_documents(messages.clone(), &did_id)?;
-        let diffs = get_ordered_diffs(messages.clone(), &did_id)?;
+        let documents = get_ordered_documents(messages.clone(), &did)?;
+        let diffs = get_ordered_diffs(messages.clone(), &did)?;
         if resolution_metadata.include_all_messages {
             for (tailhash, msg) in messages {
                 metadata.insert(tailhash, msg);
@@ -215,7 +215,8 @@ impl Resolver {
     }
 }
 
-fn get_id_and_nodes(did_segments: &[String], nodes: NetworkNodes) -> crate::Result<(String, Vec<&'static str>)> {
+fn get_nodes(did: &DID, nodes: NetworkNodes) -> crate::Result<Vec<&'static str>> {
+    let did_segments = &did.id_segments;
     let nodes: Vec<&'static str> = match did_segments[0] {
         _ if did_segments[0] == "dev" => match nodes {
             NetworkNodes::Dev(nodes) => nodes,
@@ -233,11 +234,12 @@ fn get_id_and_nodes(did_segments: &[String], nodes: NetworkNodes) -> crate::Resu
     if nodes.is_empty() {
         return Err(crate::Error::NodeError);
     }
-    Ok((did_segments.last().expect("Failed to get id_segment").into(), nodes))
+    Ok(nodes)
 }
 
 /// Order documents: first element is latest
-fn get_ordered_documents(messages: HashMap<String, String>, did_id: &str) -> crate::Result<Vec<HashWithMessage>> {
+fn get_ordered_documents(messages: HashMap<String, String>, did: &DID) -> crate::Result<Vec<HashWithMessage>> {
+    let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
     let mut documents: Vec<HashWithMessage> = messages
         .iter()
         .filter_map(|(tailhash, msg)| {
@@ -248,7 +250,7 @@ fn get_ordered_documents(messages: HashMap<String, String>, did_id: &str) -> cra
                     .id_segments
                     .last()
                     .expect("Failed to get id_segment")
-                    == did_id
+                    == iota_specific_idstring
                 {
                     Some(HashWithMessage {
                         tailhash: tailhash.into(),
@@ -270,12 +272,13 @@ fn get_ordered_documents(messages: HashMap<String, String>, did_id: &str) -> cra
 }
 
 /// Order diffs: first element is oldest
-fn get_ordered_diffs(messages: HashMap<String, String>, did_id: &str) -> crate::Result<Vec<HashWithDiff>> {
+fn get_ordered_diffs(messages: HashMap<String, String>, did: &DID) -> crate::Result<Vec<HashWithDiff>> {
+    let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
     let mut diffs: Vec<HashWithDiff> = messages
         .iter()
         .filter_map(|(tailhash, msg)| {
             if let Ok(diff) = serde_json::from_str::<Differences>(&msg) {
-                if diff.did.id_segments.last().expect("Failed to get id_segment") == did_id {
+                if diff.did.id_segments.last().expect("Failed to get id_segment") == iota_specific_idstring {
                     Some(HashWithDiff {
                         tailhash: tailhash.into(),
                         diff,
