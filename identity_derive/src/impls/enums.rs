@@ -34,7 +34,8 @@ pub fn derive_diff_enum(input: &InputModel) -> TokenStream {
             GenericParam::Type(typ) => {
                 let S: &Ident = &typ.ident;
 
-                let bounds: Vec<TokenStream> = typ.bounds.iter().map(|bound| quote! { #bound }).collect();
+                let bounds: Vec<TokenStream> =
+                    typ.bounds.iter().map(|bound| quote! { #bound }).collect();
 
                 quote! {
                     #S: identity_diff::Diff
@@ -120,7 +121,11 @@ pub fn impl_debug_enum(input: &InputModel) -> TokenStream {
 
     // create where clause from predicates.
     let clause: &WhereClause = input.clause();
-    let predicates: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
+    let predicates: Vec<TokenStream> = clause
+        .predicates
+        .iter()
+        .map(|pred| quote! { #pred })
+        .collect();
     let clause = quote! { where #(#predicates),*};
 
     // get patterns and bodies.
@@ -291,20 +296,20 @@ fn parse_evariants(evariants: &[EVariant], diff: &Ident) -> (Vec<TokenStream>, V
                 let fields: Vec<TokenStream> = fields
                     .iter()
                     .map(|f| {
-                        let fname = f.name();
-                        let typ = f.typ();
+                        let (fname, ftyp) = (f.name(), f.typ());
+
+                        let str_name = format!("{}", fname);
 
                         if f.should_ignore() {
                             quote! {
-                                #buf.field(stringify!(#fname), &#fname);
+                                #buf.field(stringify!(#str_name), &#fname);
                             }
                         } else {
                             quote! {
-                                let fname: &'static str = stringify!(#fname);
-                                if let Some(#fname) = &#fname {
-                                    #buf.field(fname, &#fname);
+                                if let Some(val) = &#fname {
+                                    #buf.field(#str_name, &val);
                                 } else {
-                                    #buf.field(fname, &None as &Option<#typ>);
+                                    #buf.field(#str_name, &None as &Option<#ftyp>);
                                 }
                             }
                         }
@@ -346,8 +351,8 @@ fn parse_evariants(evariants: &[EVariant], diff: &Ident) -> (Vec<TokenStream>, V
                                 #buf.field(&#fname);
                             },
                             _ => quote! {
-                                if let Some(field) = #fname {
-                                    #buf.field(&field);
+                                if let Some(val) = #fname {
+                                    #buf.field(&val);
                                 } else {
                                     #buf.field(&None as &Option<#ftyp>);
                                 }
@@ -363,11 +368,11 @@ fn parse_evariants(evariants: &[EVariant], diff: &Ident) -> (Vec<TokenStream>, V
                     1 => quote! {{
                         let typ_name = String::new() + stringify!(#diff) + "::" + stringify!(#vname);
 
-                        if let Some(field) = &field_0 {
-                            write!(f, "{}({:?})", typ_name, field)
+                        if let Some(val) = &field_0 {
+                            write!(f, "{}({:?})", typ_name, val)
                         } else {
-                            let field = &None as &Option<()>;
-                            write!(f, "{}({:?})", typ_name, field)
+                            let val = &None as &Option<()>;
+                            write!(f, "{}({:?})", typ_name, val)
                         }
                     }},
                     _ => quote! {{
@@ -715,7 +720,11 @@ fn parse_diff(
             });
         }
     }
-    (diff_lpatterns.to_vec(), diff_rpatterns.to_vec(), diff_bodies.to_vec())
+    (
+        diff_lpatterns.to_vec(),
+        diff_rpatterns.to_vec(),
+        diff_bodies.to_vec(),
+    )
 }
 
 // parse data for from_diff and into_diff functions.
@@ -798,7 +807,9 @@ fn parse_from_into(
         SVariant::Tuple => {
             let ftyps: Vec<&Type> = vfields.iter().map(|f| f.typ()).collect();
             let fmax = ftyps.len();
-            let fnames: Vec<Ident> = (0..fmax).map(|ident| format_ident!("field_{}", ident)).collect();
+            let fnames: Vec<Ident> = (0..fmax)
+                .map(|ident| format_ident!("field_{}", ident))
+                .collect();
 
             // from logic.
             let from_fassign: Vec<TokenStream> = var
@@ -885,7 +896,11 @@ fn parse_from_into(
 }
 
 // create field names based on thee size of an enum.
-fn populate_field_names(vfields: &[DataFields], fmax: usize, struct_type: SVariant) -> (Vec<Ident>, Vec<Ident>) {
+fn populate_field_names(
+    vfields: &[DataFields],
+    fmax: usize,
+    struct_type: SVariant,
+) -> (Vec<Ident>, Vec<Ident>) {
     match struct_type {
         SVariant::Named => (
             vfields
@@ -900,8 +915,12 @@ fn populate_field_names(vfields: &[DataFields], fmax: usize, struct_type: SVaria
                 .collect(),
         ),
         SVariant::Tuple => (
-            (0..fmax).map(|ident| format_ident!("left_{}", ident)).collect(),
-            (0..fmax).map(|ident| format_ident!("right_{}", ident)).collect(),
+            (0..fmax)
+                .map(|ident| format_ident!("left_{}", ident))
+                .collect(),
+            (0..fmax)
+                .map(|ident| format_ident!("right_{}", ident))
+                .collect(),
         ),
         _ => panic!("Wrong Struct Type!"),
     }

@@ -131,7 +131,11 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
         .collect();
 
     // setup the where clause predicates and the where clause code.
-    let preds: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
+    let preds: Vec<TokenStream> = clause
+        .predicates
+        .iter()
+        .map(|pred| quote! { #pred })
+        .collect();
     let clause = quote! { where #(#preds),*};
 
     match svariant {
@@ -142,17 +146,19 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
             let buf: Ident = format_ident!("buf");
             for field in fields.iter() {
                 let (fname, ftype) = (field.name(), field.typ());
+
+                let str_name = format!("{}", fname);
+
                 mac.extend(if field.should_ignore() {
                     quote! {
-                        #buf.field(stringify!(#fname), &self.#fname);
+                        #buf.field(#str_name, &self.#fname);
                     }
                 } else {
                     quote! {
-                        let fname = stringify!(#fname);
-                        if let Some(#fname) = &self.#fname {
-                            #buf.field(fname, #fname);
+                        if let Some(val) = &self.#fname {
+                            #buf.field(#str_name, val);
                         } else {
-                            #buf.field(fname, &None as &Option<#ftype>);
+                            #buf.field(#str_name, &None as &Option<#ftype>);
                         }
                     }
                 });
@@ -165,7 +171,7 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
                     #clause
                     {
                         fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                            const NAME: &str = stringify!(#diff);
+                            const NAME: &str = stringify!(diff);
                             let mut #buf = f.debug_struct(NAME);
                             #mac
                             #buf.finish()
@@ -184,15 +190,15 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
             let buf = format_ident!("buf");
             for field in fields.iter() {
                 let (fpos, ftyp) = (field.position(), field.typ());
-                let fname = format_ident!("field");
+
                 f_tokens.extend(match count {
                     1 => quote! {},
                     _ if field.should_ignore() => quote! {
                         #buf.field(&self.#fpos);
                     },
                     _ => quote! {
-                        if let Some(#fname) = &self.#fpos {
-                            #buf.field(#fname);
+                        if let Some(val) = &self.#fpos {
+                            #buf.field(val);
                         } else {
                             #buf.field(&None as &Option<#ftyp>);
                         }
@@ -202,8 +208,8 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
             let mac = match count {
                 1 => quote! {
                     const NAME: &str = stringify!(#diff);
-                    if let Some(field) = &self.0 {
-                        write!(f, "{}({:?})", NAME, field)
+                    if let Some(val) = &self.0 {
+                        write!(f, "{}({:?})", NAME, val)
                     } else {
                         let field = &None as &Option<()>;
                         write!(f, "{}({:?})", NAME, field)
@@ -279,7 +285,11 @@ pub fn impl_from_into(input: &InputModel) -> TokenStream {
             })
             .collect();
 
-        let preds: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
+        let preds: Vec<TokenStream> = clause
+            .predicates
+            .iter()
+            .map(|pred| quote! { #pred })
+            .collect();
         let clause = quote! { where #(#preds),*};
 
         quote! {
@@ -345,7 +355,11 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
         .collect();
 
     // get predicates and generate where clause.
-    let preds: Vec<TokenStream> = clause.predicates.iter().map(|pred| quote! { #pred }).collect();
+    let preds: Vec<TokenStream> = clause
+        .predicates
+        .iter()
+        .map(|pred| quote! { #pred })
+        .collect();
     let clause = quote! { where #(#preds),* };
 
     match svariant {
@@ -490,7 +504,9 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
             // get types and create markers for the positioned fields.
             let field_typs: Vec<_> = fields.iter().map(|f| f.typ()).collect();
             let field_max = field_typs.len();
-            let field_markers: Vec<Ident> = (0..field_max).map(|t| format_ident!("field_{}", t)).collect();
+            let field_markers: Vec<Ident> = (0..field_max)
+                .map(|t| format_ident!("field_{}", t))
+                .collect();
 
             // get merge field logic.
             let field_merge: Vec<TokenStream> = fields
@@ -554,12 +570,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                         quote! { Default::default() }
                     } else {
                         quote! {
-                            <#typ>::from_diff(
-                                match #marker {
-                                    Some(v) => v,
-                                    None => <#typ>::default().into_diff()
-                                }
-                            )
+                            #marker.map(|v| <#typ>::from_diff(v)).unwrap_or_default()
                         }
                     }
                 })
@@ -645,16 +656,12 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
 
                     #[allow(unused)]
                     fn from_diff(diff: Self::Type) -> Self {
-                        match diff {
-                           #diff => Self,
-                        }
+                        Self
                     }
 
                     #[allow(unused)]
                     fn into_diff(self) -> Self::Type {
-                        match self {
-                            Self => #diff,
-                        }
+                        #diff
                     }
                 }
         },

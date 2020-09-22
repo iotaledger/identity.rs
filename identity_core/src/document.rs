@@ -8,7 +8,9 @@ use std::{
 use crate::{
     common::Timestamp,
     did::DID,
-    utils::{helpers::string_or_list, Authentication, Context, HasId, IdCompare, PublicKey, Service, Subject},
+    utils::{
+        helpers::string_or_list, Authentication, Context, IdCompare, PublicKey, Service, Subject,
+    },
 };
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
@@ -23,19 +25,47 @@ pub struct DIDDocument {
     pub created: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub updated: Option<String>,
-    #[serde(rename = "publicKey", skip_serializing_if = "HashSet::is_empty", default)]
+    #[serde(
+        rename = "publicKey",
+        skip_serializing_if = "HashSet::is_empty",
+        default
+    )]
     pub public_keys: HashSet<IdCompare<PublicKey>>,
-    #[serde(rename = "authentication", skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(
+        rename = "authentication",
+        skip_serializing_if = "Vec::is_empty",
+        default
+    )]
     pub auth: Vec<Authentication>,
-    #[serde(rename = "assertionMethod", skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(
+        rename = "assertionMethod",
+        skip_serializing_if = "Vec::is_empty",
+        default
+    )]
     pub assert: Vec<Authentication>,
-    #[serde(rename = "verificationMethod", skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(
+        rename = "verificationMethod",
+        skip_serializing_if = "Vec::is_empty",
+        default
+    )]
     pub verification: Vec<Authentication>,
-    #[serde(rename = "capabilityDelegation", skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(
+        rename = "capabilityDelegation",
+        skip_serializing_if = "Vec::is_empty",
+        default
+    )]
     pub delegation: Vec<Authentication>,
-    #[serde(rename = "capabilityInvocation", skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(
+        rename = "capabilityInvocation",
+        skip_serializing_if = "Vec::is_empty",
+        default
+    )]
     pub invocation: Vec<Authentication>,
-    #[serde(rename = "keyAgreement", skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(
+        rename = "keyAgreement",
+        skip_serializing_if = "Vec::is_empty",
+        default
+    )]
     pub agreement: Vec<Authentication>,
     #[serde(skip_serializing_if = "HashSet::is_empty", default)]
     pub services: HashSet<IdCompare<Service>>,
@@ -61,8 +91,12 @@ impl DIDDocument {
             ..Default::default()
         };
 
-        self.public_keys.into_iter().for_each(|k| doc.update_public_key(k));
-        self.services.into_iter().for_each(|s| doc.update_service(s));
+        self.public_keys
+            .into_iter()
+            .for_each(|k| doc.update_public_key(k));
+        self.services
+            .into_iter()
+            .for_each(|s| doc.update_service(s));
 
         doc
     }

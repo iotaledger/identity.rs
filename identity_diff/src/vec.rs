@@ -133,7 +133,7 @@ impl<T: Diff> Debug for InnerVec<T> {
                 .field("item", item)
                 .finish(),
             Self::Remove { count } => f.debug_struct("Remove").field("count", count).finish(),
-            Self::Add(diff) => write!(f, "Add({:#?})", diff),
+            Self::Add(diff) => f.debug_tuple("Add").field(diff).finish(),
         }
     }
 }
