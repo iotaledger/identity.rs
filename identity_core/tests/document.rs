@@ -160,9 +160,9 @@ fn test_doc_diff() {
 
     new.update_public_key(public_key);
 
-    let diff = old.diff(&new);
+    let diff = old.diff(&new).unwrap();
 
-    let old = old.merge(diff);
+    let old = old.merge(diff).unwrap();
 
     // check to see that the old and new docs cotain all of the same fields.
     assert_eq!(new.to_string(), old.to_string());
@@ -178,9 +178,9 @@ fn test_doc_diff_timestamps() {
 
     let mut doc2 = doc2.unwrap();
     doc2.update_time();
-    let diff = doc1.diff(&doc2);
+    let diff = doc1.diff(&doc2).unwrap();
 
-    let merge = doc1.merge(diff);
+    let merge = doc1.merge(diff).unwrap();
 
     assert_eq!(merge, doc2);
 }
@@ -227,7 +227,7 @@ fn test_diff_merge_from_string() {
 
     let def_doc = DIDDocument::default();
 
-    let res = def_doc.merge(diff);
+    let res = def_doc.merge(diff).unwrap();
 
     assert_eq!(doc, res);
 }
@@ -326,7 +326,7 @@ fn test_realistic_diff() {
         ..did_doc.clone()
     };
 
-    let diff = did_doc.diff(&did_doc_2);
+    let diff = did_doc.diff(&did_doc_2).unwrap();
 
     let json = serde_json::to_string(&diff).unwrap();
 
@@ -334,7 +334,7 @@ fn test_realistic_diff() {
 
     let diff = DIDDocument::get_diff_from_str(json).unwrap();
 
-    let new_doc = did_doc.merge(diff);
+    let new_doc = did_doc.merge(diff).unwrap();
 
     assert_eq!(did_doc_2, new_doc);
 }
