@@ -1,5 +1,5 @@
 [package]
-name = "identity_communication"
+name = "identity_comm"
 version = "0.1.0"
 authors = ["IOTA Identity"]
 edition = "2018"

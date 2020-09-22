@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "identity_account",
-    "identity_communication",
+    "identity_comm",
     "identity_resolver",
     "identity_schema",
     "identity_core",
