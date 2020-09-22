@@ -1,22 +1,28 @@
-use identity_integration::did_helper::did_iota_address;
+use identity_core::did::DID;
+use identity_integration::did_helper::get_iota_address;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
     fn has_81_trytes() {
-        assert_eq!(did_iota_address("").unwrap().len(), 81);
-        assert_eq!(did_iota_address("123456789").unwrap().len(), 81);
-        assert_eq!(did_iota_address("123456789abcdefghi").unwrap().len(), 81);
+        let did = DID::parse_from_str("did:iota:a").unwrap();
+        assert_eq!(get_iota_address(&did).unwrap().len(), 81);
+        let did = DID::parse_from_str("did:iota:123456789").unwrap();
+        assert_eq!(get_iota_address(&did).unwrap().len(), 81);
+        let did = DID::parse_from_str("did:iota:123456789abcdefghi").unwrap();
+        assert_eq!(get_iota_address(&did).unwrap().len(), 81);
     }
     #[test]
     fn same_address() {
+        let did = DID::parse_from_str("did:iota:123456789").unwrap();
         assert_eq!(
-            did_iota_address("123456789").unwrap(),
+            get_iota_address(&did).unwrap(),
             String::from("WAHCTBYCXCABDDICVAQCSCXBQCLBLBBCIDLDZCQCPBFDCBADEDVCACUBFCNBBDRBGCECGDWCHCMDTCZBX")
         );
+        let did = DID::parse_from_str("did:iota:123456789abcdefghi").unwrap();
         assert_eq!(
-            did_iota_address("123456789abcdefghi").unwrap(),
+            get_iota_address(&did).unwrap(),
             String::from("XAVAUCWBCDTCBBPBOBVCFDBCNBPBZAWBVAICACXCLBPBFDXCQCWACBXBWA9CDDLBTCICWBSCQBTCWCSCN")
         );
     }

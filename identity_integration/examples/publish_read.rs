@@ -7,7 +7,7 @@ use identity_core::{
     utils::{Context, Subject},
 };
 use identity_integration::{
-    did_helper::did_iota_address,
+    did_helper::get_iota_address,
     tangle_reader::TangleReader,
     tangle_writer::{iota_network, Payload, TangleWriter},
 };
@@ -26,13 +26,7 @@ async fn main() -> Result<()> {
     }
     .init()
     .init_timestamps()?;
-    let did_address = did_iota_address(
-        &did_document
-            .derive_did()?
-            .id_segments
-            .last()
-            .expect("Failed to get id_segment"),
-    )?;
+    let did_address = get_iota_address(&did_document.derive_did()?)?;
     let did_payload = Payload::DIDDocument(did_document);
     // 1. Publish DID document to the Tangle
     let tangle_writer = TangleWriter::new(nodes.clone(), iota_network::Comnet)?;

@@ -1,10 +1,12 @@
 use bs58::encode;
+use identity_core::did::DID;
 use iota_conversion::trytes_converter;
 use multihash::Blake2b256;
 
 /// Returns an address from a did segment
-pub fn did_iota_address(did: &str) -> crate::Result<String> {
-    let hash = Blake2b256::digest(did.as_bytes());
+pub fn get_iota_address(did: &DID) -> crate::Result<String> {
+    let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
+    let hash = Blake2b256::digest(iota_specific_idstring.as_bytes());
     let bs58key = encode(&hash.digest()).into_string();
     let trytes = match trytes_converter::to_trytes(&bs58key) {
         Ok(trytes) => trytes,

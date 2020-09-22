@@ -1,4 +1,4 @@
-use crate::did_helper::did_iota_address;
+use crate::did_helper::get_iota_address;
 use identity_core::{did::DID, document::DIDDocument};
 pub use iota::client::builder::Network as iota_network;
 use iota::{
@@ -49,21 +49,16 @@ impl TangleWriter {
     }
     /// Publishes DID document to the Tangle
     pub async fn publish_document(&self, did_document: &Payload) -> crate::Result<Hash> {
-        let id_segments;
-        let document = match did_document {
-            Payload::DIDDocument(document) => {
-                id_segments = document.derive_did()?.id_segments;
-                document.to_string()
-            }
+        let (did, document_string) = match did_document {
+            Payload::DIDDocument(document) => (document.derive_did()?, document.to_string()),
             Payload::DIDDocumentDifferences(differences) => {
-                id_segments = differences.did.id_segments.clone();
-                serde_json::to_string(&differences)?
+                (differences.did.clone(), serde_json::to_string(&differences)?)
             }
         };
         // Check if correct network
-        check_network(id_segments.clone(), &self.network)?;
+        check_network(did.id_segments.clone(), &self.network)?;
 
-        let address = did_iota_address(id_segments.last().expect("Failed to get id_segment"))?;
+        let address = get_iota_address(&did)?;
 
         // Diff chain address in did_document?
         // Is it possible to get the address from the did_document after an auth change?
@@ -71,7 +66,7 @@ impl TangleWriter {
         let transfers = vec![Transfer {
             address: Address::from_inner_unchecked(TryteBuf::try_from_str(&address)?.as_trits().encode()),
             value: 0,
-            message: Some(document),
+            message: Some(document_string),
             tag: Some(
                 Tag::try_from_inner(
                     TryteBuf::try_from_str("DID999999999999999999999999")?
