@@ -17,6 +17,7 @@
 //! - [CFRG Elliptic Curve ECDH and Signatures](https://tools.ietf.org/html/rfc8037)
 //! - [JOSE Registrations for Web Authentication Algorithms](https://tools.ietf.org/html/rfc8812)
 //! - [Chacha derived AEAD algorithms in JOSE](https://tools.ietf.org/html/draft-amringer-jose-chacha-01)
+//! - [JSON Web Token Best Current Practices](https://tools.ietf.org/html/rfc8725)
 #[macro_use]
 extern crate anyhow;
 

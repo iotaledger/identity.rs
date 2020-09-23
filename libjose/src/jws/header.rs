@@ -53,7 +53,7 @@ pub struct JwsHeader<T = Empty> {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7515#section-4.1.6)
   #[serde(skip_serializing_if = "Option::is_none")]
-  x5c: Option<Vec<Vec<u8>>>,
+  x5c: Option<Vec<String>>,
   /// X.509 Certificate SHA-1 Thumbprint.
   ///
   /// A base64url-encoded SHA-1 thumbprint of the DER encoding of the X.509
@@ -61,7 +61,7 @@ pub struct JwsHeader<T = Empty> {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7515#section-4.1.7)
   #[serde(skip_serializing_if = "Option::is_none")]
-  x5t: Option<Vec<u8>>,
+  x5t: Option<String>,
   /// X.509 Certificate SHA-256 Thumbprint.
   ///
   /// A base64url-encoded SHA-256 thumbprint of the DER encoding of the X.509
@@ -69,7 +69,7 @@ pub struct JwsHeader<T = Empty> {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7515#section-4.1.8)
   #[serde(rename = "x5t#S256", skip_serializing_if = "Option::is_none")]
-  x5t_s256: Option<Vec<u8>>,
+  x5t_s256: Option<String>,
   /// Type.
   ///
   /// Used by JWS applications to declare the media type of this complete JWS.
@@ -128,7 +128,7 @@ pub struct JwsHeader<T = Empty> {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc8555#section-6.5.2)
   #[serde(skip_serializing_if = "Option::is_none")]
-  nonce: Option<Vec<u8>>,
+  nonce: Option<String>,
   /// PASSporT extension identifier.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc8225#section-8.1)
@@ -220,35 +220,35 @@ impl<T> JwsHeader<T> {
   }
 
   /// Returns the value of the X.509 certificate chain claim (x5c).
-  pub fn x5c(&self) -> Option<&[Vec<u8>]> {
+  pub fn x5c(&self) -> Option<&[String]> {
     self.x5c.as_deref()
   }
 
   /// Sets values for the X.509 certificate chain claim (x5c).
-  pub fn set_x5c(&mut self, value: impl IntoIterator<Item = impl IntoIterator<Item = u8>>) {
-    self.x5c = Some(value.into_iter().map(Vec::from_iter).collect());
+  pub fn set_x5c(&mut self, value: impl IntoIterator<Item = impl Into<String>>) {
+    self.x5c = Some(value.into_iter().map(Into::into).collect());
   }
 
   /// Returns the value of the X.509 certificate SHA-1 thumbprint claim (x5t).
-  pub fn x5t(&self) -> Option<&[u8]> {
+  pub fn x5t(&self) -> Option<&str> {
     self.x5t.as_deref()
   }
 
   /// Sets a value for the X.509 certificate SHA-1 thumbprint claim (x5t).
-  pub fn set_x5t(&mut self, value: impl IntoIterator<Item = u8>) {
-    self.x5t = Some(Vec::from_iter(value.into_iter()));
+  pub fn set_x5t(&mut self, value: impl Into<String>) {
+    self.x5t = Some(value.into());
   }
 
   /// Returns the value of the X.509 certificate SHA-256 thumbprint claim
   /// (x5t#S256).
-  pub fn x5t_s256(&self) -> Option<&[u8]> {
+  pub fn x5t_s256(&self) -> Option<&str> {
     self.x5t_s256.as_deref()
   }
 
   /// Sets a value for the X.509 certificate SHA-256 thumbprint claim
   /// (x5t#S256).
-  pub fn set_x5t_s256(&mut self, value: impl IntoIterator<Item = u8>) {
-    self.x5t_s256 = Some(Vec::from_iter(value.into_iter()));
+  pub fn set_x5t_s256(&mut self, value: impl Into<String>) {
+    self.x5t_s256 = Some(value.into());
   }
 
   /// Returns the value of the token type claim (typ).
@@ -302,13 +302,13 @@ impl<T> JwsHeader<T> {
   }
 
   /// Returns the value of the nonce claim (nonce).
-  pub fn nonce(&self) -> Option<&[u8]> {
+  pub fn nonce(&self) -> Option<&str> {
     self.nonce.as_deref()
   }
 
   /// Sets a value for the nonce claim (nonce).
-  pub fn set_nonce(&mut self, value: impl IntoIterator<Item = u8>) {
-    self.nonce = Some(Vec::from_iter(value.into_iter()));
+  pub fn set_nonce(&mut self, value: impl Into<String>) {
+    self.nonce = Some(value.into());
   }
 
   /// Returns the value of the passport extension claim (ppt).

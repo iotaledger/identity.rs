@@ -1,24 +1,10 @@
 use core::iter::FromIterator;
+use serde_json::Map;
+use serde_json::Value;
 
 use crate::utils::Empty;
 
-// TODO
-#[derive(Clone, Default, Debug, PartialEq, Deserialize, Serialize)]
-pub struct DID(pub String);
-
-// TODO
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub enum Credential {
-  Standard,
-  Verifiable,
-}
-
-// TODO
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub enum Presentation {
-  Standard,
-  Verifiable,
-}
+type Object = Map<String, Value>;
 
 /// JSON Web Token Claims
 ///
@@ -68,17 +54,17 @@ pub struct JwtClaims<T = Empty> {
   ///
   /// [More Info](https://www.w3.org/TR/did-core/)
   #[serde(skip_serializing_if = "Option::is_none")]
-  did: Option<DID>, // Decentralized Identifier
+  did: Option<String>, // Decentralized Identifier
   /// Contains the properties of a Verifiable Credential
   ///
   /// [More Info](https://w3c.github.io/vc-data-model/#json-web-token)
   #[serde(skip_serializing_if = "Option::is_none")]
-  vc: Option<Credential>, // Verifiable Credential
+  vc: Option<Object>, // Verifiable Credential
   /// Contains the properties of a Verifiable Presentation
   ///
   /// [More Info](https://w3c.github.io/vc-data-model/#json-web-token)
   #[serde(skip_serializing_if = "Option::is_none")]
-  vp: Option<Presentation>, // Verifiable Presentation
+  vp: Option<Object>, // Verifiable Presentation
   /// Public/Private Claim Names
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7519#section-4.2)
@@ -175,32 +161,32 @@ impl<T> JwtClaims<T> {
   }
 
   /// Returns the value for the JWT DID claim (did).
-  pub fn did(&self) -> Option<&DID> {
-    self.did.as_ref()
+  pub fn did(&self) -> Option<&str> {
+    self.did.as_deref()
   }
 
   /// Sets a value for the JWT DID claim (did).
-  pub fn set_did(&mut self, value: impl Into<DID>) {
+  pub fn set_did(&mut self, value: impl Into<String>) {
     self.did = Some(value.into());
   }
 
   /// Returns the value for the JWT verifiable credential claim (vc).
-  pub fn vc(&self) -> Option<&Credential> {
+  pub fn vc(&self) -> Option<&Object> {
     self.vc.as_ref()
   }
 
   /// Sets a value for the JWT verifiable credential claim (vc).
-  pub fn set_vc(&mut self, value: impl Into<Credential>) {
+  pub fn set_vc(&mut self, value: impl Into<Object>) {
     self.vc = Some(value.into());
   }
 
   /// Returns the value for the JWT verifiable presentation claim (vp).
-  pub fn vp(&self) -> Option<&Presentation> {
+  pub fn vp(&self) -> Option<&Object> {
     self.vp.as_ref()
   }
 
   /// Sets a value for the JWT verifiable presentation claim (vp).
-  pub fn set_vp(&mut self, value: impl Into<Presentation>) {
+  pub fn set_vp(&mut self, value: impl Into<Object>) {
     self.vp = Some(value.into());
   }
 

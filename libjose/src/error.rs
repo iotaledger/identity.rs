@@ -26,8 +26,8 @@ pub enum PemError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum ValidationError {
-  #[error("Missing Required Claims: {}", .0.join(", "))]
-  MissingClaims(Vec<&'static str>),
+  #[error("Missing Required Claim: {0}")]
+  MissingClaim(&'static str),
   #[error("Invalid Audience Claim")]
   InvalidAudience,
   #[error("Invalid Issuer Claim")]

@@ -69,7 +69,7 @@ pub struct Jwk {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.7)
   #[serde(skip_serializing_if = "Option::is_none")]
-  x5c: Option<Vec<Vec<u8>>>,
+  x5c: Option<Vec<String>>,
   /// X.509 Certificate SHA-1 Thumbprint.
   ///
   /// A base64url-encoded SHA-1 thumbprint of the DER encoding of an X.509
@@ -77,7 +77,7 @@ pub struct Jwk {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.8)
   #[serde(skip_serializing_if = "Option::is_none")]
-  x5t: Option<Vec<u8>>,
+  x5t: Option<String>,
   /// X.509 Certificate SHA-256 Thumbprint.
   ///
   /// A base64url-encoded SHA-256 thumbprint of the DER encoding of an X.509
@@ -85,7 +85,7 @@ pub struct Jwk {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4.9)
   #[serde(rename = "x5t#S256", skip_serializing_if = "Option::is_none")]
-  x5t_s256: Option<Vec<u8>>,
+  x5t_s256: Option<String>,
   /// Type-Specific Key Properties.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7517#section-4)
@@ -176,36 +176,36 @@ impl Jwk {
   }
 
   /// Returns the value of the X.509 certificate chain property (x5c).
-  pub fn x5c(&self) -> Option<&[Vec<u8>]> {
+  pub fn x5c(&self) -> Option<&[String]> {
     self.x5c.as_deref()
   }
 
   /// Sets values for the X.509 certificate chain property (x5c).
-  pub fn set_x5c(&mut self, value: impl IntoIterator<Item = impl IntoIterator<Item = u8>>) {
-    self.x5c = Some(value.into_iter().map(Vec::from_iter).collect());
+  pub fn set_x5c(&mut self, value: impl IntoIterator<Item = impl Into<String>>) {
+    self.x5c = Some(value.into_iter().map(Into::into).collect());
   }
 
   /// Returns the value of the X.509 certificate SHA-1 thumbprint property
   /// (x5t).
-  pub fn x5t(&self) -> Option<&[u8]> {
+  pub fn x5t(&self) -> Option<&str> {
     self.x5t.as_deref()
   }
 
   /// Sets a value for the X.509 certificate SHA-1 thumbprint property (x5t).
-  pub fn set_x5t(&mut self, value: impl IntoIterator<Item = u8>) {
-    self.x5t = Some(Vec::from_iter(value.into_iter()));
+  pub fn set_x5t(&mut self, value: impl Into<String>) {
+    self.x5t = Some(value.into());
   }
 
   /// Returns the value of the X.509 certificate SHA-256 thumbprint property
   /// (x5t#S256).
-  pub fn x5t_s256(&self) -> Option<&[u8]> {
+  pub fn x5t_s256(&self) -> Option<&str> {
     self.x5t_s256.as_deref()
   }
 
   /// Sets a value for the X.509 certificate SHA-256 thumbprint property
   /// (x5t#S256).
-  pub fn set_x5t_s256(&mut self, value: impl IntoIterator<Item = u8>) {
-    self.x5t_s256 = Some(Vec::from_iter(value.into_iter()));
+  pub fn set_x5t_s256(&mut self, value: impl Into<String>) {
+    self.x5t_s256 = Some(value.into());
   }
 
   /// Returns a reference to the custom JWK properties.
