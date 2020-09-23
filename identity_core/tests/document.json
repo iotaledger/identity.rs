@@ -67,33 +67,27 @@
         "id": "did:iota:123456789abcdefghi",
         "public_keys": [
             {
-                "Add": {
-                    "id": "did:iota:123456789abcdefghi#keys-1",
-                    "type": "RsaVerificationKey2018",
-                    "controller": "did:iota:123456789abcdefghi",
-                    "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-                }
+                "id": "did:iota:123456789abcdefghi#keys-1",
+                "type": "RsaVerificationKey2018",
+                "controller": "did:iota:123456789abcdefghi",
+                "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
             }
         ],
         "services": [
             {
-                "Add": {
-                    "id": "did:into:123#edv",
-                    "type": "EncryptedDataVault",
-                    "serviceEndpoint": "https://edv.example.com/"
-                }
+                "id": "did:into:123#edv",
+                "type": "EncryptedDataVault",
+                "serviceEndpoint": "https://edv.example.com/"
             }
         ]
     },
     "diff2": {
         "public_keys": [
             {
-                "Add": {
-                    "id": "did:iota:123456789abcdefghi#keys-1",
-                    "type": "RsaVerificationKey2018",
-                    "controller": "did:iota:123456789abcdefghi",
-                    "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
-                }
+                "id": "did:iota:123456789abcdefghi#keys-1",
+                "type": "RsaVerificationKey2018",
+                "controller": "did:iota:123456789abcdefghi",
+                "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
             }
         ]
     }
