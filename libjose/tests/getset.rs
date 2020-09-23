@@ -6,10 +6,13 @@ use libjose::jwk::Jwk;
 use libjose::jwk::JwkOperation;
 use libjose::jwk::JwkType;
 use libjose::jwk::JwkUse;
+use libjose::jwm::JwmAttributes;
 use libjose::jws::JwsAlgorithm;
 use libjose::jws::JwsHeader;
 use libjose::jwt::JwtClaims;
 use libjose::utils::encode_b64;
+use serde_json::Value;
+use std::collections::BTreeMap;
 
 macro_rules! test_getset {
   ($ty:ty, $get:ident, $set:ident, Url = $value:expr) => {
@@ -27,7 +30,7 @@ macro_rules! test_getset {
   ($ty:ty, $get:ident, $set:ident, OptionRef = $value:expr) => {
     let mut header = <$ty>::new();
     assert_eq!(header.$get(), None);
-    header.$set($value);
+    header.$set($value.clone());
     assert_eq!(header.$get().unwrap(), &$value);
   };
   ($ty:ty, $get:ident, $set:ident, $value:expr) => {
@@ -161,4 +164,45 @@ fn test_jwt_claims_getset() {
   test_getset!(JwtClaims, nbf, set_nbf, Option = 123456789);
   test_getset!(JwtClaims, iat, set_iat, Option = 123456789);
   test_getset!(JwtClaims, jti, set_jti, Option = "jwt id");
+}
+
+#[test]
+fn test_jwm_attributes_getset() {
+  let mut attrs = BTreeMap::new();
+  attrs.insert("hello".into(), "world".into());
+  test_getset!(JwmAttributes, id, set_id, Option = "msg-id");
+  test_getset!(JwmAttributes, type_, set_type, Option = "msg-type");
+  test_getset!(JwmAttributes, body, set_body, OptionRef = attrs);
+  test_getset!(JwmAttributes, to, set_to, Option = "msg-to");
+  test_getset!(JwmAttributes, from, set_from, Option = "msg-from");
+  test_getset!(
+    JwmAttributes,
+    thread_id,
+    set_thread_id,
+    Option = "msg-thread-id"
+  );
+  test_getset!(
+    JwmAttributes,
+    created_time,
+    set_created_time,
+    Option = 123456789
+  );
+  test_getset!(
+    JwmAttributes,
+    expires_time,
+    set_expires_time,
+    Option = 123456789
+  );
+  test_getset!(
+    JwmAttributes,
+    reply_url,
+    set_reply_url,
+    Option = "msg-reply-url"
+  );
+  test_getset!(
+    JwmAttributes,
+    reply_to,
+    set_reply_to,
+    Option = vec!["msg-reply-to-1", "msg-reply-to-2"]
+  );
 }

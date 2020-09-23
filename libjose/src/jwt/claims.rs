@@ -6,8 +6,6 @@ use crate::alloc::String;
 use crate::alloc::Vec;
 use crate::utils::Empty;
 
-type Object = Map<String, Value>;
-
 /// JSON Web Token Claims
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7519#section-4)
@@ -61,12 +59,12 @@ pub struct JwtClaims<T = Empty> {
   ///
   /// [More Info](https://w3c.github.io/vc-data-model/#json-web-token)
   #[serde(skip_serializing_if = "Option::is_none")]
-  vc: Option<Object>, // Verifiable Credential
+  vc: Option<Map<String, Value>>, // Verifiable Credential
   /// Contains the properties of a Verifiable Presentation
   ///
   /// [More Info](https://w3c.github.io/vc-data-model/#json-web-token)
   #[serde(skip_serializing_if = "Option::is_none")]
-  vp: Option<Object>, // Verifiable Presentation
+  vp: Option<Map<String, Value>>, // Verifiable Presentation
   /// Public/Private Claim Names
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7519#section-4.2)
@@ -173,22 +171,22 @@ impl<T> JwtClaims<T> {
   }
 
   /// Returns the value for the JWT verifiable credential claim (vc).
-  pub fn vc(&self) -> Option<&Object> {
+  pub fn vc(&self) -> Option<&Map<String, Value>> {
     self.vc.as_ref()
   }
 
   /// Sets a value for the JWT verifiable credential claim (vc).
-  pub fn set_vc(&mut self, value: impl Into<Object>) {
+  pub fn set_vc(&mut self, value: impl Into<Map<String, Value>>) {
     self.vc = Some(value.into());
   }
 
   /// Returns the value for the JWT verifiable presentation claim (vp).
-  pub fn vp(&self) -> Option<&Object> {
+  pub fn vp(&self) -> Option<&Map<String, Value>> {
     self.vp.as_ref()
   }
 
   /// Sets a value for the JWT verifiable presentation claim (vp).
-  pub fn set_vp(&mut self, value: impl Into<Object>) {
+  pub fn set_vp(&mut self, value: impl Into<Map<String, Value>>) {
     self.vp = Some(value.into());
   }
 

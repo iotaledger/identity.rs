@@ -58,6 +58,7 @@ pub mod error;
 pub mod jwa;
 pub mod jwe;
 pub mod jwk;
+pub mod jwm;
 pub mod jws;
 pub mod jwt;
 #[doc(hidden)]
