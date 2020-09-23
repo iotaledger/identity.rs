@@ -24,7 +24,7 @@ where
 
 /// The inner parsing method for the `DIDParser`.
 fn parse_pairs(pairs: Pairs<Rule>) -> crate::Result<DID> {
-    let mut prms: Vec<Param> = Vec::new();
+    let mut params: Vec<Param> = Vec::new();
     let mut path_segs: Vec<String> = Vec::new();
 
     let mut did = DID::default();
@@ -43,30 +43,35 @@ fn parse_pairs(pairs: Pairs<Rule>) -> crate::Result<DID> {
                 }
                 did.id_segments.push(pair.as_str().to_string());
             }
-            Rule::param => {
-                let mut inner = pair.into_inner();
-                let name = inner.next().expect("No name for this value");
-
-                match inner.next() {
-                    Some(val) => {
-                        prms.push(Param::from((name.as_str().to_string(), Some(val.as_str().to_string()))));
-                    }
-                    None => {
-                        prms.push(Param::from((name.as_str().to_string(), None)));
-                    }
-                }
-            }
             Rule::path_segment => {
                 path_segs.push(pair.as_str().to_string());
             }
-            Rule::query => did.add_query(pair.as_str().to_string()),
+            Rule::query => {
+                let pairs = pair.into_inner();
+                for pair in pairs {
+                    let mut param = Param::default();
+                    if let Rule::param = pair.as_rule() {
+                        let pair = pair.clone().into_inner();
+                        for p in pair {
+                            if let Rule::param_name = p.as_rule() {
+                                param.key = p.as_str().to_string();
+                            }
+
+                            if let Rule::param_value = p.as_rule() {
+                                param.value = Some(p.as_str().to_string());
+                            }
+                        }
+                    }
+                    params.push(param);
+                }
+            }
             Rule::fragment => did.add_fragment(pair.as_str().to_string()),
             _ => return Err(crate::Error::FormatError("Token in DID has an incorrect format".into())),
         }
     }
 
-    if !prms.is_empty() {
-        did.add_params(prms);
+    if !params.is_empty() {
+        did.add_query(params);
     }
 
     if !path_segs.is_empty() {

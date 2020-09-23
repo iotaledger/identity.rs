@@ -58,8 +58,7 @@ fn test_auth() {
         controller: "did:iota:123456789abcdefghi".into(),
         key_data: auth_key_data,
         ..Default::default()
-    }
-    .init();
+    };
 
     doc_2.update_public_key(key1);
     doc_2.update_public_key(key2);
@@ -120,8 +119,7 @@ fn test_assertion() {
         controller: "did:iota:123456789abcdefghi".into(),
         key_data: auth_key_data,
         ..Default::default()
-    }
-    .init();
+    };
 
     doc_2.update_public_key(key1);
     doc_2.update_public_key(key2);
@@ -182,8 +180,7 @@ fn test_verification() {
         controller: "did:iota:123456789abcdefghi".into(),
         key_data: auth_key_data,
         ..Default::default()
-    }
-    .init();
+    };
 
     doc_2.update_public_key(key1);
     doc_2.update_public_key(key2);
@@ -244,8 +241,7 @@ fn test_delegation() {
         controller: "did:iota:123456789abcdefghi".into(),
         key_data: auth_key_data,
         ..Default::default()
-    }
-    .init();
+    };
 
     doc_2.update_public_key(key1);
     doc_2.update_public_key(key2);
@@ -306,8 +302,7 @@ fn test_invocation() {
         controller: "did:iota:123456789abcdefghi".into(),
         key_data: auth_key_data,
         ..Default::default()
-    }
-    .init();
+    };
 
     doc_2.update_public_key(key1);
     doc_2.update_public_key(key2);
@@ -368,8 +363,7 @@ fn test_agreement() {
         controller: "did:iota:123456789abcdefghi".into(),
         key_data: auth_key_data,
         ..Default::default()
-    }
-    .init();
+    };
 
     doc_2.update_public_key(key1);
     doc_2.update_public_key(key2);

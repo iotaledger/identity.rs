@@ -1,12 +1,12 @@
 use identity_core::{
     did::DID,
     document::DIDDocument,
-    utils::{Context, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
+    utils::{Authentication, Context, IdCompare, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
 };
 
 use std::str::FromStr;
 
-use serde_diff::{Apply, Diff};
+use identity_diff::Diff;
 
 const JSON_STR: &str = include_str!("document.json");
 
@@ -62,9 +62,24 @@ fn test_doc_creation() {
         id: "did:into:123#edv".into(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
-    };
+    }
+    .init();
+
+    let endpoint2 = ServiceEndpoint {
+        context: "https://edv.example.com/".into(),
+        ..Default::default()
+    }
+    .init();
+
+    let service2 = Service {
+        id: "did:into:123#edv".into(),
+        service_type: "IdentityHub".into(),
+        endpoint: endpoint2,
+    }
+    .init();
 
     did_doc.update_service(service.clone());
+    did_doc.update_service(service2.clone());
 
     let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
@@ -85,8 +100,11 @@ fn test_doc_creation() {
         ..Default::default()
     }
     .init();
-    did_doc_2.update_service(service);
+
     did_doc_2.update_public_key(public_key);
+
+    did_doc_2.update_service(service);
+    did_doc_2.update_service(service2);
 
     let did_doc = did_doc.init_timestamps().unwrap();
 
@@ -98,7 +116,7 @@ fn test_doc_creation() {
 #[test]
 fn test_doc_diff() {
     // old doc
-    let mut old = DIDDocument {
+    let old = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
         id: Subject::from("did:iota:123456789abcdefghi"),
         ..Default::default()
@@ -122,7 +140,8 @@ fn test_doc_diff() {
         id: "did:into:123#edv".into(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
-    };
+    }
+    .init();
 
     new.update_service(service);
 
@@ -139,46 +158,132 @@ fn test_doc_diff() {
 
     new.update_public_key(public_key);
 
-    // diff the two docs and create a json string of the diff.
-    let json_diff = serde_json::to_string(&Diff::serializable(&old, &new)).unwrap();
+    let diff = old.diff(&new).unwrap();
 
-    let mut deserializer = serde_json::Deserializer::from_str(&json_diff);
-
-    // apply the json string to the old document.
-    Apply::apply(&mut deserializer, &mut old).unwrap();
+    let old = old.merge(diff).unwrap();
 
     // check to see that the old and new docs cotain all of the same fields.
     assert_eq!(new.to_string(), old.to_string());
 }
 
+// test diffing the timestamps.
 #[test]
 fn test_doc_diff_timestamps() {
+    // fetch the did doc in json format.
     let json_str = setup_json("doc");
 
-    let mut doc1 = DIDDocument::default();
+    // create a default doc.
+    let doc1 = DIDDocument::default();
 
-    let doc2 = DIDDocument::from_str(&json_str);
+    // generate a doc from the json string.
+    let mut doc2 = DIDDocument::from_str(&json_str).unwrap();
 
-    let mut doc2 = doc2.unwrap();
+    // call update time on the doc.
     doc2.update_time();
-    let diff = Diff::serializable(&doc1, &doc2);
 
-    let json_diff = serde_json::to_string(&diff).unwrap();
+    // diff the doc with doc2.
+    let diff = doc1.diff(&doc2).unwrap();
 
-    let mut deserializer = serde_json::Deserializer::from_str(&json_diff);
+    // merge the doc diff into doc 1.
+    let merge = doc1.merge(diff).unwrap();
 
-    Apply::apply(&mut deserializer, &mut doc1).unwrap();
-
-    assert_eq!(doc1.to_string(), doc2.to_string());
+    // check to see that the new doc is the same as doc2.
+    assert_eq!(merge, doc2);
 }
 
 #[test]
-fn test_diff_strings() {
+fn test_diff_merge_from_string() {
     let diff_str = setup_json("diff");
 
+    // create a doc.
+    let mut doc = DIDDocument {
+        context: Context::from("https://w3id.org/did/v1"),
+        id: Subject::from("did:iota:123456789abcdefghi"),
+        ..Default::default()
+    }
+    .init();
+    // create an endpoint.
+    let endpoint = ServiceEndpoint {
+        context: "https://edv.example.com/".into(),
+        ..Default::default()
+    }
+    .init();
+
+    // create a IdCompare<Service>
+    let service = Service {
+        id: "did:into:123#edv".into(),
+        service_type: "EncryptedDataVault".into(),
+        endpoint,
+    }
+    .init();
+
+    // update the service.
+    doc.update_service(service);
+
+    // create some key data.
+    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
+    // create a public key, IdCompare<PublicKey>.
+    let public_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data,
+        ..Default::default()
+    }
+    .init();
+
+    // add the public key to the did doc.
+    doc.update_public_key(public_key);
+
+    // get the diff from the json string and generate a did doc.
+    let diff = DIDDocument::get_diff_from_str(diff_str).unwrap();
+
+    // create a default empty did Doc.
     let def_doc = DIDDocument::default();
 
-    let mut doc = DIDDocument {
+    // merge the diff with the default doc.
+    let res = def_doc.merge(diff).unwrap();
+
+    // check to see if the new doc is the same as the old doc.
+    assert_eq!(doc, res);
+}
+
+#[test]
+fn test_doc_metadata() {
+    use std::collections::HashMap;
+
+    // get the json string for a did doc.
+    let json_str = setup_json("doc");
+    // get the json string for the metadata.
+    let result_str = setup_json("metadata");
+
+    // generate a did doc from the json string.
+    let doc = DIDDocument::from_str(&json_str);
+
+    assert!(doc.is_ok());
+
+    let doc = doc.unwrap();
+    // create a new hashmap and insert the metadata.
+    let mut metadata = HashMap::new();
+    metadata.insert("some".into(), "metadata".into());
+    metadata.insert("some_more".into(), "metadata_stuff".into());
+
+    // add the metadata to the original doc.
+    let doc = doc.supply_metadata(metadata).unwrap();
+
+    // get the metadata doc string and create a new did doc from it.
+    let res_doc = DIDDocument::from_str(&result_str).unwrap();
+
+    // check to see if the two docs are the same.
+    assert_eq!(doc, res_doc);
+}
+
+#[test]
+fn test_realistic_diff() {
+    let json_str = setup_json("diff2");
+
+    let mut did_doc = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
         id: Subject::from("did:iota:123456789abcdefghi"),
         ..Default::default()
@@ -194,9 +299,24 @@ fn test_diff_strings() {
         id: "did:into:123#edv".into(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
-    };
+    }
+    .init();
 
-    doc.update_service(service);
+    let endpoint2 = ServiceEndpoint {
+        context: "https://edv.example.com/".into(),
+        ..Default::default()
+    }
+    .init();
+
+    let service2 = Service {
+        id: "did:into:123#edv".into(),
+        service_type: "IdentityHub".into(),
+        endpoint: endpoint2,
+    }
+    .init();
+
+    did_doc.update_service(service);
+    did_doc.update_service(service2);
 
     let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
@@ -209,33 +329,99 @@ fn test_diff_strings() {
     }
     .init();
 
-    doc.update_public_key(public_key);
+    did_doc.update_public_key(public_key.clone());
 
-    let json_diff = serde_json::to_string(&Diff::serializable(&def_doc, &doc)).unwrap();
+    let key_data_1 = KeyData::Pem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
+    let key1 = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data: key_data_1,
+        ..Default::default()
+    }
+    .init();
 
-    // remove newlines and spaces from the diff_str.
-    assert_eq!(json_diff, diff_str.replace("\n", "").replace(" ", "").replace("\r", ""))
+    let mut did_doc_2 = did_doc.clone();
+
+    did_doc_2.update_public_key(public_key);
+    did_doc_2.update_public_key(key1);
+
+    let diff = did_doc.diff(&did_doc_2).unwrap();
+
+    let json = serde_json::to_string(&diff).unwrap();
+
+    assert_eq!(json_str, json);
+
+    let diff = DIDDocument::get_diff_from_str(json).unwrap();
+
+    let new_doc = did_doc.merge(diff).unwrap();
+
+    assert_eq!(did_doc_2, new_doc);
 }
 
+// test that items in the did doc are unique by their subject/id.
 #[test]
-fn test_doc_metadata() {
-    use std::collections::HashMap;
+fn test_id_compare() {
+    // key data.
+    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
-    let json_str = setup_json("doc");
-    let result_str = setup_json("metadata");
+    // service endpoint.
+    let endpoint = ServiceEndpoint {
+        context: "https://edv.example.com/".into(),
+        ..Default::default()
+    }
+    .init();
 
-    let doc = DIDDocument::from_str(&json_str);
+    // create a public key.
+    let public_key = PublicKey {
+        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:123456789abcdefghi".into(),
+        key_data,
+        ..Default::default()
+    }
+    .init();
 
-    assert!(doc.is_ok());
+    // create the authentication key.
+    let auth = Authentication::Key(public_key.clone());
 
-    let doc = doc.unwrap();
-    let mut metadata = HashMap::new();
-    metadata.insert("some".into(), "metadata".into());
-    metadata.insert("some_more".into(), "metadata_stuff".into());
+    // create a IdCompare<Service>
+    let service = Service {
+        id: "did:into:123#edv".into(),
+        service_type: "EncryptedDataVault".into(),
+        endpoint,
+    }
+    .init();
 
-    let doc = doc.supply_metadata(metadata).unwrap();
+    // generate a did doc.
+    let mut did_doc = DIDDocument {
+        context: Context::from("https://w3id.org/did/v1"),
+        id: Subject::from("did:iota:123456789abcdefghi"),
+        ..Default::default()
+    }
+    .init();
 
-    let res_doc = DIDDocument::from_str(&result_str).unwrap();
+    // insert the service twice.
+    did_doc.update_service(service.clone());
+    did_doc.update_service(service);
 
-    assert_eq!(doc, res_doc);
+    // insert the public key twice.
+    did_doc.update_public_key(public_key.clone());
+    did_doc.update_public_key(public_key);
+
+    // insert both auths.
+    did_doc.update_agreement(auth.clone());
+    did_doc.update_agreement(auth.clone());
+
+    // expect length of the services, keys and agreements.
+    let expected_length = 1;
+
+    // failed structure of the agreement field.
+    let failed_auth = vec![IdCompare::new(auth.clone()), IdCompare::new(auth)];
+
+    assert_eq!(expected_length, did_doc.services.len());
+    assert_eq!(expected_length, did_doc.public_keys.len());
+    assert_eq!(expected_length, did_doc.agreement.len());
+
+    assert_ne!(failed_auth, did_doc.agreement);
 }

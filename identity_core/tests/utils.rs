@@ -44,7 +44,7 @@ fn test_subject_from_did() {
     let did = DID {
         method_name: "iota".into(),
         id_segments: vec!["123456".into(), "789011".into()],
-        params: Some(vec![("name".into(), Some("value".into())).into()]),
+        query: Some(vec![("name".into(), Some("value".into())).into()]),
         ..Default::default()
     }
     .init()
@@ -64,7 +64,7 @@ fn test_subject_from() {
     let did = DID {
         method_name: "iota".into(),
         id_segments: vec!["123456".into(), "789011".into()],
-        params: Some(vec![("name".into(), Some("value".into())).into()]),
+        query: Some(vec![("name".into(), Some("value".into())).into()]),
         ..Default::default()
     }
     .init()
@@ -94,8 +94,7 @@ fn test_public_key() {
         controller: "did:iota:pqrstuvwxyz0987654321".into(),
         key_data,
         ..Default::default()
-    }
-    .init();
+    };
 
     assert_eq!(public_key, pk_t);
 

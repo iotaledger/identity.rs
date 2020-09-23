@@ -45,6 +45,28 @@ macro_rules! impl_error_ctor {
     };
 }
 
+/// creates a simple HashMap using map! { "key" => "val", .. }
+#[allow(unused_macros)]
+#[macro_export]
+macro_rules! map {
+    ($($key:expr => $val:expr),* $(,)?) => {{
+        let mut map = HashMap::new();
+        $( map.insert($key, $val); )*
+            map
+    }}
+}
+
+/// Creates a simple HashSet using set! {"val_1", "val_2", ...};
+#[allow(unused_macros)]
+#[macro_export]
+macro_rules! set {
+    ($($val:expr),* $(,)?) => {{ #[allow(redundant_semicolons)] {
+        let mut set = HashSet::new();
+        $( set.insert($val); )* ;
+        set
+    }}}
+}
+
 #[macro_export]
 macro_rules! impl_builder_setter {
     ($fn:ident, $field:ident, Option<$ty:ty>) => {
