@@ -1,6 +1,4 @@
-use bs58::encode;
 use identity_diff::Diff;
-use multihash::Blake2b256;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
@@ -10,7 +8,6 @@ use std::{
 use crate::{
     common::Timestamp,
     did::DID,
-    iota_network,
     utils::{helpers::string_or_list, Authentication, Context, HasId, IdCompare, PublicKey, Service, Subject},
 };
 
@@ -71,31 +68,15 @@ impl DIDDocument {
     }
 
     /// sets the value of the `id` into the `DIDDocument`.
-    pub fn create_id(&mut self, iota_network: iota_network, network_shard: Option<String>) -> crate::Result<()> {
+    pub fn create_id(&mut self) -> crate::Result<()> {
         if self.id.to_did().unwrap().method_name == "" {
-            if self.public_keys.is_empty() {
-                return Err(crate::Error::NoPublicKeyError);
+            if self.auth.is_empty() {
+                return Err(crate::Error::NoAuthKeyError);
             }
-            // we need to get the DID controller public key.
-            // let authentication_key = self.public_keys.get_authentication_key();
-            // iterate and create the id for each key and compare it with the controller id?
-            let authentication_key = match self.public_keys.iter().next() {
-                Some(IdCompare(y)) => y.to_string(),
-                _ => panic!("no key"),
-            };
-            let hash = Blake2b256::digest(authentication_key.as_bytes());
-            let bs58key = encode(&hash.digest()).into_string();
-            let network_string = match iota_network {
-                iota_network::Comnet => "com:".to_string(),
-                iota_network::Devnet => "dev:".to_string(),
-                _ => "".to_string(), // default: "main" also can be written as ""
-            };
-            let shard_string = match network_shard {
-                Some(shard) => format!("{}:", shard),
-                _ => String::new(),
-            };
-            let id_string = format!("did:iota:{}{}{}", network_string, shard_string, bs58key);
-            self.id = Subject::from(id_string);
+            // which one to use if there are multiple keys?
+            if let Authentication::Key(key) = &self.auth[0] {
+                self.id = key.id.clone();
+            }
         }
         // else ID already set
         Ok(())

@@ -1,5 +1,8 @@
+use bs58::encode;
+use multihash::Blake2b256;
 use std::{hash::Hash, str::FromStr};
 
+use crate::iota_network;
 use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
 
@@ -66,6 +69,39 @@ impl PublicKey {
             key_data: self.key_data,
             reference: self.reference,
         })
+    }
+    /// Creates own method specific ID and set the id and controller to it, if they don't already have values
+    pub fn create_own_id(&mut self, iota_network: iota_network, network_shard: Option<String>) -> crate::Result<()> {
+        let pub_key = match &self.key_data {
+            KeyData::Unknown(key) => key,
+            KeyData::Pem(key) => key,
+            KeyData::Jwk(key) => key,
+            KeyData::Hex(key) => key,
+            KeyData::Base64(key) => key,
+            KeyData::Base58(key) => key,
+            KeyData::Multibase(key) => key,
+            KeyData::IotaAddress(key) => key,
+            KeyData::EthereumAddress(key) => key,
+        };
+        let hash = Blake2b256::digest(pub_key.as_bytes());
+        let bs58key = encode(&hash.digest()).into_string();
+        let network_string = match iota_network {
+            iota_network::Comnet => "com:".to_string(),
+            iota_network::Devnet => "dev:".to_string(),
+            _ => "".to_string(), // default: "main" also can be written as ""
+        };
+        let shard_string = match network_shard {
+            Some(shard) => format!("{}:", shard),
+            _ => String::new(),
+        };
+        let id_string = format!("did:iota:{}{}{}", network_string, shard_string, bs58key);
+        if self.id.to_did().unwrap().method_name == "" {
+            self.id = Subject::from(id_string.clone());
+        }
+        if self.controller.to_did().unwrap().method_name == "" {
+            self.controller = Subject::from(id_string);
+        }
+        Ok(())
     }
 }
 

@@ -1,5 +1,6 @@
 use identity_core::{
     document::DIDDocument,
+    iota_network,
     utils::{Authentication, Context, KeyData, PublicKey, Subject},
 };
 
@@ -379,4 +380,23 @@ fn test_agreement() {
     let doc_2 = doc_2.init();
 
     assert_eq!(doc_1, doc_2);
+}
+
+/// test DID creation.
+#[test]
+fn test_did_creation() {
+    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+
+    let mut auth_key = PublicKey {
+        key_type: "RsaVerificationKey2018".into(),
+        key_data,
+        ..Default::default()
+    }
+    .init();
+    auth_key.0.create_own_id(iota_network::Comnet, None).unwrap();
+
+    assert_eq!(
+        auth_key.0.id.to_did().unwrap().to_string(),
+        "did:iota:com:5X7Uq87P7x6P2kdJEiNYun6npfHa21DiozoCWhuJtwPg"
+    );
 }
