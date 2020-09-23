@@ -3,7 +3,7 @@ use std::{hash::Hash, str::FromStr};
 use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
 
-use crate::utils::{HasId, IdCompare, Subject};
+use crate::utils::{HasId, Subject};
 
 /// Public Key type enum. Can also contain a custom key type specified by the CustomKey field.
 #[derive(Debug, PartialEq, Clone, Diff, Deserialize, Serialize, Eq, Hash, Ord, PartialOrd)]
@@ -58,14 +58,14 @@ pub struct PublicKey {
 }
 
 impl PublicKey {
-    pub fn init(self) -> IdCompare<Self> {
-        IdCompare(Self {
+    pub fn init(self) -> Self {
+        Self {
             id: self.id,
             key_type: self.key_type,
             controller: self.controller,
             key_data: self.key_data,
             reference: self.reference,
-        })
+        }
     }
 }
 

@@ -8,7 +8,9 @@ use std::{
 use crate::{
     common::Timestamp,
     did::DID,
-    utils::{helpers::string_or_list, Authentication, Context, IdCompare, PublicKey, Service, Subject},
+    utils::{
+        add_unique_to_vec, helpers::string_or_list, Authentication, Context, IdCompare, PublicKey, Service, Subject,
+    },
 };
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
@@ -26,17 +28,17 @@ pub struct DIDDocument {
     #[serde(rename = "publicKey", skip_serializing_if = "HashSet::is_empty", default)]
     pub public_keys: HashSet<IdCompare<PublicKey>>,
     #[serde(rename = "authentication", skip_serializing_if = "Vec::is_empty", default)]
-    pub auth: Vec<Authentication>,
+    pub auth: Vec<IdCompare<Authentication>>,
     #[serde(rename = "assertionMethod", skip_serializing_if = "Vec::is_empty", default)]
-    pub assert: Vec<Authentication>,
+    pub assert: Vec<IdCompare<Authentication>>,
     #[serde(rename = "verificationMethod", skip_serializing_if = "Vec::is_empty", default)]
-    pub verification: Vec<Authentication>,
+    pub verification: Vec<IdCompare<Authentication>>,
     #[serde(rename = "capabilityDelegation", skip_serializing_if = "Vec::is_empty", default)]
-    pub delegation: Vec<Authentication>,
+    pub delegation: Vec<IdCompare<Authentication>>,
     #[serde(rename = "capabilityInvocation", skip_serializing_if = "Vec::is_empty", default)]
-    pub invocation: Vec<Authentication>,
+    pub invocation: Vec<IdCompare<Authentication>>,
     #[serde(rename = "keyAgreement", skip_serializing_if = "Vec::is_empty", default)]
-    pub agreement: Vec<Authentication>,
+    pub agreement: Vec<IdCompare<Authentication>>,
     #[serde(skip_serializing_if = "HashSet::is_empty", default)]
     pub services: HashSet<IdCompare<Service>>,
     #[serde(flatten)]
@@ -46,7 +48,7 @@ pub struct DIDDocument {
 impl DIDDocument {
     /// Initialize the DIDDocument.
     pub fn init(self) -> Self {
-        let mut doc = DIDDocument {
+        let doc = DIDDocument {
             context: self.context,
             id: self.id,
             created: self.created,
@@ -58,11 +60,9 @@ impl DIDDocument {
             invocation: self.invocation,
             agreement: self.agreement,
             metadata: self.metadata,
-            ..Default::default()
+            public_keys: self.public_keys,
+            services: self.services,
         };
-
-        self.public_keys.into_iter().for_each(|k| doc.update_public_key(k));
-        self.services.into_iter().for_each(|s| doc.update_service(s));
 
         doc
     }
@@ -73,7 +73,9 @@ impl DIDDocument {
     }
 
     /// sets a new `service` of type `Service` into the `DIDDocument`.
-    pub fn update_service(&mut self, service: IdCompare<Service>) {
+    pub fn update_service(&mut self, service: Service) {
+        let service = IdCompare::new(service);
+
         self.services.insert(service);
     }
 
@@ -83,7 +85,9 @@ impl DIDDocument {
     }
 
     /// sets a new `key_pair` of type `PublicKey` into the `DIDDocument`.
-    pub fn update_public_key(&mut self, key_pair: IdCompare<PublicKey>) {
+    pub fn update_public_key(&mut self, key_pair: PublicKey) {
+        let key_pair = IdCompare::new(key_pair);
+
         self.public_keys.insert(key_pair);
     }
 
@@ -94,7 +98,11 @@ impl DIDDocument {
 
     /// sets in a new `auth` of type `Authentication` into the `DIDDocument`.
     pub fn update_auth(&mut self, auth: Authentication) {
-        self.auth.push(auth);
+        let auth = IdCompare::new(auth);
+
+        let collection = add_unique_to_vec(auth, self.auth.clone());
+
+        self.auth = collection;
     }
 
     /// remove all of the authentications from the `DIDDocument`.
@@ -104,7 +112,11 @@ impl DIDDocument {
 
     /// sets in a new `assert` of type `Authentication` into the `DIDDocument`.
     pub fn update_assert(&mut self, assert: Authentication) {
-        self.assert.push(assert);
+        let assert = IdCompare::new(assert);
+
+        let collection = add_unique_to_vec(assert, self.assert.clone());
+
+        self.assert = collection;
     }
 
     /// remove all of the assertion methods from the `DIDDocument`.
@@ -114,7 +126,11 @@ impl DIDDocument {
 
     /// sets in a new `verification` of type `Authentication` into the `DIDDocument`.
     pub fn update_verification(&mut self, verification: Authentication) {
-        self.verification.push(verification);
+        let verification = IdCompare::new(verification);
+
+        let collection = add_unique_to_vec(verification, self.verification.clone());
+
+        self.verification = collection;
     }
 
     /// remove all of the verification methods from the `DIDDocument`.
@@ -124,7 +140,11 @@ impl DIDDocument {
 
     /// sets in a new `delegation` of type `Authentication` into the `DIDDocument`.
     pub fn update_delegation(&mut self, delegation: Authentication) {
-        self.delegation.push(delegation);
+        let delegation = IdCompare::new(delegation);
+
+        let collection = add_unique_to_vec(delegation, self.delegation.clone());
+
+        self.delegation = collection;
     }
 
     /// remove all of the capability delegations from the `DIDDocument`.
@@ -134,7 +154,11 @@ impl DIDDocument {
 
     /// sets in a new `invocation` of type `Authentication` into the `DIDDocument`.
     pub fn update_invocation(&mut self, invocation: Authentication) {
-        self.invocation.push(invocation);
+        let invocation = IdCompare::new(invocation);
+
+        let collection = add_unique_to_vec(invocation, self.invocation.clone());
+
+        self.invocation = collection;
     }
 
     /// remove all of the capability invocations from the `DIDDocument`.
@@ -144,7 +168,11 @@ impl DIDDocument {
 
     /// sets in a new `agreement` of type `Authentication` into the `DIDDocument`.
     pub fn update_agreement(&mut self, agreement: Authentication) {
-        self.agreement.push(agreement);
+        let agreement = IdCompare::new(agreement);
+
+        let collection = add_unique_to_vec(agreement, self.agreement.clone());
+
+        self.agreement = collection;
     }
 
     /// remove all of the key agreements from the `DIDDocument`.
