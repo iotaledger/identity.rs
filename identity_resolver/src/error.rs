@@ -38,5 +38,8 @@ pub enum Error {
     /// IO Error
     #[error("IO Error: {0}")]
     IOError(#[from] std::io::Error),
+    /// Diff Error
+    #[error("Diff Error: {0}")]
+    DiffError(#[from] identity_diff::Error),
 }
 pub type Result<T> = AnyhowResult<T, Error>;

@@ -166,7 +166,7 @@ impl Resolver {
                     .expect("Failed to get updated field")
             {
                 let diff_document = DIDDocument::get_diff_from_str(diff.diff.diff.clone())?;
-                latest_document.document = latest_document.document.merge(diff_document);
+                latest_document.document = latest_document.document.merge(diff_document)?;
                 metadata.insert(format!("diff_tail_transaction {}", i), diff.tailhash.clone());
             }
         }

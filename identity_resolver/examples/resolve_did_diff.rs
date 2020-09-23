@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
     new.update_public_key(public_key);
     new.update_time();
     // diff the two docs.
-    let diff = old.diff(&new);
+    let diff = old.diff(&new)?;
     let did_payload = Payload::DIDDocumentDifferences(Differences {
         did: new.derive_did()?,
         diff: serde_json::to_string(&diff)?,
@@ -70,7 +70,7 @@ async fn main() -> Result<()> {
     println!("Document: {:?}", resolution_result.did_document);
 
     // merge the diff to the old document.
-    let old = old.merge(diff);
+    let old = old.merge(diff)?;
     // check to see that the old and new docs cotain all of the same fields.
     assert_eq!(resolution_result.did_document.unwrap().to_string(), old.to_string());
     Ok(())
