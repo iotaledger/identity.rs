@@ -1,5 +1,5 @@
 use identity_common::Object;
-use identity_ldp::LinkedDataSignature;
+use identity_proof::LinkedDataSignature;
 use serde_json::{from_str, to_string};
 
 macro_rules! test_parse_lds {

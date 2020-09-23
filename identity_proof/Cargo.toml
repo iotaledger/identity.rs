@@ -1,5 +1,5 @@
 [package]
-name = "identity_ldp"
+name = "identity_proof"
 version = "0.1.0"
 authors = ["IOTA Identity"]
 edition = "2018"

@@ -25,7 +25,7 @@ jobs:
             identity_core,
             identity_crypto,
             identity_integration,
-            identity_ldp,
+            identity_proof,
             identity_resolver,
             identity_schema,
             identity_vc,

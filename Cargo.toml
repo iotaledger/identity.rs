@@ -8,7 +8,7 @@ members = [
     "identity_core",
     "identity_crypto",
     "identity_integration",
-    "identity_ldp",
+    "identity_proof",
     "identity_vc",
     "identity_diff",
     "identity_derive"
