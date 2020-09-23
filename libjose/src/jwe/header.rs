@@ -6,6 +6,8 @@ use crate::jwe::JweCompression;
 use crate::jwe::JweEncryption;
 use crate::jwk::Jwk;
 use crate::utils::Empty;
+use crate::alloc::String;
+use crate::alloc::Vec;
 
 /// JSON Web Encryption JOSE Header.
 ///

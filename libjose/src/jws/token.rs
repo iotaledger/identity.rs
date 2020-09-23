@@ -4,6 +4,8 @@ use serde::Serialize;
 use serde_json::from_slice;
 use serde_json::to_vec;
 
+use crate::alloc::String;
+use crate::alloc::Vec;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jws::Decoder;

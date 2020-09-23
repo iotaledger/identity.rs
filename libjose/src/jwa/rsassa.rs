@@ -16,6 +16,9 @@ use crate::jws::JwsAlgorithm;
 use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;
 use crate::utils::pem_decode;
+use crate::alloc::String;
+use crate::alloc::Vec;
+use crate::alloc::ToString;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(non_camel_case_types)]
@@ -65,7 +68,7 @@ impl RsassaAlgorithm {
     data.check_alg(self.name())?;
 
     let key: PKey<Secret> = todo!("RsassaSigner::signer_from_jwk");
-    let kid: Option<String> = data.kid().map(ToOwned::to_owned);
+    let kid: Option<String> = data.kid().map(ToString::to_string);
 
     Ok(RsassaSigner {
       alg: self,
@@ -101,7 +104,7 @@ impl RsassaAlgorithm {
     data.check_alg(self.name())?;
 
     let key: PKey<Public> = todo!("RsassaVerifier::verifier_from_jwk");
-    let kid: Option<String> = data.kid().map(ToOwned::to_owned);
+    let kid: Option<String> = data.kid().map(ToString::to_string);
 
     Ok(RsassaVerifier {
       alg: self,

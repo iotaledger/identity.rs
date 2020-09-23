@@ -1,4 +1,3 @@
-use core::fmt::Display;
 use core::str::from_utf8;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -8,7 +7,11 @@ use serde_json::to_vec;
 use serde_json::Map;
 use serde_json::Value;
 
-use crate::error::Error;
+use crate::alloc::String;
+use crate::alloc::Vec;
+use crate::alloc::ToString;
+use crate::error::DecodeError;
+use crate::error::EncodeError;
 use crate::error::Result;
 use crate::jws::JwsHeader;
 use crate::jws::JwsRawToken;
@@ -16,37 +19,6 @@ use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;
 use crate::utils::decode_b64_into;
 use crate::utils::encode_b64_into;
-
-// Taken from anyhow: https://github.com/dtolnay/anyhow/blob/master/src/macros.rs#L51
-macro_rules! bail {
-  ($msg:literal $(,)?) => {
-    return Err($crate::error::Error::EncodeError(::anyhow::anyhow!($msg)));
-  };
-  ($err:expr $(,)?) => {
-    return Err($crate::error::Error::EncodeError(::anyhow::anyhow!($err)));
-  };
-  ($fmt:expr, $($arg:tt)*) => {
-    return Err($crate::error::Error::EncodeError(::anyhow::anyhow!($fmt, $($arg)*)));
-  };
-}
-
-macro_rules! ensure {
-  ($cond:expr, $kind:ident, $msg:literal $(,)?) => {
-    if !$cond {
-      return Err($crate::error::Error::$kind(::anyhow::anyhow!($msg)));
-    }
-  };
-  ($cond:expr, $kind:ident, $err:expr $(,)?) => {
-    if !$cond {
-      return Err($crate::error::Error::$kind(::anyhow::anyhow!($err)));
-    }
-  };
-  ($cond:expr, $kind:ident, $fmt:expr, $($arg:tt)*) => {
-    if !$cond {
-      return Err($crate::error::Error::$kind(::anyhow::anyhow!($fmt, $($arg)*)));
-    }
-  };
-}
 
 // The default encoding behaviour is to use base64url-encoded payloads
 const B64_DEFAULT: bool = true;
@@ -192,14 +164,14 @@ where
   let mut components: RawComponents = Components::new();
 
   // Make sure the JWS token has the expected number of components
-  ensure!(split.len() == 3, DecodeError, "Invalid Segments");
+  if split.len() != 3 {
+    return Err(DecodeError::InvalidSegments.into());
+  }
 
   // The middle segment should be empty when using detached content
-  ensure!(
-    !detached || split[1].is_empty(),
-    DecodeError,
-    "Invalid Segments"
-  );
+  if detached && !split[1].is_empty() {
+    return Err(DecodeError::InvalidSegments.into());
+  }
 
   // Extract the base64-encoded components of the token for convenience
   let header_raw: &[u8] = split[0];
@@ -252,7 +224,7 @@ fn check_header_alg<T>(header: &JwsHeader<T>, verifier: &dyn JwsVerifier) -> Res
   if header.alg() == verifier.alg() {
     Ok(())
   } else {
-    Err(Error::InvalidJwsFormat(anyhow!("Invalid Claim (alg)")))
+    Err(DecodeError::InvalidClaim("alg").into())
   }
 }
 
@@ -260,8 +232,8 @@ fn check_header_alg<T>(header: &JwsHeader<T>, verifier: &dyn JwsVerifier) -> Res
 fn check_header_kid<T>(header: &JwsHeader<T>, verifier: &dyn JwsVerifier) -> Result<()> {
   match (verifier.kid(), header.kid()) {
     (Some(kid), Some(value)) if value == kid => Ok(()),
-    (Some(_), Some(_)) => Err(Error::InvalidJwsFormat(anyhow!("Invalid Claim (kid)"))),
-    (Some(_), None) => Err(Error::InvalidJwsFormat(anyhow!("Missing Claim (kid)"))),
+    (Some(_), Some(_)) => Err(DecodeError::InvalidClaim("kid").into()),
+    (Some(_), None) => Err(DecodeError::MissingClaim("kid").into()),
     (None, _) => Ok(()),
   }
 }
@@ -287,16 +259,14 @@ fn extract_b64<T>(header: &JwsHeader<T>) -> Result<bool> {
     (Some(b64), Some(crit)) => {
       // The "crit" param MUST be included and contain "b64".
       // More Info: https://tools.ietf.org/html/rfc7797#section-6
-      ensure!(
-        crit.iter().any(|crit| crit == "b64"),
-        EncodeError,
-        "`crit` Header Parameter Missing `b64`"
-      );
+      if !crit.iter().any(|crit| crit == "b64") {
+        return Err(EncodeError::MissingCritB64.into());
+      }
 
       Ok(b64)
     }
     (Some(_), None) => {
-      bail!("Missing `crit` Header Parameter");
+      Err(EncodeError::MissingCrit.into())
     }
     (None, _) => Ok(B64_DEFAULT),
   }
@@ -326,18 +296,16 @@ where
 fn extract_unencoded_payload(data: &[u8]) -> Result<&str> {
   let payload: &str = match from_utf8(data) {
     Ok(payload) => payload,
-    Err(error) => bail!("Bad Content: {}", error),
+    Err(error) => return Err(EncodeError::InvalidContent(error).into()),
   };
 
   // Validate the payload
   // More Info: https://tools.ietf.org/html/rfc7797#section-5.2
   //
   // TODO: Provide a more flexible API for this validaton
-  ensure!(
-    !payload.contains('.'),
-    EncodeError,
-    "Bad Content: Payload Contains `.`"
-  );
+  if payload.contains('.') {
+    return Err(EncodeError::InvalidContentChar('.').into());
+  }
 
   Ok(payload)
 }
@@ -389,15 +357,35 @@ impl<T> Components<T> {
 
   fn into_compact(self) -> String
   where
-    T: Display,
+    T: AsRef<str>,
   {
-    format!("{}.{}.{}", self.header, self.payload, self.signature)
+    let mut capacity: usize = 2; // initially 2 for delimiters
+    capacity += self.header.as_ref().len();
+    capacity += self.payload.as_ref().len();
+    capacity += self.signature.as_ref().len();
+
+    let mut output: String = String::with_capacity(capacity);
+    output.push_str(self.header.as_ref());
+    output.push('.');
+    output.push_str(self.payload.as_ref());
+    output.push('.');
+    output.push_str(self.signature.as_ref());
+    output
   }
 
   fn into_compact_detached(self) -> String
   where
-    T: Display,
+    T: AsRef<str>,
   {
-    format!("{}..{}", self.header, self.signature)
+    let mut capacity: usize = 2; // initially 2 for delimiters
+    capacity += self.header.as_ref().len();
+    capacity += self.signature.as_ref().len();
+
+    let mut output: String = String::with_capacity(capacity);
+    output.push_str(self.header.as_ref());
+    output.push('.');
+    output.push('.');
+    output.push_str(self.signature.as_ref());
+    output
   }
 }

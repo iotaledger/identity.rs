@@ -26,8 +26,10 @@ pub enum PemError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum ValidationError {
-  #[error("Missing Required Claim: {0}")]
+  #[error("Missing Claim: {0}")]
   MissingClaim(&'static str),
+  #[error("Invalid Claim: {0}")]
+  InvalidClaim(&'static str),
   #[error("Invalid Audience Claim")]
   InvalidAudience,
   #[error("Invalid Issuer Claim")]
@@ -40,6 +42,28 @@ pub enum ValidationError {
   TokenExpired,
   #[error("Token Not Yet Valid")]
   TokenNotYetValid,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum EncodeError {
+  #[error("Missing `crit` Header Parameter")]
+  MissingCrit,
+  #[error("Missing `b64` in `crit` Header Parameter")]
+  MissingCritB64,
+  #[error("Invalid Content: {0}")]
+  InvalidContent(#[from] core::str::Utf8Error),
+  #[error("Invalid Content: Invalid Character `{0}`")]
+  InvalidContentChar(char),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum DecodeError {
+  #[error("Invalid Segments")]
+  InvalidSegments,
+  #[error("Invalid Claim: {0}")]
+  InvalidClaim(&'static str),
+  #[error("Missing Claim: {0}")]
+  MissingClaim(&'static str),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -58,10 +82,10 @@ pub enum Error {
   PemError(#[from] PemError),
   #[error(transparent)]
   ValidationError(#[from] ValidationError),
-  #[error("Encode Error: {0}")]
-  EncodeError(anyhow::Error),
-  #[error("Decode Error: {0}")]
-  DecodeError(anyhow::Error),
+  #[error(transparent)]
+  EncodeError(#[from] EncodeError),
+  #[error(transparent)]
+  DecodeError(#[from] DecodeError),
 }
 
 #[cfg(feature = "ring-core")]

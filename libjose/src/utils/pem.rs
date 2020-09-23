@@ -8,6 +8,8 @@ use core::iter::SkipWhile;
 use core::str::from_utf8;
 use core::str::Lines;
 
+use crate::alloc::String;
+use crate::alloc::Vec;
 use crate::error::PemError;
 use crate::error::Result;
 

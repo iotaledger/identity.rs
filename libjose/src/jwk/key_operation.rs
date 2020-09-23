@@ -7,6 +7,9 @@ use serde::Deserializer;
 use serde::Serialize;
 use serde::Serializer;
 
+use crate::alloc::String;
+use crate::alloc::ToString;
+
 /// Supported algorithms for the JSON Web Key `key_ops` property.
 ///
 /// [More Info](https://www.iana.org/assignments/jose/jose.xhtml#web-key-operations)

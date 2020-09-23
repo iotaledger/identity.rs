@@ -4,6 +4,9 @@ use core::fmt::Result as FmtResult;
 use core::marker::PhantomData;
 use zeroize::Zeroize;
 
+use crate::alloc::Box;
+use crate::alloc::Vec;
+
 cfg_if::cfg_if! {
   if #[cfg(feature = "ring")] {
     mod ring;

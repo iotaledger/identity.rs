@@ -23,6 +23,9 @@ use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;
 use crate::utils::decode_b64;
 use crate::utils::encode_b64;
+use crate::alloc::String;
+use crate::alloc::Vec;
+use crate::alloc::ToString;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(non_camel_case_types)]
@@ -97,7 +100,7 @@ impl HmacAlgorithm {
     };
 
     self.signer_from_bytes(k).map(|mut signer| {
-      signer.kid = data.kid().map(ToOwned::to_owned);
+      signer.kid = data.kid().map(ToString::to_string);
       signer
     })
   }
@@ -143,20 +146,25 @@ impl HmacAlgorithm {
     };
 
     self.verifier_from_bytes(k).map(|mut signer| {
-      signer.kid = data.kid().map(ToOwned::to_owned);
+      signer.kid = data.kid().map(ToString::to_string);
       signer
     })
   }
 
   pub fn to_jwk(self, data: impl AsRef<[u8]>) -> Jwk {
     let mut jwk: Jwk = Jwk::with_kty(JwkType::Oct);
+    let mut ops: Vec<JwkOperation> = Vec::with_capacity(2);
+
+    ops.push(JwkOperation::Sign);
+    ops.push(JwkOperation::Verify);
 
     jwk.set_alg(self.name());
     jwk.set_use(JwkUse::Signature);
-    jwk.set_key_ops(vec![JwkOperation::Sign, JwkOperation::Verify]);
+    jwk.set_key_ops(ops);
     jwk.set_params(JwkParamsOct {
       k: encode_b64(data),
     });
+
     jwk
   }
 }

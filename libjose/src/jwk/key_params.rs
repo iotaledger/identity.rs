@@ -1,3 +1,6 @@
+use crate::alloc::String;
+use crate::alloc::Vec;
+
 type BigUint = String; // TODO
 
 /// Algorithm-specific parameters for JSON Web Keys.

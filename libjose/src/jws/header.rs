@@ -4,6 +4,8 @@ use url::Url;
 use crate::jwk::Jwk;
 use crate::jws::JwsAlgorithm;
 use crate::utils::Empty;
+use crate::alloc::String;
+use crate::alloc::Vec;
 
 /// JSON Web Signature JOSE Header.
 ///

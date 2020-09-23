@@ -17,6 +17,9 @@ use crate::jws::JwsAlgorithm;
 use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;
 use crate::utils::pem_decode;
+use crate::alloc::String;
+use crate::alloc::Vec;
+use crate::alloc::ToString;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(non_camel_case_types)]
@@ -62,7 +65,7 @@ impl EddsaAlgorithm {
     data.check_alg(self.name())?;
 
     let (key, crv): (PKey<Secret>, EdCurve) = todo!("EddsaAlgorithm::signer_from_jwk");
-    let kid: Option<String> = data.kid().map(ToOwned::to_owned);
+    let kid: Option<String> = data.kid().map(ToString::to_string);
 
     Ok(EddsaSigner {
       alg: self,
@@ -99,7 +102,7 @@ impl EddsaAlgorithm {
     data.check_alg(self.name())?;
 
     let key: PKey<Public> = todo!("EddsaAlgorithm::verifier_from_jwk");
-    let kid: Option<String> = data.kid().map(ToOwned::to_owned);
+    let kid: Option<String> = data.kid().map(ToString::to_string);
 
     Ok(EddsaVerifier {
       alg: self,

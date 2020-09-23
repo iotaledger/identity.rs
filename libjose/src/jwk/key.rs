@@ -1,9 +1,12 @@
 use core::iter::FromIterator;
 use serde_json::to_vec;
-use std::collections::BTreeMap;
 use url::Url;
 
+use crate::alloc::BTreeMap;
+use crate::alloc::String;
+use crate::alloc::Vec;
 use crate::error::Error;
+use crate::error::ValidationError;
 use crate::error::Result;
 use crate::jwa::HashAlgorithm;
 use crate::jwk::JwkOperation;
@@ -330,5 +333,5 @@ impl Jwk {
 }
 
 fn bad_property_err(name: &'static str) -> Error {
-  Error::InvalidJwkFormat(anyhow!("Bad Property: `{}`", name))
+  ValidationError::InvalidClaim(name).into()
 }

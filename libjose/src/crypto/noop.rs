@@ -6,11 +6,13 @@ use crate::error::Result;
 use crate::jwa::EcdsaAlgorithm;
 use crate::jwa::EddsaAlgorithm;
 use crate::jwa::HmacAlgorithm;
-use crate::jwa::RsaAlgorithm;
-use crate::jwk::EcCurve;
-use crate::jwk::EdCurve;
-use crate::jwk::HashAlgorithm;
-use crate::jwk::RsaBits;
+use crate::jwa::RsassaAlgorithm;
+use crate::jwa::RsassaPssAlgorithm;
+use crate::jwa::EcCurve;
+use crate::jwa::EdCurve;
+use crate::jwa::HashAlgorithm;
+use crate::jwa::RsaBits;
+use crate::alloc::Vec;
 
 pub(crate) fn message_digest(
   _algorithm: HashAlgorithm,
@@ -86,19 +88,36 @@ pub(crate) fn rsa_generate(_bits: RsaBits) -> Result<KeyPair> {
   todo!("[noop] rsa_generate")
 }
 
-pub(crate) fn rsa_sign(
-  _algorithm: RsaAlgorithm,
+pub(crate) fn rsassa_sign(
+  _algorithm: RsassaAlgorithm,
   _message: &[u8],
   _key: &PKey<Secret>,
 ) -> Result<Vec<u8>> {
-  todo!("[noop] rsa_sign")
+  todo!("[noop] rsassa_sign")
 }
 
-pub(crate) fn rsa_verify(
-  _algorithm: RsaAlgorithm,
+pub(crate) fn rsassa_verify(
+  _algorithm: RsassaAlgorithm,
   _message: &[u8],
   _signature: &[u8],
   _key: &PKey<Public>,
 ) -> Result<()> {
-  todo!("[noop] rsa_verify")
+  todo!("[noop] rsassa_verify")
+}
+
+pub(crate) fn rsassa_pss_sign(
+  _algorithm: RsassaPssAlgorithm,
+  _message: &[u8],
+  _key: &PKey<Secret>,
+) -> Result<Vec<u8>> {
+  todo!("[noop] rsassa_pss_sign")
+}
+
+pub(crate) fn rsassa_pss_verify(
+  _algorithm: RsassaPssAlgorithm,
+  _message: &[u8],
+  _signature: &[u8],
+  _key: &PKey<Public>,
+) -> Result<()> {
+  todo!("[noop] rsassa_pss_verify")
 }

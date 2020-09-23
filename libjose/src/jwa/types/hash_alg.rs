@@ -1,5 +1,6 @@
 use crate::crypto::message_digest;
 use crate::error::Result;
+use crate::alloc::Vec;
 
 pub const SHA256: HashAlgorithm = HashAlgorithm::Sha256;
 pub const SHA384: HashAlgorithm = HashAlgorithm::Sha384;

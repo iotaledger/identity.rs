@@ -1,4 +1,5 @@
 use crate::error::Result;
+use crate::alloc::Vec;
 use crate::jwe::JweAlgorithm;
 
 /// The `JweEncrypter` trait specifies a common interface for JWE encryption

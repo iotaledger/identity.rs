@@ -14,6 +14,7 @@ use ring::signature::Signature;
 use ring::signature::UnparsedPublicKey;
 use ring::signature::VerificationAlgorithm;
 
+use crate::alloc::Vec;
 use crate::crypto::KeyPair;
 use crate::crypto::PKey;
 use crate::crypto::Public;
