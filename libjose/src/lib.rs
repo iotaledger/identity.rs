@@ -24,8 +24,8 @@ extern crate anyhow;
 #[macro_use]
 extern crate serde;
 
-mod crypto;
-
+#[doc(hidden)]
+pub mod crypto;
 pub mod error;
 pub mod jwa;
 pub mod jwe;

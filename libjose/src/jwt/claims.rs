@@ -9,7 +9,7 @@ type Object = Map<String, Value>;
 /// JSON Web Token Claims
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7519#section-4)
-#[derive(Clone, Default, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct JwtClaims<T = Empty> {
   /// Identifies the principal that issued the JWT
   ///

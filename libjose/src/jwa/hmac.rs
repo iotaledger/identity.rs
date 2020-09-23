@@ -56,7 +56,7 @@ impl HmacAlgorithm {
     hmac_generate(self)
   }
 
-  pub fn signer_from_raw(self, data: impl AsRef<[u8]>) -> Result<HmacSigner> {
+  pub fn signer_from_bytes(self, data: impl AsRef<[u8]>) -> Result<HmacSigner> {
     let data: &[u8] = data.as_ref();
 
     if data.len() < self.hash_alg().size() {
@@ -96,13 +96,13 @@ impl HmacAlgorithm {
       None => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
     };
 
-    self.signer_from_raw(k).map(|mut signer| {
+    self.signer_from_bytes(k).map(|mut signer| {
       signer.kid = data.kid().map(ToOwned::to_owned);
       signer
     })
   }
 
-  pub fn verifier_from_raw(self, data: impl AsRef<[u8]>) -> Result<HmacVerifier> {
+  pub fn verifier_from_bytes(self, data: impl AsRef<[u8]>) -> Result<HmacVerifier> {
     let data: &[u8] = data.as_ref();
 
     if data.len() < self.hash_alg().size() {
@@ -142,7 +142,7 @@ impl HmacAlgorithm {
       None => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
     };
 
-    self.verifier_from_raw(k).map(|mut signer| {
+    self.verifier_from_bytes(k).map(|mut signer| {
       signer.kid = data.kid().map(ToOwned::to_owned);
       signer
     })

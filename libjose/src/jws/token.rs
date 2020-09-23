@@ -14,13 +14,13 @@ use crate::jws::JwsVerifier;
 use crate::jwt::JwtClaims;
 use crate::utils::Empty;
 
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct JwsRawToken<T = Empty> {
   pub header: JwsHeader<T>,
   pub claims: Vec<u8>,
 }
 
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct JwsToken<T = Empty, U = Empty> {
   header: JwsHeader<T>,
   claims: JwtClaims<U>,
