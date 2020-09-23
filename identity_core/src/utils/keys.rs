@@ -1,12 +1,12 @@
-use std::str::FromStr;
+use std::{hash::Hash, str::FromStr};
 
+use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
-use serde_diff::SerdeDiff;
 
-use crate::utils::Subject;
+use crate::utils::{HasId, Subject};
 
 /// Public Key type enum. Can also contain a custom key type specified by the CustomKey field.
-#[derive(Debug, PartialEq, Clone, SerdeDiff, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Clone, Diff, Deserialize, Serialize, Eq, Hash, Ord, PartialOrd)]
 pub enum PublicKeyTypes {
     Ed25519VerificationKey2018,
     RsaVerificationKey2018,
@@ -20,7 +20,7 @@ pub enum PublicKeyTypes {
 }
 
 /// Encoding method used for the specified public key.
-#[derive(Debug, PartialEq, Clone, Deserialize, Serialize, SerdeDiff)]
+#[derive(Debug, PartialEq, Clone, Deserialize, Serialize, Diff, Eq, Hash, Ord, PartialOrd)]
 pub enum KeyData {
     #[serde(rename = "publicKeyUnknown")]
     Unknown(String),
@@ -44,7 +44,8 @@ pub enum KeyData {
 
 /// Public key struct that contains `id`, `key_type`, `controller`, `encoding_type`, `key_data` and `reference`.
 /// `reference` defines whether or not the PublicKey is a reference.
-#[derive(Debug, Clone, Default, PartialEq, SerdeDiff, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Diff, Deserialize, Serialize, Eq, Hash, Ord, PartialOrd)]
+#[diff(from_into)]
 pub struct PublicKey {
     pub id: Subject,
     #[serde(rename = "type")]
@@ -65,6 +66,14 @@ impl PublicKey {
             key_data: self.key_data,
             reference: self.reference,
         }
+    }
+}
+
+impl HasId for PublicKey {
+    type Id = Subject;
+
+    fn id(&self) -> &Self::Id {
+        &self.id
     }
 }
 

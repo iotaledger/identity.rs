@@ -6,5 +6,7 @@ members = [
     "identity_schema",
     "identity_core",
     "identity_integration",
-    "identity_vc"
+    "identity_vc",
+    "identity_diff",
+    "identity_derive"
 ]

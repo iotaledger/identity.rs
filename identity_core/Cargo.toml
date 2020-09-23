@@ -21,7 +21,9 @@ anyhow = "1.0"
 serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
 serde_cbor = "0.11"
-serde-diff = "0.3.1"
+
+# diff macro and trait
+identity_diff = {path = "../identity_diff", version = "0.1.0", features = ["diff_derive"]}
 
 # parser crates
 pest = "2.1"
