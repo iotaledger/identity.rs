@@ -1,4 +1,4 @@
-# 🗓️ Team Identity Meeting Notes - 2020-xx-xx
+# 🗓️ Team Identity Meeting Notes - 2020-09-09
 
 ## 👥 Participants
 - @Thoralf-M
@@ -7,14 +7,28 @@
 - @tensor-programming
 - @JelleMillenaar
 - @huhn511
-
+- @l1h3r
 
 ## 💬 Discussion topics
+- Standup
+- Questions
+- 
+
+
+
+### Standup
+
+#### What was last week's progress on your project?
 - 
 - 
 - 
 
-## 🎯 Goals
+#### What will be the project's focus this week?
+-
 - 
 - 
-- 
+
+### Questions
+
+Q:
+A:
