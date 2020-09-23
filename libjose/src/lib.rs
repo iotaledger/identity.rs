@@ -36,6 +36,7 @@ extern crate serde;
 mod alloc {
   pub use ::std::boxed::Box;
   pub use ::std::collections::BTreeMap;
+  pub use ::std::collections::BTreeSet;
   pub use ::std::string::String;
   pub use ::std::string::ToString;
   pub use ::std::vec::Vec;
@@ -45,6 +46,7 @@ mod alloc {
 mod alloc {
   pub use ::alloc_::boxed::Box;
   pub use ::alloc_::collections::BTreeMap;
+  pub use ::alloc_::collections::BTreeSet;
   pub use ::alloc_::string::String;
   pub use ::alloc_::string::ToString;
   pub use ::alloc_::vec::Vec;

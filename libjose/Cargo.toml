@@ -30,6 +30,20 @@ ring = { version = "0.16", default-features = false, optional = true }
 [features]
 default = ["std", "crypto-ring"]
 
+std = [
+  "alloc",
+  "anyhow/std",
+  "base64/std",
+  "serde/std",
+  "serde_json/std",
+]
+
+alloc = [
+  "base64/alloc",
+  "serde/alloc",
+  "serde_json/alloc",
+]
+
 crypto-ring = ["ring-core", "secp256k1", "ring/std"]
 crypto-stronghold = []
 
@@ -37,10 +51,3 @@ ring-core = ["lazy_static", "ring"]
 
 secp256k1 = ["k256-core", "libsecp256k1/std"]
 k256-core = ["libsecp256k1", "rand"]
-
-std = [
-  "anyhow/std",
-  "base64/std",
-  "serde/std",
-  "serde_json/std",
-]

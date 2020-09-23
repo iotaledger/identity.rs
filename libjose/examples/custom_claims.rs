@@ -1,7 +1,7 @@
 use libjose::crypto::PKey;
 use libjose::crypto::Secret;
-use libjose::jwa::HmacSigner;
 use libjose::jwa::HmacAlgorithm::*;
+use libjose::jwa::HmacSigner;
 use libjose::jws::JwsHeader;
 use libjose::jws::JwsToken;
 use libjose::jwt::JwtClaims;
@@ -33,7 +33,6 @@ fn main() {
     claim2: b"world".to_vec(),
   });
 
-  //
   // See "examples/basic_jws.rs" for more information on the following:
   //
 

@@ -3,6 +3,9 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
 
+use crate::alloc::String;
+use crate::alloc::ToString;
+use crate::alloc::Vec;
 use crate::crypto::hmac_generate;
 use crate::crypto::hmac_sign;
 use crate::crypto::hmac_verify;
@@ -23,9 +26,6 @@ use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;
 use crate::utils::decode_b64;
 use crate::utils::encode_b64;
-use crate::alloc::String;
-use crate::alloc::Vec;
-use crate::alloc::ToString;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(non_camel_case_types)]

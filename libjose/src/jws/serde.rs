@@ -1,3 +1,5 @@
+use core::convert::TryFrom;
+use core::iter::FromIterator;
 use core::str::from_utf8;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -8,14 +10,15 @@ use serde_json::Map;
 use serde_json::Value;
 
 use crate::alloc::String;
-use crate::alloc::Vec;
 use crate::alloc::ToString;
+use crate::alloc::Vec;
 use crate::error::DecodeError;
 use crate::error::EncodeError;
 use crate::error::Result;
 use crate::jws::JwsHeader;
 use crate::jws::JwsRawToken;
 use crate::jws::JwsSigner;
+use crate::jws::JwsToken;
 use crate::jws::JwsVerifier;
 use crate::utils::decode_b64_into;
 use crate::utils::encode_b64_into;
@@ -119,18 +122,50 @@ where
 // Decoding
 // =============================================================================
 
+use crate::alloc::BTreeSet;
+use crate::jws::JwsAlgorithm;
+
 // TODO: Decode JSON
-pub struct Decoder;
+pub struct Decoder {
+  algorithms: BTreeSet<JwsAlgorithm>,
+}
 
 impl Decoder {
+  pub fn new() -> Self {
+    Self {
+      algorithms: BTreeSet::new(),
+    }
+  }
+
+  pub fn with_algorithms(algorithms: impl IntoIterator<Item = impl Into<JwsAlgorithm>>) -> Self {
+    Self {
+      algorithms: BTreeSet::from_iter(algorithms.into_iter().map(Into::into)),
+    }
+  }
+
+  pub fn decode_compact_token<T, U>(
+    &self,
+    data: impl AsRef<[u8]>,
+    verifier: &dyn JwsVerifier,
+  ) -> Result<JwsToken<T, U>>
+  where
+    T: DeserializeOwned,
+    U: DeserializeOwned,
+  {
+    self
+      .decode_compact(data, verifier)
+      .and_then(JwsToken::try_from)
+  }
+
   pub fn decode_compact<T>(
+    &self,
     data: impl AsRef<[u8]>,
     verifier: &dyn JwsVerifier,
   ) -> Result<JwsRawToken<T>>
   where
     T: DeserializeOwned,
   {
-    let (header, components) = decode_compact_components(data, verifier, None)?;
+    let (header, components) = self.decode_compact_components(data, verifier, None)?;
 
     Ok(JwsRawToken {
       header,
@@ -139,6 +174,7 @@ impl Decoder {
   }
 
   pub fn decode_compact_detached<T>(
+    &self,
     data: impl AsRef<[u8]>,
     payload: impl AsRef<[u8]>,
     verifier: &dyn JwsVerifier,
@@ -146,97 +182,107 @@ impl Decoder {
   where
     T: DeserializeOwned,
   {
-    decode_compact_components(data, verifier, Some(payload.as_ref())).map(|(header, _)| header)
-  }
-}
+    let (header, _) = self.decode_compact_components(data, verifier, Some(payload.as_ref()))?;
 
-fn decode_compact_components<T>(
-  data: impl AsRef<[u8]>,
-  verifier: &dyn JwsVerifier,
-  payload: Option<&[u8]>,
-) -> Result<(JwsHeader<T>, RawComponents)>
-where
-  T: DeserializeOwned,
-{
-  // Extract the components of the compact JWS token
-  let split: Vec<&[u8]> = data.as_ref().split(|byte| *byte == b'.').collect();
-  let detached: bool = payload.is_some();
-  let mut components: RawComponents = Components::new();
-
-  // Make sure the JWS token has the expected number of components
-  if split.len() != 3 {
-    return Err(DecodeError::InvalidSegments.into());
+    Ok(header)
   }
 
-  // The middle segment should be empty when using detached content
-  if detached && !split[1].is_empty() {
-    return Err(DecodeError::InvalidSegments.into());
+  fn decode_compact_components<T>(
+    &self,
+    data: impl AsRef<[u8]>,
+    verifier: &dyn JwsVerifier,
+    payload: Option<&[u8]>,
+  ) -> Result<(JwsHeader<T>, RawComponents)>
+  where
+    T: DeserializeOwned,
+  {
+    // Extract the components of the compact JWS token
+    let split: Vec<&[u8]> = data.as_ref().split(|byte| *byte == b'.').collect();
+    let detached: bool = payload.is_some();
+    let mut components: RawComponents = Components::new();
+
+    // Make sure the JWS token has the expected number of components
+    if split.len() != 3 {
+      return Err(DecodeError::InvalidSegments.into());
+    }
+
+    // The middle segment should be empty when using detached content
+    if detached && !split[1].is_empty() {
+      return Err(DecodeError::InvalidSegments.into());
+    }
+
+    // Extract the base64-encoded components of the token for convenience
+    let header_raw: &[u8] = split[0];
+    let payload_raw: &[u8] = payload.unwrap_or(split[1]);
+    let signature_raw: &[u8] = split[2];
+
+    // Add the base64-decoded header to the components
+    decode_b64_into(header_raw, &mut components.header)?;
+
+    // Deserialize to a JOSE header
+    let jose: JwsHeader<T> = from_slice(&components.header)?;
+
+    // Validate the claims in the JOSE header
+    self.check_header_claims(&jose, verifier)?;
+
+    // Parse the signature
+    decode_b64_into(&signature_raw, &mut components.signature)?;
+
+    // Re-build the message
+    let message: Vec<u8> = create_jws_message(header_raw, payload_raw);
+
+    // Verify the signature
+    verifier.verify(&message, &components.signature)?;
+
+    // Only extract and decode the payload if NOT using the detached serialization
+    if !detached {
+      // Check if the payload is base64url-encoded and decode if necessary
+      if extract_b64(&jose)? {
+        decode_b64_into(payload_raw, &mut components.payload)?;
+      } else {
+        components.payload.extend_from_slice(payload_raw);
+      }
+    }
+
+    Ok((jose, components))
   }
 
-  // Extract the base64-encoded components of the token for convenience
-  let header_raw: &[u8] = split[0];
-  let payload_raw: &[u8] = payload.unwrap_or(split[1]);
-  let signature_raw: &[u8] = split[2];
+  fn check_header_claims<T>(
+    &self,
+    header: &JwsHeader<T>,
+    verifier: &dyn JwsVerifier,
+  ) -> Result<()> {
+    self.check_header_alg(header, verifier)?;
+    self.check_header_kid(header, verifier)?;
 
-  // Add the base64-decoded header to the components
-  decode_b64_into(header_raw, &mut components.header)?;
+    let valid: bool = self.algorithms.contains(&header.alg());
 
-  // Deserialize to a JOSE header
-  let jose: JwsHeader<T> = from_slice(&components.header)?;
+    Ok(())
+  }
 
-  // Validate the claims in the JOSE header
-  check_header_claims(&jose, verifier)?;
-
-  // Parse the signature
-  decode_b64_into(&signature_raw, &mut components.signature)?;
-
-  // Re-build the message
-  let message: Vec<u8> = create_jws_message(header_raw, payload_raw);
-
-  // Verify the signature
-  verifier.verify(&message, &components.signature)?;
-
-  // Only extract and decode the payload if NOT using the detached serialization
-  if !detached {
-    // Check if the payload is base64url-encoded and decode if necessary
-    if extract_b64(&jose)? {
-      decode_b64_into(payload_raw, &mut components.payload)?;
+  /// Ensure the header algorithm matches the verifier algorithm.
+  fn check_header_alg<T>(&self, header: &JwsHeader<T>, verifier: &dyn JwsVerifier) -> Result<()> {
+    if header.alg() == verifier.alg() {
+      Ok(())
     } else {
-      components.payload.extend_from_slice(payload_raw);
+      Err(DecodeError::InvalidClaim("alg").into())
     }
   }
 
-  Ok((jose, components))
+  /// Ensure the header key ID matches the verifier key ID if one is set.
+  fn check_header_kid<T>(&self, header: &JwsHeader<T>, verifier: &dyn JwsVerifier) -> Result<()> {
+    match (verifier.kid(), header.kid()) {
+      (Some(kid), Some(value)) if value == kid => Ok(()),
+      (Some(_), Some(_)) => Err(DecodeError::InvalidClaim("kid").into()),
+      (Some(_), None) => Err(DecodeError::MissingClaim("kid").into()),
+      (None, _) => Ok(()),
+    }
+  }
 }
 
 // =============================================================================
 // Helpers
 // =============================================================================
-
-fn check_header_claims<T>(header: &JwsHeader<T>, verifier: &dyn JwsVerifier) -> Result<()> {
-  check_header_alg(header, verifier)?;
-  check_header_kid(header, verifier)?;
-  Ok(())
-}
-
-/// Ensure the header algorithm matches the verifier algorithm.
-fn check_header_alg<T>(header: &JwsHeader<T>, verifier: &dyn JwsVerifier) -> Result<()> {
-  if header.alg() == verifier.alg() {
-    Ok(())
-  } else {
-    Err(DecodeError::InvalidClaim("alg").into())
-  }
-}
-
-/// Ensure the header key ID matches the verifier key ID if one is set.
-fn check_header_kid<T>(header: &JwsHeader<T>, verifier: &dyn JwsVerifier) -> Result<()> {
-  match (verifier.kid(), header.kid()) {
-    (Some(kid), Some(value)) if value == kid => Ok(()),
-    (Some(_), Some(_)) => Err(DecodeError::InvalidClaim("kid").into()),
-    (Some(_), None) => Err(DecodeError::MissingClaim("kid").into()),
-    (None, _) => Ok(()),
-  }
-}
 
 // Handle the "b64" header parameter.
 //
@@ -265,9 +311,7 @@ fn extract_b64<T>(header: &JwsHeader<T>) -> Result<bool> {
 
       Ok(b64)
     }
-    (Some(_), None) => {
-      Err(EncodeError::MissingCrit.into())
-    }
+    (Some(_), None) => Err(EncodeError::MissingCrit.into()),
     (None, _) => Ok(B64_DEFAULT),
   }
 }

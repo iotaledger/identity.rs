@@ -8,11 +8,9 @@ use crate::alloc::String;
 use crate::alloc::Vec;
 use crate::error::Error;
 use crate::error::Result;
-use crate::jws::Decoder;
 use crate::jws::Encoder;
 use crate::jws::JwsHeader;
 use crate::jws::JwsSigner;
-use crate::jws::JwsVerifier;
 use crate::jwt::JwtClaims;
 use crate::utils::Empty;
 
@@ -55,14 +53,6 @@ impl<T, U> JwsToken<T, U> {
     U: Serialize,
   {
     Encoder::encode_compact(&to_vec(&self.claims)?, &self.header, signer)
-  }
-
-  pub fn decode_compact(data: impl AsRef<[u8]>, verifier: &dyn JwsVerifier) -> Result<Self>
-  where
-    T: DeserializeOwned,
-    U: DeserializeOwned,
-  {
-    Decoder::decode_compact(data, verifier).and_then(Self::try_from)
   }
 }
 

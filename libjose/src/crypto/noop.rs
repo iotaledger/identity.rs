@@ -1,18 +1,18 @@
+use crate::alloc::Vec;
 use crate::crypto::KeyPair;
 use crate::crypto::PKey;
 use crate::crypto::Public;
 use crate::crypto::Secret;
 use crate::error::Result;
+use crate::jwa::EcCurve;
 use crate::jwa::EcdsaAlgorithm;
+use crate::jwa::EdCurve;
 use crate::jwa::EddsaAlgorithm;
+use crate::jwa::HashAlgorithm;
 use crate::jwa::HmacAlgorithm;
+use crate::jwa::RsaBits;
 use crate::jwa::RsassaAlgorithm;
 use crate::jwa::RsassaPssAlgorithm;
-use crate::jwa::EcCurve;
-use crate::jwa::EdCurve;
-use crate::jwa::HashAlgorithm;
-use crate::jwa::RsaBits;
-use crate::alloc::Vec;
 
 pub(crate) fn message_digest(
   _algorithm: HashAlgorithm,

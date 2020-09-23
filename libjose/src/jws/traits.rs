@@ -1,6 +1,6 @@
+use crate::alloc::Vec;
 use crate::error::Result;
 use crate::jws::JwsAlgorithm;
-use crate::alloc::Vec;
 
 /// The `JwsSigner` trait specifies a common interface for JWS signature
 /// creation algorithms.

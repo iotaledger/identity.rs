@@ -1,8 +1,9 @@
 use libjose::crypto::PKey;
 use libjose::crypto::Secret;
+use libjose::jwa::HmacAlgorithm::*;
 use libjose::jwa::HmacSigner;
 use libjose::jwa::HmacVerifier;
-use libjose::jwa::HmacAlgorithm::*;
+use libjose::jws::Decoder;
 use libjose::jws::JwsHeader;
 use libjose::jws::JwsToken;
 use libjose::jwt::JwtClaims;
@@ -95,7 +96,8 @@ fn main() {
   let verifier: HmacVerifier = HS512.verifier_from_bytes(&pkey).unwrap();
 
   // Decode the JSON Web Token with signature validation
-  let decoded: JwsToken = JwsToken::decode_compact(encoded, &verifier).unwrap();
+  let decoder: Decoder = Decoder::with_algorithms(vec![HS512]);
+  let decoded: JwsToken = decoder.decode_compact_token(encoded, &verifier).unwrap();
 
   pp!("Decoded Token", decoded);
 

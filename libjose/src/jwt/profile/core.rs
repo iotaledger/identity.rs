@@ -2,10 +2,10 @@ use core::convert::TryFrom;
 use core::time::Duration;
 use std::time::SystemTime;
 
+use crate::alloc::String;
 use crate::error::Result;
 use crate::error::ValidationError;
 use crate::jwt::JwtClaims;
-use crate::alloc::String;
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Validation {

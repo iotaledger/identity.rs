@@ -31,7 +31,8 @@ fn test_compact() {
   assert_eq!(segment_count(&serialized), 3);
 
   let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
-  let deserialized: JwsRawToken<Empty> = Decoder::decode_compact(&serialized, &verifier).unwrap();
+  let decoder: Decoder = Decoder::with_algorithms(vec![HS512]);
+  let deserialized: JwsRawToken<Empty> = decoder.decode_compact(&serialized, &verifier).unwrap();
   assert_eq!(deserialized.header.alg(), JwsAlgorithm::HS512);
   assert_eq!(deserialized.header.kid().unwrap(), "#my-key");
   assert_eq!(deserialized.claims, payload);
@@ -54,7 +55,8 @@ fn test_compact_unencoded() {
   assert_eq!(segment_count(&serialized), 3);
 
   let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
-  let deserialized: JwsRawToken<Empty> = Decoder::decode_compact(&serialized, &verifier).unwrap();
+  let decoder: Decoder = Decoder::with_algorithms(vec![HS512]);
+  let deserialized: JwsRawToken<Empty> = decoder.decode_compact(&serialized, &verifier).unwrap();
   assert_eq!(deserialized.header.alg(), JwsAlgorithm::HS512);
   assert_eq!(deserialized.header.b64().unwrap(), false);
   assert_eq!(deserialized.header.crit().unwrap(), &["b64".to_string()]);
@@ -62,7 +64,7 @@ fn test_compact_unencoded() {
 }
 
 #[test]
-#[should_panic = "Bad Content"]
+#[should_panic = "InvalidContentChar"]
 fn test_compact_unencoded_invalid() {
   let mut header: JwsHeader<Empty> = JwsHeader::new();
   let claims: JwtClaims<Empty> = JwtClaims::new();
@@ -91,7 +93,8 @@ fn test_compact_signature_invalid() {
   let segments: Vec<&str> = serialized.split(".").collect();
   let modified: String = [segments[0], segments[1], "my-signature"].join(".");
   let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
-  let _: JwsRawToken<Empty> = Decoder::decode_compact(&modified, &verifier).unwrap();
+  let decoder: Decoder = Decoder::with_algorithms(vec![HS512]);
+  let _: JwsRawToken<Empty> = decoder.decode_compact(&modified, &verifier).unwrap();
 }
 
 #[test]
@@ -106,7 +109,8 @@ fn test_compact_payload_invalid() {
   let segments: Vec<&str> = serialized.split(".").collect();
   let modified: String = [segments[0], "my-payload", segments[2]].join(".");
   let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
-  let _: JwsRawToken<Empty> = Decoder::decode_compact(&modified, &verifier).unwrap();
+  let decoder: Decoder = Decoder::with_algorithms(vec![HS512]);
+  let _: JwsRawToken<Empty> = decoder.decode_compact(&modified, &verifier).unwrap();
 }
 
 #[test]
@@ -123,8 +127,10 @@ fn test_detached() {
 
   let payload: Vec<u8> = encode_b64(payload).into_bytes();
   let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
-  let deserialized: JwsHeader<Empty> =
-    Decoder::decode_compact_detached(&serialized, &payload, &verifier).unwrap();
+  let decoder: Decoder = Decoder::with_algorithms(vec![HS512]);
+  let deserialized: JwsHeader<Empty> = decoder
+    .decode_compact_detached(&serialized, &payload, &verifier)
+    .unwrap();
   assert_eq!(deserialized.alg(), JwsAlgorithm::HS512);
   assert_eq!(deserialized.kid().unwrap(), "#my-key");
 }
@@ -144,8 +150,10 @@ fn test_detached_unencoded() {
   assert_eq!(segment_count(&serialized), 2);
 
   let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
-  let deserialized: JwsHeader<Empty> =
-    Decoder::decode_compact_detached(&serialized, &payload, &verifier).unwrap();
+  let decoder: Decoder = Decoder::with_algorithms(vec![HS512]);
+  let deserialized: JwsHeader<Empty> = decoder
+    .decode_compact_detached(&serialized, &payload, &verifier)
+    .unwrap();
   assert_eq!(deserialized.alg(), JwsAlgorithm::HS512);
   assert_eq!(deserialized.kid().unwrap(), "#my-key");
 }
@@ -167,8 +175,10 @@ fn test_detached_is_truly_detached() {
   let segments: Vec<&str> = serialized.split(".").collect();
   let modified: String = [segments[0], "", segments[2]].join(".");
   let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
-  let deserialized: JwsHeader<Empty> =
-    Decoder::decode_compact_detached(&modified, &payload, &verifier).unwrap();
+  let decoder: Decoder = Decoder::with_algorithms(vec![HS512]);
+  let deserialized: JwsHeader<Empty> = decoder
+    .decode_compact_detached(&modified, &payload, &verifier)
+    .unwrap();
   assert_eq!(deserialized.alg(), JwsAlgorithm::HS512);
   assert_eq!(deserialized.kid().unwrap(), "#my-key");
 }
@@ -184,8 +194,10 @@ fn test_detached_signature_invalid() {
   let segments: Vec<&str> = serialized.split(".").collect();
   let modified: String = [segments[0], segments[1], "my-signature"].join(".");
   let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
-  let _: JwsHeader<Empty> =
-    Decoder::decode_compact_detached(&modified, &payload, &verifier).unwrap();
+  let decoder: Decoder = Decoder::with_algorithms(vec![HS512]);
+  let _: JwsHeader<Empty> = decoder
+    .decode_compact_detached(&modified, &payload, &verifier)
+    .unwrap();
 }
 
 #[test]
@@ -198,6 +210,8 @@ fn test_detached_payload_invalid() {
   let serialized: String = Encoder::encode_compact_detached(&payload, &header, &signer).unwrap();
   let payload: Vec<u8> = vec![5, 6, 7, 8];
   let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
-  let _: JwsHeader<Empty> =
-    Decoder::decode_compact_detached(&serialized, &payload, &verifier).unwrap();
+  let decoder: Decoder = Decoder::with_algorithms(vec![HS512]);
+  let _: JwsHeader<Empty> = decoder
+    .decode_compact_detached(&serialized, &payload, &verifier)
+    .unwrap();
 }

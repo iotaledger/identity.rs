@@ -48,14 +48,34 @@ fn test_jwe_header_getset() {
   test_getset!(JweHeader, jwk, set_jwk, OptionRef = Jwk::new());
   test_getset!(JweHeader, kid, set_kid, Option = "key id");
   test_getset!(JweHeader, x5u, set_x5u, Url = "https://foo.com/x509");
-  test_getset!(JweHeader, x5c, set_x5c, Option = vec![encode_b64(vec![1, 2, 3, 4])]);
-  test_getset!(JweHeader, x5t, set_x5t, Option = encode_b64(vec![1, 2, 3, 4]));
-  test_getset!(JweHeader, x5t_s256, set_x5t_s256, Option = encode_b64(vec![1, 2, 3, 4]));
+  test_getset!(
+    JweHeader,
+    x5c,
+    set_x5c,
+    Option = vec![encode_b64(vec![1, 2, 3, 4])]
+  );
+  test_getset!(
+    JweHeader,
+    x5t,
+    set_x5t,
+    Option = encode_b64(vec![1, 2, 3, 4])
+  );
+  test_getset!(
+    JweHeader,
+    x5t_s256,
+    set_x5t_s256,
+    Option = encode_b64(vec![1, 2, 3, 4])
+  );
   test_getset!(JweHeader, typ, set_typ, Option = "type");
   test_getset!(JweHeader, cty, set_cty, Option = "content type");
   test_getset!(JweHeader, crit, set_crit, Option = vec!["critical"]);
   test_getset!(JweHeader, url, set_url, Url = "https://foo.com/url");
-  test_getset!(JweHeader, nonce, set_nonce, Option = encode_b64(vec![1, 2, 3, 4]));
+  test_getset!(
+    JweHeader,
+    nonce,
+    set_nonce,
+    Option = encode_b64(vec![1, 2, 3, 4])
+  );
   test_getset!(JweHeader, epk, set_epk, OptionRef = Jwk::new());
   test_getset!(JweHeader, apu, set_apu, Option = "agreement partyuinfo");
   test_getset!(JweHeader, apv, set_apv, Option = "agreement partyvinfo");
@@ -78,9 +98,19 @@ fn test_jwk_getset() {
   test_getset!(Jwk, alg, set_alg, Option = "algorithm");
   test_getset!(Jwk, kid, set_kid, Option = "key id");
   test_getset!(Jwk, x5u, set_x5u, Url = "https://foo.com/");
-  test_getset!(Jwk, x5c, set_x5c, Option = vec![encode_b64(vec![1, 2, 3, 4])]);
+  test_getset!(
+    Jwk,
+    x5c,
+    set_x5c,
+    Option = vec![encode_b64(vec![1, 2, 3, 4])]
+  );
   test_getset!(Jwk, x5t, set_x5t, Option = encode_b64(vec![1, 2, 3, 4]));
-  test_getset!(Jwk, x5t_s256, set_x5t_s256, Option = encode_b64(vec![1, 2, 3, 4]));
+  test_getset!(
+    Jwk,
+    x5t_s256,
+    set_x5t_s256,
+    Option = encode_b64(vec![1, 2, 3, 4])
+  );
 }
 
 #[test]
@@ -90,15 +120,35 @@ fn test_jws_header_getset() {
   test_getset!(JwsHeader, jwk, set_jwk, OptionRef = Jwk::new());
   test_getset!(JwsHeader, kid, set_kid, Option = "key id");
   test_getset!(JwsHeader, x5u, set_x5u, Url = "https://foo.com/");
-  test_getset!(JwsHeader, x5c, set_x5c, Option = vec![encode_b64(vec![1, 2, 3, 4])]);
-  test_getset!(JwsHeader, x5t, set_x5t, Option = encode_b64(vec![1, 2, 3, 4]));
-  test_getset!(JwsHeader, x5t_s256, set_x5t_s256, Option = encode_b64(vec![1, 2, 3, 4]));
+  test_getset!(
+    JwsHeader,
+    x5c,
+    set_x5c,
+    Option = vec![encode_b64(vec![1, 2, 3, 4])]
+  );
+  test_getset!(
+    JwsHeader,
+    x5t,
+    set_x5t,
+    Option = encode_b64(vec![1, 2, 3, 4])
+  );
+  test_getset!(
+    JwsHeader,
+    x5t_s256,
+    set_x5t_s256,
+    Option = encode_b64(vec![1, 2, 3, 4])
+  );
   test_getset!(JwsHeader, typ, set_typ, Option = "type");
   test_getset!(JwsHeader, cty, set_cty, Option = "content type");
   test_getset!(JwsHeader, crit, set_crit, Option = vec!["critical"]);
   test_getset!(JwsHeader, b64, set_b64, Option = false);
   test_getset!(JwsHeader, url, set_url, Url = "https://foo.com/");
-  test_getset!(JwsHeader, nonce, set_nonce, Option = encode_b64(vec![1, 2, 3, 4]));
+  test_getset!(
+    JwsHeader,
+    nonce,
+    set_nonce,
+    Option = encode_b64(vec![1, 2, 3, 4])
+  );
   test_getset!(JwsHeader, ppt, set_ppt, Option = "passport");
 }
 
