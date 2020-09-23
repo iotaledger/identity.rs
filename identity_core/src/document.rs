@@ -8,7 +8,6 @@ use std::{
 };
 
 use crate::{
-    common::Timestamp,
     did::DID,
     utils::{
         add_unique_to_vec, helpers::string_or_list, Authentication, Context, IdCompare, PublicKey, Service, Subject,
