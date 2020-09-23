@@ -48,7 +48,7 @@ pub struct DIDDocument {
 impl DIDDocument {
     /// Initialize the DIDDocument.
     pub fn init(self) -> Self {
-        let doc = DIDDocument {
+        DIDDocument {
             context: self.context,
             id: self.id,
             created: self.created,
@@ -62,9 +62,7 @@ impl DIDDocument {
             metadata: self.metadata,
             public_keys: self.public_keys,
             services: self.services,
-        };
-
-        doc
+        }
     }
 
     /// gets the inner value of the `context` from the `DIDDocument`.
