@@ -252,10 +252,13 @@ impl Decoder {
     header: &JwsHeader<T>,
     verifier: &dyn JwsVerifier,
   ) -> Result<()> {
+    // Check algorithm permission
+    if !self.algorithms.contains(&header.alg()) {
+      return Err(DecodeError::InvalidClaim("alg").into());
+    }
+
     self.check_header_alg(header, verifier)?;
     self.check_header_kid(header, verifier)?;
-
-    let valid: bool = self.algorithms.contains(&header.alg());
 
     Ok(())
   }

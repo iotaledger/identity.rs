@@ -1,4 +1,4 @@
-use libjose::jwa::HmacAlgorithm::HS512;
+use libjose::jwa::HmacAlgorithm::*;
 use libjose::jws::Decoder;
 use libjose::jws::Encoder;
 use libjose::jws::JwsAlgorithm;
@@ -110,6 +110,38 @@ fn test_compact_payload_invalid() {
   let modified: String = [segments[0], "my-payload", segments[2]].join(".");
   let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
   let decoder: Decoder = Decoder::with_algorithms(vec![HS512]);
+  let _: JwsRawToken<Empty> = decoder.decode_compact(&modified, &verifier).unwrap();
+}
+
+#[test]
+#[should_panic = r#"InvalidClaim("alg")"#]
+fn test_compact_algorithm_invalid() {
+  let header: JwsHeader<Empty> = JwsHeader::new();
+  let claims: JwtClaims<Empty> = JwtClaims::new();
+  let payload: Vec<u8> = serde_json::to_vec(&claims).unwrap();
+  let key = HS512.generate_key().unwrap();
+  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let serialized: String = Encoder::encode_compact(&payload, &header, &signer).unwrap();
+  let segments: Vec<&str> = serialized.split(".").collect();
+  let modified: String = [segments[0], segments[1], "my-signature"].join(".");
+  let verifier = HS256.verifier_from_bytes(key.as_ref()).unwrap();
+  let decoder: Decoder = Decoder::with_algorithms(vec![HS256, HS512]);
+  let _: JwsRawToken<Empty> = decoder.decode_compact(&modified, &verifier).unwrap();
+}
+
+#[test]
+#[should_panic = r#"InvalidClaim("alg")"#]
+fn test_compact_algorithm_not_allowed() {
+  let header: JwsHeader<Empty> = JwsHeader::new();
+  let claims: JwtClaims<Empty> = JwtClaims::new();
+  let payload: Vec<u8> = serde_json::to_vec(&claims).unwrap();
+  let key = HS512.generate_key().unwrap();
+  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let serialized: String = Encoder::encode_compact(&payload, &header, &signer).unwrap();
+  let segments: Vec<&str> = serialized.split(".").collect();
+  let modified: String = [segments[0], segments[1], "my-signature"].join(".");
+  let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
+  let decoder: Decoder = Decoder::with_algorithms(vec![HS256]);
   let _: JwsRawToken<Empty> = decoder.decode_compact(&modified, &verifier).unwrap();
 }
 
