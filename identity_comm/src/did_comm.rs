@@ -1,4 +1,5 @@
 use identity_core::did::DID;
+use identity_core::common::Timestamp;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -9,8 +10,8 @@ pub struct DIDComm {
     pub comm_type: String, // MUST be a valid Message Type URI
     pub from: Option<DID>, // MUST be a string that is a valid DID which identifies the sender of the message
     pub to: Option<Vec<DID>>, // MUST be an array of strings where each element is a valid DID
-    pub created_at: Option<String>, /* expressed in UTC Epoch Seconds (example: 1599692536) -> https://github.com/iotaledger/identity.rs/blob/952e8c86ff58954b15bb2a4964dfb7b6fe39b122/identity_core/src/common/timestamp.rs */
-    pub expires_at: Option<String>, /* expressed in UTC Epoch Seconds (example: 1599692536) -> https://github.com/iotaledger/identity.rs/blob/952e8c86ff58954b15bb2a4964dfb7b6fe39b122/identity_core/src/common/timestamp.rs */
+    pub created_at: Option<Timestamp>, /* expressed in UTC Epoch Seconds (example: 1599692536) -> https://github.com/iotaledger/identity.rs/blob/952e8c86ff58954b15bb2a4964dfb7b6fe39b122/identity_core/src/common/timestamp.rs */
+    pub expires_at: Option<Timestamp>, /* expressed in UTC Epoch Seconds (example: 1599692536) -> https://github.com/iotaledger/identity.rs/blob/952e8c86ff58954b15bb2a4964dfb7b6fe39b122/identity_core/src/common/timestamp.rs */
     pub body: Option<String>,       // Here can be everything
 }
 
