@@ -1,295 +1,520 @@
-use core::convert::TryFrom;
-use core::iter::FromIterator;
+use core::fmt::Display;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
+use core::fmt::Error as FmtError;
 use core::str::from_utf8;
-use serde::de::DeserializeOwned;
+use serde::de::Error as _;
+use serde_json::Error;
 use serde::Serialize;
-use serde_json::from_slice;
-use serde_json::to_value;
 use serde_json::to_vec;
+use serde_json::to_value;
+use serde_json::to_string;
 use serde_json::Map;
 use serde_json::Value;
+use core::convert::TryFrom;
+use serde::de::DeserializeOwned;
+use core::iter::FromIterator;
+use serde_json::from_slice;
 
+use crate::alloc::BTreeSet;
+use crate::jws::JwsAlgorithm;
+use crate::jws::JwsRawToken;
+use crate::jws::JwsToken;
 use crate::alloc::String;
-use crate::alloc::ToString;
 use crate::alloc::Vec;
+use crate::jws::JwsSigner;
+use crate::jws::JwsHeader;
+use crate::error::Result;
+use crate::utils::Empty;
 use crate::error::DecodeError;
 use crate::error::EncodeError;
-use crate::error::Result;
-use crate::jws::JwsHeader;
-use crate::jws::JwsRawToken;
-use crate::jws::JwsSigner;
-use crate::jws::JwsToken;
-use crate::jws::JwsVerifier;
-use crate::utils::decode_b64_into;
 use crate::utils::encode_b64_into;
+use crate::utils::decode_b64_into;
 
-// The default encoding behaviour is to use base64url-encoded payloads
-const B64_DEFAULT: bool = true;
+// =============================================================================
+// General
+// =============================================================================
+
+fn take_str(string: &mut String) -> String {
+  core::mem::replace(string, String::new())
+}
+
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum JwsFormat {
+  Compact,
+  General,
+  Flatten,
+}
+
+pub struct JwsSignatureScope<'a, T = Empty, U = Empty> {
+  /// The signature algorithm implementation.
+  signer: &'a dyn JwsSigner,
+  /// The protected JOSE header.
+  header_p: Option<JwsHeader<T>>,
+  /// The unprotected JOSE header.
+  header_u: Option<JwsHeader<U>>,
+}
+
+impl<'a, S, T, U> From<(&'a S, JwsHeader<T>)> for JwsSignatureScope<'a, T, U> where S: JwsSigner {
+  fn from(other: (&'a S, JwsHeader<T>)) -> Self {
+    Self {
+      signer: other.0,
+      header_p: Some(other.1),
+      header_u: None,
+    }
+  }
+}
+
+impl<'a, S, T, U> From<(&'a S, JwsHeader<T>, JwsHeader<U>)> for JwsSignatureScope<'a, T, U> where S: JwsSigner {
+  fn from(other: (&'a S, JwsHeader<T>, JwsHeader<U>)) -> Self {
+    Self {
+      signer: other.0,
+      header_p: Some(other.1),
+      header_u: Some(other.2),
+    }
+  }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct JwsSignature {
+  signature: String,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  protected: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  header: Option<Map<String, Value>>,
+}
+
+/// An encoded JSON Web Signature in general JSON format.
+#[derive(Debug, Deserialize, Serialize)]
+pub struct JwsEncodedGeneral {
+  #[serde(skip_serializing_if = "Option::is_none")]
+  payload: Option<String>,
+  #[serde(skip_serializing_if = "Vec::is_empty")]
+  signatures: Vec<JwsSignature>,
+}
+
+/// An encoded JSON Web Signature in flattened JSON format.
+#[derive(Debug, Deserialize, Serialize)]
+pub struct JwsEncodedFlatten {
+  #[serde(skip_serializing_if = "Option::is_none")]
+  payload: Option<String>,
+  #[serde(flatten)]
+  signature: JwsSignature,
+}
+
+#[derive(Debug)]
+pub enum JwsEncoded {
+  /// The JWS Compact Serialization represents digitally signed or MACed content
+  /// as a compact, URL-safe string.
+  Compact(String),
+  /// The JWS JSON Serialization represents digitally signed or MACed content as
+  /// a JSON object. This representation is neither optimized for compactness
+  /// nor URL-safe.
+  General(JwsEncodedGeneral),
+  /// The flattened JWS JSON Serialization syntax is based upon the general
+  /// syntax but flattens it, optimizing it for the single digital signature/MAC
+  /// case.
+  Flatten(JwsEncodedFlatten),
+}
+
+impl JwsEncoded {
+  pub fn to_string(&self) -> Result<String> {
+    match self {
+      Self::Compact(inner) => Ok(inner.clone()),
+      Self::General(ref inner) => to_string(inner).map_err(Into::into),
+      Self::Flatten(ref inner) => to_string(inner).map_err(Into::into),
+    }
+  }
+}
+
+impl Display for JwsEncoded {
+  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+    write!(f, "{}", self.to_string().map_err(|_| FmtError)?)
+  }
+}
 
 // =============================================================================
 // Encoding
 // =============================================================================
 
-// TODO: Encode General
-// TODO: Encode Flattened
-pub struct Encoder;
-
-impl Encoder {
-  /// The JWS Compact Serialization represents digitally signed or MACed
-  /// content as a compact, URL-safe string. This string is:
-  ///
-  ///    BASE64URL(UTF8(JWS Protected Header)) || '.' ||
-  ///    BASE64URL(JWS Payload) || '.' ||
-  ///    BASE64URL(JWS Signature)
-  ///
-  /// Only one signature/MAC is supported by the JWS Compact Serialization and
-  /// it provides no syntax to represent a JWS Unprotected Header value.
-  ///
-  /// [RFC7515#3.1](https://tools.ietf.org/html/rfc7515#section-3.1)
-  ///
-  /// [RFC7515#5.1](https://tools.ietf.org/html/rfc7515#section-5.1)
-  ///
-  /// [RFC7515#7.1](https://tools.ietf.org/html/rfc7515#section-7.1)
-  pub fn encode_compact<T>(
-    data: impl AsRef<[u8]>,
-    header: &JwsHeader<T>,
-    signer: &dyn JwsSigner,
-  ) -> Result<String>
-  where
-    T: Serialize,
-  {
-    encode_components(data, header, signer).map(Components::into_compact)
-  }
-
-  /// Serialize the token with compact serialization and detached content.
+pub struct JwsEncoder<'a, T = Empty, U = Empty> {
+  /// The serialization format of the encoded token.
+  format: JwsFormat,
+  /// The signature scope used to create cryptographic signatures.
+  scopes: Vec<JwsSignatureScope<'a, T, U>>,
+  /// Encode the token with detached content.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7515#appendix-F)
-  pub fn encode_compact_detached<T>(
-    data: impl AsRef<[u8]>,
-    header: &JwsHeader<T>,
-    signer: &dyn JwsSigner,
-  ) -> Result<String>
-  where
-    T: Serialize,
-  {
-    encode_components(data, header, signer).map(Components::into_compact_detached)
-  }
+  detached: bool,
 }
 
-fn encode_components<T>(
-  data: impl AsRef<[u8]>,
-  header: &JwsHeader<T>,
-  signer: &dyn JwsSigner,
-) -> Result<B64Components>
-where
-  T: Serialize,
-{
-  let payload: &[u8] = data.as_ref();
-  let mut components: B64Components = Components::new();
-
-  // Extract the "b64" which header which determines the content encoding method.
-  let b64: bool = extract_b64(header)?;
-
-  // Encode and add the payload; the payload MAY be base64-encoded.
-  if b64 {
-    // Serialize and include the encoded payload.
-    encode_b64_into(payload, &mut components.payload);
-  } else {
-    // Add the payload as a raw string.
-    components
-      .payload
-      .push_str(extract_unencoded_payload(payload)?);
+impl<'a, T, U> JwsEncoder<'a, T, U> {
+  /// Creates a new `JwsEncoder` with the default format (Compact).
+  pub const fn new() -> Self {
+    Self::with_format(JwsFormat::Compact)
   }
 
-  // Extract the JOSE header, agumented with claims from the signer.
-  let header: Map<String, Value> = extract_header(header, signer)?;
-
-  // Encode and add the header.
-  encode_b64_into(&to_vec(&header)?, &mut components.header);
-
-  // Create and sign the message
-  let message: Vec<u8> = components.create_message();
-  let signature: Vec<u8> = signer.sign(&message)?;
-
-  // Encode and add the signature
-  encode_b64_into(&signature, &mut components.signature);
-
-  // Return the raw signature components
-  Ok(components)
-}
-
-// =============================================================================
-// Decoding
-// =============================================================================
-
-use crate::alloc::BTreeSet;
-use crate::jws::JwsAlgorithm;
-
-// TODO: Decode JSON
-pub struct Decoder {
-  algorithms: BTreeSet<JwsAlgorithm>,
-}
-
-impl Decoder {
-  pub fn new() -> Self {
+  /// Creates a new `JwsEncoder` with the given `format`.
+  pub const fn with_format(format: JwsFormat) -> Self {
     Self {
-      algorithms: BTreeSet::new(),
+      format,
+      scopes: Vec::new(),
+      detached: false,
     }
   }
 
-  pub fn with_algorithms(algorithms: impl IntoIterator<Item = impl Into<JwsAlgorithm>>) -> Self {
-    Self {
-      algorithms: BTreeSet::from_iter(algorithms.into_iter().map(Into::into)),
-    }
-  }
-
-  pub fn decode_compact_token<T, U>(
-    &self,
-    data: impl AsRef<[u8]>,
-    verifier: &dyn JwsVerifier,
-  ) -> Result<JwsToken<T, U>>
-  where
-    T: DeserializeOwned,
-    U: DeserializeOwned,
-  {
+  pub fn format(mut self, value: impl Into<JwsFormat>) -> Self {
+    self.format = value.into();
     self
-      .decode_compact(data, verifier)
-      .and_then(JwsToken::try_from)
   }
 
-  pub fn decode_compact<T>(
-    &self,
-    data: impl AsRef<[u8]>,
-    verifier: &dyn JwsVerifier,
-  ) -> Result<JwsRawToken<T>>
-  where
-    T: DeserializeOwned,
-  {
-    let (header, components) = self.decode_compact_components(data, verifier, None)?;
-
-    Ok(JwsRawToken {
-      header,
-      claims: components.payload,
-    })
+  pub fn attach(&mut self) {
+    self.detached = false;
   }
 
-  pub fn decode_compact_detached<T>(
-    &self,
-    data: impl AsRef<[u8]>,
-    payload: impl AsRef<[u8]>,
-    verifier: &dyn JwsVerifier,
-  ) -> Result<JwsHeader<T>>
-  where
-    T: DeserializeOwned,
-  {
-    let (header, _) = self.decode_compact_components(data, verifier, Some(payload.as_ref()))?;
-
-    Ok(header)
+  pub fn detach(&mut self) {
+    self.detached = true;
   }
 
-  fn decode_compact_components<T>(
-    &self,
-    data: impl AsRef<[u8]>,
-    verifier: &dyn JwsVerifier,
-    payload: Option<&[u8]>,
-  ) -> Result<(JwsHeader<T>, RawComponents)>
-  where
-    T: DeserializeOwned,
-  {
-    // Extract the components of the compact JWS token
-    let split: Vec<&[u8]> = data.as_ref().split(|byte| *byte == b'.').collect();
-    let detached: bool = payload.is_some();
-    let mut components: RawComponents = Components::new();
+  pub fn scope(mut self, value: impl Into<JwsSignatureScope<'a, T, U>>) -> Self {
+    self.scopes.push(value.into());
+    self
+  }
 
-    // Make sure the JWS token has the expected number of components
-    if split.len() != 3 {
-      return Err(DecodeError::InvalidSegments.into());
+  pub fn scopes(mut self, value: impl IntoIterator<Item = impl Into<JwsSignatureScope<'a, T, U>>>) -> Self {
+    self.scopes.extend(value.into_iter().map(Into::into));
+    self
+  }
+
+  pub fn encode<D>(&self, data: &D) -> Result<JwsEncoded>
+  where
+    T: Serialize + Clone,
+    U: Serialize,
+    D: Serialize,
+  {
+    to_vec(data).map_err(Into::into).and_then(|data| self.encode_slice(&data))
+  }
+
+  pub fn encode_slice(&self, data: impl AsRef<[u8]>) -> Result<JwsEncoded>
+  where
+    T: Serialize + Clone,
+    U: Serialize
+  {
+    self.check_fmt()?;
+
+    // A helper for local state and signature composition
+    let mut components: B64Components = Components::new();
+
+    // The signatures that will be created
+    let mut signatures: Vec<JwsSignature> = Vec::with_capacity(self.scopes.len());
+
+    // Indicates if we are using base64-encoded content
+    let mut b64: Option<bool> = None;
+
+    // 1. Create the content to be used as the JWS Payload.
+    let payload: &[u8] = data.as_ref();
+
+    for scope in self.scopes.iter() {
+      let header_p: Option<&JwsHeader<T>> = scope.header_p.as_ref();
+      let header_u: Option<&JwsHeader<U>> = scope.header_u.as_ref();
+
+      // If this scope has an unprotected header, make sure it doesn't have any
+      // restricted parameters.
+      if let Some(header) = header_u {
+        self.check_restricted_params(header)?;
+      }
+
+      // Create an "enhanced" version of the protected header where the "alg" and
+      // "kid" properties are set from values given by the signer. This helps
+      // avoid security issues that may arise from mismatched algorithms in the
+      // JOSE header.
+      //
+      // Note: This is only done if an integrity-protected header was provided.
+      //
+      let header_p: Option<JwsHeader<T>> = header_p
+        .cloned()
+        .map(|header| self.enhance_protected_header(header, scope.signer));
+
+      // 3. Create the JSON object(s) containing the desired set of Header
+      //    Parameters, which together comprise the JOSE Header (the JWS
+      //    Protected Header and/or the JWS Unprotected Header).
+      let jose: Map<String, Value> = create_jose_header(header_p.as_ref(), header_u)?;
+
+      // Validate the combined JOSE header parameters
+      self.check_alg(&jose, scope.signer)?;
+      self.check_crit(&jose)?;
+
+      //
+      // 2. Compute the encoded payload value BASE64URL(JWS Payload).
+      //
+
+      // Extract the "b64" header parameter and encode the payload as required.
+      // Also take the time to make sure all headers have the same value for the
+      // "b64" header parameter - this is a requirement AND as a result we only
+      // need to encode the payload once.
+      //
+      // See: https://tools.ietf.org/html/rfc7797#section-3
+      match (b64, extract_b64(&jose)?) {
+        (Some(true), true) => {}
+        (Some(false), false) => {}
+        (Some(_), _) => {
+          return Err(EncodeError::InvalidJoseHeader("Invalid `b64` parameter").into());
+        }
+        (None, true) => {
+          // Add the payload as a base64-encoded string.
+          encode_b64_into(payload, &mut components.payload);
+          b64 = Some(true);
+        }
+        (None, false) => {
+          // Add the payload as a UTF-8 string.
+          components.payload.push_str(self.create_unencoded_payload(payload)?);
+          b64 = Some(false);
+        }
+      }
+
+      //
+      // 3. We already created the JOSE header as a previous step.
+      //
+
+      // 4. Compute the encoded header BASE64URL(UTF8(JWS Protected Header)).
+      if let Some(header) = header_p.as_ref() {
+        encode_b64_into(&to_vec(header)?, &mut components.header);
+      }
+
+      // 5. Compute the JWS Signature in the manner defined for the
+      //    particular algorithm being used over the JWS Signing Input
+      //    ASCII(BASE64URL(UTF8(JWS Protected Header)) || '.' ||
+      //    BASE64URL(JWS Payload)). The "alg" (algorithm) Header Parameter
+      //    MUST be present in the JOSE Header, with the algorithm value
+      //    accurately representing the algorithm used to construct the JWS
+      //    Signature.
+      let signature: Vec<u8> = scope.signer.sign(&components.create_message())?;
+
+      // 6. Compute the encoded signature value BASE64URL(JWS Signature).
+      encode_b64_into(&signature, &mut components.signature);
+
+      // Extract the protected header
+      let header_p: Option<String> = Some(&mut components.header)
+        .filter(|header| !header.is_empty())
+        .map(take_str);
+
+      // Serialize the unprotected header
+      let header_u: Option<Map<String, Value>> = header_u
+        .map(to_object)
+        .transpose()?;
+
+      // Add the signature components for this scope
+      signatures.push(JwsSignature {
+        signature: take_str(&mut components.signature),
+        protected: header_p,
+        header: header_u,
+      });
+
+      // 7. If the JWS JSON Serialization is being used, repeat this process
+      //    (steps 3-6) for each digital signature or MAC operation being
+      //    performed.
     }
 
-    // The middle segment should be empty when using detached content
-    if detached && !split[1].is_empty() {
-      return Err(DecodeError::InvalidSegments.into());
-    }
+    // Sanity check
+    assert_eq!(self.scopes.len(), signatures.len());
 
-    // Extract the base64-encoded components of the token for convenience
-    let header_raw: &[u8] = split[0];
-    let payload_raw: &[u8] = payload.unwrap_or(split[1]);
-    let signature_raw: &[u8] = split[2];
+    //
+    // 8. Create the desired serialized output.
+    //
 
-    // Add the base64-decoded header to the components
-    decode_b64_into(header_raw, &mut components.header)?;
+    let payload: Option<String> = if self.detached {
+      None
+    } else {
+      Some(components.payload)
+    };
 
-    // Deserialize to a JOSE header
-    let jose: JwsHeader<T> = from_slice(&components.header)?;
+    match (self.format, signatures.as_slice()) {
+      (JwsFormat::Compact, [signature]) => match signature {
+        JwsSignature { signature, protected: Some(header), header: None } => {
+          let data: String = if let Some(payload) = payload {
+            create_jws_compact(header, payload, signature)
+          } else {
+            create_jws_compact_detached(header, signature)
+          };
 
-    // Validate the claims in the JOSE header
-    self.check_header_claims(&jose, verifier)?;
-
-    // Parse the signature
-    decode_b64_into(&signature_raw, &mut components.signature)?;
-
-    // Re-build the message
-    let message: Vec<u8> = create_jws_message(header_raw, payload_raw);
-
-    // Verify the signature
-    verifier.verify(&message, &components.signature)?;
-
-    // Only extract and decode the payload if NOT using the detached serialization
-    if !detached {
-      // Check if the payload is base64url-encoded and decode if necessary
-      if extract_b64(&jose)? {
-        decode_b64_into(payload_raw, &mut components.payload)?;
-      } else {
-        components.payload.extend_from_slice(payload_raw);
+          Ok(JwsEncoded::Compact(data))
+        }
+        _ => {
+          unreachable!("Invalid Signature")
+        }
+      }
+      (JwsFormat::General, _) => {
+        Ok(JwsEncoded::General(JwsEncodedGeneral {
+          payload,
+          signatures,
+        }))
+      }
+      (JwsFormat::Flatten, [_]) => {
+        Ok(JwsEncoded::Flatten(JwsEncodedFlatten {
+          payload,
+          signature: signatures.pop().expect("infallible")
+        }))
+      }
+      (JwsFormat::Flatten, [..]) | (JwsFormat::Compact, [..]) => {
+        unreachable!("Too Many Signatures")
       }
     }
-
-    Ok((jose, components))
   }
 
-  fn check_header_claims<T>(
-    &self,
-    header: &JwsHeader<T>,
-    verifier: &dyn JwsVerifier,
-  ) -> Result<()> {
-    // Check algorithm permission
-    if !self.algorithms.contains(&header.alg()) {
-      return Err(DecodeError::InvalidClaim("alg").into());
+  // Ensure the format/signer configuration is properly aligned
+  fn check_fmt(&self) -> Result<()> {
+    match (self.format, self.scopes.len()) {
+      (_, 0) => {
+        Err(EncodeError::InvalidConfiguration("Not Enough Signer Scopes").into())
+      }
+      (JwsFormat::General, _) | (JwsFormat::Compact, 1) | (JwsFormat::Flatten, 1) => {
+        Ok(())
+      }
+      (JwsFormat::Compact, _) | (JwsFormat::Flatten, _) => {
+        Err(EncodeError::InvalidConfiguration("Too Many Signer Scopes").into())
+      }
+    }
+  }
+
+  fn check_restricted_params<C>(&self, header: &JwsHeader<C>) -> Result<()> {
+    // The "b64" header parameter MUST be protected if provided
+    //
+    // See: https://tools.ietf.org/html/rfc7797#section-3
+    if header.b64().is_some() {
+      return Err(EncodeError::InvalidJoseHeader("Unprotected `b64`").into());
     }
 
-    self.check_header_alg(header, verifier)?;
-    self.check_header_kid(header, verifier)?;
+    // The "crit" header parameter MUST be protected if provided
+    //
+    // See: https://tools.ietf.org/html/rfc7515#section-4.1.11
+    if header.crit().is_some() {
+      return Err(EncodeError::InvalidJoseHeader("Unprotected `crit`").into());
+    }
 
     Ok(())
   }
 
-  /// Ensure the header algorithm matches the verifier algorithm.
-  fn check_header_alg<T>(&self, header: &JwsHeader<T>, verifier: &dyn JwsVerifier) -> Result<()> {
-    if header.alg() == verifier.alg() {
-      Ok(())
-    } else {
-      Err(DecodeError::InvalidClaim("alg").into())
+  fn enhance_protected_header(&self, mut header: JwsHeader<T>, signer: &dyn JwsSigner) -> JwsHeader<T> {
+    // This MUST be present in the signed JOSE header and security is
+    // slightly enhanced if this is a protected header property.
+    //
+    // See: https://tools.ietf.org/html/rfc7515#section-10.7
+    header.set_alg(signer.alg());
+
+    // Use the "kid" claim from the signer, if present.
+    if let Some(kid) = signer.kid() {
+      header.set_kid(kid);
+    }
+
+    header
+  }
+
+  fn check_alg(&self, header: &Map<String, Value>, signer: &dyn JwsSigner) -> Result<()> {
+    // The "alg" parameter MUST be present in the JOSE header; ensure it
+    // matches the algorithm of the signer.
+    //
+    // See: https://tools.ietf.org/html/rfc7515#section-10.7
+    match header.get("alg") {
+      Some(Value::String(alg)) if alg == signer.alg().name() => {
+        Ok(())
+      }
+      Some(_) => {
+        Err(EncodeError::InvalidJoseHeader("Invalid `alg` parameter (type)").into())
+      }
+      None => {
+        Err(EncodeError::InvalidJoseHeader("Missing `alg` parameter").into())
+      }
     }
   }
 
-  /// Ensure the header key ID matches the verifier key ID if one is set.
-  fn check_header_kid<T>(&self, header: &JwsHeader<T>, verifier: &dyn JwsVerifier) -> Result<()> {
-    match (verifier.kid(), header.kid()) {
-      (Some(kid), Some(value)) if value == kid => Ok(()),
-      (Some(_), Some(_)) => Err(DecodeError::InvalidClaim("kid").into()),
-      (Some(_), None) => Err(DecodeError::MissingClaim("kid").into()),
-      (None, _) => Ok(()),
+  fn check_crit(&self, header: &Map<String, Value>) -> Result<()> {
+    // The "crit" parameter MUST NOT be an empty list
+    //
+    // See: https://tools.ietf.org/html/rfc7515#section-4.1.11
+    match header.get("crit") {
+      Some(Value::Array(crit)) if crit.is_empty() => {
+        Err(EncodeError::InvalidJoseHeader("Invalid `crit` parameter (empty)").into())
+      }
+      Some(Value::Array(_)) => {
+        Ok(())
+      }
+      Some(_) => {
+        Err(EncodeError::InvalidJoseHeader("Invalid `crit` parameter (type)").into())
+      }
+      None => {
+        Ok(())
+      }
     }
+  }
+
+  fn create_unencoded_payload<'p>(&self, data: &'p [u8]) -> Result<&'p str> {
+    let payload: &str = match from_utf8(data) {
+      Ok(payload) => payload,
+      Err(error) => return Err(EncodeError::InvalidContent(error).into()),
+    };
+
+    // Validate the payload
+    //
+    // See: https://tools.ietf.org/html/rfc7797#section-5.2
+    //
+    // TODO: Provide a more flexible API for this validaton
+    if payload.contains('.') {
+      return Err(EncodeError::InvalidContentChar('.').into());
+    }
+
+    Ok(payload)
   }
 }
 
 // =============================================================================
-// Helpers
+// Misc Helpers
 // =============================================================================
 
-// Handle the "b64" header parameter.
-//
-// See [RFC7797](https://tools.ietf.org/html/rfc7797#section-3) for more info.
+fn create_jose_header<T, U>(
+  header_p: Option<&T>,
+  header_u: Option<&U>,
+) -> Result<Map<String, Value>> where T: Serialize, U: Serialize {
+  // Convert the protected header to a JSON object
+  let mut header_p_map: Map<String, Value> = match header_p {
+    Some(header) => to_object(header)?,
+    None => Map::new(),
+  };
+
+  // Convert the unprotected header to a JSON object
+  let mut header_u_map: Map<String, Value> = match header_u {
+    Some(header) => to_object(header)?,
+    None => Map::new(),
+  };
+
+  // Both headers CANNOT be empty - Something MUST be present
+  if header_p_map.is_empty() && header_u_map.is_empty() {
+    return Err(EncodeError::InvalidJoseHeader("Cannot be empty").into());
+  }
+
+  // Merge the unprotected values into the protected header
+  //
+  // The headers CANNOT contain duplicate properties values
+  for (key, value) in header_u_map {
+    if header_p_map.insert(key, value).is_some() {
+      return Err(EncodeError::InvalidJoseHeader("Duplicate Property").into());
+    }
+  }
+
+  Ok(header_p_map)
+}
+
+fn to_object<T>(data: &T) -> Result<Map<String, Value>> where T: Serialize {
+  match to_value(data)? {
+    Value::Object(object) => {
+      Ok(object)
+    }
+    _ => {
+      Err(Error::custom("Invalid Object").into())
+    }
+  }
+}
+
+// Extract the "b64" header parameter. See [RFC7797](https://tools.ietf.org/html/rfc7797#section-3) for more info.
 //
 // The following table shows the JWS Signing Input computation, depending
 // upon the value of this parameter:
@@ -303,70 +528,28 @@ impl Decoder {
 // | false | ASCII(BASE64URL(UTF8(JWS Protected Header)) || '.') ||    |
 // |       | JWS Payload                                               |
 // +-------+-----------------------------------------------------------+
-fn extract_b64<T>(header: &JwsHeader<T>) -> Result<bool> {
-  match (header.b64(), header.crit()) {
-    (Some(b64), Some(crit)) => {
-      // The "crit" param MUST be included and contain "b64".
-      // More Info: https://tools.ietf.org/html/rfc7797#section-6
-      if !crit.iter().any(|crit| crit == "b64") {
-        return Err(EncodeError::MissingCritB64.into());
-      }
+fn extract_b64(header: &Map<String, Value>) -> Result<bool> {
+  match (header.get("b64"), header.get("crit")) {
+    (Some(Value::Bool(b64)), Some(Value::Array(crit))) => {
+      // // The "crit" param MUST be included and contain "b64".
+      // // More Info: https://tools.ietf.org/html/rfc7797#section-6
+      // if !crit.iter().any(|crit| crit == "b64") {
+      //   return Err(EncodeError::MissingCritB64.into());
+      // }
 
-      Ok(b64)
+      Ok(*b64)
     }
-    (Some(_), None) => Err(EncodeError::MissingCrit.into()),
-    (None, _) => Ok(B64_DEFAULT),
+    (Some(_), Some(_)) => {
+      Err(EncodeError::InvalidJoseHeader("Bad Type").into())
+    }
+    (Some(_), None) => {
+      Err(EncodeError::InvalidJoseHeader("Missing `crit` parameter").into())
+    }
+    (None, _) => {
+      // The default behaviour is to use base64url-encoded payloads
+      Ok(true)
+    }
   }
-}
-
-// Extract the JOSE header as a JSON object with signer-specific claims.
-fn extract_header<T>(header: &JwsHeader<T>, signer: &dyn JwsSigner) -> Result<Map<String, Value>>
-where
-  T: Serialize,
-{
-  let mut object = match to_value(header)? {
-    Value::Object(object) => object,
-    _ => unreachable!(),
-  };
-
-  // This MUST be present in the signed JOSE header.
-  object.insert("alg".into(), signer.alg().name().into());
-
-  // Use the "kid" claim from the signer, if present.
-  if let Some(kid) = signer.kid() {
-    object.insert("kid".into(), kid.to_string().into());
-  }
-
-  Ok(object)
-}
-
-fn extract_unencoded_payload(data: &[u8]) -> Result<&str> {
-  let payload: &str = match from_utf8(data) {
-    Ok(payload) => payload,
-    Err(error) => return Err(EncodeError::InvalidContent(error).into()),
-  };
-
-  // Validate the payload
-  // More Info: https://tools.ietf.org/html/rfc7797#section-5.2
-  //
-  // TODO: Provide a more flexible API for this validaton
-  if payload.contains('.') {
-    return Err(EncodeError::InvalidContentChar('.').into());
-  }
-
-  Ok(payload)
-}
-
-fn create_jws_message(header: impl AsRef<[u8]>, payload: impl AsRef<[u8]>) -> Vec<u8> {
-  let header: &[u8] = header.as_ref();
-  let payload: &[u8] = payload.as_ref();
-  let capacity: usize = header.len() + 1 + payload.len();
-  let mut message: Vec<u8> = Vec::with_capacity(capacity);
-
-  message.extend_from_slice(header);
-  message.push(b'.');
-  message.extend_from_slice(payload);
-  message
 }
 
 // =============================================================================
@@ -401,38 +584,61 @@ impl<T> Components<T> {
   {
     create_jws_message(&self.header, &self.payload)
   }
+}
 
-  fn into_compact(self) -> String
-  where
-    T: AsRef<str>,
-  {
-    let mut capacity: usize = 2; // initially 2 for delimiters
-    capacity += self.header.as_ref().len();
-    capacity += self.payload.as_ref().len();
-    capacity += self.signature.as_ref().len();
+// =============================================================================
+// String/Byte Helpers
+// =============================================================================
 
-    let mut output: String = String::with_capacity(capacity);
-    output.push_str(self.header.as_ref());
-    output.push('.');
-    output.push_str(self.payload.as_ref());
-    output.push('.');
-    output.push_str(self.signature.as_ref());
-    output
-  }
+fn create_jws_message(
+  header: impl AsRef<[u8]>,
+  payload: impl AsRef<[u8]>,
+) -> Vec<u8> {
+  let header: &[u8] = header.as_ref();
+  let payload: &[u8] = payload.as_ref();
+  let capacity: usize = header.len() + 1 + payload.len();
 
-  fn into_compact_detached(self) -> String
-  where
-    T: AsRef<str>,
-  {
-    let mut capacity: usize = 2; // initially 2 for delimiters
-    capacity += self.header.as_ref().len();
-    capacity += self.signature.as_ref().len();
+  let mut output: Vec<u8> = Vec::with_capacity(capacity);
 
-    let mut output: String = String::with_capacity(capacity);
-    output.push_str(self.header.as_ref());
-    output.push('.');
-    output.push('.');
-    output.push_str(self.signature.as_ref());
-    output
-  }
+  output.extend_from_slice(header);
+  output.push(b'.');
+  output.extend_from_slice(payload);
+  output
+}
+
+fn create_jws_compact(
+  header: impl AsRef<str>,
+  payload: impl AsRef<str>,
+  signature: impl AsRef<str>,
+) -> String {
+  let header: &str = header.as_ref();
+  let payload: &str = payload.as_ref();
+  let signature: &str = signature.as_ref();
+  let capacity: usize = header.len() + 1 + payload.len() + 1 + signature.len();
+
+  let mut output: String = String::with_capacity(capacity);
+
+  output.push_str(header.as_ref());
+  output.push('.');
+  output.push_str(payload.as_ref());
+  output.push('.');
+  output.push_str(signature.as_ref());
+  output
+}
+
+fn create_jws_compact_detached(
+  header: impl AsRef<str>,
+  signature: impl AsRef<str>,
+) -> String {
+  let header: &str = header.as_ref();
+  let signature: &str = signature.as_ref();
+  let capacity: usize = header.len() + 2 + signature.len();
+
+  let mut output: String = String::with_capacity(capacity);
+
+  output.push_str(header.as_ref());
+  output.push('.');
+  output.push('.');
+  output.push_str(signature.as_ref());
+  output
 }

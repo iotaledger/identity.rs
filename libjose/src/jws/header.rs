@@ -146,6 +146,7 @@ pub struct JwsHeader<T = Empty> {
 impl<T> JwsHeader<T> {
   /// Create a new `JwsHeader`.
   pub const fn new() -> Self {
+    // TODO: Force algorithm selection or make optional
     Self::with_alg(JwsAlgorithm::NONE)
   }
 

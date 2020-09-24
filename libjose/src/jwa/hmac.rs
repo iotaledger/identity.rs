@@ -161,6 +161,7 @@ impl HmacAlgorithm {
     jwk.set_alg(self.name());
     jwk.set_use(JwkUse::Signature);
     jwk.set_key_ops(ops);
+
     jwk.set_params(JwkParamsOct {
       k: encode_b64(data),
     });

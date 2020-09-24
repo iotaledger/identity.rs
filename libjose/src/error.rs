@@ -46,14 +46,14 @@ pub enum ValidationError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum EncodeError {
-  #[error("Missing `crit` Header Parameter")]
-  MissingCrit,
-  #[error("Missing `b64` in `crit` Header Parameter")]
-  MissingCritB64,
   #[error("Invalid Content: {0}")]
   InvalidContent(#[from] core::str::Utf8Error),
   #[error("Invalid Content: Invalid Character `{0}`")]
   InvalidContentChar(char),
+  #[error("Invalid JOSE Header: {0}")]
+  InvalidJoseHeader(&'static str),
+  #[error("Invalid Encoder Configuration: {0}")]
+  InvalidConfiguration(&'static str)
 }
 
 #[derive(Debug, thiserror::Error)]
