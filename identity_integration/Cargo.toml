@@ -28,8 +28,7 @@ iota-conversion =  "0.5.1"
 failure = "0.1.8"
 
 # identity
-# identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
-identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "feat(core)/solidify-api-and-diff"}
+identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
 
 # hash
 multihash = "*"
