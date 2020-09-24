@@ -1,5 +1,5 @@
 [package]
-name = "iota-identity-wasm"
+name = "iota_identity_wasm"
 version = "0.0.1"
 authors = ["Team Identity"]
 edition = "2018"
