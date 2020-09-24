@@ -72,7 +72,7 @@ impl DIDDocument {
                 return Err(crate::Error::NoAuthKeyError);
             }
             // which one to use if there are multiple keys?
-            if let Authentication::Key(key) = &self.auth[0] {
+            if let Authentication::Key(key) = &self.auth[0].0 {
                 self.id = key.id.clone();
             }
         }

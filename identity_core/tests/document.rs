@@ -1,12 +1,8 @@
 use identity_core::{
     did::DID,
     document::DIDDocument,
-<<<<<<< HEAD
     iota_network,
-    utils::{Authentication, Context, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
-=======
     utils::{Authentication, Context, IdCompare, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
->>>>>>> 9da68a4a0df4fc13069b70860dc6bc0998e38dcf
 };
 
 use std::str::FromStr;
@@ -364,13 +360,6 @@ fn test_realistic_diff() {
     assert_eq!(did_doc_2, new_doc);
 }
 
-<<<<<<< HEAD
-/// test doc with DID creation.
-#[test]
-fn test_doc_with_did_creation() {
-    let mut did_doc = DIDDocument {
-        context: Context::from("https://w3id.org/did/v1"),
-=======
 // test that items in the did doc are unique by their subject/id.
 #[test]
 fn test_id_compare() {
@@ -380,39 +369,19 @@ fn test_id_compare() {
     // service endpoint.
     let endpoint = ServiceEndpoint {
         context: "https://edv.example.com/".into(),
->>>>>>> 9da68a4a0df4fc13069b70860dc6bc0998e38dcf
         ..Default::default()
     }
     .init();
 
-<<<<<<< HEAD
-    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
-    let mut auth_key = PublicKey {
-        key_type: "RsaVerificationKey2018".into(),
-=======
     // create a public key.
     let public_key = PublicKey {
         id: "did:iota:123456789abcdefghi#keys-1".into(),
         key_type: "RsaVerificationKey2018".into(),
         controller: "did:iota:123456789abcdefghi".into(),
->>>>>>> 9da68a4a0df4fc13069b70860dc6bc0998e38dcf
         key_data,
         ..Default::default()
     }
     .init();
-<<<<<<< HEAD
-    auth_key.0.create_own_id(iota_network::Comnet, None).unwrap();
-
-    let auth = Authentication::Key(auth_key.0.clone());
-
-    did_doc.update_auth(auth);
-
-    did_doc.create_id().unwrap();
-    assert_eq!(
-        did_doc.derive_did().unwrap().to_string(),
-        "did:iota:com:5X7Uq87P7x6P2kdJEiNYun6npfHa21DiozoCWhuJtwPg"
-    );
-=======
 
     // create the authentication key.
     let auth = Authentication::Key(public_key.clone());
@@ -456,5 +425,33 @@ fn test_id_compare() {
     assert_eq!(expected_length, did_doc.agreement.len());
 
     assert_ne!(failed_auth, did_doc.agreement);
->>>>>>> 9da68a4a0df4fc13069b70860dc6bc0998e38dcf
+}
+
+/// test doc with DID creation.
+#[test]
+fn test_doc_with_did_creation() {
+    let mut did_doc = DIDDocument {
+        context: Context::from("https://w3id.org/did/v1"),
+        ..Default::default()
+    }
+    .init();
+
+    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+    let mut auth_key = PublicKey {
+        key_type: "RsaVerificationKey2018".into(),
+        key_data,
+        ..Default::default()
+    }
+    .init();
+    auth_key.create_own_id(iota_network::Comnet, None).unwrap();
+
+    let auth = Authentication::Key(auth_key.clone());
+
+    did_doc.update_auth(auth);
+
+    did_doc.create_id().unwrap();
+    assert_eq!(
+        did_doc.derive_did().unwrap().to_string(),
+        "did:iota:com:5X7Uq87P7x6P2kdJEiNYun6npfHa21DiozoCWhuJtwPg"
+    );
 }
