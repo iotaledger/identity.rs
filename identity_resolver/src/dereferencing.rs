@@ -121,15 +121,15 @@ fn get_fragment_property(did_document: DIDDocument, fragment: String) -> crate::
     // pub auth: Vec<Authentication>,
     if !did_document.auth.is_empty() {
         for property in did_document.auth {
-            match &property {
+            match &property.0 {
                 Authentication::Method(subj) => {
                     if subj.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                        return Ok(Property::Authentication(property));
+                        return Ok(Property::Authentication(property.0));
                     }
                 }
                 Authentication::Key(key) => {
                     if key.id.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                        return Ok(Property::Authentication(property));
+                        return Ok(Property::Authentication(property.0));
                     }
                 }
             }
@@ -138,15 +138,15 @@ fn get_fragment_property(did_document: DIDDocument, fragment: String) -> crate::
     // // pub assert: Vec<Authentication>,
     if !did_document.assert.is_empty() {
         for property in did_document.assert {
-            match &property {
+            match &property.0 {
                 Authentication::Method(subj) => {
                     if subj.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                        return Ok(Property::Authentication(property));
+                        return Ok(Property::Authentication(property.0));
                     }
                 }
                 Authentication::Key(key) => {
                     if key.id.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                        return Ok(Property::Authentication(property));
+                        return Ok(Property::Authentication(property.0));
                     }
                 }
             }
@@ -155,15 +155,15 @@ fn get_fragment_property(did_document: DIDDocument, fragment: String) -> crate::
     // // pub verification: Vec<Authentication>,
     if !did_document.verification.is_empty() {
         for property in did_document.verification {
-            match &property {
+            match &property.0 {
                 Authentication::Method(subj) => {
                     if subj.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                        return Ok(Property::Authentication(property));
+                        return Ok(Property::Authentication(property.0));
                     }
                 }
                 Authentication::Key(key) => {
                     if key.id.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                        return Ok(Property::Authentication(property));
+                        return Ok(Property::Authentication(property.0));
                     }
                 }
             }
@@ -172,15 +172,15 @@ fn get_fragment_property(did_document: DIDDocument, fragment: String) -> crate::
     // // pub delegation: Vec<Authentication>,
     if !did_document.delegation.is_empty() {
         for property in did_document.delegation {
-            match &property {
+            match &property.0 {
                 Authentication::Method(subj) => {
                     if subj.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                        return Ok(Property::Authentication(property));
+                        return Ok(Property::Authentication(property.0));
                     }
                 }
                 Authentication::Key(key) => {
                     if key.id.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                        return Ok(Property::Authentication(property));
+                        return Ok(Property::Authentication(property.0));
                     }
                 }
             }
@@ -189,15 +189,15 @@ fn get_fragment_property(did_document: DIDDocument, fragment: String) -> crate::
     // // pub invocation: Vec<Authentication>,
     if !did_document.invocation.is_empty() {
         for property in did_document.invocation {
-            match &property {
+            match &property.0 {
                 Authentication::Method(subj) => {
                     if subj.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                        return Ok(Property::Authentication(property));
+                        return Ok(Property::Authentication(property.0));
                     }
                 }
                 Authentication::Key(key) => {
                     if key.id.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                        return Ok(Property::Authentication(property));
+                        return Ok(Property::Authentication(property.0));
                     }
                 }
             }
@@ -206,15 +206,15 @@ fn get_fragment_property(did_document: DIDDocument, fragment: String) -> crate::
     // // pub agreement: Vec<Authentication>,
     if !did_document.agreement.is_empty() {
         for property in did_document.agreement {
-            match &property {
+            match &property.0 {
                 Authentication::Method(subj) => {
                     if subj.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                        return Ok(Property::Authentication(property));
+                        return Ok(Property::Authentication(property.0));
                     }
                 }
                 Authentication::Key(key) => {
                     if key.id.to_did()?.fragment.expect("Couldn't get fragment") == fragment {
-                        return Ok(Property::Authentication(property));
+                        return Ok(Property::Authentication(property.0));
                     }
                 }
             }
