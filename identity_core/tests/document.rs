@@ -445,7 +445,7 @@ fn test_doc_with_did_creation() {
     .init();
     auth_key.create_own_id(iota_network::Comnet, None).unwrap();
 
-    let auth = Authentication::Key(auth_key.clone());
+    let auth = Authentication::Key(auth_key);
 
     did_doc.update_auth(auth);
 
