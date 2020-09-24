@@ -8,5 +8,6 @@ members = [
     "identity_integration",
     "identity_vc",
     "identity_diff",
-    "identity_derive"
+    "identity_derive",
+    "libraries/wasm"
 ]

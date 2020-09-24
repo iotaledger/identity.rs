@@ -1,0 +1,24 @@
+[package]
+name = "iota-identity-wasm"
+version = "0.0.1"
+authors = ["Team Identity"]
+edition = "2018"
+repository = "https://github.com/iotaledger/identity.rs"
+homepage = "https://www.iota.org"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+# TODO: Discover this:
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
+wasm-bindgen-futures = "0.4"
+console_error_panic_hook = "0.1.6"
+
+identity_core = { path = "../../identity_core" }

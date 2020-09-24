@@ -1,0 +1,45 @@
+{
+  "name": "iota-identity-wasm",
+  "version": "0.0.1",
+  "description": "WASM binding for the IOTA identity library",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iotaledger/identity.rs.git"
+  },
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "build:nodejs": "wasm-pack build --target nodejs --out-dir wasm-node && rm ./wasm-node/.gitignore",
+    "build:web": "wasm-pack build --target web --out-dir wasm-web && node ./build/web && rm ./wasm-web/.gitignore",
+    "build": "npm run build:web && npm run build:nodejs",
+    "pretest": "npm run build:nodejs",
+    "prepublishOnly": "npm run build",
+    "test": "mocha",
+    "serve": "webpack-dev-server",
+    "example:node": "node examples/node.js"
+  },
+  "contributors": [
+    "huhn511 <huhn@einfachiota.de>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/iotaledger/identity.rs/issues"
+  },
+  "homepage": "https://www.iota.org",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "mocha": "^7.1.2",
+    "@wasm-tool/wasm-pack-plugin": "^1.1.0",
+    "copy-webpack-plugin": "^5.0.3",
+    "webpack": "^4.42.0",
+    "webpack-cli": "^3.3.3",
+    "webpack-dev-server": "^3.7.1",
+    "rimraf": "^3.0.0"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.0"
+  }
+}
