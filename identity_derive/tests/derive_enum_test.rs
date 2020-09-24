@@ -98,22 +98,22 @@ fn test_struct_enum() {
 
     let t2 = StructEnum::B { y: 200 };
 
-    let diff = t.diff(&t2);
+    let diff = t.diff(&t2).unwrap();
 
-    let res = t.merge(diff);
+    let res = t.merge(diff).unwrap();
 
     assert_eq!(t2, res);
 
-    let diff = t2.into_diff();
+    let diff = t2.into_diff().unwrap();
 
     assert_eq!(
         DiffStructEnum::B {
-            y: Some((200 as usize).into_diff())
+            y: Some((200 as usize).into_diff().unwrap())
         },
         diff
     );
 
-    let res = StructEnum::from_diff(diff);
+    let res = StructEnum::from_diff(diff).unwrap();
 
     assert_eq!(StructEnum::B { y: 200 }, res);
 }
@@ -123,17 +123,17 @@ fn test_unit_enum() {
     let t = UnitEnum::A;
     let t2 = UnitEnum::B;
 
-    let diff = t.diff(&t2);
+    let diff = t.diff(&t2).unwrap();
 
-    let res = t.merge(diff);
+    let res = t.merge(diff).unwrap();
 
     assert_eq!(t2, res);
 
-    let diff = t2.into_diff();
+    let diff = t2.into_diff().unwrap();
 
     assert_eq!(DiffUnitEnum::B, diff);
 
-    let res = UnitEnum::from_diff(diff);
+    let res = UnitEnum::from_diff(diff).unwrap();
 
     assert_eq!(UnitEnum::B, res);
 }
@@ -143,20 +143,23 @@ fn test_tuple_enum() {
     let t = TupleEnum::A(10);
     let t2 = TupleEnum::C(20, 30);
 
-    let diff = t.diff(&t2);
+    let diff = t.diff(&t2).unwrap();
 
-    let res = t.merge(diff);
+    let res = t.merge(diff).unwrap();
 
     assert_eq!(t2, res);
 
-    let diff = t2.into_diff();
+    let diff = t2.into_diff().unwrap();
 
     assert_eq!(
-        DiffTupleEnum::C(Some((20 as usize).into_diff()), Some((30 as usize).into_diff())),
+        DiffTupleEnum::C(
+            Some((20 as usize).into_diff().unwrap()),
+            Some((30 as usize).into_diff().unwrap())
+        ),
         diff
     );
 
-    let res = TupleEnum::from_diff(diff);
+    let res = TupleEnum::from_diff(diff).unwrap();
 
     assert_eq!(TupleEnum::C(20, 30), res);
 }
@@ -168,22 +171,22 @@ fn test_mixed_enum() {
         y: String::from("test"),
     };
 
-    let diff = t.diff(&t2);
+    let diff = t.diff(&t2).unwrap();
 
-    let res = t.merge(diff);
+    let res = t.merge(diff).unwrap();
 
     assert_eq!(t2, res);
 
-    let diff = t2.into_diff();
+    let diff = t2.into_diff().unwrap();
 
     assert_eq!(
         DiffMixedEnum::C {
-            y: Some(String::from("test").into_diff())
+            y: Some(String::from("test").into_diff().unwrap())
         },
         diff
     );
 
-    let res = MixedEnum::from_diff(diff);
+    let res = MixedEnum::from_diff(diff).unwrap();
 
     assert_eq!(
         MixedEnum::C {
@@ -200,24 +203,24 @@ fn test_nested_enum() {
         y: InnerStruct { y: 10 },
     });
 
-    let diff = t.diff(&t2);
+    let diff = t.diff(&t2).unwrap();
 
-    let res = t.merge(diff);
+    let res = t.merge(diff).unwrap();
 
     assert_eq!(t2, res);
 
-    let diff = t2.into_diff();
+    let diff = t2.into_diff().unwrap();
 
     assert_eq!(
         DiffNestedEnum::Nest(Some(DiffInnerEnum::Inner {
             y: Some(DiffInnerStruct {
-                y: Some((10 as usize).into_diff())
+                y: Some((10 as usize).into_diff().unwrap())
             })
         })),
         diff
     );
 
-    let res = NestedEnum::from_diff(diff);
+    let res = NestedEnum::from_diff(diff).unwrap();
 
     assert_eq!(
         NestedEnum::Nest(InnerEnum::Inner {
@@ -232,17 +235,17 @@ fn test_enum_with_generics() {
     let t: EnumWithGeneric<String, usize> = EnumWithGeneric::A(String::from("test"));
     let t2: EnumWithGeneric<String, usize> = EnumWithGeneric::B(10);
 
-    let diff = t.diff(&t2);
+    let diff = t.diff(&t2).unwrap();
 
-    let res = t.merge(diff);
+    let res = t.merge(diff).unwrap();
 
     assert_eq!(t2, res);
 
-    let diff = t2.into_diff();
+    let diff = t2.into_diff().unwrap();
 
-    assert_eq!(DiffEnumWithGeneric::B(Some((10 as usize).into_diff())), diff);
+    assert_eq!(DiffEnumWithGeneric::B(Some((10 as usize).into_diff().unwrap())), diff);
 
-    let res = EnumWithGeneric::from_diff(diff);
+    let res = EnumWithGeneric::from_diff(diff).unwrap();
 
     assert_eq!(EnumWithGeneric::B(10), res);
 }
@@ -252,9 +255,9 @@ fn test_ignore_enum() {
     let t = IgnoreEnum::A { x: 10, y: 10 };
     let t2 = IgnoreEnum::B(String::from("test"), 30);
 
-    let diff = t.diff(&t2);
+    let diff = t.diff(&t2).unwrap();
 
-    let res = t.merge(diff);
+    let res = t.merge(diff).unwrap();
 
     let expected = IgnoreEnum::B(String::new(), 30);
 
@@ -268,26 +271,26 @@ fn test_serde_enum() {
         y: String::from("test"),
     };
 
-    let diff = t.diff(&t2);
+    let diff = t.diff(&t2).unwrap();
 
     let json = serde_json::to_string(&diff).unwrap();
 
     let diff = serde_json::from_str(&json).unwrap();
 
-    let res = t.merge(diff);
+    let res = t.merge(diff).unwrap();
 
     assert_eq!(t2, res);
 
-    let diff = t2.into_diff();
+    let diff = t2.into_diff().unwrap();
 
     assert_eq!(
         DiffMixedEnum::C {
-            y: Some(String::from("test").into_diff())
+            y: Some(String::from("test").into_diff().unwrap())
         },
         diff
     );
 
-    let res = MixedEnum::from_diff(diff);
+    let res = MixedEnum::from_diff(diff).unwrap();
 
     assert_eq!(
         MixedEnum::C {
@@ -302,14 +305,14 @@ fn test_enum_opt() {
     let t = TestOpt::Inner(None);
     let t2 = TestOpt::Inner(None);
 
-    let diff1 = t.diff(&t2);
+    let diff1 = t.diff(&t2).unwrap();
 
-    let diff2 = t2.into_diff();
+    let diff2 = t2.into_diff().unwrap();
 
     assert_eq!(diff1, diff2);
 
     let t = TestOpt::InnerS { a: None };
-    let diff = t.into_diff();
+    let diff = t.into_diff().unwrap();
 
     let json = serde_json::to_string(&diff).unwrap();
 
@@ -320,7 +323,7 @@ fn test_enum_opt() {
     let t = TestOpt::InnerS { a: None };
     let t2 = TestOpt::InnerS { a: None };
 
-    let diff = t.diff(&t2);
+    let diff = t.diff(&t2).unwrap();
 
     let json = serde_json::to_string(&diff).unwrap();
 
@@ -329,7 +332,7 @@ fn test_enum_opt() {
     let t = TestOpt::Inner(None);
     let t2 = TestOpt::InnerS { a: None };
 
-    let diff = t.diff(&t2);
+    let diff = t.diff(&t2).unwrap();
 
     let json = serde_json::to_string(&diff).unwrap();
 
@@ -342,7 +345,7 @@ fn test_from_into() {
 
     let t2 = IntoFrom::Test(TestOpt::Inner(Some(10)));
 
-    let diff = t.diff(&t2);
+    let diff = t.diff(&t2).unwrap();
 
     let json = serde_json::to_string(&diff).unwrap();
 
@@ -352,7 +355,7 @@ fn test_from_into() {
 
     let diff: DiffIntoFrom = serde_json::from_str(&json).unwrap();
 
-    let merge = t2.merge(diff);
+    let merge = t2.merge(diff).unwrap();
 
     let expected = IntoFrom::Test(TestOpt::Inner(Some(10)));
 

@@ -4,6 +4,7 @@
 /// `serde_json::Value`, `Vec` and primitives such as `i8`/`u8` up to `usize` and `isize` as well as the unit type `()`,
 /// `bool`, and `char` types.  Structs and Enums are supported via `identity_derive` and can be composed of any number
 /// of these types.
+mod error;
 mod hashmap;
 mod hashset;
 mod macros;
@@ -14,6 +15,7 @@ mod traits;
 mod value;
 mod vec;
 
+pub use error::{Error, Result};
 pub use traits::Diff;
 
 /// feature `diff_derive` imports `identity_derive` with this crate.

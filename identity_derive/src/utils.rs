@@ -22,9 +22,7 @@ pub fn extract_option_segment(path: &Path) -> Option<&PathSegment> {
 
 /// checks to see if the `should_ignore` attribute has been put before a field.
 pub fn should_ignore(field: &Field) -> bool {
-    let mut attr_exists = false;
-
-    field.attrs.iter().for_each(|field| {
+    let find = field.attrs.iter().find(|field| {
         let attr_seg: Vec<String> = field.path.segments.iter().map(|seg| format!("{}", seg.ident)).collect();
 
         let diff_attr = attr_seg == ["diff"];
@@ -39,35 +37,36 @@ pub fn should_ignore(field: &Field) -> bool {
             _ => false,
         };
 
-        attr_exists = attr_exists || diff_attr && should_ignore
+        diff_attr && should_ignore
     });
 
-    attr_exists
+    find.is_some()
 }
 
 pub fn parse_from_into(input: &DeriveInput) -> bool {
-    let mut attr_exists = false;
-    input.attrs.iter().for_each(|a| {
+    let find = input.attrs.iter().find(|a| {
         if let Meta::List(MetaList { path, nested, .. }) = a.parse_meta().unwrap() {
             {
                 if let Some(ident) = path.get_ident() {
                     if "diff" == format!("{}", format_ident!("{}", ident)) {
-                        attr_exists = true
+                        let find_nested = nested.iter().find(|m| {
+                            if let NestedMeta::Meta(Meta::Path(p)) = m {
+                                if let Some(ident) = p.get_ident() {
+                                    if "from_into" == format!("{}", format_ident!("{}", ident)) {
+                                        return true;
+                                    }
+                                }
+                            }
+                            false
+                        });
+
+                        return find_nested.is_some();
                     }
                 }
-
-                nested.iter().for_each(|m| {
-                    if let NestedMeta::Meta(Meta::Path(p)) = m {
-                        if let Some(ident) = p.get_ident() {
-                            if "from_into" == format!("{}", format_ident!("{}", ident)) {
-                                attr_exists = true
-                            }
-                        }
-                    }
-                });
             }
         }
+        false
     });
 
-    attr_exists
+    find.is_some()
 }

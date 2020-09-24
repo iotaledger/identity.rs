@@ -7,14 +7,14 @@ pub trait Diff: Clone + Debug + PartialEq {
     type Type: Sized + Clone + Debug + PartialEq + for<'de> Deserialize<'de> + Serialize;
 
     /// Finds the difference between two types; `self` and `other` and returns `Self::Type`
-    fn diff(&self, other: &Self) -> Self::Type;
+    fn diff(&self, other: &Self) -> crate::Result<Self::Type>;
 
     /// Merges a `Self::Type` with `Self`
-    fn merge(&self, diff: Self::Type) -> Self;
+    fn merge(&self, diff: Self::Type) -> crate::Result<Self>;
 
     /// Converts a `diff` of type `Self::Type` to a `Self`.
-    fn from_diff(diff: Self::Type) -> Self;
+    fn from_diff(diff: Self::Type) -> crate::Result<Self>;
 
     /// Converts a type of `Self` to a `diff` of `Self::Type`.
-    fn into_diff(self) -> Self::Type;
+    fn into_diff(self) -> crate::Result<Self::Type>;
 }

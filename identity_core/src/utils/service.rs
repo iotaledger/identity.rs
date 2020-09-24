@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use std::{hash::Hash, str::FromStr};
 
-use crate::utils::{Context, HasId, IdCompare, Subject};
+use crate::utils::{Context, HasId, Subject};
 use identity_diff::Diff;
 
 /// Describes a `Service` in a `DIDDocument` type. Contains an `id`, `service_type` and `endpoint`.  The `endpoint` can
@@ -30,12 +30,12 @@ pub struct ServiceEndpoint {
 }
 
 impl Service {
-    pub fn init(self) -> IdCompare<Self> {
-        IdCompare(Self {
+    pub fn init(self) -> Self {
+        Self {
             id: self.id,
             service_type: self.service_type,
             endpoint: self.endpoint,
-        })
+        }
     }
 }
 

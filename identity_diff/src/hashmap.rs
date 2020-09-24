@@ -61,7 +61,7 @@ where
     type Type = DiffHashMap<K, V>;
 
     /// Diffs two `HashMaps`; `self` and `other` and creates a `DiffHashMap<K, V>`
-    fn diff(&self, other: &Self) -> Self::Type {
+    fn diff(&self, other: &Self) -> crate::Result<Self::Type> {
         let old: HashSet<&K> = self.keys().collect();
         let new: HashSet<&K> = other.keys().collect();
 
@@ -74,7 +74,7 @@ where
         for key in changed_keys {
             let (old_val, new_val): (&V, &V) = (&self[key], &other[key]);
 
-            let diff = old_val.diff(new_val);
+            let diff = old_val.diff(new_val)?;
 
             changes.push(InnerValue::Change {
                 key: (*key).clone(),
@@ -84,18 +84,18 @@ where
         for key in added_keys {
             changes.push(InnerValue::Add {
                 key: (*key).clone(),
-                value: other[key].clone().into_diff(),
+                value: other[key].clone().into_diff()?,
             });
         }
         for key in removed_keys {
             changes.push(InnerValue::Remove { key: (*key).clone() });
         }
 
-        DiffHashMap(if changes.is_empty() { None } else { Some(changes) })
+        Ok(DiffHashMap(if changes.is_empty() { None } else { Some(changes) }))
     }
 
     /// Merges the changes in a `DiffHashMap<K, V>`, `diff` with a `HashMap<K, V>`, `self`.
-    fn merge(&self, diff: Self::Type) -> Self {
+    fn merge(&self, diff: Self::Type) -> crate::Result<Self> {
         let mut new = self.clone();
 
         for change in diff.into_iter() {
@@ -103,10 +103,10 @@ where
                 InnerValue::Change { key, value } => {
                     let fake: &mut V = &mut *new.get_mut(&key).expect("Failed to get value");
 
-                    *fake = <V>::from_diff(value);
+                    *fake = <V>::from_diff(value)?;
                 }
                 InnerValue::Add { key, value } => {
-                    new.insert(key, <V>::from_diff(value));
+                    new.insert(key, <V>::from_diff(value)?);
                 }
                 InnerValue::Remove { key } => {
                     new.remove(&key);
@@ -114,17 +114,17 @@ where
             }
         }
 
-        new
+        Ok(new)
     }
 
     /// Converts a `DiffHashMap<K, V>`, `diff` into a `HashMap<K, V>`.
-    fn from_diff(diff: Self::Type) -> Self {
+    fn from_diff(diff: Self::Type) -> crate::Result<Self> {
         let mut map = Self::new();
         if let Some(diff) = diff.0 {
             for (idx, elm) in diff.into_iter().enumerate() {
                 match elm {
                     InnerValue::Add { key, value } => {
-                        map.insert(key, <V>::from_diff(value));
+                        map.insert(key, <V>::from_diff(value)?);
                     }
                     _ => {
                         panic!("Unable to create Diff at index: {:?}", idx);
@@ -132,20 +132,21 @@ where
                 }
             }
         }
-        map
+
+        Ok(map)
     }
 
     /// Converts a `HashMap<K, V>`, `diff` into a `DiffHashMap<K, V>`.
-    fn into_diff(self) -> Self::Type {
+    fn into_diff(self) -> crate::Result<Self::Type> {
         let mut changes: Vec<InnerValue<K, V>> = Vec::new();
         for (key, val) in self {
             changes.push(InnerValue::Add {
                 key,
-                value: val.into_diff(),
+                value: val.into_diff()?,
             });
         }
 
-        DiffHashMap(if changes.is_empty() { None } else { Some(changes) })
+        Ok(DiffHashMap(if changes.is_empty() { None } else { Some(changes) }))
     }
 }
 
@@ -229,23 +230,23 @@ mod tests {
             "quux".into() => 10usize,
         };
 
-        let diff = m0.diff(&m1);
+        let diff = m0.diff(&m1).unwrap();
 
         let expected: DiffHashMap<String, usize> = DiffHashMap(Some(vec![
             InnerValue::Change {
                 key: "foo".into(),
-                value: 0usize.into_diff(),
+                value: 0usize.into_diff().unwrap(),
             },
             InnerValue::Add {
                 key: "quux".into(),
-                value: 10usize.into_diff(),
+                value: 10usize.into_diff().unwrap(),
             },
             InnerValue::Remove { key: "baz".into() },
         ]));
 
         assert_eq!(expected, diff);
 
-        let m2 = m0.merge(diff);
+        let m2 = m0.merge(diff).unwrap();
 
         assert_eq!(m1, m2);
     }

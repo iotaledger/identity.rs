@@ -142,17 +142,19 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
             let buf: Ident = format_ident!("buf");
             for field in fields.iter() {
                 let (fname, ftype) = (field.name(), field.typ());
+
+                let str_name = format!("{}", fname);
+
                 mac.extend(if field.should_ignore() {
                     quote! {
-                        #buf.field(stringify!(#fname), &self.#fname);
+                        #buf.field(#str_name, &self.#fname);
                     }
                 } else {
                     quote! {
-                        let fname = stringify!(#fname);
-                        if let Some(#fname) = &self.#fname {
-                            #buf.field(fname, #fname);
+                        if let Some(val) = &self.#fname {
+                            #buf.field(#str_name, val);
                         } else {
-                            #buf.field(fname, &None as &Option<#ftype>);
+                            #buf.field(#str_name, &None as &Option<#ftype>);
                         }
                     }
                 });
@@ -165,7 +167,7 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
                     #clause
                     {
                         fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                            const NAME: &str = stringify!(#diff);
+                            const NAME: &str = stringify!(diff);
                             let mut #buf = f.debug_struct(NAME);
                             #mac
                             #buf.finish()
@@ -184,15 +186,15 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
             let buf = format_ident!("buf");
             for field in fields.iter() {
                 let (fpos, ftyp) = (field.position(), field.typ());
-                let fname = format_ident!("field");
+
                 f_tokens.extend(match count {
                     1 => quote! {},
                     _ if field.should_ignore() => quote! {
                         #buf.field(&self.#fpos);
                     },
                     _ => quote! {
-                        if let Some(#fname) = &self.#fpos {
-                            #buf.field(#fname);
+                        if let Some(val) = &self.#fpos {
+                            #buf.field(val);
                         } else {
                             #buf.field(&None as &Option<#ftyp>);
                         }
@@ -202,8 +204,8 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
             let mac = match count {
                 1 => quote! {
                     const NAME: &str = stringify!(#diff);
-                    if let Some(field) = &self.0 {
-                        write!(f, "{}({:?})", NAME, field)
+                    if let Some(val) = &self.0 {
+                        write!(f, "{}({:?})", NAME, val)
                     } else {
                         let field = &None as &Option<()>;
                         write!(f, "{}({:?})", NAME, field)
@@ -286,14 +288,14 @@ pub fn impl_from_into(input: &InputModel) -> TokenStream {
             impl <#(#param_decls),*> std::convert::From<#name<#params>> for #diff<#params> #clause
             {
                 fn from(name: #name<#params>) -> Self {
-                    name.into_diff()
+                    name.into_diff().expect("Unable to convert to diff")
                 }
             }
 
             impl <#(#param_decls),*> std::convert::From<#diff<#params>> for #name<#params> #clause
             {
                 fn from(diff: #diff<#params>) -> Self {
-                    Self::from_diff(diff)
+                    Self::from_diff(diff).expect("Unable to conver from diff")
                 }
             }
         }
@@ -365,7 +367,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     } else {
                         quote! {
                             #fname: if let Some(d) = diff.#fname {
-                                self.#fname.merge(d)
+                                self.#fname.merge(d)?
                             } else {
                                 self.#fname.clone()
                             },
@@ -388,7 +390,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                             #fname: if self.#fname == other.#fname || other.#fname == None {
                                 None
                             } else {
-                                Some(self.#fname.diff(&other.#fname))
+                                Some(self.#fname.diff(&other.#fname)?)
                             }
                         }
                     } else {
@@ -396,7 +398,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                             #fname: if self.#fname == other.#fname {
                                 None
                             } else {
-                                Some(self.#fname.diff(&other.#fname))
+                                Some(self.#fname.diff(&other.#fname)?)
                             }
                         }
                     }
@@ -416,9 +418,9 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                             #fname: <#ftyp>::from_diff(
                                 match #fname {
                                     Some(v) => v,
-                                    None => <#ftyp>::default().into_diff()
+                                    None => <#ftyp>::default().into_diff()?
                                 },
-                            )
+                            )?
                         }
                     }
                 })
@@ -433,15 +435,15 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                         quote! { #fname: Option::None }
                     } else if field.is_option() {
                         quote! {
-                            #fname: if let identity_diff::option::DiffOption::Some(_) = #fname.clone().into_diff() {
-                                Some(#fname.into_diff())
+                            #fname: if let identity_diff::option::DiffOption::Some(_) = #fname.clone().into_diff()? {
+                                Some(#fname.into_diff()?)
                             } else {
                                 None
                             }
                         }
                     } else {
                         quote! {
-                            #fname: Some(#fname.into_diff())
+                            #fname: Some(#fname.into_diff()?)
                         }
                     }
                 })
@@ -456,28 +458,28 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     type Type = #diff<#params>;
 
                     #[allow(unused)]
-                    fn merge(&self, diff: Self::Type) -> Self {
-                        Self{ #(#field_merge)* }
+                    fn merge(&self, diff: Self::Type) -> identity_diff::Result<Self> {
+                        Ok(Self{ #(#field_merge)* })
                     }
 
-                    fn diff(&self, other: &Self) -> Self::Type {
-                        #diff { #(#fields_diff),* }
+                    fn diff(&self, other: &Self) -> identity_diff::Result<Self::Type> {
+                        Ok(#diff { #(#fields_diff),* })
                     }
 
                     #[allow(unused)]
-                    fn from_diff(diff: Self::Type) -> Self {
+                    fn from_diff(diff: Self::Type) -> identity_diff::Result<Self> {
                         match diff {
                             #diff { #(#fnames),* } => {
-                                Self{ #(#fields_from),* }
+                                Ok(Self{ #(#fields_from),* })
                             }
                         }
                     }
 
                     #[allow(unused)]
-                    fn into_diff(self) -> Self::Type {
+                    fn into_diff(self) -> identity_diff::Result<Self::Type> {
                         match self {
                             Self { #(#fnames),* } => {
-                                #diff { #(#fields_into),* }
+                                Ok(#diff { #(#fields_into),* })
                             }
                         }
                     }
@@ -504,7 +506,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     } else {
                         quote! {
                             if let Some(v) = diff.#pos {
-                                self.#pos.merge(v)
+                                self.#pos.merge(v)?
                             } else {
                                 self.#pos.clone()
                             },
@@ -525,7 +527,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     } else if field.is_option() {
                         quote! {
                             if self.#pos != other.#pos && other.#pos != None {
-                                Some(self.#pos.diff(&other.#pos))
+                                Some(self.#pos.diff(&other.#pos)?)
                             } else {
                                 None
                             },
@@ -533,7 +535,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     } else {
                         quote! {
                             if self.#pos != other.#pos {
-                                Some(self.#pos.diff(&other.#pos))
+                                Some(self.#pos.diff(&other.#pos)?)
                             } else {
                                 None
                             },
@@ -554,12 +556,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                         quote! { Default::default() }
                     } else {
                         quote! {
-                            <#typ>::from_diff(
-                                match #marker {
-                                    Some(v) => v,
-                                    None => <#typ>::default().into_diff()
-                                }
-                            )
+                            #marker.map(|v| <#typ>::from_diff(v).expect("Unable to convert from diff")).unwrap_or_default()
                         }
                     }
                 })
@@ -575,15 +572,15 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                         quote! { Option::None }
                     } else if field.is_option() {
                         quote! {
-                            if #marker.clone().into_diff() == identity_diff::option::DiffOption::None {
+                            if #marker.clone().into_diff()? == identity_diff::option::DiffOption::None {
                                 None
                             } else {
-                                Some(#marker.into_diff())
+                                Some(#marker.into_diff()?)
                             }
                         }
                     } else {
                         quote! {
-                            Some(#marker.into_diff())
+                            Some(#marker.into_diff()?)
                         }
                     }
                 })
@@ -598,28 +595,28 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     type Type = #diff<#params>;
 
                     #[allow(unused)]
-                    fn merge(&self, diff: Self::Type) -> Self {
-                        Self( #(#field_merge)* )
+                    fn merge(&self, diff: Self::Type) -> identity_diff::Result<Self> {
+                        Ok(Self( #(#field_merge)* ))
                     }
                     #[allow(unused)]
-                    fn diff(&self, other: &Self) -> Self::Type {
-                        #diff( #(#fields_diff)* )
+                    fn diff(&self, other: &Self) -> identity_diff::Result<Self::Type> {
+                        Ok(#diff( #(#fields_diff)* ))
                     }
 
                     #[allow(unused)]
-                    fn from_diff(diff: Self::Type) -> Self {
+                    fn from_diff(diff: Self::Type) -> identity_diff::Result<Self> {
                         match diff {
                             #diff ( #(#field_markers),*) => {
-                                Self( #(#fields_from),* )
+                                Ok(Self( #(#fields_from),* ))
                             }
                         }
                     }
 
                     #[allow(unused)]
-                    fn into_diff(self) -> Self::Type {
+                    fn into_diff(self) -> identity_diff::Result<Self::Type> {
                         match self {
                             Self ( #(#field_markers,)* ..) => {
-                                #diff ( #(#fields_into),* )
+                                Ok(#diff ( #(#fields_into),* ))
                             },
                         }
                     }
@@ -635,26 +632,22 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
                     type Type = #diff<#params>;
 
                     #[allow(unused)]
-                    fn merge(&self, diff: Self::Type) -> Self {
-                        Self
+                    fn merge(&self, diff: Self::Type) -> identity_diff::Result<Self> {
+                        Ok(Self)
                     }
 
-                    fn diff(&self, other: &Self) -> Self::Type {
-                        #diff
-                    }
-
-                    #[allow(unused)]
-                    fn from_diff(diff: Self::Type) -> Self {
-                        match diff {
-                           #diff => Self,
-                        }
+                    fn diff(&self, other: &Self) -> identity_diff::Result<Self::Type> {
+                        Ok(#diff)
                     }
 
                     #[allow(unused)]
-                    fn into_diff(self) -> Self::Type {
-                        match self {
-                            Self => #diff,
-                        }
+                    fn from_diff(diff: Self::Type) -> identity_diff::Result<Self> {
+                        Ok(Self)
+                    }
+
+                    #[allow(unused)]
+                    fn into_diff(self) -> identity_diff::Result<Self::Type> {
+                        Ok(#diff)
                     }
                 }
         },
