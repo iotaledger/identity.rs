@@ -3,7 +3,7 @@ use libjose::crypto::Secret;
 use libjose::jwa::HmacAlgorithm::*;
 use libjose::jwa::HmacSigner;
 use libjose::jws::JwsHeader;
-use libjose::jws::JwsToken;
+use libjose::jws::JwsEncoder;
 use libjose::jwt::JwtClaims;
 use serde::Deserialize;
 use serde::Serialize;
@@ -33,13 +33,21 @@ fn main() {
     claim2: b"world".to_vec(),
   });
 
-  // See "examples/basic_jws.rs" for more information on the following:
-  //
+  println!("Header: {:#?}", header);
+  println!("Claims: {:#?}", claims);
 
-  let token: JwsToken<_, MyClaims> = JwsToken::new(header, claims);
+  // Generate a key for the `HS512` JSON Web Algorithm
   let pkey: PKey<Secret> = HS512.generate_key().unwrap();
+
+  // Create a signer from the generated key
   let signer: HmacSigner = HS512.signer_from_bytes(&pkey).unwrap();
-  let encoded: String = token.encode_compact(&signer).unwrap();
+
+  // Use the `JwsEncoder` helper to sign and encode the token
+  let encoded: String = JwsEncoder::new()
+    .encode(&claims, &header, &signer)
+    .unwrap()
+    .to_string()
+    .unwrap();
 
   println!("Encoded: {}", encoded);
 }

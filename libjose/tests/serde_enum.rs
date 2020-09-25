@@ -20,6 +20,7 @@ macro_rules! assert_serde {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_jwe_algorithm_serde() {
   assert_serde!(JweAlgorithm::RSA1_5, jstr!("RSA1_5"));
   assert_serde!(JweAlgorithm::RSA_OAEP, jstr!("RSA-OAEP"));
@@ -37,29 +38,22 @@ fn test_jwe_algorithm_serde() {
   assert_serde!(JweAlgorithm::A128GCMKW, jstr!("A128GCMKW"));
   assert_serde!(JweAlgorithm::A192GCMKW, jstr!("A192GCMKW"));
   assert_serde!(JweAlgorithm::A256GCMKW, jstr!("A256GCMKW"));
-  assert_serde!(
-    JweAlgorithm::PBES2_HS256_A128KW,
-    jstr!("PBES2-HS256+A128KW")
-  );
-  assert_serde!(
-    JweAlgorithm::PBES2_HS384_A192KW,
-    jstr!("PBES2-HS384+A192KW")
-  );
-  assert_serde!(
-    JweAlgorithm::PBES2_HS512_A256KW,
-    jstr!("PBES2-HS512+A256KW")
-  );
+  assert_serde!(JweAlgorithm::PBES2_HS256_A128KW, jstr!("PBES2-HS256+A128KW"));
+  assert_serde!(JweAlgorithm::PBES2_HS384_A192KW, jstr!("PBES2-HS384+A192KW"));
+  assert_serde!(JweAlgorithm::PBES2_HS512_A256KW, jstr!("PBES2-HS512+A256KW"));
   assert_serde!(JweAlgorithm::ECDH_ES_C20PKW, jstr!("ECDH-ES+C20PKW"));
   assert_serde!(JweAlgorithm::ECDH_ES_XC20PKW, jstr!("ECDH-ES+XC20PKW"));
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_jwe_compression_serde() {
   assert_serde!(JweCompression::Deflate, jstr!("DEF"));
   assert_serde!(JweCompression::Custom("foo".into()), jstr!("foo"));
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_jwe_encryption_serde() {
   assert_serde!(JweEncryption::A128CBC_HS256, jstr!("A128CBC-HS256"));
   assert_serde!(JweEncryption::A192CBC_HS384, jstr!("A192CBC-HS384"));
@@ -72,6 +66,7 @@ fn test_jwe_encryption_serde() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_jwk_operation_serde() {
   assert_serde!(JwkOperation::Sign, jstr!("sign"));
   assert_serde!(JwkOperation::Verify, jstr!("verify"));
@@ -81,10 +76,11 @@ fn test_jwk_operation_serde() {
   assert_serde!(JwkOperation::UnwrapKey, jstr!("unwrapKey"));
   assert_serde!(JwkOperation::DeriveKey, jstr!("deriveKey"));
   assert_serde!(JwkOperation::DeriveBits, jstr!("deriveBits"));
-  assert_serde!(JweCompression::Custom("foo".into()), jstr!("foo"));
+  assert_serde!(JwkOperation::Custom("foo".into()), jstr!("foo"));
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_jwk_type_serde() {
   assert_serde!(JwkType::Ec, jstr!("EC"));
   assert_serde!(JwkType::Rsa, jstr!("RSA"));
@@ -93,6 +89,7 @@ fn test_jwk_type_serde() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_jwk_use_serde() {
   assert_serde!(JwkUse::Signature, jstr!("sig"));
   assert_serde!(JwkUse::Encryption, jstr!("enc"));
@@ -100,6 +97,7 @@ fn test_jwk_use_serde() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_jws_algorithm_serde() {
   assert_serde!(JwsAlgorithm::HS256, jstr!("HS256"));
   assert_serde!(JwsAlgorithm::HS384, jstr!("HS384"));
