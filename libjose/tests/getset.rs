@@ -12,8 +12,6 @@ use libjose::jws::JwsHeader;
 use libjose::jwt::JwtClaims;
 use libjose::utils::encode_b64;
 use serde_json::Map;
-use serde_json::Value;
-use std::collections::BTreeMap;
 
 macro_rules! test_getset {
   ($ty:ty, $get:ident, $set:ident, Url = $value:expr) => {

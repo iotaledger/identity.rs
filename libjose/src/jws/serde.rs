@@ -46,6 +46,12 @@ pub enum JwsFormat {
   Flatten,
 }
 
+impl Default for JwsFormat {
+  fn default() -> Self {
+    Self::Compact
+  }
+}
+
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct JwsSignature {
   pub signature: String,
@@ -138,7 +144,7 @@ impl Default for CharSet {
   }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct JwsEncoder {
   /// The serialization format of the encoded token.
   format: JwsFormat,
@@ -209,7 +215,7 @@ impl JwsEncoder {
     U: Serialize,
   {
     // A helper for signature composition
-    let mut components: B64Components = Components::new();
+    let mut components: StrComponents = Components::new();
 
     // 1. Create the content to be used as the JWS Payload.
 
@@ -360,6 +366,7 @@ impl JwsEncoder {
 // Decoding
 // =============================================================================
 
+#[derive(Clone, Debug, Default)]
 pub struct JwsDecoder<'a> {
   /// The serialization format of the encoded data
   format: JwsFormat,
@@ -789,8 +796,7 @@ fn create_jws_compact_detached(header: impl AsRef<str>, signature: impl AsRef<st
 // Component Helpers
 // =============================================================================
 
-type RawComponents = Components<Vec<u8>>;
-type B64Components = Components<String>;
+type StrComponents = Components<String>;
 
 #[derive(Debug)]
 struct Components<T> {

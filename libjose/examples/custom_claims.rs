@@ -34,7 +34,10 @@ fn main() {
   });
 
   println!("Header: {:#?}", header);
+  println!();
+
   println!("Claims: {:#?}", claims);
+  println!();
 
   // Generate a key for the `HS512` JSON Web Algorithm
   let pkey: PKey<Secret> = HS512.generate_key().unwrap();
@@ -50,4 +53,5 @@ fn main() {
     .unwrap();
 
   println!("Encoded: {}", encoded);
+  println!();
 }

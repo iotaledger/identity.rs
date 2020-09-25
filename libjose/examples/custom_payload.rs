@@ -29,7 +29,10 @@ fn main() {
     .unwrap();
 
   println!("Payload: {}", payload);
+  println!();
+
   println!("Encoded: {}", encoded);
+  println!();
 
   // Use the `JwsDecoder` helper to decode token WITHOUT deserializing the
   // claims.

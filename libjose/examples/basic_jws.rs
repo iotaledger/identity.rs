@@ -24,4 +24,5 @@ fn main() {
     .unwrap();
 
   println!("Encoded: {}", encoded);
+  println!();
 }
