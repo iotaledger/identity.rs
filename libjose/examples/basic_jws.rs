@@ -1,9 +1,9 @@
-use libjose::jwk::Jwk;
-use libjose::jws::JwsHeader;
-use libjose::jws::JwsEncoder;
-use libjose::jwt::JwtClaims;
 use libjose::jwa::HmacAlgorithm::*;
 use libjose::jwa::HmacSigner;
+use libjose::jwk::Jwk;
+use libjose::jws::JwsEncoder;
+use libjose::jws::JwsHeader;
+use libjose::jwt::JwtClaims;
 
 fn main() {
   let header: JwsHeader = JwsHeader::new();

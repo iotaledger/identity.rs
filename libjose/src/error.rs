@@ -53,7 +53,7 @@ pub enum EncodeError {
   #[error("Missing Header Parameter: {0}")]
   MissingParam(&'static str),
   #[error("Invalid Encoder Configuration: {0}")]
-  InvalidConfiguration(&'static str)
+  InvalidConfiguration(&'static str),
 }
 
 #[derive(Debug, thiserror::Error)]

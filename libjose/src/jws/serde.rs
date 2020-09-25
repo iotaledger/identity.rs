@@ -1,38 +1,38 @@
-use core::iter::FromIterator;
-use serde_json::from_value;
 use core::convert::TryFrom;
-use core::iter::once;
-use core::str::from_utf8;
-use serde::de::Error as _;
-use serde::de::DeserializeOwned;
-use serde_json::Error;
-use serde_json::from_slice;
-use serde_json::to_value;
-use serde::Serialize;
-use serde_json::to_vec;
-use serde_json::Map;
-use serde_json::Value;
-use serde_json::to_string;
 use core::fmt::Display;
+use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
-use core::fmt::Error as FmtError;
+use core::iter::once;
+use core::iter::FromIterator;
+use core::str::from_utf8;
+use serde::de::DeserializeOwned;
+use serde::de::Error as _;
+use serde::Serialize;
+use serde_json::from_slice;
+use serde_json::from_value;
+use serde_json::to_string;
+use serde_json::to_value;
+use serde_json::to_vec;
+use serde_json::Error;
+use serde_json::Map;
+use serde_json::Value;
 
-use crate::alloc::Cow;
-use crate::jws::JwsAlgorithm;
-use crate::jwt::JwtClaims;
-use crate::jws::JwsVerifier;
-use crate::jws::JwsRawToken;
-use crate::jws::JwsToken;
-use crate::alloc::String;
-use crate::error::EncodeError;
-use crate::error::DecodeError;
-use crate::error::Result;
-use crate::jws::JwsHeader;
-use crate::jws::JwsSigner;
-use crate::utils::encode_b64_into;
-use crate::utils::decode_b64;
 use crate::alloc::BTreeSet;
+use crate::alloc::Cow;
+use crate::alloc::String;
+use crate::error::DecodeError;
+use crate::error::EncodeError;
+use crate::error::Result;
+use crate::jws::JwsAlgorithm;
+use crate::jws::JwsHeader;
+use crate::jws::JwsRawToken;
+use crate::jws::JwsSigner;
+use crate::jws::JwsToken;
+use crate::jws::JwsVerifier;
+use crate::jwt::JwtClaims;
+use crate::utils::decode_b64;
+use crate::utils::encode_b64_into;
 
 const PARAM_ALG: &str = "alg";
 const PARAM_B64: &str = "b64";
@@ -211,9 +211,7 @@ impl JwsEncoder {
     // A helper for signature composition
     let mut components: B64Components = Components::new();
 
-    //
     // 1. Create the content to be used as the JWS Payload.
-    //
 
     let payload: &[u8] = claims.as_ref();
 
@@ -226,9 +224,7 @@ impl JwsEncoder {
     self.check_alg(&jose, signer)?;
     self.check_crit(&jose)?;
 
-    //
     // 2. Compute the encoded payload value BASE64URL(JWS Payload).
-    //
 
     // Extract the "b64" header parameter and encode the payload as required.
     //
@@ -238,16 +234,14 @@ impl JwsEncoder {
       encode_b64_into(payload, &mut components.payload);
     } else {
       // Add the payload as a UTF-8 string.
-      components.payload.push_str(self.create_unencoded_payload(payload)?);
+      components
+        .payload
+        .push_str(self.create_unencoded_payload(payload)?);
     }
 
-    //
     // 3. We already created the JOSE header as a previous step.
-    //
 
-    //
     // 4. Compute the encoded header BASE64URL(UTF8(JWS Protected Header)).
-    //
 
     encode_b64_into(&to_vec(&jose)?, &mut components.header);
 
@@ -261,19 +255,13 @@ impl JwsEncoder {
     let message: Vec<u8> = components.create_message();
     let signature: Vec<u8> = signer.sign(&message)?;
 
-    //
     // 6. Compute the encoded signature value BASE64URL(JWS Signature).
-    //
 
     encode_b64_into(&signature, &mut components.signature);
 
-    //
     // 7. We don't support multiple JWS signatures
-    //
 
-    //
     // 8. Create the desired serialized output.
-    //
 
     let payload: Option<String> = if self.detach {
       None
@@ -322,15 +310,9 @@ impl JwsEncoder {
     //
     // See: https://tools.ietf.org/html/rfc7515#section-10.7
     match header.get(PARAM_ALG) {
-      Some(Value::String(alg)) if alg == signer.alg().name() => {
-        Ok(())
-      }
-      Some(_) => {
-        Err(EncodeError::InvalidParam(PARAM_ALG).into())
-      }
-      None => {
-        Err(EncodeError::MissingParam(PARAM_ALG).into())
-      }
+      Some(Value::String(alg)) if alg == signer.alg().name() => Ok(()),
+      Some(_) => Err(EncodeError::InvalidParam(PARAM_ALG).into()),
+      None => Err(EncodeError::MissingParam(PARAM_ALG).into()),
     }
   }
 
@@ -342,15 +324,9 @@ impl JwsEncoder {
       Some(Value::Array(crit)) if crit.is_empty() => {
         Err(EncodeError::InvalidParam(PARAM_CRIT).into())
       }
-      Some(Value::Array(_)) => {
-        Ok(())
-      }
-      Some(_) => {
-        Err(EncodeError::InvalidParam(PARAM_CRIT).into())
-      }
-      None => {
-        Ok(())
-      }
+      Some(Value::Array(_)) => Ok(()),
+      Some(_) => Err(EncodeError::InvalidParam(PARAM_CRIT).into()),
+      None => Ok(()),
     }
   }
 
@@ -450,7 +426,10 @@ impl<'a> JwsDecoder<'a> {
     self
   }
 
-  pub fn payload<T>(mut self, value: &'a T) -> Self where T: AsRef<[u8]> + ?Sized {
+  pub fn payload<T>(mut self, value: &'a T) -> Self
+  where
+    T: AsRef<[u8]> + ?Sized,
+  {
     self.payload = Some(value.as_ref());
     self
   }
@@ -463,7 +442,9 @@ impl<'a> JwsDecoder<'a> {
   {
     // TODO: Better separate decoder errors from the TryFrom error as this can
     // lead to confusion regarding signature validation.
-    self.decode_token(data, verifier).and_then(TryFrom::try_from)
+    self
+      .decode_token(data, verifier)
+      .and_then(TryFrom::try_from)
   }
 
   pub fn decode_token<T, U>(&self, data: &T, verifier: &dyn JwsVerifier) -> Result<JwsRawToken<U>>
@@ -552,7 +533,7 @@ impl<'a> JwsDecoder<'a> {
     //    specification, by the algorithm being used, or by the "crit" Header
     //    Parameter value, and that the values of those parameters are also
     //    understood and supported.
-   self.check_header_claims(&jose, verifier)?;
+    self.check_header_claims(&jose, verifier)?;
 
     // 6. Base64url-decode the encoded representation of the JWS Payload,
     //    following the restriction that no line breaks, whitespace, or other
@@ -577,9 +558,7 @@ impl<'a> JwsDecoder<'a> {
     //    validation succeeded or not.
     verifier.verify(&create_jws_message(header_b64, payload_b64), &signature)?;
 
-    //
     // 9. No need to repeat as we only support a single signature
-    //
 
     // 10. If none of the validations in step 9 succeeded, then the JWS MUST be
     //    considered invalid. Otherwise, in the JWS JSON Serialization case,
@@ -590,13 +569,23 @@ impl<'a> JwsDecoder<'a> {
     let header: JwsHeader<U> = from_value(Value::Object(jose))?;
 
     if detached {
-      Ok(JwsRawToken { header, claims: Vec::new() })
+      Ok(JwsRawToken {
+        header,
+        claims: Vec::new(),
+      })
     } else {
-      Ok(JwsRawToken { header, claims: payload })
+      Ok(JwsRawToken {
+        header,
+        claims: payload,
+      })
     }
   }
 
-  fn check_header_claims(&self, header: &Map<String, Value>, verifier: &dyn JwsVerifier) -> Result<()> {
+  fn check_header_claims(
+    &self,
+    header: &Map<String, Value>,
+    verifier: &dyn JwsVerifier,
+  ) -> Result<()> {
     self.check_header_alg(header, verifier)?;
     self.check_header_kid(header, verifier)?;
     self.check_header_crit(header)?;
@@ -605,16 +594,28 @@ impl<'a> JwsDecoder<'a> {
   }
 
   // Ensure the header algorithm matches the verifier algorithm.
-  fn check_header_alg(&self, header: &Map<String, Value>, verifier: &dyn JwsVerifier) -> Result<()> {
+  fn check_header_alg(
+    &self,
+    header: &Map<String, Value>,
+    verifier: &dyn JwsVerifier,
+  ) -> Result<()> {
     match (header.get(PARAM_ALG), verifier.alg().name()) {
-      (Some(Value::String(received)), expected) if received == expected && self.permit_algorithm(received) => Ok(()),
+      (Some(Value::String(received)), expected)
+        if received == expected && self.permit_algorithm(received) =>
+      {
+        Ok(())
+      }
       (None, _) => Err(DecodeError::MissingParam(PARAM_ALG).into()),
       (Some(_), _) => Err(DecodeError::InvalidParam(PARAM_ALG).into()),
     }
   }
 
   // Ensure the header key ID matches the verifier key ID if one is set.
-  fn check_header_kid(&self, header: &Map<String, Value>, verifier: &dyn JwsVerifier) -> Result<()> {
+  fn check_header_kid(
+    &self,
+    header: &Map<String, Value>,
+    verifier: &dyn JwsVerifier,
+  ) -> Result<()> {
     match (header.get(PARAM_KID), verifier.kid()) {
       (Some(Value::String(received)), Some(expected)) if received == expected => Ok(()),
       (Some(_), Some(_)) => Err(DecodeError::InvalidParam(PARAM_KID).into()),
@@ -627,29 +628,25 @@ impl<'a> JwsDecoder<'a> {
   // the JOSE header.
   fn check_header_crit(&self, header: &Map<String, Value>) -> Result<()> {
     match header.get(PARAM_CRIT) {
-      Some(Value::Array(ref crit)) => {
-        match crit.as_slice() {
-          [head @ Value::String(_), tail @ ..] => {
-            for key in once(head).chain(tail) {
-              let key: &str = match key {
-                Value::String(value) => value.as_str(),
-                _ => unreachable!(),
-              };
+      Some(Value::Array(ref crit)) => match crit.as_slice() {
+        [head @ Value::String(_), tail @ ..] => {
+          for key in once(head).chain(tail) {
+            let key: &str = match key {
+              Value::String(value) => value.as_str(),
+              _ => unreachable!(),
+            };
 
-              if !header.contains_key(key) {
-                return Err(DecodeError::InvalidParam(PARAM_CRIT).into());
-              }
+            if !header.contains_key(key) {
+              return Err(DecodeError::InvalidParam(PARAM_CRIT).into());
             }
+          }
 
-            Ok(())
-          }
-          [..] => {
-            Err(DecodeError::InvalidParam(PARAM_CRIT).into())
-          }
+          Ok(())
         }
-      }
+        [..] => Err(DecodeError::InvalidParam(PARAM_CRIT).into()),
+      },
       Some(_) => Err(DecodeError::InvalidParam(PARAM_CRIT).into()),
-      None => Ok(())
+      None => Ok(()),
     }
   }
 
@@ -668,7 +665,13 @@ impl<'a> JwsDecoder<'a> {
 // Misc Helpers
 // =============================================================================
 
-fn create_jose_header<T>(header: &JwsHeader<T>, signer: &dyn JwsSigner) -> Result<Map<String, Value>> where T: Serialize {
+fn create_jose_header<T>(
+  header: &JwsHeader<T>,
+  signer: &dyn JwsSigner,
+) -> Result<Map<String, Value>>
+where
+  T: Serialize,
+{
   let mut jose: Map<String, Value> = to_object(header)?;
 
   // The JOSE header MUST contain an algorithm and SHOULD be included in the
@@ -712,12 +715,8 @@ fn extract_b64(header: &Map<String, Value>) -> Result<bool> {
 
       Ok(*b64)
     }
-    (Some(_), Some(_)) => {
-      Err(EncodeError::InvalidParam("b64/crit").into())
-    }
-    (Some(_), None) => {
-      Err(EncodeError::MissingParam(PARAM_CRIT).into())
-    }
+    (Some(_), Some(_)) => Err(EncodeError::InvalidParam("b64/crit").into()),
+    (Some(_), None) => Err(EncodeError::MissingParam(PARAM_CRIT).into()),
     (None, _) => {
       // The default behaviour is to use base64url-encoded payloads
       Ok(true)
@@ -725,14 +724,13 @@ fn extract_b64(header: &Map<String, Value>) -> Result<bool> {
   }
 }
 
-fn to_object<T>(data: &T) -> Result<Map<String, Value>> where T: Serialize {
+fn to_object<T>(data: &T) -> Result<Map<String, Value>>
+where
+  T: Serialize,
+{
   match to_value(data)? {
-    Value::Object(object) => {
-      Ok(object)
-    }
-    _ => {
-      Err(Error::custom("Invalid Object").into())
-    }
+    Value::Object(object) => Ok(object),
+    _ => Err(Error::custom("Invalid Object").into()),
   }
 }
 
@@ -740,10 +738,7 @@ fn to_object<T>(data: &T) -> Result<Map<String, Value>> where T: Serialize {
 // String/Byte Helpers
 // =============================================================================
 
-fn create_jws_message(
-  header: impl AsRef<[u8]>,
-  payload: impl AsRef<[u8]>,
-) -> Vec<u8> {
+fn create_jws_message(header: impl AsRef<[u8]>, payload: impl AsRef<[u8]>) -> Vec<u8> {
   let header: &[u8] = header.as_ref();
   let payload: &[u8] = payload.as_ref();
   let capacity: usize = header.len() + 1 + payload.len();
@@ -776,10 +771,7 @@ fn create_jws_compact(
   output
 }
 
-fn create_jws_compact_detached(
-  header: impl AsRef<str>,
-  signature: impl AsRef<str>,
-) -> String {
+fn create_jws_compact_detached(header: impl AsRef<str>, signature: impl AsRef<str>) -> String {
   let header: &str = header.as_ref();
   let signature: &str = signature.as_ref();
   let capacity: usize = header.len() + 2 + signature.len();

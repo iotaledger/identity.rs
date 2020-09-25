@@ -1,7 +1,7 @@
 use libjose::jwa::HmacAlgorithm::*;
+use libjose::jws::JwsAlgorithm;
 use libjose::jws::JwsDecoder;
 use libjose::jws::JwsEncoder;
-use libjose::jws::JwsAlgorithm;
 use libjose::jws::JwsHeader;
 use libjose::jws::JwsRawToken;
 use libjose::jwt::JwtClaims;
