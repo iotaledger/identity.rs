@@ -34,6 +34,7 @@ extern crate serde;
 
 #[cfg(feature = "std")]
 mod alloc {
+  pub use ::std::borrow::Cow;
   pub use ::std::boxed::Box;
   pub use ::std::collections::BTreeMap;
   pub use ::std::collections::BTreeSet;
@@ -44,6 +45,7 @@ mod alloc {
 
 #[cfg(not(feature = "std"))]
 mod alloc {
+  pub use ::alloc_::borrow::Cow;
   pub use ::alloc_::boxed::Box;
   pub use ::alloc_::collections::BTreeMap;
   pub use ::alloc_::collections::BTreeSet;

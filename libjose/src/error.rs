@@ -47,23 +47,23 @@ pub enum ValidationError {
 #[derive(Debug, thiserror::Error)]
 pub enum EncodeError {
   #[error("Invalid Content: {0}")]
-  InvalidContent(#[from] core::str::Utf8Error),
-  #[error("Invalid Content: Invalid Character `{0}`")]
-  InvalidContentChar(char),
-  #[error("Invalid JOSE Header: {0}")]
-  InvalidJoseHeader(&'static str),
+  InvalidContent(&'static str),
+  #[error("Invalid Header Parameter: {0}")]
+  InvalidParam(&'static str),
+  #[error("Missing Header Parameter: {0}")]
+  MissingParam(&'static str),
   #[error("Invalid Encoder Configuration: {0}")]
   InvalidConfiguration(&'static str)
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum DecodeError {
-  #[error("Invalid Segments")]
-  InvalidSegments,
-  #[error("Invalid Claim: {0}")]
-  InvalidClaim(&'static str),
-  #[error("Missing Claim: {0}")]
-  MissingClaim(&'static str),
+  #[error("Invalid Input")]
+  InvalidInput,
+  #[error("Invalid Header Parameter: {0}")]
+  InvalidParam(&'static str),
+  #[error("Missing Header Parameter: {0}")]
+  MissingParam(&'static str),
 }
 
 #[derive(Debug, thiserror::Error)]
