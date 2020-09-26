@@ -3,7 +3,7 @@ use identity_core::did::DID;
 use iota_conversion::trytes_converter;
 use multihash::Blake2b256;
 
-/// Returns an address from a did segment
+/// Creates an 81 Trytes IOTA address from the DID
 pub fn get_iota_address(did: &DID) -> crate::Result<String> {
     let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
     let hash = Blake2b256::digest(iota_specific_idstring.as_bytes());

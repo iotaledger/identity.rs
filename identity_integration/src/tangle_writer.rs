@@ -56,14 +56,12 @@ impl TangleWriter {
                 (differences.did.clone(), serde_json::to_string(&differences)?)
             }
         };
-        // Check if correct network
+        // Check if correct network selected
         check_network(did.id_segments.clone(), &self.network)?;
 
+        // Where does the address for diff changes come from?
         let address = get_iota_address(&did)?;
 
-        // Diff chain address in did_document?
-        // Is it possible to get the address from the did_document after an auth change?
-        // let serialzed_did_message = serde_json::to_string(&did_document.to_string())?;
         let transfers = vec![Transfer {
             address: Address::from_inner_unchecked(TryteBuf::try_from_str(&address)?.as_trits().encode()),
             value: 0,
@@ -80,7 +78,7 @@ impl TangleWriter {
 
         // Send the transaction
         let bundle = self.iota.send(None).transfers(transfers).send().await?;
-
+        // Get the transaction hash
         let mut curl = CurlP81::new();
         let mut trits = TritBuf::<T1B1Buf>::zeros(BundledTransaction::trit_len());
         bundle[0].into_trits_allocated(&mut trits);
@@ -123,7 +121,6 @@ impl TangleWriter {
 
     /// Returns confirmation status
     pub async fn is_confirmed(&self, tail_transaction: Hash) -> crate::Result<bool> {
-        // Get confirmation status
         let inclusion_states = self
             .iota
             .get_inclusion_states()

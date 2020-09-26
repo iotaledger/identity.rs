@@ -21,9 +21,6 @@ pub enum Error {
     /// serde_json Error
     #[error("serde_json Error: {0}")]
     SerdeJsonError(#[from] serde_json::Error),
-    /// bee_ternary Error
-    #[error("Sorting Error: Couldn't sort transactions to bundles")]
-    TransactionSortingFailed,
     /// Node Error
     #[error("Node Error: Wrong network specified, DID requires {0:?}")]
     NetworkNodeError(&'static str),
