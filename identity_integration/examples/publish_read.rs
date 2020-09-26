@@ -29,7 +29,7 @@ async fn main() -> Result<()> {
     let did_address = get_iota_address(&did_document.derive_did()?)?;
     let did_payload = Payload::DIDDocument(did_document);
     // 1. Publish DID document to the Tangle
-    let tangle_writer = TangleWriter::new(nodes.clone(), iota_network::Comnet)?;
+    let tangle_writer = TangleWriter::new(nodes.clone(), iota_network::Comnet).await?;
 
     let mut tail_transaction = tangle_writer.publish_document(&did_payload).await?;
     println!(

@@ -40,11 +40,12 @@ pub struct TangleWriter {
 }
 
 impl TangleWriter {
-    pub fn new(nodes: Vec<&'static str>, network: iota::client::builder::Network) -> crate::Result<Self> {
+    pub async fn new(nodes: Vec<&'static str>, network: iota::client::builder::Network) -> crate::Result<Self> {
         let iota = iota::ClientBuilder::new()
             .nodes(&nodes)?
             .network(network.clone())
-            .build()?;
+            .build()
+            .await?;
         Ok(Self { iota, network })
     }
     /// Publishes DID document to the Tangle

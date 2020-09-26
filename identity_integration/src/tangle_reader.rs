@@ -23,7 +23,7 @@ impl TangleReader {
     }
     /// Returns all messages from an address
     pub async fn fetch(&self, address: &str) -> crate::Result<HashMap<String, String>> {
-        let iota = iota::ClientBuilder::new().nodes(&self.nodes)?.build()?;
+        let iota = iota::ClientBuilder::new().nodes(&self.nodes)?.build().await?;
 
         let address = Address::from_inner_unchecked(TryteBuf::try_from_str(address)?.as_trits().encode());
 
