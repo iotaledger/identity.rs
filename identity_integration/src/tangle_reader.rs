@@ -156,7 +156,7 @@ fn sort_txs_to_bundles(trytes: Vec<BundledTransaction>) -> crate::Result<HashMap
 }
 
 /// Order documents: first element is latest
-fn get_ordered_documents(messages: HashMap<String, String>, did: &DID) -> crate::Result<Vec<HashWithDocument>> {
+pub fn get_ordered_documents(messages: HashMap<String, String>, did: &DID) -> crate::Result<Vec<HashWithDocument>> {
     let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
     let mut documents: Vec<HashWithDocument> = messages
         .iter()
@@ -190,7 +190,7 @@ fn get_ordered_documents(messages: HashMap<String, String>, did: &DID) -> crate:
 }
 
 /// Order diffs: first element is oldest
-fn get_ordered_diffs(messages: HashMap<String, String>, did: &DID) -> crate::Result<Vec<HashWithDiff>> {
+pub fn get_ordered_diffs(messages: HashMap<String, String>, did: &DID) -> crate::Result<Vec<HashWithDiff>> {
     let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
     let mut diffs: Vec<HashWithDiff> = messages
         .iter()
