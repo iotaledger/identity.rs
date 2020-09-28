@@ -12,7 +12,7 @@ use iota::{
 };
 use iota_conversion::Trinary;
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use std::{fmt, thread, time::Duration};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Differences {
@@ -48,7 +48,23 @@ impl TangleWriter {
             .await?;
         Ok(Self { iota, network })
     }
-    /// Publishes DID document to the Tangle
+    /// Sends document or diff to the Tangle and promotes the transaction until it's confirmed
+    pub async fn send(&self, did_document: &Payload) -> crate::Result<Hash> {
+        let mut tail_transaction = self.publish_document(did_document).await?;
+        thread::sleep(Duration::from_secs(5));
+        let mut j: usize = 0;
+        while !self.is_confirmed(tail_transaction).await? {
+            j += 1;
+            thread::sleep(Duration::from_secs(5));
+            self.promote(tail_transaction).await?;
+            // Send the document again if the previous transaction didn't get confirmed after 150 seconds
+            if j % 30 == 0 {
+                tail_transaction = self.publish_document(&did_document).await?;
+            }
+        }
+        Ok(tail_transaction)
+    }
+    /// Publishes DID document or diff to the Tangle
     pub async fn publish_document(&self, did_document: &Payload) -> crate::Result<Hash> {
         let (did, document_string) = match did_document {
             Payload::DIDDocument(document) => (document.derive_did()?, document.to_string()),

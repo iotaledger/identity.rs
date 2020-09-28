@@ -11,7 +11,8 @@ use identity_integration::{
     tangle_writer::{iota_network, Payload, TangleWriter},
 };
 use iota_conversion::Trinary;
-use std::str::FromStr;
+use smol::Timer;
+use std::{str::FromStr, time::Duration};
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
@@ -29,11 +30,30 @@ async fn main() -> Result<()> {
     // 1. Publish DID document to the Tangle
     let tangle_writer = TangleWriter::new(nodes.clone(), iota_network::Comnet).await?;
 
-    let tail_transaction = tangle_writer.send(&did_payload).await?;
+    let mut tail_transaction = tangle_writer.publish_document(&did_payload).await?;
     println!(
         "DID document published: https://comnet.thetangle.org/transaction/{}",
         tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
     );
+    // Get confirmation status, promote if unconfirmed, this needs to be done until it's confirmed or older than 150
+    // seconds, then a new transaction needs to be sent
+    Timer::after(Duration::from_secs(5)).await;
+    let mut j = 0;
+    while !tangle_writer.is_confirmed(tail_transaction).await? {
+        j += 1;
+        Timer::after(Duration::from_secs(5)).await;
+        let promotehash = tangle_writer.promote(tail_transaction).await?;
+        println!("Promoted: https://comnet.thetangle.org/transaction/{}", promotehash);
+        // Send the document again if the previous transaction didn't get confirmed after 150 seconds
+        if j % 30 == 0 {
+            tail_transaction = tangle_writer.publish_document(&did_payload).await?;
+            println!(
+                "DID document published again: https://comnet.thetangle.org/transaction/{}",
+                tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
+            );
+        }
+    }
+    println!("Transaction got confirmed!");
 
     // 2. Fetch messages from DID address
     let tangle_reader = TangleReader::new(nodes);

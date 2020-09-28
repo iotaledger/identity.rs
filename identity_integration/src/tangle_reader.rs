@@ -1,3 +1,5 @@
+use crate::{did_helper::get_iota_address, tangle_writer::Differences};
+use identity_core::{did::DID, document::DIDDocument};
 use iota::{
     crypto::ternary::{
         sponge::{CurlP81, Sponge},
@@ -13,6 +15,17 @@ use iota_conversion::{trytes_converter, Trinary};
 use std::collections::HashMap;
 
 #[derive(Clone)]
+pub struct HashWithDocument {
+    pub tailhash: String,
+    pub document: DIDDocument,
+}
+
+pub struct HashWithDiff {
+    pub tailhash: String,
+    pub diff: Differences,
+}
+
+#[derive(Clone)]
 pub struct TangleReader {
     pub nodes: Vec<&'static str>,
 }
@@ -22,10 +35,12 @@ impl TangleReader {
         Self { nodes }
     }
     /// Returns all messages from an address
-    pub async fn fetch(&self, address: &str) -> crate::Result<HashMap<String, String>> {
+    pub async fn fetch(&self, did: &DID) -> crate::Result<HashMap<String, String>> {
+        let address = get_iota_address(&did)?;
+
         let iota = iota::ClientBuilder::new().nodes(&self.nodes)?.build().await?;
 
-        let address = Address::from_inner_unchecked(TryteBuf::try_from_str(address)?.as_trits().encode());
+        let address = Address::from_inner_unchecked(TryteBuf::try_from_str(&address)?.as_trits().encode());
 
         let response = iota.find_transactions().addresses(&[address]).send().await?;
         let txs = iota.get_trytes(&response.hashes).await?;
@@ -59,6 +74,18 @@ impl TangleReader {
         }
 
         Ok(messages)
+    }
+    /// Returns all documents ordered from an address
+    pub async fn fetch_documents(&self, did: &DID) -> crate::Result<Vec<HashWithDocument>> {
+        let messages = self.fetch(did).await?;
+        let documents = get_ordered_documents(messages, did)?;
+        Ok(documents)
+    }
+    /// Returns all diffs ordered from an address
+    pub async fn fetch_diffs(&self, did: &DID) -> crate::Result<Vec<HashWithDiff>> {
+        let messages = self.fetch(did).await?;
+        let diffs = get_ordered_diffs(messages, did)?;
+        Ok(diffs)
     }
 }
 
@@ -126,4 +153,65 @@ fn sort_txs_to_bundles(trytes: Vec<BundledTransaction>) -> crate::Result<HashMap
         .filter(|(_, bundle)| bundle.len() == *bundle[0].last_index().to_inner() + 1)
         .collect();
     Ok(complete_bundles)
+}
+
+/// Order documents: first element is latest
+fn get_ordered_documents(messages: HashMap<String, String>, did: &DID) -> crate::Result<Vec<HashWithDocument>> {
+    let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
+    let mut documents: Vec<HashWithDocument> = messages
+        .iter()
+        .filter_map(|(tailhash, msg)| {
+            if let Ok(document) = serde_json::from_str::<DIDDocument>(&msg) {
+                if document
+                    .derive_did()
+                    .expect("Failed to get DID from document")
+                    .id_segments
+                    .last()
+                    .expect("Failed to get id_segment")
+                    == iota_specific_idstring
+                {
+                    Some(HashWithDocument {
+                        tailhash: tailhash.into(),
+                        document,
+                    })
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        })
+        .collect();
+    if documents.is_empty() {
+        return Ok(documents);
+    }
+    documents.sort_by(|a, b| b.document.updated.cmp(&a.document.updated));
+    Ok(documents)
+}
+
+/// Order diffs: first element is oldest
+fn get_ordered_diffs(messages: HashMap<String, String>, did: &DID) -> crate::Result<Vec<HashWithDiff>> {
+    let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
+    let mut diffs: Vec<HashWithDiff> = messages
+        .iter()
+        .filter_map(|(tailhash, msg)| {
+            if let Ok(diff) = serde_json::from_str::<Differences>(&msg) {
+                if diff.did.id_segments.last().expect("Failed to get id_segment") == iota_specific_idstring {
+                    Some(HashWithDiff {
+                        tailhash: tailhash.into(),
+                        diff,
+                    })
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        })
+        .collect();
+    if diffs.is_empty() {
+        return Ok(diffs);
+    }
+    diffs.sort_by(|a, b| a.diff.time.cmp(&b.diff.time));
+    Ok(diffs)
 }
