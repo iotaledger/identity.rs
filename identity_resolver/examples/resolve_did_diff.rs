@@ -14,7 +14,7 @@ use iota_conversion::Trinary;
 #[smol_potat::main]
 async fn main() -> Result<()> {
     let nodes = vec!["http://localhost:14265", "https://nodes.comnet.thetangle.org:443"];
-    let tangle_writer = TangleWriter::new(nodes.clone(), iota_network::Comnet)?;
+    let tangle_writer = TangleWriter::new(nodes.clone(), iota_network::Comnet).await?;
 
     // Create and publish first document version
     let old = DIDDocument {

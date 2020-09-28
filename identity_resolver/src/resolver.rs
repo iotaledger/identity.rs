@@ -1,7 +1,7 @@
 use bytestream::*;
 use identity_core::{common::Timestamp, did::DID, document::DIDDocument};
 use identity_diff::Diff;
-use identity_integration::{did_helper::get_iota_address, tangle_reader::TangleReader, tangle_writer::Differences};
+use identity_integration::tangle_reader::{get_ordered_diffs, get_ordered_documents, TangleReader};
 use std::{collections::HashMap, io::Write, time::Instant};
 
 #[derive(Debug)]
@@ -72,15 +72,6 @@ pub enum NetworkNodes {
     Com(Vec<&'static str>),
     Dev(Vec<&'static str>),
 }
-#[derive(Clone)]
-struct HashWithMessage {
-    tailhash: String,
-    document: DIDDocument,
-}
-struct HashWithDiff {
-    tailhash: String,
-    diff: Differences,
-}
 
 impl Resolver {
     pub fn new(nodes: NetworkNodes) -> crate::Result<Self> {
@@ -134,7 +125,7 @@ impl Resolver {
         let mut metadata = HashMap::new();
         let nodes = get_nodes(&did, self.nodes.clone())?;
         let reader = TangleReader::new(nodes.to_vec());
-        let messages = match reader.fetch(&get_iota_address(&did)?).await {
+        let messages = match reader.fetch(&did).await {
             Ok(messages) => messages,
             _ => {
                 return Ok(ResolutionResult {
@@ -149,6 +140,9 @@ impl Resolver {
             }
         };
         let documents = get_ordered_documents(messages.clone(), &did)?;
+        if documents.is_empty() {
+            return Err(crate::Error::DocumentNotFound);
+        }
         let diffs = get_ordered_diffs(messages.clone(), &did)?;
         if resolution_metadata.include_all_messages {
             for (tailhash, msg) in messages {
@@ -235,65 +229,4 @@ fn get_nodes(did: &DID, nodes: NetworkNodes) -> crate::Result<Vec<&'static str>>
         return Err(crate::Error::NodeError);
     }
     Ok(nodes)
-}
-
-/// Order documents: first element is latest
-fn get_ordered_documents(messages: HashMap<String, String>, did: &DID) -> crate::Result<Vec<HashWithMessage>> {
-    let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
-    let mut documents: Vec<HashWithMessage> = messages
-        .iter()
-        .filter_map(|(tailhash, msg)| {
-            if let Ok(document) = serde_json::from_str::<DIDDocument>(&msg) {
-                if document
-                    .derive_did()
-                    .expect("Failed to get DID from document")
-                    .id_segments
-                    .last()
-                    .expect("Failed to get id_segment")
-                    == iota_specific_idstring
-                {
-                    Some(HashWithMessage {
-                        tailhash: tailhash.into(),
-                        document,
-                    })
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        })
-        .collect();
-    if documents.is_empty() {
-        return Err(crate::Error::DocumentNotFound);
-    }
-    documents.sort_by(|a, b| b.document.updated.cmp(&a.document.updated));
-    Ok(documents)
-}
-
-/// Order diffs: first element is oldest
-fn get_ordered_diffs(messages: HashMap<String, String>, did: &DID) -> crate::Result<Vec<HashWithDiff>> {
-    let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
-    let mut diffs: Vec<HashWithDiff> = messages
-        .iter()
-        .filter_map(|(tailhash, msg)| {
-            if let Ok(diff) = serde_json::from_str::<Differences>(&msg) {
-                if diff.did.id_segments.last().expect("Failed to get id_segment") == iota_specific_idstring {
-                    Some(HashWithDiff {
-                        tailhash: tailhash.into(),
-                        diff,
-                    })
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        })
-        .collect();
-    if diffs.is_empty() {
-        return Ok(diffs);
-    }
-    diffs.sort_by(|a, b| a.diff.time.cmp(&b.diff.time));
-    Ok(diffs)
 }
