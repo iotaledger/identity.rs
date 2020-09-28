@@ -1,21 +1,21 @@
 #[macro_export]
 macro_rules! object {
     () => {
-      $crate::common::Object::default()
+        $crate::object::Object::default()
     };
     ($($key:ident : $value:expr),* $(,)*) => {
-      {
-        let mut object = ::std::collections::HashMap::new();
+        {
+            let mut object = ::std::collections::HashMap::new();
 
         $(
-          object.insert(
-            stringify!($key).to_string(),
-            $crate::common::Value::from($value),
-          );
+            object.insert(
+                stringify!($key).to_string(),
+                $crate::value::Value::from($value),
+            );
         )*
 
-        $crate::common::Object::from(object)
-      }
+            $crate::object::Object::from(object)
+        }
     };
 }
 
@@ -30,6 +30,22 @@ macro_rules! line_error {
     };
 }
 
+// Creates a constructor function for an error enum
+#[macro_export]
+macro_rules! impl_error_ctor {
+    ($fn:ident, $ident:ident, Into<$ty:ty>) => {
+        pub fn $fn(inner: impl Into<$ty>) -> Self {
+            Self::$ident(inner.into())
+        }
+    };
+    ($fn:ident, $ident:ident, $ty:ty) => {
+        pub fn $fn(inner: $ty) -> Self {
+            Self::$ident(inner)
+        }
+    };
+}
+
+/// creates a simple HashMap using map! { "key" => "val", .. }
 #[allow(unused_macros)]
 #[macro_export]
 macro_rules! map {
@@ -51,7 +67,6 @@ macro_rules! set {
     }}}
 }
 
-#[allow(unused_macros)]
 #[macro_export]
 macro_rules! impl_builder_setter {
     ($fn:ident, $field:ident, Option<$ty:ty>) => {
@@ -80,7 +95,6 @@ macro_rules! impl_builder_setter {
     };
 }
 
-#[allow(unused_macros)]
 #[macro_export]
 macro_rules! impl_builder_try_setter {
     ($fn:ident, $field:ident, Option<$ty:ty>) => {

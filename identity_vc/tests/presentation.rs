@@ -1,7 +1,7 @@
 #[macro_use]
 mod macros;
 
-use identity_core::object;
+use identity_common::object;
 use identity_vc::prelude::*;
 
 #[test]

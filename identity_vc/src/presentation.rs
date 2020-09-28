@@ -1,14 +1,10 @@
-use identity_core::{
-    common::{Object, OneOrMany, Uri, Value},
-    impl_builder_setter, impl_builder_try_setter,
-};
+use identity_common::{impl_builder_setter, impl_builder_try_setter, Object, OneOrMany, Uri, Value};
 use serde::{Deserialize, Serialize};
-use serde_json::{from_str, to_string};
 
 use crate::{
     common::{Context, RefreshService, TermsOfUse},
     credential::Credential,
-    error::{Error, Result},
+    error::Result,
     utils::validate_presentation_structure,
     verifiable::{VerifiableCredential, VerifiablePresentation},
 };
@@ -56,14 +52,6 @@ impl Presentation {
 
     pub fn validate(&self) -> Result<()> {
         validate_presentation_structure(self)
-    }
-
-    pub fn from_json(json: &(impl AsRef<str> + ?Sized)) -> Result<Self> {
-        from_str(json.as_ref()).map_err(Error::DecodeJSON)
-    }
-
-    pub fn to_json(&self) -> Result<String> {
-        to_string(self).map_err(Error::EncodeJSON)
     }
 }
 

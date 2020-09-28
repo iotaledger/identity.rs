@@ -1,0 +1,22 @@
+[package]
+name = "identity_crypto"
+version = "0.1.0"
+authors = ["IOTA Identity"]
+edition = "2018"
+description = "Common cryptography traits and types for Identity libraries."
+readme = "../README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "identity"]
+homepage = "https://www.iota.org"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+hex = "0.4"
+identity_common = { path = "../identity_common" }
+sha2 = "0.9"
+sha3 = "0.9"
+thiserror = "1.0"
+zeroize = "1.1"

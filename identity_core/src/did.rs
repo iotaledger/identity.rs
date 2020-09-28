@@ -1,4 +1,6 @@
+use identity_common::uri::Uri;
 use identity_diff::Diff;
+
 use serde::{
     de::{self, Deserialize, Deserializer, Visitor},
     ser::{Serialize, Serializer},
@@ -208,5 +210,11 @@ impl Serialize for DID {
 impl From<DIDTuple> for Param {
     fn from((key, value): DIDTuple) -> Param {
         Param { key, value }
+    }
+}
+
+impl From<DID> for Uri {
+    fn from(other: DID) -> Uri {
+        Uri::from(other.to_string())
     }
 }

@@ -1,4 +1,6 @@
+use identity_common::Timestamp;
 use identity_diff::Diff;
+
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
@@ -6,7 +8,6 @@ use std::{
 };
 
 use crate::{
-    common::Timestamp,
     did::DID,
     utils::{
         add_unique_to_vec, helpers::string_or_list, Authentication, Context, IdCompare, PublicKey, Service, Subject,
@@ -185,7 +186,7 @@ impl DIDDocument {
 
     /// Updates the `updated` time for the `DIDDocument`.
     pub fn update_time(&mut self) {
-        self.updated = Some(Timestamp::now().to_rfc3339());
+        self.updated = Some(Timestamp::now().to_string());
     }
 
     /// Inserts `metadata` into the `DIDDocument` body.  The metadata must be a HashMap<String, String> where the keys
@@ -198,8 +199,8 @@ impl DIDDocument {
     /// these timestamps.
     pub fn init_timestamps(self) -> crate::Result<Self> {
         Ok(DIDDocument {
-            created: Some(Timestamp::now().to_rfc3339()),
-            updated: Some(Timestamp::now().to_rfc3339()),
+            created: Some(Timestamp::now().to_string()),
+            updated: Some(Timestamp::now().to_string()),
             ..self
         }
         .init())

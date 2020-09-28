@@ -1,4 +1,4 @@
-use identity_core::common::{Object, OneOrMany, Value};
+use identity_common::{Object, OneOrMany, Value};
 
 use crate::error::{Error, Result};
 
