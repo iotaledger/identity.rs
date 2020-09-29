@@ -8,7 +8,7 @@ use crate::alloc::String;
 use crate::alloc::Vec;
 use crate::error::Error;
 use crate::error::Result;
-use crate::jws::Encoder;
+use crate::jws::JwsEncoder;
 use crate::jws::JwsHeader;
 use crate::jws::JwsSigner;
 use crate::jwt::JwtClaims;
@@ -52,7 +52,9 @@ impl<T, U> JwsToken<T, U> {
     T: Serialize,
     U: Serialize,
   {
-    Encoder::encode_compact(&to_vec(&self.claims)?, &self.header, signer)
+    JwsEncoder::new()
+      .encode_slice(&to_vec(&self.claims)?, &self.header, signer)?
+      .to_string()
   }
 }
 
