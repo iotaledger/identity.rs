@@ -14,6 +14,21 @@ pub struct Cache<K, V> {
 }
 
 impl<K: Hash + Eq, V> Cache<K, V> {
+    /// creates a new empty `Cache`
+    /// # Example
+    /// ```
+    /// use identity_account::storage::Cache;
+    /// use std::time::Duration;
+    ///
+    /// let mut cache = Cache::new();
+    ///
+    /// let key: &'static str = "key";
+    /// let value: &'static str = "value";
+    ///
+    /// cache.insert(key, value, None);
+    ///
+    /// assert_eq!(cache.get(&key), Some(&value))
+    /// ```
     pub fn new() -> Self {
         Self {
             table: HashMap::new(),
@@ -23,6 +38,24 @@ impl<K: Hash + Eq, V> Cache<K, V> {
         }
     }
 
+    /// creates an empty `Cache` with a periodic scanner which identifies expired entries.
+    ///
+    /// # Example
+    /// ```
+    /// use identity_account::storage::Cache;
+    /// use std::time::Duration;
+    ///
+    /// let scan_frequency = Duration::from_secs(60);
+    ///
+    /// let mut cache = Cache::create_with_scanner(scan_frequency);
+    ///
+    /// let key: &'static str = "key";
+    /// let value: &'static str = "value";
+    ///
+    /// cache.insert(key, value, None);
+    ///
+    /// assert_eq!(cache.get(&key), Some(&value));
+    /// ```
     pub fn create_with_scanner(scan_frequency: Duration) -> Self {
         Self {
             table: HashMap::new(),
@@ -32,6 +65,22 @@ impl<K: Hash + Eq, V> Cache<K, V> {
         }
     }
 
+    /// Gets the value associated with the specified key.
+    ///
+    /// # Example
+    /// ```
+    /// use identity_account::storage::Cache;
+    /// use std::time::Duration;
+    ///
+    /// let mut cache = Cache::new();
+    ///
+    /// let key: &'static str = "key";
+    /// let value: &'static str = "value";
+    ///
+    /// cache.insert(key, value, None);
+    ///
+    /// assert_eq!(cache.get(&key), Some(&value))
+    /// ```
     pub fn get(&self, key: &K) -> Option<&V> {
         let now = SystemTime::now();
 
@@ -41,6 +90,20 @@ impl<K: Hash + Eq, V> Cache<K, V> {
             .map(|value| &value.val)
     }
 
+    /// Gets the value associated with the specified key.  If the key could not be found in the `Cache`, creates and
+    /// inserts the value using a specified `func` function. # Example
+    /// ```
+    /// use identity_account::storage::Cache;
+    /// use std::time::Duration;
+    ///
+    /// let mut cache = Cache::new();
+    ///
+    /// let key: &'static str = "key";
+    /// let value: &'static str = "value";
+    ///
+    /// assert_eq!(cache.get_or_insert(key, move || value, None), &value);
+    /// assert!(cache.contains_key(&key));
+    /// ```
     pub fn get_or_insert<F>(&mut self, key: K, func: F, lifetime: Option<Duration>) -> &V
     where
         F: Fn() -> V,
