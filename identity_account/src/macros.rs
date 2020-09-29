@@ -15,6 +15,7 @@
 /// }
 ///
 /// assert_eq!(fib(20), 10946);
+/// assert_eq!(FIB_CACHE.lock().unwrap().get(&20), Some(&10946));
 /// ```
 #[macro_export]
 macro_rules! cache {
@@ -22,18 +23,23 @@ macro_rules! cache {
         use once_cell::sync::Lazy;
         use std::sync::Mutex;
         use identity_account::storage::Cache;
+        use paste::paste;
+
+        paste! {
+            // create a static instance of `Cache<K, V>` for the expression called `$EXPR_NAME_CACHE`.
+            static [<$name:upper _CACHE>]: Lazy<Mutex<Cache<($($arg_type),*), $ret>>> = Lazy::new(|| Mutex::new(Cache::new()));
 
         #[allow(unused_parens)]
         fn $name($($arg: $arg_type), *) -> $ret {
             // create a static instance of `Cache<K, V>`
-            static CACHE: Lazy<Mutex<Cache<($($arg_type),*), $ret>>> =
-                Lazy::new(|| Mutex::new(Cache::new()));
+            // static CACHE: Lazy<Mutex<Cache<($($arg_type),*), $ret>>> =
+            //     Lazy::new(|| Mutex::new(Cache::new()));
 
             // create key out of arg.
             let key = ($($arg.clone()), *);
 
             // get mutex to check for cached value.
-            let cache = CACHE.lock().unwrap();
+            let cache = [<$name:upper _CACHE>].lock().unwrap();
 
             // check for cached value.
             match cache.get(&key) {
@@ -46,11 +52,12 @@ macro_rules! cache {
                     let value = (||$body)();
 
                     // re-get mutex to add/update the cache.
-                    let mut cache = CACHE.lock().unwrap();
+                    let mut cache = [<$name:upper _CACHE>].lock().unwrap();
                     cache.insert(key, value, None);
                     value.clone()
                 }
             }
         }
+    }
     };
 }
