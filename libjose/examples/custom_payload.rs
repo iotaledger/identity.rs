@@ -36,10 +36,7 @@ fn main() {
 
   // Use the `JwsDecoder` helper to decode token WITHOUT deserializing the
   // claims.
-  let decoded: JwsRawToken = JwsDecoder::new()
-    .alg(HS512)
-    .decode_token(&encoded, &verifier)
-    .unwrap();
+  let decoded: JwsRawToken = JwsDecoder::new().alg(HS512).decode_token(&encoded, &verifier).unwrap();
 
   let claims: &str = from_utf8(&decoded.claims).unwrap();
 
