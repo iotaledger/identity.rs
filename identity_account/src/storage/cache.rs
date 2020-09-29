@@ -124,6 +124,24 @@ impl<K: Hash + Eq, V> Cache<K, V> {
         }
     }
 
+    /// Insert a key-value pair into the cache.
+    /// If key was not present, a `None` is returned, else the value is updated and the old value is returned.  
+    ///
+    /// # Example
+    /// ```
+    /// use identity_account::storage::Cache;
+    /// use std::time::Duration;
+    ///
+    /// let mut cache = Cache::new();
+    ///
+    /// let key: &'static str = "key";
+    /// let value: &'static str = "value";
+    ///
+    /// let insert = cache.insert(key, value, None);
+    ///
+    /// assert_eq!(cache.get(&key), Some(&value));
+    /// assert!(insert.is_none());
+    /// ```
     pub fn insert(&mut self, key: K, value: V, lifetime: Option<Duration>) -> Option<V> {
         let now = SystemTime::now();
 
