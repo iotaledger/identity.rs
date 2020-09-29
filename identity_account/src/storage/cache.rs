@@ -230,3 +230,10 @@ impl<K: Hash + Eq, V> Cache<K, V> {
         }
     }
 }
+
+/// Default implementation for `Cache<K, V>`
+impl<K: Hash + Eq, V> Default for Cache<K, V> {
+    fn default() -> Self {
+        Cache::new()
+    }
+}
