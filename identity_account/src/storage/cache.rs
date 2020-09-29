@@ -153,6 +153,23 @@ impl<K: Hash + Eq, V> Cache<K, V> {
             .map(|value| value.val)
     }
 
+    /// Removes a key from the cache.  Returns the value from the key if the key existed in the cache.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use identity_account::storage::Cache;
+    /// use std::time::Duration;
+    ///
+    /// let mut cache = Cache::new();
+    ///
+    /// let key: &'static str = "key";
+    /// let value: &'static str = "value";
+    ///
+    /// let insert = cache.insert(key, value, None);
+    /// assert_eq!(cache.remove(&key), Some(value));
+    /// assert!(!cache.contains_key(&key));
+    /// ```
     pub fn remove(&mut self, key: &K) -> Option<V> {
         let now = SystemTime::now();
 
@@ -164,20 +181,41 @@ impl<K: Hash + Eq, V> Cache<K, V> {
             .map(|value| value.val)
     }
 
+    // Check if the `Cache<K, V>` contains a specific key.
     pub fn contains_key(&self, key: &K) -> bool {
         let now = SystemTime::now();
 
         self.table.get(key).filter(|value| !value.has_expired(now)).is_some()
     }
 
+    // Get the last scanned at time.
     pub fn get_last_scanned_at(&self) -> Option<SystemTime> {
         self.last_scan_at
     }
 
+    /// Get the cache's scan frequency.
+    ///
+    /// # Example
+    /// ```
+    /// use identity_account::storage::Cache;
+    /// use std::time::Duration;
+    ///
+    /// let scan_frequency = Duration::from_secs(60);
+    ///
+    /// let mut cache = Cache::create_with_scanner(scan_frequency);
+    ///
+    /// let key: &'static str = "key";
+    /// let value: &'static str = "value";
+    ///
+    /// cache.insert(key, value, None);
+    ///
+    /// assert_eq!(cache.get_scan_frequency(), Some(scan_frequency));
+    /// ```
     pub fn get_scan_frequency(&self) -> Option<Duration> {
         self.scan_frequency
     }
 
+    /// attempts to remove expired items based on the current system time provided.
     fn try_remove_expired_items(&mut self, now: SystemTime) {
         if let Some(frequency) = self.scan_frequency {
             let since = now
