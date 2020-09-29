@@ -29,35 +29,35 @@ macro_rules! cache {
             // create a static instance of `Cache<K, V>` for the expression called `$EXPR_NAME_CACHE`.
             static [<$name:upper _CACHE>]: Lazy<Mutex<Cache<($($arg_type),*), $ret>>> = Lazy::new(|| Mutex::new(Cache::new()));
 
-        #[allow(unused_parens)]
-        fn $name($($arg: $arg_type), *) -> $ret {
-            // create a static instance of `Cache<K, V>`
-            // static CACHE: Lazy<Mutex<Cache<($($arg_type),*), $ret>>> =
-            //     Lazy::new(|| Mutex::new(Cache::new()));
+            #[allow(unused_parens)]
+            fn $name($($arg: $arg_type), *) -> $ret {
+                // create a static instance of `Cache<K, V>`
+                // static CACHE: Lazy<Mutex<Cache<($($arg_type),*), $ret>>> =
+                //     Lazy::new(|| Mutex::new(Cache::new()));
 
-            // create key out of arg.
-            let key = ($($arg.clone()), *);
+                // create key out of arg.
+                let key = ($($arg.clone()), *);
 
-            // get mutex to check for cached value.
-            let cache = [<$name:upper _CACHE>].lock().unwrap();
+                // get mutex to check for cached value.
+                let cache = [<$name:upper _CACHE>].lock().unwrap();
 
-            // check for cached value.
-            match cache.get(&key) {
-                // if value is cached, return it.
-                Some(val) => val.clone(),
-                None => {
-                    // drop the mutex before execution to avoid a deadlock.
-                    drop(cache);
-                    // execute the body of the function/expression.
-                    let value = (||$body)();
+                // check for cached value.
+                match cache.get(&key) {
+                    // if value is cached, return it.
+                    Some(val) => val.clone(),
+                    None => {
+                        // drop the mutex before execution to avoid a deadlock.
+                        drop(cache);
+                        // execute the body of the function/expression.
+                        let value = (||$body)();
 
-                    // re-get mutex to add/update the cache.
-                    let mut cache = [<$name:upper _CACHE>].lock().unwrap();
-                    cache.insert(key, value, None);
-                    value.clone()
+                        // re-get mutex to add/update the cache.
+                        let mut cache = [<$name:upper _CACHE>].lock().unwrap();
+                        cache.insert(key, value, None);
+                        value.clone()
+                    }
                 }
             }
         }
-    }
     };
 }
