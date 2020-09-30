@@ -4,10 +4,10 @@ use libjose::jwa::HmacAlgorithm::*;
 use libjose::jwa::HmacSigner;
 use libjose::jwa::HmacVerifier;
 use libjose::jws::JwsDecoder;
-use libjose::jws::JwsHeader;
-use libjose::jwt::JwtClaims;
 use libjose::jws::JwsEncoder;
+use libjose::jws::JwsHeader;
 use libjose::jws::JwsToken;
+use libjose::jwt::JwtClaims;
 use std::convert::TryInto;
 use std::time::SystemTime;
 

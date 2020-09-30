@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use rand::rngs::OsRng;
 use ring::constant_time::verify_slices_are_equal;
 use ring::digest;
@@ -14,7 +15,6 @@ use ring::signature::Signature;
 use ring::signature::UnparsedPublicKey;
 use ring::signature::VerificationAlgorithm;
 
-use crate::alloc::Vec;
 use crate::crypto::KeyPair;
 use crate::crypto::PKey;
 use crate::crypto::Public;

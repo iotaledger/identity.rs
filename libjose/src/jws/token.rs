@@ -4,7 +4,7 @@ macro_rules! impl_jose_token {
       #[derive(Clone, Debug, PartialEq)]
       pub struct [<$name RawToken>]<T = $crate::utils::Empty> {
         pub header: $header<T>,
-        pub claims: $crate::alloc::Vec<u8>,
+        pub claims: ::alloc::vec::Vec<u8>,
       }
 
       #[derive(Clone, Debug, PartialEq)]

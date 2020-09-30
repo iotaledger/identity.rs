@@ -1,4 +1,5 @@
-use crate::alloc::Vec;
+use alloc::vec::Vec;
+
 use crate::error::Result;
 use crate::jwe::JweAlgorithm;
 

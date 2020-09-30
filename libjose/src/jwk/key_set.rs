@@ -1,6 +1,6 @@
+use alloc::vec::Vec;
 use core::iter::FromIterator;
 
-use crate::alloc::Vec;
 use crate::jwk::Jwk;
 
 /// JSON Web Key Set.

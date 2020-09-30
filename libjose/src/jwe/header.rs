@@ -1,8 +1,8 @@
+use alloc::string::String;
+use alloc::vec::Vec;
 use core::iter::FromIterator;
 use url::Url;
 
-use crate::alloc::String;
-use crate::alloc::Vec;
 use crate::jwe::JweAlgorithm;
 use crate::jwe::JweCompression;
 use crate::jwe::JweEncryption;

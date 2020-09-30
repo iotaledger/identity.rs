@@ -1,5 +1,6 @@
-use crate::alloc::String;
-use crate::alloc::Vec;
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::error::Result;
 
 pub fn encode_b64(data: impl AsRef<[u8]>) -> String {

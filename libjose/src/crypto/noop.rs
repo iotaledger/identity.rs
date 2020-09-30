@@ -1,4 +1,5 @@
-use crate::alloc::Vec;
+use alloc::vec::Vec;
+
 use crate::crypto::KeyPair;
 use crate::crypto::PKey;
 use crate::crypto::Public;

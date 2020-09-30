@@ -1,10 +1,10 @@
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+use alloc::vec::Vec;
 use core::iter::FromIterator;
 use serde_json::to_vec;
 use url::Url;
 
-use crate::alloc::BTreeMap;
-use crate::alloc::String;
-use crate::alloc::Vec;
 use crate::error::Error;
 use crate::error::Result;
 use crate::error::ValidationError;

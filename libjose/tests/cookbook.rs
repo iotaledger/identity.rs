@@ -8,6 +8,7 @@ use libjose::jwk::JwkType;
 use libjose::jwk::JwkUse;
 use serde_json::from_slice;
 
+#[rustfmt::skip]
 const FX_JWK_1: &[u8] = include_bytes!("fixtures/cookbook/jwk/3_1_ec_public_key.json");
 const FX_JWK_2: &[u8] = include_bytes!("fixtures/cookbook/jwk/3_2_ec_private_key.json");
 const FX_JWK_3: &[u8] = include_bytes!("fixtures/cookbook/jwk/3_3_rsa_public_key.json");

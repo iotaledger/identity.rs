@@ -1,3 +1,5 @@
+use alloc::string::String;
+use alloc::string::ToString;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
@@ -6,9 +8,6 @@ use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
 use serde::Serializer;
-
-use crate::alloc::String;
-use crate::alloc::ToString;
 
 /// Supported algorithms for the JSON Web Key `use` property.
 ///

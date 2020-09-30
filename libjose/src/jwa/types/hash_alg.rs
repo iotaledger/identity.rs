@@ -1,4 +1,5 @@
-use crate::alloc::Vec;
+use alloc::vec::Vec;
+
 use crate::crypto::message_digest;
 use crate::error::Result;
 

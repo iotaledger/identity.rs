@@ -1,8 +1,8 @@
 use core::convert::TryFrom;
 use core::time::Duration;
 use std::time::SystemTime;
+use alloc::string::String;
 
-use crate::alloc::String;
 use crate::error::Result;
 use crate::error::ValidationError;
 use crate::jwt::JwtClaims;

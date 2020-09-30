@@ -1,11 +1,11 @@
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
 
-use crate::alloc::String;
-use crate::alloc::ToString;
-use crate::alloc::Vec;
 use crate::crypto::hmac_generate;
 use crate::crypto::hmac_sign;
 use crate::crypto::hmac_verify;

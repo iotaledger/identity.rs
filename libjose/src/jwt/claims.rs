@@ -1,9 +1,9 @@
+use alloc::string::String;
+use alloc::vec::Vec;
 use core::iter::FromIterator;
 use serde_json::Map;
 use serde_json::Value;
 
-use crate::alloc::String;
-use crate::alloc::Vec;
 use crate::utils::Empty;
 
 /// JSON Web Token Claims

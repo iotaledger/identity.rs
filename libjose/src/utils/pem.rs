@@ -4,12 +4,12 @@
 //!
 //! ### RFC
 //! [Textual Encodings of PKIX, PKCS, and CMS Structures](https://tools.ietf.org/html/rfc7468)
+use alloc::string::String;
+use alloc::vec::Vec;
 use core::iter::SkipWhile;
 use core::str::from_utf8;
 use core::str::Lines;
 
-use crate::alloc::String;
-use crate::alloc::Vec;
 use crate::error::PemError;
 use crate::error::Result;
 

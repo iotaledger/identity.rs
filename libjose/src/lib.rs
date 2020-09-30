@@ -23,36 +23,16 @@
 #[cfg(not(feature = "alloc"))]
 compile_error!("This crate does not yet support environments without liballoc.");
 
-#[cfg(not(feature = "std"))]
-extern crate alloc as alloc_;
+#[cfg(feature = "alloc")]
+extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
 
 #[macro_use]
 extern crate anyhow;
 
 #[macro_use]
 extern crate serde;
-
-#[cfg(feature = "std")]
-mod alloc {
-  pub use ::std::borrow::Cow;
-  pub use ::std::boxed::Box;
-  pub use ::std::collections::BTreeMap;
-  pub use ::std::collections::BTreeSet;
-  pub use ::std::string::String;
-  pub use ::std::string::ToString;
-  pub use ::std::vec::Vec;
-}
-
-#[cfg(not(feature = "std"))]
-mod alloc {
-  pub use ::alloc_::borrow::Cow;
-  pub use ::alloc_::boxed::Box;
-  pub use ::alloc_::collections::BTreeMap;
-  pub use ::alloc_::collections::BTreeSet;
-  pub use ::alloc_::string::String;
-  pub use ::alloc_::string::ToString;
-  pub use ::alloc_::vec::Vec;
-}
 
 #[doc(hidden)]
 pub mod crypto;

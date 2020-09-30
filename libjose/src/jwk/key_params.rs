@@ -1,5 +1,7 @@
-use crate::alloc::String;
-use crate::alloc::Vec;
+use alloc::string::String;
+use alloc::vec::Vec;
+
+use crate::jwk::JwkType;
 
 type BigUint = String; // TODO
 
