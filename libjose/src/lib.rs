@@ -18,6 +18,7 @@
 //! - [JOSE Registrations for Web Authentication Algorithms](https://tools.ietf.org/html/rfc8812)
 //! - [Chacha derived AEAD algorithms in JOSE](https://tools.ietf.org/html/draft-amringer-jose-chacha-01)
 //! - [JSON Web Token Best Current Practices](https://tools.ietf.org/html/rfc8725)
+//! - [Public Key Authenticated Encryption for JOSE: ECDH-1PU](https://tools.ietf.org/html/draft-madden-jose-ecdh-1pu-03)
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(not(feature = "alloc"))]
@@ -37,6 +38,7 @@ extern crate serde;
 #[doc(hidden)]
 pub mod crypto;
 pub mod error;
+pub mod jose;
 pub mod jwa;
 pub mod jwe;
 pub mod jwk;

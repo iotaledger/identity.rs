@@ -17,27 +17,14 @@ pub enum JwkParams {
   Okp(JwkParamsOkp),
 }
 
-impl From<JwkParamsEc> for JwkParams {
-  fn from(other: JwkParamsEc) -> Self {
-    Self::Ec(other)
-  }
-}
-
-impl From<JwkParamsRsa> for JwkParams {
-  fn from(other: JwkParamsRsa) -> Self {
-    Self::Rsa(other)
-  }
-}
-
-impl From<JwkParamsOct> for JwkParams {
-  fn from(other: JwkParamsOct) -> Self {
-    Self::Oct(other)
-  }
-}
-
-impl From<JwkParamsOkp> for JwkParams {
-  fn from(other: JwkParamsOkp) -> Self {
-    Self::Okp(other)
+impl JwkParams {
+  pub const fn new(kty: JwkType) -> Self {
+    match kty {
+      JwkType::Ec => Self::Ec(JwkParamsEc::new()),
+      JwkType::Rsa => Self::Rsa(JwkParamsRsa::new()),
+      JwkType::Oct => Self::Oct(JwkParamsOct::new()),
+      JwkType::Okp => Self::Okp(JwkParamsOkp::new()),
+    }
   }
 }
 
@@ -64,6 +51,23 @@ pub struct JwkParamsEc {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7518#section-6.2.2.1)
   pub d: Option<String>, // ECC Private Key
+}
+
+impl JwkParamsEc {
+  pub const fn new() -> Self {
+    Self {
+      crv: String::new(),
+      x: String::new(),
+      y: String::new(),
+      d: None,
+    }
+  }
+}
+
+impl From<JwkParamsEc> for JwkParams {
+  fn from(other: JwkParamsEc) -> Self {
+    Self::Ec(other)
+  }
 }
 
 /// Parameters for RSA Keys.
@@ -141,6 +145,28 @@ pub struct JwkParamsRsaPrime {
   pub t: BigUint, // Factor CRT Coefficient
 }
 
+impl JwkParamsRsa {
+  pub const fn new() -> Self {
+    Self {
+      n: BigUint::new(),
+      e: BigUint::new(),
+      d: None,
+      p: None,
+      q: None,
+      dp: None,
+      dq: None,
+      qi: None,
+      oth: None,
+    }
+  }
+}
+
+impl From<JwkParamsRsa> for JwkParams {
+  fn from(other: JwkParamsRsa) -> Self {
+    Self::Rsa(other)
+  }
+}
+
 /// Parameters for Symmetric Keys.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7518#section-6.4)
@@ -150,6 +176,18 @@ pub struct JwkParamsOct {
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7518#section-6.4.1)
   pub k: String, // Key Value
+}
+
+impl JwkParamsOct {
+  pub const fn new() -> Self {
+    Self { k: String::new() }
+  }
+}
+
+impl From<JwkParamsOct> for JwkParams {
+  fn from(other: JwkParamsOct) -> Self {
+    Self::Oct(other)
+  }
 }
 
 /// Parameters for Octet Key Pairs.
@@ -170,4 +208,20 @@ pub struct JwkParamsOkp {
   /// [More Info](https://tools.ietf.org/html/rfc8037#section-2)
   #[serde(skip_serializing_if = "Option::is_none")]
   pub d: Option<String>, // Private Key
+}
+
+impl JwkParamsOkp {
+  pub const fn new() -> Self {
+    Self {
+      crv: String::new(),
+      x: String::new(),
+      d: None,
+    }
+  }
+}
+
+impl From<JwkParamsOkp> for JwkParams {
+  fn from(other: JwkParamsOkp) -> Self {
+    Self::Okp(other)
+  }
 }

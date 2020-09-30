@@ -71,6 +71,15 @@ pub enum JweAlgorithm {
   /// ECDH-ES using Concat KDF and CEK wrapped with XC20PKW.
   #[serde(rename = "ECDH-ES+XC20PKW")]
   ECDH_ES_XC20PKW,
+  /// ECDH-1PU using one-pass KDF and CEK wrapped with "A128KW"
+  #[serde(rename = "ECDH-1PU+A128KW")]
+  ECDH_1PU_A128KW,
+  /// ECDH-1PU using one-pass KDF and CEK wrapped with "A192KW"
+  #[serde(rename = "ECDH-1PU+A192KW")]
+  ECDH_1PU_A192KW,
+  /// ECDH-1PU using one-pass KDF and CEK wrapped with "A256KW"
+  #[serde(rename = "ECDH-1PU+A256KW")]
+  ECDH_1PU_A256KW,
 }
 
 impl JweAlgorithm {
@@ -97,6 +106,9 @@ impl JweAlgorithm {
       Self::PBES2_HS512_A256KW => "PBES2-HS512+A256KW",
       Self::ECDH_ES_C20PKW => "ECDH-ES+C20PKW",
       Self::ECDH_ES_XC20PKW => "ECDH-ES+XC20PKW",
+      Self::ECDH_1PU_A128KW => "ECDH-1PU+A128KW",
+      Self::ECDH_1PU_A192KW => "ECDH-1PU+A192KW",
+      Self::ECDH_1PU_A256KW => "ECDH-1PU+A256KW",
     }
   }
 }
