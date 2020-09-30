@@ -1,6 +1,7 @@
 use std::time::{Duration, SystemTime};
 
 mod cache;
+mod compress;
 mod utils;
 
 pub use cache::Cache;
