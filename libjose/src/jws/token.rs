@@ -1,71 +1,64 @@
-use core::convert::TryFrom;
-use serde::de::DeserializeOwned;
-use serde::Serialize;
-use serde_json::from_slice;
-use serde_json::to_vec;
+macro_rules! impl_jose_token {
+  ($name:ident, $header:ty, $claims:ty) => {
+    paste::paste! {
+      #[derive(Clone, Debug, PartialEq)]
+      pub struct [<$name RawToken>]<T = $crate::utils::Empty> {
+        pub header: $header<T>,
+        pub claims: $crate::alloc::Vec<u8>,
+      }
 
-use crate::alloc::String;
-use crate::alloc::Vec;
-use crate::error::Error;
-use crate::error::Result;
-use crate::jws::Encoder;
+      #[derive(Clone, Debug, PartialEq)]
+      pub struct [<$name Token>]<T = $crate::utils::Empty, U = $crate::utils::Empty> {
+        pub header: $header<T>,
+        pub claims: $claims<U>,
+      }
+
+      impl<T, U> [<$name Token>]<T, U> {
+        pub const fn new(header: $header<T>, claims: $claims<U>) -> Self {
+          Self { header, claims }
+        }
+
+        pub const fn header(&self) -> &$header<T> {
+          &self.header
+        }
+
+        pub fn header_mut(&mut self) -> &mut $header<T> {
+          &mut self.header
+        }
+
+        pub const fn claims(&self) -> &$claims<U> {
+          &self.claims
+        }
+
+        pub fn claims_mut(&mut self) -> &mut $claims<U> {
+          &mut self.claims
+        }
+
+        pub fn split(self) -> ($header<T>, $claims<U>) {
+          (self.header, self.claims)
+        }
+      }
+
+      impl<T, U> ::core::convert::TryFrom<[<$name RawToken>]<T>> for [<$name Token>]<T, U>
+      where
+        U: ::serde::de::DeserializeOwned,
+      {
+        type Error = $crate::error::Error;
+
+        fn try_from(other: [<$name RawToken>]<T>) -> $crate::error::Result<Self, Self::Error> {
+          Ok(Self {
+            header: other.header,
+            claims: ::serde_json::from_slice(&other.claims)?,
+          })
+        }
+      }
+    }
+  };
+}
+
+use crate::jwe::JweHeader;
 use crate::jws::JwsHeader;
-use crate::jws::JwsSigner;
 use crate::jwt::JwtClaims;
-use crate::utils::Empty;
 
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct JwsRawToken<T = Empty> {
-  pub header: JwsHeader<T>,
-  pub claims: Vec<u8>,
-}
-
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct JwsToken<T = Empty, U = Empty> {
-  header: JwsHeader<T>,
-  claims: JwtClaims<U>,
-}
-
-impl<T, U> JwsToken<T, U> {
-  pub const fn new(header: JwsHeader<T>, claims: JwtClaims<U>) -> Self {
-    Self { header, claims }
-  }
-
-  pub const fn header(&self) -> &JwsHeader<T> {
-    &self.header
-  }
-
-  pub fn header_mut(&mut self) -> &mut JwsHeader<T> {
-    &mut self.header
-  }
-
-  pub const fn claims(&self) -> &JwtClaims<U> {
-    &self.claims
-  }
-
-  pub fn claims_mut(&mut self) -> &mut JwtClaims<U> {
-    &mut self.claims
-  }
-
-  pub fn encode_compact(&self, signer: &dyn JwsSigner) -> Result<String>
-  where
-    T: Serialize,
-    U: Serialize,
-  {
-    Encoder::encode_compact(&to_vec(&self.claims)?, &self.header, signer)
-  }
-}
-
-impl<T, U> TryFrom<JwsRawToken<T>> for JwsToken<T, U>
-where
-  U: DeserializeOwned,
-{
-  type Error = Error;
-
-  fn try_from(other: JwsRawToken<T>) -> Result<Self, Self::Error> {
-    Ok(Self {
-      header: other.header,
-      claims: from_slice(&other.claims)?,
-    })
-  }
-}
+impl_jose_token!(Jwe, JweHeader, JwtClaims);
+impl_jose_token!(Jws, JwsHeader, JwtClaims);
