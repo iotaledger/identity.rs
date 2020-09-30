@@ -270,6 +270,39 @@ fn test_detached_unencoded() {
 }
 
 #[test]
+fn test_detached_unencoded_no_validation() {
+  let mut header: JwsHeader = JwsHeader::new();
+
+  header.set_kid("#my-key");
+  header.set_b64(false);
+  header.set_crit(vec!["b64"]);
+
+  let payload: &[u8] = b"hello.";
+  let key = HS512.generate_key().unwrap();
+  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+
+  let encoded: String = JwsEncoder::new()
+    .detach()
+    .encode_slice(payload, &header, &signer)
+    .unwrap()
+    .to_string()
+    .unwrap();
+
+  assert_eq!(segment_count(&encoded), 2);
+
+  let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
+
+  let decoded: JwsRawToken = JwsDecoder::new()
+    .alg(HS512)
+    .payload(payload)
+    .decode_token(&encoded, &verifier)
+    .unwrap();
+
+  assert_eq!(decoded.header.alg(), JwsAlgorithm::HS512);
+  assert_eq!(decoded.header.kid().unwrap(), "#my-key");
+}
+
+#[test]
 fn test_detached_is_truly_detached() {
   let mut header: JwsHeader = JwsHeader::new();
 

@@ -32,7 +32,7 @@ use crate::jws::JwsToken;
 use crate::jws::JwsVerifier;
 use crate::jwt::JwtClaims;
 use crate::utils::decode_b64;
-use crate::utils::encode_b64_into;
+use crate::utils::encode_b64;
 
 const PARAM_ALG: &str = "alg";
 const PARAM_B64: &str = "b64";
@@ -214,12 +214,9 @@ impl JwsEncoder {
     T: AsRef<[u8]> + ?Sized,
     U: Serialize,
   {
-    // A helper for signature composition
-    let mut components: StrComponents = Components::new();
-
     // 1. Create the content to be used as the JWS Payload.
 
-    let payload: &[u8] = claims.as_ref();
+    let claims: &[u8] = claims.as_ref();
 
     // 3. Create the JSON object(s) containing the desired set of Header
     //    Parameters, which together comprise the JOSE Header (the JWS
@@ -232,24 +229,27 @@ impl JwsEncoder {
 
     // 2. Compute the encoded payload value BASE64URL(JWS Payload).
 
+    let mut payload_b64: Vec<u8> = Vec::new();
+
     // Extract the "b64" header parameter and encode the payload as required.
     //
     // See: https://tools.ietf.org/html/rfc7797#section-3
     if extract_b64(&jose)? {
       // Add the payload as a base64-encoded string.
-      encode_b64_into(payload, &mut components.payload);
-    } else {
+      payload_b64 = encode_b64(claims).into_bytes();
+    } else if !self.detach {
       // Add the payload as a UTF-8 string.
-      components
-        .payload
-        .push_str(self.create_unencoded_payload(payload)?);
+      payload_b64.extend_from_slice(self.create_unencoded_payload(claims)?.as_bytes());
+    } else {
+      // Add the payload as-is.
+      payload_b64.extend_from_slice(claims);
     }
 
     // 3. We already created the JOSE header as a previous step.
 
     // 4. Compute the encoded header BASE64URL(UTF8(JWS Protected Header)).
 
-    encode_b64_into(&to_vec(&jose)?, &mut components.header);
+    let header_b64: String = encode_b64(&to_vec(&jose)?);
 
     // 5. Compute the JWS Signature in the manner defined for the
     //    particular algorithm being used over the JWS Signing Input
@@ -258,12 +258,11 @@ impl JwsEncoder {
     //    MUST be present in the JOSE Header, with the algorithm value
     //    accurately representing the algorithm used to construct the JWS
     //    Signature.
-    let message: Vec<u8> = components.create_message();
+    let message: Vec<u8> = create_jws_message(&header_b64, &payload_b64);
     let signature: Vec<u8> = signer.sign(&message)?;
 
     // 6. Compute the encoded signature value BASE64URL(JWS Signature).
-
-    encode_b64_into(&signature, &mut components.signature);
+    let signature_b64: String = encode_b64(&signature);
 
     // 7. We don't support multiple JWS signatures
 
@@ -272,15 +271,17 @@ impl JwsEncoder {
     let payload: Option<String> = if self.detach {
       None
     } else {
-      Some(components.payload)
+      // This should not fail because we validated the non-detached payload
+      // above and ensured the content was valid UTF-8.
+      Some(String::from_utf8(payload_b64).expect("infallible"))
     };
 
     match self.format {
       JwsFormat::Compact => {
         let data: String = if let Some(payload) = payload {
-          create_jws_compact(components.header, payload, components.signature)
+          create_jws_compact(header_b64, payload, signature_b64)
         } else {
-          create_jws_compact_detached(components.header, components.signature)
+          create_jws_compact_detached(header_b64, signature_b64)
         };
 
         Ok(JwsEncoded::Compact(data))
@@ -289,8 +290,8 @@ impl JwsEncoder {
         let data: JwsEncodedGeneral = JwsEncodedGeneral {
           payload,
           signatures: vec![JwsSignature {
-            signature: components.signature,
-            protected: components.header,
+            signature: signature_b64,
+            protected: header_b64,
           }],
         };
 
@@ -300,8 +301,8 @@ impl JwsEncoder {
         let data: JwsEncodedFlatten = JwsEncodedFlatten {
           payload,
           signature: JwsSignature {
-            signature: components.signature,
-            protected: components.header,
+            signature: signature_b64,
+            protected: header_b64,
           },
         };
 
@@ -790,37 +791,4 @@ fn create_jws_compact_detached(header: impl AsRef<str>, signature: impl AsRef<st
   output.push('.');
   output.push_str(signature.as_ref());
   output
-}
-
-// =============================================================================
-// Component Helpers
-// =============================================================================
-
-type StrComponents = Components<String>;
-
-#[derive(Debug)]
-struct Components<T> {
-  header: T,
-  payload: T,
-  signature: T,
-}
-
-impl<T> Components<T> {
-  fn new() -> Self
-  where
-    T: Default,
-  {
-    Self {
-      header: T::default(),
-      payload: T::default(),
-      signature: T::default(),
-    }
-  }
-
-  fn create_message(&self) -> Vec<u8>
-  where
-    T: AsRef<[u8]>,
-  {
-    create_jws_message(&self.header, &self.payload)
-  }
 }
