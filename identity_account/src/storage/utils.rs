@@ -18,7 +18,8 @@ pub fn cache_file_dir(name: &str) -> crate::Result<PathBuf> {
 fn home_dir(name: &str) -> crate::Result<PathBuf> {
     let home = match std::env::var("CACHE_VAR") {
         Ok(h) => h.into(),
-        Err(_) => dirs::home_dir().unwrap(),
+        Err(e) => dirs::home_dir()
+            .ok_or_else(|| crate::Error::DirError(format!("Error getting the Home Directory: {}", e)))?,
     };
 
     let home_dir = home.join(format!(".{}", name));
