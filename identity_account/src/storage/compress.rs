@@ -74,8 +74,6 @@ impl HuffmanCodec {
 
         out.extend(encoded_bytes);
 
-        println!("{}", out.len());
-
         Ok(out)
     }
 
@@ -168,6 +166,7 @@ pub fn frequency_map(val: &str) -> BTreeMap<char, u32> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::proptest;
 
     #[test]
     fn test_encode_decode() {
@@ -178,5 +177,18 @@ mod tests {
         let decompressed = HuffmanCodec::decompress(&compressed).unwrap();
 
         assert_eq!(expected, decompressed);
+    }
+
+    proptest! {
+        #[test]
+        fn prop_check_encode_decode(s in "[a-zA-Z0-9._!~$&'()*+;,=/?:@-]+[a-zA-Z0-9._!~$&'()*+;,=/?:@-]+") {
+            let expected = String::from(&s);
+
+            let compressed = HuffmanCodec::compress(s).unwrap();
+            let decompressed = HuffmanCodec::decompress(&compressed).unwrap();
+
+            assert_eq!(expected, decompressed);
+
+        }
     }
 }

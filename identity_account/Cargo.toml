@@ -35,3 +35,6 @@ dirs = "3.0"
 
 # stronghold high level
 # iota-stronghold = { git = "https://github.com/iotaledger/stronghold.rs.git", branch = "refactor/vault-terminology" }
+
+[dev-dependencies]
+proptest = "0.10.1"
