@@ -190,5 +190,15 @@ mod tests {
             assert_eq!(expected, decompressed);
 
         }
+
+        #[test]
+        fn prop_test_encode_decode_len(s in "[a-zA-Z0-9._!~$&'()*+;,=/?:@-]+[a-zA-Z0-9._!~$&'()*+;,=/?:@-]+") {
+            let expected = s.len();
+
+            let compressed = HuffmanCodec::compress(s).unwrap();
+            let decompressed = HuffmanCodec::decompress(&compressed).unwrap();
+
+            assert_eq!(expected, decompressed.len());
+        }
     }
 }
