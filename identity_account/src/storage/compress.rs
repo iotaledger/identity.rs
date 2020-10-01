@@ -69,7 +69,7 @@ impl HuffmanCodec {
 
         encoded.char_indices().for_each(|(idx, ch)| {
             encoded_bytes[idx / 8] <<= 1;
-            encoded_bytes[idx / 8] += (ch as u8) - '0' as u8;
+            encoded_bytes[idx / 8] += (ch as u8) - b'0';
         });
 
         out.extend(encoded_bytes);
@@ -79,9 +79,7 @@ impl HuffmanCodec {
 
     pub fn decompress(data: &[u8]) -> crate::Result<String> {
         let mut tree_size: [u8; 8] = [0; 8];
-        for i in 0..8 {
-            tree_size[i] = data[i];
-        }
+        tree_size[..8].clone_from_slice(&data[..8]);
 
         let tree_size_val = usize::from_be_bytes(tree_size);
         let encoded_tree = &data[8..(tree_size_val + 8)];
@@ -111,7 +109,7 @@ impl HuffmanCodec {
                     } else {
                         Box::leak(left).clone()
                     };
-                    if let None = codec_clone.root.left {
+                    if codec_clone.root.left.is_none() {
                         if let Some(ch) = codec_clone.root.value {
                             output_string.push(ch);
                         }
@@ -135,7 +133,7 @@ pub fn fill_code_map_outer(map: &mut BTreeMap<char, String>, tree: &HuffmanCodec
 }
 
 pub fn fill_code_map_inner_recur(map: &mut BTreeMap<char, String>, tree: &HTree, prefix: String) -> crate::Result<()> {
-    if let None = &tree.left {
+    if tree.left.is_none() {
         let ch: char;
         if let Some(c) = tree.value {
             ch = c;
@@ -146,10 +144,12 @@ pub fn fill_code_map_inner_recur(map: &mut BTreeMap<char, String>, tree: &HTree,
         return Ok(());
     }
 
-    Ok(if let (Some(left), Some(right)) = (&tree.left, &tree.right) {
+    if let (Some(left), Some(right)) = (&tree.left, &tree.right) {
         fill_code_map_inner_recur(map, left, format!("{}0", prefix))?;
         fill_code_map_inner_recur(map, right, format!("{}1", prefix))?;
-    })
+    }
+
+    Ok(())
 }
 
 pub fn frequency_map(val: &str) -> BTreeMap<char, u32> {
