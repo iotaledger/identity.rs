@@ -1,231 +1,182 @@
-use std::{
-    cmp::Ordering,
-    collections::{binary_heap::BinaryHeap, BTreeMap},
-    rc::Rc,
-    string::String,
-    vec::Vec,
-};
+use std::collections::{binary_heap::BinaryHeap, BTreeMap};
 
-/// Huffman compression codec
-pub struct Codec(pub BTreeMap<char, Vec<u8>>);
+use serde::{Deserialize, Serialize};
 
-/// Huffman Tree structure
-#[derive(Eq, Debug, Clone)]
-struct HTree {
-    count: i32,
-    value: Option<char>,
-    left: Option<Rc<HTree>>,
-    right: Option<Rc<HTree>>,
+use crate::storage::compress::tree::HTree;
+
+mod tree;
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct HuffmanCodec {
+    root: HTree,
 }
 
-impl Codec {
-    /// Create a new codec with a specified table
-    pub fn new(s: &str) -> crate::Result<Self> {
-        let f_map = frequency_map(s);
-        let heap = map_to_heap(f_map);
-        let tree = heap_to_tree(heap)?;
+impl HuffmanCodec {
+    fn new(map: BTreeMap<char, u32>) -> HuffmanCodec {
+        let mut heap = BinaryHeap::new();
 
-        Ok(Self(tree_to_codes(&Some(tree), Vec::new(), BTreeMap::new())))
-    }
-
-    /// Encode a data string using the table.
-    pub fn encode(&self, data: String) -> crate::Result<Vec<u8>> {
-        let mut num_bits = 0;
-
-        data.chars()
-            .map(|c| {
-                if let Some(code) = self.0.get(&c) {
-                    num_bits += code.len();
-                    Ok(())
-                } else {
-                    Err(crate::Error::CompressionError("Doesn't exist in codec".into()))
-                }
-            })
-            .collect::<crate::Result<()>>()?;
-
-        let mut ret = Vec::<u8>::with_capacity(num_bits);
-
-        data.chars().for_each(|ch| {
-            let val = self.0.get(&ch).expect("Should exist but doesn't");
-
-            val.iter().for_each(|bit| ret.push(*bit));
+        map.iter().for_each(|(c, v)| {
+            let new = HTree::new(*c, *v);
+            heap.push(new);
         });
 
-        Ok(ret)
-    }
+        let mut left: HTree;
+        let mut right: HTree;
 
-    /// Decode a buffer to a String with the specified table.
-    pub fn decode(&self, data: Vec<u8>) -> String {
-        let code = reverse(&self.0);
+        while heap.len() >= 2 {
+            left = heap.pop().unwrap();
+            right = heap.pop().unwrap();
 
-        let mut temp = Vec::<u8>::new();
-        let mut ret = String::new();
+            heap.push(HTree::merge(left, right));
+        }
 
-        data.into_iter().for_each(|b| {
-            temp.push(b);
-
-            if let Some(c) = code.get(&temp) {
-                ret.push(*c);
-                temp.clear();
-            }
-        });
-        ret
-    }
-}
-
-impl HTree {
-    /// Create a new Huffman Tree.
-    pub fn new(value: char, count: i32) -> Rc<Self> {
-        Rc::new(HTree {
-            count,
-            value: Some(value),
-            left: None,
-            right: None,
-        })
-    }
-
-    /// Merge two Huffman Trees.
-    pub fn merge(tree_left: Rc<HTree>, tree_right: Rc<HTree>) -> Rc<HTree> {
-        Rc::new(HTree {
-            count: tree_left.count + tree_right.count,
-            value: None,
-            left: Some(tree_left),
-            right: Some(tree_right),
-        })
-    }
-}
-
-/// Convert a `BTreeMap<char, i32>` to a `BinaryHeap<Rc<HTree>>`.
-fn map_to_heap(map: BTreeMap<char, i32>) -> BinaryHeap<Rc<HTree>> {
-    let mut heap = BinaryHeap::new();
-    map.into_iter().for_each(|(l, c)| {
-        let t = HTree::new(l, c);
-        heap.push(t);
-    });
-
-    heap
-}
-
-/// Convert the `BinaryHeap<Rc<HTree>>` to a `Rc<HTree>`
-fn heap_to_tree(mut heap: BinaryHeap<Rc<HTree>>) -> crate::Result<Rc<HTree>> {
-    while heap.len() > 1 {
-        let (t1, t2) = (
-            heap.pop()
-                .ok_or_else(|| crate::Error::CompressionError("Error popping off of Heap".into()))?,
-            heap.pop()
-                .ok_or_else(|| crate::Error::CompressionError("Error popping off of Heap".into()))?,
-        );
-
-        heap.push(HTree::merge(t1, t2));
-    }
-
-    heap.pop()
-        .ok_or_else(|| crate::Error::CompressionError("Error popping off of Heap".into()))
-}
-
-/// Convert a `HTree` to the codec format.
-fn tree_to_codes(
-    root: &Option<Rc<HTree>>,
-    prefix: Vec<u8>,
-    mut map: BTreeMap<char, Vec<u8>>,
-) -> BTreeMap<char, Vec<u8>> {
-    if let Some(ref tree) = *root {
-        match tree.value {
-            Some(t) => {
-                map.insert(t, prefix);
-            }
-            None => {
-                let (mut pre_l, mut pre_r) = (prefix.clone(), prefix);
-                pre_l.push(1u8);
-                let map = tree_to_codes(&tree.left, pre_l, map);
-                pre_r.push(0u8);
-
-                return tree_to_codes(&tree.right, pre_r, map);
-            }
+        HuffmanCodec {
+            root: heap.pop().unwrap(),
         }
     }
 
-    map
+    pub fn compress(data: String) -> crate::Result<Vec<u8>> {
+        let mut out: Vec<u8> = Vec::new();
+        let frequency_map = frequency_map(&data);
+
+        let tree = HuffmanCodec::new(frequency_map);
+
+        let tree_bytes: Vec<u8> = bincode::serialize(&tree)?;
+        let tree_size = tree_bytes.len().to_be_bytes();
+
+        out.extend(&tree_size);
+        out.extend(&tree_bytes);
+
+        let mut map = BTreeMap::new();
+        fill_code_map_outer(&mut map, &tree)?;
+
+        let mut encoded: String = data.chars().fold(String::new(), |mut acc, c| {
+            acc.push_str(map.get(&c).unwrap());
+            acc
+        });
+
+        out.extend(&encoded.len().to_be_bytes());
+
+        while encoded.len() % 8 != 0 {
+            encoded.push_str("0");
+        }
+
+        let mut encoded_bytes: Vec<u8> = Vec::new();
+
+        for _ in 0..encoded.len() / 8 {
+            encoded_bytes.push(0u8);
+        }
+
+        encoded.char_indices().for_each(|(idx, ch)| {
+            encoded_bytes[idx / 8] <<= 1;
+            encoded_bytes[idx / 8] += (ch as u8) - '0' as u8;
+        });
+
+        out.extend(encoded_bytes);
+
+        println!("{}", out.len());
+
+        Ok(out)
+    }
+
+    pub fn decompress(data: &[u8]) -> crate::Result<String> {
+        let mut tree_size: [u8; 8] = [0; 8];
+        for i in 0..8 {
+            tree_size[i] = data[i];
+        }
+
+        let tree_size_val = usize::from_be_bytes(tree_size);
+        let encoded_tree = &data[8..(tree_size_val + 8)];
+        let tree: HuffmanCodec = bincode::deserialize(encoded_tree)?;
+
+        let mut byte_buf: [u8; 8] = [0; 8];
+        for i in 0..8 {
+            byte_buf[i] = data[i + (tree_size_val + 8)];
+        }
+
+        let data_size = usize::from_be_bytes(byte_buf);
+        let encoded_data = &data[(tree_size_val + 16)..];
+
+        let mut codec_clone = tree.clone();
+
+        let mut output_string = String::from("");
+
+        let mut bit_counter = 0;
+        for byte in encoded_data {
+            for i in 0..8 {
+                let mask = 0x80 >> i;
+                let bit = (mask & byte) >> (7 - i);
+
+                if let (Some(left), Some(right)) = (codec_clone.root.left.clone(), codec_clone.root.right.clone()) {
+                    codec_clone.root = if bit == 1 {
+                        Box::leak(right).clone()
+                    } else {
+                        Box::leak(left).clone()
+                    };
+                    if let None = codec_clone.root.left {
+                        if let Some(ch) = codec_clone.root.value {
+                            output_string.push(ch);
+                        }
+                        codec_clone.root = tree.clone().root;
+                    }
+                }
+
+                bit_counter += 1;
+                if bit_counter == data_size {
+                    break;
+                }
+            }
+        }
+
+        Ok(output_string)
+    }
 }
 
-/// Swap the keys and values in a `BTreeMap<char, Vec<u8>>` to `BTreeMap<Vec<u8>, char>>`
-fn reverse(tree: &BTreeMap<char, Vec<u8>>) -> BTreeMap<Vec<u8>, char> {
-    let mut ret = BTreeMap::new();
+pub fn fill_code_map_outer(map: &mut BTreeMap<char, String>, tree: &HuffmanCodec) -> crate::Result<()> {
+    fill_code_map_inner_recur(map, &tree.root, String::from(""))
+}
 
-    tree.iter().for_each(|(k, v)| {
-        ret.insert(v.clone(), *k);
+pub fn fill_code_map_inner_recur(map: &mut BTreeMap<char, String>, tree: &HTree, prefix: String) -> crate::Result<()> {
+    if let None = &tree.left {
+        let ch: char;
+        if let Some(c) = tree.value {
+            ch = c;
+        } else {
+            return Err(crate::Error::CompressionError("Error building the code map".into()));
+        }
+        map.insert(ch, prefix);
+        return Ok(());
+    }
+
+    Ok(if let (Some(left), Some(right)) = (&tree.left, &tree.right) {
+        fill_code_map_inner_recur(map, left, format!("{}0", prefix))?;
+        fill_code_map_inner_recur(map, right, format!("{}1", prefix))?;
+    })
+}
+
+pub fn frequency_map(val: &str) -> BTreeMap<char, u32> {
+    let mut out: BTreeMap<char, u32> = BTreeMap::new();
+
+    val.chars().for_each(|ch| {
+        let new = if let Some(o) = out.get(&ch) { o + 1u32 } else { 1u32 };
+        out.insert(ch, new);
     });
 
-    ret
-}
-
-/// Create a `BTreeMap<char, i32>` of the frequency of the Codec.  
-fn frequency_map(n: &str) -> BTreeMap<char, i32> {
-    let mut output: BTreeMap<char, i32> = BTreeMap::new();
-    n.chars().for_each(|c| {
-        let new = if let Some(o) = output.get(&c) { o + 1i32 } else { 1i32 };
-        output.insert(c, new);
-    });
-    output
-}
-
-impl Ord for HTree {
-    fn cmp(&self, other: &HTree) -> Ordering {
-        (self.count).cmp(&(other.count))
-    }
-}
-
-impl PartialOrd for HTree {
-    fn partial_cmp(&self, other: &HTree) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl PartialEq for HTree {
-    fn eq(&self, other: &HTree) -> bool {
-        self.count == other.count
-    }
+    out
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]
-    fn test_frequency() {
-        let val = "abababababaaababbbbabababbabccbcccbabbdddddd";
+    fn test_encode_decode() {
+        let expected = "aaabbcdefg";
 
-        let res = frequency_map(val);
-        let mut expected: BTreeMap<char, i32> = BTreeMap::new();
+        let compressed = HuffmanCodec::compress(expected.into()).unwrap();
 
-        expected.insert('a', 14);
-        expected.insert('b', 19);
-        expected.insert('c', 5);
-        expected.insert('d', 6);
+        let decompressed = HuffmanCodec::decompress(&compressed).unwrap();
 
-        assert_eq!(expected, res);
-    }
-
-    #[test]
-    fn test_decode() {
-        let val = String::from("abababababaaababbbbabababbabccbcccbabbdddddd");
-        let table = "aaaaaabbbbbcccdddd";
-        let codec = Codec::new(table).unwrap();
-        let encode = codec.encode(val.clone()).unwrap();
-
-        let decode = codec.decode(encode);
-
-        assert_eq!(val, decode);
-
-        let val = String::from("aabbaccdc");
-
-        let encode = codec.encode(val.clone()).unwrap();
-        let decode = codec.decode(encode);
-
-        assert_eq!(val, decode);
-
-        let val = String::from("ABC");
-
-        assert!(codec.encode(val).is_err());
+        assert_eq!(expected, decompressed);
     }
 }

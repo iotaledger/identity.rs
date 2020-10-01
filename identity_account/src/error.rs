@@ -9,6 +9,8 @@ pub enum Error {
     DirError(String),
     #[error("Compression Error: `{0}`")]
     CompressionError(String),
+    #[error("Bincode Error: `{0}`")]
+    BincodeError(#[from] bincode::Error),
 }
 
 pub type Result<T> = AnyhowResult<T, Error>;
