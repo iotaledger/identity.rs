@@ -3,6 +3,7 @@ use identity_core::common::Timestamp;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
+
 #[derive(Debug, Deserialize, Serialize, PartialEq, Default, Eq, Clone)]
 pub struct DIDComm {
     pub id: String, // MUST be unique to the sender
@@ -46,4 +47,14 @@ impl FromStr for DIDComm {
         let did_comm = serde_json::from_str(s).expect("Unable to build DIDComm Message");
         Ok(did_comm)
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub enum MessageTypes {
+    TrustPing,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct TrustPing {
+    did: DID
 }
