@@ -5,13 +5,10 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
+use crypto::key_box::SecretKey;
+use crypto::rand::OsRng;
+use crypto::signers::hmac;
 
-use crate::crypto::hmac_generate;
-use crate::crypto::hmac_sign;
-use crate::crypto::hmac_verify;
-use crate::crypto::PKey;
-use crate::crypto::Public;
-use crate::crypto::Secret;
 use crate::error::CryptoError;
 use crate::error::Result;
 use crate::jwa::HashAlgorithm;
@@ -55,14 +52,16 @@ impl HmacAlgorithm {
     }
   }
 
-  pub fn generate_key(self) -> Result<PKey<Secret>> {
-    hmac_generate(self)
+  /// Creates a new Hmac key.
+  pub fn generate_key(self) -> Result<SecretKey> {
+    SecretKey::random(self.hash_alg().output_size(), &mut OsRng).map_err(Into::into)
   }
 
+  /// Creates a new `HmacSigner` from a slice of bytes.
   pub fn signer_from_bytes(self, data: impl AsRef<[u8]>) -> Result<HmacSigner> {
     let data: &[u8] = data.as_ref();
 
-    if data.len() < self.hash_alg().size() {
+    if data.len() < self.hash_alg().output_size() {
       return Err(CryptoError::InvalidKeyFormat(self.name()).into());
     }
 
@@ -73,10 +72,11 @@ impl HmacAlgorithm {
     })
   }
 
+  /// Creates a new `HmacSigner` from a base64url-encoded key.
   pub fn signer_from_b64(self, data: impl AsRef<[u8]>) -> Result<HmacSigner> {
     let data: Vec<u8> = decode_b64(data.as_ref())?;
 
-    if data.len() < self.hash_alg().size() {
+    if data.len() < self.hash_alg().output_size() {
       return Err(CryptoError::InvalidKeyFormat(self.name()).into());
     }
 
@@ -87,6 +87,7 @@ impl HmacAlgorithm {
     })
   }
 
+  /// Creates a new `HmacSigner` from a JSON Web Key.
   pub fn signer_from_jwk(self, data: &Jwk) -> Result<HmacSigner> {
     data.check_use(&JwkUse::Signature)?;
     data.check_ops(&JwkOperation::Sign)?;
@@ -105,10 +106,11 @@ impl HmacAlgorithm {
     })
   }
 
+  /// Creates a new `HmacVerifier` from a slice of bytes.
   pub fn verifier_from_bytes(self, data: impl AsRef<[u8]>) -> Result<HmacVerifier> {
     let data: &[u8] = data.as_ref();
 
-    if data.len() < self.hash_alg().size() {
+    if data.len() < self.hash_alg().output_size() {
       return Err(CryptoError::InvalidKeyFormat(self.name()).into());
     }
 
@@ -119,10 +121,11 @@ impl HmacAlgorithm {
     })
   }
 
+  /// Creates a new `HmacVerifier` from a base64url-encoded key.
   pub fn verifier_from_b64(self, data: impl AsRef<[u8]>) -> Result<HmacVerifier> {
     let data: Vec<u8> = decode_b64(data.as_ref())?;
 
-    if data.len() < self.hash_alg().size() {
+    if data.len() < self.hash_alg().output_size() {
       return Err(CryptoError::InvalidKeyFormat(self.name()).into());
     }
 
@@ -133,6 +136,7 @@ impl HmacAlgorithm {
     })
   }
 
+  /// Creates a new `HmacVerifier` from a JSON Web Key.
   pub fn verifier_from_jwk(self, data: &Jwk) -> Result<HmacVerifier> {
     data.check_use(&JwkUse::Signature)?;
     data.check_ops(&JwkOperation::Verify)?;
@@ -151,6 +155,7 @@ impl HmacAlgorithm {
     })
   }
 
+  /// Creates a new Hmac JSON Web Key with the given slice of bytes.
   pub fn to_jwk(self, data: impl AsRef<[u8]>) -> Jwk {
     let mut jwk: Jwk = Jwk::with_kty(JwkType::Oct);
     let mut ops: Vec<JwkOperation> = Vec::with_capacity(2);
@@ -186,10 +191,14 @@ impl From<HmacAlgorithm> for JwsAlgorithm {
   }
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+// =============================================================================
+// Hmac Signer
+// =============================================================================
+
+#[derive(Debug)]
 pub struct HmacSigner {
   alg: HmacAlgorithm,
-  key: PKey<Secret>,
+  key: SecretKey,
   kid: Option<String>,
 }
 
@@ -203,7 +212,13 @@ impl JwsSigner for HmacSigner {
   }
 
   fn sign(&self, message: &[u8]) -> Result<Vec<u8>> {
-    hmac_sign(self.alg, message, &self.key)
+    let signature: Vec<u8> = match self.alg {
+      HmacAlgorithm::HS256 => hmac::sign_sha256(&self.key, message)?.to_vec(),
+      HmacAlgorithm::HS384 => hmac::sign_sha384(&self.key, message)?.to_vec(),
+      HmacAlgorithm::HS512 => hmac::sign_sha512(&self.key, message)?.to_vec(),
+    };
+
+    Ok(signature)
   }
 }
 
@@ -215,10 +230,14 @@ impl Deref for HmacSigner {
   }
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+// =============================================================================
+// Hmac Verifier
+// =============================================================================
+
+#[derive(Debug)]
 pub struct HmacVerifier {
   alg: HmacAlgorithm,
-  key: PKey<Public>,
+  key: SecretKey,
   kid: Option<String>,
 }
 
@@ -232,7 +251,13 @@ impl JwsVerifier for HmacVerifier {
   }
 
   fn verify(&self, message: &[u8], signature: &[u8]) -> Result<()> {
-    hmac_verify(self.alg, message, signature, &self.key)
+    match self.alg {
+      HmacAlgorithm::HS256 => hmac::verify_sha256(&self.key, message, signature)?,
+      HmacAlgorithm::HS384 => hmac::verify_sha384(&self.key, message, signature)?,
+      HmacAlgorithm::HS512 => hmac::verify_sha512(&self.key, message, signature)?,
+    }
+
+    Ok(())
   }
 }
 
