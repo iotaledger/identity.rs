@@ -21,12 +21,10 @@ anyhow = "1.0"
 
 # serialization
 serde = {version = "1.0", features = ["derive"]}
-serde_json = "1.0"
+serde_json = { version = "1.0", features = ["preserve_order"] }
 serde_cbor = "0.11"
 
-# timestamps
-chrono = { version = "0.4", features = ["serde"] }
-
 # identity
+identity_common = { path = "../identity_common" }
 identity_core = { path = "../identity_core" }
 # identity_core = { git = "https://github.com/iotaledger/identity.rs", branch = "dev" }

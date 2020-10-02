@@ -1,16 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::{fmt, ops::Deref};
 
-use crate::did::DID;
-
 /// A simple wrapper for URIs adhering to RFC 3986
 ///
 /// TODO: Parse/Validate according to RFC 3986
-/// TODO: impl From<DID> for Uri
 #[derive(Clone, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(transparent)]
-pub struct Uri(pub(crate) String);
+pub struct Uri(String);
 
 impl Uri {
     pub fn into_inner(self) -> String {
@@ -41,12 +38,6 @@ impl From<&'_ str> for Uri {
 impl From<String> for Uri {
     fn from(other: String) -> Self {
         Self(other)
-    }
-}
-
-impl From<DID> for Uri {
-    fn from(other: DID) -> Uri {
-        Self(other.to_string())
     }
 }
 

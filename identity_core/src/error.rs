@@ -1,5 +1,5 @@
 use anyhow::Result as AnyhowResult;
-use chrono::ParseError as ChronoError;
+use identity_common::Error as CommonError;
 use pest::error::Error as PestError;
 use thiserror::Error as DeriveError;
 
@@ -23,9 +23,8 @@ pub enum Error {
     /// Json related error from `serde_json`
     #[error("Json Error: {0}")]
     SerdeError(#[from] serde_json::Error),
-    /// Error caused when parsing an invalid timestamp.
-    #[error("Timestamp Error: {0}")]
-    InvalidTimestamp(#[from] ChronoError),
+    #[error(transparent)]
+    CommonError(#[from] CommonError),
 }
 
 /// The main crate result type derived from the `anyhow::Result` type.

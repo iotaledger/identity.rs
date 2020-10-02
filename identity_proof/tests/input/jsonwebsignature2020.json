@@ -1,0 +1,7 @@
+{
+  "type": "JsonWebSignature2020",
+  "verificationMethod": "https://w3id.org/people/dave/keys/2",
+  "created": "2016-11-05T03:12:54Z",
+  "proofPurpose": "assertionMethod",
+  "jws": "eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..dXNHwJ-9iPMRQ4AUcv9j-7LuImTiWAG0sDYbRRDDiyAjOV9CUmjLMKiePpytoAmGNGNTHDlEOsTa4CS3dZ7yBg"
+}

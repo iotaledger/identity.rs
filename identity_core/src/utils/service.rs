@@ -1,13 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-use std::str::FromStr;
+use std::{hash::Hash, str::FromStr};
 
-use crate::utils::{Context, Subject};
-use serde_diff::SerdeDiff;
+use crate::utils::{Context, HasId, Subject};
+use identity_diff::Diff;
 
 /// Describes a `Service` in a `DIDDocument` type. Contains an `id`, `service_type` and `endpoint`.  The `endpoint` can
 /// be represented as a `String` or a `ServiceEndpoint` in json.
-#[derive(Debug, Eq, PartialEq, Deserialize, Serialize, SerdeDiff, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Deserialize, Serialize, Diff, Clone, Default, Hash, PartialOrd, Ord)]
+#[diff(from_into)]
 pub struct Service {
     #[serde(default)]
     pub id: Subject,
@@ -20,7 +21,8 @@ pub struct Service {
 /// Describes the `ServiceEndpoint` struct type. Contains a required `context` and two optional fields: `endpoint_type`
 /// and `instances`.  If neither `instances` nor `endpoint_type` is specified, the `ServiceEndpoint` is represented as a
 /// String in json using the `context`.
-#[derive(Debug, Eq, PartialEq, Clone, SerdeDiff, Default)]
+#[derive(Debug, Eq, PartialEq, Clone, Diff, Default, Hash, PartialOrd, Ord)]
+#[diff(from_into)]
 pub struct ServiceEndpoint {
     pub context: Context,
     pub endpoint_type: Option<String>,
@@ -44,6 +46,14 @@ impl ServiceEndpoint {
             endpoint_type: self.endpoint_type,
             instances: self.instances,
         }
+    }
+}
+
+impl HasId for Service {
+    type Id = Subject;
+
+    fn id(&self) -> &Self::Id {
+        &self.id
     }
 }
 

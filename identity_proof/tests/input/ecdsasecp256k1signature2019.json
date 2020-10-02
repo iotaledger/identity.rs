@@ -1,0 +1,7 @@
+{
+  "type": "EcdsaSecp256k1Signature2019",
+  "created": "2020-03-30T20:54:52Z",
+  "verificationMethod": "did:example:123#qfknmVDhMi3Uc190IHBRfBRqMgbEEBRzWOj1E9EmzwM",
+  "proofPurpose": "assertionMethod",
+  "jws": "eyJhbGciOiJFUzI1NksiLCJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ..EsCNG3KD8CcurIBd354JMIYvsBr9bvF17RQbfqEg5dZy45vmSGVg1U5_rlXihjGLb3EtTK9-73X3YYYgfW2Byg"
+}

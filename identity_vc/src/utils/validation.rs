@@ -1,4 +1,4 @@
-use identity_core::common::{OneOrMany, Uri};
+use identity_common::{OneOrMany, Uri};
 
 use crate::{
     common::Context,

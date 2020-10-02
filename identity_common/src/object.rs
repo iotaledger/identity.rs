@@ -7,7 +7,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use crate::common::Value;
+use crate::value::Value;
 
 type Inner = HashMap<String, Value>;
 
@@ -55,14 +55,29 @@ impl From<Object> for Inner {
     }
 }
 
+impl From<Map<String, Value>> for Object {
+    fn from(other: Map<String, Value>) -> Self {
+        Self::from_iter(other.into_iter())
+    }
+}
+
 impl From<Object> for Map<String, Value> {
     fn from(other: Object) -> Self {
-        Map::from_iter(other.into_inner().into_iter())
+        Self::from_iter(other.into_inner().into_iter())
     }
 }
 
 impl From<Object> for Value {
     fn from(other: Object) -> Self {
         Value::Object(other.into())
+    }
+}
+
+impl FromIterator<(String, Value)> for Object {
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: IntoIterator<Item = (String, Value)>,
+    {
+        Self(Inner::from_iter(iter))
     }
 }

@@ -1,9 +1,5 @@
-use identity_core::{
-    common::{Object, OneOrMany, Timestamp, Uri, Value},
-    impl_builder_setter, impl_builder_try_setter,
-};
+use identity_common::{impl_builder_setter, impl_builder_try_setter, Object, OneOrMany, Timestamp, Uri, Value};
 use serde::{Deserialize, Serialize};
-use serde_json::{from_str, to_string};
 
 use crate::{
     common::{
@@ -77,14 +73,6 @@ impl Credential {
 
     pub fn validate(&self) -> Result<()> {
         validate_credential_structure(self)
-    }
-
-    pub fn from_json(json: &(impl AsRef<str> + ?Sized)) -> Result<Self> {
-        from_str(json.as_ref()).map_err(Error::DecodeJSON)
-    }
-
-    pub fn to_json(&self) -> Result<String> {
-        to_string(self).map_err(Error::EncodeJSON)
     }
 }
 
