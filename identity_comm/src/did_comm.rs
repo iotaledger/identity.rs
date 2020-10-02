@@ -1,5 +1,5 @@
 use identity_core::did::DID;
-use identity_core::common::Timestamp;
+use identity_common::Timestamp;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -56,5 +56,18 @@ pub enum MessageTypes {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct TrustPing {
-    did: DID
+    
+
+    // pub did: DID,
+
+    // this will live in DIDComm body
+    // #[serde(rename = "@id")]
+    // pub id: MessageId,
+    // #[serde(default)]
+    pub response_requested: bool,
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // comment: Option<String>,
+    // #[serde(rename = "~thread")]
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub thread: Option<Thread>,
 }
