@@ -1,5 +1,7 @@
-use identity_core::did::DID;
 use wasm_bindgen::prelude::*;
+
+mod core;
+
 
 #[wasm_bindgen]
 extern "C" {
@@ -13,12 +15,6 @@ extern "C" {
 pub fn greet() -> Result<String, JsValue> {
   console_error_panic_hook::set_once();
 
-  let did = DID {
-    method_name: "iota".into(),
-    id_segments: vec!["123456".into()],
-    ..Default::default()
-  }
-  .init()
-  .unwrap();
-  Ok(did.to_string())
+
+  Ok("Hello World!".to_owned())
 }
