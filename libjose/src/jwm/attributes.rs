@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+use alloc::string::String;
 use core::iter::FromIterator;
 use core::ops::Deref;
 use core::ops::DerefMut;
