@@ -1,6 +1,5 @@
-use libjose::crypto::PKey;
-use libjose::crypto::Secret;
 use libjose::jwa::HmacAlgorithm::*;
+use libjose::jwa::HmacKey;
 use libjose::jwa::HmacSigner;
 use libjose::jwa::HmacVerifier;
 use libjose::jws::JwsDecoder;
@@ -15,11 +14,11 @@ fn main() {
   let payload: &str = "hello world";
 
   // Generate a key for the `HS512` JSON Web Algorithm
-  let pkey: PKey<Secret> = HS512.generate_key().unwrap();
+  let key: HmacKey = HS512.generate_key().unwrap();
 
   // Create a signer and verifier from the generated key
-  let signer: HmacSigner = HS512.signer_from_bytes(&pkey).unwrap();
-  let verifier: HmacVerifier = HS512.verifier_from_bytes(&pkey).unwrap();
+  let signer: HmacSigner = key.to_signer();
+  let verifier: HmacVerifier = key.to_verifier();
 
   // Use the `JwsEncoder` helper to sign and encode the token
   let encoded: String = JwsEncoder::new()

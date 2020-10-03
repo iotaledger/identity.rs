@@ -25,7 +25,7 @@ fn test_compact() {
 
   let payload: Vec<u8> = serde_json::to_vec(&claims).unwrap();
   let key = HS512.generate_key().unwrap();
-  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let signer = key.to_signer();
 
   let encoded: String = JwsEncoder::new()
     .encode_slice(&payload, &header, &signer)
@@ -35,7 +35,7 @@ fn test_compact() {
 
   assert_eq!(segment_count(&encoded), 3);
 
-  let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
+  let verifier = key.to_verifier();
 
   let decoded: JwsRawToken = JwsDecoder::new()
     .alg(HS512)
@@ -56,7 +56,7 @@ fn test_compact_unencoded() {
 
   let payload: &[u8] = b"hello world";
   let key = HS512.generate_key().unwrap();
-  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let signer = key.to_signer();
 
   let encoded: String = JwsEncoder::new()
     .encode_slice(payload, &header, &signer)
@@ -66,7 +66,7 @@ fn test_compact_unencoded() {
 
   assert_eq!(segment_count(&encoded), 3);
 
-  let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
+  let verifier = key.to_verifier();
 
   let decoded: JwsRawToken = JwsDecoder::new()
     .alg(HS512)
@@ -92,7 +92,7 @@ fn test_compact_unencoded_invalid() {
   payload.push(b'.');
 
   let key = HS512.generate_key().unwrap();
-  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let signer = key.to_signer();
 
   JwsEncoder::new()
     .encode_slice(&payload, &header, &signer)
@@ -108,7 +108,7 @@ fn test_compact_signature_invalid() {
   let claims: JwtClaims = JwtClaims::new();
   let payload: Vec<u8> = serde_json::to_vec(&claims).unwrap();
   let key = HS512.generate_key().unwrap();
-  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let signer = key.to_signer();
 
   let encoded: String = JwsEncoder::new()
     .encode_slice(&payload, &header, &signer)
@@ -118,7 +118,7 @@ fn test_compact_signature_invalid() {
 
   let segments: Vec<&str> = encoded.split(".").collect();
   let modified: String = [segments[0], segments[1], "my-signature"].join(".");
-  let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
+  let verifier = key.to_verifier();
 
   let _: JwsRawToken = JwsDecoder::new()
     .alg(HS512)
@@ -133,7 +133,7 @@ fn test_compact_payload_invalid() {
   let claims: JwtClaims = JwtClaims::new();
   let payload: Vec<u8> = serde_json::to_vec(&claims).unwrap();
   let key = HS512.generate_key().unwrap();
-  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let signer = key.to_signer();
 
   let encoded: String = JwsEncoder::new()
     .encode_slice(&payload, &header, &signer)
@@ -143,7 +143,7 @@ fn test_compact_payload_invalid() {
 
   let segments: Vec<&str> = encoded.split(".").collect();
   let modified: String = [segments[0], &encode_b64(b"my-payload"), segments[2]].join(".");
-  let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
+  let verifier = key.to_verifier();
 
   let _: JwsRawToken = JwsDecoder::new()
     .alg(HS512)
@@ -158,7 +158,10 @@ fn test_compact_algorithm_invalid() {
   let claims: JwtClaims = JwtClaims::new();
   let payload: Vec<u8> = serde_json::to_vec(&claims).unwrap();
   let key = HS512.generate_key().unwrap();
-  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let signer = key.to_signer();
+
+  let mut jwk = key.to_jwk();
+  jwk.set_alg(HS256.name());
 
   let encoded: String = JwsEncoder::new()
     .encode_slice(&payload, &header, &signer)
@@ -168,7 +171,7 @@ fn test_compact_algorithm_invalid() {
 
   let segments: Vec<&str> = encoded.split(".").collect();
   let modified: String = [segments[0], segments[1], "my-signature"].join(".");
-  let verifier = HS256.verifier_from_bytes(key.as_ref()).unwrap();
+  let verifier = HS256.verifier_from_jwk(&jwk).unwrap();
 
   let _: JwsRawToken = JwsDecoder::new()
     .alg(HS256)
@@ -184,7 +187,7 @@ fn test_compact_algorithm_not_allowed() {
   let claims: JwtClaims = JwtClaims::new();
   let payload: Vec<u8> = serde_json::to_vec(&claims).unwrap();
   let key = HS512.generate_key().unwrap();
-  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let signer = key.to_signer();
 
   let encoded: String = JwsEncoder::new()
     .encode_slice(&payload, &header, &signer)
@@ -194,7 +197,7 @@ fn test_compact_algorithm_not_allowed() {
 
   let segments: Vec<&str> = encoded.split(".").collect();
   let modified: String = [segments[0], segments[1], "my-signature"].join(".");
-  let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
+  let verifier = key.to_verifier();
 
   let _: JwsRawToken = JwsDecoder::new()
     .alg(HS256)
@@ -210,7 +213,7 @@ fn test_detached() {
 
   let payload: Vec<u8> = vec![1, 2, 3, 4];
   let key = HS512.generate_key().unwrap();
-  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let signer = key.to_signer();
 
   let encoded: String = JwsEncoder::new()
     .detach()
@@ -222,7 +225,7 @@ fn test_detached() {
   assert_eq!(segment_count(&encoded), 2);
 
   let payload: Vec<u8> = encode_b64(payload).into_bytes();
-  let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
+  let verifier = key.to_verifier();
 
   let decoded: JwsRawToken = JwsDecoder::new()
     .alg(HS512)
@@ -246,7 +249,7 @@ fn test_detached_unencoded() {
 
   let payload: &[u8] = b"hello";
   let key = HS512.generate_key().unwrap();
-  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let signer = key.to_signer();
 
   let encoded: String = JwsEncoder::new()
     .detach()
@@ -257,7 +260,7 @@ fn test_detached_unencoded() {
 
   assert_eq!(segment_count(&encoded), 2);
 
-  let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
+  let verifier = key.to_verifier();
 
   let decoded: JwsRawToken = JwsDecoder::new()
     .alg(HS512)
@@ -279,7 +282,7 @@ fn test_detached_unencoded_no_validation() {
 
   let payload: &[u8] = b"hello.";
   let key = HS512.generate_key().unwrap();
-  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let signer = key.to_signer();
 
   let encoded: String = JwsEncoder::new()
     .detach()
@@ -290,7 +293,7 @@ fn test_detached_unencoded_no_validation() {
 
   assert_eq!(segment_count(&encoded), 2);
 
-  let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
+  let verifier = key.to_verifier();
 
   let decoded: JwsRawToken = JwsDecoder::new()
     .alg(HS512)
@@ -312,7 +315,7 @@ fn test_detached_is_truly_detached() {
 
   let payload: &[u8] = b"hello";
   let key = HS512.generate_key().unwrap();
-  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let signer = key.to_signer();
 
   let encoded: String = JwsEncoder::new()
     .detach()
@@ -325,7 +328,7 @@ fn test_detached_is_truly_detached() {
 
   let segments: Vec<&str> = encoded.split(".").collect();
   let modified: String = [segments[0], "", segments[2]].join(".");
-  let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
+  let verifier = key.to_verifier();
 
   let decoded: JwsRawToken = JwsDecoder::new()
     .alg(HS512)
@@ -343,7 +346,7 @@ fn test_detached_signature_invalid() {
   let header: JwsHeader = JwsHeader::new();
   let payload: &[u8] = b"hello";
   let key = HS512.generate_key().unwrap();
-  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let signer = key.to_signer();
 
   let encoded: String = JwsEncoder::new()
     .detach()
@@ -354,7 +357,7 @@ fn test_detached_signature_invalid() {
 
   let segments: Vec<&str> = encoded.split(".").collect();
   let modified: String = [segments[0], segments[1], &encode_b64(b"my-signature")].join(".");
-  let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
+  let verifier = key.to_verifier();
 
   let _: JwsRawToken = JwsDecoder::new()
     .alg(HS512)
@@ -369,7 +372,7 @@ fn test_detached_payload_invalid() {
   let header: JwsHeader = JwsHeader::new();
   let payload: Vec<u8> = vec![1, 2, 3, 4];
   let key = HS512.generate_key().unwrap();
-  let signer = HS512.signer_from_bytes(key.as_ref()).unwrap();
+  let signer = key.to_signer();
 
   let encoded: String = JwsEncoder::new()
     .detach()
@@ -379,7 +382,7 @@ fn test_detached_payload_invalid() {
     .unwrap();
 
   let payload: Vec<u8> = vec![5, 6, 7, 8];
-  let verifier = HS512.verifier_from_bytes(key.as_ref()).unwrap();
+  let verifier = key.to_verifier();
 
   let _: JwsRawToken = JwsDecoder::new()
     .alg(HS512)

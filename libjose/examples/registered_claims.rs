@@ -1,6 +1,5 @@
-use libjose::crypto::PKey;
-use libjose::crypto::Secret;
 use libjose::jwa::HmacAlgorithm::*;
+use libjose::jwa::HmacKey;
 use libjose::jwa::HmacSigner;
 use libjose::jwa::HmacVerifier;
 use libjose::jws::JwsDecoder;
@@ -65,13 +64,13 @@ fn main() {
   println!();
 
   // Generate a "private key" for the `HS512` JSON Web Algorithm
-  let pkey: PKey<Secret> = HS512.generate_key().unwrap();
+  let key: HmacKey = HS512.generate_key().unwrap();
 
   // Create a "signer" from raw bytes
   //
   // Note: Other formats MAY be supported and are algorithm-specific.
   // Examples include: Base64 - DER - PEM
-  let signer: HmacSigner = HS512.signer_from_bytes(&pkey).unwrap();
+  let signer: HmacSigner = key.to_signer();
 
   // Encode the JSON Web Token using the compact serialization format.
   let encoded: String = JwsEncoder::new()
@@ -86,7 +85,7 @@ fn main() {
   // Create a "verifier" from the SAME key as the signer (because HMAC)
   //
   // Note: Similar to the "signer", available formats are algorithm-specific.
-  let verifier: HmacVerifier = HS512.verifier_from_bytes(&pkey).unwrap();
+  let verifier: HmacVerifier = key.to_verifier();
 
   // Decode the JSON Web Token with signature validation
   let decoded: JwsToken = JwsDecoder::new()

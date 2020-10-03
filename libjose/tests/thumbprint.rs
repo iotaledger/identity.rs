@@ -1,4 +1,4 @@
-use libjose::jwa::SHA256;
+use libjose::crypto::digest;
 use libjose::jwk::Jwk;
 use serde::Deserialize;
 
@@ -13,7 +13,8 @@ struct Fixture {
 #[test]
 fn test_thumbprint_example() {
   let fixture: Fixture = serde_json::from_slice(JSON).unwrap();
-  let thumbprint: String = fixture.input.thumbprint_b64(SHA256).unwrap();
+
+  let thumbprint: String = fixture.input.thumbprint_b64::<digest::SHA2_256>().unwrap();
 
   assert_eq!(thumbprint, fixture.output);
 }
