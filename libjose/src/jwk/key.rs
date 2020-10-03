@@ -2,13 +2,13 @@ use alloc::collections::BTreeMap;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
+use crypto::digest::Digest;
 use serde_json::to_vec;
 use url::Url;
 
 use crate::error::Error;
 use crate::error::Result;
 use crate::error::ValidationError;
-use crate::jwa::HashAlgorithm;
 use crate::jwk::JwkOperation;
 use crate::jwk::JwkParams;
 use crate::jwk::JwkParamsEc;
@@ -254,16 +254,22 @@ impl Jwk {
   /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).
   ///
   /// The thumbprint is returned as a base64url-encoded string.
-  pub fn thumbprint_b64(&self, algorithm: HashAlgorithm) -> Result<String> {
+  pub fn thumbprint_b64<D>(&self) -> Result<String>
+  where
+    D: Digest,
+  {
     self
-      .thumbprint_raw(algorithm)
+      .thumbprint_raw::<D>()
       .map(|thumbprint| encode_b64(&thumbprint))
   }
 
   /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).
   ///
   /// The thumbprint is returned as an unencoded vector of bytes.
-  pub fn thumbprint_raw(&self, algorithm: HashAlgorithm) -> Result<Vec<u8>> {
+  pub fn thumbprint_raw<D>(&self) -> Result<Vec<u8>>
+  where
+    D: Digest,
+  {
     let params: &JwkParams = self
       .params
       .as_ref()
@@ -292,7 +298,7 @@ impl Jwk {
       }
     }
 
-    algorithm.digest(&to_vec(&data)?)
+    Ok(D::digest(&to_vec(&data)?).to_vec())
   }
 
   // ===========================================================================

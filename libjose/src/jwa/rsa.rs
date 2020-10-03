@@ -5,22 +5,22 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
-use crypto::signers::rsa;
 use crypto::rand::OsRng;
+use crypto::signers::rsa;
 
-use crate::error::CryptoError;
+use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::Jwk;
 use crate::jwk::JwkOperation;
+use crate::jwk::JwkParams;
+use crate::jwk::JwkParamsRsa;
 use crate::jwk::JwkUse;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;
+use crate::utils::decode_b64;
 use crate::utils::pem_decode;
 use crate::utils::Pem;
-use crate::jwk::JwkParamsRsa;
-use crate::jwk::JwkParams;
-use crate::utils::decode_b64;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(non_camel_case_types)]
@@ -75,7 +75,7 @@ impl RsaAlgorithm {
     let key: rsa::PrivateKey = match pem.pem_type.as_str() {
       "RSA PRIVATE KEY" => rsa::PrivateKey::from_pkcs1(pem.pem_data)?,
       "PRIVATE KEY" => rsa::PrivateKey::from_pkcs8(pem.pem_data)?,
-      _ => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+      _ => return Err(Error::InvalidKeyFormat(self.name()).into()),
     };
 
     Ok(RsaSigner {
@@ -93,23 +93,23 @@ impl RsaAlgorithm {
 
     let params: &JwkParamsRsa = match data.params() {
       Some(JwkParams::Rsa(params)) => params,
-      Some(_) | None => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name()).into()),
     };
 
     // TODO: Multi-prime key
     if params.oth.is_some() {
-      return Err(CryptoError::InvalidKeyFormat(self.name()).into());
+      return Err(Error::InvalidKeyFormat(self.name()).into());
     }
 
-    let n: rsa::BigUint = decode_b64_biguint(&params.n)?;
-    let e: rsa::BigUint = decode_b64_biguint(&params.e)?;
-    let d: rsa::BigUint = decode_b64_biguint_opt(params.d.as_ref())?;
-    let p: rsa::BigUint = decode_b64_biguint_opt(params.p.as_ref())?;
-    let q: rsa::BigUint = decode_b64_biguint_opt(params.q.as_ref())?;
+    let n: rsa::BigUint = self.decode_b64_biguint(&params.n)?;
+    let e: rsa::BigUint = self.decode_b64_biguint(&params.e)?;
+    let d: rsa::BigUint = self.decode_b64_biguint_opt(params.d.as_ref())?;
+    let p: rsa::BigUint = self.decode_b64_biguint_opt(params.p.as_ref())?;
+    let q: rsa::BigUint = self.decode_b64_biguint_opt(params.q.as_ref())?;
 
-    let _dp: rsa::BigUint = decode_b64_biguint_opt(params.dp.as_ref())?;
-    let _dq: rsa::BigUint = decode_b64_biguint_opt(params.dq.as_ref())?;
-    let _qi: rsa::BigUint = decode_b64_biguint_opt(params.qi.as_ref())?;
+    let _dp: rsa::BigUint = self.decode_b64_biguint_opt(params.dp.as_ref())?;
+    let _dq: rsa::BigUint = self.decode_b64_biguint_opt(params.dq.as_ref())?;
+    let _qi: rsa::BigUint = self.decode_b64_biguint_opt(params.qi.as_ref())?;
 
     let key: rsa::PrivateKey = rsa::PrivateKey::new(n, e, d, vec![p, q])?;
     let kid: Option<String> = data.kid().map(ToString::to_string);
@@ -141,7 +141,7 @@ impl RsaAlgorithm {
     let key: rsa::PublicKey = match pem.pem_type.as_str() {
       "RSA PUBLIC KEY" => rsa::PublicKey::from_pkcs1(&pem.pem_data)?,
       "PUBLIC KEY" => rsa::PublicKey::from_pkcs8(&pem.pem_data)?,
-      _ => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+      _ => return Err(Error::InvalidKeyFormat(self.name()).into()),
     };
 
     Ok(RsaVerifier {
@@ -159,11 +159,11 @@ impl RsaAlgorithm {
 
     let params: &JwkParamsRsa = match data.params() {
       Some(JwkParams::Rsa(params)) => params,
-      Some(_) | None => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name()).into()),
     };
 
-    let n: rsa::BigUint = decode_b64_biguint(&params.n)?;
-    let e: rsa::BigUint = decode_b64_biguint(&params.e)?;
+    let n: rsa::BigUint = self.decode_b64_biguint(&params.n)?;
+    let e: rsa::BigUint = self.decode_b64_biguint(&params.e)?;
 
     let key: rsa::PublicKey = rsa::PublicKey::new(n, e)?;
     let kid: Option<String> = data.kid().map(ToString::to_string);
@@ -173,6 +173,17 @@ impl RsaAlgorithm {
       key,
       kid,
     })
+  }
+
+  fn decode_b64_biguint(self, data: impl AsRef<[u8]>) -> Result<rsa::BigUint> {
+    decode_b64(data.as_ref()).map(|data| rsa::BigUint::from_bytes_be(&data))
+  }
+
+  fn decode_b64_biguint_opt(self, data: Option<impl AsRef<[u8]>>) -> Result<rsa::BigUint> {
+    match data {
+      Some(data) => self.decode_b64_biguint(data),
+      None => Err(Error::InvalidKeyFormat(self.name()).into()),
+    }
   }
 }
 
@@ -276,20 +287,5 @@ impl Deref for RsaVerifier {
 
   fn deref(&self) -> &Self::Target {
     self
-  }
-}
-
-// =============================================================================
-// Helpers
-// =============================================================================
-
-fn decode_b64_biguint(data: impl AsRef<[u8]>) -> Result<rsa::BigUint> {
-  decode_b64(data.as_ref()).map(|data| rsa::BigUint::from_bytes_be(&data))
-}
-
-fn decode_b64_biguint_opt(data: Option<impl AsRef<[u8]>>) -> Result<rsa::BigUint> {
-  match data {
-    Some(ref data) => decode_b64_biguint(data.as_ref()),
-    None => todo!("Private Exponent"),
   }
 }

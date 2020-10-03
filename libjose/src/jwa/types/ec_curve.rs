@@ -1,3 +1,4 @@
+use crypto::signers::ecdsa;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
@@ -31,5 +32,16 @@ impl EcCurve {
 impl Display for EcCurve {
   fn fmt(&self, f: &mut Formatter) -> Result {
     f.write_fmt(format_args!("{}", self.name()))
+  }
+}
+
+impl From<EcCurve> for ecdsa::Curve {
+  fn from(other: EcCurve) -> Self {
+    match other {
+      EcCurve::P256 => ecdsa::Curve::P256,
+      EcCurve::P384 => ecdsa::Curve::P384,
+      EcCurve::P521 => ecdsa::Curve::P521,
+      EcCurve::Secp256K1 => ecdsa::Curve::K256,
+    }
   }
 }

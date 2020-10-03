@@ -32,6 +32,9 @@ extern crate std;
 #[macro_use]
 extern crate anyhow;
 
+// Export `crypto` crate for convenience
+pub extern crate crypto;
+
 #[macro_use]
 extern crate serde;
 

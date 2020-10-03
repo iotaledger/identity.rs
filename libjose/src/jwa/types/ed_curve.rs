@@ -1,3 +1,4 @@
+use crypto::signers::eddsa;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
@@ -25,5 +26,14 @@ impl EdCurve {
 impl Display for EdCurve {
   fn fmt(&self, f: &mut Formatter) -> Result {
     f.write_fmt(format_args!("{}", self.name()))
+  }
+}
+
+impl From<EdCurve> for eddsa::Curve {
+  fn from(other: EdCurve) -> Self {
+    match other {
+      EdCurve::Ed25519 => eddsa::Curve::Ed25519,
+      EdCurve::Ed448 => eddsa::Curve::Ed448,
+    }
   }
 }

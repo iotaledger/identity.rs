@@ -1,16 +1,6 @@
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
-pub enum CryptoError {
-  #[error("Invalid Key Format: {0}")]
-  InvalidKeyFormat(&'static str),
-  #[error("Invalid Signature: {0}")]
-  InvalidSignature(&'static str),
-  #[error("Unspecified Error")]
-  Unspecified,
-}
-
-#[derive(Debug, thiserror::Error)]
 pub enum PemError {
   #[error("Invalid UTF-8: {0}")]
   InvalidUtf8(#[from] core::str::Utf8Error),
@@ -76,8 +66,10 @@ pub enum Error {
   InvalidJwkFormat(anyhow::Error),
   #[error("Invalid JWS Format: {0}")]
   InvalidJwsFormat(anyhow::Error),
+  #[error("Invalid Key Format: {0}")]
+  InvalidKeyFormat(&'static str),
   #[error(transparent)]
-  CryptoError(#[from] CryptoError),
+  CryptoError(#[from] crypto::Error),
   #[error(transparent)]
   PemError(#[from] PemError),
   #[error(transparent)]
@@ -86,25 +78,4 @@ pub enum Error {
   EncodeError(#[from] EncodeError),
   #[error(transparent)]
   DecodeError(#[from] DecodeError),
-}
-
-#[cfg(feature = "ring-core")]
-impl From<ring::error::Unspecified> for Error {
-  fn from(_: ring::error::Unspecified) -> Self {
-    Self::CryptoError(CryptoError::Unspecified)
-  }
-}
-
-#[cfg(feature = "ring-core")]
-impl From<ring::error::KeyRejected> for Error {
-  fn from(_: ring::error::KeyRejected) -> Self {
-    Self::CryptoError(CryptoError::InvalidKeyFormat("REJECTED"))
-  }
-}
-
-#[cfg(feature = "secp256k1")]
-impl From<secp256k1::Error> for Error {
-  fn from(_: secp256k1::Error) -> Self {
-    Self::CryptoError(CryptoError::InvalidSignature("ES256K"))
-  }
 }

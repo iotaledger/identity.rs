@@ -121,7 +121,7 @@ impl CharSet {
         data
           .as_ref()
           .chars()
-          .all(|ch| matches!(ch, ' ' | '\x20'..='\x2D' | '\x2F'..='\x7E'))
+          .all(|ch| matches!(ch, '\x20'..='\x2D' | '\x2F'..='\x7E'))
       }
       Self::UrlSafe => {
         // If a JWS using the JWS Compact Serialization and a non-detached

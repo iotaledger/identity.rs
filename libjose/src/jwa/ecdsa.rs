@@ -5,23 +5,23 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
-use crypto::signers::ecdsa;
 use crypto::rand::OsRng;
+use crypto::signers::ecdsa;
 
-use crate::utils::decode_b64;
+use crate::error::Error;
 use crate::error::Result;
 use crate::jwa::EcCurve;
 use crate::jwk::Jwk;
 use crate::jwk::JwkOperation;
+use crate::jwk::JwkParams;
+use crate::jwk::JwkParamsEc;
 use crate::jwk::JwkUse;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;
+use crate::utils::decode_b64;
 use crate::utils::pem_decode;
-use crate::error::CryptoError;
 use crate::utils::Pem;
-use crate::jwk::JwkParams;
-use crate::jwk::JwkParamsEc;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(non_camel_case_types)]
@@ -57,23 +57,14 @@ impl EcdsaAlgorithm {
     }
   }
 
-  pub const fn curve_(self) -> ecdsa::Curve {
-    match self {
-      Self::ES256 => ecdsa::Curve::P256,
-      Self::ES384 => ecdsa::Curve::P384,
-      Self::ES512 => ecdsa::Curve::P521,
-      Self::ES256K => ecdsa::Curve::K256,
-    }
-  }
-
   /// Creates a new random ECDSA `PrivateKey`.
   pub fn generate_key(self) -> Result<ecdsa::PrivateKey> {
-    Ok(ecdsa::PrivateKey::random(self.curve_(), OsRng))
+    Ok(ecdsa::PrivateKey::random(self.curve().into(), OsRng))
   }
 
   /// Creates a new `EcdsaSigner` from DER-encoded material in PKCS#8 form.
   pub fn signer_from_der(self, data: impl AsRef<[u8]>) -> Result<EcdsaSigner> {
-    let key: ecdsa::PrivateKey = ecdsa::PrivateKey::from_slice(self.curve_(), data)?;
+    let key: ecdsa::PrivateKey = ecdsa::PrivateKey::from_slice(self.curve().into(), data)?;
 
     Ok(EcdsaSigner {
       alg: self,
@@ -87,8 +78,8 @@ impl EcdsaAlgorithm {
     let pem: Pem = pem_decode(&data)?;
 
     let key: ecdsa::PrivateKey = match pem.pem_type.as_str() {
-      "PRIVATE KEY" => ecdsa::PrivateKey::from_slice(self.curve_(), pem.pem_data)?,
-      _ => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+      "PRIVATE KEY" => ecdsa::PrivateKey::from_slice(self.curve().into(), pem.pem_data)?,
+      _ => return Err(Error::InvalidKeyFormat(self.name()).into()),
     };
 
     Ok(EcdsaSigner {
@@ -106,25 +97,25 @@ impl EcdsaAlgorithm {
 
     let params: &JwkParamsEc = match data.params() {
       Some(JwkParams::Ec(params)) => params,
-      Some(_) | None => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name()).into()),
     };
 
     if params.crv != self.curve().name() {
-      return Err(CryptoError::InvalidKeyFormat(self.name()).into());
+      return Err(Error::InvalidKeyFormat(self.name()).into());
     }
 
     let x: Vec<u8> = decode_b64(params.x.as_str())?;
     let y: Vec<u8> = decode_b64(params.y.as_str())?;
 
-    let d: Vec<u8> = match params.d {
-      Some(ref d) => decode_b64(&d)?,
-      None => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+    let d: Vec<u8> = match params.d.as_deref() {
+      Some(d) => decode_b64(d)?,
+      None => return Err(Error::InvalidKeyFormat(self.name()).into()),
     };
 
-    let key: ecdsa::PrivateKey = ecdsa::PrivateKey::from_slice(self.curve_(), &d)?;
+    let key: ecdsa::PrivateKey = ecdsa::PrivateKey::from_slice(self.curve().into(), &d)?;
 
-    if key.public_key() != ecdsa::PublicKey::from_coord(self.curve_(), x, y)? {
-      return Err(CryptoError::InvalidKeyFormat(self.name()).into());
+    if key.public_key() != ecdsa::PublicKey::from_coord(self.curve().into(), x, y)? {
+      return Err(Error::InvalidKeyFormat(self.name()).into());
     }
 
     Ok(EcdsaSigner {
@@ -136,7 +127,7 @@ impl EcdsaAlgorithm {
 
   /// Creates a new `EcdsaVerifier` from DER-encoded material in PKCS#8 form.
   pub fn verifier_from_der(self, data: impl AsRef<[u8]>) -> Result<EcdsaVerifier> {
-    let key: ecdsa::PublicKey = ecdsa::PublicKey::from_slice(self.curve_(), data)?;
+    let key: ecdsa::PublicKey = ecdsa::PublicKey::from_slice(self.curve().into(), data)?;
 
     Ok(EcdsaVerifier {
       alg: self,
@@ -150,8 +141,8 @@ impl EcdsaAlgorithm {
     let pem: Pem = pem_decode(&data)?;
 
     let key: ecdsa::PublicKey = match pem.pem_type.as_str() {
-      "PUBLIC KEY" => ecdsa::PublicKey::from_slice(self.curve_(), pem.pem_data)?,
-      _ => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+      "PUBLIC KEY" => ecdsa::PublicKey::from_slice(self.curve().into(), pem.pem_data)?,
+      _ => return Err(Error::InvalidKeyFormat(self.name()).into()),
     };
 
     Ok(EcdsaVerifier {
@@ -169,17 +160,17 @@ impl EcdsaAlgorithm {
 
     let params: &JwkParamsEc = match data.params() {
       Some(JwkParams::Ec(params)) => params,
-      Some(_) | None => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name()).into()),
     };
 
     if params.crv != self.curve().name() {
-      return Err(CryptoError::InvalidKeyFormat(self.name()).into());
+      return Err(Error::InvalidKeyFormat(self.name()).into());
     }
 
     let x: Vec<u8> = decode_b64(params.x.as_str())?;
     let y: Vec<u8> = decode_b64(params.y.as_str())?;
 
-    let key: ecdsa::PublicKey = ecdsa::PublicKey::from_coord(self.curve_(), x, y)?;
+    let key: ecdsa::PublicKey = ecdsa::PublicKey::from_coord(self.curve().into(), x, y)?;
 
     Ok(EcdsaVerifier {
       alg: self,
@@ -223,14 +214,11 @@ impl JwsSigner for EcdsaSigner {
   }
 
   fn sign(&self, message: &[u8]) -> Result<Vec<u8>> {
-    let signature: ecdsa::Signature = match self.alg {
-      EcdsaAlgorithm::ES256 => self.key.sign(message)?,
-      EcdsaAlgorithm::ES384 => self.key.sign(message)?,
-      EcdsaAlgorithm::ES512 => self.key.sign(message)?,
-      EcdsaAlgorithm::ES256K => self.key.sign(message)?,
-    };
-
-    Ok(signature.as_ref().to_vec())
+    self
+      .key
+      .sign(message)
+      .map_err(Into::into)
+      .map(|signature| signature.as_ref().to_vec())
   }
 }
 
@@ -259,14 +247,7 @@ impl JwsVerifier for EcdsaVerifier {
   }
 
   fn verify(&self, message: &[u8], signature: &[u8]) -> Result<()> {
-    match self.alg {
-      EcdsaAlgorithm::ES256 => self.key.verify(message, signature)?,
-      EcdsaAlgorithm::ES384 => self.key.verify(message, signature)?,
-      EcdsaAlgorithm::ES512 => self.key.verify(message, signature)?,
-      EcdsaAlgorithm::ES256K => self.key.verify(message, signature)?,
-    }
-
-    Ok(())
+    self.key.verify(message, signature).map_err(Into::into)
   }
 }
 

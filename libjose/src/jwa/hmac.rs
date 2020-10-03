@@ -9,9 +9,8 @@ use crypto::key_box::SecretKey;
 use crypto::rand::OsRng;
 use crypto::signers::hmac;
 
-use crate::error::CryptoError;
+use crate::error::Error;
 use crate::error::Result;
-use crate::jwa::HashAlgorithm;
 use crate::jwk::Jwk;
 use crate::jwk::JwkOperation;
 use crate::jwk::JwkParams;
@@ -44,25 +43,25 @@ impl HmacAlgorithm {
     }
   }
 
-  pub const fn hash_alg(self) -> HashAlgorithm {
+  pub const fn output_size(self) -> usize {
     match self {
-      Self::HS256 => HashAlgorithm::Sha256,
-      Self::HS384 => HashAlgorithm::Sha384,
-      Self::HS512 => HashAlgorithm::Sha512,
+      Self::HS256 => hmac::SHA256_OUTPUT_SIZE,
+      Self::HS384 => hmac::SHA384_OUTPUT_SIZE,
+      Self::HS512 => hmac::SHA512_OUTPUT_SIZE,
     }
   }
 
   /// Creates a new Hmac key.
   pub fn generate_key(self) -> Result<SecretKey> {
-    SecretKey::random(self.hash_alg().output_size(), &mut OsRng).map_err(Into::into)
+    SecretKey::random(self.output_size(), &mut OsRng).map_err(Into::into)
   }
 
   /// Creates a new `HmacSigner` from a slice of bytes.
   pub fn signer_from_bytes(self, data: impl AsRef<[u8]>) -> Result<HmacSigner> {
     let data: &[u8] = data.as_ref();
 
-    if data.len() < self.hash_alg().output_size() {
-      return Err(CryptoError::InvalidKeyFormat(self.name()).into());
+    if data.len() < self.output_size() {
+      return Err(Error::InvalidKeyFormat(self.name()).into());
     }
 
     Ok(HmacSigner {
@@ -76,8 +75,8 @@ impl HmacAlgorithm {
   pub fn signer_from_b64(self, data: impl AsRef<[u8]>) -> Result<HmacSigner> {
     let data: Vec<u8> = decode_b64(data.as_ref())?;
 
-    if data.len() < self.hash_alg().output_size() {
-      return Err(CryptoError::InvalidKeyFormat(self.name()).into());
+    if data.len() < self.output_size() {
+      return Err(Error::InvalidKeyFormat(self.name()).into());
     }
 
     Ok(HmacSigner {
@@ -94,13 +93,12 @@ impl HmacAlgorithm {
     data.check_alg(self.name())?;
     data.check_kty(JwkType::Oct)?;
 
-    let k: Vec<u8> = match data.params() {
-      Some(JwkParams::Oct(JwkParamsOct { k })) => decode_b64(k)?,
-      Some(_) => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
-      None => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+    let k: &str = match data.params() {
+      Some(JwkParams::Oct(JwkParamsOct { k })) => k.as_str(),
+      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name()).into()),
     };
 
-    self.signer_from_bytes(k).map(|mut signer| {
+    self.signer_from_b64(k).map(|mut signer| {
       signer.kid = data.kid().map(ToString::to_string);
       signer
     })
@@ -110,8 +108,8 @@ impl HmacAlgorithm {
   pub fn verifier_from_bytes(self, data: impl AsRef<[u8]>) -> Result<HmacVerifier> {
     let data: &[u8] = data.as_ref();
 
-    if data.len() < self.hash_alg().output_size() {
-      return Err(CryptoError::InvalidKeyFormat(self.name()).into());
+    if data.len() < self.output_size() {
+      return Err(Error::InvalidKeyFormat(self.name()).into());
     }
 
     Ok(HmacVerifier {
@@ -125,8 +123,8 @@ impl HmacAlgorithm {
   pub fn verifier_from_b64(self, data: impl AsRef<[u8]>) -> Result<HmacVerifier> {
     let data: Vec<u8> = decode_b64(data.as_ref())?;
 
-    if data.len() < self.hash_alg().output_size() {
-      return Err(CryptoError::InvalidKeyFormat(self.name()).into());
+    if data.len() < self.output_size() {
+      return Err(Error::InvalidKeyFormat(self.name()).into());
     }
 
     Ok(HmacVerifier {
@@ -143,13 +141,12 @@ impl HmacAlgorithm {
     data.check_alg(self.name())?;
     data.check_kty(JwkType::Oct)?;
 
-    let k: Vec<u8> = match data.params() {
-      Some(JwkParams::Oct(JwkParamsOct { k })) => decode_b64(k)?,
-      Some(_) => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
-      None => return Err(CryptoError::InvalidKeyFormat(self.name()).into()),
+    let k: &str = match data.params() {
+      Some(JwkParams::Oct(JwkParamsOct { k })) => k.as_str(),
+      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name()).into()),
     };
 
-    self.verifier_from_bytes(k).map(|mut signer| {
+    self.verifier_from_b64(k).map(|mut signer| {
       signer.kid = data.kid().map(ToString::to_string);
       signer
     })
