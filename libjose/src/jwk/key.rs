@@ -308,7 +308,7 @@ impl Jwk {
   pub fn check_use(&self, expected: &JwkUse) -> Result<()> {
     match self.use_() {
       Some(value) if value == expected => Ok(()),
-      Some(_) => Err(bad_property_err("use")),
+      Some(_) => Err(ValidationError::InvalidClaim("use").into()),
       None => Ok(()),
     }
   }
@@ -316,7 +316,7 @@ impl Jwk {
   pub fn check_ops(&self, expected: &JwkOperation) -> Result<()> {
     match self.key_ops() {
       Some(ops) if ops.contains(expected) => Ok(()),
-      Some(_) => Err(bad_property_err("key_ops")),
+      Some(_) => Err(ValidationError::InvalidClaim("key_ops").into()),
       None => Ok(()),
     }
   }
@@ -324,7 +324,7 @@ impl Jwk {
   pub fn check_alg(&self, expected: &str) -> Result<()> {
     match self.alg() {
       Some(value) if value == expected => Ok(()),
-      Some(_) => Err(bad_property_err("alg")),
+      Some(_) => Err(ValidationError::InvalidClaim("alg").into()),
       None => Ok(()),
     }
   }
@@ -333,11 +333,7 @@ impl Jwk {
     if self.kty() == value {
       Ok(())
     } else {
-      Err(bad_property_err("kty"))
+      Err(ValidationError::InvalidClaim("kty").into())
     }
   }
-}
-
-fn bad_property_err(name: &'static str) -> Error {
-  ValidationError::InvalidClaim(name).into()
 }

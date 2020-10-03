@@ -14,6 +14,7 @@ use crate::jwk::Jwk;
 use crate::jwk::JwkOperation;
 use crate::jwk::JwkParams;
 use crate::jwk::JwkParamsRsa;
+use crate::jwk::JwkType;
 use crate::jwk::JwkUse;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsSigner;
@@ -40,7 +41,7 @@ pub enum RsaAlgorithm {
 }
 
 impl RsaAlgorithm {
-  /// Returns the JWA identifier of the algorithm.
+  /// Returns the JWA identifier of the RSA algorithm.
   pub const fn name(self) -> &'static str {
     match self {
       Self::RS256 => "RS256",
@@ -57,25 +58,24 @@ impl RsaAlgorithm {
     rsa::PrivateKey::random(&mut OsRng, bits).map_err(Into::into)
   }
 
-  /// Creates a new `RsaSigner` from DER-encoded material in PKCS#8 form.
+  /// Creates a new `RsaSigner` from a DER-encoded PKCS#1/PKCS#8 RSA private
+  /// key.
   pub fn signer_from_der(self, data: impl AsRef<[u8]>) -> Result<RsaSigner> {
-    let key: rsa::PrivateKey = rsa::PrivateKey::from_slice(data)?;
-
     Ok(RsaSigner {
       alg: self,
-      key,
+      key: rsa::PrivateKey::from_slice(data)?,
       kid: None,
     })
   }
 
-  /// Creates a new `RsaSigner` from a PEM-encoded document.
+  /// Creates a new `RsaSigner` from a PEM-encoded RSA private key.
   pub fn signer_from_pem(self, data: impl AsRef<[u8]>) -> Result<RsaSigner> {
     let pem: Pem = pem_decode(&data)?;
 
     let key: rsa::PrivateKey = match pem.pem_type.as_str() {
       "RSA PRIVATE KEY" => rsa::PrivateKey::from_pkcs1(pem.pem_data)?,
       "PRIVATE KEY" => rsa::PrivateKey::from_pkcs8(pem.pem_data)?,
-      _ => return Err(Error::InvalidKeyFormat(self.name()).into()),
+      _ => return Err(Error::InvalidKeyFormat(self.name())),
     };
 
     Ok(RsaSigner {
@@ -86,23 +86,25 @@ impl RsaAlgorithm {
   }
 
   /// Creates a new `RsaSigner` from a JSON Web Key.
+  #[allow(clippy::many_single_char_names)]
   pub fn signer_from_jwk(self, data: &Jwk) -> Result<RsaSigner> {
     data.check_use(&JwkUse::Signature)?;
     data.check_ops(&JwkOperation::Sign)?;
     data.check_alg(self.name())?;
+    data.check_kty(JwkType::Rsa)?;
 
     let params: &JwkParamsRsa = match data.params() {
       Some(JwkParams::Rsa(params)) => params,
-      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name()).into()),
+      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name())),
     };
 
     // TODO: Multi-prime key
     if params.oth.is_some() {
-      return Err(Error::InvalidKeyFormat(self.name()).into());
+      return Err(Error::InvalidKeyFormat(self.name()));
     }
 
-    let n: rsa::BigUint = self.decode_b64_biguint(&params.n)?;
-    let e: rsa::BigUint = self.decode_b64_biguint(&params.e)?;
+    let n: rsa::BigUint = Self::decode_b64_biguint(&params.n)?;
+    let e: rsa::BigUint = Self::decode_b64_biguint(&params.e)?;
     let d: rsa::BigUint = self.decode_b64_biguint_opt(params.d.as_ref())?;
     let p: rsa::BigUint = self.decode_b64_biguint_opt(params.p.as_ref())?;
     let q: rsa::BigUint = self.decode_b64_biguint_opt(params.q.as_ref())?;
@@ -123,25 +125,24 @@ impl RsaAlgorithm {
     })
   }
 
-  /// Creates a new `RsaVerifier` from DER-encoded material in PKCS#8 form.
+  /// Creates a new `RsaVerifier` from a DER-encoded PKCS#1/PKCS#8 RSA public
+  /// key.
   pub fn verifier_from_der(self, data: impl AsRef<[u8]>) -> Result<RsaVerifier> {
-    let key: rsa::PublicKey = rsa::PublicKey::from_slice(data)?;
-
     Ok(RsaVerifier {
       alg: self,
-      key,
+      key: rsa::PublicKey::from_slice(data)?,
       kid: None,
     })
   }
 
-  /// Creates a new `RsaVerifier` from a PEM-encoded document.
+  /// Creates a new `RsaVerifier` from a PEM-encoded RSA public key.
   pub fn verifier_from_pem(self, data: impl AsRef<[u8]>) -> Result<RsaVerifier> {
     let pem: Pem = pem_decode(&data)?;
 
     let key: rsa::PublicKey = match pem.pem_type.as_str() {
       "RSA PUBLIC KEY" => rsa::PublicKey::from_pkcs1(&pem.pem_data)?,
       "PUBLIC KEY" => rsa::PublicKey::from_pkcs8(&pem.pem_data)?,
-      _ => return Err(Error::InvalidKeyFormat(self.name()).into()),
+      _ => return Err(Error::InvalidKeyFormat(self.name())),
     };
 
     Ok(RsaVerifier {
@@ -156,14 +157,15 @@ impl RsaAlgorithm {
     data.check_use(&JwkUse::Signature)?;
     data.check_ops(&JwkOperation::Verify)?;
     data.check_alg(self.name())?;
+    data.check_kty(JwkType::Rsa)?;
 
     let params: &JwkParamsRsa = match data.params() {
       Some(JwkParams::Rsa(params)) => params,
-      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name()).into()),
+      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name())),
     };
 
-    let n: rsa::BigUint = self.decode_b64_biguint(&params.n)?;
-    let e: rsa::BigUint = self.decode_b64_biguint(&params.e)?;
+    let n: rsa::BigUint = Self::decode_b64_biguint(&params.n)?;
+    let e: rsa::BigUint = Self::decode_b64_biguint(&params.e)?;
 
     let key: rsa::PublicKey = rsa::PublicKey::new(n, e)?;
     let kid: Option<String> = data.kid().map(ToString::to_string);
@@ -175,15 +177,16 @@ impl RsaAlgorithm {
     })
   }
 
-  fn decode_b64_biguint(self, data: impl AsRef<[u8]>) -> Result<rsa::BigUint> {
+  fn decode_b64_biguint(data: impl AsRef<[u8]>) -> Result<rsa::BigUint> {
     decode_b64(data.as_ref()).map(|data| rsa::BigUint::from_bytes_be(&data))
   }
 
   fn decode_b64_biguint_opt(self, data: Option<impl AsRef<[u8]>>) -> Result<rsa::BigUint> {
-    match data {
-      Some(data) => self.decode_b64_biguint(data),
-      None => Err(Error::InvalidKeyFormat(self.name()).into()),
-    }
+    data
+      .as_ref()
+      .map(Self::decode_b64_biguint)
+      .transpose()?
+      .ok_or_else(|| Error::InvalidKeyFormat(self.name()))
   }
 }
 

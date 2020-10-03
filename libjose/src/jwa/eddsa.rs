@@ -14,15 +14,16 @@ use crate::error::Result;
 use crate::jwa::EdCurve;
 use crate::jwk::Jwk;
 use crate::jwk::JwkOperation;
-use crate::jwk::JwkUse;
-use crate::jwk::JwkParamsOkp;
 use crate::jwk::JwkParams;
+use crate::jwk::JwkParamsOkp;
+use crate::jwk::JwkType;
+use crate::jwk::JwkUse;
 use crate::jws::JwsAlgorithm;
 use crate::jws::JwsSigner;
 use crate::jws::JwsVerifier;
+use crate::utils::decode_b64;
 use crate::utils::pem_decode;
 use crate::utils::Pem;
-use crate::utils::decode_b64;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(non_camel_case_types)]
@@ -32,7 +33,7 @@ pub enum EddsaAlgorithm {
 }
 
 impl EddsaAlgorithm {
-  /// Returns the JWA identifier of the algorithm.
+  /// Returns the JWA identifier of the EdDSA algorithm.
   pub const fn name(self) -> &'static str {
     match self {
       Self::EdDSA => "EdDSA",
@@ -44,25 +45,25 @@ impl EddsaAlgorithm {
     eddsa::PrivateKey::random(curve.into(), &mut OsRng).map_err(Into::into)
   }
 
-  /// Creates a new `EddsaSigner` from DER-encoded material in PKCS#8 form.
+  /// Creates a new `EddsaSigner` from a DER-encoded PKCS#8 private key.
   pub fn signer_from_der(self, data: impl AsRef<[u8]>) -> Result<EddsaSigner> {
-    let key: eddsa::PrivateKey = eddsa::PrivateKey::from_slice(Curve::Ed25519, data)?;
-
     Ok(EddsaSigner {
       alg: self,
       crv: EdCurve::Ed25519,
-      key,
+      key: eddsa::PrivateKey::from_slice(Curve::Ed25519, data)?,
       kid: None,
     })
   }
 
-  /// Creates a new `EddsaSigner` from a PEM-encoded document.
+  /// Creates a new `EddsaSigner` from a PEM-encoded private key.
   pub fn signer_from_pem(self, data: impl AsRef<[u8]>) -> Result<EddsaSigner> {
     let pem: Pem = pem_decode(&data)?;
 
+    // TODO: ED25519 PRIVATE KEY
+    // TODO: ED448 PRIVATE KEY
     let key: eddsa::PrivateKey = match pem.pem_type.as_str() {
       "PRIVATE KEY" => eddsa::PrivateKey::from_slice(Curve::Ed25519, pem.pem_data)?,
-      _ => return Err(Error::InvalidKeyFormat(self.name()).into()),
+      _ => return Err(Error::InvalidKeyFormat(self.name())),
     };
 
     Ok(EddsaSigner {
@@ -78,29 +79,32 @@ impl EddsaAlgorithm {
     data.check_use(&JwkUse::Signature)?;
     data.check_ops(&JwkOperation::Sign)?;
     data.check_alg(self.name())?;
+    data.check_kty(JwkType::Okp)?;
 
     let params: &JwkParamsOkp = match data.params() {
       Some(JwkParams::Okp(params)) => params,
-      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name()).into()),
+      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name())),
     };
 
     let crv: EdCurve = match params.crv.as_str() {
       "Ed25519" => EdCurve::Ed25519,
       "Ed448" => EdCurve::Ed448,
-      _ => return Err(Error::InvalidKeyFormat(self.name()).into()),
+      _ => return Err(Error::InvalidKeyFormat(self.name())),
     };
 
     let x: Vec<u8> = decode_b64(params.x.as_str())?;
 
-    let d: Vec<u8> = match params.d.as_ref() {
-      Some(d) =>  decode_b64(d.as_str())?,
-      None => return Err(Error::InvalidKeyFormat(self.name()).into()),
-    };
+    let d: Vec<u8> = params
+      .d
+      .as_ref()
+      .map(decode_b64)
+      .transpose()?
+      .ok_or_else(|| Error::InvalidKeyFormat(self.name()))?;
 
     let key: eddsa::PrivateKey = eddsa::PrivateKey::from_slice(crv.into(), &d)?;
 
     if key.public_key() != eddsa::PublicKey::from_slice(crv.into(), &x)? {
-      return Err(Error::InvalidKeyFormat(self.name()).into());
+      return Err(Error::InvalidKeyFormat(self.name()));
     }
 
     Ok(EddsaSigner {
@@ -111,25 +115,23 @@ impl EddsaAlgorithm {
     })
   }
 
-  /// Creates a new `EddsaVerifier` from DER-encoded material in PKCS#8 form.
+  /// Creates a new `EddsaVerifier` from a DER-encoded PKCS#8 public key.
   pub fn verifier_from_der(self, data: impl AsRef<[u8]>) -> Result<EddsaVerifier> {
-    let key: eddsa::PublicKey = eddsa::PublicKey::from_slice(Curve::Ed25519, data)?;
-
     Ok(EddsaVerifier {
       alg: self,
       crv: EdCurve::Ed25519,
-      key,
+      key: eddsa::PublicKey::from_slice(Curve::Ed25519, data)?,
       kid: None,
     })
   }
 
-  /// Creates a new `EddsaVerifier` from a PEM-encoded document.
+  /// Creates a new `EddsaVerifier` from a PEM-encoded public key.
   pub fn verifier_from_pem(self, data: impl AsRef<[u8]>) -> Result<EddsaVerifier> {
     let pem: Pem = pem_decode(&data)?;
 
     let key: eddsa::PublicKey = match pem.pem_type.as_str() {
       "PUBLIC KEY" => eddsa::PublicKey::from_slice(Curve::Ed25519, pem.pem_data)?,
-      _ => return Err(Error::InvalidKeyFormat(self.name()).into()),
+      _ => return Err(Error::InvalidKeyFormat(self.name())),
     };
 
     Ok(EddsaVerifier {
@@ -145,16 +147,17 @@ impl EddsaAlgorithm {
     data.check_use(&JwkUse::Signature)?;
     data.check_ops(&JwkOperation::Verify)?;
     data.check_alg(self.name())?;
+    data.check_kty(JwkType::Okp)?;
 
     let params: &JwkParamsOkp = match data.params() {
       Some(JwkParams::Okp(params)) => params,
-      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name()).into()),
+      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name())),
     };
 
     let crv: EdCurve = match params.crv.as_str() {
       "Ed25519" => EdCurve::Ed25519,
       "Ed448" => EdCurve::Ed448,
-      _ => return Err(Error::InvalidKeyFormat(self.name()).into()),
+      _ => return Err(Error::InvalidKeyFormat(self.name())),
     };
 
     let x: Vec<u8> = decode_b64(params.x.as_str())?;
@@ -185,7 +188,7 @@ impl From<EddsaAlgorithm> for JwsAlgorithm {
 }
 
 // =============================================================================
-// Eddsa Signer
+// EdDSA Signer
 // =============================================================================
 
 #[derive(Debug)]
@@ -223,7 +226,7 @@ impl Deref for EddsaSigner {
 }
 
 // =============================================================================
-// Eddsa Verifier
+// EdDSA Verifier
 // =============================================================================
 
 #[derive(Debug)]

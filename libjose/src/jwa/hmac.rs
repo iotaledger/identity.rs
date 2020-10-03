@@ -35,6 +35,7 @@ pub enum HmacAlgorithm {
 }
 
 impl HmacAlgorithm {
+  /// Returns the JWA identifier of the Hmac algorithm.
   pub const fn name(self) -> &'static str {
     match self {
       Self::HS256 => "HS256",
@@ -43,7 +44,7 @@ impl HmacAlgorithm {
     }
   }
 
-  pub const fn output_size(self) -> usize {
+  pub const fn key_size(self) -> usize {
     match self {
       Self::HS256 => hmac::SHA256_OUTPUT_SIZE,
       Self::HS384 => hmac::SHA384_OUTPUT_SIZE,
@@ -51,124 +52,50 @@ impl HmacAlgorithm {
     }
   }
 
-  /// Creates a new Hmac key.
-  pub fn generate_key(self) -> Result<SecretKey> {
-    SecretKey::random(self.output_size(), &mut OsRng).map_err(Into::into)
+  /// Creates a new random `HmacKey`.
+  pub fn generate_key(self) -> Result<HmacKey> {
+    HmacKey::new(self)
   }
 
-  /// Creates a new `HmacSigner` from a slice of bytes.
+  /// Creates a new `HmacSigner` from the given slice of bytes.
   pub fn signer_from_bytes(self, data: impl AsRef<[u8]>) -> Result<HmacSigner> {
-    let data: &[u8] = data.as_ref();
-
-    if data.len() < self.output_size() {
-      return Err(Error::InvalidKeyFormat(self.name()).into());
-    }
-
-    Ok(HmacSigner {
-      alg: self,
-      key: data.into(),
-      kid: None,
-    })
+    HmacKey::from_bytes(self, data).map(|key| key.to_signer())
   }
 
   /// Creates a new `HmacSigner` from a base64url-encoded key.
   pub fn signer_from_b64(self, data: impl AsRef<[u8]>) -> Result<HmacSigner> {
-    let data: Vec<u8> = decode_b64(data.as_ref())?;
-
-    if data.len() < self.output_size() {
-      return Err(Error::InvalidKeyFormat(self.name()).into());
-    }
-
-    Ok(HmacSigner {
-      alg: self,
-      key: data.into(),
-      kid: None,
-    })
+    HmacKey::from_b64(self, data).map(|key| key.to_signer())
   }
 
   /// Creates a new `HmacSigner` from a JSON Web Key.
   pub fn signer_from_jwk(self, data: &Jwk) -> Result<HmacSigner> {
     data.check_use(&JwkUse::Signature)?;
     data.check_ops(&JwkOperation::Sign)?;
-    data.check_alg(self.name())?;
-    data.check_kty(JwkType::Oct)?;
 
-    let k: &str = match data.params() {
-      Some(JwkParams::Oct(JwkParamsOct { k })) => k.as_str(),
-      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name()).into()),
-    };
-
-    self.signer_from_b64(k).map(|mut signer| {
-      signer.kid = data.kid().map(ToString::to_string);
-      signer
-    })
+    HmacKey::from_jwk(self, data).map(|key| key.to_signer())
   }
 
-  /// Creates a new `HmacVerifier` from a slice of bytes.
+  /// Creates a new `HmacVerifier` from the given slice of bytes.
   pub fn verifier_from_bytes(self, data: impl AsRef<[u8]>) -> Result<HmacVerifier> {
-    let data: &[u8] = data.as_ref();
-
-    if data.len() < self.output_size() {
-      return Err(Error::InvalidKeyFormat(self.name()).into());
-    }
-
-    Ok(HmacVerifier {
-      alg: self,
-      key: data.into(),
-      kid: None,
-    })
+    HmacKey::from_bytes(self, data).map(|key| key.to_verifier())
   }
 
   /// Creates a new `HmacVerifier` from a base64url-encoded key.
   pub fn verifier_from_b64(self, data: impl AsRef<[u8]>) -> Result<HmacVerifier> {
-    let data: Vec<u8> = decode_b64(data.as_ref())?;
-
-    if data.len() < self.output_size() {
-      return Err(Error::InvalidKeyFormat(self.name()).into());
-    }
-
-    Ok(HmacVerifier {
-      alg: self,
-      key: data.into(),
-      kid: None,
-    })
+    HmacKey::from_b64(self, data).map(|key| key.to_verifier())
   }
 
   /// Creates a new `HmacVerifier` from a JSON Web Key.
   pub fn verifier_from_jwk(self, data: &Jwk) -> Result<HmacVerifier> {
     data.check_use(&JwkUse::Signature)?;
     data.check_ops(&JwkOperation::Verify)?;
-    data.check_alg(self.name())?;
-    data.check_kty(JwkType::Oct)?;
 
-    let k: &str = match data.params() {
-      Some(JwkParams::Oct(JwkParamsOct { k })) => k.as_str(),
-      Some(_) | None => return Err(Error::InvalidKeyFormat(self.name()).into()),
-    };
-
-    self.verifier_from_b64(k).map(|mut signer| {
-      signer.kid = data.kid().map(ToString::to_string);
-      signer
-    })
+    HmacKey::from_jwk(self, data).map(|key| key.to_verifier())
   }
 
-  /// Creates a new Hmac JSON Web Key with the given slice of bytes.
-  pub fn to_jwk(self, data: impl AsRef<[u8]>) -> Jwk {
-    let mut jwk: Jwk = Jwk::with_kty(JwkType::Oct);
-    let mut ops: Vec<JwkOperation> = Vec::with_capacity(2);
-
-    ops.push(JwkOperation::Sign);
-    ops.push(JwkOperation::Verify);
-
-    jwk.set_alg(self.name());
-    jwk.set_use(JwkUse::Signature);
-    jwk.set_key_ops(ops);
-
-    jwk.set_params(JwkParamsOct {
-      k: encode_b64(data),
-    });
-
-    jwk
+  /// Creates a new Hmac JSON Web Key from the given slice of bytes.
+  pub fn to_jwk(self, data: impl AsRef<[u8]>) -> Result<Jwk> {
+    HmacKey::from_bytes(self, data).map(|key| key.to_jwk())
   }
 }
 
@@ -263,5 +190,110 @@ impl Deref for HmacVerifier {
 
   fn deref(&self) -> &Self::Target {
     self
+  }
+}
+
+// =============================================================================
+// Hmac Key
+// =============================================================================
+
+#[derive(Clone, Debug)]
+pub struct HmacKey {
+  alg: HmacAlgorithm,
+  key: SecretKey,
+  kid: Option<String>,
+}
+
+impl HmacKey {
+  /// Creates a new random `HmacKey`.
+  pub fn new(alg: HmacAlgorithm) -> Result<Self> {
+    Ok(Self {
+      alg,
+      key: SecretKey::random(alg.key_size(), &mut OsRng)?,
+      kid: None,
+    })
+  }
+
+  /// Creates a new `HmacKey` from the given slice of bytes.
+  pub fn from_bytes(alg: HmacAlgorithm, data: impl AsRef<[u8]>) -> Result<Self> {
+    let data: &[u8] = data.as_ref();
+
+    if data.len() < alg.key_size() {
+      return Err(Error::InvalidKeyFormat(alg.name()));
+    }
+
+    Ok(Self {
+      alg,
+      key: data.into(),
+      kid: None,
+    })
+  }
+
+  /// Creates a new `HmacKey` from a base64url-encoded key.
+  pub fn from_b64(alg: HmacAlgorithm, data: impl AsRef<[u8]>) -> Result<Self> {
+    let data: Vec<u8> = decode_b64(data)?;
+
+    if data.len() < alg.key_size() {
+      return Err(Error::InvalidKeyFormat(alg.name()));
+    }
+
+    Ok(Self {
+      alg,
+      key: data.into(),
+      kid: None,
+    })
+  }
+
+  /// Creates a new `HmacKey` from a JSON Web Key.
+  pub fn from_jwk(alg: HmacAlgorithm, data: &Jwk) -> Result<Self> {
+    data.check_alg(alg.name())?;
+    data.check_kty(JwkType::Oct)?;
+
+    let k: &str = match data.params() {
+      Some(JwkParams::Oct(JwkParamsOct { k })) => k.as_str(),
+      Some(_) | None => return Err(Error::InvalidKeyFormat(alg.name())),
+    };
+
+    Self::from_b64(alg, k).map(|mut this| {
+      this.kid = data.kid().map(ToString::to_string);
+      this
+    })
+  }
+
+  /// Creates a new Hmac JSON Web Key with the given slice of bytes.
+  pub fn to_jwk(&self) -> Jwk {
+    let mut jwk: Jwk = Jwk::with_kty(JwkType::Oct);
+    let mut ops: Vec<JwkOperation> = Vec::with_capacity(2);
+
+    ops.push(JwkOperation::Sign);
+    ops.push(JwkOperation::Verify);
+
+    jwk.set_alg(self.alg.name());
+    jwk.set_use(JwkUse::Signature);
+    jwk.set_key_ops(ops);
+
+    jwk.set_params(JwkParamsOct {
+      k: encode_b64(&self.key),
+    });
+
+    jwk
+  }
+
+  /// Creates a new `HmacSigner` from this `HmacKey`.
+  pub fn to_signer(&self) -> HmacSigner {
+    HmacSigner {
+      alg: self.alg,
+      key: self.key.clone(),
+      kid: self.kid.clone(),
+    }
+  }
+
+  /// Creates a new `HmacVerifier` from this `HmacKey`.
+  pub fn to_verifier(&self) -> HmacVerifier {
+    HmacVerifier {
+      alg: self.alg,
+      key: self.key.clone(),
+      kid: self.kid.clone(),
+    }
   }
 }
