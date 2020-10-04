@@ -1,4 +1,4 @@
-use chrono::ParseError as ChronoError;
+use identity_common::Error as CommonError;
 use std::result::Result as StdResult;
 use thiserror::Error as ThisError;
 
@@ -14,18 +14,14 @@ pub enum Error {
     InvalidBaseContext(&'static str),
     #[error("Invalid URI for {0}")]
     InvalidURI(&'static str),
-    #[error("Invalid timestamp format ({0})")]
-    InvalidTimestamp(ChronoError),
     #[error("Missing `Credential` subject")]
     MissingCredentialSubject,
     #[error("Invalid `Credential` subject")]
     InvalidCredentialSubject,
     #[error("Missing `Credential` issuer")]
     MissingCredentialIssuer,
-    #[error("Failed to decode JSON: {0}")]
-    DecodeJSON(serde_json::Error),
-    #[error("Failed to encode JSON: {0}")]
-    EncodeJSON(serde_json::Error),
+    #[error(transparent)]
+    CommonError(#[from] CommonError),
 }
 
-pub type Result<T> = StdResult<T, Error>;
+pub type Result<T, E = Error> = StdResult<T, E>;

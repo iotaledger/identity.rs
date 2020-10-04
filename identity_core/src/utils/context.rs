@@ -1,13 +1,13 @@
-use std::str::FromStr;
+use std::{hash::Hash, str::FromStr};
 
+use identity_diff::Diff;
 use serde::{
     ser::{Serialize, SerializeSeq, Serializer},
     Deserialize,
 };
-use serde_diff::SerdeDiff;
 
 /// A context type.  Contains a Vector of Strings which describe the DID context.
-#[derive(Debug, PartialEq, Eq, Deserialize, Clone, SerdeDiff)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Clone, Hash, Diff, PartialOrd, Ord)]
 #[serde(transparent)]
 pub struct Context(Vec<String>);
 

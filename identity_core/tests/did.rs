@@ -24,13 +24,13 @@ fn test_multiple_ids() {
     let did = DID {
         method_name: "iota".into(),
         id_segments: vec!["123456".into(), "789011".into()],
-        params: Some(vec![Param::from(("name".into(), Some("value".into())))]),
+        query: Some(vec![Param::from(("name".into(), Some("value".into())))]),
         ..Default::default()
     }
     .init()
     .unwrap();
 
-    assert_eq!(format!("{}", did), "did:iota:123456:789011;name=value");
+    assert_eq!(format!("{}", did), "did:iota:123456:789011?name=value");
 }
 
 /// test the DID Param struct.
@@ -39,7 +39,7 @@ fn test_param() {
     let param = ("name".into(), Some("value".into()));
     let param = Param::from(param);
 
-    assert_eq!(param.name, "name");
+    assert_eq!(param.key, "name");
     assert_eq!(param.value, Some(String::from("value")));
     assert_eq!(format!("{}", param), "name=value");
 }
@@ -71,20 +71,22 @@ fn test_params() {
     let mut did = DID {
         method_name: "iota".into(),
         id_segments: vec!["123456".into()],
-        params: params.clone(),
+        query: params.clone(),
         ..Default::default()
     }
     .init()
     .unwrap();
 
-    assert_eq!(format!("{}", did), "did:iota:123456;param=a;param=b");
-    assert_eq!(did.params, params);
+    println!("{:?}", did);
+
+    assert_eq!(format!("{}", did), "did:iota:123456?param=a&param=b");
+    assert_eq!(did.query, params);
 
     let param_c = Param::from(("param".into(), Some("c".into())));
     let params = vec![param_c.clone()];
-    did.add_params(params);
+    did.add_query(params);
 
-    assert_eq!(did.params, Some(vec![param_a, param_b, param_c]));
+    assert_eq!(did.query, Some(vec![param_a, param_b, param_c]));
 }
 
 /// test a did with path strings.
@@ -107,14 +109,14 @@ fn test_path_did() {
 fn test_full_did() {
     let param_a = Param::from(("param".into(), Some("a".into())));
     let param_b = Param::from(("param".into(), Some("b".into())));
-    let params = Some(vec![param_a, param_b]);
+    let param_c = Param::from(("param".into(), Some("c".into())));
+    let params = Some(vec![param_a, param_b, param_c]);
 
     let did = DID {
         method_name: "iota".into(),
         id_segments: vec!["123456".into()],
-        params,
+        query: params,
         path_segments: Some(vec!["some_path".into()]),
-        query: Some("some_query".into()),
         fragment: Some("a_fragment".into()),
     }
     .init()
@@ -122,30 +124,38 @@ fn test_full_did() {
 
     assert_eq!(
         format!("{}", did),
-        "did:iota:123456;param=a;param=b/some_path?some_query#a_fragment"
+        "did:iota:123456/some_path?param=a&param=b&param=c#a_fragment"
     );
+}
+
+#[test]
+fn test_some() {
+    let did =
+        DID::parse_from_str("did:example:123456789abcdefghi?service=messages&relative-ref=%2Fsome%2Fpath%3Fquery#frag")
+            .unwrap();
+
+    println!("{:?}", did);
 }
 
 /// test the did parser on a full did.
 #[test]
 fn test_parser() {
-    let did = DID::parse_from_str("did:iota:123456;param=a;param=b/some_path?some_query#a_fragment").unwrap();
+    let did = DID::parse_from_str("did:iota:123456/some_path?param=a&param=b#a_fragment").unwrap();
 
     assert_eq!(
         format!("{}", did),
-        "did:iota:123456;param=a;param=b/some_path?some_query#a_fragment"
+        "did:iota:123456/some_path?param=a&param=b#a_fragment"
     );
     assert_eq!(
         did,
         DID {
             method_name: "iota".into(),
             id_segments: vec!["123456".into()],
-            params: Some(vec![
+            query: Some(vec![
                 ("param".into(), Some("a".into())).into(),
                 ("param".into(), Some("b".into())).into()
             ]),
             path_segments: Some(vec!["some_path".into()]),
-            query: Some("some_query".into()),
             fragment: Some("a_fragment".into()),
         }
         .init()
@@ -202,9 +212,8 @@ fn test_serde() {
     let did = DID {
         method_name: "iota".into(),
         id_segments: vec!["123456".into()],
-        params,
         path_segments: Some(vec!["some_path".into()]),
-        query: Some("some_query".into()),
+        query: params,
         fragment: Some("a_fragment".into()),
     }
     .init()
@@ -212,9 +221,7 @@ fn test_serde() {
 
     assert_tokens(
         &did,
-        &[Token::String(
-            "did:iota:123456;param=a;param=b/some_path?some_query#a_fragment",
-        )],
+        &[Token::String("did:iota:123456/some_path?param=a&param=b#a_fragment")],
     )
 }
 
@@ -253,8 +260,8 @@ fn inner_did_name(s: &str) -> Option<DID> {
 }
 
 /// logic for the did params prop test.
-fn inner_did_params(n: &str, v: &str) -> Option<DID> {
-    let did_str = format!("did:iota:12345678;{}={}", n, v);
+fn inner_did_query_params(n: &str, v: &str) -> Option<DID> {
+    let did_str = format!("did:iota:12345678?{}={}", n, v);
 
     DID::parse_from_str(did_str).unwrap();
 
@@ -262,7 +269,7 @@ fn inner_did_params(n: &str, v: &str) -> Option<DID> {
         DID {
             method_name: "iota".into(),
             id_segments: vec!["12345678".into()],
-            params: Some(vec![(n.into(), Some(v.into())).into()]),
+            query: Some(vec![(n.into(), Some(v.into())).into()]),
             ..Default::default()
         }
         .init()
@@ -281,24 +288,6 @@ fn inner_did_path(p: &str) -> Option<DID> {
             method_name: "iota".into(),
             id_segments: vec!["12345678".into()],
             path_segments: Some(vec![p.into()]),
-            ..Default::default()
-        }
-        .init()
-        .unwrap(),
-    )
-}
-
-/// logic for the did query prop test.
-fn inner_did_query(q: &str) -> Option<DID> {
-    let did_str = format!("did:iota:12345678?{}", q);
-
-    DID::parse_from_str(did_str).unwrap();
-
-    Some(
-        DID {
-            method_name: "iota".into(),
-            id_segments: vec!["12345678".into()],
-            query: Some(q.into()),
             ..Default::default()
         }
         .init()
@@ -343,19 +332,13 @@ proptest! {
     #[test]
     // Run cases that match the regex and are ascii as the params.  Check if the parser accepts them and if the DID can be created with them.
     fn prop_parse_did_params(n in "[a-zA-Z0-9.=:-]+", v in "[a-zA-Z0-9.=:-]*".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
-        inner_did_params(&n, &v);
+        inner_did_query_params(&n, &v);
     }
 
     #[test]
     // Run cases that match the regex and are ascii as the path_segments.  Check if the parser accepts them and if the DID can be created with them.
     fn prop_parse_did_path(p in "[a-zA-Z0-9._!~$&'()*+;,=:@-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
         inner_did_path(&p);
-    }
-
-    #[test]
-    // Run cases that match the regex and are ascii as the query.  Check if the parser accepts them and if the DID can be created with them.
-    fn prop_parse_did_query(q in "[a-zA-Z0-9._!~$&'()*+;,=/?:@-]+".prop_filter("Values must be Ascii", |v| v.is_ascii())) {
-        inner_did_query(&q);
     }
 
     #[test]
