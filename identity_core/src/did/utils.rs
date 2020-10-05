@@ -2,10 +2,6 @@ use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 
-pub trait Dedup<T: PartialEq + Clone> {
-    fn clear_duplicates(&mut self);
-}
-
 pub trait HasId {
     type Id: Hash + PartialEq + Eq;
 
