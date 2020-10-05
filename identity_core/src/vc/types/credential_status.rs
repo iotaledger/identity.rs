@@ -8,7 +8,7 @@ use crate::{
 
 /// Information used to determine the current status of a `Credential`.
 ///
-/// Ref: https://www.w3.org/TR/vc-data-model/#status
+/// [More Info](https://www.w3.org/TR/vc-data-model/#status)
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct CredentialStatus {
     pub id: Uri,

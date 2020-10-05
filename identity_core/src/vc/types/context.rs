@@ -4,6 +4,8 @@ use std::fmt;
 use crate::common::{Object, Uri};
 
 /// A reference to a JSON-LD context
+///
+/// [More Info](https://www.w3.org/TR/vc-data-model/#contexts)
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Context {

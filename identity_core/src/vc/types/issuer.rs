@@ -2,9 +2,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::common::{Object, Uri};
 
-/// TODO:
-///   - Deserialize single Uri into object-style layout
-///   - Replace Enum with plain struct
+/// An identifier representing the issuer of a `Credential`.
+///
+/// [More Info](https://www.w3.org/TR/vc-data-model/#issuer)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Issuer {

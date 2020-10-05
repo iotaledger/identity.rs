@@ -8,7 +8,7 @@ use crate::{
 
 /// Information used to refresh or assert the status of a `Credential`.
 ///
-/// Ref: https://www.w3.org/TR/vc-data-model/#refreshing
+/// [More Info](https://www.w3.org/TR/vc-data-model/#refreshing)
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct RefreshService {
     pub id: Uri,

@@ -8,7 +8,7 @@ use crate::{
 
 /// Information used to validate the structure of a `Credential`.
 ///
-/// Ref: https://www.w3.org/TR/vc-data-model/#data-schemas
+/// [More Info](https://www.w3.org/TR/vc-data-model/#data-schemas)
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct CredentialSchema {
     pub id: Uri,

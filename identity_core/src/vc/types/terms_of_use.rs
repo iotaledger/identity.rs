@@ -9,7 +9,7 @@ use crate::{
 /// Information used to express obligations, prohibitions, and permissions about
 /// a `Credential` or `Presentation`.
 ///
-/// Ref: https://www.w3.org/TR/vc-data-model/#terms-of-use
+/// [More Info](https://www.w3.org/TR/vc-data-model/#terms-of-use)
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct TermsOfUse {
     #[serde(skip_serializing_if = "Option::is_none")]

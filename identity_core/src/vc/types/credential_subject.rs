@@ -8,7 +8,7 @@ use crate::{
 
 /// An entity who is the target of a set of claims.
 ///
-/// Ref: https://www.w3.org/TR/vc-data-model/#credential-subject
+/// [More Info](https://www.w3.org/TR/vc-data-model/#credential-subject)
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct CredentialSubject {
     #[serde(skip_serializing_if = "Option::is_none")]

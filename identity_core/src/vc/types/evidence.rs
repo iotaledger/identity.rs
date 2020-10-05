@@ -8,7 +8,7 @@ use crate::{
 
 /// Information used to increase confidence in the claims of a `Credential`
 ///
-/// Ref: https://www.w3.org/TR/vc-data-model/#evidence
+/// [More Info](https://www.w3.org/TR/vc-data-model/#evidence)
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Evidence {
     #[serde(skip_serializing_if = "Option::is_none")]
