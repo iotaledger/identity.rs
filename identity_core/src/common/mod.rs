@@ -2,7 +2,6 @@
 mod macros;
 
 pub mod convert;
-pub mod error;
 pub mod object;
 pub mod one_or_many;
 pub mod timestamp;
@@ -10,7 +9,6 @@ pub mod uri;
 pub mod value;
 
 pub use convert::{AsJson, SerdeInto};
-pub use error::{Error, Result};
 pub use object::Object;
 pub use one_or_many::OneOrMany;
 pub use timestamp::Timestamp;

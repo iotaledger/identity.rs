@@ -61,7 +61,7 @@ impl FromStr for Service {
     type Err = crate::Error;
 
     fn from_str(s: &str) -> crate::Result<Service> {
-        Ok(serde_json::from_str(s)?)
+        serde_json::from_str(s).map_err(crate::Error::DecodeJSON)
     }
 }
 
@@ -75,7 +75,7 @@ impl FromStr for ServiceEndpoint {
     type Err = crate::Error;
 
     fn from_str(s: &str) -> crate::Result<ServiceEndpoint> {
-        Ok(serde_json::from_str(s)?)
+        serde_json::from_str(s).map_err(crate::Error::DecodeJSON)
     }
 }
 

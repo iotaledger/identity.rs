@@ -207,7 +207,7 @@ impl DIDDocument {
     }
 
     pub fn get_diff_from_str(json: String) -> crate::Result<DiffDIDDocument> {
-        Ok(serde_json::from_str(&json)?)
+        serde_json::from_str(&json).map_err(crate::Error::DecodeJSON)
     }
 }
 
@@ -223,7 +223,6 @@ impl FromStr for DIDDocument {
     type Err = crate::Error;
 
     fn from_str(s: &str) -> crate::Result<Self> {
-        let doc = serde_json::from_str(s)?;
-        Ok(doc)
+        serde_json::from_str(s).map_err(crate::Error::DecodeJSON)
     }
 }

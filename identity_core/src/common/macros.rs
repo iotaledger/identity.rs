@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! object {
     () => {
-        $crate::object::Object::default()
+        $crate::common::Object::default()
     };
     ($($key:ident : $value:expr),* $(,)*) => {
         {
@@ -10,11 +10,11 @@ macro_rules! object {
         $(
             object.insert(
                 stringify!($key).to_string(),
-                $crate::value::Value::from($value),
+                $crate::common::Value::from($value),
             );
         )*
 
-            $crate::object::Object::from(object)
+            $crate::common::Object::from(object)
         }
     };
 }

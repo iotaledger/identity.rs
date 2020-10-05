@@ -93,7 +93,7 @@ impl FromStr for PublicKey {
     type Err = crate::Error;
 
     fn from_str(s: &str) -> crate::Result<PublicKey> {
-        Ok(serde_json::from_str(s)?)
+        serde_json::from_str(s).map_err(crate::Error::DecodeJSON)
     }
 }
 
