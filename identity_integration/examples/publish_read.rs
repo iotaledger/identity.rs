@@ -91,5 +91,5 @@ async fn create_diff(
         auth_key: bs58_auth_key,
         signature: String::new(),
     });
-    Ok(sign_payload(&keypair, did_payload.clone())?)
+    Ok(sign_payload(&keypair, did_payload)?)
 }
