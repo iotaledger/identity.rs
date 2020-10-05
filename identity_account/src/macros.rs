@@ -53,7 +53,7 @@ macro_rules! cache {
 
                         // re-get mutex to add/update the cache.
                         let mut cache = [<$name:upper _CACHE>].lock().unwrap();
-                        cache.insert(key, value, None);
+                        cache.insert(key, value, None, None);
                         value.clone()
                     }
                 }

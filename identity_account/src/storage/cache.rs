@@ -25,7 +25,7 @@ impl<K: Hash + Eq, V> Cache<K, V> {
     /// let key: &'static str = "key";
     /// let value: &'static str = "value";
     ///
-    /// cache.insert(key, value, None);
+    /// cache.insert(key, value, None, None);
     ///
     /// assert_eq!(cache.get(&key), Some(&value))
     /// ```
@@ -52,7 +52,7 @@ impl<K: Hash + Eq, V> Cache<K, V> {
     /// let key: &'static str = "key";
     /// let value: &'static str = "value";
     ///
-    /// cache.insert(key, value, None);
+    /// cache.insert(key, value, None, None);
     ///
     /// assert_eq!(cache.get(&key), Some(&value));
     /// ```
@@ -77,7 +77,7 @@ impl<K: Hash + Eq, V> Cache<K, V> {
     /// let key: &'static str = "key";
     /// let value: &'static str = "value";
     ///
-    /// cache.insert(key, value, None);
+    /// cache.insert(key, value, None, None);
     ///
     /// assert_eq!(cache.get(&key), Some(&value))
     /// ```
@@ -101,10 +101,10 @@ impl<K: Hash + Eq, V> Cache<K, V> {
     /// let key: &'static str = "key";
     /// let value: &'static str = "value";
     ///
-    /// assert_eq!(cache.get_or_insert(key, move || value, None), &value);
+    /// assert_eq!(cache.get_or_insert(key, move || value, None, None), &value);
     /// assert!(cache.contains_key(&key));
     /// ```
-    pub fn get_or_insert<F>(&mut self, key: K, func: F, lifetime: Option<Duration>) -> &V
+    pub fn get_or_insert<F>(&mut self, key: K, func: F, lifetime: Option<Duration>, needs_cache: Option<bool>) -> &V
     where
         F: Fn() -> V,
     {
@@ -115,12 +115,12 @@ impl<K: Hash + Eq, V> Cache<K, V> {
         match self.table.entry(key) {
             Entry::Occupied(mut occ) => {
                 if occ.get().has_expired(now) {
-                    occ.insert(Value::new(func(), lifetime));
+                    occ.insert(Value::new(func(), lifetime, needs_cache));
                 }
 
                 &occ.into_mut().val
             }
-            Entry::Vacant(vac) => &vac.insert(Value::new(func(), lifetime)).val,
+            Entry::Vacant(vac) => &vac.insert(Value::new(func(), lifetime, needs_cache)).val,
         }
     }
 
@@ -137,18 +137,18 @@ impl<K: Hash + Eq, V> Cache<K, V> {
     /// let key: &'static str = "key";
     /// let value: &'static str = "value";
     ///
-    /// let insert = cache.insert(key, value, None);
+    /// let insert = cache.insert(key, value, None, None);
     ///
     /// assert_eq!(cache.get(&key), Some(&value));
     /// assert!(insert.is_none());
     /// ```
-    pub fn insert(&mut self, key: K, value: V, lifetime: Option<Duration>) -> Option<V> {
+    pub fn insert(&mut self, key: K, value: V, lifetime: Option<Duration>, needs_cache: Option<bool>) -> Option<V> {
         let now = SystemTime::now();
 
         self.try_remove_expired_items(now);
 
         self.table
-            .insert(key, Value::new(value, lifetime))
+            .insert(key, Value::new(value, lifetime, needs_cache))
             .filter(|value| !value.has_expired(now))
             .map(|value| value.val)
     }
@@ -166,7 +166,7 @@ impl<K: Hash + Eq, V> Cache<K, V> {
     /// let key: &'static str = "key";
     /// let value: &'static str = "value";
     ///
-    /// let insert = cache.insert(key, value, None);
+    /// let insert = cache.insert(key, value, None, None);
     /// assert_eq!(cache.remove(&key), Some(value));
     /// assert!(!cache.contains_key(&key));
     /// ```
@@ -207,7 +207,7 @@ impl<K: Hash + Eq, V> Cache<K, V> {
     /// let key: &'static str = "key";
     /// let value: &'static str = "value";
     ///
-    /// cache.insert(key, value, None);
+    /// cache.insert(key, value, None, None);
     ///
     /// assert_eq!(cache.get_scan_frequency(), Some(scan_frequency));
     /// ```

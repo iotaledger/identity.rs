@@ -13,17 +13,23 @@ pub use file::CacheFile;
 pub(crate) struct Value<T> {
     pub val: T,
     expiration: Option<SystemTime>,
+    needs_cache: Option<bool>,
 }
 
 impl<T> Value<T> {
-    pub fn new(val: T, duration: Option<Duration>) -> Self {
+    pub fn new(val: T, duration: Option<Duration>, needs_cache: Option<bool>) -> Self {
         Value {
             val,
             expiration: duration.map(|dur| SystemTime::now() + dur),
+            needs_cache,
         }
     }
 
     pub fn has_expired(&self, time_now: SystemTime) -> bool {
         self.expiration.map_or(false, |time| time_now >= time)
+    }
+
+    pub fn should_cache(&self) -> bool {
+        self.needs_cache.map_or(false, |t| t)
     }
 }
