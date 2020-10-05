@@ -49,6 +49,8 @@ async fn main() -> Result<()> {
         did: new.derive_did()?,
         diff: serde_json::to_string(&diff)?,
         time: Timestamp::now().to_rfc3339(),
+        auth_key: String::from("authkey"),
+        signature: String::from("signature"),
     });
     let tail_transaction = tangle_writer.publish_document(&did_payload).await?;
     println!(
