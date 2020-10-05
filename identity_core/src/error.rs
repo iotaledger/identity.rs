@@ -1,9 +1,8 @@
 use anyhow::Result as AnyhowResult;
-use identity_common::Error as CommonError;
 use pest::error::Error as PestError;
 use thiserror::Error as DeriveError;
 
-use crate::did_parser::Rule;
+use crate::{common::Error as CommonError, did_parser::Rule};
 
 /// The main crate Error type; uses `thiserror`.
 #[derive(Debug, DeriveError)]

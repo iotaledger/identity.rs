@@ -1,4 +1,3 @@
-use identity_common::uri::Uri;
 use identity_diff::Diff;
 
 use serde::{
@@ -11,14 +10,14 @@ use std::{
     hash::Hash,
 };
 
-use crate::did_parser::parse;
+use crate::{common::Uri, did_parser::parse};
 
 const LEADING_TOKENS: &str = "did";
 
 /// An aliased tuple the converts into a `Param` type.
 type DIDTuple = (String, Option<String>);
 
-/// a Decentralized identity structure.  
+/// a Decentralized identity structure.
 #[derive(Debug, PartialEq, Default, Eq, Clone, Diff, Hash, Ord, PartialOrd)]
 #[diff(from_into)]
 pub struct DID {
@@ -86,7 +85,7 @@ impl DID {
         self.path_segments = Some(ps.clone());
     }
 
-    /// Method to add a fragment to the DID.  
+    /// Method to add a fragment to the DID.
     pub fn add_fragment(&mut self, fragment: String) {
         self.fragment = Some(fragment);
     }

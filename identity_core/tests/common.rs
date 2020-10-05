@@ -1,4 +1,4 @@
-use identity_common::{line_error, object, Timestamp};
+use identity_core::{line_error, object, Timestamp};
 
 use std::convert::TryFrom;
 

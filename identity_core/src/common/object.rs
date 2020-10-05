@@ -7,7 +7,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use crate::value::Value;
+use crate::common::Value;
 
 type Inner = HashMap<String, Value>;
 
