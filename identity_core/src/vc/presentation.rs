@@ -1,12 +1,11 @@
-use identity_common::{impl_builder_setter, impl_builder_try_setter, Object, OneOrMany, Uri, Value};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    common::{Context, RefreshService, TermsOfUse},
-    credential::Credential,
-    error::Result,
-    utils::validate_presentation_structure,
-    verifiable::{VerifiableCredential, VerifiablePresentation},
+    common::{Object, OneOrMany, Uri, Value},
+    vc::{
+        validate_presentation_structure, Context, Credential, RefreshService, Result, TermsOfUse, VerifiableCredential,
+        VerifiablePresentation,
+    },
 };
 
 /// A `Presentation` represents a bundle of one or more `VerifiableCredential`s.

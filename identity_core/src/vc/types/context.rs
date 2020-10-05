@@ -1,6 +1,7 @@
-use identity_common::{Object, Uri};
 use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use crate::common::{Object, Uri};
 
 /// A reference to a JSON-LD context
 #[derive(Clone, PartialEq, Deserialize, Serialize)]

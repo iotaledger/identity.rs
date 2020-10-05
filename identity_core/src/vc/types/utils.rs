@@ -1,6 +1,7 @@
-use identity_common::{Object, OneOrMany, Value};
-
-use crate::error::{Error, Result};
+use crate::{
+    common::{Object, OneOrMany, Value},
+    vc::{Error, Result},
+};
 
 pub fn take_object_id(object: &mut Object) -> Option<String> {
     match object.remove("id") {

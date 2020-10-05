@@ -1,10 +1,10 @@
-use identity_common::{Object, Uri};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
 use crate::{
-    common::{try_take_object_id, try_take_object_type},
+    common::{Object, Uri},
     error::Error,
+    vc::{try_take_object_id, try_take_object_type},
 };
 
 /// Information used to validate the structure of a `Credential`.

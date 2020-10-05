@@ -1,10 +1,6 @@
-use identity_common::{OneOrMany, Uri};
-
 use crate::{
-    common::Context,
-    credential::Credential,
-    error::{Error, Result},
-    presentation::Presentation,
+    common::{OneOrMany, Uri},
+    vc::{Context, Credential, Error, Presentation, Result},
 };
 
 pub fn validate_credential_structure(credential: &Credential) -> Result<()> {

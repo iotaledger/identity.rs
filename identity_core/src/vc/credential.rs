@@ -1,13 +1,11 @@
-use identity_common::{impl_builder_setter, impl_builder_try_setter, Object, OneOrMany, Timestamp, Uri, Value};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    common::{
-        Context, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, RefreshService, TermsOfUse,
+    common::{Object, OneOrMany, Timestamp, Uri, Value},
+    vc::{
+        validate_credential_structure, Context, CredentialSchema, CredentialStatus, CredentialSubject, Error, Evidence,
+        Issuer, RefreshService, Result, TermsOfUse, VerifiableCredential,
     },
-    error::{Error, Result},
-    utils::validate_credential_structure,
-    verifiable::VerifiableCredential,
 };
 
 /// A `Credential` represents a set of claims describing an entity.

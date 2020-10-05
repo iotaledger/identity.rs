@@ -1,8 +1,10 @@
-use identity_common::{Object, OneOrMany};
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 
-use crate::credential::Credential;
+use crate::{
+    common::{Object, OneOrMany},
+    vc::Credential,
+};
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct VerifiableCredential {

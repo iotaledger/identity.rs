@@ -5,5 +5,4 @@ members = [
     "identity_derive",
     "identity_diff",
     "identity_proof",
-    "identity_vc",
 ]

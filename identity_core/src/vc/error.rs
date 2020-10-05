@@ -1,8 +1,4 @@
-use identity_common::Error as CommonError;
-use std::result::Result as StdResult;
-use thiserror::Error as ThisError;
-
-#[derive(Debug, ThisError)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Cannot convert `Object` to `{0}`")]
     BadObjectConversion(&'static str),
@@ -20,8 +16,6 @@ pub enum Error {
     InvalidCredentialSubject,
     #[error("Missing `Credential` issuer")]
     MissingCredentialIssuer,
-    #[error(transparent)]
-    CommonError(#[from] CommonError),
 }
 
-pub type Result<T, E = Error> = StdResult<T, E>;
+pub type Result<T, E = Error> = ::core::result::Result<T, E>;

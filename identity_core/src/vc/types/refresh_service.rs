@@ -1,33 +1,32 @@
-use identity_common::{Object, OneOrMany};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
 use crate::{
-    common::{take_object_id, try_take_object_types},
+    common::{Object, OneOrMany, Uri},
     error::Error,
+    vc::{try_take_object_id, try_take_object_types},
 };
 
-/// Information used to increase confidence in the claims of a `Credential`
+/// Information used to refresh or assert the status of a `Credential`.
 ///
-/// Ref: https://www.w3.org/TR/vc-data-model/#evidence
+/// Ref: https://www.w3.org/TR/vc-data-model/#refreshing
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
-pub struct Evidence {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<String>,
+pub struct RefreshService {
+    pub id: Uri,
     #[serde(rename = "type")]
     pub types: OneOrMany<String>,
     #[serde(flatten)]
     pub properties: Object,
 }
 
-impl TryFrom<Object> for Evidence {
+impl TryFrom<Object> for RefreshService {
     type Error = Error;
 
     fn try_from(mut other: Object) -> Result<Self, Self::Error> {
         let mut this: Self = Default::default();
 
-        this.id = take_object_id(&mut other);
-        this.types = try_take_object_types("Evidence", &mut other)?;
+        this.id = try_take_object_id("RefreshService", &mut other)?.into();
+        this.types = try_take_object_types("RefreshService", &mut other)?;
         this.properties = other;
 
         Ok(this)

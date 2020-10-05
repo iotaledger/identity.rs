@@ -1,5 +1,6 @@
-use identity_common::{Object, Uri};
 use serde::{Deserialize, Serialize};
+
+use crate::common::{Object, Uri};
 
 /// TODO:
 ///   - Deserialize single Uri into object-style layout
