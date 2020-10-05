@@ -4,7 +4,6 @@ use std::convert::TryFrom;
 use crate::{
     common::{Object, OneOrMany, Uri},
     error::Error,
-    vc::{take_object_id, try_take_object_types},
 };
 
 /// Information used to express obligations, prohibitions, and permissions about
@@ -25,12 +24,10 @@ impl TryFrom<Object> for TermsOfUse {
     type Error = Error;
 
     fn try_from(mut other: Object) -> Result<Self, Self::Error> {
-        let mut this: Self = Default::default();
-
-        this.id = take_object_id(&mut other).map(Into::into);
-        this.types = try_take_object_types("TermsOfUse", &mut other)?;
-        this.properties = other;
-
-        Ok(this)
+        Ok(Self {
+            id: other.take_object_id().map(Into::into),
+            types: other.try_take_object_types()?,
+            properties: other,
+        })
     }
 }

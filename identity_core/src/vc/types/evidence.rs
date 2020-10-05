@@ -4,7 +4,6 @@ use std::convert::TryFrom;
 use crate::{
     common::{Object, OneOrMany},
     error::Error,
-    vc::{take_object_id, try_take_object_types},
 };
 
 /// Information used to increase confidence in the claims of a `Credential`
@@ -24,12 +23,10 @@ impl TryFrom<Object> for Evidence {
     type Error = Error;
 
     fn try_from(mut other: Object) -> Result<Self, Self::Error> {
-        let mut this: Self = Default::default();
-
-        this.id = take_object_id(&mut other);
-        this.types = try_take_object_types("Evidence", &mut other)?;
-        this.properties = other;
-
-        Ok(this)
+        Ok(Self {
+            id: other.take_object_id(),
+            types: other.try_take_object_types()?,
+            properties: other,
+        })
     }
 }

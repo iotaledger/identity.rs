@@ -1,7 +1,5 @@
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("Cannot convert `Object` to `{0}`")]
-    BadObjectConversion(&'static str),
     #[error("Missing base type for {0}")]
     MissingBaseType(&'static str),
     #[error("Missing base context for {0}")]

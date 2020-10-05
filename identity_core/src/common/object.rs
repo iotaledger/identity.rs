@@ -7,7 +7,10 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use crate::common::Value;
+use crate::{
+    common::{OneOrMany, Value},
+    error::{Error, Result},
+};
 
 type Inner = HashMap<String, Value>;
 
@@ -20,6 +23,52 @@ pub struct Object(Inner);
 impl Object {
     pub fn into_inner(self) -> Inner {
         self.0
+    }
+
+    pub fn take_object_id(&mut self) -> Option<String> {
+        match self.0.remove("id") {
+            Some(Value::String(id)) => Some(id),
+            Some(_) | None => None,
+        }
+    }
+
+    pub fn try_take_object_id(&mut self) -> Result<String> {
+        self.take_object_id().ok_or(Error::InvalidObjectId)
+    }
+
+    pub fn take_object_type(&mut self) -> Option<String> {
+        match self.0.remove("type") {
+            Some(Value::String(value)) => Some(value),
+            Some(_) | None => None,
+        }
+    }
+
+    pub fn try_take_object_type(&mut self) -> Result<String> {
+        self.take_object_type().ok_or(Error::InvalidObjectType)
+    }
+
+    pub fn take_object_types(&mut self) -> Option<OneOrMany<String>> {
+        match self.remove("type") {
+            Some(Value::String(value)) => Some(value.into()),
+            Some(Value::Array(values)) => Some(Self::collect_types(values)),
+            Some(_) | None => None,
+        }
+    }
+
+    pub fn try_take_object_types(&mut self) -> Result<OneOrMany<String>> {
+        self.take_object_types().ok_or(Error::InvalidObjectType)
+    }
+
+    fn collect_types(values: Vec<Value>) -> OneOrMany<String> {
+        let mut types: Vec<String> = Vec::with_capacity(values.len());
+
+        for value in values {
+            if let Value::String(value) = value {
+                types.push(value);
+            }
+        }
+
+        types.into()
     }
 }
 

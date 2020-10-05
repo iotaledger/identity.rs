@@ -16,6 +16,10 @@ pub enum Error {
     DecodeJSON(serde_json::Error),
     #[error("Invalid Timestamp: {0}")]
     InvalidTimestamp(#[from] chrono::ParseError),
+    #[error("Invalid object id")]
+    InvalidObjectId,
+    #[error("Invalid object type")]
+    InvalidObjectType,
     #[error(transparent)]
     CredentialError(#[from] crate::vc::Error),
 }

@@ -6,9 +6,12 @@ mod evidence;
 mod issuer;
 mod refresh_service;
 mod terms_of_use;
-mod utils;
 
-pub use self::{
-    context::*, credential_schema::*, credential_status::*, credential_subject::*, evidence::*, issuer::*,
-    refresh_service::*, terms_of_use::*, utils::*,
-};
+pub use context::*;
+pub use credential_schema::*;
+pub use credential_status::*;
+pub use credential_subject::*;
+pub use evidence::*;
+pub use issuer::*;
+pub use refresh_service::*;
+pub use terms_of_use::*;

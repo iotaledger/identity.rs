@@ -4,7 +4,6 @@ use std::convert::TryFrom;
 use crate::{
     common::{Object, OneOrMany, Uri},
     error::Error,
-    vc::{try_take_object_id, try_take_object_types},
 };
 
 /// Information used to refresh or assert the status of a `Credential`.
@@ -23,12 +22,10 @@ impl TryFrom<Object> for RefreshService {
     type Error = Error;
 
     fn try_from(mut other: Object) -> Result<Self, Self::Error> {
-        let mut this: Self = Default::default();
-
-        this.id = try_take_object_id("RefreshService", &mut other)?.into();
-        this.types = try_take_object_types("RefreshService", &mut other)?;
-        this.properties = other;
-
-        Ok(this)
+        Ok(Self {
+            id: other.try_take_object_id()?.into(),
+            types: other.try_take_object_types()?,
+            properties: other,
+        })
     }
 }

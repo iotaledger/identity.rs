@@ -70,7 +70,7 @@ fn test_builder_invalid_holder_fmt() {
 }
 
 #[test]
-#[should_panic = "Cannot convert `Object` to `RefreshService`"]
+#[should_panic = "Invalid object id"]
 fn test_builder_invalid_refresh_service_missing_id() {
     PresentationBuilder::new()
         .id("did:iota:123")
@@ -81,7 +81,7 @@ fn test_builder_invalid_refresh_service_missing_id() {
 }
 
 #[test]
-#[should_panic = "Cannot convert `Object` to `RefreshService`"]
+#[should_panic = "Invalid object type"]
 fn test_builder_invalid_refresh_service_missing_type() {
     PresentationBuilder::new()
         .id("did:iota:123")
@@ -92,7 +92,7 @@ fn test_builder_invalid_refresh_service_missing_type() {
 }
 
 #[test]
-#[should_panic = "Cannot convert `Object` to `TermsOfUse`"]
+#[should_panic = "Invalid object type"]
 fn test_builder_invalid_terms_of_use_missing_type() {
     PresentationBuilder::new()
         .id("did:iota:123")

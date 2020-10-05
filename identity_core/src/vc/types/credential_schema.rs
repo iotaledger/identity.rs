@@ -4,7 +4,6 @@ use std::convert::TryFrom;
 use crate::{
     common::{Object, Uri},
     error::Error,
-    vc::{try_take_object_id, try_take_object_type},
 };
 
 /// Information used to validate the structure of a `Credential`.
@@ -23,12 +22,10 @@ impl TryFrom<Object> for CredentialSchema {
     type Error = Error;
 
     fn try_from(mut other: Object) -> Result<Self, Self::Error> {
-        let mut this: Self = Default::default();
-
-        this.id = try_take_object_id("CredentialSchema", &mut other)?.into();
-        this.type_ = try_take_object_type("CredentialSchema", &mut other)?;
-        this.properties = other;
-
-        Ok(this)
+        Ok(Self {
+            id: other.try_take_object_id()?.into(),
+            type_: other.try_take_object_type()?,
+            properties: other,
+        })
     }
 }
