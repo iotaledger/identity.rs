@@ -1,9 +1,11 @@
 use identity_account::storage::HuffmanCodec;
 use proptest::proptest;
 
+const RAW_STR: &str = include_str!("compression.txt");
+
 #[test]
 fn test_encode_decode() {
-    let expected = "uuuuuuuuuuuuuuuuuuu987123iouyasdoi7a8s7d698a7sydn9c87wyqei87yjh8q7dh6e8ji7qw6jd8q7w6eji8q76ein8qc76eni867tni76ycnjukaytsduytuiuytiuytaisudnc19826n87tna9876tn987yarnfffffffffffffffffffffti87aynt8";
+    let expected = RAW_STR;
 
     let compressed = HuffmanCodec::compress(expected.into()).unwrap();
 
