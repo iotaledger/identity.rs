@@ -5,6 +5,7 @@ mod compress;
 mod utils;
 
 pub use cache::Cache;
+pub use compress::HuffmanCodec;
 
 #[derive(Clone)]
 pub(crate) struct Value<T> {
