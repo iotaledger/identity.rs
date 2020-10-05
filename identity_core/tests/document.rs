@@ -1,5 +1,5 @@
 use identity_core::did::{
-    Authentication, Context, DIDDocument, IdCompare, KeyData, PublicKey, Service, ServiceEndpoint, Subject, DID,
+    Authentication, Context, DIDDocument, IdCompare, KeyData, PublicKey, Service, ServiceEndpoint, DID,
 };
 
 use std::str::FromStr;
@@ -46,7 +46,7 @@ fn test_parse_document() {
 fn test_doc_creation() {
     let mut did_doc = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
-        id: Subject::from("did:iota:123456789abcdefghi"),
+        id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
     .init();
@@ -57,7 +57,7 @@ fn test_doc_creation() {
     .init();
 
     let service = Service {
-        id: "did:into:123#edv".into(),
+        id: "did:into:123#edv".parse().unwrap(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
     }
@@ -70,7 +70,7 @@ fn test_doc_creation() {
     .init();
 
     let service2 = Service {
-        id: "did:into:123#edv".into(),
+        id: "did:into:123#edv".parse().unwrap(),
         service_type: "IdentityHub".into(),
         endpoint: endpoint2,
     }
@@ -82,9 +82,9 @@ fn test_doc_creation() {
     let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
     let public_key = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
         key_type: "RsaVerificationKey2018".into(),
-        controller: "did:iota:123456789abcdefghi".into(),
+        controller: "did:iota:123456789abcdefghi".parse().unwrap(),
         key_data,
         ..Default::default()
     }
@@ -94,7 +94,7 @@ fn test_doc_creation() {
 
     let mut did_doc_2 = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
-        id: Subject::from("did:iota:123456789abcdefghi"),
+        id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
     .init();
@@ -116,14 +116,14 @@ fn test_doc_diff() {
     // old doc
     let old = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
-        id: Subject::from("did:iota:123456789abcdefghi"),
+        id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
     .init();
     // new doc.
     let mut new = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
-        id: Subject::from("did:iota:123456789abcdefghi"),
+        id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
     .init();
@@ -135,7 +135,7 @@ fn test_doc_diff() {
     .init();
 
     let service = Service {
-        id: "did:into:123#edv".into(),
+        id: "did:into:123#edv".parse().unwrap(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
     }
@@ -146,9 +146,9 @@ fn test_doc_diff() {
     let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
     let public_key = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
         key_type: "RsaVerificationKey2018".into(),
-        controller: "did:iota:123456789abcdefghi".into(),
+        controller: "did:iota:123456789abcdefghi".parse().unwrap(),
         key_data,
         ..Default::default()
     }
@@ -196,7 +196,7 @@ fn test_diff_merge_from_string() {
     // create a doc.
     let mut doc = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
-        id: Subject::from("did:iota:123456789abcdefghi"),
+        id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
     .init();
@@ -209,7 +209,7 @@ fn test_diff_merge_from_string() {
 
     // create a IdCompare<Service>
     let service = Service {
-        id: "did:into:123#edv".into(),
+        id: "did:into:123#edv".parse().unwrap(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
     }
@@ -223,9 +223,9 @@ fn test_diff_merge_from_string() {
 
     // create a public key, IdCompare<PublicKey>.
     let public_key = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
         key_type: "RsaVerificationKey2018".into(),
-        controller: "did:iota:123456789abcdefghi".into(),
+        controller: "did:iota:123456789abcdefghi".parse().unwrap(),
         key_data,
         ..Default::default()
     }
@@ -283,7 +283,7 @@ fn test_realistic_diff() {
 
     let mut did_doc = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
-        id: Subject::from("did:iota:123456789abcdefghi"),
+        id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
     .init();
@@ -294,7 +294,7 @@ fn test_realistic_diff() {
     .init();
 
     let service = Service {
-        id: "did:into:123#edv".into(),
+        id: "did:into:123#edv".parse().unwrap(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
     }
@@ -307,7 +307,7 @@ fn test_realistic_diff() {
     .init();
 
     let service2 = Service {
-        id: "did:into:123#edv".into(),
+        id: "did:into:123#edv".parse().unwrap(),
         service_type: "IdentityHub".into(),
         endpoint: endpoint2,
     }
@@ -319,9 +319,9 @@ fn test_realistic_diff() {
     let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
     let public_key = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
         key_type: "RsaVerificationKey2018".into(),
-        controller: "did:iota:123456789abcdefghi".into(),
+        controller: "did:iota:123456789abcdefghi".parse().unwrap(),
         key_data,
         ..Default::default()
     }
@@ -331,9 +331,9 @@ fn test_realistic_diff() {
 
     let key_data_1 = KeyData::Pem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
     let key1 = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
         key_type: "RsaVerificationKey2018".into(),
-        controller: "did:iota:123456789abcdefghi".into(),
+        controller: "did:iota:123456789abcdefghi".parse().unwrap(),
         key_data: key_data_1,
         ..Default::default()
     }
@@ -372,9 +372,9 @@ fn test_id_compare() {
 
     // create a public key.
     let public_key = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
         key_type: "RsaVerificationKey2018".into(),
-        controller: "did:iota:123456789abcdefghi".into(),
+        controller: "did:iota:123456789abcdefghi".parse().unwrap(),
         key_data,
         ..Default::default()
     }
@@ -385,7 +385,7 @@ fn test_id_compare() {
 
     // create a IdCompare<Service>
     let service = Service {
-        id: "did:into:123#edv".into(),
+        id: "did:into:123#edv".parse().unwrap(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
     }
@@ -394,7 +394,7 @@ fn test_id_compare() {
     // generate a did doc.
     let mut did_doc = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
-        id: Subject::from("did:iota:123456789abcdefghi"),
+        id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
     .init();

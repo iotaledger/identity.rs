@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::{fmt, ops::Deref};
 
+use crate::did::DID;
+
 /// A simple wrapper for URIs adhering to RFC 3986
 ///
 /// TODO: Parse/Validate according to RFC 3986
@@ -38,6 +40,12 @@ impl From<&'_ str> for Uri {
 impl From<String> for Uri {
     fn from(other: String) -> Self {
         Self(other)
+    }
+}
+
+impl From<DID> for Uri {
+    fn from(other: DID) -> Uri {
+        Self(other.to_string())
     }
 }
 

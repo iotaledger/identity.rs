@@ -1,3 +1,4 @@
+use core::str::FromStr;
 use identity_diff::Diff;
 use serde::{
     de::{self, Deserialize, Deserializer, Visitor},
@@ -9,7 +10,7 @@ use std::{
     hash::Hash,
 };
 
-use crate::{common::Uri, did::parser::parse};
+use crate::did::parser::parse;
 
 const LEADING_TOKENS: &str = "did";
 
@@ -25,14 +26,6 @@ pub struct DID {
     pub path_segments: Option<Vec<String>>,
     pub query: Option<Vec<Param>>,
     pub fragment: Option<String>,
-}
-
-/// a DID Params struct.
-#[derive(Debug, PartialEq, Eq, Clone, Default, Hash, PartialOrd, Ord, Diff, DDeserialize, DSerialize)]
-#[diff(from_into)]
-pub struct Param {
-    pub key: String,
-    pub value: Option<String>,
 }
 
 impl DID {
@@ -151,15 +144,11 @@ impl Display for DID {
     }
 }
 
-/// Display trait for the param struct.
-impl Display for Param {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        let val = match &self.value {
-            Some(v) => format!("={}", v),
-            None => String::new(),
-        };
+impl FromStr for DID {
+    type Err = crate::Error;
 
-        write!(f, "{}{}", self.key, val)
+    fn from_str(string: &str) -> crate::Result<Self> {
+        Self::parse_from_str(string)
     }
 }
 
@@ -205,14 +194,28 @@ impl Serialize for DID {
     }
 }
 
-impl From<DIDTuple> for Param {
-    fn from((key, value): DIDTuple) -> Param {
-        Param { key, value }
+/// a DID Params struct.
+#[derive(Debug, PartialEq, Eq, Clone, Default, Hash, PartialOrd, Ord, Diff, DDeserialize, DSerialize)]
+#[diff(from_into)]
+pub struct Param {
+    pub key: String,
+    pub value: Option<String>,
+}
+
+/// Display trait for the param struct.
+impl Display for Param {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        let val = match &self.value {
+            Some(v) => format!("={}", v),
+            None => String::new(),
+        };
+
+        write!(f, "{}{}", self.key, val)
     }
 }
 
-impl From<DID> for Uri {
-    fn from(other: DID) -> Uri {
-        Uri::from(other.to_string())
+impl From<DIDTuple> for Param {
+    fn from((key, value): DIDTuple) -> Param {
+        Param { key, value }
     }
 }

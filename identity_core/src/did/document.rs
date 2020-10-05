@@ -10,7 +10,7 @@ use crate::{
     did::{
         helpers::string_or_list,
         utils::{add_unique_to_vec, IdCompare},
-        Authentication, Context, PublicKey, Service, Subject, DID,
+        Authentication, Context, PublicKey, Service, DID,
     },
 };
 
@@ -20,7 +20,7 @@ use crate::{
 pub struct DIDDocument {
     #[serde(rename = "@context", deserialize_with = "string_or_list", default)]
     pub context: Context,
-    pub id: Subject,
+    pub id: DID,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[diff(should_ignore)]
     pub created: Option<String>,
@@ -180,8 +180,8 @@ impl DIDDocument {
     }
 
     /// get the ID from the Document as a DID.
-    pub fn derive_did(&self) -> crate::Result<DID> {
-        self.id.to_did()
+    pub fn derive_did(&self) -> &DID {
+        &self.id
     }
 
     /// Updates the `updated` time for the `DIDDocument`.

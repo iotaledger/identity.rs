@@ -1,4 +1,4 @@
-use identity_core::did::{Context, KeyData, PublicKey, Service, ServiceEndpoint, Subject, DID};
+use identity_core::did::{Context, KeyData, PublicKey, Service, ServiceEndpoint, DID};
 
 use std::str::FromStr;
 
@@ -28,52 +28,11 @@ fn test_context() {
 #[test]
 fn test_subject_from_string() {
     let raw_str = r#""did:iota:123456789abcdefghi""#;
-    let subject = Subject::new("did:iota:123456789abcdefghi".into()).unwrap();
+    let subject: DID = "did:iota:123456789abcdefghi".parse().unwrap();
 
     let string = serde_json::to_string(&subject).unwrap();
 
     assert_eq!(string, raw_str);
-}
-
-/// Test building a subject from a DID structure.
-#[test]
-fn test_subject_from_did() {
-    let did = DID {
-        method_name: "iota".into(),
-        id_segments: vec!["123456".into(), "789011".into()],
-        query: Some(vec![("name".into(), Some("value".into())).into()]),
-        ..Default::default()
-    }
-    .init()
-    .unwrap();
-
-    let string = format!("\"{}\"", did.to_string());
-
-    let subject = Subject::from_did(did).unwrap();
-    let res = serde_json::to_string(&subject).unwrap();
-
-    assert_eq!(res, string);
-}
-
-/// Test Subject from a DID using the From Trait.
-#[test]
-fn test_subject_from() {
-    let did = DID {
-        method_name: "iota".into(),
-        id_segments: vec!["123456".into(), "789011".into()],
-        query: Some(vec![("name".into(), Some("value".into())).into()]),
-        ..Default::default()
-    }
-    .init()
-    .unwrap();
-
-    let string = format!("\"{}\"", did.to_string());
-
-    let subject: Subject = did.into();
-
-    let res = serde_json::to_string(&subject).unwrap();
-
-    assert_eq!(res, string);
 }
 
 /// Test public key structure from String and with PublicKey::new
@@ -86,9 +45,9 @@ fn test_public_key() {
     let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
     let public_key = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".into(),
+        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
         key_type: "Ed25519VerificationKey2018".into(),
-        controller: "did:iota:pqrstuvwxyz0987654321".into(),
+        controller: "did:iota:pqrstuvwxyz0987654321".parse().unwrap(),
         key_data,
         ..Default::default()
     };
@@ -112,7 +71,7 @@ fn test_service_with_no_endpoint_body() {
     .init();
 
     let service = Service {
-        id: "did:into:123#edv".into(),
+        id: "did:into:123#edv".parse().unwrap(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
     };
@@ -139,7 +98,7 @@ fn test_service_with_body() {
     .init();
 
     let service = Service {
-        id: "did:example:123456789abcdefghi#hub".into(),
+        id: "did:example:123456789abcdefghi#hub".parse().unwrap(),
         service_type: "IdentityHub".into(),
         endpoint,
     };

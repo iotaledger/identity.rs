@@ -2,7 +2,7 @@ use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
 use std::{hash::Hash, str::FromStr};
 
-use crate::did::{utils::HasId, Subject};
+use crate::did::{utils::HasId, DID};
 
 /// Public Key type enum. Can also contain a custom key type specified by the CustomKey field.
 #[derive(Debug, PartialEq, Clone, Diff, Deserialize, Serialize, Eq, Hash, Ord, PartialOrd)]
@@ -46,10 +46,10 @@ pub enum KeyData {
 #[derive(Debug, Clone, Default, PartialEq, Diff, Deserialize, Serialize, Eq, Hash, Ord, PartialOrd)]
 #[diff(from_into)]
 pub struct PublicKey {
-    pub id: Subject,
+    pub id: DID,
     #[serde(rename = "type")]
     pub key_type: PublicKeyTypes,
-    pub controller: Subject,
+    pub controller: DID,
     #[serde(flatten)]
     pub key_data: KeyData,
     #[serde(skip)]
@@ -69,7 +69,7 @@ impl PublicKey {
 }
 
 impl HasId for PublicKey {
-    type Id = Subject;
+    type Id = DID;
 
     fn id(&self) -> &Self::Id {
         &self.id

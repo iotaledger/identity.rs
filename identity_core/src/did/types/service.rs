@@ -10,7 +10,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::did::{utils::HasId, Context, Subject};
+use crate::did::{utils::HasId, Context, DID};
 
 /// Describes a `Service` in a `DIDDocument` type. Contains an `id`, `service_type` and `endpoint`.  The `endpoint` can
 /// be represented as a `String` or a `ServiceEndpoint` in json.
@@ -18,7 +18,7 @@ use crate::did::{utils::HasId, Context, Subject};
 #[diff(from_into)]
 pub struct Service {
     #[serde(default)]
-    pub id: Subject,
+    pub id: DID,
     #[serde(rename = "type")]
     pub service_type: String,
     #[serde(rename = "serviceEndpoint")]
@@ -57,7 +57,7 @@ impl ServiceEndpoint {
 }
 
 impl HasId for Service {
-    type Id = Subject;
+    type Id = DID;
 
     fn id(&self) -> &Self::Id {
         &self.id
