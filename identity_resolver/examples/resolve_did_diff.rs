@@ -1,8 +1,8 @@
 //! Publish new did document and read it from the tangle
 //! cargo run --example resolve_did_diff
 use anyhow::Result;
+use identity_common::Timestamp;
 use identity_core::{
-    common::Timestamp,
     document::DIDDocument,
     utils::{Context, KeyData, PublicKey, Subject},
 };

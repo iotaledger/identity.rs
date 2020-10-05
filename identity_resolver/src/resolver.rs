@@ -1,5 +1,6 @@
 use bytestream::*;
-use identity_core::{common::Timestamp, did::DID, document::DIDDocument};
+use identity_common::Timestamp;
+use identity_core::{did::DID, document::DIDDocument};
 use identity_diff::Diff;
 use identity_integration::tangle_reader::{get_ordered_diffs, get_ordered_documents, TangleReader};
 use std::{collections::HashMap, io::Write, time::Instant};

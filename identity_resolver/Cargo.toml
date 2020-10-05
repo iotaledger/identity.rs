@@ -27,6 +27,7 @@ url = "2.1.1"
 
 iota-conversion =  "0.5.1"
 identity_core = {git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
+identity_common = {git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
 identity_diff = {git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
 identity_integration = {git = "https://github.com/iotaledger/identity.rs", branch = "feat/did-ledger-integration"}
 
