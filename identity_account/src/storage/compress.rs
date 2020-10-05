@@ -167,4 +167,3 @@ pub fn frequency_map(val: &str) -> BTreeMap<char, u32> {
 
     out
 }
-
