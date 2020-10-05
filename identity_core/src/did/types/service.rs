@@ -10,7 +10,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::did::{utils::HasId, Context, DID};
+use crate::{did::{DID, Context}, utils::HasId};
 
 /// Describes a `Service` in a `DIDDocument` type. Contains an `id`, `service_type` and `endpoint`.  The `endpoint` can
 /// be represented as a `String` or a `ServiceEndpoint` in json.

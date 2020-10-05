@@ -7,9 +7,9 @@ use std::{
 
 use crate::{
     common::Timestamp,
+    utils::IdCompare,
     did::{
         helpers::string_or_list,
-        utils::{add_unique_to_vec, IdCompare},
         Authentication, Context, PublicKey, Service, DID,
     },
 };
@@ -28,18 +28,18 @@ pub struct DIDDocument {
     pub updated: Option<String>,
     #[serde(rename = "publicKey", skip_serializing_if = "HashSet::is_empty", default)]
     pub public_keys: HashSet<IdCompare<PublicKey>>,
-    #[serde(rename = "authentication", skip_serializing_if = "Vec::is_empty", default)]
-    pub auth: Vec<IdCompare<Authentication>>,
-    #[serde(rename = "assertionMethod", skip_serializing_if = "Vec::is_empty", default)]
-    pub assert: Vec<IdCompare<Authentication>>,
-    #[serde(rename = "verificationMethod", skip_serializing_if = "Vec::is_empty", default)]
-    pub verification: Vec<IdCompare<Authentication>>,
-    #[serde(rename = "capabilityDelegation", skip_serializing_if = "Vec::is_empty", default)]
-    pub delegation: Vec<IdCompare<Authentication>>,
-    #[serde(rename = "capabilityInvocation", skip_serializing_if = "Vec::is_empty", default)]
-    pub invocation: Vec<IdCompare<Authentication>>,
-    #[serde(rename = "keyAgreement", skip_serializing_if = "Vec::is_empty", default)]
-    pub agreement: Vec<IdCompare<Authentication>>,
+    #[serde(rename = "authentication", skip_serializing_if = "HashSet::is_empty", default)]
+    pub auth: HashSet<IdCompare<Authentication>>,
+    #[serde(rename = "assertionMethod", skip_serializing_if = "HashSet::is_empty", default)]
+    pub assert: HashSet<IdCompare<Authentication>>,
+    #[serde(rename = "verificationMethod", skip_serializing_if = "HashSet::is_empty", default)]
+    pub verification: HashSet<IdCompare<Authentication>>,
+    #[serde(rename = "capabilityDelegation", skip_serializing_if = "HashSet::is_empty", default)]
+    pub delegation: HashSet<IdCompare<Authentication>>,
+    #[serde(rename = "capabilityInvocation", skip_serializing_if = "HashSet::is_empty", default)]
+    pub invocation: HashSet<IdCompare<Authentication>>,
+    #[serde(rename = "keyAgreement", skip_serializing_if = "HashSet::is_empty", default)]
+    pub agreement: HashSet<IdCompare<Authentication>>,
     #[serde(skip_serializing_if = "HashSet::is_empty", default)]
     pub services: HashSet<IdCompare<Service>>,
     #[serde(flatten)]
@@ -73,9 +73,7 @@ impl DIDDocument {
 
     /// sets a new `service` of type `Service` into the `DIDDocument`.
     pub fn update_service(&mut self, service: Service) {
-        let service = IdCompare::new(service);
-
-        self.services.insert(service);
+        self.services.insert(service.into());
     }
 
     /// remove all of the services from the `DIDDocument`.
@@ -85,9 +83,7 @@ impl DIDDocument {
 
     /// sets a new `key_pair` of type `PublicKey` into the `DIDDocument`.
     pub fn update_public_key(&mut self, key_pair: PublicKey) {
-        let key_pair = IdCompare::new(key_pair);
-
-        self.public_keys.insert(key_pair);
+        self.public_keys.insert(key_pair.into());
     }
 
     /// remove all of the public keys from the `DIDDocument`.
@@ -97,11 +93,7 @@ impl DIDDocument {
 
     /// sets in a new `auth` of type `Authentication` into the `DIDDocument`.
     pub fn update_auth(&mut self, auth: Authentication) {
-        let auth = IdCompare::new(auth);
-
-        let collection = add_unique_to_vec(auth, self.auth.clone());
-
-        self.auth = collection;
+        self.auth.insert(auth.into());
     }
 
     /// remove all of the authentications from the `DIDDocument`.
@@ -111,11 +103,7 @@ impl DIDDocument {
 
     /// sets in a new `assert` of type `Authentication` into the `DIDDocument`.
     pub fn update_assert(&mut self, assert: Authentication) {
-        let assert = IdCompare::new(assert);
-
-        let collection = add_unique_to_vec(assert, self.assert.clone());
-
-        self.assert = collection;
+        self.assert.insert(assert.into());
     }
 
     /// remove all of the assertion methods from the `DIDDocument`.
@@ -125,11 +113,7 @@ impl DIDDocument {
 
     /// sets in a new `verification` of type `Authentication` into the `DIDDocument`.
     pub fn update_verification(&mut self, verification: Authentication) {
-        let verification = IdCompare::new(verification);
-
-        let collection = add_unique_to_vec(verification, self.verification.clone());
-
-        self.verification = collection;
+        self.verification.insert(verification.into());
     }
 
     /// remove all of the verification methods from the `DIDDocument`.
@@ -139,11 +123,7 @@ impl DIDDocument {
 
     /// sets in a new `delegation` of type `Authentication` into the `DIDDocument`.
     pub fn update_delegation(&mut self, delegation: Authentication) {
-        let delegation = IdCompare::new(delegation);
-
-        let collection = add_unique_to_vec(delegation, self.delegation.clone());
-
-        self.delegation = collection;
+        self.delegation.insert(delegation.into());
     }
 
     /// remove all of the capability delegations from the `DIDDocument`.
@@ -153,11 +133,7 @@ impl DIDDocument {
 
     /// sets in a new `invocation` of type `Authentication` into the `DIDDocument`.
     pub fn update_invocation(&mut self, invocation: Authentication) {
-        let invocation = IdCompare::new(invocation);
-
-        let collection = add_unique_to_vec(invocation, self.invocation.clone());
-
-        self.invocation = collection;
+        self.invocation.insert(invocation.into());
     }
 
     /// remove all of the capability invocations from the `DIDDocument`.
@@ -167,11 +143,7 @@ impl DIDDocument {
 
     /// sets in a new `agreement` of type `Authentication` into the `DIDDocument`.
     pub fn update_agreement(&mut self, agreement: Authentication) {
-        let agreement = IdCompare::new(agreement);
-
-        let collection = add_unique_to_vec(agreement, self.agreement.clone());
-
-        self.agreement = collection;
+        self.agreement.insert(agreement.into());
     }
 
     /// remove all of the key agreements from the `DIDDocument`.

@@ -1,5 +1,6 @@
-use identity_core::did::{
-    Authentication, Context, DIDDocument, IdCompare, KeyData, PublicKey, Service, ServiceEndpoint, DID,
+use identity_core::{
+    did::{Authentication, Context, DIDDocument, KeyData, PublicKey, Service, ServiceEndpoint, DID},
+    utils::IdCompare,
 };
 
 use std::str::FromStr;
@@ -421,5 +422,5 @@ fn test_id_compare() {
     assert_eq!(expected_length, did_doc.public_keys.len());
     assert_eq!(expected_length, did_doc.agreement.len());
 
-    assert_ne!(failed_auth, did_doc.agreement);
+    assert_ne!(failed_auth, did_doc.agreement.into_iter().collect::<Vec<_>>());
 }
