@@ -1,4 +1,4 @@
-use identity_account::storage::{read_cache_file, write_cache_file, HuffmanCodec};
+use identity_account::storage::{CacheFile, HuffmanCodec};
 use std::fs::metadata;
 
 // plain text string file.
@@ -11,16 +11,19 @@ fn test_compression_writing() {
 
     let filename = String::from("tests/test");
 
+    let cache_compressed = CacheFile::new(filename);
+    let cache_plain = CacheFile::new(PLAIN_PATH.into());
+
     let compressed = HuffmanCodec::compress(expected.into()).unwrap();
 
-    write_cache_file(compressed, &filename).unwrap();
+    cache_compressed.write_cache_file(compressed).unwrap();
 
-    let contents = read_cache_file(&filename).unwrap();
+    let contents = cache_compressed.read_cache_file().unwrap();
 
     let decompressed = HuffmanCodec::decompress(&contents).unwrap();
 
-    let metadata_compressed = metadata(filename).unwrap();
-    let metadata_plain = metadata(PLAIN_PATH).unwrap();
+    let metadata_compressed = metadata(cache_compressed.get_name()).unwrap();
+    let metadata_plain = metadata(cache_plain.get_name()).unwrap();
 
     let compressed_len = metadata_compressed.len();
     let plain_len = metadata_plain.len();

@@ -7,7 +7,7 @@ mod utils;
 
 pub use cache::Cache;
 pub use compress::HuffmanCodec;
-pub use file::{read_cache_file, write_cache_file};
+pub use file::CacheFile;
 
 #[derive(Clone)]
 pub(crate) struct Value<T> {
