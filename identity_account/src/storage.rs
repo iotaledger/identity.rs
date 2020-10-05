@@ -2,10 +2,12 @@ use std::time::{Duration, SystemTime};
 
 mod cache;
 mod compress;
+mod file;
 mod utils;
 
 pub use cache::Cache;
 pub use compress::HuffmanCodec;
+pub use file::{read_cache_file, write_cache_file};
 
 #[derive(Clone)]
 pub(crate) struct Value<T> {
