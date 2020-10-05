@@ -1,17 +1,11 @@
 use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::{HashMap, HashSet},
-    str::FromStr,
-};
+use std::{collections::HashMap, str::FromStr};
 
 use crate::{
     common::Timestamp,
-    utils::IdCompare,
-    did::{
-        helpers::string_or_list,
-        Authentication, Context, PublicKey, Service, DID,
-    },
+    did::{helpers::string_or_list, Authentication, Context, PublicKey, Service, DID},
+    utils::IdSet,
 };
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
@@ -26,22 +20,22 @@ pub struct DIDDocument {
     pub created: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub updated: Option<String>,
-    #[serde(rename = "publicKey", skip_serializing_if = "HashSet::is_empty", default)]
-    pub public_keys: HashSet<IdCompare<PublicKey>>,
-    #[serde(rename = "authentication", skip_serializing_if = "HashSet::is_empty", default)]
-    pub auth: HashSet<IdCompare<Authentication>>,
-    #[serde(rename = "assertionMethod", skip_serializing_if = "HashSet::is_empty", default)]
-    pub assert: HashSet<IdCompare<Authentication>>,
-    #[serde(rename = "verificationMethod", skip_serializing_if = "HashSet::is_empty", default)]
-    pub verification: HashSet<IdCompare<Authentication>>,
-    #[serde(rename = "capabilityDelegation", skip_serializing_if = "HashSet::is_empty", default)]
-    pub delegation: HashSet<IdCompare<Authentication>>,
-    #[serde(rename = "capabilityInvocation", skip_serializing_if = "HashSet::is_empty", default)]
-    pub invocation: HashSet<IdCompare<Authentication>>,
-    #[serde(rename = "keyAgreement", skip_serializing_if = "HashSet::is_empty", default)]
-    pub agreement: HashSet<IdCompare<Authentication>>,
-    #[serde(skip_serializing_if = "HashSet::is_empty", default)]
-    pub services: HashSet<IdCompare<Service>>,
+    #[serde(rename = "publicKey", skip_serializing_if = "IdSet::is_empty", default)]
+    pub public_keys: IdSet<PublicKey>,
+    #[serde(rename = "authentication", skip_serializing_if = "IdSet::is_empty", default)]
+    pub auth: IdSet<Authentication>,
+    #[serde(rename = "assertionMethod", skip_serializing_if = "IdSet::is_empty", default)]
+    pub assert: IdSet<Authentication>,
+    #[serde(rename = "verificationMethod", skip_serializing_if = "IdSet::is_empty", default)]
+    pub verification: IdSet<Authentication>,
+    #[serde(rename = "capabilityDelegation", skip_serializing_if = "IdSet::is_empty", default)]
+    pub delegation: IdSet<Authentication>,
+    #[serde(rename = "capabilityInvocation", skip_serializing_if = "IdSet::is_empty", default)]
+    pub invocation: IdSet<Authentication>,
+    #[serde(rename = "keyAgreement", skip_serializing_if = "IdSet::is_empty", default)]
+    pub agreement: IdSet<Authentication>,
+    #[serde(skip_serializing_if = "IdSet::is_empty", default)]
+    pub services: IdSet<Service>,
     #[serde(flatten)]
     pub metadata: HashMap<String, String>,
 }

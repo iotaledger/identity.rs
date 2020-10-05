@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     did::{PublicKey, DID},
-    utils::HasId
+    utils::HasId,
 };
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Clone, PartialEq, Diff, Serialize, Deserialize)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Diff, Serialize, Deserialize)]
 #[serde(untagged)]
 #[diff(from_into)]
 pub enum Authentication {

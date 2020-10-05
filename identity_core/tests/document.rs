@@ -422,5 +422,5 @@ fn test_id_compare() {
     assert_eq!(expected_length, did_doc.public_keys.len());
     assert_eq!(expected_length, did_doc.agreement.len());
 
-    assert_ne!(failed_auth, did_doc.agreement.into_iter().collect::<Vec<_>>());
+    assert_ne!(failed_auth, did_doc.agreement.iter().cloned().collect::<Vec<_>>());
 }
