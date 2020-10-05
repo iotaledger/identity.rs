@@ -1,7 +1,7 @@
 use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
 
-use crate::utils::{HasId, PublicKey, Subject};
+use crate::did::{utils::HasId, PublicKey, Subject};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, PartialEq, Diff, Serialize, Deserialize)]

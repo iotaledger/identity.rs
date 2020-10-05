@@ -1,6 +1,6 @@
 pct_encoded = { "%" ~ ASCII_HEX_DIGIT ~ ASCII_HEX_DIGIT }
 shard_char = { path_char | "/" | "?" }
-path_char = { ASCII_ALPHA | ASCII_DIGIT | "-" | "." | "_" | 
+path_char = { ASCII_ALPHA | ASCII_DIGIT | "-" | "." | "_" |
               "!" | "~" | "$" | "&" | "'" | "(" | ")" | "*" | "+" |
               ";" | "," | "=" | ":" | "@" | pct_encoded}
 
@@ -17,7 +17,7 @@ id_segment = { id_segment_char* }
 
 param_char    = { ASCII_ALPHA | ASCII_DIGIT | "." | "-" | "_" | ":" |
                   "!" | "~" | "$" | "'" | "(" | ")" | "*" | "+" |
-                  ";" | "," | "@" | 
+                  ";" | "," | "@" |
                   pct_encoded }
 param_name    = { param_char+ }
 param_value   = { param_char* }

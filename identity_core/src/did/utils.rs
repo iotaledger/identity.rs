@@ -1,20 +1,6 @@
-mod authentication;
-mod context;
-pub mod helpers;
-mod keys;
-mod service;
-mod service_serialize;
-mod subject;
-
 use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
-
-pub use authentication::Authentication;
-pub use context::Context;
-pub use keys::{KeyData, PublicKey, PublicKeyTypes};
-pub use service::{Service, ServiceEndpoint};
-pub use subject::Subject;
 
 pub trait Dedup<T: PartialEq + Clone> {
     fn clear_duplicates(&mut self);

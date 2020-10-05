@@ -5,10 +5,10 @@ use crate::did::{Param, DID};
 
 /// a derived parser for the `DID` struct.  Rules are derived from the `did.pest` file using the `pest` crate.
 #[derive(Parser)]
-#[grammar = "did.pest"]
+#[grammar = "did/did-syntax.pest"]
 struct DIDParser;
 
-/// parses a `ToString` type into a `DID` if it follows the proper format.  
+/// parses a `ToString` type into a `DID` if it follows the proper format.
 pub fn parse<T>(input: T) -> crate::Result<DID>
 where
     T: ToString,
@@ -18,7 +18,7 @@ where
 
     match pairs {
         Ok(p) => Ok(parse_pairs(p)?),
-        Err(e) => Err(crate::Error::ParseError(e)),
+        Err(e) => Err(crate::Error::ParseError(e.into())),
     }
 }
 

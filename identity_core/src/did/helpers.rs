@@ -2,7 +2,6 @@ use serde::{
     de::{self, SeqAccess, Visitor},
     Deserialize, Deserializer,
 };
-
 use std::{fmt, marker::PhantomData, str::FromStr};
 
 /// deserializes the data into either a List or a String depending on how many elements are in the data.

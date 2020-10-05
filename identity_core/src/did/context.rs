@@ -1,10 +1,9 @@
-use std::{hash::Hash, str::FromStr};
-
 use identity_diff::Diff;
 use serde::{
     ser::{Serialize, SerializeSeq, Serializer},
     Deserialize,
 };
+use std::{hash::Hash, str::FromStr};
 
 /// A context type.  Contains a Vector of Strings which describe the DID context.
 #[derive(Debug, PartialEq, Eq, Deserialize, Clone, Hash, Diff, PartialOrd, Ord)]

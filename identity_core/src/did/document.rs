@@ -1,5 +1,4 @@
 use identity_diff::Diff;
-
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
@@ -8,9 +7,10 @@ use std::{
 
 use crate::{
     common::Timestamp,
-    did::DID,
-    utils::{
-        add_unique_to_vec, helpers::string_or_list, Authentication, Context, IdCompare, PublicKey, Service, Subject,
+    did::{
+        helpers::string_or_list,
+        utils::{add_unique_to_vec, IdCompare},
+        Authentication, Context, PublicKey, Service, Subject, DID,
     },
 };
 

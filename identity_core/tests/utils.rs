@@ -1,7 +1,4 @@
-use identity_core::{
-    did::DID,
-    utils::{Context, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
-};
+use identity_core::did::{Context, KeyData, PublicKey, Service, ServiceEndpoint, Subject, DID};
 
 use std::str::FromStr;
 

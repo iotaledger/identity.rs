@@ -1,5 +1,4 @@
 use identity_diff::Diff;
-
 use serde::{
     de::{self, Deserialize, Deserializer, Visitor},
     ser::{Serialize, Serializer},
@@ -10,7 +9,7 @@ use std::{
     hash::Hash,
 };
 
-use crate::{common::Uri, did_parser::parse};
+use crate::{common::Uri, did::parser::parse};
 
 const LEADING_TOKENS: &str = "did";
 

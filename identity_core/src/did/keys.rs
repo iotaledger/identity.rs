@@ -1,9 +1,8 @@
-use std::{hash::Hash, str::FromStr};
-
 use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
+use std::{hash::Hash, str::FromStr};
 
-use crate::utils::{HasId, Subject};
+use crate::did::{utils::HasId, Subject};
 
 /// Public Key type enum. Can also contain a custom key type specified by the CustomKey field.
 #[derive(Debug, PartialEq, Clone, Diff, Deserialize, Serialize, Eq, Hash, Ord, PartialOrd)]

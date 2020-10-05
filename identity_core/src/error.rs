@@ -1,8 +1,5 @@
 use anyhow::Result as AnyhowResult;
-use pest::error::Error as PestError;
 use thiserror::Error as DeriveError;
-
-use crate::did_parser::Rule;
 
 /// The main crate Error type; uses `thiserror`.
 #[derive(Debug, DeriveError)]
@@ -12,7 +9,7 @@ pub enum Error {
     FormatError(String),
     /// Error from when pest can not properly parse a line.
     #[error("Parse Error: {0}")]
-    ParseError(#[from] PestError<Rule>),
+    ParseError(#[from] anyhow::Error),
     #[error("Failed to encode JSON: {0}")]
     EncodeJSON(serde_json::Error),
     #[error("Failed to decode JSON: {0}")]

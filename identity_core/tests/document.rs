@@ -1,7 +1,5 @@
-use identity_core::{
-    did::DID,
-    document::DIDDocument,
-    utils::{Authentication, Context, IdCompare, KeyData, PublicKey, Service, ServiceEndpoint, Subject},
+use identity_core::did::{
+    Authentication, Context, DIDDocument, IdCompare, KeyData, PublicKey, Service, ServiceEndpoint, Subject, DID,
 };
 
 use std::str::FromStr;
