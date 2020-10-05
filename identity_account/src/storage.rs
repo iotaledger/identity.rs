@@ -9,6 +9,7 @@ pub use cache::Cache;
 pub use compress::HuffmanCodec;
 pub use file::CacheFile;
 
+/// Main value for the `Cache`.  Contains an expiration time and a boolean.
 #[derive(Clone)]
 pub(crate) struct Value<T> {
     pub val: T,

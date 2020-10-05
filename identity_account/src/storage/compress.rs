@@ -6,12 +6,14 @@ use crate::storage::compress::tree::HTree;
 
 mod tree;
 
+/// Huffman Codec for compression. Contains a `HTree`
 #[derive(Serialize, Deserialize, Clone)]
 pub struct HuffmanCodec {
     root: HTree,
 }
 
 impl HuffmanCodec {
+    /// create a new HuffmanCodec from a `BTreeMap<Char, u32>`
     fn new(map: BTreeMap<char, u32>) -> HuffmanCodec {
         let mut heap = BinaryHeap::new();
 
@@ -35,6 +37,18 @@ impl HuffmanCodec {
         }
     }
 
+    /// Compress `String` data using the Huffman algorithm.
+    /// # Example
+    /// ```
+    /// use identity_account::storage::HuffmanCodec;
+    ///
+    /// let expected = "aaabbbbcccccddddd";
+    ///
+    /// let compressed = HuffmanCodec::compress(expected.into()).unwrap();
+    /// let decompressed = HuffmanCodec::decompress(&compressed).unwrap();
+    ///
+    /// assert_eq!(expected, decompressed);
+    /// ```
     pub fn compress(data: String) -> crate::Result<Vec<u8>> {
         if data.len() == 1 {
             return Err(crate::Error::CompressionError(
@@ -82,6 +96,18 @@ impl HuffmanCodec {
         Ok(out)
     }
 
+    /// Decompress `&[u8]` data using the Huffman algorithm.
+    /// # Example
+    /// ```
+    /// use identity_account::storage::HuffmanCodec;
+    ///
+    /// let expected = "aaabbbbcccccddddd";
+    ///
+    /// let compressed = HuffmanCodec::compress(expected.into()).unwrap();
+    /// let decompressed = HuffmanCodec::decompress(&compressed).unwrap();
+    ///
+    /// assert_eq!(expected, decompressed);
+    /// ```
     pub fn decompress(data: &[u8]) -> crate::Result<String> {
         let mut tree_size: [u8; 8] = [0; 8];
         tree_size[..8].clone_from_slice(&data[..8]);
@@ -133,11 +159,13 @@ impl HuffmanCodec {
     }
 }
 
-pub fn fill_code_map_outer(map: &mut BTreeMap<char, String>, tree: &HuffmanCodec) -> crate::Result<()> {
+/// Fill the code map with data for the Huffman Compression and decompression algorithm.
+fn fill_code_map_outer(map: &mut BTreeMap<char, String>, tree: &HuffmanCodec) -> crate::Result<()> {
     fill_code_map_inner_recur(map, &tree.root, String::from(""))
 }
 
-pub fn fill_code_map_inner_recur(map: &mut BTreeMap<char, String>, tree: &HTree, prefix: String) -> crate::Result<()> {
+/// Inner recursive function for the Huffman Algorithm.
+fn fill_code_map_inner_recur(map: &mut BTreeMap<char, String>, tree: &HTree, prefix: String) -> crate::Result<()> {
     if tree.left.is_none() {
         let ch: char;
         if let Some(c) = tree.value {
@@ -157,7 +185,8 @@ pub fn fill_code_map_inner_recur(map: &mut BTreeMap<char, String>, tree: &HTree,
     Ok(())
 }
 
-pub fn frequency_map(val: &str) -> BTreeMap<char, u32> {
+/// generate a frequency map from a `&str`.  Creates a `BTreeMap<char, u32>`.
+fn frequency_map(val: &str) -> BTreeMap<char, u32> {
     let mut out: BTreeMap<char, u32> = BTreeMap::new();
 
     val.chars().for_each(|ch| {
