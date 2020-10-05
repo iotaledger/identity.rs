@@ -2,48 +2,95 @@
 //! cargo run --example publish_read
 
 use anyhow::Result;
+use hex;
 use identity_core::{
+    common::Timestamp,
     document::DIDDocument,
-    utils::{Context, Subject},
+    utils::{KeyData, PublicKey},
 };
+use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
+use identity_diff::Diff;
 use identity_integration::{
-    tangle_reader::TangleReader,
-    tangle_writer::{iota_network, Payload, TangleWriter},
+    helpers::*,
+    tangle_reader::{get_ordered_diffs, get_ordered_documents, TangleReader},
+    tangle_writer::{iota_network, Differences, Payload, TangleWriter},
 };
 use iota_conversion::Trinary;
-use std::str::FromStr;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
     let nodes = vec!["http://localhost:14265", "https://nodes.comnet.thetangle.org:443"];
-    let did = "did:iota:com:123456789abcdefghi";
-    let did_document = DIDDocument {
-        context: Context::from("https://www.w3.org/ns/did/v1"),
-        id: Subject::from(did),
-        ..Default::default()
-    }
-    .init()
-    .init_timestamps()?;
-    let did = did_document.derive_did()?;
-    let did_payload = Payload::DIDDocument(did_document);
-    // 1. Publish DID document to the Tangle
     let tangle_writer = TangleWriter::new(nodes.clone(), iota_network::Comnet).await?;
+    // Create keypair
+    let keypair = Ed25519::generate(&Ed25519, KeyGenerator::default())?;
+    let bs58_auth_key = bs58::encode(hex::decode(keypair.public().to_string())?).into_string();
 
-    let tail_transaction = tangle_writer.send(&did_payload).await?;
+    // Create, sign and publish DID document to the Tangle
+    let did_document = create_document(bs58_auth_key.clone())?;
+    let did_payload = Payload::DIDDocument(did_document.clone());
+    let signed_payload = sign_payload(&keypair, did_payload.clone())?;
+    let tail_transaction = tangle_writer.send(&signed_payload).await?;
     println!(
         "DID document published: https://comnet.thetangle.org/transaction/{}",
         tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
     );
 
-    // 2. Fetch messages from DID address
+    // Create, sign and publish diff to the Tangle
+    let signed_diff_payload = create_diff(did_document.clone(), bs58_auth_key, &keypair).await?;
+    let tail_transaction = tangle_writer.publish_document(&signed_diff_payload).await?;
+    println!(
+        "DID document difference published: https://comnet.thetangle.org/transaction/{}",
+        tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
+    );
+
+    // Get document and diff from the tangle and validate the signatures
+    let did = did_document.derive_did()?;
     let tangle_reader = TangleReader::new(nodes);
-    let received_message = tangle_reader.fetch(&did).await?;
-    let fetched_did_document =
-        DIDDocument::from_str(&received_message.values().cloned().next().expect("Couldn't get message"))?;
-    println!("Document from the Tangle: {:?}", fetched_did_document);
+    let received_messages = tangle_reader.fetch(&did).await?;
+
+    let documents = get_ordered_documents(received_messages.clone(), &did)?;
+    let fetched_document = documents.first().expect("No document found").document.clone();
+    println!("Document from the Tangle: {:?}", fetched_document);
+    let sig = has_valid_signature(&Payload::DIDDocument(fetched_document.clone()))?;
+    println!("Doc valid signature: {}", sig);
+
+    let diffs = get_ordered_diffs(received_messages, &did)?;
+    let fetched_diff = diffs.first().expect("No document found").diff.clone();
+    let sig = has_valid_signature(&Payload::DIDDocumentDifferences(fetched_diff))?;
+    println!("Diff valid signature: {}", sig);
+
     // Check if sent message is the same as the received one
-    if let Payload::DIDDocument(doc) = did_payload {
-        assert_eq!(doc, fetched_did_document);
+    if let Payload::DIDDocument(doc) = signed_payload {
+        assert_eq!(doc, fetched_document);
     };
     Ok(())
+}
+
+async fn create_diff(
+    did_document: DIDDocument,
+    bs58_auth_key: String,
+    keypair: &identity_crypto::KeyPair,
+) -> crate::Result<Payload> {
+    // updated doc and publish diff
+    let mut new = did_document.clone();
+    let public_key = PublicKey {
+        id: "did:iota:123456789abcdefghij#keys-1".into(),
+        key_type: "RsaVerificationKey2018".into(),
+        controller: "did:iota:com:123456789abcdefghij".into(),
+        key_data: KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into()),
+        ..Default::default()
+    }
+    .init();
+    new.update_public_key(public_key);
+    new.update_time();
+    // diff the two docs.
+    let diff = did_document.diff(&new)?;
+    let did_payload = Payload::DIDDocumentDifferences(Differences {
+        did: new.derive_did()?,
+        diff: serde_json::to_string(&diff)?,
+        time: Timestamp::now().to_rfc3339(),
+        auth_key: bs58_auth_key,
+        signature: String::new(),
+    });
+    Ok(sign_payload(&keypair, did_payload.clone())?)
 }

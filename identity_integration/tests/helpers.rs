@@ -1,5 +1,5 @@
 use identity_core::did::DID;
-use identity_integration::did_helper::get_iota_address;
+use identity_integration::helpers::get_iota_address;
 
 #[cfg(test)]
 mod tests {

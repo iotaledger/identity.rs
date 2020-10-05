@@ -27,6 +27,12 @@ pub enum Error {
     /// Tryteconversion Error
     #[error("Tryteconversion Error: Couldn't convert public key to trytes")]
     TryteConversionError,
+    /// identity_crypto Error
+    #[error("identity_crypto Error: {0}")]
+    IdentityCryptoError(#[from] identity_crypto::Error),
+    /// bs58 Error
+    #[error("bs58 decode Error: {0}")]
+    Bs58Error(#[from] bs58::decode::Error),
 }
 
 impl From<Infallible> for Error {

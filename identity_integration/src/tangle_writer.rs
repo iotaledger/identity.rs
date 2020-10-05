@@ -1,4 +1,4 @@
-use crate::did_helper::get_iota_address;
+use crate::helpers::get_iota_address;
 use identity_core::{did::DID, document::DIDDocument};
 pub use iota::client::builder::Network as iota_network;
 use iota::{
@@ -14,14 +14,16 @@ use iota_conversion::Trinary;
 use serde::{Deserialize, Serialize};
 use std::{fmt, thread, time::Duration};
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Differences {
     pub did: DID,
     pub diff: String,
     pub time: String,
+    pub auth_key: String,
+    pub signature: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum Payload {
     DIDDocument(DIDDocument),
     DIDDocumentDifferences(Differences),

@@ -1,4 +1,4 @@
-use crate::{did_helper::get_iota_address, tangle_writer::Differences};
+use crate::{helpers::get_iota_address, tangle_writer::Differences};
 use identity_core::{did::DID, document::DIDDocument};
 use iota::{
     crypto::ternary::{
