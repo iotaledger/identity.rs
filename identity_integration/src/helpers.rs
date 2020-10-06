@@ -33,7 +33,9 @@ pub fn verify_signature(message: &str, signature: &str, pub_key: &str) -> crate:
     )?)
 }
 
+/// Verifies Ed25519 signatures for DID documents or diffs
 pub fn has_valid_signature(payload: &Payload) -> crate::Result<bool> {
+    //todo verify that did matches auth key (only before auth change, later verify signatures with previous auth key)
     let is_valid = match payload {
         Payload::DIDDocument(doc) => {
             if let Some(sig) = doc.metadata.get("proof") {
@@ -77,6 +79,7 @@ pub fn sign(key: &identity_crypto::KeyPair, message: &str) -> crate::Result<Stri
     Ok(sig_bs58)
 }
 
+/// Signs a DID document or diff with a Ed25519 Keypair
 pub fn sign_payload(key: &identity_crypto::KeyPair, payload: Payload) -> crate::Result<Payload> {
     let signed_payload = match payload {
         Payload::DIDDocument(document) => {
@@ -94,6 +97,7 @@ pub fn sign_payload(key: &identity_crypto::KeyPair, payload: Payload) -> crate::
     Ok(signed_payload)
 }
 
+/// Creates a DID document with an auth key and a DID
 pub fn create_document(auth_key: String) -> crate::Result<DIDDocument> {
     let mut did_doc = DIDDocument {
         context: Context::from("https://w3id.org/did/v1"),
