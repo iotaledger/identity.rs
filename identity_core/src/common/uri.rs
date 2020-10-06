@@ -1,3 +1,4 @@
+use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
 use std::{fmt, ops::Deref};
 
@@ -6,7 +7,7 @@ use crate::did::DID;
 /// A simple wrapper for URIs adhering to RFC 3986
 ///
 /// TODO: Parse/Validate according to RFC 3986
-#[derive(Clone, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Diff)]
 #[repr(transparent)]
 #[serde(transparent)]
 pub struct Uri(String);

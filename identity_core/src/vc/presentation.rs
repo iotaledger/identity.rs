@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    common::{Object, OneOrMany, Uri, Value},
+    common::{Context, Object, OneOrMany, Uri, Value},
     vc::{
-        validate_presentation_structure, Context, Credential, RefreshService, Result, TermsOfUse, VerifiableCredential,
+        validate_presentation_structure, Credential, RefreshService, Result, TermsOfUse, VerifiableCredential,
         VerifiablePresentation,
     },
 };

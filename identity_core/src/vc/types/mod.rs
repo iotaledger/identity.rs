@@ -1,4 +1,3 @@
-mod context;
 mod credential_schema;
 mod credential_status;
 mod credential_subject;
@@ -7,7 +6,6 @@ mod issuer;
 mod refresh_service;
 mod terms_of_use;
 
-pub use context::*;
 pub use credential_schema::*;
 pub use credential_status::*;
 pub use credential_subject::*;

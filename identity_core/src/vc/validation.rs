@@ -1,6 +1,6 @@
 use crate::{
-    common::{OneOrMany, Uri},
-    vc::{Context, Credential, Error, Presentation, Result},
+    common::{Context, OneOrMany, Uri},
+    vc::{Credential, Error, Presentation, Result},
 };
 
 pub fn validate_credential_structure(credential: &Credential) -> Result<()> {

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::fmt;
+use core::fmt;
+use core::slice::from_ref;
 
 /// A generic container that stores one or many values of a given type.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -48,6 +49,13 @@ impl<T> OneOrMany<T> {
 
     pub fn iter(&self) -> impl Iterator<Item = &T> + '_ {
         OneOrManyIter::new(self)
+    }
+
+    pub fn as_slice(&self) -> &[T] {
+        match self {
+            Self::One(inner) => from_ref(inner),
+            Self::Many(inner) => inner.as_slice(),
+        }
     }
 
     /// Consumes the `OneOrMany`, returning the contents as a `Vec`.

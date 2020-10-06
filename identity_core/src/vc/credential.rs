@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    common::{Object, OneOrMany, Timestamp, Uri, Value},
+    common::{Context, Object, OneOrMany, Timestamp, Uri, Value},
     vc::{
-        validate_credential_structure, Context, CredentialSchema, CredentialStatus, CredentialSubject, Error, Evidence,
+        validate_credential_structure, CredentialSchema, CredentialStatus, CredentialSubject, Error, Evidence,
         Issuer, RefreshService, Result, TermsOfUse, VerifiableCredential,
     },
 };
