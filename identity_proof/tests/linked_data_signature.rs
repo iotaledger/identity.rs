@@ -1,4 +1,4 @@
-use identity_common::Object;
+use identity_core::common::Object;
 use identity_proof::LinkedDataSignature;
 use serde_json::{from_str, to_string};
 

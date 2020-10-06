@@ -60,7 +60,7 @@ fn test_builder_valid() {
 }
 
 #[test]
-#[should_panic = "Missing `Credential` subject"]
+#[should_panic = "Missing Subject"]
 fn test_builder_missing_subjects() {
     CredentialBuilder::new()
         .issuer("did:issuer")
@@ -78,7 +78,7 @@ fn test_builder_missing_issuer() {
 }
 
 #[test]
-#[should_panic = "Invalid URI for Credential issuer"]
+#[should_panic = "Invalid Issuer"]
 fn test_builder_invalid_issuer() {
     CredentialBuilder::new()
         .subject(CredentialSubjectBuilder::default().id("did:sub").build().unwrap())
