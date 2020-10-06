@@ -1,4 +1,5 @@
 use core::convert::TryFrom;
+use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -9,12 +10,15 @@ use crate::{
 /// Information used to validate the structure of a `Credential`.
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#data-schemas)
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize, Builder)]
 pub struct CredentialSchema {
+    #[builder(setter(into))]
     pub id: Uri,
     #[serde(rename = "type")]
+    #[builder(setter(into))]
     pub type_: String,
     #[serde(flatten)]
+    #[builder(default, setter(into))]
     pub properties: Object,
 }
 
@@ -27,5 +31,22 @@ impl TryFrom<Object> for CredentialSchema {
             type_: other.try_take_object_type()?,
             properties: other,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic = "`id` must be initialized"]
+    fn test_builder_missing_id() {
+        CredentialSchemaBuilder::default().type_("my-type").build().unwrap();
+    }
+
+    #[test]
+    #[should_panic = "`type_` must be initialized"]
+    fn test_builder_missing_type() {
+        CredentialSchemaBuilder::default().id("my-id").build().unwrap();
     }
 }

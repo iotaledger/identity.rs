@@ -1,4 +1,5 @@
 use core::convert::TryFrom;
+use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -9,11 +10,13 @@ use crate::{
 /// An entity who is the target of a set of claims.
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#credential-subject)
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize, Builder)]
 pub struct CredentialSubject {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(into, strip_option))]
     pub id: Option<Uri>,
     #[serde(flatten)]
+    #[builder(default, setter(into))]
     pub properties: Object,
 }
 

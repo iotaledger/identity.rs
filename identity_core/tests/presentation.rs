@@ -1,40 +1,66 @@
 #[macro_use]
 mod macros;
 
-use identity_core::{common::Context, object, vc::*};
+#[macro_use]
+extern crate identity_core;
+
+use identity_core::{common::Context, vc::*};
 
 #[test]
 fn test_builder_valid() {
     let issuance = timestamp!("2010-01-01T00:00:00Z");
 
+    let subject = CredentialSubjectBuilder::default()
+        .id("did:iota:alice")
+        .build()
+        .unwrap();
+
     let credential = CredentialBuilder::new()
         .issuer("did:example:issuer")
-        .context("https://www.w3.org/2018/credentials/examples/v1")
-        .type_("PrescriptionCredential")
-        .try_subject(object!(id: "did:iota:alice"))
-        .unwrap()
+        .context(vec![
+            Context::from(Credential::BASE_CONTEXT),
+            Context::from("https://www.w3.org/2018/credentials/examples/v1"),
+        ])
+        .types(vec![Credential::BASE_TYPE.into(), "PrescriptionCredential".into()])
+        .subject(subject)
         .issuance_date(issuance)
         .build()
         .unwrap();
 
     let verifiable = VerifiableCredential::new(credential, object!());
 
+    let refresh_service = RefreshServiceBuilder::default()
+        .id("refresh-service")
+        .types("Refresh2020".to_string())
+        .build()
+        .unwrap();
+
+    let terms = vec![
+        TermsOfUseBuilder::default()
+            .types("Policy2019".to_string())
+            .build()
+            .unwrap(),
+        TermsOfUseBuilder::default()
+            .types("Policy2020".to_string())
+            .build()
+            .unwrap(),
+    ];
+
     let presentation = PresentationBuilder::new()
-        .context("https://www.w3.org/2018/credentials/examples/v1")
+        .context(vec![
+            Context::from(Presentation::BASE_CONTEXT),
+            Context::from("https://www.w3.org/2018/credentials/examples/v1"),
+        ])
         .id("did:example:id:123")
-        .type_("PrescriptionCredential")
+        .types(vec![Presentation::BASE_TYPE.into(), "PrescriptionCredential".into()])
         .credential(verifiable.clone())
-        .try_refresh_service(object!(id: "", type: "Refresh2020"))
-        .unwrap()
-        .try_terms_of_use(object!(type: "Policy2019"))
-        .unwrap()
-        .try_terms_of_use(object!(type: "Policy2020"))
-        .unwrap()
+        .refresh_service(refresh_service)
+        .terms_of_use(terms)
         .build()
         .unwrap();
 
     assert_eq!(presentation.context.len(), 2);
-    assert_matches!(presentation.context.get(0).unwrap(), Context::Uri(ref uri) if uri == Credential::BASE_CONTEXT);
+    assert_matches!(presentation.context.get(0).unwrap(), Context::Uri(ref uri) if uri == Presentation::BASE_CONTEXT);
     assert_matches!(presentation.context.get(1).unwrap(), Context::Uri(ref uri) if uri == "https://www.w3.org/2018/credentials/examples/v1");
 
     assert_eq!(presentation.id, Some("did:example:id:123".into()));
@@ -65,39 +91,6 @@ fn test_builder_invalid_holder_fmt() {
     PresentationBuilder::new()
         .id("did:iota:123")
         .holder("d00m")
-        .build()
-        .unwrap_or_else(|error| panic!("{}", error));
-}
-
-#[test]
-#[should_panic = "Invalid object id"]
-fn test_builder_invalid_refresh_service_missing_id() {
-    PresentationBuilder::new()
-        .id("did:iota:123")
-        .try_refresh_service(object!(type: "RefreshServiceType"))
-        .unwrap_or_else(|error| panic!("{}", error))
-        .build()
-        .unwrap_or_else(|error| panic!("{}", error));
-}
-
-#[test]
-#[should_panic = "Invalid object type"]
-fn test_builder_invalid_refresh_service_missing_type() {
-    PresentationBuilder::new()
-        .id("did:iota:123")
-        .try_refresh_service(object!(id: "did:iota:rsv:123"))
-        .unwrap_or_else(|error| panic!("{}", error))
-        .build()
-        .unwrap_or_else(|error| panic!("{}", error));
-}
-
-#[test]
-#[should_panic = "Invalid object type"]
-fn test_builder_invalid_terms_of_use_missing_type() {
-    PresentationBuilder::new()
-        .id("did:iota:123")
-        .try_terms_of_use(object!(id: "did:iota:rsv:123"))
-        .unwrap_or_else(|error| panic!("{}", error))
         .build()
         .unwrap_or_else(|error| panic!("{}", error));
 }

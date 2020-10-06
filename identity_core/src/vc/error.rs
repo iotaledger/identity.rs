@@ -1,5 +1,9 @@
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("Invalid Credential: {0}")]
+    InvalidCredential(String),
+    #[error("Invalid Presentation: {0}")]
+    InvalidPresentation(String),
     #[error("Missing base type for {0}")]
     MissingBaseType(&'static str),
     #[error("Missing base context for {0}")]

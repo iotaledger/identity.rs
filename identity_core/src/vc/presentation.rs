@@ -1,9 +1,10 @@
+use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    common::{Context, Object, OneOrMany, Uri, Value},
+    common::{Context, Object, OneOrMany, Uri},
     vc::{
-        validate_presentation_structure, Credential, RefreshService, Result, TermsOfUse, VerifiableCredential,
+        validate_presentation_structure, Credential, Error, RefreshService, Result, TermsOfUse, VerifiableCredential,
         VerifiablePresentation,
     },
 };
@@ -11,15 +12,18 @@ use crate::{
 /// A `Presentation` represents a bundle of one or more `VerifiableCredential`s.
 ///
 /// `Presentation`s can be combined with `Proof`s to create `VerifiablePresentation`s.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, Builder)]
+#[builder(build_fn(name = "build_unchecked"), pattern = "owned")]
 pub struct Presentation {
     /// A set of URIs or `Object`s describing the applicable JSON-LD contexts.
     ///
     /// NOTE: The first URI MUST be `https://www.w3.org/2018/credentials/v1`
     #[serde(rename = "@context")]
+    #[builder(setter(into))]
     pub context: OneOrMany<Context>,
     /// A unique `URI` referencing the subject of the presentation.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(into, strip_option))]
     pub id: Option<Uri>,
     /// One or more URIs defining the type of presentation.
     ///
@@ -28,25 +32,33 @@ pub struct Presentation {
     /// We're using a `String` here since we don't currently use JSON-LD and
     /// don't have any immediate plans to do so.
     #[serde(rename = "type")]
+    #[builder(setter(into, strip_option))]
     pub types: OneOrMany<String>,
     /// TODO
     #[serde(rename = "verifiableCredential")]
+    #[builder(default, setter(into, name = "credential"))]
     pub verifiable_credential: OneOrMany<VerifiableCredential>,
     /// The entity that generated the presentation.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(into, strip_option))]
     pub holder: Option<Uri>,
     /// TODO
     #[serde(rename = "refreshService", skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(into, strip_option))]
     pub refresh_service: Option<OneOrMany<RefreshService>>,
     /// The terms of use issued by the presentation holder
     #[serde(rename = "termsOfUse", skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(into, strip_option))]
     pub terms_of_use: Option<OneOrMany<TermsOfUse>>,
     /// Miscellaneous properties.
     #[serde(flatten)]
+    #[builder(default, setter(into))]
     pub properties: Object,
 }
 
 impl Presentation {
+    pub const BASE_CONTEXT: &'static str = Credential::BASE_CONTEXT;
+
     pub const BASE_TYPE: &'static str = "VerifiablePresentation";
 
     pub fn validate(&self) -> Result<()> {
@@ -58,106 +70,26 @@ impl Presentation {
 // Presentation Builder
 // =============================================================================
 
-/// A convenience for constructing a `Presentation` or `VerifiablePresentation`
-/// from dynamic data.
-///
-/// NOTE: Base context and type are automatically included.
-#[derive(Debug)]
-pub struct PresentationBuilder {
-    context: Vec<Context>,
-    id: Option<Uri>,
-    types: Vec<String>,
-    verifiable_credential: Vec<VerifiableCredential>,
-    holder: Option<Uri>,
-    refresh_service: Vec<RefreshService>,
-    terms_of_use: Vec<TermsOfUse>,
-    properties: Object,
-}
-
 impl PresentationBuilder {
     pub fn new() -> Self {
-        Self {
-            context: vec![Credential::BASE_CONTEXT.into()],
-            id: None,
-            types: vec![Presentation::BASE_TYPE.into()],
-            verifiable_credential: Vec::new(),
-            holder: None,
-            refresh_service: Vec::new(),
-            terms_of_use: Vec::new(),
-            properties: Default::default(),
-        }
+        let mut this: Self = Default::default();
+
+        this.context = Some(vec![Presentation::BASE_CONTEXT.into()].into());
+        this.types = Some(vec![Presentation::BASE_TYPE.into()].into());
+        this
     }
 
-    pub fn context(mut self, value: impl Into<Context>) -> Self {
-        let value: Context = value.into();
-
-        if !matches!(value, Context::Uri(ref uri) if uri == Credential::BASE_CONTEXT) {
-            self.context.push(value);
-        }
-
-        self
-    }
-
-    pub fn type_(mut self, value: impl Into<String>) -> Self {
-        let value: String = value.into();
-
-        if value != Presentation::BASE_TYPE {
-            self.types.push(value);
-        }
-
-        self
-    }
-
-    pub fn property(mut self, key: impl Into<String>, value: impl Into<Value>) -> Self {
-        self.properties.insert(key.into(), value.into());
-        self
-    }
-
-    impl_builder_setter!(id, id, Option<Uri>);
-    impl_builder_setter!(credential, verifiable_credential, Vec<VerifiableCredential>);
-    impl_builder_setter!(holder, holder, Option<Uri>);
-    impl_builder_setter!(refresh, refresh_service, Vec<RefreshService>);
-    impl_builder_setter!(terms_of_use, terms_of_use, Vec<TermsOfUse>);
-    impl_builder_setter!(properties, properties, Object);
-
-    impl_builder_try_setter!(try_refresh_service, refresh_service, Vec<RefreshService>);
-    impl_builder_try_setter!(try_terms_of_use, terms_of_use, Vec<TermsOfUse>);
-
-    /// Consumes the `PresentationBuilder`, returning a valid `Presentation`
+    /// Consumes the `PresentationBuilder_`, returning a valid `Presentation`
     pub fn build(self) -> Result<Presentation> {
-        let mut presentation: Presentation = Presentation {
-            context: self.context.into(),
-            id: self.id,
-            types: self.types.into(),
-            verifiable_credential: self.verifiable_credential.into(),
-            holder: self.holder,
-            refresh_service: None,
-            terms_of_use: None,
-            properties: self.properties,
-        };
+        let this: Presentation = self.build_unchecked().map_err(Error::InvalidPresentation)?;
 
-        if !self.refresh_service.is_empty() {
-            presentation.refresh_service = Some(self.refresh_service.into());
-        }
+        this.validate()?;
 
-        if !self.terms_of_use.is_empty() {
-            presentation.terms_of_use = Some(self.terms_of_use.into());
-        }
-
-        presentation.validate()?;
-
-        Ok(presentation)
+        Ok(this)
     }
 
-    /// Consumes the `PresentationBuilder`, returning a valid `VerifiablePresentation`
+    /// Consumes the `PresentationBuilder_`, returning a valid `VerifiablePresentation`
     pub fn build_verifiable(self, proof: impl Into<OneOrMany<Object>>) -> Result<VerifiablePresentation> {
-        self.build()
-            .map(|credential| VerifiablePresentation::new(credential, proof))
-    }
-}
-
-impl Default for PresentationBuilder {
-    fn default() -> Self {
-        Self::new()
+        self.build().map(|this| VerifiablePresentation::new(this, proof))
     }
 }

@@ -7,16 +7,29 @@ use identity_core::{common::Context, object, vc::*};
 fn test_builder_valid() {
     let issuance = timestamp!("2010-01-01T00:00:00Z");
 
+    let subjects = vec![
+        CredentialSubjectBuilder::default()
+            .id("did:iota:alice")
+            .properties(object!(spouse: "did:iota:bob"))
+            .build()
+            .unwrap(),
+        CredentialSubjectBuilder::default()
+            .id("did:iota:bob")
+            .properties(object!(spouse: "did:iota:alice"))
+            .build()
+            .unwrap(),
+    ];
+
     let credential = CredentialBuilder::new()
         .issuer("did:example:issuer")
-        .context("https://www.w3.org/2018/credentials/examples/v1")
-        .context(object!(id: "did:context:1234", type: "CustomContext2020"))
+        .context(vec![
+            Context::from(Credential::BASE_CONTEXT),
+            Context::from("https://www.w3.org/2018/credentials/examples/v1"),
+            Context::from(object!(id: "did:context:1234", type: "CustomContext2020")),
+        ])
         .id("did:example:123")
-        .type_("RelationshipCredential")
-        .try_subject(object!(id: "did:iota:alice", spouse: "did:iota:bob"))
-        .unwrap()
-        .try_subject(object!(id: "did:iota:bob", spouse: "did:iota:alice"))
-        .unwrap()
+        .types(vec![Credential::BASE_TYPE.into(), "RelationshipCredential".into()])
+        .subject(subjects)
         .issuance_date(issuance)
         .build()
         .unwrap();
@@ -56,22 +69,10 @@ fn test_builder_missing_subjects() {
 }
 
 #[test]
-#[should_panic = "Invalid `Credential` subject"]
-fn test_builder_invalid_subjects() {
-    CredentialBuilder::new()
-        .issuer("did:issuer")
-        .try_subject(object!())
-        .unwrap_or_else(|error| panic!("{}", error))
-        .build()
-        .unwrap_or_else(|error| panic!("{}", error));
-}
-
-#[test]
-#[should_panic = "Missing `Credential` issuer"]
+#[should_panic = "`issuer` must be initialized"]
 fn test_builder_missing_issuer() {
     CredentialBuilder::new()
-        .try_subject(object!(id: "did:sub"))
-        .unwrap_or_else(|error| panic!("{}", error))
+        .subject(CredentialSubjectBuilder::default().id("did:sub").build().unwrap())
         .build()
         .unwrap_or_else(|error| panic!("{}", error));
 }
@@ -80,8 +81,7 @@ fn test_builder_missing_issuer() {
 #[should_panic = "Invalid URI for Credential issuer"]
 fn test_builder_invalid_issuer() {
     CredentialBuilder::new()
-        .try_subject(object!(id: "did:sub"))
-        .unwrap_or_else(|error| panic!("{}", error))
+        .subject(CredentialSubjectBuilder::default().id("did:sub").build().unwrap())
         .issuer("foo")
         .build()
         .unwrap_or_else(|error| panic!("{}", error));
