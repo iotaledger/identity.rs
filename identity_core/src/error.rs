@@ -20,6 +20,8 @@ pub enum Error {
     InvalidObjectId,
     #[error("Invalid object type")]
     InvalidObjectType,
-    #[error(transparent)]
-    CredentialError(#[from] crate::vc::Error),
+    #[error("Invalid Credential: {0}")]
+    InvalidCredential(String),
+    #[error("Invalid Presentation: {0}")]
+    InvalidPresentation(String),
 }
