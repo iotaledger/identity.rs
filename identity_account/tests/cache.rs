@@ -29,7 +29,7 @@ fn test_insert_return_old() {
 
     let res_a = cache.insert(key, 1, Some(Duration::default()), None);
     let res_b = cache.insert(key, 2, None, None);
-    let res_c = cache.insert(key, 3, None, None);
+    let res_c = cache.insert(key, 3, None, Some(true));
 
     assert_eq!(res_a, None);
     assert_eq!(res_b, None);

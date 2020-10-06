@@ -1,19 +1,25 @@
 use crate::storage::Value;
 use std::{
     collections::{hash_map::Entry, HashMap},
+    fmt::Debug,
     hash::Hash,
     time::{Duration, SystemTime},
 };
 
 /// Local memory cache for unencrypted items.
-pub struct Cache<K, V> {
+#[derive(Debug)]
+pub struct Cache<K, V>
+where
+    K: Hash + Eq,
+    V: Clone + Debug,
+{
     table: HashMap<K, Value<V>>,
     scan_frequency: Option<Duration>,
     created_at: SystemTime,
     last_scan_at: Option<SystemTime>,
 }
 
-impl<K: Hash + Eq, V> Cache<K, V> {
+impl<K: Hash + Eq, V: Clone + Debug> Cache<K, V> {
     /// creates a new empty `Cache`
     /// # Example
     /// ```
@@ -98,13 +104,13 @@ impl<K: Hash + Eq, V> Cache<K, V> {
     ///
     /// let mut cache = Cache::new();
     ///
-    /// let key: &'static str = "key";
-    /// let value: &'static str = "value";
+    /// let key = "key";
+    /// let value = "value";
     ///
     /// assert_eq!(cache.get_or_insert(key, move || value, None, None), &value);
     /// assert!(cache.contains_key(&key));
     /// ```
-    pub fn get_or_insert<F>(&mut self, key: K, func: F, lifetime: Option<Duration>, needs_cache: Option<bool>) -> &V
+    pub fn get_or_insert<F>(&mut self, key: K, func: F, lifetime: Option<Duration>, file_backed: Option<bool>) -> &V
     where
         F: Fn() -> V,
     {
@@ -115,12 +121,12 @@ impl<K: Hash + Eq, V> Cache<K, V> {
         match self.table.entry(key) {
             Entry::Occupied(mut occ) => {
                 if occ.get().has_expired(now) {
-                    occ.insert(Value::new(func(), lifetime, needs_cache));
+                    occ.insert(Value::new(func(), lifetime, file_backed));
                 }
 
                 &occ.into_mut().val
             }
-            Entry::Vacant(vac) => &vac.insert(Value::new(func(), lifetime, needs_cache)).val,
+            Entry::Vacant(vac) => &vac.insert(Value::new(func(), lifetime, file_backed)).val,
         }
     }
 
@@ -142,15 +148,15 @@ impl<K: Hash + Eq, V> Cache<K, V> {
     /// assert_eq!(cache.get(&key), Some(&value));
     /// assert!(insert.is_none());
     /// ```
-    pub fn insert(&mut self, key: K, value: V, lifetime: Option<Duration>, needs_cache: Option<bool>) -> Option<V> {
+    pub fn insert(&mut self, key: K, value: V, lifetime: Option<Duration>, file_backed: Option<bool>) -> Option<V> {
         let now = SystemTime::now();
 
         self.try_remove_expired_items(now);
 
         self.table
-            .insert(key, Value::new(value, lifetime, needs_cache))
+            .insert(key, Value::new(value, lifetime, file_backed))
             .filter(|value| !value.has_expired(now))
-            .map(|value| value.val)
+            .map(|value| value.val.clone())
     }
 
     /// Removes a key from the cache.  Returns the value from the key if the key existed in the cache.
@@ -178,7 +184,7 @@ impl<K: Hash + Eq, V> Cache<K, V> {
         self.table
             .remove(key)
             .filter(|value| !value.has_expired(now))
-            .map(|value| value.val)
+            .map(|value| value.val.clone())
     }
 
     // Check if the `Cache<K, V>` contains a specific key.
@@ -232,7 +238,7 @@ impl<K: Hash + Eq, V> Cache<K, V> {
 }
 
 /// Default implementation for `Cache<K, V>`
-impl<K: Hash + Eq, V> Default for Cache<K, V> {
+impl<K: Hash + Eq, V: Clone + Debug> Default for Cache<K, V> {
     fn default() -> Self {
         Cache::new()
     }

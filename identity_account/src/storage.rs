@@ -10,19 +10,19 @@ pub use compress::HuffmanCodec;
 pub use file::CacheFile;
 
 /// Main value for the `Cache`.  Contains an expiration time and a boolean.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct Value<T> {
     pub val: T,
     expiration: Option<SystemTime>,
-    needs_cache: Option<bool>,
+    file_backed: Option<bool>,
 }
 
 impl<T> Value<T> {
-    pub fn new(val: T, duration: Option<Duration>, needs_cache: Option<bool>) -> Self {
+    pub fn new(val: T, duration: Option<Duration>, file_backed: Option<bool>) -> Self {
         Value {
             val,
             expiration: duration.map(|dur| SystemTime::now() + dur),
-            needs_cache,
+            file_backed,
         }
     }
 
@@ -30,7 +30,7 @@ impl<T> Value<T> {
         self.expiration.map_or(false, |time| time_now >= time)
     }
 
-    pub fn should_cache(&self) -> bool {
-        self.needs_cache.map_or(false, |t| t)
+    pub fn file_backed(&self) -> bool {
+        self.file_backed.map_or(false, |t| t)
     }
 }
