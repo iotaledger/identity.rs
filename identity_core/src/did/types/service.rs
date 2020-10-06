@@ -6,18 +6,18 @@ use serde::{
 };
 use std::{
     fmt::{self, Formatter},
-    hash::Hash,
     str::FromStr,
 };
 
 use crate::{
-    did::{Context, DID},
+    common::{Context, OneOrMany},
+    did::DID,
     utils::HasId,
 };
 
 /// Describes a `Service` in a `DIDDocument` type. Contains an `id`, `service_type` and `endpoint`.  The `endpoint` can
 /// be represented as a `String` or a `ServiceEndpoint` in json.
-#[derive(Debug, Eq, PartialEq, Deserialize, Serialize, Diff, Clone, Default, Hash, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Deserialize, Serialize, Diff, Clone, Default)]
 #[diff(from_into)]
 pub struct Service {
     #[serde(default)]
@@ -31,10 +31,10 @@ pub struct Service {
 /// Describes the `ServiceEndpoint` struct type. Contains a required `context` and two optional fields: `endpoint_type`
 /// and `instances`.  If neither `instances` nor `endpoint_type` is specified, the `ServiceEndpoint` is represented as a
 /// String in json using the `context`.
-#[derive(Debug, Eq, PartialEq, Clone, Diff, Default, Hash, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Clone, Diff, Default)]
 #[diff(from_into)]
 pub struct ServiceEndpoint {
-    pub context: Context,
+    pub context: OneOrMany<Context>,
     pub endpoint_type: Option<String>,
     pub instances: Option<Vec<String>>,
 }
@@ -148,7 +148,7 @@ impl<'de> Visitor<'de> for ServiceEndpointVisitor {
         E: de::Error,
     {
         Ok(ServiceEndpoint {
-            context: Context::from_str(value).expect("Unable to deserialize the context"),
+            context: vec![value.into()].into(),
             ..Default::default()
         })
     }
@@ -188,7 +188,7 @@ impl<'de> Visitor<'de> for ServiceEndpointVisitor {
         let context = context.ok_or_else(|| de::Error::missing_field("@context"))?;
 
         Ok(ServiceEndpoint {
-            context: Context::from_str(&context).expect("Unable to deserialize the context into a Service endpoint"),
+            context: vec![context.into()].into(),
             endpoint_type,
             instances,
         })

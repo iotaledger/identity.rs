@@ -171,7 +171,7 @@ where
             (lhs @ Self::One(_), Self::Type::One(None)) => Ok(lhs.clone()),
             (Self::Many(lhs), Self::Type::Many(Some(ref rhs))) => Ok(Self::Many(lhs.merge(rhs.clone())?)),
             (lhs @ Self::Many(_), Self::Type::Many(None)) => Ok(lhs.clone()),
-            (_, diff) => Self::from_diff(diff.clone()),
+            (_, diff) => Self::from_diff(diff),
         }
     }
 

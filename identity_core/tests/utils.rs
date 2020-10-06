@@ -1,4 +1,7 @@
-use identity_core::did::{Context, KeyData, PublicKey, Service, ServiceEndpoint, DID};
+use identity_core::{
+    common::{Context, OneOrMany},
+    did::{KeyData, PublicKey, Service, ServiceEndpoint, DID},
+};
 
 use std::str::FromStr;
 
@@ -14,10 +17,7 @@ fn setup_json(key: &str) -> String {
 #[test]
 fn test_context() {
     let raw_str = r#"["https://w3id.org/did/v1","https://w3id.org/security/v1"]"#;
-    let ctx = Context::new(vec![
-        "https://w3id.org/did/v1".into(),
-        "https://w3id.org/security/v1".into(),
-    ]);
+    let ctx: OneOrMany<Context> = vec!["https://w3id.org/did/v1".into(), "https://w3id.org/security/v1".into()].into();
 
     let string = serde_json::to_string(&ctx).unwrap();
 
@@ -65,7 +65,7 @@ fn test_service_with_no_endpoint_body() {
     let raw_str = setup_json("service");
 
     let endpoint = ServiceEndpoint {
-        context: "https://edv.example.com/".into(),
+        context: vec!["https://edv.example.com/".into()].into(),
         ..Default::default()
     }
     .init();
@@ -91,7 +91,7 @@ fn test_service_with_body() {
     let raw_str = setup_json("endpoint");
 
     let endpoint = ServiceEndpoint {
-        context: "https://schema.identity.foundation/hub".into(),
+        context: vec!["https://schema.identity.foundation/hub".into()].into(),
         endpoint_type: Some("UserHubEndpoint".into()),
         instances: Some(vec!["did:example:456".into(), "did:example:789".into()]),
     }
