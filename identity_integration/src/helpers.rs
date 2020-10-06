@@ -35,7 +35,7 @@ pub fn verify_signature(message: &str, signature: &str, pub_key: &str) -> crate:
 
 /// Verifies Ed25519 signatures for DID documents or diffs
 pub fn has_valid_signature(payload: &Payload) -> crate::Result<bool> {
-    //todo verify that did matches auth key (only before auth change, later verify signatures with previous auth key)
+    // todo verify that did matches auth key (only before auth change, later verify signatures with previous auth key)
     let is_valid = match payload {
         Payload::DIDDocument(doc) => {
             if let Some(sig) = doc.metadata.get("proof") {

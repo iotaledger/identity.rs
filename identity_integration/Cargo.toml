@@ -38,6 +38,8 @@ multihash = "*"
 bs58 = "0.3.1"
 hex = "0.4"
 
+async-trait = "0.1.41"
+
 [dev-dependencies]
 smol-potat = "0.3.3"
 smol = {version = "0.1.18", features = ["tokio02"] }
