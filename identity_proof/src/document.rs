@@ -1,4 +1,4 @@
-use identity_common::{Object, SerdeInto};
+use identity_core::common::{Object, SerdeInto};
 use serde::Serialize;
 
 use crate::error::Result;

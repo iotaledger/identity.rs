@@ -11,7 +11,7 @@ pub enum Error {
     #[error("Invalid LD Signature: {0}")]
     InvalidLDSignature(String),
     #[error(transparent)]
-    Common(#[from] identity_common::Error),
+    Common(#[from] identity_core::Error),
     #[error(transparent)]
     Crypto(#[from] identity_crypto::Error),
     #[error(transparent)]

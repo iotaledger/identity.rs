@@ -1,12 +1,12 @@
-use identity_diff::Diff;
-use serde::{Deserialize, Serialize};
-use serde_json::Map;
-use std::{
-    collections::HashMap,
+use core::{
     fmt,
     iter::FromIterator,
     ops::{Deref, DerefMut},
 };
+use identity_diff::Diff;
+use serde::{Deserialize, Serialize};
+use serde_json::Map;
+use std::collections::HashMap;
 
 use crate::{
     common::{OneOrMany, Value},

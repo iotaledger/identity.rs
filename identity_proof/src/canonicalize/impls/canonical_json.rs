@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use canonical_json::to_string;
-use identity_common::Object;
+use identity_core::common::Object;
 use serde_json::to_value;
 
 use crate::{

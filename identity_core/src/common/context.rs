@@ -1,6 +1,6 @@
+use core::fmt;
 use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::common::{Object, Uri};
 

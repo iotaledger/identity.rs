@@ -1,6 +1,6 @@
+use core::{fmt, ops::Deref};
 use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
-use std::{fmt, ops::Deref};
 
 use crate::did::DID;
 

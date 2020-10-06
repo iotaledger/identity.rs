@@ -1,4 +1,4 @@
-use identity_common::{Object, Timestamp};
+use identity_core::common::{Object, Timestamp};
 use serde::{Deserialize, Serialize};
 
 /// Options permitted to create/customize a linked data signature
