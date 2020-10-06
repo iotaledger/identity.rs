@@ -42,7 +42,7 @@ impl<T: Diff> DiffVec<T> {
 /// `Diff` trait implementation for `Vec<T>`
 impl<T> Diff for Vec<T>
 where
-    T: Clone + Debug + PartialEq + Diff + Default + for<'de> Deserialize<'de> + Serialize,
+    T: Clone + Debug + PartialEq + Diff + for<'de> Deserialize<'de> + Serialize,
 {
     /// Corresponding Diff Type for `Vec<T>`
     type Type = DiffVec<T>;

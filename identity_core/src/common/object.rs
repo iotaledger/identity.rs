@@ -1,3 +1,4 @@
+use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
 use serde_json::Map;
 use std::{
@@ -15,7 +16,7 @@ use crate::{
 type Inner = HashMap<String, Value>;
 
 // An String -> Value `HashMap` wrapper
-#[derive(Clone, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Default, PartialEq, Deserialize, Serialize, Diff)]
 #[repr(transparent)]
 #[serde(transparent)]
 pub struct Object(Inner);

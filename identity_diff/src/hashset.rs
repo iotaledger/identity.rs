@@ -19,7 +19,7 @@ pub enum InnerValue<T: Diff> {
 
 impl<T> Diff for HashSet<T>
 where
-    T: Debug + Clone + PartialEq + Ord + Diff + Hash + for<'de> Deserialize<'de> + Serialize,
+    T: Debug + Clone + PartialEq + Eq + Diff + Hash + for<'de> Deserialize<'de> + Serialize,
 {
     type Type = DiffHashSet<T>;
 

@@ -1,6 +1,8 @@
+use core::{fmt, hash::Hash, slice::from_ref};
+use identity_diff::{Diff, Error};
 use serde::{Deserialize, Serialize};
-use core::fmt;
-use core::slice::from_ref;
+
+use crate::error::Result;
 
 /// A generic container that stores one or many values of a given type.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -107,6 +109,10 @@ impl<T> From<OneOrMany<T>> for Vec<T> {
     }
 }
 
+// =============================================================================
+// Iterator
+// =============================================================================
+
 struct OneOrManyIter<'a, T> {
     inner: &'a OneOrMany<T>,
     index: usize,
@@ -124,5 +130,64 @@ impl<'a, T> Iterator for OneOrManyIter<'a, T> {
     fn next(&mut self) -> Option<Self::Item> {
         self.index += 1;
         self.inner.get(self.index - 1)
+    }
+}
+
+// =============================================================================
+// Diff Support
+// =============================================================================
+
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(bound(deserialize = "DiffOneOrMany<T>: Clone + fmt::Debug + PartialEq"))]
+// #[serde(from = "OneOrMany<T>", into = "OneOrMany<T>")]
+#[serde(untagged)]
+pub enum DiffOneOrMany<T>
+where
+    T: Diff + for<'a> Deserialize<'a> + Serialize,
+{
+    One(#[serde(skip_serializing_if = "Option::is_none")] Option<<T as Diff>::Type>),
+    Many(#[serde(skip_serializing_if = "Option::is_none")] Option<<Vec<T> as Diff>::Type>),
+}
+
+impl<T> Diff for OneOrMany<T>
+where
+    T: Clone + fmt::Debug + PartialEq + Diff + for<'a> Deserialize<'a> + Serialize,
+{
+    type Type = DiffOneOrMany<T>;
+
+    fn diff(&self, other: &Self) -> Result<Self::Type, Error> {
+        match (self, other) {
+            (Self::One(lhs), Self::One(rhs)) if lhs == rhs => Ok(DiffOneOrMany::One(None)),
+            (Self::One(lhs), Self::One(rhs)) => lhs.diff(rhs).map(Some).map(DiffOneOrMany::One),
+            (Self::Many(lhs), Self::Many(rhs)) if lhs == rhs => Ok(DiffOneOrMany::Many(None)),
+            (Self::Many(lhs), Self::Many(rhs)) => lhs.diff(rhs).map(Some).map(DiffOneOrMany::Many),
+            (_, diff) => diff.clone().into_diff(),
+        }
+    }
+
+    fn merge(&self, diff: Self::Type) -> Result<Self, Error> {
+        match (self, diff) {
+            (Self::One(lhs), Self::Type::One(Some(ref rhs))) => Ok(Self::One(lhs.merge(rhs.clone())?)),
+            (lhs @ Self::One(_), Self::Type::One(None)) => Ok(lhs.clone()),
+            (Self::Many(lhs), Self::Type::Many(Some(ref rhs))) => Ok(Self::Many(lhs.merge(rhs.clone())?)),
+            (lhs @ Self::Many(_), Self::Type::Many(None)) => Ok(lhs.clone()),
+            (_, diff) => Self::from_diff(diff.clone()),
+        }
+    }
+
+    fn from_diff(diff: Self::Type) -> Result<Self, Error> {
+        match diff {
+            DiffOneOrMany::One(Some(inner)) => T::from_diff(inner).map(Self::One),
+            DiffOneOrMany::One(None) => Ok(Default::default()),
+            DiffOneOrMany::Many(Some(inner)) => <Vec<T>>::from_diff(inner).map(Self::Many),
+            DiffOneOrMany::Many(None) => Ok(Default::default()),
+        }
+    }
+
+    fn into_diff(self) -> Result<Self::Type, Error> {
+        match self {
+            Self::One(inner) => inner.into_diff().map(Some).map(DiffOneOrMany::One),
+            Self::Many(inner) => inner.into_diff().map(Some).map(DiffOneOrMany::Many),
+        }
     }
 }

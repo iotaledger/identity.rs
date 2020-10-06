@@ -1,8 +1,8 @@
-use anyhow::Result as AnyhowResult;
-use thiserror::Error as DeriveError;
+/// The main crate result type derived from the `anyhow::Result` type.
+pub type Result<T, E = Error> = anyhow::Result<T, E>;
 
 /// The main crate Error type; uses `thiserror`.
-#[derive(Debug, DeriveError)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// A format error that takes a String.  Indicates that the Format of the did is not correct.
     #[error("Format Error: {0}")]
@@ -23,6 +23,3 @@ pub enum Error {
     #[error(transparent)]
     CredentialError(#[from] crate::vc::Error),
 }
-
-/// The main crate result type derived from the `anyhow::Result` type.
-pub type Result<T> = AnyhowResult<T, Error>;

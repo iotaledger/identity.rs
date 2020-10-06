@@ -29,6 +29,10 @@ pub struct DID {
 }
 
 impl DID {
+    pub const BASE_CONTEXT: &'static str = "https://www.w3.org/ns/did/v1";
+
+    pub const SECURITY_CONTEXT: &'static str = "https://w3id.org/security/v1";
+
     /// Initializes the DID struct with the filled out fields. Also runs parse_from_str to validate the fields.
     pub fn init(self) -> crate::Result<DID> {
         let did = DID {

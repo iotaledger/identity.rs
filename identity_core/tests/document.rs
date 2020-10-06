@@ -1,13 +1,13 @@
 use identity_core::{
-    did::{Authentication, Context, DIDDocument, KeyData, PublicKey, Service, ServiceEndpoint, DID},
-    utils::IdCompare,
+    common::OneOrMany,
+    did::{Authentication, DIDDocument, KeyData, PublicKey, Service, ServiceEndpoint, DID},
 };
 
 use std::str::FromStr;
 
 use identity_diff::Diff;
 
-const JSON_STR: &str = include_str!("document.json");
+const JSON_STR: &str = include_str!("fixtures/did/document.json");
 
 fn setup_json(key: &str) -> String {
     let json_str = json::parse(JSON_STR).unwrap();
@@ -25,10 +25,7 @@ fn test_parse_document() {
     assert!(doc.is_ok());
 
     let doc = doc.unwrap();
-    let ctx = Context::new(vec![
-        "https://w3id.org/did/v1".into(),
-        "https://w3id.org/security/v1".into(),
-    ]);
+    let ctx = vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()].into();
 
     let did = DID {
         method_name: "iota".into(),
@@ -46,7 +43,7 @@ fn test_parse_document() {
 #[test]
 fn test_doc_creation() {
     let mut did_doc = DIDDocument {
-        context: Context::from("https://w3id.org/did/v1"),
+        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
@@ -94,7 +91,7 @@ fn test_doc_creation() {
     did_doc.update_public_key(public_key.clone());
 
     let mut did_doc_2 = DIDDocument {
-        context: Context::from("https://w3id.org/did/v1"),
+        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
@@ -116,14 +113,14 @@ fn test_doc_creation() {
 fn test_doc_diff() {
     // old doc
     let old = DIDDocument {
-        context: Context::from("https://w3id.org/did/v1"),
+        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
     .init();
     // new doc.
     let mut new = DIDDocument {
-        context: Context::from("https://w3id.org/did/v1"),
+        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
@@ -196,7 +193,7 @@ fn test_diff_merge_from_string() {
 
     // create a doc.
     let mut doc = DIDDocument {
-        context: Context::from("https://w3id.org/did/v1"),
+        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
@@ -283,7 +280,7 @@ fn test_realistic_diff() {
     let json_str = setup_json("diff2");
 
     let mut did_doc = DIDDocument {
-        context: Context::from("https://w3id.org/did/v1"),
+        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
@@ -394,7 +391,7 @@ fn test_id_compare() {
 
     // generate a did doc.
     let mut did_doc = DIDDocument {
-        context: Context::from("https://w3id.org/did/v1"),
+        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     }
@@ -416,11 +413,11 @@ fn test_id_compare() {
     let expected_length = 1;
 
     // failed structure of the agreement field.
-    let failed_auth = vec![IdCompare::new(auth.clone()), IdCompare::new(auth)];
+    let failed_auth = vec![auth.clone(), auth];
 
     assert_eq!(expected_length, did_doc.services.len());
     assert_eq!(expected_length, did_doc.public_keys.len());
     assert_eq!(expected_length, did_doc.agreement.len());
 
-    assert_ne!(failed_auth, did_doc.agreement.iter().cloned().collect::<Vec<_>>());
+    assert_ne!(failed_auth, did_doc.agreement);
 }

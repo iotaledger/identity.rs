@@ -1,7 +1,7 @@
 #[macro_use]
 mod macros;
 
-use identity_core::{object, vc::*};
+use identity_core::{common::Context, object, vc::*};
 
 #[test]
 fn test_builder_valid() {

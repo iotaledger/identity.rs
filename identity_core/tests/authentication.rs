@@ -1,10 +1,8 @@
-use identity_core::did::{Authentication, Context, DIDDocument, KeyData, PublicKey};
-
+use identity_core::did::{Authentication, DIDDocument, KeyData, PublicKey, DID};
+use json::JsonValue;
 use std::str::FromStr;
 
-use json::JsonValue;
-
-const JSON_STR: &str = include_str!("auth.json");
+const JSON_STR: &str = include_str!("fixtures/did/auth.json");
 
 fn setup_json(index: usize) -> String {
     let json_str: JsonValue = json::parse(JSON_STR).unwrap();
@@ -19,10 +17,7 @@ fn test_auth() {
     let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
     let mut doc_2 = DIDDocument {
-        context: Context::new(vec![
-            "https://w3id.org/did/v1".into(),
-            "https://w3id.org/security/v1".into(),
-        ]),
+        context: vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()].into(),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     };
@@ -80,10 +75,7 @@ fn test_assertion() {
     let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
     let mut doc_2 = DIDDocument {
-        context: Context::new(vec![
-            "https://w3id.org/did/v1".into(),
-            "https://w3id.org/security/v1".into(),
-        ]),
+        context: vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()].into(),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     };
@@ -141,10 +133,7 @@ fn test_verification() {
     let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
     let mut doc_2 = DIDDocument {
-        context: Context::new(vec![
-            "https://w3id.org/did/v1".into(),
-            "https://w3id.org/security/v1".into(),
-        ]),
+        context: vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()].into(),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     };
@@ -202,10 +191,7 @@ fn test_delegation() {
     let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
     let mut doc_2 = DIDDocument {
-        context: Context::new(vec![
-            "https://w3id.org/did/v1".into(),
-            "https://w3id.org/security/v1".into(),
-        ]),
+        context: vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()].into(),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     };
@@ -263,10 +249,7 @@ fn test_invocation() {
     let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
     let mut doc_2 = DIDDocument {
-        context: Context::new(vec![
-            "https://w3id.org/did/v1".into(),
-            "https://w3id.org/security/v1".into(),
-        ]),
+        context: vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()].into(),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     };
@@ -324,10 +307,7 @@ fn test_agreement() {
     let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
     let mut doc_2 = DIDDocument {
-        context: Context::new(vec![
-            "https://w3id.org/did/v1".into(),
-            "https://w3id.org/security/v1".into(),
-        ]),
+        context: vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()].into(),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
     };

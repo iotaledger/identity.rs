@@ -1,6 +1,5 @@
 mod did;
 mod document;
-mod helpers;
 mod parser;
 mod types;
 
