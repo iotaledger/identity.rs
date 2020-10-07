@@ -122,7 +122,7 @@ pub fn create_document(auth_key: String) -> crate::Result<DIDDocument> {
     Ok(did_doc)
 }
 
-fn create_method_id(
+pub fn create_method_id(
     key_data: KeyData,
     iota_network: iota_network,
     network_shard: Option<String>,
