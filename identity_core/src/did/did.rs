@@ -223,8 +223,3 @@ impl From<DIDTuple> for Param {
         Param { key, value }
     }
 }
-
-pub trait DIDExt {
-    type Error;
-    fn create_method_id(&self) -> Result<DID, Self::Error>;
-}

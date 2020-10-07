@@ -2,7 +2,7 @@ use crate::tangle_writer::{iota_network, Payload};
 use bs58::{decode, encode};
 use identity_core::{
     common::{one_or_many::OneOrMany, Context},
-    did::{Authentication, DIDDocument, DIDExt, KeyData, PublicKey, DID},
+    did::{Authentication, DIDDocument, KeyData, PublicKey, DID},
 };
 use identity_crypto::{Ed25519, Sign, Verify};
 use iota_conversion::trytes_converter;
@@ -104,12 +104,7 @@ pub fn create_document(auth_key: String) -> crate::Result<DIDDocument> {
     .init();
     let key_data = KeyData::Base58(auth_key);
     //create comnet id
-    let generator = DIDGenerator {
-        key_data: key_data.clone(),
-        iota_network: iota_network::Comnet,
-        network_shard: None,
-    };
-    let did = generator.create_method_id()?;
+    let did = create_method_id(key_data.clone(), iota_network::Comnet, None)?;
 
     let auth_key = PublicKey {
         key_type: "RsaVerificationKey2018".into(),
@@ -127,40 +122,33 @@ pub fn create_document(auth_key: String) -> crate::Result<DIDDocument> {
     Ok(did_doc)
 }
 
-// pub struct DIDGenerator(DID);
-pub struct DIDGenerator {
+fn create_method_id(
     key_data: KeyData,
     iota_network: iota_network,
     network_shard: Option<String>,
-}
-
-impl DIDExt for DIDGenerator {
-    // type Input = DIDGenerator;
-    type Error = crate::Error;
-    fn create_method_id(&self) -> crate::Result<DID> {
-        let pub_key = match &self.key_data {
-            KeyData::Unknown(key) => key,
-            KeyData::Pem(key) => key,
-            KeyData::Jwk(key) => key,
-            KeyData::Hex(key) => key,
-            KeyData::Base64(key) => key,
-            KeyData::Base58(key) => key,
-            KeyData::Multibase(key) => key,
-            KeyData::IotaAddress(key) => key,
-            KeyData::EthereumAddress(key) => key,
-        };
-        let hash = Blake2b256::digest(pub_key.as_bytes());
-        let bs58key = encode(&hash.digest()).into_string();
-        let network_string = match self.iota_network {
-            iota_network::Comnet => "com:".to_string(),
-            iota_network::Devnet => "dev:".to_string(),
-            _ => "".to_string(), // default: "main" also can be written as ""
-        };
-        let shard_string = match &self.network_shard {
-            Some(shard) => format!("{}:", shard),
-            _ => String::new(),
-        };
-        let id_string = format!("did:iota:{}{}{}", network_string, shard_string, bs58key);
-        Ok(DID::parse_from_str(id_string).unwrap())
-    }
+) -> crate::Result<DID> {
+    let pub_key = match &key_data {
+        KeyData::Unknown(key) => key,
+        KeyData::Pem(key) => key,
+        KeyData::Jwk(key) => key,
+        KeyData::Hex(key) => key,
+        KeyData::Base64(key) => key,
+        KeyData::Base58(key) => key,
+        KeyData::Multibase(key) => key,
+        KeyData::IotaAddress(key) => key,
+        KeyData::EthereumAddress(key) => key,
+    };
+    let hash = Blake2b256::digest(pub_key.as_bytes());
+    let bs58key = encode(&hash.digest()).into_string();
+    let network_string = match iota_network {
+        iota_network::Comnet => "com:".to_string(),
+        iota_network::Devnet => "dev:".to_string(),
+        _ => "".to_string(), // default: "main" also can be written as ""
+    };
+    let shard_string = match &network_shard {
+        Some(shard) => format!("{}:", shard),
+        _ => String::new(),
+    };
+    let id_string = format!("did:iota:{}{}{}", network_string, shard_string, bs58key);
+    Ok(DID::parse_from_str(id_string).unwrap())
 }
