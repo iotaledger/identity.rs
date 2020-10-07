@@ -2,10 +2,7 @@ use crate::tangle_writer::{iota_network, Payload};
 use bs58::{decode, encode};
 use identity_core::{
     common::{one_or_many::OneOrMany, Context},
-    did::DIDDocument,
-    did::DIDExt,
-    did::DID,
-    did::{Authentication, KeyData, PublicKey},
+    did::{Authentication, DIDDocument, DIDExt, KeyData, PublicKey, DID},
 };
 use identity_crypto::{Ed25519, Sign, Verify};
 use iota_conversion::trytes_converter;

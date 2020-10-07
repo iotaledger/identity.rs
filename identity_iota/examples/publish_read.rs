@@ -3,7 +3,10 @@
 
 use anyhow::Result;
 
-use identity_core::{common::Timestamp, did::DIDDocument, did::KeyData, did::PublicKey, did::DID};
+use identity_core::{
+    common::Timestamp,
+    did::{DIDDocument, KeyData, PublicKey, DID},
+};
 use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
 use identity_diff::Diff;
 use identity_iota::{

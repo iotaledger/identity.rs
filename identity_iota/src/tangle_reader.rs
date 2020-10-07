@@ -1,7 +1,7 @@
 use crate::{helpers::get_iota_address, tangle_writer::Differences};
 use async_trait::async_trait;
 pub use identity_core::did::IdentityReader;
-use identity_core::{did::DIDDocument, did::DID};
+use identity_core::did::{DIDDocument, DID};
 use iota::{
     crypto::ternary::{
         sponge::{CurlP81, Sponge},
@@ -14,8 +14,7 @@ use iota::{
     },
 };
 use iota_conversion::{trytes_converter, Trinary};
-use std::collections::HashMap;
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 #[derive(Clone)]
 pub struct HashWithDocument {
     pub tailhash: String,

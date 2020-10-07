@@ -1,7 +1,7 @@
 use crate::helpers::get_iota_address;
 use async_trait::async_trait;
 pub use identity_core::did::IdentityWriter;
-use identity_core::{did::DIDDocument, did::DID};
+use identity_core::did::{DIDDocument, DID};
 pub use iota::client::builder::Network as iota_network;
 use iota::{
     client::Transfer,
