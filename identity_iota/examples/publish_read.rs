@@ -12,14 +12,14 @@ use identity_diff::Diff;
 use identity_iota::{
     helpers::*,
     tangle_reader::{get_ordered_diffs, get_ordered_documents, IOTAReader, IdentityReader},
-    tangle_writer::{iota_network, Differences, IOTAWriter, IdentityWriter, Payload},
+    tangle_writer::{Differences, IOTAWriter, IdentityWriter, Network, Payload},
 };
 use iota_conversion::Trinary;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
     let nodes = vec!["http://localhost:14265", "https://nodes.comnet.thetangle.org:443"];
-    let tangle_writer = IOTAWriter::new(nodes.clone(), iota_network::Comnet).await?;
+    let tangle_writer = IOTAWriter::new(nodes.clone(), Network::Comnet).await?;
     // Create keypair
     let keypair = Ed25519::generate(&Ed25519, KeyGenerator::default())?;
     let bs58_auth_key = bs58::encode(hex::decode(keypair.public().to_string())?).into_string();

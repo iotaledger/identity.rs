@@ -1,8 +1,8 @@
-use crate::helpers::get_iota_address;
+use crate::{helpers::get_iota_address, Error};
 use async_trait::async_trait;
 pub use identity_core::did::IdentityWriter;
 use identity_core::did::{DIDDocument, DID};
-pub use iota::client::builder::Network as iota_network;
+pub use iota::client::builder::Network;
 use iota::{
     client::Transfer,
     crypto::ternary::{
@@ -10,11 +10,11 @@ use iota::{
         Hash,
     },
     ternary::{T1B1Buf, TritBuf, TryteBuf},
-    transaction::bundled::{Address, BundledTransaction, BundledTransactionField, Tag},
+    transaction::bundled::{Address, BundledTransaction, BundledTransactionField},
 };
 use iota_conversion::Trinary;
 use serde::{Deserialize, Serialize};
-use std::{fmt, thread, time::Duration};
+use std::{thread, time::Duration};
 
 #[async_trait]
 impl IdentityWriter for IOTAWriter {
@@ -54,7 +54,7 @@ impl IOTAWriter {
     /// Publishes DID document or diff to the Tangle
     pub async fn publish_document(&self, did_document: &Payload) -> crate::Result<Hash> {
         let (did, document_string) = match did_document {
-            Payload::DIDDocument(document) => (document.derive_did().clone(), document.to_string()),
+            Payload::DIDDocument(document) => (document.derive_did().clone(), serde_json::to_string(document)?),
             Payload::DIDDocumentDifferences(differences) => {
                 (differences.did.clone(), serde_json::to_string(&differences)?)
             }
@@ -69,14 +69,7 @@ impl IOTAWriter {
             address: Address::from_inner_unchecked(TryteBuf::try_from_str(&address)?.as_trits().encode()),
             value: 0,
             message: Some(document_string),
-            tag: Some(
-                Tag::try_from_inner(
-                    TryteBuf::try_from_str("DID999999999999999999999999")?
-                        .as_trits()
-                        .encode(),
-                )
-                .expect("Can't convert tag"),
-            ),
+            tag: None,
         }];
 
         // Send the transaction
@@ -149,26 +142,12 @@ pub enum Payload {
     DIDDocumentDifferences(Differences),
 }
 
-impl fmt::Display for Payload {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
+fn check_network(id_segments: Vec<String>, network: &Network) -> crate::Result<()> {
+    match (id_segments[0].as_str(), network) {
+        ("dev", Network::Devnet) => Ok(()),
+        ("com", Network::Comnet) => Ok(()),
+        (_, Network::Devnet) => Err(Error::NetworkNodeError("dev")),
+        (_, Network::Comnet) => Err(Error::NetworkNodeError("com")),
+        (_, Network::Mainnet) => Ok(()),
     }
-}
-
-fn check_network(id_segments: Vec<String>, network: &iota_network) -> crate::Result<()> {
-    match id_segments[0] {
-        _ if id_segments[0] == "dev" => match network {
-            iota_network::Devnet => {}
-            _ => return Err(crate::Error::NetworkNodeError("dev")),
-        },
-        _ if id_segments[0] == "com" => match network {
-            iota_network::Comnet => {}
-            _ => return Err(crate::Error::NetworkNodeError("com")),
-        },
-        _ => match network {
-            iota_network::Mainnet => {}
-            _ => return Err(crate::Error::NetworkNodeError("main")),
-        },
-    };
-    Ok(())
 }

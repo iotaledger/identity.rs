@@ -1,4 +1,4 @@
-use crate::tangle_writer::{iota_network, Payload};
+use crate::tangle_writer::{Network, Payload};
 use bs58::{decode, encode};
 use identity_core::{
     common::{one_or_many::OneOrMany, Context},
@@ -82,7 +82,7 @@ pub fn sign_payload(key: &identity_crypto::KeyPair, payload: Payload) -> crate::
     let signed_payload = match payload {
         Payload::DIDDocument(document) => {
             let mut metadata = HashMap::new();
-            let signature = sign(&key, &document.to_string())?;
+            let signature = sign(&key, &serde_json::to_string(&document)?)?;
             metadata.insert("proof".into(), signature);
             let signed_doc = document.supply_metadata(metadata)?;
             Payload::DIDDocument(signed_doc)
@@ -104,7 +104,7 @@ pub fn create_document(auth_key: String) -> crate::Result<DIDDocument> {
     .init();
     let key_data = KeyData::Base58(auth_key);
     //create comnet id
-    let did = create_method_id(key_data.clone(), iota_network::Comnet, None)?;
+    let did = create_method_id(key_data.clone(), Network::Comnet, None)?;
 
     let auth_key = PublicKey {
         key_type: "RsaVerificationKey2018".into(),
@@ -122,11 +122,7 @@ pub fn create_document(auth_key: String) -> crate::Result<DIDDocument> {
     Ok(did_doc)
 }
 
-pub fn create_method_id(
-    key_data: KeyData,
-    iota_network: iota_network,
-    network_shard: Option<String>,
-) -> crate::Result<DID> {
+pub fn create_method_id(key_data: KeyData, network: Network, network_shard: Option<String>) -> crate::Result<DID> {
     let pub_key = match &key_data {
         KeyData::Unknown(key) => key,
         KeyData::Pem(key) => key,
@@ -140,9 +136,9 @@ pub fn create_method_id(
     };
     let hash = Blake2b256::digest(pub_key.as_bytes());
     let bs58key = encode(&hash.digest()).into_string();
-    let network_string = match iota_network {
-        iota_network::Comnet => "com:".to_string(),
-        iota_network::Devnet => "dev:".to_string(),
+    let network_string = match network {
+        Network::Comnet => "com:".to_string(),
+        Network::Devnet => "dev:".to_string(),
         _ => "".to_string(), // default: "main" also can be written as ""
     };
     let shard_string = match &network_shard {

@@ -1,5 +1,4 @@
 use anyhow::Result as AnyhowResult;
-use std::convert::Infallible;
 use thiserror::Error as thisErr;
 #[derive(Debug, thisErr)]
 pub enum Error {
@@ -33,12 +32,9 @@ pub enum Error {
     /// bs58 Error
     #[error("bs58 decode Error: {0}")]
     Bs58Error(#[from] bs58::decode::Error),
-}
-
-impl From<Infallible> for Error {
-    fn from(_: Infallible) -> Self {
-        unreachable!()
-    }
+    /// Infallible Error
+    #[error("InfallibleError Error: {0}")]
+    InfallibleError(#[from] std::convert::Infallible),
 }
 
 pub type Result<T> = AnyhowResult<T, Error>;
