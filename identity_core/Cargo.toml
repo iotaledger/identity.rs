@@ -30,6 +30,9 @@ identity_diff = { path = "../identity_diff", version = "0.1.0", features = ["dif
 pest = "2.1"
 pest_derive = "2.1"
 
+# trait
+async-trait = "0.1.41"
+
 [dev-dependencies]
 # generative/property testing
 proptest = "0.10"
