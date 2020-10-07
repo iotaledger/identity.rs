@@ -41,4 +41,4 @@ async-trait = "0.1.41"
 
 [dev-dependencies]
 smol-potat = "0.3.3"
-smol = {version = "0.1.18", features = ["tokio02"] }
+smol = { version = "0.1.18", features = ["tokio02"] }
