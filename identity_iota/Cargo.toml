@@ -23,7 +23,7 @@ serde_json = "1.0"
 
 # IOTA
 iota-core = { git = "https://github.com/Thoralf-M/iota.rs", branch = "works" }
-iota-conversion =  "0.5.1"
+iota-conversion =  "0.5"
 
 # identity
 identity_core = { path = "../identity_core" }
