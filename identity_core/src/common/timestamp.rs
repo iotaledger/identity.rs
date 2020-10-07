@@ -1,8 +1,9 @@
+use identity_diff::{self as diff, Diff, string::DiffString};
 use chrono::{DateTime, SecondsFormat, Utc};
 use core::{convert::TryFrom, fmt, ops::Deref};
 use serde::{Deserialize, Serialize};
 
-use crate::error::Error;
+use crate::error::{Error, Result};
 
 type Inner = DateTime<Utc>;
 
@@ -12,6 +13,13 @@ type Inner = DateTime<Utc>;
 pub struct Timestamp(Inner);
 
 impl Timestamp {
+    pub fn from_str(string: &str) -> Result<Self> {
+        match DateTime::parse_from_rfc3339(string) {
+            Ok(datetime) => Ok(Self(datetime.into())),
+            Err(error) => Err(Error::InvalidTimestamp(error)),
+        }
+    }
+
     /// Creates a new `Timestamp` of the current time.
     pub fn now() -> Self {
         Self(Utc::now())
@@ -70,9 +78,36 @@ impl TryFrom<&'_ str> for Timestamp {
     type Error = Error;
 
     fn try_from(string: &'_ str) -> Result<Self, Self::Error> {
-        match DateTime::parse_from_rfc3339(string) {
-            Ok(datetime) => Ok(Self(datetime.into())),
-            Err(error) => Err(Error::InvalidTimestamp(error)),
-        }
+        Self::from_str(string)
+    }
+}
+
+impl Diff for Timestamp {
+    type Type = DiffString;
+
+    fn diff(&self, other: &Self) -> Result<Self::Type, diff::Error> {
+        self.to_rfc3339().diff(&other.to_rfc3339())
+    }
+
+    fn merge(&self, diff: Self::Type) -> Result<Self, diff::Error> {
+        let time: String = self.to_rfc3339().merge(diff)?;
+
+        let time: Self = Self::from_str(time.as_str())
+            .map_err(|error| diff::Error::MergeError(format!("{}", error)))?;
+
+        Ok(time)
+    }
+
+    fn from_diff(diff: Self::Type) -> Result<Self, diff::Error> {
+        let time: String = String::from_diff(diff)?;
+
+        let time: Self =  Self::from_str(time.as_str())
+            .map_err(|error| diff::Error::MergeError(format!("{}", error)))?;
+
+        Ok(time)
+    }
+
+    fn into_diff(self) -> Result<Self::Type, diff::Error> {
+        self.to_rfc3339().into_diff()
     }
 }

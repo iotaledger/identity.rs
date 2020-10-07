@@ -10,6 +10,8 @@ pub enum Error {
     /// Error from when pest can not properly parse a line.
     #[error("Parse Error: {0}")]
     ParseError(#[from] anyhow::Error),
+    #[error("Diff Error: {0}")]
+    DiffError(#[from] identity_diff::Error),
     #[error("Failed to encode JSON: {0}")]
     EncodeJSON(serde_json::Error),
     #[error("Failed to decode JSON: {0}")]
