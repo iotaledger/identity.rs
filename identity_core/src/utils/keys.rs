@@ -44,6 +44,7 @@ pub enum KeyData {
 
 /// Public key struct that contains `id`, `key_type`, `controller`, `encoding_type`, `key_data` and `reference`.
 /// `reference` defines whether or not the PublicKey is a reference.
+/// TODO: Optimize for when id == controller.
 #[derive(Debug, Clone, Default, PartialEq, Diff, Deserialize, Serialize, Eq, Hash, Ord, PartialOrd)]
 #[diff(from_into)]
 pub struct PublicKey {
