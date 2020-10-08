@@ -156,7 +156,7 @@ impl<K: Hash + Eq, V: Clone + Debug> Cache<K, V> {
         self.table
             .insert(key, Value::new(value, lifetime, file_backed))
             .filter(|value| !value.has_expired(now))
-            .map(|value| value.val.clone())
+            .map(|value| value.val)
     }
 
     /// Removes a key from the cache.  Returns the value from the key if the key existed in the cache.
