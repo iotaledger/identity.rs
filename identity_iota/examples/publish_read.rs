@@ -11,8 +11,8 @@ use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
 use identity_diff::Diff;
 use identity_iota::{
     helpers::*,
-    tangle_reader::{get_ordered_diffs, get_ordered_documents, IOTAReader, IdentityReader},
-    tangle_writer::{Differences, IOTAWriter, IdentityWriter, Network, Payload},
+    tangle_reader::{order_diffs, order_documents, IOTAReader, IdentityReader},
+    tangle_writer::{Differences, IOTAWriter, Network, Payload},
 };
 use iota_conversion::Trinary;
 
@@ -48,13 +48,13 @@ async fn main() -> Result<()> {
 
     let received_messages = tangle_reader.fetch(&did).await?;
 
-    let documents = get_ordered_documents(received_messages.clone(), &did)?;
+    let documents = order_documents(received_messages.0.unwrap())?;
     let fetched_document = documents.first().expect("No document found").document.clone();
     println!("Document from the Tangle: {:?}", fetched_document);
     let sig = has_valid_signature(&Payload::DIDDocument(fetched_document.clone()))?;
     println!("Doc valid signature: {}", sig);
 
-    let diffs = get_ordered_diffs(received_messages, &did)?;
+    let diffs = order_diffs(received_messages.1.unwrap())?;
     let fetched_diff = diffs.first().expect("No document found").diff.clone();
     println!("Diff from the Tangle: {:?}", fetched_diff);
     let sig = has_valid_signature(&Payload::DIDDocumentDifferences(fetched_diff))?;

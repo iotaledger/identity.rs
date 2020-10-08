@@ -18,23 +18,17 @@ use std::{thread, time::Duration};
 
 #[async_trait]
 impl IdentityWriter for IOTAWriter {
-    type Payload = Payload;
-    type Hash = Hash;
+    type Diff = Differences;
     type Error = crate::Error;
-    async fn send(&self, did_document: &Payload) -> crate::Result<Hash> {
-        let mut tail_transaction = self.publish_document(did_document).await?;
-        thread::sleep(Duration::from_secs(5));
-        let mut j: usize = 0;
-        while !self.is_confirmed(tail_transaction).await? {
-            j += 1;
-            thread::sleep(Duration::from_secs(5));
-            self.promote(tail_transaction).await?;
-            // Send the document again if the previous transaction didn't get confirmed after 150 seconds
-            if j % 30 == 0 {
-                tail_transaction = self.publish_document(&did_document).await?;
-            }
-        }
-        Ok(tail_transaction)
+    async fn send_doc(&self, did_document: &DIDDocument) -> crate::Result<Vec<u8>> {
+        let tail_transaction = self.send(&Payload::DIDDocument(did_document.clone())).await?;
+        Ok(tail_transaction.to_string().into_bytes())
+    }
+    async fn send_diff(&self, did_document_diff: &Self::Diff) -> crate::Result<Vec<u8>> {
+        let tail_transaction = self
+            .send(&Payload::DIDDocumentDifferences(did_document_diff.clone()))
+            .await?;
+        Ok(tail_transaction.to_string().into_bytes())
     }
 }
 
@@ -50,6 +44,21 @@ impl IOTAWriter {
             .network(network.clone())
             .build()?;
         Ok(Self { iota, network })
+    }
+    pub async fn send(&self, did_document: &Payload) -> crate::Result<Hash> {
+        let mut tail_transaction = self.publish_document(did_document).await?;
+        thread::sleep(Duration::from_secs(5));
+        let mut j: usize = 0;
+        while !self.is_confirmed(tail_transaction).await? {
+            j += 1;
+            thread::sleep(Duration::from_secs(5));
+            self.promote(tail_transaction).await?;
+            // Send the document again if the previous transaction didn't get confirmed after 150 seconds
+            if j % 30 == 0 {
+                tail_transaction = self.publish_document(&did_document).await?;
+            }
+        }
+        Ok(tail_transaction)
     }
     /// Publishes DID document or diff to the Tangle
     pub async fn publish_document(&self, did_document: &Payload) -> crate::Result<Hash> {

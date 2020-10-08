@@ -34,12 +34,11 @@ pub struct IOTAReader {
 
 #[async_trait]
 impl IdentityReader for IOTAReader {
-    type FetchResponse = HashMap<String, String>;
     type HashDocument = HashWithDocument;
     type HashDiff = HashWithDiff;
     type Error = crate::Error;
     // Fetch documents and diffs with a single API call
-    async fn fetch(&self, did: &DID) -> crate::Result<HashMap<String, String>> {
+    async fn fetch(&self, did: &DID) -> crate::Result<(Option<Vec<Self::HashDocument>>, Option<Vec<Self::HashDiff>>)> {
         let address = get_iota_address(&did)?;
 
         let iota = iota::ClientBuilder::new().nodes(&self.nodes)?.build()?;
@@ -58,8 +57,8 @@ impl IdentityReader for IOTAReader {
             return Err(crate::Error::MissingTransactions);
         }
 
-        // Convert messages to ascii
-        let mut messages = HashMap::new();
+        let mut documents = Vec::new();
+        let mut diffs = Vec::new();
         for (txhash, bundle) in bundles.iter() {
             let trytes_coll: Vec<String> = bundle
                 .iter()
@@ -71,31 +70,54 @@ impl IdentityReader for IOTAReader {
                         .expect("Couldn't get Trytes")
                 })
                 .collect();
-
+            // Convert messages to ascii
             if let Ok(message) = trytes_converter::to_string(&trytes_coll.concat()) {
-                messages.insert(txhash.clone(), message);
+                // Remove invalid stuff (wrong signature/did) here or do we want to keep it at this point for debug
+                // purposes?
+                if let Ok(document) = DIDDocument::from_str(&message) {
+                    documents.push(HashWithDocument {
+                        tailhash: txhash.clone(),
+                        document,
+                    });
+                }
+                if let Ok(diff) = serde_json::from_str::<Differences>(&message) {
+                    diffs.push(HashWithDiff {
+                        tailhash: txhash.clone(),
+                        diff,
+                    });
+                }
             }
         }
-
-        Ok(messages)
+        match documents.is_empty() {
+            true => match diffs.is_empty() {
+                true => Ok((None, None)),
+                false => Ok((None, Some(diffs))),
+            },
+            false => match diffs.is_empty() {
+                true => Ok((Some(documents), None)),
+                false => Ok((Some(documents), Some(diffs))),
+            },
+        }
     }
-    // fn fetch_documents(&self, did: &DID) -> Result<Vec<Self::HashDocument>, Self::Error>;
-    // fn fetch_diffs(&self, did: &DID) -> Result<Vec<Self::HashDiff>, Self::Error>;
-    // // Fetch documents from FetchResponse
-    // fn fetch_documents_from(&self, response: Self::FetchResponse) -> Result<Vec<Self::HashDocument>, Self::Error>;
-    // // Fetch diffs from FetchResponse
-    // fn fetch_diffs_from(&self, response: Self::FetchResponse) -> Result<Vec<Self::HashDocument>, Self::Error>;
     /// Returns all documents ordered from an address
-    async fn fetch_documents(&self, did: &DID) -> crate::Result<Vec<HashWithDocument>> {
+    async fn fetch_documents(&self, did: &DID) -> crate::Result<Option<Vec<Self::HashDocument>>> {
         let messages = self.fetch(did).await?;
-        let documents = get_ordered_documents(messages, did)?;
-        Ok(documents)
+        if let Some(documents) = messages.0 {
+            let documents = order_documents(documents)?;
+            Ok(Some(documents))
+        } else {
+            Ok(None)
+        }
     }
     /// Returns all diffs ordered from an address
-    async fn fetch_diffs(&self, did: &DID) -> crate::Result<Vec<HashWithDiff>> {
+    async fn fetch_diffs(&self, did: &DID) -> crate::Result<Option<Vec<Self::HashDiff>>> {
         let messages = self.fetch(did).await?;
-        let diffs = get_ordered_diffs(messages, did)?;
-        Ok(diffs)
+        if let Some(diffs) = messages.1 {
+            let diffs = order_diffs(diffs)?;
+            Ok(Some(diffs))
+        } else {
+            Ok(None)
+        }
     }
 }
 impl IOTAReader {
@@ -171,61 +193,62 @@ fn sort_txs_to_bundles(trytes: Vec<BundledTransaction>) -> crate::Result<HashMap
 }
 
 /// Order documents: first element is latest
-pub fn get_ordered_documents(messages: HashMap<String, String>, did: &DID) -> crate::Result<Vec<HashWithDocument>> {
-    let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
-    let mut documents: Vec<HashWithDocument> = messages
-        .iter()
-        .filter_map(|(tailhash, msg)| {
-            if let Ok(document) = DIDDocument::from_str(&msg) {
-                if document
-                    .derive_did()
-                    .id_segments
-                    .last()
-                    .expect("Failed to get id_segment")
-                    == iota_specific_idstring
-                {
-                    Some(HashWithDocument {
-                        tailhash: tailhash.into(),
-                        document,
-                    })
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        })
-        .collect();
-    if documents.is_empty() {
-        return Ok(documents);
-    }
+pub fn order_documents(mut documents: Vec<HashWithDocument>) -> crate::Result<Vec<HashWithDocument>> {
+    // Maybe validate this inside fetch()
+    // let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
+    // let mut documents: Vec<HashWithDocument> = messages
+    //     .iter()
+    //     .filter_map(|(tailhash, msg)| {
+    //         if let Ok(document) = DIDDocument::from_str(&msg) {
+    //             if document
+    //                 .derive_did()
+    //                 .id_segments
+    //                 .last()
+    //                 .expect("Failed to get id_segment")
+    //                 == iota_specific_idstring
+    //             {
+    //                 Some(HashWithDocument {
+    //                     tailhash: tailhash.into(),
+    //                     document,
+    //                 })
+    //             } else {
+    //                 None
+    //             }
+    //         } else {
+    //             None
+    //         }
+    //     })
+    //     .collect();
+    // if documents.is_empty() {
+    //     return Ok(documents);
+    // }
     documents.sort_by(|a, b| b.document.updated.cmp(&a.document.updated));
     Ok(documents)
 }
 
 /// Order diffs: first element is oldest
-pub fn get_ordered_diffs(messages: HashMap<String, String>, did: &DID) -> crate::Result<Vec<HashWithDiff>> {
-    let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
-    let mut diffs: Vec<HashWithDiff> = messages
-        .iter()
-        .filter_map(|(tailhash, msg)| {
-            if let Ok(diff) = serde_json::from_str::<Differences>(&msg) {
-                if diff.did.id_segments.last().expect("Failed to get id_segment") == iota_specific_idstring {
-                    Some(HashWithDiff {
-                        tailhash: tailhash.into(),
-                        diff,
-                    })
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        })
-        .collect();
-    if diffs.is_empty() {
-        return Ok(diffs);
-    }
+pub fn order_diffs(mut diffs: Vec<HashWithDiff>) -> crate::Result<Vec<HashWithDiff>> {
+    // let iota_specific_idstring = did.id_segments.last().expect("Failed to get id_segment");
+    // let mut diffs: Vec<HashWithDiff> = messages
+    //     .iter()
+    //     .filter_map(|(tailhash, msg)| {
+    //         if let Ok(diff) = serde_json::from_str::<Differences>(&msg) {
+    //             if diff.did.id_segments.last().expect("Failed to get id_segment") == iota_specific_idstring {
+    //                 Some(HashWithDiff {
+    //                     tailhash: tailhash.into(),
+    //                     diff,
+    //                 })
+    //             } else {
+    //                 None
+    //             }
+    //         } else {
+    //             None
+    //         }
+    //     })
+    //     .collect();
+    // if diffs.is_empty() {
+    //     return Ok(diffs);
+    // }
     diffs.sort_by(|a, b| a.diff.time.cmp(&b.diff.time));
     Ok(diffs)
 }
