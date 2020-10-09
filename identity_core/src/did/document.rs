@@ -17,9 +17,9 @@ pub struct DIDDocument {
     pub id: DID,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[diff(should_ignore)]
-    pub created: Option<String>,
+    pub created: Option<Timestamp>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub updated: Option<String>,
+    pub updated: Option<Timestamp>,
     #[serde(rename = "publicKey", skip_serializing_if = "Vec::is_empty", default)]
     pub public_keys: Vec<PublicKey>,
     #[serde(rename = "authentication", skip_serializing_if = "Vec::is_empty", default)]
@@ -152,7 +152,7 @@ impl DIDDocument {
 
     /// Updates the `updated` time for the `DIDDocument`.
     pub fn update_time(&mut self) {
-        self.updated = Some(Timestamp::now().to_string());
+        self.updated = Some(Timestamp::now());
     }
 
     /// Inserts `metadata` into the `DIDDocument` body.  The metadata must be a HashMap<String, String> where the keys
@@ -165,15 +165,15 @@ impl DIDDocument {
     /// these timestamps.
     pub fn init_timestamps(self) -> crate::Result<Self> {
         Ok(DIDDocument {
-            created: Some(Timestamp::now().to_string()),
-            updated: Some(Timestamp::now().to_string()),
+            created: Some(Timestamp::now()),
+            updated: Some(Timestamp::now()),
             ..self
         }
         .init())
     }
 
-    pub fn get_diff_from_str(json: String) -> crate::Result<DiffDIDDocument> {
-        serde_json::from_str(&json).map_err(crate::Error::DecodeJSON)
+    pub fn get_diff_from_str(json: impl AsRef<str>) -> crate::Result<DiffDIDDocument> {
+        serde_json::from_str(json.as_ref()).map_err(crate::Error::DecodeJSON)
     }
 }
 

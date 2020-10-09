@@ -49,7 +49,7 @@ fn test_doc_creation() {
     }
     .init();
     let endpoint = ServiceEndpoint {
-        context: vec!["https://edv.example.com/".into()].into(),
+        context: "https://edv.example.com/".into(),
         ..Default::default()
     }
     .init();
@@ -62,7 +62,7 @@ fn test_doc_creation() {
     .init();
 
     let endpoint2 = ServiceEndpoint {
-        context: vec!["https://edv.example.com/".into()].into(),
+        context: "https://edv.example.com/".into(),
         ..Default::default()
     }
     .init();
@@ -127,7 +127,7 @@ fn test_doc_diff() {
     .init();
 
     let endpoint = ServiceEndpoint {
-        context: vec!["https://edv.example.com/".into()].into(),
+        context: "https://edv.example.com/".into(),
         ..Default::default()
     }
     .init();
@@ -200,7 +200,7 @@ fn test_diff_merge_from_string() {
     .init();
     // create an endpoint.
     let endpoint = ServiceEndpoint {
-        context: vec!["https://edv.example.com/".into()].into(),
+        context: "https://edv.example.com/".into(),
         ..Default::default()
     }
     .init();
@@ -286,7 +286,7 @@ fn test_realistic_diff() {
     }
     .init();
     let endpoint = ServiceEndpoint {
-        context: vec!["https://edv.example.com/".into()].into(),
+        context: "https://edv.example.com/".into(),
         ..Default::default()
     }
     .init();
@@ -299,7 +299,7 @@ fn test_realistic_diff() {
     .init();
 
     let endpoint2 = ServiceEndpoint {
-        context: vec!["https://edv.example.com/".into()].into(),
+        context: "https://edv.example.com/".into(),
         ..Default::default()
     }
     .init();
@@ -363,7 +363,7 @@ fn test_id_compare() {
 
     // service endpoint.
     let endpoint = ServiceEndpoint {
-        context: vec!["https://edv.example.com/".into()].into(),
+        context: "https://edv.example.com/".into(),
         ..Default::default()
     }
     .init();

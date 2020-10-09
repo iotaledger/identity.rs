@@ -3,7 +3,7 @@ use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    common::{Object, Uri},
+    common::{Object, Url},
     error::Error,
 };
 
@@ -13,7 +13,7 @@ use crate::{
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize, Builder)]
 pub struct CredentialSchema {
     #[builder(setter(into))]
-    pub id: Uri,
+    pub id: Url,
     #[serde(rename = "type")]
     #[builder(setter(into))]
     pub type_: String,
@@ -47,6 +47,6 @@ mod tests {
     #[test]
     #[should_panic = "`type_` must be initialized"]
     fn test_builder_missing_type() {
-        CredentialSchemaBuilder::default().id("my-id").build().unwrap();
+        CredentialSchemaBuilder::default().id("did:test").build().unwrap();
     }
 }

@@ -3,7 +3,7 @@ use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    common::{Object, OneOrMany, Uri},
+    common::{Object, OneOrMany, Url},
     error::Error,
 };
 
@@ -13,7 +13,7 @@ use crate::{
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize, Builder)]
 pub struct CredentialStatus {
     #[builder(setter(into))]
-    pub id: Uri,
+    pub id: Url,
     #[serde(rename = "type")]
     #[builder(setter(into))]
     pub types: OneOrMany<String>,
@@ -50,6 +50,6 @@ mod tests {
     #[test]
     #[should_panic = "`types` must be initialized"]
     fn test_builder_missing_types() {
-        CredentialStatusBuilder::default().id("my-id").build().unwrap();
+        CredentialStatusBuilder::default().id("did:test").build().unwrap();
     }
 }

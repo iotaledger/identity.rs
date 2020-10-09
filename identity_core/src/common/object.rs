@@ -22,6 +22,10 @@ type Inner = HashMap<String, Value>;
 pub struct Object(Inner);
 
 impl Object {
+    pub fn new() -> Self {
+        Self(HashMap::new())
+    }
+
     pub fn into_inner(self) -> Inner {
         self.0
     }
@@ -123,11 +127,17 @@ impl From<Object> for Value {
     }
 }
 
-impl FromIterator<(String, Value)> for Object {
-    fn from_iter<T>(iter: T) -> Self
+impl<T> FromIterator<(String, T)> for Object
+where
+    T: Into<Value>,
+{
+    fn from_iter<I>(iter: I) -> Self
     where
-        T: IntoIterator<Item = (String, Value)>,
+        I: IntoIterator<Item = (String, T)>,
     {
-        Self(Inner::from_iter(iter))
+        iter.into_iter()
+            .map(|(key, value)| (key, value.into()))
+            .collect::<Inner>()
+            .into()
     }
 }

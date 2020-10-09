@@ -42,6 +42,6 @@ mod tests {
     #[test]
     #[should_panic = "`types` must be initialized"]
     fn test_builder_missing_types() {
-        EvidenceBuilder::default().id("my-id").build().unwrap();
+        EvidenceBuilder::default().id("did:test").build().unwrap();
     }
 }

@@ -7,7 +7,7 @@ extern crate identity_core;
 use identity_core::{common::Context, vc::*};
 
 #[test]
-fn test_builder_valid() {
+fn test_presentation_builder_valid() {
     let issuance = timestamp!("2010-01-01T00:00:00Z");
 
     let subject = CredentialSubjectBuilder::default()
@@ -30,7 +30,7 @@ fn test_builder_valid() {
     let verifiable = VerifiableCredential::new(credential, object!());
 
     let refresh_service = RefreshServiceBuilder::default()
-        .id("refresh-service")
+        .id("did:refresh-service")
         .types("Refresh2020".to_string())
         .build()
         .unwrap();
@@ -60,8 +60,8 @@ fn test_builder_valid() {
         .unwrap();
 
     assert_eq!(presentation.context.len(), 2);
-    assert_matches!(presentation.context.get(0).unwrap(), Context::Uri(ref uri) if uri == Presentation::BASE_CONTEXT);
-    assert_matches!(presentation.context.get(1).unwrap(), Context::Uri(ref uri) if uri == "https://www.w3.org/2018/credentials/examples/v1");
+    assert_matches!(presentation.context.get(0).unwrap(), Context::Url(ref url) if url == Presentation::BASE_CONTEXT);
+    assert_matches!(presentation.context.get(1).unwrap(), Context::Url(ref url) if url == "https://www.w3.org/2018/credentials/examples/v1");
 
     assert_eq!(presentation.id, Some("did:example:id:123".into()));
 
@@ -77,7 +77,7 @@ fn test_builder_valid() {
 }
 
 #[test]
-#[should_panic = "Invalid URI for Presentation id"]
+#[should_panic = "InvalidUrl"]
 fn test_builder_invalid_id_fmt() {
     PresentationBuilder::new()
         .id("foo")
@@ -86,7 +86,7 @@ fn test_builder_invalid_id_fmt() {
 }
 
 #[test]
-#[should_panic = "Invalid URI for Presentation holder"]
+#[should_panic = "InvalidUrl"]
 fn test_builder_invalid_holder_fmt() {
     PresentationBuilder::new()
         .id("did:iota:123")

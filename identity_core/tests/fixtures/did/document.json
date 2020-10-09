@@ -5,7 +5,7 @@
             "https://w3id.org/security/v1"
         ],
         "id": "did:iota:123456789abcdefghi",
-        "updated": "2020-08-31T05:46:33.559590+00:00Z",
+        "updated": "2020-08-31T05:46:33.55Z",
         "publicKey": [
             {
                 "id": "did:iota:123456789abcdefghi#keys-1",
@@ -33,7 +33,7 @@
             "https://w3id.org/security/v1"
         ],
         "id": "did:iota:123456789abcdefghi",
-        "updated": "2020-08-31T05:46:33.559590+00:00Z",
+        "updated": "2020-08-31T05:46:33.55Z",
         "publicKey": [
             {
                 "id": "did:iota:123456789abcdefghi#keys-1",
@@ -59,7 +59,7 @@
     },
     "diff": {
         "context": {
-            "Uri": "https://www.w3.org/ns/did/v1"
+            "Url": "https://www.w3.org/ns/did/v1"
         },
         "id": "did:iota:123456789abcdefghi",
         "public_keys": [
