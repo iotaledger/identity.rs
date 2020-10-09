@@ -56,6 +56,17 @@ impl DID {
         DID::parse_from_str(did)
     }
 
+    // TODO: Fix this
+    pub fn join_relative(base: &Self, relative: &Self) -> crate::Result<Self> {
+        Ok(Self {
+            method_name: base.method_name.clone(),
+            id_segments: base.id_segments.clone(),
+            fragment: relative.fragment.clone(),
+            path_segments: relative.path_segments.clone(),
+            query: relative.query.clone(),
+        })
+    }
+
     pub fn parse_from_str<T>(input: T) -> crate::Result<Self>
     where
         T: ToString,

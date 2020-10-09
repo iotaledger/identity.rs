@@ -10,34 +10,22 @@ license = "Apache-2.0"
 keywords = ["iota", "tangle", "identity"]
 homepage = "https://www.iota.org"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-# error handling
-anyhow = "1.0"
-thiserror = "1.0"
-
-# serialization
-serde = "1.0"
-serde_json = "1.0"
-
-# IOTA
+anyhow = { version = "1.0", default-features = false, features = ["std"] }
+async-trait = { version = "0.1", default-features = false }
+blake2 = { version = "0.9", default-features = false }
+bs58 = { version = "0.3", default-features = false, features = ["alloc"] }
+iota-constants = { version = "0.2", default-features = false }
+iota-conversion = { version = "0.5", default-features = false }
+# iota-core = { git = "https://github.com/iotaledger/iota.rs", branch = "dev" }
 iota-core = { git = "https://github.com/Thoralf-M/iota.rs", branch = "works" }
-iota-conversion =  "0.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+thiserror = { version = "1.0", default-features = false }
 
-# identity
 identity_core = { path = "../identity_core" }
-identity_crypto = {git = "https://github.com/iotaledger/identity.rs", branch = "feat/identity-signature-suites"}
-libjose = {git = "https://github.com/iotaledger/identity.rs", branch = "feat/siop-did"}
-identity_diff = { path = "../identity_diff" }
-
-# hash
-multihash = "0.11.4"
-bs58 = "0.3.1"
-hex = "0.4"
-
-async-trait = "0.1.41"
+identity_crypto = { git = "https://github.com/iotaledger/identity.rs", branch = "feat/identity-signature-suites" }
 
 [dev-dependencies]
-smol-potat = "0.3.3"
+smol-potat = { version = "0.3.3" }
 smol = { version = "0.1.18", features = ["tokio02"] }
