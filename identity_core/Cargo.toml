@@ -16,6 +16,8 @@ homepage = "https://www.iota.org"
 # error handling
 thiserror = "1.0"
 anyhow = "1.0"
+
+async-trait = { version = "0.1", default-features = false }
 chrono = { version = "0.4", features = ["serde"] }
 derive_builder = { version = "0.9", default-features = false }
 percent-encoding = { version = "2.1", default-features = false }
@@ -31,9 +33,6 @@ identity_diff = { path = "../identity_diff", version = "0.1.0", features = ["dif
 # parser crates
 pest = "2.1"
 pest_derive = "2.1"
-
-# trait
-async-trait = "0.1"
 
 [dev-dependencies]
 # generative/property testing

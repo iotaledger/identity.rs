@@ -9,7 +9,7 @@ pub enum Error {
     FormatError(String),
     /// Error from when pest can not properly parse a line.
     #[error("Parse Error: {0}")]
-    ParseError(#[from] anyhow::Error),
+    ParseError(anyhow::Error),
     #[error("Diff Error: {0}")]
     DiffError(#[from] identity_diff::Error),
     #[error("Failed to encode JSON: {0}")]
@@ -26,4 +26,14 @@ pub enum Error {
     InvalidCredential(String),
     #[error("Invalid Presentation: {0}")]
     InvalidPresentation(String),
+    #[error("Invalid Url: {0}")]
+    InvalidUrl(#[from] url::ParseError),
+    #[error("Invalid UTF-8: {0}")]
+    InvalidUtf8(#[from] core::str::Utf8Error),
+    #[error("DID Resolution Error: {0}")]
+    ResolutionError(anyhow::Error),
+    #[error("Identity Reader Error: {0}")]
+    IdentityReaderError(anyhow::Error),
+    #[error("Identity Writer Error: {0}")]
+    IdentityWriterError(anyhow::Error),
 }

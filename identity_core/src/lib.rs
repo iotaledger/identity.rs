@@ -1,8 +1,11 @@
 #[macro_use]
 pub mod common;
 
+pub mod deref;
 pub mod did;
 pub mod error;
+pub mod io;
+pub mod resolver;
 pub mod utils;
 pub mod vc;
 
