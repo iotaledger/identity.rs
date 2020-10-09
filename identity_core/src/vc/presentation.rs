@@ -2,7 +2,7 @@ use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    common::{Context, Object, OneOrMany, Uri},
+    common::{Context, Object, OneOrMany, Url},
     error::{Error, Result},
     vc::{
         validate_presentation_structure, Credential, RefreshService, TermsOfUse, VerifiableCredential,
@@ -25,7 +25,7 @@ pub struct Presentation {
     /// A unique `URI` referencing the subject of the presentation.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(into, strip_option))]
-    pub id: Option<Uri>,
+    pub id: Option<Url>,
     /// One or more URIs defining the type of presentation.
     ///
     /// NOTE: The VC spec defines this as a set of URIs BUT they are commonly
@@ -42,7 +42,7 @@ pub struct Presentation {
     /// The entity that generated the presentation.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(into, strip_option))]
-    pub holder: Option<Uri>,
+    pub holder: Option<Url>,
     /// TODO
     #[serde(rename = "refreshService", skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(into, strip_option))]

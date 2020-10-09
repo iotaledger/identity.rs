@@ -33,6 +33,16 @@ impl DID {
 
     pub const SECURITY_CONTEXT: &'static str = "https://w3id.org/security/v1";
 
+    pub const PARAMS: [&'static str; 7] = [
+        "hl",
+        "service",
+        "version-id",
+        "version-time",
+        "relative-ref",
+        "initial-state",
+        "transform-keys",
+    ];
+
     /// Initializes the DID struct with the filled out fields. Also runs parse_from_str to validate the fields.
     pub fn init(self) -> crate::Result<DID> {
         let did = DID {
@@ -204,6 +214,12 @@ impl Serialize for DID {
 pub struct Param {
     pub key: String,
     pub value: Option<String>,
+}
+
+impl Param {
+    pub fn pair(&self) -> (&str, &str) {
+        (self.key.as_str(), self.value.as_deref().unwrap_or_default())
+    }
 }
 
 /// Display trait for the param struct.

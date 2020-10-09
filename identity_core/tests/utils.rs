@@ -65,7 +65,7 @@ fn test_service_with_no_endpoint_body() {
     let raw_str = setup_json("service");
 
     let endpoint = ServiceEndpoint {
-        context: vec!["https://edv.example.com/".into()].into(),
+        context: "https://edv.example.com/".into(),
         ..Default::default()
     }
     .init();
@@ -91,7 +91,7 @@ fn test_service_with_body() {
     let raw_str = setup_json("endpoint");
 
     let endpoint = ServiceEndpoint {
-        context: vec!["https://schema.identity.foundation/hub".into()].into(),
+        context: "https://schema.identity.foundation/hub".into(),
         endpoint_type: Some("UserHubEndpoint".into()),
         instances: Some(vec!["did:example:456".into(), "did:example:789".into()]),
     }

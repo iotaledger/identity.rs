@@ -3,7 +3,7 @@ use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    common::{Object, OneOrMany, Uri},
+    common::{Object, OneOrMany, Url},
     error::Error,
 };
 
@@ -15,7 +15,7 @@ use crate::{
 pub struct TermsOfUse {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(into, strip_option))]
-    pub id: Option<Uri>,
+    pub id: Option<Url>,
     #[serde(rename = "type")]
     #[builder(setter(into))]
     pub types: OneOrMany<String>,
@@ -43,6 +43,6 @@ mod tests {
     #[test]
     #[should_panic = "`types` must be initialized"]
     fn test_builder_missing_types() {
-        TermsOfUseBuilder::default().id("my-id").build().unwrap();
+        TermsOfUseBuilder::default().id("did:test").build().unwrap();
     }
 }

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::common::{Object, Uri};
+use crate::common::{Object, Url};
 
 /// An identifier representing the issuer of a `Credential`.
 ///
@@ -8,18 +8,18 @@ use crate::common::{Object, Uri};
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Issuer {
-    Uri(Uri),
+    Url(Url),
     Obj {
-        id: Uri,
+        id: Url,
         #[serde(flatten)]
         object: Object,
     },
 }
 
 impl Issuer {
-    pub fn uri(&self) -> &Uri {
+    pub fn url(&self) -> &Url {
         match self {
-            Self::Uri(uri) => uri,
+            Self::Url(url) => url,
             Self::Obj { id, .. } => id,
         }
     }
@@ -27,9 +27,9 @@ impl Issuer {
 
 impl<T> From<T> for Issuer
 where
-    T: Into<Uri>,
+    T: Into<Url>,
 {
     fn from(other: T) -> Self {
-        Self::Uri(other.into())
+        Self::Url(other.into())
     }
 }

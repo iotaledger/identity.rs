@@ -1,6 +1,6 @@
-use identity_diff::{self as diff, Diff, string::DiffString};
 use chrono::{DateTime, SecondsFormat, Utc};
-use core::{convert::TryFrom, fmt, ops::Deref};
+use core::{convert::TryFrom, fmt, ops::Deref, str::FromStr};
+use identity_diff::{self as diff, string::DiffString, Diff};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
@@ -13,7 +13,7 @@ type Inner = DateTime<Utc>;
 pub struct Timestamp(Inner);
 
 impl Timestamp {
-    pub fn from_str(string: &str) -> Result<Self> {
+    pub fn parse(string: &str) -> Result<Self> {
         match DateTime::parse_from_rfc3339(string) {
             Ok(datetime) => Ok(Self(datetime.into())),
             Err(error) => Err(Error::InvalidTimestamp(error)),
@@ -22,7 +22,7 @@ impl Timestamp {
 
     /// Creates a new `Timestamp` of the current time.
     pub fn now() -> Self {
-        Self(Utc::now())
+        Self::parse(&Self::to_rfc3339(&Self(Utc::now()))).unwrap()
     }
 
     /// Consumes the `Timestamp` and returns the inner `DateTime`.
@@ -44,13 +44,13 @@ impl Default for Timestamp {
 
 impl fmt::Debug for Timestamp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self.to_rfc3339())
+        write!(f, "{:?}", self.0)
     }
 }
 
 impl fmt::Display for Timestamp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_rfc3339())
+        write!(f, "{:?}", self.0)
     }
 }
 
@@ -78,7 +78,15 @@ impl TryFrom<&'_ str> for Timestamp {
     type Error = Error;
 
     fn try_from(string: &'_ str) -> Result<Self, Self::Error> {
-        Self::from_str(string)
+        Self::parse(string)
+    }
+}
+
+impl FromStr for Timestamp {
+    type Err = Error;
+
+    fn from_str(string: &str) -> Result<Self, Self::Err> {
+        Self::parse(string)
     }
 }
 
@@ -90,21 +98,17 @@ impl Diff for Timestamp {
     }
 
     fn merge(&self, diff: Self::Type) -> Result<Self, diff::Error> {
-        let time: String = self.to_rfc3339().merge(diff)?;
+        let this: String = self.to_rfc3339().merge(diff)?;
 
-        let time: Self = Self::from_str(time.as_str())
-            .map_err(|error| diff::Error::MergeError(format!("{}", error)))?;
-
-        Ok(time)
+        Self::from_str(this.as_str())
+            .map_err(|error| diff::Error::MergeError(format!("{}", error)))
     }
 
     fn from_diff(diff: Self::Type) -> Result<Self, diff::Error> {
-        let time: String = String::from_diff(diff)?;
+        let this: String = String::from_diff(diff)?;
 
-        let time: Self =  Self::from_str(time.as_str())
-            .map_err(|error| diff::Error::MergeError(format!("{}", error)))?;
-
-        Ok(time)
+        Self::from_str(this.as_str())
+            .map_err(|error| diff::Error::MergeError(format!("{}", error)))
     }
 
     fn into_diff(self) -> Result<Self::Type, diff::Error> {

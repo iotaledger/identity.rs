@@ -3,7 +3,7 @@ use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    common::{Object, Uri},
+    common::{Object, Url},
     error::Error,
 };
 
@@ -14,7 +14,7 @@ use crate::{
 pub struct CredentialSubject {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(into, strip_option))]
-    pub id: Option<Uri>,
+    pub id: Option<Url>,
     #[serde(flatten)]
     #[builder(default, setter(into))]
     pub properties: Object,

@@ -6,4 +6,7 @@ pub mod error;
 pub mod utils;
 pub mod vc;
 
+// Re-export the `identity_diff` crate as `diff`
+pub use identity_diff as diff;
+
 pub use error::{Error, Result};

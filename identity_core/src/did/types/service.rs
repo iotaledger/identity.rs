@@ -9,11 +9,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::{
-    common::{Context, OneOrMany},
-    did::DID,
-    utils::HasId,
-};
+use crate::{common::Url, did::DID, utils::HasId};
 
 /// Describes a `Service` in a `DIDDocument` type. Contains an `id`, `service_type` and `endpoint`.  The `endpoint` can
 /// be represented as a `String` or a `ServiceEndpoint` in json.
@@ -34,7 +30,7 @@ pub struct Service {
 #[derive(Debug, PartialEq, Clone, Diff, Default)]
 #[diff(from_into)]
 pub struct ServiceEndpoint {
-    pub context: OneOrMany<Context>,
+    pub context: Url,
     pub endpoint_type: Option<String>,
     pub instances: Option<Vec<String>>,
 }
@@ -148,7 +144,7 @@ impl<'de> Visitor<'de> for ServiceEndpointVisitor {
         E: de::Error,
     {
         Ok(ServiceEndpoint {
-            context: vec![value.into()].into(),
+            context: Url::parse(value).map_err(de::Error::custom)?,
             ..Default::default()
         })
     }
@@ -188,7 +184,7 @@ impl<'de> Visitor<'de> for ServiceEndpointVisitor {
         let context = context.ok_or_else(|| de::Error::missing_field("@context"))?;
 
         Ok(ServiceEndpoint {
-            context: vec![context.into()].into(),
+            context: Url::parse(context).map_err(de::Error::custom)?,
             endpoint_type,
             instances,
         })

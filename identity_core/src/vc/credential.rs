@@ -2,7 +2,7 @@ use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    common::{Context, Object, OneOrMany, Timestamp, Uri, Value},
+    common::{Context, Object, OneOrMany, Timestamp, Url, Value},
     error::{Error, Result},
     vc::{
         validate_credential_structure, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer,
@@ -25,7 +25,7 @@ pub struct Credential {
     /// A unique `URI` referencing the subject of the credential.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default, setter(into, strip_option))]
-    pub id: Option<Uri>,
+    pub id: Option<Url>,
     /// One or more URIs defining the type of credential.
     ///
     /// NOTE: The VC spec defines this as a set of URIs BUT they are commonly
