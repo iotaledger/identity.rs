@@ -77,7 +77,7 @@ fn test_builder_valid() {
 }
 
 #[test]
-#[should_panic = "Invalid URI for Presentation id"]
+#[should_panic = "Invalid ID"]
 fn test_builder_invalid_id_fmt() {
     PresentationBuilder::new()
         .id("foo")
@@ -86,7 +86,7 @@ fn test_builder_invalid_id_fmt() {
 }
 
 #[test]
-#[should_panic = "Invalid URI for Presentation holder"]
+#[should_panic = "Invalid Holder"]
 fn test_builder_invalid_holder_fmt() {
     PresentationBuilder::new()
         .id("did:iota:123")
