@@ -72,7 +72,7 @@ impl TangleWriter {
         })
     }
 
-    async fn write_json<T>(&self, did: &DID, data: &T) -> Result<Hash>
+    pub async fn write_json<T>(&self, did: &DID, data: &T) -> Result<Hash>
     where
         T: Serialize,
     {
@@ -100,7 +100,7 @@ impl TangleWriter {
         Ok(txn)
     }
 
-    async fn publish_json<T>(&self, did: &DID, data: &T) -> Result<Hash>
+    pub async fn publish_json<T>(&self, did: &DID, data: &T) -> Result<Hash>
     where
         T: Serialize,
     {

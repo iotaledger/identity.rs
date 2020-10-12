@@ -106,7 +106,7 @@ impl TangleReader {
         Ok((latest, metadata))
     }
 
-    fn extract_documents<'a>(did: &DID, content: &'a Content) -> Result<Vec<TangleDoc>> {
+    pub fn extract_documents<'a>(did: &DID, content: &'a Content) -> Result<Vec<TangleDoc>> {
         let mid: &str = method_id(did)?;
 
         let mut documents: Vec<TangleDoc> = content
@@ -128,7 +128,7 @@ impl TangleReader {
         Ok(documents)
     }
 
-    fn extract_diffs<'a>(did: &DID, content: &'a Content) -> Result<Vec<TangleDiff>> {
+    pub fn extract_diffs<'a>(did: &DID, content: &'a Content) -> Result<Vec<TangleDiff>> {
         let mid: &str = method_id(did)?;
 
         let mut diffs: Vec<TangleDiff> = content

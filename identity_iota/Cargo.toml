@@ -26,6 +26,9 @@ thiserror = { version = "1.0", default-features = false }
 identity_core = { path = "../identity_core" }
 identity_crypto = { git = "https://github.com/iotaledger/identity.rs", branch = "feat/identity-signature-suites" }
 
+multihash = "0.11"
 [dev-dependencies]
 smol-potat = { version = "0.3.3" }
 smol = { version = "0.1.18", features = ["tokio02"] }
+hex = "0.4.2"
+identity_diff = { path = "../identity_diff" }

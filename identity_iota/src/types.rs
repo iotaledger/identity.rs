@@ -14,6 +14,7 @@ pub struct DIDDiff {
     pub did: DID,
     pub diff: String,
     pub time: Timestamp,
+    pub signature: String,
 }
 
 // =============================================================================
