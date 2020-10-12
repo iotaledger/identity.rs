@@ -22,11 +22,17 @@ where
         Self { resolver }
     }
 
-    pub async fn deref_str(&self, did: &str, input: DereferenceInput) -> Result<Dereference> where R: Sync {
+    pub async fn deref_str(&self, did: &str, input: DereferenceInput) -> Result<Dereference>
+    where
+        R: Sync,
+    {
         self.deref_did(&DID::parse_from_str(did)?, input).await
     }
 
-    pub async fn deref_did(&self, did: &DID, input: DereferenceInput) -> Result<Dereference> where R: Sync {
+    pub async fn deref_did(&self, did: &DID, input: DereferenceInput) -> Result<Dereference>
+    where
+        R: Sync,
+    {
         let mut context: DereferenceContext = DereferenceContext::new();
 
         self.deref_did_(did, input, &mut context).await?;
@@ -34,7 +40,10 @@ where
         Ok(context.finish())
     }
 
-    async fn deref_did_(&self, did: &DID, input: DereferenceInput, context: &mut DereferenceContext) -> Result<()> where R: Sync {
+    async fn deref_did_(&self, did: &DID, input: DereferenceInput, context: &mut DereferenceContext) -> Result<()>
+    where
+        R: Sync,
+    {
         let mut resolution: Resolution = self.resolver.resolve_did(did, input.resolution).await?;
 
         if resolution.metadata.error.is_some() {

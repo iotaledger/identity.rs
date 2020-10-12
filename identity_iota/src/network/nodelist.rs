@@ -27,6 +27,13 @@ impl NodeList {
         }
     }
 
+    pub fn with_network_and_nodes(network: Network, nodes: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        Self {
+            network,
+            nodes: Vec::from_iter(nodes.into_iter().map(Into::into)),
+        }
+    }
+
     pub fn set_network(&mut self, network: Network) {
         self.network = network;
     }
