@@ -2,16 +2,15 @@
 //! cargo run --example publish_read
 
 use anyhow::Result;
-use identity_core::io::IdentityWriter;
-
 use hex;
-use identity_core::{
-    common::Timestamp,
-    did::{DIDDocument, KeyData, PublicKey, DID},
-};
 use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
-use identity_diff::Diff;
 use identity_iota::{
+    core::{
+        common::Timestamp,
+        did::{DIDDocument, KeyData, PublicKey, DID},
+        diff::Diff,
+        io::IdentityWriter,
+    },
     helpers::{
         create_document, diff_has_valid_signature, doc_has_valid_signature, get_auth_key, sign_diff, sign_document,
     },
@@ -24,8 +23,7 @@ use iota_conversion::Trinary;
 #[smol_potat::main]
 async fn main() -> Result<()> {
     let nodes = vec!["http://localhost:14265", "https://nodes.comnet.thetangle.org:443"];
-    let mut nodelist = NodeList::with_nodes(nodes);
-    nodelist.set_network(Network::Comnet);
+    let nodelist = NodeList::with_network_and_nodes(Network::Comnet, nodes);
 
     let tangle_writer = TangleWriter::new(&nodelist)?;
     // Create keypair
