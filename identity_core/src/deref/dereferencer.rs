@@ -1,24 +1,32 @@
-use async_trait::async_trait;
+use anyhow::anyhow;
 use percent_encoding::percent_decode_str;
 
 use crate::{
     common::Url,
     deref::{Dereference, DereferenceContext, DereferenceInput, PrimaryResource, SecondaryResource},
     did::{DIDDocument, Param, DID},
-    error::Result,
-    resolver::{ErrorKind, Resolution, ResolutionInput},
+    error::{Error, Result},
+    resolver::{ErrorKind, IdentityResolver, Resolution},
     utils::HasId as _,
 };
 
-#[async_trait]
-pub trait IdentityDeref {
-    async fn resolve(&self, did: &DID, input: ResolutionInput) -> Result<Resolution>;
+pub struct Dereferencer<R> {
+    resolver: R,
+}
 
-    async fn deref_str(&self, did: &str, input: DereferenceInput) -> Result<Dereference> {
+impl<R> Dereferencer<R>
+where
+    R: IdentityResolver,
+{
+    pub fn new(resolver: R) -> Self {
+        Self { resolver }
+    }
+
+    pub async fn deref_str(&self, did: &str, input: DereferenceInput) -> Result<Dereference> where R: Sync {
         self.deref_did(&DID::parse_from_str(did)?, input).await
     }
 
-    async fn deref_did(&self, did: &DID, input: DereferenceInput) -> Result<Dereference> {
+    pub async fn deref_did(&self, did: &DID, input: DereferenceInput) -> Result<Dereference> where R: Sync {
         let mut context: DereferenceContext = DereferenceContext::new();
 
         self.deref_did_(did, input, &mut context).await?;
@@ -26,8 +34,8 @@ pub trait IdentityDeref {
         Ok(context.finish())
     }
 
-    async fn deref_did_(&self, did: &DID, input: DereferenceInput, context: &mut DereferenceContext) -> Result<()> {
-        let mut resolution: Resolution = self.resolve(did, input.resolution).await?;
+    async fn deref_did_(&self, did: &DID, input: DereferenceInput, context: &mut DereferenceContext) -> Result<()> where R: Sync {
+        let mut resolution: Resolution = self.resolver.resolve_did(did, input.resolution).await?;
 
         if resolution.metadata.error.is_some() {
             context.set_resolution(resolution);
@@ -130,18 +138,18 @@ fn service_endpoint_ctor(did: &DID, params: &[Param], service: Url) -> Result<Ur
     // The input DID URL and input service endpoint URL MUST NOT both have a
     // query component.
     if did.query.is_some() && service.query().is_some() {
-        todo!("Error")
+        return Err(Error::DereferenceError(anyhow!("Multiple DID Queries")));
     }
 
     // The input DID URL and input service endpoint URL MUST NOT both have a
     // fragment component.
     if did.fragment.is_some() && service.fragment().is_some() {
-        todo!("Error")
+        return Err(Error::DereferenceError(anyhow!("Multiple DID Fragments")));
     }
 
     // The input service endpoint URL MUST be an HTTP(S) URL.
     if service.scheme() != "https" {
-        todo!("Error")
+        return Err(Error::DereferenceError(anyhow!("Invalid Service Protocol")));
     }
 
     let segments: &[String] = did.path_segments.as_deref().unwrap_or_default();

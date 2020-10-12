@@ -1,4 +1,3 @@
-pub mod deref;
 pub mod did;
 pub mod error;
 pub mod helpers;

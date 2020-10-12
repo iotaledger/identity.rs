@@ -32,6 +32,8 @@ pub enum Error {
     InvalidUtf8(#[from] core::str::Utf8Error),
     #[error("DID Resolution Error: {0}")]
     ResolutionError(anyhow::Error),
+    #[error("DID Dereference Error: {0}")]
+    DereferenceError(anyhow::Error),
     #[error("Identity Reader Error: {0}")]
     IdentityReaderError(anyhow::Error),
     #[error("Identity Writer Error: {0}")]

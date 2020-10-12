@@ -41,6 +41,22 @@ pub enum KeyData {
     EthereumAddress(String),
 }
 
+impl KeyData {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Unknown(inner) => inner.as_str(),
+            Self::Pem(inner) => inner.as_str(),
+            Self::Jwk(inner) => inner.as_str(),
+            Self::Hex(inner) => inner.as_str(),
+            Self::Base64(inner) => inner.as_str(),
+            Self::Base58(inner) => inner.as_str(),
+            Self::Multibase(inner) => inner.as_str(),
+            Self::IotaAddress(inner) => inner.as_str(),
+            Self::EthereumAddress(inner) => inner.as_str(),
+        }
+    }
+}
+
 /// Public key struct that contains `id`, `key_type`, `controller`, `encoding_type`, `key_data` and `reference`.
 /// `reference` defines whether or not the PublicKey is a reference.
 #[derive(Debug, Clone, Default, PartialEq, Diff, Deserialize, Serialize, Eq, Hash, Ord, PartialOrd)]

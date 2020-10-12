@@ -50,7 +50,7 @@ impl fmt::Debug for Timestamp {
 
 impl fmt::Display for Timestamp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self.0)
+        write!(f, "{}", self.to_rfc3339())
     }
 }
 

@@ -41,7 +41,7 @@ pub fn doc_has_valid_signature(doc: &DIDDocument) -> Result<bool> {
                 println!("DID doesn't match auth key");
                 Ok(false)
             } else {
-                Ok(verify_signature(&doc_without_metadata.to_string(), sig, &auth_key)?)
+                Ok(verify_signature(&doc_without_metadata.to_string(), sig, auth_key)?)
             }
         } else {
             Ok(false)
@@ -107,37 +107,16 @@ pub fn create_document(auth_key: String) -> Result<DIDDocument> {
 }
 
 /// Get authentication key from a DIDDocument
-pub fn get_auth_key(document: &DIDDocument) -> Option<String> {
+pub fn get_auth_key(document: &DIDDocument) -> Option<&str> {
     if let Authentication::Key(pub_key) = &document.auth[0] {
-        let auth_key = match &pub_key.key_data {
-            KeyData::Unknown(key) => key,
-            KeyData::Pem(key) => key,
-            KeyData::Jwk(key) => key,
-            KeyData::Hex(key) => key,
-            KeyData::Base64(key) => key,
-            KeyData::Base58(key) => key,
-            KeyData::Multibase(key) => key,
-            KeyData::IotaAddress(key) => key,
-            KeyData::EthereumAddress(key) => key,
-        };
-        Some(auth_key.to_string())
+        Some(pub_key.key_data.as_str())
     } else {
         None
     }
 }
 
 pub fn create_method_id(key_data: KeyData, network: Option<&str>, network_shard: Option<String>) -> Result<DID> {
-    let pub_key = match &key_data {
-        KeyData::Unknown(key) => key,
-        KeyData::Pem(key) => key,
-        KeyData::Jwk(key) => key,
-        KeyData::Hex(key) => key,
-        KeyData::Base64(key) => key,
-        KeyData::Base58(key) => key,
-        KeyData::Multibase(key) => key,
-        KeyData::IotaAddress(key) => key,
-        KeyData::EthereumAddress(key) => key,
-    };
+    let pub_key = key_data.as_str();
     let hash = Blake2b256::digest(pub_key.as_bytes());
     let bs58key = encode(&hash.digest()).into_string();
     let network_string = match network {
