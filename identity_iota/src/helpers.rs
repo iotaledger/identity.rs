@@ -29,19 +29,20 @@ pub fn doc_has_valid_signature(doc: &DIDDocument) -> Result<bool> {
     // todo verify that did matches auth key (only before auth change, later verify signatures with previous auth key)
     if let Some(sig) = doc.metadata.get("proof") {
         let doc_without_metadata = doc.clone().supply_metadata(HashMap::new())?;
-        if let Authentication::Key(pub_key) = &doc.auth[0] {
-            let pub_key = match &pub_key.key_data {
-                KeyData::Unknown(key) => key,
-                KeyData::Pem(key) => key,
-                KeyData::Jwk(key) => key,
-                KeyData::Hex(key) => key,
-                KeyData::Base64(key) => key,
-                KeyData::Base58(key) => key,
-                KeyData::Multibase(key) => key,
-                KeyData::IotaAddress(key) => key,
-                KeyData::EthereumAddress(key) => key,
+        if let Some(auth_key) = get_auth_key(&doc) {
+            // Check did auth key correlation
+            let did = doc.derive_did();
+            let key = match &doc.auth[0] {
+                Authentication::Key(key) => key.key_data.clone(),
+                _ => return Ok(false),
             };
-            Ok(verify_signature(&doc_without_metadata.to_string(), sig, pub_key)?)
+            let created_did = create_method_id(key, Some(&did.id_segments[0]), None)?;
+            if did != &created_did {
+                println!("DID doesn't match auth key");
+                Ok(false)
+            } else {
+                Ok(verify_signature(&doc_without_metadata.to_string(), sig, &auth_key)?)
+            }
         } else {
             Ok(false)
         }
@@ -103,6 +104,26 @@ pub fn create_document(auth_key: String) -> Result<DIDDocument> {
     did_doc.id = did;
 
     Ok(did_doc)
+}
+
+/// Get authentication key from a DIDDocument
+pub fn get_auth_key(document: &DIDDocument) -> Option<String> {
+    if let Authentication::Key(pub_key) = &document.auth[0] {
+        let auth_key = match &pub_key.key_data {
+            KeyData::Unknown(key) => key,
+            KeyData::Pem(key) => key,
+            KeyData::Jwk(key) => key,
+            KeyData::Hex(key) => key,
+            KeyData::Base64(key) => key,
+            KeyData::Base58(key) => key,
+            KeyData::Multibase(key) => key,
+            KeyData::IotaAddress(key) => key,
+            KeyData::EthereumAddress(key) => key,
+        };
+        Some(auth_key.to_string())
+    } else {
+        None
+    }
 }
 
 pub fn create_method_id(key_data: KeyData, network: Option<&str>, network_shard: Option<String>) -> Result<DID> {

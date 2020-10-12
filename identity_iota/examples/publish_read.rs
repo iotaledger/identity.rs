@@ -7,12 +7,14 @@ use identity_core::io::IdentityWriter;
 use hex;
 use identity_core::{
     common::Timestamp,
-    did::{Authentication, DIDDocument, KeyData, PublicKey, DID},
+    did::{DIDDocument, KeyData, PublicKey, DID},
 };
 use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
 use identity_diff::Diff;
 use identity_iota::{
-    helpers::{create_document, diff_has_valid_signature, doc_has_valid_signature, sign_diff, sign_document},
+    helpers::{
+        create_document, diff_has_valid_signature, doc_has_valid_signature, get_auth_key, sign_diff, sign_document,
+    },
     io::{TangleReader, TangleWriter},
     network::{Network, NodeList},
     types::DIDDiff,
@@ -64,19 +66,8 @@ async fn main() -> Result<()> {
     println!("Document has valid signature: {}", sig);
 
     //get auth key from DIDDocument
-    if let Authentication::Key(pub_key) = &docs[0].data.auth[0] {
-        let auth_key = match &pub_key.key_data {
-            KeyData::Unknown(key) => key,
-            KeyData::Pem(key) => key,
-            KeyData::Jwk(key) => key,
-            KeyData::Hex(key) => key,
-            KeyData::Base64(key) => key,
-            KeyData::Base58(key) => key,
-            KeyData::Multibase(key) => key,
-            KeyData::IotaAddress(key) => key,
-            KeyData::EthereumAddress(key) => key,
-        };
-        let sig = diff_has_valid_signature(diffs[0].data.clone(), auth_key)?;
+    if let Some(auth_key) = get_auth_key(&docs[0].data) {
+        let sig = diff_has_valid_signature(diffs[0].data.clone(), &auth_key)?;
         println!("Diff has valid signature: {}", sig);
     }
     Ok(())
