@@ -66,25 +66,41 @@ The following steps MUST be taken to generate a valid Tag:
 * Generate an asymmetric keypair using a supported verification method type.
 * Hash the public key using `BLAKE2b-256` and encode using base58.
 
-Note that this public key MUST also be embedded into the DID Document (See ...).
-
-## DID Messages
-
-### Authentication Chain
-
-### Differentiation Chain
-
-### DID Document
-
-### Key Revocation?
+Note that this public key MUST also be embedded into the DID Document (See [CRUD: Create](#Create)).
 
 ## CRUD Operations
 
+DID Documents associated to the `did:iota` method consist of a chain of data messages, also known as zero-value transactions, published to a Tangle called "DID messages". The Tangle has no understanding of "DID messages" and acts purely as an immutable database. The chain of DID messages and the resulting DID Documents must therefore be validated on the client side. 
+
 ### Create
+
+The DID has been generated out of an asymmetric keypair (See [Format: Generation](#Generation)). An initial DID message must be published to IOTA for the identity to be usable. This initial DID message must be a valid DID Document according to the W3C DID standard. In addition, this DID must contain atleast one public key inside the authentication object. The public key, when hashed using the `Blake2b-256` hashing function must equal the tag section of the DID. 
+
+For further updates on the DID Document, two types of message chains are used:
+
+_The Authentication Chain (Auth Chain)_
+
+The authentication chain is a chain of DID messages containing complete DID documents. 
+
+_The Differentiation Chain (Diff Chain)_
+
+The differentiation chain is a chain of DID messages that lists the relative changes compared to the DID document contained in the auth chain DID message which references this diff chain. It is possible that every auth chain DID message might spawn a new diff chain. Multiple auth chain DID messages CANNOT share the same diff chain. 
 
 ### Read
 
 ### Update
+
+#### Authentication Chain
+
+A valid DID message in the auth chain must contain the following:
+
+* The DID documents MUST contain atleast one public key inside the authentication object. 
+* The message MUST have a proof object that is signed using an authentication key that was valid in the previous auth chain DID message. 
+* The message MAY contain a reference to an IOTA address containing a new differentiation chain.
+
+#### Differentiation Chain
+
+#### Key Revocation?
 
 ### Delete
 
