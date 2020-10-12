@@ -7,7 +7,6 @@ use identity_core::{
 };
 use identity_crypto::{Ed25519, Sign, Verify};
 use multihash::Blake2b256;
-use serde_json;
 use std::collections::HashMap;
 
 pub fn verify_signature(message: &str, signature: &str, pub_key: &str) -> Result<bool> {

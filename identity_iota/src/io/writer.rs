@@ -21,8 +21,8 @@ use crate::{
     utils::{create_address_from_trits, encode_trits, txn_hash},
 };
 
-/// Random-walk depth
-const RW_DEPTH: u8 = 2;
+/// Tipselection depth
+const TS_DEPTH: u8 = 2;
 
 /// Fixed-address used for faster transaction confirmation times
 const PROMOTION: &str = "PROMOTEADDRESSPROMOTEADDRESSPROMOTEADDRESSPROMOTEADDRESSPROMOTEADDRESSPROMOTEADDR";
@@ -145,7 +145,7 @@ impl TangleWriter {
             .build()
             .await?;
 
-        let tips: GTTAResponse = self.client.get_transactions_to_approve().depth(RW_DEPTH).send().await?;
+        let tips: GTTAResponse = self.client.get_transactions_to_approve().depth(TS_DEPTH).send().await?;
 
         let transfer: &BundledTransaction = match transfers.get(0) {
             Some(transfer) => transfer,

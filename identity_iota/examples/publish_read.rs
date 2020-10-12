@@ -11,14 +11,12 @@ use identity_core::{
 };
 use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
 use identity_diff::Diff;
-use identity_iota::helpers::{
-    create_document, diff_has_valid_signature, doc_has_valid_signature, sign_diff, sign_document,
+use identity_iota::{
+    helpers::{create_document, diff_has_valid_signature, doc_has_valid_signature, sign_diff, sign_document},
+    io::{TangleReader, TangleWriter},
+    network::{Network, NodeList},
+    types::DIDDiff,
 };
-use identity_iota::io::TangleReader;
-use identity_iota::io::TangleWriter;
-use identity_iota::network::Network;
-use identity_iota::network::NodeList;
-use identity_iota::types::DIDDiff;
 use iota_conversion::Trinary;
 
 #[smol_potat::main]

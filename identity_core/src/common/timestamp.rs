@@ -100,15 +100,13 @@ impl Diff for Timestamp {
     fn merge(&self, diff: Self::Type) -> Result<Self, diff::Error> {
         let this: String = self.to_rfc3339().merge(diff)?;
 
-        Self::from_str(this.as_str())
-            .map_err(|error| diff::Error::MergeError(format!("{}", error)))
+        Self::from_str(this.as_str()).map_err(|error| diff::Error::MergeError(format!("{}", error)))
     }
 
     fn from_diff(diff: Self::Type) -> Result<Self, diff::Error> {
         let this: String = String::from_diff(diff)?;
 
-        Self::from_str(this.as_str())
-            .map_err(|error| diff::Error::MergeError(format!("{}", error)))
+        Self::from_str(this.as_str()).map_err(|error| diff::Error::MergeError(format!("{}", error)))
     }
 
     fn into_diff(self) -> Result<Self::Type, diff::Error> {
