@@ -19,26 +19,6 @@ pub enum InnerVec<T: Diff> {
     Add(<T as Diff>::Type),
 }
 
-impl<T: Diff> DiffVec<T> {
-    /// returns an iterator of `&InnerVec<T>` from a `DiffVec<T>`
-    pub fn iter<'d>(&'d self) -> Box<dyn Iterator<Item = &InnerVec<T>> + 'd> {
-        Box::new(self.0.iter())
-    }
-
-    /// returns an iterator of `InnerVec<T>` from a `DiffVec<T>`
-    pub fn into_iter<'d>(self) -> Box<dyn Iterator<Item = InnerVec<T>> + 'd>
-    where
-        Self: 'd,
-    {
-        Box::new(self.0.into_iter())
-    }
-
-    /// Returns the length of the `DiffVec<T>` type.
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-}
-
 /// `Diff` trait implementation for `Vec<T>`
 impl<T> Diff for Vec<T>
 where
@@ -76,7 +56,7 @@ where
     fn merge(&self, diff: Self::Type) -> crate::Result<Self> {
         let mut vec: Self = self.clone();
 
-        for change in diff.into_iter() {
+        for change in diff.0.into_iter() {
             match change {
                 InnerVec::Add(d) => vec.push(<T>::from_diff(d)?),
                 InnerVec::Change { index, item } => vec[index] = self[index].merge(item)?,

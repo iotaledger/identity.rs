@@ -26,31 +26,6 @@ pub struct DiffHashMap<K: Diff, V: Diff>(
     #[serde(skip_serializing_if = "Option::is_none")] pub Option<Vec<InnerValue<K, V>>>,
 );
 
-impl<K, V> DiffHashMap<K, V>
-where
-    K: Clone + Debug + PartialEq + Hash + Diff + for<'de> Deserialize<'de> + Serialize,
-    V: Clone + Debug + PartialEq + Diff + for<'de> Deserialize<'de> + Serialize,
-{
-    /// Converts the `DiffHashMap` into an iterator where the Item is the `InnerValue<K, V>`
-    pub fn into_iter<'a>(self) -> Box<dyn Iterator<Item = InnerValue<K, V>> + 'a>
-    where
-        Self: 'a,
-    {
-        match self.0 {
-            Some(diff) => Box::new(diff.into_iter()),
-            None => Box::new(empty()),
-        }
-    }
-
-    /// Returns the length of the `DiffHashMap`
-    pub fn len(&self) -> usize {
-        match &self.0 {
-            Some(d) => d.len(),
-            None => 0,
-        }
-    }
-}
-
 /// Diff Implementation on a HashMap<K, V>
 impl<K, V> Diff for HashMap<K, V>
 where
@@ -98,7 +73,7 @@ where
     fn merge(&self, diff: Self::Type) -> crate::Result<Self> {
         let mut new = self.clone();
 
-        for change in diff.into_iter() {
+        for change in diff.0.into_iter().flatten() {
             match change {
                 InnerValue::Change { key, value } => {
                     let fake: &mut V = &mut *new.get_mut(&key).expect("Failed to get value");
