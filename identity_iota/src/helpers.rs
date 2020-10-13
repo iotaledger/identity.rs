@@ -4,9 +4,9 @@ use identity_core::{
     common::OneOrMany,
     did::{Authentication, DIDDocument, DIDDocumentBuilder, KeyData, KeyType, PublicKey, PublicKeyBuilder, DID},
 };
-use identity_crypto::{Ed25519, Sign, Verify};
+use identity_crypto::{Ed25519, KeyPair, Sign, Verify};
 use multihash::Blake2b256;
-use std::collections::HashMap;
+use serde_json::to_vec;
 
 use crate::{error::Error, types::DIDDiff};
 
@@ -27,7 +27,9 @@ pub fn diff_has_valid_signature(diff: DIDDiff, auth_key: &str) -> Result<bool> {
 pub fn doc_has_valid_signature(doc: &DIDDocument) -> Result<bool> {
     // todo verify that did matches auth key (only before auth change, later verify signatures with previous auth key)
     if let Some(sig) = doc.metadata.get("proof") {
-        let doc_without_metadata = doc.clone().supply_metadata(HashMap::new());
+        let mut doc_without_metadata = doc.clone();
+        doc_without_metadata.clear_metadata();
+
         if let Some(auth_key) = get_auth_key(&doc) {
             // Check did auth key correlation
             let did = doc.derive_did();
@@ -50,31 +52,24 @@ pub fn doc_has_valid_signature(doc: &DIDDocument) -> Result<bool> {
     }
 }
 
-pub fn sign(key: &identity_crypto::KeyPair, message: &str) -> Result<String> {
-    // "proof": {
-    //     "type": "RsaSignature2018",
-    //     "created": "2017-10-24T05:33:31Z",
-    //     "creator": "https://example.com/jdoe/keys/1",
-    //     "domain": "example.com",
-    //     "signatureValue": "eyiOiJJ0eXAK...EjXkgFWFO"
-    //   }
-    let sig = Sign::sign(&Ed25519, message.as_bytes(), key.secret())?;
-    let sig_bs58 = encode(sig).into_string();
-    Ok(sig_bs58)
+pub fn sign(key: &KeyPair, message: impl AsRef<[u8]>) -> Result<String> {
+    let sig = Sign::sign(&Ed25519, message.as_ref(), key.secret())?;
+
+    Ok(bs58::encode(sig).into_string())
 }
 
-// /// Signs a DID document or diff with a Ed25519 Keypair
-pub fn sign_document(key: &identity_crypto::KeyPair, document: DIDDocument) -> Result<DIDDocument> {
-    let mut metadata = HashMap::new();
-    let signature = sign(&key, &serde_json::to_string(&document)?)?;
-    metadata.insert("proof".into(), signature);
-    let signed_doc = document.supply_metadata(metadata);
-    Ok(signed_doc)
+/// Signs a DID document or diff with a Ed25519 Keypair
+pub fn sign_document(document: &mut DIDDocument, key: &KeyPair) -> Result<()> {
+    document.remove_metadata("proof");
+    document.set_metadata("proof", sign(key, &to_vec(document)?)?);
+
+    Ok(())
 }
 
-pub fn sign_diff(key: &identity_crypto::KeyPair, mut diddiff: DIDDiff) -> Result<DIDDiff> {
-    diddiff.signature = sign(&key, &diddiff.diff)?;
-    Ok(diddiff)
+pub fn sign_diff(diff: &mut DIDDiff, key: &KeyPair) -> Result<()> {
+    diff.signature = sign(key, diff.diff.as_bytes())?;
+
+    Ok(())
 }
 
 /// Creates a DID document with an auth key and a DID

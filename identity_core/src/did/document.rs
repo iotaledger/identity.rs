@@ -151,19 +151,26 @@ impl DIDDocument {
         self.updated = Some(Timestamp::now());
     }
 
-    /// Inserts `metadata` into the `DIDDocument` body.  The metadata must be a HashMap<String, String> where the keys
-    /// are json keys and values are the json values.
-    pub fn supply_metadata(mut self, metadata: HashMap<String, String>) -> Self {
-        self.metadata = metadata;
-        self
+    pub fn set_metadata<T, U>(&mut self, key: T, value: U)
+    where
+        T: Into<String>,
+        U: Into<String>,
+    {
+        self.metadata.insert(key.into(), value.into());
     }
 
-    /// initialize the `created` and `updated` timestamps to publish the did document.  Returns the did document with
-    /// these timestamps.
-    pub fn init_timestamps(mut self) -> Self {
+    pub fn remove_metadata(&mut self, key: &str) {
+        self.metadata.remove(key);
+    }
+
+    pub fn clear_metadata(&mut self) {
+        self.metadata.clear();
+    }
+
+    /// initialize the `created` and `updated` timestamps to publish the did document.
+    pub fn init_timestamps(&mut self) {
         self.created = Some(Timestamp::now());
         self.updated = Some(Timestamp::now());
-        self
     }
 
     pub fn get_diff_from_str(json: impl AsRef<str>) -> crate::Result<DiffDIDDocument> {

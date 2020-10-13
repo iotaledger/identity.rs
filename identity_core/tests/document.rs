@@ -92,7 +92,7 @@ fn test_doc_creation() {
     did_doc_2.update_service(service);
     did_doc_2.update_service(service2);
 
-    let did_doc = did_doc.init_timestamps();
+    did_doc.init_timestamps();
 
     // did_doc has timestamps while did_doc_2 does not.
     assert_ne!(did_doc, did_doc_2);
@@ -237,14 +237,10 @@ fn test_doc_metadata() {
 
     assert!(doc.is_ok());
 
-    let doc = doc.unwrap();
-    // create a new hashmap and insert the metadata.
-    let mut metadata = HashMap::new();
-    metadata.insert("some".into(), "metadata".into());
-    metadata.insert("some_more".into(), "metadata_stuff".into());
-
-    // add the metadata to the original doc.
-    let doc = doc.supply_metadata(metadata);
+    let mut doc = doc.unwrap();
+    // insert the metadata.
+    doc.set_metadata("some", "metadata");
+    doc.set_metadata("some_more", "metadata_stuff");
 
     // get the metadata doc string and create a new did doc from it.
     let res_doc = DIDDocument::from_str(&result_str).unwrap();
