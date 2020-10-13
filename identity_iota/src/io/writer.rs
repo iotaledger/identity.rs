@@ -109,7 +109,7 @@ impl TangleWriter {
             return Err(Error::InvalidDocument(DocumentError::NetworkMismatch));
         }
 
-        // Build the transfer to push the seriaized data to the tangle.
+        // Build the transfer to push the serialized data to the tangle.
         let transfer: Transfer = Transfer {
             address: create_address(&did)?,
             value: 0,
@@ -124,7 +124,7 @@ impl TangleWriter {
         let txn: BundledTransaction = if let [_] = bundle.as_slice() {
             bundle.pop().expect("infallible")
         } else {
-            return Err(Error::InvalidTransaction(TransactionError::MissingBundle));
+            return Err(Error::InvalidTransaction(TransactionError::InvalidBundle));
         };
 
         Ok(txn_hash(&txn))

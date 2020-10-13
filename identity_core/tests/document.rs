@@ -1,6 +1,6 @@
 use identity_core::{
     common::OneOrMany,
-    did::{Authentication, DIDDocument, KeyData, PublicKey, Service, ServiceEndpoint, DID},
+    did::{Authentication, DIDDocument, KeyData, KeyType, PublicKey, Service, ServiceEndpoint, DID},
 };
 
 use std::str::FromStr;
@@ -77,16 +77,14 @@ fn test_doc_creation() {
     did_doc.update_service(service.clone());
     did_doc.update_service(service2.clone());
 
-    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+    let key_data = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
     let public_key = PublicKey {
         id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
-        key_type: "RsaVerificationKey2018".into(),
+        key_type: KeyType::RsaVerificationKey2018,
         controller: "did:iota:123456789abcdefghi".parse().unwrap(),
         key_data,
-        ..Default::default()
-    }
-    .init();
+    };
 
     did_doc.update_public_key(public_key.clone());
 
@@ -141,16 +139,14 @@ fn test_doc_diff() {
 
     new.update_service(service);
 
-    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+    let key_data = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
     let public_key = PublicKey {
         id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
-        key_type: "RsaVerificationKey2018".into(),
+        key_type: KeyType::RsaVerificationKey2018,
         controller: "did:iota:123456789abcdefghi".parse().unwrap(),
         key_data,
-        ..Default::default()
-    }
-    .init();
+    };
 
     new.update_public_key(public_key);
 
@@ -217,17 +213,15 @@ fn test_diff_merge_from_string() {
     doc.update_service(service);
 
     // create some key data.
-    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+    let key_data = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
     // create a public key, IdCompare<PublicKey>.
     let public_key = PublicKey {
         id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
-        key_type: "RsaVerificationKey2018".into(),
+        key_type: KeyType::RsaVerificationKey2018,
         controller: "did:iota:123456789abcdefghi".parse().unwrap(),
         key_data,
-        ..Default::default()
-    }
-    .init();
+    };
 
     // add the public key to the did doc.
     doc.update_public_key(public_key);
@@ -314,28 +308,21 @@ fn test_realistic_diff() {
     did_doc.update_service(service);
     did_doc.update_service(service2);
 
-    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
-
     let public_key = PublicKey {
         id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
-        key_type: "RsaVerificationKey2018".into(),
+        key_type: KeyType::RsaVerificationKey2018,
         controller: "did:iota:123456789abcdefghi".parse().unwrap(),
-        key_data,
-        ..Default::default()
-    }
-    .init();
+        key_data: KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into()),
+    };
 
     did_doc.update_public_key(public_key.clone());
 
-    let key_data_1 = KeyData::Pem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
     let key1 = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
-        key_type: "RsaVerificationKey2018".into(),
+        id: "did:iota:123456789abcdefghi#keys-2".parse().unwrap(),
+        key_type: KeyType::RsaVerificationKey2018,
         controller: "did:iota:123456789abcdefghi".parse().unwrap(),
-        key_data: key_data_1,
-        ..Default::default()
-    }
-    .init();
+        key_data: KeyData::PublicKeyPem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into()),
+    };
 
     let mut did_doc_2 = did_doc.clone();
 
@@ -359,7 +346,7 @@ fn test_realistic_diff() {
 #[test]
 fn test_id_compare() {
     // key data.
-    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+    let key_data = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
     // service endpoint.
     let endpoint = ServiceEndpoint {
@@ -371,12 +358,10 @@ fn test_id_compare() {
     // create a public key.
     let public_key = PublicKey {
         id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
-        key_type: "RsaVerificationKey2018".into(),
+        key_type: KeyType::RsaVerificationKey2018,
         controller: "did:iota:123456789abcdefghi".parse().unwrap(),
         key_data,
-        ..Default::default()
-    }
-    .init();
+    };
 
     // create the authentication key.
     let auth = Authentication::Key(public_key.clone());

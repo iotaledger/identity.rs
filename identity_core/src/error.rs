@@ -22,6 +22,8 @@ pub enum Error {
     InvalidObjectId,
     #[error("Invalid object type")]
     InvalidObjectType,
+    #[error("Invalid key type")]
+    InvalidKeyType,
     #[error("Invalid Credential: {0}")]
     InvalidCredential(String),
     #[error("Invalid Presentation: {0}")]

@@ -6,18 +6,29 @@ use crate::{
     utils::HasId,
 };
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Diff, Serialize, Deserialize)]
 #[serde(untagged)]
 #[diff(from_into)]
 pub enum Authentication {
-    Method(DID),
+    DID(DID),
     Key(PublicKey),
 }
 
 impl Default for Authentication {
     fn default() -> Self {
-        Self::Method(Default::default())
+        Self::DID(Default::default())
+    }
+}
+
+impl From<DID> for Authentication {
+    fn from(other: DID) -> Self {
+        Self::DID(other)
+    }
+}
+
+impl From<PublicKey> for Authentication {
+    fn from(other: PublicKey) -> Self {
+        Self::Key(other)
     }
 }
 
@@ -26,7 +37,7 @@ impl HasId for Authentication {
 
     fn id(&self) -> &Self::Id {
         match self {
-            Authentication::Method(subject) => subject,
+            Authentication::DID(subject) => subject,
             Authentication::Key(key) => &key.id,
         }
     }

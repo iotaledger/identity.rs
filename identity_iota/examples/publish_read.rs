@@ -7,7 +7,7 @@ use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
 use identity_iota::{
     core::{
         common::Timestamp,
-        did::{DIDDocument, KeyData, PublicKey, DID},
+        did::{DIDDocument, KeyData, KeyType, PublicKey, DID},
         diff::Diff,
         io::IdentityWriter,
     },
@@ -77,12 +77,11 @@ async fn create_diff(did_document: DIDDocument, keypair: &identity_crypto::KeyPa
     let public_key = PublicKey {
         id: DID::parse_from_str("did:iota:123456789abcdefghij#keys-1")?,
         // id: "did:iota:123456789abcdefghij#keys-1".into(),
-        key_type: "RsaVerificationKey2018".into(),
         controller: DID::parse_from_str("did:iota:com:123456789abcdefghij")?,
-        key_data: KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into()),
-        ..Default::default()
-    }
-    .init();
+        key_type: KeyType::RsaVerificationKey2018,
+        key_data: KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into()),
+    };
+
     new.update_public_key(public_key);
     new.update_time();
     // diff the two docs.

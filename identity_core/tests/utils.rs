@@ -1,6 +1,6 @@
 use identity_core::{
     common::{Context, OneOrMany},
-    did::{KeyData, PublicKey, Service, ServiceEndpoint, DID},
+    did::{KeyData, KeyType, PublicKey, Service, ServiceEndpoint, DID},
 };
 
 use std::str::FromStr;
@@ -40,23 +40,18 @@ fn test_subject_from_string() {
 fn test_public_key() {
     let raw_str = setup_json("public");
 
-    let pk_t = PublicKey::from_str(&raw_str).unwrap();
+    let pk_t: PublicKey = serde_json::from_str(&raw_str).unwrap();
 
-    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
+    let key_data = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
 
     let public_key = PublicKey {
         id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
-        key_type: "Ed25519VerificationKey2018".into(),
+        key_type: KeyType::Ed25519VerificationKey2018,
         controller: "did:iota:pqrstuvwxyz0987654321".parse().unwrap(),
         key_data,
-        ..Default::default()
     };
 
     assert_eq!(public_key, pk_t);
-
-    let res = serde_json::to_string(&public_key).unwrap();
-
-    assert_eq!(res, pk_t.to_string());
 }
 
 /// Test service without ServiceEndpoint body.

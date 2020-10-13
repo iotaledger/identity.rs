@@ -12,6 +12,8 @@ pub enum Error {
     TernaryError(#[from] iota::ternary::Error),
     #[error("Invalid DID Method ID")]
     InvalidMethodId,
+    #[error("Invalid DID Signature")]
+    InvalidSignature,
     #[error("Invalid Tryte Conversion")]
     InvalidTryteConversion,
     #[error("Invalid Transaction: {0}")]
@@ -22,12 +24,14 @@ pub enum Error {
 
 #[derive(Debug, thiserror::Error)]
 pub enum TransactionError {
-    #[error("Missing Trytes")]
-    MissingTrytes,
+    #[error("Invalid Bundle")]
+    InvalidBundle,
     #[error("Missing Bundle")]
     MissingBundle,
     #[error("Missing Content")]
     MissingContent,
+    #[error("Missing Trytes")]
+    MissingTrytes,
     #[error("Unconfirmable Transaction")]
     Unconfirmable,
 }

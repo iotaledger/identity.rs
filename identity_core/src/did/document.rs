@@ -86,8 +86,8 @@ impl DIDDocument {
     }
 
     /// sets in a new `auth` of type `Authentication` into the `DIDDocument`.
-    pub fn update_auth(&mut self, auth: Authentication) {
-        self.auth.set_unique(auth);
+    pub fn update_auth(&mut self, auth: impl Into<Authentication>) {
+        self.auth.set_unique(auth.into());
     }
 
     /// remove all of the authentications from the `DIDDocument`.
@@ -96,8 +96,8 @@ impl DIDDocument {
     }
 
     /// sets in a new `assert` of type `Authentication` into the `DIDDocument`.
-    pub fn update_assert(&mut self, assert: Authentication) {
-        self.assert.set_unique(assert);
+    pub fn update_assert(&mut self, assert: impl Into<Authentication>) {
+        self.assert.set_unique(assert.into());
     }
 
     /// remove all of the assertion methods from the `DIDDocument`.
@@ -106,8 +106,8 @@ impl DIDDocument {
     }
 
     /// sets in a new `verification` of type `Authentication` into the `DIDDocument`.
-    pub fn update_verification(&mut self, verification: Authentication) {
-        self.verification.set_unique(verification);
+    pub fn update_verification(&mut self, verification: impl Into<Authentication>) {
+        self.verification.set_unique(verification.into());
     }
 
     /// remove all of the verification methods from the `DIDDocument`.
@@ -116,8 +116,8 @@ impl DIDDocument {
     }
 
     /// sets in a new `delegation` of type `Authentication` into the `DIDDocument`.
-    pub fn update_delegation(&mut self, delegation: Authentication) {
-        self.delegation.set_unique(delegation);
+    pub fn update_delegation(&mut self, delegation: impl Into<Authentication>) {
+        self.delegation.set_unique(delegation.into());
     }
 
     /// remove all of the capability delegations from the `DIDDocument`.
@@ -126,8 +126,8 @@ impl DIDDocument {
     }
 
     /// sets in a new `invocation` of type `Authentication` into the `DIDDocument`.
-    pub fn update_invocation(&mut self, invocation: Authentication) {
-        self.invocation.set_unique(invocation);
+    pub fn update_invocation(&mut self, invocation: impl Into<Authentication>) {
+        self.invocation.set_unique(invocation.into());
     }
 
     /// remove all of the capability invocations from the `DIDDocument`.
@@ -136,8 +136,8 @@ impl DIDDocument {
     }
 
     /// sets in a new `agreement` of type `Authentication` into the `DIDDocument`.
-    pub fn update_agreement(&mut self, agreement: Authentication) {
-        self.agreement.set_unique(agreement);
+    pub fn update_agreement(&mut self, agreement: impl Into<Authentication>) {
+        self.agreement.set_unique(agreement.into());
     }
 
     /// remove all of the key agreements from the `DIDDocument`.
