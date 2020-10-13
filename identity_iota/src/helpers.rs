@@ -134,5 +134,5 @@ pub fn create_method_id(key_data: KeyData, network: Option<&str>, network_shard:
         _ => String::new(),
     };
     let id_string = format!("did:iota:{}{}{}", network_string, shard_string, bs58key);
-    Ok(DID::parse_from_str(id_string)?)
+    Ok(DID::from(id_string)?)
 }

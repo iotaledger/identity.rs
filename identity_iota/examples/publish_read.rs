@@ -76,10 +76,10 @@ async fn create_diff(did_document: DIDDocument, keypair: &identity_crypto::KeyPa
     // updated doc and publish diff
     let mut new = did_document.clone();
     let public_key = PublicKey {
-        id: DID::parse_from_str("did:iota:123456789abcdefghij#keys-1")?,
+        id: DID::from("did:iota:123456789abcdefghij#keys-1")?,
         // id: "did:iota:123456789abcdefghij#keys-1".into(),
         key_type: "RsaVerificationKey2018".into(),
-        controller: DID::parse_from_str("did:iota:com:123456789abcdefghij")?,
+        controller: DID::from("did:iota:com:123456789abcdefghij")?,
         key_data: KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into()),
         ..Default::default()
     }

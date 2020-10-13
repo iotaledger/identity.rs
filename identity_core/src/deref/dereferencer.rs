@@ -26,7 +26,7 @@ where
     where
         R: Sync,
     {
-        self.deref_did(&DID::parse_from_str(did)?, input).await
+        self.deref_did(&DID::from(did)?, input).await
     }
 
     pub async fn deref_did(&self, did: &DID, input: DereferenceInput) -> Result<Dereference>

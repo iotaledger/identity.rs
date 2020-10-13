@@ -56,7 +56,7 @@ pub trait IdentityResolver {
         // 1. Validate that the input DID conforms to the did rule of the DID Syntax
         // ==
 
-        match DID::parse_from_str(did) {
+        match DID::from(did) {
             Ok(ref did) => {
                 self.resolve_did_(did, input, context).await?;
             }
