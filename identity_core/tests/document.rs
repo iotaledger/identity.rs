@@ -36,7 +36,7 @@ fn test_parse_document() {
     .unwrap();
 
     assert_eq!(doc.context, ctx);
-    assert_eq!(doc.id, did.into());
+    assert_eq!(doc.id, did);
 }
 
 /// test doc creation via the `DIDDocument::new` method.
