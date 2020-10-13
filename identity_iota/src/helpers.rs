@@ -1,8 +1,7 @@
 use anyhow::Result;
 use bs58::{decode, encode};
-use identity_core::{
-    common::OneOrMany,
-    did::{PublicKeyBuilder, DIDDocumentBuilder, Authentication, DIDDocument, KeyData, KeyType, PublicKey, DID},
+use identity_core::did::{
+    Authentication, DIDDocument, DIDDocumentBuilder, KeyData, KeyType, PublicKey, PublicKeyBuilder, DID,
 };
 use identity_crypto::{Ed25519, Sign, Verify};
 use multihash::Blake2b256;
@@ -32,10 +31,10 @@ pub fn doc_has_valid_signature(doc: &DIDDocument) -> Result<bool> {
             // Check did auth key correlation
             let did = doc.derive_did();
             let key = match &doc.auth[0] {
-                Authentication::Key(key) => key.key_data.clone(),
+                Authentication::Key(key) => key.key_data().as_str(),
                 _ => return Ok(false),
             };
-            let created_did = create_method_id(key.as_str(), Some(&did.id_segments[0]), None)?;
+            let created_did = create_method_id(key, Some(&did.id_segments[0]), None)?;
             if did != &created_did {
                 println!("DID doesn't match auth key");
                 Ok(false)
@@ -102,7 +101,7 @@ pub fn create_document(auth_key: String) -> Result<DIDDocument> {
 /// Get authentication key from a DIDDocument
 pub fn get_auth_key(document: &DIDDocument) -> Option<&str> {
     if let Authentication::Key(pub_key) = &document.auth[0] {
-        Some(pub_key.key_data.as_str())
+        Some(pub_key.key_data().as_str())
     } else {
         None
     }

@@ -7,7 +7,7 @@ use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
 use identity_iota::{
     core::{
         common::Timestamp,
-        did::{DIDDocument, KeyData, KeyType, PublicKey, DID},
+        did::{DIDDocument, KeyData, KeyType, PublicKeyBuilder},
         diff::Diff,
         io::IdentityWriter,
     },
@@ -74,13 +74,16 @@ async fn main() -> Result<()> {
 async fn create_diff(did_document: DIDDocument, keypair: &identity_crypto::KeyPair) -> crate::Result<DIDDiff> {
     // updated doc and publish diff
     let mut new = did_document.clone();
-    let public_key = PublicKey {
-        id: DID::parse_from_str("did:iota:123456789abcdefghij#keys-1")?,
-        // id: "did:iota:123456789abcdefghij#keys-1".into(),
-        controller: DID::parse_from_str("did:iota:com:123456789abcdefghij")?,
-        key_type: KeyType::RsaVerificationKey2018,
-        key_data: KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into()),
-    };
+
+    let public_key = PublicKeyBuilder::default()
+        .id("did:iota:123456789abcdefghij#keys-1".parse()?)
+        .controller("did:iota:com:123456789abcdefghij".parse()?)
+        .key_type(KeyType::RsaVerificationKey2018)
+        .key_data(KeyData::PublicKeyBase58(
+            "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        ))
+        .build()
+        .unwrap();
 
     new.update_public_key(public_key);
     new.update_time();
