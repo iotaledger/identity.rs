@@ -5,6 +5,8 @@ pub enum Error {
     #[error(transparent)]
     CoreError(#[from] identity_core::Error),
     #[error(transparent)]
+    CryptoError(#[from] identity_crypto::Error),
+    #[error(transparent)]
     DiffError(#[from] identity_core::diff::Error),
     #[error(transparent)]
     ClientError(#[from] iota::client::error::Error),

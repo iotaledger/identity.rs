@@ -225,8 +225,6 @@ fn test_diff_merge_from_string() {
 
 #[test]
 fn test_doc_metadata() {
-    use std::collections::HashMap;
-
     // get the json string for a did doc.
     let json_str = setup_json("doc");
     // get the json string for the metadata.

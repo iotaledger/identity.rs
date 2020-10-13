@@ -1,14 +1,15 @@
-use anyhow::Result;
 use bs58::{decode, encode};
 use identity_core::{
-    common::OneOrMany,
+    common::{AsJson as _, OneOrMany},
     did::{Authentication, DIDDocument, DIDDocumentBuilder, KeyData, KeyType, PublicKey, PublicKeyBuilder, DID},
 };
 use identity_crypto::{Ed25519, KeyPair, Sign, Verify};
 use multihash::Blake2b256;
-use serde_json::to_vec;
 
-use crate::{error::Error, types::DIDDiff};
+use crate::{
+    error::{Error, Result},
+    types::DIDDiff,
+};
 
 pub fn verify_signature(message: &str, signature: &str, pub_key: &str) -> Result<bool> {
     let pub_key = decode(pub_key).into_vec().map_err(|_| Error::InvalidSignature)?;
@@ -61,7 +62,7 @@ pub fn sign(key: &KeyPair, message: impl AsRef<[u8]>) -> Result<String> {
 /// Signs a DID document or diff with a Ed25519 Keypair
 pub fn sign_document(document: &mut DIDDocument, key: &KeyPair) -> Result<()> {
     document.remove_metadata("proof");
-    document.set_metadata("proof", sign(key, &to_vec(document)?)?);
+    document.set_metadata("proof", sign(key, &document.to_json_vec()?)?);
 
     Ok(())
 }
