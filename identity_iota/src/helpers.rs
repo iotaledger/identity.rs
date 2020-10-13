@@ -2,7 +2,7 @@ use anyhow::Result;
 use bs58::{decode, encode};
 use identity_core::{
     common::OneOrMany,
-    did::{Authentication, DIDDocument, KeyData, KeyType, PublicKey, DID},
+    did::{PublicKeyBuilder, DIDDocumentBuilder, Authentication, DIDDocument, KeyData, KeyType, PublicKey, DID},
 };
 use identity_crypto::{Ed25519, Sign, Verify};
 use multihash::Blake2b256;
@@ -27,7 +27,7 @@ pub fn diff_has_valid_signature(diff: DIDDiff, auth_key: &str) -> Result<bool> {
 pub fn doc_has_valid_signature(doc: &DIDDocument) -> Result<bool> {
     // todo verify that did matches auth key (only before auth change, later verify signatures with previous auth key)
     if let Some(sig) = doc.metadata.get("proof") {
-        let doc_without_metadata = doc.clone().supply_metadata(HashMap::new())?;
+        let doc_without_metadata = doc.clone().supply_metadata(HashMap::new());
         if let Some(auth_key) = get_auth_key(&doc) {
             // Check did auth key correlation
             let did = doc.derive_did();
@@ -68,7 +68,7 @@ pub fn sign_document(key: &identity_crypto::KeyPair, document: DIDDocument) -> R
     let mut metadata = HashMap::new();
     let signature = sign(&key, &serde_json::to_string(&document)?)?;
     metadata.insert("proof".into(), signature);
-    let signed_doc = document.supply_metadata(metadata)?;
+    let signed_doc = document.supply_metadata(metadata);
     Ok(signed_doc)
 }
 
@@ -80,24 +80,23 @@ pub fn sign_diff(key: &identity_crypto::KeyPair, mut diddiff: DIDDiff) -> Result
 /// Creates a DID document with an auth key and a DID
 pub fn create_document(auth_key: String) -> Result<DIDDocument> {
     //create comnet id
-    let did = create_method_id(&auth_key, Some("com"), None)?;
+    let did: DID = create_method_id(&auth_key, Some("com"), None)?;
 
-    let auth_key = PublicKey {
-        id: did.clone(),
-        controller: did.clone(),
-        key_type: KeyType::RsaVerificationKey2018,
-        key_data: KeyData::PublicKeyBase58(auth_key),
-    };
+    let key: PublicKey = PublicKeyBuilder::default()
+        .id(did.clone())
+        .controller(did.clone())
+        .key_type(KeyType::RsaVerificationKey2018)
+        .key_data(KeyData::PublicKeyBase58(auth_key))
+        .build()
+        .expect("FIXME");
 
-    let did_doc = DIDDocument {
-        context: OneOrMany::One("https://w3id.org/did/v1".into()),
-        id: did,
-        auth: vec![auth_key.into()],
-        ..Default::default()
-    }
-    .init();
+    let doc: DIDDocument = DIDDocumentBuilder::default()
+        .id(did)
+        .auth(vec![key.into()])
+        .build()
+        .expect("FIXME");
 
-    Ok(did_doc)
+    Ok(doc)
 }
 
 /// Get authentication key from a DIDDocument

@@ -58,8 +58,6 @@ fn test_auth() {
     doc_2.update_auth(auth2);
     doc_2.update_auth(auth3);
 
-    let doc_2 = doc_2.init();
-
     assert_eq!(doc_1, doc_2);
 }
 
@@ -110,8 +108,6 @@ fn test_assertion() {
     doc_2.update_assert(auth1);
     doc_2.update_assert(auth2);
     doc_2.update_assert(auth3);
-
-    let doc_2 = doc_2.init();
 
     assert_eq!(doc_1, doc_2);
 }
@@ -164,8 +160,6 @@ fn test_verification() {
     doc_2.update_verification(auth2);
     doc_2.update_verification(auth3);
 
-    let doc_2 = doc_2.init();
-
     assert_eq!(doc_1, doc_2);
 }
 
@@ -216,8 +210,6 @@ fn test_delegation() {
     doc_2.update_delegation(auth1);
     doc_2.update_delegation(auth2);
     doc_2.update_delegation(auth3);
-
-    let doc_2 = doc_2.init();
 
     assert_eq!(doc_1, doc_2);
 }
@@ -270,8 +262,6 @@ fn test_invocation() {
     doc_2.update_invocation(auth2);
     doc_2.update_invocation(auth3);
 
-    let doc_2 = doc_2.init();
-
     assert_eq!(doc_1, doc_2);
 }
 
@@ -322,8 +312,6 @@ fn test_agreement() {
     doc_2.update_agreement(auth1);
     doc_2.update_agreement(auth2);
     doc_2.update_agreement(auth3);
-
-    let doc_2 = doc_2.init();
 
     assert_eq!(doc_1, doc_2);
 }

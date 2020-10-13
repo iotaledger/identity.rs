@@ -1,3 +1,4 @@
+use derive_builder::Builder;
 use identity_diff::Diff;
 use serde::{
     de::{self, Deserializer, MapAccess, Visitor},
@@ -13,12 +14,15 @@ use crate::{common::Url, did::DID, utils::HasId};
 
 /// Describes a `Service` in a `DIDDocument` type. Contains an `id`, `service_type` and `endpoint`.  The `endpoint` can
 /// be represented as a `String` or a `ServiceEndpoint` in json.
-#[derive(Debug, PartialEq, Deserialize, Serialize, Diff, Clone, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize, Diff, Builder)]
 #[diff(from_into)]
+#[builder(pattern = "owned")]
 pub struct Service {
     #[serde(default)]
+    #[builder(try_setter)]
     pub id: DID,
     #[serde(rename = "type")]
+    #[builder(setter(into))]
     pub service_type: String,
     #[serde(rename = "serviceEndpoint")]
     pub endpoint: ServiceEndpoint,
@@ -27,32 +31,16 @@ pub struct Service {
 /// Describes the `ServiceEndpoint` struct type. Contains a required `context` and two optional fields: `endpoint_type`
 /// and `instances`.  If neither `instances` nor `endpoint_type` is specified, the `ServiceEndpoint` is represented as a
 /// String in json using the `context`.
-#[derive(Debug, PartialEq, Clone, Diff, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Diff, Builder)]
 #[diff(from_into)]
+#[builder(pattern = "owned")]
 pub struct ServiceEndpoint {
+    #[builder(try_setter)]
     pub context: Url,
+    #[builder(default, setter(into, strip_option))]
     pub endpoint_type: Option<String>,
+    #[builder(default, setter(into, strip_option))]
     pub instances: Option<Vec<String>>,
-}
-
-impl Service {
-    pub fn init(self) -> Self {
-        Self {
-            id: self.id,
-            service_type: self.service_type,
-            endpoint: self.endpoint,
-        }
-    }
-}
-
-impl ServiceEndpoint {
-    pub fn init(self) -> Self {
-        Self {
-            context: self.context,
-            endpoint_type: self.endpoint_type,
-            instances: self.instances,
-        }
-    }
 }
 
 impl HasId for Service {

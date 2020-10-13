@@ -1,4 +1,5 @@
 use core::{
+    convert::TryFrom,
     fmt::{Display, Formatter, Result as FmtResult},
     str::FromStr,
 };
@@ -7,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
 
-/// Public Key type enum.
+/// Possible key types within a DID document.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Diff)]
 pub enum KeyType {
     JsonWebKey2020,
@@ -21,6 +22,20 @@ pub enum KeyType {
 }
 
 impl KeyType {
+    pub fn try_from_str(string: &str) -> Result<Self> {
+        match string {
+            "JsonWebKey2020" => Ok(Self::JsonWebKey2020),
+            "Secp256k1VerificationKey2018" => Ok(Self::EcdsaSecp256k1VerificationKey2019),
+            "Ed25519VerificationKey2018" => Ok(Self::Ed25519VerificationKey2018),
+            "GpgVerificationKey2020" => Ok(Self::GpgVerificationKey2020),
+            "RsaVerificationKey2018" => Ok(Self::RsaVerificationKey2018),
+            "X25519KeyAgreementKey2019" => Ok(Self::X25519KeyAgreementKey2019),
+            "SchnorrSecp256k1VerificationKey2019" => Ok(Self::SchnorrSecp256k1VerificationKey2019),
+            "EcdsaSecp256k1RecoveryMethod2020" => Ok(Self::EcdsaSecp256k1RecoveryMethod2020),
+            _ => Err(Error::InvalidKeyType),
+        }
+    }
+
     pub const fn as_str(&self) -> &'static str {
         match self {
             Self::JsonWebKey2020 => "JsonWebKey2020",
@@ -44,17 +59,15 @@ impl Display for KeyType {
 impl FromStr for KeyType {
     type Err = Error;
 
-    fn from_str(string: &str) -> Result<Self> {
-        match string {
-            "JsonWebKey2020" => Ok(Self::JsonWebKey2020),
-            "Secp256k1VerificationKey2018" => Ok(Self::EcdsaSecp256k1VerificationKey2019),
-            "Ed25519VerificationKey2018" => Ok(Self::Ed25519VerificationKey2018),
-            "GpgVerificationKey2020" => Ok(Self::GpgVerificationKey2020),
-            "RsaVerificationKey2018" => Ok(Self::RsaVerificationKey2018),
-            "X25519KeyAgreementKey2019" => Ok(Self::X25519KeyAgreementKey2019),
-            "SchnorrSecp256k1VerificationKey2019" => Ok(Self::SchnorrSecp256k1VerificationKey2019),
-            "EcdsaSecp256k1RecoveryMethod2020" => Ok(Self::EcdsaSecp256k1RecoveryMethod2020),
-            _ => Err(Error::InvalidKeyType),
-        }
+    fn from_str(string: &str) -> Result<Self, Self::Err> {
+        Self::try_from_str(string)
+    }
+}
+
+impl TryFrom<&'_ str> for KeyType {
+    type Error = Error;
+
+    fn try_from(other: &'_ str) -> Result<Self, Self::Error> {
+        Self::try_from_str(other)
     }
 }

@@ -62,8 +62,7 @@ fn test_service_with_no_endpoint_body() {
     let endpoint = ServiceEndpoint {
         context: "https://edv.example.com/".into(),
         ..Default::default()
-    }
-    .init();
+    };
 
     let service = Service {
         id: "did:into:123#edv".parse().unwrap(),
@@ -89,8 +88,7 @@ fn test_service_with_body() {
         context: "https://schema.identity.foundation/hub".into(),
         endpoint_type: Some("UserHubEndpoint".into()),
         instances: Some(vec!["did:example:456".into(), "did:example:789".into()]),
-    }
-    .init();
+    };
 
     let service = Service {
         id: "did:example:123456789abcdefghi#hub".parse().unwrap(),

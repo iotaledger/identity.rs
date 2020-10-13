@@ -1,3 +1,4 @@
+use derive_builder::Builder;
 use identity_diff::{self as diff, Diff};
 use serde::{Deserialize, Serialize};
 
@@ -7,11 +8,15 @@ use crate::{
 };
 
 /// Public key struct.
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Builder)]
+#[builder(pattern = "owned")]
 pub struct PublicKey {
+    #[builder(try_setter)]
     pub id: DID,
+    #[builder(try_setter)]
     pub controller: DID,
     #[serde(rename = "type")]
+    #[builder(try_setter)]
     pub key_type: KeyType,
     #[serde(flatten)]
     pub key_data: KeyData,

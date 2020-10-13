@@ -46,33 +46,29 @@ fn test_doc_creation() {
         context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
-    }
-    .init();
+    };
+
     let endpoint = ServiceEndpoint {
         context: "https://edv.example.com/".into(),
         ..Default::default()
-    }
-    .init();
+    };
 
     let service = Service {
         id: "did:into:123#edv".parse().unwrap(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
-    }
-    .init();
+    };
 
     let endpoint2 = ServiceEndpoint {
         context: "https://edv.example.com/".into(),
         ..Default::default()
-    }
-    .init();
+    };
 
     let service2 = Service {
         id: "did:into:123#edv".parse().unwrap(),
         service_type: "IdentityHub".into(),
         endpoint: endpoint2,
-    }
-    .init();
+    };
 
     did_doc.update_service(service.clone());
     did_doc.update_service(service2.clone());
@@ -92,15 +88,14 @@ fn test_doc_creation() {
         context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
-    }
-    .init();
+    };
 
     did_doc_2.update_public_key(public_key);
 
     did_doc_2.update_service(service);
     did_doc_2.update_service(service2);
 
-    let did_doc = did_doc.init_timestamps().unwrap();
+    let did_doc = did_doc.init_timestamps();
 
     // did_doc has timestamps while did_doc_2 does not.
     assert_ne!(did_doc, did_doc_2);
@@ -114,28 +109,25 @@ fn test_doc_diff() {
         context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
-    }
-    .init();
+    };
+
     // new doc.
     let mut new = DIDDocument {
         context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
-    }
-    .init();
+    };
 
     let endpoint = ServiceEndpoint {
         context: "https://edv.example.com/".into(),
         ..Default::default()
-    }
-    .init();
+    };
 
     let service = Service {
         id: "did:into:123#edv".parse().unwrap(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
-    }
-    .init();
+    };
 
     new.update_service(service);
 
@@ -192,22 +184,20 @@ fn test_diff_merge_from_string() {
         context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
-    }
-    .init();
+    };
+
     // create an endpoint.
     let endpoint = ServiceEndpoint {
         context: "https://edv.example.com/".into(),
         ..Default::default()
-    }
-    .init();
+    };
 
     // create a IdCompare<Service>
     let service = Service {
         id: "did:into:123#edv".parse().unwrap(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
-    }
-    .init();
+    };
 
     // update the service.
     doc.update_service(service);
@@ -260,7 +250,7 @@ fn test_doc_metadata() {
     metadata.insert("some_more".into(), "metadata_stuff".into());
 
     // add the metadata to the original doc.
-    let doc = doc.supply_metadata(metadata).unwrap();
+    let doc = doc.supply_metadata(metadata);
 
     // get the metadata doc string and create a new did doc from it.
     let res_doc = DIDDocument::from_str(&result_str).unwrap();
@@ -277,33 +267,29 @@ fn test_realistic_diff() {
         context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
-    }
-    .init();
+    };
+
     let endpoint = ServiceEndpoint {
         context: "https://edv.example.com/".into(),
         ..Default::default()
-    }
-    .init();
+    };
 
     let service = Service {
         id: "did:into:123#edv".parse().unwrap(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
-    }
-    .init();
+    };
 
     let endpoint2 = ServiceEndpoint {
         context: "https://edv.example.com/".into(),
         ..Default::default()
-    }
-    .init();
+    };
 
     let service2 = Service {
         id: "did:into:123#edv".parse().unwrap(),
         service_type: "IdentityHub".into(),
         endpoint: endpoint2,
-    }
-    .init();
+    };
 
     did_doc.update_service(service);
     did_doc.update_service(service2);
@@ -352,8 +338,7 @@ fn test_id_compare() {
     let endpoint = ServiceEndpoint {
         context: "https://edv.example.com/".into(),
         ..Default::default()
-    }
-    .init();
+    };
 
     // create a public key.
     let public_key = PublicKey {
@@ -371,16 +356,14 @@ fn test_id_compare() {
         id: "did:into:123#edv".parse().unwrap(),
         service_type: "EncryptedDataVault".into(),
         endpoint,
-    }
-    .init();
+    };
 
     // generate a did doc.
     let mut did_doc = DIDDocument {
         context: OneOrMany::One(DID::BASE_CONTEXT.into()),
         id: "did:iota:123456789abcdefghi".parse().unwrap(),
         ..Default::default()
-    }
-    .init();
+    };
 
     // insert the service twice.
     did_doc.update_service(service.clone());

@@ -1,3 +1,4 @@
+use derive_builder::Builder;
 use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, str::FromStr};
@@ -10,56 +11,51 @@ use crate::{
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
 /// `public_keys`, services and metadata.  Only `context` and `id` are required to create a DID document.
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Diff)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Diff, Builder)]
+#[builder(pattern = "owned")]
 pub struct DIDDocument {
     #[serde(rename = "@context")]
+    #[builder(setter(into))]
     pub context: OneOrMany<Context>,
+    #[builder(try_setter)]
     pub id: DID,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[diff(should_ignore)]
+    #[builder(default, setter(into, strip_option))]
     pub created: Option<Timestamp>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(into, strip_option))]
     pub updated: Option<Timestamp>,
     #[serde(rename = "publicKey", skip_serializing_if = "Vec::is_empty", default)]
+    #[builder(default)]
     pub public_keys: Vec<PublicKey>,
     #[serde(rename = "authentication", skip_serializing_if = "Vec::is_empty", default)]
+    #[builder(default)]
     pub auth: Vec<Authentication>,
     #[serde(rename = "assertionMethod", skip_serializing_if = "Vec::is_empty", default)]
+    #[builder(default)]
     pub assert: Vec<Authentication>,
     #[serde(rename = "verificationMethod", skip_serializing_if = "Vec::is_empty", default)]
+    #[builder(default)]
     pub verification: Vec<Authentication>,
     #[serde(rename = "capabilityDelegation", skip_serializing_if = "Vec::is_empty", default)]
+    #[builder(default)]
     pub delegation: Vec<Authentication>,
     #[serde(rename = "capabilityInvocation", skip_serializing_if = "Vec::is_empty", default)]
+    #[builder(default)]
     pub invocation: Vec<Authentication>,
     #[serde(rename = "keyAgreement", skip_serializing_if = "Vec::is_empty", default)]
+    #[builder(default)]
     pub agreement: Vec<Authentication>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    #[builder(default)]
     pub services: Vec<Service>,
     #[serde(flatten)]
+    #[builder(default)]
     pub metadata: HashMap<String, String>,
 }
 
 impl DIDDocument {
-    /// Initialize the DIDDocument.
-    pub fn init(self) -> Self {
-        DIDDocument {
-            context: self.context,
-            id: self.id,
-            created: self.created,
-            updated: self.updated,
-            auth: self.auth,
-            assert: self.assert,
-            verification: self.verification,
-            delegation: self.delegation,
-            invocation: self.invocation,
-            agreement: self.agreement,
-            metadata: self.metadata,
-            public_keys: self.public_keys,
-            services: self.services,
-        }
-    }
-
     /// gets the inner value of the `context` from the `DIDDocument`.
     pub fn context(&self) -> &[Context] {
         self.context.as_slice()
@@ -157,19 +153,17 @@ impl DIDDocument {
 
     /// Inserts `metadata` into the `DIDDocument` body.  The metadata must be a HashMap<String, String> where the keys
     /// are json keys and values are the json values.
-    pub fn supply_metadata(self, metadata: HashMap<String, String>) -> crate::Result<Self> {
-        Ok(DIDDocument { metadata, ..self }.init())
+    pub fn supply_metadata(mut self, metadata: HashMap<String, String>) -> Self {
+        self.metadata = metadata;
+        self
     }
 
     /// initialize the `created` and `updated` timestamps to publish the did document.  Returns the did document with
     /// these timestamps.
-    pub fn init_timestamps(self) -> crate::Result<Self> {
-        Ok(DIDDocument {
-            created: Some(Timestamp::now()),
-            updated: Some(Timestamp::now()),
-            ..self
-        }
-        .init())
+    pub fn init_timestamps(mut self) -> Self {
+        self.created = Some(Timestamp::now());
+        self.updated = Some(Timestamp::now());
+        self
     }
 
     pub fn get_diff_from_str(json: impl AsRef<str>) -> crate::Result<DiffDIDDocument> {
