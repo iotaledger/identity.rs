@@ -1,0 +1,20 @@
+//! Resolve a DID
+//! cargo run --example resolve
+
+use anyhow::Result;
+use identity_iota::{
+    core::{
+        did::DID,
+        resolver::{IdentityResolver, ResolutionInput},
+    },
+    resolver::TangleResolver,
+};
+#[smol_potat::main]
+async fn main() -> Result<()> {
+    let mut resolver = TangleResolver::new();
+    resolver.set_nodes(vec!["http://localhost:14265", "https://nodes.comnet.thetangle.org:443"]);
+    let did = DID::parse_from_str("did:iota:com:874TeZFu6bFHNbzU4ETa5adAWmRbAgusG17kfyWtszN2")?;
+    let res = resolver.document(&did, &ResolutionInput::new()).await?;
+    println!("{:?}", res);
+    Ok(())
+}

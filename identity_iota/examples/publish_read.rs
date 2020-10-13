@@ -32,6 +32,7 @@ async fn main() -> Result<()> {
 
     // Create, sign and publish DID document to the Tangle
     let did_document = create_document(bs58_auth_key.clone())?;
+    println!("DID: {}", did_document.derive_did());
     let signed_doc = sign_document(&keypair, did_document.clone())?;
     let tail_transaction = tangle_writer.write_document(&signed_doc).await?;
     println!(

@@ -84,7 +84,8 @@ pub fn create_document(auth_key: String) -> Result<DIDDocument> {
         context: OneOrMany::One(Context::from("https://w3id.org/did/v1")),
         ..Default::default()
     }
-    .init();
+    .init()
+    .init_timestamps()?;
     let key_data = KeyData::Base58(auth_key);
     //create comnet id
     // let did = create_method_id(key_data.clone())?;
@@ -102,6 +103,7 @@ pub fn create_document(auth_key: String) -> Result<DIDDocument> {
 
     did_doc.update_auth(auth);
     did_doc.id = did;
+    did_doc.update_time();
 
     Ok(did_doc)
 }
@@ -132,5 +134,5 @@ pub fn create_method_id(key_data: KeyData, network: Option<&str>, network_shard:
         _ => String::new(),
     };
     let id_string = format!("did:iota:{}{}{}", network_string, shard_string, bs58key);
-    Ok(DID::parse_from_str(id_string).unwrap())
+    Ok(DID::parse_from_str(id_string)?)
 }
