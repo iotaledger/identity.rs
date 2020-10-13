@@ -1,7 +1,8 @@
 use anyhow::Result;
 use bs58::{decode, encode};
-use identity_core::did::{
-    Authentication, DIDDocument, DIDDocumentBuilder, KeyData, KeyType, PublicKey, PublicKeyBuilder, DID,
+use identity_core::{
+    common::OneOrMany,
+    did::{Authentication, DIDDocument, DIDDocumentBuilder, KeyData, KeyType, PublicKey, PublicKeyBuilder, DID},
 };
 use identity_crypto::{Ed25519, Sign, Verify};
 use multihash::Blake2b256;
@@ -90,6 +91,7 @@ pub fn create_document(auth_key: String) -> Result<DIDDocument> {
         .expect("FIXME");
 
     let doc: DIDDocument = DIDDocumentBuilder::default()
+        .context(OneOrMany::One(DID::BASE_CONTEXT.into()))
         .id(did)
         .auth(vec![key.into()])
         .build()

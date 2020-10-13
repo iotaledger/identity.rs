@@ -2,7 +2,6 @@
 //! cargo run --example publish_read
 
 use anyhow::Result;
-use hex;
 use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
 use identity_iota::{
     core::{

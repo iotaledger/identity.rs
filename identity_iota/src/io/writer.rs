@@ -118,16 +118,15 @@ impl TangleWriter {
         };
 
         // Dispatch the transfer to the network
-        let mut bundle: Vec<BundledTransaction> = self.client.send(None).transfers(vec![transfer]).send().await?;
+        let bundle: Vec<BundledTransaction> = self.client.send(None).transfers(vec![transfer]).send().await?;
 
-        // Extract the response transaction - there should be exactly one.
-        let txn: BundledTransaction = if let [_] = bundle.as_slice() {
-            bundle.pop().expect("infallible")
-        } else {
-            return Err(Error::InvalidTransaction(TransactionError::InvalidBundle));
-        };
+        // Extract the tail transaction from the response.
+        let tail: &BundledTransaction = bundle
+            .iter()
+            .find(|txn| txn.is_tail())
+            .ok_or_else(|| Error::InvalidTransaction(TransactionError::InvalidBundle))?;
 
-        Ok(txn_hash(&txn))
+        Ok(txn_hash(tail))
     }
 
     async fn promote(&self, txn: &Hash) -> Result<String> {
@@ -146,24 +145,20 @@ impl TangleWriter {
             .await?;
 
         let tips: GTTAResponse = self.client.get_transactions_to_approve().depth(TS_DEPTH).send().await?;
-
-        let transfer: &BundledTransaction = match transfers.get(0) {
-            Some(transfer) => transfer,
-            None => return Err(Error::InvalidTransaction(TransactionError::MissingBundle)),
-        };
+        let tail: &BundledTransaction = transfers.tail();
 
         let trytes: AttachToTangleResponse = self
             .client
             .attach_to_tangle()
             .trunk_transaction(&txn)
             .branch_transaction(&tips.branch_transaction)
-            .trytes(from_ref(transfer))
+            .trytes(from_ref(tail))
             .send()
             .await?;
 
         self.client.broadcast_transactions(&trytes.trytes).await?;
 
-        Ok(encode_trits(transfer.bundle().as_trits()))
+        Ok(encode_trits(tail.bundle().as_trits()))
     }
 
     async fn is_confirmed(&self, txn: &Hash) -> Result<bool> {
