@@ -99,7 +99,7 @@ impl Diff for PublicKey {
                 .key_type
                 .map(|value| self.key_type.merge(value))
                 .transpose()?
-                .unwrap_or_else(|| self.key_type.clone()),
+                .unwrap_or_else(|| self.key_type),
             key_data: diff
                 .key_data
                 .map(|value| self.key_data.merge(value))
@@ -141,12 +141,12 @@ impl Diff for PublicKey {
                 .key_type
                 .map(<KeyType>::from_diff)
                 .transpose()?
-                .unwrap_or_else(|| Self::default_key_type()),
+                .unwrap_or_else(Self::default_key_type),
             key_data: diff
                 .key_data
                 .map(<KeyData>::from_diff)
                 .transpose()?
-                .unwrap_or_else(|| Self::default_key_data()),
+                .unwrap_or_else(Self::default_key_data),
         })
     }
 
