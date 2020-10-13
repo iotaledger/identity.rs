@@ -1,6 +1,6 @@
 use identity_core::{
     common::OneOrMany,
-    did::{Authentication, DIDDocument, KeyData, KeyType, PublicKey, Service, ServiceEndpoint, DID},
+    did::{Authentication, DIDDocument, KeyData, KeyType, PublicKeyBuilder, ServiceBuilder, ServiceEndpoint, DID},
 };
 
 use std::str::FromStr;
@@ -48,39 +48,36 @@ fn test_doc_creation() {
         ..Default::default()
     };
 
-    let endpoint = ServiceEndpoint {
-        context: "https://edv.example.com/".into(),
-        ..Default::default()
-    };
+    let endpoint = ServiceEndpoint::Url("https://edv.example.com/".parse().unwrap());
 
-    let service = Service {
-        id: "did:into:123#edv".parse().unwrap(),
-        service_type: "EncryptedDataVault".into(),
-        endpoint,
-    };
+    let service = ServiceBuilder::default()
+        .id("did:into:123#edv".parse().unwrap())
+        .service_type("EncryptedDataVault")
+        .endpoint(endpoint)
+        .build()
+        .unwrap();
 
-    let endpoint2 = ServiceEndpoint {
-        context: "https://edv.example.com/".into(),
-        ..Default::default()
-    };
+    let endpoint2 = ServiceEndpoint::Url("https://edv.example.com/".parse().unwrap());
 
-    let service2 = Service {
-        id: "did:into:123#edv".parse().unwrap(),
-        service_type: "IdentityHub".into(),
-        endpoint: endpoint2,
-    };
+    let service2 = ServiceBuilder::default()
+        .id("did:into:123#edv".parse().unwrap())
+        .service_type("IdentityHub")
+        .endpoint(endpoint2)
+        .build()
+        .unwrap();
 
     did_doc.update_service(service.clone());
     did_doc.update_service(service2.clone());
 
-    let key_data = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
-
-    let public_key = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
-        key_type: KeyType::RsaVerificationKey2018,
-        controller: "did:iota:123456789abcdefghi".parse().unwrap(),
-        key_data,
-    };
+    let public_key = PublicKeyBuilder::default()
+        .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
+        .key_type(KeyType::RsaVerificationKey2018)
+        .controller("did:iota:123456789abcdefghi".parse().unwrap())
+        .key_data(KeyData::PublicKeyBase58(
+            "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        ))
+        .build()
+        .unwrap();
 
     did_doc.update_public_key(public_key.clone());
 
@@ -118,27 +115,26 @@ fn test_doc_diff() {
         ..Default::default()
     };
 
-    let endpoint = ServiceEndpoint {
-        context: "https://edv.example.com/".into(),
-        ..Default::default()
-    };
+    let endpoint = ServiceEndpoint::Url("https://edv.example.com/".parse().unwrap());
 
-    let service = Service {
-        id: "did:into:123#edv".parse().unwrap(),
-        service_type: "EncryptedDataVault".into(),
-        endpoint,
-    };
+    let service = ServiceBuilder::default()
+        .id("did:into:123#edv".parse().unwrap())
+        .service_type("EncryptedDataVault")
+        .endpoint(endpoint)
+        .build()
+        .unwrap();
 
     new.update_service(service);
 
-    let key_data = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
-
-    let public_key = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
-        key_type: KeyType::RsaVerificationKey2018,
-        controller: "did:iota:123456789abcdefghi".parse().unwrap(),
-        key_data,
-    };
+    let public_key = PublicKeyBuilder::default()
+        .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
+        .key_type(KeyType::RsaVerificationKey2018)
+        .controller("did:iota:123456789abcdefghi".parse().unwrap())
+        .key_data(KeyData::PublicKeyBase58(
+            "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        ))
+        .build()
+        .unwrap();
 
     new.update_public_key(public_key);
 
@@ -187,31 +183,29 @@ fn test_diff_merge_from_string() {
     };
 
     // create an endpoint.
-    let endpoint = ServiceEndpoint {
-        context: "https://edv.example.com/".into(),
-        ..Default::default()
-    };
+    let endpoint = ServiceEndpoint::Url("https://edv.example.com/".parse().unwrap());
 
     // create a IdCompare<Service>
-    let service = Service {
-        id: "did:into:123#edv".parse().unwrap(),
-        service_type: "EncryptedDataVault".into(),
-        endpoint,
-    };
+    let service = ServiceBuilder::default()
+        .id("did:into:123#edv".parse().unwrap())
+        .service_type("EncryptedDataVault")
+        .endpoint(endpoint)
+        .build()
+        .unwrap();
 
     // update the service.
     doc.update_service(service);
 
-    // create some key data.
-    let key_data = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
-
     // create a public key, IdCompare<PublicKey>.
-    let public_key = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
-        key_type: KeyType::RsaVerificationKey2018,
-        controller: "did:iota:123456789abcdefghi".parse().unwrap(),
-        key_data,
-    };
+    let public_key = PublicKeyBuilder::default()
+        .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
+        .key_type(KeyType::RsaVerificationKey2018)
+        .controller("did:iota:123456789abcdefghi".parse().unwrap())
+        .key_data(KeyData::PublicKeyBase58(
+            "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        ))
+        .build()
+        .unwrap();
 
     // add the public key to the did doc.
     doc.update_public_key(public_key);
@@ -269,46 +263,48 @@ fn test_realistic_diff() {
         ..Default::default()
     };
 
-    let endpoint = ServiceEndpoint {
-        context: "https://edv.example.com/".into(),
-        ..Default::default()
-    };
+    let endpoint = ServiceEndpoint::Url("https://edv.example.com/".parse().unwrap());
 
-    let service = Service {
-        id: "did:into:123#edv".parse().unwrap(),
-        service_type: "EncryptedDataVault".into(),
-        endpoint,
-    };
+    let service = ServiceBuilder::default()
+        .id("did:into:123#edv".parse().unwrap())
+        .service_type("EncryptedDataVault")
+        .endpoint(endpoint)
+        .build()
+        .unwrap();
 
-    let endpoint2 = ServiceEndpoint {
-        context: "https://edv.example.com/".into(),
-        ..Default::default()
-    };
+    let endpoint2 = ServiceEndpoint::Url("https://edv.example.com/".parse().unwrap());
 
-    let service2 = Service {
-        id: "did:into:123#edv".parse().unwrap(),
-        service_type: "IdentityHub".into(),
-        endpoint: endpoint2,
-    };
+    let service2 = ServiceBuilder::default()
+        .id("did:into:123#edv".parse().unwrap())
+        .service_type("IdentityHub")
+        .endpoint(endpoint2)
+        .build()
+        .unwrap();
 
     did_doc.update_service(service);
     did_doc.update_service(service2);
 
-    let public_key = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
-        key_type: KeyType::RsaVerificationKey2018,
-        controller: "did:iota:123456789abcdefghi".parse().unwrap(),
-        key_data: KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into()),
-    };
+    let public_key = PublicKeyBuilder::default()
+        .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
+        .key_type(KeyType::RsaVerificationKey2018)
+        .controller("did:iota:123456789abcdefghi".parse().unwrap())
+        .key_data(KeyData::PublicKeyBase58(
+            "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        ))
+        .build()
+        .unwrap();
 
     did_doc.update_public_key(public_key.clone());
 
-    let key1 = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-2".parse().unwrap(),
-        key_type: KeyType::RsaVerificationKey2018,
-        controller: "did:iota:123456789abcdefghi".parse().unwrap(),
-        key_data: KeyData::PublicKeyPem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into()),
-    };
+    let key1 = PublicKeyBuilder::default()
+        .id("did:iota:123456789abcdefghi#keys-2".parse().unwrap())
+        .key_type(KeyType::RsaVerificationKey2018)
+        .controller("did:iota:123456789abcdefghi".parse().unwrap())
+        .key_data(KeyData::PublicKeyPem(
+            "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into(),
+        ))
+        .build()
+        .unwrap();
 
     let mut did_doc_2 = did_doc.clone();
 
@@ -331,32 +327,30 @@ fn test_realistic_diff() {
 // test that items in the did doc are unique by their subject/id.
 #[test]
 fn test_id_compare() {
-    // key data.
-    let key_data = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
-
     // service endpoint.
-    let endpoint = ServiceEndpoint {
-        context: "https://edv.example.com/".into(),
-        ..Default::default()
-    };
+    let endpoint = ServiceEndpoint::Url("https://edv.example.com/".parse().unwrap());
 
     // create a public key.
-    let public_key = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
-        key_type: KeyType::RsaVerificationKey2018,
-        controller: "did:iota:123456789abcdefghi".parse().unwrap(),
-        key_data,
-    };
+    let public_key = PublicKeyBuilder::default()
+        .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
+        .key_type(KeyType::RsaVerificationKey2018)
+        .controller("did:iota:123456789abcdefghi".parse().unwrap())
+        .key_data(KeyData::PublicKeyBase58(
+            "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        ))
+        .build()
+        .unwrap();
 
     // create the authentication key.
     let auth = Authentication::Key(public_key.clone());
 
     // create a IdCompare<Service>
-    let service = Service {
-        id: "did:into:123#edv".parse().unwrap(),
-        service_type: "EncryptedDataVault".into(),
-        endpoint,
-    };
+    let service = ServiceBuilder::default()
+        .id("did:into:123#edv".parse().unwrap())
+        .service_type("EncryptedDataVault")
+        .endpoint(endpoint)
+        .build()
+        .unwrap();
 
     // generate a did doc.
     let mut did_doc = DIDDocument {

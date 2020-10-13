@@ -1,14 +1,11 @@
-#[macro_use]
-mod macros;
-
-#[macro_use]
-extern crate identity_core;
-
-use identity_core::{common::Context, vc::*};
+use identity_core::{
+    common::{Context, Object, Timestamp},
+    vc::*,
+};
 
 #[test]
 fn test_presentation_builder_valid() {
-    let issuance = timestamp!("2010-01-01T00:00:00Z");
+    let issuance: Timestamp = "2010-01-01T00:00:00Z".parse().unwrap();
 
     let subject = CredentialSubjectBuilder::default()
         .id("did:iota:alice")
@@ -27,7 +24,7 @@ fn test_presentation_builder_valid() {
         .build()
         .unwrap();
 
-    let verifiable = VerifiableCredential::new(credential, object!());
+    let verifiable = VerifiableCredential::new(credential, Object::new());
 
     let refresh_service = RefreshServiceBuilder::default()
         .id("did:refresh-service")
@@ -60,8 +57,10 @@ fn test_presentation_builder_valid() {
         .unwrap();
 
     assert_eq!(presentation.context.len(), 2);
-    assert_matches!(presentation.context.get(0).unwrap(), Context::Url(ref url) if url == Presentation::BASE_CONTEXT);
-    assert_matches!(presentation.context.get(1).unwrap(), Context::Url(ref url) if url == "https://www.w3.org/2018/credentials/examples/v1");
+    assert!(matches!(presentation.context.get(0).unwrap(), Context::Url(ref url) if url == Presentation::BASE_CONTEXT));
+    assert!(
+        matches!(presentation.context.get(1).unwrap(), Context::Url(ref url) if url == "https://www.w3.org/2018/credentials/examples/v1")
+    );
 
     assert_eq!(presentation.id, Some("did:example:id:123".into()));
 

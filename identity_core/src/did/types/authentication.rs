@@ -38,7 +38,7 @@ impl HasId for Authentication {
     fn id(&self) -> &Self::Id {
         match self {
             Authentication::DID(subject) => subject,
-            Authentication::Key(key) => &key.id,
+            Authentication::Key(key) => key.id(),
         }
     }
 }

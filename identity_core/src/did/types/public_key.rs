@@ -12,14 +12,14 @@ use crate::{
 #[builder(pattern = "owned")]
 pub struct PublicKey {
     #[builder(try_setter)]
-    pub id: DID,
+    id: DID,
     #[builder(try_setter)]
-    pub controller: DID,
+    controller: DID,
     #[serde(rename = "type")]
     #[builder(try_setter)]
-    pub key_type: KeyType,
+    key_type: KeyType,
     #[serde(flatten)]
-    pub key_data: KeyData,
+    key_data: KeyData,
 }
 
 impl PublicKey {
@@ -29,6 +29,22 @@ impl PublicKey {
 
     pub fn default_key_data() -> KeyData {
         KeyData::PublicKeyHex("".into())
+    }
+
+    pub fn id(&self) -> &DID {
+        &self.id
+    }
+
+    pub fn controller(&self) -> &DID {
+        &self.controller
+    }
+
+    pub fn key_type(&self) -> KeyType {
+        self.key_type
+    }
+
+    pub fn key_data(&self) -> &KeyData {
+        &self.key_data
     }
 }
 
