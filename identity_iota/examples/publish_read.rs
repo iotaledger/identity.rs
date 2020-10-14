@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
     sign_document(&mut did_document, &keypair)?;
 
     let tail_transaction = tangle_writer
-        .write_json(did_document.derive_did(), &did_document)
+        .write_json(did_document.did(), &did_document)
         .await?;
 
     println!(
@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
     // Create, sign and publish diff to the Tangle
     let signed_diff = create_diff(did_document.clone(), &keypair).await?;
     let tail_transaction = tangle_writer
-        .publish_json(&did_document.derive_did(), &signed_diff)
+        .publish_json(&did_document.did(), &signed_diff)
         .await?;
 
     println!(
@@ -55,7 +55,7 @@ async fn main() -> Result<()> {
     );
 
     // Get document and diff from the tangle and validate the signatures
-    let did = did_document.derive_did();
+    let did = did_document.did();
     let tangle_reader = TangleReader::new(&nodelist)?;
 
     let received_messages = tangle_reader.fetch(&did).await?;
@@ -100,7 +100,7 @@ async fn create_diff(did_document: DIDDocument, keypair: &identity_crypto::KeyPa
     let diff = did_document.diff(&new)?;
 
     let mut diddiff = DIDDiff {
-        did: new.derive_did().clone(),
+        did: new.did().clone(),
         diff: serde_json::to_string(&diff)?,
         time: Timestamp::now(),
         signature: String::new(),

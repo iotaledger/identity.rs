@@ -142,7 +142,7 @@ impl DIDDocument {
     }
 
     /// get the ID from the Document as a DID.
-    pub fn derive_did(&self) -> &DID {
+    pub fn did(&self) -> &DID {
         &self.id
     }
 

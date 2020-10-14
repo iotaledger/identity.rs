@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
     sign_document(&mut did_document, &keypair)?;
 
     let tail_transaction = tangle_writer
-        .write_json(did_document.derive_did(), &did_document)
+        .write_json(did_document.did(), &did_document)
         .await?;
 
     println!(

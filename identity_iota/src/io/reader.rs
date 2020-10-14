@@ -114,7 +114,7 @@ impl TangleReader {
             .filter_map(|(hash, payload)| {
                 from_str::<DIDDocument>(payload)
                     .ok()
-                    .filter(|document| matches!(method_id(document.derive_did()), Ok(id) if id == mid))
+                    .filter(|document| matches!(method_id(document.did()), Ok(id) if id == mid))
                     .map(|data| TangleDoc {
                         data,
                         hash: hash.into(),

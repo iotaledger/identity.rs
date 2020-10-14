@@ -33,16 +33,6 @@ impl DID {
 
     pub const SECURITY_CONTEXT: &'static str = "https://w3id.org/security/v1";
 
-    pub const PARAMS: [&'static str; 7] = [
-        "hl",
-        "service",
-        "version-id",
-        "version-time",
-        "relative-ref",
-        "initial-state",
-        "transform-keys",
-    ];
-
     /// Initializes the DID struct with the filled out fields. Also runs parse_from_str to validate the fields.
     pub fn init(self) -> crate::Result<DID> {
         let did = DID {

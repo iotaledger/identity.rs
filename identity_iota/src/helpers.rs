@@ -33,7 +33,7 @@ pub fn doc_has_valid_signature(doc: &DIDDocument) -> Result<bool> {
 
         if let Some(auth_key) = get_auth_key(&doc) {
             // Check did auth key correlation
-            let did = doc.derive_did();
+            let did = doc.did();
             let key = match &doc.auth[0] {
                 Authentication::Key(key) => key.key_data().as_str(),
                 _ => return Ok(false),
