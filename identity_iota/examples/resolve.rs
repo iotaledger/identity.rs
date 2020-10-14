@@ -11,8 +11,7 @@ use identity_iota::{
 };
 #[smol_potat::main]
 async fn main() -> Result<()> {
-    let mut resolver = TangleResolver::new();
-    resolver.set_nodes(vec!["http://localhost:14265", "https://nodes.comnet.thetangle.org:443"]);
+    let resolver = TangleResolver::with_nodes(vec!["http://localhost:14265", "https://nodes.comnet.thetangle.org:443"]);
     let did = DID::from("did:iota:com:2BSaGCbQC8a664Eum7Et3wnpQADS43GopDoKs63aU8zS")?;
     let res = resolver.document(&did, &ResolutionInput::new()).await?;
     println!("{:?}", res);
