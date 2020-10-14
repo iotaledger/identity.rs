@@ -13,7 +13,7 @@ use identity_iota::{
 async fn main() -> Result<()> {
     let mut resolver = TangleResolver::new();
     resolver.set_nodes(vec!["http://localhost:14265", "https://nodes.comnet.thetangle.org:443"]);
-    let did = DID::from("did:iota:com:874TeZFu6bFHNbzU4ETa5adAWmRbAgusG17kfyWtszN2")?;
+    let did = DID::from("did:iota:com:2BSaGCbQC8a664Eum7Et3wnpQADS43GopDoKs63aU8zS")?;
     let res = resolver.document(&did, &ResolutionInput::new()).await?;
     println!("{:?}", res);
     Ok(())

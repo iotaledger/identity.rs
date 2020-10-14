@@ -177,7 +177,7 @@ impl IdentityWriter for TangleWriter {
     type Hash = Hash;
 
     async fn write_document(&self, document: &DIDDocument) -> Result<Self::Hash, core::Error> {
-        self.write_json(document.derive_did(), document)
+        self.write_json(document.did(), document)
             .await
             .map_err(|error| core::Error::ResolutionError(error.into()))
     }

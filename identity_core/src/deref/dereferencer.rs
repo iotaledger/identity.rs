@@ -126,7 +126,7 @@ fn dereference_secondary(document: DIDDocument, target: &str) -> Result<Option<S
         };
     }
 
-    let base: DID = document.derive_did().clone();
+    let base: DID = document.did().clone();
 
     extract!(base, target, document.public_keys, PublicKey);
     extract!(base, target, document.auth, Authentication);
