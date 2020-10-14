@@ -96,8 +96,8 @@ fn dereference_primary(did: &DID, document: DIDDocument) -> Result<PrimaryResour
         let input: &str = document
             .services
             .iter()
-            .find(|service| matches!(service.id.fragment.as_deref(), Some(fragment) if fragment == param))
-            .map(|service| service.endpoint.context.as_str())
+            .find(|service| matches!(service.id().fragment.as_deref(), Some(fragment) if fragment == param))
+            .map(|service| service.endpoint().context().as_str())
             .unwrap_or_default();
 
         // Perform the "Service Endpoint Construction" algorithm

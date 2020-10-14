@@ -1,57 +1,36 @@
+use derive_builder::Builder;
 use identity_diff::Diff;
-use serde::{
-    de::{self, Deserializer, MapAccess, Visitor},
-    ser::{SerializeStruct, Serializer},
-    Deserialize, Serialize,
-};
-use std::{
-    fmt::{self, Formatter},
-    str::FromStr,
-};
+use serde::{Deserialize, Serialize};
 
 use crate::{common::Url, did::DID, utils::HasId};
 
-/// Describes a `Service` in a `DIDDocument` type. Contains an `id`, `service_type` and `endpoint`.  The `endpoint` can
-/// be represented as a `String` or a `ServiceEndpoint` in json.
-#[derive(Debug, PartialEq, Deserialize, Serialize, Diff, Clone, Default)]
+/// Describes a `Service` in a `DIDDocument` type.
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize, Diff, Builder)]
 #[diff(from_into)]
+#[builder(pattern = "owned")]
 pub struct Service {
     #[serde(default)]
-    pub id: DID,
+    #[builder(try_setter)]
+    id: DID,
     #[serde(rename = "type")]
-    pub service_type: String,
+    #[builder(setter(into))]
+    service_type: String,
     #[serde(rename = "serviceEndpoint")]
-    pub endpoint: ServiceEndpoint,
-}
-
-/// Describes the `ServiceEndpoint` struct type. Contains a required `context` and two optional fields: `endpoint_type`
-/// and `instances`.  If neither `instances` nor `endpoint_type` is specified, the `ServiceEndpoint` is represented as a
-/// String in json using the `context`.
-#[derive(Debug, PartialEq, Clone, Diff, Default)]
-#[diff(from_into)]
-pub struct ServiceEndpoint {
-    pub context: Url,
-    pub endpoint_type: Option<String>,
-    pub instances: Option<Vec<String>>,
+    #[builder(setter(into))]
+    endpoint: ServiceEndpoint,
 }
 
 impl Service {
-    pub fn init(self) -> Self {
-        Self {
-            id: self.id,
-            service_type: self.service_type,
-            endpoint: self.endpoint,
-        }
+    pub fn id(&self) -> &DID {
+        &self.id
     }
-}
 
-impl ServiceEndpoint {
-    pub fn init(self) -> Self {
-        Self {
-            context: self.context,
-            endpoint_type: self.endpoint_type,
-            instances: self.instances,
-        }
+    pub fn service_type(&self) -> &str {
+        &*self.service_type
+    }
+
+    pub fn endpoint(&self) -> &ServiceEndpoint {
+        &self.endpoint
     }
 }
 
@@ -63,170 +42,80 @@ impl HasId for Service {
     }
 }
 
-impl FromStr for Service {
-    type Err = crate::Error;
-
-    fn from_str(s: &str) -> crate::Result<Service> {
-        serde_json::from_str(s).map_err(crate::Error::DecodeJSON)
-    }
+/// Describes the `ServiceEndpoint` struct type.
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, Diff)]
+#[serde(untagged)]
+#[diff(from_into)]
+pub enum ServiceEndpoint {
+    Url(Url),
+    Obj(ServiceEndpointObject),
 }
 
-impl ToString for Service {
-    fn to_string(&self) -> String {
-        serde_json::to_string(self).expect("Unable to serialize the service")
-    }
-}
-
-impl FromStr for ServiceEndpoint {
-    type Err = crate::Error;
-
-    fn from_str(s: &str) -> crate::Result<ServiceEndpoint> {
-        serde_json::from_str(s).map_err(crate::Error::DecodeJSON)
-    }
-}
-
-impl ToString for ServiceEndpoint {
-    fn to_string(&self) -> String {
-        serde_json::to_string(self).expect("Unable to serialize the Service Endpoint struct")
-    }
-}
-
-impl From<&str> for ServiceEndpoint {
-    fn from(s: &str) -> Self {
-        serde_json::from_str(s).expect("Unable to parse string")
-    }
-}
-
-/// The Json fields for the `ServiceEndpoint`.
-enum Field {
-    Context,
-    Type,
-    Instances,
-}
-
-/// A visitor for the service endpoint values.
-struct ServiceEndpointVisitor;
-
-/// A visitor for the service endpoint keys.
-struct FieldVisitor;
-
-/// Deserialize logic for the `ServiceEndpoint` type.
-impl<'de> Deserialize<'de> for ServiceEndpoint {
-    fn deserialize<D>(deserializer: D) -> Result<ServiceEndpoint, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_any(ServiceEndpointVisitor)
-    }
-}
-
-/// Deserialize logic for the `Field` type.
-impl<'de> Deserialize<'de> for Field {
-    fn deserialize<D>(deserializer: D) -> Result<Field, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_any(FieldVisitor)
-    }
-}
-
-/// Visitor logic for the `ServiceEndpointVisitor` to deserialize the `ServiceEndpoint`.
-impl<'de> Visitor<'de> for ServiceEndpointVisitor {
-    type Value = ServiceEndpoint;
-
-    fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-        formatter.write_str("Expecting a string or a Service Endpoint Struct")
-    }
-
-    /// If given a &str use this logic to create a `ServiceEndpoint`.
-    fn visit_str<E>(self, value: &str) -> Result<ServiceEndpoint, E>
-    where
-        E: de::Error,
-    {
-        Ok(ServiceEndpoint {
-            context: Url::parse(value).map_err(de::Error::custom)?,
-            ..Default::default()
-        })
-    }
-
-    /// given a map, use this logic to create a `ServiceEndpoint`.
-    fn visit_map<M>(self, mut map: M) -> Result<ServiceEndpoint, M::Error>
-    where
-        M: MapAccess<'de>,
-    {
-        let mut context: Option<String> = None;
-        let mut endpoint_type: Option<String> = None;
-        let mut instances: Option<Vec<String>> = None;
-
-        while let Some(key) = map.next_key()? {
-            match key {
-                Field::Context => {
-                    if context.is_some() {
-                        return Err(de::Error::duplicate_field("@context"));
-                    }
-                    context = Some(map.next_value()?);
-                }
-                Field::Type => {
-                    if endpoint_type.is_some() {
-                        return Err(de::Error::duplicate_field("type"));
-                    }
-                    endpoint_type = Some(map.next_value()?);
-                }
-                Field::Instances => {
-                    if instances.is_some() {
-                        return Err(de::Error::duplicate_field("instances"));
-                    }
-                    instances = Some(map.next_value()?);
-                }
-            }
+impl ServiceEndpoint {
+    pub fn context(&self) -> &Url {
+        match self {
+            Self::Url(url) => &url,
+            Self::Obj(inner) => inner.context(),
         }
-
-        let context = context.ok_or_else(|| de::Error::missing_field("@context"))?;
-
-        Ok(ServiceEndpoint {
-            context: Url::parse(context).map_err(de::Error::custom)?,
-            endpoint_type,
-            instances,
-        })
-    }
-}
-
-/// Visitor logic for the `FieldVisitor` to deserialize the `Field` type.
-impl<'de> Visitor<'de> for FieldVisitor {
-    type Value = Field;
-
-    fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-        formatter.write_str("Expected `@context`, `type`, or `instances`")
     }
 
-    /// If given a &str use this logic to create a `Field`.
-    fn visit_str<E>(self, value: &str) -> Result<Field, E>
-    where
-        E: de::Error,
-    {
-        match value {
-            "@context" => Ok(Field::Context),
-            "type" => Ok(Field::Type),
-            "instances" => Ok(Field::Instances),
-            _ => Err(de::Error::unknown_field(value, &[])),
+    pub fn endpoint_type(&self) -> Option<&str> {
+        match self {
+            Self::Url(_) => None,
+            Self::Obj(inner) => inner.endpoint_type(),
+        }
+    }
+
+    pub fn instances(&self) -> Option<&[String]> {
+        match self {
+            Self::Url(_) => None,
+            Self::Obj(inner) => inner.instances(),
         }
     }
 }
 
-/// Serialize the `ServiceEndpoint`.
-impl Serialize for ServiceEndpoint {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        if self.instances == None && self.endpoint_type == None {
-            self.context.serialize(serializer)
-        } else {
-            let mut se = serializer.serialize_struct("", 3)?;
-            se.serialize_field("@context", &self.context)?;
-            se.serialize_field("type", &self.endpoint_type)?;
-            se.serialize_field("instances", &self.instances)?;
-            se.end()
-        }
+impl Default for ServiceEndpoint {
+    fn default() -> Self {
+        Self::Url(Default::default())
+    }
+}
+
+impl From<Url> for ServiceEndpoint {
+    fn from(other: Url) -> Self {
+        Self::Url(other)
+    }
+}
+
+impl From<ServiceEndpointObject> for ServiceEndpoint {
+    fn from(other: ServiceEndpointObject) -> Self {
+        Self::Obj(other)
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize, Diff, Builder)]
+#[diff(from_into)]
+#[builder(pattern = "owned", name = "ServiceEndpointBuilder")]
+pub struct ServiceEndpointObject {
+    #[serde(rename = "@context")]
+    #[builder(try_setter)]
+    context: Url,
+    #[serde(rename = "type")]
+    #[builder(default, setter(into, strip_option))]
+    endpoint_type: Option<String>,
+    #[builder(default, setter(into, strip_option))]
+    instances: Option<Vec<String>>,
+}
+
+impl ServiceEndpointObject {
+    pub fn context(&self) -> &Url {
+        &self.context
+    }
+
+    pub fn endpoint_type(&self) -> Option<&str> {
+        self.endpoint_type.as_deref()
+    }
+
+    pub fn instances(&self) -> Option<&[String]> {
+        self.instances.as_deref()
     }
 }

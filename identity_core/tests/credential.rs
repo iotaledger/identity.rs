@@ -1,11 +1,12 @@
-#[macro_use]
-mod macros;
-
-use identity_core::{common::Context, object, vc::*};
+use identity_core::{
+    common::{Context, Timestamp},
+    object,
+    vc::*,
+};
 
 #[test]
 fn test_credential_builder_valid() {
-    let issuance = timestamp!("2010-01-01T00:00:00Z");
+    let issuance: Timestamp = "2010-01-01T00:00:00Z".parse().unwrap();
 
     let subjects = vec![
         CredentialSubjectBuilder::default()
@@ -35,8 +36,10 @@ fn test_credential_builder_valid() {
         .unwrap();
 
     assert_eq!(credential.context.len(), 3);
-    assert_matches!(credential.context.get(0).unwrap(), Context::Url(ref url) if url == Credential::BASE_CONTEXT);
-    assert_matches!(credential.context.get(1).unwrap(), Context::Url(ref url) if url == "https://www.w3.org/2018/credentials/examples/v1");
+    assert!(matches!(credential.context.get(0).unwrap(), Context::Url(ref url) if url == Credential::BASE_CONTEXT));
+    assert!(
+        matches!(credential.context.get(1).unwrap(), Context::Url(ref url) if url == "https://www.w3.org/2018/credentials/examples/v1")
+    );
 
     assert_eq!(credential.id, Some("did:example:123".into()));
 

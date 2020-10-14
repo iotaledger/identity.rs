@@ -1,11 +1,9 @@
 use identity_core::{
-    common::{Context, OneOrMany},
-    did::{KeyData, PublicKey, Service, ServiceEndpoint, DID},
+    common::{AsJson as _, Context, OneOrMany, Url},
+    did::{KeyData, KeyType, PublicKey, PublicKeyBuilder, Service, ServiceBuilder, ServiceEndpointBuilder, DID},
 };
 
-use std::str::FromStr;
-
-const JSON_STR: &str = include_str!("utils.json");
+const JSON_STR: &str = include_str!("fixtures/did/utils.json");
 
 fn setup_json(key: &str) -> String {
     let json_str = json::parse(JSON_STR).unwrap();
@@ -40,23 +38,19 @@ fn test_subject_from_string() {
 fn test_public_key() {
     let raw_str = setup_json("public");
 
-    let pk_t = PublicKey::from_str(&raw_str).unwrap();
+    let pk_t: PublicKey = serde_json::from_str(&raw_str).unwrap();
 
-    let key_data = KeyData::Base58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
-
-    let public_key = PublicKey {
-        id: "did:iota:123456789abcdefghi#keys-1".parse().unwrap(),
-        key_type: "Ed25519VerificationKey2018".into(),
-        controller: "did:iota:pqrstuvwxyz0987654321".parse().unwrap(),
-        key_data,
-        ..Default::default()
-    };
+    let public_key = PublicKeyBuilder::default()
+        .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
+        .key_type(KeyType::Ed25519VerificationKey2018)
+        .controller("did:iota:pqrstuvwxyz0987654321".parse().unwrap())
+        .key_data(KeyData::PublicKeyBase58(
+            "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
+        ))
+        .build()
+        .unwrap();
 
     assert_eq!(public_key, pk_t);
-
-    let res = serde_json::to_string(&public_key).unwrap();
-
-    assert_eq!(res, pk_t.to_string());
 }
 
 /// Test service without ServiceEndpoint body.
@@ -64,25 +58,20 @@ fn test_public_key() {
 fn test_service_with_no_endpoint_body() {
     let raw_str = setup_json("service");
 
-    let endpoint = ServiceEndpoint {
-        context: "https://edv.example.com/".into(),
-        ..Default::default()
-    }
-    .init();
+    let service = ServiceBuilder::default()
+        .id("did:into:123#edv".parse().unwrap())
+        .service_type("EncryptedDataVault")
+        .endpoint(Url::parse("https://edv.example.com/").unwrap())
+        .build()
+        .unwrap();
 
-    let service = Service {
-        id: "did:into:123#edv".parse().unwrap(),
-        service_type: "EncryptedDataVault".into(),
-        endpoint,
-    };
-
-    let service_2: Service = Service::from_str(&raw_str).unwrap();
+    let service_2: Service = Service::from_json(&raw_str).unwrap();
 
     assert_eq!(service, service_2);
 
     let res = serde_json::to_string(&service).unwrap();
 
-    assert_eq!(res, service_2.to_string());
+    assert_eq!(res, service_2.to_json().unwrap());
 }
 
 /// Test Service with a ServiceEndpoint Body.
@@ -90,24 +79,25 @@ fn test_service_with_no_endpoint_body() {
 fn test_service_with_body() {
     let raw_str = setup_json("endpoint");
 
-    let endpoint = ServiceEndpoint {
-        context: "https://schema.identity.foundation/hub".into(),
-        endpoint_type: Some("UserHubEndpoint".into()),
-        instances: Some(vec!["did:example:456".into(), "did:example:789".into()]),
-    }
-    .init();
+    let endpoint = ServiceEndpointBuilder::default()
+        .context("https://schema.identity.foundation/hub".parse().unwrap())
+        .endpoint_type("UserHubEndpoint")
+        .instances(vec!["did:example:456".into(), "did:example:789".into()])
+        .build()
+        .unwrap();
 
-    let service = Service {
-        id: "did:example:123456789abcdefghi#hub".parse().unwrap(),
-        service_type: "IdentityHub".into(),
-        endpoint,
-    };
+    let service = ServiceBuilder::default()
+        .id("did:example:123456789abcdefghi#hub".parse().unwrap())
+        .service_type("IdentityHub")
+        .endpoint(endpoint)
+        .build()
+        .unwrap();
 
-    let service_2: Service = Service::from_str(&raw_str).unwrap();
+    let service_2: Service = Service::from_json(&raw_str).unwrap();
 
     assert_eq!(service, service_2);
 
     let res = serde_json::to_string(&service).unwrap();
 
-    assert_eq!(res, service_2.to_string());
+    assert_eq!(res, service_2.to_json().unwrap());
 }
