@@ -1,3 +1,8 @@
+use serde::{Deserialize, Serialize};
 
-pub const TRUSTPING: &'static str = "https://didcomm.org/iota/v1/message_types/trustping";
+use crate::messages::trust_ping::TRUSTPING;
 
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub enum MessageTypes {
+    TrustPing,
+}

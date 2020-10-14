@@ -49,25 +49,3 @@ impl FromStr for DIDComm {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub enum MessageTypes {
-    TrustPing,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct TrustPing {
-    
-
-    // pub did: DID,
-
-    // this will live in DIDComm body
-    // #[serde(rename = "@id")]
-    // pub id: MessageId,
-    // #[serde(default)]
-    pub response_requested: bool,
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // comment: Option<String>,
-    // #[serde(rename = "~thread")]
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub thread: Option<Thread>,
-}

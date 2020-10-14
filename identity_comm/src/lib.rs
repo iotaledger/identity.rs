@@ -7,3 +7,4 @@ pub use libjose::jwm::JwmAttributes as DIDComm_message;
 
 
 pub mod types;
+pub mod messages;
