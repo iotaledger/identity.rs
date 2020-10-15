@@ -16,6 +16,10 @@ pub enum Error {
     InvalidMethodId,
     #[error("Invalid DID Signature")]
     InvalidSignature,
+    #[error("Invalid DID Authentication Key")]
+    InvalidAuthenticationKey,
+    #[error("Invalid DID Proof")]
+    InvalidProof,
     #[error("Invalid Tryte Conversion")]
     InvalidTryteConversion,
     #[error("Invalid Transaction: {0}")]

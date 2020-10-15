@@ -3,8 +3,9 @@
 
 use identity_crypto::{Ed25519, KeyGen};
 use identity_iota::{
+    did::TangleDocument as _,
     error::Result,
-    helpers::{create_document, sign_document},
+    helpers::create_document,
     io::TangleWriter,
     network::{Network, NodeList},
 };
@@ -24,7 +25,7 @@ async fn main() -> Result<()> {
     // Create, sign and publish DID document to the Tangle
     let mut did_document = create_document(bs58_auth_key)?;
 
-    sign_document(&mut did_document, &keypair)?;
+    did_document.sign_unchecked(keypair.secret())?;
 
     let tail_transaction = tangle_writer.write_json(did_document.did(), &did_document).await?;
 

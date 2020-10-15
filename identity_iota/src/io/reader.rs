@@ -15,10 +15,10 @@ use serde_json::from_str;
 use std::collections::BTreeMap;
 
 use crate::{
-    did::{create_address, method_id},
+    did::{create_address, method_id, DIDDiff},
     error::{DocumentError, Error, Result, TransactionError},
     network::{Network, NodeList},
-    types::{DIDDiff, TangleDiff, TangleDoc},
+    types::{TangleDiff, TangleDoc},
     utils::{encode_trits, trytes_to_utf8, txn_hash_trytes},
 };
 
@@ -95,7 +95,7 @@ impl TangleReader {
                 return Err(Error::InvalidDocument(DocumentError::MissingUpdated));
             };
 
-            if diff.data.time > *updated {
+            if diff.data.proof.created > *updated {
                 latest.data = latest.data.merge(DIDDocument::get_diff_from_str(&diff.data.diff)?)?;
                 metadata.insert(format!("hash:diff:{}", index), diff.hash.into());
             }
@@ -136,7 +136,7 @@ impl TangleReader {
             .filter_map(|(hash, payload)| {
                 from_str::<DIDDiff>(payload)
                     .ok()
-                    .filter(|diff| matches!(method_id(&diff.did), Ok(id) if id == mid))
+                    .filter(|diff| matches!(method_id(&diff.id), Ok(id) if id == mid))
                     .map(|data| TangleDiff {
                         data,
                         hash: hash.into(),
@@ -145,7 +145,7 @@ impl TangleReader {
             .collect();
 
         // Sort diffs by timestamp in ascending order
-        diffs.sort_by(|a, b| a.data.time.cmp(&b.data.time));
+        diffs.sort_by(|a, b| a.data.proof.created.cmp(&b.data.proof.created));
 
         Ok(diffs)
     }

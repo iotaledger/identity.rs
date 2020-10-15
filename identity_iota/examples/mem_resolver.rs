@@ -4,7 +4,8 @@ use std::collections::BTreeMap;
 use identity_core::{
     self as core,
     common::{AsJson as _, Object, OneOrMany, Timestamp, Url},
-    did::{DIDDocument, DIDDocumentBuilder, KeyData, KeyType, PublicKey, PublicKeyBuilder, ServiceBuilder, DID},
+    did::{DIDDocument, DIDDocumentBuilder, ServiceBuilder, DID},
+    key::{KeyData, KeyType, PublicKey, PublicKeyBuilder},
     resolver::{
         dereference, resolve, Dereference, DocumentMetadata, InputMetadata, MetaDocument, Resolution, ResolverMethod,
     },
