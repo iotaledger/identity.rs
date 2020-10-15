@@ -5,7 +5,7 @@ use crate::{
     resolver::{DocumentMetadata, ResolutionMetadata},
 };
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Resolution {
     #[serde(rename = "did-resolution-metadata")]
     pub metadata: ResolutionMetadata,

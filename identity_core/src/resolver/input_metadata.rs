@@ -8,7 +8,7 @@ pub const MIME_DID_LD: &str = "application/did+ld+json";
 
 // TODO: Support versioning via `version-id`/`version-time`
 // TODO: Support caching via `no-cache`
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct InputMetadata {
     /// The MIME type of the preferred representation of the DID document.
     ///

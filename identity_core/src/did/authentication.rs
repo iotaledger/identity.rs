@@ -1,10 +1,7 @@
 use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    did::{PublicKey, DID},
-    utils::HasId,
-};
+use crate::{did::DID, key::PublicKey, utils::HasId};
 
 #[derive(Debug, Clone, PartialEq, Diff, Serialize, Deserialize)]
 #[serde(untagged)]

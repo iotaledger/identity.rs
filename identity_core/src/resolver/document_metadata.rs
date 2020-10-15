@@ -1,7 +1,7 @@
 use crate::common::{Object, Timestamp};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct DocumentMetadata {
     /// The timestamp of the Create operation.
     ///

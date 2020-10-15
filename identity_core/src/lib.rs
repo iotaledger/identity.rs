@@ -3,6 +3,7 @@ pub mod common;
 
 pub mod did;
 pub mod error;
+pub mod key;
 pub mod resolver;
 pub mod utils;
 pub mod vc;

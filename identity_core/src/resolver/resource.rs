@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     common::Url,
-    did::{Authentication, DIDDocument as Document, PublicKey, Service, DID},
+    did::{Authentication, DIDDocument as Document, Service, DID},
+    key::PublicKey,
 };
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

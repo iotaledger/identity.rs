@@ -35,8 +35,8 @@ impl TangleResolver {
 
         let mut metadata: DocumentMetadata = DocumentMetadata::new();
 
-        metadata.created = document.data.created.clone();
-        metadata.updated = document.data.updated.clone();
+        metadata.created = document.data.created;
+        metadata.updated = document.data.updated;
 
         Ok(MetaDocument {
             data: document.data,

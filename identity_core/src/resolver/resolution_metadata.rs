@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{common::Object, did::DID, resolver::ErrorKind};
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct ResolutionMetadata {
     /// The error code from the resolution process, if an error occurred.
     ///

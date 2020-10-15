@@ -3,7 +3,8 @@ use identity_diff::{self as diff, Diff};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    did::{KeyData, KeyType, DID},
+    did::DID,
+    key::{KeyData, KeyType},
     utils::HasId,
 };
 

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::resolver::{DocumentMetadata, ResolutionMetadata, Resource};
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Dereference {
     #[serde(rename = "did-url-dereferencing-metadata")]
     pub metadata: ResolutionMetadata,

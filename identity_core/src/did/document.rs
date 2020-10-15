@@ -6,8 +6,9 @@ use std::{collections::HashMap, str::FromStr};
 
 use crate::{
     common::{Context, OneOrMany, Timestamp},
-    did::{Authentication, PublicKey, Service, DID, KeyIndex, KeyRelation},
+    did::{Authentication, Service, DID},
     error::Result,
+    key::{KeyIndex, KeyRelation, PublicKey},
     utils::{AddUnique as _, HasId},
 };
 
