@@ -26,9 +26,7 @@ async fn main() -> Result<()> {
 
     sign_document(&mut did_document, &keypair)?;
 
-    let tail_transaction = tangle_writer
-        .write_json(did_document.did(), &did_document)
-        .await?;
+    let tail_transaction = tangle_writer.write_json(did_document.did(), &did_document).await?;
 
     println!(
         "DID document published: https://comnet.thetangle.org/transaction/{}",

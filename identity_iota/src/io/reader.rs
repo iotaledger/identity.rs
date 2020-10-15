@@ -89,14 +89,14 @@ impl TangleReader {
         let mut metadata: Object = Object::new();
 
         for (index, diff) in diffs.into_iter().enumerate() {
-            let updated: &Timestamp = if let Some(updated) = latest.updated.as_ref() {
+            let updated: &Timestamp = if let Some(updated) = latest.data.updated.as_ref() {
                 updated
             } else {
                 return Err(Error::InvalidDocument(DocumentError::MissingUpdated));
             };
 
-            if diff.time > *updated {
-                latest.data = latest.merge(DIDDocument::get_diff_from_str(&diff.diff)?)?;
+            if diff.data.time > *updated {
+                latest.data = latest.data.merge(DIDDocument::get_diff_from_str(&diff.data.diff)?)?;
                 metadata.insert(format!("hash:diff:{}", index), diff.hash.into());
             }
         }
@@ -123,7 +123,7 @@ impl TangleReader {
             .collect();
 
         // Sort documents by updated timestamp in descending order
-        documents.sort_by(|a, b| b.updated.cmp(&a.updated));
+        documents.sort_by(|a, b| b.data.updated.cmp(&a.data.updated));
 
         Ok(documents)
     }
@@ -145,7 +145,7 @@ impl TangleReader {
             .collect();
 
         // Sort diffs by timestamp in ascending order
-        diffs.sort_by(|a, b| a.time.cmp(&b.time));
+        diffs.sort_by(|a, b| a.data.time.cmp(&b.data.time));
 
         Ok(diffs)
     }
