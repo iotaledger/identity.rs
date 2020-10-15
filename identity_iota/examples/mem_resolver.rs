@@ -87,6 +87,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+#[derive(Clone, Debug, Default)]
 pub struct MemResolver {
     store: Vec<MetaDocument>,
     index: BTreeMap<DID, usize>,

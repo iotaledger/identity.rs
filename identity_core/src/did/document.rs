@@ -1,11 +1,10 @@
-use core::slice::Iter;
+use core::{slice::Iter, str::FromStr};
 use derive_builder::Builder;
 use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, str::FromStr};
 
 use crate::{
-    common::{Context, OneOrMany, Timestamp},
+    common::{Context, Object, OneOrMany, Timestamp, Value},
     did::{Authentication, Service, DID},
     error::Result,
     key::{KeyIndex, KeyRelation, PublicKey},
@@ -55,7 +54,7 @@ pub struct DIDDocument {
     pub services: Vec<Service>,
     #[serde(flatten)]
     #[builder(default)]
-    pub metadata: HashMap<String, String>,
+    pub metadata: Object,
 }
 
 impl DIDDocument {
@@ -161,7 +160,7 @@ impl DIDDocument {
     pub fn set_metadata<T, U>(&mut self, key: T, value: U)
     where
         T: Into<String>,
-        U: Into<String>,
+        U: Into<Value>,
     {
         self.metadata.insert(key.into(), value.into());
     }
@@ -172,6 +171,14 @@ impl DIDDocument {
 
     pub fn clear_metadata(&mut self) {
         self.metadata.clear();
+    }
+
+    pub fn metadata(&self) -> &Object {
+        &self.metadata
+    }
+
+    pub fn metadata_mut(&mut self) -> &mut Object {
+        &mut self.metadata
     }
 
     /// initialize the `created` and `updated` timestamps to publish the did document.
@@ -246,7 +253,7 @@ impl Default for DIDDocument {
             invocation: Vec::new(),
             agreement: Vec::new(),
             services: Vec::new(),
-            metadata: HashMap::new(),
+            metadata: Default::default(),
         }
     }
 }

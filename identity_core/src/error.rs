@@ -12,6 +12,8 @@ pub enum Error {
     ParseError(anyhow::Error),
     #[error("Diff Error: {0}")]
     DiffError(#[from] identity_diff::Error),
+    #[error("Crypto Error: {0}")]
+    CryptoError(#[from] identity_crypto::Error),
     #[error("Failed to encode JSON: {0}")]
     EncodeJSON(serde_json::Error),
     #[error("Failed to decode JSON: {0}")]

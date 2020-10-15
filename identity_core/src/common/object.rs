@@ -3,27 +3,30 @@ use core::{
     iter::FromIterator,
     ops::{Deref, DerefMut},
 };
-use identity_diff::Diff;
+use identity_diff::{
+    self as diff,
+    hashmap::{DiffHashMap, InnerValue},
+    Diff,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Map;
-use std::collections::HashMap;
 
 use crate::{
     common::{OneOrMany, Value},
     error::{Error, Result},
 };
 
-type Inner = HashMap<String, Value>;
+type Inner = Map<String, Value>;
 
 // An String -> Value `HashMap` wrapper
-#[derive(Clone, Default, PartialEq, Deserialize, Serialize, Diff)]
+#[derive(Clone, Default, PartialEq, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(transparent)]
 pub struct Object(Inner);
 
 impl Object {
     pub fn new() -> Self {
-        Self(HashMap::new())
+        Self(Map::new())
     }
 
     pub fn into_inner(self) -> Inner {
@@ -97,27 +100,19 @@ impl DerefMut for Object {
     }
 }
 
-impl From<Inner> for Object {
-    fn from(other: Inner) -> Self {
-        Self(other)
-    }
-}
-
 impl From<Object> for Inner {
     fn from(other: Object) -> Self {
         other.into_inner()
     }
 }
 
-impl From<Map<String, Value>> for Object {
-    fn from(other: Map<String, Value>) -> Self {
-        Self::from_iter(other.into_iter())
-    }
-}
-
-impl From<Object> for Map<String, Value> {
-    fn from(other: Object) -> Self {
-        Self::from_iter(other.into_inner().into_iter())
+impl<I, T> From<I> for Object
+where
+    I: IntoIterator<Item = (String, T)>,
+    T: Into<Value>,
+{
+    fn from(other: I) -> Self {
+        Self::from_iter(other)
     }
 }
 
@@ -135,9 +130,101 @@ where
     where
         I: IntoIterator<Item = (String, T)>,
     {
-        iter.into_iter()
-            .map(|(key, value)| (key, value.into()))
-            .collect::<Inner>()
-            .into()
+        let inner: Inner = iter.into_iter().map(|(key, value)| (key, value.into())).collect();
+
+        Self(inner)
+    }
+}
+
+impl Diff for Object {
+    type Type = DiffHashMap<String, Value>;
+
+    fn diff(&self, other: &Self) -> diff::Result<Self::Type> {
+        use std::collections::HashSet;
+
+        let old: HashSet<&String> = self.keys().collect();
+        let new: HashSet<&String> = other.keys().collect();
+        let changed_keys = old.intersection(&new).filter(|key| self[**key] != other[**key]);
+
+        let removed_keys = old.difference(&new);
+        let added_keys = new.difference(&old);
+
+        let mut changes: Vec<InnerValue<String, Value>> = Vec::new();
+
+        for key in changed_keys {
+            changes.push(InnerValue::Change {
+                key: key.to_string(),
+                value: self[*key].diff(&other[*key])?,
+            });
+        }
+
+        for key in added_keys {
+            changes.push(InnerValue::Add {
+                key: key.to_string(),
+                value: other[*key].clone().into_diff()?,
+            });
+        }
+
+        for key in removed_keys {
+            changes.push(InnerValue::Remove { key: key.to_string() });
+        }
+
+        if changes.is_empty() {
+            Ok(DiffHashMap(None))
+        } else {
+            Ok(DiffHashMap(Some(changes)))
+        }
+    }
+
+    fn merge(&self, diff: Self::Type) -> diff::Result<Self> {
+        let mut this: Self = self.clone();
+
+        for change in diff.0.into_iter().flatten() {
+            match change {
+                InnerValue::Change { key, value } => {
+                    if let Some(entry) = this.get_mut(&key) {
+                        *entry = Value::from_diff(value)?;
+                    }
+                }
+                InnerValue::Add { key, value } => {
+                    this.insert(key, Value::from_diff(value)?);
+                }
+                InnerValue::Remove { key } => {
+                    this.remove(&key);
+                }
+            }
+        }
+
+        Ok(this)
+    }
+
+    fn from_diff(diff: Self::Type) -> diff::Result<Self> {
+        let mut this: Self = Self::new();
+
+        if let Some(diff) = diff.0 {
+            for (index, inner) in diff.into_iter().enumerate() {
+                if let InnerValue::Add { key, value } = inner {
+                    this.insert(key, Value::from_diff(value)?);
+                } else {
+                    panic!("Unable to create Diff at index: {:?}", index);
+                }
+            }
+        }
+
+        Ok(this)
+    }
+
+    fn into_diff(self) -> diff::Result<Self::Type> {
+        let changes: Vec<_> = self
+            .0
+            .into_iter()
+            .map(|(key, value)| value.into_diff().map(|value| InnerValue::Add { key, value }))
+            .collect::<diff::Result<_>>()?;
+
+        if changes.is_empty() {
+            Ok(DiffHashMap(None))
+        } else {
+            Ok(DiffHashMap(Some(changes)))
+        }
     }
 }

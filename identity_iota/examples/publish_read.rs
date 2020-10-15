@@ -2,20 +2,13 @@
 //! cargo run --example publish_read
 
 use anyhow::Result;
-use identity_core::{
-    common::Timestamp,
-    did::DIDDocument,
-    diff::Diff,
-    key::{KeyData, KeyType, PublicKeyBuilder},
-};
+use identity_core::{did::DIDDocument, diff::Diff};
 use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
 use identity_iota::{
-    helpers::{
-        create_document, diff_has_valid_signature, doc_has_valid_signature, get_auth_key, sign_diff, sign_document,
-    },
+    did::{DIDDiff, DIDProof, TangleDocument as _},
+    helpers::create_document,
     io::{TangleReader, TangleWriter},
     network::{Network, NodeList},
-    types::DIDDiff,
 };
 use iota_conversion::Trinary as _;
 
@@ -33,7 +26,7 @@ async fn main() -> Result<()> {
     // Create, sign and publish DID document to the Tangle
     let mut did_document = create_document(bs58_auth_key)?;
 
-    sign_document(&mut did_document, &keypair)?;
+    did_document.sign_unchecked(keypair.secret())?;
 
     println!("DID: {}", did_document.did());
 
@@ -66,14 +59,11 @@ async fn main() -> Result<()> {
     let diffs = TangleReader::extract_diffs(&did, &received_messages)?;
     println!("extracted diffs: {:?}", diffs);
 
-    let sig = doc_has_valid_signature(&docs[0].data)?;
+    let sig = docs[0].data.verify_unchecked().is_ok();
     println!("Document has valid signature: {}", sig);
 
-    //get auth key from DIDDocument
-    if let Some(auth_key) = get_auth_key(&docs[0].data) {
-        let sig = diff_has_valid_signature(diffs[0].data.clone(), &auth_key)?;
-        println!("Diff has valid signature: {}", sig);
-    }
+    let sig = docs[0].data.verify_diff_unchecked(&diffs[0].data).is_ok();
+    println!("Diff has valid signature: {}", sig);
 
     Ok(())
 }
@@ -82,30 +72,19 @@ async fn create_diff(did_document: DIDDocument, keypair: &identity_crypto::KeyPa
     // updated doc and publish diff
     let mut new = did_document.clone();
 
-    let public_key = PublicKeyBuilder::default()
-        .id("did:iota:123456789abcdefghij#keys-1".parse()?)
-        .controller("did:iota:com:123456789abcdefghij".parse()?)
-        .key_type(KeyType::RsaVerificationKey2018)
-        .key_data(KeyData::PublicKeyBase58(
-            "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
-        ))
-        .build()
-        .unwrap();
-
-    new.update_public_key(public_key);
+    new.set_metadata("new-value", true);
     new.update_time();
 
     // diff the two docs.
     let diff = did_document.diff(&new)?;
 
     let mut diddiff = DIDDiff {
-        did: new.did().clone(),
+        id: new.did().clone(),
         diff: serde_json::to_string(&diff)?,
-        time: Timestamp::now(),
-        signature: String::new(),
+        proof: DIDProof::new(new.did().clone()), // TODO: This is wrong - should be the key DID
     };
 
-    sign_diff(&mut diddiff, &keypair)?;
+    did_document.sign_diff_unchecked(&mut diddiff, keypair.secret())?;
 
     Ok(diddiff)
 }
