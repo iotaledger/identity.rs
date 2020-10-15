@@ -18,6 +18,12 @@ pub enum Error {
     DecodeJSON(serde_json::Error),
     #[error("Invalid Timestamp: {0}")]
     InvalidTimestamp(#[from] chrono::ParseError),
+    #[error("Failed to decode base16 data: {0}")]
+    DecodeBase16(#[from] hex::FromHexError),
+    #[error("Failed to decode base58 data: {0}")]
+    DecodeBase58(#[from] bs58::decode::Error),
+    #[error("Failed to decode base64 data: {0}")]
+    DecodeBase64(#[from] base64::DecodeError),
     #[error("Invalid object id")]
     InvalidObjectId,
     #[error("Invalid object type")]

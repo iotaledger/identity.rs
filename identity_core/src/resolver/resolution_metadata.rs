@@ -1,23 +1,40 @@
 use core::time::Duration;
 use serde::{Deserialize, Serialize};
 
-use crate::resolver::ErrorKind;
+use crate::{common::Object, did::DID, resolver::ErrorKind};
 
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct ResolutionMetadata {
-    pub duration: Duration,
+    /// The error code from the resolution process, if an error occurred.
+    ///
+    /// [More Info](https://www.w3.org/TR/did-spec-registries/#error)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<ErrorKind>,
-    #[serde(rename = "content-type", skip_serializing_if = "Option::is_none")]
+    /// The MIME type of the returned document stream.
+    ///
+    /// Note: This is only relevant when using stream-based resolution.
+    ///
+    /// [More Info](https://www.w3.org/TR/did-spec-registries/#content-type)
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub content_type: Option<String>,
+    /// The elapsed time of the resolution operation.
+    pub duration: Duration,
+    /// The parsed DID that was used for resolution.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resolved: Option<DID>,
+    /// Additional resolution metadata properties.
+    #[serde(flatten)]
+    pub properties: Object,
 }
 
 impl ResolutionMetadata {
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
-            duration: Duration::from_secs(0),
             error: None,
             content_type: None,
+            duration: Duration::from_secs(0),
+            resolved: None,
+            properties: Object::new(),
         }
     }
 }

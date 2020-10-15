@@ -1,23 +1,26 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{common::Object, did::DIDDocument, resolver::ResolutionMetadata};
+use crate::{
+    did::DIDDocument as Document,
+    resolver::{DocumentMetadata, ResolutionMetadata},
+};
 
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Resolution {
-    #[serde(rename = "didResolutionMetadata")]
+    #[serde(rename = "did-resolution-metadata")]
     pub metadata: ResolutionMetadata,
-    #[serde(rename = "didDocument")]
-    pub did_document: Option<DIDDocument>,
-    #[serde(rename = "didResolutionMetadata")]
-    pub did_document_metadata: Option<Object>,
+    #[serde(rename = "did-document", skip_serializing_if = "Option::is_none")]
+    pub document: Option<Document>,
+    #[serde(rename = "did-document-metadata", skip_serializing_if = "Option::is_none")]
+    pub document_metadata: Option<DocumentMetadata>,
 }
 
 impl Resolution {
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             metadata: ResolutionMetadata::new(),
-            did_document: None,
-            did_document_metadata: None,
+            document: None,
+            document_metadata: None,
         }
     }
 }

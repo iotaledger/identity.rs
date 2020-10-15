@@ -1,13 +1,11 @@
 use async_trait::async_trait;
 use identity_core::{
     self as core,
-    common::Timestamp,
     did::DID,
-    error::Result,
-    resolver::{Document, IdentityResolver, ResolutionInput},
+    resolver::{DocumentMetadata, InputMetadata, MetaDocument, ResolverMethod},
 };
 
-use crate::{io::TangleReader, network::NodeList, types::TangleDoc};
+use crate::{error::Result, io::TangleReader, network::NodeList, types::TangleDoc};
 
 #[derive(Debug)]
 pub struct TangleResolver {
@@ -34,10 +32,25 @@ impl TangleResolver {
     pub fn nodes_mut(&mut self) -> &mut NodeList {
         &mut self.nodes
     }
+
+    pub async fn document(&self, did: &DID) -> Result<MetaDocument> {
+        let reader: TangleReader = TangleReader::new(&self.nodes)?;
+        let document: TangleDoc = reader.fetch_latest(did).await.map(|(doc, _)| doc)?;
+
+        let mut metadata: DocumentMetadata = DocumentMetadata::new();
+
+        metadata.created = document.data.created;
+        metadata.updated = document.data.updated;
+
+        Ok(MetaDocument {
+            data: document.data,
+            meta: metadata,
+        })
+    }
 }
 
 #[async_trait]
-impl IdentityResolver for TangleResolver {
+impl ResolverMethod for TangleResolver {
     fn is_supported(&self, did: &DID) -> bool {
         // The DID method MUST be IOTA.
         if did.method_name != "iota" {
@@ -48,26 +61,10 @@ impl IdentityResolver for TangleResolver {
         self.nodes.network().matches_did(did)
     }
 
-    async fn document(&self, did: &DID, _input: &ResolutionInput) -> Result<Option<Document>> {
-        let reader: TangleReader =
-            TangleReader::new(&self.nodes).map_err(|error| core::Error::ResolutionError(error.into()))?;
-
-        // TODO: Support `input.version`
-        // TODO: Support `input.no_cache`
-
-        let (document, mut metadata): (TangleDoc, _) = reader
-            .fetch_latest(did)
+    async fn read(&self, did: &DID, _input: InputMetadata) -> core::Result<Option<MetaDocument>> {
+        self.document(did)
             .await
-            .map_err(|error| core::Error::ResolutionError(error.into()))?;
-
-        if let Some(timestamp) = document.created.as_ref().map(Timestamp::to_rfc3339) {
-            metadata.insert("created".into(), timestamp.into());
-        }
-
-        if let Some(timestamp) = document.updated.as_ref().map(Timestamp::to_rfc3339) {
-            metadata.insert("updated".into(), timestamp.into());
-        }
-
-        Ok(Some((document.data, metadata)))
+            .map_err(|error| core::Error::ResolutionError(error.into()))
+            .map(Some)
     }
 }

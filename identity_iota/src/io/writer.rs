@@ -1,10 +1,5 @@
-use ::core::slice::from_ref;
-use async_trait::async_trait;
-use identity_core::{
-    self as core,
-    did::{DIDDocument, DID},
-    io::IdentityWriter,
-};
+use core::slice::from_ref;
+use identity_core::did::{DIDDocument, DID};
 use iota::{
     client::{AttachToTangleResponse, GTTAResponse, Transfer},
     crypto::ternary::Hash,
@@ -72,6 +67,10 @@ impl TangleWriter {
         })
     }
 
+    pub async fn write_document(&self, document: &DIDDocument) -> Result<Hash> {
+        self.write_json(document.did(), document).await
+    }
+
     pub async fn write_json<T>(&self, did: &DID, data: &T) -> Result<Hash>
     where
         T: Serialize,
@@ -113,7 +112,7 @@ impl TangleWriter {
         let transfer: Transfer = Transfer {
             address: create_address(&did)?,
             value: 0,
-            message: Some(to_string(&data).map_err(core::Error::EncodeJSON)?),
+            message: Some(to_string(&data).map_err(identity_core::Error::EncodeJSON)?),
             tag: None,
         };
 
@@ -169,16 +168,5 @@ impl TangleWriter {
             .await
             .map_err(Into::into)
             .map(|states| states.states.as_slice() == [true])
-    }
-}
-
-#[async_trait]
-impl IdentityWriter for TangleWriter {
-    type Hash = Hash;
-
-    async fn write_document(&self, document: &DIDDocument) -> Result<Self::Hash, core::Error> {
-        self.write_json(document.did(), document)
-            .await
-            .map_err(|error| core::Error::ResolutionError(error.into()))
     }
 }

@@ -1,4 +1,7 @@
-use identity_core::did::{Authentication, DIDDocument, KeyData, KeyType, PublicKeyBuilder, DID};
+use identity_core::{
+    did::{Authentication, DIDDocument, DIDDocumentBuilder, DID},
+    key::{KeyData, KeyType, PublicKeyBuilder},
+};
 use json::JsonValue;
 use std::str::FromStr;
 
@@ -16,11 +19,11 @@ fn test_auth() {
 
     let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
-    let mut doc_2 = DIDDocument {
-        context: vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()].into(),
-        id: "did:iota:123456789abcdefghi".parse().unwrap(),
-        ..Default::default()
-    };
+    let mut doc_2 = DIDDocumentBuilder::default()
+        .context(vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()])
+        .id("did:iota:123456789abcdefghi".parse().unwrap())
+        .build()
+        .unwrap();
 
     let key_data_1 = KeyData::PublicKeyPem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
     let key_data_2 = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
@@ -70,11 +73,11 @@ fn test_assertion() {
 
     let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
-    let mut doc_2 = DIDDocument {
-        context: vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()].into(),
-        id: "did:iota:123456789abcdefghi".parse().unwrap(),
-        ..Default::default()
-    };
+    let mut doc_2 = DIDDocumentBuilder::default()
+        .context(vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()])
+        .id("did:iota:123456789abcdefghi".parse().unwrap())
+        .build()
+        .unwrap();
 
     let key_data_1 = KeyData::PublicKeyPem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
     let key_data_2 = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
@@ -124,11 +127,11 @@ fn test_verification() {
 
     let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
-    let mut doc_2 = DIDDocument {
-        context: vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()].into(),
-        id: "did:iota:123456789abcdefghi".parse().unwrap(),
-        ..Default::default()
-    };
+    let mut doc_2 = DIDDocumentBuilder::default()
+        .context(vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()])
+        .id("did:iota:123456789abcdefghi".parse().unwrap())
+        .build()
+        .unwrap();
 
     let key_data_1 = KeyData::PublicKeyPem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
     let key_data_2 = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
@@ -178,11 +181,11 @@ fn test_delegation() {
 
     let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
-    let mut doc_2 = DIDDocument {
-        context: vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()].into(),
-        id: "did:iota:123456789abcdefghi".parse().unwrap(),
-        ..Default::default()
-    };
+    let mut doc_2 = DIDDocumentBuilder::default()
+        .context(vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()])
+        .id("did:iota:123456789abcdefghi".parse().unwrap())
+        .build()
+        .unwrap();
 
     let key_data_1 = KeyData::PublicKeyPem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
     let key_data_2 = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
@@ -232,11 +235,11 @@ fn test_invocation() {
 
     let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
-    let mut doc_2 = DIDDocument {
-        context: vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()].into(),
-        id: "did:iota:123456789abcdefghi".parse().unwrap(),
-        ..Default::default()
-    };
+    let mut doc_2 = DIDDocumentBuilder::default()
+        .context(vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()])
+        .id("did:iota:123456789abcdefghi".parse().unwrap())
+        .build()
+        .unwrap();
 
     let key_data_1 = KeyData::PublicKeyPem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
     let key_data_2 = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());
@@ -286,11 +289,11 @@ fn test_agreement() {
 
     let doc_1 = DIDDocument::from_str(&json_str).unwrap();
 
-    let mut doc_2 = DIDDocument {
-        context: vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()].into(),
-        id: "did:iota:123456789abcdefghi".parse().unwrap(),
-        ..Default::default()
-    };
+    let mut doc_2 = DIDDocumentBuilder::default()
+        .context(vec![DID::BASE_CONTEXT.into(), DID::SECURITY_CONTEXT.into()])
+        .id("did:iota:123456789abcdefghi".parse().unwrap())
+        .build()
+        .unwrap();
 
     let key_data_1 = KeyData::PublicKeyPem("-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into());
     let key_data_2 = KeyData::PublicKeyBase58("H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into());

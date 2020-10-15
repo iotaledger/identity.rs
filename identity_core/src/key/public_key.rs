@@ -3,12 +3,13 @@ use identity_diff::{self as diff, Diff};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    did::{KeyData, KeyType, DID},
+    did::DID,
+    key::{KeyData, KeyType},
     utils::HasId,
 };
 
 /// Public key struct.
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Builder)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, Builder)]
 #[builder(pattern = "owned")]
 pub struct PublicKey {
     #[builder(try_setter)]

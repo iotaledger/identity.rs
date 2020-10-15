@@ -1,6 +1,6 @@
 use identity_core::{
-    common::OneOrMany,
-    did::{Authentication, DIDDocument, KeyData, KeyType, PublicKeyBuilder, ServiceBuilder, ServiceEndpoint, DID},
+    did::{Authentication, DIDDocument, DIDDocumentBuilder, ServiceBuilder, ServiceEndpoint, DID},
+    key::{KeyData, KeyType, PublicKeyBuilder},
 };
 
 use std::str::FromStr;
@@ -42,11 +42,11 @@ fn test_parse_document() {
 /// test doc creation via the `DIDDocument::new` method.
 #[test]
 fn test_doc_creation() {
-    let mut did_doc = DIDDocument {
-        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
-        id: "did:iota:123456789abcdefghi".parse().unwrap(),
-        ..Default::default()
-    };
+    let mut did_doc = DIDDocumentBuilder::default()
+        .context(vec![DID::BASE_CONTEXT.into()])
+        .id("did:iota:123456789abcdefghi".parse().unwrap())
+        .build()
+        .unwrap();
 
     let endpoint = ServiceEndpoint::Url("https://edv.example.com/".parse().unwrap());
 
@@ -81,11 +81,11 @@ fn test_doc_creation() {
 
     did_doc.update_public_key(public_key.clone());
 
-    let mut did_doc_2 = DIDDocument {
-        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
-        id: "did:iota:123456789abcdefghi".parse().unwrap(),
-        ..Default::default()
-    };
+    let mut did_doc_2 = DIDDocumentBuilder::default()
+        .context(vec![DID::BASE_CONTEXT.into()])
+        .id("did:iota:123456789abcdefghi".parse().unwrap())
+        .build()
+        .unwrap();
 
     did_doc_2.update_public_key(public_key);
 
@@ -102,18 +102,18 @@ fn test_doc_creation() {
 #[test]
 fn test_doc_diff() {
     // old doc
-    let old = DIDDocument {
-        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
-        id: "did:iota:123456789abcdefghi".parse().unwrap(),
-        ..Default::default()
-    };
+    let old = DIDDocumentBuilder::default()
+        .context(vec![DID::BASE_CONTEXT.into()])
+        .id("did:iota:123456789abcdefghi".parse().unwrap())
+        .build()
+        .unwrap();
 
     // new doc.
-    let mut new = DIDDocument {
-        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
-        id: "did:iota:123456789abcdefghi".parse().unwrap(),
-        ..Default::default()
-    };
+    let mut new = DIDDocumentBuilder::default()
+        .context(vec![DID::BASE_CONTEXT.into()])
+        .id("did:iota:123456789abcdefghi".parse().unwrap())
+        .build()
+        .unwrap();
 
     let endpoint = ServiceEndpoint::Url("https://edv.example.com/".parse().unwrap());
 
@@ -176,11 +176,11 @@ fn test_diff_merge_from_string() {
     let diff_str = setup_json("diff");
 
     // create a doc.
-    let mut doc = DIDDocument {
-        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
-        id: "did:iota:123456789abcdefghi".parse().unwrap(),
-        ..Default::default()
-    };
+    let mut doc = DIDDocumentBuilder::default()
+        .context(vec![DID::BASE_CONTEXT.into()])
+        .id("did:iota:123456789abcdefghi".parse().unwrap())
+        .build()
+        .unwrap();
 
     // create an endpoint.
     let endpoint = ServiceEndpoint::Url("https://edv.example.com/".parse().unwrap());
@@ -251,11 +251,11 @@ fn test_doc_metadata() {
 fn test_realistic_diff() {
     let json_str = setup_json("diff2");
 
-    let mut did_doc = DIDDocument {
-        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
-        id: "did:iota:123456789abcdefghi".parse().unwrap(),
-        ..Default::default()
-    };
+    let mut did_doc = DIDDocumentBuilder::default()
+        .context(vec![DID::BASE_CONTEXT.into()])
+        .id("did:iota:123456789abcdefghi".parse().unwrap())
+        .build()
+        .unwrap();
 
     let endpoint = ServiceEndpoint::Url("https://edv.example.com/".parse().unwrap());
 
@@ -347,11 +347,11 @@ fn test_id_compare() {
         .unwrap();
 
     // generate a did doc.
-    let mut did_doc = DIDDocument {
-        context: OneOrMany::One(DID::BASE_CONTEXT.into()),
-        id: "did:iota:123456789abcdefghi".parse().unwrap(),
-        ..Default::default()
-    };
+    let mut did_doc = DIDDocumentBuilder::default()
+        .context(vec![DID::BASE_CONTEXT.into()])
+        .id("did:iota:123456789abcdefghi".parse().unwrap())
+        .build()
+        .unwrap();
 
     // insert the service twice.
     did_doc.update_service(service.clone());

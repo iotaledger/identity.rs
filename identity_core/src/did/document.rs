@@ -1,3 +1,4 @@
+use core::slice::Iter;
 use derive_builder::Builder;
 use identity_diff::Diff;
 use serde::{Deserialize, Serialize};
@@ -5,8 +6,10 @@ use std::{collections::HashMap, str::FromStr};
 
 use crate::{
     common::{Context, OneOrMany, Timestamp},
-    did::{Authentication, PublicKey, Service, DID},
-    utils::AddUnique as _,
+    did::{Authentication, Service, DID},
+    error::Result,
+    key::{KeyIndex, KeyRelation, PublicKey},
+    utils::{AddUnique as _, HasId},
 };
 
 /// A struct that represents a DID Document.  Contains the fields `context`, `id`, `created`, `updated`,
@@ -56,6 +59,10 @@ pub struct DIDDocument {
 }
 
 impl DIDDocument {
+    pub fn resolve_key<'a>(&self, key: impl Into<KeyIndex<'a>>, relation: KeyRelation) -> Option<&PublicKey> {
+        self.resolve_key_(key.into(), relation)
+    }
+
     /// gets the inner value of the `context` from the `DIDDocument`.
     pub fn context(&self) -> &[Context] {
         self.context.as_slice()
@@ -173,8 +180,54 @@ impl DIDDocument {
         self.updated = Some(Timestamp::now());
     }
 
-    pub fn get_diff_from_str(json: impl AsRef<str>) -> crate::Result<DiffDIDDocument> {
+    pub fn get_diff_from_str(json: impl AsRef<str>) -> Result<DiffDIDDocument> {
         serde_json::from_str(json.as_ref()).map_err(crate::Error::DecodeJSON)
+    }
+
+    fn resolve_key_(&self, key: KeyIndex, relation: KeyRelation) -> Option<&PublicKey> {
+        for (index, method) in self.key_iter(relation).enumerate() {
+            if key == index || Self::matches_fragment(method, key) {
+                return self.extract_key(method);
+            }
+        }
+
+        if relation == KeyRelation::VerificationMethod {
+            for (index, method) in self.public_keys.iter().enumerate() {
+                if key == index || Self::matches_fragment(method, key) {
+                    return Some(method);
+                }
+            }
+        }
+
+        None
+    }
+
+    fn matches_fragment<T>(method: &T, key: KeyIndex) -> bool
+    where
+        T: HasId<Id = DID>,
+    {
+        matches!(method.id().fragment.as_deref(), Some(fragment) if key == fragment)
+    }
+
+    fn key_iter(&self, relation: KeyRelation) -> Iter<Authentication> {
+        match relation {
+            KeyRelation::VerificationMethod => self.verification.iter(),
+            KeyRelation::Authentication => self.auth.iter(),
+            KeyRelation::AssertionMethod => self.assert.iter(),
+            KeyRelation::KeyAgreement => self.agreement.iter(),
+            KeyRelation::CapabilityInvocation => self.invocation.iter(),
+            KeyRelation::CapabilityDelegation => self.delegation.iter(),
+        }
+    }
+
+    fn extract_key<'a>(&'a self, method: &'a Authentication) -> Option<&'a PublicKey> {
+        match method {
+            Authentication::DID(did) => did
+                .fragment
+                .as_deref()
+                .and_then(|fragment| self.resolve_key_(fragment.into(), Default::default())),
+            Authentication::Key(key) => Some(key),
+        }
     }
 }
 
@@ -209,7 +262,7 @@ impl ToString for DIDDocument {
 impl FromStr for DIDDocument {
     type Err = crate::Error;
 
-    fn from_str(s: &str) -> crate::Result<Self> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         serde_json::from_str(s).map_err(crate::Error::DecodeJSON)
     }
 }
