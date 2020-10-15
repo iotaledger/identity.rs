@@ -1,15 +1,10 @@
 [workspace]
 members = [
-    "identity_account",
-    "identity_comm",
-    "identity_resolver",
-    "identity_schema",
-    "identity_common",
     "identity_core",
     "identity_crypto",
-    "identity_integration",
-    "identity_proof",
-    "identity_vc",
+    "identity_derive",
     "identity_diff",
-    "identity_derive"
+    "identity_iota",
+    "identity_proof",
+    "identity_comm",
 ]
