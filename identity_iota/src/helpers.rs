@@ -12,7 +12,7 @@ use crate::{
     types::DIDDiff,
 };
 
-pub fn verify_signature(message: &str, signature: &str, pub_key: &String) -> Result<bool> {
+pub fn verify_signature(message: &str, signature: &str, pub_key: &str) -> Result<bool> {
     let pub_key = decode(pub_key).into_vec().map_err(|_| Error::InvalidSignature)?;
     let signature = decode(signature).into_vec().map_err(|_| Error::InvalidSignature)?;
 
@@ -20,7 +20,7 @@ pub fn verify_signature(message: &str, signature: &str, pub_key: &String) -> Res
 }
 
 /// Verifies Ed25519 signatures for diffs
-pub fn diff_has_valid_signature(diff: DIDDiff, auth_key: &String) -> Result<bool> {
+pub fn diff_has_valid_signature(diff: DIDDiff, auth_key: &str) -> Result<bool> {
     // todo verify that did matches auth key (only before auth change, later verify signatures with previous auth key)
     Ok(verify_signature(&diff.diff, &diff.signature, auth_key)?)
 }
@@ -120,7 +120,7 @@ pub fn get_auth_key(document: &DIDDocument) -> Option<String> {
     }
 }
 
-pub fn create_method_id(pub_key: &String, network: Option<&str>, network_shard: Option<String>) -> Result<DID> {
+pub fn create_method_id(pub_key: &str, network: Option<&str>, network_shard: Option<String>) -> Result<DID> {
     let hash = Blake2b256::digest(pub_key.as_bytes());
     let bs58key = encode(&hash.digest()).into_string();
     let network_string = match network {
