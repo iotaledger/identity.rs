@@ -1,5 +1,5 @@
 use identity_core::did::DID;
-use identity_common::Timestamp;
+use identity_core::common::Timestamp;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
