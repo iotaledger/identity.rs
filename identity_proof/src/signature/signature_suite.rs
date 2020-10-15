@@ -3,7 +3,11 @@ use identity_core::{
     common::{Object, Timestamp},
     utils::{decode_b64, encode_b64},
 };
-use identity_crypto::{KeyGen, PublicKey, SecretKey, Sign, Verify};
+
+use identity_crypto::{
+    sha2::{Digest, Sha256},
+    PublicKey, SecretKey, Sign, Verify,
+};
 
 use crate::{
     canonicalize::{CanonicalJson, Canonicalize},
@@ -17,7 +21,7 @@ const DEFAULT_PURPOSE: &str = "assertionMethod";
 /// A trait for implementations of linked data signature suites.
 ///
 /// Ref: https://w3c-ccg.github.io/ld-proofs/#linked-data-signatures
-pub trait SignatureSuite: KeyGen + Sign + Verify {
+pub trait SignatureSuite: Sign + Verify {
     /// Returns a unique identifier for this signature suite.
     ///
     /// Note: This SHOULD be a standard value.
@@ -27,7 +31,9 @@ pub trait SignatureSuite: KeyGen + Sign + Verify {
     /// The message digest algorithm for the `SignatureSuite` implementation.
     ///
     /// Ref: https://w3c-ccg.github.io/ld-proofs/#dfn-message-digest-algorithm
-    fn digest(&self, message: &[u8]) -> Result<Vec<u8>>;
+    fn digest(&self, message: &[u8]) -> Result<Vec<u8>> {
+        Ok(Sha256::digest(message).to_vec())
+    }
 
     /// The service used to handle document normalization.
     fn canonicalizer(&self) -> &dyn Canonicalize {
@@ -39,19 +45,14 @@ pub trait SignatureSuite: KeyGen + Sign + Verify {
         self.canonicalizer().canonicalize(object)
     }
 
-    /// Encodes the signature as a `String`.
-    fn encode_signature(&self, signature: Vec<u8>) -> String {
-        encode_b64(&signature)
+    /// Encodes the signature and returns a `SignatureValue`.
+    fn to_signature_value(&self, signature: Vec<u8>) -> Result<SignatureValue> {
+        Ok(SignatureValue::Proof(encode_b64(&signature)))
     }
 
-    /// Decodes a `String`-encoded signature.
-    fn decode_signature(&self, signature: &LinkedDataSignature) -> Result<Vec<u8>> {
-        decode_b64(signature.proof()).map_err(Into::into)
-    }
-
-    /// Creates a `SignatureValue` from a raw String.
-    fn to_signature_value(&self, signature: String) -> SignatureValue {
-        SignatureValue::Proof(signature)
+    /// Decodes and returns the raw bytes of signature from a `SignatureValue`.
+    fn from_signature_value(&self, signature: &str) -> Result<Vec<u8>> {
+        decode_b64(signature).map_err(Into::into)
     }
 
     /// Creates a `LinkedDataSignature` with the given `document`, `options`,
@@ -81,7 +82,7 @@ pub trait SignatureSuite: KeyGen + Sign + Verify {
     ) -> Result<bool> {
         let options: SignatureOptions = proof.to_options();
         let data: Vec<u8> = self.create_verify_hash(document, &options)?;
-        let signature: Vec<u8> = self.decode_signature(&proof)?;
+        let signature: Vec<u8> = self.from_signature_value(proof.proof())?;
 
         <Self as Verify>::verify(self, &data, &signature, public).map_err(Into::into)
     }
@@ -95,7 +96,7 @@ pub trait SignatureSuite: KeyGen + Sign + Verify {
             domain: options.domain,
             nonce: options.nonce,
             data: SignatureData {
-                value: self.to_signature_value(self.encode_signature(signature)),
+                value: self.to_signature_value(signature)?,
                 properties: options.properties,
             },
         })

@@ -1,6 +1,7 @@
 pub mod canonicalize;
 pub mod document;
 pub mod error;
+pub mod jws;
 pub mod signature;
 
 pub use canonicalize::{CanonicalJson, Canonicalize, Urdna2015, Urgna2012};
