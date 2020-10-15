@@ -85,9 +85,10 @@ pub fn sign_diff(diff: &mut DIDDiff, key: &KeyPair) -> Result<()> {
 pub fn create_document(auth_key: String) -> Result<DIDDocument> {
     //create comnet id
     let did: DID = create_method_id(&auth_key, Some("com"), None)?;
-
+    let mut key_did = did.clone();
+    key_did.add_fragment("keys-1".to_string());
     let key: PublicKey = PublicKeyBuilder::default()
-        .id(did.clone())
+        .id(key_did)
         .controller(did.clone())
         .key_type(KeyType::RsaVerificationKey2018)
         .key_data(KeyData::PublicKeyBase58(auth_key))
@@ -101,7 +102,6 @@ pub fn create_document(auth_key: String) -> Result<DIDDocument> {
         .build()
         .expect("FIXME");
     doc.init_timestamps();
-
     Ok(doc)
 }
 
