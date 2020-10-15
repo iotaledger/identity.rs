@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{did::DID, key::PublicKey, utils::HasId};
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, PartialEq, Diff, Serialize, Deserialize)]
 #[serde(untagged)]
 #[diff(from_into)]

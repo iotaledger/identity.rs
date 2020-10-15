@@ -43,6 +43,7 @@ impl From<Url> for PrimaryResource {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum SecondaryResource {
