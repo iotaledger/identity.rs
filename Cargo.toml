@@ -1,13 +1,13 @@
 [workspace]
 members = [
-    "identity_account",
-    "identity_communication",
-    "identity_resolver",
-    "identity_schema",
     "identity_core",
-    "identity_integration",
-    "identity_vc",
+    "identity_crypto",
+    "identity_derive",
     "identity_diff",
     "identity_derive",
+    "identity_iota",
+    "identity_proof",
+]
+exclude = [
     "libraries/wasm"
 ]

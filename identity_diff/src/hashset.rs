@@ -19,7 +19,7 @@ pub enum InnerValue<T: Diff> {
 
 impl<T> Diff for HashSet<T>
 where
-    T: Debug + Clone + PartialEq + Ord + Diff + Hash + for<'de> Deserialize<'de> + Serialize,
+    T: Debug + Clone + PartialEq + Eq + Diff + Hash + for<'de> Deserialize<'de> + Serialize,
 {
     type Type = DiffHashSet<T>;
 
@@ -90,35 +90,6 @@ where
             }
         }
         Ok(set)
-    }
-}
-
-impl<T> DiffHashSet<T>
-where
-    T: Clone + Debug + PartialEq + Diff + for<'de> Deserialize<'de> + Serialize,
-{
-    pub fn iter<'v>(&'v self) -> Box<dyn Iterator<Item = &InnerValue<T>> + 'v> {
-        match &self.0 {
-            Some(diffs) => Box::new(diffs.iter()),
-            None => Box::new(empty()),
-        }
-    }
-
-    pub fn into_iter<'v>(self) -> Box<dyn Iterator<Item = InnerValue<T>> + 'v>
-    where
-        Self: 'v,
-    {
-        match self.0 {
-            Some(diffs) => Box::new(diffs.into_iter()),
-            None => Box::new(empty()),
-        }
-    }
-
-    pub fn len(&self) -> usize {
-        match &self.0 {
-            Some(diffs) => diffs.len(),
-            None => 0,
-        }
     }
 }
 

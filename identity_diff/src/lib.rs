@@ -5,15 +5,15 @@
 /// `bool`, and `char` types.  Structs and Enums are supported via `identity_derive` and can be composed of any number
 /// of these types.
 mod error;
-mod hashmap;
-mod hashset;
+pub mod hashmap;
+pub mod hashset;
 mod macros;
 pub mod option;
-mod string;
+pub mod string;
 mod traits;
 #[cfg(feature = "serde_value")]
 mod value;
-mod vec;
+pub mod vec;
 
 pub use error::{Error, Result};
 pub use traits::Diff;

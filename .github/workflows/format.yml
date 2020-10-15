@@ -19,15 +19,12 @@ jobs:
       matrix:
         project:
           [
-            identity_account,
-            identity_communication,
             identity_core,
-            identity_integration,
-            identity_resolver,
-            identity_schema,
-            identity_vc,
+            identity_crypto,
             identity_derive,
             identity_diff,
+            identity_iota,
+            identity_proof,
           ]
 
     steps:
