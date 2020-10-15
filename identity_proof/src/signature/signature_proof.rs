@@ -1,4 +1,4 @@
-use identity_common::{Object, SerdeInto};
+use identity_core::common::{Object, SerdeInto};
 use identity_crypto::{self as crypto, Error, Proof, PublicKey, SecretKey};
 use std::marker::PhantomData;
 
@@ -71,13 +71,16 @@ where
     fn create(&self, document: &Self::Document, secret: &SecretKey) -> crypto::Result<Self::Output> {
         self.create_proof(document, secret)
             .and_then(|proof| Ok(proof.serde_into()?))
-            .map_err(Error::create_proof)
+            .map_err(|error| Error::CreateProof(error.into()))
     }
 
     fn verify(&self, document: &Self::Document, proof: &Self::Output, public: &PublicKey) -> crypto::Result<bool> {
         proof
             .serde_into()
-            .map_err(Error::create_proof)
-            .and_then(|proof| self.verify_proof(document, &proof, public).map_err(Error::create_proof))
+            .map_err(|error| Error::CreateProof(error.into()))
+            .and_then(|proof| {
+                self.verify_proof(document, &proof, public)
+                    .map_err(|error| Error::CreateProof(error.into()))
+            })
     }
 }

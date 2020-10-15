@@ -1,4 +1,4 @@
-use identity_common::SerdeInto;
+use identity_core::common::SerdeInto;
 use identity_proof::{CanonicalJson, Canonicalize};
 use serde_json::json;
 

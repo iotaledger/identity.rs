@@ -1,4 +1,4 @@
-use identity_common::Object;
+use identity_core::common::Object;
 
 use crate::{canonicalize::Canonicalize, error::Result};
 

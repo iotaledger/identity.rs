@@ -295,7 +295,7 @@ pub fn impl_from_into(input: &InputModel) -> TokenStream {
             impl <#(#param_decls),*> std::convert::From<#diff<#params>> for #name<#params> #clause
             {
                 fn from(diff: #diff<#params>) -> Self {
-                    Self::from_diff(diff).expect("Unable to conver from diff")
+                    Self::from_diff(diff).expect("Unable to convert from diff")
                 }
             }
         }

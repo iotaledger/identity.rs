@@ -1,4 +1,4 @@
-use identity_common::{Object, Value};
+use identity_core::common::{Object, Value};
 use serde::{de::Error as _, ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
 use std::convert::TryFrom;
 

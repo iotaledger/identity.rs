@@ -15,7 +15,6 @@ homepage = "https://www.iota.org"
 [dependencies]
 anyhow = "1.0"
 hex = "0.4"
-identity_common = { path = "../identity_common" }
 sha2 = "0.9"
 sha3 = "0.9"
 thiserror = "1.0"
