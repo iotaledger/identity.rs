@@ -6,7 +6,7 @@ use crate::{
     utils::HasId,
 };
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Diff, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Diff, Serialize, Deserialize)]
 #[serde(untagged)]
 #[diff(from_into)]
 pub enum Authentication {
