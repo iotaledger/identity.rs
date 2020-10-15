@@ -1,6 +1,7 @@
 use identity_core::{
     common::{AsJson as _, Context, OneOrMany, Url},
-    did::{KeyData, KeyType, PublicKey, PublicKeyBuilder, Service, ServiceBuilder, ServiceEndpointBuilder, DID},
+    did::{Service, ServiceBuilder, ServiceEndpointBuilder, DID},
+    key::{KeyData, KeyType, PublicKey, PublicKeyBuilder},
 };
 
 const JSON_STR: &str = include_str!("fixtures/did/utils.json");
