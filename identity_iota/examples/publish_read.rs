@@ -4,8 +4,9 @@
 use anyhow::Result;
 use identity_core::{
     common::Timestamp,
-    did::{DIDDocument, KeyData, KeyType, PublicKeyBuilder},
+    did::DIDDocument,
     diff::Diff,
+    key::{KeyData, KeyType, PublicKeyBuilder},
 };
 use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
 use identity_iota::{

@@ -131,7 +131,7 @@ fn test_full_did() {
 #[test]
 fn test_some() {
     let did =
-        DID::from("did:example:123456789abcdefghi?service=messages&relative-ref=%2Fsome%2Fpath%3Fquery#frag").unwrap();
+        DID::parse("did:example:123456789abcdefghi?service=messages&relative-ref=%2Fsome%2Fpath%3Fquery#frag").unwrap();
 
     println!("{:?}", did);
 }
@@ -139,7 +139,7 @@ fn test_some() {
 /// test the did parser on a full did.
 #[test]
 fn test_parser() {
-    let did = DID::from("did:iota:123456/some_path?param=a&param=b#a_fragment").unwrap();
+    let did = DID::parse("did:iota:123456/some_path?param=a&param=b#a_fragment").unwrap();
 
     assert_eq!(
         format!("{}", did),
@@ -165,7 +165,7 @@ fn test_parser() {
 /// test multiple path strings in a DID.
 #[test]
 fn test_multiple_paths() {
-    let did = DID::from("did:iota:123456/some_path_a/some_path_b").unwrap();
+    let did = DID::parse("did:iota:123456/some_path_a/some_path_b").unwrap();
 
     assert_eq!(format!("{}", did), "did:iota:123456/some_path_a/some_path_b");
     assert_eq!(
@@ -184,15 +184,15 @@ fn test_multiple_paths() {
 /// test the parsing constraints properly throw errors.
 #[test]
 fn test_parsing_contraints() {
-    let did = DID::from("did:IOTA:12345");
+    let did = DID::parse("did:IOTA:12345");
 
     assert!(did.is_err());
 
-    let did = DID::from("did:iota:%$^@1234");
+    let did = DID::parse("did:iota:%$^@1234");
 
     assert!(did.is_err());
 
-    let did = DID::from("x:iota:123456");
+    let did = DID::parse("x:iota:123456");
 
     assert!(did.is_err());
 }
@@ -200,7 +200,7 @@ fn test_parsing_contraints() {
 /// test DID serialization and deserialization.
 #[test]
 fn test_serde() {
-    let did = DID::from("did:iota:12345").unwrap();
+    let did = DID::parse("did:iota:12345").unwrap();
 
     assert_tokens(&did, &[Token::String("did:iota:12345")]);
 
@@ -228,7 +228,7 @@ fn test_serde() {
 fn inner_did_id_seg(s: &str) -> Option<DID> {
     let did_str = format!("did:iota:{}", s);
 
-    DID::from(&did_str).unwrap();
+    DID::parse(&did_str).unwrap();
 
     Some(
         DID {
@@ -245,7 +245,7 @@ fn inner_did_id_seg(s: &str) -> Option<DID> {
 fn inner_did_name(s: &str) -> Option<DID> {
     let did_str = format!("did:{}:12345678", s);
 
-    DID::from(&did_str).unwrap();
+    DID::parse(&did_str).unwrap();
 
     Some(
         DID {
@@ -262,7 +262,7 @@ fn inner_did_name(s: &str) -> Option<DID> {
 fn inner_did_query_params(n: &str, v: &str) -> Option<DID> {
     let did_str = format!("did:iota:12345678?{}={}", n, v);
 
-    DID::from(did_str).unwrap();
+    DID::parse(did_str).unwrap();
 
     Some(
         DID {
@@ -280,7 +280,7 @@ fn inner_did_query_params(n: &str, v: &str) -> Option<DID> {
 fn inner_did_path(p: &str) -> Option<DID> {
     let did_str = format!("did:iota:12345678/{}", p);
 
-    DID::from(did_str).unwrap();
+    DID::parse(did_str).unwrap();
 
     Some(
         DID {
@@ -298,7 +298,7 @@ fn inner_did_path(p: &str) -> Option<DID> {
 fn inner_did_frag(f: &str) -> Option<DID> {
     let did_str = format!("did:iota:12345678#{}", f);
 
-    DID::from(did_str).unwrap();
+    DID::parse(did_str).unwrap();
 
     Some(
         DID {
