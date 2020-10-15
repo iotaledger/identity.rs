@@ -14,8 +14,6 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 anyhow = "1.0"
-base64 = "0.12"
-bs58 = "0.3"
 canonical_json = { git = "https://github.com/l1h3r/canonicaljson-rs", branch = "force-map-order" }
 identity_core = { path = "../identity_core" }
 identity_crypto = { path = "../identity_crypto" }

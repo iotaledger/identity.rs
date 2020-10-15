@@ -18,8 +18,11 @@ thiserror = "1.0"
 anyhow = "1.0"
 
 async-trait = { version = "0.1", default-features = false }
+base64 = { version = "0.12", default-features = false, features = ["std"] }
+bs58 = { version = "0.3", default-features = false, features = ["std"] }
 chrono = { version = "0.4", features = ["serde"] }
 derive_builder = { version = "0.9", default-features = false }
+hex = { version = "0.4", default-features = false , features = ["std"] }
 percent-encoding = { version = "2.1", default-features = false }
 url = { version = "2.1", default-features = false, features = ["serde"] }
 

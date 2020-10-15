@@ -1,5 +1,8 @@
 use anyhow::anyhow;
-use identity_core::common::{Object, Timestamp};
+use identity_core::{
+    common::{Object, Timestamp},
+    utils::{decode_b64, encode_b64},
+};
 use identity_crypto::{KeyGen, PublicKey, SecretKey, Sign, Verify};
 
 use crate::{
@@ -7,7 +10,6 @@ use crate::{
     document::LinkedDataDocument,
     error::{Error, Result},
     signature::{LinkedDataSignature, SignatureData, SignatureOptions, SignatureValue},
-    utils::{decode_b64, encode_b64},
 };
 
 const DEFAULT_PURPOSE: &str = "assertionMethod";
@@ -44,7 +46,7 @@ pub trait SignatureSuite: KeyGen + Sign + Verify {
 
     /// Decodes a `String`-encoded signature.
     fn decode_signature(&self, signature: &LinkedDataSignature) -> Result<Vec<u8>> {
-        decode_b64(signature.proof())
+        decode_b64(signature.proof()).map_err(Into::into)
     }
 
     /// Creates a `SignatureValue` from a raw String.
