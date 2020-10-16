@@ -1,10 +1,10 @@
 //! Publish new did document and read it from the tangle
 //! cargo run --example publish_read
 
-use anyhow::Result;
-use identity_core::{did::DIDDocument, diff::Diff};
+use anyhow::{anyhow, Result};
 use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
 use identity_iota::{
+    core::{did::DIDDocument, diff::Diff, key::KeyRelation},
     did::{DIDDiff, DIDProof, TangleDocument as _},
     helpers::create_document,
     io::{TangleReader, TangleWriter},
@@ -71,17 +71,18 @@ async fn main() -> Result<()> {
 async fn create_diff(did_document: DIDDocument, keypair: &identity_crypto::KeyPair) -> crate::Result<DIDDiff> {
     // updated doc and publish diff
     let mut new = did_document.clone();
-
-    new.set_metadata("new-value", true);
     new.update_time();
 
     // diff the two docs.
     let diff = did_document.diff(&new)?;
 
+    let key_did = new
+        .resolve_key(0, KeyRelation::Authentication)
+        .ok_or(anyhow!("Error::InvalidAuthenticationKey"))?;
     let mut diddiff = DIDDiff {
         id: new.did().clone(),
         diff: serde_json::to_string(&diff)?,
-        proof: DIDProof::new(new.did().clone()), // TODO: This is wrong - should be the key DID
+        proof: DIDProof::new(key_did.id().clone()),
     };
 
     did_document.sign_diff_unchecked(&mut diddiff, keypair.secret())?;
