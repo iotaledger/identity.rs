@@ -77,6 +77,30 @@ impl TangleDocument for DIDDocument {
 
         verify_canonicalized(self, key)
     }
+
+    fn sign_deactivation(&self, document: &mut DIDDocument, secret: &SecretKey) -> Result<()> {
+        // Get the first authentication key from the document.
+        let key: &PublicKey = self
+            .resolve_key(0, KeyRelation::Authentication)
+            .ok_or(Error::InvalidAuthenticationKey)?;
+
+        let key_type: KeyType = key.key_type();
+        let proof: DIDProof = DIDProof::new(key.id().clone());
+        let proof: Object = proof.serde_into()?;
+
+        // Reset the proof object in the document.
+        document.set_metadata("proof", proof);
+
+        // Create a signature from the document JSON.
+        let signature: String = sign_canonicalized(document, key_type, secret)?;
+
+        // Update the document proof with the encoded signature.
+        //
+        // Note: This access should not panic since we already set the "proof" object.
+        document.metadata_mut()["proof"]["signature"] = signature.into();
+
+        Ok(())
+    }
 }
 
 fn sign_canonicalized<T>(data: &T, key_type: KeyType, secret: &SecretKey) -> Result<String>
