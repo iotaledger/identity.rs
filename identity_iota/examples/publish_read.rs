@@ -1,11 +1,12 @@
 //! Publish new did document and read it from the tangle
 //! cargo run --example publish_read
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
 use identity_iota::{
     core::{did::DIDDocument, diff::Diff, key::KeyRelation},
     did::{DIDDiff, DIDProof, TangleDocument as _},
+    error::Error,
     helpers::create_document,
     io::{TangleReader, TangleWriter},
     network::{Network, NodeList},
@@ -39,7 +40,7 @@ async fn main() -> Result<()> {
 
     // Create, sign and publish diff to the Tangle
     let signed_diff = create_diff(did_document.clone(), &keypair).await?;
-    let tail_transaction = tangle_writer.publish_json(&did_document.did(), &signed_diff).await?;
+    let tail_transaction = tangle_writer.write_json(&did_document.did(), &signed_diff).await?;
 
     println!(
         "DID document DIDDiff published: https://comnet.thetangle.org/transaction/{}",
@@ -78,7 +79,7 @@ async fn create_diff(did_document: DIDDocument, keypair: &identity_crypto::KeyPa
 
     let key_did = new
         .resolve_key(0, KeyRelation::Authentication)
-        .ok_or(anyhow!("Error::InvalidAuthenticationKey"))?;
+        .ok_or(Error::InvalidAuthenticationKey)?;
     let mut diddiff = DIDDiff {
         id: new.did().clone(),
         diff: serde_json::to_string(&diff)?,
