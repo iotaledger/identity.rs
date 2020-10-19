@@ -25,7 +25,7 @@ async fn main() -> Result<()> {
     let bs58_auth_key = bs58::encode(keypair.public()).into_string();
 
     // Create, sign and publish DID document to the Tangle
-    let mut did_document = create_document(bs58_auth_key)?;
+    let mut did_document = create_document(bs58_auth_key.clone())?;
 
     did_document.sign_unchecked(keypair.secret())?;
 
@@ -40,7 +40,12 @@ async fn main() -> Result<()> {
 
     // Create, sign and publish diff to the Tangle
     let signed_diff = create_diff(did_document.clone(), &keypair).await?;
-    let tail_transaction = tangle_writer.write_json(&did_document.did(), &signed_diff).await?;
+    let auth_key = did_document
+        .resolve_key(0, KeyRelation::Authentication)
+        .ok_or(Error::InvalidAuthenticationKey)?;
+    let tail_transaction = tangle_writer
+        .publish_diff_json(&did_document.did(), auth_key.key_data(), &signed_diff)
+        .await?;
 
     println!(
         "DID document DIDDiff published: https://comnet.thetangle.org/transaction/{}",
