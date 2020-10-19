@@ -50,5 +50,5 @@ pub fn create_method_id(pub_key: &str, network: Option<&str>, network_shard: Opt
         _ => String::new(),
     };
     let id_string = format!("did:iota:{}{}{}", network_string, shard_string, bs58key);
-    Ok(DID::parse(id_string).unwrap())
+    Ok(DID::parse(id_string)?)
 }
