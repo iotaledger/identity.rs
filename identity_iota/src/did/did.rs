@@ -32,7 +32,8 @@ pub fn create_iota_address(did: &DID) -> Result<String> {
 /// Creates an 81 Trytes IOTA address from public key bytes for a diff
 pub fn create_diff_address_hash(public_key: &[u8]) -> Result<String> {
     let hash = &Blake2b256::digest(public_key);
-    let encoded: String = encode(hash.digest()).into_string();
+    let second_hash = &Blake2b256::digest(hash.digest());
+    let encoded: String = encode(second_hash.digest()).into_string();
     let mut trytes: String = utf8_to_trytes(&encoded);
 
     trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
