@@ -16,10 +16,13 @@ pub fn method_id(did: &DID) -> Result<&str> {
 }
 
 /// Creates an 81 Trytes IOTA address from the DID
-pub fn create_address_hash(did: &DID) -> Result<String> {
-    let hash = &Blake2b256::digest(method_id(did)?.as_bytes());
-    let encoded: String = encode(hash.digest()).into_string();
-    let mut trytes: String = utf8_to_trytes(&encoded);
+pub fn create_iota_address(did: &DID) -> Result<String> {
+    let mut id = method_id(did)?.to_string();
+    // Add empty string if id is too short
+    if id.len() < 42 {
+        id = format!("{}{}", id, "\0".repeat(41 - id.len()));
+    }
+    let mut trytes: String = utf8_to_trytes(&id);
 
     trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
 
@@ -38,7 +41,7 @@ pub fn create_diff_address_hash(public_key: &[u8]) -> Result<String> {
 }
 
 pub fn create_address(did: &DID) -> Result<Address> {
-    create_address_hash(did).and_then(create_address_from_trits)
+    create_iota_address(did).and_then(create_address_from_trits)
 }
 
 pub fn create_diff_address(public_key: &[u8]) -> Result<Address> {
