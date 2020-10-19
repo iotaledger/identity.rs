@@ -88,7 +88,7 @@ async fn create_diff(did_document: DIDDocument, keypair: &identity_crypto::KeyPa
     let mut diddiff = DIDDiff {
         id: new.did().clone(),
         diff: serde_json::to_string(&diff)?,
-        proof: DIDProof::new(key_did.id().clone()),
+        proof: DIDProof::new(key_did.id().clone())?,
     };
 
     did_document.sign_diff_unchecked(&mut diddiff, keypair.secret())?;

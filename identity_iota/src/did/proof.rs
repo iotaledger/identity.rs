@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::error::{Error, Result};
 use identity_core::{common::Timestamp, did::DID};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -14,11 +15,12 @@ pub struct DIDProof {
 }
 
 impl DIDProof {
-    pub fn new(id: DID) -> Self {
-        Self {
-            id: id.fragment.expect("DID without fragment provided"),
+    pub fn new(id: DID) -> Result<Self> {
+        let id = id.fragment.ok_or(Error::InvalidMethodId)?;
+        Ok(Self {
+            id,
             created: Timestamp::now(),
             signature: String::new(),
-        }
+        })
     }
 }
