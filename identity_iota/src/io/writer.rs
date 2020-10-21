@@ -33,8 +33,8 @@ pub struct Config {
 }
 
 impl Config {
-    const DEFAULT_CONFIRM_DELAY: Duration = Duration::from_secs(5);
-    const DEFAULT_PROMOTE_DELAY: Duration = Duration::from_secs(5);
+    const DEFAULT_CONFIRM_DELAY: Duration = Duration::from_secs(10);
+    const DEFAULT_PROMOTE_DELAY: Duration = Duration::from_secs(10);
     const DEFAULT_PROMOTE_LIMIT: usize = 20;
 
     pub const fn new() -> Self {

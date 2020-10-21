@@ -14,8 +14,13 @@ use iota_conversion::Trinary as _;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-    let nodes = vec!["http://localhost:14265", "https://nodes.comnet.thetangle.org:443"];
-    let nodelist = NodeList::with_network_and_nodes(Network::Comnet, nodes);
+    let nodes = vec![
+        "http://localhost:14265",
+        "https://nodes.thetangle.org:443",
+        "https://iotanode.us:14267",
+        "https://pow.iota.community:443",
+    ];
+    let nodelist = NodeList::with_network_and_nodes(Network::Mainnet, nodes);
 
     let tangle_writer = TangleWriter::new(&nodelist)?;
 
@@ -33,7 +38,7 @@ async fn main() -> Result<()> {
     let tail_transaction = tangle_writer.write_json(did_document.did(), &did_document).await?;
 
     println!(
-        "DID document published: https://comnet.thetangle.org/transaction/{}",
+        "DID document published: https://thetangle.org/transaction/{}",
         tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
     );
 
@@ -42,7 +47,7 @@ async fn main() -> Result<()> {
     let tail_transaction = tangle_writer.write_json(did_document.did(), &deactivation_doc).await?;
 
     println!(
-        "Deactivation DID document published: https://comnet.thetangle.org/transaction/{}",
+        "Deactivation DID document published: https://thetangle.org/transaction/{}",
         tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
     );
 

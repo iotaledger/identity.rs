@@ -10,7 +10,7 @@ use crate::error::Result;
 /// Creates a DID document with an auth key and a DID
 pub fn create_document(auth_key: String) -> Result<DIDDocument> {
     //create comnet id
-    let did: DID = create_method_id(&auth_key, Some("com"), None)?;
+    let did: DID = create_method_id(&auth_key, None, None)?;
     let key: DID = format!("{}#key-1", did).parse()?;
 
     let public_key: PublicKey = PublicKeyBuilder::default()
