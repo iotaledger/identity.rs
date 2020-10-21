@@ -36,7 +36,7 @@ impl LdSignature {
             type_: type_.into(),
             verification_method: options.verification_method,
             proof_purpose: options.proof_purpose,
-            created: options.created.unwrap_or_else(|| Timestamp::now()),
+            created: options.created.unwrap_or_else(Timestamp::now),
             domain: options.domain,
             nonce: options.nonce,
             data: SignatureData {
