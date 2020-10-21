@@ -73,7 +73,10 @@ where
     let verified: Vec<u8> = ed25519_verify(&signature, public)?;
 
     // Remove the signature from the JSON object
-    let _ = json["proof"][proof.data.key()].take();
+    json["proof"]
+        .as_object_mut()
+        .ok_or(Error::InvalidSignature)?
+        .remove(proof.data.key());
 
     let digest = serde_jcs::to_vec(&json)
         .map_err(|_| Error::InvalidDocument)
@@ -153,4 +156,151 @@ fn resolve_key(document: &Document, fragment: &str) -> Result<Vec<u8>> {
         .try_decode()
         .ok_or(Error::InvalidDocument)?
         .map_err(|_| Error::InvalidDocument)
+}
+
+#[cfg(test)]
+mod tests {
+  const UNSIGNED: &str = r#"
+    {
+      "id": "did:example:123",
+      "publicKey": [
+        {
+          "id": "did:example:123#key-1",
+          "type": "JcsEd25519Key2020",
+          "controller": "did:example:123",
+          "publicKeyBase58": "6b23ioXQSAayuw13PGFMCAKqjgqoLTpeXWCy5WRfw28c"
+        }
+      ],
+      "service": [
+        {
+          "id": "schemaID",
+          "type": "schema",
+          "serviceEndpoint": "schemaID"
+        }
+      ],
+      "proof": {
+        "created": "2020-04-17T18:03:18Z",
+        "verificationMethod": "did:example:123#key-1",
+        "nonce": "7bc22433-2ea4-4d30-abf2-2652bebb26c7",
+        "type": "JcsEd25519Signature2020"
+      }
+    }
+  "#;
+
+  const SIGNED: &str = r#"
+    {
+      "id": "did:example:123",
+      "publicKey": [
+        {
+          "id": "did:example:123#key-1",
+          "type": "JcsEd25519Key2020",
+          "controller": "did:example:123",
+          "publicKeyBase58": "6b23ioXQSAayuw13PGFMCAKqjgqoLTpeXWCy5WRfw28c"
+        }
+      ],
+      "service": [
+        {
+          "id": "schemaID",
+          "type": "schema",
+          "serviceEndpoint": "schemaID"
+        }
+      ],
+      "proof": {
+        "created": "2020-04-17T18:03:18Z",
+        "verificationMethod": "did:example:123#key-1",
+        "nonce": "7bc22433-2ea4-4d30-abf2-2652bebb26c7",
+        "type": "JcsEd25519Signature2020",
+        "signatureValue": "5TcawVLuoqRjCuu4jAmRqBcKoab1YVqxG8RXnQwvQBHNwP7RhPwXhzhTLVu3dKGposo2mmtfx9AwcqB2Mwnagup1JT5Yr9u3SjzLCc6kx4wW6HG5SKcra4SauhutN94s8Eo"
+      }
+    }
+  "#;
+
+  use super::{jcs_sign, jcs_verify, ed25519_sign, ed25519_verify};
+
+  use identity_core::{
+    common::Value,
+    utils::{decode_b58, decode_hex, encode_hex},
+  };
+
+  const PUBLIC_B58: &str = "6b23ioXQSAayuw13PGFMCAKqjgqoLTpeXWCy5WRfw28c";
+  const SECRET_B58: &str = "3qsrFcQqVuPpuGrRkU4wkQRvw1tc1C5EmEDPioS1GzQ2pLoThy5TYS2BsrwuzHYDnVqcYhMSpDhTXGst6H5ttFkG";
+  const EXPECTED: &str = "0ccbeb905006a327b5112c7bfaa2a5918784209818a83750548b9965661b9d1d467c4078faacbaa36c1bd0f88673039adea51f5d216cd45cbf0e1528fb67f10a68656c6c6f";
+
+  #[test]
+  fn test_ed25519_can_sign_and_verify() {
+    let public: Vec<u8> = decode_b58(PUBLIC_B58).unwrap();
+    let secret: Vec<u8> = decode_b58(SECRET_B58).unwrap();
+    let expected: Vec<u8> = decode_hex(EXPECTED).unwrap();
+
+    let signature = ed25519_sign(b"hello", &secret).unwrap();
+    let verified = ed25519_verify(&expected, &public).unwrap();
+
+    assert_eq!(encode_hex(&signature), EXPECTED);
+    assert_eq!(&verified, b"hello");
+  }
+
+  #[test]
+  fn test_jcsed25519signature2020_can_sign_and_verify() {
+    let public = decode_b58(PUBLIC_B58).unwrap();
+    let secret = decode_b58(SECRET_B58).unwrap();
+    let expected = "5TcawVLuoqRjCuu4jAmRqBcKoab1YVqxG8RXnQwvQBHNwP7RhPwXhzhTLVu3dKGposo2mmtfx9AwcqB2Mwnagup1JT5Yr9u3SjzLCc6kx4wW6HG5SKcra4SauhutN94s8Eo";
+
+    let mut unsigned = serde_json::from_str::<Value>(UNSIGNED).unwrap();
+    let signed = serde_json::from_str::<Value>(SIGNED).unwrap();
+
+    let signature = jcs_sign(&unsigned, &secret).unwrap();
+
+    assert_eq!(signature, expected);
+
+    unsigned["proof"]["signatureValue"] = signature.into();
+
+    println!("U > {:#}", unsigned);
+
+    assert_eq!(
+      serde_jcs::to_vec(&unsigned).unwrap(),
+      serde_jcs::to_vec(&signed).unwrap(),
+    );
+
+    let verified = jcs_verify(&unsigned, &public);
+
+    assert!(verified.is_ok());
+  }
+
+  #[test]
+  fn test_jcsed25519signature2020_fails_when_key_is_mutated() {
+    let public = decode_hex("00015daa95f69cbd3f431ff5a3b2eefe2bb5d9ea0d296607446aab7b7106f3ed").unwrap();
+    let secret = decode_b58(SECRET_B58).unwrap();
+    let expected = "5TcawVLuoqRjCuu4jAmRqBcKoab1YVqxG8RXnQwvQBHNwP7RhPwXhzhTLVu3dKGposo2mmtfx9AwcqB2Mwnagup1JT5Yr9u3SjzLCc6kx4wW6HG5SKcra4SauhutN94s8Eo";
+
+    let mut document = serde_json::from_str::<Value>(UNSIGNED).unwrap();
+    let signature = jcs_sign(&document, &secret).unwrap();
+
+    assert_eq!(signature, expected);
+
+    document["proof"]["signatureValue"] = signature.into();
+
+    let verified = jcs_verify(&document, &public);
+
+    assert!(verified.is_err());
+  }
+
+  #[test]
+  fn test_jcsed25519signature2020_fails_when_signature_is_mutated() {
+    let public = decode_b58(PUBLIC_B58).unwrap();
+    let secret = decode_b58(SECRET_B58).unwrap();
+    let expected = "5TcawVLuoqRjCuu4jAmRqBcKoab1YVqxG8RXnQwvQBHNwP7RhPwXhzhTLVu3dKGposo2mmtfx9AwcqB2Mwnagup1JT5Yr9u3SjzLCc6kx4wW6HG5SKcra4SauhutN94s8Eo";
+
+    let mut document = serde_json::from_str::<Value>(UNSIGNED).unwrap();
+    let mut signature = jcs_sign(&document, &secret).unwrap();
+
+    assert_eq!(signature, expected);
+
+    signature.push('0');
+
+    document["proof"]["signatureValue"] = signature.into();
+
+    let verified = jcs_verify(&document, &public);
+
+    assert!(verified.is_err());
+  }
 }
