@@ -1,5 +1,5 @@
-use serde_json::json;
 use serde_jcs::to_vec;
+use serde_json::json;
 
 #[test]
 fn test_canonicalize_json() {
