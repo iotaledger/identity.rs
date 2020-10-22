@@ -1,9 +1,11 @@
-mod linked_data_signature;
+mod ld_signature;
 mod signature_data;
 mod signature_options;
-mod signature_proof;
-mod signature_suite;
+mod signature_value;
+mod suites;
 
-pub use self::{
-    linked_data_signature::*, signature_data::*, signature_options::*, signature_proof::*, signature_suite::*,
-};
+pub use ld_signature::*;
+pub use signature_data::*;
+pub use signature_options::*;
+pub use signature_value::*;
+pub use suites::*;
