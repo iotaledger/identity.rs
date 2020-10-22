@@ -58,16 +58,6 @@ pub struct DIDDocument {
 }
 
 impl DIDDocument {
-    pub fn deactivate(did: &DID) -> Result<Self> {
-        let doc: DIDDocument = DIDDocumentBuilder::default()
-            .context(OneOrMany::One(DID::BASE_CONTEXT.into()))
-            .id(did.clone())
-            .updated(Timestamp::now())
-            .build()
-            .unwrap();
-        Ok(doc)
-    }
-
     pub fn resolve_key<'a>(&self, key: impl Into<KeyIndex<'a>>, relation: KeyRelation) -> Option<&PublicKey> {
         self.resolve_key_(key.into(), relation)
     }
