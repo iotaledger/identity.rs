@@ -1,5 +1,10 @@
-use identity_core::did::DID;
+use identity_core::{did::DID, utils::encode_b58};
 use identity_iota::did::IotaDID;
+use multihash::Blake2b256;
+
+fn key(input: &str) -> String {
+    encode_b58(Blake2b256::digest(input.as_bytes()).digest())
+}
 
 #[test]
 fn test_parse_valid() {
@@ -21,31 +26,40 @@ fn test_parse_invalid() {
 
 #[test]
 fn test_from_did() {
-    let did: DID = "did:iota:123".parse().unwrap();
+    let key: String = key("123");
+
+    let did: DID = format!("did:iota:{}", key).parse().unwrap();
     assert!(IotaDID::try_from_did(did).is_ok());
 
-    let did: DID = "did:web:123".parse().unwrap();
+    let did: DID = "did:iota:123".parse().unwrap();
+    assert!(IotaDID::try_from_did(did).is_err());
+
+    let did: DID = format!("did:web:{}", key).parse().unwrap();
     assert!(IotaDID::try_from_did(did).is_err());
 }
 
 #[test]
 fn test_network() {
-    let did: IotaDID = "did:iota:dev:123".parse().unwrap();
+    let key: String = key("123");
+
+    let did: IotaDID = format!("did:iota:dev:{}", key).parse().unwrap();
     assert_eq!(did.network(), "dev");
 
-    let did: IotaDID = "did:iota:123".parse().unwrap();
+    let did: IotaDID = format!("did:iota:{}", key).parse().unwrap();
     assert_eq!(did.network(), "main");
 
-    let did: IotaDID = "did:iota:rainbow:123".parse().unwrap();
+    let did: IotaDID = format!("did:iota:rainbow:{}", key).parse().unwrap();
     assert_eq!(did.network(), "rainbow");
 }
 
 #[test]
 fn test_shard() {
-    let did: IotaDID = "did:iota:dev:123".parse().unwrap();
+    let key: String = key("123");
+
+    let did: IotaDID = format!("did:iota:dev:{}", key).parse().unwrap();
     assert_eq!(did.shard(), None);
 
-    let did: IotaDID = "did:iota:dev:shard:123".parse().unwrap();
+    let did: IotaDID = format!("did:iota:dev:shard:{}", key).parse().unwrap();
     assert_eq!(did.shard(), Some("shard"));
 }
 
@@ -67,8 +81,10 @@ fn test_method_id() {
 
 #[test]
 fn test_normalize() {
-    let mut did1: IotaDID = "did:iota:123".parse().unwrap();
-    let did2: IotaDID = "did:iota:main:123".parse().unwrap();
+    let key: String = key("123");
+
+    let mut did1: IotaDID = format!("did:iota:{}", key).parse().unwrap();
+    let did2: IotaDID = format!("did:iota:main:{}", key).parse().unwrap();
 
     assert!(did1 != did2);
     did1.normalize();
