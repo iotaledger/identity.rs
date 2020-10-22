@@ -86,7 +86,11 @@ impl Serialize for SignatureData {
             map.serialize_entry(key, value)?;
         }
 
-        map.serialize_entry(self.key(), self.value())?;
+        let value: &str = self.value();
+
+        if !value.is_empty() {
+            map.serialize_entry(self.key(), value)?;
+        }
 
         map.end()
     }
