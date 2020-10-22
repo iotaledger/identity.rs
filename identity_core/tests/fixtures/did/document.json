@@ -9,7 +9,7 @@
         "publicKey": [
             {
                 "id": "did:iota:123456789abcdefghi#keys-1",
-                "type": "RsaVerificationKey2018",
+                "type": "Ed25519VerificationKey2018",
                 "controller": "did:iota:123456789abcdefghi",
                 "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
             },
@@ -21,7 +21,7 @@
             },
             {
                 "id": "did:iota:123456789abcdefghi#keys-3",
-                "type": "EcdsaSecp256k1VerificationKey2019",
+                "type": "Ed25519VerificationKey2018",
                 "controller": "did:iota:123456789abcdefghi",
                 "publicKeyHex": "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
             }
@@ -37,7 +37,7 @@
         "publicKey": [
             {
                 "id": "did:iota:123456789abcdefghi#keys-1",
-                "type": "RsaVerificationKey2018",
+                "type": "Ed25519VerificationKey2018",
                 "controller": "did:iota:123456789abcdefghi",
                 "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
             },
@@ -49,7 +49,7 @@
             },
             {
                 "id": "did:iota:123456789abcdefghi#keys-3",
-                "type": "EcdsaSecp256k1VerificationKey2019",
+                "type": "Ed25519VerificationKey2018",
                 "controller": "did:iota:123456789abcdefghi",
                 "publicKeyHex": "02b97c30de767f084ce3080168ee293053ba33b235d7116a3263d29f1450936b71"
             }
@@ -65,7 +65,7 @@
         "public_keys": [
             {
                 "id": "did:iota:123456789abcdefghi#keys-1",
-                "type": "RsaVerificationKey2018",
+                "type": "Ed25519VerificationKey2018",
                 "controller": "did:iota:123456789abcdefghi",
                 "publicKeyBase58": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
             }
@@ -83,7 +83,7 @@
             {
                 "id": "did:iota:123456789abcdefghi#keys-2",
                 "controller": "did:iota:123456789abcdefghi",
-                "type": "RsaVerificationKey2018",
+                "type": "Ed25519VerificationKey2018",
                 "publicKeyPem": "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----"
             }
         ]

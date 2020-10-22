@@ -11,7 +11,7 @@ pub mod value;
 
 pub use self::url::Url;
 pub use context::Context;
-pub use convert::{AsJson, SerdeInto};
+pub use convert::{AsJson, FromJson, SerdeInto, ToJson};
 pub use object::Object;
 pub use one_or_many::OneOrMany;
 pub use timestamp::Timestamp;
