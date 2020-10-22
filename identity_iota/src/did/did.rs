@@ -14,9 +14,9 @@ use crate::{
 };
 
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct TangleDID(DID);
+pub struct IotaDID(DID);
 
-impl TangleDID {
+impl IotaDID {
     pub const METHOD: &'static str = "iota";
 
     pub fn try_from_did(did: DID) -> Result<Self> {
@@ -74,7 +74,7 @@ impl TangleDID {
             [_] => "main",
             [network, _] => &*network,
             [network, _, _] => &*network,
-            _ => unreachable!("TangleDID::network called for invalid DID"),
+            _ => unreachable!("IotaDID::network called for invalid DID"),
         }
     }
 
@@ -83,7 +83,7 @@ impl TangleDID {
             [_] => None,
             [_, _] => None,
             [_, shard, _] => Some(&*shard),
-            _ => unreachable!("TangleDID::shard called for invalid DID"),
+            _ => unreachable!("IotaDID::shard called for invalid DID"),
         }
     }
 
@@ -92,7 +92,7 @@ impl TangleDID {
             [mid] => &*mid,
             [_, mid] => &*mid,
             [_, _, mid] => &*mid,
-            _ => unreachable!("TangleDID::method_id called for invalid DID"),
+            _ => unreachable!("IotaDID::method_id called for invalid DID"),
         }
     }
 
@@ -100,7 +100,7 @@ impl TangleDID {
         match &*self.id_segments {
             [_] => self.id_segments.insert(0, "main".into()),
             [_, _] | [_, _, _] => {}
-            _ => unreachable!("TangleDID::normalize called for invalid DID"),
+            _ => unreachable!("IotaDID::normalize called for invalid DID"),
         }
     }
 
@@ -126,19 +126,19 @@ impl TangleDID {
     }
 }
 
-impl Display for TangleDID {
+impl Display for IotaDID {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}", self.0)
     }
 }
 
-impl Debug for TangleDID {
+impl Debug for IotaDID {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}", self.0)
     }
 }
 
-impl Deref for TangleDID {
+impl Deref for IotaDID {
     type Target = DID;
 
     fn deref(&self) -> &Self::Target {
@@ -146,19 +146,19 @@ impl Deref for TangleDID {
     }
 }
 
-impl DerefMut for TangleDID {
+impl DerefMut for IotaDID {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl From<TangleDID> for DID {
-    fn from(other: TangleDID) -> Self {
+impl From<IotaDID> for DID {
+    fn from(other: IotaDID) -> Self {
         other.0
     }
 }
 
-impl TryFrom<DID> for TangleDID {
+impl TryFrom<DID> for IotaDID {
     type Error = Error;
 
     fn try_from(other: DID) -> Result<Self, Self::Error> {
@@ -166,7 +166,7 @@ impl TryFrom<DID> for TangleDID {
     }
 }
 
-impl FromStr for TangleDID {
+impl FromStr for IotaDID {
     type Err = Error;
 
     fn from_str(string: &str) -> Result<Self, Self::Err> {

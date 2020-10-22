@@ -5,12 +5,12 @@ use identity_core::{
     utils::encode_b58,
 };
 
-use crate::{did::TangleDID, error::Result};
+use crate::{did::IotaDID, error::Result};
 
 /// Creates a DID document with an auth key and a DID
 pub fn create_document(auth_key: &[u8]) -> Result<DIDDocument> {
     //create comnet id
-    let did: DID = TangleDID::with_network(auth_key, "com")?.into();
+    let did: DID = IotaDID::with_network(auth_key, "com")?.into();
     let key: DID = format!("{}#key-1", did).parse()?;
 
     let public_key: PublicKey = PublicKeyBuilder::default()
