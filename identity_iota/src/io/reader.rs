@@ -99,7 +99,7 @@ impl TangleReader {
             };
 
             if diff.data.proof.created > *updated {
-                latest.data = latest.data.merge(DIDDocument::get_diff_from_str(&diff.data.diff)?)?;
+                latest.data = latest.data.merge(diff.data.diff)?;
                 metadata.insert(format!("hash:diff:{}", index), diff.hash.into());
             }
         }

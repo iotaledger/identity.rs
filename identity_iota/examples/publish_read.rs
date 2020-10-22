@@ -1,12 +1,12 @@
 //! Publish new did document and read it from the tangle
 //! cargo run --example publish_read
 
-use anyhow::Result;
-use identity_core::{did::DIDDocument, diff::Diff};
-use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
+use identity_core::key::PublicKey;
+use identity_crypto::KeyPair;
 use identity_iota::{
-    did::{DIDDiff, DIDProof, TangleDocument as _},
-    helpers::create_document,
+    did::{IotaDID, IotaDocument},
+    error::Result,
+    helpers::create_ed25519_key,
     io::{TangleReader, TangleWriter},
     network::{Network, NodeList},
 };
@@ -20,23 +20,39 @@ async fn main() -> Result<()> {
     let tangle_writer = TangleWriter::new(&nodelist)?;
 
     // Create keypair
-    let keypair = Ed25519::generate(&Ed25519, KeyGenerator::default())?;
+    let keypair: KeyPair = IotaDocument::generate_ed25519_keypair();
 
-    // Create, sign and publish DID document to the Tangle
-    let mut did_document = create_document(keypair.public().as_ref())?;
+    // Create comnet DID and authentication method
+    let did: IotaDID = IotaDID::with_network(keypair.public().as_ref(), "com")?;
+    let key: PublicKey = create_ed25519_key(&did, keypair.public().as_ref())?;
 
-    did_document.sign_unchecked(keypair.secret())?;
+    // Create a minimal DID document from the DID and authentication method
+    let mut document: IotaDocument = IotaDocument::new(did, key)?;
 
-    let tail_transaction = tangle_writer.write_json(did_document.did(), &did_document).await?;
+    // Sign the document with the authentication method secret
+    document.sign(keypair.secret())?;
+
+    // Ensure the document proof is valid
+    assert!(document.verify().is_ok());
+
+    let tail_transaction = tangle_writer.write_json(document.did(), &document).await?;
 
     println!(
         "DID document published: https://comnet.thetangle.org/transaction/{}",
         tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
     );
 
-    // Create, sign and publish diff to the Tangle
-    let signed_diff = create_diff(did_document.clone(), &keypair).await?;
-    let tail_transaction = tangle_writer.publish_json(&did_document.did(), &signed_diff).await?;
+    // Update document and publish diff to the Tangle
+    let mut update = document.clone();
+
+    update.set_metadata("new-value", true);
+
+    let signed_diff = document.diff(update.into(), keypair.secret())?;
+
+    // Ensure the diff proof is valid
+    assert!(document.verify_diff(&signed_diff).is_ok());
+
+    let tail_transaction = tangle_writer.publish_json(&document.did(), &signed_diff).await?;
 
     println!(
         "DID document DIDDiff published: https://comnet.thetangle.org/transaction/{}",
@@ -44,44 +60,24 @@ async fn main() -> Result<()> {
     );
 
     // Get document and diff from the tangle and validate the signatures
-    let did = did_document.did();
+    let did = document.did();
     let tangle_reader = TangleReader::new(&nodelist)?;
 
     let received_messages = tangle_reader.fetch(&did).await?;
     println!("{:?}", received_messages);
 
-    let docs = TangleReader::extract_documents(&did, &received_messages)?;
+    let mut docs = TangleReader::extract_documents(&did, &received_messages)?;
     println!("extracted docs: {:?}", docs);
 
     let diffs = TangleReader::extract_diffs(&did, &received_messages)?;
     println!("extracted diffs: {:?}", diffs);
 
-    let sig = docs[0].data.verify_unchecked().is_ok();
+    let doc = IotaDocument::try_from_document(docs.remove(0).data)?;
+    let sig = doc.verify().is_ok();
     println!("Document has valid signature: {}", sig);
 
-    let sig = docs[0].data.verify_diff_unchecked(&diffs[0].data).is_ok();
+    let sig = doc.verify_diff(&diffs[0].data).is_ok();
     println!("Diff has valid signature: {}", sig);
 
     Ok(())
-}
-
-async fn create_diff(did_document: DIDDocument, keypair: &identity_crypto::KeyPair) -> crate::Result<DIDDiff> {
-    // updated doc and publish diff
-    let mut new = did_document.clone();
-
-    new.set_metadata("new-value", true);
-    new.update_time();
-
-    // diff the two docs.
-    let diff = did_document.diff(&new)?;
-
-    let mut diddiff = DIDDiff {
-        id: new.did().clone(),
-        diff: serde_json::to_string(&diff)?,
-        proof: DIDProof::new(new.did().clone()), // TODO: This is wrong - should be the key DID
-    };
-
-    did_document.sign_diff_unchecked(&mut diddiff, keypair.secret())?;
-
-    Ok(diddiff)
 }

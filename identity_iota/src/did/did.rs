@@ -121,7 +121,7 @@ impl IotaDID {
         create_address_from_trits(self.create_address_hash())
     }
 
-    fn encode_key(key: &[u8]) -> String {
+    pub(crate) fn encode_key(key: &[u8]) -> String {
         encode_b58(Blake2b256::digest(key).digest())
     }
 }

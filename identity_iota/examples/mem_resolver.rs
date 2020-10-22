@@ -10,15 +10,15 @@ use identity_core::{
         dereference, resolve, Dereference, DocumentMetadata, InputMetadata, MetaDocument, Resolution, ResolverMethod,
     },
 };
-use identity_crypto::{Ed25519, KeyGen as _, KeyPair};
-use identity_iota::error::Result;
+use identity_crypto::KeyPair;
+use identity_iota::{error::Result, did::IotaDocument};
 use multihash::{Blake2b256, MultihashGeneric};
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
     let mut resolver: MemResolver = MemResolver::new();
 
-    let keypair: KeyPair = Ed25519::generate(&Ed25519, Default::default())?;
+    let keypair: KeyPair = IotaDocument::generate_ed25519_keypair();
     let public: String = bs58::encode(keypair.public()).into_string();
 
     let ident: MultihashGeneric<_> = Blake2b256::digest(public.as_bytes());

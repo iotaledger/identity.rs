@@ -1,11 +1,12 @@
 //! Publish new did document and read it from the tangle
 //! cargo run --example publish
 
-use identity_crypto::{Ed25519, KeyGen};
+use identity_core::key::PublicKey;
+use identity_crypto::KeyPair;
 use identity_iota::{
-    did::TangleDocument as _,
+    did::{IotaDID, IotaDocument},
     error::Result,
-    helpers::create_document,
+    helpers::create_ed25519_key,
     io::TangleWriter,
     network::{Network, NodeList},
 };
@@ -19,14 +20,22 @@ async fn main() -> Result<()> {
     let tangle_writer = TangleWriter::new(&nodelist)?;
 
     // Create keypair
-    let keypair = Ed25519::generate(&Ed25519, Default::default())?;
+    let keypair: KeyPair = IotaDocument::generate_ed25519_keypair();
 
-    // Create, sign and publish DID document to the Tangle
-    let mut did_document = create_document(keypair.public().as_ref())?;
+    // Create comnet DID and authentication method
+    let did: IotaDID = IotaDID::with_network(keypair.public().as_ref(), "com")?;
+    let key: PublicKey = create_ed25519_key(&did, keypair.public().as_ref())?;
 
-    did_document.sign_unchecked(keypair.secret())?;
+    // Create a minimal DID document from the DID and authentication method
+    let mut document: IotaDocument = IotaDocument::new(did, key)?;
 
-    let tail_transaction = tangle_writer.write_json(did_document.did(), &did_document).await?;
+    // Sign the document with the authentication method secret
+    document.sign(keypair.secret())?;
+
+    // Ensure the document proof is valid
+    assert!(document.verify().is_ok());
+
+    let tail_transaction = tangle_writer.write_json(document.did(), &document).await?;
 
     println!(
         "DID document published: https://comnet.thetangle.org/transaction/{}",
