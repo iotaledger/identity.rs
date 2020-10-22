@@ -2,9 +2,9 @@ use identity_core::{
     common::{AsJson as _, Object, SerdeInto as _, Value},
     did::DIDDocument,
     key::{KeyData, KeyRelation, KeyType, PublicKey},
-    utils::{decode_b58, decode_hex, encode_b58},
+    utils::{decode_b58, encode_b58},
 };
-use identity_crypto::{Ed25519, Secp256k1, SecretKey, Sign as _, Verify as _};
+use identity_crypto::{Ed25519, SecretKey, Sign as _, Verify as _};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -95,14 +95,8 @@ where
 
 fn sign(data: &[u8], key_type: KeyType, secret: &SecretKey) -> Result<Vec<u8>> {
     match key_type {
-        KeyType::JsonWebKey2020 => todo!("Not Supported: JsonWebKey2020"),
-        KeyType::EcdsaSecp256k1VerificationKey2019 => Secp256k1.sign(&data, secret).map_err(Into::into),
         KeyType::Ed25519VerificationKey2018 => Ed25519.sign(&data, secret).map_err(Into::into),
-        KeyType::GpgVerificationKey2020 => todo!("Not Supported: GpgVerificationKey2020"),
-        KeyType::RsaVerificationKey2018 => todo!("Not Supported: RsaVerificationKey2018"),
-        KeyType::X25519KeyAgreementKey2019 => todo!("Not Supported: X25519KeyAgreementKey2019"),
-        KeyType::SchnorrSecp256k1VerificationKey2019 => todo!("Not Supported: SchnorrSecp256k1VerificationKey2019"),
-        KeyType::EcdsaSecp256k1RecoveryMethod2020 => todo!("Not Supported: EcdsaSecp256k1RecoveryMethod2020"),
+        _ => Err(Error::InvalidAuthenticationKey),
     }
 }
 
@@ -139,21 +133,6 @@ where
 
 fn verify(data: &[u8], signature: &[u8], key: &PublicKey) -> Result<bool> {
     match (key.key_type(), key.key_data()) {
-        (KeyType::JsonWebKey2020, KeyData::PublicKeyJwk(_)) => todo!("Not Supported: JsonWebKey2020/PublicKeyJwk"),
-
-        (KeyType::EcdsaSecp256k1VerificationKey2019, KeyData::PublicKeyHex(inner)) => {
-            let key: Vec<u8> = decode_hex(inner)?;
-            let valid: bool = Secp256k1.verify(data, signature, &key.into())?;
-
-            Ok(valid)
-        }
-        (KeyType::EcdsaSecp256k1VerificationKey2019, KeyData::PublicKeyJwk(_)) => {
-            todo!("Not Supported: EcdsaSecp256k1VerificationKey2019/PublicKeyJwk")
-        }
-
-        (KeyType::Ed25519VerificationKey2018, KeyData::PublicKeyJwk(_)) => {
-            todo!("Not Supported: Ed25519VerificationKey2018/PublicKeyJwk")
-        }
         (KeyType::Ed25519VerificationKey2018, KeyData::PublicKeyBase58(inner)) => {
             let key: Vec<u8> = decode_b58(inner)?;
             let valid: bool = Ed25519.verify(data, signature, &key.into())?;
@@ -161,37 +140,6 @@ fn verify(data: &[u8], signature: &[u8], key: &PublicKey) -> Result<bool> {
             Ok(valid)
         }
 
-        // (KeyType::GpgVerificationKey2020, KeyData::PublicKeyGpg(_)) => {}
-        (KeyType::RsaVerificationKey2018, KeyData::PublicKeyJwk(_)) => {
-            todo!("Not Supported: RsaVerificationKey2018/PublicKeyJwk")
-        }
-        (KeyType::RsaVerificationKey2018, KeyData::PublicKeyPem(_)) => {
-            todo!("Not Supported: RsaVerificationKey2018/PublicKeyPem")
-        }
-
-        (KeyType::X25519KeyAgreementKey2019, KeyData::PublicKeyJwk(_)) => {
-            todo!("Not Supported: X25519KeyAgreementKey2019/PublicKeyJwk")
-        }
-        (KeyType::X25519KeyAgreementKey2019, KeyData::PublicKeyBase58(_)) => {
-            todo!("Not Supported: X25519KeyAgreementKey2019/PublicKeyBase58")
-        }
-
-        (KeyType::SchnorrSecp256k1VerificationKey2019, KeyData::PublicKeyJwk(_)) => {
-            todo!("Not Supported: SchnorrSecp256k1VerificationKey2019/PublicKeyJwk")
-        }
-        (KeyType::SchnorrSecp256k1VerificationKey2019, KeyData::PublicKeyBase58(_)) => {
-            todo!("Not Supported: SchnorrSecp256k1VerificationKey2019/PublicKeyBase58")
-        }
-
-        (KeyType::EcdsaSecp256k1RecoveryMethod2020, KeyData::EthereumAddress(_)) => {
-            todo!("Not Supported: EcdsaSecp256k1RecoveryMethod2020/EthereumAddress")
-        }
-        (KeyType::EcdsaSecp256k1RecoveryMethod2020, KeyData::PublicKeyHex(_)) => {
-            todo!("Not Supported: EcdsaSecp256k1RecoveryMethod2020/PublicKeyHex")
-        }
-        (KeyType::EcdsaSecp256k1RecoveryMethod2020, KeyData::PublicKeyJwk(_)) => {
-            todo!("Not Supported: EcdsaSecp256k1RecoveryMethod2020/PublicKeyJwk")
-        }
-        (_, _) => todo!("Invalid KeyType/KeyData Configuration"),
+        (_, _) => Err(Error::InvalidAuthenticationKey),
     }
 }

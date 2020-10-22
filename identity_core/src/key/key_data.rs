@@ -10,6 +10,7 @@ use crate::{
 /// Encoding method used for the specified public key.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize, Diff)]
 #[serde(rename_all = "camelCase")]
+#[non_exhaustive]
 pub enum KeyData {
     EthereumAddress(String),
     PublicKeyHex(String),
