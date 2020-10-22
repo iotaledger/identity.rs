@@ -90,8 +90,7 @@ where
 }
 
 pub fn sign_lds(document: &mut Document, options: SignatureOptions, secret: &[u8]) -> Result<()> {
-    let fragment: &str = extract_verification(&options.verification_method)?;
-    let keydata: Vec<u8> = resolve_key(document, fragment)?;
+    let keydata: Vec<u8> = resolve_key(document, &options.verification_method)?;
 
     // The verification method key data MUST be equal to the derived public key data.
     if pubkey(&keydata)? != seckey(secret)?.public_key() {
@@ -129,22 +128,7 @@ pub fn verify_lds(document: &Document) -> Result<()> {
         .and_then(|method| method.as_str())
         .ok_or(Error::InvalidDocument)?;
 
-    let fragment: &str = extract_verification(method)?;
-    let keydata: Vec<u8> = resolve_key(document, fragment)?;
-
-    jcs_verify(document, &keydata)
-}
-
-fn extract_verification(method: &str) -> Result<&str> {
-    // "Parse" the verification method identifier.
-    let fragment: &str = method.trim_start_matches('#');
-
-    // The verification method identifier MUST NOT be empty.
-    if fragment.is_empty() {
-        Err(Error::InvalidDocument)
-    } else {
-        Ok(fragment)
-    }
+    jcs_verify(document, &resolve_key(document, method)?)
 }
 
 fn resolve_key(document: &Document, fragment: &str) -> Result<Vec<u8>> {
