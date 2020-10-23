@@ -15,7 +15,10 @@ use serde_json::from_str;
 use std::collections::BTreeMap;
 
 use crate::{
-    did::{create_address, method_id, DIDDiff},
+    did::{
+        deprecated::{create_address, method_id},
+        DIDDiff,
+    },
     error::{DocumentError, Error, Result, TransactionError},
     network::{Network, NodeList},
     types::{TangleDiff, TangleDoc},

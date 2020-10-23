@@ -12,6 +12,8 @@ pub enum Error {
     ClientError(#[from] iota::client::error::Error),
     #[error(transparent)]
     TernaryError(#[from] iota::ternary::Error),
+    #[error("Invalid DID Method")]
+    InvalidMethod,
     #[error("Invalid DID Method ID")]
     InvalidMethodId,
     #[error("Invalid DID Signature")]

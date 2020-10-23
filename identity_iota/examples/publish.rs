@@ -20,10 +20,9 @@ async fn main() -> Result<()> {
 
     // Create keypair
     let keypair = Ed25519::generate(&Ed25519, Default::default())?;
-    let bs58_auth_key = bs58::encode(keypair.public()).into_string();
 
     // Create, sign and publish DID document to the Tangle
-    let mut did_document = create_document(bs58_auth_key)?;
+    let mut did_document = create_document(keypair.public().as_ref())?;
 
     did_document.sign_unchecked(keypair.secret())?;
 
