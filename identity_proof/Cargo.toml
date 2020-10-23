@@ -14,10 +14,11 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 anyhow = "1.0"
+ed25519-zebra = { version = "2.2", default-features = false }
 identity_core = { path = "../identity_core" }
 identity_crypto = { path = "../identity_crypto" }
+rand = { version = "0.7", default-features = false, features = ["getrandom"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_jcs = { git = "https://github.com/l1h3r/serde_jcs", branch = "main", default-features = false }
 serde_json = { version = "1.0", features = ["preserve_order"] }
-sodiumoxide = { version = "0.2", default-features = false }
 thiserror = "1.0"

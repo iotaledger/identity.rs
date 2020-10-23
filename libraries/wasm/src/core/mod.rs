@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
-use identity_crypto::{Ed25519, KeyGen, KeyGenerator};
+use identity_proof::signature::jcsed25519signature2020;
 // use multihash::Blake2b256;
 use identity_core::{common::OneOrMany, did::DIDDocument, did::DIDDocumentBuilder, did::DID};
 #[wasm_bindgen]
@@ -40,7 +40,7 @@ impl Core {
         console_error_panic_hook::set_once();
         //     let keypair = Ed25519::generate(&Ed25519, Default::default())?;
 
-        let keypair = KeyGen::generate(&Ed25519, KeyGenerator::default()).unwrap();
+        let keypair = jcsed25519signature2020::new_keypair();
         let bs58_auth_key = bs58::encode(keypair.public()).into_string();
         // console.log("bs58_auth_key: {:?}", bs58_auth_key);
         Ok(bs58_auth_key.into())
