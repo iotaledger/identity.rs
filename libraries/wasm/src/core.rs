@@ -1,11 +1,7 @@
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
-use identity_core::{
-    did::DID,
-    document::DIDDocument,
-    utils::{Context, Subject},
-};
+use identity_core::{common::OneOrMany, did::DIDDocument, did::DIDDocumentBuilder, did::DID};
 #[wasm_bindgen]
 #[derive(Serialize)]
 pub struct Core {}
@@ -29,13 +25,12 @@ impl Core {
     pub fn create_did_document(did: &str) -> Result<String, JsValue> {
         console_error_panic_hook::set_once();
 
-        let mut did_doc = DIDDocument {
-            context: Context::from("https://w3id.org/did/v1"),
-            id: Subject::from(did),
-            ..Default::default()
-        }
-        .init();
+        let doc: DIDDocument = DIDDocumentBuilder::default()
+            .context(OneOrMany::One(DID::BASE_CONTEXT.into()))
+            .id(DID::parse_from_str(did).unwrap())
+            .build()
+            .unwrap();
 
-        Ok(did_doc.to_string())
+        Ok(doc.to_string())
     }
 }
