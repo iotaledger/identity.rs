@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use identity_proof::signature::jcsed25519signature2020;
 // use multihash::Blake2b256;
-use identity_core::{common::OneOrMany, did::DIDDocument, did::DIDDocumentBuilder, did::DID};
+use identity_core::{common::OneOrMany, did::DIDDocument, did::DID};
 #[wasm_bindgen]
 #[derive(Serialize)]
 pub struct Core {}
@@ -35,15 +35,18 @@ impl Core {
     //     Ok(doc.to_string())
     // }
 
-    #[wasm_bindgen(js_name = "createGenerateKeypair")]
-    pub fn create_generate_keypair() -> Result<String, JsValue> {
+
+
+    #[wasm_bindgen(js_name = "GenerateKeypair")]
+    pub fn generate_keypair() -> Result<JsValue, JsValue> {
         console_error_panic_hook::set_once();
         //     let keypair = Ed25519::generate(&Ed25519, Default::default())?;
 
-        let keypair = jcsed25519signature2020::new_keypair();
-        let bs58_auth_key = bs58::encode(keypair.public()).into_string();
+        //let bs58_auth_key = bs58::encode(keypair.public()).into_string();
         // console.log("bs58_auth_key: {:?}", bs58_auth_key);
-        Ok(bs58_auth_key.into())
+       
+        let js_object = JSKeyPair::new();
+        Ok(JsValue::from(js_object))
     }
 
     // #[wasm_bindgen(js_name = "createDocument")]
@@ -71,3 +74,32 @@ impl Core {
     // }
 }
 
+#[wasm_bindgen]
+#[derive(Serialize)]
+pub struct JSKeyPair {
+    publicKey: String,
+    privateKey: String,
+}
+
+#[wasm_bindgen(js_name = "KeyPair")]
+impl JSKeyPair {
+    // will be accessible on JavaScript with `new Address(5.0, '###')`
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        let keypair = jcsed25519signature2020::new_keypair();
+
+        Self {
+            publicKey: keypair.public().to_string(),
+            privateKey: keypair.secret().to_string()
+        }
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn publicKey(&self) -> String {
+        self.publicKey.clone()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn privateKey(&self) -> String {
+        self.privateKey.clone()
+    }
+}

@@ -2,17 +2,18 @@ import("../pkg/index.js").then((identity) => {
 
 
     console.log(identity)
-    //const did = identity.Core.createGenerateKeypair();
-
 
     const greet = identity.Greet()
-    const id = "alice"
-    const did = identity.Core.create_did(id);
-    
     console.log("greet: ", greet)
-    console.log("did: ", did)
-    const document = identity.Core.createDIDDocument(did);
-    console.log("document: ", document)
+
+    // Generate Keypairs
+    const alice_keypair = identity.Core.GenerateKeypair();
+    console.log("alice_keypair: privateKey:", alice_keypair.privateKey)
+    console.log("alice_keypair: GetPublicKey:", alice_keypair.publicKey)
+    const bob_keypair = new identity.JSKeyPair();
+    console.log("bob_keypair: GetPrivateKey: ", bob_keypair.privateKey)
+    console.log("bob_keypair: GetPublicKey: ", bob_keypair.publicKey)
+
 });
 
 
