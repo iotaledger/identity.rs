@@ -22,5 +22,7 @@ wasm-bindgen-futures = "0.4"
 console_error_panic_hook = "0.1.6"
 
 serde = { version = "1.0", features = ["derive"] }
+bs58 = { version = "0.3", default-features = false, features = ["alloc"] }
 
 identity_core = { path = "../../identity_core" }
+identity_crypto = { git = "https://github.com/iotaledger/identity.rs", branch = "feat/identity-signature-suites-wasm" }
