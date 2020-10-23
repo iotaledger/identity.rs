@@ -11,7 +11,7 @@ use identity_core::{
     },
 };
 use identity_crypto::KeyPair;
-use identity_iota::{error::Result, did::IotaDocument};
+use identity_iota::{did::IotaDocument, error::Result};
 use multihash::{Blake2b256, MultihashGeneric};
 
 #[smol_potat::main]

@@ -172,6 +172,12 @@ impl Deref for IotaDocument {
     }
 }
 
+impl DerefMut for IotaDocument {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.document
+    }
+}
+
 impl From<IotaDocument> for Document {
     fn from(other: IotaDocument) -> Self {
         other.document
