@@ -1,3 +1,4 @@
+pub mod client;
 pub mod did;
 pub mod error;
 pub mod helpers;

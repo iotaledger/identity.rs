@@ -26,6 +26,16 @@ pub enum Error {
     InvalidProof,
     #[error("Invalid Tryte Conversion")]
     InvalidTryteConversion,
+    #[error("Invalid Transaction Bundle")]
+    InvalidTransactionBundle,
+    #[error("Invalid Transaction Hashes")]
+    InvalidTransactionHashes,
+    #[error("Invalid Transaction Trytes")]
+    InvalidTransactionTrytes,
+    #[error("Invalid Transfer Tail")]
+    InvalidTransferTail,
+    #[error("Transfer Unconfirmable")]
+    TransferUnconfirmable,
     #[error("Invalid Transaction: {0}")]
     InvalidTransaction(TransactionError),
     #[error("Invalid Document: {0}")]
