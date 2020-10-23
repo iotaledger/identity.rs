@@ -4,7 +4,10 @@ use core::{
     ops::{Deref, DerefMut},
     str::FromStr,
 };
-use identity_core::{did::DID, utils::encode_b58};
+use identity_core::{
+    did::DID,
+    utils::{decode_b58, encode_b58},
+};
 use iota::transaction::bundled::Address;
 use multihash::Blake2b256;
 
@@ -12,6 +15,9 @@ use crate::{
     error::{Error, Result},
     utils::{create_address_from_trits, utf8_to_trytes},
 };
+
+// The hash size of BLAKE2b-256 (32-bytes)
+const BLAKE2B_256_LEN: usize = 32;
 
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct IotaDID(DID);
@@ -25,6 +31,14 @@ impl IotaDID {
         }
 
         if did.id_segments.is_empty() || did.id_segments.len() > 3 {
+            return Err(Error::InvalidMethodId);
+        }
+
+        // We checked if `id_segments` was empty so this should not panic
+        let mid: &str = did.id_segments.last().expect("infallible");
+        let len: usize = decode_b58(mid)?.len();
+
+        if len != BLAKE2B_256_LEN {
             return Err(Error::InvalidMethodId);
         }
 
