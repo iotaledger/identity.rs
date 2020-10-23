@@ -26,3 +26,7 @@ bs58 = { version = "0.3", default-features = false, features = ["alloc"] }
 
 identity_core = { path = "../../identity_core" }
 identity_proof = { path = "../../identity_proof" }
+
+
+[target.wasm32-unknown-unknown.dependencies]
+rand = { version = "0.7", default-features = false, features = ["wasm-bindgen"] }
