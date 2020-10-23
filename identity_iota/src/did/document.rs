@@ -46,6 +46,8 @@ impl IotaDocument {
     }
 
     pub fn new(did: IotaDID, authentication: PublicKey) -> Result<Self> {
+        // TODO: Validate `authentication`; ensure the DIDs match
+
         let mut document: Document = DocumentBuilder::default()
             .context(OneOrMany::One(DID::BASE_CONTEXT.into()))
             .id(did.into())
@@ -59,14 +61,12 @@ impl IotaDocument {
         Ok(Self { document })
     }
 
-    pub fn authentication_key(&self) -> Result<&PublicKey> {
-        // TODO: This should be validated in try_from_document - shouldn't fail here
-        self.resolve_key(0, KeyRelation::Authentication)
-            .ok_or(Error::InvalidAuthenticationKey)
+    pub fn authentication_key(&self) -> &PublicKey {
+        self.resolve_key(0, KeyRelation::Authentication).expect("infallible")
     }
 
     pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
-        let key: &PublicKey = self.authentication_key()?;
+        let key: &PublicKey = self.authentication_key();
 
         let fragment: String = format!("{}", key.id());
         let options: SignatureOptions = SignatureOptions::new(fragment);
@@ -84,7 +84,7 @@ impl IotaDocument {
     }
 
     pub fn verify(&self) -> Result<()> {
-        let key: &PublicKey = self.authentication_key()?;
+        let key: &PublicKey = self.authentication_key();
 
         match key.key_type() {
             KeyType::Ed25519VerificationKey2018 => {
@@ -103,7 +103,7 @@ impl IotaDocument {
         other.update_time();
 
         // Get the first authentication key from the document.
-        let key: &PublicKey = self.authentication_key()?;
+        let key: &PublicKey = self.authentication_key();
 
         let fragment: String = format!("{}", key.id());
         let options: SignatureOptions = SignatureOptions::new(fragment);
@@ -135,7 +135,7 @@ impl IotaDocument {
         // Wrap the diff/document in a verifiable type.
         let target: LdDiffRead = LdDiffRead::new(diff, &self.document);
 
-        match self.authentication_key()?.key_type() {
+        match self.authentication_key().key_type() {
             KeyType::Ed25519VerificationKey2018 => {
                 jcsed25519signature2020::verify_lds(&target)?;
             }
@@ -169,12 +169,6 @@ impl Deref for IotaDocument {
 
     fn deref(&self) -> &Self::Target {
         &self.document
-    }
-}
-
-impl DerefMut for IotaDocument {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.document
     }
 }
 
