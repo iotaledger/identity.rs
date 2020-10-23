@@ -13,7 +13,27 @@ import("../pkg/index.js").then((identity) => {
     const bob_keypair = new identity.JSKeyPair();
     console.log("bob_keypair: GetPrivateKey: ", bob_keypair.privateKey)
     console.log("bob_keypair: GetPublicKey: ", bob_keypair.publicKey)
+    
+    // Generate UUID
+    let aice_uuid = identity.Core.GenerateUUID(alice_keypair.publicKey);
+    console.log("aice_uuid: ", aice_uuid);
+    let bob_uuid = identity.Core.GenerateUUID(bob_keypair.publicKey);
+    console.log("bob_uuid: ", bob_uuid);
+    
+    // Creating the DID
+    let alice_did = identity.Core.CreateDID(aice_uuid); 
+    console.log("alice_did: ", alice_did);
+    let bob_did = new identity.JSDID(bob_uuid)
+    console.log("bob_did: ", bob_did.did);
+    
+    // Creating the DID Document
+    let alice_document = identity.Core.createDocument(alice_did);
+    console.log("alice_document: ", alice_document);
+     
 
+    let bob_document = new identity.JSDIDDocument(bob_uuid)
+    console.log("bob_document: ", bob_document);
+    console.log("bob_document: ", bob_document.document);
 });
 
 
