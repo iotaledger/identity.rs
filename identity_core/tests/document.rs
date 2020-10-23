@@ -71,7 +71,7 @@ fn test_doc_creation() {
 
     let public_key = PublicKeyBuilder::default()
         .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
-        .key_type(KeyType::RsaVerificationKey2018)
+        .key_type(KeyType::Ed25519VerificationKey2018)
         .controller("did:iota:123456789abcdefghi".parse().unwrap())
         .key_data(KeyData::PublicKeyBase58(
             "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
@@ -128,7 +128,7 @@ fn test_doc_diff() {
 
     let public_key = PublicKeyBuilder::default()
         .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
-        .key_type(KeyType::RsaVerificationKey2018)
+        .key_type(KeyType::Ed25519VerificationKey2018)
         .controller("did:iota:123456789abcdefghi".parse().unwrap())
         .key_data(KeyData::PublicKeyBase58(
             "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
@@ -199,7 +199,7 @@ fn test_diff_merge_from_string() {
     // create a public key, IdCompare<PublicKey>.
     let public_key = PublicKeyBuilder::default()
         .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
-        .key_type(KeyType::RsaVerificationKey2018)
+        .key_type(KeyType::Ed25519VerificationKey2018)
         .controller("did:iota:123456789abcdefghi".parse().unwrap())
         .key_data(KeyData::PublicKeyBase58(
             "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
@@ -280,7 +280,7 @@ fn test_realistic_diff() {
 
     let public_key = PublicKeyBuilder::default()
         .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
-        .key_type(KeyType::RsaVerificationKey2018)
+        .key_type(KeyType::Ed25519VerificationKey2018)
         .controller("did:iota:123456789abcdefghi".parse().unwrap())
         .key_data(KeyData::PublicKeyBase58(
             "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),
@@ -292,7 +292,7 @@ fn test_realistic_diff() {
 
     let key1 = PublicKeyBuilder::default()
         .id("did:iota:123456789abcdefghi#keys-2".parse().unwrap())
-        .key_type(KeyType::RsaVerificationKey2018)
+        .key_type(KeyType::Ed25519VerificationKey2018)
         .controller("did:iota:123456789abcdefghi".parse().unwrap())
         .key_data(KeyData::PublicKeyPem(
             "-----BEGIN PUBLIC KEY...END PUBLIC KEY-----".into(),
@@ -327,7 +327,7 @@ fn test_id_compare() {
     // create a public key.
     let public_key = PublicKeyBuilder::default()
         .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
-        .key_type(KeyType::RsaVerificationKey2018)
+        .key_type(KeyType::Ed25519VerificationKey2018)
         .controller("did:iota:123456789abcdefghi".parse().unwrap())
         .key_data(KeyData::PublicKeyBase58(
             "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV".into(),

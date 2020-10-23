@@ -2,37 +2,10 @@ use identity_core::common::{Object, Value};
 use serde::{de::Error as _, ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
 use std::convert::TryFrom;
 
-use crate::error::{Error, Result};
-
-const PROPERTY_JWS: &str = "jws";
-const PROPERTY_PROOF: &str = "proofValue";
-const PROPERTY_SIGNATURE: &str = "signatureValue";
-
-/// Represents one of the various proof values of a linked data signature suite
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum SignatureValue {
-    Jws(String),
-    Proof(String),
-    Signature(String),
-}
-
-impl SignatureValue {
-    pub fn key(&self) -> &'static str {
-        match self {
-            Self::Jws(_) => PROPERTY_JWS,
-            Self::Proof(_) => PROPERTY_PROOF,
-            Self::Signature(_) => PROPERTY_SIGNATURE,
-        }
-    }
-
-    pub fn value(&self) -> &str {
-        match self {
-            Self::Jws(ref inner) => inner,
-            Self::Proof(ref inner) => inner,
-            Self::Signature(ref inner) => inner,
-        }
-    }
-}
+use crate::{
+    error::{Error, Result},
+    signature::{SignatureValue, PROPERTY_JWS, PROPERTY_PROOF, PROPERTY_SIGNATURE},
+};
 
 /// Contains the value and misc. properties of a linked data signature
 #[derive(Clone, Debug, PartialEq)]
@@ -73,6 +46,15 @@ impl TryFrom<Object> for SignatureData {
         };
 
         Ok(Self { value, properties })
+    }
+}
+
+impl From<SignatureValue> for SignatureData {
+    fn from(other: SignatureValue) -> Self {
+        Self {
+            value: other,
+            properties: Object::new(),
+        }
     }
 }
 

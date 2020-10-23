@@ -31,7 +31,7 @@ fn test_auth() {
 
     let key1 = PublicKeyBuilder::default()
         .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
-        .key_type(KeyType::RsaVerificationKey2018)
+        .key_type(KeyType::Ed25519VerificationKey2018)
         .controller("did:iota:123456789abcdefghi".parse().unwrap())
         .key_data(key_data_1)
         .build()
@@ -85,7 +85,7 @@ fn test_assertion() {
 
     let key1 = PublicKeyBuilder::default()
         .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
-        .key_type(KeyType::RsaVerificationKey2018)
+        .key_type(KeyType::Ed25519VerificationKey2018)
         .controller("did:iota:123456789abcdefghi".parse().unwrap())
         .key_data(key_data_1)
         .build()
@@ -139,7 +139,7 @@ fn test_verification() {
 
     let key1 = PublicKeyBuilder::default()
         .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
-        .key_type(KeyType::RsaVerificationKey2018)
+        .key_type(KeyType::Ed25519VerificationKey2018)
         .controller("did:iota:123456789abcdefghi".parse().unwrap())
         .key_data(key_data_1)
         .build()
@@ -193,7 +193,7 @@ fn test_delegation() {
 
     let key1 = PublicKeyBuilder::default()
         .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
-        .key_type(KeyType::RsaVerificationKey2018)
+        .key_type(KeyType::Ed25519VerificationKey2018)
         .controller("did:iota:123456789abcdefghi".parse().unwrap())
         .key_data(key_data_1)
         .build()
@@ -247,7 +247,7 @@ fn test_invocation() {
 
     let key1 = PublicKeyBuilder::default()
         .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
-        .key_type(KeyType::RsaVerificationKey2018)
+        .key_type(KeyType::Ed25519VerificationKey2018)
         .controller("did:iota:123456789abcdefghi".parse().unwrap())
         .key_data(key_data_1)
         .build()
@@ -301,7 +301,7 @@ fn test_agreement() {
 
     let key1 = PublicKeyBuilder::default()
         .id("did:iota:123456789abcdefghi#keys-1".parse().unwrap())
-        .key_type(KeyType::RsaVerificationKey2018)
+        .key_type(KeyType::Ed25519VerificationKey2018)
         .controller("did:iota:123456789abcdefghi".parse().unwrap())
         .key_data(key_data_1)
         .build()
