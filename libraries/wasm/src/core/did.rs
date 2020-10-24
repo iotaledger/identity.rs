@@ -30,6 +30,7 @@ impl JSDID {
 
     #[wasm_bindgen(getter)]
     pub fn did(&self) -> String {
+        console_error_panic_hook::set_once();
         self.did.to_string().clone()
     }
  }

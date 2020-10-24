@@ -105,7 +105,9 @@ pub struct JSKeyPair {
 impl JSKeyPair {
     // will be accessible on JavaScript with `new Address(5.0, '###')`
     #[wasm_bindgen(constructor)]
+    
     pub fn new() -> Self {
+        console_error_panic_hook::set_once();
         let keypair = jcsed25519signature2020::new_keypair();
 
         Self {
@@ -116,10 +118,14 @@ impl JSKeyPair {
 
     #[wasm_bindgen(getter)]
     pub fn publicKey(&self) -> String {
+        console_error_panic_hook::set_once();
+
         self.publicKey.clone()
     }
     #[wasm_bindgen(getter)]
     pub fn privateKey(&self) -> String {
+        console_error_panic_hook::set_once();
+
         self.privateKey.clone()
     }
 }
