@@ -1,5 +1,5 @@
 use identity_iota::{
-    did::{deprecated::create_address, IotaDID, IotaDocument},
+    did::{IotaDID, IotaDocument},
 };
 use iota::transaction::bundled::BundledTransactionField;
 use iota_conversion::Trinary;
@@ -8,7 +8,7 @@ use iota_conversion::Trinary;
 #[test]
 fn test_create_did_address() {
     let did = IotaDID::parse("did:iota:com:HbuRS48djS5PbLQciy6iE9BTdaDTBM3GxcbGdyuv3TWo").unwrap();
-    let address = create_address(&did).unwrap();
+    let address = did.create_address().unwrap();
     assert_eq!(
         address.to_inner().as_i8_slice().trytes().unwrap(),
         "RBQCIDACBCYABBSCYCBCZAZBQCVB9CRCXCMD9BXCOBCBLBCCSCPCNBCCLBWBXAQBLDRCQCQBSCMDIDJDX"
