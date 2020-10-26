@@ -1,6 +1,8 @@
 use identity_core::did::DID;
-use identity_iota::network::{Network, NodeList};
-use identity_iota::resolver::TangleResolver;
+use identity_iota::{
+    network::{Network, NodeList},
+    resolver::TangleResolver,
+};
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
