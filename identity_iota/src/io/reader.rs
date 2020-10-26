@@ -18,10 +18,9 @@ use std::collections::BTreeMap;
 use crate::{
     did::{
         deprecated::{create_address, method_id},
-        DIDDiff,
+        DIDDiff, IotaDocument,
     },
     error::{DocumentError, Error, Result, TransactionError},
-    helpers::create_diff_address,
     network::{Network, NodeList},
     types::{TangleDiff, TangleDoc},
     utils::{encode_trits, trytes_to_utf8, txn_hash_trytes},
@@ -65,7 +64,7 @@ impl TangleReader {
             KeyData::PublicKeyBase58(key) => key.as_bytes(),
             _ => return Err(Error::InvalidAuthenticationKey),
         };
-        let diff_address = create_diff_address(&auth_key_bytes)?;
+        let diff_address = IotaDocument::create_diff_address(&auth_key_bytes)?;
         let mut diff_data = self.fetch_data(diff_address).await?;
         document_data.append(&mut diff_data);
         Ok(document_data)

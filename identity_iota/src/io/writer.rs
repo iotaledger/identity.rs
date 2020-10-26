@@ -13,9 +13,8 @@ use serde_json::to_string;
 use std::{thread, time::Duration};
 
 use crate::{
-    did::deprecated::create_address,
+    did::{deprecated::create_address, IotaDocument},
     error::{DocumentError, Error, Result, TransactionError},
-    helpers::create_diff_address,
     network::{Network, NodeList},
     utils::{create_address_from_trits, encode_trits, txn_hash},
 };
@@ -150,7 +149,7 @@ impl TangleWriter {
 
         // Build the transfer to push the serialized data to the tangle.
         let transfer: Transfer = Transfer {
-            address: create_diff_address(&auth_key_bytes)?,
+            address: IotaDocument::create_diff_address(&auth_key_bytes)?,
             value: 0,
             message: Some(to_string(&data).map_err(identity_core::Error::EncodeJSON)?),
             tag: None,
