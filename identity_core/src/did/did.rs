@@ -57,6 +57,12 @@ impl DID {
         })
     }
 
+    pub fn matches_base(&self, base: &Self) -> bool {
+        self.method_name == base.method_name
+            && self.id_segments == base.id_segments
+            && self.path_segments == base.path_segments
+    }
+
     pub fn parse<T>(input: T) -> crate::Result<Self>
     where
         T: ToString,

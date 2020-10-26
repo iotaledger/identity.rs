@@ -11,7 +11,7 @@ use identity_core::{
     utils::encode_b58,
 };
 use identity_crypto::{KeyPair, SecretKey};
-use identity_proof::{signature::jcsed25519signature2020, LdDocument, LdSignature, SignatureOptions};
+use identity_proof::{signature::jcsed25519signature2020, LdSignature, SignatureOptions};
 use iota::transaction::bundled::Address;
 use multihash::{Blake2b256, MultihashGeneric};
 use serde::{Deserialize, Serialize};
@@ -35,23 +35,19 @@ impl IotaDocument {
     }
 
     pub fn try_from_document(document: Document) -> Result<Self> {
-        // The DID document MUST have a well-formed IOTA DID
         let did: IotaDID = IotaDID::try_from_did(document.did().clone())?;
 
-        // The DID document MUST have an authentication key that matches the DID
-        let key: Vec<u8> = LdDocument::resolve_key(&document, 0.into())?;
-        let tag: String = IotaDID::encode_key(&key);
+        let authentication: &PublicKey = document
+            .resolve_key(0, KeyRelation::Authentication)
+            .ok_or(Error::InvalidAuthenticationKey)?;
 
-        // The DID tag MUST equal Base58( Blake2b-256( authentication-key ) )
-        if did.method_id() != tag {
-            return Err(Error::InvalidAuthenticationKey);
-        }
+        Self::check_authentication_key_id(authentication, &did)?;
 
         Ok(Self { document, did })
     }
 
     pub fn new(did: IotaDID, authentication: PublicKey) -> Result<Self> {
-        // TODO: Validate `authentication`; ensure the DIDs match
+        Self::check_authentication_key_id(&authentication, &did)?;
 
         let mut document: Document = DocumentBuilder::default()
             .context(OneOrMany::One(DID::BASE_CONTEXT.into()))
@@ -187,6 +183,20 @@ impl IotaDocument {
 
     pub fn create_diff_address(public_key: &[u8]) -> Result<Address> {
         create_address_from_trits(Self::create_diff_address_hash(public_key))
+    }
+
+    fn check_authentication_key_id(authentication: &PublicKey, did: &IotaDID) -> Result<()> {
+        let key: &DID = authentication.id();
+
+        if key.fragment.is_none() {
+            return Err(Error::InvalidAuthenticationKey);
+        }
+
+        if !key.matches_base(did) {
+            return Err(Error::InvalidAuthenticationKey);
+        }
+
+        Ok(())
     }
 }
 

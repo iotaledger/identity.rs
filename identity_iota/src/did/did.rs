@@ -24,6 +24,7 @@ pub struct IotaDID(DID);
 
 impl IotaDID {
     pub const METHOD: &'static str = "iota";
+    pub const NETWORK: &'static str = "main";
 
     pub fn try_from_did(did: DID) -> Result<Self> {
         if did.method_name != Self::METHOD {
@@ -85,7 +86,7 @@ impl IotaDID {
 
     pub fn network(&self) -> &str {
         match &*self.id_segments {
-            [_] => "main",
+            [_] => Self::NETWORK,
             [network, _] => &*network,
             [network, _, _] => &*network,
             _ => unreachable!("IotaDID::network called for invalid DID"),
@@ -112,7 +113,7 @@ impl IotaDID {
 
     pub fn normalize(&mut self) {
         match &*self.id_segments {
-            [_] => self.id_segments.insert(0, "main".into()),
+            [_] => self.id_segments.insert(0, Self::NETWORK.into()),
             [_, _] | [_, _, _] => {}
             _ => unreachable!("IotaDID::normalize called for invalid DID"),
         }
