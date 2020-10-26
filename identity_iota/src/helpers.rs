@@ -1,5 +1,8 @@
-use crate::utils::{create_address_from_trits, utf8_to_trytes};
-use crate::{did::IotaDID, error::Result};
+use crate::{
+    did::IotaDID,
+    error::Result,
+    utils::{create_address_from_trits, utf8_to_trytes},
+};
 use bs58::encode;
 use identity_core::{
     common::OneOrMany,

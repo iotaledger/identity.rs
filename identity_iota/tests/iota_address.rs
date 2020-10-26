@@ -1,22 +1,18 @@
-use identity_core::did::DID;
-use identity_iota::did::{create_address, create_diff_address};
+use identity_iota::{
+    did::{deprecated::create_address, IotaDID},
+    helpers::create_diff_address,
+};
 use iota::transaction::bundled::BundledTransactionField;
 use iota_conversion::Trinary;
 
 /// test iota address creation from a DID
 #[test]
 fn test_create_did_address() {
-    let did = DID {
-        method_name: "iota".into(),
-        id_segments: vec!["123456".into()],
-        ..Default::default()
-    }
-    .init()
-    .unwrap();
+    let did = IotaDID::parse("did:iota:com:HbuRS48djS5PbLQciy6iE9BTdaDTBM3GxcbGdyuv3TWo").unwrap();
     let address = create_address(&did).unwrap();
     assert_eq!(
         address.to_inner().as_i8_slice().trytes().unwrap(),
-        "VAWAXAYAZA9B999999999999999999999999999999999999999999999999999999999999999999999"
+        "WANBFDYCVCQCABNDACUCCCDDUCKBXCVACDWAYAFCGCWALBVCDCYCNDBDXAXBLDTCJDRCBCNBYCLDABBDZ"
     );
 }
 
