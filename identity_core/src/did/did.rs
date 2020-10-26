@@ -43,7 +43,7 @@ impl DID {
             query: self.query,
         };
 
-        DID::parse_from_str(did)
+        DID::parse(did)
     }
 
     // TODO: Fix this
@@ -57,7 +57,7 @@ impl DID {
         })
     }
 
-    pub fn parse_from_str<T>(input: T) -> crate::Result<Self>
+    pub fn parse<T>(input: T) -> crate::Result<Self>
     where
         T: ToString,
     {
@@ -163,7 +163,7 @@ impl FromStr for DID {
     type Err = crate::Error;
 
     fn from_str(string: &str) -> crate::Result<Self> {
-        Self::parse_from_str(string)
+        Self::parse(string)
     }
 }
 
@@ -186,7 +186,7 @@ impl<'de> Deserialize<'de> for DID {
             where
                 V: de::Error,
             {
-                match DID::parse_from_str(value) {
+                match DID::parse(value) {
                     Ok(d) => Ok(d),
                     Err(e) => Err(de::Error::custom(e.to_string())),
                 }
