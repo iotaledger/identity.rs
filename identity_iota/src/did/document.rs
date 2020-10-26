@@ -68,6 +68,10 @@ impl IotaDocument {
         })
     }
 
+    pub fn did(&self) -> &IotaDID {
+        &self.did
+    }
+
     pub fn authentication_key(&self) -> &PublicKey {
         self.resolve_key(0, KeyRelation::Authentication).expect("infallible")
     }
