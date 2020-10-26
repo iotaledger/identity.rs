@@ -20,7 +20,7 @@ async fn main() -> Result<()> {
         "https://iotanode.us:14267",
         "https://pow.iota.community:443",
     ];
-    let nodelist = NodeList::with_network_and_nodes(Network::Comnet, nodes);
+    let nodelist = NodeList::with_network_and_nodes(Network::Mainnet, nodes);
 
     let tangle_writer = TangleWriter::new(&nodelist)?;
 
