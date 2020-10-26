@@ -29,7 +29,7 @@ impl PublicKey {
     }
 
     pub fn default_key_data() -> KeyData {
-        KeyData::PublicKeyHex("".into())
+        KeyData::PublicKeyBase58("".into())
     }
 
     pub fn id(&self) -> &DID {

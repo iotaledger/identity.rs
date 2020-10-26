@@ -13,8 +13,9 @@ use serde_json::to_string;
 use std::{thread, time::Duration};
 
 use crate::{
-    did::{create_address, create_diff_address},
+    did::deprecated::create_address,
     error::{DocumentError, Error, Result, TransactionError},
+    helpers::create_diff_address,
     network::{Network, NodeList},
     utils::{create_address_from_trits, encode_trits, txn_hash},
 };

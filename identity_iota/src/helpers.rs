@@ -1,23 +1,26 @@
+use crate::utils::{create_address_from_trits, utf8_to_trytes};
+use crate::{did::IotaDID, error::Result};
+use bs58::encode;
 use identity_core::{
     common::OneOrMany,
     did::{DIDDocument, DIDDocumentBuilder, DID},
     key::{KeyData, KeyType, PublicKey, PublicKeyBuilder},
+    utils::encode_b58,
 };
+use iota::transaction::bundled::Address;
 use multihash::Blake2b256;
 
-use crate::error::Result;
-
 /// Creates a DID document with an auth key and a DID
-pub fn create_document(auth_key: String) -> Result<DIDDocument> {
+pub fn create_document(auth_key: &[u8]) -> Result<DIDDocument> {
     //create comnet id
-    let did: DID = create_method_id(&auth_key, None, None)?;
+    let did: DID = IotaDID::with_network(auth_key, "com")?.into();
     let key: DID = format!("{}#key-1", did).parse()?;
 
     let public_key: PublicKey = PublicKeyBuilder::default()
         .id(key.clone())
         .controller(did.clone())
         .key_type(KeyType::Ed25519VerificationKey2018)
-        .key_data(KeyData::PublicKeyBase58(auth_key))
+        .key_data(KeyData::PublicKeyBase58(encode_b58(auth_key)))
         .build()
         .unwrap();
 
@@ -34,21 +37,17 @@ pub fn create_document(auth_key: String) -> Result<DIDDocument> {
     Ok(doc)
 }
 
-pub fn create_method_id(pub_key: &str, network: Option<&str>, network_shard: Option<String>) -> Result<DID> {
-    let hash = Blake2b256::digest(pub_key.as_bytes());
-    let bs58key = bs58::encode(&hash.digest()).into_string();
-    let network_string = match network {
-        Some(network_str) => match network_str {
-            "com" => "com:".to_string(),
-            "dev" => "dev:".to_string(),
-            _ => "".to_string(),
-        },
-        _ => "".to_string(), // default: "main" also can be written as ""
-    };
-    let shard_string = match &network_shard {
-        Some(shard) => format!("{}:", shard),
-        _ => String::new(),
-    };
-    let id_string = format!("did:iota:{}{}{}", network_string, shard_string, bs58key);
-    Ok(DID::parse(id_string)?)
+/// Creates an 81 Trytes IOTA address from public key bytes for a diff
+pub fn create_diff_address_hash(public_key: &[u8]) -> Result<String> {
+    let hash = &Blake2b256::digest(public_key);
+    let second_hash = &Blake2b256::digest(hash.digest());
+    let encoded: String = encode(second_hash.digest()).into_string();
+    let mut trytes: String = utf8_to_trytes(&encoded);
+
+    trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
+
+    Ok(trytes)
+}
+pub fn create_diff_address(public_key: &[u8]) -> Result<Address> {
+    create_diff_address_hash(public_key).and_then(create_address_from_trits)
 }

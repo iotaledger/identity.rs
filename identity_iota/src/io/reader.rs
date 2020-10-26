@@ -16,8 +16,12 @@ use serde_json::from_str;
 use std::collections::BTreeMap;
 
 use crate::{
-    did::{create_address, create_diff_address, method_id, DIDDiff},
+    did::{
+        deprecated::{create_address, method_id},
+        DIDDiff,
+    },
     error::{DocumentError, Error, Result, TransactionError},
+    helpers::create_diff_address,
     network::{Network, NodeList},
     types::{TangleDiff, TangleDoc},
     utils::{encode_trits, trytes_to_utf8, txn_hash_trytes},
