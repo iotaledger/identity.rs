@@ -17,6 +17,10 @@ impl TangleResolver {
         Self { nodes: NodeList::new() }
     }
 
+    pub fn with_nodes(nodes: impl Into<NodeList>) -> Self {
+        Self { nodes: nodes.into() }
+    }
+
     pub fn set_nodes(&mut self, nodes: impl Into<NodeList>) {
         self.nodes = nodes.into();
     }

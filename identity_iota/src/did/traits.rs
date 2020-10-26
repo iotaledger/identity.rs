@@ -1,6 +1,5 @@
-use identity_crypto::SecretKey;
-
 use crate::{did::DIDDiff, error::Result};
+use identity_crypto::SecretKey;
 
 pub trait TangleDocument {
     fn sign_unchecked(&mut self, secret: &SecretKey) -> Result<()>;
