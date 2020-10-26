@@ -1,6 +1,4 @@
-use identity_iota::{
-    did::{IotaDID, IotaDocument},
-};
+use identity_iota::did::{IotaDID, IotaDocument};
 use iota::transaction::bundled::BundledTransactionField;
 use iota_conversion::Trinary;
 
