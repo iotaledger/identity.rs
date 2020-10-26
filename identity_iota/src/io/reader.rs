@@ -2,6 +2,7 @@ use identity_core::{
     common::{Object, Timestamp},
     did::{DIDDocument, DID},
     diff::Diff as _,
+    key::{KeyData, KeyRelation},
 };
 use iota::{
     client::{FindTransactionsResponse, GetTrytesResponse},
@@ -20,6 +21,7 @@ use crate::{
         DIDDiff,
     },
     error::{DocumentError, Error, Result, TransactionError},
+    helpers::create_diff_address,
     network::{Network, NodeList},
     types::{TangleDiff, TangleDoc},
     utils::{encode_trits, trytes_to_utf8, txn_hash_trytes},
@@ -52,7 +54,24 @@ impl TangleReader {
 
     pub async fn fetch(&self, did: &DID) -> Result<Content> {
         let address: Address = create_address(&did)?;
+        let mut document_data = self.fetch_data(address).await?;
+        let documents = Self::extract_documents(&did, &document_data)?;
+        //Get diff address from latest auth_key
+        let latest_auth_key = documents[0]
+            .data
+            .resolve_key(0, KeyRelation::Authentication)
+            .ok_or(Error::InvalidAuthenticationKey)?;
+        let auth_key_bytes = match &latest_auth_key.key_data() {
+            KeyData::PublicKeyBase58(key) => key.as_bytes(),
+            _ => return Err(Error::InvalidAuthenticationKey),
+        };
+        let diff_address = create_diff_address(&auth_key_bytes)?;
+        let mut diff_data = self.fetch_data(diff_address).await?;
+        document_data.append(&mut diff_data);
+        Ok(document_data)
+    }
 
+    pub async fn fetch_data(&self, address: Address) -> Result<Content> {
         let response: FindTransactionsResponse = self.client.find_transactions().addresses(&[address]).send().await?;
 
         let content: GetTrytesResponse = self.client.get_trytes(&response.hashes).await?;
