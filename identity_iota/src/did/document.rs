@@ -22,6 +22,7 @@ use crate::{
 #[serde(try_from = "Document", into = "Document")]
 pub struct IotaDocument {
     document: Document,
+    did: IotaDID,
 }
 
 impl IotaDocument {
@@ -42,7 +43,10 @@ impl IotaDocument {
             return Err(Error::InvalidAuthenticationKey);
         }
 
-        Ok(Self { document })
+        Ok(Self {
+            document,
+            did,
+        })
     }
 
     pub fn new(did: IotaDID, authentication: PublicKey) -> Result<Self> {
@@ -50,7 +54,7 @@ impl IotaDocument {
 
         let mut document: Document = DocumentBuilder::default()
             .context(OneOrMany::One(DID::BASE_CONTEXT.into()))
-            .id(did.into())
+            .id(did.clone().into())
             .auth(vec![authentication.id().clone().into()])
             .public_keys(vec![authentication])
             .build()
@@ -58,7 +62,10 @@ impl IotaDocument {
 
         document.init_timestamps();
 
-        Ok(Self { document })
+        Ok(Self {
+            document,
+            did,
+        })
     }
 
     pub fn authentication_key(&self) -> &PublicKey {
