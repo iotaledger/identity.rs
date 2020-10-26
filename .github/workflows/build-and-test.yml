@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/wasm-bindings-ci
   pull_request:
     branches:
       - main
