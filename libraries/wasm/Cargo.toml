@@ -27,6 +27,7 @@ multihash = { version = "0.11", default-features = false }
 
 identity_core = { path = "../../identity_core" }
 identity_proof = { path = "../../identity_proof" }
+identity_iota = { path = "../../identity_iota" }
 
 
 [target.wasm32-unknown-unknown.dependencies]

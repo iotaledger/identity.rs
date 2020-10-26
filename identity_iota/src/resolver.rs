@@ -45,7 +45,7 @@ impl TangleResolver {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl ResolverMethod for TangleResolver {
     fn is_supported(&self, did: &DID) -> bool {
         // The DID method MUST be IOTA.

@@ -32,10 +32,13 @@ import("../pkg/index.js").then((identity) => {
 
 
     let bob_document = new identity.JSDIDDocument(bob_uuid)
-    console.log("bob_document: ", bob_document);
     console.log("bob_document: ", bob_document.document);
     // let what = bob_document.set_sign_unchecked(bob_keypair.privateKey);
     // console.log("bob_document: ", what);
+
+    identity.Iota.ResolveDID("did:iota:com:HbuRS48djS5PbLQciy6iE9BTdaDTBM3GxcbGdyuv3TWo").then(doc => {
+        console.log("resolved document: ", doc);
+    });
 });
 
 
