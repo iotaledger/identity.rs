@@ -20,7 +20,7 @@ impl TangleDocument for DIDDocument {
             .ok_or(Error::InvalidAuthenticationKey)?;
 
         // Reset the proof object in the diff.
-        diff.proof = DIDProof::new(key.id().clone());
+        diff.proof = DIDProof::new(key.id().clone())?;
 
         // Create a signature from the diff JSON.
         let signature: String = sign_canonicalized(diff, key.key_type(), secret)?;
@@ -50,7 +50,7 @@ impl TangleDocument for DIDDocument {
             .ok_or(Error::InvalidAuthenticationKey)?;
 
         let key_type: KeyType = key.key_type();
-        let proof: DIDProof = DIDProof::new(key.id().clone());
+        let proof: DIDProof = DIDProof::new(key.id().clone())?;
         let proof: Object = proof.serde_into()?;
 
         // Reset the proof object in the document.

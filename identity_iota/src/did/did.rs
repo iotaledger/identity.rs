@@ -54,7 +54,7 @@ impl IotaDID {
     pub fn new(public: &[u8]) -> Result<Self> {
         let key: String = Self::encode_key(public);
         let did: String = format!("did:{}:{}", Self::METHOD, key);
-        let did: DID = DID::parse_from_str(did)?;
+        let did: DID = DID::parse(did)?;
 
         Ok(Self(did))
     }
@@ -62,7 +62,7 @@ impl IotaDID {
     pub fn with_network(public: &[u8], network: &str) -> Result<Self> {
         let key: String = Self::encode_key(public);
         let did: String = format!("did:{}:{}:{}", Self::METHOD, network, key);
-        let did: DID = DID::parse_from_str(did)?;
+        let did: DID = DID::parse(did)?;
 
         Ok(Self(did))
     }
@@ -70,7 +70,7 @@ impl IotaDID {
     pub fn with_shard(public: &[u8], shard: &str) -> Result<Self> {
         let key: String = Self::encode_key(public);
         let did: String = format!("did:{}:{}:{}", Self::METHOD, shard, key);
-        let did: DID = DID::parse_from_str(did)?;
+        let did: DID = DID::parse(did)?;
 
         Ok(Self(did))
     }
@@ -78,7 +78,7 @@ impl IotaDID {
     pub fn with_network_and_shard(public: &[u8], network: &str, shard: &str) -> Result<Self> {
         let key: String = Self::encode_key(public);
         let did: String = format!("did:{}:{}:{}:{}", Self::METHOD, network, shard, key);
-        let did: DID = DID::parse_from_str(did)?;
+        let did: DID = DID::parse(did)?;
 
         Ok(Self(did))
     }

@@ -1,5 +1,8 @@
 use core::slice::from_ref;
-use identity_core::did::{DIDDocument, DID};
+use identity_core::{
+    did::{DIDDocument, DID},
+    key::KeyData,
+};
 use iota::{
     client::{AttachToTangleResponse, GTTAResponse, Transfer},
     crypto::ternary::Hash,
@@ -12,6 +15,7 @@ use std::{thread, time::Duration};
 use crate::{
     did::deprecated::create_address,
     error::{DocumentError, Error, Result, TransactionError},
+    helpers::create_diff_address,
     network::{Network, NodeList},
     utils::{create_address_from_trits, encode_trits, txn_hash},
 };
@@ -30,8 +34,8 @@ pub struct Config {
 }
 
 impl Config {
-    const DEFAULT_CONFIRM_DELAY: Duration = Duration::from_secs(5);
-    const DEFAULT_PROMOTE_DELAY: Duration = Duration::from_secs(5);
+    const DEFAULT_CONFIRM_DELAY: Duration = Duration::from_secs(10);
+    const DEFAULT_PROMOTE_DELAY: Duration = Duration::from_secs(10);
     const DEFAULT_PROMOTE_LIMIT: usize = 20;
 
     pub const fn new() -> Self {
@@ -111,6 +115,42 @@ impl TangleWriter {
         // Build the transfer to push the serialized data to the tangle.
         let transfer: Transfer = Transfer {
             address: create_address(&did)?,
+            value: 0,
+            message: Some(to_string(&data).map_err(identity_core::Error::EncodeJSON)?),
+            tag: None,
+        };
+
+        // Dispatch the transfer to the network
+        let bundle: Vec<BundledTransaction> = self.client.send(None).transfers(vec![transfer]).send().await?;
+
+        // Extract the tail transaction from the response.
+        let tail: &BundledTransaction = bundle
+            .iter()
+            .find(|txn| txn.is_tail())
+            .ok_or_else(|| Error::InvalidTransaction(TransactionError::InvalidBundle))?;
+
+        Ok(txn_hash(tail))
+    }
+
+    // Accept only diffs and use the did from there so you don't need to provide it additionally? Same for DID documents
+    pub async fn publish_diff_json<T>(&self, did: &DID, auth_key: &KeyData, data: &T) -> Result<Hash>
+    where
+        T: Serialize,
+    {
+        // Ensure the correct network is selected
+        if !self.network.matches_did(did) {
+            return Err(Error::InvalidDocument(DocumentError::NetworkMismatch));
+        }
+
+        // TODO: replace this when other signatures are supported and maybe move it to create_diff_address
+        let auth_key_bytes = match &auth_key {
+            KeyData::PublicKeyBase58(key) => key.as_bytes(),
+            _ => return Err(Error::InvalidAuthenticationKey),
+        };
+
+        // Build the transfer to push the serialized data to the tangle.
+        let transfer: Transfer = Transfer {
+            address: create_diff_address(&auth_key_bytes)?,
             value: 0,
             message: Some(to_string(&data).map_err(identity_core::Error::EncodeJSON)?),
             tag: None,
