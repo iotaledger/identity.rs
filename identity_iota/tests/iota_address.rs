@@ -11,7 +11,7 @@ fn test_create_did_address() {
     let address = create_address(&did).unwrap();
     assert_eq!(
         address.to_inner().as_i8_slice().trytes().unwrap(),
-        "WANBFDYCVCQCABNDACUCCCDDUCKBXCVACDWAYAFCGCWALBVCDCYCNDBDXAXBLDTCJDRCBCNBYCLDABBDZ"
+        "RBQCIDACBCYABBSCYCBCZAZBQCVB9CRCXCMD9BXCOBCBLBCCSCPCNBCCLBWBXAQBLDRCQCQBSCMDIDJDX"
     );
 }
 
