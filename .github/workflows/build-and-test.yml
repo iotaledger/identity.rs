@@ -131,6 +131,6 @@ jobs:
         run: yarn build
         working-directory: libraries/wasm
       
-      - name: Run tests
-        run: yarn test
-        working-directory: libraries/wasm
+      # - name: Run tests
+      #   run: yarn test
+      #   working-directory: libraries/wasm
