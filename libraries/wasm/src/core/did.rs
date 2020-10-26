@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use wasm_bindgen::prelude::*;
 use identity_core::did::DID;
+use serde::Serialize;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 #[derive(Serialize)]
@@ -16,21 +16,19 @@ impl JSDID {
 
         let did = DID {
             method_name: "iota".into(),
-            id_segments: vec![id.into()],
+            id_segments: vec![id],
             ..Default::default()
         }
         .init()
         .unwrap();
 
-        let object = JSDID {
-            did
-        };
+        let object = JSDID { did };
         Ok(JsValue::from(object))
     }
 
     #[wasm_bindgen(getter)]
     pub fn did(&self) -> String {
         console_error_panic_hook::set_once();
-        self.did.to_string().clone()
+        self.did.to_string()
     }
- }
+}

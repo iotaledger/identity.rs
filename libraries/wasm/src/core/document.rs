@@ -1,10 +1,10 @@
-use serde::{Deserialize, Serialize};
-use wasm_bindgen::prelude::*;
 use identity_core::{
     common::OneOrMany,
     did::{DIDDocument, DIDDocumentBuilder, DID},
     key::{KeyData, KeyType, PublicKey, PublicKeyBuilder},
 };
+use serde::Serialize;
+use wasm_bindgen::prelude::*;
 
 use multihash::Blake2b256;
 
@@ -22,7 +22,6 @@ impl JSDIDDocument {
 
         let did: DID = create_method_id(&auth_key, Some("com"), None).unwrap();
         let key: DID = format!("{}#key-1", did).parse().unwrap();
-    
         let public_key: PublicKey = PublicKeyBuilder::default()
             .id(key.clone())
             .controller(did.clone())
@@ -30,7 +29,6 @@ impl JSDIDDocument {
             .key_data(KeyData::PublicKeyBase58(auth_key))
             .build()
             .unwrap();
-    
         let document: DIDDocument = DIDDocumentBuilder::default()
             .context(OneOrMany::One(DID::BASE_CONTEXT.into()))
             .id(did)
@@ -39,10 +37,7 @@ impl JSDIDDocument {
             .build()
             .unwrap();
 
-        let object = JSDIDDocument {
-            document
-        };
-
+        let object = JSDIDDocument { document };
 
         Ok(JsValue::from(object))
     }
@@ -50,15 +45,16 @@ impl JSDIDDocument {
     #[wasm_bindgen(getter)]
     pub fn document(&self) -> String {
         console_error_panic_hook::set_once();
-        self.document.to_string().clone()
+        self.document.to_string()
     }
     // #[wasm_bindgen(setter)]
     // pub fn set_sign_unchecked(&self, id: String) {
     //     // hmm sign_unchecked is not here anymore :(
+    //it's in identity_iota
     // }
- }
+}
 
- pub fn create_method_id(pub_key: &str, network: Option<&str>, network_shard: Option<String>) -> Result<DID, JsValue> {
+pub fn create_method_id(pub_key: &str, network: Option<&str>, network_shard: Option<String>) -> Result<DID, JsValue> {
     let hash = Blake2b256::digest(pub_key.as_bytes());
     let bs58key = bs58::encode(&hash.digest()).into_string();
     let network_string = match network {

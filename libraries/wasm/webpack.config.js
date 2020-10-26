@@ -24,5 +24,11 @@ module.exports = {
     new WasmPackPlugin({
       crateDirectory: __dirname,
     }),
-  ]
+  ],
+  // Makes the output less verbose
+  stats: 'minimal',
+  // Removes the asset size warning
+  performance: {
+    hints: false,
+  }
 };
