@@ -86,3 +86,44 @@ jobs:
         with:
           command: test
           args: --manifest-path=${{ matrix.project }}/Cargo.toml --all --release
+
+  build-and-test-wasm:
+    runs-on: ubuntu-latest
+    strategy:
+        fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+
+      - name: Get current date
+        if: matrix.os == 'ubuntu-latest'
+        run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+      
+      - name: Install wasm-pack
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: wasm-pack
+
+      - name: Install JS dependencies
+        run: yarn
+        working-directory: libraries/wasm
+
+      - name: Build WASM bindings
+        run: yarn build
+        working-directory: libraries/wasm
+      
+      - name: Run tests
+        run: yarn test
+        working-directory: libraries/wasm

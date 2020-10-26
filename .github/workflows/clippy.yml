@@ -25,6 +25,7 @@ jobs:
             identity_diff,
             identity_iota,
             identity_proof,
+            libraries/wasm,
           ]
 
     steps:
