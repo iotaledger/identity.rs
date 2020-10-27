@@ -56,32 +56,32 @@ async fn main() -> Result<()> {
     // Ensure the diff proof is valid
     assert!(document.verify_diff(&signed_diff).is_ok());
 
-    let tail_transaction = tangle_writer.publish_json(&document.did(), &signed_diff).await?;
+    // let tail_transaction = tangle_writer.publish_json(&document.did(), &signed_diff).await?;
 
-    println!(
-        "DID document DIDDiff published: https://thetangle.org/transaction/{}",
-        tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
-    );
+    // println!(
+    //     "DID document DIDDiff published: https://thetangle.org/transaction/{}",
+    //     tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
+    // );
 
-    // Get document and diff from the tangle and validate the signatures
-    let did = document.did();
-    let tangle_reader = TangleReader::new(&nodelist)?;
+    // // Get document and diff from the tangle and validate the signatures
+    // let did = document.did();
+    // let tangle_reader = TangleReader::new(&nodelist)?;
 
-    let received_messages = tangle_reader.fetch(&did).await?;
-    println!("{:?}", received_messages);
+    // let received_messages = tangle_reader.fetch(&did).await?;
+    // println!("{:?}", received_messages);
 
-    let mut docs = TangleReader::extract_documents(&did, &received_messages)?;
-    println!("extracted docs: {:?}", docs);
+    // let mut docs = TangleReader::extract_documents(&did, &received_messages)?;
+    // println!("extracted docs: {:?}", docs);
 
-    let diffs = TangleReader::extract_diffs(&did, &received_messages)?;
-    println!("extracted diffs: {:?}", diffs);
+    // let diffs = TangleReader::extract_diffs(&did, &received_messages)?;
+    // println!("extracted diffs: {:?}", diffs);
 
-    let doc = IotaDocument::try_from_document(docs.remove(0).data)?;
-    let sig = doc.verify().is_ok();
-    println!("Document has valid signature: {}", sig);
+    // let doc = IotaDocument::try_from_document(docs.remove(0).data)?;
+    // let sig = doc.verify().is_ok();
+    // println!("Document has valid signature: {}", sig);
 
-    let sig = doc.verify_diff(&diffs[0].data).is_ok();
-    println!("Diff has valid signature: {}", sig);
+    // let sig = doc.verify_diff(&diffs[0].data).is_ok();
+    // println!("Diff has valid signature: {}", sig);
 
     Ok(())
 }
