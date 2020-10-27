@@ -9,7 +9,7 @@ import("../pkg/index.js").then((identity) => {
     console.log("greet: ", greet)
 
     // Generate Keypairs
-    const alice_keypair = identity.Core.GenerateKeypair();
+    const alice_keypair = identity.core.GenerateKeypair();
     console.log("alice_keypair: privateKey:", alice_keypair.privateKey)
     console.log("alice_keypair: GetPublicKey:", alice_keypair.publicKey)
     const bob_keypair = new identity.JSKeyPair();
@@ -18,20 +18,20 @@ import("../pkg/index.js").then((identity) => {
 
     // Generate UUID
     // UUID is just another name for method_id?
-    let aice_uuid = identity.Core.GenerateUUID(alice_keypair.publicKey);
+    let aice_uuid = identity.core.GenerateUUID(alice_keypair.publicKey);
     console.log("aice_uuid: ", aice_uuid);
-    let bob_uuid = identity.Core.GenerateUUID(bob_keypair.publicKey);
+    let bob_uuid = identity.core.GenerateUUID(bob_keypair.publicKey);
     console.log("bob_uuid: ", bob_uuid);
 
     // Creating the DID
-    let alice_did = identity.Core.CreateDID("iota", alice_keypair.publicKey);
+    let alice_did = identity.core.CreateDID("iota", alice_keypair.publicKey);
     console.log("alice_did: ", alice_did);
     //uuid should be replaced by the public key?
     let bob_did = new identity.JSDID("iota", bob_uuid)
     console.log("bob_did: ", bob_did.did);
 
     // Creating the DID Document
-    let alice_document = identity.Core.createDocument(alice_did);
+    let alice_document = identity.core.createDocument(alice_did);
     console.log("alice_document: ", alice_document);
 
 

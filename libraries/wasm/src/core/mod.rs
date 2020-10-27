@@ -9,10 +9,11 @@ mod document;
 
 #[wasm_bindgen]
 #[derive(Serialize)]
-pub struct Core {}
+#[allow(non_camel_case_types)]
+pub struct core {}
 
 #[wasm_bindgen]
-impl Core {
+impl core {
     #[wasm_bindgen(js_name = "CreateDID")]
     pub fn create_did(method_name: String, id: String) -> Result<String, JsValue> {
         console_error_panic_hook::set_once();
