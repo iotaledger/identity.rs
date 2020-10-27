@@ -9,7 +9,7 @@ pub struct TangleDoc {
     pub data: DIDDocument,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct TangleDiff {
     pub hash: String,
     pub data: DIDDiff,

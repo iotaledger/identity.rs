@@ -224,16 +224,16 @@ fn dereference_primary(document: Document, mut did: DID) -> Result<Option<Primar
 
 fn dereference_document(document: Document, fragment: &str) -> Result<Option<SecondaryResource>> {
     macro_rules! extract {
-    ($base:expr, $target:expr, $iter:expr) => {
-      for object in $iter {
-        let did: DID = DID::join_relative($base, object.id())?;
+        ($base:expr, $target:expr, $iter:expr) => {
+            for object in $iter {
+                let did: DID = DID::join_relative($base, object.id())?;
 
-        if matches!(did.fragment.as_deref(), Some(fragment) if fragment == $target) {
-          return Ok(Some(object.into()));
-        }
-      }
-    };
-  }
+                if matches!(did.fragment.as_deref(), Some(fragment) if fragment == $target) {
+                    return Ok(Some(object.into()));
+                }
+            }
+        };
+    }
 
     extract!(&document.id, fragment, document.public_keys);
     extract!(&document.id, fragment, document.verification);

@@ -9,6 +9,8 @@ pub enum Error {
     #[error(transparent)]
     DiffError(#[from] identity_core::diff::Error),
     #[error(transparent)]
+    ProofError(#[from] identity_proof::error::Error),
+    #[error(transparent)]
     ClientError(#[from] iota::client::error::Error),
     #[error(transparent)]
     TernaryError(#[from] iota::ternary::Error),
