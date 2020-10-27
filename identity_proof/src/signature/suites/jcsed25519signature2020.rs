@@ -1,3 +1,5 @@
+use core::convert::TryInto as _;
+use ed25519_zebra::{Signature, SigningKey, VerificationKey, VerificationKeyBytes};
 use identity_core::{
     common::{SerdeInto as _, ToJson as _, Value},
     utils::{decode_b58, encode_b58},
@@ -6,8 +8,8 @@ use identity_crypto::{
     sha2::{self, Digest as _},
     KeyPair, SecretKey,
 };
+use rand::rngs::OsRng;
 use serde::Serialize;
-use sodiumoxide::crypto::sign::ed25519;
 
 use crate::{
     document::LdDocument,
@@ -16,29 +18,59 @@ use crate::{
 };
 
 const SIGNATURE_TYPE: &str = "JcsEd25519Signature2020";
+const SIGNATURE_SIZE: usize = 64;
+const PUBLIC_KEY_BYTES: usize = 32;
+const SECRET_KEY_BYTES: usize = 32;
 
 pub fn new_keypair() -> KeyPair {
-    let (public, secret): (ed25519::PublicKey, ed25519::SecretKey) = ed25519::gen_keypair();
+    let secret: SigningKey = SigningKey::new(OsRng);
+    let public: VerificationKey = (&secret).into();
+    let public: VerificationKeyBytes = public.into();
 
     KeyPair::new(public.as_ref().to_vec().into(), secret.as_ref().to_vec().into())
 }
 
-fn pubkey(slice: &[u8]) -> Result<ed25519::PublicKey> {
-    ed25519::PublicKey::from_slice(slice).ok_or(Error::InvalidKeyFormat)
+fn pubkey(slice: &[u8]) -> Result<VerificationKey> {
+    if slice.len() < PUBLIC_KEY_BYTES {
+        return Err(Error::InvalidKeyFormat);
+    }
+
+    slice[..PUBLIC_KEY_BYTES]
+        .try_into()
+        .map_err(|_| Error::InvalidKeyFormat)
 }
 
-fn seckey(slice: &[u8]) -> Result<ed25519::SecretKey> {
-    ed25519::SecretKey::from_slice(slice).ok_or(Error::InvalidKeyFormat)
+fn seckey(slice: &[u8]) -> Result<SigningKey> {
+    if slice.len() < SECRET_KEY_BYTES {
+        return Err(Error::InvalidKeyFormat);
+    }
+
+    slice[..SECRET_KEY_BYTES]
+        .try_into()
+        .map_err(|_| Error::InvalidKeyFormat)
 }
 
 // output = <SIGNATURE><MESSAGE>
 fn ed25519_sign(message: &[u8], secret: &[u8]) -> Result<Vec<u8>> {
-    seckey(secret).map(|secret| ed25519::sign(message, &secret))
+    let key: SigningKey = seckey(secret)?;
+    let sig: [u8; SIGNATURE_SIZE] = key.sign(message).into();
+
+    Ok([&sig, message].concat())
 }
 
 // signature = <SIGNATURE><MESSAGE>
 fn ed25519_verify(signature: &[u8], public: &[u8]) -> Result<Vec<u8>> {
-    pubkey(public).and_then(|public| ed25519::verify(signature, &public).map_err(|_| Error::InvalidSignature))
+    if signature.len() < SIGNATURE_SIZE {
+        return Err(Error::InvalidSignature);
+    }
+
+    let key: VerificationKey = pubkey(public)?;
+    let (sig, msg): (&[u8], &[u8]) = signature.split_at(SIGNATURE_SIZE);
+    let sig: Signature = sig.try_into().map_err(|_| Error::InvalidSignature)?;
+
+    key.verify(&sig, msg).map_err(|_| Error::InvalidSignature)?;
+
+    Ok(msg.to_vec())
 }
 
 pub fn jcs_sign<T>(document: &T, secret: &SecretKey) -> Result<String>
@@ -94,8 +126,11 @@ where
 {
     let keydata: Vec<u8> = document.resolve_key(options.verification_method.as_str().into())?;
 
+    let pub1: VerificationKey = pubkey(&keydata)?;
+    let pub2: VerificationKey = (&seckey(secret.as_ref())?).into();
+
     // The verification method key data MUST be equal to the derived public key data.
-    if pubkey(&keydata)? != seckey(secret.as_ref())?.public_key() {
+    if pub1.as_ref() != pub2.as_ref() {
         return Err(Error::InvalidDocument);
     }
 
