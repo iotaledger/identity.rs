@@ -8,6 +8,8 @@ use identity_core::{
     did::DID,
     utils::{decode_b58, encode_b58},
 };
+use identity_crypto::KeyPair;
+use identity_proof::signature::jcsed25519signature2020;
 use iota::transaction::bundled::Address;
 use multihash::Blake2b256;
 
@@ -24,6 +26,14 @@ pub struct IotaDID(DID);
 
 impl IotaDID {
     pub const METHOD: &'static str = "iota";
+    pub const NETWORK: &'static str = "main";
+
+    pub fn generate_ed25519() -> Result<(Self, KeyPair)> {
+        let key: KeyPair = jcsed25519signature2020::new_keypair();
+        let did: Self = Self::new(key.public().as_ref())?;
+
+        Ok((did, key))
+    }
 
     pub fn try_from_did(did: DID) -> Result<Self> {
         if did.method_name != Self::METHOD {
@@ -85,7 +95,7 @@ impl IotaDID {
 
     pub fn network(&self) -> &str {
         match &*self.id_segments {
-            [_] => "main",
+            [_] => Self::NETWORK,
             [network, _] => &*network,
             [network, _, _] => &*network,
             _ => unreachable!("IotaDID::network called for invalid DID"),
@@ -112,7 +122,7 @@ impl IotaDID {
 
     pub fn normalize(&mut self) {
         match &*self.id_segments {
-            [_] => self.id_segments.insert(0, "main".into()),
+            [_] => self.id_segments.insert(0, Self::NETWORK.into()),
             [_, _] | [_, _, _] => {}
             _ => unreachable!("IotaDID::normalize called for invalid DID"),
         }
@@ -140,6 +150,12 @@ impl IotaDID {
     }
 }
 
+impl PartialEq<DID> for IotaDID {
+    fn eq(&self, other: &DID) -> bool {
+        self.0.eq(other)
+    }
+}
+
 impl Display for IotaDID {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}", self.0)
@@ -160,6 +176,7 @@ impl Deref for IotaDID {
     }
 }
 
+// TODO: Remove this
 impl DerefMut for IotaDID {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
@@ -189,10 +206,8 @@ impl FromStr for IotaDID {
 }
 
 pub mod deprecated {
-    use bs58::encode;
     use identity_core::did::DID;
     use iota::transaction::bundled::Address;
-    use multihash::Blake2b256;
 
     use crate::{
         error::{Error, Result},
@@ -208,9 +223,7 @@ pub mod deprecated {
 
     /// Creates an 81 Trytes IOTA address from the DID
     pub fn create_address(did: &DID) -> Result<Address> {
-        let digest: &[u8] = &Blake2b256::digest(method_id(did)?.as_bytes());
-        let encoded: String = encode(digest).into_string();
-        let mut trytes: String = utf8_to_trytes(&encoded);
+        let mut trytes: String = utf8_to_trytes(method_id(did)?);
 
         trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
 

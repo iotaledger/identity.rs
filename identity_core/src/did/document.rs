@@ -213,7 +213,10 @@ impl DIDDocument {
     where
         T: HasId<Id = DID>,
     {
-        matches!(method.id().fragment.as_deref(), Some(fragment) if key == fragment)
+        let target: Option<&str> = key.normalize();
+        let current: Option<&str> = method.id().fragment.as_deref();
+
+        matches!((current, target), (Some(current), Some(target)) if target == current)
     }
 
     fn key_iter(&self, relation: KeyRelation) -> Iter<Authentication> {

@@ -4,6 +4,22 @@ pub enum KeyIndex<'i> {
     Ident(&'i str),
 }
 
+impl<'i> KeyIndex<'i> {
+    pub fn normalize(&self) -> Option<&str> {
+        match self {
+            Self::Ident(ident) if ident.starts_with("did:") => {
+                if let Some(index) = ident.rfind('#') {
+                    Some(&ident[index + 1..])
+                } else {
+                    None
+                }
+            }
+            Self::Ident(ident) => Some(ident.trim_start_matches('#')),
+            Self::Index(_) => None,
+        }
+    }
+}
+
 impl<'i> From<&'i str> for KeyIndex<'i> {
     fn from(other: &'i str) -> Self {
         Self::Ident(other)
