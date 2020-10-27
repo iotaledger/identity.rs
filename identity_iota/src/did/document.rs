@@ -186,7 +186,7 @@ impl IotaDocument {
         create_address_from_trits(Self::create_diff_address_hash(public_key))
     }
 
-    fn check_authentication_key_id(authentication: &PublicKey, did: &IotaDID) -> Result<()> {
+    pub fn check_authentication_key_id(authentication: &PublicKey, did: &IotaDID) -> Result<()> {
         let key: &DID = authentication.id();
 
         if key.fragment.is_none() {

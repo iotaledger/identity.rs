@@ -1,55 +1,52 @@
 import("../pkg/index.js").then((identity) => {
 
-
     console.log(identity)
 
     // identity_core
 
-    const greet = identity.Greet()
-    console.log("greet: ", greet)
-
     // Generate Keypairs
-    const alice_keypair = identity.core.GenerateKeypair();
+    const alice_keypair = new identity.KeyPair();
     console.log("alice_keypair: privateKey:", alice_keypair.privateKey)
     console.log("alice_keypair: GetPublicKey:", alice_keypair.publicKey)
-    const bob_keypair = new identity.JSKeyPair();
+    const bob_keypair = new identity.KeyPair();
     console.log("bob_keypair: GetPrivateKey: ", bob_keypair.privateKey)
     console.log("bob_keypair: GetPublicKey: ", bob_keypair.publicKey)
 
-    // Generate UUID
-    // UUID is just another name for method_id?
-    let aice_uuid = identity.core.GenerateUUID(alice_keypair.publicKey);
-    console.log("aice_uuid: ", aice_uuid);
-    let bob_uuid = identity.core.GenerateUUID(bob_keypair.publicKey);
-    console.log("bob_uuid: ", bob_uuid);
 
     // Creating the DID
-    let alice_did = identity.core.CreateDID("iota", alice_keypair.publicKey);
-    console.log("alice_did: ", alice_did);
+    let alice_did = new identity.DID("iota", alice_keypair.publicKey)
+    console.log("alice_did: ", alice_did.did);
     //uuid should be replaced by the public key?
-    let bob_did = new identity.JSDID("iota", bob_uuid)
+    let bob_did = new identity.DID("iota", bob_keypair.publicKey)
     console.log("bob_did: ", bob_did.did);
 
     // Creating the DID Document
-    let alice_document = identity.core.createDocument(alice_did);
-    console.log("alice_document: ", alice_document);
+    let alice_document = new identity.DIDDocument("github", alice_keypair.publicKey)
+    console.log("alice_document: ", alice_document.document);
 
 
-    let bob_document = new identity.JSDIDDocument(bob_uuid)
+    let bob_document = new identity.DIDDocument("iota", bob_keypair.publicKey)
     console.log("bob_document: ", bob_document.document);
     // let what = bob_document.set_sign_unchecked(bob_keypair.privateKey);
     // console.log("bob_document: ", what);
 
-
-
     // identity_iota 
 
-    let iota_document = new identity.JSIotaDID(alice_keypair.publicKey);
-    console.log("iota_document: ", iota_document.did);
+    let iota_did = new identity.IotaDID(alice_keypair.publicKey);
+    console.log("iota_did: ", iota_did.did);
+    console.log("iota_did address: ", iota_did.create_address);
 
-    let network_iota_document = identity.JSIotaDID.CreateIotaDIDWithNetwork(alice_keypair.publicKey, "com");
-    console.log("network_iota_document: ", network_iota_document.did);
+    let network_iota_did = identity.IotaDID.CreateIotaDIDWithNetwork(alice_keypair.publicKey, "com");
+    console.log("network_iota_did: ", network_iota_did.did);
 
+    let iota_document = new identity.IotaDocument(network_iota_did.did, alice_keypair.publicKey);
+    console.log("iota document: ", iota_document.document);
+    console.log("iota document did: ", iota_document.did);
+    console.log("iota document authentication_key: ", iota_document.authentication_key);
+
+    let iota_document2 = identity.IotaDocument.TryFromDocument(iota_document.document);
+    console.log(iota_document2.document);
+    console.log(iota_document2.create_diff_address);
     // identity.Iota.ResolveDID("did:iota:com:HbuRS48djS5PbLQciy6iE9BTdaDTBM3GxcbGdyuv3TWo").then(doc => {
     //     console.log("resolved document: ", doc);
     // });
