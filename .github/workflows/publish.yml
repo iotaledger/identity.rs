@@ -34,10 +34,7 @@ jobs:
           node-version: 12.x
       
       - name: Install wasm-pack
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: wasm-pack
+        run: yarn global add wasm-pack
 
       - name: Install JS dependencies
         run: yarn
