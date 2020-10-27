@@ -70,6 +70,16 @@ impl IotaDocument {
         self.resolve_key(0, KeyRelation::Authentication).expect("infallible")
     }
 
+    pub fn authentication_key_bytes(&self) -> Vec<u8> {
+        self.authentication_key()
+            .key_data()
+            .try_decode()
+            .transpose()
+            .ok()
+            .flatten()
+            .unwrap_or_default()
+    }
+
     pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
         let key: &PublicKey = self.authentication_key();
 
@@ -153,16 +163,7 @@ impl IotaDocument {
     }
 
     pub fn diff_address_hash(&self) -> String {
-        let key: Vec<u8> = self
-            .authentication_key()
-            .key_data()
-            .try_decode()
-            .transpose()
-            .ok()
-            .flatten()
-            .unwrap_or_default();
-
-        Self::create_diff_address_hash(&key)
+        Self::create_diff_address_hash(&self.authentication_key_bytes())
     }
 
     pub fn diff_address(&self) -> Result<Address> {
@@ -224,6 +225,7 @@ impl Deref for IotaDocument {
     }
 }
 
+// TODO: Remove this
 impl DerefMut for IotaDocument {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.document

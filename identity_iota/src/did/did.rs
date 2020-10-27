@@ -8,6 +8,8 @@ use identity_core::{
     did::DID,
     utils::{decode_b58, encode_b58},
 };
+use identity_crypto::KeyPair;
+use identity_proof::signature::jcsed25519signature2020;
 use iota::transaction::bundled::Address;
 use multihash::Blake2b256;
 
@@ -25,6 +27,13 @@ pub struct IotaDID(DID);
 impl IotaDID {
     pub const METHOD: &'static str = "iota";
     pub const NETWORK: &'static str = "main";
+
+    pub fn generate_ed25519() -> Result<(Self, KeyPair)> {
+        let key: KeyPair = jcsed25519signature2020::new_keypair();
+        let did: Self = Self::new(key.public().as_ref())?;
+
+        Ok((did, key))
+    }
 
     pub fn try_from_did(did: DID) -> Result<Self> {
         if did.method_name != Self::METHOD {
@@ -141,6 +150,12 @@ impl IotaDID {
     }
 }
 
+impl PartialEq<DID> for IotaDID {
+    fn eq(&self, other: &DID) -> bool {
+        self.0.eq(other)
+    }
+}
+
 impl Display for IotaDID {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}", self.0)
@@ -161,6 +176,7 @@ impl Deref for IotaDID {
     }
 }
 
+// TODO: Remove this
 impl DerefMut for IotaDID {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
