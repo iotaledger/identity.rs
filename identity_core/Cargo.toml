@@ -30,7 +30,7 @@ url = { version = "2.1", default-features = false, features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }
 
-identity_crypto = { git = "https://github.com/iotaledger/identity.rs", branch = "feat/identity-signature-suites" }
+identity_crypto = { path = "../identity_crypto" }
 identity_diff = { path = "../identity_diff", version = "0.1.0", features = ["diff_derive"] }
 
 # parser crates
