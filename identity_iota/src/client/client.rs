@@ -1,4 +1,10 @@
+use async_trait::async_trait;
 use core::slice::from_ref;
+use identity_core::{
+    did::DID,
+    error::{Error, Result as CoreResult},
+    resolver::{DocumentMetadata, InputMetadata, MetaDocument, ResolverMethod},
+};
 use iota::crypto::ternary::Hash;
 
 use crate::{
@@ -58,5 +64,33 @@ impl Client {
             .await
             .map_err(Into::into)
             .map(|states| states.states.as_slice() == [true])
+    }
+}
+
+#[async_trait]
+impl ResolverMethod for Client {
+    fn is_supported(&self, did: &DID) -> bool {
+        IotaDID::is_valid(did) && self.network.matches_did(did)
+    }
+
+    async fn read(&self, did: &DID, _input: InputMetadata) -> CoreResult<Option<MetaDocument>> {
+        let did: IotaDID = IotaDID::try_from_did(did.clone()).map_err(|error| Error::ResolutionError(error.into()))?;
+
+        self.read_document(&did)
+            .send()
+            .await
+            .map_err(|error| Error::ResolutionError(error.into()))
+            .map(|response| {
+                let mut metadata: DocumentMetadata = DocumentMetadata::new();
+
+                metadata.created = response.document.created;
+                metadata.updated = response.document.updated;
+                metadata.properties = response.metadata;
+
+                Some(MetaDocument {
+                    data: response.document.into(),
+                    meta: metadata,
+                })
+            })
     }
 }

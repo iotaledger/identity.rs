@@ -35,7 +35,11 @@ impl IotaDID {
         Ok((did, key))
     }
 
-    pub fn try_from_did(did: DID) -> Result<Self> {
+    pub fn is_valid(did: &DID) -> bool {
+        Self::check_validity(did).is_ok()
+    }
+
+    pub fn check_validity(did: &DID) -> Result<(), Error> {
         if did.method_name != Self::METHOD {
             return Err(Error::InvalidMethod);
         }
@@ -52,7 +56,11 @@ impl IotaDID {
             return Err(Error::InvalidMethodId);
         }
 
-        Ok(Self(did))
+        Ok(())
+    }
+
+    pub fn try_from_did(did: DID) -> Result<Self> {
+        Self::check_validity(&did).map(|_| Self(did))
     }
 
     pub fn parse(string: impl AsRef<str>) -> Result<Self> {

@@ -13,10 +13,7 @@ use identity_iota::{
     error::Result,
     network::Network,
 };
-use iota::{
-    client::Transfer,
-    transaction::bundled::Address,
-};
+use iota::{client::Transfer, transaction::bundled::Address};
 use std::time::Duration;
 
 const PUBLIC: &str = "66jqh9UeDQ5p88YZvv8F9qNuUxQPQfuYLc6njpsVC95u";
