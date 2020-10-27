@@ -20,6 +20,8 @@ pub enum Error {
     InvalidMethodId,
     #[error("Invalid DID Signature")]
     InvalidSignature,
+    #[error("Invalid DID Network")]
+    InvalidDIDNetwork,
     #[error("Invalid DID Authentication Key")]
     InvalidAuthenticationKey,
     #[error("Invalid DID Proof")]

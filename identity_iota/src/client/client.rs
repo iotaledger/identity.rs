@@ -2,8 +2,8 @@ use core::slice::from_ref;
 use iota::crypto::ternary::Hash;
 
 use crate::{
-    client::{ClientBuilder, ReadTransactionsRequest, SendTransferRequest},
-    did::IotaDID,
+    client::{ClientBuilder, CreateDocumentRequest, ReadDocumentRequest, ReadTransactionsRequest, SendTransferRequest},
+    did::{IotaDID, IotaDocument},
     error::Result,
     network::Network,
 };
@@ -40,6 +40,14 @@ impl Client {
 
     pub fn send_transfer(&self) -> SendTransferRequest {
         SendTransferRequest::new(self)
+    }
+
+    pub fn create_document<'a, 'b>(&'a self, document: &'b IotaDocument) -> CreateDocumentRequest<'a, 'b> {
+        CreateDocumentRequest::new(self.send_transfer(), document)
+    }
+
+    pub fn read_document<'a, 'b>(&'a self, did: &'b IotaDID) -> ReadDocumentRequest<'a, 'b> {
+        ReadDocumentRequest::new(self, did)
     }
 
     pub async fn is_transaction_confirmed(&self, hash: &Hash) -> Result<bool> {
