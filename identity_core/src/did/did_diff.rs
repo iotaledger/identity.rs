@@ -101,7 +101,7 @@ impl Diff for DID {
                 query,
                 fragment,
             } => Ok(DiffDID {
-                method_name: method_name,
+                method_name,
                 id_segments: Some(id_segments.into_diff()?),
                 path_segments: if let identity_diff::option::DiffOption::Some(_) = path_segments.clone().into_diff()? {
                     Some(path_segments.into_diff()?)
