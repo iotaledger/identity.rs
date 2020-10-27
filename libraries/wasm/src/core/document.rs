@@ -17,7 +17,7 @@ pub struct JSDIDDocument {
 #[wasm_bindgen(js_name = "DIDDocument")]
 impl JSDIDDocument {
     #[wasm_bindgen(constructor)]
-    pub fn new(auth_key: String) -> Result<JsValue, JsValue> {
+    pub fn new(auth_key: String) -> Self {
         console_error_panic_hook::set_once();
 
         let did: DID = create_method_id(&auth_key, Some("com"), None).unwrap();
@@ -37,9 +37,7 @@ impl JSDIDDocument {
             .build()
             .unwrap();
 
-        let object = JSDIDDocument { document };
-
-        Ok(JsValue::from(object))
+        JSDIDDocument { document }
     }
 
     #[wasm_bindgen(getter)]

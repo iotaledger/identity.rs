@@ -11,19 +11,18 @@ pub struct JSDID {
 #[wasm_bindgen(js_name = "DID")]
 impl JSDID {
     #[wasm_bindgen(constructor)]
-    pub fn new(id: String) -> Result<JsValue, JsValue> {
+    pub fn new(method_name: String, id: String) -> Self {
         console_error_panic_hook::set_once();
 
         let did = DID {
-            method_name: "iota".into(),
+            method_name,
             id_segments: vec![id],
             ..Default::default()
         }
         .init()
         .unwrap();
 
-        let object = JSDID { did };
-        Ok(JsValue::from(object))
+        JSDID { did }
     }
 
     #[wasm_bindgen(getter)]

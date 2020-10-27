@@ -3,6 +3,8 @@ import("../pkg/index.js").then((identity) => {
 
     console.log(identity)
 
+    // identity_core
+
     const greet = identity.Greet()
     console.log("greet: ", greet)
 
@@ -15,15 +17,17 @@ import("../pkg/index.js").then((identity) => {
     console.log("bob_keypair: GetPublicKey: ", bob_keypair.publicKey)
 
     // Generate UUID
+    // UUID is just another name for method_id?
     let aice_uuid = identity.Core.GenerateUUID(alice_keypair.publicKey);
     console.log("aice_uuid: ", aice_uuid);
     let bob_uuid = identity.Core.GenerateUUID(bob_keypair.publicKey);
     console.log("bob_uuid: ", bob_uuid);
 
     // Creating the DID
-    let alice_did = identity.Core.CreateDID(aice_uuid);
+    let alice_did = identity.Core.CreateDID("iota", alice_keypair.publicKey);
     console.log("alice_did: ", alice_did);
-    let bob_did = new identity.JSDID(bob_uuid)
+    //uuid should be replaced by the public key?
+    let bob_did = new identity.JSDID("iota", bob_uuid)
     console.log("bob_did: ", bob_did.did);
 
     // Creating the DID Document
@@ -36,9 +40,19 @@ import("../pkg/index.js").then((identity) => {
     // let what = bob_document.set_sign_unchecked(bob_keypair.privateKey);
     // console.log("bob_document: ", what);
 
-    identity.Iota.ResolveDID("did:iota:com:HbuRS48djS5PbLQciy6iE9BTdaDTBM3GxcbGdyuv3TWo").then(doc => {
-        console.log("resolved document: ", doc);
-    });
+
+
+    // identity_iota 
+
+    let iota_document = new identity.JSIotaDID(alice_keypair.publicKey);
+    console.log("iota_document: ", iota_document.did);
+
+    let network_iota_document = identity.JSIotaDID.CreateIotaDIDWithNetwork(alice_keypair.publicKey, "com");
+    console.log("network_iota_document: ", network_iota_document.did);
+
+    // identity.Iota.ResolveDID("did:iota:com:HbuRS48djS5PbLQciy6iE9BTdaDTBM3GxcbGdyuv3TWo").then(doc => {
+    //     console.log("resolved document: ", doc);
+    // });
 });
 
 

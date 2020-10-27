@@ -1,3 +1,6 @@
+mod did;
+pub use did::*;
+
 use identity_iota::{
     did::IotaDID,
     network::{Network, NodeList},

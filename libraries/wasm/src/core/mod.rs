@@ -14,11 +14,11 @@ pub struct Core {}
 #[wasm_bindgen]
 impl Core {
     #[wasm_bindgen(js_name = "CreateDID")]
-    pub fn create_did(id: String) -> Result<String, JsValue> {
+    pub fn create_did(method_name: String, id: String) -> Result<String, JsValue> {
         console_error_panic_hook::set_once();
 
         let did = DID {
-            method_name: "iota".into(),
+            method_name,
             id_segments: vec![id],
             ..Default::default()
         }
