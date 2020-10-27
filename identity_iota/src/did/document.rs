@@ -11,13 +11,13 @@ use identity_core::{
     utils::encode_b58,
 };
 use identity_crypto::{KeyPair, SecretKey};
-use identity_proof::{signature::jcsed25519signature2020, LdSignature, SignatureOptions};
+use identity_proof::{signature::jcsed25519signature2020, LdRead, LdSignature, LdWrite, SignatureOptions};
 use iota::transaction::bundled::Address;
 use multihash::{Blake2b256, MultihashGeneric};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    did::{DIDDiff, IotaDID, LdDiffRead, LdDiffWrite},
+    did::{DIDDiff, IotaDID},
     error::{Error, Result},
     utils::{create_address_from_trits, utf8_to_trytes},
 };
@@ -131,7 +131,7 @@ impl IotaDocument {
         };
 
         // Wrap the diff/document in a signable type.
-        let mut target: LdDiffWrite = LdDiffWrite::new(&mut diff, &self.document);
+        let mut target: LdWrite<DIDDiff> = LdWrite::new(&mut diff, &self.document);
 
         // Create and apply the signature
         match key.key_type() {
@@ -148,7 +148,7 @@ impl IotaDocument {
 
     pub fn verify_diff(&self, diff: &DIDDiff) -> Result<()> {
         // Wrap the diff/document in a verifiable type.
-        let target: LdDiffRead = LdDiffRead::new(diff, &self.document);
+        let target: LdRead<DIDDiff> = LdRead::new(diff, &self.document);
 
         match self.authentication_key().key_type() {
             KeyType::Ed25519VerificationKey2018 => {

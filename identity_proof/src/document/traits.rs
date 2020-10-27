@@ -12,3 +12,9 @@ pub trait LdDocument: Serialize {
 
     fn set_signature(&mut self, value: String) -> Result<()>;
 }
+
+pub trait HasProof {
+    fn proof(&self) -> &LdSignature;
+
+    fn proof_mut(&mut self) -> &mut LdSignature;
+}
