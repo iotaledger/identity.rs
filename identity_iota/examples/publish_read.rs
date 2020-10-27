@@ -27,8 +27,8 @@ async fn main() -> Result<()> {
     // Create keypair
     let keypair: KeyPair = IotaDocument::generate_ed25519_keypair();
 
-    // Create comnet DID and authentication method
-    let did: IotaDID = IotaDID::with_network(keypair.public().as_ref(), "com")?;
+    // Create DID and authentication method
+    let did: IotaDID = IotaDID::new(keypair.public().as_ref())?;
     let key: PublicKey = create_ed25519_key(&did, keypair.public().as_ref())?;
 
     // Create a minimal DID document from the DID and authentication method
