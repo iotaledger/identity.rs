@@ -16,7 +16,7 @@ use crate::{
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Diff, Builder)]
 #[builder(pattern = "owned")]
 pub struct DIDDocument {
-    #[serde(rename = "@context")]
+    #[serde(rename = "@context", default)]
     #[builder(setter(into))]
     pub context: OneOrMany<Context>,
     #[builder(try_setter)]

@@ -1,5 +1,4 @@
 use core::str::FromStr;
-use identity_diff::Diff;
 use serde::{
     de::{self, Deserialize, Deserializer, Visitor},
     ser::{Serialize, Serializer},
@@ -18,8 +17,7 @@ const LEADING_TOKENS: &str = "did";
 type DIDTuple = (String, Option<String>);
 
 /// a Decentralized identity structure.
-#[derive(Debug, PartialEq, Default, Eq, Clone, Diff, Hash, Ord, PartialOrd)]
-#[diff(from_into)]
+#[derive(Debug, PartialEq, Default, Eq, Clone, Hash, Ord, PartialOrd)]
 pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
@@ -216,8 +214,7 @@ impl Serialize for DID {
 }
 
 /// a DID Params struct.
-#[derive(Debug, PartialEq, Eq, Clone, Default, Hash, PartialOrd, Ord, Diff, DDeserialize, DSerialize)]
-#[diff(from_into)]
+#[derive(Debug, PartialEq, Eq, Clone, Default, Hash, PartialOrd, Ord, DDeserialize, DSerialize)]
 pub struct Param {
     pub key: String,
     pub value: Option<String>,
