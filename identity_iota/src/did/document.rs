@@ -7,7 +7,7 @@ use identity_core::{
     common::{OneOrMany, ToJson as _},
     did::{DIDDocument as Document, DIDDocumentBuilder as DocumentBuilder, DID},
     diff::Diff as _,
-    key::{KeyRelation, KeyType, PublicKey},
+    key::{KeyData, KeyRelation, KeyType, PublicKey, PublicKeyBuilder},
     utils::encode_b58,
 };
 use identity_crypto::{KeyPair, SecretKey};
@@ -30,8 +30,21 @@ pub struct IotaDocument {
 }
 
 impl IotaDocument {
-    pub fn generate_ed25519_keypair() -> KeyPair {
-        jcsed25519signature2020::new_keypair()
+    pub fn generate_ed25519<'a, T>(tag: &str, network: T) -> Result<(Self, KeyPair)>
+    where
+        T: Into<Option<&'a str>>,
+    {
+        let (did, keypair): (IotaDID, KeyPair) = IotaDID::generate_ed25519(network)?;
+
+        let authentication: PublicKey = PublicKeyBuilder::default()
+            .id(format!("{}#{}", did, tag).parse()?)
+            .controller(did.into())
+            .key_type(KeyType::Ed25519VerificationKey2018)
+            .key_data(KeyData::PublicKeyBase58(encode_b58(keypair.public())))
+            .build()
+            .expect("FIXME");
+
+        Self::try_from_key(authentication).map(|this| (this, keypair))
     }
 
     pub fn try_from_document(document: Document) -> Result<Self> {
@@ -46,12 +59,20 @@ impl IotaDocument {
         Ok(Self { document, did })
     }
 
-    pub fn new(did: IotaDID, authentication: PublicKey) -> Result<Self> {
-        Self::check_authentication_key_id(&authentication, &did)?;
+    pub fn try_from_key(authentication: PublicKey) -> Result<Self> {
+        let mut base: DID = authentication.id().clone();
 
+        base.fragment = None;
+        base.query = None;
+        base.path_segments = None;
+
+        Self::create_document(base, authentication).and_then(Self::try_from_document)
+    }
+
+    fn create_document(did: impl Into<DID>, authentication: PublicKey) -> Result<Document> {
         let mut document: Document = DocumentBuilder::default()
             .context(OneOrMany::One(DID::BASE_CONTEXT.into()))
-            .id(did.clone().into())
+            .id(did.into())
             .auth(vec![authentication.id().clone().into()])
             .public_keys(vec![authentication])
             .build()
@@ -59,7 +80,7 @@ impl IotaDocument {
 
         document.init_timestamps();
 
-        Ok(Self { document, did })
+        Ok(document)
     }
 
     pub fn did(&self) -> &IotaDID {
