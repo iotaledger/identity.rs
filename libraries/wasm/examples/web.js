@@ -39,7 +39,9 @@ import("../pkg/index.js").then((identity) => {
     let network_iota_did = identity.IotaDID.CreateIotaDIDWithNetwork(alice_keypair.publicKey, "com");
     console.log("network_iota_did: ", network_iota_did.did);
 
-    let iota_document = new identity.IotaDocument(network_iota_did.did, alice_keypair.publicKey);
+    let keypair = new identity.Key();
+    console.log("keypair: ", keypair);
+    let iota_document = new identity.IotaDocument(network_iota_did.did, keypair.public);
     console.log("iota document: ", iota_document.document);
     console.log("iota document did: ", iota_document.did);
     console.log("iota document authentication_key: ", iota_document.authentication_key);
@@ -47,8 +49,12 @@ import("../pkg/index.js").then((identity) => {
     let iota_document2 = identity.IotaDocument.TryFromDocument(iota_document.document);
     console.log(iota_document2.document);
     console.log("create_diff_address: ", iota_document2.create_diff_address);
-    // console.log("sign: ", iota_document2.sign());
-    console.log("verify: ", iota_document2.verify());
+    console.log("sign: ", iota_document2.sign(keypair));
+    console.log("Document has valid signature: ", iota_document2.verify());
+    let diff = iota_document2.diff(iota_document, keypair);
+    console.log("diff: ", diff);
+    // Find out why this is false
+    console.log("Diff has valid signature: ", iota_document2.verify_diff(diff));
     // identity.ResolveDID("did:iota:8gPe8EwndxtvQPfYT5KsXBXtXUGZMLCPP4Z98by33TMs", "https://nodes.thetangle.org:443").then(doc => {
     //     console.log("resolved document: ", doc);
     // });
