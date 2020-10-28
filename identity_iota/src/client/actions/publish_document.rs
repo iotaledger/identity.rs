@@ -14,25 +14,25 @@ use crate::{
 
 #[derive(Clone, PartialEq)]
 #[repr(transparent)]
-pub struct CreateDocumentResponse {
+pub struct PublishDocumentResponse {
     pub tail: BundledTransaction,
 }
 
-impl Debug for CreateDocumentResponse {
+impl Debug for PublishDocumentResponse {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        f.debug_struct("CreateDocumentResponse")
+        f.debug_struct("PublishDocumentResponse")
             .field("tail", &TransactionPrinter::full(&self.tail))
             .finish()
     }
 }
 
 #[derive(Debug)]
-pub struct CreateDocumentRequest<'a, 'b> {
+pub struct PublishDocumentRequest<'a, 'b> {
     pub(crate) transfer: SendTransferRequest<'a>,
     pub(crate) document: &'b IotaDocument,
 }
 
-impl<'a, 'b> CreateDocumentRequest<'a, 'b> {
+impl<'a, 'b> PublishDocumentRequest<'a, 'b> {
     pub const fn new(transfer: SendTransferRequest<'a>, document: &'b IotaDocument) -> Self {
         Self { transfer, document }
     }
@@ -42,7 +42,7 @@ impl<'a, 'b> CreateDocumentRequest<'a, 'b> {
         self
     }
 
-    pub async fn send(self) -> Result<CreateDocumentResponse> {
+    pub async fn send(self) -> Result<PublishDocumentResponse> {
         let did: &IotaDID = self.document.did();
 
         if self.transfer.trace {
@@ -82,6 +82,6 @@ impl<'a, 'b> CreateDocumentRequest<'a, 'b> {
         // Submit the transfer to the tangle.
         let response: SendTransferResponse = self.transfer.send(transfer).await?;
 
-        Ok(CreateDocumentResponse { tail: response.tail })
+        Ok(PublishDocumentResponse { tail: response.tail })
     }
 }

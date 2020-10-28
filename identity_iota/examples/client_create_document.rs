@@ -8,7 +8,7 @@ use identity_core::{
 };
 use identity_crypto::KeyPair;
 use identity_iota::{
-    client::{Client, ClientBuilder, CreateDocumentResponse, ReadDocumentResponse, TransactionPrinter},
+    client::{Client, ClientBuilder, PublishDocumentResponse, ReadDocumentResponse, TransactionPrinter},
     did::{IotaDID, IotaDocument},
     error::Result,
     network::Network,
@@ -75,7 +75,7 @@ async fn main() -> Result<()> {
     println!("[+] Client > {:#?}", client);
     println!("[+]");
 
-    let response: CreateDocumentResponse = client
+    let response: PublishDocumentResponse = client
         .create_document(&doc)
         // enable trace debug messages
         .trace(true)

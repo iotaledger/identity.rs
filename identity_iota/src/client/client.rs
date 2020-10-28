@@ -8,7 +8,9 @@ use identity_core::{
 use iota::crypto::ternary::Hash;
 
 use crate::{
-    client::{ClientBuilder, CreateDocumentRequest, ReadDocumentRequest, ReadTransactionsRequest, SendTransferRequest},
+    client::{
+        ClientBuilder, PublishDocumentRequest, ReadDocumentRequest, ReadTransactionsRequest, SendTransferRequest,
+    },
     did::{IotaDID, IotaDocument},
     error::Result,
     network::Network,
@@ -48,8 +50,8 @@ impl Client {
         SendTransferRequest::new(self)
     }
 
-    pub fn create_document<'a, 'b>(&'a self, document: &'b IotaDocument) -> CreateDocumentRequest<'a, 'b> {
-        CreateDocumentRequest::new(self.send_transfer(), document)
+    pub fn create_document<'a, 'b>(&'a self, document: &'b IotaDocument) -> PublishDocumentRequest<'a, 'b> {
+        PublishDocumentRequest::new(self.send_transfer(), document)
     }
 
     pub fn read_document<'a, 'b>(&'a self, did: &'b IotaDID) -> ReadDocumentRequest<'a, 'b> {
