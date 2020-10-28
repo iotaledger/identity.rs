@@ -49,7 +49,7 @@ import("../pkg/index.js").then((identity) => {
     console.log("create_diff_address: ", iota_document2.create_diff_address);
     // console.log("sign: ", iota_document2.sign());
     console.log("verify: ", iota_document2.verify());
-    // identity.Iota.ResolveDID("did:iota:com:HbuRS48djS5PbLQciy6iE9BTdaDTBM3GxcbGdyuv3TWo").then(doc => {
+    // identity.ResolveDID("did:iota:8gPe8EwndxtvQPfYT5KsXBXtXUGZMLCPP4Z98by33TMs", "https://nodes.thetangle.org:443").then(doc => {
     //     console.log("resolved document: ", doc);
     // });
 });
