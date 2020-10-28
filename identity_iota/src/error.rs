@@ -38,32 +38,4 @@ pub enum Error {
     InvalidTransferTail,
     #[error("Transfer Unconfirmable")]
     TransferUnconfirmable,
-    #[error("Invalid Transaction: {0}")]
-    InvalidTransaction(TransactionError),
-    #[error("Invalid Document: {0}")]
-    InvalidDocument(DocumentError),
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum TransactionError {
-    #[error("Invalid Bundle")]
-    InvalidBundle,
-    #[error("Missing Bundle")]
-    MissingBundle,
-    #[error("Missing Content")]
-    MissingContent,
-    #[error("Missing Trytes")]
-    MissingTrytes,
-    #[error("Unconfirmable Transaction")]
-    Unconfirmable,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum DocumentError {
-    #[error("Missing Payload")]
-    MissingPayload,
-    #[error("Missing Timestamp (Updated)")]
-    MissingUpdated,
-    #[error("Invalid DID Network")]
-    NetworkMismatch,
 }

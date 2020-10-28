@@ -117,8 +117,6 @@ impl<'a, 'b> ReadDocumentRequest<'a, 'b> {
                     continue;
                 }
 
-                encode_trits(&message.tail_hash);
-
                 documents.push(document);
             }
         }
