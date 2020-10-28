@@ -46,7 +46,9 @@ import("../pkg/index.js").then((identity) => {
 
     let iota_document2 = identity.IotaDocument.TryFromDocument(iota_document.document);
     console.log(iota_document2.document);
-    console.log(iota_document2.create_diff_address);
+    console.log("create_diff_address: ", iota_document2.create_diff_address);
+    // console.log("sign: ", iota_document2.sign());
+    console.log("verify: ", iota_document2.verify());
     // identity.Iota.ResolveDID("did:iota:com:HbuRS48djS5PbLQciy6iE9BTdaDTBM3GxcbGdyuv3TWo").then(doc => {
     //     console.log("resolved document: ", doc);
     // });
