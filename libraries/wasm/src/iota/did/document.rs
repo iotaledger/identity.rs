@@ -1,11 +1,11 @@
 use identity_core::{
+    common::AsJson,
     did::{DIDDocument, DID},
     key::{KeyData, KeyType, PublicKey, PublicKeyBuilder},
     utils::encode_b58,
 };
 use identity_crypto::KeyPair;
 use identity_iota::did::{DIDDiff, IotaDID, IotaDocument as _IotaDocument};
-
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
@@ -120,12 +120,13 @@ impl IotaDocument {
                 &key.0.secret(),
             )
             .unwrap()
-            .to_string()
+            .to_json()
+            .unwrap()
     }
     #[wasm_bindgen(js_name = "verify_diff")]
     pub fn verify_diff(&self, diff: String) -> bool {
         console_error_panic_hook::set_once();
-        let diff = DIDDiff::from_str(&diff).unwrap();
+        let diff = DIDDiff::from_json(&diff).unwrap();
         matches!(self.document.verify_diff(&diff), Ok(_))
     }
 }
