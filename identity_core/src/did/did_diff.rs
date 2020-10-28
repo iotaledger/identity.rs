@@ -93,63 +93,63 @@ impl Diff for DID {
     }
 
     fn into_diff(self) -> identity_diff::Result<Self::Type> {
-        match self {
-            Self {
-                method_name,
-                id_segments,
-                path_segments,
-                query,
-                fragment,
-            } => Ok(DiffDID {
-                method_name,
-                id_segments: Some(id_segments.into_diff()?),
-                path_segments: if let identity_diff::option::DiffOption::Some(_) = path_segments.clone().into_diff()? {
-                    Some(path_segments.into_diff()?)
-                } else {
-                    None
-                },
-                query: if let identity_diff::option::DiffOption::Some(_) = query.clone().into_diff()? {
-                    Some(query.into_diff()?)
-                } else {
-                    None
-                },
-                fragment: if let identity_diff::option::DiffOption::Some(_) = fragment.clone().into_diff()? {
-                    Some(fragment.into_diff()?)
-                } else {
-                    None
-                },
-            }),
-        }
+        let Self {
+            method_name,
+            id_segments,
+            path_segments,
+            query,
+            fragment,
+        } = self;
+
+        Ok(DiffDID {
+            method_name,
+            id_segments: Some(id_segments.into_diff()?),
+            path_segments: if let identity_diff::option::DiffOption::Some(_) = path_segments.clone().into_diff()? {
+                Some(path_segments.into_diff()?)
+            } else {
+                None
+            },
+            query: if let identity_diff::option::DiffOption::Some(_) = query.clone().into_diff()? {
+                Some(query.into_diff()?)
+            } else {
+                None
+            },
+            fragment: if let identity_diff::option::DiffOption::Some(_) = fragment.clone().into_diff()? {
+                Some(fragment.into_diff()?)
+            } else {
+                None
+            },
+        })
     }
 
     fn from_diff(diff: Self::Type) -> identity_diff::Result<Self> {
-        match diff {
-            DiffDID {
-                method_name,
-                id_segments,
-                path_segments,
-                query,
-                fragment,
-            } => Ok(Self {
-                method_name,
-                id_segments: <Vec<String>>::from_diff(match id_segments {
-                    Some(v) => v,
-                    None => <Vec<String>>::default().into_diff()?,
-                })?,
-                path_segments: <Option<Vec<String>>>::from_diff(match path_segments {
-                    Some(v) => v,
-                    None => <Option<Vec<String>>>::default().into_diff()?,
-                })?,
-                query: <Option<Vec<Param>>>::from_diff(match query {
-                    Some(v) => v,
-                    None => <Option<Vec<Param>>>::default().into_diff()?,
-                })?,
-                fragment: <Option<String>>::from_diff(match fragment {
-                    Some(v) => v,
-                    None => <Option<String>>::default().into_diff()?,
-                })?,
-            }),
-        }
+        let DiffDID {
+            method_name,
+            id_segments,
+            path_segments,
+            query,
+            fragment,
+        } = diff;
+
+        Ok(Self {
+            method_name,
+            id_segments: <Vec<String>>::from_diff(match id_segments {
+                Some(v) => v,
+                None => <Vec<String>>::default().into_diff()?,
+            })?,
+            path_segments: <Option<Vec<String>>>::from_diff(match path_segments {
+                Some(v) => v,
+                None => <Option<Vec<String>>>::default().into_diff()?,
+            })?,
+            query: <Option<Vec<Param>>>::from_diff(match query {
+                Some(v) => v,
+                None => <Option<Vec<Param>>>::default().into_diff()?,
+            })?,
+            fragment: <Option<String>>::from_diff(match fragment {
+                Some(v) => v,
+                None => <Option<String>>::default().into_diff()?,
+            })?,
+        })
     }
 }
 
@@ -187,43 +187,32 @@ impl Diff for Param {
     }
 
     fn into_diff(self) -> identity_diff::Result<Self::Type> {
-        match self {
-            Self { key, value } => Ok(DiffParam {
-                key: Some(key.into_diff()?),
-                value: if let identity_diff::option::DiffOption::Some(_) = value.clone().into_diff()? {
-                    Some(value.into_diff()?)
-                } else {
-                    None
-                },
-            }),
-        }
+        let Self { key, value } = self;
+
+        Ok(DiffParam {
+            key: Some(key.into_diff()?),
+            value: if let identity_diff::option::DiffOption::Some(_) = value.clone().into_diff()? {
+                Some(value.into_diff()?)
+            } else {
+                None
+            },
+        })
     }
     fn from_diff(diff: Self::Type) -> identity_diff::Result<Self> {
-        match diff {
-            DiffParam { key, value } => Ok(Self {
-                key: <String>::from_diff(match key {
-                    Some(v) => v,
-                    None => <String>::default().into_diff()?,
-                })?,
-                value: <Option<String>>::from_diff(match value {
-                    Some(v) => v,
-                    None => <Option<String>>::default().into_diff()?,
-                })?,
-            }),
-        }
+        let DiffParam { key, value } = diff;
+
+        Ok(Self {
+            key: <String>::from_diff(match key {
+                Some(v) => v,
+                None => <String>::default().into_diff()?,
+            })?,
+            value: <Option<String>>::from_diff(match value {
+                Some(v) => v,
+                None => <Option<String>>::default().into_diff()?,
+            })?,
+        })
     }
 }
-
-// impl Serialize for DiffDID {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: Serializer,
-//     {
-//         let s = format!("{}", Into::<DID>::into(self.clone()));
-
-//         serializer.serialize_str(s.as_str())
-//     }
-// }
 
 impl From<DID> for DiffDID {
     fn from(did: DID) -> Self {
