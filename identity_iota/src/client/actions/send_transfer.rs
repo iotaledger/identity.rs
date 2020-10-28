@@ -13,22 +13,29 @@ use std::{thread, time::Instant};
 use crate::{
     client::{Client, PromoteOptions, TransactionPrinter},
     error::{Error, Result},
-    utils::{create_address_from_trits, encode_trits, txn_hash, txn_hash_trytes},
+    utils::{create_address_from_trits, txn_hash},
 };
 
 /// Fixed-address used for faster transaction confirmation times
 const PROMOTION: &str = "PROMOTEADDRESSPROMOTEADDRESSPROMOTEADDRESSPROMOTEADDRESSPROMOTEADDRESSPROMOTEADDR";
 
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ConfirmationMode {
+    Immediate,
+    Promoted,
+}
+
 #[derive(Clone, PartialEq)]
-#[repr(transparent)]
 pub struct SendTransferResponse {
     pub tail: BundledTransaction,
+    pub mode: ConfirmationMode,
 }
 
 impl Debug for SendTransferResponse {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         f.debug_struct("SendTransferResponse")
             .field("tail", &TransactionPrinter::full(&self.tail))
+            .field("mode", &self.mode)
             .finish()
     }
 }
@@ -85,7 +92,10 @@ impl<'a> SendTransferRequest<'a> {
 
     pub async fn send(self, transfer: Transfer) -> Result<SendTransferResponse> {
         if self.trace {
-            println!("[+] trace(1): Sending Transfer: {:?}", transfer.message);
+            println!("[+] trace(1): Sending Transfer >");
+            println!("[+] trace(1):   Message: {:?}", transfer.message);
+            println!("[+] trace(1):   Confirm: {:?}", self.confirm_time);
+            println!("[+] trace(1):   Promote: {:?}", self.promote);
         }
 
         // Send the transfer to the configured node.
@@ -103,44 +113,29 @@ impl<'a> SendTransferRequest<'a> {
 
         let tail_hash: Hash = txn_hash(&tail);
 
-        if self.trace {
-            println!("[+] trace(3): Tail Transaction: {:?}", TransactionPrinter::full(&tail));
-        }
-
         if let Some(delay) = self.confirm_time {
             thread::sleep(delay);
         }
 
         if self.client.is_transaction_confirmed(&tail_hash).await? {
-            if self.trace {
-                println!("[+] trace(4): Immediate Confirmation: {}", txn_hash_trytes(&tail));
-            }
-
-            Ok(SendTransferResponse { tail })
+            Ok(SendTransferResponse {
+                tail,
+                mode: ConfirmationMode::Immediate,
+            })
         } else if let Some(promote) = self.promote {
             self.promote_loop(&tail_hash, &promote).await?;
 
-            if self.trace {
-                println!("[+] trace(4): Promoted Confirmation: {}", txn_hash_trytes(&tail));
-            }
-
-            Ok(SendTransferResponse { tail })
+            Ok(SendTransferResponse {
+                tail,
+                mode: ConfirmationMode::Promoted,
+            })
         } else {
-            if self.trace {
-                println!("[+] trace(4): Unconfirmable: {}", txn_hash_trytes(&tail));
-            }
-
             Err(Error::TransferUnconfirmable)
         }
     }
 
     async fn promote_loop(&self, hash: &Hash, options: &PromoteOptions) -> Result<()> {
         let instant: Instant = Instant::now();
-
-        if self.trace {
-            println!("[+] trace(3.1): Promoting: {}", encode_trits(hash));
-            println!("[+] trace(3.1): Options: {:?}", options);
-        }
 
         loop {
             self.promote_once(hash, options).await?;
@@ -149,14 +144,6 @@ impl<'a> SendTransferRequest<'a> {
 
             if self.client.is_transaction_confirmed(hash).await? {
                 break;
-            }
-
-            if self.trace {
-                if let Some(timeout) = options.timeout {
-                    println!("[+] trace(3.2): Elapsed: {:?}/{:?}", instant.elapsed(), timeout);
-                } else {
-                    println!("[+] trace(3.2): Elapsed: {:?}/???", instant.elapsed());
-                }
             }
 
             if matches!(options.timeout, Some(timeout) if instant.elapsed() >= timeout) {
