@@ -142,7 +142,7 @@ impl Doc {
 
     #[wasm_bindgen]
     pub fn diff(&self, other: &Doc, key: &Key) -> Result<JsValue, JsValue> {
-        let diff: DIDDiff = self.0.diff(other.0.clone().into(), key.0.secret()).map_err(js_err)?;
+        let diff: DIDDiff = self.0.diff(&other.0, key.0.secret()).map_err(js_err)?;
 
         JsValue::from_serde(&diff).map_err(js_err)
     }

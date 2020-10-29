@@ -113,10 +113,7 @@ impl IotaDocument {
         Ok(())
     }
 
-    pub fn diff(&self, mut other: Document, secret: &SecretKey) -> Result<DIDDiff> {
-        // Update the `updated` timestamp of the new document
-        other.update_time();
-
+    pub fn diff(&self, other: &Document, secret: &SecretKey) -> Result<DIDDiff> {
         // Get the first authentication key from the document.
         let key: &PublicKey = self.authentication_key();
 
@@ -126,7 +123,7 @@ impl IotaDocument {
         // Create a diff of changes between the two documents.
         let mut diff: DIDDiff = DIDDiff {
             id: self.document.did().clone(),
-            diff: self.document.diff(&other)?,
+            diff: self.document.diff(other)?,
             proof: LdSignature::new("", options.clone()),
         };
 
