@@ -2,6 +2,15 @@ const identity = require('../wasm-node/iota_identity_wasm')
 
 console.log("identity", identity)
 
+// ======================================================
+// https://github.com/seanmonstar/reqwest/issues/910
+// ======================================================
+const fetch = require('node-fetch')
+global.Headers = fetch.Headers
+global.Request = fetch.Request
+global.Response = fetch.Response
+global.fetch = fetch
+
 const { initialize, resolve, publish, Key, Doc, DID } = identity
 
 initialize()
@@ -30,9 +39,8 @@ async function playground() {
 
   console.log("From JSON >", Doc.fromJSON(json))
 
-  // const resolved = await resolve(doc.did, "https://nodes.thetangle.org:443")
-
-  // console.log("resolved", resolved)
+  console.log("published", await publish(doc, "https://nodes.thetangle.org:443"))
+  console.log("resolved", await resolve(doc.did, "https://nodes.thetangle.org:443"))
 }
 
 function alice_bob() {
