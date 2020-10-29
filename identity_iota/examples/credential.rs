@@ -9,7 +9,7 @@ use identity_core::{
 };
 use identity_crypto::KeyPair;
 use identity_iota::{
-    client::{Client, ClientBuilder, CreateDocumentResponse, TransactionPrinter},
+    client::{Client, ClientBuilder, PublishDocumentResponse, TransactionPrinter},
     did::{IotaDID, IotaDocument},
     error::Result,
     helpers::create_ed25519_key,
@@ -56,11 +56,7 @@ impl User {
         doc.sign(key.secret())?;
 
         // Publish the document
-        let response: CreateDocumentResponse = client
-            .create_document(&doc)
-            .trace(true)
-            .send()
-            .await?;
+        let response: PublishDocumentResponse = client.create_document(&doc).trace(true).send().await?;
 
         let printer = TransactionPrinter::hash(&response.tail);
 
@@ -109,7 +105,6 @@ impl User {
         Ok(credential)
     }
 }
-
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
