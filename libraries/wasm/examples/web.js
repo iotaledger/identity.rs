@@ -2,62 +2,50 @@ import("../pkg/index.js").then((identity) => {
 
     console.log(identity)
 
-    // identity_core
+    const { initialize, resolve, publish, Key, Doc, DID } = identity
+
+    initialize();
 
     // Generate Keypairs
-    const alice_keypair = new identity.KeyPair();
-    console.log("alice_keypair: privateKey:", alice_keypair.privateKey)
-    console.log("alice_keypair: GetPublicKey:", alice_keypair.publicKey)
-    const bob_keypair = new identity.KeyPair();
-    console.log("bob_keypair: GetPrivateKey: ", bob_keypair.privateKey)
-    console.log("bob_keypair: GetPublicKey: ", bob_keypair.publicKey)
+    const alice_keypair = new Key()
+    console.log("alice_keypair: ", alice_keypair)
 
+    const bob_keypair = new Key()
+    console.log("bob_keypair: ", bob_keypair)
 
-    // Creating the DID
-    let alice_did = new identity.DID("iota", alice_keypair.publicKey)
-    console.log("alice_did: ", alice_did.did);
-    //uuid should be replaced by the public key?
-    let bob_did = new identity.DID("iota", bob_keypair.publicKey)
-    console.log("bob_did: ", bob_did.did);
+    // Create the DIDs
+    let alice_did = new DID(alice_keypair.public)
+    console.log("alice_did: ", alice_did.toString(), alice_did.address)
 
-    // Creating the DID Document
-    let alice_document = new identity.DIDDocument("github", alice_keypair.publicKey)
-    console.log("alice_document: ", alice_document.document);
+    let bob_did = new DID(bob_keypair.public)
+    console.log("bob_did: ", bob_did.toString(), bob_did.address)
 
+    // Create the DID Documents
+    let alice_document = new Doc({did: alice_did.did, key: alice_keypair.public})
+    console.log("alice_document: ", alice_document.document)
 
-    let bob_document = new identity.DIDDocument("iota", bob_keypair.publicKey)
-    console.log("bob_document: ", bob_document.document);
-    // let what = bob_document.set_sign_unchecked(bob_keypair.privateKey);
-    // console.log("bob_document: ", what);
+    let bob_document = new Doc({did: bob_did.did, key: bob_keypair.public})
+    console.log("bob_document: ", bob_document.document)
 
-    // identity_iota 
+    let update = {...bob_document.document}
 
-    let iota_did = new identity.IotaDID(alice_keypair.publicKey);
-    console.log("iota_did: ", iota_did.did);
-    console.log("iota_did address: ", iota_did.create_address);
+    update["foo"] = 123
+    update["bar"] = 456
+    update = Doc.fromJSON(JSON.stringify(update))
 
-    let network_iota_did = identity.IotaDID.CreateIotaDIDWithNetwork(alice_keypair.publicKey, "com");
-    console.log("network_iota_did: ", network_iota_did.did);
+    console.log("Update: ", update)
 
-    let keypair = new identity.Key();
-    console.log("keypair: ", keypair);
-    let iota_document = new identity.IotaDocument(network_iota_did.did, keypair.public);
-    console.log("iota document: ", iota_document.document);
-    console.log("iota document did: ", iota_document.did);
-    console.log("iota document authentication_key: ", iota_document.authentication_key);
+    let diff = bob_document.diff(update, bob_keypair)
 
-    let iota_document2 = identity.IotaDocument.TryFromDocument(iota_document.document);
-    console.log(iota_document2.document);
-    console.log("create_diff_address: ", iota_document2.create_diff_address);
-    console.log("sign: ", iota_document2.sign(keypair));
-    console.log("Document has valid signature: ", iota_document2.verify());
-    let diff = iota_document2.diff(iota_document, keypair);
-    console.log("diff: ", diff);
-    // Find out why this is false
-    console.log("Diff has valid signature: ", iota_document2.verify_diff(diff));
-    // identity.ResolveDID("did:iota:8gPe8EwndxtvQPfYT5KsXBXtXUGZMLCPP4Z98by33TMs", "https://nodes.thetangle.org:443").then(doc => {
-    //     console.log("resolved document: ", doc);
-    // });
+    console.log("diff: ", JSON.stringify(diff, null, 2))
+
+    let json = JSON.stringify(diff)
+
+    console.log("Diff has valid signature: ", bob_document.verify_diff(json))
+
+    // // identity.ResolveDID("did:iota:8gPe8EwndxtvQPfYT5KsXBXtXUGZMLCPP4Z98by33TMs", "https://nodes.thetangle.org:443").then(doc => {
+    // //     console.log("resolved document: ", doc);
+    // // });
 });
 
 

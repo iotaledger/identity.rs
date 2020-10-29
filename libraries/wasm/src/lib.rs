@@ -1,12 +1,22 @@
+#![allow(clippy::inherent_to_string, clippy::new_without_default)]
+
+#[macro_use]
+extern crate serde;
+
 use wasm_bindgen::prelude::*;
 
-mod core;
-mod iota;
+pub mod did;
+pub mod doc;
+pub mod iota;
+pub mod key;
 
 #[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    pub fn log(s: &str);
-    #[wasm_bindgen(js_namespace = console)]
-    pub fn error(s: &str);
+pub fn initialize() -> JsValue {
+    console_error_panic_hook::set_once();
+
+    JsValue::TRUE
+}
+
+pub fn js_err<T: ToString>(error: T) -> JsValue {
+    error.to_string().into()
 }

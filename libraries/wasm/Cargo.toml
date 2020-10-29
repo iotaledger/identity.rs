@@ -17,20 +17,16 @@ wasm-opt = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+console_error_panic_hook = "0.1"
+iota-constants = { version = "0.2", default-features = false }
+serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4"
-console_error_panic_hook = "0.1.6"
-
-serde = { version = "1.0", features = ["derive"] }
-bs58 = { version = "0.3", default-features = false, features = ["alloc"] }
-multihash = { version = "0.11", default-features = false }
 
 identity_core = { path = "../../identity_core" }
 identity_proof = { path = "../../identity_proof" }
 identity_iota = { path = "../../identity_iota" }
 identity_crypto = { path = "../../identity_crypto" }
-
-iota-constants = { version = "0.2", default-features = false }
 
 [target.wasm32-unknown-unknown.dependencies]
 rand = { version = "0.7", default-features = false, features = ["wasm-bindgen"] }
