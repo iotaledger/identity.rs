@@ -69,7 +69,7 @@ impl Client {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl ResolverMethod for Client {
     fn is_supported(&self, did: &DID) -> bool {
         IotaDID::is_valid(did) && self.network.matches_did(did)

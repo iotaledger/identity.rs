@@ -13,14 +13,14 @@ pub struct MetaDocument {
     pub meta: DocumentMetadata,
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 pub trait ResolverMethod {
     fn is_supported(&self, did: &DID) -> bool;
 
     async fn read(&self, did: &DID, input: InputMetadata) -> Result<Option<MetaDocument>>;
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl<T> ResolverMethod for &'_ T
 where
     T: ResolverMethod + Send + Sync,
