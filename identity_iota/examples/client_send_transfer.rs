@@ -14,7 +14,6 @@ use identity_iota::{
     network::Network,
 };
 use iota::{client::Transfer, transaction::bundled::Address};
-use std::time::Duration;
 
 const PUBLIC: &str = "66jqh9UeDQ5p88YZvv8F9qNuUxQPQfuYLc6njpsVC95u";
 const SECRET: &str = "5E7sd95ArqK52mmt6BVXw7Hod8vAgSkSSqwTamYH1HhtdQrBrL8EqCmYbui4Bg12oZtLU6oXkq2qXS4q7BWd8JFm";
@@ -83,12 +82,6 @@ async fn main() -> Result<()> {
         .send_transfer()
         // enable trace debug messages
         .trace(true)
-        // check for confirmation immediately
-        .confirm_time(Duration::from_secs(0))
-        // promote for 30 seconds if not immediately confirmed
-        .promote_timeout(Duration::from_secs(30))
-        // promote every 3 seconds
-        .promote_interval(Duration::from_secs(3))
         // send the transfer to the tangle
         .send(transfer)
         .await?;
