@@ -66,6 +66,18 @@ impl IotaDocument {
         &self.did
     }
 
+    pub fn supersedes(&self) -> Option<&str> {
+        None // TODO
+    }
+
+    pub fn diff_chain(&self) -> Option<&str> {
+        None // TODO
+    }
+
+    pub fn has_diff_chain(&self) -> bool {
+        self.diff_chain().is_some()
+    }
+
     pub fn authentication_key(&self) -> &PublicKey {
         self.resolve_key(0, KeyRelation::Authentication).expect("infallible")
     }
