@@ -22,7 +22,7 @@ async function playground() {
 
   console.log("did", new DID({ key: (new Key()).public, network: "com" }))
 
-  const { key, doc } = Doc.generate({ network: "com" })
+  const { key, doc } = Doc.generateCom()
 
   console.log("key (generated)", key)
   console.log("doc (generated)", doc)
@@ -39,8 +39,8 @@ async function playground() {
 
   console.log("From JSON >", Doc.fromJSON(json))
 
-  console.log("published", await publish(doc, "https://nodes.thetangle.org:443"))
-  console.log("resolved", await resolve(doc.did, "https://nodes.thetangle.org:443"))
+  console.log("published", await publish(doc.document, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+  console.log("resolved", await resolve(doc.did, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
 }
 
 function alice_bob() {

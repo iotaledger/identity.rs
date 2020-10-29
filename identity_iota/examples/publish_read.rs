@@ -51,7 +51,7 @@ async fn main() -> Result<()> {
 
     update.set_metadata("new-value", true);
 
-    let signed_diff = document.diff(update.into(), keypair.secret())?;
+    let signed_diff = document.diff(&update, keypair.secret())?;
 
     // Ensure the diff proof is valid
     assert!(document.verify_diff(&signed_diff).is_ok());

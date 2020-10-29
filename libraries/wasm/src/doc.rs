@@ -77,6 +77,15 @@ impl Doc {
         Ok(NewDoc { doc, key })
     }
 
+    #[wasm_bindgen(js_name = generateCom)]
+    pub fn generate_com() -> Result<NewDoc, JsValue> {
+        let key: Key = Key::new();
+        let did: IotaDID = IotaDID::with_network(key.public().as_ref(), "com").map_err(js_err)?;
+        let doc: Self = Self::create(did, key.public(), None)?;
+
+        Ok(NewDoc { doc, key })
+    }
+
     #[wasm_bindgen(constructor)]
     pub fn new(params: &JsValue) -> Result<Doc, JsValue> {
         if params.is_object() {

@@ -1,14 +1,11 @@
-use identity_core::resolver::MetaDocument;
 use identity_iota::{
+    client::{Client, ClientBuilder, TransactionPrinter},
     did::IotaDID,
-    io::TangleWriter,
-    network::{Network, NodeList},
-    resolver::TangleResolver,
-    utils::encode_trits,
+    network::Network,
 };
 use wasm_bindgen::prelude::*;
 
-use crate::{doc::Doc, js_err};
+use crate::js_err;
 
 #[wasm_bindgen]
 extern "C" {
@@ -19,24 +16,73 @@ extern "C" {
     pub fn error(s: &str);
 }
 
-#[wasm_bindgen]
-pub async fn publish(doc: Doc, node: String) -> Result<JsValue, JsValue> {
-    let nodelist: NodeList = NodeList::with_network_and_nodes(Network::Mainnet, vec![node]);
-    let writer: TangleWriter = TangleWriter::new(&nodelist).map_err(js_err)?;
+#[derive(Debug, Deserialize)]
+pub enum ClientNode {
+    #[serde(rename = "node")]
+    Node(String),
+    #[serde(rename = "nodes")]
+    List(Vec<String>),
+}
 
-    let hash: _ = writer.write_document(&doc.0).await.map_err(js_err)?;
-    let hash: String = encode_trits(hash.as_trits());
+#[derive(Debug, Deserialize)]
+pub struct ClientParams {
+    network: Option<String>,
+    #[serde(flatten)]
+    node: ClientNode,
+}
 
-    Ok(hash.into())
+impl ClientParams {
+    pub fn build(self, mut builder: ClientBuilder) -> ClientBuilder {
+        builder = Self::build_node(builder, self.node);
+        builder = Self::build_network(builder, self.network);
+        builder
+    }
+
+    fn build_node(builder: ClientBuilder, node: ClientNode) -> ClientBuilder {
+        match node {
+            ClientNode::Node(node) => builder.node(node),
+            ClientNode::List(node) => builder.nodes(node),
+        }
+    }
+
+    fn build_network(builder: ClientBuilder, network: Option<String>) -> ClientBuilder {
+        match network.as_deref() {
+            Some("main") | Some("mainnet") => builder.network(Network::Mainnet),
+            Some("com") | Some("comnet") => builder.network(Network::Comnet),
+            Some("dev") | Some("devnet") => builder.network(Network::Devnet),
+            Some(_) | None => builder.network(Network::Mainnet),
+        }
+    }
+}
+
+fn client(params: JsValue) -> Result<Client, JsValue> {
+    if params.is_object() {
+        let params: ClientParams = params.into_serde().map_err(js_err)?;
+        params.build(ClientBuilder::new()).build().map_err(js_err)
+    } else if let Some(node) = params.as_string() {
+        ClientBuilder::new().node(node).build().map_err(js_err)
+    } else {
+        Err("Invalid Arguments for `new Client(..)`".into())
+    }
 }
 
 #[wasm_bindgen]
-pub async fn resolve(did: String, node: String) -> Result<JsValue, JsValue> {
-    let nodelist: NodeList = NodeList::with_network_and_nodes(Network::Mainnet, vec![node]);
-    let resolver: TangleResolver = TangleResolver::with_nodes(nodelist);
+pub async fn publish(doc: JsValue, params: JsValue) -> Result<JsValue, JsValue> {
+    client(params)?
+        .create_document(&doc.into_serde().map_err(js_err)?)
+        .send()
+        .await
+        .map_err(js_err)
+        .map(|response| TransactionPrinter::hash(&response.tail).to_string())
+        .map(Into::into)
+}
 
-    let did: IotaDID = did.parse().map_err(js_err)?;
-    let res: MetaDocument = resolver.document(&did).await.map_err(js_err)?;
-
-    JsValue::from_serde(&res).map_err(js_err)
+#[wasm_bindgen]
+pub async fn resolve(did: String, params: JsValue) -> Result<JsValue, JsValue> {
+    client(params)?
+        .read_document(&IotaDID::parse(did).map_err(js_err)?)
+        .send()
+        .await
+        .map_err(js_err)
+        .and_then(|response| JsValue::from_serde(&response).map_err(js_err))
 }
