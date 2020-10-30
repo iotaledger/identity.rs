@@ -8,7 +8,7 @@ use identity_core::{
 };
 use identity_crypto::KeyPair;
 use identity_iota::{
-    client::{Client, ClientBuilder, PublishDocumentResponse, ReadDocumentResponse, TransactionPrinter},
+    client::{Client, ClientBuilder, PublishDocumentResponse, ReadDocumentResponse},
     did::{IotaDID, IotaDocument},
     error::Result,
     network::Network,
@@ -86,11 +86,9 @@ async fn main() -> Result<()> {
     println!("[+] Response > {:#?}", response);
     println!("[+]");
 
-    let printer: TransactionPrinter<'_, _> = TransactionPrinter::hash(&response.tail);
-
     println!("[+]");
     println!("[+] DID Document Published >");
-    println!("[+]   https://comnet.thetangle.org/transaction/{}", printer);
+    println!("[+]   {}", client.transaction_url(&response.tail));
     println!("[+]");
 
     let response: ReadDocumentResponse = client
