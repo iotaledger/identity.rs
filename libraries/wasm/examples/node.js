@@ -1,4 +1,4 @@
-const identity = require('../wasm-node/iota_identity_wasm')
+const identity = require('../node/iota_identity_wasm')
 
 console.log("identity", identity)
 
