@@ -59,13 +59,13 @@ function alice_bob() {
   console.log("bob_did: ", bob_did.toString(), bob_did.address)
 
   // Create the DID Documents
-  let alice_document = new Doc({did: alice_did.did, key: alice_keypair.public})
+  let alice_document = new Doc({ did: alice_did.did, key: alice_keypair.public })
   console.log("alice_document: ", alice_document.document)
 
-  let bob_document = new Doc({did: bob_did.did, key: bob_keypair.public})
+  let bob_document = new Doc({ did: bob_did.did, key: bob_keypair.public })
   console.log("bob_document: ", bob_document.document)
 
-  let update = {...bob_document.document}
+  let update = { ...bob_document.document }
 
   update["foo"] = 123
   update["bar"] = 456

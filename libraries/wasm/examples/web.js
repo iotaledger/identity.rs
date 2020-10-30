@@ -1,52 +1,84 @@
-import("../pkg/index.js").then((identity) => {
+import("../pkg/index.js").then(async identity => {
+    try {
+        console.log(identity)
+        const { initialize, resolve, publish, Key, Doc, DID } = identity
 
-    console.log(identity)
+        initialize();
 
-    const { initialize, resolve, publish, Key, Doc, DID } = identity
+        await playground()
+        await alice_bob()
 
-    initialize();
+        async function playground() {
+            console.log("key", new Key())
 
-    // Generate Keypairs
-    const alice_keypair = new Key()
-    console.log("alice_keypair: ", alice_keypair)
+            console.log("did", new DID((new Key()).public))
 
-    const bob_keypair = new Key()
-    console.log("bob_keypair: ", bob_keypair)
+            console.log("did", new DID({ key: (new Key()).public, network: "com" }))
 
-    // Create the DIDs
-    let alice_did = new DID(alice_keypair.public)
-    console.log("alice_did: ", alice_did.toString(), alice_did.address)
+            const { key, doc } = Doc.generateCom()
 
-    let bob_did = new DID(bob_keypair.public)
-    console.log("bob_did: ", bob_did.toString(), bob_did.address)
+            console.log("key (generated)", key)
+            console.log("doc (generated)", doc)
 
-    // Create the DID Documents
-    let alice_document = new Doc({did: alice_did.did, key: alice_keypair.public})
-    console.log("alice_document: ", alice_document.document)
+            console.log("doc (unsigned)", doc.document)
 
-    let bob_document = new Doc({did: bob_did.did, key: bob_keypair.public})
-    console.log("bob_document: ", bob_document.document)
+            doc.sign(key)
 
-    let update = {...bob_document.document}
+            console.log("doc (signed)", doc.document)
 
-    update["foo"] = 123
-    update["bar"] = 456
-    update = Doc.fromJSON(JSON.stringify(update))
+            console.log("doc valid?", doc.verify())
 
-    console.log("Update: ", update)
+            const json = JSON.stringify(doc.document)
 
-    let diff = bob_document.diff(update, bob_keypair)
+            console.log("From JSON >", Doc.fromJSON(json))
 
-    console.log("diff: ", JSON.stringify(diff, null, 2))
+            console.log("published", await publish(doc.document, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            console.log("resolved", await resolve(doc.did, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+        }
 
-    let json = JSON.stringify(diff)
+        function alice_bob() {
+            // Generate Keypairs
+            const alice_keypair = new Key()
+            console.log("alice_keypair: ", alice_keypair)
 
-    console.log("Diff has valid signature: ", bob_document.verify_diff(json))
+            const bob_keypair = new Key()
+            console.log("bob_keypair: ", bob_keypair)
 
-    // // identity.ResolveDID("did:iota:8gPe8EwndxtvQPfYT5KsXBXtXUGZMLCPP4Z98by33TMs", "https://nodes.thetangle.org:443").then(doc => {
-    // //     console.log("resolved document: ", doc);
-    // // });
+            // Create the DIDs
+            let alice_did = new DID(alice_keypair.public)
+            console.log("alice_did: ", alice_did.toString(), alice_did.address)
+
+            let bob_did = new DID(bob_keypair.public)
+            console.log("bob_did: ", bob_did.toString(), bob_did.address)
+
+            // Create the DID Documents
+            let alice_document = new Doc({ did: alice_did.did, key: alice_keypair.public })
+            console.log("alice_document: ", alice_document.document)
+
+            let bob_document = new Doc({ did: bob_did.did, key: bob_keypair.public })
+            console.log("bob_document: ", bob_document.document)
+
+            let update = { ...bob_document.document }
+
+            update["foo"] = 123
+            update["bar"] = 456
+            update = Doc.fromJSON(JSON.stringify(update))
+
+            console.log("Update: ", update)
+
+            let diff = bob_document.diff(update, bob_keypair)
+
+            console.log("diff: ", JSON.stringify(diff, null, 2))
+
+            let json = JSON.stringify(diff)
+
+            console.log("Diff has valid signature: ", bob_document.verify_diff(json))
+        }
+    } catch (e) {
+        console.error(e)
+    }
 });
+
 
 
 /*
