@@ -73,6 +73,19 @@ import("../pkg/index.js").then(async identity => {
             let json = JSON.stringify(diff)
 
             console.log("Diff has valid signature: ", bob_document.verify_diff(json))
+
+            bob_document.update_service({ id: bob_document.id, type: "MessagingService", serviceEndpoint: "https://example.com/messages/8377464" })
+            console.log("Doc with service ", bob_document.document);
+            bob_document.clear_services()
+            console.log("Doc with services cleared ", bob_document.document);
+            let key = new Key();
+            let public_key = {
+                id: bob_did.toString() + "#keys-1",
+                controller: bob_did.toString(),
+                key: key.public,
+            }
+            bob_document.update_public_key(public_key)
+            console.log("Doc with public key ", bob_document.document);
         }
     } catch (e) {
         console.error(e)

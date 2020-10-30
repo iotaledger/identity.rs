@@ -1,5 +1,6 @@
 use identity_core::{
     common::FromJson as _,
+    did::{Service, DID},
     key::{KeyData, KeyType, PublicKey, PublicKeyBuilder},
     utils::{decode_b58, encode_b58},
 };
@@ -163,4 +164,55 @@ impl Doc {
             Err(_) => false,
         }
     }
+
+    #[wasm_bindgen]
+    pub fn update_service(&mut self, service: JsValue) -> Result<Doc, JsValue> {
+        if service.is_object() {
+            let params: Service = service.into_serde().map_err(js_err)?;
+
+            self.0.update_service(params);
+            Ok(Doc(self.0.clone()))
+        } else {
+            panic!("Invalid Arguments for `update_service(..)`");
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn clear_services(&mut self) -> Result<Doc, JsValue> {
+        self.0.clear_services();
+        Ok(Doc(self.0.clone()))
+    }
+
+    #[wasm_bindgen]
+    pub fn update_public_key(&mut self, public_key: JsValue) -> Result<Doc, JsValue> {
+        if public_key.is_object() {
+            let public_key: KeyParams = public_key.into_serde().map_err(js_err)?;
+            let key: PublicKey = PublicKeyBuilder::default()
+                .id(DID::parse(public_key.id).map_err(js_err)?)
+                .controller(DID::parse(public_key.controller).map_err(js_err)?)
+                .key_type(KeyType::Ed25519VerificationKey2018)
+                .key_data(KeyData::PublicKeyBase58(public_key.key))
+                .build()
+                .map_err(js_err)?;
+
+            self.0.update_public_key(key);
+            Ok(Doc(self.0.clone()))
+        } else {
+            panic!("Invalid Arguments for `update_service(..)`");
+        }
+    }
+
+    // This would also remove the authentication key
+    // #[wasm_bindgen]
+    // pub fn clear_public_keys(&mut self) -> Result<Doc, JsValue> {
+    //     self.0.clear_public_keys();
+    //     Ok(Doc(self.0.clone()))
+    // }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct KeyParams {
+    key: String,
+    id: String,
+    controller: String,
 }
