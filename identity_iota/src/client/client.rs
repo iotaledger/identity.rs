@@ -5,11 +5,12 @@ use identity_core::{
     error::{Error, Result as CoreResult},
     resolver::{DocumentMetadata, InputMetadata, MetaDocument, ResolverMethod},
 };
-use iota::crypto::ternary::Hash;
+use iota::{crypto::ternary::Hash, transaction::bundled::BundledTransaction};
 
 use crate::{
     client::{
         ClientBuilder, PublishDocumentRequest, ReadDocumentRequest, ReadTransactionsRequest, SendTransferRequest,
+        TransactionPrinter,
     },
     did::{IotaDID, IotaDocument},
     error::Result,
@@ -23,6 +24,14 @@ pub struct Client {
 }
 
 impl Client {
+    pub fn transaction_url(&self, transaction: &BundledTransaction) -> String {
+        format!(
+            "{}/transaction/{}",
+            self.network.explorer_url(),
+            TransactionPrinter::hash(transaction)
+        )
+    }
+
     pub fn new() -> Result<Self> {
         Self::from_builder(ClientBuilder::new())
     }

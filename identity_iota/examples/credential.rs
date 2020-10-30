@@ -9,7 +9,7 @@ use identity_core::{
 };
 use identity_crypto::KeyPair;
 use identity_iota::{
-    client::{Client, ClientBuilder, PublishDocumentResponse, TransactionPrinter},
+    client::{Client, ClientBuilder, PublishDocumentResponse},
     did::{IotaDID, IotaDocument},
     error::Result,
     helpers::create_ed25519_key,
@@ -59,10 +59,8 @@ impl User {
         // Publish the document
         let response: PublishDocumentResponse = client.create_document(&doc).trace(true).send().await?;
 
-        let printer = TransactionPrinter::hash(&response.tail);
-
         println!("[+] Doc > {:#}", doc);
-        println!("[+]   https://explorer.iota.org/mainnet/transaction/{}", printer);
+        println!("[+]   {}", client.transaction_url(&response.tail));
         println!("[+]");
 
         Ok(Self {
