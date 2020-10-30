@@ -45,14 +45,15 @@ struct User {
 impl User {
     async fn new(name: impl Into<String>, client: &Client) -> Result<Self> {
         // Generate a DID/keypair
-        let (mut did, key): (IotaDID, KeyPair) = IotaDID::generate_ed25519()?;
+        let (did, key): (IotaDID, KeyPair) = IotaDID::generate_ed25519()?;
 
-        did.id_segments.insert(0, "com".into());
-
-        // Create a signed DID document
+        // Create an Ed25519VerificationKey2018 object as the authentication key
         let pkey: PublicKey = create_ed25519_key(&did, key.public().as_ref())?;
+
+        // Create a DID document with the generated DID/authentication key
         let mut doc: IotaDocument = IotaDocument::new(did, pkey)?;
 
+        // Sign the document
         doc.sign(key.secret())?;
 
         // Publish the document
@@ -61,7 +62,7 @@ impl User {
         let printer = TransactionPrinter::hash(&response.tail);
 
         println!("[+] Doc > {:#}", doc);
-        println!("[+]   https://comnet.thetangle.org/transaction/{}", printer);
+        println!("[+]   https://explorer.iota.org/mainnet/transaction/{}", printer);
         println!("[+]");
 
         Ok(Self {
@@ -95,29 +96,29 @@ impl User {
             .build()
             .unwrap();
 
-        let mut credential: VerifiableCredential = VerifiableCredential {
+        let mut vc: VerifiableCredential = VerifiableCredential {
             credential,
             proof: LdSignature::new("", SignatureOptions::new("")),
         };
 
-        self.doc.sign_data(&mut credential, self.key.secret())?;
+        self.doc.sign_data(&mut vc, self.key.secret())?;
 
-        Ok(credential)
+        Ok(vc)
     }
 }
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
     let client: Client = ClientBuilder::new()
-        .network(Network::Comnet)
-        .node("https://nodes.comnet.thetangle.org:443")
+        .network(Network::Mainnet)
+        .node("https://nodes.thetangle.org:443")
         .build()?;
 
     let issuer: User = User::new("Issuer", &client).await?;
     let subject: User = User::new("Subject", &client).await?;
-    let credential: VerifiableCredential = issuer.issue(&subject)?;
+    let vc: VerifiableCredential = issuer.issue(&subject)?;
 
-    let json: String = credential.to_json_pretty()?;
+    let json: String = vc.to_json_pretty()?;
 
     println!("[+] Credential > {}", json);
     println!("[+]");
@@ -142,12 +143,9 @@ async fn main() -> Result<()> {
     println!("[+] Subject Doc (resolved) > {:#}", subject_doc);
     println!("[+]");
 
-    let credential: VerifiableCredential = VerifiableCredential::from_json(&json)?;
+    let vc: VerifiableCredential = VerifiableCredential::from_json(&json)?;
 
-    println!(
-        "[+] Credential (valid?) > {:#?}",
-        issuer_doc.verify_data(&credential).is_ok()
-    );
+    println!("[+] Credential (valid?) > {:#?}", issuer_doc.verify_data(&vc).is_ok());
     println!("[+]");
 
     Ok(())
