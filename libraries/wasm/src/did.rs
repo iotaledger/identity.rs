@@ -1,4 +1,4 @@
-use identity_core::utils::decode_b58;
+use identity_core::{did::DID as CoreDID, utils::decode_b58};
 use identity_iota::did::IotaDID;
 use wasm_bindgen::prelude::*;
 
@@ -43,6 +43,11 @@ impl DID {
         }
     }
 
+    #[wasm_bindgen]
+    pub fn parse(did_string: String) -> Result<DID, JsValue> {
+        Ok(Self(IotaDID::parse(did_string).map_err(js_err)?))
+    }
+
     #[wasm_bindgen(getter)]
     pub fn network(&self) -> String {
         self.0.network().to_string()
@@ -70,5 +75,11 @@ impl DID {
     #[wasm_bindgen(js_name = toString)]
     pub fn to_string(&self) -> String {
         self.0.to_string()
+    }
+}
+
+impl DID {
+    pub fn parse_from_did(did: CoreDID) -> Result<DID, JsValue> {
+        Ok(Self(IotaDID::parse(did.to_string()).map_err(js_err)?))
     }
 }

@@ -9,6 +9,7 @@ pub mod did;
 pub mod doc;
 pub mod iota;
 pub mod key;
+pub mod pubkey;
 
 #[wasm_bindgen]
 pub fn initialize() -> JsValue {

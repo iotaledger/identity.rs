@@ -1,7 +1,7 @@
 import("../pkg/index.js").then(async identity => {
     try {
         console.log(identity)
-        const { initialize, resolve, publish, Key, Doc, DID } = identity
+        const { initialize, resolve, publish, Key, Doc, DID, PubKey } = identity
 
         initialize();
 
@@ -74,17 +74,13 @@ import("../pkg/index.js").then(async identity => {
 
             console.log("Diff has valid signature: ", bob_document.verify_diff(json))
 
-            bob_document.update_service({ id: bob_document.id, type: "MessagingService", serviceEndpoint: "https://example.com/messages/8377464" })
+            // bob_document.update_service(DID.parse(bob_document.document.id + "#messages"), "https://example.com/messages/8377464", "MessagingService")
             console.log("Doc with service ", bob_document.document);
             bob_document.clear_services()
             console.log("Doc with services cleared ", bob_document.document);
-            let key = new Key();
-            let public_key = {
-                id: bob_did.toString() + "#keys-1",
-                controller: bob_did.toString(),
-                key: key.public,
-            }
-            bob_document.update_public_key(public_key)
+            let keypair = new Key();
+            let publicKey = new PubKey(DID.parse(bob_document.document.id + "#keys-1"), DID.parse(bob_document.document.id), keypair.public)
+            bob_document.update_public_key(publicKey)
             console.log("Doc with public key ", bob_document.document);
         }
     } catch (e) {

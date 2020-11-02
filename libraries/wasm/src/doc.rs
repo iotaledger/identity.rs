@@ -1,13 +1,13 @@
 use identity_core::{
     common::FromJson as _,
-    did::{Service, DID},
+    did::{ServiceBuilder, ServiceEndpoint, DID},
     key::{KeyData, KeyType, PublicKey, PublicKeyBuilder},
     utils::{decode_b58, encode_b58},
 };
 use identity_iota::did::{DIDDiff, IotaDID, IotaDocument};
 use wasm_bindgen::prelude::*;
 
-use crate::{js_err, key::Key};
+use crate::{did::DID as WasmDID, js_err, key::Key, pubkey::PubKey};
 
 #[derive(Debug, Deserialize)]
 pub struct DocParams {
@@ -166,15 +166,16 @@ impl Doc {
     }
 
     #[wasm_bindgen]
-    pub fn update_service(&mut self, service: JsValue) -> Result<Doc, JsValue> {
-        if service.is_object() {
-            let params: Service = service.into_serde().map_err(js_err)?;
-
-            self.0.update_service(params);
-            Ok(Doc(self.0.clone()))
-        } else {
-            panic!("Invalid Arguments for `update_service(..)`");
-        }
+    pub fn update_service(&mut self, did: WasmDID, url: String, service_type: String) -> Result<Doc, JsValue> {
+        let endpoint = ServiceEndpoint::Url(url.parse().map_err(js_err)?);
+        let service = ServiceBuilder::default()
+            .id(DID::parse(did.0).map_err(js_err)?)
+            .service_type(service_type)
+            .endpoint(endpoint)
+            .build()
+            .map_err(js_err)?;
+        self.0.update_service(service);
+        Ok(Doc(self.0.clone()))
     }
 
     #[wasm_bindgen]
@@ -184,22 +185,9 @@ impl Doc {
     }
 
     #[wasm_bindgen]
-    pub fn update_public_key(&mut self, public_key: JsValue) -> Result<Doc, JsValue> {
-        if public_key.is_object() {
-            let public_key: KeyParams = public_key.into_serde().map_err(js_err)?;
-            let key: PublicKey = PublicKeyBuilder::default()
-                .id(DID::parse(public_key.id).map_err(js_err)?)
-                .controller(DID::parse(public_key.controller).map_err(js_err)?)
-                .key_type(KeyType::Ed25519VerificationKey2018)
-                .key_data(KeyData::PublicKeyBase58(public_key.key))
-                .build()
-                .map_err(js_err)?;
-
-            self.0.update_public_key(key);
-            Ok(Doc(self.0.clone()))
-        } else {
-            panic!("Invalid Arguments for `update_service(..)`");
-        }
+    pub fn update_public_key(&mut self, public_key: &PubKey) -> Result<Doc, JsValue> {
+        self.0.update_public_key(public_key.0.clone());
+        Ok(Doc(self.0.clone()))
     }
 
     // This would also remove the authentication key
