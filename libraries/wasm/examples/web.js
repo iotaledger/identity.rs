@@ -82,6 +82,15 @@ import("../pkg/index.js").then(async identity => {
             let publicKey = new PubKey(DID.parse(bob_document.document.id + "#keys-1"), DID.parse(bob_document.document.id), keypair.public)
             bob_document.update_public_key(publicKey)
             console.log("Doc with public key ", bob_document.document);
+            bob_document.update_public_key(publicKey)
+            bob_document.update_auth(publicKey)
+            bob_document.update_assert(publicKey)
+            bob_document.update_verification(publicKey)
+            bob_document.update_delegation(publicKey)
+            bob_document.update_invocation(publicKey)
+            bob_document.update_agreement(publicKey)
+            bob_document.update_time()
+            console.log("Doc with A LOT", bob_document.document);
         }
     } catch (e) {
         console.error(e)

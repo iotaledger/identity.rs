@@ -190,6 +190,47 @@ impl Doc {
         Ok(Doc(self.0.clone()))
     }
 
+    #[wasm_bindgen]
+    pub fn update_auth(&mut self, public_key: &PubKey) -> Result<Doc, JsValue> {
+        self.0.update_auth(public_key.0.clone());
+        Ok(Doc(self.0.clone()))
+    }
+
+    #[wasm_bindgen]
+    pub fn update_assert(&mut self, public_key: &PubKey) -> Result<Doc, JsValue> {
+        self.0.update_assert(public_key.0.clone());
+        Ok(Doc(self.0.clone()))
+    }
+
+    #[wasm_bindgen]
+    pub fn update_verification(&mut self, public_key: &PubKey) -> Result<Doc, JsValue> {
+        self.0.update_verification(public_key.0.clone());
+        Ok(Doc(self.0.clone()))
+    }
+
+    #[wasm_bindgen]
+    pub fn update_delegation(&mut self, public_key: &PubKey) -> Result<Doc, JsValue> {
+        self.0.update_delegation(public_key.0.clone());
+        Ok(Doc(self.0.clone()))
+    }
+
+    #[wasm_bindgen]
+    pub fn update_invocation(&mut self, public_key: &PubKey) -> Result<Doc, JsValue> {
+        self.0.update_invocation(public_key.0.clone());
+        Ok(Doc(self.0.clone()))
+    }
+
+    #[wasm_bindgen]
+    pub fn update_agreement(&mut self, public_key: &PubKey) -> Result<Doc, JsValue> {
+        self.0.update_agreement(public_key.0.clone());
+        Ok(Doc(self.0.clone()))
+    }
+
+    #[wasm_bindgen]
+    pub fn update_time(&mut self) {
+        self.0.update_time();
+    }
+
     // This would also remove the authentication key
     // #[wasm_bindgen]
     // pub fn clear_public_keys(&mut self) -> Result<Doc, JsValue> {
