@@ -1,7 +1,7 @@
 const path = require('path')
 const fs = require('fs')
 
-const entryFilePath = path.join(__dirname, '../wasm-web/iota_identity_wasm.js')
+const entryFilePath = path.join(__dirname, '../web/iota_identity_wasm.js')
 const entryFile = fs.readFileSync(entryFilePath).toString()
 
 // comment out this code so it works for Webpack
