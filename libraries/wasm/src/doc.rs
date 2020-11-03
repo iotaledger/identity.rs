@@ -56,7 +56,7 @@ impl Doc {
             .build()
             .map_err(js_err)?;
 
-        IotaDocument::new(did, method).map_err(js_err).map(Self)
+        IotaDocument::try_from_key(method).map_err(js_err).map(Self)
     }
 
     fn create_did(key: impl AsRef<str>) -> Result<IotaDID, JsValue> {

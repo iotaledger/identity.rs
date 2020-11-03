@@ -20,14 +20,9 @@ impl DID {
     fn create(key: impl AsRef<str>, network: Option<&str>, shard: Option<&str>) -> Result<Self, JsValue> {
         let public: Vec<u8> = decode_b58(key.as_ref()).map_err(js_err)?;
 
-        match (network, shard) {
-            (Some(network), Some(shard)) => IotaDID::with_network_and_shard(&public, network, shard)
-                .map_err(js_err)
-                .map(Self),
-            (Some(network), None) => IotaDID::with_network(&public, network).map_err(js_err).map(Self),
-            (None, Some(shard)) => IotaDID::with_shard(&public, shard).map_err(js_err).map(Self),
-            (None, None) => IotaDID::new(&public).map_err(js_err).map(Self),
-        }
+        IotaDID::with_network_and_shard(&public, network, shard)
+            .map_err(js_err)
+            .map(Self)
     }
 
     #[wasm_bindgen(constructor)]
