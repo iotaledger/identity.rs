@@ -1,12 +1,19 @@
 import("../pkg/index.js").then(async identity => {
     try {
         console.log(identity)
-        const { initialize, resolve, publish, Key, Doc, DID, PubKey } = identity
+        const { initialize, resolve, publish, Key, Doc, DID, PubKey, VerifiableCredential } = identity
 
         initialize();
 
         await playground()
         await alice_bob()
+        await testVC()
+
+        async function testVC() {
+            const { key, doc } = Doc.generateCom()
+            let vc = new VerifiableCredential(doc, { name: "Issuer" }, key);
+            console.log("vc", vc.to_json_pretty());
+        }
 
         async function playground() {
             console.log("key", new Key())
@@ -74,7 +81,7 @@ import("../pkg/index.js").then(async identity => {
 
             console.log("Diff has valid signature: ", bob_document.verify_diff(json))
 
-            // bob_document.update_service(DID.parse(bob_document.document.id + "#messages"), "https://example.com/messages/8377464", "MessagingService")
+            bob_document.update_service(DID.parse(bob_document.document.id + "#messages"), "https://example.com/messages/8377464", "MessagingService")
             console.log("Doc with service ", bob_document.document);
             bob_document.clear_services()
             console.log("Doc with services cleared ", bob_document.document);
