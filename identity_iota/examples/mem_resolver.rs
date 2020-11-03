@@ -146,7 +146,7 @@ impl MemResolver {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl ResolverMethod for MemResolver {
     fn is_supported(&self, _: &DID) -> bool {
         true

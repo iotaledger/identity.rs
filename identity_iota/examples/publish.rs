@@ -3,24 +3,21 @@
 
 use identity_crypto::KeyPair;
 use identity_iota::{
+    client::{Client, ClientBuilder},
     did::IotaDocument,
     error::Result,
-    io::TangleWriter,
-    network::{Network, NodeList},
+    network::Network,
 };
-use iota_conversion::Trinary as _;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-    let nodes = vec![
-        "http://localhost:14265",
-        "https://nodes.thetangle.org:443",
-        "https://iotanode.us:14267",
-        "https://pow.iota.community:443",
-    ];
-    let nodelist = NodeList::with_network_and_nodes(Network::Mainnet, nodes);
-
-    let tangle_writer = TangleWriter::new(&nodelist)?;
+    let client: Client = ClientBuilder::new()
+        .node("http://localhost:14265")
+        .node("https://nodes.thetangle.org:443")
+        .node("https://iotanode.us:14267")
+        .node("https://pow.iota.community:443")
+        .network(Network::Mainnet)
+        .build()?;
 
     // Create keypair/DID document
     let (mut document, keypair): (IotaDocument, KeyPair) = IotaDocument::generate_ed25519("key-1", None)?;
@@ -33,12 +30,9 @@ async fn main() -> Result<()> {
 
     println!("DID: {}", document.did());
 
-    let tail_transaction = tangle_writer.write_json(document.did(), &document).await?;
+    let response = client.create_document(&document).send().await?;
 
-    println!(
-        "DID document published: https://thetangle.org/transaction/{}",
-        tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
-    );
+    println!("DID document published: {}", client.transaction_url(&response.tail));
 
     Ok(())
 }

@@ -11,7 +11,7 @@ use identity_core::{
     utils::encode_b58,
 };
 use identity_crypto::{KeyPair, SecretKey};
-use identity_proof::{signature::jcsed25519signature2020, LdRead, LdSignature, LdWrite, SignatureOptions};
+use identity_proof::{signature::jcsed25519signature2020, HasProof, LdRead, LdSignature, LdWrite, SignatureOptions};
 use iota::transaction::bundled::Address;
 use multihash::{Blake2b256, MultihashGeneric};
 use serde::{Deserialize, Serialize};
@@ -87,6 +87,18 @@ impl IotaDocument {
         &self.did
     }
 
+    pub fn supersedes(&self) -> Option<&str> {
+        None // TODO
+    }
+
+    pub fn diff_chain(&self) -> Option<&str> {
+        None // TODO
+    }
+
+    pub fn has_diff_chain(&self) -> bool {
+        self.diff_chain().is_some()
+    }
+
     pub fn authentication_key(&self) -> &PublicKey {
         self.resolve_key(0, KeyRelation::Authentication).expect("infallible")
     }
@@ -138,21 +150,34 @@ impl IotaDocument {
         // Update the `updated` timestamp of the new document
         other.update_time();
 
+        // Create a diff of changes between the two documents.
+        let mut diff: DIDDiff = DIDDiff {
+            id: self.document.did().clone(),
+            diff: self.document.diff(&other)?,
+            proof: LdSignature::new("", SignatureOptions::new("")),
+        };
+
+        self.sign_data(&mut diff, secret)?;
+
+        Ok(diff)
+    }
+
+    pub fn verify_diff(&self, diff: &DIDDiff) -> Result<()> {
+        self.verify_data(diff)
+    }
+
+    pub fn sign_data<T>(&self, data: &mut T, secret: &SecretKey) -> Result<()>
+    where
+        T: HasProof + Serialize,
+    {
         // Get the first authentication key from the document.
         let key: &PublicKey = self.authentication_key();
 
         let fragment: String = format!("{}", key.id());
         let options: SignatureOptions = SignatureOptions::new(fragment);
 
-        // Create a diff of changes between the two documents.
-        let mut diff: DIDDiff = DIDDiff {
-            id: self.document.did().clone(),
-            diff: self.document.diff(&other)?,
-            proof: LdSignature::new("", options.clone()),
-        };
-
         // Wrap the diff/document in a signable type.
-        let mut target: LdWrite<DIDDiff> = LdWrite::new(&mut diff, &self.document);
+        let mut target: LdWrite<T> = LdWrite::new(data, &self.document);
 
         // Create and apply the signature
         match key.key_type() {
@@ -164,12 +189,15 @@ impl IotaDocument {
             }
         }
 
-        Ok(diff)
+        Ok(())
     }
 
-    pub fn verify_diff(&self, diff: &DIDDiff) -> Result<()> {
-        // Wrap the diff/document in a verifiable type.
-        let target: LdRead<DIDDiff> = LdRead::new(diff, &self.document);
+    pub fn verify_data<T>(&self, data: &T) -> Result<()>
+    where
+        T: HasProof + Serialize,
+    {
+        // Wrap the data/document in a verifiable type.
+        let target: LdRead<T> = LdRead::new(data, &self.document);
 
         match self.authentication_key().key_type() {
             KeyType::Ed25519VerificationKey2018 => {

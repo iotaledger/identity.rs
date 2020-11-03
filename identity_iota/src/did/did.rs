@@ -39,6 +39,30 @@ impl IotaDID {
         Ok((did, key))
     }
 
+    pub fn is_valid(did: &DID) -> bool {
+        Self::check_validity(did).is_ok()
+    }
+
+    pub fn check_validity(did: &DID) -> Result<(), Error> {
+        if did.method_name != Self::METHOD {
+            return Err(Error::InvalidMethod);
+        }
+
+        if did.id_segments.is_empty() || did.id_segments.len() > 3 {
+            return Err(Error::InvalidMethodId);
+        }
+
+        // We checked if `id_segments` was empty so this should not panic
+        let mid: &str = did.id_segments.last().expect("infallible");
+        let len: usize = decode_b58(mid)?.len();
+
+        if len != BLAKE2B_256_LEN {
+            return Err(Error::InvalidMethodId);
+        }
+
+        Ok(())
+    }
+
     pub fn try_from_did(did: DID) -> Result<Self> {
         Self::check_validity(&did).map(|_| Self(did))
     }
@@ -128,30 +152,6 @@ impl IotaDID {
 
     pub fn create_address(&self) -> Result<Address> {
         create_address_from_trits(self.create_address_hash())
-    }
-
-    pub fn is_valid(did: &DID) -> bool {
-        Self::check_validity(did).is_ok()
-    }
-
-    pub fn check_validity(did: &DID) -> Result<(), Error> {
-        if did.method_name != Self::METHOD {
-            return Err(Error::InvalidMethod);
-        }
-
-        if did.id_segments.is_empty() || did.id_segments.len() > 3 {
-            return Err(Error::InvalidMethodId);
-        }
-
-        // We checked if `id_segments` was empty so this should not panic
-        let mid: &str = did.id_segments.last().expect("infallible");
-        let len: usize = decode_b58(mid)?.len();
-
-        if len != BLAKE2B_256_LEN {
-            return Err(Error::InvalidMethodId);
-        }
-
-        Ok(())
     }
 
     fn encode_key(key: &[u8]) -> String {

@@ -20,6 +20,14 @@ impl Network {
             (Self::Mainnet, _) => true,
         }
     }
+
+    pub fn explorer_url(self) -> &'static str {
+        match self {
+            Self::Mainnet => "https://explorer.iota.org/mainnet/",
+            Self::Devnet => "https://explorer.iota.org/devnet/",
+            Self::Comnet => "https://comnet.thetangle.org/",
+        }
+    }
 }
 
 use iota::client::builder;
