@@ -16,9 +16,14 @@ pub struct VerifiableCredential(pub(crate) IotaVC);
 #[wasm_bindgen]
 impl VerifiableCredential {
     #[wasm_bindgen(constructor)]
-    pub fn new(document: &Doc, name: String, key: &Key) -> Result<VerifiableCredential, JsValue> {
+    pub fn new(
+        issuer_document: &Doc,
+        subject_document: &Doc,
+        name: String,
+        key: &Key,
+    ) -> Result<VerifiableCredential, JsValue> {
         let subject: CredentialSubject = CredentialSubjectBuilder::default()
-            .id(DID::from(document.0.did().clone()))
+            .id(DID::from(subject_document.0.did().clone()))
             // Get this from JsValue and how?
             .properties(object!(
                 name: name,
@@ -33,7 +38,7 @@ impl VerifiableCredential {
 
         let mut credential: IotaVC = CredentialBuilder::new()
             .id("http://example.edu/credentials/3732")
-            .issuer(DID::from(document.0.did().clone()))
+            .issuer(DID::from(issuer_document.0.did().clone()))
             .context(vec![Context::from(CoreCredential::BASE_CONTEXT)])
             .types(vec![
                 CoreCredential::BASE_TYPE.into(),
@@ -45,7 +50,7 @@ impl VerifiableCredential {
             .map(IotaVC::new)
             .map_err(js_err)?;
 
-        credential.sign(&document.0, key.0.secret()).map_err(js_err)?;
+        credential.sign(&issuer_document.0, key.0.secret()).map_err(js_err)?;
 
         Ok(Self(credential))
     }
