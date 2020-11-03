@@ -50,7 +50,7 @@ impl Doc {
 
         let method: PublicKey = PublicKeyBuilder::default()
             .id(key.into())
-            .controller(did.clone().into())
+            .controller(did.into())
             .key_type(KeyType::Ed25519VerificationKey2018)
             .key_data(KeyData::PublicKeyBase58(public))
             .build()
