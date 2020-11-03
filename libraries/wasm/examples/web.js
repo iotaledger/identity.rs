@@ -1,7 +1,7 @@
 import("../pkg/index.js").then(async identity => {
     try {
         console.log(identity)
-        const { initialize, resolve, publish, Key, Doc, DID, PubKey, VerifiableCredential } = identity
+        const { initialize, resolve, publish, checkCredential, Key, Doc, DID, PubKey, VerifiableCredential } = identity
 
         initialize();
 
@@ -11,8 +11,11 @@ import("../pkg/index.js").then(async identity => {
 
         async function testVC() {
             const { key, doc } = Doc.generateCom()
-            let vc = new VerifiableCredential(doc, { name: "Issuer" }, key);
+            doc.sign(key)
+            console.log("published", await publish(doc.document, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            let vc = new VerifiableCredential(doc, "Issuer", key);
             console.log("vc", vc.to_json_pretty());
+            console.log("vc valid: ", await checkCredential(vc.to_json_pretty(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
         }
 
         async function playground() {

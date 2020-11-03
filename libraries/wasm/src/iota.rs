@@ -2,6 +2,7 @@ use identity_iota::{
     client::{Client, ClientBuilder, TransactionPrinter},
     did::IotaDID,
     network::Network,
+    vc::{CredentialValidation, CredentialValidator},
 };
 use wasm_bindgen::prelude::*;
 
@@ -85,4 +86,12 @@ pub async fn resolve(did: String, params: JsValue) -> Result<JsValue, JsValue> {
         .await
         .map_err(js_err)
         .and_then(|response| JsValue::from_serde(&response).map_err(js_err))
+}
+
+#[wasm_bindgen(js_name = checkCredential)]
+pub async fn check_credential(data: String, params: JsValue) -> Result<bool, JsValue> {
+    let client = client(params)?;
+    let validator: CredentialValidator<'_> = CredentialValidator::new(&client);
+    let validation: CredentialValidation = validator.check(&data).await.map_err(js_err)?;
+    Ok(validation.verified)
 }
