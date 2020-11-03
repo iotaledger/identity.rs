@@ -14,26 +14,8 @@ use identity_iota::{
     error::Result,
     helpers::create_ed25519_key,
     network::Network,
+    vc::{CredentialValidation, CredentialValidator, VerifiableCredential},
 };
-use identity_proof::{HasProof, LdSignature, SignatureOptions};
-use serde::{Deserialize, Serialize};
-
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct VerifiableCredential {
-    #[serde(flatten)]
-    credential: Credential,
-    proof: LdSignature,
-}
-
-impl HasProof for VerifiableCredential {
-    fn proof(&self) -> &LdSignature {
-        &self.proof
-    }
-
-    fn proof_mut(&mut self) -> &mut LdSignature {
-        &mut self.proof
-    }
-}
 
 #[derive(Debug)]
 struct User {
@@ -84,7 +66,7 @@ impl User {
             .build()
             .unwrap();
 
-        let credential: Credential = CredentialBuilder::new()
+        let mut credential: VerifiableCredential = CredentialBuilder::new()
             .id("http://example.edu/credentials/3732")
             .issuer(DID::from(self.doc.did().clone()))
             .context(vec![Context::from(Credential::BASE_CONTEXT)])
@@ -92,16 +74,12 @@ impl User {
             .subject(vec![subject])
             .issuance_date(Timestamp::now())
             .build()
+            .map(VerifiableCredential::new)
             .unwrap();
 
-        let mut vc: VerifiableCredential = VerifiableCredential {
-            credential,
-            proof: LdSignature::new("", SignatureOptions::new("")),
-        };
+        credential.sign(&self.doc, self.key.secret())?;
 
-        self.doc.sign_data(&mut vc, self.key.secret())?;
-
-        Ok(vc)
+        Ok(credential)
     }
 }
 
@@ -129,21 +107,10 @@ async fn main() -> Result<()> {
     // ====================
     // ====================
 
-    let issuer_did: IotaDID = issuer.doc.did().to_string().parse()?;
-    let issuer_doc: IotaDocument = client.read_document(&issuer_did).send().await?.document;
+    let validator: CredentialValidator<'_> = CredentialValidator::new(&client);
+    let validation: CredentialValidation = validator.check(&json).await?;
 
-    println!("[+] Issuer Doc (resolved) > {:#}", issuer_doc);
-    println!("[+]");
-
-    let subject_did: IotaDID = subject.doc.did().to_string().parse()?;
-    let subject_doc: IotaDocument = client.read_document(&subject_did).send().await?.document;
-
-    println!("[+] Subject Doc (resolved) > {:#}", subject_doc);
-    println!("[+]");
-
-    let vc: VerifiableCredential = VerifiableCredential::from_json(&json)?;
-
-    println!("[+] Credential (valid?) > {:#?}", issuer_doc.verify_data(&vc).is_ok());
+    println!("[+] Credential Validation > {:#?}", validation);
     println!("[+]");
 
     Ok(())
