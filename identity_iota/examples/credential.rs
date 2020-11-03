@@ -3,16 +3,14 @@
 use identity_core::{
     common::{AsJson as _, Context, Timestamp},
     did::DID,
-    key::PublicKey,
     object,
     vc::{Credential, CredentialBuilder, CredentialSubject, CredentialSubjectBuilder},
 };
 use identity_crypto::KeyPair;
 use identity_iota::{
     client::{Client, ClientBuilder, PublishDocumentResponse},
-    did::{IotaDID, IotaDocument},
+    did::IotaDocument,
     error::Result,
-    helpers::create_ed25519_key,
     network::Network,
     vc::{CredentialValidation, CredentialValidator, VerifiableCredential},
 };
@@ -26,14 +24,8 @@ struct User {
 
 impl User {
     async fn new(name: impl Into<String>, client: &Client) -> Result<Self> {
-        // Generate a DID/keypair
-        let (did, key): (IotaDID, KeyPair) = IotaDID::generate_ed25519()?;
-
-        // Create an Ed25519VerificationKey2018 object as the authentication key
-        let pkey: PublicKey = create_ed25519_key(&did, key.public().as_ref())?;
-
-        // Create a DID document with the generated DID/authentication key
-        let mut doc: IotaDocument = IotaDocument::new(did, pkey)?;
+        // Create a DID document with a generated DID/authentication key
+        let (mut doc, key): (IotaDocument, KeyPair) = IotaDocument::generate_ed25519("key-1", None)?;
 
         // Sign the document
         doc.sign(key.secret())?;
