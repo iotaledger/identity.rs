@@ -117,7 +117,7 @@ impl Display for DID {
                 .map(ToString::to_string)
                 .fold(&mut String::new(), |acc, p| {
                     if !acc.is_empty() {
-                        acc.push_str(":");
+                        acc.push(':');
                     }
                     acc.push_str(&p);
 
@@ -130,7 +130,7 @@ impl Display for DID {
                 "/{}",
                 segs.iter().map(ToString::to_string).fold(&mut String::new(), |acc, p| {
                     if !acc.is_empty() {
-                        acc.push_str("/");
+                        acc.push('/');
                     }
                     acc.push_str(&p);
 
@@ -145,7 +145,7 @@ impl Display for DID {
                 "?{}",
                 qur.iter().map(ToString::to_string).fold(&mut String::new(), |acc, p| {
                     if !acc.is_empty() {
-                        acc.push_str("&");
+                        acc.push('&');
                     }
                     acc.push_str(&p);
 

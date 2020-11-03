@@ -226,7 +226,7 @@ pub mod deprecated {
         did.id_segments
             .last()
             .map(|string| string.as_str())
-            .ok_or_else(|| Error::InvalidMethodId)
+            .ok_or(Error::InvalidMethodId)
     }
 
     /// Creates an 81 Trytes IOTA address from the DID
