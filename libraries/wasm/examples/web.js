@@ -91,6 +91,12 @@ import("../pkg/index.js").then(async identity => {
             bob_document.update_agreement(publicKey)
             bob_document.update_time()
             console.log("Doc with A LOT", bob_document.document);
+            let bob_auth_key = bob_document.resolve_key("Authentication")
+            console.log("bob_auth_key: ", bob_auth_key.pubkey);
+            setTimeout(() => {
+                bob_document.update_time()
+                console.log("bob_document with updated time: ", bob_document.document)
+            }, 1000)
         }
     } catch (e) {
         console.error(e)

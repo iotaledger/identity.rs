@@ -1,7 +1,7 @@
 use identity_core::{
     common::FromJson as _,
     did::{ServiceBuilder, ServiceEndpoint, DID},
-    key::{KeyData, KeyType, PublicKey, PublicKeyBuilder},
+    key::{KeyData, KeyRelation, KeyType, PublicKey, PublicKeyBuilder},
     utils::{decode_b58, encode_b58},
 };
 use identity_iota::did::{DIDDiff, IotaDID, IotaDocument};
@@ -231,12 +231,23 @@ impl Doc {
         self.0.update_time();
     }
 
-    // This would also remove the authentication key
-    // #[wasm_bindgen]
-    // pub fn clear_public_keys(&mut self) -> Result<Doc, JsValue> {
-    //     self.0.clear_public_keys();
-    //     Ok(Doc(self.0.clone()))
-    // }
+    #[wasm_bindgen]
+    pub fn resolve_key(&mut self, key_relation: &str) -> Result<PubKey, JsValue> {
+        let relation = match key_relation {
+            "VerificationMethod" => KeyRelation::VerificationMethod,
+            "Authentication" => KeyRelation::Authentication,
+            "AssertionMethod" => KeyRelation::AssertionMethod,
+            "KeyAgreement" => KeyRelation::KeyAgreement,
+            "CapabilityInvocation" => KeyRelation::CapabilityInvocation,
+            "CapabilityDelegation" => KeyRelation::CapabilityDelegation,
+            _ => panic!("Unknown KeyRelation"),
+        };
+
+        match self.0.resolve_key(0, relation) {
+            Some(key) => Ok(PubKey(key.clone())),
+            _ => panic!("Key not found"),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
