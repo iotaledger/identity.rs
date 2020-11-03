@@ -4,7 +4,7 @@
 use identity_core::key::PublicKey;
 use identity_crypto::KeyPair;
 use identity_iota::{
-    client::{Client, ClientBuilder, TransactionPrinter},
+    client::{Client, ClientBuilder},
     did::{IotaDID, IotaDocument},
     error::Result,
     helpers::create_ed25519_key,
@@ -41,10 +41,7 @@ async fn main() -> Result<()> {
 
     let response = client.create_document(&document).send().await?;
 
-    println!(
-        "DID document published: https://thetangle.org/transaction/{}",
-        TransactionPrinter::hash(&response.tail),
-    );
+    println!("DID document published: {}", client.transaction_url(&response.tail));
 
     // Update document and publish diff to the Tangle
     let mut update = document.clone();
