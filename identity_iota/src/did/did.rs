@@ -1,6 +1,7 @@
 use core::{
     convert::TryFrom,
     fmt::{Debug, Display, Formatter, Result as FmtResult},
+    iter::once,
     ops::{Deref, DerefMut},
     str::FromStr,
 };
@@ -28,9 +29,12 @@ impl IotaDID {
     pub const METHOD: &'static str = "iota";
     pub const NETWORK: &'static str = "main";
 
-    pub fn generate_ed25519() -> Result<(Self, KeyPair)> {
+    pub fn generate_ed25519<'a, T>(network: T) -> Result<(Self, KeyPair)>
+    where
+        T: Into<Option<&'a str>>,
+    {
         let key: KeyPair = jcsed25519signature2020::new_keypair();
-        let did: Self = Self::new(key.public().as_ref())?;
+        let did: Self = Self::with_network(key.public().as_ref(), network)?;
 
         Ok((did, key))
     }
@@ -64,41 +68,38 @@ impl IotaDID {
     }
 
     pub fn parse(string: impl AsRef<str>) -> Result<Self> {
-        DID::from_str(string.as_ref())
-            .map_err(Into::into)
-            .and_then(Self::try_from_did)
+        Self::try_from_did(DID::from_str(string.as_ref())?)
     }
 
     pub fn new(public: &[u8]) -> Result<Self> {
-        let key: String = Self::encode_key(public);
-        let did: String = format!("did:{}:{}", Self::METHOD, key);
-        let did: DID = DID::parse(did)?;
-
-        Ok(Self(did))
+        Self::with_network_and_shard(public, None, None)
     }
 
-    pub fn with_network(public: &[u8], network: &str) -> Result<Self> {
-        let key: String = Self::encode_key(public);
-        let did: String = format!("did:{}:{}:{}", Self::METHOD, network, key);
-        let did: DID = DID::parse(did)?;
-
-        Ok(Self(did))
+    pub fn with_network<'a, T>(public: &[u8], network: T) -> Result<Self>
+    where
+        T: Into<Option<&'a str>>,
+    {
+        Self::with_network_and_shard(public, network, None)
     }
 
-    pub fn with_shard(public: &[u8], shard: &str) -> Result<Self> {
-        let key: String = Self::encode_key(public);
-        let did: String = format!("did:{}:{}:{}", Self::METHOD, shard, key);
-        let did: DID = DID::parse(did)?;
+    pub fn with_network_and_shard<'a, 'b, T, U>(public: &[u8], network: T, shard: U) -> Result<Self>
+    where
+        T: Into<Option<&'a str>>,
+        U: Into<Option<&'b str>>,
+    {
+        let mut did: String = format!("did:{}:", Self::METHOD);
 
-        Ok(Self(did))
-    }
+        if let Some(network) = network.into() {
+            did.extend(network.chars().chain(once(':')));
+        }
 
-    pub fn with_network_and_shard(public: &[u8], network: &str, shard: &str) -> Result<Self> {
-        let key: String = Self::encode_key(public);
-        let did: String = format!("did:{}:{}:{}:{}", Self::METHOD, network, shard, key);
-        let did: DID = DID::parse(did)?;
+        if let Some(shard) = shard.into() {
+            did.extend(shard.chars().chain(once(':')));
+        }
 
-        Ok(Self(did))
+        did.push_str(&Self::encode_key(public));
+
+        Ok(Self(DID::parse(did)?))
     }
 
     pub fn network(&self) -> &str {

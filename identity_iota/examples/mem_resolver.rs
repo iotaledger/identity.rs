@@ -11,14 +11,15 @@ use identity_core::{
     },
 };
 use identity_crypto::KeyPair;
-use identity_iota::{did::IotaDocument, error::Result};
+use identity_iota::error::Result;
+use identity_proof::signature::jcsed25519signature2020;
 use multihash::{Blake2b256, MultihashGeneric};
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
     let mut resolver: MemResolver = MemResolver::new();
 
-    let keypair: KeyPair = IotaDocument::generate_ed25519_keypair();
+    let keypair: KeyPair = jcsed25519signature2020::new_keypair();
     let public: String = bs58::encode(keypair.public()).into_string();
 
     let ident: MultihashGeneric<_> = Blake2b256::digest(public.as_bytes());
