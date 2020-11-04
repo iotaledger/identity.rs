@@ -1,12 +1,11 @@
+use crate::{doc::Doc, js_err, key::Key};
 use identity_core::{
-    common::{AsJson as _, Context, Timestamp},
+    common::{AsJson as _, Context, Timestamp, Value},
     did::DID,
-    object,
     vc::{Credential as CoreCredential, CredentialBuilder, CredentialSubject, CredentialSubjectBuilder},
 };
 use identity_iota::vc::VerifiableCredential as IotaVC;
-
-use crate::{doc::Doc, js_err, key::Key};
+use serde_json::Map;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(inspectable)]
@@ -18,32 +17,26 @@ impl VerifiableCredential {
     #[wasm_bindgen(constructor)]
     pub fn new(
         issuer_document: &Doc,
-        subject_document: &Doc,
-        name: String,
         key: &Key,
+        subject_document: &Doc,
+        credential_type: String,
+        credential_url: String,
+        properties: String,
     ) -> Result<VerifiableCredential, JsValue> {
+        let json_properties: serde_json::Value = serde_json::from_str(&properties).map_err(js_err)?;
+        let properties_obj: Map<String, Value> = json_properties.as_object().unwrap().clone();
+
         let subject: CredentialSubject = CredentialSubjectBuilder::default()
             .id(DID::from(subject_document.0.did().clone()))
-            // Get this from JsValue and how?
-            .properties(object!(
-                name: name,
-                degree:
-                    object!(
-                      name: "Bachelor of Science and Arts",
-                      type: "BachelorDegree",
-                    )
-            ))
+            .properties(properties_obj)
             .build()
             .unwrap();
 
         let mut credential: IotaVC = CredentialBuilder::new()
-            .id("http://example.edu/credentials/3732")
+            .id(credential_url)
             .issuer(DID::from(issuer_document.0.did().clone()))
             .context(vec![Context::from(CoreCredential::BASE_CONTEXT)])
-            .types(vec![
-                CoreCredential::BASE_TYPE.into(),
-                "UniversityDegreeCredential".into(),
-            ])
+            .types(vec![CoreCredential::BASE_TYPE.into(), credential_type])
             .subject(vec![subject])
             .issuance_date(Timestamp::now())
             .build()
