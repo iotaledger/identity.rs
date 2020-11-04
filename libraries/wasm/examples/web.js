@@ -20,8 +20,13 @@ import("../pkg/index.js").then(async identity => {
             let subjectDoc = doc
             console.log("vc subject doc published", await publish(doc.document, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
             let vc = new VerifiableCredential(issuerDoc, issuerKey, subjectDoc, "UniversityDegreeCredential", "http://example.edu/credentials/3732", JSON.stringify({ name: "Subject", degree: { name: "Bachelor of Science and Arts", type: "BachelorDegree" } }));
-            console.log("vc", vc.to_json_pretty());
-            console.log("vc valid: ", await checkCredential(vc.to_json_pretty(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            console.log("vc", vc);
+            console.log("vc valid: ", await checkCredential(vc.to_string(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            // deleted here because otherwise it's twice in the second credential
+            delete vc.vc.proof
+            let vc_fromJson = VerifiableCredential.from_json(issuerDoc, issuerKey, vc.to_string())
+            console.log("vc_fromJson: ", vc_fromJson.vc);
+            console.log("vc_fromJson valid: ", await checkCredential(vc_fromJson.to_string(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
         }
 
         async function playground() {

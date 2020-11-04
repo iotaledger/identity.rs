@@ -1,6 +1,6 @@
 use crate::{doc::Doc, js_err, key::Key};
 use identity_core::{
-    common::{AsJson as _, Context, Timestamp, Value},
+    common::{Context, Timestamp, Value},
     did::DID,
     vc::{Credential as CoreCredential, CredentialBuilder, CredentialSubject, CredentialSubjectBuilder},
 };
@@ -47,8 +47,24 @@ impl VerifiableCredential {
 
         Ok(Self(credential))
     }
+
     #[wasm_bindgen]
-    pub fn to_json_pretty(&self) -> Result<String, JsValue> {
-        Ok(self.0.to_json_pretty().map_err(js_err)?)
+    pub fn from_json(issuer_document: &Doc, key: &Key, credential: String) -> Result<VerifiableCredential, JsValue> {
+        let credential: CoreCredential = serde_json::from_str(&credential).map_err(js_err)?;
+        let mut vc = IotaVC::new(credential);
+        vc.sign(&issuer_document.0, key.0.secret()).map_err(js_err)?;
+
+        Ok(Self(vc))
+    }
+
+    #[wasm_bindgen]
+    pub fn to_string(&self) -> Result<String, JsValue> {
+        let credential = serde_json::to_string(&self.0).map_err(js_err)?;
+        Ok(credential)
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn vc(&self) -> JsValue {
+        JsValue::from_serde(&self.0).ok().unwrap_or(JsValue::NULL)
     }
 }
