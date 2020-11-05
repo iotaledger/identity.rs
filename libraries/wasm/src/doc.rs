@@ -168,7 +168,7 @@ impl Doc {
     }
 
     #[wasm_bindgen]
-    pub fn update_service(&mut self, did: WasmDID, url: String, service_type: String) -> Result<Doc, JsValue> {
+    pub fn update_service(&self, did: WasmDID, url: String, service_type: String) -> Result<Doc, JsValue> {
         let endpoint = ServiceEndpoint::Url(url.parse().map_err(js_err)?);
         let service = ServiceBuilder::default()
             .id(DID::parse(did.0).map_err(js_err)?)
@@ -176,8 +176,9 @@ impl Doc {
             .endpoint(endpoint)
             .build()
             .map_err(js_err)?;
-        self.0.update_service(service);
-        Ok(Doc(self.0.clone()))
+        let mut new_doc = self.0.clone();
+        new_doc.update_service(service);
+        Ok(Doc(new_doc))
     }
 
     #[wasm_bindgen]

@@ -75,6 +75,6 @@ impl DID {
 
 impl DID {
     pub fn parse_from_did(did: CoreDID) -> Result<DID, JsValue> {
-        Ok(Self(IotaDID::parse(did.to_string()).map_err(js_err)?))
+        IotaDID::try_from_did(did).map_err(js_err).map(Self)
     }
 }
