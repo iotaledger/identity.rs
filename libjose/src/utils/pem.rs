@@ -13,27 +13,13 @@ use core::str::Lines;
 use crate::error::PemError;
 use crate::error::Result;
 
+const LINE: &str = "\n";
 const WRAP: usize = 64;
 
 const HEADER_PREFIX: &str = "-----BEGIN ";
 const HEADER_SUFFIX: &str = "-----";
 const FOOTER_PREFIX: &str = "-----END ";
 const FOOTER_SUFFIX: &str = "-----";
-
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Line {
-  CRLF,
-  LF,
-}
-
-impl Line {
-  pub const fn as_str(self) -> &'static str {
-    match self {
-      Self::CRLF => "\r\n",
-      Self::LF => "\n",
-    }
-  }
-}
 
 /// A PEM-encoded document.
 ///
@@ -50,19 +36,19 @@ pub struct Pem {
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7468#section-2)
 pub fn pem_encode(data: &Pem) -> Result<String> {
-  pem_encode_config(data, Line::CRLF)
+  pem_encode_config(data, LINE)
 }
 
 /// Returns a PEM-encoded String of the input document.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7468#section-2)
-pub fn pem_encode_config(data: &Pem, line: Line) -> Result<String> {
+pub fn pem_encode_config(data: &Pem, line: &str) -> Result<String> {
   let mut output: String = String::new();
 
   output.push_str(HEADER_PREFIX);
   output.push_str(data.pem_type.as_str());
   output.push_str(HEADER_SUFFIX);
-  output.push_str(line.as_str());
+  output.push_str(line);
 
   let content: String = if data.pem_data.is_empty() {
     String::new()
@@ -72,13 +58,13 @@ pub fn pem_encode_config(data: &Pem, line: Line) -> Result<String> {
 
   for chunk in content.into_bytes().chunks(WRAP) {
     output.push_str(to_utf8(chunk)?);
-    output.push_str(line.as_str());
+    output.push_str(line);
   }
 
   output.push_str(FOOTER_PREFIX);
   output.push_str(data.pem_type.as_str());
   output.push_str(FOOTER_SUFFIX);
-  output.push_str(line.as_str());
+  output.push_str(line);
 
   Ok(output)
 }
@@ -202,9 +188,9 @@ mod tests {
     for (_, data, roundtrip) in DOCUMENTS {
       if *roundtrip {
         let decoded = pem_decode(data).unwrap();
-        let encoded = pem_encode_config(&decoded, Line::LF).unwrap();
+        let encoded = pem_encode(&decoded).unwrap();
 
-        assert!(encoded.trim() == data.trim());
+        assert_eq!(decoded, pem_decode(&encoded).unwrap());
       }
     }
   }
