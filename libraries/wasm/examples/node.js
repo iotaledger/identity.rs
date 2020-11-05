@@ -11,7 +11,7 @@ global.Request = fetch.Request
 global.Response = fetch.Response
 global.fetch = fetch
 
-const { initialize, resolve, publish, Key, Doc, DID } = identity
+const { initialize, resolve, publish, checkCredential, Key, Doc, DID, VerifiableCredential } = identity
 
 initialize()
 
@@ -82,9 +82,28 @@ function alice_bob() {
   console.log("Diff has valid signature: ", bob_document.verify_diff(json))
 }
 
+async function testVC() {
+  var { key, doc } = Doc.generateCom()
+  doc.sign(key)
+  let issuerKey = key
+  let issuerDoc = doc
+  console.log("vc issuer doc published", await publish(doc.document, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+  var { key, doc } = Doc.generateCom()
+  doc.sign(key)
+  let subjectDoc = doc
+  console.log("vc subject doc published", await publish(doc.document, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+  let vc = new VerifiableCredential(issuerDoc, issuerKey, subjectDoc, "UniversityDegreeCredential", "http://example.edu/credentials/3732", JSON.stringify({ name: "Subject", degree: { name: "Bachelor of Science and Arts", type: "BachelorDegree" } }));
+  console.log("vc", vc);
+  console.log("vc valid: ", await checkCredential(vc.to_string(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+  let vc_fromJson = VerifiableCredential.from_json(issuerDoc, issuerKey, vc.to_string())
+  console.log("vc_fromJson: ", vc_fromJson.vc);
+  console.log("vc_fromJson valid: ", await checkCredential(vc_fromJson.to_string(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+}
+
 async function run() {
   await playground()
   await alice_bob()
+  await testVC()
 }
 
 run().then((output) => {
