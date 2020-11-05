@@ -1,26 +1,32 @@
-use identity_common::{Object, Timestamp};
+use identity_core::common::{Object, Timestamp};
 use serde::{Deserialize, Serialize};
 
-/// Options permitted to create/customize a linked data signature
-///
-/// Note: The exact definition of these options is still uncertain
-///
-/// Ref: https://github.com/w3c-ccg/ld-proofs/issues/16
-/// Ref: https://github.com/w3c-ccg/ld-proofs/issues/19
-/// Ref: https://github.com/w3c-ccg/ld-proofs/issues/27
-///
-/// Ref: https://github.com/w3c-ccg/ld-cryptosuite-registry/issues/3
-/// Ref: https://github.com/w3c-ccg/ld-cryptosuite-registry/issues/34
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+/// Options used to create a linked data signature
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct SignatureOptions {
+    #[serde(rename = "verificationMethod")]
+    pub verification_method: String,
+    #[serde(rename = "proofPurpose", skip_serializing_if = "Option::is_none")]
+    pub proof_purpose: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created: Option<Timestamp>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub purpose: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub domain: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub nonce: Option<String>,
     #[serde(flatten)]
     pub properties: Object,
+}
+
+impl SignatureOptions {
+    pub fn new(verification_method: impl Into<String>) -> Self {
+        Self {
+            verification_method: verification_method.into(),
+            proof_purpose: None,
+            created: None,
+            domain: None,
+            nonce: None,
+            properties: Object::new(),
+        }
+    }
 }

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     branches:
       - main
@@ -19,18 +20,12 @@ jobs:
       matrix:
         project:
           [
-            identity_account,
-            identity_common,
-            identity_communication,
             identity_core,
             identity_crypto,
-            identity_integration,
-            identity_proof,
-            identity_resolver,
-            identity_schema,
-            identity_vc,
             identity_derive,
             identity_diff,
+            identity_iota,
+            identity_proof,
           ]
         os: [ubuntu-latest, windows-latest]
 
@@ -45,11 +40,11 @@ jobs:
 
       - name: Get current date
         if: matrix.os == 'ubuntu-latest'
-        run: echo "::set-env name=CURRENT_DATE::$(date +'%Y-%m-%d')"
+        run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
       - name: Get current date
         if: matrix.os == 'windows-latest'
-        run: echo "::set-env name=CURRENT_DATE::$(Get-Date -Format "yyyy-MM-dd")"
+        run: echo "CURRENT_DATE=$(Get-Date -Format "yyyy-MM-dd")" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
 
       - name: Cache cargo registry
         uses: actions/cache@v2

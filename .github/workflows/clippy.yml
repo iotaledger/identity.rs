@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     branches:
       - main
@@ -19,18 +20,12 @@ jobs:
       matrix:
         project:
           [
-            identity_account,
-            identity_common,
-            identity_communication,
             identity_core,
             identity_crypto,
-            identity_integration,
-            identity_proof,
-            identity_resolver,
-            identity_schema,
-            identity_vc,
             identity_derive,
             identity_diff,
+            identity_iota,
+            identity_proof,
           ]
 
     steps:
