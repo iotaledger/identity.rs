@@ -7,7 +7,7 @@ members = [
     "identity_derive",
     "identity_iota",
     "identity_proof",
-    "libraries/wasm"
 ]
 exclude = [
+    "libraries/wasm"
 ]

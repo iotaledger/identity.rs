@@ -3,6 +3,7 @@ use identity_core::{
     vc::Credential,
 };
 use identity_proof::LdSignature;
+use serde::Serialize;
 use std::collections::BTreeMap;
 
 use crate::{
@@ -12,7 +13,7 @@ use crate::{
     vc::VerifiableCredential,
 };
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CredentialValidation {
     pub credential: VerifiableCredential,
     pub verified: bool,
@@ -20,7 +21,7 @@ pub struct CredentialValidation {
     pub subjects: BTreeMap<String, DocumentValidation>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DocumentValidation {
     pub did: IotaDID,
     pub document: IotaDocument,

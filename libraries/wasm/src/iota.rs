@@ -89,9 +89,9 @@ pub async fn resolve(did: String, params: JsValue) -> Result<JsValue, JsValue> {
 }
 
 #[wasm_bindgen(js_name = checkCredential)]
-pub async fn check_credential(data: String, params: JsValue) -> Result<bool, JsValue> {
+pub async fn check_credential(data: String, params: JsValue) -> Result<JsValue, JsValue> {
     let client = client(params)?;
     let validator: CredentialValidator<'_> = CredentialValidator::new(&client);
     let validation: CredentialValidation = validator.check(&data).await.map_err(js_err)?;
-    Ok(validation.verified)
+    Ok(JsValue::from_serde(&validation).ok().unwrap_or(JsValue::NULL))
 }

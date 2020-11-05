@@ -246,10 +246,7 @@ impl Doc {
             _ => panic!("Unknown KeyRelation"),
         };
 
-        match self.0.resolve_key(0, relation) {
-            Some(key) => Ok(PubKey(key.clone())),
-            _ => panic!("Key not found"),
-        }
+        Ok(PubKey(self.0.resolve_key(0, relation).expect("Key not found").clone()))
     }
 }
 
