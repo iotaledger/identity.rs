@@ -2,10 +2,10 @@ use alloc::collections::BTreeMap;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
-use crypto::digest::Digest;
 use serde_json::to_vec;
 use url::Url;
 
+use crate::crypto::digest::Digest;
 use crate::error::Error;
 use crate::error::Result;
 use crate::error::ValidationError;

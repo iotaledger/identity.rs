@@ -5,10 +5,10 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
-use crypto::rand::OsRng;
-use crypto::signers::eddsa;
-use crypto::signers::eddsa::Curve;
 
+use crate::crypto::rand::OsRng;
+use crate::crypto::signers::eddsa;
+use crate::crypto::signers::eddsa::Curve;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwa::EdCurve;

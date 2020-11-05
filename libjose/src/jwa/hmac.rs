@@ -5,10 +5,10 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
-use crypto::key_box::SecretKey;
-use crypto::rand::OsRng;
-use crypto::signers::hmac;
 
+use crate::crypto::key_box::SecretKey;
+use crate::crypto::rand::OsRng;
+use crate::crypto::signers::hmac;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::Jwk;

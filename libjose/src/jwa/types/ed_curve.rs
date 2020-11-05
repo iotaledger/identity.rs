@@ -1,7 +1,8 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
-use crypto::signers::eddsa;
+
+use crate::crypto::signers::eddsa;
 
 /// Supported Elliptic Curves.
 ///

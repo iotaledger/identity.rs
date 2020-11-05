@@ -19,14 +19,16 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 thiserror = { version = "1.0", default-features = false }
 url = { version = "2.1", default-features = false, features = ["serde"] }
-zeroize = { version = "1.1", default-features = false }
 
-# Crypto-related - TODO: [[[ STRONGHOLD ]]]
-crypto = { git = "https://github.com/iotaledger/stronghold.rs", branch = "dev" }
-libsecp256k1 = { version = "0.3", default-features = false, features = ["hmac"], optional = true }
-lazy_static = { version = "1.4", default-features = false, optional = true }
-rand = { version = "0.7", default-features = false, features = ["getrandom"], optional = true }
-ring = { version = "0.16", default-features = false, optional = true }
+digest-crate = { version = "0.9", default-features = false, package = "digest" }
+ed25519-dalek = { version = "1.0", default-features = false, features = ["u64_backend"] }
+hmac-crate = { version = "0.9", default-features = false, package = "hmac" }
+k256 = { version = "0.5", default-features = false, features = ["ecdsa-core", "ecdsa", "sha256", "zeroize"] }
+p256 = { version = "0.5", default-features = false, features = ["ecdsa-core", "ecdsa", "sha256", "zeroize"] }
+rand-crate = { version = "0.7", default-features = false, features = ["getrandom"], package = "rand" }
+rsa-crate = { version = "0.3", default-features = false, package = "rsa" }
+sha2 = { version = "0.9", default-features = false }
+zeroize = { version = "1.1", default-features = false }
 
 [features]
 default = ["std"]

@@ -69,7 +69,7 @@ pub enum Error {
   #[error("Invalid Key Format: {0}")]
   InvalidKeyFormat(&'static str),
   #[error(transparent)]
-  CryptoError(#[from] crypto::Error),
+  CryptoError(#[from] crate::crypto::Error),
   #[error(transparent)]
   PemError(#[from] PemError),
   #[error(transparent)]

@@ -1,14 +1,14 @@
-use alloc::vec;
 use alloc::string::String;
 use alloc::string::ToString;
+use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
-use crypto::rand::OsRng;
-use crypto::signers::rsa;
 
+use crate::crypto::rand::OsRng;
+use crate::crypto::signers::rsa;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::Jwk;

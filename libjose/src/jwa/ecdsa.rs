@@ -5,9 +5,9 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
-use crypto::rand::OsRng;
-use crypto::signers::ecdsa;
 
+use crate::crypto::rand::OsRng;
+use crate::crypto::signers::ecdsa;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwa::EcCurve;
