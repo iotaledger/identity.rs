@@ -116,7 +116,7 @@ fn test_compact_signature_invalid() {
     .to_string()
     .unwrap();
 
-  let segments: Vec<&str> = encoded.split(".").collect();
+  let segments: Vec<&str> = encoded.split('.').collect();
   let modified: String = [segments[0], segments[1], "my-signature"].join(".");
   let verifier = key.to_verifier();
 
@@ -141,7 +141,7 @@ fn test_compact_payload_invalid() {
     .to_string()
     .unwrap();
 
-  let segments: Vec<&str> = encoded.split(".").collect();
+  let segments: Vec<&str> = encoded.split('.').collect();
   let modified: String = [segments[0], &encode_b64(b"my-payload"), segments[2]].join(".");
   let verifier = key.to_verifier();
 
@@ -169,7 +169,7 @@ fn test_compact_algorithm_invalid() {
     .to_string()
     .unwrap();
 
-  let segments: Vec<&str> = encoded.split(".").collect();
+  let segments: Vec<&str> = encoded.split('.').collect();
   let modified: String = [segments[0], segments[1], "my-signature"].join(".");
   let verifier = HS256.verifier_from_jwk(&jwk).unwrap();
 
@@ -195,7 +195,7 @@ fn test_compact_algorithm_not_allowed() {
     .to_string()
     .unwrap();
 
-  let segments: Vec<&str> = encoded.split(".").collect();
+  let segments: Vec<&str> = encoded.split('.').collect();
   let modified: String = [segments[0], segments[1], "my-signature"].join(".");
   let verifier = key.to_verifier();
 
@@ -326,7 +326,7 @@ fn test_detached_is_truly_detached() {
 
   assert_eq!(segment_count(&encoded), 2);
 
-  let segments: Vec<&str> = encoded.split(".").collect();
+  let segments: Vec<&str> = encoded.split('.').collect();
   let modified: String = [segments[0], "", segments[2]].join(".");
   let verifier = key.to_verifier();
 
@@ -355,7 +355,7 @@ fn test_detached_signature_invalid() {
     .to_string()
     .unwrap();
 
-  let segments: Vec<&str> = encoded.split(".").collect();
+  let segments: Vec<&str> = encoded.split('.').collect();
   let modified: String = [segments[0], segments[1], &encode_b64(b"my-signature")].join(".");
   let verifier = key.to_verifier();
 

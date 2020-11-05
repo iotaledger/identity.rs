@@ -13,13 +13,27 @@ use core::str::Lines;
 use crate::error::PemError;
 use crate::error::Result;
 
-const LINE: char = '\n';
 const WRAP: usize = 64;
 
 const HEADER_PREFIX: &str = "-----BEGIN ";
 const HEADER_SUFFIX: &str = "-----";
 const FOOTER_PREFIX: &str = "-----END ";
 const FOOTER_SUFFIX: &str = "-----";
+
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Line {
+  CRLF,
+  LF,
+}
+
+impl Line {
+  pub const fn as_str(self) -> &'static str {
+    match self {
+      Self::CRLF => "\r\n",
+      Self::LF => "\n",
+    }
+  }
+}
 
 /// A PEM-encoded document.
 ///
@@ -32,16 +46,23 @@ pub struct Pem {
   pub pem_type: String,
 }
 
-/// Returns a PEM-encoded String of the encoded document.
+/// Returns a PEM-encoded String of the input document.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7468#section-2)
 pub fn pem_encode(data: &Pem) -> Result<String> {
+  pem_encode_config(data, Line::CRLF)
+}
+
+/// Returns a PEM-encoded String of the input document.
+///
+/// [More Info](https://tools.ietf.org/html/rfc7468#section-2)
+pub fn pem_encode_config(data: &Pem, line: Line) -> Result<String> {
   let mut output: String = String::new();
 
   output.push_str(HEADER_PREFIX);
   output.push_str(data.pem_type.as_str());
   output.push_str(HEADER_SUFFIX);
-  output.push(LINE);
+  output.push_str(line.as_str());
 
   let content: String = if data.pem_data.is_empty() {
     String::new()
@@ -51,13 +72,13 @@ pub fn pem_encode(data: &Pem) -> Result<String> {
 
   for chunk in content.into_bytes().chunks(WRAP) {
     output.push_str(to_utf8(chunk)?);
-    output.push(LINE);
+    output.push_str(line.as_str());
   }
 
   output.push_str(FOOTER_PREFIX);
   output.push_str(data.pem_type.as_str());
   output.push_str(FOOTER_SUFFIX);
-  output.push(LINE);
+  output.push_str(line.as_str());
 
   Ok(output)
 }
@@ -97,6 +118,8 @@ fn to_utf8(data: &(impl AsRef<[u8]> + ?Sized)) -> Result<&str, PemError> {
 }
 
 fn parse_content(iter: &mut dyn Iterator<Item = &str>) -> Result<Vec<u8>, PemError> {
+  // TODO: Use Cow<'a, [u8]> and avoid copy when base64 data IS not split on
+  // multiple lines
   let mut content: Vec<u8> = Vec::new();
 
   for line in iter {
@@ -130,8 +153,7 @@ fn parse_footer<'a>(
 
 #[cfg(test)]
 mod tests {
-  use super::pem_decode as decode;
-  use super::pem_encode as encode;
+  use super::*;
 
   // https://tools.ietf.org/html/rfc7468#section-5.1
   const PEM_5_1: &str = include_str!("../../tests/fixtures/pem-examples/5_1.pem");
@@ -170,8 +192,8 @@ mod tests {
   #[test]
   fn test_decode() {
     for (type_, data, _) in DOCUMENTS {
-      assert!(decode(data).unwrap().pem_type == *type_);
-      assert!(decode(data).unwrap().pem_data.len() > 0);
+      assert!(pem_decode(data).unwrap().pem_type == *type_);
+      assert!(pem_decode(data).unwrap().pem_data.len() > 0);
     }
   }
 
@@ -179,7 +201,10 @@ mod tests {
   fn test_roundtrip() {
     for (_, data, roundtrip) in DOCUMENTS {
       if *roundtrip {
-        assert!(encode(&decode(data).unwrap()).unwrap().trim() == data.trim());
+        let decoded = pem_decode(data).unwrap();
+        let encoded = pem_encode_config(&decoded, Line::LF).unwrap();
+
+        assert!(encoded.trim() == data.trim());
       }
     }
   }

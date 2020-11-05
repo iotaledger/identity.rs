@@ -1,8 +1,8 @@
-use alloc::vec::Vec;
-use alloc::vec;
 use alloc::borrow::Cow;
 use alloc::collections::BTreeSet;
 use alloc::string::String;
+use alloc::vec;
+use alloc::vec::Vec;
 use core::convert::TryFrom;
 use core::fmt::Display;
 use core::fmt::Error as FmtError;
