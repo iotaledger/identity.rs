@@ -124,10 +124,18 @@ async function testVC() {
   console.log("vc_fromJson valid: ", await checkCredential(vc_fromJson.to_string(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
 }
 
+function restore_keypair() {
+  let secret = "Bac8bArn1tX9rrqawk9cWM6aK5KHNbhrvnV1VzBXMDrF"
+  let public = "7zwMYWKnoUJKArSxigqk5kHoCVw6vhsrWoKDRTcoXuhj"
+  let keypair = Key.from_strings(secret, public)
+  console.log(keypair);
+}
+
 async function run() {
   await playground()
   await alice_bob()
   await testVC()
+  restore_keypair()
 }
 
 run().then((output) => {

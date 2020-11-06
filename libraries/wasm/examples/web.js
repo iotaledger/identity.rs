@@ -8,6 +8,14 @@ import("../pkg/index.js").then(async identity => {
         await playground()
         await alice_bob()
         await testVC()
+        restore_keypair()
+
+        function restore_keypair() {
+            let secret = "Bac8bArn1tX9rrqawk9cWM6aK5KHNbhrvnV1VzBXMDrF"
+            let public = "7zwMYWKnoUJKArSxigqk5kHoCVw6vhsrWoKDRTcoXuhj"
+            let keypair = Key.from_strings(secret, public)
+            console.log(keypair);
+        }
 
         async function testVC() {
             var { key, doc } = Doc.generateCom()
