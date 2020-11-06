@@ -10,10 +10,8 @@ license = "MIT"
 [lib]
 crate-type = ["cdylib"]
 
-# TODO: Discover this:
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
