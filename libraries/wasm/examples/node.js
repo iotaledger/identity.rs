@@ -11,7 +11,7 @@ global.Request = fetch.Request
 global.Response = fetch.Response
 global.fetch = fetch
 
-const { initialize, resolve, publish, checkCredential, Key, Doc, DID, VerifiableCredential } = identity
+const { initialize, resolve, publish, checkCredential, Key, PubKey, Doc, DID, VerifiableCredential } = identity
 
 initialize()
 
@@ -80,6 +80,30 @@ function alice_bob() {
   let json = JSON.stringify(diff)
 
   console.log("Diff has valid signature: ", bob_document.verify_diff(json))
+
+  bob_document.update_service(DID.parse(bob_document.document.id + "#messages"), "https://example.com/messages/8377464", "MessagingService")
+  console.log("Doc with service ", bob_document.document);
+  bob_document.clear_services()
+  console.log("Doc with services cleared ", bob_document.document);
+  let keypair = new Key();
+  let publicKey = new PubKey(DID.parse(bob_document.document.id + "#keys-1"), DID.parse(bob_document.document.id), keypair.public)
+  bob_document.update_public_key(publicKey)
+  console.log("Doc with public key ", bob_document.document);
+  bob_document.update_public_key(publicKey)
+  bob_document.update_auth(publicKey)
+  bob_document.update_assert(publicKey)
+  bob_document.update_verification(publicKey)
+  bob_document.update_delegation(publicKey)
+  bob_document.update_invocation(publicKey)
+  bob_document.update_agreement(publicKey)
+  bob_document.update_time()
+  console.log("Doc with A LOT", bob_document.document);
+  let bob_auth_key = bob_document.resolve_key("Authentication")
+  console.log("bob_auth_key: ", bob_auth_key.pubkey);
+  setTimeout(() => {
+    bob_document.update_time()
+    console.log("bob_document with updated time: ", bob_document.document)
+  }, 1000)
 }
 
 async function testVC() {

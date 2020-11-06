@@ -236,16 +236,7 @@ impl Doc {
 
     #[wasm_bindgen]
     pub fn resolve_key(&mut self, key_relation: &str) -> Result<PubKey, JsValue> {
-        let relation = match key_relation {
-            "VerificationMethod" => KeyRelation::VerificationMethod,
-            "Authentication" => KeyRelation::Authentication,
-            "AssertionMethod" => KeyRelation::AssertionMethod,
-            "KeyAgreement" => KeyRelation::KeyAgreement,
-            "CapabilityInvocation" => KeyRelation::CapabilityInvocation,
-            "CapabilityDelegation" => KeyRelation::CapabilityDelegation,
-            _ => panic!("Unknown KeyRelation"),
-        };
-
+        let relation: KeyRelation = key_relation.parse().map_err(js_err)?;
         Ok(PubKey(self.0.resolve_key(0, relation).expect("Key not found").clone()))
     }
 }
