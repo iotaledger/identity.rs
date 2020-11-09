@@ -8,27 +8,7 @@ export default function identity() {
     }
     return initWasm('iota_identity_wasm_bg.wasm').then(() => {
         __initializedIotaWasm = true
+        wasm.initialize()
         return wasm
     })
-}
-
-// Todo add all functions
-
-/**
- * Get a Ed25519 keypair
- */
-function newKey() {
-    return identity().then(lib => new lib.Key())
-}
-
-/**
- * Generate a DID from a public key
- */
-function newDID(publicKey) {
-    return identity().then(lib => new lib.DID(publicKey))
-}
-
-export {
-    newKey,
-    newDID
 }
