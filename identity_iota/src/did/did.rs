@@ -13,7 +13,7 @@ use identity_crypto::KeyPair;
 use identity_proof::signature::jcsed25519signature2020;
 use iota::transaction::bundled::Address;
 use multihash::Blake2b256;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     error::{Error, Result},
@@ -23,7 +23,8 @@ use crate::{
 // The hash size of BLAKE2b-256 (32-bytes)
 const BLAKE2B_256_LEN: usize = 32;
 
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[serde(try_from = "DID", into = "DID")]
 pub struct IotaDID(DID);
 
 impl IotaDID {
