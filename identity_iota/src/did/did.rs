@@ -145,6 +145,10 @@ impl IotaDID {
         this
     }
 
+    pub fn into_inner(self) -> DID {
+        self.0
+    }
+
     /// Creates an 81 Trytes IOTA address from the DID
     pub fn create_address_hash(&self) -> String {
         let mut trytes: String = utf8_to_trytes(self.method_id());

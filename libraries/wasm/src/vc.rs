@@ -1,12 +1,11 @@
-use crate::{doc::Doc, js_err, key::Key};
 use identity_core::{
-    common::{Context, Object, Timestamp, Value},
-    did::DID,
-    vc::{Credential as CoreCredential, CredentialBuilder, CredentialSubject, CredentialSubjectBuilder},
+    common::{Context, FromJson as _, OneOrMany, Timestamp},
+    vc::{Credential, CredentialBuilder, CredentialSubject},
 };
 use identity_iota::vc::VerifiableCredential as IotaVC;
-use serde_json::Map;
 use wasm_bindgen::prelude::*;
+
+use crate::{doc::Doc, js_err, key::Key};
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
@@ -16,57 +15,52 @@ pub struct VerifiableCredential(pub(crate) IotaVC);
 impl VerifiableCredential {
     #[wasm_bindgen(constructor)]
     pub fn new(
-        issuer_document: &Doc,
-        key: &Key,
-        subject_document: &Doc,
+        issuer_doc: &Doc,
+        issuer_key: &Key,
+        credential_id: String,
         credential_type: String,
-        credential_url: String,
-        properties: String,
+        credential_subject: JsValue,
     ) -> Result<VerifiableCredential, JsValue> {
-        let json_properties: serde_json::Value = serde_json::from_str(&properties).map_err(js_err)?;
-        let properties_obj: Map<String, Value> = json_properties.as_object().unwrap().clone();
+        let subjects: OneOrMany<CredentialSubject> = credential_subject.into_serde().map_err(js_err)?;
 
-        let subject: CredentialSubject = CredentialSubjectBuilder::default()
-            .id(DID::from(subject_document.0.did().clone()))
-            .properties(properties_obj)
-            .build()
-            .unwrap();
-
-        let mut credential: IotaVC = CredentialBuilder::new()
-            .id(credential_url)
-            .issuer(DID::from(issuer_document.0.did().clone()))
-            .context(vec![Context::from(CoreCredential::BASE_CONTEXT)])
-            .types(vec![CoreCredential::BASE_TYPE.into(), credential_type])
-            .subject(vec![subject])
+        let mut this: Self = CredentialBuilder::new()
+            .id(credential_id)
+            .issuer(issuer_doc.did().0.into_inner())
+            .context(vec![Context::from(Credential::BASE_CONTEXT)])
+            .types(vec![Credential::BASE_TYPE.into(), credential_type])
+            .subject(subjects)
             .issuance_date(Timestamp::now())
             .build()
             .map(IotaVC::new)
-            .map_err(js_err)?;
+            .map_err(js_err)
+            .map(Self)?;
 
-        credential.sign(&issuer_document.0, key.0.secret()).map_err(js_err)?;
+        this.sign(issuer_doc, issuer_key)?;
 
-        Ok(Self(credential))
+        Ok(this)
     }
 
+    /// Signs the credential with the given issuer `Doc` and `Key` object.
     #[wasm_bindgen]
-    pub fn from_json(issuer_document: &Doc, key: &Key, credential: String) -> Result<VerifiableCredential, JsValue> {
-        let mut credential: CoreCredential = serde_json::from_str(&credential).map_err(js_err)?;
-        // deletes proof object if there is one
-        credential.properties = Object::new();
-        let mut vc = IotaVC::new(credential);
-        vc.sign(&issuer_document.0, key.0.secret()).map_err(js_err)?;
-
-        Ok(Self(vc))
+    pub fn sign(&mut self, issuer: &Doc, key: &Key) -> Result<(), JsValue> {
+        self.0.sign(&issuer.0, key.0.secret()).map_err(js_err)
     }
 
+    /// Verifies the credential signature against the issuer `Doc`.
     #[wasm_bindgen]
-    pub fn to_string(&self) -> Result<String, JsValue> {
-        let credential = serde_json::to_string(&self.0).map_err(js_err)?;
-        Ok(credential)
+    pub fn verify(&self, issuer: &Doc) -> Result<(), JsValue> {
+        self.0.verify(&issuer.0).map_err(js_err)
     }
 
-    #[wasm_bindgen(getter)]
-    pub fn vc(&self) -> JsValue {
-        JsValue::from_serde(&self.0).ok().unwrap_or(JsValue::NULL)
+    /// Serializes a `VerifiableCredential` object as a JSON string.
+    #[wasm_bindgen(js_name = toJSON)]
+    pub fn to_json(&self) -> Result<JsValue, JsValue> {
+        JsValue::from_serde(&self.0).map_err(js_err)
+    }
+
+    /// Deserializes a `VerifiableCredential` object from a JSON string.
+    #[wasm_bindgen(js_name = fromJSON)]
+    pub fn from_json(json: &str) -> Result<VerifiableCredential, JsValue> {
+        IotaVC::from_json(json).map_err(js_err).map(Self)
     }
 }

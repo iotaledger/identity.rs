@@ -1,15 +1,8 @@
-use identity_core::{did::DID as CoreDID, utils::decode_b58};
+use identity_core::utils::{decode_b58, decode_b64};
 use identity_iota::did::IotaDID;
 use wasm_bindgen::prelude::*;
 
-use crate::js_err;
-
-#[derive(Debug, Deserialize)]
-pub struct DIDParams {
-    key: String,
-    network: Option<String>,
-    shard: Option<String>,
-}
+use crate::{js_err, key::Key};
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
@@ -17,64 +10,61 @@ pub struct DID(pub(crate) IotaDID);
 
 #[wasm_bindgen]
 impl DID {
-    fn create(key: impl AsRef<str>, network: Option<&str>, shard: Option<&str>) -> Result<Self, JsValue> {
-        let public: Vec<u8> = decode_b58(key.as_ref()).map_err(js_err)?;
-
-        IotaDID::with_network_and_shard(&public, network, shard)
-            .map_err(js_err)
-            .map(Self)
+    fn create(pubkey: &[u8], network: Option<&str>) -> Result<DID, JsValue> {
+        IotaDID::with_network(pubkey, network).map_err(js_err).map(Self)
     }
 
+    /// Creates a new `DID` from a `Key` object.
     #[wasm_bindgen(constructor)]
-    pub fn new(params: &JsValue) -> Result<DID, JsValue> {
-        if params.is_object() {
-            let params: DIDParams = params.into_serde().map_err(js_err)?;
-
-            Self::create(params.key, params.network.as_deref(), params.shard.as_deref())
-        } else if let Some(key) = params.as_string() {
-            Self::create(key, None, None)
-        } else {
-            panic!("Invalid Arguments for `new DID(..)`");
-        }
+    pub fn new(key: &Key, network: Option<String>) -> Result<DID, JsValue> {
+        Self::create(key.0.public().as_ref(), network.as_deref())
     }
 
+    /// Creates a new `DID` from a base58-encoded public key.
+    #[wasm_bindgen(js_name = fromBase58Key)]
+    pub fn from_base58_key(key: &str, network: Option<String>) -> Result<DID, JsValue> {
+        Self::create(&decode_b58(key).map_err(js_err)?, network.as_deref())
+    }
+
+    /// Creates a new `DID` from a base64-encoded public key.
+    #[wasm_bindgen(js_name = fromBase64Key)]
+    pub fn from_base64_key(key: &str, network: Option<String>) -> Result<DID, JsValue> {
+        Self::create(&decode_b64(key).map_err(js_err)?, network.as_deref())
+    }
+
+    /// Parses a `DID` from the input string.
     #[wasm_bindgen]
-    pub fn parse(did_string: String) -> Result<DID, JsValue> {
-        Ok(Self(IotaDID::parse(did_string).map_err(js_err)?))
+    pub fn parse(input: String) -> Result<DID, JsValue> {
+        IotaDID::parse(input).map_err(js_err).map(Self)
     }
 
+    /// Returns the IOTA tangle network of the `DID`.
     #[wasm_bindgen(getter)]
-    pub fn network(&self) -> String {
-        self.0.network().to_string()
+    pub fn network(&self) -> JsValue {
+        self.0.network().into()
     }
 
+    /// Returns the IOTA tangle shard of the `DID` (if any).
     #[wasm_bindgen(getter)]
     pub fn shard(&self) -> JsValue {
-        if let Some(shard) = self.0.shard() {
-            shard.into()
-        } else {
-            JsValue::NULL
-        }
+        self.0.shard().map(Into::into).unwrap_or(JsValue::NULL)
     }
 
+    /// Returns the unique tag of the `DID`.
     #[wasm_bindgen(getter)]
-    pub fn method_id(&self) -> String {
-        self.0.method_id().to_string()
+    pub fn tag(&self) -> JsValue {
+        self.0.method_id().into()
     }
 
+    /// Returns the IOTA tangle address of the `DID`.
     #[wasm_bindgen(getter)]
-    pub fn address(&self) -> String {
-        self.0.create_address_hash()
+    pub fn address(&self) -> JsValue {
+        self.0.create_address_hash().into()
     }
 
+    /// Returns the `DID` object as a string.
     #[wasm_bindgen(js_name = toString)]
-    pub fn to_string(&self) -> String {
-        self.0.to_string()
-    }
-}
-
-impl DID {
-    pub fn parse_from_did(did: CoreDID) -> Result<DID, JsValue> {
-        IotaDID::try_from_did(did).map_err(js_err).map(Self)
+    pub fn to_string(&self) -> JsValue {
+        self.0.to_string().into()
     }
 }

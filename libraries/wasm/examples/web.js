@@ -13,79 +13,94 @@ import("../pkg/index.js").then(async identity => {
         function restore_keypair() {
             let secret = "Bac8bArn1tX9rrqawk9cWM6aK5KHNbhrvnV1VzBXMDrF"
             let public = "7zwMYWKnoUJKArSxigqk5kHoCVw6vhsrWoKDRTcoXuhj"
-            let keypair = Key.from_strings(secret, public)
+            let keypair = Key.fromBase58(secret, public)
             console.log(keypair);
         }
 
         async function testVC() {
-            var { key, doc } = Doc.generateCom()
+            var { key, doc } = Doc.generateEd25519("com")
             doc.sign(key)
             let issuerKey = key
             let issuerDoc = doc
-            console.log("vc issuer doc published", await publish(doc.document, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
-            var { key, doc } = Doc.generateCom()
+            console.log("vc issuer doc published", await publish(doc.toJSON(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            var { key, doc } = Doc.generateEd25519("com")
             doc.sign(key)
             let subjectDoc = doc
-            console.log("vc subject doc published", await publish(doc.document, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
-            let vc = new VerifiableCredential(issuerDoc, issuerKey, subjectDoc, "UniversityDegreeCredential", "http://example.edu/credentials/3732", JSON.stringify({ name: "Subject", degree: { name: "Bachelor of Science and Arts", type: "BachelorDegree" } }));
+            console.log("vc subject doc published", await publish(doc.toJSON(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            let vc = new VerifiableCredential(
+                issuerDoc,
+                issuerKey,
+                "http://example.edu/credentials/3732",
+                "UniversityDegreeCredential",
+                {
+                    id: subjectDoc.id,
+                    name: "Subject",
+                    degree: {
+                        name: "Bachelor of Science and Arts",
+                        type: "BachelorDegree"
+                    }
+                }
+            );
             console.log("vc", vc);
-            console.log("vc valid: ", await checkCredential(vc.to_string(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
-            let vc_fromJson = VerifiableCredential.from_json(issuerDoc, issuerKey, vc.to_string())
+            console.log("vc valid: ", await checkCredential(vc.toString(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            let vc_fromJson = VerifiableCredential.fromJSON(vc.toString())
             console.log("vc_fromJson: ", vc_fromJson.vc);
-            console.log("vc_fromJson valid: ", await checkCredential(vc_fromJson.to_string(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            console.log("vc_fromJson valid: ", await checkCredential(vc_fromJson.toString(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
         }
 
         async function playground() {
-            console.log("key", new Key())
+            console.log("key", Key.ed25519())
 
-            console.log("did", new DID((new Key()).public))
+            console.log("did", new DID(Key.ed25519()))
 
-            console.log("did", new DID({ key: (new Key()).public, network: "com" }))
+            console.log("did", new DID(Key.ed25519(), "com"))
 
-            const { key, doc } = Doc.generateCom()
+            const { key, doc } = Doc.generateEd25519("com")
 
             console.log("key (generated)", key)
             console.log("doc (generated)", doc)
 
-            console.log("doc (unsigned)", doc.document)
+            console.log("doc (unsigned)", doc.toJSON())
 
             doc.sign(key)
 
-            console.log("doc (signed)", doc.document)
+            console.log("doc (signed)", doc.toJSON())
 
             console.log("doc valid?", doc.verify())
 
-            const json = JSON.stringify(doc.document)
+            const json = JSON.stringify(doc.toJSON())
 
             console.log("From JSON >", Doc.fromJSON(json))
 
-            console.log("published", await publish(doc.document, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
-            console.log("resolved", await resolve(doc.did, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            console.log("published", await publish(doc.toJSON(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            console.log("resolved", await resolve(doc.id, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
         }
 
         function alice_bob() {
             // Generate Keypairs
-            const alice_keypair = new Key()
+            const alice_keypair = Key.ed25519()
             console.log("alice_keypair: ", alice_keypair)
 
-            const bob_keypair = new Key()
+            const bob_keypair = Key.ed25519()
             console.log("bob_keypair: ", bob_keypair)
 
             // Create the DIDs
-            let alice_did = new DID(alice_keypair.public)
+            let alice_did = new DID(alice_keypair)
             console.log("alice_did: ", alice_did.toString(), alice_did.address)
 
-            let bob_did = new DID(bob_keypair.public)
+            let bob_did = new DID(bob_keypair)
             console.log("bob_did: ", bob_did.toString(), bob_did.address)
 
             // Create the DID Documents
-            let alice_document = new Doc({ did: alice_did.did, key: alice_keypair.public })
-            console.log("alice_document: ", alice_document.document)
+            let alice_pubkey = PubKey.ed25519(alice_did, alice_keypair.public)
+            let alice_document = new Doc(alice_pubkey)
+            console.log("alice_document: ", alice_document.toJSON())
 
-            let bob_document = new Doc({ did: bob_did.did, key: bob_keypair.public })
-            console.log("bob_document: ", bob_document.document)
+            let bob_pubkey = PubKey.ed25519(bob_did, bob_keypair.public)
+            let bob_document = new Doc(bob_pubkey)
+            console.log("bob_document: ", bob_document.toJSON())
 
-            let update = { ...bob_document.document }
+            let update = { ...bob_document.toJSON() }
 
             update["foo"] = 123
             update["bar"] = 456
@@ -99,30 +114,30 @@ import("../pkg/index.js").then(async identity => {
 
             let json = JSON.stringify(diff)
 
-            console.log("Diff has valid signature: ", bob_document.verify_diff(json))
+            console.log("Diff has valid signature: ", bob_document.verifyDiff(json))
 
-            bob_document.update_service(DID.parse(bob_document.document.id + "#messages"), "https://example.com/messages/8377464", "MessagingService")
-            console.log("Doc with service ", bob_document.document);
-            bob_document.clear_services()
-            console.log("Doc with services cleared ", bob_document.document);
-            let keypair = new Key();
-            let publicKey = new PubKey(DID.parse(bob_document.document.id + "#keys-1"), DID.parse(bob_document.document.id), keypair.public)
-            bob_document.update_public_key(publicKey)
-            console.log("Doc with public key ", bob_document.document);
-            bob_document.update_public_key(publicKey)
-            bob_document.update_auth(publicKey)
-            bob_document.update_assert(publicKey)
-            bob_document.update_verification(publicKey)
-            bob_document.update_delegation(publicKey)
-            bob_document.update_invocation(publicKey)
-            bob_document.update_agreement(publicKey)
-            bob_document.update_time()
-            console.log("Doc with A LOT", bob_document.document);
-            let bob_auth_key = bob_document.resolve_key("Authentication")
+            bob_document.updateService(DID.parse(bob_document.toJSON().id + "#messages"), "https://example.com/messages/8377464", "MessagingService")
+            console.log("Doc with service ", bob_document.toJSON());
+            bob_document.clearServices()
+            console.log("Doc with services cleared ", bob_document.toJSON());
+            let keypair = Key.ed25519();
+            let publicKey = PubKey.ed25519(bob_document.did(), keypair.public, "#keys-1")
+            bob_document.updatePublicKey(publicKey)
+            console.log("Doc with public key ", bob_document.toJSON());
+            bob_document.updatePublicKey(publicKey)
+            bob_document.updateAuth(publicKey)
+            bob_document.updateAssert(publicKey)
+            bob_document.updateVerification(publicKey)
+            bob_document.updateDelegation(publicKey)
+            bob_document.updateInvocation(publicKey)
+            bob_document.updateAgreement(publicKey)
+            bob_document.updateTime()
+            console.log("Doc with A LOT", bob_document.toJSON());
+            let bob_auth_key = bob_document.resolveKey(0, "Authentication")
             console.log("bob_auth_key: ", bob_auth_key.pubkey);
             setTimeout(() => {
-                bob_document.update_time()
-                console.log("bob_document with updated time: ", bob_document.document)
+                bob_document.updateTime()
+                console.log("bob_document with updated time: ", bob_document.toJSON())
             }, 1000)
         }
     } catch (e) {
