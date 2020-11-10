@@ -12,6 +12,7 @@ pub mod key;
 pub mod pubkey;
 pub mod vc;
 
+/// Initializes the console_error_panic_hook for better error messages
 #[wasm_bindgen]
 pub fn initialize() -> JsValue {
     console_error_panic_hook::set_once();
