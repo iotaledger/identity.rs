@@ -40,31 +40,31 @@ impl DID {
 
     /// Returns the IOTA tangle network of the `DID`.
     #[wasm_bindgen(getter)]
-    pub fn network(&self) -> JsValue {
+    pub fn network(&self) -> String {
         self.0.network().into()
     }
 
     /// Returns the IOTA tangle shard of the `DID` (if any).
     #[wasm_bindgen(getter)]
-    pub fn shard(&self) -> JsValue {
-        self.0.shard().map(Into::into).unwrap_or(JsValue::NULL)
+    pub fn shard(&self) -> Option<String> {
+        self.0.shard().map(Into::into)
     }
 
     /// Returns the unique tag of the `DID`.
     #[wasm_bindgen(getter)]
-    pub fn tag(&self) -> JsValue {
+    pub fn tag(&self) -> String {
         self.0.method_id().into()
     }
 
     /// Returns the IOTA tangle address of the `DID`.
     #[wasm_bindgen(getter)]
-    pub fn address(&self) -> JsValue {
-        self.0.create_address_hash().into()
+    pub fn address(&self) -> String {
+        self.0.create_address_hash()
     }
 
     /// Returns the `DID` object as a string.
     #[wasm_bindgen(js_name = toString)]
-    pub fn to_string(&self) -> JsValue {
-        self.0.to_string().into()
+    pub fn to_string(&self) -> String {
+        self.0.to_string()
     }
 }

@@ -48,8 +48,8 @@ impl VerifiableCredential {
 
     /// Verifies the credential signature against the issuer `Doc`.
     #[wasm_bindgen]
-    pub fn verify(&self, issuer: &Doc) -> Result<(), JsValue> {
-        self.0.verify(&issuer.0).map_err(js_err)
+    pub fn verify(&self, issuer: &Doc) -> Result<bool, JsValue> {
+        self.0.verify(&issuer.0).map_err(js_err).map(|_| true)
     }
 
     /// Serializes a `VerifiableCredential` object as a JSON string.
