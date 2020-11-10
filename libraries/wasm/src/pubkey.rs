@@ -33,8 +33,8 @@ impl PubKey {
     }
 
     /// Generates a new `PubKey` object suitable for ed25519 signatures.
-    #[wasm_bindgen(js_name = ed25519)]
-    pub fn ed25519(did: &DID, key_data: &str, tag: Option<String>) -> Result<PubKey, JsValue> {
+    #[wasm_bindgen(js_name = generateEd25519)]
+    pub fn generate_ed25519(did: &DID, key_data: &str, tag: Option<String>) -> Result<PubKey, JsValue> {
         Self::new(did, DEFAULT_KEY, key_data, tag)
     }
 

@@ -49,11 +49,11 @@ import("../pkg/index.js").then(async identity => {
         }
 
         async function playground() {
-            console.log("key", Key.ed25519())
+            console.log("key", Key.generateEd25519())
 
-            console.log("did", new DID(Key.ed25519()))
+            console.log("did", new DID(Key.generateEd25519()))
 
-            console.log("did", new DID(Key.ed25519(), "com"))
+            console.log("did", new DID(Key.generateEd25519(), "com"))
 
             const { key, doc } = Doc.generateEd25519("com")
 
@@ -78,10 +78,10 @@ import("../pkg/index.js").then(async identity => {
 
         function alice_bob() {
             // Generate Keypairs
-            const alice_keypair = Key.ed25519()
+            const alice_keypair = Key.generateEd25519()
             console.log("alice_keypair: ", alice_keypair)
 
-            const bob_keypair = Key.ed25519()
+            const bob_keypair = Key.generateEd25519()
             console.log("bob_keypair: ", bob_keypair)
 
             // Create the DIDs
@@ -92,11 +92,11 @@ import("../pkg/index.js").then(async identity => {
             console.log("bob_did: ", bob_did.toString(), bob_did.address)
 
             // Create the DID Documents
-            let alice_pubkey = PubKey.ed25519(alice_did, alice_keypair.public)
+            let alice_pubkey = PubKey.generateEd25519(alice_did, alice_keypair.public)
             let alice_document = new Doc(alice_pubkey)
             console.log("alice_document: ", alice_document.toJSON())
 
-            let bob_pubkey = PubKey.ed25519(bob_did, bob_keypair.public)
+            let bob_pubkey = PubKey.generateEd25519(bob_did, bob_keypair.public)
             let bob_document = new Doc(bob_pubkey)
             console.log("bob_document: ", bob_document.toJSON())
 
@@ -120,8 +120,8 @@ import("../pkg/index.js").then(async identity => {
             console.log("Doc with service ", bob_document.toJSON());
             bob_document.clearServices()
             console.log("Doc with services cleared ", bob_document.toJSON());
-            let keypair = Key.ed25519();
-            let publicKey = PubKey.ed25519(bob_document.did(), keypair.public, "#keys-1")
+            let keypair = Key.generateEd25519();
+            let publicKey = PubKey.generateEd25519(bob_document.did(), keypair.public, "#keys-1")
             bob_document.updatePublicKey(publicKey)
             console.log("Doc with public key ", bob_document.toJSON());
             bob_document.updatePublicKey(publicKey)
