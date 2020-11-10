@@ -94,25 +94,25 @@ new CopyWebPlugin({
 ### Usage
 
 ```js
-import loadWasm, * as identityLib from "iota-identity-wasm-test/web/";
+import * as identity from "iota-identity-wasm-test/web/";
 
-loadWasm().then(() => {
-    let keyPair = identityLib.Key.ed25519();
+identity.init().then(() => {
+    let keyPair = identity.Key.ed25519();
     console.log("keyPair", keyPair);
-    let did = new identityLib.DID(keyPair);
+    let did = new identity.DID(keyPair);
     console.log("did", did);
 });
 
 // or
 
 (async () => {
-    await loadWasm()
-    let keyPair = identityLib.Key.ed25519();
+    await identity.init()
+    let keyPair = identity.Key.ed25519();
     console.log("keyPair", keyPair);
-    let did = new identityLib.DID(keyPair);
+    let did = new identity.DID(keyPair);
     console.log("did", did);
  })();
 
 ```
 
-`loadWasm().then(() => {` or `await loadWasm()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
+`identity.init().then(() => {` or `await identity.init()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
