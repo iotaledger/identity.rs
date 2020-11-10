@@ -45,8 +45,8 @@ impl Doc {
             .map(Self)
     }
 
-    #[wasm_bindgen]
-    pub fn generate(key_type: &str, network: Option<String>, tag: Option<String>) -> Result<NewDoc, JsValue> {
+    #[wasm_bindgen(js_name = generateRandom)]
+    pub fn generate_random(key_type: &str, network: Option<String>, tag: Option<String>) -> Result<NewDoc, JsValue> {
         let key: Key = Key::new(key_type)?;
         let did: DID = DID::new(&key, network)?;
         let pkey: PubKey = PubKey::new(&did, key_type, &key.public(), tag)?;
@@ -59,7 +59,7 @@ impl Doc {
 
     #[wasm_bindgen(js_name = generateEd25519)]
     pub fn generate_ed25519(network: Option<String>, tag: Option<String>) -> Result<NewDoc, JsValue> {
-        Self::generate(DEFAULT_KEY, network, tag)
+        Self::generate_random(DEFAULT_KEY, network, tag)
     }
 
     #[wasm_bindgen]
