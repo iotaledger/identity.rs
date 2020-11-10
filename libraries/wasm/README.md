@@ -3,6 +3,7 @@
 > This is the alpha version of the official WASM binding to IOTA's Identity API.
 
 ## Install the library:
+
 $ npm install iota-identity-wasm-test
 // or using yarn
 $ yarn add iota-identity-wasm-test
@@ -31,7 +32,9 @@ console.log("alice_document: ", alice_document.document)
 The library loads the WASM file with an HTTP GET request, so the .wasm file must be copied to the root of the dist folder.
 
 ### Rollup
+
 - Install `rollup-plugin-copy`:
+
 ```bash
 $ npm install rollup-plugin-copy
 // or using yarn
@@ -39,18 +42,21 @@ $ yarn add rollup-plugin-copy
 ```
 
 - Add the copy plugin usage to the `plugins` array under `rollup.config.js`:
+
 ```js
 copy({
-	targets: [{
-		src: 'node_modules/iota-identity-wasm-test/web/iota_identity_wasm_bg.wasm',
-		dest: 'public',
-		rename: 'iota_identity_wasm_bg.wasm'
-	}]
+    targets: [{
+        src: 'node_modules/iota-identity-wasm-test/web/iota_identity_wasm_bg.wasm',
+        dest: 'public',
+        rename: 'iota_identity_wasm_bg.wasm'
+    }]
 })
 ```
 
 ### Webpack
+
 - Install `copy-webpack-plugin`:
+
 ```bash
 $ npm install copy-webpack-plugin --save-dev
 // or using yarn
@@ -65,25 +71,36 @@ const CopyWebPlugin= require('copy-webpack-plugin');
 
 new CopyWebPlugin({
     patterns: [
-        { 
-          from: 'node_modules/iota-identity-wasm-test/web/iota_identity_wasm_bg.wasm', 
-          to: 'iota_identity_wasm_bg.wasm' 
-          }
+        {
+          from: 'node_modules/iota-identity-wasm-test/web/iota_identity_wasm_bg.wasm',
+          to: 'iota_identity_wasm_bg.wasm'
+        }
     ]
 }),
 ```
 
 ### Usage
+
 ```js
-import identity from "iota-identity-wasm-test/web";
+import loadWasm, * as identityLib from "iota-identity-wasm-test/web/";
 
-identity().then((lib) => {
-    let keyPair = new lib.Key();
+loadWasm().then(() => {
+    let keyPair = identityLib.Key.ed25519();
     console.log("keyPair", keyPair);
-    did.value = JSON.stringify(new lib.DID(keyPair.public));
-    console.log("did", did.value);
+    let did = new identityLib.DID(keyPair);
+    console.log("did", did);
 });
-```
 
+// or
+
+(async () => {
+    await loadWasm()
+    let keyPair = identityLib.Key.ed25519();
+    console.log("keyPair", keyPair);
+    let did = new identityLib.DID(keyPair);
+    console.log("did", did);
+ })();
+
+```
 
 `identity().then((lib) => {` or `let lib = await identity()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
