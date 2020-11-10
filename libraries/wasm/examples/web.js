@@ -18,15 +18,15 @@ import("../pkg/index.js").then(async identity => {
         }
 
         async function testVC() {
-            var { key, doc } = Doc.generateEd25519("com")
+            var { key, doc } = Doc.generateEd25519("main")
             doc.sign(key)
             let issuerKey = key
             let issuerDoc = doc
-            console.log("vc issuer doc published", await publish(doc.toJSON(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
-            var { key, doc } = Doc.generateEd25519("com")
+            console.log("vc issuer doc published https://explorer.iota.org/mainnet/transaction/" + await publish(doc.toJSON(), { node: "https://nodes.thetangle.org:443", network: "main" }))
+            var { key, doc } = Doc.generateEd25519("main")
             doc.sign(key)
             let subjectDoc = doc
-            console.log("vc subject doc published", await publish(doc.toJSON(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            console.log("vc subject doc published https://explorer.iota.org/mainnet/transaction/" + await publish(doc.toJSON(), { node: "https://nodes.thetangle.org:443", network: "main" }))
             let credentialSubject = {
                 id: subjectDoc.id,
                 name: "Subject",
@@ -43,10 +43,10 @@ import("../pkg/index.js").then(async identity => {
                 "http://example.edu/credentials/3732",
             );
             console.log("vc", vc.toJSON());
-            console.log("vc valid: ", await checkCredential(vc.toString(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            console.log("vc valid: ", await checkCredential(vc.toString(), { node: "https://nodes.thetangle.org:443", network: "main" }))
             let vc_fromJson = VerifiableCredential.fromJSON(vc.toJSON())
             console.log("vc_fromJson: ", vc_fromJson);
-            console.log("vc_fromJson valid: ", await checkCredential(vc_fromJson.toString(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            console.log("vc_fromJson valid: ", await checkCredential(vc_fromJson.toString(), { node: "https://nodes.thetangle.org:443", network: "main" }))
         }
 
         async function playground() {
@@ -54,9 +54,9 @@ import("../pkg/index.js").then(async identity => {
 
             console.log("did", new DID(Key.generateEd25519()))
 
-            console.log("did", new DID(Key.generateEd25519(), "com"))
+            console.log("did", new DID(Key.generateEd25519(), "main"))
 
-            const { key, doc } = Doc.generateEd25519("com")
+            const { key, doc } = Doc.generateEd25519("main")
 
             console.log("key (generated)", key)
             console.log("doc (generated)", doc)
@@ -71,8 +71,8 @@ import("../pkg/index.js").then(async identity => {
 
             console.log("From JSON >", Doc.fromJSON(doc.toJSON()))
 
-            console.log("published", await publish(doc.toJSON(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
-            console.log("resolved", await resolve(doc.id, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            console.log("published https://explorer.iota.org/mainnet/transaction/" + await publish(doc.toJSON(), { node: "https://nodes.thetangle.org:443", network: "main" }))
+            console.log("resolved", await resolve(doc.id, { node: "https://nodes.thetangle.org:443", network: "main" }))
         }
 
         function alice_bob() {

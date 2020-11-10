@@ -44,9 +44,9 @@ The library loads the WASM file with an HTTP GET request, so the .wasm file must
 - Install `rollup-plugin-copy`:
 
 ```bash
-$ npm install rollup-plugin-copy
+$ npm install rollup-plugin-copy --save-dev
 // or using yarn
-$ yarn add rollup-plugin-copy
+$ yarn add rollup-plugin-copy --dev
 ```
 
 - Add the copy plugin usage to the `plugins` array under `rollup.config.js`:

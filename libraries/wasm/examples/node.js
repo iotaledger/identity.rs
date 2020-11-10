@@ -14,13 +14,13 @@ const { Key, PubKey, Doc, DID, VerifiableCredential, VerifiablePresentation } = 
 Identity.initialize()
 
 const CLIENT_CONFIG = {
-  network: "com",
-  node: "https://nodes.comnet.thetangle.org:443",
+  network: "main",
+  node: "https://nodes.thetangle.org:443",
 }
 
 function generateUser(name) {
-  const key = Key.generateEd25519("com")
-  const did = new DID(key, "com")
+  const key = Key.generateEd25519("main")
+  const did = new DID(key, "main")
   const doc = new Doc(PubKey.generateEd25519(did, key.public))
 
   return {
@@ -47,8 +47,8 @@ async function run() {
   console.log("Signed Doc (bob):   ", bob.doc.verify(), bob.doc.toJSON())
 
   // Publish all DID documents
-  console.log("Publish Result (alice): ", await Identity.publish(alice.doc.toJSON(), CLIENT_CONFIG))
-  console.log("Publish Result (bob):   ", await Identity.publish(bob.doc.toJSON(), CLIENT_CONFIG))
+  console.log("Publish Result (alice): https://explorer.iota.org/mainnet/transaction/" + await Identity.publish(alice.doc.toJSON(), CLIENT_CONFIG))
+  console.log("Publish Result (bob):   https://explorer.iota.org/mainnet/transaction/" + await Identity.publish(bob.doc.toJSON(), CLIENT_CONFIG))
 
   // Prepare a credential subject indicating the degree earned by Alice
   let credentialSubject = {
