@@ -84,3 +84,6 @@ identity().then((lib) => {
     console.log("did", did.value);
 });
 ```
+
+
+`identity().then((lib) => {` or `let lib = await identity()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
