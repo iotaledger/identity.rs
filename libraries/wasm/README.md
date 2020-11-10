@@ -57,14 +57,20 @@ $ npm install copy-webpack-plugin --save-dev
 $ yarn add copy-webpack-plugin --dev
 ```
 
-- Add the copy plugin to the `plugins` array of your webpack config:
 ```js
-new CopyWebpackPlugin([
-  {
-    src: 'node_modules/iota-identity-wasm-test/web/iota_identity_wasm_bg.wasm',
-    to: 'iota_identity_wasm_bg.wasm'
-  }
-])
+// Inluce the copy plugin
+const CopyWebPlugin= require('copy-webpack-plugin');
+
+// Add the copy plugin to the `plugins` array of your webpack config:
+
+new CopyWebPlugin({
+    patterns: [
+        { 
+          from: 'node_modules/iota-identity-wasm-test/web/iota_identity_wasm_bg.wasm', 
+          to: 'iota_identity_wasm_bg.wasm' 
+          }
+    ]
+}),
 ```
 
 ### Usage
