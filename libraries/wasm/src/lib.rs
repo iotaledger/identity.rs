@@ -11,6 +11,7 @@ pub mod iota;
 pub mod key;
 pub mod pubkey;
 pub mod vc;
+pub mod vp;
 
 /// Initializes the console_error_panic_hook for better error messages
 #[wasm_bindgen]
