@@ -11,6 +11,7 @@ pub mod iota;
 pub mod key;
 pub mod pubkey;
 pub mod vc;
+pub mod vp;
 
 #[wasm_bindgen]
 pub fn initialize() -> JsValue {

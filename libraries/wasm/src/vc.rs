@@ -40,11 +40,7 @@ impl VerifiableCredential {
             builder = builder.id(credential_id);
         }
 
-        let mut this: Self = builder
-            .build()
-            .map(IotaVC::new)
-            .map_err(js_err)
-            .map(Self)?;
+        let mut this: Self = builder.build().map(IotaVC::new).map_err(js_err).map(Self)?;
 
         this.sign(issuer_doc, issuer_key)?;
 
