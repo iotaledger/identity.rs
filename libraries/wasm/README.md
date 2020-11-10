@@ -4,27 +4,35 @@
 
 ## Install the library:
 
+```bash
 $ npm install iota-identity-wasm-test
 // or using yarn
 $ yarn add iota-identity-wasm-test
+```
 
 ## NodeJS Setup
 
 ```js
 const identity = require('iota-identity-wasm-test/node')
 
-// Generate Keypairs
-const alice_keypair = new identity.Key()
+// Call the initialize function to get better error messages from Wasm
+identity.initialize()
+
+// Generate Keypair
+const alice_keypair = identity.Key.generateEd25519()
 console.log("alice_keypair: ", alice_keypair)
 
 // Create the DIDs
-let alice_did = new identity.DID(alice_keypair.public)
-console.log("alice_did: ", alice_did.toString(), alice_did.address)
+let alice_did = new identity.DID(alice_keypair)
+console.log("alice_did and IOTA address: ", alice_did.toString(), alice_did.address)
+
+// Create the public key
+let alice_pubkey = identity.PubKey.generateEd25519(alice_did, alice_keypair.public)
+console.log("alice_pubkey: ", alice_pubkey);
 
 // Create the DID Documents
-let alice_document = new identity.Doc({ did: alice_did.did, key: alice_keypair.public })
-console.log("alice_document: ", alice_document.document)
-
+let alice_document = new identity.Doc(alice_pubkey)
+console.log("alice_document: ", alice_document)
 ```
 
 ## Web Setup
@@ -44,6 +52,10 @@ $ yarn add rollup-plugin-copy
 - Add the copy plugin usage to the `plugins` array under `rollup.config.js`:
 
 ```js
+// Inluce the copy plugin
+import copy from 'rollup-plugin-copy'
+
+// Add the copy plugin to the `plugins` array of your rollup config:
 copy({
     targets: [{
         src: 'node_modules/iota-identity-wasm-test/web/iota_identity_wasm_bg.wasm',

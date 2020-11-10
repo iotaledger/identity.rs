@@ -41,10 +41,10 @@ import("../pkg/index.js").then(async identity => {
                     }
                 }
             );
-            console.log("vc", vc);
+            console.log("vc", vc.toJSON());
             console.log("vc valid: ", await checkCredential(vc.toString(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
             let vc_fromJson = VerifiableCredential.fromJSON(vc.toString())
-            console.log("vc_fromJson: ", vc_fromJson.vc);
+            console.log("vc_fromJson: ", vc_fromJson);
             console.log("vc_fromJson valid: ", await checkCredential(vc_fromJson.toString(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
         }
 
@@ -134,7 +134,7 @@ import("../pkg/index.js").then(async identity => {
             bob_document.updateTime()
             console.log("Doc with A LOT", bob_document.toJSON());
             let bob_auth_key = bob_document.resolveKey(0, "Authentication")
-            console.log("bob_auth_key: ", bob_auth_key.pubkey);
+            console.log("bob_auth_key: ", bob_auth_key);
             setTimeout(() => {
                 bob_document.updateTime()
                 console.log("bob_document with updated time: ", bob_document.toJSON())
