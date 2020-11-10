@@ -1,5 +1,4 @@
 use identity_core::{
-    common::FromJson as _,
     key::KeyType,
     utils::{decode_b58, decode_b64, encode_b58},
 };
@@ -61,16 +60,16 @@ impl Key {
         encode_b58(self.0.secret())
     }
 
-    /// Serializes a `Key` object as a JSON string.
+    /// Serializes a `Key` object as a JSON object.
     #[wasm_bindgen(js_name = toJSON)]
     pub fn to_json(&self) -> Result<JsValue, JsValue> {
         JsValue::from_serde(&self.to_key_data()).map_err(js_err)
     }
 
-    /// Deserializes a `Key` object from a JSON string.
+    /// Deserializes a `Key` object from a JSON object.
     #[wasm_bindgen(js_name = fromJSON)]
-    pub fn from_json(json: &str) -> Result<Key, JsValue> {
-        let data: KeyData = KeyData::from_json(json).map_err(js_err)?;
+    pub fn from_json(json: &JsValue) -> Result<Key, JsValue> {
+        let data: KeyData = json.into_serde().map_err(js_err)?;
         let this: Self = Self::from_base58(&data.public, &data.private)?;
 
         Ok(this)

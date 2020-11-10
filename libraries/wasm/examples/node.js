@@ -35,9 +35,7 @@ async function playground() {
 
   console.log("doc valid?", doc.verify())
 
-  const json = JSON.stringify(doc.toJSON())
-
-  console.log("From JSON >", Doc.fromJSON(json))
+  console.log("From JSON >", Doc.fromJSON(doc.toJSON()))
 
   console.log("published", await publish(doc.toJSON(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
   console.log("resolved", await resolve(doc.id, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
@@ -71,7 +69,7 @@ function alice_bob() {
 
   update["foo"] = 123
   update["bar"] = 456
-  update = Doc.fromJSON(JSON.stringify(update))
+  update = Doc.fromJSON(update)
 
   console.log("Update: ", update)
 
@@ -134,7 +132,7 @@ async function testVC() {
   );
   console.log("vc", vc);
   console.log("vc valid: ", await checkCredential(vc.toString(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
-  let vc_fromJson = VerifiableCredential.fromJSON(vc.toString())
+  let vc_fromJson = VerifiableCredential.fromJSON(vc.toJSON())
   console.log("vc_fromJson: ", vc_fromJson);
   console.log("vc_fromJson valid: ", await checkCredential(vc_fromJson.toString(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
 }

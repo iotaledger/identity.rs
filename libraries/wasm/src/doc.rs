@@ -236,15 +236,15 @@ impl Doc {
             .ok_or_else(|| "Key Not Found".into())
     }
 
-    /// Serializes a `Doc` object as a JSON string.
+    /// Serializes a `Doc` object as a JSON object.
     #[wasm_bindgen(js_name = toJSON)]
     pub fn to_json(&self) -> Result<JsValue, JsValue> {
         JsValue::from_serde(&self.0).map_err(js_err)
     }
 
-    /// Deserializes a `Doc` object from a JSON string.
+    /// Deserializes a `Doc` object from a JSON object.
     #[wasm_bindgen(js_name = fromJSON)]
-    pub fn from_json(json: &str) -> Result<Doc, JsValue> {
-        IotaDocument::from_json(json).map_err(js_err).map(Self)
+    pub fn from_json(json: &JsValue) -> Result<Doc, JsValue> {
+        json.into_serde().map_err(js_err).map(Self)
     }
 }

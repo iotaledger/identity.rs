@@ -1,7 +1,4 @@
-use identity_core::{
-    common::AsJson as _,
-    key::{KeyData, KeyType, PublicKey, PublicKeyBuilder},
-};
+use identity_core::key::{KeyData, KeyType, PublicKey, PublicKeyBuilder};
 use identity_iota::did::IotaDID;
 use wasm_bindgen::prelude::*;
 
@@ -52,15 +49,15 @@ impl PubKey {
             .map(DID)
     }
 
-    /// Serializes a `PubKey` object as a JSON string.
+    /// Serializes a `PubKey` object as a JSON object.
     #[wasm_bindgen(js_name = toJSON)]
     pub fn to_json(&self) -> Result<JsValue, JsValue> {
         JsValue::from_serde(&self.0).map_err(js_err)
     }
 
-    /// Deserializes a `PubKey` object from a JSON string.
+    /// Deserializes a `PubKey` object from a JSON object.
     #[wasm_bindgen(js_name = fromJSON)]
-    pub fn from_json(json: &str) -> Result<PubKey, JsValue> {
-        PublicKey::from_json(json).map_err(js_err).map(Self)
+    pub fn from_json(json: &JsValue) -> Result<PubKey, JsValue> {
+        json.into_serde().map_err(js_err).map(Self)
     }
 }
