@@ -103,4 +103,4 @@ loadWasm().then(() => {
 
 ```
 
-`identity().then((lib) => {` or `let lib = await identity()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
+`loadWasm().then(() => {` or `await loadWasm()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
