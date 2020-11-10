@@ -17,19 +17,30 @@ impl VerifiableCredential {
     pub fn new(
         issuer_doc: &Doc,
         issuer_key: &Key,
-        credential_id: String,
-        credential_type: String,
-        credential_subject: JsValue,
+        subject_data: JsValue,
+        credential_type: Option<String>,
+        credential_id: Option<String>,
     ) -> Result<VerifiableCredential, JsValue> {
-        let subjects: OneOrMany<CredentialSubject> = credential_subject.into_serde().map_err(js_err)?;
+        let subjects: OneOrMany<CredentialSubject> = subject_data.into_serde().map_err(js_err)?;
 
-        let mut this: Self = CredentialBuilder::new()
-            .id(credential_id)
+        let types: Vec<String> = {
+            let mut types = vec![Credential::BASE_TYPE.into()];
+            types.extend(credential_type.into_iter());
+            types
+        };
+
+        let mut builder: CredentialBuilder = CredentialBuilder::new()
             .issuer(issuer_doc.did().0.into_inner())
             .context(vec![Context::from(Credential::BASE_CONTEXT)])
-            .types(vec![Credential::BASE_TYPE.into(), credential_type])
+            .types(types)
             .subject(subjects)
-            .issuance_date(Timestamp::now())
+            .issuance_date(Timestamp::now());
+
+        if let Some(credential_id) = credential_id {
+            builder = builder.id(credential_id);
+        }
+
+        let mut this: Self = builder
             .build()
             .map(IotaVC::new)
             .map_err(js_err)

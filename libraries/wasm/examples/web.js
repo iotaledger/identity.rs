@@ -27,19 +27,20 @@ import("../pkg/index.js").then(async identity => {
             doc.sign(key)
             let subjectDoc = doc
             console.log("vc subject doc published", await publish(doc.toJSON(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
+            let credentialSubject = {
+                id: subjectDoc.id,
+                name: "Subject",
+                degree: {
+                    name: "Bachelor of Science and Arts",
+                    type: "BachelorDegree"
+                }
+            }
             let vc = new VerifiableCredential(
                 issuerDoc,
                 issuerKey,
-                "http://example.edu/credentials/3732",
+                credentialSubject,
                 "UniversityDegreeCredential",
-                {
-                    id: subjectDoc.id,
-                    name: "Subject",
-                    degree: {
-                        name: "Bachelor of Science and Arts",
-                        type: "BachelorDegree"
-                    }
-                }
+                "http://example.edu/credentials/3732",
             );
             console.log("vc", vc.toJSON());
             console.log("vc valid: ", await checkCredential(vc.toString(), { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
