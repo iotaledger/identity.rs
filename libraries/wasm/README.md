@@ -15,6 +15,13 @@ $ yarn add iota-identity-wasm-test
 ```js
 const identity = require('iota-identity-wasm-test/node')
 
+// If you want to send requests to a node you also need to add this (https://github.com/seanmonstar/reqwest/issues/910)
+const fetch = require('node-fetch')
+global.Headers = fetch.Headers
+global.Request = fetch.Request
+global.Response = fetch.Response
+global.fetch = fetch
+
 // Call the initialize function to get better error messages from Wasm
 identity.initialize()
 
