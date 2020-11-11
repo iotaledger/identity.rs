@@ -1,6 +1,6 @@
 {
   "name": "iota-identity-wasm-test",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "WASM binding for the IOTA identity library",
   "repository": {
     "type": "git",

@@ -45,6 +45,7 @@ impl Doc {
             .map(Self)
     }
 
+    /// Generates a keypair and DID Document, supported key_type is "Ed25519VerificationKey2018"
     #[wasm_bindgen(js_name = generateRandom)]
     pub fn generate_random(key_type: &str, network: Option<String>, tag: Option<String>) -> Result<NewDoc, JsValue> {
         let key: Key = Key::new(key_type)?;
@@ -57,12 +58,13 @@ impl Doc {
         })
     }
 
+    /// Generates an Ed25519 keypair and DID Document
     #[wasm_bindgen(js_name = generateEd25519)]
     pub fn generate_ed25519(network: Option<String>, tag: Option<String>) -> Result<NewDoc, JsValue> {
         Self::generate_random(DEFAULT_KEY, network, tag)
     }
 
-    #[wasm_bindgen]
+    #[wasm_bindgen(getter)]
     pub fn did(&self) -> DID {
         DID(self.0.did().clone())
     }
@@ -96,11 +98,13 @@ impl Doc {
         self.0.sign(key.0.secret()).map_err(js_err).map(|_| JsValue::NULL)
     }
 
+    /// Verify the signature with the authentication_key
     #[wasm_bindgen]
     pub fn verify(&self) -> bool {
         self.0.verify().is_ok()
     }
 
+    /// Generate the difference between two DID Documents and sign it
     #[wasm_bindgen]
     pub fn diff(&self, other: &Doc, key: &Key) -> Result<JsValue, JsValue> {
         let doc: DIDDocument = other.0.clone().into();
@@ -109,6 +113,7 @@ impl Doc {
         JsValue::from_serde(&diff).map_err(js_err)
     }
 
+    /// Verify the signature in a diff with the authentication_key
     #[wasm_bindgen(js_name = verifyDiff)]
     pub fn verify_diff(&self, diff: String) -> bool {
         match DIDDiff::from_json(&diff) {

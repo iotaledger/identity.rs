@@ -120,7 +120,7 @@ import("../pkg/index.js").then(async identity => {
             bob_document.clearServices()
             console.log("Doc with services cleared ", bob_document.toJSON());
             let keypair = Key.generateEd25519();
-            let publicKey = PubKey.generateEd25519(bob_document.did(), keypair.public, "#keys-1")
+            let publicKey = PubKey.generateEd25519(bob_document.did, keypair.public, "#keys-1")
             bob_document.updatePublicKey(publicKey)
             console.log("Doc with public key ", bob_document.toJSON());
             bob_document.updatePublicKey(publicKey)

@@ -21,6 +21,7 @@ pub fn initialize() -> JsValue {
     JsValue::TRUE
 }
 
+/// Convert errors so they are readable in JS
 pub fn js_err<T: ToString>(error: T) -> JsValue {
     error.to_string().into()
 }
