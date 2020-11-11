@@ -33,7 +33,7 @@ const entryFileTs = fs.readFileSync(entryFilePathTs).toString()
 // Replace the init function in the ts file
 let changedFileTs = entryFileTs.replace(
   "/**\n* If `module_or_path` is {RequestInfo} or {URL}, makes a request and\n* for everything else, calls `WebAssembly.instantiate` directly.\n*\n* @param {InitInput | Promise<InitInput>} module_or_path\n*\n* @returns {Promise<InitOutput>}\n*/\nexport default function init (module_or_path?: InitInput | Promise<InitInput>): Promise<InitOutput>;",
-  "\/**\r\n* Loads the Wasm file so the lib can be used\r\n*\/\r\nexport function init (): Promise<>;"
+  "\/**\r\n* Loads the Wasm file so the lib can be used\r\n*\/\r\nexport function init (): Promise<void>;"
 )
 fs.writeFileSync(
   entryFilePathTs,
