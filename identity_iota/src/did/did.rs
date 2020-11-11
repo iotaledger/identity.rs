@@ -90,7 +90,9 @@ impl IotaDID {
         let mut did: String = format!("did:{}:", Self::METHOD);
 
         if let Some(network) = network.into() {
-            did.extend(network.chars().chain(once(':')));
+            if network != "main" {
+                did.extend(network.chars().chain(once(':')));
+            }
         }
 
         if let Some(shard) = shard.into() {
