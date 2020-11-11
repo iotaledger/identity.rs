@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build:nodejs": "wasm-pack build --target nodejs --out-dir node && rm ./node/.gitignore",
-    "build:web": "wasm-pack build --target web --out-dir web && node ./build/web && rm ./web/.gitignore",
+    "build:web": "wasm-pack build --target web --out-dir web && rm ./web/.gitignore",
     "build": "npm run build:web && npm run build:nodejs",
     "pretest": "npm run build:nodejs",
     "prepublishOnly": "npm run build",

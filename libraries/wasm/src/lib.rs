@@ -13,6 +13,12 @@ pub mod pubkey;
 pub mod vc;
 pub mod vp;
 
+#[wasm_bindgen(start)]
+pub fn start() -> Result<(), JsValue> {
+    initialize();
+    Ok(())
+}
+
 /// Initializes the console_error_panic_hook for better error messages
 #[wasm_bindgen]
 pub fn initialize() -> JsValue {
