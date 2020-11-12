@@ -24,7 +24,7 @@ The individual libraries are developed to be agnostic of Distributed Ledger Tech
 
 ## Warning
 
-This library is currently under development and is not yet ready to be used for anything. It is currently feature incomplete and cannot be considered alpha. Use at your own peril. Until a formal third-party security audit has taken place, the IOTA Foundation makes no guarantees to the fitness of this library for any purposes.
+This library is currently under development and might undergo large changes. It is currently in its alpha stage. Until a formal third-party security audit has taken place, the IOTA Foundation makes no guarantees to the fitness of this library.
 
 As such they are to be seen as **experimental** and not ready for real-world applications.
 
@@ -34,7 +34,7 @@ Nevertheless, we are very interested in feedback about the design and implementa
 
 At the current state, the framework is not fit for any projects, however as the framework matures we expect to support more and more type of applications. We recommend no use in real-world applications until the consumed libraries are audited, but experimentation and Proof-of-Concept projects are encouraged at the different stages.
 
-**Current Stage: 0**
+**Current Stage: 2**
 
 **Stage 1: DID (Q4 2020)**
 
@@ -53,20 +53,20 @@ Stage 4: TBD
 ## Roadmap
 
 ### Documentation and Specification
-- [ ] Examples
+- [x] Examples
 - [ ] Specification Documentation
 
 ### Basic Framework
-- [ ] DID Document Manager (Under active development)
-- [ ] IOTA Integration (Under active development)
-- [ ] Resolver (Under active development)
+- [x] DID Document Manager
+- [x] IOTA Integration
+- [x] Resolver
 - [ ] Stronghold Integration
 - [ ] DID Comms
-- [ ] Verifiable Credentials
+- [x] Verifiable Credentials
 - [ ] VC Comms
 - [ ] Schema Validation
 - [ ] C FFI Bindings
-- [ ] Javascript FFI Bindings
+- [x] Javascript FFI Bindings
 
 ### Extended Features (2021+)
 - [ ] Mobile App Wrapper
