@@ -132,13 +132,7 @@ impl IotaDID {
     pub fn normalize(&mut self) {
         match &*self.id_segments {
             [_] => {}
-            [network, _] => {
-                if let "main" = network.as_str() {
-                    self.id_segments.remove(0);
-                    {}
-                }
-            }
-            [network, _, _] => {
+            [network, _] | [network, _, _] => {
                 if let "main" = network.as_str() {
                     self.id_segments.remove(0);
                     {}
