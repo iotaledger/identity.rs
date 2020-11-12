@@ -120,8 +120,4 @@ identity.init().then(() => {
 
 `identity.init().then(() => {` or `await identity.init()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
 
-### API Reference
-
-* [Node](docs/api-reference-node.md)
-
-* [Web](docs/api-reference-web.md)
+### [API Reference](docs/api-reference.md)
