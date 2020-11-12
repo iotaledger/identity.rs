@@ -32,7 +32,7 @@ Nevertheless, we are very interested in feedback about the design and implementa
 
 ## Planned Milestones
 
-At the current state, the framework is not fit for any projects, however as the framework matures we expect to support more and more type of applications. We recommend no use in real-world applications until the consumed libraries are audited, but experimentation and Proof-of-Concept projects are encouraged at the different stages.
+At the current state, the framework is in alpha. As the framework matures we expect to support more and more type of applications. We recommend no use in real-world applications until the consumed libraries are audited, but experimentation and Proof-of-Concept projects are encouraged at the different stages.
 
 **Current Stage: 2**
 
