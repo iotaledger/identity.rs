@@ -1,3 +1,3 @@
 # IOTA Identity Libraries
 
-- WASM
+- [WASM](wasm/README.md)
