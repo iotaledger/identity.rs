@@ -64,7 +64,7 @@ impl IotaDID {
     }
 
     pub fn try_from_did(did: DID) -> Result<Self> {
-        Self::check_validity(&did).map(|_| Self(did))
+        Self::check_validity(&did).map(|_| Self(did).normalized())
     }
 
     pub fn parse(string: impl AsRef<str>) -> Result<Self> {
@@ -90,9 +90,7 @@ impl IotaDID {
         let mut did: String = format!("did:{}:", Self::METHOD);
 
         if let Some(network) = network.into() {
-            if network != "main" {
-                did.extend(network.chars().chain(once(':')));
-            }
+            did.extend(network.chars().chain(once(':')));
         }
 
         if let Some(shard) = shard.into() {
@@ -133,8 +131,14 @@ impl IotaDID {
 
     pub fn normalize(&mut self) {
         match &*self.id_segments {
-            [_] => self.id_segments.insert(0, Self::NETWORK.into()),
-            [_, _] | [_, _, _] => {}
+            [_] => {}
+            [network, _] => {
+                if let "main" = network.as_str() {
+                    self.id_segments.remove(0);
+                    {}
+                }
+            }
+            [_, _, _] => {}
             _ => unreachable!("IotaDID::normalize called for invalid DID"),
         }
     }

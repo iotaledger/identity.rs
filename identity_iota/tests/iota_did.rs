@@ -83,10 +83,8 @@ fn test_method_id() {
 fn test_normalize() {
     let key: String = key("123");
 
-    let mut did1: IotaDID = format!("did:iota:{}", key).parse().unwrap();
+    let did1: IotaDID = format!("did:iota:{}", key).parse().unwrap();
     let did2: IotaDID = format!("did:iota:main:{}", key).parse().unwrap();
 
-    assert!(did1 != did2);
-    did1.normalize();
     assert!(did1 == did2);
 }
