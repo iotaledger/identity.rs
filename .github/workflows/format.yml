@@ -1,0 +1,43 @@
+name: Format
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths-ignore:
+      - 'docs/**'
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          [
+            identity_core,
+            identity_crypto,
+            identity_derive,
+            identity_diff,
+            identity_iota,
+            identity_proof,
+          ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install rustfmt with nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --manifest-path=${{ matrix.project }}/Cargo.toml --all -- --check

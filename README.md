@@ -1,57 +1,84 @@
-# Identity.rs 
+![banner](./.meta/identity_banner.png)
 
-This is a work-in-progress library for Digital Identity on IOTA. It follows the Decentralized Identifiers (DIDs) and Verifiable Credentials standards created by the W3C. The concept of digital identity allows people, businesses, devices and anything else to identify themselves online, while remaining fully in control of this process.
+<p align="center">
+  <a href="https://discord.iota.org/" style="text-decoration:none;"><img src="https://img.shields.io/badge/Discord-9cf.svg?logo=discord" alt="Discord"></a>
+  <a href="https://iota.stackexchange.com/" style="text-decoration:none;"><img src="https://img.shields.io/badge/StackExchange-9cf.svg?logo=stackexchange" alt="StackExchange"></a>
+  <a href="https://github.com/iotaledger/identity.rs/blob/master/LICENSE" style="text-decoration:none;"><img src="https://img.shields.io/github/license/iotaledger/bee.svg" alt="Apache 2.0 license"></a>
+</p>
 
-**WARNING: THE CURRENT VERSION IS FEATURE INCOMPLETE AND WILL STILL UNDERGO MASSIVE CHANGES**
-If you are interested in using this project or contributing, join our [Discord](https://discord.iota.org) and visit the channel #identity-dev. 
+<p align="center">
+  <a href="#introduction">Introduction</a> ◈
+  <a href="#warning">Warning</a> ◈
+  <a href="#planned-milestones">Planned Milestones</a> ◈  
+  <a href="#roadmap">Roadmap</a> ◈
+  <a href="#joining-the-discussion">Joining the discussion</a>
+</p>
 
-## Prerequisits
-TODO
+---
 
-## Decentralized Identifers (DID)
+## Introduction
 
-This DID implementation is based on [v0.13 of the DID specification from W3C](https://w3c-ccg.github.io/did-spec/).
-DID's are authenticated using the [DID-Authentication protocol](https://github.com/WebOfTrustInfo/rwot6-santabarbara/blob/master/final-documents/did-auth.md), which proves to an inspection party that they are communicating with the owner of the DID.
-[According to the DID specification](https://w3c-ccg.github.io/did-spec/#did-documents) a DID Document is outputted when a DID is resolved. 
-This DID Document may be stored on IOTA, however this is immutabily stored and **might** contain personal data according to the GDPR. 
-It is therefore recommended that any DID's that represent people, will not be published on the Tangle, while issueing entities and devices should publish these to IOTA. 
+IOTA Identity is an implementation of decentralized digital identity also known as Self Sovereign Identity (SSI). It implements standards such as [DID](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) from W3C and other related (proposed) standards. This framework can be utilized to create and authenticate digital identities, creating a trusted connection and sharing verifiable information, establishing trust in the digital world. 
 
-To create, retrieve and manage DID Documents look at the [DID Documention](src/DID/README.md).
+The individual libraries are developed to be agnostic of Distributed Ledger Technology (DLT), with the exception of the IOTA integration and higher level libraries. Written in stable rust, it has strong guarantees of memory safety, process integrity while maintaining performance. 
 
-## Verifiable Credentials 
+## Warning
 
-Verifiable Credentials are implemented according to the [Verifiable Credentials Data Model 1.0 by W3C Community Group](https://www.w3.org/TR/vc-data-model/) standard.
-Verifiable Credentials works closely together with the DID standard. Where a DID can just be authenticated, Verifiable Credentials can add verifiable attributes to the identifier. 
-The acquisition, communication, management and storage of Verifiable Credentials are out of the scope of this implementation. 
-For a general introduction to the concept, please [read the explanation on the specification page](https://www.w3.org/TR/vc-data-model/#what-is-a-verifiable-credential).
+This library is currently under development and is not yet ready to be used for anything. It is currently feature incomplete and cannot be considered alpha. Use at your own peril. Until a formal third-party security audit has taken place, the IOTA Foundation makes no guarantees to the fitness of this library for any purposes.
 
-To create and verify Verifiable Credentials look at the [Verifiable Credentials Documentation](src/VC/README.md).
+As such they are to be seen as **experimental** and not ready for real-world applications.
 
-## Verifiable Presentations
+Nevertheless, we are very interested in feedback about the design and implementation, and encourage you to reach out with any concerns or suggestions you may have.
 
-To prevent a replay-attack where another party can also pass on the credential as if it is talking about their DID, Verifiable Presentation are introduced. 
-The [Verifiable Presentation data model](https://www.w3.org/TR/vc-data-model/#presentations) groups a set of excisting Verifiable Credentials of the subject together for the inspecting party and adds a signature, including a challenge from the inspecting party. It is therefore recommended to not communicate credentials directly, but rather presentations.
+## Planned Milestones
 
-## Schematics of Credentials
+At the current state, the framework is not fit for any projects, however as the framework matures we expect to support more and more type of applications. We recommend no use in real-world applications until the consumed libraries are audited, but experimentation and Proof-of-Concept projects are encouraged at the different stages.
 
-TODO: Describe schematics
+**Current Stage: 0**
 
-## Encryption techniques
+**Stage 1: DID (Q4 2020)**
 
-TODO: Describe current Encryption techniques and wanted / planned techniques.
+As the DID standard is implemented and the IOTA ledger is integrated the first experimentations are possible. DIDs can be created, updated and ownership can be proven. This allows simple experimentations where ownership of an identity is the main requirement. 
 
-## Future of this project
+**Stage 2: Verifiable Credentials (Q4 2020)**
 
-Identity will be used for:
-- Replace physical documents
-- Improved KYC
-- Replace passwords
-- IoT Security
-- Access Control
-- Trust
-- Smart Cities
-- Vehicle Identities (VID)
+With the Verifiable Credentials standard implemented, not only ownership can be proven, but also other attributes. At this stage PoCs are possible similarly to [Selv](https://selv.iota.org). However, the communications between actors are not yet implemented, identities are not easily recognized nor are credential layouts standardized. Real-world applications are possible at this stage (after audit), but require extra effort.
 
-## API Reference
+**Stage 3: Communication Standardization (Q1 2021)**
 
-TODO: Add Module overview
+Once the communications between DID actors have been implemented, any application using identity can communicate out-of-the-box in an interoperable manner. This makes applications easier to develop, yet as mentioned in Stage 2, identities are still not easily recognized nor are the credential layouts standarized. Real-world applications are therefore easier to develop (after audit), but scaling the application outside of a consortium is difficult.
+
+Stage 4: TBD
+
+## Roadmap
+
+### Documentation and Specification
+- [ ] Examples
+- [ ] Specification Documentation
+
+### Basic Framework
+- [ ] DID Document Manager (Under active development)
+- [ ] IOTA Integration (Under active development)
+- [ ] Resolver (Under active development)
+- [ ] Stronghold Integration
+- [ ] DID Comms
+- [ ] Verifiable Credentials
+- [ ] VC Comms
+- [ ] Schema Validation
+- [ ] C FFI Bindings
+- [ ] Javascript FFI Bindings
+
+### Extended Features (2021+)
+- [ ] Mobile App Wrapper
+- [ ] Credential standardization
+- [ ] Identity Agent
+- [ ] Pairwise DIDs
+- [ ] Zero Knowledge Proofs
+- [ ] Trust Fabric
+- [ ] eId Integrations
+- [ ] IoT reputation system
+- [ ] Identity for Objects
+
+## Joining the discussion
+
+If you want to get involved in discussions about this framework, or you're looking for support, go to the #identity-discussion channel on [Discord](http://discord.iota.org).
