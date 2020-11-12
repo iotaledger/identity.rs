@@ -113,15 +113,30 @@ TODO: With guidance from Tensor
 
 ## CRUD Operations
 
-DID Documents associated to the `did:iota` method consist of a chain of data messages, also known as zero-value transactions, published to a Tangle called "DID messages". The Tangle has no understanding of "DID messages" and acts purely as an immutable database. The chain of DID messages and the resulting DID Documents must therefore be validated on the client side. 
+Create, Read, Update and Delete (CRUD) operations that change the DID Documents are to be submitted to an IOTA Tangle in order to be publicly avaliable. They will either have to be a valid Auth DID Message or Diff DID Message, submitted on the correct indexation for the identity. 
 
 ### Create
 
+To generate a new DID, the method described in [generation](#generation) must be followed. A basic DID Document must be created that includes the public key used in the DID creation process as a public key included in the `authentication` object. This DID Document must be formatted as a Auth DID Message and published to an IOTA Tangle on the indexation generated out of the public key used in the DID creation process. 
+
+A valid indexation for the Auth DID Messages is the hash generated from hashing the `Blake2b-256` algorithm encoded in base58. 
+
 ### Read
 
-### Update
+To read the latest DID Document associated with a DID, the following process must be executed:
+* The indexation to query the Auth DID Messages DID is the `tag` part of the DID. 
+* Query all the Auth DID Messages and order based on prevMsg linkages.
+* When order cannot be determined through the prevMsg, dismiss the later  Auth DID Messages based on the milestone index. 
+* Validate the first Auth DID Message as containing 
 
-#### Key Revocation?
+#### Determining Order
+
+To determine order of any DID messages, the following algorithm must be applied:
+* Order is initially established by recreating the chain based on the `prevMsg` linkages. 
+* When two or more Messages compete, the older messages are to be dismissed.
+* To determine which messages are to be dismissed, the order is based on which milestone confirmed the message.
+
+### Update
 
 ### Delete
 
