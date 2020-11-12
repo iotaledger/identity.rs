@@ -15,9 +15,6 @@ $ yarn add iota-identity-wasm-test
 ```js
 const identity = require('iota-identity-wasm-test/node')
 
-// Call the initialize function to get better error messages from Wasm
-identity.initialize()
-
 // Generate Keypair
 const alice_keypair = identity.Key.generateEd25519()
 console.log("alice_keypair: ", alice_keypair)
