@@ -138,7 +138,12 @@ impl IotaDID {
                     {}
                 }
             }
-            [_, _, _] => {}
+            [network, _, _] => {
+                if let "main" = network.as_str() {
+                    self.id_segments.remove(0);
+                    {}
+                }
+            }
             _ => unreachable!("IotaDID::normalize called for invalid DID"),
         }
     }
