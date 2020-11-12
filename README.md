@@ -1,4 +1,4 @@
-![banner](./.meta/identity_banner2.png)
+![banner](./.meta/identity_banner.png)
 
 <p align="center">
   <a href="https://discord.iota.org/" style="text-decoration:none;"><img src="https://img.shields.io/badge/Discord-9cf.svg?logo=discord" alt="Discord"></a>
