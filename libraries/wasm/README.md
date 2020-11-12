@@ -52,7 +52,7 @@ $ yarn add rollup-plugin-copy --dev
 - Add the copy plugin usage to the `plugins` array under `rollup.config.js`:
 
 ```js
-// Inluce the copy plugin
+// Include the copy plugin
 import copy from 'rollup-plugin-copy'
 
 // Add the copy plugin to the `plugins` array of your rollup config:
@@ -76,7 +76,7 @@ $ yarn add copy-webpack-plugin --dev
 ```
 
 ```js
-// Inluce the copy plugin
+// Include the copy plugin
 const CopyWebPlugin= require('copy-webpack-plugin');
 
 // Add the copy plugin to the `plugins` array of your webpack config:
