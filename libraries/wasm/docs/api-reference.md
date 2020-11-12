@@ -27,10 +27,10 @@
 <dd><p>Resolves the latest DID Document from the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
 </dd>
 <dt><a href="#checkCredential">checkCredential(data, params)</a> ⇒ <code>any</code></dt>
-<dd><p>Validates credential with the DID Document from the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
+<dd><p>Validates a credential with the DID Document from the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
 </dd>
 <dt><a href="#checkPresentation">checkPresentation(data, params)</a> ⇒ <code>any</code></dt>
-<dd><p>Validates credential with the DID Document from the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
+<dd><p>Validates a presentation with the DID Document from the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
 </dd>
 <dt><a href="#start">start()</a></dt>
 <dd></dd>
@@ -732,7 +732,7 @@ Resolves the latest DID Document from the Tangle, params looks like { node: "htt
 <a name="checkCredential"></a>
 
 ## checkCredential(data, params) ⇒ <code>any</code>
-Validates credential with the DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
+Validates a credential with the DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
 
 **Kind**: global function  
 
@@ -744,7 +744,7 @@ Validates credential with the DID Document from the Tangle, params looks like { 
 <a name="checkPresentation"></a>
 
 ## checkPresentation(data, params) ⇒ <code>any</code>
-Validates credential with the DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
+Validates a presentation with the DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
 
 **Kind**: global function  
 
