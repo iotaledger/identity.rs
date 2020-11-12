@@ -1,5 +1,6 @@
 use identity_core::common::{FromJson as _, Object};
 use iota::transaction::bundled::{Address, BundledTransactionField as _};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     client::{Client, ReadTransactionsRequest, ReadTransactionsResponse, TangleMessage},
@@ -8,7 +9,7 @@ use crate::{
     utils::encode_trits,
 };
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct ReadDocumentResponse {
     pub document: IotaDocument,
     pub metadata: Object,

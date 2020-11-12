@@ -9,7 +9,7 @@ pub struct ClientBuilder {
 impl ClientBuilder {
     pub const fn new() -> Self {
         Self {
-            network: Network::Devnet,
+            network: Network::Mainnet,
             nodes: Vec::new(),
         }
     }

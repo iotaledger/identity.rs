@@ -15,3 +15,5 @@ book
 
 # ignore index.html
 index.html
+
+!/libraries/wasm/static/index.html
