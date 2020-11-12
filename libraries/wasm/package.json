@@ -1,7 +1,7 @@
 {
-  "name": "iota-identity-wasm-test",
-  "version": "0.0.13",
-  "description": "WASM binding for the IOTA identity library",
+  "name": "@iota/iota-identity-wasm",
+  "version": "0.1.0",
+  "description": "WASM bindings for IOTA Identity - A Self Sovereign Identity Framework implementing the DID and VC standards from W3C. To be used in Javascript/Typescript",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/iotaledger/identity.rs.git"
@@ -20,9 +20,13 @@
     "example:node": "node examples/node.js"
   },
   "contributors": [
-    "huhn511 <huhn@einfachiota.de>"
+    "Jelle Millenaar <jelle.millenaar@iota.org>",
+    "Devin Turner <devin.turner@iota.org>",
+    "Tensor <tensordeveloper@gmail.com>", 
+    "Thoralf Müller <thoralf.mue@gmail.com>",
+    "Sebastian Heusser <huhn.dev@gmail.com>"
   ],
-  "license": "MIT",
+  "license": "Apache 2.0",
   "bugs": {
     "url": "https://github.com/iotaledger/identity.rs/issues"
   },
@@ -32,8 +36,7 @@
   },
   "files": [
     "web",
-    "node",
-    "web.js"
+    "node"
   ],
   "devDependencies": {
     "@wasm-tool/wasm-pack-plugin": "^1.1.0",
