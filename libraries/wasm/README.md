@@ -2,6 +2,8 @@
 
 > This is the alpha version of the official WASM binding to IOTA's Identity API.
 
+## [API Reference](docs/api-reference.md)
+
 ## Install the library:
 
 ```bash
@@ -116,5 +118,3 @@ identity.init().then(() => {
 ```
 
 `identity.init().then(() => {` or `await identity.init()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
-
-### [API Reference](docs/api-reference.md)
