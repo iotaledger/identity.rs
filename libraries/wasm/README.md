@@ -15,13 +15,6 @@ $ yarn add iota-identity-wasm-test
 ```js
 const identity = require('iota-identity-wasm-test/node')
 
-// If you want to send requests to a node you also need to add this (https://github.com/seanmonstar/reqwest/issues/910)
-const fetch = require('node-fetch')
-global.Headers = fetch.Headers
-global.Request = fetch.Request
-global.Response = fetch.Response
-global.fetch = fetch
-
 // Call the initialize function to get better error messages from Wasm
 identity.initialize()
 
@@ -103,6 +96,7 @@ new CopyWebPlugin({
 ```js
 import * as identity from "iota-identity-wasm-test/web/";
 
+
 identity.init().then(() => {
     let keyPair = identity.Key.ed25519();
     console.log("keyPair", keyPair);
@@ -120,6 +114,8 @@ identity.init().then(() => {
     console.log("did", did);
  })();
 
+// Default path is "iota_identity_wasm_bg.wasm", but you can override it like this
+ await identity.init("./static/iota_identity_wasm_bg.wasm");
 ```
 
 `identity.init().then(() => {` or `await identity.init()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)

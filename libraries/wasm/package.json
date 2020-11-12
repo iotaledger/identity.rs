@@ -1,6 +1,6 @@
 {
   "name": "iota-identity-wasm-test",
-  "version": "0.0.11",
+  "version": "0.0.13",
   "description": "WASM binding for the IOTA identity library",
   "repository": {
     "type": "git",
@@ -10,8 +10,8 @@
     "example": "examples"
   },
   "scripts": {
-    "build:nodejs": "wasm-pack build --target nodejs --out-dir node && rm ./node/.gitignore",
-    "build:web": "wasm-pack build --target web --out-dir web && rm ./web/.gitignore",
+    "build:nodejs": "wasm-pack build --target nodejs --out-dir node && node ./build/node",
+    "build:web": "wasm-pack build --target web --out-dir web && node ./build/web",
     "build": "npm run build:web && npm run build:nodejs",
     "pretest": "npm run build:nodejs",
     "prepublishOnly": "npm run build",
