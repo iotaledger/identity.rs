@@ -1,18 +1,15 @@
-use identity_core::{
-    common::{FromJson as _, Object},
-    vc::Credential,
-};
-use identity_proof::LdSignature;
+use identity_core::common::{FromJson as _, Object, SerdeInto as _};
+use serde::Serialize;
 use std::collections::BTreeMap;
 
 use crate::{
     client::{Client, ReadDocumentResponse},
     did::{IotaDID, IotaDocument},
-    error::{Error, Result},
-    vc::VerifiableCredential,
+    error::Result,
+    vc::{VerifiableCredential, VerifiablePresentation},
 };
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CredentialValidation {
     pub credential: VerifiableCredential,
     pub verified: bool,
@@ -20,7 +17,15 @@ pub struct CredentialValidation {
     pub subjects: BTreeMap<String, DocumentValidation>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct PresentationValidation {
+    pub presentation: VerifiablePresentation,
+    pub verified: bool,
+    pub holder: DocumentValidation,
+    pub credentials: Vec<CredentialValidation>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DocumentValidation {
     pub did: IotaDID,
     pub document: IotaDocument,
@@ -42,26 +47,26 @@ impl<'a> CredentialValidator<'a> {
     where
         T: AsRef<str> + ?Sized,
     {
-        let mut credential: Credential = Credential::from_json(data)?;
-        let mut subjects: BTreeMap<String, DocumentValidation> = BTreeMap::new();
+        self.validate_credential(VerifiableCredential::from_json(data)?).await
+    }
 
-        let issuer: DocumentValidation = self.document(credential.issuer.url().as_str()).await?;
+    pub async fn check_presentation<T>(&self, data: &T) -> Result<PresentationValidation>
+    where
+        T: AsRef<str> + ?Sized,
+    {
+        self.validate_presentation(VerifiablePresentation::from_json(data)?)
+            .await
+    }
 
-        let proof: LdSignature = credential
-            .properties
-            .remove("proof")
-            .map(LdSignature::from_json_value)
-            .transpose()?
-            .ok_or(Error::InvalidProof)?;
-
-        let credential: VerifiableCredential = VerifiableCredential::with_proof(credential, proof);
+    async fn validate_credential(&self, credential: VerifiableCredential) -> Result<CredentialValidation> {
+        let issuer: DocumentValidation = self.validate_document(credential.issuer.url().as_str()).await?;
         let verified: bool = credential.verify(&issuer.document).is_ok();
 
-        if verified {
-            for subject in credential.credential_subject.iter() {
-                if let Some(id) = subject.id.as_ref() {
-                    subjects.insert(id.to_string(), self.document(id.as_str()).await?);
-                }
+        let mut subjects: BTreeMap<String, DocumentValidation> = BTreeMap::new();
+
+        for subject in credential.credential_subject.iter() {
+            if let Some(id) = subject.id.as_ref() {
+                subjects.insert(id.to_string(), self.validate_document(id.as_str()).await?);
             }
         }
 
@@ -73,7 +78,31 @@ impl<'a> CredentialValidator<'a> {
         })
     }
 
-    async fn document(&self, did: &str) -> Result<DocumentValidation> {
+    async fn validate_presentation(&self, presentation: VerifiablePresentation) -> Result<PresentationValidation> {
+        let holder: &str = presentation
+            .holder
+            .as_ref()
+            .map(|holder| holder.as_str())
+            .ok_or_else(|| identity_core::Error::InvalidPresentation("Presentation missing `holder`".into()))?;
+
+        let holder: DocumentValidation = self.validate_document(holder).await?;
+        let verified: bool = presentation.verify(&holder.document).is_ok();
+
+        let mut credentials: Vec<CredentialValidation> = Vec::new();
+
+        for credential in presentation.verifiable_credential.iter() {
+            credentials.push(self.validate_credential(credential.serde_into()?).await?);
+        }
+
+        Ok(PresentationValidation {
+            presentation,
+            verified,
+            holder,
+            credentials,
+        })
+    }
+
+    async fn validate_document(&self, did: &str) -> Result<DocumentValidation> {
         let did: IotaDID = did.parse()?;
         let doc: ReadDocumentResponse = self.client.read_document(&did).send().await?;
         let verified: bool = doc.document.verify().is_ok();
