@@ -46,4 +46,6 @@ jobs:
 
       - name: Publish WASM bindings to NPM
         run: yarn publish
+        # env:
+        #   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         working-directory: libraries/wasm
