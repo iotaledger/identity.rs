@@ -5,7 +5,6 @@ on:
     branches:
       - main
       - dev
-      - feature/wasm-bindings-ci
   pull_request:
     branches:
       - main
@@ -113,10 +112,6 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 12.x
-
-      - name: Get current date
-        if: matrix.os == 'ubuntu-latest'
-        run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
       
       - name: Install wasm-pack
         run: yarn global add wasm-pack
