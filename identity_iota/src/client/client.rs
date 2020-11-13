@@ -26,7 +26,7 @@ pub struct Client {
 impl Client {
     pub fn transaction_url(&self, transaction: &BundledTransaction) -> String {
         format!(
-            "{}/transaction/{}",
+            "{}transaction/{}",
             self.network.explorer_url(),
             TransactionPrinter::hash(transaction)
         )

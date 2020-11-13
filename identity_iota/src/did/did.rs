@@ -66,7 +66,11 @@ impl IotaDID {
     }
 
     pub fn try_from_did(did: DID) -> Result<Self> {
-        Self::check_validity(&did).map(|_| Self(did))
+        Self::check_validity(&did).map(|_| {
+            let mut did = Self(did);
+            did.normalize();
+            did
+        })
     }
 
     pub fn parse(string: impl AsRef<str>) -> Result<Self> {
@@ -133,16 +137,14 @@ impl IotaDID {
 
     pub fn normalize(&mut self) {
         match &*self.id_segments {
-            [_] => self.id_segments.insert(0, Self::NETWORK.into()),
-            [_, _] | [_, _, _] => {}
+            [_] => (),
+            [network, _] | [network, _, _] => {
+                if network == "main" {
+                    self.id_segments.remove(0);
+                }
+            }
             _ => unreachable!("IotaDID::normalize called for invalid DID"),
         }
-    }
-
-    pub fn normalized(&self) -> Self {
-        let mut this: Self = self.clone();
-        this.normalize();
-        this
     }
 
     pub fn into_inner(self) -> DID {
