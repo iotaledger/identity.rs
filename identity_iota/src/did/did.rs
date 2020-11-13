@@ -139,7 +139,7 @@ impl IotaDID {
         match &*self.id_segments {
             [_] => (),
             [network, _] | [network, _, _] => {
-                if let "main" = network.as_str() {
+                if network == "main" {
                     self.id_segments.remove(0);
                 }
             }
