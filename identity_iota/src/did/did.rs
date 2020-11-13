@@ -64,7 +64,11 @@ impl IotaDID {
     }
 
     pub fn try_from_did(did: DID) -> Result<Self> {
-        Self::check_validity(&did).map(|_| Self(did).normalized())
+        Self::check_validity(&did).map(|_| {
+            let mut did = Self(did);
+            did.normalize();
+            did
+        })
     }
 
     pub fn parse(string: impl AsRef<str>) -> Result<Self> {
@@ -140,12 +144,6 @@ impl IotaDID {
             }
             _ => unreachable!("IotaDID::normalize called for invalid DID"),
         }
-    }
-
-    pub fn normalized(&self) -> Self {
-        let mut this: Self = self.clone();
-        this.normalize();
-        this
     }
 
     /// Creates an 81 Trytes IOTA address from the DID
