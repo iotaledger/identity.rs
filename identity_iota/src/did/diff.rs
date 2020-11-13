@@ -1,11 +1,20 @@
-use identity_core::did::DID;
+use identity_core::did::{DiffDIDDocument, DID};
+use identity_proof::{HasProof, LdSignature};
 use serde::{Deserialize, Serialize};
 
-use crate::did::DIDProof;
-
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DIDDiff {
     pub id: DID,
-    pub diff: String, // TODO: Replace with DiffDIDDocument
-    pub proof: DIDProof,
+    pub diff: DiffDIDDocument,
+    pub proof: LdSignature,
+}
+
+impl HasProof for DIDDiff {
+    fn proof(&self) -> &LdSignature {
+        &self.proof
+    }
+
+    fn proof_mut(&mut self) -> &mut LdSignature {
+        &mut self.proof
+    }
 }

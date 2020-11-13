@@ -1,7 +1,7 @@
 {
-  "name": "iota-identity-wasm",
-  "version": "0.0.1",
-  "description": "WASM binding for the IOTA identity library",
+  "name": "@iota/iota-identity-wasm",
+  "version": "0.1.0",
+  "description": "WASM bindings for IOTA Identity - A Self Sovereign Identity Framework implementing the DID and VC standards from W3C. To be used in Javascript/Typescript",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/iotaledger/identity.rs.git"
@@ -10,8 +10,8 @@
     "example": "examples"
   },
   "scripts": {
-    "build:nodejs": "wasm-pack build --target nodejs --out-dir wasm-node && rm ./wasm-node/.gitignore",
-    "build:web": "wasm-pack build --target web --out-dir wasm-web && node ./build/web && rm ./wasm-web/.gitignore",
+    "build:nodejs": "wasm-pack build --target nodejs --out-dir node && node ./build/node",
+    "build:web": "wasm-pack build --target web --out-dir web && node ./build/web",
     "build": "npm run build:web && npm run build:nodejs",
     "pretest": "npm run build:nodejs",
     "prepublishOnly": "npm run build",
@@ -20,9 +20,13 @@
     "example:node": "node examples/node.js"
   },
   "contributors": [
-    "huhn511 <huhn@einfachiota.de>"
+    "Jelle Millenaar <jelle.millenaar@iota.org>",
+    "Devin Turner <devin.turner@iota.org>",
+    "Tensor <tensordeveloper@gmail.com>", 
+    "Thoralf Müller <thoralf.mue@gmail.com>",
+    "Sebastian Heusser <huhn.dev@gmail.com>"
   ],
-  "license": "MIT",
+  "license": "Apache 2.0",
   "bugs": {
     "url": "https://github.com/iotaledger/identity.rs/issues"
   },
@@ -30,14 +34,18 @@
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "web",
+    "node"
+  ],
   "devDependencies": {
-    "mocha": "^7.1.2",
     "@wasm-tool/wasm-pack-plugin": "^1.1.0",
-    "copy-webpack-plugin": "^5.0.3",
+    "copy-webpack-plugin": "^6.3.0",
+    "mocha": "^7.1.2",
+    "rimraf": "^3.0.0",
     "webpack": "^4.42.0",
     "webpack-cli": "^3.3.3",
-    "webpack-dev-server": "^3.7.1",
-    "rimraf": "^3.0.0"
+    "webpack-dev-server": "^3.7.1"
   },
   "dependencies": {
     "node-fetch": "^2.6.0"

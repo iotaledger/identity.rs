@@ -24,7 +24,9 @@ serde_json = { version = "1.0", features = ["preserve_order"] }
 thiserror = { version = "1.0", default-features = false }
 
 identity_core = { path = "../identity_core" }
-identity_crypto = { git = "https://github.com/iotaledger/identity.rs", branch = "feat/identity-signature-suites-wasm" }
+identity_crypto = { path = "../identity_crypto" }
+identity_proof = { path = "../identity_proof" }
+
 [dev-dependencies]
 smol-potat = { version = "0.3.3" }
 smol = { version = "0.1.18", features = ["tokio02"] }

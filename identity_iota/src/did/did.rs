@@ -1,6 +1,7 @@
 use core::{
     convert::TryFrom,
     fmt::{Debug, Display, Formatter, Result as FmtResult},
+    iter::once,
     ops::{Deref, DerefMut},
     str::FromStr,
 };
@@ -8,8 +9,11 @@ use identity_core::{
     did::DID,
     utils::{decode_b58, encode_b58},
 };
+use identity_crypto::KeyPair;
+use identity_proof::signature::jcsed25519signature2020;
 use iota::transaction::bundled::Address;
 use multihash::Blake2b256;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     error::{Error, Result},
@@ -19,13 +23,29 @@ use crate::{
 // The hash size of BLAKE2b-256 (32-bytes)
 const BLAKE2B_256_LEN: usize = 32;
 
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[serde(try_from = "DID", into = "DID")]
 pub struct IotaDID(DID);
 
 impl IotaDID {
     pub const METHOD: &'static str = "iota";
+    pub const NETWORK: &'static str = "main";
 
-    pub fn try_from_did(did: DID) -> Result<Self> {
+    pub fn generate_ed25519<'a, T>(network: T) -> Result<(Self, KeyPair)>
+    where
+        T: Into<Option<&'a str>>,
+    {
+        let key: KeyPair = jcsed25519signature2020::new_keypair();
+        let did: Self = Self::with_network(key.public().as_ref(), network)?;
+
+        Ok((did, key))
+    }
+
+    pub fn is_valid(did: &DID) -> bool {
+        Self::check_validity(did).is_ok()
+    }
+
+    pub fn check_validity(did: &DID) -> Result<(), Error> {
         if did.method_name != Self::METHOD {
             return Err(Error::InvalidMethod);
         }
@@ -42,50 +62,55 @@ impl IotaDID {
             return Err(Error::InvalidMethodId);
         }
 
-        Ok(Self(did))
+        Ok(())
+    }
+
+    pub fn try_from_did(did: DID) -> Result<Self> {
+        Self::check_validity(&did).map(|_| {
+            let mut did = Self(did);
+            did.normalize();
+            did
+        })
     }
 
     pub fn parse(string: impl AsRef<str>) -> Result<Self> {
-        DID::from_str(string.as_ref())
-            .map_err(Into::into)
-            .and_then(Self::try_from_did)
+        Self::try_from_did(DID::from_str(string.as_ref())?)
     }
 
     pub fn new(public: &[u8]) -> Result<Self> {
-        let key: String = Self::encode_key(public);
-        let did: String = format!("did:{}:{}", Self::METHOD, key);
-        let did: DID = DID::parse(did)?;
-
-        Ok(Self(did))
+        Self::with_network_and_shard(public, None, None)
     }
 
-    pub fn with_network(public: &[u8], network: &str) -> Result<Self> {
-        let key: String = Self::encode_key(public);
-        let did: String = format!("did:{}:{}:{}", Self::METHOD, network, key);
-        let did: DID = DID::parse(did)?;
-
-        Ok(Self(did))
+    pub fn with_network<'a, T>(public: &[u8], network: T) -> Result<Self>
+    where
+        T: Into<Option<&'a str>>,
+    {
+        Self::with_network_and_shard(public, network, None)
     }
 
-    pub fn with_shard(public: &[u8], shard: &str) -> Result<Self> {
-        let key: String = Self::encode_key(public);
-        let did: String = format!("did:{}:{}:{}", Self::METHOD, shard, key);
-        let did: DID = DID::parse(did)?;
+    pub fn with_network_and_shard<'a, 'b, T, U>(public: &[u8], network: T, shard: U) -> Result<Self>
+    where
+        T: Into<Option<&'a str>>,
+        U: Into<Option<&'b str>>,
+    {
+        let mut did: String = format!("did:{}:", Self::METHOD);
 
-        Ok(Self(did))
-    }
+        if let Some(network) = network.into() {
+            did.extend(network.chars().chain(once(':')));
+        }
 
-    pub fn with_network_and_shard(public: &[u8], network: &str, shard: &str) -> Result<Self> {
-        let key: String = Self::encode_key(public);
-        let did: String = format!("did:{}:{}:{}:{}", Self::METHOD, network, shard, key);
-        let did: DID = DID::parse(did)?;
+        if let Some(shard) = shard.into() {
+            did.extend(shard.chars().chain(once(':')));
+        }
 
-        Ok(Self(did))
+        did.push_str(&Self::encode_key(public));
+
+        Ok(Self(DID::parse(did)?))
     }
 
     pub fn network(&self) -> &str {
         match &*self.id_segments {
-            [_] => "main",
+            [_] => Self::NETWORK,
             [network, _] => &*network,
             [network, _, _] => &*network,
             _ => unreachable!("IotaDID::network called for invalid DID"),
@@ -112,16 +137,18 @@ impl IotaDID {
 
     pub fn normalize(&mut self) {
         match &*self.id_segments {
-            [_] => self.id_segments.insert(0, "main".into()),
-            [_, _] | [_, _, _] => {}
+            [_] => (),
+            [network, _] | [network, _, _] => {
+                if network == "main" {
+                    self.id_segments.remove(0);
+                }
+            }
             _ => unreachable!("IotaDID::normalize called for invalid DID"),
         }
     }
 
-    pub fn normalized(&self) -> Self {
-        let mut this: Self = self.clone();
-        this.normalize();
-        this
+    pub fn into_inner(self) -> DID {
+        self.0
     }
 
     /// Creates an 81 Trytes IOTA address from the DID
@@ -137,6 +164,12 @@ impl IotaDID {
 
     fn encode_key(key: &[u8]) -> String {
         encode_b58(Blake2b256::digest(key).digest())
+    }
+}
+
+impl PartialEq<DID> for IotaDID {
+    fn eq(&self, other: &DID) -> bool {
+        self.0.eq(other)
     }
 }
 
@@ -160,6 +193,7 @@ impl Deref for IotaDID {
     }
 }
 
+// TODO: Remove this
 impl DerefMut for IotaDID {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
@@ -189,10 +223,8 @@ impl FromStr for IotaDID {
 }
 
 pub mod deprecated {
-    use bs58::encode;
     use identity_core::did::DID;
     use iota::transaction::bundled::Address;
-    use multihash::Blake2b256;
 
     use crate::{
         error::{Error, Result},
@@ -203,14 +235,12 @@ pub mod deprecated {
         did.id_segments
             .last()
             .map(|string| string.as_str())
-            .ok_or_else(|| Error::InvalidMethodId)
+            .ok_or(Error::InvalidMethodId)
     }
 
     /// Creates an 81 Trytes IOTA address from the DID
     pub fn create_address(did: &DID) -> Result<Address> {
-        let digest: &[u8] = &Blake2b256::digest(method_id(did)?.as_bytes());
-        let encoded: String = encode(digest).into_string();
-        let mut trytes: String = utf8_to_trytes(&encoded);
+        let mut trytes: String = utf8_to_trytes(method_id(did)?);
 
         trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
 

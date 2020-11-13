@@ -1,44 +1,38 @@
 //! Publish new did document and read it from the tangle
 //! cargo run --example publish
 
-use identity_crypto::{Ed25519, KeyGen};
+use identity_crypto::KeyPair;
 use identity_iota::{
-    did::TangleDocument as _,
+    client::{Client, ClientBuilder},
+    did::IotaDocument,
     error::Result,
-    helpers::create_document,
-    io::TangleWriter,
-    network::{Network, NodeList},
+    network::Network,
 };
-use iota_conversion::Trinary as _;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-    let nodes = vec![
-        "http://localhost:14265",
-        "https://nodes.thetangle.org:443",
-        "https://iotanode.us:14267",
-        "https://pow.iota.community:443",
-    ];
-    let nodelist = NodeList::with_network_and_nodes(Network::Mainnet, nodes);
+    let client: Client = ClientBuilder::new()
+        .node("http://localhost:14265")
+        .node("https://nodes.thetangle.org:443")
+        .node("https://iotanode.us:14267")
+        .node("https://pow.iota.community:443")
+        .network(Network::Mainnet)
+        .build()?;
 
-    let tangle_writer = TangleWriter::new(&nodelist)?;
+    // Create keypair/DID document
+    let (mut document, keypair): (IotaDocument, KeyPair) = IotaDocument::generate_ed25519("key-1", None)?;
 
-    // Create keypair
-    let keypair = Ed25519::generate(&Ed25519, Default::default())?;
+    // Sign the document with the authentication method secret
+    document.sign(keypair.secret())?;
 
-    // Create, sign and publish DID document to the Tangle
-    let mut did_document = create_document(keypair.public().as_ref())?;
+    // Ensure the document proof is valid
+    assert!(document.verify().is_ok());
 
-    did_document.sign_unchecked(keypair.secret())?;
+    println!("DID: {}", document.did());
 
-    println!("DID: {}", did_document.did());
+    let response = client.create_document(&document).send().await?;
 
-    let tail_transaction = tangle_writer.write_json(did_document.did(), &did_document).await?;
-
-    println!(
-        "DID document published: https://thetangle.org/transaction/{}",
-        tail_transaction.as_i8_slice().trytes().expect("Couldn't get Trytes")
-    );
+    println!("DID document published: {}", client.transaction_url(&response.tail));
 
     Ok(())
 }

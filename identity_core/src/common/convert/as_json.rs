@@ -32,6 +32,10 @@ pub trait FromJson: for<'de> Deserialize<'de> + Sized {
     fn from_json_slice(json: &(impl AsRef<[u8]> + ?Sized)) -> Result<Self> {
         serde_json::from_slice(json.as_ref()).map_err(Error::DecodeJSON)
     }
+
+    fn from_json_value(json: serde_json::Value) -> Result<Self> {
+        serde_json::from_value(json).map_err(Error::DecodeJSON)
+    }
 }
 
 impl<T> FromJson for T where T: for<'de> Deserialize<'de> + Sized {}

@@ -4,10 +4,9 @@ members = [
     "identity_crypto",
     "identity_derive",
     "identity_diff",
-    "identity_derive",
     "identity_iota",
     "identity_proof",
-    "libraries/wasm"
 ]
 exclude = [
+    "libraries/wasm"
 ]

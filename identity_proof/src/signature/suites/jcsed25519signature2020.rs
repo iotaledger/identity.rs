@@ -2,18 +2,17 @@ use core::convert::TryInto as _;
 use ed25519_zebra::{Signature, SigningKey, VerificationKey, VerificationKeyBytes};
 use identity_core::{
     common::{SerdeInto as _, ToJson as _, Value},
-    did::DIDDocument as Document,
-    key::KeyRelation,
     utils::{decode_b58, encode_b58},
 };
 use identity_crypto::{
     sha2::{self, Digest as _},
-    KeyPair,
+    KeyPair, SecretKey,
 };
 use rand::rngs::OsRng;
 use serde::Serialize;
 
 use crate::{
+    document::LdDocument,
     error::{Error, Result},
     signature::{LdSignature, SignatureOptions},
 };
@@ -74,14 +73,14 @@ fn ed25519_verify(signature: &[u8], public: &[u8]) -> Result<Vec<u8>> {
     Ok(msg.to_vec())
 }
 
-pub fn jcs_sign<T>(document: &T, secret: &[u8]) -> Result<String>
+pub fn jcs_sign<T>(document: &T, secret: &SecretKey) -> Result<String>
 where
     T: Serialize,
 {
     serde_jcs::to_vec(document)
         .map_err(|_| Error::InvalidDocument)
         .map(|canon| sha2::Sha256::digest(&canon))
-        .and_then(|digest| ed25519_sign(&digest, secret))
+        .and_then(|digest| ed25519_sign(&digest, secret.as_ref()))
         .map(|signature| encode_b58(&signature))
 }
 
@@ -121,76 +120,40 @@ where
     }
 }
 
-pub fn sign_lds(document: &mut Document, options: SignatureOptions, secret: &[u8]) -> Result<()> {
-    let fragment: &str = extract_verification(&options.verification_method)?;
-    let keydata: Vec<u8> = resolve_key(document, fragment)?;
+pub fn sign_lds<T>(document: &mut T, options: SignatureOptions, secret: &SecretKey) -> Result<()>
+where
+    T: LdDocument,
+{
+    let keydata: Vec<u8> = document.resolve_key(options.verification_method.as_str().into())?;
 
     let pub1: VerificationKey = pubkey(&keydata)?;
-    let pub2: VerificationKey = (&seckey(secret)?).into();
+    let pub2: VerificationKey = (&seckey(secret.as_ref())?).into();
 
     // The verification method key data MUST be equal to the derived public key data.
     if pub1.as_ref() != pub2.as_ref() {
         return Err(Error::InvalidDocument);
     }
 
-    // Create and serialize a proof with a blank signature
-    let proof: Value = LdSignature::new(SIGNATURE_TYPE, options).to_json_value()?;
-
-    // Add the proof to the DID document.
-    document.metadata_mut().insert("proof".into(), proof);
+    // Add a proof with a blank signature to the document.
+    document.set_proof(LdSignature::new(SIGNATURE_TYPE, options))?;
 
     // Create an encoded signature
     let signature: String = jcs_sign(&document, secret)?;
 
-    // Add the signature to the proof object within the DID document.
-    document
-        .metadata_mut()
-        .get_mut("proof")
-        .ok_or(Error::InvalidSignature)?
-        .as_object_mut()
-        .ok_or(Error::InvalidSignature)?
-        .insert("signatureValue".into(), signature.into());
+    // Update the document with the serialized signature
+    document.set_signature(signature)?;
 
     Ok(())
 }
 
-pub fn verify_lds(document: &Document) -> Result<()> {
+pub fn verify_lds<T>(document: &T) -> Result<()>
+where
+    T: LdDocument,
+{
     // Extract the verification method from the proof
-    let method: &str = document
-        .metadata()
-        .get("proof")
-        .and_then(|proof| proof.as_object())
-        .and_then(|proof| proof.get("verificationMethod"))
-        .and_then(|method| method.as_str())
-        .ok_or(Error::InvalidDocument)?;
+    let method: &str = document.verification_method().ok_or(Error::InvalidDocument)?;
 
-    let fragment: &str = extract_verification(method)?;
-    let keydata: Vec<u8> = resolve_key(document, fragment)?;
-
-    jcs_verify(document, &keydata)
-}
-
-fn extract_verification(method: &str) -> Result<&str> {
-    // "Parse" the verification method identifier.
-    let fragment: &str = method.trim_start_matches('#');
-
-    // The verification method identifier MUST NOT be empty.
-    if fragment.is_empty() {
-        Err(Error::InvalidDocument)
-    } else {
-        Ok(fragment)
-    }
-}
-
-fn resolve_key(document: &Document, fragment: &str) -> Result<Vec<u8>> {
-    // The DID document MUST have a verification method with the specified fragment.
-    document
-        .resolve_key(fragment, KeyRelation::Authentication)
-        .ok_or(Error::InvalidDocument)?
-        .key_data()
-        .try_decode()
-        .ok_or(Error::InvalidDocument)?
-        .map_err(|_| Error::InvalidDocument)
+    jcs_verify(document, &document.resolve_key(method.into())?)
 }
 
 #[cfg(test)]
@@ -283,13 +246,11 @@ mod tests {
         let mut unsigned = serde_json::from_str::<Value>(UNSIGNED).unwrap();
         let signed = serde_json::from_str::<Value>(SIGNED).unwrap();
 
-        let signature = jcs_sign(&unsigned, &secret).unwrap();
+        let signature = jcs_sign(&unsigned, &secret.into()).unwrap();
 
         assert_eq!(signature, expected);
 
         unsigned["proof"]["signatureValue"] = signature.into();
-
-        println!("U > {:#}", unsigned);
 
         assert_eq!(
             serde_jcs::to_vec(&unsigned).unwrap(),
@@ -308,7 +269,7 @@ mod tests {
         let expected = "5TcawVLuoqRjCuu4jAmRqBcKoab1YVqxG8RXnQwvQBHNwP7RhPwXhzhTLVu3dKGposo2mmtfx9AwcqB2Mwnagup1JT5Yr9u3SjzLCc6kx4wW6HG5SKcra4SauhutN94s8Eo";
 
         let mut document = serde_json::from_str::<Value>(UNSIGNED).unwrap();
-        let signature = jcs_sign(&document, &secret).unwrap();
+        let signature = jcs_sign(&document, &secret.into()).unwrap();
 
         assert_eq!(signature, expected);
 
@@ -326,7 +287,7 @@ mod tests {
         let expected = "5TcawVLuoqRjCuu4jAmRqBcKoab1YVqxG8RXnQwvQBHNwP7RhPwXhzhTLVu3dKGposo2mmtfx9AwcqB2Mwnagup1JT5Yr9u3SjzLCc6kx4wW6HG5SKcra4SauhutN94s8Eo";
 
         let mut document = serde_json::from_str::<Value>(UNSIGNED).unwrap();
-        let mut signature = jcs_sign(&document, &secret).unwrap();
+        let mut signature = jcs_sign(&document, &secret.into()).unwrap();
 
         assert_eq!(signature, expected);
 

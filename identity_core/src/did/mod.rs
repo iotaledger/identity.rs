@@ -1,6 +1,7 @@
 mod authentication;
 #[allow(clippy::module_inception)]
 mod did;
+mod did_diff;
 mod document;
 mod parser;
 mod service;

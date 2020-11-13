@@ -1,5 +1,4 @@
 use core::str::FromStr;
-use identity_diff::Diff;
 use serde::{
     de::{self, Deserialize, Deserializer, Visitor},
     ser::{Serialize, Serializer},
@@ -18,8 +17,7 @@ const LEADING_TOKENS: &str = "did";
 type DIDTuple = (String, Option<String>);
 
 /// a Decentralized identity structure.
-#[derive(Debug, PartialEq, Default, Eq, Clone, Diff, Hash, Ord, PartialOrd)]
-#[diff(from_into)]
+#[derive(Debug, PartialEq, Default, Eq, Clone, Hash, Ord, PartialOrd)]
 pub struct DID {
     pub method_name: String,
     pub id_segments: Vec<String>,
@@ -55,6 +53,12 @@ impl DID {
             path_segments: relative.path_segments.clone(),
             query: relative.query.clone(),
         })
+    }
+
+    pub fn matches_base(&self, base: &Self) -> bool {
+        self.method_name == base.method_name
+            && self.id_segments == base.id_segments
+            && self.path_segments == base.path_segments
     }
 
     pub fn parse<T>(input: T) -> crate::Result<Self>
@@ -113,7 +117,7 @@ impl Display for DID {
                 .map(ToString::to_string)
                 .fold(&mut String::new(), |acc, p| {
                     if !acc.is_empty() {
-                        acc.push_str(":");
+                        acc.push(':');
                     }
                     acc.push_str(&p);
 
@@ -126,7 +130,7 @@ impl Display for DID {
                 "/{}",
                 segs.iter().map(ToString::to_string).fold(&mut String::new(), |acc, p| {
                     if !acc.is_empty() {
-                        acc.push_str("/");
+                        acc.push('/');
                     }
                     acc.push_str(&p);
 
@@ -141,7 +145,7 @@ impl Display for DID {
                 "?{}",
                 qur.iter().map(ToString::to_string).fold(&mut String::new(), |acc, p| {
                     if !acc.is_empty() {
-                        acc.push_str("&");
+                        acc.push('&');
                     }
                     acc.push_str(&p);
 
@@ -210,8 +214,7 @@ impl Serialize for DID {
 }
 
 /// a DID Params struct.
-#[derive(Debug, PartialEq, Eq, Clone, Default, Hash, PartialOrd, Ord, Diff, DDeserialize, DSerialize)]
-#[diff(from_into)]
+#[derive(Debug, PartialEq, Eq, Clone, Default, Hash, PartialOrd, Ord, DDeserialize, DSerialize)]
 pub struct Param {
     pub key: String,
     pub value: Option<String>,
