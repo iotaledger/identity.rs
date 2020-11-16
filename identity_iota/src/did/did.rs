@@ -105,7 +105,7 @@ impl IotaDID {
 
         did.push_str(&Self::encode_key(public));
 
-        Ok(Self(DID::parse(did)?))
+        Ok(Self::try_from_did(DID::parse(did)?)?)
     }
 
     pub fn network(&self) -> &str {
