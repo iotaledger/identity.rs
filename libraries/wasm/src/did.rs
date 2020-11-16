@@ -4,6 +4,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::{js_err, key::Key};
 
+/// @typicalname did
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct DID(pub(crate) IotaDID);

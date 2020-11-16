@@ -90,7 +90,7 @@ pub async fn resolve(did: String, params: JsValue) -> Result<JsValue, JsValue> {
         .and_then(|response| JsValue::from_serde(&response).map_err(js_err))
 }
 
-/// Validates credential with the DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
+/// Validates a credential with the DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
 #[wasm_bindgen(js_name = checkCredential)]
 pub async fn check_credential(data: String, params: JsValue) -> Result<JsValue, JsValue> {
     CredentialValidator::new(&client(params)?)
@@ -100,7 +100,7 @@ pub async fn check_credential(data: String, params: JsValue) -> Result<JsValue, 
         .and_then(|validation| JsValue::from_serde(&validation).map_err(js_err))
 }
 
-/// Validates credential with the DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
+/// Validates a presentation with the DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
 #[wasm_bindgen(js_name = checkPresentation)]
 pub async fn check_presentation(data: String, params: JsValue) -> Result<JsValue, JsValue> {
     CredentialValidator::new(&client(params)?)

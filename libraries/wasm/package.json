@@ -12,7 +12,8 @@
   "scripts": {
     "build:nodejs": "wasm-pack build --target nodejs --out-dir node && node ./build/node",
     "build:web": "wasm-pack build --target web --out-dir web && node ./build/web",
-    "build": "npm run build:web && npm run build:nodejs",
+    "build:docs": "node ./build/docs",
+    "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
     "pretest": "npm run build:nodejs",
     "prepublishOnly": "npm run build",
     "test": "mocha",
@@ -41,6 +42,7 @@
   "devDependencies": {
     "@wasm-tool/wasm-pack-plugin": "^1.1.0",
     "copy-webpack-plugin": "^6.3.0",
+    "jsdoc-to-markdown": "^6.0.1",
     "mocha": "^7.1.2",
     "rimraf": "^3.0.0",
     "wasm-pack": "^0.9.1",

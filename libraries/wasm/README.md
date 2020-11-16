@@ -2,6 +2,8 @@
 
 > This is the alpha version of the official WASM binding to IOTA's Identity API.
 
+## [API Reference](docs/api-reference.md)
+
 ## Install the library:
 
 ```bash
@@ -14,9 +16,6 @@ $ yarn add iota-identity-wasm-test
 
 ```js
 const identity = require('iota-identity-wasm-test/node')
-
-// Call the initialize function to get better error messages from Wasm
-identity.initialize()
 
 // Generate Keypair
 const alice_keypair = identity.Key.generateEd25519()
@@ -52,7 +51,7 @@ $ yarn add rollup-plugin-copy --dev
 - Add the copy plugin usage to the `plugins` array under `rollup.config.js`:
 
 ```js
-// Inluce the copy plugin
+// Include the copy plugin
 import copy from 'rollup-plugin-copy'
 
 // Add the copy plugin to the `plugins` array of your rollup config:
@@ -76,7 +75,7 @@ $ yarn add copy-webpack-plugin --dev
 ```
 
 ```js
-// Inluce the copy plugin
+// Include the copy plugin
 const CopyWebPlugin= require('copy-webpack-plugin');
 
 // Add the copy plugin to the `plugins` array of your webpack config:
