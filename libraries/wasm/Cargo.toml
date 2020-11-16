@@ -4,6 +4,7 @@ version = "0.0.1"
 authors = ["Team Identity"]
 edition = "2018"
 repository = "https://github.com/iotaledger/identity.rs"
+description = "WASM version of Identity.rs"
 homepage = "https://www.iota.org"
 license = "MIT"
 
