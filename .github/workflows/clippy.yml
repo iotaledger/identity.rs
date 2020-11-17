@@ -21,11 +21,9 @@ jobs:
         project:
           [
             identity_core,
-            identity_crypto,
             identity_derive,
             identity_diff,
             identity_iota,
-            identity_proof,
             libraries/wasm,
           ]
 

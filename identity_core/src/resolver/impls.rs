@@ -1,16 +1,14 @@
 use anyhow::anyhow;
-use percent_encoding::percent_decode_str;
-use std::{collections::BTreeMap, time::Instant};
+use did_doc::{url::Url, Document};
+use did_url::DID;
+use std::time::Instant;
 
 use crate::{
-    common::Url,
-    did::{DIDDocument as Document, Param, DID},
     error::{Error, Result},
     resolver::{
         Dereference, DocumentMetadata, ErrorKind, InputMetadata, MetaDocument, PrimaryResource, Resolution,
         ResolverMethod, Resource, SecondaryResource,
     },
-    utils::HasId as _,
 };
 
 pub async fn resolve<R>(did: &str, input: InputMetadata, method: R) -> Result<Resolution>
@@ -58,10 +56,12 @@ pub async fn dereference<R>(did: &str, input: InputMetadata, method: R) -> Resul
 where
     R: ResolverMethod,
 {
+    // Create the context immediately, for accurate durations.
+    let mut context: DerefContext = DerefContext::new();
+
     // 1. Obtain the DID document for the input DID by executing the DID
     //    resolution algorithm.
     let resolution: Resolution = resolve(did, input, method).await?;
-    let mut context: DerefContext = DerefContext::new();
 
     // If the resolution result contains an error, bail early.
     if let Some(error) = resolution.metadata.error {
@@ -93,7 +93,7 @@ where
 
     // 3. If the original input DID URL contained a DID fragment, execute the
     //    algorithm for Dereferencing the Secondary Resource.
-    if let Some(fragment) = did.fragment.as_deref() {
+    if let Some(fragment) = did.fragment() {
         //
         // Dereferencing the Secondary Resource
         //
@@ -191,21 +191,18 @@ impl DerefContext {
 
 fn dereference_primary(document: Document, mut did: DID) -> Result<Option<PrimaryResource>> {
     // Remove the DID fragment from the input DID URL.
-    did.fragment = None;
-
-    // Parse and collect the query, for convenience.
-    let params: BTreeMap<&str, &str> = did.query.iter().flatten().map(|param| param.pair()).collect();
+    did.set_fragment(None);
 
     // 1. If the input DID URL contains the DID parameter service...
-    if let Some(target) = params.get("service").copied() {
+    if let Some((_, target)) = did.query_pairs().find(|(key, _)| key == "service") {
         // 1.1. From the resolved DID document, select the service endpoint whose
         //      id property contains a fragment which matches the value of the
         //      service DID parameter of the input DID URL.
         document
-            .services
+            .service()
             .iter()
-            .find(|service| matches!(service.id().fragment.as_deref(), Some(fragment) if fragment == target))
-            .map(|service| service.endpoint().context())
+            .find(|service| matches!(service.id().fragment(), Some(fragment) if fragment == target))
+            .map(|service| service.service_endpoint())
             // 1.2. Execute the Service Endpoint Construction algorithm.
             .map(|url| service_endpoint_ctor(did, url))
             .transpose()?
@@ -214,7 +211,7 @@ fn dereference_primary(document: Document, mut did: DID) -> Result<Option<Primar
             .map(Ok)
             .transpose()
     // 3. Otherwise, if the input DID URL contains no DID path and no DID query.
-    } else if did.path_segments.is_none() && did.query.is_none() {
+    } else if did.path().is_empty() && did.query().is_none() {
         // 3.1. Return the resolved DID document.
         Ok(Some(document.into()))
     } else {
@@ -225,24 +222,23 @@ fn dereference_primary(document: Document, mut did: DID) -> Result<Option<Primar
 fn dereference_document(document: Document, fragment: &str) -> Result<Option<SecondaryResource>> {
     macro_rules! extract {
         ($base:expr, $target:expr, $iter:expr) => {
-            for object in $iter {
-                let did: DID = DID::join_relative($base, object.id())?;
+            for object in $iter.iter() {
+                let did: DID = $base.join(object.id())?;
 
-                if matches!(did.fragment.as_deref(), Some(fragment) if fragment == $target) {
-                    return Ok(Some(object.into()));
+                if matches!(did.fragment(), Some(fragment) if fragment == $target) {
+                    return Ok(Some(object.clone().into()));
                 }
             }
         };
     }
 
-    extract!(&document.id, fragment, document.public_keys);
-    extract!(&document.id, fragment, document.verification);
-    extract!(&document.id, fragment, document.auth);
-    extract!(&document.id, fragment, document.assert);
-    extract!(&document.id, fragment, document.agreement);
-    extract!(&document.id, fragment, document.delegation);
-    extract!(&document.id, fragment, document.invocation);
-    extract!(&document.id, fragment, document.services);
+    extract!(document.id(), fragment, document.verification_method());
+    extract!(document.id(), fragment, document.authentication());
+    extract!(document.id(), fragment, document.assertion_method());
+    extract!(document.id(), fragment, document.key_agreement());
+    extract!(document.id(), fragment, document.capability_delegation());
+    extract!(document.id(), fragment, document.capability_invocation());
+    extract!(document.id(), fragment, document.service());
 
     Ok(None)
 }
@@ -253,13 +249,13 @@ fn dereference_document(document: Document, fragment: &str) -> Result<Option<Sec
 fn service_endpoint_ctor(did: DID, url: &Url) -> Result<Url> {
     // The input DID URL and input service endpoint URL MUST NOT both have a
     // query component.
-    if did.query.is_some() && url.query().is_some() {
+    if did.query().is_some() && url.query().is_some() {
         return Err(Error::DereferenceError(anyhow!("Multiple DID Queries")));
     }
 
     // The input DID URL and input service endpoint URL MUST NOT both have a
     // fragment component.
-    if did.fragment.is_some() && url.fragment().is_some() {
+    if did.fragment().is_some() && url.fragment().is_some() {
         return Err(Error::DereferenceError(anyhow!("Multiple DID Fragments")));
     }
 
@@ -279,37 +275,28 @@ fn service_endpoint_ctor(did: DID, url: &Url) -> Result<Url> {
     output.set_fragment(None);
 
     // Decode and join the `relative-ref` query param, if it exists.
-    let relative: Option<_> = did
-        .query
-        .as_deref()
-        .unwrap_or_default()
-        .iter()
-        .find(|param| param.key == "relative-ref")
-        .and_then(|param| param.value.as_deref())
-        .filter(|value| !value.is_empty())
-        .map(|value| percent_decode_str(value).decode_utf8())
-        .transpose()?;
-
-    if let Some(relative) = relative {
+    if let Some((_, relative)) = did.query_pairs().find(|(key, _)| key == "relative-ref") {
         output = output.join(&relative)?;
     }
 
     // 4. Append the path component of the input DID URL to the output
     //    service endpoint URL.
-    if let Some(segments) = did.path_segments.as_deref() {
-        output.path_segments_mut().unwrap().extend(segments);
-    }
+    output
+        .path_segments_mut()
+        .unwrap()
+        .pop_if_empty()
+        .extend(did.path().split('/'));
 
     // 5. If the input service endpoint URL has a query component, append ?
     //    plus the query to the output service endpoint URL.
     // 6. If the input DID URL has a query component, append ? plus the
     //    query to the output service endpoint URL.
-    match (did.query.as_deref(), url.query().map(|_| url.query_pairs())) {
-        (Some(params), None) => {
-            output.query_pairs_mut().extend_pairs(params.iter().map(Param::pair));
+    match (did.query(), url.query()) {
+        (Some(_), None) => {
+            output.query_pairs_mut().extend_pairs(did.query_pairs());
         }
-        (None, Some(query)) => {
-            output.query_pairs_mut().extend_pairs(query);
+        (None, Some(_)) => {
+            output.query_pairs_mut().extend_pairs(url.query_pairs());
         }
         (Some(_), Some(_)) => unreachable!(),
         (None, None) => {}
@@ -319,7 +306,7 @@ fn service_endpoint_ctor(did: DID, url: &Url) -> Result<Url> {
     //    # plus the fragment to the output service endpoint URL.
     // 8. If the input DID URL has a fragment component, append # plus the
     //    fragment to the output service endpoint URL.
-    match (did.fragment.as_deref(), url.fragment()) {
+    match (did.fragment(), url.fragment()) {
         (fragment @ Some(_), None) | (None, fragment @ Some(_)) => output.set_fragment(fragment),
         (Some(_), Some(_)) => unreachable!(),
         (None, None) => {}

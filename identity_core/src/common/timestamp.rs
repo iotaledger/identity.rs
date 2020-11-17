@@ -1,38 +1,39 @@
-use chrono::{DateTime, SecondsFormat, Utc};
-use core::{convert::TryFrom, fmt, ops::Deref, str::FromStr};
-use identity_diff::{self as diff, string::DiffString, Diff};
-use serde::{Deserialize, Serialize};
+use core::{
+    convert::TryFrom,
+    fmt::{Debug, Display, Formatter, Result as FmtResult},
+    str::FromStr,
+};
+use time::{Format, OffsetDateTime};
 
 use crate::error::{Error, Result};
 
-type Inner = DateTime<Utc>;
-
+/// A parsed Timestamp.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
-#[serde(transparent)]
-pub struct Timestamp(Inner);
+#[serde(try_from = "String", into = "String")]
+pub struct Timestamp(OffsetDateTime);
 
 impl Timestamp {
-    pub fn parse(string: &str) -> Result<Self> {
-        match DateTime::parse_from_rfc3339(string) {
-            Ok(datetime) => Ok(Self(datetime.into())),
-            Err(error) => Err(Error::InvalidTimestamp(error)),
-        }
+    /// Parses a `Timestamp` from the provided input string.
+    pub fn parse(input: &str) -> Result<Self> {
+        OffsetDateTime::parse(input, Format::Rfc3339)
+            .map_err(Into::into)
+            .map(Self)
     }
 
-    /// Creates a new `Timestamp` of the current time.
+    /// Creates a new `Timestamp` with the current date and time.
     pub fn now() -> Self {
-        Self::parse(&Self::to_rfc3339(&Self(Utc::now()))).unwrap()
+        Self(OffsetDateTime::now_utc())
     }
 
-    /// Consumes the `Timestamp` and returns the inner `DateTime`.
-    pub fn into_inner(self) -> Inner {
-        self.0
+    /// Returns the `Timestamp` as a Unix timestamp.
+    pub fn to_unix(&self) -> i64 {
+        self.0.timestamp()
     }
 
     /// Returns the `Timestamp` as an RFC 3339 `String`.
     pub fn to_rfc3339(&self) -> String {
-        self.0.to_rfc3339_opts(SecondsFormat::Secs, true)
+        self.0.format("%0Y-%0m-%0dT%0H:%0M:%0SZ")
     }
 }
 
@@ -42,35 +43,21 @@ impl Default for Timestamp {
     }
 }
 
-impl fmt::Debug for Timestamp {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self.0)
+impl Debug for Timestamp {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        write!(f, "{:?}", self.to_rfc3339())
     }
 }
 
-impl fmt::Display for Timestamp {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Display for Timestamp {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}", self.to_rfc3339())
     }
 }
 
-impl From<Inner> for Timestamp {
-    fn from(other: Inner) -> Self {
-        Self(other)
-    }
-}
-
-impl From<Timestamp> for Inner {
+impl From<Timestamp> for String {
     fn from(other: Timestamp) -> Self {
-        other.into_inner()
-    }
-}
-
-impl Deref for Timestamp {
-    type Target = Inner;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+        other.to_rfc3339()
     }
 }
 
@@ -82,6 +69,14 @@ impl TryFrom<&'_ str> for Timestamp {
     }
 }
 
+impl TryFrom<String> for Timestamp {
+    type Error = Error;
+
+    fn try_from(string: String) -> Result<Self, Self::Error> {
+        Self::parse(&string)
+    }
+}
+
 impl FromStr for Timestamp {
     type Err = Error;
 
@@ -90,26 +85,38 @@ impl FromStr for Timestamp {
     }
 }
 
-impl Diff for Timestamp {
-    type Type = DiffString;
+#[cfg(test)]
+mod tests {
+    use crate::common::Timestamp;
 
-    fn diff(&self, other: &Self) -> Result<Self::Type, diff::Error> {
-        self.to_rfc3339().diff(&other.to_rfc3339())
+    #[test]
+    fn test_parse_valid() {
+        let original = "2020-01-01T00:00:00Z";
+        let timestamp = Timestamp::parse(original).unwrap();
+
+        assert_eq!(timestamp.to_rfc3339(), original);
+
+        let original = "1980-01-01T12:34:56Z";
+        let timestamp = Timestamp::parse(original).unwrap();
+
+        assert_eq!(timestamp.to_rfc3339(), original);
     }
 
-    fn merge(&self, diff: Self::Type) -> Result<Self, diff::Error> {
-        let this: String = self.to_rfc3339().merge(diff)?;
-
-        Self::from_str(this.as_str()).map_err(|error| diff::Error::MergeError(format!("{}", error)))
+    #[test]
+    #[should_panic = "InvalidYear"]
+    fn test_parse_empty() {
+        Timestamp::parse("").unwrap();
     }
 
-    fn from_diff(diff: Self::Type) -> Result<Self, diff::Error> {
-        let this: String = String::from_diff(diff)?;
-
-        Self::from_str(this.as_str()).map_err(|error| diff::Error::MergeError(format!("{}", error)))
+    #[test]
+    #[should_panic = "InvalidYear"]
+    fn test_parse_invalid_date() {
+        Timestamp::parse("foo bar").unwrap();
     }
 
-    fn into_diff(self) -> Result<Self::Type, diff::Error> {
-        self.to_rfc3339().into_diff()
+    #[test]
+    #[should_panic = "UnexpectedCharacter"]
+    fn test_parse_invalid_fmt() {
+        Timestamp::parse("2020/01/01 03:30:16").unwrap();
     }
 }

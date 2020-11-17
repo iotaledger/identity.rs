@@ -1,6 +1,6 @@
 macro_rules! impl_bytes {
     ($ident:ident) => {
-        #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+        #[derive(Clone)]
         pub struct $ident(Vec<u8>);
 
         impl $ident {
@@ -13,18 +13,7 @@ macro_rules! impl_bytes {
             }
 
             pub fn to_hex(&self) -> String {
-                ::hex::encode(self)
-            }
-
-            pub fn check_length(&self, valid: &[usize]) -> $crate::error::Result<()> {
-                if valid.contains(&self.len()) {
-                    Ok(())
-                } else {
-                    Err($crate::error::Error::Custom(::anyhow::anyhow!(
-                        "Invalid key length for {}",
-                        stringify!($ident)
-                    )))
-                }
+                $crate::utils::encode_hex(self)
             }
         }
 
@@ -53,16 +42,19 @@ macro_rules! impl_bytes {
             }
         }
 
-        impl ::std::fmt::Debug for $ident {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        impl ::core::fmt::Debug for $ident {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 write!(f, "{:?}", self.to_hex())
             }
         }
 
-        impl ::std::fmt::Display for $ident {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        impl ::core::fmt::Display for $ident {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 write!(f, "{}", self.to_hex())
             }
         }
     };
 }
+
+impl_bytes!(PublicKey);
+impl_bytes!(SecretKey);

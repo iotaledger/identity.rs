@@ -1,10 +1,6 @@
+use did_doc::{url::Url, DIDKey, Document, Method, MethodRef, Service};
+use did_url::DID;
 use serde::{Deserialize, Serialize};
-
-use crate::{
-    common::Url,
-    did::{Authentication, DIDDocument as Document, Service, DID},
-    key::PublicKey,
-};
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum Resource {
@@ -48,7 +44,7 @@ impl From<Url> for PrimaryResource {
 #[serde(untagged)]
 pub enum SecondaryResource {
     VerificationDID(DID),
-    VerificationKey(PublicKey),
+    VerificationKey(Method),
     Service(Service),
 }
 
@@ -58,18 +54,30 @@ impl From<DID> for SecondaryResource {
     }
 }
 
-impl From<PublicKey> for SecondaryResource {
-    fn from(other: PublicKey) -> Self {
+impl From<Method> for SecondaryResource {
+    fn from(other: Method) -> Self {
         Self::VerificationKey(other)
     }
 }
 
-impl From<Authentication> for SecondaryResource {
-    fn from(other: Authentication) -> Self {
+impl From<MethodRef> for SecondaryResource {
+    fn from(other: MethodRef) -> Self {
         match other {
-            Authentication::DID(inner) => inner.into(),
-            Authentication::Key(inner) => inner.into(),
+            MethodRef::Refer(inner) => inner.into(),
+            MethodRef::Embed(inner) => inner.into(),
         }
+    }
+}
+
+impl From<DIDKey<Method>> for SecondaryResource {
+    fn from(other: DIDKey<Method>) -> Self {
+        other.into_inner().into()
+    }
+}
+
+impl From<DIDKey<MethodRef>> for SecondaryResource {
+    fn from(other: DIDKey<MethodRef>) -> Self {
+        other.into_inner().into()
     }
 }
 
