@@ -1,0 +1,8 @@
+{
+  "id": "https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192d4231",
+  "type": ["DocumentVerification"],
+  "verifier": "https://example.edu/issuers/14",
+  "evidenceDocument": "DriversLicense",
+  "subjectPresence": "Physical",
+  "documentPresence": "Physical"
+}

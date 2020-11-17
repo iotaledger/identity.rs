@@ -1,0 +1,11 @@
+{
+  "type": "HolderPolicy",
+  "id": "http://example.com/policies/credential/6",
+  "profile": "http://example.com/profiles/credential",
+  "prohibition": [{
+    "assigner": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+    "assignee": "https://wineonline.example.org/",
+    "target": "http://example.edu/credentials/3732",
+    "action": ["3rdPartyCorrelation"]
+  }]
+}
