@@ -22,10 +22,14 @@
       }
     },
     "proof": [{
-      "type": "RsaSignature2018"
+      "type": "RsaSignature2018",
+      "verificationMethod": "",
+      "signatureValue": ""
     }]
   }],
   "proof": [{
-    "type": "RsaSignature2018"
+    "type": "RsaSignature2018",
+    "verificationMethod": "",
+    "signatureValue": ""
   }]
 }
