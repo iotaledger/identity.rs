@@ -1,33 +1,37 @@
-use identity_core::common::{FromJson as _, Object, SerdeInto as _};
-use serde::Serialize;
+use identity_core::{
+    common::Object,
+    convert::FromJson as _,
+    error::Error,
+    vc::{VerifiableCredential, VerifiablePresentation},
+};
+use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 
 use crate::{
     client::{Client, ReadDocumentResponse},
     did::{IotaDID, IotaDocument},
     error::Result,
-    vc::{VerifiableCredential, VerifiablePresentation},
 };
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct CredentialValidation {
-    pub credential: VerifiableCredential,
-    pub verified: bool,
+pub struct CredentialValidation<T = Object> {
+    pub credential: VerifiableCredential<T>,
     pub issuer: DocumentValidation,
     pub subjects: BTreeMap<String, DocumentValidation>,
+    pub verified: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct PresentationValidation {
-    pub presentation: VerifiablePresentation,
-    pub verified: bool,
+pub struct PresentationValidation<T = Object, U = Object> {
+    pub presentation: VerifiablePresentation<T, U>,
     pub holder: DocumentValidation,
-    pub credentials: Vec<CredentialValidation>,
+    pub credentials: Vec<CredentialValidation<U>>,
+    pub verified: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DocumentValidation {
-    pub did: IotaDID,
+    pub did: IotaDID<'static>,
     pub document: IotaDocument,
     pub metadata: Object,
     pub verified: bool,
@@ -39,28 +43,42 @@ pub struct CredentialValidator<'a> {
 }
 
 impl<'a> CredentialValidator<'a> {
-    pub fn new(client: &'a Client) -> Self {
+    /// Creates a new `CredentialValidator`.
+    pub const fn new(client: &'a Client) -> Self {
         Self { client }
     }
 
-    pub async fn check<T>(&self, data: &T) -> Result<CredentialValidation>
+    /// Deserializes the given JSON-encoded `VerifiableCredential` and validates
+    /// all associated DID documents.
+    pub async fn check<T>(&self, data: &str) -> Result<CredentialValidation<T>>
     where
-        T: AsRef<str> + ?Sized,
+        T: DeserializeOwned + Serialize,
     {
         self.validate_credential(VerifiableCredential::from_json(data)?).await
     }
 
-    pub async fn check_presentation<T>(&self, data: &T) -> Result<PresentationValidation>
+    /// Deserializes the given JSON-encoded `VerifiablePresentation` and
+    /// validates all associated DID documents/`VerifiableCredential`s.
+    pub async fn check_presentation<T, U>(&self, data: &str) -> Result<PresentationValidation<T, U>>
     where
-        T: AsRef<str> + ?Sized,
+        T: Clone + DeserializeOwned + Serialize,
+        U: Clone + DeserializeOwned + Serialize,
     {
         self.validate_presentation(VerifiablePresentation::from_json(data)?)
             .await
     }
 
-    async fn validate_credential(&self, credential: VerifiableCredential) -> Result<CredentialValidation> {
+    /// Validates the `VerifiableCredential` proof and all relevant DID documents.
+    ///
+    /// Note: The credential is expected to have a proof created by the issuing party.
+    /// Note: The credential issuer URL is expected to be a valid DID.
+    /// Note: Credential subject IDs are expected to be valid DIDs (if present).
+    pub async fn validate_credential<T>(&self, credential: VerifiableCredential<T>) -> Result<CredentialValidation<T>>
+    where
+        T: Serialize,
+    {
         let issuer: DocumentValidation = self.validate_document(credential.issuer.url().as_str()).await?;
-        let verified: bool = credential.verify(&issuer.document).is_ok();
+        let verified: bool = issuer.document.verify_data(&credential).is_ok();
 
         let mut subjects: BTreeMap<String, DocumentValidation> = BTreeMap::new();
 
@@ -72,33 +90,44 @@ impl<'a> CredentialValidator<'a> {
 
         Ok(CredentialValidation {
             credential,
-            verified,
             issuer,
             subjects,
+            verified,
         })
     }
 
-    async fn validate_presentation(&self, presentation: VerifiablePresentation) -> Result<PresentationValidation> {
+    /// Validates the `VerifiablePresentation` proof and all relevant DID documents.
+    ///
+    /// Note: The presentation holder is expected to be present and a valid DID.
+    /// Note: The presentation is expected to have a proof created by the holder.
+    pub async fn validate_presentation<T, U>(
+        &self,
+        presentation: VerifiablePresentation<T, U>,
+    ) -> Result<PresentationValidation<T, U>>
+    where
+        T: Clone + Serialize,
+        U: Clone + Serialize,
+    {
         let holder: &str = presentation
             .holder
             .as_ref()
             .map(|holder| holder.as_str())
-            .ok_or_else(|| identity_core::Error::InvalidPresentation("Presentation missing `holder`".into()))?;
+            .ok_or_else(|| Error::InvalidPresentation("Presentation missing `holder`".into()))?;
 
         let holder: DocumentValidation = self.validate_document(holder).await?;
-        let verified: bool = presentation.verify(&holder.document).is_ok();
+        let verified: bool = holder.document.verify_data(&presentation).is_ok();
 
-        let mut credentials: Vec<CredentialValidation> = Vec::new();
+        let mut credentials: Vec<CredentialValidation<U>> = Vec::new();
 
         for credential in presentation.verifiable_credential.iter() {
-            credentials.push(self.validate_credential(credential.serde_into()?).await?);
+            credentials.push(self.validate_credential(credential.clone()).await?);
         }
 
         Ok(PresentationValidation {
             presentation,
-            verified,
             holder,
             credentials,
+            verified,
         })
     }
 

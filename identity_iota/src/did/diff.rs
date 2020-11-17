@@ -1,20 +1,45 @@
-use identity_core::did::{DiffDIDDocument, DID};
-use identity_proof::{HasProof, LdSignature};
-use serde::{Deserialize, Serialize};
+use identity_core::did_doc::{SetSignature, Signature, TrySignature, TrySignatureMut};
+
+use crate::{
+    did::{IotaDID, IotaDocument},
+    error::Result,
+};
+
+pub type Diff = (); // TODO: FIXME
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct DIDDiff {
-    pub id: DID,
-    pub diff: DiffDIDDocument,
-    pub proof: LdSignature,
+pub struct DIDDiff<'a> {
+    pub did: IotaDID<'a>,
+    pub diff: Diff,
+    pub proof: Option<Signature>,
 }
 
-impl HasProof for DIDDiff {
-    fn proof(&self) -> &LdSignature {
-        &self.proof
-    }
+impl<'a> DIDDiff<'a> {
+    pub fn new(document: &'a IotaDocument, _other: &IotaDocument) -> Result<Self> {
+        let diff: Diff = ();
 
-    fn proof_mut(&mut self) -> &mut LdSignature {
-        &mut self.proof
+        Ok(Self {
+            did: document.id(),
+            diff,
+            proof: None,
+        })
+    }
+}
+
+impl TrySignature for DIDDiff<'_> {
+    fn try_signature(&self) -> Option<&Signature> {
+        self.proof.as_ref()
+    }
+}
+
+impl TrySignatureMut for DIDDiff<'_> {
+    fn try_signature_mut(&mut self) -> Option<&mut Signature> {
+        self.proof.as_mut()
+    }
+}
+
+impl SetSignature for DIDDiff<'_> {
+    fn set_signature(&mut self, value: Signature) {
+        self.proof = Some(value);
     }
 }

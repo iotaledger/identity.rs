@@ -1,4 +1,7 @@
-use crate::{client::Client, error::Result, network::Network};
+use crate::{
+    client::{Client, Network},
+    error::Result,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ClientBuilder {
