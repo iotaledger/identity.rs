@@ -1,12 +1,9 @@
-use identity_core::common::{FromJson as _, Object};
-use iota::transaction::bundled::{Address, BundledTransactionField as _};
-use serde::{Deserialize, Serialize};
+use identity_core::{common::Object, convert::FromJson as _};
 
 use crate::{
     client::{Client, ReadTransactionsRequest, ReadTransactionsResponse, TangleMessage},
     did::{IotaDID, IotaDocument},
     error::{Error, Result},
-    utils::encode_trits,
 };
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -37,24 +34,13 @@ impl<'a, 'b> ReadDocumentRequest<'a, 'b> {
     }
 
     pub async fn send(self) -> Result<ReadDocumentResponse> {
-        let target_id: &str = self.did.method_id();
-
         if self.trace {
-            println!("[+] trace(1): Target Id: {:?}", target_id);
-        }
-
-        // Create a document tangle address from the DID.
-        let address: Address = self.did.create_address()?;
-
-        if self.trace {
-            println!(
-                "[+] trace(2): AuthChain Address: {:?}",
-                encode_trits(address.to_inner())
-            );
+            println!("[+] trace(1): Target Id: {:?}", self.did.tag());
+            println!("[+] trace(2): Auth Chain: {:?}", self.did.address_hash());
         }
 
         // Fetch all messages for the auth chain.
-        let request: ReadTransactionsRequest = ReadTransactionsRequest::new(self.client, address);
+        let request: ReadTransactionsRequest = ReadTransactionsRequest::new(self.client, self.did.address()?);
         let response: ReadTransactionsResponse = request.trace(self.trace).send().await?;
 
         if self.trace {
@@ -68,7 +54,7 @@ impl<'a, 'b> ReadDocumentRequest<'a, 'b> {
             println!("[+] trace(4): Auth Document: {:?}", document);
         }
 
-        if document.has_diff_chain() {
+        if let Some(_address) = document.diff_chain() {
             todo!("Handle Document Diff Chain")
         }
 
@@ -82,11 +68,11 @@ impl<'a, 'b> ReadDocumentRequest<'a, 'b> {
         let documents: Vec<IotaDocument> = self.extract_auth_chain(messages);
 
         let (mut initials, mut additionals): (Vec<IotaDocument>, Vec<IotaDocument>) =
-            documents.into_iter().partition(|item| item.supersedes().is_none());
+            documents.into_iter().partition(|item| item.prev_msg().is_none());
 
         // Sort documents in ASCENDING order
-        initials.sort_by(|a, b| a.created.cmp(&b.created));
-        additionals.sort_by(|a, b| a.created.cmp(&b.created));
+        initials.sort_by_key(|document| document.created());
+        additionals.sort_by_key(|document| document.created());
 
         // Find the first initial document with a valid signature
         let initial: IotaDocument = initials.into_iter().find(|item| item.verify().is_ok())?;
@@ -105,19 +91,12 @@ impl<'a, 'b> ReadDocumentRequest<'a, 'b> {
             let document: Option<IotaDocument> = message
                 .message_utf8()
                 .ok()
-                .and_then(|json| IotaDocument::from_json(&json).ok());
+                // Only include documents that deserialize as valid IOTA documents
+                .and_then(|json| IotaDocument::from_json(&json).ok())
+                // Only include documents matching the target DID
+                .filter(|document| self.did.authority() == document.id().authority());
 
             if let Some(document) = document {
-                // Only include documents matching the target DID
-                if self.did != document.did() {
-                    continue;
-                }
-
-                // Only include documents with valid timestamps
-                if document.created.is_none() || document.updated.is_none() {
-                    continue;
-                }
-
                 documents.push(document);
             }
         }

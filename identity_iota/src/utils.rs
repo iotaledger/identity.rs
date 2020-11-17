@@ -32,9 +32,10 @@ where
 }
 
 pub fn create_address_from_trits(trits: impl AsRef<str>) -> Result<Address> {
-    let trits: TritBuf<T1B1Buf> = TryteBuf::try_from_str(trits.as_ref())?.as_trits().encode();
-
-    Ok(Address::from_inner_unchecked(trits))
+    TryteBuf::try_from_str(trits.as_ref())
+        .map_err(Into::into)
+        .map(|trytes| trytes.as_trits().encode::<T1B1Buf>())
+        .map(Address::from_inner_unchecked)
 }
 
 pub fn to_tryte(byte: u8) -> impl IntoIterator<Item = char> {
