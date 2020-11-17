@@ -39,7 +39,7 @@ impl<'a, 'b> PublishDocumentRequest<'a, 'b> {
     }
 
     pub async fn send(self) -> Result<PublishDocumentResponse> {
-        let did: IotaDID = self.document.id();
+        let did: &IotaDID = self.document.id();
 
         if self.transfer.trace {
             println!("[+] trace(1): Create Document with DID: {:?}", did);

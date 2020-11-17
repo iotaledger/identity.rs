@@ -31,7 +31,7 @@ pub struct PresentationValidation<T = Object, U = Object> {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DocumentValidation {
-    pub did: IotaDID<'static>,
+    pub did: IotaDID,
     pub document: IotaDocument,
     pub metadata: Object,
     pub verified: bool,

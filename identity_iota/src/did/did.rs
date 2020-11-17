@@ -13,7 +13,6 @@ use identity_core::{
 };
 use iota::transaction::bundled::Address;
 use multihash::Blake2b256;
-use std::borrow::Cow;
 
 use crate::{
     error::{Error, Result},
@@ -24,10 +23,11 @@ use crate::{
 const BLAKE2B_256_LEN: usize = 32;
 
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[repr(transparent)]
 #[serde(into = "DID", try_from = "DID")]
-pub struct IotaDID<'a>(Cow<'a, DID>);
+pub struct IotaDID(DID);
 
-impl<'a> IotaDID<'a> {
+impl IotaDID {
     /// The DID method name.
     pub const METHOD: &'static str = "iota";
 
@@ -51,8 +51,10 @@ impl<'a> IotaDID<'a> {
     /// # Errors
     ///
     /// Returns `Err` if the input is not a valid `IotaDID`.
-    pub fn try_from_borrowed(did: &'a DID) -> Result<Self> {
-        Self::try_from_cow(Cow::Borrowed(did))
+    pub fn try_from_borrowed(did: &DID) -> Result<&Self> {
+        Self::check_validity(did)?;
+        // SAFETY: we performed the necessary validation in `check_validity`.
+        Ok(unsafe { Self::new_unchecked_ref(did) })
     }
 
     /// Converts an owned `DID` to an `IotaDID.`
@@ -61,19 +63,8 @@ impl<'a> IotaDID<'a> {
     ///
     /// Returns `Err` if the input is not a valid `IotaDID`.
     pub fn try_from_owned(did: DID) -> Result<Self> {
-        Self::try_from_cow(Cow::Owned(did))
-    }
-
-    /// Converts a clone-on-write `DID` to an `IotaDID`.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if the input is not a valid `IotaDID`.
-    pub fn try_from_cow(did: Cow<'a, DID>) -> Result<Self> {
         Self::check_validity(&did)?;
-
-        // SAFETY: we performed the necessary validation in `check_validity`.
-        Ok(unsafe { Self::from_cow_unchecked(did) })
+        Ok(Self(did))
     }
 
     /// Converts a clone-on-write `DID` to an `IotaDID` without validation.
@@ -81,10 +72,9 @@ impl<'a> IotaDID<'a> {
     /// # Safety
     ///
     /// This must be guaranteed safe by the caller.
-    #[allow(unused_unsafe)]
-    pub unsafe fn from_cow_unchecked(did: Cow<'a, DID>) -> Self {
+    pub unsafe fn new_unchecked_ref(did: &DID) -> &Self {
         // SAFETY: This is guaranteed safe by the caller.
-        unsafe { Self(did) }
+        &*(did as *const DID as *const IotaDID)
     }
 
     /// Parses an `IotaDID` from the given `input`.
@@ -139,7 +129,7 @@ impl<'a> IotaDID<'a> {
 
         did.push_str(&Self::encode_key(public));
 
-        did.parse().map(Cow::Owned).map(Self).map_err(Into::into)
+        did.parse().map_err(Into::into).and_then(Self::try_from_owned)
     }
 
     /// Creates a new [`IotaDID`] by joining `self` with the relative IotaDID `other`.
@@ -242,19 +232,19 @@ impl<'a> IotaDID<'a> {
     }
 }
 
-impl Display for IotaDID<'_> {
+impl Display for IotaDID {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}", self.0)
     }
 }
 
-impl Debug for IotaDID<'_> {
+impl Debug for IotaDID {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}", self.0)
     }
 }
 
-impl Deref for IotaDID<'_> {
+impl Deref for IotaDID {
     type Target = DID;
 
     fn deref(&self) -> &Self::Target {
@@ -262,31 +252,31 @@ impl Deref for IotaDID<'_> {
     }
 }
 
-impl AsRef<DID> for IotaDID<'_> {
+impl AsRef<DID> for IotaDID {
     fn as_ref(&self) -> &DID {
-        self.0.as_ref()
+        &self.0
     }
 }
 
-impl AsRef<str> for IotaDID<'_> {
+impl AsRef<str> for IotaDID {
     fn as_ref(&self) -> &str {
         self.0.as_str()
     }
 }
 
-impl PartialEq<DID> for IotaDID<'_> {
+impl PartialEq<DID> for IotaDID {
     fn eq(&self, other: &DID) -> bool {
-        self.0.as_ref() == other
+        self.0.eq(other)
     }
 }
 
-impl From<IotaDID<'_>> for DID {
-    fn from(other: IotaDID<'_>) -> Self {
-        other.0.into_owned()
+impl From<IotaDID> for DID {
+    fn from(other: IotaDID) -> Self {
+        other.0
     }
 }
 
-impl TryFrom<DID> for IotaDID<'_> {
+impl TryFrom<DID> for IotaDID {
     type Error = Error;
 
     fn try_from(other: DID) -> Result<Self, Self::Error> {
@@ -294,15 +284,15 @@ impl TryFrom<DID> for IotaDID<'_> {
     }
 }
 
-impl<'a> TryFrom<&'a DID> for IotaDID<'a> {
+impl<'a> TryFrom<&'a DID> for &'a IotaDID {
     type Error = Error;
 
     fn try_from(other: &'a DID) -> Result<Self, Self::Error> {
-        Self::try_from_borrowed(other)
+        IotaDID::try_from_borrowed(other)
     }
 }
 
-impl FromStr for IotaDID<'_> {
+impl FromStr for IotaDID {
     type Err = Error;
 
     fn from_str(string: &str) -> Result<Self, Self::Err> {

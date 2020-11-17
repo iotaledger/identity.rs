@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
     println!("DID Document Transaction > {}", client.transaction_url(&response.tail));
     println!();
 
-    let did: IotaDID = document.id();
+    let did: &IotaDID = document.id();
 
     // Resolve the DID and retrieve the published DID Document from the Tangle.
     //

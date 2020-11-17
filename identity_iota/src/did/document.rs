@@ -17,7 +17,6 @@ use identity_core::{
 };
 use iota::transaction::bundled::Address;
 use serde::Serialize;
-use std::borrow::Cow;
 
 use crate::{
     did::{DIDDiff, IotaDID},
@@ -96,7 +95,7 @@ impl IotaDocument {
     ///
     /// Returns `Err` if the document is not a valid `IotaDocument`.
     pub fn try_from_document(mut document: Document) -> Result<Self> {
-        let did: IotaDID = IotaDID::try_from_borrowed(document.id())?;
+        let did: &IotaDID = IotaDID::try_from_borrowed(document.id())?;
         let key: &DID = document.try_resolve(AUTH_QUERY)?.into_method().id();
 
         if key.fragment().is_none() {
@@ -120,11 +119,11 @@ impl IotaDocument {
     }
 
     /// Returns the DID document `id`.
-    pub fn id(&self) -> IotaDID {
+    pub fn id(&self) -> &IotaDID {
         // SAFETY: We checked the validity of the DID Document ID in the
         // IotaDocument constructors; we don't provide mutable references so
         // the value cannot change with typical "safe" Rust.
-        unsafe { IotaDID::from_cow_unchecked(Cow::Borrowed(self.0.id())) }
+        unsafe { IotaDID::new_unchecked_ref(self.0.id()) }
     }
 
     /// Returns the Tangle message id of the previous DID document, if any.

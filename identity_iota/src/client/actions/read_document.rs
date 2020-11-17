@@ -15,12 +15,12 @@ pub struct ReadDocumentResponse {
 #[derive(Debug)]
 pub struct ReadDocumentRequest<'a, 'b> {
     pub(crate) client: &'a Client,
-    pub(crate) did: &'b IotaDID<'b>,
+    pub(crate) did: &'b IotaDID,
     pub(crate) trace: bool,
 }
 
 impl<'a, 'b> ReadDocumentRequest<'a, 'b> {
-    pub const fn new(client: &'a Client, did: &'b IotaDID<'b>) -> Self {
+    pub const fn new(client: &'a Client, did: &'b IotaDID) -> Self {
         Self {
             client,
             did,

@@ -8,37 +8,37 @@ use crate::{
 pub type Diff = (); // TODO: FIXME
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct DIDDiff<'a> {
-    pub did: IotaDID<'a>,
+pub struct DIDDiff {
+    pub did: IotaDID,
     pub diff: Diff,
     pub proof: Option<Signature>,
 }
 
-impl<'a> DIDDiff<'a> {
-    pub fn new(document: &'a IotaDocument, _other: &IotaDocument) -> Result<Self> {
+impl DIDDiff {
+    pub fn new(document: &IotaDocument, _other: &IotaDocument) -> Result<Self> {
         let diff: Diff = ();
 
         Ok(Self {
-            did: document.id(),
+            did: document.id().clone(),
             diff,
             proof: None,
         })
     }
 }
 
-impl TrySignature for DIDDiff<'_> {
+impl TrySignature for DIDDiff {
     fn try_signature(&self) -> Option<&Signature> {
         self.proof.as_ref()
     }
 }
 
-impl TrySignatureMut for DIDDiff<'_> {
+impl TrySignatureMut for DIDDiff {
     fn try_signature_mut(&mut self) -> Option<&mut Signature> {
         self.proof.as_mut()
     }
 }
 
-impl SetSignature for DIDDiff<'_> {
+impl SetSignature for DIDDiff {
     fn set_signature(&mut self, value: Signature) {
         self.proof = Some(value);
     }

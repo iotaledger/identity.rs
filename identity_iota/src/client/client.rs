@@ -65,7 +65,7 @@ impl Client {
         PublishDocumentRequest::new(self.send_transfer(), document)
     }
 
-    pub fn read_document<'a, 'b>(&'a self, did: &'b IotaDID<'b>) -> ReadDocumentRequest<'a, 'b> {
+    pub fn read_document<'a, 'b>(&'a self, did: &'b IotaDID) -> ReadDocumentRequest<'a, 'b> {
         ReadDocumentRequest::new(self, did)
     }
 
@@ -90,7 +90,7 @@ impl ResolverMethod for Client {
     }
 
     async fn read(&self, did: &DID, _input: InputMetadata) -> CoreResult<Option<MetaDocument>> {
-        let did: IotaDID = IotaDID::try_from_borrowed(did).map_err(|error| Error::ResolutionError(error.into()))?;
+        let did: &IotaDID = IotaDID::try_from_borrowed(did).map_err(|error| Error::ResolutionError(error.into()))?;
 
         let response: ReadDocumentResponse = self
             .read_document(&did)
