@@ -1,9 +1,7 @@
+use did_doc::Document;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    did::DIDDocument as Document,
-    resolver::{DocumentMetadata, ResolutionMetadata},
-};
+use crate::resolver::{DocumentMetadata, ResolutionMetadata};
 
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Resolution {
