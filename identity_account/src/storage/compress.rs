@@ -77,14 +77,10 @@ impl HuffmanCodec {
         out.extend(&encoded.len().to_be_bytes());
 
         while encoded.len() % 8 != 0 {
-            encoded.push_str("0");
+            encoded.push('0');
         }
 
-        let mut encoded_bytes: Vec<u8> = Vec::new();
-
-        for _ in 0..encoded.len() / 8 {
-            encoded_bytes.push(0u8);
-        }
+        let mut encoded_bytes: Vec<u8> = vec![0u8; encoded.len() / 8];
 
         encoded.char_indices().for_each(|(idx, ch)| {
             encoded_bytes[idx / 8] <<= 1;

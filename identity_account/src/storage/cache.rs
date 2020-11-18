@@ -184,7 +184,7 @@ impl<K: Hash + Eq, V: Clone + Debug> Cache<K, V> {
         self.table
             .remove(key)
             .filter(|value| !value.has_expired(now))
-            .map(|value| value.val.clone())
+            .map(|value| value.val)
     }
 
     // Check if the `Cache<K, V>` contains a specific key.
