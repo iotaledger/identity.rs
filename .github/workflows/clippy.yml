@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     branches:
       - main
@@ -25,6 +26,7 @@ jobs:
             identity_diff,
             identity_iota,
             identity_proof,
+            libraries/wasm,
           ]
 
     steps:

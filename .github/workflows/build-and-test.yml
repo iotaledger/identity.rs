@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     branches:
       - main
@@ -86,3 +87,43 @@ jobs:
         with:
           command: test
           args: --manifest-path=${{ matrix.project }}/Cargo.toml --all --release
+
+  build-and-test-wasm:
+    runs-on: ubuntu-latest
+    strategy:
+        fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install WASM toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+      
+      - name: Install wasm-pack
+        run: yarn global add wasm-pack
+
+      - name: Install JS dependencies
+        run: yarn
+        working-directory: libraries/wasm
+
+      - name: Build WASM bindings
+        run: yarn build
+        working-directory: libraries/wasm
+      
+      # - name: Run tests
+      #   run: yarn test
+      #   working-directory: libraries/wasm

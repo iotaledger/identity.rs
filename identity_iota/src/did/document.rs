@@ -1,197 +1,296 @@
-use identity_core::{
-    common::{AsJson as _, Object, SerdeInto as _, Value},
-    did::DIDDocument,
-    key::{KeyData, KeyRelation, KeyType, PublicKey},
-    utils::{decode_b58, decode_hex, encode_b58},
+use core::{
+    convert::TryFrom,
+    fmt::{Debug, Display, Error as FmtError, Formatter, Result as FmtResult},
+    ops::{Deref, DerefMut},
 };
-use identity_crypto::{Ed25519, Secp256k1, SecretKey, Sign as _, Verify as _};
+use identity_core::{
+    common::{OneOrMany, ToJson as _},
+    did::{DIDDocument as Document, DIDDocumentBuilder as DocumentBuilder, DID},
+    diff::Diff as _,
+    key::{KeyData, KeyRelation, KeyType, PublicKey, PublicKeyBuilder},
+    utils::encode_b58,
+};
+use identity_crypto::{KeyPair, SecretKey};
+use identity_proof::{signature::jcsed25519signature2020, HasProof, LdRead, LdSignature, LdWrite, SignatureOptions};
+use iota::transaction::bundled::Address;
+use multihash::{Blake2b256, MultihashGeneric};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    did::{DIDDiff, DIDProof, TangleDocument},
+    did::{DIDDiff, IotaDID},
     error::{Error, Result},
+    utils::{create_address_from_trits, utf8_to_trytes},
 };
 
-impl TangleDocument for DIDDocument {
-    fn sign_diff_unchecked(&self, diff: &mut DIDDiff, secret: &SecretKey) -> Result<()> {
-        // Get the first authentication key from the document.
-        let key: &PublicKey = self
+#[derive(Clone, PartialEq, Deserialize, Serialize)]
+#[serde(try_from = "Document", into = "Document")]
+pub struct IotaDocument {
+    document: Document,
+    did: IotaDID,
+}
+
+impl IotaDocument {
+    pub fn generate_ed25519<'a, T>(tag: &str, network: T) -> Result<(Self, KeyPair)>
+    where
+        T: Into<Option<&'a str>>,
+    {
+        let (did, keypair): (IotaDID, KeyPair) = IotaDID::generate_ed25519(network)?;
+
+        let authentication: PublicKey = PublicKeyBuilder::default()
+            .id(format!("{}#{}", did, tag).parse()?)
+            .controller(did.into())
+            .key_type(KeyType::Ed25519VerificationKey2018)
+            .key_data(KeyData::PublicKeyBase58(encode_b58(keypair.public())))
+            .build()
+            .expect("FIXME");
+
+        Self::try_from_key(authentication).map(|this| (this, keypair))
+    }
+
+    pub fn try_from_document(document: Document) -> Result<Self> {
+        let did: IotaDID = IotaDID::try_from_did(document.did().clone())?;
+
+        let authentication: &PublicKey = document
             .resolve_key(0, KeyRelation::Authentication)
             .ok_or(Error::InvalidAuthenticationKey)?;
 
-        // Reset the proof object in the diff.
-        diff.proof = DIDProof::new(key.id().clone());
+        Self::check_authentication_key_id(authentication, &did)?;
 
-        // Create a signature from the diff JSON.
-        let signature: String = sign_canonicalized(diff, key.key_type(), secret)?;
+        Ok(Self { document, did })
+    }
 
-        // Update the diff proof with the encoded signature.
-        diff.proof.signature = signature;
+    pub fn try_from_key(authentication: PublicKey) -> Result<Self> {
+        let mut base: DID = authentication.id().clone();
+
+        base.fragment = None;
+        base.query = None;
+        base.path_segments = None;
+
+        Self::create_document(base, authentication).and_then(Self::try_from_document)
+    }
+
+    fn create_document(did: impl Into<DID>, authentication: PublicKey) -> Result<Document> {
+        let mut document: Document = DocumentBuilder::default()
+            .context(OneOrMany::One(DID::BASE_CONTEXT.into()))
+            .id(did.into())
+            .auth(vec![authentication.id().clone().into()])
+            .public_keys(vec![authentication])
+            .build()
+            .expect("FIXME");
+
+        document.init_timestamps();
+
+        Ok(document)
+    }
+
+    pub fn did(&self) -> &IotaDID {
+        &self.did
+    }
+
+    pub fn supersedes(&self) -> Option<&str> {
+        None // TODO
+    }
+
+    pub fn diff_chain(&self) -> Option<&str> {
+        None // TODO
+    }
+
+    pub fn has_diff_chain(&self) -> bool {
+        self.diff_chain().is_some()
+    }
+
+    pub fn authentication_key(&self) -> &PublicKey {
+        self.resolve_key(0, KeyRelation::Authentication).expect("infallible")
+    }
+
+    pub fn authentication_key_bytes(&self) -> Vec<u8> {
+        self.authentication_key()
+            .key_data()
+            .try_decode()
+            .transpose()
+            .ok()
+            .flatten()
+            .unwrap_or_default()
+    }
+
+    pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
+        let key: &PublicKey = self.authentication_key();
+
+        let fragment: String = format!("{}", key.id());
+        let options: SignatureOptions = SignatureOptions::new(fragment);
+
+        match key.key_type() {
+            KeyType::Ed25519VerificationKey2018 => {
+                jcsed25519signature2020::sign_lds(&mut self.document, options, secret)?;
+            }
+            _ => {
+                return Err(Error::InvalidAuthenticationKey);
+            }
+        }
 
         Ok(())
     }
 
-    fn verify_diff_unchecked(&self, diff: &DIDDiff) -> Result<()> {
-        // TODO: Validate diff.id
-        // TODO: Validate diff.prevMsg
+    pub fn verify(&self) -> Result<()> {
+        let key: &PublicKey = self.authentication_key();
 
-        // Get the first authentication key from the document.
-        let key: &PublicKey = self
-            .resolve_key(0, KeyRelation::Authentication)
-            .ok_or(Error::InvalidAuthenticationKey)?;
-
-        verify_canonicalized(diff, key)
-    }
-
-    fn sign_unchecked(&mut self, secret: &SecretKey) -> Result<()> {
-        // Get the first authentication key from the document.
-        let key: &PublicKey = self
-            .resolve_key(0, KeyRelation::Authentication)
-            .ok_or(Error::InvalidAuthenticationKey)?;
-
-        let key_type: KeyType = key.key_type();
-        let proof: DIDProof = DIDProof::new(key.id().clone());
-        let proof: Object = proof.serde_into()?;
-
-        // Reset the proof object in the document.
-        self.set_metadata("proof", proof);
-
-        // Create a signature from the document JSON.
-        let signature: String = sign_canonicalized(self, key_type, secret)?;
-
-        // Update the document proof with the encoded signature.
-        //
-        // Note: This access should not panic since we already set the "proof" object.
-        self.metadata_mut()["proof"]["signature"] = signature.into();
+        match key.key_type() {
+            KeyType::Ed25519VerificationKey2018 => {
+                jcsed25519signature2020::verify_lds(&self.document)?;
+            }
+            _ => {
+                return Err(Error::InvalidAuthenticationKey);
+            }
+        }
 
         Ok(())
     }
 
-    fn verify_unchecked(&self) -> Result<()> {
+    pub fn diff(&self, mut other: Document, secret: &SecretKey) -> Result<DIDDiff> {
+        // Update the `updated` timestamp of the new document
+        other.update_time();
+
+        // Create a diff of changes between the two documents.
+        let mut diff: DIDDiff = DIDDiff {
+            id: self.document.did().clone(),
+            diff: self.document.diff(&other)?,
+            proof: LdSignature::new("", SignatureOptions::new("")),
+        };
+
+        self.sign_data(&mut diff, secret)?;
+
+        Ok(diff)
+    }
+
+    pub fn verify_diff(&self, diff: &DIDDiff) -> Result<()> {
+        self.verify_data(diff)
+    }
+
+    pub fn sign_data<T>(&self, data: &mut T, secret: &SecretKey) -> Result<()>
+    where
+        T: HasProof + Serialize,
+    {
         // Get the first authentication key from the document.
-        let key: &PublicKey = self
-            .resolve_key(0, KeyRelation::Authentication)
-            .ok_or(Error::InvalidAuthenticationKey)?;
+        let key: &PublicKey = self.authentication_key();
 
-        // TODO: Validate self.id == DID::parse(key.key_data())
+        let fragment: String = format!("{}", key.id());
+        let options: SignatureOptions = SignatureOptions::new(fragment);
 
-        verify_canonicalized(self, key)
-    }
-}
+        // Wrap the diff/document in a signable type.
+        let mut target: LdWrite<T> = LdWrite::new(data, &self.document);
 
-fn sign_canonicalized<T>(data: &T, key_type: KeyType, secret: &SecretKey) -> Result<String>
-where
-    T: for<'de> Deserialize<'de> + Serialize,
-{
-    // Serialize as canonicalized JSON.
-    // TODO: Canonicalize
-    let data: Vec<u8> = data.to_json_vec()?;
+        // Create and apply the signature
+        match key.key_type() {
+            KeyType::Ed25519VerificationKey2018 => {
+                jcsed25519signature2020::sign_lds(&mut target, options, secret)?;
+            }
+            _ => {
+                return Err(Error::InvalidAuthenticationKey);
+            }
+        }
 
-    // Create a signature from the canonicalized JSON.
-    let signature: Vec<u8> = sign(&data, key_type, secret)?;
-
-    Ok(encode_b58(&signature))
-}
-
-fn sign(data: &[u8], key_type: KeyType, secret: &SecretKey) -> Result<Vec<u8>> {
-    match key_type {
-        KeyType::JsonWebKey2020 => todo!("Not Supported: JsonWebKey2020"),
-        KeyType::EcdsaSecp256k1VerificationKey2019 => Secp256k1.sign(&data, secret).map_err(Into::into),
-        KeyType::Ed25519VerificationKey2018 => Ed25519.sign(&data, secret).map_err(Into::into),
-        KeyType::GpgVerificationKey2020 => todo!("Not Supported: GpgVerificationKey2020"),
-        KeyType::RsaVerificationKey2018 => todo!("Not Supported: RsaVerificationKey2018"),
-        KeyType::X25519KeyAgreementKey2019 => todo!("Not Supported: X25519KeyAgreementKey2019"),
-        KeyType::SchnorrSecp256k1VerificationKey2019 => todo!("Not Supported: SchnorrSecp256k1VerificationKey2019"),
-        KeyType::EcdsaSecp256k1RecoveryMethod2020 => todo!("Not Supported: EcdsaSecp256k1RecoveryMethod2020"),
-    }
-}
-
-fn verify_canonicalized<T>(data: &T, key: &PublicKey) -> Result<()>
-where
-    T: for<'de> Deserialize<'de> + Serialize,
-{
-    // Convert the diff to a JSON object.
-    let mut data: Object = data.serde_into()?;
-
-    // Remove the signature from the proof.
-    let signature: Vec<u8> = data
-        .get_mut("proof")
-        .ok_or(Error::InvalidProof)?
-        .as_object_mut()
-        .ok_or(Error::InvalidProof)?
-        .remove("signature")
-        .and_then(|value| match value {
-            Value::String(value) => decode_b58(&value).ok(),
-            _ => None,
-        })
-        .ok_or(Error::InvalidProof)?;
-
-    // Serialize as canonicalized JSON.
-    // TODO: Canonicalize
-    let data: Vec<u8> = data.to_json_vec()?;
-
-    if verify(&data, &signature, key)? {
         Ok(())
-    } else {
-        Err(Error::InvalidProof)
+    }
+
+    pub fn verify_data<T>(&self, data: &T) -> Result<()>
+    where
+        T: HasProof + Serialize,
+    {
+        // Wrap the data/document in a verifiable type.
+        let target: LdRead<T> = LdRead::new(data, &self.document);
+
+        match self.authentication_key().key_type() {
+            KeyType::Ed25519VerificationKey2018 => {
+                jcsed25519signature2020::verify_lds(&target)?;
+            }
+            _ => {
+                return Err(Error::InvalidAuthenticationKey);
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn diff_address_hash(&self) -> String {
+        Self::create_diff_address_hash(&self.authentication_key_bytes())
+    }
+
+    pub fn diff_address(&self) -> Result<Address> {
+        create_address_from_trits(self.diff_address_hash())
+    }
+
+    /// Creates an 81 Trytes IOTA address from public key bytes for a diff
+    pub fn create_diff_address_hash(public_key: &[u8]) -> String {
+        let hash: MultihashGeneric<_> = Blake2b256::digest(public_key);
+        let hash: MultihashGeneric<_> = Blake2b256::digest(hash.digest());
+
+        let mut trytes: String = utf8_to_trytes(&encode_b58(hash.digest()));
+
+        trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
+
+        trytes
+    }
+
+    pub fn create_diff_address(public_key: &[u8]) -> Result<Address> {
+        create_address_from_trits(Self::create_diff_address_hash(public_key))
+    }
+
+    fn check_authentication_key_id(authentication: &PublicKey, did: &IotaDID) -> Result<()> {
+        let key: &DID = authentication.id();
+
+        if key.fragment.is_none() {
+            return Err(Error::InvalidAuthenticationKey);
+        }
+
+        if !key.matches_base(did) {
+            return Err(Error::InvalidAuthenticationKey);
+        }
+
+        Ok(())
     }
 }
 
-fn verify(data: &[u8], signature: &[u8], key: &PublicKey) -> Result<bool> {
-    match (key.key_type(), key.key_data()) {
-        (KeyType::JsonWebKey2020, KeyData::PublicKeyJwk(_)) => todo!("Not Supported: JsonWebKey2020/PublicKeyJwk"),
+impl Display for IotaDocument {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        if f.alternate() {
+            f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
+        } else {
+            f.write_str(&self.to_json().map_err(|_| FmtError)?)
+        }
+    }
+}
 
-        (KeyType::EcdsaSecp256k1VerificationKey2019, KeyData::PublicKeyHex(inner)) => {
-            let key: Vec<u8> = decode_hex(inner)?;
-            let valid: bool = Secp256k1.verify(data, signature, &key.into())?;
+impl Debug for IotaDocument {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        Debug::fmt(&self.document, f)
+    }
+}
 
-            Ok(valid)
-        }
-        (KeyType::EcdsaSecp256k1VerificationKey2019, KeyData::PublicKeyJwk(_)) => {
-            todo!("Not Supported: EcdsaSecp256k1VerificationKey2019/PublicKeyJwk")
-        }
+impl Deref for IotaDocument {
+    type Target = Document;
 
-        (KeyType::Ed25519VerificationKey2018, KeyData::PublicKeyJwk(_)) => {
-            todo!("Not Supported: Ed25519VerificationKey2018/PublicKeyJwk")
-        }
-        (KeyType::Ed25519VerificationKey2018, KeyData::PublicKeyBase58(inner)) => {
-            let key: Vec<u8> = decode_b58(inner)?;
-            let valid: bool = Ed25519.verify(data, signature, &key.into())?;
+    fn deref(&self) -> &Self::Target {
+        &self.document
+    }
+}
 
-            Ok(valid)
-        }
+// TODO: Remove this
+impl DerefMut for IotaDocument {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.document
+    }
+}
 
-        // (KeyType::GpgVerificationKey2020, KeyData::PublicKeyGpg(_)) => {}
-        (KeyType::RsaVerificationKey2018, KeyData::PublicKeyJwk(_)) => {
-            todo!("Not Supported: RsaVerificationKey2018/PublicKeyJwk")
-        }
-        (KeyType::RsaVerificationKey2018, KeyData::PublicKeyPem(_)) => {
-            todo!("Not Supported: RsaVerificationKey2018/PublicKeyPem")
-        }
+impl From<IotaDocument> for Document {
+    fn from(other: IotaDocument) -> Self {
+        other.document
+    }
+}
 
-        (KeyType::X25519KeyAgreementKey2019, KeyData::PublicKeyJwk(_)) => {
-            todo!("Not Supported: X25519KeyAgreementKey2019/PublicKeyJwk")
-        }
-        (KeyType::X25519KeyAgreementKey2019, KeyData::PublicKeyBase58(_)) => {
-            todo!("Not Supported: X25519KeyAgreementKey2019/PublicKeyBase58")
-        }
+impl TryFrom<Document> for IotaDocument {
+    type Error = Error;
 
-        (KeyType::SchnorrSecp256k1VerificationKey2019, KeyData::PublicKeyJwk(_)) => {
-            todo!("Not Supported: SchnorrSecp256k1VerificationKey2019/PublicKeyJwk")
-        }
-        (KeyType::SchnorrSecp256k1VerificationKey2019, KeyData::PublicKeyBase58(_)) => {
-            todo!("Not Supported: SchnorrSecp256k1VerificationKey2019/PublicKeyBase58")
-        }
-
-        (KeyType::EcdsaSecp256k1RecoveryMethod2020, KeyData::EthereumAddress(_)) => {
-            todo!("Not Supported: EcdsaSecp256k1RecoveryMethod2020/EthereumAddress")
-        }
-        (KeyType::EcdsaSecp256k1RecoveryMethod2020, KeyData::PublicKeyHex(_)) => {
-            todo!("Not Supported: EcdsaSecp256k1RecoveryMethod2020/PublicKeyHex")
-        }
-        (KeyType::EcdsaSecp256k1RecoveryMethod2020, KeyData::PublicKeyJwk(_)) => {
-            todo!("Not Supported: EcdsaSecp256k1RecoveryMethod2020/PublicKeyJwk")
-        }
-        (_, _) => todo!("Invalid KeyType/KeyData Configuration"),
+    fn try_from(other: Document) -> Result<Self, Self::Error> {
+        Self::try_from_document(other)
     }
 }

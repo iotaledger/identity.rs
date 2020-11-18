@@ -1,0 +1,31 @@
+[package]
+name = "iota_identity_wasm"
+version = "0.0.1"
+authors = ["Team Identity"]
+edition = "2018"
+repository = "https://github.com/iotaledger/identity.rs"
+description = "WASM version of Identity.rs"
+homepage = "https://www.iota.org"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+console_error_panic_hook = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
+wasm-bindgen-futures = "0.4"
+
+identity_core = { path = "../../identity_core" }
+identity_proof = { path = "../../identity_proof" }
+identity_iota = { path = "../../identity_iota" }
+identity_crypto = { path = "../../identity_crypto" }
+
+[target.wasm32-unknown-unknown.dependencies]
+rand = { version = "0.7", default-features = false, features = ["wasm-bindgen"] }

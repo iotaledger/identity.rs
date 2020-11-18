@@ -1,0 +1,56 @@
+{
+  "name": "@iota/iota-identity-wasm",
+  "version": "0.1.0",
+  "description": "WASM bindings for IOTA Identity - A Self Sovereign Identity Framework implementing the DID and VC standards from W3C. To be used in Javascript/Typescript",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iotaledger/identity.rs.git"
+  },
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "build:nodejs": "wasm-pack build --target nodejs --out-dir node && node ./build/node",
+    "build:web": "wasm-pack build --target web --out-dir web && node ./build/web",
+    "build:docs": "node ./build/docs",
+    "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
+    "pretest": "npm run build:nodejs",
+    "prepublishOnly": "npm run build",
+    "test": "mocha",
+    "serve": "webpack-dev-server",
+    "example:node": "node examples/node.js"
+  },
+  "contributors": [
+    "Jelle Millenaar <jelle.millenaar@iota.org>",
+    "Devin Turner <devin.turner@iota.org>",
+    "Tensor <tensordeveloper@gmail.com>",
+    "Thoralf Müller <thoralf.mue@gmail.com>",
+    "Sebastian Heusser <huhn.dev@gmail.com>"
+  ],
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/iotaledger/identity.rs/issues"
+  },
+  "homepage": "https://www.iota.org",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "web",
+    "node"
+  ],
+  "devDependencies": {
+    "@wasm-tool/wasm-pack-plugin": "^1.1.0",
+    "copy-webpack-plugin": "^6.3.0",
+    "jsdoc-to-markdown": "^6.0.1",
+    "mocha": "^7.1.2",
+    "rimraf": "^3.0.0",
+    "wasm-pack": "^0.9.1",
+    "webpack": "^4.42.0",
+    "webpack-cli": "^3.3.3",
+    "webpack-dev-server": "^3.7.1"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.0"
+  }
+}

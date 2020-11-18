@@ -8,3 +8,6 @@ members = [
     "identity_proof",
     "identity_comm",
 ]
+exclude = [
+    "libraries/wasm"
+]

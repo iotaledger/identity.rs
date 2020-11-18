@@ -29,7 +29,7 @@ impl PublicKey {
     }
 
     pub fn default_key_data() -> KeyData {
-        KeyData::PublicKeyHex("".into())
+        KeyData::PublicKeyBase58("".into())
     }
 
     pub fn id(&self) -> &DID {
@@ -100,7 +100,7 @@ impl Diff for PublicKey {
                 .key_type
                 .map(|value| self.key_type.merge(value))
                 .transpose()?
-                .unwrap_or_else(|| self.key_type),
+                .unwrap_or(self.key_type),
             key_data: diff
                 .key_data
                 .map(|value| self.key_data.merge(value))
