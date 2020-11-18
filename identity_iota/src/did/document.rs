@@ -13,7 +13,6 @@ use identity_core::{
     },
     did_url::DID,
     proof::JcsEd25519Signature2020,
-    utils::encode_b58,
 };
 use iota::transaction::bundled::Address;
 use serde::Serialize;
@@ -68,19 +67,20 @@ impl IotaDocument {
         U: Into<Option<&'b str>>,
     {
         let (did, keypair): (IotaDID, KeyPair) = IotaDID::generate_ed25519(network, shard)?;
+        let key: DID = (*did).join(format!("#{}", tag))?;
 
         let authentication: Method = MethodBuilder::default()
-            .id(format!("{}#{}", did, tag).parse()?)
+            .id(key.clone())
             .controller(did.clone().into())
             .key_type(MethodType::Ed25519VerificationKey2018)
-            .key_data(MethodData::PublicKeyBase58(encode_b58(keypair.public())))
+            .key_data(MethodData::new_b58(keypair.public()))
             .build()?;
 
         let this: Self = DocumentBuilder::new(Properties::new())
             .id(did.into())
             // Note: We use a reference to the verification method due to
             // limitations in the did_doc crate.
-            .authentication(authentication.id().clone())
+            .authentication(key)
             .verification_method(authentication)
             .build()
             .map(VerifiableDocument::new)
@@ -153,7 +153,7 @@ impl IotaDocument {
 
     /// Returns the key bytes of the default DID document authentication method.
     pub fn authentication_bytes(&self) -> Result<Vec<u8>> {
-        self.authentication().key_data().try_decode().map_err(Into::into)
+        self.try_resolve_bytes(AUTH_QUERY).map_err(Into::into)
     }
 
     /// Returns the method type of the default DID document authentication method.

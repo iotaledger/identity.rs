@@ -28,7 +28,7 @@ impl Timestamp {
 
     /// Returns the `Timestamp` as a Unix timestamp.
     pub fn to_unix(&self) -> i64 {
-        self.0.timestamp()
+        self.0.unix_timestamp()
     }
 
     /// Returns the `Timestamp` as an RFC 3339 `String`.

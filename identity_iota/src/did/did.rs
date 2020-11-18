@@ -64,7 +64,7 @@ impl IotaDID {
     /// Returns `Err` if the input is not a valid `IotaDID`.
     pub fn try_from_owned(did: DID) -> Result<Self> {
         Self::check_validity(&did)?;
-        Ok(Self(did))
+        Ok(Self(Self::normalize(did)))
     }
 
     /// Converts a clone-on-write `DID` to an `IotaDID` without validation.
@@ -225,6 +225,17 @@ impl IotaDID {
 
     pub fn segments(&self) -> Segments {
         Segments(self.method_id())
+    }
+
+    fn normalize(mut did: DID) -> DID {
+        let segments: Segments = Segments(did.method_id());
+
+        if segments.count() == 2 && segments.network() == "main" {
+            let method_id: String = segments.tag().to_string();
+            did.set_method_id(method_id);
+        }
+
+        did
     }
 
     fn encode_key(key: &[u8]) -> String {
@@ -457,5 +468,22 @@ mod tests {
         assert_eq!(did.tag(), tag);
         assert_eq!(did.network(), "foo");
         assert_eq!(did.shard(), Some("shard-1"));
+    }
+
+    #[test]
+    fn test_normalize() {
+        let key: KeyPair = JcsEd25519Signature2020::new_keypair();
+        let tag: String = IotaDID::encode_key(key.public().as_ref());
+
+        // A DID with "main" as the network can be normalized ("main" removed)
+        let did1: IotaDID = format!("did:iota:{}", tag).parse().unwrap();
+        let did2: IotaDID = format!("did:iota:main:{}", tag).parse().unwrap();
+        assert_eq!(did1, did2);
+
+        // A DID with a shard cannot be normalized
+        let did_str: String = format!("did:iota:main:shard:{}", tag);
+        let did: IotaDID = did_str.parse().unwrap();
+
+        assert_eq!(did.as_str(), did_str);
     }
 }
