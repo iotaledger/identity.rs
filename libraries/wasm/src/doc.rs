@@ -1,7 +1,6 @@
 use identity_core::{
-    common::FromJson as _,
-    did::{DIDDocument, ServiceBuilder, ServiceEndpoint},
-    key::{KeyIndex, KeyRelation},
+    convert::{FromJson as _, SerdeInto as _},
+    did_doc::{DIDKey, Document, DocumentBuilder, MethodIndex, MethodScope, Service, ServiceBuilder},
 };
 use identity_iota::did::{DIDDiff, IotaDocument};
 use wasm_bindgen::prelude::*;
@@ -40,8 +39,12 @@ pub struct Doc(pub(crate) IotaDocument);
 impl Doc {
     #[wasm_bindgen(constructor)]
     pub fn new(authentication: &PubKey) -> Result<Doc, JsValue> {
-        IotaDocument::try_from_key(authentication.0.clone())
+        DocumentBuilder::default()
+            .id(authentication.0.id().clone())
+            .authentication(authentication.0.clone())
+            .build()
             .map_err(js_err)
+            .and_then(|base| IotaDocument::try_from_document(base).map_err(js_err))
             .map(Self)
     }
 
@@ -65,32 +68,28 @@ impl Doc {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn did(&self) -> DID {
-        DID(self.0.did().clone())
-    }
-
-    #[wasm_bindgen(getter)]
     pub fn id(&self) -> String {
-        self.0.did().to_string()
+        self.0.id().to_string()
     }
 
     #[wasm_bindgen(getter, js_name = authChain)]
     pub fn auth_chain(&self) -> String {
-        self.0.did().create_address_hash()
+        self.0.id().address_hash()
     }
 
     #[wasm_bindgen(getter, js_name = diffChain)]
     pub fn diff_chain(&self) -> String {
-        self.0.diff_address_hash()
+        String::new() // TODO: FIXME
     }
 
     #[wasm_bindgen(getter)]
-    pub fn proof(&self) -> JsValue {
+    pub fn proof(&self) -> Result<JsValue, JsValue> {
         self.0
-            .metadata()
-            .get("proof")
-            .and_then(|value| JsValue::from_serde(value).ok())
-            .unwrap_or(JsValue::NULL)
+            .proof()
+            .map(|proof| JsValue::from_serde(proof))
+            .transpose()
+            .map_err(js_err)
+            .map(|option| option.unwrap_or(JsValue::NULL))
     }
 
     #[wasm_bindgen]
@@ -107,8 +106,8 @@ impl Doc {
     /// Generate the difference between two DID Documents and sign it
     #[wasm_bindgen]
     pub fn diff(&self, other: &Doc, key: &Key) -> Result<JsValue, JsValue> {
-        let doc: DIDDocument = other.0.clone().into();
-        let diff: DIDDiff = self.0.diff(doc, key.0.secret()).map_err(js_err)?;
+        let doc: IotaDocument = other.0.clone();
+        let diff: DIDDiff = self.0.diff(&doc, key.0.secret()).map_err(js_err)?;
 
         JsValue::from_serde(&diff).map_err(js_err)
     }
@@ -124,119 +123,121 @@ impl Doc {
 
     #[wasm_bindgen(js_name = updateService)]
     pub fn update_service(&mut self, did: DID, url: String, service_type: String) -> Result<(), JsValue> {
-        let service = ServiceBuilder::default()
+        let service: Service = ServiceBuilder::default()
             .id(did.0.into())
-            .service_type(service_type)
-            .endpoint(ServiceEndpoint::Url(url.parse().map_err(js_err)?))
-            .build()?;
+            .type_(service_type)
+            .service_endpoint(url.parse().map_err(js_err)?)
+            .build()
+            .map_err(js_err)?;
 
-        self.0.update_service(service);
+        Self::mutate(self, |doc| doc.service_mut().push(service))?;
 
         Ok(())
     }
 
     #[wasm_bindgen(js_name = clearServices)]
-    pub fn clear_services(&mut self) {
-        self.0.clear_services();
-    }
-
-    #[wasm_bindgen(js_name = updatePublicKey)]
-    pub fn update_public_key(&mut self, public_key: &PubKey) {
-        self.0.update_public_key(public_key.0.clone());
-    }
-
-    #[wasm_bindgen(js_name = clearPublicKeys)]
-    pub fn clear_public_keys(&mut self) {
-        self.0.clear_public_keys();
+    pub fn clear_services(&mut self) -> Result<(), JsValue> {
+        Self::mutate(self, |doc| doc.service_mut().clear())
     }
 
     #[wasm_bindgen(js_name = updateAuth)]
-    pub fn update_auth(&mut self, public_key: &PubKey) {
-        self.0.update_auth(public_key.0.clone());
+    pub fn update_auth(&mut self, public_key: &PubKey) -> Result<bool, JsValue> {
+        Self::mutate(self, |doc| {
+            doc.authentication_mut()
+                .update(DIDKey::new(public_key.0.clone().into()))
+        })
     }
 
     #[wasm_bindgen(js_name = clearAuth)]
-    pub fn clear_auth(&mut self) {
-        self.0.clear_auth();
+    pub fn clear_auth(&mut self) -> Result<(), JsValue> {
+        Self::mutate(self, |doc| doc.authentication_mut().clear())
     }
 
     #[wasm_bindgen(js_name = updateAssert)]
-    pub fn update_assert(&mut self, public_key: &PubKey) {
-        self.0.update_assert(public_key.0.clone());
+    pub fn update_assert(&mut self, public_key: &PubKey) -> Result<bool, JsValue> {
+        Self::mutate(self, |doc| {
+            doc.assertion_method_mut()
+                .update(DIDKey::new(public_key.0.clone().into()))
+        })
     }
 
     #[wasm_bindgen(js_name = clearAssert)]
-    pub fn clear_assert(&mut self) {
-        self.0.clear_assert();
+    pub fn clear_assert(&mut self) -> Result<(), JsValue> {
+        Self::mutate(self, |doc| doc.assertion_method_mut().clear())
     }
 
     #[wasm_bindgen(js_name = updateVerification)]
-    pub fn update_verification(&mut self, public_key: &PubKey) {
-        self.0.update_verification(public_key.0.clone());
+    pub fn update_verification(&mut self, public_key: &PubKey) -> Result<bool, JsValue> {
+        Self::mutate(self, |doc| {
+            doc.verification_method_mut().update(DIDKey::new(public_key.0.clone()))
+        })
     }
 
     #[wasm_bindgen(js_name = clearVerification)]
-    pub fn clear_verification(&mut self) {
-        self.0.clear_verification();
+    pub fn clear_verification(&mut self) -> Result<(), JsValue> {
+        Self::mutate(self, |doc| doc.verification_method_mut().clear())
     }
 
     #[wasm_bindgen(js_name = updateDelegation)]
-    pub fn update_delegation(&mut self, public_key: &PubKey) {
-        self.0.update_delegation(public_key.0.clone());
+    pub fn update_delegation(&mut self, public_key: &PubKey) -> Result<bool, JsValue> {
+        Self::mutate(self, |doc| {
+            doc.capability_delegation_mut()
+                .update(DIDKey::new(public_key.0.clone().into()))
+        })
     }
 
     #[wasm_bindgen(js_name = clearDelegation)]
-    pub fn clear_delegation(&mut self) {
-        self.0.clear_delegation();
+    pub fn clear_delegation(&mut self) -> Result<(), JsValue> {
+        Self::mutate(self, |doc| doc.capability_delegation_mut().clear())
     }
 
     #[wasm_bindgen(js_name = updateInvocation)]
-    pub fn update_invocation(&mut self, public_key: &PubKey) {
-        self.0.update_invocation(public_key.0.clone());
+    pub fn update_invocation(&mut self, public_key: &PubKey) -> Result<bool, JsValue> {
+        Self::mutate(self, |doc| {
+            doc.capability_invocation_mut()
+                .update(DIDKey::new(public_key.0.clone().into()))
+        })
     }
 
     #[wasm_bindgen(js_name = clearInvocation)]
-    pub fn clear_invocation(&mut self) {
-        self.0.clear_invocation();
+    pub fn clear_invocation(&mut self) -> Result<(), JsValue> {
+        Self::mutate(self, |doc| doc.capability_invocation_mut().clear())
     }
 
     #[wasm_bindgen(js_name = updateAgreement)]
-    pub fn update_agreement(&mut self, public_key: &PubKey) {
-        self.0.update_agreement(public_key.0.clone());
+    pub fn update_agreement(&mut self, public_key: &PubKey) -> Result<bool, JsValue> {
+        Self::mutate(self, |doc| {
+            doc.key_agreement_mut().update(DIDKey::new(public_key.0.clone().into()))
+        })
     }
 
     #[wasm_bindgen(js_name = clearAgreement)]
-    pub fn clear_agreement(&mut self) {
-        self.0.clear_agreement();
-    }
-
-    #[wasm_bindgen(js_name = updateTime)]
-    pub fn update_time(&mut self) {
-        self.0.update_time();
+    pub fn clear_agreement(&mut self) -> Result<(), JsValue> {
+        Self::mutate(self, |doc| doc.key_agreement_mut().clear())
     }
 
     #[wasm_bindgen(js_name = resolveKey)]
     pub fn resolve_key(&mut self, ident: JsValue, scope: Option<String>) -> Result<PubKey, JsValue> {
         let borrow: String;
 
-        let ident: KeyIndex = if let Some(number) = ident.as_f64() {
-            KeyIndex::Index(number.to_string().parse().map_err(js_err)?)
+        let ident: MethodIndex = if let Some(number) = ident.as_f64() {
+            MethodIndex::Index(number.to_string().parse().map_err(js_err)?)
         } else if let Some(ident) = ident.as_string() {
             borrow = ident;
-            KeyIndex::Ident(&borrow)
+            MethodIndex::Ident(&borrow)
         } else {
             return Err("Invalid Key Identifier".into());
         };
 
-        let scope: KeyRelation = scope
-            .map(|scope| scope.parse::<KeyRelation>())
+        let scope: MethodScope = scope
+            .map(|scope| scope.parse::<MethodScope>())
             .transpose()
             .map_err(js_err)?
-            .unwrap_or(KeyRelation::Authentication);
+            .unwrap_or(MethodScope::Authentication);
 
         self.0
-            .resolve_key(ident, scope)
-            .cloned()
+            .resolve((ident, scope))
+            .map(|wrap| wrap.into_method().clone())
             .map(PubKey)
             .ok_or_else(|| "Key Not Found".into())
     }
@@ -251,5 +252,18 @@ impl Doc {
     #[wasm_bindgen(js_name = fromJSON)]
     pub fn from_json(json: &JsValue) -> Result<Doc, JsValue> {
         json.into_serde().map_err(js_err).map(Self)
+    }
+
+    // Bypass IotaDocument Deref limitations and allow modifications to the
+    // core DID Document type.
+    //
+    // Uses `serde` for conversions and re-validates the document after mutation.
+    fn mutate<T>(this: &mut Self, f: impl FnOnce(&mut Document) -> T) -> Result<T, JsValue> {
+        let mut document: Document = this.0.serde_into().map_err(js_err)?;
+        let output: T = f(&mut document);
+
+        this.0 = IotaDocument::try_from_document(document).map_err(js_err)?;
+
+        Ok(output)
     }
 }

@@ -33,9 +33,7 @@
 <dd><p>Validates a presentation with the DID Document from the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
 </dd>
 <dt><a href="#start">start()</a></dt>
-<dd></dd>
-<dt><a href="#initialize">initialize()</a> ⇒ <code>any</code></dt>
-<dd><p>Initializes the console_error_panic_hook for better error messages</p>
+<dd><p>Initializes the console error panic hook for better error messages</p>
 </dd>
 </dl>
 
@@ -141,7 +139,6 @@ Parses a `DID` from the input string.
 * [Doc](#Doc)
     * [new Doc(authentication)](#new_Doc_new)
     * _instance_
-        * [.did](#Doc+did) ⇒ [<code>DID</code>](#DID)
         * [.id](#Doc+id) ⇒ <code>string</code>
         * [.authChain](#Doc+authChain) ⇒ <code>string</code>
         * [.diffChain](#Doc+diffChain) ⇒ <code>string</code>
@@ -152,21 +149,18 @@ Parses a `DID` from the input string.
         * [.verifyDiff(diff)](#Doc+verifyDiff) ⇒ <code>boolean</code>
         * [.updateService(did, url, service_type)](#Doc+updateService)
         * [.clearServices()](#Doc+clearServices)
-        * [.updatePublicKey(public_key)](#Doc+updatePublicKey)
-        * [.clearPublicKeys()](#Doc+clearPublicKeys)
-        * [.updateAuth(public_key)](#Doc+updateAuth)
+        * [.updateAuth(public_key)](#Doc+updateAuth) ⇒ <code>boolean</code>
         * [.clearAuth()](#Doc+clearAuth)
-        * [.updateAssert(public_key)](#Doc+updateAssert)
+        * [.updateAssert(public_key)](#Doc+updateAssert) ⇒ <code>boolean</code>
         * [.clearAssert()](#Doc+clearAssert)
-        * [.updateVerification(public_key)](#Doc+updateVerification)
+        * [.updateVerification(public_key)](#Doc+updateVerification) ⇒ <code>boolean</code>
         * [.clearVerification()](#Doc+clearVerification)
-        * [.updateDelegation(public_key)](#Doc+updateDelegation)
+        * [.updateDelegation(public_key)](#Doc+updateDelegation) ⇒ <code>boolean</code>
         * [.clearDelegation()](#Doc+clearDelegation)
-        * [.updateInvocation(public_key)](#Doc+updateInvocation)
+        * [.updateInvocation(public_key)](#Doc+updateInvocation) ⇒ <code>boolean</code>
         * [.clearInvocation()](#Doc+clearInvocation)
-        * [.updateAgreement(public_key)](#Doc+updateAgreement)
+        * [.updateAgreement(public_key)](#Doc+updateAgreement) ⇒ <code>boolean</code>
         * [.clearAgreement()](#Doc+clearAgreement)
-        * [.updateTime()](#Doc+updateTime)
         * [.resolveKey(ident, scope)](#Doc+resolveKey) ⇒ [<code>PubKey</code>](#PubKey)
         * [.toJSON()](#Doc+toJSON) ⇒ <code>any</code>
     * _static_
@@ -182,10 +176,6 @@ Parses a `DID` from the input string.
 | --- | --- |
 | authentication | [<code>PubKey</code>](#PubKey) | 
 
-<a name="Doc+did"></a>
-
-### doc.did ⇒ [<code>DID</code>](#DID)
-**Kind**: instance property of [<code>Doc</code>](#Doc)  
 <a name="Doc+id"></a>
 
 ### doc.id ⇒ <code>string</code>
@@ -255,22 +245,9 @@ Verify the signature in a diff with the authentication_key
 
 ### doc.clearServices()
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
-<a name="Doc+updatePublicKey"></a>
-
-### doc.updatePublicKey(public_key)
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-
-| Param | Type |
-| --- | --- |
-| public_key | [<code>PubKey</code>](#PubKey) | 
-
-<a name="Doc+clearPublicKeys"></a>
-
-### doc.clearPublicKeys()
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
 <a name="Doc+updateAuth"></a>
 
-### doc.updateAuth(public_key)
+### doc.updateAuth(public_key) ⇒ <code>boolean</code>
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 
 | Param | Type |
@@ -283,7 +260,7 @@ Verify the signature in a diff with the authentication_key
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 <a name="Doc+updateAssert"></a>
 
-### doc.updateAssert(public_key)
+### doc.updateAssert(public_key) ⇒ <code>boolean</code>
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 
 | Param | Type |
@@ -296,7 +273,7 @@ Verify the signature in a diff with the authentication_key
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 <a name="Doc+updateVerification"></a>
 
-### doc.updateVerification(public_key)
+### doc.updateVerification(public_key) ⇒ <code>boolean</code>
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 
 | Param | Type |
@@ -309,7 +286,7 @@ Verify the signature in a diff with the authentication_key
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 <a name="Doc+updateDelegation"></a>
 
-### doc.updateDelegation(public_key)
+### doc.updateDelegation(public_key) ⇒ <code>boolean</code>
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 
 | Param | Type |
@@ -322,7 +299,7 @@ Verify the signature in a diff with the authentication_key
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 <a name="Doc+updateInvocation"></a>
 
-### doc.updateInvocation(public_key)
+### doc.updateInvocation(public_key) ⇒ <code>boolean</code>
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 
 | Param | Type |
@@ -335,7 +312,7 @@ Verify the signature in a diff with the authentication_key
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 <a name="Doc+updateAgreement"></a>
 
-### doc.updateAgreement(public_key)
+### doc.updateAgreement(public_key) ⇒ <code>boolean</code>
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 
 | Param | Type |
@@ -345,10 +322,6 @@ Verify the signature in a diff with the authentication_key
 <a name="Doc+clearAgreement"></a>
 
 ### doc.clearAgreement()
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-<a name="Doc+updateTime"></a>
-
-### doc.updateTime()
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 <a name="Doc+resolveKey"></a>
 
@@ -668,7 +641,7 @@ Deserializes a `VerifiableCredential` object from a JSON object.
 <a name="VerifiablePresentation+sign"></a>
 
 ### verifiablePresentation.sign(holder, key)
-Signs the credential with the given holder `Doc` and `Key` object.
+Signs the presentation with the given holder `Doc` and `Key` object.
 
 **Kind**: instance method of [<code>VerifiablePresentation</code>](#VerifiablePresentation)  
 
@@ -680,7 +653,7 @@ Signs the credential with the given holder `Doc` and `Key` object.
 <a name="VerifiablePresentation+verify"></a>
 
 ### verifiablePresentation.verify(holder) ⇒ <code>boolean</code>
-Verifies the credential signature against the holder `Doc`.
+Verifies the presentation signature against the holder `Doc`.
 
 **Kind**: instance method of [<code>VerifiablePresentation</code>](#VerifiablePresentation)  
 
@@ -756,10 +729,6 @@ Validates a presentation with the DID Document from the Tangle, params looks lik
 <a name="start"></a>
 
 ## start()
-**Kind**: global function  
-<a name="initialize"></a>
-
-## initialize() ⇒ <code>any</code>
-Initializes the console_error_panic_hook for better error messages
+Initializes the console error panic hook for better error messages
 
 **Kind**: global function  

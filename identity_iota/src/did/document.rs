@@ -307,13 +307,6 @@ impl Deref for IotaDocument {
     }
 }
 
-// TODO: FIXME, this is awful
-impl core::ops::DerefMut for IotaDocument {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
 impl PartialEq<VerifiableDocument<Properties>> for IotaDocument {
     fn eq(&self, other: &VerifiableDocument<Properties>) -> bool {
         &self.0 == other
