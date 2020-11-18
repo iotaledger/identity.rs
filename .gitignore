@@ -17,3 +17,6 @@ book
 index.html
 
 !/libraries/wasm/static/index.html
+
+# Remove compression test file
+test
