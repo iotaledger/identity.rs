@@ -1,58 +1,92 @@
 extern crate riker;
+use chronicle_common::actor;
 use riker::actors::*;
+use tokio::{runtime::Runtime, sync::mpsc::unbounded_channel};
 
-// Define the messages we'll use
-#[derive(Clone, Debug)]
-pub struct Add;
+use identity_comm::did_comm::DIDComm;
 
-#[derive(Clone, Debug)]
-pub struct Sub;
+use crate::message::Message;
 
-#[derive(Clone, Debug)]
-pub struct Print;
 
-// Define the Actor and use the 'actor' attribute
-// to specify which messages it will receive
-#[actor(Add, Sub, Print)]
+use crate::handler::IdentityMessageHandler;
+use tokio::sync::mpsc::UnboundedReceiver;
+
+actor!(IdentityBuilder {
+  rx: UnboundedReceiver<Message>,
+  message_handler: IdentityMessageHandler
+});
+
+impl IdentityBuilder {
+    /// Builds the Ideneity actor.
+    pub fn build(self) -> Identity {
+        Identity {
+            rx: self.rx.expect("rx is required"),
+            message_handler: IdentityMessageHandler::new().expect("failed to initialise account manager"),
+        }
+    }
+}
+
+/// The Account actor.
+pub struct Identity {
+    rx: UnboundedReceiver<Message>,
+    message_handler: IdentityMessageHandler,
+}
+
+impl Identity {
+    /// Runs the actor.
+    pub async fn run(mut self) {
+        println!("running wallet actor");
+
+        while let Some(message) = self.rx.recv().await {
+            self.message_handler.handle(message).await;
+        }
+    }
+}
+
 pub struct IdentityActor {
-    count: u32,
+    identity_message_handler: IdentityMessageHandler,
+    runtime: Runtime,
 }
 
 impl ActorFactoryArgs<u32> for IdentityActor {
     fn create_args(count: u32) -> Self {
-        Self { count }
+        let actor = Self {
+            identity_message_handler: IdentityMessageHandler::new()
+                .expect("failed to initialise identity message handler"),
+            runtime: Runtime::new().expect("failed to create tokio runtime"),
+        };
+        actor
     }
 }
 
 impl Actor for IdentityActor {
-    type Msg = IdentityActorMsg;
+    type Msg = Message;
 
     fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
         // Use the respective Receive<T> implementation
-        self.receive(ctx, msg, sender);
+        // self.receive(ctx, msg, sender);
+        let identity_message_handler = &self.identity_message_handler;
+        self.runtime.block_on(async move {
+            identity_message_handler.handle(msg).await;
+        });
     }
 }
 
-impl Receive<Add> for IdentityActor {
-    type Msg = IdentityActorMsg;
-
-    fn receive(&mut self, _ctx: &Context<Self::Msg>, _msg: Add, _sender: Sender) {
-        self.count += 1;
+impl Default for IdentityActor {
+    fn default() -> Self {
+        let actor = Self {
+            identity_message_handler: Default::default(),
+            runtime: Runtime::new().expect("failed to create tokio runtime"),
+        };
+        //   actor.start_polling(POLLING_INTERVAL_MS);
+        actor
     }
 }
 
-impl Receive<Sub> for IdentityActor {
-    type Msg = IdentityActorMsg;
+// impl Receive<Add> for IdentityActor {
+//     type Msg = IdentityActorMsg;
 
-    fn receive(&mut self, _ctx: &Context<Self::Msg>, _msg: Sub, _sender: Sender) {
-        self.count -= 1;
-    }
-}
-
-impl Receive<Print> for IdentityActor {
-    type Msg = IdentityActorMsg;
-
-    fn receive(&mut self, _ctx: &Context<Self::Msg>, _msg: Print, _sender: Sender) {
-        println!("Total counter value: {}", self.count);
-    }
-}
+//     fn receive(&mut self, _ctx: &Context<Self::Msg>, _msg: Add, _sender: Sender) {
+//         self.count += 1;
+//     }
+// }
