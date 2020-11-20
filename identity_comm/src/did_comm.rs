@@ -10,8 +10,8 @@ pub struct DIDComm {
     pub id: String, // MUST be unique to the sender
     #[serde(rename = "type")]
     pub comm_type: MessageType, // MUST be a valid Message Type URI
-    pub from: Option<DID>, // MUST be a string that is a valid DID which identifies the sender of the message
-    pub to: Option<Vec<DID>>, // MUST be an array of strings where each element is a valid DID
+    pub from: Option<String>, // MUST be a string that is a valid DID which identifies the sender of the message
+    pub to: Option<Vec<String>>, // MUST be an array of strings where each element is a valid DID
     pub created_at: Option<Timestamp>, /* expressed in UTC Epoch Seconds (example: 1599692536) -> https://github.com/iotaledger/identity.rs/blob/952e8c86ff58954b15bb2a4964dfb7b6fe39b122/identity_core/src/common/timestamp.rs */
     pub expires_at: Option<Timestamp>, /* expressed in UTC Epoch Seconds (example: 1599692536) -> https://github.com/iotaledger/identity.rs/blob/952e8c86ff58954b15bb2a4964dfb7b6fe39b122/identity_core/src/common/timestamp.rs */
     pub body: Option<String>,          // Here can be everything
@@ -31,19 +31,6 @@ impl DIDComm {
         };
         Ok(did_comm)
     }
-
-
-    // pub fn id(&self) -> String {
-    //     self.id.clone()
-    // }
-
-    // pub fn message_type(&self) -> MessageType {
-    //     self.comm_type.clone()
-    // }
-
-    // pub fn send(&self) -> String {
-    //     "sended! :) ".into()
-    // }
 }
 
 /// converts a `DIDComm` Message into a string using the `to_string()` method.
