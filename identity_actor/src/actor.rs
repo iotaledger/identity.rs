@@ -35,7 +35,7 @@ pub struct Identity {
 impl Identity {
     /// Runs the actor.
     pub async fn run(mut self) {
-        println!("running wallet actor");
+        println!("running identity actor");
 
         while let Some(message) = self.rx.recv().await {
             self.message_handler.handle(message).await;
