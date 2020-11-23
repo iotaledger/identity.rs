@@ -36,5 +36,13 @@ dirs = "3.0"
 # stronghold high level
 # iota-stronghold = { git = "https://github.com/iotaledger/stronghold.rs.git", branch = "refactor/vault-terminology" }
 
+identity_core = { path = "../identity_core" }
+identity_crypto = { path = "../identity_crypto" }
+identity_iota = { path = "../identity_iota" }
+identity_diff = { path = "../identity_diff" }
+identity_proof = { path = "../identity_proof" }
+
 [dev-dependencies]
 proptest = "0.10.1"
+smol-potat = { version = "0.3.3" }
+smol = { version = "0.1.18", features = ["tokio02"] }

@@ -19,7 +19,11 @@ impl CacheFile {
 
     /// write the input; `Vec<u8>` to the cache file.
     pub fn write_cache_file(&self, input: Vec<u8>) -> crate::Result<()> {
-        let file = OpenOptions::new().write(true).create(true).open(self.get_name())?;
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(self.get_name())?;
         let mut buf_writer = BufWriter::new(file);
         buf_writer.write_all(&input)?;
         Ok(())
