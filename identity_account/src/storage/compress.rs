@@ -108,17 +108,17 @@ impl HuffmanCodec {
         let mut tree_size: [u8; 8] = [0; 8];
         tree_size[..8].clone_from_slice(&data[..8]);
 
-        let tree_size_val = usize::from_be_bytes(tree_size);
-        let encoded_tree = &data[8..(tree_size_val + 8)];
+        let tree_size_val = u64::from_be_bytes(tree_size);
+        let encoded_tree = &data[8..(tree_size_val as usize + 8)];
         let tree: HuffmanCodec = bincode::deserialize(encoded_tree)?;
 
         let mut byte_buf: [u8; 8] = [0; 8];
         for i in 0..8 {
-            byte_buf[i] = data[i + (tree_size_val + 8)];
+            byte_buf[i] = data[i + (tree_size_val as usize + 8)];
         }
 
-        let data_size = usize::from_be_bytes(byte_buf);
-        let encoded_data = &data[(tree_size_val + 16)..];
+        let data_size = u64::from_be_bytes(byte_buf);
+        let encoded_data = &data[(tree_size_val as usize + 16)..];
 
         let mut codec_clone = tree.clone();
 

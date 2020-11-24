@@ -1,14 +1,32 @@
 import("../pkg/index.js").then(async identity => {
     try {
         console.log(identity)
-        const { initialize, resolve, publish, checkCredential, Key, Doc, DID, PubKey, VerifiableCredential } = identity
+        const { initialize, resolve, publish, checkCredential, isDocSynced, Key, Doc, DID, PubKey, VerifiableCredential, State } = identity
 
         initialize();
 
-        await playground()
-        await alice_bob()
-        await testVC()
-        restore_keypair()
+        // await playground()
+        // await alice_bob()
+        // await testVC()
+        // restore_keypair()
+        await state()
+
+        async function state() {
+            const { key, doc } = Doc.generateEd25519("main")
+            doc.sign(key)
+            console.log("doc", doc);
+            console.log("latest_doc", doc.toJSON());
+            let state = new State(key, doc);
+            state.to_localstorage();
+            let read_state = state.from_localstorage();
+            console.log(read_state.documents);
+            // let state_string = read_state.to_string();
+            // let state_from_str = State.from_str(state_string)
+
+            // console.log("latest_doc", read_state.latest_doc.toJSON());
+            // await publish(state.latest_doc.toJSON(), { node: "https://nodes.thetangle.org:443", network: "main" })
+            // console.log("Latest_doc from state synced: ", await isDocSynced(state.latest_doc, { node: "https://nodes.thetangle.org:443", network: "main" }));
+        }
 
         function restore_keypair() {
             let secret = "Bac8bArn1tX9rrqawk9cWM6aK5KHNbhrvnV1VzBXMDrF"

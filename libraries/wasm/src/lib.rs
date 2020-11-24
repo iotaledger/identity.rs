@@ -10,6 +10,7 @@ pub mod doc;
 pub mod iota;
 pub mod key;
 pub mod pubkey;
+pub mod state;
 pub mod vc;
 pub mod vp;
 

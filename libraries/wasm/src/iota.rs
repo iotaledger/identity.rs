@@ -1,3 +1,4 @@
+use crate::{doc::Doc, js_err};
 use identity_iota::{
     client::{Client, ClientBuilder, TransactionPrinter},
     did::IotaDID,
@@ -5,8 +6,6 @@ use identity_iota::{
     vc::CredentialValidator,
 };
 use wasm_bindgen::prelude::*;
-
-use crate::js_err;
 
 #[wasm_bindgen]
 extern "C" {
@@ -108,4 +107,15 @@ pub async fn check_presentation(data: String, params: JsValue) -> Result<JsValue
         .await
         .map_err(js_err)
         .and_then(|validation| JsValue::from_serde(&validation).map_err(js_err))
+}
+
+/// Comparest document with document from Tangle, params looks like { node: "http://localhost:14265", network: "main" }
+#[wasm_bindgen(js_name = isDocSynced)]
+pub async fn is_doc_synced(document: Doc, params: JsValue) -> Result<bool, JsValue> {
+    let res = client(params)?
+        .read_document(&document.0.did())
+        .send()
+        .await
+        .map_err(js_err)?;
+    Ok(document.0 == res.document)
 }

@@ -100,6 +100,10 @@ impl State {
         }
         Ok(r)
     }
+    /// Get all stored keypairs
+    pub fn keypairs_as_string(&self) -> Vec<Key> {
+        self.keys.clone()
+    }
     /// Generates a new Ed25519 keypair and stores it
     pub fn new_keypair(&mut self) -> KeyPair {
         let keypair: KeyPair = jcsed25519signature2020::new_keypair();
