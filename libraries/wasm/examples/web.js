@@ -23,10 +23,11 @@ import("../pkg/index.js").then(async identity => {
             // Add a keypair and add the new document to the state
             let keypair = Key.generateEd25519();
             let publicKey = PubKey.generateEd25519(read_state.latest_doc.did, keypair.public, "#keys-2")
+            read_state.update_keypair(keypair)
             let new_doc = read_state.latest_doc
             new_doc.updatePublicKey(publicKey)
             read_state.add_document(new_doc)
-            console.log(read_state.documents);
+            console.log(read_state);
 
             // let state_string = read_state.to_string();
             // let state_from_str = State.from_str(state_string)

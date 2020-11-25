@@ -63,18 +63,22 @@ impl State {
         self.0.add_document(document.0)
     }
     /// Add a keypair to the state
+    #[wasm_bindgen]
     pub fn update_keypair(&mut self, keypair: Key) {
         self.0.update_keypair(&keypair.0)
     }
     /// Generates a new Ed25519 keypair and stores it
+    #[wasm_bindgen]
     pub fn new_keypair(&mut self) -> Key {
         Key(self.0.new_keypair())
     }
     /// Get the latest keypair
+    #[wasm_bindgen(getter)]
     pub fn keypair(&self) -> Result<Key, JsValue> {
         Ok(Key(self.0.keypair().map_err(js_err)?))
     }
     /// Get all stored keypairs
+    #[wasm_bindgen(getter)]
     pub fn keypairs(&self) -> Result<JsValue, JsValue> {
         let keypairs: Vec<Keypair> = self.0.keypairs_as_string();
         Ok(JsValue::from_serde(&keypairs).map_err(js_err)?)
