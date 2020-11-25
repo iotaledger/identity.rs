@@ -104,19 +104,19 @@ mod tests {
     }
 
     #[test]
-    #[should_panic = "InvalidYear"]
+    #[should_panic = "InvalidTimestamp"]
     fn test_parse_empty() {
         Timestamp::parse("").unwrap();
     }
 
     #[test]
-    #[should_panic = "InvalidYear"]
+    #[should_panic = "InvalidTimestamp"]
     fn test_parse_invalid_date() {
         Timestamp::parse("foo bar").unwrap();
     }
 
     #[test]
-    #[should_panic = "UnexpectedCharacter"]
+    #[should_panic = "InvalidTimestamp"]
     fn test_parse_invalid_fmt() {
         Timestamp::parse("2020/01/01 03:30:16").unwrap();
     }
