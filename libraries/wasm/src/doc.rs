@@ -1,8 +1,10 @@
 use identity_core::{
     convert::{FromJson as _, SerdeInto as _},
-    did_doc::{DIDKey, Document, DocumentBuilder, MethodIndex, MethodScope, Service, ServiceBuilder},
+    did_doc::{
+        DIDKey, Document, DocumentBuilder, MethodIndex, MethodScope, Service, ServiceBuilder, VerifiableDocument,
+    },
 };
-use identity_iota::did::{DIDDiff, IotaDocument};
+use identity_iota::did::{DIDDiff, IotaDocument, Properties};
 use wasm_bindgen::prelude::*;
 
 use crate::{
@@ -39,12 +41,21 @@ pub struct Doc(pub(crate) IotaDocument);
 impl Doc {
     #[wasm_bindgen(constructor)]
     pub fn new(authentication: &PubKey) -> Result<Doc, JsValue> {
-        DocumentBuilder::default()
-            .id(authentication.0.id().clone())
-            .authentication(authentication.0.clone())
+        let mut did = authentication.0.id().clone();
+        did.set_fragment(None);
+
+        let base: VerifiableDocument<Properties> = DocumentBuilder::new(Properties::new())
+            .id(did)
+            // Note: We use a reference to the verification method due to
+            // upstream limitations.
+            .authentication(authentication.0.id().clone())
+            .verification_method(authentication.0.clone())
             .build()
+            .map(VerifiableDocument::new)
+            .map_err(js_err)?;
+
+        IotaDocument::try_from_document(base.serde_into().map_err(js_err)?)
             .map_err(js_err)
-            .and_then(|base| IotaDocument::try_from_document(base).map_err(js_err))
             .map(Self)
     }
 

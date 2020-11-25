@@ -21,7 +21,7 @@ pub enum Error {
     #[error("Invalid Url: {0}")]
     InvalidUrl(#[from] did_doc::url::ParseError),
     #[error("Invalid Timestamp: {0}")]
-    InvalidTimestamp(#[from] time::ParseError),
+    InvalidTimestamp(#[from] chrono::ParseError),
     #[error("Invalid Credential: {0}")]
     InvalidCredential(String),
     #[error("Invalid Presentation: {0}")]

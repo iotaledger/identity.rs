@@ -1,9 +1,9 @@
+use chrono::{DateTime, SecondsFormat, Utc};
 use core::{
     convert::TryFrom,
     fmt::{Debug, Display, Formatter, Result as FmtResult},
     str::FromStr,
 };
-use time::{Format, OffsetDateTime};
 
 use crate::error::{Error, Result};
 
@@ -11,29 +11,30 @@ use crate::error::{Error, Result};
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(try_from = "String", into = "String")]
-pub struct Timestamp(OffsetDateTime);
+pub struct Timestamp(DateTime<Utc>);
 
 impl Timestamp {
     /// Parses a `Timestamp` from the provided input string.
     pub fn parse(input: &str) -> Result<Self> {
-        OffsetDateTime::parse(input, Format::Rfc3339)
+        DateTime::parse_from_rfc3339(input)
             .map_err(Into::into)
+            .map(Into::into)
             .map(Self)
     }
 
     /// Creates a new `Timestamp` with the current date and time.
     pub fn now() -> Self {
-        Self(OffsetDateTime::now_utc())
+        Self::parse(&Self::to_rfc3339(&Self(Utc::now()))).unwrap()
     }
 
     /// Returns the `Timestamp` as a Unix timestamp.
     pub fn to_unix(&self) -> i64 {
-        self.0.unix_timestamp()
+        self.0.timestamp()
     }
 
     /// Returns the `Timestamp` as an RFC 3339 `String`.
     pub fn to_rfc3339(&self) -> String {
-        self.0.format("%0Y-%0m-%0dT%0H:%0M:%0SZ")
+        self.0.to_rfc3339_opts(SecondsFormat::Secs, true)
     }
 }
 
