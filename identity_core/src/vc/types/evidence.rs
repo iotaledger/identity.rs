@@ -1,47 +1,86 @@
-use core::convert::TryFrom;
-use derive_builder::Builder;
-use serde::{Deserialize, Serialize};
-
-use crate::{
-    common::{Object, OneOrMany},
-    error::Error,
-};
+use crate::common::{Object, OneOrMany};
 
 /// Information used to increase confidence in the claims of a `Credential`
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#evidence)
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize, Builder)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Evidence {
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(default, setter(into, strip_option))]
     pub id: Option<String>,
     #[serde(rename = "type")]
-    #[builder(setter(into))]
     pub types: OneOrMany<String>,
     #[serde(flatten)]
-    #[builder(default, setter(into))]
     pub properties: Object,
 }
 
-impl TryFrom<Object> for Evidence {
-    type Error = Error;
+impl Evidence {
+    pub fn new<T>(types: T) -> Self
+    where
+        T: Into<OneOrMany<String>>,
+    {
+        Self::with_properties(types, Object::new())
+    }
 
-    fn try_from(mut other: Object) -> Result<Self, Self::Error> {
-        Ok(Self {
-            id: other.take_object_id(),
-            types: other.try_take_object_types()?,
-            properties: other,
-        })
+    pub fn with_id<T, U>(types: T, id: U) -> Self
+    where
+        T: Into<OneOrMany<String>>,
+        U: Into<String>,
+    {
+        Self {
+            id: Some(id.into()),
+            types: types.into(),
+            properties: Object::new(),
+        }
+    }
+
+    pub fn with_properties<T>(types: T, properties: Object) -> Self
+    where
+        T: Into<OneOrMany<String>>,
+    {
+        Self {
+            id: None,
+            types: types.into(),
+            properties,
+        }
+    }
+
+    pub fn with_id_and_properties<T, U, V>(types: T, id: U, properties: Object) -> Self
+    where
+        T: Into<OneOrMany<String>>,
+        U: Into<String>,
+    {
+        Self {
+            id: Some(id.into()),
+            types: types.into(),
+            properties,
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::{convert::FromJson as _, vc::Evidence};
+
+    const JSON1: &str = include_str!("../../../tests/fixtures/vc/evidence-1.json");
+    const JSON2: &str = include_str!("../../../tests/fixtures/vc/evidence-2.json");
 
     #[test]
-    #[should_panic = "`types` must be initialized"]
-    fn test_builder_missing_types() {
-        EvidenceBuilder::default().id("did:test").build().unwrap();
+    #[rustfmt::skip]
+    fn test_from_json() {
+        let evidence: Evidence = Evidence::from_json(JSON1).unwrap();
+        assert_eq!(evidence.id.unwrap(), "https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192d4231");
+        assert_eq!(evidence.types.as_slice(), ["DocumentVerification"]);
+        assert_eq!(evidence.properties["verifier"], "https://example.edu/issuers/14");
+        assert_eq!(evidence.properties["evidenceDocument"], "DriversLicense");
+        assert_eq!(evidence.properties["subjectPresence"], "Physical");
+        assert_eq!(evidence.properties["documentPresence"], "Physical");
+
+        let evidence: Evidence = Evidence::from_json(JSON2).unwrap();
+        assert_eq!(evidence.id.unwrap(), "https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192dxyzab");
+        assert_eq!(evidence.types.as_slice(), ["SupportingActivity"]);
+        assert_eq!(evidence.properties["verifier"], "https://example.edu/issuers/14");
+        assert_eq!(evidence.properties["evidenceDocument"], "Fluid Dynamics Focus");
+        assert_eq!(evidence.properties["subjectPresence"], "Digital");
+        assert_eq!(evidence.properties["documentPresence"], "Digital");
     }
 }

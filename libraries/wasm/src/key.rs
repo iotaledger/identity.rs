@@ -1,16 +1,16 @@
 use identity_core::{
-    key::KeyType,
+    crypto::{KeyPair, PublicKey, SecretKey},
+    did_doc::MethodType,
+    proof::JcsEd25519Signature2020,
     utils::{decode_b58, decode_b64, encode_b58},
 };
-use identity_crypto::{KeyPair, PublicKey, SecretKey};
-use identity_proof::signature::jcsed25519signature2020;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 use crate::js_err;
 
 #[wasm_bindgen(inspectable)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct Key(pub(crate) KeyPair);
 
 #[wasm_bindgen]
@@ -18,8 +18,8 @@ impl Key {
     /// Generates a new `Key` object.
     #[wasm_bindgen(constructor)]
     pub fn new(key_type: &str) -> Result<Key, JsValue> {
-        match KeyType::try_from_str(key_type).map_err(js_err)? {
-            KeyType::Ed25519VerificationKey2018 => Ok(Self::generate_ed25519()),
+        match key_type.parse().map_err(js_err)? {
+            MethodType::Ed25519VerificationKey2018 => Ok(Self::generate_ed25519()),
             _ => Err("Invalid Key Type".into()),
         }
     }
@@ -27,7 +27,7 @@ impl Key {
     /// Generates a new `Key` object suitable for ed25519 signatures.
     #[wasm_bindgen(js_name = generateEd25519)]
     pub fn generate_ed25519() -> Key {
-        Self(jcsed25519signature2020::new_keypair())
+        Self(JcsEd25519Signature2020::new_keypair())
     }
 
     /// Parses a `Key` object from base58-encoded public/private keys.

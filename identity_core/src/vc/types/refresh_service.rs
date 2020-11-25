@@ -1,55 +1,48 @@
-use core::convert::TryFrom;
-use derive_builder::Builder;
-use serde::{Deserialize, Serialize};
-
-use crate::{
-    common::{Object, OneOrMany, Url},
-    error::Error,
-};
+use crate::common::{Object, OneOrMany, Url};
 
 /// Information used to refresh or assert the status of a `Credential`.
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#refreshing)
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize, Builder)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct RefreshService {
-    #[builder(setter(into))]
     pub id: Url,
     #[serde(rename = "type")]
-    #[builder(setter(into))]
     pub types: OneOrMany<String>,
     #[serde(flatten)]
-    #[builder(default, setter(into))]
     pub properties: Object,
 }
 
-impl TryFrom<Object> for RefreshService {
-    type Error = Error;
+impl RefreshService {
+    pub fn new<T>(id: Url, types: T) -> Self
+    where
+        T: Into<OneOrMany<String>>,
+    {
+        Self::with_properties(id, types, Object::new())
+    }
 
-    fn try_from(mut other: Object) -> Result<Self, Self::Error> {
-        Ok(Self {
-            id: other.try_take_object_id()?.into(),
-            types: other.try_take_object_types()?,
-            properties: other,
-        })
+    pub fn with_properties<T>(id: Url, types: T, properties: Object) -> Self
+    where
+        T: Into<OneOrMany<String>>,
+    {
+        Self {
+            id,
+            types: types.into(),
+            properties,
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::{convert::FromJson as _, vc::RefreshService};
+
+    const JSON: &str = include_str!("../../../tests/fixtures/vc/refresh-service-1.json");
 
     #[test]
-    #[should_panic = "`id` must be initialized"]
-    fn test_builder_missing_id() {
-        RefreshServiceBuilder::default()
-            .types("my-type".to_string())
-            .build()
-            .unwrap();
-    }
-
-    #[test]
-    #[should_panic = "`types` must be initialized"]
-    fn test_builder_missing_types() {
-        RefreshServiceBuilder::default().id("did:test").build().unwrap();
+    #[rustfmt::skip]
+    fn test_from_json() {
+        let service: RefreshService = RefreshService::from_json(JSON).unwrap();
+        assert_eq!(service.id, "https://example.edu/refresh/3732");
+        assert_eq!(service.types.as_slice(), ["ManualRefreshService2018"]);
     }
 }

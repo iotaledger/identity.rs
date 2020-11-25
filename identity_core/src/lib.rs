@@ -1,14 +1,22 @@
 #[macro_use]
-pub mod common;
+extern crate lazy_static;
 
-pub mod did;
+#[macro_use]
+extern crate serde;
+
+pub use did_doc;
+pub use did_url;
+pub use identity_diff;
+pub use serde_json::json;
+
+#[macro_use]
+pub mod common;
+pub mod convert;
+pub mod crypto;
 pub mod error;
-pub mod key;
+pub mod proof;
 pub mod resolver;
 pub mod utils;
 pub mod vc;
-
-// Re-export the `identity_diff` crate as `diff`
-pub use identity_diff as diff;
 
 pub use error::{Error, Result};
