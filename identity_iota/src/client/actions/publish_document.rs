@@ -1,15 +1,11 @@
 use core::fmt::{Debug, Formatter, Result as FmtResult};
-use identity_core::common::ToJson as _;
-use iota::{
-    client::Transfer,
-    transaction::bundled::{Address, BundledTransaction, BundledTransactionField as _},
-};
+use identity_core::convert::ToJson as _;
+use iota::{client::Transfer, transaction::bundled::BundledTransaction};
 
 use crate::{
     client::{SendTransferRequest, SendTransferResponse, TransactionPrinter},
     did::{IotaDID, IotaDocument},
     error::{Error, Result},
-    utils::encode_trits,
 };
 
 #[derive(Clone, PartialEq)]
@@ -43,7 +39,7 @@ impl<'a, 'b> PublishDocumentRequest<'a, 'b> {
     }
 
     pub async fn send(self) -> Result<PublishDocumentResponse> {
-        let did: &IotaDID = self.document.did();
+        let did: &IotaDID = self.document.id();
 
         if self.transfer.trace {
             println!("[+] trace(1): Create Document with DID: {:?}", did);
@@ -55,25 +51,13 @@ impl<'a, 'b> PublishDocumentRequest<'a, 'b> {
         }
 
         if self.transfer.trace {
-            println!(
-                "[+] trace(2): Authentication Method: {:?}",
-                self.document.authentication_key()
-            );
-        }
-
-        // Verify the document signature with the authentication key.
-        self.document.verify()?;
-
-        // Create a tangle address from the DID.
-        let address: Address = did.create_address()?;
-
-        if self.transfer.trace {
-            println!("[+] trace(3): Tangle Address: {:?}", encode_trits(address.to_inner()));
+            println!("[+] trace(2): Authentication: {:?}", self.document.authentication());
+            println!("[+] trace(3): Tangle Address: {:?}", did.address_hash());
         }
 
         // Create a transfer to publish the DID document at the specified address.
         let transfer: Transfer = Transfer {
-            address,
+            address: did.address()?,
             value: 0,
             message: Some(self.document.to_json()?),
             tag: None,

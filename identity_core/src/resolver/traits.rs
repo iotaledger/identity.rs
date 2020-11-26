@@ -1,8 +1,9 @@
 use async_trait::async_trait;
+use did_doc::Document;
+use did_url::DID;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    did::{DIDDocument as Document, DID},
     error::Result,
     resolver::{DocumentMetadata, InputMetadata},
 };

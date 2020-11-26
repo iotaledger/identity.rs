@@ -1,5 +1,4 @@
-use core::fmt;
-use identity_diff::Diff;
+use core::fmt::{Debug, Formatter, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::common::{Object, Url};
@@ -7,18 +6,18 @@ use crate::common::{Object, Url};
 /// A reference to a JSON-LD context
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#contexts)
-#[derive(Clone, PartialEq, Deserialize, Serialize, Diff)]
+#[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Context {
     Url(Url),
     Obj(Object),
 }
 
-impl fmt::Debug for Context {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Debug for Context {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
-            Self::Url(inner) => fmt::Debug::fmt(inner, f),
-            Self::Obj(inner) => fmt::Debug::fmt(inner, f),
+            Self::Url(inner) => Debug::fmt(inner, f),
+            Self::Obj(inner) => Debug::fmt(inner, f),
         }
     }
 }
@@ -29,20 +28,20 @@ impl From<Url> for Context {
     }
 }
 
-impl From<&'_ str> for Context {
-    fn from(other: &'_ str) -> Self {
-        Self::Url(other.into())
-    }
-}
-
-impl From<String> for Context {
-    fn from(other: String) -> Self {
-        Self::Url(other.into())
-    }
-}
-
 impl From<Object> for Context {
     fn from(other: Object) -> Self {
         Self::Obj(other)
+    }
+}
+
+impl<T> PartialEq<T> for Context
+where
+    T: AsRef<str> + ?Sized,
+{
+    fn eq(&self, other: &T) -> bool {
+        match self {
+            Self::Url(inner) => inner.as_str() == other.as_ref(),
+            Self::Obj(_) => false,
+        }
     }
 }

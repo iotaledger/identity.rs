@@ -1,8 +1,3 @@
-#![allow(clippy::inherent_to_string, clippy::new_without_default)]
-
-#[macro_use]
-extern crate serde;
-
 use wasm_bindgen::prelude::*;
 
 pub mod did;
@@ -14,18 +9,11 @@ pub mod state;
 pub mod vc;
 pub mod vp;
 
+/// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]
 pub fn start() -> Result<(), JsValue> {
-    initialize();
-    Ok(())
-}
-
-/// Initializes the console_error_panic_hook for better error messages
-#[wasm_bindgen]
-pub fn initialize() -> JsValue {
     console_error_panic_hook::set_once();
-
-    JsValue::TRUE
+    Ok(())
 }
 
 /// Convert errors so they are readable in JS

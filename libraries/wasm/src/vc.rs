@@ -1,15 +1,14 @@
 use identity_core::{
-    common::{Context, OneOrMany, Timestamp},
-    vc::{Credential, CredentialBuilder, CredentialSubject},
+    common::{OneOrMany, Url},
+    vc::{Credential, CredentialBuilder, CredentialSubject, VerifiableCredential as VC},
 };
-use identity_iota::vc::VerifiableCredential as IotaVC;
 use wasm_bindgen::prelude::*;
 
 use crate::{doc::Doc, js_err, key::Key};
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct VerifiableCredential(pub(crate) IotaVC);
+pub struct VerifiableCredential(pub(crate) VC);
 
 #[wasm_bindgen]
 impl VerifiableCredential {
@@ -22,25 +21,24 @@ impl VerifiableCredential {
         credential_id: Option<String>,
     ) -> Result<VerifiableCredential, JsValue> {
         let subjects: OneOrMany<CredentialSubject> = subject_data.into_serde().map_err(js_err)?;
+        let issuer_url: Url = Url::parse(issuer_doc.id().as_str()).map_err(js_err)?;
 
-        let types: Vec<String> = {
-            let mut types = vec![Credential::BASE_TYPE.into()];
-            types.extend(credential_type.into_iter());
-            types
-        };
+        let mut builder: CredentialBuilder = CredentialBuilder::default().issuer(issuer_url);
 
-        let mut builder: CredentialBuilder = CredentialBuilder::new()
-            .issuer(issuer_doc.did().0.into_inner())
-            .context(vec![Context::from(Credential::BASE_CONTEXT)])
-            .types(types)
-            .subject(subjects)
-            .issuance_date(Timestamp::now());
-
-        if let Some(credential_id) = credential_id {
-            builder = builder.id(credential_id);
+        for subject in subjects.into_vec() {
+            builder = builder.credential_subject(subject);
         }
 
-        let mut this: Self = builder.build().map(IotaVC::new).map_err(js_err).map(Self)?;
+        if let Some(credential_type) = credential_type {
+            builder = builder.type_(credential_type);
+        }
+
+        if let Some(credential_id) = credential_id {
+            builder = builder.id(Url::parse(credential_id).map_err(js_err)?);
+        }
+
+        let credential: Credential = builder.build().map_err(js_err)?;
+        let mut this: Self = Self(VC::new(credential, Vec::new()));
 
         this.sign(issuer_doc, issuer_key)?;
 
@@ -50,13 +48,13 @@ impl VerifiableCredential {
     /// Signs the credential with the given issuer `Doc` and `Key` object.
     #[wasm_bindgen]
     pub fn sign(&mut self, issuer: &Doc, key: &Key) -> Result<(), JsValue> {
-        self.0.sign(&issuer.0, key.0.secret()).map_err(js_err)
+        issuer.0.sign_data(&mut self.0, key.0.secret()).map_err(js_err)
     }
 
     /// Verifies the credential signature against the issuer `Doc`.
     #[wasm_bindgen]
     pub fn verify(&self, issuer: &Doc) -> Result<bool, JsValue> {
-        self.0.verify(&issuer.0).map_err(js_err).map(|_| true)
+        issuer.0.verify_data(&self.0).map_err(js_err).map(|_| true)
     }
 
     /// Serializes a `VerifiableCredential` object as a JSON object.

@@ -1,10 +1,10 @@
-use crate::{doc::Doc, js_err};
+use identity_core::common::Object;
 use identity_iota::{
-    client::{Client, ClientBuilder, TransactionPrinter},
+    client::{Client, ClientBuilder, Network, TransactionPrinter},
     did::IotaDID,
-    network::Network,
     vc::CredentialValidator,
 };
+use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -70,7 +70,7 @@ fn client(params: JsValue) -> Result<Client, JsValue> {
 #[wasm_bindgen]
 pub async fn publish(doc: JsValue, params: JsValue) -> Result<JsValue, JsValue> {
     client(params)?
-        .create_document(&doc.into_serde().map_err(js_err)?)
+        .publish_document(&doc.into_serde().map_err(js_err)?)
         .send()
         .await
         .map_err(js_err)
@@ -93,7 +93,7 @@ pub async fn resolve(did: String, params: JsValue) -> Result<JsValue, JsValue> {
 #[wasm_bindgen(js_name = checkCredential)]
 pub async fn check_credential(data: String, params: JsValue) -> Result<JsValue, JsValue> {
     CredentialValidator::new(&client(params)?)
-        .check(&data)
+        .check::<Object>(&data)
         .await
         .map_err(js_err)
         .and_then(|validation| JsValue::from_serde(&validation).map_err(js_err))
@@ -103,7 +103,7 @@ pub async fn check_credential(data: String, params: JsValue) -> Result<JsValue, 
 #[wasm_bindgen(js_name = checkPresentation)]
 pub async fn check_presentation(data: String, params: JsValue) -> Result<JsValue, JsValue> {
     CredentialValidator::new(&client(params)?)
-        .check_presentation(&data)
+        .check_presentation::<Object, Object>(&data)
         .await
         .map_err(js_err)
         .and_then(|validation| JsValue::from_serde(&validation).map_err(js_err))

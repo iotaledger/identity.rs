@@ -1,7 +1,10 @@
 use async_trait::async_trait;
 use core::slice::from_ref;
 use identity_core::{
-    did::DID,
+    common::Url,
+    convert::SerdeInto as _,
+    did_doc::Document,
+    did_url::DID,
     error::{Error, Result as CoreResult},
     resolver::{DocumentMetadata, InputMetadata, MetaDocument, ResolverMethod},
 };
@@ -9,12 +12,11 @@ use iota::{crypto::ternary::Hash, transaction::bundled::BundledTransaction};
 
 use crate::{
     client::{
-        ClientBuilder, PublishDocumentRequest, ReadDocumentRequest, ReadTransactionsRequest, SendTransferRequest,
-        TransactionPrinter,
+        ClientBuilder, Network, PublishDocumentRequest, ReadDocumentRequest, ReadDocumentResponse,
+        ReadTransactionsRequest, SendTransferRequest,
     },
     did::{IotaDID, IotaDocument},
     error::Result,
-    network::Network,
 };
 
 #[derive(Clone, Debug)]
@@ -24,14 +26,6 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn transaction_url(&self, transaction: &BundledTransaction) -> String {
-        format!(
-            "{}transaction/{}",
-            self.network.explorer_url(),
-            TransactionPrinter::hash(transaction)
-        )
-    }
-
     pub fn new() -> Result<Self> {
         Self::from_builder(ClientBuilder::new())
     }
@@ -51,15 +45,23 @@ impl Client {
         })
     }
 
+    pub fn explorer_url(&self) -> &'static Url {
+        self.network.explorer_url()
+    }
+
+    pub fn transaction_url(&self, transaction: &BundledTransaction) -> Url {
+        self.network.transaction_url(transaction)
+    }
+
     pub fn read_transactions<'a>(&'a self, did: &IotaDID) -> ReadTransactionsRequest<'a> {
-        ReadTransactionsRequest::new(self, did.create_address().unwrap())
+        ReadTransactionsRequest::new(self, did.address().unwrap())
     }
 
     pub fn send_transfer(&self) -> SendTransferRequest {
         SendTransferRequest::new(self)
     }
 
-    pub fn create_document<'a, 'b>(&'a self, document: &'b IotaDocument) -> PublishDocumentRequest<'a, 'b> {
+    pub fn publish_document<'a, 'b>(&'a self, document: &'b IotaDocument) -> PublishDocumentRequest<'a, 'b> {
         PublishDocumentRequest::new(self.send_transfer(), document)
     }
 
@@ -81,27 +83,32 @@ impl Client {
 #[async_trait(?Send)]
 impl ResolverMethod for Client {
     fn is_supported(&self, did: &DID) -> bool {
-        IotaDID::is_valid(did) && self.network.matches_did(did)
+        match IotaDID::try_from_borrowed(did) {
+            Ok(did) => self.network.matches_did(&did),
+            Err(_) => false,
+        }
     }
 
     async fn read(&self, did: &DID, _input: InputMetadata) -> CoreResult<Option<MetaDocument>> {
-        let did: IotaDID = IotaDID::try_from_did(did.clone()).map_err(|error| Error::ResolutionError(error.into()))?;
+        let did: &IotaDID = IotaDID::try_from_borrowed(did).map_err(|error| Error::ResolutionError(error.into()))?;
 
-        self.read_document(&did)
+        let response: ReadDocumentResponse = self
+            .read_document(&did)
             .send()
             .await
-            .map_err(|error| Error::ResolutionError(error.into()))
-            .map(|response| {
-                let mut metadata: DocumentMetadata = DocumentMetadata::new();
+            .map_err(|error| Error::ResolutionError(error.into()))?;
 
-                metadata.created = response.document.created;
-                metadata.updated = response.document.updated;
-                metadata.properties = response.metadata;
+        let mut metadata: DocumentMetadata = DocumentMetadata::new();
 
-                Some(MetaDocument {
-                    data: response.document.into(),
-                    meta: metadata,
-                })
-            })
+        metadata.created = Some(response.document.created());
+        metadata.updated = Some(response.document.updated());
+        metadata.properties = response.metadata;
+
+        let data: Document = response
+            .document
+            .serde_into()
+            .map_err(|error| Error::ResolutionError(error.into()))?;
+
+        Ok(Some(MetaDocument { data, meta: metadata }))
     }
 }

@@ -1,7 +1,8 @@
 use core::time::Duration;
+use did_url::DID;
 use serde::{Deserialize, Serialize};
 
-use crate::{common::Object, did::DID, resolver::ErrorKind};
+use crate::{common::Object, resolver::ErrorKind};
 
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct ResolutionMetadata {

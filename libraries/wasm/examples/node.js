@@ -11,8 +11,6 @@ global.fetch = fetch
 
 const { Key, PubKey, Doc, DID, VerifiableCredential, VerifiablePresentation } = Identity
 
-Identity.initialize()
-
 const CLIENT_CONFIG = {
   network: "main",
   node: "https://nodes.thetangle.org:443",

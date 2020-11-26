@@ -1,4 +1,4 @@
-use identity_core::key::{KeyData, KeyType, PublicKey, PublicKeyBuilder};
+use identity_core::did_doc::{Method, MethodBuilder, MethodData};
 use identity_iota::did::IotaDID;
 use wasm_bindgen::prelude::*;
 
@@ -9,7 +9,7 @@ pub const DEFAULT_TAG: &str = "authentication";
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct PubKey(pub(crate) PublicKey);
+pub struct PubKey(pub(crate) Method);
 
 #[wasm_bindgen]
 impl PubKey {
@@ -19,13 +19,13 @@ impl PubKey {
         let tag: &str = tag.as_deref().unwrap_or(DEFAULT_TAG);
         let key: _ = format!("{}#{}", did.0, tag).parse().map_err(js_err)?;
 
-        PublicKeyBuilder::default()
+        MethodBuilder::default()
             .id(key)
             .controller(did.0.clone().into())
-            .key_type(KeyType::try_from_str(key_type).map_err(js_err)?)
-            .key_data(KeyData::PublicKeyBase58(key_data.into()))
+            .key_type(key_type.parse().map_err(js_err)?)
+            .key_data(MethodData::PublicKeyBase58(key_data.into()))
             .build()
-            .map_err(Into::into)
+            .map_err(js_err)
             .map(Self)
     }
 
@@ -38,13 +38,13 @@ impl PubKey {
     /// Returns the `id` DID of the `PubKey` object.
     #[wasm_bindgen(getter)]
     pub fn id(&self) -> Result<DID, JsValue> {
-        IotaDID::try_from_did(self.0.id().clone()).map_err(js_err).map(DID)
+        IotaDID::try_from_owned(self.0.id().clone()).map_err(js_err).map(DID)
     }
 
     /// Returns the `controller` DID of the `PubKey` object.
     #[wasm_bindgen(getter)]
     pub fn controller(&self) -> Result<DID, JsValue> {
-        IotaDID::try_from_did(self.0.controller().clone())
+        IotaDID::try_from_owned(self.0.controller().clone())
             .map_err(js_err)
             .map(DID)
     }
