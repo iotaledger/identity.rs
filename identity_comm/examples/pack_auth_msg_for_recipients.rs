@@ -12,31 +12,36 @@
 //! cargo run --example pack_auth_msg_for_recipients
 //! ```
 
-use identity_comm::{did_comm::DIDComm, envelope::pack_auth_msg};
+use identity_comm::{
+    did_comm_builder::DIDCommBuilder,
+    envelope::{pack_auth_msg, EncryptionType},
+    messages::MessageType,
+};
 
 fn main() {
-    let alice = DIDComm {
-        id: "123456".into(),
-        comm_type: "https://didcomm.org/iota".into(),
-        ..Default::default()
-    }
-    .init()
-    .unwrap();
+    let alice = DIDCommBuilder::new()
+        .id("123456")
+        .comm_type(MessageType::TrustPing)
+        .build()
+        .unwrap();
 
-    let bob = DIDComm {
-        id: "789012".into(),
-        comm_type: "https://didcomm.org/iota".into(),
-        ..Default::default()
-    }
-    .init()
-    .unwrap();
+    let bob = DIDCommBuilder::new()
+        .id("789012")
+        .comm_type(MessageType::TrustPing)
+        .build()
+        .unwrap();
 
     println!("alice: {:?}", alice);
     println!("bob: {:?}", bob);
 
-    let message = "I AM A PRIVATE SIGNED MESSAGE";
+    let message = "I AM A PRIVATE SIGNED MESSAGE".to_string();
 
-    let packedMsg = pack_auth_msg(message, "bob_public_key".to_string(), alice);
+    let packedMsg = pack_auth_msg(
+        message,
+        vec!["bob_public_key".to_string()],
+        Some(alice),
+        EncryptionType::XC20P,
+    );
 
     println!("packedMsg: {:?}", packedMsg);
 }

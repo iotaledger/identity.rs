@@ -1,13 +1,12 @@
-
 use serde::{Deserialize, Serialize};
 
-pub const TRUSTPING: &'static str = "https://didcomm.org/iota/v1/message_types/trustping";
+pub const TRUSTPING: &str = "https://didcomm.org/iota/v1/message_types/trustping";
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Default)]
 pub struct TrustPing {
     pub response_requested: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    comment: Option<String>
+    comment: Option<String>,
 }
 
 impl TrustPing {

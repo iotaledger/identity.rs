@@ -3,8 +3,10 @@ use riker::actors::*;
 use std::time::Duration;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
-use identity_actor::actor::{IdentityActor, IdentityBuilder};
-use identity_actor::message::{Message, MessageType, Response};
+use identity_actor::{
+    actor::{IdentityActor, IdentityBuilder},
+    message::{Message, MessageType, Response},
+};
 
 // https://github.com/iotaledger/actors.rs/blob/a6e1f79f98e7d994bbb4d4a895b110550ea7f277/wallet/src/lib.rs#L357
 

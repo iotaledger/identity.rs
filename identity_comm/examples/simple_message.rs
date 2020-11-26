@@ -7,7 +7,8 @@
 //! cargo run --example simple_message
 //! ```
 
-use identity_comm::{did_comm::DIDComm, types::MessageType};
+use identity_comm::{did_comm_builder::DIDCommBuilder, messages::MessageType};
+use identity_core::did::DID;
 use identity_crypto::KeyPair;
 use identity_iota::did::IotaDocument;
 
@@ -15,17 +16,20 @@ use identity_core::common::Timestamp;
 
 fn main() {
     let alice = Account::new("alice".to_string());
+    println!("{}", alice.name);
+    println!("{:?}", alice.keypair);
     let bob = Account::new("bob".to_string());
 
-    let message = DIDComm {
-        id: "".into(),
-        comm_type: MessageType::TrustPing,
-        from: Some(alice.document.did().to_string()),
-        to: Some(vec![bob.document.did().to_string()]),
-        created_at: Some(Timestamp::now()),
-        expires_at: Some(Timestamp::now()),
-        body: Some("".into()),
-    };
+    let message = DIDCommBuilder::new()
+        .id("123456")
+        .comm_type(MessageType::TrustPing)
+        .from(DID::parse(alice.document.did()).unwrap())
+        .to(vec![DID::parse(bob.document.did()).unwrap()])
+        .created_at(Timestamp::now())
+        .expires_at(Timestamp::now())
+        .body("".into())
+        .build()
+        .unwrap();
 
     println!("Created message: {}", message.to_string());
 

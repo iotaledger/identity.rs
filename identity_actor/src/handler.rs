@@ -1,12 +1,13 @@
 use crate::error::IdentityMessageError;
 use identity_comm::did_comm::DIDComm;
 
-use serde::{ser::Serializer, Deserialize, Serialize};
-use std::any::Any;
-use std::panic::{catch_unwind, AssertUnwindSafe, UnwindSafe};
-use std::result::Result;
+use std::{
+    any::Any,
+    panic::{catch_unwind, AssertUnwindSafe, UnwindSafe},
+    result::Result,
+};
 
-use crate::message::{Message, MessageType, ResponseType, Response};
+use crate::message::{Message, MessageType, Response, ResponseType};
 
 pub struct IdentityMessageHandler {
     // account_manager: AccountManager,
@@ -32,8 +33,8 @@ impl IdentityMessageHandler {
             Err(e) => ResponseType::Panic("ERROR".to_string()),
         };
         let _ = message
-        .response_tx
-        .send(Response::new(message.id(), message.message_type, response));
+            .response_tx
+            .send(Response::new(message.id(), message.message_type, response));
 
         // let _ = message.send();
     }

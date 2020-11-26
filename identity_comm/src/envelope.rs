@@ -13,23 +13,23 @@ pub enum EncryptionType {
 /// Non-repudiable authentication
 pub fn pack_auth_msg_non_repudiable(
     message: String,
-    recipientKeys: Vec<String>,
-    senderKeys: did_comm::DIDComm,
-    encryption_type: EncryptionType,
+    _recipient_keys: Vec<String>,
+    sender_keys: did_comm::DIDComm,
+    _encryption_type: EncryptionType,
 ) -> crate::Result<String> {
-    let signedMsg = sign(message, senderKeys.clone());
-    // packMessage(signedMsg, recipientKeys, Some(senderKeys), encryption_type)
+    let _signed_msg = sign(message, sender_keys);
+    // packMessage(signedMsg, recipient_keys, Some(sender_keys), encryption_type)
     Ok("TODO".to_string())
 }
 
 /// repudiable authentication
 pub fn pack_auth_msg(
-    message: String,
-    recipientKeys: Vec<String>,
-    senderKeys: Option<did_comm::DIDComm>,
-    encryption_type: EncryptionType,
+    _message: String,
+    _recipient_keys: Vec<String>,
+    _sender_keys: Option<did_comm::DIDComm>,
+    _encryption_type: EncryptionType,
 ) -> crate::Result<String> {
-    // packMessage(message, recipientKeys, senderKeys, encryption_type)
+    // packMessage(message, recipientKeys, sender_keys, encryption_type)
     Ok("TODO".to_string())
 }
 
@@ -44,12 +44,16 @@ pub fn pack_anon_msg(
 }
 
 /// Non-repudiable signature with no encryption
-pub fn pack_nonrepudiable_msg(message: String, did_comm: did_comm::DIDComm, encryption_type: EncryptionType) -> String {
+pub fn pack_nonrepudiable_msg(
+    message: String,
+    did_comm: did_comm::DIDComm,
+    _encryption_type: EncryptionType,
+) -> String {
     sign(message, did_comm)
 }
 
 // senderKeys = keypair
-fn sign(msg: String, senderKeys: did_comm::DIDComm) -> String {
+fn sign(_msg: String, _sender_keys: did_comm::DIDComm) -> String {
     println!("signed");
     "will be implemented soon".to_string()
 }
@@ -59,11 +63,11 @@ fn pack_message(
     msg: String,
     key: Vec<u8>,
     nonce: Vec<u8>,
-    fromKeys: Option<did_comm::DIDComm>,
-    encryption_type: EncryptionType,
+    from_keys: Option<did_comm::DIDComm>,
+    _encryption_type: EncryptionType,
 ) -> crate::Result<String> {
-    match fromKeys {
-        Some(p) => {
+    match from_keys {
+        Some(_p) => {
             println!("encrypt and sign message");
 
             // Sender Authenticated Encryption

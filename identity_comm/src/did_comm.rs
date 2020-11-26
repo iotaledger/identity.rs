@@ -1,9 +1,9 @@
+use crate::did_comm_builder::DIDCommBuilder;
 use identity_core::common::Timestamp;
-use identity_core::did::DID;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-use crate::types::MessageType;
+use crate::messages::MessageType;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DIDComm {
@@ -18,18 +18,18 @@ pub struct DIDComm {
 }
 
 impl DIDComm {
-    /// Initializes the DIDComm struct with the filled out fields.
-    pub fn init(self) -> crate::Result<DIDComm> {
-        let did_comm = DIDComm {
-            id: self.id,
-            comm_type: self.comm_type,
-            from: self.from,
-            to: self.to,
-            created_at: self.created_at,
-            expires_at: self.expires_at,
-            body: self.body,
+    /// Returns a new `DIDComm` based on the `DIDCommBuilder` configuration.
+    pub fn from_builder(builder: DIDCommBuilder) -> crate::Result<Self> {
+        let this: Self = Self {
+            id: builder.id,
+            comm_type: builder.comm_type,
+            from: builder.from,
+            to: builder.to,
+            created_at: builder.created_at,
+            expires_at: builder.expires_at,
+            body: builder.body,
         };
-        Ok(did_comm)
+        Ok(this)
     }
 }
 

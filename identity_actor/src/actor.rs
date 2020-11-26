@@ -7,7 +7,6 @@ use identity_comm::did_comm::DIDComm;
 
 use crate::message::Message;
 
-
 use crate::handler::IdentityMessageHandler;
 use tokio::sync::mpsc::UnboundedReceiver;
 

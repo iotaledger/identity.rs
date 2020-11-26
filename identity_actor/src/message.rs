@@ -40,10 +40,9 @@ impl Message {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(tag = "cmd", content = "payload")]
 pub enum MessageType {
-  /// Remove the account related to the specified `account_id`.
-  TrustPing,
+    /// Remove the account related to the specified `account_id`.
+    TrustPing,
 }
-
 
 impl Serialize for MessageType {
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
