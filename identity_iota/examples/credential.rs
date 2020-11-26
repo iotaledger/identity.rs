@@ -74,11 +74,7 @@ async fn main() -> Result<()> {
 
     // Extract the default verification method from the authentication scope and
     // create a Verifiable Credential signed by the issuer.
-    let vc: VerifiableCredential = credential.sign(
-        &doc_iss,
-        MethodScope::Authentication,
-        key_iss.secret(),
-    )?;
+    let vc: VerifiableCredential = credential.sign(&doc_iss, MethodScope::Authentication, key_iss.secret())?;
 
     println!("Credential > {:#}", vc);
     println!();

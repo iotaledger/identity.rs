@@ -151,10 +151,8 @@ impl<T> Credential<T> {
     {
         let method: MethodWrap<'_, D2> = document.try_resolve(query)?;
 
-        let options: SignatureOptions = SignatureOptions::with_purpose(
-            method.id().to_string(),
-            method.scope().as_str().to_string(),
-        );
+        let options: SignatureOptions =
+            SignatureOptions::with_purpose(method.id().to_string(), method.scope().as_str().to_string());
 
         let mut target: VerifiableCredential<T> = VerifiableCredential::new(self, Vec::new());
         let mut writer: MethodWriter<VerifiableCredential<T>, D2> = MethodWriter::new(&mut target, &*method);
