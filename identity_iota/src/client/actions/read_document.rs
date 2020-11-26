@@ -1,9 +1,11 @@
+use core::ops::Deref;
 use identity_core::{common::Object, convert::FromJson as _};
 
 use crate::{
     client::{Client, ReadTransactionsRequest, ReadTransactionsResponse, TangleMessage},
     did::{IotaDID, IotaDocument},
     error::{Error, Result},
+    utils::encode_trits,
 };
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -47,11 +49,11 @@ impl<'a, 'b> ReadDocumentRequest<'a, 'b> {
             println!("[+] trace(3): Tangle Documents: {:?}", response);
         }
 
-        let document: Option<IotaDocument> = self.extract_auth_document(response.messages);
-        let document: IotaDocument = document.ok_or(Error::InvalidTransactionBundle)?;
+        let document: Option<ChainDocument> = self.extract_auth_document(response.messages);
+        let document: ChainDocument = document.ok_or(Error::InvalidTransactionBundle)?;
 
         if self.trace {
-            println!("[+] trace(4): Auth Document: {:?}", document);
+            println!("[+] trace(4): Auth Document: {:?}", document.document);
         }
 
         if let Some(_address) = document.diff_chain() {
@@ -59,48 +61,79 @@ impl<'a, 'b> ReadDocumentRequest<'a, 'b> {
         }
 
         Ok(ReadDocumentResponse {
-            document,
+            document: document.document,
             metadata: Object::new(),
         })
     }
 
-    fn extract_auth_document(&self, messages: Vec<TangleMessage>) -> Option<IotaDocument> {
-        let documents: Vec<IotaDocument> = self.extract_auth_chain(messages);
+    fn extract_auth_document(&self, messages: Vec<TangleMessage>) -> Option<ChainDocument> {
+        let (mut docs1, mut docs2): (Vec<_>, Vec<_>) = messages
+            .into_iter()
+            .flat_map(|message| ChainDocument::new(self.did, message))
+            .partition(ChainDocument::is_initial_document);
 
-        let (mut initials, mut additionals): (Vec<IotaDocument>, Vec<IotaDocument>) =
-            documents.into_iter().partition(|item| item.prev_msg().is_none());
+        // Sort documents in ASCENDING order.
+        docs1.sort_by_key(|document| document.created());
+        docs2.sort_by_key(|document| document.created());
 
-        // Sort documents in ASCENDING order
-        initials.sort_by_key(|document| document.created());
-        additionals.sort_by_key(|document| document.created());
+        // Find the first initial document with a valid signature.
+        let mut target: ChainDocument = docs1.into_iter().find(|item| item.verify().is_ok())?;
 
-        // Find the first initial document with a valid signature
-        let initial: IotaDocument = initials.into_iter().find(|item| item.verify().is_ok())?;
+        // Follow the chain of successive documents - AKA the auth chain.
+        for maybe in docs2 {
+            let hash: &str = maybe.document.prev_msg()?;
 
-        if !additionals.is_empty() {
-            todo!("Handle Document Succession")
+            // Ignore documents that don't reference the expected Tangle message.
+            if hash != target.transaction_hash() {
+                continue;
+            }
+
+            // Ignore documents with invalid signatures.
+            if target.verify_data(&*maybe).is_err() {
+                continue;
+            }
+
+            target = maybe;
         }
 
-        Some(initial)
+        Some(target)
+    }
+}
+
+struct ChainDocument {
+    document: IotaDocument,
+    message: TangleMessage,
+}
+
+impl ChainDocument {
+    fn is_initial_document(&self) -> bool {
+        self.document.prev_msg().is_none()
     }
 
-    fn extract_auth_chain(&self, messages: Vec<TangleMessage>) -> Vec<IotaDocument> {
-        let mut documents: Vec<IotaDocument> = Vec::with_capacity(messages.len());
+    fn transaction_hash(&self) -> String {
+        encode_trits(&self.message.tail_hash)
+    }
 
-        for message in messages {
-            let document: Option<IotaDocument> = message
-                .message_utf8()
-                .ok()
-                // Only include documents that deserialize as valid IOTA documents
-                .and_then(|json| IotaDocument::from_json(&json).ok())
-                // Only include documents matching the target DID
-                .filter(|document| self.did.authority() == document.id().authority());
+    fn new(did: &IotaDID, message: TangleMessage) -> Option<Self> {
+        // Convert the Tangle message content to a UTF8 string.
+        let json: String = message.message_utf8().ok()?;
 
-            if let Some(document) = document {
-                documents.push(document);
-            }
+        // Deserialize the message; ignore any documents that fail.
+        let document: IotaDocument = IotaDocument::from_json(&json).ok()?;
+
+        // Ignore any documents that don't belong to that target DID.
+        if did.authority() != document.id().authority() {
+            return None;
         }
 
-        documents
+        Some(Self { document, message })
+    }
+}
+
+impl Deref for ChainDocument {
+    type Target = IotaDocument;
+
+    fn deref(&self) -> &Self::Target {
+        &self.document
     }
 }
