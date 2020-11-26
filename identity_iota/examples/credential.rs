@@ -6,7 +6,7 @@
 use identity_core::{
     common::{Url, Value},
     convert::{FromJson as _, ToJson as _},
-    did_doc::MethodWrap,
+    did_doc::MethodScope,
     did_url::DID,
     json,
     vc::{Credential, CredentialBuilder, CredentialSubject, VerifiableCredential},
@@ -74,8 +74,7 @@ async fn main() -> Result<()> {
 
     // Extract the default verification method from the authentication scope and
     // create a Verifiable Credential signed by the issuer.
-    let vm: MethodWrap = doc_iss.authentication();
-    let vc: VerifiableCredential = credential.sign(&vm, key_iss.secret())?;
+    let vc: VerifiableCredential = credential.sign(&doc_iss, MethodScope::Authentication, key_iss.secret())?;
 
     println!("Credential > {:#}", vc);
     println!();

@@ -173,7 +173,7 @@ mod tests {
 
     use crate::{
         convert::FromJson as _,
-        did_doc::{SignatureData, VerifiableDocument},
+        did_doc::{SignatureData, SignatureOptions, VerifiableDocument},
         utils::{decode_b58, decode_hex, encode_hex},
     };
 
@@ -201,8 +201,10 @@ mod tests {
         let secret = decode_b58(SECRET_B58).unwrap();
         let mut unsigned: VerifiableDocument = VerifiableDocument::from_json(UNSIGNED).unwrap();
         let signed: VerifiableDocument = VerifiableDocument::from_json(SIGNED).unwrap();
+        let method = unsigned.try_resolve("#key-1").unwrap();
+        let options: SignatureOptions = SignatureOptions::new(method.try_into_fragment().unwrap());
 
-        unsigned.sign(&JcsEd25519Signature2020, "#key-1", &secret).unwrap();
+        unsigned.sign(&JcsEd25519Signature2020, options, &secret).unwrap();
 
         assert!(unsigned.verify(&JcsEd25519Signature2020).is_ok());
         assert_eq!(
@@ -220,8 +222,10 @@ mod tests {
     fn test_jcsed25519signature2020_fails_when_key_is_mutated() {
         let secret = decode_b58(SECRET_B58).unwrap();
         let mut document: VerifiableDocument = VerifiableDocument::from_json(UNSIGNED).unwrap();
+        let method = document.try_resolve("#key-1").unwrap();
+        let options: SignatureOptions = SignatureOptions::new(method.try_into_fragment().unwrap());
 
-        document.sign(&JcsEd25519Signature2020, "#key-1", &secret).unwrap();
+        document.sign(&JcsEd25519Signature2020, options, &secret).unwrap();
 
         assert!(document.verify(&JcsEd25519Signature2020).is_ok());
         assert_eq!(
@@ -238,8 +242,10 @@ mod tests {
     fn test_jcsed25519signature2020_fails_when_signature_is_mutated() {
         let secret = decode_b58(SECRET_B58).unwrap();
         let mut document: VerifiableDocument = VerifiableDocument::from_json(UNSIGNED).unwrap();
+        let method = document.try_resolve("#key-1").unwrap();
+        let options: SignatureOptions = SignatureOptions::new(method.try_into_fragment().unwrap());
 
-        document.sign(&JcsEd25519Signature2020, "#key-1", &secret).unwrap();
+        document.sign(&JcsEd25519Signature2020, options, &secret).unwrap();
 
         assert!(document.verify(&JcsEd25519Signature2020).is_ok());
         assert_eq!(

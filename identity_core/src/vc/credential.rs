@@ -1,5 +1,5 @@
 use core::fmt::{Display, Error as FmtError, Formatter, Result as FmtResult};
-use did_doc::{Method, MethodType, MethodWriter, SignatureOptions};
+use did_doc::{Document, MethodQuery, MethodType, MethodWrap, MethodWriter, SignatureOptions};
 use serde::Serialize;
 
 use crate::{
@@ -139,13 +139,23 @@ impl<T> Credential<T> {
         Ok(())
     }
 
-    pub fn sign<U>(self, method: &Method<U>, secret: &SecretKey) -> Result<VerifiableCredential<T>>
+    pub fn sign<'a, Q, D1, D2, D3>(
+        self,
+        document: &Document<D1, D2, D3>,
+        query: Q,
+        secret: &SecretKey,
+    ) -> Result<VerifiableCredential<T>>
     where
         T: Serialize,
+        Q: Into<MethodQuery<'a>>,
     {
-        let options: SignatureOptions = SignatureOptions::new(method.id().to_string());
+        let method: MethodWrap<'_, D2> = document.try_resolve(query)?;
+
+        let options: SignatureOptions =
+            SignatureOptions::with_purpose(method.id().to_string(), method.scope().as_str().to_string());
+
         let mut target: VerifiableCredential<T> = VerifiableCredential::new(self, Vec::new());
-        let mut writer: MethodWriter<VerifiableCredential<T>, U> = MethodWriter::new(&mut target, method);
+        let mut writer: MethodWriter<VerifiableCredential<T>, D2> = MethodWriter::new(&mut target, &*method);
 
         match method.key_type() {
             MethodType::Ed25519VerificationKey2018 => {
