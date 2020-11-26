@@ -9,7 +9,7 @@ use identity_core::{
     crypto::{KeyPair, SecretKey},
     did_doc::{
         Document, DocumentBuilder, Method, MethodBuilder, MethodData, MethodScope, MethodType, MethodWrap,
-        SetSignature, Signature, TrySignature, VerifiableDocument,
+        SetSignature, Signature, SignatureOptions, TrySignature, VerifiableDocument,
     },
     did_url::DID,
     proof::JcsEd25519Signature2020,
@@ -161,6 +161,24 @@ impl IotaDocument {
         self.authentication().key_type()
     }
 
+    /// Returns a reference to the `VerifiableDocument`.
+    pub fn as_document(&self) -> &VerifiableDocument<Properties> {
+        &self.0
+    }
+
+    /// Returns a mutable reference to the `VerifiableDocument`.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe because it does not check that modifications
+    /// made to the `VerifiableDocument` maintain a valid `IotaDocument`.
+    ///
+    /// If this constraint is violated, it may cause issues with future uses of
+    /// the `IotaDocument`.
+    pub unsafe fn as_document_mut(&mut self) -> &mut VerifiableDocument<Properties> {
+        &mut self.0
+    }
+
     /// Signs the DID document with the default authentication method.
     ///
     /// # Errors
@@ -170,7 +188,9 @@ impl IotaDocument {
     pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
         match self.authentication_type() {
             MethodType::Ed25519VerificationKey2018 => {
-                self.0.sign(JcsEd25519Signature2020, AUTH_QUERY, secret.as_ref())?;
+                let mut opts: SignatureOptions = self.0.resolve_options(AUTH_QUERY)?;
+                opts.created = Some(Timestamp::now().to_string());
+                self.0.sign(JcsEd25519Signature2020, opts, secret.as_ref())?;
             }
             _ => {
                 return Err(Error::InvalidDocument { error: ERR_AMNS });
@@ -214,8 +234,9 @@ impl IotaDocument {
     {
         match self.authentication_type() {
             MethodType::Ed25519VerificationKey2018 => {
-                self.0
-                    .sign_data(data, JcsEd25519Signature2020, AUTH_QUERY, secret.as_ref())?;
+                let mut opts: SignatureOptions = self.0.resolve_options(AUTH_QUERY)?;
+                opts.created = Some(Timestamp::now().to_string());
+                self.0.sign_data(data, JcsEd25519Signature2020, opts, secret.as_ref())?;
             }
             _ => {
                 return Err(Error::InvalidDocument { error: ERR_AMNS });
