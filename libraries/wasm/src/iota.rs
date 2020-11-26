@@ -1,3 +1,4 @@
+use crate::{doc::Doc, js_err};
 use identity_core::common::Object;
 use identity_iota::{
     client::{Client, ClientBuilder, Network, TransactionPrinter},
@@ -113,7 +114,7 @@ pub async fn check_presentation(data: String, params: JsValue) -> Result<JsValue
 #[wasm_bindgen(js_name = isDocSynced)]
 pub async fn is_doc_synced(document: Doc, params: JsValue) -> Result<bool, JsValue> {
     let res = client(params)?
-        .read_document(&document.0.did())
+        .read_document(&document.0.id())
         .send()
         .await
         .map_err(js_err)?;

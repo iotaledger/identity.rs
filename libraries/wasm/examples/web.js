@@ -20,10 +20,10 @@ import("../pkg/index.js").then(async identity => {
             console.log(read_state.documents);
             // Add a keypair and add the new document to the state
             let keypair = Key.generateEd25519();
-            let publicKey = PubKey.generateEd25519(read_state.latest_doc.did, keypair.public, "#keys-2")
-            read_state.update_keypair(keypair)
+            let publicKey = PubKey.generateEd25519(DID.parse(read_state.latest_doc.id), keypair.public)
             let new_doc = read_state.latest_doc
-            new_doc.updatePublicKey(publicKey)
+            console.log(new_doc);
+            new_doc.updateVerification(publicKey)
             read_state.add_document(new_doc)
             console.log(read_state);
 
@@ -145,10 +145,7 @@ import("../pkg/index.js").then(async identity => {
             bob_document.clearServices()
             console.log("Doc with services cleared ", bob_document.toJSON());
             let keypair = Key.generateEd25519();
-            let publicKey = PubKey.generateEd25519(bob_document.did, keypair.public, "#keys-1")
-            bob_document.updatePublicKey(publicKey)
-            console.log("Doc with public key ", bob_document.toJSON());
-            bob_document.updatePublicKey(publicKey)
+            let publicKey = PubKey.generateEd25519(DID.parse(bob_document.id), keypair.public)
             bob_document.updateAuth(publicKey)
             bob_document.updateAssert(publicKey)
             bob_document.updateVerification(publicKey)

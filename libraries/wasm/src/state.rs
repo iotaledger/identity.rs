@@ -6,6 +6,7 @@ use identity_account::{
 use identity_iota::did::IotaDocument;
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
+
 #[wasm_bindgen(inspectable)]
 #[derive(Debug, PartialEq)]
 pub struct State(pub(crate) identity_state);
@@ -85,7 +86,7 @@ impl State {
     }
     /// Converts the State to a String
     #[wasm_bindgen]
-    pub fn to_string(&self) -> String {
+    pub fn export_to_string(&self) -> String {
         self.0.to_string()
     }
     /// Converts a String to a State
