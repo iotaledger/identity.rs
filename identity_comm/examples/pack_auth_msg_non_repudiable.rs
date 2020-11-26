@@ -10,7 +10,11 @@
 //! cargo run --example pack_auth_msg_non_repudiable
 //! ```
 
-use identity_comm::{did_comm_builder::DIDCommBuilder, envelope::pack_auth_msg_non_repudiable};
+use identity_comm::{
+    did_comm_builder::DIDCommBuilder,
+    envelope::{pack_auth_msg_non_repudiable, EncryptionType},
+    messages::MessageType,
+};
 
 fn main() {
     let alice = DIDCommBuilder::new()
@@ -30,7 +34,12 @@ fn main() {
 
     let message = "I AM A PRIVATE SIGNED MESSAGE";
 
-    let packedMsg = pack_auth_msg_non_repudiable(message, "bob_public_key".to_string(), alice);
+    let packed_msg = pack_auth_msg_non_repudiable(
+        message.to_string(),
+        vec!["bob_public_key".to_string()],
+        alice,
+        EncryptionType::XC20P,
+    );
 
-    println!("packedMsg: {:?}", packedMsg);
+    println!("packedMsg: {:?}", packed_msg);
 }

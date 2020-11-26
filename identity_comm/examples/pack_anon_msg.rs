@@ -11,10 +11,7 @@
 //! cargo run --example pack_anon_msg
 //! ```
 
-use identity_comm::{
-    did_comm::DIDComm,
-    envelope::{pack_anon_msg, unpack_message, EncryptionType},
-};
+use identity_comm::envelope::{pack_anon_msg, unpack_message, EncryptionType};
 
 fn main() {
     let key = b"LbNeQyMtf2HF1D6oQWabsrd6wPX1CUhg";

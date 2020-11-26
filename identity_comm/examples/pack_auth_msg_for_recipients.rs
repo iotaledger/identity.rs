@@ -36,12 +36,12 @@ fn main() {
 
     let message = "I AM A PRIVATE SIGNED MESSAGE".to_string();
 
-    let packedMsg = pack_auth_msg(
+    let packed_msg = pack_auth_msg(
         message,
         vec!["bob_public_key".to_string()],
         Some(alice),
         EncryptionType::XC20P,
     );
 
-    println!("packedMsg: {:?}", packedMsg);
+    println!("packedMsg: {:?}", packed_msg);
 }
