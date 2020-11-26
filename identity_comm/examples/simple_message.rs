@@ -7,9 +7,9 @@
 //! cargo run --example simple_message
 //! ```
 
+use did_url::DID;
 use identity_comm::{did_comm_builder::DIDCommBuilder, messages::MessageType};
-use identity_core::did::DID;
-use identity_crypto::KeyPair;
+use identity_core::crypto::KeyPair;
 use identity_iota::did::IotaDocument;
 
 use identity_core::common::Timestamp;
@@ -23,8 +23,8 @@ fn main() {
     let message = DIDCommBuilder::new()
         .id("123456")
         .comm_type(MessageType::TrustPing)
-        .from(DID::parse(alice.document.did()).unwrap())
-        .to(vec![DID::parse(bob.document.did()).unwrap()])
+        .from(DID::parse(alice.document.id()).unwrap())
+        .to(vec![DID::parse(bob.document.id()).unwrap()])
         .created_at(Timestamp::now())
         .expires_at(Timestamp::now())
         .body("".into())
@@ -45,14 +45,15 @@ struct Account {
 impl Account {
     fn new(name: String) -> Self {
         // Create keypair/DID document
-        let (mut document, keypair): (IotaDocument, KeyPair) = IotaDocument::generate_ed25519("key-1", None).unwrap();
+        let (mut document, keypair): (IotaDocument, KeyPair) =
+            IotaDocument::generate_ed25519("key-1", "main", None).unwrap();
 
         // Sign the document with the authentication method secret
         document.sign(keypair.secret()).unwrap();
 
         // Ensure the document proof is valid
         assert!(document.verify().is_ok());
-        println!("Created DID: {}", document.did());
+        println!("Created DID: {}", document.id());
 
         Self {
             name,

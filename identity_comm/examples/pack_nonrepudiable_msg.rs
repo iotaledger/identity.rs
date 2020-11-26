@@ -13,7 +13,9 @@
 //! ```
 
 use identity_comm::{
-    did_comm_builder::DIDCommBuilder, envelope::pack_nonrepudiable_msg, envelope::EncryptionType, messages::MessageType,
+    did_comm_builder::DIDCommBuilder,
+    envelope::{pack_nonrepudiable_msg, EncryptionType},
+    messages::MessageType,
 };
 
 fn main() {

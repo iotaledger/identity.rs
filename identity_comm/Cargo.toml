@@ -23,8 +23,7 @@ anyhow = "1.0"
 # identity
 identity_core = { path = "../identity_core" }
 identity_iota = { path = "../identity_iota" }
-identity_crypto = { path = "../identity_crypto" }
-identity_proof = { path = "../identity_proof" }
+did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
 libjose = {git = "https://github.com/iotaledger/identity.rs", branch = "feat/siop-did"}
 
 chacha20poly1305 = "0.6.0"

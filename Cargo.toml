@@ -5,7 +5,6 @@ members = [
     "identity_derive",
     "identity_diff",
     "identity_iota",
-    "identity_proof",
     "identity_comm",
 ]
 exclude = [

@@ -1,5 +1,6 @@
 use crate::{did_comm::DIDComm, messages::MessageType};
-use identity_core::{common::Timestamp, did::DID};
+use did_url::DID;
+use identity_core::common::Timestamp;
 use serde::{Deserialize, Serialize};
 
 /// A `DIDCommBuilder` is used to create a customized `DIDComm`.

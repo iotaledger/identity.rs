@@ -1,5 +1,4 @@
-use identity_comm::did_comm_builder::*;
-use identity_comm::messages::MessageType;
+use identity_comm::{did_comm_builder::*, messages::MessageType};
 #[test]
 fn test_create_did_comm() {
     let did_comm = DIDCommBuilder::new()
