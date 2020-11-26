@@ -151,9 +151,7 @@ impl<T> Credential<T> {
             MethodType::Ed25519VerificationKey2018 => {
                 writer.sign(JcsEd25519Signature2020, options, secret.as_ref())?;
             }
-            _ => {
-                todo!("return Err(\"Verification Method Not Supported\")")
-            }
+            _ => todo!("return Err(\"Verification Method Not Supported\")"),
         }
 
         Ok(target)

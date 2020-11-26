@@ -3,14 +3,17 @@ use crate::{
     Error, Result,
 };
 use core::convert::TryFrom;
-use identity_core::{resolver::resolve, utils::decode_hex};
-use identity_crypto::{KeyPair, PublicKey, SecretKey};
-use identity_diff::Diff;
+use identity_core::{
+    crypto::{KeyPair, PublicKey, SecretKey},
+    proof::JcsEd25519Signature2020,
+    resolver::resolve,
+    utils::decode_hex,
+};
+// use identity_diff::Diff;
 use identity_iota::{
     client::Client,
     did::{DIDDiff, IotaDocument},
 };
-use identity_proof::signature::jcsed25519signature2020;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -106,7 +109,7 @@ impl State {
     }
     /// Generates a new Ed25519 keypair and stores it
     pub fn new_keypair(&mut self) -> KeyPair {
-        let keypair: KeyPair = jcsed25519signature2020::new_keypair();
+        let keypair: KeyPair = JcsEd25519Signature2020::new_keypair();
         self.update_keypair(&keypair);
         keypair
     }
@@ -134,13 +137,13 @@ impl State {
         })
     }
     /// Add a diff to the state
-    pub fn add_diff(&mut self, diff: DIDDiff) -> Result<()> {
-        // update latest doc
-        self.latest_doc = IotaDocument::try_from(self.latest_doc.merge(diff.diff.clone())?)?;
-        let len = self.documents.len() - 1;
-        self.documents[len].diffs.push(diff);
-        Ok(())
-    }
+    // pub fn add_diff(&mut self, diff: DIDDiff) -> Result<()> {
+    //     // update latest doc
+    //     self.latest_doc = IotaDocument::try_from(self.latest_doc.merge(diff.diff.clone())?)?;
+    //     let len = self.documents.len() - 1;
+    //     self.documents[len].diffs.push(diff);
+    //     Ok(())
+    // }
     /// Get the length from the latest diff chain
     pub fn latest_diffchain_len(&self) -> Result<usize> {
         Ok(self
@@ -152,7 +155,7 @@ impl State {
     }
     /// Check if state is synced with the Tangle
     pub async fn is_synced(&self, client: Client) -> Result<bool> {
-        let res = resolve(&self.latest_doc().did().to_string(), Default::default(), &client).await?;
+        let res = resolve(&self.latest_doc().id().to_string(), Default::default(), &client).await?;
         Ok(IotaDocument::try_from(
             res.document
                 .ok_or_else(|| Error::StateError("Resolving failed".into()))?,

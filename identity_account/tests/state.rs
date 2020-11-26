@@ -1,6 +1,6 @@
 use anyhow::Result;
 use identity_account::identity_state::State;
-use identity_crypto::KeyPair;
+use identity_core::crypto::KeyPair;
 use identity_iota::did::IotaDocument;
 use std::str::FromStr;
 
@@ -20,7 +20,7 @@ fn fs() -> Result<()> {
 
 pub fn create() -> Result<(IotaDocument, KeyPair)> {
     // Create keypair/DID document
-    let (mut document, keypair): (IotaDocument, KeyPair) = IotaDocument::generate_ed25519("key-1", None)?;
+    let (mut document, keypair): (IotaDocument, KeyPair) = IotaDocument::generate_ed25519("key-1", "main", None)?;
 
     // Sign the document with the authentication method secret
     document.sign(keypair.secret())?;
