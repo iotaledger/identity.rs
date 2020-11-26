@@ -1,9 +1,7 @@
 import("../pkg/index.js").then(async identity => {
     try {
         console.log(identity)
-        const { initialize, resolve, publish, checkCredential, Key, Doc, DID, PubKey, VerifiableCredential } = identity
-
-        initialize();
+        const { resolve, publish, checkCredential, Key, Doc, DID, PubKey, VerifiableCredential } = identity
 
         await playground()
         await alice_bob()

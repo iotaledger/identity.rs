@@ -2,7 +2,6 @@
 members = [
     "identity_actor",
     "identity_core",
-    "identity_crypto",
     "identity_derive",
     "identity_diff",
     "identity_iota",

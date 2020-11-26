@@ -1,289 +1,321 @@
 use core::{
     convert::TryFrom,
-    fmt::{Debug, Display, Error as FmtError, Formatter, Result as FmtResult},
-    ops::{Deref, DerefMut},
+    fmt::{Debug, Display, Formatter, Result as FmtResult},
+    ops::Deref,
 };
 use identity_core::{
-    common::{OneOrMany, ToJson as _},
-    did::{DIDDocument as Document, DIDDocumentBuilder as DocumentBuilder, DID},
-    diff::Diff as _,
-    key::{KeyData, KeyRelation, KeyType, PublicKey, PublicKeyBuilder},
-    utils::encode_b58,
+    common::Timestamp,
+    convert::{FromJson as _, SerdeInto as _},
+    crypto::{KeyPair, SecretKey},
+    did_doc::{
+        Document, DocumentBuilder, Method, MethodBuilder, MethodData, MethodScope, MethodType, MethodWrap,
+        SetSignature, Signature, TrySignature, VerifiableDocument,
+    },
+    did_url::DID,
+    proof::JcsEd25519Signature2020,
 };
-use identity_crypto::{KeyPair, SecretKey};
-use identity_proof::{signature::jcsed25519signature2020, HasProof, LdRead, LdSignature, LdWrite, SignatureOptions};
 use iota::transaction::bundled::Address;
-use multihash::{Blake2b256, MultihashGeneric};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::{
     did::{DIDDiff, IotaDID},
     error::{Error, Result},
-    utils::{create_address_from_trits, utf8_to_trytes},
 };
 
-#[derive(Clone, PartialEq, Deserialize, Serialize)]
-#[serde(try_from = "Document", into = "Document")]
-pub struct IotaDocument {
-    document: Document,
-    did: IotaDID,
+const AUTH_QUERY: (usize, MethodScope) = (0, MethodScope::Authentication);
+
+const ERR_AMNS: &str = "Authentication Method Not Supported";
+const ERR_AMMF: &str = "Authentication Method Missing Fragment";
+const ERR_AMIM: &str = "Authentication Method Id Mismatch";
+
+// TODO: Add generic properties object (?)
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub struct Properties {
+    pub created: Timestamp,
+    pub updated: Timestamp,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prev_msg: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub diff_chain: Option<String>,
 }
 
+impl Properties {
+    pub fn new() -> Self {
+        Self {
+            created: Timestamp::now(),
+            updated: Timestamp::now(),
+            prev_msg: None,
+            diff_chain: None,
+        }
+    }
+}
+
+impl Default for Properties {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[derive(Clone, PartialEq, Deserialize, Serialize)]
+#[serde(try_from = "Document", into = "VerifiableDocument<Properties>")]
+pub struct IotaDocument(VerifiableDocument<Properties>);
+
 impl IotaDocument {
-    pub fn generate_ed25519<'a, T>(tag: &str, network: T) -> Result<(Self, KeyPair)>
+    pub fn generate_ed25519<'a, 'b, T, U>(tag: &str, network: T, shard: U) -> Result<(Self, KeyPair)>
     where
         T: Into<Option<&'a str>>,
+        U: Into<Option<&'b str>>,
     {
-        let (did, keypair): (IotaDID, KeyPair) = IotaDID::generate_ed25519(network)?;
+        let (did, keypair): (IotaDID, KeyPair) = IotaDID::generate_ed25519(network, shard)?;
+        let key: DID = (*did).join(format!("#{}", tag))?;
 
-        let authentication: PublicKey = PublicKeyBuilder::default()
-            .id(format!("{}#{}", did, tag).parse()?)
-            .controller(did.into())
-            .key_type(KeyType::Ed25519VerificationKey2018)
-            .key_data(KeyData::PublicKeyBase58(encode_b58(keypair.public())))
-            .build()
-            .expect("FIXME");
+        let authentication: Method = MethodBuilder::default()
+            .id(key.clone())
+            .controller(did.clone().into())
+            .key_type(MethodType::Ed25519VerificationKey2018)
+            .key_data(MethodData::new_b58(keypair.public()))
+            .build()?;
 
-        Self::try_from_key(authentication).map(|this| (this, keypair))
-    }
-
-    pub fn try_from_document(document: Document) -> Result<Self> {
-        let did: IotaDID = IotaDID::try_from_did(document.did().clone())?;
-
-        let authentication: &PublicKey = document
-            .resolve_key(0, KeyRelation::Authentication)
-            .ok_or(Error::InvalidAuthenticationKey)?;
-
-        Self::check_authentication_key_id(authentication, &did)?;
-
-        Ok(Self { document, did })
-    }
-
-    pub fn try_from_key(authentication: PublicKey) -> Result<Self> {
-        let mut base: DID = authentication.id().clone();
-
-        base.fragment = None;
-        base.query = None;
-        base.path_segments = None;
-
-        Self::create_document(base, authentication).and_then(Self::try_from_document)
-    }
-
-    fn create_document(did: impl Into<DID>, authentication: PublicKey) -> Result<Document> {
-        let mut document: Document = DocumentBuilder::default()
-            .context(OneOrMany::One(DID::BASE_CONTEXT.into()))
+        let this: Self = DocumentBuilder::new(Properties::new())
             .id(did.into())
-            .auth(vec![authentication.id().clone().into()])
-            .public_keys(vec![authentication])
+            // Note: We use a reference to the verification method due to
+            // limitations in the did_doc crate.
+            .authentication(key)
+            .verification_method(authentication)
             .build()
-            .expect("FIXME");
+            .map(VerifiableDocument::new)
+            .map(Self)?;
 
-        document.init_timestamps();
-
-        Ok(document)
+        Ok((this, keypair))
     }
 
-    pub fn did(&self) -> &IotaDID {
-        &self.did
+    /// Converts a generic DID `Document` to an `IotaDocument`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the document is not a valid `IotaDocument`.
+    pub fn try_from_document(mut document: Document) -> Result<Self> {
+        let did: &IotaDID = IotaDID::try_from_borrowed(document.id())?;
+        let key: &DID = document.try_resolve(AUTH_QUERY)?.into_method().id();
+
+        if key.fragment().is_none() {
+            return Err(Error::InvalidDocument { error: ERR_AMMF });
+        }
+
+        if key.authority() != did.authority() {
+            return Err(Error::InvalidDocument { error: ERR_AMIM });
+        }
+
+        if let Some(proof) = document.properties_mut().remove("proof") {
+            let proof: Signature = Signature::from_json_value(proof)?;
+            let root: Document<Properties> = document.try_map(|old| old.serde_into())?;
+
+            Ok(Self(VerifiableDocument::with_proof(root, proof)))
+        } else {
+            let root: Document<Properties> = document.try_map(|old| old.serde_into())?;
+
+            Ok(Self(VerifiableDocument::new(root)))
+        }
     }
 
-    pub fn supersedes(&self) -> Option<&str> {
-        None // TODO
+    /// Returns the DID document `id`.
+    pub fn id(&self) -> &IotaDID {
+        // SAFETY: We checked the validity of the DID Document ID in the
+        // IotaDocument constructors; we don't provide mutable references so
+        // the value cannot change with typical "safe" Rust.
+        unsafe { IotaDID::new_unchecked_ref(self.0.id()) }
     }
 
+    /// Returns the Tangle message id of the previous DID document, if any.
+    pub fn prev_msg(&self) -> Option<&str> {
+        self.properties().prev_msg.as_deref()
+    }
+
+    /// Returns the Tangle address of the DID document diff chain, if any.
     pub fn diff_chain(&self) -> Option<&str> {
-        None // TODO
+        self.properties().diff_chain.as_deref()
     }
 
-    pub fn has_diff_chain(&self) -> bool {
-        self.diff_chain().is_some()
+    /// Returns the timestamp of when the DID document was created.
+    pub fn created(&self) -> Timestamp {
+        self.properties().created
     }
 
-    pub fn authentication_key(&self) -> &PublicKey {
-        self.resolve_key(0, KeyRelation::Authentication).expect("infallible")
+    /// Returns the timestamp of the last DID document update.
+    pub fn updated(&self) -> Timestamp {
+        self.properties().updated
     }
 
-    pub fn authentication_key_bytes(&self) -> Vec<u8> {
-        self.authentication_key()
-            .key_data()
-            .try_decode()
-            .transpose()
-            .ok()
-            .flatten()
-            .unwrap_or_default()
+    /// Returns the default authentication method of the DID document.
+    pub fn authentication(&self) -> MethodWrap {
+        self.resolve(AUTH_QUERY).unwrap()
     }
 
+    /// Returns the key bytes of the default DID document authentication method.
+    pub fn authentication_bytes(&self) -> Result<Vec<u8>> {
+        self.try_resolve_bytes(AUTH_QUERY).map_err(Into::into)
+    }
+
+    /// Returns the method type of the default DID document authentication method.
+    pub fn authentication_type(&self) -> MethodType {
+        self.authentication().key_type()
+    }
+
+    /// Signs the DID document with the default authentication method.
+    ///
+    /// # Errors
+    ///
+    /// Fails if an unsupported verification method is used, document
+    /// serialization fails, or the signature operation fails.
     pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
-        let key: &PublicKey = self.authentication_key();
-
-        let fragment: String = format!("{}", key.id());
-        let options: SignatureOptions = SignatureOptions::new(fragment);
-
-        match key.key_type() {
-            KeyType::Ed25519VerificationKey2018 => {
-                jcsed25519signature2020::sign_lds(&mut self.document, options, secret)?;
+        match self.authentication_type() {
+            MethodType::Ed25519VerificationKey2018 => {
+                self.0.sign(JcsEd25519Signature2020, AUTH_QUERY, secret.as_ref())?;
             }
             _ => {
-                return Err(Error::InvalidAuthenticationKey);
+                return Err(Error::InvalidDocument { error: ERR_AMNS });
             }
         }
 
         Ok(())
     }
 
+    /// Verifies the signature of the DID document.
+    ///
+    /// Note: It is assumed that the signature was created using the default
+    /// authentication method.
+    ///
+    /// # Errors
+    ///
+    /// Fails if an unsupported verification method is used, document
+    /// serialization fails, or the verification operation fails.
     pub fn verify(&self) -> Result<()> {
-        let key: &PublicKey = self.authentication_key();
-
-        match key.key_type() {
-            KeyType::Ed25519VerificationKey2018 => {
-                jcsed25519signature2020::verify_lds(&self.document)?;
+        match self.authentication_type() {
+            MethodType::Ed25519VerificationKey2018 => {
+                self.0.verify(JcsEd25519Signature2020)?;
             }
             _ => {
-                return Err(Error::InvalidAuthenticationKey);
+                return Err(Error::InvalidDocument { error: ERR_AMNS });
             }
         }
 
         Ok(())
     }
 
-    pub fn diff(&self, mut other: Document, secret: &SecretKey) -> Result<DIDDiff> {
-        // Update the `updated` timestamp of the new document
-        other.update_time();
+    /// Signs the provided data with the default authentication method.
+    ///
+    /// # Errors
+    ///
+    /// Fails if an unsupported verification method is used, document
+    /// serialization fails, or the signature operation fails.
+    pub fn sign_data<T>(&self, data: &mut T, secret: &SecretKey) -> Result<()>
+    where
+        T: Serialize + SetSignature,
+    {
+        match self.authentication_type() {
+            MethodType::Ed25519VerificationKey2018 => {
+                self.0
+                    .sign_data(data, JcsEd25519Signature2020, AUTH_QUERY, secret.as_ref())?;
+            }
+            _ => {
+                return Err(Error::InvalidDocument { error: ERR_AMNS });
+            }
+        }
 
-        // Create a diff of changes between the two documents.
-        let mut diff: DIDDiff = DIDDiff {
-            id: self.document.did().clone(),
-            diff: self.document.diff(&other)?,
-            proof: LdSignature::new("", SignatureOptions::new("")),
-        };
+        Ok(())
+    }
+
+    /// Verfies the signature of the provided data.
+    ///
+    /// Note: It is assumed that the signature was created using the default
+    /// authentication method.
+    ///
+    /// # Errors
+    ///
+    /// Fails if an unsupported verification method is used, document
+    /// serialization fails, or the verification operation fails.
+    pub fn verify_data<T>(&self, data: &T) -> Result<()>
+    where
+        T: Serialize + TrySignature,
+    {
+        match self.authentication_type() {
+            MethodType::Ed25519VerificationKey2018 => {
+                self.0.verify_data(data, JcsEd25519Signature2020)?;
+            }
+            _ => {
+                return Err(Error::InvalidDocument { error: ERR_AMNS });
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Creates a `DIDDiff` representing the changes between `self` and `other`.
+    ///
+    /// The returned `DIDDiff` will have a digital signature created using the
+    /// default authentication method and `secret`.
+    ///
+    /// # Errors
+    ///
+    /// Fails if the diff operation or signature operation fails.
+    pub fn diff(&self, other: &Self, secret: &SecretKey) -> Result<DIDDiff> {
+        let mut diff: DIDDiff = DIDDiff::new(self, other)?;
 
         self.sign_data(&mut diff, secret)?;
 
         Ok(diff)
     }
 
+    /// Verifies the `DIDDiff` proof using the default authentication method.
+    ///
+    /// # Errors
+    ///
+    /// Fails if the signature operation fails.
     pub fn verify_diff(&self, diff: &DIDDiff) -> Result<()> {
         self.verify_data(diff)
     }
 
-    pub fn sign_data<T>(&self, data: &mut T, secret: &SecretKey) -> Result<()>
-    where
-        T: HasProof + Serialize,
-    {
-        // Get the first authentication key from the document.
-        let key: &PublicKey = self.authentication_key();
-
-        let fragment: String = format!("{}", key.id());
-        let options: SignatureOptions = SignatureOptions::new(fragment);
-
-        // Wrap the diff/document in a signable type.
-        let mut target: LdWrite<T> = LdWrite::new(data, &self.document);
-
-        // Create and apply the signature
-        match key.key_type() {
-            KeyType::Ed25519VerificationKey2018 => {
-                jcsed25519signature2020::sign_lds(&mut target, options, secret)?;
-            }
-            _ => {
-                return Err(Error::InvalidAuthenticationKey);
-            }
-        }
-
-        Ok(())
+    /// Returns the Tangle address of the DID document auth chain as a
+    /// tryte-encoded String.
+    pub fn auth_address_hash(&self) -> String {
+        self.id().address_hash()
     }
 
-    pub fn verify_data<T>(&self, data: &T) -> Result<()>
-    where
-        T: HasProof + Serialize,
-    {
-        // Wrap the data/document in a verifiable type.
-        let target: LdRead<T> = LdRead::new(data, &self.document);
-
-        match self.authentication_key().key_type() {
-            KeyType::Ed25519VerificationKey2018 => {
-                jcsed25519signature2020::verify_lds(&target)?;
-            }
-            _ => {
-                return Err(Error::InvalidAuthenticationKey);
-            }
-        }
-
-        Ok(())
-    }
-
-    pub fn diff_address_hash(&self) -> String {
-        Self::create_diff_address_hash(&self.authentication_key_bytes())
-    }
-
-    pub fn diff_address(&self) -> Result<Address> {
-        create_address_from_trits(self.diff_address_hash())
-    }
-
-    /// Creates an 81 Trytes IOTA address from public key bytes for a diff
-    pub fn create_diff_address_hash(public_key: &[u8]) -> String {
-        let hash: MultihashGeneric<_> = Blake2b256::digest(public_key);
-        let hash: MultihashGeneric<_> = Blake2b256::digest(hash.digest());
-
-        let mut trytes: String = utf8_to_trytes(&encode_b58(hash.digest()));
-
-        trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
-
-        trytes
-    }
-
-    pub fn create_diff_address(public_key: &[u8]) -> Result<Address> {
-        create_address_from_trits(Self::create_diff_address_hash(public_key))
-    }
-
-    fn check_authentication_key_id(authentication: &PublicKey, did: &IotaDID) -> Result<()> {
-        let key: &DID = authentication.id();
-
-        if key.fragment.is_none() {
-            return Err(Error::InvalidAuthenticationKey);
-        }
-
-        if !key.matches_base(did) {
-            return Err(Error::InvalidAuthenticationKey);
-        }
-
-        Ok(())
+    /// Returns the Tangle address of the DID document auth chain.
+    pub fn auth_address(&self) -> Result<Address> {
+        self.id().address()
     }
 }
 
 impl Display for IotaDocument {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        if f.alternate() {
-            f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
-        } else {
-            f.write_str(&self.to_json().map_err(|_| FmtError)?)
-        }
+        Display::fmt(&self.0, f)
     }
 }
 
 impl Debug for IotaDocument {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        Debug::fmt(&self.document, f)
+        Debug::fmt(&self.0, f)
     }
 }
 
 impl Deref for IotaDocument {
-    type Target = Document;
+    type Target = VerifiableDocument<Properties>;
 
     fn deref(&self) -> &Self::Target {
-        &self.document
+        &self.0
     }
 }
 
-// TODO: Remove this
-impl DerefMut for IotaDocument {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.document
+impl PartialEq<VerifiableDocument<Properties>> for IotaDocument {
+    fn eq(&self, other: &VerifiableDocument<Properties>) -> bool {
+        &self.0 == other
     }
 }
 
-impl From<IotaDocument> for Document {
+impl From<IotaDocument> for VerifiableDocument<Properties> {
     fn from(other: IotaDocument) -> Self {
-        other.document
+        other.0
     }
 }
 

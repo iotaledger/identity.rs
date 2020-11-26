@@ -10,39 +10,23 @@ license = "Apache-2.0"
 keywords = ["iota", "tangle", "identity"]
 homepage = "https://www.iota.org"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-# error handling
-thiserror = "1.0"
-anyhow = "1.0"
-
+anyhow = { version = "1.0" }
 async-trait = { version = "0.1", default-features = false }
 base64 = { version = "0.12", default-features = false, features = ["std"] }
 bs58 = { version = "0.3", default-features = false, features = ["std"] }
-chrono = { version = "0.4", features = ["serde"] }
-derive_builder = { version = "0.9", default-features = false }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "a02420805527e8bda45ac48de2b93e8cc1d731de", default-features = false, features = ["std"] }
+did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
+ed25519-zebra = { version = "2.2", default-features = false }
 hex = { version = "0.4", default-features = false , features = ["std"] }
-percent-encoding = { version = "2.1", default-features = false }
-url = { version = "2.1", default-features = false, features = ["serde"] }
-
-# serialization
+lazy_static = { version = "1.4", default-features = false }
+rand = { version = "0.7", default-features = false, features = ["getrandom"] }
 serde = { version = "1.0", features = ["derive"] }
+serde_jcs = { version = "0.1", default-features = false }
 serde_json = { version = "1.0", features = ["preserve_order"] }
+sha2 = { version = "0.9" }
+thiserror = { version = "1.0" }
+zeroize = { version = "1.1" }
 
-identity_crypto = { path = "../identity_crypto" }
 identity_diff = { path = "../identity_diff", version = "0.1.0", features = ["diff_derive"] }
-
-# parser crates
-pest = "2.1"
-pest_derive = "2.1"
-
-[dev-dependencies]
-# generative/property testing
-proptest = "0.10"
-
-# serde testing
-serde_test = "1.0"
-
-# json parsing
-json = "0.12"

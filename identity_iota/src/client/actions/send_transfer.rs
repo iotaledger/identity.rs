@@ -37,8 +37,7 @@ impl<'a> SendTransferRequest<'a> {
 
     pub async fn send(self, transfer: Transfer) -> Result<SendTransferResponse> {
         if self.trace {
-            println!("[+] trace: Sending Transfer >");
-            println!("[+] trace:   Message: {:?}", transfer.message);
+            println!("[+] trace: Sending Transfer: {:?}", transfer.message);
         }
 
         self.client

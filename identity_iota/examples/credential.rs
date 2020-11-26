@@ -1,109 +1,101 @@
+//! A basic example that generates and publishes subject and issuer DID
+//! Documents, creates a VerifiableCredential specifying claims about the
+//! subject, and retrieves information through the CredentialValidator API.
 //!
 //! cargo run --example credential
 use identity_core::{
-    common::{AsJson as _, Context, Timestamp},
-    did::DID,
-    object,
-    vc::{Credential, CredentialBuilder, CredentialSubject, CredentialSubjectBuilder},
+    common::{Url, Value},
+    convert::{FromJson as _, ToJson as _},
+    did_doc::MethodWrap,
+    did_url::DID,
+    json,
+    vc::{Credential, CredentialBuilder, CredentialSubject, VerifiableCredential},
 };
-use identity_crypto::KeyPair;
 use identity_iota::{
-    client::{Client, ClientBuilder, PublishDocumentResponse},
+    client::{Client, ClientBuilder, Network, PublishDocumentResponse},
+    crypto::KeyPair,
     did::IotaDocument,
     error::Result,
-    network::Network,
-    vc::{CredentialValidation, CredentialValidator, VerifiableCredential},
+    vc::{CredentialValidation, CredentialValidator},
 };
 
-#[derive(Debug)]
-struct User {
-    doc: IotaDocument,
-    key: KeyPair,
-    name: String,
+// A helper function to generate and new DID Document/KeyPair, sign the
+// document, publish it to the Tangle, and return the Document/KeyPair.
+async fn document(client: &Client, network: Network) -> Result<(IotaDocument, KeyPair)> {
+    let (mut document, keypair): (IotaDocument, KeyPair) =
+        IotaDocument::generate_ed25519("key-1", network.as_str(), None)?;
+
+    document.sign(keypair.secret())?;
+
+    println!("DID Document (signed) > {:#}", document);
+    println!();
+
+    let response: PublishDocumentResponse = client.publish_document(&document).send().await?;
+
+    println!("DID Document Transaction > {}", client.transaction_url(&response.tail));
+    println!();
+
+    Ok((document, keypair))
 }
 
-impl User {
-    async fn new(name: impl Into<String>, client: &Client) -> Result<Self> {
-        // Create a DID document with a generated DID/authentication key
-        let (mut doc, key): (IotaDocument, KeyPair) = IotaDocument::generate_ed25519("key-1", None)?;
+fn subject(subject: &DID) -> Result<CredentialSubject> {
+    let json: Value = json!({
+        "id": subject.as_str(),
+        "degree": {
+            "type": "BachelorDegree",
+            "name": "Bachelor of Science and Arts"
+        }
+    });
 
-        // Sign the document
-        doc.sign(key.secret())?;
-
-        // Publish the document
-        let response: PublishDocumentResponse = client.create_document(&doc).trace(true).send().await?;
-
-        println!("[+] Doc > {:#}", doc);
-        println!("[+]   {}", client.transaction_url(&response.tail));
-        println!("[+]");
-
-        Ok(Self {
-            doc,
-            key,
-            name: name.into(),
-        })
-    }
-
-    fn issue(&self, user: &User) -> Result<VerifiableCredential> {
-        let subject: CredentialSubject = CredentialSubjectBuilder::default()
-            .id(DID::from(user.doc.did().clone()))
-            .properties(object!(
-                name: user.name.clone(),
-                degree:
-                    object!(
-                      name: "Bachelor of Science and Arts",
-                      type: "BachelorDegree",
-                    )
-            ))
-            .build()
-            .unwrap();
-
-        let mut credential: VerifiableCredential = CredentialBuilder::new()
-            .id("http://example.edu/credentials/3732")
-            .issuer(DID::from(self.doc.did().clone()))
-            .context(vec![Context::from(Credential::BASE_CONTEXT)])
-            .types(vec![Credential::BASE_TYPE.into(), "UniversityDegreeCredential".into()])
-            .subject(vec![subject])
-            .issuance_date(Timestamp::now())
-            .build()
-            .map(VerifiableCredential::new)
-            .unwrap();
-
-        credential.sign(&self.doc, self.key.secret())?;
-
-        Ok(credential)
-    }
+    CredentialSubject::from_json_value(json).map_err(Into::into)
 }
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-    let client: Client = ClientBuilder::new()
-        .network(Network::Mainnet)
-        .node("https://nodes.thetangle.org:443")
+    // TODO: Make configurable
+    let network: Network = Network::Mainnet;
+    let node: &str = network.node_url().as_str();
+
+    #[rustfmt::skip]
+    println!("Creating Identity Client using network({:?}) and node({})", network, node);
+    println!();
+
+    let client: Client = ClientBuilder::new().node(node).network(network).build()?;
+
+    let (doc_iss, key_iss): (IotaDocument, KeyPair) = document(&client, network).await?;
+    let (doc_sub, _key_sub): (IotaDocument, KeyPair) = document(&client, network).await?;
+
+    // Create a new Credential with claims about "subject", specified by "issuer".
+    let credential: Credential = CredentialBuilder::default()
+        .issuer(Url::parse(doc_iss.id())?)
+        .type_("UniversityDegreeCredential")
+        .credential_subject(subject(&doc_sub.id())?)
         .build()?;
 
-    let issuer: User = User::new("Issuer", &client).await?;
-    let subject: User = User::new("Subject", &client).await?;
-    let vc: VerifiableCredential = issuer.issue(&subject)?;
+    // Extract the default verification method from the authentication scope and
+    // create a Verifiable Credential signed by the issuer.
+    let vm: MethodWrap = doc_iss.authentication();
+    let vc: VerifiableCredential = credential.sign(&vm, key_iss.secret())?;
 
-    let json: String = vc.to_json_pretty()?;
-
-    println!("[+] Credential > {}", json);
-    println!("[+]");
+    println!("Credential > {:#}", vc);
+    println!();
 
     // ====================
     // ====================
     //
-    // Exchange DIDs/Credentials
+    // Out-Of-Band DID/Credential Exchange
     //
     // ====================
     // ====================
 
-    let validator: CredentialValidator<'_> = CredentialValidator::new(&client);
-    let validation: CredentialValidation = validator.check(&json).await?;
+    let vc: String = vc.to_json()?;
 
-    println!("[+] Credential Validation > {:#?}", validation);
-    println!("[+]");
+    // Validate the Credential and resolve all DID Documents.
+    let validator: CredentialValidator = CredentialValidator::new(&client);
+    let validation: CredentialValidation = validator.check(&vc).await?;
+
+    println!("Credential Validation > {:#?}", validation);
+    println!();
 
     Ok(())
 }
