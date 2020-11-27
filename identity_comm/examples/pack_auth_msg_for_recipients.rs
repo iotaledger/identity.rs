@@ -19,9 +19,11 @@ use identity_comm::{
 };
 
 fn main() {
+    let alice_key = b"LbNeQyMtf2HF1D6oQWabsrd6wPX1CUhg";
     let alice = DIDCommBuilder::new()
         .id("123456")
         .comm_type(MessageType::TrustPing)
+        .body("I AM A PRIVATE SIGNED MESSAGE".to_string())
         .build()
         .unwrap();
 
@@ -34,12 +36,10 @@ fn main() {
     println!("alice: {:?}", alice);
     println!("bob: {:?}", bob);
 
-    let message = "I AM A PRIVATE SIGNED MESSAGE".to_string();
-
     let packed_msg = pack_auth_msg(
-        message,
+        alice.to_string(),
         vec!["bob_public_key".to_string()],
-        Some(alice),
+        Some(alice_key.to_vec()),
         EncryptionType::XC20P,
     );
 

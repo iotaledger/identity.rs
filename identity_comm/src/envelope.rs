@@ -1,5 +1,3 @@
-use crate::did_comm;
-
 use chacha20poly1305::{
     aead::{Aead, NewAead},
     Key, XChaCha20Poly1305, XNonce,
@@ -14,19 +12,19 @@ pub enum EncryptionType {
 pub fn pack_auth_msg_non_repudiable(
     message: String,
     _recipient_keys: Vec<String>,
-    sender_keys: did_comm::DIDComm,
+    sender_keys: Vec<u8>,
     _encryption_type: EncryptionType,
 ) -> crate::Result<String> {
     let _signed_msg = sign(message, sender_keys);
     // packMessage(signedMsg, recipient_keys, Some(sender_keys), encryption_type)
-    Ok("TODO".to_string())
+    Ok(_signed_msg)
 }
 
 /// repudiable authentication
 pub fn pack_auth_msg(
     _message: String,
     _recipient_keys: Vec<String>,
-    _sender_keys: Option<did_comm::DIDComm>,
+    _sender_keys: Option<Vec<u8>>,
     _encryption_type: EncryptionType,
 ) -> crate::Result<String> {
     // packMessage(message, recipientKeys, sender_keys, encryption_type)
@@ -44,26 +42,23 @@ pub fn pack_anon_msg(
 }
 
 /// Non-repudiable signature with no encryption
-pub fn pack_nonrepudiable_msg(
-    message: String,
-    did_comm: did_comm::DIDComm,
-    _encryption_type: EncryptionType,
-) -> String {
-    sign(message, did_comm)
+pub fn pack_nonrepudiable_msg(message: String, sender_keys: Vec<u8>, _encryption_type: EncryptionType) -> String {
+    sign(message, sender_keys)
 }
 
 // senderKeys = keypair
-fn sign(_msg: String, _sender_keys: did_comm::DIDComm) -> String {
-    println!("signed");
-    "will be implemented soon".to_string()
+fn sign(msg: String, _sender_keys: Vec<u8>) -> String {
+    println!("sign is not implemented, return raw msg");
+    let signature = "Not implemented";
+    json!({"message":msg,"signature":signature}).to_string()
 }
 
 // senderKeys = keypair
 fn pack_message(
     msg: String,
-    key: Vec<u8>,
+    recipient_key: Vec<u8>,
     nonce: Vec<u8>,
-    from_keys: Option<did_comm::DIDComm>,
+    from_keys: Option<Vec<u8>>,
     _encryption_type: EncryptionType,
 ) -> crate::Result<String> {
     match from_keys {
@@ -82,7 +77,7 @@ fn pack_message(
             Ok("Result".into())
         }
         None => {
-            let key = Key::from_slice(&key); // 32-bytes
+            let key = Key::from_slice(&recipient_key); // 32-bytes
             let aead = XChaCha20Poly1305::new(key);
             let nonce = XNonce::from_slice(&nonce); // 24-bytes; unique
             let ciphertext = aead

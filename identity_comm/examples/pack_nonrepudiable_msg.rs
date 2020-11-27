@@ -19,17 +19,16 @@ use identity_comm::{
 };
 
 fn main() {
+    let key = b"LbNeQyMtf2HF1D6oQWabsrd6wPX1CUhg";
     let alice = DIDCommBuilder::new()
         .id("123456")
         .comm_type(MessageType::TrustPing)
+        .body("I AM A PUBLIC SIGNED MESSAGE".to_string())
         .build()
         .unwrap();
-
     println!("alice: {:?}", alice);
 
-    let message = "I AM A PUBLIC SIGNED MESSAGE";
+    let packed_msg = pack_nonrepudiable_msg(alice.to_string(), key.to_vec(), EncryptionType::XC20P);
 
-    let packed_msg = pack_nonrepudiable_msg(message.to_string(), alice, EncryptionType::XC20P);
-
-    println!("packedMsg: {:?}", packed_msg);
+    println!("packedMsg: {}", packed_msg);
 }

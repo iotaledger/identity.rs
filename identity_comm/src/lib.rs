@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate serde_json;
 pub mod did_comm;
 pub mod did_comm_builder;
 pub mod envelope;

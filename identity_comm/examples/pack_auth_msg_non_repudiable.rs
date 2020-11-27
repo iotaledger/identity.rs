@@ -17,6 +17,7 @@ use identity_comm::{
 };
 
 fn main() {
+    let alice_key = b"LbNeQyMtf2HF1D6oQWabsrd6wPX1CUhg";
     let alice = DIDCommBuilder::new()
         .id("123456")
         .comm_type(MessageType::TrustPing)
@@ -37,7 +38,7 @@ fn main() {
     let packed_msg = pack_auth_msg_non_repudiable(
         message.to_string(),
         vec!["bob_public_key".to_string()],
-        alice,
+        alice_key.to_vec(),
         EncryptionType::XC20P,
     );
 
