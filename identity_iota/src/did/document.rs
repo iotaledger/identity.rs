@@ -9,7 +9,7 @@ use identity_core::{
     crypto::{KeyPair, SecretKey},
     did_doc::{
         Document, DocumentBuilder, Method, MethodBuilder, MethodData, MethodScope, MethodType, MethodWrap,
-        SetSignature, Signature, SignatureOptions, TrySignature, VerifiableDocument,
+        SetSignature, Signature, SignatureDocument, SignatureOptions, TrySignature, VerifiableDocument,
     },
     did_url::DID,
     proof::JcsEd25519Signature2020,
@@ -131,9 +131,25 @@ impl IotaDocument {
         self.properties().prev_msg.as_deref()
     }
 
+    /// Sets the Tangle message id the previous DID document.
+    pub fn set_prev_msg<T>(&mut self, value: T)
+    where
+        T: Into<String>,
+    {
+        self.0.properties_mut().prev_msg = Some(value.into());
+    }
+
     /// Returns the Tangle address of the DID document diff chain, if any.
     pub fn diff_chain(&self) -> Option<&str> {
         self.properties().diff_chain.as_deref()
+    }
+
+    /// Sets the Tangle address_hash of the DID document diff chain.
+    pub fn set_diff_chain<T>(&mut self, value: T)
+    where
+        T: Into<String>,
+    {
+        self.0.properties_mut().diff_chain = Some(value.into());
     }
 
     /// Returns the timestamp of when the DID document was created.
@@ -141,9 +157,29 @@ impl IotaDocument {
         self.properties().created
     }
 
+    /// Sets the timestamp of when the DID document was created.
+    pub fn set_created(&mut self, value: Timestamp) {
+        self.0.properties_mut().created = value;
+    }
+
+    /// Sets the DID document "created" timestamp to `Timestamp::now`.
+    pub fn set_created_now(&mut self) {
+        self.set_created(Timestamp::now());
+    }
+
     /// Returns the timestamp of the last DID document update.
     pub fn updated(&self) -> Timestamp {
         self.properties().updated
+    }
+
+    /// Sets the timestamp of the last DID document update.
+    pub fn set_updated(&mut self, value: Timestamp) {
+        self.0.properties_mut().updated = value;
+    }
+
+    /// Sets the DID document "updated" timestamp to `Timestamp::now`.
+    pub fn set_updated_now(&mut self) {
+        self.set_updated(Timestamp::now());
     }
 
     /// Returns the default authentication method of the DID document.
@@ -345,5 +381,23 @@ impl TryFrom<Document> for IotaDocument {
 
     fn try_from(other: Document) -> Result<Self, Self::Error> {
         Self::try_from_document(other)
+    }
+}
+
+impl SignatureDocument for IotaDocument {
+    fn resolve_method(&self, method: &str) -> Option<Vec<u8>> {
+        SignatureDocument::resolve_method(&self.0, method)
+    }
+
+    fn try_signature(&self) -> Option<&Signature> {
+        SignatureDocument::try_signature(&self.0)
+    }
+
+    fn try_signature_mut(&mut self) -> Option<&mut Signature> {
+        SignatureDocument::try_signature_mut(&mut self.0)
+    }
+
+    fn set_signature(&mut self, signature: Signature) {
+        SignatureDocument::set_signature(&mut self.0, signature)
     }
 }
