@@ -9,7 +9,7 @@ use identity_core::{
     crypto::{KeyPair, SecretKey},
     did_doc::{
         Document, DocumentBuilder, Method, MethodBuilder, MethodData, MethodScope, MethodType, MethodWrap,
-        SetSignature, Signature, TrySignature, VerifiableDocument,
+        SetSignature, Signature, SignatureDocument, SignatureOptions, TrySignature, VerifiableDocument,
     },
     did_url::DID,
     proof::JcsEd25519Signature2020,
@@ -131,9 +131,25 @@ impl IotaDocument {
         self.properties().prev_msg.as_deref()
     }
 
+    /// Sets the Tangle message id the previous DID document.
+    pub fn set_prev_msg<T>(&mut self, value: T)
+    where
+        T: Into<String>,
+    {
+        self.0.properties_mut().prev_msg = Some(value.into());
+    }
+
     /// Returns the Tangle address of the DID document diff chain, if any.
     pub fn diff_chain(&self) -> Option<&str> {
         self.properties().diff_chain.as_deref()
+    }
+
+    /// Sets the Tangle address_hash of the DID document diff chain.
+    pub fn set_diff_chain<T>(&mut self, value: T)
+    where
+        T: Into<String>,
+    {
+        self.0.properties_mut().diff_chain = Some(value.into());
     }
 
     /// Returns the timestamp of when the DID document was created.
@@ -141,9 +157,29 @@ impl IotaDocument {
         self.properties().created
     }
 
+    /// Sets the timestamp of when the DID document was created.
+    pub fn set_created(&mut self, value: Timestamp) {
+        self.0.properties_mut().created = value;
+    }
+
+    /// Sets the DID document "created" timestamp to `Timestamp::now`.
+    pub fn set_created_now(&mut self) {
+        self.set_created(Timestamp::now());
+    }
+
     /// Returns the timestamp of the last DID document update.
     pub fn updated(&self) -> Timestamp {
         self.properties().updated
+    }
+
+    /// Sets the timestamp of the last DID document update.
+    pub fn set_updated(&mut self, value: Timestamp) {
+        self.0.properties_mut().updated = value;
+    }
+
+    /// Sets the DID document "updated" timestamp to `Timestamp::now`.
+    pub fn set_updated_now(&mut self) {
+        self.set_updated(Timestamp::now());
     }
 
     /// Returns the default authentication method of the DID document.
@@ -161,6 +197,24 @@ impl IotaDocument {
         self.authentication().key_type()
     }
 
+    /// Returns a reference to the `VerifiableDocument`.
+    pub fn as_document(&self) -> &VerifiableDocument<Properties> {
+        &self.0
+    }
+
+    /// Returns a mutable reference to the `VerifiableDocument`.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe because it does not check that modifications
+    /// made to the `VerifiableDocument` maintain a valid `IotaDocument`.
+    ///
+    /// If this constraint is violated, it may cause issues with future uses of
+    /// the `IotaDocument`.
+    pub unsafe fn as_document_mut(&mut self) -> &mut VerifiableDocument<Properties> {
+        &mut self.0
+    }
+
     /// Signs the DID document with the default authentication method.
     ///
     /// # Errors
@@ -170,7 +224,9 @@ impl IotaDocument {
     pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
         match self.authentication_type() {
             MethodType::Ed25519VerificationKey2018 => {
-                self.0.sign(JcsEd25519Signature2020, AUTH_QUERY, secret.as_ref())?;
+                let mut opts: SignatureOptions = self.0.resolve_options(AUTH_QUERY)?;
+                opts.created = Some(Timestamp::now().to_string());
+                self.0.sign(JcsEd25519Signature2020, opts, secret.as_ref())?;
             }
             _ => {
                 return Err(Error::InvalidDocument { error: ERR_AMNS });
@@ -214,8 +270,9 @@ impl IotaDocument {
     {
         match self.authentication_type() {
             MethodType::Ed25519VerificationKey2018 => {
-                self.0
-                    .sign_data(data, JcsEd25519Signature2020, AUTH_QUERY, secret.as_ref())?;
+                let mut opts: SignatureOptions = self.0.resolve_options(AUTH_QUERY)?;
+                opts.created = Some(Timestamp::now().to_string());
+                self.0.sign_data(data, JcsEd25519Signature2020, opts, secret.as_ref())?;
             }
             _ => {
                 return Err(Error::InvalidDocument { error: ERR_AMNS });
@@ -324,5 +381,23 @@ impl TryFrom<Document> for IotaDocument {
 
     fn try_from(other: Document) -> Result<Self, Self::Error> {
         Self::try_from_document(other)
+    }
+}
+
+impl SignatureDocument for IotaDocument {
+    fn resolve_method(&self, method: &str) -> Option<Vec<u8>> {
+        SignatureDocument::resolve_method(&self.0, method)
+    }
+
+    fn try_signature(&self) -> Option<&Signature> {
+        SignatureDocument::try_signature(&self.0)
+    }
+
+    fn try_signature_mut(&mut self) -> Option<&mut Signature> {
+        SignatureDocument::try_signature_mut(&mut self.0)
+    }
+
+    fn set_signature(&mut self, signature: Signature) {
+        SignatureDocument::set_signature(&mut self.0, signature)
     }
 }

@@ -16,7 +16,7 @@ async-trait = { version = "0.1", default-features = false }
 base64 = { version = "0.12", default-features = false, features = ["std"] }
 bs58 = { version = "0.3", default-features = false, features = ["std"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
-did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "a02420805527e8bda45ac48de2b93e8cc1d731de", default-features = false, features = ["std"] }
+did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "d6944acd930447c5d6d2d762fe6245a35cc7e39c", default-features = false, features = ["std"] }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
 ed25519-zebra = { version = "2.2", default-features = false }
 hex = { version = "0.4", default-features = false , features = ["std"] }
