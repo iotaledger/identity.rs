@@ -14,7 +14,6 @@ homepage = "https://www.iota.org"
 default = ["serde_value"]
 serde_value = ["serde_json"]
 diff_derive = ["identity_derive"]
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 serde = { version = "1.0", features = [ "derive" ] }
@@ -25,6 +24,9 @@ anyhow = "1.0"
 thiserror = "1.0"
 
 identity_derive = {version = "0.1.0", path = "../identity_derive", optional = true}
+
+did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "d6944acd930447c5d6d2d762fe6245a35cc7e39c", default-features = false, features = ["std"] }
+did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
 
 [dev-dependencies]
 serde_json = "1.0"
