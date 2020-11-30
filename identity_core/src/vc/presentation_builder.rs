@@ -185,7 +185,7 @@ mod tests {
             .issuer(issuer())
             .build()
             .unwrap()
-            .sign(&document.resolve(0).unwrap(), keypair.secret())
+            .sign(&document, 0, keypair.secret())
             .unwrap();
 
         let presentation: Presentation = PresentationBuilder::default()
