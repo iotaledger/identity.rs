@@ -1,0 +1,29 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://didcomm.org/iota/v1/message_types/auth",
+    "type": "object",
+    "title": "Trustping",
+    "description": "DIDComm Auth Message Type.",
+    "default": {},
+    "examples": [
+        {
+            "response_requested": false
+        }
+    ],
+    "required": [
+        "response_requested"
+    ],
+    "properties": {
+        "response_requested": {
+            "$id": "#/properties/response_requested",
+            "type": "boolean",
+            "title": "The response_requested schema",
+            "description": "Sender can request a response with this flag.",
+            "default": false,
+            "examples": [
+                false
+            ]
+        }
+    },
+    "additionalProperties": true
+}
