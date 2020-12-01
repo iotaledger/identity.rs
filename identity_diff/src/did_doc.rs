@@ -156,21 +156,10 @@ impl Diff for Object {
 // =============================================================================
 // =============================================================================
 
-impl<'de, T, U, V> Deserialize<'de> for DiffDocument<T, U, V>
-where
-    T: Diff + Serialize + for<'__de> Deserialize<'__de>,
-    U: Diff + Serialize + for<'__de> Deserialize<'__de>,
-    V: Diff + Serialize + for<'__de> Deserialize<'__de>,
-{
-    fn deserialize<D>(_deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        todo!("DiffDocument::deserialize")
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(bound(
+    deserialize = ""
+))]
 pub struct DiffDocument<T, U, V>
 where
     T: Diff + Serialize + for<'__de> Deserialize<'__de>,
