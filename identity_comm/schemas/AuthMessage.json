@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://didcomm.org/iota/v1/message_types/auth",
     "type": "object",
-    "title": "Trustping",
+    "title": "Auth Message",
     "description": "DIDComm Auth Message Type.",
     "default": {},
     "examples": [
