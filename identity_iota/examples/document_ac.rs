@@ -8,11 +8,12 @@ use identity_core::{
     proof::JcsEd25519Signature2020,
 };
 use identity_iota::{
-    client::{Client, ClientBuilder, Network, PublishDocumentResponse, ReadDocumentResponse, TransactionPrinter},
+    client::{Client, ClientBuilder, Network, PublishDocumentResponse, ReadDocumentResponse},
     crypto::KeyPair,
     did::IotaDocument,
     error::Result,
 };
+use std::{thread::sleep, time::Duration};
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
@@ -50,12 +51,16 @@ async fn main() -> Result<()> {
     println!("DID Document Transaction > {}", client.transaction_url(&response.tail));
     println!();
 
+    let message_id: String = client.transaction_hash(&response.tail);
+
     // =========================================================================
     // AUTH CHAIN
     // =========================================================================
 
+    // Wait a bit so the timestamp changes
+    sleep(Duration::from_secs(2));
+
     let mut updated: IotaDocument = document.clone();
-    let message_id: TransactionPrinter<_> = TransactionPrinter::hash(&response.tail);
 
     let key1: KeyPair = JcsEd25519Signature2020::new_keypair();
     let key2: KeyPair = JcsEd25519Signature2020::new_keypair();
@@ -87,7 +92,7 @@ async fn main() -> Result<()> {
     }
 
     updated.set_updated_now();
-    updated.set_prev_msg(format!("{}", message_id));
+    updated.set_prev_msg(message_id);
 
     // Sign the updated document with the *previous* authentication method
     document.sign_data(&mut updated, keypair.secret())?;

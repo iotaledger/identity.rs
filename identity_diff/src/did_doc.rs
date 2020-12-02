@@ -4,7 +4,7 @@ use did_doc::{
     OrderedSet, Service, ServiceBuilder,
 };
 use did_url::DID;
-use serde::{de::Deserializer, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -157,25 +157,34 @@ impl Diff for Object {
 // =============================================================================
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-#[serde(bound(
-    deserialize = ""
-))]
-pub struct DiffDocument<T, U, V>
+#[serde(bound(deserialize = ""))]
+pub struct DiffDocument<T = Object, U = Object, V = Object>
 where
     T: Diff + Serialize + for<'__de> Deserialize<'__de>,
     U: Diff + Serialize + for<'__de> Deserialize<'__de>,
     V: Diff + Serialize + for<'__de> Deserialize<'__de>,
 {
+    #[serde(skip_serializing_if = "Option::is_none")]
     id: Option<DiffString>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     controller: Option<Option<DiffString>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     also_known_as: Option<DiffVec<Url>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     verification_method: Option<DiffVec<DIDKey<Method<U>>>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     authentication: Option<DiffVec<DIDKey<MethodRef<U>>>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     assertion_method: Option<DiffVec<DIDKey<MethodRef<U>>>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     key_agreement: Option<DiffVec<DIDKey<MethodRef<U>>>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     capability_delegation: Option<DiffVec<DIDKey<MethodRef<U>>>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     capability_invocation: Option<DiffVec<DIDKey<MethodRef<U>>>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     service: Option<DiffVec<Service<V>>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     properties: Option<<T as Diff>::Type>,
 }
 
@@ -495,7 +504,7 @@ where
 // =============================================================================
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct DiffMethod<T>
+pub struct DiffMethod<T = Object>
 where
     T: Diff,
 {
@@ -642,7 +651,7 @@ where
 // =============================================================================
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub enum DiffMethodRef<T>
+pub enum DiffMethodRef<T = Object>
 where
     T: Diff,
 {
@@ -786,7 +795,7 @@ impl Diff for MethodType {
 // =============================================================================
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct DiffService<T>
+pub struct DiffService<T = Object>
 where
     T: Diff,
 {

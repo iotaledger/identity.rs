@@ -12,11 +12,24 @@ use std::{
 #[serde(untagged)]
 pub enum InnerValue<K, V: Diff> {
     // Logs if a value has changed between the two types being Diffed.
-    Change { key: K, value: <V as Diff>::Type },
+    Change {
+        #[serde(rename = "c:k")]
+        key: K,
+        #[serde(rename = "c:v")]
+        value: <V as Diff>::Type,
+    },
     // Logs an addition.
-    Add { key: K, value: <V as Diff>::Type },
+    Add {
+        #[serde(rename = "a:k")]
+        key: K,
+        #[serde(rename = "a:v")]
+        value: <V as Diff>::Type,
+    },
     // Logs a removal.
-    Remove { key: K },
+    Remove {
+        #[serde(rename = "r:k")]
+        key: K,
+    },
 }
 
 /// A `DiffHashMap` type which represents a Diffed `HashMap`.  By default this value is transparent to `serde`.
