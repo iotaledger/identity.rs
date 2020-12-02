@@ -29,7 +29,6 @@ const ERR_AMNS: &str = "Authentication Method Not Supported";
 const ERR_AMMF: &str = "Authentication Method Missing Fragment";
 const ERR_AMIM: &str = "Authentication Method Id Mismatch";
 
-// TODO: Add generic properties object (?)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Properties {
     pub created: Timestamp,

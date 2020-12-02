@@ -11,8 +11,7 @@ use std::{thread::sleep, time::Duration};
 #[smol_potat::main]
 async fn main() -> Result<()> {
     // TODO: Make configurable
-    // let network: Network = Network::Mainnet;
-    let network: Network = Network::Comnet;
+    let network: Network = Network::Mainnet;
     let node: &str = network.node_url().as_str();
 
     #[rustfmt::skip]
