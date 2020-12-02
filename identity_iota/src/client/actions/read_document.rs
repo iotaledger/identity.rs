@@ -18,51 +18,40 @@ pub struct ReadDocumentResponse {
 pub struct ReadDocumentRequest<'a, 'b> {
     pub(crate) client: &'a Client,
     pub(crate) did: &'b IotaDID,
-    pub(crate) trace: bool,
 }
 
 impl<'a, 'b> ReadDocumentRequest<'a, 'b> {
     pub const fn new(client: &'a Client, did: &'b IotaDID) -> Self {
-        Self {
-            client,
-            did,
-            trace: false,
-        }
-    }
-
-    pub fn trace(mut self, value: bool) -> Self {
-        self.trace = value;
-        self
+        Self { client, did }
     }
 
     pub async fn send(self) -> Result<ReadDocumentResponse> {
-        if self.trace {
-            println!("[+] trace(1): Target Id: {:?}", self.did.tag());
-            println!("[+] trace(2): Auth Chain: {:?}", self.did.address_hash());
-        }
+        trace!("Target Id:  {}", self.did.tag());
+        trace!("Auth Chain: {}", self.did.address_hash());
 
         // Fetch all messages for the auth chain.
-        let request: ReadTransactionsRequest = ReadTransactionsRequest::new(self.client, self.did.address()?);
-        let response: ReadTransactionsResponse = request.trace(self.trace).send().await?;
+        let response: ReadTransactionsResponse = self.client.read_transactions(self.did).send().await?;
 
-        if self.trace {
-            println!("[+] trace(3): Tangle Documents: {:?}", response);
-        }
+        trace!("Tangle Documents: {:?}", response);
 
-        let document: Option<ChainDocument> = self.extract_auth_document(response.messages);
-        let document: ChainDocument = document.ok_or(Error::InvalidTransactionBundle)?;
+        let document: ChainDocument = self
+            .extract_auth_document(response.messages)
+            .ok_or(Error::InvalidTransactionBundle)?;
 
-        if self.trace {
-            println!("[+] trace(4): Auth Document: {:?}", document.document);
-        }
+        trace!("Auth Document: {:?}", document.document);
 
         if let Some(_address) = document.diff_chain() {
             todo!("Handle Document Diff Chain")
         }
 
+        let mut metadata: Object = Object::new();
+
+        metadata.insert("message".into(), document.message.message_str().into());
+        metadata.insert("address".into(), document.message.address.into());
+
         Ok(ReadDocumentResponse {
             document: document.document,
-            metadata: Object::new(),
+            metadata,
         })
     }
 

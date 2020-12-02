@@ -22,7 +22,6 @@ pub struct ReadTransactionsRequest<'a> {
     pub(crate) client: &'a Client,
     pub(crate) address: Address,
     pub(crate) allow_empty: bool,
-    pub(crate) trace: bool,
 }
 
 impl<'a> ReadTransactionsRequest<'a> {
@@ -31,7 +30,6 @@ impl<'a> ReadTransactionsRequest<'a> {
             client,
             address,
             allow_empty: true,
-            trace: false,
         }
     }
 
@@ -40,18 +38,11 @@ impl<'a> ReadTransactionsRequest<'a> {
         self
     }
 
-    pub fn trace(mut self, value: bool) -> Self {
-        self.trace = value;
-        self
-    }
-
     pub async fn send(self) -> Result<ReadTransactionsResponse> {
-        if self.trace {
-            println!(
-                "[+] trace(1): Find Transactions at Address: {:?}",
-                encode_trits(self.address.to_inner())
-            );
-        }
+        trace!(
+            "Find Transactions at Address: {}",
+            encode_trits(self.address.to_inner())
+        );
 
         // Fetch all transaction hashes containing the tangle address.
         let response: FindTransactionsResponse = self
@@ -62,16 +53,14 @@ impl<'a> ReadTransactionsRequest<'a> {
             .send()
             .await?;
 
-        if self.trace {
-            println!(
-                "[+] trace(2): FindTransactions Response: {:?}",
-                response
-                    .hashes
-                    .iter()
-                    .map(|hash| encode_trits(hash))
-                    .collect::<Vec<_>>(),
-            );
-        }
+        trace!(
+            "FindTransactions Response: {:?}",
+            response
+                .hashes
+                .iter()
+                .map(|hash| encode_trits(hash))
+                .collect::<Vec<_>>()
+        );
 
         if response.hashes.is_empty() {
             if self.allow_empty {
@@ -87,12 +76,10 @@ impl<'a> ReadTransactionsRequest<'a> {
         // Fetch the content of all transactions.
         let content: GetTrytesResponse = self.client.client.get_trytes(&response.hashes).await?;
 
-        if self.trace {
-            println!(
-                "[+] trace(3): GetTrytes Response: {:?}",
-                content.trytes.iter().map(TransactionPrinter::full).collect::<Vec<_>>(),
-            );
-        }
+        trace!(
+            "GetTrytes Response: {:?}",
+            content.trytes.iter().map(TransactionPrinter::full).collect::<Vec<_>>()
+        );
 
         if content.trytes.is_empty() {
             return Err(Error::InvalidTransactionTrytes);
@@ -104,9 +91,7 @@ impl<'a> ReadTransactionsRequest<'a> {
             .map(TangleMessage::try_from_bundle)
             .collect::<Result<_>>()?;
 
-        if self.trace {
-            println!("[+] trace(4): Tangle Messages: {:?}", messages);
-        }
+        trace!("Tangle Messages: {:?}", messages);
 
         Ok(ReadTransactionsResponse {
             address: self.address,

@@ -3,7 +3,7 @@ use identity_core::convert::ToJson as _;
 use iota::{client::Transfer, transaction::bundled::BundledTransaction};
 
 use crate::{
-    client::{SendTransferRequest, SendTransferResponse, TransactionPrinter},
+    client::{Client, TransactionPrinter},
     did::{IotaDID, IotaDocument},
     error::{Error, Result},
 };
@@ -24,36 +24,27 @@ impl Debug for PublishDocumentResponse {
 
 #[derive(Debug)]
 pub struct PublishDocumentRequest<'a, 'b> {
-    pub(crate) transfer: SendTransferRequest<'a>,
+    pub(crate) client: &'a Client,
     pub(crate) document: &'b IotaDocument,
 }
 
 impl<'a, 'b> PublishDocumentRequest<'a, 'b> {
-    pub const fn new(transfer: SendTransferRequest<'a>, document: &'b IotaDocument) -> Self {
-        Self { transfer, document }
-    }
-
-    pub fn trace(mut self, value: bool) -> Self {
-        self.transfer = self.transfer.trace(value);
-        self
+    pub const fn new(client: &'a Client, document: &'b IotaDocument) -> Self {
+        Self { client, document }
     }
 
     pub async fn send(self) -> Result<PublishDocumentResponse> {
         let did: &IotaDID = self.document.id();
 
-        if self.transfer.trace {
-            println!("[+] trace(1): Create Document with DID: {:?}", did);
-        }
+        trace!("Publish Document with DID: {}", did);
 
         // Ensure the correct network is selected.
-        if !self.transfer.client.network.matches_did(&did) {
+        if !self.client.network.matches_did(&did) {
             return Err(Error::InvalidDIDNetwork);
         }
 
-        if self.transfer.trace {
-            println!("[+] trace(2): Authentication: {:?}", self.document.authentication());
-            println!("[+] trace(3): Tangle Address: {:?}", did.address_hash());
-        }
+        trace!("Authentication: {:?}", self.document.authentication());
+        trace!("Tangle Address: {}", did.address_hash());
 
         // Create a transfer to publish the DID document at the specified address.
         let transfer: Transfer = Transfer {
@@ -64,8 +55,9 @@ impl<'a, 'b> PublishDocumentRequest<'a, 'b> {
         };
 
         // Submit the transfer to the tangle.
-        let response: SendTransferResponse = self.transfer.send(transfer).await?;
-
-        Ok(PublishDocumentResponse { tail: response.tail })
+        self.client
+            .send_transfer(transfer)
+            .await
+            .map(|tail| PublishDocumentResponse { tail })
     }
 }

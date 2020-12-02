@@ -5,18 +5,18 @@ use identity_core::{
     convert::SerdeInto as _,
     did_doc::Document,
     did_url::DID,
-    error::{Error, Result as CoreResult},
+    error::{Error as CoreError, Result as CoreResult},
     resolver::{DocumentMetadata, InputMetadata, MetaDocument, ResolverMethod},
 };
-use iota::{crypto::ternary::Hash, transaction::bundled::BundledTransaction};
+use iota::{client::Transfer, crypto::ternary::Hash, transaction::bundled::BundledTransaction};
 
 use crate::{
     client::{
         ClientBuilder, Network, PublishDocumentRequest, ReadDocumentRequest, ReadDocumentResponse,
-        ReadTransactionsRequest, SendTransferRequest, TransactionPrinter,
+        ReadTransactionsRequest, TransactionPrinter,
     },
     did::{IotaDID, IotaDocument},
-    error::Result,
+    error::{Error, Result},
 };
 
 #[derive(Clone, Debug)]
@@ -61,16 +61,25 @@ impl Client {
         ReadTransactionsRequest::new(self, did.address().unwrap())
     }
 
-    pub fn send_transfer(&self) -> SendTransferRequest {
-        SendTransferRequest::new(self)
-    }
-
     pub fn publish_document<'a, 'b>(&'a self, document: &'b IotaDocument) -> PublishDocumentRequest<'a, 'b> {
-        PublishDocumentRequest::new(self.send_transfer(), document)
+        PublishDocumentRequest::new(self, document)
     }
 
     pub fn read_document<'a, 'b>(&'a self, did: &'b IotaDID) -> ReadDocumentRequest<'a, 'b> {
         ReadDocumentRequest::new(self, did)
+    }
+
+    pub async fn send_transfer(&self, transfer: Transfer) -> Result<BundledTransaction> {
+        trace!("Sending Transfer: {:?}", transfer.message);
+
+        self.client
+            .send(None)
+            .transfers(vec![transfer])
+            .send()
+            .await?
+            .into_iter()
+            .find(|transaction| transaction.is_tail())
+            .ok_or(Error::InvalidTransferTail)
     }
 
     pub async fn is_transaction_confirmed(&self, hash: &Hash) -> Result<bool> {
@@ -94,13 +103,14 @@ impl ResolverMethod for Client {
     }
 
     async fn read(&self, did: &DID, _input: InputMetadata) -> CoreResult<Option<MetaDocument>> {
-        let did: &IotaDID = IotaDID::try_from_borrowed(did).map_err(|error| Error::ResolutionError(error.into()))?;
+        let did: &IotaDID =
+            IotaDID::try_from_borrowed(did).map_err(|error| CoreError::ResolutionError(error.into()))?;
 
         let response: ReadDocumentResponse = self
             .read_document(&did)
             .send()
             .await
-            .map_err(|error| Error::ResolutionError(error.into()))?;
+            .map_err(|error| CoreError::ResolutionError(error.into()))?;
 
         let mut metadata: DocumentMetadata = DocumentMetadata::new();
 
@@ -111,7 +121,7 @@ impl ResolverMethod for Client {
         let data: Document = response
             .document
             .serde_into()
-            .map_err(|error| Error::ResolutionError(error.into()))?;
+            .map_err(|error| CoreError::ResolutionError(error.into()))?;
 
         Ok(Some(MetaDocument { data, meta: metadata }))
     }
