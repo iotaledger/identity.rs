@@ -3,7 +3,7 @@
 //! Run with:
 //!
 //! ```
-//! cargo run --example basic_actor
+//! cargo run --example auth_actor
 //! ```
 
 
@@ -17,6 +17,7 @@ use identity_actor::{
     message::{Message, Response},
     message_type::{MessageType},
 };
+
 // https://github.com/iotaledger/actors.rs/blob/a6e1f79f98e7d994bbb4d4a895b110550ea7f277/wallet/src/lib.rs#L357
 
 // start the system and create an actor
@@ -28,7 +29,9 @@ async fn main() -> identity_comm::Result<()> {
     let actor = IdentityBuilder::new().rx(rx).build();
     tokio::spawn(actor.run());
 
-    send_message(&tx, MessageType::TrustPing).await;
+    let response = send_message(&tx, MessageType::AuthMessage).await;
+
+    println!("Response: {:?}", response);
 
     sys.print_tree();
     // force main to wait before exiting program

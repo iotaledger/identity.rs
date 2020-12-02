@@ -7,7 +7,8 @@ use std::{
     result::Result,
 };
 
-use crate::message::{Message, MessageType, Response, ResponseType};
+use crate::message::{Message, Response, ResponseType};
+use crate::message_type::{MessageType};
 
 pub struct IdentityMessageHandler {
     // account_manager: AccountManager,
@@ -26,6 +27,7 @@ impl IdentityMessageHandler {
     pub async fn handle(&self, message: Message) {
         let response: Result<ResponseType, IdentityMessageError> = match message.message_type() {
             MessageType::TrustPing => convert_panics(|| self.handle_trust_ping()),
+            MessageType::AuthMessage => convert_panics(|| self.handle_auth_message()),
         };
         let response = match response {
             Ok(r) => r,
@@ -42,6 +44,10 @@ impl IdentityMessageHandler {
     /// Handle trust ping.
     fn handle_trust_ping(&self) -> Result<ResponseType, IdentityMessageError> {
         Ok(ResponseType::TrustPingResponse)
+    }
+    /// Handle Auth message.
+    fn handle_auth_message(&self) -> Result<ResponseType, IdentityMessageError> {
+        Ok(ResponseType::AuthMessageResponse)
     }
 }
 
