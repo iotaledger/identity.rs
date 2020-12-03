@@ -2,7 +2,7 @@ use core::ops::Deref;
 use identity_core::{common::Object, convert::FromJson as _};
 
 use crate::{
-    client::{Client, ReadTransactionsRequest, ReadTransactionsResponse, TangleMessage},
+    client::{Client, ReadTransactionsResponse, TangleMessage},
     did::{IotaDID, IotaDocument},
     error::{Error, Result},
     utils::encode_trits,

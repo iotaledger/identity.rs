@@ -223,6 +223,19 @@ impl IotaDID {
         create_address_from_trits(self.address_hash())
     }
 
+    pub fn diff_address_hash(&self, index: usize) -> String {
+        let addr: String = format!("{}/{}", self.tag(), index);
+        let hash: String = Self::encode_key(addr.as_bytes());
+
+        let mut trytes: String = utf8_to_trytes(&hash);
+        trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
+        trytes
+    }
+
+    pub fn diff_address(&self, index: usize) -> Result<Address> {
+        create_address_from_trits(self.diff_address_hash(index))
+    }
+
     pub fn segments(&self) -> Segments {
         Segments(self.method_id())
     }

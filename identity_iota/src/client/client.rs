@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use core::slice::from_ref;
 use identity_core::{
     common::Url,
-    convert::SerdeInto as _,
+    convert::{SerdeInto as _, ToJson as _},
     did_doc::Document,
     did_url::DID,
     error::{Error as CoreError, Result as CoreResult},
@@ -12,10 +12,9 @@ use iota::{client::Transfer, crypto::ternary::Hash, transaction::bundled::Bundle
 
 use crate::{
     client::{
-        ClientBuilder, Network, PublishDocumentRequest, ReadDocumentRequest, ReadDocumentResponse,
-        ReadTransactionsRequest, TransactionPrinter,
+        ClientBuilder, Network, ReadDocumentRequest, ReadDocumentResponse, ReadTransactionsRequest, TransactionPrinter,
     },
-    did::{IotaDID, IotaDocument},
+    did::{DIDDiff, IotaDID, IotaDocument},
     error::{Error, Result},
 };
 
@@ -61,12 +60,43 @@ impl Client {
         ReadTransactionsRequest::new(self, did.address().unwrap())
     }
 
-    pub fn publish_document<'a, 'b>(&'a self, document: &'b IotaDocument) -> PublishDocumentRequest<'a, 'b> {
-        PublishDocumentRequest::new(self, document)
-    }
-
     pub fn read_document<'a, 'b>(&'a self, did: &'b IotaDID) -> ReadDocumentRequest<'a, 'b> {
         ReadDocumentRequest::new(self, did)
+    }
+
+    pub async fn publish_document(&self, document: &IotaDocument) -> Result<BundledTransaction> {
+        trace!("Publish Document with DID: {}", document.id());
+
+        trace!("Authentication: {:?}", document.authentication());
+        trace!("Tangle Address: {}", document.id().address_hash());
+
+        self.check_network(document.id())?;
+
+        self.send_transfer(Transfer {
+            address: document.id().address()?,
+            value: 0,
+            message: Some(document.to_json()?),
+            tag: None,
+        })
+        .await
+    }
+
+    pub async fn publish_diff(&self, diff: &DIDDiff, index: usize) -> Result<BundledTransaction> {
+        trace!("Publish Diff with DID: {}", diff.did);
+
+        trace!("Previous Message: {}", diff.prev_msg);
+        trace!("Document Changes: {}", diff.diff);
+        trace!("Tangle Address: {}", diff.did.diff_address_hash(index));
+
+        self.check_network(&diff.did)?;
+
+        self.send_transfer(Transfer {
+            address: diff.did.diff_address(index)?,
+            value: 0,
+            message: Some(diff.to_json()?),
+            tag: None,
+        })
+        .await
     }
 
     pub async fn send_transfer(&self, transfer: Transfer) -> Result<BundledTransaction> {
@@ -90,6 +120,15 @@ impl Client {
             .await
             .map_err(Into::into)
             .map(|states| states.states.as_slice() == [true])
+    }
+
+    fn check_network(&self, did: &IotaDID) -> Result<()> {
+        // Ensure the correct network is selected.
+        if !self.network.matches_did(did) {
+            return Err(Error::InvalidDIDNetwork);
+        }
+
+        Ok(())
     }
 }
 

@@ -20,6 +20,14 @@ pub enum Network {
 }
 
 impl Network {
+    pub fn from_str(string: &str) -> Self {
+        match string {
+            "dev" => Self::Devnet,
+            "com" => Self::Comnet,
+            _ => Self::Mainnet,
+        }
+    }
+
     pub fn matches_did(self, did: &IotaDID) -> bool {
         did.network() == self.as_str() || self == Self::Mainnet
     }

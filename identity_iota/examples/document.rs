@@ -4,7 +4,7 @@
 //! cargo run --example document
 use identity_core::resolver::{dereference, resolve, Dereference, Resolution};
 use identity_iota::{
-    client::{Client, ClientBuilder, Network, PublishDocumentResponse},
+    client::{Client, ClientBuilder, Network},
     crypto::KeyPair,
     did::{IotaDID, IotaDocument},
     error::Result,
@@ -41,9 +41,9 @@ async fn main() -> Result<()> {
     assert!(dbg!(document.verify()).is_ok());
 
     // Use the client created above to publish the DID Document to the Tangle.
-    let response: PublishDocumentResponse = client.publish_document(&document).send().await?;
+    let transaction: _ = client.publish_document(&document).await?;
 
-    println!("DID Document Transaction > {}", client.transaction_url(&response.tail));
+    println!("DID Document Transaction > {}", client.transaction_url(&transaction));
     println!();
 
     let did: &IotaDID = document.id();

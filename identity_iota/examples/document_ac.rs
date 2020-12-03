@@ -8,7 +8,7 @@ use identity_core::{
     proof::JcsEd25519Signature2020,
 };
 use identity_iota::{
-    client::{Client, ClientBuilder, Network, PublishDocumentResponse, ReadDocumentResponse},
+    client::{Client, ClientBuilder, Network, ReadDocumentResponse},
     crypto::KeyPair,
     did::IotaDocument,
     error::Result,
@@ -46,12 +46,12 @@ async fn main() -> Result<()> {
     assert!(dbg!(document.verify()).is_ok());
 
     // Use the client created above to publish the DID Document to the Tangle.
-    let response: PublishDocumentResponse = client.publish_document(&document).send().await?;
+    let transaction: _ = client.publish_document(&document).await?;
 
-    println!("DID Document Transaction > {}", client.transaction_url(&response.tail));
+    println!("DID Document Transaction > {}", client.transaction_url(&transaction));
     println!();
 
-    let message_id: String = client.transaction_hash(&response.tail);
+    let message_id: String = client.transaction_hash(&transaction);
 
     // =========================================================================
     // AUTH CHAIN
@@ -104,9 +104,9 @@ async fn main() -> Result<()> {
     assert!(dbg!(document.verify_data(&updated)).is_ok());
 
     // Publish the updated document.
-    let response: PublishDocumentResponse = client.publish_document(&updated).send().await?;
+    let transaction: _ = client.publish_document(&updated).await?;
 
-    println!("New Document Transaction > {}", client.transaction_url(&response.tail));
+    println!("New Document Transaction > {}", client.transaction_url(&transaction));
     println!();
 
     let response: ReadDocumentResponse = client.read_document(document.id()).send().await?;

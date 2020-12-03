@@ -1,7 +1,7 @@
 //! cargo run --example document_diff
 use identity_core::convert::AsJson as _;
 use identity_iota::{
-    client::{Client, ClientBuilder, Network, PublishDocumentResponse},
+    client::{Client, ClientBuilder, Network},
     crypto::KeyPair,
     did::{DIDDiff, IotaDocument},
     error::Result,
@@ -39,12 +39,12 @@ async fn main() -> Result<()> {
     assert!(dbg!(document.verify()).is_ok());
 
     // Use the client created above to publish the DID Document to the Tangle.
-    let response: PublishDocumentResponse = client.publish_document(&document).send().await?;
+    let transaction: _ = client.publish_document(&document).await?;
 
-    println!("DID Document Transaction > {}", client.transaction_url(&response.tail));
+    println!("DID Document Transaction > {}", client.transaction_url(&transaction));
     println!();
 
-    let message_id: String = client.transaction_hash(&response.tail);
+    let message_id: String = client.transaction_hash(&transaction);
 
     // =========================================================================
     // DIFF

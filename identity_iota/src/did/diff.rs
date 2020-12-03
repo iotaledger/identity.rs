@@ -5,6 +5,7 @@ use identity_core::{
 };
 
 use crate::{
+    client::{Client, ClientBuilder, Network},
     did::{IotaDID, IotaDocument},
     error::Result,
 };
@@ -15,6 +16,8 @@ pub struct DIDDiff {
     pub prev_msg: String,
     pub diff: String,
     pub proof: Option<Signature>,
+    #[serde(skip)]
+    pub message_id: Option<String>,
 }
 
 impl DIDDiff {
@@ -28,7 +31,41 @@ impl DIDDiff {
             prev_msg,
             diff,
             proof: None,
+            message_id: None,
         })
+    }
+
+    /// Returns the Tangle message id of the published DID diff, if any.
+    pub fn message_id(&self) -> Option<&str> {
+        self.message_id.as_deref()
+    }
+
+    // Sets the Tangle message id the published DID diff.
+    pub fn set_message_id<T>(&mut self, value: T)
+    where
+        T: Into<String>,
+    {
+        self.message_id = Some(value.into());
+    }
+
+    pub async fn publish(&mut self, index: usize) -> Result<()> {
+        let network: Network = Network::from_str(self.did.network());
+
+        let client: Client = ClientBuilder::new()
+            .node(network.node_url().as_str())
+            .network(network)
+            .build()?;
+
+        self.publish_with_client(index, &client).await
+    }
+
+    pub async fn publish_with_client(&mut self, index: usize, client: &Client) -> Result<()> {
+        let transaction: _ = client.publish_diff(&*self, index).await?;
+        let message_id: String = client.transaction_hash(&transaction);
+
+        self.set_message_id(message_id);
+
+        Ok(())
     }
 }
 

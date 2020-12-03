@@ -19,6 +19,7 @@ use iota::transaction::bundled::Address;
 use serde::Serialize;
 
 use crate::{
+    client::{Client, ClientBuilder, Network},
     did::{DIDDiff, IotaDID},
     error::{Error, Result},
 };
@@ -37,6 +38,8 @@ pub struct Properties {
     pub prev_msg: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub diff_chain: Option<String>,
+    #[serde(skip)]
+    pub message_id: Option<String>,
     #[serde(flatten)]
     pub properties: Object,
 }
@@ -48,6 +51,7 @@ impl Properties {
             updated: Timestamp::now(),
             prev_msg: None,
             diff_chain: None,
+            message_id: None,
             properties: Object::new(),
         }
     }
@@ -127,6 +131,19 @@ impl IotaDocument {
         // IotaDocument constructors; we don't provide mutable references so
         // the value cannot change with typical "safe" Rust.
         unsafe { IotaDID::new_unchecked_ref(self.0.id()) }
+    }
+
+    /// Returns the Tangle message id of the published DID document, if any.
+    pub fn message_id(&self) -> Option<&str> {
+        self.0.properties().message_id.as_deref()
+    }
+
+    // Sets the Tangle message id the published DID document.
+    pub fn set_message_id<T>(&mut self, value: T)
+    where
+        T: Into<String>,
+    {
+        self.0.properties_mut().message_id = Some(value.into());
     }
 
     /// Returns the Tangle message id of the previous DID document, if any.
@@ -226,6 +243,26 @@ impl IotaDocument {
     /// the `IotaDocument`.
     pub unsafe fn as_document_mut(&mut self) -> &mut VerifiableDocument<Properties> {
         &mut self.0
+    }
+
+    pub async fn publish(&mut self) -> Result<()> {
+        let network: Network = Network::from_str(self.id().network());
+
+        let client: Client = ClientBuilder::new()
+            .node(network.node_url().as_str())
+            .network(network)
+            .build()?;
+
+        self.publish_with_client(&client).await
+    }
+
+    pub async fn publish_with_client(&mut self, client: &Client) -> Result<()> {
+        let transaction: _ = client.publish_document(&*self).await?;
+        let message_id: String = client.transaction_hash(&transaction);
+
+        self.set_message_id(message_id);
+
+        Ok(())
     }
 
     /// Signs the DID document with the default authentication method.

@@ -12,7 +12,7 @@ use identity_core::{
     vc::{Credential, CredentialBuilder, CredentialSubject, VerifiableCredential},
 };
 use identity_iota::{
-    client::{Client, ClientBuilder, Network, PublishDocumentResponse},
+    client::{Client, ClientBuilder, Network},
     crypto::KeyPair,
     did::IotaDocument,
     error::Result,
@@ -30,9 +30,9 @@ async fn document(client: &Client, network: Network) -> Result<(IotaDocument, Ke
     println!("DID Document (signed) > {:#}", document);
     println!();
 
-    let response: PublishDocumentResponse = client.publish_document(&document).send().await?;
+    let transaction: _ = client.publish_document(&document).await?;
 
-    println!("DID Document Transaction > {}", client.transaction_url(&response.tail));
+    println!("DID Document Transaction > {}", client.transaction_url(&transaction));
     println!();
 
     Ok((document, keypair))
