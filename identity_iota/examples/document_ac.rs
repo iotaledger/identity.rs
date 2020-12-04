@@ -7,31 +7,19 @@ use identity_core::{
     did_doc::{Method, MethodBuilder, MethodData, MethodRef, MethodType},
     proof::JcsEd25519Signature2020,
 };
-use identity_iota::{
-    client::{Client, ClientBuilder, Network, ReadDocumentResponse},
-    crypto::KeyPair,
-    did::IotaDocument,
-    error::Result,
-};
+use identity_iota::{client::Client, crypto::KeyPair, did::IotaDocument, error::Result};
 use std::{thread::sleep, time::Duration};
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-    // TODO: Make configurable
-    let network: Network = Network::Mainnet;
-    let node: &str = network.node_url().as_str();
-
-    #[rustfmt::skip]
-    println!("Creating Identity Client using network({:?}) and node({})", network, node);
-    println!();
-
-    let client: Client = ClientBuilder::new().node(node).network(network).build()?;
+    let client: Client = Client::new()?;
 
     // Generate a new DID Document and public/private key pair.
     //
-    // The generated document will have an authentication key with the tag `key-1`
+    // The generated document will have a verification method with the tag
+    // `authentication`
     let (mut document, keypair): (IotaDocument, KeyPair) =
-        IotaDocument::generate_ed25519("key-1", network.as_str(), None)?;
+        IotaDocument::builder().did_network(client.network().as_str()).build()?;
 
     // Sign the DID Document with the default verification method.
     //
@@ -46,12 +34,7 @@ async fn main() -> Result<()> {
     assert!(dbg!(document.verify()).is_ok());
 
     // Use the client created above to publish the DID Document to the Tangle.
-    let transaction: _ = client.publish_document(&document).await?;
-
-    println!("DID Document Transaction > {}", client.transaction_url(&transaction));
-    println!();
-
-    let message_id: String = client.transaction_hash(&transaction);
+    document.publish_with_client(&client).await?;
 
     // =========================================================================
     // AUTH CHAIN
@@ -92,7 +75,7 @@ async fn main() -> Result<()> {
     }
 
     updated.set_updated_now();
-    updated.set_prev_msg(message_id);
+    updated.set_previous_message_id(document.message_id().unwrap());
 
     // Sign the updated document with the *previous* authentication method
     document.sign_data(&mut updated, keypair.secret())?;
@@ -104,12 +87,10 @@ async fn main() -> Result<()> {
     assert!(dbg!(document.verify_data(&updated)).is_ok());
 
     // Publish the updated document.
-    let transaction: _ = client.publish_document(&updated).await?;
+    updated.publish_with_client(&client).await?;
 
-    println!("New Document Transaction > {}", client.transaction_url(&transaction));
-    println!();
-
-    let response: ReadDocumentResponse = client.read_document(document.id()).send().await?;
+    // Read the published DID document from the Tangle.
+    let response: (IotaDocument, _) = client.read_document(document.id()).await?;
 
     println!("Document Response > {:#?}", response);
     println!();

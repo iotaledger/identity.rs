@@ -8,7 +8,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 
 use crate::{
-    client::{Client, ReadDocumentResponse},
+    client::Client,
     did::{IotaDID, IotaDocument},
     error::Result,
 };
@@ -133,13 +133,13 @@ impl<'a> CredentialValidator<'a> {
 
     async fn validate_document(&self, did: &str) -> Result<DocumentValidation> {
         let did: IotaDID = did.parse()?;
-        let doc: ReadDocumentResponse = self.client.read_document(&did).send().await?;
-        let verified: bool = doc.document.verify().is_ok();
+        let (document, metadata): _ = self.client.read_document(&did).await?;
+        let verified: bool = document.verify().is_ok();
 
         Ok(DocumentValidation {
             did,
-            document: doc.document,
-            metadata: doc.metadata,
+            document,
+            metadata,
             verified,
         })
     }

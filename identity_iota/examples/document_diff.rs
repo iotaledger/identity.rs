@@ -1,30 +1,23 @@
 //! cargo run --example document_diff
-use identity_core::convert::AsJson as _;
+use identity_core::resolver::{resolve, Dereference, Resolution};
 use identity_iota::{
-    client::{Client, ClientBuilder, Network},
+    client::Client,
     crypto::KeyPair,
-    did::{DIDDiff, IotaDocument},
+    did::{DocumentDiff, IotaDocument},
     error::Result,
 };
 use std::{thread::sleep, time::Duration};
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-    // TODO: Make configurable
-    let network: Network = Network::Mainnet;
-    let node: &str = network.node_url().as_str();
-
-    #[rustfmt::skip]
-    println!("Creating Identity Client using network({:?}) and node({})", network, node);
-    println!();
-
-    let client: Client = ClientBuilder::new().node(node).network(network).build()?;
+    let client: Client = Client::new()?;
 
     // Generate a new DID Document and public/private key pair.
     //
-    // The generated document will have an authentication key with the tag `key-1`
+    // The generated document will have an authentication key with the tag
+    // `authentication`
     let (mut document, keypair): (IotaDocument, KeyPair) =
-        IotaDocument::generate_ed25519("key-1", network.as_str(), None)?;
+        IotaDocument::builder().did_network(client.network().as_str()).build()?;
 
     // Sign the DID Document with the default verification method.
     //
@@ -39,12 +32,7 @@ async fn main() -> Result<()> {
     assert!(dbg!(document.verify()).is_ok());
 
     // Use the client created above to publish the DID Document to the Tangle.
-    let transaction: _ = client.publish_document(&document).await?;
-
-    println!("DID Document Transaction > {}", client.transaction_url(&transaction));
-    println!();
-
-    let message_id: String = client.transaction_hash(&transaction);
+    document.publish_with_client(&client).await?;
 
     // =========================================================================
     // DIFF
@@ -58,7 +46,8 @@ async fn main() -> Result<()> {
     update.properties_mut().insert("bar".into(), vec![1, 2, 3].into());
     update.set_updated_now();
 
-    let diff: DIDDiff = document.diff(&update, keypair.secret(), message_id)?;
+    let previous_message_id: &str = document.message_id().unwrap();
+    let mut diff: DocumentDiff = document.diff(&update, keypair.secret(), previous_message_id.into())?;
 
     println!("Document Diff (signed) > {:#?}", diff);
     println!();
@@ -66,23 +55,14 @@ async fn main() -> Result<()> {
     // SANITY CHECK: Ensure the signature is valid.
     assert!(dbg!(document.verify_data(&diff)).is_ok());
 
-    // TODO: Publish and Read Diff
+    // Publish at the diff address for auth document #1
+    diff.publish_with_client(&client, 1).await?;
 
-    println!("JSON > {}", diff.to_json_pretty()?);
+    // Resolve the final DID document with all verified diffs merged.
+    let resolution: Resolution = resolve(diff.did().as_str(), Default::default(), &client).await?;
+
+    println!("DID Document Resolution > {:#?}", resolution);
     println!();
-
-    println!("Doc (old) > {:#}", document);
-    println!();
-
-    println!("Doc (new) > {:#}", update);
-    println!();
-
-    document.merge(&diff)?;
-
-    println!("Doc (merged) > {:#}", document);
-    println!();
-
-    assert_eq!(document, update);
 
     Ok(())
 }

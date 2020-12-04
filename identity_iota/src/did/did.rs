@@ -1,22 +1,21 @@
 use core::{
     convert::TryFrom,
     fmt::{Debug, Display, Formatter, Result as FmtResult},
-    iter::once,
     ops::Deref,
     str::FromStr,
 };
 use identity_core::{
     crypto::KeyPair,
-    did_url::{self, DID},
+    did_url::{Error as DIDError, DID},
     proof::JcsEd25519Signature2020,
     utils::{decode_b58, encode_b58},
 };
-use iota::transaction::bundled::Address;
 use multihash::Blake2b256;
 
 use crate::{
+    did::Segments,
     error::{Error, Result},
-    utils::{create_address_from_trits, utf8_to_trytes},
+    utils::utf8_to_trytes,
 };
 
 // The hash size of BLAKE2b-256 (32-bytes)
@@ -32,7 +31,7 @@ impl IotaDID {
     pub const METHOD: &'static str = "iota";
 
     /// The default Tangle network.
-    pub const NETWORK: &'static str = "main";
+    pub const DEFAULT_NETWORK: &'static str = "main";
 
     /// Generates an `IotaDID` and `KeyPair` suitable for `ed25519` signatures.
     pub fn generate_ed25519<'b, 'c, T, U>(network: T, shard: U) -> Result<(Self, KeyPair)>
@@ -40,10 +39,12 @@ impl IotaDID {
         T: Into<Option<&'b str>>,
         U: Into<Option<&'c str>>,
     {
-        let key: KeyPair = JcsEd25519Signature2020::new_keypair();
-        let did: Self = Self::with_network_and_shard(key.public().as_ref(), network, shard)?;
+        let keypair: KeyPair = JcsEd25519Signature2020::new_keypair();
+        let public: &[u8] = keypair.public().as_ref();
 
-        Ok((did, key))
+        let did: Self = Self::with_network_and_shard(public, network, shard)?;
+
+        Ok((did, keypair))
     }
 
     /// Converts a borrowed `DID` to an `IotaDID.`
@@ -53,6 +54,7 @@ impl IotaDID {
     /// Returns `Err` if the input is not a valid `IotaDID`.
     pub fn try_from_borrowed(did: &DID) -> Result<&Self> {
         Self::check_validity(did)?;
+
         // SAFETY: we performed the necessary validation in `check_validity`.
         Ok(unsafe { Self::new_unchecked_ref(did) })
     }
@@ -64,10 +66,12 @@ impl IotaDID {
     /// Returns `Err` if the input is not a valid `IotaDID`.
     pub fn try_from_owned(did: DID) -> Result<Self> {
         Self::check_validity(&did)?;
+
         Ok(Self(Self::normalize(did)))
     }
 
-    /// Converts a clone-on-write `DID` to an `IotaDID` without validation.
+    /// Converts a `DID` reference to an `IotaDID` reference without performing
+    /// validation checks.
     ///
     /// # Safety
     ///
@@ -120,16 +124,18 @@ impl IotaDID {
         let mut did: String = format!("{}:{}:", DID::SCHEME, Self::METHOD);
 
         if let Some(network) = network.into() {
-            did.extend(network.chars().chain(once(':')));
+            did.push_str(network);
+            did.push(':');
         }
 
         if let Some(shard) = shard.into() {
-            did.extend(shard.chars().chain(once(':')));
+            did.push_str(shard);
+            did.push(':');
         }
 
         did.push_str(&Self::encode_key(public));
 
-        did.parse().map_err(Into::into).and_then(Self::try_from_owned)
+        Self::parse(did)
     }
 
     /// Creates a new [`IotaDID`] by joining `self` with the relative IotaDID `other`.
@@ -148,7 +154,7 @@ impl IotaDID {
     /// Returns `Err` if the input is not a valid `IotaDID`.
     pub fn check_method(did: &DID) -> Result<()> {
         if did.method() != Self::METHOD {
-            Err(did_url::Error::InvalidMethodName.into())
+            Err(Error::InvalidDID(DIDError::InvalidMethodName))
         } else {
             Ok(())
         }
@@ -163,19 +169,17 @@ impl IotaDID {
         let segments: Vec<&str> = did.method_id().split(':').collect();
 
         if segments.is_empty() || segments.len() > 3 {
-            return Err(did_url::Error::InvalidMethodId.into());
+            return Err(Error::InvalidDID(DIDError::InvalidMethodId));
         }
 
         // We checked if `id_segments` was empty so this should not panic
         let mid: &str = segments.last().unwrap();
         let len: usize = decode_b58(mid)?.len();
 
-        // TODO: Check if bytes are valid trytes
-
         if len == BLAKE2B_256_LEN {
             Ok(())
         } else {
-            Err(did_url::Error::InvalidMethodId.into())
+            Err(Error::InvalidDID(DIDError::InvalidMethodId))
         }
     }
 
@@ -211,19 +215,19 @@ impl IotaDID {
         self.segments().tag()
     }
 
-    /// Returns the Tangle address of the DID as a tryte-encoded String.
-    pub fn address_hash(&self) -> String {
+    pub fn segments(&self) -> Segments<'_> {
+        Segments(self.method_id())
+    }
+
+    /// Returns the Tangle address of the DID auth chain.
+    pub fn address(&self) -> String {
         let mut trytes: String = utf8_to_trytes(self.tag());
         trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
         trytes
     }
 
-    /// Returns the Tangle address of the DID.
-    pub fn address(&self) -> Result<Address> {
-        create_address_from_trits(self.address_hash())
-    }
-
-    pub fn diff_address_hash(&self, index: usize) -> String {
+    /// Returns the Tangle address of the DID diff chain at the specified index.
+    pub fn diff_address(&self, index: usize) -> String {
         let addr: String = format!("{}/{}", self.tag(), index);
         let hash: String = Self::encode_key(addr.as_bytes());
 
@@ -232,18 +236,10 @@ impl IotaDID {
         trytes
     }
 
-    pub fn diff_address(&self, index: usize) -> Result<Address> {
-        create_address_from_trits(self.diff_address_hash(index))
-    }
-
-    pub fn segments(&self) -> Segments {
-        Segments(self.method_id())
-    }
-
-    fn normalize(mut did: DID) -> DID {
+    pub(crate) fn normalize(mut did: DID) -> DID {
         let segments: Segments = Segments(did.method_id());
 
-        if segments.count() == 2 && segments.network() == "main" {
+        if segments.count() == 2 && segments.network() == Self::DEFAULT_NETWORK {
             let method_id: String = segments.tag().to_string();
             did.set_method_id(method_id);
         }
@@ -251,7 +247,7 @@ impl IotaDID {
         did
     }
 
-    fn encode_key(key: &[u8]) -> String {
+    pub(crate) fn encode_key(key: &[u8]) -> String {
         encode_b58(Blake2b256::digest(key).digest())
     }
 }
@@ -324,51 +320,11 @@ impl FromStr for IotaDID {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Segments<'a>(&'a str);
-
-impl<'a> Segments<'a> {
-    pub fn network(&self) -> &'a str {
-        match self.count() {
-            1 => IotaDID::NETWORK,
-            2 | 3 => &self.0[..self.head()],
-            _ => unreachable!("Segments::network called for invalid IOTA DID"),
-        }
-    }
-
-    pub fn shard(&self) -> Option<&'a str> {
-        match self.count() {
-            1 | 2 => None,
-            3 => Some(&self.0[&self.head() + 1..self.tail()]),
-            _ => unreachable!("Segments::shard called for invalid IOTA DID"),
-        }
-    }
-
-    pub fn tag(&self) -> &'a str {
-        match self.count() {
-            1 => self.0,
-            2 | 3 => &self.0[self.tail() + 1..],
-            _ => unreachable!("Segments::tag called for invalid IOTA DID"),
-        }
-    }
-
-    pub fn count(&self) -> usize {
-        self.0.split(':').count()
-    }
-
-    fn head(&self) -> usize {
-        self.0.find(':').unwrap()
-    }
-
-    fn tail(&self) -> usize {
-        self.0.rfind(':').unwrap()
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::*;
     use identity_core::{crypto::KeyPair, did_url::DID, proof::JcsEd25519Signature2020};
+
+    use super::*;
 
     const TAG: &str = "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
 
@@ -447,7 +403,7 @@ mod tests {
     #[test]
     fn test_address() {
         let did: IotaDID = format!("did:iota:com:{}", ADDR_TAG).parse().unwrap();
-        assert_eq!(did.address_hash(), ADDR_TRYTES);
+        assert_eq!(did.address(), ADDR_TRYTES);
     }
 
     #[test]
@@ -457,7 +413,7 @@ mod tests {
         let tag: String = IotaDID::encode_key(key.public().as_ref());
 
         assert_eq!(did.tag(), tag);
-        assert_eq!(did.network(), IotaDID::NETWORK);
+        assert_eq!(did.network(), IotaDID::DEFAULT_NETWORK);
         assert_eq!(did.shard(), None);
     }
 

@@ -1,12 +1,12 @@
 #![allow(clippy::module_inception)]
-mod actions;
 mod builder;
 mod client;
 mod network;
+mod resolver;
 mod types;
 
-pub use actions::*;
 pub use builder::*;
 pub use client::*;
 pub use network::*;
+pub use resolver::*;
 pub use types::*;

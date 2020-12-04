@@ -34,7 +34,6 @@ impl Network {
 
     pub fn transaction_url(&self, transaction: &BundledTransaction) -> Url {
         let hash: TransactionPrinter<_> = TransactionPrinter::hash(transaction);
-
         let mut url: Url = self.explorer_url().clone();
 
         url.path_segments_mut()

@@ -44,6 +44,10 @@ impl TangleMessage {
     pub fn message_utf8(&self) -> Result<String> {
         trytes_to_utf8(&self.message_str())
     }
+
+    pub fn transaction_hash(&self) -> String {
+        encode_trits(&self.tail_hash)
+    }
 }
 
 impl Debug for TangleMessage {

@@ -1,10 +1,10 @@
-use core::iter::once;
+use core::{cmp::Ordering, iter::once};
 use iota::{
     crypto::ternary::{
         sponge::{CurlP81, Sponge as _},
         Hash,
     },
-    ternary::{raw::RawEncoding, Btrit, T1B1Buf, TritBuf, Trits, TryteBuf},
+    ternary::{raw::RawEncoding, Btrit, T1B1Buf, TritBuf, Trits, TryteBuf, T1B1},
     transaction::bundled::{Address, BundledTransaction, BundledTransactionField as _},
 };
 use iota_conversion::trytes_converter;
@@ -49,4 +49,47 @@ pub fn utf8_to_trytes(input: impl AsRef<[u8]>) -> String {
 
 pub fn trytes_to_utf8(string: impl AsRef<str>) -> Result<String> {
     trytes_converter::to_string(string.as_ref()).map_err(|_| Error::InvalidTryteConversion)
+}
+
+pub fn bundles_from_trytes(mut transactions: Vec<BundledTransaction>) -> Vec<Vec<BundledTransaction>> {
+    transactions.sort_by(|a, b| {
+        // TODO: impl Ord for Address, Tag, Hash
+        cmp_trits(a.address().to_inner(), b.address().to_inner())
+            .then(cmp_trits(a.tag().to_inner(), b.tag().to_inner()))
+            // different messages may have the same bundle hash!
+            .then(cmp_trits(a.bundle().to_inner(), b.bundle().to_inner()))
+            // reverse order of transactions will be extracted from back with `pop`
+            .then(a.index().to_inner().cmp(b.index().to_inner()).reverse())
+    });
+
+    let mut bundles: Vec<Vec<BundledTransaction>> = Vec::new();
+
+    if let Some(root) = transactions.pop() {
+        let mut bundle: Vec<BundledTransaction> = vec![root];
+
+        loop {
+            if let Some(transaction) = transactions.pop() {
+                if cmp_transaction(&bundle[0], &transaction) {
+                    bundle.push(transaction);
+                } else {
+                    bundles.push(bundle);
+                    bundle = vec![transaction];
+                }
+            } else {
+                bundles.push(bundle);
+                break;
+            }
+        }
+    }
+
+    // TODO: Check the bundles
+    bundles
+}
+
+fn cmp_trits(a: &Trits<T1B1>, b: &Trits<T1B1>) -> Ordering {
+    a.iter().cmp(b.iter())
+}
+
+fn cmp_transaction(a: &BundledTransaction, b: &BundledTransaction) -> bool {
+    a.address() == b.address() && a.tag() == b.tag() && a.bundle() == b.bundle()
 }

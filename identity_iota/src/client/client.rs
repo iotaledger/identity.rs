@@ -1,21 +1,18 @@
-use async_trait::async_trait;
 use core::slice::from_ref;
 use identity_core::{
-    common::Url,
-    convert::{SerdeInto as _, ToJson as _},
-    did_doc::Document,
-    did_url::DID,
-    error::{Error as CoreError, Result as CoreResult},
-    resolver::{DocumentMetadata, InputMetadata, MetaDocument, ResolverMethod},
+    common::{Object, Url},
+    convert::ToJson,
 };
-use iota::{client::Transfer, crypto::ternary::Hash, transaction::bundled::BundledTransaction};
+use iota::{
+    client::{FindTransactionsResponse, GetTrytesResponse, Transfer},
+    transaction::bundled::{Address, BundledTransaction, BundledTransactionField as _},
+};
 
 use crate::{
-    client::{
-        ClientBuilder, Network, ReadDocumentRequest, ReadDocumentResponse, ReadTransactionsRequest, TransactionPrinter,
-    },
-    did::{DIDDiff, IotaDID, IotaDocument},
+    client::{ClientBuilder, Network, TangleDocument, TangleMessage, TransactionPrinter},
+    did::{DocumentDiff, IotaDID, IotaDocument},
     error::{Error, Result},
+    utils::{bundles_from_trytes, create_address_from_trits, encode_trits},
 };
 
 #[derive(Clone, Debug)]
@@ -29,11 +26,22 @@ impl Client {
         Self::from_builder(ClientBuilder::new())
     }
 
+    pub fn from_network(network: Network) -> Result<Self> {
+        ClientBuilder::new()
+            .node(network.node_url().as_str())
+            .network(network)
+            .build()
+    }
+
     pub fn from_builder(builder: ClientBuilder) -> Result<Self> {
         let mut client: iota::ClientBuilder = iota::ClientBuilder::new();
 
-        for node in builder.nodes {
-            client = client.node(&node)?;
+        if builder.nodes.is_empty() {
+            client = client.node(builder.network.node_url().as_str())?;
+        } else {
+            for node in builder.nodes {
+                client = client.node(&node)?;
+            }
         }
 
         client = client.network(builder.network.into());
@@ -42,6 +50,10 @@ impl Client {
             client: client.build()?,
             network: builder.network,
         })
+    }
+
+    pub fn network(&self) -> Network {
+        self.network
     }
 
     pub fn explorer_url(&self) -> &'static Url {
@@ -56,50 +68,74 @@ impl Client {
         TransactionPrinter::hash(transaction).to_string()
     }
 
-    pub fn read_transactions<'a>(&'a self, did: &IotaDID) -> ReadTransactionsRequest<'a> {
-        ReadTransactionsRequest::new(self, did.address().unwrap())
-    }
-
-    pub fn read_document<'a, 'b>(&'a self, did: &'b IotaDID) -> ReadDocumentRequest<'a, 'b> {
-        ReadDocumentRequest::new(self, did)
-    }
-
     pub async fn publish_document(&self, document: &IotaDocument) -> Result<BundledTransaction> {
-        trace!("Publish Document with DID: {}", document.id());
-
+        trace!("Publishing DID Document: {}", document.id());
         trace!("Authentication: {:?}", document.authentication());
-        trace!("Tangle Address: {}", document.id().address_hash());
+        trace!("Document Proof: {}", document.verify().is_ok());
+        trace!("Tangle Address: {}", document.id().address());
 
         self.check_network(document.id())?;
 
-        self.send_transfer(Transfer {
-            address: document.id().address()?,
-            value: 0,
-            message: Some(document.to_json()?),
-            tag: None,
-        })
-        .await
+        let address: String = document.id().address();
+        let transfer: Transfer = Self::json_transfer(&address, document)?;
+
+        self.send_transfer(transfer).await
     }
 
-    pub async fn publish_diff(&self, diff: &DIDDiff, index: usize) -> Result<BundledTransaction> {
-        trace!("Publish Diff with DID: {}", diff.did);
-
-        trace!("Previous Message: {}", diff.prev_msg);
+    pub async fn publish_diff(&self, diff: &DocumentDiff, index: usize) -> Result<BundledTransaction> {
+        trace!("Publish DID Document Diff: {}", diff.did);
+        trace!("Previous Message: {}", diff.previous_message_id);
         trace!("Document Changes: {}", diff.diff);
-        trace!("Tangle Address: {}", diff.did.diff_address_hash(index));
+        trace!("Tangle Address: {}", diff.did.diff_address(index));
 
         self.check_network(&diff.did)?;
 
-        self.send_transfer(Transfer {
-            address: diff.did.diff_address(index)?,
-            value: 0,
-            message: Some(diff.to_json()?),
-            tag: None,
-        })
-        .await
+        let address: String = diff.did.diff_address(index);
+        let transfer: Transfer = Self::json_transfer(&address, diff)?;
+
+        self.send_transfer(transfer).await
     }
 
-    pub async fn send_transfer(&self, transfer: Transfer) -> Result<BundledTransaction> {
+    pub async fn read_document(&self, did: &IotaDID) -> Result<(IotaDocument, Object)> {
+        trace!("Read DID Document: {}", did);
+        trace!("Auth Chain Address: {}", did.address());
+
+        // Fetch all messages for the auth chain.
+        let address: Address = create_address_from_trits(did.address())?;
+        let messages: Vec<TangleMessage> = self.read_transactions(&address, true).await?;
+
+        trace!("Tangle Messages: {:?}", messages);
+
+        let document: TangleDocument = extract_auth_document(did, messages)?;
+
+        trace!("Tangle Document (auth): {:?}", document);
+
+        // TODO: Handle Diff Chain Updates
+
+        let message: TangleMessage = document.message;
+        let mut document: IotaDocument = document.document;
+        let mut metadata: Object = Object::new();
+
+        // Add the Tangle message ID to the final DID document.
+        document.set_message_id(message.transaction_hash());
+
+        // Gather extra metadata that may be useful elsewhere.
+        metadata.insert("message".into(), message.message_str().into());
+        metadata.insert("address".into(), message.address.into());
+
+        Ok((document, metadata))
+    }
+
+    pub(crate) fn check_network(&self, did: &IotaDID) -> Result<()> {
+        // Ensure the correct network is selected.
+        if !self.network.matches_did(did) {
+            return Err(Error::InvalidDIDNetwork);
+        }
+
+        Ok(())
+    }
+
+    async fn send_transfer(&self, transfer: Transfer) -> Result<BundledTransaction> {
         trace!("Sending Transfer: {:?}", transfer.message);
 
         self.client
@@ -112,56 +148,98 @@ impl Client {
             .ok_or(Error::InvalidTransferTail)
     }
 
-    pub async fn is_transaction_confirmed(&self, hash: &Hash) -> Result<bool> {
-        self.client
-            .get_inclusion_states()
-            .transactions(from_ref(hash))
-            .send()
-            .await
-            .map_err(Into::into)
-            .map(|states| states.states.as_slice() == [true])
-    }
-
-    fn check_network(&self, did: &IotaDID) -> Result<()> {
-        // Ensure the correct network is selected.
-        if !self.network.matches_did(did) {
-            return Err(Error::InvalidDIDNetwork);
+    async fn read_transactions(&self, address: &Address, allow_empty: bool) -> Result<Vec<TangleMessage>> {
+        fn __dbg_transactions(response: &FindTransactionsResponse) -> Vec<String> {
+            response.hashes.iter().map(|hash| encode_trits(hash)).collect()
         }
 
-        Ok(())
+        fn __dbg_trytes(response: &GetTrytesResponse) -> Vec<TransactionPrinter> {
+            response.trytes.iter().map(TransactionPrinter::full).collect()
+        }
+
+        trace!("Read Transactions: {}", encode_trits(address.to_inner()));
+
+        // Fetch all transaction hashes containing the tangle address.
+        let response: FindTransactionsResponse = self
+            .client
+            .find_transactions()
+            .addresses(from_ref(address))
+            .send()
+            .await?;
+
+        trace!("Transactions Found: {:?}", __dbg_transactions(&response));
+
+        if response.hashes.is_empty() {
+            if allow_empty {
+                return Ok(Vec::new());
+            } else {
+                return Err(Error::InvalidTransactionHashes);
+            }
+        }
+
+        // Fetch the content of all transactions.
+        let content: GetTrytesResponse = self.client.get_trytes(&response.hashes).await?;
+
+        trace!("Transaction Trytes: {:?}", __dbg_trytes(&content));
+
+        if content.trytes.is_empty() {
+            return Err(Error::InvalidTransactionTrytes);
+        }
+
+        // Re-build the fragmented messages stored in the bundle.
+        bundles_from_trytes(content.trytes)
+            .into_iter()
+            .map(TangleMessage::try_from_bundle)
+            .collect()
+    }
+
+    fn json_transfer<T>(address: &str, data: &T) -> Result<Transfer>
+    where
+        T: ToJson,
+    {
+        let address: Address = create_address_from_trits(address)?;
+        let message: String = data.to_json()?;
+
+        Ok(Transfer {
+            address,
+            value: 0,
+            message: Some(message),
+            tag: None,
+        })
     }
 }
 
-#[async_trait(?Send)]
-impl ResolverMethod for Client {
-    fn is_supported(&self, did: &DID) -> bool {
-        match IotaDID::try_from_borrowed(did) {
-            Ok(did) => self.network.matches_did(&did),
-            Err(_) => false,
+fn extract_auth_document(did: &IotaDID, messages: Vec<TangleMessage>) -> Result<TangleDocument> {
+    let (mut docs1, mut docs2): (Vec<_>, Vec<_>) = messages
+        .into_iter()
+        .flat_map(|message| TangleDocument::new(did, message))
+        .partition(|document| document.previous_message_id().is_none());
+
+    docs1.sort_by_key(|document| document.created());
+    docs2.sort_by_key(|document| document.created());
+
+    // Find the first initial document with a valid signature.
+    let mut target: TangleDocument = docs1
+        .into_iter()
+        .find(|item| item.verify().is_ok())
+        .ok_or(Error::InvalidTransactionBundle)?;
+
+    // Follow the chain of successive documents - AKA the auth chain.
+    for maybe in docs2 {
+        if let Some(hash) = maybe.previous_message_id() {
+            // Ignore documents that don't reference the expected Tangle message.
+            if hash != target.message.transaction_hash() {
+                continue;
+            }
+
+            // Ignore documents with invalid signatures.
+            if target.verify_data(&*maybe).is_err() {
+                continue;
+            }
+
+            target = maybe;
         }
     }
 
-    async fn read(&self, did: &DID, _input: InputMetadata) -> CoreResult<Option<MetaDocument>> {
-        let did: &IotaDID =
-            IotaDID::try_from_borrowed(did).map_err(|error| CoreError::ResolutionError(error.into()))?;
-
-        let response: ReadDocumentResponse = self
-            .read_document(&did)
-            .send()
-            .await
-            .map_err(|error| CoreError::ResolutionError(error.into()))?;
-
-        let mut metadata: DocumentMetadata = DocumentMetadata::new();
-
-        metadata.created = Some(response.document.created());
-        metadata.updated = Some(response.document.updated());
-        metadata.properties = response.metadata;
-
-        let data: Document = response
-            .document
-            .serde_into()
-            .map_err(|error| CoreError::ResolutionError(error.into()))?;
-
-        Ok(Some(MetaDocument { data, meta: metadata }))
-    }
+    Ok(target)
 }

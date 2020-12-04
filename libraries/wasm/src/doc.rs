@@ -127,7 +127,7 @@ impl Doc {
     #[wasm_bindgen(js_name = verifyDiff)]
     pub fn verify_diff(&self, diff: String) -> bool {
         match DIDDiff::from_json(&diff) {
-            Ok(diff) => self.0.verify_diff(&diff).is_ok(),
+            Ok(diff) => self.0.verify_data(&diff).is_ok(),
             Err(_) => false,
         }
     }
