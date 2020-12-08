@@ -15,6 +15,7 @@ pub struct IotaDocumentBuilder {
     authentication_type: MethodType,
     did_network: Option<String>,
     did_shard: Option<String>,
+    immutable: bool,
 }
 
 impl IotaDocumentBuilder {
@@ -24,6 +25,7 @@ impl IotaDocumentBuilder {
             authentication_type: MethodType::Ed25519VerificationKey2018,
             did_network: None,
             did_shard: None,
+            immutable: false,
         }
     }
 
@@ -60,6 +62,12 @@ impl IotaDocumentBuilder {
         self
     }
 
+    #[must_use]
+    pub fn immutable(mut self, value: bool) -> Self {
+        self.immutable = value;
+        self
+    }
+
     pub fn build(self) -> Result<(IotaDocument, KeyPair)> {
         let keypair: KeyPair = Self::default_keypair(self.authentication_type)?;
         let public: &[u8] = keypair.public().as_ref();
@@ -77,7 +85,12 @@ impl IotaDocumentBuilder {
             .key_data(MethodData::new_b58(public))
             .build()?;
 
-        let document: IotaDocument = DocumentBuilder::new(Properties::new())
+        let properties: Properties = Properties {
+            immutable: self.immutable,
+            ..Properties::new()
+        };
+
+        let document: IotaDocument = DocumentBuilder::new(properties)
             .id(did.into())
             .authentication(method)
             .build()
@@ -94,5 +107,11 @@ impl IotaDocumentBuilder {
                 todo!("Invalid Method Type")
             }
         }
+    }
+}
+
+impl Default for IotaDocumentBuilder {
+    fn default() -> Self {
+        Self::new()
     }
 }

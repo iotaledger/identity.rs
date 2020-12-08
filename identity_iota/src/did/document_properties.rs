@@ -4,6 +4,7 @@ use identity_core::common::{Object, Timestamp};
 pub struct Properties {
     pub(crate) created: Timestamp,
     pub(crate) updated: Timestamp,
+    pub(crate) immutable: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) previous_message_id: Option<String>,
     #[serde(flatten)]
@@ -15,6 +16,7 @@ impl Properties {
         Self {
             created: Timestamp::now(),
             updated: Timestamp::now(),
+            immutable: false,
             previous_message_id: None,
             properties: Object::new(),
         }

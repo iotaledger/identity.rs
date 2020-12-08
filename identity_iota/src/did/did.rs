@@ -226,16 +226,6 @@ impl IotaDID {
         trytes
     }
 
-    /// Returns the Tangle address of the DID diff chain at the specified index.
-    pub fn diff_address(&self, index: usize) -> String {
-        let addr: String = format!("{}/{}", self.tag(), index);
-        let hash: String = Self::encode_key(addr.as_bytes());
-
-        let mut trytes: String = utf8_to_trytes(&hash);
-        trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
-        trytes
-    }
-
     pub(crate) fn normalize(mut did: DID) -> DID {
         let segments: Segments = Segments(did.method_id());
 

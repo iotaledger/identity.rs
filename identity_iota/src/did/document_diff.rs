@@ -36,7 +36,7 @@ impl DocumentDiff {
     }
 
     /// Returns the DID of associated document.
-    pub fn did(&self) -> &IotaDID {
+    pub fn id(&self) -> &IotaDID {
         &self.did
     }
 
@@ -69,16 +69,16 @@ impl DocumentDiff {
     }
 
     /// Publishes the `DocumentDiff` to the Tangle using a default `Client`.
-    pub async fn publish(&mut self, index: usize) -> Result<()> {
+    pub async fn publish(&mut self, message_id: &str) -> Result<()> {
         let network: Network = Network::from_str(self.did.network());
         let client: Client = Client::from_network(network)?;
 
-        self.publish_with_client(&client, index).await
+        self.publish_with_client(&client, message_id).await
     }
 
     /// Publishes the `DocumentDiff` to the Tangle using the provided `Client`.
-    pub async fn publish_with_client(&mut self, client: &Client, index: usize) -> Result<()> {
-        let transaction: _ = client.publish_diff(self, index).await?;
+    pub async fn publish_with_client(&mut self, client: &Client, message_id: &str) -> Result<()> {
+        let transaction: _ = client.publish_diff(self, message_id).await?;
         let message_id: String = client.transaction_hash(&transaction);
 
         self.set_message_id(message_id);

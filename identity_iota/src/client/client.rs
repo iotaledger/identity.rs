@@ -1,15 +1,13 @@
 use core::slice::from_ref;
-use identity_core::{
-    common::{Object, Url},
-    convert::ToJson,
-};
+use identity_core::{common::Url, convert::ToJson};
 use iota::{
     client::{FindTransactionsResponse, GetTrytesResponse, Transfer},
     transaction::bundled::{Address, BundledTransaction, BundledTransactionField as _},
 };
 
 use crate::{
-    client::{ClientBuilder, Network, TangleDocument, TangleMessage, TransactionPrinter},
+    chain::{AuthChain, DiffChain, DocumentChain},
+    client::{ClientBuilder, Network, TangleMessage, TransactionPrinter},
     did::{DocumentDiff, IotaDID, IotaDocument},
     error::{Error, Result},
     utils::{bundles_from_trytes, create_address_from_trits, encode_trits},
@@ -82,22 +80,22 @@ impl Client {
         self.send_transfer(transfer).await
     }
 
-    pub async fn publish_diff(&self, diff: &DocumentDiff, index: usize) -> Result<BundledTransaction> {
+    pub async fn publish_diff(&self, diff: &DocumentDiff, message_id: &str) -> Result<BundledTransaction> {
         trace!("Publish DID Document Diff: {}", diff.did);
         trace!("Previous Message: {}", diff.previous_message_id);
         trace!("Document Changes: {}", diff.diff);
-        trace!("Tangle Address: {}", diff.did.diff_address(index));
+        trace!("Tangle Address: {}", IotaDocument::diff_address(message_id));
 
         self.check_network(&diff.did)?;
 
-        let address: String = diff.did.diff_address(index);
+        let address: String = IotaDocument::diff_address(message_id);
         let transfer: Transfer = Self::json_transfer(&address, diff)?;
 
         self.send_transfer(transfer).await
     }
 
-    pub async fn read_document(&self, did: &IotaDID) -> Result<(IotaDocument, Object)> {
-        trace!("Read DID Document: {}", did);
+    pub async fn read_document_chain(&self, did: &IotaDID) -> Result<DocumentChain> {
+        trace!("Read Document Chain: {}", did);
         trace!("Auth Chain Address: {}", did.address());
 
         // Fetch all messages for the auth chain.
@@ -106,24 +104,26 @@ impl Client {
 
         trace!("Tangle Messages: {:?}", messages);
 
-        let document: TangleDocument = extract_auth_document(did, messages)?;
+        let auth: AuthChain = AuthChain::try_from_messages(did, &messages)?;
 
-        trace!("Tangle Document (auth): {:?}", document);
+        let diff: DiffChain = if auth.current().immutable() {
+            DiffChain::new()
+        } else {
+            // Fetch all messages for the diff chain.
+            let address: String = IotaDocument::diff_address(auth.current_message_id());
+            let address: Address = create_address_from_trits(&address)?;
+            let messages: Vec<TangleMessage> = self.read_transactions(&address, true).await?;
 
-        // TODO: Handle Diff Chain Updates
+            trace!("Tangle Messages: {:?}", messages);
 
-        let message: TangleMessage = document.message;
-        let mut document: IotaDocument = document.document;
-        let mut metadata: Object = Object::new();
+            DiffChain::try_from_messages(&auth, &messages)?
+        };
 
-        // Add the Tangle message ID to the final DID document.
-        document.set_message_id(message.transaction_hash());
+        Ok(DocumentChain::new(auth, diff))
+    }
 
-        // Gather extra metadata that may be useful elsewhere.
-        metadata.insert("message".into(), message.message_str().into());
-        metadata.insert("address".into(), message.address.into());
-
-        Ok((document, metadata))
+    pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
+        self.read_document_chain(did).await.and_then(DocumentChain::fold)
     }
 
     pub(crate) fn check_network(&self, did: &IotaDID) -> Result<()> {
@@ -207,39 +207,4 @@ impl Client {
             tag: None,
         })
     }
-}
-
-fn extract_auth_document(did: &IotaDID, messages: Vec<TangleMessage>) -> Result<TangleDocument> {
-    let (mut docs1, mut docs2): (Vec<_>, Vec<_>) = messages
-        .into_iter()
-        .flat_map(|message| TangleDocument::new(did, message))
-        .partition(|document| document.previous_message_id().is_none());
-
-    docs1.sort_by_key(|document| document.created());
-    docs2.sort_by_key(|document| document.created());
-
-    // Find the first initial document with a valid signature.
-    let mut target: TangleDocument = docs1
-        .into_iter()
-        .find(|item| item.verify().is_ok())
-        .ok_or(Error::InvalidTransactionBundle)?;
-
-    // Follow the chain of successive documents - AKA the auth chain.
-    for maybe in docs2 {
-        if let Some(hash) = maybe.previous_message_id() {
-            // Ignore documents that don't reference the expected Tangle message.
-            if hash != target.message.transaction_hash() {
-                continue;
-            }
-
-            // Ignore documents with invalid signatures.
-            if target.verify_data(&*maybe).is_err() {
-                continue;
-            }
-
-            target = maybe;
-        }
-    }
-
-    Ok(target)
 }

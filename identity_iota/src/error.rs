@@ -14,8 +14,6 @@ pub enum Error {
     ClientError(#[from] iota::client::error::Error),
     #[error("Ternary Error: {0}")]
     TernaryError(#[from] iota::ternary::Error),
-    #[error("Document Chain Error: {0}")]
-    ChainError(#[from] crate::did::ChainError),
     #[error("Invalid Document: {error}")]
     InvalidDocument { error: &'static str },
     #[error("Invalid DID Network")]

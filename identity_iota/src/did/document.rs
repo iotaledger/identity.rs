@@ -20,6 +20,7 @@ use crate::{
     client::{Client, Network},
     did::{DocumentDiff, IotaDID, IotaDocumentBuilder, Properties},
     error::{Error, Result},
+    utils::utf8_to_trytes,
 };
 
 const AUTH_QUERY: (usize, MethodScope) = (0, MethodScope::Authentication);
@@ -179,6 +180,16 @@ impl IotaDocument {
         T: Into<String>,
     {
         self.document.properties_mut().previous_message_id = Some(value.into());
+    }
+
+    /// Returns true if the `IotaDocument` is flagged as immutable.
+    pub fn immutable(&self) -> bool {
+        self.document.properties().immutable
+    }
+
+    /// Sets the value of the `immutable` flag.
+    pub fn set_immutable(&mut self, value: bool) {
+        self.document.properties_mut().immutable = value;
     }
 
     /// Returns a reference to the custom `IotaDocument` properties.
@@ -346,8 +357,22 @@ impl IotaDocument {
     /// Fails if the merge operation or signature operation fails.
     pub fn merge(&mut self, diff: &DocumentDiff) -> Result<()> {
         self.verify_data(diff)?;
+
+        let __serde: Option<String> = self.message_id.take();
+
         *self = diff.merge(self)?;
+        self.message_id = __serde;
+
         Ok(())
+    }
+
+    /// Returns the Tangle address of the DID diff chain.
+    pub fn diff_address(message_id: &str) -> String {
+        let hash: String = IotaDID::encode_key(message_id.as_bytes());
+
+        let mut trytes: String = utf8_to_trytes(&hash);
+        trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
+        trytes
     }
 }
 

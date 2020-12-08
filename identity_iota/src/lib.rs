@@ -7,6 +7,7 @@ extern crate log;
 #[macro_use]
 extern crate serde;
 
+pub mod chain;
 pub mod client;
 pub mod did;
 pub mod error;

@@ -20,6 +20,7 @@ pub enum Network {
 }
 
 impl Network {
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(string: &str) -> Self {
         match string {
             "dev" => Self::Devnet,

@@ -90,7 +90,7 @@ async fn main() -> Result<()> {
     updated.publish_with_client(&client).await?;
 
     // Read the published DID document from the Tangle.
-    let response: (IotaDocument, _) = client.read_document(document.id()).await?;
+    let response: IotaDocument = client.read_document(document.id()).await?;
 
     println!("Document Response > {:#?}", response);
     println!();
