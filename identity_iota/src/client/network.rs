@@ -1,7 +1,7 @@
 use identity_core::common::Url;
-use iota::{client::builder, transaction::bundled::BundledTransaction};
+use iota::client::builder;
 
-use crate::{client::TransactionPrinter, did::IotaDID};
+use crate::did::IotaDID;
 
 lazy_static! {
     static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/mainnet").unwrap();
@@ -24,27 +24,7 @@ impl Network {
         did.network() == self.as_str() || self == Self::Mainnet
     }
 
-    pub fn transaction_url(&self, transaction: &BundledTransaction) -> Url {
-        let hash: TransactionPrinter<_> = TransactionPrinter::hash(transaction);
-
-        let mut url: Url = self.explorer_url().clone();
-
-        url.path_segments_mut()
-            .unwrap()
-            .push("transaction")
-            .push(&hash.to_string());
-
-        url
-    }
-
-    pub fn explorer_url(self) -> &'static Url {
-        match self {
-            Self::Mainnet => &*EXPLORER_MAIN,
-            Self::Devnet => &*EXPLORER_DEV,
-            Self::Comnet => &*EXPLORER_COM,
-        }
-    }
-
+    /// Returns the default node URL of the Tangle network.
     pub fn node_url(self) -> &'static Url {
         match self {
             Self::Mainnet => &*NODE_MAIN,
@@ -53,12 +33,28 @@ impl Network {
         }
     }
 
+    /// Returns the web explorer URL of the Tangle network.
+    pub fn explorer_url(self) -> &'static Url {
+        match self {
+            Self::Mainnet => &*EXPLORER_MAIN,
+            Self::Devnet => &*EXPLORER_DEV,
+            Self::Comnet => &*EXPLORER_COM,
+        }
+    }
+
+    /// Returns the name of the network as a static `str`.
     pub const fn as_str(&self) -> &'static str {
         match self {
             Self::Mainnet => "main",
             Self::Devnet => "dev",
             Self::Comnet => "com",
         }
+    }
+}
+
+impl Default for Network {
+    fn default() -> Self {
+        Network::Mainnet
     }
 }
 

@@ -2,11 +2,15 @@
 extern crate lazy_static;
 
 #[macro_use]
+extern crate log;
+
+#[macro_use]
 extern crate serde;
 
 pub mod client;
 pub mod did;
 pub mod error;
+pub mod tangle;
 pub mod utils;
 pub mod vc;
 
