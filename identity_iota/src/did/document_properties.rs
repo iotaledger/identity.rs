@@ -7,7 +7,7 @@ pub struct Properties {
     pub(crate) created: Timestamp,
     pub(crate) updated: Timestamp,
     pub(crate) immutable: bool,
-    #[serde(skip_serializing_if = "MessageId::is_none")]
+    #[serde(default, skip_serializing_if = "MessageId::is_none")]
     pub(crate) previous_message_id: MessageId,
     #[serde(flatten)]
     pub(crate) properties: Object,

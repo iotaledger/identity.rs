@@ -6,10 +6,11 @@ use iota::{
 };
 
 use crate::{
+    chain::{AuthChain, DiffChain, DocumentChain},
     client::{ClientBuilder, Network, TxnPrinter},
     did::{DocumentDiff, IotaDID, IotaDocument},
     error::{Error, Result},
-    tangle::Message,
+    tangle::{Message, MessageId},
     utils::{bundles_from_trytes, create_address_from_trits, encode_trits, txn_hash_trytes},
 };
 
@@ -32,12 +33,24 @@ impl Client {
         ClientBuilder::new()
     }
 
+    /// Creates a new `Client` with default settings for the given `Network`.
+    pub fn from_network(network: Network) -> Result<Self> {
+        Self::builder()
+            .node(network.node_url().as_str())
+            .network(network)
+            .build()
+    }
+
     /// Creates a new `Client` based on the `ClientBuilder` configuration.
     pub fn from_builder(builder: ClientBuilder) -> Result<Self> {
         let mut client: iota::ClientBuilder = iota::ClientBuilder::new();
 
-        for node in builder.nodes {
-            client = client.node(&node)?;
+        if builder.nodes.is_empty() {
+            client = client.node(builder.network.node_url().as_str())?;
+        } else {
+            for node in builder.nodes {
+                client = client.node(&node)?;
+            }
         }
 
         client = client.network(builder.network.into());
@@ -46,6 +59,11 @@ impl Client {
             client: client.build()?,
             network: builder.network,
         })
+    }
+
+    /// Returns the `Client` Tangle network.
+    pub fn network(&self) -> Network {
+        self.network
     }
 
     /// Returns the default node URL of the `Client` network.
@@ -96,7 +114,7 @@ impl Client {
     ///
     /// Note: The only validation performed is to ensure the correct Tangle
     /// network is selected.
-    pub async fn publish_diff(&self, message_id: &str, diff: &DocumentDiff) -> Result<BundledTransaction> {
+    pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<BundledTransaction> {
         trace!("Publish Diff: {}", diff.id());
         trace!("Tangle Address: {}", IotaDocument::diff_address(message_id));
 
@@ -106,6 +124,35 @@ impl Client {
         let transfer: Transfer = create_transfer(&address, diff)?;
 
         self.send_transfer(transfer).await
+    }
+
+    pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
+        self.read_document_chain(did).await.and_then(DocumentChain::fold)
+    }
+
+    pub async fn read_document_chain(&self, did: &IotaDID) -> Result<DocumentChain> {
+        trace!("Read Document Chain: {}", did);
+        trace!("Auth Chain Address: {}", did.address());
+
+        // Fetch all messages for the auth chain.
+        let address: String = did.address();
+        let messages: Vec<Message> = self.read_messages(&address).await?;
+
+        let auth: AuthChain = AuthChain::try_from_messages(did, &messages)?;
+
+        let diff: DiffChain = if auth.current().immutable() {
+            DiffChain::new()
+        } else {
+            // Fetch all messages for the diff chain.
+            let address: String = IotaDocument::diff_address(auth.current_message_id());
+            let messages: Vec<Message> = self.read_messages(&address).await?;
+
+            trace!("Tangle Messages: {:?}", messages);
+
+            DiffChain::try_from_messages(&auth, &messages)?
+        };
+
+        Ok(DocumentChain::new(auth, diff))
     }
 
     pub async fn read_messages(&self, address: &str) -> Result<Vec<Message>> {

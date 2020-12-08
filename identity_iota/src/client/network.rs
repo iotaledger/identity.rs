@@ -20,8 +20,16 @@ pub enum Network {
 }
 
 impl Network {
+    pub fn from_name(string: &str) -> Self {
+        match string {
+            "dev" => Self::Devnet,
+            "com" => Self::Comnet,
+            _ => Self::Mainnet,
+        }
+    }
+
     pub fn matches_did(self, did: &IotaDID) -> bool {
-        did.network() == self.as_str() || self == Self::Mainnet
+        did.network() == self.as_str()
     }
 
     /// Returns the default node URL of the Tangle network.
@@ -43,7 +51,7 @@ impl Network {
     }
 
     /// Returns the name of the network as a static `str`.
-    pub const fn as_str(&self) -> &'static str {
+    pub const fn as_str(self) -> &'static str {
         match self {
             Self::Mainnet => "main",
             Self::Devnet => "dev",
@@ -75,5 +83,36 @@ impl From<Network> for builder::Network {
             Network::Devnet => Self::Devnet,
             Network::Comnet => Self::Comnet,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_name() {
+        assert_eq!(Network::from_name("com"), Network::Comnet);
+        assert_eq!(Network::from_name("dev"), Network::Devnet);
+        assert_eq!(Network::from_name("main"), Network::Mainnet);
+        assert_eq!(Network::from_name("anything"), Network::Mainnet);
+    }
+
+    #[test]
+    fn test_matches_did() {
+        let did: IotaDID = IotaDID::new(b"").unwrap();
+        assert!(Network::matches_did(Network::Mainnet, &did));
+        assert!(!Network::matches_did(Network::Comnet, &did));
+        assert!(!Network::matches_did(Network::Devnet, &did));
+
+        let did: IotaDID = IotaDID::with_network(b"", "com").unwrap();
+        assert!(Network::matches_did(Network::Comnet, &did));
+        assert!(!Network::matches_did(Network::Mainnet, &did));
+        assert!(!Network::matches_did(Network::Devnet, &did));
+
+        let did: IotaDID = IotaDID::with_network(b"", "dev").unwrap();
+        assert!(Network::matches_did(Network::Devnet, &did));
+        assert!(!Network::matches_did(Network::Mainnet, &did));
+        assert!(!Network::matches_did(Network::Comnet, &did));
     }
 }

@@ -4,7 +4,7 @@
 //! cargo run --example document
 use identity_core::resolver::{dereference, resolve, Dereference, Resolution};
 use identity_iota::{
-    client::{Client, ClientBuilder, Network, PublishDocumentResponse},
+    client::Client,
     crypto::KeyPair,
     did::{IotaDID, IotaDocument},
     error::Result,

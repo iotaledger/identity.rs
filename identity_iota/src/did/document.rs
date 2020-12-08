@@ -17,6 +17,7 @@ use identity_core::{
 use serde::Serialize;
 
 use crate::{
+    client::{Client, Network},
     did::{DocumentDiff, IotaDID, IotaDocumentBuilder, Properties},
     error::{Error, Result},
     tangle::{MessageId, TangleRef},
@@ -35,7 +36,6 @@ type __Document = VerifiableDocument<Properties>;
 #[serde(try_from = "Document", into = "__Document")]
 pub struct IotaDocument {
     document: __Document,
-    #[serde(skip)]
     message_id: MessageId,
 }
 
@@ -333,9 +333,29 @@ impl IotaDocument {
         Ok(())
     }
 
+    /// Publishes the `IotaDocument` to the Tangle using a default `Client`.
+    pub async fn publish(&mut self) -> Result<()> {
+        let network: Network = Network::from_name(self.id().network());
+        let client: Client = Client::from_network(network)?;
+
+        self.publish_with_client(&client).await
+    }
+
+    /// Publishes the `IotaDocument` to the Tangle using the provided `Client`.
+    pub async fn publish_with_client(&mut self, client: &Client) -> Result<()> {
+        let transaction: _ = client.publish_document(self).await?;
+        let message_id: String = client.transaction_hash(&transaction);
+
+        self.set_message_id(message_id.into());
+
+        Ok(())
+    }
+
     /// Returns the Tangle address of the DID diff chain.
-    pub fn diff_address(message_id: &str) -> String {
-        let hash: String = IotaDID::encode_key(message_id.as_bytes());
+    pub fn diff_address(message_id: &MessageId) -> String {
+        debug_assert!(message_id.is_some());
+
+        let hash: String = IotaDID::encode_key(message_id.as_str().as_bytes());
 
         let mut trytes: String = utf8_to_trytes(&hash);
         trytes.truncate(iota_constants::HASH_TRYTES_SIZE);

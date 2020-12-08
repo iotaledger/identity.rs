@@ -73,10 +73,9 @@ fn client(params: JsValue) -> Result<Client, JsValue> {
 pub async fn publish(doc: JsValue, params: JsValue) -> Result<JsValue, JsValue> {
     client(params)?
         .publish_document(&doc.into_serde().map_err(js_err)?)
-        .send()
         .await
         .map_err(js_err)
-        .map(|response| TransactionPrinter::hash(&response.tail).to_string())
+        .map(|response| TransactionPrinter::hash(&response).to_string())
         .map(Into::into)
 }
 

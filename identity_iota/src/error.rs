@@ -28,4 +28,6 @@ pub enum Error {
     InvalidTransactionTrytes,
     #[error("Invalid Bundle Tail")]
     InvalidBundleTail,
+    #[error("Chain Error: {error}")]
+    ChainError { error: &'static str },
 }

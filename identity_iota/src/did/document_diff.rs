@@ -5,6 +5,7 @@ use identity_core::{
 };
 
 use crate::{
+    client::{Client, Network},
     did::{IotaDID, IotaDocument},
     error::Result,
     tangle::{MessageId, TangleRef},
@@ -53,6 +54,24 @@ impl DocumentDiff {
     /// Returns a reference to the `DocumentDiff` proof.
     pub fn proof(&self) -> Option<&Signature> {
         self.proof.as_ref()
+    }
+
+    /// Publishes the `DocumentDiff` to the Tangle using a default `Client`.
+    pub async fn publish(&mut self, message_id: &MessageId) -> Result<()> {
+        let network: Network = Network::from_name(self.did.network());
+        let client: Client = Client::from_network(network)?;
+
+        self.publish_with_client(&client, message_id).await
+    }
+
+    /// Publishes the `DocumentDiff` to the Tangle using the provided `Client`.
+    pub async fn publish_with_client(&mut self, client: &Client, message_id: &MessageId) -> Result<()> {
+        let transaction: _ = client.publish_diff(message_id, self).await?;
+        let message_id: String = client.transaction_hash(&transaction);
+
+        self.set_message_id(message_id.into());
+
+        Ok(())
     }
 
     pub(crate) fn merge(&self, document: &IotaDocument) -> Result<IotaDocument> {

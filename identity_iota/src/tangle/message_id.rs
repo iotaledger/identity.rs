@@ -5,11 +5,16 @@ pub struct MessageId(Option<String>);
 impl MessageId {
     pub const NONE: Self = Self(None);
 
-    pub fn new(value: String) -> Self {
-        if value.is_empty() {
-            Self(None)
-        } else {
+    pub fn new<T>(value: T) -> Self
+    where
+        T: Into<String>,
+    {
+        let value: String = value.into();
+
+        if maybe_trytes(&value) {
             Self(Some(value))
+        } else {
+            Self(None)
         }
     }
 
@@ -24,6 +29,14 @@ impl MessageId {
     pub fn as_str(&self) -> &str {
         self.0.as_deref().unwrap_or_default()
     }
+}
+
+fn maybe_trytes(input: &str) -> bool {
+    if input.len() != iota_constants::HASH_TRYTES_SIZE {
+        return false;
+    }
+
+    input.chars().all(|ch| iota_constants::TRYTE_ALPHABET.contains(&ch))
 }
 
 impl Default for MessageId {
@@ -47,5 +60,25 @@ where
             Some(inner) => inner == other.as_ref(),
             None => false,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[rustfmt::skip]
+    fn test_new() {
+        // Valid
+        assert!(MessageId::new("BCZVFSZPSMLPEQUXVWQQIHHQJJXZPZWRERJVBKKXHKMJAQJUN9OIXDBKMWFSAQIGC9YNXCCFOFKBQZ999").is_some());
+        assert!(MessageId::new("999999999999999999999999999999999999999999999999999999999999999999999999999999999").is_some());
+
+        // Invalid
+        assert!(MessageId::new("").is_none());
+        assert!(MessageId::new("         ").is_none());
+        assert!(MessageId::new("- - - - - - -").is_none());
+        assert!(MessageId::new("999999999999999999-999999999999999999999999999-9999999999999999999999-99999999999").is_none());
+        assert!(MessageId::new("BCZVFSZPSMLPEQUXVWQQIHHQJJXZPZWRERJVBKKXHKMJAQJUN9OIXDBKMWFSAQIGC9YNXCCFOFKBQZ").is_none());
     }
 }
