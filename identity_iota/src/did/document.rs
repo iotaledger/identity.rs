@@ -352,14 +352,18 @@ impl IotaDocument {
     }
 
     /// Returns the Tangle address of the DID diff chain.
-    pub fn diff_address(message_id: &MessageId) -> String {
-        debug_assert!(message_id.is_some());
+    pub fn diff_address(message_id: &MessageId) -> Result<String> {
+        if message_id.is_none() {
+            return Err(Error::InvalidDocument {
+                error: "Invalid Message Id",
+            });
+        }
 
         let hash: String = IotaDID::encode_key(message_id.as_str().as_bytes());
 
         let mut trytes: String = utf8_to_trytes(&hash);
         trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
-        trytes
+        Ok(trytes)
     }
 }
 

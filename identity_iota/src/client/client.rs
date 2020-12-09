@@ -116,11 +116,11 @@ impl Client {
     /// network is selected.
     pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<BundledTransaction> {
         trace!("Publish Diff: {}", diff.id());
-        trace!("Tangle Address: {}", IotaDocument::diff_address(message_id));
+        trace!("Tangle Address: {}", IotaDocument::diff_address(message_id)?);
 
         self.check_network(diff.id())?;
 
-        let address: String = IotaDocument::diff_address(message_id);
+        let address: String = IotaDocument::diff_address(message_id)?;
         let transfer: Transfer = create_transfer(&address, diff)?;
 
         self.send_transfer(transfer).await
@@ -144,7 +144,7 @@ impl Client {
             DiffChain::new()
         } else {
             // Fetch all messages for the diff chain.
-            let address: String = IotaDocument::diff_address(auth.current_message_id());
+            let address: String = IotaDocument::diff_address(auth.current_message_id())?;
             let messages: Vec<Message> = self.read_messages(&address).await?;
 
             trace!("Tangle Messages: {:?}", messages);
