@@ -21,7 +21,8 @@ identity_core = { path = "../../identity_core" }
 identity_iota = { path = "../../identity_iota" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-rand = { version = "0.7", default-features = false, features = ["wasm-bindgen"] }
+getrandom = { version = "0.2", default-features = false, features = ["js", "wasm-bindgen"] }
+# rand = { version = "0.7", default-features = false, features = ["wasm-bindgen"] }
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false
