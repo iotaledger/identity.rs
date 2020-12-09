@@ -3,20 +3,6 @@ macro_rules! impl_bytes {
         #[derive(Clone)]
         pub struct $ident(Vec<u8>);
 
-        impl $ident {
-            pub fn len(&self) -> usize {
-                self.0.len()
-            }
-
-            pub fn is_empty(&self) -> bool {
-                self.0.is_empty()
-            }
-
-            pub fn to_hex(&self) -> String {
-                $crate::utils::encode_hex(self)
-            }
-        }
-
         impl From<Vec<u8>> for $ident {
             fn from(other: Vec<u8>) -> $ident {
                 Self(other)
@@ -44,13 +30,13 @@ macro_rules! impl_bytes {
 
         impl ::core::fmt::Debug for $ident {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                write!(f, "{:?}", self.to_hex())
+                write!(f, "{:?}", stringify!($ident))
             }
         }
 
         impl ::core::fmt::Display for $ident {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                write!(f, "{}", self.to_hex())
+                write!(f, "{}", stringify!($ident))
             }
         }
     };

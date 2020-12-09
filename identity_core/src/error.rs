@@ -14,6 +14,8 @@ pub enum Error {
     DecodeBase58(#[from] bs58::decode::Error),
     #[error("Failed to decode base64 data: {0}")]
     DecodeBase64(#[from] base64::DecodeError),
+    #[error("Crypto Error: {0}")]
+    CryptoError(crypto::Error),
     #[error("Invalid DID: {0}")]
     InvalidDID(#[from] did_url::Error),
     #[error("Invalid DID Document: {0}")]
@@ -30,4 +32,10 @@ pub enum Error {
     ResolutionError(anyhow::Error),
     #[error("DID Dereference Error: {0}")]
     DereferenceError(anyhow::Error),
+}
+
+impl From<crypto::Error> for Error {
+    fn from(other: crypto::Error) -> Self {
+        Self::CryptoError(other)
+    }
 }

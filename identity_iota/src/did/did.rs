@@ -40,7 +40,7 @@ impl IotaDID {
         T: Into<Option<&'b str>>,
         U: Into<Option<&'c str>>,
     {
-        let key: KeyPair = JcsEd25519Signature2020::new_keypair();
+        let key: KeyPair = JcsEd25519Signature2020::new_keypair()?;
         let did: Self = Self::with_network_and_shard(key.public().as_ref(), network, shard)?;
 
         Ok((did, key))
@@ -439,7 +439,7 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let key: KeyPair = JcsEd25519Signature2020::new_keypair();
+        let key: KeyPair = JcsEd25519Signature2020::new_keypair().unwrap();
         let did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
         let tag: String = IotaDID::encode_key(key.public().as_ref());
 
@@ -450,7 +450,7 @@ mod tests {
 
     #[test]
     fn test_with_network() {
-        let key: KeyPair = JcsEd25519Signature2020::new_keypair();
+        let key: KeyPair = JcsEd25519Signature2020::new_keypair().unwrap();
         let did: IotaDID = IotaDID::with_network(key.public().as_ref(), "foo").unwrap();
         let tag: String = IotaDID::encode_key(key.public().as_ref());
 
@@ -461,7 +461,7 @@ mod tests {
 
     #[test]
     fn test_with_network_and_shard() {
-        let key: KeyPair = JcsEd25519Signature2020::new_keypair();
+        let key: KeyPair = JcsEd25519Signature2020::new_keypair().unwrap();
         let did: IotaDID = IotaDID::with_network_and_shard(key.public().as_ref(), "foo", "shard-1").unwrap();
         let tag: String = IotaDID::encode_key(key.public().as_ref());
 
@@ -472,7 +472,7 @@ mod tests {
 
     #[test]
     fn test_normalize() {
-        let key: KeyPair = JcsEd25519Signature2020::new_keypair();
+        let key: KeyPair = JcsEd25519Signature2020::new_keypair().unwrap();
         let tag: String = IotaDID::encode_key(key.public().as_ref());
 
         // A DID with "main" as the network can be normalized ("main" removed)

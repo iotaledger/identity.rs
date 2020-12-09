@@ -19,15 +19,15 @@ impl Key {
     #[wasm_bindgen(constructor)]
     pub fn new(key_type: &str) -> Result<Key, JsValue> {
         match key_type.parse().map_err(js_err)? {
-            MethodType::Ed25519VerificationKey2018 => Ok(Self::generate_ed25519()),
+            MethodType::Ed25519VerificationKey2018 => Self::generate_ed25519(),
             _ => Err("Invalid Key Type".into()),
         }
     }
 
     /// Generates a new `Key` object suitable for ed25519 signatures.
     #[wasm_bindgen(js_name = generateEd25519)]
-    pub fn generate_ed25519() -> Key {
-        Self(JcsEd25519Signature2020::new_keypair())
+    pub fn generate_ed25519() -> Result<Key, JsValue> {
+        JcsEd25519Signature2020::new_keypair().map_err(js_err).map(Self)
     }
 
     /// Parses a `Key` object from base58-encoded public/private keys.

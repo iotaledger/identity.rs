@@ -57,8 +57,8 @@ async fn main() -> Result<()> {
     let mut updated: IotaDocument = document.clone();
     let message_id: TransactionPrinter<_> = TransactionPrinter::hash(&response.tail);
 
-    let key1: KeyPair = JcsEd25519Signature2020::new_keypair();
-    let key2: KeyPair = JcsEd25519Signature2020::new_keypair();
+    let key1: KeyPair = JcsEd25519Signature2020::new_keypair()?;
+    let key2: KeyPair = JcsEd25519Signature2020::new_keypair()?;
 
     let authentication: Method = MethodBuilder::default()
         .id((**document.id()).join("#key-2")?)

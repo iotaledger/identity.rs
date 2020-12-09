@@ -162,7 +162,7 @@ mod tests {
     #[test]
     #[rustfmt::skip]
     fn test_presentation_builder_valid() {
-        let keypair: KeyPair = JcsEd25519Signature2020::new_keypair();
+        let keypair: KeyPair = JcsEd25519Signature2020::new_keypair().unwrap();
         let controller: DID = "did:example:1234".parse().unwrap();
 
         let method: Method = MethodBuilder::default()

@@ -1,12 +1,10 @@
 use core::convert::TryInto as _;
-use did_doc::{Error, Result, SignatureData, SignatureSuite};
-use ed25519_zebra::{Signature, SigningKey, VerificationKey, VerificationKeyBytes};
-use rand::rngs::OsRng;
-use serde::Serialize;
-use sha2::{
-    digest::{consts::U32, generic_array::GenericArray},
-    Digest as _, Sha256,
+use crypto::hashes::sha;
+use crypto::ed25519::{
+    verify, PublicKey, SecretKey, Signature, COMPRESSED_PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH, SIGNATURE_LENGTH,
 };
+use did_doc::{Error, Result, SignatureData, SignatureSuite};
+use serde::Serialize;
 
 use crate::{
     crypto::KeyPair,
@@ -14,29 +12,35 @@ use crate::{
 };
 
 const SIGNATURE_NAME: &str = "JcsEd25519Signature2020";
-const SIGNATURE_SIZE: usize = 64;
-const PUBLIC_KEY_BYTES: usize = 32;
-const SECRET_KEY_BYTES: usize = 32;
+
+type Sha256Output = [u8; 32];
 
 #[derive(Clone, Copy, Debug)]
 pub struct JcsEd25519Signature2020;
 
 impl JcsEd25519Signature2020 {
-    pub fn new_keypair() -> KeyPair {
-        let secret: SigningKey = SigningKey::new(OsRng);
-        let public: VerificationKey = (&secret).into();
-        let public: VerificationKeyBytes = public.into();
+    pub fn new_keypair() -> Result<KeyPair> {
+        let secret: SecretKey = SecretKey::generate().map_err(|_| Error::message("Failed to Generate KeyPair"))?;
+        let public: PublicKey = secret.public_key();
 
-        KeyPair::new(public.as_ref().to_vec().into(), secret.as_ref().to_vec().into())
+        Ok(KeyPair::new(
+            public.to_compressed_bytes().to_vec().into(),
+            secret.to_le_bytes().to_vec().into(),
+        ))
     }
 
-    fn normalize<T>(data: &T) -> Result<GenericArray<u8, U32>>
+    fn normalize<T>(data: &T) -> Result<Sha256Output>
     where
         T: Serialize,
     {
-        serde_jcs::to_vec(data)
-            .map_err(|_| Error::message("Cannot Serialize Document"))
-            .map(|json| Sha256::digest(&json))
+        let json: Vec<u8> = serde_jcs::to_vec(data)
+            .map_err(|_| Error::message("Cannot Serialize Document"))?;
+
+        let mut output: Sha256Output = [0; 32];
+
+        sha::SHA256(&json, &mut output);
+
+        Ok(output)
     }
 }
 
@@ -66,7 +70,7 @@ impl SignatureSuite for JcsEd25519Signature2020 {
 
         let signature: Vec<u8> = decode_b58(&signature).map_err(|_| Error::message("Invalid Signature Data"))?;
         let verified: Vec<u8> = ed25519_verify(&signature, public)?;
-        let digest: GenericArray<u8, U32> = Self::normalize(message)?;
+        let digest: Sha256Output = Self::normalize(message)?;
 
         if digest[..] == verified[..] {
             Ok(())
@@ -76,48 +80,50 @@ impl SignatureSuite for JcsEd25519Signature2020 {
     }
 }
 
-fn pubkey(slice: &[u8]) -> Result<VerificationKey> {
-    if slice.len() < PUBLIC_KEY_BYTES {
-        return Err(Error::message("Invalid Key Format"));
-    }
-
-    slice[..PUBLIC_KEY_BYTES]
+fn pubkey(slice: &[u8]) -> Result<PublicKey> {
+    let bytes: [u8; COMPRESSED_PUBLIC_KEY_LENGTH] = slice[..COMPRESSED_PUBLIC_KEY_LENGTH]
         .try_into()
-        .map_err(|_| Error::message("Invalid Key Format"))
+        .map_err(|_| Error::message("Invalid Key Format"))?;
+
+    PublicKey::from_compressed_bytes(bytes).map_err(|_| Error::message("Invalid Key Format"))
 }
 
-fn seckey(slice: &[u8]) -> Result<SigningKey> {
-    if slice.len() < SECRET_KEY_BYTES {
-        return Err(Error::message("Invalid Key Format"));
-    }
-
-    slice[..SECRET_KEY_BYTES]
+fn seckey(slice: &[u8]) -> Result<SecretKey> {
+    let bytes: [u8; SECRET_KEY_LENGTH] = slice[..SECRET_KEY_LENGTH]
         .try_into()
-        .map_err(|_| Error::message("Invalid Key Format"))
+        .map_err(|_| Error::message("Invalid Key Format"))?;
+
+    SecretKey::from_le_bytes(bytes).map_err(|_| Error::message("Invalid Key Format"))
 }
 
 // output = <SIGNATURE><MESSAGE>
 fn ed25519_sign(message: &[u8], secret: &[u8]) -> Result<Vec<u8>> {
-    let key: SigningKey = seckey(secret)?;
-    let sig: [u8; SIGNATURE_SIZE] = key.sign(message).into();
+    let key: SecretKey = seckey(secret)?;
+    let sig: [u8; SIGNATURE_LENGTH] = key.sign(message).to_bytes();
 
     Ok([&sig, message].concat())
 }
 
 // signature = <SIGNATURE><MESSAGE>
 fn ed25519_verify(signature: &[u8], public: &[u8]) -> Result<Vec<u8>> {
-    if signature.len() < SIGNATURE_SIZE {
-        return Err(Error::message("Invalid Key Format"));
+    if signature.len() < SIGNATURE_LENGTH {
+        return Err(Error::message("Invalid Signature Format"));
     }
 
-    let key: VerificationKey = pubkey(public)?;
-    let (sig, msg): (&[u8], &[u8]) = signature.split_at(SIGNATURE_SIZE);
-    let sig: Signature = sig.try_into().map_err(|_| Error::message("Invalid Key Format"))?;
+    let key: PublicKey = pubkey(public)?;
+    let (sig, msg): (&[u8], &[u8]) = signature.split_at(SIGNATURE_LENGTH);
 
-    key.verify(&sig, msg)
-        .map_err(|_| Error::message("Invalid Key Format"))?;
+    let bytes: [u8; SIGNATURE_LENGTH] = sig[..SIGNATURE_LENGTH]
+        .try_into()
+        .map_err(|_| Error::message("Invalid Signature Format"))?;
 
-    Ok(msg.to_vec())
+    let sig: Signature = Signature::from_bytes(bytes);
+
+    if verify(&key, &sig, msg) {
+        Ok(msg.to_vec())
+    } else {
+        Err(Error::message("Invalid Signature Format"))
+    }
 }
 
 #[cfg(test)]

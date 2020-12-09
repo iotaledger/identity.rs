@@ -18,15 +18,20 @@ bs58 = { version = "0.3", default-features = false, features = ["std"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "d6944acd930447c5d6d2d762fe6245a35cc7e39c", default-features = false, features = ["std"] }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
-ed25519-zebra = { version = "2.2", default-features = false }
 hex = { version = "0.4", default-features = false , features = ["std"] }
 lazy_static = { version = "1.4", default-features = false }
 rand = { version = "0.7", default-features = false, features = ["getrandom"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_jcs = { version = "0.1", default-features = false }
 serde_json = { version = "1.0", features = ["preserve_order"] }
-sha2 = { version = "0.9" }
 thiserror = { version = "1.0" }
 zeroize = { version = "1.1" }
 
 identity_diff = { path = "../identity_diff", version = "0.1.0", features = ["diff_derive"] }
+
+[dependencies.crypto]
+git = "https://github.com/iotaledger/crypto.rs"
+rev = "bc35d38561efcf20a50aeb0f0b08028b4b4fda46"
+package = "iota-crypto"
+default-features = false
+features = ["ed25519", "sha", "random"]
