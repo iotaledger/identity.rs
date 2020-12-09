@@ -12,7 +12,7 @@ use identity_core::{
     vc::{Credential, CredentialBuilder, CredentialSubject, VerifiableCredential},
 };
 use identity_iota::{
-    client::{Client, ClientBuilder, Network, PublishDocumentResponse},
+    client::Client,
     crypto::KeyPair,
     did::IotaDocument,
     error::Result,
@@ -21,18 +21,20 @@ use identity_iota::{
 
 // A helper function to generate and new DID Document/KeyPair, sign the
 // document, publish it to the Tangle, and return the Document/KeyPair.
-async fn document(client: &Client, network: Network) -> Result<(IotaDocument, KeyPair)> {
-    let (mut document, keypair): (IotaDocument, KeyPair) =
-        IotaDocument::generate_ed25519("key-1", network.as_str(), None)?;
+async fn document(client: &Client) -> Result<(IotaDocument, KeyPair)> {
+    let (mut document, keypair): (IotaDocument, KeyPair) = IotaDocument::builder()
+        .authentication_tag("key-1")
+        .did_network(client.network().as_str())
+        .build()?;
 
     document.sign(keypair.secret())?;
 
     println!("DID Document (signed) > {:#}", document);
     println!();
 
-    let response: PublishDocumentResponse = client.publish_document(&document).send().await?;
+    let transaction: _ = client.publish_document(&document).await?;
 
-    println!("DID Document Transaction > {}", client.transaction_url(&response.tail));
+    println!("DID Document Transaction > {}", client.transaction_url(&transaction));
     println!();
 
     Ok((document, keypair))
@@ -52,18 +54,10 @@ fn subject(subject: &DID) -> Result<CredentialSubject> {
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-    // TODO: Make configurable
-    let network: Network = Network::Mainnet;
-    let node: &str = network.node_url().as_str();
+    let client: Client = Client::new()?;
 
-    #[rustfmt::skip]
-    println!("Creating Identity Client using network({:?}) and node({})", network, node);
-    println!();
-
-    let client: Client = ClientBuilder::new().node(node).network(network).build()?;
-
-    let (doc_iss, key_iss): (IotaDocument, KeyPair) = document(&client, network).await?;
-    let (doc_sub, _key_sub): (IotaDocument, KeyPair) = document(&client, network).await?;
+    let (doc_iss, key_iss): (IotaDocument, KeyPair) = document(&client).await?;
+    let (doc_sub, _key_sub): (IotaDocument, KeyPair) = document(&client).await?;
 
     // Create a new Credential with claims about "subject", specified by "issuer".
     let credential: Credential = CredentialBuilder::default()
