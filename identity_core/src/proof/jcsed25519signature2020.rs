@@ -1,7 +1,9 @@
 use core::convert::TryInto as _;
-use crypto::hashes::sha;
-use crypto::ed25519::{
-    verify, PublicKey, SecretKey, Signature, COMPRESSED_PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH, SIGNATURE_LENGTH,
+use crypto::{
+    ed25519::{
+        verify, PublicKey, SecretKey, Signature, COMPRESSED_PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH, SIGNATURE_LENGTH,
+    },
+    hashes::sha,
 };
 use did_doc::{Error, Result, SignatureData, SignatureSuite};
 use serde::Serialize;
@@ -33,8 +35,7 @@ impl JcsEd25519Signature2020 {
     where
         T: Serialize,
     {
-        let json: Vec<u8> = serde_jcs::to_vec(data)
-            .map_err(|_| Error::message("Cannot Serialize Document"))?;
+        let json: Vec<u8> = serde_jcs::to_vec(data).map_err(|_| Error::message("Cannot Serialize Document"))?;
 
         let mut output: Sha256Output = [0; 32];
 
