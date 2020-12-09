@@ -1,4 +1,6 @@
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+use core::fmt::{Debug, Formatter, Result};
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 pub struct MessageId(Option<String>);
 
@@ -31,12 +33,10 @@ impl MessageId {
     }
 }
 
-fn maybe_trytes(input: &str) -> bool {
-    if input.len() != iota_constants::HASH_TRYTES_SIZE {
-        return false;
+impl Debug for MessageId {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        f.write_str(self.0.as_deref().unwrap_or_default())
     }
-
-    input.chars().all(|ch| iota_constants::TRYTE_ALPHABET.contains(&ch))
 }
 
 impl Default for MessageId {
@@ -61,6 +61,14 @@ where
             None => false,
         }
     }
+}
+
+fn maybe_trytes(input: &str) -> bool {
+    if input.len() != iota_constants::HASH_TRYTES_SIZE {
+        return false;
+    }
+
+    input.chars().all(|ch| iota_constants::TRYTE_ALPHABET.contains(&ch))
 }
 
 #[cfg(test)]

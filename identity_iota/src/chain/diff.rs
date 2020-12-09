@@ -1,9 +1,9 @@
 use core::slice::Iter;
 
 use crate::{
-    chain::AuthChain,
+    chain::{AuthChain, DocumentChain},
     did::{DocumentDiff, IotaDID},
-    error::Result,
+    error::{Error, Result},
     tangle::{Message, MessageId, MessageIndex, TangleRef as _},
 };
 
@@ -28,7 +28,7 @@ impl DiffChain {
 
         let mut this: Self = Self::new();
 
-        while let Some(mut list) = index.remove(message_id(auth, &this)) {
+        while let Some(mut list) = index.remove(DocumentChain::__diff_message_id(auth, &this)) {
             'inner: while let Some(next) = list.pop() {
                 if auth.current().verify_data(&next).is_ok() {
                     this.inner.push(next);
@@ -55,6 +55,11 @@ impl DiffChain {
         self.inner.is_empty()
     }
 
+    /// Empties the diff chain, removing all diffs.
+    pub fn clear(&mut self) {
+        self.inner.clear();
+    }
+
     /// Returns an iterator yielding references to `DocumentDiff`s.
     pub fn iter(&self) -> Iter<'_, DocumentDiff> {
         self.inner.iter()
@@ -64,14 +69,75 @@ impl DiffChain {
     pub fn current_message_id(&self) -> Option<&MessageId> {
         self.inner.last().map(|diff| diff.message_id())
     }
+
+    /// Adds a new diff to the diff chain.
+    ///
+    /// # Errors
+    ///
+    /// Fails if the diff signature is invalid or the Tangle message
+    /// references within the diff are invalid.
+    pub fn try_push(&mut self, auth: &AuthChain, diff: DocumentDiff) -> Result<()> {
+        self.check_validity(auth, &diff)?;
+
+        // SAFETY: we performed the necessary validation in `check_validity`.
+        unsafe {
+            self.push_unchecked(diff);
+        }
+
+        Ok(())
+    }
+
+    /// Adds a new diff to the diff chain with performing validation checks.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe because it does not check the validity of
+    /// the signature or Tangle references of the `DocumentDiff`.
+    pub unsafe fn push_unchecked(&mut self, diff: DocumentDiff) {
+        self.inner.push(diff);
+    }
+
+    /// Returns `true` if the `DocumentDiff` can be added to the diff chain.
+    pub fn is_valid(&self, auth: &AuthChain, diff: &DocumentDiff) -> bool {
+        self.check_validity(auth, diff).is_ok()
+    }
+
+    /// Checks if the `DocumentDiff` can be added to the diff chain.
+    ///
+    /// # Errors
+    ///
+    /// Fails if the `DocumentDiff` is not a valid addition.
+    pub fn check_validity(&self, auth: &AuthChain, diff: &DocumentDiff) -> Result<()> {
+        if auth.current().verify_data(diff).is_err() {
+            return Err(Error::ChainError {
+                error: "Invalid Signature",
+            });
+        }
+
+        if diff.message_id().is_none() {
+            return Err(Error::ChainError {
+                error: "Invalid Message Id",
+            });
+        }
+
+        if diff.previous_message_id().is_none() {
+            return Err(Error::ChainError {
+                error: "Invalid Previous Message Id",
+            });
+        }
+
+        if diff.previous_message_id() != DocumentChain::__diff_message_id(auth, self) {
+            return Err(Error::ChainError {
+                error: "Invalid Previous Message Id",
+            });
+        }
+
+        Ok(())
+    }
 }
 
 impl Default for DiffChain {
     fn default() -> Self {
         Self::new()
     }
-}
-
-fn message_id<'a>(auth: &'a AuthChain, diff: &'a DiffChain) -> &'a MessageId {
-    diff.current_message_id().unwrap_or_else(|| auth.current_message_id())
 }

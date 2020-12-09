@@ -152,7 +152,7 @@ impl Client {
             DiffChain::try_from_messages(&auth, &messages)?
         };
 
-        Ok(DocumentChain::new(auth, diff))
+        DocumentChain::with_diff_chain(auth, diff)
     }
 
     pub async fn read_messages(&self, address: &str) -> Result<Vec<Message>> {

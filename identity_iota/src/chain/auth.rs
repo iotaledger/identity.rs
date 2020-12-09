@@ -77,9 +77,29 @@ impl AuthChain {
     /// # Errors
     ///
     /// Fails if the document signature is invalid or the Tangle message
-    /// references within the document are invalid
+    /// references within the document are invalid.
     pub fn try_push(&mut self, document: IotaDocument) -> Result<()> {
-        if self.current.verify_data(&document).is_err() {
+        self.check_validity(&document)?;
+
+        self.history
+            .get_or_insert_with(Vec::new)
+            .push(mem::replace(&mut self.current, document));
+
+        Ok(())
+    }
+
+    /// Returns `true` if the `IotaDocument` can be added to the auth chain.
+    pub fn is_valid(&self, document: &IotaDocument) -> bool {
+        self.check_validity(document).is_ok()
+    }
+
+    /// Checks if the `IotaDocument` can be added to the auth chain.
+    ///
+    /// # Errors
+    ///
+    /// Fails if the `IotaDocument` is not a valid addition.
+    pub fn check_validity(&self, document: &IotaDocument) -> Result<()> {
+        if self.current.verify_data(document).is_err() {
             return Err(Error::ChainError {
                 error: "Invalid Signature",
             });
@@ -102,10 +122,6 @@ impl AuthChain {
                 error: "Invalid Previous Message Id",
             });
         }
-
-        self.history
-            .get_or_insert_with(Vec::new)
-            .push(mem::replace(&mut self.current, document));
 
         Ok(())
     }
