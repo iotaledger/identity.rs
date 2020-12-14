@@ -126,6 +126,7 @@ impl DocumentChain {
     ///
     /// # Errors
     ///
+    /// Fails if the document diff is invalid.
     pub fn try_push_diff(&mut self, diff: DocumentDiff) -> Result<()> {
         self.diff_chain.check_validity(&self.auth_chain, &diff)?;
 

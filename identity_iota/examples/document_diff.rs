@@ -27,9 +27,7 @@ async fn main() -> Result<()> {
     // =========================================================================
 
     {
-        let (mut document, keypair): (IotaDocument, KeyPair) = IotaDocument::builder()
-            .did_network(network)
-            .build()?;
+        let (mut document, keypair): (IotaDocument, KeyPair) = IotaDocument::builder().did_network(network).build()?;
 
         document.sign(keypair.secret())?;
         document.publish_with_client(&client).await?;
