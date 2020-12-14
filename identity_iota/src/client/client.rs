@@ -17,6 +17,7 @@ use crate::{
     },
     did::{IotaDID, IotaDocument},
     error::Result,
+    utils::create_address_from_trits,
 };
 
 #[derive(Clone, Debug)]
@@ -58,7 +59,7 @@ impl Client {
     }
 
     pub fn read_transactions<'a>(&'a self, did: &IotaDID) -> ReadTransactionsRequest<'a> {
-        ReadTransactionsRequest::new(self, did.address().unwrap())
+        ReadTransactionsRequest::new(self, create_address_from_trits(did.address()).unwrap())
     }
 
     pub fn send_transfer(&self) -> SendTransferRequest {

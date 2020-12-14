@@ -6,6 +6,7 @@ use crate::{
     client::{SendTransferRequest, SendTransferResponse, TransactionPrinter},
     did::{IotaDID, IotaDocument},
     error::{Error, Result},
+    utils::create_address_from_trits,
 };
 
 #[derive(Clone, PartialEq)]
@@ -52,12 +53,12 @@ impl<'a, 'b> PublishDocumentRequest<'a, 'b> {
 
         if self.transfer.trace {
             println!("[+] trace(2): Authentication: {:?}", self.document.authentication());
-            println!("[+] trace(3): Tangle Address: {:?}", did.address_hash());
+            println!("[+] trace(3): Tangle Address: {:?}", did.address());
         }
 
         // Create a transfer to publish the DID document at the specified address.
         let transfer: Transfer = Transfer {
-            address: did.address()?,
+            address: create_address_from_trits(did.address())?,
             value: 0,
             message: Some(self.document.to_json()?),
             tag: None,

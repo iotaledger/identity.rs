@@ -5,7 +5,7 @@ use crate::{
     client::{Client, ReadTransactionsRequest, ReadTransactionsResponse, TangleMessage},
     did::{IotaDID, IotaDocument},
     error::{Error, Result},
-    utils::encode_trits,
+    utils::{create_address_from_trits, encode_trits},
 };
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -38,11 +38,12 @@ impl<'a, 'b> ReadDocumentRequest<'a, 'b> {
     pub async fn send(self) -> Result<ReadDocumentResponse> {
         if self.trace {
             println!("[+] trace(1): Target Id: {:?}", self.did.tag());
-            println!("[+] trace(2): Auth Chain: {:?}", self.did.address_hash());
+            println!("[+] trace(2): Auth Chain: {:?}", self.did.address());
         }
 
         // Fetch all messages for the auth chain.
-        let request: ReadTransactionsRequest = ReadTransactionsRequest::new(self.client, self.did.address()?);
+        let request: ReadTransactionsRequest =
+            ReadTransactionsRequest::new(self.client, create_address_from_trits(self.did.address())?);
         let response: ReadTransactionsResponse = request.trace(self.trace).send().await?;
 
         if self.trace {
@@ -56,7 +57,7 @@ impl<'a, 'b> ReadDocumentRequest<'a, 'b> {
             println!("[+] trace(4): Auth Document: {:?}", document.document);
         }
 
-        if let Some(_address) = document.diff_chain() {
+        if !document.immutable() {
             todo!("Handle Document Diff Chain")
         }
 
@@ -81,7 +82,7 @@ impl<'a, 'b> ReadDocumentRequest<'a, 'b> {
 
         // Follow the chain of successive documents - AKA the auth chain.
         for maybe in docs2 {
-            let hash: &str = maybe.document.prev_msg()?;
+            let hash: &str = maybe.document.previous_message_id()?;
 
             // Ignore documents that don't reference the expected Tangle message.
             if hash != target.transaction_hash() {
@@ -107,7 +108,7 @@ struct ChainDocument {
 
 impl ChainDocument {
     fn is_initial_document(&self) -> bool {
-        self.document.prev_msg().is_none()
+        self.document.previous_message_id().is_none()
     }
 
     fn transaction_hash(&self) -> String {
