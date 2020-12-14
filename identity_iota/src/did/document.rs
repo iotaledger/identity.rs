@@ -4,7 +4,7 @@ use core::{
     ops::Deref,
 };
 use identity_core::{
-    common::Timestamp,
+    common::{Object, Timestamp},
     convert::{FromJson as _, SerdeInto as _},
     crypto::{KeyPair, SecretKey},
     did_doc::{
@@ -12,6 +12,7 @@ use identity_core::{
         SetSignature, Signature, SignatureDocument, SignatureOptions, TrySignature, VerifiableDocument,
     },
     did_url::DID,
+    identity_diff::{did_doc::DiffDocument, Diff},
     proof::JcsEd25519Signature2020,
 };
 use iota::transaction::bundled::Address;
@@ -28,7 +29,6 @@ const ERR_AMNS: &str = "Authentication Method Not Supported";
 const ERR_AMMF: &str = "Authentication Method Missing Fragment";
 const ERR_AMIM: &str = "Authentication Method Id Mismatch";
 
-// TODO: Add generic properties object (?)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Properties {
     pub created: Timestamp,
@@ -37,6 +37,8 @@ pub struct Properties {
     pub prev_msg: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub diff_chain: Option<String>,
+    #[serde(flatten)]
+    pub properties: Object,
 }
 
 impl Properties {
@@ -46,6 +48,7 @@ impl Properties {
             updated: Timestamp::now(),
             prev_msg: None,
             diff_chain: None,
+            properties: Object::new(),
         }
     }
 }
@@ -128,7 +131,7 @@ impl IotaDocument {
 
     /// Returns the Tangle message id of the previous DID document, if any.
     pub fn prev_msg(&self) -> Option<&str> {
-        self.properties().prev_msg.as_deref()
+        self.0.properties().prev_msg.as_deref()
     }
 
     /// Sets the Tangle message id the previous DID document.
@@ -141,7 +144,7 @@ impl IotaDocument {
 
     /// Returns the Tangle address of the DID document diff chain, if any.
     pub fn diff_chain(&self) -> Option<&str> {
-        self.properties().diff_chain.as_deref()
+        self.0.properties().diff_chain.as_deref()
     }
 
     /// Sets the Tangle address_hash of the DID document diff chain.
@@ -152,9 +155,19 @@ impl IotaDocument {
         self.0.properties_mut().diff_chain = Some(value.into());
     }
 
+    /// Returns a reference to the custom `IotaDocument` properties.
+    pub fn properties(&self) -> &Object {
+        &self.0.properties().properties
+    }
+
+    /// Returns a mutable reference to the custom `IotaDocument` properties.
+    pub fn properties_mut(&mut self) -> &mut Object {
+        &mut self.0.properties_mut().properties
+    }
+
     /// Returns the timestamp of when the DID document was created.
     pub fn created(&self) -> Timestamp {
-        self.properties().created
+        self.0.properties().created
     }
 
     /// Sets the timestamp of when the DID document was created.
@@ -169,7 +182,7 @@ impl IotaDocument {
 
     /// Returns the timestamp of the last DID document update.
     pub fn updated(&self) -> Timestamp {
-        self.properties().updated
+        self.0.properties().updated
     }
 
     /// Sets the timestamp of the last DID document update.
@@ -315,12 +328,31 @@ impl IotaDocument {
     /// # Errors
     ///
     /// Fails if the diff operation or signature operation fails.
-    pub fn diff(&self, other: &Self, secret: &SecretKey) -> Result<DIDDiff> {
-        let mut diff: DIDDiff = DIDDiff::new(self, other)?;
+    pub fn diff(&self, other: &Self, secret: &SecretKey, prev_msg: String) -> Result<DIDDiff> {
+        let mut diff: DIDDiff = DIDDiff::new(self, other, prev_msg)?;
 
         self.sign_data(&mut diff, secret)?;
 
         Ok(diff)
+    }
+
+    /// Verifies a `DIDDiff` signature and merges the changes into `self`.
+    ///
+    /// If merging fails `self` remains unmodified, otherwise `self` represents
+    /// the merged document state.
+    ///
+    /// # Errors
+    ///
+    /// Fails if the merge operation or signature operation fails.
+    pub fn merge(&mut self, diff: &DIDDiff) -> Result<()> {
+        self.verify_data(diff)?;
+
+        let this: Document = self.serde_into()?;
+        let data: DiffDocument = DiffDocument::from_json(&diff.diff)?;
+
+        *self = Diff::merge(&this, data)?.serde_into()?;
+
+        Ok(())
     }
 
     /// Verifies the `DIDDiff` proof using the default authentication method.

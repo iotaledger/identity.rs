@@ -13,7 +13,7 @@ use iota::{crypto::ternary::Hash, transaction::bundled::BundledTransaction};
 use crate::{
     client::{
         ClientBuilder, Network, PublishDocumentRequest, ReadDocumentRequest, ReadDocumentResponse,
-        ReadTransactionsRequest, SendTransferRequest,
+        ReadTransactionsRequest, SendTransferRequest, TransactionPrinter,
     },
     did::{IotaDID, IotaDocument},
     error::Result,
@@ -51,6 +51,10 @@ impl Client {
 
     pub fn transaction_url(&self, transaction: &BundledTransaction) -> Url {
         self.network.transaction_url(transaction)
+    }
+
+    pub fn transaction_hash(&self, transaction: &BundledTransaction) -> String {
+        TransactionPrinter::hash(transaction).to_string()
     }
 
     pub fn read_transactions<'a>(&'a self, did: &IotaDID) -> ReadTransactionsRequest<'a> {

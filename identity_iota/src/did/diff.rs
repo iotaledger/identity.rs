@@ -1,25 +1,31 @@
-use identity_core::did_doc::{SetSignature, Signature, TrySignature, TrySignatureMut};
+use identity_core::{
+    convert::{SerdeInto as _, ToJson as _},
+    did_doc::{Document, SetSignature, Signature, TrySignature, TrySignatureMut},
+    identity_diff::Diff,
+};
 
 use crate::{
     did::{IotaDID, IotaDocument},
     error::Result,
 };
 
-pub type Diff = (); // TODO: FIXME
-
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DIDDiff {
     pub did: IotaDID,
-    pub diff: Diff,
+    pub prev_msg: String,
+    pub diff: String,
     pub proof: Option<Signature>,
 }
 
 impl DIDDiff {
-    pub fn new(document: &IotaDocument, _other: &IotaDocument) -> Result<Self> {
-        let diff: Diff = ();
+    pub fn new(document: &IotaDocument, other: &IotaDocument, prev_msg: String) -> Result<Self> {
+        let a: Document = document.serde_into()?;
+        let b: Document = other.serde_into()?;
+        let diff: String = Diff::diff(&a, &b)?.to_json()?;
 
         Ok(Self {
             did: document.id().clone(),
+            prev_msg,
             diff,
             proof: None,
         })

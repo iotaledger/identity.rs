@@ -4,6 +4,8 @@ pub type Result<T, E = Error> = anyhow::Result<T, E>;
 pub enum Error {
     #[error("Core Error: {0}")]
     CoreError(#[from] identity_core::Error),
+    #[error("Diff Error: {0}")]
+    DiffError(#[from] identity_core::identity_diff::Error),
     #[error("Invalid DID: {0}")]
     InvalidDID(#[from] identity_core::did_url::Error),
     #[error("Invalid Document: {0}")]

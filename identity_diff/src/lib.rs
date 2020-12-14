@@ -4,6 +4,7 @@
 /// `serde_json::Value`, `Vec` and primitives such as `i8`/`u8` up to `usize` and `isize` as well as the unit type `()`,
 /// `bool`, and `char` types.  Structs and Enums are supported via `identity_derive` and can be composed of any number
 /// of these types.
+pub mod did_doc;
 mod error;
 pub mod hashmap;
 pub mod hashset;

@@ -116,9 +116,9 @@ impl Doc {
 
     /// Generate the difference between two DID Documents and sign it
     #[wasm_bindgen]
-    pub fn diff(&self, other: &Doc, key: &Key) -> Result<JsValue, JsValue> {
+    pub fn diff(&self, other: &Doc, key: &Key, prev_msg: String) -> Result<JsValue, JsValue> {
         let doc: IotaDocument = other.0.clone();
-        let diff: DIDDiff = self.0.diff(&doc, key.0.secret()).map_err(js_err)?;
+        let diff: DIDDiff = self.0.diff(&doc, key.0.secret(), prev_msg).map_err(js_err)?;
 
         JsValue::from_serde(&diff).map_err(js_err)
     }
