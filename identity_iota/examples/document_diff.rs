@@ -3,7 +3,7 @@ use identity_core::convert::AsJson as _;
 use identity_iota::{
     client::{Client, ClientBuilder, Network, PublishDocumentResponse},
     crypto::KeyPair,
-    did::{DIDDiff, IotaDocument},
+    did::{DocumentDiff, IotaDocument},
     error::Result,
 };
 use std::{thread::sleep, time::Duration};
@@ -58,7 +58,7 @@ async fn main() -> Result<()> {
     update.properties_mut().insert("bar".into(), vec![1, 2, 3].into());
     update.set_updated_now();
 
-    let diff: DIDDiff = document.diff(&update, keypair.secret(), message_id)?;
+    let diff: DocumentDiff = document.diff(&update, keypair.secret(), message_id)?;
 
     println!("Document Diff (signed) > {:#?}", diff);
     println!();

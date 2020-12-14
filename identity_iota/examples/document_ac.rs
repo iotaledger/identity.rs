@@ -92,7 +92,7 @@ async fn main() -> Result<()> {
     }
 
     updated.set_updated_now();
-    updated.set_prev_msg(message_id);
+    updated.set_previous_message_id(message_id);
 
     // Sign the updated document with the *previous* authentication method
     document.sign_data(&mut updated, keypair.secret())?;

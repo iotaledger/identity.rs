@@ -25,7 +25,7 @@ thiserror = "1.0"
 
 identity_derive = {version = "0.1.0", path = "../identity_derive", optional = true}
 
-did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "d6944acd930447c5d6d2d762fe6245a35cc7e39c", default-features = false, features = ["std"] }
+did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "c61c0457eea7a453949a877f1dde92878a23dd24", default-features = false, features = ["std"] }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
 
 [dev-dependencies]

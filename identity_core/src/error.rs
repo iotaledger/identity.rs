@@ -18,6 +18,8 @@ pub enum Error {
     InvalidDID(#[from] did_url::Error),
     #[error("Invalid DID Document: {0}")]
     InvalidDocument(#[from] did_doc::Error),
+    #[error("Invalid Document Diff: {0}")]
+    InvalidDiff(#[from] identity_diff::Error),
     #[error("Invalid Url: {0}")]
     InvalidUrl(#[from] did_doc::url::ParseError),
     #[error("Invalid Timestamp: {0}")]
