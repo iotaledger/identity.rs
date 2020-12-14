@@ -60,7 +60,7 @@ impl DID {
     /// Returns the IOTA tangle address of the `DID`.
     #[wasm_bindgen(getter)]
     pub fn address(&self) -> String {
-        self.0.address_hash()
+        self.0.address()
     }
 
     /// Returns the `DID` object as a string.

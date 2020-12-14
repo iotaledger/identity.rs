@@ -4,7 +4,7 @@ use identity_core::{
         DIDKey, Document, DocumentBuilder, MethodIndex, MethodScope, Service, ServiceBuilder, VerifiableDocument,
     },
 };
-use identity_iota::did::{DIDDiff, IotaDocument, Properties};
+use identity_iota::did::{DocumentDiff, IotaDocument, Properties};
 use wasm_bindgen::prelude::*;
 
 use crate::{
@@ -85,7 +85,7 @@ impl Doc {
 
     #[wasm_bindgen(getter, js_name = authChain)]
     pub fn auth_chain(&self) -> String {
-        self.0.id().address_hash()
+        self.0.id().address()
     }
 
     #[wasm_bindgen(getter, js_name = diffChain)]
@@ -118,7 +118,7 @@ impl Doc {
     #[wasm_bindgen]
     pub fn diff(&self, other: &Doc, key: &Key, prev_msg: String) -> Result<JsValue, JsValue> {
         let doc: IotaDocument = other.0.clone();
-        let diff: DIDDiff = self.0.diff(&doc, key.0.secret(), prev_msg).map_err(js_err)?;
+        let diff: DocumentDiff = self.0.diff(&doc, key.0.secret(), prev_msg).map_err(js_err)?;
 
         JsValue::from_serde(&diff).map_err(js_err)
     }
@@ -126,7 +126,7 @@ impl Doc {
     /// Verify the signature in a diff with the authentication_key
     #[wasm_bindgen(js_name = verifyDiff)]
     pub fn verify_diff(&self, diff: String) -> bool {
-        match DIDDiff::from_json(&diff) {
+        match DocumentDiff::from_json(&diff) {
             Ok(diff) => self.0.verify_data(&diff).is_ok(),
             Err(_) => false,
         }
