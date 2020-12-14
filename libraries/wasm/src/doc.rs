@@ -4,7 +4,10 @@ use identity_core::{
         DIDKey, Document, DocumentBuilder, MethodIndex, MethodScope, Service, ServiceBuilder, VerifiableDocument,
     },
 };
-use identity_iota::did::{DocumentDiff, IotaDocument, Properties};
+use identity_iota::{
+    did::{DocumentDiff, IotaDocument, Properties},
+    tangle::MessageId,
+};
 use wasm_bindgen::prelude::*;
 
 use crate::{
@@ -118,7 +121,11 @@ impl Doc {
     #[wasm_bindgen]
     pub fn diff(&self, other: &Doc, key: &Key, prev_msg: String) -> Result<JsValue, JsValue> {
         let doc: IotaDocument = other.0.clone();
-        let diff: DocumentDiff = self.0.diff(&doc, key.0.secret(), prev_msg).map_err(js_err)?;
+
+        let diff: DocumentDiff = self
+            .0
+            .diff(&doc, key.0.secret(), MessageId::new(prev_msg))
+            .map_err(js_err)?;
 
         JsValue::from_serde(&diff).map_err(js_err)
     }
