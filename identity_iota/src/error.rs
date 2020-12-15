@@ -26,6 +26,8 @@ pub enum Error {
     InvalidTransactionHashes,
     #[error("Invalid Transaction Trytes")]
     InvalidTransactionTrytes,
-    #[error("Invalid Transfer Tail")]
-    InvalidTransferTail,
+    #[error("Invalid Bundle Tail")]
+    InvalidBundleTail,
+    #[error("Chain Error: {error}")]
+    ChainError { error: &'static str },
 }

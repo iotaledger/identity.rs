@@ -18,6 +18,7 @@ iota-conversion = { version = "0.5", default-features = false }
 # iota-core = { git = "https://github.com/iotaledger/iota.rs", branch = "dev" }
 iota-core = { git = "https://github.com/Thoralf-M/iota.rs", branch = "works" }
 lazy_static = { version = "1.4", default-features = false }
+log = { version = "0.4", default-features = false }
 multihash = { version = "0.11", default-features = false }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }

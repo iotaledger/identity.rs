@@ -1,7 +1,7 @@
 use identity_core::common::Url;
-use iota::{client::builder, transaction::bundled::BundledTransaction};
+use iota::client::builder;
 
-use crate::{client::TransactionPrinter, did::IotaDID};
+use crate::did::IotaDID;
 
 lazy_static! {
     static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/mainnet").unwrap();
@@ -20,31 +20,19 @@ pub enum Network {
 }
 
 impl Network {
-    pub fn matches_did(self, did: &IotaDID) -> bool {
-        did.network() == self.as_str() || self == Self::Mainnet
-    }
-
-    pub fn transaction_url(&self, transaction: &BundledTransaction) -> Url {
-        let hash: TransactionPrinter<_> = TransactionPrinter::hash(transaction);
-
-        let mut url: Url = self.explorer_url().clone();
-
-        url.path_segments_mut()
-            .unwrap()
-            .push("transaction")
-            .push(&hash.to_string());
-
-        url
-    }
-
-    pub fn explorer_url(self) -> &'static Url {
-        match self {
-            Self::Mainnet => &*EXPLORER_MAIN,
-            Self::Devnet => &*EXPLORER_DEV,
-            Self::Comnet => &*EXPLORER_COM,
+    pub fn from_name(string: &str) -> Self {
+        match string {
+            "dev" => Self::Devnet,
+            "com" => Self::Comnet,
+            _ => Self::Mainnet,
         }
     }
 
+    pub fn matches_did(self, did: &IotaDID) -> bool {
+        did.network() == self.as_str()
+    }
+
+    /// Returns the default node URL of the Tangle network.
     pub fn node_url(self) -> &'static Url {
         match self {
             Self::Mainnet => &*NODE_MAIN,
@@ -53,12 +41,28 @@ impl Network {
         }
     }
 
-    pub const fn as_str(&self) -> &'static str {
+    /// Returns the web explorer URL of the Tangle network.
+    pub fn explorer_url(self) -> &'static Url {
+        match self {
+            Self::Mainnet => &*EXPLORER_MAIN,
+            Self::Devnet => &*EXPLORER_DEV,
+            Self::Comnet => &*EXPLORER_COM,
+        }
+    }
+
+    /// Returns the name of the network as a static `str`.
+    pub const fn as_str(self) -> &'static str {
         match self {
             Self::Mainnet => "main",
             Self::Devnet => "dev",
             Self::Comnet => "com",
         }
+    }
+}
+
+impl Default for Network {
+    fn default() -> Self {
+        Network::Mainnet
     }
 }
 
@@ -79,5 +83,36 @@ impl From<Network> for builder::Network {
             Network::Devnet => Self::Devnet,
             Network::Comnet => Self::Comnet,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_name() {
+        assert_eq!(Network::from_name("com"), Network::Comnet);
+        assert_eq!(Network::from_name("dev"), Network::Devnet);
+        assert_eq!(Network::from_name("main"), Network::Mainnet);
+        assert_eq!(Network::from_name("anything"), Network::Mainnet);
+    }
+
+    #[test]
+    fn test_matches_did() {
+        let did: IotaDID = IotaDID::new(b"").unwrap();
+        assert!(Network::matches_did(Network::Mainnet, &did));
+        assert!(!Network::matches_did(Network::Comnet, &did));
+        assert!(!Network::matches_did(Network::Devnet, &did));
+
+        let did: IotaDID = IotaDID::with_network(b"", "com").unwrap();
+        assert!(Network::matches_did(Network::Comnet, &did));
+        assert!(!Network::matches_did(Network::Mainnet, &did));
+        assert!(!Network::matches_did(Network::Devnet, &did));
+
+        let did: IotaDID = IotaDID::with_network(b"", "dev").unwrap();
+        assert!(Network::matches_did(Network::Devnet, &did));
+        assert!(!Network::matches_did(Network::Mainnet, &did));
+        assert!(!Network::matches_did(Network::Comnet, &did));
     }
 }

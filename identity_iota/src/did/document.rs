@@ -17,8 +17,10 @@ use identity_core::{
 use serde::Serialize;
 
 use crate::{
+    client::{Client, Network},
     did::{DocumentDiff, IotaDID, IotaDocumentBuilder, Properties},
     error::{Error, Result},
+    tangle::{MessageId, TangleRef},
     utils::utf8_to_trytes,
 };
 
@@ -34,6 +36,7 @@ type __Document = VerifiableDocument<Properties>;
 #[serde(try_from = "Document", into = "__Document")]
 pub struct IotaDocument {
     document: __Document,
+    message_id: MessageId,
 }
 
 impl IotaDocument {
@@ -84,10 +87,12 @@ impl IotaDocument {
 
             Ok(Self {
                 document: VerifiableDocument::with_proof(root, proof),
+                message_id: MessageId::NONE,
             })
         } else {
             Ok(Self {
                 document: VerifiableDocument::new(root),
+                message_id: MessageId::NONE,
             })
         }
     }
@@ -153,16 +158,16 @@ impl IotaDocument {
     }
 
     /// Returns the Tangle message id of the previous DID document, if any.
-    pub fn previous_message_id(&self) -> Option<&str> {
-        self.document.properties().previous_message_id.as_deref()
+    pub fn previous_message_id(&self) -> &MessageId {
+        &self.document.properties().previous_message_id
     }
 
     /// Sets the Tangle message id the previous DID document.
     pub fn set_previous_message_id<T>(&mut self, value: T)
     where
-        T: Into<String>,
+        T: Into<MessageId>,
     {
-        self.document.properties_mut().previous_message_id = Some(value.into());
+        self.document.properties_mut().previous_message_id = value.into();
     }
 
     /// Returns true if the `IotaDocument` is flagged as immutable.
@@ -304,7 +309,7 @@ impl IotaDocument {
     /// # Errors
     ///
     /// Fails if the diff operation or signature operation fails.
-    pub fn diff(&self, other: &Self, secret: &SecretKey, previous_message_id: String) -> Result<DocumentDiff> {
+    pub fn diff(&self, other: &Self, secret: &SecretKey, previous_message_id: MessageId) -> Result<DocumentDiff> {
         let mut diff: DocumentDiff = DocumentDiff::new(self, other, previous_message_id)?;
 
         self.sign_data(&mut diff, secret)?;
@@ -328,13 +333,37 @@ impl IotaDocument {
         Ok(())
     }
 
+    /// Publishes the `IotaDocument` to the Tangle using a default `Client`.
+    pub async fn publish(&mut self) -> Result<()> {
+        let network: Network = Network::from_name(self.id().network());
+        let client: Client = Client::from_network(network)?;
+
+        self.publish_with_client(&client).await
+    }
+
+    /// Publishes the `IotaDocument` to the Tangle using the provided `Client`.
+    pub async fn publish_with_client(&mut self, client: &Client) -> Result<()> {
+        let transaction: _ = client.publish_document(self).await?;
+        let message_id: String = client.transaction_hash(&transaction);
+
+        self.set_message_id(message_id.into());
+
+        Ok(())
+    }
+
     /// Returns the Tangle address of the DID diff chain.
-    pub fn diff_address(message_id: &str) -> String {
-        let hash: String = IotaDID::encode_key(message_id.as_bytes());
+    pub fn diff_address(message_id: &MessageId) -> Result<String> {
+        if message_id.is_none() {
+            return Err(Error::InvalidDocument {
+                error: "Invalid Message Id",
+            });
+        }
+
+        let hash: String = IotaDID::encode_key(message_id.as_str().as_bytes());
 
         let mut trytes: String = utf8_to_trytes(&hash);
         trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
-        trytes
+        Ok(trytes)
     }
 }
 
@@ -366,7 +395,10 @@ impl PartialEq<__Document> for IotaDocument {
 
 impl From<__Document> for IotaDocument {
     fn from(other: __Document) -> Self {
-        Self { document: other }
+        Self {
+            document: other,
+            message_id: MessageId::NONE,
+        }
     }
 }
 
@@ -381,6 +413,24 @@ impl TryFrom<Document> for IotaDocument {
 
     fn try_from(other: Document) -> Result<Self, Self::Error> {
         Self::try_from_document(other)
+    }
+}
+
+impl TangleRef for IotaDocument {
+    fn message_id(&self) -> &MessageId {
+        &self.message_id
+    }
+
+    fn set_message_id(&mut self, message_id: MessageId) {
+        self.message_id = message_id;
+    }
+
+    fn previous_message_id(&self) -> &MessageId {
+        IotaDocument::previous_message_id(self)
+    }
+
+    fn set_previous_message_id(&mut self, message_id: MessageId) {
+        IotaDocument::set_previous_message_id(self, message_id)
     }
 }
 

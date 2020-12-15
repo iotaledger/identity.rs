@@ -1,6 +1,6 @@
 use identity_core::common::Object;
 use identity_iota::{
-    client::{Client, ClientBuilder, Network, TransactionPrinter},
+    client::{Client, ClientBuilder, Network, TxnPrinter},
     did::IotaDID,
     vc::CredentialValidator,
 };
@@ -73,10 +73,9 @@ fn client(params: JsValue) -> Result<Client, JsValue> {
 pub async fn publish(doc: JsValue, params: JsValue) -> Result<JsValue, JsValue> {
     client(params)?
         .publish_document(&doc.into_serde().map_err(js_err)?)
-        .send()
         .await
         .map_err(js_err)
-        .map(|response| TransactionPrinter::hash(&response.tail).to_string())
+        .map(|response| TxnPrinter::hash(&response).to_string())
         .map(Into::into)
 }
 
@@ -85,7 +84,6 @@ pub async fn publish(doc: JsValue, params: JsValue) -> Result<JsValue, JsValue> 
 pub async fn resolve(did: String, params: JsValue) -> Result<JsValue, JsValue> {
     client(params)?
         .read_document(&IotaDID::parse(did).map_err(js_err)?)
-        .send()
         .await
         .map_err(js_err)
         .and_then(|response| JsValue::from_serde(&response).map_err(js_err))

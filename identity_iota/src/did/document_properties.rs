@@ -1,12 +1,14 @@
 use identity_core::common::{Object, Timestamp};
 
+use crate::tangle::MessageId;
+
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Properties {
     pub(crate) created: Timestamp,
     pub(crate) updated: Timestamp,
     pub(crate) immutable: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) previous_message_id: Option<String>,
+    #[serde(default, skip_serializing_if = "MessageId::is_none")]
+    pub(crate) previous_message_id: MessageId,
     #[serde(flatten)]
     pub(crate) properties: Object,
 }
@@ -17,7 +19,7 @@ impl Properties {
             created: Timestamp::now(),
             updated: Timestamp::now(),
             immutable: false,
-            previous_message_id: None,
+            previous_message_id: MessageId::NONE,
             properties: Object::new(),
         }
     }

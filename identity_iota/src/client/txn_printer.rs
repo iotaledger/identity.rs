@@ -6,33 +6,33 @@ use iota::transaction::bundled::{BundledTransaction, BundledTransactionField as 
 
 use crate::utils::{encode_trits, txn_hash_trytes};
 
-pub enum TransactionFmtFull {}
+pub enum __Full {}
 
-pub enum TransactionFmtMini {}
+pub enum __Mini {}
 
-pub enum TransactionFmtHash {}
+pub enum __Hash {}
 
-pub struct TransactionPrinter<'a, T = TransactionFmtFull>(&'a BundledTransaction, PhantomData<T>);
+pub struct TxnPrinter<'a, T = __Full>(&'a BundledTransaction, PhantomData<T>);
 
-impl<'a> TransactionPrinter<'a, TransactionFmtFull> {
+impl<'a> TxnPrinter<'a, __Full> {
     pub fn full(transaction: &'a BundledTransaction) -> Self {
         Self(transaction, PhantomData)
     }
 }
 
-impl<'a> TransactionPrinter<'a, TransactionFmtMini> {
+impl<'a> TxnPrinter<'a, __Mini> {
     pub fn mini(transaction: &'a BundledTransaction) -> Self {
         Self(transaction, PhantomData)
     }
 }
 
-impl<'a> TransactionPrinter<'a, TransactionFmtHash> {
+impl<'a> TxnPrinter<'a, __Hash> {
     pub fn hash(transaction: &'a BundledTransaction) -> Self {
         Self(transaction, PhantomData)
     }
 }
 
-impl Debug for TransactionPrinter<'_, TransactionFmtFull> {
+impl Debug for TxnPrinter<'_, __Full> {
     fn fmt(&self, f: &mut Formatter) -> Result {
         f.debug_struct("BundledTransaction")
             .field("hash", &txn_hash_trytes(self.0))
@@ -50,7 +50,7 @@ impl Debug for TransactionPrinter<'_, TransactionFmtFull> {
     }
 }
 
-impl Debug for TransactionPrinter<'_, TransactionFmtMini> {
+impl Debug for TxnPrinter<'_, __Mini> {
     fn fmt(&self, f: &mut Formatter) -> Result {
         f.debug_struct("BundledTransaction")
             .field("hash", &txn_hash_trytes(self.0))
@@ -59,13 +59,13 @@ impl Debug for TransactionPrinter<'_, TransactionFmtMini> {
     }
 }
 
-impl Debug for TransactionPrinter<'_, TransactionFmtHash> {
+impl Debug for TxnPrinter<'_, __Hash> {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{}", txn_hash_trytes(self.0))
     }
 }
 
-impl Display for TransactionPrinter<'_, TransactionFmtHash> {
+impl Display for TxnPrinter<'_, __Hash> {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "{}", txn_hash_trytes(self.0))
     }
