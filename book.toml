@@ -3,7 +3,11 @@ authors = ["huhn511"]
 language = "en"
 multilingual = false
 src = "./docs"
-title = "identity"
+title = "IOTA Identity"
+
+[output.html]
+default-theme = "iota"
+theme = "docs/.config/theme"
 
 [build]
 build-dir = "book"
