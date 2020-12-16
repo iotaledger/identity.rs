@@ -1,0 +1,23 @@
+name: Create Meeting Notes
+on:
+  schedule:
+    - cron:  '0 18 * * WED'
+jobs:
+  updateChangelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Prepare Meeting Notes
+        run: |
+          cp ./docs/meeting-notes/_template.md ./docs/meeting-notes/test.md
+          cat ./docs/meeting-notes/test.md
+      - name: Create Meeting Notes
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: create meeting notes
+          title: Meeting Notes $(date +%d-%m-%Y)
+          body: create meeting notes for the next meeting
+          branch: (upcoming)-meeting-$(date +%d-%m-%Y)
+          base: dev  
