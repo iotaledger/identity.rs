@@ -1,6 +1,12 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result;
+use core::fmt::Result as FmtResult;
+use miniz_oxide::deflate::compress_to_vec;
+use miniz_oxide::deflate::CompressionLevel;
+use miniz_oxide::inflate::decompress_to_vec;
+
+use crate::error::Result;
+use crate::lib::*;
 
 /// Supported algorithms for the JSON Web Encryption `zip` claim.
 ///
@@ -19,6 +25,21 @@ impl JweCompression {
       Self::Deflate => "DEF",
     }
   }
+
+  pub fn compress(&self, content: &[u8]) -> Result<Vec<u8>> {
+    match self {
+      Self::Deflate => Ok(compress_to_vec(
+        content,
+        CompressionLevel::DefaultLevel as u8,
+      )),
+    }
+  }
+
+  pub fn decompress(&self, content: &[u8]) -> Result<Vec<u8>> {
+    match self {
+      Self::Deflate => decompress_to_vec(content).map_err(Into::into),
+    }
+  }
 }
 
 impl Default for JweCompression {
@@ -28,7 +49,7 @@ impl Default for JweCompression {
 }
 
 impl Display for JweCompression {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter) -> FmtResult {
     f.write_str(self.name())
   }
 }
