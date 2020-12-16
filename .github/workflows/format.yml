@@ -24,6 +24,7 @@ jobs:
             identity_derive,
             identity_diff,
             identity_iota,
+            libjose,
             libraries/wasm,
           ]
 
