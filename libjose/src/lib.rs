@@ -46,6 +46,11 @@ mod lib {
   pub use core::iter::FromIterator;
 
   #[cfg(all(feature = "alloc", not(feature = "std")))]
+  pub use alloc::vec;
+  #[cfg(feature = "std")]
+  pub use std::vec;
+
+  #[cfg(all(feature = "alloc", not(feature = "std")))]
   pub use alloc::borrow::{Cow, ToOwned};
   #[cfg(feature = "std")]
   pub use std::borrow::{Cow, ToOwned};
@@ -66,7 +71,7 @@ mod lib {
   pub use std::boxed::Box;
 
   #[cfg(all(feature = "alloc", not(feature = "std")))]
-  pub use alloc::collections::BTreeMap;
+  pub use alloc::collections::{BTreeMap, BTreeSet};
   #[cfg(feature = "std")]
-  pub use std::collections::BTreeMap;
+  pub use std::collections::{BTreeMap, BTreeSet};
 }

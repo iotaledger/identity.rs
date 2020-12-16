@@ -30,6 +30,37 @@ pub trait JweEncrypter {
   ) -> Result<Option<Vec<u8>>>;
 }
 
+impl<'a, T> JweEncrypter for &'a T
+where
+  T: JweEncrypter,
+{
+  fn alg(&self) -> JweAlgorithm {
+    (**self).alg()
+  }
+
+  fn kid(&self) -> Option<&str> {
+    (**self).kid()
+  }
+
+  fn cek(
+    &self,
+    enc: JweEncryption,
+    header: &JweHeader,
+    output: &mut JweHeader,
+  ) -> Result<Option<Cow<[u8]>>> {
+    (**self).cek(enc, header, output)
+  }
+
+  fn encrypt(
+    &self,
+    key: &[u8],
+    header: &JweHeader,
+    output: &mut JweHeader,
+  ) -> Result<Option<Vec<u8>>> {
+    (**self).encrypt(key, header, output)
+  }
+}
+
 /// The `JweDecrypter` trait specifies a common interface for JWE decryption
 /// algorithms.
 pub trait JweDecrypter {
@@ -46,4 +77,26 @@ pub trait JweDecrypter {
     enc: JweEncryption,
     header: &JweHeader,
   ) -> Result<Cow<[u8]>>;
+}
+
+impl<'a, T> JweDecrypter for &'a T
+where
+  T: JweDecrypter,
+{
+  fn alg(&self) -> JweAlgorithm {
+    (**self).alg()
+  }
+
+  fn kid(&self) -> Option<&str> {
+    (**self).kid()
+  }
+
+  fn decrypt(
+    &self,
+    key: Option<&[u8]>,
+    enc: JweEncryption,
+    header: &JweHeader,
+  ) -> Result<Cow<[u8]>> {
+    (**self).decrypt(key, enc, header)
+  }
 }

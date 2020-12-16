@@ -228,8 +228,8 @@ impl JweHeader {
   }
 
   /// Returns the value of the compression claim (zip).
-  pub fn zip(&self) -> Option<&JweCompression> {
-    self.zip.as_ref()
+  pub fn zip(&self) -> Option<JweCompression> {
+    self.zip
   }
 
   /// Sets a value for the compression claim (zip).

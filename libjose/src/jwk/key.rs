@@ -114,8 +114,8 @@ impl Jwk {
   }
 
   /// Returns the value for the use property (use).
-  pub fn use_(&self) -> Option<&JwkUse> {
-    self.use_.as_ref()
+  pub fn use_(&self) -> Option<JwkUse> {
+    self.use_
   }
 
   /// Sets a value for the key use parameter (use).
@@ -236,7 +236,7 @@ impl Jwk {
   // Validations
   // ===========================================================================
 
-  pub fn check_use(&self, expected: &JwkUse) -> Result<()> {
+  pub fn check_use(&self, expected: JwkUse) -> Result<()> {
     match self.use_() {
       Some(value) if value == expected => Ok(()),
       Some(_) => Err(Error::InvalidClaim("use")),
@@ -244,9 +244,9 @@ impl Jwk {
     }
   }
 
-  pub fn check_ops(&self, expected: &JwkOperation) -> Result<()> {
+  pub fn check_ops(&self, expected: JwkOperation) -> Result<()> {
     match self.key_ops() {
-      Some(ops) if ops.contains(expected) => Ok(()),
+      Some(ops) if ops.contains(&expected) => Ok(()),
       Some(_) => Err(Error::InvalidClaim("key_ops")),
       None => Ok(()),
     }
