@@ -14,6 +14,9 @@ pub enum Error {
   InvalidParam(&'static str),
   MissingParam(&'static str),
   InvalidContent(&'static str),
+  EncError(&'static str),
+  SigError(&'static str),
+  KeyError(&'static str),
 }
 
 impl Display for Error {
@@ -29,6 +32,9 @@ impl Display for Error {
       Self::InvalidParam(inner) => f.write_fmt(format_args!("Invalid Param: {}", inner)),
       Self::MissingParam(inner) => f.write_fmt(format_args!("Missing Param: {}", inner)),
       Self::InvalidContent(inner) => f.write_fmt(format_args!("Invalid Content: {}", inner)),
+      Self::EncError(inner) => f.write_fmt(format_args!("Encryption Error: {}", inner)),
+      Self::SigError(inner) => f.write_fmt(format_args!("Signature Error: {}", inner)),
+      Self::KeyError(inner) => f.write_fmt(format_args!("Invalid Key Format: {}", inner)),
     }
   }
 }
