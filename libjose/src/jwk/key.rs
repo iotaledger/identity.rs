@@ -1,12 +1,19 @@
+use serde_json::to_vec;
 use url::Url;
 
+use crate::crypto::digest::Digest;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::JwkOperation;
 use crate::jwk::JwkParams;
+use crate::jwk::JwkParamsEc;
+use crate::jwk::JwkParamsOct;
+use crate::jwk::JwkParamsOkp;
+use crate::jwk::JwkParamsRsa;
 use crate::jwk::JwkType;
 use crate::jwk::JwkUse;
 use crate::lib::*;
+use crate::utils::encode_b64;
 
 /// JSON Web Key.
 ///
@@ -230,6 +237,55 @@ impl Jwk {
   /// Sets the value of the custom JWK properties. Does not assert valid params.
   pub fn set_params_unchecked(&mut self, value: impl Into<JwkParams>) {
     self.params = value.into();
+  }
+
+  // ===========================================================================
+  // Thumbprint
+  // ===========================================================================
+
+  /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).
+  ///
+  /// The thumbprint is returned as a base64url-encoded string.
+  pub fn thumbprint_b64<D>(&self) -> Result<String>
+  where
+    D: Digest,
+  {
+    self
+      .thumbprint_raw::<D>()
+      .map(|thumbprint| encode_b64(&thumbprint))
+  }
+
+  /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).
+  ///
+  /// The thumbprint is returned as an unencoded vector of bytes.
+  pub fn thumbprint_raw<D>(&self) -> Result<Vec<u8>>
+  where
+    D: Digest,
+  {
+    let mut data: BTreeMap<&str, &str> = BTreeMap::new();
+
+    data.insert("kty", self.kty.name());
+
+    match &self.params {
+      JwkParams::Ec(JwkParamsEc { crv, x, y, .. }) => {
+        data.insert("crv", crv);
+        data.insert("x", x);
+        data.insert("y", y);
+      }
+      JwkParams::Rsa(JwkParamsRsa { n, e, .. }) => {
+        data.insert("e", e);
+        data.insert("n", n);
+      }
+      JwkParams::Oct(JwkParamsOct { k }) => {
+        data.insert("k", k);
+      }
+      JwkParams::Okp(JwkParamsOkp { crv, x, .. }) => {
+        data.insert("crv", crv);
+        data.insert("x", x);
+      }
+    }
+
+    Ok(D::digest(&to_vec(&data)?).to_vec())
   }
 
   // ===========================================================================
