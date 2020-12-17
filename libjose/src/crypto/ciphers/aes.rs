@@ -8,6 +8,7 @@ use aes_gcm::aes::Aes192;
 use aes_gcm::Aes128Gcm;
 use aes_gcm::Aes256Gcm;
 use aes_gcm::AesGcm;
+use core::convert::TryInto as _;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -38,6 +39,28 @@ macro_rules! decrypt {
 
     Ok(plaintext)
   }};
+}
+
+macro_rules! wrap_key {
+  ($impl:path, $plaintext:expr, $key:expr) => {
+    $key
+      .try_into()
+      .map(<$impl>::new)
+      .map_err(|_| Error::EncError("Failed to Wrap Key"))?
+      .encapsulate($plaintext)
+      .map_err(|_| Error::EncError("Failed to Wrap Key"))
+  };
+}
+
+macro_rules! unwrap_key {
+  ($impl:path, $ciphertext:expr, $key:expr, $len:expr) => {
+    $key
+      .try_into()
+      .map(<$impl>::new)
+      .map_err(|_| Error::EncError("Failed to Unwrap Key"))?
+      .decapsulate($ciphertext, $len)
+      .map_err(|_| Error::EncError("Failed to Unwrap Key"))
+  };
 }
 
 pub fn key_len_AES_GCM_128() -> usize {
@@ -119,4 +142,28 @@ pub fn decrypt_AES_GCM_256(
   tag: &[u8],
 ) -> Result<Vec<u8>> {
   decrypt!(Aes256Gcm, ciphertext, key, iv, aad, tag)
+}
+
+pub fn wrap_AES_GCM_128(ciphertext: &[u8], key: &[u8]) -> Result<Vec<u8>> {
+  wrap_key!(aes_keywrap::Aes128KeyWrap, ciphertext, key)
+}
+
+pub fn wrap_AES_GCM_192(_: &[u8], _: &[u8]) -> Result<Vec<u8>> {
+  todo!("wrap_AES_GCM_192")
+}
+
+pub fn wrap_AES_GCM_256(ciphertext: &[u8], key: &[u8]) -> Result<Vec<u8>> {
+  wrap_key!(aes_keywrap::Aes256KeyWrap, ciphertext, key)
+}
+
+pub fn unwrap_AES_GCM_128(ciphertext: &[u8], key: &[u8], len: usize) -> Result<Vec<u8>> {
+  unwrap_key!(aes_keywrap::Aes128KeyWrap, ciphertext, key, len)
+}
+
+pub fn unwrap_AES_GCM_192(_: &[u8], _: &[u8], _: usize) -> Result<Vec<u8>> {
+  todo!("unwrap_AES_GCM_192")
+}
+
+pub fn unwrap_AES_GCM_256(ciphertext: &[u8], key: &[u8], len: usize) -> Result<Vec<u8>> {
+  unwrap_key!(aes_keywrap::Aes256KeyWrap, ciphertext, key, len)
 }

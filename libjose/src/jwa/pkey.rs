@@ -543,6 +543,7 @@ impl PKeyExt for PKey<Public> {
   }
 
   #[cfg(feature = "pem")]
+  #[allow(clippy::redundant_closure)]
   fn from_rsa_pem(data: impl AsRef<[u8]>) -> Result<Self> {
     rsa::pem::parse(&data)
       .map_err(|_| Error::KeyError("Rsa"))
@@ -577,6 +578,7 @@ impl PKeyExt for PKey<Public> {
     }
   }
 
+  #[allow(clippy::redundant_closure)]
   fn derive_ecx(&self, curve: EdCurve) -> Result<Self> {
     match curve {
       EdCurve::Ed25519 => edwards::CompressedEdwardsY::from_slice(self.to_ed_bytes(curve)?)
@@ -643,6 +645,7 @@ impl PKeyExt for PKey<Secret> {
   }
 
   #[cfg(feature = "pem")]
+  #[allow(clippy::redundant_closure)]
   fn from_rsa_pem(data: impl AsRef<[u8]>) -> Result<Self> {
     rsa::pem::parse(&data)
       .map_err(|_| Error::KeyError("Rsa"))
