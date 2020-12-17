@@ -34,6 +34,7 @@ extern crate serde;
 
 pub mod error;
 pub mod jose;
+pub mod jwa;
 pub mod jwe;
 pub mod jwk;
 pub mod jwm;
