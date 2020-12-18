@@ -1,7 +1,8 @@
+use crypto::hashes::sha::SHA256;
+use crypto::hashes::sha::SHA256_LEN;
 use serde_json::to_vec;
 use url::Url;
 
-use crate::crypto::digest::Digest;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::JwkOperation;
@@ -245,23 +246,21 @@ impl Jwk {
 
   /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).
   ///
+  /// `SHA2-256` is used as the hash function *H*.
+  ///
   /// The thumbprint is returned as a base64url-encoded string.
-  pub fn thumbprint_b64<D>(&self) -> Result<String>
-  where
-    D: Digest,
-  {
+  pub fn thumbprint_b64(&self) -> Result<String> {
     self
-      .thumbprint_raw::<D>()
+      .thumbprint_raw()
       .map(|thumbprint| encode_b64(&thumbprint))
   }
 
   /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).
   ///
+  /// `SHA2-256` is used as the hash function *H*.
+  ///
   /// The thumbprint is returned as an unencoded vector of bytes.
-  pub fn thumbprint_raw<D>(&self) -> Result<Vec<u8>>
-  where
-    D: Digest,
-  {
+  pub fn thumbprint_raw(&self) -> Result<Vec<u8>> {
     let mut data: BTreeMap<&str, &str> = BTreeMap::new();
 
     data.insert("kty", self.kty.name());
@@ -285,7 +284,11 @@ impl Jwk {
       }
     }
 
-    Ok(D::digest(&to_vec(&data)?).to_vec())
+    let mut output: [u8; SHA256_LEN] = [0; SHA256_LEN];
+
+    SHA256(&to_vec(&data)?, &mut output);
+
+    Ok(output.to_vec())
   }
 
   // ===========================================================================

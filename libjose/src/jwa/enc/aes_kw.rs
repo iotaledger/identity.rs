@@ -2,6 +2,9 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
+use crypto::ciphers::aes::AES_128_GCM;
+use crypto::ciphers::aes::AES_192_GCM;
+use crypto::ciphers::aes::AES_256_GCM;
 
 use crate::crypto::ciphers::aes;
 use crate::error::Error;
@@ -43,11 +46,11 @@ impl AesKwAlgorithm {
     }
   }
 
-  pub fn key_len(self) -> usize {
+  pub const fn key_len(self) -> usize {
     match self {
-      Self::A128KW => aes::key_len_AES_GCM_128(),
-      Self::A192KW => aes::key_len_AES_GCM_192(),
-      Self::A256KW => aes::key_len_AES_GCM_256(),
+      Self::A128KW => AES_128_GCM::KEY_LENGTH,
+      Self::A192KW => AES_192_GCM::KEY_LENGTH,
+      Self::A256KW => AES_256_GCM::KEY_LENGTH,
     }
   }
 

@@ -5,16 +5,16 @@ use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::marker::PhantomData;
+use crypto::hashes::sha::SHA256;
+use crypto::hashes::sha::SHA256_LEN;
+use crypto::hashes::sha::SHA384;
+use crypto::hashes::sha::SHA384_LEN;
+use crypto::hashes::sha::SHA512;
+use crypto::hashes::sha::SHA512_LEN;
 use curve25519_dalek::edwards;
 use rsa::PublicKey as _;
 use rsa::PublicKeyParts as _;
 
-use crate::crypto::digest::Digest as _;
-use crate::crypto::digest::SHA2_256;
-use crate::crypto::digest::SHA2_384;
-use crate::crypto::digest::SHA2_512;
-use crate::crypto::rand::random_bytes;
-use crate::crypto::rand::OsRng;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwa::EcCurve;
@@ -23,6 +23,8 @@ use crate::jwa::EdCurve;
 use crate::jwa::RsaAlgorithm;
 use crate::jwa::RsaBits;
 use crate::lib::*;
+use crate::utils::random_bytes;
+use crate::utils::OsRng;
 
 macro_rules! rsa_padding {
   (@PKCS1_SHA256) => {
@@ -35,18 +37,41 @@ macro_rules! rsa_padding {
     rsa::PaddingScheme::new_pkcs1v15_sign(Some(rsa::Hash::SHA2_512))
   };
   (@PSS_SHA256) => {
-    rsa::PaddingScheme::new_pss::<SHA2_256, OsRng>(OsRng)
+    rsa::PaddingScheme::new_pss::<::sha2::Sha256, _>(OsRng)
   };
   (@PSS_SHA384) => {
-    rsa::PaddingScheme::new_pss::<SHA2_384, OsRng>(OsRng)
+    rsa::PaddingScheme::new_pss::<::sha2::Sha384, _>(OsRng)
   };
   (@PSS_SHA512) => {
-    rsa::PaddingScheme::new_pss::<SHA2_512, OsRng>(OsRng)
+    rsa::PaddingScheme::new_pss::<::sha2::Sha512, _>(OsRng)
   };
 }
 
+macro_rules! SHA_256 {
+  ($message:expr) => {{
+    let mut output: [u8; SHA256_LEN] = [0; SHA256_LEN];
+    SHA256($message, &mut output);
+    output
+  }};
+}
+
+macro_rules! SHA_384 {
+  ($message:expr) => {{
+    let mut output: [u8; SHA384_LEN] = [0; SHA384_LEN];
+    SHA384($message, &mut output);
+    output
+  }};
+}
+
+macro_rules! SHA_512 {
+  ($message:expr) => {{
+    let mut output: [u8; SHA512_LEN] = [0; SHA512_LEN];
+    SHA512($message, &mut output);
+    output
+  }};
+}
+
 const ED25519_SECRET_LEN: usize = 32;
-const ED25519_SIGNATURE_LEN: usize = 64;
 
 const X25519_PUBLIC_LEN: usize = 32;
 const X25519_SECRET_LEN: usize = 32;
@@ -57,8 +82,8 @@ type P256SecretKey = p256::ecdsa::SigningKey;
 type K256PublicKey = k256::ecdsa::VerifyingKey;
 type K256SecretKey = k256::ecdsa::SigningKey;
 
-type Ed25519PublicKey = ed25519_zebra::VerificationKey;
-type Ed25519SecretKey = ed25519_zebra::SigningKey;
+type Ed25519PublicKey = crypto::ed25519::PublicKey;
+type Ed25519SecretKey = crypto::ed25519::SecretKey;
 
 type X25519PublicKey = x25519_dalek::PublicKey;
 type X25519SecretKey = x25519_dalek::StaticSecret;
@@ -119,8 +144,8 @@ impl PKey<Public> {
 
   pub fn to_rsa_public_components(&self) -> Result<(&rsa::BigUint, &rsa::BigUint)> {
     self
-      .downcast_ref("Rsa")
-      .map(|key: &RsaPublicKey| (key.n(), key.e()))
+      .downcast_ref::<RsaPublicKey>("Rsa")
+      .map(|key| (key.n(), key.e()))
   }
 
   pub fn from_ec_coord(curve: EcCurve, x: &[u8], y: &[u8]) -> Result<Self> {
@@ -148,14 +173,14 @@ impl PKey<Public> {
     match curve {
       EcCurve::P256 => {
         let point: P256Point = self
-          .downcast_ref(curve.name())
-          .map(|key: &P256PublicKey| key.to_encoded_point(false))?;
+          .downcast_ref::<P256PublicKey>(curve.name())
+          .map(|key| key.to_encoded_point(false))?;
 
         debug_assert!(!point.is_compressed());
 
         Ok((
-          point.x().to_vec(),
-          point.y().expect("Missing y-coordinate").to_vec(),
+          point.x().expect("Invalid Point: Identity").to_vec(),
+          point.y().expect("Invalid Point: Compressed").to_vec(),
         ))
       }
       EcCurve::P384 => todo!("Public::to_ec_coord(P384)"),
@@ -164,14 +189,14 @@ impl PKey<Public> {
         use k256::elliptic_curve::sec1::ToEncodedPoint as _;
 
         let point: K256Point = self
-          .downcast_ref(curve.name())
-          .map(|key: &K256PublicKey| key.to_encoded_point(false))?;
+          .downcast_ref::<K256PublicKey>(curve.name())
+          .map(|key| key.to_encoded_point(false))?;
 
         debug_assert!(!point.is_compressed());
 
         Ok((
-          point.x().to_vec(),
-          point.y().expect("Missing y-coordinate").to_vec(),
+          point.x().expect("Invalid Point: Identity").to_vec(),
+          point.y().expect("Invalid Point: Compressed").to_vec(),
         ))
       }
     }
@@ -213,16 +238,11 @@ impl PKey<Public> {
   pub fn try_ed_verify(&self, curve: EdCurve, message: &[u8], signature: &[u8]) -> Result<()> {
     match curve {
       EdCurve::Ed25519 => {
-        let signature: _ = signature
-          .try_into()
-          .map_err(|_| Error::SigError(curve.name()))?;
-
         self
           .downcast_ref::<Ed25519PublicKey>(curve.name())?
-          .verify(&signature, message)
-          .map_err(|_| Error::SigError(curve.name()))?;
+          .verify(&signature.try_into()?, message)?;
       }
-      EdCurve::Ed448 => todo!("Public::try_ed_sign(Ed448)"),
+      EdCurve::Ed448 => todo!("Public::try_ed_verify(Ed448)"),
     }
 
     Ok(())
@@ -237,36 +257,12 @@ impl PKey<Public> {
     let key: &RsaPublicKey = self.downcast_ref(algorithm.name())?;
 
     let out: Result<(), _> = match algorithm {
-      RsaAlgorithm::RS256 => key.verify(
-        rsa_padding!(@PKCS1_SHA256),
-        &SHA2_256::digest(message),
-        signature,
-      ),
-      RsaAlgorithm::RS384 => key.verify(
-        rsa_padding!(@PKCS1_SHA384),
-        &SHA2_384::digest(message),
-        signature,
-      ),
-      RsaAlgorithm::RS512 => key.verify(
-        rsa_padding!(@PKCS1_SHA512),
-        &SHA2_512::digest(message),
-        signature,
-      ),
-      RsaAlgorithm::PS256 => key.verify(
-        rsa_padding!(@PSS_SHA256),
-        &SHA2_256::digest(message),
-        signature,
-      ),
-      RsaAlgorithm::PS384 => key.verify(
-        rsa_padding!(@PSS_SHA384),
-        &SHA2_384::digest(message),
-        signature,
-      ),
-      RsaAlgorithm::PS512 => key.verify(
-        rsa_padding!(@PSS_SHA512),
-        &SHA2_512::digest(message),
-        signature,
-      ),
+      RsaAlgorithm::RS256 => key.verify(rsa_padding!(@PKCS1_SHA256), &SHA_256!(message), signature),
+      RsaAlgorithm::RS384 => key.verify(rsa_padding!(@PKCS1_SHA384), &SHA_384!(message), signature),
+      RsaAlgorithm::RS512 => key.verify(rsa_padding!(@PKCS1_SHA512), &SHA_512!(message), signature),
+      RsaAlgorithm::PS256 => key.verify(rsa_padding!(@PSS_SHA256), &SHA_256!(message), signature),
+      RsaAlgorithm::PS384 => key.verify(rsa_padding!(@PSS_SHA384), &SHA_384!(message), signature),
+      RsaAlgorithm::PS512 => key.verify(rsa_padding!(@PSS_SHA512), &SHA_512!(message), signature),
     };
 
     out.map_err(|_| Error::SigError(algorithm.name()))
@@ -289,7 +285,9 @@ impl PKey<Secret> {
 
   pub fn generate_ed(curve: EdCurve) -> Result<Self> {
     match curve {
-      EdCurve::Ed25519 => Ok(Self::from_key(Ed25519SecretKey::new(OsRng))),
+      EdCurve::Ed25519 => Ed25519SecretKey::generate()
+        .map_err(Into::into)
+        .map(Self::from_key),
       EdCurve::Ed448 => todo!("Secret::generate_ed(Ed448)"),
     }
   }
@@ -308,7 +306,7 @@ impl PKey<Secret> {
   }
 
   pub fn generate_raw(size: usize) -> Result<Self> {
-    Ok(Self::from_key(random_bytes(size, OsRng)?))
+    Ok(Self::from_key(random_bytes(size)?))
   }
 
   pub fn from_raw_bytes(data: impl AsRef<[u8]>) -> Self {
@@ -334,22 +332,20 @@ impl PKey<Secret> {
 
   pub fn to_rsa_secret_components(&self) -> Result<(&rsa::BigUint, &[rsa::BigUint])> {
     self
-      .downcast_ref("Rsa")
-      .map(|key: &RsaPrivateKey| (key.d(), key.primes()))
+      .downcast_ref::<RsaPrivateKey>("Rsa")
+      .map(|key| (key.d(), key.primes()))
   }
 
   pub fn ec_public_key(&self, curve: EcCurve) -> Result<PKey<Public>> {
     match curve {
       EcCurve::P256 => self
-        .downcast_ref(curve.name())
-        .map(|key: &P256SecretKey| key.verify_key())
-        .map(PKey::from_key),
+        .downcast_ref::<P256SecretKey>(curve.name())
+        .map(|key| PKey::from_key(key.verify_key())),
       EcCurve::P384 => todo!("Secret::ec_public_key(P384)"),
       EcCurve::P521 => todo!("Secret::ec_public_key(P521)"),
       EcCurve::Secp256K1 => self
-        .downcast_ref(curve.name())
-        .map(|key: &K256SecretKey| key.verify_key())
-        .map(PKey::from_key),
+        .downcast_ref::<K256SecretKey>(curve.name())
+        .map(|key| PKey::from_key(key.verify_key())),
     }
   }
 
@@ -357,8 +353,7 @@ impl PKey<Secret> {
     match curve {
       EdCurve::Ed25519 => self
         .downcast_ref::<Ed25519SecretKey>(curve.name())
-        .map(Ed25519PublicKey::from)
-        .map(PKey::from_key),
+        .map(|key| PKey::from_key(key.public_key())),
       EdCurve::Ed448 => todo!("Secret::ed_public_key(Ed448)"),
     }
   }
@@ -367,8 +362,7 @@ impl PKey<Secret> {
     match curve {
       EcxCurve::X25519 => self
         .downcast_ref::<X25519SecretKey>(curve.name())
-        .map(X25519PublicKey::from)
-        .map(PKey::from_key),
+        .map(|key| PKey::from_key(X25519PublicKey::from(key))),
       EcxCurve::X448 => todo!("Secret::ecx_public_key(X448)"),
     }
   }
@@ -376,8 +370,7 @@ impl PKey<Secret> {
   pub fn rsa_public_key(&self) -> Result<PKey<Public>> {
     self
       .downcast_ref::<RsaPrivateKey>("Rsa")
-      .map(RsaPrivateKey::to_public_key)
-      .map(PKey::from_key)
+      .map(|key| PKey::from_key(key.to_public_key()))
   }
 
   pub fn try_ec_sign(&self, curve: EcCurve, message: &[u8]) -> Result<Vec<u8>> {
@@ -389,7 +382,7 @@ impl PKey<Secret> {
           .downcast_ref::<P256SecretKey>(curve.name())?
           .try_sign(message)
           .map_err(|_| Error::SigError(curve.name()))
-          .map(|signature| signature.as_ref().to_vec())
+          .map(|signature: P256Signature| signature.as_ref().to_vec())
       }
       EcCurve::P384 => todo!("Secret::try_ec_sign(P384)"),
       EcCurve::P521 => todo!("Secret::try_ec_sign(P521)"),
@@ -408,9 +401,8 @@ impl PKey<Secret> {
   pub fn try_ed_sign(&self, curve: EdCurve, message: &[u8]) -> Result<Vec<u8>> {
     match curve {
       EdCurve::Ed25519 => self
-        .downcast_ref(curve.name())
-        .map(|key: &Ed25519SecretKey| key.sign(message).into())
-        .map(|signature: [u8; ED25519_SIGNATURE_LEN]| signature.to_vec()),
+        .downcast_ref::<Ed25519SecretKey>(curve.name())
+        .map(|key| key.sign(message).to_bytes().to_vec()),
       EdCurve::Ed448 => todo!("Secret::try_ed_sign(Ed448)"),
     }
   }
@@ -419,12 +411,12 @@ impl PKey<Secret> {
     let key: &RsaPrivateKey = self.downcast_ref(algorithm.name())?;
 
     let out: Result<Vec<u8>, _> = match algorithm {
-      RsaAlgorithm::RS256 => key.sign(rsa_padding!(@PKCS1_SHA256), &SHA2_256::digest(message)),
-      RsaAlgorithm::RS384 => key.sign(rsa_padding!(@PKCS1_SHA384), &SHA2_384::digest(message)),
-      RsaAlgorithm::RS512 => key.sign(rsa_padding!(@PKCS1_SHA512), &SHA2_512::digest(message)),
-      RsaAlgorithm::PS256 => key.sign(rsa_padding!(@PSS_SHA256), &SHA2_256::digest(message)),
-      RsaAlgorithm::PS384 => key.sign(rsa_padding!(@PSS_SHA384), &SHA2_384::digest(message)),
-      RsaAlgorithm::PS512 => key.sign(rsa_padding!(@PSS_SHA512), &SHA2_512::digest(message)),
+      RsaAlgorithm::RS256 => key.sign(rsa_padding!(@PKCS1_SHA256), &SHA_256!(message)),
+      RsaAlgorithm::RS384 => key.sign(rsa_padding!(@PKCS1_SHA384), &SHA_384!(message)),
+      RsaAlgorithm::RS512 => key.sign(rsa_padding!(@PKCS1_SHA512), &SHA_512!(message)),
+      RsaAlgorithm::PS256 => key.sign(rsa_padding!(@PSS_SHA256), &SHA_256!(message)),
+      RsaAlgorithm::PS384 => key.sign(rsa_padding!(@PSS_SHA384), &SHA_384!(message)),
+      RsaAlgorithm::PS512 => key.sign(rsa_padding!(@PSS_SHA512), &SHA_512!(message)),
     };
 
     out.map_err(|_| Error::SigError(algorithm.name()))
@@ -511,21 +503,19 @@ impl PKeyExt for PKey<Public> {
   fn from_ed_bytes(curve: EdCurve, data: impl AsRef<[u8]>) -> Result<Self> {
     match curve {
       EdCurve::Ed25519 => Ed25519PublicKey::try_from(data.as_ref())
-        .map_err(|_| Error::KeyError(curve.name()))
+        .map_err(Into::into)
         .map(Self::from_key),
       EdCurve::Ed448 => todo!("Public::from_ed_bytes(Ed448)"),
     }
   }
 
-  #[allow(clippy::redundant_closure)]
   fn from_ecx_bytes(curve: EcxCurve, data: impl AsRef<[u8]>) -> Result<Self> {
     match curve {
       EcxCurve::X25519 => data
         .as_ref()
         .try_into()
         .map_err(|_| Error::KeyError(curve.name()))
-        .map(|key: [u8; X25519_PUBLIC_LEN]| X25519PublicKey::from(key))
-        .map(Self::from_key),
+        .map(|key: [u8; X25519_PUBLIC_LEN]| Self::from_key(X25519PublicKey::from(key))),
       EcxCurve::X448 => todo!("Public::from_ecx_bytes(X448)"),
     }
   }
@@ -563,8 +553,8 @@ impl PKeyExt for PKey<Public> {
   fn to_ed_bytes(&self, curve: EdCurve) -> Result<&[u8]> {
     match curve {
       EdCurve::Ed25519 => self
-        .downcast_ref(curve.name())
-        .map(|key: &Ed25519PublicKey| key.as_ref()),
+        .downcast_ref::<Ed25519PublicKey>(curve.name())
+        .map(|key| key.as_ref()),
       EdCurve::Ed448 => todo!("Public::to_ed_bytes(Ed448)"),
     }
   }
@@ -572,8 +562,8 @@ impl PKeyExt for PKey<Public> {
   fn to_ecx_bytes(&self, curve: EcxCurve) -> Result<Vec<u8>> {
     match curve {
       EcxCurve::X25519 => self
-        .downcast_ref(curve.name())
-        .map(|key: &X25519PublicKey| key.as_bytes().to_vec()),
+        .downcast_ref::<X25519PublicKey>(curve.name())
+        .map(|key| key.as_bytes().to_vec()),
       EcxCurve::X448 => todo!("Public::to_ecx_bytes(X448)"),
     }
   }
@@ -613,7 +603,7 @@ impl PKeyExt for PKey<Secret> {
   fn from_ed_bytes(curve: EdCurve, data: impl AsRef<[u8]>) -> Result<Self> {
     match curve {
       EdCurve::Ed25519 => Ed25519SecretKey::try_from(data.as_ref())
-        .map_err(|_| Error::KeyError(curve.name()))
+        .map_err(Into::into)
         .map(Self::from_key),
       EdCurve::Ed448 => todo!("Secret::from_ed_bytes(Ed448)"),
     }
@@ -656,21 +646,21 @@ impl PKeyExt for PKey<Secret> {
   fn to_ec_bytes(&self, curve: EcCurve) -> Result<Vec<u8>> {
     match curve {
       EcCurve::P256 => self
-        .downcast_ref(curve.name())
-        .map(|key: &P256SecretKey| key.to_bytes().to_vec()),
+        .downcast_ref::<P256SecretKey>(curve.name())
+        .map(|key| key.to_bytes().to_vec()),
       EcCurve::P384 => todo!("Secret::to_ec_bytes(P384)"),
       EcCurve::P521 => todo!("Secret::to_ec_bytes(P521)"),
       EcCurve::Secp256K1 => self
-        .downcast_ref(curve.name())
-        .map(|key: &K256SecretKey| key.to_bytes().to_vec()),
+        .downcast_ref::<K256SecretKey>(curve.name())
+        .map(|key| key.to_bytes().to_vec()),
     }
   }
 
   fn to_ed_bytes(&self, curve: EdCurve) -> Result<&[u8]> {
     match curve {
       EdCurve::Ed25519 => self
-        .downcast_ref(curve.name())
-        .map(|key: &Ed25519SecretKey| key.as_ref()),
+        .downcast_ref::<Ed25519SecretKey>(curve.name())
+        .map(|key| key.as_ref()),
       EdCurve::Ed448 => todo!("Secret::to_ed_bytes(Ed448)"),
     }
   }
@@ -678,8 +668,8 @@ impl PKeyExt for PKey<Secret> {
   fn to_ecx_bytes(&self, curve: EcxCurve) -> Result<Vec<u8>> {
     match curve {
       EcxCurve::X25519 => self
-        .downcast_ref(curve.name())
-        .map(|key: &X25519SecretKey| key.to_bytes().to_vec()),
+        .downcast_ref::<X25519SecretKey>(curve.name())
+        .map(|key| key.to_bytes().to_vec()),
       EcxCurve::X448 => todo!("Secret::to_ecx_bytes(X448)"),
     }
   }
@@ -693,7 +683,7 @@ impl PKeyExt for PKey<Secret> {
 
         let mut x25519: [u8; X25519_SECRET_LEN] = [0; X25519_SECRET_LEN];
 
-        x25519.copy_from_slice(&SHA2_512::digest(slice)[..ED25519_SECRET_LEN]);
+        x25519.copy_from_slice(&SHA_512!(slice)[..ED25519_SECRET_LEN]);
         x25519[0] &= 248;
         x25519[31] &= 127;
         x25519[31] |= 64;

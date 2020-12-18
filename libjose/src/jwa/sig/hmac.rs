@@ -2,8 +2,13 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
+use crypto::hashes::sha::SHA256_LEN;
+use crypto::hashes::sha::SHA384_LEN;
+use crypto::hashes::sha::SHA512_LEN;
+use crypto::macs::hmac::HMAC_SHA256;
+use crypto::macs::hmac::HMAC_SHA384;
+use crypto::macs::hmac::HMAC_SHA512;
 
-use crate::crypto::macs::hmac;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwa::PKey;
@@ -20,6 +25,28 @@ use crate::jws::JwsVerifier;
 use crate::lib::*;
 use crate::utils::decode_b64;
 use crate::utils::encode_b64;
+
+macro_rules! sign {
+  ($impl:ident, $size:expr, $message:expr, $key:expr) => {{
+    let mut output: [u8; $size] = [0; $size];
+
+    $impl($message, $key, &mut output);
+
+    output.to_vec()
+  }};
+}
+
+macro_rules! verify {
+  ($impl:ident, $size:expr, $message:expr, $signature:expr, $key:expr) => {{
+    let mac: Vec<u8> = sign!($impl, $size, $message, $key);
+
+    if mac != $signature {
+      return Err(Error::SigError("Invalid HMAC Signature"));
+    }
+
+    Ok(())
+  }};
+}
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(non_camel_case_types)]
@@ -44,9 +71,9 @@ impl HmacAlgorithm {
 
   pub fn key_size(self) -> usize {
     match self {
-      Self::HS256 => hmac::key_len_HMAC_SHA256(),
-      Self::HS384 => hmac::key_len_HMAC_SHA384(),
-      Self::HS512 => hmac::key_len_HMAC_SHA512(),
+      Self::HS256 => SHA256_LEN,
+      Self::HS384 => SHA384_LEN,
+      Self::HS512 => SHA512_LEN,
     }
   }
 
@@ -190,9 +217,9 @@ impl JwsSigner for HmacSigner {
     let key: &[u8] = self.key.to_raw_bytes()?;
 
     match self.alg {
-      HmacAlgorithm::HS256 => hmac::sign_HMAC_SHA256(key, message),
-      HmacAlgorithm::HS384 => hmac::sign_HMAC_SHA384(key, message),
-      HmacAlgorithm::HS512 => hmac::sign_HMAC_SHA512(key, message),
+      HmacAlgorithm::HS256 => Ok(sign!(HMAC_SHA256, SHA256_LEN, message, key)),
+      HmacAlgorithm::HS384 => Ok(sign!(HMAC_SHA384, SHA384_LEN, message, key)),
+      HmacAlgorithm::HS512 => Ok(sign!(HMAC_SHA512, SHA512_LEN, message, key)),
     }
   }
 }
@@ -235,9 +262,9 @@ impl JwsVerifier for HmacVerifier {
     let key: &[u8] = self.key.to_raw_bytes()?;
 
     match self.alg {
-      HmacAlgorithm::HS256 => hmac::verify_HMAC_SHA256(key, message, signature),
-      HmacAlgorithm::HS384 => hmac::verify_HMAC_SHA384(key, message, signature),
-      HmacAlgorithm::HS512 => hmac::verify_HMAC_SHA512(key, message, signature),
+      HmacAlgorithm::HS256 => verify!(HMAC_SHA256, SHA256_LEN, key, message, signature),
+      HmacAlgorithm::HS384 => verify!(HMAC_SHA384, SHA384_LEN, key, message, signature),
+      HmacAlgorithm::HS512 => verify!(HMAC_SHA512, SHA512_LEN, key, message, signature),
     }
   }
 }

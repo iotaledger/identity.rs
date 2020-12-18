@@ -2,10 +2,10 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
+use crypto::ciphers::aes::AES_128_GCM;
+use crypto::ciphers::aes::AES_192_GCM;
+use crypto::ciphers::aes::AES_256_GCM;
 
-use crate::crypto::ciphers::aes;
-use crate::crypto::rand::random_bytes;
-use crate::crypto::rand::OsRng;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwa::PKey;
@@ -46,11 +46,11 @@ impl AesGcmKwAlgorithm {
     }
   }
 
-  pub fn key_len(self) -> usize {
+  pub const fn key_len(self) -> usize {
     match self {
-      Self::A128GCMKW => aes::key_len_AES_GCM_128(),
-      Self::A192GCMKW => aes::key_len_AES_GCM_192(),
-      Self::A256GCMKW => aes::key_len_AES_GCM_256(),
+      Self::A128GCMKW => AES_128_GCM::KEY_LENGTH,
+      Self::A192GCMKW => AES_192_GCM::KEY_LENGTH,
+      Self::A256GCMKW => AES_256_GCM::KEY_LENGTH,
     }
   }
 
@@ -168,19 +168,52 @@ impl JweEncrypter for AesGcmKwEncrypter {
   }
 
   fn encrypt(&self, cek: &[u8], _: &JweHeader, output: &mut JweHeader) -> Result<Option<Vec<u8>>> {
-    let iv: Vec<u8> = random_bytes(32, OsRng)?;
-    let key: &[u8] = self.key.to_raw_bytes()?;
+    let plaintext: &[u8] = self.key.to_raw_bytes()?;
 
-    let (ciphertext, tag): _ = match self.alg {
-      AesGcmKwAlgorithm::A128GCMKW => aes::encrypt_AES_GCM_128(cek, key, &iv, &[])?,
-      AesGcmKwAlgorithm::A192GCMKW => aes::encrypt_AES_GCM_192(cek, key, &iv, &[])?,
-      AesGcmKwAlgorithm::A256GCMKW => aes::encrypt_AES_GCM_256(cek, key, &iv, &[])?,
-    };
+    match self.alg {
+      AesGcmKwAlgorithm::A128GCMKW => {
+        let key: _ = to_bytes!(cek, AES_128_GCM::KEY_LENGTH, "CEK")?;
+        let iv: _ = gen_bytes!(AES_128_GCM::IV_LENGTH)?;
 
-    output.set_iv(encode_b64(iv));
-    output.set_tag(encode_b64(tag));
+        let mut ciphertext: Vec<u8> = plaintext.to_vec();
+        let mut tag: [u8; AES_128_GCM::TAG_LENGTH] = [0; AES_128_GCM::TAG_LENGTH];
 
-    Ok(Some(ciphertext))
+        AES_128_GCM::encrypt(&key, &iv, &[], plaintext, &mut ciphertext, &mut tag)?;
+
+        output.set_iv(encode_b64(&iv));
+        output.set_tag(encode_b64(&tag));
+
+        Ok(Some(ciphertext))
+      }
+      AesGcmKwAlgorithm::A192GCMKW => {
+        let key: _ = to_bytes!(cek, AES_192_GCM::KEY_LENGTH, "CEK")?;
+        let iv: _ = gen_bytes!(AES_192_GCM::IV_LENGTH)?;
+
+        let mut ciphertext: Vec<u8> = plaintext.to_vec();
+        let mut tag: [u8; AES_192_GCM::TAG_LENGTH] = [0; AES_192_GCM::TAG_LENGTH];
+
+        AES_192_GCM::encrypt(&key, &iv, &[], plaintext, &mut ciphertext, &mut tag)?;
+
+        output.set_iv(encode_b64(&iv));
+        output.set_tag(encode_b64(&tag));
+
+        Ok(Some(ciphertext))
+      }
+      AesGcmKwAlgorithm::A256GCMKW => {
+        let key: _ = to_bytes!(cek, AES_256_GCM::KEY_LENGTH, "CEK")?;
+        let iv: _ = gen_bytes!(AES_256_GCM::IV_LENGTH)?;
+
+        let mut ciphertext: Vec<u8> = plaintext.to_vec();
+        let mut tag: [u8; AES_256_GCM::TAG_LENGTH] = [0; AES_256_GCM::TAG_LENGTH];
+
+        AES_256_GCM::encrypt(&key, &iv, &[], plaintext, &mut ciphertext, &mut tag)?;
+
+        output.set_iv(encode_b64(&iv));
+        output.set_tag(encode_b64(&tag));
+
+        Ok(Some(ciphertext))
+      }
+    }
   }
 }
 
@@ -214,27 +247,51 @@ impl JweDecrypter for AesGcmKwDecrypter {
 
   fn decrypt(&self, cek: Option<&[u8]>, _: JweEncryption, header: &JweHeader) -> Result<Cow<[u8]>> {
     let cek: &[u8] = cek.ok_or(Error::EncError("Content Encryption Key is Required"))?;
-    let key: &[u8] = self.key.to_raw_bytes()?;
+    let ciphertext: &[u8] = self.key.to_raw_bytes()?;
 
     let iv: Vec<u8> = header
       .iv()
-      .ok_or(Error::EncError("Missing Header Claim: `iv`"))
+      .ok_or(Error::MissingClaim("iv"))
       .and_then(decode_b64)?;
 
     let tag: Vec<u8> = header
       .tag()
-      .ok_or(Error::EncError("Missing Header Claim: `tag`"))
+      .ok_or(Error::MissingClaim("tag"))
       .and_then(decode_b64)?;
 
     match self.alg {
       AesGcmKwAlgorithm::A128GCMKW => {
-        aes::decrypt_AES_GCM_128(cek, key, &iv, &[], &tag).map(Cow::Owned)
+        let key: _ = to_bytes!(cek, AES_128_GCM::KEY_LENGTH, "CEK")?;
+        let iv: _ = to_bytes!(iv, AES_128_GCM::IV_LENGTH, "IV")?;
+        let tag: _ = to_bytes!(tag, AES_128_GCM::TAG_LENGTH, "Tag")?;
+
+        let mut plaintext: Vec<u8> = ciphertext.to_vec();
+
+        AES_128_GCM::decrypt(&key, &iv, &[], &tag, ciphertext, &mut plaintext)?;
+
+        Ok(Cow::Owned(plaintext))
       }
       AesGcmKwAlgorithm::A192GCMKW => {
-        aes::decrypt_AES_GCM_192(cek, key, &iv, &[], &tag).map(Cow::Owned)
+        let key: _ = to_bytes!(cek, AES_192_GCM::KEY_LENGTH, "CEK")?;
+        let iv: _ = to_bytes!(iv, AES_192_GCM::IV_LENGTH, "IV")?;
+        let tag: _ = to_bytes!(tag, AES_192_GCM::TAG_LENGTH, "Tag")?;
+
+        let mut plaintext: Vec<u8> = ciphertext.to_vec();
+
+        AES_192_GCM::decrypt(&key, &iv, &[], &tag, ciphertext, &mut plaintext)?;
+
+        Ok(Cow::Owned(plaintext))
       }
       AesGcmKwAlgorithm::A256GCMKW => {
-        aes::decrypt_AES_GCM_256(cek, key, &iv, &[], &tag).map(Cow::Owned)
+        let key: _ = to_bytes!(cek, AES_256_GCM::KEY_LENGTH, "CEK")?;
+        let iv: _ = to_bytes!(iv, AES_256_GCM::IV_LENGTH, "IV")?;
+        let tag: _ = to_bytes!(tag, AES_256_GCM::TAG_LENGTH, "Tag")?;
+
+        let mut plaintext: Vec<u8> = ciphertext.to_vec();
+
+        AES_256_GCM::decrypt(&key, &iv, &[], &tag, ciphertext, &mut plaintext)?;
+
+        Ok(Cow::Owned(plaintext))
       }
     }
   }

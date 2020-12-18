@@ -14,9 +14,11 @@ pub enum Error {
   InvalidParam(&'static str),
   MissingParam(&'static str),
   InvalidContent(&'static str),
+  InvalidArray(&'static str),
   EncError(&'static str),
   SigError(&'static str),
   KeyError(&'static str),
+  CryptoError(crypto::Error),
 }
 
 impl Display for Error {
@@ -32,15 +34,23 @@ impl Display for Error {
       Self::InvalidParam(inner) => f.write_fmt(format_args!("Invalid Param: {}", inner)),
       Self::MissingParam(inner) => f.write_fmt(format_args!("Missing Param: {}", inner)),
       Self::InvalidContent(inner) => f.write_fmt(format_args!("Invalid Content: {}", inner)),
+      Self::InvalidArray(inner) => f.write_fmt(format_args!("Invalid Array: {}", inner)),
       Self::EncError(inner) => f.write_fmt(format_args!("Encryption Error: {}", inner)),
       Self::SigError(inner) => f.write_fmt(format_args!("Signature Error: {}", inner)),
       Self::KeyError(inner) => f.write_fmt(format_args!("Invalid Key Format: {}", inner)),
+      Self::CryptoError(inner) => f.write_fmt(format_args!("Crypto Error: {}", inner)),
     }
   }
 }
 
 #[cfg(feature = "std")]
 impl std::error::Error for Error {}
+
+impl From<crypto::Error> for Error {
+  fn from(other: crypto::Error) -> Self {
+    Self::CryptoError(other)
+  }
+}
 
 impl From<serde_json::Error> for Error {
   fn from(other: serde_json::Error) -> Self {

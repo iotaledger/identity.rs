@@ -27,19 +27,12 @@ use crate::lib::*;
 use crate::utils::decode_b64;
 use crate::utils::encode_b64;
 use crate::utils::is_b64;
+use crate::utils::random_bytes;
 
 const PARAM_ALG: &str = "alg";
 const PARAM_ENC: &str = "enc";
 
 type Object = Map<String, Value>;
-
-// TODO: FIXME
-pub struct OsRng;
-
-// TODO: FIXME
-pub fn random_bytes(_: usize, _: OsRng) -> Result<Vec<u8>> {
-  todo!("random_bytes")
-}
 
 // =============================================================================
 // JWE Encoding Format
@@ -413,7 +406,7 @@ impl JweDecoder {
       }
 
       let iv: &[u8] = segments.iv.as_deref().unwrap_or_default();
-      let tag: Option<&[u8]> = segments.tag.as_deref();
+      let tag: &[u8] = segments.tag.as_deref().unwrap_or_default();
       let plaintext: Vec<u8> = enc.decrypt(&segments.ciphertext, &key, iv, &aad, tag)?;
 
       let claims: Vec<u8> = if let Some(zip) = protected.zip() {
@@ -437,13 +430,13 @@ fn unwrap_cek(enc: JweEncryption, key: Option<Cow<[u8]>>) -> Result<Cow<[u8]>> {
   if let Some(key) = key {
     Ok(key)
   } else {
-    random_bytes(enc.key_len(), OsRng).map(Cow::Owned)
+    random_bytes(enc.key_len()).map(Cow::Owned)
   }
 }
 
 fn generate_iv(enc: JweEncryption) -> Result<Option<Vec<u8>>> {
   if enc.iv_len() > 0 {
-    random_bytes(enc.iv_len(), OsRng).map(Some)
+    random_bytes(enc.iv_len()).map(Some)
   } else {
     Ok(None)
   }

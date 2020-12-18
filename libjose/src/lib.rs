@@ -32,6 +32,9 @@ extern crate std;
 #[macro_use]
 extern crate serde;
 
+#[macro_use]
+mod macros;
+
 pub mod crypto;
 pub mod error;
 pub mod jose;

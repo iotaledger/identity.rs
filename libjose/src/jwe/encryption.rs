@@ -1,34 +1,14 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
+use crypto::ciphers::aes::AES_128_GCM;
+use crypto::ciphers::aes::AES_192_GCM;
+use crypto::ciphers::aes::AES_256_GCM;
+use crypto::ciphers::chacha::CHACHA20_POLY1305;
+use crypto::ciphers::chacha::XCHACHA20_POLY1305;
 
-use crate::crypto::ciphers::aes;
-use crate::crypto::ciphers::chacha;
-use crate::error::Error;
 use crate::error::Result;
 use crate::lib::*;
-
-macro_rules! check_key {
-  ($this:expr, $value:expr) => {
-    if $value.len() != $this.key_len() {
-      return Err(Error::EncError("Invalid Content Encryption Key Length"));
-    }
-  };
-}
-
-macro_rules! check_iv {
-  ($this:expr, $value:expr) => {
-    if $value.len() != $this.iv_len() {
-      return Err(Error::EncError("Invalid Initialization Vector Length"));
-    }
-  };
-}
-
-macro_rules! require_tag {
-  ($tag:expr) => {
-    $tag.ok_or(Error::EncError("Decryption Tag is Required"))
-  };
-}
 
 /// Supported algorithms for the JSON Web Encryption `enc` claim.
 ///
@@ -74,23 +54,23 @@ impl JweEncryption {
     }
   }
 
-  pub fn key_len(self) -> usize {
+  pub const fn key_len(self) -> usize {
     match self {
-      Self::A128CBC_HS256 | Self::A128GCM => aes::key_len_AES_GCM_128(),
-      Self::A192CBC_HS384 | Self::A192GCM => aes::key_len_AES_GCM_192(),
-      Self::A256CBC_HS512 | Self::A256GCM => aes::key_len_AES_GCM_256(),
-      Self::C20P => chacha::key_len_C20P(),
-      Self::XC20P => chacha::key_len_XC20P(),
+      Self::A128CBC_HS256 | Self::A128GCM => AES_128_GCM::KEY_LENGTH,
+      Self::A192CBC_HS384 | Self::A192GCM => AES_192_GCM::KEY_LENGTH,
+      Self::A256CBC_HS512 | Self::A256GCM => AES_256_GCM::KEY_LENGTH,
+      Self::C20P => CHACHA20_POLY1305::KEY_LENGTH,
+      Self::XC20P => XCHACHA20_POLY1305::KEY_LENGTH,
     }
   }
 
-  pub fn iv_len(self) -> usize {
+  pub const fn iv_len(self) -> usize {
     match self {
-      Self::A128CBC_HS256 | Self::A128GCM => aes::iv_len_AES_GCM_128(),
-      Self::A192CBC_HS384 | Self::A192GCM => aes::iv_len_AES_GCM_192(),
-      Self::A256CBC_HS512 | Self::A256GCM => aes::iv_len_AES_GCM_256(),
-      Self::C20P => chacha::iv_len_C20P(),
-      Self::XC20P => chacha::iv_len_XC20P(),
+      Self::A128CBC_HS256 | Self::A128GCM => AES_128_GCM::IV_LENGTH,
+      Self::A192CBC_HS384 | Self::A192GCM => AES_192_GCM::IV_LENGTH,
+      Self::A256CBC_HS512 | Self::A256GCM => AES_256_GCM::IV_LENGTH,
+      Self::C20P => CHACHA20_POLY1305::IV_LENGTH,
+      Self::XC20P => XCHACHA20_POLY1305::IV_LENGTH,
     }
   }
 
@@ -112,34 +92,59 @@ impl JweEncryption {
         todo!("JweEncryption::encrypt(A256CBC_HS512)")
       }
       Self::A128GCM => {
-        check_key!(self, key);
-        check_iv!(self, iv);
+        let key: _ = to_bytes!(key, AES_128_GCM::KEY_LENGTH, "CEK")?;
+        let iv: _ = to_bytes!(iv, AES_128_GCM::IV_LENGTH, "IV")?;
 
-        aes::encrypt_AES_GCM_128(plaintext, key, iv, aad).map(|(c, t)| (c, Some(t)))
+        let mut ciphertext: Vec<u8> = plaintext.to_vec();
+        let mut tag: [u8; AES_128_GCM::TAG_LENGTH] = [0; AES_128_GCM::TAG_LENGTH];
+
+        AES_128_GCM::encrypt(&key, &iv, aad, plaintext, &mut ciphertext, &mut tag)?;
+
+        Ok((ciphertext, Some(tag.to_vec())))
       }
       Self::A192GCM => {
-        check_key!(self, key);
-        check_iv!(self, iv);
+        let key: _ = to_bytes!(key, AES_192_GCM::KEY_LENGTH, "CEK")?;
+        let iv: _ = to_bytes!(iv, AES_192_GCM::IV_LENGTH, "IV")?;
 
-        aes::encrypt_AES_GCM_192(plaintext, key, iv, aad).map(|(c, t)| (c, Some(t)))
+        let mut ciphertext: Vec<u8> = plaintext.to_vec();
+        let mut tag: [u8; AES_192_GCM::TAG_LENGTH] = [0; AES_192_GCM::TAG_LENGTH];
+
+        AES_192_GCM::encrypt(&key, &iv, aad, plaintext, &mut ciphertext, &mut tag)?;
+
+        Ok((ciphertext, Some(tag.to_vec())))
       }
       Self::A256GCM => {
-        check_key!(self, key);
-        check_iv!(self, iv);
+        let key: _ = to_bytes!(key, AES_256_GCM::KEY_LENGTH, "CEK")?;
+        let iv: _ = to_bytes!(iv, AES_256_GCM::IV_LENGTH, "IV")?;
 
-        aes::encrypt_AES_GCM_256(plaintext, key, iv, aad).map(|(c, t)| (c, Some(t)))
+        let mut ciphertext: Vec<u8> = plaintext.to_vec();
+        let mut tag: [u8; AES_256_GCM::TAG_LENGTH] = [0; AES_256_GCM::TAG_LENGTH];
+
+        AES_256_GCM::encrypt(&key, &iv, aad, plaintext, &mut ciphertext, &mut tag)?;
+
+        Ok((ciphertext, Some(tag.to_vec())))
       }
       Self::C20P => {
-        check_key!(self, key);
-        check_iv!(self, iv);
+        let key: _ = to_bytes!(key, CHACHA20_POLY1305::KEY_LENGTH, "CEK")?;
+        let iv: _ = to_bytes!(iv, CHACHA20_POLY1305::IV_LENGTH, "IV")?;
 
-        chacha::encrypt_C20P(plaintext, key, iv, aad).map(|(c, t)| (c, Some(t)))
+        let mut ciphertext: Vec<u8> = plaintext.to_vec();
+        let mut tag: [u8; CHACHA20_POLY1305::TAG_LENGTH] = [0; CHACHA20_POLY1305::TAG_LENGTH];
+
+        CHACHA20_POLY1305::encrypt(&key, &iv, aad, plaintext, &mut ciphertext, &mut tag)?;
+
+        Ok((ciphertext, Some(tag.to_vec())))
       }
       Self::XC20P => {
-        check_key!(self, key);
-        check_iv!(self, iv);
+        let key: _ = to_bytes!(key, XCHACHA20_POLY1305::KEY_LENGTH, "CEK")?;
+        let iv: _ = to_bytes!(iv, XCHACHA20_POLY1305::IV_LENGTH, "IV")?;
 
-        chacha::encrypt_XC20P(plaintext, key, iv, aad).map(|(c, t)| (c, Some(t)))
+        let mut ciphertext: Vec<u8> = plaintext.to_vec();
+        let mut tag: [u8; XCHACHA20_POLY1305::TAG_LENGTH] = [0; XCHACHA20_POLY1305::TAG_LENGTH];
+
+        XCHACHA20_POLY1305::encrypt(&key, &iv, aad, plaintext, &mut ciphertext, &mut tag)?;
+
+        Ok((ciphertext, Some(tag.to_vec())))
       }
     }
   }
@@ -150,7 +155,7 @@ impl JweEncryption {
     key: &[u8],
     iv: &[u8],
     aad: &[u8],
-    tag: Option<&[u8]>,
+    tag: &[u8],
   ) -> Result<Vec<u8>> {
     match self {
       Self::A128CBC_HS256 => {
@@ -163,34 +168,59 @@ impl JweEncryption {
         todo!("JweEncryption::decrypt(A256CBC_HS512)")
       }
       Self::A128GCM => {
-        check_key!(self, key);
-        check_iv!(self, iv);
+        let key: _ = to_bytes!(key, AES_128_GCM::KEY_LENGTH, "CEK")?;
+        let iv: _ = to_bytes!(iv, AES_128_GCM::IV_LENGTH, "IV")?;
+        let tag: _ = to_bytes!(tag, AES_128_GCM::TAG_LENGTH, "Tag")?;
 
-        aes::decrypt_AES_GCM_128(ciphertext, key, iv, aad, require_tag!(tag)?)
+        let mut plaintext: Vec<u8> = ciphertext.to_vec();
+
+        AES_128_GCM::decrypt(&key, &iv, aad, &tag, ciphertext, &mut plaintext)?;
+
+        Ok(plaintext)
       }
       Self::A192GCM => {
-        check_key!(self, key);
-        check_iv!(self, iv);
+        let key: _ = to_bytes!(key, AES_192_GCM::KEY_LENGTH, "CEK")?;
+        let iv: _ = to_bytes!(iv, AES_192_GCM::IV_LENGTH, "IV")?;
+        let tag: _ = to_bytes!(tag, AES_192_GCM::TAG_LENGTH, "Tag")?;
 
-        aes::decrypt_AES_GCM_192(ciphertext, key, iv, aad, require_tag!(tag)?)
+        let mut plaintext: Vec<u8> = ciphertext.to_vec();
+
+        AES_192_GCM::decrypt(&key, &iv, aad, &tag, ciphertext, &mut plaintext)?;
+
+        Ok(plaintext)
       }
       Self::A256GCM => {
-        check_key!(self, key);
-        check_iv!(self, iv);
+        let key: _ = to_bytes!(key, AES_256_GCM::KEY_LENGTH, "CEK")?;
+        let iv: _ = to_bytes!(iv, AES_256_GCM::IV_LENGTH, "IV")?;
+        let tag: _ = to_bytes!(tag, AES_256_GCM::TAG_LENGTH, "Tag")?;
 
-        aes::decrypt_AES_GCM_256(ciphertext, key, iv, aad, require_tag!(tag)?)
+        let mut plaintext: Vec<u8> = ciphertext.to_vec();
+
+        AES_256_GCM::decrypt(&key, &iv, aad, &tag, ciphertext, &mut plaintext)?;
+
+        Ok(plaintext)
       }
       Self::C20P => {
-        check_key!(self, key);
-        check_iv!(self, iv);
+        let key: _ = to_bytes!(key, CHACHA20_POLY1305::KEY_LENGTH, "CEK")?;
+        let iv: _ = to_bytes!(iv, CHACHA20_POLY1305::IV_LENGTH, "IV")?;
+        let tag: _ = to_bytes!(tag, CHACHA20_POLY1305::TAG_LENGTH, "Tag")?;
 
-        chacha::decrypt_C20P(ciphertext, key, iv, aad, require_tag!(tag)?)
+        let mut plaintext: Vec<u8> = ciphertext.to_vec();
+
+        CHACHA20_POLY1305::decrypt(&key, &iv, aad, &tag, ciphertext, &mut plaintext)?;
+
+        Ok(plaintext)
       }
       Self::XC20P => {
-        check_key!(self, key);
-        check_iv!(self, iv);
+        let key: _ = to_bytes!(key, XCHACHA20_POLY1305::KEY_LENGTH, "CEK")?;
+        let iv: _ = to_bytes!(iv, XCHACHA20_POLY1305::IV_LENGTH, "IV")?;
+        let tag: _ = to_bytes!(tag, XCHACHA20_POLY1305::TAG_LENGTH, "Tag")?;
 
-        chacha::decrypt_XC20P(ciphertext, key, iv, aad, require_tag!(tag)?)
+        let mut plaintext: Vec<u8> = ciphertext.to_vec();
+
+        XCHACHA20_POLY1305::decrypt(&key, &iv, aad, &tag, ciphertext, &mut plaintext)?;
+
+        Ok(plaintext)
       }
     }
   }

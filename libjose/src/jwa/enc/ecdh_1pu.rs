@@ -2,6 +2,9 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
+use crypto::ciphers::aes::AES_128_GCM;
+use crypto::ciphers::aes::AES_192_GCM;
+use crypto::ciphers::aes::AES_256_GCM;
 
 use crate::crypto::ciphers::aes;
 use crate::error::Error;
@@ -48,9 +51,9 @@ impl Ecdh1PUAlgorithm {
   pub fn key_len(self) -> usize {
     match self {
       Self::ECDH_1PU => unreachable!(),
-      Self::ECDH_1PU_A128KW => aes::key_len_AES_GCM_128(),
-      Self::ECDH_1PU_A192KW => aes::key_len_AES_GCM_192(),
-      Self::ECDH_1PU_A256KW => aes::key_len_AES_GCM_256(),
+      Self::ECDH_1PU_A128KW => AES_128_GCM::KEY_LENGTH,
+      Self::ECDH_1PU_A192KW => AES_192_GCM::KEY_LENGTH,
+      Self::ECDH_1PU_A256KW => AES_256_GCM::KEY_LENGTH,
     }
   }
 
@@ -325,7 +328,7 @@ impl JweDecrypter for Ecdh1PUDecrypter {
       .epk()
       .map(|epk| self.kty.expand_epk(&epk))
       .transpose()?
-      .ok_or(Error::EncError("Missing Ephemeral Public Key"))
+      .ok_or(Error::MissingClaim("epk"))
       .and_then(|public| {
         let ze: Vec<u8> = self.kty.diffie_hellman(&self.key_sec, &public)?;
         let zs: Vec<u8> = self.kty.diffie_hellman(&self.key_sec, &self.key_pub)?;

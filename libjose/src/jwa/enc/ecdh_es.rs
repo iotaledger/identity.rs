@@ -2,9 +2,13 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
+use crypto::ciphers::aes::AES_128_GCM;
+use crypto::ciphers::aes::AES_192_GCM;
+use crypto::ciphers::aes::AES_256_GCM;
+use crypto::ciphers::chacha::CHACHA20_POLY1305;
+use crypto::ciphers::chacha::XCHACHA20_POLY1305;
 
 use crate::crypto::ciphers::aes;
-use crate::crypto::ciphers::chacha;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwa::EcdhKeyType;
@@ -56,11 +60,11 @@ impl EcdhESAlgorithm {
   pub fn key_len(self) -> usize {
     match self {
       Self::ECDH_ES => unreachable!(),
-      Self::ECDH_ES_A128KW => aes::key_len_AES_GCM_128(),
-      Self::ECDH_ES_A192KW => aes::key_len_AES_GCM_192(),
-      Self::ECDH_ES_A256KW => aes::key_len_AES_GCM_256(),
-      Self::ECDH_ES_C20PKW => chacha::key_len_C20P(),
-      Self::ECDH_ES_XC20PKW => chacha::key_len_XC20P(),
+      Self::ECDH_ES_A128KW => AES_128_GCM::KEY_LENGTH,
+      Self::ECDH_ES_A192KW => AES_192_GCM::KEY_LENGTH,
+      Self::ECDH_ES_A256KW => AES_256_GCM::KEY_LENGTH,
+      Self::ECDH_ES_C20PKW => CHACHA20_POLY1305::KEY_LENGTH,
+      Self::ECDH_ES_XC20PKW => XCHACHA20_POLY1305::KEY_LENGTH,
     }
   }
 
@@ -321,7 +325,7 @@ impl JweDecrypter for EcdhESDecrypter {
       .epk()
       .map(|epk| self.kty.expand_epk(&epk))
       .transpose()?
-      .ok_or(Error::EncError("Missing Ephemeral Public Key"))
+      .ok_or(Error::MissingClaim("epk"))
       .and_then(|public| self.kty.diffie_hellman(&self.key, &public))?;
 
     let key: Vec<u8> = if let EcdhESAlgorithm::ECDH_ES = self.alg {

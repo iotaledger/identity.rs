@@ -17,14 +17,9 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 url = { version = "2.1", default-features = false, features = ["serde"] }
 
-aes-gcm = { version = "0.8", default-features = false, features = ["aes"] }
-aes-keywrap = { version = "0.2", default-features = false }
-chacha20poly1305 = { version = "0.7", default-features = false, features = ["xchacha20poly1305"] }
 curve25519-dalek = { version = "3.0", default-features = false }
-ed25519-zebra = { version = "2.2", default-features = false }
-hmac = { version = "0.10", default-features = false }
-k256 = { version = "0.6", default-features = false, features = ["ecdh", "ecdsa-core", "ecdsa", "sha256", "zeroize"] }
-p256 = { version = "0.6", default-features = false, features = ["ecdh", "ecdsa-core", "ecdsa", "sha256", "zeroize"] }
+k256 = { version = "0.7", default-features = false, features = ["ecdsa", "sha256", "zeroize"] }
+p256 = { version = "0.7", default-features = false, features = ["ecdsa", "sha256", "zeroize"] }
 rand = { version = "0.7", default-features = false, features = ["getrandom"] }
 rsa = { version = "0.3", default-features = false }
 sha2 = { version = "0.9", default-features = false }
