@@ -1,3 +1,5 @@
 /examples/example
 
-identity.h
+
+main
+main.o
