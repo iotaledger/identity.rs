@@ -6,5 +6,6 @@ members = [
     "identity_iota",
 ]
 exclude = [
-    "libraries/wasm"
+    "libraries/wasm",
+    "libraries/c"
 ]

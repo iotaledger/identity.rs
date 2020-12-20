@@ -1,0 +1,15 @@
+[package]
+name = "identity-c"
+version = "0.0.1"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["staticlib", "cdylib"]
+
+[dependencies]
+identity_core = { path = "../../identity_core" }
+identity_iota = { path = "../../identity_iota" }
+
+[build-dependencies]
+cbindgen = "^0.14.2"
