@@ -9,6 +9,7 @@ pub enum Error {
   InvalidJson(serde_json::Error),
   InvalidBase64(base64::DecodeError),
   InvalidDecompression(miniz_oxide::inflate::TINFLStatus),
+  InvalidUtf8(core::str::Utf8Error),
   InvalidClaim(&'static str),
   MissingClaim(&'static str),
   InvalidParam(&'static str),
@@ -26,9 +27,8 @@ impl Display for Error {
     match self {
       Self::InvalidJson(inner) => f.write_fmt(format_args!("Invalid JSON: {}", inner)),
       Self::InvalidBase64(inner) => f.write_fmt(format_args!("Invalid Base64: {}", inner)),
-      Self::InvalidDecompression(inner) => {
-        f.write_fmt(format_args!("Invalid Decompression: {:?}", inner))
-      }
+      Self::InvalidDecompression(inner) => f.write_fmt(format_args!("Invalid Decompression: {:?}", inner)),
+      Self::InvalidUtf8(inner) => f.write_fmt(format_args!("Invalid Utf-8: {:?}", inner)),
       Self::InvalidClaim(inner) => f.write_fmt(format_args!("Invalid Claim: {}", inner)),
       Self::MissingClaim(inner) => f.write_fmt(format_args!("Missing Claim: {}", inner)),
       Self::InvalidParam(inner) => f.write_fmt(format_args!("Invalid Param: {}", inner)),

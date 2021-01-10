@@ -1,4 +1,6 @@
+comment_width = 120
 format_code_in_doc_comments = true
+max_width = 120
 normalize_doc_attributes = true
 normalize_comments = true
 reorder_impl_items = true

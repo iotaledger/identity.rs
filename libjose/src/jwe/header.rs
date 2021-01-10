@@ -1,9 +1,13 @@
-use url::Url;
+use core::ops::Deref;
+use core::ops::DerefMut;
 
+use crate::error::Error;
+use crate::error::Result;
 use crate::jwe::JweAlgorithm;
 use crate::jwe::JweCompression;
 use crate::jwe::JweEncryption;
 use crate::jwk::Jwk;
+use crate::jwt::JwtHeader;
 use crate::lib::*;
 
 /// JSON Web Encryption JOSE Header.
@@ -11,6 +15,9 @@ use crate::lib::*;
 /// [More Info](https://tools.ietf.org/html/rfc7516#section-4)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct JweHeader {
+  /// Common JOSE Header Parameters.
+  #[serde(flatten)]
+  common: JwtHeader,
   /// Algorithm.
   ///
   /// Identifies the cryptographic algorithm used to secure the JWS.
@@ -32,98 +39,6 @@ pub struct JweHeader {
   /// [More Info](https://tools.ietf.org/html/rfc7516#section-4.1.3)
   #[serde(skip_serializing_if = "Option::is_none")]
   zip: Option<JweCompression>,
-  /// JWK Set URL.
-  ///
-  /// A JWK Set containing the public key to which the JWE was encrypted; this
-  /// can be used to determine the private key needed to decrypt the JWE.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc7516#section-4.1.4)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  jku: Option<Url>,
-  /// JSON Web Key.
-  ///
-  /// The public key to which the JWE was encrypted; this can be used to
-  /// determine the private key needed to decrypt the JWE.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc7516#section-4.1.5)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  jwk: Option<Jwk>,
-  /// Key ID.
-  ///
-  /// A hint indicating which key was used to encrypt the JWE.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc7516#section-4.1.6)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  kid: Option<String>,
-  /// X.509 URL.
-  ///
-  /// A URI that refers to a resource for the X.509 public key certificate or
-  /// certificate chain corresponding to the key used to encrypt the JWE.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc7516#section-4.1.7)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  x5u: Option<Url>,
-  /// X.509 Certificate Chain.
-  ///
-  /// Contains the X.509 public key certificate or certificate chain
-  /// corresponding to the key used to encrypt the JWE.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc7516#section-4.1.8)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  x5c: Option<Vec<String>>,
-  /// X.509 Certificate SHA-1 Thumbprint.
-  ///
-  /// A base64url-encoded SHA-1 thumbprint of the DER encoding of the X.509
-  /// certificate corresponding to the key used to encrypt the JWE.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc7516#section-4.1.9)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  x5t: Option<String>,
-  /// X.509 Certificate SHA-256 Thumbprint.
-  ///
-  /// A base64url-encoded SHA-256 thumbprint of the DER encoding of the X.509
-  /// certificate corresponding to the key used to encrypt the JWE.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc7516#section-4.1.10)
-  #[serde(rename = "x5t#S256", skip_serializing_if = "Option::is_none")]
-  x5t_s256: Option<String>,
-  /// Type.
-  ///
-  /// Used by JWE applications to declare the media type of the
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc7516#section-4.1.11)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  typ: Option<String>,
-  /// Content Type.
-  ///
-  /// Used by JWE applications to declare the media type of the secured content.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc7516#section-4.1.12)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  cty: Option<String>,
-  /// Critical.
-  ///
-  /// Indicates that JWE extensions are being used that MUST be understood and
-  /// processed.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc7516#section-4.1.13)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  crit: Option<Vec<String>>,
-  /// URL.
-  ///
-  /// Specifies the URL to which this JWS object is directed.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc8555#section-6.4.1)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  url: Option<Url>,
-  /// Nonce.
-  ///
-  /// Provides a unique value that enables the verifier of a JWS to recognize
-  /// when replay has occurred.
-  ///
-  /// [More Info](https://tools.ietf.org/html/rfc8555#section-6.5.2)
-  #[serde(skip_serializing_if = "Option::is_none")]
-  nonce: Option<String>,
   /// Ephemeral Public Key.
   ///
   /// Public key created by the originator for the use in key agreement
@@ -182,21 +97,10 @@ impl JweHeader {
   /// Creates a new `JweHeader` with the given `alg` and `enc` claims.
   pub const fn new(alg: JweAlgorithm, enc: JweEncryption) -> Self {
     Self {
+      common: JwtHeader::new(),
       alg,
       enc,
       zip: None,
-      jku: None,
-      jwk: None,
-      kid: None,
-      x5u: None,
-      x5c: None,
-      x5t: None,
-      x5t_s256: None,
-      typ: None,
-      cty: None,
-      crit: None,
-      url: None,
-      nonce: None,
       epk: None,
       apu: None,
       apv: None,
@@ -232,136 +136,24 @@ impl JweHeader {
     self.zip
   }
 
+  /// Returns the value of the compression claim (zip).
+  pub fn try_zip(&self) -> Result<JweCompression> {
+    self.zip().ok_or(Error::MissingParam("zip"))
+  }
+
   /// Sets a value for the compression claim (zip).
   pub fn set_zip(&mut self, value: impl Into<JweCompression>) {
     self.zip = Some(value.into());
   }
 
-  /// Returns the value of the JWK set URL claim (jku).
-  pub fn jku(&self) -> Option<&Url> {
-    self.jku.as_ref()
-  }
-
-  /// Sets a value for the JWK set URL claim (jku).
-  pub fn set_jku(&mut self, value: impl Into<Url>) {
-    self.jku = Some(value.into());
-  }
-
-  /// Returns the value of the JWK claim (jwk).
-  pub fn jwk(&self) -> Option<&Jwk> {
-    self.jwk.as_ref()
-  }
-
-  /// Sets a value for the JWK claim (jwk).
-  pub fn set_jwk(&mut self, value: impl Into<Jwk>) {
-    self.jwk = Some(value.into());
-  }
-
-  /// Returns the value of the key ID claim (kid).
-  pub fn kid(&self) -> Option<&str> {
-    self.kid.as_deref()
-  }
-
-  /// Sets a value for the key ID claim (kid).
-  pub fn set_kid(&mut self, value: impl Into<String>) {
-    self.kid = Some(value.into());
-  }
-
-  /// Returns the value of the X.509 URL claim (x5u).
-  pub fn x5u(&self) -> Option<&Url> {
-    self.x5u.as_ref()
-  }
-
-  /// Sets a value for the X.509 URL claim (x5u).
-  pub fn set_x5u(&mut self, value: impl Into<Url>) {
-    self.x5u = Some(value.into());
-  }
-
-  /// Returns the value of the X.509 certificate chain claim (x5c).
-  pub fn x5c(&self) -> Option<&[String]> {
-    self.x5c.as_deref()
-  }
-
-  /// Sets values for the X.509 certificate chain claim (x5c).
-  pub fn set_x5c(&mut self, value: impl IntoIterator<Item = impl Into<String>>) {
-    self.x5c = Some(value.into_iter().map(Into::into).collect());
-  }
-
-  /// Returns the value of the X.509 certificate SHA-1 thumbprint claim (x5t).
-  pub fn x5t(&self) -> Option<&str> {
-    self.x5t.as_deref()
-  }
-
-  /// Sets a value for the X.509 certificate SHA-1 thumbprint claim (x5t).
-  pub fn set_x5t(&mut self, value: impl Into<String>) {
-    self.x5t = Some(value.into());
-  }
-
-  /// Returns the value of the X.509 certificate SHA-256 thumbprint claim
-  /// (x5t#S256).
-  pub fn x5t_s256(&self) -> Option<&str> {
-    self.x5t_s256.as_deref()
-  }
-
-  /// Sets a value for the X.509 certificate SHA-256 thumbprint claim
-  /// (x5t#S256).
-  pub fn set_x5t_s256(&mut self, value: impl Into<String>) {
-    self.x5t_s256 = Some(value.into());
-  }
-
-  /// Returns the value of the token type claim (typ).
-  pub fn typ(&self) -> Option<&str> {
-    self.typ.as_deref()
-  }
-
-  /// Sets a value for the token type claim (typ).
-  pub fn set_typ(&mut self, value: impl Into<String>) {
-    self.typ = Some(value.into());
-  }
-
-  /// Returns the value of the content type claim (cty).
-  pub fn cty(&self) -> Option<&str> {
-    self.cty.as_deref()
-  }
-
-  /// Sets a value for the content type claim (cty).
-  pub fn set_cty(&mut self, value: impl Into<String>) {
-    self.cty = Some(value.into());
-  }
-
-  /// Returns the value of the critical claim (crit).
-  pub fn crit(&self) -> Option<&[String]> {
-    self.crit.as_deref()
-  }
-
-  /// Sets values for the critical claim (crit).
-  pub fn set_crit(&mut self, value: impl IntoIterator<Item = impl Into<String>>) {
-    self.crit = Some(Vec::from_iter(value.into_iter().map(Into::into)));
-  }
-
-  /// Returns the value of the url claim (url).
-  pub fn url(&self) -> Option<&Url> {
-    self.url.as_ref()
-  }
-
-  /// Sets a value for the url claim (url).
-  pub fn set_url(&mut self, value: impl Into<Url>) {
-    self.url = Some(value.into());
-  }
-
-  /// Returns the value of the nonce claim (nonce).
-  pub fn nonce(&self) -> Option<&str> {
-    self.nonce.as_deref()
-  }
-
-  /// Sets a value for the nonce claim (nonce).
-  pub fn set_nonce(&mut self, value: impl Into<String>) {
-    self.nonce = Some(value.into());
-  }
-
   /// Returns the value of the ephemeral public key claim (epk).
   pub fn epk(&self) -> Option<&Jwk> {
     self.epk.as_ref()
+  }
+
+  /// Returns the value of the ephemeral public key claim (epk).
+  pub fn try_epk(&self) -> Result<&Jwk> {
+    self.epk().ok_or(Error::MissingParam("epk"))
   }
 
   /// Sets a value for the ephemeral public key claim (epk).
@@ -374,6 +166,11 @@ impl JweHeader {
     self.apu.as_deref()
   }
 
+  /// Returns the value of the partyuinfo claim (apu).
+  pub fn try_apu(&self) -> Result<&str> {
+    self.apu().ok_or(Error::MissingParam("apu"))
+  }
+
   /// Sets a value for the partyuinfo claim (apu).
   pub fn set_apu(&mut self, value: impl Into<String>) {
     self.apu = Some(value.into());
@@ -382,6 +179,11 @@ impl JweHeader {
   /// Returns the value of the partyvinfo claim (apv).
   pub fn apv(&self) -> Option<&str> {
     self.apv.as_deref()
+  }
+
+  /// Returns the value of the partyvinfo claim (apv).
+  pub fn try_apv(&self) -> Result<&str> {
+    self.apv().ok_or(Error::MissingParam("apv"))
   }
 
   /// Sets a value for the partyvinfo claim (apv).
@@ -394,6 +196,11 @@ impl JweHeader {
     self.iv.as_deref()
   }
 
+  /// Returns the value of the initialization vector claim (iv).
+  pub fn try_iv(&self) -> Result<&str> {
+    self.iv().ok_or(Error::MissingParam("iv"))
+  }
+
   /// Sets a value for the initialization vector claim (iv).
   pub fn set_iv(&mut self, value: impl Into<String>) {
     self.iv = Some(value.into());
@@ -402,6 +209,11 @@ impl JweHeader {
   /// Returns the value of the authentication tag claim (tag).
   pub fn tag(&self) -> Option<&str> {
     self.tag.as_deref()
+  }
+
+  /// Returns the value of the authentication tag claim (tag).
+  pub fn try_tag(&self) -> Result<&str> {
+    self.tag().ok_or(Error::MissingParam("tag"))
   }
 
   /// Sets a value for the authentication tag claim (tag).
@@ -414,6 +226,11 @@ impl JweHeader {
     self.p2s.as_deref()
   }
 
+  /// Returns the value of the authentication pbes2 salt input claim (p2s).
+  pub fn try_p2s(&self) -> Result<&str> {
+    self.p2s().ok_or(Error::MissingParam("p2s"))
+  }
+
   /// Sets a value for the authentication pbes2 salt input claim (p2s).
   pub fn set_p2s(&mut self, value: impl Into<String>) {
     self.p2s = Some(value.into());
@@ -424,8 +241,27 @@ impl JweHeader {
     self.p2c
   }
 
+  /// Returns the value of the authentication pbes2 count claim (p2c).
+  pub fn try_p2c(&self) -> Result<u64> {
+    self.p2c().ok_or(Error::MissingParam("p2c"))
+  }
+
   /// Sets a value for the authentication pbes2 count claim (p2c).
   pub fn set_p2c(&mut self, value: impl Into<u64>) {
     self.p2c = Some(value.into());
+  }
+}
+
+impl Deref for JweHeader {
+  type Target = JwtHeader;
+
+  fn deref(&self) -> &Self::Target {
+    &self.common
+  }
+}
+
+impl DerefMut for JweHeader {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.common
   }
 }

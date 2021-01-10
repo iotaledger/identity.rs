@@ -2,14 +2,18 @@
 
 mod algorithm;
 mod compression;
+mod decoder;
+mod encoder;
 mod encryption;
+mod format;
 mod header;
-mod serde;
-mod traits;
+mod recipient;
 
 pub use self::algorithm::*;
 pub use self::compression::*;
+pub use self::decoder::*;
+pub use self::encoder::*;
 pub use self::encryption::*;
+pub use self::format::*;
 pub use self::header::*;
-pub use self::serde::*;
-pub use self::traits::*;
+pub use self::recipient::*;

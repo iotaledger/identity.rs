@@ -18,15 +18,17 @@ serde_json = { version = "1.0", default-features = false }
 url = { version = "2.1", default-features = false, features = ["serde"] }
 
 curve25519-dalek = { version = "3.0", default-features = false }
-k256 = { version = "0.7", default-features = false, features = ["ecdsa", "sha256", "zeroize"] }
-p256 = { version = "0.7", default-features = false, features = ["ecdsa", "sha256", "zeroize"] }
+k256 = { version = "0.7", default-features = false, features = ["ecdh", "ecdsa", "sha256"] }
+p256 = { version = "0.7", default-features = false, features = ["ecdh", "ecdsa"] }
 rand = { version = "0.7", default-features = false, features = ["getrandom"] }
 rsa = { version = "0.3", default-features = false }
+sha-1 = { version = "0.9", default-features = false }
 sha2 = { version = "0.9", default-features = false }
 x25519-dalek = { version = "1.1", default-features = false }
+x448 = { version = "0.6", default-features = false }
 
 [features]
-default = ["std", "pem"]
+default = ["std"]
 
 std = [
   "alloc",
@@ -39,5 +41,3 @@ alloc = [
   "serde/alloc",
   "serde_json/alloc",
 ]
-
-pem = ["rsa/pem"]

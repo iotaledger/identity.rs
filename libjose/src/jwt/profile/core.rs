@@ -160,9 +160,7 @@ impl CoreProfile {
   fn validate_timestamps<T>(&self, claims: &JwtClaims<T>) -> Result<()> {
     fn timestamp(value: i64) -> Duration {
       use core::convert::TryFrom as _;
-      u64::try_from(value)
-        .map(Duration::from_secs)
-        .unwrap_or_default()
+      u64::try_from(value).map(Duration::from_secs).unwrap_or_default()
     }
 
     let timecop: TimeCop = self.timecop.unwrap_or_else(TimeCop::new);

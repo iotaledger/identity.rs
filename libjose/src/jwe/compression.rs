@@ -8,6 +8,8 @@ use miniz_oxide::inflate::decompress_to_vec;
 use crate::error::Result;
 use crate::lib::*;
 
+const DEFLATE_LEVEL: u8 = CompressionLevel::DefaultLevel as u8;
+
 /// Supported algorithms for the JSON Web Encryption `zip` claim.
 ///
 /// [More Info](https://www.iana.org/assignments/jose/jose.xhtml#web-encryption-compression-algorithms)
@@ -28,10 +30,7 @@ impl JweCompression {
 
   pub fn compress(&self, content: &[u8]) -> Result<Vec<u8>> {
     match self {
-      Self::Deflate => Ok(compress_to_vec(
-        content,
-        CompressionLevel::DefaultLevel as u8,
-      )),
+      Self::Deflate => Ok(compress_to_vec(content, DEFLATE_LEVEL)),
     }
   }
 

@@ -40,6 +40,19 @@ impl JwkOperation {
       Self::DeriveBits => "deriveBits",
     }
   }
+
+  pub const fn invert(&self) -> Self {
+    match self {
+      Self::Sign => Self::Verify,
+      Self::Verify => Self::Sign,
+      Self::Encrypt => Self::Decrypt,
+      Self::Decrypt => Self::Encrypt,
+      Self::WrapKey => Self::UnwrapKey,
+      Self::UnwrapKey => Self::WrapKey,
+      Self::DeriveKey => Self::DeriveKey,
+      Self::DeriveBits => Self::DeriveBits,
+    }
+  }
 }
 
 impl Display for JwkOperation {

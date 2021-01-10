@@ -1,8 +1,7 @@
-use crypto::hashes::sha::SHA256;
-use crypto::hashes::sha::SHA256_LEN;
 use serde_json::to_vec;
 use url::Url;
 
+use crate::crypto;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::JwkOperation;
@@ -110,6 +109,24 @@ impl Jwk {
     }
   }
 
+  /// Creates a new `Jwk` from the given params.
+  pub fn from_params(params: impl Into<JwkParams>) -> Self {
+    let params: JwkParams = params.into();
+
+    Self {
+      kty: params.kty(),
+      use_: None,
+      key_ops: None,
+      alg: None,
+      kid: None,
+      x5u: None,
+      x5c: None,
+      x5t: None,
+      x5t_s256: None,
+      params,
+    }
+  }
+
   /// Returns the value for the key type parameter (kty).
   pub fn kty(&self) -> JwkType {
     self.kty
@@ -138,7 +155,7 @@ impl Jwk {
 
   /// Sets values for the key operations parameter (key_ops).
   pub fn set_key_ops(&mut self, value: impl IntoIterator<Item = impl Into<JwkOperation>>) {
-    self.key_ops = Some(Vec::from_iter(value.into_iter().map(Into::into)));
+    self.key_ops = Some(value.into_iter().map(Into::into).collect());
   }
 
   /// Returns the value for the algorithm property (alg).
@@ -240,6 +257,62 @@ impl Jwk {
     self.params = value.into();
   }
 
+  pub fn try_ec_params(&self) -> Result<&JwkParamsEc> {
+    match self.params() {
+      JwkParams::Ec(params) => Ok(params),
+      _ => Err(Error::KeyError("Ec")),
+    }
+  }
+
+  pub fn try_ec_params_mut(&mut self) -> Result<&mut JwkParamsEc> {
+    match self.params_mut() {
+      JwkParams::Ec(params) => Ok(params),
+      _ => Err(Error::KeyError("Ec")),
+    }
+  }
+
+  pub fn try_rsa_params(&self) -> Result<&JwkParamsRsa> {
+    match self.params() {
+      JwkParams::Rsa(params) => Ok(params),
+      _ => Err(Error::KeyError("Rsa")),
+    }
+  }
+
+  pub fn try_rsa_params_mut(&mut self) -> Result<&mut JwkParamsRsa> {
+    match self.params_mut() {
+      JwkParams::Rsa(params) => Ok(params),
+      _ => Err(Error::KeyError("Rsa")),
+    }
+  }
+
+  pub fn try_oct_params(&self) -> Result<&JwkParamsOct> {
+    match self.params() {
+      JwkParams::Oct(params) => Ok(params),
+      _ => Err(Error::KeyError("Oct")),
+    }
+  }
+
+  pub fn try_oct_params_mut(&mut self) -> Result<&mut JwkParamsOct> {
+    match self.params_mut() {
+      JwkParams::Oct(params) => Ok(params),
+      _ => Err(Error::KeyError("Oct")),
+    }
+  }
+
+  pub fn try_okp_params(&self) -> Result<&JwkParamsOkp> {
+    match self.params() {
+      JwkParams::Okp(params) => Ok(params),
+      _ => Err(Error::KeyError("Okp")),
+    }
+  }
+
+  pub fn try_okp_params_mut(&mut self) -> Result<&mut JwkParamsOkp> {
+    match self.params_mut() {
+      JwkParams::Okp(params) => Ok(params),
+      _ => Err(Error::KeyError("Okp")),
+    }
+  }
+
   // ===========================================================================
   // Thumbprint
   // ===========================================================================
@@ -250,9 +323,7 @@ impl Jwk {
   ///
   /// The thumbprint is returned as a base64url-encoded string.
   pub fn thumbprint_b64(&self) -> Result<String> {
-    self
-      .thumbprint_raw()
-      .map(|thumbprint| encode_b64(&thumbprint))
+    self.thumbprint_raw().map(|thumbprint| encode_b64(&thumbprint))
   }
 
   /// Creates a Thumbprint of the JSON Web Key according to [RFC7638](https://tools.ietf.org/html/rfc7638).
@@ -260,7 +331,7 @@ impl Jwk {
   /// `SHA2-256` is used as the hash function *H*.
   ///
   /// The thumbprint is returned as an unencoded vector of bytes.
-  pub fn thumbprint_raw(&self) -> Result<Vec<u8>> {
+  pub fn thumbprint_raw(&self) -> Result<[u8; SHA256_LEN]> {
     let mut data: BTreeMap<&str, &str> = BTreeMap::new();
 
     data.insert("kty", self.kty.name());
@@ -284,11 +355,7 @@ impl Jwk {
       }
     }
 
-    let mut output: [u8; SHA256_LEN] = [0; SHA256_LEN];
-
-    SHA256(&to_vec(&data)?, &mut output);
-
-    Ok(output.to_vec())
+    Ok(crypto::sha256(&to_vec(&data)?))
   }
 
   // ===========================================================================
@@ -319,19 +386,81 @@ impl Jwk {
     }
   }
 
-  pub fn check_kty(&self, value: JwkType) -> Result<()> {
-    if self.kty() == value {
-      Ok(())
+  pub fn check_signing_key(&self, algorithm: &str) -> Result<()> {
+    self.check_use(JwkUse::Signature)?;
+    self.check_ops(JwkOperation::Sign)?;
+    self.check_alg(algorithm)?;
+
+    Ok(())
+  }
+
+  pub fn check_verifying_key(&self, algorithm: &str) -> Result<()> {
+    self.check_use(JwkUse::Signature)?;
+    self.check_ops(JwkOperation::Verify)?;
+    self.check_alg(algorithm)?;
+
+    Ok(())
+  }
+
+  pub fn check_encryption_key(&self, algorithm: &str) -> Result<()> {
+    self.check_use(JwkUse::Encryption)?;
+    self.check_ops(JwkOperation::Encrypt)?;
+    self.check_alg(algorithm)?;
+
+    Ok(())
+  }
+
+  pub fn check_decryption_key(&self, algorithm: &str) -> Result<()> {
+    self.check_use(JwkUse::Encryption)?;
+    self.check_ops(JwkOperation::Decrypt)?;
+    self.check_alg(algorithm)?;
+
+    Ok(())
+  }
+
+  pub fn try_ec_curve(&self) -> Result<EcCurve> {
+    if let JwkParams::Ec(inner) = self.params() {
+      inner.try_ec_curve()
     } else {
-      Err(Error::InvalidClaim("kty"))
+      Err(Error::KeyError("Ec Curve"))
     }
   }
 
-  pub fn check_ktys(&self, value: &[JwkType]) -> Result<()> {
-    if value.contains(&self.kty()) {
-      Ok(())
+  pub fn try_ed_curve(&self) -> Result<EdCurve> {
+    if let JwkParams::Okp(inner) = self.params() {
+      inner.try_ed_curve()
     } else {
-      Err(Error::InvalidClaim("kty"))
+      Err(Error::KeyError("Ed Curve"))
     }
+  }
+
+  pub fn try_ecx_curve(&self) -> Result<EcxCurve> {
+    if let JwkParams::Okp(inner) = self.params() {
+      inner.try_ecx_curve()
+    } else {
+      Err(Error::KeyError("Ecx Curve"))
+    }
+  }
+
+  pub fn to_public(&self) -> Jwk {
+    let mut public: Jwk = Jwk::from_params(self.params().to_public());
+
+    if let Some(value) = self.use_() {
+      public.set_use(value);
+    }
+
+    if let Some(value) = self.key_ops() {
+      public.set_key_ops(value.iter().map(|op| op.invert()));
+    }
+
+    if let Some(value) = self.alg() {
+      public.set_alg(value);
+    }
+
+    if let Some(value) = self.kid() {
+      public.set_kid(value);
+    }
+
+    public
   }
 }

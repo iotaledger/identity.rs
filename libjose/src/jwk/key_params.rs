@@ -1,3 +1,8 @@
+use crate::error::Error;
+use crate::error::Result;
+use crate::jwk::EcCurve;
+use crate::jwk::EcxCurve;
+use crate::jwk::EdCurve;
 use crate::jwk::JwkType;
 use crate::lib::*;
 
@@ -20,6 +25,24 @@ impl JwkParams {
       JwkType::Rsa => Self::Rsa(JwkParamsRsa::new()),
       JwkType::Oct => Self::Oct(JwkParamsOct::new()),
       JwkType::Okp => Self::Okp(JwkParamsOkp::new()),
+    }
+  }
+
+  pub const fn kty(&self) -> JwkType {
+    match self {
+      Self::Ec(inner) => inner.kty(),
+      Self::Rsa(inner) => inner.kty(),
+      Self::Oct(inner) => inner.kty(),
+      Self::Okp(inner) => inner.kty(),
+    }
+  }
+
+  pub fn to_public(&self) -> Self {
+    match self {
+      Self::Ec(inner) => Self::Ec(inner.to_public()),
+      Self::Rsa(inner) => Self::Rsa(inner.to_public()),
+      Self::Oct(inner) => Self::Oct(inner.to_public()),
+      Self::Okp(inner) => Self::Okp(inner.to_public()),
     }
   }
 }
@@ -50,6 +73,7 @@ pub struct JwkParamsEc {
   /// The Elliptic Curve private key as a base64url-encoded value.
   ///
   /// [More Info](https://tools.ietf.org/html/rfc7518#section-6.2.2.1)
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub d: Option<String>, // ECC Private Key
 }
 
@@ -60,6 +84,29 @@ impl JwkParamsEc {
       x: String::new(),
       y: String::new(),
       d: None,
+    }
+  }
+
+  pub const fn kty(&self) -> JwkType {
+    JwkType::Ec
+  }
+
+  pub fn to_public(&self) -> Self {
+    Self {
+      crv: self.crv.clone(),
+      x: self.x.clone(),
+      y: self.y.clone(),
+      d: None,
+    }
+  }
+
+  pub fn try_ec_curve(&self) -> Result<EcCurve> {
+    match &*self.crv {
+      "P-256" => Ok(EcCurve::P256),
+      "P-384" => Ok(EcCurve::P384),
+      "P-521" => Ok(EcCurve::P521),
+      "secp256k1" => Ok(EcCurve::Secp256K1),
+      _ => Err(Error::KeyError("Ec Curve")),
     }
   }
 }
@@ -163,6 +210,24 @@ impl JwkParamsRsa {
       oth: None,
     }
   }
+
+  pub const fn kty(&self) -> JwkType {
+    JwkType::Rsa
+  }
+
+  pub fn to_public(&self) -> Self {
+    Self {
+      n: self.n.clone(),
+      e: self.e.clone(),
+      d: None,
+      p: None,
+      q: None,
+      dp: None,
+      dq: None,
+      qi: None,
+      oth: None,
+    }
+  }
 }
 
 impl From<JwkParamsRsa> for JwkParams {
@@ -189,6 +254,14 @@ pub struct JwkParamsOct {
 impl JwkParamsOct {
   pub const fn new() -> Self {
     Self { k: String::new() }
+  }
+
+  pub const fn kty(&self) -> JwkType {
+    JwkType::Oct
+  }
+
+  pub fn to_public(&self) -> Self {
+    Self { k: self.k.clone() }
   }
 }
 
@@ -228,6 +301,34 @@ impl JwkParamsOkp {
       crv: String::new(),
       x: String::new(),
       d: None,
+    }
+  }
+
+  pub const fn kty(&self) -> JwkType {
+    JwkType::Okp
+  }
+
+  pub fn to_public(&self) -> Self {
+    Self {
+      crv: self.crv.clone(),
+      x: self.x.clone(),
+      d: None,
+    }
+  }
+
+  pub fn try_ed_curve(&self) -> Result<EdCurve> {
+    match &*self.crv {
+      "Ed25519" => Ok(EdCurve::Ed25519),
+      "Ed448" => Ok(EdCurve::Ed448),
+      _ => Err(Error::KeyError("Ed Curve")),
+    }
+  }
+
+  pub fn try_ecx_curve(&self) -> Result<EcxCurve> {
+    match &*self.crv {
+      "X25519" => Ok(EcxCurve::X25519),
+      "X448" => Ok(EcxCurve::X448),
+      _ => Err(Error::KeyError("Ecx Curve")),
     }
   }
 }

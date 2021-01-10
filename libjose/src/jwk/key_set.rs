@@ -1,3 +1,7 @@
+use core::ops::Index;
+use core::ops::IndexMut;
+use core::slice::SliceIndex;
+
 use crate::jwk::Jwk;
 use crate::lib::*;
 
@@ -73,5 +77,34 @@ impl FromIterator<Jwk> for JwkSet {
     Self {
       keys: Vec::from_iter(iter),
     }
+  }
+}
+
+impl IntoIterator for JwkSet {
+  type IntoIter = vec::IntoIter<Self::Item>;
+  type Item = Jwk;
+
+  fn into_iter(self) -> Self::IntoIter {
+    self.keys.into_iter()
+  }
+}
+
+impl<I> Index<I> for JwkSet
+where
+  I: SliceIndex<[Jwk]>,
+{
+  type Output = I::Output;
+
+  fn index(&self, index: I) -> &Self::Output {
+    Index::index(&*self.keys, index)
+  }
+}
+
+impl<I> IndexMut<I> for JwkSet
+where
+  I: SliceIndex<[Jwk]>,
+{
+  fn index_mut(&mut self, index: I) -> &mut Self::Output {
+    IndexMut::index_mut(&mut *self.keys, index)
   }
 }

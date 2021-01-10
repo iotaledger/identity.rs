@@ -114,7 +114,7 @@ impl<T> JwtClaims<T> {
 
   /// Sets values for the audience claim (aud).
   pub fn set_aud(&mut self, value: impl IntoIterator<Item = impl Into<String>>) {
-    self.aud = Some(Vec::from_iter(value.into_iter().map(Into::into)));
+    self.aud = Some(value.into_iter().map(Into::into).collect());
   }
 
   /// Returns the time for the expires at claim (exp).

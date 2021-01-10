@@ -111,7 +111,7 @@ impl<T> JwmAttributes<T> {
 
   /// Sets a value for the body atribute (body).
   pub fn set_body(&mut self, value: impl IntoIterator<Item = impl Into<(String, Value)>>) {
-    self.body = Some(Map::from_iter(value.into_iter().map(Into::into)))
+    self.body = Some(value.into_iter().map(Into::into).collect())
   }
 
   /// Returns the value for the to atribute (to).
@@ -121,7 +121,7 @@ impl<T> JwmAttributes<T> {
 
   /// Sets a value for the to atribute (to).
   pub fn set_to(&mut self, value: impl IntoIterator<Item = impl Into<String>>) {
-    self.to = Some(Vec::from_iter(value.into_iter().map(Into::into)));
+    self.to = Some(value.into_iter().map(Into::into).collect());
   }
 
   /// Returns the value for the from atribute (from).
@@ -181,7 +181,7 @@ impl<T> JwmAttributes<T> {
 
   /// Sets a value for the reply to atribute (reply_to).
   pub fn set_reply_to(&mut self, value: impl IntoIterator<Item = impl Into<String>>) {
-    self.reply_to = Some(Vec::from_iter(value.into_iter().map(Into::into)));
+    self.reply_to = Some(value.into_iter().map(Into::into).collect());
   }
 }
 
