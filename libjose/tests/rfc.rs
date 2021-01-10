@@ -222,12 +222,28 @@ fn test_rfc8037_x25519() {
 
   for tv in TVS {
     let public: Jwk = serde_json::from_str(tv.public_jwk).unwrap();
-    assert_eq!(EcxCurve::X25519, public.try_okp_params().unwrap().try_ecx_curve().unwrap());
-    assert_eq!(tv.public_key, &Secret::Jwk(&public).to_x25519_public().unwrap().as_bytes()[..]);
+
+    assert_eq!(
+      EcxCurve::X25519,
+      public.try_okp_params().unwrap().try_ecx_curve().unwrap()
+    );
+
+    assert_eq!(
+      tv.public_key,
+      &Secret::Jwk(&public).to_x25519_public().unwrap().as_bytes()[..]
+    );
 
     let eph_public: Jwk = serde_json::from_str(tv.eph_public_jwk).unwrap();
-    assert_eq!(EcxCurve::X25519, eph_public.try_okp_params().unwrap().try_ecx_curve().unwrap());
-    assert_eq!(tv.eph_public_key, &Secret::Jwk(&eph_public).to_x25519_public().unwrap().as_bytes()[..]);
+
+    assert_eq!(
+      EcxCurve::X25519,
+      eph_public.try_okp_params().unwrap().try_ecx_curve().unwrap()
+    );
+
+    assert_eq!(
+      tv.eph_public_key,
+      &Secret::Jwk(&eph_public).to_x25519_public().unwrap().as_bytes()[..]
+    );
 
     let eph_secret: Jwk = Jwk::from_params(JwkParamsOkp {
       crv: EcxCurve::X25519.name().to_string(),
@@ -255,12 +271,28 @@ fn test_rfc8037_x448() {
 
   for tv in TVS {
     let public: Jwk = serde_json::from_str(tv.public_jwk).unwrap();
-    assert_eq!(EcxCurve::X448, public.try_okp_params().unwrap().try_ecx_curve().unwrap());
-    assert_eq!(tv.public_key, &Secret::Jwk(&public).to_x448_public().unwrap().as_bytes()[..]);
+
+    assert_eq!(
+      EcxCurve::X448,
+      public.try_okp_params().unwrap().try_ecx_curve().unwrap()
+    );
+
+    assert_eq!(
+      tv.public_key,
+      &Secret::Jwk(&public).to_x448_public().unwrap().as_bytes()[..]
+    );
 
     let eph_public: Jwk = serde_json::from_str(tv.eph_public_jwk).unwrap();
-    assert_eq!(EcxCurve::X448, eph_public.try_okp_params().unwrap().try_ecx_curve().unwrap());
-    assert_eq!(tv.eph_public_key, &Secret::Jwk(&eph_public).to_x448_public().unwrap().as_bytes()[..]);
+
+    assert_eq!(
+      EcxCurve::X448,
+      eph_public.try_okp_params().unwrap().try_ecx_curve().unwrap()
+    );
+
+    assert_eq!(
+      tv.eph_public_key,
+      &Secret::Jwk(&eph_public).to_x448_public().unwrap().as_bytes()[..]
+    );
 
     let eph_secret: Jwk = Jwk::from_params(JwkParamsOkp {
       crv: EcxCurve::X448.name().to_string(),

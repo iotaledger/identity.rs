@@ -1,6 +1,7 @@
 use core::ops::Deref;
 use core::ops::DerefMut;
 
+use crate::jose::JoseHeader;
 use crate::jws::JwsAlgorithm;
 use crate::jwt::JwtHeader;
 use crate::lib::*;
@@ -88,6 +89,18 @@ impl JwsHeader {
   pub fn set_ppt(&mut self, value: impl Into<String>) {
     self.ppt = Some(value.into());
   }
+
+  // ===========================================================================
+  // ===========================================================================
+
+  pub fn has(&self, claim: &str) -> bool {
+    match claim {
+      "alg" => true, // we always have an algorithm
+      "b64" => self.b64().is_some(),
+      "ppt" => self.ppt().is_some(),
+      _ => self.common.has(claim),
+    }
+  }
 }
 
 impl Deref for JwsHeader {
@@ -101,5 +114,15 @@ impl Deref for JwsHeader {
 impl DerefMut for JwsHeader {
   fn deref_mut(&mut self) -> &mut Self::Target {
     &mut self.common
+  }
+}
+
+impl JoseHeader for JwsHeader {
+  fn common(&self) -> &JwtHeader {
+    self
+  }
+
+  fn has_claim(&self, claim: &str) -> bool {
+    self.has(claim)
   }
 }

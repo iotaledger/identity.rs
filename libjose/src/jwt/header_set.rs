@@ -93,6 +93,7 @@ impl<'a, T: 'a> JwtHeaderSet<'a, T> {
   }
 }
 
+#[rustfmt::skip]
 impl<'a, T: 'a> JwtHeaderSet<'a, T>
 where
   T: Deref<Target = JwtHeader>,
@@ -111,12 +112,14 @@ where
   impl_accessors!(nonce, try_nonce, &str);
 }
 
+#[rustfmt::skip]
 impl<'a> JwtHeaderSet<'a, JwsHeader> {
   impl_accessors!(@unwrapped, alg, try_alg, JwsAlgorithm);
   impl_accessors!(@protected, b64, try_b64, bool);
   impl_accessors!(@protected, ppt, try_ppt, &str);
 }
 
+#[rustfmt::skip]
 impl<'a> JwtHeaderSet<'a, JweHeader> {
   impl_accessors!(@unwrapped, alg, try_alg, JweAlgorithm);
   impl_accessors!(@unwrapped, enc, try_enc, JweEncryption);

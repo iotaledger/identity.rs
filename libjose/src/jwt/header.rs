@@ -1,5 +1,6 @@
 use url::Url;
 
+use crate::jose::JoseHeader;
 use crate::jwk::Jwk;
 use crate::lib::*;
 
@@ -241,5 +242,36 @@ impl JwtHeader {
   /// Sets a value for the nonce claim (nonce).
   pub fn set_nonce(&mut self, value: impl Into<String>) {
     self.nonce = Some(value.into());
+  }
+
+  // ===========================================================================
+  // ===========================================================================
+
+  pub fn has(&self, claim: &str) -> bool {
+    match claim {
+      "jku" => self.jku().is_some(),
+      "jwk" => self.jwk().is_some(),
+      "kid" => self.kid().is_some(),
+      "x5u" => self.x5u().is_some(),
+      "x5c" => self.x5c().is_some(),
+      "x5t" => self.x5t().is_some(),
+      "x5t#S256" => self.x5t_s256().is_some(),
+      "typ" => self.typ().is_some(),
+      "cty" => self.cty().is_some(),
+      "crit" => self.crit().is_some(),
+      "url" => self.url().is_some(),
+      "nonce" => self.nonce().is_some(),
+      _ => false,
+    }
+  }
+}
+
+impl JoseHeader for JwtHeader {
+  fn common(&self) -> &JwtHeader {
+    self
+  }
+
+  fn has_claim(&self, claim: &str) -> bool {
+    self.has(claim)
   }
 }

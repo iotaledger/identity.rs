@@ -24,6 +24,13 @@ pub enum KeyManagement {
   EncryptionDirect,
 }
 
+impl KeyManagement {
+  /// Returns true if this management mode uses a direct key value.
+  pub const fn is_direct(self) -> bool {
+    matches!(self, Self::KeyAgreementDirect | Self::EncryptionDirect)
+  }
+}
+
 impl From<JweAlgorithm> for KeyManagement {
   fn from(other: JweAlgorithm) -> Self {
     match other {

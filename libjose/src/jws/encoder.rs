@@ -2,7 +2,6 @@ use core::str;
 use crypto::hashes::sha::SHA256_LEN;
 use crypto::hashes::sha::SHA384_LEN;
 use crypto::hashes::sha::SHA512_LEN;
-use k256::ecdsa::signature::Signer;
 
 use crate::crypto::hmac_sha256;
 use crate::crypto::hmac_sha384;
@@ -25,7 +24,6 @@ use crate::utils::encode_b64;
 use crate::utils::encode_b64_json;
 use crate::utils::extract_b64;
 use crate::utils::validate_jws_headers;
-use crate::utils::K256Signature;
 use crate::utils::Secret;
 
 macro_rules! to_json {
@@ -279,13 +277,10 @@ fn sign(algorithm: JwsAlgorithm, message: &[u8], recipient: Recipient<'_>) -> Re
     JwsAlgorithm::PS256 => Ok(encode_b64(rsa!(PSS_SHA256, sha256, message, secret))),
     JwsAlgorithm::PS384 => Ok(encode_b64(rsa!(PSS_SHA384, sha384, message, secret))),
     JwsAlgorithm::PS512 => Ok(encode_b64(rsa!(PSS_SHA512, sha512, message, secret))),
-    JwsAlgorithm::ES256 => Ok(encode_b64(secret.to_p256_secret()?.try_sign(message)?)),
+    JwsAlgorithm::ES256 => Ok(encode_b64(secret.to_p256_secret()?.sign(message)?)),
     JwsAlgorithm::ES384 => todo!("ES384"),
     JwsAlgorithm::ES512 => todo!("ES512"),
-    JwsAlgorithm::ES256K => Ok(encode_b64(Signer::<K256Signature>::try_sign(
-      &secret.to_k256_secret()?,
-      message,
-    )?)),
+    JwsAlgorithm::ES256K => Ok(encode_b64(secret.to_k256_secret()?.sign(message)?)),
     JwsAlgorithm::NONE => todo!("NONE"),
     JwsAlgorithm::EdDSA => match recipient.eddsa_curve {
       EdCurve::Ed25519 => Ok(encode_b64(secret.to_ed25519_secret()?.sign(message).to_bytes())),

@@ -1,7 +1,5 @@
-use core::convert::TryFrom as _;
 use core::str;
-use p256::ecdsa::signature::Verifier as _;
-use p256::elliptic_curve::subtle::ConstantTimeEq as _;
+use subtle::ConstantTimeEq as _;
 use serde_json::from_slice;
 
 use crate::error::Error;
@@ -19,9 +17,6 @@ use crate::utils::decode_b64_json;
 use crate::utils::filter_non_empty_bytes;
 use crate::utils::parse_utf8;
 use crate::utils::validate_jws_headers;
-use crate::utils::Ed25519Signature;
-use crate::utils::K256Signature;
-use crate::utils::P256Signature;
 use crate::utils::Secret;
 
 type HeaderSet<'a> = JwtHeaderSet<'a, JwsHeader>;
@@ -255,19 +250,13 @@ impl<'a, 'b> Decoder<'a, 'b> {
       JwsAlgorithm::PS256 => rsa!(PSS_SHA256, sha256, message, signature, public),
       JwsAlgorithm::PS384 => rsa!(PSS_SHA384, sha384, message, signature, public),
       JwsAlgorithm::PS512 => rsa!(PSS_SHA512, sha512, message, signature, public),
-      JwsAlgorithm::ES256 => public
-        .to_p256_public()?
-        .verify(message, &P256Signature::try_from(signature)?)?,
+      JwsAlgorithm::ES256 => public.to_p256_public()?.verify(message, signature)?,
       JwsAlgorithm::ES384 => todo!("ES384"),
       JwsAlgorithm::ES512 => todo!("ES512"),
-      JwsAlgorithm::ES256K => public
-        .to_k256_public()?
-        .verify(message, &K256Signature::try_from(signature)?)?,
+      JwsAlgorithm::ES256K => public.to_k256_public()?.verify(message, signature)?,
       JwsAlgorithm::NONE => todo!("NONE"),
       JwsAlgorithm::EdDSA => match self.eddsa_curve {
-        EdCurve::Ed25519 => public
-          .to_ed25519_public()?
-          .verify(&Ed25519Signature::try_from(signature)?, message)?,
+        EdCurve::Ed25519 => public.to_ed25519_public()?.verify(message, signature)?,
         EdCurve::Ed448 => todo!("EdDSA/Ed448"),
       },
     }

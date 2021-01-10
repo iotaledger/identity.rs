@@ -3,6 +3,7 @@ use core::ops::DerefMut;
 
 use crate::error::Error;
 use crate::error::Result;
+use crate::jose::JoseHeader;
 use crate::jwe::JweAlgorithm;
 use crate::jwe::JweCompression;
 use crate::jwe::JweEncryption;
@@ -250,6 +251,25 @@ impl JweHeader {
   pub fn set_p2c(&mut self, value: impl Into<u64>) {
     self.p2c = Some(value.into());
   }
+
+  // ===========================================================================
+  // ===========================================================================
+
+  pub fn has(&self, claim: &str) -> bool {
+    match claim {
+      "alg" => true, // we always have an algorithm
+      "enc" => true, // we always have an encryption algorithm
+      "zip" => self.zip().is_some(),
+      "epk" => self.epk().is_some(),
+      "apu" => self.apu().is_some(),
+      "apv" => self.apv().is_some(),
+      "iv" => self.iv().is_some(),
+      "tag" => self.tag().is_some(),
+      "p2s" => self.p2s().is_some(),
+      "p2c" => self.p2c().is_some(),
+      _ => self.common.has(claim),
+    }
+  }
 }
 
 impl Deref for JweHeader {
@@ -263,5 +283,15 @@ impl Deref for JweHeader {
 impl DerefMut for JweHeader {
   fn deref_mut(&mut self) -> &mut Self::Target {
     &mut self.common
+  }
+}
+
+impl JoseHeader for JweHeader {
+  fn common(&self) -> &JwtHeader {
+    self
+  }
+
+  fn has_claim(&self, claim: &str) -> bool {
+    self.has(claim)
   }
 }

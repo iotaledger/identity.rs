@@ -1,7 +1,8 @@
+use crypto::hashes::sha::SHA256;
+use crypto::hashes::sha::SHA256_LEN;
 use serde_json::to_vec;
 use url::Url;
 
-use crate::crypto;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::JwkOperation;
@@ -14,6 +15,9 @@ use crate::jwk::JwkType;
 use crate::jwk::JwkUse;
 use crate::lib::*;
 use crate::utils::encode_b64;
+
+/// A SHA256 JSON Web Key Thumbprint.
+pub type JwkThumbprint = [u8; SHA256_LEN];
 
 /// JSON Web Key.
 ///
@@ -331,7 +335,7 @@ impl Jwk {
   /// `SHA2-256` is used as the hash function *H*.
   ///
   /// The thumbprint is returned as an unencoded vector of bytes.
-  pub fn thumbprint_raw(&self) -> Result<[u8; SHA256_LEN]> {
+  pub fn thumbprint_raw(&self) -> Result<JwkThumbprint> {
     let mut data: BTreeMap<&str, &str> = BTreeMap::new();
 
     data.insert("kty", self.kty.name());
@@ -355,7 +359,11 @@ impl Jwk {
       }
     }
 
-    Ok(crypto::sha256(&to_vec(&data)?))
+    let mut out: JwkThumbprint = Default::default();
+
+    SHA256(&to_vec(&data)?, &mut out);
+
+    Ok(out)
   }
 
   // ===========================================================================

@@ -1,3 +1,4 @@
+use core::convert::TryFrom;
 use crypto::ciphers::aes::AES_128_CBC_HMAC_SHA_256 as A128CBC_HS256;
 use crypto::ciphers::aes::AES_128_GCM as A128GCM;
 use crypto::ciphers::aes::AES_192_CBC_HMAC_SHA_384 as A192CBC_HS384;
@@ -23,14 +24,15 @@ use crate::lib::*;
 use crate::utils::check_slice_param;
 use crate::utils::concat_kdf;
 use crate::utils::create_aad;
+use crate::utils::create_pbes2_salt;
 use crate::utils::decode_b64;
 use crate::utils::decode_b64_json;
 use crate::utils::diffie_hellman;
 use crate::utils::filter_non_empty_bytes;
 use crate::utils::parse_cek;
 use crate::utils::parse_utf8;
-use crate::utils::Secret;
 use crate::utils::validate_jwe_headers;
+use crate::utils::Secret;
 
 pub type Token = (JweHeader, Vec<u8>);
 
@@ -267,13 +269,30 @@ impl<'a> Decoder<'a> {
       }};
     }
 
+    macro_rules! pbes2 {
+      (($impl:ident, $size:ident), $wrap:ident, $header:expr, $recipient:expr, $secret:expr) => {{
+        let name: &str = $header.try_alg()?.name();
+        let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
+        let key: Cow<[u8]> = $secret.to_oct_key(0)?;
+        let p2s: Vec<u8> = $header.try_p2s().and_then(decode_b64)?;
+        let p2c: usize = usize::try_from($header.try_p2c()?).map_err(|_| Error::InvalidClaim("p2c"))?;
+        let salt: Vec<u8> = create_pbes2_salt(name, &p2s);
+
+        let mut derived: [u8; ::crypto::hashes::sha::$size / 2] = [0; ::crypto::hashes::sha::$size / 2];
+
+        ::crypto::kdfs::pbkdf::$impl(&key, &salt, p2c, &mut derived)?;
+
+        let ptx: Vec<u8> = ::crypto::aes_kw::$wrap::new(&derived).unwrap_key_vec(&ctx)?;
+
+        Ok(Cow::Owned(ptx))
+      }};
+    }
+
     macro_rules! aes_kw {
       ($impl:ident, $recipient:expr, $secret:expr) => {{
-        use ::crypto::aes_kw::AesKeyWrap;
-
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
         let key: Cow<[u8]> = $secret.to_oct_key(::crypto::aes_kw::$impl::key_length())?;
-        let ptx: Vec<u8> = ::crypto::aes_kw::$impl::unwrap_key_vec(&key, &ctx)?;
+        let ptx: Vec<u8> = ::crypto::aes_kw::$impl::new(&key).unwrap_key_vec(&ctx)?;
 
         Ok(Cow::Owned(ptx))
       }};
@@ -287,13 +306,11 @@ impl<'a> Decoder<'a> {
         ecdh_kw!(derive_ecdh_1pu, $wrap, $header, $recipient, $this)
       };
       ($derive:ident, $wrap:ident, $header:expr, $recipient:expr, $this:expr) => {{
-        use ::crypto::aes_kw::AesKeyWrap;
-
         let name: &str = $header.try_alg()?.name();
         let size: usize = $header.try_alg()?.try_key_len()?;
         let shared: Vec<u8> = EcdhDeriver::new($this).$derive(&$header, name, size)?;
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
-        let ptx: Vec<u8> = ::crypto::aes_kw::$wrap::unwrap_key_vec(&shared, &ctx)?;
+        let ptx: Vec<u8> = ::crypto::aes_kw::$wrap::new(&shared).unwrap_key_vec(&ctx)?;
 
         Ok(Cow::Owned(ptx))
       }};
@@ -319,13 +336,8 @@ impl<'a> Decoder<'a> {
       }};
     }
 
-    if matches!(
-      algorithm.into(),
-      KeyManagement::KeyAgreementDirect | KeyManagement::EncryptionDirect
-    ) {
-      if recipient.encrypted_key.is_some() {
-        return Err(Error::EncError("CEK (non-empty)"));
-      }
+    if KeyManagement::from(algorithm).is_direct() && recipient.encrypted_key.is_some() {
+      return Err(Error::EncError("CEK (non-empty)"));
     }
 
     match algorithm {
@@ -334,30 +346,54 @@ impl<'a> Decoder<'a> {
       JweAlgorithm::RSA_OAEP_256 => rsa!(RSA_OAEP_256, recipient, self.secret),
       JweAlgorithm::RSA_OAEP_384 => rsa!(RSA_OAEP_384, recipient, self.secret),
       JweAlgorithm::RSA_OAEP_512 => rsa!(RSA_OAEP_512, recipient, self.secret),
-      JweAlgorithm::A128KW => aes_kw!(Aes128, recipient, self.secret),
-      JweAlgorithm::A192KW => aes_kw!(Aes192, recipient, self.secret),
-      JweAlgorithm::A256KW => aes_kw!(Aes256, recipient, self.secret),
+      JweAlgorithm::A128KW => aes_kw!(Aes128Kw, recipient, self.secret),
+      JweAlgorithm::A192KW => aes_kw!(Aes192Kw, recipient, self.secret),
+      JweAlgorithm::A256KW => aes_kw!(Aes256Kw, recipient, self.secret),
       JweAlgorithm::DIR => self.secret.to_oct_key(0),
       JweAlgorithm::ECDH_ES => EcdhDeriver::new(self)
         .derive_ecdh_es(&header, encryption.name(), encryption.key_len())
         .map(Cow::Owned),
-      JweAlgorithm::ECDH_ES_A128KW => ecdh_kw!(@es, Aes128, header, recipient, self),
-      JweAlgorithm::ECDH_ES_A192KW => ecdh_kw!(@es, Aes192, header, recipient, self),
-      JweAlgorithm::ECDH_ES_A256KW => ecdh_kw!(@es, Aes256, header, recipient, self),
+      JweAlgorithm::ECDH_ES_A128KW => ecdh_kw!(@es, Aes128Kw, header, recipient, self),
+      JweAlgorithm::ECDH_ES_A192KW => ecdh_kw!(@es, Aes192Kw, header, recipient, self),
+      JweAlgorithm::ECDH_ES_A256KW => ecdh_kw!(@es, Aes256Kw, header, recipient, self),
       JweAlgorithm::ECDH_ES_C20PKW => ecdh_chacha!(@es, C20P, header, recipient, self),
       JweAlgorithm::ECDH_ES_XC20PKW => ecdh_chacha!(@es, XC20P, header, recipient, self),
       JweAlgorithm::A128GCMKW => aead!(A128GCM, header, recipient, self.secret),
       JweAlgorithm::A192GCMKW => aead!(A192GCM, header, recipient, self.secret),
       JweAlgorithm::A256GCMKW => aead!(A256GCM, header, recipient, self.secret),
-      JweAlgorithm::PBES2_HS256_A128KW => todo!("PBES2_HS256_A128KW"),
-      JweAlgorithm::PBES2_HS384_A192KW => todo!("PBES2_HS384_A192KW"),
-      JweAlgorithm::PBES2_HS512_A256KW => todo!("PBES2_HS512_A256KW"),
+      JweAlgorithm::PBES2_HS256_A128KW => {
+        pbes2!(
+          (PBKDF2_HMAC_SHA256, SHA256_LEN),
+          Aes128Kw,
+          header,
+          recipient,
+          self.secret
+        )
+      }
+      JweAlgorithm::PBES2_HS384_A192KW => {
+        pbes2!(
+          (PBKDF2_HMAC_SHA384, SHA384_LEN),
+          Aes192Kw,
+          header,
+          recipient,
+          self.secret
+        )
+      }
+      JweAlgorithm::PBES2_HS512_A256KW => {
+        pbes2!(
+          (PBKDF2_HMAC_SHA512, SHA512_LEN),
+          Aes256Kw,
+          header,
+          recipient,
+          self.secret
+        )
+      }
       JweAlgorithm::ECDH_1PU => EcdhDeriver::new(self)
         .derive_ecdh_1pu(&header, encryption.name(), encryption.key_len())
         .map(Cow::Owned),
-      JweAlgorithm::ECDH_1PU_A128KW => ecdh_kw!(@1pu, Aes128, header, recipient, self),
-      JweAlgorithm::ECDH_1PU_A192KW => ecdh_kw!(@1pu, Aes192, header, recipient, self),
-      JweAlgorithm::ECDH_1PU_A256KW => ecdh_kw!(@1pu, Aes256, header, recipient, self),
+      JweAlgorithm::ECDH_1PU_A128KW => ecdh_kw!(@1pu, Aes128Kw, header, recipient, self),
+      JweAlgorithm::ECDH_1PU_A192KW => ecdh_kw!(@1pu, Aes192Kw, header, recipient, self),
+      JweAlgorithm::ECDH_1PU_A256KW => ecdh_kw!(@1pu, Aes256Kw, header, recipient, self),
       JweAlgorithm::C20PKW => aead!(C20P, header, recipient, self.secret),
       JweAlgorithm::XC20PKW => aead!(XC20P, header, recipient, self.secret),
     }

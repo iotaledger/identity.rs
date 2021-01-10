@@ -1,18 +1,18 @@
-use core::ops::Deref;
-
 use crate::error::Error;
 use crate::error::Result;
+use crate::jose::JoseHeader;
 use crate::jwe::JweHeader;
 use crate::jws::JwsHeader;
-use crate::jwt::JwtHeader;
 use crate::lib::*;
 use crate::utils::decode_b64;
 
+// The default value of the "b64" header parameter
 const DEFAULT_B64: bool = true;
 
+// Claims defined in the base JWE/JWS RFCs
 const PREDEFINED: &[&str] = &[
-  "alg", "jku", "jwk", "kid", "x5u", "x5c", "x5t", "x5t#s256", "typ", "cty", "crit",
-  "enc", "zip", "epk", "apu", "apv", "iv", "tag", "p2s", "p2c",
+  "alg", "jku", "jwk", "kid", "x5u", "x5c", "x5t", "x5t#s256", "typ", "cty", "crit", "enc", "zip", "epk", "apu", "apv",
+  "iv", "tag", "p2s", "p2c",
 ];
 
 pub fn check_slice_param<T>(name: &'static str, slice: Option<&[T]>, value: &T) -> Result<()>
@@ -83,6 +83,8 @@ pub fn validate_jws_headers(
   unprotected: Option<&JwsHeader>,
   permitted: Option<&[String]>,
 ) -> Result<()> {
+  // TODO: Validate Disjoint
+
   validate_crit(protected, unprotected, permitted)?;
   validate_b64(protected, unprotected)?;
 
@@ -95,23 +97,39 @@ pub fn validate_jwe_headers<'a>(
   recipients: impl Iterator<Item = Option<&'a JweHeader>>,
   permitted: Option<&[String]>,
 ) -> Result<()> {
-  todo!("validate_jwe_headers")
+  // TODO: Validate Disjoint
+
+  for recipient in recipients {
+    // TODO: Validate Disjoint
+
+    let unprotected: Option<Cow<JweHeader>> = match (unprotected, recipient) {
+      (Some(header), None) => Some(Cow::Borrowed(header)),
+      (None, Some(header)) => Some(Cow::Borrowed(header)),
+      (Some(_lhs), Some(_rhs)) => todo!("Merge Headers"),
+      (None, None) => None,
+    };
+
+    validate_crit(protected, unprotected.as_deref(), permitted)?;
+
+    // The "zip" parameter MUST be integrity protected
+    if unprotected.map(|header| header.has("zip")).unwrap_or_default() {
+      return Err(Error::InvalidParam("zip (unprotected)"));
+    }
+  }
+
+  Ok(())
 }
 
-pub fn validate_crit<T>(
-  protected: Option<&T>,
-  unprotected: Option<&T>,
-  permitted: Option<&[String]>,
-) -> Result<()>
+pub fn validate_crit<T>(protected: Option<&T>, unprotected: Option<&T>, permitted: Option<&[String]>) -> Result<()>
 where
-  T: Deref<Target = JwtHeader>,
+  T: JoseHeader,
 {
   // The "crit" parameter MUST be integrity protected
-  if unprotected.and_then(|header| header.crit()).is_some() {
+  if unprotected.map(|header| header.has_claim("crit")).unwrap_or_default() {
     return Err(Error::InvalidParam("crit (unprotected)"));
   }
 
-  let values: Option<&[String]> = protected.and_then(|header| header.crit());
+  let values: Option<&[String]> = protected.and_then(|header| header.common().crit());
 
   // The "crit" parameter MUST NOT be an empty list
   if values.map(|values| values.is_empty()).unwrap_or_default() {
@@ -131,6 +149,15 @@ where
     // The "crit" parameter MUST be understood by the application.
     if !permitted.contains(value) {
       return Err(Error::InvalidParam("crit (unpermitted)"));
+    }
+
+    let exists: bool = protected
+      .map(|header| header.has_claim(value))
+      .or_else(|| unprotected.map(|header| header.has_claim(value)))
+      .unwrap_or_default();
+
+    if !exists {
+      return Err(Error::InvalidParam("crit"));
     }
   }
 
