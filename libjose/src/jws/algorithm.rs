@@ -53,10 +53,10 @@ impl JwsAlgorithm {
     Self::PS384,
     Self::PS512,
     Self::ES256,
-    Self::ES384,
-    Self::ES512,
+    Self::ES384, // unsupported
+    Self::ES512, // unsupported
     Self::ES256K,
-    Self::NONE,
+    Self::NONE, // unsupported
     Self::EdDSA,
   ];
 

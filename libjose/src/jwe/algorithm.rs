@@ -1,11 +1,12 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
-use crypto::ciphers::aes::AES_128_GCM;
-use crypto::ciphers::aes::AES_192_GCM;
-use crypto::ciphers::aes::AES_256_GCM;
-use crypto::ciphers::chacha::CHACHA20_POLY1305;
-use crypto::ciphers::chacha::XCHACHA20_POLY1305;
+use crypto::ciphers::aes::Aes128Gcm;
+use crypto::ciphers::aes::Aes192Gcm;
+use crypto::ciphers::aes::Aes256Gcm;
+use crypto::ciphers::chacha::ChaCha20Poly1305;
+use crypto::ciphers::chacha::XChaCha20Poly1305;
+use crypto::ciphers::traits::Cipher;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -166,28 +167,28 @@ impl JweAlgorithm {
       Self::RSA_OAEP_256 => None,
       Self::RSA_OAEP_384 => None,
       Self::RSA_OAEP_512 => None,
-      Self::A128KW => Some(AES_128_GCM::KEY_LENGTH),
-      Self::A192KW => Some(AES_192_GCM::KEY_LENGTH),
-      Self::A256KW => Some(AES_256_GCM::KEY_LENGTH),
+      Self::A128KW => Some(Aes128Gcm::KEY_LENGTH),
+      Self::A192KW => Some(Aes192Gcm::KEY_LENGTH),
+      Self::A256KW => Some(Aes256Gcm::KEY_LENGTH),
       Self::DIR => None,
       Self::ECDH_ES => None,
-      Self::ECDH_ES_A128KW => Some(AES_128_GCM::KEY_LENGTH),
-      Self::ECDH_ES_A192KW => Some(AES_192_GCM::KEY_LENGTH),
-      Self::ECDH_ES_A256KW => Some(AES_256_GCM::KEY_LENGTH),
-      Self::ECDH_ES_C20PKW => Some(CHACHA20_POLY1305::KEY_LENGTH),
-      Self::ECDH_ES_XC20PKW => Some(XCHACHA20_POLY1305::KEY_LENGTH),
-      Self::A128GCMKW => Some(AES_128_GCM::KEY_LENGTH),
-      Self::A192GCMKW => Some(AES_192_GCM::KEY_LENGTH),
-      Self::A256GCMKW => Some(AES_256_GCM::KEY_LENGTH),
-      Self::PBES2_HS256_A128KW => Some(AES_128_GCM::KEY_LENGTH),
-      Self::PBES2_HS384_A192KW => Some(AES_192_GCM::KEY_LENGTH),
-      Self::PBES2_HS512_A256KW => Some(AES_256_GCM::KEY_LENGTH),
+      Self::ECDH_ES_A128KW => Some(Aes128Gcm::KEY_LENGTH),
+      Self::ECDH_ES_A192KW => Some(Aes192Gcm::KEY_LENGTH),
+      Self::ECDH_ES_A256KW => Some(Aes256Gcm::KEY_LENGTH),
+      Self::ECDH_ES_C20PKW => Some(ChaCha20Poly1305::KEY_LENGTH),
+      Self::ECDH_ES_XC20PKW => Some(XChaCha20Poly1305::KEY_LENGTH),
+      Self::A128GCMKW => Some(Aes128Gcm::KEY_LENGTH),
+      Self::A192GCMKW => Some(Aes192Gcm::KEY_LENGTH),
+      Self::A256GCMKW => Some(Aes256Gcm::KEY_LENGTH),
+      Self::PBES2_HS256_A128KW => Some(Aes128Gcm::KEY_LENGTH),
+      Self::PBES2_HS384_A192KW => Some(Aes192Gcm::KEY_LENGTH),
+      Self::PBES2_HS512_A256KW => Some(Aes256Gcm::KEY_LENGTH),
       Self::ECDH_1PU => None,
-      Self::ECDH_1PU_A128KW => Some(AES_128_GCM::KEY_LENGTH),
-      Self::ECDH_1PU_A192KW => Some(AES_192_GCM::KEY_LENGTH),
-      Self::ECDH_1PU_A256KW => Some(AES_256_GCM::KEY_LENGTH),
-      Self::C20PKW => Some(CHACHA20_POLY1305::KEY_LENGTH),
-      Self::XC20PKW => Some(XCHACHA20_POLY1305::KEY_LENGTH),
+      Self::ECDH_1PU_A128KW => Some(Aes128Gcm::KEY_LENGTH),
+      Self::ECDH_1PU_A192KW => Some(Aes192Gcm::KEY_LENGTH),
+      Self::ECDH_1PU_A256KW => Some(Aes256Gcm::KEY_LENGTH),
+      Self::C20PKW => Some(ChaCha20Poly1305::KEY_LENGTH),
+      Self::XC20PKW => Some(XChaCha20Poly1305::KEY_LENGTH),
     }
   }
 

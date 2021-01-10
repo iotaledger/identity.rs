@@ -1,4 +1,4 @@
-use core::convert::TryInto;
+use core::convert::TryFrom;
 use core::iter::once;
 
 use crate::error::Error;
@@ -29,17 +29,11 @@ pub type P256SecretKey = crypto::nistp256::SecretKey;
 pub type K256PublicKey = crypto::secp256k1::PublicKey;
 pub type K256SecretKey = crypto::secp256k1::SecretKey;
 
-pub type X25519PublicKey = x25519_dalek::PublicKey;
-pub type X25519SecretKey = x25519_dalek::StaticSecret;
+pub type X25519PublicKey = crypto::x25519::PublicKey;
+pub type X25519SecretKey = crypto::x25519::SecretKey;
 
-pub type X448PublicKey = x448::PublicKey;
-pub type X448SecretKey = x448::Secret;
-
-pub const X25519_PUBLIC_LEN: usize = 32;
-pub const X25519_SECRET_LEN: usize = 32;
-
-pub const X448_PUBLIC_LEN: usize = 56;
-pub const X448_SECRET_LEN: usize = 56;
+pub type X448PublicKey = crypto::x448::PublicKey;
+pub type X448SecretKey = crypto::x448::SecretKey;
 
 const SEC1_UNCOMPRESSED_TAG: u8 = 0x04;
 
@@ -168,36 +162,30 @@ impl<'a> Secret<'a> {
     expand_ec_secret(EcCurve::Secp256K1, self, K256SecretKey::from_bytes)
   }
 
+  #[allow(clippy::redundant_closure)]
   pub fn to_ed25519_public(self) -> Result<Ed25519PublicKey> {
-    expand_ed_public(EdCurve::Ed25519, self, |arr| arr.try_into())
+    expand_ed_public(EdCurve::Ed25519, self, |arr| Ed25519PublicKey::try_from(arr))
   }
 
+  #[allow(clippy::redundant_closure)]
   pub fn to_ed25519_secret(self) -> Result<Ed25519SecretKey> {
-    expand_ed_secret(EdCurve::Ed25519, self, |arr| arr.try_into())
+    expand_ed_secret(EdCurve::Ed25519, self, |arr| Ed25519SecretKey::try_from(arr))
   }
 
   pub fn to_x25519_public(self) -> Result<X25519PublicKey> {
-    expand_ecx_public(EcxCurve::X25519, self, |arr| {
-      TryInto::<[u8; X25519_PUBLIC_LEN]>::try_into(arr).map(Into::into)
-    })
+    expand_ecx_public(EcxCurve::X25519, self, X25519PublicKey::from_bytes)
   }
 
   pub fn to_x25519_secret(self) -> Result<X25519SecretKey> {
-    expand_ecx_secret(EcxCurve::X25519, self, |arr| {
-      TryInto::<[u8; X25519_SECRET_LEN]>::try_into(arr).map(Into::into)
-    })
+    expand_ecx_secret(EcxCurve::X25519, self, X25519SecretKey::from_bytes)
   }
 
   pub fn to_x448_public(self) -> Result<X448PublicKey> {
-    expand_ecx_public(EcxCurve::X448, self, |arr| {
-      X448PublicKey::from_bytes(arr).ok_or_else(|| Error::KeyError(EcxCurve::X448.name()))
-    })
+    expand_ecx_public(EcxCurve::X448, self, X448PublicKey::from_bytes)
   }
 
   pub fn to_x448_secret(self) -> Result<X448SecretKey> {
-    expand_ecx_secret(EcxCurve::X448, self, |arr| {
-      TryInto::<[u8; X448_SECRET_LEN]>::try_into(arr).map(Into::into)
-    })
+    expand_ecx_secret(EcxCurve::X448, self, X448SecretKey::from_bytes)
   }
 
   pub(crate) fn expand<T, E>(

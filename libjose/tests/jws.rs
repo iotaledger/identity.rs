@@ -47,6 +47,9 @@ fn roundtrip(algorithm: JwsAlgorithm) -> Result<()> {
 #[test]
 fn test_roundtrip() {
   for alg in JwsAlgorithm::ALL {
+    if matches!(alg, JwsAlgorithm::ES384 | JwsAlgorithm::ES512 | JwsAlgorithm::NONE) {
+      continue;
+    }
     roundtrip(*alg).unwrap();
   }
 }

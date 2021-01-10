@@ -16,6 +16,7 @@ pub enum Error {
   MissingParam(&'static str),
   InvalidContent(&'static str),
   InvalidArray(&'static str),
+  AlgError(&'static str),
   EncError(&'static str),
   SigError(&'static str),
   KeyError(&'static str),
@@ -35,6 +36,7 @@ impl Display for Error {
       Self::MissingParam(inner) => f.write_fmt(format_args!("Missing Param: {}", inner)),
       Self::InvalidContent(inner) => f.write_fmt(format_args!("Invalid Content: {}", inner)),
       Self::InvalidArray(inner) => f.write_fmt(format_args!("Invalid Array: {}", inner)),
+      Self::AlgError(inner) => f.write_fmt(format_args!("Unsupported Algorithm: {}", inner)),
       Self::EncError(inner) => f.write_fmt(format_args!("Encryption Error: {}", inner)),
       Self::SigError(inner) => f.write_fmt(format_args!("Signature Error: {}", inner)),
       Self::KeyError(inner) => f.write_fmt(format_args!("Invalid Key Format: {}", inner)),
@@ -67,5 +69,11 @@ impl From<base64::DecodeError> for Error {
 impl From<miniz_oxide::inflate::TINFLStatus> for Error {
   fn from(other: miniz_oxide::inflate::TINFLStatus) -> Self {
     Self::InvalidDecompression(other)
+  }
+}
+
+impl From<::rsa::errors::Error> for Error {
+  fn from(_: ::rsa::errors::Error) -> Self {
+    Self::CryptoError(crypto::Error::SignatureError { alg: "Rsa" })
   }
 }

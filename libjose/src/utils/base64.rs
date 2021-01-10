@@ -35,3 +35,13 @@ where
 {
   decode_b64(data).and_then(|data| from_slice(&data).map_err(Into::into))
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn smoke() {
+    assert!(decode_b64(encode_b64(b"libjose")).is_ok());
+  }
+}

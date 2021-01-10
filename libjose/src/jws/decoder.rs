@@ -1,6 +1,6 @@
 use core::str;
-use subtle::ConstantTimeEq as _;
 use serde_json::from_slice;
+use subtle::ConstantTimeEq as _;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -217,19 +217,30 @@ impl<'a, 'b> Decoder<'a, 'b> {
   fn verify(&self, algorithm: JwsAlgorithm, message: &[u8], signature: &[u8]) -> Result<()> {
     macro_rules! hmac {
       ($impl:ident, $key_len:ident, $message:expr, $signature:expr, $secret:expr) => {{
-        let secret: Cow<[u8]> = $secret.to_oct_key($crate::crypto::$key_len)?;
-        let digest: [u8; $crate::crypto::$key_len] = $crate::crypto::$impl(&secret, $message);
+        use ::crypto::hashes::sha::$key_len;
+        use ::crypto::macs::hmac::$impl;
 
-        if $signature.ct_eq(&digest).unwrap_u8() != 1 {
+        let secret: Cow<[u8]> = $secret.to_oct_key($key_len)?;
+        let mut mac: [u8; $key_len] = [0; $key_len];
+
+        $impl($message, &secret, &mut mac);
+
+        if $signature.ct_eq(&mac).unwrap_u8() != 1 {
           return Err(Error::SigError("HMAC"));
         }
       }};
     }
 
     macro_rules! rsa {
-      ($padding:ident, $digest:ident, $message:expr, $signature:expr, $secret:expr) => {{
+      ($padding:ident, $digest:ident, $digest_len:ident, $message:expr, $signature:expr, $secret:expr) => {{
+        use ::crypto::hashes::sha::$digest;
+        use ::crypto::hashes::sha::$digest_len;
+
+        let mut digest: [u8; $digest_len] = [0; $digest_len];
+
+        $digest($message, &mut digest);
+
         let secret: _ = $secret.to_rsa_public()?;
-        let digest: _ = $crate::crypto::$digest($message);
         let padding: _ = $crate::rsa_padding!(@$padding);
 
         rsa::PublicKey::verify(&secret, padding, &digest, $signature)?;
@@ -241,23 +252,23 @@ impl<'a, 'b> Decoder<'a, 'b> {
     public.check_verifying_key(algorithm.name())?;
 
     match algorithm {
-      JwsAlgorithm::HS256 => hmac!(hmac_sha256, SHA256_LEN, message, signature, public),
-      JwsAlgorithm::HS384 => hmac!(hmac_sha384, SHA384_LEN, message, signature, public),
-      JwsAlgorithm::HS512 => hmac!(hmac_sha512, SHA512_LEN, message, signature, public),
-      JwsAlgorithm::RS256 => rsa!(PKCS1_SHA256, sha256, message, signature, public),
-      JwsAlgorithm::RS384 => rsa!(PKCS1_SHA384, sha384, message, signature, public),
-      JwsAlgorithm::RS512 => rsa!(PKCS1_SHA512, sha512, message, signature, public),
-      JwsAlgorithm::PS256 => rsa!(PSS_SHA256, sha256, message, signature, public),
-      JwsAlgorithm::PS384 => rsa!(PSS_SHA384, sha384, message, signature, public),
-      JwsAlgorithm::PS512 => rsa!(PSS_SHA512, sha512, message, signature, public),
+      JwsAlgorithm::HS256 => hmac!(HMAC_SHA256, SHA256_LEN, message, signature, public),
+      JwsAlgorithm::HS384 => hmac!(HMAC_SHA384, SHA384_LEN, message, signature, public),
+      JwsAlgorithm::HS512 => hmac!(HMAC_SHA512, SHA512_LEN, message, signature, public),
+      JwsAlgorithm::RS256 => rsa!(PKCS1_SHA256, SHA256, SHA256_LEN, message, signature, public),
+      JwsAlgorithm::RS384 => rsa!(PKCS1_SHA384, SHA384, SHA384_LEN, message, signature, public),
+      JwsAlgorithm::RS512 => rsa!(PKCS1_SHA512, SHA512, SHA512_LEN, message, signature, public),
+      JwsAlgorithm::PS256 => rsa!(PSS_SHA256, SHA256, SHA256_LEN, message, signature, public),
+      JwsAlgorithm::PS384 => rsa!(PSS_SHA384, SHA384, SHA384_LEN, message, signature, public),
+      JwsAlgorithm::PS512 => rsa!(PSS_SHA512, SHA512, SHA512_LEN, message, signature, public),
       JwsAlgorithm::ES256 => public.to_p256_public()?.verify(message, signature)?,
-      JwsAlgorithm::ES384 => todo!("ES384"),
-      JwsAlgorithm::ES512 => todo!("ES512"),
+      JwsAlgorithm::ES384 => return Err(Error::AlgError("ES384")),
+      JwsAlgorithm::ES512 => return Err(Error::AlgError("ES512")),
       JwsAlgorithm::ES256K => public.to_k256_public()?.verify(message, signature)?,
-      JwsAlgorithm::NONE => todo!("NONE"),
+      JwsAlgorithm::NONE => return Err(Error::AlgError("NONE")),
       JwsAlgorithm::EdDSA => match self.eddsa_curve {
         EdCurve::Ed25519 => public.to_ed25519_public()?.verify(message, signature)?,
-        EdCurve::Ed448 => todo!("EdDSA/Ed448"),
+        EdCurve::Ed448 => return Err(Error::AlgError("EdDSA/Ed448")),
       },
     }
 

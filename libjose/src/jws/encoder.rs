@@ -1,14 +1,7 @@
 use core::str;
-use crypto::hashes::sha::SHA256_LEN;
-use crypto::hashes::sha::SHA384_LEN;
-use crypto::hashes::sha::SHA512_LEN;
+use serde::Serialize;
+use serde_json::to_vec;
 
-use crate::crypto::hmac_sha256;
-use crate::crypto::hmac_sha384;
-use crate::crypto::hmac_sha512;
-use crate::crypto::sha256;
-use crate::crypto::sha384;
-use crate::crypto::sha512;
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::EdCurve;
@@ -18,7 +11,6 @@ use crate::jws::JwsFormat;
 use crate::jws::JwsHeader;
 use crate::jws::Recipient;
 use crate::lib::*;
-use crate::rsa_padding;
 use crate::utils::create_message;
 use crate::utils::encode_b64;
 use crate::utils::encode_b64_json;
@@ -106,6 +98,13 @@ impl<'a> Encoder<'a> {
   pub fn recipient(mut self, value: impl Into<Recipient<'a>>) -> Self {
     self.recipients.push(value.into());
     self
+  }
+
+  pub fn encode_serde<T>(&self, claims: &T) -> Result<String>
+  where
+    T: Serialize,
+  {
+    self.encode(&to_vec(claims)?)
   }
 
   pub fn encode(&self, claims: &[u8]) -> Result<String> {
@@ -257,9 +256,33 @@ fn encode_recipient<'a>(payload: &[u8], recipient: Recipient<'a>) -> Result<Sign
 }
 
 fn sign(algorithm: JwsAlgorithm, message: &[u8], recipient: Recipient<'_>) -> Result<String> {
+  macro_rules! hmac {
+    ($impl:ident, $key_len:ident, $message:expr, $secret:expr) => {{
+      use ::crypto::hashes::sha::$key_len;
+      use ::crypto::macs::hmac::$impl;
+
+      let secret: Cow<[u8]> = $secret.to_oct_key($key_len)?;
+      let mut mac: [u8; $key_len] = [0; $key_len];
+
+      $impl($message, &secret, &mut mac);
+
+      Ok(encode_b64(mac))
+    }};
+  }
+
   macro_rules! rsa {
-    ($padding:ident, $digest:ident, $message:expr, $secret:expr) => {{
-      $secret.to_rsa_secret()?.sign(rsa_padding!(@$padding), &$digest($message))?
+    ($padding:ident, $digest:ident, $digest_len:ident, $message:expr, $secret:expr) => {{
+      use ::crypto::hashes::sha::$digest;
+      use ::crypto::hashes::sha::$digest_len;
+
+      let mut digest: [u8; $digest_len] = [0; $digest_len];
+
+      $digest($message, &mut digest);
+
+      let secret: _ = $secret.to_rsa_secret()?;
+      let padding: _ = $crate::rsa_padding!(@$padding);
+
+      Ok(encode_b64(secret.sign(padding, &digest)?))
     }};
   }
 
@@ -268,23 +291,23 @@ fn sign(algorithm: JwsAlgorithm, message: &[u8], recipient: Recipient<'_>) -> Re
   secret.check_signing_key(algorithm.name())?;
 
   match algorithm {
-    JwsAlgorithm::HS256 => Ok(encode_b64(hmac_sha256(&secret.to_oct_key(SHA256_LEN)?, message))),
-    JwsAlgorithm::HS384 => Ok(encode_b64(hmac_sha384(&secret.to_oct_key(SHA384_LEN)?, message))),
-    JwsAlgorithm::HS512 => Ok(encode_b64(hmac_sha512(&secret.to_oct_key(SHA512_LEN)?, message))),
-    JwsAlgorithm::RS256 => Ok(encode_b64(rsa!(PKCS1_SHA256, sha256, message, secret))),
-    JwsAlgorithm::RS384 => Ok(encode_b64(rsa!(PKCS1_SHA384, sha384, message, secret))),
-    JwsAlgorithm::RS512 => Ok(encode_b64(rsa!(PKCS1_SHA512, sha512, message, secret))),
-    JwsAlgorithm::PS256 => Ok(encode_b64(rsa!(PSS_SHA256, sha256, message, secret))),
-    JwsAlgorithm::PS384 => Ok(encode_b64(rsa!(PSS_SHA384, sha384, message, secret))),
-    JwsAlgorithm::PS512 => Ok(encode_b64(rsa!(PSS_SHA512, sha512, message, secret))),
+    JwsAlgorithm::HS256 => hmac!(HMAC_SHA256, SHA256_LEN, message, secret),
+    JwsAlgorithm::HS384 => hmac!(HMAC_SHA384, SHA384_LEN, message, secret),
+    JwsAlgorithm::HS512 => hmac!(HMAC_SHA512, SHA512_LEN, message, secret),
+    JwsAlgorithm::RS256 => rsa!(PKCS1_SHA256, SHA256, SHA256_LEN, message, secret),
+    JwsAlgorithm::RS384 => rsa!(PKCS1_SHA384, SHA384, SHA384_LEN, message, secret),
+    JwsAlgorithm::RS512 => rsa!(PKCS1_SHA512, SHA512, SHA512_LEN, message, secret),
+    JwsAlgorithm::PS256 => rsa!(PSS_SHA256, SHA256, SHA256_LEN, message, secret),
+    JwsAlgorithm::PS384 => rsa!(PSS_SHA384, SHA384, SHA384_LEN, message, secret),
+    JwsAlgorithm::PS512 => rsa!(PSS_SHA512, SHA512, SHA512_LEN, message, secret),
     JwsAlgorithm::ES256 => Ok(encode_b64(secret.to_p256_secret()?.sign(message)?)),
-    JwsAlgorithm::ES384 => todo!("ES384"),
-    JwsAlgorithm::ES512 => todo!("ES512"),
+    JwsAlgorithm::ES384 => Err(Error::AlgError("ES384")),
+    JwsAlgorithm::ES512 => Err(Error::AlgError("ES512")),
     JwsAlgorithm::ES256K => Ok(encode_b64(secret.to_k256_secret()?.sign(message)?)),
-    JwsAlgorithm::NONE => todo!("NONE"),
+    JwsAlgorithm::NONE => Err(Error::AlgError("NONE")),
     JwsAlgorithm::EdDSA => match recipient.eddsa_curve {
       EdCurve::Ed25519 => Ok(encode_b64(secret.to_ed25519_secret()?.sign(message).to_bytes())),
-      EdCurve::Ed448 => todo!("EdDSA/Ed448"),
+      EdCurve::Ed448 => Err(Error::AlgError("EdDSA/Ed448")),
     },
   }
 }

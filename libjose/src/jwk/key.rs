@@ -1,10 +1,14 @@
 use crypto::hashes::sha::SHA256;
 use crypto::hashes::sha::SHA256_LEN;
-use serde_json::to_vec;
+use rand::rngs::OsRng;
+use rsa::PublicKeyParts as _;
 use url::Url;
 
 use crate::error::Error;
 use crate::error::Result;
+use crate::jwk::EcCurve;
+use crate::jwk::EcxCurve;
+use crate::jwk::EdCurve;
 use crate::jwk::JwkOperation;
 use crate::jwk::JwkParams;
 use crate::jwk::JwkParamsEc;
@@ -15,6 +19,14 @@ use crate::jwk::JwkType;
 use crate::jwk::JwkUse;
 use crate::lib::*;
 use crate::utils::encode_b64;
+use crate::utils::random_bytes;
+use crate::utils::Ed25519SecretKey;
+use crate::utils::K256SecretKey;
+use crate::utils::KeyParams;
+use crate::utils::P256SecretKey;
+use crate::utils::RsaSecretKey;
+use crate::utils::X25519SecretKey;
+use crate::utils::X448SecretKey;
 
 /// A SHA256 JSON Web Key Thumbprint.
 pub type JwkThumbprint = [u8; SHA256_LEN];
@@ -336,32 +348,26 @@ impl Jwk {
   ///
   /// The thumbprint is returned as an unencoded vector of bytes.
   pub fn thumbprint_raw(&self) -> Result<JwkThumbprint> {
-    let mut data: BTreeMap<&str, &str> = BTreeMap::new();
+    let kty: &str = self.kty.name();
 
-    data.insert("kty", self.kty.name());
-
-    match &self.params {
+    let json: String = match self.params() {
       JwkParams::Ec(JwkParamsEc { crv, x, y, .. }) => {
-        data.insert("crv", crv);
-        data.insert("x", x);
-        data.insert("y", y);
+        format!(r#"{{"crv":"{}","kty":"{}","x":"{}","y":"{}"}}"#, crv, kty, x, y)
       }
-      JwkParams::Rsa(JwkParamsRsa { n, e, .. }) => {
-        data.insert("e", e);
-        data.insert("n", n);
+      JwkParams::Rsa(JwkParamsRsa { e, n, .. }) => {
+        format!(r#"{{"e":"{}","kty":"{}","n":"{}"}}"#, e, kty, n)
       }
       JwkParams::Oct(JwkParamsOct { k }) => {
-        data.insert("k", k);
+        format!(r#"{{"k":"{}","kty":"{}"}}"#, k, kty)
       }
       JwkParams::Okp(JwkParamsOkp { crv, x, .. }) => {
-        data.insert("crv", crv);
-        data.insert("x", x);
+        format!(r#"{{"crv":"{}","kty":"{}","x":"{}"}}"#, crv, kty, x)
       }
-    }
+    };
 
     let mut out: JwkThumbprint = Default::default();
 
-    SHA256(&to_vec(&data)?, &mut out);
+    SHA256(json.as_bytes(), &mut out);
 
     Ok(out)
   }
@@ -427,26 +433,23 @@ impl Jwk {
   }
 
   pub fn try_ec_curve(&self) -> Result<EcCurve> {
-    if let JwkParams::Ec(inner) = self.params() {
-      inner.try_ec_curve()
-    } else {
-      Err(Error::KeyError("Ec Curve"))
+    match self.params() {
+      JwkParams::Ec(inner) => inner.try_ec_curve(),
+      _ => Err(Error::KeyError("Ec Curve")),
     }
   }
 
   pub fn try_ed_curve(&self) -> Result<EdCurve> {
-    if let JwkParams::Okp(inner) = self.params() {
-      inner.try_ed_curve()
-    } else {
-      Err(Error::KeyError("Ed Curve"))
+    match self.params() {
+      JwkParams::Okp(inner) => inner.try_ed_curve(),
+      _ => Err(Error::KeyError("Ed Curve")),
     }
   }
 
   pub fn try_ecx_curve(&self) -> Result<EcxCurve> {
-    if let JwkParams::Okp(inner) = self.params() {
-      inner.try_ecx_curve()
-    } else {
-      Err(Error::KeyError("Ecx Curve"))
+    match self.params() {
+      JwkParams::Okp(inner) => inner.try_ecx_curve(),
+      _ => Err(Error::KeyError("Ecx Curve")),
     }
   }
 
@@ -470,5 +473,83 @@ impl Jwk {
     }
 
     public
+  }
+
+  pub fn random(params: impl Into<KeyParams>) -> Result<Self> {
+    macro_rules! generate_ec {
+      ($secret:ident, $curve:expr) => {{
+        let secret: $secret = $secret::generate()?;
+        let (x, y): _ = secret.public_key().to_coord()?;
+
+        Ok(Jwk::from_params(JwkParamsEc {
+          crv: $curve.to_string(),
+          x: encode_b64(x),
+          y: encode_b64(y),
+          d: Some(encode_b64(secret.to_bytes())),
+        }))
+      }};
+    }
+
+    macro_rules! generate_ecx {
+      ($secret:ident, $curve:expr) => {{
+        let secret: $secret = $secret::generate()?;
+
+        Ok(Jwk::from_params(JwkParamsOkp {
+          crv: $curve.name().to_string(),
+          x: encode_b64(secret.public_key().to_bytes()),
+          d: Some(encode_b64(secret.to_bytes())),
+        }))
+      }};
+    }
+
+    match params.into() {
+      KeyParams::None => Ok(Jwk::new(JwkType::Oct)),
+      KeyParams::Oct(key_len) => Ok(Jwk::from_params(JwkParamsOct {
+        k: encode_b64(random_bytes(key_len)?),
+      })),
+      KeyParams::Rsa(bits) => {
+        let secret: RsaSecretKey = RsaSecretKey::new(&mut OsRng, bits.bits())?;
+
+        let (p, q) = match secret.primes() {
+          [_] => unreachable!(),
+          [p, q] => (p, q),
+          [..] => return Err(Error::KeyError("multi prime keys are not supported")),
+        };
+
+        Ok(Jwk::from_params(JwkParamsRsa {
+          n: encode_b64(secret.n().to_bytes_be()),
+          e: encode_b64(secret.e().to_bytes_be()),
+          d: Some(encode_b64(secret.d().to_bytes_be())),
+          p: Some(encode_b64(p.to_bytes_be())),
+          q: Some(encode_b64(q.to_bytes_be())),
+          dp: Some(encode_b64(&[])), // TODO: FIXME
+          dq: Some(encode_b64(&[])), // TODO: FIXME
+          qi: Some(encode_b64(&[])), // TODO: FIXME
+          oth: None,
+        }))
+      }
+      KeyParams::Ec(curve) => match curve {
+        EcCurve::P256 => generate_ec!(P256SecretKey, curve),
+        EcCurve::P384 => Err(Error::AlgError("Ec/P384")),
+        EcCurve::P521 => Err(Error::AlgError("Ec/P521")),
+        EcCurve::Secp256K1 => generate_ec!(K256SecretKey, curve),
+      },
+      KeyParams::Ed(curve) => match curve {
+        EdCurve::Ed25519 => {
+          let secret: Ed25519SecretKey = Ed25519SecretKey::generate()?;
+
+          Ok(Jwk::from_params(JwkParamsOkp {
+            crv: curve.name().to_string(),
+            x: encode_b64(secret.public_key().to_compressed_bytes()),
+            d: Some(encode_b64(secret.to_le_bytes())),
+          }))
+        }
+        EdCurve::Ed448 => Err(Error::AlgError("Ed/P521")),
+      },
+      KeyParams::Ecx(curve) => match curve {
+        EcxCurve::X25519 => generate_ecx!(X25519SecretKey, curve),
+        EcxCurve::X448 => generate_ecx!(X448SecretKey, curve),
+      },
+    }
   }
 }

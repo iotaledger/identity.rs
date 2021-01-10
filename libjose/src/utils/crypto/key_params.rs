@@ -1,8 +1,9 @@
-use crypto::ciphers::aes::AES_128_GCM;
-use crypto::ciphers::aes::AES_192_GCM;
-use crypto::ciphers::aes::AES_256_GCM;
-use crypto::ciphers::chacha::CHACHA20_POLY1305;
-use crypto::ciphers::chacha::XCHACHA20_POLY1305;
+use crypto::ciphers::aes::Aes128Gcm;
+use crypto::ciphers::aes::Aes192Gcm;
+use crypto::ciphers::aes::Aes256Gcm;
+use crypto::ciphers::chacha::ChaCha20Poly1305;
+use crypto::ciphers::chacha::XChaCha20Poly1305;
+use crypto::ciphers::traits::Cipher;
 use crypto::hashes::sha::SHA256_LEN;
 use crypto::hashes::sha::SHA384_LEN;
 use crypto::hashes::sha::SHA512_LEN;
@@ -112,9 +113,9 @@ impl From<(JweAlgorithm, JweEncryption)> for KeyParams {
       (JweAlgorithm::RSA_OAEP_256, _) => Self::Rsa(RsaBits::B2048),
       (JweAlgorithm::RSA_OAEP_384, _) => Self::Rsa(RsaBits::B2048),
       (JweAlgorithm::RSA_OAEP_512, _) => Self::Rsa(RsaBits::B2048),
-      (JweAlgorithm::A128KW, _) => Self::Oct(AES_128_GCM::KEY_LENGTH),
-      (JweAlgorithm::A192KW, _) => Self::Oct(AES_192_GCM::KEY_LENGTH),
-      (JweAlgorithm::A256KW, _) => Self::Oct(AES_256_GCM::KEY_LENGTH),
+      (JweAlgorithm::A128KW, _) => Self::Oct(Aes128Gcm::KEY_LENGTH),
+      (JweAlgorithm::A192KW, _) => Self::Oct(Aes192Gcm::KEY_LENGTH),
+      (JweAlgorithm::A256KW, _) => Self::Oct(Aes256Gcm::KEY_LENGTH),
       (JweAlgorithm::DIR, encryption) => Self::Oct(encryption.key_len()),
       (JweAlgorithm::ECDH_ES, _) => Self::Ecx(EcxCurve::X25519),
       (JweAlgorithm::ECDH_ES_A128KW, _) => Self::Ecx(EcxCurve::X25519),
@@ -122,18 +123,18 @@ impl From<(JweAlgorithm, JweEncryption)> for KeyParams {
       (JweAlgorithm::ECDH_ES_A256KW, _) => Self::Ecx(EcxCurve::X25519),
       (JweAlgorithm::ECDH_ES_C20PKW, _) => Self::Ecx(EcxCurve::X25519),
       (JweAlgorithm::ECDH_ES_XC20PKW, _) => Self::Ecx(EcxCurve::X25519),
-      (JweAlgorithm::A128GCMKW, _) => Self::Oct(AES_128_GCM::KEY_LENGTH),
-      (JweAlgorithm::A192GCMKW, _) => Self::Oct(AES_192_GCM::KEY_LENGTH),
-      (JweAlgorithm::A256GCMKW, _) => Self::Oct(AES_256_GCM::KEY_LENGTH),
-      (JweAlgorithm::PBES2_HS256_A128KW, _) => Self::Oct(AES_128_GCM::KEY_LENGTH),
-      (JweAlgorithm::PBES2_HS384_A192KW, _) => Self::Oct(AES_192_GCM::KEY_LENGTH),
-      (JweAlgorithm::PBES2_HS512_A256KW, _) => Self::Oct(AES_256_GCM::KEY_LENGTH),
+      (JweAlgorithm::A128GCMKW, _) => Self::Oct(Aes128Gcm::KEY_LENGTH),
+      (JweAlgorithm::A192GCMKW, _) => Self::Oct(Aes192Gcm::KEY_LENGTH),
+      (JweAlgorithm::A256GCMKW, _) => Self::Oct(Aes256Gcm::KEY_LENGTH),
+      (JweAlgorithm::PBES2_HS256_A128KW, _) => Self::Oct(Aes128Gcm::KEY_LENGTH),
+      (JweAlgorithm::PBES2_HS384_A192KW, _) => Self::Oct(Aes192Gcm::KEY_LENGTH),
+      (JweAlgorithm::PBES2_HS512_A256KW, _) => Self::Oct(Aes256Gcm::KEY_LENGTH),
       (JweAlgorithm::ECDH_1PU, _) => Self::Ecx(EcxCurve::X25519),
       (JweAlgorithm::ECDH_1PU_A128KW, _) => Self::Ecx(EcxCurve::X25519),
       (JweAlgorithm::ECDH_1PU_A192KW, _) => Self::Ecx(EcxCurve::X25519),
       (JweAlgorithm::ECDH_1PU_A256KW, _) => Self::Ecx(EcxCurve::X25519),
-      (JweAlgorithm::C20PKW, _) => Self::Oct(CHACHA20_POLY1305::KEY_LENGTH),
-      (JweAlgorithm::XC20PKW, _) => Self::Oct(XCHACHA20_POLY1305::KEY_LENGTH),
+      (JweAlgorithm::C20PKW, _) => Self::Oct(ChaCha20Poly1305::KEY_LENGTH),
+      (JweAlgorithm::XC20PKW, _) => Self::Oct(XChaCha20Poly1305::KEY_LENGTH),
     }
   }
 }

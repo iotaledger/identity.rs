@@ -1,7 +1,8 @@
 use core::convert::TryFrom as _;
 use core::mem;
+use crypto::hashes::sha::SHA256;
+use crypto::hashes::sha::SHA256_LEN;
 
-use crate::crypto;
 use crate::error::Error;
 use crate::error::Result;
 use crate::lib::*;
@@ -10,9 +11,10 @@ const U32_SIZE: usize = mem::size_of::<u32>();
 
 /// The Concat KDF (using SHA-256) as defined in Section 5.8.1 of NIST.800-56A
 pub fn concat_kdf(alg: &str, len: usize, z: &[u8], apu: &[u8], apv: &[u8]) -> Result<Vec<u8>> {
-  let target: usize = (len + (crypto::SHA256_LEN - 1)) / crypto::SHA256_LEN;
+  let target: usize = (len + (SHA256_LEN - 1)) / SHA256_LEN;
   let rounds: u32 = u32::try_from(target).map_err(|_| Error::KeyError("Iteration Overflow"))?;
 
+  let mut digest: [u8; SHA256_LEN] = [0; SHA256_LEN];
   let mut buffer: Vec<u8> = Vec::new();
   let mut output: Vec<u8> = Vec::new();
 
@@ -41,7 +43,9 @@ pub fn concat_kdf(alg: &str, len: usize, z: &[u8], apu: &[u8], apv: &[u8]) -> Re
     // Update the iteration count
     buffer[..U32_SIZE].copy_from_slice(&(count as u32 + 1).to_be_bytes());
 
-    output.extend_from_slice(&crypto::sha256(&buffer));
+    SHA256(&buffer, &mut digest);
+
+    output.extend_from_slice(&digest);
   }
 
   output.truncate(len);

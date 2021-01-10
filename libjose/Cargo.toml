@@ -7,7 +7,7 @@ description = "A library for JOSE (JSON Object Signing and Encryption)"
 readme = "README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 license = "Apache-2.0"
-keywords = ["iota", "tangle", "identity", "jose", "jwa", "jwe", "jwk", "jws", "jwt"]
+keywords = ["iota", "tangle", "identity", "jose", "jwa", "jwe", "jwk", "jwm", "jws", "jwt"]
 homepage = "https://www.iota.org"
 
 [dependencies]
@@ -17,15 +17,31 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 url = { version = "2.1", default-features = false, features = ["serde"] }
 
-curve25519-dalek = { version = "3.0", default-features = false }
-k256 = { version = "0.7", default-features = false, features = ["ecdh", "ecdsa", "sha256"] }
-p256 = { version = "0.7", default-features = false, features = ["ecdh", "ecdsa"] }
 rand = { version = "0.7", default-features = false, features = ["getrandom"] }
 rsa = { version = "0.3", default-features = false }
 sha-1 = { version = "0.9", default-features = false }
 sha2 = { version = "0.9", default-features = false }
-x25519-dalek = { version = "1.1", default-features = false }
-x448 = { version = "0.6", default-features = false }
+subtle = { version = "2.4", default-features = false }
+
+[dependencies.crypto]
+path = "../../crypto.rs"
+package = "iota-crypto"
+default-features = false
+features = [
+  "aes",
+  "aes-cbc",
+  "aes-kw",
+  "chacha",
+  "nist-p256",
+  "ed25519",
+  "hmac",
+  "pbkdf",
+  "random",
+  "secp256k1",
+  "sha",
+  "x25519",
+  "x448",
+]
 
 [features]
 default = ["std"]

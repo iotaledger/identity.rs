@@ -1,3 +1,4 @@
+use core::iter::FromIterator;
 use core::ops::Index;
 use core::ops::IndexMut;
 use core::slice::SliceIndex;

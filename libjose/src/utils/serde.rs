@@ -1,3 +1,5 @@
+use core::str;
+
 use crate::error::Error;
 use crate::error::Result;
 use crate::jose::JoseHeader;
@@ -14,6 +16,10 @@ const PREDEFINED: &[&str] = &[
   "alg", "jku", "jwk", "kid", "x5u", "x5c", "x5t", "x5t#s256", "typ", "cty", "crit", "enc", "zip", "epk", "apu", "apv",
   "iv", "tag", "p2s", "p2c",
 ];
+
+pub fn parse_utf8(slice: &(impl AsRef<[u8]> + ?Sized)) -> Result<&str> {
+  str::from_utf8(slice.as_ref()).map_err(Error::InvalidUtf8)
+}
 
 pub fn check_slice_param<T>(name: &'static str, slice: Option<&[T]>, value: &T) -> Result<()>
 where

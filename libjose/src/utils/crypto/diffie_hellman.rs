@@ -1,3 +1,4 @@
+use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::EcCurve;
 use crate::jwk::EcdhCurve;
@@ -22,12 +23,8 @@ pub fn diffie_hellman<'a, 'b>(
 
         Ok(shared.as_bytes().to_vec())
       }
-      EcCurve::P384 => {
-        todo!("diffie_hellman(P384)")
-      }
-      EcCurve::P521 => {
-        todo!("diffie_hellman(P521)")
-      }
+      EcCurve::P384 => Err(Error::AlgError("Diffie-Hellman (P384)")),
+      EcCurve::P521 => Err(Error::AlgError("Diffie-Hellman (P521)")),
       EcCurve::Secp256K1 => {
         let public: _ = public.to_k256_public()?;
         let secret: _ = secret.to_k256_secret()?;
@@ -47,8 +44,7 @@ pub fn diffie_hellman<'a, 'b>(
       EcxCurve::X448 => {
         let public: _ = public.to_x448_public()?;
         let secret: _ = secret.to_x448_secret()?;
-        // We unwrap because low order points are checked with `to_x448_public`
-        let shared: _ = secret.to_diffie_hellman(&public).unwrap();
+        let shared: _ = secret.diffie_hellman(&public);
 
         Ok(shared.as_bytes().to_vec())
       }

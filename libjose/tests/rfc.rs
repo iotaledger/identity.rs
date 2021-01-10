@@ -14,9 +14,10 @@ use serde_json::Value;
 #[test]
 fn test_rfc7515() {
   struct TestVector {
+    deterministic: bool,
     header: &'static str,
     claims: &'static [u8],
-    encoded: &'static str,
+    encoded: &'static [u8],
     private_key: &'static str,
   }
 
@@ -26,14 +27,16 @@ fn test_rfc7515() {
     let header: JwsHeader = serde_json::from_str(tv.header).unwrap();
     let jwk: Jwk = serde_json::from_str(tv.private_key).unwrap();
 
-    let encoded: String = jws::Encoder::new()
-      .recipient((&jwk, &header))
-      .encode(tv.claims)
-      .unwrap();
+    if tv.deterministic {
+      let encoded: String = jws::Encoder::new()
+        .recipient((&jwk, &header))
+        .encode(tv.claims)
+        .unwrap();
 
-    assert_eq!(encoded, tv.encoded);
+      assert_eq!(encoded.as_bytes(), tv.encoded);
+    }
 
-    let decoded: _ = jws::Decoder::new(&jwk).decode(encoded.as_bytes()).unwrap();
+    let decoded: _ = jws::Decoder::new(&jwk).decode(tv.encoded).unwrap();
 
     assert_eq!(decoded.protected.unwrap(), header);
     assert_eq!(decoded.claims, tv.claims);
@@ -230,7 +233,7 @@ fn test_rfc8037_x25519() {
 
     assert_eq!(
       tv.public_key,
-      &Secret::Jwk(&public).to_x25519_public().unwrap().as_bytes()[..]
+      &Secret::Jwk(&public).to_x25519_public().unwrap().to_bytes()[..]
     );
 
     let eph_public: Jwk = serde_json::from_str(tv.eph_public_jwk).unwrap();
@@ -242,7 +245,7 @@ fn test_rfc8037_x25519() {
 
     assert_eq!(
       tv.eph_public_key,
-      &Secret::Jwk(&eph_public).to_x25519_public().unwrap().as_bytes()[..]
+      &Secret::Jwk(&eph_public).to_x25519_public().unwrap().to_bytes()[..]
     );
 
     let eph_secret: Jwk = Jwk::from_params(JwkParamsOkp {
@@ -279,7 +282,7 @@ fn test_rfc8037_x448() {
 
     assert_eq!(
       tv.public_key,
-      &Secret::Jwk(&public).to_x448_public().unwrap().as_bytes()[..]
+      &Secret::Jwk(&public).to_x448_public().unwrap().to_bytes()[..]
     );
 
     let eph_public: Jwk = serde_json::from_str(tv.eph_public_jwk).unwrap();
@@ -291,7 +294,7 @@ fn test_rfc8037_x448() {
 
     assert_eq!(
       tv.eph_public_key,
-      &Secret::Jwk(&eph_public).to_x448_public().unwrap().as_bytes()[..]
+      &Secret::Jwk(&eph_public).to_x448_public().unwrap().to_bytes()[..]
     );
 
     let eph_secret: Jwk = Jwk::from_params(JwkParamsOkp {

@@ -1,12 +1,13 @@
 use core::convert::TryFrom;
-use crypto::ciphers::aes::AES_128_CBC_HMAC_SHA_256 as A128CBC_HS256;
-use crypto::ciphers::aes::AES_128_GCM as A128GCM;
-use crypto::ciphers::aes::AES_192_CBC_HMAC_SHA_384 as A192CBC_HS384;
-use crypto::ciphers::aes::AES_192_GCM as A192GCM;
-use crypto::ciphers::aes::AES_256_CBC_HMAC_SHA_512 as A256CBC_HS512;
-use crypto::ciphers::aes::AES_256_GCM as A256GCM;
-use crypto::ciphers::chacha::CHACHA20_POLY1305 as C20P;
-use crypto::ciphers::chacha::XCHACHA20_POLY1305 as XC20P;
+use crypto::ciphers::aes::Aes128Gcm;
+use crypto::ciphers::aes::Aes192Gcm;
+use crypto::ciphers::aes::Aes256Gcm;
+use crypto::ciphers::aes_cbc::Aes128CbcHmac256;
+use crypto::ciphers::aes_cbc::Aes192CbcHmac384;
+use crypto::ciphers::aes_cbc::Aes256CbcHmac512;
+use crypto::ciphers::chacha::ChaCha20Poly1305;
+use crypto::ciphers::chacha::XChaCha20Poly1305;
+use crypto::ciphers::traits::Cipher;
 use serde_json::from_slice;
 
 use crate::error::Error;
@@ -251,7 +252,8 @@ impl<'a> Decoder<'a> {
       ($padding:ident, $recipient:expr, $secret:expr) => {{
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
         let key: _ = $secret.to_rsa_secret()?;
-        let ptx: _ = key.decrypt($crate::rsa_padding!(@$padding), &ctx)?;
+        let pad: _ = $crate::rsa_padding!(@$padding);
+        let ptx: Vec<u8> = key.decrypt(pad, &ctx)?;
 
         Ok(Cow::Owned(ptx))
       }};
@@ -263,26 +265,36 @@ impl<'a> Decoder<'a> {
         let key: Cow<[u8]> = $secret.to_oct_key($impl::KEY_LENGTH)?;
         let iv: Vec<u8> = $header.try_iv().and_then(decode_b64)?;
         let tag: Vec<u8> = $header.try_tag().and_then(decode_b64)?;
-        let ptx: Vec<u8> = $impl::decrypt_vec(&key, &iv, &[], &tag, &ctx)?;
+        let mut ptx: Vec<u8> = vec![0; ctx.len()];
+
+        $impl::try_decrypt(&key, &iv, &[], &tag, &ctx, &mut ptx)?;
 
         Ok(Cow::Owned(ptx))
       }};
     }
 
     macro_rules! pbes2 {
-      (($impl:ident, $size:ident), $wrap:ident, $header:expr, $recipient:expr, $secret:expr) => {{
-        let name: &str = $header.try_alg()?.name();
+      (($impl:ident, $digest_len:ident), $wrap:ident, $header:expr, $recipient:expr, $secret:expr) => {{
+        use ::crypto::aes_kw::$wrap;
+        use ::crypto::hashes::sha::$digest_len;
+        use ::crypto::kdfs::pbkdf::$impl;
+
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
         let key: Cow<[u8]> = $secret.to_oct_key(0)?;
         let p2s: Vec<u8> = $header.try_p2s().and_then(decode_b64)?;
         let p2c: usize = usize::try_from($header.try_p2c()?).map_err(|_| Error::InvalidClaim("p2c"))?;
-        let salt: Vec<u8> = create_pbes2_salt(name, &p2s);
+        let salt: Vec<u8> = create_pbes2_salt($header.try_alg()?.name(), &p2s);
+        let mut derived: [u8; $digest_len / 2] = [0; $digest_len / 2];
 
-        let mut derived: [u8; ::crypto::hashes::sha::$size / 2] = [0; ::crypto::hashes::sha::$size / 2];
+        $impl(&key, &salt, p2c, &mut derived)?;
 
-        ::crypto::kdfs::pbkdf::$impl(&key, &salt, p2c, &mut derived)?;
+        let mut ptx: Vec<u8> = ctx
+          .len()
+          .checked_sub($wrap::BLOCK)
+          .ok_or(Error::InvalidContent("CEK (length)"))
+          .map(|length| vec![0; length])?;
 
-        let ptx: Vec<u8> = ::crypto::aes_kw::$wrap::new(&derived).unwrap_key_vec(&ctx)?;
+        $wrap::new(&derived).unwrap_key(&ctx, &mut ptx)?;
 
         Ok(Cow::Owned(ptx))
       }};
@@ -290,9 +302,18 @@ impl<'a> Decoder<'a> {
 
     macro_rules! aes_kw {
       ($impl:ident, $recipient:expr, $secret:expr) => {{
+        use ::crypto::aes_kw::$impl;
+
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
-        let key: Cow<[u8]> = $secret.to_oct_key(::crypto::aes_kw::$impl::key_length())?;
-        let ptx: Vec<u8> = ::crypto::aes_kw::$impl::new(&key).unwrap_key_vec(&ctx)?;
+        let key: Cow<[u8]> = $secret.to_oct_key($impl::KEY_LENGTH)?;
+
+        let mut ptx: Vec<u8> = ctx
+          .len()
+          .checked_sub($impl::BLOCK)
+          .ok_or(Error::InvalidContent("CEK (length)"))
+          .map(|length| vec![0; length])?;
+
+        $impl::new(&key).unwrap_key(&ctx, &mut ptx)?;
 
         Ok(Cow::Owned(ptx))
       }};
@@ -306,11 +327,21 @@ impl<'a> Decoder<'a> {
         ecdh_kw!(derive_ecdh_1pu, $wrap, $header, $recipient, $this)
       };
       ($derive:ident, $wrap:ident, $header:expr, $recipient:expr, $this:expr) => {{
-        let name: &str = $header.try_alg()?.name();
-        let size: usize = $header.try_alg()?.try_key_len()?;
-        let shared: Vec<u8> = EcdhDeriver::new($this).$derive(&$header, name, size)?;
+        use ::crypto::aes_kw::$wrap;
+
+        let algorithm: &str = $header.try_alg()?.name();
+        let key_len: usize = $header.try_alg()?.try_key_len()?;
+        let deriver: EcdhDeriver = EcdhDeriver::new($this);
+        let derived: Vec<u8> = deriver.$derive(&$header, algorithm, key_len)?;
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
-        let ptx: Vec<u8> = ::crypto::aes_kw::$wrap::new(&shared).unwrap_key_vec(&ctx)?;
+
+        let mut ptx: Vec<u8> = ctx
+          .len()
+          .checked_sub($wrap::BLOCK)
+          .ok_or(Error::InvalidContent("CEK (length)"))
+          .map(|length| vec![0; length])?;
+
+        $wrap::new(&derived).unwrap_key(&ctx, &mut ptx)?;
 
         Ok(Cow::Owned(ptx))
       }};
@@ -324,13 +355,17 @@ impl<'a> Decoder<'a> {
         ecdh_chacha!(derive_ecdh_1pu, $wrap, $header, $recipient, $this)
       };
       ($derive:ident, $wrap:ident, $header:expr, $recipient:expr, $this:expr) => {{
-        let name: &str = $header.try_alg()?.name();
-        let size: usize = $header.try_alg()?.try_key_len()?;
-        let shared: Vec<u8> = EcdhDeriver::new($this).$derive(&header, name, size)?;
+        let algorithm: &str = $header.try_alg()?.name();
+        let key_len: usize = $header.try_alg()?.try_key_len()?;
+        let deriver: EcdhDeriver = EcdhDeriver::new($this);
+        let derived: Vec<u8> = deriver.$derive(&header, algorithm, key_len)?;
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
         let iv: Vec<u8> = $header.try_iv().and_then(decode_b64)?;
         let tag: Vec<u8> = $header.try_tag().and_then(decode_b64)?;
-        let ptx: Vec<u8> = $wrap::decrypt_vec(&shared, &iv, &[], &tag, &ctx)?;
+
+        let mut ptx: Vec<u8> = vec![0; ctx.len()];
+
+        $wrap::try_decrypt(&derived, &iv, &[], &tag, &ctx, &mut ptx)?;
 
         Ok(Cow::Owned(ptx))
       }};
@@ -356,11 +391,17 @@ impl<'a> Decoder<'a> {
       JweAlgorithm::ECDH_ES_A128KW => ecdh_kw!(@es, Aes128Kw, header, recipient, self),
       JweAlgorithm::ECDH_ES_A192KW => ecdh_kw!(@es, Aes192Kw, header, recipient, self),
       JweAlgorithm::ECDH_ES_A256KW => ecdh_kw!(@es, Aes256Kw, header, recipient, self),
-      JweAlgorithm::ECDH_ES_C20PKW => ecdh_chacha!(@es, C20P, header, recipient, self),
-      JweAlgorithm::ECDH_ES_XC20PKW => ecdh_chacha!(@es, XC20P, header, recipient, self),
-      JweAlgorithm::A128GCMKW => aead!(A128GCM, header, recipient, self.secret),
-      JweAlgorithm::A192GCMKW => aead!(A192GCM, header, recipient, self.secret),
-      JweAlgorithm::A256GCMKW => aead!(A256GCM, header, recipient, self.secret),
+      JweAlgorithm::ECDH_ES_C20PKW => ecdh_chacha!(@es, ChaCha20Poly1305, header, recipient, self),
+      JweAlgorithm::ECDH_ES_XC20PKW => ecdh_chacha!(@es, XChaCha20Poly1305, header, recipient, self),
+      JweAlgorithm::A128GCMKW => {
+        aead!(Aes128Gcm, header, recipient, self.secret)
+      }
+      JweAlgorithm::A192GCMKW => {
+        aead!(Aes192Gcm, header, recipient, self.secret)
+      }
+      JweAlgorithm::A256GCMKW => {
+        aead!(Aes256Gcm, header, recipient, self.secret)
+      }
       JweAlgorithm::PBES2_HS256_A128KW => {
         pbes2!(
           (PBKDF2_HMAC_SHA256, SHA256_LEN),
@@ -394,8 +435,12 @@ impl<'a> Decoder<'a> {
       JweAlgorithm::ECDH_1PU_A128KW => ecdh_kw!(@1pu, Aes128Kw, header, recipient, self),
       JweAlgorithm::ECDH_1PU_A192KW => ecdh_kw!(@1pu, Aes192Kw, header, recipient, self),
       JweAlgorithm::ECDH_1PU_A256KW => ecdh_kw!(@1pu, Aes256Kw, header, recipient, self),
-      JweAlgorithm::C20PKW => aead!(C20P, header, recipient, self.secret),
-      JweAlgorithm::XC20PKW => aead!(XC20P, header, recipient, self.secret),
+      JweAlgorithm::C20PKW => {
+        aead!(ChaCha20Poly1305, header, recipient, self.secret)
+      }
+      JweAlgorithm::XC20PKW => {
+        aead!(XChaCha20Poly1305, header, recipient, self.secret)
+      }
     }
   }
 
@@ -489,16 +534,22 @@ fn decrypt_content(
   tag: &[u8],
   ciphertext: &[u8],
 ) -> Result<Vec<u8>> {
-  match encryption {
-    JweEncryption::A128CBC_HS256 => A128CBC_HS256::decrypt_vec(key, iv, aad, tag, ciphertext).map_err(Into::into),
-    JweEncryption::A192CBC_HS384 => A192CBC_HS384::decrypt_vec(key, iv, aad, tag, ciphertext).map_err(Into::into),
-    JweEncryption::A256CBC_HS512 => A256CBC_HS512::decrypt_vec(key, iv, aad, tag, ciphertext).map_err(Into::into),
-    JweEncryption::A128GCM => A128GCM::decrypt_vec(key, iv, aad, tag, ciphertext).map_err(Into::into),
-    JweEncryption::A192GCM => A192GCM::decrypt_vec(key, iv, aad, tag, ciphertext).map_err(Into::into),
-    JweEncryption::A256GCM => A256GCM::decrypt_vec(key, iv, aad, tag, ciphertext).map_err(Into::into),
-    JweEncryption::C20P => C20P::decrypt_vec(key, iv, aad, tag, ciphertext).map_err(Into::into),
-    JweEncryption::XC20P => XC20P::decrypt_vec(key, iv, aad, tag, ciphertext).map_err(Into::into),
-  }
+  let mut plaintext: Vec<u8> = vec![0; ciphertext.len()];
+
+  let length: usize = match encryption {
+    JweEncryption::A128CBC_HS256 => Aes128CbcHmac256::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
+    JweEncryption::A192CBC_HS384 => Aes192CbcHmac384::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
+    JweEncryption::A256CBC_HS512 => Aes256CbcHmac512::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
+    JweEncryption::A128GCM => Aes128Gcm::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
+    JweEncryption::A192GCM => Aes192Gcm::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
+    JweEncryption::A256GCM => Aes256Gcm::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
+    JweEncryption::C20P => ChaCha20Poly1305::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
+    JweEncryption::XC20P => XChaCha20Poly1305::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
+  };
+
+  plaintext.truncate(length);
+
+  Ok(plaintext)
 }
 
 struct EcdhDeriver<'a: 'b, 'b>(&'b Decoder<'a>);

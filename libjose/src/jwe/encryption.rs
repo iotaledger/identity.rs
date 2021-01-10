@@ -1,14 +1,15 @@
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
-use crypto::ciphers::aes::AES_128_CBC_HMAC_SHA_256;
-use crypto::ciphers::aes::AES_128_GCM;
-use crypto::ciphers::aes::AES_192_CBC_HMAC_SHA_384;
-use crypto::ciphers::aes::AES_192_GCM;
-use crypto::ciphers::aes::AES_256_CBC_HMAC_SHA_512;
-use crypto::ciphers::aes::AES_256_GCM;
-use crypto::ciphers::chacha::CHACHA20_POLY1305;
-use crypto::ciphers::chacha::XCHACHA20_POLY1305;
+use crypto::ciphers::aes::Aes128Gcm;
+use crypto::ciphers::aes::Aes192Gcm;
+use crypto::ciphers::aes::Aes256Gcm;
+use crypto::ciphers::aes_cbc::Aes128CbcHmac256;
+use crypto::ciphers::aes_cbc::Aes192CbcHmac384;
+use crypto::ciphers::aes_cbc::Aes256CbcHmac512;
+use crypto::ciphers::chacha::ChaCha20Poly1305;
+use crypto::ciphers::chacha::XChaCha20Poly1305;
+use crypto::ciphers::traits::Cipher;
 
 /// Supported algorithms for the JSON Web Encryption `enc` claim.
 ///
@@ -67,27 +68,40 @@ impl JweEncryption {
 
   pub const fn key_len(self) -> usize {
     match self {
-      Self::A128CBC_HS256 => AES_128_CBC_HMAC_SHA_256::KEY_LENGTH,
-      Self::A192CBC_HS384 => AES_192_CBC_HMAC_SHA_384::KEY_LENGTH,
-      Self::A256CBC_HS512 => AES_256_CBC_HMAC_SHA_512::KEY_LENGTH,
-      Self::A128GCM => AES_128_GCM::KEY_LENGTH,
-      Self::A192GCM => AES_192_GCM::KEY_LENGTH,
-      Self::A256GCM => AES_256_GCM::KEY_LENGTH,
-      Self::C20P => CHACHA20_POLY1305::KEY_LENGTH,
-      Self::XC20P => XCHACHA20_POLY1305::KEY_LENGTH,
+      Self::A128CBC_HS256 => Aes128CbcHmac256::KEY_LENGTH,
+      Self::A192CBC_HS384 => Aes192CbcHmac384::KEY_LENGTH,
+      Self::A256CBC_HS512 => Aes256CbcHmac512::KEY_LENGTH,
+      Self::A128GCM => Aes128Gcm::KEY_LENGTH,
+      Self::A192GCM => Aes192Gcm::KEY_LENGTH,
+      Self::A256GCM => Aes256Gcm::KEY_LENGTH,
+      Self::C20P => ChaCha20Poly1305::KEY_LENGTH,
+      Self::XC20P => XChaCha20Poly1305::KEY_LENGTH,
     }
   }
 
   pub const fn iv_len(self) -> usize {
     match self {
-      Self::A128CBC_HS256 => AES_128_CBC_HMAC_SHA_256::IV_LENGTH,
-      Self::A192CBC_HS384 => AES_192_CBC_HMAC_SHA_384::IV_LENGTH,
-      Self::A256CBC_HS512 => AES_256_CBC_HMAC_SHA_512::IV_LENGTH,
-      Self::A128GCM => AES_128_GCM::IV_LENGTH,
-      Self::A192GCM => AES_192_GCM::IV_LENGTH,
-      Self::A256GCM => AES_256_GCM::IV_LENGTH,
-      Self::C20P => CHACHA20_POLY1305::IV_LENGTH,
-      Self::XC20P => XCHACHA20_POLY1305::IV_LENGTH,
+      Self::A128CBC_HS256 => Aes128CbcHmac256::NONCE_LENGTH,
+      Self::A192CBC_HS384 => Aes192CbcHmac384::NONCE_LENGTH,
+      Self::A256CBC_HS512 => Aes256CbcHmac512::NONCE_LENGTH,
+      Self::A128GCM => Aes128Gcm::NONCE_LENGTH,
+      Self::A192GCM => Aes192Gcm::NONCE_LENGTH,
+      Self::A256GCM => Aes256Gcm::NONCE_LENGTH,
+      Self::C20P => ChaCha20Poly1305::NONCE_LENGTH,
+      Self::XC20P => XChaCha20Poly1305::NONCE_LENGTH,
+    }
+  }
+
+  pub const fn tag_len(self) -> usize {
+    match self {
+      Self::A128CBC_HS256 => Aes128CbcHmac256::TAG_LENGTH,
+      Self::A192CBC_HS384 => Aes192CbcHmac384::TAG_LENGTH,
+      Self::A256CBC_HS512 => Aes256CbcHmac512::TAG_LENGTH,
+      Self::A128GCM => Aes128Gcm::TAG_LENGTH,
+      Self::A192GCM => Aes192Gcm::TAG_LENGTH,
+      Self::A256GCM => Aes256Gcm::TAG_LENGTH,
+      Self::C20P => ChaCha20Poly1305::TAG_LENGTH,
+      Self::XC20P => XChaCha20Poly1305::TAG_LENGTH,
     }
   }
 }

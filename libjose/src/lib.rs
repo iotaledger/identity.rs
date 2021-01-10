@@ -47,8 +47,6 @@ pub mod jwt;
 pub mod utils;
 
 mod lib {
-  pub use core::iter::FromIterator;
-
   #[cfg(all(feature = "alloc", not(feature = "std")))]
   pub use alloc::vec;
   #[cfg(feature = "std")]
@@ -68,62 +66,4 @@ mod lib {
   pub use alloc::vec::Vec;
   #[cfg(feature = "std")]
   pub use std::vec::Vec;
-
-  #[cfg(all(feature = "alloc", not(feature = "std")))]
-  pub use alloc::boxed::Box;
-  #[cfg(feature = "std")]
-  pub use std::boxed::Box;
-
-  #[cfg(all(feature = "alloc", not(feature = "std")))]
-  pub use alloc::collections::{BTreeMap, BTreeSet};
-  #[cfg(feature = "std")]
-  pub use std::collections::{BTreeMap, BTreeSet};
-}
-
-pub mod crypto {
-  pub use crypto::hashes::sha::SHA256;
-  pub use crypto::hashes::sha::SHA256_LEN;
-  pub use crypto::hashes::sha::SHA384;
-  pub use crypto::hashes::sha::SHA384_LEN;
-  pub use crypto::hashes::sha::SHA512;
-  pub use crypto::hashes::sha::SHA512_LEN;
-  pub use crypto::macs::hmac::HMAC_SHA256;
-  pub use crypto::macs::hmac::HMAC_SHA384;
-  pub use crypto::macs::hmac::HMAC_SHA512;
-
-  pub fn hmac_sha256(key: &[u8], message: &[u8]) -> [u8; SHA256_LEN] {
-    let mut out: [u8; SHA256_LEN] = [0; SHA256_LEN];
-    HMAC_SHA256(message, key, &mut out);
-    out
-  }
-
-  pub fn hmac_sha384(key: &[u8], message: &[u8]) -> [u8; SHA384_LEN] {
-    let mut out: [u8; SHA384_LEN] = [0; SHA384_LEN];
-    HMAC_SHA384(message, key, &mut out);
-    out
-  }
-
-  pub fn hmac_sha512(key: &[u8], message: &[u8]) -> [u8; SHA512_LEN] {
-    let mut out: [u8; SHA512_LEN] = [0; SHA512_LEN];
-    HMAC_SHA512(message, key, &mut out);
-    out
-  }
-
-  pub fn sha256(message: &[u8]) -> [u8; SHA256_LEN] {
-    let mut out: [u8; SHA256_LEN] = [0; SHA256_LEN];
-    SHA256(message, &mut out);
-    out
-  }
-
-  pub fn sha384(message: &[u8]) -> [u8; SHA384_LEN] {
-    let mut out: [u8; SHA384_LEN] = [0; SHA384_LEN];
-    SHA384(message, &mut out);
-    out
-  }
-
-  pub fn sha512(message: &[u8]) -> [u8; SHA512_LEN] {
-    let mut out: [u8; SHA512_LEN] = [0; SHA512_LEN];
-    SHA512(message, &mut out);
-    out
-  }
 }
