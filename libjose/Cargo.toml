@@ -24,7 +24,9 @@ sha2 = { version = "0.9", default-features = false }
 subtle = { version = "2.4", default-features = false }
 
 [dependencies.crypto]
-path = "../../crypto.rs"
+git = "https://github.com/iotaledger/crypto.rs"
+branch = "libjose"
+# path = "../../crypto.rs"
 package = "iota-crypto"
 default-features = false
 features = [
