@@ -152,10 +152,7 @@ fn test_tuple_enum() {
     let diff = t2.into_diff().unwrap();
 
     assert_eq!(
-        DiffTupleEnum::C(
-            Some(20_usize.into_diff().unwrap()),
-            Some(30_usize.into_diff().unwrap())
-        ),
+        DiffTupleEnum::C(Some(20_usize.into_diff().unwrap()), Some(30_usize.into_diff().unwrap())),
         diff
     );
 
