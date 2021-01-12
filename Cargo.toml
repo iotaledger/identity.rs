@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "identity_comm",
     "identity_core",
     "identity_derive",
     "identity_diff",

@@ -1,0 +1,21 @@
+[package]
+name = "identity_comm"
+version = "0.1.0"
+authors = ["IOTA Identity"]
+edition = "2018"
+description = "A DID communication library"
+readme = "../README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "identity"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "d6944acd930447c5d6d2d762fe6245a35cc7e39c", default-features = false, features = ["std"] }
+did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
+identity_core = { path = "../identity_core" }
+identity_iota = { path = "../identity_iota" }
+libjose = { git = "https://github.com/iotaledger/identity.rs", branch = "feat/libjose" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
+thiserror = { version = "1.0" }
