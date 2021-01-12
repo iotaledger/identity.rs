@@ -1,9 +1,18 @@
 use did_url::DID;
-use identity_core::{common::Object, convert::SerdeInto};
+use identity_core::{
+    common::Object,
+    convert::SerdeInto,
+    crypto::{KeyPair, PublicKey},
+};
 use libjose::jwm::JwmAttributes;
 use serde::Serialize;
 
-use crate::{error::Result, message::MessageBuilder, utils::Timestamp};
+use crate::{
+    envelope::{Encrypted, EncryptionAlgorithm, Plaintext, SignatureAlgorithm, Signed},
+    error::Result,
+    message::MessageBuilder,
+    utils::Timestamp,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Message<T = ()> {
@@ -47,11 +56,13 @@ impl<T> Message<T> {
             body: builder.body,
         })
     }
+}
 
-    pub fn into_attributes(self) -> Result<JwmAttributes>
-    where
-        T: Serialize,
-    {
+impl<T> Message<T>
+where
+    T: Serialize,
+{
+    pub fn into_attributes(self) -> Result<JwmAttributes> {
         let mut attributes: JwmAttributes = JwmAttributes::new();
 
         attributes.set_id(self.id);
@@ -75,5 +86,37 @@ impl<T> Message<T> {
         }
 
         Ok(attributes)
+    }
+
+    pub fn pack_plain(&self) -> Result<Plaintext> {
+        Plaintext::from_message(self)
+    }
+
+    pub fn pack_auth(
+        &self,
+        algorithm: EncryptionAlgorithm,
+        recipients: &[PublicKey],
+        sender: &KeyPair,
+    ) -> Result<Encrypted> {
+        Encrypted::from_message(self, algorithm, recipients, sender)
+    }
+
+    pub fn pack_auth_non_repudiable(
+        &self,
+        signature: SignatureAlgorithm,
+        encryption: EncryptionAlgorithm,
+        recipients: &[PublicKey],
+        sender: &KeyPair,
+    ) -> Result<Encrypted> {
+        Self::pack_non_repudiable(self, signature, sender)
+            .and_then(|signed| Encrypted::from_signed(&signed, encryption, recipients, sender))
+    }
+
+    pub fn pack_anon(&self, algorithm: EncryptionAlgorithm, recipients: &[PublicKey]) -> Result<Encrypted> {
+        Encrypted::anon_from_message(self, algorithm, recipients)
+    }
+
+    pub fn pack_non_repudiable(&self, algorithm: SignatureAlgorithm, sender: &KeyPair) -> Result<Signed> {
+        Signed::from_message(self, algorithm, sender)
     }
 }

@@ -41,21 +41,21 @@ impl Envelope {
     pub fn from_message<T>(
         message: &Message<T>,
         algorithm: Algorithm,
-        sender: &KeyPair,
         recipients: &[PublicKey],
+        sender: &KeyPair,
     ) -> Result<Self>
     where
         T: Serialize,
     {
         Plaintext::from_message(message)
-            .and_then(|plaintext| Self::from_plaintext(&plaintext, algorithm, sender, recipients))
+            .and_then(|plaintext| Self::from_plaintext(&plaintext, algorithm, recipients, sender))
     }
 
     pub fn from_plaintext(
         envelope: &Plaintext,
         algorithm: Algorithm,
-        sender: &KeyPair,
         recipients: &[PublicKey],
+        sender: &KeyPair,
     ) -> Result<Self> {
         Self::from_envelope(envelope, algorithm, recipients, Some(sender))
     }
@@ -63,8 +63,8 @@ impl Envelope {
     pub fn from_signed(
         envelope: &Signed,
         algorithm: Algorithm,
-        sender: &KeyPair,
         recipients: &[PublicKey],
+        sender: &KeyPair,
     ) -> Result<Self> {
         Self::from_envelope(envelope, algorithm, recipients, Some(sender))
     }
