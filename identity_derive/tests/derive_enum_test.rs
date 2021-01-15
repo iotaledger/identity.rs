@@ -108,7 +108,7 @@ fn test_struct_enum() {
 
     assert_eq!(
         DiffStructEnum::B {
-            y: Some((200 as usize).into_diff().unwrap())
+            y: Some(200_usize.into_diff().unwrap())
         },
         diff
     );
@@ -152,10 +152,7 @@ fn test_tuple_enum() {
     let diff = t2.into_diff().unwrap();
 
     assert_eq!(
-        DiffTupleEnum::C(
-            Some((20 as usize).into_diff().unwrap()),
-            Some((30 as usize).into_diff().unwrap())
-        ),
+        DiffTupleEnum::C(Some(20_usize.into_diff().unwrap()), Some(30_usize.into_diff().unwrap())),
         diff
     );
 
@@ -214,7 +211,7 @@ fn test_nested_enum() {
     assert_eq!(
         DiffNestedEnum::Nest(Some(DiffInnerEnum::Inner {
             y: Some(DiffInnerStruct {
-                y: Some((10 as usize).into_diff().unwrap())
+                y: Some(10_usize.into_diff().unwrap())
             })
         })),
         diff
@@ -243,7 +240,7 @@ fn test_enum_with_generics() {
 
     let diff = t2.into_diff().unwrap();
 
-    assert_eq!(DiffEnumWithGeneric::B(Some((10 as usize).into_diff().unwrap())), diff);
+    assert_eq!(DiffEnumWithGeneric::B(Some(10_usize.into_diff().unwrap())), diff);
 
     let res = EnumWithGeneric::from_diff(diff).unwrap();
 
