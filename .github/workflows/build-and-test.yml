@@ -105,23 +105,23 @@ jobs:
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
           node-version: 12.x
-      
+
       - name: Install wasm-pack
         run: yarn global add wasm-pack
 
       - name: Install JS dependencies
         run: yarn
-        working-directory: libraries/wasm
+        working-directory: bindings/wasm
 
       - name: Build WASM bindings
         run: yarn build
-        working-directory: libraries/wasm
-      
+        working-directory: bindings/wasm
+
       # - name: Run tests
       #   run: yarn test
-      #   working-directory: libraries/wasm
+      #   working-directory: bindings/wasm

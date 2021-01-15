@@ -5,6 +5,3 @@ members = [
     "identity_diff",
     "identity_iota",
 ]
-exclude = [
-    "libraries/wasm"
-]
