@@ -5,3 +5,6 @@ members = [
     "identity_diff",
     "identity_iota",
 ]
+exclude = [
+    "bindings/wasm",
+]
