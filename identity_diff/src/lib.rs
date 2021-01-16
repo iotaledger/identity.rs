@@ -12,19 +12,11 @@ mod macros;
 pub mod option;
 pub mod string;
 mod traits;
-#[cfg(feature = "serde_value")]
 mod value;
 pub mod vec;
 
 pub use error::{Error, Result};
 pub use traits::Diff;
 
-/// feature `diff_derive` imports `identity_derive` with this crate.
-#[cfg(feature = "diff_derive")]
-#[allow(unused_imports)]
-#[macro_use]
-extern crate identity_derive;
-
-#[cfg(feature = "diff_derive")]
 #[doc(hidden)]
 pub use identity_derive::*;

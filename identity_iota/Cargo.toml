@@ -3,7 +3,7 @@ name = "identity_iota"
 version = "0.1.0"
 authors = ["IOTA Identity"]
 edition = "2018"
-description = "A DID to ledger intergration library for IOTA"
+description = "An IOTA Tangle intergration for the identity-rs library."
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
 license = "Apache-2.0"
@@ -13,20 +13,16 @@ homepage = "https://www.iota.org"
 [dependencies]
 anyhow = { version = "1.0", default-features = false, features = ["std"] }
 async-trait = { version = "0.1", default-features = false }
+identity_core = { version = "=0.1.0", path = "../identity_core" }
 iota-constants = { version = "0.2", default-features = false }
 iota-conversion = { version = "0.5", default-features = false }
-# iota-core = { git = "https://github.com/iotaledger/iota.rs", branch = "dev" }
-iota-core = { git = "https://github.com/Thoralf-M/iota.rs", branch = "works" }
+iota-core = { git = "https://github.com/Thoralf-M/iota.rs", rev = "d7c8c64fc3ac2340f0148708a916c245f42fd454" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
 multihash = { version = "0.11", default-features = false }
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
 
-identity_core = { path = "../identity_core" }
-
 [dev-dependencies]
-smol-potat = { version = "0.3.3" }
 smol = { version = "0.1.18", features = ["tokio02"] }
-hex = "0.4.2"
-identity_diff = { path = "../identity_diff" }
+smol-potat = { version = "0.3" }
