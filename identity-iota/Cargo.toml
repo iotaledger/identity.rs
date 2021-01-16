@@ -1,5 +1,5 @@
 [package]
-name = "identity_iota"
+name = "identity-iota"
 version = "0.1.0"
 authors = ["IOTA Identity"]
 edition = "2018"
@@ -13,7 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 anyhow = { version = "1.0", default-features = false, features = ["std"] }
 async-trait = { version = "0.1", default-features = false }
-identity_core = { version = "=0.1.0", path = "../identity_core" }
+identity-core = { version = "=0.1.0", path = "../identity-core" }
 iota-constants = { version = "0.2", default-features = false }
 iota-conversion = { version = "0.5", default-features = false }
 iota-core = { git = "https://github.com/Thoralf-M/iota.rs", rev = "d7c8c64fc3ac2340f0148708a916c245f42fd454" }

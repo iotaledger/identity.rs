@@ -1,5 +1,5 @@
 [package]
-name = "identity_derive"
+name = "identity-derive"
 version = "0.1.0"
 authors = ["IOTA Identity"]
 edition = "2018"

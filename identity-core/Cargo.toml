@@ -1,5 +1,5 @@
 [package]
-name = "identity_core"
+name = "identity-core"
 version = "0.1.0"
 authors = ["IOTA Identity"]
 edition = "2018"
@@ -20,7 +20,7 @@ did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "c61c0457eea7a453949
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
 ed25519-zebra = { version = "2.2", default-features = false }
 hex = { version = "0.4", default-features = false , features = ["std"] }
-identity_diff = { version = "=0.1.0", path = "../identity_diff", default-features = false }
+identity-diff = { version = "=0.1.0", path = "../identity-diff", default-features = false }
 lazy_static = { version = "1.4", default-features = false }
 rand = { version = "0.7", default-features = false, features = ["getrandom"] }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }

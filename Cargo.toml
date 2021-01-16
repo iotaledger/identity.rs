@@ -1,8 +1,8 @@
 [workspace]
 members = [
-  "identity_core",
-  "identity_diff",
-  "identity_iota",
+  "identity-core",
+  "identity-diff",
+  "identity-iota",
 ]
 exclude = [
   "bindings/wasm",
