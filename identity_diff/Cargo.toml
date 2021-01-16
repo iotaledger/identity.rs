@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 anyhow = { version = "1.0" }
 did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "c61c0457eea7a453949a877f1dde92878a23dd24", default-features = false, features = ["std"] }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
-identity_derive = { version = "0.1.0", path = "../identity_derive" }
+identity_derive = { version = "=0.1.0", path = "derive" }
 serde = { version = "1.0", features = [ "derive" ] }
 serde_json = { version = "1.0" }
 thiserror = { version = "1.0" }

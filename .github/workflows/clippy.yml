@@ -21,7 +21,6 @@ jobs:
         project:
           [
             identity_core,
-            identity_derive,
             identity_diff,
             identity_iota,
             bindings/wasm,

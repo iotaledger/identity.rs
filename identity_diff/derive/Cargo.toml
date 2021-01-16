@@ -19,7 +19,3 @@ proc-macro2 = { version = "1.0" }
 quote = { version = "1.0" }
 serde = { version = "1.0" }
 syn = { version = "1.0", features = ["extra-traits", "parsing", "derive"] }
-
-[dev-dependencies]
-identity_diff = { version = "0.1.0", path = "../identity_diff" }
-serde_json = "1.0"
