@@ -1,0 +1,3 @@
+# https://github.com/eqrion/cbindgen/blob/master/template.toml
+
+language = "C"
