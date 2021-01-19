@@ -198,9 +198,9 @@ mod tests {
         assert_eq!(tree.data(), &hashes[..]);
         assert_eq!(tree.leaves(), hashes.len());
 
-        for index in 0..hashes.len() {
+        for (index, hash) in hashes.iter().enumerate() {
             let proof: Sha256Proof = tree.proof(index).unwrap();
-            let root: Sha256Hash = proof.root(hashes[index]);
+            let root: Sha256Hash = proof.root(*hash);
 
             assert_eq!(tree.root(), &root);
         }
