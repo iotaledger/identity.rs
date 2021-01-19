@@ -7,11 +7,9 @@ mod node;
 mod proof;
 mod tree;
 
-pub use self::consts::*;
-pub use self::digest::*;
-pub use self::hash::*;
-pub use self::math::*;
-pub use self::merkle::*;
-pub use self::node::*;
-pub use self::proof::*;
-pub use self::tree::*;
+pub use self::digest::Digest;
+pub use self::digest::DigestExt;
+pub use self::hash::Hash;
+pub use self::merkle::MTree;
+pub use self::node::Node;
+pub use self::proof::Proof;

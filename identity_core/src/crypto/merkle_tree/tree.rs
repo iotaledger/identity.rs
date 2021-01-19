@@ -1,48 +1,48 @@
 use digest::Digest;
 use digest::Output;
 
-use crate::crypto::merkle_tree::log2c;
+use crate::crypto::merkle_tree::math;
 use crate::crypto::merkle_tree::DigestExt;
 use crate::crypto::merkle_tree::Hash;
 
 #[inline(always)]
-pub fn __height(leaves: usize) -> usize {
-    log2c(leaves)
+pub fn height(leaves: usize) -> usize {
+    math::log2c(leaves)
 }
 
 #[inline(always)]
-pub const fn __total(leaves: usize) -> usize {
+pub const fn total(leaves: usize) -> usize {
     // 2l - 1
     (leaves << 1) - 1
 }
 
 #[inline(always)]
-pub const fn __leaves(nodes: usize) -> usize {
+pub const fn leaves(nodes: usize) -> usize {
     // l = (n + 1) / 2
     (nodes + 1) >> 1
 }
 
 #[inline(always)]
-pub const fn __index_lhs(index: usize) -> usize {
+pub const fn index_lhs(index: usize) -> usize {
     // 2i + 1
     (index << 1) + 1
 }
 
 #[inline(always)]
-pub const fn __index_rhs(index: usize) -> usize {
+pub const fn index_rhs(index: usize) -> usize {
     // 2i + 2
     (index << 1) + 2
 }
 
-pub fn __compute_nodes<D>(digest: &mut D, leaves: &[Hash<D>]) -> Box<[Hash<D>]>
+pub fn compute_nodes<D>(digest: &mut D, leaves: &[Hash<D>]) -> Box<[Hash<D>]>
 where
     D: Digest,
     Output<D>: Copy,
 {
     let count: usize = leaves.len();
-    let total: usize = __total(count);
+    let total: usize = self::total(count);
     let offset: usize = total - count;
-    let height: usize = __height(count);
+    let height: usize = self::height(count);
 
     assert_eq!(count, 1 << height);
 
@@ -54,13 +54,13 @@ where
 
     // Compute parent hashes in bottom-up order
     for index in 0..height {
-        __compute(digest, &mut nodes, height - index);
+        compute(digest, &mut nodes, height - index);
     }
 
     nodes.into_boxed_slice()
 }
 
-pub fn __compute<D>(digest: &mut D, nodes: &mut Vec<Hash<D>>, index: usize)
+fn compute<D>(digest: &mut D, nodes: &mut Vec<Hash<D>>, index: usize)
 where
     D: Digest,
 {
@@ -72,8 +72,8 @@ where
 
         assert!(nodes.len() > local);
 
-        let lhs: &Hash<D> = &nodes[__index_lhs(local)];
-        let rhs: &Hash<D> = &nodes[__index_rhs(local)];
+        let lhs: &Hash<D> = &nodes[index_lhs(local)];
+        let rhs: &Hash<D> = &nodes[index_rhs(local)];
 
         nodes[local] = digest.hash_branch(lhs, rhs);
     }

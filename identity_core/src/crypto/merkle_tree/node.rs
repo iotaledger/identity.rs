@@ -6,12 +6,14 @@ use digest::Digest;
 use crate::crypto::merkle_tree::DigestExt;
 use crate::crypto::merkle_tree::Hash;
 
+/// A tagged [`struct@Hash`].
 pub enum Node<D: Digest> {
     L(Hash<D>),
     R(Hash<D>),
 }
 
 impl<D: Digest> Node<D> {
+    /// Returns the [`struct@Hash`] of the node.
     pub fn get(&self) -> &Hash<D> {
         match self {
             Self::L(hash) => hash,
@@ -19,10 +21,12 @@ impl<D: Digest> Node<D> {
         }
     }
 
+    /// Computes the parent hash of `self` and `other` using a default digest.
     pub fn hash(&self, other: &Hash<D>) -> Hash<D> {
         self.hash_with(&mut D::new(), other)
     }
 
+    /// Computes the parent hash of `self` and `other` using the given `digest`.
     pub fn hash_with(&self, digest: &mut D, other: &Hash<D>) -> Hash<D> {
         match self {
             Self::L(hash) => digest.hash_branch(hash, other),
@@ -42,9 +46,9 @@ impl<D: Digest> Debug for Node<D> {
 
 #[cfg(test)]
 mod tests {
+    use digest::Digest;
     use sha2::Sha256;
 
-    use crate::crypto::merkle_tree::Digest;
     use crate::crypto::merkle_tree::DigestExt;
     use crate::crypto::merkle_tree::Hash;
     use crate::crypto::merkle_tree::Node;

@@ -6,49 +6,46 @@ use sha2::digest::Output;
 use sha2::Digest;
 use sha2::Sha256;
 
-use crate::crypto::merkle_tree::is_pow2;
+use crate::crypto::merkle_tree::math;
+use crate::crypto::merkle_tree::tree;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Node;
 use crate::crypto::merkle_tree::Proof;
-use crate::crypto::merkle_tree::__compute_nodes;
-use crate::crypto::merkle_tree::__height;
-use crate::crypto::merkle_tree::__leaves;
-use crate::crypto::merkle_tree::__total;
 
-/// A Merkle Tree designed for static data.
-///
-/// # Overview
-///
-/// The Merkle Tree is implemented as a **perfect binary tree** where all
-/// interior nodes have two children and all leaves have the same depth.
-///
-/// # Layout
-///
-/// An example tree with 8 leaves [A..H]:
-///
-/// 0-|                 0
-///  -|                 |
-/// 1-|         1 ------------- 2
-///  -|         |               |
-/// 2-|     3 ----- 4      5 ------ 6
-///  -|     |       |      |        |
-/// 3-|   A - B   C - D   E - F   G - H
-///
-/// The tree will have the following layout:
-///
-///   [0, 1, 2, 3, 4, 5, 6, A, B, C, D, E, F, G, H]
-///
-/// Building the tree is straight-forward:
-///
-///   1. Allocate Vec:  [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _]
-///   2. Insert Hashes: [_, _, _, _, _, _, _, A, B, C, D, E, F, G, H]
-///   3. Update (H=2):  [_, _, _, 3, 4, 5, 6, A, B, C, D, E, F, G, H]
-///   4. Update (H=1):  [_, 1, 2, 3, 4, 5, 6, A, B, C, D, E, F, G, H]
-///   5. Update (H=0):  [0, 1, 2, 3, 4, 5, 6, A, B, C, D, E, F, G, H]
-///
-/// Computing the root hash:
-///
-///   H(H(H(A | B) | H(C | D)) | H(H(E | F) | H(G | H)))
+/// A [Merkle tree](https://en.wikipedia.org/wiki/Merkle_tree) designed for
+/// static data.
+// # Overview
+//
+// The Merkle tree is implemented as a **perfect binary tree** where all
+// interior nodes have two children and all leaves have the same depth.
+//
+// # Layout
+//
+// An example tree with 8 leaves [A..H]:
+//
+// 0-|                 0
+//  -|                 |
+// 1-|         1 ------------- 2
+//  -|         |               |
+// 2-|     3 ----- 4      5 ------ 6
+//  -|     |       |      |        |
+// 3-|   A - B   C - D   E - F   G - H
+//
+// The tree will have the following layout:
+//
+//   [0, 1, 2, 3, 4, 5, 6, A, B, C, D, E, F, G, H]
+//
+// Building the tree is straight-forward:
+//
+//   1. Allocate Vec:  [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _]
+//   2. Insert Hashes: [_, _, _, _, _, _, _, A, B, C, D, E, F, G, H]
+//   3. Update (H=2):  [_, _, _, 3, 4, 5, 6, A, B, C, D, E, F, G, H]
+//   4. Update (H=1):  [_, 1, 2, 3, 4, 5, 6, A, B, C, D, E, F, G, H]
+//   5. Update (H=0):  [0, 1, 2, 3, 4, 5, 6, A, B, C, D, E, F, G, H]
+//
+// Computing the root hash:
+//
+//   H(H(H(A | B) | H(C | D)) | H(H(E | F) | H(G | H)))
 pub struct MTree<D = Sha256>
 where
     D: Digest,
@@ -61,25 +58,30 @@ impl<D> MTree<D>
 where
     D: Digest,
 {
+    /// Returns the number of leaf nodes in the tree.
     pub fn leaves(&self) -> usize {
-        __leaves(self.nodes.len())
+        tree::leaves(self.nodes.len())
     }
 
+    /// Returns the height of the tree.
     pub fn height(&self) -> usize {
-        __height(__leaves(self.nodes.len()))
+        tree::height(tree::leaves(self.nodes.len()))
     }
 
+    /// Returns the root hash of the tree.
     pub fn root(&self) -> &Hash<D> {
         &self.nodes[0]
     }
 
+    /// Returns a slice of the leaf nodes in the tree.
     pub fn data(&self) -> &[Hash<D>] {
         &self.nodes[self.nodes.len() - self.leaves()..]
     }
 
-    pub fn layer(&self, index: usize) -> &[Hash<D>] {
-        let leaves: usize = 2_usize.pow(index as u32);
-        let total: usize = __total(leaves);
+    /// Returns a slice of nodes at the specified `height`.
+    pub fn layer(&self, height: usize) -> &[Hash<D>] {
+        let leaves: usize = 2_usize.pow(height as u32);
+        let total: usize = tree::total(leaves);
 
         if total <= self.nodes.len() {
             &self.nodes[total - leaves..total]
@@ -94,14 +96,15 @@ where
     D: Digest,
     Output<D>: Copy,
 {
+    /// Creates a new [`MTree`] from a slice of pre-hashed data.
     pub fn from_leaves(leaves: &[Hash<D>]) -> Option<Self> {
-        // This Merkle Tree only supports pow2 sequences
-        if !is_pow2(leaves.len()) {
+        // This Merkle tree only supports pow2 sequences
+        if !math::is_pow2(leaves.len()) {
             return None;
         }
 
         Some(Self {
-            nodes: __compute_nodes(&mut D::new(), leaves),
+            nodes: tree::compute_nodes(&mut D::new(), leaves),
             marker: PhantomData,
         })
     }
@@ -116,7 +119,7 @@ where
         }
 
         let mut nodes: Vec<Node<D>> = Vec::new();
-        let mut index: usize = __total(leaves) - leaves + local;
+        let mut index: usize = tree::total(leaves) - leaves + local;
 
         while index > 0 {
             if index & 1 == 0 {

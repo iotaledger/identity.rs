@@ -10,11 +10,13 @@ use subtle::ConstantTimeEq;
 
 use crate::utils::encode_hex;
 
+/// The output of a hash function.
 pub struct Hash<D>(Output<D>)
 where
     D: Digest;
 
 impl<D: Digest> Hash<D> {
+    /// Creates a new [`struct@Hash`] from a slice.
     pub fn from_slice(slice: &[u8]) -> Option<Self> {
         if slice.len() != D::OutputSize::USIZE {
             return None;
