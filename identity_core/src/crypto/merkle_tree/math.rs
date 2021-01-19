@@ -12,7 +12,7 @@ use crate::crypto::merkle_tree::SIZE_USIZE;
 /// ```
 #[inline(always)]
 pub const fn is_pow2(value: usize) -> bool {
-  value > 1 && value.is_power_of_two()
+    value > 1 && value.is_power_of_two()
 }
 
 /// Returns the base-2 logarithm of `value`, rounded up.
@@ -36,5 +36,5 @@ pub const fn is_pow2(value: usize) -> bool {
 /// ```
 #[inline(always)]
 pub fn log2c(value: usize) -> usize {
-  (SIZE_USIZE * 8) - value.leading_zeros() as usize - value.is_power_of_two() as usize
+    (SIZE_USIZE * 8) - value.leading_zeros() as usize - value.is_power_of_two() as usize
 }
