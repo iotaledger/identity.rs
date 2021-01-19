@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use did_doc::{url::Url, DIDKey, Document, Method, MethodRef, Service};
 use did_url::DID;
 use serde::{Deserialize, Serialize};

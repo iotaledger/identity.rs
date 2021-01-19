@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::common::{Object, OneOrMany, Url};
 
 /// Information used to determine the current status of a `Credential`.

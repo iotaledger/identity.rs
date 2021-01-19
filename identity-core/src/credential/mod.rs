@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 //! Types and traits for working with Verifiable Credentials.
 
 #![allow(clippy::module_inception)]

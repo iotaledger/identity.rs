@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use core::{cmp::Ordering, iter::once};
 use iota::{
     crypto::ternary::{

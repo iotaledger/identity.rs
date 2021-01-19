@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use core::fmt::{Debug, Formatter, Result as FmtResult};
 use identity_core::convert::FromJson as _;
 use iota::{

@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use identity_core::{
     convert::{AsJson as _, SerdeInto as _},
     did_doc::{Document, SetSignature, Signature, TrySignature, TrySignatureMut},
