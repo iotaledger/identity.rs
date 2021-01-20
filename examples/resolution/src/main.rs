@@ -1,7 +1,5 @@
 //! A basic example that generates a DID Document, publishes it to the Tangle,
 //! and retrieves information through DID Document resolution/dereferencing.
-//!
-//! cargo run --example document
 use identity_core::resolver::{dereference, resolve, Dereference, Resolution};
 use identity_iota::{
     client::Client,

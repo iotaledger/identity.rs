@@ -3,7 +3,12 @@ members = [
   "identity-core",
   "identity-diff",
   "identity-iota",
+
+  "examples/credential",
+  "examples/diff-chain",
+  "examples/resolution",
 ]
+
 exclude = [
   "bindings/wasm",
 ]

@@ -1,4 +1,5 @@
-//! cargo run --example document_diff
+//! An example that utilizes a diff and auth chain to publish updates to a
+//! DID Document.
 use identity_core::{
     did_doc::{MethodBuilder, MethodData, MethodRef, MethodType},
     proof::JcsEd25519Signature2020,
