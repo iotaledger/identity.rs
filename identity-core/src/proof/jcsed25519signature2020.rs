@@ -3,14 +3,11 @@ use did_doc::{Error, Result, SignatureData, SignatureSuite};
 use ed25519_zebra::{Signature, SigningKey, VerificationKey, VerificationKeyBytes};
 use rand::rngs::OsRng;
 use serde::Serialize;
-use sha2::{
-    digest::{consts::U32, generic_array::GenericArray},
-    Digest as _, Sha256,
-};
+use sha2::{digest::Output, Sha256};
 
 use crate::{
     crypto::KeyPair,
-    utils::{decode_b58, encode_b58},
+    utils::{decode_b58, encode_b58, jcs_sha256},
 };
 
 const SIGNATURE_NAME: &str = "JcsEd25519Signature2020";
@@ -30,13 +27,11 @@ impl JcsEd25519Signature2020 {
         KeyPair::new(public.as_ref().to_vec().into(), secret.as_ref().to_vec().into())
     }
 
-    fn normalize<T>(data: &T) -> Result<GenericArray<u8, U32>>
+    fn normalize<T>(data: &T) -> Result<Output<Sha256>>
     where
         T: Serialize,
     {
-        serde_jcs::to_vec(data)
-            .map_err(|_| Error::message("Cannot Serialize Document"))
-            .map(|json| Sha256::digest(&json))
+        jcs_sha256(data).map_err(|_| Error::message("Cannot Serialize Document"))
     }
 }
 
@@ -66,7 +61,7 @@ impl SignatureSuite for JcsEd25519Signature2020 {
 
         let signature: Vec<u8> = decode_b58(&signature).map_err(|_| Error::message("Invalid Signature Data"))?;
         let verified: Vec<u8> = ed25519_verify(&signature, public)?;
-        let digest: GenericArray<u8, U32> = Self::normalize(message)?;
+        let digest: _ = Self::normalize(message)?;
 
         if digest[..] == verified[..] {
             Ok(())
