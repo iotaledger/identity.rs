@@ -145,7 +145,7 @@ Parses a `DID` from the input string.
         * [.proof](#Doc+proof) ⇒ <code>any</code>
         * [.sign(key)](#Doc+sign) ⇒ <code>any</code>
         * [.verify()](#Doc+verify) ⇒ <code>boolean</code>
-        * [.diff(other, key)](#Doc+diff) ⇒ <code>any</code>
+        * [.diff(other, key, prev_msg)](#Doc+diff) ⇒ <code>any</code>
         * [.verifyDiff(diff)](#Doc+verifyDiff) ⇒ <code>boolean</code>
         * [.updateService(did, url, service_type)](#Doc+updateService)
         * [.clearServices()](#Doc+clearServices)
@@ -209,7 +209,7 @@ Verify the signature with the authentication_key
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 <a name="Doc+diff"></a>
 
-### doc.diff(other, key) ⇒ <code>any</code>
+### doc.diff(other, key, prev_msg) ⇒ <code>any</code>
 Generate the difference between two DID Documents and sign it
 
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
@@ -218,6 +218,7 @@ Generate the difference between two DID Documents and sign it
 | --- | --- |
 | other | [<code>Doc</code>](#Doc) | 
 | key | [<code>Key</code>](#Key) | 
+| prev_msg | <code>string</code> |
 
 <a name="Doc+verifyDiff"></a>
 
