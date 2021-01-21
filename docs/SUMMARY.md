@@ -9,5 +9,8 @@
         - [Getting Started](./libraries/rust/getting_started.md)
     - [WASM](./libraries/wasm/README.md)
         - [Getting Started](./libraries/wasm/getting_started.md)
+        - [Examples](./libraries/wasm/soon.md)
+        - [API Reference](./libraries/wasm/api-reference.md)
+        - [Troubleshooting](./libraries/wasm/soon.md)
 - [Glossary](./Glossary.md)
 - [Contribute](./contribute.md)
