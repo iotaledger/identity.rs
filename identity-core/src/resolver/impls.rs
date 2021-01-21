@@ -11,6 +11,11 @@ use crate::{
     },
 };
 
+/// Resolves a DID into a DID Document by using the "Read" operation of the DID method.
+///
+/// See [DID Resolution][SPEC] for more information.
+///
+/// [SPEC]: https://www.w3.org/TR/did-core/#did-resolution
 pub async fn resolve<R>(did: &str, input: InputMetadata, method: R) -> Result<Resolution>
 where
     R: ResolverMethod,
@@ -52,6 +57,11 @@ where
     Ok(context.finish())
 }
 
+/// Dereferences a DID URL into a primary or secondary resource.
+///
+/// See [DID Url Dereferencing][SPEC] for more information.
+///
+/// [SPEC]: https://www.w3.org/TR/did-core/#did-url-dereferencing
 pub async fn dereference<R>(did: &str, input: InputMetadata, method: R) -> Result<Dereference>
 where
     R: ResolverMethod,

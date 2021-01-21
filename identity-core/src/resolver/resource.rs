@@ -2,9 +2,14 @@ use did_doc::{url::Url, DIDKey, Document, Method, MethodRef, Service};
 use did_url::DID;
 use serde::{Deserialize, Serialize};
 
+/// A resource returned from a [DID URL dereferencing][SPEC] process.
+///
+/// [SPEC]: https://www.w3.org/TR/did-core/#dfn-did-url-dereferencing
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum Resource {
+    /// A dereferenced primary resource.
     Primary(PrimaryResource),
+    /// A dereferenced secondary resource.
     Secondary(SecondaryResource),
 }
 
@@ -20,10 +25,15 @@ impl From<SecondaryResource> for Resource {
     }
 }
 
+/// A primary resource returned from a [DID URL dereferencing][SPEC] process.
+///
+/// [SPEC]: https://www.w3.org/TR/did-core/#dfn-did-url-dereferencing
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum PrimaryResource {
+    /// A dereferenced DID Document.
     Document(Document),
+    /// A dereferenced DID Document service endpoint.
     Service(Url),
 }
 
@@ -39,12 +49,18 @@ impl From<Url> for PrimaryResource {
     }
 }
 
+/// A secondary resource returned from a [DID URL dereferencing][SPEC] process.
+///
+/// [SPEC]: https://www.w3.org/TR/did-core/#dfn-did-url-dereferencing
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum SecondaryResource {
+    /// A DID Document Method Id.
     VerificationDID(DID),
+    /// A DID Document Verification Method.
     VerificationKey(Method),
+    /// A DID Document Service.
     Service(Service),
 }
 

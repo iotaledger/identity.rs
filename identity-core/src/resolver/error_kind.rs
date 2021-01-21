@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
 
+/// Types of errors that be returned from a [DID resolution][SPEC] process.
+///
+/// [SPEC]: https://www.w3.org/TR/did-core/#dfn-did-resolution
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum ErrorKind {
     /// The DID supplied to the DID resolution function does not conform to

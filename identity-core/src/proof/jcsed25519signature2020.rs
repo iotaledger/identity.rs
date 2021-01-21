@@ -16,12 +16,19 @@ const SIGNATURE_SIZE: usize = 64;
 const PUBLIC_KEY_BYTES: usize = 32;
 const SECRET_KEY_BYTES: usize = 32;
 
+/// An implementation of the [JCS Ed25519 Signature 2020][SPEC1] signature suite
+/// for [Linked Data Proofs][SPEC2].
+///
+/// [SPEC1]: https://identity.foundation/JcsEd25519Signature2020/
+/// [SPEC2]: https://w3c-ccg.github.io/ld-proofs/
 #[derive(Clone, Copy, Debug)]
 pub struct JcsEd25519Signature2020;
 
 impl JcsEd25519Signature2020 {
+    /// The name of the signature suite.
     pub const NAME: &'static str = SIGNATURE_NAME;
 
+    /// Generates a new [`KeyPair`] appropriate for this signature suite.
     pub fn new_keypair() -> KeyPair {
         let secret: SigningKey = SigningKey::new(OsRng);
         let public: VerificationKey = (&secret).into();
@@ -30,6 +37,7 @@ impl JcsEd25519Signature2020 {
         KeyPair::new(public.as_ref().to_vec().into(), secret.as_ref().to_vec().into())
     }
 
+    /// Signs the given `data` with `secret` and returns a digital signature.
     pub fn sign_data<T>(data: &T, secret: &[u8]) -> Result<SignatureData>
     where
         T: Serialize,
@@ -41,6 +49,7 @@ impl JcsEd25519Signature2020 {
             .map(SignatureData::Signature)
     }
 
+    /// Verifies the authenticity of `data` using `signature` and `public`.
     pub fn verify_data<T>(data: &T, signature: &SignatureData, public: &[u8]) -> Result<()>
     where
         T: Serialize,

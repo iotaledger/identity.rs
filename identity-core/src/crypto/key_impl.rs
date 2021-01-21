@@ -1,21 +1,8 @@
 macro_rules! impl_bytes {
     ($ident:ident) => {
+        /// A cryptographic key.
         #[derive(Clone)]
         pub struct $ident(Vec<u8>);
-
-        impl $ident {
-            pub fn len(&self) -> usize {
-                self.0.len()
-            }
-
-            pub fn is_empty(&self) -> bool {
-                self.0.is_empty()
-            }
-
-            pub fn to_b58(&self) -> String {
-                $crate::utils::encode_b58(self)
-            }
-        }
 
         impl From<Vec<u8>> for $ident {
             fn from(other: Vec<u8>) -> $ident {
@@ -44,13 +31,13 @@ macro_rules! impl_bytes {
 
         impl ::core::fmt::Debug for $ident {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                write!(f, "{:?}", self.to_b58())
+                f.write_str(stringify!($ident))
             }
         }
 
         impl ::core::fmt::Display for $ident {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                write!(f, "{}", self.to_b58())
+                f.write_str(stringify!($ident))
             }
         }
     };

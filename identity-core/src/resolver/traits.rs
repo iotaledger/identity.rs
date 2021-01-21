@@ -8,16 +8,22 @@ use crate::{
     resolver::{DocumentMetadata, InputMetadata},
 };
 
+/// A resolved [`Document`] and associated [`DocumentMetadata`].
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct MetaDocument {
+    /// A resolved DID Document.
     pub data: Document,
+    /// Information regarding the associated Documents resolution process.
     pub meta: DocumentMetadata,
 }
 
+/// A trait for generic DID Resolvers.
 #[async_trait(?Send)]
 pub trait ResolverMethod {
+    /// Returns `true` if the given `did` is supported by this DID Resolver.
     fn is_supported(&self, did: &DID) -> bool;
 
+    /// Performs the "Read" operation of the DID method.
     async fn read(&self, did: &DID, input: InputMetadata) -> Result<Option<MetaDocument>>;
 }
 

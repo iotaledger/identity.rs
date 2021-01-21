@@ -139,6 +139,8 @@ impl<T> Credential<T> {
         Ok(())
     }
 
+    /// Creates a new [`VerifiableCredential`] by signing `self` with `document`
+    /// and `secret`.
     pub fn sign<'a, Q, D1, D2, D3>(
         self,
         document: &Document<D1, D2, D3>,

@@ -1,3 +1,5 @@
+//! Cryptographic Utilities
+
 mod key_impl;
 mod key_pair;
 

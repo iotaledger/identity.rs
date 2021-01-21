@@ -1,6 +1,7 @@
 use crate::common::{Object, Timestamp};
 use serde::{Deserialize, Serialize};
 
+/// Metadata associated with a resolved DID Document.
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct DocumentMetadata {
     /// The timestamp of the Create operation.
@@ -19,6 +20,7 @@ pub struct DocumentMetadata {
 }
 
 impl DocumentMetadata {
+    /// Creates a new [`DocumentMetadata`].
     pub fn new() -> Self {
         Self {
             created: None,

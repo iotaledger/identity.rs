@@ -4,6 +4,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{common::Object, resolver::ErrorKind};
 
+/// Metadata associated with a [DID resolution][SPEC] process.
+///
+/// [SPEC]: https://www.w3.org/TR/did-core/#dfn-did-resolution
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct ResolutionMetadata {
     /// The error code from the resolution process, if an error occurred.
@@ -29,6 +32,7 @@ pub struct ResolutionMetadata {
 }
 
 impl ResolutionMetadata {
+    /// Creates a new [`ResolutionMetadata`].
     pub fn new() -> Self {
         Self {
             error: None,

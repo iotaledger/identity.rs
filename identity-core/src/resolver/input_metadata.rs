@@ -2,12 +2,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::common::Object;
 
-pub const MIME_ANY: &str = "*/*";
+/// The content type of a JSON DID Document.
 pub const MIME_DID: &str = "application/did+json";
+
+/// The content type of a JSON-LD DID Document.
 pub const MIME_DID_LD: &str = "application/did+ld+json";
 
 // TODO: Support versioning via `version-id`/`version-time`
 // TODO: Support caching via `no-cache`
+
+/// Input options used to configure a [DID resolution][SPEC] process.
+///
+/// [SPEC]: https://www.w3.org/TR/did-core/#dfn-did-resolution
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct InputMetadata {
     /// The MIME type of the preferred representation of the DID document.
@@ -23,6 +29,7 @@ pub struct InputMetadata {
 }
 
 impl InputMetadata {
+    /// Creates a new [`InputMetadata`].
     pub fn new() -> Self {
         Self {
             accept: None,
