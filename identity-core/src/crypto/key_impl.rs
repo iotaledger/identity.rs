@@ -12,8 +12,8 @@ macro_rules! impl_bytes {
                 self.0.is_empty()
             }
 
-            pub fn to_hex(&self) -> String {
-                $crate::utils::encode_hex(self)
+            pub fn to_b58(&self) -> String {
+                $crate::utils::encode_b58(self)
             }
         }
 
@@ -44,13 +44,13 @@ macro_rules! impl_bytes {
 
         impl ::core::fmt::Debug for $ident {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                write!(f, "{:?}", self.to_hex())
+                write!(f, "{:?}", self.to_b58())
             }
         }
 
         impl ::core::fmt::Display for $ident {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                write!(f, "{}", self.to_hex())
+                write!(f, "{}", self.to_b58())
             }
         }
     };

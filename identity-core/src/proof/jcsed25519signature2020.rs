@@ -174,25 +174,26 @@ mod tests {
     use crate::{
         convert::FromJson as _,
         did_doc::{SignatureData, SignatureOptions, VerifiableDocument},
-        utils::{decode_b58, decode_hex, encode_hex},
+        utils::decode_b58,
     };
 
     const PUBLIC_B58: &str = "6b23ioXQSAayuw13PGFMCAKqjgqoLTpeXWCy5WRfw28c";
     const SECRET_B58: &str = "3qsrFcQqVuPpuGrRkU4wkQRvw1tc1C5EmEDPioS1GzQ2pLoThy5TYS2BsrwuzHYDnVqcYhMSpDhTXGst6H5ttFkG";
 
-    const SIGNATURE_HELLO: &str = "0ccbeb905006a327b5112c7bfaa2a5918784209818a83750548b9965661b9d1d467c4078faacbaa36c1bd0f88673039adea51f5d216cd45cbf0e1528fb67f10a68656c6c6f";
+    #[rustfmt::skip]
+    const SIGNATURE_HELLO: &[u8] = &[12, 203, 235, 144, 80, 6, 163, 39, 181, 17, 44, 123, 250, 162, 165, 145, 135, 132, 32, 152, 24, 168, 55, 80, 84, 139, 153, 101, 102, 27, 157, 29, 70, 124, 64, 120, 250, 172, 186, 163, 108, 27, 208, 248, 134, 115, 3, 154, 222, 165, 31, 93, 33, 108, 212, 92, 191, 14, 21, 40, 251, 103, 241, 10, 104, 101, 108, 108, 111];
+
     const SIGNATURE_DOCUMENT: &str = "piKnvB438vWsinW1dqq2EYRzcYFuR7Qm9X8t2S6TPPLDokLwcFBXnnERk6jmS8RXKTJnXKWw1Q9oNhYTwbR7vJkaJT8ZGgwDHNxa6mrMNsQsWkM4rg6EYY99xQko7FnpAMn";
 
     #[test]
     fn test_ed25519_can_sign_and_verify() {
         let public: Vec<u8> = decode_b58(PUBLIC_B58).unwrap();
         let secret: Vec<u8> = decode_b58(SECRET_B58).unwrap();
-        let expected: Vec<u8> = decode_hex(SIGNATURE_HELLO).unwrap();
 
         let signature = ed25519_sign(b"hello", &secret).unwrap();
-        let verified = ed25519_verify(&expected, &public).unwrap();
+        let verified = ed25519_verify(&signature, &public).unwrap();
 
-        assert_eq!(encode_hex(&signature), SIGNATURE_HELLO);
+        assert_eq!(&signature, SIGNATURE_HELLO);
         assert_eq!(&verified, b"hello");
     }
 

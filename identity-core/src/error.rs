@@ -8,12 +8,8 @@ pub enum Error {
     EncodeJSON(serde_json::Error),
     #[error("Failed to decode JSON: {0}")]
     DecodeJSON(serde_json::Error),
-    #[error("Failed to decode base16 data: {0}")]
-    DecodeBase16(#[from] hex::FromHexError),
     #[error("Failed to decode base58 data: {0}")]
     DecodeBase58(#[from] bs58::decode::Error),
-    #[error("Failed to decode base64 data: {0}")]
-    DecodeBase64(#[from] base64::DecodeError),
     #[error("Invalid DID: {0}")]
     InvalidDID(#[from] did_url::Error),
     #[error("Invalid DID Document: {0}")]

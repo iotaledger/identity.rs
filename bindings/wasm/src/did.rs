@@ -1,4 +1,4 @@
-use identity_core::utils::{decode_b58, decode_b64};
+use identity_core::utils::decode_b58;
 use identity_iota::did::IotaDID;
 use wasm_bindgen::prelude::*;
 
@@ -25,12 +25,6 @@ impl DID {
     #[wasm_bindgen(js_name = fromBase58Key)]
     pub fn from_base58_key(key: &str, network: Option<String>) -> Result<DID, JsValue> {
         Self::create(&decode_b58(key).map_err(js_err)?, network.as_deref())
-    }
-
-    /// Creates a new `DID` from a base64-encoded public key.
-    #[wasm_bindgen(js_name = fromBase64Key)]
-    pub fn from_base64_key(key: &str, network: Option<String>) -> Result<DID, JsValue> {
-        Self::create(&decode_b64(key).map_err(js_err)?, network.as_deref())
     }
 
     /// Parses a `DID` from the input string.

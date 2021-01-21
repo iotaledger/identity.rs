@@ -52,7 +52,6 @@
         * [.toString()](#DID+toString) ⇒ <code>string</code>
     * _static_
         * [.fromBase58Key(key, network)](#DID.fromBase58Key) ⇒ [<code>DID</code>](#DID)
-        * [.fromBase64Key(key, network)](#DID.fromBase64Key) ⇒ [<code>DID</code>](#DID)
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
 
 <a name="new_DID_new"></a>
@@ -100,18 +99,6 @@ Returns the `DID` object as a string.
 
 ### DID.fromBase58Key(key, network) ⇒ [<code>DID</code>](#DID)
 Creates a new `DID` from a base58-encoded public key.
-
-**Kind**: static method of [<code>DID</code>](#DID)  
-
-| Param | Type |
-| --- | --- |
-| key | <code>string</code> | 
-| network | <code>string</code> \| <code>undefined</code> | 
-
-<a name="DID.fromBase64Key"></a>
-
-### DID.fromBase64Key(key, network) ⇒ [<code>DID</code>](#DID)
-Creates a new `DID` from a base64-encoded public key.
 
 **Kind**: static method of [<code>DID</code>](#DID)  
 
@@ -390,7 +377,6 @@ Deserializes a `Doc` object from a JSON object.
     * _static_
         * [.generateEd25519()](#Key.generateEd25519) ⇒ [<code>Key</code>](#Key)
         * [.fromBase58(public_key, private_key)](#Key.fromBase58) ⇒ [<code>Key</code>](#Key)
-        * [.fromBase64(public_key, private_key)](#Key.fromBase64) ⇒ [<code>Key</code>](#Key)
         * [.fromJSON(json)](#Key.fromJSON) ⇒ [<code>Key</code>](#Key)
 
 <a name="new_Key_new"></a>
@@ -431,18 +417,6 @@ Generates a new `Key` object suitable for ed25519 signatures.
 
 ### Key.fromBase58(public_key, private_key) ⇒ [<code>Key</code>](#Key)
 Parses a `Key` object from base58-encoded public/private keys.
-
-**Kind**: static method of [<code>Key</code>](#Key)  
-
-| Param | Type |
-| --- | --- |
-| public_key | <code>string</code> | 
-| private_key | <code>string</code> | 
-
-<a name="Key.fromBase64"></a>
-
-### Key.fromBase64(public_key, private_key) ⇒ [<code>Key</code>](#Key)
-Parses a `Key` object from base64-encoded public/private keys.
 
 **Kind**: static method of [<code>Key</code>](#Key)  
 

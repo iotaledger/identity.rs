@@ -13,13 +13,11 @@ homepage = "https://www.iota.org"
 [dependencies]
 anyhow = { version = "1.0", default-features = false }
 async-trait = { version = "0.1", default-features = false }
-base64 = { version = "0.12", default-features = false, features = ["std"] }
-bs58 = { version = "0.3", default-features = false, features = ["std"] }
+bs58 = { version = "0.4", default-features = false, features = ["std"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "c61c0457eea7a453949a877f1dde92878a23dd24", default-features = false, features = ["std"] }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
 ed25519-zebra = { version = "2.2", default-features = false }
-hex = { version = "0.4", default-features = false , features = ["std"] }
 identity-diff = { version = "=0.1.0", path = "../identity-diff", default-features = false }
 lazy_static = { version = "1.4", default-features = false }
 rand = { version = "0.7", default-features = false, features = ["getrandom"] }
