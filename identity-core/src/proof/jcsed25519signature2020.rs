@@ -53,7 +53,7 @@ impl JcsEd25519Signature2020 {
         let verified: Vec<u8> = ed25519_verify(&signature, public)?;
         let digest: _ = Self::normalize(data)?;
 
-        if digest[..].ct_eq(&verified[..]).unwrap_u8() == 1 {
+        if digest[..].ct_eq(&verified[..]).into() {
             Ok(())
         } else {
             Err(Error::message("Invalid Signature Digest"))
