@@ -10,7 +10,9 @@ use core::{
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum OneOrMany<T> {
+    /// A single instance of `T`.
     One(T),
+    /// Multiple instances of `T`.
     Many(Vec<T>),
 }
 
@@ -83,7 +85,7 @@ impl<T> OneOrMany<T> {
         &*self
     }
 
-    /// Consumes the `OneOrMany` and returns the contents as a `Vec`.
+    /// Consumes the [`OneOrMany`] and returns the contents as a [`Vec`].
     pub fn into_vec(self) -> Vec<T> {
         match self {
             Self::One(inner) => vec![inner],

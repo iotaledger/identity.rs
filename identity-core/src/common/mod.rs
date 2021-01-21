@@ -1,7 +1,9 @@
-pub mod context;
-pub mod one_or_many;
-pub mod timestamp;
-pub mod url;
+//! Definitions of common types.
+
+mod context;
+mod one_or_many;
+mod timestamp;
+mod url;
 
 pub use context::Context;
 pub use did_doc::{Object, Value};

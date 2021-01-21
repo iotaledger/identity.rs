@@ -5,25 +5,31 @@ use crate::common::{Object, Url};
 /// [More Info](https://www.w3.org/TR/vc-data-model/#credential-subject)
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct CredentialSubject {
+    /// A Url identifying the credential subject.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<Url>,
+    /// Additional properties of the credential subject.
     #[serde(flatten)]
     pub properties: Object,
 }
 
 impl CredentialSubject {
+    /// Creates a new [`CredentialSubject`].
     pub fn new() -> Self {
         Self::with_properties(Object::new())
     }
 
+    /// Creates a new [`CredentialSubject`] with the given `id`.
     pub fn with_id(id: Url) -> Self {
         Self::with_id_and_properties(id, Object::new())
     }
 
+    /// Creates a new [`CredentialSubject`] with the given `properties`.
     pub fn with_properties(properties: Object) -> Self {
         Self { id: None, properties }
     }
 
+    /// Creates a new [`CredentialSubject`] with the given `id` and `properties`.
     pub fn with_id_and_properties(id: Url, properties: Object) -> Self {
         Self {
             id: Some(id),

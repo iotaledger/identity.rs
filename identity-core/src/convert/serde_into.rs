@@ -3,7 +3,10 @@ use crate::{
     error::Result,
 };
 
+/// An escape-hatch for converting between types that represent the same JSON
+/// structure.
 pub trait SerdeInto: ToJson {
+    /// Converts `self` to `T` by converting to/from JSON.
     fn serde_into<T>(&self) -> Result<T>
     where
         T: AsJson,

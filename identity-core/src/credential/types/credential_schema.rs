@@ -5,14 +5,18 @@ use crate::common::{Object, OneOrMany, Url};
 /// [More Info](https://www.w3.org/TR/vc-data-model/#data-schemas)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct CredentialSchema {
+    /// A Url identifying the credential schema file.
     pub id: Url,
+    /// The type(s) of the credential schema.
     #[serde(rename = "type")]
     pub types: OneOrMany<String>,
+    /// Additional properties of the credential schema.
     #[serde(flatten)]
     pub properties: Object,
 }
 
 impl CredentialSchema {
+    /// Creates a new [`CredentialSchema`].
     pub fn new<T>(id: Url, types: T) -> Self
     where
         T: Into<OneOrMany<String>>,
@@ -20,6 +24,7 @@ impl CredentialSchema {
         Self::with_properties(id, types, Object::new())
     }
 
+    /// Creates a new [`CredentialSchema`] with the given `properties`.
     pub fn with_properties<T>(id: Url, types: T, properties: Object) -> Self
     where
         T: Into<OneOrMany<String>>,

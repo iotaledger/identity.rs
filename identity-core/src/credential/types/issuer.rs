@@ -5,7 +5,9 @@ use crate::common::{Object, Url};
 /// [More Info](https://www.w3.org/TR/vc-data-model/#issuer)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct IssuerData {
+    /// A Url identifying the credential issuer.
     pub id: Url,
+    /// Additional properties of the credential issuer.
     #[serde(flatten)]
     pub properties: Object,
 }
@@ -16,11 +18,14 @@ pub struct IssuerData {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Issuer {
+    /// A credential issuer expressed as a Url.
     Url(Url),
+    /// A credential issuer expressed as a JSON object.
     Obj(IssuerData),
 }
 
 impl Issuer {
+    /// Returns a reference to the credential issuer Url.
     pub fn url(&self) -> &Url {
         match self {
             Self::Url(url) => url,

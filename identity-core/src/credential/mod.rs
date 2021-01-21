@@ -1,3 +1,5 @@
+//! Types and traits for working with Verifiable Credentials.
+
 #![allow(clippy::module_inception)]
 
 mod credential;

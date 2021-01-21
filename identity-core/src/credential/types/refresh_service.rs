@@ -5,14 +5,18 @@ use crate::common::{Object, OneOrMany, Url};
 /// [More Info](https://www.w3.org/TR/vc-data-model/#refreshing)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct RefreshService {
+    /// The Url of the credential refresh service.
     pub id: Url,
+    /// The type(s) of the credential refresh service.
     #[serde(rename = "type")]
     pub types: OneOrMany<String>,
+    /// Additional properties of the credential refresh service.
     #[serde(flatten)]
     pub properties: Object,
 }
 
 impl RefreshService {
+    /// Creates a new [`RefreshService`].
     pub fn new<T>(id: Url, types: T) -> Self
     where
         T: Into<OneOrMany<String>>,
@@ -20,6 +24,7 @@ impl RefreshService {
         Self::with_properties(id, types, Object::new())
     }
 
+    /// Creates a new [`RefreshService`] with the given `properties`.
     pub fn with_properties<T>(id: Url, types: T, properties: Object) -> Self
     where
         T: Into<OneOrMany<String>>,

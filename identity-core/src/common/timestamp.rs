@@ -14,7 +14,7 @@ use crate::error::{Error, Result};
 pub struct Timestamp(DateTime<Utc>);
 
 impl Timestamp {
-    /// Parses a `Timestamp` from the provided input string.
+    /// Parses a [`Timestamp`] from the provided input string.
     pub fn parse(input: &str) -> Result<Self> {
         DateTime::parse_from_rfc3339(input)
             .map_err(Into::into)
@@ -22,17 +22,17 @@ impl Timestamp {
             .map(Self)
     }
 
-    /// Creates a new `Timestamp` with the current date and time.
+    /// Creates a new [`Timestamp`] with the current date and time.
     pub fn now() -> Self {
         Self::parse(&Self::to_rfc3339(&Self(Utc::now()))).unwrap()
     }
 
-    /// Returns the `Timestamp` as a Unix timestamp.
+    /// Returns the [`Timestamp`] as a Unix timestamp.
     pub fn to_unix(&self) -> i64 {
         self.0.timestamp()
     }
 
-    /// Returns the `Timestamp` as an RFC 3339 `String`.
+    /// Returns the [`Timestamp`] as an RFC 3339 `String`.
     pub fn to_rfc3339(&self) -> String {
         self.0.to_rfc3339_opts(SecondsFormat::Secs, true)
     }

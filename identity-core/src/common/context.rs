@@ -9,7 +9,9 @@ use crate::common::{Object, Url};
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Context {
+    /// A JSON-LD context expressed as a Url.
     Url(Url),
+    /// A JSON-LD context expressed as a JSON object.
     Obj(Object),
 }
 

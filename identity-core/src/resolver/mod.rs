@@ -1,3 +1,5 @@
+//! Types and traits for supporting DID Document resolution.
+
 mod dereference;
 mod document_metadata;
 mod error_kind;

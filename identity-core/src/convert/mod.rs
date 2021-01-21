@@ -1,3 +1,5 @@
+//! Traits for conversions between types.
+
 mod json;
 mod serde_into;
 

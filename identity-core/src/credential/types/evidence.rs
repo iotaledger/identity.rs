@@ -5,15 +5,19 @@ use crate::common::{Object, OneOrMany};
 /// [More Info](https://www.w3.org/TR/vc-data-model/#evidence)
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Evidence {
+    /// A Url that allows retrieval of information about the evidence.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    /// The type(s) of the credential evidence.
     #[serde(rename = "type")]
     pub types: OneOrMany<String>,
+    /// Additional properties of the credential evidence.
     #[serde(flatten)]
     pub properties: Object,
 }
 
 impl Evidence {
+    /// Creates a new [`Evidence`] instance.
     pub fn new<T>(types: T) -> Self
     where
         T: Into<OneOrMany<String>>,
@@ -21,6 +25,7 @@ impl Evidence {
         Self::with_properties(types, Object::new())
     }
 
+    /// Creates a new [`Evidence`] instance with the given `id`.
     pub fn with_id<T, U>(types: T, id: U) -> Self
     where
         T: Into<OneOrMany<String>>,
@@ -33,6 +38,7 @@ impl Evidence {
         }
     }
 
+    /// Creates a new [`Evidence`] instance with the given `properties`.
     pub fn with_properties<T>(types: T, properties: Object) -> Self
     where
         T: Into<OneOrMany<String>>,
@@ -44,6 +50,7 @@ impl Evidence {
         }
     }
 
+    /// Creates a new [`Evidence`] instance with the given `id` and `properties`.
     pub fn with_id_and_properties<T, U, V>(types: T, id: U, properties: Object) -> Self
     where
         T: Into<OneOrMany<String>>,
