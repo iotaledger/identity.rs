@@ -183,7 +183,7 @@ where
     #[serde(skip_serializing_if = "Option::is_none")]
     capability_invocation: Option<DiffVec<DIDKey<MethodRef<U>>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    service: Option<DiffVec<Service<V>>>,
+    service: Option<DiffVec<DIDKey<Service<V>>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     properties: Option<<T as Diff>::Type>,
 }
@@ -250,7 +250,7 @@ where
             service: if self.service() == other.service() {
                 None
             } else {
-                Some(self.service().to_vec().diff(&other.service().to_vec())?)
+                Some(self.service().diff(&other.service())?)
             },
             properties: if self.properties() == other.properties() {
                 None
@@ -315,11 +315,11 @@ where
             .transpose()?
             .unwrap_or_else(|| self.capability_invocation().clone());
 
-        let service: Vec<Service<V>> = diff
+        let service: OrderedSet<DIDKey<Service<V>>> = diff
             .service
-            .map(|value| self.service().to_vec().merge(value))
+            .map(|value| self.service().merge(value))
             .transpose()?
-            .unwrap_or_else(|| self.service().to_vec());
+            .unwrap_or_else(|| self.service().clone());
 
         let properties: T = diff
             .properties
@@ -363,8 +363,8 @@ where
             builder = builder.capability_invocation(element.into_inner());
         }
 
-        for element in service {
-            builder = builder.service(element);
+        for element in service.to_vec() {
+            builder = builder.service(element.into_inner());
         }
 
         builder.build().map_err(Error::convert)
@@ -428,7 +428,7 @@ where
             .transpose()?
             .ok_or_else(|| Error::convert("Missing field `capability_invocation`"))?;
 
-        let service: Vec<Service<V>> = diff
+        let service: OrderedSet<DIDKey<Service<V>>> = diff
             .service
             .map(Diff::from_diff)
             .transpose()?
@@ -476,8 +476,8 @@ where
             builder = builder.capability_invocation(element.into_inner());
         }
 
-        for element in service {
-            builder = builder.service(element);
+        for element in service.to_vec() {
+            builder = builder.service(element.into_inner());
         }
 
         builder.build().map_err(Error::convert)

@@ -73,13 +73,13 @@ where
 }
 
 impl<T, U> TrySignature for VerifiablePresentation<T, U> {
-    fn try_signature(&self) -> Option<&Signature> {
+    fn signature(&self) -> Option<&Signature> {
         self.proof.get(0)
     }
 }
 
 impl<T, U> TrySignatureMut for VerifiablePresentation<T, U> {
-    fn try_signature_mut(&mut self) -> Option<&mut Signature> {
+    fn signature_mut(&mut self) -> Option<&mut Signature> {
         self.proof.get_mut(0)
     }
 }
