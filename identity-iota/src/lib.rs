@@ -1,12 +1,12 @@
-#![warn(
-  missing_docs,
-  missing_crate_level_docs,
-  broken_intra_doc_links,
-  private_intra_doc_links,
-  private_doc_tests,
-  // clippy::missing_safety_doc,
-  // clippy::missing_errors_doc,
-)]
+// #![warn(
+//   missing_docs,
+//   missing_crate_level_docs,
+//   broken_intra_doc_links,
+//   private_intra_doc_links,
+//   private_doc_tests,
+//   clippy::missing_safety_doc,
+//   clippy::missing_errors_doc,
+// )]
 
 #[macro_use]
 extern crate lazy_static;
