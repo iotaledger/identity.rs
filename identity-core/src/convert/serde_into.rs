@@ -1,17 +1,15 @@
-use serde::{Deserialize, Serialize};
-use serde_json::{from_value, to_value};
+use crate::{
+    convert::{AsJson, ToJson},
+    error::Result,
+};
 
-use crate::error::{Error, Result};
-
-pub trait SerdeInto: Serialize + Sized {
+pub trait SerdeInto: ToJson {
     fn serde_into<T>(&self) -> Result<T>
     where
-        T: for<'de> Deserialize<'de>,
+        T: AsJson,
     {
-        to_value(self)
-            .map_err(Error::EncodeJSON)
-            .and_then(|value| from_value(value).map_err(Error::DecodeJSON))
+        <Self as ToJson>::to_json_value(self).and_then(<T as AsJson>::from_json_value)
     }
 }
 
-impl<T> SerdeInto for T where T: Serialize + Sized {}
+impl<T> SerdeInto for T where T: ToJson {}
