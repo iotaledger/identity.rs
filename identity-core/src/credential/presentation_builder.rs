@@ -1,7 +1,7 @@
 use crate::{
     common::{Context, Object, Url, Value},
+    credential::{Presentation, RefreshService, TermsOfUse, VerifiableCredential},
     error::Result,
-    vc::{Presentation, RefreshService, TermsOfUse, VerifiableCredential},
 };
 
 /// A `PresentationBuilder` is used to create a customized `Presentation`.
@@ -131,13 +131,13 @@ mod tests {
     use crate::{
         common::{Object, Url},
         convert::FromJson as _,
-        crypto::KeyPair,
-        proof::JcsEd25519Signature2020,
-        utils::encode_b58,
-        vc::{
+        credential::{
             Credential as Credential_, CredentialBuilder, CredentialSubject, Presentation as Presentation_,
             PresentationBuilder, VerifiableCredential,
         },
+        crypto::KeyPair,
+        proof::JcsEd25519Signature2020,
+        utils::encode_b58,
     };
 
     type Credential = Credential_<Object>;

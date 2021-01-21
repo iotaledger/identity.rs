@@ -1,8 +1,8 @@
 use identity_core::{
     common::Object,
     convert::FromJson as _,
+    credential::{VerifiableCredential, VerifiablePresentation},
     error::Error,
-    vc::{VerifiableCredential, VerifiablePresentation},
 };
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;

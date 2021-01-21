@@ -9,11 +9,11 @@ extern crate serde;
 
 pub mod chain;
 pub mod client;
+pub mod credential;
 pub mod did;
 pub mod error;
 pub mod tangle;
 pub mod utils;
-pub mod vc;
 
 /// Re-export `identity_core::crypto`; in the future this will be `crypto.rs`.
 pub mod crypto {

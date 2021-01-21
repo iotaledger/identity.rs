@@ -4,8 +4,8 @@ use serde::Serialize;
 use crate::{
     common::{Context, Object, OneOrMany, Url},
     convert::ToJson as _,
+    credential::{Credential, PresentationBuilder, RefreshService, TermsOfUse, VerifiableCredential},
     error::{Error, Result},
-    vc::{Credential, PresentationBuilder, RefreshService, TermsOfUse, VerifiableCredential},
 };
 
 /// A `Presentation` represents a bundle of one or more `VerifiableCredential`s.
@@ -115,7 +115,7 @@ where
 mod tests {
     use crate::{
         convert::FromJson as _,
-        vc::{CredentialSubject, VerifiableCredential, VerifiablePresentation},
+        credential::{CredentialSubject, VerifiableCredential, VerifiablePresentation},
     };
 
     const JSON: &str = include_str!("../../tests/fixtures/vc/presentation-1.json");

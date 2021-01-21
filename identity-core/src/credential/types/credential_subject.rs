@@ -34,7 +34,7 @@ impl CredentialSubject {
 
 #[cfg(test)]
 mod tests {
-    use crate::{convert::FromJson as _, vc::CredentialSubject};
+    use crate::{convert::FromJson as _, credential::CredentialSubject};
 
     const JSON1: &str = include_str!("../../../tests/fixtures/vc/credential-subject-1.json");
     const JSON2: &str = include_str!("../../../tests/fixtures/vc/credential-subject-2.json");

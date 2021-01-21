@@ -1,9 +1,9 @@
 use crate::{
     common::{Context, Object, Timestamp, Url, Value},
-    error::Result,
-    vc::{
+    credential::{
         Credential, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, RefreshService, TermsOfUse,
     },
+    error::Result,
 };
 
 /// A `CredentialBuilder` is used to create a customized `Credential`.
@@ -185,7 +185,7 @@ mod tests {
     use crate::{
         common::{Object, Timestamp, Url},
         convert::FromJson as _,
-        vc::{Credential as Credential_, CredentialBuilder, CredentialSubject},
+        credential::{Credential as Credential_, CredentialBuilder, CredentialSubject},
     };
 
     type Credential = Credential_<Object>;

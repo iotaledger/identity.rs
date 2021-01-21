@@ -1,6 +1,6 @@
 use identity_core::{
     common::{OneOrMany, Url},
-    vc::{Presentation, PresentationBuilder, VerifiableCredential, VerifiablePresentation as VP},
+    credential::{Presentation, PresentationBuilder, VerifiableCredential, VerifiablePresentation as VP},
 };
 use wasm_bindgen::prelude::*;
 

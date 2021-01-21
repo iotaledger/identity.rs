@@ -1,10 +1,10 @@
 use crate::common::{Object, OneOrMany, Url};
 
-/// Information used to refresh or assert the status of a `Credential`.
+/// Information used to determine the current status of a `Credential`.
 ///
-/// [More Info](https://www.w3.org/TR/vc-data-model/#refreshing)
+/// [More Info](https://www.w3.org/TR/vc-data-model/#status)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct RefreshService {
+pub struct CredentialStatus {
     pub id: Url,
     #[serde(rename = "type")]
     pub types: OneOrMany<String>,
@@ -12,7 +12,7 @@ pub struct RefreshService {
     pub properties: Object,
 }
 
-impl RefreshService {
+impl CredentialStatus {
     pub fn new<T>(id: Url, types: T) -> Self
     where
         T: Into<OneOrMany<String>>,
@@ -34,15 +34,15 @@ impl RefreshService {
 
 #[cfg(test)]
 mod tests {
-    use crate::{convert::FromJson as _, vc::RefreshService};
+    use crate::{convert::FromJson as _, credential::CredentialStatus};
 
-    const JSON: &str = include_str!("../../../tests/fixtures/vc/refresh-service-1.json");
+    const JSON: &str = include_str!("../../../tests/fixtures/vc/credential-status-1.json");
 
     #[test]
     #[rustfmt::skip]
     fn test_from_json() {
-        let service: RefreshService = RefreshService::from_json(JSON).unwrap();
-        assert_eq!(service.id, "https://example.edu/refresh/3732");
-        assert_eq!(service.types.as_slice(), ["ManualRefreshService2018"]);
+        let status: CredentialStatus = CredentialStatus::from_json(JSON).unwrap();
+        assert_eq!(status.id, "https://example.edu/status/24");
+        assert_eq!(status.types.as_slice(), ["CredentialStatusList2017"]);
     }
 }

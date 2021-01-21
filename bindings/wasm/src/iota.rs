@@ -2,7 +2,7 @@ use identity_core::common::Object;
 use identity_iota::{
     client::{Client, ClientBuilder, Network, TxnPrinter},
     did::IotaDID,
-    vc::CredentialValidator,
+    credential::CredentialValidator,
 };
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;

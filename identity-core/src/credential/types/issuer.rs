@@ -40,7 +40,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{convert::FromJson as _, vc::Issuer};
+    use crate::{convert::FromJson as _, credential::Issuer};
 
     const JSON1: &str = include_str!("../../../tests/fixtures/vc/issuer-1.json");
     const JSON2: &str = include_str!("../../../tests/fixtures/vc/issuer-2.json");

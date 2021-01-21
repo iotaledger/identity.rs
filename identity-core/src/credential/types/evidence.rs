@@ -59,7 +59,7 @@ impl Evidence {
 
 #[cfg(test)]
 mod tests {
-    use crate::{convert::FromJson as _, vc::Evidence};
+    use crate::{convert::FromJson as _, credential::Evidence};
 
     const JSON1: &str = include_str!("../../../tests/fixtures/vc/evidence-1.json");
     const JSON2: &str = include_str!("../../../tests/fixtures/vc/evidence-2.json");

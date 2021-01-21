@@ -62,7 +62,7 @@ impl TermsOfUse {
 
 #[cfg(test)]
 mod tests {
-    use crate::{convert::FromJson as _, vc::TermsOfUse};
+    use crate::{convert::FromJson as _, credential::TermsOfUse};
 
     const JSON1: &str = include_str!("../../../tests/fixtures/vc/terms-of-use-1.json");
     const JSON2: &str = include_str!("../../../tests/fixtures/vc/terms-of-use-2.json");

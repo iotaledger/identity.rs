@@ -12,11 +12,11 @@ pub use serde_json::json;
 #[macro_use]
 pub mod common;
 pub mod convert;
+pub mod credential;
 pub mod crypto;
 pub mod error;
 pub mod proof;
 pub mod resolver;
 pub mod utils;
-pub mod vc;
 
 pub use error::{Error, Result};

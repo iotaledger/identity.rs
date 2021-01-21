@@ -5,13 +5,13 @@ use serde::Serialize;
 use crate::{
     common::{Context, Object, OneOrMany, Timestamp, Url},
     convert::ToJson as _,
-    crypto::SecretKey,
-    error::{Error, Result},
-    proof::JcsEd25519Signature2020,
-    vc::{
+    credential::{
         CredentialBuilder, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, RefreshService,
         TermsOfUse, VerifiableCredential,
     },
+    crypto::SecretKey,
+    error::{Error, Result},
+    proof::JcsEd25519Signature2020,
 };
 
 lazy_static! {
@@ -185,7 +185,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{convert::FromJson as _, vc::Credential};
+    use crate::{convert::FromJson as _, credential::Credential};
 
     const JSON1: &str = include_str!("../../tests/fixtures/vc/credential-1.json");
     const JSON2: &str = include_str!("../../tests/fixtures/vc/credential-2.json");

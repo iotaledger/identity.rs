@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     common::{Object, OneOrMany},
     convert::ToJson as _,
+    credential::Presentation,
     did_doc::{SetSignature, Signature, TrySignature, TrySignatureMut},
-    vc::Presentation,
 };
 
 /// A `VerifiablePresentation` represents a `Presentation` with an associated

@@ -34,7 +34,7 @@ impl CredentialSchema {
 
 #[cfg(test)]
 mod tests {
-    use crate::{convert::FromJson as _, vc::CredentialSchema};
+    use crate::{convert::FromJson as _, credential::CredentialSchema};
 
     const JSON1: &str = include_str!("../../../tests/fixtures/vc/credential-schema-1.json");
     const JSON2: &str = include_str!("../../../tests/fixtures/vc/credential-schema-2.json");
