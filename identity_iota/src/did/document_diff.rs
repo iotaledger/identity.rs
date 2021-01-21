@@ -104,13 +104,13 @@ impl TangleRef for DocumentDiff {
 }
 
 impl TrySignature for DocumentDiff {
-    fn try_signature(&self) -> Option<&Signature> {
+    fn signature(&self) -> Option<&Signature> {
         self.proof.as_ref()
     }
 }
 
 impl TrySignatureMut for DocumentDiff {
-    fn try_signature_mut(&mut self) -> Option<&mut Signature> {
+    fn signature_mut(&mut self) -> Option<&mut Signature> {
         self.proof.as_mut()
     }
 }

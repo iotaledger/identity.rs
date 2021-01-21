@@ -81,8 +81,8 @@ impl From<DIDKey<MethodRef>> for SecondaryResource {
     }
 }
 
-impl From<Service> for SecondaryResource {
-    fn from(other: Service) -> Self {
-        Self::Service(other)
+impl From<DIDKey<Service>> for SecondaryResource {
+    fn from(other: DIDKey<Service>) -> Self {
+        Self::Service(other.into_inner())
     }
 }
