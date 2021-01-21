@@ -1,14 +1,10 @@
-use serde::Serialize;
-use serde_jcs::to_vec;
 use sha2::{digest::Output, Digest, Sha256};
 
-use crate::error::{Error, Result};
+use crate::{convert::ToJson, error::Result};
 
 pub fn jcs_sha256<T>(data: &T) -> Result<Output<Sha256>>
 where
-    T: Serialize,
+    T: ToJson,
 {
-    to_vec(data)
-        .map_err(Error::EncodeJSON)
-        .map(|json| Sha256::digest(&json))
+    data.to_jcs().map(|json| Sha256::digest(&json))
 }

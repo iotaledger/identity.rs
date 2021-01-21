@@ -17,6 +17,10 @@ pub trait ToJson: Serialize {
     fn to_json_pretty(&self) -> Result<String> {
         serde_json::to_string_pretty(self).map_err(Error::EncodeJSON)
     }
+
+    fn to_jcs(&self) -> Result<Vec<u8>> {
+        serde_jcs::to_vec(self).map_err(Error::EncodeJSON)
+    }
 }
 
 impl<T> ToJson for T where T: Serialize {}
@@ -50,6 +54,10 @@ pub trait AsJson: FromJson + ToJson {
 
     fn from_json_slice(json: &(impl AsRef<[u8]> + ?Sized)) -> Result<Self> {
         <Self as FromJson>::from_json_slice(json)
+    }
+
+    fn from_json_value(json: serde_json::Value) -> Result<Self> {
+        <Self as FromJson>::from_json_value(json)
     }
 
     fn to_json(&self) -> Result<String> {
