@@ -7,7 +7,7 @@
     private_intra_doc_links,
     private_doc_tests,
     clippy::missing_safety_doc,
-    clippy::missing_errors_doc
+    // clippy::missing_errors_doc
 )]
 
 #[macro_use]
