@@ -1,5 +1,5 @@
 use core::fmt::{Display, Error as FmtError, Formatter, Result as FmtResult};
-use did_doc::{Document, MethodQuery, MethodType, MethodWrap, MethodWriter, SignatureOptions};
+use did_doc::{Document, LdSuite, MethodQuery, MethodType, MethodWrap, SignatureOptions};
 use serde::Serialize;
 
 use crate::{
@@ -151,22 +151,19 @@ impl<T> Credential<T> {
     {
         let method: MethodWrap<'_, D2> = document.try_resolve(query)?;
 
-        let options: SignatureOptions =
-            SignatureOptions::with_purpose(method.id().to_string(), method.scope().as_str().to_string());
-
-        let mut target: VerifiableCredential<T> = VerifiableCredential::new(self, Vec::new());
-        let mut writer: MethodWriter<VerifiableCredential<T>, D2> = MethodWriter::new(&mut target, &*method);
-
         match method.key_type() {
             MethodType::Ed25519VerificationKey2018 => {
-                writer.sign(JcsEd25519Signature2020, options, secret.as_ref())?;
-            }
-            _ => {
-                todo!("return Err(\"Verification Method Not Supported\")")
-            }
-        }
+                let options: SignatureOptions = method.into();
+                let suite: LdSuite<_> = LdSuite::new(JcsEd25519Signature2020);
 
-        Ok(target)
+                let mut verifiable: VerifiableCredential<T> = VerifiableCredential::new(self, Vec::new());
+
+                suite.sign(&mut verifiable, options, secret)?;
+
+                Ok(verifiable)
+            }
+            _ => Err(Error::InvalidCredential("Verification Method Not Supported".into())),
+        }
     }
 }
 

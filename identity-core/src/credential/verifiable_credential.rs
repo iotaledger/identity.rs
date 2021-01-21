@@ -72,13 +72,13 @@ impl<T> DerefMut for VerifiableCredential<T> {
 }
 
 impl<T> TrySignature for VerifiableCredential<T> {
-    fn try_signature(&self) -> Option<&Signature> {
+    fn signature(&self) -> Option<&Signature> {
         self.proof.get(0)
     }
 }
 
 impl<T> TrySignatureMut for VerifiableCredential<T> {
-    fn try_signature_mut(&mut self) -> Option<&mut Signature> {
+    fn signature_mut(&mut self) -> Option<&mut Signature> {
         self.proof.get_mut(0)
     }
 }

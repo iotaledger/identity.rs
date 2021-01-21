@@ -148,7 +148,7 @@ impl Doc {
             .build()
             .map_err(js_err)?;
 
-        Self::mutate(self, |doc| doc.service_mut().push(service))?;
+        Self::mutate(self, |doc| doc.service_mut().update(DIDKey::new(service)))?;
 
         Ok(())
     }
