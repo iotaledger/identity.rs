@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod credential;
 mod credential_builder;
 mod presentation;
