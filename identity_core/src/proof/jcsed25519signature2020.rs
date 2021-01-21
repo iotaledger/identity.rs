@@ -1,5 +1,5 @@
 use core::convert::TryInto as _;
-use did_doc::{Error, Result, SignatureData, SignatureSuite};
+use did_doc::{Error, Method, Result, Sign, SignatureData, SuiteName, Verify};
 use ed25519_zebra::{Signature, SigningKey, VerificationKey, VerificationKeyBytes};
 use rand::rngs::OsRng;
 use serde::Serialize;
@@ -7,6 +7,7 @@ use sha2::{
     digest::{consts::U32, generic_array::GenericArray},
     Digest as _, Sha256,
 };
+use subtle::ConstantTimeEq;
 
 use crate::{
     crypto::KeyPair,
@@ -22,12 +23,44 @@ const SECRET_KEY_BYTES: usize = 32;
 pub struct JcsEd25519Signature2020;
 
 impl JcsEd25519Signature2020 {
+    pub const NAME: &'static str = SIGNATURE_NAME;
+
     pub fn new_keypair() -> KeyPair {
         let secret: SigningKey = SigningKey::new(OsRng);
         let public: VerificationKey = (&secret).into();
         let public: VerificationKeyBytes = public.into();
 
         KeyPair::new(public.as_ref().to_vec().into(), secret.as_ref().to_vec().into())
+    }
+
+    pub fn sign_data<T>(data: &T, secret: &[u8]) -> Result<SignatureData>
+    where
+        T: Serialize,
+    {
+        Self::normalize(data)
+            .and_then(|data| ed25519_sign(&data, secret))
+            .map_err(|_| Error::message("Cannot Sign Document"))
+            .map(|data| encode_b58(&data))
+            .map(SignatureData::Signature)
+    }
+
+    pub fn verify_data<T>(data: &T, signature: &SignatureData, public: &[u8]) -> Result<()>
+    where
+        T: Serialize,
+    {
+        let signature: &str = signature
+            .try_signature()
+            .ok_or_else(|| Error::message("Signature Data Not Found"))?;
+
+        let signature: Vec<u8> = decode_b58(&signature).map_err(|_| Error::message("Invalid Signature Data"))?;
+        let verified: Vec<u8> = ed25519_verify(&signature, public)?;
+        let digest: GenericArray<u8, U32> = Self::normalize(data)?;
+
+        if digest[..].ct_eq(&verified[..]).unwrap_u8() == 1 {
+            Ok(())
+        } else {
+            Err(Error::message("Invalid Signature Digest"))
+        }
     }
 
     fn normalize<T>(data: &T) -> Result<GenericArray<u8, U32>>
@@ -40,39 +73,28 @@ impl JcsEd25519Signature2020 {
     }
 }
 
-impl SignatureSuite for JcsEd25519Signature2020 {
-    fn name(&self) -> &'static str {
-        SIGNATURE_NAME
+impl SuiteName for JcsEd25519Signature2020 {
+    fn name(&self) -> String {
+        Self::NAME.to_string()
     }
+}
 
-    fn sign<T>(&self, message: &T, secret: &[u8]) -> Result<SignatureData>
+impl Sign for JcsEd25519Signature2020 {
+    fn sign<T>(&self, data: &T, secret: &[u8]) -> Result<SignatureData>
     where
         T: Serialize,
     {
-        Self::normalize(message)
-            .and_then(|message| ed25519_sign(&message, secret))
-            .map_err(|_| Error::message("Cannot Sign Document"))
-            .map(|signature| encode_b58(&signature))
-            .map(SignatureData::Signature)
+        Self::sign_data(data, secret)
     }
+}
 
-    fn verify<T>(&self, message: &T, signature: &SignatureData, public: &[u8]) -> Result<()>
+impl Verify for JcsEd25519Signature2020 {
+    fn verify<T, U>(&self, data: &T, signature: &SignatureData, method: &Method<U>) -> Result<()>
     where
         T: Serialize,
+        U: Serialize,
     {
-        let signature: &str = signature
-            .try_signature()
-            .ok_or_else(|| Error::message("Signature Data Not Found"))?;
-
-        let signature: Vec<u8> = decode_b58(&signature).map_err(|_| Error::message("Invalid Signature Data"))?;
-        let verified: Vec<u8> = ed25519_verify(&signature, public)?;
-        let digest: GenericArray<u8, U32> = Self::normalize(message)?;
-
-        if digest[..] == verified[..] {
-            Ok(())
-        } else {
-            Err(Error::message("Invalid Signature Digest"))
-        }
+        Self::verify_data(data, signature, &method.key_data().try_decode()?)
     }
 }
 
@@ -173,7 +195,7 @@ mod tests {
 
     use crate::{
         convert::FromJson as _,
-        did_doc::{SignatureData, SignatureOptions, VerifiableDocument},
+        did_doc::{LdSuite, SignatureData, SignatureOptions, VerifiableDocument},
         utils::{decode_b58, decode_hex, encode_hex},
     };
 
@@ -203,18 +225,19 @@ mod tests {
         let signed: VerifiableDocument = VerifiableDocument::from_json(SIGNED).unwrap();
         let method = unsigned.try_resolve("#key-1").unwrap();
         let options: SignatureOptions = SignatureOptions::new(method.try_into_fragment().unwrap());
+        let suite: LdSuite<_> = LdSuite::new(JcsEd25519Signature2020);
 
-        unsigned.sign(&JcsEd25519Signature2020, options, &secret).unwrap();
+        suite.sign(&mut unsigned, options, &secret).unwrap();
 
-        assert!(unsigned.verify(&JcsEd25519Signature2020).is_ok());
+        assert!(suite.verify(&unsigned).is_ok());
         assert_eq!(
-            unsigned.properties().proof().unwrap().data().try_signature().unwrap(),
+            unsigned.properties().proof().unwrap().data().as_str(),
             SIGNATURE_DOCUMENT
         );
 
         assert_eq!(
             serde_jcs::to_vec(&unsigned).unwrap(),
-            serde_jcs::to_vec(&signed).unwrap(),
+            serde_jcs::to_vec(&signed).unwrap()
         );
     }
 
@@ -224,18 +247,19 @@ mod tests {
         let mut document: VerifiableDocument = VerifiableDocument::from_json(UNSIGNED).unwrap();
         let method = document.try_resolve("#key-1").unwrap();
         let options: SignatureOptions = SignatureOptions::new(method.try_into_fragment().unwrap());
+        let suite: LdSuite<_> = LdSuite::new(JcsEd25519Signature2020);
 
-        document.sign(&JcsEd25519Signature2020, options, &secret).unwrap();
+        suite.sign(&mut document, options, &secret).unwrap();
 
-        assert!(document.verify(&JcsEd25519Signature2020).is_ok());
+        assert!(suite.verify(&document).is_ok());
         assert_eq!(
-            document.properties().proof().unwrap().data().try_signature().unwrap(),
+            document.properties().proof().unwrap().data().as_str(),
             SIGNATURE_DOCUMENT
         );
 
         document.proof_mut().unwrap().verification_method = "#key-2".into();
 
-        assert!(document.verify(&JcsEd25519Signature2020).is_err());
+        assert!(suite.verify(&document).is_err());
     }
 
     #[test]
@@ -244,21 +268,21 @@ mod tests {
         let mut document: VerifiableDocument = VerifiableDocument::from_json(UNSIGNED).unwrap();
         let method = document.try_resolve("#key-1").unwrap();
         let options: SignatureOptions = SignatureOptions::new(method.try_into_fragment().unwrap());
+        let suite: LdSuite<_> = LdSuite::new(JcsEd25519Signature2020);
 
-        document.sign(&JcsEd25519Signature2020, options, &secret).unwrap();
+        suite.sign(&mut document, options, &secret).unwrap();
 
-        assert!(document.verify(&JcsEd25519Signature2020).is_ok());
+        assert!(suite.verify(&document).is_ok());
         assert_eq!(
-            document.properties().proof().unwrap().data().try_signature().unwrap(),
+            document.properties().proof().unwrap().data().as_str(),
             SIGNATURE_DOCUMENT
         );
 
         document
             .proof_mut()
             .unwrap()
-            .data_mut()
-            .set(SignatureData::Signature("foo".into()));
+            .set_data(SignatureData::Signature("foo".into()));
 
-        assert!(document.verify(&JcsEd25519Signature2020).is_err());
+        assert!(suite.verify(&document).is_err());
     }
 }
