@@ -1,8 +1,8 @@
 use identity_core::common::Object;
 use identity_iota::{
     client::{Client, ClientBuilder, Network, TxnPrinter},
+    credential::CredentialValidator,
     did::IotaDID,
-    vc::CredentialValidator,
 };
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;

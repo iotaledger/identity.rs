@@ -2,7 +2,7 @@ use identity_core::{
     crypto::{KeyPair, PublicKey, SecretKey},
     did_doc::MethodType,
     proof::JcsEd25519Signature2020,
-    utils::{decode_b58, decode_b64, encode_b58},
+    utils::{decode_b58, encode_b58},
 };
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -35,15 +35,6 @@ impl Key {
     pub fn from_base58(public_key: &str, private_key: &str) -> Result<Key, JsValue> {
         let public: PublicKey = decode_b58(public_key).map_err(js_err)?.into();
         let private: SecretKey = decode_b58(private_key).map_err(js_err)?.into();
-
-        Ok(Self(KeyPair::new(public, private)))
-    }
-
-    /// Parses a `Key` object from base64-encoded public/private keys.
-    #[wasm_bindgen(js_name = fromBase64)]
-    pub fn from_base64(public_key: &str, private_key: &str) -> Result<Key, JsValue> {
-        let public: PublicKey = decode_b64(public_key).map_err(js_err)?.into();
-        let private: SecretKey = decode_b64(private_key).map_err(js_err)?.into();
 
         Ok(Self(KeyPair::new(public, private)))
     }
