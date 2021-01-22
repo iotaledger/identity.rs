@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::crypto::merkle_tree::consts;
 
 /// Return true if `value` is a power of two greater than `1`.

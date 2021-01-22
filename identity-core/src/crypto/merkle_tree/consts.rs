@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use core::mem;
 
 pub const PREFIX_L: &[u8] = &[0x00];
