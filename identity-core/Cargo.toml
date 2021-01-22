@@ -17,6 +17,7 @@ bs58 = { version = "0.4", default-features = false, features = ["std"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "bb8bda8f6d39451b08e3cc198f956c212a3b87f8", default-features = false, features = ["std"] }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
+digest = { version = "0.9", default-features = false }
 ed25519-zebra = { version = "2.2", default-features = false }
 identity-diff = { version = "=0.1.0", path = "../identity-diff", default-features = false }
 lazy_static = { version = "1.4", default-features = false }
