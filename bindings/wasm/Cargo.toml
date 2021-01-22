@@ -1,24 +1,25 @@
 [package]
-name = "iota_identity_wasm"
-version = "0.0.1"
-authors = ["Team Identity"]
+name = "identity-wasm"
+version = "0.1.0"
+authors = ["IOTA Identity"]
 edition = "2018"
+description = "Web Assembly bindings for the identity-rs crate."
+readme = "README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-description = "WASM version of Identity.rs"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "identity", "wasm"]
 homepage = "https://www.iota.org"
-license = "MIT"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-console_error_panic_hook = "0.1"
+console_error_panic_hook = { version = "0.1" }
+identity-core = { version = "=0.1.0", path = "../../identity-core" }
+identity-iota = { version = "=0.1.0", path = "../../identity-iota" }
 serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
-
-identity_core = { path = "../../identity_core" }
-identity_iota = { path = "../../identity_iota" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 rand = { version = "0.7", default-features = false, features = ["wasm-bindgen"] }

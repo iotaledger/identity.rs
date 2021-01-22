@@ -1,10 +1,14 @@
 [workspace]
 members = [
-    "identity_core",
-    "identity_derive",
-    "identity_diff",
-    "identity_iota",
+  "identity-core",
+  "identity-diff",
+  "identity-iota",
+
+  "examples/credential",
+  "examples/diff-chain",
+  "examples/resolution",
 ]
+
 exclude = [
-    "bindings/wasm",
+  "bindings/wasm",
 ]
