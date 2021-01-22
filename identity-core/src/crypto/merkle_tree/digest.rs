@@ -9,7 +9,7 @@ use crate::crypto::merkle_tree::Hash;
 
 /// An extension of the [`Digest`] trait for Merkle tree construction.
 pub trait DigestExt: Sized + Digest {
-    /// Computes the [`Hash`] of a Merkle tree leaf node.
+    /// Computes the [`struct@Hash`] of a Merkle tree leaf node.
     fn hash_leaf(&mut self, data: &[u8]) -> Hash<Self> {
         self.reset();
         self.update(consts::PREFIX_L);
@@ -17,7 +17,7 @@ pub trait DigestExt: Sized + Digest {
         self.finalize_reset().into()
     }
 
-    /// Computes the parent [`Hash`] of two Merkle tree nodes.
+    /// Computes the parent [`struct@Hash`] of two Merkle tree nodes.
     fn hash_branch(&mut self, lhs: &Hash<Self>, rhs: &Hash<Self>) -> Hash<Self> {
         self.reset();
         self.update(consts::PREFIX_B);
