@@ -11,7 +11,7 @@ use digest::Output;
 use subtle::Choice;
 use subtle::ConstantTimeEq;
 
-use crate::utils::encode_hex;
+use crate::utils::encode_b58;
 
 /// The output of a hash function.
 pub struct Hash<D>(Output<D>)
@@ -75,7 +75,7 @@ where
 
 impl<D: Digest> Debug for Hash<D> {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        f.write_str(&encode_hex(self))
+        f.write_str(&encode_b58(self))
     }
 }
 
