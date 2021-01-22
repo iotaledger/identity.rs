@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 //! Errors that may occur when Self-sovereign Identity goes wrong.
 
 /// Alias for a `Result` with the error type [`Error`].

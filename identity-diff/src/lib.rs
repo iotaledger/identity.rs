@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 /// This module implements a `Diff` trait type.  The Diff trait gives data structures an ability to compare
 /// themselves to another data structure of the same type over time.  The library pairs off with `identity_derive` which
 /// implements a derive macro for the `Diff` Trait. Types supported include `HashMap`, `Option`, `String`,

@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use anyhow::Result as AnyhowResult;
 use core::fmt::Display;
 use thiserror::Error as DeriveError;

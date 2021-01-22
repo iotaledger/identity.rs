@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use sha2::{digest::Output, Digest, Sha256};
 
 use crate::{convert::ToJson, error::Result};

@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 //! An example that utilizes a diff and auth chain to publish updates to a
 //! DID Document.
 use identity_core::{

@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 //! A basic example that generates and publishes subject and issuer DID
 //! Documents, creates a VerifiableCredential specifying claims about the
 //! subject, and retrieves information through the CredentialValidator API.

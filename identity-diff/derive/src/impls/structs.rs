@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 #![allow(non_snake_case)]
 
 use crate::model::{InputModel, SVariant};

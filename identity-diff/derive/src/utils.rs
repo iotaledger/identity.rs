@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use proc_macro2::{Delimiter, TokenTree};
 
 use syn::{DeriveInput, Field, Meta, MetaList, NestedMeta, Path, PathSegment};

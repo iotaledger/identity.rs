@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use core::convert::TryFrom as _;
 use did_doc::{
     url::Url, DIDKey, Document, DocumentBuilder, Method, MethodBuilder, MethodData, MethodRef, MethodType, Object,
