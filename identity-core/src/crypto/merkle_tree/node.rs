@@ -11,7 +11,9 @@ use crate::crypto::merkle_tree::Hash;
 
 /// A tagged [`struct@Hash`].
 pub enum Node<D: Digest> {
+    /// A node tagged with `L`.
     L(Hash<D>),
+    /// A node tagged with `R`.
     R(Hash<D>),
 }
 
@@ -60,8 +62,8 @@ mod tests {
     fn test_hash() {
         let mut digest: Sha256 = Sha256::new();
 
-        let h1: Hash<Sha256> = digest.hash_data(b"A");
-        let h2: Hash<Sha256> = digest.hash_data(b"B");
+        let h1: Hash<Sha256> = digest.hash_leaf(b"A");
+        let h2: Hash<Sha256> = digest.hash_leaf(b"B");
 
         assert_eq!(Node::L(h1).hash(&h2), digest.hash_branch(&h1, &h2));
         assert_eq!(Node::R(h1).hash(&h2), digest.hash_branch(&h2, &h1));

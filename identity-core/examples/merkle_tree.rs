@@ -30,7 +30,7 @@ where
     leaves
         .into_iter()
         .map(AsRef::as_ref)
-        .map(|leaf| digest.hash_data(leaf))
+        .map(|leaf| digest.hash_leaf(leaf))
         .collect()
 }
 
@@ -61,7 +61,7 @@ fn main() -> Result<()> {
     println!("Inclusion Proof: {:#?}", proof);
 
     // Hash the target public key with SHA-256.
-    let target: Hash<Sha256> = digest.hash_data(kpairs[index].public().as_ref());
+    let target: Hash<Sha256> = digest.hash_leaf(kpairs[index].public().as_ref());
     println!("Target Hash: {:?}", target);
 
     // Use the generated proof to verify inclusion of the target hash in the

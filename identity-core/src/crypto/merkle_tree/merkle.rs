@@ -112,6 +112,7 @@ where
         })
     }
 
+    /// Generates a proof-of-inclusion for the leaf node at the specified index.
     pub fn proof(&self, local: usize) -> Option<Proof<D>> {
         let leaves: usize = self.leaves();
 
@@ -137,6 +138,7 @@ where
         Some(Proof::new(nodes.into_boxed_slice()))
     }
 
+    /// Verifies the computed root of `proof` with the root hash of `self`.
     pub fn verify(&self, proof: &Proof<D>, hash: Hash<D>) -> bool {
         proof.verify(self.root(), hash)
     }
@@ -177,7 +179,7 @@ mod tests {
 
     macro_rules! h {
         ($leaf:expr) => {
-            Sha256::new().hash_data($leaf)
+            Sha256::new().hash_leaf($leaf)
         };
         ($lhs:expr, $rhs:expr) => {
             Sha256::new().hash_branch(&$lhs, &$rhs)
@@ -197,7 +199,7 @@ mod tests {
 
         let mut digest: Sha256 = Sha256::new();
 
-        let hashes: Vec<Sha256Hash> = nodes.iter().map(|node| digest.hash_data(node.as_ref())).collect();
+        let hashes: Vec<Sha256Hash> = nodes.iter().map(|node| digest.hash_leaf(node.as_ref())).collect();
 
         let tree: MTree = MTree::from_leaves(&hashes).unwrap();
 

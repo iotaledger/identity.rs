@@ -1,6 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Types and traits for [Merkle tree][WIKI] operations.
+//!
+//! [WIKI]: https://en.wikipedia.org/wiki/Merkle_tree
+
 mod consts;
 mod digest;
 mod hash;
