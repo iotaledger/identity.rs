@@ -6,12 +6,13 @@ use identity_core::{
     did_doc::{Document, SetSignature, Signature, TrySignature, TrySignatureMut},
     identity_diff::{did_doc::DiffDocument, Diff},
 };
+use iota::MessageId;
 
 use crate::{
     client::{Client, Network},
     did::{IotaDID, IotaDocument},
     error::Result,
-    tangle::{MessageId, TangleRef},
+    tangle::TangleRef,
 };
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -20,7 +21,7 @@ pub struct DocumentDiff {
     pub(crate) diff: String,
     pub(crate) previous_message_id: MessageId,
     pub(crate) proof: Option<Signature>,
-    #[serde(skip)]
+    #[serde(skip, default = "MessageId::null")]
     pub(crate) message_id: MessageId,
 }
 
@@ -35,7 +36,7 @@ impl DocumentDiff {
             previous_message_id,
             diff,
             proof: None,
-            message_id: MessageId::NONE,
+            message_id: MessageId::null(),
         })
     }
 
@@ -69,10 +70,9 @@ impl DocumentDiff {
 
     /// Publishes the `DocumentDiff` to the Tangle using the provided `Client`.
     pub async fn publish_with_client(&mut self, client: &Client, message_id: &MessageId) -> Result<()> {
-        let transaction: _ = client.publish_diff(message_id, self).await?;
-        let message_id: String = client.transaction_hash(&transaction);
+        let message_id: MessageId = client.publish_diff(message_id, self).await?;
 
-        self.set_message_id(message_id.into());
+        self.set_message_id(message_id);
 
         Ok(())
     }

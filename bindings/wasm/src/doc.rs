@@ -89,16 +89,6 @@ impl Doc {
         self.0.id().to_string()
     }
 
-    #[wasm_bindgen(getter, js_name = authChain)]
-    pub fn auth_chain(&self) -> String {
-        self.0.id().address()
-    }
-
-    #[wasm_bindgen(getter, js_name = diffChain)]
-    pub fn diff_chain(&self) -> String {
-        String::new() // TODO: FIXME
-    }
-
     #[wasm_bindgen(getter)]
     pub fn proof(&self) -> Result<JsValue, JsValue> {
         self.0

@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::mem;
+use iota::Message;
+use iota::MessageId;
 
 use crate::{
     did::{IotaDID, IotaDocument},
     error::{Error, Result},
-    tangle::{Message, MessageId, MessageIndex, TangleRef as _},
+    tangle::{MessageExt, MessageIdExt, MessageIndex, TangleRef as _},
 };
 
 #[derive(Debug)]
@@ -23,12 +25,11 @@ impl AuthChain {
             .flat_map(|message| message.try_extract_document(did))
             .collect();
 
-        let current: IotaDocument =
-            index
-                .remove_where(&MessageId::NONE, |doc| doc.verify().is_ok())
-                .ok_or(Error::ChainError {
-                    error: "Invalid Root Document",
-                })?;
+        let current: IotaDocument = index
+            .remove_where(&MessageId::null(), |doc| doc.verify().is_ok())
+            .ok_or(Error::ChainError {
+                error: "Invalid Root Document",
+            })?;
 
         let mut this: Self = Self::new(current)?;
 
@@ -51,7 +52,7 @@ impl AuthChain {
             });
         }
 
-        if current.message_id().is_none() {
+        if current.message_id().is_null() {
             return Err(Error::ChainError {
                 error: "Invalid Message Id",
             });
@@ -108,13 +109,13 @@ impl AuthChain {
             });
         }
 
-        if document.message_id().is_none() {
+        if document.message_id().is_null() {
             return Err(Error::ChainError {
                 error: "Invalid Message Id",
             });
         }
 
-        if document.previous_message_id().is_none() {
+        if document.previous_message_id().is_null() {
             return Err(Error::ChainError {
                 error: "Invalid Previous Message Id",
             });

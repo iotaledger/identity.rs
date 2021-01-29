@@ -15,8 +15,8 @@ pub enum Error {
     InvalidDoc(#[from] identity_core::did_doc::Error),
     #[error("Client Error: {0}")]
     ClientError(#[from] iota::client::error::Error),
-    #[error("Ternary Error: {0}")]
-    TernaryError(#[from] iota::ternary::Error),
+    #[error("Invalid Message: {0}")]
+    InvalidMessage(#[from] iota::bee_message::Error),
     #[error("Invalid Document: {error}")]
     InvalidDocument { error: &'static str },
     #[error("Invalid DID Network")]

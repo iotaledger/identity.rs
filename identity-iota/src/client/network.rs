@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Url;
-use iota::client::builder;
 
 use crate::did::IotaDID;
 
@@ -66,26 +65,6 @@ impl Network {
 impl Default for Network {
     fn default() -> Self {
         Network::Mainnet
-    }
-}
-
-impl From<builder::Network> for Network {
-    fn from(other: builder::Network) -> Network {
-        match other {
-            builder::Network::Mainnet => Self::Mainnet,
-            builder::Network::Devnet => Self::Devnet,
-            builder::Network::Comnet => Self::Comnet,
-        }
-    }
-}
-
-impl From<Network> for builder::Network {
-    fn from(other: Network) -> builder::Network {
-        match other {
-            Network::Mainnet => Self::Mainnet,
-            Network::Devnet => Self::Devnet,
-            Network::Comnet => Self::Comnet,
-        }
     }
 }
 

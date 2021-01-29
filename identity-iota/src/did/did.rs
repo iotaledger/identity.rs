@@ -18,7 +18,6 @@ use multihash::Blake2b256;
 use crate::{
     did::Segments,
     error::{Error, Result},
-    utils::utf8_to_trytes,
 };
 
 // The hash size of BLAKE2b-256 (32-bytes)
@@ -222,13 +221,6 @@ impl IotaDID {
         Segments(self.method_id())
     }
 
-    /// Returns the Tangle address of the DID auth chain.
-    pub fn address(&self) -> String {
-        let mut trytes: String = utf8_to_trytes(self.tag());
-        trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
-        trytes
-    }
-
     pub(crate) fn normalize(mut did: DID) -> DID {
         let segments: Segments = Segments(did.method_id());
 
@@ -320,9 +312,6 @@ mod tests {
 
     const TAG: &str = "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
 
-    const ADDR_TAG: &str = "HbuRS48djS5PbLQciy6iE9BTdaDTBM3GxcbGdyuv3TWo";
-    const ADDR_TRYTES: &str = "RBQCIDACBCYABBSCYCBCZAZBQCVB9CRCXCMD9BXCOBCBLBCCSCPCNBCCLBWBXAQBLDRCQCQBSCMDIDJDX";
-
     #[test]
     fn test_parse_valid() {
         assert!(IotaDID::parse(format!("did:iota:{}", TAG)).is_ok());
@@ -390,12 +379,6 @@ mod tests {
 
         let did: IotaDID = format!("did:iota:main:shard:{}", TAG).parse().unwrap();
         assert_eq!(did.tag(), TAG);
-    }
-
-    #[test]
-    fn test_address() {
-        let did: IotaDID = format!("did:iota:com:{}", ADDR_TAG).parse().unwrap();
-        assert_eq!(did.address(), ADDR_TRYTES);
     }
 
     #[test]

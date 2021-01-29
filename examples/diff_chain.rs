@@ -17,7 +17,7 @@ use identity_iota::{
 };
 use std::{thread::sleep, time::Duration};
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
     let client: Client = ClientBuilder::new().network(Network::Comnet).build()?;
     let network: &str = client.network().as_str();

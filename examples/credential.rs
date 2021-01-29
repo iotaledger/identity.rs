@@ -53,7 +53,7 @@ fn subject(subject: &DID) -> Result<CredentialSubject> {
     CredentialSubject::from_json_value(json).map_err(Into::into)
 }
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
     let client: Client = Client::new()?;
 

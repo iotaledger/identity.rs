@@ -1,11 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use iota::MessageId;
+
 use crate::{
     chain::{AuthChain, DiffChain},
     did::{DocumentDiff, IotaDID, IotaDocument},
     error::Result,
-    tangle::MessageId,
 };
 
 #[derive(Debug)]

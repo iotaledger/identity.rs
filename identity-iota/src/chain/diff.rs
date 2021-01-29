@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::slice::Iter;
+use iota::Message;
+use iota::MessageId;
 
 use crate::{
     chain::{AuthChain, DocumentChain},
     did::{DocumentDiff, IotaDID},
     error::{Error, Result},
-    tangle::{Message, MessageId, MessageIndex, TangleRef as _},
+    tangle::{MessageExt, MessageIdExt, MessageIndex, TangleRef as _},
 };
 
 #[derive(Debug)]
@@ -117,13 +119,13 @@ impl DiffChain {
             });
         }
 
-        if diff.message_id().is_none() {
+        if diff.message_id().is_null() {
             return Err(Error::ChainError {
                 error: "Invalid Message Id",
             });
         }
 
-        if diff.previous_message_id().is_none() {
+        if diff.previous_message_id().is_null() {
             return Err(Error::ChainError {
                 error: "Invalid Previous Message Id",
             });

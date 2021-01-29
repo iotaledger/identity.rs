@@ -1,16 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::hash::Hash;
 use core::{
     borrow::Borrow,
     iter::FromIterator,
     ops::{Deref, DerefMut},
 };
-use std::collections::BTreeMap;
+use iota::MessageId;
+use std::collections::HashMap;
 
-use crate::tangle::{MessageId, TangleRef};
+use crate::tangle::TangleRef;
 
-type __Index<T> = BTreeMap<MessageId, Vec<T>>;
+type __Index<T> = HashMap<MessageId, Vec<T>>;
 
 #[derive(Clone, Debug)]
 pub struct MessageIndex<T> {
@@ -20,7 +22,7 @@ pub struct MessageIndex<T> {
 impl<T> MessageIndex<T> {
     /// Creates a new `MessageIndex`.
     pub fn new() -> Self {
-        Self { inner: BTreeMap::new() }
+        Self { inner: HashMap::new() }
     }
 
     /// Returns the total size of the index.
@@ -31,7 +33,7 @@ impl<T> MessageIndex<T> {
     pub fn remove_where<U>(&mut self, key: &U, f: impl Fn(&T) -> bool) -> Option<T>
     where
         MessageId: Borrow<U>,
-        U: Ord + ?Sized,
+        U: Hash + Eq + ?Sized,
     {
         if let Some(list) = self.inner.get_mut(key) {
             list.iter().position(f).map(|index| list.remove(index))

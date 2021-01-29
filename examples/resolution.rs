@@ -11,7 +11,7 @@ use identity_iota::{
     error::Result,
 };
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
     let client: Client = Client::new()?;
 

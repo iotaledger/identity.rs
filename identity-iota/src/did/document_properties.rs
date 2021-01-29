@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::{Object, Timestamp};
+use iota::MessageId;
 
-use crate::tangle::MessageId;
+use crate::tangle::MessageIdExt;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Properties {
     pub(crate) created: Timestamp,
     pub(crate) updated: Timestamp,
     pub(crate) immutable: bool,
-    #[serde(default, skip_serializing_if = "MessageId::is_none")]
+    #[serde(default = "MessageId::null", skip_serializing_if = "MessageIdExt::is_null")]
     pub(crate) previous_message_id: MessageId,
     #[serde(flatten)]
     pub(crate) properties: Object,
@@ -22,7 +23,7 @@ impl Properties {
             created: Timestamp::now(),
             updated: Timestamp::now(),
             immutable: false,
-            previous_message_id: MessageId::NONE,
+            previous_message_id: MessageId::null(),
             properties: Object::new(),
         }
     }

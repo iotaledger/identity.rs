@@ -17,14 +17,14 @@ use identity_core::{
     did_url::DID,
     proof::JcsEd25519Signature2020,
 };
+use iota::MessageId;
 use serde::Serialize;
 
 use crate::{
     client::{Client, Network},
     did::{DocumentDiff, IotaDID, IotaDocumentBuilder, Properties},
     error::{Error, Result},
-    tangle::{MessageId, TangleRef},
-    utils::utf8_to_trytes,
+    tangle::{MessageIdExt, TangleRef},
 };
 
 const AUTH_QUERY: (usize, MethodScope) = (0, MethodScope::Authentication);
@@ -90,12 +90,12 @@ impl IotaDocument {
 
             Ok(Self {
                 document: VerifiableDocument::with_proof(root, proof),
-                message_id: MessageId::NONE,
+                message_id: MessageId::null(),
             })
         } else {
             Ok(Self {
                 document: VerifiableDocument::new(root),
-                message_id: MessageId::NONE,
+                message_id: MessageId::null(),
             })
         }
     }
@@ -166,11 +166,8 @@ impl IotaDocument {
     }
 
     /// Sets the Tangle message id the previous DID document.
-    pub fn set_previous_message_id<T>(&mut self, value: T)
-    where
-        T: Into<MessageId>,
-    {
-        self.document.properties_mut().previous_message_id = value.into();
+    pub fn set_previous_message_id(&mut self, value: MessageId) {
+        self.document.properties_mut().previous_message_id = value;
     }
 
     /// Returns true if the `IotaDocument` is flagged as immutable.
@@ -355,27 +352,22 @@ impl IotaDocument {
 
     /// Publishes the `IotaDocument` to the Tangle using the provided `Client`.
     pub async fn publish_with_client(&mut self, client: &Client) -> Result<()> {
-        let transaction: _ = client.publish_document(self).await?;
-        let message_id: String = client.transaction_hash(&transaction);
+        let message_id: MessageId = client.publish_document(self).await?;
 
-        self.set_message_id(message_id.into());
+        self.set_message_id(message_id);
 
         Ok(())
     }
 
     /// Returns the Tangle address of the DID diff chain.
     pub fn diff_address(message_id: &MessageId) -> Result<String> {
-        if message_id.is_none() {
+        if message_id.is_null() {
             return Err(Error::InvalidDocument {
                 error: "Invalid Message Id",
             });
         }
 
-        let hash: String = IotaDID::encode_key(message_id.as_str().as_bytes());
-
-        let mut trytes: String = utf8_to_trytes(&hash);
-        trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
-        Ok(trytes)
+        Ok(IotaDID::encode_key(message_id.encode_hex().as_bytes()))
     }
 }
 
@@ -409,7 +401,7 @@ impl From<__Document> for IotaDocument {
     fn from(other: __Document) -> Self {
         Self {
             document: other,
-            message_id: MessageId::NONE,
+            message_id: MessageId::null(),
         }
     }
 }
