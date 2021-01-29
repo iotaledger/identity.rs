@@ -27,8 +27,3 @@ pub mod did;
 pub mod error;
 pub mod tangle;
 pub mod utils;
-
-/// Re-export `identity_core::crypto`; in the future this will be `crypto.rs`.
-pub mod crypto {
-    pub use identity_core::crypto::*;
-}

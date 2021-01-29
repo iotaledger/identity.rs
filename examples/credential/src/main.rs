@@ -8,6 +8,7 @@ use identity_core::{
     common::{Url, Value},
     convert::{FromJson as _, ToJson as _},
     credential::{Credential, CredentialBuilder, CredentialSubject, VerifiableCredential},
+    crypto::KeyPair,
     did_doc::MethodScope,
     did_url::DID,
     json,
@@ -15,7 +16,6 @@ use identity_core::{
 use identity_iota::{
     client::Client,
     credential::{CredentialValidation, CredentialValidator},
-    crypto::KeyPair,
     did::IotaDocument,
     error::Result,
 };

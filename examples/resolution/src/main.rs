@@ -3,10 +3,12 @@
 
 //! A basic example that generates a DID Document, publishes it to the Tangle,
 //! and retrieves information through DID Document resolution/dereferencing.
-use identity_core::resolver::{dereference, resolve, Dereference, Resolution};
+use identity_core::{
+    crypto::KeyPair,
+    resolver::{dereference, resolve, Dereference, Resolution},
+};
 use identity_iota::{
     client::Client,
-    crypto::KeyPair,
     did::{IotaDID, IotaDocument},
     error::Result,
 };
