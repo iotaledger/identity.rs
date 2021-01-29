@@ -9,7 +9,7 @@ use crate::{convert::ToJson, error::Result};
 /// hashed using SHA-256.
 pub fn jcs_sha256<T>(data: &T) -> Result<Output<Sha256>>
 where
-    T: ToJson,
+  T: ToJson,
 {
-    data.to_jcs().map(|json| Sha256::digest(&json))
+  data.to_jcs().map(|json| Sha256::digest(&json))
 }

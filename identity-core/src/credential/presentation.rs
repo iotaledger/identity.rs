@@ -5,10 +5,10 @@ use core::fmt::{Display, Error as FmtError, Formatter, Result as FmtResult};
 use serde::Serialize;
 
 use crate::{
-    common::{Context, Object, OneOrMany, Url},
-    convert::ToJson as _,
-    credential::{Credential, PresentationBuilder, RefreshService, TermsOfUse, VerifiableCredential},
-    error::{Error, Result},
+  common::{Context, Object, OneOrMany, Url},
+  convert::ToJson as _,
+  credential::{Credential, PresentationBuilder, RefreshService, TermsOfUse, VerifiableCredential},
+  error::{Error, Result},
 };
 
 /// A `Presentation` represents a bundle of one or more `VerifiableCredential`s.
@@ -16,114 +16,114 @@ use crate::{
 /// `Presentation`s can be signed with `Document`s to create `VerifiablePresentation`s.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Presentation<T = Object, U = Object> {
-    /// The JSON-LD context(s) applicable to the `Presentation`.
-    #[serde(rename = "@context")]
-    pub context: OneOrMany<Context>,
-    /// A unique `URI` referencing the subject of the `Presentation`.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<Url>,
-    /// One or more URIs defining the type of the `Presentation`.
-    #[serde(rename = "type")]
-    pub types: OneOrMany<String>,
-    /// Credential(s) expressing the claims of the `Presentation`.
-    #[serde(default = "Default::default", rename = "verifiableCredential")]
-    pub verifiable_credential: OneOrMany<VerifiableCredential<U>>,
-    /// The entity that generated the presentation.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub holder: Option<Url>,
-    /// Service(s) used to refresh an expired `Presentation`.
-    #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
-    pub refresh_service: OneOrMany<RefreshService>,
-    /// Terms-of-use specified by the `Presentation` holder.
-    #[serde(default, rename = "termsOfUse", skip_serializing_if = "OneOrMany::is_empty")]
-    pub terms_of_use: OneOrMany<TermsOfUse>,
-    /// Miscellaneous properties.
-    #[serde(flatten)]
-    pub properties: T,
+  /// The JSON-LD context(s) applicable to the `Presentation`.
+  #[serde(rename = "@context")]
+  pub context: OneOrMany<Context>,
+  /// A unique `URI` referencing the subject of the `Presentation`.
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub id: Option<Url>,
+  /// One or more URIs defining the type of the `Presentation`.
+  #[serde(rename = "type")]
+  pub types: OneOrMany<String>,
+  /// Credential(s) expressing the claims of the `Presentation`.
+  #[serde(default = "Default::default", rename = "verifiableCredential")]
+  pub verifiable_credential: OneOrMany<VerifiableCredential<U>>,
+  /// The entity that generated the presentation.
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub holder: Option<Url>,
+  /// Service(s) used to refresh an expired `Presentation`.
+  #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
+  pub refresh_service: OneOrMany<RefreshService>,
+  /// Terms-of-use specified by the `Presentation` holder.
+  #[serde(default, rename = "termsOfUse", skip_serializing_if = "OneOrMany::is_empty")]
+  pub terms_of_use: OneOrMany<TermsOfUse>,
+  /// Miscellaneous properties.
+  #[serde(flatten)]
+  pub properties: T,
 }
 
 impl<T, U> Presentation<T, U> {
-    /// Returns the base JSON-LD context for `Presentation`s.
-    pub fn base_context() -> &'static Context {
-        Credential::<U>::base_context()
+  /// Returns the base JSON-LD context for `Presentation`s.
+  pub fn base_context() -> &'static Context {
+    Credential::<U>::base_context()
+  }
+
+  /// Returns the base type for `Presentation`s.
+  pub const fn base_type() -> &'static str {
+    "VerifiablePresentation"
+  }
+
+  /// Creates a `PresentationBuilder` to configure a new `Presentation`.
+  ///
+  /// This is the same as `PresentationBuilder::new()`.
+  pub fn builder(properties: T) -> PresentationBuilder<T, U> {
+    PresentationBuilder::new(properties)
+  }
+
+  /// Returns a new `Presentation` based on the `PresentationBuilder` configuration.
+  pub fn from_builder(builder: PresentationBuilder<T, U>) -> Result<Self> {
+    let this: Self = Self {
+      context: builder.context.into(),
+      id: builder.id,
+      types: builder.types.into(),
+      verifiable_credential: builder.verifiable_credential.into(),
+      holder: builder.holder,
+      refresh_service: builder.refresh_service.into(),
+      terms_of_use: builder.terms_of_use.into(),
+      properties: builder.properties,
+    };
+
+    this.check_structure()?;
+
+    Ok(this)
+  }
+
+  /// Validates the semantic structure of the `Presentation`.
+  pub fn check_structure(&self) -> Result<()> {
+    // Ensure the base context is present and in the correct location
+    match self.context.get(0) {
+      Some(context) if context == Self::base_context() => {}
+      Some(_) | None => return Err(Error::InvalidPresentation("Missing Base Context".into())),
     }
 
-    /// Returns the base type for `Presentation`s.
-    pub const fn base_type() -> &'static str {
-        "VerifiablePresentation"
+    // The set of types MUST contain the base type
+    if !self.types.iter().any(|type_| type_ == Self::base_type()) {
+      return Err(Error::InvalidPresentation("Missing Base Type".into()));
     }
 
-    /// Creates a `PresentationBuilder` to configure a new `Presentation`.
-    ///
-    /// This is the same as `PresentationBuilder::new()`.
-    pub fn builder(properties: T) -> PresentationBuilder<T, U> {
-        PresentationBuilder::new(properties)
+    // Check all credentials.
+    for credential in self.verifiable_credential.iter() {
+      credential.check_structure()?;
     }
 
-    /// Returns a new `Presentation` based on the `PresentationBuilder` configuration.
-    pub fn from_builder(builder: PresentationBuilder<T, U>) -> Result<Self> {
-        let this: Self = Self {
-            context: builder.context.into(),
-            id: builder.id,
-            types: builder.types.into(),
-            verifiable_credential: builder.verifiable_credential.into(),
-            holder: builder.holder,
-            refresh_service: builder.refresh_service.into(),
-            terms_of_use: builder.terms_of_use.into(),
-            properties: builder.properties,
-        };
-
-        this.check_structure()?;
-
-        Ok(this)
-    }
-
-    /// Validates the semantic structure of the `Presentation`.
-    pub fn check_structure(&self) -> Result<()> {
-        // Ensure the base context is present and in the correct location
-        match self.context.get(0) {
-            Some(context) if context == Self::base_context() => {}
-            Some(_) | None => return Err(Error::InvalidPresentation("Missing Base Context".into())),
-        }
-
-        // The set of types MUST contain the base type
-        if !self.types.iter().any(|type_| type_ == Self::base_type()) {
-            return Err(Error::InvalidPresentation("Missing Base Type".into()));
-        }
-
-        // Check all credentials.
-        for credential in self.verifiable_credential.iter() {
-            credential.check_structure()?;
-        }
-
-        Ok(())
-    }
+    Ok(())
+  }
 }
 
 impl<T, U> Display for Presentation<T, U>
 where
-    T: Serialize,
-    U: Serialize,
+  T: Serialize,
+  U: Serialize,
 {
-    fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        if f.alternate() {
-            f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
-        } else {
-            f.write_str(&self.to_json().map_err(|_| FmtError)?)
-        }
+  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+    if f.alternate() {
+      f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
+    } else {
+      f.write_str(&self.to_json().map_err(|_| FmtError)?)
     }
+  }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        convert::FromJson as _,
-        credential::{CredentialSubject, VerifiableCredential, VerifiablePresentation},
-    };
+  use crate::{
+    convert::FromJson as _,
+    credential::{CredentialSubject, VerifiableCredential, VerifiablePresentation},
+  };
 
-    const JSON: &str = include_str!("../../tests/fixtures/vc/presentation-1.json");
+  const JSON: &str = include_str!("../../tests/fixtures/vc/presentation-1.json");
 
-    #[test]
+  #[test]
     #[rustfmt::skip]
     fn test_from_json() {
         let presentation: VerifiablePresentation = VerifiablePresentation::from_json(JSON).unwrap();

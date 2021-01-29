@@ -9,75 +9,75 @@ use crate::common::{Object, OneOrMany, Url};
 /// [More Info](https://www.w3.org/TR/vc-data-model/#terms-of-use)
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct TermsOfUse {
-    /// The instance id of the credential terms-of-use.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<Url>,
-    /// The type(s) of the credential terms-of-use.
-    #[serde(rename = "type")]
-    pub types: OneOrMany<String>,
-    /// Additional properties of the credential terms-of-use.
-    #[serde(flatten)]
-    pub properties: Object,
+  /// The instance id of the credential terms-of-use.
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub id: Option<Url>,
+  /// The type(s) of the credential terms-of-use.
+  #[serde(rename = "type")]
+  pub types: OneOrMany<String>,
+  /// Additional properties of the credential terms-of-use.
+  #[serde(flatten)]
+  pub properties: Object,
 }
 
 impl TermsOfUse {
-    /// Creates a new [`TermsOfUse`] instance.
-    pub fn new<T>(types: T) -> Self
-    where
-        T: Into<OneOrMany<String>>,
-    {
-        Self {
-            id: None,
-            types: types.into(),
-            properties: Object::new(),
-        }
+  /// Creates a new [`TermsOfUse`] instance.
+  pub fn new<T>(types: T) -> Self
+  where
+    T: Into<OneOrMany<String>>,
+  {
+    Self {
+      id: None,
+      types: types.into(),
+      properties: Object::new(),
     }
+  }
 
-    /// Creates a new [`TermsOfUse`] instance with the given `id`.
-    pub fn with_id<T, U>(types: T, id: Url) -> Self
-    where
-        T: Into<OneOrMany<String>>,
-    {
-        Self {
-            id: Some(id),
-            types: types.into(),
-            properties: Object::new(),
-        }
+  /// Creates a new [`TermsOfUse`] instance with the given `id`.
+  pub fn with_id<T, U>(types: T, id: Url) -> Self
+  where
+    T: Into<OneOrMany<String>>,
+  {
+    Self {
+      id: Some(id),
+      types: types.into(),
+      properties: Object::new(),
     }
+  }
 
-    /// Creates a new [`TermsOfUse`] instance with the given `properties`.
-    pub fn with_properties<T, U>(types: T, properties: Object) -> Self
-    where
-        T: Into<OneOrMany<String>>,
-    {
-        Self {
-            id: None,
-            types: types.into(),
-            properties,
-        }
+  /// Creates a new [`TermsOfUse`] instance with the given `properties`.
+  pub fn with_properties<T, U>(types: T, properties: Object) -> Self
+  where
+    T: Into<OneOrMany<String>>,
+  {
+    Self {
+      id: None,
+      types: types.into(),
+      properties,
     }
+  }
 
-    /// Creates a new [`TermsOfUse`] instance with the given `id` and `properties`.
-    pub fn with_id_and_properties<T, U, V>(types: T, id: Url, properties: Object) -> Self
-    where
-        T: Into<OneOrMany<String>>,
-    {
-        Self {
-            id: Some(id),
-            types: types.into(),
-            properties,
-        }
+  /// Creates a new [`TermsOfUse`] instance with the given `id` and `properties`.
+  pub fn with_id_and_properties<T, U, V>(types: T, id: Url, properties: Object) -> Self
+  where
+    T: Into<OneOrMany<String>>,
+  {
+    Self {
+      id: Some(id),
+      types: types.into(),
+      properties,
     }
+  }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{convert::FromJson as _, credential::TermsOfUse};
+  use crate::{convert::FromJson as _, credential::TermsOfUse};
 
-    const JSON1: &str = include_str!("../../../tests/fixtures/vc/terms-of-use-1.json");
-    const JSON2: &str = include_str!("../../../tests/fixtures/vc/terms-of-use-2.json");
+  const JSON1: &str = include_str!("../../../tests/fixtures/vc/terms-of-use-1.json");
+  const JSON2: &str = include_str!("../../../tests/fixtures/vc/terms-of-use-2.json");
 
-    #[test]
+  #[test]
     #[rustfmt::skip]
     fn test_from_json() {
         let policy: TermsOfUse = TermsOfUse::from_json(JSON1).unwrap();

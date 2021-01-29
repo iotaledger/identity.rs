@@ -8,47 +8,47 @@ use crate::common::{Object, OneOrMany, Url};
 /// [More Info](https://www.w3.org/TR/vc-data-model/#data-schemas)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct CredentialSchema {
-    /// A Url identifying the credential schema file.
-    pub id: Url,
-    /// The type(s) of the credential schema.
-    #[serde(rename = "type")]
-    pub types: OneOrMany<String>,
-    /// Additional properties of the credential schema.
-    #[serde(flatten)]
-    pub properties: Object,
+  /// A Url identifying the credential schema file.
+  pub id: Url,
+  /// The type(s) of the credential schema.
+  #[serde(rename = "type")]
+  pub types: OneOrMany<String>,
+  /// Additional properties of the credential schema.
+  #[serde(flatten)]
+  pub properties: Object,
 }
 
 impl CredentialSchema {
-    /// Creates a new [`CredentialSchema`].
-    pub fn new<T>(id: Url, types: T) -> Self
-    where
-        T: Into<OneOrMany<String>>,
-    {
-        Self::with_properties(id, types, Object::new())
-    }
+  /// Creates a new [`CredentialSchema`].
+  pub fn new<T>(id: Url, types: T) -> Self
+  where
+    T: Into<OneOrMany<String>>,
+  {
+    Self::with_properties(id, types, Object::new())
+  }
 
-    /// Creates a new [`CredentialSchema`] with the given `properties`.
-    pub fn with_properties<T>(id: Url, types: T, properties: Object) -> Self
-    where
-        T: Into<OneOrMany<String>>,
-    {
-        Self {
-            id,
-            types: types.into(),
-            properties,
-        }
+  /// Creates a new [`CredentialSchema`] with the given `properties`.
+  pub fn with_properties<T>(id: Url, types: T, properties: Object) -> Self
+  where
+    T: Into<OneOrMany<String>>,
+  {
+    Self {
+      id,
+      types: types.into(),
+      properties,
     }
+  }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{convert::FromJson as _, credential::CredentialSchema};
+  use crate::{convert::FromJson as _, credential::CredentialSchema};
 
-    const JSON1: &str = include_str!("../../../tests/fixtures/vc/credential-schema-1.json");
-    const JSON2: &str = include_str!("../../../tests/fixtures/vc/credential-schema-2.json");
-    const JSON3: &str = include_str!("../../../tests/fixtures/vc/credential-schema-3.json");
+  const JSON1: &str = include_str!("../../../tests/fixtures/vc/credential-schema-1.json");
+  const JSON2: &str = include_str!("../../../tests/fixtures/vc/credential-schema-2.json");
+  const JSON3: &str = include_str!("../../../tests/fixtures/vc/credential-schema-3.json");
 
-    #[test]
+  #[test]
     #[rustfmt::skip]
     fn test_from_json() {
         let schema: CredentialSchema = CredentialSchema::from_json(JSON1).unwrap();
