@@ -19,6 +19,7 @@ did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "bb8bda8f6d39451b08e
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
 digest = { version = "0.9", default-features = false }
 ed25519-zebra = { version = "2.2", default-features = false }
+hex = { version = "0.4", default-features = false }
 identity-diff = { version = "=0.1.0", path = "../identity-diff", default-features = false }
 rand = { version = "0.7", default-features = false, features = ["getrandom"] }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }

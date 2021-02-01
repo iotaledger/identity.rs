@@ -4,7 +4,7 @@
 //! Errors that may occur when working with Verifiable Credentials.
 
 /// Alias for a `Result` with the error type [`Error`].
-pub type Result<T, E = Error> = core::result::Result<T, E>;
+pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error)]

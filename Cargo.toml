@@ -2,6 +2,7 @@
 members = [
   "identity-core",
   "identity-credential",
+  "identity-did",
   "identity-diff",
   "identity-iota",
 

@@ -21,3 +21,19 @@ where
 {
   bs58::encode(data).with_alphabet(bs58::Alphabet::BITCOIN).into_string()
 }
+
+/// Decodes the given `data` as base16 (hex).
+pub fn decode_b16<T>(data: &T) -> Result<Vec<u8>>
+where
+  T: AsRef<[u8]> + ?Sized,
+{
+  hex::decode(data).map_err(Error::DecodeBase16)
+}
+
+/// Encodes the given `data` as base16 (hex).
+pub fn encode_b16<T>(data: &T) -> String
+where
+  T: AsRef<[u8]> + ?Sized,
+{
+  hex::encode(data)
+}

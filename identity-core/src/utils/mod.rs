@@ -3,7 +3,8 @@
 
 //! Misc. utility functions.
 
-mod base58;
+mod base_encoding;
 mod jcs_sha256;
 
-pub use self::{base58::*, jcs_sha256::*};
+pub use self::base_encoding::*;
+pub use self::jcs_sha256::*;

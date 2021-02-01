@@ -15,6 +15,9 @@ pub enum Error {
   /// Caused by a failure to decode Rust types from JSON.
   #[error("Failed to decode JSON: {0}")]
   DecodeJSON(serde_json::Error),
+  /// Caused by a failure to decode base16-encoded data.
+  #[error("Failed to decode base16 data: {0}")]
+  DecodeBase16(#[from] hex::FromHexError),
   /// Caused by a failure to decode base58-encoded data.
   #[error("Failed to decode base58 data: {0}")]
   DecodeBase58(#[from] bs58::decode::Error),
