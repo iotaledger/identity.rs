@@ -79,17 +79,17 @@ mod tests {
   use super::*;
 
   #[test]
-    #[rustfmt::skip]
-    fn test_new() {
-        // Valid
-        assert!(MessageId::new("BCZVFSZPSMLPEQUXVWQQIHHQJJXZPZWRERJVBKKXHKMJAQJUN9OIXDBKMWFSAQIGC9YNXCCFOFKBQZ999").is_some());
-        assert!(MessageId::new("999999999999999999999999999999999999999999999999999999999999999999999999999999999").is_some());
+  #[rustfmt::skip]
+  fn test_new() {
+    // Valid
+    assert!(MessageId::new("BCZVFSZPSMLPEQUXVWQQIHHQJJXZPZWRERJVBKKXHKMJAQJUN9OIXDBKMWFSAQIGC9YNXCCFOFKBQZ999").is_some());
+    assert!(MessageId::new("999999999999999999999999999999999999999999999999999999999999999999999999999999999").is_some());
 
-        // Invalid
-        assert!(MessageId::new("").is_none());
-        assert!(MessageId::new("         ").is_none());
-        assert!(MessageId::new("- - - - - - -").is_none());
-        assert!(MessageId::new("999999999999999999-999999999999999999999999999-9999999999999999999999-99999999999").is_none());
-        assert!(MessageId::new("BCZVFSZPSMLPEQUXVWQQIHHQJJXZPZWRERJVBKKXHKMJAQJUN9OIXDBKMWFSAQIGC9YNXCCFOFKBQZ").is_none());
-    }
+    // Invalid
+    assert!(MessageId::new("").is_none());
+    assert!(MessageId::new("         ").is_none());
+    assert!(MessageId::new("- - - - - - -").is_none());
+    assert!(MessageId::new("999999999999999999-999999999999999999999999999-9999999999999999999999-99999999999").is_none());
+    assert!(MessageId::new("BCZVFSZPSMLPEQUXVWQQIHHQJJXZPZWRERJVBKKXHKMJAQJUN9OIXDBKMWFSAQIGC9YNXCCFOFKBQZ").is_none());
+  }
 }
