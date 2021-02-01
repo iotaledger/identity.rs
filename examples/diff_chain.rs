@@ -3,6 +3,9 @@
 
 //! An example that utilizes a diff and auth chain to publish updates to a
 //! DID Document.
+//!
+//! cargo run --example diff_chain
+
 use identity_core::{
   crypto::KeyPair,
   did_doc::{MethodBuilder, MethodData, MethodRef, MethodType},

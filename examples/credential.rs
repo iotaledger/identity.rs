@@ -4,6 +4,9 @@
 //! A basic example that generates and publishes subject and issuer DID
 //! Documents, creates a VerifiableCredential specifying claims about the
 //! subject, and retrieves information through the CredentialValidator API.
+//!
+//! cargo run --example credential
+
 use identity_core::{
   common::{Url, Value},
   convert::{FromJson as _, ToJson as _},

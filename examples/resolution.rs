@@ -3,6 +3,9 @@
 
 //! A basic example that generates a DID Document, publishes it to the Tangle,
 //! and retrieves information through DID Document resolution/dereferencing.
+//!
+//! cargo run --example resolution
+
 use identity_core::{
   crypto::KeyPair,
   resolver::{dereference, resolve, Dereference, Resolution},
