@@ -1,21 +1,37 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::fmt::{Display, Error as FmtError, Formatter, Result as FmtResult};
-use did_doc::{Document, LdSuite, MethodQuery, MethodType, MethodWrap, SignatureOptions};
+use core::fmt::Display;
+use core::fmt::Error as FmtError;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
+use did_doc::Document;
+use did_doc::LdSuite;
+use did_doc::MethodQuery;
+use did_doc::MethodType;
+use did_doc::MethodWrap;
+use did_doc::SignatureOptions;
+use identity_core::common::Context;
+use identity_core::common::Object;
+use identity_core::common::OneOrMany;
+use identity_core::common::Timestamp;
+use identity_core::common::Url;
+use identity_core::convert::ToJson;
+use identity_core::crypto::SecretKey;
+use identity_core::proof::JcsEd25519Signature2020;
 use serde::Serialize;
 
-use crate::{
-  common::{Context, Object, OneOrMany, Timestamp, Url},
-  convert::ToJson as _,
-  credential::{
-    CredentialBuilder, CredentialSchema, CredentialStatus, CredentialSubject, Evidence, Issuer, RefreshService,
-    TermsOfUse, VerifiableCredential,
-  },
-  crypto::SecretKey,
-  error::{Error, Result},
-  proof::JcsEd25519Signature2020,
-};
+use crate::credential::Builder;
+use crate::credential::Evidence;
+use crate::credential::Issuer;
+use crate::credential::Policy;
+use crate::credential::Refresh;
+use crate::credential::Schema;
+use crate::credential::Status;
+use crate::credential::Subject;
+use crate::credential::VerifiableCredential;
+use crate::error::Error;
+use crate::error::Result;
 
 lazy_static! {
   static ref BASE_CONTEXT: Context = Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap());
@@ -37,7 +53,7 @@ pub struct Credential<T = Object> {
   pub types: OneOrMany<String>,
   /// One or more `Object`s representing the `Credential` subject(s).
   #[serde(rename = "credentialSubject")]
-  pub credential_subject: OneOrMany<CredentialSubject>,
+  pub credential_subject: OneOrMany<Subject>,
   /// A reference to the issuer of the `Credential`.
   pub issuer: Issuer,
   /// A timestamp of when the `Credential` becomes valid.
@@ -48,16 +64,16 @@ pub struct Credential<T = Object> {
   pub expiration_date: Option<Timestamp>,
   /// Information used to determine the current status of the `Credential`.
   #[serde(default, rename = "credentialStatus", skip_serializing_if = "OneOrMany::is_empty")]
-  pub credential_status: OneOrMany<CredentialStatus>,
+  pub credential_status: OneOrMany<Status>,
   /// Information used to assist in the enforcement of a specific `Credential` structure.
   #[serde(default, rename = "credentialSchema", skip_serializing_if = "OneOrMany::is_empty")]
-  pub credential_schema: OneOrMany<CredentialSchema>,
+  pub credential_schema: OneOrMany<Schema>,
   /// Service(s) used to refresh an expired `Credential`.
   #[serde(default, rename = "refreshService", skip_serializing_if = "OneOrMany::is_empty")]
-  pub refresh_service: OneOrMany<RefreshService>,
+  pub refresh_service: OneOrMany<Refresh>,
   /// Terms-of-use specified by the `Credential` issuer.
   #[serde(default, rename = "termsOfUse", skip_serializing_if = "OneOrMany::is_empty")]
-  pub terms_of_use: OneOrMany<TermsOfUse>,
+  pub terms_of_use: OneOrMany<Policy>,
   /// Human-readable evidence used to support the claims within the `Credential`.
   #[serde(default, skip_serializing_if = "OneOrMany::is_empty")]
   pub evidence: OneOrMany<Evidence>,
@@ -81,29 +97,27 @@ impl<T> Credential<T> {
     "VerifiableCredential"
   }
 
-  /// Creates a `CredentialBuilder` to configure a new `Credential`.
+  /// Creates a new `Builder` to configure a `Credential`.
   ///
-  /// This is the same as `CredentialBuilder::new()`.
-  pub fn builder(properties: T) -> CredentialBuilder<T> {
-    CredentialBuilder::new(properties)
+  /// This is the same as `Builder::new()`.
+  pub fn builder(properties: T) -> Builder<T> {
+    Builder::new(properties)
   }
 
-  /// Returns a new `Credential` based on the `CredentialBuilder` configuration.
-  pub fn from_builder(builder: CredentialBuilder<T>) -> Result<Self> {
+  /// Returns a new `Credential` based on the `Builder` configuration.
+  pub fn from_builder(builder: Builder<T>) -> Result<Self> {
     let this: Self = Self {
       context: builder.context.into(),
       id: builder.id,
       types: builder.types.into(),
-      credential_subject: builder.credential_subject.into(),
-      issuer: builder
-        .issuer
-        .ok_or_else(|| Error::InvalidCredential("Missing Credential Issuer".into()))?,
+      credential_subject: builder.subject.into(),
+      issuer: builder.issuer.ok_or(Error::MissingIssuer)?,
       issuance_date: builder.issuance_date.unwrap_or_default(),
       expiration_date: builder.expiration_date,
-      credential_status: builder.credential_status.into(),
-      credential_schema: builder.credential_schema.into(),
-      refresh_service: builder.refresh_service.into(),
-      terms_of_use: builder.terms_of_use.into(),
+      credential_status: builder.status.into(),
+      credential_schema: builder.schema.into(),
+      refresh_service: builder.refresh.into(),
+      terms_of_use: builder.policy.into(),
       evidence: builder.evidence.into(),
       non_transferable: builder.non_transferable,
       properties: builder.properties,
@@ -119,23 +133,23 @@ impl<T> Credential<T> {
     // Ensure the base context is present and in the correct location
     match self.context.get(0) {
       Some(context) if context == Self::base_context() => {}
-      Some(_) | None => return Err(Error::InvalidCredential("Missing Base Context".into())),
+      Some(_) | None => return Err(Error::MissingBaseContext),
     }
 
     // The set of types MUST contain the base type
     if !self.types.iter().any(|type_| type_ == Self::base_type()) {
-      return Err(Error::InvalidCredential("Missing Base Type".into()));
+      return Err(Error::MissingBaseType);
     }
 
     // Credentials MUST have at least one subject
     if self.credential_subject.is_empty() {
-      return Err(Error::InvalidCredential("Missing Subject".into()));
+      return Err(Error::MissingSubject);
     }
 
     // Each subject is defined as one or more properties - no empty objects
     for subject in self.credential_subject.iter() {
       if subject.id.is_none() && subject.properties.is_empty() {
-        return Err(Error::InvalidCredential("Invalid Subject".into()));
+        return Err(Error::InvalidSubject);
       }
     }
 
@@ -149,7 +163,7 @@ impl<T> Credential<T> {
     document: &Document<D1, D2, D3>,
     query: Q,
     secret: &SecretKey,
-  ) -> Result<VerifiableCredential<T>>
+  ) -> did_doc::Result<VerifiableCredential<T>>
   where
     T: Serialize,
     Q: Into<MethodQuery<'a>>,
@@ -167,7 +181,7 @@ impl<T> Credential<T> {
 
         Ok(verifiable)
       }
-      _ => Err(Error::InvalidCredential("Verification Method Not Supported".into())),
+      _ => Err(did_doc::Error::message("Verification Method Not Supported")),
     }
   }
 }
@@ -187,20 +201,22 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::{convert::FromJson as _, credential::Credential};
+  use identity_core::convert::FromJson;
 
-  const JSON1: &str = include_str!("../../tests/fixtures/vc/credential-1.json");
-  const JSON2: &str = include_str!("../../tests/fixtures/vc/credential-2.json");
-  const JSON3: &str = include_str!("../../tests/fixtures/vc/credential-3.json");
-  const JSON4: &str = include_str!("../../tests/fixtures/vc/credential-4.json");
-  const JSON5: &str = include_str!("../../tests/fixtures/vc/credential-5.json");
-  const JSON6: &str = include_str!("../../tests/fixtures/vc/credential-6.json");
-  const JSON7: &str = include_str!("../../tests/fixtures/vc/credential-7.json");
-  const JSON8: &str = include_str!("../../tests/fixtures/vc/credential-8.json");
-  const JSON9: &str = include_str!("../../tests/fixtures/vc/credential-9.json");
-  const JSON10: &str = include_str!("../../tests/fixtures/vc/credential-10.json");
-  const JSON11: &str = include_str!("../../tests/fixtures/vc/credential-11.json");
-  const JSON12: &str = include_str!("../../tests/fixtures/vc/credential-12.json");
+  use crate::credential::Credential;
+
+  const JSON1: &str = include_str!("../../tests/fixtures/credential-1.json");
+  const JSON2: &str = include_str!("../../tests/fixtures/credential-2.json");
+  const JSON3: &str = include_str!("../../tests/fixtures/credential-3.json");
+  const JSON4: &str = include_str!("../../tests/fixtures/credential-4.json");
+  const JSON5: &str = include_str!("../../tests/fixtures/credential-5.json");
+  const JSON6: &str = include_str!("../../tests/fixtures/credential-6.json");
+  const JSON7: &str = include_str!("../../tests/fixtures/credential-7.json");
+  const JSON8: &str = include_str!("../../tests/fixtures/credential-8.json");
+  const JSON9: &str = include_str!("../../tests/fixtures/credential-9.json");
+  const JSON10: &str = include_str!("../../tests/fixtures/credential-10.json");
+  const JSON11: &str = include_str!("../../tests/fixtures/credential-11.json");
+  const JSON12: &str = include_str!("../../tests/fixtures/credential-12.json");
 
   #[test]
   fn test_from_json() {

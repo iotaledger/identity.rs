@@ -1,7 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common::{Object, Url};
+use identity_core::common::Object;
+use identity_core::common::Url;
 
 /// A `Credential` issuer in object form.
 ///
@@ -48,20 +49,21 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::{convert::FromJson as _, credential::Issuer};
+  use identity_core::convert::FromJson;
 
-  const JSON1: &str = include_str!("../../../tests/fixtures/vc/issuer-1.json");
-  const JSON2: &str = include_str!("../../../tests/fixtures/vc/issuer-2.json");
+  use crate::credential::Issuer;
+
+  const JSON1: &str = include_str!("../../tests/fixtures/issuer-1.json");
+  const JSON2: &str = include_str!("../../tests/fixtures/issuer-2.json");
 
   #[test]
-    #[rustfmt::skip]
-    fn test_from_json() {
-        let issuer: Issuer = Issuer::from_json(JSON1).unwrap();
-        assert!(matches!(issuer, Issuer::Url(_)));
-        assert_eq!(issuer.url(), "https://example.edu/issuers/14");
+  fn test_from_json() {
+    let issuer: Issuer = Issuer::from_json(JSON1).unwrap();
+    assert!(matches!(issuer, Issuer::Url(_)));
+    assert_eq!(issuer.url(), "https://example.edu/issuers/14");
 
-        let issuer: Issuer = Issuer::from_json(JSON2).unwrap();
-        assert!(matches!(issuer, Issuer::Obj(_)));
-        assert_eq!(issuer.url(), "did:example:76e12ec712ebc6f1c221ebfeb1f");
-    }
+    let issuer: Issuer = Issuer::from_json(JSON2).unwrap();
+    assert!(matches!(issuer, Issuer::Obj(_)));
+    assert_eq!(issuer.url(), "did:example:76e12ec712ebc6f1c221ebfeb1f");
+  }
 }

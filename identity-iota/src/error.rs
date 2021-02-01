@@ -9,6 +9,8 @@ pub enum Error {
   CoreError(#[from] identity_core::Error),
   #[error("Diff Error: {0}")]
   DiffError(#[from] identity_core::identity_diff::Error),
+  #[error("Credential Error: {0}")]
+  CredError(#[from] identity_credential::Error),
   #[error("Invalid DID: {0}")]
   InvalidDID(#[from] identity_core::did_url::Error),
   #[error("Invalid Document: {0}")]
@@ -31,6 +33,8 @@ pub enum Error {
   InvalidTransactionTrytes,
   #[error("Invalid Bundle Tail")]
   InvalidBundleTail,
+  #[error("Invalid PResentation Holder")]
+  InvalidPresentationHolder,
   #[error("Chain Error: {error}")]
   ChainError { error: &'static str },
 }

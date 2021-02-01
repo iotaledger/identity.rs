@@ -1,19 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::{
-  common::Object,
-  convert::FromJson as _,
-  credential::{VerifiableCredential, VerifiablePresentation},
-  error::Error,
-};
+use identity_core::{common::Object, convert::FromJson as _};
+use identity_credential::{credential::VerifiableCredential, presentation::VerifiablePresentation};
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::BTreeMap;
 
 use crate::{
   client::Client,
   did::{IotaDID, IotaDocument},
-  error::Result,
+  error::{Error, Result},
 };
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -116,7 +112,7 @@ impl<'a> CredentialValidator<'a> {
       .holder
       .as_ref()
       .map(|holder| holder.as_str())
-      .ok_or_else(|| Error::InvalidPresentation("Presentation missing `holder`".into()))?;
+      .ok_or(Error::InvalidPresentationHolder)?;
 
     let holder: DocumentValidation = self.validate_document(holder).await?;
     let verified: bool = holder.document.verify_data(&presentation).is_ok();

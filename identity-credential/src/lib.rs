@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Identity Core
+//! Types and traits for working with Verifiable Credentials/Presentations.
 
 #![warn(
   missing_docs,
@@ -14,20 +14,14 @@
 )]
 
 #[macro_use]
-extern crate serde;
-
-pub use did_doc;
-pub use did_url;
-pub use identity_diff;
-pub use serde_json::json;
+extern crate lazy_static;
 
 #[macro_use]
-pub mod common;
-pub mod convert;
-pub mod crypto;
-pub mod error;
-pub mod proof;
-pub mod resolver;
-pub mod utils;
+extern crate serde;
 
-pub use error::{Error, Result};
+pub mod credential;
+pub mod error;
+pub mod presentation;
+
+pub use self::error::Error;
+pub use self::error::Result;

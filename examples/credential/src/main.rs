@@ -7,12 +7,12 @@
 use identity_core::{
   common::{Url, Value},
   convert::{FromJson as _, ToJson as _},
-  credential::{Credential, CredentialBuilder, CredentialSubject, VerifiableCredential},
   crypto::KeyPair,
   did_doc::MethodScope,
   did_url::DID,
   json,
 };
+use identity_credential::credential::{Builder as CredentialBuilder, Credential, Subject, VerifiableCredential};
 use identity_iota::{
   client::Client,
   credential::{CredentialValidation, CredentialValidator},
@@ -41,16 +41,16 @@ async fn document(client: &Client) -> Result<(IotaDocument, KeyPair)> {
   Ok((document, keypair))
 }
 
-fn subject(subject: &DID) -> Result<CredentialSubject> {
+fn subject(subject: &DID) -> Result<Subject> {
   let json: Value = json!({
-      "id": subject.as_str(),
-      "degree": {
-          "type": "BachelorDegree",
-          "name": "Bachelor of Science and Arts"
-      }
+    "id": subject.as_str(),
+    "degree": {
+      "type": "BachelorDegree",
+      "name": "Bachelor of Science and Arts"
+    }
   });
 
-  CredentialSubject::from_json_value(json).map_err(Into::into)
+  Subject::from_json_value(json).map_err(Into::into)
 }
 
 #[smol_potat::main]
@@ -64,7 +64,7 @@ async fn main() -> Result<()> {
   let credential: Credential = CredentialBuilder::default()
     .issuer(Url::parse(doc_iss.id())?)
     .type_("UniversityDegreeCredential")
-    .credential_subject(subject(&doc_sub.id())?)
+    .subject(subject(&doc_sub.id())?)
     .build()?;
 
   // Extract the default verification method from the authentication scope and

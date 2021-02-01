@@ -1,0 +1,22 @@
+[package]
+name = "identity-credential"
+version = "0.1.0"
+authors = ["IOTA Identity"]
+edition = "2018"
+description = "An implementation of the Verfiable Credentials standard."
+readme = "../README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "identity"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "bb8bda8f6d39451b08e3cc198f956c212a3b87f8", default-features = false, features = ["std"] }
+did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
+identity-core = { version = "=0.1.0", path = "../identity-core" }
+lazy_static = { version = "1.4", default-features = false }
+serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+thiserror = { version = "1.0", default-features = false }
+
+[dev-dependencies]
+serde_json = { version = "1.0" }

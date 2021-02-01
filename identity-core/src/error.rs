@@ -33,12 +33,6 @@ pub enum Error {
   /// Caused by attempting to parse an invalid `Timestamp`.
   #[error("Invalid Timestamp: {0}")]
   InvalidTimestamp(#[from] chrono::ParseError),
-  /// Caused by attempting to perform an invalid `Credential` operation.
-  #[error("Invalid Credential: {0}")]
-  InvalidCredential(String),
-  /// Caused by attempting to perform an invalid `Presentation` operation.
-  #[error("Invalid Presentation: {0}")]
-  InvalidPresentation(String),
   /// Caused by a failure to resolve a DID.
   #[error("DID Resolution Error: {0}")]
   ResolutionError(anyhow::Error),

@@ -1,13 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common::{Object, OneOrMany, Url};
+use identity_core::common::Object;
+use identity_core::common::OneOrMany;
+use identity_core::common::Url;
 
 /// Information used to refresh or assert the status of a `Credential`.
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#refreshing)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct RefreshService {
+pub struct Refresh {
   /// The Url of the credential refresh service.
   pub id: Url,
   /// The type(s) of the credential refresh service.
@@ -18,8 +20,8 @@ pub struct RefreshService {
   pub properties: Object,
 }
 
-impl RefreshService {
-  /// Creates a new [`RefreshService`].
+impl Refresh {
+  /// Creates a new [`Refresh`].
   pub fn new<T>(id: Url, types: T) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -27,7 +29,7 @@ impl RefreshService {
     Self::with_properties(id, types, Object::new())
   }
 
-  /// Creates a new [`RefreshService`] with the given `properties`.
+  /// Creates a new [`Refresh`] with the given `properties`.
   pub fn with_properties<T>(id: Url, types: T, properties: Object) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -42,15 +44,16 @@ impl RefreshService {
 
 #[cfg(test)]
 mod tests {
-  use crate::{convert::FromJson as _, credential::RefreshService};
+  use identity_core::convert::FromJson;
 
-  const JSON: &str = include_str!("../../../tests/fixtures/vc/refresh-service-1.json");
+  use crate::credential::Refresh;
+
+  const JSON: &str = include_str!("../../tests/fixtures/refresh-1.json");
 
   #[test]
-    #[rustfmt::skip]
-    fn test_from_json() {
-        let service: RefreshService = RefreshService::from_json(JSON).unwrap();
-        assert_eq!(service.id, "https://example.edu/refresh/3732");
-        assert_eq!(service.types.as_slice(), ["ManualRefreshService2018"]);
-    }
+  fn test_from_json() {
+    let service: Refresh = Refresh::from_json(JSON).unwrap();
+    assert_eq!(service.id, "https://example.edu/refresh/3732");
+    assert_eq!(service.types.as_slice(), ["ManualRefreshService2018"]);
+  }
 }

@@ -1,13 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common::{Object, OneOrMany, Url};
+use identity_core::common::Object;
+use identity_core::common::OneOrMany;
+use identity_core::common::Url;
 
 /// Information used to determine the current status of a `Credential`.
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#status)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct CredentialStatus {
+pub struct Status {
   /// A Url identifying the credential status.
   pub id: Url,
   /// The type(s) of the credential status.
@@ -18,8 +20,8 @@ pub struct CredentialStatus {
   pub properties: Object,
 }
 
-impl CredentialStatus {
-  /// Creates a new [`CredentialStatus`].
+impl Status {
+  /// Creates a new [`Status`].
   pub fn new<T>(id: Url, types: T) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -27,7 +29,7 @@ impl CredentialStatus {
     Self::with_properties(id, types, Object::new())
   }
 
-  /// Creates a new [`CredentialStatus`] with the given `properties`.
+  /// Creates a new [`Status`] with the given `properties`.
   pub fn with_properties<T>(id: Url, types: T, properties: Object) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -42,15 +44,16 @@ impl CredentialStatus {
 
 #[cfg(test)]
 mod tests {
-  use crate::{convert::FromJson as _, credential::CredentialStatus};
+  use identity_core::convert::FromJson;
 
-  const JSON: &str = include_str!("../../../tests/fixtures/vc/credential-status-1.json");
+  use crate::credential::Status;
+
+  const JSON: &str = include_str!("../../tests/fixtures/status-1.json");
 
   #[test]
-    #[rustfmt::skip]
-    fn test_from_json() {
-        let status: CredentialStatus = CredentialStatus::from_json(JSON).unwrap();
-        assert_eq!(status.id, "https://example.edu/status/24");
-        assert_eq!(status.types.as_slice(), ["CredentialStatusList2017"]);
-    }
+  fn test_from_json() {
+    let status: Status = Status::from_json(JSON).unwrap();
+    assert_eq!(status.id, "https://example.edu/status/24");
+    assert_eq!(status.types.as_slice(), ["CredentialStatusList2017"]);
+  }
 }

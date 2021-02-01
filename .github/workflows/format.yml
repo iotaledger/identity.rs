@@ -21,6 +21,7 @@ jobs:
         project:
           [
             identity-core,
+            identity-credential,
             identity-diff,
             identity-iota,
             bindings/wasm,
