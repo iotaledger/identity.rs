@@ -81,7 +81,7 @@ where
     let query: MethodQuery<'_> = signature.try_into()?;
     let method: MethodWrap<'_, M> = resolver.try_resolve_method(query)?;
 
-    if !self.methods.is_empty() || !self.methods.contains(&method.key_type()) {
+    if !self.methods.is_empty() && !self.methods.contains(&method.key_type()) {
       return Err(Error::UnknownMethodType);
     }
 

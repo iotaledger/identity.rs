@@ -144,71 +144,18 @@ pub(crate) fn ed25519_verify(message: &[u8], signature: &[u8], public: &[u8]) ->
 
 #[cfg(test)]
 mod tests {
-  // const UNSIGNED: &str = r##"
-  //   {
-  //     "id": "did:example:123",
-  //     "verificationMethod": [
-  //       {
-  //         "id": "did:example:123#key-1",
-  //         "type": "JcsEd25519Key2020",
-  //         "controller": "did:example:123",
-  //         "publicKeyBase58": "6b23ioXQSAayuw13PGFMCAKqjgqoLTpeXWCy5WRfw28c"
-  //       }
-  //     ],
-  //     "service": [
-  //       {
-  //         "id": "did:schema:id",
-  //         "type": "schema",
-  //         "serviceEndpoint": "https://example.com"
-  //       }
-  //     ]
-  //   }
-  // "##;
-
-  // const SIGNED: &str = r##"
-  //   {
-  //     "id": "did:example:123",
-  //     "verificationMethod": [
-  //       {
-  //         "id": "did:example:123#key-1",
-  //         "type": "JcsEd25519Key2020",
-  //         "controller": "did:example:123",
-  //         "publicKeyBase58": "6b23ioXQSAayuw13PGFMCAKqjgqoLTpeXWCy5WRfw28c"
-  //       }
-  //     ],
-  //     "service": [
-  //       {
-  //         "id": "did:schema:id",
-  //         "type": "schema",
-  //         "serviceEndpoint": "https://example.com"
-  //       }
-  //     ],
-  //     "proof": {
-  //       "verificationMethod": "#key-1",
-  //       "type": "JcsEd25519Signature2020",
-  //       "signatureValue": "piKnvB438vWsinW1dqq2EYRzcYFuR7Qm9X8t2S6TPPLDokLwcFBXnnERk6jmS8RXKTJnXKWw1Q9oNhYTwbR7vJkaJT8ZGgwDHNxa6mrMNsQsWkM4rg6EYY99xQko7FnpAMn"
-  //     }
-  //   }
-  // "##;
-
-  // use identity_did::signature::LdSuite;
-  // use identity_did::signature::VerifiableDocument;
-
   use super::ed25519_sign;
   use super::ed25519_verify;
-  // use crate::convert::FromJson;
-  // use crate::crypto::JcsEd25519Signature2020;
-  // use crate::crypto::SignatureData;
-  // use crate::crypto::SignatureOptions;
   use crate::utils::decode_b58;
+
+  const SIGNATURE_HELLO: &[u8] = &[
+    12, 203, 235, 144, 80, 6, 163, 39, 181, 17, 44, 123, 250, 162, 165, 145, 135, 132, 32, 152, 24, 168, 55, 80, 84,
+    139, 153, 101, 102, 27, 157, 29, 70, 124, 64, 120, 250, 172, 186, 163, 108, 27, 208, 248, 134, 115, 3, 154, 222,
+    165, 31, 93, 33, 108, 212, 92, 191, 14, 21, 40, 251, 103, 241, 10, 104, 101, 108, 108, 111,
+  ];
 
   const PUBLIC_B58: &str = "6b23ioXQSAayuw13PGFMCAKqjgqoLTpeXWCy5WRfw28c";
   const SECRET_B58: &str = "3qsrFcQqVuPpuGrRkU4wkQRvw1tc1C5EmEDPioS1GzQ2pLoThy5TYS2BsrwuzHYDnVqcYhMSpDhTXGst6H5ttFkG";
-
-  #[rustfmt::skip]
-  const SIGNATURE_HELLO: &[u8] = &[12, 203, 235, 144, 80, 6, 163, 39, 181, 17, 44, 123, 250, 162, 165, 145, 135, 132, 32, 152, 24, 168, 55, 80, 84, 139, 153, 101, 102, 27, 157, 29, 70, 124, 64, 120, 250, 172, 186, 163, 108, 27, 208, 248, 134, 115, 3, 154, 222, 165, 31, 93, 33, 108, 212, 92, 191, 14, 21, 40, 251, 103, 241, 10, 104, 101, 108, 108, 111];
-
-  // const SIGNATURE_DOCUMENT: &str = "piKnvB438vWsinW1dqq2EYRzcYFuR7Qm9X8t2S6TPPLDokLwcFBXnnERk6jmS8RXKTJnXKWw1Q9oNhYTwbR7vJkaJT8ZGgwDHNxa6mrMNsQsWkM4rg6EYY99xQko7FnpAMn";
 
   #[test]
   fn test_ed25519_can_sign_and_verify() {
@@ -221,72 +168,4 @@ mod tests {
     let verified: _ = ed25519_verify(b"hello", &signature, &public);
     assert!(verified.is_ok());
   }
-
-  // #[test]
-  // fn test_jcsed25519signature2020_can_sign_and_verify() {
-  //   let secret = decode_b58(SECRET_B58).unwrap();
-  //   let mut unsigned: VerifiableDocument = VerifiableDocument::from_json(UNSIGNED).unwrap();
-  //   let signed: VerifiableDocument = VerifiableDocument::from_json(SIGNED).unwrap();
-  //   let method = unsigned.try_resolve("#key-1").unwrap();
-  //   let options: SignatureOptions = SignatureOptions::new(method.try_into_fragment().unwrap());
-  //   let suite: LdSuite<_> = LdSuite::new(JcsEd25519Signature2020);
-
-  //   suite.sign(&mut unsigned, options, &secret).unwrap();
-
-  //   assert!(suite.verify(&unsigned).is_ok());
-  //   assert_eq!(
-  //     unsigned.properties().proof().unwrap().data().as_str(),
-  //     SIGNATURE_DOCUMENT
-  //   );
-
-  //   assert_eq!(
-  //     serde_jcs::to_vec(&unsigned).unwrap(),
-  //     serde_jcs::to_vec(&signed).unwrap()
-  //   );
-  // }
-
-  // #[test]
-  // fn test_jcsed25519signature2020_fails_when_key_is_mutated() {
-  //   let secret = decode_b58(SECRET_B58).unwrap();
-  //   let mut document: VerifiableDocument = VerifiableDocument::from_json(UNSIGNED).unwrap();
-  //   let method = document.try_resolve("#key-1").unwrap();
-  //   let options: SignatureOptions = SignatureOptions::new(method.try_into_fragment().unwrap());
-  //   let suite: LdSuite<_> = LdSuite::new(JcsEd25519Signature2020);
-
-  //   suite.sign(&mut document, options, &secret).unwrap();
-
-  //   assert!(suite.verify(&document).is_ok());
-  //   assert_eq!(
-  //     document.properties().proof().unwrap().data().as_str(),
-  //     SIGNATURE_DOCUMENT
-  //   );
-
-  //   document.proof_mut().unwrap().verification_method = "#key-2".into();
-
-  //   assert!(suite.verify(&document).is_err());
-  // }
-
-  // #[test]
-  // fn test_jcsed25519signature2020_fails_when_signature_is_mutated() {
-  //   let secret = decode_b58(SECRET_B58).unwrap();
-  //   let mut document: VerifiableDocument = VerifiableDocument::from_json(UNSIGNED).unwrap();
-  //   let method = document.try_resolve("#key-1").unwrap();
-  //   let options: SignatureOptions = SignatureOptions::new(method.try_into_fragment().unwrap());
-  //   let suite: LdSuite<_> = LdSuite::new(JcsEd25519Signature2020);
-
-  //   suite.sign(&mut document, options, &secret).unwrap();
-
-  //   assert!(suite.verify(&document).is_ok());
-  //   assert_eq!(
-  //     document.properties().proof().unwrap().data().as_str(),
-  //     SIGNATURE_DOCUMENT
-  //   );
-
-  //   document
-  //     .proof_mut()
-  //     .unwrap()
-  //     .set_data(SignatureData::Signature("foo".into()));
-
-  //   assert!(suite.verify(&document).is_err());
-  // }
 }
