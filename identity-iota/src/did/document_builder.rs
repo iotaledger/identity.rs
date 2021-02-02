@@ -12,6 +12,7 @@ use identity_did::verification::MethodType;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::did::Properties;
+use crate::error::Error;
 use crate::error::Result;
 
 #[derive(Clone, Debug)]
@@ -108,7 +109,7 @@ impl IotaDocumentBuilder {
   fn default_keypair(method: MethodType) -> Result<KeyPair> {
     match method {
       MethodType::Ed25519VerificationKey2018 => KeyPair::new_ed25519().map_err(Into::into),
-      _ => todo!("Invalid Method Type"),
+      _ => Err(Error::InvalidDocument { error: "Unknown Method Type" }),
     }
   }
 }
