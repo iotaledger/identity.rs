@@ -6,5 +6,5 @@
 mod builder;
 mod service;
 
-pub use self::builder::Builder;
+pub use self::builder::ServiceBuilder;
 pub use self::service::Service;

@@ -11,7 +11,7 @@ mod method_scope;
 mod method_type;
 mod method_wrap;
 
-pub use self::builder::Builder;
+pub use self::builder::MethodBuilder;
 pub use self::method::Method;
 pub use self::method_data::MethodData;
 pub use self::method_ident::MethodIdent;

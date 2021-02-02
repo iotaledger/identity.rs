@@ -18,7 +18,7 @@ use crate::credential::Refresh;
 use crate::credential::VerifiableCredential;
 use crate::error::Error;
 use crate::error::Result;
-use crate::presentation::Builder;
+use crate::presentation::PresentationBuilder;
 
 /// A `Presentation` represents a bundle of one or more `VerifiableCredential`s.
 ///
@@ -62,15 +62,15 @@ impl<T, U> Presentation<T, U> {
     "VerifiablePresentation"
   }
 
-  /// Creates a `Builder` to configure a new `Presentation`.
+  /// Creates a `PresentationBuilder` to configure a new `Presentation`.
   ///
-  /// This is the same as `Builder::new()`.
-  pub fn builder(properties: T) -> Builder<T, U> {
-    Builder::new(properties)
+  /// This is the same as `PresentationBuilder::new()`.
+  pub fn builder(properties: T) -> PresentationBuilder<T, U> {
+    PresentationBuilder::new(properties)
   }
 
-  /// Returns a new `Presentation` based on the `Builder` configuration.
-  pub fn from_builder(builder: Builder<T, U>) -> Result<Self> {
+  /// Returns a new `Presentation` based on the `PresentationBuilder` configuration.
+  pub fn from_builder(builder: PresentationBuilder<T, U>) -> Result<Self> {
     let this: Self = Self {
       context: builder.context.into(),
       id: builder.id,

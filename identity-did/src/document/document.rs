@@ -12,7 +12,7 @@ use identity_core::crypto::SignatureOptions;
 use serde::Serialize;
 
 use crate::did::DID;
-use crate::document::Builder;
+use crate::document::DocumentBuilder;
 use crate::error::Error;
 use crate::error::Result;
 use crate::service::Service;
@@ -53,15 +53,15 @@ pub struct Document<T = (), U = (), V = ()> {
 }
 
 impl<T, U, V> Document<T, U, V> {
-  /// Creates a `Builder` to configure a new `Document`.
+  /// Creates a `DocumentBuilder` to configure a new `Document`.
   ///
-  /// This is the same as `Builder::new()`.
-  pub fn builder(properties: T) -> Builder<T, U, V> {
-    Builder::new(properties)
+  /// This is the same as `DocumentBuilder::new()`.
+  pub fn builder(properties: T) -> DocumentBuilder<T, U, V> {
+    DocumentBuilder::new(properties)
   }
 
-  /// Returns a new `Document` based on the `Builder` configuration.
-  pub fn from_builder(builder: Builder<T, U, V>) -> Result<Self> {
+  /// Returns a new `Document` based on the `DocumentBuilder` configuration.
+  pub fn from_builder(builder: DocumentBuilder<T, U, V>) -> Result<Self> {
     Ok(Self {
       id: builder.id.ok_or(Error::InvalidDocumentId)?,
       controller: builder.controller,
@@ -334,9 +334,9 @@ impl<T, U, V> ResolveMethod<U> for Document<T, U, V> {
 #[cfg(test)]
 mod tests {
   use crate::did::DID;
-  use crate::document::Builder;
+  use crate::document::DocumentBuilder;
   use crate::document::Document;
-  use crate::verification::Builder as MethodBuilder;
+  use crate::verification::MethodBuilder;
   use crate::verification::Method;
   use crate::verification::MethodData;
   use crate::verification::MethodScope;
@@ -359,7 +359,7 @@ mod tests {
   fn document() -> Document {
     let controller: DID = controller();
 
-    Builder::default()
+    DocumentBuilder::default()
       .id(controller.clone())
       .verification_method(method(&controller, "#key-1"))
       .verification_method(method(&controller, "#key-2"))

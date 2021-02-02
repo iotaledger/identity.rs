@@ -12,7 +12,7 @@ use serde::Serialize;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
-use crate::service::Builder;
+use crate::service::ServiceBuilder;
 
 /// A DID Document Service
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -27,15 +27,15 @@ pub struct Service<T = ()> {
 }
 
 impl<T> Service<T> {
-  /// Creates a `Builder` to configure a new `Service`.
+  /// Creates a `ServiceBuilder` to configure a new `Service`.
   ///
-  /// This is the same as `Builder::new()`.
-  pub fn builder(properties: T) -> Builder<T> {
-    Builder::new(properties)
+  /// This is the same as `ServiceBuilder::new()`.
+  pub fn builder(properties: T) -> ServiceBuilder<T> {
+    ServiceBuilder::new(properties)
   }
 
-  /// Returns a new `Service` based on the `Builder` configuration.
-  pub fn from_builder(builder: Builder<T>) -> Result<Self> {
+  /// Returns a new `Service` based on the `ServiceBuilder` configuration.
+  pub fn from_builder(builder: ServiceBuilder<T>) -> Result<Self> {
     Ok(Self {
       id: builder.id.ok_or(Error::InvalidServiceId)?,
       type_: builder.type_.ok_or(Error::InvalidServiceType)?,

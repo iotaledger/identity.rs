@@ -11,9 +11,9 @@ use crate::utils::DIDKey;
 use crate::verification::Method;
 use crate::verification::MethodRef;
 
-/// A `Builder` is used to generate a customized `Document`.
+/// A `DocumentBuilder` is used to generate a customized `Document`.
 #[derive(Clone, Debug)]
-pub struct Builder<T = (), U = (), V = ()> {
+pub struct DocumentBuilder<T = (), U = (), V = ()> {
   pub(crate) id: Option<DID>,
   pub(crate) controller: Option<DID>,
   pub(crate) also_known_as: Vec<Url>,
@@ -27,8 +27,8 @@ pub struct Builder<T = (), U = (), V = ()> {
   pub(crate) properties: T,
 }
 
-impl<T, U, V> Builder<T, U, V> {
-  /// Creates a new `Builder`.
+impl<T, U, V> DocumentBuilder<T, U, V> {
+  /// Creates a new `DocumentBuilder`.
   pub fn new(properties: T) -> Self {
     Self {
       id: None,
@@ -115,13 +115,13 @@ impl<T, U, V> Builder<T, U, V> {
     self
   }
 
-  /// Returns a new `Document` based on the `Builder` configuration.
+  /// Returns a new `Document` based on the `DocumentBuilder` configuration.
   pub fn build(self) -> Result<Document<T, U, V>> {
     Document::from_builder(self)
   }
 }
 
-impl<T, U, V> Default for Builder<T, U, V>
+impl<T, U, V> Default for DocumentBuilder<T, U, V>
 where
   T: Default,
 {
@@ -137,6 +137,6 @@ mod tests {
   #[test]
   #[should_panic = "InvalidDocumentId"]
   fn test_missing_id() {
-    let _: Document = Builder::default().build().unwrap();
+    let _: Document = DocumentBuilder::default().build().unwrap();
   }
 }

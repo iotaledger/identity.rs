@@ -12,9 +12,9 @@ use crate::credential::VerifiableCredential;
 use crate::error::Result;
 use crate::presentation::Presentation;
 
-/// A `Builder` is used to create a customized `Presentation`.
+/// A `PresentationBuilder` is used to create a customized `Presentation`.
 #[derive(Clone, Debug)]
-pub struct Builder<T = Object, U = Object> {
+pub struct PresentationBuilder<T = Object, U = Object> {
   pub(crate) context: Vec<Context>,
   pub(crate) id: Option<Url>,
   pub(crate) types: Vec<String>,
@@ -25,8 +25,8 @@ pub struct Builder<T = Object, U = Object> {
   pub(crate) properties: T,
 }
 
-impl<T, U> Builder<T, U> {
-  /// Creates a new `Builder`.
+impl<T, U> PresentationBuilder<T, U> {
+  /// Creates a new `PresentationBuilder`.
   pub fn new(properties: T) -> Self {
     Self {
       context: vec![Presentation::<T, U>::base_context().clone()],
@@ -89,13 +89,13 @@ impl<T, U> Builder<T, U> {
     self
   }
 
-  /// Returns a new `Presentation` based on the `Builder` configuration.
+  /// Returns a new `Presentation` based on the `PresentationBuilder` configuration.
   pub fn build(self) -> Result<Presentation<T, U>> {
     Presentation::from_builder(self)
   }
 }
 
-impl<T> Builder<Object, T> {
+impl<T> PresentationBuilder<Object, T> {
   /// Adds a new custom property to the `Presentation`.
   #[must_use]
   pub fn property<K, V>(mut self, key: K, value: V) -> Self
@@ -122,7 +122,7 @@ impl<T> Builder<Object, T> {
   }
 }
 
-impl<T, U> Default for Builder<T, U>
+impl<T, U> Default for PresentationBuilder<T, U>
 where
   T: Default,
 {
@@ -139,20 +139,20 @@ mod tests {
   use identity_core::crypto::KeyPair;
   use identity_core::utils::encode_b58;
   use identity_did::did::DID;
-  use identity_did::document::Builder as DocumentBuilder;
+  use identity_did::document::DocumentBuilder;
   use identity_did::document::Document;
-  use identity_did::verification::Builder as MethodBuilder;
+  use identity_did::verification::MethodBuilder;
   use identity_did::verification::Method;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodType;
   use serde_json::json;
   use serde_json::Value;
 
-  use crate::credential::Builder as CredentialBuilder;
+  use crate::credential::CredentialBuilder;
   use crate::credential::Credential;
   use crate::credential::Subject;
   use crate::credential::VerifiableCredential;
-  use crate::presentation::Builder;
+  use crate::presentation::PresentationBuilder;
   use crate::presentation::Presentation;
 
   fn subject() -> Subject {
@@ -200,7 +200,7 @@ mod tests {
       .sign(&document, 0, keypair.secret())
       .unwrap();
 
-    let presentation: Presentation = Builder::default()
+    let presentation: Presentation = PresentationBuilder::default()
       .type_("ExamplePresentation")
       .credential(credential)
       .build()

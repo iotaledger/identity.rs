@@ -16,7 +16,7 @@ mod status;
 mod subject;
 mod verifiable;
 
-pub use self::builder::Builder;
+pub use self::builder::CredentialBuilder;
 pub use self::credential::Credential;
 pub use self::evidence::Evidence;
 pub use self::issuer::Issuer;

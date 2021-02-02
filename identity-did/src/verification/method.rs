@@ -12,7 +12,7 @@ use serde::Serialize;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
-use crate::verification::Builder;
+use crate::verification::MethodBuilder;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
 
@@ -30,15 +30,15 @@ pub struct Method<T = ()> {
 }
 
 impl<T> Method<T> {
-  /// Creates a `Builder` to configure a new `Method`.
+  /// Creates a `MethodBuilder` to configure a new `Method`.
   ///
-  /// This is the same as `Builder::new()`.
-  pub fn builder(properties: T) -> Builder<T> {
-    Builder::new(properties)
+  /// This is the same as `MethodBuilder::new()`.
+  pub fn builder(properties: T) -> MethodBuilder<T> {
+    MethodBuilder::new(properties)
   }
 
-  /// Returns a new `Method` based on the `Builder` configuration.
-  pub fn from_builder(builder: Builder<T>) -> Result<Self> {
+  /// Returns a new `Method` based on the `MethodBuilder` configuration.
+  pub fn from_builder(builder: MethodBuilder<T>) -> Result<Self> {
     Ok(Method {
       id: builder.id.ok_or(Error::InvalidMethodId)?,
       controller: builder.controller.ok_or(Error::InvalidMethodController)?,

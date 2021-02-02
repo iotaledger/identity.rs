@@ -7,17 +7,17 @@ use crate::did::DID;
 use crate::error::Result;
 use crate::service::Service;
 
-/// A `Builder` is used to generate a customized `Service`.
+/// A `ServiceBuilder` is used to generate a customized `Service`.
 #[derive(Clone, Debug, Default)]
-pub struct Builder<T = ()> {
+pub struct ServiceBuilder<T = ()> {
   pub(crate) id: Option<DID>,
   pub(crate) type_: Option<String>,
   pub(crate) service_endpoint: Option<Url>,
   pub(crate) properties: T,
 }
 
-impl<T> Builder<T> {
-  /// Creates a new `Builder`.
+impl<T> ServiceBuilder<T> {
+  /// Creates a new `ServiceBuilder`.
   pub fn new(properties: T) -> Self {
     Self {
       id: None,
@@ -48,7 +48,7 @@ impl<T> Builder<T> {
     self
   }
 
-  /// Returns a new `Service` based on the `Builder` configuration.
+  /// Returns a new `Service` based on the `ServiceBuilder` configuration.
   pub fn build(self) -> Result<Service<T>> {
     Service::from_builder(self)
   }
@@ -61,7 +61,7 @@ mod tests {
   #[test]
   #[should_panic = "InvalidServiceId"]
   fn test_missing_id() {
-    let _: Service = Builder::default()
+    let _: Service = ServiceBuilder::default()
       .type_("ServiceType")
       .service_endpoint("https://example.com".parse().unwrap())
       .build()
@@ -71,7 +71,7 @@ mod tests {
   #[test]
   #[should_panic = "InvalidServiceType"]
   fn test_missing_type_() {
-    let _: Service = Builder::default()
+    let _: Service = ServiceBuilder::default()
       .id("did:example:123".parse().unwrap())
       .service_endpoint("https://example.com".parse().unwrap())
       .build()
@@ -81,7 +81,7 @@ mod tests {
   #[test]
   #[should_panic = "InvalidServiceEndpoint"]
   fn test_missing_service_endpoint() {
-    let _: Service = Builder::default()
+    let _: Service = ServiceBuilder::default()
       .id("did:example:123".parse().unwrap())
       .type_("ServiceType")
       .build()

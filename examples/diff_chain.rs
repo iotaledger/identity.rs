@@ -7,7 +7,7 @@
 //! cargo run --example diff_chain
 
 use identity_core::crypto::KeyPair;
-use identity_did::verification::Builder as MethodBuilder;
+use identity_did::verification::MethodBuilder;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodScope;

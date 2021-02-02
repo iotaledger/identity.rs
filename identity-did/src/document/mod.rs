@@ -6,5 +6,5 @@
 mod builder;
 mod document;
 
-pub use self::builder::Builder;
+pub use self::builder::DocumentBuilder;
 pub use self::document::Document;

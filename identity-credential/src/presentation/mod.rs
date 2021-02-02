@@ -9,6 +9,6 @@ mod builder;
 mod presentation;
 mod verifiable;
 
-pub use self::builder::Builder;
+pub use self::builder::PresentationBuilder;
 pub use self::presentation::Presentation;
 pub use self::verifiable::VerifiablePresentation;

@@ -7,9 +7,9 @@ use crate::verification::Method;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
 
-/// A `Builder` is used to generate a customized `Method`.
+/// A `MethodBuilder` is used to generate a customized `Method`.
 #[derive(Clone, Debug, Default)]
-pub struct Builder<T = ()> {
+pub struct MethodBuilder<T = ()> {
   pub(crate) id: Option<DID>,
   pub(crate) controller: Option<DID>,
   pub(crate) key_type: Option<MethodType>,
@@ -17,8 +17,8 @@ pub struct Builder<T = ()> {
   pub(crate) properties: T,
 }
 
-impl<T> Builder<T> {
-  /// Creates a new `Builder`.
+impl<T> MethodBuilder<T> {
+  /// Creates a new `MethodBuilder`.
   pub fn new(properties: T) -> Self {
     Self {
       id: None,
@@ -57,7 +57,7 @@ impl<T> Builder<T> {
     self
   }
 
-  /// Returns a new `Method` based on the `Builder` configuration.
+  /// Returns a new `Method` based on the `MethodBuilder` configuration.
   pub fn build(self) -> Result<Method<T>> {
     Method::from_builder(self)
   }
@@ -70,7 +70,7 @@ mod tests {
   #[test]
   #[should_panic = "InvalidMethodId"]
   fn test_missing_id() {
-    let _: Method = Builder::default()
+    let _: Method = MethodBuilder::default()
       .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::PublicKeyBase58("".into()))
@@ -81,7 +81,7 @@ mod tests {
   #[test]
   #[should_panic = "InvalidMethodType"]
   fn test_missing_key_type() {
-    let _: Method = Builder::default()
+    let _: Method = MethodBuilder::default()
       .id("did:example:123".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
       .key_data(MethodData::PublicKeyBase58("".into()))
@@ -92,7 +92,7 @@ mod tests {
   #[test]
   #[should_panic = "InvalidMethodData"]
   fn test_missing_key_data() {
-    let _: Method = Builder::default()
+    let _: Method = MethodBuilder::default()
       .id("did:example:123".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
@@ -103,7 +103,7 @@ mod tests {
   #[test]
   #[should_panic = "InvalidMethodController"]
   fn test_missing_controller() {
-    let _: Method = Builder::default()
+    let _: Method = MethodBuilder::default()
       .id("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::PublicKeyBase58("".into()))

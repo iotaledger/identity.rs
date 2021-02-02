@@ -21,7 +21,7 @@ use identity_did::verification::MethodType;
 use identity_did::verification::MethodWrap;
 use serde::Serialize;
 
-use crate::credential::Builder;
+use crate::credential::CredentialBuilder;
 use crate::credential::Evidence;
 use crate::credential::Issuer;
 use crate::credential::Policy;
@@ -97,15 +97,15 @@ impl<T> Credential<T> {
     "VerifiableCredential"
   }
 
-  /// Creates a new `Builder` to configure a `Credential`.
+  /// Creates a new `CredentialBuilder` to configure a `Credential`.
   ///
-  /// This is the same as `Builder::new()`.
-  pub fn builder(properties: T) -> Builder<T> {
-    Builder::new(properties)
+  /// This is the same as `CredentialBuilder::new()`.
+  pub fn builder(properties: T) -> CredentialBuilder<T> {
+    CredentialBuilder::new(properties)
   }
 
-  /// Returns a new `Credential` based on the `Builder` configuration.
-  pub fn from_builder(builder: Builder<T>) -> Result<Self> {
+  /// Returns a new `Credential` based on the `CredentialBuilder` configuration.
+  pub fn from_builder(builder: CredentialBuilder<T>) -> Result<Self> {
     let this: Self = Self {
       context: builder.context.into(),
       id: builder.id,

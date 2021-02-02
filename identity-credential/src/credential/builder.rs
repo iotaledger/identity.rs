@@ -17,9 +17,9 @@ use crate::credential::Status;
 use crate::credential::Subject;
 use crate::error::Result;
 
-/// A `Builder` is used to create a customized `Credential`.
+/// A `CredentialBuilder` is used to create a customized `Credential`.
 #[derive(Clone, Debug)]
-pub struct Builder<T = Object> {
+pub struct CredentialBuilder<T = Object> {
   pub(crate) context: Vec<Context>,
   pub(crate) id: Option<Url>,
   pub(crate) types: Vec<String>,
@@ -36,8 +36,8 @@ pub struct Builder<T = Object> {
   pub(crate) properties: T,
 }
 
-impl<T> Builder<T> {
-  /// Creates a new `Builder`.
+impl<T> CredentialBuilder<T> {
+  /// Creates a new `CredentialBuilder`.
   pub fn new(properties: T) -> Self {
     Self {
       context: vec![Credential::<T>::base_context().clone()],
@@ -148,13 +148,13 @@ impl<T> Builder<T> {
     self
   }
 
-  /// Returns a new `Credential` based on the `Builder` configuration.
+  /// Returns a new `Credential` based on the `CredentialBuilder` configuration.
   pub fn build(self) -> Result<Credential<T>> {
     Credential::from_builder(self)
   }
 }
 
-impl Builder {
+impl CredentialBuilder {
   /// Adds a new custom property to the `Credential`.
   #[must_use]
   pub fn property<K, V>(mut self, key: K, value: V) -> Self
@@ -181,7 +181,7 @@ impl Builder {
   }
 }
 
-impl<T> Default for Builder<T>
+impl<T> Default for CredentialBuilder<T>
 where
   T: Default,
 {
@@ -199,7 +199,7 @@ mod tests {
   use serde_json::json;
   use serde_json::Value;
 
-  use crate::credential::Builder;
+  use crate::credential::CredentialBuilder;
   use crate::credential::Credential;
   use crate::credential::Subject;
 
@@ -222,7 +222,7 @@ mod tests {
   #[test]
   #[rustfmt::skip]
   fn test_credential_builder_valid() {
-    let credential: Credential = Builder::default()
+    let credential: Credential = CredentialBuilder::default()
       .context(Url::parse("https://www.w3.org/2018/credentials/examples/v1").unwrap())
       .id(Url::parse("http://example.edu/credentials/3732").unwrap())
       .type_("UniversityDegreeCredential")
@@ -250,12 +250,12 @@ mod tests {
   #[test]
   #[should_panic = "MissingSubject"]
   fn test_builder_missing_subjects() {
-    let _: Credential = Builder::default().issuer(issuer()).build().unwrap();
+    let _: Credential = CredentialBuilder::default().issuer(issuer()).build().unwrap();
   }
 
   #[test]
   #[should_panic = "MissingIssuer"]
   fn test_builder_missing_issuer() {
-    let _: Credential = Builder::default().subject(subject()).build().unwrap();
+    let _: Credential = CredentialBuilder::default().subject(subject()).build().unwrap();
   }
 }
