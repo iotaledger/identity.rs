@@ -20,6 +20,6 @@ iota-conversion = { version = "0.5", default-features = false }
 iota-core = { git = "https://github.com/Thoralf-M/iota.rs", rev = "d7c8c64fc3ac2340f0148708a916c245f42fd454" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
-multihash = { version = "0.11", default-features = false }
+multihash = { version = "0.13", default-features = false, features = ["blake2b"] }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }

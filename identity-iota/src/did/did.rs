@@ -14,6 +14,7 @@ use identity_core::utils::encode_b58;
 use identity_did::did::Error as DIDError;
 use identity_did::did::DID;
 use multihash::Blake2b256;
+use multihash::Hasher;
 
 use crate::did::Segments;
 use crate::error::Error;
@@ -240,7 +241,7 @@ impl IotaDID {
   }
 
   pub(crate) fn encode_key(key: &[u8]) -> String {
-    encode_b58(Blake2b256::digest(key).digest())
+    encode_b58(&Blake2b256::digest(key))
   }
 }
 
