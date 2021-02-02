@@ -7,7 +7,7 @@ pub struct SignatureOptions {
   /// The unique identifier of the DID method used to create this signature.
   #[serde(rename = "verificationMethod")]
   pub verification_method: String,
-  /// The intended purpose of the signature - See [`MethodScope`] for supported values.
+  /// The intended purpose of the signature.
   #[serde(rename = "proofPurpose", skip_serializing_if = "Option::is_none")]
   pub proof_purpose: Option<String>,
   /// A timestamp of when the signature was created.

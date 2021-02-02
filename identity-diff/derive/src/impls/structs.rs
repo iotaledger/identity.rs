@@ -438,7 +438,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
             quote! { #fname: Option::None }
           } else if field.is_option() {
             quote! {
-                #fname: if let identity_diff::option::DiffOption::Some(_) = #fname.clone().into_diff()? {
+                #fname: if let identity_diff::DiffOption::Some(_) = #fname.clone().into_diff()? {
                     Some(#fname.into_diff()?)
                 } else {
                     None
@@ -575,7 +575,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
             quote! { Option::None }
           } else if field.is_option() {
             quote! {
-                if #marker.clone().into_diff()? == identity_diff::option::DiffOption::None {
+                if #marker.clone().into_diff()? == identity_diff::DiffOption::None {
                     None
                 } else {
                     Some(#marker.into_diff()?)

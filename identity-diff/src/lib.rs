@@ -8,19 +8,27 @@
 //! `bool`, and `char` types.  Structs and Enums are supported via `identity_derive` and can be composed of any number
 //! of these types.
 
-pub mod did_doc;
-mod error;
-pub mod hashmap;
-pub mod hashset;
-mod macros;
-pub mod option;
-pub mod string;
-mod traits;
-mod value;
-pub mod vec;
-
-pub use error::{Error, Result};
-pub use traits::Diff;
-
 #[doc(hidden)]
 pub use identity_derive::*;
+
+mod error;
+mod hashmap;
+mod hashset;
+mod macros;
+mod object;
+mod option;
+mod string;
+mod traits;
+mod url;
+mod value;
+mod vec;
+
+pub use self::error::Error;
+pub use self::error::Result;
+pub use self::hashmap::DiffHashMap;
+pub use self::hashset::DiffHashSet;
+pub use self::object::DiffObject;
+pub use self::option::DiffOption;
+pub use self::string::DiffString;
+pub use self::traits::Diff;
+pub use self::vec::DiffVec;

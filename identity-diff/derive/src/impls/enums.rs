@@ -770,7 +770,7 @@ fn parse_from_into(
             quote! { #fname: Option::None }
           } else if f.is_option() {
             quote! {
-                #fname: if let identity_diff::option::DiffOption::Some(_) = #fname.clone().into_diff()? {
+                #fname: if let identity_diff::DiffOption::Some(_) = #fname.clone().into_diff()? {
                     Some(#fname.into_diff()?)
                 } else {
                     None
@@ -839,7 +839,7 @@ fn parse_from_into(
             quote! { Option::None }
           } else if f.is_option() {
             quote! {
-                if #fname.clone().into_diff()? == identity_diff::option::DiffOption::None {
+                if #fname.clone().into_diff()? == identity_diff::DiffOption::None {
                     None
                 } else {
                     Some(#fname.into_diff()?)

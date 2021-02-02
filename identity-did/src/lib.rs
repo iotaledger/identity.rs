@@ -21,6 +21,7 @@ extern crate serde;
 #[doc(inline)]
 pub use did_url as did;
 
+pub mod diff;
 pub mod document;
 pub mod error;
 pub mod resolution;
