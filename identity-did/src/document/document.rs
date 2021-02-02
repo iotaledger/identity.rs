@@ -6,11 +6,11 @@ use core::fmt::Display;
 use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
-use did_url::DID;
 use identity_core::common::Url;
 use identity_core::convert::ToJson;
 use serde::Serialize;
 
+use crate::did::DID;
 use crate::document::Builder;
 use crate::error::Error;
 use crate::error::Result;
@@ -333,8 +333,7 @@ impl<T, U, V> ResolveMethod<U> for Document<T, U, V> {
 
 #[cfg(test)]
 mod tests {
-  use did_url::DID;
-
+  use crate::did::DID;
   use crate::document::Builder;
   use crate::document::Document;
   use crate::verification::Builder as MethodBuilder;

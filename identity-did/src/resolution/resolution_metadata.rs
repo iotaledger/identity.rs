@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::time::Duration;
-use did_url::DID;
-use serde::{Deserialize, Serialize};
+use identity_core::common::Object;
 
-use crate::{common::Object, resolver::ErrorKind};
+use crate::did::DID;
+use crate::resolution::ErrorKind;
 
 /// Metadata associated with a [DID resolution][SPEC] process.
 ///

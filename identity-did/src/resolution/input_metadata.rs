@@ -1,9 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use serde::{Deserialize, Serialize};
-
-use crate::common::Object;
+use identity_core::common::Object;
 
 /// The content type of a JSON DID Document.
 pub const MIME_DID: &str = "application/did+json";

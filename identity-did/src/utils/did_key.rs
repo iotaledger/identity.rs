@@ -13,7 +13,8 @@ use core::hash::Hash;
 use core::hash::Hasher;
 use core::ops::Deref;
 use core::ops::DerefMut;
-use did_url::DID;
+
+use crate::did::DID;
 
 /// A helper struct for comparing types only by `DID`.
 ///

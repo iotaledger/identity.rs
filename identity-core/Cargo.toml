@@ -12,7 +12,6 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 anyhow = { version = "1.0", default-features = false }
-async-trait = { version = "0.1", default-features = false }
 bs58 = { version = "0.4", default-features = false, features = ["std"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "bb8bda8f6d39451b08e3cc198f956c212a3b87f8", default-features = false, features = ["std"] }

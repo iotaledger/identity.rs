@@ -239,8 +239,8 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
-  use did_url::DID;
 
+  use crate::did::DID;
   use crate::utils::DIDKey;
   use crate::verification::MethodRef;
 

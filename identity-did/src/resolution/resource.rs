@@ -1,9 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use did_doc::{url::Url, DIDKey, Document, Method, MethodRef, Service};
-use did_url::DID;
-use serde::{Deserialize, Serialize};
+use identity_core::common::Url;
+
+use crate::did::DID;
+use crate::document::Document;
+use crate::service::Service;
+use crate::utils::DIDKey;
+use crate::verification::Method;
+use crate::verification::MethodRef;
 
 /// A resource returned from a [DID URL dereferencing][SPEC] process.
 ///
@@ -88,20 +93,17 @@ impl From<MethodRef> for SecondaryResource {
   }
 }
 
-impl From<DIDKey<Method>> for SecondaryResource {
-  fn from(other: DIDKey<Method>) -> Self {
-    other.into_inner().into()
+impl From<Service> for SecondaryResource {
+  fn from(other: Service) -> Self {
+    Self::Service(other)
   }
 }
 
-impl From<DIDKey<MethodRef>> for SecondaryResource {
-  fn from(other: DIDKey<MethodRef>) -> Self {
+impl<T> From<DIDKey<T>> for SecondaryResource
+where
+  T: Into<SecondaryResource>,
+{
+  fn from(other: DIDKey<T>) -> Self {
     other.into_inner().into()
-  }
-}
-
-impl From<DIDKey<Service>> for SecondaryResource {
-  fn from(other: DIDKey<Service>) -> Self {
-    Self::Service(other.into_inner())
   }
 }

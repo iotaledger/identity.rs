@@ -2,14 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
-use did_doc::Document;
-use did_url::DID;
-use serde::{Deserialize, Serialize};
 
-use crate::{
-  error::Result,
-  resolver::{DocumentMetadata, InputMetadata},
-};
+use crate::did::DID;
+use crate::document::Document;
+use crate::error::Result;
+use crate::resolution::DocumentMetadata;
+use crate::resolution::InputMetadata;
 
 /// A resolved [`Document`] and associated [`DocumentMetadata`].
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

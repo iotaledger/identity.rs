@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common::{Object, Timestamp};
-use serde::{Deserialize, Serialize};
+use identity_core::common::Object;
+use identity_core::common::Timestamp;
 
 /// Metadata associated with a resolved DID Document.
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]

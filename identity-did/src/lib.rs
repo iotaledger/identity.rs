@@ -25,6 +25,7 @@ pub mod did {
 
 pub mod document;
 pub mod error;
+pub mod resolution;
 pub mod service;
 pub mod signature;
 pub mod utils;

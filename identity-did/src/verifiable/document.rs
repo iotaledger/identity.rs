@@ -11,11 +11,11 @@ use serde::Serialize;
 
 use crate::document::Document as Document_;
 use crate::signature::Signature;
+use crate::verifiable::Properties;
 use crate::verifiable::ResolveMethod;
 use crate::verifiable::SetSignature;
 use crate::verifiable::TrySignature;
 use crate::verifiable::TrySignatureMut;
-use crate::verifiable::Properties;
 use crate::verification::MethodQuery;
 use crate::verification::MethodWrap;
 

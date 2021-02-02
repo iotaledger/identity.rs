@@ -1,18 +1,25 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::anyhow;
-use did_doc::{url::Url, Document};
-use did_url::DID;
+use identity_core::common::Url;
 use std::time::Instant;
 
-use crate::{
-  error::{Error, Result},
-  resolver::{
-    Dereference, DocumentMetadata, ErrorKind, InputMetadata, MetaDocument, PrimaryResource, Resolution, ResolverMethod,
-    Resource, SecondaryResource,
-  },
-};
+use crate::did::DID;
+use crate::document::Document;
+use crate::error::Error;
+use crate::error::Result;
+use crate::resolution::Dereference;
+use crate::resolution::DocumentMetadata;
+use crate::resolution::ErrorKind;
+use crate::resolution::InputMetadata;
+use crate::resolution::MetaDocument;
+use crate::resolution::PrimaryResource;
+use crate::resolution::Resolution;
+use crate::resolution::ResolverMethod;
+use crate::resolution::Resource;
+use crate::resolution::SecondaryResource;
+use crate::utils::DIDKey;
+use crate::utils::OrderedSet;
 
 /// Resolves a DID into a DID Document by using the "Read" operation of the DID method.
 ///
@@ -83,17 +90,16 @@ where
 
   // Extract the document and metadata - Both properties MUST exist as we
   // checked for resolution errors above.
-  let (document, metadata): (Document, DocumentMetadata) = resolution
-    .document
-    .zip(resolution.document_metadata)
-    .ok_or_else(|| Error::DereferenceError(anyhow!("Missing Document/Metadata")))?;
+  let (document, metadata): (Document, DocumentMetadata) = match (resolution.document, resolution.document_metadata) {
+    (Some(document), Some(metadata)) => (document, metadata),
+    (Some(_), None) => return Err(Error::MissingResolutionMetadata),
+    (None, Some(_)) => return Err(Error::MissingResolutionDocument),
+    (None, None) => return Err(Error::MissingResolutionData),
+  };
 
   // Extract the parsed DID from the resolution output - It MUST exist as we
   // checked for resolution errors above.
-  let did: DID = resolution
-    .metadata
-    .resolved
-    .ok_or_else(|| Error::DereferenceError(anyhow!("Missing Resolved DID")))?;
+  let did: DID = resolution.metadata.resolved.ok_or(Error::MissingResolutionDID)?;
 
   // Add the resolution document metadata to the response.
   context.set_metadata(metadata);
@@ -233,25 +239,51 @@ fn dereference_primary(document: Document, mut did: DID) -> Result<Option<Primar
 }
 
 fn dereference_document(document: Document, fragment: &str) -> Result<Option<SecondaryResource>> {
-  macro_rules! extract {
-        ($base:expr, $target:expr, $iter:expr) => {
-            for object in $iter.iter() {
-                let did: DID = $base.join(object.id())?;
+  #[inline]
+  fn dereference<T>(base: &DID, query: &str, resources: &OrderedSet<DIDKey<T>>) -> Result<Option<SecondaryResource>>
+  where
+    T: Clone + AsRef<DID> + Into<SecondaryResource>,
+  {
+    for object in resources.iter() {
+      let did: DID = base.join((**object).as_ref())?;
 
-                if matches!(did.fragment(), Some(fragment) if fragment == $target) {
-                    return Ok(Some(object.clone().into()));
-                }
-            }
-        };
+      if matches!(did.fragment(), Some(fragment) if fragment == query) {
+        return Ok(Some(object.clone().into()));
+      }
     }
 
-  extract!(document.id(), fragment, document.verification_method());
-  extract!(document.id(), fragment, document.authentication());
-  extract!(document.id(), fragment, document.assertion_method());
-  extract!(document.id(), fragment, document.key_agreement());
-  extract!(document.id(), fragment, document.capability_delegation());
-  extract!(document.id(), fragment, document.capability_invocation());
-  extract!(document.id(), fragment, document.service());
+    Ok(None)
+  }
+
+  let base: &DID = document.id();
+
+  if let Some(resource) = dereference(base, fragment, document.verification_method())? {
+    return Ok(Some(resource));
+  }
+
+  if let Some(resource) = dereference(base, fragment, document.authentication())? {
+    return Ok(Some(resource));
+  }
+
+  if let Some(resource) = dereference(base, fragment, document.assertion_method())? {
+    return Ok(Some(resource));
+  }
+
+  if let Some(resource) = dereference(base, fragment, document.key_agreement())? {
+    return Ok(Some(resource));
+  }
+
+  if let Some(resource) = dereference(base, fragment, document.capability_delegation())? {
+    return Ok(Some(resource));
+  }
+
+  if let Some(resource) = dereference(base, fragment, document.capability_invocation())? {
+    return Ok(Some(resource));
+  }
+
+  if let Some(resource) = dereference(base, fragment, document.service())? {
+    return Ok(Some(resource));
+  }
 
   Ok(None)
 }
@@ -263,18 +295,18 @@ fn service_endpoint_ctor(did: DID, url: &Url) -> Result<Url> {
   // The input DID URL and input service endpoint URL MUST NOT both have a
   // query component.
   if did.query().is_some() && url.query().is_some() {
-    return Err(Error::DereferenceError(anyhow!("Multiple DID Queries")));
+    return Err(Error::InvalidDIDQuery);
   }
 
   // The input DID URL and input service endpoint URL MUST NOT both have a
   // fragment component.
   if did.fragment().is_some() && url.fragment().is_some() {
-    return Err(Error::DereferenceError(anyhow!("Multiple DID Fragments")));
+    return Err(Error::InvalidDIDFragment);
   }
 
   // The input service endpoint URL MUST be an HTTP(S) URL.
   if url.scheme() != "https" {
-    return Err(Error::DereferenceError(anyhow!("Invalid Service Protocol")));
+    return Err(Error::InvalidServiceProtocol);
   }
 
   // 1. Initialize a string output service endpoint URL to the value of

@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use did_url::DID;
+use crate::did::DID;
 
 /// Index or identifier used to identify the target verification method of a
 /// `MethodQuery`.

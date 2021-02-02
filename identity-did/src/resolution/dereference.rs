@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use serde::{Deserialize, Serialize};
-
-use crate::resolver::{DocumentMetadata, ResolutionMetadata, Resource};
+use crate::resolution::DocumentMetadata;
+use crate::resolution::ResolutionMetadata;
+use crate::resolution::Resource;
 
 /// The output returned from [DID URL dereferencing][SPEC].
 ///

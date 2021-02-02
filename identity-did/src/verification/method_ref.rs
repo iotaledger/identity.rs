@@ -4,8 +4,8 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
-use did_url::DID;
 
+use crate::did::DID;
 use crate::verification::Method;
 
 /// A reference to a verification method, either a `DID` or embedded `Method`.
