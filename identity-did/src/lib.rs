@@ -18,10 +18,8 @@
 #[macro_use]
 extern crate serde;
 
-pub mod did {
-  #[doc(import)]
-  pub use did_url::*;
-}
+#[doc(inline)]
+pub use did_url as did;
 
 pub mod document;
 pub mod error;

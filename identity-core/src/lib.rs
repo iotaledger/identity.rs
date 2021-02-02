@@ -18,17 +18,16 @@
 #[macro_use]
 extern crate serde;
 
-pub use did_doc;
-pub use did_url;
-pub use identity_diff;
+#[doc(inline)]
 pub use serde_json::json;
+
+#[doc(inline)]
+pub use identity_diff as diff;
 
 pub mod common;
 pub mod convert;
 pub mod crypto;
 pub mod error;
-pub mod proof;
-pub mod resolver;
 pub mod utils;
 
 pub use self::error::Error;

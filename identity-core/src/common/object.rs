@@ -3,7 +3,7 @@
 
 use std::collections::BTreeMap;
 
-#[doc(import)]
+#[doc(inline)]
 pub use serde_json::Value;
 
 /// An alias for an ordered map of key-[value][`Value`] pairs.
