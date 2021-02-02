@@ -19,7 +19,7 @@ struct TestVector {
   signature: &'static str,
 }
 
-const TVS: &'static [TestVector] = &include!("fixtures/jcs_ed25519.rs");
+const TVS: &[TestVector] = &include!("fixtures/jcs_ed25519.rs");
 
 type Document = document::Document<Properties<Object>, (), ()>;
 
