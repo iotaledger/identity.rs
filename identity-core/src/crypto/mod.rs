@@ -3,8 +3,7 @@
 
 //! Cryptographic Utilities
 
-mod key_impl;
-mod key_pair;
+mod key;
 pub mod merkle_tree;
 
 pub use self::{key_impl::*, key_pair::*};
