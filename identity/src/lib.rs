@@ -14,6 +14,7 @@
   clippy::missing_safety_doc,
   clippy::missing_errors_doc
 )]
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
 
 pub mod core {
   //! Core Traits and Types
@@ -36,6 +37,8 @@ pub mod crypto {
   pub use identity_core::crypto::*;
 }
 
+#[cfg(feature = "credential")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "credential")))]
 pub mod credential {
   //! Verifiable Credentials
   //!
@@ -46,6 +49,8 @@ pub mod credential {
   pub use identity_credential::presentation::*;
 }
 
+#[cfg(feature = "identifier")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "identifier")))]
 pub mod did {
   //! Decentralized Identifiers
   //!
@@ -65,6 +70,8 @@ pub mod did {
   pub use identity_did::verifiable;
 }
 
+#[cfg(feature = "iota")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "iota")))]
 pub mod iota {
   //! IOTA Tangle DID Method
 
