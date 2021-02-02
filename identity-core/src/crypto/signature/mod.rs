@@ -13,6 +13,6 @@ pub use self::signature::Signature;
 pub use self::signature_data::SignatureData;
 pub use self::signature_options::SignatureOptions;
 pub use self::signature_value::SignatureValue;
-pub use self::traits::SigSign;
 pub use self::traits::SigName;
+pub use self::traits::SigSign;
 pub use self::traits::SigVerify;

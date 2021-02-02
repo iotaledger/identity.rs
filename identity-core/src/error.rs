@@ -21,12 +21,6 @@ pub enum Error {
   /// Caused by a failure to decode base58-encoded data.
   #[error("Failed to decode base58 data: {0}")]
   DecodeBase58(#[from] bs58::decode::Error),
-  /// Caused by attempting to perform an invalid `DID` operation.
-  #[error("Invalid DID: {0}")]
-  InvalidDID(#[from] did_url::Error),
-  /// Caused by attempting to perform an invalid DID `Document` operation.
-  #[error("Invalid DID Document: {0}")]
-  InvalidDocument(#[from] did_doc::Error),
   /// Caused by attempting to perform an invalid `Diff` operation.
   #[error("Invalid Document Diff: {0}")]
   InvalidDiff(#[from] identity_diff::Error),
@@ -36,10 +30,13 @@ pub enum Error {
   /// Caused by attempting to parse an invalid `Timestamp`.
   #[error("Invalid Timestamp: {0}")]
   InvalidTimestamp(#[from] chrono::ParseError),
+  /// Caused by attempting to parse an invalid DID proof.
+  #[error("Invalid Proof Format")]
+  InvalidProofFormat,
+  /// Caused by attempting to parse an invalid cryptographic key.
+  #[error("Invalid Key Format")]
+  InvalidKeyFormat,
   /// Caused by a failure to resolve a DID.
   #[error("DID Resolution Error: {0}")]
   ResolutionError(anyhow::Error),
-  /// Caused by a failure to dereference a DID URL.
-  #[error("DID Dereference Error: {0}")]
-  DereferenceError(anyhow::Error),
 }

@@ -7,13 +7,13 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
 use core::ops::DerefMut;
-use did_doc::SetSignature;
-use did_doc::Signature;
-use did_doc::TrySignature;
-use did_doc::TrySignatureMut;
 use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::convert::ToJson;
+use identity_core::crypto::Signature;
+use identity_did::verifiable::SetSignature;
+use identity_did::verifiable::TrySignature;
+use identity_did::verifiable::TrySignatureMut;
 use serde::Serialize;
 
 use crate::presentation::Presentation;

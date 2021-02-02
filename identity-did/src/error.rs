@@ -9,8 +9,10 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+  /// Caused by errors from the `identity_core` crate.
   #[error("{0}")]
   CoreError(#[from] ::identity_core::Error),
+  /// Caused by errors from the `did_url` crate.
   #[error("{0}")]
   DIDError(#[from] ::did_url::Error),
 

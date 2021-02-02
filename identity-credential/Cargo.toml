@@ -11,9 +11,8 @@ keywords = ["iota", "tangle", "identity"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "bb8bda8f6d39451b08e3cc198f956c212a3b87f8", default-features = false, features = ["std"] }
-did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
 identity-core = { version = "=0.1.0", path = "../identity-core" }
+identity-did = { version = "=0.1.0", path = "../identity-did" }
 lazy_static = { version = "1.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }

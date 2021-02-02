@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryInto;
+use identity_core::crypto::SigName;
 use identity_core::crypto::SigSign;
+use identity_core::crypto::SigVerify;
 use identity_core::crypto::Signature;
 use identity_core::crypto::SignatureData;
 use identity_core::crypto::SignatureOptions;
-use identity_core::crypto::SigName;
-use identity_core::crypto::SigVerify;
 use serde::Serialize;
 
 use crate::error::Error;
@@ -16,27 +16,28 @@ use crate::verifiable::ResolveMethod;
 use crate::verifiable::SetSignature;
 use crate::verifiable::TrySignature;
 use crate::verification::MethodQuery;
-use crate::verification::MethodWrap;
 use crate::verification::MethodType;
-
-pub trait LdSignature: SigName {
-  const METHODS: &'static [MethodType];
-}
+use crate::verification::MethodWrap;
 
 #[derive(Clone, Copy, Debug)]
 pub struct LdSuite<S> {
   suite: S,
+  methods: &'static [MethodType],
 }
 
 impl<S> LdSuite<S> {
   pub fn new(suite: S) -> Self {
-    Self { suite }
+    Self::with_methods(suite, &[])
+  }
+
+  pub fn with_methods(suite: S, methods: &'static [MethodType]) -> Self {
+    Self { suite, methods }
   }
 }
 
 impl<S> LdSuite<S>
 where
-  S: SigSign + LdSignature,
+  S: SigSign + SigName,
 {
   pub fn sign<T, K>(&self, message: &mut T, options: SignatureOptions, secret: &K) -> Result<()>
   where
@@ -55,7 +56,7 @@ where
 
 impl<S> LdSuite<S>
 where
-  S: SigVerify + LdSignature,
+  S: SigVerify + SigName,
 {
   pub fn verify<T, M>(&self, message: &T) -> Result<()>
   where
@@ -80,7 +81,7 @@ where
     let query: MethodQuery<'_> = signature.try_into()?;
     let method: MethodWrap<'_, M> = resolver.try_resolve_method(query)?;
 
-    if !S::METHODS.contains(&method.key_type()) {
+    if !self.methods.is_empty() && !self.methods.contains(&method.key_type()) {
       return Err(Error::UnknownMethodType);
     }
 

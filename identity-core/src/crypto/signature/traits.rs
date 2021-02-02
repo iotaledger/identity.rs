@@ -3,8 +3,8 @@
 
 use serde::Serialize;
 
-use crate::error::Result;
 use crate::crypto::SignatureData;
+use crate::error::Result;
 
 /// A trait for signature suites identified by a particular name.
 pub trait SigName {

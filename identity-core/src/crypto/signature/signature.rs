@@ -8,11 +8,11 @@ use core::ops::Deref;
 use core::ops::DerefMut;
 use serde::Serialize;
 
-use crate::error::Result;
+use crate::crypto::SigVerify;
 use crate::crypto::SignatureData;
 use crate::crypto::SignatureOptions;
 use crate::crypto::SignatureValue;
-use crate::crypto::SigVerify;
+use crate::error::Result;
 
 /// A DID Document digital signature.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]

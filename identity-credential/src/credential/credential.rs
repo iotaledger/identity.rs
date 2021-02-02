@@ -5,20 +5,20 @@ use core::fmt::Display;
 use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
-use did_doc::Document;
-use did_doc::LdSuite;
-use did_doc::MethodQuery;
-use did_doc::MethodType;
-use did_doc::MethodWrap;
-use did_doc::SignatureOptions;
 use identity_core::common::Context;
 use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::ToJson;
+use identity_core::crypto::JcsEd25519Signature2020;
 use identity_core::crypto::SecretKey;
-use identity_core::proof::JcsEd25519Signature2020;
+use identity_core::crypto::SignatureOptions;
+use identity_did::document::Document;
+use identity_did::verifiable::LdSuite;
+use identity_did::verification::MethodQuery;
+use identity_did::verification::MethodType;
+use identity_did::verification::MethodWrap;
 use serde::Serialize;
 
 use crate::credential::Builder;
@@ -163,7 +163,7 @@ impl<T> Credential<T> {
     document: &Document<D1, D2, D3>,
     query: Q,
     secret: &SecretKey,
-  ) -> did_doc::Result<VerifiableCredential<T>>
+  ) -> Result<VerifiableCredential<T>>
   where
     T: Serialize,
     Q: Into<MethodQuery<'a>>,
@@ -181,7 +181,7 @@ impl<T> Credential<T> {
 
         Ok(verifiable)
       }
-      _ => Err(did_doc::Error::message("Verification Method Not Supported")),
+      _ => Err(Error::DIDError(identity_did::Error::UnknownMethodType)),
     }
   }
 }

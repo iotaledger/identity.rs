@@ -7,8 +7,8 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
 use core::ops::DerefMut;
-use serde::Serialize;
 use identity_core::crypto::Signature;
+use serde::Serialize;
 
 use crate::document::Document as Document_;
 use crate::verifiable::Properties;
