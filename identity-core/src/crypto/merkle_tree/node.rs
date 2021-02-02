@@ -41,7 +41,7 @@ impl<D: Digest> Node<D> {
 }
 
 impl<D: Digest> Debug for Node<D> {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     match self {
       Self::L(hash) => f.write_fmt(format_args!("L({:?})", hash)),
       Self::R(hash) => f.write_fmt(format_args!("R({:?})", hash)),

@@ -44,7 +44,7 @@ impl<D: Digest> Proof<D> {
 }
 
 impl<D: Digest> Debug for Proof<D> {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.debug_struct("Proof").field("nodes", &self.nodes).finish()
   }
 }

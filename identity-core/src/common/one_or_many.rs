@@ -1,13 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::{
-  fmt::{Debug, Display, Formatter, Result as FmtResult},
-  hash::Hash,
-  mem::replace,
-  ops::Deref,
-  slice::from_ref,
-};
+use core::fmt::Debug;
+use core::fmt::Display;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
+use core::hash::Hash;
+use core::mem::replace;
+use core::ops::Deref;
+use core::slice::from_ref;
 
 /// A generic container that stores one or many values of a given type.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -101,7 +102,7 @@ impl<T> Debug for OneOrMany<T>
 where
   T: Debug,
 {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     match self {
       Self::One(inner) => Debug::fmt(inner, f),
       Self::Many(inner) => Debug::fmt(inner, f),
@@ -114,7 +115,7 @@ where
   T: Display,
   Vec<T>: Display,
 {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     match self {
       Self::One(inner) => Display::fmt(inner, f),
       Self::Many(inner) => Display::fmt(inner, f),
@@ -177,7 +178,7 @@ struct OneOrManyIter<'a, T> {
 }
 
 impl<'a, T> OneOrManyIter<'a, T> {
-  pub fn new(inner: &'a OneOrMany<T>) -> Self {
+  fn new(inner: &'a OneOrMany<T>) -> Self {
     Self { inner, index: 0 }
   }
 }

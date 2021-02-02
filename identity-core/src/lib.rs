@@ -4,6 +4,8 @@
 //! Identity Core
 
 #![warn(
+  rust_2018_idioms,
+  unreachable_pub,
   missing_docs,
   missing_crate_level_docs,
   broken_intra_doc_links,
@@ -21,7 +23,6 @@ pub use did_url;
 pub use identity_diff;
 pub use serde_json::json;
 
-#[macro_use]
 pub mod common;
 pub mod convert;
 pub mod crypto;
@@ -30,4 +31,5 @@ pub mod proof;
 pub mod resolver;
 pub mod utils;
 
-pub use error::{Error, Result};
+pub use self::error::Error;
+pub use self::error::Result;

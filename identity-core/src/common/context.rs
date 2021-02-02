@@ -1,10 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::fmt::{Debug, Formatter, Result};
-use serde::{Deserialize, Serialize};
+use core::fmt::Debug;
+use core::fmt::Formatter;
+use core::fmt::Result;
 
-use crate::common::{Object, Url};
+use crate::common::Object;
+use crate::common::Url;
 
 /// A reference to a JSON-LD context
 ///
@@ -19,7 +21,7 @@ pub enum Context {
 }
 
 impl Debug for Context {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     match self {
       Self::Url(inner) => Debug::fmt(inner, f),
       Self::Obj(inner) => Debug::fmt(inner, f),

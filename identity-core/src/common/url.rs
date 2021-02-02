@@ -1,25 +1,27 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::{
-  fmt::{Debug, Display, Formatter, Result as FmtResult},
-  ops::{Deref, DerefMut},
-  str::FromStr,
-};
-use did_doc::url;
+use core::fmt::Debug;
+use core::fmt::Display;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
+use core::ops::Deref;
+use core::ops::DerefMut;
+use core::str::FromStr;
 
-use crate::error::{Error, Result};
+use crate::error::Error;
+use crate::error::Result;
 
 /// A parsed URL.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(transparent)]
-pub struct Url(url::Url);
+pub struct Url(::url::Url);
 
 impl Url {
   /// Parses an absolute [`Url`] from the given input string.
   pub fn parse(input: impl AsRef<str>) -> Result<Self> {
-    url::Url::parse(input.as_ref()).map_err(Into::into).map(Self)
+    ::url::Url::parse(input.as_ref()).map_err(Into::into).map(Self)
   }
 
   /// Consumes the [`Url`] and returns the value as a `String`.
@@ -34,19 +36,19 @@ impl Url {
 }
 
 impl Debug for Url {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     Debug::fmt(&self.0, f)
   }
 }
 
 impl Display for Url {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     Display::fmt(&self.0, f)
   }
 }
 
 impl Deref for Url {
-  type Target = url::Url;
+  type Target = ::url::Url;
 
   fn deref(&self) -> &Self::Target {
     &self.0

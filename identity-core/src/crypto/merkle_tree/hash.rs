@@ -74,7 +74,7 @@ where
 }
 
 impl<D: Digest> Debug for Hash<D> {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_str(&encode_b58(self))
   }
 }

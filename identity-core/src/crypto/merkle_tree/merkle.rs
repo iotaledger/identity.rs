@@ -148,7 +148,7 @@ impl<D> Debug for MTree<D>
 where
   D: Digest,
 {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     let mut f = f.debug_struct("MTree");
 
     let total: usize = self.height();

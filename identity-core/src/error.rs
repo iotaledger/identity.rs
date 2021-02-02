@@ -32,7 +32,7 @@ pub enum Error {
   InvalidDiff(#[from] identity_diff::Error),
   /// Caused by attempting to parse an invalid `Url`.
   #[error("Invalid Url: {0}")]
-  InvalidUrl(#[from] did_doc::url::ParseError),
+  InvalidUrl(#[from] url::ParseError),
   /// Caused by attempting to parse an invalid `Timestamp`.
   #[error("Invalid Timestamp: {0}")]
   InvalidTimestamp(#[from] chrono::ParseError),

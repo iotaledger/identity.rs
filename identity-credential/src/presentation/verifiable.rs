@@ -70,7 +70,7 @@ where
   T: Serialize,
   U: Serialize,
 {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     if f.alternate() {
       f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
     } else {

@@ -1,14 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use chrono::{DateTime, SecondsFormat, Utc};
-use core::{
-  convert::TryFrom,
-  fmt::{Debug, Display, Formatter, Result as FmtResult},
-  str::FromStr,
-};
+use chrono::DateTime;
+use chrono::SecondsFormat;
+use chrono::Utc;
+use core::convert::TryFrom;
+use core::fmt::Debug;
+use core::fmt::Display;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
+use core::str::FromStr;
 
-use crate::error::{Error, Result};
+use crate::error::Error;
+use crate::error::Result;
 
 /// A parsed Timestamp.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -48,13 +52,13 @@ impl Default for Timestamp {
 }
 
 impl Debug for Timestamp {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     write!(f, "{:?}", self.to_rfc3339())
   }
 }
 
 impl Display for Timestamp {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     write!(f, "{}", self.to_rfc3339())
   }
 }

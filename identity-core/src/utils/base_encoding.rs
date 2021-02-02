@@ -1,7 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::{Error, Result};
+use crate::error::Error;
+use crate::error::Result;
 
 /// Decodes the given `data` as base58-btc.
 pub fn decode_b58<T>(data: &T) -> Result<Vec<u8>>

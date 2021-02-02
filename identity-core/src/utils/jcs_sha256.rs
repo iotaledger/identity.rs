@@ -1,9 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use sha2::{digest::Output, Digest, Sha256};
+use sha2::digest::Digest;
+use sha2::digest::Output;
+use sha2::Sha256;
 
-use crate::{convert::ToJson, error::Result};
+use crate::convert::ToJson;
+use crate::error::Result;
 
 /// Returns the given `data` serialized using JSON Canonicalization Scheme and
 /// hashed using SHA-256.

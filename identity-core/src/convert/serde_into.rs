@@ -1,10 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-  convert::{AsJson, ToJson},
-  error::Result,
-};
+use crate::convert::AsJson;
+use crate::convert::ToJson;
+use crate::error::Result;
 
 /// An escape-hatch for converting between types that represent the same JSON
 /// structure.

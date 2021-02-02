@@ -1,8 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::{Error, Result};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
+
+use crate::error::Error;
+use crate::error::Result;
 
 /// A convenience-trait for types that can be serialized as JSON.
 pub trait ToJson: Serialize {

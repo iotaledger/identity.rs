@@ -9,35 +9,35 @@ use crate::crypto::merkle_tree::DigestExt;
 use crate::crypto::merkle_tree::Hash;
 
 #[inline(always)]
-pub fn height(leaves: usize) -> usize {
+pub(super) fn height(leaves: usize) -> usize {
   math::log2c(leaves)
 }
 
 #[inline(always)]
-pub const fn total(leaves: usize) -> usize {
+pub(super) const fn total(leaves: usize) -> usize {
   // 2l - 1
   (leaves << 1) - 1
 }
 
 #[inline(always)]
-pub const fn leaves(nodes: usize) -> usize {
+pub(super) const fn leaves(nodes: usize) -> usize {
   // l = (n + 1) / 2
   (nodes + 1) >> 1
 }
 
 #[inline(always)]
-pub const fn index_lhs(index: usize) -> usize {
+pub(super) const fn index_lhs(index: usize) -> usize {
   // 2i + 1
   (index << 1) + 1
 }
 
 #[inline(always)]
-pub const fn index_rhs(index: usize) -> usize {
+pub(super) const fn index_rhs(index: usize) -> usize {
   // 2i + 2
   (index << 1) + 2
 }
 
-pub fn compute_nodes<D>(digest: &mut D, leaves: &[Hash<D>]) -> Box<[Hash<D>]>
+pub(super) fn compute_nodes<D>(digest: &mut D, leaves: &[Hash<D>]) -> Box<[Hash<D>]>
 where
   D: Digest,
   Output<D>: Copy,

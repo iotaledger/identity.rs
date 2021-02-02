@@ -33,13 +33,13 @@ macro_rules! impl_bytes {
     }
 
     impl ::core::fmt::Debug for $ident {
-      fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+      fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
         f.write_str(stringify!($ident))
       }
     }
 
     impl ::core::fmt::Display for $ident {
-      fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+      fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
         f.write_str(stringify!($ident))
       }
     }
