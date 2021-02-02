@@ -7,15 +7,15 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
 use core::ops::DerefMut;
+use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
+use identity_core::crypto::TrySignature;
+use identity_core::crypto::TrySignatureMut;
 use serde::Serialize;
 
 use crate::document::Document as Document_;
 use crate::verifiable::Properties;
 use crate::verifiable::ResolveMethod;
-use crate::verifiable::SetSignature;
-use crate::verifiable::TrySignature;
-use crate::verifiable::TrySignatureMut;
 use crate::verification::MethodQuery;
 use crate::verification::MethodWrap;
 

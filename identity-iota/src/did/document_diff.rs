@@ -3,13 +3,13 @@
 
 use identity_core::convert::AsJson;
 use identity_core::convert::SerdeInto;
+use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
+use identity_core::crypto::TrySignature;
+use identity_core::crypto::TrySignatureMut;
 use identity_core::diff::Diff;
 use identity_did::diff::DiffDocument;
 use identity_did::document::Document;
-use identity_did::verifiable::SetSignature;
-use identity_did::verifiable::TrySignature;
-use identity_did::verifiable::TrySignatureMut;
 
 use crate::client::Client;
 use crate::client::Network;

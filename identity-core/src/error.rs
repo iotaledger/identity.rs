@@ -36,4 +36,7 @@ pub enum Error {
   /// Caused by attempting to parse an invalid cryptographic key.
   #[error("Invalid Key Format")]
   InvalidKeyFormat,
+  /// Caused by a failed attempt at retrieving a digital signature.
+  #[error("Signature Not Found")]
+  MissingSignature,
 }

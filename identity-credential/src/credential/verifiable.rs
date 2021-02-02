@@ -10,10 +10,10 @@ use core::ops::DerefMut;
 use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::convert::ToJson;
+use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
-use identity_did::verifiable::SetSignature;
-use identity_did::verifiable::TrySignature;
-use identity_did::verifiable::TrySignatureMut;
+use identity_core::crypto::TrySignature;
+use identity_core::crypto::TrySignatureMut;
 use serde::Serialize;
 
 use crate::credential::Credential;

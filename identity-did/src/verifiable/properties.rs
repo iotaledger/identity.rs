@@ -3,11 +3,10 @@
 
 use core::ops::Deref;
 use core::ops::DerefMut;
+use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
-
-use crate::verifiable::SetSignature;
-use crate::verifiable::TrySignature;
-use crate::verifiable::TrySignatureMut;
+use identity_core::crypto::TrySignature;
+use identity_core::crypto::TrySignatureMut;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct Properties<T = ()> {

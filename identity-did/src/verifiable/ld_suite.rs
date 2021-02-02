@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryInto;
+use identity_core::crypto::SetSignature;
 use identity_core::crypto::SigName;
 use identity_core::crypto::SigSign;
 use identity_core::crypto::SigVerify;
 use identity_core::crypto::Signature;
 use identity_core::crypto::SignatureData;
 use identity_core::crypto::SignatureOptions;
+use identity_core::crypto::TrySignature;
 use serde::Serialize;
 
 use crate::error::Error;
 use crate::error::Result;
 use crate::verifiable::ResolveMethod;
-use crate::verifiable::SetSignature;
-use crate::verifiable::TrySignature;
 use crate::verification::MethodQuery;
 use crate::verification::MethodType;
 use crate::verification::MethodWrap;

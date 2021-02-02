@@ -20,8 +20,6 @@ pub enum Error {
   OrderedSetDuplicate,
   #[error("Verification Method Not Found")]
   QueryMethodNotFound,
-  #[error("Signature Not Found")]
-  QuerySignatureNotFound,
 
   #[error("Invalid Document Property: `id`")]
   InvalidDocumentId,
