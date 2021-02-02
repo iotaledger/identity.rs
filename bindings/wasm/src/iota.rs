@@ -1,12 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::Object;
-use identity_iota::{
-  client::{Client, ClientBuilder, Network, TxnPrinter},
-  credential::CredentialValidator,
-  did::IotaDID,
-};
+use identity::core::Object;
+use identity::iota::Client;
+use identity::iota::ClientBuilder;
+use identity::iota::CredentialValidator;
+use identity::iota::IotaDID;
+use identity::iota::Network;
+use identity::iota::TxnPrinter;
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 

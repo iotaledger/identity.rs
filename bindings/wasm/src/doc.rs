@@ -1,22 +1,27 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::{
-  convert::{FromJson as _, SerdeInto as _},
-  did_doc::{DIDKey, Document, DocumentBuilder, MethodIndex, MethodScope, Service, ServiceBuilder, VerifiableDocument},
-};
-use identity_iota::{
-  did::{DocumentDiff, IotaDocument, Properties},
-  tangle::MessageId,
-};
+use identity::core::FromJson;
+use identity::core::Object;
+use identity::core::SerdeInto;
+use identity::did::DIDKey;
+use identity::did::Document;
+use identity::did::DocumentBuilder;
+use identity::did::MethodIdent;
+use identity::did::MethodScope;
+use identity::did::Service;
+use identity::did::ServiceBuilder;
+use identity::iota::DocumentDiff;
+use identity::iota::IotaDocument;
+use identity::iota::MessageId;
+use identity::iota::Properties;
 use wasm_bindgen::prelude::*;
 
-use crate::{
-  did::DID,
-  js_err,
-  key::Key,
-  pubkey::{PubKey, DEFAULT_KEY},
-};
+use crate::did::DID;
+use crate::js_err;
+use crate::key::Key;
+use crate::pubkey::PubKey;
+use crate::pubkey::DEFAULT_KEY;
 
 #[wasm_bindgen(inspectable)]
 pub struct NewDoc {
@@ -48,14 +53,15 @@ impl Doc {
     let mut did = authentication.0.id().clone();
     did.set_fragment(None);
 
-    let base: VerifiableDocument<Properties> = DocumentBuilder::new(Properties::new())
+    let base: IotaDocument = DocumentBuilder::new(Properties::new())
       .id(did)
       // Note: We use a reference to the verification method due to
       // upstream limitations.
       .authentication(authentication.0.id().clone())
       .verification_method(authentication.0.clone())
       .build()
-      .map(VerifiableDocument::new)
+      .map(Document::into_verifiable)
+      .map(Into::into)
       .map_err(js_err)?;
 
     IotaDocument::try_from_document(base.serde_into().map_err(js_err)?)
@@ -244,11 +250,11 @@ impl Doc {
   pub fn resolve_key(&mut self, ident: JsValue, scope: Option<String>) -> Result<PubKey, JsValue> {
     let borrow: String;
 
-    let ident: MethodIndex = if let Some(number) = ident.as_f64() {
-      MethodIndex::Index(number.to_string().parse().map_err(js_err)?)
+    let ident: MethodIdent = if let Some(number) = ident.as_f64() {
+      MethodIdent::Index(number.to_string().parse().map_err(js_err)?)
     } else if let Some(ident) = ident.as_string() {
       borrow = ident;
-      MethodIndex::Ident(&borrow)
+      MethodIdent::Ident(&borrow)
     } else {
       return Err("Invalid Key Identifier".into());
     };
@@ -283,8 +289,8 @@ impl Doc {
   // core DID Document type.
   //
   // Uses `serde` for conversions and re-validates the document after mutation.
-  fn mutate<T>(this: &mut Self, f: impl FnOnce(&mut Document) -> T) -> Result<T, JsValue> {
-    let mut document: Document = this.0.serde_into().map_err(js_err)?;
+  fn mutate<T>(this: &mut Self, f: impl FnOnce(&mut Document<Object>) -> T) -> Result<T, JsValue> {
+    let mut document: Document<Object> = this.0.serde_into().map_err(js_err)?;
     let output: T = f(&mut document);
 
     this.0 = IotaDocument::try_from_document(document).map_err(js_err)?;

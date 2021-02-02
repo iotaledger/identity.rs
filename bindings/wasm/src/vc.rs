@@ -1,13 +1,17 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::{
-  common::{OneOrMany, Url},
-  credential::{Credential, CredentialBuilder, CredentialSubject, VerifiableCredential as VC},
-};
+use identity::core::OneOrMany;
+use identity::core::Url;
+use identity::credential::Credential;
+use identity::credential::CredentialBuilder;
+use identity::credential::Subject;
+use identity::credential::VerifiableCredential as VC;
 use wasm_bindgen::prelude::*;
 
-use crate::{doc::Doc, js_err, key::Key};
+use crate::doc::Doc;
+use crate::js_err;
+use crate::key::Key;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
@@ -23,13 +27,13 @@ impl VerifiableCredential {
     credential_type: Option<String>,
     credential_id: Option<String>,
   ) -> Result<VerifiableCredential, JsValue> {
-    let subjects: OneOrMany<CredentialSubject> = subject_data.into_serde().map_err(js_err)?;
+    let subjects: OneOrMany<Subject> = subject_data.into_serde().map_err(js_err)?;
     let issuer_url: Url = Url::parse(issuer_doc.id().as_str()).map_err(js_err)?;
 
     let mut builder: CredentialBuilder = CredentialBuilder::default().issuer(issuer_url);
 
     for subject in subjects.into_vec() {
-      builder = builder.credential_subject(subject);
+      builder = builder.subject(subject);
     }
 
     if let Some(credential_type) = credential_type {

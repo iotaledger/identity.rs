@@ -1,12 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::{
-  crypto::{KeyPair, PublicKey, SecretKey},
-  did_doc::MethodType,
-  utils::{decode_b58, encode_b58, generate_ed25519},
-};
-use serde::{Deserialize, Serialize};
+use identity::core::decode_b58;
+use identity::core::encode_b58;
+use identity::crypto::KeyPair;
+use identity::crypto::PublicKey;
+use identity::crypto::SecretKey;
+use identity::did::MethodType;
 use wasm_bindgen::prelude::*;
 
 use crate::js_err;
@@ -21,7 +21,7 @@ impl Key {
   #[wasm_bindgen(constructor)]
   pub fn new(key_type: &str) -> Result<Key, JsValue> {
     match key_type.parse().map_err(js_err)? {
-      MethodType::Ed25519VerificationKey2018 => Ok(Self::generate_ed25519()),
+      MethodType::Ed25519VerificationKey2018 => Self::generate_ed25519(),
       _ => Err("Invalid Key Type".into()),
     }
   }
@@ -29,7 +29,7 @@ impl Key {
   /// Generates a new `Key` object suitable for ed25519 signatures.
   #[wasm_bindgen(js_name = generateEd25519)]
   pub fn generate_ed25519() -> Result<Key, JsValue> {
-    generate_ed25519().map_err(js_err).map(Self)
+    KeyPair::new_ed25519().map_err(js_err).map(Self)
   }
 
   /// Parses a `Key` object from base58-encoded public/private keys.

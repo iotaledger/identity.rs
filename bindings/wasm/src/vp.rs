@@ -1,13 +1,17 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::{
-  common::{OneOrMany, Url},
-  credential::{Presentation, PresentationBuilder, VerifiableCredential, VerifiablePresentation as VP},
-};
+use identity::core::OneOrMany;
+use identity::core::Url;
+use identity::credential::Presentation;
+use identity::credential::PresentationBuilder;
+use identity::credential::VerifiableCredential;
+use identity::credential::VerifiablePresentation as VP;
 use wasm_bindgen::prelude::*;
 
-use crate::{doc::Doc, js_err, key::Key};
+use crate::doc::Doc;
+use crate::js_err;
+use crate::key::Key;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
@@ -29,7 +33,7 @@ impl VerifiablePresentation {
     let mut builder: PresentationBuilder = PresentationBuilder::default().holder(holder_url);
 
     for credential in credentials.into_vec() {
-      builder = builder.verifiable_credential(credential);
+      builder = builder.credential(credential);
     }
 
     if let Some(presentation_type) = presentation_type {

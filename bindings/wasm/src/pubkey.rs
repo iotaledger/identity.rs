@@ -1,11 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::did_doc::{Method, MethodBuilder, MethodData};
-use identity_iota::did::IotaDID;
+use identity::did::Method;
+use identity::did::MethodBuilder;
+use identity::did::MethodData;
+use identity::iota::IotaDID;
 use wasm_bindgen::prelude::*;
 
-use crate::{did::DID, js_err};
+use crate::did::DID;
+use crate::js_err;
 
 pub const DEFAULT_KEY: &str = "Ed25519VerificationKey2018";
 pub const DEFAULT_TAG: &str = "authentication";
