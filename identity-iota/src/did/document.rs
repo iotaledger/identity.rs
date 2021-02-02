@@ -9,8 +9,6 @@ use core::fmt::Result as FmtResult;
 use core::ops::Deref;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
-use identity_core::common::Value;
-use identity_core::convert::FromJson;
 use identity_core::convert::SerdeInto;
 use identity_core::crypto::JcsEd25519Signature2020;
 use identity_core::crypto::KeyPair;
@@ -22,8 +20,8 @@ use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_did::did::DID;
 use identity_did::document::Document;
-use identity_did::verifiable::Document as VerifiableDocument;
 use identity_did::verifiable::LdSuite;
+use identity_did::verifiable::Properties as VerifiableProperties;
 use identity_did::verifiable::ResolveMethod;
 use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodScope;
@@ -36,7 +34,7 @@ use crate::client::Network;
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocumentBuilder;
-use crate::did::Properties;
+use crate::did::Properties as BaseProperties;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::MessageId;
@@ -49,7 +47,8 @@ const ERR_AMNS: &str = "Authentication Method Not Supported";
 const ERR_AMMF: &str = "Authentication Method Missing Fragment";
 const ERR_AMIM: &str = "Authentication Method Id Mismatch";
 
-type __Document = VerifiableDocument<Properties>;
+type Properties = VerifiableProperties<BaseProperties>;
+type __Document = Document<Properties, (), ()>;
 
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[serde(try_from = "Document<Object>", into = "__Document")]
@@ -84,7 +83,7 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Returns `Err` if the document is not a valid `IotaDocument`.
-  pub fn try_from_document(mut document: Document<Object>) -> Result<Self> {
+  pub fn try_from_document(document: Document<Object>) -> Result<Self> {
     let did: &IotaDID = IotaDID::try_from_borrowed(document.id())?;
     let key: &DID = document.try_resolve(AUTH_QUERY)?.into_method().id();
 
@@ -98,22 +97,10 @@ impl IotaDocument {
       return Err(Error::InvalidDocument { error: ERR_AMIM });
     }
 
-    let proof: Option<Value> = document.properties_mut().remove("proof");
-    let root: Document<Properties> = document.try_map(|old| old.serde_into())?;
-
-    if let Some(proof) = proof {
-      let proof: Signature = Signature::from_json_value(proof)?;
-
-      Ok(Self {
-        document: VerifiableDocument::with_proof(root, proof),
-        message_id: MessageId::NONE,
-      })
-    } else {
-      Ok(Self {
-        document: VerifiableDocument::new(root),
-        message_id: MessageId::NONE,
-      })
-    }
+    Ok(Self {
+      document: document.serde_into()?,
+      message_id: MessageId::NONE,
+    })
   }
 
   /// Creates a `IotaDocumentBuilder` to configure a new `IotaDocument`.
@@ -209,17 +196,17 @@ impl IotaDocument {
     &mut self.document.properties_mut().properties
   }
 
-  /// Returns a reference to the `VerifiableDocument`.
+  /// Returns a reference to the underlying `Document`.
   pub fn as_document(&self) -> &__Document {
     &self.document
   }
 
-  /// Returns a mutable reference to the `VerifiableDocument`.
+  /// Returns a mutable reference to the underlying `Document`.
   ///
   /// # Safety
   ///
   /// This function is unsafe because it does not check that modifications
-  /// made to the `VerifiableDocument` maintain a valid `IotaDocument`.
+  /// made to the `Document` maintain a valid `IotaDocument`.
   ///
   /// If this constraint is violated, it may cause issues with future uses of
   /// the `IotaDocument`.

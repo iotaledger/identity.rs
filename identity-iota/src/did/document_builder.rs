@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::KeyPair;
+use identity_did::document::Document;
 use identity_did::document::DocumentBuilder;
-use identity_did::verifiable::Document as VerifiableDocument;
 use identity_did::verification::Method;
 use identity_did::verification::MethodBuilder;
 use identity_did::verification::MethodData;
@@ -99,7 +99,7 @@ impl IotaDocumentBuilder {
       .id(did.into())
       .authentication(method)
       .build()
-      .map(VerifiableDocument::new)
+      .map(Document::into_verifiable)
       .map(Into::into)?;
 
     Ok((document, keypair))
