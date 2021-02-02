@@ -334,10 +334,10 @@ impl<T, U, V> ResolveMethod<U> for Document<T, U, V> {
 #[cfg(test)]
 mod tests {
   use crate::did::DID;
-  use crate::document::DocumentBuilder;
   use crate::document::Document;
-  use crate::verification::MethodBuilder;
+  use crate::document::DocumentBuilder;
   use crate::verification::Method;
+  use crate::verification::MethodBuilder;
   use crate::verification::MethodData;
   use crate::verification::MethodScope;
   use crate::verification::MethodType;

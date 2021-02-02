@@ -20,6 +20,7 @@ jobs:
       matrix:
         project:
           [
+            identity,
             identity-core,
             identity-credential,
             identity-did,

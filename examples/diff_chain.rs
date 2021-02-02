@@ -6,21 +6,20 @@
 //!
 //! cargo run --example diff_chain
 
-use identity_core::crypto::KeyPair;
-use identity_did::verification::MethodBuilder;
-use identity_did::verification::MethodData;
-use identity_did::verification::MethodRef;
-use identity_did::verification::MethodScope;
-use identity_did::verification::MethodType;
-use identity_iota::chain::AuthChain;
-use identity_iota::chain::DocumentChain;
-use identity_iota::client::Client;
-use identity_iota::client::ClientBuilder;
-use identity_iota::client::Network;
-use identity_iota::did::DocumentDiff;
-use identity_iota::did::IotaDocument;
-use identity_iota::error::Result;
-use identity_iota::tangle::MessageId;
+use identity::crypto::KeyPair;
+use identity::did::MethodBuilder;
+use identity::did::MethodData;
+use identity::did::MethodRef;
+use identity::did::MethodType;
+use identity::iota::AuthChain;
+use identity::iota::Client;
+use identity::iota::ClientBuilder;
+use identity::iota::DocumentChain;
+use identity::iota::DocumentDiff;
+use identity::iota::IotaDocument;
+use identity::iota::MessageId;
+use identity::iota::Network;
+use identity::iota::Result;
 use std::thread::sleep;
 use std::time::Duration;
 

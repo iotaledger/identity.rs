@@ -199,8 +199,8 @@ mod tests {
   use serde_json::json;
   use serde_json::Value;
 
-  use crate::credential::CredentialBuilder;
   use crate::credential::Credential;
+  use crate::credential::CredentialBuilder;
   use crate::credential::Subject;
 
   fn subject() -> Subject {

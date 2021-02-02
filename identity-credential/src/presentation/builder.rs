@@ -139,21 +139,21 @@ mod tests {
   use identity_core::crypto::KeyPair;
   use identity_core::utils::encode_b58;
   use identity_did::did::DID;
-  use identity_did::document::DocumentBuilder;
   use identity_did::document::Document;
-  use identity_did::verification::MethodBuilder;
+  use identity_did::document::DocumentBuilder;
   use identity_did::verification::Method;
+  use identity_did::verification::MethodBuilder;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodType;
   use serde_json::json;
   use serde_json::Value;
 
-  use crate::credential::CredentialBuilder;
   use crate::credential::Credential;
+  use crate::credential::CredentialBuilder;
   use crate::credential::Subject;
   use crate::credential::VerifiableCredential;
-  use crate::presentation::PresentationBuilder;
   use crate::presentation::Presentation;
+  use crate::presentation::PresentationBuilder;
 
   fn subject() -> Subject {
     let json: Value = json!({

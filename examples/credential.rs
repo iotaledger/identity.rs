@@ -7,23 +7,23 @@
 //!
 //! cargo run --example credential
 
-use identity_core::common::Url;
-use identity_core::common::Value;
-use identity_core::convert::FromJson;
-use identity_core::convert::ToJson;
-use identity_core::crypto::KeyPair;
-use identity_core::json;
-use identity_credential::credential::CredentialBuilder;
-use identity_credential::credential::Credential;
-use identity_credential::credential::Subject;
-use identity_credential::credential::VerifiableCredential;
-use identity_did::did::DID;
-use identity_did::verification::MethodScope;
-use identity_iota::client::Client;
-use identity_iota::credential::CredentialValidation;
-use identity_iota::credential::CredentialValidator;
-use identity_iota::did::IotaDocument;
-use identity_iota::error::Result;
+use identity::core::json;
+use identity::core::FromJson;
+use identity::core::ToJson;
+use identity::core::Url;
+use identity::core::Value;
+use identity::credential::Credential;
+use identity::credential::CredentialBuilder;
+use identity::credential::Subject;
+use identity::credential::VerifiableCredential;
+use identity::crypto::KeyPair;
+use identity::did::MethodScope;
+use identity::did::DID;
+use identity::iota::Client;
+use identity::iota::CredentialValidation;
+use identity::iota::CredentialValidator;
+use identity::iota::IotaDocument;
+use identity::iota::Result;
 
 // A helper function to generate and new DID Document/KeyPair, sign the
 // document, publish it to the Tangle, and return the Document/KeyPair.
