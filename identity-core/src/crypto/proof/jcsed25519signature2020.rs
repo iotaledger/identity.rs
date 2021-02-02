@@ -17,7 +17,6 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::utils::decode_b58;
 use crate::utils::encode_b58;
-use crate::utils::generate_ed25519;
 use crate::utils::jcs_sha256;
 
 const SIGNATURE_NAME: &str = "JcsEd25519Signature2020";
@@ -40,7 +39,7 @@ impl JcsEd25519Signature2020 {
   /// Generates a new [`KeyPair`] appropriate for this signature suite.
   pub fn new_keypair() -> KeyPair {
     // TODO: Remove unwrap
-    generate_ed25519().unwrap()
+    KeyPair::new_ed25519().unwrap()
   }
 
   /// Signs the given `data` with `secret` and returns a digital signature.
@@ -145,62 +144,62 @@ pub(crate) fn ed25519_verify(message: &[u8], signature: &[u8], public: &[u8]) ->
 
 #[cfg(test)]
 mod tests {
-  const UNSIGNED: &str = r##"
-    {
-      "id": "did:example:123",
-      "verificationMethod": [
-        {
-          "id": "did:example:123#key-1",
-          "type": "JcsEd25519Key2020",
-          "controller": "did:example:123",
-          "publicKeyBase58": "6b23ioXQSAayuw13PGFMCAKqjgqoLTpeXWCy5WRfw28c"
-        }
-      ],
-      "service": [
-        {
-          "id": "did:schema:id",
-          "type": "schema",
-          "serviceEndpoint": "https://example.com"
-        }
-      ]
-    }
-  "##;
+  // const UNSIGNED: &str = r##"
+  //   {
+  //     "id": "did:example:123",
+  //     "verificationMethod": [
+  //       {
+  //         "id": "did:example:123#key-1",
+  //         "type": "JcsEd25519Key2020",
+  //         "controller": "did:example:123",
+  //         "publicKeyBase58": "6b23ioXQSAayuw13PGFMCAKqjgqoLTpeXWCy5WRfw28c"
+  //       }
+  //     ],
+  //     "service": [
+  //       {
+  //         "id": "did:schema:id",
+  //         "type": "schema",
+  //         "serviceEndpoint": "https://example.com"
+  //       }
+  //     ]
+  //   }
+  // "##;
 
-  const SIGNED: &str = r##"
-    {
-      "id": "did:example:123",
-      "verificationMethod": [
-        {
-          "id": "did:example:123#key-1",
-          "type": "JcsEd25519Key2020",
-          "controller": "did:example:123",
-          "publicKeyBase58": "6b23ioXQSAayuw13PGFMCAKqjgqoLTpeXWCy5WRfw28c"
-        }
-      ],
-      "service": [
-        {
-          "id": "did:schema:id",
-          "type": "schema",
-          "serviceEndpoint": "https://example.com"
-        }
-      ],
-      "proof": {
-        "verificationMethod": "#key-1",
-        "type": "JcsEd25519Signature2020",
-        "signatureValue": "piKnvB438vWsinW1dqq2EYRzcYFuR7Qm9X8t2S6TPPLDokLwcFBXnnERk6jmS8RXKTJnXKWw1Q9oNhYTwbR7vJkaJT8ZGgwDHNxa6mrMNsQsWkM4rg6EYY99xQko7FnpAMn"
-      }
-    }
-  "##;
+  // const SIGNED: &str = r##"
+  //   {
+  //     "id": "did:example:123",
+  //     "verificationMethod": [
+  //       {
+  //         "id": "did:example:123#key-1",
+  //         "type": "JcsEd25519Key2020",
+  //         "controller": "did:example:123",
+  //         "publicKeyBase58": "6b23ioXQSAayuw13PGFMCAKqjgqoLTpeXWCy5WRfw28c"
+  //       }
+  //     ],
+  //     "service": [
+  //       {
+  //         "id": "did:schema:id",
+  //         "type": "schema",
+  //         "serviceEndpoint": "https://example.com"
+  //       }
+  //     ],
+  //     "proof": {
+  //       "verificationMethod": "#key-1",
+  //       "type": "JcsEd25519Signature2020",
+  //       "signatureValue": "piKnvB438vWsinW1dqq2EYRzcYFuR7Qm9X8t2S6TPPLDokLwcFBXnnERk6jmS8RXKTJnXKWw1Q9oNhYTwbR7vJkaJT8ZGgwDHNxa6mrMNsQsWkM4rg6EYY99xQko7FnpAMn"
+  //     }
+  //   }
+  // "##;
 
   // use identity_did::signature::LdSuite;
   // use identity_did::signature::VerifiableDocument;
 
   use super::ed25519_sign;
   use super::ed25519_verify;
-  use crate::convert::FromJson;
-  use crate::crypto::JcsEd25519Signature2020;
-  use crate::crypto::SignatureData;
-  use crate::crypto::SignatureOptions;
+  // use crate::convert::FromJson;
+  // use crate::crypto::JcsEd25519Signature2020;
+  // use crate::crypto::SignatureData;
+  // use crate::crypto::SignatureOptions;
   use crate::utils::decode_b58;
 
   const PUBLIC_B58: &str = "6b23ioXQSAayuw13PGFMCAKqjgqoLTpeXWCy5WRfw28c";
@@ -209,7 +208,7 @@ mod tests {
   #[rustfmt::skip]
   const SIGNATURE_HELLO: &[u8] = &[12, 203, 235, 144, 80, 6, 163, 39, 181, 17, 44, 123, 250, 162, 165, 145, 135, 132, 32, 152, 24, 168, 55, 80, 84, 139, 153, 101, 102, 27, 157, 29, 70, 124, 64, 120, 250, 172, 186, 163, 108, 27, 208, 248, 134, 115, 3, 154, 222, 165, 31, 93, 33, 108, 212, 92, 191, 14, 21, 40, 251, 103, 241, 10, 104, 101, 108, 108, 111];
 
-  const SIGNATURE_DOCUMENT: &str = "piKnvB438vWsinW1dqq2EYRzcYFuR7Qm9X8t2S6TPPLDokLwcFBXnnERk6jmS8RXKTJnXKWw1Q9oNhYTwbR7vJkaJT8ZGgwDHNxa6mrMNsQsWkM4rg6EYY99xQko7FnpAMn";
+  // const SIGNATURE_DOCUMENT: &str = "piKnvB438vWsinW1dqq2EYRzcYFuR7Qm9X8t2S6TPPLDokLwcFBXnnERk6jmS8RXKTJnXKWw1Q9oNhYTwbR7vJkaJT8ZGgwDHNxa6mrMNsQsWkM4rg6EYY99xQko7FnpAMn";
 
   #[test]
   fn test_ed25519_can_sign_and_verify() {

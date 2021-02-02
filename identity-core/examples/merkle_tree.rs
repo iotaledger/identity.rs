@@ -10,15 +10,14 @@ use identity_core::crypto::merkle_tree::MTree;
 use identity_core::crypto::merkle_tree::Proof;
 use identity_core::crypto::KeyPair;
 use identity_core::error::Result;
-use identity_core::proof::JcsEd25519Signature2020;
 use rand::rngs::OsRng;
 use rand::Rng;
 use sha2::Sha256;
 
 const LEAVES: usize = 1 << 8;
 
-fn generate_leaves(count: usize) -> Vec<KeyPair> {
-  (0..count).map(|_| JcsEd25519Signature2020::new_keypair()).collect()
+fn generate_leaves(count: usize) -> Result<Vec<KeyPair>> {
+  (0..count).map(|_| KeyPair::new_ed25519()).collect()
 }
 
 fn generate_hashes<'a, D, T, I>(digest: &mut D, leaves: I) -> Vec<Hash<D>>
@@ -46,7 +45,7 @@ fn main() -> Result<()> {
   println!("Target Index:  {}", index);
 
   // Generate a list of keypairs to use for the Merkle tree.
-  let kpairs: Vec<KeyPair> = generate_leaves(LEAVES);
+  let kpairs: Vec<KeyPair> = generate_leaves(LEAVES).unwrap();
 
   // Hash all keypairs with SHA-256.
   let leaves: _ = kpairs.iter().map(KeyPair::public);

@@ -2,20 +2,32 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::slice::from_ref;
-use identity_core::{common::Url, convert::ToJson};
-use iota::{
-  client::{FindTransactionsResponse, GetTrytesResponse, Transfer},
-  transaction::bundled::{Address, BundledTransaction, BundledTransactionField as _},
-};
+use identity_core::common::Url;
+use identity_core::convert::ToJson;
+use iota::client::FindTransactionsResponse;
+use iota::client::GetTrytesResponse;
+use iota::client::Transfer;
+use iota::transaction::bundled::Address;
+use iota::transaction::bundled::BundledTransaction;
+use iota::transaction::bundled::BundledTransactionField;
 
-use crate::{
-  chain::{AuthChain, DiffChain, DocumentChain},
-  client::{ClientBuilder, Network, TxnPrinter},
-  did::{DocumentDiff, IotaDID, IotaDocument},
-  error::{Error, Result},
-  tangle::{Message, MessageId},
-  utils::{bundles_from_trytes, create_address_from_trits, encode_trits, txn_hash_trytes},
-};
+use crate::chain::AuthChain;
+use crate::chain::DiffChain;
+use crate::chain::DocumentChain;
+use crate::client::ClientBuilder;
+use crate::client::Network;
+use crate::client::TxnPrinter;
+use crate::did::DocumentDiff;
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
+use crate::error::Error;
+use crate::error::Result;
+use crate::tangle::Message;
+use crate::tangle::MessageId;
+use crate::utils::bundles_from_trytes;
+use crate::utils::create_address_from_trits;
+use crate::utils::encode_trits;
+use crate::utils::txn_hash_trytes;
 
 #[derive(Clone, Debug)]
 pub struct Client {

@@ -1,12 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-  chain::{AuthChain, DiffChain},
-  did::{DocumentDiff, IotaDID, IotaDocument},
-  error::Result,
-  tangle::MessageId,
-};
+use crate::chain::AuthChain;
+use crate::chain::DiffChain;
+use crate::did::DocumentDiff;
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
+use crate::error::Result;
+use crate::tangle::MessageId;
 
 #[derive(Debug)]
 pub struct DocumentChain {

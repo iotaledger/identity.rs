@@ -1,19 +1,22 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::{common::Object, convert::FromJson as _};
-use identity_credential::{credential::VerifiableCredential, presentation::VerifiablePresentation};
-use serde::{de::DeserializeOwned, Serialize};
+use identity_core::common::Object;
+use identity_core::convert::FromJson;
+use identity_credential::credential::VerifiableCredential;
+use identity_credential::presentation::VerifiablePresentation;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use std::collections::BTreeMap;
 
-use crate::{
-  client::Client,
-  did::{IotaDID, IotaDocument},
-  error::{Error, Result},
-};
+use crate::client::Client;
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
+use crate::error::Error;
+use crate::error::Result;
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct CredentialValidation<T = Object> {
+pub struct CredentialValidation<T = ()> {
   pub credential: VerifiableCredential<T>,
   pub issuer: DocumentValidation,
   pub subjects: BTreeMap<String, DocumentValidation>,
@@ -21,7 +24,7 @@ pub struct CredentialValidation<T = Object> {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct PresentationValidation<T = Object, U = Object> {
+pub struct PresentationValidation<T = (), U = ()> {
   pub presentation: VerifiablePresentation<T, U>,
   pub holder: DocumentValidation,
   pub credentials: Vec<CredentialValidation<U>>,

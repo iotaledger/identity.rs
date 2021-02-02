@@ -1,13 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::{
-  fmt::{Debug, Display, Formatter, Result},
-  marker::PhantomData,
-};
-use iota::transaction::bundled::{BundledTransaction, BundledTransactionField as _};
+use core::fmt::Debug;
+use core::fmt::Display;
+use core::fmt::Formatter;
+use core::fmt::Result;
+use core::marker::PhantomData;
+use iota::transaction::bundled::BundledTransaction;
+use iota::transaction::bundled::BundledTransactionField;
 
-use crate::utils::{encode_trits, txn_hash_trytes};
+use crate::utils::encode_trits;
+use crate::utils::txn_hash_trytes;
 
 pub enum __Full {}
 

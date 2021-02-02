@@ -1,20 +1,27 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::fmt::{Debug, Formatter, Result as FmtResult};
-use identity_core::convert::FromJson as _;
-use iota::{
-  crypto::ternary::Hash,
-  ternary::{T1B1Buf, TritBuf},
-  transaction::bundled::{BundledTransaction, BundledTransactionField as _, Timestamp},
-};
+use core::fmt::Debug;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
+use identity_core::convert::FromJson;
+use iota::crypto::ternary::Hash;
+use iota::ternary::T1B1Buf;
+use iota::ternary::TritBuf;
+use iota::transaction::bundled::BundledTransaction;
+use iota::transaction::bundled::BundledTransactionField;
+use iota::transaction::bundled::Timestamp;
 
-use crate::{
-  did::{DocumentDiff, IotaDID, IotaDocument},
-  error::{Error, Result},
-  tangle::{MessageId, TangleRef},
-  utils::{encode_trits, trytes_to_utf8, txn_hash},
-};
+use crate::did::DocumentDiff;
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
+use crate::error::Error;
+use crate::error::Result;
+use crate::tangle::MessageId;
+use crate::tangle::TangleRef;
+use crate::utils::encode_trits;
+use crate::utils::trytes_to_utf8;
+use crate::utils::txn_hash;
 
 macro_rules! try_extract {
   ($ty:ty, $this:expr, $did:expr) => {{

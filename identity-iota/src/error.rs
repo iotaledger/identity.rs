@@ -5,19 +5,19 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-  #[error("Core Error: {0}")]
+  #[error("{0}")]
   CoreError(#[from] identity_core::Error),
-  #[error("Diff Error: {0}")]
-  DiffError(#[from] identity_core::identity_diff::Error),
-  #[error("Credential Error: {0}")]
+  #[error("{0}")]
+  DiffError(#[from] identity_core::diff::Error),
+  #[error("{0}")]
   CredError(#[from] identity_credential::Error),
-  #[error("Invalid DID: {0}")]
-  InvalidDID(#[from] identity_core::did_url::Error),
-  #[error("Invalid Document: {0}")]
-  InvalidDoc(#[from] identity_core::did_doc::Error),
-  #[error("Client Error: {0}")]
+  #[error("{0}")]
+  InvalidDID(#[from] identity_did::did::Error),
+  #[error("{0}")]
+  InvalidDoc(#[from] identity_did::Error),
+  #[error("{0}")]
   ClientError(#[from] iota::client::error::Error),
-  #[error("Ternary Error: {0}")]
+  #[error("{0}")]
   TernaryError(#[from] iota::ternary::Error),
   #[error("Invalid Document: {error}")]
   InvalidDocument { error: &'static str },

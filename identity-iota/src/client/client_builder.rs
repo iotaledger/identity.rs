@@ -1,10 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-  client::{Client, Network},
-  error::Result,
-};
+use crate::client::Client;
+use crate::client::Network;
+use crate::error::Result;
 
 /// A `ClientBuilder` is used to generated a customized `Client`.
 #[derive(Clone, Debug)]

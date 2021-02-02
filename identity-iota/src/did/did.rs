@@ -1,25 +1,24 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::{
-  convert::TryFrom,
-  fmt::{Debug, Display, Formatter, Result as FmtResult},
-  ops::Deref,
-  str::FromStr,
-};
-use identity_core::{
-  crypto::KeyPair,
-  did_url::{Error as DIDError, DID},
-  proof::JcsEd25519Signature2020,
-  utils::{decode_b58, encode_b58},
-};
+use core::convert::TryFrom;
+use core::fmt::Debug;
+use core::fmt::Display;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
+use core::ops::Deref;
+use core::str::FromStr;
+use identity_core::crypto::KeyPair;
+use identity_core::utils::decode_b58;
+use identity_core::utils::encode_b58;
+use identity_did::did::Error as DIDError;
+use identity_did::did::DID;
 use multihash::Blake2b256;
 
-use crate::{
-  did::Segments,
-  error::{Error, Result},
-  utils::utf8_to_trytes,
-};
+use crate::did::Segments;
+use crate::error::Error;
+use crate::error::Result;
+use crate::utils::utf8_to_trytes;
 
 // The hash size of BLAKE2b-256 (32-bytes)
 const BLAKE2B_256_LEN: usize = 32;
@@ -42,7 +41,7 @@ impl IotaDID {
     T: Into<Option<&'b str>>,
     U: Into<Option<&'c str>>,
   {
-    let keypair: KeyPair = JcsEd25519Signature2020::new_keypair();
+    let keypair: KeyPair = KeyPair::new_ed25519()?;
     let public: &[u8] = keypair.public().as_ref();
 
     let did: Self = Self::with_network_and_shard(public, network, shard)?;
@@ -316,7 +315,8 @@ impl FromStr for IotaDID {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use identity_core::{crypto::KeyPair, did_url::DID, proof::JcsEd25519Signature2020};
+  use identity_core::crypto::KeyPair;
+  use identity_did::did::DID;
 
   const TAG: &str = "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
 
@@ -400,7 +400,7 @@ mod tests {
 
   #[test]
   fn test_new() {
-    let key: KeyPair = JcsEd25519Signature2020::new_keypair();
+    let key: KeyPair = KeyPair::new_ed25519().unwrap();
     let did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
@@ -411,7 +411,7 @@ mod tests {
 
   #[test]
   fn test_with_network() {
-    let key: KeyPair = JcsEd25519Signature2020::new_keypair();
+    let key: KeyPair = KeyPair::new_ed25519().unwrap();
     let did: IotaDID = IotaDID::with_network(key.public().as_ref(), "foo").unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
@@ -422,7 +422,7 @@ mod tests {
 
   #[test]
   fn test_with_network_and_shard() {
-    let key: KeyPair = JcsEd25519Signature2020::new_keypair();
+    let key: KeyPair = KeyPair::new_ed25519().unwrap();
     let did: IotaDID = IotaDID::with_network_and_shard(key.public().as_ref(), "foo", "shard-1").unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
@@ -433,7 +433,7 @@ mod tests {
 
   #[test]
   fn test_normalize() {
-    let key: KeyPair = JcsEd25519Signature2020::new_keypair();
+    let key: KeyPair = KeyPair::new_ed25519().unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
     // A DID with "main" as the network can be normalized ("main" removed)

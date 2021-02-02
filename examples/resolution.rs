@@ -6,15 +6,15 @@
 //!
 //! cargo run --example resolution
 
-use identity_core::{
-  crypto::KeyPair,
-  resolver::{dereference, resolve, Dereference, Resolution},
-};
-use identity_iota::{
-  client::Client,
-  did::{IotaDID, IotaDocument},
-  error::Result,
-};
+use identity_core::crypto::KeyPair;
+use identity_did::resolution::dereference;
+use identity_did::resolution::resolve;
+use identity_did::resolution::Dereference;
+use identity_did::resolution::Resolution;
+use identity_iota::client::Client;
+use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDocument;
+use identity_iota::error::Result;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {

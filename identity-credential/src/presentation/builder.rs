@@ -133,22 +133,20 @@ where
 
 #[cfg(test)]
 mod tests {
-  use did_doc::Document;
-  use did_doc::DocumentBuilder;
-  use did_doc::Method;
-  use did_doc::MethodBuilder;
-  use did_doc::MethodData;
-  use did_doc::MethodType;
-  use did_url::DID;
-  use serde_json::json;
-  use serde_json::Value;
-
   use identity_core::common::Object;
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
-  use identity_core::proof::JcsEd25519Signature2020;
   use identity_core::utils::encode_b58;
+  use identity_did::did::DID;
+  use identity_did::document::Builder as DocumentBuilder;
+  use identity_did::document::Document;
+  use identity_did::verification::Builder as MethodBuilder;
+  use identity_did::verification::Method;
+  use identity_did::verification::MethodData;
+  use identity_did::verification::MethodType;
+  use serde_json::json;
+  use serde_json::Value;
 
   use crate::credential::Builder as CredentialBuilder;
   use crate::credential::Credential;
@@ -176,7 +174,7 @@ mod tests {
   #[test]
   #[rustfmt::skip]
   fn test_presentation_builder_valid() {
-    let keypair: KeyPair = JcsEd25519Signature2020::new_keypair();
+    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let controller: DID = "did:example:1234".parse().unwrap();
 
     let method: Method = MethodBuilder::default()

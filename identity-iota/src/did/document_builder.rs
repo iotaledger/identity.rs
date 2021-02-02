@@ -1,16 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::{
-  crypto::KeyPair,
-  did_doc::{DocumentBuilder, Method, MethodBuilder, MethodData, MethodType, VerifiableDocument},
-  proof::JcsEd25519Signature2020,
-};
+use identity_core::crypto::KeyPair;
+use identity_did::document::Builder as DocumentBuilder;
+use identity_did::verifiable::Document as VerifiableDocument;
+use identity_did::verification::Builder as MethodBuilder;
+use identity_did::verification::Method;
+use identity_did::verification::MethodData;
+use identity_did::verification::MethodType;
 
-use crate::{
-  did::{IotaDID, IotaDocument, Properties},
-  error::Result,
-};
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
+use crate::did::Properties;
+use crate::error::Result;
 
 #[derive(Clone, Debug)]
 pub struct IotaDocumentBuilder {
@@ -105,10 +107,8 @@ impl IotaDocumentBuilder {
 
   fn default_keypair(method: MethodType) -> Result<KeyPair> {
     match method {
-      MethodType::Ed25519VerificationKey2018 => Ok(JcsEd25519Signature2020::new_keypair()),
-      _ => {
-        todo!("Invalid Method Type")
-      }
+      MethodType::Ed25519VerificationKey2018 => KeyPair::new_ed25519().map_err(Into::into),
+      _ => todo!("Invalid Method Type"),
     }
   }
 }

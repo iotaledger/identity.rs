@@ -5,6 +5,8 @@ use zeroize::Zeroize;
 
 use crate::crypto::PublicKey;
 use crate::crypto::SecretKey;
+use crate::error::Result;
+use crate::utils::generate_ed25519;
 
 /// A convenience for storing a pair of cryptographic keys
 #[derive(Clone, Debug)]
@@ -14,6 +16,11 @@ pub struct KeyPair {
 }
 
 impl KeyPair {
+  /// Creates a new Ed25519 [`KeyPair`].
+  pub fn new_ed25519() -> Result<Self> {
+    generate_ed25519()
+  }
+
   /// Creates a new [`KeyPair`] from the given keys.
   pub const fn new(public: PublicKey, secret: SecretKey) -> Self {
     Self { public, secret }

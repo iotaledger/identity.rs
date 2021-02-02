@@ -3,12 +3,16 @@
 
 use core::slice::Iter;
 
-use crate::{
-  chain::{AuthChain, DocumentChain},
-  did::{DocumentDiff, IotaDID},
-  error::{Error, Result},
-  tangle::{Message, MessageId, MessageIndex, TangleRef as _},
-};
+use crate::chain::AuthChain;
+use crate::chain::DocumentChain;
+use crate::did::DocumentDiff;
+use crate::did::IotaDID;
+use crate::error::Error;
+use crate::error::Result;
+use crate::tangle::Message;
+use crate::tangle::MessageId;
+use crate::tangle::MessageIndex;
+use crate::tangle::TangleRef;
 
 #[derive(Debug)]
 pub struct DiffChain {

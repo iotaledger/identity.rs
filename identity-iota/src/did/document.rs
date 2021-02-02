@@ -1,31 +1,47 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::{
-  convert::TryFrom,
-  fmt::{Debug, Display, Formatter, Result as FmtResult},
-  ops::Deref,
-};
-use identity_core::{
-  common::{Object, Timestamp, Value},
-  convert::{FromJson as _, SerdeInto as _},
-  crypto::{KeyPair, SecretKey},
-  did_doc::{
-    Document, LdSuite, MethodQuery, MethodScope, MethodType, MethodWrap, ResolveMethod, SetSignature, Signature,
-    SignatureOptions, TrySignature, TrySignatureMut, VerifiableDocument,
-  },
-  did_url::DID,
-  proof::JcsEd25519Signature2020,
-};
+use core::convert::TryFrom;
+use core::fmt::Debug;
+use core::fmt::Display;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
+use core::ops::Deref;
+use identity_core::common::Object;
+use identity_core::common::Timestamp;
+use identity_core::common::Value;
+use identity_core::convert::FromJson;
+use identity_core::convert::SerdeInto;
+use identity_core::crypto::JcsEd25519Signature2020;
+use identity_core::crypto::KeyPair;
+use identity_core::crypto::SecretKey;
+use identity_core::crypto::Signature;
+use identity_core::crypto::SignatureOptions;
+use identity_did::did::DID;
+use identity_did::document::Document;
+use identity_did::verifiable::Document as VerifiableDocument;
+use identity_did::verifiable::LdSuite;
+use identity_did::verifiable::ResolveMethod;
+use identity_did::verifiable::SetSignature;
+use identity_did::verifiable::TrySignature;
+use identity_did::verifiable::TrySignatureMut;
+use identity_did::verification::MethodQuery;
+use identity_did::verification::MethodScope;
+use identity_did::verification::MethodType;
+use identity_did::verification::MethodWrap;
 use serde::Serialize;
 
-use crate::{
-  client::{Client, Network},
-  did::{DocumentDiff, IotaDID, IotaDocumentBuilder, Properties},
-  error::{Error, Result},
-  tangle::{MessageId, TangleRef},
-  utils::utf8_to_trytes,
-};
+use crate::client::Client;
+use crate::client::Network;
+use crate::did::DocumentDiff;
+use crate::did::IotaDID;
+use crate::did::IotaDocumentBuilder;
+use crate::did::Properties;
+use crate::error::Error;
+use crate::error::Result;
+use crate::tangle::MessageId;
+use crate::tangle::TangleRef;
+use crate::utils::utf8_to_trytes;
 
 const AUTH_QUERY: (usize, MethodScope) = (0, MethodScope::Authentication);
 
@@ -36,7 +52,7 @@ const ERR_AMIM: &str = "Authentication Method Id Mismatch";
 type __Document = VerifiableDocument<Properties>;
 
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
-#[serde(try_from = "Document", into = "__Document")]
+#[serde(try_from = "Document<Object>", into = "__Document")]
 pub struct IotaDocument {
   document: __Document,
   message_id: MessageId,
@@ -68,7 +84,7 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Returns `Err` if the document is not a valid `IotaDocument`.
-  pub fn try_from_document(mut document: Document) -> Result<Self> {
+  pub fn try_from_document(mut document: Document<Object>) -> Result<Self> {
     let did: &IotaDID = IotaDID::try_from_borrowed(document.id())?;
     let key: &DID = document.try_resolve(AUTH_QUERY)?.into_method().id();
 
@@ -420,10 +436,10 @@ impl From<IotaDocument> for __Document {
   }
 }
 
-impl TryFrom<Document> for IotaDocument {
+impl TryFrom<Document<Object>> for IotaDocument {
   type Error = Error;
 
-  fn try_from(other: Document) -> Result<Self, Self::Error> {
+  fn try_from(other: Document<Object>) -> Result<Self, Self::Error> {
     Self::try_from_document(other)
   }
 }
@@ -464,7 +480,7 @@ impl SetSignature for IotaDocument {
   }
 }
 
-impl ResolveMethod<Object> for IotaDocument {
+impl ResolveMethod<()> for IotaDocument {
   fn resolve_method(&self, query: MethodQuery<'_>) -> Option<MethodWrap<'_>> {
     self.document.resolve(query)
   }

@@ -1,18 +1,23 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::{
-  convert::{AsJson as _, SerdeInto as _},
-  did_doc::{Document, SetSignature, Signature, TrySignature, TrySignatureMut},
-  identity_diff::{did_doc::DiffDocument, Diff},
-};
+use identity_core::convert::AsJson;
+use identity_core::convert::SerdeInto;
+use identity_core::crypto::Signature;
+use identity_core::diff::Diff;
+use identity_did::diff::DiffDocument;
+use identity_did::document::Document;
+use identity_did::verifiable::SetSignature;
+use identity_did::verifiable::TrySignature;
+use identity_did::verifiable::TrySignatureMut;
 
-use crate::{
-  client::{Client, Network},
-  did::{IotaDID, IotaDocument},
-  error::Result,
-  tangle::{MessageId, TangleRef},
-};
+use crate::client::Client;
+use crate::client::Network;
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
+use crate::error::Result;
+use crate::tangle::MessageId;
+use crate::tangle::TangleRef;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DocumentDiff {

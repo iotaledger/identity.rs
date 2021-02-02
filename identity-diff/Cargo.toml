@@ -11,7 +11,6 @@ keywords = ["iota", "tangle", "identity"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-anyhow = { version = "1.0" }
 did_url = { version = "0.1", default-features = false, features = ["alloc"] }
 identity-derive = { version = "=0.1.0", path = "derive" }
 serde = { version = "1.0", features = [ "derive" ] }

@@ -6,19 +6,23 @@
 //!
 //! cargo run --example diff_chain
 
-use identity_core::{
-  crypto::KeyPair,
-  did_doc::{MethodBuilder, MethodData, MethodRef, MethodType},
-  proof::JcsEd25519Signature2020,
-};
-use identity_iota::{
-  chain::{AuthChain, DocumentChain},
-  client::{Client, ClientBuilder, Network},
-  did::{DocumentDiff, IotaDocument},
-  error::Result,
-  tangle::MessageId,
-};
-use std::{thread::sleep, time::Duration};
+use identity_core::crypto::KeyPair;
+use identity_did::verification::Builder as MethodBuilder;
+use identity_did::verification::MethodData;
+use identity_did::verification::MethodRef;
+use identity_did::verification::MethodScope;
+use identity_did::verification::MethodType;
+use identity_iota::chain::AuthChain;
+use identity_iota::chain::DocumentChain;
+use identity_iota::client::Client;
+use identity_iota::client::ClientBuilder;
+use identity_iota::client::Network;
+use identity_iota::did::DocumentDiff;
+use identity_iota::did::IotaDocument;
+use identity_iota::error::Result;
+use identity_iota::tangle::MessageId;
+use std::thread::sleep;
+use std::time::Duration;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
@@ -54,7 +58,7 @@ async fn main() -> Result<()> {
 
   {
     let mut new: IotaDocument = chain.current().clone();
-    let keypair: KeyPair = JcsEd25519Signature2020::new_keypair();
+    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
 
     let authentication: MethodRef = MethodBuilder::default()
       .id(chain.id().join("#key-2")?.into())
@@ -115,7 +119,7 @@ async fn main() -> Result<()> {
 
   {
     let mut new: IotaDocument = chain.current().clone();
-    let keypair: KeyPair = JcsEd25519Signature2020::new_keypair();
+    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
 
     let authentication: MethodRef = MethodBuilder::default()
       .id(new.id().join("#bad-key")?.into())

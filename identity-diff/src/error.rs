@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::Result as AnyhowResult;
 use core::fmt::Display;
-use thiserror::Error as DeriveError;
 
-#[derive(Debug, DeriveError)]
+pub type Result<T, E = Error> = ::core::result::Result<T, E>;
+
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
   #[error("Diff Error: {0}")]
   DiffError(String),
@@ -37,5 +37,3 @@ impl Error {
     Self::ConversionError(format!("{}", message))
   }
 }
-
-pub type Result<T, E = Error> = AnyhowResult<T, E>;

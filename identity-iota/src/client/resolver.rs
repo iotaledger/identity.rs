@@ -2,17 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_trait::async_trait;
-use identity_core::{
-  convert::SerdeInto as _,
-  did_url::DID,
-  error::{Error, Result},
-  resolver::{DocumentMetadata, InputMetadata, MetaDocument, ResolverMethod},
-};
+use identity_core::convert::SerdeInto;
+use identity_did::did::DID;
+use identity_did::error::Error;
+use identity_did::error::Result;
+use identity_did::resolution::DocumentMetadata;
+use identity_did::resolution::InputMetadata;
+use identity_did::resolution::MetaDocument;
+use identity_did::resolution::ResolverMethod;
 
-use crate::{
-  client::Client,
-  did::{IotaDID, IotaDocument},
-};
+use crate::client::Client;
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
 
 #[async_trait(?Send)]
 impl ResolverMethod for Client {
@@ -23,8 +24,11 @@ impl ResolverMethod for Client {
   }
 
   async fn read(&self, did: &DID, _input: InputMetadata) -> Result<Option<MetaDocument>> {
-    let did: &IotaDID = IotaDID::try_from_borrowed(did).map_err(err)?;
-    let document: IotaDocument = self.read_document(&did).await.map_err(err)?;
+    let document: IotaDocument = IotaDID::try_from_borrowed(did)
+      .map_err(|_| Error::MissingResolutionDID)
+      .map(|did| self.read_document(&did))?
+      .await
+      .map_err(|_| Error::MissingResolutionDocument)?;
 
     let mut meta: DocumentMetadata = DocumentMetadata::new();
     meta.created = Some(document.created());
@@ -35,8 +39,4 @@ impl ResolverMethod for Client {
       meta,
     }))
   }
-}
-
-fn err(error: crate::error::Error) -> Error {
-  Error::ResolutionError(error.into())
 }

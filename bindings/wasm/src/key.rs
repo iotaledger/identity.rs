@@ -4,8 +4,7 @@
 use identity_core::{
   crypto::{KeyPair, PublicKey, SecretKey},
   did_doc::MethodType,
-  proof::JcsEd25519Signature2020,
-  utils::{decode_b58, encode_b58},
+  utils::{decode_b58, encode_b58, generate_ed25519},
 };
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -29,8 +28,8 @@ impl Key {
 
   /// Generates a new `Key` object suitable for ed25519 signatures.
   #[wasm_bindgen(js_name = generateEd25519)]
-  pub fn generate_ed25519() -> Key {
-    Self(JcsEd25519Signature2020::new_keypair())
+  pub fn generate_ed25519() -> Result<Key, JsValue> {
+    generate_ed25519().map_err(js_err).map(Self)
   }
 
   /// Parses a `Key` object from base58-encoded public/private keys.

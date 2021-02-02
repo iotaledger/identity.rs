@@ -3,11 +3,14 @@
 
 use core::mem;
 
-use crate::{
-  did::{IotaDID, IotaDocument},
-  error::{Error, Result},
-  tangle::{Message, MessageId, MessageIndex, TangleRef as _},
-};
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
+use crate::error::Error;
+use crate::error::Result;
+use crate::tangle::Message;
+use crate::tangle::MessageId;
+use crate::tangle::MessageIndex;
+use crate::tangle::TangleRef;
 
 #[derive(Debug)]
 pub struct AuthChain {
