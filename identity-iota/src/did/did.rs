@@ -229,7 +229,7 @@ impl IotaDID {
   }
 
   pub(crate) fn normalize(mut did: DID) -> DID {
-    let segments: Segments = Segments(did.method_id());
+    let segments: Segments<'_> = Segments(did.method_id());
 
     if segments.count() == 2 && segments.network() == Self::DEFAULT_NETWORK {
       let method_id: String = segments.tag().to_string();
@@ -245,13 +245,13 @@ impl IotaDID {
 }
 
 impl Display for IotaDID {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     write!(f, "{}", self.0)
   }
 }
 
 impl Debug for IotaDID {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     write!(f, "{}", self.0)
   }
 }

@@ -100,7 +100,7 @@ impl<T> Debug for DiffHashSet<T>
 where
   T: Debug + Diff,
 {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     write!(f, "DiffHashSet")?;
     let mut buf = f.debug_list();
     if let Some(d) = &self.0 {
@@ -116,7 +116,7 @@ impl<T> Debug for InnerValue<T>
 where
   T: Debug + Diff,
 {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     match &self {
       Self::Add(val) => f.debug_tuple("Add").field(val).finish(),
       Self::Remove { remove } => f.debug_tuple("Remove").field(remove).finish(),

@@ -39,7 +39,7 @@ impl MessageId {
 }
 
 impl Debug for MessageId {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_str(self.0.as_deref().unwrap_or_default())
   }
 }

@@ -39,7 +39,7 @@ impl<'a> TxnPrinter<'a, __Hash> {
 }
 
 impl Debug for TxnPrinter<'_, __Full> {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.debug_struct("BundledTransaction")
       .field("hash", &txn_hash_trytes(self.0))
       .field("address", &encode_trits(self.0.address().to_inner()))
@@ -57,7 +57,7 @@ impl Debug for TxnPrinter<'_, __Full> {
 }
 
 impl Debug for TxnPrinter<'_, __Mini> {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.debug_struct("BundledTransaction")
       .field("hash", &txn_hash_trytes(self.0))
       .field("address", &encode_trits(self.0.address().to_inner()))
@@ -66,13 +66,13 @@ impl Debug for TxnPrinter<'_, __Mini> {
 }
 
 impl Debug for TxnPrinter<'_, __Hash> {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     write!(f, "{}", txn_hash_trytes(self.0))
   }
 }
 
 impl Display for TxnPrinter<'_, __Hash> {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     write!(f, "{}", txn_hash_trytes(self.0))
   }
 }

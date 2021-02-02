@@ -36,7 +36,4 @@ pub enum Error {
   /// Caused by attempting to parse an invalid cryptographic key.
   #[error("Invalid Key Format")]
   InvalidKeyFormat,
-  /// Caused by a failure to resolve a DID.
-  #[error("DID Resolution Error: {0}")]
-  ResolutionError(anyhow::Error),
 }

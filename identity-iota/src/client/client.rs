@@ -93,7 +93,7 @@ impl Client {
 
   /// Returns the web explorer URL of the given `transaction`.
   pub fn transaction_url(&self, transaction: &BundledTransaction) -> Url {
-    let hash: TxnPrinter<_> = TxnPrinter::hash(transaction);
+    let hash: TxnPrinter<'_, _> = TxnPrinter::hash(transaction);
     let mut url: Url = self.network.explorer_url().clone();
 
     url
@@ -245,6 +245,6 @@ fn __dbg_transactions(response: &FindTransactionsResponse) -> Vec<String> {
   response.hashes.iter().map(|hash| encode_trits(hash)).collect()
 }
 
-fn __dbg_trytes(response: &GetTrytesResponse) -> Vec<TxnPrinter> {
+fn __dbg_trytes(response: &GetTrytesResponse) -> Vec<TxnPrinter<'_>> {
   response.trytes.iter().map(TxnPrinter::full).collect()
 }

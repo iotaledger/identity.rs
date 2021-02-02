@@ -132,7 +132,7 @@ impl IotaDocument {
   }
 
   /// Returns the default authentication method of the DID document.
-  pub fn authentication(&self) -> MethodWrap {
+  pub fn authentication(&self) -> MethodWrap<'_> {
     self.document.resolve(AUTH_QUERY).unwrap()
   }
 
@@ -396,13 +396,13 @@ impl IotaDocument {
 }
 
 impl Display for IotaDocument {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     Display::fmt(&self.document, f)
   }
 }
 
 impl Debug for IotaDocument {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     Debug::fmt(&self.document, f)
   }
 }

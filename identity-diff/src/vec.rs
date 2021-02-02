@@ -105,7 +105,7 @@ where
 
 /// Debug trait for `DiffVec<T>`
 impl<T: Diff> Debug for DiffVec<T> {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     write!(f, "DiffVec ")?;
     f.debug_list().entries(self.0.iter()).finish()
   }
@@ -113,7 +113,7 @@ impl<T: Diff> Debug for DiffVec<T> {
 
 /// Debug trait for `InnerVec<T>`
 impl<T: Diff> Debug for InnerVec<T> {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     match &self {
       Self::Change { index, item } => f
         .debug_struct("Change")

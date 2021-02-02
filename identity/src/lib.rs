@@ -1,7 +1,23 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! IOTA Identity
+
+#![warn(
+  rust_2018_idioms,
+  unreachable_pub,
+  missing_docs,
+  missing_crate_level_docs,
+  broken_intra_doc_links,
+  private_intra_doc_links,
+  private_doc_tests,
+  clippy::missing_safety_doc,
+  clippy::missing_errors_doc
+)]
+
 pub mod core {
+  //! Core Traits and Types
+
   pub use identity_core::common::*;
   pub use identity_core::convert::*;
   pub use identity_core::error::*;
@@ -15,16 +31,26 @@ pub mod core {
 }
 
 pub mod crypto {
+  //! Cryptographic Utilities
+
   pub use identity_core::crypto::*;
 }
 
 pub mod credential {
+  //! Verifiable Credentials
+  //!
+  //! [Specification](https://www.w3.org/TR/vc-data-model/)
+
   pub use identity_credential::credential::*;
   pub use identity_credential::error::*;
   pub use identity_credential::presentation::*;
 }
 
 pub mod did {
+  //! Decentralized Identifiers
+  //!
+  //! [Specification](https://www.w3.org/TR/did-core/)
+
   pub use identity_did::document::*;
   pub use identity_did::error::*;
   pub use identity_did::service::*;
@@ -40,6 +66,8 @@ pub mod did {
 }
 
 pub mod iota {
+  //! IOTA Tangle DID Method
+
   pub use identity_iota::chain::*;
   pub use identity_iota::client::*;
   pub use identity_iota::credential::*;

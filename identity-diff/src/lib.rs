@@ -8,6 +8,18 @@
 //! `bool`, and `char` types.  Structs and Enums are supported via `identity_derive` and can be composed of any number
 //! of these types.
 
+#![warn(
+  rust_2018_idioms,
+  unreachable_pub,
+  // missing_docs,
+  // missing_crate_level_docs,
+  // broken_intra_doc_links,
+  // private_intra_doc_links,
+  // private_doc_tests,
+  // clippy::missing_safety_doc,
+  // clippy::missing_errors_doc,
+)]
+
 #[doc(hidden)]
 pub use identity_derive::*;
 

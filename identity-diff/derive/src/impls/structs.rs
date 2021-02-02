@@ -169,7 +169,7 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
               for #diff<#params>
               #clause
               {
-                  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                       const NAME: &str = stringify!(diff);
                       let mut #buf = f.debug_struct(NAME);
                       #mac
@@ -227,7 +227,7 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
           impl<#(#param_decls),*> std::fmt::Debug for #diff<#params>
               #clause
               {
-                  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                       #mac
                   }
               }
@@ -238,7 +238,7 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
             impl<#(#param_decls),*> std::fmt::Debug for #diff<#params>
                 #clause
             {
-                fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
                 {
                     f.debug_struct(stringify!(#diff)).finish()
                 }

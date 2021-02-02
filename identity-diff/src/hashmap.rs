@@ -147,7 +147,7 @@ where
   K: Debug + Diff,
   V: Debug + Diff,
 {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     write!(f, "DiffHashMap")?;
 
     let mut buf = f.debug_list();
@@ -178,7 +178,7 @@ where
   K: Debug + Diff,
   V: Debug + Diff,
 {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     match &self {
       Self::Change { key, value } => f
         .debug_struct("Change")

@@ -92,7 +92,7 @@ impl Message {
 }
 
 impl Debug for Message {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     f.debug_struct("Message")
       .field("address", &self.address)
       .field("message", &self.message_str())

@@ -52,7 +52,7 @@ impl Diff for String {
 
 /// Debug trait implementation for DiffString.
 impl Debug for DiffString {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     match &self.0 {
       Some(val) => write!(f, "DiffString({:#?})", val),
       None => write!(f, "DiffString None"),
