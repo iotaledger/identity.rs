@@ -109,7 +109,9 @@ impl IotaDocumentBuilder {
   fn default_keypair(method: MethodType) -> Result<KeyPair> {
     match method {
       MethodType::Ed25519VerificationKey2018 => KeyPair::new_ed25519().map_err(Into::into),
-      _ => Err(Error::InvalidDocument { error: "Unknown Method Type" }),
+      _ => Err(Error::InvalidDocument {
+        error: "Unknown Method Type",
+      }),
     }
   }
 }
