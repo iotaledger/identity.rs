@@ -8,9 +8,9 @@ use core::fmt::Result as FmtResult;
 use core::ops::Deref;
 use core::ops::DerefMut;
 use serde::Serialize;
+use identity_core::crypto::Signature;
 
 use crate::document::Document as Document_;
-use crate::signature::Signature;
 use crate::verifiable::Properties;
 use crate::verifiable::ResolveMethod;
 use crate::verifiable::SetSignature;

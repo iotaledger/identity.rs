@@ -1,26 +1,31 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::verification::MethodWrap;
-
+/// Customizable properties of a DID Document signature.
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct SignatureOptions {
+  /// The unique identifier of the DID method used to create this signature.
   #[serde(rename = "verificationMethod")]
   pub verification_method: String,
+  /// The intended purpose of the signature - See [`MethodScope`] for supported values.
   #[serde(rename = "proofPurpose", skip_serializing_if = "Option::is_none")]
   pub proof_purpose: Option<String>,
+  /// A timestamp of when the signature was created.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub created: Option<String>,
+  /// The signature `nonce` property.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub nonce: Option<String>,
+  /// The signature `domain` property.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub domain: Option<String>,
 }
 
 impl SignatureOptions {
-  pub const fn new(verification_method: String) -> Self {
+  /// Creates a new [`SignatureOptions`] instance with the given `method`.
+  pub fn new(method: impl Into<String>) -> Self {
     Self {
-      verification_method,
+      verification_method: method.into(),
       proof_purpose: None,
       created: None,
       nonce: None,
@@ -28,19 +33,15 @@ impl SignatureOptions {
     }
   }
 
-  pub const fn with_purpose(verification_method: String, proof_purpose: String) -> Self {
+  /// Creates a new [`SignatureOptions`] instance with the given `method` and
+  /// `purpose`.
+  pub fn with_purpose(method: impl Into<String>, purpose: impl Into<String>) -> Self {
     Self {
-      verification_method,
-      proof_purpose: Some(proof_purpose),
+      verification_method: method.into(),
+      proof_purpose: Some(purpose.into()),
       created: None,
       nonce: None,
       domain: None,
     }
-  }
-}
-
-impl<T> From<MethodWrap<'_, T>> for SignatureOptions {
-  fn from(other: MethodWrap<'_, T>) -> Self {
-    Self::with_purpose(other.id().to_string(), other.scope().as_str().to_string())
   }
 }

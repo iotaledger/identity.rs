@@ -9,13 +9,12 @@ use core::ops::DerefMut;
 use serde::Serialize;
 
 use crate::error::Result;
-use crate::signature::SignatureData;
-use crate::signature::SignatureOptions;
-use crate::signature::SignatureValue;
-use crate::signature::Verify;
-use crate::verification::MethodIdent;
-use crate::verification::MethodQuery;
+use crate::crypto::SignatureData;
+use crate::crypto::SignatureOptions;
+use crate::crypto::SignatureValue;
+use crate::crypto::SigVerify;
 
+/// A DID Document digital signature.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct Signature {
   #[serde(rename = "type")]
@@ -27,6 +26,7 @@ pub struct Signature {
 }
 
 impl Signature {
+  /// Creates a new [`Signature`].
   pub fn new(type_: impl Into<String>, options: SignatureOptions) -> Self {
     Self {
       type_: type_.into(),
@@ -35,52 +35,51 @@ impl Signature {
     }
   }
 
+  /// Returns the `type` property of the signature.
   pub fn type_(&self) -> &str {
     &*self.type_
   }
 
+  /// Returns a reference to the signature `data`.
   pub const fn data(&self) -> &SignatureValue {
     &self.data
   }
 
+  /// Returns a mutable reference to the signature `data`.
   pub fn data_mut(&mut self) -> &mut SignatureValue {
     &mut self.data
   }
 
+  /// Sets the signature `data` to the given `value`.
   pub fn set_data(&mut self, value: SignatureData) {
     self.data.set(value);
   }
 
+  /// Clears the current signature value - all other properties are unchanged.
   pub fn clear_data(&mut self) {
     self.data.clear();
   }
 
+  /// Flag the signature value so it is ignored during serialization
   pub fn hide_value(&self) {
     self.data.hide();
   }
 
+  /// Restore the signature value state so serialization behaves normally
   pub fn show_value(&self) {
     self.data.show();
   }
 
-  pub fn to_query(&self) -> Result<MethodQuery<'_>> {
-    let ident: MethodIdent<'_> = (&*self.verification_method).into();
-
-    if let Some(scope) = self.proof_purpose.as_deref() {
-      Ok(MethodQuery::with_scope(ident, scope.parse()?))
-    } else {
-      Ok(MethodQuery::new(ident))
-    }
-  }
-
+  /// Verifies `self` with the given signature `suite` and `public` key.
   pub fn verify<S, M>(&self, suite: &S, message: &M, public: &[u8]) -> Result<()>
   where
-    S: Verify,
+    S: SigVerify,
     M: Serialize,
   {
     self.verifiable(|data| suite.verify(message, data, public))
   }
 
+  #[doc(hidden)]
   pub fn verifiable<T, F>(&self, f: F) -> T
   where
     F: FnOnce(&SignatureValue) -> T,

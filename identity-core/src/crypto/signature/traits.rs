@@ -4,16 +4,17 @@
 use serde::Serialize;
 
 use crate::error::Result;
-use crate::signature::SignatureData;
-use crate::verification::MethodType;
+use crate::crypto::SignatureData;
 
-pub trait SuiteName {
+/// A trait for signature suites identified by a particular name.
+pub trait SigName {
+  /// Returns the name identifying this signature suite.
   fn name(&self) -> String;
 }
 
-impl<'a, T> SuiteName for &'a T
+impl<'a, T> SigName for &'a T
 where
-  T: SuiteName,
+  T: SigName,
 {
   fn name(&self) -> String {
     (**self).name()
@@ -23,15 +24,17 @@ where
 // =============================================================================
 // =============================================================================
 
-pub trait Sign {
+/// A trait for general-purpose signature creation
+pub trait SigSign {
+  /// Signs the given `data` with `secret` and returns a digital signature.
   fn sign<T>(&self, data: &T, secret: &[u8]) -> Result<SignatureData>
   where
     T: Serialize;
 }
 
-impl<'a, T> Sign for &'a T
+impl<'a, T> SigSign for &'a T
 where
-  T: Sign,
+  T: SigSign,
 {
   fn sign<U>(&self, data: &U, secret: &[u8]) -> Result<SignatureData>
   where
@@ -44,20 +47,18 @@ where
 // =============================================================================
 // =============================================================================
 
-pub trait Verify {
-  const METHODS: &'static [MethodType];
-
+/// A trait for general-purpose signature verification
+pub trait SigVerify {
+  /// Verifies the authenticity of `data` using `signature` and `public`.
   fn verify<T>(&self, data: &T, signature: &SignatureData, public: &[u8]) -> Result<()>
   where
     T: Serialize;
 }
 
-impl<'a, T> Verify for &'a T
+impl<'a, T> SigVerify for &'a T
 where
-  T: Verify,
+  T: SigVerify,
 {
-  const METHODS: &'static [MethodType] = T::METHODS;
-
   fn verify<U>(&self, data: &U, signature: &SignatureData, public: &[u8]) -> Result<()>
   where
     U: Serialize,

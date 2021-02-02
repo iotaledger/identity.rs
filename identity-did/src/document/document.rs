@@ -8,6 +8,7 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use identity_core::common::Url;
 use identity_core::convert::ToJson;
+use identity_core::crypto::SignatureOptions;
 use serde::Serialize;
 
 use crate::did::DID;
@@ -15,7 +16,6 @@ use crate::document::Builder;
 use crate::error::Error;
 use crate::error::Result;
 use crate::service::Service;
-use crate::signature::SignatureOptions;
 use crate::utils::DIDKey;
 use crate::utils::OrderedSet;
 use crate::verifiable::ResolveMethod;

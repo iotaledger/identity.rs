@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::ops::Deref;
+use identity_core::crypto::SignatureOptions;
 
 use crate::verification::Method;
 use crate::verification::MethodScope;
@@ -41,5 +42,11 @@ impl<T> Deref for MethodWrap<'_, T> {
 
   fn deref(&self) -> &Self::Target {
     self.method
+  }
+}
+
+impl<T> From<MethodWrap<'_, T>> for SignatureOptions {
+  fn from(other: MethodWrap<'_, T>) -> Self {
+    Self::with_purpose(other.id().as_str(), other.scope().as_str())
   }
 }

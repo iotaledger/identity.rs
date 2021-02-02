@@ -3,8 +3,8 @@
 
 use core::ops::Deref;
 use core::ops::DerefMut;
+use identity_core::crypto::Signature;
 
-use crate::signature::Signature;
 use crate::verifiable::SetSignature;
 use crate::verifiable::TrySignature;
 use crate::verifiable::TrySignatureMut;

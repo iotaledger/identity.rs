@@ -8,8 +8,9 @@ use core::fmt::Result;
 use core::ops::Deref;
 use core::ops::DerefMut;
 
-use crate::signature::SignatureData;
+use crate::crypto::SignatureData;
 
+/// A [`SignatureData`] wrapper with a visiblity toggle.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct SignatureValue {
@@ -19,6 +20,7 @@ pub struct SignatureValue {
 }
 
 impl SignatureValue {
+  /// Creates a new [`SignatureValue`].
   pub const fn new() -> Self {
     Self {
       data: SignatureData::None,
@@ -26,22 +28,27 @@ impl SignatureValue {
     }
   }
 
+  /// Returns `true` if the value is empty.
   pub fn is_none(&self) -> bool {
     self.data.is_none() || self.hide.get()
   }
 
+  /// Sets the value of the underlying [`SignatureData`].
   pub fn set(&mut self, value: SignatureData) {
     self.data = value;
   }
 
+  /// Clears the value of the underlying [`SignatureData`].
   pub fn clear(&mut self) {
     self.set(SignatureData::None);
   }
 
+  /// Flag the signature value as "hidden".
   pub fn hide(&self) {
     self.hide.set(true);
   }
 
+  /// Flag the signature value as "visible".
   pub fn show(&self) {
     self.hide.set(false);
   }
