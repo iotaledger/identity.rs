@@ -6,6 +6,7 @@ publish = false
 
 [dependencies]
 identity = { path = "../identity" }
+sha2 = { version = "0.9" }
 smol = { version = "1.2" }
 smol-potat = { version = "1.1" }
 
@@ -16,6 +17,10 @@ path = "credential.rs"
 [[example]]
 name = "diff_chain"
 path = "diff_chain.rs"
+
+[[example]]
+name = "merkle_tree"
+path = "merkle_tree.rs"
 
 [[example]]
 name = "resolution"
