@@ -21,6 +21,9 @@ pub enum Error {
   /// Caused by a failure to decode base58-encoded data.
   #[error("Failed to decode base58 data: {0}")]
   DecodeBase58(#[from] bs58::decode::Error),
+  /// Caused by a failure to decode base64-encoded data.
+  #[error("Failed to decode base64 data: {0}")]
+  DecodeBase64(#[from] base64::DecodeError),
   /// Caused by attempting to perform an invalid `Diff` operation.
   #[error("Invalid Document Diff: {0}")]
   InvalidDiff(#[from] identity_diff::Error),
