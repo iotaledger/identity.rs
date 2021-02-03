@@ -11,6 +11,7 @@ use sha2::Sha256;
 
 use crate::crypto::merkle_tree::math;
 use crate::crypto::merkle_tree::tree;
+use crate::crypto::merkle_tree::DigestExt;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Node;
 use crate::crypto::merkle_tree::Proof;
@@ -139,7 +140,16 @@ where
   }
 
   /// Verifies the computed root of `proof` with the root hash of `self`.
-  pub fn verify(&self, proof: &Proof<D>, hash: Hash<D>) -> bool {
+  pub fn verify<T>(&self, proof: &Proof<D>, target: &T) -> bool
+  where
+    T: AsRef<[u8]> + ?Sized,
+  {
+    self.verify_hash(&proof, D::new().hash_leaf(target.as_ref()))
+  }
+
+  /// Verifies the computed root of `proof` with the root hash of `self` and
+  /// a pre-computed hash.
+  pub fn verify_hash(&self, proof: &Proof<D>, hash: Hash<D>) -> bool {
     proof.verify(self.root(), hash)
   }
 }
@@ -169,9 +179,9 @@ where
 
 #[cfg(test)]
 mod tests {
-  use digest::Digest;
   use sha2::Sha256;
 
+  use crate::crypto::merkle_tree::Digest;
   use crate::crypto::merkle_tree::DigestExt;
   use crate::crypto::merkle_tree::Hash;
   use crate::crypto::merkle_tree::MTree;
@@ -190,15 +200,12 @@ mod tests {
   type Sha256Proof = Proof<Sha256>;
 
   #[test]
-  fn test_works() {
-    let nodes: Vec<Vec<u8>> = (0..(1 << 7))
-      .map(|byte: u8| byte as char)
-      .map(String::from)
-      .map(String::into_bytes)
-      .collect();
+  fn test_compute_proof_and_index() {
+    const LEAVES: u32 = 1 << 10; // 1024
 
     let mut digest: Sha256 = Sha256::new();
 
+    let nodes: Vec<[u8; 4]> = (0..LEAVES).map(u32::to_be_bytes).collect();
     let hashes: Vec<Sha256Hash> = nodes.iter().map(|node| digest.hash_leaf(node.as_ref())).collect();
 
     let tree: MTree = MTree::from_leaves(&hashes).unwrap();
@@ -210,7 +217,11 @@ mod tests {
       let proof: Sha256Proof = tree.proof(index).unwrap();
       let root: Sha256Hash = proof.root(*hash);
 
+      assert!(tree.verify(&proof, &nodes[index]));
+      assert!(tree.verify_hash(&proof, *hash));
+
       assert_eq!(tree.root(), &root);
+      assert_eq!(proof.index(), index);
     }
   }
 
