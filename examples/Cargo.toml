@@ -1,0 +1,22 @@
+[package]
+name = "examples"
+version = "0.1.0"
+edition = "2018"
+publish = false
+
+[dependencies]
+identity = { path = "../identity" }
+smol = { version = "1.2" }
+smol-potat = { version = "1.1" }
+
+[[example]]
+name = "credential"
+path = "credential.rs"
+
+[[example]]
+name = "diff_chain"
+path = "diff_chain.rs"
+
+[[example]]
+name = "resolution"
+path = "resolution.rs"

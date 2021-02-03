@@ -46,7 +46,7 @@ macro_rules! impl_diff_on_primitives {
 
 
             impl Debug for $diff {
-                fn fmt(&self, f: &mut Formatter) -> FmtResult {
+                fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
                     match self.0 {
                         None => write!(f, "{} None", stringify!($diff)),
                         Some(val) => write!(f, "{} => {:#?}", stringify!($diff), val),

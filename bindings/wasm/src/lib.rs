@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[macro_use]
+extern crate serde;
+
 use wasm_bindgen::prelude::*;
 
 pub mod did;
@@ -14,11 +17,11 @@ pub mod vp;
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]
 pub fn start() -> Result<(), JsValue> {
-    console_error_panic_hook::set_once();
-    Ok(())
+  console_error_panic_hook::set_once();
+  Ok(())
 }
 
 /// Convert errors so they are readable in JS
 pub fn js_err<T: ToString>(error: T) -> JsValue {
-    error.to_string().into()
+  error.to_string().into()
 }

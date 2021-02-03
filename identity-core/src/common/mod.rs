@@ -4,12 +4,14 @@
 //! Definitions of common types.
 
 mod context;
+mod object;
 mod one_or_many;
 mod timestamp;
 mod url;
 
-pub use context::Context;
-pub use did_doc::{Object, Value};
-pub use one_or_many::OneOrMany;
-pub use timestamp::Timestamp;
-pub use url::Url;
+pub use self::context::Context;
+pub use self::object::Object;
+pub use self::object::Value;
+pub use self::one_or_many::OneOrMany;
+pub use self::timestamp::Timestamp;
+pub use self::url::Url;

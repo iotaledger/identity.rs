@@ -1,12 +1,13 @@
 [workspace]
 members = [
+  "identity",
   "identity-core",
+  "identity-credential",
+  "identity-did",
   "identity-diff",
   "identity-iota",
 
-  "examples/credential",
-  "examples/diff-chain",
-  "examples/resolution",
+  "examples",
 ]
 
 exclude = [

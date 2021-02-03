@@ -4,4 +4,5 @@ license_template_path = ".license_template"
 max_width = 120
 normalize_comments = false
 normalize_doc_attributes = false
+tab_spaces = 2
 wrap_comments = true

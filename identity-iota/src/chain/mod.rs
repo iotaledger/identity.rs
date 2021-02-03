@@ -5,6 +5,6 @@ mod auth;
 mod diff;
 mod document;
 
-pub use auth::*;
-pub use diff::*;
-pub use document::*;
+pub use self::auth::AuthChain;
+pub use self::diff::DiffChain;
+pub use self::document::DocumentChain;

@@ -3,4 +3,7 @@
 
 mod validator;
 
-pub use validator::*;
+pub use self::validator::CredentialValidation;
+pub use self::validator::CredentialValidator;
+pub use self::validator::DocumentValidation;
+pub use self::validator::PresentationValidation;

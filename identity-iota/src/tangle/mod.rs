@@ -6,7 +6,7 @@ mod message_id;
 mod message_index;
 mod traits;
 
-pub use message::*;
-pub use message_id::*;
-pub use message_index::*;
-pub use traits::*;
+pub use self::message::Message;
+pub use self::message_id::MessageId;
+pub use self::message_index::MessageIndex;
+pub use self::traits::TangleRef;
