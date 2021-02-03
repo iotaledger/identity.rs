@@ -8,6 +8,7 @@ pub mod merkle_tree;
 mod proof;
 mod signature;
 
+pub use self::key::KeyCollection;
 pub use self::key::KeyPair;
 pub use self::key::PublicKey;
 pub use self::key::SecretKey;
