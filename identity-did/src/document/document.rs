@@ -6,6 +6,7 @@ use core::fmt::Display;
 use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
+use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::convert::ToJson;
 use identity_core::crypto::SignatureOptions;
@@ -28,7 +29,7 @@ use crate::verification::MethodWrap;
 /// A DID Document
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[rustfmt::skip]
-pub struct Document<T = (), U = (), V = ()> {
+pub struct Document<T = Object, U = Object, V = Object> {
   pub(crate) id: DID,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) controller: Option<DID>,

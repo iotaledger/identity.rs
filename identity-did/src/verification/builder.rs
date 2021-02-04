@@ -6,10 +6,11 @@ use crate::error::Result;
 use crate::verification::Method;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
+use identity_core::common::Object;
 
 /// A `MethodBuilder` is used to generate a customized `Method`.
 #[derive(Clone, Debug, Default)]
-pub struct MethodBuilder<T = ()> {
+pub struct MethodBuilder<T = Object> {
   pub(crate) id: Option<DID>,
   pub(crate) controller: Option<DID>,
   pub(crate) key_type: Option<MethodType>,

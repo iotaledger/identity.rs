@@ -7,6 +7,8 @@
 //!
 //! cargo run --example credential
 
+mod common;
+
 use identity::core::json;
 use identity::core::FromJson;
 use identity::core::ToJson;
@@ -25,27 +27,6 @@ use identity::iota::CredentialValidator;
 use identity::iota::IotaDocument;
 use identity::iota::Result;
 
-// A helper function to generate and new DID Document/KeyPair, sign the
-// document, publish it to the Tangle, and return the Document/KeyPair.
-async fn document(client: &Client) -> Result<(IotaDocument, KeyPair)> {
-  let (mut document, keypair): (IotaDocument, KeyPair) = IotaDocument::builder()
-    .authentication_tag("key-1")
-    .did_network(client.network().as_str())
-    .build()?;
-
-  document.sign(keypair.secret())?;
-
-  println!("DID Document (signed) > {:#}", document);
-  println!();
-
-  let transaction: _ = client.publish_document(&document).await?;
-
-  println!("DID Document Transaction > {}", client.transaction_url(&transaction));
-  println!();
-
-  Ok((document, keypair))
-}
-
 fn subject(subject: &DID) -> Result<Subject> {
   let json: Value = json!({
     "id": subject.as_str(),
@@ -62,12 +43,12 @@ fn subject(subject: &DID) -> Result<Subject> {
 async fn main() -> Result<()> {
   let client: Client = Client::new()?;
 
-  let (doc_iss, key_iss): (IotaDocument, KeyPair) = document(&client).await?;
-  let (doc_sub, _key_sub): (IotaDocument, KeyPair) = document(&client).await?;
+  let (doc_iss, key_iss): (IotaDocument, KeyPair) = common::document(&client).await?;
+  let (doc_sub, _key_sub): (IotaDocument, KeyPair) = common::document(&client).await?;
 
   // Create a new Credential with claims about "subject", specified by "issuer".
   let credential: Credential = CredentialBuilder::default()
-    .issuer(Url::parse(doc_iss.id())?)
+    .issuer(Url::parse(doc_iss.id().as_str())?)
     .type_("UniversityDegreeCredential")
     .subject(subject(&doc_sub.id())?)
     .build()?;

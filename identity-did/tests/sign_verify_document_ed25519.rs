@@ -21,7 +21,7 @@ struct TestVector {
 
 const TVS: &[TestVector] = &include!("fixtures/jcs_ed25519.rs");
 
-type Document = document::Document<Properties<Object>, (), ()>;
+type Document = document::Document<Properties, Object, Object>;
 
 #[test]
 fn test_jcs_ed25519_can_sign_and_verify() {

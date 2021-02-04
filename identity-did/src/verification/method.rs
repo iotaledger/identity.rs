@@ -6,6 +6,7 @@ use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::iter::once;
+use identity_core::common::Object;
 use identity_core::convert::ToJson;
 use serde::Serialize;
 
@@ -18,7 +19,7 @@ use crate::verification::MethodType;
 
 /// A DID Document Verification Method
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct Method<T = ()> {
+pub struct Method<T = Object> {
   pub(crate) id: DID,
   pub(crate) controller: DID,
   #[serde(rename = "type")]

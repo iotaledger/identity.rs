@@ -48,10 +48,10 @@ const ERR_AMMF: &str = "Authentication Method Missing Fragment";
 const ERR_AMIM: &str = "Authentication Method Id Mismatch";
 
 type Properties = VerifiableProperties<BaseProperties>;
-type __Document = Document<Properties, (), ()>;
+type __Document = Document<Properties, Object, ()>;
 
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
-#[serde(try_from = "Document<Object>", into = "__Document")]
+#[serde(try_from = "Document", into = "__Document")]
 pub struct IotaDocument {
   document: __Document,
   message_id: MessageId,
@@ -83,7 +83,7 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Returns `Err` if the document is not a valid `IotaDocument`.
-  pub fn try_from_document(document: Document<Object>) -> Result<Self> {
+  pub fn try_from_document(document: Document) -> Result<Self> {
     let did: &IotaDID = IotaDID::try_from_borrowed(document.id())?;
     let key: &DID = document.try_resolve(AUTH_QUERY)?.into_method().id();
 
@@ -423,10 +423,10 @@ impl From<IotaDocument> for __Document {
   }
 }
 
-impl TryFrom<Document<Object>> for IotaDocument {
+impl TryFrom<Document> for IotaDocument {
   type Error = Error;
 
-  fn try_from(other: Document<Object>) -> Result<Self, Self::Error> {
+  fn try_from(other: Document) -> Result<Self, Self::Error> {
     Self::try_from_document(other)
   }
 }
@@ -467,7 +467,7 @@ impl SetSignature for IotaDocument {
   }
 }
 
-impl ResolveMethod<()> for IotaDocument {
+impl ResolveMethod<Object> for IotaDocument {
   fn resolve_method(&self, query: MethodQuery<'_>) -> Option<MethodWrap<'_>> {
     self.document.resolve(query)
   }

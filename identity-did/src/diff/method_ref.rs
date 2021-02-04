@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Object;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 use identity_core::diff::Error;
@@ -13,7 +14,7 @@ use crate::diff::DiffMethod;
 use crate::verification::MethodRef;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub enum DiffMethodRef<T = ()>
+pub enum DiffMethodRef<T = Object>
 where
   T: Diff,
 {
