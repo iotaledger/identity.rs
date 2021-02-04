@@ -20,6 +20,13 @@ serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
+[dependencies.web-sys]
+version = "0.3"
+default-features = false
+features = [
+  "console",
+]
+
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 rand = { version = "0.7", default-features = false, features = ["wasm-bindgen"] }
 

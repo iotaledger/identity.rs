@@ -9,9 +9,9 @@ use identity::credential::Subject;
 use identity::credential::VerifiableCredential as VC;
 use wasm_bindgen::prelude::*;
 
-use crate::doc::Doc;
-use crate::js_err;
-use crate::key::Key;
+use crate::document::Document;
+use crate::key::KeyPair;
+use crate::utils::err;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
@@ -21,14 +21,14 @@ pub struct VerifiableCredential(pub(crate) VC);
 impl VerifiableCredential {
   #[wasm_bindgen(constructor)]
   pub fn new(
-    issuer_doc: &Doc,
-    issuer_key: &Key,
+    issuer_doc: &Document,
+    issuer_key: &KeyPair,
     subject_data: JsValue,
     credential_type: Option<String>,
     credential_id: Option<String>,
   ) -> Result<VerifiableCredential, JsValue> {
-    let subjects: OneOrMany<Subject> = subject_data.into_serde().map_err(js_err)?;
-    let issuer_url: Url = Url::parse(issuer_doc.id().as_str()).map_err(js_err)?;
+    let subjects: OneOrMany<Subject> = subject_data.into_serde().map_err(err)?;
+    let issuer_url: Url = Url::parse(issuer_doc.0.id().as_str()).map_err(err)?;
 
     let mut builder: CredentialBuilder = CredentialBuilder::default().issuer(issuer_url);
 
@@ -41,10 +41,10 @@ impl VerifiableCredential {
     }
 
     if let Some(credential_id) = credential_id {
-      builder = builder.id(Url::parse(credential_id).map_err(js_err)?);
+      builder = builder.id(Url::parse(credential_id).map_err(err)?);
     }
 
-    let credential: Credential = builder.build().map_err(js_err)?;
+    let credential: Credential = builder.build().map_err(err)?;
     let mut this: Self = Self(VC::new(credential, Vec::new()));
 
     this.sign(issuer_doc, issuer_key)?;
@@ -52,27 +52,27 @@ impl VerifiableCredential {
     Ok(this)
   }
 
-  /// Signs the credential with the given issuer `Doc` and `Key` object.
+  /// Signs the credential with the given issuer `Document` and `KeyPair` object.
   #[wasm_bindgen]
-  pub fn sign(&mut self, issuer: &Doc, key: &Key) -> Result<(), JsValue> {
-    issuer.0.sign_data(&mut self.0, key.0.secret()).map_err(js_err)
+  pub fn sign(&mut self, issuer: &Document, key: &KeyPair) -> Result<(), JsValue> {
+    issuer.0.sign_data(&mut self.0, key.key.secret()).map_err(err)
   }
 
-  /// Verifies the credential signature against the issuer `Doc`.
+  /// Verifies the credential signature against the issuer `Document`.
   #[wasm_bindgen]
-  pub fn verify(&self, issuer: &Doc) -> Result<bool, JsValue> {
-    issuer.0.verify_data(&self.0).map_err(js_err).map(|_| true)
+  pub fn verify(&self, issuer: &Document) -> Result<bool, JsValue> {
+    issuer.0.verify_data(&self.0).map_err(err).map(|_| true)
   }
 
   /// Serializes a `VerifiableCredential` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(&self.0).map_err(js_err)
+    JsValue::from_serde(&self.0).map_err(err)
   }
 
   /// Deserializes a `VerifiableCredential` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<VerifiableCredential, JsValue> {
-    json.into_serde().map_err(js_err).map(Self)
+    json.into_serde().map_err(err).map(Self)
   }
 }
