@@ -6,8 +6,8 @@ publish = false
 
 [dependencies]
 identity = { path = "../identity" }
-smol = { version = "1.2" }
-smol-potat = { version = "1.1" }
+smol = { version = "0.1", features = ["tokio02"] }
+smol-potat = { version = "0.3" }
 
 [[example]]
 name = "credential"
