@@ -3,9 +3,10 @@
 
 //! cargo run --example merkle_key
 
+mod common;
+
 use identity::core::BitSet;
 use identity::core::FromJson;
-use identity::core::Object;
 use identity::core::ToJson;
 use identity::core::Url;
 use identity::credential::CredentialBuilder;
@@ -17,112 +18,115 @@ use identity::crypto::merkle_key::VerifierEd25519;
 use identity::crypto::merkle_tree::MTree;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
-use identity::crypto::PublicKey;
-use identity::crypto::SecretKey;
+use identity::crypto::KeyPair;
 use identity::crypto::SignatureOptions;
-use identity::did::verifiable::Properties;
-use identity::did::Document;
-use identity::did::DocumentBuilder;
+use identity::did::resolution::resolve;
+use identity::did::resolution::Resolution;
 use identity::did::Method;
 use identity::did::MethodBuilder;
 use identity::did::MethodData;
 use identity::did::MethodType;
-use identity::did::DID;
+use identity::iota::Client;
+use identity::iota::IotaDocument;
+use identity::iota::Result;
+use identity::iota::TangleRef;
 use rand::rngs::OsRng;
 use rand::Rng;
 use sha2::Sha256;
-
-type VerifiableDocument = Document<Properties, Object, ()>;
 
 type Signer<'a> = SignerEd25519<'a, Sha256>;
 type Verifier<'a> = VerifierEd25519<'a, Sha256>;
 
 const LEAVES: usize = 1 << 10;
 
-fn main() {
-  // Generate a collection of ed25519 keys
-  let keys: KeyCollection = KeyCollection::new_ed25519(LEAVES).unwrap();
+#[smol_potat::main]
+async fn main() -> Result<()> {
+  let client: Client = Client::new()?;
+
+  // Create a new DID Document, signed and published.
+  let (mut doc, auth): (IotaDocument, KeyPair) = common::document(&client).await?;
+
+  // Generate a collection of ed25519 keys for signing credentials
+  let keys: KeyCollection = KeyCollection::new_ed25519(LEAVES)?;
 
   // Construct a Merkle tree from the public keys
   let tree: MTree<Sha256> = keys.to_merkle_tree().unwrap();
 
   // Generate a Merkle Key Collection public key value with ed25519 as the
-  // signature algorithm, SHA-256 as the digest algorithm, and the Merkle root
-  // of the key collection
-  let key_data: Vec<u8> = MerkleKey::encode_ed25519_key::<Sha256>(&tree);
-
-  // Create a DID for the document owner
-  let controller: DID = "did:example:123".parse().unwrap();
-
-  // Create a `MerkleKeyCollection2021` verification method with
-  // the previously generated public key value
-  let method: Method<Object> = MethodBuilder::default()
-    .id(controller.join("#key-collection").unwrap())
-    .controller(controller.clone())
+  // signature algorithm, SHA-256 as the digest algorithm, and the Merkle
+  // root of the key collection - This is expressed as the public key value
+  // of the `MerkleKeyCollection2021` verification method.
+  let method: Method = MethodBuilder::default()
+    .id(doc.id().as_ref().join("#key-collection")?)
+    .controller(doc.id().as_ref().clone())
     .key_type(MethodType::MerkleKeyCollection2021)
-    .key_data(MethodData::new_b58(&key_data))
-    .build()
-    .unwrap();
+    .key_data(MethodData::new_b58(&MerkleKey::encode_ed25519_key::<Sha256>(&tree)))
+    .build()?;
 
-  println!("method: {:#}", method);
+  // Append the new verification method to the set of existing methods
+  unsafe {
+    doc.as_document_mut().verification_method_mut().append(method.into());
+  }
 
-  // Create a DID Document with the `MerkleKeyCollection2021` method
-  // as the sole verification method
-  let mut document: VerifiableDocument = DocumentBuilder::default()
-    .id(controller.clone())
-    .verification_method(method)
-    .build()
-    .unwrap();
+  // Sign and publish the updated document
+  doc.set_previous_message_id(doc.message_id().clone());
+  doc.sign(auth.secret())?;
+  doc.publish_with_client(&client).await?;
 
-  println!("document: {:#}", document);
+  println!("document: {:#}", doc);
 
   // Create a Verifiable Credential
   let mut credential: VerifiableCredential = CredentialBuilder::default()
-    .issuer(Url::parse(controller.as_str()).unwrap())
+    .issuer(Url::parse(doc.id().as_str())?)
     .type_("MyCredential")
-    .subject(Subject::from_json(r#"{"claim": true}"#).unwrap())
+    .subject(Subject::from_json(r#"{"claim": true}"#)?)
     .build()
-    .map(|credential| VerifiableCredential::new(credential, Vec::new()))
-    .unwrap();
+    .map(|credential| VerifiableCredential::new(credential, Vec::new()))?;
 
   println!("credential (unsigned): {:#}", credential);
 
   // Select a random key from the collection
   let index: usize = OsRng.gen_range(0, LEAVES);
-  let public: &PublicKey = keys[index].public();
-  let secret: &SecretKey = keys[index].secret();
 
-  println!("index: {}", index);
-
-  // Generate an inclusion proof the the selected key
+  // Generate an inclusion proof for the selected key
   let proof: Proof<Sha256> = tree.proof(index).unwrap();
 
   // Create a `Signer` and `SignatureOptions` with the Merkle proof and
   // a reference to the DID Document verification method
   let suite: Signer<'_> = Signer::new_ed25519(&proof);
-  let options: SignatureOptions = document.resolve_options(0).unwrap();
+  let options: SignatureOptions = doc.as_document().resolve_options("#key-collection")?;
 
   // Sign the Credential with the DID Document
-  suite.sign(&mut credential, options, secret).unwrap();
+  suite.sign(&mut credential, options, keys[index].secret())?;
 
   println!("credential (signed): {:#}", credential);
 
   // Create a verifier and check if the signature is valid
-  let suite: Verifier<'_> = Verifier::new_ed25519(public);
+  let suite: Verifier<'_> = Verifier::new_ed25519(keys[index].public());
 
-  println!("verified: {:?}", document.verify_merkle_key(&credential, suite));
+  println!("verified: {:?}", doc.verify_merkle_key(&credential, suite));
 
-  // Revoke the previous key - assume it was compromised
+  // Revoke the previously used key - assume it was compromised
   let mut revocation: BitSet = BitSet::new();
+
   revocation.insert(index as u32);
 
-  // Update the DID Document with the new revocation state
-  document
-    .verification_method_mut()
-    .head_mut()
-    .unwrap()
-    .properties_mut()
-    .insert("revocation".into(), revocation.to_json_value().unwrap());
+  unsafe {
+    doc
+      .as_document_mut()
+      .verification_method_mut()
+      .tail_mut()
+      .unwrap()
+      .properties_mut()
+      .insert("revocation".into(), revocation.to_json_value()?);
+  }
+
+  // Publish the new document with the updated revocation state
+  doc.set_previous_message_id(doc.message_id().clone());
+  doc.sign(auth.secret())?;
+  doc.publish_with_client(&client).await?;
+
+  println!("document: {:#}", doc);
 
   // Set false claims about the credential subject
   let subject = credential.credential_subject.get_mut(0).unwrap();
@@ -132,15 +136,29 @@ fn main() {
   // Generate a new signature using the same proof as before, which proves
   // existence of the compromised key
   let suite: Signer<'_> = Signer::new_ed25519(&proof);
-  let options: SignatureOptions = document.resolve_options(0).unwrap();
+  let options: SignatureOptions = doc.as_document().resolve_options("#key-collection")?;
 
   // Sign the Credential with the compromised key
-  suite.sign(&mut credential, options, secret).unwrap();
+  suite.sign(&mut credential, options, keys[index].secret())?;
 
   println!("credential (compro-signed): {:#}", credential);
 
   // Create a verifier and check if the signature is valid
-  let suite: Verifier<'_> = Verifier::new_ed25519(public);
+  let suite: Verifier<'_> = Verifier::new_ed25519(keys[index].public());
+
+  // Resolve the DID and receive the latest document version
+  let resolution: Resolution = resolve(doc.id().as_str(), Default::default(), &client).await?;
+
+  let document: IotaDocument = resolution
+    .document
+    .map(IotaDocument::try_from_document)
+    .transpose()?
+    .unwrap();
+
+  println!("metadata: {:#?}", resolution.metadata);
+  println!("document: {:#?}", document);
 
   println!("verified: {:?}", document.verify_merkle_key(&credential, suite));
+
+  Ok(())
 }
