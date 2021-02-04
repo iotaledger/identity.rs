@@ -3,11 +3,11 @@
 
 use core::convert::TryInto;
 use identity_core::common::BitSet;
-use identity_core::crypto::MerkleKey;
-use identity_core::crypto::MerkleKeyDigest;
-use identity_core::crypto::MerkleKeyRevocation;
-use identity_core::crypto::MerkleKeySignature;
-use identity_core::crypto::MerkleKeyVerifier;
+use identity_core::crypto::merkle_key::Digest;
+use identity_core::crypto::merkle_key::MerkleKey;
+use identity_core::crypto::merkle_key::Revocation;
+use identity_core::crypto::merkle_key::Signature as MSignature;
+use identity_core::crypto::merkle_key::Verifier;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
@@ -74,9 +74,9 @@ impl<T, U, V> SetSignature for Document<Properties<T>, U, V> {
 // Merkle Key Collection Crypto Extensions
 // =============================================================================
 
-impl<T> MerkleKeyRevocation for Method<T>
+impl<T> Revocation for Method<T>
 where
-  T: MerkleKeyRevocation,
+  T: Revocation,
 {
   fn revocation(&self) -> Result<Option<BitSet>, CoreError> {
     self.properties().revocation()
@@ -85,13 +85,13 @@ where
 
 impl<T, U, V> Document<T, U, V>
 where
-  U: MerkleKeyRevocation,
+  U: Revocation,
 {
-  pub fn verify_merkle_key<M, D, S>(&self, message: &M, verifier: MerkleKeyVerifier<'_, D, S>) -> Result<()>
+  pub fn verify_merkle_key<M, D, S>(&self, message: &M, verifier: Verifier<'_, D, S>) -> Result<()>
   where
     M: Serialize + TrySignature,
-    D: MerkleKeyDigest,
-    S: MerkleKeySignature,
+    D: Digest,
+    S: MSignature,
   {
     let signature: &Signature = message.try_signature()?;
 

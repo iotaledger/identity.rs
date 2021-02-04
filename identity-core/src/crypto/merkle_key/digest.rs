@@ -3,8 +3,8 @@
 
 use sha2::Sha256;
 
-use crate::crypto::MerkleKeyDigest;
+use crate::crypto::merkle_key::Digest;
 
-impl MerkleKeyDigest for Sha256 {
+impl Digest for Sha256 {
   const TAG: u8 = 0;
 }

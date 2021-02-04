@@ -11,7 +11,7 @@ use crate::error::Result;
 // =============================================================================
 
 /// A common interface for digest algorithms supported by Merkle Key Signatures.
-pub trait MerkleKeyDigest: DigestExt {
+pub trait Digest: DigestExt {
   /// A unique tag identifying the digest algorithm.
   const TAG: u8;
 }
@@ -20,7 +20,7 @@ pub trait MerkleKeyDigest: DigestExt {
 // =============================================================================
 
 /// A common interface for signature algorithms supported by Merkle Key Signatures.
-pub trait MerkleKeySignature {
+pub trait Signature {
   /// A unique tag identifying the signature algorithm.
   const TAG: u8;
 
@@ -35,27 +35,27 @@ pub trait MerkleKeySignature {
 // =============================================================================
 
 /// A helper-trait for dynamic sources of revocation flags.
-pub trait MerkleKeyRevocation {
+pub trait Revocation {
   /// Returns the revocation [`BitSet`] of the verification method, if any.
   fn revocation(&self) -> Result<Option<BitSet>>;
 }
 
-impl<'a, T> MerkleKeyRevocation for &'a T
+impl<'a, T> Revocation for &'a T
 where
-  T: MerkleKeyRevocation,
+  T: Revocation,
 {
   fn revocation(&self) -> Result<Option<BitSet>> {
     (**self).revocation()
   }
 }
 
-impl MerkleKeyRevocation for () {
+impl Revocation for () {
   fn revocation(&self) -> Result<Option<BitSet>> {
     Ok(None)
   }
 }
 
-impl MerkleKeyRevocation for Object {
+impl Revocation for Object {
   fn revocation(&self) -> Result<Option<BitSet>> {
     self.get("revocation").cloned().map(BitSet::from_json_value).transpose()
   }

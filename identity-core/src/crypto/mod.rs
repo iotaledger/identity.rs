@@ -4,6 +4,7 @@
 //! Cryptographic Utilities
 
 mod key;
+pub mod merkle_key;
 pub mod merkle_tree;
 mod proof;
 mod signature;
@@ -15,15 +16,6 @@ pub use self::key::SecretKey;
 pub(crate) use self::proof::ed25519_sign;
 pub(crate) use self::proof::ed25519_verify;
 pub use self::proof::JcsEd25519Signature2020;
-pub use self::proof::MerkleKey;
-pub use self::proof::MerkleKeyDigest;
-pub use self::proof::MerkleKeyEd25519;
-pub use self::proof::MerkleKeyRevocation;
-pub use self::proof::MerkleKeySignature;
-pub use self::proof::MerkleKeySigner;
-pub use self::proof::MerkleKeySignerEd25519;
-pub use self::proof::MerkleKeyVerifier;
-pub use self::proof::MerkleKeyVerifierEd25519;
 pub use self::signature::SetSignature;
 pub use self::signature::SigName;
 pub use self::signature::SigSign;

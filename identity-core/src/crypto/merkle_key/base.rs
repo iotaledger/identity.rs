@@ -4,13 +4,13 @@
 use core::convert::TryInto;
 use core::iter;
 
+use crate::crypto::merkle_key::Digest;
+use crate::crypto::merkle_key::Ed25519;
+use crate::crypto::merkle_key::Signature;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::MTree;
 use crate::crypto::merkle_tree::Node;
 use crate::crypto::merkle_tree::Proof;
-use crate::crypto::MerkleKeyDigest;
-use crate::crypto::MerkleKeyEd25519;
-use crate::crypto::MerkleKeySignature;
 
 /// Common utilities for working with Merkle Key Collection Signatures.
 #[derive(Clone, Copy, Debug)]
@@ -29,8 +29,8 @@ impl MerkleKey {
   /// Encodes the given [`MTree`] as a DID Document public key.
   pub fn encode_key<D, S>(tree: &MTree<D>) -> Vec<u8>
   where
-    D: MerkleKeyDigest,
-    S: MerkleKeySignature,
+    D: Digest,
+    S: Signature,
   {
     let mut output: Vec<u8> = Vec::with_capacity(2 + D::OUTPUT_SIZE);
     output.push(S::TAG);
@@ -43,9 +43,9 @@ impl MerkleKey {
   /// as the signature algorithm.
   pub fn encode_ed25519_key<D>(tree: &MTree<D>) -> Vec<u8>
   where
-    D: MerkleKeyDigest,
+    D: Digest,
   {
-    Self::encode_key::<D, MerkleKeyEd25519>(tree)
+    Self::encode_key::<D, Ed25519>(tree)
   }
 
   // Encodes a proof in the following form:
@@ -53,7 +53,7 @@ impl MerkleKey {
   //   [ U32(PATH-LEN) [ [ U8(NODE-TAG) | HASH(NODE-PATH) ] ... ] ]
   pub(crate) fn encode_proof<D>(proof: &Proof<D>) -> Vec<u8>
   where
-    D: MerkleKeyDigest,
+    D: Digest,
   {
     let size: usize = proof.nodes().len();
     let size: [u8; 4] = (size as u32).to_be_bytes();
@@ -71,7 +71,7 @@ impl MerkleKey {
   //   [ U32(PATH-LEN) [ [ U8(NODE-TAG) | HASH(NODE-PATH) ] ... ] ]
   pub(crate) fn decode_proof<D>(data: &[u8]) -> Option<Proof<D>>
   where
-    D: MerkleKeyDigest,
+    D: Digest,
   {
     let size: [u8; 4] = data.get(0..4)?.try_into().ok()?;
     let size: usize = u32::from_be_bytes(size).try_into().ok()?;

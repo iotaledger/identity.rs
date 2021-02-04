@@ -5,11 +5,11 @@ use core::marker::PhantomData;
 use serde::Serialize;
 
 use crate::common::BitSet;
+use crate::crypto::merkle_key::Digest;
+use crate::crypto::merkle_key::MerkleKey;
+use crate::crypto::merkle_key::Signature;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Proof;
-use crate::crypto::MerkleKey;
-use crate::crypto::MerkleKeyDigest;
-use crate::crypto::MerkleKeySignature;
 use crate::crypto::PublicKey;
 use crate::crypto::SigName;
 use crate::crypto::SigVerify;
@@ -21,20 +21,20 @@ use crate::utils::jcs_sha256;
 
 /// A signature verification helper for Merkle Key Collection Signatures.
 #[derive(Clone, Copy, Debug)]
-pub struct MerkleKeyVerifier<'a, D, S>
+pub struct Verifier<'a, D, S>
 where
-  D: MerkleKeyDigest,
+  D: Digest,
 {
   suite: S,
   public: &'a PublicKey,
   marker: PhantomData<D>,
 }
 
-impl<'a, D, S> MerkleKeyVerifier<'a, D, S>
+impl<'a, D, S> Verifier<'a, D, S>
 where
-  D: MerkleKeyDigest,
+  D: Digest,
 {
-  /// Creates a new [`MerkleKeyVerifier`].
+  /// Creates a new [`Verifier`].
   pub fn new(public: &'a PublicKey, suite: S) -> Self {
     Self {
       suite,
@@ -44,10 +44,10 @@ where
   }
 }
 
-impl<'a, D, S> MerkleKeyVerifier<'a, D, S>
+impl<'a, D, S> Verifier<'a, D, S>
 where
-  D: MerkleKeyDigest,
-  S: MerkleKeySignature,
+  D: Digest,
+  S: Signature,
 {
   /// Verifies the authenticity of `message` using `signature` and `public`.
   pub fn verify_signature<T>(
@@ -89,19 +89,19 @@ where
   }
 }
 
-impl<'a, D, S> SigName for MerkleKeyVerifier<'a, D, S>
+impl<'a, D, S> SigName for Verifier<'a, D, S>
 where
-  D: MerkleKeyDigest,
+  D: Digest,
 {
   fn name(&self) -> String {
     MerkleKey::SIGNATURE_NAME.to_string()
   }
 }
 
-impl<'a, D, S> SigVerify for MerkleKeyVerifier<'a, D, S>
+impl<'a, D, S> SigVerify for Verifier<'a, D, S>
 where
-  D: MerkleKeyDigest,
-  S: MerkleKeySignature,
+  D: Digest,
+  S: Signature,
 {
   fn verify<T>(&self, data: &T, signature: &SignatureData, public: &[u8]) -> Result<()>
   where
@@ -113,8 +113,8 @@ where
 
 fn decompose_public_key<D, S>(data: &[u8]) -> Result<Hash<D>>
 where
-  D: MerkleKeyDigest,
-  S: MerkleKeySignature,
+  D: Digest,
+  S: Signature,
 {
   // Extract and validate the signature algorithm tag
   if *data.get(0).ok_or(Error::InvalidProofFormat)? != S::TAG {

@@ -11,12 +11,12 @@ use identity::core::Url;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
 use identity::credential::VerifiableCredential;
+use identity::crypto::merkle_key::MerkleKey;
+use identity::crypto::merkle_key::SignerEd25519;
+use identity::crypto::merkle_key::VerifierEd25519;
 use identity::crypto::merkle_tree::MTree;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
-use identity::crypto::MerkleKey;
-use identity::crypto::MerkleKeySignerEd25519;
-use identity::crypto::MerkleKeyVerifierEd25519;
 use identity::crypto::PublicKey;
 use identity::crypto::SecretKey;
 use identity::crypto::SignatureOptions;
@@ -34,8 +34,8 @@ use sha2::Sha256;
 
 type VerifiableDocument = Document<Properties, Object, ()>;
 
-type Signer<'a> = MerkleKeySignerEd25519<'a, Sha256>;
-type Verifier<'a> = MerkleKeyVerifierEd25519<'a, Sha256>;
+type Signer<'a> = SignerEd25519<'a, Sha256>;
+type Verifier<'a> = VerifierEd25519<'a, Sha256>;
 
 const LEAVES: usize = 1 << 10;
 

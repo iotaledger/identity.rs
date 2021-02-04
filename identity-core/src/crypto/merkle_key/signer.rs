@@ -3,10 +3,10 @@
 
 use serde::Serialize;
 
+use crate::crypto::merkle_key::Digest;
+use crate::crypto::merkle_key::MerkleKey;
+use crate::crypto::merkle_key::Signature as MSignature;
 use crate::crypto::merkle_tree::Proof;
-use crate::crypto::MerkleKey;
-use crate::crypto::MerkleKeyDigest;
-use crate::crypto::MerkleKeySignature;
 use crate::crypto::SetSignature;
 use crate::crypto::SigName;
 use crate::crypto::SigSign;
@@ -19,28 +19,28 @@ use crate::utils::jcs_sha256;
 
 /// A signature creation helper for Merkle Key Collection Signatures.
 #[derive(Clone, Copy, Debug)]
-pub struct MerkleKeySigner<'a, D, S>
+pub struct Signer<'a, D, S>
 where
-  D: MerkleKeyDigest,
+  D: Digest,
 {
   suite: S,
   proof: &'a Proof<D>,
 }
 
-impl<'a, D, S> MerkleKeySigner<'a, D, S>
+impl<'a, D, S> Signer<'a, D, S>
 where
-  D: MerkleKeyDigest,
+  D: Digest,
 {
-  /// Creates a new [`MerkleKeySigner`].
+  /// Creates a new [`Signer`].
   pub fn new(proof: &'a Proof<D>, suite: S) -> Self {
     Self { suite, proof }
   }
 }
 
-impl<'a, D, S> MerkleKeySigner<'a, D, S>
+impl<'a, D, S> Signer<'a, D, S>
 where
-  D: MerkleKeyDigest,
-  S: MerkleKeySignature,
+  D: Digest,
+  S: MSignature,
 {
   /// Signs the given `message` with `secret` and embeds the signature in `message`.
   pub fn sign<T, K>(&self, message: &mut T, options: SignatureOptions, secret: &K) -> Result<()>
@@ -75,19 +75,19 @@ where
   }
 }
 
-impl<'a, D, S> SigName for MerkleKeySigner<'a, D, S>
+impl<'a, D, S> SigName for Signer<'a, D, S>
 where
-  D: MerkleKeyDigest,
+  D: Digest,
 {
   fn name(&self) -> String {
     MerkleKey::SIGNATURE_NAME.to_string()
   }
 }
 
-impl<'a, D, S> SigSign for MerkleKeySigner<'a, D, S>
+impl<'a, D, S> SigSign for Signer<'a, D, S>
 where
-  D: MerkleKeyDigest,
-  S: MerkleKeySignature,
+  D: Digest,
+  S: MSignature,
 {
   fn sign<T>(&self, data: &T, secret: &[u8]) -> Result<SignatureData>
   where
