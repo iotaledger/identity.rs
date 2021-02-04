@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::core::FromJson;
-use identity::core::Object;
 use identity::core::SerdeInto;
 use identity::did::DIDKey;
 use identity::did::Document;
