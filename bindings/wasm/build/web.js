@@ -1,7 +1,7 @@
 const path = require('path')
 const fs = require('fs')
 
-const entryFilePath = path.join(__dirname, '../web/iota_identity_wasm.js')
+const entryFilePath = path.join(__dirname, '../web/identity_wasm.js')
 const entryFile = fs.readFileSync(entryFilePath).toString()
 // comment out this code so it works for Webpack
 let changedFile = entryFile.replace(
@@ -20,7 +20,7 @@ let changedFile = entryFile.replace(
     // Create an init function which imports the wasm file
     .replace(
         "export default init;",
-        "let __initializedIotaWasm = false\r\n\r\nexport function init(path) {\r\n    if (__initializedIotaWasm) {\r\n        return Promise.resolve(wasm)\r\n    }\r\n    return initWasm(path || \'iota_identity_wasm_bg.wasm\').then(() => {\r\n        __initializedIotaWasm = true\r\n        return wasm\r\n    })\r\n}\r\n"
+        "let __initializedIotaWasm = false\r\n\r\nexport function init(path) {\r\n    if (__initializedIotaWasm) {\r\n        return Promise.resolve(wasm)\r\n    }\r\n    return initWasm(path || \'identity_wasm_bg.wasm\').then(() => {\r\n        __initializedIotaWasm = true\r\n        return wasm\r\n    })\r\n}\r\n"
     )
 
 fs.writeFileSync(
@@ -28,7 +28,7 @@ fs.writeFileSync(
     changedFile
 )
 
-const entryFilePathTs = path.join(__dirname, '../web/iota_identity_wasm.d.ts')
+const entryFilePathTs = path.join(__dirname, '../web/identity_wasm.d.ts')
 const entryFileTs = fs.readFileSync(entryFilePathTs).toString()
 // Replace the init function in the ts file
 let changedFileTs = entryFileTs.replace(

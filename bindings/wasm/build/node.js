@@ -2,7 +2,7 @@ const path = require('path')
 const fs = require('fs')
 
 // Add node fetch stuff (https://github.com/seanmonstar/reqwest/issues/910)
-const entryFilePathNode = path.join(__dirname, '../node/iota_identity_wasm.js')
+const entryFilePathNode = path.join(__dirname, '../node/identity_wasm.js')
 const entryFileNode = fs.readFileSync(entryFilePathNode).toString()
 let changedFileNode = entryFileNode.replace(
     "let imports = {};",

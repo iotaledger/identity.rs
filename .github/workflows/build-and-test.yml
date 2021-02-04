@@ -20,10 +20,12 @@ jobs:
       matrix:
         project:
           [
-            identity_core,
-            identity_derive,
-            identity_diff,
-            identity_iota,
+            identity,
+            identity-core,
+            identity-credential,
+            identity-did,
+            identity-diff,
+            identity-iota,
           ]
         os: [ubuntu-latest, windows-latest]
 

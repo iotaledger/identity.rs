@@ -52,7 +52,6 @@
         * [.toString()](#DID+toString) ⇒ <code>string</code>
     * _static_
         * [.fromBase58Key(key, network)](#DID.fromBase58Key) ⇒ [<code>DID</code>](#DID)
-        * [.fromBase64Key(key, network)](#DID.fromBase64Key) ⇒ [<code>DID</code>](#DID)
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
 
 <a name="new_DID_new"></a>
@@ -108,18 +107,6 @@ Creates a new `DID` from a base58-encoded public key.
 | key | <code>string</code> | 
 | network | <code>string</code> \| <code>undefined</code> | 
 
-<a name="DID.fromBase64Key"></a>
-
-### DID.fromBase64Key(key, network) ⇒ [<code>DID</code>](#DID)
-Creates a new `DID` from a base64-encoded public key.
-
-**Kind**: static method of [<code>DID</code>](#DID)  
-
-| Param | Type |
-| --- | --- |
-| key | <code>string</code> | 
-| network | <code>string</code> \| <code>undefined</code> | 
-
 <a name="DID.parse"></a>
 
 ### DID.parse(input) ⇒ [<code>DID</code>](#DID)
@@ -145,7 +132,7 @@ Parses a `DID` from the input string.
         * [.proof](#Doc+proof) ⇒ <code>any</code>
         * [.sign(key)](#Doc+sign) ⇒ <code>any</code>
         * [.verify()](#Doc+verify) ⇒ <code>boolean</code>
-        * [.diff(other, key)](#Doc+diff) ⇒ <code>any</code>
+        * [.diff(other, key, prev_msg)](#Doc+diff) ⇒ <code>any</code>
         * [.verifyDiff(diff)](#Doc+verifyDiff) ⇒ <code>boolean</code>
         * [.updateService(did, url, service_type)](#Doc+updateService)
         * [.clearServices()](#Doc+clearServices)
@@ -209,7 +196,7 @@ Verify the signature with the authentication_key
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
 <a name="Doc+diff"></a>
 
-### doc.diff(other, key) ⇒ <code>any</code>
+### doc.diff(other, key, prev_msg) ⇒ <code>any</code>
 Generate the difference between two DID Documents and sign it
 
 **Kind**: instance method of [<code>Doc</code>](#Doc)  
@@ -218,6 +205,7 @@ Generate the difference between two DID Documents and sign it
 | --- | --- |
 | other | [<code>Doc</code>](#Doc) | 
 | key | [<code>Key</code>](#Key) | 
+| prev_msg | <code>string</code> |
 
 <a name="Doc+verifyDiff"></a>
 
@@ -389,7 +377,6 @@ Deserializes a `Doc` object from a JSON object.
     * _static_
         * [.generateEd25519()](#Key.generateEd25519) ⇒ [<code>Key</code>](#Key)
         * [.fromBase58(public_key, private_key)](#Key.fromBase58) ⇒ [<code>Key</code>](#Key)
-        * [.fromBase64(public_key, private_key)](#Key.fromBase64) ⇒ [<code>Key</code>](#Key)
         * [.fromJSON(json)](#Key.fromJSON) ⇒ [<code>Key</code>](#Key)
 
 <a name="new_Key_new"></a>
@@ -430,18 +417,6 @@ Generates a new `Key` object suitable for ed25519 signatures.
 
 ### Key.fromBase58(public_key, private_key) ⇒ [<code>Key</code>](#Key)
 Parses a `Key` object from base58-encoded public/private keys.
-
-**Kind**: static method of [<code>Key</code>](#Key)  
-
-| Param | Type |
-| --- | --- |
-| public_key | <code>string</code> | 
-| private_key | <code>string</code> | 
-
-<a name="Key.fromBase64"></a>
-
-### Key.fromBase64(public_key, private_key) ⇒ [<code>Key</code>](#Key)
-Parses a `Key` object from base64-encoded public/private keys.
 
 **Kind**: static method of [<code>Key</code>](#Key)  
 
