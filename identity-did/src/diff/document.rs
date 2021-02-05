@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
@@ -20,7 +21,7 @@ use crate::verification::MethodRef;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(bound(deserialize = ""))]
-pub struct DiffDocument<T = (), U = (), V = ()>
+pub struct DiffDocument<T = Object, U = Object, V = Object>
 where
   T: Diff + Serialize + for<'__de> Deserialize<'__de>,
   U: Diff + Serialize + for<'__de> Deserialize<'__de>,

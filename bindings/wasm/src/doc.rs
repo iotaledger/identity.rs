@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::core::FromJson;
-use identity::core::Object;
 use identity::core::SerdeInto;
 use identity::did::DIDKey;
 use identity::did::Document;
@@ -289,8 +288,8 @@ impl Doc {
   // core DID Document type.
   //
   // Uses `serde` for conversions and re-validates the document after mutation.
-  fn mutate<T>(this: &mut Self, f: impl FnOnce(&mut Document<Object>) -> T) -> Result<T, JsValue> {
-    let mut document: Document<Object> = this.0.serde_into().map_err(js_err)?;
+  fn mutate<T>(this: &mut Self, f: impl FnOnce(&mut Document) -> T) -> Result<T, JsValue> {
+    let mut document: Document = this.0.serde_into().map_err(js_err)?;
     let output: T = f(&mut document);
 
     this.0 = IotaDocument::try_from_document(document).map_err(js_err)?;

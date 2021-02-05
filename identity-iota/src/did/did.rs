@@ -271,12 +271,6 @@ impl AsRef<DID> for IotaDID {
   }
 }
 
-impl AsRef<str> for IotaDID {
-  fn as_ref(&self) -> &str {
-    self.0.as_str()
-  }
-}
-
 impl PartialEq<DID> for IotaDID {
   fn eq(&self, other: &DID) -> bool {
     self.0.eq(other)

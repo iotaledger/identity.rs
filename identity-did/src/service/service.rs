@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
+use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::convert::ToJson;
 use serde::Serialize;
@@ -16,7 +17,7 @@ use crate::service::ServiceBuilder;
 
 /// A DID Document Service
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct Service<T = ()> {
+pub struct Service<T = Object> {
   pub(crate) id: DID,
   #[serde(rename = "type")]
   pub(crate) type_: String,

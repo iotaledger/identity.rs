@@ -4,6 +4,7 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
+use identity_core::common::Object;
 
 use crate::did::DID;
 use crate::verification::Method;
@@ -11,7 +12,7 @@ use crate::verification::Method;
 /// A reference to a verification method, either a `DID` or embedded `Method`.
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
-pub enum MethodRef<T = ()> {
+pub enum MethodRef<T = Object> {
   Embed(Method<T>),
   Refer(DID),
 }

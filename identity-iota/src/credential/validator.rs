@@ -16,7 +16,7 @@ use crate::error::Error;
 use crate::error::Result;
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct CredentialValidation<T = ()> {
+pub struct CredentialValidation<T = Object> {
   pub credential: VerifiableCredential<T>,
   pub issuer: DocumentValidation,
   pub subjects: BTreeMap<String, DocumentValidation>,
@@ -24,7 +24,7 @@ pub struct CredentialValidation<T = ()> {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct PresentationValidation<T = (), U = ()> {
+pub struct PresentationValidation<T = Object, U = Object> {
   pub presentation: VerifiablePresentation<T, U>,
   pub holder: DocumentValidation,
   pub credentials: Vec<CredentialValidation<U>>,

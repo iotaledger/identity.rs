@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Object;
 use identity_core::common::Url;
 
 use crate::did::DID;
@@ -9,7 +10,7 @@ use crate::service::Service;
 
 /// A `ServiceBuilder` is used to generate a customized `Service`.
 #[derive(Clone, Debug, Default)]
-pub struct ServiceBuilder<T = ()> {
+pub struct ServiceBuilder<T = Object> {
   pub(crate) id: Option<DID>,
   pub(crate) type_: Option<String>,
   pub(crate) service_endpoint: Option<Url>,

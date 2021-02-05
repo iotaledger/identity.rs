@@ -4,13 +4,17 @@
 //! Cryptographic Utilities
 
 mod key;
+pub mod merkle_key;
 pub mod merkle_tree;
 mod proof;
 mod signature;
 
+pub use self::key::KeyCollection;
 pub use self::key::KeyPair;
 pub use self::key::PublicKey;
 pub use self::key::SecretKey;
+pub(crate) use self::proof::ed25519_sign;
+pub(crate) use self::proof::ed25519_verify;
 pub use self::proof::JcsEd25519Signature2020;
 pub use self::signature::SetSignature;
 pub use self::signature::SigName;

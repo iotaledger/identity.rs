@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
@@ -13,7 +14,7 @@ use crate::did::DID;
 use crate::service::Service;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct DiffService<T = ()>
+pub struct DiffService<T = Object>
 where
   T: Diff,
 {

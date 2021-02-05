@@ -3,13 +3,14 @@
 
 use core::ops::Deref;
 use core::ops::DerefMut;
+use identity_core::common::Object;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-pub struct Properties<T = ()> {
+pub struct Properties<T = Object> {
   #[serde(flatten)]
   pub(crate) properties: T,
   // TODO: Support multiple signatures (?)

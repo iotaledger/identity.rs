@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::ops::Deref;
+use identity_core::common::Object;
 use identity_core::crypto::SignatureOptions;
 
 use crate::verification::Method;
@@ -9,7 +10,7 @@ use crate::verification::MethodScope;
 
 /// A queried `Method` with additional metadata about the query resolution.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct MethodWrap<'a, T = ()> {
+pub struct MethodWrap<'a, T = Object> {
   pub(crate) method: &'a Method<T>,
   pub(crate) index: usize,
   pub(crate) scope: MethodScope,

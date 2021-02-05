@@ -27,6 +27,14 @@ impl<D: Digest> Proof<D> {
     &self.nodes
   }
 
+  /// Returns the index of underlying leaf node in the Merkle tree.
+  pub fn index(&self) -> usize {
+    self.nodes.iter().enumerate().fold(0, |acc, (depth, node)| match node {
+      Node::L(_) => acc + 2_usize.pow(depth as u32),
+      Node::R(_) => acc,
+    })
+  }
+
   /// Verifies the computed root of `self` with the given `root` hash.
   pub fn verify(&self, root: &Hash<D>, hash: Hash<D>) -> bool {
     self.root(hash).ct_eq(root).into()
