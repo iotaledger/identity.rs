@@ -5,18 +5,20 @@
 //!
 //! [WIKI]: https://en.wikipedia.org/wiki/Merkle_tree
 
-mod consts;
 mod digest;
 mod hash;
-mod math;
 mod merkle;
 mod node;
 mod proof;
-mod tree;
+mod serde;
+mod traits;
 
 pub use self::digest::Digest;
 pub use self::digest::DigestExt;
+pub use self::digest::Output;
 pub use self::hash::Hash;
-pub use self::merkle::MTree;
+pub use self::merkle::compute_merkle_proof;
+pub use self::merkle::compute_merkle_root;
 pub use self::node::Node;
 pub use self::proof::Proof;
+pub use self::traits::AsLeaf;

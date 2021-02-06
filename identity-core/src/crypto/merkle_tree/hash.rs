@@ -5,35 +5,48 @@ use core::cmp::Ordering;
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result;
-use digest::generic_array::typenum::Unsigned;
-use digest::Digest;
-use digest::Output;
 use subtle::Choice;
 use subtle::ConstantTimeEq;
 
+use crate::crypto::merkle_tree::DigestExt;
+use crate::crypto::merkle_tree::Output;
 use crate::utils::encode_b58;
 
 /// The output of a hash function.
 pub struct Hash<D>(Output<D>)
 where
-  D: Digest;
+  D: DigestExt;
 
-impl<D: Digest> Hash<D> {
-  /// Creates a new [`struct@Hash`] from a slice.
+impl<D: DigestExt> Hash<D> {
+  /// Creates a new [`struct@Hash`] from a slice of bytes.
   pub fn from_slice(slice: &[u8]) -> Option<Self> {
-    if slice.len() != D::OutputSize::USIZE {
+    if slice.len() != D::OUTPUT_SIZE {
       return None;
     }
 
+    // SAFETY: We just asserted the length of `slice`
+    Some(unsafe { Self::from_slice_unchecked(slice) })
+  }
+
+  /// Creates a new [`struct@Hash`] from a slice of bytes.
+  ///
+  /// # Safety
+  ///
+  /// This function is unsafe because it does not ensure the input slice
+  /// has the correct length.
+  pub unsafe fn from_slice_unchecked(slice: &[u8]) -> Self {
     let mut this: Self = Self::default();
-
     this.0.copy_from_slice(slice);
+    this
+  }
 
-    Some(this)
+  /// Returns the [`struct@Hash`] as a slice of bytes.
+  pub fn as_slice(&self) -> &[u8] {
+    self.0.as_ref()
   }
 }
 
-impl<D: Digest> Clone for Hash<D>
+impl<D: DigestExt> Clone for Hash<D>
 where
   Output<D>: Clone,
 {
@@ -42,9 +55,9 @@ where
   }
 }
 
-impl<D: Digest> Copy for Hash<D> where Output<D>: Copy {}
+impl<D: DigestExt> Copy for Hash<D> where Output<D>: Copy {}
 
-impl<D: Digest> PartialEq for Hash<D>
+impl<D: DigestExt> PartialEq for Hash<D>
 where
   Output<D>: PartialEq,
 {
@@ -53,9 +66,9 @@ where
   }
 }
 
-impl<D: Digest> Eq for Hash<D> where Output<D>: Eq {}
+impl<D: DigestExt> Eq for Hash<D> where Output<D>: Eq {}
 
-impl<D: Digest> PartialOrd for Hash<D>
+impl<D: DigestExt> PartialOrd for Hash<D>
 where
   Output<D>: PartialOrd,
 {
@@ -64,7 +77,7 @@ where
   }
 }
 
-impl<D: Digest> Ord for Hash<D>
+impl<D: DigestExt> Ord for Hash<D>
 where
   Output<D>: Ord,
 {
@@ -73,32 +86,26 @@ where
   }
 }
 
-impl<D: Digest> Debug for Hash<D> {
+impl<D: DigestExt> Debug for Hash<D> {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    f.write_str(&encode_b58(self))
+    f.write_str(&encode_b58(self.as_slice()))
   }
 }
 
-impl<D: Digest> Default for Hash<D> {
+impl<D: DigestExt> Default for Hash<D> {
   fn default() -> Self {
     Self(Output::<D>::default())
   }
 }
 
-impl<D: Digest> AsRef<[u8]> for Hash<D> {
-  fn as_ref(&self) -> &[u8] {
-    self.0.as_ref()
-  }
-}
-
-impl<D: Digest> From<Output<D>> for Hash<D> {
+impl<D: DigestExt> From<Output<D>> for Hash<D> {
   fn from(other: Output<D>) -> Self {
     Self(other)
   }
 }
 
-impl<D: Digest> ConstantTimeEq for Hash<D> {
+impl<D: DigestExt> ConstantTimeEq for Hash<D> {
   fn ct_eq(&self, other: &Self) -> Choice {
-    self.as_ref().ct_eq(other.as_ref())
+    self.as_slice().ct_eq(other.as_slice())
   }
 }

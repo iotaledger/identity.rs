@@ -4,19 +4,20 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result;
-use digest::Digest;
 use subtle::ConstantTimeEq;
 
+use crate::crypto::merkle_tree::AsLeaf;
+use crate::crypto::merkle_tree::DigestExt;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Node;
 
-/// An inclusion proof that allows proving the existence of data in a
-/// [`Merkle tree`](`struct@super::MTree`).
-pub struct Proof<D: Digest> {
+/// An Merkle tree inclusion proof that allows proving the existence of a
+/// particular leaf in a Merkle tree.
+pub struct Proof<D: DigestExt> {
   nodes: Box<[Node<D>]>,
 }
 
-impl<D: Digest> Proof<D> {
+impl<D: DigestExt> Proof<D> {
   /// Creates a new [`Proof`] from a boxed slice of nodes.
   pub fn new(nodes: Box<[Node<D>]>) -> Self {
     Self { nodes }
@@ -36,7 +37,16 @@ impl<D: Digest> Proof<D> {
   }
 
   /// Verifies the computed root of `self` with the given `root` hash.
-  pub fn verify(&self, root: &Hash<D>, hash: Hash<D>) -> bool {
+  pub fn verify<T>(&self, root: &Hash<D>, target: T) -> bool
+  where
+    T: AsLeaf<D>,
+  {
+    self.verify_hash(root, target.hash(&mut D::new()))
+  }
+
+  /// Verifies the computed root of `self` with the given `root` hash and
+  /// a pre-computed target `hash`.
+  pub fn verify_hash(&self, root: &Hash<D>, hash: Hash<D>) -> bool {
     self.root(hash).ct_eq(root).into()
   }
 
@@ -51,7 +61,7 @@ impl<D: Digest> Proof<D> {
   }
 }
 
-impl<D: Digest> Debug for Proof<D> {
+impl<D: DigestExt> Debug for Proof<D> {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.debug_struct("Proof").field("nodes", &self.nodes).finish()
   }
