@@ -48,4 +48,7 @@ pub enum Error {
   /// Caused by a failed attempt at retrieving a digital signature.
   #[error("Signature Not Found")]
   MissingSignature,
+  /// Caused by attempting to create a KeyCollection of invalid size.
+  #[error("Invalid Key Collection Size: {0}")]
+  InvalidKeyCollectionSize(usize),
 }

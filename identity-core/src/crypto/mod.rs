@@ -11,6 +11,7 @@ mod signature;
 
 pub use self::key::KeyCollection;
 pub use self::key::KeyPair;
+pub use self::key::KeyType;
 pub use self::key::PublicKey;
 pub use self::key::SecretKey;
 pub(crate) use self::proof::ed25519_sign;

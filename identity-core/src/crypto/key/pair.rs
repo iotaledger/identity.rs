@@ -3,27 +3,35 @@
 
 use zeroize::Zeroize;
 
+use crate::crypto::KeyType;
 use crate::crypto::PublicKey;
 use crate::crypto::SecretKey;
 use crate::error::Result;
 use crate::utils::generate_ed25519;
 
-/// A convenience for storing a pair of cryptographic keys
+/// A convenient type for representing a pair of cryptographic keys.
 #[derive(Clone, Debug)]
 pub struct KeyPair {
+  type_: KeyType,
   public: PublicKey,
   secret: SecretKey,
 }
 
 impl KeyPair {
-  /// Creates a new Ed25519 [`KeyPair`].
+  /// Creates a new [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`].
   pub fn new_ed25519() -> Result<Self> {
-    generate_ed25519()
+    let (public, secret): (PublicKey, SecretKey) = generate_ed25519()?;
+
+    Ok(Self {
+      type_: KeyType::Ed25519,
+      public,
+      secret,
+    })
   }
 
-  /// Creates a new [`KeyPair`] from the given keys.
-  pub const fn new(public: PublicKey, secret: SecretKey) -> Self {
-    Self { public, secret }
+  /// Returns the [`type`][`KeyType`] of the `KeyPair` object.
+  pub const fn type_(&self) -> KeyType {
+    self.type_
   }
 
   /// Returns a reference to the [`PublicKey`] object.
@@ -48,5 +56,18 @@ impl Zeroize for KeyPair {
   fn zeroize(&mut self) {
     self.public.zeroize();
     self.secret.zeroize();
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_new_ed25519() {
+    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    assert_eq!(keypair.type_(), KeyType::Ed25519);
+    assert_eq!(keypair.public().as_ref().len(), 32);
+    assert_eq!(keypair.secret().as_ref().len(), 32);
   }
 }
