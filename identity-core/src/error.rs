@@ -39,6 +39,9 @@ pub enum Error {
   /// Caused by attempting to parse an invalid `Timestamp`.
   #[error("Invalid Timestamp: {0}")]
   InvalidTimestamp(#[from] chrono::ParseError),
+  /// Raised by a validation attempt against an invalid DID proof.
+  #[error("Invalid Proof Value")]
+  InvalidProofValue,
   /// Caused by attempting to parse an invalid DID proof.
   #[error("Invalid Proof Format")]
   InvalidProofFormat,

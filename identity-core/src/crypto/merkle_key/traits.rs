@@ -1,62 +1,46 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::common::BitSet;
-use crate::common::Object;
-use crate::convert::FromJson;
 use crate::crypto::merkle_tree::DigestExt;
-use crate::error::Result;
-
-// =============================================================================
-// =============================================================================
-
-/// A common interface for digest algorithms supported by Merkle Key Signatures.
-pub trait Digest: DigestExt {
-  /// A unique tag identifying the digest algorithm.
-  const TAG: u8;
-}
-
-// =============================================================================
-// =============================================================================
 
 /// A common interface for signature algorithms supported by Merkle Key Signatures.
-pub trait Signature {
+pub trait MerkleSignature {
   /// A unique tag identifying the signature algorithm.
-  const TAG: u8;
-
-  /// Signs the given `message` with `secret` and returns a digital signature.
-  fn sign(&self, message: &[u8], secret: &[u8]) -> Result<Vec<u8>>;
-
-  /// Verifies the authenticity of `message` using `signature` and `public`.
-  fn verify(&self, message: &[u8], signature: &[u8], public: &[u8]) -> Result<()>;
+  fn tag(&self) -> MerkleTag;
 }
 
-// =============================================================================
-// =============================================================================
-
-/// A helper-trait for dynamic sources of revocation flags.
-pub trait Revocation {
-  /// Returns the revocation [`BitSet`] of the verification method, if any.
-  fn revocation(&self) -> Result<Option<BitSet>>;
+/// A common interface for digest algorithms supported by Merkle Key Signatures.
+pub trait MerkleDigest: DigestExt + 'static {
+  /// A unique tag identifying the digest algorithm.
+  fn tag(&self) -> MerkleTag;
 }
 
-impl<'a, T> Revocation for &'a T
-where
-  T: Revocation,
-{
-  fn revocation(&self) -> Result<Option<BitSet>> {
-    (**self).revocation()
+/// A tag identifying a Merkle Key Collection signature or digest algorithm.
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(transparent)]
+pub struct MerkleTag(u8);
+
+impl MerkleTag {
+  /// A Merkle Key Collection tag specifying `Ed25519` as the signature algorithm.
+  pub const ED25519: Self = Self::new(0x0);
+
+  /// A Merkle Key Collection tag specifying `SHA-256` as the digest algorithm.
+  pub const SHA256: Self = Self::new(0x0);
+
+  /// Creates a new [`MerkleTag`] object.
+  pub const fn new(tag: u8) -> Self {
+    Self(tag)
   }
 }
 
-impl Revocation for () {
-  fn revocation(&self) -> Result<Option<BitSet>> {
-    Ok(None)
+impl From<u8> for MerkleTag {
+  fn from(other: u8) -> Self {
+    Self(other)
   }
 }
 
-impl Revocation for Object {
-  fn revocation(&self) -> Result<Option<BitSet>> {
-    self.get("revocation").cloned().map(BitSet::from_json_value).transpose()
+impl From<MerkleTag> for u8 {
+  fn from(other: MerkleTag) -> Self {
+    other.0
   }
 }

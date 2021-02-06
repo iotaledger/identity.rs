@@ -18,7 +18,7 @@ use crate::utils::decode_b64;
 use crate::utils::encode_b64;
 
 /// A general-purpose compressed bitset.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct BitSet(RoaringBitmap);
 
 impl BitSet {

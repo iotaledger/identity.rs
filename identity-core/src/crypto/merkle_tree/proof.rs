@@ -61,6 +61,17 @@ impl<D: DigestExt> Proof<D> {
   }
 }
 
+impl<D: DigestExt> Clone for Proof<D>
+where
+  Node<D>: Clone,
+{
+  fn clone(&self) -> Self {
+    Self {
+      nodes: self.nodes.clone(),
+    }
+  }
+}
+
 impl<D: DigestExt> Debug for Proof<D> {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.debug_struct("Proof").field("nodes", &self.nodes).finish()

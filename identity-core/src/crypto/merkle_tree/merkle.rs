@@ -72,8 +72,16 @@ where
     (_, 0) => None,
     (0, 1) => Some(Proof::new(Box::new([]))),
     (_, 1) => None,
-    (index, length) if index >= length => None,
-    (index, _) => {
+    (index, length) => {
+      if index >= length {
+        return None;
+      }
+
+      // TODO: Support proofs for any number of leaves
+      if !length.is_power_of_two() {
+        return None;
+      }
+
       let height: usize = __log2c(leaves.len() as u32) as usize;
       let mut path: Vec<Node<D>> = Vec::with_capacity(height);
 
