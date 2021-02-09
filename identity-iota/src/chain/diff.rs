@@ -1,7 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::fmt::Display;
+use core::fmt::Error as FmtError;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
 use core::slice::Iter;
+use identity_core::convert::ToJson;
 
 use crate::chain::AuthChain;
 use crate::chain::DocumentChain;
@@ -14,7 +19,8 @@ use crate::tangle::MessageId;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(transparent)]
 pub struct DiffChain {
   inner: Vec<DocumentDiff>,
 }
@@ -146,5 +152,15 @@ impl DiffChain {
 impl Default for DiffChain {
   fn default() -> Self {
     Self::new()
+  }
+}
+
+impl Display for DiffChain {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    if f.alternate() {
+      f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
+    } else {
+      f.write_str(&self.to_json().map_err(|_| FmtError)?)
+    }
   }
 }

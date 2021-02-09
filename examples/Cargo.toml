@@ -24,9 +24,5 @@ name = "merkle_key"
 path = "merkle_key.rs"
 
 [[example]]
-name = "merkle_tree"
-path = "merkle_tree.rs"
-
-[[example]]
 name = "resolution"
 path = "resolution.rs"

@@ -8,7 +8,6 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
 use core::str::FromStr;
-use identity_core::crypto::KeyPair;
 use identity_core::utils::decode_b58;
 use identity_core::utils::encode_b58;
 use identity_did::did::Error as DIDError;
@@ -35,20 +34,6 @@ impl IotaDID {
 
   /// The default Tangle network.
   pub const DEFAULT_NETWORK: &'static str = "main";
-
-  /// Generates an `IotaDID` and `KeyPair` suitable for `ed25519` signatures.
-  pub fn generate_ed25519<'b, 'c, T, U>(network: T, shard: U) -> Result<(Self, KeyPair)>
-  where
-    T: Into<Option<&'b str>>,
-    U: Into<Option<&'c str>>,
-  {
-    let keypair: KeyPair = KeyPair::new_ed25519()?;
-    let public: &[u8] = keypair.public().as_ref();
-
-    let did: Self = Self::with_network_and_shard(public, network, shard)?;
-
-    Ok((did, keypair))
-  }
 
   /// Converts a borrowed `DID` to an `IotaDID.`
   ///
@@ -99,7 +84,7 @@ impl IotaDID {
   ///
   /// Returns `Err` if the input does not form a valid `IotaDID`.
   pub fn new(public: &[u8]) -> Result<Self> {
-    Self::with_network_and_shard(public, None, None)
+    Self::parse(format!("{}:{}:{}", DID::SCHEME, Self::METHOD, Self::encode_key(public)))
   }
 
   /// Creates a new `IotaDID` for the given `public` key and `network`.
@@ -107,11 +92,14 @@ impl IotaDID {
   /// # Errors
   ///
   /// Returns `Err` if the input does not form a valid `IotaDID`.
-  pub fn with_network<'b, T>(public: &[u8], network: T) -> Result<Self>
-  where
-    T: Into<Option<&'b str>>,
-  {
-    Self::with_network_and_shard(public, network, None)
+  pub fn with_network(public: &[u8], network: &str) -> Result<Self> {
+    Self::parse(format!(
+      "{}:{}:{}:{}",
+      DID::SCHEME,
+      Self::METHOD,
+      network,
+      Self::encode_key(public)
+    ))
   }
 
   /// Creates a new `IotaDID` for the given `public` key, `network`, and `shard`.
@@ -119,26 +107,15 @@ impl IotaDID {
   /// # Errors
   ///
   /// Returns `Err` if the input does not form a valid `IotaDID`.
-  pub fn with_network_and_shard<'b, 'c, T, U>(public: &[u8], network: T, shard: U) -> Result<Self>
-  where
-    T: Into<Option<&'b str>>,
-    U: Into<Option<&'c str>>,
-  {
-    let mut did: String = format!("{}:{}:", DID::SCHEME, Self::METHOD);
-
-    if let Some(network) = network.into() {
-      did.push_str(network);
-      did.push(':');
-    }
-
-    if let Some(shard) = shard.into() {
-      did.push_str(shard);
-      did.push(':');
-    }
-
-    did.push_str(&Self::encode_key(public));
-
-    Self::parse(did)
+  pub fn with_network_and_shard(public: &[u8], network: &str, shard: &str) -> Result<Self> {
+    Self::parse(format!(
+      "{}:{}:{}:{}:{}",
+      DID::SCHEME,
+      Self::METHOD,
+      network,
+      shard,
+      Self::encode_key(public)
+    ))
   }
 
   /// Creates a new [`IotaDID`] by joining `self` with the relative IotaDID `other`.

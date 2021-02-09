@@ -9,7 +9,6 @@ use core::fmt::Result as FmtResult;
 use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::convert::ToJson;
-use identity_core::crypto::SignatureOptions;
 use serde::Serialize;
 
 use crate::did::DID;
@@ -19,7 +18,6 @@ use crate::error::Result;
 use crate::service::Service;
 use crate::utils::DIDKey;
 use crate::utils::OrderedSet;
-use crate::verifiable::ResolveMethod;
 use crate::verification::Method;
 use crate::verification::MethodQuery;
 use crate::verification::MethodRef;
@@ -64,7 +62,7 @@ impl<T, U, V> Document<T, U, V> {
   /// Returns a new `Document` based on the `DocumentBuilder` configuration.
   pub fn from_builder(builder: DocumentBuilder<T, U, V>) -> Result<Self> {
     Ok(Self {
-      id: builder.id.ok_or(Error::InvalidDocumentId)?,
+      id: builder.id.ok_or(Error::BuilderInvalidDocumentId)?,
       controller: builder.controller,
       also_known_as: builder.also_known_as,
       verification_method: builder.verification_method.try_into()?,
@@ -269,21 +267,9 @@ impl<T, U, V> Document<T, U, V> {
     self.try_resolve(query)?.key_data().try_decode()
   }
 
-  pub fn resolve_options<'a, Q>(&self, query: Q) -> Result<SignatureOptions>
-  where
-    Q: Into<MethodQuery<'a>>,
-  {
-    let query: MethodQuery<'_> = query.into();
-    let method: MethodWrap<'_, U> = self.try_resolve(query)?;
-
-    Ok(SignatureOptions::with_purpose(
-      method.id.to_string(),
-      query.scope.as_str().to_string(),
-    ))
-  }
-
-  fn resolve_method<'a>(&self, query: MethodQuery<'a>) -> Option<MethodWrap<'_, U>> {
-    let iter = match query.scope {
+  fn resolve_method(&self, query: MethodQuery<'_>) -> Option<MethodWrap<'_, U>> {
+    let iter: _ = match query.scope {
+      MethodScope::None => return self.resolve_any_method(query),
       MethodScope::VerificationMethod => return self.resolve_verification_method(query),
       MethodScope::Authentication => self.authentication.iter(),
       MethodScope::AssertionMethod => self.assertion_method.iter(),
@@ -292,11 +278,22 @@ impl<T, U, V> Document<T, U, V> {
       MethodScope::CapabilityInvocation => self.capability_invocation.iter(),
     };
 
+    self.resolve_method_iter(query, iter)
+  }
+
+  fn resolve_method_iter<'a>(
+    &'a self,
+    query: MethodQuery<'_>,
+    iter: impl Iterator<Item = &'a DIDKey<MethodRef<U>>>,
+  ) -> Option<MethodWrap<'a, U>> {
     iter
       .enumerate()
       .find(|(index, method)| query.ident == *index || query.ident.matches(method.id()))
       .and_then(|(index, method)| match method.as_ref() {
-        MethodRef::Refer(did) => self.resolve(did.fragment()?),
+        MethodRef::Refer(did) => self.resolve(MethodQuery::with_scope(
+          did.fragment()?,
+          MethodScope::VerificationMethod,
+        )),
         MethodRef::Embed(method) => Some(MethodWrap::new(method, index, query.scope)),
       })
   }
@@ -308,6 +305,30 @@ impl<T, U, V> Document<T, U, V> {
       .enumerate()
       .find(|(index, method)| query.ident == *index || query.ident.matches(method.id()))
       .map(|(index, method)| MethodWrap::new(method, index, MethodScope::VerificationMethod))
+  }
+
+  fn resolve_any_method(&self, query: MethodQuery<'_>) -> Option<MethodWrap<'_, U>> {
+    macro_rules! try_iter {
+      ($this:expr, $query:expr, $scope:ident, $iter:ident) => {{
+        let query: MethodQuery<'_> = $query.scoped(MethodScope::$scope);
+
+        if let Some(method) = $this.resolve_method_iter(query, $this.$iter.iter()) {
+          return Some(method);
+        }
+      }};
+    }
+
+    if let Some(method) = self.resolve_verification_method(query) {
+      return Some(method);
+    }
+
+    try_iter!(self, query, Authentication, authentication);
+    try_iter!(self, query, AssertionMethod, assertion_method);
+    try_iter!(self, query, KeyAgreement, key_agreement);
+    try_iter!(self, query, CapabilityDelegation, capability_delegation);
+    try_iter!(self, query, CapabilityInvocation, capability_invocation);
+
+    None
   }
 }
 
@@ -323,12 +344,6 @@ where
     } else {
       f.write_str(&self.to_json().map_err(|_| FmtError)?)
     }
-  }
-}
-
-impl<T, U, V> ResolveMethod<U> for Document<T, U, V> {
-  fn resolve_method(&self, query: MethodQuery<'_>) -> Option<MethodWrap<'_, U>> {
-    Document::resolve_method(self, query)
   }
 }
 

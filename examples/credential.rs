@@ -13,66 +13,64 @@ use identity::core::json;
 use identity::core::FromJson;
 use identity::core::ToJson;
 use identity::core::Url;
-use identity::core::Value;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
 use identity::credential::VerifiableCredential;
 use identity::crypto::KeyPair;
-use identity::did::MethodScope;
-use identity::did::DID;
 use identity::iota::Client;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
 use identity::iota::IotaDocument;
 use identity::iota::Result;
 
-fn subject(subject: &DID) -> Result<Subject> {
-  let json: Value = json!({
-    "id": subject.as_str(),
+fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Credential> {
+  let subject: Subject = Subject::from_json_value(json!({
+    "id": subject.id().as_str(),
     "degree": {
       "type": "BachelorDegree",
       "name": "Bachelor of Science and Arts"
     }
-  });
+  }))?;
 
-  Subject::from_json_value(json).map_err(Into::into)
+  let credential: Credential = CredentialBuilder::default()
+    .issuer(Url::parse(issuer.id().as_str())?)
+    .type_("UniversityDegreeCredential")
+    .subject(subject)
+    .build()?;
+
+  Ok(credential)
 }
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
+  // Initialize a `Client` to interact with the IOTA Tangle.
   let client: Client = Client::new()?;
 
+  // Create a DID Document/KeyPair for the credential issuer.
   let (doc_iss, key_iss): (IotaDocument, KeyPair) = common::document(&client).await?;
+
+  // Create a DID Document/KeyPair for the credential subject.
   let (doc_sub, _key_sub): (IotaDocument, KeyPair) = common::document(&client).await?;
 
-  // Create a new Credential with claims about "subject", specified by "issuer".
-  let credential: Credential = CredentialBuilder::default()
-    .issuer(Url::parse(doc_iss.id().as_str())?)
-    .type_("UniversityDegreeCredential")
-    .subject(subject(&doc_sub.id())?)
-    .build()?;
+  // Create an unsigned Credential with claims about `subject` specified by `issuer`.
+  let credential: Credential = issue_degree(&doc_iss, &doc_sub)?;
 
-  // Extract the default verification method from the authentication scope and
-  // create a Verifiable Credential signed by the issuer.
-  let vc: VerifiableCredential = credential.sign(&doc_iss, MethodScope::Authentication, key_iss.secret())?;
+  // Sign the Credential with the issuer secret key - the result is a VerifiableCredential.
+  let credential: VerifiableCredential = credential.sign(&doc_iss, 0, key_iss.secret())?;
 
-  println!("Credential > {:#}", vc);
+  println!("Credential > {:#}", credential);
   println!();
 
-  // ====================
-  // ====================
-  //
-  // Out-Of-Band DID/Credential Exchange
-  //
-  // ====================
-  // ====================
+  // Convert the VerifiableCredential to JSON and "exchange" with a verifier
+  let message: String = credential.to_json()?;
 
-  let vc: String = vc.to_json()?;
-
-  // Validate the Credential and resolve all DID Documents.
+  // Create a `CredentialValidator` instance that will fetch
+  // and validate all associated documents from the IOTA Tangle.
   let validator: CredentialValidator = CredentialValidator::new(&client);
-  let validation: CredentialValidation = validator.check(&vc).await?;
+
+  // Perform the validation operation.
+  let validation: CredentialValidation = validator.check(&message).await?;
 
   println!("Credential Validation > {:#?}", validation);
   println!();

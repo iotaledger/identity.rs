@@ -13,20 +13,17 @@ use identity::did::MethodRef;
 use identity::did::MethodType;
 use identity::iota::AuthChain;
 use identity::iota::Client;
-use identity::iota::ClientBuilder;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
-use identity::iota::Network;
 use identity::iota::Result;
 use std::thread::sleep;
 use std::time::Duration;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-  let client: Client = ClientBuilder::new().network(Network::Comnet).build()?;
-  let network: &str = client.network().as_str();
+  let client: Client = Client::new()?;
 
   // Keep track of the chain state locally, for reference
   let mut chain: DocumentChain;
@@ -37,7 +34,8 @@ async fn main() -> Result<()> {
   // =========================================================================
 
   {
-    let (mut document, keypair): (IotaDocument, KeyPair) = IotaDocument::builder().did_network(network).build()?;
+    let (mut document, keypair): (IotaDocument, KeyPair) =
+      IotaDocument::builder().did_network(client.network().as_str()).build()?;
 
     document.sign(keypair.secret())?;
     document.publish_with_client(&client).await?;
@@ -45,7 +43,7 @@ async fn main() -> Result<()> {
     chain = DocumentChain::new(AuthChain::new(document)?);
     keys.push(keypair);
 
-    println!("Chain (1) > {:#?}", chain);
+    println!("Chain (1) > {:#}", chain);
     println!();
   }
 
@@ -81,7 +79,7 @@ async fn main() -> Result<()> {
     keys.push(keypair);
     chain.try_push_auth(new)?;
 
-    println!("Chain (2) > {:#?}", chain);
+    println!("Chain (2) > {:#}", chain);
     println!();
   }
 
@@ -106,7 +104,7 @@ async fn main() -> Result<()> {
     diff.publish_with_client(&client, chain.auth_message_id()).await?;
     chain.try_push_diff(diff)?;
 
-    println!("Chain (3) > {:#?}", chain);
+    println!("Chain (3) > {:#}", chain);
     println!();
   }
 
@@ -163,7 +161,7 @@ async fn main() -> Result<()> {
     diff.publish_with_client(&client, chain.auth_message_id()).await?;
     chain.try_push_diff(diff)?;
 
-    println!("Chain (4) > {:#?}", chain);
+    println!("Chain (4) > {:#}", chain);
     println!();
   }
 
@@ -173,7 +171,7 @@ async fn main() -> Result<()> {
 
   let remote: DocumentChain = client.read_document_chain(chain.id()).await?;
 
-  println!("Chain (R) {:#?}", remote);
+  println!("Chain (R) {:#}", remote);
   println!();
 
   let a: &IotaDocument = chain.current();

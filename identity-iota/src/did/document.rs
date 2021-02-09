@@ -10,20 +10,15 @@ use core::ops::Deref;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::convert::SerdeInto;
-use identity_core::crypto::JcsEd25519Signature2020;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::SecretKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
-use identity_core::crypto::SignatureOptions;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_did::did::DID;
 use identity_did::document::Document;
-use identity_did::verifiable::LdSuite;
 use identity_did::verifiable::Properties as VerifiableProperties;
-use identity_did::verifiable::ResolveMethod;
-use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_did::verification::MethodWrap;
@@ -43,7 +38,6 @@ use crate::utils::utf8_to_trytes;
 
 const AUTH_QUERY: (usize, MethodScope) = (0, MethodScope::Authentication);
 
-const ERR_AMNS: &str = "Authentication Method Not Supported";
 const ERR_AMMF: &str = "Authentication Method Missing Fragment";
 const ERR_AMIM: &str = "Authentication Method Id Mismatch";
 
@@ -221,19 +215,7 @@ impl IotaDocument {
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the signature operation fails.
   pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
-    match self.authentication_type() {
-      MethodType::Ed25519VerificationKey2018 => {
-        let suite: LdSuite<_> = LdSuite::new(JcsEd25519Signature2020);
-        let options: SignatureOptions = self.resolve_options()?;
-
-        suite.sign(&mut self.document, options, secret)?;
-      }
-      _ => {
-        return Err(Error::InvalidDocument { error: ERR_AMNS });
-      }
-    }
-
-    Ok(())
+    self.document.sign_this(AUTH_QUERY, secret.as_ref()).map_err(Into::into)
   }
 
   /// Verifies the signature of the DID document.
@@ -246,16 +228,7 @@ impl IotaDocument {
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the verification operation fails.
   pub fn verify(&self) -> Result<()> {
-    match self.authentication_type() {
-      MethodType::Ed25519VerificationKey2018 => {
-        LdSuite::new(JcsEd25519Signature2020).verify(&self.document)?;
-      }
-      _ => {
-        return Err(Error::InvalidDocument { error: ERR_AMNS });
-      }
-    }
-
-    Ok(())
+    self.document.verify_this().map_err(Into::into)
   }
 
   /// Signs the provided data with the default authentication method.
@@ -268,19 +241,7 @@ impl IotaDocument {
   where
     T: Serialize + SetSignature,
   {
-    match self.authentication_type() {
-      MethodType::Ed25519VerificationKey2018 => {
-        let suite: LdSuite<_> = LdSuite::new(JcsEd25519Signature2020);
-        let options: SignatureOptions = self.resolve_options()?;
-
-        suite.sign(data, options, secret)?;
-      }
-      _ => {
-        return Err(Error::InvalidDocument { error: ERR_AMNS });
-      }
-    }
-
-    Ok(())
+    self.document.sign_that(data, AUTH_QUERY, secret).map_err(Into::into)
   }
 
   /// Verfies the signature of the provided data.
@@ -296,24 +257,8 @@ impl IotaDocument {
   where
     T: Serialize + TrySignature,
   {
-    match self.authentication_type() {
-      MethodType::Ed25519VerificationKey2018 => {
-        LdSuite::new(JcsEd25519Signature2020).verify_data(data, &self.document)?;
-      }
-      _ => {
-        return Err(Error::InvalidDocument { error: ERR_AMNS });
-      }
-    }
-
-    Ok(())
-  }
-
-  pub fn resolve_options(&self) -> Result<SignatureOptions> {
-    let mut options: SignatureOptions = self.document.resolve_options(AUTH_QUERY)?;
-
-    options.created = Some(Timestamp::now().to_string());
-
-    Ok(options)
+    // FIXME: Merkle Key Collection
+    self.document.verify_that(data, ()).map_err(Into::into)
   }
 
   /// Creates a `DocumentDiff` representing the changes between `self` and `other`.
@@ -464,11 +409,5 @@ impl TrySignatureMut for IotaDocument {
 impl SetSignature for IotaDocument {
   fn set_signature(&mut self, signature: Signature) {
     self.document.set_proof(signature)
-  }
-}
-
-impl ResolveMethod<Object> for IotaDocument {
-  fn resolve_method(&self, query: MethodQuery<'_>) -> Option<MethodWrap<'_>> {
-    self.document.resolve(query)
   }
 }

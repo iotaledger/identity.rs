@@ -13,15 +13,14 @@ use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
 use identity::credential::VerifiableCredential;
 use identity::crypto::merkle_key::MerkleKey;
-use identity::crypto::merkle_key::SignerEd25519;
-use identity::crypto::merkle_key::VerifierEd25519;
-use identity::crypto::merkle_tree::MTree;
+use identity::crypto::merkle_tree::Hash;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
 use identity::crypto::KeyPair;
-use identity::crypto::SignatureOptions;
 use identity::did::resolution::resolve;
 use identity::did::resolution::Resolution;
+use identity::did::verifiable::Public;
+use identity::did::verifiable::Secret;
 use identity::did::Method;
 use identity::did::MethodBuilder;
 use identity::did::MethodData;
@@ -33,9 +32,6 @@ use identity::iota::TangleRef;
 use rand::rngs::OsRng;
 use rand::Rng;
 use sha2::Sha256;
-
-type Signer<'a> = SignerEd25519<'a, Sha256>;
-type Verifier<'a> = VerifierEd25519<'a, Sha256>;
 
 const LEAVES: usize = 1 << 10;
 
@@ -49,8 +45,9 @@ async fn main() -> Result<()> {
   // Generate a collection of ed25519 keys for signing credentials
   let keys: KeyCollection = KeyCollection::new_ed25519(LEAVES)?;
 
-  // Construct a Merkle tree from the public keys
-  let tree: MTree<Sha256> = keys.to_merkle_tree().unwrap();
+  // Compute the Merkle root hash of the public keys
+  let merkle_root: Hash<Sha256> = keys.merkle_root();
+  let key_data: Vec<u8> = MerkleKey::encode_ed25519_key::<Sha256>(&merkle_root);
 
   // Generate a Merkle Key Collection public key value with ed25519 as the
   // signature algorithm, SHA-256 as the digest algorithm, and the Merkle
@@ -60,7 +57,7 @@ async fn main() -> Result<()> {
     .id(doc.id().as_ref().join("#key-collection")?)
     .controller(doc.id().as_ref().clone())
     .key_type(MethodType::MerkleKeyCollection2021)
-    .key_data(MethodData::new_b58(&MerkleKey::encode_ed25519_key::<Sha256>(&tree)))
+    .key_data(MethodData::new_b58(&key_data))
     .build()?;
 
   // Append the new verification method to the set of existing methods
@@ -89,22 +86,20 @@ async fn main() -> Result<()> {
   let index: usize = OsRng.gen_range(0, LEAVES);
 
   // Generate an inclusion proof for the selected key
-  let proof: Proof<Sha256> = tree.proof(index).unwrap();
+  let proof: Proof<Sha256> = keys.merkle_proof(index).unwrap();
 
-  // Create a `Signer` and `SignatureOptions` with the Merkle proof and
-  // a reference to the DID Document verification method
-  let suite: Signer<'_> = Signer::new_ed25519(&proof);
-  let options: SignatureOptions = doc.as_document().resolve_options("#key-collection")?;
+  let secret: &[u8] = keys.secret(index).unwrap().as_ref();
+  let secret: Secret<'_> = Secret::with_merkle_proof(secret, &proof);
 
   // Sign the Credential with the DID Document
-  suite.sign(&mut credential, options, keys[index].secret())?;
+  doc.sign_that(&mut credential, "#key-collection", secret)?;
 
   println!("credential (signed): {:#}", credential);
 
-  // Create a verifier and check if the signature is valid
-  let suite: Verifier<'_> = Verifier::new_ed25519(keys[index].public());
+  let public: Public<'_> = Public::with_merkle_target(keys[index].as_ref());
+  let verified: Result<(), _> = doc.verify_that(&credential, public);
 
-  println!("verified: {:?}", doc.verify_merkle_key(&credential, suite));
+  println!("verified: {:?}", verified);
 
   // Revoke the previously used key - assume it was compromised
   let mut revocation: BitSet = BitSet::new();
@@ -133,18 +128,10 @@ async fn main() -> Result<()> {
   subject.properties.insert("claim".into(), false.into());
   subject.properties.insert("new-claim".into(), "not-false".into());
 
-  // Generate a new signature using the same proof as before, which proves
-  // existence of the compromised key
-  let suite: Signer<'_> = Signer::new_ed25519(&proof);
-  let options: SignatureOptions = doc.as_document().resolve_options("#key-collection")?;
-
   // Sign the Credential with the compromised key
-  suite.sign(&mut credential, options, keys[index].secret())?;
+  doc.sign_that(&mut credential, "#key-collection", secret)?;
 
   println!("credential (compro-signed): {:#}", credential);
-
-  // Create a verifier and check if the signature is valid
-  let suite: Verifier<'_> = Verifier::new_ed25519(keys[index].public());
 
   // Resolve the DID and receive the latest document version
   let resolution: Resolution = resolve(doc.id().as_str(), Default::default(), &client).await?;
@@ -158,7 +145,10 @@ async fn main() -> Result<()> {
   println!("metadata: {:#?}", resolution.metadata);
   println!("document: {:#?}", document);
 
-  println!("verified: {:?}", document.verify_merkle_key(&credential, suite));
+  let public: Public<'_> = Public::with_merkle_target(keys[index].as_ref());
+  let verified: Result<(), _> = doc.verify_that(&credential, public);
+
+  println!("verified: {:?}", verified);
 
   Ok(())
 }

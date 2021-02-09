@@ -81,7 +81,13 @@ impl IotaDocumentBuilder {
     let network: Option<&str> = self.did_network.as_deref();
     let shard: Option<&str> = self.did_shard.as_deref();
 
-    let did: IotaDID = IotaDID::with_network_and_shard(public, network, shard)?;
+    let did: IotaDID = match (network, shard) {
+      (Some(network), Some(shard)) => IotaDID::with_network_and_shard(public, network, shard)?,
+      (Some(network), None) => IotaDID::with_network(public, network)?,
+      (None, Some(shard)) => IotaDID::with_network_and_shard(public, IotaDID::DEFAULT_NETWORK, shard)?,
+      (None, None) => IotaDID::new(public)?,
+    };
+
     let key: IotaDID = did.join(format!("#{}", self.authentication_tag))?;
 
     let method: Method = MethodBuilder::default()

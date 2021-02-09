@@ -38,9 +38,9 @@ impl<T> Service<T> {
   /// Returns a new `Service` based on the `ServiceBuilder` configuration.
   pub fn from_builder(builder: ServiceBuilder<T>) -> Result<Self> {
     Ok(Self {
-      id: builder.id.ok_or(Error::InvalidServiceId)?,
-      type_: builder.type_.ok_or(Error::InvalidServiceType)?,
-      service_endpoint: builder.service_endpoint.ok_or(Error::InvalidServiceEndpoint)?,
+      id: builder.id.ok_or(Error::BuilderInvalidServiceId)?,
+      type_: builder.type_.ok_or(Error::BuilderInvalidServiceType)?,
+      service_endpoint: builder.service_endpoint.ok_or(Error::BuilderInvalidServiceEndpoint)?,
       properties: builder.properties,
     })
   }

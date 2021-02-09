@@ -1,11 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::convert::TryFrom;
 use identity_core::crypto::Signature;
 
-use crate::error::Error;
-use crate::error::Result;
 use crate::verification::MethodIdent;
 use crate::verification::MethodScope;
 
@@ -34,6 +31,13 @@ impl<'a> MethodQuery<'a> {
   {
     Self {
       ident: ident.into(),
+      scope,
+    }
+  }
+
+  pub(crate) fn scoped(self, scope: MethodScope) -> Self {
+    Self {
+      ident: self.ident,
       scope,
     }
   }
@@ -75,16 +79,8 @@ impl<'a> From<MethodScope> for MethodQuery<'a> {
   }
 }
 
-impl<'a> TryFrom<&'a Signature> for MethodQuery<'a> {
-  type Error = Error;
-
-  fn try_from(other: &'a Signature) -> Result<Self, Self::Error> {
-    let ident: MethodIdent<'a> = (&*other.verification_method).into();
-
-    if let Some(scope) = other.proof_purpose.as_deref() {
-      Ok(MethodQuery::with_scope(ident, scope.parse()?))
-    } else {
-      Ok(MethodQuery::new(ident))
-    }
+impl<'a> From<&'a Signature> for MethodQuery<'a> {
+  fn from(other: &'a Signature) -> Self {
+    Self::new(other.verification_method())
   }
 }

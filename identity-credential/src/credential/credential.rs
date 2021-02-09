@@ -11,14 +11,9 @@ use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::ToJson;
-use identity_core::crypto::JcsEd25519Signature2020;
 use identity_core::crypto::SecretKey;
-use identity_core::crypto::SignatureOptions;
 use identity_did::document::Document;
-use identity_did::verifiable::LdSuite;
 use identity_did::verification::MethodQuery;
-use identity_did::verification::MethodType;
-use identity_did::verification::MethodWrap;
 use serde::Serialize;
 
 use crate::credential::CredentialBuilder;
@@ -155,9 +150,14 @@ impl<T> Credential<T> {
 
     Ok(())
   }
+}
 
-  /// Creates a new [`VerifiableCredential`] by signing `self` with `document`
-  /// and `secret`.
+impl<T> Credential<T>
+where
+  T: Serialize,
+{
+  /// Creates a new [`VerifiableCredential`] by signing `self` with
+  /// [`document`][`Document`] and [`secret`][`SecretKey`].
   pub fn sign<'a, Q, D1, D2, D3>(
     self,
     document: &Document<D1, D2, D3>,
@@ -165,24 +165,13 @@ impl<T> Credential<T> {
     secret: &SecretKey,
   ) -> Result<VerifiableCredential<T>>
   where
-    T: Serialize,
     Q: Into<MethodQuery<'a>>,
   {
-    let method: MethodWrap<'_, D2> = document.try_resolve(query)?;
+    let mut target: VerifiableCredential<T> = VerifiableCredential::new(self, Vec::new());
 
-    match method.key_type() {
-      MethodType::Ed25519VerificationKey2018 => {
-        let options: SignatureOptions = method.into();
-        let suite: LdSuite<_> = LdSuite::new(JcsEd25519Signature2020);
+    document.sign_that(&mut target, query, secret.as_ref())?;
 
-        let mut verifiable: VerifiableCredential<T> = VerifiableCredential::new(self, Vec::new());
-
-        suite.sign(&mut verifiable, options, secret)?;
-
-        Ok(verifiable)
-      }
-      _ => Err(Error::DIDError(identity_did::Error::UnknownMethodType)),
-    }
+    Ok(target)
   }
 }
 

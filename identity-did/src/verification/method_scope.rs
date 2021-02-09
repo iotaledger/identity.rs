@@ -9,6 +9,7 @@ use crate::error::Result;
 /// Verification method group used to refine the scope of a method query.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MethodScope {
+  None,
   VerificationMethod,
   Authentication,
   AssertionMethod,
@@ -20,6 +21,7 @@ pub enum MethodScope {
 impl MethodScope {
   pub const fn as_str(&self) -> &'static str {
     match self {
+      Self::None => "",
       Self::VerificationMethod => "VerificationMethod",
       Self::Authentication => "Authentication",
       Self::AssertionMethod => "AssertionMethod",
@@ -32,7 +34,7 @@ impl MethodScope {
 
 impl Default for MethodScope {
   fn default() -> Self {
-    Self::VerificationMethod
+    Self::None
   }
 }
 
@@ -41,6 +43,7 @@ impl FromStr for MethodScope {
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
     match string {
+      "" => Ok(Self::None),
       "VerificationMethod" => Ok(Self::VerificationMethod),
       "Authentication" => Ok(Self::Authentication),
       "AssertionMethod" => Ok(Self::AssertionMethod),

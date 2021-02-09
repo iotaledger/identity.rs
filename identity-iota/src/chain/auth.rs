@@ -1,7 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::fmt::Display;
+use core::fmt::Error as FmtError;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
 use core::mem;
+use identity_core::convert::ToJson;
 
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
@@ -12,10 +17,11 @@ use crate::tangle::MessageId;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AuthChain {
-  pub(crate) current: IotaDocument,
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) history: Option<Vec<IotaDocument>>,
+  pub(crate) current: IotaDocument,
 }
 
 impl AuthChain {
@@ -131,5 +137,15 @@ impl AuthChain {
     }
 
     Ok(())
+  }
+}
+
+impl Display for AuthChain {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    if f.alternate() {
+      f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
+    } else {
+      f.write_str(&self.to_json().map_err(|_| FmtError)?)
+    }
   }
 }
