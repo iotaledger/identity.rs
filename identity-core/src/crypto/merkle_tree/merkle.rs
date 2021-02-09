@@ -130,23 +130,25 @@ mod tests {
   type Sha256Hash = Hash<Sha256>;
   type Sha256Proof = Proof<Sha256>;
 
-  const LEAVES: u32 = 1 << 6;
-
   #[test]
   fn test_compute_proof_and_index() {
-    let mut digest: Sha256 = Sha256::new();
+    for exp in 0..6 {
+      let mut digest: Sha256 = Sha256::new();
 
-    let nodes: Vec<[u8; 4]> = (0..LEAVES).map(u32::to_be_bytes).collect();
-    let hashes: Vec<Sha256Hash> = nodes.iter().map(|node| digest.hash_leaf(node.as_ref())).collect();
-    let root: Sha256Hash = compute_merkle_root(&hashes);
+      let nodes: Vec<[u8; 4]> = (0..(1 << exp)).map(u32::to_be_bytes).collect();
+      let hashes: Vec<Sha256Hash> = nodes.iter().map(|node| digest.hash_leaf(node.as_ref())).collect();
+      let root: Sha256Hash = compute_merkle_root(&hashes);
 
-    for (index, hash) in hashes.iter().enumerate() {
-      let proof: Sha256Proof = compute_merkle_proof(&hashes, index).unwrap();
+      for (index, hash) in hashes.iter().enumerate() {
+        let proof: Sha256Proof = compute_merkle_proof(&hashes, index).unwrap();
 
-      assert_eq!(proof.index(), index);
-      assert_eq!(proof.root(*hash), root);
-      assert_eq!(proof.verify(&root, &nodes[index]), true);
-      assert_eq!(proof.verify_hash(&root, *hash), true);
+        assert_eq!(proof.index(), index);
+        assert_eq!(proof.root(*hash), root);
+        assert_eq!(proof.verify(&root, &nodes[index]), true);
+        assert_eq!(proof.verify_hash(&root, *hash), true);
+      }
+
+      assert!(compute_merkle_proof::<Sha256, _>(&hashes, hashes.len()).is_none());
     }
   }
 
