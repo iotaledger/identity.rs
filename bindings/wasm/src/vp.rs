@@ -9,8 +9,8 @@ use identity::credential::VerifiableCredential;
 use identity::credential::VerifiablePresentation as VP;
 use wasm_bindgen::prelude::*;
 
+use crate::crypto::KeyPair;
 use crate::document::Document;
-use crate::key::KeyPair;
 use crate::utils::err;
 
 #[wasm_bindgen(inspectable)]
@@ -55,7 +55,7 @@ impl VerifiablePresentation {
   /// Signs the presentation with the given holder `Document` and `KeyPair` object.
   #[wasm_bindgen]
   pub fn sign(&mut self, holder: &Document, key: &KeyPair) -> Result<(), JsValue> {
-    holder.0.sign_data(&mut self.0, key.key.secret()).map_err(err)
+    holder.0.sign_data(&mut self.0, key.0.secret()).map_err(err)
   }
 
   /// Verifies the presentation signature against the holder `Document`.

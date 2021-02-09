@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::crypto::KeyType;
 use identity::did::Method as Method_;
 use identity::did::MethodBuilder;
 use identity::did::MethodData;
@@ -8,9 +9,8 @@ use identity::did::MethodType;
 use identity::iota::IotaDID;
 use wasm_bindgen::prelude::*;
 
+use crate::crypto::KeyPair;
 use crate::did::DID;
-use crate::key::Algorithm;
-use crate::key::KeyPair;
 use crate::utils::err;
 
 pub const DEFAULT_TAG: &str = "authentication";
@@ -51,12 +51,12 @@ impl Method {
     let tag: String = format!("#{}", tag.as_deref().unwrap_or(DEFAULT_TAG));
     let kid: DID = did.0.join(tag).map_err(err).map(DID)?;
 
-    let type_: MethodType = match key.alg {
-      Algorithm::Ed25519 => MethodType::Ed25519VerificationKey2018,
+    let type_: MethodType = match key.0.type_() {
+      KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
     };
 
-    let data: MethodData = match key.alg {
-      Algorithm::Ed25519 => MethodData::PublicKeyBase58(key.public()),
+    let data: MethodData = match key.0.type_() {
+      KeyType::Ed25519 => MethodData::PublicKeyBase58(key.public()),
     };
 
     MethodBuilder::default()

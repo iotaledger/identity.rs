@@ -9,8 +9,8 @@ use identity::credential::Subject;
 use identity::credential::VerifiableCredential as VC;
 use wasm_bindgen::prelude::*;
 
+use crate::crypto::KeyPair;
 use crate::document::Document;
-use crate::key::KeyPair;
 use crate::utils::err;
 
 #[wasm_bindgen(inspectable)]
@@ -55,7 +55,7 @@ impl VerifiableCredential {
   /// Signs the credential with the given issuer `Document` and `KeyPair` object.
   #[wasm_bindgen]
   pub fn sign(&mut self, issuer: &Document, key: &KeyPair) -> Result<(), JsValue> {
-    issuer.0.sign_data(&mut self.0, key.key.secret()).map_err(err)
+    issuer.0.sign_data(&mut self.0, key.0.secret()).map_err(err)
   }
 
   /// Verifies the credential signature against the issuer `Document`.

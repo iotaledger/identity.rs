@@ -5,7 +5,7 @@ use identity::core::decode_b58;
 use identity::iota::IotaDID;
 use wasm_bindgen::prelude::*;
 
-use crate::key::KeyPair;
+use crate::crypto::KeyPair;
 use crate::utils::err;
 
 // =============================================================================
@@ -32,7 +32,7 @@ impl DID {
   /// Creates a new `DID` from a `KeyPair` object.
   #[wasm_bindgen(constructor)]
   pub fn new(key: &KeyPair, network: Option<String>, shard: Option<String>) -> Result<DID, JsValue> {
-    Self::create(key.key.public().as_ref(), network.as_deref(), shard.as_deref())
+    Self::create(key.0.public().as_ref(), network.as_deref(), shard.as_deref())
   }
 
   /// Creates a new `DID` from a base58-encoded public key.

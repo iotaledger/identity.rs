@@ -1,19 +1,35 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::core::decode_b58;
+use identity::core::encode_b58;
 use identity::core::FromJson;
 use identity::core::SerdeInto;
+use identity::crypto::merkle_key::MerkleKey;
+use identity::crypto::merkle_key::MerkleTag;
+use identity::crypto::merkle_key::Sha256;
+use identity::crypto::merkle_tree::Hash;
+use identity::crypto::JcsEd25519Signature2020 as Ed25519;
+use identity::crypto::KeyType;
+use identity::crypto::PublicKey;
+use identity::crypto::SecretKey;
+use identity::did::verifiable;
+use identity::did::verifiable::Public;
+use identity::did::verifiable::Secret;
 use identity::did::Document as Document_;
 use identity::did::MethodIdent;
 use identity::did::MethodScope;
+use identity::did::MethodWrap;
 use identity::did::Service;
 use identity::iota::DocumentDiff;
 use identity::iota::IotaDocument;
 use identity::iota::Properties;
 use wasm_bindgen::prelude::*;
 
+use crate::crypto::Digest;
+use crate::crypto::KeyCollection;
+use crate::crypto::KeyPair;
 use crate::did::DID;
-use crate::key::KeyPair;
 use crate::method::Method;
 use crate::utils::err;
 
@@ -80,10 +96,10 @@ pub struct Document(pub(crate) IotaDocument);
 #[wasm_bindgen]
 impl Document {
   #[wasm_bindgen(constructor)]
-  pub fn new(algorithm: &JsValue, params: &JsValue) -> Result<NewDocument, JsValue> {
+  pub fn new(type_: &str, params: &JsValue) -> Result<NewDocument, JsValue> {
     let params: Params = params.into_serde().map_err(err)?;
-    let key: KeyPair = KeyPair::new(algorithm)?;
-    let did: DID = DID::create(key.key.public().as_ref(), params.network(), params.shard())?;
+    let key: KeyPair = KeyPair::new(type_)?;
+    let did: DID = DID::create(key.0.public().as_ref(), params.network(), params.shard())?;
     let auth: Method = Method::create(&key, did, params.tag())?;
     let doc: Document = Self::from_auth(auth)?;
 
@@ -121,7 +137,7 @@ impl Document {
 
   #[wasm_bindgen]
   pub fn sign(&mut self, key: &KeyPair) -> Result<JsValue, JsValue> {
-    self.0.sign(key.key.secret()).map_err(err).map(|_| JsValue::NULL)
+    self.0.sign(key.0.secret()).map_err(err).map(|_| JsValue::NULL)
   }
 
   /// Verify the signature with the authentication_key
@@ -130,11 +146,86 @@ impl Document {
     self.0.verify().is_ok()
   }
 
+  /// Creates a Merkle Key Collection public key value for the given key
+  /// collection instance.
+  ///
+  /// The public key value will be encoded using Base58 encoding.
+  #[wasm_bindgen(js_name = encodeMerkleKey)]
+  pub fn encode_merkle_key(digest: &str, keys: &KeyCollection) -> Result<JsValue, JsValue> {
+    match (keys.0.type_(), digest.into()) {
+      (KeyType::Ed25519, Digest::Sha256) => {
+        let root: Hash<Sha256> = keys.0.merkle_root();
+        let data: Vec<u8> = MerkleKey::encode_key::<Ed25519, Sha256>(&Ed25519, &root);
+
+        Ok(encode_b58(&data).into())
+      }
+    }
+  }
+
+  /// Creates a Merkle Key Collection signature for the given `data` with the
+  /// DID Document verification method identified by `method`.
+  ///
+  /// A key collection (`keys`) is required and the keypair at `index` is
+  /// used for signing.
+  #[wasm_bindgen(js_name = signMerkleKey)]
+  pub fn sign_merkle_key(
+    &self,
+    data: &JsValue,
+    keys: &KeyCollection,
+    method: &str,
+    index: usize,
+  ) -> Result<JsValue, JsValue> {
+    let mut data: verifiable::Properties = data.into_serde().map_err(err)?;
+
+    let digest: MerkleTag = {
+      let method: MethodWrap<'_> = self.0.try_resolve(method).map_err(err)?;
+      let public: Vec<u8> = method.key_data().try_decode().map_err(err)?;
+
+      MerkleKey::extract_tags(&public).map_err(err)?.1
+    };
+
+    let secret: &SecretKey = match keys.0.secret(index) {
+      Some(secret) => secret,
+      None => return Err("Invalid Secret Key Index".into()),
+    };
+
+    match digest {
+      MerkleTag::SHA256 => match keys.0.merkle_proof::<Sha256>(index) {
+        Some(proof) => {
+          self
+            .0
+            .sign_that(&mut data, method, Secret::with_merkle_proof(secret.as_ref(), &proof))
+            .map_err(err)?;
+        }
+        None => return Err("Invalid Public Key Proof".into()),
+      },
+      _ => return Err("Invalid Merkle Key Digest".into()),
+    }
+
+    JsValue::from_serde(&data).map_err(err)
+  }
+
+  /// Verifies the authenticity of `data` using the given Merkle Key Collection
+  /// target public key.
+  ///
+  /// The target public key is expected to be a Base58-encoded string.
+  #[wasm_bindgen(js_name = verifyMerkleKey)]
+  pub fn verify_merkle_key(&self, data: &JsValue, target: String) -> Result<JsValue, JsValue> {
+    let data: verifiable::Properties = data.into_serde().map_err(err)?;
+
+    let public: PublicKey = decode_b58(&target).map_err(err).map(Into::into)?;
+    let public: Public<'_> = Public::with_merkle_target(public.as_ref());
+
+    self.0.verify_that(&data, public).map_err(err)?;
+
+    Ok(JsValue::TRUE)
+  }
+
   /// Generate the difference between two DID Documents and sign it
   #[wasm_bindgen]
   pub fn diff(&self, other: &Document, key: &KeyPair, prev_msg: String) -> Result<JsValue, JsValue> {
     let doc: IotaDocument = other.0.clone();
-    let diff: DocumentDiff = self.0.diff(&doc, key.key.secret(), prev_msg.into()).map_err(err)?;
+    let diff: DocumentDiff = self.0.diff(&doc, key.0.secret(), prev_msg.into()).map_err(err)?;
 
     JsValue::from_serde(&diff).map_err(err)
   }
