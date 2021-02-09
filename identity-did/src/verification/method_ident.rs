@@ -6,12 +6,12 @@ use crate::did::DID;
 /// Index or identifier used to identify the target verification method of a
 /// `MethodQuery`.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum MethodIdent<'a> {
+pub enum MethodIdent<'ident> {
   Index(usize),
-  Ident(&'a str),
+  Ident(&'ident str),
 }
 
-impl<'a> MethodIdent<'a> {
+impl<'ident> MethodIdent<'ident> {
   /// Returns a `bool` indicating if the given `DID` matches the identifier.
   pub fn matches(&self, did: &DID) -> bool {
     match self {
@@ -29,8 +29,8 @@ impl<'a> MethodIdent<'a> {
   }
 }
 
-impl<'a> From<&'a str> for MethodIdent<'a> {
-  fn from(other: &'a str) -> Self {
+impl<'ident> From<&'ident str> for MethodIdent<'ident> {
+  fn from(other: &'ident str) -> Self {
     Self::Ident(other)
   }
 }

@@ -4,7 +4,7 @@
 use identity_core::common::Url;
 use iota::client::builder;
 
-use crate::did::IotaDID;
+use crate::did::DID;
 
 lazy_static! {
   static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/mainnet").unwrap();
@@ -31,7 +31,7 @@ impl Network {
     }
   }
 
-  pub fn matches_did(self, did: &IotaDID) -> bool {
+  pub fn matches_did(self, did: &DID) -> bool {
     did.network() == self.as_str()
   }
 
@@ -69,6 +69,12 @@ impl Default for Network {
   }
 }
 
+impl<'a> From<&'a DID> for Network {
+  fn from(other: &'a DID) -> Self {
+    Self::from_name(other.network())
+  }
+}
+
 impl From<builder::Network> for Network {
   fn from(other: builder::Network) -> Network {
     match other {
@@ -103,17 +109,17 @@ mod tests {
 
   #[test]
   fn test_matches_did() {
-    let did: IotaDID = IotaDID::new(b"").unwrap();
+    let did: DID = DID::new(b"").unwrap();
     assert!(Network::matches_did(Network::Mainnet, &did));
     assert!(!Network::matches_did(Network::Comnet, &did));
     assert!(!Network::matches_did(Network::Devnet, &did));
 
-    let did: IotaDID = IotaDID::with_network(b"", "com").unwrap();
+    let did: DID = DID::with_network(b"", "com").unwrap();
     assert!(Network::matches_did(Network::Comnet, &did));
     assert!(!Network::matches_did(Network::Mainnet, &did));
     assert!(!Network::matches_did(Network::Devnet, &did));
 
-    let did: IotaDID = IotaDID::with_network(b"", "dev").unwrap();
+    let did: DID = DID::with_network(b"", "dev").unwrap();
     assert!(Network::matches_did(Network::Devnet, &did));
     assert!(!Network::matches_did(Network::Mainnet, &did));
     assert!(!Network::matches_did(Network::Comnet, &did));

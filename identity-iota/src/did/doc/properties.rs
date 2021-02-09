@@ -6,6 +6,7 @@ use identity_core::common::Timestamp;
 
 use crate::tangle::MessageId;
 
+/// Additional properties stored in an IOTA DID Document.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Properties {
   pub(crate) created: Timestamp,
@@ -18,7 +19,7 @@ pub struct Properties {
 }
 
 impl Properties {
-  pub fn new() -> Self {
+  pub(crate) fn new() -> Self {
     Self {
       created: Timestamp::now(),
       updated: Timestamp::now(),

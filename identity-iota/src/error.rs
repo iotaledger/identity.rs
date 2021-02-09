@@ -19,8 +19,12 @@ pub enum Error {
   ClientError(#[from] iota::client::error::Error),
   #[error("{0}")]
   TernaryError(#[from] iota::ternary::Error),
-  #[error("Invalid Document: {error}")]
-  InvalidDocument { error: &'static str },
+  #[error("Invalid Document - Missing Message Id")]
+  InvalidDocumentMessageId,
+  #[error("Invalid Document - Authentication Authority Mismatch")]
+  InvalidDocumentAuthAuthority,
+  #[error("Invalid Document - Authentication Missing Fragment")]
+  InvalidDocumentAuthFragment,
   #[error("Invalid DID Network")]
   InvalidDIDNetwork,
   #[error("Invalid Tryte Conversion")]

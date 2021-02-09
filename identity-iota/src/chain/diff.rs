@@ -11,7 +11,7 @@ use identity_core::convert::ToJson;
 use crate::chain::AuthChain;
 use crate::chain::DocumentChain;
 use crate::did::DocumentDiff;
-use crate::did::IotaDID;
+use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Message;
@@ -32,7 +32,7 @@ impl DiffChain {
       return Ok(Self::new());
     }
 
-    let did: &IotaDID = auth.current().id();
+    let did: &DID = auth.current().id();
 
     let mut index: MessageIndex<DocumentDiff> = messages
       .iter()
@@ -43,7 +43,7 @@ impl DiffChain {
 
     while let Some(mut list) = index.remove(DocumentChain::__diff_message_id(auth, &this)) {
       'inner: while let Some(next) = list.pop() {
-        if auth.current().verify_data(&next).is_ok() {
+        if auth.current().verify_data(&next, ()).is_ok() {
           this.inner.push(next);
           break 'inner;
         }
@@ -121,7 +121,7 @@ impl DiffChain {
   ///
   /// Fails if the `DocumentDiff` is not a valid addition.
   pub fn check_validity(&self, auth: &AuthChain, diff: &DocumentDiff) -> Result<()> {
-    if auth.current().verify_data(diff).is_err() {
+    if auth.current().verify_data(diff, ()).is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
       });

@@ -81,5 +81,4 @@ pub mod iota {
   pub use identity_iota::did::*;
   pub use identity_iota::error::*;
   pub use identity_iota::tangle::*;
-  pub use identity_iota::utils::*;
 }

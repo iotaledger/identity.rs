@@ -21,10 +21,10 @@ use identity::crypto::KeyPair;
 use identity::iota::Client;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
-use identity::iota::IotaDocument;
+use identity::iota::Document;
 use identity::iota::Result;
 
-fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Credential> {
+fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
   let subject: Subject = Subject::from_json_value(json!({
     "id": subject.id().as_str(),
     "degree": {
@@ -48,10 +48,10 @@ async fn main() -> Result<()> {
   let client: Client = Client::new()?;
 
   // Create a DID Document/KeyPair for the credential issuer.
-  let (doc_iss, key_iss): (IotaDocument, KeyPair) = common::document(&client).await?;
+  let (doc_iss, key_iss): (Document, KeyPair) = common::document(&client).await?;
 
   // Create a DID Document/KeyPair for the credential subject.
-  let (doc_sub, _key_sub): (IotaDocument, KeyPair) = common::document(&client).await?;
+  let (doc_sub, _key_sub): (Document, KeyPair) = common::document(&client).await?;
 
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
   let credential: Credential = issue_degree(&doc_iss, &doc_sub)?;

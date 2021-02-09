@@ -10,16 +10,16 @@ use crate::verification::MethodScope;
 ///
 /// See `Document::resolve`.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct MethodQuery<'a> {
-  pub(crate) ident: MethodIdent<'a>,
+pub struct MethodQuery<'ident> {
+  pub(crate) ident: MethodIdent<'ident>,
   pub(crate) scope: MethodScope,
 }
 
-impl<'a> MethodQuery<'a> {
+impl<'ident> MethodQuery<'ident> {
   /// Creates a new `MethodQuery`.
   pub fn new<T>(ident: T) -> Self
   where
-    T: Into<MethodIdent<'a>>,
+    T: Into<MethodIdent<'ident>>,
   {
     Self::with_scope(ident, MethodScope::default())
   }
@@ -27,7 +27,7 @@ impl<'a> MethodQuery<'a> {
   /// Creates a new `MethodQuery` with the given `MethodScope`.
   pub fn with_scope<T>(ident: T, scope: MethodScope) -> Self
   where
-    T: Into<MethodIdent<'a>>,
+    T: Into<MethodIdent<'ident>>,
   {
     Self {
       ident: ident.into(),
@@ -43,8 +43,8 @@ impl<'a> MethodQuery<'a> {
   }
 }
 
-impl<'a> From<&'a str> for MethodQuery<'a> {
-  fn from(other: &'a str) -> Self {
+impl<'ident> From<&'ident str> for MethodQuery<'ident> {
+  fn from(other: &'ident str) -> Self {
     Self::new(other)
   }
 }
@@ -55,8 +55,8 @@ impl From<usize> for MethodQuery<'_> {
   }
 }
 
-impl<'a> From<(&'a str, MethodScope)> for MethodQuery<'a> {
-  fn from(other: (&'a str, MethodScope)) -> Self {
+impl<'ident> From<(&'ident str, MethodScope)> for MethodQuery<'ident> {
+  fn from(other: (&'ident str, MethodScope)) -> Self {
     Self::with_scope(other.0, other.1)
   }
 }
@@ -67,20 +67,20 @@ impl From<(usize, MethodScope)> for MethodQuery<'_> {
   }
 }
 
-impl<'a> From<(MethodIdent<'a>, MethodScope)> for MethodQuery<'a> {
-  fn from(other: (MethodIdent<'a>, MethodScope)) -> Self {
+impl<'ident> From<(MethodIdent<'ident>, MethodScope)> for MethodQuery<'ident> {
+  fn from(other: (MethodIdent<'ident>, MethodScope)) -> Self {
     Self::with_scope(other.0, other.1)
   }
 }
 
-impl<'a> From<MethodScope> for MethodQuery<'a> {
+impl<'ident> From<MethodScope> for MethodQuery<'ident> {
   fn from(other: MethodScope) -> Self {
     Self::with_scope(0, other)
   }
 }
 
-impl<'a> From<&'a Signature> for MethodQuery<'a> {
-  fn from(other: &'a Signature) -> Self {
+impl<'ident> From<&'ident Signature> for MethodQuery<'ident> {
+  fn from(other: &'ident Signature) -> Self {
     Self::new(other.verification_method())
   }
 }

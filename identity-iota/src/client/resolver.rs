@@ -3,7 +3,7 @@
 
 use async_trait::async_trait;
 use identity_core::convert::SerdeInto;
-use identity_did::did::DID;
+use identity_did::did::DID as CoreDID;
 use identity_did::error::Error;
 use identity_did::error::Result;
 use identity_did::resolution::DocumentMetadata;
@@ -12,19 +12,19 @@ use identity_did::resolution::MetaDocument;
 use identity_did::resolution::ResolverMethod;
 
 use crate::client::Client;
-use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::did::Document;
+use crate::did::DID;
 
 #[async_trait(?Send)]
 impl ResolverMethod for Client {
-  fn is_supported(&self, did: &DID) -> bool {
-    IotaDID::try_from_borrowed(did)
+  fn is_supported(&self, did: &CoreDID) -> bool {
+    DID::try_from_borrowed(did)
       .map(|did| self.check_network(did).is_ok())
       .unwrap_or(false)
   }
 
-  async fn read(&self, did: &DID, _input: InputMetadata) -> Result<Option<MetaDocument>> {
-    let document: IotaDocument = IotaDID::try_from_borrowed(did)
+  async fn read(&self, did: &CoreDID, _input: InputMetadata) -> Result<Option<MetaDocument>> {
+    let document: Document = DID::try_from_borrowed(did)
       .map_err(|_| Error::MissingResolutionDID)
       .map(|did| self.read_document(&did))?
       .await

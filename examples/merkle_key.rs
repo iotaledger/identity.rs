@@ -26,7 +26,7 @@ use identity::did::MethodBuilder;
 use identity::did::MethodData;
 use identity::did::MethodType;
 use identity::iota::Client;
-use identity::iota::IotaDocument;
+use identity::iota::Document;
 use identity::iota::Result;
 use identity::iota::TangleRef;
 use rand::rngs::OsRng;
@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
   let client: Client = Client::new()?;
 
   // Create a new DID Document, signed and published.
-  let (mut doc, auth): (IotaDocument, KeyPair) = common::document(&client).await?;
+  let (mut doc, auth): (Document, KeyPair) = common::document(&client).await?;
 
   // Generate a collection of ed25519 keys for signing credentials
   let keys: KeyCollection = KeyCollection::new_ed25519(LEAVES)?;
@@ -68,7 +68,7 @@ async fn main() -> Result<()> {
   // Sign and publish the updated document
   doc.set_previous_message_id(doc.message_id().clone());
   doc.sign(auth.secret())?;
-  doc.publish_with_client(&client).await?;
+  doc.publish(&client).await?;
 
   println!("document: {:#}", doc);
 
@@ -119,7 +119,7 @@ async fn main() -> Result<()> {
   // Publish the new document with the updated revocation state
   doc.set_previous_message_id(doc.message_id().clone());
   doc.sign(auth.secret())?;
-  doc.publish_with_client(&client).await?;
+  doc.publish(&client).await?;
 
   println!("document: {:#}", doc);
 
@@ -136,9 +136,9 @@ async fn main() -> Result<()> {
   // Resolve the DID and receive the latest document version
   let resolution: Resolution = resolve(doc.id().as_str(), Default::default(), &client).await?;
 
-  let document: IotaDocument = resolution
+  let document: Document = resolution
     .document
-    .map(IotaDocument::try_from_document)
+    .map(Document::try_from_document)
     .transpose()?
     .unwrap();
 

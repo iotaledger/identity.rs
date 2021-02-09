@@ -9,15 +9,15 @@ use crate::verification::MethodScope;
 
 /// A queried `Method` with additional metadata about the query resolution.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct MethodWrap<'a, T = Object> {
-  pub(crate) method: &'a Method<T>,
+pub struct MethodWrap<'method, T = Object> {
+  pub(crate) method: &'method Method<T>,
   pub(crate) index: usize,
   pub(crate) scope: MethodScope,
 }
 
-impl<'a, T> MethodWrap<'a, T> {
+impl<'method, T> MethodWrap<'method, T> {
   /// Creates a new `MethodWrap`.
-  pub(crate) const fn new(method: &'a Method<T>, index: usize, scope: MethodScope) -> Self {
+  pub(crate) const fn new(method: &'method Method<T>, index: usize, scope: MethodScope) -> Self {
     Self { index, method, scope }
   }
 
@@ -32,7 +32,7 @@ impl<'a, T> MethodWrap<'a, T> {
   }
 
   /// Consumes the `MethodWrap` and returns a reference to the resolved `Method`.
-  pub const fn into_method(self) -> &'a Method<T> {
+  pub const fn into_method(self) -> &'method Method<T> {
     self.method
   }
 }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
+use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
 
@@ -39,6 +40,12 @@ impl MessageId {
 }
 
 impl Debug for MessageId {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    f.write_str(self.0.as_deref().unwrap_or_default())
+  }
+}
+
+impl Display for MessageId {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_str(self.0.as_deref().unwrap_or_default())
   }
