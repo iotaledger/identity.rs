@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::core::decode_b58;
-use identity::iota::IotaDID;
+use identity::iota::DID as IotaDID;
+use identity::iota::try_did;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::KeyPair;
@@ -20,10 +21,10 @@ pub struct DID(pub(crate) IotaDID);
 impl DID {
   pub(crate) fn create(public: &[u8], network: Option<&str>, shard: Option<&str>) -> Result<DID, JsValue> {
     let did: Result<IotaDID, _> = match (network, shard) {
-      (Some(network), Some(shard)) => IotaDID::with_network_and_shard(public, network, shard),
-      (Some(network), None) => IotaDID::with_network(public, network),
-      (None, Some(shard)) => IotaDID::with_network_and_shard(public, IotaDID::DEFAULT_NETWORK, shard),
-      (None, None) => IotaDID::new(public),
+      (Some(network), Some(shard)) => try_did!(public, network, shard),
+      (Some(network), None) => try_did!(public, network),
+      (None, Some(shard)) => try_did!(public, IotaDID::DEFAULT_NETWORK, shard),
+      (None, None) => try_did!(public),
     };
 
     did.map_err(err).map(Self)

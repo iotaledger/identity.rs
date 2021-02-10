@@ -6,12 +6,12 @@ use identity::core::encode_b58;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection as KeyCollection_;
-use identity::crypto::KeyType;
 use identity::crypto::PublicKey;
 use identity::crypto::SecretKey;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
+use crate::crypto::KeyType;
 use crate::crypto::KeyPair;
 use crate::utils::err;
 
@@ -37,13 +37,10 @@ pub struct KeyCollection(pub(crate) KeyCollection_);
 
 #[wasm_bindgen]
 impl KeyCollection {
-  /// Creates a new `KeyCollection` with `ed25519` keys.
+  /// Creates a new `KeyCollection` with the specified key type.
   #[wasm_bindgen(constructor)]
-  pub fn new(value: &str, count: usize) -> Result<KeyCollection, JsValue> {
-    let type_: KeyType = KeyPair::parse_key_type(value)?;
-    let keys: KeyCollection_ = KeyCollection_::new(type_, count).map_err(err)?;
-
-    Ok(Self(keys))
+  pub fn new(type_: KeyType, count: usize) -> Result<KeyCollection, JsValue> {
+    KeyCollection_::new(type_.into(), count).map_err(err).map(Self)
   }
 
   /// Returns the number of keys in the collection.
@@ -83,15 +80,15 @@ impl KeyCollection {
   }
 
   #[wasm_bindgen(js_name = merkleRoot)]
-  pub fn merkle_root(&self, digest: &JsValue) -> Result<JsValue, JsValue> {
-    match Digest::from_value(digest)? {
+  pub fn merkle_root(&self, digest: Digest) -> Result<JsValue, JsValue> {
+    match digest {
       Digest::Sha256 => Ok(encode_b58(self.0.merkle_root::<Sha256>().as_slice()).into()),
     }
   }
 
   #[wasm_bindgen(js_name = merkleProof)]
-  pub fn merkle_proof(&self, digest: &JsValue, index: usize) -> Result<JsValue, JsValue> {
-    match Digest::from_value(digest)? {
+  pub fn merkle_proof(&self, digest: Digest, index: usize) -> Result<JsValue, JsValue> {
+    match digest {
       Digest::Sha256 => {
         let proof: Proof<Sha256> = match self.0.merkle_proof(index) {
           Some(proof) => proof,
@@ -119,7 +116,7 @@ impl KeyCollection {
 
     let data: JsonData = JsonData {
       keys,
-      type_: self.0.type_(),
+      type_: self.0.type_().into(),
     };
 
     JsValue::from_serde(&data).map_err(err)
@@ -137,6 +134,8 @@ impl KeyCollection {
       Some((pk, sk))
     });
 
-    KeyCollection_::from_iterator(data.type_, iter).map_err(err).map(Self)
+    KeyCollection_::from_iterator(data.type_.into(), iter)
+      .map_err(err)
+      .map(Self)
   }
 }

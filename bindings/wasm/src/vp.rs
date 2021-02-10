@@ -55,13 +55,13 @@ impl VerifiablePresentation {
   /// Signs the presentation with the given holder `Document` and `KeyPair` object.
   #[wasm_bindgen]
   pub fn sign(&mut self, holder: &Document, key: &KeyPair) -> Result<(), JsValue> {
-    holder.0.sign_data(&mut self.0, key.0.secret()).map_err(err)
+    holder.0.sign_data(&mut self.0, Document::AUTH_QUERY, key.0.secret()).map_err(err)
   }
 
   /// Verifies the presentation signature against the holder `Document`.
   #[wasm_bindgen]
   pub fn verify(&self, holder: &Document) -> Result<bool, JsValue> {
-    holder.0.verify_data(&self.0).map_err(err).map(|_| true)
+    holder.0.verify_data(&self.0, ()).map_err(err).map(|_| true)
   }
 
   /// Serializes a `VerifiablePresentation` object as a JSON object.

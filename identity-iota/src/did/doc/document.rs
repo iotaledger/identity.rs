@@ -40,8 +40,6 @@ use crate::tangle::MessageId;
 use crate::tangle::TangleRef;
 use crate::utils::utf8_to_trytes;
 
-const AUTH_QUERY: (usize, MethodScope) = (0, MethodScope::Authentication);
-
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, ()>;
 
@@ -57,6 +55,8 @@ pub struct Document {
 }
 
 impl Document {
+  pub const AUTH_QUERY: (usize, MethodScope) = (0, MethodScope::Authentication);
+
   /// Creates a new DID Document from the given KeyPair.
   ///
   /// The DID Document will be pre-populated with a single authentication
@@ -105,7 +105,7 @@ impl Document {
   /// Returns `Err` if the document is not a valid IOTA DID Document.
   pub fn try_from_document(document: CoreDocument) -> Result<Self> {
     let did: &DID = DID::try_from_borrowed(document.id())?;
-    let key: &CoreDID = document.try_resolve(AUTH_QUERY)?.into_method().id();
+    let key: &CoreDID = document.try_resolve(Self::AUTH_QUERY)?.into_method().id();
 
     // Ensure the authentication method has an identifying fragment
     if key.fragment().is_none() {
@@ -153,7 +153,7 @@ impl Document {
   pub fn authentication(&self) -> &Method {
     // This `unwrap` is "fine" - a valid document will
     // always have a resolvable authentication method.
-    self.document.resolve(AUTH_QUERY).unwrap().into_method()
+    self.document.resolve(Self::AUTH_QUERY).unwrap().into_method()
   }
 
   /// Returns the timestamp of when the DID document was created.
@@ -217,7 +217,7 @@ impl Document {
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the signature operation fails.
   pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
-    self.document.sign_this(AUTH_QUERY, secret.as_ref()).map_err(Into::into)
+    self.document.sign_this(Self::AUTH_QUERY, secret.as_ref()).map_err(Into::into)
   }
 
   /// Verifies the signature of the DID document.
@@ -277,7 +277,7 @@ impl Document {
   pub fn diff(&self, other: &Self, message: MessageId, secret: &SecretKey) -> Result<DocumentDiff> {
     let mut diff: DocumentDiff = DocumentDiff::new(self, other, message)?;
 
-    self.sign_data(&mut diff, AUTH_QUERY, secret)?;
+    self.sign_data(&mut diff, Self::AUTH_QUERY, secret)?;
 
     Ok(diff)
   }

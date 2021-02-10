@@ -7,7 +7,6 @@ use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
 use identity::iota::Network;
 use identity::iota::PresentationValidation;
-use identity::iota::TxnPrinter;
 use wasm_bindgen::prelude::*;
 
 use crate::did::DID;
@@ -59,7 +58,7 @@ pub async fn publish(document: JsValue, params: JsValue) -> Result<JsValue, JsVa
     .publish_document(&document.0)
     .await
     .map_err(err)
-    .map(|response| TxnPrinter::hash(&response).to_string())
+    .map(|message_id| message_id.to_string())
     .map(Into::into)
 }
 

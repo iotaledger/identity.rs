@@ -10,7 +10,6 @@ use identity::crypto::merkle_key::MerkleTag;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Hash;
 use identity::crypto::JcsEd25519Signature2020 as Ed25519;
-use identity::crypto::KeyType;
 use identity::crypto::PublicKey;
 use identity::crypto::SecretKey;
 use identity::did::verifiable;
@@ -22,10 +21,11 @@ use identity::did::MethodScope;
 use identity::did::MethodWrap;
 use identity::did::Service;
 use identity::iota::DocumentDiff;
-use identity::iota::IotaDocument;
+use identity::iota::Document as IotaDocument;
 use identity::iota::Properties;
 use wasm_bindgen::prelude::*;
 
+use crate::crypto::KeyType;
 use crate::crypto::Digest;
 use crate::crypto::KeyCollection;
 use crate::crypto::KeyPair;
@@ -93,10 +93,14 @@ impl Params {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Document(pub(crate) IotaDocument);
 
+impl Document {
+  pub const AUTH_QUERY: (usize, MethodScope) = IotaDocument::AUTH_QUERY;
+}
+
 #[wasm_bindgen]
 impl Document {
   #[wasm_bindgen(constructor)]
-  pub fn new(type_: &str, params: &JsValue) -> Result<NewDocument, JsValue> {
+  pub fn new(type_: KeyType, params: &JsValue) -> Result<NewDocument, JsValue> {
     let params: Params = params.into_serde().map_err(err)?;
     let key: KeyPair = KeyPair::new(type_)?;
     let did: DID = DID::create(key.0.public().as_ref(), params.network(), params.shard())?;
@@ -151,8 +155,8 @@ impl Document {
   ///
   /// The public key value will be encoded using Base58 encoding.
   #[wasm_bindgen(js_name = encodeMerkleKey)]
-  pub fn encode_merkle_key(digest: &str, keys: &KeyCollection) -> Result<JsValue, JsValue> {
-    match (keys.0.type_(), digest.into()) {
+  pub fn encode_merkle_key(digest: Digest, keys: &KeyCollection) -> Result<JsValue, JsValue> {
+    match (keys.0.type_().into(), digest) {
       (KeyType::Ed25519, Digest::Sha256) => {
         let root: Hash<Sha256> = keys.0.merkle_root();
         let data: Vec<u8> = MerkleKey::encode_key::<Ed25519, Sha256>(&Ed25519, &root);
@@ -225,7 +229,7 @@ impl Document {
   #[wasm_bindgen]
   pub fn diff(&self, other: &Document, key: &KeyPair, prev_msg: String) -> Result<JsValue, JsValue> {
     let doc: IotaDocument = other.0.clone();
-    let diff: DocumentDiff = self.0.diff(&doc, key.0.secret(), prev_msg.into()).map_err(err)?;
+    let diff: DocumentDiff = self.0.diff(&doc, prev_msg.into(), key.0.secret()).map_err(err)?;
 
     JsValue::from_serde(&diff).map_err(err)
   }
@@ -234,7 +238,7 @@ impl Document {
   #[wasm_bindgen(js_name = verifyDiff)]
   pub fn verify_diff(&self, diff: String) -> bool {
     match DocumentDiff::from_json(&diff) {
-      Ok(diff) => self.0.verify_data(&diff).is_ok(),
+      Ok(diff) => self.0.verify_data(&diff, ()).is_ok(),
       Err(_) => false,
     }
   }

@@ -55,13 +55,13 @@ impl VerifiableCredential {
   /// Signs the credential with the given issuer `Document` and `KeyPair` object.
   #[wasm_bindgen]
   pub fn sign(&mut self, issuer: &Document, key: &KeyPair) -> Result<(), JsValue> {
-    issuer.0.sign_data(&mut self.0, key.0.secret()).map_err(err)
+    issuer.0.sign_data(&mut self.0, Document::AUTH_QUERY, key.0.secret()).map_err(err)
   }
 
   /// Verifies the credential signature against the issuer `Document`.
   #[wasm_bindgen]
   pub fn verify(&self, issuer: &Document) -> Result<bool, JsValue> {
-    issuer.0.verify_data(&self.0).map_err(err).map(|_| true)
+    issuer.0.verify_data(&self.0, ()).map_err(err).map(|_| true)
   }
 
   /// Serializes a `VerifiableCredential` object as a JSON object.

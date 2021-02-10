@@ -19,7 +19,7 @@ pub struct Properties {
 }
 
 impl Properties {
-  pub(crate) fn new() -> Self {
+  pub fn new() -> Self {
     Self {
       created: Timestamp::now(),
       updated: Timestamp::now(),

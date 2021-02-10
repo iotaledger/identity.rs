@@ -6,7 +6,7 @@ use identity::did::Method as Method_;
 use identity::did::MethodBuilder;
 use identity::did::MethodData;
 use identity::did::MethodType;
-use identity::iota::IotaDID;
+use identity::iota::DID as IotaDID;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::KeyPair;
