@@ -135,12 +135,7 @@ async fn main() -> Result<()> {
 
   // Resolve the DID and receive the latest document version
   let resolution: Resolution = resolve(doc.id().as_str(), Default::default(), &client).await?;
-
-  let document: Document = resolution
-    .document
-    .map(Document::try_from_document)
-    .transpose()?
-    .unwrap();
+  let document: Document = resolution.document.map(Document::try_from_core).transpose()?.unwrap();
 
   println!("metadata: {:#?}", resolution.metadata);
   println!("document: {:#?}", document);

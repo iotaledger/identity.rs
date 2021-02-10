@@ -153,6 +153,16 @@ impl<T> OrderedSet<T> {
     self.change(update, |item, update| item == update)
   }
 
+  /// Removes all matching items from the set.
+  #[inline]
+  pub fn remove<U>(&mut self, item: &U)
+  where
+    T: PartialEq + Borrow<U>,
+    U: PartialEq + ?Sized,
+  {
+    self.0.retain(|this| this.borrow() != item);
+  }
+
   fn change<F>(&mut self, data: T, f: F) -> bool
   where
     F: Fn(&T, &T) -> bool,

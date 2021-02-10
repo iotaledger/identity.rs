@@ -94,7 +94,7 @@ impl DID {
     try_did!(public)
   }
 
-  /// Creates a new IOTA DID for the given `public` key and `network`.
+  /// Creates a new IOTA DID from the given `public` key and `network`.
   ///
   /// # Errors
   ///
@@ -103,13 +103,23 @@ impl DID {
     try_did!(public, network)
   }
 
-  /// Creates a new IOTA DID for the given `public` key, `network`, and `shard`.
+  /// Creates a new IOTA DID from the given `public` key, `network`, and `shard`.
   ///
   /// # Errors
   ///
   /// Returns `Err` if the input does not form a valid IOTA DID.
   pub fn with_network_and_shard(public: &[u8], network: &str, shard: &str) -> Result<Self> {
     try_did!(public, network, shard)
+  }
+
+  #[doc(hidden)]
+  pub fn from_components(public: &[u8], network: Option<&str>, shard: Option<&str>) -> Result<Self> {
+    match (network, shard) {
+      (Some(network), Some(shard)) => try_did!(public, network, shard),
+      (Some(network), None) => try_did!(public, network),
+      (None, Some(shard)) => try_did!(public, Self::DEFAULT_NETWORK, shard),
+      (None, None) => try_did!(public),
+    }
   }
 
   /// Creates a new `DID` by joining `self` with the relative DID `other`.

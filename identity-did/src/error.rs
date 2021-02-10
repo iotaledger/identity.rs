@@ -44,6 +44,8 @@ pub enum Error {
   InvalidMethodFragment,
   #[error("Invalid Verification Method Type")]
   InvalidMethodType,
+  #[error("Invalid Verification Method - Duplicate")]
+  InvalidMethodDuplicate,
 
   #[error("Unknown Method Scope")]
   UnknownMethodScope,

@@ -25,6 +25,8 @@ pub enum Error {
   InvalidDocumentAuthAuthority,
   #[error("Invalid Document - Authentication Missing Fragment")]
   InvalidDocumentAuthFragment,
+  #[error("Invalid Document - Authentication Type Not Supported")]
+  InvalidDocumentAuthType,
   #[error("Invalid DID Network")]
   InvalidDIDNetwork,
   #[error("Invalid Tryte Conversion")]
@@ -41,4 +43,8 @@ pub enum Error {
   InvalidPresentationHolder,
   #[error("Chain Error: {error}")]
   ChainError { error: &'static str },
+  #[error("Missing Method Fragment")]
+  MissingMethodFragment,
+  #[error("Cannot Remove Authentication Method")]
+  CannotRemoveAuthMethod,
 }

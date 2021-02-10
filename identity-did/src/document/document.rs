@@ -231,8 +231,66 @@ impl<T, U, V> Document<T, U, V> {
     })
   }
 
-  /// Finds and returns the first verification `Method` matching the provided
-  ///`MethodQuery`.
+  /// Adds a new [`Method<U>`][`Method`] to the Document.
+  pub fn insert_method(&mut self, scope: MethodScope, method: Method<U>) -> Result<bool> {
+    macro_rules! mref {
+      ($method:expr) => {
+        MethodRef::Refer($method.id().clone()).into()
+      };
+    }
+
+    let mut inserted: bool = false;
+
+    match scope {
+      MethodScope::None => {
+        // Ensure the method doesn't already exist
+        if self.resolve(method.id().as_str()).is_some() {
+          return Err(Error::InvalidMethodDuplicate);
+        }
+
+        // Add everywhere
+        inserted &= self.authentication.append(mref!(method));
+        inserted &= self.assertion_method.append(mref!(method));
+        inserted &= self.key_agreement.append(mref!(method));
+        inserted &= self.capability_delegation.append(mref!(method));
+        inserted &= self.capability_invocation.append(mref!(method));
+        inserted &= self.verification_method.append(method.into());
+      }
+      MethodScope::VerificationMethod => {
+        inserted |= self.verification_method.append(method.into());
+      }
+      MethodScope::Authentication => {
+        inserted |= self.authentication.append(MethodRef::Embed(method).into());
+      }
+      MethodScope::AssertionMethod => {
+        inserted |= self.assertion_method.append(MethodRef::Embed(method).into());
+      }
+      MethodScope::KeyAgreement => {
+        inserted |= self.key_agreement.append(MethodRef::Embed(method).into());
+      }
+      MethodScope::CapabilityDelegation => {
+        inserted |= self.capability_delegation.append(MethodRef::Embed(method).into());
+      }
+      MethodScope::CapabilityInvocation => {
+        inserted |= self.capability_invocation.append(MethodRef::Embed(method).into());
+      }
+    }
+
+    Ok(inserted)
+  }
+
+  /// Removes all references to the specified [`Method<U>`][`Method`].
+  pub fn remove_method(&mut self, did: &DID) {
+    self.authentication.remove(did);
+    self.assertion_method.remove(did);
+    self.key_agreement.remove(did);
+    self.capability_delegation.remove(did);
+    self.capability_invocation.remove(did);
+    self.verification_method.remove(did);
+  }
+
+  /// Finds and returns the first verification [`method`][`Method`]
+  /// matching the provided [`query`][`MethodQuery`].
   pub fn resolve<'a, Q>(&self, query: Q) -> Option<MethodWrap<'_, U>>
   where
     Q: Into<MethodQuery<'a>>,
@@ -240,8 +298,8 @@ impl<T, U, V> Document<T, U, V> {
     self.resolve_method(query.into())
   }
 
-  /// Finds and returns the first verification `Method` matching the provided
-  ///`MethodQuery`.
+  /// Finds and returns the first verification [`method`][`Method`]
+  /// matching the provided [`query`][`MethodQuery`].
   ///
   /// # Errors
   ///
@@ -251,20 +309,6 @@ impl<T, U, V> Document<T, U, V> {
     Q: Into<MethodQuery<'a>>,
   {
     self.resolve(query).ok_or(Error::QueryMethodNotFound)
-  }
-
-  pub fn resolve_bytes<'a, Q>(&self, query: Q) -> Option<Vec<u8>>
-  where
-    Q: Into<MethodQuery<'a>>,
-  {
-    self.try_resolve_bytes(query).ok()
-  }
-
-  pub fn try_resolve_bytes<'a, Q>(&self, query: Q) -> Result<Vec<u8>>
-  where
-    Q: Into<MethodQuery<'a>>,
-  {
-    self.try_resolve(query)?.key_data().try_decode()
   }
 
   fn resolve_method(&self, query: MethodQuery<'_>) -> Option<MethodWrap<'_, U>> {

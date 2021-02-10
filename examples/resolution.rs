@@ -61,7 +61,7 @@ async fn main() -> Result<()> {
   // The resolved resource should be the DID Document authentication method.
   assert!(matches!(
     data.content.unwrap(),
-    Resource::Secondary(SecondaryResource::VerificationKey(method)) if method == *doc.authentication()
+    Resource::Secondary(SecondaryResource::VerificationKey(method)) if method == **doc.authentication()
   ));
 
   Ok(())

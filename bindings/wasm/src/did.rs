@@ -3,14 +3,10 @@
 
 use identity::core::decode_b58;
 use identity::iota::DID as IotaDID;
-use identity::iota::try_did;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::KeyPair;
 use crate::utils::err;
-
-// =============================================================================
-// =============================================================================
 
 /// @typicalname did
 #[wasm_bindgen(inspectable)]
@@ -19,29 +15,24 @@ pub struct DID(pub(crate) IotaDID);
 
 #[wasm_bindgen]
 impl DID {
-  pub(crate) fn create(public: &[u8], network: Option<&str>, shard: Option<&str>) -> Result<DID, JsValue> {
-    let did: Result<IotaDID, _> = match (network, shard) {
-      (Some(network), Some(shard)) => try_did!(public, network, shard),
-      (Some(network), None) => try_did!(public, network),
-      (None, Some(shard)) => try_did!(public, IotaDID::DEFAULT_NETWORK, shard),
-      (None, None) => try_did!(public),
-    };
-
-    did.map_err(err).map(Self)
-  }
-
   /// Creates a new `DID` from a `KeyPair` object.
   #[wasm_bindgen(constructor)]
   pub fn new(key: &KeyPair, network: Option<String>, shard: Option<String>) -> Result<DID, JsValue> {
-    Self::create(key.0.public().as_ref(), network.as_deref(), shard.as_deref())
+    let public: &[u8] = key.0.public().as_ref();
+    let network: Option<&str> = network.as_deref();
+    let shard: Option<&str> = shard.as_deref();
+
+    IotaDID::from_components(public, network, shard).map_err(err).map(Self)
   }
 
   /// Creates a new `DID` from a base58-encoded public key.
   #[wasm_bindgen(js_name = fromBase58)]
   pub fn from_base58(key: &str, network: Option<String>, shard: Option<String>) -> Result<DID, JsValue> {
-    decode_b58(key)
-      .map_err(err)
-      .and_then(|key| Self::create(&key, network.as_deref(), shard.as_deref()))
+    let public: Vec<u8> = decode_b58(key).map_err(err)?;
+    let network: Option<&str> = network.as_deref();
+    let shard: Option<&str> = shard.as_deref();
+
+    IotaDID::from_components(&public, network, shard).map_err(err).map(Self)
   }
 
   /// Parses a `DID` from the input string.

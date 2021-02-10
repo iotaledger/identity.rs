@@ -72,6 +72,6 @@ impl KeyPair {
   pub fn from_json(json: &JsValue) -> Result<KeyPair, JsValue> {
     let data: JsonData = json.into_serde().map_err(err)?;
 
-    Self::from_base58(data.type_.into(), &data.public, &data.secret)
+    Self::from_base58(data.type_, &data.public, &data.secret)
   }
 }

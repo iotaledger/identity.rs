@@ -11,19 +11,16 @@ use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::convert::SerdeInto;
 use identity_core::crypto::KeyPair;
-use identity_core::crypto::KeyType;
 use identity_core::crypto::SecretKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
-use identity_did::did::DID as CoreDID;
 use identity_did::document::Document as CoreDocument;
 use identity_did::verifiable::Properties as VerifiableProperties;
 use identity_did::verifiable::Public;
 use identity_did::verifiable::Secret;
-use identity_did::verification::Method;
-use identity_did::verification::MethodData;
+use identity_did::verification::Method as CoreMethod;
 use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
@@ -32,6 +29,7 @@ use serde::Serialize;
 use crate::client::Client;
 use crate::client::Network;
 use crate::did::DocumentDiff;
+use crate::did::Method;
 use crate::did::Properties as BaseProperties;
 use crate::did::DID;
 use crate::error::Error;
@@ -65,37 +63,33 @@ impl Document {
   /// The authentication method will have the DID URL fragment `#authentication`
   /// and can be easily retrieved with [`Document::authentication`].
   pub fn from_keypair(keypair: &KeyPair) -> Result<Self> {
-    fn __method_from_keypair(keypair: &KeyPair) -> Result<Method> {
-      let did: DID = DID::new(keypair.public().as_ref())?;
-      let key: DID = did.join("#authentication")?;
+    let method: Method = Method::from_keypair(keypair, "#authentication")?;
 
-      let key_type: MethodType = match keypair.type_() {
-        KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
-      };
+    // SAFETY: We don't create invalid Methods
+    Ok(unsafe { Self::from_authentication_unchecked(method) })
+  }
 
-      let key_data: MethodData = match keypair.type_() {
-        KeyType::Ed25519 => MethodData::new_b58(keypair.public()),
-      };
+  /// Creates a new DID Document from the given verification [`method`][`Method`].
+  pub fn from_authentication(method: Method) -> Result<Self> {
+    Self::check_authentication(&method)?;
 
-      Method::builder(Default::default())
-        .id(key.into())
-        .controller(did.into())
-        .key_type(key_type)
-        .key_data(key_data)
-        .build()
-        .map_err(Into::into)
-    }
+    // SAFETY: We just checked the validity of the verification method.
+    Ok(unsafe { Self::from_authentication_unchecked(method) })
+  }
 
-    let method: Method = __method_from_keypair(keypair)?;
-
-    let document: Self = CoreDocument::builder(Default::default())
+  /// Creates a new DID Document from the given verification [`method`][`Method`]
+  /// without performing validatin checks.
+  /// # Safety
+  ///
+  /// This must be guaranteed safe by the caller.
+  pub unsafe fn from_authentication_unchecked(method: Method) -> Self {
+    CoreDocument::builder(Default::default())
       .id(method.controller().clone())
       .authentication(method)
       .build()
       .map(CoreDocument::into_verifiable)
-      .map(Into::into)?;
-
-    Ok(document)
+      .map(Into::into)
+      .unwrap() // `uwnrap` is fine - we provided all the necessary properties
   }
 
   /// Converts a generic DID `Document` to an IOTA DID Document.
@@ -103,17 +97,14 @@ impl Document {
   /// # Errors
   ///
   /// Returns `Err` if the document is not a valid IOTA DID Document.
-  pub fn try_from_document(document: CoreDocument) -> Result<Self> {
+  pub fn try_from_core(document: CoreDocument) -> Result<Self> {
     let did: &DID = DID::try_from_borrowed(document.id())?;
-    let key: &CoreDID = document.try_resolve(Self::AUTH_QUERY)?.into_method().id();
+    let method: &CoreMethod = document.try_resolve(Self::AUTH_QUERY)?.into_method();
 
-    // Ensure the authentication method has an identifying fragment
-    if key.fragment().is_none() {
-      return Err(Error::InvalidDocumentAuthFragment);
-    }
+    Self::check_authentication(method)?;
 
     // Ensure the authentication method DID matches the document DID
-    if key.authority() != did.authority() {
+    if method.id().authority() != did.authority() {
       return Err(Error::InvalidDocumentAuthAuthority);
     }
 
@@ -121,6 +112,19 @@ impl Document {
       document: document.serde_into()?,
       message_id: MessageId::NONE,
     })
+  }
+
+  fn check_authentication(method: &CoreMethod) -> Result<()> {
+    Method::check_validity(method)?;
+
+    // Ensure the verification method type is supported
+    match method.key_type() {
+      MethodType::Ed25519VerificationKey2018 => {}
+      MethodType::MerkleKeyCollection2021 => return Err(Error::InvalidDocumentAuthType),
+      _ => {}
+    }
+
+    Ok(())
   }
 
   /// Returns a reference to the underlying [`Document`][`CoreDocument`].
@@ -153,7 +157,10 @@ impl Document {
   pub fn authentication(&self) -> &Method {
     // This `unwrap` is "fine" - a valid document will
     // always have a resolvable authentication method.
-    self.document.resolve(Self::AUTH_QUERY).unwrap().into_method()
+    let method: _ = self.document.resolve(Self::AUTH_QUERY).unwrap().into_method();
+
+    // SAFETY: We don't allow invalid authentication methods.
+    unsafe { Method::new_unchecked_ref(method) }
   }
 
   /// Returns the timestamp of when the DID document was created.
@@ -207,6 +214,26 @@ impl Document {
   }
 
   // ===========================================================================
+  // Verification Methods
+  // ===========================================================================
+
+  /// Adds a new Verification Method to the DID Document.
+  pub fn insert_method(&mut self, scope: MethodScope, method: Method) -> Result<bool> {
+    self.document.insert_method(scope, method.into()).map_err(Into::into)
+  }
+
+  /// Removes all references to the specified Verification Method.
+  pub fn remove_method(&mut self, did: &DID) -> Result<()> {
+    if self.authentication().id() == &**did {
+      return Err(Error::CannotRemoveAuthMethod);
+    }
+
+    self.document.remove_method(did);
+
+    Ok(())
+  }
+
+  // ===========================================================================
   // Signatures
   // ===========================================================================
 
@@ -217,7 +244,10 @@ impl Document {
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the signature operation fails.
   pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
-    self.document.sign_this(Self::AUTH_QUERY, secret.as_ref()).map_err(Into::into)
+    self
+      .document
+      .sign_this(Self::AUTH_QUERY, secret.as_ref())
+      .map_err(Into::into)
   }
 
   /// Verifies the signature of the DID document.
@@ -378,7 +408,7 @@ impl TryFrom<CoreDocument> for Document {
   type Error = Error;
 
   fn try_from(other: CoreDocument) -> Result<Self, Self::Error> {
-    Self::try_from_document(other)
+    Self::try_from_core(other)
   }
 }
 

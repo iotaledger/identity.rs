@@ -1,11 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::crypto::KeyType;
-use identity::did::Method as Method_;
-use identity::did::MethodBuilder;
-use identity::did::MethodData;
-use identity::did::MethodType;
+use identity::iota::Method as IotaMethod;
 use identity::iota::DID as IotaDID;
 use wasm_bindgen::prelude::*;
 
@@ -13,73 +9,24 @@ use crate::crypto::KeyPair;
 use crate::did::DID;
 use crate::utils::err;
 
-pub const DEFAULT_TAG: &str = "authentication";
-
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum Params {
-  None,
-  Object { did: Option<String>, tag: Option<String> },
-}
-
-impl Params {
-  fn did(&self) -> Option<&str> {
-    match self {
-      Self::None => None,
-      Self::Object { did, .. } => did.as_deref(),
-    }
-  }
-
-  fn tag(&self) -> Option<&str> {
-    match self {
-      Self::None => None,
-      Self::Object { tag, .. } => tag.as_deref(),
-    }
-  }
-}
-
-// =============================================================================
-// =============================================================================
-
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct Method(pub(crate) Method_);
+pub struct Method(pub(crate) IotaMethod);
 
 #[wasm_bindgen]
 impl Method {
-  pub(crate) fn create(key: &KeyPair, did: DID, tag: Option<&str>) -> Result<Method, JsValue> {
-    let tag: String = format!("#{}", tag.as_deref().unwrap_or(DEFAULT_TAG));
-    let kid: DID = did.0.join(tag).map_err(err).map(DID)?;
-
-    let type_: MethodType = match key.0.type_() {
-      KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
-    };
-
-    let data: MethodData = match key.0.type_() {
-      KeyType::Ed25519 => MethodData::PublicKeyBase58(key.public()),
-    };
-
-    MethodBuilder::default()
-      .id(kid.0.into())
-      .controller(did.0.into())
-      .key_type(type_)
-      .key_data(data)
-      .build()
-      .map_err(err)
-      .map(Self)
+  /// Creates a new `Method` object from the given `key`.
+  #[wasm_bindgen(constructor)]
+  pub fn new(key: &KeyPair, tag: Option<String>) -> Result<Method, JsValue> {
+    IotaMethod::from_keypair(&key.0, tag.as_deref()).map_err(err).map(Self)
   }
 
-  /// Creates a new Verification Method object.
-  #[wasm_bindgen(constructor)]
-  pub fn new(key: &KeyPair, value: &JsValue) -> Result<Method, JsValue> {
-    let params: Params = value.into_serde().map_err(err)?;
-
-    let did: DID = match params.did() {
-      Some(did) => DID::parse(did)?,
-      None => DID::new(key, None, None)?,
-    };
-
-    Self::create(key, did, params.tag())
+  /// Creates a new `Method` object from the given `did` and `key`.
+  #[wasm_bindgen(js_name = fromDID)]
+  pub fn from_did(did: DID, key: &KeyPair, tag: Option<String>) -> Result<Method, JsValue> {
+    IotaMethod::from_did(did.0, &key.0, tag.as_deref())
+      .map_err(err)
+      .map(Self)
   }
 
   /// Returns the `id` DID of the `Method` object.
@@ -98,11 +45,13 @@ impl Method {
       .map(|did| DID(did.clone()))
   }
 
+  /// Returns the `Method` type.
   #[wasm_bindgen(getter, js_name = type)]
   pub fn type_(&self) -> JsValue {
     self.0.key_type().as_str().into()
   }
 
+  /// Returns the `Method` public key data.
   #[wasm_bindgen(getter)]
   pub fn data(&self) -> Result<JsValue, JsValue> {
     JsValue::from_serde(self.0.key_data()).map_err(err)
