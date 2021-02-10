@@ -27,13 +27,13 @@
 macro_rules! did {
   // Defining explicit branches rather than `$($tt:tt)+` gives much better docs.
   ($public:expr, $network:expr, $shard:expr) => {
-    try_did!($public, $network, $shard).unwrap()
+    $crate::try_did!($public, $network, $shard).unwrap()
   };
   ($public:expr, $network:expr) => {
-    try_did!($public, $network).unwrap()
+    $crate::try_did!($public, $network).unwrap()
   };
   ($public:expr) => {
-    try_did!($public).unwrap()
+    $crate::try_did!($public).unwrap()
   };
 }
 
