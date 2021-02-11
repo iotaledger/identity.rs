@@ -1,12 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::core::json;
+use identity::core::FromJson;
+use identity::core::Object;
 use identity::core::OneOrMany;
+use identity::core::SerdeInto;
+use identity::core::Timestamp;
 use identity::core::Url;
+use identity::core::Value;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
-use identity::credential::VerifiableCredential as VC;
+use identity::credential::VerifiableCredential as VerifiableCredential_;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::KeyPair;
@@ -15,21 +21,55 @@ use crate::utils::err;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct VerifiableCredential(pub(crate) VC);
+pub struct VerifiableCredential(pub(crate) VerifiableCredential_);
 
 #[wasm_bindgen]
 impl VerifiableCredential {
-  #[wasm_bindgen(constructor)]
-  pub fn new(
+  #[wasm_bindgen]
+  pub fn extend(value: &JsValue) -> Result<VerifiableCredential, JsValue> {
+    let mut base: Object = value.into_serde().map_err(err)?;
+
+    if !base.contains_key("credentialSubject") {
+      return Err("Missing property: `credentialSubject`".into());
+    }
+
+    if !base.contains_key("issuer") {
+      return Err("Missing property: `issuer`".into());
+    }
+
+    if !base.contains_key("@context") {
+      base.insert(
+        "@context".into(),
+        Credential::<()>::base_context().serde_into().map_err(err)?,
+      );
+    }
+
+    let mut types: Vec<String> = match base.remove("type") {
+      Some(value) => value.serde_into().map(OneOrMany::into_vec).map_err(err)?,
+      None => Vec::new(),
+    };
+
+    types.insert(0, Credential::<()>::base_type().into());
+    base.insert("type".into(), types.serde_into().map_err(err)?);
+
+    if !base.contains_key("issuanceDate") {
+      base.insert("issuanceDate".into(), Timestamp::now().to_string().into());
+    }
+
+    base.insert("proof".into(), Value::Array(Vec::new()));
+
+    base.serde_into().map_err(err).map(Self)
+  }
+
+  #[wasm_bindgen]
+  pub fn issue(
     issuer_doc: &Document,
-    issuer_key: &KeyPair,
-    subject_data: JsValue,
+    subject_data: &JsValue,
     credential_type: Option<String>,
     credential_id: Option<String>,
   ) -> Result<VerifiableCredential, JsValue> {
     let subjects: OneOrMany<Subject> = subject_data.into_serde().map_err(err)?;
     let issuer_url: Url = Url::parse(issuer_doc.0.id().as_str()).map_err(err)?;
-
     let mut builder: CredentialBuilder = CredentialBuilder::default().issuer(issuer_url);
 
     for subject in subjects.into_vec() {
@@ -44,24 +84,11 @@ impl VerifiableCredential {
       builder = builder.id(Url::parse(credential_id).map_err(err)?);
     }
 
-    let credential: Credential = builder.build().map_err(err)?;
-    let mut this: Self = Self(VC::new(credential, Vec::new()));
-
-    this.sign(issuer_doc, issuer_key)?;
-
-    Ok(this)
-  }
-
-  /// Signs the credential with the given issuer `Document` and `KeyPair` object.
-  #[wasm_bindgen]
-  pub fn sign(&mut self, issuer: &Document, key: &KeyPair) -> Result<(), JsValue> {
-    issuer.0.sign_data(&mut self.0, Document::AUTH_QUERY, key.0.secret()).map_err(err)
-  }
-
-  /// Verifies the credential signature against the issuer `Document`.
-  #[wasm_bindgen]
-  pub fn verify(&self, issuer: &Document) -> Result<bool, JsValue> {
-    issuer.0.verify_data(&self.0, ()).map_err(err).map(|_| true)
+    builder
+      .build()
+      .map(|credential| VerifiableCredential_::new(credential, Vec::new()))
+      .map(Self)
+      .map_err(err)
   }
 
   /// Serializes a `VerifiableCredential` object as a JSON object.

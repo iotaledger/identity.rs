@@ -7,6 +7,9 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
+use identity_core::crypto::merkle_key::MerkleDigest;
+use identity_core::crypto::merkle_tree::Hash;
+use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_did::verification::Method as CoreMethod;
@@ -27,6 +30,28 @@ pub struct Method(CoreMethod);
 impl Method {
   /// The default verification method tag.
   pub const TAG: &'static str = "key";
+
+  /// Creates a new Merkle Key Collection Method from the given key collection.
+  pub fn create_merkle_key<'a, D, F>(did: DID, keys: &KeyCollection, fragment: F) -> Result<Self>
+  where
+    F: Into<Option<&'a str>>,
+    D: MerkleDigest,
+  {
+    let root: Hash<D> = keys.merkle_root::<D>();
+    let data: Vec<u8> = keys.type_().encode_key::<D>(&root);
+
+    let tag: String = format!("#{}", fragment.into().unwrap_or(Self::TAG));
+    let key: DID = did.join(tag)?;
+
+    MethodBuilder::default()
+      .id(key.into())
+      .controller(did.into())
+      .key_type(MethodType::MerkleKeyCollection2021)
+      .key_data(MethodData::new_b58(&data))
+      .build()
+      .map_err(Into::into)
+      .map(Self)
+  }
 
   /// Creates a new [`Method`] object from the given `keypair`.
   pub fn from_keypair<'a, F>(keypair: &KeyPair, fragment: F) -> Result<Self>
@@ -110,6 +135,18 @@ impl Method {
   /// according to the IOTA DID method specification.
   pub fn is_valid(method: &CoreMethod) -> bool {
     Self::check_validity(method).is_ok()
+  }
+
+  /// Returns the method `id` property.
+  pub fn id(&self) -> &DID {
+    // SAFETY: We don't create methods with invalid DID's
+    unsafe { DID::new_unchecked_ref(self.0.id()) }
+  }
+
+  /// Returns the method `controller` property.
+  pub fn controller(&self) -> &DID {
+    // SAFETY: We don't create methods with invalid DID's
+    unsafe { DID::new_unchecked_ref(self.0.controller()) }
   }
 }
 

@@ -10,6 +10,7 @@ use identity_core::crypto::merkle_key::Signer;
 use identity_core::crypto::merkle_key::Verifier;
 use identity_core::crypto::merkle_tree::Proof;
 use identity_core::crypto::JcsEd25519Signature2020 as Ed25519;
+use identity_core::crypto::PublicKey;
 use identity_core::crypto::SecretKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
@@ -191,9 +192,10 @@ impl<T, U, V> Document<T, U, V> {
               this
             };
 
-            let target: &[u8] = public.mk_target.ok_or(Error::CoreError(CoreError::InvalidKeyFormat))?;
-
-            verifier.__verify(that, target)?;
+            public
+              .mk_target
+              .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))
+              .and_then(|target| verifier.__verify(that, target).map_err(Into::into))?;
           }
           (_, _) => {
             return Err(Error::InvalidMethodType);
@@ -285,5 +287,110 @@ impl<'a> From<&'a [u8]> for Secret<'a> {
 impl<'a> From<&'a SecretKey> for Secret<'a> {
   fn from(other: &'a SecretKey) -> Self {
     Self::new(other.as_ref())
+  }
+}
+
+// =============================================================================
+// Document Signer - Simplifying Digital Signature Creation Since 2021
+// =============================================================================
+
+pub struct DocumentSigner<'base, 'query, 'proof, T, U, V> {
+  document: &'base Document<T, U, V>,
+  secret: &'base SecretKey,
+  method: Option<MethodQuery<'query>>,
+  mk_proof: Option<&'proof dyn Any>,
+}
+
+impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
+  pub fn new(document: &'base Document<T, U, V>, secret: &'base SecretKey) -> Self {
+    Self {
+      document,
+      secret,
+      method: None,
+      mk_proof: None,
+    }
+  }
+}
+
+impl<'query, T, U, V> DocumentSigner<'_, 'query, '_, T, U, V> {
+  pub fn method<Q>(mut self, value: Q) -> Self
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    self.method = Some(value.into());
+    self
+  }
+}
+
+impl<'proof, T, U, V> DocumentSigner<'_, '_, 'proof, T, U, V> {
+  pub fn merkle_key_proof<D>(mut self, proof: &'proof Proof<D>) -> Self
+  where
+    D: MerkleDigest,
+  {
+    self.mk_proof = Some(proof);
+    self
+  }
+}
+
+impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
+  pub fn sign<X>(self, data: &mut X) -> Result<()>
+  where
+    X: Serialize + SetSignature,
+  {
+    let query: MethodQuery<'_> = self.method.ok_or(Error::QueryMethodNotFound)?;
+    let mut secret: Secret<'_> = Secret::new(self.secret.as_ref());
+
+    if let Some(proof) = self.mk_proof {
+      secret.mk_proof = Some(proof);
+    }
+
+    self.document.sign_that(data, query, secret)?;
+
+    Ok(())
+  }
+}
+
+// =============================================================================
+// Document Verifier - Simplifying Digital Signature Verification Since 2021
+// =============================================================================
+
+pub struct DocumentVerifier<'base, 'target, T, U, V> {
+  document: &'base Document<T, U, V>,
+  mk_target: Option<&'target PublicKey>,
+}
+
+impl<'base, T, U, V> DocumentVerifier<'base, '_, T, U, V> {
+  pub fn new(document: &'base Document<T, U, V>) -> Self {
+    Self {
+      document,
+      mk_target: None,
+    }
+  }
+}
+
+impl<'target, T, U, V> DocumentVerifier<'_, 'target, T, U, V> {
+  pub fn merkle_key_target(mut self, value: &'target PublicKey) -> Self {
+    self.mk_target = Some(value);
+    self
+  }
+}
+
+impl<T, U, V> DocumentVerifier<'_, '_, T, U, V>
+where
+  U: Revocation,
+{
+  pub fn verify<X>(self, data: &X) -> Result<()>
+  where
+    X: Serialize + TrySignature,
+  {
+    let mut public: Public<'_> = Public::new();
+
+    if let Some(target) = self.mk_target {
+      public.set_merkle_target(target.as_ref());
+    }
+
+    self.document.verify_that(data, public)?;
+
+    Ok(())
   }
 }

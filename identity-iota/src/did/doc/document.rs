@@ -17,6 +17,8 @@ use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_did::document::Document as CoreDocument;
+use identity_did::verifiable::DocumentSigner;
+use identity_did::verifiable::DocumentVerifier;
 use identity_did::verifiable::Properties as VerifiableProperties;
 use identity_did::verifiable::Public;
 use identity_did::verifiable::Secret;
@@ -40,6 +42,9 @@ use crate::utils::utf8_to_trytes;
 
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, ()>;
+
+type Signer<'a, 'b, 'c> = DocumentSigner<'a, 'b, 'c, Properties, Object, ()>;
+type Verifier<'a, 'b> = DocumentVerifier<'a, 'b, Properties, Object, ()>;
 
 /// A DID Document adhering to the IOTA DID method specification.
 ///
@@ -78,13 +83,13 @@ impl Document {
   }
 
   /// Creates a new DID Document from the given verification [`method`][`Method`]
-  /// without performing validatin checks.
+  /// without performing validation checks.
   /// # Safety
   ///
   /// This must be guaranteed safe by the caller.
   pub unsafe fn from_authentication_unchecked(method: Method) -> Self {
     CoreDocument::builder(Default::default())
-      .id(method.controller().clone())
+      .id(method.controller().clone().into())
       .authentication(method)
       .build()
       .map(CoreDocument::into_verifiable)
@@ -144,6 +149,10 @@ impl Document {
   pub unsafe fn as_document_mut(&mut self) -> &mut BaseDocument {
     &mut self.document
   }
+
+  // ===========================================================================
+  // Properties
+  // ===========================================================================
 
   /// Returns the DID document [`id`][`DID`].
   pub fn id(&self) -> &DID {
@@ -224,7 +233,7 @@ impl Document {
 
   /// Removes all references to the specified Verification Method.
   pub fn remove_method(&mut self, did: &DID) -> Result<()> {
-    if self.authentication().id() == &**did {
+    if self.authentication().id() == did {
       return Err(Error::CannotRemoveAuthMethod);
     }
 
@@ -290,6 +299,14 @@ impl Document {
     P: Into<Public<'a>>,
   {
     self.document.verify_that(data, public).map_err(Into::into)
+  }
+
+  pub fn signer<'base>(&'base self, secret: &'base SecretKey) -> Signer<'base, '_, '_> {
+    DocumentSigner::new(&self.document, secret)
+  }
+
+  pub fn verifier<'base>(&'base self) -> Verifier<'base, '_> {
+    DocumentVerifier::new(&self.document)
   }
 
   // ===========================================================================

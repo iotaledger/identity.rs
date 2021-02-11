@@ -43,7 +43,7 @@ pub enum Error {
   InvalidPresentationHolder,
   #[error("Chain Error: {error}")]
   ChainError { error: &'static str },
-  #[error("Missing Method Fragment")]
+  #[error("Missing Verification Method Fragment")]
   MissingMethodFragment,
   #[error("Cannot Remove Authentication Method")]
   CannotRemoveAuthMethod,

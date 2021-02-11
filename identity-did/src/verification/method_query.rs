@@ -49,6 +49,12 @@ impl<'ident> From<&'ident str> for MethodQuery<'ident> {
   }
 }
 
+impl<'ident> From<&'ident String> for MethodQuery<'ident> {
+  fn from(other: &'ident String) -> Self {
+    Self::new(&**other)
+  }
+}
+
 impl From<usize> for MethodQuery<'_> {
   fn from(other: usize) -> Self {
     Self::new(other)

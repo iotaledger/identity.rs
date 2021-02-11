@@ -55,7 +55,7 @@ impl MerkleKey {
       .get(index)
       .copied()
       .map(MerkleTag::new)
-      .ok_or(Error::InvalidKeyFormat)
+      .ok_or(Error::InvalidMerkleKeyTag(None))
   }
 }
 

@@ -5,6 +5,8 @@ mod document;
 mod properties;
 mod traits;
 
+pub use self::document::DocumentSigner;
+pub use self::document::DocumentVerifier;
 pub use self::document::Public;
 pub use self::document::Secret;
 pub use self::properties::Properties;

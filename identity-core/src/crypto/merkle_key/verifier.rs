@@ -66,12 +66,12 @@ where
 
     // Validate the signature algorithm tag
     if tag_s != self.1.tag() {
-      return Err(Error::InvalidKeyFormat);
+      return Err(Error::InvalidMerkleKeyTag(Some(tag_d)));
     }
 
     // Validate the digest algorithm tag
     if tag_d != digest.tag() {
-      return Err(Error::InvalidKeyFormat);
+      return Err(Error::InvalidMerkleKeyTag(Some(tag_d)));
     }
 
     // Extract and return the Merkle root hash
