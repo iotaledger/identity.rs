@@ -45,6 +45,10 @@ pub enum Error {
   ChainError { error: &'static str },
   #[error("Missing Verification Method Fragment")]
   MissingMethodFragment,
+  #[error("Authentication Method Not Found")]
+  MissingAuthenticationMethod,
   #[error("Cannot Remove Authentication Method")]
   CannotRemoveAuthMethod,
+  #[error("Cannot Revoke Verification Method")]
+  CannotRevokeMethod,
 }

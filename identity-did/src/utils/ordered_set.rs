@@ -11,8 +11,11 @@ use core::ops::Deref;
 use core::slice::Iter;
 use serde::Deserialize;
 
+use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
+use crate::utils::DIDKey;
+use crate::verification::MethodQuery;
 
 /// An ordered set based on a `Vec<T>`.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -243,6 +246,37 @@ where
     }
 
     Ok(this)
+  }
+}
+
+impl<T> OrderedSet<DIDKey<T>>
+where
+  T: AsRef<DID>,
+{
+  pub(crate) fn query<'query, Q>(&self, query: Q) -> Option<&T>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    let query: MethodQuery<'query> = query.into();
+
+    self
+      .0
+      .iter()
+      .find(|method| query.matches(method.as_did()))
+      .map(|method| &**method)
+  }
+
+  pub(crate) fn query_mut<'query, Q>(&mut self, query: Q) -> Option<&mut T>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    let query: MethodQuery<'query> = query.into();
+
+    self
+      .0
+      .iter_mut()
+      .find(|method| query.matches(method.as_did()))
+      .map(|method| &mut **method)
   }
 }
 

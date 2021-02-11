@@ -3,90 +3,56 @@
 
 use identity_core::crypto::Signature;
 
-use crate::verification::MethodIdent;
-use crate::verification::MethodScope;
+use crate::did::DID;
 
 /// Specifies the  conditions of a DID document method resolution query.
 ///
 /// See `Document::resolve`.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct MethodQuery<'ident> {
-  pub(crate) ident: MethodIdent<'ident>,
-  pub(crate) scope: MethodScope,
-}
+#[repr(transparent)]
+pub struct MethodQuery<'query>(&'query str);
 
-impl<'ident> MethodQuery<'ident> {
-  /// Creates a new `MethodQuery`.
-  pub fn new<T>(ident: T) -> Self
-  where
-    T: Into<MethodIdent<'ident>>,
-  {
-    Self::with_scope(ident, MethodScope::default())
-  }
-
-  /// Creates a new `MethodQuery` with the given `MethodScope`.
-  pub fn with_scope<T>(ident: T, scope: MethodScope) -> Self
-  where
-    T: Into<MethodIdent<'ident>>,
-  {
-    Self {
-      ident: ident.into(),
-      scope,
+impl<'query> MethodQuery<'query> {
+  pub(crate) fn matches(&self, did: &DID) -> bool {
+    match self.fragment().zip(did.fragment()) {
+      Some((a, b)) => a == b,
+      None => false,
     }
   }
 
-  pub(crate) fn scoped(self, scope: MethodScope) -> Self {
-    Self {
-      ident: self.ident,
-      scope,
+  fn fragment(&self) -> Option<&str> {
+    if self.0.starts_with(DID::SCHEME) && !self.0.ends_with('#') {
+      // Extract the fragment from a full DID-like string
+      self.0.rfind('#').map(|index| &self.0[index + 1..])
+    } else if self.0.starts_with('#') {
+      // Remove the leading `#` if it was in the query
+      Some(&self.0[1..])
+    } else {
+      Some(self.0)
     }
   }
 }
 
-impl<'ident> From<&'ident str> for MethodQuery<'ident> {
-  fn from(other: &'ident str) -> Self {
-    Self::new(other)
+impl<'query> From<&'query str> for MethodQuery<'query> {
+  fn from(other: &'query str) -> Self {
+    Self(other)
   }
 }
 
-impl<'ident> From<&'ident String> for MethodQuery<'ident> {
-  fn from(other: &'ident String) -> Self {
-    Self::new(&**other)
+impl<'query> From<&'query String> for MethodQuery<'query> {
+  fn from(other: &'query String) -> Self {
+    Self(&**other)
   }
 }
 
-impl From<usize> for MethodQuery<'_> {
-  fn from(other: usize) -> Self {
-    Self::new(other)
+impl<'query> From<&'query DID> for MethodQuery<'query> {
+  fn from(other: &'query DID) -> Self {
+    Self(other.as_str())
   }
 }
 
-impl<'ident> From<(&'ident str, MethodScope)> for MethodQuery<'ident> {
-  fn from(other: (&'ident str, MethodScope)) -> Self {
-    Self::with_scope(other.0, other.1)
-  }
-}
-
-impl From<(usize, MethodScope)> for MethodQuery<'_> {
-  fn from(other: (usize, MethodScope)) -> Self {
-    Self::with_scope(other.0, other.1)
-  }
-}
-
-impl<'ident> From<(MethodIdent<'ident>, MethodScope)> for MethodQuery<'ident> {
-  fn from(other: (MethodIdent<'ident>, MethodScope)) -> Self {
-    Self::with_scope(other.0, other.1)
-  }
-}
-
-impl<'ident> From<MethodScope> for MethodQuery<'ident> {
-  fn from(other: MethodScope) -> Self {
-    Self::with_scope(0, other)
-  }
-}
-
-impl<'ident> From<&'ident Signature> for MethodQuery<'ident> {
-  fn from(other: &'ident Signature) -> Self {
-    Self::new(other.verification_method())
+impl<'query> From<&'query Signature> for MethodQuery<'query> {
+  fn from(other: &'query Signature) -> Self {
+    Self(other.verification_method())
   }
 }

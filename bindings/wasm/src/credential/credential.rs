@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::core::json;
-use identity::core::FromJson;
 use identity::core::Object;
 use identity::core::OneOrMany;
 use identity::core::SerdeInto;
@@ -15,7 +13,6 @@ use identity::credential::Subject;
 use identity::credential::VerifiableCredential as VerifiableCredential_;
 use wasm_bindgen::prelude::*;
 
-use crate::crypto::KeyPair;
 use crate::document::Document;
 use crate::utils::err;
 

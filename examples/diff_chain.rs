@@ -74,7 +74,7 @@ async fn main() -> Result<()> {
     new.set_updated(Timestamp::now());
     new.set_previous_message_id(chain.auth_message_id().clone());
 
-    chain.current().sign_data(&mut new, 0, keys[0].secret())?;
+    chain.current().sign_data(&mut new, keys[0].secret())?;
     new.publish(&client).await?;
 
     keys.push(keypair);

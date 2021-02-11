@@ -20,10 +20,9 @@ use identity_did::document::Document as CoreDocument;
 use identity_did::verifiable::DocumentSigner;
 use identity_did::verifiable::DocumentVerifier;
 use identity_did::verifiable::Properties as VerifiableProperties;
-use identity_did::verifiable::Public;
-use identity_did::verifiable::Secret;
 use identity_did::verification::Method as CoreMethod;
 use identity_did::verification::MethodQuery;
+use identity_did::verification::MethodRef;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use serde::Serialize;
@@ -43,8 +42,8 @@ use crate::utils::utf8_to_trytes;
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, ()>;
 
-type Signer<'a, 'b, 'c> = DocumentSigner<'a, 'b, 'c, Properties, Object, ()>;
-type Verifier<'a, 'b> = DocumentVerifier<'a, 'b, Properties, Object, ()>;
+pub type Signer<'a, 'b, 'c> = DocumentSigner<'a, 'b, 'c, Properties, Object, ()>;
+pub type Verifier<'a, 'b> = DocumentVerifier<'a, 'b, Properties, Object, ()>;
 
 /// A DID Document adhering to the IOTA DID method specification.
 ///
@@ -58,8 +57,6 @@ pub struct Document {
 }
 
 impl Document {
-  pub const AUTH_QUERY: (usize, MethodScope) = (0, MethodScope::Authentication);
-
   /// Creates a new DID Document from the given KeyPair.
   ///
   /// The DID Document will be pre-populated with a single authentication
@@ -68,7 +65,7 @@ impl Document {
   /// The authentication method will have the DID URL fragment `#authentication`
   /// and can be easily retrieved with [`Document::authentication`].
   pub fn from_keypair(keypair: &KeyPair) -> Result<Self> {
-    let method: Method = Method::from_keypair(keypair, "#authentication")?;
+    let method: Method = Method::from_keypair(keypair, "authentication")?;
 
     // SAFETY: We don't create invalid Methods
     Ok(unsafe { Self::from_authentication_unchecked(method) })
@@ -104,7 +101,12 @@ impl Document {
   /// Returns `Err` if the document is not a valid IOTA DID Document.
   pub fn try_from_core(document: CoreDocument) -> Result<Self> {
     let did: &DID = DID::try_from_borrowed(document.id())?;
-    let method: &CoreMethod = document.try_resolve(Self::AUTH_QUERY)?.into_method();
+
+    let method: &CoreMethod = document
+      .authentication()
+      .head()
+      .and_then(|method| document.resolve_ref(method))
+      .ok_or(Error::MissingAuthenticationMethod)?;
 
     Self::check_authentication(method)?;
 
@@ -166,10 +168,17 @@ impl Document {
   pub fn authentication(&self) -> &Method {
     // This `unwrap` is "fine" - a valid document will
     // always have a resolvable authentication method.
-    let method: _ = self.document.resolve(Self::AUTH_QUERY).unwrap().into_method();
+    let method: &MethodRef = self.document.authentication().head().unwrap();
+    let method: &CoreMethod = self.document.resolve_ref(method).unwrap();
 
     // SAFETY: We don't allow invalid authentication methods.
     unsafe { Method::new_unchecked_ref(method) }
+  }
+
+  fn authentication_id(&self) -> &str {
+    // This `unwrap` is "fine" - a valid document will
+    // always have a resolvable authentication method.
+    self.document.authentication().head().unwrap().id().as_str()
   }
 
   /// Returns the timestamp of when the DID document was created.
@@ -227,19 +236,27 @@ impl Document {
   // ===========================================================================
 
   /// Adds a new Verification Method to the DID Document.
-  pub fn insert_method(&mut self, scope: MethodScope, method: Method) -> Result<bool> {
-    self.document.insert_method(scope, method.into()).map_err(Into::into)
+  pub fn insert_method(&mut self, scope: MethodScope, method: Method) -> bool {
+    self.document.insert_method(scope, method.into())
   }
 
   /// Removes all references to the specified Verification Method.
   pub fn remove_method(&mut self, did: &DID) -> Result<()> {
-    if self.authentication().id() == did {
+    if self.authentication_id() == did.as_str() {
       return Err(Error::CannotRemoveAuthMethod);
     }
 
     self.document.remove_method(did);
 
     Ok(())
+  }
+
+  #[doc(hidden)]
+  pub fn try_resolve_mut<'query, Q>(&mut self, query: Q) -> Result<&mut CoreMethod>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    self.document.try_resolve_mut(query).map_err(Into::into)
   }
 
   // ===========================================================================
@@ -253,10 +270,9 @@ impl Document {
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the signature operation fails.
   pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
-    self
-      .document
-      .sign_this(Self::AUTH_QUERY, secret.as_ref())
-      .map_err(Into::into)
+    let key: String = self.authentication_id().to_string();
+
+    self.document.sign_this(&key, secret.as_ref()).map_err(Into::into)
   }
 
   /// Verifies the signature of the DID document.
@@ -275,16 +291,19 @@ impl Document {
   ///
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the signature operation fails.
-  pub fn sign_data<'a, 'b, X, Q, S>(&self, data: &mut X, query: Q, secret: S) -> Result<()>
+  pub fn sign_data<X>(&self, data: &mut X, secret: &SecretKey) -> Result<()>
   where
     X: Serialize + SetSignature,
-    Q: Into<MethodQuery<'a>>,
-    S: Into<Secret<'b>>,
   {
-    self.document.sign_that(data, query, secret).map_err(Into::into)
+    self
+      .document
+      .signer(secret)
+      .method(self.authentication_id())
+      .sign(data)
+      .map_err(Into::into)
   }
 
-  /// Verfies the signature of the provided data.
+  /// Verifies the signature of the provided data.
   ///
   /// Note: It is assumed that the signature was created using a verification
   /// method contained within the DID Document.
@@ -293,20 +312,11 @@ impl Document {
   ///
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the verification operation fails.
-  pub fn verify_data<'a, X, P>(&self, data: &X, public: P) -> Result<()>
+  pub fn verify_data<X>(&self, data: &X) -> Result<()>
   where
     X: Serialize + TrySignature,
-    P: Into<Public<'a>>,
   {
-    self.document.verify_that(data, public).map_err(Into::into)
-  }
-
-  pub fn signer<'base>(&'base self, secret: &'base SecretKey) -> Signer<'base, '_, '_> {
-    DocumentSigner::new(&self.document, secret)
-  }
-
-  pub fn verifier<'base>(&'base self) -> Verifier<'base, '_> {
-    DocumentVerifier::new(&self.document)
+    self.document.verifier().verify(data).map_err(Into::into)
   }
 
   // ===========================================================================
@@ -324,7 +334,7 @@ impl Document {
   pub fn diff(&self, other: &Self, message: MessageId, secret: &SecretKey) -> Result<DocumentDiff> {
     let mut diff: DocumentDiff = DocumentDiff::new(self, other, message)?;
 
-    self.sign_data(&mut diff, Self::AUTH_QUERY, secret)?;
+    self.sign_data(&mut diff, secret)?;
 
     Ok(diff)
   }
@@ -338,7 +348,7 @@ impl Document {
   ///
   /// Fails if the merge operation or signature operation fails.
   pub fn merge(&mut self, diff: &DocumentDiff) -> Result<()> {
-    self.verify_data(diff, ())?;
+    self.verify_data(diff)?;
 
     *self = diff.merge(self)?;
 

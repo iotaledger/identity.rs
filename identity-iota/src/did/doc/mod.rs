@@ -8,5 +8,7 @@ mod properties;
 
 pub use self::diff::DocumentDiff;
 pub use self::document::Document;
+pub use self::document::Signer;
+pub use self::document::Verifier;
 pub use self::method::Method;
 pub use self::properties::Properties;

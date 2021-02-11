@@ -57,7 +57,7 @@ async fn main() -> Result<()> {
   let credential: Credential = issue_degree(&doc_iss, &doc_sub)?;
 
   // Sign the Credential with the issuer secret key - the result is a VerifiableCredential.
-  let credential: VerifiableCredential = credential.sign(&doc_iss, 0, key_iss.secret())?;
+  let credential: VerifiableCredential = credential.sign(&doc_iss, "#authentication".into(), key_iss.secret())?;
 
   println!("Credential > {:#}", credential);
   println!();

@@ -158,18 +158,15 @@ where
 {
   /// Creates a new [`VerifiableCredential`] by signing `self` with
   /// [`document`][`Document`] and [`secret`][`SecretKey`].
-  pub fn sign<'a, Q, D1, D2, D3>(
+  pub fn sign<D1, D2, D3>(
     self,
     document: &Document<D1, D2, D3>,
-    query: Q,
+    query: MethodQuery<'_>,
     secret: &SecretKey,
-  ) -> Result<VerifiableCredential<T>>
-  where
-    Q: Into<MethodQuery<'a>>,
-  {
+  ) -> Result<VerifiableCredential<T>> {
     let mut target: VerifiableCredential<T> = VerifiableCredential::new(self, Vec::new());
 
-    document.sign_that(&mut target, query, secret.as_ref())?;
+    document.signer(secret).method(query).sign(&mut target)?;
 
     Ok(target)
   }

@@ -26,9 +26,9 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::verifiable::Properties;
 use crate::verifiable::Revocation;
+use crate::verification::Method;
 use crate::verification::MethodQuery;
 use crate::verification::MethodType;
-use crate::verification::MethodWrap;
 
 // =============================================================================
 // Generic Crypto Extensions
@@ -86,11 +86,11 @@ where
   U: Serialize,
   V: Serialize,
 {
-  pub fn sign_this<'a, Q>(&mut self, query: Q, secret: &[u8]) -> Result<()>
+  pub fn sign_this<'query, Q>(&mut self, query: Q, secret: &[u8]) -> Result<()>
   where
-    Q: Into<MethodQuery<'a>>,
+    Q: Into<MethodQuery<'query>>,
   {
-    let method: MethodWrap<'_, U> = self.try_resolve(query)?;
+    let method: &Method<U> = self.try_resolve(query)?;
     let fragment: String = method.try_into_fragment()?;
 
     match method.key_type() {
@@ -108,7 +108,7 @@ where
 
   pub fn verify_this(&self) -> Result<()> {
     let signature: &Signature = self.try_signature()?;
-    let method: MethodWrap<'_, U> = self.try_resolve(signature)?;
+    let method: &Method<U> = self.try_resolve(signature)?;
     let public: Vec<u8> = method.key_data().try_decode()?;
 
     match method.key_type() {
@@ -126,167 +126,16 @@ where
 }
 
 impl<T, U, V> Document<T, U, V> {
-  pub fn sign_that<'a, 'b, X, Q, S>(&self, that: &mut X, query: Q, secret: S) -> Result<()>
-  where
-    X: Serialize + SetSignature,
-    Q: Into<MethodQuery<'a>>,
-    S: Into<Secret<'b>>,
-  {
-    let secret: Secret<'_> = secret.into();
-    let method: MethodWrap<'_, U> = self.try_resolve(query)?;
-    let fragment: String = method.try_into_fragment()?;
-
-    match method.key_type() {
-      MethodType::Ed25519VerificationKey2018 => {
-        Ed25519.__sign(that, fragment, secret.secret)?;
-      }
-      MethodType::MerkleKeyCollection2021 => {
-        let data: Vec<u8> = method.key_data().try_decode()?;
-
-        match MerkleKey::extract_tags(&data)? {
-          (MerkleTag::ED25519, MerkleTag::SHA256) => {
-            let signer: Signer<'_, Ed25519, Sha256> = secret
-              .mk_proof
-              .and_then(Any::downcast_ref)
-              .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))
-              .map(|proof| Signer::from_borrowed(proof, Ed25519))?;
-
-            signer.__sign(that, fragment, secret.secret)?;
-          }
-          (_, _) => {
-            return Err(Error::InvalidMethodType);
-          }
-        }
-      }
-    }
-
-    Ok(())
+  /// Creates a new [`DocumentSigner`] that can be used to create digital
+  /// signatures from verification methods in this DID Document.
+  pub fn signer<'base>(&'base self, secret: &'base SecretKey) -> DocumentSigner<'base, '_, '_, T, U, V> {
+    DocumentSigner::new(self, secret)
   }
 
-  pub fn verify_that<'a, X, P>(&self, that: &X, public: P) -> Result<()>
-  where
-    X: Serialize + TrySignature,
-    P: Into<Public<'a>>,
-    U: Revocation,
-  {
-    let public: Public<'_> = public.into();
-    let signature: &Signature = that.try_signature()?;
-    let method: MethodWrap<'_, U> = self.try_resolve(signature)?;
-
-    match method.key_type() {
-      MethodType::Ed25519VerificationKey2018 => {
-        Ed25519.__verify(that, &method.key_data().try_decode()?)?;
-      }
-      MethodType::MerkleKeyCollection2021 => {
-        let data: Vec<u8> = method.key_data().try_decode()?;
-
-        match MerkleKey::extract_tags(&data)? {
-          (MerkleTag::ED25519, MerkleTag::SHA256) => {
-            let verifier: Verifier<'_, Ed25519, Sha256> = {
-              let mut this: _ = Verifier::from_borrowed(&data, Ed25519);
-
-              if let Some(revocation) = method.revocation()? {
-                this.set_revocation(revocation);
-              }
-
-              this
-            };
-
-            public
-              .mk_target
-              .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))
-              .and_then(|target| verifier.__verify(that, target).map_err(Into::into))?;
-          }
-          (_, _) => {
-            return Err(Error::InvalidMethodType);
-          }
-        }
-      }
-    }
-
-    Ok(())
-  }
-}
-
-// =============================================================================
-// Enhanced Public Key
-// =============================================================================
-
-#[derive(Clone, Copy, Debug, Default)]
-pub struct Public<'a> {
-  mk_target: Option<&'a [u8]>,
-}
-
-impl<'a> Public<'a> {
-  /// Creates a new [`Public`] key object.
-  pub fn new() -> Self {
-    Self { mk_target: None }
-  }
-
-  /// Creates a new [`Public`] with a Merkle Key Collection `target`.
-  pub fn with_merkle_target(target: &'a [u8]) -> Self {
-    Self {
-      mk_target: Some(target),
-    }
-  }
-
-  /// Sets the `target` value of a Merkle Key Collection public key.
-  pub fn set_merkle_target(&mut self, target: &'a [u8]) {
-    self.mk_target = Some(target);
-  }
-}
-
-impl From<()> for Public<'_> {
-  fn from(_: ()) -> Self {
-    Self { mk_target: None }
-  }
-}
-
-// =============================================================================
-// Enhanced Secret Key
-// =============================================================================
-
-#[derive(Clone, Copy, Debug)]
-pub struct Secret<'a> {
-  secret: &'a [u8],
-  mk_proof: Option<&'a dyn Any>,
-}
-
-impl<'a> Secret<'a> {
-  /// Creates a new [`Secret`] key object from the given slice of bytes.
-  pub fn new(secret: &'a [u8]) -> Self {
-    Self { secret, mk_proof: None }
-  }
-
-  /// Creates a new [`Secret`] with a Merkle Key Collection [`proof`][`Proof`].
-  pub fn with_merkle_proof<D>(secret: &'a [u8], proof: &'a Proof<D>) -> Self
-  where
-    D: MerkleDigest,
-  {
-    Self {
-      secret,
-      mk_proof: Some(proof),
-    }
-  }
-
-  /// Sets the `proof` value of a Merkle Key Collection secret key.
-  pub fn set_merkle_proof<D>(&mut self, proof: &'a Proof<D>)
-  where
-    D: MerkleDigest,
-  {
-    self.mk_proof = Some(proof);
-  }
-}
-
-impl<'a> From<&'a [u8]> for Secret<'a> {
-  fn from(other: &'a [u8]) -> Self {
-    Self::new(other)
-  }
-}
-
-impl<'a> From<&'a SecretKey> for Secret<'a> {
-  fn from(other: &'a SecretKey) -> Self {
-    Self::new(other.as_ref())
+  /// Creates a new [`DocumentVerifier`] that can be used to verify signatures
+  /// created with this DID Document.
+  pub fn verifier<'base>(&'base self) -> DocumentVerifier<'base, '_, T, U, V> {
+    DocumentVerifier::new(self)
   }
 }
 
@@ -312,7 +161,7 @@ impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
   }
 }
 
-impl<'query, T, U, V> DocumentSigner<'_, 'query, '_, T, U, V> {
+impl<'base, 'query, T, U, V> DocumentSigner<'base, 'query, '_, T, U, V> {
   pub fn method<Q>(mut self, value: Q) -> Self
   where
     Q: Into<MethodQuery<'query>>,
@@ -333,18 +182,45 @@ impl<'proof, T, U, V> DocumentSigner<'_, '_, 'proof, T, U, V> {
 }
 
 impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
-  pub fn sign<X>(self, data: &mut X) -> Result<()>
+  /// Signs the provided data with the configured verification method.
+  ///
+  /// # Errors
+  ///
+  /// Fails if an unsupported verification method is used, document
+  /// serialization fails, or the signature operation fails.
+  pub fn sign<X>(&self, that: &mut X) -> Result<()>
   where
     X: Serialize + SetSignature,
   {
     let query: MethodQuery<'_> = self.method.ok_or(Error::QueryMethodNotFound)?;
-    let mut secret: Secret<'_> = Secret::new(self.secret.as_ref());
+    let secret: &[u8] = self.secret.as_ref();
 
-    if let Some(proof) = self.mk_proof {
-      secret.mk_proof = Some(proof);
+    let method: &Method<U> = self.document.try_resolve(query)?;
+    let fragment: String = method.try_into_fragment()?;
+
+    match method.key_type() {
+      MethodType::Ed25519VerificationKey2018 => {
+        Ed25519.__sign(that, fragment, secret)?;
+      }
+      MethodType::MerkleKeyCollection2021 => {
+        let data: Vec<u8> = method.key_data().try_decode()?;
+
+        match MerkleKey::extract_tags(&data)? {
+          (MerkleTag::ED25519, MerkleTag::SHA256) => {
+            let signer: Signer<'_, Ed25519, Sha256> = self
+              .mk_proof
+              .and_then(Any::downcast_ref)
+              .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))
+              .map(|proof| Signer::from_borrowed(proof, Ed25519))?;
+
+            signer.__sign(that, fragment, secret)?;
+          }
+          (_, _) => {
+            return Err(Error::InvalidMethodType);
+          }
+        }
+      }
     }
-
-    self.document.sign_that(data, query, secret)?;
 
     Ok(())
   }
@@ -379,17 +255,51 @@ impl<T, U, V> DocumentVerifier<'_, '_, T, U, V>
 where
   U: Revocation,
 {
-  pub fn verify<X>(self, data: &X) -> Result<()>
+  /// Verifies the signature of the provided data.
+  ///
+  /// # Errors
+  ///
+  /// Fails if an unsupported verification method is used, document
+  /// serialization fails, or the verification operation fails.
+  pub fn verify<X>(&self, that: &X) -> Result<()>
   where
     X: Serialize + TrySignature,
   {
-    let mut public: Public<'_> = Public::new();
+    let signature: &Signature = that.try_signature()?;
+    let method: &Method<U> = self.document.try_resolve(signature)?;
 
-    if let Some(target) = self.mk_target {
-      public.set_merkle_target(target.as_ref());
+    match method.key_type() {
+      MethodType::Ed25519VerificationKey2018 => {
+        Ed25519.__verify(that, &method.key_data().try_decode()?)?;
+      }
+      MethodType::MerkleKeyCollection2021 => {
+        let data: Vec<u8> = method.key_data().try_decode()?;
+
+        match MerkleKey::extract_tags(&data)? {
+          (MerkleTag::ED25519, MerkleTag::SHA256) => {
+            let verifier: Verifier<'_, Ed25519, Sha256> = {
+              let mut this: _ = Verifier::from_borrowed(&data, Ed25519);
+
+              if let Some(revocation) = method.revocation()? {
+                this.set_revocation(revocation);
+              }
+
+              this
+            };
+
+            let target: &[u8] = self
+              .mk_target
+              .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))
+              .map(AsRef::as_ref)?;
+
+            verifier.__verify(that, target)?;
+          }
+          (_, _) => {
+            return Err(Error::InvalidMethodType);
+          }
+        }
+      }
     }
-
-    self.document.verify_that(data, public)?;
 
     Ok(())
   }

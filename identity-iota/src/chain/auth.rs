@@ -112,7 +112,7 @@ impl AuthChain {
   ///
   /// Fails if the `Document` is not a valid addition.
   pub fn check_validity(&self, document: &Document) -> Result<()> {
-    if self.current.verify_data(document, ()).is_err() {
+    if self.current.verify_data(document).is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
       });

@@ -12,21 +12,16 @@ use identity::core::Url;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
 use identity::credential::VerifiableCredential;
-use identity::crypto::merkle_key::MerkleKey;
-use identity::crypto::merkle_tree::Hash;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
 use identity::crypto::KeyPair;
+use identity::crypto::SecretKey;
 use identity::did::resolution::resolve;
 use identity::did::resolution::Resolution;
-use identity::did::verifiable::Public;
-use identity::did::verifiable::Secret;
-use identity::did::Method;
-use identity::did::MethodBuilder;
-use identity::did::MethodData;
-use identity::did::MethodType;
+use identity::did::MethodScope;
 use identity::iota::Client;
 use identity::iota::Document;
+use identity::iota::Method;
 use identity::iota::Result;
 use identity::iota::TangleRef;
 use rand::rngs::OsRng;
@@ -45,25 +40,12 @@ async fn main() -> Result<()> {
   // Generate a collection of ed25519 keys for signing credentials
   let keys: KeyCollection = KeyCollection::new_ed25519(LEAVES)?;
 
-  // Compute the Merkle root hash of the public keys
-  let merkle_root: Hash<Sha256> = keys.merkle_root();
-  let key_data: Vec<u8> = MerkleKey::encode_ed25519_key::<Sha256>(&merkle_root);
-
-  // Generate a Merkle Key Collection public key value with ed25519 as the
-  // signature algorithm, SHA-256 as the digest algorithm, and the Merkle
-  // root of the key collection - This is expressed as the public key value
-  // of the `MerkleKeyCollection2021` verification method.
-  let method: Method = MethodBuilder::default()
-    .id(doc.id().as_ref().join("#key-collection")?)
-    .controller(doc.id().as_ref().clone())
-    .key_type(MethodType::MerkleKeyCollection2021)
-    .key_data(MethodData::new_b58(&key_data))
-    .build()?;
+  // Generate a Merkle Key Collection Verification Method
+  // with SHA-256 as  the digest algorithm.
+  let method: Method = Method::create_merkle_key::<Sha256, _>(doc.id().clone(), &keys, "key-collection")?;
 
   // Append the new verification method to the set of existing methods
-  unsafe {
-    doc.as_document_mut().verification_method_mut().append(method.into());
-  }
+  doc.insert_method(MethodScope::VerificationMethod, method);
 
   // Sign and publish the updated document
   doc.set_previous_message_id(doc.message_id().clone());
@@ -84,22 +66,23 @@ async fn main() -> Result<()> {
 
   // Select a random key from the collection
   let index: usize = OsRng.gen_range(0, LEAVES);
+  let secret: &SecretKey = keys.secret(index).unwrap();
 
   // Generate an inclusion proof for the selected key
   let proof: Proof<Sha256> = keys.merkle_proof(index).unwrap();
 
-  let secret: &[u8] = keys.secret(index).unwrap().as_ref();
-  let secret: Secret<'_> = Secret::with_merkle_proof(secret, &proof);
-
-  // Sign the Credential with the DID Document
-  doc.sign_that(&mut credential, "#key-collection", secret)?;
+  // Sign the Verifiable Credential with the DID Document
+  doc
+    .signer(secret)
+    .method("key-collection")
+    .merkle_key_proof(&proof)
+    .sign(&mut credential)?;
 
   println!("credential (signed): {:#}", credential);
 
-  let public: Public<'_> = Public::with_merkle_target(keys[index].as_ref());
-  let verified: Result<(), _> = doc.verify_that(&credential, public);
+  let verified: Result<(), _> = doc.verifier().merkle_key_target(&keys[index]).verify(&credential);
 
-  println!("verified: {:?}", verified);
+  println!("verified: {:?}", verified.is_ok());
 
   // Revoke the previously used key - assume it was compromised
   let mut revocation: BitSet = BitSet::new();
@@ -109,9 +92,7 @@ async fn main() -> Result<()> {
   unsafe {
     doc
       .as_document_mut()
-      .verification_method_mut()
-      .tail_mut()
-      .unwrap()
+      .try_resolve_mut("key-collection")?
       .properties_mut()
       .insert("revocation".into(), revocation.to_json_value()?);
   }
@@ -129,7 +110,11 @@ async fn main() -> Result<()> {
   subject.properties.insert("new-claim".into(), "not-false".into());
 
   // Sign the Credential with the compromised key
-  doc.sign_that(&mut credential, "#key-collection", secret)?;
+  doc
+    .signer(secret)
+    .method("key-collection")
+    .merkle_key_proof(&proof)
+    .sign(&mut credential)?;
 
   println!("credential (compro-signed): {:#}", credential);
 
@@ -140,10 +125,10 @@ async fn main() -> Result<()> {
   println!("metadata: {:#?}", resolution.metadata);
   println!("document: {:#?}", document);
 
-  let public: Public<'_> = Public::with_merkle_target(keys[index].as_ref());
-  let verified: Result<(), _> = doc.verify_that(&credential, public);
+  // Check the verification status again - the credential SHOULD NOT be valid
+  let verified: Result<(), _> = doc.verifier().merkle_key_target(&keys[index]).verify(&credential);
 
-  println!("verified: {:?}", verified);
+  println!("verified: {:?}", verified.is_ok());
 
   Ok(())
 }

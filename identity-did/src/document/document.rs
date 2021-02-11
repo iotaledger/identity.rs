@@ -22,7 +22,6 @@ use crate::verification::Method;
 use crate::verification::MethodQuery;
 use crate::verification::MethodRef;
 use crate::verification::MethodScope;
-use crate::verification::MethodWrap;
 
 /// A DID Document
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -232,51 +231,15 @@ impl<T, U, V> Document<T, U, V> {
   }
 
   /// Adds a new [`Method<U>`][`Method`] to the Document.
-  pub fn insert_method(&mut self, scope: MethodScope, method: Method<U>) -> Result<bool> {
-    macro_rules! mref {
-      ($method:expr) => {
-        MethodRef::Refer($method.id().clone()).into()
-      };
-    }
-
-    let mut inserted: bool = false;
-
+  pub fn insert_method(&mut self, scope: MethodScope, method: Method<U>) -> bool {
     match scope {
-      MethodScope::None => {
-        // Ensure the method doesn't already exist
-        if self.resolve(method.id().as_str()).is_some() {
-          return Err(Error::InvalidMethodDuplicate);
-        }
-
-        // Add everywhere
-        inserted &= self.authentication.append(mref!(method));
-        inserted &= self.assertion_method.append(mref!(method));
-        inserted &= self.key_agreement.append(mref!(method));
-        inserted &= self.capability_delegation.append(mref!(method));
-        inserted &= self.capability_invocation.append(mref!(method));
-        inserted &= self.verification_method.append(method.into());
-      }
-      MethodScope::VerificationMethod => {
-        inserted |= self.verification_method.append(method.into());
-      }
-      MethodScope::Authentication => {
-        inserted |= self.authentication.append(MethodRef::Embed(method).into());
-      }
-      MethodScope::AssertionMethod => {
-        inserted |= self.assertion_method.append(MethodRef::Embed(method).into());
-      }
-      MethodScope::KeyAgreement => {
-        inserted |= self.key_agreement.append(MethodRef::Embed(method).into());
-      }
-      MethodScope::CapabilityDelegation => {
-        inserted |= self.capability_delegation.append(MethodRef::Embed(method).into());
-      }
-      MethodScope::CapabilityInvocation => {
-        inserted |= self.capability_invocation.append(MethodRef::Embed(method).into());
-      }
+      MethodScope::VerificationMethod => self.verification_method.append(method.into()),
+      MethodScope::Authentication => self.authentication.append(MethodRef::Embed(method).into()),
+      MethodScope::AssertionMethod => self.assertion_method.append(MethodRef::Embed(method).into()),
+      MethodScope::KeyAgreement => self.key_agreement.append(MethodRef::Embed(method).into()),
+      MethodScope::CapabilityDelegation => self.capability_delegation.append(MethodRef::Embed(method).into()),
+      MethodScope::CapabilityInvocation => self.capability_invocation.append(MethodRef::Embed(method).into()),
     }
-
-    Ok(inserted)
   }
 
   /// Removes all references to the specified [`Method<U>`][`Method`].
@@ -289,90 +252,136 @@ impl<T, U, V> Document<T, U, V> {
     self.verification_method.remove(did);
   }
 
-  /// Finds and returns the first verification [`method`][`Method`]
-  /// matching the provided [`query`][`MethodQuery`].
-  pub fn resolve<'a, Q>(&self, query: Q) -> Option<MethodWrap<'_, U>>
+  /// Returns an iterator over all verification methods in the DID Document.
+  pub fn methods(&self) -> impl Iterator<Item = &Method<U>> {
+    fn __filter_ref<T>(method: &DIDKey<MethodRef<T>>) -> Option<&Method<T>> {
+      match &**method {
+        MethodRef::Embed(method) => Some(method),
+        MethodRef::Refer(_) => None,
+      }
+    }
+
+    self
+      .verification_method
+      .iter()
+      .map(|method| &**method)
+      .chain(self.authentication.iter().filter_map(__filter_ref))
+      .chain(self.assertion_method.iter().filter_map(__filter_ref))
+      .chain(self.key_agreement.iter().filter_map(__filter_ref))
+      .chain(self.capability_delegation.iter().filter_map(__filter_ref))
+      .chain(self.capability_invocation.iter().filter_map(__filter_ref))
+  }
+
+  /// Returns the first verification [`method`][`Method`] with an `id` property
+  /// matching the provided `query`.
+  pub fn resolve<'query, Q>(&self, query: Q) -> Option<&Method<U>>
   where
-    Q: Into<MethodQuery<'a>>,
+    Q: Into<MethodQuery<'query>>,
   {
     self.resolve_method(query.into())
   }
 
-  /// Finds and returns the first verification [`method`][`Method`]
-  /// matching the provided [`query`][`MethodQuery`].
+  /// Returns the first verification [`method`][`Method`] with an `id` property
+  /// matching the provided `query`.
   ///
   /// # Errors
   ///
   /// Fails if no matching verification `Method` is found.
-  pub fn try_resolve<'a, Q>(&self, query: Q) -> Result<MethodWrap<'_, U>>
+  pub fn try_resolve<'query, Q>(&self, query: Q) -> Result<&Method<U>>
   where
-    Q: Into<MethodQuery<'a>>,
+    Q: Into<MethodQuery<'query>>,
   {
     self.resolve(query).ok_or(Error::QueryMethodNotFound)
   }
 
-  fn resolve_method(&self, query: MethodQuery<'_>) -> Option<MethodWrap<'_, U>> {
-    let iter: _ = match query.scope {
-      MethodScope::None => return self.resolve_any_method(query),
-      MethodScope::VerificationMethod => return self.resolve_verification_method(query),
-      MethodScope::Authentication => self.authentication.iter(),
-      MethodScope::AssertionMethod => self.assertion_method.iter(),
-      MethodScope::KeyAgreement => self.key_agreement.iter(),
-      MethodScope::CapabilityDelegation => self.capability_delegation.iter(),
-      MethodScope::CapabilityInvocation => self.capability_invocation.iter(),
-    };
-
-    self.resolve_method_iter(query, iter)
+  /// Returns a mutable reference to the first verification [`method`][`Method`]
+  /// with an `id` property matching the provided `query`.
+  pub fn resolve_mut<'query, Q>(&mut self, query: Q) -> Option<&mut Method<U>>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    self.resolve_method_mut(query.into())
   }
 
-  fn resolve_method_iter<'a>(
-    &'a self,
-    query: MethodQuery<'_>,
-    iter: impl Iterator<Item = &'a DIDKey<MethodRef<U>>>,
-  ) -> Option<MethodWrap<'a, U>> {
-    iter
-      .enumerate()
-      .find(|(index, method)| query.ident == *index || query.ident.matches(method.id()))
-      .and_then(|(index, method)| match method.as_ref() {
-        MethodRef::Refer(did) => self.resolve(MethodQuery::with_scope(
-          did.fragment()?,
-          MethodScope::VerificationMethod,
-        )),
-        MethodRef::Embed(method) => Some(MethodWrap::new(method, index, query.scope)),
-      })
+  /// Returns a mutable reference to the first verification [`method`][`Method`]
+  /// with an `id` property matching the provided `query`.
+  ///
+  /// # Errors
+  ///
+  /// Fails if no matching verification `Method` is found.
+  pub fn try_resolve_mut<'query, Q>(&mut self, query: Q) -> Result<&mut Method<U>>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    self.resolve_mut(query).ok_or(Error::QueryMethodNotFound)
   }
 
-  fn resolve_verification_method(&self, query: MethodQuery<'_>) -> Option<MethodWrap<'_, U>> {
-    self
-      .verification_method
-      .iter()
-      .enumerate()
-      .find(|(index, method)| query.ident == *index || query.ident.matches(method.id()))
-      .map(|(index, method)| MethodWrap::new(method, index, MethodScope::VerificationMethod))
+  #[doc(hidden)]
+  pub fn resolve_ref<'a>(&'a self, method: &'a MethodRef<U>) -> Option<&'a Method<U>> {
+    match method {
+      MethodRef::Embed(method) => Some(method),
+      MethodRef::Refer(did) => self.verification_method.query(did.as_str()),
+    }
   }
 
-  fn resolve_any_method(&self, query: MethodQuery<'_>) -> Option<MethodWrap<'_, U>> {
-    macro_rules! try_iter {
-      ($this:expr, $query:expr, $scope:ident, $iter:ident) => {{
-        let query: MethodQuery<'_> = $query.scoped(MethodScope::$scope);
+  fn resolve_method(&self, query: MethodQuery<'_>) -> Option<&Method<U>> {
+    let mut method: Option<&MethodRef<U>> = None;
 
-        if let Some(method) = $this.resolve_method_iter(query, $this.$iter.iter()) {
-          return Some(method);
-        }
-      }};
+    if method.is_none() {
+      method = self.authentication.query(query);
     }
 
-    if let Some(method) = self.resolve_verification_method(query) {
-      return Some(method);
+    if method.is_none() {
+      method = self.assertion_method.query(query);
     }
 
-    try_iter!(self, query, Authentication, authentication);
-    try_iter!(self, query, AssertionMethod, assertion_method);
-    try_iter!(self, query, KeyAgreement, key_agreement);
-    try_iter!(self, query, CapabilityDelegation, capability_delegation);
-    try_iter!(self, query, CapabilityInvocation, capability_invocation);
+    if method.is_none() {
+      method = self.key_agreement.query(query);
+    }
 
-    None
+    if method.is_none() {
+      method = self.capability_delegation.query(query);
+    }
+
+    if method.is_none() {
+      method = self.capability_invocation.query(query);
+    }
+
+    match method {
+      Some(MethodRef::Embed(method)) => Some(method),
+      Some(MethodRef::Refer(did)) => self.verification_method.query(did.as_str()),
+      None => self.verification_method.query(query),
+    }
+  }
+
+  fn resolve_method_mut(&mut self, query: MethodQuery<'_>) -> Option<&mut Method<U>> {
+    let mut method: Option<&mut MethodRef<U>> = None;
+
+    if method.is_none() {
+      method = self.authentication.query_mut(query);
+    }
+
+    if method.is_none() {
+      method = self.assertion_method.query_mut(query);
+    }
+
+    if method.is_none() {
+      method = self.key_agreement.query_mut(query);
+    }
+
+    if method.is_none() {
+      method = self.capability_delegation.query_mut(query);
+    }
+
+    if method.is_none() {
+      method = self.capability_invocation.query_mut(query);
+    }
+
+    match method {
+      Some(MethodRef::Embed(method)) => Some(method),
+      Some(MethodRef::Refer(did)) => self.verification_method.query_mut(did.as_str()),
+      None => self.verification_method.query_mut(query),
+    }
   }
 }
 
@@ -399,7 +408,6 @@ mod tests {
   use crate::verification::Method;
   use crate::verification::MethodBuilder;
   use crate::verification::MethodData;
-  use crate::verification::MethodScope;
   use crate::verification::MethodType;
 
   fn controller() -> DID {
@@ -436,7 +444,7 @@ mod tests {
   fn test_resolve_fragment_identifier() {
     let document: Document = document();
 
-    // Resolve methods by fragment using the default scope (VerificationMethod)
+    // Resolve methods by fragment
     assert_eq!(document.resolve("#key-1").unwrap().id(), "did:example:1234#key-1");
     assert_eq!(document.resolve("#key-2").unwrap().id(), "did:example:1234#key-2");
     assert_eq!(document.resolve("#key-3").unwrap().id(), "did:example:1234#key-3");
@@ -452,35 +460,9 @@ mod tests {
   fn test_resolve_index_identifier() {
     let document: Document = document();
 
-    // Resolve methods by index using the default scope once again
-    assert_eq!(document.resolve(0).unwrap().id(), "did:example:1234#key-1");
-    assert_eq!(document.resolve(2).unwrap().id(), "did:example:1234#key-3");
-  }
-
-  #[test]
-  #[rustfmt::skip]
-  fn test_resolve_explicit_scope() {
-    let document: Document = document();
-
-    // Resolve methods by fragment using explicit scopes
-    assert_eq!(document.resolve(("#key-1", MethodScope::KeyAgreement)), None);
-    assert_eq!(document.resolve(("#key-2", MethodScope::VerificationMethod)).unwrap().id(), "did:example:1234#key-2");
-  }
-
-  #[test]
-  #[rustfmt::skip]
-  fn test_resolve_reference_found() {
-    let document: Document = document();
-
-    // Resolving a method reference returns the method object
-    let resolved_ref = document.resolve(("#key-3", MethodScope::Authentication)).unwrap();
-    let resolved_obj = document.resolve(("#key-3", MethodScope::VerificationMethod)).unwrap();
-
-    assert_eq!(resolved_ref.index(), 2);
-    assert_eq!(resolved_ref.scope(), MethodScope::VerificationMethod);
-
-    // The resolved methods should be identical
-    assert_eq!(&*resolved_ref, &*resolved_obj);
+    // Resolve methods by index
+    assert_eq!(document.methods().next().unwrap().id(), "did:example:1234#key-1");
+    assert_eq!(document.methods().nth(2).unwrap().id(), "did:example:1234#key-3");
   }
 
   #[test]
@@ -489,6 +471,6 @@ mod tests {
     let document: Document = document();
 
     // Resolving an existing reference to a missing method returns None
-    assert_eq!(document.resolve(("#key-4", MethodScope::KeyAgreement)), None);
+    assert_eq!(document.resolve("#key-4"), None);
   }
 }

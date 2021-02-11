@@ -43,7 +43,7 @@ impl DiffChain {
 
     while let Some(mut list) = index.remove(DocumentChain::__diff_message_id(auth, &this)) {
       'inner: while let Some(next) = list.pop() {
-        if auth.current().verify_data(&next, ()).is_ok() {
+        if auth.current().verify_data(&next).is_ok() {
           this.inner.push(next);
           break 'inner;
         }
@@ -121,7 +121,7 @@ impl DiffChain {
   ///
   /// Fails if the `DocumentDiff` is not a valid addition.
   pub fn check_validity(&self, auth: &AuthChain, diff: &DocumentDiff) -> Result<()> {
-    if auth.current().verify_data(diff, ()).is_err() {
+    if auth.current().verify_data(diff).is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
       });

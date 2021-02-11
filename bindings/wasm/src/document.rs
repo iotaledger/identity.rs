@@ -10,9 +10,7 @@ use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PublicKey;
 use identity::crypto::SecretKey;
 use identity::did::verifiable;
-use identity::did::verifiable::Public;
 use identity::did::Method as CoreMethod;
-use identity::did::MethodIdent;
 use identity::did::MethodScope;
 use identity::iota::Document as IotaDocument;
 use identity::iota::DocumentDiff;
@@ -51,14 +49,11 @@ impl NewDocument {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Document(pub(crate) IotaDocument);
 
-impl Document {
-  pub const AUTH_QUERY: (usize, MethodScope) = IotaDocument::AUTH_QUERY;
-}
-
 #[wasm_bindgen]
 impl Document {
   /// Creates a new DID Document from the given KeyPair.
   #[wasm_bindgen(constructor)]
+  #[allow(clippy::new_ret_no_self)]
   pub fn new(type_: KeyType, tag: Option<String>) -> Result<NewDocument, JsValue> {
     let key: KeyPair = KeyPair::new(type_)?;
     let method: IotaMethod = IotaMethod::from_keypair(&key.0, tag.as_deref()).map_err(err)?;
@@ -111,7 +106,7 @@ impl Document {
   pub fn insert_method(&mut self, method: &Method, scope: Option<String>) -> Result<bool, JsValue> {
     let scope: MethodScope = scope.unwrap_or_default().parse().map_err(err)?;
 
-    self.0.insert_method(scope, method.0.clone()).map_err(err)
+    Ok(self.0.insert_method(scope, method.0.clone()))
   }
 
   #[wasm_bindgen(js_name = removeMethod)]
@@ -196,7 +191,7 @@ impl Document {
   /// If using a Merkle Key Collection verification method, The target public
   /// key is expected to be a base58-encoded string.
   #[wasm_bindgen(js_name = verifyData)]
-  pub fn verify_data(&self, data: &JsValue, args: &JsValue) -> Result<JsValue, JsValue> {
+  pub fn verify_data(&self, data: &JsValue, args: &JsValue) -> Result<bool, JsValue> {
     #[derive(Deserialize)]
     #[serde(untagged)]
     enum Args {
@@ -206,48 +201,35 @@ impl Document {
 
     let data: verifiable::Properties = data.into_serde().map_err(err)?;
     let args: Args = args.into_serde().map_err(err)?;
-    let pkey: PublicKey;
 
-    let public: Public<'_> = match args {
-      Args::None => Public::new(),
+    let result: bool = match args {
+      Args::None => self.0.verifier().verify(&data).is_ok(),
       Args::Target { target } => {
-        pkey = decode_b58(&target).map_err(err).map(Into::into)?;
-        Public::with_merkle_target(pkey.as_ref())
+        let target: PublicKey = decode_b58(&target).map_err(err).map(Into::into)?;
+
+        self.0.verifier().merkle_key_target(&target).verify(&data).is_ok()
       }
     };
 
-    Ok(self.0.verify_that(&data, public).is_ok().into())
+    Ok(result)
   }
 
   #[wasm_bindgen(js_name = resolveKey)]
-  pub fn resolve_key(&mut self, ident: &JsValue, scope: Option<String>) -> Result<Method, JsValue> {
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Ident {
-      Ident(String),
-      Index(usize),
-    }
-
-    impl Ident {
-      pub fn get(&self) -> MethodIdent<'_> {
-        match self {
-          Self::Ident(ident) => MethodIdent::Ident(ident),
-          Self::Index(index) => MethodIdent::Index(*index),
-        }
-      }
-    }
-
-    let ident: Ident = ident.into_serde().map_err(err)?;
-    let scope: MethodScope = scope.unwrap_or_default().parse().map_err(err)?;
-
-    let method: CoreMethod = self
-      .0
-      .try_resolve((ident.get(), scope))
-      .map_err(err)?
-      .into_method()
-      .clone();
+  pub fn resolve_key(&mut self, query: &str) -> Result<Method, JsValue> {
+    let method: CoreMethod = self.0.try_resolve(query).map_err(err)?.clone();
 
     IotaMethod::try_from_core(method).map_err(err).map(Method)
+  }
+
+  #[wasm_bindgen(js_name = revokeMerkleKey)]
+  pub fn revoke_merkle_key(&mut self, query: &str, index: usize) -> Result<bool, JsValue> {
+    let method: &mut IotaMethod = self
+      .0
+      .try_resolve_mut(query)
+      .and_then(IotaMethod::try_from_mut)
+      .map_err(err)?;
+
+    method.revoke_merkle_key(index).map_err(err)
   }
 
   // ===========================================================================

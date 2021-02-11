@@ -7,6 +7,8 @@ use identity_core::crypto::merkle_tree::Hash;
 use identity_core::crypto::merkle_tree::Proof;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
+use identity_core::crypto::PublicKey;
+use identity_core::crypto::SecretKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
@@ -15,8 +17,6 @@ use identity_core::crypto::TrySignatureMut;
 use crate::did::DID;
 use crate::document::Document;
 use crate::verifiable::Properties;
-use crate::verifiable::Public;
-use crate::verifiable::Secret;
 use crate::verification::Method;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
@@ -75,7 +75,9 @@ fn test_sign_verify_this_ed25519() {
     .unwrap();
 
   assert!(document.verify_this().is_err());
-  document.sign_this(0, key.secret().as_ref()).unwrap();
+
+  document.sign_this("#key-1", key.secret().as_ref()).unwrap();
+
   assert!(document.verify_this().is_ok());
 }
 
@@ -105,21 +107,21 @@ fn test_sign_verify_that_merkle_key_ed25519_sha256() {
     .build()
     .unwrap();
 
-  let public: Public<'_> = keys
-    .public(index)
-    .map(AsRef::as_ref)
-    .map(Public::with_merkle_target)
-    .unwrap();
-
-  let secret: Secret<'_> = keys
-    .secret(index)
-    .map(AsRef::as_ref)
-    .map(|secret| Secret::with_merkle_proof(secret, &proof))
-    .unwrap();
+  let public: &PublicKey = keys.public(index).unwrap();
+  let secret: &SecretKey = keys.secret(index).unwrap();
 
   let mut that: That = That::new(123);
 
-  assert!(document.verify_that(&that, public).is_err());
-  document.sign_that(&mut that, 0, secret).unwrap();
-  assert!(document.verify_that(&that, public).is_ok());
+  let verifier: _ = document.verifier().merkle_key_target(public);
+
+  assert!(verifier.verify(&that).is_err());
+
+  document
+    .signer(secret)
+    .method("#key-collection")
+    .merkle_key_proof(&proof)
+    .sign(&mut that)
+    .unwrap();
+
+  assert!(verifier.verify(&that).is_ok());
 }

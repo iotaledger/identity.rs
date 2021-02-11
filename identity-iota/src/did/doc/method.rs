@@ -2,16 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
+use core::convert::TryInto;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
+use identity_core::common::BitSet;
+use identity_core::convert::ToJson;
 use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::merkle_tree::Hash;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_did::error::Result as DIDResult;
+use identity_did::verifiable::Revocation;
 use identity_did::verification::Method as CoreMethod;
 use identity_did::verification::MethodBuilder;
 use identity_did::verification::MethodData;
@@ -95,6 +100,15 @@ impl Method {
     Ok(Self(method))
   }
 
+  /// Converts a mutable `Method` reference to a mutable  IOTA Verification
+  /// Method reference.
+  pub fn try_from_mut(method: &mut CoreMethod) -> Result<&mut Self> {
+    Self::check_validity(method)?;
+
+    // SAFETY: We just checked the validity of the verification method.
+    Ok(unsafe { &mut *(method as *mut CoreMethod as *mut Method) })
+  }
+
   /// Converts a `Method` reference to an IOTA Verification Method reference
   /// without performing validation checks.
   ///
@@ -148,6 +162,24 @@ impl Method {
     // SAFETY: We don't create methods with invalid DID's
     unsafe { DID::new_unchecked_ref(self.0.controller()) }
   }
+
+  /// Revokes the public key of a Merkle Key Collection at the specified `index`.
+  pub fn revoke_merkle_key(&mut self, index: usize) -> Result<bool> {
+    if !matches!(self.key_type(), MethodType::MerkleKeyCollection2021) {
+      return Err(Error::CannotRevokeMethod);
+    }
+
+    let mut revocation: BitSet = self.revocation()?.unwrap_or_else(BitSet::new);
+    let index: u32 = index.try_into().map_err(|_| Error::CannotRevokeMethod)?;
+    let revoked: bool = revocation.insert(index);
+
+    self
+      .0
+      .properties_mut()
+      .insert("revocation".into(), revocation.to_json_value()?);
+
+    Ok(revoked)
+  }
 }
 
 impl Display for Method {
@@ -187,5 +219,11 @@ impl TryFrom<CoreMethod> for Method {
 
   fn try_from(other: CoreMethod) -> Result<Self, Self::Error> {
     Self::try_from_core(other)
+  }
+}
+
+impl Revocation for Method {
+  fn revocation(&self) -> DIDResult<Option<BitSet>> {
+    self.0.properties().revocation()
   }
 }

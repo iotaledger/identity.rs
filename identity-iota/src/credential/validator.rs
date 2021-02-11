@@ -81,7 +81,7 @@ impl<'a> CredentialValidator<'a> {
     T: Serialize,
   {
     let issuer: DocumentValidation = self.validate_document(credential.issuer.url().as_str()).await?;
-    let verified: bool = issuer.document.verify_data(&credential, ()).is_ok();
+    let verified: bool = issuer.document.verify_data(&credential).is_ok();
 
     let mut subjects: BTreeMap<String, DocumentValidation> = BTreeMap::new();
 
@@ -118,7 +118,7 @@ impl<'a> CredentialValidator<'a> {
       .ok_or(Error::InvalidPresentationHolder)?;
 
     let holder: DocumentValidation = self.validate_document(holder).await?;
-    let verified: bool = holder.document.verify_data(&presentation, ()).is_ok();
+    let verified: bool = holder.document.verify_data(&presentation).is_ok();
 
     let mut credentials: Vec<CredentialValidation<U>> = Vec::new();
 
