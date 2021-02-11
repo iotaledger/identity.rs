@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::credential::VerifiableCredential;
+use crate::credential::VerifiablePresentation;
 use identity::core::decode_b58;
 use identity::core::FromJson;
 use identity::crypto::merkle_key::MerkleKey;
@@ -128,6 +130,22 @@ impl Document {
   #[wasm_bindgen]
   pub fn verify(&self) -> bool {
     self.0.verify().is_ok()
+  }
+
+  #[wasm_bindgen(js_name = signCredential)]
+  pub fn sign_credential(&self, data: &JsValue, args: &JsValue) -> Result<VerifiableCredential, JsValue> {
+    let json: JsValue = self.sign_data(data, args)?;
+    let data: VerifiableCredential = VerifiableCredential::from_json(&json)?;
+
+    Ok(data)
+  }
+
+  #[wasm_bindgen(js_name = signPresentation)]
+  pub fn sign_presentation(&self, data: &JsValue, args: &JsValue) -> Result<VerifiablePresentation, JsValue> {
+    let json: JsValue = self.sign_data(data, args)?;
+    let data: VerifiablePresentation = VerifiablePresentation::from_json(&json)?;
+
+    Ok(data)
   }
 
   /// Creates a signature for the given `data` with the specified DID Document

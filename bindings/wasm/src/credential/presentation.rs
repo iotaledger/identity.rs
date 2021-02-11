@@ -3,13 +3,11 @@
 
 use identity::core::OneOrMany;
 use identity::core::Url;
-use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use identity::credential::VerifiableCredential;
 use identity::credential::VerifiablePresentation as VerifiablePresentation_;
 use wasm_bindgen::prelude::*;
 
-use crate::crypto::KeyPair;
 use crate::document::Document;
 use crate::utils::err;
 
@@ -19,6 +17,37 @@ pub struct VerifiablePresentation(pub(crate) VerifiablePresentation_);
 
 #[wasm_bindgen]
 impl VerifiablePresentation {
+  #[wasm_bindgen(constructor)]
+  pub fn new(
+    holder_doc: &Document,
+    credential_data: JsValue,
+    presentation_type: Option<String>,
+    presentation_id: Option<String>,
+  ) -> Result<VerifiablePresentation, JsValue> {
+    let credentials: OneOrMany<VerifiableCredential> = credential_data.into_serde().map_err(err)?;
+    let holder_url: Url = Url::parse(holder_doc.0.id().as_str()).map_err(err)?;
+
+    let mut builder: PresentationBuilder = PresentationBuilder::default().holder(holder_url);
+
+    for credential in credentials.into_vec() {
+      builder = builder.credential(credential);
+    }
+
+    if let Some(presentation_type) = presentation_type {
+      builder = builder.type_(presentation_type);
+    }
+
+    if let Some(presentation_id) = presentation_id {
+      builder = builder.id(Url::parse(presentation_id).map_err(err)?);
+    }
+
+    builder
+      .build()
+      .map_err(err)
+      .map(|presentation| VerifiablePresentation_::new(presentation, Vec::new()))
+      .map(Self)
+  }
+
   /// Serializes a `VerifiablePresentation` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {

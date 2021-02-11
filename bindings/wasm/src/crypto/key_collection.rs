@@ -63,39 +63,33 @@ impl KeyCollection {
 
   /// Returns the public key at the specified `index` as a base58-encoded string.
   #[wasm_bindgen]
-  pub fn public(&self, index: usize) -> JsValue {
-    match self.0.public(index) {
-      Some(key) => encode_b58(key).into(),
-      None => JsValue::NULL,
-    }
+  pub fn public(&self, index: usize) -> Option<String> {
+    self.0.public(index).map(encode_b58)
   }
 
   /// Returns the secret key at the specified `index` as a base58-encoded string.
   #[wasm_bindgen]
-  pub fn secret(&self, index: usize) -> JsValue {
-    match self.0.secret(index) {
-      Some(key) => encode_b58(key).into(),
-      None => JsValue::NULL,
-    }
+  pub fn secret(&self, index: usize) -> Option<String> {
+    self.0.secret(index).map(encode_b58)
   }
 
   #[wasm_bindgen(js_name = merkleRoot)]
-  pub fn merkle_root(&self, digest: Digest) -> Result<JsValue, JsValue> {
+  pub fn merkle_root(&self, digest: Digest) -> String {
     match digest {
-      Digest::Sha256 => Ok(encode_b58(self.0.merkle_root::<Sha256>().as_slice()).into()),
+      Digest::Sha256 => encode_b58(self.0.merkle_root::<Sha256>().as_slice()),
     }
   }
 
   #[wasm_bindgen(js_name = merkleProof)]
-  pub fn merkle_proof(&self, digest: Digest, index: usize) -> Result<JsValue, JsValue> {
+  pub fn merkle_proof(&self, digest: Digest, index: usize) -> Option<String> {
     match digest {
       Digest::Sha256 => {
         let proof: Proof<Sha256> = match self.0.merkle_proof(index) {
           Some(proof) => proof,
-          None => return Ok(JsValue::NULL),
+          None => return None,
         };
 
-        Ok(encode_b58(&proof.encode()).into())
+        Some(encode_b58(&proof.encode()))
       }
     }
   }
