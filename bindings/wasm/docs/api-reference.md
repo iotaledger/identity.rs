@@ -148,7 +148,7 @@ Parses a `DID` from the input string.
         * [.signCredential(data, args)](#Document+signCredential) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
         * [.signPresentation(data, args)](#Document+signPresentation) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
         * [.signData(data, args)](#Document+signData) ⇒ <code>any</code>
-        * [.verifyData(data, args)](#Document+verifyData) ⇒ <code>boolean</code>
+        * [.verifyData(data)](#Document+verifyData) ⇒ <code>boolean</code>
         * [.resolveKey(query)](#Document+resolveKey) ⇒ [<code>Method</code>](#Method)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
         * [.diff(other, message, key)](#Document+diff) ⇒ <code>any</code>
@@ -256,18 +256,14 @@ Collection verification Method.
 
 <a name="Document+verifyData"></a>
 
-### document.verifyData(data, args) ⇒ <code>boolean</code>
+### document.verifyData(data) ⇒ <code>boolean</code>
 Verifies the authenticity of `data` using the target verification method.
-
-If using a Merkle Key Collection verification method, The target public
-key is expected to be a base58-encoded string.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | data | <code>any</code> | 
-| args | <code>any</code> | 
 
 <a name="Document+resolveKey"></a>
 
