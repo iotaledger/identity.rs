@@ -15,6 +15,7 @@ use identity::credential::VerifiableCredential;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
 use identity::crypto::KeyPair;
+use identity::crypto::PublicKey;
 use identity::crypto::SecretKey;
 use identity::did::resolution::resolve;
 use identity::did::resolution::Resolution;
@@ -66,6 +67,8 @@ async fn main() -> Result<()> {
 
   // Select a random key from the collection
   let index: usize = OsRng.gen_range(0, LEAVES);
+
+  let public: &PublicKey = keys.public(index).unwrap();
   let secret: &SecretKey = keys.secret(index).unwrap();
 
   // Generate an inclusion proof for the selected key
@@ -75,12 +78,12 @@ async fn main() -> Result<()> {
   doc
     .signer(secret)
     .method("key-collection")
-    .merkle_key_proof(&proof)
+    .merkle_key((public, &proof))
     .sign(&mut credential)?;
 
   println!("credential (signed): {:#}", credential);
 
-  let verified: Result<(), _> = doc.verifier().merkle_key_target(&keys[index]).verify(&credential);
+  let verified: Result<(), _> = doc.verifier().verify(&credential);
 
   println!("verified: {:?}", verified.is_ok());
 
@@ -113,7 +116,7 @@ async fn main() -> Result<()> {
   doc
     .signer(secret)
     .method("key-collection")
-    .merkle_key_proof(&proof)
+    .merkle_key((public, &proof))
     .sign(&mut credential)?;
 
   println!("credential (compro-signed): {:#}", credential);
@@ -126,7 +129,7 @@ async fn main() -> Result<()> {
   println!("document: {:#?}", document);
 
   // Check the verification status again - the credential SHOULD NOT be valid
-  let verified: Result<(), _> = doc.verifier().merkle_key_target(&keys[index]).verify(&credential);
+  let verified: Result<(), _> = doc.verifier().verify(&credential);
 
   println!("verified: {:?}", verified.is_ok());
 

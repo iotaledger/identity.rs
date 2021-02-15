@@ -86,6 +86,7 @@ async function run() {
   // Sign the credential with Bob's Merkle Key Collection method
   const signedVc = user2.doc.signCredential(unsignedVc, {
     method: method.id.toString(),
+    public: keys.public(0),
     secret: keys.secret(0),
     proof: keys.merkleProof(Digest.Sha256, 0),
   })
@@ -99,7 +100,11 @@ async function run() {
 
   // Create a Verifiable Presentation from the Credential - signed by Alice's key
   const unsignedVp = new VerifiablePresentation(user1.doc, signedVc.toJSON())
-  const signedVp = user1.doc.signPresentation(unsignedVp, user1.key)
+
+  const signedVp = user1.doc.signPresentation(unsignedVp, {
+    method: "#key",
+    secret: user1.key.secret,
+  })
 
   // Check the validation status of the Verifiable Presentation
   console.log("Presentation Validation", await Identity.checkPresentation(signedVp.toString(), CLIENT_CONFIG))
@@ -120,8 +125,8 @@ async function run() {
   console.log("Publish Result (user2): https://explorer.iota.org/mainnet/transaction/" + user2.message)
 
   // Resolve DID documents
-  console.log("Resolve Result (user1): ", await Identity.resolve(user1.doc.id, CLIENT_CONFIG))
-  console.log("Resolve Result (user2): ", await Identity.resolve(user2.doc.id, CLIENT_CONFIG))
+  console.log("Resolve Result (user1): ", await Identity.resolve(user1.doc.id.toString(), CLIENT_CONFIG))
+  console.log("Resolve Result (user2): ", await Identity.resolve(user2.doc.id.toString(), CLIENT_CONFIG))
 }
 
 run().then((output) => {

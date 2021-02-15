@@ -11,7 +11,6 @@ use std::vec::IntoIter;
 use crate::crypto::merkle_key::DynSigner;
 use crate::crypto::merkle_key::DynVerifier;
 use crate::crypto::merkle_key::MerkleDigest;
-use crate::crypto::merkle_key::MerkleKey;
 use crate::crypto::merkle_tree::compute_merkle_proof;
 use crate::crypto::merkle_tree::compute_merkle_root;
 use crate::crypto::merkle_tree::DigestExt;
@@ -133,40 +132,55 @@ impl KeyCollection {
   }
 
   /// Returns the Merkle root hash of the public keys in the collection.
-  pub fn merkle_root<D: DigestExt>(&self) -> Hash<D> {
+  pub fn merkle_root<D>(&self) -> Hash<D>
+  where
+    D: DigestExt,
+  {
     compute_merkle_root(&self.public)
   }
 
   /// Returns a proof-of-inclusion for the public key at the specified index.
-  pub fn merkle_proof<D: DigestExt>(&self, index: usize) -> Option<Proof<D>> {
+  pub fn merkle_proof<D>(&self, index: usize) -> Option<Proof<D>>
+  where
+    D: DigestExt,
+  {
     compute_merkle_proof(&self.public, index)
   }
 
   /// Returns a Merkle Key [`Signer`][`DynSigner`] for the secret key at the
   /// specified index.
-  pub fn merkle_key_signer<D>(&self, index: usize) -> Option<DynSigner<'static, 'static, D>>
-  where
-    D: MerkleDigest,
-  {
-    match self.type_() {
-      KeyType::Ed25519 => Some(DynSigner::from_owned(self.merkle_proof(index)?, Box::new(Ed25519))),
-    }
-  }
-
-  /// Returns a Merkle Key [`Verifier`][`DynVerifier`] for the Merkle root of
-  /// the key collection.
-  pub fn merkle_key_verifier<D>(&self) -> DynVerifier<'static, 'static, D>
+  pub fn merkle_key_signer<'key, D>(&'key self, index: usize) -> Option<DynSigner<'static, 'key, D>>
   where
     D: MerkleDigest,
   {
     match self.type_() {
       KeyType::Ed25519 => {
-        let root: Hash<D> = self.merkle_root();
-        let mkey: Vec<u8> = MerkleKey::encode_ed25519_key::<D>(&root);
+        let proof: Proof<D> = self.merkle_proof(index)?;
+        let public: &'key PublicKey = self.public(index)?;
 
-        DynVerifier::from_owned(mkey, Box::new(Ed25519))
+        Some(DynSigner::from_owned(Box::new(Ed25519), public, proof))
       }
     }
+  }
+
+  /// Returns a Merkle Key [`Verifier`][`DynVerifier`] for the Merkle root of
+  /// the key collection.
+  pub fn merkle_key_verifier<D>(&self) -> DynVerifier<'static, D>
+  where
+    D: MerkleDigest,
+  {
+    match self.type_() {
+      KeyType::Ed25519 => DynVerifier::from_owned(self.encode_key::<D>(), Box::new(Ed25519)),
+    }
+  }
+
+  /// Creates a DID Document public key value for the Merkle root of
+  /// the key collection.
+  pub fn encode_key<D>(&self) -> Vec<u8>
+  where
+    D: MerkleDigest,
+  {
+    self.type_.encode_key::<D>(&self.merkle_root())
   }
 }
 

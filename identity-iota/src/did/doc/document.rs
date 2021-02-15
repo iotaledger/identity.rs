@@ -43,7 +43,7 @@ type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, ()>;
 
 pub type Signer<'a, 'b, 'c> = DocumentSigner<'a, 'b, 'c, Properties, Object, ()>;
-pub type Verifier<'a, 'b> = DocumentVerifier<'a, 'b, Properties, Object, ()>;
+pub type Verifier<'a> = DocumentVerifier<'a, Properties, Object, ()>;
 
 /// A DID Document adhering to the IOTA DID method specification.
 ///

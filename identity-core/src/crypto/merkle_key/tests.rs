@@ -15,6 +15,19 @@ use crate::crypto::SecretKey;
 use crate::crypto::SignatureSign;
 use crate::crypto::SignatureValue;
 use crate::crypto::SignatureVerify;
+use crate::utils::encode_b58;
+
+fn inject_key(signature: &SignatureValue, key: &PublicKey) -> SignatureValue {
+  let value: &str = signature.as_str();
+  let parts: Vec<&str> = value.split('.').collect();
+
+  assert_eq!(parts.len(), 3);
+
+  let encoded: String = encode_b58(key.as_ref());
+  let value: String = format!("{}.{}.{}", encoded, parts[1], parts[2]);
+
+  SignatureValue::Signature(value)
+}
 
 #[test]
 fn test_sign_verify() {
@@ -23,8 +36,8 @@ fn test_sign_verify() {
   let index: usize = OsRng.gen_range(0, total);
 
   let keys: KeyCollection = KeyCollection::new_ed25519(total).unwrap();
-  let signer: DynSigner<'_, '_, Sha256> = keys.merkle_key_signer(index).unwrap();
-  let mut verifier: DynVerifier<'_, '_, Sha256> = keys.merkle_key_verifier();
+  let signer: DynSigner<'static, '_, Sha256> = keys.merkle_key_signer(index).unwrap();
+  let mut verifier: DynVerifier<'static, Sha256> = keys.merkle_key_verifier();
 
   let public: &PublicKey = keys.public(index).unwrap();
   let secret: &SecretKey = keys.secret(index).unwrap();
@@ -38,11 +51,12 @@ fn test_sign_verify() {
   let signature: SignatureValue = signer.sign(&input, secret.as_ref()).unwrap();
 
   // The signature should be valid
-  assert!(verifier.verify(&input, &signature, public.as_ref()).is_ok());
+  assert!(verifier.verify(&input, &signature, &[]).is_ok());
 
   // Ensure all other keys are NOT valid
   for key in samples.iter() {
-    assert!(verifier.verify(&input, &signature, key.as_ref()).is_err());
+    let signature: SignatureValue = inject_key(&signature, key);
+    assert!(verifier.verify(&input, &signature, &[]).is_err());
   }
 
   // Revoke the target key and ensure the signature is not considered valid.
@@ -50,11 +64,12 @@ fn test_sign_verify() {
   revocation.insert(index as u32);
   verifier.set_revocation(revocation);
 
-  assert!(verifier.verify(&input, &signature, public.as_ref()).is_err());
+  assert!(verifier.verify(&input, &signature, &[]).is_err());
 
   // Ensure all other keys are NOT valid
   for key in samples.iter() {
-    assert!(verifier.verify(&input, &signature, key.as_ref()).is_err());
+    let signature: SignatureValue = inject_key(&signature, key);
+    assert!(verifier.verify(&input, &signature, &[]).is_err());
   }
 
   // Reinstate the key and ensure the signature is now valid.
@@ -63,10 +78,11 @@ fn test_sign_verify() {
   revocation.remove(index as u32);
   verifier.set_revocation(revocation);
 
-  assert!(verifier.verify(&input, &signature, public.as_ref()).is_ok());
+  assert!(verifier.verify(&input, &signature, &[]).is_ok());
 
   // Ensure all other keys are NOT valid
   for key in samples.iter() {
-    assert!(verifier.verify(&input, &signature, key.as_ref()).is_err());
+    let signature: SignatureValue = inject_key(&signature, key);
+    assert!(verifier.verify(&input, &signature, &[]).is_err());
   }
 }

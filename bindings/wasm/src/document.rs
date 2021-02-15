@@ -160,6 +160,7 @@ impl Document {
     enum Args {
       MerkleKey {
         method: String,
+        public: String,
         secret: String,
         proof: String,
       },
@@ -173,22 +174,29 @@ impl Document {
     let args: Args = args.into_serde().map_err(err)?;
 
     match args {
-      Args::MerkleKey { method, secret, proof } => {
-        let public: Vec<u8> = self
+      Args::MerkleKey {
+        method,
+        public,
+        secret,
+        proof,
+      } => {
+        let merkle_key: Vec<u8> = self
           .0
           .try_resolve(&*method)
           .and_then(|method| method.key_data().try_decode())
           .map_err(err)?;
 
+        let public: PublicKey = decode_b58(&public).map_err(err).map(Into::into)?;
         let secret: SecretKey = decode_b58(&secret).map_err(err).map(Into::into)?;
-        let digest: MerkleTag = MerkleKey::extract_tags(&public).map_err(err)?.1;
+
+        let digest: MerkleTag = MerkleKey::extract_tags(&merkle_key).map_err(err)?.1;
         let proof: Vec<u8> = decode_b58(&proof).map_err(err)?;
 
         let signer: _ = self.0.signer(&secret).method(&method);
 
         match digest {
           MerkleTag::SHA256 => match Proof::<Sha256>::decode(&proof) {
-            Some(proof) => signer.merkle_key_proof(&proof).sign(&mut data).map_err(err)?,
+            Some(proof) => signer.merkle_key((&public, &proof)).sign(&mut data).map_err(err)?,
             None => return Err("Invalid Public Key Proof".into()),
           },
           _ => return Err("Invalid Merkle Key Digest".into()),
@@ -205,29 +213,10 @@ impl Document {
   }
 
   /// Verifies the authenticity of `data` using the target verification method.
-  ///
-  /// If using a Merkle Key Collection verification method, The target public
-  /// key is expected to be a base58-encoded string.
   #[wasm_bindgen(js_name = verifyData)]
-  pub fn verify_data(&self, data: &JsValue, args: &JsValue) -> Result<bool, JsValue> {
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Args {
-      None,
-      Target { target: String },
-    }
-
+  pub fn verify_data(&self, data: &JsValue) -> Result<bool, JsValue> {
     let data: verifiable::Properties = data.into_serde().map_err(err)?;
-    let args: Args = args.into_serde().map_err(err)?;
-
-    let result: bool = match args {
-      Args::None => self.0.verifier().verify(&data).is_ok(),
-      Args::Target { target } => {
-        let target: PublicKey = decode_b58(&target).map_err(err).map(Into::into)?;
-
-        self.0.verifier().merkle_key_target(&target).verify(&data).is_ok()
-      }
-    };
+    let result: bool = self.0.verifier().verify(&data).is_ok();
 
     Ok(result)
   }

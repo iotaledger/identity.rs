@@ -134,7 +134,7 @@ impl<T, U, V> Document<T, U, V> {
 
   /// Creates a new [`DocumentVerifier`] that can be used to verify signatures
   /// created with this DID Document.
-  pub fn verifier<'base>(&'base self) -> DocumentVerifier<'base, '_, T, U, V> {
+  pub fn verifier(&self) -> DocumentVerifier<'_, T, U, V> {
     DocumentVerifier::new(self)
   }
 }
@@ -147,7 +147,7 @@ pub struct DocumentSigner<'base, 'query, 'proof, T, U, V> {
   document: &'base Document<T, U, V>,
   secret: &'base SecretKey,
   method: Option<MethodQuery<'query>>,
-  mk_proof: Option<&'proof dyn Any>,
+  merkle_key: Option<(&'proof PublicKey, &'proof dyn Any)>,
 }
 
 impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
@@ -156,7 +156,7 @@ impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
       document,
       secret,
       method: None,
-      mk_proof: None,
+      merkle_key: None,
     }
   }
 }
@@ -172,11 +172,11 @@ impl<'base, 'query, T, U, V> DocumentSigner<'base, 'query, '_, T, U, V> {
 }
 
 impl<'proof, T, U, V> DocumentSigner<'_, '_, 'proof, T, U, V> {
-  pub fn merkle_key_proof<D>(mut self, proof: &'proof Proof<D>) -> Self
+  pub fn merkle_key<D>(mut self, proof: (&'proof PublicKey, &'proof Proof<D>)) -> Self
   where
     D: MerkleDigest,
   {
-    self.mk_proof = Some(proof);
+    self.merkle_key = Some((proof.0, proof.1));
     self
   }
 }
@@ -207,11 +207,18 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 
         match MerkleKey::extract_tags(&data)? {
           (MerkleTag::ED25519, MerkleTag::SHA256) => {
-            let signer: Signer<'_, Ed25519, Sha256> = self
-              .mk_proof
-              .and_then(Any::downcast_ref)
-              .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))
-              .map(|proof| Signer::from_borrowed(proof, Ed25519))?;
+            let signer: _ = match self.merkle_key {
+              Some((public, proof)) => {
+                let proof: &Proof<Sha256> = proof
+                  .downcast_ref()
+                  .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))?;
+
+                Signer::from_borrowed(Ed25519, public, proof)
+              }
+              None => {
+                return Err(Error::CoreError(CoreError::InvalidKeyFormat));
+              }
+            };
 
             signer.__sign(that, fragment, secret)?;
           }
@@ -230,28 +237,17 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 // Document Verifier - Simplifying Digital Signature Verification Since 2021
 // =============================================================================
 
-pub struct DocumentVerifier<'base, 'target, T, U, V> {
+pub struct DocumentVerifier<'base, T, U, V> {
   document: &'base Document<T, U, V>,
-  mk_target: Option<&'target PublicKey>,
 }
 
-impl<'base, T, U, V> DocumentVerifier<'base, '_, T, U, V> {
+impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
   pub fn new(document: &'base Document<T, U, V>) -> Self {
-    Self {
-      document,
-      mk_target: None,
-    }
+    Self { document }
   }
 }
 
-impl<'target, T, U, V> DocumentVerifier<'_, 'target, T, U, V> {
-  pub fn merkle_key_target(mut self, value: &'target PublicKey) -> Self {
-    self.mk_target = Some(value);
-    self
-  }
-}
-
-impl<T, U, V> DocumentVerifier<'_, '_, T, U, V>
+impl<T, U, V> DocumentVerifier<'_, T, U, V>
 where
   U: Revocation,
 {
@@ -277,22 +273,13 @@ where
 
         match MerkleKey::extract_tags(&data)? {
           (MerkleTag::ED25519, MerkleTag::SHA256) => {
-            let verifier: Verifier<'_, Ed25519, Sha256> = {
-              let mut this: _ = Verifier::from_borrowed(&data, Ed25519);
+            let mut verifier: Verifier<'_, _, Sha256> = Verifier::from_borrowed(&data, Ed25519);
 
-              if let Some(revocation) = method.revocation()? {
-                this.set_revocation(revocation);
-              }
+            if let Some(revocation) = method.revocation()? {
+              verifier.set_revocation(revocation);
+            }
 
-              this
-            };
-
-            let target: &[u8] = self
-              .mk_target
-              .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))
-              .map(AsRef::as_ref)?;
-
-            verifier.__verify(that, target)?;
+            verifier.__verify(that, &[])?;
           }
           (_, _) => {
             return Err(Error::InvalidMethodType);

@@ -112,16 +112,14 @@ fn test_sign_verify_that_merkle_key_ed25519_sha256() {
 
   let mut that: That = That::new(123);
 
-  let verifier: _ = document.verifier().merkle_key_target(public);
-
-  assert!(verifier.verify(&that).is_err());
+  assert!(document.verifier().verify(&that).is_err());
 
   document
     .signer(secret)
     .method("#key-collection")
-    .merkle_key_proof(&proof)
+    .merkle_key((public, &proof))
     .sign(&mut that)
     .unwrap();
 
-  assert!(verifier.verify(&that).is_ok());
+  assert!(document.verifier().verify(&that).is_ok());
 }
