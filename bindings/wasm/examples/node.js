@@ -127,6 +127,11 @@ async function run() {
   // Resolve DID documents
   console.log("Resolve Result (user1): ", await Identity.resolve(user1.doc.id.toString(), CLIENT_CONFIG))
   console.log("Resolve Result (user2): ", await Identity.resolve(user2.doc.id.toString(), CLIENT_CONFIG))
+
+  // Check the validation status of the Verifiable Presentation
+  //
+  // This should return `false` since we revoked the key used to sign the credential
+  console.log("Presentation Validation", await Identity.checkPresentation(signedVp.toString(), CLIENT_CONFIG))
 }
 
 run().then((output) => {
