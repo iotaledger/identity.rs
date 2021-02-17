@@ -19,7 +19,7 @@ const {
   Method,
   VerifiableCredential,
   VerifiablePresentation,
-  } = Identity
+} = Identity
 
 const CLIENT_CONFIG = {
   network: "main",
@@ -112,15 +112,15 @@ async function run() {
   // Bobs key was compromised - mark it as revoked and publish an update
   user2.doc.revokeMerkleKey(method.id.toString(), 0)
 
+  user2.doc = Document.fromJSON({
+    previous_message_id: user2.message,
+    ...user2.doc.toJSON()
+  })
+
   // The "authentication" key was not compromised so it's safe to publish an update
   user2.doc.sign(user2.key)
 
-  const update = {
-    previous_message_id: user2.message,
-    ...user2.doc.toJSON()
-  }
-
-  user2.message = await Identity.publish(update, CLIENT_CONFIG)
+  user2.message = await Identity.publish(user2.doc.toJSON(), CLIENT_CONFIG)
 
   console.log("Publish Result (user2): https://explorer.iota.org/mainnet/transaction/" + user2.message)
 
