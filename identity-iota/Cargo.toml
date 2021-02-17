@@ -1,6 +1,6 @@
 [package]
 name = "identity-iota"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 authors = ["IOTA Identity"]
 edition = "2018"
 description = "An IOTA Tangle intergration for the identity-rs library."
@@ -12,9 +12,9 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
-identity-core = { version = "=0.1.0", path = "../identity-core" }
-identity-credential = { version = "=0.1.0", path = "../identity-credential" }
-identity-did = { version = "=0.1.0", path = "../identity-did" }
+identity-core = { version = "=0.1.0-alpha.1", path = "../identity-core" }
+identity-credential = { version = "=0.1.0-alpha.1", path = "../identity-credential" }
+identity-did = { version = "=0.1.0-alpha.1", path = "../identity-did" }
 iota-constants = { version = "0.2", default-features = false }
 iota-conversion = { version = "0.5", default-features = false }
 iota-core = { git = "https://github.com/Thoralf-M/iota.rs", rev = "d7c8c64fc3ac2340f0148708a916c245f42fd454" }

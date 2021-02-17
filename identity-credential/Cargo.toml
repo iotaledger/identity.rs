@@ -1,6 +1,6 @@
 [package]
 name = "identity-credential"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 authors = ["IOTA Identity"]
 edition = "2018"
 description = "An implementation of the Verfiable Credentials standard."
@@ -11,8 +11,8 @@ keywords = ["iota", "tangle", "identity"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-identity-core = { version = "=0.1.0", path = "../identity-core" }
-identity-did = { version = "=0.1.0", path = "../identity-did" }
+identity-core = { version = "=0.1.0-alpha.1", path = "../identity-core" }
+identity-did = { version = "=0.1.0-alpha.1", path = "../identity-did" }
 lazy_static = { version = "1.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
