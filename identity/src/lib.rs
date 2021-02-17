@@ -14,7 +14,7 @@
   clippy::missing_safety_doc,
   clippy::missing_errors_doc
 )]
-#![cfg_attr(doc_cfg, feature(doc_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub mod core {
   //! Core Traits and Types
@@ -38,7 +38,7 @@ pub mod crypto {
 }
 
 #[cfg(feature = "credential")]
-#[cfg_attr(doc_cfg, doc(cfg(feature = "credential")))]
+#[cfg_attr(docsrs, doc(cfg(feature = "credential")))]
 pub mod credential {
   //! Verifiable Credentials
   //!
@@ -50,7 +50,7 @@ pub mod credential {
 }
 
 #[cfg(feature = "identifier")]
-#[cfg_attr(doc_cfg, doc(cfg(feature = "identifier")))]
+#[cfg_attr(docsrs, doc(cfg(feature = "identifier")))]
 pub mod did {
   //! Decentralized Identifiers
   //!
@@ -71,7 +71,7 @@ pub mod did {
 }
 
 #[cfg(feature = "iota")]
-#[cfg_attr(doc_cfg, doc(cfg(feature = "iota")))]
+#[cfg_attr(docsrs, doc(cfg(feature = "iota")))]
 pub mod iota {
   //! IOTA Tangle DID Method
 
@@ -81,5 +81,10 @@ pub mod iota {
   pub use identity_iota::did::*;
   pub use identity_iota::error::*;
   pub use identity_iota::tangle::*;
-  pub use identity_iota::utils::*;
+
+  #[doc(inline)]
+  pub use identity_iota::did;
+
+  #[doc(inline)]
+  pub use identity_iota::try_did;
 }

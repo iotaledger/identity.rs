@@ -12,9 +12,9 @@ use iota::transaction::bundled::BundledTransaction;
 use iota::transaction::bundled::BundledTransactionField;
 use iota::transaction::bundled::Timestamp;
 
+use crate::did::Document;
 use crate::did::DocumentDiff;
-use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::MessageId;
@@ -82,11 +82,11 @@ impl Message {
     MessageId::new(encode_trits(&self.tail_hash))
   }
 
-  pub fn try_extract_document(&self, did: &IotaDID) -> Option<IotaDocument> {
-    try_extract!(IotaDocument, self, did)
+  pub fn try_extract_document(&self, did: &DID) -> Option<Document> {
+    try_extract!(Document, self, did)
   }
 
-  pub fn try_extract_diff(&self, did: &IotaDID) -> Option<DocumentDiff> {
+  pub fn try_extract_diff(&self, did: &DID) -> Option<DocumentDiff> {
     try_extract!(DocumentDiff, self, did)
   }
 }

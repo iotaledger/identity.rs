@@ -22,25 +22,30 @@ pub enum Error {
   QueryMethodNotFound,
 
   #[error("Invalid Document Property: `id`")]
-  InvalidDocumentId,
+  BuilderInvalidDocumentId,
 
   #[error("Invalid Service Property: `id`")]
-  InvalidServiceId,
+  BuilderInvalidServiceId,
   #[error("Invalid Service Property: `type`")]
-  InvalidServiceType,
+  BuilderInvalidServiceType,
   #[error("Invalid Service Property: `service_endpoint`")]
-  InvalidServiceEndpoint,
+  BuilderInvalidServiceEndpoint,
 
   #[error("Invalid Verification Method Property: `id`")]
-  InvalidMethodId,
-  #[error("Invalid Verification Method Fragment")]
-  InvalidMethodIdFragment,
+  BuilderInvalidMethodId,
   #[error("Invalid Verification Method Property: `controller`")]
-  InvalidMethodController,
+  BuilderInvalidMethodController,
   #[error("Invalid Verification Method Property: `type`")]
-  InvalidMethodType,
+  BuilderInvalidMethodType,
   #[error("Invalid Verification Method Property: `data`")]
-  InvalidMethodData,
+  BuilderInvalidMethodData,
+
+  #[error("Invalid Verification Method Fragment")]
+  InvalidMethodFragment,
+  #[error("Invalid Verification Method Type")]
+  InvalidMethodType,
+  #[error("Invalid Verification Method - Duplicate")]
+  InvalidMethodDuplicate,
 
   #[error("Unknown Method Scope")]
   UnknownMethodScope,

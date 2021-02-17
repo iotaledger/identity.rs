@@ -31,7 +31,7 @@ impl Timestamp {
 
   /// Creates a new [`Timestamp`] with the current date and time.
   pub fn now() -> Self {
-    Self::parse(&Self::to_rfc3339(&Self(Utc::now()))).unwrap()
+    Self(Utc::now())
   }
 
   /// Returns the [`Timestamp`] as a Unix timestamp.

@@ -1,18 +1,17 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![allow(clippy::module_inception)]
+#[macro_use]
+mod macros;
 
-mod did;
-mod did_segments;
-mod document;
-mod document_builder;
-mod document_diff;
-mod document_properties;
+mod doc;
+mod url;
 
-pub use self::did::IotaDID;
-pub use self::did_segments::Segments;
-pub use self::document::IotaDocument;
-pub use self::document_builder::IotaDocumentBuilder;
-pub use self::document_diff::DocumentDiff;
-pub use self::document_properties::Properties;
+pub use self::doc::Document;
+pub use self::doc::DocumentDiff;
+pub use self::doc::Method;
+pub use self::doc::Properties;
+pub use self::doc::Signer;
+pub use self::doc::Verifier;
+pub use self::url::Segments;
+pub use self::url::DID;

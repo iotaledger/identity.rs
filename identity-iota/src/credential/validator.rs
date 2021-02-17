@@ -10,8 +10,8 @@ use serde::Serialize;
 use std::collections::BTreeMap;
 
 use crate::client::Client;
-use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::did::Document;
+use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -33,8 +33,8 @@ pub struct PresentationValidation<T = Object, U = Object> {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DocumentValidation {
-  pub did: IotaDID,
-  pub document: IotaDocument,
+  pub did: DID,
+  pub document: Document,
   pub metadata: Object,
   pub verified: bool,
 }
@@ -80,20 +80,33 @@ impl<'a> CredentialValidator<'a> {
   where
     T: Serialize,
   {
-    let issuer: DocumentValidation = self.validate_document(credential.issuer.url().as_str()).await?;
-    let verified: bool = issuer.document.verify_data(&credential).is_ok();
+    // Resolve the issuer DID Document and validate the digital signature.
+    let issuer_url: &str = credential.issuer.url().as_str();
+    let issuer_doc: DocumentValidation = self.validate_document(issuer_url).await?;
 
     let mut subjects: BTreeMap<String, DocumentValidation> = BTreeMap::new();
 
-    for subject in credential.credential_subject.iter() {
-      if let Some(id) = subject.id.as_ref() {
-        subjects.insert(id.to_string(), self.validate_document(id.as_str()).await?);
-      }
+    // Resolve all credential subjects with `id`s - we assume all ids are DIDs.
+    for id in credential
+      .credential_subject
+      .iter()
+      .filter_map(|subject| subject.id.as_ref())
+    {
+      subjects.insert(id.to_string(), self.validate_document(id.as_str()).await?);
     }
+
+    // Verify the credential signature using the issuers DID Document
+    let credential_verified: bool = issuer_doc.document.verify_data(&credential).is_ok();
+
+    // Check if all subjects have valid signatures
+    let subjects_verified: bool = subjects.values().all(|subject| subject.verified);
+
+    // The credential is truly verified if all associated documents are verified
+    let verified: bool = issuer_doc.verified && credential_verified && subjects_verified;
 
     Ok(CredentialValidation {
       credential,
-      issuer,
+      issuer: issuer_doc,
       subjects,
       verified,
     })
@@ -101,7 +114,7 @@ impl<'a> CredentialValidator<'a> {
 
   /// Validates the `VerifiablePresentation` proof and all relevant DID documents.
   ///
-  /// Note: The presentation holder is expected to be present and a valid DID.
+  /// Note: The presentation holder is expected to be a valid DID.
   /// Note: The presentation is expected to have a proof created by the holder.
   pub async fn validate_presentation<T, U>(
     &self,
@@ -111,32 +124,42 @@ impl<'a> CredentialValidator<'a> {
     T: Clone + Serialize,
     U: Clone + Serialize,
   {
-    let holder: &str = presentation
+    let holder_url: &str = presentation
       .holder
       .as_ref()
       .map(|holder| holder.as_str())
       .ok_or(Error::InvalidPresentationHolder)?;
 
-    let holder: DocumentValidation = self.validate_document(holder).await?;
-    let verified: bool = holder.document.verify_data(&presentation).is_ok();
+    // Resolve the holder DID Document and validate the digital signature.
+    let holder_doc: DocumentValidation = self.validate_document(holder_url).await?;
 
     let mut credentials: Vec<CredentialValidation<U>> = Vec::new();
 
+    // Resolve and validate all associated credentials.
     for credential in presentation.verifiable_credential.iter() {
       credentials.push(self.validate_credential(credential.clone()).await?);
     }
 
+    // Verify the presentation signature using the holders DID Document
+    let presentation_verified: bool = holder_doc.document.verify_data(&presentation).is_ok();
+
+    // Check if all credentials are verified
+    let credentials_verified: bool = credentials.iter().all(|credential| credential.verified);
+
+    // The presentation is truly verified if all associated documents are verified
+    let verified: bool = holder_doc.verified && presentation_verified && credentials_verified;
+
     Ok(PresentationValidation {
       presentation,
-      holder,
+      holder: holder_doc,
       credentials,
       verified,
     })
   }
 
   async fn validate_document(&self, did: &str) -> Result<DocumentValidation> {
-    let did: IotaDID = did.parse()?;
-    let document: IotaDocument = self.client.read_document(&did).await?;
+    let did: DID = did.parse()?;
+    let document: Document = self.client.read_document(&did).await?;
     let verified: bool = document.verify().is_ok();
 
     Ok(DocumentValidation {

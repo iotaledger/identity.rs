@@ -6,6 +6,8 @@
 /// Alias for a `Result` with the error type [`Error`].
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
+use crate::crypto::merkle_key::MerkleTag;
+
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -39,13 +41,22 @@ pub enum Error {
   /// Caused by attempting to parse an invalid `Timestamp`.
   #[error("Invalid Timestamp: {0}")]
   InvalidTimestamp(#[from] chrono::ParseError),
+  /// Raised by a validation attempt against an invalid DID proof.
+  #[error("Invalid Proof Value")]
+  InvalidProofValue,
   /// Caused by attempting to parse an invalid DID proof.
   #[error("Invalid Proof Format")]
   InvalidProofFormat,
   /// Caused by attempting to parse an invalid cryptographic key.
   #[error("Invalid Key Format")]
   InvalidKeyFormat,
+  /// Caused by attempting to parse an invalid Merkle Key Collection tag.
+  #[error("Invalid Merkle Key Tag: {0:?}")]
+  InvalidMerkleKeyTag(Option<MerkleTag>),
   /// Caused by a failed attempt at retrieving a digital signature.
   #[error("Signature Not Found")]
   MissingSignature,
+  /// Caused by attempting to create a KeyCollection of invalid size.
+  #[error("Invalid Key Collection Size: {0}")]
+  InvalidKeyCollectionSize(usize),
 }

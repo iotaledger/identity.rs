@@ -1,98 +1,85 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use serde::Serialize;
+use erased_serde::Serialize;
+use std::borrow::Cow;
 
-use crate::crypto::merkle_key::Digest;
+use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleKey;
-use crate::crypto::merkle_key::Signature as MSignature;
 use crate::crypto::merkle_tree::Proof;
-use crate::crypto::SetSignature;
-use crate::crypto::SigName;
-use crate::crypto::SigSign;
-use crate::crypto::Signature;
-use crate::crypto::SignatureData;
-use crate::crypto::SignatureOptions;
+use crate::crypto::PublicKey;
+use crate::crypto::SignatureName;
+use crate::crypto::SignatureSign;
+use crate::crypto::SignatureValue;
 use crate::error::Result;
 use crate::utils::encode_b58;
-use crate::utils::jcs_sha256;
+
+/// An alias for a [`Signer`] with a dynamic [`signature`][`SignatureSign`] type.
+pub type DynSigner<'proof, 'key, D> = Signer<'proof, 'key, Box<dyn SignatureSign + 'static>, D>;
 
 /// A signature creation helper for Merkle Key Collection Signatures.
-#[derive(Clone, Copy, Debug)]
-pub struct Signer<'a, D, S>
+///
+/// Users should use the [`SignatureSign`] trait to access this implementation.
+#[derive(Clone, Debug)]
+pub struct Signer<'proof, 'key, S, D>
 where
-  D: Digest,
+  D: MerkleDigest,
 {
+  proof: Cow<'proof, Proof<D>>,
+  public: &'key PublicKey,
   suite: S,
-  proof: &'a Proof<D>,
 }
 
-impl<'a, D, S> Signer<'a, D, S>
+impl<'proof, 'key, S, D> Signer<'proof, 'key, S, D>
 where
-  D: Digest,
+  D: MerkleDigest,
 {
-  /// Creates a new [`Signer`].
-  pub fn new(proof: &'a Proof<D>, suite: S) -> Self {
-    Self { suite, proof }
+  /// Creates a new Merkle Key Collection [`Signer`] from a borrowed
+  /// [`proof`][`Proof`].
+  pub fn from_borrowed(suite: S, public: &'key PublicKey, proof: &'proof Proof<D>) -> Self {
+    Self {
+      proof: Cow::Borrowed(proof),
+      public,
+      suite,
+    }
   }
 }
 
-impl<'a, D, S> Signer<'a, D, S>
+impl<'key, S, D> Signer<'static, 'key, S, D>
 where
-  D: Digest,
-  S: MSignature,
+  D: MerkleDigest,
 {
-  /// Signs the given `message` with `secret` and embeds the signature in `message`.
-  pub fn sign<T, K>(&self, message: &mut T, options: SignatureOptions, secret: &K) -> Result<()>
-  where
-    T: Serialize + SetSignature,
-    K: AsRef<[u8]> + ?Sized,
-  {
-    message.set_signature(Signature::new(self.name(), options));
-
-    let value: SignatureData = self.sign_data(message, secret.as_ref())?;
-
-    message.try_signature_mut()?.set_data(value);
-
-    Ok(())
-  }
-
-  /// Signs the given `message` with `secret` and returns a digital signature.
-  pub fn sign_data<T>(&self, message: &T, secret: &[u8]) -> Result<SignatureData>
-  where
-    T: Serialize,
-  {
-    let digest: _ = jcs_sha256(message)?;
-    let signature: Vec<u8> = self.suite.sign(&digest, secret)?;
-
-    let encoded_signature: String = encode_b58(&signature);
-    let encoded_proof: String = encode_b58(&MerkleKey::encode_proof(&self.proof));
-
-    Ok(SignatureData::Signature(format!(
-      "{}.{}",
-      encoded_proof, encoded_signature
-    )))
+  /// Creates a new Merkle Key Collection [`Signer`] from an owned
+  /// [`proof`][`Proof`].
+  pub fn from_owned(suite: S, public: &'key PublicKey, proof: Proof<D>) -> Self {
+    Self {
+      proof: Cow::Owned(proof),
+      public,
+      suite,
+    }
   }
 }
 
-impl<'a, D, S> SigName for Signer<'a, D, S>
+impl<'proof, 'key, S, D> SignatureName for Signer<'proof, 'key, S, D>
 where
-  D: Digest,
+  D: MerkleDigest,
 {
   fn name(&self) -> String {
-    MerkleKey::SIGNATURE_NAME.to_string()
+    MerkleKey::TYPE_SIG.to_string()
   }
 }
 
-impl<'a, D, S> SigSign for Signer<'a, D, S>
+impl<'proof, 'key, S, D> SignatureSign for Signer<'proof, 'key, S, D>
 where
-  D: Digest,
-  S: MSignature,
+  S: SignatureSign,
+  D: MerkleDigest,
 {
-  fn sign<T>(&self, data: &T, secret: &[u8]) -> Result<SignatureData>
-  where
-    T: Serialize,
-  {
-    self.sign_data(data, secret)
+  fn sign(&self, message: &dyn Serialize, secret: &[u8]) -> Result<SignatureValue> {
+    let signature: SignatureValue = self.suite.sign(message, secret)?;
+    let signature: String = signature.into_string();
+    let proof: String = encode_b58(&self.proof.encode());
+    let public: String = encode_b58(self.public.as_ref());
+
+    Ok(SignatureValue::Signature(format!("{}.{}.{}", public, proof, signature)))
   }
 }
