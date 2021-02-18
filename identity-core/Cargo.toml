@@ -1,6 +1,6 @@
 [package]
 name = "identity-core"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["IOTA Identity"]
 edition = "2018"
 description = "The core traits and types for the identity-rs library."
@@ -18,7 +18,7 @@ digest = { version = "0.9", default-features = false }
 ed25519-zebra = { version = "2.2", default-features = false }
 erased-serde = { version = "0.3", default-features = false, features = ["alloc"] }
 hex = { version = "0.4", default-features = false }
-identity-diff = { version = "=0.1.0", path = "../identity-diff", default-features = false }
+identity-diff = { version = "=0.2.0", path = "../identity-diff", default-features = false }
 rand = { version = "0.7", default-features = false, features = ["alloc", "getrandom"] }
 roaring = { version = "0.6", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }

@@ -7,15 +7,15 @@
 ## Install the library:
 
 ```bash
-$ npm install iota-identity-wasm-test
+$ npm install @iota/identity-wasm
 // or using yarn
-$ yarn add iota-identity-wasm-test
+$ yarn add @iota/identity-wasm
 ```
 
 ## NodeJS Setup
 
 ```js
-const identity = require('iota-identity-wasm-test/node')
+const identity = require('@iota/identity-wasm/node')
 
 // Generate Keypair
 const alice_keypair = identity.Key.generateEd25519()
@@ -57,9 +57,9 @@ import copy from 'rollup-plugin-copy'
 // Add the copy plugin to the `plugins` array of your rollup config:
 copy({
     targets: [{
-        src: 'node_modules/iota-identity-wasm-test/web/iota_identity_wasm_bg.wasm',
+        src: 'node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm',
         dest: 'public',
-        rename: 'iota_identity_wasm_bg.wasm'
+        rename: 'identity_wasm_bg.wasm'
     }]
 })
 ```
@@ -83,8 +83,8 @@ const CopyWebPlugin= require('copy-webpack-plugin');
 new CopyWebPlugin({
     patterns: [
         {
-          from: 'node_modules/iota-identity-wasm-test/web/iota_identity_wasm_bg.wasm',
-          to: 'iota_identity_wasm_bg.wasm'
+          from: 'node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm',
+          to: 'identity_wasm_bg.wasm'
         }
     ]
 }),
@@ -93,7 +93,7 @@ new CopyWebPlugin({
 ### Usage
 
 ```js
-import * as identity from "iota-identity-wasm-test/web/";
+import * as identity from "@iota/identity-wasm/web";
 
 
 identity.init().then(() => {
@@ -113,8 +113,8 @@ identity.init().then(() => {
     console.log("did", did);
  })();
 
-// Default path is "iota_identity_wasm_bg.wasm", but you can override it like this
- await identity.init("./static/iota_identity_wasm_bg.wasm");
+// Default path is "identity_wasm_bg.wasm", but you can override it like this
+ await identity.init("./static/identity_wasm_bg.wasm");
 ```
 
 `identity.init().then(() => {` or `await identity.init()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
