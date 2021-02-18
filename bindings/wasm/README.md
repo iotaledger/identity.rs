@@ -1,6 +1,6 @@
 # IOTA Identity WASM
 
-> This is the alpha version of the official WASM binding to IOTA's Identity API.
+> This is the alpha version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
 
 ## [API Reference](docs/api-reference.md)
 
@@ -17,21 +17,23 @@ $ yarn add @iota/identity-wasm
 ```js
 const identity = require('@iota/identity-wasm/node')
 
-// Generate Keypair
-const alice_keypair = identity.Key.generateEd25519()
-console.log("alice_keypair: ", alice_keypair)
+// Generate a new KeyPair
+const key = new identity.KeyPair(identity.KeyType.Ed25519)
 
-// Create the DIDs
-let alice_did = new identity.DID(alice_keypair)
-console.log("alice_did and IOTA address: ", alice_did.toString(), alice_did.address)
+// Create a new DID Document with the KeyPair as the default authentication method
+const doc = identity.Document.fromKeyPair(key)
 
-// Create the public key
-let alice_pubkey = identity.PubKey.generateEd25519(alice_did, alice_keypair.public)
-console.log("alice_pubkey: ", alice_pubkey);
+// Sign the DID Document with the sceret key
+doc.sign(key)
 
-// Create the DID Documents
-let alice_document = new identity.Doc(alice_pubkey)
-console.log("alice_document: ", alice_document)
+// Publish the DID Document to the IOTA Tangle
+identity.publish(doc.toJSON(), { node: "https://nodes.thetangle.org:443" })
+  .then((message) => {
+    console.log("Tangle Message Id: ", message)
+    console.log("Tangle Message Url", `https://explorer.iota.org/mainnet/transaction/${message}`)
+  }).catch((error) => {
+    console.error("Error: ", error)
+  })
 ```
 
 ## Web Setup
@@ -56,11 +58,11 @@ import copy from 'rollup-plugin-copy'
 
 // Add the copy plugin to the `plugins` array of your rollup config:
 copy({
-    targets: [{
-        src: 'node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm',
-        dest: 'public',
-        rename: 'identity_wasm_bg.wasm'
-    }]
+  targets: [{
+    src: 'node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm',
+    dest: 'public',
+    rename: 'identity_wasm_bg.wasm'
+  }]
 })
 ```
 
@@ -81,12 +83,12 @@ const CopyWebPlugin= require('copy-webpack-plugin');
 // Add the copy plugin to the `plugins` array of your webpack config:
 
 new CopyWebPlugin({
-    patterns: [
-        {
-          from: 'node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm',
-          to: 'identity_wasm_bg.wasm'
-        }
-    ]
+  patterns: [
+    {
+      from: 'node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm',
+      to: 'identity_wasm_bg.wasm'
+    }
+  ]
 }),
 ```
 
@@ -95,26 +97,25 @@ new CopyWebPlugin({
 ```js
 import * as identity from "@iota/identity-wasm/web";
 
-
 identity.init().then(() => {
-    let keyPair = identity.Key.ed25519();
-    console.log("keyPair", keyPair);
-    let did = new identity.DID(keyPair);
-    console.log("did", did);
+  const key = new identity.KeyPair(identity.KeyType.Ed25519)
+  const doc = identity.Document.fromKeyPair(key)
+  console.log("Key Pair", key)
+  console.log("DID Document: ", doc)
 });
 
 // or
 
 (async () => {
-    await identity.init()
-    let keyPair = identity.Key.ed25519();
-    console.log("keyPair", keyPair);
-    let did = new identity.DID(keyPair);
-    console.log("did", did);
- })();
+  await identity.init()
+  const key = new identity.KeyPair(identity.KeyType.Ed25519)
+  const doc = identity.Document.fromKeyPair(key)
+  console.log("Key Pair", key)
+  console.log("DID Document: ", doc)
+})()
 
 // Default path is "identity_wasm_bg.wasm", but you can override it like this
- await identity.init("./static/identity_wasm_bg.wasm");
+await identity.init("./static/identity_wasm_bg.wasm");
 ```
 
-`identity.init().then(() => {` or `await identity.init()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
+`identity.init().then(<callback>)` or `await identity.init()` is required to load the wasm file (from the server if not available, because of that it will only be slow for the first time)
