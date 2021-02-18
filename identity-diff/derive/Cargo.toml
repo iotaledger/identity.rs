@@ -1,6 +1,6 @@
 [package]
 name = "identity-derive"
-version = "0.1.0-alpha.1"
+version = "0.2.0"
 authors = ["IOTA Identity"]
 edition = "2018"
 description = "Derive `Diff` support for the identity-rs library."

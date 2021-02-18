@@ -1,6 +1,6 @@
 [package]
 name = "identity-did"
-version = "0.1.0-alpha.1"
+version = "0.2.0"
 authors = ["IOTA Identity"]
 edition = "2018"
 description = "An implementation of the Decentralized Identifiers standard."
@@ -13,6 +13,6 @@ homepage = "https://www.iota.org"
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
-identity-core = { version = "=0.1.0-alpha.1", path = "../identity-core" }
+identity-core = { version = "=0.2.0", path = "../identity-core" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 thiserror = { version = "1.0", default-features = false }

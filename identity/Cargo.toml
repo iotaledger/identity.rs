@@ -1,6 +1,6 @@
 [package]
 name = "identity"
-version = "0.1.0-alpha.1"
+version = "0.2.0"
 authors = ["IOTA Identity"]
 edition = "2018"
 description = "Tools for working with Self-sovereign Identity."
@@ -11,10 +11,10 @@ keywords = ["iota", "tangle", "identity"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-identity-core = { version = "=0.1.0-alpha.1", path = "../identity-core" }
-identity-credential = { version = "=0.1.0-alpha.1", path = "../identity-credential", optional = true }
-identity-did = { version = "=0.1.0-alpha.1", path = "../identity-did", optional = true }
-identity-iota = { version = "=0.1.0-alpha.1", path = "../identity-iota", optional = true }
+identity-core = { version = "=0.2.0", path = "../identity-core" }
+identity-credential = { version = "=0.2.0", path = "../identity-credential", optional = true }
+identity-did = { version = "=0.2.0", path = "../identity-did", optional = true }
+identity-iota = { version = "=0.2.0", path = "../identity-iota", optional = true }
 
 [features]
 default = ["identifier", "credential", "iota"]
