@@ -1,3 +1,0 @@
-# IOTA Identity Libraries
-
-- WASM

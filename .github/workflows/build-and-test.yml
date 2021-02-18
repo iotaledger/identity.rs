@@ -20,12 +20,12 @@ jobs:
       matrix:
         project:
           [
-            identity_core,
-            identity_crypto,
-            identity_derive,
-            identity_diff,
-            identity_iota,
-            identity_proof,
+            identity,
+            identity-core,
+            identity-credential,
+            identity-did,
+            identity-diff,
+            identity-iota,
           ]
         os: [ubuntu-latest, windows-latest]
 
@@ -44,7 +44,7 @@ jobs:
 
       - name: Get current date
         if: matrix.os == 'windows-latest'
-        run: echo "CURRENT_DATE=$(Get-Date -Format "yyyy-MM-dd")" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+        run: echo "CURRENT_DATE=$(Get-Date -Format "yyyy-MM-dd")" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Cache cargo registry
         uses: actions/cache@v2
@@ -87,3 +87,43 @@ jobs:
         with:
           command: test
           args: --manifest-path=${{ matrix.project }}/Cargo.toml --all --release
+
+  build-and-test-wasm:
+    runs-on: ubuntu-latest
+    strategy:
+        fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install WASM toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+
+      - name: Install wasm-pack
+        run: yarn global add wasm-pack
+
+      - name: Install JS dependencies
+        run: yarn
+        working-directory: bindings/wasm
+
+      - name: Build WASM bindings
+        run: yarn build
+        working-directory: bindings/wasm
+
+      # - name: Run tests
+      #   run: yarn test
+      #   working-directory: bindings/wasm

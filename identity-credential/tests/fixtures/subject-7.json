@@ -1,0 +1,8 @@
+{
+  "id": "http://example.com/credentials/245",
+  "currentStatus": "Disputed",
+  "statusReason": {
+    "value": "Address is out of date.",
+    "lang": "en"
+  }
+}
