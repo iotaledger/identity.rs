@@ -20,3 +20,8 @@ path = "diff_chain.rs"
 [[example]]
 name = "resolution"
 path = "resolution.rs"
+
+
+[[example]]
+name = "create_did"
+path = "create_did.rs"
