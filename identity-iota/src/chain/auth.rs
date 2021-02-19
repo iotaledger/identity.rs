@@ -1,10 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::fmt::Display;
+use core::fmt::Error as FmtError;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
 use core::mem;
+use identity_core::convert::ToJson;
 
-use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::did::Document;
+use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Message;
@@ -12,21 +17,22 @@ use crate::tangle::MessageId;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AuthChain {
-  pub(crate) current: IotaDocument,
-  pub(crate) history: Option<Vec<IotaDocument>>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub(crate) history: Option<Vec<Document>>,
+  pub(crate) current: Document,
 }
 
 impl AuthChain {
   /// Constructs a new `AuthChain` from a slice of `Message`s.
-  pub fn try_from_messages(did: &IotaDID, messages: &[Message]) -> Result<Self> {
-    let mut index: MessageIndex<IotaDocument> = messages
+  pub fn try_from_messages(did: &DID, messages: &[Message]) -> Result<Self> {
+    let mut index: MessageIndex<Document> = messages
       .iter()
       .flat_map(|message| message.try_extract_document(did))
       .collect();
 
-    let current: IotaDocument =
+    let current: Document =
       index
         .remove_where(&MessageId::NONE, |doc| doc.verify().is_ok())
         .ok_or(Error::ChainError {
@@ -46,8 +52,8 @@ impl AuthChain {
     Ok(this)
   }
 
-  /// Creates a new `AuthChain` with the given `IotaDocument` as the latest.
-  pub fn new(current: IotaDocument) -> Result<Self> {
+  /// Creates a new `AuthChain` with the given `Document` as the latest.
+  pub fn new(current: Document) -> Result<Self> {
     if current.verify().is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
@@ -64,12 +70,12 @@ impl AuthChain {
   }
 
   /// Returns a reference to the latest document in the auth chain.
-  pub fn current(&self) -> &IotaDocument {
+  pub fn current(&self) -> &Document {
     &self.current
   }
 
   /// Returns a mutable reference to the latest document in the auth chain.
-  pub fn current_mut(&mut self) -> &mut IotaDocument {
+  pub fn current_mut(&mut self) -> &mut Document {
     &mut self.current
   }
 
@@ -84,7 +90,7 @@ impl AuthChain {
   ///
   /// Fails if the document signature is invalid or the Tangle message
   /// references within the document are invalid.
-  pub fn try_push(&mut self, document: IotaDocument) -> Result<()> {
+  pub fn try_push(&mut self, document: Document) -> Result<()> {
     self.check_validity(&document)?;
 
     self
@@ -95,17 +101,17 @@ impl AuthChain {
     Ok(())
   }
 
-  /// Returns `true` if the `IotaDocument` can be added to the auth chain.
-  pub fn is_valid(&self, document: &IotaDocument) -> bool {
+  /// Returns `true` if the `Document` can be added to the auth chain.
+  pub fn is_valid(&self, document: &Document) -> bool {
     self.check_validity(document).is_ok()
   }
 
-  /// Checks if the `IotaDocument` can be added to the auth chain.
+  /// Checks if the `Document` can be added to the auth chain.
   ///
   /// # Errors
   ///
-  /// Fails if the `IotaDocument` is not a valid addition.
-  pub fn check_validity(&self, document: &IotaDocument) -> Result<()> {
+  /// Fails if the `Document` is not a valid addition.
+  pub fn check_validity(&self, document: &Document) -> Result<()> {
     if self.current.verify_data(document).is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
@@ -131,5 +137,15 @@ impl AuthChain {
     }
 
     Ok(())
+  }
+}
+
+impl Display for AuthChain {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    if f.alternate() {
+      f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
+    } else {
+      f.write_str(&self.to_json().map_err(|_| FmtError)?)
+    }
   }
 }

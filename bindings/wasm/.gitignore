@@ -8,7 +8,4 @@ web
 node
 pkg
 
-package-lock.json
-yarn.lock
-
 .DS_STORE

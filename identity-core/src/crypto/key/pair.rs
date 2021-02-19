@@ -3,27 +3,39 @@
 
 use zeroize::Zeroize;
 
+use crate::crypto::KeyRef;
+use crate::crypto::KeyType;
 use crate::crypto::PublicKey;
 use crate::crypto::SecretKey;
 use crate::error::Result;
 use crate::utils::generate_ed25519;
 
-/// A convenience for storing a pair of cryptographic keys
+/// A convenient type for representing a pair of cryptographic keys.
 #[derive(Clone, Debug)]
 pub struct KeyPair {
+  type_: KeyType,
   public: PublicKey,
   secret: SecretKey,
 }
 
 impl KeyPair {
-  /// Creates a new Ed25519 [`KeyPair`].
+  /// Creates a new [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`].
   pub fn new_ed25519() -> Result<Self> {
-    generate_ed25519()
+    Self::new(KeyType::Ed25519)
   }
 
-  /// Creates a new [`KeyPair`] from the given keys.
-  pub const fn new(public: PublicKey, secret: SecretKey) -> Self {
-    Self { public, secret }
+  /// Creates a new [`KeyPair`] with the given [`key type`][`KeyType`].
+  pub fn new(type_: KeyType) -> Result<Self> {
+    let (public, secret): (PublicKey, SecretKey) = match type_ {
+      KeyType::Ed25519 => generate_ed25519()?,
+    };
+
+    Ok(Self { type_, public, secret })
+  }
+
+  /// Returns the [`type`][`KeyType`] of the `KeyPair` object.
+  pub const fn type_(&self) -> KeyType {
+    self.type_
   }
 
   /// Returns a reference to the [`PublicKey`] object.
@@ -31,9 +43,19 @@ impl KeyPair {
     &self.public
   }
 
+  /// Returns the public key as a [`KeyRef`] object.
+  pub fn public_ref(&self) -> KeyRef<'_> {
+    KeyRef::new(self.type_, self.public.as_ref())
+  }
+
   /// Returns a reference to the [`SecretKey`] object.
   pub const fn secret(&self) -> &SecretKey {
     &self.secret
+  }
+
+  /// Returns the secret key as a [`KeyRef`] object.
+  pub fn secret_ref(&self) -> KeyRef<'_> {
+    KeyRef::new(self.type_, self.secret.as_ref())
   }
 }
 
@@ -48,5 +70,28 @@ impl Zeroize for KeyPair {
   fn zeroize(&mut self) {
     self.public.zeroize();
     self.secret.zeroize();
+  }
+}
+
+impl From<(KeyType, PublicKey, SecretKey)> for KeyPair {
+  fn from(other: (KeyType, PublicKey, SecretKey)) -> Self {
+    Self {
+      type_: other.0,
+      public: other.1,
+      secret: other.2,
+    }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_new_ed25519() {
+    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    assert_eq!(keypair.type_(), KeyType::Ed25519);
+    assert_eq!(keypair.public().as_ref().len(), 32);
+    assert_eq!(keypair.secret().as_ref().len(), 32);
   }
 }

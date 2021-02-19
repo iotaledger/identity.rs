@@ -1,6 +1,6 @@
 [package]
 name = "identity"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["IOTA Identity"]
 edition = "2018"
 description = "Tools for working with Self-sovereign Identity."
@@ -12,10 +12,10 @@ homepage = "https://www.iota.org"
 documentation = "https://identity.docs.iota.org"
 
 [dependencies]
-identity-core = { version = "=0.1.0", path = "../identity-core" }
-identity-credential = { version = "=0.1.0", path = "../identity-credential", optional = true }
-identity-did = { version = "=0.1.0", path = "../identity-did", optional = true }
-identity-iota = { version = "=0.1.0", path = "../identity-iota", optional = true }
+identity-core = { version = "=0.2.0", path = "../identity-core" }
+identity-credential = { version = "=0.2.0", path = "../identity-credential", optional = true }
+identity-did = { version = "=0.2.0", path = "../identity-did", optional = true }
+identity-iota = { version = "=0.2.0", path = "../identity-iota", optional = true }
 
 [features]
 default = ["identifier", "credential", "iota"]
@@ -31,6 +31,6 @@ iota = ["identifier", "credential", "identity-iota"]
 
 [package.metadata.docs.rs]
 # To build locally:
-# RUSTDOCFLAGS="--cfg doc_cfg" cargo +nightly doc --all-features --no-deps --open
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --open
 all-features = true
-rustdoc-args = ["--cfg", "doc_cfg"]
+rustdoc-args = ["--cfg", "docsrs"]

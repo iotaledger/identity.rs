@@ -1,22 +1,23 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use serde::Serialize;
+use erased_serde::serialize_trait_object;
+use erased_serde::Serialize;
 
 use crate::crypto::Signature;
-use crate::crypto::SignatureData;
+use crate::crypto::SignatureValue;
 use crate::error::Error;
 use crate::error::Result;
 
 /// A trait for signature suites identified by a particular name.
-pub trait SigName {
-  /// Returns the name identifying this signature suite.
+pub trait SignatureName {
+  /// Returns a unique identifier for the signatures created by this suite.
   fn name(&self) -> String;
 }
 
-impl<'a, T> SigName for &'a T
+impl<T: ?Sized> SignatureName for Box<T>
 where
-  T: SigName,
+  T: SignatureName,
 {
   fn name(&self) -> String {
     (**self).name()
@@ -27,47 +28,96 @@ where
 // =============================================================================
 
 /// A trait for general-purpose signature creation
-pub trait SigSign {
+pub trait SignatureSign: SignatureName {
   /// Signs the given `data` with `secret` and returns a digital signature.
-  fn sign<T>(&self, data: &T, secret: &[u8]) -> Result<SignatureData>
-  where
-    T: Serialize;
-}
+  fn sign(&self, data: &dyn Serialize, secret: &[u8]) -> Result<SignatureValue>;
 
-impl<'a, T> SigSign for &'a T
-where
-  T: SigSign,
-{
-  fn sign<U>(&self, data: &U, secret: &[u8]) -> Result<SignatureData>
-  where
-    U: Serialize,
-  {
-    (**self).sign(data, secret)
+  #[doc(hidden)]
+  fn __sign(&self, data: &mut dyn __TargetSign, method: String, secret: &[u8]) -> Result<()> {
+    let signature: Signature = Signature::new(self.name(), method);
+
+    data.set_signature(signature);
+
+    let value: SignatureValue = self.sign(&data, secret)?;
+    let write: &mut Signature = data.try_signature_mut()?;
+
+    write.set_value(value);
+
+    Ok(())
   }
 }
+
+macro_rules! impl_sign_deref {
+  ($($tt:tt)+) => {
+    impl $($tt)+ {
+      fn sign(&self, data: &dyn Serialize, secret: &[u8]) -> Result<SignatureValue> {
+        (**self).sign(data, secret)
+      }
+    }
+  };
+}
+
+impl_sign_deref!(<'a> SignatureSign for Box<dyn SignatureSign + 'a>);
+impl_sign_deref!(<'a> SignatureSign for Box<dyn SignatureSign + Send + 'a>);
+impl_sign_deref!(<'a> SignatureSign for Box<dyn SignatureSign + Sync + 'a>);
+impl_sign_deref!(<'a> SignatureSign for Box<dyn SignatureSign + Send + Sync + 'a>);
+
+#[doc(hidden)]
+pub trait __TargetSign: Serialize + SetSignature {}
+
+#[doc(hidden)]
+impl<T> __TargetSign for T where T: Serialize + SetSignature {}
+
+serialize_trait_object!(__TargetSign);
 
 // =============================================================================
 // =============================================================================
 
 /// A trait for general-purpose signature verification
-pub trait SigVerify {
+pub trait SignatureVerify: SignatureName {
   /// Verifies the authenticity of `data` using `signature` and `public`.
-  fn verify<T>(&self, data: &T, signature: &SignatureData, public: &[u8]) -> Result<()>
-  where
-    T: Serialize;
-}
+  fn verify(&self, data: &dyn Serialize, signature: &SignatureValue, public: &[u8]) -> Result<()>;
 
-impl<'a, T> SigVerify for &'a T
-where
-  T: SigVerify,
-{
-  fn verify<U>(&self, data: &U, signature: &SignatureData, public: &[u8]) -> Result<()>
-  where
-    U: Serialize,
-  {
-    (**self).verify(data, signature, public)
+  #[doc(hidden)]
+  fn __verify(&self, data: &dyn __TargetVerify, public: &[u8]) -> Result<()> {
+    let signature: &Signature = data.try_signature()?;
+
+    if signature.type_() != self.name() {
+      return Err(Error::InvalidProofValue);
+    }
+
+    signature.hide_value();
+
+    self.verify(&data, signature.value(), public)?;
+
+    signature.show_value();
+
+    Ok(())
   }
 }
+
+macro_rules! impl_verify_deref {
+  ($($tt:tt)+) => {
+    impl $($tt)+ {
+      fn verify(&self, data: &dyn Serialize, signature: &SignatureValue, public: &[u8]) -> Result<()> {
+        (**self).verify(data, signature, public)
+      }
+    }
+  };
+}
+
+impl_verify_deref!(<'a> SignatureVerify for Box<dyn SignatureVerify + 'a>);
+impl_verify_deref!(<'a> SignatureVerify for Box<dyn SignatureVerify + Send + 'a>);
+impl_verify_deref!(<'a> SignatureVerify for Box<dyn SignatureVerify + Sync + 'a>);
+impl_verify_deref!(<'a> SignatureVerify for Box<dyn SignatureVerify + Send + Sync + 'a>);
+
+#[doc(hidden)]
+pub trait __TargetVerify: Serialize + TrySignature {}
+
+#[doc(hidden)]
+impl<T> __TargetVerify for T where T: Serialize + TrySignature {}
+
+serialize_trait_object!(__TargetVerify);
 
 // =============================================================================
 // =============================================================================

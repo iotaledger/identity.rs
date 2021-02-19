@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::core::decode_b58;
-use identity::iota::IotaDID;
+use identity::iota::DID as IotaDID;
 use wasm_bindgen::prelude::*;
 
-use crate::js_err;
-use crate::key::Key;
+use crate::crypto::KeyPair;
+use crate::utils::err;
 
 /// @typicalname did
 #[wasm_bindgen(inspectable)]
@@ -15,26 +15,30 @@ pub struct DID(pub(crate) IotaDID);
 
 #[wasm_bindgen]
 impl DID {
-  fn create(pubkey: &[u8], network: Option<&str>) -> Result<DID, JsValue> {
-    IotaDID::with_network(pubkey, network).map_err(js_err).map(Self)
-  }
-
-  /// Creates a new `DID` from a `Key` object.
+  /// Creates a new `DID` from a `KeyPair` object.
   #[wasm_bindgen(constructor)]
-  pub fn new(key: &Key, network: Option<String>) -> Result<DID, JsValue> {
-    Self::create(key.0.public().as_ref(), network.as_deref())
+  pub fn new(key: &KeyPair, network: Option<String>, shard: Option<String>) -> Result<DID, JsValue> {
+    let public: &[u8] = key.0.public().as_ref();
+    let network: Option<&str> = network.as_deref();
+    let shard: Option<&str> = shard.as_deref();
+
+    IotaDID::from_components(public, network, shard).map_err(err).map(Self)
   }
 
   /// Creates a new `DID` from a base58-encoded public key.
-  #[wasm_bindgen(js_name = fromBase58Key)]
-  pub fn from_base58_key(key: &str, network: Option<String>) -> Result<DID, JsValue> {
-    Self::create(&decode_b58(key).map_err(js_err)?, network.as_deref())
+  #[wasm_bindgen(js_name = fromBase58)]
+  pub fn from_base58(key: &str, network: Option<String>, shard: Option<String>) -> Result<DID, JsValue> {
+    let public: Vec<u8> = decode_b58(key).map_err(err)?;
+    let network: Option<&str> = network.as_deref();
+    let shard: Option<&str> = shard.as_deref();
+
+    IotaDID::from_components(&public, network, shard).map_err(err).map(Self)
   }
 
   /// Parses a `DID` from the input string.
   #[wasm_bindgen]
-  pub fn parse(input: String) -> Result<DID, JsValue> {
-    IotaDID::parse(input).map_err(js_err).map(Self)
+  pub fn parse(input: &str) -> Result<DID, JsValue> {
+    IotaDID::parse(input).map_err(err).map(Self)
   }
 
   /// Returns the IOTA tangle network of the `DID`.
@@ -52,7 +56,7 @@ impl DID {
   /// Returns the unique tag of the `DID`.
   #[wasm_bindgen(getter)]
   pub fn tag(&self) -> String {
-    self.0.method_id().into()
+    self.0.tag().into()
   }
 
   /// Returns the IOTA tangle address of the `DID`.

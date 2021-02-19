@@ -6,6 +6,7 @@ use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::iter::once;
+use identity_core::common::Object;
 use identity_core::convert::ToJson;
 use serde::Serialize;
 
@@ -14,11 +15,12 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::verification::MethodBuilder;
 use crate::verification::MethodData;
+use crate::verification::MethodRef;
 use crate::verification::MethodType;
 
 /// A DID Document Verification Method
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct Method<T = ()> {
+pub struct Method<T = Object> {
   pub(crate) id: DID,
   pub(crate) controller: DID,
   #[serde(rename = "type")]
@@ -40,10 +42,10 @@ impl<T> Method<T> {
   /// Returns a new `Method` based on the `MethodBuilder` configuration.
   pub fn from_builder(builder: MethodBuilder<T>) -> Result<Self> {
     Ok(Method {
-      id: builder.id.ok_or(Error::InvalidMethodId)?,
-      controller: builder.controller.ok_or(Error::InvalidMethodController)?,
-      key_type: builder.key_type.ok_or(Error::InvalidMethodType)?,
-      key_data: builder.key_data.ok_or(Error::InvalidMethodData)?,
+      id: builder.id.ok_or(Error::BuilderInvalidMethodId)?,
+      controller: builder.controller.ok_or(Error::BuilderInvalidMethodController)?,
+      key_type: builder.key_type.ok_or(Error::BuilderInvalidMethodType)?,
+      key_data: builder.key_data.ok_or(Error::BuilderInvalidMethodData)?,
       properties: builder.properties,
     })
   }
@@ -102,8 +104,13 @@ impl<T> Method<T> {
     self
       .id
       .fragment()
-      .ok_or(Error::InvalidMethodIdFragment)
+      .ok_or(Error::InvalidMethodFragment)
       .map(|fragment| once('#').chain(fragment.chars()).collect())
+  }
+
+  /// Creates a new [`MethodRef`] from `self`.
+  pub fn into_ref(self) -> MethodRef<T> {
+    MethodRef::Embed(self)
   }
 }
 

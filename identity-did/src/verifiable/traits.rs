@@ -1,27 +1,38 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::Error;
+use identity_core::common::BitSet;
+use identity_core::common::Object;
+use identity_core::convert::FromJson;
+
 use crate::error::Result;
-use crate::verification::MethodQuery;
-use crate::verification::MethodWrap;
+use crate::verification::Method;
 
-// =============================================================================
-// =============================================================================
-
-pub trait ResolveMethod<M> {
-  fn resolve_method(&self, query: MethodQuery<'_>) -> Option<MethodWrap<'_, M>>;
-
-  fn try_resolve_method(&self, query: MethodQuery<'_>) -> Result<MethodWrap<'_, M>> {
-    self.resolve_method(query).ok_or(Error::QueryMethodNotFound)
+pub trait Revocation {
+  /// Returns a [`set`][`BitSet`] of Merkle Key Collection revocation flags.
+  fn revocation(&self) -> Result<Option<BitSet>> {
+    Ok(None)
   }
 }
 
-impl<'a, T, M> ResolveMethod<M> for &'a T
+impl Revocation for () {}
+
+impl Revocation for Object {
+  fn revocation(&self) -> Result<Option<BitSet>> {
+    self
+      .get("revocation")
+      .cloned()
+      .map(BitSet::from_json_value)
+      .transpose()
+      .map_err(Into::into)
+  }
+}
+
+impl<T> Revocation for Method<T>
 where
-  T: ResolveMethod<M>,
+  T: Revocation,
 {
-  fn resolve_method(&self, query: MethodQuery<'_>) -> Option<MethodWrap<'_, M>> {
-    (**self).resolve_method(query)
+  fn revocation(&self) -> Result<Option<BitSet>> {
+    self.properties().revocation()
   }
 }

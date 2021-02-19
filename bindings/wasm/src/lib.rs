@@ -6,22 +6,21 @@ extern crate serde;
 
 use wasm_bindgen::prelude::*;
 
+#[macro_use]
+mod macros;
+mod utils;
+
+pub mod credential;
+pub mod crypto;
 pub mod did;
-pub mod doc;
+pub mod document;
 pub mod iota;
-pub mod key;
-pub mod pubkey;
-pub mod vc;
-pub mod vp;
+pub mod method;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]
 pub fn start() -> Result<(), JsValue> {
   console_error_panic_hook::set_once();
-  Ok(())
-}
 
-/// Convert errors so they are readable in JS
-pub fn js_err<T: ToString>(error: T) -> JsValue {
-  error.to_string().into()
+  Ok(())
 }

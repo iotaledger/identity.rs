@@ -17,9 +17,9 @@ use crate::chain::DocumentChain;
 use crate::client::ClientBuilder;
 use crate::client::Network;
 use crate::client::TxnPrinter;
+use crate::did::Document;
 use crate::did::DocumentDiff;
-use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Message;
@@ -110,11 +110,12 @@ impl Client {
     txn_hash_trytes(transaction)
   }
 
-  /// Publishes an `IotaDocument` to the Tangle.
+  /// Publishes an DID Document to the Tangle; returns the `MessageId` of
+  /// the bundled transaction.
   ///
   /// Note: The only validation performed is to ensure the correct Tangle
   /// network is selected.
-  pub async fn publish_document(&self, document: &IotaDocument) -> Result<BundledTransaction> {
+  pub async fn publish_document(&self, document: &Document) -> Result<MessageId> {
     trace!("Publish Document: {}", document.id());
     trace!("Tangle Address: {}", document.id().address());
 
@@ -122,31 +123,34 @@ impl Client {
 
     let address: String = document.id().address();
     let transfer: Transfer = create_transfer(&address, document)?;
+    let bundled: BundledTransaction = self.send_transfer(transfer).await?;
 
-    self.send_transfer(transfer).await
+    Ok(txn_hash_trytes(&bundled).into())
   }
 
-  /// Publishes a `DocumentDiff` to the Tangle.
+  /// Publishes a `DocumentDiff` to the Tangle; returns the `MessageId` of
+  /// the bundled transaction.
   ///
   /// Note: The only validation performed is to ensure the correct Tangle
   /// network is selected.
-  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<BundledTransaction> {
+  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<MessageId> {
     trace!("Publish Diff: {}", diff.id());
-    trace!("Tangle Address: {}", IotaDocument::diff_address(message_id)?);
+    trace!("Tangle Address: {}", Document::diff_address(message_id)?);
 
     self.check_network(diff.id())?;
 
-    let address: String = IotaDocument::diff_address(message_id)?;
+    let address: String = Document::diff_address(message_id)?;
     let transfer: Transfer = create_transfer(&address, diff)?;
+    let bundled: BundledTransaction = self.send_transfer(transfer).await?;
 
-    self.send_transfer(transfer).await
+    Ok(txn_hash_trytes(&bundled).into())
   }
 
-  pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
+  pub async fn read_document(&self, did: &DID) -> Result<Document> {
     self.read_document_chain(did).await.and_then(DocumentChain::fold)
   }
 
-  pub async fn read_document_chain(&self, did: &IotaDID) -> Result<DocumentChain> {
+  pub async fn read_document_chain(&self, did: &DID) -> Result<DocumentChain> {
     trace!("Read Document Chain: {}", did);
     trace!("Auth Chain Address: {}", did.address());
 
@@ -160,7 +164,7 @@ impl Client {
       DiffChain::new()
     } else {
       // Fetch all messages for the diff chain.
-      let address: String = IotaDocument::diff_address(auth.current_message_id())?;
+      let address: String = Document::diff_address(auth.current_message_id())?;
       let messages: Vec<Message> = self.read_messages(&address).await?;
 
       trace!("Tangle Messages: {:?}", messages);
@@ -171,6 +175,7 @@ impl Client {
     DocumentChain::with_diff_chain(auth, diff)
   }
 
+  #[doc(hidden)]
   pub async fn read_messages(&self, address: &str) -> Result<Vec<Message>> {
     let address: Address = create_address_from_trits(address)?;
 
@@ -206,7 +211,7 @@ impl Client {
       .collect()
   }
 
-  pub async fn send_transfer(&self, transfer: Transfer) -> Result<BundledTransaction> {
+  pub(crate) async fn send_transfer(&self, transfer: Transfer) -> Result<BundledTransaction> {
     trace!("Sending Transfer: {:?}", transfer.message);
 
     self
@@ -220,7 +225,7 @@ impl Client {
       .ok_or(Error::InvalidBundleTail)
   }
 
-  pub fn check_network(&self, did: &IotaDID) -> Result<()> {
+  pub(crate) fn check_network(&self, did: &DID) -> Result<()> {
     if !self.network.matches_did(did) {
       return Err(Error::InvalidDIDNetwork);
     }

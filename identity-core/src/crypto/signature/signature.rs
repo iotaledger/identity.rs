@@ -1,37 +1,39 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::cell::Cell;
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
-use core::ops::Deref;
-use core::ops::DerefMut;
+use serde::__private::ser::FlatMapSerializer;
+use serde::ser::SerializeMap;
+use serde::ser::Serializer;
 use serde::Serialize;
 
-use crate::crypto::SigVerify;
-use crate::crypto::SignatureData;
-use crate::crypto::SignatureOptions;
 use crate::crypto::SignatureValue;
 use crate::error::Result;
 
 /// A DID Document digital signature.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize)]
 pub struct Signature {
   #[serde(rename = "type")]
   type_: String,
-  #[serde(flatten, skip_serializing_if = "SignatureValue::is_none")]
-  data: SignatureValue,
   #[serde(flatten)]
-  options: SignatureOptions,
+  value: SignatureValue,
+  #[serde(rename = "verificationMethod")]
+  method: String,
+  #[serde(default, skip_deserializing)]
+  hidden: Cell<bool>,
 }
 
 impl Signature {
-  /// Creates a new [`Signature`].
-  pub fn new(type_: impl Into<String>, options: SignatureOptions) -> Self {
+  /// Creates a new [`Signature`] instance with the given `type_` and `method`.
+  pub fn new(type_: impl Into<String>, method: impl Into<String>) -> Self {
     Self {
       type_: type_.into(),
-      options,
-      data: SignatureValue::new(),
+      value: SignatureValue::None,
+      method: method.into(),
+      hidden: Cell::new(false),
     }
   }
 
@@ -40,57 +42,43 @@ impl Signature {
     &*self.type_
   }
 
-  /// Returns a reference to the signature `data`.
-  pub const fn data(&self) -> &SignatureValue {
-    &self.data
+  /// Returns the identifier of the DID method used to create this signature.
+  pub fn verification_method(&self) -> &str {
+    &*self.method
   }
 
-  /// Returns a mutable reference to the signature `data`.
-  pub fn data_mut(&mut self) -> &mut SignatureValue {
-    &mut self.data
+  /// Returns a reference to the signature `value`.
+  pub const fn value(&self) -> &SignatureValue {
+    &self.value
   }
 
-  /// Sets the signature `data` to the given `value`.
-  pub fn set_data(&mut self, value: SignatureData) {
-    self.data.set(value);
+  /// Returns a mutable reference to the signature `value`.
+  pub fn value_mut(&mut self) -> &mut SignatureValue {
+    &mut self.value
+  }
+
+  /// Sets the [`SignatureValue`] of the object.
+  pub fn set_value(&mut self, value: SignatureValue) {
+    self.value = value;
   }
 
   /// Clears the current signature value - all other properties are unchanged.
-  pub fn clear_data(&mut self) {
-    self.data.clear();
+  pub fn clear_value(&mut self) {
+    self.value = SignatureValue::None;
   }
 
   /// Flag the signature value so it is ignored during serialization
   pub fn hide_value(&self) {
-    self.data.hide();
+    self.hidden.set(true);
   }
 
   /// Restore the signature value state so serialization behaves normally
   pub fn show_value(&self) {
-    self.data.show();
+    self.hidden.set(false);
   }
 
-  /// Verifies `self` with the given signature `suite` and `public` key.
-  pub fn verify<S, M>(&self, suite: &S, message: &M, public: &[u8]) -> Result<()>
-  where
-    S: SigVerify,
-    M: Serialize,
-  {
-    self.verifiable(|data| suite.verify(message, data, public))
-  }
-
-  #[doc(hidden)]
-  pub fn verifiable<T, F>(&self, f: F) -> T
-  where
-    F: FnOnce(&SignatureValue) -> T,
-  {
-    self.data.hide();
-
-    let output: T = f(self.data());
-
-    self.data.show();
-
-    output
+  fn __hide(&self) -> bool {
+    self.hidden.get() || self.value.is_none()
   }
 }
 
@@ -98,26 +86,32 @@ impl Debug for Signature {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     f.debug_struct("Signature")
       .field("type_", &self.type_)
-      .field("data", &self.data)
-      .field("verification_method", &self.options.verification_method)
-      .field("proof_purpose", &self.options.proof_purpose)
-      .field("created", &self.options.created)
-      .field("nonce", &self.options.nonce)
-      .field("domain", &self.options.domain)
+      .field("value", &self.value)
+      .field("method", &self.method)
       .finish()
   }
 }
 
-impl Deref for Signature {
-  type Target = SignatureOptions;
+impl Serialize for Signature {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let hide: bool = self.__hide();
 
-  fn deref(&self) -> &Self::Target {
-    &self.options
-  }
-}
+    let mut state: S::SerializeMap = if hide {
+      serializer.serialize_map(Some(1 + 5))?
+    } else {
+      serializer.serialize_map(Some(2 + 5))?
+    };
 
-impl DerefMut for Signature {
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.options
+    state.serialize_entry("type", &self.type_)?;
+    state.serialize_entry("verificationMethod", &self.method)?;
+
+    if !hide {
+      Serialize::serialize(&self.value, FlatMapSerializer(&mut state))?;
+    }
+
+    state.end()
   }
 }

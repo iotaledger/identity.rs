@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Object;
 use identity_core::common::Url;
 
 use crate::did::DID;
@@ -13,7 +14,7 @@ use crate::verification::MethodRef;
 
 /// A `DocumentBuilder` is used to generate a customized `Document`.
 #[derive(Clone, Debug)]
-pub struct DocumentBuilder<T = (), U = (), V = ()> {
+pub struct DocumentBuilder<T = Object, U = Object, V = Object> {
   pub(crate) id: Option<DID>,
   pub(crate) controller: Option<DID>,
   pub(crate) also_known_as: Vec<Url>,

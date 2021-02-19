@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! The IOTA Identity Library
+
 #![warn(
   rust_2018_idioms,
   unreachable_pub,
@@ -28,4 +30,8 @@ pub mod credential;
 pub mod did;
 pub mod error;
 pub mod tangle;
-pub mod utils;
+
+pub(crate) mod utils;
+
+pub use self::error::Error;
+pub use self::error::Result;

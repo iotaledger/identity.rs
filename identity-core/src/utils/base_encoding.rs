@@ -38,3 +38,19 @@ where
 {
   hex::encode(data)
 }
+
+/// Decodes the given `data` as base64.
+pub fn decode_b64<T>(data: &T) -> Result<Vec<u8>>
+where
+  T: AsRef<[u8]> + ?Sized,
+{
+  base64::decode_config(data.as_ref(), base64::URL_SAFE).map_err(Error::DecodeBase64)
+}
+
+/// Encodes the given `data` as base64.
+pub fn encode_b64<T>(data: &T) -> String
+where
+  T: AsRef<[u8]> + ?Sized,
+{
+  base64::encode_config(data.as_ref(), base64::URL_SAFE)
+}

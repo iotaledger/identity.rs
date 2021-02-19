@@ -6,6 +6,7 @@
 //!
 //! cargo run --example diff_chain
 
+use identity::core::Timestamp;
 use identity::crypto::KeyPair;
 use identity::did::MethodBuilder;
 use identity::did::MethodData;
@@ -13,20 +14,17 @@ use identity::did::MethodRef;
 use identity::did::MethodType;
 use identity::iota::AuthChain;
 use identity::iota::Client;
-use identity::iota::ClientBuilder;
+use identity::iota::Document;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
-use identity::iota::IotaDocument;
 use identity::iota::MessageId;
-use identity::iota::Network;
 use identity::iota::Result;
 use std::thread::sleep;
 use std::time::Duration;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-  let client: Client = ClientBuilder::new().network(Network::Comnet).build()?;
-  let network: &str = client.network().as_str();
+  let client: Client = Client::new()?;
 
   // Keep track of the chain state locally, for reference
   let mut chain: DocumentChain;
@@ -37,15 +35,16 @@ async fn main() -> Result<()> {
   // =========================================================================
 
   {
-    let (mut document, keypair): (IotaDocument, KeyPair) = IotaDocument::builder().did_network(network).build()?;
+    let keypair: KeyPair = KeyPair::new_ed25519()?;
+    let mut document: Document = Document::from_keypair(&keypair)?;
 
     document.sign(keypair.secret())?;
-    document.publish_with_client(&client).await?;
+    document.publish(&client).await?;
 
     chain = DocumentChain::new(AuthChain::new(document)?);
     keys.push(keypair);
 
-    println!("Chain (1) > {:#?}", chain);
+    println!("Chain (1) > {:#}", chain);
     println!();
   }
 
@@ -56,7 +55,7 @@ async fn main() -> Result<()> {
   sleep(Duration::from_secs(1));
 
   {
-    let mut new: IotaDocument = chain.current().clone();
+    let mut new: Document = chain.current().clone();
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
 
     let authentication: MethodRef = MethodBuilder::default()
@@ -72,16 +71,16 @@ async fn main() -> Result<()> {
       new.as_document_mut().authentication_mut().append(authentication.into());
     }
 
-    new.set_updated_now();
+    new.set_updated(Timestamp::now());
     new.set_previous_message_id(chain.auth_message_id().clone());
 
     chain.current().sign_data(&mut new, keys[0].secret())?;
-    new.publish_with_client(&client).await?;
+    new.publish(&client).await?;
 
     keys.push(keypair);
     chain.try_push_auth(new)?;
 
-    println!("Chain (2) > {:#?}", chain);
+    println!("Chain (2) > {:#}", chain);
     println!();
   }
 
@@ -92,21 +91,21 @@ async fn main() -> Result<()> {
   sleep(Duration::from_secs(1));
 
   {
-    let new: IotaDocument = {
-      let mut this: IotaDocument = chain.current().clone();
+    let new: Document = {
+      let mut this: Document = chain.current().clone();
       this.properties_mut().insert("foo".into(), 123.into());
       this.properties_mut().insert("bar".into(), 456.into());
-      this.set_updated_now();
+      this.set_updated(Timestamp::now());
       this
     };
 
     let message_id: MessageId = chain.diff_message_id().clone();
-    let mut diff: DocumentDiff = chain.current().diff(&new, keys[1].secret(), message_id)?;
+    let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
-    diff.publish_with_client(&client, chain.auth_message_id()).await?;
+    diff.publish(chain.auth_message_id(), &client).await?;
     chain.try_push_diff(diff)?;
 
-    println!("Chain (3) > {:#?}", chain);
+    println!("Chain (3) > {:#}", chain);
     println!();
   }
 
@@ -117,7 +116,7 @@ async fn main() -> Result<()> {
   sleep(Duration::from_secs(1));
 
   {
-    let mut new: IotaDocument = chain.current().clone();
+    let mut new: Document = chain.current().clone();
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
 
     let authentication: MethodRef = MethodBuilder::default()
@@ -133,11 +132,11 @@ async fn main() -> Result<()> {
       new.as_document_mut().authentication_mut().append(authentication.into());
     }
 
-    new.set_updated_now();
+    new.set_updated(Timestamp::now());
     new.set_previous_message_id(chain.auth_message_id().clone());
 
     new.sign(keypair.secret())?;
-    new.publish_with_client(&client).await?;
+    new.publish(&client).await?;
 
     println!("Chain Err > {:?}", chain.try_push_auth(new).unwrap_err());
   }
@@ -149,21 +148,21 @@ async fn main() -> Result<()> {
   sleep(Duration::from_secs(1));
 
   {
-    let new: IotaDocument = {
-      let mut this: IotaDocument = chain.current().clone();
+    let new: Document = {
+      let mut this: Document = chain.current().clone();
       this.properties_mut().insert("baz".into(), 789.into());
       this.properties_mut().remove("bar");
-      this.set_updated_now();
+      this.set_updated(Timestamp::now());
       this
     };
 
     let message_id: MessageId = chain.diff_message_id().clone();
-    let mut diff: DocumentDiff = chain.current().diff(&new, keys[1].secret(), message_id)?;
+    let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
-    diff.publish_with_client(&client, chain.auth_message_id()).await?;
+    diff.publish(chain.auth_message_id(), &client).await?;
     chain.try_push_diff(diff)?;
 
-    println!("Chain (4) > {:#?}", chain);
+    println!("Chain (4) > {:#}", chain);
     println!();
   }
 
@@ -173,11 +172,11 @@ async fn main() -> Result<()> {
 
   let remote: DocumentChain = client.read_document_chain(chain.id()).await?;
 
-  println!("Chain (R) {:#?}", remote);
+  println!("Chain (R) {:#}", remote);
   println!();
 
-  let a: &IotaDocument = chain.current();
-  let b: &IotaDocument = remote.current();
+  let a: &Document = chain.current();
+  let b: &Document = remote.current();
 
   // The current document in the resolved chain should be identical to the
   // current document in our local chain.

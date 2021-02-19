@@ -1,180 +1,121 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::fmt::Debug;
-use core::fmt::Formatter;
-use core::fmt::Result;
-use core::marker::PhantomData;
-use sha2::digest::Output;
-use sha2::Digest;
-use sha2::Sha256;
-
-use crate::crypto::merkle_tree::math;
-use crate::crypto::merkle_tree::tree;
+use crate::crypto::merkle_tree::AsLeaf;
+use crate::crypto::merkle_tree::DigestExt;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Node;
 use crate::crypto::merkle_tree::Proof;
 
-/// A [Merkle tree](https://en.wikipedia.org/wiki/Merkle_tree) designed for
-/// static data.
-// # Overview
-//
-// The Merkle tree is implemented as a **perfect binary tree** where all
-// interior nodes have two children and all leaves have the same depth.
-//
-// # Layout
-//
-// An example tree with 8 leaves [A..H]:
-//
-// 0-|                 0
-//  -|                 |
-// 1-|         1 ------------- 2
-//  -|         |               |
-// 2-|     3 ----- 4      5 ------ 6
-//  -|     |       |      |        |
-// 3-|   A - B   C - D   E - F   G - H
-//
-// The tree will have the following layout:
-//
-//   [0, 1, 2, 3, 4, 5, 6, A, B, C, D, E, F, G, H]
-//
-// Building the tree is straight-forward:
-//
-//   1. Allocate Vec:  [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _]
-//   2. Insert Hashes: [_, _, _, _, _, _, _, A, B, C, D, E, F, G, H]
-//   3. Update (H=2):  [_, _, _, 3, 4, 5, 6, A, B, C, D, E, F, G, H]
-//   4. Update (H=1):  [_, 1, 2, 3, 4, 5, 6, A, B, C, D, E, F, G, H]
-//   5. Update (H=0):  [0, 1, 2, 3, 4, 5, 6, A, B, C, D, E, F, G, H]
-//
-// Computing the root hash:
-//
-//   H(H(H(A | B) | H(C | D)) | H(H(E | F) | H(G | H)))
-pub struct MTree<D = Sha256>
+/// Compute the Merkle root hash for the given slice of `leaves`.
+///
+/// The values in `leaves` can be a pre-hashed slice of [`struct@Hash<D>`] or
+/// any type that implements [`AsRef<[u8]>`][`AsRef`].
+///
+/// For types implementing [`AsRef<[u8]>`][`AsRef`], the values will be hashed
+/// according to the [`Digest`][`DigestExt`] implementation, `D`.
+pub fn compute_merkle_root<D, L>(leaves: &[L]) -> Hash<D>
 where
-  D: Digest,
+  D: DigestExt,
+  L: AsLeaf<D>,
 {
-  nodes: Box<[Hash<D>]>,
-  marker: PhantomData<D>,
+  #[inline]
+  fn __generate<D, L>(digest: &mut D, leaves: &[L]) -> Hash<D>
+  where
+    D: DigestExt,
+    L: AsLeaf<D>,
+  {
+    match leaves {
+      [] => digest.hash_empty(),
+      [leaf] => leaf.hash(digest),
+      leaves => {
+        let (this, that): _ = __split_pow2(leaves);
+
+        let lhs: Hash<D> = __generate(digest, this);
+        let rhs: Hash<D> = __generate(digest, that);
+
+        digest.hash_node(&lhs, &rhs)
+      }
+    }
+  }
+
+  __generate::<D, L>(&mut D::new(), leaves)
 }
 
-impl<D> MTree<D>
+/// Generate a proof-of-inclusion for the leaf node at the specified `index`.
+pub fn compute_merkle_proof<D, L>(leaves: &[L], index: usize) -> Option<Proof<D>>
 where
-  D: Digest,
+  D: DigestExt,
+  L: AsLeaf<D>,
 {
-  /// Returns the number of leaf nodes in the tree.
-  pub fn leaves(&self) -> usize {
-    tree::leaves(self.nodes.len())
-  }
+  #[inline]
+  fn __generate<D, L>(digest: &mut D, path: &mut Vec<Node<D>>, leaves: &[L], index: usize)
+  where
+    D: DigestExt,
+    L: AsLeaf<D>,
+  {
+    if leaves.len() > 1 {
+      let k: usize = __pow2(leaves.len() as u32 - 1);
+      let (this, that): _ = leaves.split_at(k);
 
-  /// Returns the height of the tree.
-  pub fn height(&self) -> usize {
-    tree::height(tree::leaves(self.nodes.len()))
-  }
-
-  /// Returns the root hash of the tree.
-  pub fn root(&self) -> &Hash<D> {
-    &self.nodes[0]
-  }
-
-  /// Returns a slice of the leaf nodes in the tree.
-  pub fn data(&self) -> &[Hash<D>] {
-    &self.nodes[self.nodes.len() - self.leaves()..]
-  }
-
-  /// Returns a slice of nodes at the specified `height`.
-  pub fn layer(&self, height: usize) -> &[Hash<D>] {
-    let leaves: usize = 2_usize.pow(height as u32);
-    let total: usize = tree::total(leaves);
-
-    if total <= self.nodes.len() {
-      &self.nodes[total - leaves..total]
-    } else {
-      &[]
-    }
-  }
-}
-
-impl<D> MTree<D>
-where
-  D: Digest,
-  Output<D>: Copy,
-{
-  /// Creates a new [`MTree`] from a slice of pre-hashed data.
-  pub fn from_leaves(leaves: &[Hash<D>]) -> Option<Self> {
-    // This Merkle tree only supports pow2 sequences
-    if !math::is_pow2(leaves.len()) {
-      return None;
-    }
-
-    Some(Self {
-      nodes: tree::compute_nodes(&mut D::new(), leaves),
-      marker: PhantomData,
-    })
-  }
-
-  /// Generates a proof-of-inclusion for the leaf node at the specified index.
-  pub fn proof(&self, local: usize) -> Option<Proof<D>> {
-    let leaves: usize = self.leaves();
-
-    assert!(leaves >= 2);
-
-    if local >= leaves {
-      return None;
-    }
-
-    let mut nodes: Vec<Node<D>> = Vec::new();
-    let mut index: usize = tree::total(leaves) - leaves + local;
-
-    while index > 0 {
-      if index & 1 == 0 {
-        nodes.push(Node::L(self.nodes[index - 1]));
+      if index < k {
+        __generate::<D, L>(digest, path, this, index);
+        path.push(Node::R(compute_merkle_root::<D, L>(&that)));
       } else {
-        nodes.push(Node::R(self.nodes[index + 1]));
+        __generate::<D, L>(digest, path, that, index - k);
+        path.push(Node::L(compute_merkle_root::<D, L>(&this)));
+      }
+    }
+  }
+
+  match (index, leaves.len()) {
+    (_, 0) => None,
+    (0, 1) => Some(Proof::new(Box::new([]))),
+    (_, 1) => None,
+    (index, length) => {
+      if index >= length {
+        return None;
       }
 
-      index = (index - 1) >> 1;
+      // TODO: Support proofs for any number of leaves
+      if !length.is_power_of_two() {
+        return None;
+      }
+
+      let height: usize = __log2c(leaves.len() as u32) as usize;
+      let mut path: Vec<Node<D>> = Vec::with_capacity(height);
+
+      __generate(&mut D::new(), &mut path, leaves, index);
+
+      Some(Proof::new(path.into_boxed_slice()))
     }
-
-    Some(Proof::new(nodes.into_boxed_slice()))
-  }
-
-  /// Verifies the computed root of `proof` with the root hash of `self`.
-  pub fn verify(&self, proof: &Proof<D>, hash: Hash<D>) -> bool {
-    proof.verify(self.root(), hash)
   }
 }
 
-impl<D> Debug for MTree<D>
-where
-  D: Digest,
-{
-  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-    let mut f = f.debug_struct("MTree");
+#[inline]
+fn __pow2(value: u32) -> usize {
+  1 << __log2c(value)
+}
 
-    let total: usize = self.height();
-    let count: usize = total.min(4);
+#[inline]
+fn __log2c(value: u32) -> u32 {
+  32 - value.leading_zeros() - 1
+}
 
-    f.field("layer (root)", &self.layer(0));
-
-    for index in 1..count {
-      f.field(&format!("layer (#{})", index), &self.layer(index));
-    }
-
-    f.field("height", &total);
-    f.field("leaves", &self.leaves());
-
-    f.finish()
-  }
+#[inline]
+fn __split_pow2<T>(slice: &[T]) -> (&[T], &[T]) {
+  slice.split_at(__pow2(slice.len() as u32 - 1))
 }
 
 #[cfg(test)]
 mod tests {
-  use digest::Digest;
   use sha2::Sha256;
 
+  use crate::crypto::merkle_tree::compute_merkle_proof;
+  use crate::crypto::merkle_tree::compute_merkle_root;
+  use crate::crypto::merkle_tree::Digest;
   use crate::crypto::merkle_tree::DigestExt;
   use crate::crypto::merkle_tree::Hash;
-  use crate::crypto::merkle_tree::MTree;
   use crate::crypto::merkle_tree::Proof;
 
   macro_rules! h {
@@ -182,7 +123,7 @@ mod tests {
       Sha256::new().hash_leaf($leaf)
     };
     ($lhs:expr, $rhs:expr) => {
-      Sha256::new().hash_branch(&$lhs, &$rhs)
+      Sha256::new().hash_node(&$lhs, &$rhs)
     };
   }
 
@@ -190,27 +131,24 @@ mod tests {
   type Sha256Proof = Proof<Sha256>;
 
   #[test]
-  fn test_works() {
-    let nodes: Vec<Vec<u8>> = (0..(1 << 7))
-      .map(|byte: u8| byte as char)
-      .map(String::from)
-      .map(String::into_bytes)
-      .collect();
+  fn test_compute_proof_and_index() {
+    for exp in 0..6 {
+      let mut digest: Sha256 = Sha256::new();
 
-    let mut digest: Sha256 = Sha256::new();
+      let nodes: Vec<[u8; 4]> = (0..(1 << exp)).map(u32::to_be_bytes).collect();
+      let hashes: Vec<Sha256Hash> = nodes.iter().map(|node| digest.hash_leaf(node.as_ref())).collect();
+      let root: Sha256Hash = compute_merkle_root(&hashes);
 
-    let hashes: Vec<Sha256Hash> = nodes.iter().map(|node| digest.hash_leaf(node.as_ref())).collect();
+      for (index, hash) in hashes.iter().enumerate() {
+        let proof: Sha256Proof = compute_merkle_proof(&hashes, index).unwrap();
 
-    let tree: MTree = MTree::from_leaves(&hashes).unwrap();
+        assert_eq!(proof.index(), index);
+        assert_eq!(proof.root(*hash), root);
+        assert_eq!(proof.verify(&root, &nodes[index]), true);
+        assert_eq!(proof.verify_hash(&root, *hash), true);
+      }
 
-    assert_eq!(tree.data(), &hashes[..]);
-    assert_eq!(tree.leaves(), hashes.len());
-
-    for (index, hash) in hashes.iter().enumerate() {
-      let proof: Sha256Proof = tree.proof(index).unwrap();
-      let root: Sha256Hash = proof.root(*hash);
-
-      assert_eq!(tree.root(), &root);
+      assert!(compute_merkle_proof::<Sha256, _>(&hashes, hashes.len()).is_none());
     }
   }
 
@@ -236,18 +174,14 @@ mod tests {
 
     let ABCDEFGH: Sha256Hash = h!(ABCD, EFGH);
 
-    let data: [Sha256Hash; 8] = [A, B, C, D, E, F, G, H];
-    let tree: MTree = MTree::from_leaves(&data).unwrap();
+    assert_eq!(AB, compute_merkle_root(&[A, B]));
+    assert_eq!(CD, compute_merkle_root(&[C, D]));
+    assert_eq!(EF, compute_merkle_root(&[E, F]));
+    assert_eq!(GH, compute_merkle_root(&[G, H]));
 
-    assert_eq!(tree.root(), &ABCDEFGH);
-    assert_eq!(tree.data(), &[A, B, C, D, E, F, G, H]);
-    assert_eq!(tree.height(), 3);
-    assert_eq!(tree.leaves(), 8);
+    assert_eq!(ABCD, compute_merkle_root(&[A, B, C, D]));
+    assert_eq!(EFGH, compute_merkle_root(&[E, F, G, H]));
 
-    assert_eq!(tree.layer(0), &[ABCDEFGH]);
-    assert_eq!(tree.layer(1), &[ABCD, EFGH]);
-    assert_eq!(tree.layer(2), &[AB, CD, EF, GH]);
-    assert_eq!(tree.layer(3), &[A, B, C, D, E, F, G, H]);
-    assert_eq!(tree.layer(4), &[]);
+    assert_eq!(ABCDEFGH, compute_merkle_root(&[A, B, C, D, E, F, G, H]));
   }
 }

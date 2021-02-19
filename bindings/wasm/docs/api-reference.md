@@ -3,13 +3,15 @@
 <dl>
 <dt><a href="#DID">DID</a></dt>
 <dd></dd>
-<dt><a href="#Doc">Doc</a></dt>
+<dt><a href="#Document">Document</a></dt>
 <dd></dd>
-<dt><a href="#Key">Key</a></dt>
+<dt><a href="#KeyCollection">KeyCollection</a></dt>
 <dd></dd>
-<dt><a href="#NewDoc">NewDoc</a></dt>
+<dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
-<dt><a href="#PubKey">PubKey</a></dt>
+<dt><a href="#Method">Method</a></dt>
+<dd></dd>
+<dt><a href="#NewDocument">NewDocument</a></dt>
 <dd></dd>
 <dt><a href="#VerifiableCredential">VerifiableCredential</a></dt>
 <dd></dd>
@@ -17,10 +19,22 @@
 <dd></dd>
 </dl>
 
+## Members
+
+<dl>
+<dt><a href="#Digest">Digest</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+</dl>
+
 ## Functions
 
 <dl>
-<dt><a href="#publish">publish(doc, params)</a> ⇒ <code>any</code></dt>
+<dt><a href="#start">start()</a></dt>
+<dd><p>Initializes the console error panic hook for better error messages</p>
+</dd>
+<dt><a href="#publish">publish(document, params)</a> ⇒ <code>any</code></dt>
 <dd><p>Publishes a DID Document to the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
 </dd>
 <dt><a href="#resolve">resolve(did, params)</a> ⇒ <code>any</code></dt>
@@ -32,9 +46,6 @@
 <dt><a href="#checkPresentation">checkPresentation(data, params)</a> ⇒ <code>any</code></dt>
 <dd><p>Validates a presentation with the DID Document from the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
 </dd>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
-</dd>
 </dl>
 
 <a name="DID"></a>
@@ -43,7 +54,7 @@
 **Kind**: global class  
 
 * [DID](#DID)
-    * [new DID(key, network)](#new_DID_new)
+    * [new DID(key, network, shard)](#new_DID_new)
     * _instance_
         * [.network](#DID+network) ⇒ <code>string</code>
         * [.shard](#DID+shard) ⇒ <code>string</code> \| <code>undefined</code>
@@ -51,19 +62,20 @@
         * [.address](#DID+address) ⇒ <code>string</code>
         * [.toString()](#DID+toString) ⇒ <code>string</code>
     * _static_
-        * [.fromBase58Key(key, network)](#DID.fromBase58Key) ⇒ [<code>DID</code>](#DID)
+        * [.fromBase58(key, network, shard)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
 
 <a name="new_DID_new"></a>
 
-### new DID(key, network)
-Creates a new `DID` from a `Key` object.
+### new DID(key, network, shard)
+Creates a new `DID` from a `KeyPair` object.
 
 
 | Param | Type |
 | --- | --- |
-| key | [<code>Key</code>](#Key) | 
+| key | [<code>KeyPair</code>](#KeyPair) | 
 | network | <code>string</code> \| <code>undefined</code> | 
+| shard | <code>string</code> \| <code>undefined</code> | 
 
 <a name="DID+network"></a>
 
@@ -95,9 +107,9 @@ Returns the IOTA tangle address of the `DID`.
 Returns the `DID` object as a string.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
-<a name="DID.fromBase58Key"></a>
+<a name="DID.fromBase58"></a>
 
-### DID.fromBase58Key(key, network) ⇒ [<code>DID</code>](#DID)
+### DID.fromBase58(key, network, shard) ⇒ [<code>DID</code>](#DID)
 Creates a new `DID` from a base58-encoded public key.
 
 **Kind**: static method of [<code>DID</code>](#DID)  
@@ -106,6 +118,7 @@ Creates a new `DID` from a base58-encoded public key.
 | --- | --- |
 | key | <code>string</code> | 
 | network | <code>string</code> \| <code>undefined</code> | 
+| shard | <code>string</code> \| <code>undefined</code> | 
 
 <a name="DID.parse"></a>
 
@@ -118,457 +131,526 @@ Parses a `DID` from the input string.
 | --- | --- |
 | input | <code>string</code> | 
 
-<a name="Doc"></a>
+<a name="Document"></a>
 
-## Doc
+## Document
 **Kind**: global class  
 
-* [Doc](#Doc)
-    * [new Doc(authentication)](#new_Doc_new)
+* [Document](#Document)
+    * [new Document(type_, tag)](#new_Document_new)
     * _instance_
-        * [.id](#Doc+id) ⇒ <code>string</code>
-        * [.authChain](#Doc+authChain) ⇒ <code>string</code>
-        * [.diffChain](#Doc+diffChain) ⇒ <code>string</code>
-        * [.proof](#Doc+proof) ⇒ <code>any</code>
-        * [.sign(key)](#Doc+sign) ⇒ <code>any</code>
-        * [.verify()](#Doc+verify) ⇒ <code>boolean</code>
-        * [.diff(other, key, prev_msg)](#Doc+diff) ⇒ <code>any</code>
-        * [.verifyDiff(diff)](#Doc+verifyDiff) ⇒ <code>boolean</code>
-        * [.updateService(did, url, service_type)](#Doc+updateService)
-        * [.clearServices()](#Doc+clearServices)
-        * [.updateAuth(public_key)](#Doc+updateAuth) ⇒ <code>boolean</code>
-        * [.clearAuth()](#Doc+clearAuth)
-        * [.updateAssert(public_key)](#Doc+updateAssert) ⇒ <code>boolean</code>
-        * [.clearAssert()](#Doc+clearAssert)
-        * [.updateVerification(public_key)](#Doc+updateVerification) ⇒ <code>boolean</code>
-        * [.clearVerification()](#Doc+clearVerification)
-        * [.updateDelegation(public_key)](#Doc+updateDelegation) ⇒ <code>boolean</code>
-        * [.clearDelegation()](#Doc+clearDelegation)
-        * [.updateInvocation(public_key)](#Doc+updateInvocation) ⇒ <code>boolean</code>
-        * [.clearInvocation()](#Doc+clearInvocation)
-        * [.updateAgreement(public_key)](#Doc+updateAgreement) ⇒ <code>boolean</code>
-        * [.clearAgreement()](#Doc+clearAgreement)
-        * [.resolveKey(ident, scope)](#Doc+resolveKey) ⇒ [<code>PubKey</code>](#PubKey)
-        * [.toJSON()](#Doc+toJSON) ⇒ <code>any</code>
+        * [.id](#Document+id) ⇒ [<code>DID</code>](#DID)
+        * [.proof](#Document+proof) ⇒ <code>any</code>
+        * [.insertMethod(method, scope)](#Document+insertMethod) ⇒ <code>boolean</code>
+        * [.removeMethod(did)](#Document+removeMethod)
+        * [.sign(key)](#Document+sign)
+        * [.verify()](#Document+verify) ⇒ <code>boolean</code>
+        * [.signCredential(data, args)](#Document+signCredential) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
+        * [.signPresentation(data, args)](#Document+signPresentation) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
+        * [.signData(data, args)](#Document+signData) ⇒ <code>any</code>
+        * [.verifyData(data)](#Document+verifyData) ⇒ <code>boolean</code>
+        * [.resolveKey(query)](#Document+resolveKey) ⇒ [<code>Method</code>](#Method)
+        * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
+        * [.diff(other, message, key)](#Document+diff) ⇒ <code>any</code>
+        * [.merge(diff)](#Document+merge)
+        * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.generateRandom(key_type, network, tag)](#Doc.generateRandom) ⇒ [<code>NewDoc</code>](#NewDoc)
-        * [.generateEd25519(network, tag)](#Doc.generateEd25519) ⇒ [<code>NewDoc</code>](#NewDoc)
-        * [.fromJSON(json)](#Doc.fromJSON) ⇒ [<code>Doc</code>](#Doc)
+        * [.fromKeyPair(key)](#Document.fromKeyPair) ⇒ [<code>Document</code>](#Document)
+        * [.fromAuthentication(method)](#Document.fromAuthentication) ⇒ [<code>Document</code>](#Document)
+        * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
 
-<a name="new_Doc_new"></a>
+<a name="new_Document_new"></a>
 
-### new Doc(authentication)
+### new Document(type_, tag)
+Creates a new DID Document from the given KeyPair.
 
-| Param | Type |
-| --- | --- |
-| authentication | [<code>PubKey</code>](#PubKey) | 
-
-<a name="Doc+id"></a>
-
-### doc.id ⇒ <code>string</code>
-**Kind**: instance property of [<code>Doc</code>](#Doc)  
-<a name="Doc+authChain"></a>
-
-### doc.authChain ⇒ <code>string</code>
-**Kind**: instance property of [<code>Doc</code>](#Doc)  
-<a name="Doc+diffChain"></a>
-
-### doc.diffChain ⇒ <code>string</code>
-**Kind**: instance property of [<code>Doc</code>](#Doc)  
-<a name="Doc+proof"></a>
-
-### doc.proof ⇒ <code>any</code>
-**Kind**: instance property of [<code>Doc</code>](#Doc)  
-<a name="Doc+sign"></a>
-
-### doc.sign(key) ⇒ <code>any</code>
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
 
 | Param | Type |
 | --- | --- |
-| key | [<code>Key</code>](#Key) | 
+| type_ | <code>number</code> | 
+| tag | <code>string</code> \| <code>undefined</code> | 
 
-<a name="Doc+verify"></a>
+<a name="Document+id"></a>
 
-### doc.verify() ⇒ <code>boolean</code>
+### document.id ⇒ [<code>DID</code>](#DID)
+Returns the DID Document `id`.
+
+**Kind**: instance property of [<code>Document</code>](#Document)  
+<a name="Document+proof"></a>
+
+### document.proof ⇒ <code>any</code>
+Returns the DID Document `proof` object.
+
+**Kind**: instance property of [<code>Document</code>](#Document)  
+<a name="Document+insertMethod"></a>
+
+### document.insertMethod(method, scope) ⇒ <code>boolean</code>
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| method | [<code>Method</code>](#Method) | 
+| scope | <code>string</code> \| <code>undefined</code> | 
+
+<a name="Document+removeMethod"></a>
+
+### document.removeMethod(did)
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>DID</code>](#DID) | 
+
+<a name="Document+sign"></a>
+
+### document.sign(key)
+Signs the DID Document with the default authentication method.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| key | [<code>KeyPair</code>](#KeyPair) | 
+
+<a name="Document+verify"></a>
+
+### document.verify() ⇒ <code>boolean</code>
 Verify the signature with the authentication_key
 
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-<a name="Doc+diff"></a>
+**Kind**: instance method of [<code>Document</code>](#Document)  
+<a name="Document+signCredential"></a>
 
-### doc.diff(other, key, prev_msg) ⇒ <code>any</code>
-Generate the difference between two DID Documents and sign it
-
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
+### document.signCredential(data, args) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
+**Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| other | [<code>Doc</code>](#Doc) | 
-| key | [<code>Key</code>](#Key) | 
-| prev_msg | <code>string</code> |
+| data | <code>any</code> | 
+| args | <code>any</code> | 
 
-<a name="Doc+verifyDiff"></a>
+<a name="Document+signPresentation"></a>
 
-### doc.verifyDiff(diff) ⇒ <code>boolean</code>
-Verify the signature in a diff with the authentication_key
+### document.signPresentation(data, args) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
+**Kind**: instance method of [<code>Document</code>](#Document)  
 
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
+| Param | Type |
+| --- | --- |
+| data | <code>any</code> | 
+| args | <code>any</code> | 
+
+<a name="Document+signData"></a>
+
+### document.signData(data, args) ⇒ <code>any</code>
+Creates a signature for the given `data` with the specified DID Document
+Verification Method.
+
+An additional `proof` property is required if using a Merkle Key
+Collection verification Method.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>any</code> | 
+| args | <code>any</code> | 
+
+<a name="Document+verifyData"></a>
+
+### document.verifyData(data) ⇒ <code>boolean</code>
+Verifies the authenticity of `data` using the target verification method.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>any</code> | 
+
+<a name="Document+resolveKey"></a>
+
+### document.resolveKey(query) ⇒ [<code>Method</code>](#Method)
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| query | <code>string</code> | 
+
+<a name="Document+revokeMerkleKey"></a>
+
+### document.revokeMerkleKey(query, index) ⇒ <code>boolean</code>
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| query | <code>string</code> | 
+| index | <code>number</code> | 
+
+<a name="Document+diff"></a>
+
+### document.diff(other, message, key) ⇒ <code>any</code>
+Generate the difference between two DID Documents and sign it
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| other | [<code>Document</code>](#Document) | 
+| message | <code>string</code> | 
+| key | [<code>KeyPair</code>](#KeyPair) | 
+
+<a name="Document+merge"></a>
+
+### document.merge(diff)
+Verifies the `diff` signature and merges the changes into `self`.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | diff | <code>string</code> | 
 
-<a name="Doc+updateService"></a>
+<a name="Document+toJSON"></a>
 
-### doc.updateService(did, url, service_type)
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
+### document.toJSON() ⇒ <code>any</code>
+Serializes a `Document` object as a JSON object.
 
-| Param | Type |
-| --- | --- |
-| did | [<code>DID</code>](#DID) | 
-| url | <code>string</code> | 
-| service_type | <code>string</code> | 
+**Kind**: instance method of [<code>Document</code>](#Document)  
+<a name="Document.fromKeyPair"></a>
 
-<a name="Doc+clearServices"></a>
+### Document.fromKeyPair(key) ⇒ [<code>Document</code>](#Document)
+Creates a new DID Document from the given KeyPair.
 
-### doc.clearServices()
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-<a name="Doc+updateAuth"></a>
-
-### doc.updateAuth(public_key) ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
+**Kind**: static method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| public_key | [<code>PubKey</code>](#PubKey) | 
+| key | [<code>KeyPair</code>](#KeyPair) | 
 
-<a name="Doc+clearAuth"></a>
+<a name="Document.fromAuthentication"></a>
 
-### doc.clearAuth()
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-<a name="Doc+updateAssert"></a>
+### Document.fromAuthentication(method) ⇒ [<code>Document</code>](#Document)
+Creates a new DID Document from the given verification [`method`][`Method`].
 
-### doc.updateAssert(public_key) ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
+**Kind**: static method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| public_key | [<code>PubKey</code>](#PubKey) | 
+| method | [<code>Method</code>](#Method) | 
 
-<a name="Doc+clearAssert"></a>
+<a name="Document.fromJSON"></a>
 
-### doc.clearAssert()
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-<a name="Doc+updateVerification"></a>
+### Document.fromJSON(json) ⇒ [<code>Document</code>](#Document)
+Deserializes a `Document` object from a JSON object.
 
-### doc.updateVerification(public_key) ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-
-| Param | Type |
-| --- | --- |
-| public_key | [<code>PubKey</code>](#PubKey) | 
-
-<a name="Doc+clearVerification"></a>
-
-### doc.clearVerification()
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-<a name="Doc+updateDelegation"></a>
-
-### doc.updateDelegation(public_key) ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-
-| Param | Type |
-| --- | --- |
-| public_key | [<code>PubKey</code>](#PubKey) | 
-
-<a name="Doc+clearDelegation"></a>
-
-### doc.clearDelegation()
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-<a name="Doc+updateInvocation"></a>
-
-### doc.updateInvocation(public_key) ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-
-| Param | Type |
-| --- | --- |
-| public_key | [<code>PubKey</code>](#PubKey) | 
-
-<a name="Doc+clearInvocation"></a>
-
-### doc.clearInvocation()
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-<a name="Doc+updateAgreement"></a>
-
-### doc.updateAgreement(public_key) ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-
-| Param | Type |
-| --- | --- |
-| public_key | [<code>PubKey</code>](#PubKey) | 
-
-<a name="Doc+clearAgreement"></a>
-
-### doc.clearAgreement()
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-<a name="Doc+resolveKey"></a>
-
-### doc.resolveKey(ident, scope) ⇒ [<code>PubKey</code>](#PubKey)
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-
-| Param | Type |
-| --- | --- |
-| ident | <code>any</code> | 
-| scope | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Doc+toJSON"></a>
-
-### doc.toJSON() ⇒ <code>any</code>
-Serializes a `Doc` object as a JSON object.
-
-**Kind**: instance method of [<code>Doc</code>](#Doc)  
-<a name="Doc.generateRandom"></a>
-
-### Doc.generateRandom(key_type, network, tag) ⇒ [<code>NewDoc</code>](#NewDoc)
-Generates a keypair and DID Document, supported key_type is "Ed25519VerificationKey2018"
-
-**Kind**: static method of [<code>Doc</code>](#Doc)  
-
-| Param | Type |
-| --- | --- |
-| key_type | <code>string</code> | 
-| network | <code>string</code> \| <code>undefined</code> | 
-| tag | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Doc.generateEd25519"></a>
-
-### Doc.generateEd25519(network, tag) ⇒ [<code>NewDoc</code>](#NewDoc)
-Generates an Ed25519 keypair and DID Document
-
-**Kind**: static method of [<code>Doc</code>](#Doc)  
-
-| Param | Type |
-| --- | --- |
-| network | <code>string</code> \| <code>undefined</code> | 
-| tag | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Doc.fromJSON"></a>
-
-### Doc.fromJSON(json) ⇒ [<code>Doc</code>](#Doc)
-Deserializes a `Doc` object from a JSON object.
-
-**Kind**: static method of [<code>Doc</code>](#Doc)  
+**Kind**: static method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="Key"></a>
+<a name="KeyCollection"></a>
 
-## Key
+## KeyCollection
 **Kind**: global class  
 
-* [Key](#Key)
-    * [new Key(key_type)](#new_Key_new)
+* [KeyCollection](#KeyCollection)
+    * [new KeyCollection(type_, count)](#new_KeyCollection_new)
     * _instance_
-        * [.public](#Key+public) ⇒ <code>string</code>
-        * [.private](#Key+private) ⇒ <code>string</code>
-        * [.toJSON()](#Key+toJSON) ⇒ <code>any</code>
+        * [.length](#KeyCollection+length) ⇒ <code>number</code>
+        * [.isEmpty()](#KeyCollection+isEmpty) ⇒ <code>boolean</code>
+        * [.keypair(index)](#KeyCollection+keypair) ⇒ [<code>KeyPair</code>](#KeyPair) \| <code>undefined</code>
+        * [.public(index)](#KeyCollection+public) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.secret(index)](#KeyCollection+secret) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.merkleRoot(digest)](#KeyCollection+merkleRoot) ⇒ <code>string</code>
+        * [.merkleProof(digest, index)](#KeyCollection+merkleProof) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.toJSON()](#KeyCollection+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.generateEd25519()](#Key.generateEd25519) ⇒ [<code>Key</code>](#Key)
-        * [.fromBase58(public_key, private_key)](#Key.fromBase58) ⇒ [<code>Key</code>](#Key)
-        * [.fromJSON(json)](#Key.fromJSON) ⇒ [<code>Key</code>](#Key)
+        * [.fromJSON(json)](#KeyCollection.fromJSON) ⇒ [<code>KeyCollection</code>](#KeyCollection)
 
-<a name="new_Key_new"></a>
+<a name="new_KeyCollection_new"></a>
 
-### new Key(key_type)
-Generates a new `Key` object.
+### new KeyCollection(type_, count)
+Creates a new `KeyCollection` with the specified key type.
 
 
 | Param | Type |
 | --- | --- |
-| key_type | <code>string</code> | 
+| type_ | <code>number</code> | 
+| count | <code>number</code> | 
 
-<a name="Key+public"></a>
+<a name="KeyCollection+length"></a>
 
-### key.public ⇒ <code>string</code>
+### keyCollection.length ⇒ <code>number</code>
+Returns the number of keys in the collection.
+
+**Kind**: instance property of [<code>KeyCollection</code>](#KeyCollection)  
+<a name="KeyCollection+isEmpty"></a>
+
+### keyCollection.isEmpty() ⇒ <code>boolean</code>
+Returns `true` if the collection contains no keys.
+
+**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
+<a name="KeyCollection+keypair"></a>
+
+### keyCollection.keypair(index) ⇒ [<code>KeyPair</code>](#KeyPair) \| <code>undefined</code>
+Returns the keypair at the specified `index`.
+
+**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="KeyCollection+public"></a>
+
+### keyCollection.public(index) ⇒ <code>string</code> \| <code>undefined</code>
+Returns the public key at the specified `index` as a base58-encoded string.
+
+**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="KeyCollection+secret"></a>
+
+### keyCollection.secret(index) ⇒ <code>string</code> \| <code>undefined</code>
+Returns the secret key at the specified `index` as a base58-encoded string.
+
+**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>number</code> | 
+
+<a name="KeyCollection+merkleRoot"></a>
+
+### keyCollection.merkleRoot(digest) ⇒ <code>string</code>
+**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
+
+| Param | Type |
+| --- | --- |
+| digest | <code>number</code> | 
+
+<a name="KeyCollection+merkleProof"></a>
+
+### keyCollection.merkleProof(digest, index) ⇒ <code>string</code> \| <code>undefined</code>
+**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
+
+| Param | Type |
+| --- | --- |
+| digest | <code>number</code> | 
+| index | <code>number</code> | 
+
+<a name="KeyCollection+toJSON"></a>
+
+### keyCollection.toJSON() ⇒ <code>any</code>
+Serializes a `KeyCollection` object as a JSON object.
+
+**Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
+<a name="KeyCollection.fromJSON"></a>
+
+### KeyCollection.fromJSON(json) ⇒ [<code>KeyCollection</code>](#KeyCollection)
+Deserializes a `KeyCollection` object from a JSON object.
+
+**Kind**: static method of [<code>KeyCollection</code>](#KeyCollection)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
+<a name="KeyPair"></a>
+
+## KeyPair
+**Kind**: global class  
+
+* [KeyPair](#KeyPair)
+    * [new KeyPair(type_)](#new_KeyPair_new)
+    * _instance_
+        * [.public](#KeyPair+public) ⇒ <code>string</code>
+        * [.secret](#KeyPair+secret) ⇒ <code>string</code>
+        * [.toJSON()](#KeyPair+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromBase58(type_, public_key, secret_key)](#KeyPair.fromBase58) ⇒ [<code>KeyPair</code>](#KeyPair)
+        * [.fromJSON(json)](#KeyPair.fromJSON) ⇒ [<code>KeyPair</code>](#KeyPair)
+
+<a name="new_KeyPair_new"></a>
+
+### new KeyPair(type_)
+Generates a new `KeyPair` object.
+
+
+| Param | Type |
+| --- | --- |
+| type_ | <code>number</code> | 
+
+<a name="KeyPair+public"></a>
+
+### keyPair.public ⇒ <code>string</code>
 Returns the public key as a base58-encoded string.
 
-**Kind**: instance property of [<code>Key</code>](#Key)  
-<a name="Key+private"></a>
+**Kind**: instance property of [<code>KeyPair</code>](#KeyPair)  
+<a name="KeyPair+secret"></a>
 
-### key.private ⇒ <code>string</code>
-Returns the private key as a base58-encoded string.
+### keyPair.secret ⇒ <code>string</code>
+Returns the secret key as a base58-encoded string.
 
-**Kind**: instance property of [<code>Key</code>](#Key)  
-<a name="Key+toJSON"></a>
+**Kind**: instance property of [<code>KeyPair</code>](#KeyPair)  
+<a name="KeyPair+toJSON"></a>
 
-### key.toJSON() ⇒ <code>any</code>
-Serializes a `Key` object as a JSON object.
+### keyPair.toJSON() ⇒ <code>any</code>
+Serializes a `KeyPair` object as a JSON object.
 
-**Kind**: instance method of [<code>Key</code>](#Key)  
-<a name="Key.generateEd25519"></a>
+**Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
+<a name="KeyPair.fromBase58"></a>
 
-### Key.generateEd25519() ⇒ [<code>Key</code>](#Key)
-Generates a new `Key` object suitable for ed25519 signatures.
+### KeyPair.fromBase58(type_, public_key, secret_key) ⇒ [<code>KeyPair</code>](#KeyPair)
+Parses a `KeyPair` object from base58-encoded public/secret keys.
 
-**Kind**: static method of [<code>Key</code>](#Key)  
-<a name="Key.fromBase58"></a>
-
-### Key.fromBase58(public_key, private_key) ⇒ [<code>Key</code>](#Key)
-Parses a `Key` object from base58-encoded public/private keys.
-
-**Kind**: static method of [<code>Key</code>](#Key)  
+**Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
 
 | Param | Type |
 | --- | --- |
+| type_ | <code>number</code> | 
 | public_key | <code>string</code> | 
-| private_key | <code>string</code> | 
+| secret_key | <code>string</code> | 
 
-<a name="Key.fromJSON"></a>
+<a name="KeyPair.fromJSON"></a>
 
-### Key.fromJSON(json) ⇒ [<code>Key</code>](#Key)
-Deserializes a `Key` object from a JSON object.
+### KeyPair.fromJSON(json) ⇒ [<code>KeyPair</code>](#KeyPair)
+Deserializes a `KeyPair` object from a JSON object.
 
-**Kind**: static method of [<code>Key</code>](#Key)  
+**Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
 
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="NewDoc"></a>
+<a name="Method"></a>
 
-## NewDoc
+## Method
 **Kind**: global class  
 
-* [NewDoc](#NewDoc)
-    * [.key](#NewDoc+key) ⇒ [<code>Key</code>](#Key)
-    * [.doc](#NewDoc+doc) ⇒ [<code>Doc</code>](#Doc)
-
-<a name="NewDoc+key"></a>
-
-### newDoc.key ⇒ [<code>Key</code>](#Key)
-**Kind**: instance property of [<code>NewDoc</code>](#NewDoc)  
-<a name="NewDoc+doc"></a>
-
-### newDoc.doc ⇒ [<code>Doc</code>](#Doc)
-**Kind**: instance property of [<code>NewDoc</code>](#NewDoc)  
-<a name="PubKey"></a>
-
-## PubKey
-**Kind**: global class  
-
-* [PubKey](#PubKey)
-    * [new PubKey(did, key_type, key_data, tag)](#new_PubKey_new)
+* [Method](#Method)
+    * [new Method(key, tag)](#new_Method_new)
     * _instance_
-        * [.id](#PubKey+id) ⇒ [<code>DID</code>](#DID)
-        * [.controller](#PubKey+controller) ⇒ [<code>DID</code>](#DID)
-        * [.toJSON()](#PubKey+toJSON) ⇒ <code>any</code>
+        * [.id](#Method+id) ⇒ [<code>DID</code>](#DID)
+        * [.controller](#Method+controller) ⇒ [<code>DID</code>](#DID)
+        * [.type](#Method+type) ⇒ <code>string</code>
+        * [.data](#Method+data) ⇒ <code>any</code>
+        * [.toJSON()](#Method+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.generateEd25519(did, key_data, tag)](#PubKey.generateEd25519) ⇒ [<code>PubKey</code>](#PubKey)
-        * [.fromJSON(json)](#PubKey.fromJSON) ⇒ [<code>PubKey</code>](#PubKey)
+        * [.fromDID(did, key, tag)](#Method.fromDID) ⇒ [<code>Method</code>](#Method)
+        * [.createMerkleKey(digest, did, keys, tag)](#Method.createMerkleKey) ⇒ [<code>Method</code>](#Method)
+        * [.fromJSON(value)](#Method.fromJSON) ⇒ [<code>Method</code>](#Method)
 
-<a name="new_PubKey_new"></a>
+<a name="new_Method_new"></a>
 
-### new PubKey(did, key_type, key_data, tag)
+### new Method(key, tag)
+Creates a new `Method` object from the given `key`.
+
+
+| Param | Type |
+| --- | --- |
+| key | [<code>KeyPair</code>](#KeyPair) | 
+| tag | <code>string</code> \| <code>undefined</code> | 
+
+<a name="Method+id"></a>
+
+### method.id ⇒ [<code>DID</code>](#DID)
+Returns the `id` DID of the `Method` object.
+
+**Kind**: instance property of [<code>Method</code>](#Method)  
+<a name="Method+controller"></a>
+
+### method.controller ⇒ [<code>DID</code>](#DID)
+Returns the `controller` DID of the `Method` object.
+
+**Kind**: instance property of [<code>Method</code>](#Method)  
+<a name="Method+type"></a>
+
+### method.type ⇒ <code>string</code>
+Returns the `Method` type.
+
+**Kind**: instance property of [<code>Method</code>](#Method)  
+<a name="Method+data"></a>
+
+### method.data ⇒ <code>any</code>
+Returns the `Method` public key data.
+
+**Kind**: instance property of [<code>Method</code>](#Method)  
+<a name="Method+toJSON"></a>
+
+### method.toJSON() ⇒ <code>any</code>
+Serializes a `Method` object as a JSON object.
+
+**Kind**: instance method of [<code>Method</code>](#Method)  
+<a name="Method.fromDID"></a>
+
+### Method.fromDID(did, key, tag) ⇒ [<code>Method</code>](#Method)
+Creates a new `Method` object from the given `did` and `key`.
+
+**Kind**: static method of [<code>Method</code>](#Method)  
 
 | Param | Type |
 | --- | --- |
 | did | [<code>DID</code>](#DID) | 
-| key_type | <code>string</code> | 
-| key_data | <code>string</code> | 
+| key | [<code>KeyPair</code>](#KeyPair) | 
 | tag | <code>string</code> \| <code>undefined</code> | 
 
-<a name="PubKey+id"></a>
+<a name="Method.createMerkleKey"></a>
 
-### pubKey.id ⇒ [<code>DID</code>](#DID)
-Returns the `id` DID of the `PubKey` object.
+### Method.createMerkleKey(digest, did, keys, tag) ⇒ [<code>Method</code>](#Method)
+Creates a new Merkle Key Collection Method from the given key collection.
 
-**Kind**: instance property of [<code>PubKey</code>](#PubKey)  
-<a name="PubKey+controller"></a>
-
-### pubKey.controller ⇒ [<code>DID</code>](#DID)
-Returns the `controller` DID of the `PubKey` object.
-
-**Kind**: instance property of [<code>PubKey</code>](#PubKey)  
-<a name="PubKey+toJSON"></a>
-
-### pubKey.toJSON() ⇒ <code>any</code>
-Serializes a `PubKey` object as a JSON object.
-
-**Kind**: instance method of [<code>PubKey</code>](#PubKey)  
-<a name="PubKey.generateEd25519"></a>
-
-### PubKey.generateEd25519(did, key_data, tag) ⇒ [<code>PubKey</code>](#PubKey)
-Generates a new `PubKey` object suitable for ed25519 signatures.
-
-**Kind**: static method of [<code>PubKey</code>](#PubKey)  
+**Kind**: static method of [<code>Method</code>](#Method)  
 
 | Param | Type |
 | --- | --- |
+| digest | <code>number</code> | 
 | did | [<code>DID</code>](#DID) | 
-| key_data | <code>string</code> | 
+| keys | [<code>KeyCollection</code>](#KeyCollection) | 
 | tag | <code>string</code> \| <code>undefined</code> | 
 
-<a name="PubKey.fromJSON"></a>
+<a name="Method.fromJSON"></a>
 
-### PubKey.fromJSON(json) ⇒ [<code>PubKey</code>](#PubKey)
-Deserializes a `PubKey` object from a JSON object.
+### Method.fromJSON(value) ⇒ [<code>Method</code>](#Method)
+Deserializes a `Method` object from a JSON object.
 
-**Kind**: static method of [<code>PubKey</code>](#PubKey)  
+**Kind**: static method of [<code>Method</code>](#Method)  
 
 | Param | Type |
 | --- | --- |
-| json | <code>any</code> | 
+| value | <code>any</code> | 
 
+<a name="NewDocument"></a>
+
+## NewDocument
+**Kind**: global class  
+
+* [NewDocument](#NewDocument)
+    * [.key](#NewDocument+key) ⇒ [<code>KeyPair</code>](#KeyPair)
+    * [.doc](#NewDocument+doc) ⇒ [<code>Document</code>](#Document)
+
+<a name="NewDocument+key"></a>
+
+### newDocument.key ⇒ [<code>KeyPair</code>](#KeyPair)
+**Kind**: instance property of [<code>NewDocument</code>](#NewDocument)  
+<a name="NewDocument+doc"></a>
+
+### newDocument.doc ⇒ [<code>Document</code>](#Document)
+**Kind**: instance property of [<code>NewDocument</code>](#NewDocument)  
 <a name="VerifiableCredential"></a>
 
 ## VerifiableCredential
 **Kind**: global class  
 
 * [VerifiableCredential](#VerifiableCredential)
-    * [new VerifiableCredential(issuer_doc, issuer_key, subject_data, credential_type, credential_id)](#new_VerifiableCredential_new)
     * _instance_
-        * [.sign(issuer, key)](#VerifiableCredential+sign)
-        * [.verify(issuer)](#VerifiableCredential+verify) ⇒ <code>boolean</code>
         * [.toJSON()](#VerifiableCredential+toJSON) ⇒ <code>any</code>
     * _static_
+        * [.extend(value)](#VerifiableCredential.extend) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
+        * [.issue(issuer_doc, subject_data, credential_type, credential_id)](#VerifiableCredential.issue) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
         * [.fromJSON(json)](#VerifiableCredential.fromJSON) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
-
-<a name="new_VerifiableCredential_new"></a>
-
-### new VerifiableCredential(issuer_doc, issuer_key, subject_data, credential_type, credential_id)
-
-| Param | Type |
-| --- | --- |
-| issuer_doc | [<code>Doc</code>](#Doc) | 
-| issuer_key | [<code>Key</code>](#Key) | 
-| subject_data | <code>any</code> | 
-| credential_type | <code>string</code> \| <code>undefined</code> | 
-| credential_id | <code>string</code> \| <code>undefined</code> | 
-
-<a name="VerifiableCredential+sign"></a>
-
-### verifiableCredential.sign(issuer, key)
-Signs the credential with the given issuer `Doc` and `Key` object.
-
-**Kind**: instance method of [<code>VerifiableCredential</code>](#VerifiableCredential)  
-
-| Param | Type |
-| --- | --- |
-| issuer | [<code>Doc</code>](#Doc) | 
-| key | [<code>Key</code>](#Key) | 
-
-<a name="VerifiableCredential+verify"></a>
-
-### verifiableCredential.verify(issuer) ⇒ <code>boolean</code>
-Verifies the credential signature against the issuer `Doc`.
-
-**Kind**: instance method of [<code>VerifiableCredential</code>](#VerifiableCredential)  
-
-| Param | Type |
-| --- | --- |
-| issuer | [<code>Doc</code>](#Doc) | 
 
 <a name="VerifiableCredential+toJSON"></a>
 
@@ -576,6 +658,27 @@ Verifies the credential signature against the issuer `Doc`.
 Serializes a `VerifiableCredential` object as a JSON object.
 
 **Kind**: instance method of [<code>VerifiableCredential</code>](#VerifiableCredential)  
+<a name="VerifiableCredential.extend"></a>
+
+### VerifiableCredential.extend(value) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
+**Kind**: static method of [<code>VerifiableCredential</code>](#VerifiableCredential)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
+<a name="VerifiableCredential.issue"></a>
+
+### VerifiableCredential.issue(issuer_doc, subject_data, credential_type, credential_id) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
+**Kind**: static method of [<code>VerifiableCredential</code>](#VerifiableCredential)  
+
+| Param | Type |
+| --- | --- |
+| issuer_doc | [<code>Document</code>](#Document) | 
+| subject_data | <code>any</code> | 
+| credential_type | <code>string</code> \| <code>undefined</code> | 
+| credential_id | <code>string</code> \| <code>undefined</code> | 
+
 <a name="VerifiableCredential.fromJSON"></a>
 
 ### VerifiableCredential.fromJSON(json) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
@@ -593,48 +696,22 @@ Deserializes a `VerifiableCredential` object from a JSON object.
 **Kind**: global class  
 
 * [VerifiablePresentation](#VerifiablePresentation)
-    * [new VerifiablePresentation(holder_doc, holder_key, credential_data, presentation_type, presentation_id)](#new_VerifiablePresentation_new)
+    * [new VerifiablePresentation(holder_doc, credential_data, presentation_type, presentation_id)](#new_VerifiablePresentation_new)
     * _instance_
-        * [.sign(holder, key)](#VerifiablePresentation+sign)
-        * [.verify(holder)](#VerifiablePresentation+verify) ⇒ <code>boolean</code>
         * [.toJSON()](#VerifiablePresentation+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#VerifiablePresentation.fromJSON) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
 
 <a name="new_VerifiablePresentation_new"></a>
 
-### new VerifiablePresentation(holder_doc, holder_key, credential_data, presentation_type, presentation_id)
+### new VerifiablePresentation(holder_doc, credential_data, presentation_type, presentation_id)
 
 | Param | Type |
 | --- | --- |
-| holder_doc | [<code>Doc</code>](#Doc) | 
-| holder_key | [<code>Key</code>](#Key) | 
+| holder_doc | [<code>Document</code>](#Document) | 
 | credential_data | <code>any</code> | 
 | presentation_type | <code>string</code> \| <code>undefined</code> | 
 | presentation_id | <code>string</code> \| <code>undefined</code> | 
-
-<a name="VerifiablePresentation+sign"></a>
-
-### verifiablePresentation.sign(holder, key)
-Signs the presentation with the given holder `Doc` and `Key` object.
-
-**Kind**: instance method of [<code>VerifiablePresentation</code>](#VerifiablePresentation)  
-
-| Param | Type |
-| --- | --- |
-| holder | [<code>Doc</code>](#Doc) | 
-| key | [<code>Key</code>](#Key) | 
-
-<a name="VerifiablePresentation+verify"></a>
-
-### verifiablePresentation.verify(holder) ⇒ <code>boolean</code>
-Verifies the presentation signature against the holder `Doc`.
-
-**Kind**: instance method of [<code>VerifiablePresentation</code>](#VerifiablePresentation)  
-
-| Param | Type |
-| --- | --- |
-| holder | [<code>Doc</code>](#Doc) | 
 
 <a name="VerifiablePresentation+toJSON"></a>
 
@@ -653,16 +730,30 @@ Deserializes a `VerifiablePresentation` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="Digest"></a>
+
+## Digest
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
+**Kind**: global variable  
+<a name="start"></a>
+
+## start()
+Initializes the console error panic hook for better error messages
+
+**Kind**: global function  
 <a name="publish"></a>
 
-## publish(doc, params) ⇒ <code>any</code>
+## publish(document, params) ⇒ <code>any</code>
 Publishes a DID Document to the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
 
 **Kind**: global function  
 
 | Param | Type |
 | --- | --- |
-| doc | <code>any</code> | 
+| document | <code>any</code> | 
 | params | <code>any</code> | 
 
 <a name="resolve"></a>
@@ -701,9 +792,3 @@ Validates a presentation with the DID Document from the Tangle, params looks lik
 | data | <code>string</code> | 
 | params | <code>any</code> | 
 
-<a name="start"></a>
-
-## start()
-Initializes the console error panic hook for better error messages
-
-**Kind**: global function  
