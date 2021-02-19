@@ -17,6 +17,10 @@ identity-credential = { version = "=0.2.0", path = "../identity-credential", opt
 identity-did = { version = "=0.2.0", path = "../identity-did", optional = true }
 identity-iota = { version = "=0.2.0", path = "../identity-iota", optional = true }
 
+[dev-dependencies]
+smol = { version = "0.1", features = ["tokio02"] }
+smol-potat = { version = "0.3" }
+
 [features]
 default = ["identifier", "credential", "iota"]
 
