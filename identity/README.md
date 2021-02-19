@@ -6,10 +6,12 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 
 ## Example
 ```rust
-use identity::iota::Client;
-use identity::iota::IotaDocument;
 use identity::crypto::KeyPair;
+use identity::iota::Client;
+use identity::iota::Document;
+use identity::iota::Network;
 use identity::iota::Result;
+use identity::iota::TangleRef;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
@@ -18,23 +20,23 @@ async fn main() -> Result<()> {
   let client: Client = Client::new()?;
 
   // Create a DID Document (an identity).
-  let (mut document, keypair): (IotaDocument, KeyPair) = IotaDocument::builder()
-    .authentication_tag("key-1")
-    .did_network(client.network().as_str())
-    .build()?;
+  let keypair: KeyPair = KeyPair::new_ed25519()?;
+  let mut document: Document = Document::from_keypair(&keypair)?;
 
   // Sign the DID Document with the default authentication key.
   document.sign(keypair.secret())?;
 
   // Use the client to publish the DID Document to the IOTA Tangle.
-  let transaction: _ = client.publish_document(&document).await?;
+  document.publish(&client).await?;
 
   // Print the DID Document transaction link.
-  println!("DID Document Transaction > {}", client.transaction_url(&transaction));
+  let network: Network = document.id().into();
+  let explore: String = format!("{}/transaction/{}", network.explorer_url(), document.message_id());
+
+  println!("DID Document Transaction > {}", explore);
 
   Ok(())
 }
-
 ```
 
 **Output**: Example DID Document in the [Tangle Explorer](https://explorer.iota.org/mainnet/transaction/LESUXJUMJCOWGHU9CQQUIHCIPYELOBMHZT9CHCYHJPO9BONQ9IQIFJSREYNOCTYCTQYBHBMBBWJJZ9999).
