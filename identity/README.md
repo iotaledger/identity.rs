@@ -15,7 +15,6 @@ use identity::iota::TangleRef;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-
   // Create a client to interact with the IOTA Tangle.
   let client: Client = Client::new()?;
 
