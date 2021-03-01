@@ -11,6 +11,7 @@ keywords = ["iota", "tangle", "identity"]
 homepage = "https://www.iota.org"
 
 [dependencies]
+async-trait = { version = "0.1", default-features = false }
 futures = { version = "0.3" }
 hashbrown = { version = "0.9" }
 identity-core = { version = "=0.2.0", path = "../identity-core" }
