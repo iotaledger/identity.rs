@@ -111,7 +111,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 12.x
+          node-version: 15.x
 
       - name: Install wasm-pack
         run: yarn global add wasm-pack
