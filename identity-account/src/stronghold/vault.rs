@@ -20,57 +20,54 @@ use crate::stronghold::Runtime;
 pub type Record = (usize, RecordHint);
 
 #[derive(Debug)]
-pub struct Vault<'path> {
-  flags: Vec<StrongholdFlags>,
+pub struct Vault<'snapshot> {
+  path: &'snapshot Path,
   name: Vec<u8>,
-  path: &'path Path,
+  flags: Vec<StrongholdFlags>,
 }
 
-impl<'path> Vault<'path> {
-  pub(crate) fn new<T>(path: &'path Path, name: &T, flags: &[StrongholdFlags]) -> Self
+impl<'snapshot> Vault<'snapshot> {
+  pub(crate) fn new<P, T>(path: &'snapshot P, name: &T, flags: &[StrongholdFlags]) -> Self
   where
+    P: AsRef<Path> + ?Sized,
     T: AsRef<[u8]> + ?Sized,
   {
     Self {
-      flags: flags.to_vec(),
+      path: path.as_ref(),
       name: name.as_ref().to_vec(),
-      path,
+      flags: flags.to_vec(),
     }
   }
 }
 
 impl Vault<'_> {
-  pub fn name(&self) -> &[u8] {
-    &self.name
-  }
-
+  /// Returns the snapshot path of the vault.
   pub fn path(&self) -> &Path {
     self.path
   }
 
+  /// Returns the name of the vault.
+  pub fn name(&self) -> &[u8] {
+    &self.name
+  }
+
+  /// Returns the vault policy options.
   pub fn flags(&self) -> &[StrongholdFlags] {
     &self.flags
   }
 
-  pub async fn flush(&self) -> Result<()> {
-    Runtime::lock().await?.write_snapshot(self.path).await
-  }
-
   /// Inserts a record.
-  pub async fn insert(
-    &self,
-    location: Location,
-    payload: Vec<u8>,
-    hint: RecordHint,
-    flags: &[VaultFlags],
-  ) -> Result<()> {
+  pub async fn insert<T>(&self, location: Location, payload: T, hint: RecordHint, flags: &[VaultFlags]) -> Result<()>
+  where
+    T: Into<Vec<u8>>,
+  {
     let mut runtime: _ = Runtime::lock().await?;
 
     runtime.set_snapshot(self.path).await?;
     runtime.load_actor(self.path, &self.name, &self.flags).await?;
 
     runtime
-      .write_to_vault(location, payload, hint, flags.to_vec())
+      .write_to_vault(location, payload.into(), hint, flags.to_vec())
       .await
       .to_result()?;
 
@@ -88,7 +85,7 @@ impl Vault<'_> {
     Ok(())
   }
 
-  /// Executes a runtime `procedure`.
+  /// Executes a runtime [`procedure`][`Procedure`].
   pub async fn execute(&self, procedure: Procedure) -> Result<ProcedureResult> {
     let mut runtime: _ = Runtime::lock().await?;
 

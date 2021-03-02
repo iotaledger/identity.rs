@@ -18,6 +18,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Mutex as SyncMutex;
+use std::sync::MutexGuard as SyncMutexGuard;
 use std::sync::Once;
 use std::thread;
 use std::time::Duration;
@@ -25,11 +26,13 @@ use std::time::Instant;
 use tokio::runtime::Runtime as AsyncRuntime;
 use tokio::sync::Mutex;
 use tokio::sync::MutexGuard;
+use zeroize::Zeroize;
 
 use crate::error::Error;
 use crate::error::PleaseDontMakeYourOwnResult;
 use crate::error::Result;
 use crate::stronghold::SnapshotStatus;
+use crate::utils::fs;
 
 #[derive(Debug)]
 pub(crate) struct Runtime {
@@ -62,6 +65,10 @@ impl Runtime {
 
   pub(crate) async fn set_password(path: &Path, password: Password) {
     Passwords::get().store(path, password).await;
+  }
+
+  pub(crate) async fn set_password_interval(value: Duration) {
+    Passwords::get().set_interval(value).await;
   }
 
   pub(crate) async fn snapshot_status(path: &Path) -> SnapshotStatus {
@@ -142,11 +149,13 @@ impl ActorState {
   }
 
   pub(crate) async fn flush(&mut self, path: &Path, persist: bool) -> Result<()> {
-    if persist && !self.clients_loaded.is_empty() {
+    let active: bool = !self.clients_active.is_empty();
+
+    if persist && active {
       self.write_snapshot(path).await?;
     }
 
-    for client in self.clients_loaded.iter() {
+    for client in self.clients_active.iter() {
       self
         .stronghold
         .kill_stronghold(client.clone(), false)
@@ -160,8 +169,10 @@ impl ActorState {
         .to_result()?;
     }
 
-    // delay to wait for the actors to be killed
-    thread::sleep(Duration::from_millis(300));
+    if active {
+      // delay to wait for the actors to be killed
+      thread::sleep(Duration::from_millis(300));
+    }
 
     self.clients_active.clear();
     self.clients_loaded.clear();
@@ -170,13 +181,19 @@ impl ActorState {
   }
 
   pub(crate) async fn write_snapshot(&mut self, path: &Path) -> Result<()> {
-    let password: Password = Passwords::get().load(path).await?;
+    fs::ensure_directory(path)?;
 
-    self
+    let mut password: Vec<u8> = Passwords::get().load(path).await?.to_vec();
+
+    let result: Result<()> = self
       .stronghold
-      .write_all_to_snapshot(&password.to_vec(), None, Some(path.to_path_buf()))
+      .write_all_to_snapshot(&password, None, Some(path.to_path_buf()))
       .await
-      .to_result()
+      .to_result();
+
+    password.zeroize();
+
+    result
   }
 
   pub(crate) async fn load_actor(&mut self, snapshot: &Path, client: &[u8], flags: &[StrongholdFlags]) -> Result<()> {
@@ -195,17 +212,18 @@ impl ActorState {
 
     if !self.clients_loaded.contains(client) {
       if snapshot.exists() {
-        self
+        let mut password: Vec<u8> = Passwords::get().load(snapshot).await?.to_vec();
+        let output: Option<PathBuf> = Some(snapshot.to_path_buf());
+
+        let result: Result<()> = self
           .stronghold
-          .read_snapshot(
-            client.into(),
-            None,
-            &Passwords::get().load(snapshot).await?.to_vec(),
-            None,
-            Some(snapshot.to_path_buf()),
-          )
+          .read_snapshot(client.into(), None, &password, None, output)
           .await
-          .to_result()?;
+          .to_result();
+
+        password.zeroize();
+
+        result?
       }
 
       self.clients_loaded.insert(client.into());
@@ -304,17 +322,16 @@ impl Task {
     })
   }
 
-  pub(crate) async fn spawn<F, T>(future: F) -> Result<()>
+  fn lock() -> Result<SyncMutexGuard<'static, AsyncRuntime>> {
+    Self::get().and_then(|this| this.data.lock().map_err(|_| Error::MutexPoisoned))
+  }
+
+  pub(crate) fn spawn<F>(future: F)
   where
-    F: Future<Output = Result<T>> + Send + 'static,
-    T: Send + 'static,
+    F: Future + Send + 'static,
+    F::Output: Send + 'static,
   {
-    let tpool: _ = Self::get()?;
-    let guard: _ = tpool.data.lock().unwrap();
-
-    guard.spawn(future);
-
-    Ok(())
+    Self::lock().unwrap().spawn(future);
   }
 }
 
@@ -342,13 +359,12 @@ impl Passwords {
     });
 
     __SWEEP.call_once(|| {
-      thread::spawn(|| async {
-        Task::spawn::<_, ()>(async {
+      thread::spawn(|| {
+        Task::spawn(async {
           loop {
-            Passwords::prune().await?;
+            Passwords::prune().await.unwrap();
           }
-        })
-        .await
+        });
       });
     });
 
@@ -357,6 +373,10 @@ impl Passwords {
 
   async fn interval(&self) -> Duration {
     *self.sweep.lock().await
+  }
+
+  async fn set_interval(&self, value: Duration) {
+    *self.sweep.lock().await = value;
   }
 
   async fn elapsed(&self, path: &Path) -> Option<Duration> {
@@ -407,8 +427,7 @@ impl Passwords {
   }
 
   async fn prune() -> Result<()> {
-    let passwords: &Self = Self::get();
-    let interval: Duration = passwords.interval().await;
+    let interval: Duration = Self::get().interval().await;
 
     thread::sleep(interval);
 
@@ -416,7 +435,7 @@ impl Passwords {
       return Ok(());
     }
 
-    let cleared: Vec<PathBuf> = passwords.drain(interval).await;
+    let cleared: Vec<PathBuf> = Self::get().drain(interval).await;
     let current: _ = CurrentSnapshot::lock().await;
 
     for path in cleared {

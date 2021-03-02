@@ -18,13 +18,14 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::stronghold::Store;
 
-pub struct Records<'path> {
-  pub(crate) store: Store<'path>,
+pub struct Records<'snapshot> {
+  pub(crate) store: Store<'snapshot>,
 }
 
-impl<'path> Records<'path> {
-  pub(crate) fn new<T>(path: &'path Path, name: &T, flags: &[StrongholdFlags]) -> Self
+impl<'snapshot> Records<'snapshot> {
+  pub(crate) fn new<P, T>(path: &'snapshot P, name: &T, flags: &[StrongholdFlags]) -> Self
   where
+    P: AsRef<Path> + ?Sized,
     T: AsRef<[u8]> + ?Sized,
   {
     Self {
@@ -44,10 +45,6 @@ impl Records<'_> {
 
   pub fn flags(&self) -> &[StrongholdFlags] {
     self.store.flags()
-  }
-
-  pub async fn flush(&self) -> Result<()> {
-    self.store.flush().await
   }
 
   pub async fn index(&self) -> Result<RecordIndex> {
@@ -185,80 +182,8 @@ impl Debug for RecordIndex {
 
 #[cfg(test)]
 mod tests {
-  use core::iter;
-  use rand::distributions::Alphanumeric;
-  use rand::rngs::OsRng;
-  use rand::Rng;
-  use std::fs;
-  use std::path::Path;
-  use std::path::PathBuf;
-
   use crate::stronghold::RecordIndex;
   use crate::stronghold::RecordTag;
-  use crate::stronghold::Records;
-  use crate::stronghold::Snapshot;
-
-  fn rand_string(chars: usize) -> String {
-    iter::repeat(())
-      .map(|_| OsRng.sample(Alphanumeric))
-      .map(char::from)
-      .take(chars)
-      .collect()
-  }
-
-  fn snapshot_path(root: &str, chars: usize) -> PathBuf {
-    AsRef::<Path>::as_ref(root).join(format!("{}.stronghold", rand_string(chars)))
-  }
-
-  #[tokio::test]
-  async fn test_record_get_set() {
-    fs::create_dir_all("./test-storage").unwrap();
-
-    let location: PathBuf = snapshot_path("./test-storage", 10);
-    let snapshot: Snapshot = Snapshot::new(&location);
-
-    snapshot.load([0; 32]).await.unwrap();
-
-    let records: Records<'_> = snapshot.records("", &[]);
-
-    assert_eq!(records.all().await.unwrap().len(), 0);
-
-    for index in 0..50_u32 {
-      records
-        .set(&index.to_be_bytes(), &index.pow(2).to_be_bytes())
-        .await
-        .unwrap();
-    }
-
-    for index in 0..50_u32 {
-      let data: Vec<u8> = records.get(&index.to_be_bytes()).await.unwrap();
-      assert_eq!(data, &index.pow(2).to_be_bytes());
-    }
-
-    for index in 50..100_u32 {
-      let data: Vec<u8> = records.get(&index.to_be_bytes()).await.unwrap();
-      assert_eq!(data, Vec::<u8>::new());
-    }
-
-    snapshot.unload(true).await.unwrap();
-    snapshot.load([0; 32]).await.unwrap();
-
-    for index in 0..50_u32 {
-      let data: Vec<u8> = records.get(&index.to_be_bytes()).await.unwrap();
-      assert_eq!(data, &index.pow(2).to_be_bytes());
-    }
-
-    for index in 0..50_u32 {
-      records.del(&index.to_be_bytes()).await.unwrap();
-    }
-
-    for index in 0..50_u32 {
-      let data: Vec<u8> = records.get(&index.to_be_bytes()).await.unwrap();
-      assert_eq!(data, Vec::<u8>::new());
-    }
-
-    fs::remove_file(&location).unwrap();
-  }
 
   #[test]
   fn test_record_index() {

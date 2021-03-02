@@ -14,40 +14,40 @@ use crate::stronghold::Runtime;
 const STRONG_404: &str = "Unable to read from store";
 
 #[derive(Debug)]
-pub struct Store<'path> {
-  flags: Vec<StrongholdFlags>,
+pub struct Store<'snapshot> {
+  path: &'snapshot Path,
   name: Vec<u8>,
-  path: &'path Path,
+  flags: Vec<StrongholdFlags>,
 }
 
-impl<'path> Store<'path> {
-  pub(crate) fn new<T>(path: &'path Path, name: &T, flags: &[StrongholdFlags]) -> Self
+impl<'snapshot> Store<'snapshot> {
+  pub(crate) fn new<P, T>(path: &'snapshot P, name: &T, flags: &[StrongholdFlags]) -> Self
   where
+    P: AsRef<Path> + ?Sized,
     T: AsRef<[u8]> + ?Sized,
   {
     Self {
-      flags: flags.to_vec(),
+      path: path.as_ref(),
       name: name.as_ref().to_vec(),
-      path,
+      flags: flags.to_vec(),
     }
   }
 }
 
 impl Store<'_> {
-  pub fn name(&self) -> &[u8] {
-    &self.name
-  }
-
+  /// Returns the snapshot path of the store.
   pub fn path(&self) -> &Path {
     self.path
   }
 
-  pub fn flags(&self) -> &[StrongholdFlags] {
-    &self.flags
+  /// Returns the name of the store.
+  pub fn name(&self) -> &[u8] {
+    &self.name
   }
 
-  pub async fn flush(&self) -> Result<()> {
-    Runtime::lock().await?.write_snapshot(self.path).await
+  /// Returns the store policy options.
+  pub fn flags(&self) -> &[StrongholdFlags] {
+    &self.flags
   }
 
   /// Gets a record.
@@ -74,12 +74,19 @@ impl Store<'_> {
   }
 
   /// Adds a record.
-  pub async fn set(&self, location: Location, payload: Vec<u8>, ttl: Option<Duration>) -> Result<()> {
+  pub async fn set<T>(&self, location: Location, payload: T, ttl: Option<Duration>) -> Result<()>
+  where
+    T: Into<Vec<u8>>,
+  {
     let mut runtime: _ = Runtime::lock().await?;
 
     runtime.set_snapshot(self.path).await?;
     runtime.load_actor(self.path, &self.name, &self.flags).await?;
-    runtime.write_to_store(location, payload, ttl).await.to_result()?;
+
+    runtime
+      .write_to_store(location, payload.into(), ttl)
+      .await
+      .to_result()?;
 
     Ok(())
   }
