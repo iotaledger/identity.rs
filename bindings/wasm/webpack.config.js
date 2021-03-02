@@ -34,5 +34,8 @@ module.exports = {
   // Removes the asset size warning
   performance: {
     hints: false,
+  },
+  experiments: {
+    asyncWebAssembly: true
   }
 };
