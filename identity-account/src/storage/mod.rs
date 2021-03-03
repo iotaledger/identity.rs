@@ -4,10 +4,12 @@
 mod handle;
 mod key_location;
 mod signature;
+mod stronghold;
 mod traits;
 
 pub use self::handle::StorageHandle;
 pub use self::key_location::KeyLocation;
 pub use self::signature::Signature;
+pub use self::stronghold::StrongholdAdapter;
 pub use self::traits::StorageAdapter;
 pub use self::traits::VaultAdapter;

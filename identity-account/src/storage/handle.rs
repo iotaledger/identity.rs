@@ -4,7 +4,6 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
-use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
 use std::sync::Arc;
 use tokio::sync::Mutex;
