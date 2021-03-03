@@ -15,7 +15,7 @@ futures = { version = "0.3" }
 hashbrown = { version = "0.9" }
 identity-core = { version = "=0.2.0", path = "../identity-core" }
 once_cell = { version = "1.5", default-features = false, features = ["std"] }
-riker = { version = "0.4" }
+riker = { version = "0.4", git ="https://github.com/elenaf9/riker", branch = "master" }
 slog = { version = "2.7" }
 tokio = { version = "1.2", default-features = false, features = ["rt", "rt-multi-thread", "sync"] }
 zeroize = { version = "1.2"}
@@ -26,9 +26,8 @@ rev = "dbb082870676b25b1867513792e51bd74ef1824d"
 features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha"]
 
 [dependencies.iota-stronghold]
-path = "../../stronghold.rs/client"
-# git = "https://github.com/iotaledger/stronghold.rs"
-# rev = "175d33562081dc26bd0b4b5cce624759606161d7"
+git = "https://github.com/iotaledger/stronghold.rs"
+rev = "374742b1d0d42592d7ae39bb7842fb301b685ddd"
 
 [dev-dependencies]
 rand = { version = "0.8" }
