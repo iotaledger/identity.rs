@@ -14,8 +14,8 @@ use std::path::Path;
 use crate::error::Error;
 use crate::error::PleaseDontMakeYourOwnResult;
 use crate::error::Result;
+use crate::stronghold::Context;
 use crate::stronghold::ProcedureResult;
-use crate::stronghold::Runtime;
 
 pub type Record = (usize, RecordHint);
 
@@ -61,38 +61,29 @@ impl Vault<'_> {
   where
     T: Into<Vec<u8>>,
   {
-    let mut runtime: _ = Runtime::lock().await?;
-
-    runtime.set_snapshot(self.path).await?;
-    runtime.load_actor(self.path, &self.name, &self.flags).await?;
-
-    runtime
+    Context::scope(self.path, &self.name, &self.flags)
+      .await?
       .write_to_vault(location, payload.into(), hint, flags.to_vec())
       .await
-      .to_result()?;
-
-    Ok(())
+      .to_result()
   }
 
   /// Deletes a record.
   pub async fn delete(&self, location: Location, gc: bool) -> Result<()> {
-    let mut runtime: _ = Runtime::lock().await?;
-
-    runtime.set_snapshot(self.path).await?;
-    runtime.load_actor(self.path, &self.name, &self.flags).await?;
-    runtime.delete_data(location, gc).await.to_result()?;
-
-    Ok(())
+    Context::scope(self.path, &self.name, &self.flags)
+      .await?
+      .delete_data(location, gc)
+      .await
+      .to_result()
   }
 
   /// Executes a runtime [`procedure`][`Procedure`].
   pub async fn execute(&self, procedure: Procedure) -> Result<ProcedureResult> {
-    let mut runtime: _ = Runtime::lock().await?;
-
-    runtime.set_snapshot(self.path).await?;
-    runtime.load_actor(self.path, &self.name, &self.flags).await?;
-
-    runtime.runtime_exec(procedure).await.to_result()
+    Context::scope(self.path, &self.name, &self.flags)
+      .await?
+      .runtime_exec(procedure)
+      .await
+      .to_result()
   }
 
   /// Returns a list of available records and hints.
@@ -100,12 +91,8 @@ impl Vault<'_> {
   where
     T: AsRef<[u8]> + ?Sized,
   {
-    let mut runtime: _ = Runtime::lock().await?;
-
-    runtime.set_snapshot(self.path).await?;
-    runtime.load_actor(self.path, &self.name, &self.flags).await?;
-
-    let (data, status): (Vec<Record>, _) = runtime.list_hints_and_ids(vault.as_ref()).await;
+    let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
+    let (data, status): (Vec<Record>, _) = scope.list_hints_and_ids(vault.as_ref()).await;
 
     status.to_result()?;
 

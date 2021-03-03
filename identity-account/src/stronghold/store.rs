@@ -9,7 +9,7 @@ use std::time::Duration;
 use crate::error::Error;
 use crate::error::PleaseDontMakeYourOwnResult;
 use crate::error::Result;
-use crate::stronghold::Runtime;
+use crate::stronghold::Context;
 
 const STRONG_404: &str = "Unable to read from store";
 
@@ -61,12 +61,8 @@ impl Store<'_> {
 
   /// Gets a record.
   pub async fn get_strict(&self, location: Location) -> Result<Vec<u8>> {
-    let mut runtime: _ = Runtime::lock().await?;
-
-    runtime.set_snapshot(self.path).await?;
-    runtime.load_actor(self.path, &self.name, &self.flags).await?;
-
-    let (data, status): (Vec<u8>, _) = runtime.read_from_store(location).await;
+    let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
+    let (data, status): (Vec<u8>, _) = scope.read_from_store(location).await;
 
     status.to_result()?;
 
@@ -78,27 +74,19 @@ impl Store<'_> {
   where
     T: Into<Vec<u8>>,
   {
-    let mut runtime: _ = Runtime::lock().await?;
-
-    runtime.set_snapshot(self.path).await?;
-    runtime.load_actor(self.path, &self.name, &self.flags).await?;
-
-    runtime
+    Context::scope(self.path, &self.name, &self.flags)
+      .await?
       .write_to_store(location, payload.into(), ttl)
       .await
-      .to_result()?;
-
-    Ok(())
+      .to_result()
   }
 
   /// Removes a record.
   pub async fn del(&self, location: Location) -> Result<()> {
-    let mut runtime: _ = Runtime::lock().await?;
-
-    runtime.set_snapshot(self.path).await?;
-    runtime.load_actor(self.path, &self.name, &self.flags).await?;
-    runtime.delete_from_store(location).await.to_result()?;
-
-    Ok(())
+    Context::scope(self.path, &self.name, &self.flags)
+      .await?
+      .delete_from_store(location)
+      .await
+      .to_result()
   }
 }
