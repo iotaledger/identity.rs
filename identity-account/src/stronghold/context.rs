@@ -213,11 +213,7 @@ impl Database {
 
     // Spawn a new actor or switch targets if this client was already spawned
     if self.clients_active.contains(client) {
-      self
-        .stronghold
-        .switch_actor_target(client.into())
-        .await
-        .to_result()?;
+      self.stronghold.switch_actor_target(client.into()).await.to_result()?;
     } else {
       self
         .stronghold
