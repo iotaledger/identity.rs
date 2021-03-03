@@ -13,6 +13,7 @@ pub enum Error {
   StrongholdPasswordNotSet,
   StrongholdProcedureFailure,
   StrongholdInvalidAddress,
+  MutexPoisoned,
 }
 
 impl From<std::io::Error> for Error {

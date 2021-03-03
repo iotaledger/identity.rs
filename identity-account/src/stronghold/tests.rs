@@ -85,9 +85,7 @@ rusty_fork_test! {
       );
     })
   }
-}
 
-rusty_fork_test! {
   #[test]
   fn test_password_persistence() {
     block_on(async {
@@ -144,117 +142,123 @@ rusty_fork_test! {
       );
     })
   }
-}
 
-#[tokio::test]
-async fn test_store_basics() {
-  let password: EncryptionKey = derive_encryption_key("my-password:test_store_basics");
-  let snapshot: Snapshot = open_snapshot(&generate_filename(), password).await;
+  #[test]
+  fn test_store_basics() {
+    block_on(async {
+      let password: EncryptionKey = derive_encryption_key("my-password:test_store_basics");
+      let snapshot: Snapshot = open_snapshot(&generate_filename(), password).await;
 
-  let store: Store = snapshot.store(b"store", &[]);
+      let store: Store = snapshot.store(b"store", &[]);
 
-  assert!(store.get(location("A")).await.unwrap().is_empty());
-  assert!(store.get(location("B")).await.unwrap().is_empty());
-  assert!(store.get(location("C")).await.unwrap().is_empty());
+      assert!(store.get(location("A")).await.unwrap().is_empty());
+      assert!(store.get(location("B")).await.unwrap().is_empty());
+      assert!(store.get(location("C")).await.unwrap().is_empty());
 
-  store.set(location("A"), b"foo".to_vec(), None).await.unwrap();
-  store.set(location("B"), b"bar".to_vec(), None).await.unwrap();
-  store.set(location("C"), b"baz".to_vec(), None).await.unwrap();
+      store.set(location("A"), b"foo".to_vec(), None).await.unwrap();
+      store.set(location("B"), b"bar".to_vec(), None).await.unwrap();
+      store.set(location("C"), b"baz".to_vec(), None).await.unwrap();
 
-  assert_eq!(store.get(location("A")).await.unwrap(), b"foo".to_vec());
-  assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
-  assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
+      assert_eq!(store.get(location("A")).await.unwrap(), b"foo".to_vec());
+      assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
+      assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
 
-  store.del(location("A")).await.unwrap();
-  store.del(location("C")).await.unwrap();
+      store.del(location("A")).await.unwrap();
+      store.del(location("C")).await.unwrap();
 
-  assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
+      assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
 
-  snapshot.unload(true).await.unwrap();
+      snapshot.unload(true).await.unwrap();
 
-  fs::remove_file(store.path()).unwrap();
-}
-
-#[tokio::test]
-async fn test_store_multiple_snapshots() {
-  let password: EncryptionKey = derive_encryption_key("my-password:test_store_multiple_snapshots");
-  let snapshot1: Snapshot = open_snapshot(&generate_filename(), password).await;
-  let snapshot2: Snapshot = open_snapshot(&generate_filename(), password).await;
-  let snapshot3: Snapshot = open_snapshot(&generate_filename(), password).await;
-
-  let store1: Store = snapshot1.store(b"store1", &[]);
-  let store2: Store = snapshot2.store(b"store2", &[]);
-  let store3: Store = snapshot3.store(b"store3", &[]);
-  let stores: &[_] = &[&store1, &store2, &store3];
-
-  for store in stores {
-    assert!(store.get(location("A")).await.unwrap().is_empty());
-    assert!(store.get(location("B")).await.unwrap().is_empty());
-    assert!(store.get(location("C")).await.unwrap().is_empty());
+      fs::remove_file(store.path()).unwrap();
+    })
   }
 
-  for store in stores {
-    store.set(location("A"), b"foo".to_vec(), None).await.unwrap();
-    store.set(location("B"), b"bar".to_vec(), None).await.unwrap();
-    store.set(location("C"), b"baz".to_vec(), None).await.unwrap();
+  #[test]
+  fn test_store_multiple_snapshots() {
+    block_on(async {
+      let password: EncryptionKey = derive_encryption_key("my-password:test_store_multiple_snapshots");
+      let snapshot1: Snapshot = open_snapshot(&generate_filename(), password).await;
+      let snapshot2: Snapshot = open_snapshot(&generate_filename(), password).await;
+      let snapshot3: Snapshot = open_snapshot(&generate_filename(), password).await;
+
+      let store1: Store = snapshot1.store(b"store1", &[]);
+      let store2: Store = snapshot2.store(b"store2", &[]);
+      let store3: Store = snapshot3.store(b"store3", &[]);
+      let stores: &[_] = &[&store1, &store2, &store3];
+
+      for store in stores {
+        assert!(store.get(location("A")).await.unwrap().is_empty());
+        assert!(store.get(location("B")).await.unwrap().is_empty());
+        assert!(store.get(location("C")).await.unwrap().is_empty());
+      }
+
+      for store in stores {
+        store.set(location("A"), b"foo".to_vec(), None).await.unwrap();
+        store.set(location("B"), b"bar".to_vec(), None).await.unwrap();
+        store.set(location("C"), b"baz".to_vec(), None).await.unwrap();
+      }
+
+      for store in stores {
+        assert_eq!(store.get(location("A")).await.unwrap(), b"foo".to_vec());
+        assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
+        assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
+      }
+
+      for store in stores {
+        store.del(location("A")).await.unwrap();
+        store.del(location("C")).await.unwrap();
+      }
+
+      for store in stores {
+        assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
+      }
+
+      snapshot1.unload(true).await.unwrap();
+      snapshot2.unload(true).await.unwrap();
+      snapshot3.unload(true).await.unwrap();
+
+      for store in stores {
+        fs::remove_file(store.path()).unwrap();
+      }
+    })
   }
 
-  for store in stores {
-    assert_eq!(store.get(location("A")).await.unwrap(), b"foo".to_vec());
-    assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
-    assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
-  }
+  #[test]
+  fn test_store_persistence() {
+    block_on(async {
+      let password: EncryptionKey = derive_encryption_key("my-password:test_store_persistence");
+      let filename: PathBuf = generate_filename();
 
-  for store in stores {
-    store.del(location("A")).await.unwrap();
-    store.del(location("C")).await.unwrap();
-  }
+      {
+        let snapshot: Snapshot = open_snapshot(&filename, password).await;
+        let store: Store = snapshot.store(b"persistence", &[]);
 
-  for store in stores {
-    assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
-  }
+        assert!(store.get(location("A")).await.unwrap().is_empty());
+        assert!(store.get(location("B")).await.unwrap().is_empty());
+        assert!(store.get(location("C")).await.unwrap().is_empty());
 
-  snapshot1.unload(true).await.unwrap();
-  snapshot2.unload(true).await.unwrap();
-  snapshot3.unload(true).await.unwrap();
+        store.set(location("A"), b"foo".to_vec(), None).await.unwrap();
+        store.set(location("B"), b"bar".to_vec(), None).await.unwrap();
+        store.set(location("C"), b"baz".to_vec(), None).await.unwrap();
 
-  for store in stores {
-    fs::remove_file(store.path()).unwrap();
-  }
-}
+        assert_eq!(store.get(location("A")).await.unwrap(), b"foo".to_vec());
+        assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
+        assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
 
-#[tokio::test]
-async fn test_store_persistence() {
-  let password: EncryptionKey = derive_encryption_key("my-password:test_store_persistence");
-  let filename: PathBuf = generate_filename();
+        snapshot.unload(true).await.unwrap();
+      }
 
-  {
-    let snapshot: Snapshot = open_snapshot(&filename, password).await;
-    let store: Store = snapshot.store(b"persistence", &[]);
+      {
+        let snapshot: Snapshot = load_snapshot(&filename, password).await;
+        let store: Store = snapshot.store(b"persistence", &[]);
 
-    assert!(store.get(location("A")).await.unwrap().is_empty());
-    assert!(store.get(location("B")).await.unwrap().is_empty());
-    assert!(store.get(location("C")).await.unwrap().is_empty());
+        assert_eq!(store.get(location("A")).await.unwrap(), b"foo".to_vec());
+        assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
+        assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
 
-    store.set(location("A"), b"foo".to_vec(), None).await.unwrap();
-    store.set(location("B"), b"bar".to_vec(), None).await.unwrap();
-    store.set(location("C"), b"baz".to_vec(), None).await.unwrap();
-
-    assert_eq!(store.get(location("A")).await.unwrap(), b"foo".to_vec());
-    assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
-    assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
-
-    snapshot.unload(true).await.unwrap();
-  }
-
-  {
-    let snapshot: Snapshot = load_snapshot(&filename, password).await;
-    let store: Store = snapshot.store(b"persistence", &[]);
-
-    assert_eq!(store.get(location("A")).await.unwrap(), b"foo".to_vec());
-    assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());
-    assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
-
-    fs::remove_file(store.path()).unwrap();
+        fs::remove_file(store.path()).unwrap();
+      }
+    })
   }
 }
