@@ -17,7 +17,7 @@ identity-core = { version = "=0.2.0", path = "../identity-core" }
 once_cell = { version = "1.5", default-features = false, features = ["std"] }
 riker = { version = "0.4" }
 slog = { version = "2.7" }
-tokio = { version = "1.2", default-features = false, features = ["sync"] }
+tokio = { version = "1.2", default-features = false, features = ["rt", "rt-multi-thread", "sync"] }
 zeroize = { version = "1.2"}
 
 [dependencies.iota-crypto]
@@ -33,4 +33,4 @@ path = "../../stronghold.rs/client"
 [dev-dependencies]
 rand = { version = "0.8" }
 rusty-fork = { version = "0.3" }
-tokio = { version = "1.2", features = ["full"] }
+tokio = { version = "1.2", features = ["macros", "rt", "rt-multi-thread", "sync"] }
