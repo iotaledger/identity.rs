@@ -38,10 +38,6 @@ impl StrongholdAdapter {
     Ok(Self { snapshot })
   }
 
-  pub fn set_password(&self, password: Password) -> Result<()> {
-    self.snapshot.set_password(password)
-  }
-
   fn records(&self) -> Records<'_> {
     self.snapshot.records("identity", &[])
   }
@@ -86,6 +82,10 @@ impl StorageAdapter for StrongholdAdapter {
 
 #[async_trait::async_trait]
 impl VaultAdapter for StrongholdAdapter {
+  async fn set_password(&self, password: Password) -> Result<()> {
+    self.snapshot.set_password(password)
+  }
+
   async fn generate_public_key(&mut self, location: KeyLocation<'_>) -> Result<PublicKey> {
     let vault: Vault<'_> = self.key_vault(location);
 

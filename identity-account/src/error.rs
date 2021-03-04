@@ -5,6 +5,8 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
 #[derive(Debug)]
 pub enum Error {
+  CoreError(identity_core::Error),
+  IotaError(identity_iota::Error),
   IoError(std::io::Error),
   ActorSystemError(riker::system::SystemError),
   StrongholdError(iota_stronghold::Error),
@@ -14,6 +16,23 @@ pub enum Error {
   StrongholdProcedureFailure,
   StrongholdInvalidAddress,
   MutexPoisoned,
+  RwLockReadPoisoned,
+  RwLockWritePoisoned,
+  MissingStorageAdapter,
+  IdentityDuplicateName,
+  IdentityOverload,
+}
+
+impl From<identity_core::Error> for Error {
+  fn from(other: identity_core::Error) -> Self {
+    Self::CoreError(other)
+  }
+}
+
+impl From<identity_iota::Error> for Error {
+  fn from(other: identity_iota::Error) -> Self {
+    Self::IotaError(other)
+  }
 }
 
 impl From<std::io::Error> for Error {

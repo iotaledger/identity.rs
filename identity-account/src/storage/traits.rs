@@ -8,6 +8,7 @@ use crate::error::Result;
 use crate::storage::KeyLocation;
 use crate::storage::Signature;
 use crate::utils::fs;
+use crate::utils::EncryptionKey;
 
 #[async_trait::async_trait]
 pub trait StorageAdapter: Send + Sync {
@@ -34,6 +35,8 @@ pub trait StorageAdapter: Send + Sync {
 
 #[async_trait::async_trait]
 pub trait VaultAdapter: StorageAdapter {
+  async fn set_password(&self, password: EncryptionKey) -> Result<()>;
+
   async fn generate_public_key(&mut self, location: KeyLocation<'_>) -> Result<PublicKey>;
 
   async fn retrieve_public_key(&mut self, location: KeyLocation<'_>) -> Result<PublicKey>;
@@ -74,6 +77,10 @@ macro_rules! impl_vault_deref {
   ($trait:ident) => {
     #[async_trait::async_trait]
     impl VaultAdapter for Box<dyn $trait> {
+      async fn set_password(&self, password: EncryptionKey) -> Result<()> {
+        (**self).set_password(password).await
+      }
+
       async fn generate_public_key(&mut self, location: KeyLocation<'_>) -> Result<PublicKey> {
         (**self).generate_public_key(location).await
       }
