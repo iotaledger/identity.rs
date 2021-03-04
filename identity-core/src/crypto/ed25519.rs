@@ -2,43 +2,55 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryInto;
-use ed25519_zebra::Signature;
-use ed25519_zebra::SigningKey;
-use ed25519_zebra::VerificationKey;
+use crypto::signatures::ed25519;
 
 use crate::error::Error;
 use crate::error::Result;
 
-const SIGNATURE_LEN: usize = 64;
-const PUBLIC_KEY_LEN: usize = 32;
-const SECRET_KEY_LEN: usize = 32;
+const SIGNATURE_LEN: usize = ed25519::SIGNATURE_LENGTH;
+const PUBLIC_KEY_LEN: usize = ed25519::COMPRESSED_PUBLIC_KEY_LENGTH;
+const SECRET_KEY_LEN: usize = ed25519::SECRET_KEY_LENGTH;
 
 pub(crate) fn ed25519_sign(message: &[u8], secret: &[u8]) -> Result<[u8; SIGNATURE_LEN]> {
-  let key: SigningKey = parse_secret(secret).ok_or(Error::InvalidKeyFormat)?;
-  let sig: [u8; SIGNATURE_LEN] = key.sign(message).into();
-
-  Ok(sig)
+  parse_secret(secret).map(|secret| secret.sign(message).to_bytes())
 }
 
 pub(crate) fn ed25519_verify(message: &[u8], signature: &[u8], public: &[u8]) -> Result<()> {
-  let key: VerificationKey = parse_public(public).ok_or(Error::InvalidKeyFormat)?;
-  let sig: Signature = parse_signature(signature).ok_or(Error::InvalidProofFormat)?;
+  let key: ed25519::PublicKey = parse_public(public)?;
+  let sig: ed25519::Signature = parse_signature(signature)?;
 
-  key.verify(&sig, message).map_err(|_| Error::InvalidProofValue)?;
-
-  Ok(())
+  if key.verify(&sig, message) {
+    Ok(())
+  } else {
+    Err(Error::InvalidProofValue)
+  }
 }
 
-fn parse_public(slice: &[u8]) -> Option<VerificationKey> {
-  slice.get(..PUBLIC_KEY_LEN).and_then(|bytes| bytes.try_into().ok())
+fn parse_public(slice: &[u8]) -> Result<ed25519::PublicKey> {
+  let bytes: [u8; PUBLIC_KEY_LEN] = slice
+    .get(..PUBLIC_KEY_LEN)
+    .and_then(|bytes| bytes.try_into().ok())
+    .ok_or_else(|| Error::InvalidKeyLength(slice.len(), PUBLIC_KEY_LEN))?;
+
+  ed25519::PublicKey::from_compressed_bytes(bytes).map_err(Into::into)
 }
 
-fn parse_secret(slice: &[u8]) -> Option<SigningKey> {
-  slice.get(..SECRET_KEY_LEN).and_then(|bytes| bytes.try_into().ok())
+fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey> {
+  let bytes: [u8; SECRET_KEY_LEN] = slice
+    .get(..SECRET_KEY_LEN)
+    .and_then(|bytes| bytes.try_into().ok())
+    .ok_or_else(|| Error::InvalidKeyLength(slice.len(), SECRET_KEY_LEN))?;
+
+  ed25519::SecretKey::from_le_bytes(bytes).map_err(Into::into)
 }
 
-fn parse_signature(slice: &[u8]) -> Option<Signature> {
-  slice.get(..SIGNATURE_LEN).and_then(|bytes| bytes.try_into().ok())
+fn parse_signature(slice: &[u8]) -> Result<ed25519::Signature> {
+  let bytes: [u8; SIGNATURE_LEN] = slice
+    .get(..SIGNATURE_LEN)
+    .and_then(|bytes| bytes.try_into().ok())
+    .ok_or_else(|| Error::InvalidSigLength(slice.len(), SIGNATURE_LEN))?;
+
+  Ok(ed25519::Signature::from_bytes(bytes))
 }
 
 #[cfg(test)]

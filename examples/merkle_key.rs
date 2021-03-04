@@ -12,6 +12,7 @@ use identity::core::Url;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
 use identity::credential::VerifiableCredential;
+use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
 use identity::crypto::KeyPair;
@@ -27,7 +28,6 @@ use identity::iota::Result;
 use identity::iota::TangleRef;
 use rand::rngs::OsRng;
 use rand::Rng;
-use sha2::Sha256;
 
 const LEAVES: usize = 1 << 10;
 
@@ -66,7 +66,7 @@ async fn main() -> Result<()> {
   println!("credential (unsigned): {:#}", credential);
 
   // Select a random key from the collection
-  let index: usize = OsRng.gen_range(0, LEAVES);
+  let index: usize = OsRng.gen_range(0..LEAVES);
 
   let public: &PublicKey = keys.public(index).unwrap();
   let secret: &SecretKey = keys.secret(index).unwrap();

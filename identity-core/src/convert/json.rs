@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crypto::hashes::sha::Sha256;
+use crypto::hashes::Digest;
+use crypto::hashes::Output;
 use erased_serde::Serialize;
 use serde::Deserialize;
-use sha2::digest::Digest;
-use sha2::digest::Output;
-use sha2::Sha256;
 
 use crate::error::Error;
 use crate::error::Result;

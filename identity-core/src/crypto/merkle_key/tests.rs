@@ -4,11 +4,13 @@
 use rand::rngs::OsRng;
 use rand::seq::IteratorRandom;
 use rand::Rng;
-use sha2::Sha256;
 
 use crate::common::BitSet;
+use crate::crypto::merkle_key::Blake2b256;
 use crate::crypto::merkle_key::DynSigner;
 use crate::crypto::merkle_key::DynVerifier;
+use crate::crypto::merkle_key::MerkleDigest;
+use crate::crypto::merkle_key::Sha256;
 use crate::crypto::KeyCollection;
 use crate::crypto::PublicKey;
 use crate::crypto::SecretKey;
@@ -29,15 +31,17 @@ fn inject_key(signature: &SignatureValue, key: &PublicKey) -> SignatureValue {
   SignatureValue::Signature(value)
 }
 
-#[test]
-fn test_sign_verify() {
+fn __test_sign_verify<D>()
+where
+  D: MerkleDigest,
+{
   let input: &[u8] = b"IOTA Identity";
-  let total: usize = 1 << OsRng.gen_range(6, 10);
-  let index: usize = OsRng.gen_range(0, total);
+  let total: usize = 1 << OsRng.gen_range(6..10);
+  let index: usize = OsRng.gen_range(0..total);
 
   let keys: KeyCollection = KeyCollection::new_ed25519(total).unwrap();
-  let signer: DynSigner<'static, '_, Sha256> = keys.merkle_key_signer(index).unwrap();
-  let mut verifier: DynVerifier<'static, Sha256> = keys.merkle_key_verifier();
+  let signer: DynSigner<'static, '_, D> = keys.merkle_key_signer(index).unwrap();
+  let mut verifier: DynVerifier<'static, D> = keys.merkle_key_verifier();
 
   let public: &PublicKey = keys.public(index).unwrap();
   let secret: &SecretKey = keys.secret(index).unwrap();
@@ -85,4 +89,14 @@ fn test_sign_verify() {
     let signature: SignatureValue = inject_key(&signature, key);
     assert!(verifier.verify(&input, &signature, &[]).is_err());
   }
+}
+
+#[test]
+fn test_sign_verify_sha256() {
+  __test_sign_verify::<Sha256>();
+}
+
+#[test]
+fn test_sign_verify_blake2b256() {
+  __test_sign_verify::<Blake2b256>();
 }

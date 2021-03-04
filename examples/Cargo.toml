@@ -6,8 +6,7 @@ publish = false
 
 [dependencies]
 identity = { path = "../identity" }
-rand = { version = "0.7" }
-sha2 = { version = "0.9" }
+rand = { version = "0.8" }
 smol = { version = "0.1", features = ["tokio02"] }
 smol-potat = { version = "0.3" }
 

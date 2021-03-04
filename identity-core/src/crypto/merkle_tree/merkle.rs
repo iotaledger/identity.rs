@@ -109,7 +109,7 @@ fn __split_pow2<T>(slice: &[T]) -> (&[T], &[T]) {
 
 #[cfg(test)]
 mod tests {
-  use sha2::Sha256;
+  use crypto::hashes::sha::Sha256;
 
   use crate::crypto::merkle_tree::compute_merkle_proof;
   use crate::crypto::merkle_tree::compute_merkle_root;
