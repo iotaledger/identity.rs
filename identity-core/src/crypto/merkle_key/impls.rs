@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #[doc(inline)]
-pub use sha2::Sha256;
+pub use crypto::hashes::sha::Sha256;
+
+#[doc(inline)]
+pub use crypto::hashes::blake2b::Blake2b256;
 
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleSignature;
@@ -15,6 +18,13 @@ use crate::crypto::KeyType;
 impl MerkleDigest for Sha256 {
   fn tag(&self) -> MerkleTag {
     MerkleTag::SHA256
+  }
+}
+
+// Add support for using Blake2b-256 as a Merkle Key Collection digest algorithm.
+impl MerkleDigest for Blake2b256 {
+  fn tag(&self) -> MerkleTag {
+    MerkleTag::BLAKE2B_256
   }
 }
 

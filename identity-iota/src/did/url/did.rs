@@ -8,12 +8,12 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
 use core::str::FromStr;
+use crypto::hashes::blake2b::Blake2b256;
+use crypto::hashes::Digest;
 use identity_core::utils::decode_b58;
 use identity_core::utils::encode_b58;
 use identity_did::did::Error as DIDError;
 use identity_did::did::DID as CoreDID;
-use multihash::Blake2b256;
-use multihash::Hasher;
 
 use crate::did::Segments;
 use crate::error::Error;

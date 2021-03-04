@@ -10,6 +10,7 @@ mod traits;
 mod verifier;
 
 pub use self::base::MerkleKey;
+pub use self::impls::Blake2b256;
 pub use self::impls::Sha256;
 pub use self::signer::DynSigner;
 pub use self::signer::Signer;

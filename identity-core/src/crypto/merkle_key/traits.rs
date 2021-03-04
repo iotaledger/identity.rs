@@ -27,6 +27,9 @@ impl MerkleTag {
   /// A Merkle Key Collection tag specifying `SHA-256` as the digest algorithm.
   pub const SHA256: Self = Self::new(0x0);
 
+  /// A Merkle Key Collection tag specifying `Blake2b-256` as the digest algorithm.
+  pub const BLAKE2B_256: Self = Self::new(0x1);
+
   /// Creates a new [`MerkleTag`] object.
   pub const fn new(tag: u8) -> Self {
     Self(tag)

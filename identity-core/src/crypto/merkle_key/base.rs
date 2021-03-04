@@ -61,7 +61,7 @@ impl MerkleKey {
 
 #[cfg(test)]
 mod tests {
-  use sha2::Sha256;
+  use crypto::hashes::sha::Sha256;
 
   use crate::crypto::merkle_key::MerkleKey;
   use crate::crypto::merkle_key::MerkleTag;
