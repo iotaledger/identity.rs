@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::crypto::merkle_key::Ed25519;
 use identity_core::crypto::merkle_key::MerkleKey;
 use identity_core::crypto::merkle_key::Sha256;
 use identity_core::crypto::merkle_tree::Hash;
@@ -76,7 +77,7 @@ fn test_sign_verify_this_ed25519() {
 
   assert!(document.verify_this().is_err());
 
-  document.sign_this("#key-1", key.secret().as_ref()).unwrap();
+  document.sign_this("#key-1", key.secret()).unwrap();
 
   assert!(document.verify_this().is_ok());
 }
@@ -91,7 +92,7 @@ fn test_sign_verify_that_merkle_key_ed25519_sha256() {
 
   let root: Hash<Sha256> = keys.merkle_root();
   let proof: Proof<Sha256> = keys.merkle_proof(index).unwrap();
-  let mkey: Vec<u8> = MerkleKey::encode_ed25519_key::<Sha256>(&root);
+  let mkey: Vec<u8> = MerkleKey::encode_key::<Sha256, Ed25519>(&root);
 
   let method: Method = Method::builder(Default::default())
     .id(controller.join("#key-collection").unwrap())

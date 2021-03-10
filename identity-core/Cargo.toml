@@ -14,7 +14,6 @@ homepage = "https://www.iota.org"
 base64 = { version = "0.13", default-features = false, features = ["std"] }
 bs58 = { version = "0.4", default-features = false, features = ["std"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
-erased-serde = { version = "0.3", default-features = false, features = ["alloc"] }
 hex = { version = "0.4", default-features = false }
 identity-diff = { version = "=0.2.0", path = "../identity-diff", default-features = false }
 roaring = { version = "0.6", default-features = false }

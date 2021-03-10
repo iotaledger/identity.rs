@@ -2,14 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::any::Any;
+use identity_core::common::BitSet;
+use identity_core::crypto::merkle_key::Blake2b256;
+use identity_core::crypto::merkle_key::Ed25519;
 use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::merkle_key::MerkleKey;
+use identity_core::crypto::merkle_key::MerkleSignature;
 use identity_core::crypto::merkle_key::MerkleTag;
 use identity_core::crypto::merkle_key::Sha256;
 use identity_core::crypto::merkle_key::Signer;
+use identity_core::crypto::merkle_key::SigningKey;
+use identity_core::crypto::merkle_key::VerificationKey;
 use identity_core::crypto::merkle_key::Verifier;
 use identity_core::crypto::merkle_tree::Proof;
-use identity_core::crypto::JcsEd25519Signature2020 as Ed25519;
+use identity_core::crypto::JcsEd25519Signer;
+use identity_core::crypto::JcsEd25519Verifier;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SecretKey;
 use identity_core::crypto::SetSignature;
@@ -86,7 +93,7 @@ where
   U: Serialize,
   V: Serialize,
 {
-  pub fn sign_this<'query, Q>(&mut self, query: Q, secret: &[u8]) -> Result<()>
+  pub fn sign_this<'query, Q>(&mut self, query: Q, secret: &SecretKey) -> Result<()>
   where
     Q: Into<MethodQuery<'query>>,
   {
@@ -95,7 +102,7 @@ where
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        Ed25519.__sign(self, fragment, secret)?;
+        JcsEd25519Signer::new(secret).create_signature(self, &fragment)?;
       }
       MethodType::MerkleKeyCollection2021 => {
         // Documents can't be signed with Merkle Key Collections
@@ -109,11 +116,11 @@ where
   pub fn verify_this(&self) -> Result<()> {
     let signature: &Signature = self.try_signature()?;
     let method: &Method<U> = self.try_resolve(signature)?;
-    let public: Vec<u8> = method.key_data().try_decode()?;
+    let public: PublicKey = method.key_data().try_decode()?.into();
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        Ed25519.__verify(self, &public)?;
+        JcsEd25519Verifier::new(&public).verify_signature(self)?;
       }
       MethodType::MerkleKeyCollection2021 => {
         // Documents can't be signed with Merkle Key Collections
@@ -193,34 +200,22 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
     X: Serialize + SetSignature,
   {
     let query: MethodQuery<'_> = self.method.ok_or(Error::QueryMethodNotFound)?;
-    let secret: &[u8] = self.secret.as_ref();
-
     let method: &Method<U> = self.document.try_resolve(query)?;
     let fragment: String = method.try_into_fragment()?;
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        Ed25519.__sign(that, fragment, secret)?;
+        JcsEd25519Signer::new(self.secret).create_signature(that, &fragment)?;
       }
       MethodType::MerkleKeyCollection2021 => {
         let data: Vec<u8> = method.key_data().try_decode()?;
 
         match MerkleKey::extract_tags(&data)? {
           (MerkleTag::ED25519, MerkleTag::SHA256) => {
-            let signer: _ = match self.merkle_key {
-              Some((public, proof)) => {
-                let proof: &Proof<Sha256> = proof
-                  .downcast_ref()
-                  .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))?;
-
-                Signer::from_borrowed(Ed25519, public, proof)
-              }
-              None => {
-                return Err(Error::CoreError(CoreError::InvalidKeyFormat));
-              }
-            };
-
-            signer.__sign(that, fragment, secret)?;
+            self.merkle_key_sign::<X, Sha256, Ed25519>(that, fragment)?;
+          }
+          (MerkleTag::ED25519, MerkleTag::BLAKE2B_256) => {
+            self.merkle_key_sign::<X, Blake2b256, Ed25519>(that, fragment)?;
           }
           (_, _) => {
             return Err(Error::InvalidMethodType);
@@ -230,6 +225,31 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
     }
 
     Ok(())
+  }
+
+  fn merkle_key_sign<X, D, S>(&self, that: &mut X, fragment: String) -> Result<()>
+  where
+    X: Serialize + SetSignature,
+    D: MerkleDigest,
+    S: MerkleSignature,
+    S: for<'a> SignatureSign<'a, Secret = SecretKey>,
+    S: for<'a> SignatureVerify<'a, Public = PublicKey>,
+  {
+    match self.merkle_key {
+      Some((public, proof)) => {
+        let proof: &Proof<D> = proof
+          .downcast_ref()
+          .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))?;
+
+        let skey: SigningKey<'_, D> = SigningKey::from_borrowed(public, self.secret, proof);
+        let signer: Signer<'_, D, S> = Signer::create(&skey);
+
+        signer.create_signature(that, &fragment)?;
+
+        Ok(())
+      }
+      None => Err(Error::CoreError(CoreError::InvalidKeyFormat)),
+    }
   }
 }
 
@@ -263,30 +283,43 @@ where
   {
     let signature: &Signature = that.try_signature()?;
     let method: &Method<U> = self.document.try_resolve(signature)?;
+    let data: Vec<u8> = method.key_data().try_decode()?;
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        Ed25519.__verify(that, &method.key_data().try_decode()?)?;
+        JcsEd25519Verifier::new(&data.into()).verify_signature(that)?;
       }
-      MethodType::MerkleKeyCollection2021 => {
-        let data: Vec<u8> = method.key_data().try_decode()?;
-
-        match MerkleKey::extract_tags(&data)? {
-          (MerkleTag::ED25519, MerkleTag::SHA256) => {
-            let mut verifier: Verifier<'_, _, Sha256> = Verifier::from_borrowed(&data, Ed25519);
-
-            if let Some(revocation) = method.revocation()? {
-              verifier.set_revocation(revocation);
-            }
-
-            verifier.__verify(that, &[])?;
-          }
-          (_, _) => {
-            return Err(Error::InvalidMethodType);
-          }
+      MethodType::MerkleKeyCollection2021 => match MerkleKey::extract_tags(&data)? {
+        (MerkleTag::ED25519, MerkleTag::SHA256) => {
+          self.merkle_key_verify::<X, Sha256, Ed25519>(that, method, &data)?;
         }
-      }
+        (MerkleTag::ED25519, MerkleTag::BLAKE2B_256) => {
+          self.merkle_key_verify::<X, Blake2b256, Ed25519>(that, method, &data)?;
+        }
+        (_, _) => {
+          return Err(Error::InvalidMethodType);
+        }
+      },
     }
+
+    Ok(())
+  }
+
+  fn merkle_key_verify<X, D, S>(&self, that: &X, method: &Method<U>, data: &[u8]) -> Result<()>
+  where
+    X: Serialize + TrySignature,
+    D: MerkleDigest,
+    S: MerkleSignature,
+    S: for<'a> SignatureVerify<'a, Public = PublicKey>,
+  {
+    let revocation: Option<BitSet> = method.revocation()?;
+    let mut vkey: VerificationKey<'_> = VerificationKey::from_borrowed(data);
+
+    if let Some(revocation) = revocation.as_ref() {
+      vkey.set_revocation(revocation);
+    }
+
+    Verifier::<'_, D, S>::create(&vkey).verify_signature(that)?;
 
     Ok(())
   }

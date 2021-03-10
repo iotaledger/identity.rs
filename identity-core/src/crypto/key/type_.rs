@@ -3,10 +3,10 @@
 
 use core::str::FromStr;
 
+use crate::crypto::merkle_key::Ed25519;
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleKey;
 use crate::crypto::merkle_tree::Hash;
-use crate::crypto::JcsEd25519Signature2020 as Ed25519;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -26,13 +26,13 @@ impl KeyType {
     }
   }
 
-  /// Creates a DID Document public key value for the given Merkle tree `root`.
-  pub fn encode_key<D>(&self, root: &Hash<D>) -> Vec<u8>
+  /// Creates a DID Document public key value for the given Merkle `root`.
+  pub fn encode_merkle_key<D>(&self, root: &Hash<D>) -> Vec<u8>
   where
     D: MerkleDigest,
   {
     match self {
-      Self::Ed25519 => MerkleKey::encode_key::<_, D>(&Ed25519, root),
+      Self::Ed25519 => MerkleKey::encode_key::<D, Ed25519>(root),
     }
   }
 }
