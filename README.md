@@ -33,16 +33,14 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 
 ## Documentation and Resources
 
-- [API Reference](https://identity-docs.iota.org/docs/identity/index.html): Package documentation (cargo docs). You can also build them yourself using:
-  ```cargo doc --document-private-items --no-deps --open ```
+- [API Reference](https://identity-docs.iota.org/docs/identity/index.html): Package documentation (cargo docs).
 - [Identity Documentation Pages](https://identity-docs.iota.org/welcome.html): Supplementing documentation with context around identity and simple examples on library usage.
 - [Examples in /examples folder](https://github.com/iotaledger/identity.rs/tree/main/examples): Practical code snippets to get you started with the library.
 - [IOTA Identity Experience Team Website](https://iota-community.github.io/X-Team_IOTA_Identity/): Website for a collaborative effort to provide help, guidance and spotlight to the IOTA Identity Community through offering feedback and introducing consistent workflows around IOTA Identity.
 
-
 ## Getting Started
 
-If you want to include IOTA Identity in your project, simple add it as a dependency in your `cargo.toml`:
+If you want to include IOTA Identity in your project, simply add it as a dependency in your `cargo.toml`:
 ```rust
 [dependencies]
 identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
@@ -54,9 +52,14 @@ To try out the [examples](https://github.com/iotaledger/identity.rs/tree/main/ex
 2. Build the repository with `cargo build `
 3. Run your first example using `cargo run --example getting_started `
 
+If you would like to build the [API Reference](https://identity-docs.iota.org/docs/identity/index.html) yourself from source, you can do so using:
+```rust
+cargo doc --document-private-items --no-deps --open
+```
+
 ## Example: Creating an Identity
 
-Cargo.toml
+*Cargo.toml*
 ```rust
 [package]
 name = "iota_identity_example"
@@ -68,7 +71,7 @@ identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
 smol = { version = "0.1", features = ["tokio02"] }
 smol-potat = { version = "0.3" }
 ```
-main.<span></span>rs
+*main.*<span></span>*rs*
 ```rust
 use identity::crypto::KeyPair;
 use identity::iota::{Client, Document, Network, Result, TangleRef};
@@ -97,18 +100,18 @@ async fn main() -> Result<()> {
   Ok(())
 }
 ```
-Example output
+*Example output*
 ```rust
 DID Document Transaction > https://explorer.iota.org/mainnet/transaction/YARETIQBJLER9BC9U9MOAXEBWVIHXYRMJAYFQSJDCPQXXWSEKQOFKGFMXYCNXPLTRAYQZTCLJJRXZ9999
 ```
-The output link points towards the DID Document transaction through the IOTA Tangle Explorer, see [here](https://explorer.iota.org/mainnet/transaction/YARETIQBJLER9BC9U9MOAXEBWVIHXYRMJAYFQSJDCPQXXWSEKQOFKGFMXYCNXPLTRAYQZTCLJJRXZ9999).
+The output link points towards the DID Document transaction, viewable through the IOTA Tangle Explorer, see [here](https://explorer.iota.org/mainnet/transaction/YARETIQBJLER9BC9U9MOAXEBWVIHXYRMJAYFQSJDCPQXXWSEKQOFKGFMXYCNXPLTRAYQZTCLJJRXZ9999). You can see the full DID Document as transaction payload.
 
 
 ## Roadmap and Milestones
 
-For detailed development progress, see also the identity development [canban board](https://github.com/iotaledger/identity.rs/projects/3).
+For detailed development progress, see also the IOTA Identity development [canban board](https://github.com/iotaledger/identity.rs/projects/3).
 
-IOTA Identity is in heavy development, and will naturally change as it matures and people use it. The chart below isn't meant to be exhaustive, but rather helps give an idea for some of the areas of development and their relative completion:
+IOTA Identity is in heavy development, and will naturally change as it matures and people use it. The chart below isn't meant to be exhaustive, but rather helps to give an idea for some of the areas of development and their relative completion:
 
 #### Basic Framework
 
@@ -145,11 +148,11 @@ IOTA Identity is in heavy development, and will naturally change as it matures a
 
 #### Planned Milestones
 
-At the current state, the framework is in alpha. As the framework matures we expect to support more and more type of applications. We recommend no use in real-world applications until the consumed libraries are audited, but experimentation and Proof-of-Concept projects are encouraged at the different stages.
+At the current state, the framework is in alpha. As the framework matures we expect to support more and more types of applications. We recommend no use in real-world applications until the consumed libraries are audited, but experimentation and Proof-of-Concept projects are encouraged at the different stages.
 
 | Milestone                 | Topic                                                      | Completion     | Notes                                                                                              |
 | :----------------- | :-------------------------------------------------------- | :----- | :------------------------------------------------------------------------------------------------ |
-|    1:heavy_check_mark: | [DID](https://www.w3.org/TR/did-core/)                     | Q4 2020 | As the DID standard is implemented and the IOTA ledger is integrated the first experimentations are possible. DIDs can be created, updated and ownership can be proven. This allows simple experimentations where ownership of an identity is the main requirement. |
+|    1:heavy_check_mark: | [DID](https://www.w3.org/TR/did-core/)                     | Q4 2020 | As the DID standard is implemented and the IOTA ledger is integrated first experimentations are possible. DIDs can be created, updated and ownership can be proven. This allows simple experimentations where ownership of an identity is the main requirement. |
 |    2:heavy_check_mark: | [VCs](https://www.w3.org/TR/vc-data-model/)                | Q4 2020 | With the Verifiable Credentials standard implemented, not only ownership can be proven, but also other attributes. At this stage PoCs are possible similarly to [Selv](https://selv.iota.org). However, the communications between actors are not yet implemented, identities are not easily recognized nor are credential layouts standardized. Real-world applications are possible at this stage (after audit), but require extra effort. |
 |    3:large_orange_diamond: | [DID Comms](https://identity.foundation/didcomm-messaging/spec/) | Q1 2021 | Once the communications between DID actors have been implemented, any application using identity can communicate out-of-the-box in an interoperable manner. This makes applications easier to develop, yet as mentioned in Milestone 2, identities are still not easily recognized nor are the credential layouts standarized. Real-world applications are therefore easier to develop (after audit), but scaling the application outside of a consortium is difficult. |
 |    4+             | TBD                                                        | TBD     | TBD                                                                                                |
