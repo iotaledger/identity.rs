@@ -7,20 +7,22 @@ use rand::Rng;
 
 use crate::common::BitSet;
 use crate::crypto::merkle_key::Blake2b256;
-use crate::crypto::merkle_key::Ed25519;
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleSignature;
+use crate::crypto::merkle_key::MerkleSigner;
+use crate::crypto::merkle_key::MerkleTag;
+use crate::crypto::merkle_key::MerkleVerifier;
 use crate::crypto::merkle_key::Sha256;
-use crate::crypto::merkle_key::Signer;
 use crate::crypto::merkle_key::SigningKey;
 use crate::crypto::merkle_key::VerificationKey;
-use crate::crypto::merkle_key::Verifier;
+use crate::crypto::Ed25519;
 use crate::crypto::KeyCollection;
 use crate::crypto::PublicKey;
-use crate::crypto::SecretKey;
-use crate::crypto::SignatureSign;
+use crate::crypto::Sign;
 use crate::crypto::SignatureValue;
-use crate::crypto::SignatureVerify;
+use crate::crypto::Signer as _;
+use crate::crypto::Verifier as _;
+use crate::crypto::Verify;
 use crate::utils::encode_b58;
 
 fn inject_key(signature: &SignatureValue, key: &PublicKey) -> SignatureValue {
@@ -39,10 +41,11 @@ fn __test_sign_verify<D, S>()
 where
   D: MerkleDigest,
   S: MerkleSignature,
-  S: for<'a> SignatureSign<'a, Secret = SecretKey>,
-  S: for<'a> SignatureVerify<'a, Public = PublicKey>,
+  S: Sign<Secret = [u8]>,
+  S: Verify<Public = [u8]>,
+  S::Output: AsRef<[u8]>,
 {
-  assert_eq!(S::TAG, Ed25519::TAG);
+  assert_eq!(S::TAG, MerkleTag::ED25519);
 
   let input: &[u8] = b"IOTA Identity";
   let total: usize = 1 << OsRng.gen_range(6..10);
@@ -54,9 +57,6 @@ where
   let skey: SigningKey<'_, D> = keys.merkle_key(index).unwrap();
   let vkey: VerificationKey<'_> = VerificationKey::from_borrowed(&mkey);
 
-  let signer: Signer<'_, D, S> = Signer::create(&skey);
-  let verifier: Verifier<'_, D, S> = Verifier::create(&vkey);
-
   let public: &PublicKey = keys.public(index).unwrap();
 
   // Test a few semi-valid keys - included in the Merkle root but not the signing key.
@@ -65,14 +65,14 @@ where
     .filter(|key| key.as_ref() != public.as_ref())
     .choose_multiple(&mut OsRng, 10);
 
-  let signature: SignatureValue = signer.sign(&input).unwrap();
+  let signature: SignatureValue = MerkleSigner::<D, S>::sign(&input, &skey).unwrap();
 
   // The signature should be valid
-  assert!(verifier.verify(&input, &signature).is_ok());
+  assert!(MerkleVerifier::<D, S>::verify(&input, &signature, &vkey).is_ok());
 
   // Ensure all other keys are NOT valid
   for key in samples.iter() {
-    assert!(verifier.verify(&input, &inject_key(&signature, key)).is_err());
+    assert!(MerkleVerifier::<D, S>::verify(&input, &inject_key(&signature, key), &vkey).is_err());
   }
 
   // Revoke the target key and ensure the signature is not considered valid.
@@ -80,26 +80,24 @@ where
   revocation.insert(index as u32);
   let mut vkey: VerificationKey<'_> = VerificationKey::from_borrowed(&mkey);
   vkey.set_revocation(&revocation);
-  let verifier: Verifier<'_, D, S> = Verifier::create(&vkey);
 
-  assert!(verifier.verify(&input, &signature).is_err());
+  assert!(MerkleVerifier::<D, S>::verify(&input, &signature, &vkey).is_err());
 
   // Ensure all other keys are NOT valid
   for key in samples.iter() {
-    assert!(verifier.verify(&input, &inject_key(&signature, key)).is_err());
+    assert!(MerkleVerifier::<D, S>::verify(&input, &inject_key(&signature, key), &vkey).is_err());
   }
 
   // Reinstate the key and ensure the signature is now valid.
   revocation.remove(index as u32);
   let mut vkey: VerificationKey<'_> = VerificationKey::from_borrowed(&mkey);
   vkey.set_revocation(&revocation);
-  let verifier: Verifier<'_, D, S> = Verifier::create(&vkey);
 
-  assert!(verifier.verify(&input, &signature).is_ok());
+  assert!(MerkleVerifier::<D, S>::verify(&input, &signature, &vkey).is_ok());
 
   // Ensure all other keys are NOT valid
   for key in samples.iter() {
-    assert!(verifier.verify(&input, &inject_key(&signature, key)).is_err());
+    assert!(MerkleVerifier::<D, S>::verify(&input, &inject_key(&signature, key), &vkey).is_err());
   }
 }
 

@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::crypto::merkle_key::Ed25519;
 use identity_core::crypto::merkle_key::MerkleKey;
 use identity_core::crypto::merkle_key::Sha256;
 use identity_core::crypto::merkle_tree::Hash;
 use identity_core::crypto::merkle_tree::Proof;
+use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::PublicKey;

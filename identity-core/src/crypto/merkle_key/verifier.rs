@@ -6,16 +6,18 @@ use serde::Serialize;
 use std::borrow::Cow;
 
 use crate::common::BitSet;
+use crate::convert::ToJson;
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleKey;
 use crate::crypto::merkle_key::MerkleSignature;
 use crate::crypto::merkle_key::MerkleTag;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Proof;
+use crate::crypto::Named;
 use crate::crypto::PublicKey;
-use crate::crypto::SignatureName;
 use crate::crypto::SignatureValue;
-use crate::crypto::SignatureVerify;
+use crate::crypto::Verifier;
+use crate::crypto::Verify;
 use crate::error::Error;
 use crate::error::Result;
 use crate::utils::decode_b58;
@@ -62,45 +64,16 @@ impl<'key> VerificationKey<'key> {
 
 /// A signature verification helper for Merkle Key Collection Signatures.
 #[derive(Clone)]
-pub struct Verifier<'key, D, S>
+pub struct MerkleVerifier<D, S>
 where
   D: MerkleDigest,
   S: MerkleSignature,
 {
-  merkle_key: Cow<'key, [u8]>,
-  revocation: Option<&'key BitSet>,
   marker_d: PhantomData<D>,
   marker_s: PhantomData<S>,
 }
 
-impl<D, S> Verifier<'_, D, S>
-where
-  D: MerkleDigest,
-  S: MerkleSignature,
-{
-  fn decompose_public_key(&self) -> Result<Hash<D>> {
-    let (tag_s, tag_d): (MerkleTag, MerkleTag) = MerkleKey::extract_tags(&self.merkle_key)?;
-
-    // Validate the signature algorithm tag
-    if tag_s != S::TAG {
-      return Err(Error::InvalidMerkleKeyTag(Some(tag_d)));
-    }
-
-    // Validate the digest algorithm tag
-    if tag_d != D::TAG {
-      return Err(Error::InvalidMerkleKeyTag(Some(tag_d)));
-    }
-
-    // Extract and return the Merkle root hash
-    self
-      .merkle_key
-      .get(2..)
-      .and_then(Hash::from_slice)
-      .ok_or(Error::InvalidKeyFormat)
-  }
-}
-
-impl<'key, D, S> SignatureName for Verifier<'key, D, S>
+impl<D, S> Named for MerkleVerifier<D, S>
 where
   D: MerkleDigest,
   S: MerkleSignature,
@@ -108,35 +81,22 @@ where
   const NAME: &'static str = MerkleKey::TYPE_SIG;
 }
 
-impl<'borrow, 'key: 'borrow, D, S> SignatureVerify<'key> for Verifier<'key, D, S>
+impl<'key, D, S> Verifier<VerificationKey<'key>> for MerkleVerifier<D, S>
 where
   D: MerkleDigest,
-  S: MerkleSignature + for<'scope> SignatureVerify<'scope, Public = PublicKey>,
+  S: MerkleSignature,
+  S: Verify,
+  S: Verify<Public = [u8]>,
 {
-  type Actual = Self;
-  type Public = VerificationKey<'key>;
-
-  fn create(key: &'borrow VerificationKey<'key>) -> Self::Actual {
-    Self {
-      merkle_key: match key.merkle_key {
-        Cow::Borrowed(data) => Cow::Borrowed(data),
-        Cow::Owned(ref data) => Cow::Owned(data.clone()),
-      },
-      revocation: key.revocation,
-      marker_d: PhantomData,
-      marker_s: PhantomData,
-    }
-  }
-
-  fn verify<T>(&self, data: &T, signature: &SignatureValue) -> Result<()>
+  fn verify<X>(data: &X, signature: &SignatureValue, public: &VerificationKey<'key>) -> Result<()>
   where
-    T: Serialize,
+    X: Serialize,
   {
     let mut digest: D = D::new();
 
     let (target, proof, signature): _ = expand_signature_value(signature)?;
 
-    let merkle_root: Hash<D> = self.decompose_public_key()?;
+    let merkle_root: Hash<D> = decompose_public_key::<D, S>(public)?;
     let merkle_proof: Proof<D> = Proof::decode(&proof).ok_or(Error::InvalidProofFormat)?;
     let target_hash: Hash<D> = digest.hash_leaf(target.as_ref());
 
@@ -148,14 +108,14 @@ where
 
     // If a set of revocation flags was provided, ensure the public key
     // was not revoked
-    if let Some(revocation) = self.revocation {
+    if let Some(revocation) = public.revocation {
       if revocation.contains(merkle_proof.index() as u32) {
         return Err(Error::InvalidProofValue);
       }
     }
 
     // Verify the signature with underlying signature algorithm
-    S::create(&target).verify(data, &signature)?;
+    S::verify(&data.to_jcs()?, &signature, target.as_ref())?;
 
     Ok(())
   }
@@ -164,7 +124,32 @@ where
 // =============================================================================
 // =============================================================================
 
-fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<u8>, SignatureValue)> {
+fn decompose_public_key<D, S>(key: &VerificationKey<'_>) -> Result<Hash<D>>
+where
+  D: MerkleDigest,
+  S: MerkleSignature,
+{
+  let (tag_s, tag_d): (MerkleTag, MerkleTag) = MerkleKey::extract_tags(&key.merkle_key)?;
+
+  // Validate the signature algorithm tag
+  if tag_s != S::TAG {
+    return Err(Error::InvalidMerkleKeyTag(Some(tag_d)));
+  }
+
+  // Validate the digest algorithm tag
+  if tag_d != D::TAG {
+    return Err(Error::InvalidMerkleKeyTag(Some(tag_d)));
+  }
+
+  // Extract and return the Merkle root hash
+  key
+    .merkle_key
+    .get(2..)
+    .and_then(Hash::from_slice)
+    .ok_or(Error::InvalidKeyFormat)
+}
+
+fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<u8>, Vec<u8>)> {
   let data: &str = signature.as_str();
   let mut parts: _ = data.split('.');
 
@@ -181,8 +166,8 @@ fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<
   // Extract bytes of the base58-encoded proof
   let proof: Vec<u8> = decode_b58(proof).map_err(|_| Error::InvalidProofFormat)?;
 
-  // Format the signature value for the underlying signature implementation
-  let signature: SignatureValue = SignatureValue::Signature(signature.to_string());
+  // Decode the signature value for the underlying signature implementation
+  let signature: Vec<u8> = decode_b58(signature)?;
 
   Ok((public, proof, signature))
 }

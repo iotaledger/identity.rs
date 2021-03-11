@@ -1,16 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod set_signature;
-mod signature_name;
-mod signature_sign;
-mod signature_verify;
-mod try_signature;
-mod try_signature_mut;
+mod core;
+mod data;
 
-pub use self::set_signature::SetSignature;
-pub use self::signature_name::SignatureName;
-pub use self::signature_sign::SignatureSign;
-pub use self::signature_verify::SignatureVerify;
-pub use self::try_signature::TrySignature;
-pub use self::try_signature_mut::TrySignatureMut;
+pub use self::core::Named;
+pub use self::core::Sign;
+pub use self::core::Signer;
+pub use self::core::Verifier;
+pub use self::core::Verify;
+pub use self::data::SetSignature;
+pub use self::data::TrySignature;
+pub use self::data::TrySignatureMut;

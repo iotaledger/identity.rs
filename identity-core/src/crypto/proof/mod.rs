@@ -6,5 +6,4 @@
 
 mod jcs_ed25519;
 
-pub use self::jcs_ed25519::JcsEd25519Signer;
-pub use self::jcs_ed25519::JcsEd25519Verifier;
+pub use self::jcs_ed25519::JcsEd25519;

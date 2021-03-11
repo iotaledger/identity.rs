@@ -147,7 +147,7 @@ impl KeyCollection {
 
   /// Returns a Merkle Key [`SigningKey`] for the key pair at the
   /// specified `index`.
-  pub fn merkle_key<'a, D>(&'a self, index: usize) -> Option<SigningKey<'a, D>>
+  pub fn merkle_key<D>(&self, index: usize) -> Option<SigningKey<'_, D>>
   where
     D: MerkleDigest,
   {

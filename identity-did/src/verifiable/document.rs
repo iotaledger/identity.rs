@@ -4,27 +4,28 @@
 use core::any::Any;
 use identity_core::common::BitSet;
 use identity_core::crypto::merkle_key::Blake2b256;
-use identity_core::crypto::merkle_key::Ed25519;
 use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::merkle_key::MerkleKey;
 use identity_core::crypto::merkle_key::MerkleSignature;
+use identity_core::crypto::merkle_key::MerkleSigner;
 use identity_core::crypto::merkle_key::MerkleTag;
+use identity_core::crypto::merkle_key::MerkleVerifier;
 use identity_core::crypto::merkle_key::Sha256;
-use identity_core::crypto::merkle_key::Signer;
 use identity_core::crypto::merkle_key::SigningKey;
 use identity_core::crypto::merkle_key::VerificationKey;
-use identity_core::crypto::merkle_key::Verifier;
 use identity_core::crypto::merkle_tree::Proof;
-use identity_core::crypto::JcsEd25519Signer;
-use identity_core::crypto::JcsEd25519Verifier;
+use identity_core::crypto::Ed25519;
+use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SecretKey;
 use identity_core::crypto::SetSignature;
+use identity_core::crypto::Sign;
 use identity_core::crypto::Signature;
-use identity_core::crypto::SignatureSign;
-use identity_core::crypto::SignatureVerify;
+use identity_core::crypto::Signer;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
+use identity_core::crypto::Verifier;
+use identity_core::crypto::Verify;
 use identity_core::error::Error as CoreError;
 use serde::Serialize;
 
@@ -102,7 +103,7 @@ where
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519Signer::new(secret).create_signature(self, &fragment)?;
+        JcsEd25519::<Ed25519>::create_signature(self, &fragment, secret.as_ref())?;
       }
       MethodType::MerkleKeyCollection2021 => {
         // Documents can't be signed with Merkle Key Collections
@@ -120,7 +121,7 @@ where
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519Verifier::new(&public).verify_signature(self)?;
+        JcsEd25519::<Ed25519>::verify_signature(self, public.as_ref())?;
       }
       MethodType::MerkleKeyCollection2021 => {
         // Documents can't be signed with Merkle Key Collections
@@ -205,7 +206,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519Signer::new(self.secret).create_signature(that, &fragment)?;
+        JcsEd25519::<Ed25519>::create_signature(that, &fragment, self.secret.as_ref())?;
       }
       MethodType::MerkleKeyCollection2021 => {
         let data: Vec<u8> = method.key_data().try_decode()?;
@@ -232,8 +233,8 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
     X: Serialize + SetSignature,
     D: MerkleDigest,
     S: MerkleSignature,
-    S: for<'a> SignatureSign<'a, Secret = SecretKey>,
-    S: for<'a> SignatureVerify<'a, Public = PublicKey>,
+    S: Sign<Secret = [u8]>,
+    S::Output: AsRef<[u8]>,
   {
     match self.merkle_key {
       Some((public, proof)) => {
@@ -242,9 +243,8 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
           .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))?;
 
         let skey: SigningKey<'_, D> = SigningKey::from_borrowed(public, self.secret, proof);
-        let signer: Signer<'_, D, S> = Signer::create(&skey);
 
-        signer.create_signature(that, &fragment)?;
+        MerkleSigner::<D, S>::create_signature(that, &fragment, &skey)?;
 
         Ok(())
       }
@@ -287,7 +287,7 @@ where
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519Verifier::new(&data.into()).verify_signature(that)?;
+        JcsEd25519::<Ed25519>::verify_signature(that, &data)?;
       }
       MethodType::MerkleKeyCollection2021 => match MerkleKey::extract_tags(&data)? {
         (MerkleTag::ED25519, MerkleTag::SHA256) => {
@@ -310,7 +310,7 @@ where
     X: Serialize + TrySignature,
     D: MerkleDigest,
     S: MerkleSignature,
-    S: for<'a> SignatureVerify<'a, Public = PublicKey>,
+    S: Verify<Public = [u8]>,
   {
     let revocation: Option<BitSet> = method.revocation()?;
     let mut vkey: VerificationKey<'_> = VerificationKey::from_borrowed(data);
@@ -319,7 +319,7 @@ where
       vkey.set_revocation(revocation);
     }
 
-    Verifier::<'_, D, S>::create(&vkey).verify_signature(that)?;
+    MerkleVerifier::<D, S>::verify_signature(that, &vkey)?;
 
     Ok(())
   }

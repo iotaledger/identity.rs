@@ -52,13 +52,13 @@ impl MerkleKey {
 #[cfg(test)]
 mod tests {
   use crate::crypto::merkle_key::Blake2b256;
-  use crate::crypto::merkle_key::Ed25519;
   use crate::crypto::merkle_key::MerkleDigest;
   use crate::crypto::merkle_key::MerkleKey;
   use crate::crypto::merkle_key::MerkleSignature;
   use crate::crypto::merkle_key::MerkleTag;
   use crate::crypto::merkle_key::Sha256;
   use crate::crypto::merkle_tree::Hash;
+  use crate::crypto::Ed25519;
 
   fn assert_tag<D, S>()
   where
