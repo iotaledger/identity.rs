@@ -10,10 +10,10 @@
 
 <p align="center">
   <a href="#introduction">Introduction</a> ◈
-  <a href="#documentation-resources">Documentation & Resources</a> ◈
+  <a href="#documentation-and-resources">Documentation & Resources</a> ◈
   <a href="#getting-started">Getting Started</a> ◈
   <a href="#example-creating-an-identity">Example</a> ◈
-  <a href="#roadmap-milestones">Roadmap</a> ◈
+  <a href="#roadmap-and-milestones">Roadmap</a> ◈
   <a href="#contributing">Contributing</a>
 </p>
 
@@ -23,7 +23,7 @@
 
 IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements standards such as the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) and the DIF [DIDComm Messaging](https://identity.foundation/didcomm-messaging/spec/) specifications alongside supporting methods. This framework can be used to create and authenticate digital identities, creating a trusted connection and sharing verifiable information, establishing trust in the digital world.
 
-The individual libraries are developed to be agnostic about the utilized [Distributed Ledger Technology (DLT)](https://en.wikipedia.org/wiki/Distributed_ledger), with the exception of the [IOTA](https://www.iota.org) integration and higher level libraries. Written in stable rust, it has strong guarantees of memory safety and process integrity while maintaining performance.
+The individual libraries are developed to be agnostic about the utilized [Distributed Ledger Technology (DLT)](https://en.wikipedia.org/wiki/Distributed_ledger), with the exception of the [IOTA](https://www.iota.org) integration and higher level libraries. Written in stable Rust, it has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
 
 > :warning: **WARNING** :warning:
 > 
@@ -31,10 +31,10 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 > Until a formal third-party security audit has taken place, the [IOTA Foundation](https://www.iota.org/) makes no guarantees to the fitness of this library. As such, it is to be seen as **experimental** and not ready for real-world applications.
 > Nevertheless, we are very interested in feedback about user experience, design and implementation, and encourage you to reach out with any concerns or suggestions you may have.
 
-## Documentation & Resources
+## Documentation and Resources
 
 - [API Reference](https://identity-docs.iota.org/docs/identity/index.html): Package documentation (cargo docs). You can also build them yourself using:
-  `cargo doc --document-private-items --no-deps --open `
+  ```cargo doc --document-private-items --no-deps --open ```
 - [Identity Documentation Pages](https://identity-docs.iota.org/welcome.html): Supplementing documentation with context around identity and simple examples on library usage.
 - [Examples in /examples folder](https://github.com/iotaledger/identity.rs/tree/main/examples): Practical code snippets to get you started with the library.
 - [IOTA Identity Experience Team Website](https://iota-community.github.io/X-Team_IOTA_Identity/): Website for a collaborative effort to provide help, guidance and spotlight to the IOTA Identity Community through offering feedback and introducing consistent workflows around IOTA Identity.
@@ -104,7 +104,7 @@ DID Document Transaction > https://explorer.iota.org/mainnet/transaction/YARETIQ
 The output link points towards the DID Document transaction through the IOTA Tangle Explorer, see [here](https://explorer.iota.org/mainnet/transaction/YARETIQBJLER9BC9U9MOAXEBWVIHXYRMJAYFQSJDCPQXXWSEKQOFKGFMXYCNXPLTRAYQZTCLJJRXZ9999).
 
 
-## Roadmap & Milestones
+## Roadmap and Milestones
 
 For detailed development progress, see also the identity development [canban board](https://github.com/iotaledger/identity.rs/projects/3).
 
@@ -156,4 +156,8 @@ At the current state, the framework is in alpha. As the framework matures we exp
 
 ## Contributing
 
-If you want to get involved in discussions about this framework, or you're looking for support, go to the #identity-discussion channel on [Discord](http://discord.iota.org).
+We would love to have you help us with the development of IOTA Identity. Each and every contribution is greatly valued!
+
+To contribute directly to the repository, simply fork the project, push your changes to your fork and create a pull request to get them included!
+
+The best place to get involved in discussions about this framework or to look for support at is the `#identity-discussion` channel on the [IOTA Discord](http://discord.iota.org). You can also ask questions on our [Stack Exchange](https://iota.stackexchange.com/).
