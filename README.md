@@ -121,8 +121,8 @@ IOTA Identity is in heavy development, and will naturally change as it matures a
 | IOTA Integration          |             |          |                        | :heavy_check_mark: | Finished implementation. |
 | Resolver                  |             |          |                        | :heavy_check_mark: | Finished implementation. |
 | Stronghold Integration    |             |          | :large_orange_diamond: |                    | Basically done, mostly testing right now. |
-| DID Comms                 |             |          | :large_orange_diamond: |                    | Partially done. |
-| Verifiable Credentials    |             |          |                        | :heavy_check_mark: | Finished implementation. |
+| [DID Comms](https://identity.foundation/didcomm-messaging/spec/)                 |             |          | :large_orange_diamond: |                    | Partially done. |
+| [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/)    |             |          |                        | :heavy_check_mark: | Finished implementation. |
 | VC Comms                  | :large_orange_diamond: | |                      |                    | |
 | Schema Validation         | :large_orange_diamond: | |                      |                    | |
 | C FFI Bindings            | :large_orange_diamond: | |                      |                    | |
