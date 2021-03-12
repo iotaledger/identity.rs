@@ -22,6 +22,7 @@ impl MerkleDigest for Blake2b256 {
   const TAG: MerkleTag = MerkleTag::BLAKE2B_256;
 }
 
+// Add support for using Ed25519 as a Merkle Key Collection signature algorithm.
 impl<T: ?Sized> MerkleSignature for Ed25519<T> {
   const TAG: MerkleTag = MerkleTag::ED25519;
 }
