@@ -29,3 +29,7 @@ path = "merkle_key.rs"
 [[example]]
 name = "resolution"
 path = "resolution.rs"
+
+[[example]]
+name = "getting_started"
+path = "getting_started.rs"
