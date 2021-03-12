@@ -6,6 +6,9 @@
 
 This folder provides code examples for you to learn how IOTA Identity can be used. The following examples are currently available:
 
+
+HOW TO USE THEM
+
 | #    | Name                                           | Information                                                                                                                |
 | :--: | :--------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
 | 1    | [getting_started](getting_started.rs)          | Introductory example for you to test whether the library is set up / working properly and compiles.                        |
