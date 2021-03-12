@@ -1,6 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! A basic example that generates and publishes a DID Document,
+//! the fundamental building block for decentralized identity.
+//!
+//! cargo run --example create_did
+
 use identity::crypto::KeyPair;
 use identity::iota::Client;
 use identity::iota::Document;
