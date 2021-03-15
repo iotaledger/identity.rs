@@ -61,7 +61,7 @@ impl Client {
       let nodes: Vec<&str> = builder.nodes.iter().map(|node| node.as_str()).collect();
       client = client.with_nodes(&nodes)?;
     }
-    if builder.node_sync_enabled == false {
+    if !builder.node_sync_enabled {
       client = client.with_node_sync_disabled();
     }
 

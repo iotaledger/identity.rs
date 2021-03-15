@@ -53,7 +53,7 @@ where
     if let Some(scope) = self.inner.get_mut(key) {
       scope.insert(0, element);
     } else {
-      self.inner.insert(key.clone(), vec![element]);
+      self.inner.insert(*key, vec![element]);
     }
   }
 
