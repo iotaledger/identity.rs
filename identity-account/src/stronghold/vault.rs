@@ -56,6 +56,15 @@ impl Vault<'_> {
     &self.flags
   }
 
+  /// Runs the Stronghold garbage collector.
+  pub async fn garbage_collect(&self, vault: &[u8]) -> Result<()> {
+    Context::scope(self.path, &self.name, &self.flags)
+      .await?
+      .garbage_collect(vault.to_vec())
+      .await
+      .to_result()
+  }
+
   /// Inserts a record.
   pub async fn insert<T>(&self, location: Location, payload: T, hint: RecordHint, flags: &[VaultFlags]) -> Result<()>
   where

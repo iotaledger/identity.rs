@@ -71,21 +71,30 @@ impl Records<'_> {
   }
 
   pub async fn set(&self, record_id: &[u8], record: &[u8]) -> Result<()> {
+    self.try_set(record_id, record, true).await.map(|_| ())
+  }
+
+  pub async fn try_set(&self, record_id: &[u8], record: &[u8], replace: bool) -> Result<bool> {
     let mut index: RecordIndex = self.index().await?;
     let record_tag: RecordTag = RecordIndex::tag(record_id);
+    let inserted: bool = index.insert(&record_tag);
 
     // Add the id to the record index
-    if index.insert(&record_tag) {
+    if inserted {
       self.store.set(Locations::index(), index.into_bytes(), None).await?;
     }
 
-    // Add the record to a namespaced store in the snapshot
-    self
-      .store
-      .set(Locations::record(&record_tag), record.to_vec(), None)
-      .await?;
+    if inserted || replace {
+      // Add the record to a namespaced store in the snapshot
+      self
+        .store
+        .set(Locations::record(&record_tag), record.to_vec(), None)
+        .await?;
 
-    Ok(())
+      Ok(true)
+    } else {
+      Ok(false)
+    }
   }
 
   pub async fn del(&self, record_id: &[u8]) -> Result<()> {
@@ -141,11 +150,11 @@ impl RecordIndex {
     self.0
   }
 
-  fn iter(&self) -> impl Iterator<Item = &[u8]> {
+  pub fn iter(&self) -> impl Iterator<Item = &[u8]> {
     self.0.chunks_exact(Self::CHUNK)
   }
 
-  fn contains(&self, tag: &[u8]) -> bool {
+  pub fn contains(&self, tag: &[u8]) -> bool {
     self.iter().any(|chunk| chunk == tag)
   }
 
