@@ -34,10 +34,9 @@ const LEAVES: usize = 1 << 10;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Create a new client connected to the Testnet (Chrysalis).
-    // Node-syncing has to be disabled for now.
-    let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
-
+  // Create a new client connected to the Testnet (Chrysalis).
+  // Node-syncing has to be disabled for now.
+  let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
 
   // Create a new DID Document, signed and published.
   let (mut doc, auth): (Document, KeyPair) = common::document(&client).await?;

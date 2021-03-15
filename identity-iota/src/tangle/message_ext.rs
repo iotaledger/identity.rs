@@ -6,64 +6,64 @@ use iota::Message;
 use iota::MessageId;
 use iota::Payload;
 
+use crate::did::Document;
 use crate::did::DocumentDiff;
 use crate::did::DID;
-use crate::did::Document;
 use crate::error::Result;
 use crate::tangle::TangleRef;
 
 macro_rules! try_extract {
-    ($ty:ty, $this:expr, $did:expr) => {{
-        if let Some(Payload::Indexation(payload)) = $this.payload() {
-            let mut resource: $ty = <$ty>::from_json_slice(payload.data()).ok()?;
+  ($ty:ty, $this:expr, $did:expr) => {{
+    if let Some(Payload::Indexation(payload)) = $this.payload() {
+      let mut resource: $ty = <$ty>::from_json_slice(payload.data()).ok()?;
 
-            if $did.authority() != resource.id().authority() {
-                return None;
-            }
+      if $did.authority() != resource.id().authority() {
+        return None;
+      }
 
-            TangleRef::set_message_id(&mut resource, $this.id().0);
+      TangleRef::set_message_id(&mut resource, $this.id().0);
 
-            Some(resource)
-        } else {
-            None
-        }
-    }};
+      Some(resource)
+    } else {
+      None
+    }
+  }};
 }
 
 pub trait MessageIdExt: Sized {
-    fn is_null(&self) -> bool;
+  fn is_null(&self) -> bool;
 
-    fn encode_hex(&self) -> String;
+  fn encode_hex(&self) -> String;
 
-    fn decode_hex(hex: &str) -> Result<Self>;
+  fn decode_hex(hex: &str) -> Result<Self>;
 }
 
 impl MessageIdExt for MessageId {
-    fn is_null(&self) -> bool {
-        MessageId::null().eq(self)
-    }
+  fn is_null(&self) -> bool {
+    MessageId::null().eq(self)
+  }
 
-    fn encode_hex(&self) -> String {
-        self.to_string()
-    }
+  fn encode_hex(&self) -> String {
+    self.to_string()
+  }
 
-    fn decode_hex(hex: &str) -> Result<Self> {
-        hex.parse().map_err(Into::into)
-    }
+  fn decode_hex(hex: &str) -> Result<Self> {
+    hex.parse().map_err(Into::into)
+  }
 }
 
 pub trait MessageExt {
-    fn try_extract_document(&self, did: &DID) -> Option<Document>;
+  fn try_extract_document(&self, did: &DID) -> Option<Document>;
 
-    fn try_extract_diff(&self, did: &DID) -> Option<DocumentDiff>;
+  fn try_extract_diff(&self, did: &DID) -> Option<DocumentDiff>;
 }
 
 impl MessageExt for Message {
-    fn try_extract_document(&self, did: &DID) -> Option<Document> {
-        try_extract!(Document, self, did)
-    }
+  fn try_extract_document(&self, did: &DID) -> Option<Document> {
+    try_extract!(Document, self, did)
+  }
 
-    fn try_extract_diff(&self, did: &DID) -> Option<DocumentDiff> {
-        try_extract!(DocumentDiff, self, did)
-    }
+  fn try_extract_diff(&self, did: &DID) -> Option<DocumentDiff> {
+    try_extract!(DocumentDiff, self, did)
+  }
 }

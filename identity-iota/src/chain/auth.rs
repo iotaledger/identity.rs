@@ -12,12 +12,12 @@ use crate::did::Document;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
-use iota::Message;
-use iota::MessageId;
-use crate::tangle::MessageIndex;
-use crate::tangle::TangleRef;
 use crate::tangle::MessageExt;
 use crate::tangle::MessageIdExt;
+use crate::tangle::MessageIndex;
+use crate::tangle::TangleRef;
+use iota::Message;
+use iota::MessageId;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AuthChain {
@@ -34,12 +34,11 @@ impl AuthChain {
       .flat_map(|message| message.try_extract_document(did))
       .collect();
 
-    let current: Document =
-      index
-        .remove_where(&MessageId::null(), |doc| doc.verify().is_ok())
-        .ok_or(Error::ChainError {
-          error: "Invalid Root Document",
-        })?;
+    let current: Document = index
+      .remove_where(&MessageId::null(), |doc| doc.verify().is_ok())
+      .ok_or(Error::ChainError {
+        error: "Invalid Root Document",
+      })?;
 
     let mut this: Self = Self::new(current)?;
 

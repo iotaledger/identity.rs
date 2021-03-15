@@ -16,46 +16,46 @@ pub struct ClientBuilder {
 impl ClientBuilder {
   /// Creates a new `ClientBuilder`.
   pub fn new() -> Self {
-      Self {
-          network: Network::default(),
-          nodes: Vec::new(),
-          node_sync_enabled: true,
-      }
+    Self {
+      network: Network::default(),
+      nodes: Vec::new(),
+      node_sync_enabled: true,
+    }
   }
 
   /// Sets the network of the generated `Client`.
   #[must_use]
   pub fn network(mut self, network: Network) -> Self {
-      self.network = network;
-      self
+    self.network = network;
+    self
   }
 
   /// Adds an IOTA node to the generated `Client`.
   #[must_use]
   pub fn node(mut self, node: impl Into<String>) -> Self {
-      self.nodes.push(node.into());
-      self
+    self.nodes.push(node.into());
+    self
   }
 
   /// Adds an iterator of IOTA nodes to the generated `Client`.
   pub fn nodes(mut self, nodes: impl IntoIterator<Item = impl Into<String>>) -> Self {
-      self.nodes.extend(nodes.into_iter().map(Into::into));
-      self
+    self.nodes.extend(nodes.into_iter().map(Into::into));
+    self
   }
 
   pub fn node_sync_disabled(mut self) -> Self {
-      self.node_sync_enabled = false;
-      self
+    self.node_sync_enabled = false;
+    self
   }
 
   /// Creates a new `Client` based on the `ClientBuilder` configuration.
   pub async fn build(self) -> Result<Client> {
-      Client::from_builder(self).await
+    Client::from_builder(self).await
   }
 }
 
 impl Default for ClientBuilder {
   fn default() -> Self {
-      Self::new()
+    Self::new()
   }
 }

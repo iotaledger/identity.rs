@@ -14,12 +14,12 @@ use crate::did::DocumentDiff;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
-use iota::Message;
-use iota::MessageId;
-use crate::tangle::MessageIndex;
 use crate::tangle::MessageExt;
 use crate::tangle::MessageIdExt;
+use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
+use iota::Message;
+use iota::MessageId;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(transparent)]

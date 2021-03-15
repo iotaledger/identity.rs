@@ -11,10 +11,9 @@ use identity::iota::TangleRef;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Create a new client connected to the Testnet (Chrysalis).
-    // Node-syncing has to be disabled for now.
-    let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
-
+  // Create a new client connected to the Testnet (Chrysalis).
+  // Node-syncing has to be disabled for now.
+  let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
 
   let keypair: KeyPair = KeyPair::new_ed25519()?;
   let mut document: Document = Document::from_keypair(&keypair)?;

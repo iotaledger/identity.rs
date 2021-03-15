@@ -19,10 +19,9 @@ use identity::iota::DID;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Create a new client connected to the Testnet (Chrysalis).
-    // Node-syncing has to be disabled for now.
-    let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
-
+  // Create a new client connected to the Testnet (Chrysalis).
+  // Node-syncing has to be disabled for now.
+  let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
 
   // Create a pair of Ed25519 public/secret keys.
   let key: KeyPair = KeyPair::new_ed25519()?;

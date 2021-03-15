@@ -18,17 +18,16 @@ use identity::iota::ClientBuilder;
 use identity::iota::Document;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
-use iota::MessageId;
 use identity::iota::Result;
+use iota::MessageId;
 use std::thread::sleep;
 use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Create a new client connected to the Testnet (Chrysalis).
-    // Node-syncing has to be disabled for now.
-    let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
-
+  // Create a new client connected to the Testnet (Chrysalis).
+  // Node-syncing has to be disabled for now.
+  let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
 
   // Keep track of the chain state locally, for reference
   let mut chain: DocumentChain;

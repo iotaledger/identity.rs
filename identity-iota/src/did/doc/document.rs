@@ -25,8 +25,8 @@ use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use serde::Serialize;
 use iota::MessageId;
+use serde::Serialize;
 
 use crate::client::Client;
 use crate::client::Network;

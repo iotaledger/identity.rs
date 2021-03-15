@@ -46,10 +46,9 @@ fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
 #[tokio::main]
 async fn main() -> Result<()> {
   // Initialize a `Client` to interact with the IOTA Tangle.
-    // Create a new client connected to the Testnet (Chrysalis).
-    // Node-syncing has to be disabled for now.
-    let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
-
+  // Create a new client connected to the Testnet (Chrysalis).
+  // Node-syncing has to be disabled for now.
+  let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
 
   // Create a DID Document/KeyPair for the credential issuer.
   let (doc_iss, key_iss): (Document, KeyPair) = common::document(&client).await?;
