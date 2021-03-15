@@ -39,6 +39,7 @@ impl PleaseDontMakeYourOwnResult<ProcedureResult> for ProcResult {
       ProcResult::BIP39MnemonicSentence(inner) => inner.to_result().map(ProcedureResult::BIP39MnemonicSentence),
       ProcResult::Ed25519PublicKey(inner) => inner.to_result().map(ProcedureResult::Ed25519PublicKey),
       ProcResult::Ed25519Sign(inner) => inner.to_result().map(ProcedureResult::Ed25519Sign),
+      ProcResult::Error(inner) => Err(Error::StrongholdResult(inner)),
     }
   }
 }
