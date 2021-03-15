@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_stronghold::hd::ChainCode;
+use crypto::keys::slip10::ChainCode;
 use iota_stronghold::ProcResult;
 use iota_stronghold::ResultMessage;
 

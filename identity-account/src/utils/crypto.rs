@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crypto::kdfs::pbkdf::PBKDF2_HMAC_SHA512;
+use crypto::keys::pbkdf::PBKDF2_HMAC_SHA512;
 
 const PBKDF_ITER: usize = 100;
 const PBKDF_SALT: &[u8] = b"identity.rs";
