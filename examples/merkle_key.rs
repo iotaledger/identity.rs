@@ -22,6 +22,7 @@ use identity::did::resolution::resolve;
 use identity::did::resolution::Resolution;
 use identity::did::MethodScope;
 use identity::iota::Client;
+use identity::iota::ClientBuilder;
 use identity::iota::Document;
 use identity::iota::Method;
 use identity::iota::Result;
@@ -31,9 +32,12 @@ use rand::Rng;
 
 const LEAVES: usize = 1 << 10;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
-  let client: Client = Client::new()?;
+    // Create a new client connected to the Testnet (Chrysalis).
+    // Node-syncing has to be disabled for now.
+    let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
+
 
   // Create a new DID Document, signed and published.
   let (mut doc, auth): (Document, KeyPair) = common::document(&client).await?;

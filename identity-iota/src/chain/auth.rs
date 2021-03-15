@@ -12,10 +12,12 @@ use crate::did::Document;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::Message;
-use crate::tangle::MessageId;
+use iota::Message;
+use iota::MessageId;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
+use crate::tangle::MessageExt;
+use crate::tangle::MessageIdExt;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AuthChain {
@@ -34,7 +36,7 @@ impl AuthChain {
 
     let current: Document =
       index
-        .remove_where(&MessageId::NONE, |doc| doc.verify().is_ok())
+        .remove_where(&MessageId::null(), |doc| doc.verify().is_ok())
         .ok_or(Error::ChainError {
           error: "Invalid Root Document",
         })?;
@@ -60,7 +62,7 @@ impl AuthChain {
       });
     }
 
-    if current.message_id().is_none() {
+    if current.message_id().is_null() {
       return Err(Error::ChainError {
         error: "Invalid Message Id",
       });
@@ -118,13 +120,13 @@ impl AuthChain {
       });
     }
 
-    if document.message_id().is_none() {
+    if document.message_id().is_null() {
       return Err(Error::ChainError {
         error: "Invalid Message Id",
       });
     }
 
-    if document.previous_message_id().is_none() {
+    if document.previous_message_id().is_null() {
       return Err(Error::ChainError {
         error: "Invalid Previous Message Id",
       });

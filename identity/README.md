@@ -13,10 +13,13 @@ use identity::iota::Network;
 use identity::iota::Result;
 use identity::iota::TangleRef;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
   // Create a client to interact with the IOTA Tangle.
-  let client: Client = Client::new()?;
+    // Create a new client connected to the Testnet (Chrysalis).
+    // Node-syncing has to be disabled for now.
+    let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
+
 
   // Create a DID Document (an identity).
   let keypair: KeyPair = KeyPair::new_ed25519()?;

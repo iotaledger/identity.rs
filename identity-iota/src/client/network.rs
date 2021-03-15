@@ -2,15 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Url;
-use iota::client::builder;
 
 use crate::did::DID;
 
 lazy_static! {
-  static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/mainnet").unwrap();
+  static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/chrysalis").unwrap();
   static ref EXPLORER_DEV: Url = Url::parse("https://explorer.iota.org/devnet").unwrap();
   static ref EXPLORER_COM: Url = Url::parse("https://comnet.thetangle.org").unwrap();
-  static ref NODE_MAIN: Url = Url::parse("https://nodes.iota.org:443").unwrap();
+  static ref NODE_MAIN: Url = Url::parse("https://api.lb-0.testnet.chrysalis2.com:443").unwrap();
   static ref NODE_DEV: Url = Url::parse("https://nodes.devnet.iota.org:443").unwrap();
   static ref NODE_COM: Url = Url::parse("https://nodes.comnet.thetangle.org:443").unwrap();
 }
@@ -72,26 +71,6 @@ impl Default for Network {
 impl<'a> From<&'a DID> for Network {
   fn from(other: &'a DID) -> Self {
     Self::from_name(other.network())
-  }
-}
-
-impl From<builder::Network> for Network {
-  fn from(other: builder::Network) -> Network {
-    match other {
-      builder::Network::Mainnet => Self::Mainnet,
-      builder::Network::Devnet => Self::Devnet,
-      builder::Network::Comnet => Self::Comnet,
-    }
-  }
-}
-
-impl From<Network> for builder::Network {
-  fn from(other: Network) -> builder::Network {
-    match other {
-      Network::Mainnet => Self::Mainnet,
-      Network::Devnet => Self::Devnet,
-      Network::Comnet => Self::Comnet,
-    }
   }
 }
 

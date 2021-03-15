@@ -3,14 +3,18 @@
 
 use identity::crypto::KeyPair;
 use identity::iota::Client;
+use identity::iota::ClientBuilder;
 use identity::iota::Document;
 use identity::iota::Network;
 use identity::iota::Result;
 use identity::iota::TangleRef;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
-  let client: Client = Client::new()?;
+    // Create a new client connected to the Testnet (Chrysalis).
+    // Node-syncing has to be disabled for now.
+    let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
+
 
   let keypair: KeyPair = KeyPair::new_ed25519()?;
   let mut document: Document = Document::from_keypair(&keypair)?;

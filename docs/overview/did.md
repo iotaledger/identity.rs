@@ -13,7 +13,7 @@ use identity::iota::Client;
 use identity::iota::IotaDocument;
 
 //Setting up the IOTA Network 
-let client: Client = Client::new()?;
+let client: Client = Client::new().await?;
 let network: &str = client.network().as_str();
 
 //Generating a DID Document

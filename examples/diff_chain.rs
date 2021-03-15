@@ -14,17 +14,21 @@ use identity::did::MethodRef;
 use identity::did::MethodType;
 use identity::iota::AuthChain;
 use identity::iota::Client;
+use identity::iota::ClientBuilder;
 use identity::iota::Document;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
-use identity::iota::MessageId;
+use iota::MessageId;
 use identity::iota::Result;
 use std::thread::sleep;
 use std::time::Duration;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
-  let client: Client = Client::new()?;
+    // Create a new client connected to the Testnet (Chrysalis).
+    // Node-syncing has to be disabled for now.
+    let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
+
 
   // Keep track of the chain state locally, for reference
   let mut chain: DocumentChain;

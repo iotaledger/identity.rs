@@ -7,8 +7,11 @@ publish = false
 [dependencies]
 identity = { path = "../identity" }
 rand = { version = "0.8" }
-smol = { version = "0.1", features = ["tokio02"] }
-smol-potat = { version = "0.3" }
+iota-core = { git = "https://github.com/iotaledger/iota.rs", rev = "86f5bb24727266e13abd772616d0700abe866892" }
+#iota-core = { git = "https://github.com/iotaledger/iota.rs", rev = "c993159e2a0d4eb250dc82e43e233219144e5931" }
+#iota-core = { git = "https://github.com/Thoralf-M/iota.rs", rev = "d7c8c64fc3ac2340f0148708a916c245f42fd454" }
+
+tokio = { version = "1.0", features = ["full"] }
 
 [[example]]
 name = "create_did"
