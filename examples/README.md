@@ -4,10 +4,21 @@
 
 ## IOTA Identity Examples
 
-This folder provides code examples for you to learn how IOTA Identity can be used. The following examples are currently available:
+This folder provides code examples for you to learn how IOTA Identity can be used.
 
+You can run each example using 
 
-HOW TO USE THEM
+```rust
+cargo run --example <example_name>
+```
+
+For Instance, to run the example `getting_started`, use
+
+```rust
+cargo run --example getting_started
+```
+
+The following examples are currently available:
 
 | #    | Name                                           | Information                                                                                                                |
 | :--: | :--------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
