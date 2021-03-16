@@ -91,7 +91,7 @@ impl Document {
       .build()
       .map(CoreDocument::into_verifiable)
       .map(Into::into)
-      .unwrap() // `uwnrap` is fine - we provided all the necessary properties
+      .unwrap() // `unwrap` is fine - we provided all the necessary properties
   }
 
   /// Converts a generic DID `Document` to an IOTA DID Document.
