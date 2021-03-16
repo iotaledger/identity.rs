@@ -172,7 +172,6 @@ mod tests {
   }
 
   #[test]
-  #[rustfmt::skip]
   fn test_presentation_builder_valid() {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let controller: DID = "did:example:1234".parse().unwrap();

@@ -12,7 +12,6 @@ use identity::did::resolution;
 use identity::did::resolution::Resource;
 use identity::did::resolution::SecondaryResource;
 use identity::iota::Client;
-use identity::iota::ClientBuilder;
 use identity::iota::Document;
 use identity::iota::Result;
 use identity::iota::DID;
@@ -20,9 +19,7 @@ use identity::iota::DID;
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a new client connected to the Testnet (Chrysalis).
-  // Node-syncing has to be disabled for now.
-  let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
-
+  let client: Client = Client::new().await?;
   // Create a pair of Ed25519 public/secret keys.
   let key: KeyPair = KeyPair::new_ed25519()?;
 

@@ -7,25 +7,21 @@ use crate::did::DID;
 
 lazy_static! {
   static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/chrysalis").unwrap();
-  static ref EXPLORER_DEV: Url = Url::parse("https://explorer.iota.org/devnet").unwrap();
-  static ref EXPLORER_COM: Url = Url::parse("https://comnet.thetangle.org").unwrap();
+  static ref EXPLORER_TEST: Url = Url::parse("https://explorer.iota.org/chrysalis").unwrap();
   static ref NODE_MAIN: Url = Url::parse("https://api.lb-0.testnet.chrysalis2.com:443").unwrap();
-  static ref NODE_DEV: Url = Url::parse("https://nodes.devnet.iota.org:443").unwrap();
-  static ref NODE_COM: Url = Url::parse("https://nodes.comnet.thetangle.org:443").unwrap();
+  static ref NODE_TEST: Url = Url::parse("https://api.lb-0.testnet.chrysalis2.com:443").unwrap();
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Network {
   Mainnet,
-  Devnet,
-  Comnet,
+  Testnet,
 }
 
 impl Network {
   pub fn from_name(string: &str) -> Self {
     match string {
-      "dev" => Self::Devnet,
-      "com" => Self::Comnet,
+      "test" => Self::Testnet,
       _ => Self::Mainnet,
     }
   }
@@ -38,8 +34,7 @@ impl Network {
   pub fn node_url(self) -> &'static Url {
     match self {
       Self::Mainnet => &*NODE_MAIN,
-      Self::Devnet => &*NODE_DEV,
-      Self::Comnet => &*NODE_COM,
+      Self::Testnet => &*NODE_TEST,
     }
   }
 
@@ -47,8 +42,7 @@ impl Network {
   pub fn explorer_url(self) -> &'static Url {
     match self {
       Self::Mainnet => &*EXPLORER_MAIN,
-      Self::Devnet => &*EXPLORER_DEV,
-      Self::Comnet => &*EXPLORER_COM,
+      Self::Testnet => &*EXPLORER_TEST,
     }
   }
 
@@ -56,8 +50,7 @@ impl Network {
   pub const fn as_str(self) -> &'static str {
     match self {
       Self::Mainnet => "main",
-      Self::Devnet => "dev",
-      Self::Comnet => "com",
+      Self::Testnet => "test",
     }
   }
 }
@@ -80,8 +73,7 @@ mod tests {
 
   #[test]
   fn test_from_name() {
-    assert_eq!(Network::from_name("com"), Network::Comnet);
-    assert_eq!(Network::from_name("dev"), Network::Devnet);
+    assert_eq!(Network::from_name("test"), Network::Testnet);
     assert_eq!(Network::from_name("main"), Network::Mainnet);
     assert_eq!(Network::from_name("anything"), Network::Mainnet);
   }
@@ -90,17 +82,10 @@ mod tests {
   fn test_matches_did() {
     let did: DID = DID::new(b"").unwrap();
     assert!(Network::matches_did(Network::Mainnet, &did));
-    assert!(!Network::matches_did(Network::Comnet, &did));
-    assert!(!Network::matches_did(Network::Devnet, &did));
+    assert!(!Network::matches_did(Network::Testnet, &did));
 
-    let did: DID = DID::with_network(b"", "com").unwrap();
-    assert!(Network::matches_did(Network::Comnet, &did));
+    let did: DID = DID::with_network(b"", "test").unwrap();
+    assert!(Network::matches_did(Network::Testnet, &did));
     assert!(!Network::matches_did(Network::Mainnet, &did));
-    assert!(!Network::matches_did(Network::Devnet, &did));
-
-    let did: DID = DID::with_network(b"", "dev").unwrap();
-    assert!(Network::matches_did(Network::Devnet, &did));
-    assert!(!Network::matches_did(Network::Mainnet, &did));
-    assert!(!Network::matches_did(Network::Comnet, &did));
   }
 }

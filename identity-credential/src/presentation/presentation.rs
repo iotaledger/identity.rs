@@ -134,7 +134,6 @@ mod tests {
   const JSON: &str = include_str!("../../tests/fixtures/presentation-1.json");
 
   #[test]
-  #[rustfmt::skip]
   fn test_from_json() {
     let presentation: VerifiablePresentation = VerifiablePresentation::from_json(JSON).unwrap();
     let credential: &VerifiableCredential = presentation.verifiable_credential.get(0).unwrap();

@@ -19,7 +19,6 @@ use identity::credential::Subject;
 use identity::credential::VerifiableCredential;
 use identity::crypto::KeyPair;
 use identity::iota::Client;
-use identity::iota::ClientBuilder;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
 use identity::iota::Document;
@@ -47,9 +46,7 @@ fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
 async fn main() -> Result<()> {
   // Initialize a `Client` to interact with the IOTA Tangle.
   // Create a new client connected to the Testnet (Chrysalis).
-  // Node-syncing has to be disabled for now.
-  let client: Client = ClientBuilder::new().node_sync_disabled().build().await?;
-
+  let client: Client = Client::new().await?;
   // Create a DID Document/KeyPair for the credential issuer.
   let (doc_iss, key_iss): (Document, KeyPair) = common::document(&client).await?;
 

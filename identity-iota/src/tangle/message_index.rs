@@ -158,7 +158,6 @@ where {
     }
 
   #[test]
-    #[rustfmt::skip]
     fn test_works() {
         let index: MessageIndex<Case> = setup();
 

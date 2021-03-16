@@ -3,15 +3,20 @@
 
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
-use identity_core::{common::Url, convert::ToJson};
-use iota::{Message, MessageId};
-
-use crate::{
-  chain::{AuthChain, DiffChain, DocumentChain},
-  client::{ClientBuilder, Network},
-  did::{Document, DocumentDiff, DID},
-  error::{Error, Result},
-};
+use identity_core::common::Url;
+use identity_core::convert::ToJson;
+use iota::Message;
+use iota::MessageId;
+use crate::chain::AuthChain;
+use crate::chain::DiffChain;
+use crate::chain::DocumentChain;
+use crate::client::ClientBuilder;
+use crate::client::Network;
+use crate::did::Document;
+use crate::did::DocumentDiff;
+use crate::did::DID;
+use crate::error::Error;
+use crate::error::Result;
 
 #[derive(Clone, Debug)]
 pub struct Messages {

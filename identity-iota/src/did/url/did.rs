@@ -307,8 +307,7 @@ mod tests {
   fn test_parse_valid() {
     assert!(DID::parse(format!("did:iota:{}", TAG)).is_ok());
     assert!(DID::parse(format!("did:iota:main:{}", TAG)).is_ok());
-    assert!(DID::parse(format!("did:iota:com:{}", TAG)).is_ok());
-    assert!(DID::parse(format!("did:iota:dev:{}", TAG)).is_ok());
+    assert!(DID::parse(format!("did:iota:test:{}", TAG)).is_ok());
     assert!(DID::parse(format!("did:iota:rainbow:{}", TAG)).is_ok());
     assert!(DID::parse(format!("did:iota:rainbow:shard-1:{}", TAG)).is_ok());
   }
@@ -339,8 +338,8 @@ mod tests {
   fn test_network() {
     let key: String = DID::encode_key(b"123");
 
-    let did: DID = format!("did:iota:dev:{}", key).parse().unwrap();
-    assert_eq!(did.network(), "dev");
+    let did: DID = format!("did:iota:test:{}", key).parse().unwrap();
+    assert_eq!(did.network(), "test");
 
     let did: DID = format!("did:iota:{}", key).parse().unwrap();
     assert_eq!(did.network(), "main");

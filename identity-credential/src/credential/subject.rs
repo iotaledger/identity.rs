@@ -60,7 +60,6 @@ mod tests {
   const JSON10: &str = include_str!("../../tests/fixtures/subject-10.json");
 
   #[test]
-  #[rustfmt::skip]
   fn test_from_json() {
     let subject: Subject = Subject::from_json(JSON1).unwrap();
     assert_eq!(subject.id.unwrap(), "did:example:ebfeb1f712ebc6f1c276e12ec21");

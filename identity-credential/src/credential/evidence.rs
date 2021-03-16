@@ -78,7 +78,6 @@ mod tests {
   const JSON2: &str = include_str!("../../tests/fixtures/evidence-2.json");
 
   #[test]
-  #[rustfmt::skip]
   fn test_from_json() {
     let evidence: Evidence = Evidence::from_json(JSON1).unwrap();
     assert_eq!(evidence.id.unwrap(), "https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192d4231");
