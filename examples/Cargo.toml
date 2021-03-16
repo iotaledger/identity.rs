@@ -19,8 +19,8 @@ name = "create_did_document"
 path = "create_did_document.rs"
 
 [[example]]
-name = "credential"
-path = "credential.rs"
+name = "verifiable_credential"
+path = "verifiable_credential.rs"
 
 [[example]]
 name = "diff_chain"
