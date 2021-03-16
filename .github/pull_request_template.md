@@ -17,10 +17,9 @@ Describe the tests that you ran to verify your changes.
 Make sure to provide instructions for the maintainer as well as any relevant configurations.
 
 ## Change checklist
-Add an `x` to the boxes that are relevant to your changes, and delete any items that are not.
+Add an `x` to the boxes that are relevant to your changes.
 
 - [ ] I have followed the contribution guidelines for this project
-- [ ] I have implemented the fix or feature across all bindings
 - [ ] I have performed a self-review of my own code
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
