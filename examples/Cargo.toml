@@ -23,6 +23,10 @@ name = "verifiable_credential"
 path = "verifiable_credential.rs"
 
 [[example]]
+name = "resolution"
+path = "resolution.rs"
+
+[[example]]
 name = "diff_chain"
 path = "diff_chain.rs"
 
@@ -30,7 +34,4 @@ path = "diff_chain.rs"
 name = "merkle_key"
 path = "merkle_key.rs"
 
-[[example]]
-name = "resolution"
-path = "resolution.rs"
 
