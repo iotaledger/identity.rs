@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // use identity_diff::Diff;
-// use serde::{Deserialize, Serialize};
+// use serde::Deserialize;
+use serde::Serialize;
 
 // #[derive(Diff, Debug, Clone, PartialEq, Default)]
 // pub struct Test {

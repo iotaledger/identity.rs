@@ -1,12 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use futures::stream::FuturesUnordered;
-use futures::stream::StreamExt;
-use identity_core::common::Url;
-use identity_core::convert::ToJson;
-use iota::Message;
-use iota::MessageId;
 use crate::chain::AuthChain;
 use crate::chain::DiffChain;
 use crate::chain::DocumentChain;
@@ -17,6 +11,12 @@ use crate::did::DocumentDiff;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
+use futures::stream::FuturesUnordered;
+use futures::stream::StreamExt;
+use identity_core::common::Url;
+use identity_core::convert::ToJson;
+use iota::Message;
+use iota::MessageId;
 
 #[derive(Clone, Debug)]
 pub struct Messages {

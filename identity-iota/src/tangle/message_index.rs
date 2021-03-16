@@ -1,16 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::tangle::TangleRef;
+use core::borrow::Borrow;
 use core::hash::Hash;
-use core::{
-  borrow::Borrow,
-  iter::FromIterator,
-  ops::{Deref, DerefMut},
-};
+use core::iter::FromIterator;
+use core::ops::Deref;
+use core::ops::DerefMut;
 use iota::MessageId;
 use std::collections::HashMap;
-
-use crate::tangle::TangleRef;
 
 type __Index<T> = HashMap<MessageId, Vec<T>>;
 
@@ -158,15 +156,15 @@ where {
     }
 
   #[test]
-    fn test_works() {
-        let index: MessageIndex<Case> = setup();
+  fn test_works() {
+    let index: MessageIndex<Case> = setup();
 
-        assert_eq!(index.size(), 6);
-        assert_eq!(index[&MessageId::new(*b"99999999999999999999999999999990")].len(), 1);
-        assert_eq!(index[&MessageId::new(*b"9999999999999999999999999999999A")].len(), 2);
-        assert_eq!(index[&MessageId::new(*b"9999999999999999999999999999999B")].len(), 2);
-        assert_eq!(index[&MessageId::new(*b"9999999999999999999999999999999C")].len(), 1);
-    }
+    assert_eq!(index.size(), 6);
+    assert_eq!(index[&MessageId::new(*b"99999999999999999999999999999990")].len(), 1);
+    assert_eq!(index[&MessageId::new(*b"9999999999999999999999999999999A")].len(), 2);
+    assert_eq!(index[&MessageId::new(*b"9999999999999999999999999999999B")].len(), 2);
+    assert_eq!(index[&MessageId::new(*b"9999999999999999999999999999999C")].len(), 1);
+  }
 
   #[test]
     #[rustfmt::skip]

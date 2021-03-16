@@ -1,14 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::model::InputModel;
+use crate::utils::extract_option_segment;
+use crate::utils::parse_from_into;
+use crate::utils::should_ignore;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput};
-
-use crate::{
-  model::InputModel,
-  utils::{extract_option_segment, parse_from_into, should_ignore},
-};
+use syn::parse_macro_input;
+use syn::DeriveInput;
 
 mod impls;
 mod model;

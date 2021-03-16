@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::str::FromStr;
 use identity::core::decode_b58;
 use identity::core::FromJson;
 use identity::crypto::merkle_key::MerkleKey;
@@ -16,8 +15,9 @@ use identity::did::MethodScope;
 use identity::iota::Document as IotaDocument;
 use identity::iota::DocumentDiff;
 use identity::iota::Method as IotaMethod;
-use wasm_bindgen::prelude::*;
 use iota::MessageId;
+use std::str::FromStr;
+use wasm_bindgen::prelude::*;
 
 use crate::credential::VerifiableCredential;
 use crate::credential::VerifiablePresentation;
