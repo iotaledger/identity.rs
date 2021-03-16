@@ -134,26 +134,49 @@ mod tests {
   const JSON: &str = include_str!("../../tests/fixtures/presentation-1.json");
 
   #[test]
-  #[rustfmt::skip]
   fn test_from_json() {
     let presentation: VerifiablePresentation = VerifiablePresentation::from_json(JSON).unwrap();
     let credential: &VerifiableCredential = presentation.verifiable_credential.get(0).unwrap();
     let subject: &Subject = credential.credential_subject.get(0).unwrap();
 
-    assert_eq!(presentation.context.as_slice(), ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"]);
-    assert_eq!(presentation.id.as_ref().unwrap(), "urn:uuid:3978344f-8596-4c3a-a978-8fcaba3903c5");
-    assert_eq!(presentation.types.as_slice(), ["VerifiablePresentation", "CredentialManagerPresentation"]);
+    assert_eq!(
+      presentation.context.as_slice(),
+      [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ]
+    );
+    assert_eq!(
+      presentation.id.as_ref().unwrap(),
+      "urn:uuid:3978344f-8596-4c3a-a978-8fcaba3903c5"
+    );
+    assert_eq!(
+      presentation.types.as_slice(),
+      ["VerifiablePresentation", "CredentialManagerPresentation"]
+    );
     assert_eq!(presentation.proof().get(0).unwrap().type_(), "RsaSignature2018");
 
-    assert_eq!(credential.context.as_slice(), ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"]);
+    assert_eq!(
+      credential.context.as_slice(),
+      [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ]
+    );
     assert_eq!(credential.id.as_ref().unwrap(), "http://example.edu/credentials/3732");
-    assert_eq!(credential.types.as_slice(), ["VerifiableCredential", "UniversityDegreeCredential"]);
+    assert_eq!(
+      credential.types.as_slice(),
+      ["VerifiableCredential", "UniversityDegreeCredential"]
+    );
     assert_eq!(credential.issuer.url(), "https://example.edu/issuers/14");
     assert_eq!(credential.issuance_date, "2010-01-01T19:23:24Z".parse().unwrap());
     assert_eq!(credential.proof().get(0).unwrap().type_(), "RsaSignature2018");
 
     assert_eq!(subject.id.as_ref().unwrap(), "did:example:ebfeb1f712ebc6f1c276e12ec21");
     assert_eq!(subject.properties["degree"]["type"], "BachelorDegree");
-    assert_eq!(subject.properties["degree"]["name"], "Bachelor of Science in Mechanical Engineering");
+    assert_eq!(
+      subject.properties["degree"]["name"],
+      "Bachelor of Science in Mechanical Engineering"
+    );
   }
 }
