@@ -33,10 +33,12 @@ const LEAVES: usize = 1 << 10;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
+
+  // Create a Client to interact with the IOTA Tangle.
   let client: Client = Client::new()?;
 
   // Create a new DID Document, signed and published.
-  let (mut doc, auth): (Document, KeyPair) = common::document(&client).await?;
+  let (mut doc, auth): (Document, KeyPair) = common::create_did_document(&client).await?;
 
   // Generate a collection of ed25519 keys for signing credentials
   let keys: KeyCollection = KeyCollection::new_ed25519(LEAVES)?;

@@ -53,10 +53,10 @@ async fn main() -> Result<()> {
   // Initialize a `Client` to interact with the IOTA Tangle.
   let client: Client = Client::new()?;
 
-  // Create a signed DID Document/KeyPair for the credential issuer.
+  // Create a signed DID Document/KeyPair for the credential issuer (see previous example).
   let (doc_iss, key_iss): (Document, KeyPair) = common::create_did_document(&client).await?;
 
-  // Create a signed DID Document/KeyPair for the credential subject.
+  // Create a signed DID Document/KeyPair for the credential subject (see previous example).
   let (doc_sub, _key_sub): (Document, KeyPair) = common::create_did_document(&client).await?;
 
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
