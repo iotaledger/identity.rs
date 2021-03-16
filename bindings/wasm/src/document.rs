@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
 use identity::core::decode_b58;
 use identity::core::FromJson;
 use identity::crypto::merkle_key::MerkleKey;
@@ -16,6 +17,7 @@ use identity::iota::Document as IotaDocument;
 use identity::iota::DocumentDiff;
 use identity::iota::Method as IotaMethod;
 use wasm_bindgen::prelude::*;
+use iota::MessageId;
 
 use crate::credential::VerifiableCredential;
 use crate::credential::VerifiablePresentation;
@@ -248,7 +250,7 @@ impl Document {
   pub fn diff(&self, other: &Document, message: &str, key: &KeyPair) -> Result<JsValue, JsValue> {
     self
       .0
-      .diff(&other.0, message.to_string().into(), key.0.secret())
+      .diff(&other.0, MessageId::from_str(message).map_err(err)?, key.0.secret())
       .map_err(err)
       .and_then(|diff| JsValue::from_serde(&diff).map_err(err))
   }
