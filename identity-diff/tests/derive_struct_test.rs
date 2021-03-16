@@ -3,7 +3,7 @@
 
 // use identity_diff::Diff;
 // use serde::Deserialize;
-use serde::Serialize;
+// use serde::Serialize;
 
 // #[derive(Diff, Debug, Clone, PartialEq, Default)]
 // pub struct Test {
