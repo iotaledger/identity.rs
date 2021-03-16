@@ -3,6 +3,9 @@
 
 use core::iter::once;
 
+use crate::types::Identity;
+use crate::types::IdentityMetadata;
+
 #[derive(Clone, Copy, Debug)]
 #[repr(u8)]
 #[rustfmt::skip]
@@ -27,6 +30,14 @@ pub struct ResourceId<'a> {
 }
 
 impl<'a> ResourceId<'a> {
+  pub fn new_identity(data: &'a Identity) -> Self {
+    Self::new(ResourceType::Identity, data.id().tag().as_bytes())
+  }
+
+  pub fn new_identity_meta(data: &'a IdentityMetadata) -> Self {
+    ResourceId::new(ResourceType::IdentityMeta, data.id().as_bytes())
+  }
+
   pub const fn new(type_: ResourceType, data: &'a [u8]) -> Self {
     Self { type_, data }
   }

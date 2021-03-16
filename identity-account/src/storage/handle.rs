@@ -8,6 +8,10 @@ use identity_core::crypto::PublicKey;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::sync::MutexGuard;
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::error::Result;
 use crate::storage::VaultAdapter;
@@ -29,6 +33,30 @@ impl StorageHandle {
     Self {
       data: Arc::new(Mutex::new(storage)),
     }
+  }
+
+  /// Returns a list of deserialized resources.
+  pub async fn json_all<T>(&self, type_: ResourceType) -> Result<Vec<T>>
+  where
+    T: for<'a> Deserialize<'a>,
+  {
+    self.all(type_).await.and_then(deserialize_list)
+  }
+
+  /// Deserializes and returns the resource specified by `id`.
+  pub async fn json_get<T>(&self, id: ResourceId<'_>) -> Result<T>
+  where
+    T: for<'a> Deserialize<'a>,
+  {
+    self.get(id).await.and_then(deserialize)
+  }
+
+  /// Serializes and inserts the given `data`.
+  pub async fn json_set<T>(&self, id: ResourceId<'_>, data: &T) -> Result<()>
+  where
+    T: Serialize,
+  {
+    self.set(id, data.to_json_vec()?).await
   }
 
   // ===========================================================================
@@ -92,4 +120,18 @@ impl Debug for StorageHandle {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     f.write_str("StorageHandle")
   }
+}
+
+fn deserialize<T>(data: Vec<u8>) -> Result<T>
+where
+  T: for<'a> Deserialize<'a>,
+{
+  T::from_json_slice(&data).map_err(Into::into)
+}
+
+fn deserialize_list<T>(data: Vec<Vec<u8>>) -> Result<Vec<T>>
+where
+  T: for<'a> Deserialize<'a>,
+{
+  data.into_iter().map(deserialize).collect()
 }
