@@ -8,21 +8,14 @@
 
 mod common;
 
-use identity::core::json;
-use identity::core::FromJson;
-use identity::core::ToJson;
 use identity::core::Url;
 use identity::credential::Credential;
-use identity::credential::CredentialBuilder;
-use identity::credential::Subject;
 use identity::credential::VerifiableCredential;
 use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use identity::credential::VerifiablePresentation;
 use identity::crypto::KeyPair;
 use identity::iota::Client;
-use identity::iota::CredentialValidation;
-use identity::iota::CredentialValidator;
 use identity::iota::Document;
 use identity::iota::Result;
 
@@ -58,12 +51,14 @@ async fn main() -> Result<()> {
     // .policy()
     .build()?; // Finally, build the Presentation using the PresentationBuilder configuration.
 
-    println!("Credential > {:#}", presentation);
-    println!();
+  // Construct a new Verifiable Presentation
+  let mut veri_pres: VerifiablePresentation = VerifiablePresentation::new(presentation, Vec::new());
 
+  // Sign it with the issuer secret key
+  doc_iss.signer(key_iss.secret()).method("#authentication").sign(&mut veri_pres)?;
 
-// WHY IS THERE vc.sign but not pres.sign??
-
+  println!("Verifiable Presentation > {:#}", veri_pres);
+  println!();
 
   Ok(())
 }
