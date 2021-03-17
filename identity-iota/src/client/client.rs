@@ -36,10 +36,6 @@ impl Client {
     Self::from_builder(Self::builder()).await
   }
 
-  pub fn client(&mut self) -> &mut iota::Client {
-    &mut self.client
-  }
-
   /// Creates a `ClientBuilder` to configure a new `Client`.
   ///
   /// This is the same as `ClientBuilder::new()`.
