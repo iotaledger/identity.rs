@@ -4,14 +4,14 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
 use identity_core::crypto::PublicKey;
+use serde::Deserialize;
+use serde::Serialize;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::sync::MutexGuard;
-use identity_core::convert::FromJson;
-use identity_core::convert::ToJson;
-use serde::Deserialize;
-use serde::Serialize;
 
 use crate::error::Result;
 use crate::storage::VaultAdapter;

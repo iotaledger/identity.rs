@@ -3,8 +3,10 @@
 
 use core::iter::once;
 
+use crate::types::CredentialMetadata;
 use crate::types::Identity;
 use crate::types::IdentityMetadata;
+use crate::types::PresentationMetadata;
 
 #[derive(Clone, Copy, Debug)]
 #[repr(u8)]
@@ -30,12 +32,28 @@ pub struct ResourceId<'a> {
 }
 
 impl<'a> ResourceId<'a> {
-  pub fn new_identity(data: &'a Identity) -> Self {
-    Self::new(ResourceType::Identity, data.id().tag().as_bytes())
+  pub fn new_identity(tag: &'a str) -> Self {
+    Self::new(ResourceType::Identity, tag.as_bytes())
   }
 
   pub fn new_identity_meta(data: &'a IdentityMetadata) -> Self {
-    ResourceId::new(ResourceType::IdentityMeta, data.id().as_bytes())
+    Self::new(ResourceType::IdentityMeta, data.id().as_bytes())
+  }
+
+  pub fn new_credential(tag: &'a str) -> Self {
+    Self::new(ResourceType::Credential, tag.as_bytes())
+  }
+
+  pub fn new_credential_meta(data: &'a CredentialMetadata) -> Self {
+    Self::new(ResourceType::CredentialMeta, data.id().as_bytes())
+  }
+
+  pub fn new_presentation(tag: &'a str) -> Self {
+    Self::new(ResourceType::Presentation, tag.as_bytes())
+  }
+
+  pub fn new_presentation_meta(data: &'a PresentationMetadata) -> Self {
+    Self::new(ResourceType::PresentationMeta, data.id().as_bytes())
   }
 
   pub const fn new(type_: ResourceType, data: &'a [u8]) -> Self {
