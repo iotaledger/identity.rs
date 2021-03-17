@@ -144,3 +144,12 @@ pub mod iota {
   #[doc(inline)]
   pub use identity_iota::try_did;
 }
+
+pub mod prelude {
+  //! Prelude of commonly used types for the identity crate
+
+  pub use identity_core::crypto::KeyPair;
+  pub use identity_iota::client::Client;
+  pub use identity_iota::did::Document;
+  pub use identity_iota::Result;
+}
