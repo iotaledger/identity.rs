@@ -13,6 +13,7 @@
   <a href="#documentation-and-resources">Documentation & Resources</a> ◈
   <a href="#getting-started">Getting Started</a> ◈
   <a href="#example-creating-an-identity">Example</a> ◈
+  <a href="#bindings">Bindings</a> ◈
   <a href="#roadmap-and-milestones">Roadmap</a> ◈
   <a href="#contributing">Contributing</a>
 </p>
@@ -106,6 +107,11 @@ DID Document Transaction > https://explorer.iota.org/mainnet/transaction/YARETIQ
 ```
 The output link points towards the DID Document transaction, viewable through the IOTA Tangle Explorer, see [here](https://explorer.iota.org/mainnet/transaction/YARETIQBJLER9BC9U9MOAXEBWVIHXYRMJAYFQSJDCPQXXWSEKQOFKGFMXYCNXPLTRAYQZTCLJJRXZ9999). You can see the full DID Document as transaction payload.
 
+## Bindings
+
+Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages are a work in progress (see Roadmap below). Currently available bindings are:
+
+* [Web Assembly](bindings/wasm/)
 
 ## Roadmap and Milestones
 
