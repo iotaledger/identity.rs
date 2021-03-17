@@ -109,7 +109,7 @@ The output link points towards the DID Document transaction, viewable through th
 
 ## Bindings
 
-Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages are a work in progress (see Roadmap below). Currently available bindings are:
+[Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages are a work in progress (see Roadmap below). Currently available bindings are:
 
 * [Web Assembly](bindings/wasm/)
 
