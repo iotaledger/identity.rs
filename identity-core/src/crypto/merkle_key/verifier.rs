@@ -84,9 +84,7 @@ where
 impl<'key, D, S> Verifier<VerificationKey<'key>> for MerkleVerifier<D, S>
 where
   D: MerkleDigest,
-  S: MerkleSignature,
-  S: Verify,
-  S: Verify<Public = [u8]>,
+  S: MerkleSignature + Verify<Public = [u8]>,
 {
   fn verify<X>(data: &X, signature: &SignatureValue, public: &VerificationKey<'key>) -> Result<()>
   where
