@@ -5,6 +5,7 @@ use core::marker::PhantomData;
 use futures::executor;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::Sign;
+use identity_core::error::Error;
 use identity_core::error::Result;
 
 use crate::storage::StorageHandle;
@@ -36,8 +37,9 @@ impl<'a> Sign for RemoteEd25519<'a> {
     debug_assert_eq!(key.location.type_(), KeyType::Ed25519, "KeyLocation is not Ed25519");
 
     let future: _ = key.storage.key_sign(&key.location, message.to_vec());
-    let signature: Signature = executor::block_on(future).unwrap(); // TODO: Map Err
 
-    Ok(signature.data)
+    executor::block_on(future)
+      .map_err(|_| Error::InvalidProofValue)
+      .map(|signature| signature.data)
   }
 }
