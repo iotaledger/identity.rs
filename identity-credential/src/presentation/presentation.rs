@@ -23,9 +23,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::presentation::PresentationBuilder;
 
-/// A `Presentation` represents a bundle of one or more `Credential`s.
-///
-/// `Presentation`s can be signed with `Document`s to create verifiable `Presentation`s.
+/// Represents a bundle of one or more [Credential]s.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Presentation<T = Object, U = Object> {
   /// The JSON-LD context(s) applicable to the `Presentation`.
@@ -40,7 +38,7 @@ pub struct Presentation<T = Object, U = Object> {
   /// Credential(s) expressing the claims of the `Presentation`.
   #[serde(default = "Default::default", rename = "verifiableCredential")]
   pub verifiable_credential: OneOrMany<Credential<U>>,
-  /// The entity that generated the presentation.
+  /// The entity that generated the `Presentation`.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub holder: Option<Url>,
   /// Service(s) used to refresh an expired `Presentation`.
@@ -68,9 +66,9 @@ impl<T, U> Presentation<T, U> {
     "VerifiablePresentation"
   }
 
-  /// Creates a `PresentationBuilder` to configure a new `Presentation`.
+  /// Creates a `PresentationBuilder` to configure a new Presentation.
   ///
-  /// This is the same as `PresentationBuilder::new()`.
+  /// This is the same as [PresentationBuilder::new].
   pub fn builder(properties: T) -> PresentationBuilder<T, U> {
     PresentationBuilder::new(properties)
   }

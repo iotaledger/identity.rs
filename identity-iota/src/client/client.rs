@@ -43,7 +43,7 @@ impl Client {
 
   /// Creates a `ClientBuilder` to configure a new `Client`.
   ///
-  /// This is the same as `ClientBuilder::new()`.
+  /// This is the same as [ClientBuilder::new]`.
   pub fn builder() -> ClientBuilder {
     ClientBuilder::new()
   }

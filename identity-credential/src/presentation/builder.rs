@@ -12,7 +12,7 @@ use crate::credential::Refresh;
 use crate::error::Result;
 use crate::presentation::Presentation;
 
-/// A `PresentationBuilder` is used to create a customized `Presentation`.
+/// A `PresentationBuilder` is used to create a customized [Presentation].
 #[derive(Clone, Debug)]
 pub struct PresentationBuilder<T = Object, U = Object> {
   pub(crate) context: Vec<Context>,
@@ -40,21 +40,21 @@ impl<T, U> PresentationBuilder<T, U> {
     }
   }
 
-  /// Adds a value to the `Presentation` context set.
+  /// Adds a value to the `context` set.
   #[must_use]
   pub fn context(mut self, value: impl Into<Context>) -> Self {
     self.context.push(value.into());
     self
   }
 
-  /// Sets the value of the `Presentation` `id`.
+  /// Sets the value of `id`.
   #[must_use]
   pub fn id(mut self, value: Url) -> Self {
     self.id = Some(value);
     self
   }
 
-  /// Adds a value to the `Presentation` type set.
+  /// Adds a value to the `type` set.
   #[must_use]
   pub fn type_(mut self, value: impl Into<String>) -> Self {
     self.types.push(value.into());
@@ -68,7 +68,7 @@ impl<T, U> PresentationBuilder<T, U> {
     self
   }
 
-  /// Sets the value of the `Credential` `holder`.
+  /// Sets the value of the `holder`.
   #[must_use]
   pub fn holder(mut self, value: Url) -> Self {
     self.holder = Some(value);
@@ -96,7 +96,7 @@ impl<T, U> PresentationBuilder<T, U> {
 }
 
 impl<T> PresentationBuilder<Object, T> {
-  /// Adds a new custom property to the `Presentation`.
+  /// Adds a new custom property.
   #[must_use]
   pub fn property<K, V>(mut self, key: K, value: V) -> Self
   where
@@ -107,7 +107,7 @@ impl<T> PresentationBuilder<Object, T> {
     self
   }
 
-  /// Adds a series of custom properties to the `Presentation`.
+  /// Adds a series of custom properties.
   #[must_use]
   pub fn properties<K, V, I>(mut self, iter: I) -> Self
   where

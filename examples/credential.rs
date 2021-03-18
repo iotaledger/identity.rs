@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! A basic example that generates and publishes subject and issuer DID
-//! Documents, creates a Credential specifying claims about the
+//! Documents, creates a Verifiable Credential specifying claims about the
 //! subject, and retrieves information through the CredentialValidator API.
 //!
 //! cargo run --example credential
@@ -54,13 +54,13 @@ async fn main() -> Result<()> {
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
   let mut credential: Credential = issue_degree(&doc_iss, &doc_sub)?;
 
-  // Sign the Credential with the issuer secret key - the result is a Verified Credential.
+  // Sign the Credential with the issuer secret key - the result is a Verifiable Credential.
   doc_iss.sign_data(&mut credential, key_iss.secret())?;
 
   println!("Credential > {:#}", credential);
   println!();
 
-  // Convert the Credential to JSON and "exchange" with a verifier
+  // Convert the Verifiable Credential to JSON and "exchange" with a verifier
   let message: String = credential.to_json()?;
 
   // Create a `CredentialValidator` instance that will fetch

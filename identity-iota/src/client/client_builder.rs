@@ -5,7 +5,7 @@ use crate::client::Client;
 use crate::client::Network;
 use crate::error::Result;
 
-/// A `ClientBuilder` is used to generated a customized `Client`.
+/// A `ClientBuilder` is used to generated a customized [Client].
 #[derive(Clone, Debug)]
 pub struct ClientBuilder {
   pub(crate) network: Network,
@@ -21,21 +21,21 @@ impl ClientBuilder {
     }
   }
 
-  /// Sets the network of the generated `Client`.
+  /// Sets the network.
   #[must_use]
   pub fn network(mut self, network: Network) -> Self {
     self.network = network;
     self
   }
 
-  /// Adds an IOTA node to the generated `Client`.
+  /// Adds an IOTA node.
   #[must_use]
   pub fn node(mut self, node: impl Into<String>) -> Self {
     self.nodes.push(node.into());
     self
   }
 
-  /// Adds an iterator of IOTA nodes to the generated `Client`.
+  /// Adds an iterator of IOTA nodes.
   pub fn nodes(mut self, nodes: impl IntoIterator<Item = impl Into<String>>) -> Self {
     self.nodes.extend(nodes.into_iter().map(Into::into));
     self
