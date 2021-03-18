@@ -190,14 +190,14 @@ mod tests {
       .build()
       .unwrap();
 
-    let credential: Credential = CredentialBuilder::default()
+    let mut credential: Credential = CredentialBuilder::default()
       .type_("ExampleCredential")
       .subject(subject())
       .issuer(issuer())
       .build()
-      .unwrap()
-      .sign(&document, "#key-1".into(), keypair.secret())
       .unwrap();
+
+    document.signer(keypair.secret()).method("#key-1").sign(&mut credential).unwrap();
 
     let presentation: Presentation = PresentationBuilder::default()
       .type_("ExamplePresentation")

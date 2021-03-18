@@ -36,8 +36,6 @@ lazy_static! {
 }
 
 /// A `Credential` represents a set of claims describing an entity.
-///
-/// `Credential`s can be signed with `Document`s to create `Credential`s.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Credential<T = Object> {
   /// The JSON-LD context(s) applicable to the `Credential`.
@@ -166,24 +164,6 @@ impl<T> Credential<T> {
   /// Returns a mutable reference to the `Credential` proof.
   pub fn proof_mut(&mut self) -> Option<&mut Signature> {
     self.proof.as_mut()
-  }
-}
-
-impl<T> Credential<T>
-where
-  T: Serialize,
-{
-  /// Creates a new [`Credential`] by signing `self` with
-  /// [`document`][`Document`] and [`secret`][`SecretKey`].
-  pub fn sign<D1, D2, D3>(
-    mut self,
-    document: &Document<D1, D2, D3>,
-    query: MethodQuery<'_>,
-    secret: &SecretKey,
-  ) -> Result<Credential<T>> {
-    document.signer(secret).method(query).sign(&mut self)?;
-
-    Ok(self)
   }
 }
 
