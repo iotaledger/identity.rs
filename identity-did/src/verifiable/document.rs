@@ -232,8 +232,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
   where
     X: Serialize + SetSignature,
     D: MerkleDigest,
-    S: MerkleSignature,
-    S: Sign<Secret = [u8]>,
+    S: MerkleSignature + Sign<Secret = [u8]>,
     S::Output: AsRef<[u8]>,
   {
     match self.merkle_key {
@@ -309,8 +308,7 @@ where
   where
     X: Serialize + TrySignature,
     D: MerkleDigest,
-    S: MerkleSignature,
-    S: Verify<Public = [u8]>,
+    S: MerkleSignature + Verify<Public = [u8]>,
   {
     let revocation: Option<BitSet> = method.revocation()?;
     let mut vkey: VerificationKey<'_> = VerificationKey::from_borrowed(data);
