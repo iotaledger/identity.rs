@@ -19,6 +19,10 @@ name = "create_did_document"
 path = "create_did_document.rs"
 
 [[example]]
+name = "manipulate_did_document"
+path = "manipulate_did_document.rs"
+
+[[example]]
 name = "verifiable_credential"
 path = "verifiable_credential.rs"
 
