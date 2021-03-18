@@ -12,6 +12,10 @@ use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::ToJson;
 use identity_core::crypto::SecretKey;
+use identity_core::crypto::SetSignature;
+use identity_core::crypto::Signature;
+use identity_core::crypto::TrySignature;
+use identity_core::crypto::TrySignatureMut;
 use identity_did::document::Document;
 use identity_did::verification::MethodQuery;
 use serde::Serialize;
@@ -24,7 +28,6 @@ use crate::credential::Refresh;
 use crate::credential::Schema;
 use crate::credential::Status;
 use crate::credential::Subject;
-use crate::credential::VerifiableCredential;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -34,7 +37,7 @@ lazy_static! {
 
 /// A `Credential` represents a set of claims describing an entity.
 ///
-/// `Credential`s can be signed with `Document`s to create `VerifiableCredential`s.
+/// `Credential`s can be signed with `Document`s to create `Credential`s.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Credential<T = Object> {
   /// The JSON-LD context(s) applicable to the `Credential`.
@@ -79,9 +82,21 @@ pub struct Credential<T = Object> {
   /// Miscellaneous properties.
   #[serde(flatten)]
   pub properties: T,
+  /// Proof(s) used to verify a `Credential`
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub proof: Option<OneOrMany<Signature>>,
 }
 
 impl<T> Credential<T> {
+  /// Creates a new verifiable `Credential`.
+  pub fn new<P>(mut credential: Credential<T>, proof: P) -> Self
+  where
+    P: Into<Signature>,
+  {
+    credential.proof.replace(OneOrMany::One(proof.into()));
+    credential
+  }
+
   /// Returns the base JSON-LD context for `Credential`s.
   pub fn base_context() -> &'static Context {
     &*BASE_CONTEXT
@@ -116,6 +131,7 @@ impl<T> Credential<T> {
       evidence: builder.evidence.into(),
       non_transferable: builder.non_transferable,
       properties: builder.properties,
+      proof: None,
     };
 
     this.check_structure()?;
@@ -150,25 +166,33 @@ impl<T> Credential<T> {
 
     Ok(())
   }
+
+  /// Returns a reference to the `Credential` proof.
+  pub fn proof(&self) -> Option<&OneOrMany<Signature>> {
+    self.proof.as_ref()
+  }
+
+  /// Returns a mutable reference to the `Credential` proof.
+  pub fn proof_mut(&mut self) -> Option<&mut OneOrMany<Signature>> {
+    self.proof.as_mut()
+  }
 }
 
 impl<T> Credential<T>
 where
   T: Serialize,
 {
-  /// Creates a new [`VerifiableCredential`] by signing `self` with
+  /// Creates a new [`Credential`] by signing `self` with
   /// [`document`][`Document`] and [`secret`][`SecretKey`].
   pub fn sign<D1, D2, D3>(
-    self,
+    mut self,
     document: &Document<D1, D2, D3>,
     query: MethodQuery<'_>,
     secret: &SecretKey,
-  ) -> Result<VerifiableCredential<T>> {
-    let mut target: VerifiableCredential<T> = VerifiableCredential::new(self, Vec::new());
+  ) -> Result<Credential<T>> {
+    document.signer(secret).method(query).sign(&mut self)?;
 
-    document.signer(secret).method(query).sign(&mut target)?;
-
-    Ok(target)
+    Ok(self)
   }
 }
 
@@ -185,6 +209,23 @@ where
   }
 }
 
+impl<T> TrySignature for Credential<T> {
+  fn signature(&self) -> Option<&Signature> {
+    self.proof.as_ref().and_then(|proof| proof.get(0))
+  }
+}
+
+impl<T> TrySignatureMut for Credential<T> {
+  fn signature_mut(&mut self) -> Option<&mut Signature> {
+    self.proof.as_mut().and_then(|proof| proof.get_mut(0))
+  }
+}
+
+impl<T> SetSignature for Credential<T> {
+  fn set_signature(&mut self, value: Signature) {
+    self.proof.replace(OneOrMany::One(value));
+  }
+}
 #[cfg(test)]
 mod tests {
   use identity_core::convert::FromJson;

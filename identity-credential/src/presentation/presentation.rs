@@ -19,12 +19,11 @@ use serde::Serialize;
 use crate::credential::Credential;
 use crate::credential::Policy;
 use crate::credential::Refresh;
-use crate::credential::VerifiableCredential;
 use crate::error::Error;
 use crate::error::Result;
 use crate::presentation::PresentationBuilder;
 
-/// A `Presentation` represents a bundle of one or more `VerifiableCredential`s.
+/// A `Presentation` represents a bundle of one or more `Credential`s.
 ///
 /// `Presentation`s can be signed with `Document`s to create `VerifiablePresentation`s.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -39,8 +38,8 @@ pub struct Presentation<T = Object, U = Object> {
   #[serde(rename = "type")]
   pub types: OneOrMany<String>,
   /// Credential(s) expressing the claims of the `Presentation`.
-  #[serde(default = "Default::default", rename = "verifiableCredential")]
-  pub verifiable_credential: OneOrMany<VerifiableCredential<U>>,
+  #[serde(default = "Default::default", rename = "VerifiableCredential")]
+  pub verifiable_credential: OneOrMany<Credential<U>>,
   /// The entity that generated the presentation.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub holder: Option<Url>,
@@ -50,15 +49,23 @@ pub struct Presentation<T = Object, U = Object> {
   /// Terms-of-use specified by the `Presentation` holder.
   #[serde(default, rename = "termsOfUse", skip_serializing_if = "OneOrMany::is_empty")]
   pub terms_of_use: OneOrMany<Policy>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  /// Proof(s) used to verify a `Presentation`
-  pub proof: Option<OneOrMany<Signature>>,
   /// Miscellaneous properties.
   #[serde(flatten)]
   pub properties: T,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  /// Proof(s) used to verify a `Presentation`
+  pub proof: Option<OneOrMany<Signature>>,
 }
 
 impl<T, U> Presentation<T, U> {
+  /// Creates a new verifiable `Presentation`.
+  pub fn new<P>(mut presentation: Presentation<T, U>, proof: P) -> Self
+  where
+    P: Into<OneOrMany<Signature>>,
+  {
+    presentation.proof.replace(proof.into());
+    presentation
+  }
   /// Returns the base JSON-LD context for `Presentation`s.
   pub fn base_context() -> &'static Context {
     Credential::<U>::base_context()
@@ -86,9 +93,8 @@ impl<T, U> Presentation<T, U> {
       holder: builder.holder,
       refresh_service: builder.refresh.into(),
       terms_of_use: builder.policy.into(),
-      proof: None,
       properties: builder.properties,
-
+      proof: None,
     };
 
     this.check_structure()?;
@@ -118,7 +124,7 @@ impl<T, U> Presentation<T, U> {
   }
 
   /// Returns a reference to the `VerifiablePresentation` proof.
-  pub fn proof(&self) -> Option<&OneOrMany<Signature>>{
+  pub fn proof(&self) -> Option<&OneOrMany<Signature>> {
     self.proof.as_ref()
   }
 
@@ -126,7 +132,6 @@ impl<T, U> Presentation<T, U> {
   pub fn proof_mut(&mut self) -> Option<&mut OneOrMany<Signature>> {
     self.proof.as_mut()
   }
-
 }
 
 impl<T, U> Display for Presentation<T, U>
@@ -143,8 +148,6 @@ where
   }
 }
 
-
-
 impl<T, U> TrySignature for Presentation<T, U> {
   fn signature(&self) -> Option<&Signature> {
     self.proof.as_ref().and_then(|proof| proof.get(0))
@@ -159,17 +162,16 @@ impl<T, U> TrySignatureMut for Presentation<T, U> {
 
 impl<T, U> SetSignature for Presentation<T, U> {
   fn set_signature(&mut self, value: Signature) {
-    self.proof = Some(OneOrMany::One(value));
+    self.proof.replace(OneOrMany::One(value));
   }
 }
 
-
 #[cfg(test)]
 mod tests {
-  use identity_core::convert::FromJson;
   use super::Presentation;
+  use crate::credential::Credential;
   use crate::credential::Subject;
-  use crate::credential::VerifiableCredential;
+  use identity_core::convert::FromJson;
 
   const JSON: &str = include_str!("../../tests/fixtures/presentation-1.json");
 
@@ -177,7 +179,7 @@ mod tests {
   #[rustfmt::skip]
   fn test_from_json() {
     let presentation: Presentation = Presentation::from_json(JSON).unwrap();
-    let credential: &VerifiableCredential = presentation.verifiable_credential.get(0).unwrap();
+    let credential: &Credential = presentation.verifiable_credential.get(0).unwrap();
     let subject: &Subject = credential.credential_subject.get(0).unwrap();
 
     assert_eq!(presentation.context.as_slice(), ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"]);
@@ -187,10 +189,10 @@ mod tests {
 
     assert_eq!(credential.context.as_slice(), ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"]);
     assert_eq!(credential.id.as_ref().unwrap(), "http://example.edu/credentials/3732");
-    assert_eq!(credential.types.as_slice(), ["VerifiableCredential", "UniversityDegreeCredential"]);
+    assert_eq!(credential.types.as_slice(), ["Credential", "UniversityDegreeCredential"]);
     assert_eq!(credential.issuer.url(), "https://example.edu/issuers/14");
     assert_eq!(credential.issuance_date, "2010-01-01T19:23:24Z".parse().unwrap());
-    assert_eq!(credential.proof().get(0).unwrap().type_(), "RsaSignature2018");
+    assert_eq!(credential.proof().unwrap().get(0).unwrap().type_(), "RsaSignature2018");
 
     assert_eq!(subject.id.as_ref().unwrap(), "did:example:ebfeb1f712ebc6f1c276e12ec21");
     assert_eq!(subject.properties["degree"]["type"], "BachelorDegree");

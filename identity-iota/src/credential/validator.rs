@@ -3,7 +3,7 @@
 
 use identity_core::common::Object;
 use identity_core::convert::FromJson;
-use identity_credential::credential::VerifiableCredential;
+use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -17,7 +17,7 @@ use crate::error::Result;
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CredentialValidation<T = Object> {
-  pub credential: VerifiableCredential<T>,
+  pub credential: Credential<T>,
   pub issuer: DocumentValidation,
   pub subjects: BTreeMap<String, DocumentValidation>,
   pub verified: bool,
@@ -50,33 +50,31 @@ impl<'a> CredentialValidator<'a> {
     Self { client }
   }
 
-  /// Deserializes the given JSON-encoded `VerifiableCredential` and validates
+  /// Deserializes the given JSON-encoded `Credential` and validates
   /// all associated DID documents.
   pub async fn check<T>(&self, data: &str) -> Result<CredentialValidation<T>>
   where
     T: DeserializeOwned + Serialize,
   {
-    self.validate_credential(VerifiableCredential::from_json(data)?).await
+    self.validate_credential(Credential::from_json(data)?).await
   }
 
   /// Deserializes the given JSON-encoded `Presentation` and
-  /// validates all associated DID documents/`VerifiableCredential`s.
+  /// validates all associated DID documents/`Credential`s.
   pub async fn check_presentation<T, U>(&self, data: &str) -> Result<PresentationValidation<T, U>>
   where
     T: Clone + DeserializeOwned + Serialize,
     U: Clone + DeserializeOwned + Serialize,
   {
-    self
-      .validate_presentation(Presentation::from_json(data)?)
-      .await
+    self.validate_presentation(Presentation::from_json(data)?).await
   }
 
-  /// Validates the `VerifiableCredential` proof and all relevant DID documents.
+  /// Validates the `Credential` proof and all relevant DID documents.
   ///
   /// Note: The credential is expected to have a proof created by the issuing party.
   /// Note: The credential issuer URL is expected to be a valid DID.
   /// Note: Credential subject IDs are expected to be valid DIDs (if present).
-  pub async fn validate_credential<T>(&self, credential: VerifiableCredential<T>) -> Result<CredentialValidation<T>>
+  pub async fn validate_credential<T>(&self, credential: Credential<T>) -> Result<CredentialValidation<T>>
   where
     T: Serialize,
   {

@@ -6,9 +6,9 @@ use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::common::Value;
 
+use crate::credential::Credential;
 use crate::credential::Policy;
 use crate::credential::Refresh;
-use crate::credential::VerifiableCredential;
 use crate::error::Result;
 use crate::presentation::Presentation;
 
@@ -18,7 +18,7 @@ pub struct PresentationBuilder<T = Object, U = Object> {
   pub(crate) context: Vec<Context>,
   pub(crate) id: Option<Url>,
   pub(crate) types: Vec<String>,
-  pub(crate) credentials: Vec<VerifiableCredential<U>>,
+  pub(crate) credentials: Vec<Credential<U>>,
   pub(crate) holder: Option<Url>,
   pub(crate) refresh: Vec<Refresh>,
   pub(crate) policy: Vec<Policy>,
@@ -61,9 +61,9 @@ impl<T, U> PresentationBuilder<T, U> {
     self
   }
 
-  /// Adds a value to the `verifiableCredential` set.
+  /// Adds a value to the `Credential` set.
   #[must_use]
-  pub fn credential(mut self, value: VerifiableCredential<U>) -> Self {
+  pub fn credential(mut self, value: Credential<U>) -> Self {
     self.credentials.push(value);
     self
   }
@@ -151,7 +151,6 @@ mod tests {
   use crate::credential::Credential;
   use crate::credential::CredentialBuilder;
   use crate::credential::Subject;
-  use crate::credential::VerifiableCredential;
   use crate::presentation::Presentation;
   use crate::presentation::PresentationBuilder;
 
@@ -191,7 +190,7 @@ mod tests {
       .build()
       .unwrap();
 
-    let credential: VerifiableCredential = CredentialBuilder::default()
+    let credential: Credential = CredentialBuilder::default()
       .type_("ExampleCredential")
       .subject(subject())
       .issuer(issuer())

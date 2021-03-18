@@ -4,8 +4,8 @@
 use identity::core::OneOrMany;
 use identity::core::Url;
 use identity::credential::PresentationBuilder;
-use identity::credential::VerifiableCredential;
-use identity::credential::VerifiablePresentation as VerifiablePresentation_;
+use identity::credential::Credential;
+use identity::credential::Presentation;
 use wasm_bindgen::prelude::*;
 
 use crate::document::Document;
@@ -13,7 +13,7 @@ use crate::utils::err;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct VerifiablePresentation(pub(crate) VerifiablePresentation_);
+pub struct VerifiablePresentation(pub(crate) Presentation);
 
 #[wasm_bindgen]
 impl VerifiablePresentation {
@@ -24,7 +24,7 @@ impl VerifiablePresentation {
     presentation_type: Option<String>,
     presentation_id: Option<String>,
   ) -> Result<VerifiablePresentation, JsValue> {
-    let credentials: OneOrMany<VerifiableCredential> = credential_data.into_serde().map_err(err)?;
+    let credentials: OneOrMany<Credential> = credential_data.into_serde().map_err(err)?;
     let holder_url: Url = Url::parse(holder_doc.0.id().as_str()).map_err(err)?;
 
     let mut builder: PresentationBuilder = PresentationBuilder::default().holder(holder_url);
@@ -44,7 +44,6 @@ impl VerifiablePresentation {
     builder
       .build()
       .map_err(err)
-      .map(|presentation| VerifiablePresentation_::new(presentation, Vec::new()))
       .map(Self)
   }
 
