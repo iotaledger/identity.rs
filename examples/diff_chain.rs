@@ -7,18 +7,15 @@
 //! cargo run --example diff_chain
 
 use identity::core::Timestamp;
-use identity::crypto::KeyPair;
 use identity::did::MethodBuilder;
 use identity::did::MethodData;
 use identity::did::MethodRef;
 use identity::did::MethodType;
 use identity::iota::AuthChain;
-use identity::iota::Client;
-use identity::iota::Document;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
 use identity::iota::MessageId;
-use identity::iota::Result;
+use identity::prelude::*;
 use std::thread::sleep;
 use std::time::Duration;
 

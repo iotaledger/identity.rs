@@ -15,17 +15,14 @@ use identity::credential::VerifiableCredential;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
-use identity::crypto::KeyPair;
 use identity::crypto::PublicKey;
 use identity::crypto::SecretKey;
 use identity::did::resolution::resolve;
 use identity::did::resolution::Resolution;
 use identity::did::MethodScope;
-use identity::iota::Client;
-use identity::iota::Document;
 use identity::iota::Method;
-use identity::iota::Result;
 use identity::iota::TangleRef;
+use identity::prelude::*;
 use rand::rngs::OsRng;
 use rand::Rng;
 
