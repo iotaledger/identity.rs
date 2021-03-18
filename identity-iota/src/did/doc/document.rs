@@ -81,6 +81,7 @@ impl Document {
 
   /// Creates a new DID Document from the given verification [`method`][`Method`]
   /// without performing validation checks.
+  ///
   /// # Safety
   ///
   /// This must be guaranteed safe by the caller.
@@ -272,7 +273,7 @@ impl Document {
   pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
     let key: String = self.authentication_id().to_string();
 
-    self.document.sign_this(&key, secret.as_ref()).map_err(Into::into)
+    self.document.sign_this(&key, secret).map_err(Into::into)
   }
 
   /// Verifies the signature of the DID document.
