@@ -10,6 +10,10 @@ use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 use identity_core::convert::ToJson;
+use identity_core::crypto::SetSignature;
+use identity_core::crypto::Signature;
+use identity_core::crypto::TrySignature;
+use identity_core::crypto::TrySignatureMut;
 use serde::Serialize;
 
 use crate::credential::Credential;
@@ -46,6 +50,9 @@ pub struct Presentation<T = Object, U = Object> {
   /// Terms-of-use specified by the `Presentation` holder.
   #[serde(default, rename = "termsOfUse", skip_serializing_if = "OneOrMany::is_empty")]
   pub terms_of_use: OneOrMany<Policy>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  /// Proof(s) used to verify a `Presentation`
+  pub proof: Option<OneOrMany<Signature>>,
   /// Miscellaneous properties.
   #[serde(flatten)]
   pub properties: T,
@@ -79,7 +86,9 @@ impl<T, U> Presentation<T, U> {
       holder: builder.holder,
       refresh_service: builder.refresh.into(),
       terms_of_use: builder.policy.into(),
+      proof: None,
       properties: builder.properties,
+
     };
 
     this.check_structure()?;
@@ -107,6 +116,17 @@ impl<T, U> Presentation<T, U> {
 
     Ok(())
   }
+
+  /// Returns a reference to the `VerifiablePresentation` proof.
+  pub fn proof(&self) -> Option<&OneOrMany<Signature>>{
+    self.proof.as_ref()
+  }
+
+  /// Returns a mutable reference to the `VerifiablePresentation` proof.
+  pub fn proof_mut(&mut self) -> Option<&mut OneOrMany<Signature>> {
+    self.proof.as_mut()
+  }
+
 }
 
 impl<T, U> Display for Presentation<T, U>
@@ -123,27 +143,47 @@ where
   }
 }
 
+
+
+impl<T, U> TrySignature for Presentation<T, U> {
+  fn signature(&self) -> Option<&Signature> {
+    self.proof.as_ref().and_then(|proof| proof.get(0))
+  }
+}
+
+impl<T, U> TrySignatureMut for Presentation<T, U> {
+  fn signature_mut(&mut self) -> Option<&mut Signature> {
+    self.proof.as_mut().and_then(|proof| proof.get_mut(0))
+  }
+}
+
+impl<T, U> SetSignature for Presentation<T, U> {
+  fn set_signature(&mut self, value: Signature) {
+    self.proof = Some(OneOrMany::One(value));
+  }
+}
+
+
 #[cfg(test)]
 mod tests {
   use identity_core::convert::FromJson;
-
+  use super::Presentation;
   use crate::credential::Subject;
   use crate::credential::VerifiableCredential;
-  use crate::presentation::VerifiablePresentation;
 
   const JSON: &str = include_str!("../../tests/fixtures/presentation-1.json");
 
   #[test]
   #[rustfmt::skip]
   fn test_from_json() {
-    let presentation: VerifiablePresentation = VerifiablePresentation::from_json(JSON).unwrap();
+    let presentation: Presentation = Presentation::from_json(JSON).unwrap();
     let credential: &VerifiableCredential = presentation.verifiable_credential.get(0).unwrap();
     let subject: &Subject = credential.credential_subject.get(0).unwrap();
 
     assert_eq!(presentation.context.as_slice(), ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"]);
     assert_eq!(presentation.id.as_ref().unwrap(), "urn:uuid:3978344f-8596-4c3a-a978-8fcaba3903c5");
     assert_eq!(presentation.types.as_slice(), ["VerifiablePresentation", "CredentialManagerPresentation"]);
-    assert_eq!(presentation.proof().get(0).unwrap().type_(), "RsaSignature2018");
+    assert_eq!(presentation.proof().unwrap().get(0).unwrap().type_(), "RsaSignature2018");
 
     assert_eq!(credential.context.as_slice(), ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"]);
     assert_eq!(credential.id.as_ref().unwrap(), "http://example.edu/credentials/3732");

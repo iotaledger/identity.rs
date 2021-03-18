@@ -119,7 +119,7 @@ where
     // Merkle Key Collection signatures store their public key values
     // alongside their proofs (in the signature value). The `public` value
     // **SHOULD NOT** be provided as it will be extracted and verified
-    // according to the decoded proof and revocation set.
+    // according toVerifiablePresentation the decoded proof and revocation set.
     if !public.is_empty() {
       return Err(Error::InvalidKeyFormat);
     }

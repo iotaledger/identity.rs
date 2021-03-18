@@ -4,7 +4,7 @@
 use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_credential::credential::VerifiableCredential;
-use identity_credential::presentation::VerifiablePresentation;
+use identity_credential::presentation::Presentation;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -25,7 +25,7 @@ pub struct CredentialValidation<T = Object> {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PresentationValidation<T = Object, U = Object> {
-  pub presentation: VerifiablePresentation<T, U>,
+  pub presentation: Presentation<T, U>,
   pub holder: DocumentValidation,
   pub credentials: Vec<CredentialValidation<U>>,
   pub verified: bool,
@@ -59,7 +59,7 @@ impl<'a> CredentialValidator<'a> {
     self.validate_credential(VerifiableCredential::from_json(data)?).await
   }
 
-  /// Deserializes the given JSON-encoded `VerifiablePresentation` and
+  /// Deserializes the given JSON-encoded `Presentation` and
   /// validates all associated DID documents/`VerifiableCredential`s.
   pub async fn check_presentation<T, U>(&self, data: &str) -> Result<PresentationValidation<T, U>>
   where
@@ -67,7 +67,7 @@ impl<'a> CredentialValidator<'a> {
     U: Clone + DeserializeOwned + Serialize,
   {
     self
-      .validate_presentation(VerifiablePresentation::from_json(data)?)
+      .validate_presentation(Presentation::from_json(data)?)
       .await
   }
 
@@ -112,13 +112,13 @@ impl<'a> CredentialValidator<'a> {
     })
   }
 
-  /// Validates the `VerifiablePresentation` proof and all relevant DID documents.
+  /// Validates the `Presentation` proof and all relevant DID documents.
   ///
   /// Note: The presentation holder is expected to be a valid DID.
   /// Note: The presentation is expected to have a proof created by the holder.
   pub async fn validate_presentation<T, U>(
     &self,
-    presentation: VerifiablePresentation<T, U>,
+    presentation: Presentation<T, U>,
   ) -> Result<PresentationValidation<T, U>>
   where
     T: Clone + Serialize,
