@@ -17,12 +17,9 @@ use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
 use identity::credential::VerifiableCredential;
-use identity::crypto::KeyPair;
-use identity::iota::Client;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
-use identity::iota::Document;
-use identity::iota::Result;
+use identity::prelude::*;
 
 fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
   let subject: Subject = Subject::from_json_value(json!({
