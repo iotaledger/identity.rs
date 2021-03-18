@@ -58,14 +58,6 @@ pub struct Presentation<T = Object, U = Object> {
 }
 
 impl<T, U> Presentation<T, U> {
-  /// Creates a new verifiable `Presentation`.
-  pub fn new<P>(mut presentation: Presentation<T, U>, proof: P) -> Self
-  where
-    P: Into<Signature>,
-  {
-    presentation.proof.replace(proof.into());
-    presentation
-  }
   /// Returns the base JSON-LD context for `Presentation`s.
   pub fn base_context() -> &'static Context {
     Credential::<U>::base_context()

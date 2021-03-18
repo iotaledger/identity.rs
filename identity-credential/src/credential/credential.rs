@@ -88,15 +88,6 @@ pub struct Credential<T = Object> {
 }
 
 impl<T> Credential<T> {
-  /// Creates a new verifiable `Credential`.
-  pub fn new<P>(mut credential: Credential<T>, proof: P) -> Self
-  where
-    P: Into<Signature>,
-  {
-    credential.proof.replace(proof.into());
-    credential
-  }
-
   /// Returns the base JSON-LD context for `Credential`s.
   pub fn base_context() -> &'static Context {
     &*BASE_CONTEXT
