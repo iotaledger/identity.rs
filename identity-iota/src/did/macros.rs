@@ -9,7 +9,7 @@
 ///
 /// # Example
 ///
-/// ```rust
+/// ```
 /// # use identity_iota::did;
 /// #
 /// let did = did!(b"public-key");
