@@ -47,8 +47,6 @@ async fn main() -> Result<()> {
     .id(id_url) // Optional: Sets a unique identifier for the Presentation.
     .credential(credential) // Adds a Verifiable Credential to the Presentation. Call this multiple times for multiple credentials.
     .holder(holder_url)
-    // .refresh()
-    // .policy()
     .build()?; // Finally, build the Presentation using the PresentationBuilder configuration.
 
   // Construct a new Verifiable Presentation
