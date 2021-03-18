@@ -27,7 +27,6 @@ use identity::iota::Result;
 // Helper that takes two DID Documents (identities) for issuer and subject, and
 // creates a credential with claims about subject by issuer.
 fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
-
   // Create VC "subject" field containing subject ID and claims about it.
   let subject: Subject = Subject::from_json_value(json!({
     "id": subject.id().as_str(),
@@ -49,7 +48,6 @@ fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-
   // Initialize a `Client` to interact with the IOTA Tangle.
   let client: Client = Client::new()?;
 

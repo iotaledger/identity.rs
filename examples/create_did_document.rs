@@ -15,7 +15,6 @@ use identity::iota::TangleRef;
 
 #[smol_potat::main] // Using this allows us to have an async main function.
 async fn main() -> Result<()> {
-  
   // Create a DID Document (an identity).
   let keypair: KeyPair = KeyPair::new_ed25519()?;
   let mut document: Document = Document::from_keypair(&keypair)?;

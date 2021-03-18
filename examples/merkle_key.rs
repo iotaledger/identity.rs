@@ -33,7 +33,6 @@ const LEAVES: usize = 1 << 10;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-
   // Create a Client to interact with the IOTA Tangle.
   let client: Client = Client::new()?;
 

@@ -9,7 +9,6 @@ use identity::iota::Result;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-
 	// Print IOTA Identity header
 	println!("");
 	println!(r#"  _____ ____ _______          _____    _            _   _ _         "#);

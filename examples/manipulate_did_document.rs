@@ -11,7 +11,6 @@ use identity::iota::Result;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-
   // Create a DID Document out of an ed25519 keypair.
   let keypair: KeyPair = KeyPair::new_ed25519()?;
   let mut document: identity::iota::Document = Document::from_keypair(&keypair)?;
@@ -25,13 +24,14 @@ async fn main() -> Result<()> {
   let did: &identity::did::DID = document.id(); // The Document ID.
   let controller: Option<&identity::did::DID> = document.controller(); // The Document controller.
   let aka: &[identity::core::Url] = document.also_known_as(); // AKA: Subject of this identifier is also identified by one or more other identifiers.
-  // ... etc. Each getter also has a _mut variant returning a mutable reference instead of an immutable one, e.g. .id_mut()
-  // See also https://identity.docs.iota.org/docs/identity/did/struct.Document.html
+                                                              // ... etc. Each getter also has a _mut variant returning a mutable reference instead of an immutable one, e.g. .id_mut()
+                                                              // See also https://identity.docs.iota.org/docs/identity/did/struct.Document.html
 
   // We can iterate over a DID Document's verification methods using document.methods(), which returns an iterator:
-  for m in document.methods() { // m is of type &identity::did::Method
+  for m in document.methods() {
+    // m is of type &identity::did::Method
     println!("Method > {:#}", m);
-  };
+  }
   println!("");
 
   // We can also add and remove methods from a DID Document using insert_method() and remove_method() respectively.

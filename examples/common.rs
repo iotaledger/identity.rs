@@ -3,21 +3,20 @@
 
 // This file contains helper functions for the examples.
 
-use identity::crypto::KeyPair;
-use identity::iota::Client;
-use identity::iota::Document;
-use identity::iota::Result;
 use identity::core::json;
 use identity::core::FromJson;
 use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
+use identity::crypto::KeyPair;
+use identity::iota::Client;
+use identity::iota::Document;
+use identity::iota::Result;
 
 // A helper function to generate a new DID Document/KeyPair, sign the
 // document, publish it to the Tangle, and return the Document/KeyPair.
 pub async fn create_did_document(client: &Client) -> Result<(Document, KeyPair)> {
-
   // Generate a new DID Document and public/private key pair.
   // The generated document will have an authentication key associated with
   // the keypair.
@@ -37,7 +36,6 @@ pub async fn create_did_document(client: &Client) -> Result<(Document, KeyPair)>
 // Helper that takes two DID Documents (identities) for issuer and subject, and
 // creates a credential with claims about subject by issuer.
 pub fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
-
   // Create VC "subject" field containing subject ID and claims about it.
   let subject: Subject = Subject::from_json_value(json!({
     "id": subject.id().as_str(),

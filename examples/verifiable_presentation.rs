@@ -3,16 +3,16 @@
 
 //! A Verifiable Presentation (VP) represents a bundle of one or more Verifiable Credentials.
 //! This example demonstrates building and usage of VPs.
-//! 
+//!
 //! cargo run --example verifiable_presentation
 
 mod common;
 
 use identity::core::Url;
 use identity::credential::Credential;
-use identity::credential::VerifiableCredential;
 use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
+use identity::credential::VerifiableCredential;
 use identity::credential::VerifiablePresentation;
 use identity::crypto::KeyPair;
 use identity::iota::Client;
@@ -21,7 +21,6 @@ use identity::iota::Result;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {
-
   // Initialize a `Client` to interact with the IOTA Tangle.
   let client: Client = Client::new()?;
 
@@ -43,7 +42,7 @@ async fn main() -> Result<()> {
 
   // Build our presentation.
   let presentation: Presentation = PresentationBuilder::default() // Create new Presentation using the builder.
-  // Note that ::default() already sets the .context() and .type() values for you, so we don't have to do this here anymore.
+    // Note that ::default() already sets the .context() and .type() values for you, so we don't have to do this here anymore.
     .id(id_url) // Optional: Sets a unique identifier for the Presentation.
     .credential(credential) // Adds a Verifiable Credential to the Presentation. Call this multiple times for multiple credentials.
     .holder(holder_url)
@@ -53,7 +52,10 @@ async fn main() -> Result<()> {
   let mut veri_pres: VerifiablePresentation = VerifiablePresentation::new(presentation, Vec::new());
 
   // Sign it with the issuer secret key
-  doc_iss.signer(key_iss.secret()).method("#authentication").sign(&mut veri_pres)?;
+  doc_iss
+    .signer(key_iss.secret())
+    .method("#authentication")
+    .sign(&mut veri_pres)?;
 
   println!("Verifiable Presentation > {:#}", veri_pres);
   println!();
