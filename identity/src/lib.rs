@@ -146,7 +146,7 @@ pub mod iota {
 }
 
 pub mod prelude {
-  //! Prelude of commonly used types for the identity crate
+  //! Prelude of commonly used types
 
   pub use identity_core::crypto::KeyPair;
   pub use identity_iota::client::Client;
