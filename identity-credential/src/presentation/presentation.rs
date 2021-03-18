@@ -25,7 +25,7 @@ use crate::presentation::PresentationBuilder;
 
 /// A `Presentation` represents a bundle of one or more `Credential`s.
 ///
-/// `Presentation`s can be signed with `Document`s to create `VerifiablePresentation`s.
+/// `Presentation`s can be signed with `Document`s to create verifiable `Presentation`s.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Presentation<T = Object, U = Object> {
   /// The JSON-LD context(s) applicable to the `Presentation`.
@@ -115,12 +115,12 @@ impl<T, U> Presentation<T, U> {
     Ok(())
   }
 
-  /// Returns a reference to the `VerifiablePresentation` proof.
+  /// Returns a reference to the `Presentation` proof.
   pub fn proof(&self) -> Option<&Signature> {
     self.proof.as_ref()
   }
 
-  /// Returns a mutable reference to the `VerifiablePresentation` proof.
+  /// Returns a mutable reference to the `Presentation` proof.
   pub fn proof_mut(&mut self) -> Option<&mut Signature> {
     self.proof.as_mut()
   }
