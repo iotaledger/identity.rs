@@ -52,10 +52,10 @@ async fn main() -> Result<()> {
   let (doc_sub, _key_sub): (Document, KeyPair) = common::document(&client).await?;
 
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
-  let credential: Credential = issue_degree(&doc_iss, &doc_sub)?;
+  let mut credential: Credential = issue_degree(&doc_iss, &doc_sub)?;
 
-  // Sign the Credential with the issuer secret key - the result is a Credential.
-  let credential: Credential = credential.sign(&doc_iss, "#authentication".into(), key_iss.secret())?;
+  // Sign the Credential with the issuer secret key - the result is a Verified Credential.
+  doc_iss.sign_data(&mut credential, key_iss.secret())?;
 
   println!("Credential > {:#}", credential);
   println!();
