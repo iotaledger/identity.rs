@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::prelude::*;
 use identity::iota::Network;
 use identity::iota::TangleRef;
+use identity::prelude::*;
 
 // A helper function to generate and new DID Document/KeyPair, sign the
 // document, publish it to the Tangle, and return the Document/KeyPair.

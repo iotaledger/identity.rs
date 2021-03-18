@@ -10,8 +10,8 @@ use identity::core::SerdeInto;
 use identity::did::resolution;
 use identity::did::resolution::Resource;
 use identity::did::resolution::SecondaryResource;
-use identity::prelude::*;
 use identity::iota::DID;
+use identity::prelude::*;
 
 #[smol_potat::main]
 async fn main() -> Result<()> {

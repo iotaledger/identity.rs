@@ -21,8 +21,8 @@ use identity::did::resolution::resolve;
 use identity::did::resolution::Resolution;
 use identity::did::MethodScope;
 use identity::iota::Method;
-use identity::prelude::*;
 use identity::iota::TangleRef;
+use identity::prelude::*;
 use rand::rngs::OsRng;
 use rand::Rng;
 
