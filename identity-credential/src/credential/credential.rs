@@ -84,7 +84,7 @@ pub struct Credential<T = Object> {
   pub properties: T,
   /// Proof(s) used to verify a `Credential`
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub proof: Option<OneOrMany<Signature>>,
+  pub proof: Option<Signature>,
 }
 
 impl<T> Credential<T> {
@@ -93,7 +93,7 @@ impl<T> Credential<T> {
   where
     P: Into<Signature>,
   {
-    credential.proof.replace(OneOrMany::One(proof.into()));
+    credential.proof.replace(proof.into());
     credential
   }
 
@@ -168,12 +168,12 @@ impl<T> Credential<T> {
   }
 
   /// Returns a reference to the `Credential` proof.
-  pub fn proof(&self) -> Option<&OneOrMany<Signature>> {
+  pub fn proof(&self) -> Option<&Signature> {
     self.proof.as_ref()
   }
 
   /// Returns a mutable reference to the `Credential` proof.
-  pub fn proof_mut(&mut self) -> Option<&mut OneOrMany<Signature>> {
+  pub fn proof_mut(&mut self) -> Option<&mut Signature> {
     self.proof.as_mut()
   }
 }
@@ -211,19 +211,19 @@ where
 
 impl<T> TrySignature for Credential<T> {
   fn signature(&self) -> Option<&Signature> {
-    self.proof.as_ref().and_then(|proof| proof.get(0))
+    self.proof.as_ref()
   }
 }
 
 impl<T> TrySignatureMut for Credential<T> {
   fn signature_mut(&mut self) -> Option<&mut Signature> {
-    self.proof.as_mut().and_then(|proof| proof.get_mut(0))
+    self.proof.as_mut()
   }
 }
 
 impl<T> SetSignature for Credential<T> {
   fn set_signature(&mut self, value: Signature) {
-    self.proof.replace(OneOrMany::One(value));
+    self.proof.replace(value);
   }
 }
 #[cfg(test)]

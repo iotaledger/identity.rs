@@ -38,7 +38,7 @@ pub struct Presentation<T = Object, U = Object> {
   #[serde(rename = "type")]
   pub types: OneOrMany<String>,
   /// Credential(s) expressing the claims of the `Presentation`.
-  #[serde(default = "Default::default", rename = "VerifiableCredential")]
+  #[serde(default = "Default::default", rename = "verifiableCredential")]
   pub verifiable_credential: OneOrMany<Credential<U>>,
   /// The entity that generated the presentation.
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -52,16 +52,16 @@ pub struct Presentation<T = Object, U = Object> {
   /// Miscellaneous properties.
   #[serde(flatten)]
   pub properties: T,
-  #[serde(skip_serializing_if = "Option::is_none")]
   /// Proof(s) used to verify a `Presentation`
-  pub proof: Option<OneOrMany<Signature>>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub proof: Option<Signature>,
 }
 
 impl<T, U> Presentation<T, U> {
   /// Creates a new verifiable `Presentation`.
   pub fn new<P>(mut presentation: Presentation<T, U>, proof: P) -> Self
   where
-    P: Into<OneOrMany<Signature>>,
+    P: Into<Signature>,
   {
     presentation.proof.replace(proof.into());
     presentation
@@ -124,12 +124,12 @@ impl<T, U> Presentation<T, U> {
   }
 
   /// Returns a reference to the `VerifiablePresentation` proof.
-  pub fn proof(&self) -> Option<&OneOrMany<Signature>> {
+  pub fn proof(&self) -> Option<&Signature> {
     self.proof.as_ref()
   }
 
   /// Returns a mutable reference to the `VerifiablePresentation` proof.
-  pub fn proof_mut(&mut self) -> Option<&mut OneOrMany<Signature>> {
+  pub fn proof_mut(&mut self) -> Option<&mut Signature> {
     self.proof.as_mut()
   }
 }
@@ -150,19 +150,19 @@ where
 
 impl<T, U> TrySignature for Presentation<T, U> {
   fn signature(&self) -> Option<&Signature> {
-    self.proof.as_ref().and_then(|proof| proof.get(0))
+    self.proof.as_ref()
   }
 }
 
 impl<T, U> TrySignatureMut for Presentation<T, U> {
   fn signature_mut(&mut self) -> Option<&mut Signature> {
-    self.proof.as_mut().and_then(|proof| proof.get_mut(0))
+    self.proof.as_mut()
   }
 }
 
 impl<T, U> SetSignature for Presentation<T, U> {
   fn set_signature(&mut self, value: Signature) {
-    self.proof.replace(OneOrMany::One(value));
+    self.proof.replace(value);
   }
 }
 
@@ -185,14 +185,14 @@ mod tests {
     assert_eq!(presentation.context.as_slice(), ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"]);
     assert_eq!(presentation.id.as_ref().unwrap(), "urn:uuid:3978344f-8596-4c3a-a978-8fcaba3903c5");
     assert_eq!(presentation.types.as_slice(), ["VerifiablePresentation", "CredentialManagerPresentation"]);
-    assert_eq!(presentation.proof().unwrap().get(0).unwrap().type_(), "RsaSignature2018");
+    assert_eq!(presentation.proof().unwrap().type_(), "RsaSignature2018");
 
     assert_eq!(credential.context.as_slice(), ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"]);
     assert_eq!(credential.id.as_ref().unwrap(), "http://example.edu/credentials/3732");
-    assert_eq!(credential.types.as_slice(), ["Credential", "UniversityDegreeCredential"]);
+    assert_eq!(credential.types.as_slice(), ["VerifiableCredential", "UniversityDegreeCredential"]);
     assert_eq!(credential.issuer.url(), "https://example.edu/issuers/14");
     assert_eq!(credential.issuance_date, "2010-01-01T19:23:24Z".parse().unwrap());
-    assert_eq!(credential.proof().unwrap().get(0).unwrap().type_(), "RsaSignature2018");
+    assert_eq!(credential.proof().unwrap().type_(), "RsaSignature2018");
 
     assert_eq!(subject.id.as_ref().unwrap(), "did:example:ebfeb1f712ebc6f1c276e12ec21");
     assert_eq!(subject.properties["degree"]["type"], "BachelorDegree");

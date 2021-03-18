@@ -3,9 +3,9 @@
 
 use identity::core::OneOrMany;
 use identity::core::Url;
-use identity::credential::PresentationBuilder;
 use identity::credential::Credential;
 use identity::credential::Presentation;
+use identity::credential::PresentationBuilder;
 use wasm_bindgen::prelude::*;
 
 use crate::document::Document;
@@ -41,10 +41,7 @@ impl VerifiablePresentation {
       builder = builder.id(Url::parse(presentation_id).map_err(err)?);
     }
 
-    builder
-      .build()
-      .map_err(err)
-      .map(Self)
+    builder.build().map_err(err).map(Self)
   }
 
   /// Serializes a `VerifiablePresentation` object as a JSON object.

@@ -80,10 +80,7 @@ impl VerifiableCredential {
       builder = builder.id(Url::parse(credential_id).map_err(err)?);
     }
 
-    builder
-      .build()
-      .map(Self)
-      .map_err(err)
+    builder.build().map(Self).map_err(err)
   }
 
   /// Serializes a `VerifiableCredential` object as a JSON object.
