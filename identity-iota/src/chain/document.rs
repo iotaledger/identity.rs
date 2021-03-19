@@ -57,7 +57,12 @@ impl DocumentChain {
       Some(Self::__fold(&auth_chain, &diff_chain)?)
     };
 
-    Ok(Self { auth_chain, diff_chain, document })
+    #[allow(clippy::inconsistent_struct_constructor)]
+    Ok(Self {
+      auth_chain,
+      diff_chain,
+      document,
+    })
   }
 
   /// Returns a reference to the DID identifying the document chain.
