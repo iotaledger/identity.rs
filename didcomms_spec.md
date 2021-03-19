@@ -1,20 +1,24 @@
+#DID Communications Message Specification
+<u>**Contents:**</u>
+* <a href="#authentication">Authentication</a>
+* <a href="#authorization">Authorization</a>
+* <a href="#verifiable-credential-issuance">Verifiable Credential Issuance</a>
 
 ---
 # Authentication
 
+Proving control over an identifier.
 
-Proving control over an Identifier.
-
-The Authentication flow consists of a simple request-response message exchange, where the contents of the response must match those of the request. Because all Messages are signed and authenticated, the response functions as proof of control by nature of being correctly signed by the keys listed in the DID Document of the issuer. Because of this, in scenarios where a more complex functionality (e.g. Credential Verification) is needed, an additional Authentication flow is not necessary.
+The authentication flow consists of a simple request-response message exchange, where the contents of the response must match those of the request. Because all messages are signed and authenticated, the response functions as proof of control by nature of being correctly signed by the keys listed in the DID Document of the issuer. Because of this, in scenarios where a more complex functionality (e.g. Credential Verification) is needed, an additional authentication flow is not necessary.
 
 ### Roles
-- **Verifier**: Agent who requests and verifies the Authenticity of the Authenticator
-- **Authenticator**: Agent who proves control over their Identifier
+- <u>**Verifier**</u>: Agent who requests and verifies the authenticity of the <u>authenticator</u>
+- <u>**Authenticator**</u>: Agent who proves control over their identifier
 
 ### Messages
 
 #### Authentication Request
-The verifier sends the `authenticationRequest` to the authentication service endpoint of the authenticator, specifying a `callbackURL` for the reponse to be posted to, as well as an arbitrary `description` which is to be signed by the authenticator. 
+The <u>verifier</u> sends the `authenticationRequest` to the authentication service endpoint of the <u>authenticator</u>, specifying a `callbackURL` for the `authenticationResponse` to be posted to, as well as an arbitrary `description` which is to be signed by the <u>authenticator</u>. 
 
 ###### Layout
 
@@ -26,7 +30,7 @@ authenticationRequest: {
 ```
 
 #### Authentication Response
-The authenticator answers with an `authenticationResponse`, quoting the request it answers to and providing a `signature` of the `authenticationRequest` field, which is the complete original `authenticationRequest`.
+The <u>authenticator</u> answers with an `authenticationResponse`, quoting the `authenticationRequest` it answers to and providing a `signature` of the `authenticationRequest` field, which is the complete original `authenticationRequest`.
 
 ###### Layout
 
@@ -46,58 +50,164 @@ authenticationResponse: {
 
 ### Examples
 
-Alice wants to know whether an identity she received earlier corresponds to the domain https://www.bob.com. She sends an **authentication request** to the domain specified in the identity's service endpoint:
+The <u>verifier</u> wants to know whether an identity he received earlier corresponds to the domain https://www.bob.com. He sends an `authenticationRequest` to the domain specified in the identity's service endpoint:
 
-```json
+```JSON
 {
     callbackURL: "https://example.com/auth",
     description: "Are you Bob?",
 }
 ```
 
-The service endpoints receives the **authentication request** and answers with e.g. the following **authentication response**:
+The service endpoint of the <u>authenticator</u> receives the `authenticationRequest` and answers with e.g. the following `authenticationResponse`:
 
-```json
+```JSON
 {
     authenticationRequest: {
         callbackURL: "https://www.bob.com/auth",
         description: "Are you Bob?",
     },
     signature: {
-      "type": "JcsEd25519Signature2020",
-      "verificationMethod": "#authentication",
-      "signatureValue": "5Hw1JWv4a6hZH5obtAshbbKZQAJK6h8YbEwZvdxgWCXSL81fvRYoMCjt22vaBtZewgGq641dqR31C27YhDusoo4N"
+      type: "JcsEd25519Signature2020",
+      verificationMethod: "#authentication",
+      signatureValue: "5Hw1JWv4a6hZH5obtAshbbKZQAJK6h8YbEwZvdxgWCXSL81fvRYoMCjt22vaBtZewgGq641dqR31C27YhDusoo4N"
    }
 }
 ```
 
-The `signature` provided here must correspond with the `#authentication` public key provided in the DID Document of the identity that Alice has received earlier. If that is the case, the domain is authenticated successfully.
-
-
+The `signature` provided here must correspond with the `#authentication` public key provided in the DID Document of the identity that the <u>verifier</u> has received earlier. If that is the case, the domain is authenticated successfully.
 
 ---
-# (Interaction Flow Title)
+# Authorization
 
-(Information and description about the flow)
+Giving consent or permission.
+
+The Authorization flow consists of a simple request-response message exchange, where the Initiator requests authorization from the <u>authorizer</u> to carry out some action. It is similar to the authentication flow in structure, however the intent of the interaction is different. Authentication is about proving the identity of an agent (e.g. SSO), while authorization is about giving permission or privilege for a service to act on an agents behalf.
 
 ### Roles
-- (Role 1): (Description 1)
-- (Role 2): (Description 2)
+- **Authorized**: Agent requesting authorization to perform some action
+- **Authorizer**: Agent granting authorization to the <u>authorized</u>
 
 ### Messages
 
-##### (Message 1)
-(Information about Message 1)
+#### Authorization Request
+The <u>authorized</u> broadcasts a message representing the intent of the action which permission is required for.
 
 ###### Layout
 
-###### Response
+```JSON
+authorizationRequest: {
+    callbackURL: "<URL as String>",
+    description: "<Text as String>",
+    imageURL: "<Image URL as String>",
+    action: "<Text as String>",
+}
+```
 
-##### (Message 2)
-(Information about Message 2)
+#### Authorization Response
+The <u>authorizer</u> responds with a message containing the same contents as the `authorizationRequest` as consent.
 
 ###### Layout
 
-###### Response
+```JSON
+authorizationResponse: {
+    callbackURL: "<URL as String>",
+    description: "<Text as String>",
+    imageURL: "<Image URL as String>",
+    action: "<Text as String>",
+}
+```
 
 ### Examples
+
+The <u>authorized</u> would like to open the <u>authorizers</u> door and sends an `authorizationRequest` for said action to the <u>authorizer</u>:
+
+```JSON
+{
+    callbackURL: "https://example.com/authz",
+    description: "Front Door",
+    imageURL: "https://example.com/lockImage.png",
+    action: "Open the door",
+}
+```
+
+The <u>authorizer</u> reponds with the same content, consenting to the action:
+
+```JSON
+{
+    callbackURL: "https://example.com/authz",
+    description: "Front Door",
+    imageURL: "https://example.com/lockImage.png",
+    action: "Open the door",
+}
+```
+
+---
+# Verifiable Credential Issuance
+
+Creating an authenticated statement about an identifier.
+
+The issuance flow consists of a three step message exchange between two parties, the <u>issuer</u> and the <u>holder</u>.
+
+### Roles
+- **Issuer**: Agent who offers and issues one or more Verifiable Credentials
+- **Holder**: Agent who selects and receives one or more Verifiable Credentials
+
+### Messages
+
+#### Credential Offer
+The Issuer broadcasts a message containing a list of credential types offered for issuance in this interaction, each with it's own list of requirements which must be satisfied by the Holder in order to qualify for the credential.
+
+###### Layout
+
+```JSON
+authorizationRequest: {
+    tbd: "<URL as String>",
+}
+```
+
+#### Credential Selection
+The Holder responds with a message containing a list of selected credentials with associated data for satisfying requirements.
+
+###### Layout
+
+```JSON
+authorizationResponse: {
+    tbd: "<URL as String>",
+}
+```
+
+#### Credential Issuance
+The Issuer responds with a message containing a list of newly issued credentials corrosponding to the selected set.
+
+###### Layout
+
+```JSON
+authorizationResponse: {
+    tbd: "<URL as String>",
+}
+```
+
+### Examples
+
+The authorized would like to open the authorizers door and sends an authorization request for said action to the authorizer:
+
+```JSON
+{
+    callbackURL: "https://example.com/authz",
+    description: "Front Door",
+    imageURL: "https://example.com/lockImage.png",
+    action: "Open the door",
+}
+```
+
+The authorizer reponds with the same content, consenting to the action:
+
+```JSON
+{
+    callbackURL: "https://example.com/authz",
+    description: "Front Door",
+    imageURL: "https://example.com/lockImage.png",
+    action: "Open the door",
+}
+```
