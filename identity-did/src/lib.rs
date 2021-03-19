@@ -19,7 +19,6 @@
 //!
 //! See [our documentation portal](https://identity.docs.iota.org/overview/did.html) for additional documentations, conceptual explainations and usage examples.
 
-#![allow(renamed_and_removed_lints)]
 #![warn(
   rust_2018_idioms,
   unreachable_pub,

@@ -8,7 +8,6 @@
 //! `bool`, and `char` types.  Structs and Enums are supported via `identity_derive` and can be composed of any number
 //! of these types.
 
-#![allow(renamed_and_removed_lints)]
 #![warn(
   rust_2018_idioms,
   unreachable_pub,

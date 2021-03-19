@@ -78,13 +78,13 @@ impl<T: Diff> Default for DiffOption<T> {
   }
 }
 
-/// From `DiffOption<T>` implementation for `Option<T>`.
-impl<T> From<DiffOption<T>> for Option<T>
+/// Into `Option<T>` implementation for `DiffOption<T>`.
+impl<T> Into<Option<T>> for DiffOption<T>
 where
   T: Diff,
 {
-  fn from(other: DiffOption<T>) -> Option<T> {
-    match other {
+  fn into(self) -> Option<T> {
+    match self {
       DiffOption::Some(s) => Some(Diff::from_diff(s).expect("Unable to convert from diff")),
       DiffOption::None => None,
     }

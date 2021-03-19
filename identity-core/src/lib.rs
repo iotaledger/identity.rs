@@ -3,7 +3,6 @@
 
 //! Identity Core
 
-#![allow(renamed_and_removed_lints)]
 #![warn(
   rust_2018_idioms,
   unreachable_pub,
