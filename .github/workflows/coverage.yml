@@ -1,0 +1,26 @@
+name: Coverage
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+      - feat/test-coverage
+    paths:
+      - '**.rs'
+      - '**.toml'
+      - '.github/workflows/coverage.yml'
+      - '.github/workflows/scripts/coverage.sh'
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/tarpaulin@v0.1
+        with:
+          out-type: 'Lcov'
+      - uses: coverallsapp/github-action@v1.1.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: lcov.info
