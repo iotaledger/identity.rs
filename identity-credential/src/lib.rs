@@ -3,6 +3,7 @@
 
 //! Types and traits for working with Verifiable Credentials/Presentations.
 
+#![allow(renamed_and_removed_lints)]
 #![warn(
   rust_2018_idioms,
   unreachable_pub,

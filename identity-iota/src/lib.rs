@@ -3,6 +3,7 @@
 
 //! The IOTA Identity Library
 
+#![allow(renamed_and_removed_lints)]
 #![warn(
   rust_2018_idioms,
   unreachable_pub,

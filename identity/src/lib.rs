@@ -3,10 +3,11 @@
 
 #![cfg_attr(docsrs, feature(doc_cfg, extended_key_value_attributes))]
 #![cfg_attr(docsrs, cfg_attr(docsrs, doc = include_str!("../README.md")))]
+#![allow(renamed_and_removed_lints)]
 #![warn(
   rust_2018_idioms,
   unreachable_pub,
-  missing_docs,
+  // missing_docs,
   missing_crate_level_docs,
   broken_intra_doc_links,
   private_intra_doc_links,
