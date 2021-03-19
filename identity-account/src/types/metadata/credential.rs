@@ -1,49 +1,54 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::Timestamp;
+use identity_core::common::Url;
+use identity_credential::credential::Credential;
+use std::borrow::Cow;
 
-use crate::types::Metadata;
+use crate::storage::ResourceType;
+use crate::types::MetadataItem;
+use crate::types::Identifier;
+use crate::types::Timestamps;
+use crate::error::Result;
+use crate::error::Error;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CredentialMetadata {
-  pub(crate) id: String,
-  pub(crate) created_at: Timestamp,
-  pub(crate) updated_at: Timestamp,
+  pub(crate) timestamps: Timestamps,
+  pub(crate) identifier: Identifier,
+  pub(crate) credential_id: String,
+  pub(crate) credential_issuer_id: String,
 }
 
 impl CredentialMetadata {
-  pub fn new() -> Self {
-    Self {
-      id: String::new(),
-      created_at: Timestamp::now(),
-      updated_at: Timestamp::now(),
-    }
-  }
+  pub fn new<T>(
+    ident: String,
+    index: u32,
+    credential: &Credential<T>,
+  ) -> Result<Self> {
+    let credential_id: &Url = credential
+      .id
+      .as_ref()
+      .ok_or(Error::InvalidCredentialMissingId)?;
 
-  pub fn id(&self) -> &str {
-    &self.id
-  }
-
-  pub fn created_at(&self) -> Timestamp {
-    self.created_at
-  }
-
-  pub fn updated_at(&self) -> Timestamp {
-    self.updated_at
+    Ok(Self {
+      timestamps: Timestamps::now(),
+      identifier: Identifier::new(ident, index),
+      credential_id: credential_id.to_string(),
+      credential_issuer_id: credential.issuer.url().to_string(),
+    })
   }
 }
 
-impl Metadata for CredentialMetadata {
-  fn tag(&self) -> &str {
-    &self.id
+impl MetadataItem for CredentialMetadata {
+  const METADATA: ResourceType = ResourceType::CredentialMeta;
+  const RESOURCE: ResourceType = ResourceType::Credential;
+
+  fn resource(&self) -> Cow<'_, [u8]> {
+    Cow::Borrowed(self.credential_id.as_bytes())
   }
 
-  fn ident(&self) -> &str {
-    ""
-  }
-
-  fn index(&self) -> u32 {
-    0
+  fn identifier(&self) -> &Identifier {
+    &self.identifier
   }
 }

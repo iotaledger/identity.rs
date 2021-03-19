@@ -22,16 +22,7 @@ use crate::storage::StorageHandle;
 use crate::types::IdentityMetadata;
 use crate::types::KeyLocation;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Identity {
-  base: Document,
-}
-
 impl Identity {
-  pub const fn new(base: Document) -> Self {
-    Self { base }
-  }
-
   // Note: This needs to match Document::sign_this
   pub(crate) async fn sign_this(&mut self, metadata: &IdentityMetadata, storage: &StorageHandle) -> Result<()> {
     let method: &Method = self.base.authentication();
@@ -101,26 +92,12 @@ impl Identity {
           keys.insert(KeyLocation::owned(KeyType::Ed25519, metadata.index(), fragment));
         }
         MethodType::MerkleKeyCollection2021 => {
-          todo!("TODO: Handle Merkle Key Collection")
+          todo!("Key Collection Locations")
         }
         _ => return Err(DIDError::UnknownMethodType.into()),
       }
     }
 
     Ok(())
-  }
-}
-
-impl Deref for Identity {
-  type Target = Document;
-
-  fn deref(&self) -> &Self::Target {
-    &self.base
-  }
-}
-
-impl DerefMut for Identity {
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.base
   }
 }

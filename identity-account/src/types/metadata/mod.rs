@@ -3,8 +3,10 @@
 
 mod credential;
 mod identity;
-mod presentation;
+mod list;
+mod traits;
 
 pub use self::credential::CredentialMetadata;
 pub use self::identity::IdentityMetadata;
-pub use self::presentation::PresentationMetadata;
+pub use self::list::MetadataList;
+pub use self::traits::MetadataItem;

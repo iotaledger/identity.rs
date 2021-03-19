@@ -5,9 +5,9 @@ use identity_core::crypto::PublicKey;
 use std::path::Path;
 
 use crate::error::Result;
-use crate::types::KeyLocation;
-use crate::types::ResourceId;
-use crate::types::ResourceType;
+use crate::storage::KeyLocation;
+use crate::storage::ResourceId;
+use crate::storage::ResourceType;
 use crate::types::Signature;
 use crate::utils::fs;
 use crate::utils::EncryptionKey;

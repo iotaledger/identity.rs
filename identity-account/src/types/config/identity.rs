@@ -25,11 +25,13 @@ impl IdentityConfig {
     }
   }
 
+  #[must_use]
   pub fn key_type(mut self, value: KeyType) -> Self {
     self.key_type = value;
     self
   }
 
+  #[must_use]
   pub fn name<T>(mut self, value: T) -> Self
   where
     T: Into<String>,
@@ -38,6 +40,7 @@ impl IdentityConfig {
     self
   }
 
+  #[must_use]
   pub fn network<T>(mut self, value: T) -> Self
   where
     T: Into<String>,
@@ -46,6 +49,7 @@ impl IdentityConfig {
     self
   }
 
+  #[must_use]
   pub fn shard<T>(mut self, value: T) -> Self
   where
     T: Into<String>,
@@ -54,11 +58,13 @@ impl IdentityConfig {
     self
   }
 
+  #[must_use]
   pub fn publish(mut self, value: bool) -> Self {
     self.publish = value;
     self
   }
 
+  #[must_use]
   pub fn persist(mut self, value: bool) -> Self {
     self.persist = value;
     self

@@ -15,9 +15,9 @@ use tokio::sync::MutexGuard;
 
 use crate::error::Result;
 use crate::storage::VaultAdapter;
-use crate::types::KeyLocation;
-use crate::types::ResourceId;
-use crate::types::ResourceType;
+use crate::storage::KeyLocation;
+use crate::storage::ResourceId;
+use crate::storage::ResourceType;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
 
@@ -87,22 +87,27 @@ impl StorageHandle {
   // Vault Adapter
   // ===========================================================================
 
+  /// Sets the account password.
   pub async fn set_password(&self, password: EncryptionKey) -> Result<()> {
     self.__lock().await.set_password(password).await
   }
 
+  /// Creates a new keypair at the specified `location`
   pub async fn key_new(&self, location: &KeyLocation<'_>) -> Result<PublicKey> {
     self.__lock().await.key_new(location).await
   }
 
+  /// Retrieves the public key at the specified `location`.
   pub async fn key_get(&self, location: &KeyLocation<'_>) -> Result<PublicKey> {
     self.__lock().await.key_get(location).await
   }
 
+  /// Deletes the keypair specified by `location`.
   pub async fn key_del(&self, location: &KeyLocation<'_>) -> Result<()> {
     self.__lock().await.key_del(location).await
   }
 
+  /// Signs the given `payload` with the private key at the specified `location`.
   pub async fn key_sign(&self, location: &KeyLocation<'_>, payload: Vec<u8>) -> Result<Signature> {
     self.__lock().await.key_sign(location, payload).await
   }

@@ -15,9 +15,9 @@ use crate::stronghold::default_hint;
 use crate::stronghold::Records;
 use crate::stronghold::Snapshot;
 use crate::stronghold::Vault;
-use crate::types::KeyLocation;
-use crate::types::ResourceId;
-use crate::types::ResourceType;
+use crate::storage::KeyLocation;
+use crate::storage::ResourceId;
+use crate::storage::ResourceType;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
 
@@ -51,38 +51,25 @@ impl StrongholdAdapter {
   }
 }
 
-const fn key(type_: ResourceType) -> &'static str {
-  match type_ {
-    ResourceType::Identity => "$_Identity",
-    ResourceType::IdentityMeta => "$_IdentityMeta",
-    ResourceType::IdentityDiff => "$_IdentityDiff",
-    ResourceType::IdentityDiffMeta => "$_IdentityDiffMeta",
-    ResourceType::Credential => "$_Credential",
-    ResourceType::CredentialMeta => "$_CredentialMeta",
-    ResourceType::Presentation => "$_Presentation",
-    ResourceType::PresentationMeta => "$_PresentationMeta",
-  }
-}
-
 #[async_trait::async_trait]
 impl StorageAdapter for StrongholdAdapter {
   async fn all(&mut self, type_: ResourceType) -> Result<Vec<Vec<u8>>> {
-    self.records(key(type_)).all().await
+    self.records(type_.name()).all().await
   }
 
   async fn get(&mut self, id: ResourceId<'_>) -> Result<Vec<u8>> {
-    self.records(key(id.type_())).get(id.data()).await
+    self.records(id.type_().name()).get(id.data()).await
   }
 
   async fn set(&mut self, id: ResourceId<'_>, data: Vec<u8>) -> Result<()> {
-    self.records(key(id.type_())).set(id.data(), &data).await?;
+    self.records(id.type_().name()).set(id.data(), &data).await?;
     self.snapshot.save().await?;
 
     Ok(())
   }
 
   async fn del(&mut self, id: ResourceId<'_>) -> Result<()> {
-    self.records(key(id.type_())).del(id.data()).await?;
+    self.records(id.type_().name()).del(id.data()).await?;
     self.snapshot.save().await?;
 
     Ok(())

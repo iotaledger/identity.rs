@@ -9,8 +9,7 @@ use identity_core::error::Error;
 use identity_core::error::Result;
 
 use crate::storage::StorageHandle;
-use crate::types::KeyLocation;
-use crate::types::Signature;
+use crate::storage::KeyLocation;
 
 pub struct RemoteKey<'a> {
   storage: &'a StorageHandle,

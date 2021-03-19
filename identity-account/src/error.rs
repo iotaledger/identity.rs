@@ -8,6 +8,7 @@ pub enum Error {
   CryptoError(crypto::Error),
   CoreError(identity_core::Error),
   DIDError(identity_did::Error),
+  CredentialError(identity_credential::Error),
   IotaError(identity_iota::Error),
   IoError(std::io::Error),
   ActorSystemError(riker::system::SystemError),
@@ -34,6 +35,12 @@ impl From<crypto::Error> for Error {
 impl From<identity_core::Error> for Error {
   fn from(other: identity_core::Error) -> Self {
     Self::CoreError(other)
+  }
+}
+
+impl From<identity_credential::Error> for Error {
+  fn from(other: identity_credential::Error) -> Self {
+    Self::CredentialError(other)
   }
 }
 
