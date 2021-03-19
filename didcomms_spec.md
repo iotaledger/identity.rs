@@ -14,27 +14,27 @@ The Authentication flow consists of a simple request-response message exchange, 
 ### Messages
 
 #### Authentication Request
-The verifier sends the **authentication request** to the authentication service endpoint of the authenticator, specifying a `callbackURL` for the reponse to be posted to, as well as an arbitrary `description` which is to be signed by the authenticator. 
+The verifier sends the `authenticationRequest` to the authentication service endpoint of the authenticator, specifying a `callbackURL` for the reponse to be posted to, as well as an arbitrary `description` which is to be signed by the authenticator. 
 
 ###### Layout
 
-```json
-{
+```JSON
+"authenticationRequest": {
     callbackURL: <URL as String>,
     description: <Text as String>,
 }
 ```
 
 #### Authentication Response
-The authenticator answers with an **authentication response**, quoting the request it answers to and providing a `signature` of the `authenticationRequest` field, which is the complete original **authentication request**.
+The authenticator answers with an `authenticationResponse`, quoting the request it answers to and providing a `signature` of the `authenticationRequest` field, which is the complete original `authenticationRequest`.
 
 ###### Layout
 
-```json
-{
-    authenticationRequest: {
-        callbackURL: <URL as String>,
-        description: <Text as String>,
+```JSON
+"authenticationResponse": {
+    "authenticationRequest": {
+        "callbackURL": <URL as String>,
+        "description": <Text as String>,
     },
     signature: {
       "type": <Signature Type as String>,
