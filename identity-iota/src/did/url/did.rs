@@ -27,7 +27,6 @@ const BLAKE2B_256_LEN: usize = 32;
 ///
 /// This is a thin wrapper around the [`DID`][`CoreDID`] type from the
 /// [`identity_did`][`identity_did`] crate.
-#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(into = "CoreDID", try_from = "CoreDID")]
