@@ -18,22 +18,22 @@ pub struct Subject {
 }
 
 impl Subject {
-  /// Creates a new [`Subject`].
+  /// Creates a new `Subject`.
   pub fn new() -> Self {
     Self::with_properties(Object::new())
   }
 
-  /// Creates a new [`Subject`] with the given `id`.
+  /// Creates a new `Subject` with the given `id`.
   pub fn with_id(id: Url) -> Self {
     Self::with_id_and_properties(id, Object::new())
   }
 
-  /// Creates a new [`Subject`] with the given `properties`.
+  /// Creates a new `Subject` with the given `properties`.
   pub fn with_properties(properties: Object) -> Self {
     Self { id: None, properties }
   }
 
-  /// Creates a new [`Subject`] with the given `id` and `properties`.
+  /// Creates a new `Subject` with the given `id` and `properties`.
   pub fn with_id_and_properties(id: Url, properties: Object) -> Self {
     Self {
       id: Some(id),

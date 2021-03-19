@@ -22,7 +22,7 @@ use crate::utils::encode_b58;
 /// An implementation of the [JCS Ed25519 Signature 2020][SPEC1] signature suite
 /// for [Linked Data Proofs][SPEC2].
 ///
-/// Users should use the [`SignatureSign`]/[`SignatureVerify`] traits to access
+/// Users should use the [`Sign`]/[`Verify`] traits to access
 /// this implementation.
 ///
 /// [SPEC1]: https://identity.foundation/JcsEd25519Signature2020/
