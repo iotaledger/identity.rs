@@ -19,9 +19,9 @@ The verifier sends the `authenticationRequest` to the authentication service end
 ###### Layout
 
 ```JSON
-"authenticationRequest": {
-    callbackURL: <URL as String>,
-    description: <Text as String>,
+authenticationRequest: {
+    callbackURL: "<URL as String>",
+    description: "<Text as String>",
 }
 ```
 
@@ -31,15 +31,15 @@ The authenticator answers with an `authenticationResponse`, quoting the request 
 ###### Layout
 
 ```JSON
-"authenticationResponse": {
-    "authenticationRequest": {
-        "callbackURL": <URL as String>,
-        "description": <Text as String>,
+authenticationResponse: {
+    authenticationRequest: {
+        callbackURL: "<URL as String>",
+        description: "<Text as String>",
     },
     signature: {
-      "type": <Signature Type as String>,
-      "verificationMethod": <Verification Method as String>,
-      "signatureValue": <Signature as String>
+      type: "<Signature Type as String>",
+      verificationMethod: "<Verification Method as String>",
+      signatureValue: "<Signature as String>"
    }
 }
 ```
