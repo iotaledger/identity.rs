@@ -97,12 +97,12 @@ impl DocumentChain {
     Ok(self.auth_chain.current)
   }
 
-  /// Returns a reference to the latest document in the chain.
+  /// Returns a reference to the latest document.
   pub fn current(&self) -> &Document {
     self.document.as_ref().unwrap_or_else(|| self.auth_chain.current())
   }
 
-  /// Returns a mutable reference to the latest document in the chain.
+  /// Returns a mutable reference to the latest document.
   pub fn current_mut(&mut self) -> &mut Document {
     if let Some(document) = self.document.as_mut() {
       document
@@ -135,7 +135,7 @@ impl DocumentChain {
     Ok(())
   }
 
-  /// Adds a new diff to the current diff chain.
+  /// Adds a new diff to the chain.
   ///
   /// # Errors
   ///
