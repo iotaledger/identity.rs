@@ -66,7 +66,7 @@ The <u>endpoint</u> answers with a `didResponse` to the `callbackURL`:
 ```
 
 ---
-# Authentication
+## Authentication
 
 Proving control over an identifier.
 
@@ -139,7 +139,7 @@ The service endpoint of the <u>authenticator</u> receives the `authenticationReq
 The `signature` provided here must correspond with the `#authentication` public key provided in the DID Document of the identity that the <u>verifier</u> has received earlier. If that is the case, the domain is authenticated successfully.
 
 ---
-# Authorization
+## Authorization
 
 Giving consent or permission.
 
@@ -204,7 +204,7 @@ The <u>authorizer</u> reponds with the same content, consenting to the action:
 ```
 
 ---
-# Credential Issuance
+## Credential Issuance
 
 Creating an authenticated statement about an identifier.
 
@@ -262,7 +262,7 @@ The <u>issuer</u> responds with a message containing a list of newly issued cred
 TBD after above flow is cleared up
 
 ---
-# Credential Verification
+## Credential Verification
 
 Proving a set of statements about an identifier.
 
@@ -310,7 +310,7 @@ credentialResponse: {
 TBD after above flow is cleared up
 
 ---
-# DID Resolution
+## DID Resolution
 
 Using another Agent as a Resolver.
 
