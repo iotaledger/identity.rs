@@ -179,5 +179,49 @@ async fn main() -> Result<()> {
   // current document in our local chain.
   assert_eq!(a, b);
 
+  // =========================================================================
+  // Test Read Document Chain with diff true oder false
+  // =========================================================================
+
+  let mut did = chain.id().clone();
+  let opt: Option<&str> = Some("diff=false");
+  did.set_query(opt);
+  // The flag diff=false and the did query parameter should be identical
+  assert_eq!("diff=false", did.query().unwrap());
+
+  let remote: DocumentChain = client.read_document_chain(&did).await?;
+
+  println!("Chain (R) {:#}", remote);
+  println!();
+
+  let a: &Document = chain.current();
+  let b: &Document = remote.current();
+
+  // The current document in the resolved chain should be identical to the
+  // current document in our local chain.
+  assert_eq!(a, b);
+
+  // =========================================================================
+  // Test Read Document Chain with diff true oder false
+  // =========================================================================
+  
+  let opt: Option<&str> = Some("diff=true");
+  did.set_query(opt);
+
+  // The flag diff=true and the did query parameter should be identical
+  assert_eq!("diff=true", did.query().unwrap());
+
+  let remote: DocumentChain = client.read_document_chain(&did).await?;
+
+  println!("Chain (R) {:#}", remote);
+  println!();
+
+  let c: &Document = chain.current();
+  let d: &Document = remote.current();
+  // The current document in the resolved chain should be not identical to the
+  // current document in our local chain
+  // document in resolved chain has the flag immutable false and the document in our local chain has the flag immutable true
+  assert_ne!(c, d);
+
   Ok(())
 }
