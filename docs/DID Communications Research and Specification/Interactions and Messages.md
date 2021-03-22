@@ -3,6 +3,8 @@
 * <a href="#authentication">Authentication</a>
 * <a href="#authorization">Authorization</a>
 * <a href="#verifiable-credential-issuance">Verifiable Credential Issuance</a>
+* <a href="#verifiable-credential-verification">Verifiable Credential Verification</a>
+* <a href="#did-resolution">DID Resolution</a>
 
 ---
 # Authentication
@@ -156,58 +158,157 @@ The issuance flow consists of a three step message exchange between two parties,
 ### Messages
 
 #### Credential Offer
-The Issuer broadcasts a message containing a list of credential types offered for issuance in this interaction, each with it's own list of requirements which must be satisfied by the Holder in order to qualify for the credential.
+The <u>issuer</u> broadcasts a message containing a list of credential types offered for issuance in this interaction, each with it's own list of requirements which must be satisfied by the <u>holder</u> in order to qualify for the credential.
 
 ###### Layout
 
 ```JSON
-authorizationRequest: {
-    tbd: "<URL as String>",
+{
+    callbackURL: "<URL as String>",
+    offeredCredentials: [
+        {
+            type: "<Type as String>",
+        },
+    ],
 }
 ```
 
 #### Credential Selection
-The Holder responds with a message containing a list of selected credentials with associated data for satisfying requirements.
+The <u>holder</u> responds with a message containing a list of selected credentials with associated data for satisfying requirements.
 
 ###### Layout
 
 ```JSON
-authorizationResponse: {
-    tbd: "<URL as String>",
+{
+    callbackURL: "<URL as String>",
+    selectedCredentials: [{type: "<Type as String>"}]
 }
 ```
 
 #### Credential Issuance
-The Issuer responds with a message containing a list of newly issued credentials corrosponding to the selected set.
+The <u>issuer</u> responds with a message containing a list of newly issued credentials corrosponding to the selected set.
 
 ###### Layout
 
 ```JSON
-authorizationResponse: {
-    tbd: "<URL as String>",
+{
+    issued: [
+        [{type: "<Type as String>"}]
+    ]
 }
 ```
 
 ### Examples
 
-The authorized would like to open the authorizers door and sends an authorization request for said action to the authorizer:
+TBD after above flow is cleared up
+
+---
+# Verifiable Credential Verification
+
+Proving a set of statements about an identifier.
+
+The credential verification flow is a simple request-response message exchange between the <u>verifier</u> and the <u>prover</u>.
+
+### Roles
+- **Verifier**: Agent who requests a set of Verifiable Credentials with associated requirements
+- **Prover**: Agent who provides a set of Verifiable Credentials attempting to satisfy the request
+
+### Messages
+
+#### Credential Request
+The <u>verifier</u> broadcasts a `credentialRequest` containing a list of credential types, each with it's own list of requirements to be satisfied by the <u>prover</u>.
+
+###### Layout
 
 ```JSON
-{
-    callbackURL: "https://example.com/authz",
-    description: "Front Door",
-    imageURL: "https://example.com/lockImage.png",
-    action: "Open the door",
+credentialRequest: {
+    callbackURL: "<URL as String>",
+    credentialRequirements: [
+        {
+            type: "<Type as String>",
+            constraints: [
+                <Constraint 1>,
+                <Constraint 2>,
+            ],
+        },
+    ],
 }
 ```
 
-The authorizer reponds with the same content, consenting to the action:
+#### Credential Response
+The <u>prover</u> responds with a list of credentials which should satisfy the corrosponding requirements in the `credentialRequest`.
+
+###### Layout
+
+```JSON
+credentialResponse: {
+    credentials: [{type: "<Type as String>"}]
+}
+```
+
+### Examples
+
+TBD after above flow is cleared up
+
+---
+# DID Resolution
+Using another Agent as a Resolver
+
+Peer resolution consists of a simple request-response message exchange, where the Requester asks the Resolver to perform DID resolution and return the result.
+
+### Roles
+- **Requester**: Agent who requests the resolution of a DID
+- **Resolver**: Agent who resolves the given DID (or their own) and returns the result
+
+### Messages
+
+#### Resolution Request
+The Requester broadcasts a message which may or may not contain a DID.
+
+###### Layout
+
+```JSON
+resolutionRequest: {
+    callbackURL: "<URL as String>",
+    did: "<DID as String>",
+}
+```
+
+#### Resolution Result
+If the message contains a DID, the Resolver resolves the DID and returns the DID Resolution Result. Otherwise, the Resolver returns the result of resolving it's own DID. This is intended for the special case of "local" DID methods, which do not have a globally resolvable state.
+
+###### Layout
+
+```JSON
+resolutionResult: {
+    didDocument: "<DID Document as JSON>",
+}
+```
+
+### Examples
+
+The <u>requester</u> sends a `resolutionRequest` to the <u>resolver</u>:
 
 ```JSON
 {
-    callbackURL: "https://example.com/authz",
-    description: "Front Door",
-    imageURL: "https://example.com/lockImage.png",
-    action: "Open the door",
+    callbackURL: "https://alice.com/res",
+    did: "did:iota:sdbgik8s34htosebgo9se34hg9so3ehg",
+}
+```
+
+The <u>resolver</u> answers with a `resolutionResult` to the <u>requester</u>:
+
+```JSON
+{
+    didDocument: {
+        @context: "https://www.w3.org/ns/did/v1",
+        id: "did:example:123456789abcdefghi",
+        authentication: [{
+            id: "did:example:123456789abcdefghi#keys-1",
+            type: "Ed25519VerificationKey2020",
+            controller: "did:example:123456789abcdefghi",
+            publicKeyMultibase: "zH3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+        }]
+    }
 }
 ```
