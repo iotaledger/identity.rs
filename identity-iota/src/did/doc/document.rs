@@ -210,7 +210,7 @@ impl Document {
   pub fn set_previous_message_id(&mut self, value: impl Into<MessageId>) {
     self.document.properties_mut().previous_message_id = value.into();
   }
-  
+
   /// Returns a reference to the custom DID Document properties.
   pub fn properties(&self) -> &Object {
     &self.document.properties().properties

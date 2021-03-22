@@ -11,7 +11,6 @@ use crate::tangle::MessageId;
 pub struct Properties {
   pub(crate) created: Timestamp,
   pub(crate) updated: Timestamp,
-  pub(crate) immutable: bool,
   #[serde(default, skip_serializing_if = "MessageId::is_none")]
   pub(crate) previous_message_id: MessageId,
   #[serde(flatten)]
@@ -23,7 +22,6 @@ impl Properties {
     Self {
       created: Timestamp::now(),
       updated: Timestamp::now(),
-      immutable: false,
       previous_message_id: MessageId::NONE,
       properties: Object::new(),
     }

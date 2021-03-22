@@ -204,7 +204,7 @@ async fn main() -> Result<()> {
   // =========================================================================
   // Test Read Document Chain with diff true oder false
   // =========================================================================
-  
+
   let opt: Option<&str> = Some("diff=true");
   did.set_query(opt);
 
