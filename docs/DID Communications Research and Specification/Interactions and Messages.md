@@ -32,7 +32,7 @@ The <u>requester</u> sends the `didRequest` to the <u>endpoint</u>, specifying a
 
 ```JSON
 didRequest: {
-    callbackURL: "<URL as String>"
+    "callbackURL": "<URL as String>"
 }
 ```
 
@@ -43,7 +43,7 @@ The <u>endpoint</u> answers with a `didResponse`, containing its DID.
 
 ```JSON
 didResponse: {
-    did: "<DID as String>"
+    "did": "<DID as String>"
 }
 ```
 
@@ -53,7 +53,7 @@ The <u>requester</u> sends the `didRequest` to the <u>endpoint</u>'s API:
 
 ```JSON
 {
-    callbackURL: "https://www.aliceswonderland.com/didreq"
+    "callbackURL": "https://www.aliceswonderland.com/didreq"
 }
 ```
 
@@ -61,7 +61,7 @@ The <u>endpoint</u> answers with a `didResponse` to the `callbackURL`:
 
 ```JSON
 {
-    did: "did:iota:zsdbfg897s34bgez"
+    "did": "did:iota:zsdbfg897s34bgez"
 }
 ```
 
@@ -85,8 +85,8 @@ The <u>verifier</u> sends the `authenticationRequest` to the authentication serv
 
 ```JSON
 authenticationRequest: {
-    callbackURL: "<URL as String>",
-    description: "<Text as String>",
+    "callbackURL": "<URL as String>",
+    "description": "<Text as String>",
 }
 ```
 
@@ -97,14 +97,14 @@ The <u>authenticator</u> answers with an `authenticationResponse`, quoting the `
 
 ```JSON
 authenticationResponse: {
-    authenticationRequest: {
-        callbackURL: "<URL as String>",
-        description: "<Text as String>",
+    "authenticationRequest": {
+        "callbackURL": "<URL as String>",
+        "description": "<Text as String>",
     },
-    signature: {
-      type: "<Signature Type as String>",
-      verificationMethod: "<Verification Method as String>",
-      signatureValue: "<Signature as String>"
+    "signature": {
+      "type": "<Signature Type as String>",
+      "verificationMethod": "<Verification Method as String>",
+      "signatureValue": "<Signature as String>"
    }
 }
 ```
@@ -115,8 +115,8 @@ The <u>verifier</u> wants to know whether an identity he received earlier corres
 
 ```JSON
 {
-    callbackURL: "https://example.com/auth",
-    description: "Are you Bob?",
+    "callbackURL": "https://example.com/auth",
+    "description": "Are you Bob?",
 }
 ```
 
@@ -124,14 +124,14 @@ The service endpoint of the <u>authenticator</u> receives the `authenticationReq
 
 ```JSON
 {
-    authenticationRequest: {
-        callbackURL: "https://www.bob.com/auth",
-        description: "Are you Bob?",
+    "authenticationRequest": {
+        "callbackURL": "https://www.bob.com/auth",
+        "description": "Are you Bob?",
     },
-    signature: {
-      type: "JcsEd25519Signature2020",
-      verificationMethod: "#authentication",
-      signatureValue: "5Hw1JWv4a6hZH5obtAshbbKZQAJK6h8YbEwZvdxgWCXSL81fvRYoMCjt22vaBtZewgGq641dqR31C27YhDusoo4N"
+    "signature": {
+        "type": "JcsEd25519Signature2020",
+        "verificationMethod": "#authentication",
+        "signatureValue": "5Hw1JWv4a6hZH5obtAshbbKZQAJK6h8YbEwZvdxgWCXSL81fvRYoMCjt22vaBtZewgGq641dqR31C27YhDusoo4N"
    }
 }
 ```
@@ -158,10 +158,10 @@ The <u>authorized</u> broadcasts a message representing the intent of the action
 
 ```JSON
 authorizationRequest: {
-    callbackURL: "<URL as String>",
-    description: "<Text as String>",
-    imageURL: "<Image URL as String>",
-    action: "<Text as String>",
+    "callbackURL": "<URL as String>",
+    "description": "<Text as String>",
+    "imageURL": "<Image URL as String>",
+    "action": "<Text as String>",
 }
 ```
 
@@ -172,10 +172,10 @@ The <u>authorizer</u> responds with a message containing the same contents as th
 
 ```JSON
 authorizationResponse: {
-    callbackURL: "<URL as String>",
-    description: "<Text as String>",
-    imageURL: "<Image URL as String>",
-    action: "<Text as String>",
+    "callbackURL": "<URL as String>",
+    "description": "<Text as String>",
+    "imageURL": "<Image URL as String>",
+    "action": "<Text as String>",
 }
 ```
 
@@ -185,10 +185,10 @@ The <u>authorized</u> would like to open the <u>authorizers</u> door and sends a
 
 ```JSON
 {
-    callbackURL: "https://example.com/authz",
-    description: "Front Door",
-    imageURL: "https://example.com/lockImage.png",
-    action: "Open the door",
+    "callbackURL": "https://example.com/authz",
+    "description": "Front Door",
+    "imageURL": "https://example.com/lockImage.png",
+    "action": "Open the door",
 }
 ```
 
@@ -196,10 +196,10 @@ The <u>authorizer</u> reponds with the same content, consenting to the action:
 
 ```JSON
 {
-    callbackURL: "https://example.com/authz",
-    description: "Front Door",
-    imageURL: "https://example.com/lockImage.png",
-    action: "Open the door",
+    "callbackURL": "https://example.com/authz",
+    "description": "Front Door",
+    "imageURL": "https://example.com/lockImage.png",
+    "action": "Open the door",
 }
 ```
 
@@ -223,10 +223,10 @@ The <u>issuer</u> broadcasts a message containing a list of credential types off
 
 ```JSON
 {
-    callbackURL: "<URL as String>",
-    offeredCredentials: [
+    "callbackURL": "<URL as String>",
+    "offeredCredentials": [
         {
-            type: "<Type as String>",
+            "type": "<Type as String>",
         },
     ],
 }
@@ -239,8 +239,12 @@ The <u>holder</u> responds with a message containing a list of selected credenti
 
 ```JSON
 {
-    callbackURL: "<URL as String>",
-    selectedCredentials: [{type: "<Type as String>"}]
+    "callbackURL": "<URL as String>",
+    "selectedCredentials": [
+        {
+            "type": "<Type as String>"
+        },
+    ],
 }
 ```
 
@@ -251,9 +255,11 @@ The <u>issuer</u> responds with a message containing a list of newly issued cred
 
 ```JSON
 {
-    issued: [
-        [{type: "<Type as String>"}]
-    ]
+    "issued": [
+        {
+            "type": "<Type as String>"
+        },
+    ],
 }
 ```
 
@@ -281,11 +287,11 @@ The <u>verifier</u> broadcasts a `credentialRequest` containing a list of creden
 
 ```JSON
 credentialRequest: {
-    callbackURL: "<URL as String>",
-    credentialRequirements: [
+    "callbackURL": "<URL as String>",
+    "credentialRequirements": [
         {
-            type: "<Type as String>",
-            constraints: [
+            "type": "<Type as String>",
+            "constraints": [
                 <Constraint 1>,
                 <Constraint 2>,
             ],
@@ -301,7 +307,7 @@ The <u>prover</u> responds with a list of credentials which should satisfy the c
 
 ```JSON
 credentialResponse: {
-    credentials: [{type: "<Type as String>"}]
+    "credentials": [{type: "<Type as String>"}]
 }
 ```
 
@@ -329,8 +335,8 @@ The Requester broadcasts a message which may or may not contain a DID.
 
 ```JSON
 resolutionRequest: {
-    callbackURL: "<URL as String>",
-    did: "<DID as String>",
+    "callbackURL": "<URL as String>",
+    "did": "<DID as String>",
 }
 ```
 
@@ -341,7 +347,7 @@ If the message contains a DID, the Resolver resolves the DID and returns the DID
 
 ```JSON
 resolutionResult: {
-    didDocument: "<DID Document as JSON>",
+    "didDocument": "<DID Document as JSON>",
 }
 ```
 
@@ -351,8 +357,8 @@ The <u>requester</u> sends a `resolutionRequest` to the <u>resolver</u>:
 
 ```JSON
 {
-    callbackURL: "https://alice.com/res",
-    did: "did:iota:sdbgik8s34htosebgo9se34hg9so3ehg",
+    "callbackURL": "https://alice.com/res",
+    "did": "did:iota:sdbgik8s34htosebgo9se34hg9so3ehg",
 }
 ```
 
@@ -360,14 +366,14 @@ The <u>resolver</u> answers with a `resolutionResult` to the <u>requester</u>:
 
 ```JSON
 {
-    didDocument: {
-        @context: "https://www.w3.org/ns/did/v1",
-        id: "did:example:123456789abcdefghi",
-        authentication: [{
-            id: "did:example:123456789abcdefghi#keys-1",
-            type: "Ed25519VerificationKey2020",
-            controller: "did:example:123456789abcdefghi",
-            publicKeyMultibase: "zH3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+    "didDocument": {
+        "@context": "https://www.w3.org/ns/did/v1",
+        "id": "did:example:123456789abcdefghi",
+        "authentication": [{
+            "id": "did:example:123456789abcdefghi#keys-1",
+            "type": "Ed25519VerificationKey2020",
+            "controller": "did:example:123456789abcdefghi",
+            "publicKeyMultibase": "zH3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
         }]
     }
 }
