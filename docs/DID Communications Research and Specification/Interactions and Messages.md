@@ -1,18 +1,18 @@
 # DID Communications Message Specification
 
-<u>**Contents:**</u>
-
-◈ <a href="#did-discovery">**DID Discovery**</a> - Requesting a DID from an agent.
-
-◈ <a href="#authentication">**Authentication**</a> - Proving control over an identifier.
-
-◈ <a href="#authorization">**Authorization**</a> - Giving consent or permission.
-
-◈ <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about an identifier.
-
-◈ <a href="#credential-verification">**Credential Verification**</a> - Proving a set of statements about an identifier.
-
-◈ <a href="#did-resolution">**DID Resolution**</a> - Using another Agent as a Resolver.
+> <u>**Contents:**</u>
+>
+> ◈ <a href="#did-discovery">**DID Discovery**</a> - Requesting a DID from an agent.
+>
+> ◈ <a href="#authentication">**Authentication**</a> - Proving control over an identifier.
+>
+> ◈ <a href="#authorization">**Authorization**</a> - Giving consent or permission.
+>
+> ◈ <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about an identifier.
+>
+> ◈ <a href="#credential-verification">**Credential Verification**</a> - Proving a set of statements about an identifier.
+>
+> ◈ <a href="#did-resolution">**DID Resolution**</a> - Using another Agent as a Resolver.
 
 ---
 # DID Discovery
