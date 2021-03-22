@@ -15,7 +15,7 @@
 > ◈ <a href="#did-resolution">**DID Resolution**</a> - Using another Agent as a Resolver.
 
 ---
-# DID Discovery
+## DID Discovery
 
 Requesting a DID from an agent.
 
