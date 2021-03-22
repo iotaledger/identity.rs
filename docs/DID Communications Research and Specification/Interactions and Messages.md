@@ -1,6 +1,6 @@
 # DID Communications Message Specification
 
-> <u>**Contents:**</u>
+> #### Contents
 >
 > ◈ <a href="#did-discovery">**DID Discovery**</a> - Requesting a DID from an agent.
 >
