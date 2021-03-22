@@ -1,10 +1,63 @@
-#DID Communications Message Specification
+# DID Communications Message Specification
+
 <u>**Contents:**</u>
-* <a href="#authentication">Authentication</a>
-* <a href="#authorization">Authorization</a>
-* <a href="#verifiable-credential-issuance">Verifiable Credential Issuance</a>
-* <a href="#verifiable-credential-verification">Verifiable Credential Verification</a>
-* <a href="#did-resolution">DID Resolution</a>
+◈ <a href="#did-discovery">**DID Discovery**</a> - Requesting a DID from an agent.
+◈ <a href="#authentication">**Authentication**</a> - Proving control over an identifier.
+◈ <a href="#authorization">**Authorization**</a> - Giving consent or permission.
+◈ <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about an identifier.
+◈ <a href="#credential-verification">**Credential Verification**</a> - Proving a set of statements about an identifier.
+◈ <a href="#did-resolution">**DID Resolution**</a> - Using another Agent as a Resolver.
+
+---
+# DID Discovery
+
+Requesting a DID from an agent.
+
+### Roles
+- <u>**Requester**</u>: Agent who requests a DID from the <u>endpoint</u>
+- <u>**Endpoint**</u>: Agent who provides the requested DID to the <u>requester</u>
+
+### Messages
+
+#### DID Request
+The <u>requester</u> sends the `didRequest` to the <u>endpoint</u>, specifying a `callbackURL` for the `didResponse` to be posted to. 
+
+###### Layout
+
+```JSON
+didRequest: {
+    callbackURL: "<URL as String>"
+}
+```
+
+#### DID Response
+The <u>endpoint</u> answers with a `didResponse`, containing its DID.
+
+###### Layout
+
+```JSON
+didResponse: {
+    did: "<DID as String>"
+}
+```
+
+### Examples
+
+The <u>requester</u> sends the `didRequest` to the <u>endpoint</u>'s API:
+
+```JSON
+{
+    callbackURL: "https://www.aliceswonderland.com/didreq"
+}
+```
+
+The <u>endpoint</u> answers with a `didResponse` to the `callbackURL`:
+
+```JSON
+{
+    did: "did:iota:zsdbfg897s34bgez"
+}
+```
 
 ---
 # Authentication
@@ -145,7 +198,7 @@ The <u>authorizer</u> reponds with the same content, consenting to the action:
 ```
 
 ---
-# Verifiable Credential Issuance
+# Credential Issuance
 
 Creating an authenticated statement about an identifier.
 
@@ -203,7 +256,7 @@ The <u>issuer</u> responds with a message containing a list of newly issued cred
 TBD after above flow is cleared up
 
 ---
-# Verifiable Credential Verification
+# Credential Verification
 
 Proving a set of statements about an identifier.
 
@@ -252,7 +305,8 @@ TBD after above flow is cleared up
 
 ---
 # DID Resolution
-Using another Agent as a Resolver
+
+Using another Agent as a Resolver.
 
 Peer resolution consists of a simple request-response message exchange, where the Requester asks the Resolver to perform DID resolution and return the result.
 
