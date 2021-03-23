@@ -360,3 +360,40 @@ fn service_endpoint_ctor(did: DID, url: &Url) -> Result<Url> {
   // 9. Return the output service endpoint URL.
   Ok(output)
 }
+
+#[cfg(test)]
+mod test {
+  use super::*;
+
+  fn did() -> DID {
+    "did:test:1234".parse().unwrap()
+  }
+
+  #[test]
+  fn test_service_endpoint_valid() {
+    let did = did();
+    assert!(service_endpoint_ctor(did, &Url::parse("https://my-service.endpoint.net").unwrap()).is_ok());
+  }
+  #[test]
+  fn test_service_endpoint_invalid_query() {
+    let did = did();
+    assert!(matches!(
+      service_endpoint_ctor(did.join("?query=this").unwrap(), &Url::parse("https://my-service.endpoint.net?query=this").unwrap()),
+      Err(Error::InvalidDIDQuery)
+    ));
+    
+    assert!(service_endpoint_ctor(did.join("?query=this").unwrap(), &Url::parse("https://my-service.endpoint.net").unwrap()).is_ok());
+    assert!(service_endpoint_ctor(did, &Url::parse("https://my-service.endpoint.net?query=this").unwrap()).is_ok());
+  }
+  #[test]
+  fn test_service_endpoint_invalid_fragment() {
+    let did = did();
+    assert!(matches!(
+      service_endpoint_ctor(did.join("#fragment").unwrap(), &Url::parse("https://my-service.endpoint.net#fragment").unwrap()),
+      Err(Error::InvalidDIDFragment)
+    ));
+
+    assert!(service_endpoint_ctor(did.join("#fragment").unwrap(), &Url::parse("https://my-service.endpoint.net").unwrap()).is_ok());
+    assert!(service_endpoint_ctor(did, &Url::parse("https://my-service.endpoint.net#fragment").unwrap()).is_ok());
+  }
+}
