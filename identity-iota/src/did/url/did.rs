@@ -398,6 +398,14 @@ mod tests {
     assert_eq!(did.tag(), tag);
     assert_eq!(did.network(), DID::DEFAULT_NETWORK);
     assert_eq!(did.shard(), None);
+
+    let did = DID::from_components(key.public().as_ref(), None, None).unwrap();
+    assert_eq!(did.tag(), tag);
+    assert_eq!(did.network(), DID::DEFAULT_NETWORK);
+    assert_eq!(did.shard(), None);
+
+    let did = DID::from_components(key.public().as_ref(), Some(DID::DEFAULT_NETWORK), None).unwrap();
+    assert_eq!(did.network(), DID::DEFAULT_NETWORK);
   }
 
   #[test]
@@ -437,5 +445,19 @@ mod tests {
     let did: DID = did_str.parse().unwrap();
 
     assert_eq!(did.as_str(), did_str);
+  }
+
+  #[test]
+  fn test_setter() {
+    let key: KeyPair = KeyPair::new_ed25519().unwrap();
+    let mut did: DID = DID::new(key.public().as_ref()).unwrap();
+
+    did.set_path("#foo");
+    did.set_query(Some("diff=true"));
+    did.set_fragment(Some("foo"));
+
+    assert_eq!(did.path(), "#foo");
+    assert_eq!(did.query(), Some("diff=true"));
+    assert_eq!(did.fragment(), Some("foo"));
   }
 }
