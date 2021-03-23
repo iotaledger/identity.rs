@@ -150,7 +150,7 @@ mod test {
     let mut properties: BTreeMap<String, Value> = BTreeMap::default();
     properties.insert("key1".to_string(), "value1".into());
     Service::builder(properties)
-      .id(controller.clone())
+      .id(controller)
       .service_endpoint(Url::parse("did:service:1234").unwrap())
       .type_("test_service")
       .build()

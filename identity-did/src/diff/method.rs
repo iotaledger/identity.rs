@@ -194,7 +194,7 @@ mod test {
     // add property
     let mut properties = BTreeMap::new();
     properties.insert("key1".to_string(), Value::String("value1".to_string()));
-    *new.properties_mut() = properties.clone();
+    *new.properties_mut() = properties;
 
     let diff = method.diff(&new).unwrap();
     assert!(diff.id.is_none());
@@ -208,7 +208,7 @@ mod test {
     // add another property
     let mut properties = BTreeMap::new();
     properties.insert("key2".to_string(), Value::String("value1".to_string()));
-    *new.properties_mut() = properties.clone();
+    *new.properties_mut() = properties;
 
     let diff = method.diff(&new).unwrap();
     assert!(diff.id.is_none());
@@ -222,7 +222,7 @@ mod test {
     // change property
     let mut properties = BTreeMap::new();
     properties.insert("key2".to_string(), Value::String("value2".to_string()));
-    *new.properties_mut() = properties.clone();
+    *new.properties_mut() = properties;
 
     let diff = method.diff(&new).unwrap();
     assert!(diff.id.is_none());
@@ -299,7 +299,7 @@ mod test {
       )))))
     );
 
-    let merge = method.merge(diff.clone()).unwrap();
+    let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
   #[test]
@@ -314,7 +314,7 @@ mod test {
     // add property
     let mut properties = BTreeMap::new();
     properties.insert("key1".to_string(), Value::String("value1".to_string()));
-    *new.properties_mut() = properties.clone();
+    *new.properties_mut() = properties;
 
     let diff = method.diff(&new).unwrap();
     let diff_method = Method::from_diff(diff);
