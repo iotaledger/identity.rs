@@ -134,7 +134,8 @@ where
       .controller
       .flatten()
       .and_then(|value| self.controller().map(|controller| controller.merge(value)))
-      .transpose()?;
+      .transpose()?
+      .or_else(|| self.controller().cloned());
 
     let also_known_as: Vec<Url> = diff
       .also_known_as
