@@ -160,19 +160,13 @@ impl Client {
 
     let auth: AuthChain = AuthChain::try_from_messages(did, &messages)?;
 
-    // Check if there is any query given and return it
-    let temp_query = match did.query() {
-      Some(query) => query,
-      None => "",
+    // Check if there is any query given and return
+    let diff_option = match did.query() {
+      Some(query) => query.contains("diff=true"),
+      None => true,
     };
-    // check if the diff=true | false Option is given
-    let diff_option: bool = !temp_query.is_empty() && temp_query.contains("diff=true");
-    //println!("DIFF BOOL:  {}", diff_option);
 
-    // check diff=true | false
     let diff: DiffChain = if diff_option {
-      DiffChain::new()
-    } else {
       // Fetch all messages for the diff chain.
       let address: String = Document::diff_address(auth.current_message_id())?;
       let messages: Vec<Message> = self.read_messages(&address).await?;
@@ -180,6 +174,8 @@ impl Client {
       trace!("Tangle Messages: {:?}", messages);
 
       DiffChain::try_from_messages(&auth, &messages)?
+    } else {
+      DiffChain::new()
     };
 
     DocumentChain::with_diff_chain(auth, diff)
