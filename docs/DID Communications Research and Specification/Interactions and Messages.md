@@ -1,8 +1,13 @@
+TODO
 # DID Communications Message Specification
 
 > ### Contents
 >
+> ◈ <a href="#trust-ping">**Trust Ping**</a> - Testing a pairwise channel.
+>
 > ◈ <a href="#did-discovery">**DID Discovery**</a> - Requesting a DID from an agent.
+>
+> ◈ <a href="#did-introduction">**DID Introduction**</a> - Introducing two parties through an intermediary.
 >
 > ◈ <a href="#did-resolution">**DID Resolution**</a> - Using another agent as a Resolver.
 >
@@ -12,7 +17,72 @@
 >
 > ◈ <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about a DID.
 >
-> ◈ <a href="#credential-verification">**Credential Verification**</a> - Proving a set of statements about a DID.
+> ◈ <a href="#credential-revocation">**Credential Revocation**</a> - Notifying a holder that a previously issued credential has been revoked.
+>
+> ◈ <a href="#presentation-verification">**Presentation Verification**</a> - Proving a set of statements about a DID.
+
+---
+## Trust Ping
+
+Testing a pairwise channel.
+
+### Roles
+- <u>**Sender**</u>: Agent who initiates the trust ping
+- <u>**Receiver**</u>: Agent who responds to the <u>senders</u> trust ping
+
+### Messages
+
+#### Ping
+The <u>senders</u> sends the `trustPing` to the <u>receiver</u>, specifying a `callbackURL` for the `didResponse` to be posted to. 
+
+###### Layout
+
+```JSON
+trustPing: {
+    "callbackURL": "<URL as String>",
+    "responseRequested": <Boolean>,
+    "type": "<URL as String>",
+    "id": "<DID as String>",
+    "timing": {...}
+}
+```
+
+#### Response
+The <u>receiver</u> answers with a `trustPingResponse`:
+
+###### Layout
+
+```JSON
+trustPingResponse: {
+    "type": "<URL as String>",
+    "id": "<DID as String>",
+    "timing": {...}
+}
+```
+
+### Examples
+
+The <u>senders</u> sends the `trustPing` to the <u>receiver</u>'s API:
+
+```JSON
+{
+    "callbackURL": "https://www.bobsworld.com/ping",
+    "responseRequested": true,
+    "type": "https://didcomm.org/trust_ping/1.0/ping",
+    "id": "did:iota:sdgf786sdgfi87sedzgf",
+    "timing": {...}
+}
+```
+
+Only if `responseRequested` is `true` may the <u>receiver</u> answer the ping with a `trustPingResponse`:
+
+```JSON
+{
+    "type": "https://didcomm.org/trust_ping/1.0/ping",
+    "id": "did:iota:hd8f7hg84e5hbtg8drg",
+    "timing": {...}
+}
+```
 
 ---
 ## DID Discovery
@@ -64,6 +134,23 @@ The <u>endpoint</u> answers with a `didResponse` to the `callbackURL`:
     "did": "did:iota:zsdbfg897s34bgez"
 }
 ```
+
+---
+## DID Introduction
+
+Introducing two parties through an intermediary.
+
+### Roles
+- <u>**Introducer**</u>: Agent who introduces two <u>introducees</u> to each other
+- <u>**Introducee**</u>: Agents who get introduced to each other by the <u>introducer</u>
+
+### Messages
+
+TBD
+
+### Examples
+
+TBD
 
 ---
 ## DID Resolution
@@ -332,7 +419,45 @@ The <u>issuer</u> responds with a message containing a list of newly issued cred
 TBD after above flow is cleared up
 
 ---
-## Credential Verification
+## Credential Revocation
+
+Notifying a holder that a previously issued credential has been revoked.
+
+### Roles
+- <u>**Issuer**</u>: Agent who revokes the credential
+- <u>**Holder**</u>: Agent who holds the credential to be revoked
+
+### Messages
+
+#### Ping
+The <u>issuer</u> sends the `credentialRevocation` to the <u>holder</u>, notifying him of the revocation. 
+
+###### Layout
+
+```JSON
+credentialRevocation: {
+    "@type": "<Type as String>",
+    "@id": "<uuid-revocation-notification>",
+    "credential_id": "<uuid-credential>",
+    "comment": "Some comment"
+}
+```
+
+### Examples
+
+The <u>issuer</u> sends the `credentialRevocation` to the <u>holder</u>:
+
+```JSON
+{
+  "@type": "https://didcomm.org/revocation_notification/1.0/revoke",
+  "@id": "<uuid-revocation-notification>",
+  "credential_id": "<uuid-credential>",
+  "comment": "Some comment"
+}
+```
+
+---
+## Presentation Verification
 
 Proving a set of statements about an identifier.
 
