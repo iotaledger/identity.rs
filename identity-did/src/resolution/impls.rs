@@ -378,22 +378,36 @@ mod test {
   fn test_service_endpoint_invalid_query() {
     let did = did();
     assert!(matches!(
-      service_endpoint_ctor(did.join("?query=this").unwrap(), &Url::parse("https://my-service.endpoint.net?query=this").unwrap()),
+      service_endpoint_ctor(
+        did.join("?query=this").unwrap(),
+        &Url::parse("https://my-service.endpoint.net?query=this").unwrap()
+      ),
       Err(Error::InvalidDIDQuery)
     ));
-    
-    assert!(service_endpoint_ctor(did.join("?query=this").unwrap(), &Url::parse("https://my-service.endpoint.net").unwrap()).is_ok());
+
+    assert!(service_endpoint_ctor(
+      did.join("?query=this").unwrap(),
+      &Url::parse("https://my-service.endpoint.net").unwrap()
+    )
+    .is_ok());
     assert!(service_endpoint_ctor(did, &Url::parse("https://my-service.endpoint.net?query=this").unwrap()).is_ok());
   }
   #[test]
   fn test_service_endpoint_invalid_fragment() {
     let did = did();
     assert!(matches!(
-      service_endpoint_ctor(did.join("#fragment").unwrap(), &Url::parse("https://my-service.endpoint.net#fragment").unwrap()),
+      service_endpoint_ctor(
+        did.join("#fragment").unwrap(),
+        &Url::parse("https://my-service.endpoint.net#fragment").unwrap()
+      ),
       Err(Error::InvalidDIDFragment)
     ));
 
-    assert!(service_endpoint_ctor(did.join("#fragment").unwrap(), &Url::parse("https://my-service.endpoint.net").unwrap()).is_ok());
+    assert!(service_endpoint_ctor(
+      did.join("#fragment").unwrap(),
+      &Url::parse("https://my-service.endpoint.net").unwrap()
+    )
+    .is_ok());
     assert!(service_endpoint_ctor(did, &Url::parse("https://my-service.endpoint.net#fragment").unwrap()).is_ok());
   }
 }

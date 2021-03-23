@@ -137,9 +137,9 @@ where
 
 #[cfg(test)]
 mod test {
+  use super::*;
+  use identity_core::common::Value;
   use std::collections::BTreeMap;
-    use identity_core::common::Value;
-    use super::*;
 
   fn controller() -> DID {
     "did:example:1234".parse().unwrap()
