@@ -1,4 +1,3 @@
-TODO
 # DID Communications Message Specification
 
 > ### Contents
