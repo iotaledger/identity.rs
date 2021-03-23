@@ -158,3 +158,197 @@ where
     })
   }
 }
+
+#[cfg(test)]
+mod test {
+  use identity_core::common::Value;
+  use std::collections::BTreeMap;
+
+  use super::*;
+
+  fn test_method() -> Method {
+    Method::builder(Default::default())
+      .id("did:example:123".parse().unwrap())
+      .controller("did:example:123".parse().unwrap())
+      .key_type(MethodType::Ed25519VerificationKey2018)
+      .key_data(MethodData::PublicKeyBase58("".into()))
+      .build()
+      .unwrap()
+  }
+  #[test]
+  fn test_diff() {
+    let method = test_method();
+    let new = method.clone();
+    let diff = method.diff(&new).unwrap();
+    assert!(diff.id.is_none());
+    assert!(diff.controller.is_none());
+    assert!(diff.key_data.is_none());
+    assert!(diff.key_type.is_none());
+    assert!(diff.properties.is_none());
+  }
+  #[test]
+  fn test_properties() {
+    let method = test_method();
+    let mut new = method.clone();
+
+    // add property
+    let mut properties = BTreeMap::new();
+    properties.insert("key1".to_string(), Value::String("value1".to_string()));
+    *new.properties_mut() = properties.clone();
+
+    let diff = method.diff(&new).unwrap();
+    assert!(diff.id.is_none());
+    assert!(diff.controller.is_none());
+    assert!(diff.key_data.is_none());
+    assert!(diff.key_type.is_none());
+
+    let merge = method.merge(diff).unwrap();
+    assert_eq!(merge, new);
+
+    // add another property
+    let mut properties = BTreeMap::new();
+    properties.insert("key2".to_string(), Value::String("value1".to_string()));
+    *new.properties_mut() = properties.clone();
+
+    let diff = method.diff(&new).unwrap();
+    assert!(diff.id.is_none());
+    assert!(diff.controller.is_none());
+    assert!(diff.key_data.is_none());
+    assert!(diff.key_type.is_none());
+
+    let merge = method.merge(diff).unwrap();
+    assert_eq!(merge, new);
+
+    // change property
+    let mut properties = BTreeMap::new();
+    properties.insert("key2".to_string(), Value::String("value2".to_string()));
+    *new.properties_mut() = properties.clone();
+
+    let diff = method.diff(&new).unwrap();
+    assert!(diff.id.is_none());
+    assert!(diff.controller.is_none());
+    assert!(diff.key_data.is_none());
+    assert!(diff.key_type.is_none());
+
+    let merge = method.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+  #[test]
+  fn test_id() {
+    let method = test_method();
+    let mut new = method.clone();
+    *new.id_mut() = "did:diff:123".parse().unwrap();
+
+    let diff = method.diff(&new).unwrap();
+    assert!(diff.controller.is_none());
+    assert!(diff.key_data.is_none());
+    assert!(diff.key_type.is_none());
+    assert!(diff.properties.is_none());
+    assert_eq!(diff.id, Some(DiffString(Some("did:diff:123".to_string()))));
+
+    let merge = method.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+  #[test]
+  fn test_controller() {
+    let method = test_method();
+    let mut new = method.clone();
+    *new.controller_mut() = "did:diff:123".parse().unwrap();
+
+    let diff = method.diff(&new).unwrap();
+    assert!(diff.id.is_none());
+    assert!(diff.key_data.is_none());
+    assert!(diff.key_type.is_none());
+    assert!(diff.properties.is_none());
+    assert_eq!(diff.controller, Some(DiffString(Some("did:diff:123".to_string()))));
+
+    let merge = method.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+  #[test]
+  fn test_key_type() {
+    let method = test_method();
+    let mut new = method.clone();
+    *new.key_type_mut() = MethodType::MerkleKeyCollection2021;
+
+    let diff = method.diff(&new).unwrap();
+    assert!(diff.id.is_none());
+    assert!(diff.controller.is_none());
+    assert!(diff.key_data.is_none());
+    assert!(diff.properties.is_none());
+    assert_eq!(diff.key_type, Some(MethodType::MerkleKeyCollection2021));
+
+    let merge = method.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+  #[test]
+  fn test_key_data() {
+    let method = test_method();
+    let mut new = method.clone();
+    *new.key_data_mut() = MethodData::PublicKeyBase58("diff".into());
+
+    let diff = method.diff(&new).unwrap();
+    assert!(diff.id.is_none());
+    assert!(diff.controller.is_none());
+    assert!(diff.key_type.is_none());
+    assert!(diff.properties.is_none());
+    assert_eq!(
+      diff.key_data,
+      Some(DiffMethodData::PublicKeyBase58(Some(DiffString(Some(
+        "diff".to_string()
+      )))))
+    );
+
+    let merge = method.merge(diff.clone()).unwrap();
+    assert_eq!(merge, new);
+  }
+  #[test]
+  fn test_from_diff() {
+    let method = test_method();
+    let mut new = method.clone();
+
+    let diff = method.diff(&new).unwrap();
+    let diff_method = Method::from_diff(diff);
+    assert!(diff_method.is_err());
+
+    // add property
+    let mut properties = BTreeMap::new();
+    properties.insert("key1".to_string(), Value::String("value1".to_string()));
+    *new.properties_mut() = properties.clone();
+
+    let diff = method.diff(&new).unwrap();
+    let diff_method = Method::from_diff(diff);
+    assert!(diff_method.is_err());
+
+    // add id
+    *new.id_mut() = "did:diff:123".parse().unwrap();
+    let diff = method.diff(&new).unwrap();
+    let diff_method = Method::from_diff(diff);
+    assert!(diff_method.is_err());
+
+    // add controller
+    *new.controller_mut() = "did:diff:123".parse().unwrap();
+    let diff = method.diff(&new).unwrap();
+    let diff_method = Method::from_diff(diff);
+    assert!(diff_method.is_err());
+
+    // add key_type
+    *new.key_type_mut() = MethodType::MerkleKeyCollection2021;
+    let diff = method.diff(&new).unwrap();
+    let diff_method = Method::from_diff(diff);
+    assert!(diff_method.is_err());
+
+    // add key_data
+    *new.key_data_mut() = MethodData::PublicKeyBase58("diff".into());
+    let diff = method.diff(&new).unwrap();
+    let diff_method = Method::from_diff(diff.clone());
+    assert!(diff_method.is_ok());
+    let diff_method = diff_method.unwrap();
+    assert_eq!(diff_method, new);
+
+    let merge = method.merge(diff.clone()).unwrap();
+    assert_eq!(merge, new);
+
+    assert_eq!(new.into_diff().unwrap(), diff);
+  }
+}
