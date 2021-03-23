@@ -6,6 +6,7 @@ on:
       - dev
       - stable
       - llvm-cov
+      - increase_test_coverage_across_crates
     paths:
       - '**.rs'
       - '**.toml'
