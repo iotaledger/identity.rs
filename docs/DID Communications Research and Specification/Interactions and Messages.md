@@ -4,15 +4,15 @@
 >
 > ◈ <a href="#did-discovery">**DID Discovery**</a> - Requesting a DID from an agent.
 >
-> ◈ <a href="#authentication">**Authentication**</a> - Proving control over an identifier.
+> ◈ <a href="#did-resolution">**DID Resolution**</a> - Using another agent as a Resolver.
+>
+> ◈ <a href="#authentication">**Authentication**</a> - Proving control over a DID.
 >
 > ◈ <a href="#authorization">**Authorization**</a> - Giving consent or permission.
 >
-> ◈ <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about an identifier.
+> ◈ <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about a DID.
 >
-> ◈ <a href="#credential-verification">**Credential Verification**</a> - Proving a set of statements about an identifier.
->
-> ◈ <a href="#did-resolution">**DID Resolution**</a> - Using another Agent as a Resolver.
+> ◈ <a href="#credential-verification">**Credential Verification**</a> - Proving a set of statements about a DID.
 
 ---
 ## DID Discovery
@@ -62,6 +62,70 @@ The <u>endpoint</u> answers with a `didResponse` to the `callbackURL`:
 ```JSON
 {
     "did": "did:iota:zsdbfg897s34bgez"
+}
+```
+
+---
+## DID Resolution
+
+Using another Agent as a Resolver.
+
+Peer resolution consists of a simple request-response message exchange, where the Requester asks the Resolver to perform DID resolution and return the result.
+
+### Roles
+- **Requester**: Agent who requests the resolution of a DID
+- **Resolver**: Agent who resolves the given DID (or their own) and returns the result
+
+### Messages
+
+#### Resolution Request
+The Requester broadcasts a message which may or may not contain a DID.
+
+###### Layout
+
+```JSON
+resolutionRequest: {
+    "callbackURL": "<URL as String>",
+    "did": "<DID as String>",
+}
+```
+
+#### Resolution Result
+If the message contains a DID, the Resolver resolves the DID and returns the DID Resolution Result. Otherwise, the Resolver returns the result of resolving it's own DID. This is intended for the special case of "local" DID methods, which do not have a globally resolvable state.
+
+###### Layout
+
+```JSON
+resolutionResult: {
+    "didDocument": "<DID Document as JSON>",
+}
+```
+
+### Examples
+
+The <u>requester</u> sends a `resolutionRequest` to the <u>resolver</u>:
+
+```JSON
+{
+    "callbackURL": "https://alice.com/res",
+    "did": "did:iota:sdbgik8s34htosebgo9se34hg9so3ehg",
+}
+```
+
+The <u>resolver</u> answers with a `resolutionResult` to the <u>requester</u>:
+
+```JSON
+{
+    "didDocument": {
+        "@context": "https://www.w3.org/ns/did/v1",
+        "id": "did:example:123456789abcdefghi",
+        "authentication": [{
+            "id": "did:example:123456789abcdefghi#keys-1",
+            "type": "Ed25519VerificationKey2020",
+            "controller": "did:example:123456789abcdefghi",
+            "publicKeyMultibase": "zH3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
+        }]
+    }
 }
 ```
 
@@ -276,7 +340,7 @@ The credential verification flow is a simple request-response message exchange b
 
 ### Roles
 - **Verifier**: Agent who requests a set of Verifiable Credentials with associated requirements
-- **Prover**: Agent who provides a set of Verifiable Credentials attempting to satisfy the request
+- **Prover**: Agent who provides a set of Verifiable Credentials in the form of a Verifiable Presentation attempting to satisfy the request
 
 ### Messages
 
@@ -301,80 +365,16 @@ credentialRequest: {
 ```
 
 #### Credential Response
-The <u>prover</u> responds with a list of credentials which should satisfy the corrosponding requirements in the `credentialRequest`.
+The <u>prover</u> responds with a Verifiable Presentation which should satisfy the corrosponding requirements in the `credentialRequest`.
 
 ###### Layout
 
 ```JSON
 credentialResponse: {
-    "credentials": [{type: "<Type as String>"}]
+    "verifiablePresentation": {...}
 }
 ```
 
 ### Examples
 
 TBD after above flow is cleared up
-
----
-## DID Resolution
-
-Using another Agent as a Resolver.
-
-Peer resolution consists of a simple request-response message exchange, where the Requester asks the Resolver to perform DID resolution and return the result.
-
-### Roles
-- **Requester**: Agent who requests the resolution of a DID
-- **Resolver**: Agent who resolves the given DID (or their own) and returns the result
-
-### Messages
-
-#### Resolution Request
-The Requester broadcasts a message which may or may not contain a DID.
-
-###### Layout
-
-```JSON
-resolutionRequest: {
-    "callbackURL": "<URL as String>",
-    "did": "<DID as String>",
-}
-```
-
-#### Resolution Result
-If the message contains a DID, the Resolver resolves the DID and returns the DID Resolution Result. Otherwise, the Resolver returns the result of resolving it's own DID. This is intended for the special case of "local" DID methods, which do not have a globally resolvable state.
-
-###### Layout
-
-```JSON
-resolutionResult: {
-    "didDocument": "<DID Document as JSON>",
-}
-```
-
-### Examples
-
-The <u>requester</u> sends a `resolutionRequest` to the <u>resolver</u>:
-
-```JSON
-{
-    "callbackURL": "https://alice.com/res",
-    "did": "did:iota:sdbgik8s34htosebgo9se34hg9so3ehg",
-}
-```
-
-The <u>resolver</u> answers with a `resolutionResult` to the <u>requester</u>:
-
-```JSON
-{
-    "didDocument": {
-        "@context": "https://www.w3.org/ns/did/v1",
-        "id": "did:example:123456789abcdefghi",
-        "authentication": [{
-            "id": "did:example:123456789abcdefghi#keys-1",
-            "type": "Ed25519VerificationKey2020",
-            "controller": "did:example:123456789abcdefghi",
-            "publicKeyMultibase": "zH3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
-        }]
-    }
-}
-```
