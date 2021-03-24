@@ -196,7 +196,11 @@ mod tests {
       .build()
       .unwrap();
 
-    document.signer(keypair.secret()).method("#key-1").sign(&mut credential).unwrap();
+    document
+      .signer(keypair.secret())
+      .method("#key-1")
+      .sign(&mut credential)
+      .unwrap();
 
     let presentation: Presentation = PresentationBuilder::default()
       .type_("ExamplePresentation")

@@ -14,8 +14,8 @@ use identity::did::MethodType;
 use identity::iota::AuthChain;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
-use iota::MessageId;
 use identity::prelude::*;
+use iota::MessageId;
 use std::thread::sleep;
 use std::time::Duration;
 
