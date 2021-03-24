@@ -1,4 +1,7 @@
 # DID Communications Message Specification
+TODO https://identity.foundation/didcomm-messaging/spec/#discover-features-protocol-10
+TODO dec https://github.com/hyperledger/aries-rfcs/blob/master/features/0032-message-timing/README.md
+TODO thread id
 
 > ### Contents
 >
@@ -32,17 +35,23 @@ Testing a pairwise channel.
 ### Messages
 
 #### Ping
-The <u>senders</u> sends the `trustPing` to the <u>receiver</u>, specifying a `callbackURL` for the `didResponse` to be posted to. 
+The <u>senders</u> sends the `trustPing` to the <u>receiver</u>, specifying a `callbackURL` for the `didResponse` to be posted to. TODO say what is OPTIONAL
 
 ###### Layout
 
 ```JSON
 trustPing: {
     "callbackURL": "<URL as String>",
-    "responseRequested": <Boolean>,
-    "type": "<URL as String>",
-    "id": "<DID as String>",
-    "timing": {...}
+    "responseRequested": <Boolean>, TODO: make obvious if MUST or optional
+    "type": "<URL as String>", TODO REM
+    "id": "<DID as String>", TODO make optional / REM
+    "timing": {
+TODO
+ "out_time": "2018-12-15 04:29:23Z",
+    "expires_time": "2018-12-15 05:29:23Z",
+
+
+    }
 }
 ```
 
@@ -102,6 +111,7 @@ The <u>requester</u> sends the `didRequest` to the <u>endpoint</u>, specifying a
 ```JSON
 didRequest: {
     "callbackURL": "<URL as String>"
+    TODO OPTIONAL DID FIELD
 }
 ```
 
@@ -136,7 +146,8 @@ The <u>endpoint</u> answers with a `didResponse` to the `callbackURL`:
 
 ---
 ## DID Introduction
-
+TODO open an issue for this and remove it here
+TODO call it "now kiss" protocol
 Introducing two parties through an intermediary.
 
 ### Roles
@@ -153,7 +164,7 @@ TBD
 
 ---
 ## DID Resolution
-
+TODO put down sources for all interactions into the document
 Using another Agent as a Resolver.
 
 Peer resolution consists of a simple request-response message exchange, where the Requester asks the Resolver to perform DID resolution and return the result.
@@ -237,6 +248,9 @@ The <u>verifier</u> sends the `authenticationRequest` to the authentication serv
 authenticationRequest: {
     "callbackURL": "<URL as String>",
     "description": "<Text as String>",
+    TODO timestamp or random value or challenge/nonce, sign everything
+    TODO check WHAT EXACTLY others are actually signing
+    TODO thread if instead of sending challenge back
 }
 ```
 
@@ -317,7 +331,7 @@ authorizationRequest: {
 
 #### Authorization Response
 The <u>authorizer</u> responds with a message containing the same contents as the `authorizationRequest` as consent.
-
+TODO: respond with a VC, think about including frost into the vc for the action field, remove for now and submit an issue
 ###### Layout
 
 ```JSON
@@ -355,8 +369,9 @@ The <u>authorizer</u> reponds with the same content, consenting to the action:
 
 ---
 ## Credential Issuance
-
+TODO split into 3 interactions: requesting possibler VCs, requesting the schema, issuing the VC
 Creating an authenticated statement about an identifier.
+TODO pqwjefiosdgfuikzsdfg
 
 The issuance flow consists of a three step message exchange between two parties, the <u>issuer</u> and the <u>holder</u>.
 
@@ -370,7 +385,7 @@ The issuance flow consists of a three step message exchange between two parties,
 The <u>issuer</u> broadcasts a message containing a list of credential types offered for issuance in this interaction, each with it's own list of requirements which must be satisfied by the <u>holder</u> in order to qualify for the credential.
 
 ###### Layout
-
+TODO return the whole schema of VC offered
 ```JSON
 {
     "callbackURL": "<URL as String>",
@@ -502,3 +517,9 @@ credentialResponse: {
 ### Examples
 
 TBD after above flow is cleared up
+
+TODO make it one interaction with 3 messages but the first one is optional
+
+message 1: (request a presentation)
+message 2: send a presentation
+message 3: (ack)
