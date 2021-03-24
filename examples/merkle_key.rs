@@ -9,23 +9,20 @@ use identity::core::BitSet;
 use identity::core::FromJson;
 use identity::core::ToJson;
 use identity::core::Url;
+use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
-use identity::credential::VerifiableCredential;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
-use identity::crypto::KeyPair;
 use identity::crypto::PublicKey;
 use identity::crypto::SecretKey;
 use identity::did::resolution::resolve;
 use identity::did::resolution::Resolution;
 use identity::did::MethodScope;
-use identity::iota::Client;
-use identity::iota::Document;
 use identity::iota::Method;
-use identity::iota::Result;
 use identity::iota::TangleRef;
+use identity::prelude::*;
 use rand::rngs::OsRng;
 use rand::Rng;
 
@@ -56,12 +53,11 @@ async fn main() -> Result<()> {
   println!("document: {:#}", doc);
 
   // Create a Verifiable Credential
-  let mut credential: VerifiableCredential = CredentialBuilder::default()
+  let mut credential: Credential = CredentialBuilder::default()
     .issuer(Url::parse(doc.id().as_str())?)
     .type_("MyCredential")
     .subject(Subject::from_json(r#"{"claim": true}"#)?)
-    .build()
-    .map(|credential| VerifiableCredential::new(credential, Vec::new()))?;
+    .build()?;
 
   println!("credential (unsigned): {:#}", credential);
 

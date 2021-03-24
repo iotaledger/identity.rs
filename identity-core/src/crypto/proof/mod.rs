@@ -6,4 +6,4 @@
 
 mod jcs_ed25519;
 
-pub use self::jcs_ed25519::JcsEd25519Signature2020;
+pub use self::jcs_ed25519::JcsEd25519;

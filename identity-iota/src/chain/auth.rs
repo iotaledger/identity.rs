@@ -70,12 +70,12 @@ impl AuthChain {
     Ok(Self { current, history: None })
   }
 
-  /// Returns a reference to the latest document in the auth chain.
+  /// Returns a reference to the latest `Document`.
   pub fn current(&self) -> &Document {
     &self.current
   }
 
-  /// Returns a mutable reference to the latest document in the auth chain.
+  /// Returns a mutable reference to the latest `Document`.
   pub fn current_mut(&mut self) -> &mut Document {
     &mut self.current
   }
@@ -85,12 +85,12 @@ impl AuthChain {
     self.current.message_id()
   }
 
-  /// Adds a new document to the auth chain.
+  /// Adds a new `Document` to the `AuthChain`.
   ///
   /// # Errors
   ///
   /// Fails if the document signature is invalid or the Tangle message
-  /// references within the document are invalid.
+  /// references within the `Document` are invalid.
   pub fn try_push(&mut self, document: Document) -> Result<()> {
     self.check_validity(&document)?;
 
@@ -102,12 +102,12 @@ impl AuthChain {
     Ok(())
   }
 
-  /// Returns `true` if the `Document` can be added to the auth chain.
+  /// Returns `true` if the `Document` can be added to the `AuthChain`.
   pub fn is_valid(&self, document: &Document) -> bool {
     self.check_validity(document).is_ok()
   }
 
-  /// Checks if the `Document` can be added to the auth chain.
+  /// Checks if the `Document` can be added to the `AuthChain`.
   ///
   /// # Errors
   ///

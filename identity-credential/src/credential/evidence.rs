@@ -21,7 +21,7 @@ pub struct Evidence {
 }
 
 impl Evidence {
-  /// Creates a new [`Evidence`] instance.
+  /// Creates a new `Evidence` instance.
   pub fn new<T>(types: T) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -29,7 +29,7 @@ impl Evidence {
     Self::with_properties(types, Object::new())
   }
 
-  /// Creates a new [`Evidence`] instance with the given `id`.
+  /// Creates a new `Evidence` instance with the given `id`.
   pub fn with_id<T, U>(types: T, id: U) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -42,7 +42,7 @@ impl Evidence {
     }
   }
 
-  /// Creates a new [`Evidence`] instance with the given `properties`.
+  /// Creates a new `Evidence` instance with the given `properties`.
   pub fn with_properties<T>(types: T, properties: Object) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -54,7 +54,7 @@ impl Evidence {
     }
   }
 
-  /// Creates a new [`Evidence`] instance with the given `id` and `properties`.
+  /// Creates a new `Evidence` instance with the given `id` and `properties`.
   pub fn with_id_and_properties<T, U, V>(types: T, id: U, properties: Object) -> Self
   where
     T: Into<OneOrMany<String>>,

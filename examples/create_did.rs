@@ -1,12 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::crypto::KeyPair;
-use identity::iota::Client;
-use identity::iota::Document;
 use identity::iota::Network;
-use identity::iota::Result;
 use identity::iota::TangleRef;
+use identity::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {

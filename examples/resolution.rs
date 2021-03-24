@@ -7,14 +7,11 @@
 //! cargo run --example resolution
 
 use identity::core::SerdeInto;
-use identity::crypto::KeyPair;
 use identity::did::resolution;
 use identity::did::resolution::Resource;
 use identity::did::resolution::SecondaryResource;
-use identity::iota::Client;
-use identity::iota::Document;
-use identity::iota::Result;
 use identity::iota::DID;
+use identity::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {

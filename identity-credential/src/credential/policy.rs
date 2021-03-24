@@ -6,7 +6,7 @@ use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 
 /// Information used to express obligations, prohibitions, and permissions about
-/// a `Credential` or `Presentation`.
+/// a [`Credential`][crate::credential::Credential] or [`Presentation`][crate::presentation::Presentation].
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#terms-of-use)
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
@@ -23,7 +23,7 @@ pub struct Policy {
 }
 
 impl Policy {
-  /// Creates a new [`Policy`] instance.
+  /// Creates a new `Policy` instance.
   pub fn new<T>(types: T) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -35,7 +35,7 @@ impl Policy {
     }
   }
 
-  /// Creates a new [`Policy`] instance with the given `id`.
+  /// Creates a new `Policy` instance with the given `id`.
   pub fn with_id<T, U>(types: T, id: Url) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -47,7 +47,7 @@ impl Policy {
     }
   }
 
-  /// Creates a new [`Policy`] instance with the given `properties`.
+  /// Creates a new `Policy` instance with the given `properties`.
   pub fn with_properties<T, U>(types: T, properties: Object) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -59,7 +59,7 @@ impl Policy {
     }
   }
 
-  /// Creates a new [`Policy`] instance with the given `id` and `properties`.
+  /// Creates a new `Policy` instance with the given `id` and `properties`.
   pub fn with_id_and_properties<T, U, V>(types: T, id: Url, properties: Object) -> Self
   where
     T: Into<OneOrMany<String>>,
