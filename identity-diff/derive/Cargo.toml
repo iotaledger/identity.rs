@@ -1,0 +1,21 @@
+[package]
+name = "identity-derive"
+version = "0.2.0"
+authors = ["IOTA Identity"]
+edition = "2018"
+description = "Derive `Diff` support for the identity-rs library."
+readme = "../../README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "identity"]
+homepage = "https://www.iota.org"
+
+[lib]
+name = "identity_derive"
+proc-macro = true
+
+[dependencies]
+proc-macro2 = { version = "1.0" }
+quote = { version = "1.0" }
+serde = { version = "1.0" }
+syn = { version = "1.0", features = ["extra-traits", "parsing", "derive"] }

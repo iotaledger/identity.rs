@@ -1,0 +1,35 @@
+[package]
+name = "identity-account"
+version = "0.2.0"
+authors = ["IOTA Identity"]
+edition = "2018"
+description = "Secure storage for Decentralized Identifiers and Verifiable Credentials."
+readme = "../README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "identity"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+futures = { version = "0.3" }
+hashbrown = { version = "0.9" }
+identity-core = { version = "=0.2.0", path = "../identity-core" }
+once_cell = { version = "1.5", default-features = false, features = ["std"] }
+riker = { version = "0.4" }
+slog = { version = "2.7" }
+tokio = { version = "1.2", default-features = false, features = ["rt", "rt-multi-thread", "sync"] }
+zeroize = { version = "1.2"}
+
+[dependencies.iota-crypto]
+git = "https://github.com/iotaledger/crypto.rs"
+rev = "b849861b86c3f7357b7477de4253b7352b363627"
+features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10"]
+
+[dependencies.iota-stronghold]
+git = "https://github.com/iotaledger/stronghold.rs"
+rev = "b8904ff0df9c963980ae148815ad56c40588d84a"
+
+[dev-dependencies]
+rand = { version = "0.8" }
+rusty-fork = { version = "0.3" }
+tokio = { version = "1.2", features = ["macros", "rt", "rt-multi-thread", "sync"] }

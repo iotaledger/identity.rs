@@ -1,0 +1,11 @@
+/target
+Cargo.lock
+
+node_modules
+wasm-web
+wasm-node
+web
+node
+pkg
+
+.DS_STORE

@@ -18,9 +18,13 @@ jobs:
 
       - run: mdbook build
 
+      - run: cargo doc --document-private-items --no-deps --release
+      - run: cp -r target/doc book/docs
+
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+        uses: iotaledger/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./book
+          cname: identity.docs.iota.org
