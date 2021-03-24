@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::convert::AsJson;
+use crate::convert::FromJson;
 use crate::convert::ToJson;
 use crate::error::Result;
 
@@ -11,9 +11,9 @@ pub trait SerdeInto: ToJson {
   /// Converts `self` to `T` by converting to/from JSON.
   fn serde_into<T>(&self) -> Result<T>
   where
-    T: AsJson,
+    T: FromJson,
   {
-    <Self as ToJson>::to_json_value(self).and_then(<T as AsJson>::from_json_value)
+    <Self as ToJson>::to_json_value(self).and_then(<T as FromJson>::from_json_value)
   }
 }
 

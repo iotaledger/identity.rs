@@ -78,10 +78,12 @@ mod tests {
   const JSON2: &str = include_str!("../../tests/fixtures/evidence-2.json");
 
   #[test]
-  #[rustfmt::skip]
   fn test_from_json() {
     let evidence: Evidence = Evidence::from_json(JSON1).unwrap();
-    assert_eq!(evidence.id.unwrap(), "https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192d4231");
+    assert_eq!(
+      evidence.id.unwrap(),
+      "https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192d4231"
+    );
     assert_eq!(evidence.types.as_slice(), ["DocumentVerification"]);
     assert_eq!(evidence.properties["verifier"], "https://example.edu/issuers/14");
     assert_eq!(evidence.properties["evidenceDocument"], "DriversLicense");
@@ -89,7 +91,10 @@ mod tests {
     assert_eq!(evidence.properties["documentPresence"], "Physical");
 
     let evidence: Evidence = Evidence::from_json(JSON2).unwrap();
-    assert_eq!(evidence.id.unwrap(), "https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192dxyzab");
+    assert_eq!(
+      evidence.id.unwrap(),
+      "https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192dxyzab"
+    );
     assert_eq!(evidence.types.as_slice(), ["SupportingActivity"]);
     assert_eq!(evidence.properties["verifier"], "https://example.edu/issuers/14");
     assert_eq!(evidence.properties["evidenceDocument"], "Fluid Dynamics Focus");
