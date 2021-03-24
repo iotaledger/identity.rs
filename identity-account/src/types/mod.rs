@@ -4,6 +4,7 @@
 mod config;
 mod identifier;
 mod key;
+mod location;
 mod metadata;
 mod signature;
 mod timestamps;
@@ -18,3 +19,10 @@ pub use self::metadata::MetadataItem;
 pub use self::metadata::MetadataList;
 pub use self::signature::Signature;
 pub use self::timestamps::Timestamps;
+pub use self::location::Index;
+pub use self::location::AuthLocation;
+pub use self::location::DiffLocation;
+pub use self::location::DocLocation;
+pub use self::location::KeyLocation;
+pub use self::location::MetaLocation;
+pub use self::location::ToKey;

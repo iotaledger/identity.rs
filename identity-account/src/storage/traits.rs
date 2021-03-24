@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::PublicKey;
+use identity_core::crypto::KeyType;
 use std::path::Path;
 
 use crate::error::Result;
-use crate::storage::KeyLocation;
+use crate::types::KeyLocation;
 use crate::storage::ResourceId;
 use crate::storage::ResourceType;
 use crate::types::Signature;
@@ -45,14 +46,14 @@ pub trait VaultAdapter: StorageAdapter {
   async fn set_password(&mut self, password: EncryptionKey) -> Result<()>;
 
   /// Creates a new keypair at the specified `location`
-  async fn key_new(&mut self, location: &KeyLocation<'_>) -> Result<PublicKey>;
+  async fn key_new(&mut self, type_: KeyType, location: &KeyLocation<'_>) -> Result<PublicKey>;
 
   /// Retrieves the public key at the specified `location`.
-  async fn key_get(&mut self, location: &KeyLocation<'_>) -> Result<PublicKey>;
+  async fn key_get(&mut self, type_: KeyType, location: &KeyLocation<'_>) -> Result<PublicKey>;
 
   /// Deletes the keypair specified by `location`.
-  async fn key_del(&mut self, location: &KeyLocation<'_>) -> Result<()>;
+  async fn key_del(&mut self, type_: KeyType, location: &KeyLocation<'_>) -> Result<()>;
 
   /// Signs the given `payload` with the private key at the specified `location`.
-  async fn key_sign(&mut self, location: &KeyLocation<'_>, payload: Vec<u8>) -> Result<Signature>;
+  async fn key_sign(&mut self, type_: KeyType, location: &KeyLocation<'_>, payload: Vec<u8>) -> Result<Signature>;
 }

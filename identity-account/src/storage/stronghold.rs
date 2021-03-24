@@ -15,7 +15,8 @@ use crate::stronghold::default_hint;
 use crate::stronghold::Records;
 use crate::stronghold::Snapshot;
 use crate::stronghold::Vault;
-use crate::storage::KeyLocation;
+use crate::types::KeyLocation;
+use crate::types::ToKey;
 use crate::storage::ResourceId;
 use crate::storage::ResourceType;
 use crate::types::Signature;
@@ -86,10 +87,10 @@ impl VaultAdapter for StrongholdAdapter {
     self.snapshot.set_password(password)
   }
 
-  async fn key_new(&mut self, location: &KeyLocation<'_>) -> Result<PublicKey> {
+  async fn key_new(&mut self, type_: KeyType, location: &KeyLocation<'_>) -> Result<PublicKey> {
     let vault: Vault<'_> = self.vault(KEYS);
 
-    let public: PublicKey = match location.type_() {
+    let public: PublicKey = match type_ {
       KeyType::Ed25519 => generate_ed25519(&vault, location).await?,
     };
 
@@ -98,18 +99,18 @@ impl VaultAdapter for StrongholdAdapter {
     Ok(public)
   }
 
-  async fn key_get(&mut self, location: &KeyLocation<'_>) -> Result<PublicKey> {
+  async fn key_get(&mut self, type_: KeyType, location: &KeyLocation<'_>) -> Result<PublicKey> {
     let vault: Vault<'_> = self.vault(KEYS);
 
-    match location.type_() {
+    match type_ {
       KeyType::Ed25519 => retrieve_ed25519(&vault, location).await,
     }
   }
 
-  async fn key_del(&mut self, location: &KeyLocation<'_>) -> Result<()> {
+  async fn key_del(&mut self, type_: KeyType, location: &KeyLocation<'_>) -> Result<()> {
     let vault: Vault<'_> = self.vault(KEYS);
 
-    match location.type_() {
+    match type_ {
       KeyType::Ed25519 => {
         vault.delete(seed_location(location), false).await?;
         vault.delete(skey_location(location), false).await?;
@@ -121,10 +122,10 @@ impl VaultAdapter for StrongholdAdapter {
     Ok(())
   }
 
-  async fn key_sign(&mut self, location: &KeyLocation<'_>, payload: Vec<u8>) -> Result<Signature> {
+  async fn key_sign(&mut self, type_: KeyType, location: &KeyLocation<'_>, payload: Vec<u8>) -> Result<Signature> {
     let vault: Vault<'_> = self.vault(KEYS);
 
-    match location.type_() {
+    match type_ {
       KeyType::Ed25519 => sign_ed25519(&vault, payload, location).await,
     }
   }
@@ -163,13 +164,9 @@ async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocatio
 }
 
 fn seed_location(location: &KeyLocation<'_>) -> Location {
-  Location::generic("vault:seed", key_location(location))
+  Location::generic("vault:seed", location.to_key())
 }
 
 fn skey_location(location: &KeyLocation<'_>) -> Location {
-  Location::generic("vault:skey", key_location(location))
-}
-
-fn key_location(location: &KeyLocation<'_>) -> String {
-  format!("{}:{}", location.identity(), location.fragment())
+  Location::generic("vault:skey", location.to_key())
 }

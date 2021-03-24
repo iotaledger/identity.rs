@@ -42,8 +42,8 @@ impl MetadataItem for IdentityMetadata {
   const METADATA: ResourceType = ResourceType::IdentityMeta;
   const RESOURCE: ResourceType = ResourceType::Identity;
 
-  fn resource(&self) -> Cow<'_, [u8]> {
-    Cow::Owned(format!("{}:{}", self.document_id, self.latest_auth_id.index()).into_bytes())
+  fn resource(&self) -> &[u8] {
+    self.document_id.as_bytes()
   }
 
   fn identifier(&self) -> &Identifier {

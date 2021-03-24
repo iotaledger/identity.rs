@@ -1,14 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::types::Index;
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Identifier {
   pub(crate) ident: String,
-  pub(crate) index: u32,
+  pub(crate) index: Index,
 }
 
 impl Identifier {
-  pub const fn new(ident: String, index: u32) -> Self {
+  pub const fn new(ident: String, index: Index) -> Self {
     Self { ident, index }
   }
 
@@ -16,7 +18,7 @@ impl Identifier {
     &self.ident
   }
 
-  pub fn index(&self) -> u32 {
+  pub fn index(&self) -> Index {
     self.index
   }
 }

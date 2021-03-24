@@ -7,6 +7,7 @@ use core::fmt::Result as FmtResult;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_core::crypto::PublicKey;
+use identity_core::crypto::KeyType;
 use serde::Deserialize;
 use serde::Serialize;
 use std::sync::Arc;
@@ -15,7 +16,7 @@ use tokio::sync::MutexGuard;
 
 use crate::error::Result;
 use crate::storage::VaultAdapter;
-use crate::storage::KeyLocation;
+use crate::types::KeyLocation;
 use crate::storage::ResourceId;
 use crate::storage::ResourceType;
 use crate::types::Signature;
@@ -93,23 +94,23 @@ impl StorageHandle {
   }
 
   /// Creates a new keypair at the specified `location`
-  pub async fn key_new(&self, location: &KeyLocation<'_>) -> Result<PublicKey> {
-    self.__lock().await.key_new(location).await
+  pub async fn key_new(&self, type_: KeyType, location: &KeyLocation<'_>) -> Result<PublicKey> {
+    self.__lock().await.key_new(type_, location).await
   }
 
   /// Retrieves the public key at the specified `location`.
-  pub async fn key_get(&self, location: &KeyLocation<'_>) -> Result<PublicKey> {
-    self.__lock().await.key_get(location).await
+  pub async fn key_get(&self, type_: KeyType, location: &KeyLocation<'_>) -> Result<PublicKey> {
+    self.__lock().await.key_get(type_, location).await
   }
 
   /// Deletes the keypair specified by `location`.
-  pub async fn key_del(&self, location: &KeyLocation<'_>) -> Result<()> {
-    self.__lock().await.key_del(location).await
+  pub async fn key_del(&self, type_: KeyType, location: &KeyLocation<'_>) -> Result<()> {
+    self.__lock().await.key_del(type_, location).await
   }
 
   /// Signs the given `payload` with the private key at the specified `location`.
-  pub async fn key_sign(&self, location: &KeyLocation<'_>, payload: Vec<u8>) -> Result<Signature> {
-    self.__lock().await.key_sign(location, payload).await
+  pub async fn key_sign(&self, type_: KeyType, location: &KeyLocation<'_>, payload: Vec<u8>) -> Result<Signature> {
+    self.__lock().await.key_sign(type_, location, payload).await
   }
 
   // ===========================================================================

@@ -9,7 +9,7 @@ use identity_core::error::Error;
 use identity_core::error::Result;
 
 use crate::storage::StorageHandle;
-use crate::storage::KeyLocation;
+use crate::types::KeyLocation;
 
 pub struct RemoteKey<'a> {
   storage: &'a StorageHandle,
@@ -33,9 +33,9 @@ impl<'a> Sign for RemoteEd25519<'a> {
   type Output = Vec<u8>;
 
   fn sign(message: &[u8], key: &Self::Secret) -> Result<Self::Output> {
-    debug_assert_eq!(key.location.type_(), KeyType::Ed25519, "KeyLocation is not Ed25519");
-
-    let future: _ = key.storage.key_sign(&key.location, message.to_vec());
+    let future: _ = key
+      .storage
+      .key_sign(KeyType::Ed25519, &key.location, message.to_vec());
 
     executor::block_on(future)
       .map_err(|_| Error::InvalidProofValue)

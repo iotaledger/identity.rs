@@ -3,12 +3,12 @@
 
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
-use std::borrow::Cow;
 
 use crate::storage::ResourceType;
 use crate::types::MetadataItem;
 use crate::types::Identifier;
 use crate::types::Timestamps;
+use crate::types::Index;
 use crate::error::Result;
 use crate::error::Error;
 
@@ -23,7 +23,7 @@ pub struct CredentialMetadata {
 impl CredentialMetadata {
   pub fn new<T>(
     ident: String,
-    index: u32,
+    index: Index,
     credential: &Credential<T>,
   ) -> Result<Self> {
     let credential_id: &Url = credential
@@ -44,8 +44,8 @@ impl MetadataItem for CredentialMetadata {
   const METADATA: ResourceType = ResourceType::CredentialMeta;
   const RESOURCE: ResourceType = ResourceType::Credential;
 
-  fn resource(&self) -> Cow<'_, [u8]> {
-    Cow::Borrowed(self.credential_id.as_bytes())
+  fn resource(&self) -> &[u8] {
+    self.credential_id.as_bytes()
   }
 
   fn identifier(&self) -> &Identifier {
