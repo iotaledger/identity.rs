@@ -139,21 +139,44 @@ where {
     }
   }
 
-  #[rustfmt::skip]
-    fn setup() -> MessageIndex<Case> {
-        let cases: Vec<Case> = vec![
-            Case::new(*b"9999999999999999999999999999999A", *b"99999999999999999999999999999990", true),
-            Case::new(*b"9999999999999999999999999999999B", *b"9999999999999999999999999999999A", false),
-            Case::new(*b"9999999999999999999999999999999C", *b"9999999999999999999999999999999A", true),
-            Case::new(*b"9999999999999999999999999999999D", *b"9999999999999999999999999999999C", false),
-            Case::new(*b"9999999999999999999999999999999E", *b"9999999999999999999999999999999B", false),
-            Case::new(*b"9999999999999999999999999999999F", *b"9999999999999999999999999999999B", true),
-        ];
+  fn setup() -> MessageIndex<Case> {
+    let cases: Vec<Case> = vec![
+      Case::new(
+        *b"9999999999999999999999999999999A",
+        *b"99999999999999999999999999999990",
+        true,
+      ),
+      Case::new(
+        *b"9999999999999999999999999999999B",
+        *b"9999999999999999999999999999999A",
+        false,
+      ),
+      Case::new(
+        *b"9999999999999999999999999999999C",
+        *b"9999999999999999999999999999999A",
+        true,
+      ),
+      Case::new(
+        *b"9999999999999999999999999999999D",
+        *b"9999999999999999999999999999999C",
+        false,
+      ),
+      Case::new(
+        *b"9999999999999999999999999999999E",
+        *b"9999999999999999999999999999999B",
+        false,
+      ),
+      Case::new(
+        *b"9999999999999999999999999999999F",
+        *b"9999999999999999999999999999999B",
+        true,
+      ),
+    ];
 
-        let mut index: MessageIndex<Case> = MessageIndex::new();
-        index.extend(cases);
-        index
-    }
+    let mut index: MessageIndex<Case> = MessageIndex::new();
+    index.extend(cases);
+    index
+  }
 
   #[test]
   fn test_works() {
@@ -167,27 +190,48 @@ where {
   }
 
   #[test]
-    #[rustfmt::skip]
-    fn test_remove_where() {
-        let mut index: MessageIndex<Case> = setup();
+  fn test_remove_where() {
+    let mut index: MessageIndex<Case> = setup();
 
-        let removed: Case = index.remove_where(&MessageId::new(*b"99999999999999999999999999999990"), |_| true).unwrap();
-        assert_eq!(removed.message_id, MessageId::new(*b"9999999999999999999999999999999A"));
-        assert_eq!(removed.previous_message_id, MessageId::new(*b"99999999999999999999999999999990") );
-        assert!(index.remove_where(&MessageId::new(*b"99999999999999999999999999999990"), |_| true).is_none());
+    let removed: Case = index
+      .remove_where(&MessageId::new(*b"99999999999999999999999999999990"), |_| true)
+      .unwrap();
 
-        let first: Case = index
-            .remove_where(&MessageId::new(*b"9999999999999999999999999999999B"), |case| !case.state)
-            .unwrap();
+    assert_eq!(removed.message_id, MessageId::new(*b"9999999999999999999999999999999A"));
 
-        assert_eq!(first.message_id, MessageId::new(*b"9999999999999999999999999999999E"));
-        assert_eq!(first.previous_message_id, MessageId::new(*b"9999999999999999999999999999999B"));
+    assert_eq!(
+      removed.previous_message_id,
+      MessageId::new(*b"99999999999999999999999999999990")
+    );
 
-        let second: Case = index
-            .remove_where(&MessageId::new(*b"9999999999999999999999999999999B"), |_| true)
-            .unwrap();
+    let removed: Option<Case> = index
+      .remove_where(&MessageId::new(*b"99999999999999999999999999999990"), |_| true)
+      .is_none();
 
-        assert_eq!(second.message_id, MessageId::new(*b"9999999999999999999999999999999F"));
-        assert_eq!(second.previous_message_id, MessageId::new(*b"9999999999999999999999999999999B"));
-    }
+    assert!(removed);
+
+    let first: Case = index
+      .remove_where(&MessageId::new(*b"9999999999999999999999999999999B"), |case| {
+        !case.state
+      })
+      .unwrap();
+
+    assert_eq!(first.message_id, MessageId::new(*b"9999999999999999999999999999999E"));
+
+    assert_eq!(
+      first.previous_message_id,
+      MessageId::new(*b"9999999999999999999999999999999B")
+    );
+
+    let second: Case = index
+      .remove_where(&MessageId::new(*b"9999999999999999999999999999999B"), |_| true)
+      .unwrap();
+
+    assert_eq!(second.message_id, MessageId::new(*b"9999999999999999999999999999999F"));
+
+    assert_eq!(
+      second.previous_message_id,
+      MessageId::new(*b"9999999999999999999999999999999B")
+    );
+  }
 }
