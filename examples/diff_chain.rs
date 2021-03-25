@@ -15,7 +15,6 @@ use identity::iota::AuthChain;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
 use identity::prelude::*;
-use iota::MessageId;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -96,7 +95,7 @@ async fn main() -> Result<()> {
       this
     };
 
-    let message_id: MessageId = chain.diff_message_id().clone();
+    let message_id = chain.diff_message_id().clone();
     let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
     diff.publish(chain.auth_message_id(), &client).await?;
@@ -153,7 +152,7 @@ async fn main() -> Result<()> {
       this
     };
 
-    let message_id: MessageId = chain.diff_message_id().clone();
+    let message_id = chain.diff_message_id().clone();
     let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
     diff.publish(chain.auth_message_id(), &client).await?;
