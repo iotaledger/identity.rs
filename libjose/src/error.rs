@@ -74,6 +74,7 @@ impl From<miniz_oxide::inflate::TINFLStatus> for Error {
 
 impl From<::rsa::errors::Error> for Error {
   fn from(_: ::rsa::errors::Error) -> Self {
-    Self::CryptoError(crypto::Error::SignatureError { alg: "Rsa" })
+    // TODO: FIXME
+    Self::CryptoError(crypto::Error::CipherError { alg: "Rsa" })
   }
 }

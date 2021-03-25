@@ -21,7 +21,7 @@ fn test_rfc7515() {
     private_key: &'static str,
   }
 
-  static TVS: &'static [TestVector] = &include!("fixtures/rfc7515.rs");
+  static TVS: &[TestVector] = &include!("fixtures/rfc7515.rs");
 
   for tv in TVS {
     let header: JwsHeader = serde_json::from_str(tv.header).unwrap();
@@ -52,7 +52,7 @@ fn test_rfc7516() {
     encoded: &'static str,
   }
 
-  static TVS: &'static [TestVector] = &include!("fixtures/rfc7516.rs");
+  static TVS: &[TestVector] = &include!("fixtures/rfc7516.rs");
 
   for tv in TVS {
     let secret: Jwk = serde_json::from_str(tv.recipient).unwrap();
@@ -73,7 +73,7 @@ fn test_rfc7517() {
     Key { json: &'static str },
   }
 
-  static TVS: &'static [TestVector] = &include!("fixtures/rfc7517.rs");
+  static TVS: &[TestVector] = &include!("fixtures/rfc7517.rs");
 
   for tv in TVS {
     match tv {
@@ -108,7 +108,7 @@ fn test_rfc7518() {
     derived_key_b64: &'static str,
   }
 
-  static TVS: &'static [TestVector] = &include!("fixtures/rfc7518.rs");
+  static TVS: &[TestVector] = &include!("fixtures/rfc7518.rs");
 
   for tv in TVS {
     let alice_jwk: Jwk = serde_json::from_str(tv.alice_jwk).unwrap();
@@ -136,7 +136,7 @@ fn test_rfc7638() {
     thumbprint_b64: &'static str,
   }
 
-  static TVS: &'static [TestVector] = &include!("fixtures/rfc7638.rs");
+  static TVS: &[TestVector] = &include!("fixtures/rfc7638.rs");
 
   for tv in TVS {
     let key: Jwk = serde_json::from_str(tv.jwk_json).unwrap();
@@ -156,7 +156,7 @@ fn test_rfc7797() {
     public_key: &'static str,
   }
 
-  static TVS: &'static [TestVector] = &include!("fixtures/rfc7797.rs");
+  static TVS: &[TestVector] = &include!("fixtures/rfc7797.rs");
 
   for tv in TVS {
     let header: JwsHeader = serde_json::from_slice(tv.header).unwrap();
@@ -186,7 +186,7 @@ fn test_rfc8037_ed25519() {
     encoded: &'static str,
   }
 
-  static TVS: &'static [TestVector] = &include!("fixtures/rfc8037_ed25519.rs");
+  static TVS: &[TestVector] = &include!("fixtures/rfc8037_ed25519.rs");
 
   for tv in TVS {
     let secret: Jwk = serde_json::from_str(tv.private_jwk).unwrap();
@@ -221,7 +221,7 @@ fn test_rfc8037_x25519() {
     z: &'static [u8],
   }
 
-  static TVS: &'static [TestVector] = &include!("fixtures/rfc8037_x25519.rs");
+  static TVS: &[TestVector] = &include!("fixtures/rfc8037_x25519.rs");
 
   for tv in TVS {
     let public: Jwk = serde_json::from_str(tv.public_jwk).unwrap();
@@ -270,7 +270,7 @@ fn test_rfc8037_x448() {
     z: &'static [u8],
   }
 
-  static TVS: &'static [TestVector] = &include!("fixtures/rfc8037_x448.rs");
+  static TVS: &[TestVector] = &include!("fixtures/rfc8037_x448.rs");
 
   for tv in TVS {
     let public: Jwk = serde_json::from_str(tv.public_jwk).unwrap();

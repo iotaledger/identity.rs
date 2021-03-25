@@ -14,7 +14,7 @@ struct MyClaims {
 }
 
 fn main() {
-  let mut header: JwsHeader = JwsHeader::new(JwsAlgorithm::HS256);
+  let header: JwsHeader = JwsHeader::new(JwsAlgorithm::HS256);
   let mut claims: JwtClaims<MyClaims> = JwtClaims::new();
   let secret: Jwk = Jwk::random(header.alg()).unwrap();
 

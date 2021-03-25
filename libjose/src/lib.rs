@@ -20,6 +20,7 @@
 //! - [JSON Web Token Best Current Practices](https://tools.ietf.org/html/rfc8725)
 //! - [Public Key Authenticated Encryption for JOSE: ECDH-1PU](https://tools.ietf.org/html/draft-madden-jose-ecdh-1pu-03)
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::upper_case_acronyms)]
 
 #[cfg(not(feature = "alloc"))]
 compile_error!("This crate does not yet support environments without liballoc.");
@@ -37,7 +38,6 @@ mod macros;
 
 pub mod error;
 pub mod jose;
-pub mod jwa;
 pub mod jwe;
 pub mod jwk;
 pub mod jwm;

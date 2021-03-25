@@ -6,7 +6,7 @@ use crypto::ciphers::aes::Aes192Gcm;
 use crypto::ciphers::aes::Aes256Gcm;
 use crypto::ciphers::chacha::ChaCha20Poly1305;
 use crypto::ciphers::chacha::XChaCha20Poly1305;
-use crypto::ciphers::traits::Cipher;
+use crypto::ciphers::traits::Aead;
 
 use crate::error::Error;
 use crate::error::Result;

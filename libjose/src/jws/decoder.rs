@@ -1,3 +1,4 @@
+use core::convert::TryInto;
 use core::str;
 use serde_json::from_slice;
 use subtle::ConstantTimeEq as _;
@@ -20,6 +21,8 @@ use crate::utils::validate_jws_headers;
 use crate::utils::Secret;
 
 type HeaderSet<'a> = JwtHeaderSet<'a, JwsHeader>;
+
+type Ed25519Signature = crypto::signatures::ed25519::Signature;
 
 const COMPACT_SEGMENTS: usize = 3;
 
@@ -267,11 +270,24 @@ impl<'a, 'b> Decoder<'a, 'b> {
       JwsAlgorithm::ES256K => public.to_k256_public()?.verify(message, signature)?,
       JwsAlgorithm::NONE => return Err(Error::AlgError("NONE")),
       JwsAlgorithm::EdDSA => match self.eddsa_curve {
-        EdCurve::Ed25519 => public.to_ed25519_public()?.verify(message, signature)?,
+        EdCurve::Ed25519 => verify_ed25519(public, message, signature)?,
         EdCurve::Ed448 => return Err(Error::AlgError("EdDSA/Ed448")),
       },
     }
 
     Ok(())
   }
+}
+
+fn verify_ed25519(key: Secret<'_>, message: &[u8], signature: &[u8]) -> Result<()> {
+  let signature: Ed25519Signature = signature
+    .try_into()
+    .map_err(|_| Error::SigError("Ed25519"))
+    .map(Ed25519Signature::from_bytes)?;
+
+  if key.to_ed25519_public()?.verify(&signature, message) {
+    return Ok(());
+  }
+
+  Err(Error::SigError("Ed25519"))
 }

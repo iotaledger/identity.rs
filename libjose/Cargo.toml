@@ -20,23 +20,20 @@ url = { version = "2.1", default-features = false, features = ["serde"] }
 rand = { version = "0.7", default-features = false, features = ["getrandom"] }
 rsa = { version = "0.3", default-features = false }
 sha-1 = { version = "0.9", default-features = false }
-sha2 = { version = "0.9", default-features = false }
 subtle = { version = "2.4", default-features = false }
 
-[dependencies.crypto]
+[dependencies.iota-crypto]
 git = "https://github.com/iotaledger/crypto.rs"
-branch = "libjose"
-# path = "../../crypto.rs"
-package = "iota-crypto"
+rev = "3d924b25766f6cf6d77c168d58c8e646e5915ef7"
 default-features = false
 features = [
   "aes",
   "aes-cbc",
   "aes-kw",
   "chacha",
-  "nist-p256",
   "ed25519",
   "hmac",
+  "p256",
   "pbkdf",
   "random",
   "secp256k1",
@@ -59,3 +56,6 @@ alloc = [
   "serde/alloc",
   "serde_json/alloc",
 ]
+
+test-rsa-enc = []
+test-rsa-sig = []

@@ -3,11 +3,14 @@ use libjose::jwk::Jwk;
 use libjose::jws::Decoder;
 use libjose::jws::Encoder;
 use libjose::jws::JwsAlgorithm;
+use libjose::jws::JwsAlgorithm::*;
 use libjose::jws::JwsFormat;
 use libjose::jws::JwsHeader;
 use libjose::jws::Token;
 
-static CLAIMS: &[u8] = b"libjose";
+const __RSA: bool = cfg!(not(feature = "test-rsa-sig"));
+
+const CLAIMS: &[u8] = b"libjose";
 
 fn roundtrip(algorithm: JwsAlgorithm) -> Result<()> {
   let header: JwsHeader = JwsHeader::new(algorithm);
@@ -45,11 +48,18 @@ fn roundtrip(algorithm: JwsAlgorithm) -> Result<()> {
 }
 
 #[test]
-fn test_roundtrip() {
+fn test_jws_roundtrip() {
   for alg in JwsAlgorithm::ALL {
-    if matches!(alg, JwsAlgorithm::ES384 | JwsAlgorithm::ES512 | JwsAlgorithm::NONE) {
+    // skip - not supported
+    if matches!(alg, ES384 | ES512 | NONE) {
       continue;
     }
+
+    // skip unless opted-in - rsa is SLOWWWW
+    if __RSA && matches!(alg, RS256 | RS384 | RS512 | PS256 | PS384 | PS512) {
+      continue;
+    }
+
     roundtrip(*alg).unwrap();
   }
 }

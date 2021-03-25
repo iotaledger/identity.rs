@@ -1,5 +1,4 @@
-use core::convert::TryFrom;
-use core::iter::once;
+use core::convert::TryInto;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -19,23 +18,24 @@ pub type RsaSecretKey = rsa::RSAPrivateKey;
 pub type RsaUint = rsa::BigUint;
 pub type RsaPadding = rsa::PaddingScheme;
 
-pub type Ed25519PublicKey = crypto::ed25519::PublicKey;
-pub type Ed25519SecretKey = crypto::ed25519::SecretKey;
-pub type Ed25519Signature = crypto::ed25519::Signature;
+pub type Ed25519PublicKey = crypto::signatures::ed25519::PublicKey;
+pub type Ed25519SecretKey = crypto::signatures::ed25519::SecretKey;
+pub type Ed25519Signature = crypto::signatures::ed25519::Signature;
 
-pub type P256PublicKey = crypto::nistp256::PublicKey;
-pub type P256SecretKey = crypto::nistp256::SecretKey;
+pub type P256PublicKey = crypto::signatures::p256::PublicKey;
+pub type P256SecretKey = crypto::signatures::p256::SecretKey;
 
-pub type K256PublicKey = crypto::secp256k1::PublicKey;
-pub type K256SecretKey = crypto::secp256k1::SecretKey;
+pub type K256PublicKey = crypto::signatures::secp256k1::PublicKey;
+pub type K256SecretKey = crypto::signatures::secp256k1::SecretKey;
 
-pub type X25519PublicKey = crypto::x25519::PublicKey;
-pub type X25519SecretKey = crypto::x25519::SecretKey;
+pub type X25519PublicKey = crypto::keys::x25519::PublicKey;
+pub type X25519SecretKey = crypto::keys::x25519::SecretKey;
 
-pub type X448PublicKey = crypto::x448::PublicKey;
-pub type X448SecretKey = crypto::x448::SecretKey;
+pub type X448PublicKey = crypto::keys::x448::PublicKey;
+pub type X448SecretKey = crypto::keys::x448::SecretKey;
 
-const SEC1_UNCOMPRESSED_TAG: u8 = 0x04;
+const ED25519_PUBLIC_KEY_LEN: usize = crypto::signatures::ed25519::COMPRESSED_PUBLIC_KEY_LENGTH;
+const ED25519_SECRET_KEY_LEN: usize = crypto::signatures::ed25519::SECRET_KEY_LENGTH;
 
 #[derive(Clone, Copy, Debug)]
 pub enum Secret<'a> {
@@ -147,7 +147,7 @@ impl<'a> Secret<'a> {
   }
 
   pub fn to_p256_public(self) -> Result<P256PublicKey> {
-    expand_ec_public(EcCurve::P256, self, P256PublicKey::from_sec1_bytes)
+    expand_ec_public(EcCurve::P256, self, P256PublicKey::from_bytes)
   }
 
   pub fn to_p256_secret(self) -> Result<P256SecretKey> {
@@ -155,21 +155,19 @@ impl<'a> Secret<'a> {
   }
 
   pub fn to_k256_public(self) -> Result<K256PublicKey> {
-    expand_ec_public(EcCurve::Secp256K1, self, K256PublicKey::from_sec1_bytes)
+    expand_ec_public(EcCurve::Secp256K1, self, K256PublicKey::from_bytes)
   }
 
   pub fn to_k256_secret(self) -> Result<K256SecretKey> {
     expand_ec_secret(EcCurve::Secp256K1, self, K256SecretKey::from_bytes)
   }
 
-  #[allow(clippy::redundant_closure)]
   pub fn to_ed25519_public(self) -> Result<Ed25519PublicKey> {
-    expand_ed_public(EdCurve::Ed25519, self, |arr| Ed25519PublicKey::try_from(arr))
+    expand_ed_public(EdCurve::Ed25519, self, parse_ed25519_public_key)
   }
 
-  #[allow(clippy::redundant_closure)]
   pub fn to_ed25519_secret(self) -> Result<Ed25519SecretKey> {
-    expand_ed_secret(EdCurve::Ed25519, self, |arr| Ed25519SecretKey::try_from(arr))
+    expand_ed_secret(EdCurve::Ed25519, self, parse_ed25519_secret_key)
   }
 
   pub fn to_x25519_public(self) -> Result<X25519PublicKey> {
@@ -226,6 +224,18 @@ fn decode_rsa_uint_opt(data: Option<impl AsRef<[u8]>>) -> Result<RsaUint> {
   data.ok_or(Error::KeyError("RSA")).and_then(decode_rsa_uint)
 }
 
+fn parse_ed25519_public_key(arr: &[u8]) -> Result<Ed25519PublicKey> {
+  let bytes: [u8; ED25519_PUBLIC_KEY_LEN] = arr.try_into().map_err(|_| Error::KeyError(EdCurve::Ed25519.name()))?;
+
+  Ed25519PublicKey::from_compressed_bytes(bytes).map_err(|_| Error::KeyError(EdCurve::Ed25519.name()))
+}
+
+fn parse_ed25519_secret_key(arr: &[u8]) -> Result<Ed25519SecretKey> {
+  let bytes: [u8; ED25519_SECRET_KEY_LEN] = arr.try_into().map_err(|_| Error::KeyError(EdCurve::Ed25519.name()))?;
+
+  Ed25519SecretKey::from_le_bytes(bytes).map_err(|_| Error::KeyError(EdCurve::Ed25519.name()))
+}
+
 fn expand_ec_public<T, E>(curve: EcCurve, secret: Secret<'_>, f: impl Fn(&[u8]) -> Result<T, E>) -> Result<T>
 where
   E: Into<Error>,
@@ -237,12 +247,12 @@ where
       return Err(Error::KeyError(curve.name()));
     }
 
-    let sec1: Vec<u8> = once(SEC1_UNCOMPRESSED_TAG)
-      .chain(decode_b64(&params.x)?.into_iter())
+    let bytes: Vec<u8> = decode_b64(&params.x)?
+      .into_iter()
       .chain(decode_b64(&params.y)?.into_iter())
       .collect();
 
-    Ok(sec1)
+    Ok(bytes)
   })
 }
 

@@ -5,9 +5,18 @@ use crypto::ciphers::aes::Aes256Gcm;
 use crypto::ciphers::aes_cbc::Aes128CbcHmac256;
 use crypto::ciphers::aes_cbc::Aes192CbcHmac384;
 use crypto::ciphers::aes_cbc::Aes256CbcHmac512;
+use crypto::ciphers::aes_kw::Aes128Kw;
+use crypto::ciphers::aes_kw::Aes192Kw;
+use crypto::ciphers::aes_kw::Aes256Kw;
 use crypto::ciphers::chacha::ChaCha20Poly1305;
 use crypto::ciphers::chacha::XChaCha20Poly1305;
-use crypto::ciphers::traits::Cipher;
+use crypto::ciphers::traits::Aead;
+use crypto::hashes::sha::SHA256_LEN;
+use crypto::hashes::sha::SHA384_LEN;
+use crypto::hashes::sha::SHA512_LEN;
+use crypto::keys::pbkdf::PBKDF2_HMAC_SHA256;
+use crypto::keys::pbkdf::PBKDF2_HMAC_SHA384;
+use crypto::keys::pbkdf::PBKDF2_HMAC_SHA512;
 use serde_json::from_slice;
 
 use crate::error::Error;
@@ -267,7 +276,7 @@ impl<'a> Decoder<'a> {
         let tag: Vec<u8> = $header.try_tag().and_then(decode_b64)?;
         let mut ptx: Vec<u8> = vec![0; ctx.len()];
 
-        $impl::try_decrypt(&key, &iv, &[], &tag, &ctx, &mut ptx)?;
+        $impl::try_decrypt(&key, &iv, &[], &mut ptx, &ctx, &tag)?;
 
         Ok(Cow::Owned(ptx))
       }};
@@ -275,10 +284,6 @@ impl<'a> Decoder<'a> {
 
     macro_rules! pbes2 {
       (($impl:ident, $digest_len:ident), $wrap:ident, $header:expr, $recipient:expr, $secret:expr) => {{
-        use ::crypto::aes_kw::$wrap;
-        use ::crypto::hashes::sha::$digest_len;
-        use ::crypto::kdfs::pbkdf::$impl;
-
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
         let key: Cow<[u8]> = $secret.to_oct_key(0)?;
         let p2s: Vec<u8> = $header.try_p2s().and_then(decode_b64)?;
@@ -302,8 +307,6 @@ impl<'a> Decoder<'a> {
 
     macro_rules! aes_kw {
       ($impl:ident, $recipient:expr, $secret:expr) => {{
-        use ::crypto::aes_kw::$impl;
-
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
         let key: Cow<[u8]> = $secret.to_oct_key($impl::KEY_LENGTH)?;
 
@@ -327,8 +330,6 @@ impl<'a> Decoder<'a> {
         ecdh_kw!(derive_ecdh_1pu, $wrap, $header, $recipient, $this)
       };
       ($derive:ident, $wrap:ident, $header:expr, $recipient:expr, $this:expr) => {{
-        use ::crypto::aes_kw::$wrap;
-
         let algorithm: &str = $header.try_alg()?.name();
         let key_len: usize = $header.try_alg()?.try_key_len()?;
         let deriver: EcdhDeriver = EcdhDeriver::new($this);
@@ -365,7 +366,7 @@ impl<'a> Decoder<'a> {
 
         let mut ptx: Vec<u8> = vec![0; ctx.len()];
 
-        $wrap::try_decrypt(&derived, &iv, &[], &tag, &ctx, &mut ptx)?;
+        $wrap::try_decrypt(&derived, &iv, &[], &mut ptx, &ctx, &tag)?;
 
         Ok(Cow::Owned(ptx))
       }};
@@ -537,14 +538,14 @@ fn decrypt_content(
   let mut plaintext: Vec<u8> = vec![0; ciphertext.len()];
 
   let length: usize = match encryption {
-    JweEncryption::A128CBC_HS256 => Aes128CbcHmac256::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
-    JweEncryption::A192CBC_HS384 => Aes192CbcHmac384::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
-    JweEncryption::A256CBC_HS512 => Aes256CbcHmac512::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
-    JweEncryption::A128GCM => Aes128Gcm::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
-    JweEncryption::A192GCM => Aes192Gcm::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
-    JweEncryption::A256GCM => Aes256Gcm::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
-    JweEncryption::C20P => ChaCha20Poly1305::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
-    JweEncryption::XC20P => XChaCha20Poly1305::try_decrypt(key, iv, aad, tag, ciphertext, &mut plaintext)?,
+    JweEncryption::A128CBC_HS256 => Aes128CbcHmac256::try_decrypt(key, iv, aad, &mut plaintext, ciphertext, tag)?,
+    JweEncryption::A192CBC_HS384 => Aes192CbcHmac384::try_decrypt(key, iv, aad, &mut plaintext, ciphertext, tag)?,
+    JweEncryption::A256CBC_HS512 => Aes256CbcHmac512::try_decrypt(key, iv, aad, &mut plaintext, ciphertext, tag)?,
+    JweEncryption::A128GCM => Aes128Gcm::try_decrypt(key, iv, aad, &mut plaintext, ciphertext, tag)?,
+    JweEncryption::A192GCM => Aes192Gcm::try_decrypt(key, iv, aad, &mut plaintext, ciphertext, tag)?,
+    JweEncryption::A256GCM => Aes256Gcm::try_decrypt(key, iv, aad, &mut plaintext, ciphertext, tag)?,
+    JweEncryption::C20P => ChaCha20Poly1305::try_decrypt(key, iv, aad, &mut plaintext, ciphertext, tag)?,
+    JweEncryption::XC20P => XChaCha20Poly1305::try_decrypt(key, iv, aad, &mut plaintext, ciphertext, tag)?,
   };
 
   plaintext.truncate(length);

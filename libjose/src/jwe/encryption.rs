@@ -9,7 +9,7 @@ use crypto::ciphers::aes_cbc::Aes192CbcHmac384;
 use crypto::ciphers::aes_cbc::Aes256CbcHmac512;
 use crypto::ciphers::chacha::ChaCha20Poly1305;
 use crypto::ciphers::chacha::XChaCha20Poly1305;
-use crypto::ciphers::traits::Cipher;
+use crypto::ciphers::traits::Aead;
 
 /// Supported algorithms for the JSON Web Encryption `enc` claim.
 ///

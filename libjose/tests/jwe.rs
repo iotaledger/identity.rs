@@ -2,13 +2,16 @@ use libjose::error::Result;
 use libjose::jwe::Decoder;
 use libjose::jwe::Encoder;
 use libjose::jwe::JweAlgorithm;
+use libjose::jwe::JweAlgorithm::*;
 use libjose::jwe::JweEncryption;
 use libjose::jwe::JweFormat;
 use libjose::jwe::JweHeader;
 use libjose::jwe::Token;
 use libjose::jwk::Jwk;
 
-static CLAIMS: &[u8] = b"libjose";
+const __RSA: bool = cfg!(not(feature = "test-rsa-enc"));
+
+const CLAIMS: &[u8] = b"libjose";
 
 fn roundtrip(algorithm: JweAlgorithm, encryption: JweEncryption) -> Result<()> {
   let header: JweHeader = JweHeader::new(algorithm, encryption);
@@ -53,8 +56,13 @@ fn roundtrip(algorithm: JweAlgorithm, encryption: JweEncryption) -> Result<()> {
 }
 
 #[test]
-fn test_roundtrip() {
+fn test_jwe_roundtrip() {
   for alg in JweAlgorithm::ALL {
+    // skip unless opted-in - rsa is SLOWWWW
+    if __RSA && matches!(alg, RSA1_5 | RSA_OAEP | RSA_OAEP_256 | RSA_OAEP_384 | RSA_OAEP_512) {
+      continue;
+    }
+
     for enc in JweEncryption::ALL {
       roundtrip(*alg, *enc).unwrap();
     }
