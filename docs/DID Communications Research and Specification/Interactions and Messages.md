@@ -16,6 +16,10 @@
 
 `challenge` as String, e.g. `please-sign-this`: A String acting as a signing challenge.
 
+`offeredCredentialTypes` as JSON: A field specific to VC issuance, contains a list of possible credential types, see <a href="#credential-options">Credential Options</a>.
+
+`credentialType` as String, e.g. `SimpleDiplomaCredential`: A VC type.
+
 `signature` as JSON, e.g. `{...}`: Includes a signature. Fields defined below.
 
 `signature[type]` as String, e.g. `JcsEd25519Signature2020`: Signature type.
@@ -50,11 +54,11 @@
 
 ◈ <a href="#authentication">**Authentication**</a> - Proving control over a DID.
 
-◈ (WIP) <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about a DID.
+◈ <a href="#credential-options">**Credential Options**</a> - Querying an agent for the VCs that the agent can issue.
 
-◈ (WIP) <a href="#credential-revocation">**Credential Revocation**</a> - Notifying a holder that a previously issued credential has been revoked.
+◈ <a href="#credential-schema">**Credential Schema**</a> - Querying an agent for the schema of a specific VC that the agent can issue.
 
-◈ (WIP) <a href="#presentation-verification">**Presentation Verification**</a> - Proving a set of statements about a DID.
+◈ <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about a DID.
 
 ---
 ## Trust Ping
@@ -313,3 +317,173 @@ authenticationResponse: {
 ```
 
 The `signature` provided here must correspond to the `#authentication` public key provided in the DID Document of the identity that the <u>verifier</u> has received earlier. If that is the case, the identifier is authenticated successfully.
+
+---
+## Credential Options
+Querying an agent for the VCs that the agent can issue.
+
+The Verifiable Credential (VC) issuance flow consists of a three step interaction process between two parties, the <u>issuer</u> and the <u>holder</u>. This is the first interaction in this process. In this interaction, the <u>holder</u> queries the <u>issuer</u> for a list of VC types that the <u>issuer</u> offers to issue.
+
+### Roles
+- **Issuer**: Agent who offers and issues one or more Verifiable Credentials
+- **Holder**: Agent who selects and receives one or more Verifiable Credentials
+
+### Messages
+
+#### credentialOptionsRequest
+The <u>holder</u> queries the <u>issuer</u> for a list of VC types that the <u>issuer</u> offers.
+
+###### Layout
+
+```JSON
+credentialOptionsRequest: {
+    "callbackURL",
+    "thread", // OPTIONAL!
+    "id", // OPTIONAL!
+    "timing" // OPTIONAL!
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "callbackURL": "https://www.alicesworld.com/credsList"
+}
+```
+
+#### credentialOptionsResponse
+The <u>issuer</u> responds with a list of offered VC types.
+
+###### Layout
+
+```JSON
+credentialOptionsResponse: {
+    "offeredCredentialTypes": [
+        "credentialType 1",
+        "credentialType 2",
+        "credentialType n"
+    ],
+    "thread", // OPTIONAL!
+    "timing" // OPTIONAL!
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "offeredCredentialTypes": [
+        "DiplomaCredential",
+        "YouHaveNiceHairCredential",
+        "DriversLicenseCredential"
+    ]
+}
+```
+
+---
+## Credential Schema
+Querying an agent for the schema of a specific VC that the agent can issue.
+
+The Verifiable Credential (VC) issuance flow consists of a three step interaction process between two parties, the <u>issuer</u> and the <u>holder</u>. This is the second interaction in this process. In this interaction, the <u>holder</u> queries the <u>issuer</u> for the precise schema of one of the VCs that the <u>issuer</u> offers to issue, with it's own list of requirements which must be satisfied by the <u>holder</u> in order to qualify for the credential.
+
+### Roles
+- **Issuer**: Agent who offers and issues one or more Verifiable Credentials
+- **Holder**: Agent who selects and receives one or more Verifiable Credentials
+
+### Messages
+
+#### credentialSchemaRequest
+The <u>holder</u> queries the <u>issuer</u> for the schema of a specific VC that the <u>issuer</u> offers.
+
+###### Layout
+
+```JSON
+credentialSchemaRequest: {
+    "callbackURL",
+    "credentialType",
+    "thread", // OPTIONAL!
+    "id", // OPTIONAL!
+    "timing" // OPTIONAL!
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "callbackURL": "https://www.alicesworld.com/credsList",
+    "credentialType": "YouHaveNiceHairCredential"
+}
+```
+
+#### credentialSchemaResponse
+The <u>issuer</u> responds with the schema of the requested `credentialType`.
+
+###### Layout
+
+```JSON
+credentialSchemaResponse: {
+    "YouHaveNiceHairCredential": {...}, //TODO: Discuss!
+    "thread", // OPTIONAL!
+    "timing" // OPTIONAL!
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "YouHaveNiceHairCredential": {
+        "type": "YouHaveNiceHairCredential",
+        ... //TODO: Discuss!
+    }, //TODO: Discuss!
+}
+```
+
+---
+## Credential Issuance
+Creating an authenticated statement about a DID.
+
+The Verifiable Credential (VC) issuance flow consists of a three step interaction process between two parties, the <u>issuer</u> and the <u>holder</u>. This is the third interaction in this process. In this interaction, the <u>holder</u> asks the <u>issuer</u> for issuance of a specific VC.
+
+### Roles
+- **Issuer**: Agent who offers and issues one or more Verifiable Credentials
+- **Holder**: Agent who selects and receives one or more Verifiable Credentials
+
+### Messages
+
+#### credentialSelection
+The <u>holder</u> sends a message containing a list of selected credentials with associated data for satisfying requirements. //TODO: Discuss: List or single issuance?
+
+###### Layout
+
+```JSON
+credentialSelection: {
+    "callbackURL",
+    "selectedCredentials": [
+        {
+            "type": "<Type as String>"
+        },
+    ],
+}
+```
+
+#### credentialIssuance
+The <u>issuer</u> responds with a message containing a list of newly issued credentials corrosponding to the selected set.
+
+###### Layout
+
+```JSON
+credentialIssuance: {
+    "issued": [
+        {
+            "type": "<Type as String>"
+        },
+    ],
+}
+```
+
+### Examples
+
+TBD after above flow is cleared up
