@@ -18,7 +18,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        project:
+          [
+            identity,
+            identity-core,
+            identity-credential,
+            identity-did,
+            identity-diff,
+            identity-iota,
+          ]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v2
@@ -30,7 +39,7 @@ jobs:
           override: true
 
       - name: Get current date
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest'
         run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
       - name: Get current date
@@ -38,52 +47,46 @@ jobs:
         run: echo "CURRENT_DATE=$(Get-Date -Format "yyyy-MM-dd")" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Cache cargo registry
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v2
         with:
           path: ~/.cargo/registry
           # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: ${{ matrix.project }}-${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
-            ${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}
+            ${{ matrix.project }}-${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}
+
       - name: Cache cargo index
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v2
         with:
           path: ~/.cargo/git
           # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: ${{ matrix.project }}-${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
-            ${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}
+            ${{ matrix.project }}-${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}
+
       - name: Cache cargo target
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v2
         with:
-          path: target
+          path: ${{ matrix.project}}/target
           # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: ${{ matrix.project }}-${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
-            ${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}
-      - name: Cache wasm cargo target
-        uses: actions/cache@v2.1.4
-        with:
-          path: bindings/wasm/target
-          # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-build-wasm-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
-          # Restore from outdated cache for speed
-          restore-keys: |
-            ${{ matrix.os }}-cargo-build-wasm-target-${{ hashFiles('**/Cargo.toml') }}
-      - name: Build
+            ${{ matrix.project }}-${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Build ${{ matrix.project }}
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --all --release
+          args: --manifest-path=${{ matrix.project }}/Cargo.toml --all --release
 
-      - name: Run tests
+      - name: Run tests for ${{ matrix.project }}
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all --release
+          args: --manifest-path=${{ matrix.project }}/Cargo.toml --all --release
 
   build-and-test-wasm:
     runs-on: ubuntu-latest
