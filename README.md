@@ -10,10 +10,10 @@
 
 <p align="center">
   <a href="#introduction">Introduction</a> ◈
+  <a href="#bindings">Bindings</a> ◈
   <a href="#documentation-and-resources">Documentation & Resources</a> ◈
   <a href="#getting-started">Getting Started</a> ◈
   <a href="#example-creating-an-identity">Example</a> ◈
-  <a href="#bindings">Bindings</a> ◈
   <a href="#roadmap-and-milestones">Roadmap</a> ◈
   <a href="#contributing">Contributing</a>
 </p>
@@ -31,6 +31,12 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 > This library is currently in its **alpha stage** and **under development** and might undergo large changes!
 > Until a formal third-party security audit has taken place, the [IOTA Foundation](https://www.iota.org/) makes no guarantees to the fitness of this library. As such, it is to be seen as **experimental** and not ready for real-world applications.
 > Nevertheless, we are very interested in feedback about user experience, design and implementation, and encourage you to reach out with any concerns or suggestions you may have.
+
+## Bindings
+
+[Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages are a work in progress (see Roadmap below). Currently available bindings are:
+
+* [Web Assembly](bindings/wasm/)
 
 ## Documentation and Resources
 
@@ -106,12 +112,6 @@ async fn main() -> Result<()> {
 DID Document Transaction > https://explorer.iota.org/mainnet/transaction/YARETIQBJLER9BC9U9MOAXEBWVIHXYRMJAYFQSJDCPQXXWSEKQOFKGFMXYCNXPLTRAYQZTCLJJRXZ9999
 ```
 The output link points towards the DID Document transaction, viewable through the IOTA Tangle Explorer, see [here](https://explorer.iota.org/mainnet/transaction/YARETIQBJLER9BC9U9MOAXEBWVIHXYRMJAYFQSJDCPQXXWSEKQOFKGFMXYCNXPLTRAYQZTCLJJRXZ9999). You can see the full DID Document as transaction payload.
-
-## Bindings
-
-[Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages are a work in progress (see Roadmap below). Currently available bindings are:
-
-* [Web Assembly](bindings/wasm/)
 
 ## Roadmap and Milestones
 
