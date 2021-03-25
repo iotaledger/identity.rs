@@ -46,19 +46,15 @@
 
 ◈ <a href="#did-discovery">**DID Discovery**</a> - Requesting a DID from an agent.
 
-◈ <a href="#did-introduction">**DID Introduction**</a> - Introducing two parties through an intermediary.
-
 ◈ <a href="#did-resolution">**DID Resolution**</a> - Using another agent as a Resolver.
 
 ◈ <a href="#authentication">**Authentication**</a> - Proving control over a DID.
 
-◈ <a href="#authorization">**Authorization**</a> - Giving consent or permission.
+◈ (WIP) <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about a DID.
 
-◈ <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about a DID.
+◈ (WIP) <a href="#credential-revocation">**Credential Revocation**</a> - Notifying a holder that a previously issued credential has been revoked.
 
-◈ <a href="#credential-revocation">**Credential Revocation**</a> - Notifying a holder that a previously issued credential has been revoked.
-
-◈ <a href="#presentation-verification">**Presentation Verification**</a> - Proving a set of statements about a DID.
+◈ (WIP) <a href="#presentation-verification">**Presentation Verification**</a> - Proving a set of statements about a DID.
 
 ---
 ## Trust Ping
@@ -322,6 +318,17 @@ The `signature` provided here must correspond to the `#authentication` public ke
 
 
 
+
+
+
+
+
+
+
+
+
+
+VVVVV HERE BE DRAGONS VVVVV
 
 
 
