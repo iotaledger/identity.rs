@@ -34,3 +34,9 @@ git = "https://github.com/iotaledger/crypto.rs"
 rev = "c3bf565eba62d0b81144174c2ff917bfde282e49"
 default-features = false
 features = ["blake2b"]
+
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

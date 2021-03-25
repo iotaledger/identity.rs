@@ -102,8 +102,10 @@ impl Context {
     // Spawn a background-process to clear expired passwords
     __SWEEP.call_once(|| {
       thread::spawn(|| {
+        // unwrap so an error kills the thread
         async_runtime_guard().unwrap().spawn(async {
           loop {
+            // unwrap so an error kills the thread
             clear_expired_passwords().await.unwrap();
           }
         });

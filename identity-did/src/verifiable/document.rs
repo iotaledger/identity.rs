@@ -47,7 +47,7 @@ impl<T, U, V> Document<T, U, V> {
     self.map(Properties::new)
   }
 
-  pub fn into_verifiable2(self, proof: Signature) -> Document<Properties<T>, U, V> {
+  pub fn into_verifiable_with_proof(self, proof: Signature) -> Document<Properties<T>, U, V> {
     self.map(|old| Properties::with_proof(old, proof))
   }
 }

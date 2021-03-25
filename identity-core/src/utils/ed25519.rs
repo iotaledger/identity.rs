@@ -8,7 +8,7 @@ use crate::crypto::SecretKey;
 use crate::error::Result;
 
 /// Generates a new pair of public/secret ed25519 keys.
-pub fn generate_ed25519() -> Result<(PublicKey, SecretKey)> {
+pub fn generate_ed25519_keypair() -> Result<(PublicKey, SecretKey)> {
   let secret: ed25519::SecretKey = ed25519::SecretKey::generate()?;
   let public: ed25519::PublicKey = secret.public_key();
 
@@ -19,6 +19,6 @@ pub fn generate_ed25519() -> Result<(PublicKey, SecretKey)> {
 }
 
 /// Generates a list of public/secret ed25519 keys.
-pub fn generate_ed25519_list(count: usize) -> Result<Vec<(PublicKey, SecretKey)>> {
-  (0..count).map(|_| generate_ed25519()).collect()
+pub fn generate_ed25519_keypairs(count: usize) -> Result<Vec<(PublicKey, SecretKey)>> {
+  (0..count).map(|_| generate_ed25519_keypair()).collect()
 }

@@ -187,7 +187,6 @@ mod tests {
       ["VerifiablePresentation", "CredentialManagerPresentation"]
     );
     assert_eq!(presentation.proof().unwrap().type_(), "RsaSignature2018");
-
     assert_eq!(
       credential.context.as_slice(),
       [

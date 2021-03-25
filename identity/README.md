@@ -1,5 +1,3 @@
-# identity
-
 ## IOTA Identity
 IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized identity, also known as Self Sovereign Identity (SSI), through the [W3C Decentralized Identifiers (DID)](https://w3c.github.io/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) standards alongside supporting methods, utilizing the [IOTA Distributed Ledger](https://www.iota.org).
 

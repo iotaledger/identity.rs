@@ -8,7 +8,7 @@ use crate::crypto::KeyType;
 use crate::crypto::PublicKey;
 use crate::crypto::SecretKey;
 use crate::error::Result;
-use crate::utils::generate_ed25519;
+use crate::utils::generate_ed25519_keypair;
 
 /// A convenient type for representing a pair of cryptographic keys.
 #[derive(Clone, Debug)]
@@ -27,7 +27,7 @@ impl KeyPair {
   /// Creates a new [`KeyPair`] with the given [`key type`][`KeyType`].
   pub fn new(type_: KeyType) -> Result<Self> {
     let (public, secret): (PublicKey, SecretKey) = match type_ {
-      KeyType::Ed25519 => generate_ed25519()?,
+      KeyType::Ed25519 => generate_ed25519_keypair()?,
     };
 
     Ok(Self { type_, public, secret })

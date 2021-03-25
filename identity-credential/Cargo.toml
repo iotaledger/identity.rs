@@ -19,3 +19,9 @@ thiserror = { version = "1.0", default-features = false }
 
 [dev-dependencies]
 serde_json = { version = "1.0" }
+
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
