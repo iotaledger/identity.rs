@@ -36,7 +36,7 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 
 [Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages are a work in progress (see Roadmap below). Currently available bindings are:
 
-* [Web Assembly](bindings/wasm/)
+* [Web Assembly](bindings/wasm/) (JavaScript/TypeScript)
 
 ## Documentation and Resources
 
