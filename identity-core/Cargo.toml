@@ -14,7 +14,6 @@ homepage = "https://www.iota.org"
 base64 = { version = "0.13", default-features = false, features = ["std"] }
 bs58 = { version = "0.4", default-features = false, features = ["std"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
-erased-serde = { version = "0.3", default-features = false, features = ["alloc"] }
 hex = { version = "0.4", default-features = false }
 identity-diff = { version = "=0.2.0", path = "../identity-diff", default-features = false }
 roaring = { version = "0.6", default-features = false }
@@ -29,9 +28,15 @@ zeroize = { version = "1.2", default-features = false }
 
 [dependencies.iota-crypto]
 git = "https://github.com/iotaledger/crypto.rs"
-rev = "c3bf565eba62d0b81144174c2ff917bfde282e49"
+rev = "b849861b86c3f7357b7477de4253b7352b363627"
 default-features = false
 features = ["blake2b", "ed25519", "random", "sha"]
 
 [dev-dependencies]
 rand = { version = "0.8" }
+
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

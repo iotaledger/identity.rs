@@ -47,8 +47,8 @@ pub type Verifier<'a> = DocumentVerifier<'a, Properties, Object, ()>;
 
 /// A DID Document adhering to the IOTA DID method specification.
 ///
-/// This is a thin wrapper around the [`Document`][`CoreDocument`] type from the
-/// [`identity_did`][`identity_did`] crate.
+/// This is a thin wrapper around the [`Document`][CoreDocument] type from the
+/// [identity_did] crate.
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[serde(try_from = "CoreDocument", into = "BaseDocument")]
 pub struct Document {
@@ -60,10 +60,10 @@ impl Document {
   /// Creates a new DID Document from the given KeyPair.
   ///
   /// The DID Document will be pre-populated with a single authentication
-  /// method based on the provided [`KeyPair`].
+  /// method based on the provided [KeyPair].
   ///
   /// The authentication method will have the DID URL fragment `#authentication`
-  /// and can be easily retrieved with [`Document::authentication`].
+  /// and can be easily retrieved with [Document::authentication].
   pub fn from_keypair(keypair: &KeyPair) -> Result<Self> {
     let method: Method = Method::from_keypair(keypair, "authentication")?;
 
@@ -71,7 +71,7 @@ impl Document {
     Ok(unsafe { Self::from_authentication_unchecked(method) })
   }
 
-  /// Creates a new DID Document from the given verification [`method`][`Method`].
+  /// Creates a new DID Document from the given verification [`method`][Method].
   pub fn from_authentication(method: Method) -> Result<Self> {
     Self::check_authentication(&method)?;
 
@@ -79,8 +79,9 @@ impl Document {
     Ok(unsafe { Self::from_authentication_unchecked(method) })
   }
 
-  /// Creates a new DID Document from the given verification [`method`][`Method`]
+  /// Creates a new DID Document from the given verification [`method`][Method]
   /// without performing validation checks.
+  ///
   /// # Safety
   ///
   /// This must be guaranteed safe by the caller.
@@ -91,10 +92,10 @@ impl Document {
       .build()
       .map(CoreDocument::into_verifiable)
       .map(Into::into)
-      .unwrap() // `uwnrap` is fine - we provided all the necessary properties
+      .unwrap() // `unwrap` is fine - we provided all the necessary properties
   }
 
-  /// Converts a generic DID `Document` to an IOTA DID Document.
+  /// Converts a generic DID [`Document`][CoreDocument] to an IOTA DID Document.
   ///
   /// # Errors
   ///
@@ -156,7 +157,7 @@ impl Document {
   // Properties
   // ===========================================================================
 
-  /// Returns the DID document [`id`][`DID`].
+  /// Returns the DID document [`id`][DID].
   pub fn id(&self) -> &DID {
     // SAFETY: We checked the validity of the DID Document ID in the
     // DID Document constructors; we don't provide mutable references so
@@ -272,7 +273,7 @@ impl Document {
   pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
     let key: String = self.authentication_id().to_string();
 
-    self.document.sign_this(&key, secret.as_ref()).map_err(Into::into)
+    self.document.sign_this(&key, secret).map_err(Into::into)
   }
 
   /// Verifies the signature of the DID document.

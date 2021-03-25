@@ -14,9 +14,11 @@ macro_rules! get {
     &$this.0[get!(@tail $this) + 1..]
   };
   (@head $this:expr) => {
+    // unwrap is fine - we only operate on valid DIDs
     $this.0.find(':').unwrap()
   };
   (@tail $this:expr) => {
+    // unwrap is fine - we only operate on valid DIDs
     $this.0.rfind(':').unwrap()
   };
 }

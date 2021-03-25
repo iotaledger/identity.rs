@@ -1,29 +1,8 @@
-# Decentralized Identifiers
+## DID Messages
 
-Decentralized Identifiers (DID) is the fundamental standard that supports the concept of a decentralized digital identity. A DID is a unique identifier that contains enough information to be resolved to a DID Document. This document contains data such as public keys, enabling the holder to prove ownership over their personal data, but also URI's that link to public information about the identity. This implementation complies to the [DID specifications v1.0 Working Draft 20200731](https://www.w3.org/TR/2020/WD-did-core-20200731/). Please consult the linked standard for more information about the concept of a Decentralized Identifier or consult the welcome page of the documentation portal for a more highly explaination and more resources.
+TODO: Explain the concept of DID Messages and how they can be used to optimize DID updates.
 
-In the IOTA Identity framework, we have implemented the DID standard according to the `iota` DID Method Specification, which can be viewed [here](https://github.com/iotaledger/identity.rs/blob/feat/method-spec/docs/iota-did-method-spec.md#did-messages). 
-
-An example of DID conforming to the `iota` method specification:
-``` did:iota:8dQAzVbbf6FLW9ckwyCBnKmcMGcUV9LYJoXtgQkHcNQy```
-
-Example of Publishing a DID Document to the Tangle
-```
-use identity::iota::Client;
-use identity::iota::IotaDocument;
-
-//Setting up the IOTA Network 
-let client: Client = Client::new()?;
-let network: &str = client.network().as_str();
-
-//Generating a DID Document
-let (mut document, keypair): (IotaDocument, KeyPair) = IotaDocument::builder().did_network(network).build()?;
-
-//Signing and publish to the Tangle
-document.sign(keypair.secret())?;
-document.publish_with_client(&client).await?;
-```
-## Valid DID Documents
+### Valid DID Documents
 
 Most DID methods are implemented on a Distributed Ledger Technology (DLT), such as Bitcoin, Ethereum or IOTA. Most common DID implementation on DLTs are based on fit-for-purpose Blockchains that store the state of a DID Document in the ledger, or a general purpose Blockchain that utilize smart contracts to store the state. Updating a DID Document where the state is understood by the network is straightforward. The network can determine if an action is legal and if a cryptographic signature is provided correctly, as it understands the underlying data structure, and can update the state accordingly. The individual state updates, or transactions, can be forgotten. 
 
