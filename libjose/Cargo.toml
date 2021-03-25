@@ -25,6 +25,7 @@ subtle = { version = "2.4", default-features = false }
 [dependencies.iota-crypto]
 git = "https://github.com/iotaledger/crypto.rs"
 rev = "3d924b25766f6cf6d77c168d58c8e646e5915ef7"
+# path = "../../crypto.rs"
 default-features = false
 features = [
   "aes",
