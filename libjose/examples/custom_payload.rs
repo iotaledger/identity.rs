@@ -1,3 +1,8 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+//! cargo run --example custom_payload
+
 use core::str;
 
 use libjose::jwk::Jwk;

@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crypto::ciphers::aes::Aes128Gcm;
 use crypto::ciphers::aes::Aes192Gcm;
 use crypto::ciphers::aes::Aes256Gcm;

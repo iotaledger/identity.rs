@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::jwe::JweHeader;
 use crate::jwk::EcdhCurve;
 use crate::jwk::EcxCurve;

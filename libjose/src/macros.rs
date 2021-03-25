@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 #[macro_export]
 macro_rules! rsa_padding {
   (@PKCS1_SHA256) => {

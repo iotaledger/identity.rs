@@ -1,4 +1,7 @@
-//! # jose
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+//! # libjose
 //!
 //! A library for JSON Object Signing and Encryption (JOSE).
 //!

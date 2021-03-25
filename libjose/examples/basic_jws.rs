@@ -1,3 +1,8 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+//! cargo run --example basic_jws
+
 use libjose::jwk::Jwk;
 use libjose::jws::Encoder;
 use libjose::jws::JwsAlgorithm;

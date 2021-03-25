@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crypto::hashes::sha::SHA256;
 use crypto::hashes::sha::SHA256_LEN;
 use rand::rngs::OsRng;
