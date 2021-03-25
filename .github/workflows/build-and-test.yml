@@ -46,7 +46,7 @@ jobs:
         run: echo "CURRENT_DATE=$(Get-Date -Format "yyyy-MM-dd")" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Cache cargo registry
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.cargo/registry
           # Add date to the cache to keep it up to date
@@ -56,7 +56,7 @@ jobs:
             ${{ matrix.project }}-${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}
 
       - name: Cache cargo index
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.cargo/git
           # Add date to the cache to keep it up to date
@@ -66,7 +66,7 @@ jobs:
             ${{ matrix.project }}-${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}
 
       - name: Cache cargo target
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ${{ matrix.project}}/target
           # Add date to the cache to keep it up to date
@@ -75,7 +75,17 @@ jobs:
           restore-keys: |
             ${{ matrix.project }}-${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}
 
-      - name: Build ${{ matrix.project }}
+      - name: Cache wasm cargo target
+        uses: actions/cache@v2.1.4
+        with:
+          path: bindings/wasm/target
+          # Add date to the cache to keep it up to date
+          key: ${{ matrix.os }}-cargo-build-wasm-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          # Restore from outdated cache for speed
+          restore-keys: |
+            ${{ matrix.os }}-cargo-build-wasm-target-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Build
         uses: actions-rs/cargo@v1
         with:
           command: build
@@ -106,12 +116,12 @@ jobs:
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
           node-version: 12.x
-      
+
       - name: Install wasm-pack
         run: yarn global add wasm-pack
 
@@ -122,7 +132,7 @@ jobs:
       - name: Build WASM bindings
         run: yarn build
         working-directory: libraries/wasm
-      
+
       # - name: Run tests
       #   run: yarn test
       #   working-directory: libraries/wasm
