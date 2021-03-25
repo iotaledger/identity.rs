@@ -14,6 +14,16 @@
 
 `thread` as String, e.g. `jdhgbksdbgjksdbgkjdkg` or `thread-132-a`: A String, defined by the agent, to be used to identify this specific interaction to track it agent-locally.
 
+`challenge` as String, e.g. `please-sign-this`: A String acting as a signing challenge.
+
+`signature` as JSON, e.g. `{...}`: Includes a signature. Fields defined below.
+
+`signature[type]` as String, e.g. `JcsEd25519Signature2020`: Signature type.
+
+`signature[verificationMethod]` as String, e.g. `#authentication`: Reference to verification method in signer's DID Document used to produce the signature.
+
+`signature[signatureValue]` as String, e.g. `5Hw1JWv4a6hZH5obtAshbbKZQAJK6h8YbEwZvdxgWCXSL81fvRYoMCjt22vaBtZewgGq641dqR31C27YhDusoo4N`: Actual signature.
+
 `timing` as JSON, e.g. `{...}`: A decorator to include timing information into a message. Fields defined below.
 
 `timing[out_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: The timestamp when the message was emitted.
@@ -213,6 +223,9 @@ If the message contains a DID (in the `id` field), the Resolver resolves the DID
 ```JSON
 resolutionResult: {
     "didDocument"
+    "id", // OPTIONAL!
+    "thread", // OPTIONAL!
+    "timing" // OPTIONAL!
 }
 ```
 
@@ -247,59 +260,54 @@ The authentication flow consists of a simple request-response message exchange, 
 
 ### Messages
 
-#### Authentication Request
-The <u>verifier</u> sends the `authenticationRequest` to the authentication service endpoint of the <u>authenticator</u>, specifying a `callbackURL` for the `authenticationResponse` to be posted to, as well as an arbitrary `description` which is to be signed by the <u>authenticator</u>. 
+#### authenticationRequest
+The <u>verifier</u> sends the `authenticationRequest` to the authentication service endpoint of the <u>authenticator</u>, specifying a `callbackURL` for the `authenticationResponse` to be posted to. The `thread` is used as a challenge and also serves to identity the `authenticationRequest`. The whole request is to be signed by the <u>authenticator</u>. 
 
 ###### Layout
 
 ```JSON
 authenticationRequest: {
-    "callbackURL": "<URL as String>",
-    "description": "<Text as String>",
-    TODO timestamp or random value or challenge/nonce, sign everything
-    TODO check WHAT EXACTLY others are actually signing
-    TODO thread if instead of sending challenge back
+    "callbackURL",
+    "thread",
+    "challenge",
+    "id", // OPTIONAL!
+    "timing" // OPTIONAL!
 }
 ```
 
-#### Authentication Response
-The <u>authenticator</u> answers with an `authenticationResponse`, quoting the `authenticationRequest` it answers to and providing a `signature` of the `authenticationRequest` field, which is the complete original `authenticationRequest`.
+###### Example(s)
+
+```JSON
+{
+    "callbackURL": "https://www.aliceswonderland.com/auth",
+    "thread": "69-420-1337",
+    "challenge": "please sign this",
+    "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
+    "timing": {
+        "out_time": "1991-04-20T13:37:11Z",
+        "expires_time": "2069-04-20T13:37:02Z",
+        "wait_until_time": "2069-04-20T13:37:00Z"
+    }
+}
+```
+
+#### authenticationResponse
+The <u>authenticator</u> answers with an `authenticationResponse`, providing a `signature` of the whole `authenticationRequest` JSON - the complete original `authenticationRequest`.
 
 ###### Layout
 
 ```JSON
 authenticationResponse: {
-    "authenticationRequest": {
-        "callbackURL": "<URL as String>",
-        "description": "<Text as String>",
-    },
-    "signature": {
-      "type": "<Signature Type as String>",
-      "verificationMethod": "<Verification Method as String>",
-      "signatureValue": "<Signature as String>"
-   }
+    "thread",
+    "signature"
 }
 ```
 
-### Examples
-
-The <u>verifier</u> wants to know whether an identity he received earlier corresponds to the domain https://www.bob.com. He sends an `authenticationRequest` to the domain specified in the identity's service endpoint:
+###### Example(s)
 
 ```JSON
 {
-    "callbackURL": "https://example.com/auth",
-    "description": "Are you Bob?",
-}
-```
-
-The service endpoint of the <u>authenticator</u> receives the `authenticationRequest` and answers with e.g. the following `authenticationResponse`:
-
-```JSON
-{
-    "authenticationRequest": {
-        "callbackURL": "https://www.bob.com/auth",
-        "description": "Are you Bob?",
-    },
+    "thread": "69-420-1337",
     "signature": {
         "type": "JcsEd25519Signature2020",
         "verificationMethod": "#authentication",
@@ -308,42 +316,7 @@ The service endpoint of the <u>authenticator</u> receives the `authenticationReq
 }
 ```
 
-The `signature` provided here must correspond with the `#authentication` public key provided in the DID Document of the identity that the <u>verifier</u> has received earlier. If that is the case, the domain is authenticated successfully.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-{
-    "callbackURL",
-    "context", // OPTIONAL!
-    "id", // OPTIONAL!
-    "thread", // OPTIONAL!
-    "timing" // OPTIONAL!
-}
-
-`callbackURL`
-`responseRequested`
-`context`
-`id`
-`thread`
-`timing`
-
-TODO put down sources for all interactions into the document
- TODO say what is OPTIONAL
-TODO https://identity.foundation/didcomm-messaging/spec/#discover-features-protocol-10
-TODO thread id
+The `signature` provided here must correspond to the `#authentication` public key provided in the DID Document of the identity that the <u>verifier</u> has received earlier. If that is the case, the identifier is authenticated successfully.
 
 
 
@@ -464,6 +437,73 @@ The <u>issuer</u> sends the `credentialRevocation` to the <u>holder</u>:
   "comment": "Some comment"
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{
+    "callbackURL",
+    "context", // OPTIONAL!
+    "id", // OPTIONAL!
+    "thread", // OPTIONAL!
+    "timing" // OPTIONAL!
+}
+
+`callbackURL`
+`responseRequested`
+`context`
+`id`
+`thread`
+`timing`
+
+    TODO timestamp or random value or challenge/nonce, sign everything
+    TODO check WHAT EXACTLY others are actually signing
+    TODO thread if instead of sending challenge back
+TODO put down sources for all interactions into the document
+ TODO say what is OPTIONAL
+TODO https://identity.foundation/didcomm-messaging/spec/#discover-features-protocol-10
+TODO thread id
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---
 ## Presentation Verification
