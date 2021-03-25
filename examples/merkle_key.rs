@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! An example that revokes a key and shows how verification fails as a consequence.
+//! 
 //! cargo run --example merkle_key
 
 mod common;

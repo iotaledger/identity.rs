@@ -29,4 +29,4 @@ The following examples are currently available:
 | 5    | [verifiable_presentation](verifiable_presentation.rs)  | This example explains how to create a Verifiable Presentation from a set of credentials and sign it. |
 | 6    | [resolution](resolution.rs)                            | A basic example that generates a DID Document, publishes it to the Tangle, and retrieves information through DID Document resolution/dereferencing. |
 | 7    | [diff_chain](diff_chain.rs)                            | An example that utilizes a diff and auth chain to publish updates to a DID Document. |
-| 8    | [merkle_key](merkle_key.rs)                            | tbd                        |
+| 8    | [merkle_key](merkle_key.rs)                            | An example that revokes a key and shows how verification fails as a consequence. |
