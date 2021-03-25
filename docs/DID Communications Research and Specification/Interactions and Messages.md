@@ -10,6 +10,8 @@
 
 `id` as String, e.g. `did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v`: An IOTA decentralized identifier.
 
+`didDocument` as JSON: An IOTA DID Document (see e.g. in <a href="#did-resolution">DID Resolution</a>).
+
 `thread` as String, e.g. `jdhgbksdbgjksdbgkjdkg` or `thread-132-a`: A String, defined by the agent, to be used to identify this specific interaction to track it agent-locally.
 
 `timing` as JSON, e.g. `{...}`: A decorator to include timing information into a message. Fields defined below.
@@ -162,22 +164,16 @@ didResponse: {
 
 ```JSON
 {
-    "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
+    "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez"
 }
 ```
 
-
-
-
-
-
-
 ---
 ## DID Resolution
-TODO put down sources for all interactions into the document
+
 Using another Agent as a Resolver.
 
-Peer resolution consists of a simple request-response message exchange, where the Requester asks the Resolver to perform DID resolution and return the result.
+DID resolution consists of a simple request-response message exchange, where the Requester asks the Resolver to perform DID resolution and return the result.
 
 ### Roles
 - **Requester**: Agent who requests the resolution of a DID
@@ -185,96 +181,58 @@ Peer resolution consists of a simple request-response message exchange, where th
 
 ### Messages
 
-#### Resolution Request
+#### resolutionRequest
 The Requester broadcasts a message which may or may not contain a DID.
 
 ###### Layout
 
 ```JSON
 resolutionRequest: {
-    "callbackURL": "<URL as String>",
-    "did": "<DID as String>",
+    "callbackURL",
+    "id", // OPTIONAL!
+    "thread", // OPTIONAL!
+    "timing" // OPTIONAL!
 }
 ```
 
-#### Resolution Result
-If the message contains a DID, the Resolver resolves the DID and returns the DID Resolution Result. Otherwise, the Resolver returns the result of resolving it's own DID. This is intended for the special case of "local" DID methods, which do not have a globally resolvable state.
+###### Example(s)
+
+```JSON
+{
+    "callbackURL": "https://www.aliceswonderland.com/res",
+    "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
+    "thread": "req-1-1337b"
+}
+```
+
+#### resolutionResult
+If the message contains a DID (in the `id` field), the Resolver resolves the DID and returns the DID Resolution Result. Otherwise, the Resolver returns the result of resolving it's own DID. This is intended for the special case of "local" DID methods, which do not have a globally resolvable state.
 
 ###### Layout
 
 ```JSON
 resolutionResult: {
-    "didDocument": "<DID Document as JSON>",
+    "didDocument"
 }
 ```
 
-### Examples
-
-The <u>requester</u> sends a `resolutionRequest` to the <u>resolver</u>:
+###### Example(s)
 
 ```JSON
 {
-    "callbackURL": "https://alice.com/res",
-    "did": "did:iota:sdbgik8s34htosebgo9se34hg9so3ehg",
-}
-```
-
-The <u>resolver</u> answers with a `resolutionResult` to the <u>requester</u>:
-
-```JSON
-{
+    "thread": "req-1-1337b",
     "didDocument": {
         "@context": "https://www.w3.org/ns/did/v1",
-        "id": "did:example:123456789abcdefghi",
+        "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
         "authentication": [{
-            "id": "did:example:123456789abcdefghi#keys-1",
+            "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez#keys-1",
             "type": "Ed25519VerificationKey2020",
-            "controller": "did:example:123456789abcdefghi",
+            "controller": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
             "publicKeyMultibase": "zH3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
         }]
     }
 }
 ```
-
-
-
-
-
-
-
-
-
-
-
-{
-    "callbackURL",
-    "context", // OPTIONAL!
-    "id", // OPTIONAL!
-    "thread", // OPTIONAL!
-    "timing" // OPTIONAL!
-}
-
-`callbackURL`
-`responseRequested`
-`context`
-`id`
-`thread`
-`timing`
-
- TODO say what is OPTIONAL
-TODO https://identity.foundation/didcomm-messaging/spec/#discover-features-protocol-10
-TODO thread id
-
-
-
-
-
-
-
-
-
-
-
 
 ---
 ## Authentication
@@ -351,6 +309,58 @@ The service endpoint of the <u>authenticator</u> receives the `authenticationReq
 ```
 
 The `signature` provided here must correspond with the `#authentication` public key provided in the DID Document of the identity that the <u>verifier</u> has received earlier. If that is the case, the domain is authenticated successfully.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{
+    "callbackURL",
+    "context", // OPTIONAL!
+    "id", // OPTIONAL!
+    "thread", // OPTIONAL!
+    "timing" // OPTIONAL!
+}
+
+`callbackURL`
+`responseRequested`
+`context`
+`id`
+`thread`
+`timing`
+
+TODO put down sources for all interactions into the document
+ TODO say what is OPTIONAL
+TODO https://identity.foundation/didcomm-messaging/spec/#discover-features-protocol-10
+TODO thread id
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---
 ## Credential Issuance
