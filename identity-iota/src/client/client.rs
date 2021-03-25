@@ -161,12 +161,11 @@ impl Client {
     let auth: AuthChain = AuthChain::try_from_messages(did, &messages)?;
 
     // Check if there is any query given and return
-    let diff_option = match did.query() {
-      Some(query) => query.contains("diff=true"),
-      None => true,
-    };
+    let skip_diff: bool = did.query_pairs().any(|(key, value)| key == "diff" && value == "false");
 
-    let diff: DiffChain = if diff_option {
+    let diff: DiffChain = if skip_diff {
+      DiffChain::new()
+    } else {
       // Fetch all messages for the diff chain.
       let address: String = Document::diff_address(auth.current_message_id())?;
       let messages: Vec<Message> = self.read_messages(&address).await?;
@@ -174,8 +173,6 @@ impl Client {
       trace!("Tangle Messages: {:?}", messages);
 
       DiffChain::try_from_messages(&auth, &messages)?
-    } else {
-      DiffChain::new()
     };
 
     DocumentChain::with_diff_chain(auth, diff)
