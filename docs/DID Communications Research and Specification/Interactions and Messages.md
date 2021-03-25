@@ -166,23 +166,11 @@ didResponse: {
 }
 ```
 
----
-## DID Introduction
-TODO open an issue for this and remove it here
-TODO call it "now kiss" protocol
-Introducing two parties through an intermediary.
 
-### Roles
-- <u>**Introducer**</u>: Agent who introduces two <u>introducees</u> to each other
-- <u>**Introducee**</u>: Agents who get introduced to each other by the <u>introducer</u>
 
-### Messages
 
-TBD
 
-### Examples
 
-TBD
 
 ---
 ## DID Resolution
@@ -363,71 +351,6 @@ The service endpoint of the <u>authenticator</u> receives the `authenticationReq
 ```
 
 The `signature` provided here must correspond with the `#authentication` public key provided in the DID Document of the identity that the <u>verifier</u> has received earlier. If that is the case, the domain is authenticated successfully.
-
----
-## Authorization
-
-Giving consent or permission.
-
-The Authorization flow consists of a simple request-response message exchange, where the Initiator requests authorization from the <u>authorizer</u> to carry out some action. It is similar to the authentication flow in structure, however the intent of the interaction is different. Authentication is about proving the identity of an agent (e.g. SSO), while authorization is about giving permission or privilege for a service to act on an agents behalf.
-
-### Roles
-- **Authorized**: Agent requesting authorization to perform some action
-- **Authorizer**: Agent granting authorization to the <u>authorized</u>
-
-### Messages
-
-#### Authorization Request
-The <u>authorized</u> broadcasts a message representing the intent of the action which permission is required for.
-
-###### Layout
-
-```JSON
-authorizationRequest: {
-    "callbackURL": "<URL as String>",
-    "description": "<Text as String>",
-    "imageURL": "<Image URL as String>",
-    "action": "<Text as String>",
-}
-```
-
-#### Authorization Response
-The <u>authorizer</u> responds with a message containing the same contents as the `authorizationRequest` as consent.
-TODO: respond with a VC, think about including frost into the vc for the action field, remove for now and submit an issue
-###### Layout
-
-```JSON
-authorizationResponse: {
-    "callbackURL": "<URL as String>",
-    "description": "<Text as String>",
-    "imageURL": "<Image URL as String>",
-    "action": "<Text as String>",
-}
-```
-
-### Examples
-
-The <u>authorized</u> would like to open the <u>authorizers</u> door and sends an `authorizationRequest` for said action to the <u>authorizer</u>:
-
-```JSON
-{
-    "callbackURL": "https://example.com/authz",
-    "description": "Front Door",
-    "imageURL": "https://example.com/lockImage.png",
-    "action": "Open the door",
-}
-```
-
-The <u>authorizer</u> reponds with the same content, consenting to the action:
-
-```JSON
-{
-    "callbackURL": "https://example.com/authz",
-    "description": "Front Door",
-    "imageURL": "https://example.com/lockImage.png",
-    "action": "Open the door",
-}
-```
 
 ---
 ## Credential Issuance
