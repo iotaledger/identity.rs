@@ -1,27 +1,41 @@
 # DID Communications Message Specification
-TODO https://identity.foundation/didcomm-messaging/spec/#discover-features-protocol-10
-TODO dec https://github.com/hyperledger/aries-rfcs/blob/master/features/0032-message-timing/README.md
-TODO thread id
 
-> ### Contents
->
-> ◈ <a href="#trust-ping">**Trust Ping**</a> - Testing a pairwise channel.
->
-> ◈ <a href="#did-discovery">**DID Discovery**</a> - Requesting a DID from an agent.
->
-> ◈ <a href="#did-introduction">**DID Introduction**</a> - Introducing two parties through an intermediary.
->
-> ◈ <a href="#did-resolution">**DID Resolution**</a> - Using another agent as a Resolver.
->
-> ◈ <a href="#authentication">**Authentication**</a> - Proving control over a DID.
->
-> ◈ <a href="#authorization">**Authorization**</a> - Giving consent or permission.
->
-> ◈ <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about a DID.
->
-> ◈ <a href="#credential-revocation">**Credential Revocation**</a> - Notifying a holder that a previously issued credential has been revoked.
->
-> ◈ <a href="#presentation-verification">**Presentation Verification**</a> - Proving a set of statements about a DID.
+> ### Field Definitions
+
+`callbackURL` as URL/String, e.g. `https://www.bobsworld.com/ping` or `https://www.aliceswonderland/authz`: Defines the URL or API call where a request or response is to be delivered to.
+`responseRequested` as Boolean, e.g. `true` or `false`: In Messages where it is defined a reponse is to be sent to a request if and only if this is `true`. Undefined counts as `false`.
+`context` as URL/String, e.g. `https://didcomm.org/trust_ping/1.0/ping`: Defines the context that a specific message adheres to.
+`id` as String, e.g. `did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v`: An IOTA decentralized identifier.
+`thread` as String, e.g. `jdhgbksdbgjksdbgkjdkg` or `thread-132-a`: A String, defined by the agent, to be used to identify this specific interaction to track it agent-locally.
+`timing` as JSON, e.g. `{...}`: A decorator to include timing information into a message. Fields defined below.
+`timing[out_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: The timestamp when the message was emitted.
+`timing[in_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: The timestamp when the preceding message in this thread (the one that elicited this message as a response) was received.
+`timing[stale_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: Ideally, the decorated message should be processed by the the specified timestamp. After that, the message may become irrelevant or less meaningful than intended. This is a hint only.
+`timing[expires_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: The decorated message should be considered invalid or expired if encountered after the specified timestamp. This is a much stronger claim than the one for stale_time; it says that the receiver should cancel attempts to process it once the deadline is past, because the sender won't stand behind it any longer. While processing of the received message should stop, the thread of the message should be retained as the sender may send an updated/replacement message. In the case that the sender does not follow up, the policy of the receiver agent related to abandoned threads would presumably be used to eventually delete the thread.
+`timing[delay_milli]` as Integer, e.g. `1337`: Wait at least this many milliseconds before processing the message. This may be useful to defeat temporal correlation. It is recommended that agents supporting this field should not honor requests for delays longer than 10 minutes (600,000 milliseconds).
+`timing[wait_until_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: Wait until this time before processing the message.
+
+[(Source 1: Aries Message Timing)](https://github.com/hyperledger/aries-rfcs/blob/master/features/0032-message-timing/README.md)
+  
+> ### Interactions
+
+◈ <a href="#trust-ping">**Trust Ping**</a> - Testing a pairwise channel.
+
+◈ <a href="#did-discovery">**DID Discovery**</a> - Requesting a DID from an agent.
+
+◈ <a href="#did-introduction">**DID Introduction**</a> - Introducing two parties through an intermediary.
+
+◈ <a href="#did-resolution">**DID Resolution**</a> - Using another agent as a Resolver.
+
+◈ <a href="#authentication">**Authentication**</a> - Proving control over a DID.
+
+◈ <a href="#authorization">**Authorization**</a> - Giving consent or permission.
+
+◈ <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about a DID.
+
+◈ <a href="#credential-revocation">**Credential Revocation**</a> - Notifying a holder that a previously issued credential has been revoked.
+
+◈ <a href="#presentation-verification">**Presentation Verification**</a> - Proving a set of statements about a DID.
 
 ---
 ## Trust Ping
@@ -35,62 +49,58 @@ Testing a pairwise channel.
 ### Messages
 
 #### Ping
-The <u>senders</u> sends the `trustPing` to the <u>receiver</u>, specifying a `callbackURL` for the `didResponse` to be posted to. TODO say what is OPTIONAL
+The <u>senders</u> sends the `trustPing` to the <u>receiver</u>, specifying a `callbackURL` for the `trustPingResponse` to be posted to.
 
 ###### Layout
 
 ```JSON
 trustPing: {
-    "callbackURL": "<URL as String>",
-    "responseRequested": <Boolean>, TODO: make obvious if MUST or optional
-    "type": "<URL as String>", TODO REM
-    "id": "<DID as String>", TODO make optional / REM
+    "callbackURL",
+    "responseRequested", //OPTIONAL! Counts as false if omitted!
+    "context", // OPTIONAL!
+    "id", // OPTIONAL!
+    "thread", // OPTIONAL!
+    "timing": {...} // OPTIONAL! All fields OPTIONAL!
+}
+```
+
+###### Example(s)
+
+```JSON
+trustPing: {
+    "callbackURL": "https://www.bobsworld.com/ping",
+    "responseRequested": true,
+    "context": "https://didcomm.org/trust_ping/1.0/ping",
+    "id": "did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v",
     "timing": {
-TODO
- "out_time": "2018-12-15 04:29:23Z",
-    "expires_time": "2018-12-15 05:29:23Z",
-
-
+        "delay_milli": 1337
     }
 }
 ```
 
 #### Response
-The <u>receiver</u> answers with a `trustPingResponse`:
+The <u>receiver</u> answers with a `trustPingResponse` if and only if `responseRequested` was `true` in the `trustPing` message:
 
 ###### Layout
 
 ```JSON
 trustPingResponse: {
-    "type": "<URL as String>",
-    "id": "<DID as String>",
-    "timing": {...}
+    "id", // OPTIONAL!
+    "thread", // OPTIONAL!
+    "timing": {...} // OPTIONAL! All fields OPTIONAL!
 }
 ```
 
-### Examples
-
-The <u>senders</u> sends the `trustPing` to the <u>receiver</u>'s API:
+###### Example(s)
 
 ```JSON
-{
-    "callbackURL": "https://www.bobsworld.com/ping",
-    "responseRequested": true,
-    "type": "https://didcomm.org/trust_ping/1.0/ping",
-    "id": "did:iota:sdgf786sdgfi87sedzgf",
-    "timing": {...}
+trustPingResponse: {
+    "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
 }
 ```
 
-Only if `responseRequested` is `true` may the <u>receiver</u> answer the ping with a `trustPingResponse`:
-
-```JSON
-{
-    "type": "https://didcomm.org/trust_ping/1.0/ping",
-    "id": "did:iota:hd8f7hg84e5hbtg8drg",
-    "timing": {...}
-}
-```
+[Source 1: DIF Trust Ping](https://identity.foundation/didcomm-messaging/spec/#trust-ping-protocol-10)
+[Source 2: Aries Trust Ping](https://github.com/hyperledger/aries-rfcs/tree/master/features/0048-trust-ping)
 
 ---
 ## DID Discovery
@@ -143,6 +153,46 @@ The <u>endpoint</u> answers with a `didResponse` to the `callbackURL`:
     "did": "did:iota:zsdbfg897s34bgez"
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+`callbackURL`
+`responseRequested`
+`context`
+`id`
+`thread`
+`timing`
+
+ TODO say what is OPTIONAL
+TODO https://identity.foundation/didcomm-messaging/spec/#discover-features-protocol-10
+TODO thread id
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---
 ## DID Introduction
