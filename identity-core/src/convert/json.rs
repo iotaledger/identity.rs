@@ -14,28 +14,28 @@ use crate::error::Result;
 pub trait ToJson: Serialize + Sized {
   /// Serialize `self` as a string of JSON.
   fn to_json(&self) -> Result<String> {
-    serde_json::to_string(self).map_err(Error::EncodeJSON)
+    serde_json::to_string(self).map_err(Error::EncodeJson)
   }
 
   /// Serialize `self` as a JSON byte vector.
   fn to_json_vec(&self) -> Result<Vec<u8>> {
-    serde_json::to_vec(self).map_err(Error::EncodeJSON)
+    serde_json::to_vec(self).map_err(Error::EncodeJson)
   }
 
   /// Serialize `self` as a [`serde_json::Value`].
   fn to_json_value(&self) -> Result<serde_json::Value> {
-    serde_json::to_value(self).map_err(Error::EncodeJSON)
+    serde_json::to_value(self).map_err(Error::EncodeJson)
   }
 
   /// Serialize `self` as a pretty-printed string of JSON.
   fn to_json_pretty(&self) -> Result<String> {
-    serde_json::to_string_pretty(self).map_err(Error::EncodeJSON)
+    serde_json::to_string_pretty(self).map_err(Error::EncodeJson)
   }
 
   /// Serialize `self` as a JSON byte vector, normalized using JSON
   /// Canonicalization Scheme (JCS).
   fn to_jcs(&self) -> Result<Vec<u8>> {
-    serde_jcs::to_vec(self).map_err(Error::EncodeJSON)
+    serde_jcs::to_vec(self).map_err(Error::EncodeJson)
   }
 
   /// Returns the given `data` serialized using JSON Canonicalization Scheme and
@@ -54,17 +54,17 @@ impl<T> ToJson for T where T: Serialize {}
 pub trait FromJson: for<'de> Deserialize<'de> + Sized {
   /// Deserialize `Self` from a string of JSON text.
   fn from_json(json: &(impl AsRef<str> + ?Sized)) -> Result<Self> {
-    serde_json::from_str(json.as_ref()).map_err(Error::DecodeJSON)
+    serde_json::from_str(json.as_ref()).map_err(Error::DecodeJson)
   }
 
   /// Deserialize `Self` from bytes of JSON text.
   fn from_json_slice(json: &(impl AsRef<[u8]> + ?Sized)) -> Result<Self> {
-    serde_json::from_slice(json.as_ref()).map_err(Error::DecodeJSON)
+    serde_json::from_slice(json.as_ref()).map_err(Error::DecodeJson)
   }
 
   /// Deserialize `Self` from a [`serde_json::Value`].
   fn from_json_value(json: serde_json::Value) -> Result<Self> {
-    serde_json::from_value(json).map_err(Error::DecodeJSON)
+    serde_json::from_value(json).map_err(Error::DecodeJson)
   }
 }
 

@@ -16,10 +16,10 @@ pub enum Error {
   Crypto(crypto::Error),
   /// Caused by a failure to encode Rust types as JSON.
   #[error("Failed to encode JSON: {0}")]
-  EncodeJSON(serde_json::Error),
+  EncodeJson(serde_json::Error),
   /// Caused by a failure to decode Rust types from JSON.
   #[error("Failed to decode JSON: {0}")]
-  DecodeJSON(serde_json::Error),
+  DecodeJson(serde_json::Error),
   /// Caused by a failure to decode base16-encoded data.
   #[error("Failed to decode base16 data: {0}")]
   DecodeBase16(#[from] hex::FromHexError),
