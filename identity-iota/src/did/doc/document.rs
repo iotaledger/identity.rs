@@ -558,6 +558,6 @@ mod tests {
     let keypair: KeyPair = generate_testkey();
     let document: Document = Document::from_keypair(&keypair).unwrap();
 
-    assert_eq!(Document::check_authentication(document.authentication()).unwrap(), ());
+    assert_eq!(Document::check_authentication(document.authentication()).is_ok(), true);
   }
 }
