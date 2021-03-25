@@ -68,7 +68,7 @@ async fn main() -> Result<()> {
     }
 
     new.set_updated(Timestamp::now());
-    new.set_previous_message_id(chain.auth_message_id().clone());
+    new.set_previous_message_id(*chain.auth_message_id());
 
     chain.current().sign_data(&mut new, keys[0].secret())?;
     new.publish(&client).await?;
@@ -95,7 +95,7 @@ async fn main() -> Result<()> {
       this
     };
 
-    let message_id = chain.diff_message_id().clone();
+    let message_id = *chain.diff_message_id();
     let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
     diff.publish(chain.auth_message_id(), &client).await?;
@@ -129,7 +129,7 @@ async fn main() -> Result<()> {
     }
 
     new.set_updated(Timestamp::now());
-    new.set_previous_message_id(chain.auth_message_id().clone());
+    new.set_previous_message_id(*chain.auth_message_id());
 
     new.sign(keypair.secret())?;
     new.publish(&client).await?;
@@ -152,7 +152,7 @@ async fn main() -> Result<()> {
       this
     };
 
-    let message_id = chain.diff_message_id().clone();
+    let message_id = *chain.diff_message_id();
     let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
     diff.publish(chain.auth_message_id(), &client).await?;
