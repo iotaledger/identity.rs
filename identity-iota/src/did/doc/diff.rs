@@ -18,8 +18,9 @@ use crate::did::Document;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::MessageId;
+use crate::tangle::MessageIdExt;
 use crate::tangle::TangleRef;
+use iota::MessageId;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DocumentDiff {
@@ -27,7 +28,7 @@ pub struct DocumentDiff {
   pub(crate) diff: String,
   pub(crate) previous_message_id: MessageId,
   pub(crate) proof: Option<Signature>,
-  #[serde(skip)]
+  #[serde(default = "MessageId::null", skip_serializing_if = "MessageIdExt::is_null")]
   pub(crate) message_id: MessageId,
 }
 
@@ -42,7 +43,7 @@ impl DocumentDiff {
       previous_message_id,
       diff,
       proof: None,
-      message_id: MessageId::NONE,
+      message_id: MessageId::null(),
     })
   }
 
@@ -90,7 +91,12 @@ impl DocumentDiff {
     let message: MessageId = match client.into() {
       Some(client) if client.network() == network => client.publish_diff(message_id, self).await?,
       Some(_) => return Err(Error::InvalidDIDNetwork),
-      None => Client::from_network(network)?.publish_diff(message_id, self).await?,
+      None => {
+        Client::from_network(network)
+          .await?
+          .publish_diff(message_id, self)
+          .await?
+      }
     };
 
     // Update the `self` with the `MessageId` of the bundled transaction.

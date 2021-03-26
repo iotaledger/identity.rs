@@ -40,11 +40,11 @@ fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
   Ok(credential)
 }
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
   // Initialize a `Client` to interact with the IOTA Tangle.
-  let client: Client = Client::new()?;
-
+  // Create a new client connected to the Testnet (Chrysalis).
+  let client: Client = Client::new().await?;
   // Create a DID Document/KeyPair for the credential issuer.
   let (doc_iss, key_iss): (Document, KeyPair) = common::document(&client).await?;
 

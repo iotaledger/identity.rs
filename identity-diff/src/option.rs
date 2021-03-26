@@ -1,9 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
-use std::fmt::{Debug, Formatter, Result as FmtResult};
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::Result as FmtResult;
 
 use crate::Diff;
 
@@ -78,18 +81,19 @@ impl<T: Diff> Default for DiffOption<T> {
   }
 }
 
-/// Into `Option<T>` implementation for `DiffOption<T>`.
-impl<T> Into<Option<T>> for DiffOption<T>
+/// From `DiffOption<T>` implementation for `Option<T>`.
+impl<T> From<DiffOption<T>> for Option<T>
 where
   T: Diff,
 {
-  fn into(self) -> Option<T> {
-    match self {
+  fn from(other: DiffOption<T>) -> Self {
+    match other {
       DiffOption::Some(s) => Some(Diff::from_diff(s).expect("Unable to convert from diff")),
       DiffOption::None => None,
     }
   }
 }
+
 /// From `Option<T>` implementation for `DiffOption<T>`.
 impl<T> From<Option<T>> for DiffOption<T>
 where

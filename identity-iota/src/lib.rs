@@ -4,6 +4,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg, extended_key_value_attributes))]
 #![cfg_attr(docsrs, cfg_attr(docsrs, doc = include_str!("../README.md")))]
 #![cfg_attr(not(docsrs), doc = "")]
+#![allow(clippy::upper_case_acronyms)]
 #![warn(
   rust_2018_idioms,
   unreachable_pub,
@@ -31,8 +32,6 @@ pub mod credential;
 pub mod did;
 pub mod error;
 pub mod tangle;
-
-pub(crate) mod utils;
 
 pub use self::error::Error;
 pub use self::error::Result;

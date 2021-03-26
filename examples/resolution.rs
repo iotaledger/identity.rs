@@ -13,10 +13,10 @@ use identity::did::resolution::SecondaryResource;
 use identity::iota::DID;
 use identity::prelude::*;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
-  let client: Client = Client::new()?;
-
+  // Create a new client connected to the Testnet (Chrysalis).
+  let client: Client = Client::new().await?;
   // Create a pair of Ed25519 public/secret keys.
   let key: KeyPair = KeyPair::new_ed25519()?;
 
