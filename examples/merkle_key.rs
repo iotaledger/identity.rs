@@ -28,10 +28,10 @@ use rand::Rng;
 
 const LEAVES: usize = 1 << 10;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
-  let client: Client = Client::new()?;
-
+  // Create a new client connected to the Testnet (Chrysalis).
+  let client: Client = Client::new().await?;
   // Create a new DID Document, signed and published.
   let (mut doc, auth): (Document, KeyPair) = common::document(&client).await?;
 
@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
   doc.insert_method(MethodScope::VerificationMethod, method);
 
   // Sign and publish the updated document
-  doc.set_previous_message_id(doc.message_id().clone());
+  doc.set_previous_message_id(*doc.message_id());
   doc.sign(auth.secret())?;
   doc.publish(&client).await?;
 
@@ -97,7 +97,7 @@ async fn main() -> Result<()> {
   }
 
   // Publish the new document with the updated revocation state
-  doc.set_previous_message_id(doc.message_id().clone());
+  doc.set_previous_message_id(*doc.message_id());
   doc.sign(auth.secret())?;
   doc.publish(&client).await?;
 

@@ -59,12 +59,6 @@ impl DID {
     self.0.tag().into()
   }
 
-  /// Returns the IOTA tangle address of the `DID`.
-  #[wasm_bindgen(getter)]
-  pub fn address(&self) -> String {
-    self.0.address()
-  }
-
   /// Returns the `DID` object as a string.
   #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]
