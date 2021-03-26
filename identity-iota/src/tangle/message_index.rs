@@ -204,7 +204,7 @@ where {
       MessageId::new(*b"99999999999999999999999999999990")
     );
 
-    let removed: Option<Case> = index
+    let removed: bool = index
       .remove_where(&MessageId::new(*b"99999999999999999999999999999990"), |_| true)
       .is_none();
 
