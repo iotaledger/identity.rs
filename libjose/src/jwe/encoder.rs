@@ -197,7 +197,7 @@ impl<'a> Encoder<'a> {
 
     self.validate()?;
 
-    let mut context: __Context = __Context::new(self, self.recipients.len());
+    let mut context: __Context<'_, '_> = __Context::new(self, self.recipients.len());
 
     for recipient in self.recipients.iter() {
       context.expand_recipient(self.protected, self.unprotected, *recipient)?;
@@ -208,7 +208,7 @@ impl<'a> Encoder<'a> {
       .unprotected(self.unprotected)
       .try_enc()?;
 
-    let encryption_key: Cow<[u8]> = if let Some(cek) = context.encryption_key {
+    let encryption_key: Cow<'_, [u8]> = if let Some(cek) = context.encryption_key {
       cek
     } else {
       Cow::Owned(random_bytes(encryption.key_len())?)
@@ -304,7 +304,7 @@ impl<'a> Encoder<'a> {
   ) -> Result<Option<Cow<'cek, [u8]>>> {
     match algorithm {
       JweAlgorithm::DIR => {
-        let key: Cow<[u8]> = recipient.public.to_oct_key(0)?;
+        let key: Cow<'_, [u8]> = recipient.public.to_oct_key(0)?;
 
         if key.len() != encryption.key_len() {
           return Err(Error::EncError("CEK (length)"));
@@ -375,7 +375,7 @@ impl<'a> Encoder<'a> {
 
     macro_rules! aead {
       ($impl:ident, $encryption_key:expr, $public:expr, $output:expr) => {{
-        let key: Cow<[u8]> = $public.to_oct_key($impl::KEY_LENGTH)?;
+        let key: Cow<'_, [u8]> = $public.to_oct_key($impl::KEY_LENGTH)?;
         let nonce: Nonce<$impl> = $impl::random_nonce()?;
 
         let mut ctx: Vec<u8> = vec![0; $encryption_key.len()];
@@ -392,7 +392,7 @@ impl<'a> Encoder<'a> {
 
     macro_rules! pbes2 {
       (($impl:ident, $digest_len:ident), $wrap:ident, $encryption_key:expr, $public:expr, $output:expr, $this:expr) => {{
-        let key: Cow<[u8]> = $public.to_oct_key(0)?;
+        let key: Cow<'_, [u8]> = $public.to_oct_key(0)?;
         let p2s: Vec<u8> = $this.extract_p2s($output)?;
         let p2c: usize = $this.extract_p2c($output)?;
         let salt: Vec<u8> = create_pbes2_salt($output.alg().name(), &p2s);
@@ -410,7 +410,7 @@ impl<'a> Encoder<'a> {
 
     macro_rules! aes_kw {
       ($impl:ident, $encryption_key:expr, $public:expr) => {{
-        let key: Cow<[u8]> = $public.to_oct_key($impl::KEY_LENGTH)?;
+        let key: Cow<'_, [u8]> = $public.to_oct_key($impl::KEY_LENGTH)?;
         let mut ctx: Vec<u8> = vec![0; $encryption_key.len() + $impl::BLOCK];
 
         $impl::new(&key).wrap_key($encryption_key, &mut ctx)?;
@@ -429,7 +429,7 @@ impl<'a> Encoder<'a> {
       ($derive:ident, $wrap:ident, $encryption_key:expr, $recipient:expr, $output:expr, $this:expr) => {{
         let algorithm: &str = $output.alg().name();
         let key_len: usize = $output.alg().try_key_len()?;
-        let deriver: EcdhDeriver = EcdhDeriver::new($this, &$recipient);
+        let deriver: EcdhDeriver<'_, '_> = EcdhDeriver::new($this, &$recipient);
         let derived: Vec<u8> = deriver.$derive($output, algorithm, key_len)?;
         let mut ctx: Vec<u8> = vec![0; $encryption_key.len() + $wrap::BLOCK];
 
@@ -449,7 +449,7 @@ impl<'a> Encoder<'a> {
       ($derive:ident, $wrap:ident, $encryption_key:expr, $recipient:expr, $output:expr, $this:expr) => {{
         let algorithm: &str = $output.alg().name();
         let key_len: usize = $output.alg().try_key_len()?;
-        let deriver: EcdhDeriver = EcdhDeriver::new($this, &$recipient);
+        let deriver: EcdhDeriver<'_, '_> = EcdhDeriver::new($this, &$recipient);
         let derived: Vec<u8> = deriver.$derive($output, algorithm, key_len)?;
         let nonce: Nonce<$wrap> = $wrap::random_nonce()?;
 
@@ -580,13 +580,13 @@ impl<'a> Encoder<'a> {
 // =============================================================================
 // =============================================================================
 
-struct __Context<'a: 'b, 'b> {
+struct __Context<'a, 'b> {
   encoder: &'b Encoder<'a>,
   recipients: Vec<(Recipient<'a>, JweHeader)>,
   encryption_key: Option<Cow<'a, [u8]>>,
 }
 
-impl<'a: 'b, 'b> __Context<'a, 'b> {
+impl<'a, 'b> __Context<'a, 'b> {
   pub fn new(encoder: &'b Encoder<'a>, recipients: usize) -> Self {
     Self {
       encoder,
@@ -601,7 +601,7 @@ impl<'a: 'b, 'b> __Context<'a, 'b> {
     unprotected: Option<&'a JweHeader>,
     recipient: Recipient<'a>,
   ) -> Result<()> {
-    let merged: HeaderSet = HeaderSet::new()
+    let merged: HeaderSet<'_> = HeaderSet::new()
       .header(recipient.header)
       .protected(protected)
       .unprotected(unprotected);
@@ -617,7 +617,7 @@ impl<'a: 'b, 'b> __Context<'a, 'b> {
       JweHeader::new(algorithm, encryption)
     };
 
-    let cek: Option<Cow<[u8]>> = self
+    let cek: Option<Cow<'_, [u8]>> = self
       .encoder
       .generate_cek(algorithm, encryption, &mut output, recipient)?;
 
@@ -681,9 +681,9 @@ where
   Ok(tag)
 }
 
-struct EcdhDeriver<'a: 'b, 'b>(&'b Encoder<'a>, &'b Recipient<'a>);
+struct EcdhDeriver<'a, 'b>(&'b Encoder<'a>, &'b Recipient<'a>);
 
-impl<'a: 'b, 'b> EcdhDeriver<'a, 'b> {
+impl<'a, 'b> EcdhDeriver<'a, 'b> {
   fn new(encoder: &'b Encoder<'a>, recipient: &'b Recipient<'a>) -> Self {
     Self(encoder, recipient)
   }

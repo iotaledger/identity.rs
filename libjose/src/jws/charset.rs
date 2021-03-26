@@ -27,7 +27,7 @@ impl CharSet {
   /// format. The payload MUST NOT contain a period (`.`) and MAY be
   /// required to only contain URL-safe characters.
   ///
-  /// See: https://tools.ietf.org/html/rfc7797#section-5.2
+  /// [More Info](https://tools.ietf.org/html/rfc7797#section-5.2)
   pub fn validate(&self, data: &[u8]) -> Result<()> {
     let payload: &str = from_utf8(data).map_err(|_| Error::InvalidContent("UTF-8"))?;
 

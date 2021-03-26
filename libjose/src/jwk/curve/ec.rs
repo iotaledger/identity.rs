@@ -32,7 +32,7 @@ impl EcCurve {
 }
 
 impl Display for EcCurve {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_str(self.name())
   }
 }

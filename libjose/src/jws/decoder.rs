@@ -3,6 +3,15 @@
 
 use core::convert::TryInto;
 use core::str;
+use crypto::hashes::sha::SHA256;
+use crypto::hashes::sha::SHA256_LEN;
+use crypto::hashes::sha::SHA384;
+use crypto::hashes::sha::SHA384_LEN;
+use crypto::hashes::sha::SHA512;
+use crypto::hashes::sha::SHA512_LEN;
+use crypto::macs::hmac::HMAC_SHA256;
+use crypto::macs::hmac::HMAC_SHA384;
+use crypto::macs::hmac::HMAC_SHA512;
 use serde_json::from_slice;
 use subtle::ConstantTimeEq as _;
 
@@ -178,7 +187,7 @@ impl<'a, 'b> Decoder<'a, 'b> {
           return Err(Error::InvalidContent("Segments (count)"));
         }
 
-        let signature: Signature = Signature {
+        let signature: Signature<'_> = Signature {
           header: None,
           protected: Some(parse_utf8(split[0])?),
           signature: parse_utf8(split[2])?,
@@ -187,12 +196,12 @@ impl<'a, 'b> Decoder<'a, 'b> {
         format(self.expand_payload(Some(split[1]))?, vec![signature])
       }
       JwsFormat::General => {
-        let data: General = from_slice(data)?;
+        let data: General<'_> = from_slice(data)?;
 
         format(self.expand_payload(data.payload)?, data.signatures)
       }
       JwsFormat::Flatten => {
-        let data: Flatten = from_slice(data)?;
+        let data: Flatten<'_> = from_slice(data)?;
 
         format(self.expand_payload(data.payload)?, vec![data.signature])
       }
@@ -223,10 +232,7 @@ impl<'a, 'b> Decoder<'a, 'b> {
   fn verify(&self, algorithm: JwsAlgorithm, message: &[u8], signature: &[u8]) -> Result<()> {
     macro_rules! hmac {
       ($impl:ident, $key_len:ident, $message:expr, $signature:expr, $secret:expr) => {{
-        use ::crypto::hashes::sha::$key_len;
-        use ::crypto::macs::hmac::$impl;
-
-        let secret: Cow<[u8]> = $secret.to_oct_key($key_len)?;
+        let secret: Cow<'_, [u8]> = $secret.to_oct_key($key_len)?;
         let mut mac: [u8; $key_len] = [0; $key_len];
 
         $impl($message, &secret, &mut mac);
@@ -239,9 +245,6 @@ impl<'a, 'b> Decoder<'a, 'b> {
 
     macro_rules! rsa {
       ($padding:ident, $digest:ident, $digest_len:ident, $message:expr, $signature:expr, $secret:expr) => {{
-        use ::crypto::hashes::sha::$digest;
-        use ::crypto::hashes::sha::$digest_len;
-
         let mut digest: [u8; $digest_len] = [0; $digest_len];
 
         $digest($message, &mut digest);

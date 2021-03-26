@@ -173,13 +173,13 @@ impl<'a> Decoder<'a> {
         self.crits.as_deref(),
       )?;
 
-      let cek: Option<(Cow<[u8]>, Option<JweHeader>)> = expanded
+      let cek: Option<(Cow<'_, [u8]>, Option<JweHeader>)> = expanded
         .recipients
         .into_iter()
         .find_map(|recipient| self.expand_recipient(protected_ref, unprotected_ref, recipient).ok());
 
       if let Some((cek, header)) = cek {
-        let merged: HeaderSet = HeaderSet::new()
+        let merged: HeaderSet<'_> = HeaderSet::new()
           .header(&header)
           .protected(protected_ref)
           .unprotected(unprotected_ref);
@@ -213,7 +213,7 @@ impl<'a> Decoder<'a> {
   ) -> Result<(Cek<'a>, Option<JweHeader>)> {
     let header: Option<JweHeader> = recipient.header.take();
 
-    let merged: HeaderSet = HeaderSet::new()
+    let merged: HeaderSet<'_> = HeaderSet::new()
       .header(header.as_ref())
       .protected(protected)
       .unprotected(unprotected);
@@ -229,7 +229,7 @@ impl<'a> Decoder<'a> {
     self.check_enc(enc)?;
     self.check_kid(header.kid())?;
 
-    let cek: Cow<[u8]> = self.decrypt_key(alg, enc, header, recipient)?;
+    let cek: Cow<'_, [u8]> = self.decrypt_key(alg, enc, header, recipient)?;
 
     // THE CEK length MUST be equal to the required length of the content
     // encryption algorithm.
@@ -274,7 +274,7 @@ impl<'a> Decoder<'a> {
     macro_rules! aead {
       ($impl:ident, $header:expr, $recipient:expr, $secret:expr) => {{
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
-        let key: Cow<[u8]> = $secret.to_oct_key($impl::KEY_LENGTH)?;
+        let key: Cow<'_, [u8]> = $secret.to_oct_key($impl::KEY_LENGTH)?;
         let iv: Vec<u8> = $header.try_iv().and_then(decode_b64)?;
         let tag: Vec<u8> = $header.try_tag().and_then(decode_b64)?;
         let mut ptx: Vec<u8> = vec![0; ctx.len()];
@@ -288,7 +288,7 @@ impl<'a> Decoder<'a> {
     macro_rules! pbes2 {
       (($impl:ident, $digest_len:ident), $wrap:ident, $header:expr, $recipient:expr, $secret:expr) => {{
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
-        let key: Cow<[u8]> = $secret.to_oct_key(0)?;
+        let key: Cow<'_, [u8]> = $secret.to_oct_key(0)?;
         let p2s: Vec<u8> = $header.try_p2s().and_then(decode_b64)?;
         let p2c: usize = usize::try_from($header.try_p2c()?).map_err(|_| Error::InvalidClaim("p2c"))?;
         let salt: Vec<u8> = create_pbes2_salt($header.try_alg()?.name(), &p2s);
@@ -311,7 +311,7 @@ impl<'a> Decoder<'a> {
     macro_rules! aes_kw {
       ($impl:ident, $recipient:expr, $secret:expr) => {{
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
-        let key: Cow<[u8]> = $secret.to_oct_key($impl::KEY_LENGTH)?;
+        let key: Cow<'_, [u8]> = $secret.to_oct_key($impl::KEY_LENGTH)?;
 
         let mut ptx: Vec<u8> = ctx
           .len()
@@ -335,7 +335,7 @@ impl<'a> Decoder<'a> {
       ($derive:ident, $wrap:ident, $header:expr, $recipient:expr, $this:expr) => {{
         let algorithm: &str = $header.try_alg()?.name();
         let key_len: usize = $header.try_alg()?.try_key_len()?;
-        let deriver: EcdhDeriver = EcdhDeriver::new($this);
+        let deriver: EcdhDeriver<'_, '_> = EcdhDeriver::new($this);
         let derived: Vec<u8> = deriver.$derive(&$header, algorithm, key_len)?;
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
 
@@ -361,7 +361,7 @@ impl<'a> Decoder<'a> {
       ($derive:ident, $wrap:ident, $header:expr, $recipient:expr, $this:expr) => {{
         let algorithm: &str = $header.try_alg()?.name();
         let key_len: usize = $header.try_alg()?.try_key_len()?;
-        let deriver: EcdhDeriver = EcdhDeriver::new($this);
+        let deriver: EcdhDeriver<'_, '_> = EcdhDeriver::new($this);
         let derived: Vec<u8> = deriver.$derive(&header, algorithm, key_len)?;
         let ctx: Vec<u8> = parse_cek($recipient.encrypted_key)?;
         let iv: Vec<u8> = $header.try_iv().and_then(decode_b64)?;
@@ -471,7 +471,7 @@ impl<'a> Decoder<'a> {
         })
       }
       JweFormat::General => {
-        let data: General = from_slice(data)?;
+        let data: General<'_> = from_slice(data)?;
 
         format(Expanded {
           protected: filter_non_empty_bytes(data.protected),
@@ -484,7 +484,7 @@ impl<'a> Decoder<'a> {
         })
       }
       JweFormat::Flatten => {
-        let data: Flatten = from_slice(data)?;
+        let data: Flatten<'_> = from_slice(data)?;
 
         format(Expanded {
           protected: filter_non_empty_bytes(data.protected),
@@ -556,20 +556,20 @@ fn decrypt_content(
   Ok(plaintext)
 }
 
-struct EcdhDeriver<'a: 'b, 'b>(&'b Decoder<'a>);
+struct EcdhDeriver<'a, 'b>(&'b Decoder<'a>);
 
-impl<'a: 'b, 'b> EcdhDeriver<'a, 'b> {
+impl<'a, 'b> EcdhDeriver<'a, 'b> {
   fn new(decoder: &'b Decoder<'a>) -> Self {
     Self(decoder)
   }
 
-  fn derive_ecdh_es(&self, header: &HeaderSet, algorithm: &str, key_len: usize) -> Result<Vec<u8>> {
+  fn derive_ecdh_es(&self, header: &HeaderSet<'_>, algorithm: &str, key_len: usize) -> Result<Vec<u8>> {
     self.derive_ecdh_key(header, algorithm, key_len, |epk| {
       diffie_hellman(self.0.ecdh_curve, epk, self.0.secret)
     })
   }
 
-  fn derive_ecdh_1pu(&self, header: &HeaderSet, algorithm: &str, key_len: usize) -> Result<Vec<u8>> {
+  fn derive_ecdh_1pu(&self, header: &HeaderSet<'_>, algorithm: &str, key_len: usize) -> Result<Vec<u8>> {
     self.derive_ecdh_key(header, algorithm, key_len, |epk| {
       let public: Secret<'a> = self.0.public.ok_or(Error::EncError("Missing ECDH-1PU Public Key"))?;
       let ze: Vec<u8> = diffie_hellman(self.0.ecdh_curve, epk, self.0.secret)?;
@@ -581,7 +581,7 @@ impl<'a: 'b, 'b> EcdhDeriver<'a, 'b> {
 
   fn derive_ecdh_key(
     &self,
-    header: &HeaderSet,
+    header: &HeaderSet<'_>,
     algorithm: &str,
     key_len: usize,
     key_exchange: impl Fn(&Jwk) -> Result<Vec<u8>>,

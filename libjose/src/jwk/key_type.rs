@@ -37,7 +37,7 @@ impl JwkType {
 }
 
 impl Display for JwkType {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_str(self.name())
   }
 }

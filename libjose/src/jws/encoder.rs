@@ -2,6 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::str;
+use crypto::hashes::sha::SHA256;
+use crypto::hashes::sha::SHA256_LEN;
+use crypto::hashes::sha::SHA384;
+use crypto::hashes::sha::SHA384_LEN;
+use crypto::hashes::sha::SHA512;
+use crypto::hashes::sha::SHA512_LEN;
+use crypto::macs::hmac::HMAC_SHA256;
+use crypto::macs::hmac::HMAC_SHA384;
+use crypto::macs::hmac::HMAC_SHA512;
 use serde::Serialize;
 use serde_json::to_vec;
 
@@ -44,7 +53,7 @@ struct General<'a> {
 }
 
 #[derive(Serialize)]
-struct Flatten<'a: 'b, 'b> {
+struct Flatten<'a, 'b> {
   #[serde(skip_serializing_if = "Option::is_none")]
   payload: Option<&'a str>,
   #[serde(flatten)]
@@ -261,10 +270,7 @@ fn encode_recipient<'a>(payload: &[u8], recipient: Recipient<'a>) -> Result<Sign
 fn sign(algorithm: JwsAlgorithm, message: &[u8], recipient: Recipient<'_>) -> Result<String> {
   macro_rules! hmac {
     ($impl:ident, $key_len:ident, $message:expr, $secret:expr) => {{
-      use ::crypto::hashes::sha::$key_len;
-      use ::crypto::macs::hmac::$impl;
-
-      let secret: Cow<[u8]> = $secret.to_oct_key($key_len)?;
+      let secret: Cow<'_, [u8]> = $secret.to_oct_key($key_len)?;
       let mut mac: [u8; $key_len] = [0; $key_len];
 
       $impl($message, &secret, &mut mac);
@@ -275,9 +281,6 @@ fn sign(algorithm: JwsAlgorithm, message: &[u8], recipient: Recipient<'_>) -> Re
 
   macro_rules! rsa {
     ($padding:ident, $digest:ident, $digest_len:ident, $message:expr, $secret:expr) => {{
-      use ::crypto::hashes::sha::$digest;
-      use ::crypto::hashes::sha::$digest_len;
-
       let mut digest: [u8; $digest_len] = [0; $digest_len];
 
       $digest($message, &mut digest);

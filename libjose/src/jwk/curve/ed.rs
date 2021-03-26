@@ -26,7 +26,7 @@ impl EdCurve {
 }
 
 impl Display for EdCurve {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_str(self.name())
   }
 }

@@ -59,7 +59,7 @@ impl JwkOperation {
 }
 
 impl Display for JwkOperation {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_str(self.name())
   }
 }

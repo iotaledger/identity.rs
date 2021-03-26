@@ -24,7 +24,7 @@ impl EcdhCurve {
 }
 
 impl Display for EcdhCurve {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_str(self.name())
   }
 }

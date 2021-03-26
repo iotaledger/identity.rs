@@ -201,7 +201,7 @@ impl JweAlgorithm {
 }
 
 impl Display for JweAlgorithm {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     f.write_str(self.name())
   }
 }

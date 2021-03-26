@@ -24,11 +24,22 @@
 //! - [Public Key Authenticated Encryption for JOSE: ECDH-1PU](https://tools.ietf.org/html/draft-madden-jose-ecdh-1pu-03)
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::upper_case_acronyms)]
+#![warn(
+  rust_2018_idioms,
+  // unreachable_pub,
+  // missing_docs,
+  missing_crate_level_docs,
+  broken_intra_doc_links,
+  private_intra_doc_links,
+  private_doc_tests,
+  clippy::missing_safety_doc,
+  // clippy::missing_errors_doc,
+)]
 
 #[cfg(not(feature = "alloc"))]
 compile_error!("This crate does not yet support environments without liballoc.");
 
-#[cfg(feature = "alloc")]
+#[cfg(all(feature = "alloc", not(feature = "std")))]
 extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
@@ -49,24 +60,32 @@ pub mod jwt;
 #[doc(hidden)]
 pub mod utils;
 
+pub use self::error::Error;
+pub use self::error::Result;
+
 mod lib {
   #[cfg(all(feature = "alloc", not(feature = "std")))]
-  pub use alloc::vec;
+  pub(crate) use alloc::format;
   #[cfg(feature = "std")]
-  pub use std::vec;
+  pub(crate) use std::format;
 
   #[cfg(all(feature = "alloc", not(feature = "std")))]
-  pub use alloc::borrow::{Cow, ToOwned};
+  pub(crate) use alloc::vec;
   #[cfg(feature = "std")]
-  pub use std::borrow::{Cow, ToOwned};
+  pub(crate) use std::vec;
 
   #[cfg(all(feature = "alloc", not(feature = "std")))]
-  pub use alloc::string::{String, ToString};
+  pub(crate) use alloc::borrow::Cow;
   #[cfg(feature = "std")]
-  pub use std::string::{String, ToString};
+  pub(crate) use std::borrow::Cow;
 
   #[cfg(all(feature = "alloc", not(feature = "std")))]
-  pub use alloc::vec::Vec;
+  pub(crate) use alloc::string::{String, ToString};
   #[cfg(feature = "std")]
-  pub use std::vec::Vec;
+  pub(crate) use std::string::{String, ToString};
+
+  #[cfg(all(feature = "alloc", not(feature = "std")))]
+  pub(crate) use alloc::vec::Vec;
+  #[cfg(feature = "std")]
+  pub(crate) use std::vec::Vec;
 }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #[macro_export]
+#[doc(hidden)]
 macro_rules! rsa_padding {
   (@PKCS1_SHA256) => {
     ::rsa::PaddingScheme::new_pkcs1v15_sign(Some(::rsa::Hash::SHA2_256))

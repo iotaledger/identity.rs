@@ -36,7 +36,7 @@ impl JoseContentType {
 }
 
 impl Display for JoseContentType {
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_str(self.name())
   }
 }

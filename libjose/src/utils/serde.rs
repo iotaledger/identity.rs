@@ -111,7 +111,7 @@ pub fn validate_jwe_headers<'a>(
   for recipient in recipients {
     // TODO: Validate Disjoint
 
-    let unprotected: Option<Cow<JweHeader>> = match (unprotected, recipient) {
+    let unprotected: Option<Cow<'_, JweHeader>> = match (unprotected, recipient) {
       (Some(header), None) => Some(Cow::Borrowed(header)),
       (None, Some(header)) => Some(Cow::Borrowed(header)),
       (Some(_lhs), Some(_rhs)) => todo!("Merge Headers"),

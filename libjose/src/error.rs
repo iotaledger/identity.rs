@@ -1,12 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! Errors that may occur in the library.
+
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 
+/// Alias for a `Result` with the error type [Error].
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
+/// All possible errors that can occur in the library.
 #[derive(Debug)]
 pub enum Error {
   InvalidJson(serde_json::Error),
@@ -27,7 +31,7 @@ pub enum Error {
 }
 
 impl Display for Error {
-  fn fmt(&self, f: &mut Formatter) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     match self {
       Self::InvalidJson(inner) => f.write_fmt(format_args!("Invalid JSON: {}", inner)),
       Self::InvalidBase64(inner) => f.write_fmt(format_args!("Invalid Base64: {}", inner)),

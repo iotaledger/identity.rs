@@ -65,13 +65,13 @@ macro_rules! impl_accessors {
 }
 
 #[derive(Debug)]
-pub struct JwtHeaderSet<'a, T: 'a> {
+pub struct JwtHeaderSet<'a, T> {
   protected: Option<&'a T>,
   unprotected: Option<&'a T>,
   header: Option<&'a T>,
 }
 
-impl<'a, T: 'a> JwtHeaderSet<'a, T> {
+impl<'a, T> JwtHeaderSet<'a, T> {
   pub const fn new() -> Self {
     Self {
       protected: None,
