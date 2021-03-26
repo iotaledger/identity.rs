@@ -20,17 +20,22 @@ serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
+[dependencies.iota-core]
+git = "https://github.com/iotaledger/iota.rs"
+rev = "04de91aebc211b7d2291c17a900a4f2174109184"
+default-features = false
+features = ["async", "wasm"]
+
 [dependencies.web-sys]
 version = "0.3"
 default-features = false
-features = [
-  "console",
-]
+features = ["console"]
 
 [dev-dependencies]
 wasm-bindgen-test = { version = "0.3" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+chrono = { version = "0.4", features = ["wasmbind"] }
 getrandom = { version = "0.2", features = ["js"] }
 
 [package.metadata.wasm-pack.profile.release]

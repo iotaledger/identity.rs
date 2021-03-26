@@ -17,8 +17,8 @@ pub enum Error {
   InvalidDoc(#[from] identity_did::Error),
   #[error("{0}")]
   ClientError(#[from] iota::client::error::Error),
-  #[error("{0}")]
-  TernaryError(#[from] iota::ternary::Error),
+  #[error("Invalid Message: {0}")]
+  InvalidMessage(#[from] iota::bee_message::Error),
   #[error("Invalid Document - Missing Message Id")]
   InvalidDocumentMessageId,
   #[error("Invalid Document - Authentication Authority Mismatch")]

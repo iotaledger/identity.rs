@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::Diff;
-use serde::{Deserialize, Serialize};
-use std::{
-  collections::HashSet,
-  fmt::{Debug, Formatter, Result as FmtResult},
-  hash::Hash,
-  iter::empty,
-};
+use serde::Deserialize;
+use serde::Serialize;
+use std::collections::HashSet;
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::Result as FmtResult;
+use std::hash::Hash;
+use std::iter::empty;
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct DiffHashSet<T: Diff>(#[serde(skip_serializing_if = "Option::is_none")] pub Option<Vec<InnerValue<T>>>);

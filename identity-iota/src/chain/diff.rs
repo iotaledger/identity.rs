@@ -14,10 +14,12 @@ use crate::did::DocumentDiff;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::Message;
-use crate::tangle::MessageId;
+use crate::tangle::MessageExt;
+use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
+use iota::Message;
+use iota::MessageId;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(transparent)]
@@ -127,13 +129,13 @@ impl DiffChain {
       });
     }
 
-    if diff.message_id().is_none() {
+    if diff.message_id().is_null() {
       return Err(Error::ChainError {
         error: "Invalid Message Id",
       });
     }
 
-    if diff.previous_message_id().is_none() {
+    if diff.previous_message_id().is_null() {
       return Err(Error::ChainError {
         error: "Invalid Previous Message Id",
       });
