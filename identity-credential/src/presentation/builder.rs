@@ -171,7 +171,6 @@ mod tests {
   }
 
   #[test]
-  #[rustfmt::skip]
   fn test_presentation_builder_valid() {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let controller: DID = "did:example:1234".parse().unwrap();
@@ -197,7 +196,11 @@ mod tests {
       .build()
       .unwrap();
 
-    document.signer(keypair.secret()).method("#key-1").sign(&mut credential).unwrap();
+    document
+      .signer(keypair.secret())
+      .method("#key-1")
+      .sign(&mut credential)
+      .unwrap();
 
     let presentation: Presentation = PresentationBuilder::default()
       .type_("ExamplePresentation")
@@ -206,12 +209,21 @@ mod tests {
       .unwrap();
 
     assert_eq!(presentation.context.len(), 1);
-    assert_eq!(presentation.context.get(0).unwrap(), Presentation::<Object>::base_context());
+    assert_eq!(
+      presentation.context.get(0).unwrap(),
+      Presentation::<Object>::base_context()
+    );
     assert_eq!(presentation.types.len(), 2);
     assert_eq!(presentation.types.get(0).unwrap(), Presentation::<Object>::base_type());
     assert_eq!(presentation.types.get(1).unwrap(), "ExamplePresentation");
     assert_eq!(presentation.verifiable_credential.len(), 1);
-    assert_eq!(presentation.verifiable_credential.get(0).unwrap().types.get(0).unwrap(), Credential::<Object>::base_type());
-    assert_eq!(presentation.verifiable_credential.get(0).unwrap().types.get(1).unwrap(), "ExampleCredential");
+    assert_eq!(
+      presentation.verifiable_credential.get(0).unwrap().types.get(0).unwrap(),
+      Credential::<Object>::base_type()
+    );
+    assert_eq!(
+      presentation.verifiable_credential.get(0).unwrap().types.get(1).unwrap(),
+      "ExampleCredential"
+    );
   }
 }

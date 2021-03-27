@@ -102,7 +102,8 @@ impl FromStr for Timestamp {
 #[cfg(test)]
 mod tests {
   use crate::common::Timestamp;
-  use crate::convert::AsJson;
+  use crate::convert::FromJson;
+  use crate::convert::ToJson;
 
   #[test]
   fn test_parse_valid() {

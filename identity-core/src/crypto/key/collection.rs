@@ -22,7 +22,7 @@ use crate::crypto::PublicKey;
 use crate::crypto::SecretKey;
 use crate::error::Error;
 use crate::error::Result;
-use crate::utils::generate_ed25519_list;
+use crate::utils::generate_ed25519_keypairs;
 
 /// A collection of cryptographic keys.
 #[derive(Clone, Debug)]
@@ -64,7 +64,7 @@ impl KeyCollection {
   /// Creates a new [`KeyCollection`] with the given [`key type`][`KeyType`].
   pub fn new(type_: KeyType, count: usize) -> Result<Self> {
     let keys: Vec<(PublicKey, SecretKey)> = match type_ {
-      KeyType::Ed25519 => generate_ed25519_list(count)?,
+      KeyType::Ed25519 => generate_ed25519_keypairs(count)?,
     };
 
     Self::from_iterator(type_, keys.into_iter())

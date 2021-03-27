@@ -3,10 +3,19 @@
 
 #![allow(non_snake_case)]
 
-use crate::model::{DataFields, EVariant, InputModel, SVariant};
-use proc_macro2::{Ident, TokenStream};
-use quote::{format_ident, quote};
-use syn::{punctuated::Punctuated, token::Comma, GenericParam, Type, WhereClause};
+use crate::model::DataFields;
+use crate::model::EVariant;
+use crate::model::InputModel;
+use crate::model::SVariant;
+use proc_macro2::Ident;
+use proc_macro2::TokenStream;
+use quote::format_ident;
+use quote::quote;
+use syn::punctuated::Punctuated;
+use syn::token::Comma;
+use syn::GenericParam;
+use syn::Type;
+use syn::WhereClause;
 
 /// derive a Diff type Enum from an incoming `InputModel`.
 pub fn derive_diff_enum(input: &InputModel) -> TokenStream {

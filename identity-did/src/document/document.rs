@@ -438,7 +438,6 @@ mod tests {
   }
 
   #[test]
-  #[rustfmt::skip]
   fn test_resolve_fragment_identifier() {
     let document: Document = document();
 
@@ -454,7 +453,6 @@ mod tests {
   }
 
   #[test]
-  #[rustfmt::skip]
   fn test_resolve_index_identifier() {
     let document: Document = document();
 
@@ -464,7 +462,6 @@ mod tests {
   }
 
   #[test]
-  #[rustfmt::skip]
   fn test_resolve_reference_missing() {
     let document: Document = document();
 

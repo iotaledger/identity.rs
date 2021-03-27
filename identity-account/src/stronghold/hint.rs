@@ -14,5 +14,6 @@ where
 }
 
 pub fn default_hint() -> RecordHint {
+  // unwrap is okay, the hint is <= 24 bytes
   RecordHint::new([0; 24]).unwrap()
 }

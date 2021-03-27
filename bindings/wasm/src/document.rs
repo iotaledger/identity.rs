@@ -15,6 +15,8 @@ use identity::did::MethodScope;
 use identity::iota::Document as IotaDocument;
 use identity::iota::DocumentDiff;
 use identity::iota::Method as IotaMethod;
+use iota::MessageId;
+use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
 use crate::credential::VerifiableCredential;
@@ -248,7 +250,7 @@ impl Document {
   pub fn diff(&self, other: &Document, message: &str, key: &KeyPair) -> Result<JsValue, JsValue> {
     self
       .0
-      .diff(&other.0, message.to_string().into(), key.0.secret())
+      .diff(&other.0, MessageId::from_str(message).map_err(err)?, key.0.secret())
       .map_err(err)
       .and_then(|diff| JsValue::from_serde(&diff).map_err(err))
   }

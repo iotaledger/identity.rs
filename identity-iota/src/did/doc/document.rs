@@ -25,6 +25,7 @@ use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
+use iota::MessageId;
 use serde::Serialize;
 
 use crate::client::Client;
@@ -35,9 +36,8 @@ use crate::did::Properties as BaseProperties;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::MessageId;
+use crate::tangle::MessageIdExt;
 use crate::tangle::TangleRef;
-use crate::utils::utf8_to_trytes;
 
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, ()>;
@@ -92,7 +92,7 @@ impl Document {
       .build()
       .map(CoreDocument::into_verifiable)
       .map(Into::into)
-      .unwrap() // `uwnrap` is fine - we provided all the necessary properties
+      .unwrap() // `unwrap` is fine - we provided all the necessary properties
   }
 
   /// Converts a generic DID [`Document`][CoreDocument] to an IOTA DID Document.
@@ -118,7 +118,7 @@ impl Document {
 
     Ok(Self {
       document: document.serde_into()?,
-      message_id: MessageId::NONE,
+      message_id: MessageId::null(),
     })
   }
 
@@ -374,7 +374,7 @@ impl Document {
     let message: MessageId = match client.into() {
       Some(client) if client.network() == network => client.publish_document(self).await?,
       Some(_) => return Err(Error::InvalidDIDNetwork),
-      None => Client::from_network(network)?.publish_document(self).await?,
+      None => Client::from_network(network).await?.publish_document(self).await?,
     };
 
     // Update the `self` with the `MessageId` of the bundled transaction.
@@ -385,15 +385,11 @@ impl Document {
 
   /// Returns the Tangle address of the DID diff chain.
   pub fn diff_address(message_id: &MessageId) -> Result<String> {
-    if message_id.is_none() {
+    if message_id.is_null() {
       return Err(Error::InvalidDocumentMessageId);
     }
 
-    let hash: String = DID::encode_key(message_id.as_str().as_bytes());
-
-    let mut trytes: String = utf8_to_trytes(&hash);
-    trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
-    Ok(trytes)
+    Ok(DID::encode_key(message_id.encode_hex().as_bytes()))
   }
 }
 
@@ -421,7 +417,7 @@ impl From<BaseDocument> for Document {
   fn from(other: BaseDocument) -> Self {
     Self {
       document: other,
-      message_id: MessageId::NONE,
+      message_id: MessageId::null(),
     }
   }
 }

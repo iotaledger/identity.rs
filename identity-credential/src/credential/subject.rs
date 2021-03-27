@@ -60,14 +60,19 @@ mod tests {
   const JSON10: &str = include_str!("../../tests/fixtures/subject-10.json");
 
   #[test]
-  #[rustfmt::skip]
   fn test_from_json() {
     let subject: Subject = Subject::from_json(JSON1).unwrap();
     assert_eq!(subject.id.unwrap(), "did:example:ebfeb1f712ebc6f1c276e12ec21");
-    assert_eq!(subject.properties["alumniOf"]["id"], "did:example:c276e12ec21ebfeb1f712ebc6f1");
+    assert_eq!(
+      subject.properties["alumniOf"]["id"],
+      "did:example:c276e12ec21ebfeb1f712ebc6f1"
+    );
     assert_eq!(subject.properties["alumniOf"]["name"][0]["value"], "Example University");
     assert_eq!(subject.properties["alumniOf"]["name"][0]["lang"], "en");
-    assert_eq!(subject.properties["alumniOf"]["name"][1]["value"], "Exemple d'Université");
+    assert_eq!(
+      subject.properties["alumniOf"]["name"][1]["value"],
+      "Exemple d'Université"
+    );
     assert_eq!(subject.properties["alumniOf"]["name"][1]["lang"], "fr");
 
     let subject: Subject = Subject::from_json(JSON2).unwrap();
@@ -108,19 +113,34 @@ mod tests {
     let subject: Subject = Subject::from_json(JSON9).unwrap();
     assert_eq!(subject.id.unwrap(), "did:example:ebfeb1f712ebc6f1c276e12ec21");
     assert_eq!(subject.properties["image"], "https://example.edu/images/58473");
-    assert_eq!(subject.properties["alumniOf"]["id"], "did:example:c276e12ec21ebfeb1f712ebc6f1");
+    assert_eq!(
+      subject.properties["alumniOf"]["id"],
+      "did:example:c276e12ec21ebfeb1f712ebc6f1"
+    );
     assert_eq!(subject.properties["alumniOf"]["name"][0]["value"], "Example University");
     assert_eq!(subject.properties["alumniOf"]["name"][0]["lang"], "en");
-    assert_eq!(subject.properties["alumniOf"]["name"][1]["value"], "Exemple d'Université");
+    assert_eq!(
+      subject.properties["alumniOf"]["name"][1]["value"],
+      "Exemple d'Université"
+    );
     assert_eq!(subject.properties["alumniOf"]["name"][1]["lang"], "fr");
 
     let subject: Subject = Subject::from_json(JSON10).unwrap();
     assert_eq!(subject.id.unwrap(), "did:example:ebfeb1f712ebc6f1c276e12ec21");
-    assert_eq!(subject.properties["image"], "ipfs:/ipfs/QmXfrS3pHerg44zzK6QKQj6JDk8H6cMtQS7pdXbohwNQfK/image");
-    assert_eq!(subject.properties["alumniOf"]["id"], "did:example:c276e12ec21ebfeb1f712ebc6f1");
+    assert_eq!(
+      subject.properties["image"],
+      "ipfs:/ipfs/QmXfrS3pHerg44zzK6QKQj6JDk8H6cMtQS7pdXbohwNQfK/image"
+    );
+    assert_eq!(
+      subject.properties["alumniOf"]["id"],
+      "did:example:c276e12ec21ebfeb1f712ebc6f1"
+    );
     assert_eq!(subject.properties["alumniOf"]["name"][0]["value"], "Example University");
     assert_eq!(subject.properties["alumniOf"]["name"][0]["lang"], "en");
-    assert_eq!(subject.properties["alumniOf"]["name"][1]["value"], "Exemple d'Université");
+    assert_eq!(
+      subject.properties["alumniOf"]["name"][1]["value"],
+      "Exemple d'Université"
+    );
     assert_eq!(subject.properties["alumniOf"]["name"][1]["lang"], "fr");
   }
 }

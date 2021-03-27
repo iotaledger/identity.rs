@@ -5,11 +5,16 @@ use crate::client::Client;
 use crate::client::Network;
 use crate::error::Result;
 
-/// A `ClientBuilder` is used to generated a customized [Client].
+/// Sets the default node syncing process.
+/// For Chrysalis network (Testnet) we need node_sync_enabled to be false (default).
+const NODE_SYNC_ENABLED: bool = false;
+
+/// A `ClientBuilder` is used to generated a customized `Client`.
 #[derive(Clone, Debug)]
 pub struct ClientBuilder {
   pub(crate) network: Network,
   pub(crate) nodes: Vec<String>,
+  pub(crate) node_sync_enabled: bool,
 }
 
 impl ClientBuilder {
@@ -18,6 +23,7 @@ impl ClientBuilder {
     Self {
       network: Network::Mainnet,
       nodes: Vec::new(),
+      node_sync_enabled: NODE_SYNC_ENABLED,
     }
   }
 
@@ -41,9 +47,14 @@ impl ClientBuilder {
     self
   }
 
+  pub fn node_sync_enabled(mut self, value: bool) -> Self {
+    self.node_sync_enabled = value;
+    self
+  }
+
   /// Creates a new `Client` based on the `ClientBuilder` configuration.
-  pub fn build(self) -> Result<Client> {
-    Client::from_builder(self)
+  pub async fn build(self) -> Result<Client> {
+    Client::from_builder(self).await
   }
 }
 
