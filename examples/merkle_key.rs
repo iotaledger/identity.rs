@@ -9,9 +9,9 @@ use identity::core::BitSet;
 use identity::core::FromJson;
 use identity::core::ToJson;
 use identity::core::Url;
+use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
-use identity::credential::VerifiableCredential;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
@@ -28,10 +28,10 @@ use rand::Rng;
 
 const LEAVES: usize = 1 << 10;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
-  let client: Client = Client::new()?;
-
+  // Create a new client connected to the Testnet (Chrysalis).
+  let client: Client = Client::new().await?;
   // Create a new DID Document, signed and published.
   let (mut doc, auth): (Document, KeyPair) = common::document(&client).await?;
 
@@ -46,19 +46,18 @@ async fn main() -> Result<()> {
   doc.insert_method(MethodScope::VerificationMethod, method);
 
   // Sign and publish the updated document
-  doc.set_previous_message_id(doc.message_id().clone());
+  doc.set_previous_message_id(*doc.message_id());
   doc.sign(auth.secret())?;
   doc.publish(&client).await?;
 
   println!("document: {:#}", doc);
 
   // Create a Verifiable Credential
-  let mut credential: VerifiableCredential = CredentialBuilder::default()
+  let mut credential: Credential = CredentialBuilder::default()
     .issuer(Url::parse(doc.id().as_str())?)
     .type_("MyCredential")
     .subject(Subject::from_json(r#"{"claim": true}"#)?)
-    .build()
-    .map(|credential| VerifiableCredential::new(credential, Vec::new()))?;
+    .build()?;
 
   println!("credential (unsigned): {:#}", credential);
 
@@ -98,7 +97,7 @@ async fn main() -> Result<()> {
   }
 
   // Publish the new document with the updated revocation state
-  doc.set_previous_message_id(doc.message_id().clone());
+  doc.set_previous_message_id(*doc.message_id());
   doc.sign(auth.secret())?;
   doc.publish(&client).await?;
 

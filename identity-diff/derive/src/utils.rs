@@ -1,11 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use proc_macro2::{Delimiter, TokenTree};
-
-use syn::{DeriveInput, Field, Meta, MetaList, NestedMeta, Path, PathSegment};
-
+use proc_macro2::Delimiter;
+use proc_macro2::TokenTree;
 use quote::format_ident;
+use syn::DeriveInput;
+use syn::Field;
+use syn::Meta;
+use syn::MetaList;
+use syn::NestedMeta;
+use syn::Path;
+use syn::PathSegment;
 
 const PARENS: Delimiter = Delimiter::Parenthesis;
 

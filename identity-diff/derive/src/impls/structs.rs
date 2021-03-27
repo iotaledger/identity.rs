@@ -3,10 +3,14 @@
 
 #![allow(non_snake_case)]
 
-use crate::model::{InputModel, SVariant};
-use proc_macro2::{Ident, TokenStream};
-use quote::{format_ident, quote};
-use syn::{GenericParam, Type};
+use crate::model::InputModel;
+use crate::model::SVariant;
+use proc_macro2::Ident;
+use proc_macro2::TokenStream;
+use quote::format_ident;
+use quote::quote;
+use syn::GenericParam;
+use syn::Type;
 
 /// Derive the difference struct code from the `InputModel`
 pub fn derive_diff_struct(input: &InputModel) -> TokenStream {

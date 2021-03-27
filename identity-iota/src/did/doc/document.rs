@@ -25,6 +25,7 @@ use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
+use iota::MessageId;
 use serde::Serialize;
 
 use crate::client::Client;
@@ -35,9 +36,8 @@ use crate::did::Properties as BaseProperties;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::MessageId;
+use crate::tangle::MessageIdExt;
 use crate::tangle::TangleRef;
-use crate::utils::utf8_to_trytes;
 
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, ()>;
@@ -47,8 +47,8 @@ pub type Verifier<'a> = DocumentVerifier<'a, Properties, Object, ()>;
 
 /// A DID Document adhering to the IOTA DID method specification.
 ///
-/// This is a thin wrapper around the [`Document`][`CoreDocument`] type from the
-/// [`identity_did`][`identity_did`] crate.
+/// This is a thin wrapper around the [`Document`][CoreDocument] type from the
+/// [identity_did] crate.
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[serde(try_from = "CoreDocument", into = "BaseDocument")]
 pub struct Document {
@@ -60,10 +60,10 @@ impl Document {
   /// Creates a new DID Document from the given KeyPair.
   ///
   /// The DID Document will be pre-populated with a single authentication
-  /// method based on the provided [`KeyPair`].
+  /// method based on the provided [KeyPair].
   ///
   /// The authentication method will have the DID URL fragment `#authentication`
-  /// and can be easily retrieved with [`Document::authentication`].
+  /// and can be easily retrieved with [Document::authentication].
   pub fn from_keypair(keypair: &KeyPair) -> Result<Self> {
     let method: Method = Method::from_keypair(keypair, "authentication")?;
 
@@ -71,7 +71,7 @@ impl Document {
     Ok(unsafe { Self::from_authentication_unchecked(method) })
   }
 
-  /// Creates a new DID Document from the given verification [`method`][`Method`].
+  /// Creates a new DID Document from the given verification [`method`][Method].
   pub fn from_authentication(method: Method) -> Result<Self> {
     Self::check_authentication(&method)?;
 
@@ -79,8 +79,9 @@ impl Document {
     Ok(unsafe { Self::from_authentication_unchecked(method) })
   }
 
-  /// Creates a new DID Document from the given verification [`method`][`Method`]
+  /// Creates a new DID Document from the given verification [`method`][Method]
   /// without performing validation checks.
+  ///
   /// # Safety
   ///
   /// This must be guaranteed safe by the caller.
@@ -91,10 +92,10 @@ impl Document {
       .build()
       .map(CoreDocument::into_verifiable)
       .map(Into::into)
-      .unwrap() // `uwnrap` is fine - we provided all the necessary properties
+      .unwrap() // `unwrap` is fine - we provided all the necessary properties
   }
 
-  /// Converts a generic DID `Document` to an IOTA DID Document.
+  /// Converts a generic DID [`Document`][CoreDocument] to an IOTA DID Document.
   ///
   /// # Errors
   ///
@@ -117,7 +118,7 @@ impl Document {
 
     Ok(Self {
       document: document.serde_into()?,
-      message_id: MessageId::NONE,
+      message_id: MessageId::null(),
     })
   }
 
@@ -156,7 +157,7 @@ impl Document {
   // Properties
   // ===========================================================================
 
-  /// Returns the DID document [`id`][`DID`].
+  /// Returns the DID document [`id`][DID].
   pub fn id(&self) -> &DID {
     // SAFETY: We checked the validity of the DID Document ID in the
     // DID Document constructors; we don't provide mutable references so
@@ -262,7 +263,7 @@ impl Document {
   pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
     let key: String = self.authentication_id().to_string();
 
-    self.document.sign_this(&key, secret.as_ref()).map_err(Into::into)
+    self.document.sign_this(&key, secret).map_err(Into::into)
   }
 
   /// Verifies the signature of the DID document.
@@ -363,7 +364,7 @@ impl Document {
     let message: MessageId = match client.into() {
       Some(client) if client.network() == network => client.publish_document(self).await?,
       Some(_) => return Err(Error::InvalidDIDNetwork),
-      None => Client::from_network(network)?.publish_document(self).await?,
+      None => Client::from_network(network).await?.publish_document(self).await?,
     };
 
     // Update the `self` with the `MessageId` of the bundled transaction.
@@ -374,15 +375,11 @@ impl Document {
 
   /// Returns the Tangle address of the DID diff chain.
   pub fn diff_address(message_id: &MessageId) -> Result<String> {
-    if message_id.is_none() {
+    if message_id.is_null() {
       return Err(Error::InvalidDocumentMessageId);
     }
 
-    let hash: String = DID::encode_key(message_id.as_str().as_bytes());
-
-    let mut trytes: String = utf8_to_trytes(&hash);
-    trytes.truncate(iota_constants::HASH_TRYTES_SIZE);
-    Ok(trytes)
+    Ok(DID::encode_key(message_id.encode_hex().as_bytes()))
   }
 }
 
@@ -410,7 +407,7 @@ impl From<BaseDocument> for Document {
   fn from(other: BaseDocument) -> Self {
     Self {
       document: other,
-      message_id: MessageId::NONE,
+      message_id: MessageId::null(),
     }
   }
 }

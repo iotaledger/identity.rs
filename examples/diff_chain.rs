@@ -14,15 +14,14 @@ use identity::did::MethodType;
 use identity::iota::AuthChain;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
-use identity::iota::MessageId;
 use identity::prelude::*;
 use std::thread::sleep;
 use std::time::Duration;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
-  let client: Client = Client::new()?;
-
+  // Create a new client connected to the Testnet (Chrysalis).
+  let client: Client = Client::new().await?;
   // Keep track of the chain state locally, for reference
   let mut chain: DocumentChain;
   let mut keys: Vec<KeyPair> = Vec::new();
@@ -68,7 +67,7 @@ async fn main() -> Result<()> {
     }
 
     new.set_updated(Timestamp::now());
-    new.set_previous_message_id(chain.auth_message_id().clone());
+    new.set_previous_message_id(*chain.auth_message_id());
 
     chain.current().sign_data(&mut new, keys[0].secret())?;
     new.publish(&client).await?;
@@ -95,7 +94,7 @@ async fn main() -> Result<()> {
       this
     };
 
-    let message_id: MessageId = chain.diff_message_id().clone();
+    let message_id = *chain.diff_message_id();
     let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
     diff.publish(chain.auth_message_id(), &client).await?;
@@ -129,7 +128,7 @@ async fn main() -> Result<()> {
     }
 
     new.set_updated(Timestamp::now());
-    new.set_previous_message_id(chain.auth_message_id().clone());
+    new.set_previous_message_id(*chain.auth_message_id());
 
     new.sign(keypair.secret())?;
     new.publish(&client).await?;
@@ -152,7 +151,7 @@ async fn main() -> Result<()> {
       this
     };
 
-    let message_id: MessageId = chain.diff_message_id().clone();
+    let message_id = *chain.diff_message_id();
     let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
     diff.publish(chain.auth_message_id(), &client).await?;

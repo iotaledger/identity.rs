@@ -62,30 +62,24 @@ impl SignatureValue {
   /// Returns the `Jws` type signature data as a string slice.
   pub fn as_jws(&self) -> Option<&str> {
     match self {
-      Self::None => None,
       Self::Jws(inner) => Some(&*inner),
-      Self::Proof(_) => None,
-      Self::Signature(_) => None,
+      _ => None,
     }
   }
 
   /// Returns the `Proof` type signature data as a string slice.
   pub fn as_proof(&self) -> Option<&str> {
     match self {
-      Self::None => None,
-      Self::Jws(_) => None,
       Self::Proof(inner) => Some(&*inner),
-      Self::Signature(_) => None,
+      _ => None,
     }
   }
 
   /// Returns the `Signature` type signature data as a string slice.
   pub fn as_signature(&self) -> Option<&str> {
     match self {
-      Self::None => None,
-      Self::Jws(_) => None,
-      Self::Proof(_) => None,
       Self::Signature(inner) => Some(&*inner),
+      _ => None,
     }
   }
 }

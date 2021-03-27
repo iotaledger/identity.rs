@@ -1,20 +1,34 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use proc_macro2::{Ident, Literal, Span, TokenStream};
-use quote::{format_ident, quote};
-use syn::{
-  punctuated::Punctuated, token::Comma, Data, DataEnum, DataStruct, DeriveInput, Fields, GenericParam, Token, Type,
-  Variant, WhereClause,
-};
-
-use crate::{
-  extract_option_segment,
-  impls::{
-    debug_impl, derive_diff_enum, derive_diff_struct, diff_impl, impl_debug_enum, impl_diff_enum, impl_from_into,
-  },
-  parse_from_into, should_ignore,
-};
+use crate::extract_option_segment;
+use crate::impls::debug_impl;
+use crate::impls::derive_diff_enum;
+use crate::impls::derive_diff_struct;
+use crate::impls::diff_impl;
+use crate::impls::impl_debug_enum;
+use crate::impls::impl_diff_enum;
+use crate::impls::impl_from_into;
+use crate::parse_from_into;
+use crate::should_ignore;
+use proc_macro2::Ident;
+use proc_macro2::Literal;
+use proc_macro2::Span;
+use proc_macro2::TokenStream;
+use quote::format_ident;
+use quote::quote;
+use syn::punctuated::Punctuated;
+use syn::token::Comma;
+use syn::Data;
+use syn::DataEnum;
+use syn::DataStruct;
+use syn::DeriveInput;
+use syn::Fields;
+use syn::GenericParam;
+use syn::Token;
+use syn::Type;
+use syn::Variant;
+use syn::WhereClause;
 
 /// A model for dealing with the different input from the incoming AST.
 #[derive(Clone, Debug)]

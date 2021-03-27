@@ -1,8 +1,9 @@
 # Summary
 
 - [Introduction](./introduction.md)
+- [Decentralized Identity](./intro_ssi.md)
 - [Overview](./overview/README.md)
-    - [Decentralized Identifiers(DID)](./overview/did/README.md)
+    - [Decentralized Identifiers (DID)](./overview/did/README.md)
         - [Create and Publish](./overview/did/create.md)
         - [Resolve](./overview/did/resolve.md)
         - [Update](./overview/did/update.md)

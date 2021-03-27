@@ -22,7 +22,7 @@ pub struct Dereference {
 }
 
 impl Dereference {
-  /// Creates a new [`Dereference`].
+  /// Creates a new `Dereference`.
   pub fn new() -> Self {
     Self {
       metadata: ResolutionMetadata::new(),

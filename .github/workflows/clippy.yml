@@ -17,17 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        project:
-          [
-            identity,
-            identity-core,
-            identity-credential,
-            identity-did,
-            identity-diff,
-            identity-iota,
-            bindings/wasm,
-          ]
 
     steps:
       - uses: actions/checkout@v2
@@ -38,8 +27,15 @@ jobs:
           toolchain: stable
           override: true
           components: clippy
-      - uses: actions-rs/clippy-check@v1
+      - name: core clippy check
+        uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --manifest-path=${{ matrix.project }}/Cargo.toml --all-targets --all-features -- -D warnings
-          name: clippy-${{ matrix.project }}
+          args: --all-targets --all-features -- -D warnings
+          name: core
+      - name: wasm clippy check
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --manifest-path ./bindings/wasm/Cargo.toml --all-targets --all-features -- -D warnings
+          name: wasm

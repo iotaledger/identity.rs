@@ -12,7 +12,7 @@ use crate::utils::DIDKey;
 use crate::verification::Method;
 use crate::verification::MethodRef;
 
-/// A `DocumentBuilder` is used to generate a customized `Document`.
+/// A `DocumentBuilder` is used to generate a customized [Document].
 #[derive(Clone, Debug)]
 pub struct DocumentBuilder<T = Object, U = Object, V = Object> {
   pub(crate) id: Option<DID>,
@@ -46,70 +46,70 @@ impl<T, U, V> DocumentBuilder<T, U, V> {
     }
   }
 
-  /// Sets the `id` value of the generated `Document`.
+  /// Sets the `id` value.
   #[must_use]
   pub fn id(mut self, value: DID) -> Self {
     self.id = Some(value);
     self
   }
 
-  /// Sets the `controller` value of the generated `Document`.
+  /// Sets the `controller` value.
   #[must_use]
   pub fn controller(mut self, value: DID) -> Self {
     self.controller = Some(value);
     self
   }
 
-  /// Adds a value to the `alsoKnownAs` set of the generated `Document`.
+  /// Adds a value to the `alsoKnownAs` set.
   #[must_use]
   pub fn also_known_as(mut self, value: Url) -> Self {
     self.also_known_as.push(value);
     self
   }
 
-  /// Adds a value to the `verificationMethod` set of the generated `Document`.
+  /// Adds a value to the `verificationMethod` set.
   #[must_use]
   pub fn verification_method(mut self, value: Method<U>) -> Self {
     self.verification_method.push(DIDKey::new(value));
     self
   }
 
-  /// Adds a value to the `authentication` set of the generated `Document`.
+  /// Adds a value to the `authentication` set.
   #[must_use]
   pub fn authentication(mut self, value: impl Into<MethodRef<U>>) -> Self {
     self.authentication.push(DIDKey::new(value.into()));
     self
   }
 
-  /// Adds a value to the `assertionMethod` set of the generated `Document`.
+  /// Adds a value to the `assertionMethod` set.
   #[must_use]
   pub fn assertion_method(mut self, value: impl Into<MethodRef<U>>) -> Self {
     self.assertion_method.push(DIDKey::new(value.into()));
     self
   }
 
-  /// Adds a value to the `keyAgreement` set of the generated `Document`.
+  /// Adds a value to the `keyAgreement` set.
   #[must_use]
   pub fn key_agreement(mut self, value: impl Into<MethodRef<U>>) -> Self {
     self.key_agreement.push(DIDKey::new(value.into()));
     self
   }
 
-  /// Adds a value to the `capabilityDelegation` set of the generated `Document`.
+  /// Adds a value to the `capabilityDelegation` set.
   #[must_use]
   pub fn capability_delegation(mut self, value: impl Into<MethodRef<U>>) -> Self {
     self.capability_delegation.push(DIDKey::new(value.into()));
     self
   }
 
-  /// Adds a value to the `capabilityInvocation` set of the generated `Document`.
+  /// Adds a value to the `capabilityInvocation` set.
   #[must_use]
   pub fn capability_invocation(mut self, value: impl Into<MethodRef<U>>) -> Self {
     self.capability_invocation.push(DIDKey::new(value.into()));
     self
   }
 
-  /// Adds a value to the `service` set of the generated `Document`.
+  /// Adds a value to the `service` set.
   #[must_use]
   pub fn service(mut self, value: Service<V>) -> Self {
     self.service.push(DIDKey::new(value));

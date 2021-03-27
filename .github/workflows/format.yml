@@ -17,17 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        project:
-          [
-            identity,
-            identity-core,
-            identity-credential,
-            identity-did,
-            identity-diff,
-            identity-iota,
-            bindings/wasm,
-          ]
 
     steps:
       - uses: actions/checkout@v2
@@ -38,7 +27,13 @@ jobs:
           toolchain: nightly
           override: true
           components: rustfmt
-      - uses: actions-rs/cargo@v1
+      - name: core fmt check
+        uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --manifest-path=${{ matrix.project }}/Cargo.toml --all -- --check
+          args: --all -- --check
+      - name: wasm fmt check
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --manifest-path ./bindings/wasm/Cargo.toml --all -- --check
