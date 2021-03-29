@@ -1,7 +1,7 @@
 [package]
 name = "identity-iota"
 version = "0.2.0"
-authors = ["IOTA Identity"]
+authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "An IOTA Tangle intergration for the identity-rs library."
 readme = "../README.md"
@@ -12,19 +12,31 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
+futures = { version = "0.3" }
 identity-core = { version = "=0.2.0", path = "../identity-core" }
 identity-credential = { version = "=0.2.0", path = "../identity-credential" }
 identity-did = { version = "=0.2.0", path = "../identity-did" }
 iota-constants = { version = "0.2", default-features = false }
 iota-conversion = { version = "0.5", default-features = false }
-iota-core = { git = "https://github.com/Thoralf-M/iota.rs", rev = "d7c8c64fc3ac2340f0148708a916c245f42fd454" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
+
+[dependencies.iota-core]
+git = "https://github.com/iotaledger/iota.rs"
+rev = "04de91aebc211b7d2291c17a900a4f2174109184"
+default-features = false
+features = ["async", "wasm"]
 
 [dependencies.iota-crypto]
 git = "https://github.com/iotaledger/crypto.rs"
 rev = "c3bf565eba62d0b81144174c2ff917bfde282e49"
 default-features = false
 features = ["blake2b"]
+
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

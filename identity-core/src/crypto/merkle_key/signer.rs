@@ -130,8 +130,6 @@ where
     let signature: String = encode_b58(signature.as_ref());
     let formatted: String = format!("{}.{}.{}", secret.public(), secret.proof(), signature);
 
-    // TODO: Store the signature/digest tags and check during verification
-
     Ok(SignatureValue::Signature(formatted))
   }
 }

@@ -14,10 +14,12 @@ use crate::did::DocumentDiff;
 use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::Message;
-use crate::tangle::MessageId;
+use crate::tangle::MessageExt;
+use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
+use iota::Message;
+use iota::MessageId;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(transparent)]
@@ -58,17 +60,17 @@ impl DiffChain {
     Self { inner: Vec::new() }
   }
 
-  /// Returns the total number of diffs in the chain.
+  /// Returns the total number of diffs.
   pub fn len(&self) -> usize {
     self.inner.len()
   }
 
-  /// Returns `true` if the diff chain is empty.
+  /// Returns `true` if the `DiffChain` is empty.
   pub fn is_empty(&self) -> bool {
     self.inner.is_empty()
   }
 
-  /// Empties the diff chain, removing all diffs.
+  /// Empties the `DiffChain`, removing all diffs.
   pub fn clear(&mut self) {
     self.inner.clear();
   }
@@ -83,7 +85,7 @@ impl DiffChain {
     self.inner.last().map(|diff| diff.message_id())
   }
 
-  /// Adds a new diff to the diff chain.
+  /// Adds a new diff to the `DiffChain`.
   ///
   /// # Errors
   ///
@@ -100,7 +102,7 @@ impl DiffChain {
     Ok(())
   }
 
-  /// Adds a new diff to the diff chain with performing validation checks.
+  /// Adds a new diff to the `DiffChain` with performing validation checks.
   ///
   /// # Safety
   ///
@@ -110,12 +112,12 @@ impl DiffChain {
     self.inner.push(diff);
   }
 
-  /// Returns `true` if the `DocumentDiff` can be added to the diff chain.
+  /// Returns `true` if the `DocumentDiff` can be added to the `DiffChain`.
   pub fn is_valid(&self, auth: &AuthChain, diff: &DocumentDiff) -> bool {
     self.check_validity(auth, diff).is_ok()
   }
 
-  /// Checks if the `DocumentDiff` can be added to the diff chain.
+  /// Checks if the `DocumentDiff` can be added to the `DiffChain`n.
   ///
   /// # Errors
   ///
@@ -127,13 +129,13 @@ impl DiffChain {
       });
     }
 
-    if diff.message_id().is_none() {
+    if diff.message_id().is_null() {
       return Err(Error::ChainError {
         error: "Invalid Message Id",
       });
     }
 
-    if diff.previous_message_id().is_none() {
+    if diff.previous_message_id().is_null() {
       return Err(Error::ChainError {
         error: "Invalid Previous Message Id",
       });

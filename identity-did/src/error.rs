@@ -3,16 +3,16 @@
 
 //! Errors that may occur when working with Decentralized Identifiers.
 
-/// Alias for a `Result` with the error type [`Error`].
+/// Alias for a [`Result`][::core::result::Result] with the error type [Error].
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-  /// Caused by errors from the `identity_core` crate.
+  /// Caused by errors from the [identity_core] crate.
   #[error("{0}")]
   CoreError(#[from] ::identity_core::Error),
-  /// Caused by errors from the `did_url` crate.
+  /// Caused by errors from the [`did_url`][::did_url::Error] crate.
   #[error("{0}")]
   DIDError(#[from] ::did_url::Error),
 

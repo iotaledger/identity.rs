@@ -1,16 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::crypto::KeyPair;
-use identity::iota::Client;
-use identity::iota::Document;
 use identity::iota::Network;
-use identity::iota::Result;
 use identity::iota::TangleRef;
+use identity::prelude::*;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
-  let client: Client = Client::new()?;
+  // Create a new client connected to the Testnet (Chrysalis).
+  let client: Client = Client::new().await?;
 
   let keypair: KeyPair = KeyPair::new_ed25519()?;
   let mut document: Document = Document::from_keypair(&keypair)?;

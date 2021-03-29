@@ -62,9 +62,6 @@ pub enum Error {
   /// Caused by attempting to parse an invalid Merkle Key Collection tag.
   #[error("Invalid Merkle Key Tag: {0:?}")]
   InvalidMerkleKeyTag(Option<MerkleTag>),
-  /// Caused by attempting to sign/verify with a delegated signature suite.
-  #[error("Invalid Signature Call: Delegated Implementation")]
-  DelegatedSignatureCall,
   /// Caused by a failed attempt at retrieving a digital signature.
   #[error("Signature Not Found")]
   MissingSignature,

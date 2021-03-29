@@ -7,19 +7,16 @@
 //! cargo run --example resolution
 
 use identity::core::SerdeInto;
-use identity::crypto::KeyPair;
 use identity::did::resolution;
 use identity::did::resolution::Resource;
 use identity::did::resolution::SecondaryResource;
-use identity::iota::Client;
-use identity::iota::Document;
-use identity::iota::Result;
 use identity::iota::DID;
+use identity::prelude::*;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
-  let client: Client = Client::new()?;
-
+  // Create a new client connected to the Testnet (Chrysalis).
+  let client: Client = Client::new().await?;
   // Create a pair of Ed25519 public/secret keys.
   let key: KeyPair = KeyPair::new_ed25519()?;
 

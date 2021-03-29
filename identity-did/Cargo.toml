@@ -1,7 +1,7 @@
 [package]
 name = "identity-did"
 version = "0.2.0"
-authors = ["IOTA Identity"]
+authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "An implementation of the Decentralized Identifiers standard."
 readme = "../README.md"
@@ -16,3 +16,9 @@ did_url = { version = "0.1", default-features = false, features = ["std", "serde
 identity-core = { version = "=0.2.0", path = "../identity-core" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 thiserror = { version = "1.0", default-features = false }
+
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

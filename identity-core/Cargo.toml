@@ -1,7 +1,7 @@
 [package]
 name = "identity-core"
 version = "0.2.0"
-authors = ["IOTA Identity"]
+authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "The core traits and types for the identity-rs library."
 readme = "../README.md"
@@ -34,3 +34,9 @@ features = ["blake2b", "ed25519", "random", "sha"]
 
 [dev-dependencies]
 rand = { version = "0.8" }
+
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

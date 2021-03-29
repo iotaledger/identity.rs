@@ -21,8 +21,8 @@ impl MerkleKey {
 
   /// Extracts the signature and digest algorithm tags from the public key value.
   pub fn extract_tags(data: &[u8]) -> Result<(MerkleTag, MerkleTag)> {
-    let tag_s: MerkleTag = Self::__tag(data, 0)?;
-    let tag_d: MerkleTag = Self::__tag(data, 1)?;
+    let tag_s: MerkleTag = Self::tag(data, 0)?;
+    let tag_d: MerkleTag = Self::tag(data, 1)?;
 
     Ok((tag_s, tag_d))
   }
@@ -40,7 +40,7 @@ impl MerkleKey {
     output
   }
 
-  fn __tag(data: &[u8], index: usize) -> Result<MerkleTag> {
+  fn tag(data: &[u8], index: usize) -> Result<MerkleTag> {
     data
       .get(index)
       .copied()
