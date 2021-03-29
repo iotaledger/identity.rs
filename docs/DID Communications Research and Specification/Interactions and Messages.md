@@ -12,6 +12,8 @@
 
 `didDocument` as JSON: An IOTA DID Document (see e.g. in <a href="#did-resolution">DID Resolution</a>).
 
+`comment` as String: A comment.
+
 `thread` as String, e.g. `jdhgbksdbgjksdbgkjdkg` or `thread-132-a`: A String, defined by the agent, to be used to identify this specific interaction to track it agent-locally.
 
 `challenge` as String, e.g. `please-sign-this`: A String acting as a signing challenge.
@@ -59,6 +61,10 @@
 ◈ <a href="#credential-schema">**Credential Schema**</a> - Querying an agent for the schema of a specific VC that the agent can issue.
 
 ◈ <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about a DID.
+
+◈ <a href="#credential-revocation">**Credential Revocation**</a> - Notifying a holder that a previously issued credential has been revoked.
+
+◈ <a href="#presentation-verification">**Presentation Verification**</a> - Proving a set of statements about an identifier.
 
 ---
 ## Trust Ping
@@ -487,3 +493,117 @@ credentialIssuance: {
 ### Examples
 
 TBD after above flow is cleared up
+
+---
+## Credential Revocation
+
+Notifying a holder that a previously issued credential has been revoked.
+
+### Roles
+- <u>**Issuer**</u>: Agent who revokes the credential
+- <u>**Holder**</u>: Agent who holds the credential to be revoked
+
+### Messages
+
+#### revocation
+The <u>issuer</u> sends the `credentialRevocation` to the <u>holder</u>, notifying him of the revocation.
+
+###### Layout
+
+```JSON
+credentialRevocation: {
+    "credentialId",
+    "comment", // OPTIONAL!
+    "context", // OPTIONAL!
+    "id" // OPTIONAL!
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "credentialId": "gfiweuzg89w3bgi8wbgi8wi8t",
+    "comment": "Revoked because reasons.",
+    "id": "did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v",
+}
+```
+
+---
+## Presentation Verification
+
+Proving a set of statements about an identifier.
+
+The credential verification flow is a simple request-response message exchange between the <u>verifier</u> and the <u>prover</u>. The interaction can consist of up to three messages, however two of them are OPTIONAL.
+
+### Roles
+- **Verifier**: Agent who requests a set of Verifiable Credentials with associated requirements
+- **Prover**: Agent who provides a set of Verifiable Credentials in the form of a Verifiable Presentation attempting to satisfy the request
+
+### Messages
+
+#### presentationRequest
+The <u>verifier</u> requests a set of Verifiable Credentials from the <u>prover</u>. This message is OPTIONAL within this interaction.
+
+###### Layout
+
+```JSON
+presentationRequest: {
+    "callbackURL": "<URL as String>",
+    "credentialRequirements": [
+        {
+            "type": "<Type as String>",
+            "constraints": [
+                <Constraint 1>,
+                <Constraint 2>,
+            ],
+        },
+    ],
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    tbd
+}
+```
+
+#### presentationResponse
+The <u>holder</u> sends a Verifiable Presentation to the <u>verifier</u> using a `presentationResponse` message.
+
+###### Layout
+
+```JSON
+presentationResponse: {
+    "verifiablePresentation": {...}
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    tbd
+}
+```
+
+#### presentationAcknowledgement
+The <u>verifier</u> responds to the presented Verifiable Presentation. This message is OPTIONAL within this interaction.
+
+###### Layout
+
+```JSON
+presentationAcknowledgement: {
+    bool yes/no?
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    tbd
+}
+```
