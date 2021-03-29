@@ -37,6 +37,10 @@ impl MessageId {
   pub fn as_str(&self) -> &str {
     self.0.as_deref().unwrap_or_default()
   }
+
+  pub fn into_inner(self) -> Option<String> {
+    self.0
+  }
 }
 
 impl Debug for MessageId {

@@ -16,9 +16,9 @@ use tokio::sync::MutexGuard;
 
 use crate::error::Result;
 use crate::storage::VaultAdapter;
+use crate::types::ToKey;
 use crate::types::KeyLocation;
-use crate::storage::ResourceId;
-use crate::storage::ResourceType;
+use crate::types::ResourceType;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
 
@@ -44,20 +44,20 @@ impl StorageHandle {
     self.all(type_).await.and_then(deserialize_list)
   }
 
-  /// Deserializes and returns the resource specified by `id`.
-  pub async fn json_get<T>(&self, id: ResourceId<'_>) -> Result<T>
+  /// Deserializes and returns the resource specified by `key`.
+  pub async fn json_get<T>(&self, key: &dyn ToKey) -> Result<T>
   where
     T: for<'a> Deserialize<'a>,
   {
-    self.get(id).await.and_then(deserialize)
+    self.get(key).await.and_then(deserialize)
   }
 
   /// Serializes and inserts the given `data`.
-  pub async fn json_set<T>(&self, id: ResourceId<'_>, data: &T) -> Result<()>
+  pub async fn json_set<T>(&self, key: &dyn ToKey, data: &T) -> Result<()>
   where
     T: Serialize,
   {
-    self.set(id, data.to_json_vec()?).await
+    self.set(key, data.to_json_vec()?).await
   }
 
   // ===========================================================================
@@ -69,19 +69,19 @@ impl StorageHandle {
     self.__lock().await.all(type_).await
   }
 
-  /// Returns the resource specified by `id`.
-  pub async fn get(&self, id: ResourceId<'_>) -> Result<Vec<u8>> {
-    self.__lock().await.get(id).await
+  /// Returns the resource specified by `key`.
+  pub async fn get(&self, key: &dyn ToKey) -> Result<Vec<u8>> {
+    self.__lock().await.get(key).await
   }
 
-  /// Inserts or replaces the resource specified by `id` with `data`.
-  pub async fn set(&self, id: ResourceId<'_>, data: Vec<u8>) -> Result<()> {
-    self.__lock().await.set(id, data).await
+  /// Inserts or replaces the resource specified by `key` with `data`.
+  pub async fn set(&self, key: &dyn ToKey, data: Vec<u8>) -> Result<()> {
+    self.__lock().await.set(key, data).await
   }
 
-  /// Deletes the resource specified by `id`.
-  pub async fn del(&self, id: ResourceId<'_>) -> Result<()> {
-    self.__lock().await.del(id).await
+  /// Deletes the resource specified by `key`.
+  pub async fn del(&self, key: &dyn ToKey) -> Result<()> {
+    self.__lock().await.del(key).await
   }
 
   // ===========================================================================

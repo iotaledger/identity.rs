@@ -21,7 +21,7 @@ impl Index {
     self.0.checked_add(Self::INC).map(Self)
   }
 
-  pub fn get(self) -> u32 {
+  pub const fn get(self) -> u32 {
     self.0
   }
 }
@@ -34,6 +34,6 @@ impl Display for Index {
 
 impl From<u32> for Index {
   fn from(other: u32) -> Self {
-    Self(0)
+    Self(other)
   }
 }

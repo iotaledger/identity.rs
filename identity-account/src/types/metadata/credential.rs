@@ -4,7 +4,7 @@
 use identity_core::common::Url;
 use identity_credential::credential::Credential;
 
-use crate::storage::ResourceType;
+use crate::types::ResourceType;
 use crate::types::MetadataItem;
 use crate::types::Identifier;
 use crate::types::Timestamps;
@@ -41,8 +41,8 @@ impl CredentialMetadata {
 }
 
 impl MetadataItem for CredentialMetadata {
-  const METADATA: ResourceType = ResourceType::CredentialMeta;
-  const RESOURCE: ResourceType = ResourceType::Credential;
+  const METADATA: ResourceType = ResourceType::CredentialMetadata;
+  const RESOURCE: ResourceType = ResourceType::CredentialDocument;
 
   fn resource(&self) -> &[u8] {
     self.credential_id.as_bytes()

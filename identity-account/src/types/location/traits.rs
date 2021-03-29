@@ -1,12 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::types::ResourceType;
+
 pub trait ToKey {
-  const TAG: char;
+  fn type_(&self) -> ResourceType;
 
   fn id(&self) -> String;
 
   fn to_key(&self) -> String {
-    format!("{}:{}", Self::TAG, self.id())
+    format!("{}:{}", self.type_().name(), self.id())
   }
 }

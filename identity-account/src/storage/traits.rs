@@ -7,25 +7,25 @@ use std::path::Path;
 
 use crate::error::Result;
 use crate::types::KeyLocation;
-use crate::storage::ResourceId;
-use crate::storage::ResourceType;
+use crate::types::ResourceType;
 use crate::types::Signature;
+use crate::types::ToKey;
 use crate::utils::fs;
 use crate::utils::EncryptionKey;
 
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 pub trait StorageAdapter: Send + Sync + 'static {
   /// Returns a list of all resources matching the specified `type_`.
   async fn all(&mut self, type_: ResourceType) -> Result<Vec<Vec<u8>>>;
 
-  /// Returns the resource specified by `id`.
-  async fn get(&mut self, id: ResourceId<'_>) -> Result<Vec<u8>>;
+  /// Returns the resource specified by `key`.
+  async fn get(&mut self, key: &dyn ToKey) -> Result<Vec<u8>>;
 
-  /// Inserts or replaces the resource specified by `id` with `data`.
-  async fn set(&mut self, id: ResourceId<'_>, data: Vec<u8>) -> Result<()>;
+  /// Inserts or replaces the resource specified by `key` with `data`.
+  async fn set(&mut self, key: &dyn ToKey, data: Vec<u8>) -> Result<()>;
 
-  /// Deletes the resource specified by `id`.
-  async fn del(&mut self, id: ResourceId<'_>) -> Result<()>;
+  /// Deletes the resource specified by `key`.
+  async fn del(&mut self, key: &dyn ToKey) -> Result<()>;
 
   fn storage_path(&self) -> &Path;
 
@@ -40,7 +40,7 @@ pub trait StorageAdapter: Send + Sync + 'static {
   }
 }
 
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 pub trait VaultAdapter: StorageAdapter {
   /// Sets the account password.
   async fn set_password(&mut self, password: EncryptionKey) -> Result<()>;

@@ -1,8 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::storage::ResourceType;
-use crate::storage::ResourceId;
+use crate::types::ResourceType;
 use crate::types::Identifier;
 use crate::types::Key;
 

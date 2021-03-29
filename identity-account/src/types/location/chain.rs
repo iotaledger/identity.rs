@@ -5,6 +5,7 @@ use std::borrow::Cow;
 
 use crate::types::ToKey;
 use crate::types::Index;
+use crate::types::ResourceType;
 
 // =============================================================================
 // Document Chain Metadata Location
@@ -22,7 +23,9 @@ impl MetaLocation {
 }
 
 impl ToKey for MetaLocation {
-  const TAG: char = 'm';
+  fn type_(&self) -> ResourceType {
+    ResourceType::IdentityMetadata
+  }
 
   fn id(&self) -> String {
     self.chain.to_string()
@@ -44,7 +47,9 @@ impl DocLocation {
 }
 
 impl ToKey for DocLocation {
-  const TAG: char = 'c';
+  fn type_(&self) -> ResourceType {
+    ResourceType::IdentityDocument
+  }
 
   fn id(&self) -> String {
     self.chain.to_string()
@@ -72,7 +77,9 @@ impl AuthLocation {
 }
 
 impl ToKey for AuthLocation {
-  const TAG: char = 'a';
+  fn type_(&self) -> ResourceType {
+    ResourceType::AuthData
+  }
 
   fn id(&self) -> String {
     format!("{}:{}", self.chain.get(), self.index)
@@ -100,7 +107,9 @@ impl DiffLocation {
 }
 
 impl ToKey for DiffLocation {
-  const TAG: char = 'd';
+  fn type_(&self) -> ResourceType {
+    ResourceType::DiffData
+  }
 
   fn id(&self) -> String {
     format!("{}:{}", self.scope.id(), self.index)
@@ -130,7 +139,9 @@ impl<'a> KeyLocation<'a> {
 }
 
 impl ToKey for KeyLocation<'_> {
-  const TAG: char = 'k';
+  fn type_(&self) -> ResourceType {
+    ResourceType::Noop
+  }
 
   fn id(&self) -> String {
     format!("{}:{}", self.scope.id(), self.ident)

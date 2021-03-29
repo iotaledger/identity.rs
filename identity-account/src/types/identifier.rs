@@ -5,20 +5,20 @@ use crate::types::Index;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Identifier {
-  pub(crate) ident: String,
   pub(crate) index: Index,
+  pub(crate) ident: String,
 }
 
 impl Identifier {
   pub const fn new(ident: String, index: Index) -> Self {
-    Self { ident, index }
-  }
-
-  pub fn ident(&self) -> &str {
-    &self.ident
+    Self { index, ident }
   }
 
   pub fn index(&self) -> Index {
     self.index
+  }
+
+  pub fn ident(&self) -> &str {
+    &self.ident
   }
 }
