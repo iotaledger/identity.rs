@@ -3,6 +3,8 @@
 
 // This file contains helper functions for the examples.
 
+#![allow(dead_code)]
+
 use identity::core::json;
 use identity::core::FromJson;
 use identity::core::Url;
