@@ -11,7 +11,6 @@ use iota::MessageId;
 pub struct Properties {
   pub(crate) created: Timestamp,
   pub(crate) updated: Timestamp,
-  pub(crate) immutable: bool,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageIdExt::is_null")]
   pub(crate) previous_message_id: MessageId,
   #[serde(flatten)]
@@ -23,7 +22,6 @@ impl Properties {
     Self {
       created: Timestamp::now(),
       updated: Timestamp::now(),
-      immutable: false,
       previous_message_id: MessageId::null(),
       properties: Object::new(),
     }

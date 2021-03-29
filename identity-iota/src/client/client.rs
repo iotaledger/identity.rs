@@ -148,7 +148,10 @@ impl Client {
     let messages: Messages = self.read_messages(did.tag()).await?;
     let auth: AuthChain = AuthChain::try_from_messages(did, &messages.messages)?;
 
-    let diff: DiffChain = if auth.current().immutable() {
+    // Check if there is any query given and return
+    let skip_diff: bool = did.query_pairs().any(|(key, value)| key == "diff" && value == "false");
+
+    let diff: DiffChain = if skip_diff {
       DiffChain::new()
     } else {
       // Fetch all messages for the diff chain.
