@@ -1,5 +1,5 @@
 use did_doc::{url::Url, Document, Signature};
-use did_url::DID;
+use identity_iota::did::DID;
 
 use crate::{error::Result, message::Message, message::Timing};
 

@@ -2,5 +2,6 @@
 mod builder;
 mod message;
 mod timing;
+mod trustping;
 
-pub use self::{builder::*, message::*,timing::*};
+pub use self::{builder::*, message::*,timing::*,trustping::*};
