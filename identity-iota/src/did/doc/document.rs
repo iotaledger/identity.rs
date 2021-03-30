@@ -212,16 +212,6 @@ impl Document {
     self.document.properties_mut().previous_message_id = value.into();
   }
 
-  /// Returns true if the DID Document is flagged as immutable.
-  pub fn immutable(&self) -> bool {
-    self.document.properties().immutable
-  }
-
-  /// Sets the value of the `immutable` flag.
-  pub fn set_immutable(&mut self, value: bool) {
-    self.document.properties_mut().immutable = value;
-  }
-
   /// Returns a reference to the custom DID Document properties.
   pub fn properties(&self) -> &Object {
     &self.document.properties().properties
