@@ -16,13 +16,11 @@ use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
-use identity::credential::VerifiableCredential;
 use identity::crypto::KeyPair;
 use identity::iota::Client;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
-use identity::iota::Document;
-use identity::iota::Result;
+use identity::prelude::*;
 
 // Helper that takes two DID Documents (identities) for issuer and subject, and
 // creates a credential with claims about subject by issuer.
@@ -46,10 +44,10 @@ fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
   Ok(credential)
 }
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
   // Initialize a `Client` to interact with the IOTA Tangle.
-  let client: Client = Client::new()?;
+  let client: Client = Client::new().await?;
 
   // Create a signed DID Document/KeyPair for the credential issuer (see previous example).
   let (doc_iss, key_iss): (Document, KeyPair) = common::create_did_document(&client).await?;
@@ -58,15 +56,15 @@ async fn main() -> Result<()> {
   let (doc_sub, _key_sub): (Document, KeyPair) = common::create_did_document(&client).await?;
 
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
-  let credential: Credential = issue_degree(&doc_iss, &doc_sub)?;
+  let mut credential: Credential = issue_degree(&doc_iss, &doc_sub)?;
 
-  // Sign the Credential with the issuer secret key - the result is a VerifiableCredential.
-  let credential: VerifiableCredential = credential.sign(&doc_iss, "#authentication".into(), key_iss.secret())?;
+  // Sign the Credential with the issuer secret key - the result is a Verifiable Credential.
+  doc_iss.sign_data(&mut credential, key_iss.secret())?;
 
   println!("Credential > {:#}", credential);
   println!();
 
-  // Convert the VerifiableCredential to JSON and "exchange" with a verifier
+  // Convert the Verifiable Credential to JSON and "exchange" with a verifier
   let message: String = credential.to_json()?;
 
   // Create a `CredentialValidator` instance that will fetch

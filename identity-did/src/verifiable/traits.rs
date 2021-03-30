@@ -9,7 +9,7 @@ use crate::error::Result;
 use crate::verification::Method;
 
 pub trait Revocation {
-  /// Returns a [`set`][`BitSet`] of Merkle Key Collection revocation flags.
+  /// Returns a [`set`][BitSet] of Merkle Key Collection revocation flags.
   fn revocation(&self) -> Result<Option<BitSet>> {
     Ok(None)
   }

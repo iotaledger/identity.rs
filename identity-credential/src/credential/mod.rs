@@ -14,7 +14,6 @@ mod refresh;
 mod schema;
 mod status;
 mod subject;
-mod verifiable;
 
 pub use self::builder::CredentialBuilder;
 pub use self::credential::Credential;
@@ -25,4 +24,3 @@ pub use self::refresh::Refresh;
 pub use self::schema::Schema;
 pub use self::status::Status;
 pub use self::subject::Subject;
-pub use self::verifiable::VerifiableCredential;

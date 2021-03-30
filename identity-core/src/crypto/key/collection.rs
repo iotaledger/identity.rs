@@ -8,15 +8,13 @@ use core::slice::Iter;
 use core::slice::SliceIndex;
 use std::vec::IntoIter;
 
-use crate::crypto::merkle_key::DynSigner;
-use crate::crypto::merkle_key::DynVerifier;
 use crate::crypto::merkle_key::MerkleDigest;
+use crate::crypto::merkle_key::SigningKey;
 use crate::crypto::merkle_tree::compute_merkle_proof;
 use crate::crypto::merkle_tree::compute_merkle_root;
 use crate::crypto::merkle_tree::DigestExt;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Proof;
-use crate::crypto::JcsEd25519Signature2020 as Ed25519;
 use crate::crypto::KeyPair;
 use crate::crypto::KeyRef;
 use crate::crypto::KeyType;
@@ -24,7 +22,7 @@ use crate::crypto::PublicKey;
 use crate::crypto::SecretKey;
 use crate::error::Error;
 use crate::error::Result;
-use crate::utils::generate_ed25519_list;
+use crate::utils::generate_ed25519_keypairs;
 
 /// A collection of cryptographic keys.
 #[derive(Clone, Debug)]
@@ -66,7 +64,7 @@ impl KeyCollection {
   /// Creates a new [`KeyCollection`] with the given [`key type`][`KeyType`].
   pub fn new(type_: KeyType, count: usize) -> Result<Self> {
     let keys: Vec<(PublicKey, SecretKey)> = match type_ {
-      KeyType::Ed25519 => generate_ed25519_list(count)?,
+      KeyType::Ed25519 => generate_ed25519_keypairs(count)?,
     };
 
     Self::from_iterator(type_, keys.into_iter())
@@ -147,40 +145,26 @@ impl KeyCollection {
     compute_merkle_proof(&self.public, index)
   }
 
-  /// Returns a Merkle Key [`Signer`][`DynSigner`] for the secret key at the
-  /// specified index.
-  pub fn merkle_key_signer<'key, D>(&'key self, index: usize) -> Option<DynSigner<'static, 'key, D>>
+  /// Returns a Merkle Key [`SigningKey`] for the key pair at the
+  /// specified `index`.
+  pub fn merkle_key<D>(&self, index: usize) -> Option<SigningKey<'_, D>>
   where
     D: MerkleDigest,
   {
-    match self.type_() {
-      KeyType::Ed25519 => {
-        let proof: Proof<D> = self.merkle_proof(index)?;
-        let public: &'key PublicKey = self.public(index)?;
+    let proof: Proof<D> = self.merkle_proof(index)?;
+    let public: &PublicKey = self.public(index)?;
+    let secret: &SecretKey = self.secret(index)?;
 
-        Some(DynSigner::from_owned(Box::new(Ed25519), public, proof))
-      }
-    }
-  }
-
-  /// Returns a Merkle Key [`Verifier`][`DynVerifier`] for the Merkle root of
-  /// the key collection.
-  pub fn merkle_key_verifier<D>(&self) -> DynVerifier<'static, D>
-  where
-    D: MerkleDigest,
-  {
-    match self.type_() {
-      KeyType::Ed25519 => DynVerifier::from_owned(self.encode_key::<D>(), Box::new(Ed25519)),
-    }
+    Some(SigningKey::from_owned(public, secret, proof))
   }
 
   /// Creates a DID Document public key value for the Merkle root of
   /// the key collection.
-  pub fn encode_key<D>(&self) -> Vec<u8>
+  pub fn encode_merkle_key<D>(&self) -> Vec<u8>
   where
     D: MerkleDigest,
   {
-    self.type_.encode_key::<D>(&self.merkle_root())
+    self.type_.encode_merkle_key::<D>(&self.merkle_root())
   }
 }
 

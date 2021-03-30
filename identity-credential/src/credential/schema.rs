@@ -5,7 +5,7 @@ use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 
-/// Information used to validate the structure of a `Credential`.
+/// Information used to validate the structure of a [`Credential`][crate::credential::Credential].
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#data-schemas)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -21,7 +21,7 @@ pub struct Schema {
 }
 
 impl Schema {
-  /// Creates a new [`Schema`].
+  /// Creates a new `Schema`.
   pub fn new<T>(id: Url, types: T) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -29,7 +29,7 @@ impl Schema {
     Self::with_properties(id, types, Object::new())
   }
 
-  /// Creates a new [`Schema`] with the given `properties`.
+  /// Creates a new `Schema` with the given `properties`.
   pub fn with_properties<T>(id: Url, types: T, properties: Object) -> Self
   where
     T: Into<OneOrMany<String>>,

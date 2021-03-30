@@ -4,7 +4,7 @@
 use identity_core::common::Object;
 use identity_core::common::Url;
 
-/// A `Credential` issuer in object form.
+/// A [`Credential`][crate::credential::Credential] issuer in object form.
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#issuer)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -16,7 +16,7 @@ pub struct IssuerData {
   pub properties: Object,
 }
 
-/// An identifier representing the issuer of a `Credential`.
+/// An identifier representing the issuer of a [`Credential`][crate::credential::Credential].
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#issuer)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
