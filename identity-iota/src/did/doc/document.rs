@@ -505,7 +505,6 @@ mod tests {
       document.authentication().key_data(),
       &MethodData::PublicKeyBase58(String::from("FJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT"))
     );
-    assert_eq!(document.immutable(), false);
   }
 
   #[test]
