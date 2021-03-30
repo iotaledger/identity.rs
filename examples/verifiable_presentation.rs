@@ -19,7 +19,7 @@ use identity::iota::Client;
 use identity::iota::Document;
 use identity::iota::Result;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
   // Initialize a `Client` to interact with the IOTA Tangle.
   let client: Client = Client::new()?;

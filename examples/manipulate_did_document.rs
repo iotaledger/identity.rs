@@ -9,7 +9,7 @@ use identity::crypto::KeyPair;
 use identity::iota::Document;
 use identity::iota::Result;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
   // Create a DID Document out of an ed25519 keypair.
   let keypair: KeyPair = KeyPair::new_ed25519()?;
