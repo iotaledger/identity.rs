@@ -26,8 +26,10 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 
 The individual libraries are developed to be agnostic about the utilized [Distributed Ledger Technology (DLT)](https://en.wikipedia.org/wiki/Distributed_ledger), with the exception of the [IOTA](https://www.iota.org) integration and higher level libraries. Written in stable Rust, it has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
 
-:warning: **WARNING #1** :warning: **Framework only works on the Chrysalis Phase 2 network, use v0.2 or older for pre-chrysalis phase 2 networks.**
-
+> :warning: **WARNING #1** :warning: 
+>
+> **The Framework only works on the Chrysalis Phase 2 network, use [v0.2](https://github.com/iotaledger/identity.rs/releases/tag/v0.2.0) or older for pre-chrysalis phase 2 networks.**
+> 
 > :warning: **WARNING #2** :warning:
 > 
 > This library is currently in its **alpha stage** and **under development** and might undergo large changes!
