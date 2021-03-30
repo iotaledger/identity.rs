@@ -8,7 +8,6 @@ use crate::error::Result;
 
 /// Supported verification method types.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
-#[non_exhaustive]
 pub enum MethodType {
   Ed25519VerificationKey2018,
   MerkleKeyCollection2021,

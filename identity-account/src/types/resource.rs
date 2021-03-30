@@ -1,27 +1,17 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#[derive(Clone, Copy, Debug)]
-pub enum ResourceType {
-  Noop,
-  IdentityMetadata,
-  IdentityDocument,
-  AuthData,
-  DiffData,
-  CredentialMetadata,
-  CredentialDocument,
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Resource {
+  Chain,
+  Event,
 }
 
-impl ResourceType {
+impl Resource {
   pub const fn name(&self) -> &'static str {
     match self {
-      Self::Noop => "",
-      Self::IdentityMetadata => "IdentityMetadata",
-      Self::IdentityDocument => "IdentityDocument",
-      Self::AuthData => "AuthData",
-      Self::DiffData => "DiffData",
-      Self::CredentialMetadata => "CredentialMetadata",
-      Self::CredentialDocument => "CredentialDocument",
+      Self::Chain => "Chain",
+      Self::Event => "Event",
     }
   }
 }

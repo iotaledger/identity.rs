@@ -8,6 +8,7 @@ mod result;
 mod snapshot;
 mod status;
 mod store;
+mod traits;
 mod vault;
 
 pub use self::context::Context;
@@ -21,6 +22,7 @@ pub use self::result::ProcedureResult;
 pub use self::snapshot::Snapshot;
 pub use self::status::SnapshotStatus;
 pub use self::store::Store;
+pub use self::traits::Integer;
 pub use self::vault::Vault;
 
 #[cfg(test)]

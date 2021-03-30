@@ -52,15 +52,7 @@ impl Records<'_> {
   }
 
   pub async fn all(&self) -> Result<Vec<Vec<u8>>> {
-    self
-      .index()
-      .await?
-      .iter()
-      .map(Locations::record)
-      .map(|tag| self.store.get(tag))
-      .collect::<FuturesUnordered<_>>()
-      .try_collect()
-      .await
+    self.index().await?.load_all(&self.store).await
   }
 
   pub async fn get(&self, record_id: &[u8]) -> Result<Vec<u8>> {
@@ -138,16 +130,12 @@ pub struct RecordIndex(Vec<u8>);
 impl RecordIndex {
   const CHUNK: usize = 32;
 
-  fn try_new(data: Vec<u8>) -> Result<Self> {
+  pub(crate) fn try_new(data: Vec<u8>) -> Result<Self> {
     if data.len() % Self::CHUNK != 0 {
       return Err(Error::InvalidResourceIndex);
     }
 
     Ok(Self(data))
-  }
-
-  fn into_bytes(self) -> Vec<u8> {
-    self.0
   }
 
   pub fn iter(&self) -> impl Iterator<Item = &[u8]> {
@@ -158,7 +146,21 @@ impl RecordIndex {
     self.iter().any(|chunk| chunk == tag)
   }
 
-  fn insert(&mut self, tag: &[u8]) -> bool {
+  pub(crate) async fn load_all(&self, store: &Store<'_>) -> Result<Vec<Vec<u8>>> {
+    self
+      .iter()
+      .map(Locations::record)
+      .map(|tag| store.get(tag))
+      .collect::<FuturesUnordered<_>>()
+      .try_collect()
+      .await
+  }
+
+  pub(crate) fn into_bytes(self) -> Vec<u8> {
+    self.0
+  }
+
+  pub(crate) fn insert(&mut self, tag: &[u8]) -> bool {
     if self.contains(tag) {
       return false;
     }
@@ -167,7 +169,7 @@ impl RecordIndex {
     true
   }
 
-  fn remove(&mut self, tag: &[u8]) -> bool {
+  pub(crate) fn remove(&mut self, tag: &[u8]) -> bool {
     let index: Option<usize> = self.iter().position(|chunk| chunk == tag);
 
     if let Some(index) = index {
@@ -178,7 +180,7 @@ impl RecordIndex {
     false
   }
 
-  fn tag(id: &[u8]) -> RecordTag {
+  pub(crate) fn tag(id: &[u8]) -> RecordTag {
     Blake2b256::digest(id)
   }
 }

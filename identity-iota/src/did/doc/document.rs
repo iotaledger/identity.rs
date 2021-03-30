@@ -129,7 +129,6 @@ impl Document {
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {}
       MethodType::MerkleKeyCollection2021 => return Err(Error::InvalidDocumentAuthType),
-      _ => {}
     }
 
     Ok(())

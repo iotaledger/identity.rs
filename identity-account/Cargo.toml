@@ -13,7 +13,7 @@ homepage = "https://www.iota.org"
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
 futures = { version = "0.3" }
-hashbrown = { version = "0.9" }
+hashbrown = { version = "0.9", features = ["serde"] }
 identity-core = { version = "=0.2.0", path = "../identity-core" }
 identity-credential = { version = "=0.2.0", path = "../identity-credential" }
 identity-did = { version = "=0.2.0", path = "../identity-did" }
