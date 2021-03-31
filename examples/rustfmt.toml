@@ -1,7 +1,2 @@
 comment_width = 1337
-format_code_in_doc_comments = false
-max_width = 1337
-normalize_comments = false
-normalize_doc_attributes = false
-tab_spaces = 2
 wrap_comments = false
