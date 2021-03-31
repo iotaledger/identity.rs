@@ -1,3 +1,5 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
 use identity_core::{crypto::KeyPair, utils::encode_b58};
 use libjose::{
