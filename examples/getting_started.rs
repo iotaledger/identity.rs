@@ -10,7 +10,7 @@ use identity::iota::Result;
 #[tokio::main]
 async fn main() -> Result<()> {
   // Print IOTA Identity header
-  println!("");
+  println!();
   println!(r#"  _____ ____ _______          _____    _            _   _ _         "#);
   println!(r#" |_   _/ __ \__   __|/\      |_   _|  | |          | | (_) |        "#);
   println!(r#"   | || |  | | | |  /  \       | |  __| | ___ _ __ | |_ _| |_ _   _ "#);
@@ -21,11 +21,11 @@ async fn main() -> Result<()> {
   println!(r#"                                                              |___/ "#);
 
   // Print welcome text
-  println!("");
+  println!();
   println!("Welcome to IOTA Identity! The library was set up correctly and everything works!");
   println!("You can try out the other examples using: cargo run --example <example_name>");
   println!("Please visit https://github.com/iotaledger/identity.rs/tree/main/examples for further info!");
-  println!("");
+  println!();
 
   Ok(())
 }
