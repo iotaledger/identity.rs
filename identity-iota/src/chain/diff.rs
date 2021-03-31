@@ -166,3 +166,82 @@ impl Display for DiffChain {
     }
   }
 }
+
+#[cfg(test)]
+mod test {
+  use crate::chain::AuthChain;
+  use crate::chain::DocumentChain;
+  use crate::did::Document;
+  use crate::did::DocumentDiff;
+  use crate::tangle::TangleRef;
+  use identity_core::{common::Timestamp, crypto::KeyPair};
+  use identity_did::verification::{MethodBuilder, MethodData, MethodRef, MethodType};
+  use iota::MessageId;
+
+  #[test]
+  fn test_diff_chain() {
+    let mut chain: DocumentChain;
+    let mut keys: Vec<KeyPair> = Vec::new();
+
+    // =========================================================================
+    // Create Initial Document
+    // =========================================================================
+
+    {
+      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+      let mut document: Document = Document::from_keypair(&keypair).unwrap();
+      document.sign(keypair.secret()).unwrap();
+      document.set_message_id(MessageId::new([8; 32]));
+      chain = DocumentChain::new(AuthChain::new(document).unwrap());
+      keys.push(keypair);
+    }
+
+    // =========================================================================
+    // Push Auth Chain Update
+    // =========================================================================
+    {
+      let mut new: Document = chain.current().clone();
+      let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+
+      let authentication: MethodRef = MethodBuilder::default()
+        .id(chain.id().join("#key-2").unwrap().into())
+        .controller(chain.id().clone().into())
+        .key_type(MethodType::Ed25519VerificationKey2018)
+        .key_data(MethodData::new_b58(keypair.public()))
+        .build()
+        .map(Into::into)
+        .unwrap();
+
+      unsafe {
+        new.as_document_mut().authentication_mut().clear();
+        new.as_document_mut().authentication_mut().append(authentication.into());
+      }
+
+      new.set_updated(Timestamp::now());
+      new.set_previous_message_id(*chain.auth_message_id());
+
+      assert!(chain.current().sign_data(&mut new, keys[0].secret()).is_ok());
+
+      keys.push(keypair);
+      assert!(chain.try_push_auth(new).is_ok());
+    }
+
+    // =========================================================================
+    // Push Diff Chain Update
+    // =========================================================================
+    {
+      let new: Document = {
+        let mut this: Document = chain.current().clone();
+        this.properties_mut().insert("foo".into(), 123.into());
+        this.properties_mut().insert("bar".into(), 456.into());
+        this.set_updated(Timestamp::now());
+        this
+      };
+
+      let message_id = *chain.diff_message_id();
+      let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret()).unwrap();
+      diff.set_message_id(message_id);
+      assert!(chain.try_push_diff(diff).is_ok());
+    }
+  }
+}
