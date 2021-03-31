@@ -162,8 +162,7 @@ where
 #[cfg(test)]
 mod test {
   use identity_core::common::Value;
-  use std::collections::BTreeMap;
-
+  use identity_core::common::Object;
   use super::*;
 
   fn test_method() -> Method {
@@ -175,6 +174,7 @@ mod test {
       .build()
       .unwrap()
   }
+
   #[test]
   fn test_diff() {
     let method = test_method();
@@ -186,13 +186,14 @@ mod test {
     assert!(diff.key_type.is_none());
     assert!(diff.properties.is_none());
   }
+
   #[test]
   fn test_properties() {
     let method = test_method();
     let mut new = method.clone();
 
     // add property
-    let mut properties = BTreeMap::new();
+    let mut properties = Object::new();
     properties.insert("key1".to_string(), Value::String("value1".to_string()));
     *new.properties_mut() = properties;
 
@@ -206,7 +207,7 @@ mod test {
     assert_eq!(merge, new);
 
     // add another property
-    let mut properties = BTreeMap::new();
+    let mut properties = Object::new();
     properties.insert("key2".to_string(), Value::String("value1".to_string()));
     *new.properties_mut() = properties;
 
@@ -220,7 +221,7 @@ mod test {
     assert_eq!(merge, new);
 
     // change property
-    let mut properties = BTreeMap::new();
+    let mut properties = Object::new();
     properties.insert("key2".to_string(), Value::String("value2".to_string()));
     *new.properties_mut() = properties;
 
@@ -233,6 +234,7 @@ mod test {
     let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_id() {
     let method = test_method();
@@ -249,6 +251,7 @@ mod test {
     let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_controller() {
     let method = test_method();
@@ -265,6 +268,7 @@ mod test {
     let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_key_type() {
     let method = test_method();
@@ -281,6 +285,7 @@ mod test {
     let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_key_data() {
     let method = test_method();
@@ -302,6 +307,7 @@ mod test {
     let merge = method.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_from_diff() {
     let method = test_method();
@@ -312,7 +318,7 @@ mod test {
     assert!(diff_method.is_err());
 
     // add property
-    let mut properties = BTreeMap::new();
+    let mut properties = Object::new();
     properties.insert("key1".to_string(), Value::String("value1".to_string()));
     *new.properties_mut() = properties;
 

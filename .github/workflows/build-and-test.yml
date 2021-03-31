@@ -46,6 +46,7 @@ jobs:
           # Restore from outdated cache for speed
           restore-keys: |
             ${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}
+
       - name: Cache cargo index
         uses: actions/cache@v2.1.4
         with:
@@ -55,6 +56,7 @@ jobs:
           # Restore from outdated cache for speed
           restore-keys: |
             ${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}
+
       - name: Cache cargo target
         uses: actions/cache@v2.1.4
         with:
@@ -64,6 +66,7 @@ jobs:
           # Restore from outdated cache for speed
           restore-keys: |
             ${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}
+
       - name: Cache wasm cargo target
         uses: actions/cache@v2.1.4
         with:
@@ -73,6 +76,7 @@ jobs:
           # Restore from outdated cache for speed
           restore-keys: |
             ${{ matrix.os }}-cargo-build-wasm-target-${{ hashFiles('**/Cargo.toml') }}
+
       - name: Build
         uses: actions-rs/cargo@v1
         with:

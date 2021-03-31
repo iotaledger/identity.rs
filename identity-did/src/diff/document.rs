@@ -402,6 +402,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_add_verification_method() {
     let doc = document();
@@ -416,6 +417,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_replace_verification_method() {
     let doc = document();
@@ -431,6 +433,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_remove_verification_method() {
     let doc = document();
@@ -458,6 +461,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_replace_authentication() {
     let doc = document();
@@ -472,6 +476,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_remove_authentication() {
     let doc = document();
@@ -485,6 +490,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_add_assertion_method() {
     let doc = document();
@@ -498,6 +504,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_replace_assertion_method() {
     let doc = document();
@@ -512,6 +519,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_remove_assertion_method() {
     let doc = document();
@@ -525,6 +533,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_add_key_agreement() {
     let doc = document();
@@ -538,6 +547,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_replace_key_agreement() {
     let doc = document();
@@ -552,6 +562,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_remove_key_agreement() {
     let doc = document();
@@ -565,6 +576,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_add_capability_delegation() {
     let doc = document();
@@ -578,6 +590,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_replace_capability_delegation() {
     let doc = document();
@@ -592,6 +605,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_remove_capability_delegation() {
     let doc = document();
@@ -605,6 +619,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_add_capability_invocation() {
     let doc = document();
@@ -618,6 +633,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_replace_capability_invocation() {
     let doc = document();
@@ -632,6 +648,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_remove_capability_invocation() {
     let doc = document();
@@ -645,6 +662,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_add_service() {
     let doc = document();
@@ -658,6 +676,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_replace_service() {
     let doc = document();
@@ -672,6 +691,7 @@ mod test {
     let merge = doc.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_remove_service() {
     let doc = document();

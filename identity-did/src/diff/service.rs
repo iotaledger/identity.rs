@@ -139,7 +139,7 @@ where
 mod test {
   use super::*;
   use identity_core::common::Value;
-  use std::collections::BTreeMap;
+  use identity_core::common::Object;
 
   fn controller() -> DID {
     "did:example:1234".parse().unwrap()
@@ -147,7 +147,7 @@ mod test {
 
   fn service() -> Service {
     let controller = controller();
-    let mut properties: BTreeMap<String, Value> = BTreeMap::default();
+    let mut properties: Object = Object::default();
     properties.insert("key1".to_string(), "value1".into());
     Service::builder(properties)
       .id(controller)
@@ -171,6 +171,7 @@ mod test {
     let merge = service.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_type() {
     let service = service();
@@ -185,6 +186,7 @@ mod test {
     let merge = service.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_service_endpoint() {
     let service = service();
@@ -200,13 +202,14 @@ mod test {
     let merge = service.merge(diff).unwrap();
     assert_eq!(merge, new);
   }
+
   #[test]
   fn test_replace_properties() {
     let service = service();
     let mut new = service.clone();
 
     // update properties
-    *new.properties_mut() = BTreeMap::default();
+    *new.properties_mut() = Object::default();
 
     assert_ne!(service, new);
     let diff = service.diff(&new).unwrap();

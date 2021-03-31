@@ -523,6 +523,7 @@ mod tests {
     let document: Document = Document::try_from_core(document.serde_into().unwrap()).unwrap();
     compare_document(&document);
   }
+
   #[test]
   fn test_json() {
     let keypair: KeyPair = generate_testkey();
@@ -538,6 +539,7 @@ mod tests {
     let document2: Document = Document::from_json(&json_doc).unwrap();
     assert_eq!(document, document2);
   }
+
   #[test]
   fn test_authentication() {
     let keypair: KeyPair = generate_testkey();

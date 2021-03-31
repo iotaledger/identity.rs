@@ -374,6 +374,7 @@ mod test {
     let did = did();
     assert!(service_endpoint_ctor(did, &Url::parse("https://my-service.endpoint.net").unwrap()).is_ok());
   }
+
   #[test]
   fn test_service_endpoint_invalid_query() {
     let did = did();
@@ -392,6 +393,7 @@ mod test {
     .is_ok());
     assert!(service_endpoint_ctor(did, &Url::parse("https://my-service.endpoint.net?query=this").unwrap()).is_ok());
   }
+
   #[test]
   fn test_service_endpoint_invalid_fragment() {
     let did = did();
