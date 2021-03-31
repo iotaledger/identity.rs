@@ -33,7 +33,6 @@ async fn main() -> Result<()> {
   {
     let keypair: KeyPair = KeyPair::new_ed25519()?;
     let mut document: Document = Document::from_keypair(&keypair)?;
-
     document.sign(keypair.secret())?;
     document.publish(&client).await?;
 
@@ -163,7 +162,8 @@ async fn main() -> Result<()> {
   }
 
   // =========================================================================
-  // Read Document Chain
+  // Read Document Chain with no query parameter given
+  // No query parameter => Read out Auth- and Diff Chain
   // =========================================================================
 
   let remote: DocumentChain = client.read_document_chain(chain.id()).await?;
@@ -177,6 +177,55 @@ async fn main() -> Result<()> {
   // The current document in the resolved chain should be identical to the
   // current document in our local chain.
   assert_eq!(a, b);
+
+  // =========================================================================
+  // Test Read Document Chain with diff true
+  // query parameter diff=true => Read out Auth- and Diff Chain
+  // =========================================================================
+
+  let mut did = chain.id().clone();
+  let opt: Option<&str> = Some("diff=true");
+  did.set_query(opt);
+
+  // The flag diff=true and the did query parameter should be identical
+  assert_eq!("diff=true", did.query().unwrap());
+
+  let remote: DocumentChain = client.read_document_chain(&did).await?;
+
+  println!("Chain (R) {:#}", remote);
+  println!();
+
+  let a: &Document = chain.current();
+  let b: &Document = remote.current();
+
+  // The current document in the resolved chain should be identical to the
+  // current document in our local chain.
+  assert_eq!(a, b);
+
+  // =========================================================================
+  // Test Read Document Chain with query parameter diff false
+  // query parameter diff=false => Read Auth Chain, Skip Diff Chain
+  // Warning: this leads to an outdated version & is therefore not recommended
+  // =========================================================================
+
+  let opt: Option<&str> = Some("diff=false");
+  did.set_query(opt);
+
+  // The flag diff=false and the did query parameter should be identical
+  assert_eq!("diff=false", did.query().unwrap());
+
+  let remote: DocumentChain = client.read_document_chain(&did).await?;
+
+  println!("Chain (R) {:#}", remote);
+  println!();
+
+  let a: &Document = chain.current();
+  let b: &Document = remote.current();
+
+  // The current document in the resolved chain should not be identical to
+  // the current document in our local chain because you read an outdated
+  // version of the document
+  assert_ne!(a, b);
 
   Ok(())
 }

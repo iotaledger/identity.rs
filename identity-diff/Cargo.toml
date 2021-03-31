@@ -1,7 +1,7 @@
 [package]
 name = "identity-diff"
 version = "0.2.0"
-authors = ["IOTA Identity"]
+authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "The `Diff` trait for the identity-rs library."
 readme = "../README.md"
