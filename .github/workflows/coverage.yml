@@ -3,20 +3,20 @@ name: Coverage
 on:
   push:
     branches:
+      - main
       - dev
-      - stable
-      - llvm-cov
-      - increase_test_coverage_across_crates
-    paths:
-      - '**.rs'
-      - '**.toml'
-      - '.github/workflows/coverage.yml'
-      - '.github/workflows/scripts/coverage.sh'
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths-ignore:
+      - 'docs/**'
 
 jobs:
   coverage:
     runs-on: ubuntu-latest
     continue-on-error: false
+
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
