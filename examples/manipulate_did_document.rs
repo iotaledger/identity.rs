@@ -18,7 +18,7 @@ async fn main() -> Result<()> {
   // Sign the DID Document with the default authentication key.
   document.sign(keypair.secret())?;
   println!("DID Document (signed) > {:#}", document);
-  println!("");
+  println!();
 
   // We can access individual fields of the DID Document as defined below using the appropriate getters:
   let _did: &identity::did::DID = document.id(); // The Document ID.
@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
     // m is of type &identity::did::Method
     println!("Method > {:#}", m);
   }
-  println!("");
+  println!();
 
   // We can also add and remove methods from a DID Document using insert_method() and remove_method() respectively.
   let method: &identity::did::Method = document.methods().next().unwrap();
@@ -42,7 +42,7 @@ async fn main() -> Result<()> {
   // We can search for a specific method using .resolve(), for instance if we want to have the first #authentication method, we can use:
   let auth_meth = document.resolve("#authentication").unwrap();
   println!("Authentication Method > {:#}", auth_meth);
-  println!("");
+  println!();
 
   // We can sign arbitrary structs using the DID Document signer if they implement the trait `identity::crypto::SetSignature`
   // e.g. document.signer(keypair.secret()).method("#authentication").sign(&mut test);
