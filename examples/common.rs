@@ -15,7 +15,6 @@ use identity::crypto::KeyPair;
 use identity::iota::Client;
 use identity::iota::Document;
 use identity::iota::Result;
-use identity::prelude::*;
 
 // A helper function to generate a new DID Document/KeyPair, sign the
 // document, publish it to the Tangle, and return the Document/KeyPair.
