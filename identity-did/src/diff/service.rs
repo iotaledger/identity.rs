@@ -138,8 +138,8 @@ where
 #[cfg(test)]
 mod test {
   use super::*;
-  use identity_core::common::Value;
   use identity_core::common::Object;
+  use identity_core::common::Value;
 
   fn controller() -> DID {
     "did:example:1234".parse().unwrap()

@@ -161,9 +161,9 @@ where
 
 #[cfg(test)]
 mod test {
-  use identity_core::common::Value;
-  use identity_core::common::Object;
   use super::*;
+  use identity_core::common::Object;
+  use identity_core::common::Value;
 
   fn test_method() -> Method {
     Method::builder(Default::default())
