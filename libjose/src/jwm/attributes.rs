@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::ops::Deref;
-use core::ops::DerefMut;
 use serde_json::Map;
 use serde_json::Value;
 
@@ -186,18 +184,14 @@ impl<T> JwmAttributes<T> {
   pub fn set_reply_to(&mut self, value: impl IntoIterator<Item = impl Into<String>>) {
     self.reply_to = Some(value.into_iter().map(Into::into).collect());
   }
-}
 
-impl<T> Deref for JwmAttributes<T> {
-  type Target = JwtClaims<T>;
-
-  fn deref(&self) -> &Self::Target {
+  /// Returns a reference to the inner `JwtClaims` object.
+  pub fn claims(&self) -> &JwtClaims<T> {
     &self.inner
   }
-}
 
-impl<T> DerefMut for JwmAttributes<T> {
-  fn deref_mut(&mut self) -> &mut Self::Target {
+  /// Returns a mutable reference to the inner `JwtClaims` object.
+  pub fn claims_mut(&mut self) -> &mut JwtClaims<T> {
     &mut self.inner
   }
 }

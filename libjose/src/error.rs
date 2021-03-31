@@ -13,6 +13,7 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 /// All possible errors that can occur in the library.
 #[derive(Debug)]
 pub enum Error {
+  InvalidRsaPrime,
   InvalidJson(serde_json::Error),
   InvalidBase64(base64::DecodeError),
   InvalidDecompression(miniz_oxide::inflate::TINFLStatus),
@@ -33,6 +34,7 @@ pub enum Error {
 impl Display for Error {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     match self {
+      Self::InvalidRsaPrime => f.write_str("Invalid Rsa Prime Value"),
       Self::InvalidJson(inner) => f.write_fmt(format_args!("Invalid JSON: {}", inner)),
       Self::InvalidBase64(inner) => f.write_fmt(format_args!("Invalid Base64: {}", inner)),
       Self::InvalidDecompression(inner) => f.write_fmt(format_args!("Invalid Decompression: {:?}", inner)),
@@ -81,7 +83,7 @@ impl From<miniz_oxide::inflate::TINFLStatus> for Error {
 
 impl From<::rsa::errors::Error> for Error {
   fn from(_: ::rsa::errors::Error) -> Self {
-    // TODO: FIXME
+    // TODO: Return better errors
     Self::CryptoError(crypto::Error::CipherError { alg: "Rsa" })
   }
 }

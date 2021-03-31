@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use zeroize::Zeroize;
+
 use crate::error::Error;
 use crate::error::Result;
 use crate::jwk::EcCurve;
@@ -14,6 +16,8 @@ use crate::lib::*;
 /// [More Info](https://tools.ietf.org/html/rfc7518#section-6)
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(untagged)]
+#[derive(Zeroize)]
+#[zeroize(drop)]
 pub enum JwkParams {
   Ec(JwkParamsEc),
   Rsa(JwkParamsRsa),
@@ -57,7 +61,8 @@ impl JwkParams {
 /// Parameters for Elliptic Curve Keys.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7518#section-6.2)
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Zeroize)]
+#[zeroize(drop)]
 pub struct JwkParamsEc {
   /// Identifies the cryptographic curve used with the key.
   ///
@@ -127,7 +132,8 @@ impl From<JwkParamsEc> for JwkParams {
 /// Parameters for RSA Keys.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7518#section-6.3)
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Zeroize)]
+#[zeroize(drop)]
 pub struct JwkParamsRsa {
   /// The modulus value for the RSA public key as a base64urlUInt-encoded value.
   ///
@@ -181,7 +187,8 @@ pub struct JwkParamsRsa {
 /// Parameters for RSA Primes
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7518#section-6.3.2.7)
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Zeroize)]
+#[zeroize(drop)]
 pub struct JwkParamsRsaPrime {
   /// The value of a subsequent prime factor as a base64urlUInt-encoded value.
   ///
@@ -246,7 +253,8 @@ impl From<JwkParamsRsa> for JwkParams {
 /// Parameters for Symmetric Keys.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc7518#section-6.4)
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Zeroize)]
+#[zeroize(drop)]
 pub struct JwkParamsOct {
   /// The symmetric key as a base64url-encoded value.
   ///
@@ -281,7 +289,8 @@ impl From<JwkParamsOct> for JwkParams {
 /// Parameters for Octet Key Pairs.
 ///
 /// [More Info](https://tools.ietf.org/html/rfc8037#section-2)
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, Zeroize)]
+#[zeroize(drop)]
 pub struct JwkParamsOkp {
   /// The subtype of the key pair.
   ///

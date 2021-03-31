@@ -4,7 +4,9 @@
 use core::iter::FromIterator;
 use core::ops::Index;
 use core::ops::IndexMut;
+use core::slice::Iter;
 use core::slice::SliceIndex;
+use zeroize::Zeroize;
 
 use crate::jwk::Jwk;
 use crate::lib::*;
@@ -39,7 +41,11 @@ impl JwkSet {
 
   /// Returns a slice containing the entire vector of keys.
   pub fn as_slice(&self) -> &[Jwk] {
-    self.keys.as_slice()
+    &self.keys
+  }
+
+  pub fn iter(&self) -> Iter<'_, Jwk> {
+    self.keys.iter()
   }
 
   /// Returns a list of keys matching the given `kid`.
@@ -84,15 +90,6 @@ impl FromIterator<Jwk> for JwkSet {
   }
 }
 
-impl IntoIterator for JwkSet {
-  type IntoIter = vec::IntoIter<Self::Item>;
-  type Item = Jwk;
-
-  fn into_iter(self) -> Self::IntoIter {
-    self.keys.into_iter()
-  }
-}
-
 impl<I> Index<I> for JwkSet
 where
   I: SliceIndex<[Jwk]>,
@@ -110,5 +107,17 @@ where
 {
   fn index_mut(&mut self, index: I) -> &mut Self::Output {
     IndexMut::index_mut(&mut *self.keys, index)
+  }
+}
+
+impl Zeroize for JwkSet {
+  fn zeroize(&mut self) {
+    self.keys.zeroize();
+  }
+}
+
+impl Drop for JwkSet {
+  fn drop(&mut self) {
+    self.zeroize();
   }
 }

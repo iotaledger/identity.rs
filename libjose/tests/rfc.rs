@@ -84,8 +84,8 @@ fn test_rfc7517() {
         let value: Value = serde_json::from_str(json).unwrap();
         let jwks: JwkSet = serde_json::from_str(json).unwrap();
 
-        for (index, jwk) in jwks.into_iter().enumerate() {
-          let ser: Value = serde_json::to_value(&jwk).unwrap();
+        for (index, jwk) in jwks.iter().enumerate() {
+          let ser: Value = serde_json::to_value(jwk).unwrap();
           assert_eq!(ser, value["keys"][index]);
         }
       }

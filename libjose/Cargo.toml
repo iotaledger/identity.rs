@@ -11,21 +11,22 @@ keywords = ["iota", "tangle", "identity", "jose", "jwa", "jwe", "jwk", "jwm", "j
 homepage = "https://www.iota.org"
 
 [dependencies]
-base64 = { version = "0.12", default-features = false }
+base64 = { version = "0.13", default-features = false }
 miniz_oxide = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
-url = { version = "2.1", default-features = false, features = ["serde"] }
+url = { version = "2.2", default-features = false, features = ["serde"] }
+zeroize = { version = "1.2", default-features = false, features = ["zeroize_derive"] }
 
-rand = { version = "0.7", default-features = false, features = ["getrandom"] }
-rsa = { version = "0.3", default-features = false }
+num-bigint-dig = { version = "0.7", default-features = false }
+rand = { version = "0.8", default-features = false, features = ["getrandom"] }
+rsa = { version = "0.4", default-features = false, features = ["pem", "std"] }
 sha-1 = { version = "0.9", default-features = false }
 subtle = { version = "2.4", default-features = false }
 
 [dependencies.iota-crypto]
 git = "https://github.com/iotaledger/crypto.rs"
 rev = "3d924b25766f6cf6d77c168d58c8e646e5915ef7"
-# path = "../../crypto.rs"
 default-features = false
 features = [
   "aes",

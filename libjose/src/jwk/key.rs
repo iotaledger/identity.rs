@@ -1,11 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::utils::RsaComputed;
 use crypto::hashes::sha::SHA256;
 use crypto::hashes::sha::SHA256_LEN;
 use rand::rngs::OsRng;
 use rsa::PublicKeyParts as _;
 use url::Url;
+use zeroize::Zeroize;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -519,15 +521,17 @@ impl Jwk {
           [..] => return Err(Error::KeyError("multi prime keys are not supported")),
         };
 
+        let values: RsaComputed = RsaComputed::new(secret.d(), &p, &q)?;
+
         Ok(Jwk::from_params(JwkParamsRsa {
           n: encode_b64(secret.n().to_bytes_be()),
           e: encode_b64(secret.e().to_bytes_be()),
           d: Some(encode_b64(secret.d().to_bytes_be())),
           p: Some(encode_b64(p.to_bytes_be())),
           q: Some(encode_b64(q.to_bytes_be())),
-          dp: Some(encode_b64(&[])), // TODO: FIXME
-          dq: Some(encode_b64(&[])), // TODO: FIXME
-          qi: Some(encode_b64(&[])), // TODO: FIXME
+          dp: Some(encode_b64(values.dp.to_bytes_be())),
+          dq: Some(encode_b64(values.dq.to_bytes_be())),
+          qi: Some(encode_b64(values.qi.to_bytes_be())),
           oth: None,
         }))
       }
@@ -554,5 +558,17 @@ impl Jwk {
         EcxCurve::X448 => generate_ecx!(X448SecretKey, curve),
       },
     }
+  }
+}
+
+impl Zeroize for Jwk {
+  fn zeroize(&mut self) {
+    self.params.zeroize();
+  }
+}
+
+impl Drop for Jwk {
+  fn drop(&mut self) {
+    self.zeroize();
   }
 }
