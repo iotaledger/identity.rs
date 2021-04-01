@@ -6,5 +6,8 @@ mod builder;
 mod message;
 mod timing;
 mod trustping;
+mod discovery;
+mod resolution;
+mod authentication;
 
-pub use self::{builder::*, message::*,timing::*,trustping::*};
+pub use self::{builder::*, message::*,timing::*,trustping::*,discovery::*,resolution::*,authentication::*};
