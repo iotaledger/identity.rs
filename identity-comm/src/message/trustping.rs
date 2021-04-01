@@ -191,15 +191,23 @@ impl Message for TrustpingResponse{}
 
 mod tests {
   use std::str::FromStr;
-  use super::*;
+  use did_doc::Signature;
+
+    use super::*;
   use crate::message::message::AsEnvelope;
   use crate::envelope::EnvelopeExt;
+  use crate::envelope::SignatureAlgorithm;
+  use identity_core::crypto::KeyPair;
   #[test]
   pub fn test_setter() {
     let mut message = Trustping::new(Url::from_str("https://example.com").unwrap());
     message.set_response_requested(Some(true));
     let plain_envelope = message.pack_plain().unwrap();
     let bytes = plain_envelope.as_bytes();
-    dbg!(bytes);
+    let message2:Trustping = plain_envelope.to_message().unwrap();
+    dbg!(message2);
+    let keypair = KeyPair::new_ed25519().unwrap();
+    let message3 = message.pack_non_repudiable(SignatureAlgorithm::EdDSA,&keypair).unwrap();
+    dbg!(message3);
   }
 }

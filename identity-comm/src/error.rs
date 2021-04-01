@@ -13,4 +13,6 @@ pub enum Error {
     JoseError(#[from] libjose::error::Error),
     #[error("DID Document Error: {0}")]
     DocumentError(#[from] did_doc::Error),
+    #[error("JSON Error: {0}")]
+    JsonError(#[from] serde_json::error::Error)
 }

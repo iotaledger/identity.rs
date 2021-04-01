@@ -3,8 +3,9 @@
 
 use identity_core::convert::ToJson as _;
 use serde::Serialize;
+use serde::Deserialize;
 
-use crate::{envelope::EnvelopeExt, error::Result};
+use crate::{envelope::EnvelopeExt, error::Result, error::Error};
 
 /// A DIDComm Plaintext Message
 ///
@@ -20,6 +21,12 @@ impl Envelope {
   pub fn from_message<T: Serialize>(message: &T) -> Result<Self> {
     message.to_json().map_err(Into::into).map(Self)
   }
+  pub fn to_message<'a, T>(&'a self) -> Result<T> 
+  where 
+  T: Deserialize<'a> {
+    serde_json::from_str(&self.0).map_err(Error::from)
+  }
+  
 }
 
 impl EnvelopeExt for Envelope {

@@ -4,9 +4,10 @@
 use identity_core::{crypto::KeyPair, utils::encode_b58};
 use libjose::{
   jose::JoseTokenType,
-  jws::{Encoder, JwsAlgorithm, JwsFormat, JwsHeader},
+  jws::{Encoder, JwsAlgorithm, JwsFormat, JwsHeader,Decoder},
 };
 use serde::Serialize;
+use serde::Deserialize;
 
 
 use crate::{
@@ -63,6 +64,10 @@ impl Envelope {
       .encode(envelope.as_bytes())
       .map_err(Into::into)
       .map(Self)
+  }
+  pub fn to_message<'a, T>(&'a self, algorithm: Algorithm, keypair: &KeyPair) -> Result<T> 
+  where T: Deserialize<'a> {
+    Decoder::new(keypair.public().as_bytes()).format(JwsFormat::Compact).algorithm(algorithm).decode(self.as_bytes()).map_err(Into::into)
   }
 }
 
