@@ -1,43 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
-use did_doc::{url::Url, Document, Signature};
-
-use identity_core::crypto::{KeyPair, PublicKey};
-use identity_iota::did::DID;
+use crate::envelope::Encrypted;
+use crate::envelope::EncryptionAlgorithm;
+use crate::envelope::Plaintext;
+use crate::envelope::SignatureAlgorithm;
+use crate::envelope::Signed;
+use crate::error::Result;
+use identity_core::crypto::KeyPair;
+use identity_core::crypto::PublicKey;
 use serde::Serialize;
 
-use crate::{
-  envelope::{Encrypted, EncryptionAlgorithm, Plaintext, SignatureAlgorithm, Signed},
-  error::Result,
-  message::Timing
-};
-
-#[derive(Debug, Deserialize, Serialize, Default)]
-pub struct CustomMessage {
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub(super) callback_url: Option<Url>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub(super) response_requested: Option<bool>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub(super) context: Option<Url>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub(super) id: Option<DID>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub(super) did_document: Option<Document>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub(super) thread: Option<String>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub(super) challenge: Option<String>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub(super) signature: Option<Signature>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub(super) timing: Option<Timing>,
-}
-pub trait Message: Serialize {}
-
-
-pub trait AsEnvelope {
+pub trait Message {
   fn pack_plain(&self) -> Result<Plaintext>;
   fn pack_auth(&self, algorithm: EncryptionAlgorithm, recipients: &[PublicKey], sender: &KeyPair) -> Result<Encrypted>;
   fn pack_auth_non_repudiable(
@@ -51,7 +24,7 @@ pub trait AsEnvelope {
   fn pack_non_repudiable(&self, algorithm: SignatureAlgorithm, sender: &KeyPair) -> Result<Signed>;
 }
 
-impl<T: Serialize> AsEnvelope for T {
+impl<T: Serialize> Message for T {
   fn pack_plain(&self) -> Result<Plaintext> {
     Plaintext::from_message(self)
   }

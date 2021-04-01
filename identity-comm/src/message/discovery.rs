@@ -1,5 +1,7 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::message::Timing;
-use crate::message::Message;
 use did_doc::url::Url;
 use identity_iota::did::DID;
 
@@ -15,31 +17,7 @@ pub struct DidRequest {
   #[serde(skip_serializing_if = "Option::is_none")]
   timing: Option<Timing>,
 }
-#[derive(Debug, Deserialize, Serialize)]
-pub struct DidResponse {
-  id: DID,
-}
 
-impl DidResponse {
-  pub fn new(id: DID) -> Self {
-    Self { id }
-  }
-
-  /// Get a mutable reference to the did response's id.
-  pub fn id_mut(&mut self) -> &mut DID {
-    &mut self.id
-  }
-
-  /// Get a reference to the did response's id.
-  pub fn id(&self) -> &DID {
-    &self.id
-  }
-
-  /// Set the did response's id.
-  pub fn set_id(&mut self, id: DID) {
-    self.id = id;
-  }
-}
 impl DidRequest {
   pub fn new(callback_url: Url) -> Self {
     Self {
@@ -127,5 +105,28 @@ impl DidRequest {
   }
 }
 
-impl Message for DidRequest {}
-impl Message for DidResponse {}
+#[derive(Debug, Deserialize, Serialize)]
+pub struct DidResponse {
+  id: DID,
+}
+
+impl DidResponse {
+  pub fn new(id: DID) -> Self {
+    Self { id }
+  }
+
+  /// Get a mutable reference to the did response's id.
+  pub fn id_mut(&mut self) -> &mut DID {
+    &mut self.id
+  }
+
+  /// Get a reference to the did response's id.
+  pub fn id(&self) -> &DID {
+    &self.id
+  }
+
+  /// Set the did response's id.
+  pub fn set_id(&mut self, id: DID) {
+    self.id = id;
+  }
+}

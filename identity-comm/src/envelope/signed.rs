@@ -1,19 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::{crypto::KeyPair, utils::encode_b58};
-use libjose::{
-  jose::JoseTokenType,
-  jws::{Encoder, JwsAlgorithm, JwsFormat, JwsHeader,Decoder},
-};
-use serde::Serialize;
+use crate::envelope::EnvelopeExt;
+use crate::envelope::Plaintext;
+use crate::error::Result;
+use identity_core::crypto::KeyPair;
+use identity_core::crypto::PublicKey;
+use identity_core::utils::encode_b58;
+use libjose::jose::JoseTokenType;
+use libjose::jws::Decoder;
+use libjose::jws::Encoder;
+use libjose::jws::JwsAlgorithm;
+use libjose::jws::JwsFormat;
+use libjose::jws::JwsHeader;
 use serde::Deserialize;
-
-
-use crate::{
-  envelope::{EnvelopeExt, Plaintext},
-  error::Result,
-};
+use serde::Serialize;
 
 /// Supported digital signature algorithms
 ///
@@ -65,9 +66,18 @@ impl Envelope {
       .map_err(Into::into)
       .map(Self)
   }
-  pub fn to_message<'a, T>(&'a self, algorithm: Algorithm, keypair: &KeyPair) -> Result<T> 
-  where T: Deserialize<'a> {
-    Decoder::new(keypair.public().as_bytes()).format(JwsFormat::Compact).algorithm(algorithm).decode(self.as_bytes()).map_err(Into::into)
+
+  pub fn to_message<T>(&self, algorithm: Algorithm, public: &PublicKey) -> Result<T>
+  where
+    for<'a> T: Deserialize<'a>,
+  {
+    let token = Decoder::new(public.as_ref())
+      .key_id(encode_b58(public))
+      .format(JwsFormat::Compact)
+      .algorithm(algorithm.into())
+      .decode(self.as_bytes())?;
+
+    serde_json::from_slice(&token.claims.to_vec()).map_err(Into::into)
   }
 }
 

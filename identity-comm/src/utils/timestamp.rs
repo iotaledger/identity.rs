@@ -6,7 +6,7 @@
 pub struct Timestamp(i64);
 
 impl Timestamp {
-    pub const fn get(self) -> i64 {
-        self.0
-    }
+  pub const fn get(self) -> i64 {
+    self.0
+  }
 }

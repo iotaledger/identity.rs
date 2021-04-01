@@ -1,4 +1,5 @@
-use crate::message::Message;
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
 use crate::message::Timing;
 use did_doc::url::Url;
@@ -125,6 +126,7 @@ impl Trustping {
 
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct TrustpingResponse {
+  #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<DID>,
   #[serde(skip_serializing_if = "Option::is_none")]
   thread: Option<String>,
@@ -186,28 +188,35 @@ impl TrustpingResponse {
     self.timing = timing;
   }
 }
-impl Message for Trustping{}
-impl Message for TrustpingResponse{}
 
+#[cfg(test)]
 mod tests {
-  use std::str::FromStr;
-  use did_doc::Signature;
-
-    use super::*;
-  use crate::message::message::AsEnvelope;
-  use crate::envelope::EnvelopeExt;
+  use super::*;
   use crate::envelope::SignatureAlgorithm;
+  use crate::message::message::Message;
   use identity_core::crypto::KeyPair;
+
   #[test]
-  pub fn test_setter() {
-    let mut message = Trustping::new(Url::from_str("https://example.com").unwrap());
+  pub fn test_plaintext_roundtrip() {
+    let mut message = Trustping::new(Url::parse("https://example.com").unwrap());
     message.set_response_requested(Some(true));
     let plain_envelope = message.pack_plain().unwrap();
-    let bytes = plain_envelope.as_bytes();
-    let message2:Trustping = plain_envelope.to_message().unwrap();
-    dbg!(message2);
+
+    let tp: Trustping = plain_envelope.to_message().unwrap();
+    assert_eq!(format!("{:?}", tp), format!("{:?}", message));
+  }
+  #[test]
+  pub fn test_signed_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
-    let message3 = message.pack_non_repudiable(SignatureAlgorithm::EdDSA,&keypair).unwrap();
-    dbg!(message3);
+
+    let message = Trustping::new(Url::parse("https://example.com").unwrap());
+    let signed = message
+      .pack_non_repudiable(SignatureAlgorithm::EdDSA, &keypair)
+      .unwrap();
+
+    let tp = signed
+      .to_message::<Trustping>(SignatureAlgorithm::EdDSA, &keypair.public())
+      .unwrap();
+    assert_eq!(format!("{:?}", tp), format!("{:?}", message));
   }
 }

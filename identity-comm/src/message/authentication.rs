@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::message::Timing;
-use crate::message::Message;
 use did_doc::{url::Url, Signature};
 use identity_iota::did::DID;
 use serde::Serialize;
@@ -146,6 +145,3 @@ impl AuthenticationResponse {
     self.signature = signature;
   }
 }
-
-impl Message for AuthenticationRequest {}
-impl Message for AuthenticationResponse {}

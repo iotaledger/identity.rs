@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::envelope::EnvelopeExt;
+use crate::error::Result;
 use identity_core::convert::ToJson as _;
-use serde::Serialize;
 use serde::Deserialize;
-
-use crate::{envelope::EnvelopeExt, error::Result, error::Error};
+use serde::Serialize;
 
 /// A DIDComm Plaintext Message
 ///
@@ -21,12 +21,12 @@ impl Envelope {
   pub fn from_message<T: Serialize>(message: &T) -> Result<Self> {
     message.to_json().map_err(Into::into).map(Self)
   }
-  pub fn to_message<'a, T>(&'a self) -> Result<T> 
-  where 
-  T: Deserialize<'a> {
-    serde_json::from_str(&self.0).map_err(Error::from)
+  pub fn to_message<T>(&self) -> Result<T>
+  where
+    for<'a> T: Deserialize<'a>,
+  {
+    serde_json::from_str(&self.0).map_err(Into::into)
   }
-  
 }
 
 impl EnvelopeExt for Envelope {

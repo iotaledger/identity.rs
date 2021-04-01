@@ -1,5 +1,7 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::message::Timing;
-use crate::message::Message;
 use did_doc::{url::Url, Document};
 use identity_iota::did::DID;
 
@@ -86,7 +88,7 @@ impl ResolutionRequest {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct ResolutionResult {
+pub struct ResolutionResponse {
   did_document: Document,
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<DID>,
@@ -96,13 +98,13 @@ pub struct ResolutionResult {
   timing: Option<Timing>,
 }
 
-impl ResolutionResult {
-  pub fn new(did_document: Document, ) -> Self {
+impl ResolutionResponse {
+  pub fn new(did_document: Document) -> Self {
     Self {
       did_document,
-      id:None,
-      thread:None,
-      timing:None,
+      id: None,
+      thread: None,
+      timing: None,
     }
   }
 
@@ -166,6 +168,3 @@ impl ResolutionResult {
     self.timing = timing;
   }
 }
-
-impl Message for ResolutionRequest {}
-impl Message for ResolutionResult {}

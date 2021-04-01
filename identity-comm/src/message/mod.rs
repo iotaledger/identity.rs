@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(clippy::module_inception)]
-mod builder;
+mod authentication;
+mod discovery;
 mod message;
+mod resolution;
 mod timing;
 mod trustping;
-mod discovery;
-mod resolution;
-mod authentication;
 
-pub use self::{builder::*, message::*,timing::*,trustping::*,discovery::*,resolution::*,authentication::*};
+pub use self::{authentication::*, discovery::*, message::*, resolution::*, timing::*, trustping::*};
