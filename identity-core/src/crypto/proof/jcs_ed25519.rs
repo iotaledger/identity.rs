@@ -58,7 +58,10 @@ where
   where
     X: Serialize,
   {
-    let signature: &str = signature.as_signature().ok_or(Error::InvalidProofValue)?;
+    let signature: &str = signature
+      .as_signature()
+      .ok_or(Error::InvalidProofValue("jcs ed25519"))?;
+
     let signature: Vec<u8> = decode_b58(signature)?;
     let message: Vec<u8> = data.to_jcs()?;
 
