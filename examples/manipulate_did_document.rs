@@ -24,8 +24,8 @@ async fn main() -> Result<()> {
   let _did: &identity::did::DID = document.id(); // The Document ID.
   let _controller: Option<&identity::did::DID> = document.controller(); // The Document controller.
   let _aka: &[identity::core::Url] = document.also_known_as(); // AKA: Subject of this identifier is also identified by one or more other identifiers.
-                                                               // ... etc. Each getter also has a _mut variant returning a mutable reference instead of an immutable one, e.g. .id_mut()
-                                                               // See also https://identity.docs.iota.org/docs/identity/did/struct.Document.html
+                                                               // ... etc. Each getter also has a _mut variant returning a mutable reference instead of an immutable one, e.g.
+                                                               // .id_mut() See also https://identity.docs.iota.org/docs/identity/did/struct.Document.html
 
   // We can iterate over a DID Document's verification methods using document.methods(), which returns an iterator:
   for m in document.methods() {
@@ -39,12 +39,15 @@ async fn main() -> Result<()> {
   let _method_did: &identity::did::DID = method.id();
   // document.remove_method(identity::iota::DID::new(public: &[u8]));
 
-  // We can search for a specific method using .resolve(), for instance if we want to have the first #authentication method, we can use:
+  // We can search for a specific method using .resolve(), for instance if we want to have the first #authentication
+  // method, we can use:
   let auth_meth = document.resolve("#authentication").unwrap();
   println!("Authentication Method > {:#}", auth_meth);
   println!();
 
-  // We can sign arbitrary structs using the DID Document signer if they implement the trait `identity::crypto::SetSignature`
+  // We can sign arbitrary structs using the DID Document signer if they implement the trait
+  // `identity::crypto::SetSignature`
+  //
   // e.g. document.signer(keypair.secret()).method("#authentication").sign(&mut test);
 
   Ok(())

@@ -40,7 +40,8 @@ async fn main() -> Result<()> {
 
   // Build our Verifiable Presentation.
   let mut presentation: Presentation = PresentationBuilder::default() // Create new Presentation using the builder.
-    // Note that ::default() already sets the .context() and .type() values for you, so we don't have to do this here anymore.
+    // Note that ::default() already sets the .context() and .type() values for you, so we don't have to do this here
+    // anymore.
     .id(id_url) // Optional: Sets a unique identifier for the Presentation.
     .credential(credential) // Adds a Verifiable Credential to the Presentation. Call this multiple times for multiple credentials.
     .holder(holder_url)
