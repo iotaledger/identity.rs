@@ -101,14 +101,14 @@ where
     // Ensure the target hash of the user-provided public key is part
     // of the Merkle tree
     if !merkle_proof.verify(&merkle_root, target_hash) {
-      return Err(Error::InvalidProofValue);
+      return Err(Error::InvalidProofValue("merkle key - bad proof"));
     }
 
     // If a set of revocation flags was provided, ensure the public key
     // was not revoked
     if let Some(revocation) = public.revocation {
       if revocation.contains(merkle_proof.index() as u32) {
-        return Err(Error::InvalidProofValue);
+        return Err(Error::InvalidProofValue("merkle key - revoked"));
       }
     }
 
