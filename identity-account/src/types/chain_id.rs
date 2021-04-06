@@ -9,6 +9,7 @@ use core::fmt::Result as FmtResult;
 
 use crate::error::Error;
 use crate::error::Result;
+use crate::types::Index;
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(from = "u32", into = "u32")]
@@ -19,7 +20,10 @@ impl ChainId {
   pub const DEFAULT: Self = Self::from_u32(0);
 
   pub fn from_slice(slice: &[u8]) -> Result<Self> {
-    slice.try_into().map_err(|_| Error::InvalidChainId).map(Self::from_bytes)
+    slice
+      .try_into()
+      .map_err(|_| Error::InvalidChainId)
+      .map(Self::from_bytes)
   }
 
   pub const fn from_bytes(bytes: [u8; 4]) -> Self {
@@ -49,13 +53,13 @@ impl ChainId {
 
 impl Debug for ChainId {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_fmt(format_args!("{:x?}", self.to_u32()))
+    f.write_fmt(format_args!("ChainId({:#010x})", self.to_u32()))
   }
 }
 
 impl Display for ChainId {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_fmt(format_args!("{:x}", self.to_u32()))
+    f.write_fmt(format_args!("{:#010x}", self.to_u32()))
   }
 }
 
@@ -74,5 +78,17 @@ impl From<u32> for ChainId {
 impl From<ChainId> for u32 {
   fn from(other: ChainId) -> Self {
     other.to_u32()
+  }
+}
+
+impl From<Index> for ChainId {
+  fn from(other: Index) -> Self {
+    Self::from_u32(other.to_u32())
+  }
+}
+
+impl From<ChainId> for Index {
+  fn from(other: ChainId) -> Self {
+    Self::from_u32(other.to_u32())
   }
 }

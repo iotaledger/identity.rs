@@ -1,60 +1,53 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::fmt::Debug;
+use futures::stream::LocalBoxStream;
+use futures::TryStreamExt;
 use identity_core::crypto::PublicKey;
-use identity_did::verification::MethodType;
-use std::path::Path;
-use std::collections::HashSet;
 
+use crate::chain::ChainIndex;
+use crate::chain::ChainKey;
 use crate::error::Result;
-use crate::utils::fs;
-use crate::utils::EncryptionKey;
+use crate::events::Commit;
+use crate::events::Snapshot;
+use crate::types::ChainId;
 use crate::types::Signature;
-use crate::types::KeyLocation;
-use crate::types::Resource;
-use crate::chain::ChainId;
+use crate::utils::EncryptionKey;
 
 #[async_trait::async_trait(?Send)]
-pub trait StorageAdapter: Send + Sync + 'static {
-  /// Returns a list of all resources matching the specified `type_`.
-  async fn all(&mut self, resource: Resource) -> Result<Vec<Vec<u8>>>;
-
-  /// Returns the resource specified by `key`.
-  async fn get(&mut self, resource: Resource, key: &[u8]) -> Result<Vec<u8>>;
-
-  /// Inserts or replaces the resource specified by `key` with `data`.
-  async fn set(&mut self, resource: Resource, key: &[u8], data: Vec<u8>) -> Result<()>;
-
-  /// Deletes the resource specified by `key`.
-  async fn del(&mut self, resource: Resource, key: &[u8]) -> Result<()>;
-
-  fn storage_path(&self) -> &Path;
-
-  fn storage_root(&self) -> &Path {
-    let path: &Path = self.storage_path();
-
-    if fs::maybe_file(path) {
-      path.parent().unwrap_or(path)
-    } else {
-      path
-    }
-  }
-}
-
-#[async_trait::async_trait(?Send)]
-pub trait VaultAdapter: StorageAdapter {
+pub trait Storage: Debug {
   /// Sets the account password.
-  async fn set_password(&mut self, password: EncryptionKey) -> Result<()>;
+  async fn set_password(&self, password: EncryptionKey) -> Result<()>;
+
+  /// Write any unsaved changes to disk.
+  async fn flush_changes(&self) -> Result<()>;
 
   /// Creates a new keypair at the specified `location`
-  async fn key_new(&mut self, type_: MethodType, location: &KeyLocation) -> Result<PublicKey>;
+  async fn key_new(&self, chain: ChainId, location: &ChainKey) -> Result<PublicKey>;
 
   /// Retrieves the public key at the specified `location`.
-  async fn key_get(&mut self, type_: MethodType, location: &KeyLocation) -> Result<PublicKey>;
+  async fn key_get(&self, chain: ChainId, location: &ChainKey) -> Result<PublicKey>;
 
   /// Deletes the keypair specified by `location`.
-  async fn key_del(&mut self, type_: MethodType, location: &KeyLocation) -> Result<()>;
+  async fn key_del(&self, chain: ChainId, location: &ChainKey) -> Result<()>;
 
-  /// Signs the given `payload` with the private key at the specified `location`.
-  async fn key_sign(&mut self, type_: MethodType, location: &KeyLocation, payload: Vec<u8>) -> Result<Signature>;
+  /// Signs `data` with the private key at the specified `location`.
+  async fn key_sign(&self, chain: ChainId, location: &ChainKey, _data: Vec<u8>) -> Result<Signature>;
+
+  async fn get_chain_index(&self) -> Result<ChainIndex>;
+
+  async fn set_chain_index(&self, index: &ChainIndex) -> Result<()>;
+
+  async fn get_snapshot(&self, chain: ChainId) -> Result<Option<Snapshot>>;
+
+  async fn set_snapshot(&self, chain: ChainId, _snapshot: &Snapshot) -> Result<()>;
+
+  async fn append(&self, chain: ChainId, _commits: &[Commit]) -> Result<()>;
+
+  async fn stream(&self, chain: ChainId) -> Result<LocalBoxStream<'_, Result<Commit>>>;
+
+  async fn collect(&self, chain: ChainId) -> Result<Vec<Commit>> {
+    self.stream(chain).await?.try_collect().await
+  }
 }

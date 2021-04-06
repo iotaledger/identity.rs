@@ -10,7 +10,7 @@ pub struct Signature {
 }
 
 impl Signature {
-  pub fn new(pkey: PublicKey, data: Vec<u8>) -> Self {
+  pub const fn new(pkey: PublicKey, data: Vec<u8>) -> Self {
     Self { pkey, data }
   }
 

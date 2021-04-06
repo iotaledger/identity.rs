@@ -7,21 +7,30 @@ use crate::error::Error;
 use crate::error::Result;
 
 pub trait Integer: Sized {
-  fn decode(bytes: Vec<u8>) -> Result<Self>;
+  fn decode(bytes: &[u8]) -> Result<Self>;
+
   fn encode(&self) -> Vec<u8>;
+
+  fn decode_vec(bytes: Vec<u8>) -> Result<Self> {
+    Self::decode(&bytes)
+  }
+
+  fn decode_opt(bytes: &[u8]) -> Option<Self> {
+    Self::decode(bytes).ok()
+  }
 }
 
 macro_rules! impl_Integer {
   ($ident:ident) => {
     impl Integer for $ident {
-      fn decode(bytes: Vec<u8>) -> Result<Self> {
+      fn decode(bytes: &[u8]) -> Result<Self> {
         if bytes.is_empty() {
           Ok(0)
         } else {
           bytes
             .try_into()
             .map(Self::from_be_bytes)
-            .map_err(|_| Error::InvalidIntegerBytes)
+            .map_err(|_| Error::InvalidIntegerBytes(stringify!($ident)))
         }
       }
 

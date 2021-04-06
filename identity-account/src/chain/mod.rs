@@ -1,12 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod header;
-mod id;
+mod data;
 mod index;
-mod state;
+mod key;
+mod messages;
 
-pub use self::header::*;
-pub use self::id::*;
+pub use self::data::*;
 pub use self::index::*;
-pub use self::state::*;
+pub use self::key::*;
+pub use self::messages::*;

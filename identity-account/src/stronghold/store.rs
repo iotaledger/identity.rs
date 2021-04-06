@@ -10,7 +10,7 @@ use crate::error::Error;
 use crate::error::PleaseDontMakeYourOwnResult;
 use crate::error::Result;
 use crate::stronghold::Context;
-use crate::stronghold::Integer;
+use crate::traits::Integer;
 
 const STRONG_404: &str = "Unable to read from store";
 
@@ -92,7 +92,7 @@ impl Store<'_> {
   }
 
   pub async fn get_int<I: Integer>(&self, location: Location) -> Result<I> {
-    self.get(location).await.and_then(I::decode)
+    self.get(location).await.and_then(I::decode_vec)
   }
 
   pub async fn set_int<I: Integer>(&self, location: Location, value: I, ttl: Option<Duration>) -> Result<()> {
