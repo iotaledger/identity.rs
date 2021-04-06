@@ -1,14 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::envelope::EnvelopeExt;
+use crate::envelope::Plaintext;
+use crate::envelope::Signed;
+use crate::error::Result;
 use identity_core::crypto::{KeyPair, PublicKey};
-use libjose::jwe::{Encoder, JweAlgorithm, JweEncryption, JweFormat, JweHeader};
+use identity_core::utils::encode_b58;
+use libjose::jwe::{Decoder, Encoder, JweAlgorithm, JweEncryption, JweFormat, JweHeader, Token};
+use serde::Deserialize;
 use serde::Serialize;
-
-use crate::{
-  envelope::{EnvelopeExt, Plaintext, Signed},
-  error::Result,
-};
 
 /// Supported content encryption algorithms
 ///
@@ -28,7 +29,6 @@ impl From<Algorithm> for JweEncryption {
     }
   }
 }
-
 /// A DIDComm Encrypted Message
 ///
 /// [Reference](https://identity.foundation/didcomm-messaging/spec/#didcomm-encrypted-message)
@@ -107,6 +107,24 @@ impl Envelope {
       .encode(envelope.as_bytes())
       .map_err(Into::into)
       .map(Self)
+  }
+
+  pub fn to_message<T>(&self, algorithm: Algorithm, public: &PublicKey, encryption: JweAlgorithm) -> Result<T>
+  where
+    for<'a> T: Deserialize<'a>,
+  {
+    let message: Token = Decoder::new(public.as_ref())
+      .key_id(encode_b58(public))
+      .format(JweFormat::General)
+      .encryption(algorithm.into())
+      .algorithm(encryption)
+      .decode(self.as_bytes())?;
+
+    println!("0,{:?}", message);
+    println!("1, {:?}", message.0);
+    println!("2,{:?}", message.1);
+
+    todo!()
   }
 }
 

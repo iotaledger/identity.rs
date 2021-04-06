@@ -191,10 +191,13 @@ impl TrustpingResponse {
 
 #[cfg(test)]
 mod tests {
+
   use super::*;
+  use crate::envelope::EncryptionAlgorithm;
   use crate::envelope::SignatureAlgorithm;
   use crate::message::message::Message;
   use identity_core::crypto::KeyPair;
+  use libjose::jwe::JweAlgorithm;
 
   #[test]
   pub fn test_plaintext_roundtrip() {
@@ -218,5 +221,19 @@ mod tests {
       .to_message::<Trustping>(SignatureAlgorithm::EdDSA, &keypair.public())
       .unwrap();
     assert_eq!(format!("{:?}", tp), format!("{:?}", message));
+  }
+  #[test]
+  pub fn test_encrypted_roundtrip() {
+    let keypair = KeyPair::new_ed25519().unwrap();
+
+    let message = Trustping::new(Url::parse("https://example.com").unwrap());
+    let encrypted = message
+      .pack_auth(EncryptionAlgorithm::A256GCM, &[keypair.public().to_owned()], &keypair)
+      .unwrap();
+    println!("{:?}", encrypted);
+    let tp: Trustping = encrypted
+      .to_message(EncryptionAlgorithm::A256GCM, &keypair.public(), JweAlgorithm::ECDH_1PU)
+      .unwrap();
+    println!("{:?}", tp);
   }
 }
