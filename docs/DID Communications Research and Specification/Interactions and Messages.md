@@ -2,21 +2,23 @@
 
 > ### Field Definitions
 
+`context` as URL/String, e.g. `did-resolution/1.0/resolution-result`: Defines the context that a specific message adheres to.
+
+`ackContext` & `errContext` as URL/String, e.g. `did-resolution/1.0/resolution-result`: Variants of `context` that describe the context of a message that is being acknowledged or the message that errored.
+
+`thread` as String, e.g. `jdhgbksdbgjksdbgkjdkg` or `thread-132-a`: A String, defined by the agent, to be used to identify this specific interaction to track it agent-locally.
+
 `callbackURL` as URL/String, e.g. `https://www.bobsworld.com/ping` or `https://www.aliceswonderland/authz`: Defines the URL or API call where a request or response is to be delivered to.
-
-`responseRequested` as Boolean, e.g. `true` or `false`: In Messages where it is defined a reponse is to be sent to a request if and only if this is `true`. Undefined counts as `false`.
-
-`context` as URL/String, e.g. `https://didcomm.org/trust_ping/1.0/ping`: Defines the context that a specific message adheres to.
 
 `id` as String, e.g. `did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v`: An IOTA decentralized identifier.
 
 `didDocument` as JSON: An IOTA DID Document (see e.g. in <a href="#did-resolution">DID Resolution</a>).
 
+`responseRequested` as Boolean, e.g. `true` or `false`: In messages where it is defined a reponse is to be sent to a request if and only if this is `true`. Undefined counts as `false`.
+
 `comment` as String: A comment.
 
-`thread` as String, e.g. `jdhgbksdbgjksdbgkjdkg` or `thread-132-a`: A String, defined by the agent, to be used to identify this specific interaction to track it agent-locally.
-
-`challenge` as String, e.g. `please-sign-this`: A String acting as a signing challenge.
+`challenge` as JSON, e.g. `{"foo": "sign this"}`: A JSON acting as a signing challenge.
 
 `offeredCredentialTypes` as JSON: A field specific to VC issuance, contains a list of possible credential types, see <a href="#credential-options">Credential Options</a>.
 
@@ -45,29 +47,85 @@
 `timing[wait_until_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: Wait until this time before processing the message.
 
 [(Source 1: Aries Message Timing)](https://github.com/hyperledger/aries-rfcs/blob/master/features/0032-message-timing/README.md)
-  
+
+> ### Standalone Messages
+
+Messages that are shared across interactions.
+
+### Roles
+- <u>**Sender**</u>: Agent who sends the message
+- <u>**Receiver**</u>: Agent who receives the message
+
+#### acknowledgement
+The <u>sender</u> sends an `acknowledgement` message to the <u>receiver</u> to let him know that a previous message has been received.
+
+###### Layout
+
+```JSON
+acknowledgement: {
+    "context",
+    "thread",
+    "ackContext"
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "context": "acknowledgement/1.0/acknowledgement",
+    "thread": "sdfgfjghsdfg-12345-sdf-b",
+    "ackContext": "did-resolution/1.0/resolution-result"
+}
+```
+
+#### error
+The <u>sender</u> sends an `error` message to the <u>receiver</u> to let him know that a previous message has resulted in an error.
+
+###### Layout
+
+```JSON
+error: {
+    "context",
+    "thread",
+    "ackContext",
+    "comment" // OPTIONAL!
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "context": "error/1.0/error",
+    "thread": "sdfgfjghsdfg-12345-sdf-b",
+    "errContext": "did-resolution/1.0/resolution-result",
+    "comment": "Can't resolve: Signature invalid!"
+}
+```
+
 > ### Interactions
 
-◈ <a href="#trust-ping">**Trust Ping**</a> - Testing a pairwise channel.
+◈ <a href="#trust-ping">**trust-ping**</a> - Testing a pairwise channel.
 
-◈ <a href="#did-discovery">**DID Discovery**</a> - Requesting a DID from an agent.
+◈ <a href="#did-discovery">**did-discovery**</a> - Requesting a DID from an agent.
 
-◈ <a href="#did-resolution">**DID Resolution**</a> - Using another agent as a Resolver.
+◈ <a href="#did-resolution">**did-resolution**</a> - Using another agent as a Resolver.
 
-◈ <a href="#authentication">**Authentication**</a> - Proving control over a DID.
+◈ <a href="#authentication">**authentication**</a> - Proving control over a DID.
 
-◈ <a href="#credential-options">**Credential Options**</a> - Querying an agent for the VCs that the agent can issue.
+◈ <a href="#credential-options">**credential-options**</a> - Querying an agent for the VCs that the agent can issue.
 
-◈ <a href="#credential-schema">**Credential Schema**</a> - Querying an agent for the schema of a specific VC that the agent can issue.
+◈ <a href="#credential-schema">**credential-schema**</a> - Querying an agent for the schema of a specific VC that the agent can issue.
 
-◈ <a href="#credential-issuance">**Credential Issuance**</a> - Creating an authenticated statement about a DID.
+◈ <a href="#credential-issuance">**credential-issuance**</a> - Creating an authenticated statement about a DID.
 
-◈ <a href="#credential-revocation">**Credential Revocation**</a> - Notifying a holder that a previously issued credential has been revoked.
+◈ <a href="#credential-revocation">**credential-revocation**</a> - Notifying a holder that a previously issued credential has been revoked.
 
-◈ <a href="#presentation-verification">**Presentation Verification**</a> - Proving a set of statements about an identifier.
+◈ <a href="#presentation-verification">**presentation-verification**</a> - Proving a set of statements about an identifier.
 
 ---
-## Trust Ping
+## trust-ping
 
 Testing a pairwise channel.
 
@@ -77,16 +135,16 @@ Testing a pairwise channel.
 
 ### Messages
 
-#### trustPing
-The <u>senders</u> sends the `trustPing` to the <u>receiver</u>, specifying a `callbackURL` for the `trustPingResponse` to be posted to.
+#### ping
+The <u>sender</u> sends the `ping` to the <u>receiver</u>, specifying a `callbackURL` for the `pingResponse` to be posted to.
 
 ###### Layout
 
 ```JSON
-trustPing: {
+ping: {
+    "context",
     "callbackURL",
     "responseRequested", //OPTIONAL! Counts as false if omitted!
-    "context", // OPTIONAL!
     "id", // OPTIONAL!
     "thread", // OPTIONAL!
     "timing": {...} // OPTIONAL! All subfields OPTIONAL!
@@ -97,9 +155,9 @@ trustPing: {
 
 ```JSON
 {
-    "callbackURL": "https://www.bobsworld.com/ping",
+    "context": "trust-ping/1.0/ping",
+    "callbackURL": "https://www.bobsworld.com/",
     "responseRequested": true,
-    "context": "https://didcomm.org/trust_ping/1.0/ping",
     "id": "did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v",
     "timing": {
         "delay_milli": 1337
@@ -107,13 +165,14 @@ trustPing: {
 }
 ```
 
-#### trustPingResponse
-The <u>receiver</u> answers with a `trustPingResponse` if and only if `responseRequested` was `true` in the `trustPing` message:
+#### pingResponse
+The <u>receiver</u> answers with a `pingResponse` if and only if `responseRequested` was `true` in the `ping` message:
 
 ###### Layout
 
 ```JSON
-trustPingResponse: {
+pingResponse: {
+    "context",
     "id", // OPTIONAL!
     "thread", // OPTIONAL!
     "timing": {...} // OPTIONAL! All subfields OPTIONAL!
@@ -124,6 +183,7 @@ trustPingResponse: {
 
 ```JSON
 {
+    "context": "trust-ping/1.0/pingResponse",
     "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
 }
 ```
@@ -131,7 +191,7 @@ trustPingResponse: {
 [Source 1: DIF Trust Ping](https://identity.foundation/didcomm-messaging/spec/#trust-ping-protocol-10); [Source 2: Aries Trust Ping](https://github.com/hyperledger/aries-rfcs/tree/master/features/0048-trust-ping)
 
 ---
-## DID Discovery
+## did-discovery
 
 Requesting a DID from an agent.
 
@@ -148,8 +208,8 @@ The <u>requester</u> sends the `didRequest` to the <u>endpoint</u>, specifying a
 
 ```JSON
 didRequest: {
+    "context",
     "callbackURL",
-    "context", // OPTIONAL!
     "id", // OPTIONAL!
     "thread", // OPTIONAL!
     "timing" // OPTIONAL!
@@ -160,6 +220,7 @@ didRequest: {
 
 ```JSON
 {
+    "context": "did-discovery/1.0/didRequest",
     "callbackURL": "https://www.aliceswonderland.com/didreq",
     "id": "did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v",
 }
@@ -172,6 +233,7 @@ The <u>endpoint</u> answers with a `didResponse`, containing its DID.
 
 ```JSON
 didResponse: {
+    "context",
     "id"
 }
 ```
@@ -180,12 +242,13 @@ didResponse: {
 
 ```JSON
 {
+    "context": "did-discovery/1.0/didResponse",
     "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez"
 }
 ```
 
 ---
-## DID Resolution
+## did-resolution
 
 Using another Agent as a Resolver.
 
@@ -204,6 +267,7 @@ The Requester broadcasts a message which may or may not contain a DID.
 
 ```JSON
 resolutionRequest: {
+    "context",
     "callbackURL",
     "id", // OPTIONAL!
     "thread", // OPTIONAL!
@@ -215,6 +279,7 @@ resolutionRequest: {
 
 ```JSON
 {
+    "context": "did-resolution/1.0/resolutionRequest",
     "callbackURL": "https://www.aliceswonderland.com/res",
     "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
     "thread": "req-1-1337b"
@@ -228,6 +293,7 @@ If the message contains a DID (in the `id` field), the Resolver resolves the DID
 
 ```JSON
 resolutionResult: {
+    "context",
     "didDocument"
     "id", // OPTIONAL!
     "thread", // OPTIONAL!
@@ -239,6 +305,7 @@ resolutionResult: {
 
 ```JSON
 {
+    "context": "did-resolution/1.0/resolutionResult",
     "thread": "req-1-1337b",
     "didDocument": {
         "@context": "https://www.w3.org/ns/did/v1",
@@ -254,7 +321,7 @@ resolutionResult: {
 ```
 
 ---
-## Authentication
+## authentication
 
 Proving control over an identifier.
 
@@ -273,6 +340,7 @@ The <u>verifier</u> sends the `authenticationRequest` to the authentication serv
 
 ```JSON
 authenticationRequest: {
+    "context",
     "callbackURL",
     "thread",
     "challenge",
@@ -285,6 +353,7 @@ authenticationRequest: {
 
 ```JSON
 {
+    "context": "authentication/1.0/authenticationRequest",
     "callbackURL": "https://www.aliceswonderland.com/auth",
     "thread": "69-420-1337",
     "challenge": "please sign this",
@@ -304,6 +373,7 @@ The <u>authenticator</u> answers with an `authenticationResponse`, providing a `
 
 ```JSON
 authenticationResponse: {
+    "context",
     "thread",
     "signature"
 }
@@ -313,6 +383,7 @@ authenticationResponse: {
 
 ```JSON
 {
+    "context": "authentication/1.0/authenticationResponse",
     "thread": "69-420-1337",
     "signature": {
         "type": "JcsEd25519Signature2020",
@@ -325,7 +396,8 @@ authenticationResponse: {
 The `signature` provided here must correspond to the `#authentication` public key provided in the DID Document of the identity that the <u>verifier</u> has received earlier. If that is the case, the identifier is authenticated successfully.
 
 ---
-## Credential Options
+## credential-options
+
 Querying an agent for the VCs that the agent can issue.
 
 The Verifiable Credential (VC) issuance flow consists of a three step interaction process between two parties, the <u>issuer</u> and the <u>holder</u>. This is the first interaction in this process. In this interaction, the <u>holder</u> queries the <u>issuer</u> for a list of VC types that the <u>issuer</u> offers to issue.
@@ -343,6 +415,7 @@ The <u>holder</u> queries the <u>issuer</u> for a list of VC types that the <u>i
 
 ```JSON
 credentialOptionsRequest: {
+    "context",
     "callbackURL",
     "thread", // OPTIONAL!
     "id", // OPTIONAL!
@@ -354,6 +427,7 @@ credentialOptionsRequest: {
 
 ```JSON
 {
+    "context": "credential-options/1.0/credentialOptionsRequest",
     "callbackURL": "https://www.alicesworld.com/credsList"
 }
 ```
@@ -365,10 +439,16 @@ The <u>issuer</u> responds with a list of offered VC types.
 
 ```JSON
 credentialOptionsResponse: {
+    "context",
     "offeredCredentialTypes": [
         "credentialType 1",
         "credentialType 2",
         "credentialType n"
+    ],
+    "supportedIssuers": [
+        "issuer id 1",
+        "issuer id 2",
+        "issuer id n"
     ],
     "thread", // OPTIONAL!
     "timing" // OPTIONAL!
@@ -379,16 +459,21 @@ credentialOptionsResponse: {
 
 ```JSON
 {
+    "context": "credential-options/1.0/credentialOptionsResponse",
     "offeredCredentialTypes": [
         "DiplomaCredential",
         "YouHaveNiceHairCredential",
         "DriversLicenseCredential"
+    ],
+    "supportedIssuers": [
+        "did:iota:afbsdjhfbasuidfb8asifb4bfkawuiefjhdfgsukdfb",
+        "did:iota:jahsdbfukgsiudfgisdufgi8sdfgzsbegbesudgbudf"
     ]
 }
 ```
 
 ---
-## Credential Schema
+## credential-schema
 Querying an agent for the schema of a specific VC that the agent can issue.
 
 The Verifiable Credential (VC) issuance flow consists of a three step interaction process between two parties, the <u>issuer</u> and the <u>holder</u>. This is the second interaction in this process. In this interaction, the <u>holder</u> queries the <u>issuer</u> for the precise schema of one of the VCs that the <u>issuer</u> offers to issue, with it's own list of requirements which must be satisfied by the <u>holder</u> in order to qualify for the credential.
@@ -406,8 +491,9 @@ The <u>holder</u> queries the <u>issuer</u> for the schema of a specific VC that
 
 ```JSON
 credentialSchemaRequest: {
+    "context",
     "callbackURL",
-    "credentialType",
+    "credentialTypes",
     "thread", // OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
@@ -418,19 +504,24 @@ credentialSchemaRequest: {
 
 ```JSON
 {
+    "context": "credential-options/1.0/credentialSchemaRequest",
     "callbackURL": "https://www.alicesworld.com/credsList",
-    "credentialType": "YouHaveNiceHairCredential"
+    "credentialTypes": [
+        "YouHaveNiceHairCredential",
+        "DriversLicenseCredential"
+    ]
 }
 ```
 
 #### credentialSchemaResponse
-The <u>issuer</u> responds with the schema of the requested `credentialType`.
+The <u>issuer</u> responds with the schema of the requested `credentialTypes`.
 
 ###### Layout
 
 ```JSON
 credentialSchemaResponse: {
-    "YouHaveNiceHairCredential": {...}, //TODO: Discuss!
+    "context",
+    "schemas",
     "thread", // OPTIONAL!
     "timing" // OPTIONAL!
 }
@@ -440,15 +531,22 @@ credentialSchemaResponse: {
 
 ```JSON
 {
-    "YouHaveNiceHairCredential": {
-        "type": "YouHaveNiceHairCredential",
-        ... //TODO: Discuss!
-    }, //TODO: Discuss!
+    "context": "credential-options/1.0/credentialSchemaResponse",
+    "schemas": [
+        "YouHaveNiceHairCredential": {
+            "type": "YouHaveNiceHairCredential",
+            ...
+        },
+        "DriversLicenseCredential": {
+            "type": "DriversLicenseCredential",
+            ...
+        },
+    ]
 }
 ```
 
 ---
-## Credential Issuance
+## credential-issuance
 Creating an authenticated statement about a DID.
 
 The Verifiable Credential (VC) issuance flow consists of a three step interaction process between two parties, the <u>issuer</u> and the <u>holder</u>. This is the third interaction in this process. In this interaction, the <u>holder</u> asks the <u>issuer</u> for issuance of a specific VC.
@@ -460,17 +558,30 @@ The Verifiable Credential (VC) issuance flow consists of a three step interactio
 ### Messages
 
 #### credentialSelection
-The <u>holder</u> sends a message containing a list of selected credentials with associated data for satisfying requirements. //TODO: Discuss: List or single issuance?
+The <u>holder</u> sends a message containing a list of selected credentials with associated data for satisfying requirements.
 
 ###### Layout
 
 ```JSON
 credentialSelection: {
+    "context",
     "callbackURL",
     "selectedCredentials": [
-        {
-            "type": "<Type as String>"
-        },
+            "type 1",
+            "type 2",
+            "type n"
+    ],
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "context": "credential-issuance/1.0/credentialSelection",
+    "callbackURL": "https://www.bobsworld.com/serviceEndpoint",
+    "selectedCredentials": [
+            "YouHaveNiceHairCredential"
     ],
 }
 ```
@@ -482,22 +593,29 @@ The <u>issuer</u> responds with a message containing a list of newly issued cred
 
 ```JSON
 credentialIssuance: {
+    "context",
     "issued": [
-        {
-            "type": "<Type as String>"
-        },
+        ...
     ],
 }
 ```
 
-### Examples
+###### Example(s)
 
-TBD after above flow is cleared up
+```JSON
+{
+    "context": "credential-issuance/1.0/credentialIssuance",
+    "issued": [
+            {...},
+            {...}
+    ],
+}
+```
 
 ---
-## Credential Revocation
+## credential-revocation
 
-Notifying a holder that a previously issued credential has been revoked.
+Notifying a holder that a previously issued credential has been revoked. Note that this revocation is declaratory, not constitutive, so the actual revocation has to be done elsewhere (e.g. in the backend of the issuer).
 
 ### Roles
 - <u>**Issuer**</u>: Agent who revokes the credential
@@ -506,15 +624,15 @@ Notifying a holder that a previously issued credential has been revoked.
 ### Messages
 
 #### revocation
-The <u>issuer</u> sends the `credentialRevocation` to the <u>holder</u>, notifying him of the revocation.
+The <u>issuer</u> sends the `revocation` to the <u>holder</u>, notifying him of the revocation. The most important field here is `credentialId`, which specifies the credential that has been revoked.
 
 ###### Layout
 
 ```JSON
-credentialRevocation: {
+revocation: {
+    "context",
     "credentialId",
     "comment", // OPTIONAL!
-    "context", // OPTIONAL!
     "id" // OPTIONAL!
 }
 ```
@@ -523,6 +641,7 @@ credentialRevocation: {
 
 ```JSON
 {
+    "context": "credential-revocation/1.0/revocation",
     "credentialId": "gfiweuzg89w3bgi8wbgi8wi8t",
     "comment": "Revoked because reasons.",
     "id": "did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v",
@@ -530,11 +649,11 @@ credentialRevocation: {
 ```
 
 ---
-## Presentation Verification
+## presentation-verification
 
 Proving a set of statements about an identifier.
 
-The credential verification flow is a simple request-response message exchange between the <u>verifier</u> and the <u>prover</u>. The interaction can consist of up to three messages, however two of them are OPTIONAL.
+The credential verification flow is a simple request-response message exchange between the <u>verifier</u> and the <u>prover</u>. The interaction can consist of up to two messages, the first one is OPTIONAL.
 
 ### Roles
 - **Verifier**: Agent who requests a set of Verifiable Credentials with associated requirements
@@ -549,14 +668,11 @@ The <u>verifier</u> requests a set of Verifiable Credentials from the <u>prover<
 
 ```JSON
 presentationRequest: {
-    "callbackURL": "<URL as String>",
+    "context",
+    "callbackURL",
     "credentialRequirements": [
         {
-            "type": "<Type as String>",
-            "constraints": [
-                <Constraint 1>,
-                <Constraint 2>,
-            ],
+            "type"
         },
     ],
 }
@@ -566,7 +682,16 @@ presentationRequest: {
 
 ```JSON
 {
-    tbd
+    "context": "presentation-verification/1.0/presentationRequest",
+    "callbackURL": "https://www.bobsworld.com/pres",
+    "credentialRequirements": [
+        {
+            "type": "YouHaveNiceHairCredential"
+        },
+        {
+            "type": "DriversLicenseCredential"
+        }
+    ]
 }
 ```
 
@@ -577,33 +702,77 @@ The <u>holder</u> sends a Verifiable Presentation to the <u>verifier</u> using a
 
 ```JSON
 presentationResponse: {
+    "context",
+    "verifiablePresentation"
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "context": "presentation-verification/1.0/presentationResponse",
     "verifiablePresentation": {...}
 }
 ```
 
-###### Example(s)
 
-```JSON
-{
-    tbd
-}
-```
 
-#### presentationAcknowledgement
-The <u>verifier</u> responds to the presented Verifiable Presentation. This message is OPTIONAL within this interaction.
 
-###### Layout
 
-```JSON
-presentationAcknowledgement: {
-    bool yes/no?
-}
-```
+vvvvv here be dragons vvvvv
 
-###### Example(s)
 
-```JSON
-{
-    tbd
-}
-```
+
+
+
+TODO add more sources to everything
+TODO presentationRequest:
+    TODO add field challenge (nonce (or sign with timestamp)), maybe optional
+    TODO signature issues
+    field "credentialRequirements"
+TODO credentialOptionsReponse:
+    TODO and i offer therse types of sig suites that this supports
+
+    TODO also add the actual signature types / methods like ed25519-merkle (verification method types)
+    "error": {
+        "errorCode": 200
+        "comment": Shit's on fire, yo
+        TODO
+        https://github.com/hyperledger/aries-rfcs/blob/master/features/0035-report-problem/README.md
+    }
+
+TODO credentialSchemaResponse:
+    TODO SRC https://w3c-ccg.github.io/vc-json-schemas/
+
+
+
+
+    TODO make nice interaction pictures / state machines
+
+
+
+
+
+TODO more sources https://identity.foundation/#wgs
+TODO VERSION, date, last changed, etc
+TODO all PRS
+TODO all issues:
+
+Open discussion points, among others:
+
+How exactly do we define the credentialSchemas?
+How exactly will these schemas be structured and communicated?
+Do we offer single issuance or do we use lists everywhere?
+
+    Probably some more stuff we need to talk about
+
+Other ToDos:
+
+timestamp or random value or challenge/nonce, sign everything
+check WHAT EXACTLY others are actually signing
+thread if instead of sending challenge back
+put down sources for all interactions into the document
+say what is OPTIONAL
+https://identity.foundation/didcomm-messaging/spec/#discover-features-protocol-10
+thread id
