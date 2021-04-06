@@ -114,7 +114,7 @@ impl Envelope {
     for<'a> T: Deserialize<'a>,
   {
     let message: Token = Decoder::new(public.as_ref())
-      .key_id(encode_b58(public))
+     // .key_id(encode_b58(public))
       .format(JweFormat::General)
       .encryption(algorithm.into())
       .algorithm(encryption)

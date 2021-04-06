@@ -230,10 +230,10 @@ mod tests {
     let encrypted = message
       .pack_auth(EncryptionAlgorithm::A256GCM, &[keypair.public().to_owned()], &keypair)
       .unwrap();
-    println!("{:?}", encrypted);
+    dbg!(&encrypted);
     let tp: Trustping = encrypted
       .to_message(EncryptionAlgorithm::A256GCM, &keypair.public(), JweAlgorithm::ECDH_1PU)
       .unwrap();
-    println!("{:?}", tp);
+    dbg!(&tp);
   }
 }
