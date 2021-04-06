@@ -404,9 +404,7 @@ where
 mod tests {
   use crate::did::DID;
   use crate::document::Document;
-  use crate::document::DocumentBuilder;
   use crate::verification::Method;
-  use crate::verification::MethodBuilder;
   use crate::verification::MethodData;
   use crate::verification::MethodType;
 
@@ -415,7 +413,7 @@ mod tests {
   }
 
   fn method(controller: &DID, fragment: &str) -> Method {
-    MethodBuilder::default()
+    Method::builder(Default::default())
       .id(controller.join(fragment).unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
@@ -427,7 +425,7 @@ mod tests {
   fn document() -> Document {
     let controller: DID = controller();
 
-    DocumentBuilder::default()
+    Document::builder(Default::default())
       .id(controller.clone())
       .verification_method(method(&controller, "#key-1"))
       .verification_method(method(&controller, "#key-2"))

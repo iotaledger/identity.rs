@@ -461,3 +461,90 @@ impl TangleRef for Document {
     Document::set_previous_message_id(self, message_id)
   }
 }
+
+#[cfg(test)]
+mod tests {
+
+  use crate::did::doc::Document;
+  use identity_core::convert::FromJson;
+  use identity_core::convert::SerdeInto;
+  use identity_core::crypto::KeyPair;
+  use identity_core::crypto::KeyType;
+  use identity_core::crypto::PublicKey;
+  use identity_core::crypto::SecretKey;
+  use identity_did::verification::MethodData;
+  use identity_did::verification::MethodType;
+
+  const DID_ID: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
+  const DID_AUTH: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
+
+  fn generate_testkey() -> KeyPair {
+    let secret_key: Vec<u8> = vec![
+      40, 185, 109, 70, 134, 119, 123, 37, 190, 254, 232, 186, 106, 48, 213, 63, 133, 223, 167, 126, 159, 43, 178, 4,
+      190, 217, 52, 66, 92, 63, 69, 84,
+    ];
+    let public_key: Vec<u8> = vec![
+      212, 151, 158, 35, 16, 178, 19, 27, 83, 109, 212, 138, 141, 134, 122, 246, 156, 148, 227, 69, 68, 251, 190, 31,
+      25, 101, 230, 20, 130, 188, 121, 196,
+    ];
+    KeyPair::from((
+      KeyType::Ed25519,
+      PublicKey::from(public_key),
+      SecretKey::from(secret_key),
+    ))
+  }
+
+  fn compare_document(document: &Document) {
+    assert_eq!(document.id().to_string(), DID_ID);
+    assert_eq!(document.authentication_id(), DID_AUTH);
+    assert_eq!(
+      document.authentication().key_type(),
+      MethodType::Ed25519VerificationKey2018
+    );
+    assert_eq!(
+      document.authentication().key_data(),
+      &MethodData::PublicKeyBase58(String::from("FJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT"))
+    );
+  }
+
+  #[test]
+  fn test_new() {
+    //from keypair
+    let keypair: KeyPair = generate_testkey();
+    let document: Document = Document::from_keypair(&keypair).unwrap();
+    compare_document(&document);
+
+    //from authentication
+    let method = document.authentication().to_owned();
+    let document: Document = Document::from_authentication(method).unwrap();
+    compare_document(&document);
+
+    //from core
+    let document: Document = Document::try_from_core(document.serde_into().unwrap()).unwrap();
+    compare_document(&document);
+  }
+
+  #[test]
+  fn test_json() {
+    let keypair: KeyPair = generate_testkey();
+    let mut document: Document = Document::from_keypair(&keypair).unwrap();
+
+    let json_doc: String = document.to_string();
+    let document2: Document = Document::from_json(&json_doc).unwrap();
+    assert_eq!(document, document2);
+
+    assert_eq!(document.sign(keypair.secret()).is_ok(), true);
+
+    let json_doc: String = document.to_string();
+    let document2: Document = Document::from_json(&json_doc).unwrap();
+    assert_eq!(document, document2);
+  }
+
+  #[test]
+  fn test_authentication() {
+    let keypair: KeyPair = generate_testkey();
+    let document: Document = Document::from_keypair(&keypair).unwrap();
+
+    assert_eq!(Document::check_authentication(document.authentication()).is_ok(), true);
+  }
+}
