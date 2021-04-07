@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+//! An example that revokes a key and shows how verification fails as a consequence.
+//!
 //! cargo run --example merkle_key
 
 mod common;
@@ -30,10 +32,11 @@ const LEAVES: usize = 1 << 10;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  // Create a new client connected to the Testnet (Chrysalis).
+  // Create a Client to interact with the IOTA Tangle.
   let client: Client = Client::new().await?;
+
   // Create a new DID Document, signed and published.
-  let (mut doc, auth): (Document, KeyPair) = common::document(&client).await?;
+  let (mut doc, auth): (Document, KeyPair) = common::create_did_document(&client).await?;
 
   // Generate a collection of ed25519 keys for signing credentials
   let keys: KeyCollection = KeyCollection::new_ed25519(LEAVES)?;

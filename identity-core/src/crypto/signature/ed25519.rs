@@ -42,7 +42,7 @@ where
     if key.verify(&sig, message) {
       Ok(())
     } else {
-      Err(Error::InvalidProofValue)
+      Err(Error::InvalidProofValue("ed25519"))
     }
   }
 }

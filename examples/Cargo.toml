@@ -10,12 +10,28 @@ rand = { version = "0.8" }
 tokio = { version = "1.3", features = ["full"] }
 
 [[example]]
-name = "create_did"
-path = "create_did.rs"
+name = "getting_started"
+path = "getting_started.rs"
 
 [[example]]
-name = "credential"
-path = "credential.rs"
+name = "create_did_document"
+path = "create_did_document.rs"
+
+[[example]]
+name = "manipulate_did_document"
+path = "manipulate_did_document.rs"
+
+[[example]]
+name = "verifiable_credential"
+path = "verifiable_credential.rs"
+
+[[example]]
+name = "verifiable_presentation"
+path = "verifiable_presentation.rs"
+
+[[example]]
+name = "resolution"
+path = "resolution.rs"
 
 [[example]]
 name = "diff_chain"
@@ -24,7 +40,3 @@ path = "diff_chain.rs"
 [[example]]
 name = "merkle_key"
 path = "merkle_key.rs"
-
-[[example]]
-name = "resolution"
-path = "resolution.rs"

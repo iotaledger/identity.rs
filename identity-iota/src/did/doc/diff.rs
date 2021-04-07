@@ -26,9 +26,11 @@ use iota::MessageId;
 pub struct DocumentDiff {
   pub(crate) did: DID,
   pub(crate) diff: String,
-  pub(crate) previous_message_id: MessageId,
-  pub(crate) proof: Option<Signature>,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageIdExt::is_null")]
+  pub(crate) previous_message_id: MessageId,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub(crate) proof: Option<Signature>,
+  #[serde(default = "MessageId::null", skip)]
   pub(crate) message_id: MessageId,
 }
 
@@ -99,7 +101,7 @@ impl DocumentDiff {
       }
     };
 
-    // Update the `self` with the `MessageId` of the bundled transaction.
+    // Update `self` with the `MessageId` of the bundled transaction.
     self.set_message_id(message);
 
     Ok(())

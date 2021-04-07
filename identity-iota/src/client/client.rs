@@ -12,7 +12,7 @@ use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
 use futures::stream::FuturesUnordered;
-use futures::stream::StreamExt;
+use futures::stream::TryStreamExt;
 use identity_core::common::Url;
 use identity_core::convert::ToJson;
 use iota::Message;
@@ -173,9 +173,8 @@ impl Client {
       .iter()
       .map(|message| self.client.get_message().data(message))
       .collect::<FuturesUnordered<_>>()
-      .filter_map(|message| async move { message.ok() })
-      .collect()
-      .await;
+      .try_collect()
+      .await?;
 
     Ok(Messages { message_ids, messages })
   }
