@@ -56,15 +56,42 @@ Messages that are shared across interactions.
 - <u>**Sender**</u>: Agent who sends the message
 - <u>**Receiver**</u>: Agent who receives the message
 
-##### acknowledgement
-The <u>sender</u> sends an `acknowledgement` message to the <u>receiver</u> to let him know that a previous message has been received.
-
-###### Layout
+##### report
+The <u>sender</u> sends a `report` message to the <u>receiver</u> to provide him with details about a previously received message. This can be a simple acknowledgement or e.g. an error report.
 TODO only do acks on request
 TODO merge ack and error into report
 TODO make thread not optional
 TODO make thread a UUID
+TODO ackkontext errkontext
 TODO make callbackURL optional except in the first of each interaction messages
+
+###### Layout
+
+```JSON
+report: {
+    "context",
+    "thread",
+    "ackContext",
+    "comment" // OPTIONAL!
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "context": "report/1.0/report",
+    "thread": "sdfgfjghsdfg-12345-sdf-b",
+    "errContext": "did-resolution/1.0/resolutionResponse",
+    "comment": "Can't resolve: Signature invalid!"
+}
+```
+
+##### acknowledgement
+The <u>sender</u> sends an `acknowledgement` message to the <u>receiver</u> to let him know that a previous message has been received.
+
+###### Layout
+
 ```JSON
 acknowledgement: {
     "context",
