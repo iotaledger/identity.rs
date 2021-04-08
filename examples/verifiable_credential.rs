@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! A basic example that generates and publishes subject and issuer DID
-//! Documents, creates a Verifiable Credential specifying claims about the
+//! Documents, then creates a Verifiable Credential (vc) specifying claims about the
 //! subject, and retrieves information through the CredentialValidator API.
 //!
-//! cargo run --example credential
+//! cargo run --example verifiable_credential
 
 mod common;
 
@@ -22,7 +22,10 @@ use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
 use identity::prelude::*;
 
+// Helper that takes two DID Documents (identities) for issuer and subject, and
+// creates a credential with claims about subject by issuer.
 fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
+  // Create VC "subject" field containing subject ID and claims about it.
   let subject: Subject = Subject::from_json_value(json!({
     "id": subject.id().as_str(),
     "degree": {
@@ -31,6 +34,7 @@ fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
     }
   }))?;
 
+  // Build credential using subject above and issuer.
   let credential: Credential = CredentialBuilder::default()
     .issuer(Url::parse(issuer.id().as_str())?)
     .type_("UniversityDegreeCredential")
@@ -43,13 +47,13 @@ fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
 #[tokio::main]
 async fn main() -> Result<()> {
   // Initialize a `Client` to interact with the IOTA Tangle.
-  // Create a new client connected to the Testnet (Chrysalis).
   let client: Client = Client::new().await?;
-  // Create a DID Document/KeyPair for the credential issuer.
-  let (doc_iss, key_iss): (Document, KeyPair) = common::document(&client).await?;
 
-  // Create a DID Document/KeyPair for the credential subject.
-  let (doc_sub, _key_sub): (Document, KeyPair) = common::document(&client).await?;
+  // Create a signed DID Document/KeyPair for the credential issuer (see previous example).
+  let (doc_iss, key_iss): (Document, KeyPair) = common::create_did_document(&client).await?;
+
+  // Create a signed DID Document/KeyPair for the credential subject (see previous example).
+  let (doc_sub, _key_sub): (Document, KeyPair) = common::create_did_document(&client).await?;
 
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
   let mut credential: Credential = issue_degree(&doc_iss, &doc_sub)?;

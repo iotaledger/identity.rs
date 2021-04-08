@@ -87,7 +87,7 @@ pub trait Verifier<Public: ?Sized>: Named {
     let signature: &Signature = data.try_signature()?;
 
     if signature.type_() != Self::NAME {
-      return Err(Error::InvalidProofValue);
+      return Err(Error::InvalidProofValue("signature name"));
     }
 
     signature.hide_value();

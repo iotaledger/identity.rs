@@ -6,6 +6,8 @@
   <a href="https://discord.iota.org/" style="text-decoration:none;"><img src="https://img.shields.io/discord/397872799483428865" alt="Discord"></a>
   <a href="https://github.com/iotaledger/identity.rs/blob/master/LICENSE" style="text-decoration:none;"><img src="https://img.shields.io/github/license/iotaledger/bee.svg" alt="Apache 2.0 license"></a>
   <img src="https://deps.rs/repo/github/iotaledger/identity.rs/status.svg" alt="Dependencies">
+  <a href='https://coveralls.io/github/iotaledger/identity.rs?branch=dev'><img src='https://coveralls.io/repos/github/iotaledger/identity.rs/badge.svg?branch=dev' alt='Coverage Status' /></a>
+
 </p>
 
 <p align="center">
@@ -26,7 +28,11 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 
 The individual libraries are developed to be agnostic about the utilized [Distributed Ledger Technology (DLT)](https://en.wikipedia.org/wiki/Distributed_ledger), with the exception of the [IOTA](https://www.iota.org) integration and higher level libraries. Written in stable Rust, it has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
 
-> :warning: **WARNING** :warning:
+> :warning: **WARNING #1** :warning: 
+>
+> **The Framework only works on the Chrysalis Phase 2 network, use [v0.2](https://github.com/iotaledger/identity.rs/releases/tag/v0.2.0) or older for pre-chrysalis phase 2 networks.**
+> 
+> :warning: **WARNING #2** :warning:
 > 
 > This library is currently in its **alpha stage** and **under development** and might undergo large changes!
 > Until a formal third-party security audit has taken place, the [IOTA Foundation](https://www.iota.org/) makes no guarantees to the fitness of this library. As such, it is to be seen as **experimental** and not ready for real-world applications.
