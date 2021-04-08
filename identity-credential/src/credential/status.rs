@@ -5,7 +5,7 @@ use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
 
-/// Information used to determine the current status of a `Credential`.
+/// Information used to determine the current status of a [`Credential`][crate::credential::Credential].
 ///
 /// [More Info](https://www.w3.org/TR/vc-data-model/#status)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -21,7 +21,7 @@ pub struct Status {
 }
 
 impl Status {
-  /// Creates a new [`Status`].
+  /// Creates a new `Status`.
   pub fn new<T>(id: Url, types: T) -> Self
   where
     T: Into<OneOrMany<String>>,
@@ -29,7 +29,7 @@ impl Status {
     Self::with_properties(id, types, Object::new())
   }
 
-  /// Creates a new [`Status`] with the given `properties`.
+  /// Creates a new `Status` with the given `properties`.
   pub fn with_properties<T>(id: Url, types: T, properties: Object) -> Self
   where
     T: Into<OneOrMany<String>>,

@@ -134,7 +134,8 @@ where
       .controller
       .flatten()
       .and_then(|value| self.controller().map(|controller| controller.merge(value)))
-      .transpose()?;
+      .transpose()?
+      .or_else(|| self.controller().cloned());
 
     let also_known_as: Vec<Url> = diff
       .also_known_as
@@ -304,5 +305,444 @@ where
       service: Some(self.service().to_vec().into_diff()?),
       properties: Some(self.properties().clone().into_diff()?),
     })
+  }
+}
+
+#[cfg(test)]
+mod test {
+  use super::*;
+  use crate::service::ServiceBuilder;
+  use crate::verification::MethodBuilder;
+  use crate::verification::MethodData;
+  use crate::verification::MethodType;
+  use identity_core::common::Value;
+  use std::collections::BTreeMap;
+
+  fn controller() -> DID {
+    "did:example:1234".parse().unwrap()
+  }
+
+  fn method(controller: &DID, fragment: &str) -> Method {
+    MethodBuilder::default()
+      .id(controller.join(fragment).unwrap())
+      .controller(controller.clone())
+      .key_type(MethodType::Ed25519VerificationKey2018)
+      .key_data(MethodData::new_b58(fragment.as_bytes()))
+      .build()
+      .unwrap()
+  }
+  fn service(controller: &DID) -> Service {
+    ServiceBuilder::default()
+      .id(controller.clone())
+      .service_endpoint(Url::parse("did:service:1234").unwrap())
+      .type_("test_service")
+      .build()
+      .unwrap()
+  }
+  fn document() -> Document {
+    let controller = controller();
+    let mut properties: BTreeMap<String, Value> = BTreeMap::default();
+    properties.insert("key1".to_string(), "value1".into());
+
+    Document::builder(properties)
+      .id(controller.clone())
+      .controller(controller.clone())
+      .verification_method(method(&controller, "#key-1"))
+      .verification_method(method(&controller, "#key-2"))
+      .verification_method(method(&controller, "#key-3"))
+      .authentication(method(&controller, "#auth-key"))
+      .authentication(controller.join("#key-3").unwrap())
+      .key_agreement(controller.join("#key-4").unwrap())
+      .assertion_method(method(&controller, "#key-5"))
+      .capability_delegation(method(&controller, "#key-6"))
+      .capability_invocation(method(&controller, "#key-7"))
+      .service(service(&controller))
+      .build()
+      .unwrap()
+  }
+
+  #[test]
+  fn test_id() {
+    let doc = document();
+    let mut new = doc.clone();
+    let new_did = "did:diff:1234";
+    *new.id_mut() = new_did.parse().unwrap();
+    assert_ne!(doc, new);
+
+    let diff = doc.diff(&new).unwrap();
+    assert_eq!(diff.id, Some(DiffString(Some(new_did.to_string()))));
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_controller() {
+    let doc = document();
+    let mut new = doc.clone();
+    let new_controller: DID = "did:diff:1234".parse().unwrap();
+    *new.controller_mut().unwrap() = new_controller.clone();
+    assert_ne!(doc, new);
+
+    let diff = doc.diff(&new).unwrap();
+    assert_eq!(
+      diff.clone().controller.unwrap(),
+      Some(DiffString(Some(new_controller.to_string())))
+    );
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_also_known_as() {
+    let doc = document();
+    let mut new = doc.clone();
+    new.also_known_as_mut().push("diff:diff:1234".parse().unwrap());
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_add_verification_method() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // add new method
+    assert!(new
+      .verification_method_mut()
+      .append(method(&doc.clone().controller.unwrap(), "#key-diff").into()));
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_replace_verification_method() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // update method
+    let first = new.verification_method().first().unwrap().clone();
+    new
+      .verification_method_mut()
+      .replace(&first, method(&"did:diff:1234".parse().unwrap(), "#key-diff").into());
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_remove_verification_method() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // remove method
+    let first = new.verification_method().first().unwrap().clone();
+    new.verification_method_mut().remove(&first);
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_add_authentication() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // add new method
+    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    assert!(new.authentication_mut().append(method_ref.into()));
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_replace_authentication() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // update method
+    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let first = new.authentication().first().unwrap().clone();
+    new.authentication_mut().replace(&first, method_ref.into());
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_remove_authentication() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // remove method
+    let first = new.authentication().first().unwrap().clone();
+    new.authentication_mut().remove(&first);
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_add_assertion_method() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // add new method
+    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    assert!(new.assertion_method_mut().append(method_ref.into()));
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_replace_assertion_method() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // update method
+    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let first = new.assertion_method().first().unwrap().clone();
+    new.assertion_method_mut().replace(&first, method_ref.into());
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_remove_assertion_method() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // remove method
+    let first = new.assertion_method().first().unwrap().clone();
+    new.assertion_method_mut().remove(&first);
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_add_key_agreement() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // add new method
+    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    assert!(new.key_agreement_mut().append(method_ref.into()));
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_replace_key_agreement() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // update method
+    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let first = new.key_agreement().first().unwrap().clone();
+    new.key_agreement_mut().replace(&first, method_ref.into());
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_remove_key_agreement() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // remove method
+    let first = new.key_agreement().first().unwrap().clone();
+    new.key_agreement_mut().remove(&first);
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_add_capability_delegation() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // add new method
+    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    assert!(new.capability_delegation_mut().append(method_ref.into()));
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_replace_capability_delegation() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // update method
+    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let first = new.capability_delegation().first().unwrap().clone();
+    new.capability_delegation_mut().replace(&first, method_ref.into());
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_remove_capability_delegation() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // remove method
+    let first = new.capability_delegation().first().unwrap().clone();
+    new.capability_delegation_mut().remove(&first);
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_add_capability_invocation() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // add new method
+    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    assert!(new.capability_invocation_mut().append(method_ref.into()));
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_replace_capability_invocation() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // update method
+    let method_ref: MethodRef = method(&doc.clone().controller.unwrap(), "#key-diff").into();
+    let first = new.capability_invocation().first().unwrap().clone();
+    new.capability_invocation_mut().replace(&first, method_ref.into());
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_remove_capability_invocation() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // remove method
+    let first = new.capability_invocation().first().unwrap().clone();
+    new.capability_invocation_mut().remove(&first);
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_add_service() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // add new service
+    let service = service(&doc.clone().controller.unwrap().join("#key-diff").unwrap());
+    assert!(new.service_mut().append(service.into()));
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_replace_service() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // add new service
+    let service = service(&doc.clone().controller.unwrap().join("#key-diff").unwrap());
+    let first = new.service().first().unwrap().clone();
+    new.service_mut().replace(&first, service.into());
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_remove_service() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // remove method
+    let first = new.service().first().unwrap().clone();
+    new.service_mut().remove(&first);
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_replace_properties() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // update properties
+    *new.properties_mut() = BTreeMap::default();
+
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_add_properties() {
+    let doc = document();
+    let mut new = doc.clone();
+
+    // update properties
+    assert!(new
+      .properties_mut()
+      .insert("key2".to_string(), "value2".into())
+      .is_none());
+
+    assert_ne!(doc, new);
+    let diff = doc.diff(&new).unwrap();
+    let merge = doc.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_from_into_roundtrip() {
+    let doc = document();
+
+    let diff = doc.clone().into_diff().unwrap();
+    let new = Document::from_diff(diff).unwrap();
+    assert_eq!(doc, new);
   }
 }

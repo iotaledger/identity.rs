@@ -11,7 +11,6 @@ use core::ops::Deref;
 use identity_core::common::BitSet;
 use identity_core::convert::ToJson;
 use identity_core::crypto::merkle_key::MerkleDigest;
-use identity_core::crypto::merkle_tree::Hash;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
@@ -42,9 +41,6 @@ impl Method {
     F: Into<Option<&'a str>>,
     D: MerkleDigest,
   {
-    let root: Hash<D> = keys.merkle_root::<D>();
-    let data: Vec<u8> = keys.type_().encode_key::<D>(&root);
-
     let tag: String = format!("#{}", fragment.into().unwrap_or(Self::TAG));
     let key: DID = did.join(tag)?;
 
@@ -52,7 +48,7 @@ impl Method {
       .id(key.into())
       .controller(did.into())
       .key_type(MethodType::MerkleKeyCollection2021)
-      .key_data(MethodData::new_b58(&data))
+      .key_data(MethodData::new_b58(&keys.encode_merkle_key::<D>()))
       .build()
       .map_err(Into::into)
       .map(Self)

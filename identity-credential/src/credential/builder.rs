@@ -220,7 +220,6 @@ mod tests {
   }
 
   #[test]
-  #[rustfmt::skip]
   fn test_credential_builder_valid() {
     let credential: Credential = CredentialBuilder::default()
       .context(Url::parse("https://www.w3.org/2018/credentials/examples/v1").unwrap())
@@ -234,7 +233,10 @@ mod tests {
 
     assert_eq!(credential.context.len(), 2);
     assert_eq!(credential.context.get(0).unwrap(), Credential::<Object>::base_context());
-    assert_eq!(credential.context.get(1).unwrap(), "https://www.w3.org/2018/credentials/examples/v1");
+    assert_eq!(
+      credential.context.get(1).unwrap(),
+      "https://www.w3.org/2018/credentials/examples/v1"
+    );
     assert_eq!(credential.id.unwrap(), "http://example.edu/credentials/3732");
     assert_eq!(credential.types.len(), 2);
     assert_eq!(credential.types.get(0).unwrap(), Credential::<Object>::base_type());
@@ -242,9 +244,18 @@ mod tests {
     assert_eq!(credential.credential_subject.len(), 1);
     assert_eq!(credential.issuer.url(), "did:example:issuer");
     assert_eq!(credential.issuance_date.to_string(), "2010-01-01T00:00:00Z");
-    assert_eq!(credential.credential_subject.get(0).unwrap().id.as_ref().unwrap(), "did:example:ebfeb1f712ebc6f1c276e12ec21");
-    assert_eq!(credential.credential_subject.get(0).unwrap().properties["degree"]["type"], "BachelorDegree");
-    assert_eq!(credential.credential_subject.get(0).unwrap().properties["degree"]["name"], "Bachelor of Science and Arts");
+    assert_eq!(
+      credential.credential_subject.get(0).unwrap().id.as_ref().unwrap(),
+      "did:example:ebfeb1f712ebc6f1c276e12ec21"
+    );
+    assert_eq!(
+      credential.credential_subject.get(0).unwrap().properties["degree"]["type"],
+      "BachelorDegree"
+    );
+    assert_eq!(
+      credential.credential_subject.get(0).unwrap().properties["degree"]["name"],
+      "Bachelor of Science and Arts"
+    );
   }
 
   #[test]

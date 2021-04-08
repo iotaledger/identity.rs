@@ -3,7 +3,11 @@
 
 /// Creates a new IOTA DID from a `public` key and optional `network`/`shard`.
 ///
-/// [`panics`][`panic`] if the DID format is not valid.
+/// # Panics
+///
+/// Panics if the DID format is not valid.
+///
+/// # Example
 ///
 /// ```
 /// # use identity_iota::did;
@@ -37,7 +41,7 @@ macro_rules! did {
   };
 }
 
-/// A fallible version of the `did` macro.
+/// A fallible version of the [did] macro.
 #[macro_export]
 macro_rules! try_did {
   ($public:expr, $network:expr, $shard:expr) => {

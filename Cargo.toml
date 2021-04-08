@@ -13,4 +13,5 @@ members = [
 
 exclude = [
   "bindings/wasm",
+  "libjose",
 ]

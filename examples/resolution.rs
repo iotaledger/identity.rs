@@ -4,6 +4,8 @@
 //! A basic example that generates a DID Document, publishes it to the Tangle,
 //! and retrieves information through DID Document resolution/dereferencing.
 //!
+//! See also https://www.w3.org/TR/did-core/#did-resolution and https://www.w3.org/TR/did-core/#did-url-dereferencing
+//!
 //! cargo run --example resolution
 
 use identity::core::SerdeInto;
@@ -13,9 +15,10 @@ use identity::did::resolution::SecondaryResource;
 use identity::iota::DID;
 use identity::prelude::*;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
-  let client: Client = Client::new()?;
+  // Create a Client to interact with the IOTA Tangle.
+  let client: Client = Client::new().await?;
 
   // Create a pair of Ed25519 public/secret keys.
   let key: KeyPair = KeyPair::new_ed25519()?;

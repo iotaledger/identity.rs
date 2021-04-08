@@ -134,3 +134,111 @@ where
     })
   }
 }
+
+#[cfg(test)]
+mod test {
+  use super::*;
+  use identity_core::common::Object;
+
+  fn controller() -> DID {
+    "did:example:1234".parse().unwrap()
+  }
+
+  fn service() -> Service {
+    let controller = controller();
+    let mut properties: Object = Object::default();
+    properties.insert("key1".to_string(), "value1".into());
+    Service::builder(properties)
+      .id(controller)
+      .service_endpoint(Url::parse("did:service:1234").unwrap())
+      .type_("test_service")
+      .build()
+      .unwrap()
+  }
+
+  #[test]
+  fn test_id() {
+    let service = service();
+    let mut new = service.clone();
+    *new.id_mut() = "did:diff:123".parse().unwrap();
+
+    let diff = service.diff(&new).unwrap();
+    assert!(diff.properties.is_none());
+    assert!(diff.service_endpoint.is_none());
+    assert!(diff.type_.is_none());
+    assert_eq!(diff.id, Some(DiffString(Some("did:diff:123".to_string()))));
+    let merge = service.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_type() {
+    let service = service();
+    let mut new = service.clone();
+    *new.type_mut() = "test_service_2".parse().unwrap();
+
+    let diff = service.diff(&new).unwrap();
+    assert!(diff.properties.is_none());
+    assert!(diff.service_endpoint.is_none());
+    assert!(diff.id.is_none());
+    assert_eq!(diff.type_, Some(DiffString(Some("test_service_2".to_string()))));
+    let merge = service.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_service_endpoint() {
+    let service = service();
+    let mut new = service.clone();
+    let new_url = "did:test:1234".to_string();
+    *new.service_endpoint_mut() = Url::parse(new_url.clone()).unwrap();
+
+    let diff = service.diff(&new).unwrap();
+    assert!(diff.id.is_none());
+    assert!(diff.properties.is_none());
+    assert!(diff.type_.is_none());
+    assert_eq!(diff.service_endpoint, Some(DiffString(Some(new_url))));
+    let merge = service.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_replace_properties() {
+    let service = service();
+    let mut new = service.clone();
+
+    // update properties
+    *new.properties_mut() = Object::default();
+
+    assert_ne!(service, new);
+    let diff = service.diff(&new).unwrap();
+    let merge = service.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_add_properties() {
+    let service = service();
+    let mut new = service.clone();
+
+    // update properties
+    assert!(new
+      .properties_mut()
+      .insert("key2".to_string(), "value2".into())
+      .is_none());
+
+    assert_ne!(service, new);
+    let diff = service.diff(&new).unwrap();
+    let merge = service.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_from_into_roundtrip() {
+    let service = service();
+
+    let diff = service.clone().into_diff().unwrap();
+    let new = Service::from_diff(diff).unwrap();
+    assert_eq!(service, new);
+  }
+}

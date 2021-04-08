@@ -10,7 +10,6 @@ use identity::core::Value;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
-use identity::credential::VerifiableCredential as VerifiableCredential_;
 use wasm_bindgen::prelude::*;
 
 use crate::document::Document;
@@ -18,7 +17,7 @@ use crate::utils::err;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct VerifiableCredential(pub(crate) VerifiableCredential_);
+pub struct VerifiableCredential(pub(crate) Credential);
 
 #[wasm_bindgen]
 impl VerifiableCredential {
@@ -81,11 +80,7 @@ impl VerifiableCredential {
       builder = builder.id(Url::parse(credential_id).map_err(err)?);
     }
 
-    builder
-      .build()
-      .map(|credential| VerifiableCredential_::new(credential, Vec::new()))
-      .map(Self)
-      .map_err(err)
+    builder.build().map(Self).map_err(err)
   }
 
   /// Serializes a `VerifiableCredential` object as a JSON object.

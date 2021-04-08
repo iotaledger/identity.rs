@@ -1,5 +1,3 @@
-# identity
-
 ## IOTA Identity
 IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized identity, also known as Self Sovereign Identity (SSI), through the [W3C Decentralized Identifiers (DID)](https://w3c.github.io/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) standards alongside supporting methods, utilizing the [IOTA Distributed Ledger](https://www.iota.org).
 
@@ -13,10 +11,13 @@ use identity::iota::Network;
 use identity::iota::Result;
 use identity::iota::TangleRef;
 
-#[smol_potat::main]
+#[tokio::main]
 async fn main() -> Result<()> {
   // Create a client to interact with the IOTA Tangle.
-  let client: Client = Client::new()?;
+    // Create a new client connected to the Testnet (Chrysalis).
+    // Node-syncing has to be disabled for now.
+    let client: Client = Client::builder().node_sync_disabled().build().await?;
+
 
   // Create a DID Document (an identity).
   let keypair: KeyPair = KeyPair::new_ed25519()?;

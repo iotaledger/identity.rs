@@ -1,90 +1,178 @@
 ![banner](./.meta/identity_banner.png)
 
 <p align="center">
-  <a href="https://discord.iota.org/" style="text-decoration:none;"><img src="https://img.shields.io/badge/Discord-9cf.svg?logo=discord" alt="Discord"></a>
   <a href="https://iota.stackexchange.com/" style="text-decoration:none;"><img src="https://img.shields.io/badge/StackExchange-9cf.svg?logo=stackexchange" alt="StackExchange"></a>
+  <a href="https://discord.iota.org/" style="text-decoration:none;"><img src="https://img.shields.io/badge/Discord-9cf.svg?logo=discord" alt="Discord"></a>
+  <a href="https://discord.iota.org/" style="text-decoration:none;"><img src="https://img.shields.io/discord/397872799483428865" alt="Discord"></a>
   <a href="https://github.com/iotaledger/identity.rs/blob/master/LICENSE" style="text-decoration:none;"><img src="https://img.shields.io/github/license/iotaledger/bee.svg" alt="Apache 2.0 license"></a>
+  <img src="https://deps.rs/repo/github/iotaledger/identity.rs/status.svg" alt="Dependencies">
+  <a href='https://coveralls.io/github/iotaledger/identity.rs?branch=dev'><img src='https://coveralls.io/repos/github/iotaledger/identity.rs/badge.svg?branch=dev' alt='Coverage Status' /></a>
+
 </p>
 
 <p align="center">
   <a href="#introduction">Introduction</a> ◈
-  <a href="#warning">Warning</a> ◈
-  <a href="#planned-milestones">Planned Milestones</a> ◈
-  <a href="#roadmap">Roadmap</a> ◈
-  <a href="#joining-the-discussion">Joining the discussion</a>
+  <a href="#bindings">Bindings</a> ◈
+  <a href="#documentation-and-resources">Documentation & Resources</a> ◈
+  <a href="#getting-started">Getting Started</a> ◈
+  <a href="#example-creating-an-identity">Example</a> ◈
+  <a href="#roadmap-and-milestones">Roadmap</a> ◈
+  <a href="#contributing">Contributing</a>
 </p>
 
 ---
 
 ## Introduction
 
-IOTA Identity is an implementation of decentralized digital identity also known as Self Sovereign Identity (SSI). It implements standards such as [DID](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) from W3C and other related (proposed) standards. This framework can be utilized to create and authenticate digital identities, creating a trusted connection and sharing verifiable information, establishing trust in the digital world.
+IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized digital identity, also known as Self-Sovereign Identity (SSI). It implements standards such as the W3C [Decentralized Identifiers (DID)](https://www.w3.org/TR/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) and the DIF [DIDComm Messaging](https://identity.foundation/didcomm-messaging/spec/) specifications alongside supporting methods. This framework can be used to create and authenticate digital identities, creating a trusted connection and sharing verifiable information, establishing trust in the digital world.
 
-The individual libraries are developed to be agnostic of Distributed Ledger Technology (DLT), with the exception of the IOTA integration and higher level libraries. Written in stable rust, it has strong guarantees of memory safety, process integrity while maintaining performance.
+The individual libraries are developed to be agnostic about the utilized [Distributed Ledger Technology (DLT)](https://en.wikipedia.org/wiki/Distributed_ledger), with the exception of the [IOTA](https://www.iota.org) integration and higher level libraries. Written in stable Rust, it has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
 
-## Warning
-
-This library is currently under development and might undergo large changes. It is currently in its alpha stage. Until a formal third-party security audit has taken place, the IOTA Foundation makes no guarantees to the fitness of this library.
-
-As such they are to be seen as **experimental** and not ready for real-world applications.
-
-Nevertheless, we are very interested in feedback about the design and implementation, and encourage you to reach out with any concerns or suggestions you may have.
+> :warning: **WARNING #1** :warning: 
+>
+> **The Framework only works on the Chrysalis Phase 2 network, use [v0.2](https://github.com/iotaledger/identity.rs/releases/tag/v0.2.0) or older for pre-chrysalis phase 2 networks.**
+> 
+> :warning: **WARNING #2** :warning:
+> 
+> This library is currently in its **alpha stage** and **under development** and might undergo large changes!
+> Until a formal third-party security audit has taken place, the [IOTA Foundation](https://www.iota.org/) makes no guarantees to the fitness of this library. As such, it is to be seen as **experimental** and not ready for real-world applications.
+> Nevertheless, we are very interested in feedback about user experience, design and implementation, and encourage you to reach out with any concerns or suggestions you may have.
 
 ## Bindings
 
-Bindings to other programming languages.
+[Foreign Function Interface (FFI)](https://en.wikipedia.org/wiki/Foreign_function_interface) Bindings of this [Rust](https://www.rust-lang.org/) library to other programming languages are a work in progress (see Roadmap below). Currently available bindings are:
 
-* [Web Assembly](bindings/wasm/)
+* [Web Assembly](bindings/wasm/) (JavaScript/TypeScript)
 
-## Planned Milestones
+## Documentation and Resources
 
-At the current state, the framework is in alpha. As the framework matures we expect to support more and more type of applications. We recommend no use in real-world applications until the consumed libraries are audited, but experimentation and Proof-of-Concept projects are encouraged at the different stages.
+- [API Reference](https://identity-docs.iota.org/docs/identity/index.html): Package documentation (cargo docs).
+- [Identity Documentation Pages](https://identity-docs.iota.org/welcome.html): Supplementing documentation with context around identity and simple examples on library usage.
+- [Examples in /examples folder](https://github.com/iotaledger/identity.rs/tree/main/examples): Practical code snippets to get you started with the library.
+- [IOTA Identity Experience Team Website](https://iota-community.github.io/X-Team_IOTA_Identity/): Website for a collaborative effort to provide help, guidance and spotlight to the IOTA Identity Community through offering feedback and introducing consistent workflows around IOTA Identity.
 
-**Current Stage: 2**
+## Getting Started
 
-**Stage 1: DID (Q4 2020)**
+If you want to include IOTA Identity in your project, simply add it as a dependency in your `cargo.toml`:
+```rust
+[dependencies]
+identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
+```
 
-As the DID standard is implemented and the IOTA ledger is integrated the first experimentations are possible. DIDs can be created, updated and ownership can be proven. This allows simple experimentations where ownership of an identity is the main requirement.
+To try out the [examples](https://github.com/iotaledger/identity.rs/tree/main/examples), you can also do this:
 
-**Stage 2: Verifiable Credentials (Q4 2020)**
+1. Clone the repository, e.g. through `git clone https://github.com/iotaledger/identity.rs `
+2. Build the repository with `cargo build `
+3. Run your first example using `cargo run --example getting_started `
 
-With the Verifiable Credentials standard implemented, not only ownership can be proven, but also other attributes. At this stage PoCs are possible similarly to [Selv](https://selv.iota.org). However, the communications between actors are not yet implemented, identities are not easily recognized nor are credential layouts standardized. Real-world applications are possible at this stage (after audit), but require extra effort.
+If you would like to build the [API Reference](https://identity-docs.iota.org/docs/identity/index.html) yourself from source, you can do so using:
+```rust
+cargo doc --document-private-items --no-deps --open
+```
 
-**Stage 3: Communication Standardization (Q1 2021)**
+## Example: Creating an Identity
 
-Once the communications between DID actors have been implemented, any application using identity can communicate out-of-the-box in an interoperable manner. This makes applications easier to develop, yet as mentioned in Stage 2, identities are still not easily recognized nor are the credential layouts standarized. Real-world applications are therefore easier to develop (after audit), but scaling the application outside of a consortium is difficult.
+*Cargo.toml*
+```rust
+[package]
+name = "iota_identity_example"
+version = "1.0.0"
+edition = "2018"
 
-Stage 4: TBD
+[dependencies]
+identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
+smol = { version = "0.1", features = ["tokio02"] }
+smol-potat = { version = "0.3" }
+```
+*main.*<span></span>*rs*
+```rust
+use identity::crypto::KeyPair;
+use identity::iota::{Client, Document, Network, Result, TangleRef};
 
-## Roadmap
+#[smol_potat::main] // Using this allows us to have an async main function.
+async fn main() -> Result<()> {
 
-### Documentation and Specification
-- [x] Examples
-- [ ] Specification Documentation
+  // Create a DID Document (an identity).
+  let keypair: KeyPair = KeyPair::new_ed25519()?;
+  let mut document: Document = Document::from_keypair(&keypair)?;
 
-### Basic Framework
-- [x] DID Document Manager
-- [x] IOTA Integration
-- [x] Resolver
-- [ ] Stronghold Integration
-- [ ] DID Comms
-- [x] Verifiable Credentials
-- [ ] VC Comms
-- [ ] Schema Validation
-- [ ] C FFI Bindings
-- [x] Javascript FFI Bindings
+  // Sign the DID Document with the default authentication key.
+  document.sign(keypair.secret())?;
 
-### Extended Features (2021+)
-- [ ] Mobile App Wrapper
-- [ ] Credential standardization
-- [ ] Identity Agent
-- [ ] Pairwise DIDs
-- [ ] Zero Knowledge Proofs
-- [ ] Trust Fabric
-- [ ] eId Integrations
-- [ ] IoT reputation system
-- [ ] Identity for Objects
+  // Create a client to interact with the IOTA Tangle.
+  let client: Client = Client::new()?;
 
-## Joining the discussion
+  // Use the client to publish the DID Document to the IOTA Tangle.
+  document.publish(&client).await?;
 
-If you want to get involved in discussions about this framework, or you're looking for support, go to the #identity-discussion channel on [Discord](http://discord.iota.org).
+  // Print the DID Document IOTA transaction link.
+  let network: Network = document.id().into();
+  let explore: String = format!("{}/transaction/{}", network.explorer_url(), document.message_id());
+  println!("DID Document Transaction > {}", explore);
+
+  Ok(())
+}
+```
+*Example output*
+```rust
+DID Document Transaction > https://explorer.iota.org/mainnet/transaction/YARETIQBJLER9BC9U9MOAXEBWVIHXYRMJAYFQSJDCPQXXWSEKQOFKGFMXYCNXPLTRAYQZTCLJJRXZ9999
+```
+The output link points towards the DID Document transaction, viewable through the IOTA Tangle Explorer, see [here](https://explorer.iota.org/mainnet/transaction/YARETIQBJLER9BC9U9MOAXEBWVIHXYRMJAYFQSJDCPQXXWSEKQOFKGFMXYCNXPLTRAYQZTCLJJRXZ9999). You can see the full DID Document as transaction payload.
+
+## Roadmap and Milestones
+
+For detailed development progress, see also the IOTA Identity development [canban board](https://github.com/iotaledger/identity.rs/projects/3).
+
+IOTA Identity is in heavy development, and will naturally change as it matures and people use it. The chart below isn't meant to be exhaustive, but rather helps to give an idea for some of the areas of development and their relative completion:
+
+#### Basic Framework
+
+| Feature                   | Not started | In Research | In Development | Done | Notes                                                                |
+| :------------------------- | :---------: | :------: | :---------------: | :-:  | :-------------------------------------------------------------------- |
+| DID Document Manager      |             |          |                        | :heavy_check_mark: | Finished implementation. |
+| IOTA Integration          |             |          |                        | :heavy_check_mark: | Finished implementation. |
+| Resolver                  |             |          |                        | :heavy_check_mark: | Finished implementation. |
+| Stronghold Integration    |             |          | :large_orange_diamond: |                    | Basically done, mostly testing right now. |
+| [DID Comms](https://identity.foundation/didcomm-messaging/spec/)                 |             |          | :large_orange_diamond: |                    | Partially done. |
+| [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/)    |             |          |                        | :heavy_check_mark: | Finished implementation. |
+| VC Comms                  | :large_orange_diamond: | |                      |                    | |
+| Schema Validation         | :large_orange_diamond: | |                      |                    | |
+| C FFI Bindings            | :large_orange_diamond: | |                      |                    | |
+| JavaScript FFI Bindings   |             |          | :large_orange_diamond: |                    | Initial implementation done. |
+| [WASM Bindings](https://github.com/iotaledger/identity.rs/tree/main/bindings/wasm)             |             | :large_orange_diamond: |          |                    | |
+| [Code Examples](https://github.com/iotaledger/identity.rs/tree/main/examples)             |             |          | :large_orange_diamond: |                    | Working on more exhaustive examples. |
+| [API Reference](https://identity-docs.iota.org/docs/identity/index.html)             |             |          | :large_orange_diamond: |                    | |
+| [mdBook Documentation](https://identity-docs.iota.org/welcome.html)      |             |          | :large_orange_diamond: |                    | |
+
+#### Extended Features (2021+)
+
+| Feature                   | Not started | In Research | In Development | Done | Notes                                                                |
+| :------------------------- | :---------: | :------: | :---------------: | :-:  | :-------------------------------------------------------------------- |
+| Mobile App Wrapper        | :large_orange_diamond: | |                      |                    | |
+| VC Standardization        |             | :large_orange_diamond: |          |                    | Needs quite a bit of research. |
+| Identity Agent            |             | :large_orange_diamond: |          |                    | |
+| Pairwise DID              | :large_orange_diamond: | |                      |                    | |
+| Zero-Knowledge Proofs     | :large_orange_diamond: | |                      |                    | |
+| Trust Fabric              | :large_orange_diamond: | |                      |                    | |
+| eID Integrations          | :large_orange_diamond: | |                      |                    | |
+| IoT Reputation System     | :large_orange_diamond: | |                      |                    | |
+| Identity for Objects      | :large_orange_diamond: | |                      |                    | |
+
+#### Planned Milestones
+
+At the current state, the framework is in alpha. As the framework matures we expect to support more and more types of applications. We recommend no use in real-world applications until the consumed libraries are audited, but experimentation and Proof-of-Concept projects are encouraged at the different stages.
+
+| Milestone                 | Topic                                                      | Completion     | Notes                                                                                              |
+| :----------------- | :-------------------------------------------------------- | :----- | :------------------------------------------------------------------------------------------------ |
+|    1:heavy_check_mark: | [DID](https://www.w3.org/TR/did-core/)                     | Q4 2020 | As the DID standard is implemented and the IOTA ledger is integrated first experimentations are possible. DIDs can be created, updated and ownership can be proven. This allows simple experimentations where ownership of an identity is the main requirement. |
+|    2:heavy_check_mark: | [VCs](https://www.w3.org/TR/vc-data-model/)                | Q4 2020 | With the Verifiable Credentials standard implemented, not only ownership can be proven, but also other attributes. At this stage PoCs are possible similarly to [Selv](https://selv.iota.org). However, the communications between actors are not yet implemented, identities are not easily recognized nor are credential layouts standardized. Real-world applications are possible at this stage (after audit), but require extra effort. |
+|    3:large_orange_diamond: | [DID Comms](https://identity.foundation/didcomm-messaging/spec/) | Q1 2021 | Once the communications between DID actors have been implemented, any application using identity can communicate out-of-the-box in an interoperable manner. This makes applications easier to develop, yet as mentioned in Milestone 2, identities are still not easily recognized nor are the credential layouts standarized. Real-world applications are therefore easier to develop (after audit), but scaling the application outside of a consortium is difficult. |
+|    4+             | TBD                                                        | TBD     | TBD                                                                                                |
+
+## Contributing
+
+We would love to have you help us with the development of IOTA Identity. Each and every contribution is greatly valued!
+
+To contribute directly to the repository, simply fork the project, push your changes to your fork and create a pull request to get them included!
+
+The best place to get involved in discussions about this framework or to look for support at is the `#identity-discussion` channel on the [IOTA Discord](http://discord.iota.org). You can also ask questions on our [Stack Exchange](https://iota.stackexchange.com/).

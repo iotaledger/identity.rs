@@ -28,7 +28,7 @@ pub struct ClientParams {
   node: Option<ClientNode>,
 }
 
-fn client(params: JsValue) -> Result<Client, JsValue> {
+async fn client(params: JsValue) -> Result<Client, JsValue> {
   if params.is_object() {
     let params: ClientParams = params.into_serde().map_err(err)?;
 
@@ -40,9 +40,9 @@ fn client(params: JsValue) -> Result<Client, JsValue> {
       ClientNode::None => ClientBuilder::new(),
     };
 
-    builder.network(network).build().map_err(err)
+    builder.network(network).build().await.map_err(err)
   } else if let Some(node) = params.as_string() {
-    ClientBuilder::new().node(node).build().map_err(err)
+    ClientBuilder::new().node(node).build().await.map_err(err)
   } else {
     Err("Invalid Arguments for `new Client(..)`".into())
   }
@@ -51,7 +51,7 @@ fn client(params: JsValue) -> Result<Client, JsValue> {
 /// Publishes a DID Document to the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
 #[wasm_bindgen]
 pub async fn publish(document: JsValue, params: JsValue) -> Result<JsValue, JsValue> {
-  let client: Client = client(params)?;
+  let client: Client = client(params).await?;
   let document: Document = Document::from_json(&document)?;
 
   client
@@ -65,7 +65,7 @@ pub async fn publish(document: JsValue, params: JsValue) -> Result<JsValue, JsVa
 /// Resolves the latest DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
 #[wasm_bindgen]
 pub async fn resolve(did: String, params: JsValue) -> Result<JsValue, JsValue> {
-  let client: Client = client(params)?;
+  let client: Client = client(params).await?;
   let did: DID = DID::parse(&did)?;
 
   client
@@ -78,7 +78,7 @@ pub async fn resolve(did: String, params: JsValue) -> Result<JsValue, JsValue> {
 /// Validates a credential with the DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
 #[wasm_bindgen(js_name = checkCredential)]
 pub async fn check_credential(data: String, params: JsValue) -> Result<JsValue, JsValue> {
-  let client: Client = client(params)?;
+  let client: Client = client(params).await?;
 
   let status: CredentialValidation = CredentialValidator::new(&client).check(&data).await.map_err(err)?;
 
@@ -88,7 +88,7 @@ pub async fn check_credential(data: String, params: JsValue) -> Result<JsValue, 
 /// Validates a presentation with the DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
 #[wasm_bindgen(js_name = checkPresentation)]
 pub async fn check_presentation(data: String, params: JsValue) -> Result<JsValue, JsValue> {
-  let client: Client = client(params)?;
+  let client: Client = client(params).await?;
 
   let status: PresentationValidation = CredentialValidator::new(&client)
     .check_presentation(&data)
