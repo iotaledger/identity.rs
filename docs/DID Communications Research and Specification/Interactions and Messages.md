@@ -1,5 +1,7 @@
 # DID Communications Message Specification
 
+*version 0.2, last changed April 2021*
+
 ## Field Definitions
 
 `context` & `reference` as URL/String, e.g. `did-resolution/1.0/resolutionResponse`: Defines the context that a specific message either adheres to or, in case of a report, refers to.
@@ -14,17 +16,27 @@
 
 `didDocument` as JSON: An IOTA DID Document (see e.g. in <a href="#did-resolution">DID Resolution</a>).
 
-`credential` as [VC JSON](https://w3c-ccg.github.io/vc-json-schemas/): A syntactically valid credential.
-
 `comment` as String: A comment, mostly used to provide more information about something. Can be literally any String.
 
-`challenge` as JSON, e.g. `{"foo": "sign this"}`: A JSON acting as a signing challenge.
+`challenge` as JSON, e.g. `{"task": "Sign this!"}`: A JSON acting as a signing challenge. Can contain basically anything.
 
-`offeredCredentialTypes` as JSON: A field specific to VC issuance, contains a list of possible credential types, see <a href="#credential-options">Credential Options</a>.
+`credential` as [VC JSON](https://w3c-ccg.github.io/vc-json-schemas/): A syntactically valid credential.
 
-`credentialType` as String, e.g. `SimpleDiplomaCredential`: A VC type.
+`credentials`: A list of credentials.
 
-`signature` as JSON, e.g. `{...}`: Includes a signature. Fields defined below.
+`credentialId` as String, e.g.`credential-69420-delicious-lasagna`: The id of a credential.
+
+`credentialType` as String, e.g. `YouHaveNiceHairCredential`: A VC type.
+
+`credentialTypes` as JSON, e.g. `["YouHaveNiceHairCredential", "YourLasagnaIsDeliciousCredential"]`: Contains a list of possible credential types, see e.g. <a href="#credential-options">Credential Options</a>.
+
+`supportedIssuers` as JSON: Contains a list of supported issuer `id`, see <a href="#credential-options">Credential Options</a>.
+
+`schemata` as JSON: A named list of credential schemata, see <a href="#credential-schema">Credential Schema</a>.
+
+`verifiablePresentation` as JSON: A Verifiable Presentation.
+
+`signature` as JSON: Defines a signature. Fields defined below.
 
 `signature[type]` as String, e.g. `JcsEd25519Signature2020`: Signature type.
 
@@ -32,7 +44,7 @@
 
 `signature[signatureValue]` as String, e.g. `5Hw1JWv4a6hZH5obtAshbbKZQAJK6h8YbEwZvdxgWCXSL81fvRYoMCjt22vaBtZewgGq641dqR31C27YhDusoo4N`: Actual signature.
 
-`timing` as JSON, e.g. `{...}`: A decorator to include timing information into a message. Fields defined below.
+`timing` as JSON: A decorator to include timing information into a message. Fields defined below.
 
 `timing[out_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: The timestamp when the message was emitted.
 
@@ -67,7 +79,7 @@ report: {
     "thread",
     "reference",
     "comment", // OPTIONAL!
-    "timing": {...} // OPTIONAL! All subfields OPTIONAL!
+    "timing" // OPTIONAL! All subfields OPTIONAL!
 }
 ```
 
@@ -130,7 +142,7 @@ ping: {
     "thread", // OPTIONAL!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
-    "timing": {...} // OPTIONAL! All subfields OPTIONAL!
+    "timing" // OPTIONAL! All subfields OPTIONAL!
 }
 ```
 
@@ -201,6 +213,7 @@ didResponse: {
     "id",
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
+    "timing" // OPTIONAL!
 }
 ```
 
@@ -329,7 +342,9 @@ authenticationRequest: {
     "context": "authentication/1.0/authenticationRequest",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.bobsworld.com/",
-    "challenge": "please sign this",
+    "challenge": {
+        "task": "Sign this!"
+    },
     "id": "did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8",
     "timing": {
         "out_time": "1991-04-20T13:37:11Z",
@@ -351,7 +366,8 @@ authenticationResponse: {
     "signature",
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
-    "id" // OPTIONAL!
+    "id", // OPTIONAL!
+    "timing" // OPTIONAL!
 }
 ```
 
@@ -423,15 +439,10 @@ The <u>issuer</u> responds with a list of offered VC types.
 credentialOptionsResponse: {
     "context",
     "thread",
-    "offeredCredentialTypes": [
+    "credentialTypes": [
         "credentialType 1",
         "credentialType 2",
         "credentialType n"
-    ],
-    "supportedIssuers": [
-        "issuer id 1",
-        "issuer id 2",
-        "issuer id n"
     ],
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
@@ -446,14 +457,10 @@ credentialOptionsResponse: {
 {
     "context": "credential-options/1.0/credentialOptionsResponse",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
-    "offeredCredentialTypes": [
-        "DiplomaCredential",
+    "credentialTypes": [
+        "YourCatHasAnAttitudeCredential",
         "YouHaveNiceHairCredential",
-        "DriversLicenseCredential"
-    ],
-    "supportedIssuers": [
-        "did:iota:afbsdjhfbasuidfb8asifb4bfkawuiefjhdfgsukdfb",
-        "did:iota:jahsdbfukgsiudfgisdufgi8sdfgzsbegbesudgbudf"
+        "YourLasagnaIsDeliciousCredential"
     ],
     "callbackURL": "https://www.aliceswonderland.com/",
 }
@@ -499,13 +506,13 @@ credentialSchemaRequest: {
     "callbackURL": "https://www.bobsworld.com/",
     "credentialTypes": [
         "YouHaveNiceHairCredential",
-        "DriversLicenseCredential"
+        "YourLasagnaIsDeliciousCredential"
     ]
 }
 ```
 
 #### credentialSchemaResponse
-The <u>issuer</u> responds with the schema of the requested `credentialTypes`.
+The <u>issuer</u> responds with the schemata of the requested `credentialTypes`.
 
 ###### Layout
 
@@ -513,7 +520,7 @@ The <u>issuer</u> responds with the schema of the requested `credentialTypes`.
 credentialSchemaResponse: {
     "context",
     "thread",
-    "schemas",
+    "schemata",
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
@@ -527,13 +534,13 @@ credentialSchemaResponse: {
 {
     "context": "credential-options/1.0/credentialSchemaResponse",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
-    "schemas": [
+    "schemata": [
         "YouHaveNiceHairCredential": {
             "type": "YouHaveNiceHairCredential",
             ...
         },
-        "DriversLicenseCredential": {
-            "type": "DriversLicenseCredential",
+        "YourLasagnaIsDeliciousCredential": {
+            "type": "YourLasagnaIsDeliciousCredential",
             ...
         },
     ]
@@ -555,7 +562,7 @@ The Verifiable Credential (VC) issuance flow consists of a three step interactio
 #### Messages
 
 #### credentialSelection
-The <u>holder</u> sends a message containing a list of selected credentials with associated data for satisfying requirements.
+The <u>holder</u> sends a message containing a list of selected credentials.
 
 ###### Layout
 
@@ -564,13 +571,10 @@ credentialSelection: {
     "context",
     "thread",
     "callbackURL",
-    "selectedCredentials": [
-            "type 1",
-            "type 2",
-            "type n"
-    ],
+    "credentialTypes",
     "responseRequested", //OPTIONAL!
-    "id" // OPTIONAL!
+    "id", // OPTIONAL!
+    "timing" // OPTIONAL!
 }
 ```
 
@@ -581,8 +585,9 @@ credentialSelection: {
     "context": "credential-issuance/1.0/credentialSelection",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.bobsworld.com/",
-    "selectedCredentials": [
-            "YouHaveNiceHairCredential"
+    "credentialTypes": [
+        "YourCatHasAnAttitudeCredential",
+        "YourLasagnaIsDeliciousCredential"
     ],
 }
 ```
@@ -596,12 +601,11 @@ The <u>issuer</u> responds with a message containing a list of newly issued cred
 credentialIssuance: {
     "context",
     "thread",
-    "issued": [
-        ...
-    ],
+    "credentials",
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
-    "id" // OPTIONAL!
+    "id", // OPTIONAL!
+    "timing" // OPTIONAL!
 }
 ```
 
@@ -611,9 +615,10 @@ credentialIssuance: {
 {
     "context": "credential-issuance/1.0/credentialIssuance",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
-    "issued": [
-            {...},
-            {...}
+    "credentials": [
+            "credential 1",
+            "credential 2",
+            "credential n"
     ],
     "callbackURL": "https://www.aliceswonderland.com/"
 }
@@ -645,7 +650,8 @@ revocation: {
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
-    "comment" // OPTIONAL!
+    "comment", // OPTIONAL!
+    "timing" // OPTIONAL!
 }
 ```
 
@@ -688,13 +694,11 @@ presentationRequest: {
     "context",
     "thread",
     "callbackURL",
-    "credentialRequirements": [
-        {
-            "type"
-        },
-    ],
+    "credentialTypes", // OPTIONAL!
+    "supportedIssuers", // OPTIONAL!
     "responseRequested", //OPTIONAL!
-    "id" // OPTIONAL!
+    "id", // OPTIONAL!
+    "timing" // OPTIONAL!
 }
 ```
 
@@ -705,13 +709,14 @@ presentationRequest: {
     "context": "presentation-verification/1.0/presentationRequest",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.bobsworld.com/",
-    "credentialRequirements": [
-        {
-            "type": "YouHaveNiceHairCredential"
-        },
-        {
-            "type": "DriversLicenseCredential"
-        }
+    "credentialTypes": [
+        "YourCatHasAnAttitudeCredential",
+        "YouHaveNiceHairCredential",
+        "YourLasagnaIsDeliciousCredential"
+    ],
+    "supportedIssuers": [
+        "did:iota:58c35471071b3dbb97585ee06bb1dd0239ca338629534296cfbb2db6bc857e21",
+        "did:iota:23f0b94812c402a1dea1c424303b178d01485a5dcf26cf977333f3b629bd90ec"
     ]
 }
 ```
@@ -728,7 +733,8 @@ presentationResponse: {
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
     "verifiablePresentation",
-    "id" // OPTIONAL!
+    "id", // OPTIONAL!
+    "timing" // OPTIONAL!
 }
 ```
 
@@ -739,99 +745,8 @@ presentationResponse: {
     "context": "presentation-verification/1.0/presentationResponse",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.aliceswonderland.com/",
-    "verifiablePresentation": {...}
+    "verifiablePresentation": {...} // Omitted for brevity
 }
 ```
 
 [Source 1: Jolocom Credential Verification](https://jolocom.github.io/jolocom-sdk/1.0.0/guides/interaction_flows/#credential-verification);
-
-
-
-vvvvv here be dragons vvvvv
-
-
-
-
-
-
-TODO presentationRequest:
-    TODO add field challenge (nonce (or sign with timestamp)), maybe optional
-    TODO signature issues
-    field "credentialRequirements"
-TODO credentialOptionsReponse:
-    TODO and i offer therse types of sig suites that this supports
-
-    TODO also add the actual signature types / methods like ed25519-merkle (verification method types)
-    "error": {
-        "errorCode": 200
-      
-        TODO
- 
-    }
-
-TODO credentialSchemaResponse:
-
-    TODO make nice interaction pictures / state machines
-
-
-
-
-
-TODO more sources https://identity.foundation/#wgs
-TODO VERSION, date, last changed, etc
-
-
-Other ToDos:
-
-timestamp or random value or challenge/nonce, sign everything
-check WHAT EXACTLY others are actually signing
-thread if instead of sending challenge back
-put down sources for all interactions into the document
-say what is OPTIONAL
-
-
-TODO revisit each field:
-
-
-`challenge` as JSON, e.g. `{"foo": "sign this"}`: A JSON acting as a signing challenge.
-
-`offeredCredentialTypes` as JSON: A field specific to VC issuance, contains a list of possible credential types, see <a href="#credential-options">Credential Options</a>.
-
-`credentialType` as String, e.g. `SimpleDiplomaCredential`: A VC type.
-
-`signature` as JSON, e.g. `{...}`: Includes a signature. Fields defined below.
-
-`signature[type]` as String, e.g. `JcsEd25519Signature2020`: Signature type.
-
-`signature[verificationMethod]` as String, e.g. `#authentication`: Reference to verification method in signer's DID Document used to produce the signature.
-
-`signature[signatureValue]` as String, e.g. `5Hw1JWv4a6hZH5obtAshbbKZQAJK6h8YbEwZvdxgWCXSL81fvRYoMCjt22vaBtZewgGq641dqR31C27YhDusoo4N`: Actual signature.
-
-`timing` as JSON, e.g. `{...}`: A decorator to include timing information into a message. Fields defined below.
-
-`timing[out_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: The timestamp when the message was emitted.
-
-`timing[in_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: The timestamp when the preceding message in this thread (the one that elicited this message as a response) was received.
-
-`timing[stale_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: Ideally, the decorated message should be processed by the the specified timestamp. After that, the message may become irrelevant or less meaningful than intended. This is a hint only.
-
-`timing[expires_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: The decorated message should be considered invalid or expired if encountered after the specified timestamp. This is a much stronger claim than the one for stale_time; it says that the receiver should cancel attempts to process it once the deadline is past, because the sender won't stand behind it any longer. While processing of the received message should stop, the thread of the message should be retained as the sender may send an updated/replacement message. In the case that the sender does not follow up, the policy of the receiver agent related to abandoned threads would presumably be used to eventually delete the thread.
-
-`timing[delay_milli]` as Integer, e.g. `1337`: Wait at least this many milliseconds before processing the message. This may be useful to defeat temporal correlation. It is recommended that agents supporting this field should not honor requests for delays longer than 10 minutes (600,000 milliseconds).
-
-`timing[wait_until_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: Wait until this time before processing the message.
-
-`credential` as [VC JSON](https://w3c-ccg.github.io/vc-json-schemas/): A syntactically valid credential.
-
-
-TODO authentication tell what we are signing
-TODO create sequence diagrams for every interaction
-TODO take final TODOs and put them into, dunno, pr?
-TODO rework descriptions
-TODO rem interactions header ping response
-TODO ip in trust ping
-
-FINAL TODOs
-report/report: Define an actual error communication / information field that is parseable.
-revocation: How do we deal with unauthorized revocations (i.e. invalid ones)?
-field id: Discuss optionality over whole spec.
