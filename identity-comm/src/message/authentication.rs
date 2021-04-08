@@ -184,11 +184,11 @@ mod tests {
       .pack_non_repudiable(SignatureAlgorithm::EdDSA, &keypair)
       .unwrap();
 
-    let tp = signed_request
+    let request = signed_request
       .unpack::<AuthenticationRequest>(SignatureAlgorithm::EdDSA, &keypair.public())
       .unwrap();
     
-    assert_eq!(format!("{:?}", tp), format!("{:?}", authentication_request));
+    assert_eq!(format!("{:?}", request), format!("{:?}", authentication_request));
   }
 
   fn ed25519_to_x25519(keypair: KeyPair) -> Result<(PublicKey, SecretKey)> {
@@ -216,14 +216,14 @@ mod tests {
     let authentication_request = AuthenticationRequest::new(Url::parse("https://example.com").unwrap(), "69-420-1337".to_string(), "please sign this".to_string());
     let recipients = slice::from_ref(key_alice.public());
 
-    let encoded: Encrypted = authentication_request
+    let encoded_request: Encrypted = authentication_request
       .pack_auth(EncryptionAlgorithm::A256GCM, recipients, &key_bob)
       .unwrap();
 
-    let decoded: AuthenticationRequest = encoded
+    let decoded_request: AuthenticationRequest = encoded_request
       .unpack(EncryptionAlgorithm::A256GCM, key_alice.secret(), key_bob.public())
       .unwrap();
 
-    assert_eq!(format!("{:?}", decoded), format!("{:?}", authentication_request));
+    assert_eq!(format!("{:?}", decoded_request), format!("{:?}", authentication_request));
   }
 }
