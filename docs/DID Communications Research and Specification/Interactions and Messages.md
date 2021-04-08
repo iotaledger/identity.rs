@@ -2,9 +2,9 @@
 
 ## Field Definitions
 
-`context` as URL/String, e.g. `did-resolution/1.0/resolution-result`: Defines the context that a specific message adheres to.
+`context` as URL/String, e.g. `did-resolution/1.0/resolutionResponse`: Defines the context that a specific message adheres to.
 
-`ackContext` & `errContext` as URL/String, e.g. `did-resolution/1.0/resolution-result`: Variants of `context` that describe the context of a message that is being acknowledged or the message that errored.
+`ackContext` & `errContext` as URL/String, e.g. `did-resolution/1.0/resolutionResponse`: Variants of `context` that describe the context of a message that is being acknowledged or the message that errored.
 
 `thread` as String, e.g. `jdhgbksdbgjksdbgkjdkg` or `thread-132-a`: A String, defined by the agent, to be used to identify this specific interaction to track it agent-locally.
 
@@ -79,7 +79,7 @@ acknowledgement: {
 {
     "context": "acknowledgement/1.0/acknowledgement",
     "thread": "sdfgfjghsdfg-12345-sdf-b",
-    "ackContext": "did-resolution/1.0/resolution-result"
+    "ackContext": "did-resolution/1.0/resolutionResponse"
 }
 ```
 
@@ -103,7 +103,7 @@ error: {
 {
     "context": "error/1.0/error",
     "thread": "sdfgfjghsdfg-12345-sdf-b",
-    "errContext": "did-resolution/1.0/resolution-result",
+    "errContext": "did-resolution/1.0/resolutionResponse",
     "comment": "Can't resolve: Signature invalid!"
 }
 ```
@@ -114,7 +114,7 @@ error: {
 
 ◈ <a href="#did-discovery">**did-discovery**</a> (*didRequest*, *didResponse*): Requesting a DID from an agent.
 
-◈ <a href="#did-resolution">**did-resolution**</a> (*resolutionRequest*, *resolutionResult*): Using another agent as a Resolver.
+◈ <a href="#did-resolution">**did-resolution**</a> (*resolutionRequest*, *resolutionResponse*): Using another agent as a Resolver.
 
 ◈ <a href="#authentication">**authentication**</a> (*authenticationRequest*, *authenticationResponse*): Proving control over a DID.
 
@@ -290,13 +290,13 @@ resolutionRequest: {
 }
 ```
 
-##### resolutionResult
+##### resolutionResponse
 If the message contains a DID (in the `id` field), the Resolver resolves the DID and returns the DID Resolution Result. Otherwise, the Resolver returns the result of resolving it's own DID. This is intended for the special case of "local" DID methods, which do not have a globally resolvable state.
 
 ###### Layout
 
 ```JSON
-resolutionResult: {
+resolutionResponse: {
     "context",
     "didDocument"
     "id", // OPTIONAL!
@@ -309,7 +309,7 @@ resolutionResult: {
 TODO why is ID optional
 ```JSON
 {
-    "context": "did-resolution/1.0/resolutionResult",
+    "context": "did-resolution/1.0/resolutionResponse",
     "thread": "req-1-1337b",
     "didDocument": {
         "@context": "https://www.w3.org/ns/did/v1",
