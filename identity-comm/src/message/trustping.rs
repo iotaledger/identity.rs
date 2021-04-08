@@ -1,11 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-
 use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::DID;
-
 
 /// A DIDComm Trustping Message
 ///
@@ -213,27 +211,38 @@ mod tests {
 
   #[test]
   pub fn test_plaintext_roundtrip() {
-    let mut message = Trustping::new(Url::parse("https://example.com").unwrap());
-    message.set_response_requested(Some(true));
-    let plain_envelope = message.pack_plain().unwrap();
+    let ping = Trustping::new(Url::parse("https://example.com").unwrap());
+    let pong = TrustpingResponse::new();
 
-    let tp: Trustping = plain_envelope.unpack().unwrap();
-    assert_eq!(format!("{:?}", tp), format!("{:?}", message));
+    let plain_envelope_ping = ping.pack_plain().unwrap();
+    let plain_envelope_pong = pong.pack_plain().unwrap();
+
+    let tp: Trustping = plain_envelope_ping.unpack().unwrap();
+    let tpr: TrustpingResponse = plain_envelope_pong.unpack().unwrap();
+
+    assert_eq!(format!("{:?}", tp), format!("{:?}", ping));
+    assert_eq!(format!("{:?}", tpr), format!("{:?}", pong));
   }
 
   #[test]
   pub fn test_signed_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
 
-    let message = Trustping::new(Url::parse("https://example.com").unwrap());
-    let signed = message
-      .pack_non_repudiable(SignatureAlgorithm::EdDSA, &keypair)
-      .unwrap();
+    let ping = Trustping::new(Url::parse("https://example.com").unwrap());
+    let pong = TrustpingResponse::new();
 
-    let tp = signed
+    let signed_envelope_ping = ping.pack_non_repudiable(SignatureAlgorithm::EdDSA, &keypair).unwrap();
+    let singed_envelope_pong = ping.pack_non_repudiable(SignatureAlgorithm::EdDSA, &keypair).unwrap();
+
+    let tp = signed_envelope_ping
       .unpack::<Trustping>(SignatureAlgorithm::EdDSA, &keypair.public())
       .unwrap();
-    assert_eq!(format!("{:?}", tp), format!("{:?}", message));
+    let tpr = singed_envelope_pong
+      .unpack::<TrustpingResponse>(SignatureAlgorithm::EdDSA, &keypair.public())
+      .unwrap();
+
+    assert_eq!(format!("{:?}", tp), format!("{:?}", ping));
+    assert_eq!(format!("{:?}", tpr), format!("{:?}", pong));
   }
 
   fn ed25519_to_x25519(keypair: KeyPair) -> Result<(PublicKey, SecretKey)> {
@@ -258,22 +267,26 @@ mod tests {
     let key_bob = KeyPair::new_ed25519().unwrap();
     let key_bob = ed25519_to_x25519_keypair(key_bob).unwrap();
 
-    let message = Trustping::new(Url::parse("https://example.com").unwrap());
+    let ping = Trustping::new(Url::parse("https://example.com").unwrap());
+    let pong = TrustpingResponse::new();
+
     let recipients = slice::from_ref(key_alice.public());
 
-    println!("message = {:#?}", message);
-
-    let encoded: Encrypted = message
+    let encoded_envelope_ping: Encrypted = ping
+      .pack_auth(EncryptionAlgorithm::A256GCM, recipients, &key_bob)
+      .unwrap();
+    let encoded_envelope_pong: Encrypted = pong
       .pack_auth(EncryptionAlgorithm::A256GCM, recipients, &key_bob)
       .unwrap();
 
-    let decoded: Trustping = encoded
+    let tp: Trustping = encoded_envelope_ping
+      .unpack(EncryptionAlgorithm::A256GCM, key_alice.secret(), key_bob.public())
+      .unwrap();
+    let tpr: TrustpingResponse = encoded_envelope_pong
       .unpack(EncryptionAlgorithm::A256GCM, key_alice.secret(), key_bob.public())
       .unwrap();
 
-    println!("encoded = {:#?}", encoded);
-    println!("decoded = {:#?}", decoded);
-
-    panic!("FIXME");
+    assert_eq!(format!("{:?}", tp), format!("{:?}", ping));
+    assert_eq!(format!("{:?}", tpr), format!("{:?}", pong));
   }
 }
