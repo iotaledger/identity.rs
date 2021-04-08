@@ -116,16 +116,16 @@ Testing a pairwise channel.
 #### Messages
 
 #### ping
-The <u>sender</u> sends the `ping` to the <u>receiver</u>, specifying a `callbackURL` for the `pingResponse` to be posted to. The `responseRequested` field counts as `false` if omitted. If and only if the `responseRequested` field is true should the <u>**Receiver**</u> respond to the ping with a `report` message. If it is `true`, a `thread` should be passed as well to reference the `ping`.
+The <u>sender</u> sends the `ping` to the <u>receiver</u>, specifying a `callbackURL` for the `pingResponse` to be posted to. The `responseRequested` field counts as `false` if omitted. If and only if the `responseRequested` field is true should the <u>receiver</u> respond to the ping with a `report` message. If it is `true`, a `thread` should be passed as well to reference the `ping`. The `callbackURL` is OPTIONAL here because the <u>sender</u> could, for example, just include the `id` field and timing information to let the <u>receiver</u> know of transport delays.
 
 ###### Layout
 
 ```JSON
 ping: {
     "context",
-    "callbackURL",
-    "responseRequested", //OPTIONAL!
+    "callbackURL", // OPTIONAL!
     "thread", // OPTIONAL!
+    "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
     "timing": {...} // OPTIONAL! All subfields OPTIONAL!
 }
@@ -137,6 +137,7 @@ ping: {
 {
     "context": "trust-ping/1.0/ping",
     "callbackURL": "https://www.bobsworld.com/",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "responseRequested": true,
     "id": "did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v",
     "timing": {
@@ -168,6 +169,7 @@ didRequest: {
     "context",
     "thread",
     "callbackURL",
+    "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
 }
@@ -194,7 +196,8 @@ didResponse: {
     "context",
     "thread",
     "id",
-    "callbackURL" // OPTIONAL!
+    "callbackURL", // OPTIONAL!
+    "responseRequested", //OPTIONAL!
 }
 ```
 
@@ -231,6 +234,7 @@ resolutionRequest: {
     "context",
     "thread",
     "callbackURL",
+    "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
 }
@@ -258,6 +262,7 @@ resolutionResponse: {
     "thread",
     "didDocument",
     "callbackURL", // OPTIONAL!
+    "responseRequested", //OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -306,6 +311,7 @@ authenticationRequest: {
     "thread",
     "callbackURL",
     "challenge",
+    "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
 }
@@ -338,7 +344,8 @@ authenticationResponse: {
     "context",
     "thread",
     "signature",
-    "callbackURL" // OPTIONAL!
+    "callbackURL", // OPTIONAL!
+    "responseRequested" //OPTIONAL!
 }
 ```
 
@@ -382,6 +389,7 @@ credentialOptionsRequest: {
     "context",
     "thread",
     "callbackURL",
+    "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
 }
@@ -417,6 +425,7 @@ credentialOptionsResponse: {
         "issuer id n"
     ],
     "callbackURL", // OPTIONAL!
+    "responseRequested", //OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -463,6 +472,7 @@ credentialSchemaRequest: {
     "thread",
     "callbackURL",
     "credentialTypes",
+    "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
 }
@@ -493,6 +503,7 @@ credentialSchemaResponse: {
     "thread",
     "schemas",
     "callbackURL", // OPTIONAL!
+    "responseRequested", //OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -543,6 +554,7 @@ credentialSelection: {
             "type 2",
             "type n"
     ],
+    "responseRequested" //OPTIONAL!
 }
 ```
 
@@ -571,7 +583,8 @@ credentialIssuance: {
     "issued": [
         ...
     ],
-    "callbackURL" // OPTIONAL!
+    "callbackURL", // OPTIONAL!
+    "responseRequested" //OPTIONAL!
 }
 ```
 
@@ -611,6 +624,7 @@ revocation: {
     "thread",
     "credentialId",
     "callbackURL", // OPTIONAL!
+    "responseRequested", //OPTIONAL!
     "comment" // OPTIONAL!
 }
 ```
@@ -657,6 +671,7 @@ presentationRequest: {
             "type"
         },
     ],
+    "responseRequested" //OPTIONAL!
 }
 ```
 
@@ -688,6 +703,7 @@ presentationResponse: {
     "context",
     "thread",
     "callbackURL", // OPTIONAL!
+    "responseRequested", //OPTIONAL!
     "verifiablePresentation"
 }
 ```
@@ -777,8 +793,6 @@ TODO revisit each field:
 `id` as String, e.g. `did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v`: An IOTA decentralized identifier.
 
 `didDocument` as JSON: An IOTA DID Document (see e.g. in <a href="#did-resolution">DID Resolution</a>).
-
-`responseRequested` as Boolean, e.g. `true` or `false`: In messages where it is defined a reponse is to be sent to a request if and only if this is `true`. Undefined counts as `false`.
 
 `comment` as String: A comment. Can be literally any String.
 
