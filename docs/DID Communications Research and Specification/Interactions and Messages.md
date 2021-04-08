@@ -14,7 +14,9 @@
 
 `didDocument` as JSON: An IOTA DID Document (see e.g. in <a href="#did-resolution">DID Resolution</a>).
 
-`comment` as String: A comment. Can be literally any String.
+`credential` as [VC JSON](https://w3c-ccg.github.io/vc-json-schemas/): A syntactically valid credential.
+
+`comment` as String: A comment, mostly used to provide more information about something. Can be literally any String.
 
 `challenge` as JSON, e.g. `{"foo": "sign this"}`: A JSON acting as a signing challenge.
 
@@ -654,10 +656,10 @@ revocation: {
 {
     "context": "credential-revocation/1.0/revocation",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
-    "credentialId": "gfiweuzg89w3bgi8wbgi8wi8t",
+    "credentialId": "credential-69420-delicious-lasagna",
     "callbackURL": "https://www.aliceswonderland.com/",
     "id": "did:iota:42edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef242",
-    "comment": "Revoked because reasons.",
+    "comment": "Revoked because your Lasagna isn't actually that good."
 }
 ```
 
@@ -751,7 +753,7 @@ vvvvv here be dragons vvvvv
 
 
 
-TODO add more sources to everything
+
 TODO presentationRequest:
     TODO add field challenge (nonce (or sign with timestamp)), maybe optional
     TODO signature issues
@@ -762,17 +764,12 @@ TODO credentialOptionsReponse:
     TODO also add the actual signature types / methods like ed25519-merkle (verification method types)
     "error": {
         "errorCode": 200
-        "comment": Shit's on fire, yo
+      
         TODO
-        https://github.com/hyperledger/aries-rfcs/blob/master/features/0035-report-problem/README.md
+ 
     }
 
 TODO credentialSchemaResponse:
-    TODO SRC https://w3c-ccg.github.io/vc-json-schemas/
-
-
-https://w3c-ccg.github.io/vc-json-schemas/
-https://github.com/hyperledger/aries-rfcs/blob/master/features/0035-report-problem/README.md
 
     TODO make nice interaction pictures / state machines
 
@@ -795,8 +792,6 @@ say what is OPTIONAL
 
 TODO revisit each field:
 
-
-`comment` as String: A comment. Can be literally any String.
 
 `challenge` as JSON, e.g. `{"foo": "sign this"}`: A JSON acting as a signing challenge.
 
@@ -825,6 +820,9 @@ TODO revisit each field:
 `timing[delay_milli]` as Integer, e.g. `1337`: Wait at least this many milliseconds before processing the message. This may be useful to defeat temporal correlation. It is recommended that agents supporting this field should not honor requests for delays longer than 10 minutes (600,000 milliseconds).
 
 `timing[wait_until_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: Wait until this time before processing the message.
+
+`credential` as [VC JSON](https://w3c-ccg.github.io/vc-json-schemas/): A syntactically valid credential.
+
 
 TODO authentication tell what we are signing
 TODO create sequence diagrams for every interaction
