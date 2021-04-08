@@ -9,7 +9,7 @@ use identity_iota::did::DID;
 ///
 /// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md#did-discovery)
 ///
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DidRequest {
   callback_url: Url,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -109,7 +109,7 @@ impl DidRequest {
   }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DidResponse {
   id: DID,
 }

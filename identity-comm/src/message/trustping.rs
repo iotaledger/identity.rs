@@ -10,7 +10,7 @@ use identity_iota::did::DID;
 /// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md#trust-ping)
 ///
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Trustping {
   callback_url: Url,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -128,7 +128,7 @@ impl Trustping {
   }
 }
 
-#[derive(Debug, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct TrustpingResponse {
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<DID>,
