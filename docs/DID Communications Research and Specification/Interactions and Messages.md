@@ -769,16 +769,7 @@ https://github.com/hyperledger/aries-rfcs/blob/master/features/0035-report-probl
 
 TODO more sources https://identity.foundation/#wgs
 TODO VERSION, date, last changed, etc
-TODO all PRS
-TODO all issues:
 
-Open discussion points, among others:
-
-How exactly do we define the credentialSchemas?
-How exactly will these schemas be structured and communicated?
-Do we offer single issuance or do we use lists everywhere?
-
-    Probably some more stuff we need to talk about
 
 Other ToDos:
 
@@ -789,13 +780,6 @@ put down sources for all interactions into the document
 say what is OPTIONAL
 
 
-
-
-
-
-
-TODO only do acks on request
-TODO make callbackURL optional except in the first of each interaction messages
 TODO revisit each field:
 
 
@@ -830,7 +814,7 @@ TODO revisit each field:
 `timing[wait_until_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: Wait until this time before processing the message.
 
 TODO authentication tell what we are signing
-TODO sequence diagrams
+TODO create sequence diagrams for every interaction
 TODO take final TODOs and put them into, dunno, pr?
 TODO rework descriptions
 
