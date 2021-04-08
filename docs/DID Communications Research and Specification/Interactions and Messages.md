@@ -6,7 +6,7 @@
 
 `thread` as UUID, e.g. `f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c`: A UUID as String, defined by the agent that initiated an interaction, to be used to identify this specific interaction to track it agent-locally. Together with the context, these two fields can be used to identity a message / state within a specific interaction.
 
-`callbackURL` as URL/String, e.g. `https://www.bobsworld.com/ping` or `https://www.aliceswonderland/authz`: Defines the URL or API call where a request or response is to be delivered to.
+`callbackURL` as URL/String, e.g. `https://www.bobsworld.com/` or `https://www.aliceswonderland/`: Defines the URL or API call where a request or response is to be delivered to.
 
 `id` as String, e.g. `did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v`: An IOTA decentralized identifier.
 
@@ -154,6 +154,7 @@ The <u>receiver</u> answers with a `pingResponse` if and only if `responseReques
 pingResponse: {
     "context",
     "thread", // OPTIONAL!
+    "callbackURL", // OPTIONAL!
     "id", // OPTIONAL!
     "timing": {...} // OPTIONAL! All subfields OPTIONAL!
 }
@@ -202,7 +203,7 @@ didRequest: {
 {
     "context": "did-discovery/1.0/didRequest",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
-    "callbackURL": "https://www.aliceswonderland.com/didreq",
+    "callbackURL": "https://www.bobsworld.com/",
     "id": "did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v",
 }
 ```
@@ -216,7 +217,8 @@ The <u>endpoint</u> answers with a `didResponse`, containing its DID.
 didResponse: {
     "context",
     "thread",
-    "id"
+    "id",
+    "callbackURL" // OPTIONAL!
 }
 ```
 
@@ -264,7 +266,7 @@ resolutionRequest: {
 {
     "context": "did-resolution/1.0/resolutionRequest",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
-    "callbackURL": "https://www.aliceswonderland.com/res",
+    "callbackURL": "https://www.bobsworld.com/",
     "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
 }
 ```
@@ -278,7 +280,8 @@ If the message contains a DID (in the `id` field), the Resolver resolves the DID
 resolutionResponse: {
     "context",
     "thread",
-    "didDocument"
+    "didDocument",
+    "callbackURL", // OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
 }
@@ -299,7 +302,8 @@ TODO why is ID optional
             "controller": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
             "publicKeyMultibase": "zH3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
         }]
-    }
+    },
+    "callbackURL": "https://www.aliceswonderland.com/"
 }
 ```
 
@@ -338,7 +342,7 @@ authenticationRequest: {
 {
     "context": "authentication/1.0/authenticationRequest",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
-    "callbackURL": "https://www.aliceswonderland.com/auth",
+    "callbackURL": "https://www.bobsworld.com/",
     "challenge": "please sign this",
     "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
     "timing": {
@@ -358,7 +362,8 @@ The <u>authenticator</u> answers with an `authenticationResponse`, providing a `
 authenticationResponse: {
     "context",
     "thread",
-    "signature"
+    "signature",
+    "callbackURL" // OPTIONAL!
 }
 ```
 
@@ -372,7 +377,8 @@ authenticationResponse: {
         "type": "JcsEd25519Signature2020",
         "verificationMethod": "#authentication",
         "signatureValue": "5Hw1JWv4a6hZH5obtAshbbKZQAJK6h8YbEwZvdxgWCXSL81fvRYoMCjt22vaBtZewgGq641dqR31C27YhDusoo4N"
-   }
+   },
+   "callbackURL": "https://www.aliceswonderland.com/"
 }
 ```
 
@@ -412,7 +418,7 @@ credentialOptionsRequest: {
 {
     "context": "credential-options/1.0/credentialOptionsRequest",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
-    "callbackURL": "https://www.alicesworld.com/credsList"
+    "callbackURL": "https://www.bobsworld.com/"
 }
 ```
 
@@ -435,6 +441,7 @@ credentialOptionsResponse: {
         "issuer id 2",
         "issuer id n"
     ],
+    "callbackURL", // OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -453,7 +460,8 @@ credentialOptionsResponse: {
     "supportedIssuers": [
         "did:iota:afbsdjhfbasuidfb8asifb4bfkawuiefjhdfgsukdfb",
         "did:iota:jahsdbfukgsiudfgisdufgi8sdfgzsbegbesudgbudf"
-    ]
+    ],
+    "callbackURL": "https://www.aliceswonderland.com/",
 }
 ```
 
@@ -491,7 +499,7 @@ credentialSchemaRequest: {
 {
     "context": "credential-options/1.0/credentialSchemaRequest",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
-    "callbackURL": "https://www.alicesworld.com/credsList",
+    "callbackURL": "https://www.bobsworld.com/",
     "credentialTypes": [
         "YouHaveNiceHairCredential",
         "DriversLicenseCredential"
@@ -509,6 +517,7 @@ credentialSchemaResponse: {
     "context",
     "thread",
     "schemas",
+    "callbackURL", // OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -568,7 +577,7 @@ credentialSelection: {
 {
     "context": "credential-issuance/1.0/credentialSelection",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
-    "callbackURL": "https://www.bobsworld.com/serviceEndpoint",
+    "callbackURL": "https://www.bobsworld.com/",
     "selectedCredentials": [
             "YouHaveNiceHairCredential"
     ],
@@ -587,6 +596,7 @@ credentialIssuance: {
     "issued": [
         ...
     ],
+    "callbackURL" // OPTIONAL!
 }
 ```
 
@@ -600,6 +610,7 @@ credentialIssuance: {
             {...},
             {...}
     ],
+    "callbackURL": "https://www.aliceswonderland.com/"
 }
 ```
 
@@ -624,11 +635,13 @@ revocation: {
     "context",
     "thread",
     "credentialId",
+    "callbackURL", // OPTIONAL!
     "comment", // OPTIONAL!
     "id" // OPTIONAL!
 }
 ```
 TODO why id optional, why need it
+
 ###### Example(s)
 
 ```JSON
@@ -636,6 +649,7 @@ TODO why id optional, why need it
     "context": "credential-revocation/1.0/revocation",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "credentialId": "gfiweuzg89w3bgi8wbgi8wi8t",
+    "callbackURL": "https://www.aliceswonderland.com/",
     "comment": "Revoked because reasons.",
     "id": "did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v",
 }
@@ -678,7 +692,7 @@ presentationRequest: {
 {
     "context": "presentation-verification/1.0/presentationRequest",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
-    "callbackURL": "https://www.bobsworld.com/pres",
+    "callbackURL": "https://www.bobsworld.com/",
     "credentialRequirements": [
         {
             "type": "YouHaveNiceHairCredential"
@@ -699,6 +713,7 @@ The <u>holder</u> sends a Verifiable Presentation to the <u>verifier</u> using a
 presentationResponse: {
     "context",
     "thread",
+    "callbackURL", // OPTIONAL!
     "verifiablePresentation"
 }
 ```
@@ -709,6 +724,7 @@ presentationResponse: {
 {
     "context": "presentation-verification/1.0/presentationResponse",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "callbackURL": "https://www.aliceswonderland.com/",
     "verifiablePresentation": {...}
 }
 ```
@@ -785,10 +801,6 @@ TODO only do acks on request
 TODO make callbackURL optional except in the first of each interaction messages
 TODO revisit each field:
 
-`context` & `reference` as URL/String, e.g. `did-resolution/1.0/resolutionResponse`: Defines the context that a specific message either adheres to, or refers to in case of a report.
-
-`thread` as String, e.g. `jdhgbksdbgjksdbgkjdkg` or `thread-132-a`: A String, defined by the agent, to be used to identify this specific interaction to track it agent-locally.
-
 `callbackURL` as URL/String, e.g. `https://www.bobsworld.com/ping` or `https://www.aliceswonderland/authz`: Defines the URL or API call where a request or response is to be delivered to.
 
 `id` as String, e.g. `did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v`: An IOTA decentralized identifier.
@@ -828,7 +840,10 @@ TODO revisit each field:
 `timing[wait_until_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: Wait until this time before processing the message.
 
 TODO authentication tell what we are signing
+TODO sequence diagrams
+TODO take final TODOs and put them into, dunno, pr?
+TODO rework descriptions
+
 
 FINAL TODOs
-
 report/report: Define an actual error communication / information field that is parseable.
