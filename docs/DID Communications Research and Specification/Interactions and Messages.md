@@ -8,11 +8,11 @@
 
 `callbackURL` as URL/String, e.g. `https://www.bobsworld.com/` or `https://www.aliceswonderland/serviceEndpoint`: Defines the URL (or API call) where a message is to be delivered to.
 
+`responseRequested` as Boolean, e.g. `true` or `false`: In messages where it is defined it asks the recipient of the message to repond in the form of an acknowledging report. This request can be honored, but doesn't have to be honored. The only exception to this behaviour is in `trust-ping`, where the acknowledging report is to be sent if and only if this field is `true`. If this field is undefined, it counts as `false`.
+
 `id` as String, e.g. `did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v`: An IOTA decentralized identifier.
 
 `didDocument` as JSON: An IOTA DID Document (see e.g. in <a href="#did-resolution">DID Resolution</a>).
-
-`responseRequested` as Boolean, e.g. `true` or `false`: In messages where it is defined a reponse is to be sent to a request if and only if this is `true`. Undefined counts as `false`.
 
 `comment` as String: A comment. Can be literally any String.
 
@@ -116,7 +116,7 @@ Testing a pairwise channel.
 #### Messages
 
 #### ping
-The <u>sender</u> sends the `ping` to the <u>receiver</u>, specifying a `callbackURL` for the `pingResponse` to be posted to.
+The <u>sender</u> sends the `ping` to the <u>receiver</u>, specifying a `callbackURL` for the `pingResponse` to be posted to. The `responseRequested` field counts as `false` if omitted. If and only if the `responseRequested` field is true should the <u>**Receiver**</u> respond to the ping with a `report` message. If it is `true`, a `thread` should be passed as well to reference the `ping`.
 
 ###### Layout
 
@@ -124,8 +124,8 @@ The <u>sender</u> sends the `ping` to the <u>receiver</u>, specifying a `callbac
 ping: {
     "context",
     "callbackURL",
+    "responseRequested", //OPTIONAL!
     "thread", // OPTIONAL!
-    "responseRequested", //OPTIONAL! Counts as false if omitted!
     "id", // OPTIONAL!
     "timing": {...} // OPTIONAL! All subfields OPTIONAL!
 }
@@ -142,30 +142,6 @@ ping: {
     "timing": {
         "delay_milli": 1337
     }
-}
-```
-
-#### pingResponse
-The <u>receiver</u> answers with a `pingResponse` if and only if `responseRequested` was `true` in the `ping` message. The OPTIONAL `thread` field is only included if there was a thread UUID provided in the `ping` message:
-
-###### Layout
-
-```JSON
-pingResponse: {
-    "context",
-    "thread", // OPTIONAL!
-    "callbackURL", // OPTIONAL!
-    "id", // OPTIONAL!
-    "timing": {...} // OPTIONAL! All subfields OPTIONAL!
-}
-```
-
-###### Example(s)
-
-```JSON
-{
-    "context": "trust-ping/1.0/pingResponse",
-    "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
 }
 ```
 
@@ -786,8 +762,6 @@ check WHAT EXACTLY others are actually signing
 thread if instead of sending challenge back
 put down sources for all interactions into the document
 say what is OPTIONAL
-https://identity.foundation/didcomm-messaging/spec/#discover-features-protocol-10
-thread id
 
 
 
