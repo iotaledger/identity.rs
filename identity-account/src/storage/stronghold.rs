@@ -132,6 +132,15 @@ impl Storage for Stronghold {
     }
   }
 
+  async fn key_exists(&self, chain: ChainId, location: &ChainKey) -> Result<bool> {
+    let vault: Vault<'_> = self.vault(chain);
+
+    match location.type_() {
+      MethodType::Ed25519VerificationKey2018 => vault.exists(location_skey(location)).await,
+      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_exists] Handle MerkleKeyCollection2021"),
+    }
+  }
+
   async fn get_chain_index(&self) -> Result<ChainIndex> {
     // Load the metadata actor
     let store: Store<'_> = self.store(META);

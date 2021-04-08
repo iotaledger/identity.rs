@@ -36,6 +36,8 @@ pub trait Storage: Debug {
   /// Signs `data` with the private key at the specified `location`.
   async fn key_sign(&self, chain: ChainId, location: &ChainKey, data: Vec<u8>) -> Result<Signature>;
 
+  async fn key_exists(&self, chain: ChainId, location: &ChainKey) -> Result<bool>;
+
   async fn get_chain_index(&self) -> Result<ChainIndex>;
 
   async fn set_chain_index(&self, index: &ChainIndex) -> Result<()>;

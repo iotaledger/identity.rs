@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use hashbrown::HashMap;
+use hashbrown::hash_map::Entry;
 use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::crypto::JcsEd25519;
@@ -30,6 +32,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::storage::Storage;
 use crate::types::ChainId;
+use crate::types::Fragment;
 use crate::types::Index;
 use crate::types::IndexMap;
 use crate::types::Timestamp;
@@ -37,7 +40,8 @@ use crate::types::Timestamp;
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, ()>;
 
-type RemoteEd25519<'a, T> = JcsEd25519<RemoteSign<'a, T>>;
+pub type RemoteEd25519<'a, T> = JcsEd25519<RemoteSign<'a, T>>;
+pub type MethodData = (MethodScope, Option<Object>);
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ChainData {
@@ -54,7 +58,7 @@ pub struct ChainData {
   document: Option<DID>,
   controller: Option<DID>,
   also_known_as: Option<Vec<Url>>,
-  methods: Vec<(MethodScope, ChainKey, Object)>,
+  methods: HashMap<ChainKey, MethodData>,
   services: Option<Vec<Service<()>>>,
   created: Timestamp,
   updated: Timestamp,
@@ -70,12 +74,16 @@ impl ChainData {
       document: None,
       controller: None,
       also_known_as: None,
-      methods: Vec::new(),
+      methods: HashMap::new(),
       services: None,
       created: Timestamp::EPOCH,
       updated: Timestamp::EPOCH,
     }
   }
+
+  // ===========================================================================
+  // Chain State
+  // ===========================================================================
 
   pub fn chain(&self) -> ChainId {
     self.chain
@@ -88,6 +96,27 @@ impl ChainData {
   pub fn diff_index(&self) -> Index {
     self.diff_index.get(self.auth_index).copied().unwrap_or(Index::ZERO)
   }
+
+  pub fn increment_auth_index(&mut self) -> Result<()> {
+    todo!("increment_auth_index")
+  }
+
+  pub fn increment_diff_index(&mut self) -> Result<()> {
+    match self.diff_index.entry(self.auth_index) {
+      Entry::Occupied(mut entry) => {
+        entry.insert(entry.get().try_increment()?);
+      }
+      Entry::Vacant(entry) => {
+        entry.insert(Index::ONE);
+      }
+    }
+
+    Ok(())
+  }
+
+  // ===========================================================================
+  // Tangle State
+  // ===========================================================================
 
   pub fn this_message_id(&self) -> Option<&MessageId> {
     self.messages.this_message_id(self.auth_index)
@@ -109,15 +138,23 @@ impl ChainData {
   }
 
   pub fn set_diff_message_id(&mut self, message: MessageId) {
-    // self.messages.set_diff_message_id(self.auth_index, self.diff_index, message);
+    self.messages.set_diff_message_id(self.auth_index, self.diff_index(), message);
   }
 
-  pub fn increment_diff_index(&mut self) -> Result<()> {
-    let entry: &mut Index = self.diff_index.entry(self.auth_index).or_default();
+  // ===========================================================================
+  // Document State
+  // ===========================================================================
 
-    *entry = entry.try_increment()?;
+  pub fn document(&self) -> Option<&DID> {
+    self.document.as_ref()
+  }
 
-    Ok(())
+  pub fn try_document(&self) -> Result<&DID> {
+    self.document().ok_or(Error::MissingChainDocument)
+  }
+
+  pub fn set_document(&mut self, document: DID) {
+    self.document = Some(document);
   }
 
   pub fn created(&self) -> Timestamp {
@@ -137,33 +174,48 @@ impl ChainData {
     self.updated = timestamp;
   }
 
-  pub fn methods(&self) -> &[(MethodScope, ChainKey, Object)] {
-    &self.methods
+  pub fn methods(&self) -> impl Iterator<Item = (&ChainKey, &MethodData)> {
+    self.methods.iter()
   }
 
-  pub fn append_method(&mut self, scope: MethodScope, location: ChainKey) {
-    self.append_method_with_data(scope, location, Object::new());
+  pub fn methods_mut(&mut self) -> impl Iterator<Item = (&ChainKey, &mut MethodData)> {
+    self.methods.iter_mut()
   }
 
-  pub fn append_method_with_data(&mut self, scope: MethodScope, location: ChainKey, data: Object) {
-    self.methods.push((scope, location, data));
+  pub fn method(&self, fragment: &str) -> Option<(&ChainKey, &MethodData)> {
+    self.methods().find(|(location, _)| location.fragment() == fragment)
   }
 
-  pub fn document(&self) -> Option<&DID> {
-    self.document.as_ref()
+  pub fn method_mut(&mut self, fragment: &str) -> Option<(&ChainKey, &mut MethodData)> {
+    self.methods_mut().find(|(location, _)| location.fragment() == fragment)
   }
 
-  pub fn try_document(&self) -> Result<&DID> {
-    self.document().ok_or(Error::MissingChainDocument)
+  pub fn set_method(
+    &mut self,
+    location: ChainKey,
+    scope: MethodScope,
+    extra: Option<Object>,
+  ) {
+    // TODO: Replace by fragment
+    self.methods.insert(location, (scope, extra));
   }
 
-  pub fn set_document(&mut self, document: DID) {
-    self.document = Some(document);
+  // pub fn auth(&self) -> ChainKey {
+  //   ChainKey::auth(MethodType::Ed25519VerificationKey2018, self.auth_index())
+  // }
+
+  pub fn key(&self, type_: MethodType, fragment: String) -> Result<ChainKey> {
+    Ok(ChainKey {
+      type_,
+      auth: self.auth_index(),
+      diff: self.diff_index(),
+      fragment: Fragment::new(fragment),
+    })
   }
 
-  pub fn current_auth(&self) -> ChainKey {
-    ChainKey::auth(MethodType::Ed25519VerificationKey2018, self.auth_index())
-  }
+  // ===========================================================================
+  // DID Document Helpers
+  // ===========================================================================
 
   pub async fn to_document<T>(&self, store: &T) -> Result<Document>
   where
@@ -194,9 +246,10 @@ impl ChainData {
 
     builder = builder.authentication(method);
 
-    for (scope, key, properties) in self.methods.iter() {
-      let public: PublicKey = store.key_get(self.chain, &key).await?;
-      let method: CoreMethod = key.to_core(document_id, &public, properties.clone())?;
+    for (location, (scope, extra)) in self.methods.iter() {
+      let public: PublicKey = store.key_get(self.chain, location).await?;
+      let extra: Object = extra.as_ref().cloned().unwrap_or_default();
+      let method: CoreMethod = location.to_core(document_id, &public, extra)?;
 
       builder = match scope {
         MethodScope::VerificationMethod => builder.verification_method(method),
@@ -271,7 +324,7 @@ impl ChainData {
   }
 
   // ===========================================================================
-  // Misc. Helpers
+  // Private
   // ===========================================================================
 
   async fn sign_document<T: Storage>(

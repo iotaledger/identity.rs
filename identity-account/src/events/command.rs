@@ -11,11 +11,15 @@ use crate::chain::ChainKey;
 use crate::error::Result;
 use crate::events::Context;
 use crate::events::Event;
+use crate::events::CommandError;
 use crate::storage::Storage;
 use crate::types::ChainId;
-use crate::types::Fragment;
 use crate::types::Index;
 use crate::types::Timestamp;
+
+const INVALID_AUTH: &[MethodType] = &[
+  MethodType::MerkleKeyCollection2021,
+];
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Command {
@@ -63,14 +67,17 @@ impl Command {
         shard,
         authentication,
       } => {
-        assert_new_document(state)?;
-        assert_auth_type(authentication)?;
+        ensure!(state.document().is_none(), CommandError::DocumentAlreadyExists);
+        ensure!(!INVALID_AUTH.contains(&authentication), CommandError::InvalidMethodType(authentication));
 
         let location: ChainKey = ChainKey::auth(authentication, Index::ZERO);
 
         trace!("[Command::process] Chain Key = {:#?}", location);
 
-        assert_key_blank::<T>(chain, store, &location).await?;
+        ensure!(
+          !store.key_exists(chain, &location).await?,
+          CommandError::DuplicateKeyLocation(location)
+        );
 
         // Generate a private key at the initial auth index (`0`)
         let public: PublicKey = store.key_new(chain, &location).await?;
@@ -86,19 +93,17 @@ impl Command {
         })
       }
       Self::CreateMethod { type_, scope, fragment } => {
-        assert_old_document(state)?;
-        assert_frag_reserved(&fragment)?;
+        ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+        ensure!(fragment != ChainKey::AUTH, CommandError::InvalidMethodFragment("reserved"));
 
-        let location: ChainKey = ChainKey {
-          type_,
-          auth: state.auth_index(),
-          diff: state.diff_index().try_increment()?,
-          fragment: Fragment::new(fragment),
-        };
-
-        assert_key_blank::<T>(chain, store, &location).await?;
+        let location: ChainKey = state.key(type_, fragment)?;
 
         trace!("[Command::process] Chain Key = {:#?}", location);
+
+        ensure!(
+          !store.key_exists(chain, &location).await?,
+          CommandError::DuplicateKeyLocation(location)
+        );
 
         let _public: PublicKey = store.key_new(chain, &location).await?;
 
@@ -110,33 +115,4 @@ impl Command {
       }
     }
   }
-}
-
-fn assert_new_document(state: &ChainData) -> Result<()> {
-  ensure!(state.document().is_none(), "Document Already Exists");
-  Ok(())
-}
-
-fn assert_old_document(state: &ChainData) -> Result<()> {
-  ensure!(state.document().is_some(), "Document Not Found");
-  Ok(())
-}
-
-fn assert_auth_type(type_: MethodType) -> Result<()> {
-  ensure!(
-    !matches!(type_, MethodType::MerkleKeyCollection2021),
-    "Type Not Allowed - MerkleKeyCollection2021"
-  );
-
-  Ok(())
-}
-
-fn assert_frag_reserved(fragment: &str) -> Result<()> {
-  ensure!(fragment != ChainKey::AUTH, "Fragment Not Allowed - Reserved");
-  Ok(())
-}
-
-async fn assert_key_blank<T: Storage>(chain: ChainId, store: &T, location: &ChainKey) -> Result<()> {
-  ensure!(store.key_get(chain, location).await.is_err(), "Duplicate Key Location");
-  Ok(())
 }

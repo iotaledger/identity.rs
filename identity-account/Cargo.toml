@@ -32,12 +32,14 @@ zeroize = { version = "1.2"}
 
 [dependencies.iota-crypto]
 git = "https://github.com/iotaledger/crypto.rs"
-rev = "b849861b86c3f7357b7477de4253b7352b363627"
-features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10"]
+branch = "dev"
+# version = "0.4"
+# rev = "b849861b86c3f7357b7477de4253b7352b363627"
+features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std"]
 
 [dependencies.iota-stronghold]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "b8904ff0df9c963980ae148815ad56c40588d84a"
+rev = "65ec786b9da4e084c719aac8eb8159e0ca118969"
 
 [dev-dependencies]
 pretty_env_logger = { version = "0.4" }

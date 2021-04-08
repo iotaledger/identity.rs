@@ -91,6 +91,14 @@ impl Store<'_> {
       .to_result()
   }
 
+  /// Returns true if the specified location exists.
+  pub async fn exists(&self, location: Location) -> Result<bool> {
+    let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
+    let exists: bool = scope.record_exists(location).await;
+
+    Ok(exists)
+  }
+
   pub async fn get_int<I: Integer>(&self, location: Location) -> Result<I> {
     self.get(location).await.and_then(I::decode_vec)
   }

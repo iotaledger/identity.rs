@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
+use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use identity_core::common::Object;
@@ -93,11 +94,20 @@ impl ChainKey {
   }
 }
 
-impl Debug for ChainKey {
+impl Display for ChainKey {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     f.write_fmt(format_args!(
-      "ChainKey({}:{}:{}:{:?})",
-      self.auth, self.diff, self.fragment, self.type_
+      "({}:{}:{}:{})",
+      self.auth,
+      self.diff,
+      self.fragment,
+      self.type_.as_u32()
     ))
+  }
+}
+
+impl Debug for ChainKey {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    f.write_fmt(format_args!("ChainKey{}", self))
   }
 }

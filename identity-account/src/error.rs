@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::events::CommandError;
+
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
@@ -64,7 +66,7 @@ pub enum Error {
   #[error("Diff message id not found")]
   DiffMessageIdNotFound,
   #[error("Command Error: {0}")]
-  CommandError(&'static str),
+  CommandError(#[from] CommandError),
 }
 
 #[doc(hidden)]

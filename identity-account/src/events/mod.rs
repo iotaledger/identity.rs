@@ -7,11 +7,13 @@ mod macros;
 mod command;
 mod commit;
 mod context;
+mod error;
 mod event;
 mod repository;
 
 pub use self::command::*;
 pub use self::commit::*;
 pub use self::context::*;
+pub use self::error::*;
 pub use self::event::*;
 pub use self::repository::*;

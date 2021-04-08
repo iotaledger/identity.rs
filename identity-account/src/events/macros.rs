@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 macro_rules! ensure {
-  ($cond:expr, $message:literal $(,)?) => {
+  ($cond:expr, $error:expr $(,)?) => {
     if !$cond {
-      return Err($crate::Error::CommandError($message));
+      return Err($crate::Error::CommandError($error));
     }
   };
 }
@@ -20,7 +20,7 @@ macro_rules! impl_command_builder {
     match $this.$field {
       Some(value) => value,
       None => return Err($crate::Error::CommandError(
-        concat!("Missing Required Field: ", stringify!($field))
+        $crate::events::CommandError::MissingRequiredField(stringify!($field)),
       )),
     }
   };

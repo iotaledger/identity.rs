@@ -194,6 +194,16 @@ impl Storage for MemStore {
     }
   }
 
+  async fn key_exists(&self, chain: ChainId, location: &ChainKey) -> Result<bool> {
+    let vaults: RwLockReadGuard<_> = self.vaults.read()?;
+
+    if let Some(vault) = vaults.get(&chain) {
+      return Ok(vault.contains_key(location));
+    }
+
+    Ok(false)
+  }
+
   async fn key_get(&self, chain: ChainId, location: &ChainKey) -> Result<PublicKey> {
     let vaults: RwLockReadGuard<_> = self.vaults.read()?;
     let vault: &MemVault = vaults.get(&chain).ok_or(Error::KeyVaultNotFound)?;

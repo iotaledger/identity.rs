@@ -56,15 +56,6 @@ impl Vault<'_> {
     &self.flags
   }
 
-  /// Runs the Stronghold garbage collector.
-  pub async fn garbage_collect(&self, vault: &[u8]) -> Result<()> {
-    Context::scope(self.path, &self.name, &self.flags)
-      .await?
-      .garbage_collect(vault.to_vec())
-      .await
-      .to_result()
-  }
-
   /// Inserts a record.
   pub async fn insert<T>(&self, location: Location, payload: T, hint: RecordHint, flags: &[VaultFlags]) -> Result<()>
   where
@@ -82,6 +73,23 @@ impl Vault<'_> {
     Context::scope(self.path, &self.name, &self.flags)
       .await?
       .delete_data(location, gc)
+      .await
+      .to_result()
+  }
+
+  /// Returns true if the specified location exists.
+  pub async fn exists(&self, location: Location) -> Result<bool> {
+    let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
+    let exists: bool = scope.vault_exists(location).await;
+
+    Ok(exists)
+  }
+
+  /// Runs the Stronghold garbage collector.
+  pub async fn garbage_collect(&self, vault: &[u8]) -> Result<()> {
+    Context::scope(self.path, &self.name, &self.flags)
+      .await?
+      .garbage_collect(vault.to_vec())
       .await
       .to_result()
   }
