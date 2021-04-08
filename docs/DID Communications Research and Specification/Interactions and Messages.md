@@ -1,6 +1,6 @@
 # DID Communications Message Specification
 
-> ### Field Definitions
+## Field Definitions
 
 `context` as URL/String, e.g. `did-resolution/1.0/resolution-result`: Defines the context that a specific message adheres to.
 
@@ -48,7 +48,7 @@
 
 [(Source 1: Aries Message Timing)](https://github.com/hyperledger/aries-rfcs/blob/master/features/0032-message-timing/README.md)
 
-> ### Standalone Messages
+## Standalone Messages
 
 Messages that are shared across interactions.
 
@@ -60,7 +60,11 @@ Messages that are shared across interactions.
 The <u>sender</u> sends an `acknowledgement` message to the <u>receiver</u> to let him know that a previous message has been received.
 
 ###### Layout
-
+TODO only do acks on request
+TODO merge ack and error into report
+TODO make thread not optional
+TODO make thread a UUID
+TODO make callbackURL optional except in the first of each interaction messages
 ```JSON
 acknowledgement: {
     "context",
@@ -104,15 +108,28 @@ error: {
 }
 ```
 
-> ### Interactions
+## Interactions
 
 ◈ <a href="#trust-ping">**trust-ping**</a> - Testing a pairwise channel.
 
+    ping
+
+    pingResponse
+
 ◈ <a href="#did-discovery">**did-discovery**</a> - Requesting a DID from an agent.
+&nbsp;&nbsp;&nbsp;&nbsp;ping
+&nbsp;&nbsp;&nbsp;&nbsp;pingResponse
 
 ◈ <a href="#did-resolution">**did-resolution**</a> - Using another agent as a Resolver.
 
+&nbsp;&nbsp;&nbsp;&nbsp;ping
+
+&nbsp;&nbsp;&nbsp;&nbsp;pingResponse
+
 ◈ <a href="#authentication">**authentication**</a> - Proving control over a DID.
+
+&nbsp;&nbsp;&nbsp;&nbsp;ping
+&nbsp;&nbsp;&nbsp;&nbsp;pingResponse
 
 ◈ <a href="#credential-options">**credential-options**</a> - Querying an agent for the VCs that the agent can issue.
 
@@ -125,17 +142,17 @@ error: {
 ◈ <a href="#presentation-verification">**presentation-verification**</a> - Proving a set of statements about an identifier.
 
 ---
-## trust-ping
+### trust-ping
 
 Testing a pairwise channel.
 
-### Roles
+#### Roles
 - <u>**Sender**</u>: Agent who initiates the trust ping
 - <u>**Receiver**</u>: Agent who responds to the <u>senders</u> trust ping
 
-### Messages
+#### Messages
 
-#### ping
+##### ping
 The <u>sender</u> sends the `ping` to the <u>receiver</u>, specifying a `callbackURL` for the `pingResponse` to be posted to.
 
 ###### Layout
@@ -165,7 +182,7 @@ ping: {
 }
 ```
 
-#### pingResponse
+##### pingResponse
 The <u>receiver</u> answers with a `pingResponse` if and only if `responseRequested` was `true` in the `ping` message:
 
 ###### Layout
@@ -191,17 +208,17 @@ pingResponse: {
 [Source 1: DIF Trust Ping](https://identity.foundation/didcomm-messaging/spec/#trust-ping-protocol-10); [Source 2: Aries Trust Ping](https://github.com/hyperledger/aries-rfcs/tree/master/features/0048-trust-ping)
 
 ---
-## did-discovery
+### did-discovery
 
 Requesting a DID from an agent.
 
-### Roles
+#### Roles
 - <u>**Requester**</u>: Agent who requests a DID from the <u>endpoint</u>
 - <u>**Endpoint**</u>: Agent who provides the requested DID to the <u>requester</u>
 
-### Messages
+#### Messages
 
-#### didRequest
+##### didRequest
 The <u>requester</u> sends the `didRequest` to the <u>endpoint</u>, specifying a `callbackURL` for the `didResponse` to be posted to. 
 
 ###### Layout
@@ -226,7 +243,7 @@ didRequest: {
 }
 ```
 
-#### didResponse
+##### didResponse
 The <u>endpoint</u> answers with a `didResponse`, containing its DID.
 
 ###### Layout
@@ -248,19 +265,19 @@ didResponse: {
 ```
 
 ---
-## did-resolution
+### did-resolution
 
 Using another Agent as a Resolver.
 
 DID resolution consists of a simple request-response message exchange, where the Requester asks the Resolver to perform DID resolution and return the result.
 
-### Roles
+#### Roles
 - **Requester**: Agent who requests the resolution of a DID
 - **Resolver**: Agent who resolves the given DID (or their own) and returns the result
 
-### Messages
+#### Messages
 
-#### resolutionRequest
+##### resolutionRequest
 The Requester broadcasts a message which may or may not contain a DID.
 
 ###### Layout
@@ -286,7 +303,7 @@ resolutionRequest: {
 }
 ```
 
-#### resolutionResult
+##### resolutionResult
 If the message contains a DID (in the `id` field), the Resolver resolves the DID and returns the DID Resolution Result. Otherwise, the Resolver returns the result of resolving it's own DID. This is intended for the special case of "local" DID methods, which do not have a globally resolvable state.
 
 ###### Layout
@@ -302,7 +319,7 @@ resolutionResult: {
 ```
 
 ###### Example(s)
-
+TODO why is ID optional
 ```JSON
 {
     "context": "did-resolution/1.0/resolutionResult",
@@ -321,19 +338,19 @@ resolutionResult: {
 ```
 
 ---
-## authentication
+### authentication
 
 Proving control over an identifier.
 
 The authentication flow consists of a simple request-response message exchange, where the contents of the response must match those of the request. Because all messages are signed and authenticated, the response functions as proof of control by nature of being correctly signed by the keys listed in the DID Document of the issuer. Because of this, in scenarios where a more complex functionality (e.g. Credential Verification) is needed, an additional authentication flow is not necessary.
 
-### Roles
+#### Roles
 - <u>**Verifier**</u>: Agent who requests and verifies the authenticity of the <u>authenticator</u>
 - <u>**Authenticator**</u>: Agent who proves control over their identifier
 
-### Messages
+#### Messages
 
-#### authenticationRequest
+##### authenticationRequest
 The <u>verifier</u> sends the `authenticationRequest` to the authentication service endpoint of the <u>authenticator</u>, specifying a `callbackURL` for the `authenticationResponse` to be posted to. The `thread` is used as a challenge and also serves to identity the `authenticationRequest`. The whole request is to be signed by the <u>authenticator</u>. 
 
 ###### Layout
@@ -366,7 +383,7 @@ authenticationRequest: {
 }
 ```
 
-#### authenticationResponse
+##### authenticationResponse
 The <u>authenticator</u> answers with an `authenticationResponse`, providing a `signature` of the whole `authenticationRequest` JSON - the complete original `authenticationRequest`.
 
 ###### Layout
@@ -396,19 +413,19 @@ authenticationResponse: {
 The `signature` provided here must correspond to the `#authentication` public key provided in the DID Document of the identity that the <u>verifier</u> has received earlier. If that is the case, the identifier is authenticated successfully.
 
 ---
-## credential-options
+### credential-options
 
 Querying an agent for the VCs that the agent can issue.
 
 The Verifiable Credential (VC) issuance flow consists of a three step interaction process between two parties, the <u>issuer</u> and the <u>holder</u>. This is the first interaction in this process. In this interaction, the <u>holder</u> queries the <u>issuer</u> for a list of VC types that the <u>issuer</u> offers to issue.
 
-### Roles
+#### Roles
 - **Issuer**: Agent who offers and issues one or more Verifiable Credentials
 - **Holder**: Agent who selects and receives one or more Verifiable Credentials
 
-### Messages
+#### Messages
 
-#### credentialOptionsRequest
+##### credentialOptionsRequest
 The <u>holder</u> queries the <u>issuer</u> for a list of VC types that the <u>issuer</u> offers.
 
 ###### Layout
@@ -432,7 +449,7 @@ credentialOptionsRequest: {
 }
 ```
 
-#### credentialOptionsResponse
+##### credentialOptionsResponse
 The <u>issuer</u> responds with a list of offered VC types.
 
 ###### Layout
@@ -473,18 +490,18 @@ credentialOptionsResponse: {
 ```
 
 ---
-## credential-schema
+### credential-schema
 Querying an agent for the schema of a specific VC that the agent can issue.
 
 The Verifiable Credential (VC) issuance flow consists of a three step interaction process between two parties, the <u>issuer</u> and the <u>holder</u>. This is the second interaction in this process. In this interaction, the <u>holder</u> queries the <u>issuer</u> for the precise schema of one of the VCs that the <u>issuer</u> offers to issue, with it's own list of requirements which must be satisfied by the <u>holder</u> in order to qualify for the credential.
 
-### Roles
+#### Roles
 - **Issuer**: Agent who offers and issues one or more Verifiable Credentials
 - **Holder**: Agent who selects and receives one or more Verifiable Credentials
 
-### Messages
+#### Messages
 
-#### credentialSchemaRequest
+##### credentialSchemaRequest
 The <u>holder</u> queries the <u>issuer</u> for the schema of a specific VC that the <u>issuer</u> offers.
 
 ###### Layout
@@ -513,7 +530,7 @@ credentialSchemaRequest: {
 }
 ```
 
-#### credentialSchemaResponse
+##### credentialSchemaResponse
 The <u>issuer</u> responds with the schema of the requested `credentialTypes`.
 
 ###### Layout
@@ -546,18 +563,18 @@ credentialSchemaResponse: {
 ```
 
 ---
-## credential-issuance
+### credential-issuance
 Creating an authenticated statement about a DID.
 
 The Verifiable Credential (VC) issuance flow consists of a three step interaction process between two parties, the <u>issuer</u> and the <u>holder</u>. This is the third interaction in this process. In this interaction, the <u>holder</u> asks the <u>issuer</u> for issuance of a specific VC.
 
-### Roles
+#### Roles
 - **Issuer**: Agent who offers and issues one or more Verifiable Credentials
 - **Holder**: Agent who selects and receives one or more Verifiable Credentials
 
-### Messages
+#### Messages
 
-#### credentialSelection
+##### credentialSelection
 The <u>holder</u> sends a message containing a list of selected credentials with associated data for satisfying requirements.
 
 ###### Layout
@@ -586,7 +603,7 @@ credentialSelection: {
 }
 ```
 
-#### credentialIssuance
+##### credentialIssuance
 The <u>issuer</u> responds with a message containing a list of newly issued credentials corrosponding to the selected set.
 
 ###### Layout
@@ -613,17 +630,17 @@ credentialIssuance: {
 ```
 
 ---
-## credential-revocation
+### credential-revocation
 
 Notifying a holder that a previously issued credential has been revoked. Note that this revocation is declaratory, not constitutive, so the actual revocation has to be done elsewhere (e.g. in the backend of the issuer).
 
-### Roles
+#### Roles
 - <u>**Issuer**</u>: Agent who revokes the credential
 - <u>**Holder**</u>: Agent who holds the credential to be revoked
 
-### Messages
+#### Messages
 
-#### revocation
+##### revocation
 The <u>issuer</u> sends the `revocation` to the <u>holder</u>, notifying him of the revocation. The most important field here is `credentialId`, which specifies the credential that has been revoked.
 
 ###### Layout
@@ -649,19 +666,19 @@ revocation: {
 ```
 
 ---
-## presentation-verification
+### presentation-verification
 
 Proving a set of statements about an identifier.
 
 The credential verification flow is a simple request-response message exchange between the <u>verifier</u> and the <u>prover</u>. The interaction can consist of up to two messages, the first one is OPTIONAL.
 
-### Roles
+#### Roles
 - **Verifier**: Agent who requests a set of Verifiable Credentials with associated requirements
 - **Prover**: Agent who provides a set of Verifiable Credentials in the form of a Verifiable Presentation attempting to satisfy the request
 
-### Messages
+#### Messages
 
-#### presentationRequest
+##### presentationRequest
 The <u>verifier</u> requests a set of Verifiable Credentials from the <u>prover</u>. This message is OPTIONAL within this interaction.
 
 ###### Layout
@@ -695,7 +712,7 @@ presentationRequest: {
 }
 ```
 
-#### presentationResponse
+##### presentationResponse
 The <u>holder</u> sends a Verifiable Presentation to the <u>verifier</u> using a `presentationResponse` message.
 
 ###### Layout
@@ -746,7 +763,8 @@ TODO credentialSchemaResponse:
     TODO SRC https://w3c-ccg.github.io/vc-json-schemas/
 
 
-
+https://w3c-ccg.github.io/vc-json-schemas/
+https://github.com/hyperledger/aries-rfcs/blob/master/features/0035-report-problem/README.md
 
     TODO make nice interaction pictures / state machines
 
