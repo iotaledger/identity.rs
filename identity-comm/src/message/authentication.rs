@@ -108,7 +108,7 @@ impl AuthenticationRequest {
     self.timing = timing;
   }
 }
-
+// Todo: implement new method for signing of the whole AuthenticationRequest
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AuthenticationResponse {
   thread: String,
@@ -148,5 +148,82 @@ impl AuthenticationResponse {
   /// Set the authentication response's signature.
   pub fn set_signature(&mut self, signature: Signature) {
     self.signature = signature;
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use core::slice;
+  use identity_core::crypto::KeyPair;
+  use identity_core::crypto::PublicKey;
+  use identity_core::crypto::SecretKey;
+  use libjose::utils::ed25519_to_x25519_public;
+  use libjose::utils::ed25519_to_x25519_secret;
+
+  use super::*;
+  use crate::envelope::Encrypted;
+  use crate::envelope::EncryptionAlgorithm;
+  use crate::envelope::SignatureAlgorithm;
+  use crate::error::Result;
+  use crate::message::Message;
+
+  #[test]
+  pub fn test_plaintext_roundtrip() {
+    let authentication_request = AuthenticationRequest::new(Url::parse("https://example.com").unwrap(), "69-420-1337".to_string(), "please sign this".to_string());
+    let plain_envelope_request = authentication_request.pack_plain().unwrap();
+    let request: AuthenticationRequest = plain_envelope_request.unpack().unwrap();
+    assert_eq!(format!("{:?}", request), format!("{:?}", authentication_request));
+  }
+
+  #[test]
+  pub fn test_signed_roundtrip() {
+    let keypair = KeyPair::new_ed25519().unwrap();
+
+    let authentication_request = AuthenticationRequest::new(Url::parse("https://example.com").unwrap(), "69-420-1337".to_string(), "please sign this".to_string());
+    let signed_request = authentication_request
+      .pack_non_repudiable(SignatureAlgorithm::EdDSA, &keypair)
+      .unwrap();
+
+    let tp = signed_request
+      .unpack::<AuthenticationRequest>(SignatureAlgorithm::EdDSA, &keypair.public())
+      .unwrap();
+    
+    assert_eq!(format!("{:?}", tp), format!("{:?}", authentication_request));
+  }
+
+  fn ed25519_to_x25519(keypair: KeyPair) -> Result<(PublicKey, SecretKey)> {
+    Ok((
+      ed25519_to_x25519_public(keypair.public())?.to_vec().into(),
+      ed25519_to_x25519_secret(keypair.secret())?.to_vec().into(),
+    ))
+  }
+
+  fn ed25519_to_x25519_keypair(keypair: KeyPair) -> Result<KeyPair> {
+    // This is completely wrong but `type_` is never used around here
+    let type_ = keypair.type_();
+    let (public, secret) = ed25519_to_x25519(keypair)?;
+    Ok((type_, public, secret).into())
+  }
+
+  #[test]
+  pub fn test_encrypted_roundtrip() {
+    let key_alice = KeyPair::new_ed25519().unwrap();
+    let key_alice = ed25519_to_x25519_keypair(key_alice).unwrap();
+
+    let key_bob = KeyPair::new_ed25519().unwrap();
+    let key_bob = ed25519_to_x25519_keypair(key_bob).unwrap();
+
+    let authentication_request = AuthenticationRequest::new(Url::parse("https://example.com").unwrap(), "69-420-1337".to_string(), "please sign this".to_string());
+    let recipients = slice::from_ref(key_alice.public());
+
+    let encoded: Encrypted = authentication_request
+      .pack_auth(EncryptionAlgorithm::A256GCM, recipients, &key_bob)
+      .unwrap();
+
+    let decoded: AuthenticationRequest = encoded
+      .unpack(EncryptionAlgorithm::A256GCM, key_alice.secret(), key_bob.public())
+      .unwrap();
+
+    assert_eq!(format!("{:?}", decoded), format!("{:?}", authentication_request));
   }
 }
