@@ -110,38 +110,23 @@ error: {
 
 ## Interactions
 
-◈ <a href="#trust-ping">**trust-ping**</a> - Testing a pairwise channel.
+◈ <a href="#trust-ping">**trust-ping**</a> (*ping*, *pingResponse*): Testing a pairwise channel.
 
-    ping
+◈ <a href="#did-discovery">**did-discovery**</a> (*didRequest*, *didResponse*): Requesting a DID from an agent.
 
-    pingResponse
+◈ <a href="#did-resolution">**did-resolution**</a> (*resolutionRequest*, *resolutionResult*): Using another agent as a Resolver.
 
-◈ <a href="#did-discovery">**did-discovery**</a> - Requesting a DID from an agent.
-Messages: ping, pingResponse
+◈ <a href="#authentication">**authentication**</a> (*authenticationRequest*, *authenticationResponse*): Proving control over a DID.
 
-◈ <a href="#did-resolution">**did-resolution**</a> - Using another agent as a Resolver.
+◈ <a href="#credential-options">**credential-options**</a> (*credentialOptionsRequest*, *credentialOptionsResponse*): Querying an agent for the VCs that the agent can issue.
 
-&nbsp;&nbsp;&nbsp;&nbsp;ping
+◈ <a href="#credential-schema">**credential-schema**</a> (*credentialSchemaRequest*, *credentialSchemaResponse*): Querying an agent for the schema of a specific VC that the agent can issue.
 
-&nbsp;&nbsp;&nbsp;&nbsp;pingResponse
+◈ <a href="#credential-issuance">**credential-issuance**</a> (*credentialSelection*, *credentialIssuance*): Creating an authenticated statement about a DID.
 
-◈ <a href="#authentication">**authentication**</a> - Proving control over a DID.
+◈ <a href="#credential-revocation">**credential-revocation**</a> (*revocation*): Notifying a holder that a previously issued credential has been revoked.
 
-&nbsp;&nbsp;&nbsp;&nbsp;ping
-&nbsp;&nbsp;&nbsp;&nbsp;pingResponse
-
-- <a href="#credential-options">**credential-options**</a> - Querying an agent for the VCs that the agent can issue.
-Messages: *ping*, *pingResponse*
-
-- <a href="#credential-schema">**credential-schema**</a> - Querying an agent for the schema of a specific VC that the agent can issue.
-
-Messages: ping, pingResponse
-
-- <a href="#credential-issuance">**credential-issuance**</a> - Creating an authenticated statement about a DID.
-
-- <a href="#credential-revocation">**credential-revocation**</a> - Notifying a holder that a previously issued credential has been revoked.
-
-- <a href="#presentation-verification">**presentation-verification**</a> - Proving a set of statements about an identifier.
+◈ <a href="#presentation-verification">**presentation-verification**</a> (*presentationRequest*, *presentationResponse*): Proving a set of statements about an identifier.
 
 ---
 ### trust-ping
