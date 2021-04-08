@@ -3,6 +3,10 @@
 
 use identity_core::common::Timestamp;
 
+/// A DIDComm Timing
+///
+/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md)
+///
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct Timing {
   #[serde(skip_serializing_if = "Option::is_none")]

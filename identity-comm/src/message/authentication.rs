@@ -1,13 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::message::Timing;
 use identity_core::common::Url;
 use identity_core::crypto::Signature;
 use identity_iota::did::DID;
 use serde::Serialize;
 
-use crate::message::Timing;
-
+/// A DIDComm Autentication Request
+///
+/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md#authentication)
+///
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AuthenticationRequest {
   callback_url: Url,

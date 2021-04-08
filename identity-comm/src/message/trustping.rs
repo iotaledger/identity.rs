@@ -1,10 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+
+use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::DID;
 
-use crate::message::Timing;
+
+/// A DIDComm Trustping Message
+///
+/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md#trust-ping)
+///
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Trustping {

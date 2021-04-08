@@ -1,16 +1,17 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::crypto::KeyPair;
-use identity_core::crypto::PublicKey;
-use serde::Serialize;
-
 use crate::envelope::Encrypted;
 use crate::envelope::EncryptionAlgorithm;
 use crate::envelope::Plaintext;
 use crate::envelope::SignatureAlgorithm;
 use crate::envelope::Signed;
 use crate::error::Result;
+use identity_core::crypto::KeyPair;
+use identity_core::crypto::PublicKey;
+use serde::Serialize;
+
+/// A Message Trait to pack messages into Envelopes
 
 pub trait Message {
   fn pack_plain(&self) -> Result<Plaintext>;
