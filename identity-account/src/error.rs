@@ -63,8 +63,8 @@ pub enum Error {
   NoChainsFound,
   #[error("Diff message id not found")]
   DiffMessageIdNotFound,
-  #[error("Invalid Command: {0}")]
-  InvalidCommandContext(&'static str),
+  #[error("Command Error: {0}")]
+  CommandError(&'static str),
 }
 
 #[doc(hidden)]

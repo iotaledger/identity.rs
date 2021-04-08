@@ -42,6 +42,7 @@ use crate::events::Commit;
 use crate::events::Snapshot;
 use crate::storage::Storage;
 use crate::types::ChainId;
+use crate::types::Index;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
 use crate::utils::Shared;
@@ -262,11 +263,12 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn stream(&self, chain: ChainId) -> Result<LocalBoxStream<'_, Result<Commit>>> {
+  async fn stream(&self, chain: ChainId, version: Index) -> Result<LocalBoxStream<'_, Result<Commit>>> {
     let state: RwLockReadGuard<_> = self.events.read()?;
     let queue: Vec<Commit> = state.get(&chain).cloned().unwrap_or_default();
+    let index: usize = version.to_u32() as usize;
 
-    Ok(EventStream::new(chain, queue).boxed_local())
+    Ok(stream::iter(queue.into_iter().skip(index)).map(Ok).boxed_local())
   }
 }
 

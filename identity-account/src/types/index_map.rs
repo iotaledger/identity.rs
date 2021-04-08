@@ -4,9 +4,9 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result;
-use hashbrown::HashMap;
-use hashbrown::hash_map;
 use fxhash::FxBuildHasher;
+use hashbrown::hash_map;
+use hashbrown::HashMap;
 
 use crate::types::Index;
 

@@ -68,6 +68,7 @@ impl Event {
       } => {
         state.append_method(scope, location);
         state.set_updated(timestamp);
+        state.increment_diff_index()?;
       }
     }
 

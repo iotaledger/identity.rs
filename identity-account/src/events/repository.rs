@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::cell::Cell;
-use futures::stream::Skip;
-use futures::StreamExt;
 use futures::TryStreamExt;
 
 use crate::chain::ChainData;
@@ -55,15 +53,13 @@ impl<'a, T: Storage> Repository<'a, T> {
     // Get the initial version of the snapshot
     let version: Index = initial.version();
 
-    // Get a stream of events for the chain
-    let stream: _ = self.store.stream(self.chain).await?;
-
-    // Skip all events that we've already processed
-    let offset: usize = (version.to_u32() as usize).saturating_sub(1);
-    let recent: Skip<_> = stream.skip(offset);
-
-    // Apply all events to the state and create a new snapshot
-    let snapshot: Snapshot = recent.try_fold(initial, fold).await?;
+    // Apply all recent events to the state and create a new snapshot
+    let snapshot: Snapshot = self
+      .store
+      .stream(self.chain, version)
+      .await?
+      .try_fold(initial, fold)
+      .await?;
 
     trace!("[Repository::load] Version = {} -> {}", version, snapshot.version());
     trace!("[Repository::load] Snapshot = {:#?}", snapshot);

@@ -12,6 +12,7 @@ use crate::error::Result;
 use crate::events::Commit;
 use crate::events::Snapshot;
 use crate::types::ChainId;
+use crate::types::Index;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
 
@@ -33,7 +34,7 @@ pub trait Storage: Debug {
   async fn key_del(&self, chain: ChainId, location: &ChainKey) -> Result<()>;
 
   /// Signs `data` with the private key at the specified `location`.
-  async fn key_sign(&self, chain: ChainId, location: &ChainKey, _data: Vec<u8>) -> Result<Signature>;
+  async fn key_sign(&self, chain: ChainId, location: &ChainKey, data: Vec<u8>) -> Result<Signature>;
 
   async fn get_chain_index(&self) -> Result<ChainIndex>;
 
@@ -41,13 +42,13 @@ pub trait Storage: Debug {
 
   async fn get_snapshot(&self, chain: ChainId) -> Result<Option<Snapshot>>;
 
-  async fn set_snapshot(&self, chain: ChainId, _snapshot: &Snapshot) -> Result<()>;
+  async fn set_snapshot(&self, chain: ChainId, snapshot: &Snapshot) -> Result<()>;
 
-  async fn append(&self, chain: ChainId, _commits: &[Commit]) -> Result<()>;
+  async fn append(&self, chain: ChainId, commits: &[Commit]) -> Result<()>;
 
-  async fn stream(&self, chain: ChainId) -> Result<LocalBoxStream<'_, Result<Commit>>>;
+  async fn stream(&self, chain: ChainId, version: Index) -> Result<LocalBoxStream<'_, Result<Commit>>>;
 
-  async fn collect(&self, chain: ChainId) -> Result<Vec<Commit>> {
-    self.stream(chain).await?.try_collect().await
+  async fn collect(&self, chain: ChainId, version: Index) -> Result<Vec<Commit>> {
+    self.stream(chain, version).await?.try_collect().await
   }
 }

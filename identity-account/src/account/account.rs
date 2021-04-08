@@ -225,7 +225,9 @@ impl<T: Storage> Account<T> {
 
     let mut diff: DocumentDiff = DocumentDiff::new(&old_data, &new_data, previous)?;
 
-    old_state.sign_data(&old_state.current_auth(), &self.store, &mut diff).await?;
+    old_state
+      .sign_data(&old_state.current_auth(), &self.store, &mut diff)
+      .await?;
 
     let message: MessageId = client.publish_diff(&previous, &diff).await?;
 

@@ -43,7 +43,7 @@ where
     let future: _ = key.store.key_sign(key.chain, key.key, message.to_vec());
 
     executor::block_on(future)
-      .map_err(|_| Error::InvalidProofValue)
+      .map_err(|_| Error::InvalidProofValue("remote sign"))
       .map(|signature| signature.data)
   }
 }

@@ -208,14 +208,14 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn stream(&self, chain: ChainId) -> Result<LocalBoxStream<'_, Result<Commit>>> {
+  async fn stream(&self, chain: ChainId, version: Index) -> Result<LocalBoxStream<'_, Result<Commit>>> {
     type IterA = Iter<RangeFrom<u32>>;
     type IterB = Map<IterA, fn(u32) -> Index>;
     type IterC = Map<IterB, fn(Index) -> Result<Index>>;
 
     let name: String = fmt_chain(chain);
 
-    let iter: IterA = stream::iter((1..).into_iter());
+    let iter: IterA = stream::iter((version.to_u32()..).into_iter());
     let iter: IterB = iter.map(Index::from);
     let iter: IterC = iter.map(Ok);
 

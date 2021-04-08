@@ -113,14 +113,19 @@ impl ChainData {
   }
 
   pub fn increment_diff_index(&mut self) -> Result<()> {
-    let entry: &mut Index = self
-      .diff_index
-      .entry(self.auth_index)
-      .or_default();
+    let entry: &mut Index = self.diff_index.entry(self.auth_index).or_default();
 
     *entry = entry.try_increment()?;
 
     Ok(())
+  }
+
+  pub fn created(&self) -> Timestamp {
+    self.created
+  }
+
+  pub fn updated(&self) -> Timestamp {
+    self.updated
   }
 
   pub fn set_created(&mut self, timestamp: Timestamp) {
@@ -130,6 +135,10 @@ impl ChainData {
 
   pub fn set_updated(&mut self, timestamp: Timestamp) {
     self.updated = timestamp;
+  }
+
+  pub fn methods(&self) -> &[(MethodScope, ChainKey, Object)] {
+    &self.methods
   }
 
   pub fn append_method(&mut self, scope: MethodScope, location: ChainKey) {
