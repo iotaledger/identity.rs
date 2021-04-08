@@ -1,11 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
+
 use crate::envelope::EnvelopeExt;
 use crate::error::Result;
-use identity_core::convert::ToJson as _;
-use serde::Deserialize;
-use serde::Serialize;
 
 /// A DIDComm Plaintext Message
 ///
@@ -15,21 +15,19 @@ use serde::Serialize;
 ///
 ///   `JWM(Content)`
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Envelope(String);
+pub struct Plaintext(pub(crate) String);
 
-impl Envelope {
-  pub fn from_message<T: Serialize>(message: &T) -> Result<Self> {
+impl Plaintext {
+  pub fn pack<T: ToJson>(message: &T) -> Result<Self> {
     message.to_json().map_err(Into::into).map(Self)
   }
-  pub fn to_message<T>(&self) -> Result<T>
-  where
-    for<'a> T: Deserialize<'a>,
-  {
-    serde_json::from_str(&self.0).map_err(Into::into)
+
+  pub fn unpack<T: FromJson>(&self) -> Result<T> {
+    T::from_json(&self.0).map_err(Into::into)
   }
 }
 
-impl EnvelopeExt for Envelope {
+impl EnvelopeExt for Plaintext {
   const FEXT: &'static str = "dcpm";
   const MIME: &'static str = "application/didcomm-plain+json";
 

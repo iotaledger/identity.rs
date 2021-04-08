@@ -6,9 +6,7 @@ mod plaintext;
 mod signed;
 mod traits;
 
-pub use self::{
-  encrypted::{Algorithm as EncryptionAlgorithm, Envelope as Encrypted},
-  plaintext::Envelope as Plaintext,
-  signed::{Algorithm as SignatureAlgorithm, Envelope as Signed},
-  traits::*,
-};
+pub use self::encrypted::*;
+pub use self::plaintext::*;
+pub use self::signed::*;
+pub use self::traits::*;

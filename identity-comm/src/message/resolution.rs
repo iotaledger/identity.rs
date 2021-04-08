@@ -1,9 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::message::Timing;
-use did_doc::{url::Url, Document};
+use identity_core::common::Url;
+use identity_iota::did::Document;
 use identity_iota::did::DID;
+
+use crate::message::Timing;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ResolutionRequest {

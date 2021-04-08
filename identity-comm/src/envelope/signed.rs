@@ -1,9 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::envelope::EnvelopeExt;
-use crate::envelope::Plaintext;
-use crate::error::Result;
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::PublicKey;
 use identity_core::utils::encode_b58;
@@ -13,28 +12,10 @@ use libjose::jws::Encoder;
 use libjose::jws::JwsAlgorithm;
 use libjose::jws::JwsFormat;
 use libjose::jws::JwsHeader;
-use serde::Deserialize;
-use serde::Serialize;
 
-/// Supported digital signature algorithms
-///
-/// [Reference](https://identity.foundation/didcomm-messaging/spec/#algorithms)
-#[derive(Clone, Copy, Debug)]
-pub enum Algorithm {
-  EdDSA, // crv=Ed25519
-  ES256,
-  ES256K,
-}
-
-impl From<Algorithm> for JwsAlgorithm {
-  fn from(other: Algorithm) -> Self {
-    match other {
-      Algorithm::EdDSA => Self::EdDSA,
-      Algorithm::ES256 => Self::ES256,
-      Algorithm::ES256K => Self::ES256K,
-    }
-  }
-}
+use crate::envelope::EnvelopeExt;
+use crate::envelope::Plaintext;
+use crate::error::Result;
 
 /// A DIDComm Signed Message
 ///
@@ -44,14 +25,10 @@ impl From<Algorithm> for JwsAlgorithm {
 ///
 ///   `JWS(Plaintext)`
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Envelope(String);
+pub struct Signed(pub(crate) String);
 
-impl Envelope {
-  pub fn from_message<T: Serialize>(message: &T, algorithm: Algorithm, keypair: &KeyPair) -> Result<Self> {
-    Plaintext::from_message(message).and_then(|plaintext| Self::from_plaintext(&plaintext, algorithm, keypair))
-  }
-
-  pub fn from_plaintext(envelope: &Plaintext, algorithm: Algorithm, keypair: &KeyPair) -> Result<Self> {
+impl Signed {
+  pub fn pack_plaintext(message: &Plaintext, algorithm: SignatureAlgorithm, keypair: &KeyPair) -> Result<Self> {
     let header: JwsHeader = {
       let mut header: JwsHeader = JwsHeader::new(algorithm.into());
       header.set_kid(encode_b58(keypair.public()));
@@ -61,31 +38,62 @@ impl Envelope {
 
     Encoder::new()
       .format(JwsFormat::Compact)
-      .recipient((keypair.secret().as_ref(), &header))
-      .encode(envelope.as_bytes())
+      .recipient((keypair.secret(), &header))
+      .encode(message.as_bytes())
       .map_err(Into::into)
       .map(Self)
   }
 
-  pub fn to_message<T>(&self, algorithm: Algorithm, public: &PublicKey) -> Result<T>
-  where
-    for<'a> T: Deserialize<'a>,
-  {
-    let token = Decoder::new(public.as_ref())
+  pub fn unpack_plaintext(&self, algorithm: SignatureAlgorithm, public: &PublicKey) -> Result<Plaintext> {
+    let claims: Vec<u8> = Decoder::new(public)
       .key_id(encode_b58(public))
       .format(JwsFormat::Compact)
       .algorithm(algorithm.into())
-      .decode(self.as_bytes())?;
+      .decode(self.0.as_bytes())
+      .map(|token| token.claims.to_vec())?;
 
-    serde_json::from_slice(&token.claims.to_vec()).map_err(Into::into)
+    Ok(Plaintext(String::from_utf8(claims)?))
+  }
+
+  pub fn pack<T: ToJson>(message: &T, algorithm: SignatureAlgorithm, keypair: &KeyPair) -> Result<Self> {
+    Plaintext::pack(message).and_then(|plaintext| Self::pack_plaintext(&plaintext, algorithm, keypair))
+  }
+
+  pub fn unpack<T: FromJson>(&self, algorithm: SignatureAlgorithm, public: &PublicKey) -> Result<T> {
+    self
+      .unpack_plaintext(algorithm, public)
+      .and_then(|plaintext| plaintext.unpack())
   }
 }
 
-impl EnvelopeExt for Envelope {
+impl EnvelopeExt for Signed {
   const FEXT: &'static str = "dcsm";
   const MIME: &'static str = "application/didcomm-signed+json";
 
   fn as_bytes(&self) -> &[u8] {
     self.0.as_bytes()
+  }
+}
+
+// =============================================================================
+// =============================================================================
+
+/// Supported digital signature algorithms
+///
+/// [Reference](https://identity.foundation/didcomm-messaging/spec/#algorithms)
+#[derive(Clone, Copy, Debug)]
+pub enum SignatureAlgorithm {
+  EdDSA, // crv=Ed25519
+  ES256,
+  ES256K,
+}
+
+impl From<SignatureAlgorithm> for JwsAlgorithm {
+  fn from(other: SignatureAlgorithm) -> Self {
+    match other {
+      SignatureAlgorithm::EdDSA => Self::EdDSA,
+      SignatureAlgorithm::ES256 => Self::ES256,
+      SignatureAlgorithm::ES256K => Self::ES256K,
+    }
   }
 }

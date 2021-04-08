@@ -1,34 +1,24 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
+use identity_core::crypto::KeyPair;
+use identity_core::crypto::PublicKey;
+use identity_core::crypto::SecretKey;
+use libjose::jwe::Decoder;
+use libjose::jwe::Encoder;
+use libjose::jwe::JweAlgorithm;
+use libjose::jwe::JweEncryption;
+use libjose::jwe::JweFormat;
+use libjose::jwe::JweHeader;
+use libjose::jwe::Token;
+
 use crate::envelope::EnvelopeExt;
 use crate::envelope::Plaintext;
 use crate::envelope::Signed;
 use crate::error::Result;
-use identity_core::crypto::{KeyPair, PublicKey};
-use identity_core::utils::encode_b58;
-use libjose::jwe::{Decoder, Encoder, JweAlgorithm, JweEncryption, JweFormat, JweHeader, Token};
-use serde::Deserialize;
-use serde::Serialize;
 
-/// Supported content encryption algorithms
-///
-/// [Reference (auth)](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption)
-/// [Reference (anon)](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption)
-#[derive(Clone, Copy, Debug)]
-pub enum Algorithm {
-  A256GCM,
-  XC20P,
-}
-
-impl From<Algorithm> for JweEncryption {
-  fn from(other: Algorithm) -> Self {
-    match other {
-      Algorithm::A256GCM => Self::A256GCM,
-      Algorithm::XC20P => Self::XC20P,
-    }
-  }
-}
 /// A DIDComm Encrypted Message
 ///
 /// [Reference](https://identity.foundation/didcomm-messaging/spec/#didcomm-encrypted-message)
@@ -37,102 +27,101 @@ impl From<Algorithm> for JweEncryption {
 ///
 ///   `JWE(Plaintext | Signed)`
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Envelope(pub String);
+pub struct Encrypted(pub(crate) String);
 
-impl Envelope {
-  pub fn from_message<T: Serialize>(
+impl Encrypted {
+  pub fn pack<T: ToJson>(
     message: &T,
-    algorithm: Algorithm,
+    algorithm: EncryptionAlgorithm,
     recipients: &[PublicKey],
     sender: &KeyPair,
   ) -> Result<Self> {
-    Plaintext::from_message(message)
-      .and_then(|plaintext| Self::from_plaintext(&plaintext, algorithm, recipients, sender))
+    Plaintext::pack(message).and_then(|plaintext| Self::pack_plaintext(&plaintext, algorithm, recipients, sender))
   }
 
-  pub fn from_plaintext(
+  pub fn pack_plaintext(
     envelope: &Plaintext,
-    algorithm: Algorithm,
+    algorithm: EncryptionAlgorithm,
     recipients: &[PublicKey],
     sender: &KeyPair,
   ) -> Result<Self> {
-    Self::from_envelope(envelope, algorithm, recipients, Some(sender))
+    Self::pack_envelope(envelope, algorithm, recipients, sender)
   }
 
-  pub fn from_signed(
+  pub fn pack_signed(
     envelope: &Signed,
-    algorithm: Algorithm,
+    algorithm: EncryptionAlgorithm,
     recipients: &[PublicKey],
     sender: &KeyPair,
   ) -> Result<Self> {
-    Self::from_envelope(envelope, algorithm, recipients, Some(sender))
+    Self::pack_envelope(envelope, algorithm, recipients, sender)
   }
 
-  pub fn anon_from_message<T: Serialize>(message: &T, algorithm: Algorithm, recipients: &[PublicKey]) -> Result<Self> {
-    Plaintext::from_message(message).and_then(|plaintext| Self::anon_from_plaintext(&plaintext, algorithm, recipients))
-  }
-
-  pub fn anon_from_plaintext(envelope: &Plaintext, algorithm: Algorithm, recipients: &[PublicKey]) -> Result<Self> {
-    Self::from_envelope(envelope, algorithm, recipients, None)
-  }
-
-  pub fn anon_from_signed(envelope: &Signed, algorithm: Algorithm, recipients: &[PublicKey]) -> Result<Self> {
-    Self::from_envelope(envelope, algorithm, recipients, None)
-  }
-
-  fn from_envelope<T>(
+  fn pack_envelope<T: EnvelopeExt>(
     envelope: &T,
-    algorithm: Algorithm,
+    algorithm: EncryptionAlgorithm,
     recipients: &[PublicKey],
-    sender: Option<&KeyPair>,
-  ) -> Result<Self>
-  where
-    T: EnvelopeExt,
-  {
-    let header: JweHeader = if sender.is_some() {
-      JweHeader::new(JweAlgorithm::ECDH_1PU, algorithm.into())
-    } else {
-      JweHeader::new(JweAlgorithm::ECDH_ES, algorithm.into())
-    };
+    sender: &KeyPair,
+  ) -> Result<Self> {
+    let header: JweHeader = JweHeader::new(JweAlgorithm::ECDH_1PU, algorithm.into());
 
-    let mut encoder: Encoder = Encoder::new().format(JweFormat::General).protected(&header);
-
-    if let Some(sender) = sender {
-      encoder = encoder.secret(sender.secret().as_ref());
-    }
+    let encoder: Encoder = Encoder::new()
+      .format(JweFormat::General)
+      .protected(&header)
+      .secret(sender.secret());
 
     recipients
       .iter()
-      .fold(encoder, |encoder, recipient| encoder.recipient(recipient.as_ref()))
+      .fold(encoder, |encoder, recipient| encoder.recipient(recipient))
       .encode(envelope.as_bytes())
       .map_err(Into::into)
       .map(Self)
   }
 
-  pub fn to_message<T>(&self, algorithm: Algorithm, public: &PublicKey, encryption: JweAlgorithm) -> Result<T>
-  where
-    for<'a> T: Deserialize<'a>,
-  {
-    let message: Token = Decoder::new(public.as_ref())
-     // .key_id(encode_b58(public))
+  pub fn unpack<T: FromJson>(
+    &self,
+    algorithm: EncryptionAlgorithm,
+    recipient: &SecretKey,
+    sender: &PublicKey,
+  ) -> Result<T> {
+    let token: Token = Decoder::new(recipient)
+      .public(sender)
       .format(JweFormat::General)
+      .algorithm(JweAlgorithm::ECDH_1PU)
       .encryption(algorithm.into())
-      .algorithm(encryption)
       .decode(self.as_bytes())?;
 
-    println!("0,{:?}", message);
-    println!("1, {:?}", message.0);
-    println!("2,{:?}", message.1);
-
-    todo!()
+    T::from_json_slice(&token.1).map_err(Into::into)
   }
 }
 
-impl EnvelopeExt for Envelope {
+impl EnvelopeExt for Encrypted {
   const FEXT: &'static str = "dcem";
   const MIME: &'static str = "application/didcomm-encrypted+json";
 
   fn as_bytes(&self) -> &[u8] {
     self.0.as_bytes()
+  }
+}
+
+// =============================================================================
+// =============================================================================
+
+/// Supported content encryption algorithms
+///
+/// [Reference (auth)](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption)
+/// [Reference (anon)](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption)
+#[derive(Clone, Copy, Debug)]
+pub enum EncryptionAlgorithm {
+  A256GCM,
+  XC20P,
+}
+
+impl From<EncryptionAlgorithm> for JweEncryption {
+  fn from(other: EncryptionAlgorithm) -> Self {
+    match other {
+      EncryptionAlgorithm::A256GCM => Self::A256GCM,
+      EncryptionAlgorithm::XC20P => Self::XC20P,
+    }
   }
 }

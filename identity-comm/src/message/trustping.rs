@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::message::Timing;
-use did_doc::url::Url;
+use identity_core::common::Url;
 use identity_iota::did::DID;
-use serde::Serialize;
+
+use crate::message::Timing;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Trustping {
@@ -191,13 +191,19 @@ impl TrustpingResponse {
 
 #[cfg(test)]
 mod tests {
+  use core::slice;
+  use identity_core::crypto::KeyPair;
+  use identity_core::crypto::PublicKey;
+  use identity_core::crypto::SecretKey;
+  use libjose::utils::ed25519_to_x25519_public;
+  use libjose::utils::ed25519_to_x25519_secret;
 
   use super::*;
+  use crate::envelope::Encrypted;
   use crate::envelope::EncryptionAlgorithm;
   use crate::envelope::SignatureAlgorithm;
-  use crate::message::message::Message;
-  use identity_core::crypto::KeyPair;
-  use libjose::jwe::JweAlgorithm;
+  use crate::error::Result;
+  use crate::message::Message;
 
   #[test]
   pub fn test_plaintext_roundtrip() {
@@ -205,9 +211,10 @@ mod tests {
     message.set_response_requested(Some(true));
     let plain_envelope = message.pack_plain().unwrap();
 
-    let tp: Trustping = plain_envelope.to_message().unwrap();
+    let tp: Trustping = plain_envelope.unpack().unwrap();
     assert_eq!(format!("{:?}", tp), format!("{:?}", message));
   }
+
   #[test]
   pub fn test_signed_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
@@ -218,22 +225,49 @@ mod tests {
       .unwrap();
 
     let tp = signed
-      .to_message::<Trustping>(SignatureAlgorithm::EdDSA, &keypair.public())
+      .unpack::<Trustping>(SignatureAlgorithm::EdDSA, &keypair.public())
       .unwrap();
     assert_eq!(format!("{:?}", tp), format!("{:?}", message));
   }
+
+  fn ed25519_to_x25519(keypair: KeyPair) -> Result<(PublicKey, SecretKey)> {
+    Ok((
+      ed25519_to_x25519_public(keypair.public())?.to_vec().into(),
+      ed25519_to_x25519_secret(keypair.secret())?.to_vec().into(),
+    ))
+  }
+
+  fn ed25519_to_x25519_keypair(keypair: KeyPair) -> Result<KeyPair> {
+    // This is completely wrong but `type_` is never used around here
+    let type_ = keypair.type_();
+    let (public, secret) = ed25519_to_x25519(keypair)?;
+    Ok((type_, public, secret).into())
+  }
+
   #[test]
   pub fn test_encrypted_roundtrip() {
-    let keypair = KeyPair::new_ed25519().unwrap();
+    let key_alice = KeyPair::new_ed25519().unwrap();
+    let key_alice = ed25519_to_x25519_keypair(key_alice).unwrap();
+
+    let key_bob = KeyPair::new_ed25519().unwrap();
+    let key_bob = ed25519_to_x25519_keypair(key_bob).unwrap();
 
     let message = Trustping::new(Url::parse("https://example.com").unwrap());
-    let encrypted = message
-      .pack_auth(EncryptionAlgorithm::A256GCM, &[keypair.public().to_owned()], &keypair)
+    let recipients = slice::from_ref(key_alice.public());
+
+    println!("message = {:#?}", message);
+
+    let encoded: Encrypted = message
+      .pack_auth(EncryptionAlgorithm::A256GCM, recipients, &key_bob)
       .unwrap();
-    dbg!(&encrypted);
-    let tp: Trustping = encrypted
-      .to_message(EncryptionAlgorithm::A256GCM, &keypair.public(), JweAlgorithm::ECDH_1PU)
+
+    let decoded: Trustping = encoded
+      .unpack(EncryptionAlgorithm::A256GCM, key_alice.secret(), key_bob.public())
       .unwrap();
-    dbg!(&tp);
+
+    println!("encoded = {:#?}", encoded);
+    println!("decoded = {:#?}", decoded);
+
+    panic!("FIXME");
   }
 }

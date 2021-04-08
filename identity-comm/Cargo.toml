@@ -11,11 +11,11 @@ keywords = ["iota", "tangle", "identity"]
 homepage = "https://www.iota.org"
 
 [dependencies]
-did_doc = { git = "https://github.com/l1h3r/did_doc", rev = "d6944acd930447c5d6d2d762fe6245a35cc7e39c", default-features = false, features = ["std"] }
-did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
-identity-core = { path = "../identity-core" }
-identity-iota = { path = "../identity-iota" }
-libjose = { git = "https://github.com/iotaledger/identity.rs", branch = "feat/libjose" }
+identity-core = { path = "../identity-core", version = "=0.2.0" }
+identity-did = { path = "../identity-did", version = "=0.2.0" }
+identity-iota = { path = "../identity-iota", version = "=0.2.0" }
+# libjose = { path = "../libjose", version = "=0.1.0" }
+libjose = { git = "https://github.com/iotaledger/identity.rs", rev = "2d98050068b9f60b06468536ada30597d60b99f3" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
 thiserror = { version = "1.0" }
