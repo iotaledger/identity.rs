@@ -6,7 +6,7 @@
 
 `thread` as UUID, e.g. `f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c`: A UUID as String, defined by the agent that initiated an interaction, to be used to identify this specific interaction to track it agent-locally. Together with the context, these two fields can be used to identity a message / state within a specific interaction.
 
-`callbackURL` as URL/String, e.g. `https://www.bobsworld.com/` or `https://www.aliceswonderland/`: Defines the URL or API call where a request or response is to be delivered to.
+`callbackURL` as URL/String, e.g. `https://www.bobsworld.com/` or `https://www.aliceswonderland/serviceEndpoint`: Defines the URL (or API call) where a message is to be delivered to.
 
 `id` as String, e.g. `did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v`: An IOTA decentralized identifier.
 
@@ -282,13 +282,12 @@ resolutionResponse: {
     "thread",
     "didDocument",
     "callbackURL", // OPTIONAL!
-    "id", // OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
 
 ###### Example(s)
-TODO why is ID optional
+
 ```JSON
 {
     "context": "did-resolution/1.0/resolutionResponse",
@@ -636,11 +635,10 @@ revocation: {
     "thread",
     "credentialId",
     "callbackURL", // OPTIONAL!
-    "comment", // OPTIONAL!
-    "id" // OPTIONAL!
+    "comment" // OPTIONAL!
 }
 ```
-TODO why id optional, why need it
+
 
 ###### Example(s)
 
@@ -801,7 +799,6 @@ TODO only do acks on request
 TODO make callbackURL optional except in the first of each interaction messages
 TODO revisit each field:
 
-`callbackURL` as URL/String, e.g. `https://www.bobsworld.com/ping` or `https://www.aliceswonderland/authz`: Defines the URL or API call where a request or response is to be delivered to.
 
 `id` as String, e.g. `did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v`: An IOTA decentralized identifier.
 
@@ -847,3 +844,4 @@ TODO rework descriptions
 
 FINAL TODOs
 report/report: Define an actual error communication / information field that is parseable.
+revocation: How do we deal with unauthorized revocations (i.e. invalid ones)?
