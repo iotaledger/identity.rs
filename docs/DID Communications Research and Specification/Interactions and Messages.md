@@ -10,7 +10,7 @@
 
 `responseRequested` as Boolean, e.g. `true` or `false`: In messages where it is defined it asks the recipient of the message to repond in the form of an acknowledging report. This request can be honored, but doesn't have to be honored. The only exception to this behaviour is in `trust-ping`, where the acknowledging report is to be sent if and only if this field is `true`. If this field is undefined, it counts as `false`.
 
-`id` as String, e.g. `did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v`: An IOTA decentralized identifier.
+`id` as String, e.g. `did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8`: An IOTA decentralized identifier.
 
 `didDocument` as JSON: An IOTA DID Document (see e.g. in <a href="#did-resolution">DID Resolution</a>).
 
@@ -139,7 +139,7 @@ ping: {
     "callbackURL": "https://www.bobsworld.com/",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "responseRequested": true,
-    "id": "did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v",
+    "id": "did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8",
     "timing": {
         "delay_milli": 1337
     }
@@ -182,7 +182,7 @@ didRequest: {
     "context": "did-discovery/1.0/didRequest",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.bobsworld.com/",
-    "id": "did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v",
+    "id": "did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8",
 }
 ```
 
@@ -207,7 +207,7 @@ didResponse: {
 {
     "context": "did-discovery/1.0/didResponse",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
-    "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez"
+    "id": "did:iota:42edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef242"
 }
 ```
 
@@ -225,7 +225,7 @@ DID resolution consists of a simple request-response message exchange, where the
 #### Messages
 
 #### resolutionRequest
-The Requester broadcasts a message which may or may not contain a DID.
+The Requester broadcasts a message which may or may not contain a DID (see below).
 
 ###### Layout
 
@@ -247,7 +247,7 @@ resolutionRequest: {
     "context": "did-resolution/1.0/resolutionRequest",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.bobsworld.com/",
-    "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
+    "id": "did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8",
 }
 ```
 
@@ -275,11 +275,11 @@ resolutionResponse: {
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "didDocument": {
         "@context": "https://www.w3.org/ns/did/v1",
-        "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
+        "id": "did:iota:57edacef81828010b3--SNIP--a1b56678c174eef2e8",
         "authentication": [{
-            "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez#keys-1",
+            "id": "did:iota:57edacef81828010b314--SNIP--a1b56678c174eef2e8#keys-1",
             "type": "Ed25519VerificationKey2020",
-            "controller": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
+            "controller": "did:iota:57edacef81828010b3--SNIP--a1b56678c174eef2e8",
             "publicKeyMultibase": "zH3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
         }]
     },
@@ -325,7 +325,7 @@ authenticationRequest: {
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.bobsworld.com/",
     "challenge": "please sign this",
-    "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
+    "id": "did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8",
     "timing": {
         "out_time": "1991-04-20T13:37:11Z",
         "expires_time": "2069-04-20T13:37:02Z",
@@ -345,7 +345,8 @@ authenticationResponse: {
     "thread",
     "signature",
     "callbackURL", // OPTIONAL!
-    "responseRequested" //OPTIONAL!
+    "responseRequested", //OPTIONAL!
+    "id" // OPTIONAL!
 }
 ```
 
@@ -360,7 +361,8 @@ authenticationResponse: {
         "verificationMethod": "#authentication",
         "signatureValue": "5Hw1JWv4a6hZH5obtAshbbKZQAJK6h8YbEwZvdxgWCXSL81fvRYoMCjt22vaBtZewgGq641dqR31C27YhDusoo4N"
    },
-   "callbackURL": "https://www.aliceswonderland.com/"
+   "callbackURL": "https://www.aliceswonderland.com/",
+   "id": "did:iota:42edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef242",
 }
 ```
 
@@ -426,6 +428,7 @@ credentialOptionsResponse: {
     ],
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
+    "id", // OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -504,6 +507,7 @@ credentialSchemaResponse: {
     "schemas",
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
+    "id", // OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -554,7 +558,8 @@ credentialSelection: {
             "type 2",
             "type n"
     ],
-    "responseRequested" //OPTIONAL!
+    "responseRequested", //OPTIONAL!
+    "id" // OPTIONAL!
 }
 ```
 
@@ -584,7 +589,8 @@ credentialIssuance: {
         ...
     ],
     "callbackURL", // OPTIONAL!
-    "responseRequested" //OPTIONAL!
+    "responseRequested", //OPTIONAL!
+    "id" // OPTIONAL!
 }
 ```
 
@@ -625,6 +631,7 @@ revocation: {
     "credentialId",
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
+    "id", // OPTIONAL!
     "comment" // OPTIONAL!
 }
 ```
@@ -638,8 +645,8 @@ revocation: {
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "credentialId": "gfiweuzg89w3bgi8wbgi8wi8t",
     "callbackURL": "https://www.aliceswonderland.com/",
+    "id": "did:iota:42edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef242",
     "comment": "Revoked because reasons.",
-    "id": "did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v",
 }
 ```
 
@@ -671,7 +678,8 @@ presentationRequest: {
             "type"
         },
     ],
-    "responseRequested" //OPTIONAL!
+    "responseRequested", //OPTIONAL!
+    "id" // OPTIONAL!
 }
 ```
 
@@ -704,7 +712,8 @@ presentationResponse: {
     "thread",
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
-    "verifiablePresentation"
+    "verifiablePresentation",
+    "id" // OPTIONAL!
 }
 ```
 
@@ -790,10 +799,6 @@ TODO make callbackURL optional except in the first of each interaction messages
 TODO revisit each field:
 
 
-`id` as String, e.g. `did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v`: An IOTA decentralized identifier.
-
-`didDocument` as JSON: An IOTA DID Document (see e.g. in <a href="#did-resolution">DID Resolution</a>).
-
 `comment` as String: A comment. Can be literally any String.
 
 `challenge` as JSON, e.g. `{"foo": "sign this"}`: A JSON acting as a signing challenge.
@@ -833,3 +838,4 @@ TODO rework descriptions
 FINAL TODOs
 report/report: Define an actual error communication / information field that is parseable.
 revocation: How do we deal with unauthorized revocations (i.e. invalid ones)?
+field id: Discuss optionality over whole spec.
