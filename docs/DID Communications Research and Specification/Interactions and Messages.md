@@ -52,11 +52,11 @@
 
 Messages that are shared across interactions.
 
-### Roles
+#### Roles
 - <u>**Sender**</u>: Agent who sends the message
 - <u>**Receiver**</u>: Agent who receives the message
 
-#### acknowledgement
+##### acknowledgement
 The <u>sender</u> sends an `acknowledgement` message to the <u>receiver</u> to let him know that a previous message has been received.
 
 ###### Layout
@@ -83,7 +83,7 @@ acknowledgement: {
 }
 ```
 
-#### error
+##### error
 The <u>sender</u> sends an `error` message to the <u>receiver</u> to let him know that a previous message has resulted in an error.
 
 ###### Layout
@@ -117,8 +117,7 @@ error: {
     pingResponse
 
 ◈ <a href="#did-discovery">**did-discovery**</a> - Requesting a DID from an agent.
-&nbsp;&nbsp;&nbsp;&nbsp;ping
-&nbsp;&nbsp;&nbsp;&nbsp;pingResponse
+Messages: ping, pingResponse
 
 ◈ <a href="#did-resolution">**did-resolution**</a> - Using another agent as a Resolver.
 
@@ -131,15 +130,18 @@ error: {
 &nbsp;&nbsp;&nbsp;&nbsp;ping
 &nbsp;&nbsp;&nbsp;&nbsp;pingResponse
 
-◈ <a href="#credential-options">**credential-options**</a> - Querying an agent for the VCs that the agent can issue.
+- <a href="#credential-options">**credential-options**</a> - Querying an agent for the VCs that the agent can issue.
+Messages: *ping*, *pingResponse*
 
-◈ <a href="#credential-schema">**credential-schema**</a> - Querying an agent for the schema of a specific VC that the agent can issue.
+- <a href="#credential-schema">**credential-schema**</a> - Querying an agent for the schema of a specific VC that the agent can issue.
 
-◈ <a href="#credential-issuance">**credential-issuance**</a> - Creating an authenticated statement about a DID.
+Messages: ping, pingResponse
 
-◈ <a href="#credential-revocation">**credential-revocation**</a> - Notifying a holder that a previously issued credential has been revoked.
+- <a href="#credential-issuance">**credential-issuance**</a> - Creating an authenticated statement about a DID.
 
-◈ <a href="#presentation-verification">**presentation-verification**</a> - Proving a set of statements about an identifier.
+- <a href="#credential-revocation">**credential-revocation**</a> - Notifying a holder that a previously issued credential has been revoked.
+
+- <a href="#presentation-verification">**presentation-verification**</a> - Proving a set of statements about an identifier.
 
 ---
 ### trust-ping
