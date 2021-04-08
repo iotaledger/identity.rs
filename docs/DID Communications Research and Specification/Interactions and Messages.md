@@ -83,6 +83,7 @@ report: {
     }
 }
 ```
+[Source 1: Aries Report Problem Protocol](https://github.com/hyperledger/aries-rfcs/blob/master/features/0035-report-problem/README.md);
 
 ## Interactions
 
@@ -146,7 +147,7 @@ ping: {
 }
 ```
 
-[Source 1: DIF Trust Ping](https://identity.foundation/didcomm-messaging/spec/#trust-ping-protocol-10); [Source 2: Aries Trust Ping](https://github.com/hyperledger/aries-rfcs/tree/master/features/0048-trust-ping)
+[Source 1: DIF Trust Ping](https://identity.foundation/didcomm-messaging/spec/#trust-ping-protocol-10); [Source 2: Aries Trust Ping](https://github.com/hyperledger/aries-rfcs/tree/master/features/0048-trust-ping);
 
 ---
 ### did-discovery
@@ -287,6 +288,8 @@ resolutionResponse: {
 }
 ```
 
+[Source 1: Jolocom Peer Resolution](https://jolocom.github.io/jolocom-sdk/1.0.0/guides/interaction_flows/#peer-resolution); [Source 2: Aries DID Resolution Protocol](https://github.com/hyperledger/aries-rfcs/tree/master/features/0124-did-resolution-protocol);
+
 ---
 ### authentication
 
@@ -367,6 +370,8 @@ authenticationResponse: {
 ```
 
 The `signature` provided here must correspond to the `#authentication` public key provided in the DID Document of the identity that the <u>verifier</u> has received earlier. If that is the case, the identifier is authenticated successfully.
+
+[Source 1: Jolocom Authentication](https://jolocom.github.io/jolocom-sdk/1.0.0/guides/interaction_flows/#authentication);
 
 ---
 ### credential-options
@@ -452,6 +457,8 @@ credentialOptionsResponse: {
 }
 ```
 
+[Source 1: Jolocom VC Issuance](https://jolocom.github.io/jolocom-sdk/1.0.0/guides/interaction_flows/#verifiable-credential-issuance); [Source 2: Aries Issue Credential Protocol](https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2);
+
 ---
 ### credential-schema
 Querying an agent for the schema of a specific VC that the agent can issue.
@@ -531,6 +538,8 @@ credentialSchemaResponse: {
 }
 ```
 
+[Source 1: Jolocom VC Issuance](https://jolocom.github.io/jolocom-sdk/1.0.0/guides/interaction_flows/#verifiable-credential-issuance); [Source 2: Aries Issue Credential Protocol](https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2);
+
 ---
 ### credential-issuance
 Creating an authenticated statement about a DID.
@@ -608,6 +617,8 @@ credentialIssuance: {
 }
 ```
 
+[Source 1: Jolocom VC Issuance](https://jolocom.github.io/jolocom-sdk/1.0.0/guides/interaction_flows/#verifiable-credential-issuance); [Source 2: Aries Issue Credential Protocol](https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2);
+
 ---
 ### credential-revocation
 
@@ -649,6 +660,8 @@ revocation: {
     "comment": "Revoked because reasons.",
 }
 ```
+
+[Source 1: Aries Revocation Notification](https://github.com/hyperledger/aries-rfcs/tree/master/features/0183-revocation-notification);
 
 ---
 ### presentation-verification
@@ -728,7 +741,7 @@ presentationResponse: {
 }
 ```
 
-
+[Source 1: Jolocom Credential Verification](https://jolocom.github.io/jolocom-sdk/1.0.0/guides/interaction_flows/#credential-verification);
 
 
 
@@ -817,7 +830,8 @@ TODO authentication tell what we are signing
 TODO create sequence diagrams for every interaction
 TODO take final TODOs and put them into, dunno, pr?
 TODO rework descriptions
-
+TODO rem interactions header ping response
+TODO ip in trust ping
 
 FINAL TODOs
 report/report: Define an actual error communication / information field that is parseable.
