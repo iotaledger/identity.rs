@@ -2,11 +2,9 @@
 
 ## Field Definitions
 
-`context` as URL/String, e.g. `did-resolution/1.0/resolutionResponse`: Defines the context that a specific message adheres to.
+`context` & `reference` as URL/String, e.g. `did-resolution/1.0/resolutionResponse`: Defines the context that a specific message either adheres to or, in case of a report, refers to.
 
-`ackContext` & `errContext` as URL/String, e.g. `did-resolution/1.0/resolutionResponse`: Variants of `context` that describe the context of a message that is being acknowledged or the message that errored.
-
-`thread` as String, e.g. `jdhgbksdbgjksdbgkjdkg` or `thread-132-a`: A String, defined by the agent, to be used to identify this specific interaction to track it agent-locally.
+`thread` as UUID, e.g. `f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c`: A UUID as String, defined by the agent that initiated an interaction, to be used to identify this specific interaction to track it agent-locally. Together with the context, these two fields can be used to identity a message / state within a specific interaction.
 
 `callbackURL` as URL/String, e.g. `https://www.bobsworld.com/ping` or `https://www.aliceswonderland/authz`: Defines the URL or API call where a request or response is to be delivered to.
 
@@ -16,7 +14,7 @@
 
 `responseRequested` as Boolean, e.g. `true` or `false`: In messages where it is defined a reponse is to be sent to a request if and only if this is `true`. Undefined counts as `false`.
 
-`comment` as String: A comment.
+`comment` as String: A comment. Can be literally any String.
 
 `challenge` as JSON, e.g. `{"foo": "sign this"}`: A JSON acting as a signing challenge.
 
@@ -56,14 +54,8 @@ Messages that are shared across interactions.
 - <u>**Sender**</u>: Agent who sends the message
 - <u>**Receiver**</u>: Agent who receives the message
 
-##### report
-The <u>sender</u> sends a `report` message to the <u>receiver</u> to provide him with details about a previously received message. This can be a simple acknowledgement or e.g. an error report.
-TODO only do acks on request
-TODO merge ack and error into report
-TODO make thread not optional
-TODO make thread a UUID
-TODO ackkontext errkontext
-TODO make callbackURL optional except in the first of each interaction messages
+#### report
+The <u>sender</u> sends a `report` message to the <u>receiver</u> to provide him with details about a previously received message. This can be a simple acknowledgement or e.g. an error report. The `reference` field refers to the message that is either acknowledged or has resulted in an error. Further information can be passed through the `comment` field.
 
 ###### Layout
 
@@ -71,8 +63,9 @@ TODO make callbackURL optional except in the first of each interaction messages
 report: {
     "context",
     "thread",
-    "ackContext",
-    "comment" // OPTIONAL!
+    "reference",
+    "comment", // OPTIONAL!
+    "timing": {...} // OPTIONAL! All subfields OPTIONAL!
 }
 ```
 
@@ -81,57 +74,13 @@ report: {
 ```JSON
 {
     "context": "report/1.0/report",
-    "thread": "sdfgfjghsdfg-12345-sdf-b",
-    "errContext": "did-resolution/1.0/resolutionResponse",
-    "comment": "Can't resolve: Signature invalid!"
-}
-```
-
-##### acknowledgement
-The <u>sender</u> sends an `acknowledgement` message to the <u>receiver</u> to let him know that a previous message has been received.
-
-###### Layout
-
-```JSON
-acknowledgement: {
-    "context",
-    "thread",
-    "ackContext"
-}
-```
-
-###### Example(s)
-
-```JSON
-{
-    "context": "acknowledgement/1.0/acknowledgement",
-    "thread": "sdfgfjghsdfg-12345-sdf-b",
-    "ackContext": "did-resolution/1.0/resolutionResponse"
-}
-```
-
-##### error
-The <u>sender</u> sends an `error` message to the <u>receiver</u> to let him know that a previous message has resulted in an error.
-
-###### Layout
-
-```JSON
-error: {
-    "context",
-    "thread",
-    "ackContext",
-    "comment" // OPTIONAL!
-}
-```
-
-###### Example(s)
-
-```JSON
-{
-    "context": "error/1.0/error",
-    "thread": "sdfgfjghsdfg-12345-sdf-b",
-    "errContext": "did-resolution/1.0/resolutionResponse",
-    "comment": "Can't resolve: Signature invalid!"
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "reference": "did-resolution/1.0/resolutionResponse",
+    "comment": "Can't resolve DID: Signature invalid!",
+    "timing": {
+        "out_time": "2069-04-20T13:37:42Z",
+        "in_time": "2069-04-20T13:37:00Z"
+    }
 }
 ```
 
@@ -166,7 +115,7 @@ Testing a pairwise channel.
 
 #### Messages
 
-##### ping
+#### ping
 The <u>sender</u> sends the `ping` to the <u>receiver</u>, specifying a `callbackURL` for the `pingResponse` to be posted to.
 
 ###### Layout
@@ -175,9 +124,9 @@ The <u>sender</u> sends the `ping` to the <u>receiver</u>, specifying a `callbac
 ping: {
     "context",
     "callbackURL",
+    "thread", // OPTIONAL!
     "responseRequested", //OPTIONAL! Counts as false if omitted!
     "id", // OPTIONAL!
-    "thread", // OPTIONAL!
     "timing": {...} // OPTIONAL! All subfields OPTIONAL!
 }
 ```
@@ -196,16 +145,16 @@ ping: {
 }
 ```
 
-##### pingResponse
-The <u>receiver</u> answers with a `pingResponse` if and only if `responseRequested` was `true` in the `ping` message:
+#### pingResponse
+The <u>receiver</u> answers with a `pingResponse` if and only if `responseRequested` was `true` in the `ping` message. The OPTIONAL `thread` field is only included if there was a thread UUID provided in the `ping` message:
 
 ###### Layout
 
 ```JSON
 pingResponse: {
     "context",
-    "id", // OPTIONAL!
     "thread", // OPTIONAL!
+    "id", // OPTIONAL!
     "timing": {...} // OPTIONAL! All subfields OPTIONAL!
 }
 ```
@@ -232,7 +181,7 @@ Requesting a DID from an agent.
 
 #### Messages
 
-##### didRequest
+#### didRequest
 The <u>requester</u> sends the `didRequest` to the <u>endpoint</u>, specifying a `callbackURL` for the `didResponse` to be posted to. 
 
 ###### Layout
@@ -240,9 +189,9 @@ The <u>requester</u> sends the `didRequest` to the <u>endpoint</u>, specifying a
 ```JSON
 didRequest: {
     "context",
+    "thread",
     "callbackURL",
     "id", // OPTIONAL!
-    "thread", // OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -252,12 +201,13 @@ didRequest: {
 ```JSON
 {
     "context": "did-discovery/1.0/didRequest",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.aliceswonderland.com/didreq",
     "id": "did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v",
 }
 ```
 
-##### didResponse
+#### didResponse
 The <u>endpoint</u> answers with a `didResponse`, containing its DID.
 
 ###### Layout
@@ -265,6 +215,7 @@ The <u>endpoint</u> answers with a `didResponse`, containing its DID.
 ```JSON
 didResponse: {
     "context",
+    "thread",
     "id"
 }
 ```
@@ -274,6 +225,7 @@ didResponse: {
 ```JSON
 {
     "context": "did-discovery/1.0/didResponse",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez"
 }
 ```
@@ -291,7 +243,7 @@ DID resolution consists of a simple request-response message exchange, where the
 
 #### Messages
 
-##### resolutionRequest
+#### resolutionRequest
 The Requester broadcasts a message which may or may not contain a DID.
 
 ###### Layout
@@ -299,9 +251,9 @@ The Requester broadcasts a message which may or may not contain a DID.
 ```JSON
 resolutionRequest: {
     "context",
+    "thread",
     "callbackURL",
     "id", // OPTIONAL!
-    "thread", // OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -311,13 +263,13 @@ resolutionRequest: {
 ```JSON
 {
     "context": "did-resolution/1.0/resolutionRequest",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.aliceswonderland.com/res",
     "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
-    "thread": "req-1-1337b"
 }
 ```
 
-##### resolutionResponse
+#### resolutionResponse
 If the message contains a DID (in the `id` field), the Resolver resolves the DID and returns the DID Resolution Result. Otherwise, the Resolver returns the result of resolving it's own DID. This is intended for the special case of "local" DID methods, which do not have a globally resolvable state.
 
 ###### Layout
@@ -325,9 +277,9 @@ If the message contains a DID (in the `id` field), the Resolver resolves the DID
 ```JSON
 resolutionResponse: {
     "context",
+    "thread",
     "didDocument"
     "id", // OPTIONAL!
-    "thread", // OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -337,7 +289,7 @@ TODO why is ID optional
 ```JSON
 {
     "context": "did-resolution/1.0/resolutionResponse",
-    "thread": "req-1-1337b",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "didDocument": {
         "@context": "https://www.w3.org/ns/did/v1",
         "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
@@ -364,16 +316,16 @@ The authentication flow consists of a simple request-response message exchange, 
 
 #### Messages
 
-##### authenticationRequest
-The <u>verifier</u> sends the `authenticationRequest` to the authentication service endpoint of the <u>authenticator</u>, specifying a `callbackURL` for the `authenticationResponse` to be posted to. The `thread` is used as a challenge and also serves to identity the `authenticationRequest`. The whole request is to be signed by the <u>authenticator</u>. 
+#### authenticationRequest
+The <u>verifier</u> sends the `authenticationRequest` to the authentication service endpoint of the <u>authenticator</u>, specifying a `callbackURL` for the `authenticationResponse` to be posted to. The whole request is to be signed by the <u>authenticator</u>. 
 
 ###### Layout
 
 ```JSON
 authenticationRequest: {
     "context",
-    "callbackURL",
     "thread",
+    "callbackURL",
     "challenge",
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
@@ -385,8 +337,8 @@ authenticationRequest: {
 ```JSON
 {
     "context": "authentication/1.0/authenticationRequest",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.aliceswonderland.com/auth",
-    "thread": "69-420-1337",
     "challenge": "please sign this",
     "id": "did:iota:86b7t9786tb9JHFGJKHG8796UIZGUk87guzgUZIuggez",
     "timing": {
@@ -397,7 +349,7 @@ authenticationRequest: {
 }
 ```
 
-##### authenticationResponse
+#### authenticationResponse
 The <u>authenticator</u> answers with an `authenticationResponse`, providing a `signature` of the whole `authenticationRequest` JSON - the complete original `authenticationRequest`.
 
 ###### Layout
@@ -415,7 +367,7 @@ authenticationResponse: {
 ```JSON
 {
     "context": "authentication/1.0/authenticationResponse",
-    "thread": "69-420-1337",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "signature": {
         "type": "JcsEd25519Signature2020",
         "verificationMethod": "#authentication",
@@ -439,7 +391,7 @@ The Verifiable Credential (VC) issuance flow consists of a three step interactio
 
 #### Messages
 
-##### credentialOptionsRequest
+#### credentialOptionsRequest
 The <u>holder</u> queries the <u>issuer</u> for a list of VC types that the <u>issuer</u> offers.
 
 ###### Layout
@@ -447,8 +399,8 @@ The <u>holder</u> queries the <u>issuer</u> for a list of VC types that the <u>i
 ```JSON
 credentialOptionsRequest: {
     "context",
+    "thread",
     "callbackURL",
-    "thread", // OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
 }
@@ -459,11 +411,12 @@ credentialOptionsRequest: {
 ```JSON
 {
     "context": "credential-options/1.0/credentialOptionsRequest",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.alicesworld.com/credsList"
 }
 ```
 
-##### credentialOptionsResponse
+#### credentialOptionsResponse
 The <u>issuer</u> responds with a list of offered VC types.
 
 ###### Layout
@@ -471,6 +424,7 @@ The <u>issuer</u> responds with a list of offered VC types.
 ```JSON
 credentialOptionsResponse: {
     "context",
+    "thread",
     "offeredCredentialTypes": [
         "credentialType 1",
         "credentialType 2",
@@ -481,7 +435,6 @@ credentialOptionsResponse: {
         "issuer id 2",
         "issuer id n"
     ],
-    "thread", // OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -491,6 +444,7 @@ credentialOptionsResponse: {
 ```JSON
 {
     "context": "credential-options/1.0/credentialOptionsResponse",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "offeredCredentialTypes": [
         "DiplomaCredential",
         "YouHaveNiceHairCredential",
@@ -515,7 +469,7 @@ The Verifiable Credential (VC) issuance flow consists of a three step interactio
 
 #### Messages
 
-##### credentialSchemaRequest
+#### credentialSchemaRequest
 The <u>holder</u> queries the <u>issuer</u> for the schema of a specific VC that the <u>issuer</u> offers.
 
 ###### Layout
@@ -523,9 +477,9 @@ The <u>holder</u> queries the <u>issuer</u> for the schema of a specific VC that
 ```JSON
 credentialSchemaRequest: {
     "context",
+    "thread",
     "callbackURL",
     "credentialTypes",
-    "thread", // OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
 }
@@ -536,6 +490,7 @@ credentialSchemaRequest: {
 ```JSON
 {
     "context": "credential-options/1.0/credentialSchemaRequest",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.alicesworld.com/credsList",
     "credentialTypes": [
         "YouHaveNiceHairCredential",
@@ -544,7 +499,7 @@ credentialSchemaRequest: {
 }
 ```
 
-##### credentialSchemaResponse
+#### credentialSchemaResponse
 The <u>issuer</u> responds with the schema of the requested `credentialTypes`.
 
 ###### Layout
@@ -552,8 +507,8 @@ The <u>issuer</u> responds with the schema of the requested `credentialTypes`.
 ```JSON
 credentialSchemaResponse: {
     "context",
+    "thread",
     "schemas",
-    "thread", // OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -563,6 +518,7 @@ credentialSchemaResponse: {
 ```JSON
 {
     "context": "credential-options/1.0/credentialSchemaResponse",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "schemas": [
         "YouHaveNiceHairCredential": {
             "type": "YouHaveNiceHairCredential",
@@ -588,7 +544,7 @@ The Verifiable Credential (VC) issuance flow consists of a three step interactio
 
 #### Messages
 
-##### credentialSelection
+#### credentialSelection
 The <u>holder</u> sends a message containing a list of selected credentials with associated data for satisfying requirements.
 
 ###### Layout
@@ -596,6 +552,7 @@ The <u>holder</u> sends a message containing a list of selected credentials with
 ```JSON
 credentialSelection: {
     "context",
+    "thread",
     "callbackURL",
     "selectedCredentials": [
             "type 1",
@@ -610,6 +567,7 @@ credentialSelection: {
 ```JSON
 {
     "context": "credential-issuance/1.0/credentialSelection",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.bobsworld.com/serviceEndpoint",
     "selectedCredentials": [
             "YouHaveNiceHairCredential"
@@ -617,7 +575,7 @@ credentialSelection: {
 }
 ```
 
-##### credentialIssuance
+#### credentialIssuance
 The <u>issuer</u> responds with a message containing a list of newly issued credentials corrosponding to the selected set.
 
 ###### Layout
@@ -625,6 +583,7 @@ The <u>issuer</u> responds with a message containing a list of newly issued cred
 ```JSON
 credentialIssuance: {
     "context",
+    "thread",
     "issued": [
         ...
     ],
@@ -636,6 +595,7 @@ credentialIssuance: {
 ```JSON
 {
     "context": "credential-issuance/1.0/credentialIssuance",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "issued": [
             {...},
             {...}
@@ -654,7 +614,7 @@ Notifying a holder that a previously issued credential has been revoked. Note th
 
 #### Messages
 
-##### revocation
+#### revocation
 The <u>issuer</u> sends the `revocation` to the <u>holder</u>, notifying him of the revocation. The most important field here is `credentialId`, which specifies the credential that has been revoked.
 
 ###### Layout
@@ -662,17 +622,19 @@ The <u>issuer</u> sends the `revocation` to the <u>holder</u>, notifying him of 
 ```JSON
 revocation: {
     "context",
+    "thread",
     "credentialId",
     "comment", // OPTIONAL!
     "id" // OPTIONAL!
 }
 ```
-
+TODO why id optional, why need it
 ###### Example(s)
 
 ```JSON
 {
     "context": "credential-revocation/1.0/revocation",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "credentialId": "gfiweuzg89w3bgi8wbgi8wi8t",
     "comment": "Revoked because reasons.",
     "id": "did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v",
@@ -692,7 +654,7 @@ The credential verification flow is a simple request-response message exchange b
 
 #### Messages
 
-##### presentationRequest
+#### presentationRequest
 The <u>verifier</u> requests a set of Verifiable Credentials from the <u>prover</u>. This message is OPTIONAL within this interaction.
 
 ###### Layout
@@ -700,6 +662,7 @@ The <u>verifier</u> requests a set of Verifiable Credentials from the <u>prover<
 ```JSON
 presentationRequest: {
     "context",
+    "thread",
     "callbackURL",
     "credentialRequirements": [
         {
@@ -714,6 +677,7 @@ presentationRequest: {
 ```JSON
 {
     "context": "presentation-verification/1.0/presentationRequest",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.bobsworld.com/pres",
     "credentialRequirements": [
         {
@@ -726,7 +690,7 @@ presentationRequest: {
 }
 ```
 
-##### presentationResponse
+#### presentationResponse
 The <u>holder</u> sends a Verifiable Presentation to the <u>verifier</u> using a `presentationResponse` message.
 
 ###### Layout
@@ -734,6 +698,7 @@ The <u>holder</u> sends a Verifiable Presentation to the <u>verifier</u> using a
 ```JSON
 presentationResponse: {
     "context",
+    "thread",
     "verifiablePresentation"
 }
 ```
@@ -743,6 +708,7 @@ presentationResponse: {
 ```JSON
 {
     "context": "presentation-verification/1.0/presentationResponse",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "verifiablePresentation": {...}
 }
 ```
@@ -808,3 +774,61 @@ put down sources for all interactions into the document
 say what is OPTIONAL
 https://identity.foundation/didcomm-messaging/spec/#discover-features-protocol-10
 thread id
+
+
+
+
+
+
+
+TODO only do acks on request
+TODO make callbackURL optional except in the first of each interaction messages
+TODO revisit each field:
+
+`context` & `reference` as URL/String, e.g. `did-resolution/1.0/resolutionResponse`: Defines the context that a specific message either adheres to, or refers to in case of a report.
+
+`thread` as String, e.g. `jdhgbksdbgjksdbgkjdkg` or `thread-132-a`: A String, defined by the agent, to be used to identify this specific interaction to track it agent-locally.
+
+`callbackURL` as URL/String, e.g. `https://www.bobsworld.com/ping` or `https://www.aliceswonderland/authz`: Defines the URL or API call where a request or response is to be delivered to.
+
+`id` as String, e.g. `did:iota:3b8mZHjb6r6inMcDVZU4DZxNdLnxUigurg42tJPiFV9v`: An IOTA decentralized identifier.
+
+`didDocument` as JSON: An IOTA DID Document (see e.g. in <a href="#did-resolution">DID Resolution</a>).
+
+`responseRequested` as Boolean, e.g. `true` or `false`: In messages where it is defined a reponse is to be sent to a request if and only if this is `true`. Undefined counts as `false`.
+
+`comment` as String: A comment. Can be literally any String.
+
+`challenge` as JSON, e.g. `{"foo": "sign this"}`: A JSON acting as a signing challenge.
+
+`offeredCredentialTypes` as JSON: A field specific to VC issuance, contains a list of possible credential types, see <a href="#credential-options">Credential Options</a>.
+
+`credentialType` as String, e.g. `SimpleDiplomaCredential`: A VC type.
+
+`signature` as JSON, e.g. `{...}`: Includes a signature. Fields defined below.
+
+`signature[type]` as String, e.g. `JcsEd25519Signature2020`: Signature type.
+
+`signature[verificationMethod]` as String, e.g. `#authentication`: Reference to verification method in signer's DID Document used to produce the signature.
+
+`signature[signatureValue]` as String, e.g. `5Hw1JWv4a6hZH5obtAshbbKZQAJK6h8YbEwZvdxgWCXSL81fvRYoMCjt22vaBtZewgGq641dqR31C27YhDusoo4N`: Actual signature.
+
+`timing` as JSON, e.g. `{...}`: A decorator to include timing information into a message. Fields defined below.
+
+`timing[out_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: The timestamp when the message was emitted.
+
+`timing[in_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: The timestamp when the preceding message in this thread (the one that elicited this message as a response) was received.
+
+`timing[stale_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: Ideally, the decorated message should be processed by the the specified timestamp. After that, the message may become irrelevant or less meaningful than intended. This is a hint only.
+
+`timing[expires_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: The decorated message should be considered invalid or expired if encountered after the specified timestamp. This is a much stronger claim than the one for stale_time; it says that the receiver should cancel attempts to process it once the deadline is past, because the sender won't stand behind it any longer. While processing of the received message should stop, the thread of the message should be retained as the sender may send an updated/replacement message. In the case that the sender does not follow up, the policy of the receiver agent related to abandoned threads would presumably be used to eventually delete the thread.
+
+`timing[delay_milli]` as Integer, e.g. `1337`: Wait at least this many milliseconds before processing the message. This may be useful to defeat temporal correlation. It is recommended that agents supporting this field should not honor requests for delays longer than 10 minutes (600,000 milliseconds).
+
+`timing[wait_until_time]` as ISO 8601 timestamp, e.g. `2069-04-20T13:37:00Z`: Wait until this time before processing the message.
+
+TODO authentication tell what we are signing
+
+FINAL TODOs
+
+report/report: Define an actual error communication / information field that is parseable.
