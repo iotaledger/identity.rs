@@ -169,7 +169,11 @@ mod tests {
 
   #[test]
   pub fn test_plaintext_roundtrip() {
-    let authentication_request = AuthenticationRequest::new(Url::parse("https://example.com").unwrap(), "69-420-1337".to_string(), "please sign this".to_string());
+    let authentication_request = AuthenticationRequest::new(
+      Url::parse("https://example.com").unwrap(),
+      "69-420-1337".to_string(),
+      "please sign this".to_string(),
+    );
     let plain_envelope_request = authentication_request.pack_plain().unwrap();
     let request: AuthenticationRequest = plain_envelope_request.unpack().unwrap();
     assert_eq!(format!("{:?}", request), format!("{:?}", authentication_request));
@@ -179,7 +183,11 @@ mod tests {
   pub fn test_signed_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
 
-    let authentication_request = AuthenticationRequest::new(Url::parse("https://example.com").unwrap(), "69-420-1337".to_string(), "please sign this".to_string());
+    let authentication_request = AuthenticationRequest::new(
+      Url::parse("https://example.com").unwrap(),
+      "69-420-1337".to_string(),
+      "please sign this".to_string(),
+    );
     let signed_request = authentication_request
       .pack_non_repudiable(SignatureAlgorithm::EdDSA, &keypair)
       .unwrap();
@@ -187,7 +195,7 @@ mod tests {
     let request = signed_request
       .unpack::<AuthenticationRequest>(SignatureAlgorithm::EdDSA, &keypair.public())
       .unwrap();
-    
+
     assert_eq!(format!("{:?}", request), format!("{:?}", authentication_request));
   }
 
@@ -213,7 +221,11 @@ mod tests {
     let key_bob = KeyPair::new_ed25519().unwrap();
     let key_bob = ed25519_to_x25519_keypair(key_bob).unwrap();
 
-    let authentication_request = AuthenticationRequest::new(Url::parse("https://example.com").unwrap(), "69-420-1337".to_string(), "please sign this".to_string());
+    let authentication_request = AuthenticationRequest::new(
+      Url::parse("https://example.com").unwrap(),
+      "69-420-1337".to_string(),
+      "please sign this".to_string(),
+    );
     let recipients = slice::from_ref(key_alice.public());
 
     let encoded_request: Encrypted = authentication_request
@@ -224,6 +236,9 @@ mod tests {
       .unpack(EncryptionAlgorithm::A256GCM, key_alice.secret(), key_bob.public())
       .unwrap();
 
-    assert_eq!(format!("{:?}", decoded_request), format!("{:?}", authentication_request));
+    assert_eq!(
+      format!("{:?}", decoded_request),
+      format!("{:?}", authentication_request)
+    );
   }
 }
