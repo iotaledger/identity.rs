@@ -1,0 +1,12 @@
+report/report: Define an actual error communication / information field that is parseable plus error codes.
+revocation: How do we deal with unauthorized revocations (i.e. invalid ones)?
+field id: Discuss optionality over whole spec.
+create sequence diagrams for every interaction
+Constraints to fields such that large message or spam attacks arent a thing.
+work on supported signature (suites) and comms about those
+think about who signs what and how exactly and why
+and i offer therse types of sig suites that this supports
+also add the actual signature types / methods like ed25519-merkle (verification method types)
+list of vc requirements
+credential schemata for credentialSchemaResponse
+how to deal with lists
