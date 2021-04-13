@@ -24,7 +24,7 @@
 
 `credential` as [VC JSON](https://w3c-ccg.github.io/vc-json-schemas/): A syntactically valid credential.
 
-`credentials`: A list of credentials.
+`credentials`: An array of valid `credential`s as defined above.
 
 `credentialId` as String, e.g.`credential-69420-delicious-lasagna`: The id of a credential.
 
