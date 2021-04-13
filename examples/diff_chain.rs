@@ -99,9 +99,11 @@ async fn main() -> Result<()> {
 
     diff.publish(chain.auth_message_id(), &client).await?;
     chain.try_push_diff(diff)?;
+    let message_id2 = *chain.diff_message_id();
 
     println!("Chain (3) > {:#}", chain);
-    println!();
+    let text: String = format!("Diff Message: {}", message_id2);
+    println!("Diff Document Tx: {}", text);
   }
 
   // =========================================================================
