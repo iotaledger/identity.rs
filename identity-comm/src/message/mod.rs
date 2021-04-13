@@ -12,12 +12,18 @@ mod report;
 mod resolution;
 mod timing;
 mod trustping;
+mod credential_issuance;
+mod credential_revocation;
+mod presentation_verification;
 
 pub use self::authentication::*;
 pub use self::credential_options::*;
 pub use self::credential_schema::*;
+pub use self::credential_issuance::*;
+pub use self::credential_revocation::*;
 pub use self::discovery::*;
 pub use self::message::*;
+pub use self::presentation_verification::*;
 pub use self::report::*;
 pub use self::resolution::*;
 pub use self::timing::*;
