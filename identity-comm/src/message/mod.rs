@@ -4,7 +4,8 @@
 #![allow(clippy::module_inception)]
 
 mod authentication;
-mod credential;
+mod credential_options;
+mod credential_schema;
 mod discovery;
 mod message;
 mod report;
@@ -13,7 +14,8 @@ mod timing;
 mod trustping;
 
 pub use self::authentication::*;
-pub use self::credential::*;
+pub use self::credential_options::*;
+pub use self::credential_schema::*;
 pub use self::discovery::*;
 pub use self::message::*;
 pub use self::report::*;

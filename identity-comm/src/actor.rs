@@ -1,4 +1,4 @@
-use crate::message::{DidRequest, DidResponse, Trustping, TrustpingResponse};
+use crate::message::{DidRequest, DidResponse, Report, Trustping};
 use riker::actor::actor;
 use riker::actor::Actor;
 use riker::actor::BasicActorRef;
@@ -14,7 +14,7 @@ pub trait DidCommunicator {
     dbg!("trustping received");
     sender
       .expect("Sender should exists")
-      .try_tell(TrustpingResponse::default(), None)
+      .try_tell(Report::default(), None)
       .expect("Sender should receive the response");
   }
 
@@ -22,7 +22,14 @@ pub trait DidCommunicator {
     dbg!("didrequest received");
     sender
       .expect("Sender should exists")
-      .try_tell(DidResponse::new("did:example:123".parse().unwrap()), None)
+      .try_tell(
+        DidResponse::new(
+          "did-discovery/1.0/didResponse".to_string(),
+          "test-thread".to_string(),
+          "did:example:123".parse().unwrap(),
+        ),
+        None,
+      )
       .expect("Sender should receive the response");
   }
 }
@@ -77,7 +84,6 @@ impl DidCommunicator for DefaultCommunicator {
   type Msg = DidCommActorMsg;
 }
 
-
 // !  overwriting handlers requires a tiny bit of boilerplate, creating the Actor should be as easy as DidCommActor { actor: MyCommunicator }
 
 /// Custom communicator that overwrites receive_trustping
@@ -89,49 +95,50 @@ impl DidCommunicator for MyCommunicator {
     dbg!("trustping received - custom response");
     sender
       .expect("Sender should exists")
-      .try_tell(TrustpingResponse::default(), None)
+      .try_tell(Report::default(), None)
       .expect("Sender should receive the response");
   }
 }
 
-// ! Implementing a custom actor that has custom fields and overwrites the trustping handler. 
+// ! Implementing a custom actor that has custom fields and overwrites the trustping handler.
 // ! It takes the default DidRequest handler (requires some boilerplate per Default-request handled)
 
 #[actor(Trustping, DidRequest)]
 pub struct MyActor {
-    my_state: bool
+  my_state: bool,
 }
 
 impl Actor for MyActor {
-    // we used the #[actor] attribute so MyActorMsg is the Msg type
-    type Msg = MyActorMsg;
-  
-    fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
-      // Use the respective Receive<T> implementation
-      self.receive(ctx, msg, sender);
-    }
+  // we used the #[actor] attribute so MyActorMsg is the Msg type
+  type Msg = MyActorMsg;
+
+  fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
+    // Use the respective Receive<T> implementation
+    self.receive(ctx, msg, sender);
   }
+}
 
 impl DidCommunicator for MyActor {
-    type Msg = MyActorMsg;
+  type Msg = MyActorMsg;
 }
 
 /// impl custom behavior for trustpings
 impl Receive<Trustping> for MyActor {
-    type Msg = MyActorMsg;
-    fn receive(&mut self, ctx: &Context<Self::Msg>, msg: Trustping, sender: Sender) {
-        dbg!("trustping received - custom conditional response");
-        if self.my_state {self.receive_trustping(ctx, msg, sender);}
+  type Msg = MyActorMsg;
+  fn receive(&mut self, ctx: &Context<Self::Msg>, msg: Trustping, sender: Sender) {
+    dbg!("trustping received - custom conditional response");
+    if self.my_state {
+      self.receive_trustping(ctx, msg, sender);
     }
+  }
 }
 /// Using default behavior boiler plate for DidRequest
 impl Receive<DidRequest> for MyActor {
-    type Msg = MyActorMsg;
-    fn receive(&mut self, ctx: &Context<Self::Msg>, msg: DidRequest, sender: Sender) {
-        self.receive_did_request(ctx, msg, sender);
-    }
+  type Msg = MyActorMsg;
+  fn receive(&mut self, ctx: &Context<Self::Msg>, msg: DidRequest, sender: Sender) {
+    self.receive_did_request(ctx, msg, sender);
+  }
 }
-
 
 #[cfg(test)]
 mod test {
