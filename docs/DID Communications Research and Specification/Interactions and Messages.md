@@ -30,7 +30,7 @@
 
 `credentialType` as String, e.g. `YouHaveNiceHairCredential`: A VC type.
 
-`credentialTypes` as JSON, e.g. `["YouHaveNiceHairCredential", "YourLasagnaIsDeliciousCredential"]`: Contains a list of possible credential types, see e.g. <a href="#credential-options">Credential Options</a>.
+`credentialTypes` as JSON, e.g. `["YouHaveNiceHairCredential", "YourLasagnaIsDeliciousCredential"]`: Contains an array of possible credential types, see e.g. <a href="#credential-options">Credential Options</a>.
 
 `supportedIssuers` as JSON: Contains a list of supported issuer `id`, see <a href="#credential-options">Credential Options</a>.
 
