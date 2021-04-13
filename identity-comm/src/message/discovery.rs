@@ -11,24 +11,25 @@ use identity_iota::did::DID;
 ///
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DidRequest {
+  context: String,
+  thread: String,
   callback_url: Url,
   #[serde(skip_serializing_if = "Option::is_none")]
-  context: Option<Url>,
+  response_requested: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<DID>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  thread: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
   timing: Option<Timing>,
 }
 
 impl DidRequest {
-  pub fn new(callback_url: Url) -> Self {
+  pub fn new(context: String, thread: String, callback_url: Url) -> Self {
     Self {
+      context,
+      thread,
       callback_url,
-      context: None,
+      response_requested: None,
       id: None,
-      thread: None,
       timing: None,
     }
   }
@@ -48,21 +49,6 @@ impl DidRequest {
     self.callback_url = callback_url;
   }
 
-  /// Get a mutable reference to the did request's context.
-  pub fn context_mut(&mut self) -> &mut Option<Url> {
-    &mut self.context
-  }
-
-  /// Get a reference to the did request's context.
-  pub fn context(&self) -> &Option<Url> {
-    &self.context
-  }
-
-  /// Set the did request's context.
-  pub fn set_context(&mut self, context: Option<Url>) {
-    self.context = context;
-  }
-
   /// Get a mutable reference to the did request's id.
   pub fn id_mut(&mut self) -> &mut Option<DID> {
     &mut self.id
@@ -76,21 +62,6 @@ impl DidRequest {
   /// Set the did request's id.
   pub fn set_id(&mut self, id: Option<DID>) {
     self.id = id;
-  }
-
-  /// Get a mutable reference to the did request's thread.
-  pub fn thread_mut(&mut self) -> &mut Option<String> {
-    &mut self.thread
-  }
-
-  /// Get a reference to the did request's thread.
-  pub fn thread(&self) -> &Option<String> {
-    &self.thread
-  }
-
-  /// Set the did request's thread.
-  pub fn set_thread(&mut self, thread: Option<String>) {
-    self.thread = thread;
   }
 
   /// Get a mutable reference to the did request's timing.
@@ -107,16 +78,91 @@ impl DidRequest {
   pub fn set_timing(&mut self, timing: Option<Timing>) {
     self.timing = timing;
   }
+
+  /// Get a mutable reference to the did request's context.
+  pub fn context_mut(&mut self) -> &mut String {
+    &mut self.context
+  }
+
+  /// Get a reference to the did request's context.
+  pub fn context(&self) -> &String {
+    &self.context
+  }
+
+  /// Set the did request's context.
+  pub fn set_context(&mut self, context: String) {
+    self.context = context;
+  }
+
+  /// Get a mutable reference to the did request's thread.
+  pub fn thread_mut(&mut self) -> &mut String {
+    &mut self.thread
+  }
+
+  /// Get a reference to the did request's thread.
+  pub fn thread(&self) -> &String {
+    &self.thread
+  }
+
+  /// Set the did request's thread.
+  pub fn set_thread(&mut self, thread: String) {
+    self.thread = thread;
+  }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DidResponse {
+  context: String,
+  thread: String,
   id: DID,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  callback_url: Option<Url>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  response_requested: Option<bool>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  timing: Option<Timing>,
 }
 
 impl DidResponse {
-  pub fn new(id: DID) -> Self {
-    Self { id }
+  pub fn new(context: String, thread: String, id: DID) -> Self {
+    Self {
+      context,
+      thread,
+      id,
+      callback_url: None,
+      response_requested: None,
+      timing: None,
+    }
+  }
+
+  /// Get a mutable reference to the did response's context.
+  pub fn context_mut(&mut self) -> &mut String {
+    &mut self.context
+  }
+
+  /// Get a reference to the did response's context.
+  pub fn context(&self) -> &String {
+    &self.context
+  }
+
+  /// Set the did response's context.
+  pub fn set_context(&mut self, context: String) {
+    self.context = context;
+  }
+
+  /// Get a mutable reference to the did response's thread.
+  pub fn thread_mut(&mut self) -> &mut String {
+    &mut self.thread
+  }
+
+  /// Get a reference to the did response's thread.
+  pub fn thread(&self) -> &String {
+    &self.thread
+  }
+
+  /// Set the did response's thread.
+  pub fn set_thread(&mut self, thread: String) {
+    self.thread = thread;
   }
 
   /// Get a mutable reference to the did response's id.
@@ -132,6 +178,51 @@ impl DidResponse {
   /// Set the did response's id.
   pub fn set_id(&mut self, id: DID) {
     self.id = id;
+  }
+
+  /// Get a mutable reference to the did response's callback url.
+  pub fn callback_url_mut(&mut self) -> &mut Option<Url> {
+    &mut self.callback_url
+  }
+
+  /// Get a reference to the did response's callback url.
+  pub fn callback_url(&self) -> &Option<Url> {
+    &self.callback_url
+  }
+
+  /// Set the did response's callback url.
+  pub fn set_callback_url(&mut self, callback_url: Option<Url>) {
+    self.callback_url = callback_url;
+  }
+
+  /// Get a mutable reference to the did response's response requested.
+  pub fn response_requested_mut(&mut self) -> &mut Option<bool> {
+    &mut self.response_requested
+  }
+
+  /// Get a reference to the did response's response requested.
+  pub fn response_requested(&self) -> &Option<bool> {
+    &self.response_requested
+  }
+
+  /// Set the did response's response requested.
+  pub fn set_response_requested(&mut self, response_requested: Option<bool>) {
+    self.response_requested = response_requested;
+  }
+
+  /// Get a mutable reference to the did response's timing.
+  pub fn timing_mut(&mut self) -> &mut Option<Timing> {
+    &mut self.timing
+  }
+
+  /// Get a reference to the did response's timing.
+  pub fn timing(&self) -> &Option<Timing> {
+    &self.timing
+  }
+
+  /// Set the did response's timing.
+  pub fn set_timing(&mut self, timing: Option<Timing>) {
+    self.timing = timing;
   }
 }
 
@@ -154,8 +245,16 @@ mod tests {
   #[test]
   pub fn test_plaintext_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
-    let did_request = DidRequest::new(Url::parse("https://example.com").unwrap());
-    let did_response = DidResponse::new(DID::new(&keypair.public().as_ref()).unwrap());
+    let did_request = DidRequest::new(
+      "did-discovery/1.0/didRequest".to_string(),
+      "test-thread".to_string(),
+      Url::parse("https://example.com").unwrap(),
+    );
+    let did_response = DidResponse::new(
+      "did-discovery/1.0/didResponse".to_string(),
+      "test-thread".to_string(),
+      DID::new(&keypair.public().as_ref()).unwrap(),
+    );
 
     let plain_envelope_request = did_request.pack_plain().unwrap();
     let plain_envelope_response = did_response.pack_plain().unwrap();
@@ -171,9 +270,16 @@ mod tests {
   pub fn test_signed_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
 
-    let did_request = DidRequest::new(Url::parse("https://example.com").unwrap());
-    let did_response = DidResponse::new(DID::new(&keypair.public().as_ref()).unwrap());
-
+    let did_request = DidRequest::new(
+      "did-discovery/1.0/didRequest".to_string(),
+      "test-thread".to_string(),
+      Url::parse("https://example.com").unwrap(),
+    );
+    let did_response = DidResponse::new(
+      "did-discovery/1.0/didResponse".to_string(),
+      "test-thread".to_string(),
+      DID::new(&keypair.public().as_ref()).unwrap(),
+    );
     let signed_request = did_request
       .pack_non_repudiable(SignatureAlgorithm::EdDSA, &keypair)
       .unwrap();
@@ -217,8 +323,16 @@ mod tests {
     let key_bob = KeyPair::new_ed25519().unwrap();
     let key_bob = ed25519_to_x25519_keypair(key_bob).unwrap();
 
-    let did_request = DidRequest::new(Url::parse("https://example.com").unwrap());
-    let did_response = DidResponse::new(DID::new(&keypair.public().as_ref()).unwrap());
+    let did_request = DidRequest::new(
+      "did-discovery/1.0/didRequest".to_string(),
+      "test-thread".to_string(),
+      Url::parse("https://example.com").unwrap(),
+    );
+    let did_response = DidResponse::new(
+      "did-discovery/1.0/didResponse".to_string(),
+      "test-thread".to_string(),
+      DID::new(&keypair.public().as_ref()).unwrap(),
+    );
     let recipients = slice::from_ref(key_alice.public());
 
     let encoded_request: Encrypted = did_request

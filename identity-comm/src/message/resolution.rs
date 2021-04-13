@@ -12,21 +12,25 @@ use identity_iota::did::DID;
 ///
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ResolutionRequest {
+  context: String,
+  thread: String,
   callback_url: Url,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  response_requested: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<DID>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  thread: Option<String>,
-  #[serde(skip_serializing_if = "Option::is_none")]
   timing: Option<Timing>,
 }
-
+//todo: maybe merge with did discovery, because they are exactly the same
 impl ResolutionRequest {
-  pub fn new(callback_url: Url) -> Self {
+  pub fn new(context: String, thread: String, callback_url: Url) -> Self {
     Self {
+      context,
+      thread,
       callback_url,
+      response_requested: None,
       id: None,
-      thread: None,
       timing: None,
     }
   }
@@ -61,21 +65,6 @@ impl ResolutionRequest {
     self.id = id;
   }
 
-  /// Get a mutable reference to the resolution request's thread.
-  pub fn thread_mut(&mut self) -> &mut Option<String> {
-    &mut self.thread
-  }
-
-  /// Get a reference to the resolution request's thread.
-  pub fn thread(&self) -> &Option<String> {
-    &self.thread
-  }
-
-  /// Set the resolution request's thread.
-  pub fn set_thread(&mut self, thread: Option<String>) {
-    self.thread = thread;
-  }
-
   /// Get a mutable reference to the resolution request's timing.
   pub fn timing_mut(&mut self) -> &mut Option<Timing> {
     &mut self.timing
@@ -90,25 +79,74 @@ impl ResolutionRequest {
   pub fn set_timing(&mut self, timing: Option<Timing>) {
     self.timing = timing;
   }
+
+  /// Get a mutable reference to the resolution request's context.
+  pub fn context_mut(&mut self) -> &mut String {
+    &mut self.context
+  }
+
+  /// Get a reference to the resolution request's context.
+  pub fn context(&self) -> &String {
+    &self.context
+  }
+
+  /// Set the resolution request's context.
+  pub fn set_context(&mut self, context: String) {
+    self.context = context;
+  }
+
+  /// Get a mutable reference to the resolution request's thread.
+  pub fn thread_mut(&mut self) -> &mut String {
+    &mut self.thread
+  }
+
+  /// Get a reference to the resolution request's thread.
+  pub fn thread(&self) -> &String {
+    &self.thread
+  }
+
+  /// Set the resolution request's thread.
+  pub fn set_thread(&mut self, thread: String) {
+    self.thread = thread;
+  }
+
+  /// Get a mutable reference to the resolution request's response requested.
+  pub fn response_requested_mut(&mut self) -> &mut Option<bool> {
+    &mut self.response_requested
+  }
+
+  /// Get a reference to the resolution request's response requested.
+  pub fn response_requested(&self) -> &Option<bool> {
+    &self.response_requested
+  }
+
+  /// Set the resolution request's response requested.
+  pub fn set_response_requested(&mut self, response_requested: Option<bool>) {
+    self.response_requested = response_requested;
+  }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ResolutionResponse {
+  context: String,
+  thread: String,
   did_document: Document,
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<DID>,
+  callback_url: Option<Url>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  thread: Option<String>,
+  response_requested: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
   timing: Option<Timing>,
 }
 
 impl ResolutionResponse {
-  pub fn new(did_document: Document) -> Self {
+  pub fn new(context: String, thread: String, did_document: Document) -> Self {
     Self {
+      context,
+      thread,
       did_document,
-      id: None,
-      thread: None,
+      callback_url: None,
+      response_requested: None,
       timing: None,
     }
   }
@@ -128,36 +166,6 @@ impl ResolutionResponse {
     self.did_document = did_document;
   }
 
-  /// Get a mutable reference to the resolution result's id.
-  pub fn id_mut(&mut self) -> &mut Option<DID> {
-    &mut self.id
-  }
-
-  /// Get a reference to the resolution result's id.
-  pub fn id(&self) -> &Option<DID> {
-    &self.id
-  }
-
-  /// Set the resolution result's id.
-  pub fn set_id(&mut self, id: Option<DID>) {
-    self.id = id;
-  }
-
-  /// Get a mutable reference to the resolution result's thread.
-  pub fn thread_mut(&mut self) -> &mut Option<String> {
-    &mut self.thread
-  }
-
-  /// Get a reference to the resolution result's thread.
-  pub fn thread(&self) -> &Option<String> {
-    &self.thread
-  }
-
-  /// Set the resolution result's thread.
-  pub fn set_thread(&mut self, thread: Option<String>) {
-    self.thread = thread;
-  }
-
   /// Get a mutable reference to the resolution result's timing.
   pub fn timing_mut(&mut self) -> &mut Option<Timing> {
     &mut self.timing
@@ -171,6 +179,66 @@ impl ResolutionResponse {
   /// Set the resolution result's timing.
   pub fn set_timing(&mut self, timing: Option<Timing>) {
     self.timing = timing;
+  }
+
+  /// Get a mutable reference to the resolution response's context.
+  pub fn context_mut(&mut self) -> &mut String {
+    &mut self.context
+  }
+
+  /// Get a reference to the resolution response's context.
+  pub fn context(&self) -> &String {
+    &self.context
+  }
+
+  /// Set the resolution response's context.
+  pub fn set_context(&mut self, context: String) {
+    self.context = context;
+  }
+
+  /// Get a mutable reference to the resolution response's thread.
+  pub fn thread_mut(&mut self) -> &mut String {
+    &mut self.thread
+  }
+
+  /// Get a reference to the resolution response's thread.
+  pub fn thread(&self) -> &String {
+    &self.thread
+  }
+
+  /// Set the resolution response's thread.
+  pub fn set_thread(&mut self, thread: String) {
+    self.thread = thread;
+  }
+
+  /// Get a mutable reference to the resolution response's callback url.
+  pub fn callback_url_mut(&mut self) -> &mut Option<Url> {
+    &mut self.callback_url
+  }
+
+  /// Get a reference to the resolution response's callback url.
+  pub fn callback_url(&self) -> &Option<Url> {
+    &self.callback_url
+  }
+
+  /// Set the resolution response's callback url.
+  pub fn set_callback_url(&mut self, callback_url: Option<Url>) {
+    self.callback_url = callback_url;
+  }
+
+  /// Get a mutable reference to the resolution response's response requested.
+  pub fn response_requested_mut(&mut self) -> &mut Option<bool> {
+    &mut self.response_requested
+  }
+
+  /// Get a reference to the resolution response's response requested.
+  pub fn response_requested(&self) -> &Option<bool> {
+    &self.response_requested
+  }
+
+  /// Set the resolution response's response requested.
+  pub fn set_response_requested(&mut self, response_requested: Option<bool>) {
+    self.response_requested = response_requested;
   }
 }
 
@@ -193,8 +261,16 @@ mod tests {
   #[test]
   pub fn test_plaintext_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
-    let resolution_request = ResolutionRequest::new(Url::parse("https://example.com").unwrap());
-    let resolotion_respone = ResolutionResponse::new(Document::from_keypair(&keypair).unwrap());
+    let resolution_request = ResolutionRequest::new(
+      "did-discovery/1.0/did-resolution/1.0/resolutionRequest".to_string(),
+      "test-thread".to_string(),
+      Url::parse("https://example.com").unwrap(),
+    );
+    let resolotion_respone = ResolutionResponse::new(
+      "did-resolution/1.0/resolutionResponse".to_string(),
+      "test-thread".to_string(),
+      Document::from_keypair(&keypair).unwrap(),
+    );
 
     let plain_envelope_request = resolution_request.pack_plain().unwrap();
     let plain_envelope_response = resolotion_respone.pack_plain().unwrap();
@@ -209,8 +285,16 @@ mod tests {
   pub fn test_signed_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
 
-    let resolution_request = ResolutionRequest::new(Url::parse("https://example.com").unwrap());
-    let resolotion_respone = ResolutionResponse::new(Document::from_keypair(&keypair).unwrap());
+    let resolution_request = ResolutionRequest::new(
+      "did-discovery/1.0/did-resolution/1.0/resolutionRequest".to_string(),
+      "test-thread".to_string(),
+      Url::parse("https://example.com").unwrap(),
+    );
+    let resolotion_respone = ResolutionResponse::new(
+      "did-resolution/1.0/resolutionResponse".to_string(),
+      "test-thread".to_string(),
+      Document::from_keypair(&keypair).unwrap(),
+    );
     let signed_envelope_request = resolution_request
       .pack_non_repudiable(SignatureAlgorithm::EdDSA, &keypair)
       .unwrap();
@@ -254,8 +338,16 @@ mod tests {
     let key_bob = KeyPair::new_ed25519().unwrap();
     let key_bob = ed25519_to_x25519_keypair(key_bob).unwrap();
 
-    let resolution_request = ResolutionRequest::new(Url::parse("https://example.com").unwrap());
-    let resolotion_respone = ResolutionResponse::new(Document::from_keypair(&keypair).unwrap());
+    let resolution_request = ResolutionRequest::new(
+      "did-discovery/1.0/did-resolution/1.0/resolutionRequest".to_string(),
+      "test-thread".to_string(),
+      Url::parse("https://example.com").unwrap(),
+    );
+    let resolotion_respone = ResolutionResponse::new(
+      "did-resolution/1.0/resolutionResponse".to_string(),
+      "test-thread".to_string(),
+      Document::from_keypair(&keypair).unwrap(),
+    );
 
     let recipients = slice::from_ref(key_alice.public());
 

@@ -13,9 +13,12 @@ use serde::Serialize;
 ///
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AuthenticationRequest {
-  callback_url: Url,
+  context: String,
   thread: String,
+  callback_url: Url,
   challenge: String,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  response_requested: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<DID>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -23,11 +26,13 @@ pub struct AuthenticationRequest {
 }
 
 impl AuthenticationRequest {
-  pub fn new(callback_url: Url, thread: String, challenge: String) -> Self {
+  pub fn new(context: String, thread: String, callback_url: Url, challenge: String) -> Self {
     Self {
-      callback_url,
+      context,
       thread,
+      callback_url,
       challenge,
+      response_requested: None,
       id: None,
       timing: None,
     }
@@ -107,17 +112,64 @@ impl AuthenticationRequest {
   pub fn set_timing(&mut self, timing: Option<Timing>) {
     self.timing = timing;
   }
+
+  /// Get a mutable reference to the authentication request's context.
+  pub fn context_mut(&mut self) -> &mut String {
+    &mut self.context
+  }
+
+  /// Get a reference to the authentication request's context.
+  pub fn context(&self) -> &String {
+    &self.context
+  }
+
+  /// Set the authentication request's context.
+  pub fn set_context(&mut self, context: String) {
+    self.context = context;
+  }
+
+  /// Get a mutable reference to the authentication request's response requested.
+  pub fn response_requested_mut(&mut self) -> &mut Option<bool> {
+    &mut self.response_requested
+  }
+
+  /// Get a reference to the authentication request's response requested.
+  pub fn response_requested(&self) -> &Option<bool> {
+    &self.response_requested
+  }
+
+  /// Set the authentication request's response requested.
+  pub fn set_response_requested(&mut self, response_requested: Option<bool>) {
+    self.response_requested = response_requested;
+  }
 }
 // Todo: implement new method for signing of the whole AuthenticationRequest
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AuthenticationResponse {
+  context: String,
   thread: String,
   signature: Signature,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  callback_url: Option<Url>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  response_requested: Option<bool>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  id: Option<DID>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  timing: Option<Timing>,
 }
 
 impl AuthenticationResponse {
-  pub fn new(thread: String, signature: Signature) -> Self {
-    Self { thread, signature }
+  pub fn new(context: String, thread: String, signature: Signature) -> Self {
+    Self {
+      context,
+      thread,
+      signature,
+      callback_url: None,
+      response_requested: None,
+      id: None,
+      timing: None,
+    }
   }
 
   /// Get a mutable reference to the authentication response's thread.
@@ -149,6 +201,81 @@ impl AuthenticationResponse {
   pub fn set_signature(&mut self, signature: Signature) {
     self.signature = signature;
   }
+
+  /// Get a mutable reference to the authentication response's context.
+  pub fn context_mut(&mut self) -> &mut String {
+    &mut self.context
+  }
+
+  /// Get a reference to the authentication response's context.
+  pub fn context(&self) -> &String {
+    &self.context
+  }
+
+  /// Set the authentication response's context.
+  pub fn set_context(&mut self, context: String) {
+    self.context = context;
+  }
+
+  /// Get a mutable reference to the authentication response's callback url.
+  pub fn callback_url_mut(&mut self) -> &mut Option<Url> {
+    &mut self.callback_url
+  }
+
+  /// Get a reference to the authentication response's callback url.
+  pub fn callback_url(&self) -> &Option<Url> {
+    &self.callback_url
+  }
+
+  /// Set the authentication response's callback url.
+  pub fn set_callback_url(&mut self, callback_url: Option<Url>) {
+    self.callback_url = callback_url;
+  }
+
+  /// Get a mutable reference to the authentication response's response requested.
+  pub fn response_requested_mut(&mut self) -> &mut Option<bool> {
+    &mut self.response_requested
+  }
+
+  /// Get a reference to the authentication response's response requested.
+  pub fn response_requested(&self) -> &Option<bool> {
+    &self.response_requested
+  }
+
+  /// Set the authentication response's response requested.
+  pub fn set_response_requested(&mut self, response_requested: Option<bool>) {
+    self.response_requested = response_requested;
+  }
+
+  /// Get a mutable reference to the authentication response's id.
+  pub fn id_mut(&mut self) -> &mut Option<DID> {
+    &mut self.id
+  }
+
+  /// Get a reference to the authentication response's id.
+  pub fn id(&self) -> &Option<DID> {
+    &self.id
+  }
+
+  /// Set the authentication response's id.
+  pub fn set_id(&mut self, id: Option<DID>) {
+    self.id = id;
+  }
+
+  /// Get a mutable reference to the authentication response's timing.
+  pub fn timing_mut(&mut self) -> &mut Option<Timing> {
+    &mut self.timing
+  }
+
+  /// Get a reference to the authentication response's timing.
+  pub fn timing(&self) -> &Option<Timing> {
+    &self.timing
+  }
+
+  /// Set the authentication response's timing.
+  pub fn set_timing(&mut self, timing: Option<Timing>) {
+    self.timing = timing;
+  }
 }
 
 #[cfg(test)]
@@ -170,8 +297,9 @@ mod tests {
   #[test]
   pub fn test_plaintext_roundtrip() {
     let authentication_request = AuthenticationRequest::new(
-      Url::parse("https://example.com").unwrap(),
-      "69-420-1337".to_string(),
+      "authentication/1.0/authenticationRequest".to_string(),
+      "test-thread".to_string(),
+      Url::parse("htpps://example.com").unwrap(),
       "please sign this".to_string(),
     );
     let plain_envelope_request = authentication_request.pack_plain().unwrap();
@@ -184,8 +312,9 @@ mod tests {
     let keypair = KeyPair::new_ed25519().unwrap();
 
     let authentication_request = AuthenticationRequest::new(
-      Url::parse("https://example.com").unwrap(),
-      "69-420-1337".to_string(),
+      "authentication/1.0/authenticationRequest".to_string(),
+      "test-thread".to_string(),
+      Url::parse("htpps://example.com").unwrap(),
       "please sign this".to_string(),
     );
     let signed_request = authentication_request
@@ -222,8 +351,9 @@ mod tests {
     let key_bob = ed25519_to_x25519_keypair(key_bob).unwrap();
 
     let authentication_request = AuthenticationRequest::new(
-      Url::parse("https://example.com").unwrap(),
-      "69-420-1337".to_string(),
+      "authentication/1.0/authenticationRequest".to_string(),
+      "test-thread".to_string(),
+      Url::parse("htpps://example.com").unwrap(),
       "please sign this".to_string(),
     );
     let recipients = slice::from_ref(key_alice.public());
