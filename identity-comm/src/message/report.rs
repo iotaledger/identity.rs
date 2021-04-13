@@ -1,6 +1,5 @@
 use crate::message::Timing;
 
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Report {
   context: String,
