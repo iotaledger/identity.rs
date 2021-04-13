@@ -14,7 +14,7 @@
 
 `responseRequested` as Boolean, e.g. `true` or `false`: In messages where it is defined it asks the recipient of the message to repond in the form of an acknowledging report. This request can be honored, but doesn't have to be honored. The only exception to this behaviour is in `trust-ping`, where the acknowledging report is to be sent if and only if this field is `true`. If this field is undefined, it counts as `false`.
 
-`id` as String, e.g. `did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8`: An IOTA decentralized identifier.
+`id` as String, e.g. `did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8`: A decentralized identifier.
 
 `didDocument` as JSON: An IOTA DID Document (see e.g. in <a href="#did-resolution">DID Resolution</a>).
 
