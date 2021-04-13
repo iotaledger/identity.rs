@@ -4,7 +4,9 @@
 
 ## Field Definitions
 
-`context` & `reference` as URL/String, e.g. `did-resolution/1.0/resolutionResponse`: Defines the context that a specific message either adheres to or, in case of a report, refers to.
+`context` as URL/String, e.g. `did-resolution/1.0/resolutionResponse`: Defines the context that a specific message adheres to.
+
+`reference` as URL/String, e.g. `did-resolution/1.0/resolutionResponse`: Defines the context that a report message refers to.
 
 `thread` as UUID, e.g. `f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c`: A UUID as String, defined by the agent that initiated an interaction, to be used to identify this specific interaction to track it agent-locally. Together with the context, these two fields can be used to identity a message / state within a specific interaction.
 
