@@ -208,6 +208,21 @@ Verification Methods that can be used to sign DID Documents and do other reusabl
 Verification Methods that can be used to sign Verifiable Credentials:
 * `MerkleKeyCollection2021` to create a `MerkleKeySignature2021`
 
+### Revocation
+
+As mentioned above, revocation is done through deactivating public keys in the IOTA Identity framework. IOTA Identity has a highlky scalable solution since some identities might sign and want to revoke thousands if not millions of verifiable credentials. It is also GDPR compliant, leaving no trace, not even a hash, of a verifiable credential on the Tangle. Below will be a brief overview of how this mechanism works, but you may read all the details in the MerkleKeyCollection standardization document. 
+
+#### Key Collections
+
+Instead of storing individual public keys in a DID Document, IOTA Identity introduces the `MerkleKeyCollection2021` verification method. It supports a REQUIRED `publicKeyBase58` field that MUST contain the top hash of a Merkle Tree. In this Merkle Tree all the individual leaves are a public keys using the Signature Algorithm of choice and Digest Algorithm of choice for the Merkle Tree process. This process allows the creation of millions of public keys, within a single verification Method and without bloating the DID Document. For specific info such as the maximum depth of the Merkle Tree, supported signature algorithms and digest algorithms can be found in the specification document. 
+
+#### Verifiable Credential Proofs
+
+In addition to the normal signature, a `MerkleKeySignature2021` requires additional proof data to validate the signature's origin and validaty. The public key itself needs to be revealed inside the `signatureValue` field, but also the individual hashes inside the Merkle Tree and their relative location in the path to create a valid `Proof of Inclusion`. 
+
+#### Revocation List
+
+In order to revoke a public key, and therefore any Verifiable Credential or other statements, the DID Document must be updated with a revocation list. The REQUIRED `revocation` field is introduced inside the `MerkleKeyCollection2021` verification method, which lists the indices from the leaves of the Merkle Tree that are revoked. These indices are further compressed via [Roaring Bitmaps](https://roaringbitmap.org/).
 
 ## Standardized Services
 
