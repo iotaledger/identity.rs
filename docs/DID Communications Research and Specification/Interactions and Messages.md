@@ -381,7 +381,7 @@ authenticationResponse: {
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "signature": {
         "type": "JcsEd25519Signature2020",
-        "verificationMethod": "#authentication",
+        "verificationMethod": "did:iota:42edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef242#authentication",
         "signatureValue": "5Hw1JWv4a6hZH5obtAshbbKZQAJK6h8YbEwZvdxgWCXSL81fvRYoMCjt22vaBtZewgGq641dqR31C27YhDusoo4N"
    },
    "callbackURL": "https://www.aliceswonderland.com/",
