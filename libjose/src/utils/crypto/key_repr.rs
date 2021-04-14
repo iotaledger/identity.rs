@@ -37,8 +37,11 @@ pub type X25519SecretKey = crypto::keys::x25519::SecretKey;
 pub type X448PublicKey = crypto::keys::x448::PublicKey;
 pub type X448SecretKey = crypto::keys::x448::SecretKey;
 
-const ED25519_PUBLIC_KEY_LEN: usize = crypto::signatures::ed25519::COMPRESSED_PUBLIC_KEY_LENGTH;
-const ED25519_SECRET_KEY_LEN: usize = crypto::signatures::ed25519::SECRET_KEY_LENGTH;
+pub const ED25519_PUBLIC_KEY_LEN: usize = crypto::signatures::ed25519::COMPRESSED_PUBLIC_KEY_LENGTH;
+pub const ED25519_SECRET_KEY_LEN: usize = crypto::signatures::ed25519::SECRET_KEY_LENGTH;
+
+pub const X25519_PUBLIC_KEY_LEN: usize = crypto::keys::x25519::PUBLIC_KEY_LEN;
+pub const X25519_SECRET_KEY_LEN: usize = crypto::keys::x25519::SECRET_KEY_LEN;
 
 #[derive(Clone, Copy, Debug)]
 pub enum Secret<'a> {
@@ -213,6 +216,15 @@ impl<'a> From<&'a [u8]> for Secret<'a> {
 impl<'a> From<&'a Jwk> for Secret<'a> {
   fn from(other: &'a Jwk) -> Self {
     Self::Jwk(other)
+  }
+}
+
+impl<'a, T> From<&'a T> for Secret<'a>
+where
+  T: AsRef<[u8]>,
+{
+  fn from(other: &'a T) -> Self {
+    Self::Arr(other.as_ref())
   }
 }
 
