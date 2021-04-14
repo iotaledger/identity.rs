@@ -1,6 +1,8 @@
 use identity_account::account::Account;
 use identity_account::account::AutoSave;
 use identity_account::chain::ChainKey;
+use identity_account::chain::Methods;
+use identity_account::chain::TinyMethod;
 use identity_account::error::Error;
 use identity_account::error::Result;
 use identity_account::events::Command;
@@ -10,7 +12,6 @@ use identity_account::storage::MemStore;
 use identity_account::types::ChainId;
 use identity_account::types::Index;
 use identity_account::types::Timestamp;
-use identity_account::chain::MethodData;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 
@@ -126,8 +127,6 @@ async fn test_create_chain_already_exists() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_method() -> Result<()> {
-  const FRAG: &str = "test-frag";
-
   let account: Account<MemStore> = new_account().await?;
   let chain: ChainId = account.index()?.next_id();
 
@@ -140,7 +139,7 @@ async fn test_create_method() -> Result<()> {
 
   let command: Command = Command::create_method()
     .type_(MethodType::Ed25519VerificationKey2018)
-    .fragment(FRAG.to_string())
+    .fragment("key-1".into())
     .finish()
     .unwrap();
 
@@ -153,13 +152,123 @@ async fn test_create_method() -> Result<()> {
   assert_document(&state, true);
   assert_timestamps(&state, false);
 
-  assert_eq!(state.state().methods().count(), 1);
+  assert_eq!(state.state().methods().len(), 2);
 
-  let data: (&ChainKey, &MethodData) = state.state().method(FRAG).unwrap();
+  let data: &TinyMethod = state.state().methods().fetch("key-1")?;
 
-  assert_eq!(data.1.0, MethodScope::VerificationMethod);
-  assert_eq!(data.0.type_(), MethodType::Ed25519VerificationKey2018);
-  assert_eq!(data.0.fragment(), FRAG);
+  assert_eq!(data.location().type_(), MethodType::Ed25519VerificationKey2018);
+  assert_eq!(data.location().fragment(), "key-1");
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_method_reserved_fragment() -> Result<()> {
+  let account: Account<MemStore> = new_account().await?;
+  let chain: ChainId = account.index()?.next_id();
+
+  let command: Command = Command::create_chain()
+    .authentication(MethodType::Ed25519VerificationKey2018)
+    .finish()
+    .unwrap();
+
+  account.process(chain, command, false).await?;
+
+  let command: Command = Command::create_method()
+    .type_(MethodType::Ed25519VerificationKey2018)
+    .fragment(ChainKey::AUTH.to_string())
+    .finish()
+    .unwrap();
+
+  // version is now 2
+  assert_version(&account.snapshot(chain).await?, Index::from(2));
+
+  let output: _ = account.process(chain, command, false).await;
+
+  assert!(matches!(
+    output.unwrap_err(),
+    Error::CommandError(CommandError::InvalidMethodFragment(_)),
+  ));
+
+  // version is still 2, no new events have been committed
+  assert_version(&account.snapshot(chain).await?, Index::from(2));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_method_duplicate_fragment() -> Result<()> {
+  let account: Account<MemStore> = new_account().await?;
+  let chain: ChainId = account.index()?.next_id();
+
+  let command: Command = Command::create_chain()
+    .authentication(MethodType::Ed25519VerificationKey2018)
+    .finish()
+    .unwrap();
+
+  account.process(chain, command, false).await?;
+
+  let command: Command = Command::create_method()
+    .type_(MethodType::Ed25519VerificationKey2018)
+    .fragment("key-1".into())
+    .finish()
+    .unwrap();
+
+  assert_version(&account.snapshot(chain).await?, Index::from(2));
+  account.process(chain, command.clone(), false).await?;
+  assert_version(&account.snapshot(chain).await?, Index::from(4));
+
+  let output: _ = account.process(chain, command, false).await;
+
+  assert!(matches!(
+    output.unwrap_err(),
+    Error::CommandError(CommandError::DuplicateKeyFragment(_)),
+  ));
+
+  assert_version(&account.snapshot(chain).await?, Index::from(4));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_delete_method() -> Result<()> {
+  let account: Account<MemStore> = new_account().await?;
+  let chain: ChainId = account.index()?.next_id();
+
+  let command: Command = Command::create_chain()
+    .authentication(MethodType::Ed25519VerificationKey2018)
+    .finish()
+    .unwrap();
+
+  account.process(chain, command, false).await?;
+
+  let command: Command = Command::create_method()
+    .type_(MethodType::Ed25519VerificationKey2018)
+    .fragment("key-1".into())
+    .finish()
+    .unwrap();
+
+  assert_version(&account.snapshot(chain).await?, Index::from(2));
+
+  account.process(chain, command, false).await?;
+
+  let state: Snapshot = account.snapshot(chain).await?;
+
+  assert_version(&state, Index::from(4));
+  assert_eq!(state.state().methods().len(), 2);
+  assert_eq!(state.state().methods().contains("key-1"), true);
+  assert_eq!(state.state().methods().get("key-1").is_some(), true);
+
+  let command: Command = Command::delete_method().fragment("key-1".into()).finish().unwrap();
+
+  account.process(chain, command, false).await?;
+
+  let state: Snapshot = account.snapshot(chain).await?;
+
+  assert_version(&state, Index::from(6));
+  assert_eq!(state.state().methods().len(), 1);
+  assert_eq!(state.state().methods().contains("key-1"), false);
+  assert_eq!(state.state().methods().get("key-1").is_none(), true);
 
   Ok(())
 }

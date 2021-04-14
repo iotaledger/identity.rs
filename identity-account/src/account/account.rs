@@ -4,21 +4,27 @@
 use core::num::NonZeroUsize;
 use futures::executor;
 use hashbrown::HashMap;
+use identity_core::crypto::SetSignature;
 use identity_core::crypto::TrySignatureMut;
-use identity_iota::client::Client;
+use identity_did::verification::MethodScope;
+use identity_did::verification::MethodType;
 use identity_iota::client::Network;
 use identity_iota::did::Document;
 use identity_iota::did::DocumentDiff;
 use identity_iota::did::DID;
 use identity_iota::tangle::MessageId;
+use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 
+use crate::account::Client;
 use crate::chain::ChainData;
 use crate::chain::ChainIndex;
+use crate::chain::ChainKey;
+use crate::chain::TinyMethod;
 use crate::chain::Key;
 use crate::error::Error;
 use crate::error::Result;
@@ -58,6 +64,10 @@ impl<T: Storage> Account<T> {
     })
   }
 
+  pub fn store(&self) -> &T {
+    &self.store
+  }
+
   pub fn autosave(&self) -> AutoSave {
     self.autosave
   }
@@ -66,8 +76,8 @@ impl<T: Storage> Account<T> {
     self.autosave = value;
   }
 
-  pub fn store(&self) -> &T {
-    &self.store
+  pub fn commands(&self) -> usize {
+    self.commands.load(OSC)
   }
 
   // ===========================================================================
@@ -101,14 +111,11 @@ impl<T: Storage> Account<T> {
     let root: Snapshot = self.snapshot(chain).await?;
 
     // Create a DID Document from the snapshot
-    let data: Document = root.state().to_document(&self.store).await?;
-
-    Ok(data)
+    root.state().to_document()
   }
 
   pub async fn create(&self, config: IdentityConfig) -> Result<ChainId> {
-    // Acquire write access to the index - at the moment we can't add multiple
-    // identities concurrently.
+    // Acquire write access to the index.
     let mut index: RwLockWriteGuard<_> = self.index.write()?;
 
     let chain: ChainId = index.next_id();
@@ -141,10 +148,74 @@ impl<T: Storage> Account<T> {
     Ok(chain)
   }
 
+  pub async fn sign<K, U>(&self, key: K, fragment: &str, target: &mut U) -> Result<()>
+  where
+    K: Key,
+    U: Serialize + SetSignature,
+  {
+    // Acquire read access to the index
+    let index: RwLockReadGuard<_> = self.index.read()?;
+
+    // Read the chain id from the index
+    let chain: ChainId = index.get(key).ok_or(Error::ChainIdNotFound)?;
+
+    // Fetch the latest state snapshot
+    let root: Snapshot = self.snapshot(chain).await?;
+
+    let data: &ChainData = root.state();
+    let method: &TinyMethod = data.methods().fetch(fragment)?;
+
+    data.sign_data(&self.store, method.location(), target).await?;
+
+    Ok(())
+  }
+
+  pub async fn create_method<K: Key>(
+    &self,
+    key: K,
+    type_: MethodType,
+    scope: MethodScope,
+    fragment: String,
+  ) -> Result<()> {
+    let command: Command = Command::create_method()
+      .type_(type_)
+      .scope(scope)
+      .fragment(fragment)
+      .finish()?;
+
+    self.execute(key, command).await
+  }
+
+  pub async fn delete_method<K: Key>(&self, key: K, fragment: String) -> Result<()> {
+    let command: Command = Command::delete_method().fragment(fragment).finish()?;
+
+    self.execute(key, command).await
+  }
+
+  pub async fn detach_method<K: Key>(&self, key: K, fragment: String, scope: MethodScope) -> Result<()> {
+    let command: Command = Command::delete_method().fragment(fragment).scope(scope).finish()?;
+
+    self.execute(key, command).await
+  }
+
   pub async fn snapshot(&self, chain: ChainId) -> Result<Snapshot> {
     Repository::new(chain, &self.store).load().await
   }
 
+  pub async fn execute<K: Key>(&self, key: K, command: Command) -> Result<()> {
+    // Acquire read access to the index
+    let index: RwLockReadGuard<_> = self.index.read()?;
+
+    // Read the chain id from the index
+    let chain: ChainId = index.get(key).ok_or(Error::ChainIdNotFound)?;
+
+    // Process the command
+    self.process(chain, command, true).await?;
+
+    Ok(())
+  }
+
+  #[doc(hidden)]
   pub async fn process(&self, chain: ChainId, command: Command, persist: bool) -> Result<()> {
     // Load chain snapshot from storage
     let repo: Repository<'_, T> = Repository::new(chain, &self.store);
@@ -164,18 +235,16 @@ impl<T: Storage> Account<T> {
       let commits: Vec<Commit> = repo.commit(&events, &root).await?;
 
       trace!("[Account::process] Commits = {:#?}", commits);
-      trace!("[Account::process] Self    = {:#?}", self);
+      trace!("[Account::process] Self = {:#?}", self);
 
       let change: Change = Change::new(&commits);
 
-      if matches!(change, Change::None) {
-        return Ok(());
-      }
+      trace!("[Account::process] Change = {:?}", change);
 
       match change {
         Change::Auth => self.process_auth_change(repo).await?,
         Change::Diff => self.process_diff_change(repo, root).await?,
-        Change::None => unreachable!(), // should never get here due to early return above
+        Change::None => {}
       }
     }
 
@@ -209,26 +278,24 @@ impl<T: Storage> Account<T> {
     let new_state: &ChainData = new_root.state();
     let old_state: &ChainData = old_root.state();
 
-    let mut new_data: Document = new_state.to_signed_document(&self.store).await?;
-    let mut old_data: Document = old_state.to_signed_document(&self.store).await?;
-
-    let client: Arc<Client> = self.client(old_data.id().into()).await?;
+    let mut new_doc: Document = new_state.to_signed_document(&self.store).await?;
+    let mut old_doc: Document = old_state.to_signed_document(&self.store).await?;
 
     // Should never fail - to_signed_document always adds signatures
-    new_data.try_signature_mut().unwrap().hide_value();
-    old_data.try_signature_mut().unwrap().hide_value();
+    new_doc.try_signature_mut().unwrap().hide_value();
+    old_doc.try_signature_mut().unwrap().hide_value();
 
     let previous: MessageId = old_state
       .diff_message_id()
       .copied()
       .ok_or(Error::DiffMessageIdNotFound)?;
 
-    let mut diff: DocumentDiff = DocumentDiff::new(&old_data, &new_data, previous)?;
+    let auth: &ChainKey = old_state.authentication()?.location();
+    let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, previous)?;
 
-    old_state
-      .sign_data(&old_state.current_auth(), &self.store, &mut diff)
-      .await?;
+    old_state.sign_data(&self.store, auth, &mut diff).await?;
 
+    let client: Arc<Client> = self.client(old_doc.id().into()).await?;
     let message: MessageId = client.publish_diff(&previous, &diff).await?;
 
     debug!("[Account::process_diff_change] Message Id = {:?}", message);

@@ -11,6 +11,8 @@ pub enum CommandError {
   DocumentAlreadyExists,
   #[error("document not found")]
   DocumentNotFound,
+  #[error("verification method not found")]
+  MethodNotFound,
   #[error("invalid method type - {}", .0.as_str())]
   InvalidMethodType(MethodType),
   #[error("invalid method fragment - {0}")]
@@ -19,4 +21,6 @@ pub enum CommandError {
   MissingRequiredField(&'static str),
   #[error("duplicate key location - {0}")]
   DuplicateKeyLocation(ChainKey),
+  #[error("duplicate key fragment - {}", .0.fragment())]
+  DuplicateKeyFragment(ChainKey),
 }

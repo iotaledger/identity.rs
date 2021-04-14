@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
-use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use std::sync::RwLock;
@@ -31,10 +30,6 @@ impl<T> Shared<T> {
 
 impl<T: Debug> Debug for Shared<T> {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    self
-      .0
-      .try_read()
-      .map_err(|_| FmtError)
-      .and_then(|data| Debug::fmt(&*data, f))
+    Debug::fmt(&self.0, f)
   }
 }

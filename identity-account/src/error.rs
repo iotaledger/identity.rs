@@ -65,6 +65,8 @@ pub enum Error {
   NoChainsFound,
   #[error("Diff message id not found")]
   DiffMessageIdNotFound,
+  #[error("Verification method not found")]
+  MethodNotFound,
   #[error("Command Error: {0}")]
   CommandError(#[from] CommandError),
 }

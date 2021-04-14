@@ -1,20 +1,21 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use hashbrown::HashMap;
 use hashbrown::hash_map::Entry;
+use hashbrown::HashMap;
 use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::crypto::JcsEd25519;
-use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
 use identity_did::document::Document as CoreDocument;
 use identity_did::document::DocumentBuilder;
 use identity_did::error::Error as DIDError;
-use identity_did::service::Service;
+use identity_did::service::Service as CoreService;
 use identity_did::verifiable::Properties as VerifiableProperties;
 use identity_did::verification::Method as CoreMethod;
+use identity_did::verification::MethodData;
+use identity_did::verification::MethodRef as CoreMethodRef;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::Document;
@@ -38,10 +39,153 @@ use crate::types::IndexMap;
 use crate::types::Timestamp;
 
 type Properties = VerifiableProperties<BaseProperties>;
-type BaseDocument = CoreDocument<Properties, Object, ()>;
+type BaseDocument = CoreDocument<Properties, Object, Object>;
 
 pub type RemoteEd25519<'a, T> = JcsEd25519<RemoteSign<'a, T>>;
-pub type MethodData = (MethodScope, Option<Object>);
+
+type Service = CoreService<Object>;
+
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum TinyMethodRef {
+  Embed(TinyMethod),
+  Refer(Fragment),
+}
+
+impl TinyMethodRef {
+  fn fragment(&self) -> &str {
+    match self {
+      Self::Embed(inner) => inner.location.fragment(),
+      Self::Refer(inner) => inner.value(),
+    }
+  }
+
+  fn __filter(method: &TinyMethodRef) -> Option<&TinyMethod> {
+    match method {
+      Self::Embed(inner) => Some(inner),
+      Self::Refer(_) => None,
+    }
+  }
+
+  fn to_core(&self, document: &DID) -> Result<CoreMethodRef> {
+    match self {
+      Self::Embed(inner) => inner.to_core(document).map(CoreMethodRef::Embed),
+      Self::Refer(inner) => document
+        .join(inner.ident())
+        .map(Into::into)
+        .map(CoreMethodRef::Refer)
+        .map_err(Into::into),
+    }
+  }
+}
+
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub struct TinyMethod {
+  #[serde(rename = "1")]
+  location: ChainKey,
+  #[serde(rename = "2")]
+  key_data: MethodData,
+  #[serde(rename = "3")]
+  properties: Option<Object>,
+}
+
+impl TinyMethod {
+  pub fn new(location: ChainKey, key_data: MethodData) -> Self {
+    Self {
+      location,
+      key_data,
+      properties: None,
+    }
+  }
+
+  pub fn location(&self) -> &ChainKey {
+    &self.location
+  }
+
+  pub fn key_data(&self) -> &MethodData {
+    &self.key_data
+  }
+
+  pub fn properties(&self) -> Option<&Object> {
+    self.properties.as_ref()
+  }
+
+  fn to_core(&self, document: &DID) -> Result<CoreMethod> {
+    let kdata: MethodData = self.key_data.clone();
+    let extra: Option<Object> = self.properties.clone();
+
+    self.location.to_core(document, kdata, extra.unwrap_or_default())
+  }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(transparent)]
+pub struct Methods {
+  data: HashMap<MethodScope, Vec<TinyMethodRef>>,
+}
+
+impl Methods {
+  pub fn new() -> Self {
+    Self { data: HashMap::new() }
+  }
+
+  pub fn len(&self) -> usize {
+    self.iter().count()
+  }
+
+  pub fn is_empty(&self) -> bool {
+    self.len() == 0
+  }
+
+  pub fn slice(&self, scope: MethodScope) -> &[TinyMethodRef] {
+    self.data.get(&scope).map(|data| &**data).unwrap_or_default()
+  }
+
+  pub fn iter(&self) -> impl Iterator<Item = &TinyMethod> {
+    self.iter_ref().filter_map(TinyMethodRef::__filter)
+  }
+
+  pub fn iter_ref(&self) -> impl Iterator<Item = &TinyMethodRef> {
+    self
+      .slice(MethodScope::VerificationMethod)
+      .iter()
+      .chain(self.slice(MethodScope::Authentication).iter())
+      .chain(self.slice(MethodScope::AssertionMethod).iter())
+      .chain(self.slice(MethodScope::KeyAgreement).iter())
+      .chain(self.slice(MethodScope::CapabilityDelegation).iter())
+      .chain(self.slice(MethodScope::CapabilityInvocation).iter())
+  }
+
+  pub fn get(&self, fragment: &str) -> Option<&TinyMethod> {
+    self.iter().find(|method| method.location.fragment() == fragment)
+  }
+
+  pub fn fetch(&self, fragment: &str) -> Result<&TinyMethod> {
+    self.get(fragment).ok_or(Error::MethodNotFound)
+  }
+
+  pub fn contains(&self, fragment: &str) -> bool {
+    self.iter().any(|method| method.location.fragment() == fragment)
+  }
+
+  pub fn insert(&mut self, scope: MethodScope, method: TinyMethod) {
+    self.delete(method.location.fragment());
+
+    self.data.entry(scope).or_default().push(TinyMethodRef::Embed(method));
+  }
+
+  pub fn detach(&mut self, scope: MethodScope, fragment: &str) {
+    if let Some(list) = self.data.get_mut(&scope) {
+      list.retain(|method| method.fragment() != fragment);
+    }
+  }
+
+  pub fn delete(&mut self, fragment: &str) {
+    for (_, list) in self.data.iter_mut() {
+      list.retain(|method| method.fragment() != fragment);
+    }
+  }
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ChainData {
@@ -55,12 +199,19 @@ pub struct ChainData {
   // ============== //
   // Document State //
   // ============== //
+  #[serde(skip_serializing_if = "Option::is_none")]
   document: Option<DID>,
+  #[serde(skip_serializing_if = "Option::is_none")]
   controller: Option<DID>,
+  #[serde(skip_serializing_if = "Option::is_none")]
   also_known_as: Option<Vec<Url>>,
-  methods: HashMap<ChainKey, MethodData>,
-  services: Option<Vec<Service<()>>>,
+  #[serde(skip_serializing_if = "Methods::is_empty")]
+  methods: Methods,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  services: Option<Vec<Service>>,
+  #[serde(skip_serializing_if = "Timestamp::is_epoch")]
   created: Timestamp,
+  #[serde(skip_serializing_if = "Timestamp::is_epoch")]
   updated: Timestamp,
 }
 
@@ -74,7 +225,7 @@ impl ChainData {
       document: None,
       controller: None,
       also_known_as: None,
-      methods: HashMap::new(),
+      methods: Methods::new(),
       services: None,
       created: Timestamp::EPOCH,
       updated: Timestamp::EPOCH,
@@ -138,7 +289,9 @@ impl ChainData {
   }
 
   pub fn set_diff_message_id(&mut self, message: MessageId) {
-    self.messages.set_diff_message_id(self.auth_index, self.diff_index(), message);
+    self
+      .messages
+      .set_diff_message_id(self.auth_index, self.diff_index(), message);
   }
 
   // ===========================================================================
@@ -174,35 +327,17 @@ impl ChainData {
     self.updated = timestamp;
   }
 
-  pub fn methods(&self) -> impl Iterator<Item = (&ChainKey, &MethodData)> {
-    self.methods.iter()
+  pub fn methods(&self) -> &Methods {
+    &self.methods
   }
 
-  pub fn methods_mut(&mut self) -> impl Iterator<Item = (&ChainKey, &mut MethodData)> {
-    self.methods.iter_mut()
+  pub fn methods_mut(&mut self) -> &mut Methods {
+    &mut self.methods
   }
 
-  pub fn method(&self, fragment: &str) -> Option<(&ChainKey, &MethodData)> {
-    self.methods().find(|(location, _)| location.fragment() == fragment)
+  pub fn authentication(&self) -> Result<&TinyMethod> {
+    self.methods.fetch(ChainKey::AUTH)
   }
-
-  pub fn method_mut(&mut self, fragment: &str) -> Option<(&ChainKey, &mut MethodData)> {
-    self.methods_mut().find(|(location, _)| location.fragment() == fragment)
-  }
-
-  pub fn set_method(
-    &mut self,
-    location: ChainKey,
-    scope: MethodScope,
-    extra: Option<Object>,
-  ) {
-    // TODO: Replace by fragment
-    self.methods.insert(location, (scope, extra));
-  }
-
-  // pub fn auth(&self) -> ChainKey {
-  //   ChainKey::auth(MethodType::Ed25519VerificationKey2018, self.auth_index())
-  // }
 
   pub fn key(&self, type_: MethodType, fragment: String) -> Result<ChainKey> {
     Ok(ChainKey {
@@ -217,10 +352,7 @@ impl ChainData {
   // DID Document Helpers
   // ===========================================================================
 
-  pub async fn to_document<T>(&self, store: &T) -> Result<Document>
-  where
-    T: Storage,
-  {
+  pub fn to_document(&self) -> Result<Document> {
     let properties: BaseProperties = BaseProperties::new();
     let properties: Properties = VerifiableProperties::new(properties);
     let mut builder: DocumentBuilder<_, _, _> = BaseDocument::builder(properties);
@@ -239,26 +371,31 @@ impl ChainData {
       }
     }
 
-    let authtype: MethodType = MethodType::Ed25519VerificationKey2018; // TODO: FIXME
-    let location: ChainKey = ChainKey::auth(authtype, self.auth_index);
-    let authdata: PublicKey = store.key_get(self.chain, &location).await?;
-    let method: CoreMethod = location.to_core(document_id, &authdata, Default::default())?;
-
-    builder = builder.authentication(method);
-
-    for (location, (scope, extra)) in self.methods.iter() {
-      let public: PublicKey = store.key_get(self.chain, location).await?;
-      let extra: Object = extra.as_ref().cloned().unwrap_or_default();
-      let method: CoreMethod = location.to_core(document_id, &public, extra)?;
-
-      builder = match scope {
-        MethodScope::VerificationMethod => builder.verification_method(method),
-        MethodScope::Authentication => builder.authentication(method),
-        MethodScope::AssertionMethod => builder.assertion_method(method),
-        MethodScope::KeyAgreement => builder.key_agreement(method),
-        MethodScope::CapabilityDelegation => builder.capability_delegation(method),
-        MethodScope::CapabilityInvocation => builder.capability_invocation(method),
+    for method in self.methods.slice(MethodScope::VerificationMethod) {
+      builder = match method.to_core(document_id)? {
+        CoreMethodRef::Embed(inner) => builder.verification_method(inner),
+        CoreMethodRef::Refer(_) => unreachable!(),
       };
+    }
+
+    for method in self.methods.slice(MethodScope::Authentication) {
+      builder = builder.authentication(method.to_core(document_id)?);
+    }
+
+    for method in self.methods.slice(MethodScope::AssertionMethod) {
+      builder = builder.assertion_method(method.to_core(document_id)?);
+    }
+
+    for method in self.methods.slice(MethodScope::KeyAgreement) {
+      builder = builder.key_agreement(method.to_core(document_id)?);
+    }
+
+    for method in self.methods.slice(MethodScope::CapabilityDelegation) {
+      builder = builder.capability_delegation(method.to_core(document_id)?);
+    }
+
+    for method in self.methods.slice(MethodScope::CapabilityInvocation) {
+      builder = builder.capability_invocation(method.to_core(document_id)?);
     }
 
     if let Some(values) = self.services.as_ref() {
@@ -288,18 +425,16 @@ impl ChainData {
   where
     T: Storage,
   {
-    let mut document: Document = self.to_document(store).await?;
+    let mut document: Document = self.to_document()?;
+    let location: &ChainKey = self.authentication()?.location();
 
     // Sign the DID Document with the authentication method
-    let authtype: MethodType = MethodType::Ed25519VerificationKey2018; // TODO: FIXME
-    let location: ChainKey = ChainKey::auth(authtype, self.auth_index);
-
-    Self::sign_document(self.chain, store, &location, &mut document).await?;
+    Self::sign_document(self.chain, store, location, &mut document).await?;
 
     Ok(document)
   }
 
-  pub async fn sign_data<T, U>(&self, location: &ChainKey, store: &T, target: &mut U) -> Result<()>
+  pub async fn sign_data<T, U>(&self, store: &T, location: &ChainKey, target: &mut U) -> Result<()>
   where
     T: Storage,
     U: Serialize + SetSignature,

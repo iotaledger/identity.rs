@@ -13,6 +13,11 @@ impl Timestamp {
   pub fn now() -> Self {
     CoreTimestamp::now().into()
   }
+
+  pub fn is_epoch(&self) -> bool {
+    static EPOCH: &'static Timestamp = &Timestamp::EPOCH;
+    self == EPOCH
+  }
 }
 
 impl From<CoreTimestamp> for Timestamp {

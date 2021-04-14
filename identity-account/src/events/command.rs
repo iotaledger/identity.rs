@@ -2,24 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::PublicKey;
+use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::DID;
 
 use crate::chain::ChainData;
 use crate::chain::ChainKey;
+use crate::chain::TinyMethod;
 use crate::error::Result;
+use crate::events::CommandError;
 use crate::events::Context;
 use crate::events::Event;
-use crate::events::CommandError;
 use crate::storage::Storage;
 use crate::types::ChainId;
 use crate::types::Index;
 use crate::types::Timestamp;
 
-const INVALID_AUTH: &[MethodType] = &[
-  MethodType::MerkleKeyCollection2021,
-];
+const INVALID_AUTH: &[MethodType] = &[MethodType::MerkleKeyCollection2021];
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Command {
@@ -33,6 +33,10 @@ pub enum Command {
     scope: MethodScope,
     fragment: String,
   },
+  DeleteMethod {
+    fragment: String,
+    scope: Option<MethodScope>,
+  },
 }
 
 impl_command_builder!(CreateChain {
@@ -45,6 +49,11 @@ impl_command_builder!(CreateMethod {
   @required type_ MethodType,
   @default  scope MethodScope,
   @required fragment String,
+});
+
+impl_command_builder!(DeleteMethod {
+  @required fragment String,
+  @optional scope MethodScope,
 });
 
 impl Command {
@@ -68,7 +77,10 @@ impl Command {
         authentication,
       } => {
         ensure!(state.document().is_none(), CommandError::DocumentAlreadyExists);
-        ensure!(!INVALID_AUTH.contains(&authentication), CommandError::InvalidMethodType(authentication));
+        ensure!(
+          !INVALID_AUTH.contains(&authentication),
+          CommandError::InvalidMethodType(authentication)
+        );
 
         let location: ChainKey = ChainKey::auth(authentication, Index::ZERO);
 
@@ -81,6 +93,8 @@ impl Command {
 
         // Generate a private key at the initial auth index (`0`)
         let public: PublicKey = store.key_new(chain, &location).await?;
+        let data: MethodData = MethodData::new_b58(public.as_ref());
+        let method: TinyMethod = TinyMethod::new(location, data);
 
         // Generate a new DID URL from the public key
         let network: Option<&str> = network.as_deref();
@@ -89,12 +103,16 @@ impl Command {
 
         Event::respond_one(Event::ChainCreated {
           document,
+          method,
           timestamp: Timestamp::now(),
         })
       }
       Self::CreateMethod { type_, scope, fragment } => {
         ensure!(state.document().is_some(), CommandError::DocumentNotFound);
-        ensure!(fragment != ChainKey::AUTH, CommandError::InvalidMethodFragment("reserved"));
+        ensure!(
+          fragment != ChainKey::AUTH,
+          CommandError::InvalidMethodFragment("reserved")
+        );
 
         let location: ChainKey = state.key(type_, fragment)?;
 
@@ -105,11 +123,32 @@ impl Command {
           CommandError::DuplicateKeyLocation(location)
         );
 
-        let _public: PublicKey = store.key_new(chain, &location).await?;
+        ensure!(
+          !state.methods().contains(location.fragment()),
+          CommandError::DuplicateKeyFragment(location),
+        );
+
+        let pkey: PublicKey = store.key_new(chain, &location).await?;
+        let data: MethodData = MethodData::new_b58(pkey.as_ref());
+        let method: TinyMethod = TinyMethod::new(location, data);
 
         Event::respond_one(Event::MethodCreated {
           scope,
-          location,
+          method,
+          timestamp: Timestamp::now(),
+        })
+      }
+      Self::DeleteMethod { fragment, scope } => {
+        ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+        ensure!(
+          fragment != ChainKey::AUTH,
+          CommandError::InvalidMethodFragment("reserved")
+        );
+        ensure!(state.methods().contains(&fragment), CommandError::MethodNotFound);
+
+        Event::respond_one(Event::MethodDeleted {
+          fragment,
+          scope,
           timestamp: Timestamp::now(),
         })
       }

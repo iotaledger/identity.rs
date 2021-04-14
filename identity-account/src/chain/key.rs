@@ -6,8 +6,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use identity_core::common::Object;
-use identity_core::crypto::PublicKey;
-use identity_did::verification::Method as CoreMethod;
+use identity_did::verification::Method;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodType;
 use identity_iota::did::DID;
@@ -55,12 +54,12 @@ impl ChainKey {
     self.fragment.value()
   }
 
-  pub fn to_core(&self, document: &DID, public: &PublicKey, properties: Object) -> Result<CoreMethod> {
-    CoreMethod::builder(properties)
+  pub fn to_core(&self, document: &DID, key_data: MethodData, properties: Object) -> Result<Method> {
+    Method::builder(properties)
       .id(document.join(self.fragment.ident()).map(Into::into)?)
       .controller(document.clone().into())
       .key_type(self.type_)
-      .key_data(MethodData::new_b58(public.as_ref()))
+      .key_data(key_data)
       .build()
       .map_err(Into::into)
   }

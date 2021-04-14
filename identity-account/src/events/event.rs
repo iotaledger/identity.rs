@@ -6,7 +6,7 @@ use identity_iota::did::DID;
 use identity_iota::tangle::MessageId;
 
 use crate::chain::ChainData;
-use crate::chain::ChainKey;
+use crate::chain::TinyMethod;
 use crate::error::Result;
 use crate::types::ChainId;
 use crate::types::Timestamp;
@@ -20,14 +20,19 @@ pub enum Event {
   DiffMessage {
     message: MessageId,
   },
-
   ChainCreated {
     document: DID,
+    method: TinyMethod,
     timestamp: Timestamp,
   },
   MethodCreated {
     scope: MethodScope,
-    location: ChainKey,
+    method: TinyMethod,
+    timestamp: Timestamp,
+  },
+  MethodDeleted {
+    fragment: String,
+    scope: Option<MethodScope>,
     timestamp: Timestamp,
   },
 }
@@ -51,24 +56,41 @@ impl Event {
     match self {
       Self::AuthMessage { message } => {
         state.set_auth_message_id(message);
-        // state.auth_index.try_increment()?;
+        state.increment_auth_index()?;
       }
       Self::DiffMessage { message } => {
         state.set_diff_message_id(message);
-        // state.diff_index.try_increment()?;
+        state.increment_diff_index()?;
       }
-      Self::ChainCreated { document, timestamp } => {
-        state.set_created(timestamp);
+      Self::ChainCreated {
+        document,
+        method,
+        timestamp,
+      } => {
         state.set_document(document);
+        state.set_created(timestamp);
+        state.methods_mut().insert(MethodScope::VerificationMethod, method);
       }
       Self::MethodCreated {
         scope,
-        location,
+        method,
         timestamp,
       } => {
-        state.append_method(scope, location);
         state.set_updated(timestamp);
-        state.increment_diff_index()?;
+        state.methods_mut().insert(scope, method);
+      }
+      Self::MethodDeleted {
+        fragment,
+        scope,
+        timestamp,
+      } => {
+        state.set_updated(timestamp);
+
+        if let Some(scope) = scope {
+          state.methods_mut().detach(scope, &fragment);
+        } else {
+          state.methods_mut().delete(&fragment);
+        }
       }
     }
 

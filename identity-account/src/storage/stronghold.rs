@@ -224,7 +224,7 @@ impl Storage for Stronghold {
 
     let name: String = fmt_chain(chain);
 
-    let iter: IterA = stream::iter((version.to_u32()..).into_iter());
+    let iter: IterA = stream::iter(((version.to_u32() + 1)..).into_iter());
     let iter: IterB = iter.map(Index::from);
     let iter: IterC = iter.map(Ok);
 
@@ -310,16 +310,17 @@ fn location_event(index: Index) -> Location {
 }
 
 fn location_seed(location: &ChainKey) -> Location {
-  Location::generic("$vault:seed", fmt_key(location))
+  Location::generic(fmt_key("$seed", location), Vec::new())
 }
 
 fn location_skey(location: &ChainKey) -> Location {
-  Location::generic("$vault:skey", fmt_key(location))
+  Location::generic(fmt_key("$skey", location), Vec::new())
 }
 
-fn fmt_key(location: &ChainKey) -> Vec<u8> {
+fn fmt_key(prefix: &str, location: &ChainKey) -> Vec<u8> {
   format!(
-    "{}-{}-{}",
+    "{}:{}-{}-{}",
+    prefix,
     location.auth_index(),
     location.diff_index(),
     location.fragment(),
