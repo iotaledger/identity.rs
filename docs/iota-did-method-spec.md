@@ -70,8 +70,6 @@ Note that this public key MUST also be embedded into the DID Document (See [CRUD
 
 ## DID Messages
 
-TODO: Add MerkleKeyCollection fields
-
 DID Documents associated to the `did:iota` method consist of a chain of data messages, also known as zero-value transactions, published to a Tangle called "DID messages". The Tangle has no understanding of "DID messages" and acts purely as an immutable database. The chain of DID messages and the resulting DID Document must therefore be validated on the client side. 
 
 A DID message can be part of one of two different message chains, the "Integration Chain" (Int Chain) and the "Differentiation Chain" (Diff Chain). The Integration Chain is a chain of "DID Integration Messages" that contain JSON formatted DID Documents as per the W3C standard for DID. The Diff Chain is a chain of "DID Diff Messages" that contain JSON objects which only list the differences between the previous DID Document and the next state. 
@@ -206,7 +204,7 @@ Verification Methods that can be used to sign DID Documents and do other reusabl
 * `Ed25519VerificationKey2018` to create a `JcsEd25519Signature2020`.
 
 Verification Methods that can be used to sign Verifiable Credentials:
-* `MerkleKeyCollection2021` to create a `MerkleKeySignature2021`
+* `MerkleKeyCollection2021` to create a `MerkleKeySignature2021`.
 
 ### Revocation
 
@@ -224,9 +222,43 @@ In addition to the normal signature, a `MerkleKeySignature2021` requires additio
 
 In order to revoke a public key, and therefore any Verifiable Credential or other statements, the DID Document must be updated with a revocation list. The REQUIRED `revocation` field is introduced inside the `MerkleKeyCollection2021` verification method, which lists the indices from the leaves of the Merkle Tree that are revoked. These indices are further compressed via [Roaring Bitmaps](https://roaringbitmap.org/).
 
-## Standardized Services
+### Standardized Services
 
+The IOTA Identity framework also standardized certain `services` that are embedded in the DID Document. It is RECOMMENDED to implement these when implementing the `did:iota` method. 
 
+Currently standardized `services`:
+* Nothing yet. 
 
+## Security Considerations
 
-## Privacy and Security Considerations
+The `did:iota` method is implemented on the IOTA Tangle, a public permissionless and feeless Distributed Ledger Technology (DLT), making it resistant against almost all censorship attack vectors. Up until the `Coordicide` update for the IOTA network, a reliability on the coordinator exists for resolving ordering conflicts. This has a minor censorship possibility, that, in the worst case, can prevent ordering conflicts from being resolving in a DID. However, these can only be published by the possessor of the private key and therefore does not provide a usable attack vector. Lastly, a node may decide to censor DID messages locally, however a user can easily use another node. 
+
+Since DID messages are always to be signed and the 'chain of custody' of the signing key can be traced throughout the identity lifespan, replay, message insertion, deletion, modification and man-in-the-middle attacks are prevented.
+
+### Stateless Identities
+
+Unlike for-purpose Blockchains or Smart contract based DID methods, the IOTA tangle does not track and store the state of DID Document. This prevents dusting attacks against the nodes. However, the client that resolves the DID Document has the responsibility to always validate the entire history of the DID Document as to validate the 'chain of custody' of the signing keys. If a client does not do this, identity hijacking is easily possible. The IOTA Identity framework, which implements the `did:iota` method, provides an easy to use client-side validation implementation. 
+
+### Snapshotting
+
+IOTA allows feeless data and value messages. As such it has a large history of messages combining to several TBs at the time of writing. Most nodes 'snapshot' (forget/delete) older transactions, while they keep the UTXOs stored in the ledger. The snapshot settings are local, therefore all nodes may store a different length of history. As such, older DID messages would not be avaliable at every node. Since the entire history of the DID Document is required for client-side validation, this may become problematic. It is currently recommended to either use your own node, that does not snapshot or use the [Chronicle Permanode](https://github.com/iotaledger/chronicle.rs), which keeps the entire history of the Tangle. This is not a longterm scalable solution, which is why other methods for either keeping state or selective storage is considered. 
+
+### Denial of Service Attacks
+
+There is little to no barrier for users to send any message on the Tangle. While this is a great feature of IOTA, it has its drawbacks in terms of spam. Anyone can post messages on the indexation of an Identity and therefore hinder the query speed. To reduce a users own load on their identity verification speed, the Diff chain was introduced. Other messages that are spammed are identified and dropped as early as possible in the resolution process without triggering any errors or warnings. These are, for example, random data messages or incorrectly signed DID messages. 
+
+IOTA nodes provide pagination for more then 100 messages on an indexation, requiring multiple queries for identities with more messages. Since the queries are the bottleneck in the resolution process, it is recommended to run an IOTA node in a nearby location if fast verification is required on a physical location. Verification may, in the future, also be outsourced to nodes directly, to reduce the effect from spam attacks. If an identity is signficantly spammed, it might be best to create a new identity. 
+
+### Quantum Computer Threats
+
+The `did:iota` method is not more vulnerable to quantum computers then other DID methods. The IOTA Identity framework currently utilizes elliptic curve based cryptographic suites, however adding support in the future for quantum secure cryptographic suites is very easy. The `MerkleKeyCollection2021` verification method is quantum secure in the sense that public keys are only revealed to the holders and verifiers of the Verifiable Credentials, keeping the exposure to this very limited. 
+
+### Private Key Management
+
+All private keys or seeds used for the `did:iota` method should be equally well protected by the users. The signing key is especially important as it controls how keys are added or removed, providing full control over the identity. The IOTA Identity framework utilizes the [Stronghold project](https://github.com/iotaledger/stronghold.rs), a secure software implementation, isolating digital secrets from exposure to hacks or leaks. Developers may choose to add other ways to manage the private keys in a different manner.  
+
+## Privacy Considerations
+
+### Personal Identifiable Information
+
+### Correlation Risks
