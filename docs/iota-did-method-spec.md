@@ -261,4 +261,8 @@ All private keys or seeds used for the `did:iota` method should be equally well 
 
 ### Personal Identifiable Information
 
+The public IOTA Tangle networks are immutable networks. This means that once something is uploaded, it can never be completely removed. That directly conflicts with certain privacy laws such as GDPR, which have a 'right-to-be-forgotten' for Personal Identifiable Information (PII). As such, users should NEVER upload any PII to the Tangle, including inside DID Documents. The IOTA Identity framework allows verifiable credentials to be published to the Tangle directly, however this feature should only be utilized by Identity for Organisation and Identity for Things. 
+
 ### Correlation Risks
+
+As with any DID method, identities can be linked if they are used too often and their usage somehow becomes public. IOTA provides a simple solution for this problem, as creating identities is completely feeless, it is recommended to make new identities on a per interaction basis (Pairwise DIDs). The IOTA Identity framework will provide support for this in the future. 
