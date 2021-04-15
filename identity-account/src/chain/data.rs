@@ -26,7 +26,6 @@ use identity_iota::tangle::TangleRef;
 use serde::Serialize;
 
 use crate::chain::ChainKey;
-use crate::chain::ChainMessages;
 use crate::crypto::RemoteKey;
 use crate::crypto::RemoteSign;
 use crate::error::Error;
@@ -118,7 +117,7 @@ impl TinyMethod {
   }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct Methods {
   data: HashMap<MethodScope, Vec<TinyMethodRef>>,
@@ -195,7 +194,9 @@ pub struct ChainData {
   chain: ChainId,
   auth_index: Index,
   diff_index: IndexMap<Index>,
-  messages: ChainMessages,
+  this_message_id: Option<MessageId>,
+  last_auth_message_id: Option<MessageId>,
+  last_diff_message_id: Option<MessageId>,
   // ============== //
   // Document State //
   // ============== //
@@ -221,7 +222,9 @@ impl ChainData {
       chain,
       auth_index: Index::ZERO,
       diff_index: IndexMap::new(),
-      messages: ChainMessages::new(),
+      this_message_id: None,
+      last_auth_message_id: None,
+      last_diff_message_id: None,
       document: None,
       controller: None,
       also_known_as: None,
@@ -249,7 +252,8 @@ impl ChainData {
   }
 
   pub fn increment_auth_index(&mut self) -> Result<()> {
-    todo!("increment_auth_index")
+    self.auth_index = self.auth_index.try_increment()?;
+    Ok(())
   }
 
   pub fn increment_diff_index(&mut self) -> Result<()> {
@@ -270,28 +274,39 @@ impl ChainData {
   // ===========================================================================
 
   pub fn this_message_id(&self) -> Option<&MessageId> {
-    self.messages.this_message_id(self.auth_index)
+    self.this_message_id.as_ref()
+  }
+
+  pub fn try_this_message_id(&self) -> Result<&MessageId> {
+    self.this_message_id().ok_or(Error::AuthMessageIdNotFound)
   }
 
   pub fn last_message_id(&self) -> Option<&MessageId> {
-    self.messages.last_message_id(self.auth_index)
+    self.last_auth_message_id.as_ref()
+  }
+
+  pub fn try_last_message_id(&self) -> Result<&MessageId> {
+    self.last_message_id().ok_or(Error::AuthMessageIdNotFound)
   }
 
   pub fn diff_message_id(&self) -> Option<&MessageId> {
-    self
-      .messages
-      .diff_message_id(self.auth_index, self.diff_index())
-      .or_else(|| self.this_message_id())
+    self.last_diff_message_id.as_ref().or_else(|| self.this_message_id())
+  }
+
+  pub fn try_diff_message_id(&self) -> Result<&MessageId> {
+    self.diff_message_id().ok_or(Error::DiffMessageIdNotFound)
   }
 
   pub fn set_auth_message_id(&mut self, message: MessageId) {
-    self.messages.set_auth_message_id(self.auth_index, message);
+    if let Some(previous) = self.this_message_id.replace(message) {
+      self.last_auth_message_id = Some(previous);
+    }
+
+    self.last_diff_message_id = None;
   }
 
   pub fn set_diff_message_id(&mut self, message: MessageId) {
-    self
-      .messages
-      .set_diff_message_id(self.auth_index, self.diff_index(), message);
+    self.last_diff_message_id = Some(message);
   }
 
   // ===========================================================================
@@ -407,12 +422,12 @@ impl ChainData {
     // TODO: This completely bypasses method validation...
     let mut document: Document = builder.build().map(Into::into)?;
 
-    if let Some(message) = self.this_message_id() {
-      document.set_message_id(message.clone());
+    if let Some(message) = self.this_message_id {
+      document.set_message_id(message);
     }
 
-    if let Some(message) = self.last_message_id() {
-      document.set_previous_message_id(message.clone());
+    if let Some(message) = self.last_auth_message_id {
+      document.set_previous_message_id(message);
     }
 
     document.set_created(self.created.into());

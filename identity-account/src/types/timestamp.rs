@@ -15,7 +15,7 @@ impl Timestamp {
   }
 
   pub fn is_epoch(&self) -> bool {
-    static EPOCH: &'static Timestamp = &Timestamp::EPOCH;
+    static EPOCH: &Timestamp = &Timestamp::EPOCH;
     self == EPOCH
   }
 }

@@ -69,7 +69,7 @@ impl Event {
       } => {
         state.set_document(document);
         state.set_created(timestamp);
-        state.methods_mut().insert(MethodScope::VerificationMethod, method);
+        state.methods_mut().insert(MethodScope::Authentication, method);
       }
       Self::MethodCreated {
         scope,

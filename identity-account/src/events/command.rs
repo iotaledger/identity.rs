@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::PublicKey;
+use identity_core::common::Url;
+use identity_core::common::Object;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
@@ -56,6 +58,13 @@ impl_command_builder!(DeleteMethod {
   @optional scope MethodScope,
 });
 
+impl_command_builder!(CreateService {
+  @required fragment String,
+  @required type_ String,
+  @required endpoint Url,
+  @default properties Object,
+});
+
 impl Command {
   pub async fn process<T>(self, context: Context<'_, T>) -> Result<Option<Vec<Event>>>
   where
@@ -77,6 +86,7 @@ impl Command {
         authentication,
       } => {
         ensure!(state.document().is_none(), CommandError::DocumentAlreadyExists);
+
         ensure!(
           !INVALID_AUTH.contains(&authentication),
           CommandError::InvalidMethodType(authentication)
@@ -109,6 +119,7 @@ impl Command {
       }
       Self::CreateMethod { type_, scope, fragment } => {
         ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+
         ensure!(
           fragment != ChainKey::AUTH,
           CommandError::InvalidMethodFragment("reserved")
@@ -140,10 +151,12 @@ impl Command {
       }
       Self::DeleteMethod { fragment, scope } => {
         ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+
         ensure!(
           fragment != ChainKey::AUTH,
           CommandError::InvalidMethodFragment("reserved")
         );
+
         ensure!(state.methods().contains(&fragment), CommandError::MethodNotFound);
 
         Event::respond_one(Event::MethodDeleted {

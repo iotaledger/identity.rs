@@ -58,6 +58,12 @@ macro_rules! impl_command_builder {
         }
       }
 
+      impl Default for [<$ident Builder>] {
+        fn default() -> Self {
+          Self::new()
+        }
+      }
+
       impl $crate::events::Command {
         pub fn [<$ident:snake>]() -> [<$ident Builder>] {
           [<$ident Builder>]::new()

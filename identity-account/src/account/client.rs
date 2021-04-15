@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(clippy::module_inception)]
+
 pub use self::client::*;
 
 #[cfg(not(any(test, feature = "mem-client")))]

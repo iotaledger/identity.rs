@@ -64,3 +64,9 @@ impl<T: Debug> Debug for IndexMap<T> {
     f.debug_map().entries(self.0.iter()).finish()
   }
 }
+
+impl<T> Default for IndexMap<T> {
+  fn default() -> Self {
+    Self::new()
+  }
+}

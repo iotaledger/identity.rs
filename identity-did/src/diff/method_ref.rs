@@ -24,7 +24,7 @@ where
 
 impl<T> Diff for MethodRef<T>
 where
-  T: Diff + Serialize + for<'de> Deserialize<'de>,
+  T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
   type Type = DiffMethodRef<T>;
 

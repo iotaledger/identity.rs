@@ -1,7 +1,5 @@
 use identity_account::account::Account;
-use identity_account::account::AutoSave;
 use identity_account::chain::ChainKey;
-use identity_account::chain::Methods;
 use identity_account::chain::TinyMethod;
 use identity_account::error::Error;
 use identity_account::error::Result;
@@ -12,7 +10,6 @@ use identity_account::storage::MemStore;
 use identity_account::types::ChainId;
 use identity_account::types::Index;
 use identity_account::types::Timestamp;
-use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 
 async fn new_account() -> Result<Account<MemStore>> {

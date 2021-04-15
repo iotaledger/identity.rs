@@ -4,9 +4,7 @@
 mod data;
 mod index;
 mod key;
-mod messages;
 
 pub use self::data::*;
 pub use self::index::*;
 pub use self::key::*;
-pub use self::messages::*;

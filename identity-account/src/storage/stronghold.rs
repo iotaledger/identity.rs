@@ -206,7 +206,7 @@ impl Storage for Stronghold {
 
     let store: Store<'_> = self.store(&fmt_chain(chain));
 
-    let future: _ = stream::iter(commits.into_iter().map(encode))
+    let future: _ = stream::iter(commits.iter().map(encode))
       .into_stream()
       .and_then(|(index, json)| store.set(location_event(index), json, None))
       .try_for_each_concurrent(ECL, |()| future::ready(Ok(())));
@@ -224,7 +224,7 @@ impl Storage for Stronghold {
 
     let name: String = fmt_chain(chain);
 
-    let iter: IterA = stream::iter(((version.to_u32() + 1)..).into_iter());
+    let iter: IterA = stream::iter((version.to_u32() + 1)..);
     let iter: IterB = iter.map(Index::from);
     let iter: IterC = iter.map(Ok);
 

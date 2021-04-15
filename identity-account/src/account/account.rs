@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::fmt::Debug;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
 use core::num::NonZeroUsize;
 use futures::executor;
 use hashbrown::HashMap;
@@ -24,8 +27,8 @@ use crate::account::Client;
 use crate::chain::ChainData;
 use crate::chain::ChainIndex;
 use crate::chain::ChainKey;
-use crate::chain::TinyMethod;
 use crate::chain::Key;
+use crate::chain::TinyMethod;
 use crate::error::Error;
 use crate::error::Result;
 use crate::events::Command;
@@ -42,7 +45,6 @@ use crate::utils::Shared;
 
 const OSC: Ordering = Ordering::SeqCst;
 
-#[derive(Debug)]
 pub struct Account<T: Storage> {
   store: T,
   index: Shared<ChainIndex>,
@@ -259,6 +261,7 @@ impl<T: Storage> Account<T> {
   }
 
   async fn process_auth_change(&self, repo: Repository<'_, T>) -> Result<()> {
+    // TODO: Sign with previous auth key
     let new_root: Snapshot = repo.load().await?;
     let new_data: Document = new_root.state().to_signed_document(&self.store).await?;
 
@@ -285,18 +288,16 @@ impl<T: Storage> Account<T> {
     new_doc.try_signature_mut().unwrap().hide_value();
     old_doc.try_signature_mut().unwrap().hide_value();
 
-    let previous: MessageId = old_state
-      .diff_message_id()
-      .copied()
-      .ok_or(Error::DiffMessageIdNotFound)?;
+    let diff_id: &MessageId = old_state.try_diff_message_id()?;
+    let auth_id: &MessageId = old_state.try_this_message_id()?;
 
     let auth: &ChainKey = old_state.authentication()?.location();
-    let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, previous)?;
+    let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
 
     old_state.sign_data(&self.store, auth, &mut diff).await?;
 
     let client: Arc<Client> = self.client(old_doc.id().into()).await?;
-    let message: MessageId = client.publish_diff(&previous, &diff).await?;
+    let message: MessageId = client.publish_diff(auth_id, &diff).await?;
 
     debug!("[Account::process_diff_change] Message Id = {:?}", message);
 
@@ -349,6 +350,20 @@ impl<T: Storage> Drop for Account<T> {
       // ...ensure we write any outstanding changes
       let _ = executor::block_on(self.store.flush_changes());
     }
+  }
+}
+
+impl<T: Storage> Debug for Account<T> {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    let clients: Result<Vec<_>> = self.clients.read().map(|data| data.keys().cloned().collect());
+
+    f.debug_struct("Account")
+      .field("store", &self.store)
+      .field("index", &self.index)
+      .field("clients", &clients)
+      .field("autosave", &self.autosave)
+      .field("commands", &self.commands)
+      .finish()
   }
 }
 

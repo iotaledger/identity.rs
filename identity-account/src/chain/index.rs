@@ -32,7 +32,7 @@ type State = BTreeMap<Slot, ChainId>;
 // Chain Index
 // =============================================================================
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct ChainIndex(State);
 
 impl ChainIndex {

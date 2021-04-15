@@ -97,25 +97,25 @@ where
       .id
       .map(DID::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `id`"))?;
+      .ok_or_else(|| Error::convert("Missing field `service.id`"))?;
 
     let type_: String = diff
       .type_
       .map(String::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `type_`"))?;
+      .ok_or_else(|| Error::convert("Missing field `service.type_`"))?;
 
     let service_endpoint: Url = diff
       .service_endpoint
       .map(Url::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `service_endpoint`"))?;
+      .ok_or_else(|| Error::convert("Missing field `service.service_endpoint`"))?;
 
     let properties: T = diff
       .properties
       .map(T::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `properties`"))?;
+      .ok_or_else(|| Error::convert("Missing field `service.properties`"))?;
 
     Ok(Service {
       id,
