@@ -174,8 +174,12 @@ mod test {
   use crate::did::Document;
   use crate::did::DocumentDiff;
   use crate::tangle::TangleRef;
-  use identity_core::{common::Timestamp, crypto::KeyPair};
-  use identity_did::verification::{MethodBuilder, MethodData, MethodRef, MethodType};
+  use identity_core::common::Timestamp;
+  use identity_core::crypto::KeyPair;
+  use identity_did::verification::MethodBuilder;
+  use identity_did::verification::MethodData;
+  use identity_did::verification::MethodRef;
+  use identity_did::verification::MethodType;
   use iota::MessageId;
 
   #[test]
@@ -195,6 +199,11 @@ mod test {
       chain = DocumentChain::new(AuthChain::new(document).unwrap());
       keys.push(keypair);
     }
+
+    assert_eq!(
+      chain.current().proof().unwrap().verification_method(),
+      "#authentication"
+    );
 
     // =========================================================================
     // Push Auth Chain Update
@@ -221,6 +230,10 @@ mod test {
       new.set_previous_message_id(*chain.auth_message_id());
 
       assert!(chain.current().sign_data(&mut new, keys[0].secret()).is_ok());
+      assert_eq!(
+        chain.current().proof().unwrap().verification_method(),
+        "#authentication"
+      );
 
       keys.push(keypair);
       assert!(chain.try_push_auth(new).is_ok());
