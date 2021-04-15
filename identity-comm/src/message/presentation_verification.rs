@@ -74,7 +74,7 @@ impl PresentationRequest {
   pub fn set_callback_url(&mut self, callback_url: Url) {
     self.callback_url = callback_url;
   }
-  
+
   /// Get a mutable reference to the presentation request's response requested.
   pub fn response_requested_mut(&mut self) -> &mut Option<bool> {
     &mut self.response_requested
@@ -120,20 +120,20 @@ impl PresentationRequest {
     self.timing = timing;
   }
 
-    /// Get a mutable reference to the presentation request's trusted issuers.
-    pub fn trusted_issuers_mut(&mut self) -> &mut Option<Vec<String>> {
-        &mut self.trusted_issuers
-    }
+  /// Get a mutable reference to the presentation request's trusted issuers.
+  pub fn trusted_issuers_mut(&mut self) -> &mut Option<Vec<String>> {
+    &mut self.trusted_issuers
+  }
 
-    /// Get a reference to the presentation request's trusted issuers.
-    pub fn trusted_issuers(&self) -> &Option<Vec<String>> {
-        &self.trusted_issuers
-    }
+  /// Get a reference to the presentation request's trusted issuers.
+  pub fn trusted_issuers(&self) -> &Option<Vec<String>> {
+    &self.trusted_issuers
+  }
 
-    /// Set the presentation request's trusted issuers.
-    pub fn set_trusted_issuers(&mut self, trusted_issuers: Option<Vec<String>>) {
-        self.trusted_issuers = trusted_issuers;
-    }
+  /// Set the presentation request's trusted issuers.
+  pub fn set_trusted_issuers(&mut self, trusted_issuers: Option<Vec<String>>) {
+    self.trusted_issuers = trusted_issuers;
+  }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
