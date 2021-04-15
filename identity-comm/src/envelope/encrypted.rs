@@ -84,14 +84,22 @@ impl Encrypted {
     recipient: &SecretKey,
     sender: &PublicKey,
   ) -> Result<T> {
-    let token: Token = Decoder::new(recipient)
+    let token: Token = self.unpack_bytes(recipient, sender, algorithm)?;
+    T::from_json_slice(&token.1).map_err(Into::into)
+  }
+
+  pub fn unpack_bytes(
+    &self,
+    recipient: &SecretKey,
+    sender: &PublicKey,
+    algorithm: EncryptionAlgorithm,
+  ) -> Result<(JweHeader, Vec<u8>), libjose::Error> {
+    Decoder::new(recipient)
       .public(sender)
       .format(JweFormat::General)
       .algorithm(JweAlgorithm::ECDH_1PU)
       .encryption(algorithm.into())
-      .decode(self.as_bytes())?;
-
-    T::from_json_slice(&token.1).map_err(Into::into)
+      .decode(self.as_bytes())
   }
 }
 
