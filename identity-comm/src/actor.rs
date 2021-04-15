@@ -9,10 +9,11 @@ use riker::actor::Context;
 use riker::actor::Receive;
 use riker::actor::Sender;
 use riker::actor::{actor, ActorRef};
-use riker::actor::{Actor, ActorFactory, ActorFactoryArgs, ActorProducer};
+use riker::actor::{Actor, ActorFactoryArgs};
 use serde::Deserialize;
-use std::{collections::BTreeMap, fmt::Debug, panic::UnwindSafe};
-
+use std::{any::TypeId, collections::HashMap, fmt::Debug};
+use crate::riker::system::Run;
+use riker_patterns::ask::ask;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(tag = "type", content = "value")]
 pub enum DidCommActorMsg {
@@ -40,6 +41,7 @@ pub trait DidCommunicator {
     println!("trustping received");
     sender
       .expect("Sender should exists")
+      // TODO get rid of the Response enum?!
       .try_tell(DidCommActorResponse::Trustping(TrustpingResponse::default()), None)
       .expect("Sender should receive the response");
   }
@@ -103,37 +105,24 @@ impl Actor for DidCommActor {
   }
 }
 
-pub struct EncryptedCommunicator {
-  pub inner: ActorRef<DidCommActorMsg>,
-  pub recipients: PublicKey,
-  pub keypair: KeyPair,
-  pub algorithm: EncryptionAlgorithm,
+pub struct EncryptedDidCommActor {
+  // this prevents from wrapping signed envelopes in encrypted envelopes
+  inner: ActorRef<DidCommActorMsg>,
+  recipients: PublicKey,
+  keypair: KeyPair,
+  algorithm: EncryptionAlgorithm,
 }
-
-#[derive(Debug)]
-pub struct EncryptedCommunicatorProducer {
-  pub inner: ActorRef<DidCommActorMsg>,
-  pub recipients: PublicKey,
-  pub keypair: KeyPair,
-  pub algorithm: EncryptionAlgorithm,
-}
-
-// impl ActorProducer for EncryptedCommunicatorProducer {
-//   type Actor = EncryptedCommunicator;
-// }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum DidCommActorResponse {
   Trustping(TrustpingResponse),
   DidComm(DidResponse),
 }
-use crate::riker::system::Run;
-use riker_patterns::ask::ask;
-impl Actor for EncryptedCommunicator {
+
+impl Actor for EncryptedDidCommActor {
   type Msg = envelope::Encrypted;
   fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
     // TODO async tasks vs channel?
-    //      - channels probably faster but harder to make ergonomic api?
     let msg = msg
       .unpack::<DidCommActorMsg>(self.algorithm, &self.keypair.secret(), &self.recipients)
       .unwrap();
@@ -142,19 +131,10 @@ impl Actor for EncryptedCommunicator {
     ctx
       .run(handle)
       .map(|fut| {
-        // TODO this does not work: self can not receive trustping responses
         let did_comm_msg = async_std::task::block_on(async { fut.await });
         let response_envelope =
           Encrypted::pack(&did_comm_msg, self.algorithm, &[self.recipients.clone()], &self.keypair).unwrap();
-        // {
-        //     // TODO this is not gonna work, need typetag and unpack::<Box<dyn Message>>; we don't want this to depend on DidCommActorResponse
-        //     DidCommActorResponse::Trustping(res) => {
-        //       Encrypted::pack(&res, self.algorithm, &[self.recipients.clone()], &self.keypair).unwrap()
-        //     }
-        //     DidCommActorResponse::DidComm(res) => {
-        //       Encrypted::pack(&res, self.algorithm, &[self.recipients.clone()], &self.keypair).unwrap()
-        //     }
-        //   };
+
         sender
           .expect("sender must be present")
           .try_tell(response_envelope, ctx.myself())
@@ -164,7 +144,7 @@ impl Actor for EncryptedCommunicator {
   }
 }
 
-impl ActorFactoryArgs<(ActorRef<DidCommActorMsg>, PublicKey, KeyPair, EncryptionAlgorithm)> for EncryptedCommunicator {
+impl ActorFactoryArgs<(ActorRef<DidCommActorMsg>, PublicKey, KeyPair, EncryptionAlgorithm)> for EncryptedDidCommActor {
   fn create_args(config: (ActorRef<DidCommActorMsg>, PublicKey, KeyPair, EncryptionAlgorithm)) -> Self {
     Self {
       inner: config.0,
@@ -230,6 +210,7 @@ impl Receive<Trustping> for MyActor {
     }
   }
 }
+
 /// Using default behavior boiler plate for DidRequest
 impl Receive<DidRequest> for MyActor {
   type Msg = MyActorMsg;
@@ -245,5 +226,48 @@ mod test {
   #[test]
   fn test_my_communicator() {
     let _actor = DidCommActor::new(MyCommunicator);
+  }
+}
+
+
+
+/// Dynamic request handler for Actors with Enum Messages.
+/// Allows to 
+struct RequestHandler<'a, A: Actor, M> {
+  mapping: HashMap<TypeId, Box<dyn Fn(&'a mut A, &'a Context<A::Msg>, M, Sender)>>
+}
+
+type HandlerFn<'a, A: Actor, M> = dyn Fn(&'a mut A, &'a Context<A::Msg>, M, Sender);
+
+impl <'a, A: Actor, M: 'static + Message> RequestHandler<'a, A, M> {
+  fn register(&'a mut self, callback: Box<HandlerFn<'a, A, M>>) -> Option<Box<HandlerFn<'a, A, M>>> {
+    self.mapping.insert(TypeId::of::<M>(), callback)
+  }
+  fn get(&'a self, key: &TypeId) -> Option<&Box<HandlerFn<'a, A, M>>> {
+    self.mapping.get(key)
+  }
+  fn handle(&'a self, actor: &'a mut A, ctx: &'a Context<A::Msg>, msg: M, sender: Sender) -> Result<(), String>{
+  
+    let callback = self.get(&TypeId::of::<M>()).ok_or_else(|| format!("callback not found for  {}", std::any::type_name::<M>()))?;
+    callback(actor, ctx, msg, sender);
+    Ok(())
+  }
+}
+
+trait Handler<'a, A: Actor> {
+  type Request;
+  type Response;
+
+  fn handle(&'a self, actor: &'a mut A, ctx: &'a Context<A::Msg>, msg: Self::Request, sender: Sender) -> Result<Self::Response, String>;
+}
+
+struct TrustPingHandler;
+impl <'a> Handler<'a, DidCommActor> for TrustPingHandler {
+  type Request = Trustping;
+  type Response = TrustpingResponse;
+
+  fn handle(&'a self, actor: &'a mut DidCommActor, ctx: &'a Context<<DidCommActor as Actor>::Msg>, msg: Self::Request, sender: Sender) -> Result<Self::Response, String> {
+      dbg!("trustping received");
+      Ok(TrustpingResponse::default())
   }
 }

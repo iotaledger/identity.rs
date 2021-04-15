@@ -2,7 +2,7 @@ use async_std::task;
 use identity_comm::actor::DidCommActor;
 use identity_comm::actor::DidCommActorMsg;
 use identity_comm::actor::DidCommActorResponse;
-use identity_comm::actor::EncryptedCommunicator;
+use identity_comm::actor::EncryptedDidCommActor;
 use identity_comm::message::Message;
 use identity_comm::message::Trustping;
 use identity_comm::message::TrustpingResponse;
@@ -54,12 +54,12 @@ fn main() -> Result<(), String> {
   );
 
   /* -------------------------------------------------------------------------- */
-  /*                                  ENCRYPED                                  */
+  /*                                  ENCRYPTED                                 */
   /* -------------------------------------------------------------------------- */
 
   // send another trustping, this time in an encrypted envelope
   let encrypted_actor = sys
-    .actor_of_args::<EncryptedCommunicator, (ActorRef<DidCommActorMsg>, PublicKey, KeyPair, EncryptionAlgorithm)>(
+    .actor_of_args::<EncryptedDidCommActor, (ActorRef<DidCommActorMsg>, PublicKey, KeyPair, EncryptionAlgorithm)>(
       "did_comm_enc_actor",
       (actor, keypair.public().clone(), keypair.clone(), algo),
     )
@@ -73,7 +73,7 @@ fn main() -> Result<(), String> {
   let res = r_encrypted
     .unpack::<DidCommActorResponse>(algo, keypair.secret(), keypair.public())
     .unwrap();
-    
+
   assert_eq!(
     format!("{:?}", res),
     format!("{:?}", DidCommActorResponse::Trustping(TrustpingResponse::default()))
