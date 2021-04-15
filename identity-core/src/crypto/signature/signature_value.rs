@@ -92,9 +92,9 @@ impl Debug for SignatureValue {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     match self {
       Self::None => f.write_str("None"),
-      Self::Jws(inner) => f.write_fmt(format_args!("Jws({:?})", inner)),
-      Self::Proof(inner) => f.write_fmt(format_args!("Proof({:?})", inner)),
-      Self::Signature(inner) => f.write_fmt(format_args!("Signature({:?})", inner)),
+      Self::Jws(inner) => f.write_fmt(format_args!("Jws({})", inner)),
+      Self::Proof(inner) => f.write_fmt(format_args!("Proof({})", inner)),
+      Self::Signature(inner) => f.write_fmt(format_args!("Signature({})", inner)),
     }
   }
 }
