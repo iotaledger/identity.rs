@@ -18,6 +18,7 @@ serde_json = { version = "1.0", default-features = false }
 url = { version = "2.2", default-features = false, features = ["serde"] }
 zeroize = { version = "1.2", default-features = false, features = ["zeroize_derive"] }
 
+curve25519-dalek = { version = "3.0", default-features = false }
 num-bigint-dig = { version = "0.7", default-features = false }
 rand = { version = "0.8", default-features = false, features = ["getrandom"] }
 rsa = { version = "0.4", default-features = false, features = ["pem", "std"] }
