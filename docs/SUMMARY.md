@@ -32,7 +32,7 @@
         - [API Reference](./libraries/wasm/api-reference.md)
         - [Troubleshooting](./libraries/wasm/soon.md)
 - [Specifications](./specs/README.md)
-    - [DID Method Specification](./specs/method_spec.md)
+    - [DID Method Specification](./specs/iota_did_method_spec.md)
     - [Merkle Key Collection](./specs/merkle_key_collection.md)
 - [Glossary](./glossary.md)
 - [Contribute](./contribute.md)
