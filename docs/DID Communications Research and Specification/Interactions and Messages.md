@@ -12,7 +12,7 @@
 
 `callbackURL` as URL/String, e.g. `https://www.bobsworld.com/` or `https://www.aliceswonderland/serviceEndpoint`: Defines the URL (or API call) where a message is to be delivered to.
 
-`responseRequested` as Boolean, e.g. `true` or `false`: In messages where it is defined it asks the recipient of the message to repond in the form of an acknowledging report. This request can be honored, but doesn't have to be honored. The only exception to this behaviour is in `trust-ping`, where the acknowledging report is to be sent if and only if this field is `true`. If this field is undefined, it counts as `false`.
+`responseRequested` as Boolean, e.g. `true` or `false`: Undefined counts as `false`. In messages where it is defined it asks the recipient of the message to repond in the form of an acknowledging report. This request SHOULD be honored. The only exception to this behaviour is in `trust-ping`, where the acknowledging report MUST be sent if and only if this field is `true` - if it is `false`, the report MUST NOT be send.
 
 `id` as String, e.g. `did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8`: A decentralized identifier.
 
