@@ -20,7 +20,7 @@
 
 `comment` as String: A comment, mostly used to provide more information about something. Can be literally any String.
 
-`challenge` as JSON, e.g. `{"task": "Sign this!"}`: A JSON acting as a signing challenge. Can contain basically anything.
+`challenge` as String, e.g. `Sign this`: A String acting as a signing challenge. Can contain basically anything.
 
 `credential` as [VC JSON](https://w3c-ccg.github.io/vc-json-schemas/): A syntactically valid credential.
 
@@ -344,9 +344,7 @@ authenticationRequest: {
     "context": "authentication/1.0/authenticationRequest",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.bobsworld.com/",
-    "challenge": {
-        "task": "Sign this!"
-    },
+    "challenge": "Sign this!",
     "id": "did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8",
     "timing": {
         "out_time": "1991-04-20T13:37:11Z",
