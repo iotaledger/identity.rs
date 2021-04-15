@@ -1,16 +1,14 @@
 use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::DID;
-
+use uuid::Uuid;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PresentationRequest {
   context: String,
-  thread: String,
+  thread: Uuid,
   callback_url: Url,
   #[serde(skip_serializing_if = "Option::is_none")]
-  credential_types: Option<Vec<String>>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  supported_issuers: Option<Vec<String>>,
+  trusted_issuers: Option<Vec<String>>,
   #[serde(skip_serializing_if = "Option::is_none")]
   response_requested: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -20,13 +18,12 @@ pub struct PresentationRequest {
 }
 
 impl PresentationRequest {
-  pub fn new(context: String, thread: String, callback_url: Url) -> Self {
+  pub fn new(context: String, thread: Uuid, callback_url: Url) -> Self {
     Self {
       context,
       thread,
       callback_url,
-      credential_types: None,
-      supported_issuers: None,
+      trusted_issuers: None,
       response_requested: None,
       id: None,
       timing: None,
@@ -49,17 +46,17 @@ impl PresentationRequest {
   }
 
   /// Get a mutable reference to the presentation request's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the presentation request's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the presentation request's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 
@@ -77,37 +74,7 @@ impl PresentationRequest {
   pub fn set_callback_url(&mut self, callback_url: Url) {
     self.callback_url = callback_url;
   }
-
-  /// Get a mutable reference to the presentation request's credential types.
-  pub fn credential_types_mut(&mut self) -> &mut Option<Vec<String>> {
-    &mut self.credential_types
-  }
-
-  /// Get a reference to the presentation request's credential types.
-  pub fn credential_types(&self) -> &Option<Vec<String>> {
-    &self.credential_types
-  }
-
-  /// Set the presentation request's credential types.
-  pub fn set_credential_types(&mut self, credential_types: Option<Vec<String>>) {
-    self.credential_types = credential_types;
-  }
-
-  /// Get a mutable reference to the presentation request's supported issuers.
-  pub fn supported_issuers_mut(&mut self) -> &mut Option<Vec<String>> {
-    &mut self.supported_issuers
-  }
-
-  /// Get a reference to the presentation request's supported issuers.
-  pub fn supported_issuers(&self) -> &Option<Vec<String>> {
-    &self.supported_issuers
-  }
-
-  /// Set the presentation request's supported issuers.
-  pub fn set_supported_issuers(&mut self, supported_issuers: Option<Vec<String>>) {
-    self.supported_issuers = supported_issuers;
-  }
-
+  
   /// Get a mutable reference to the presentation request's response requested.
   pub fn response_requested_mut(&mut self) -> &mut Option<bool> {
     &mut self.response_requested
@@ -152,12 +119,27 @@ impl PresentationRequest {
   pub fn set_timing(&mut self, timing: Option<Timing>) {
     self.timing = timing;
   }
+
+    /// Get a mutable reference to the presentation request's trusted issuers.
+    pub fn trusted_issuers_mut(&mut self) -> &mut Option<Vec<String>> {
+        &mut self.trusted_issuers
+    }
+
+    /// Get a reference to the presentation request's trusted issuers.
+    pub fn trusted_issuers(&self) -> &Option<Vec<String>> {
+        &self.trusted_issuers
+    }
+
+    /// Set the presentation request's trusted issuers.
+    pub fn set_trusted_issuers(&mut self, trusted_issuers: Option<Vec<String>>) {
+        self.trusted_issuers = trusted_issuers;
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PresentationResponse {
   context: String,
-  thread: String,
+  thread: Uuid,
   verifiable_presentation: Vec<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
   callback_url: Option<Url>,
@@ -170,7 +152,7 @@ pub struct PresentationResponse {
 }
 
 impl PresentationResponse {
-  pub fn new(context: String, thread: String, verifiable_presentation: Vec<String>) -> Self {
+  pub fn new(context: String, thread: Uuid, verifiable_presentation: Vec<String>) -> Self {
     Self {
       context,
       thread,
@@ -198,17 +180,17 @@ impl PresentationResponse {
   }
 
   /// Get a mutable reference to the presentation response's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the presentation response's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the presentation response's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 

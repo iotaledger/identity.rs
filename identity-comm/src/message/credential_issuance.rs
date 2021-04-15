@@ -1,11 +1,12 @@
 use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::DID;
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialSelection {
   context: String,
-  thread: String,
+  thread: Uuid,
   callback_url: Url,
   credential_types: Vec<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -17,7 +18,7 @@ pub struct CredentialSelection {
 }
 
 impl CredentialSelection {
-  pub fn new(context: String, thread: String, callback_url: Url, credential_types: Vec<String>) -> Self {
+  pub fn new(context: String, thread: Uuid, callback_url: Url, credential_types: Vec<String>) -> Self {
     Self {
       context,
       thread,
@@ -45,17 +46,17 @@ impl CredentialSelection {
   }
 
   /// Get a mutable reference to the credential selection's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the credential selection's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the credential selection's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 
@@ -138,7 +139,7 @@ impl CredentialSelection {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialIssuance {
   context: String,
-  thread: String,
+  thread: Uuid,
   credentials: Vec<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
   callback_url: Option<Url>,
@@ -151,7 +152,7 @@ pub struct CredentialIssuance {
 }
 
 impl CredentialIssuance {
-  pub fn new(context: String, thread: String, credentials: Vec<String>) -> Self {
+  pub fn new(context: String, thread: Uuid, credentials: Vec<String>) -> Self {
     Self {
       context,
       thread,
@@ -179,17 +180,17 @@ impl CredentialIssuance {
   }
 
   /// Get a mutable reference to the credential issuance's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the credential issuance's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the credential issuance's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 

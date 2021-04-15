@@ -1,10 +1,10 @@
 use crate::message::Timing;
-
+use uuid::Uuid;
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Report {
   context: String,
   //todo: needs to be an uuid -> https://github.com/uuid-rs/uuid
-  thread: String,
+  thread: Uuid,
   reference: String,
   #[serde(skip_serializing_if = "Option::is_none")]
   comment: Option<String>,
@@ -13,7 +13,7 @@ pub struct Report {
 }
 
 impl Report {
-  pub fn new(context: String, thread: String, reference: String) -> Self {
+  pub fn new(context: String, thread: Uuid, reference: String) -> Self {
     Self {
       context,
       thread,
@@ -24,7 +24,7 @@ impl Report {
   }
   pub fn default() -> Self {
     let default_context = "default-context".to_string();
-    let default_thread = "default-thread".to_string();
+    let default_thread = Uuid::new_v4();
     let default_reference = "default-reference".to_string();
     Self {
       context: default_context,
@@ -51,17 +51,17 @@ impl Report {
   }
 
   /// Get a mutable reference to the report's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the report's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the report's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 

@@ -4,6 +4,7 @@
 use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::DID;
+use uuid::Uuid;
 
 /// A DIDComm Did Discovery Message
 ///
@@ -12,7 +13,7 @@ use identity_iota::did::DID;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DidRequest {
   context: String,
-  thread: String,
+  thread: Uuid,
   callback_url: Url,
   #[serde(skip_serializing_if = "Option::is_none")]
   response_requested: Option<bool>,
@@ -23,7 +24,7 @@ pub struct DidRequest {
 }
 
 impl DidRequest {
-  pub fn new(context: String, thread: String, callback_url: Url) -> Self {
+  pub fn new(context: String, thread: Uuid, callback_url: Url) -> Self {
     Self {
       context,
       thread,
@@ -95,17 +96,17 @@ impl DidRequest {
   }
 
   /// Get a mutable reference to the did request's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the did request's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the did request's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 }
@@ -113,7 +114,7 @@ impl DidRequest {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DidResponse {
   context: String,
-  thread: String,
+  thread: Uuid,
   id: DID,
   #[serde(skip_serializing_if = "Option::is_none")]
   callback_url: Option<Url>,
@@ -124,7 +125,7 @@ pub struct DidResponse {
 }
 
 impl DidResponse {
-  pub fn new(context: String, thread: String, id: DID) -> Self {
+  pub fn new(context: String, thread: Uuid, id: DID) -> Self {
     Self {
       context,
       thread,
@@ -151,17 +152,17 @@ impl DidResponse {
   }
 
   /// Get a mutable reference to the did response's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the did response's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the did response's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 
@@ -247,12 +248,12 @@ mod tests {
     let keypair = KeyPair::new_ed25519().unwrap();
     let did_request = DidRequest::new(
       "did-discovery/1.0/didRequest".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       Url::parse("https://example.com").unwrap(),
     );
     let did_response = DidResponse::new(
       "did-discovery/1.0/didResponse".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       DID::new(&keypair.public().as_ref()).unwrap(),
     );
 
@@ -272,12 +273,12 @@ mod tests {
 
     let did_request = DidRequest::new(
       "did-discovery/1.0/didRequest".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       Url::parse("https://example.com").unwrap(),
     );
     let did_response = DidResponse::new(
       "did-discovery/1.0/didResponse".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       DID::new(&keypair.public().as_ref()).unwrap(),
     );
     let signed_request = did_request
@@ -325,12 +326,12 @@ mod tests {
 
     let did_request = DidRequest::new(
       "did-discovery/1.0/didRequest".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       Url::parse("https://example.com").unwrap(),
     );
     let did_response = DidResponse::new(
       "did-discovery/1.0/didResponse".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       DID::new(&keypair.public().as_ref()).unwrap(),
     );
     let recipients = slice::from_ref(key_alice.public());

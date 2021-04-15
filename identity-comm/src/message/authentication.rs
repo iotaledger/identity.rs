@@ -6,7 +6,7 @@ use identity_core::common::Url;
 use identity_core::crypto::Signature;
 use identity_iota::did::DID;
 use serde::Serialize;
-
+use uuid::Uuid;
 /// A DIDComm Autentication Request
 ///
 /// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md#authentication)
@@ -14,7 +14,7 @@ use serde::Serialize;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AuthenticationRequest {
   context: String,
-  thread: String,
+  thread: Uuid,
   callback_url: Url,
   challenge: String,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -26,7 +26,7 @@ pub struct AuthenticationRequest {
 }
 
 impl AuthenticationRequest {
-  pub fn new(context: String, thread: String, callback_url: Url, challenge: String) -> Self {
+  pub fn new(context: String, thread: Uuid, callback_url: Url, challenge: String) -> Self {
     Self {
       context,
       thread,
@@ -54,17 +54,17 @@ impl AuthenticationRequest {
   }
 
   /// Get a mutable reference to the authentication request's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the authentication request's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the authentication request's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 
@@ -147,7 +147,7 @@ impl AuthenticationRequest {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AuthenticationResponse {
   context: String,
-  thread: String,
+  thread: Uuid,
   signature: Signature,
   #[serde(skip_serializing_if = "Option::is_none")]
   callback_url: Option<Url>,
@@ -160,7 +160,7 @@ pub struct AuthenticationResponse {
 }
 
 impl AuthenticationResponse {
-  pub fn new(context: String, thread: String, signature: Signature) -> Self {
+  pub fn new(context: String, thread: Uuid, signature: Signature) -> Self {
     Self {
       context,
       thread,
@@ -173,17 +173,17 @@ impl AuthenticationResponse {
   }
 
   /// Get a mutable reference to the authentication response's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the authentication response's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the authentication response's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 
@@ -298,7 +298,7 @@ mod tests {
   pub fn test_plaintext_roundtrip() {
     let authentication_request = AuthenticationRequest::new(
       "authentication/1.0/authenticationRequest".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       Url::parse("htpps://example.com").unwrap(),
       "please sign this".to_string(),
     );
@@ -313,7 +313,7 @@ mod tests {
 
     let authentication_request = AuthenticationRequest::new(
       "authentication/1.0/authenticationRequest".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       Url::parse("htpps://example.com").unwrap(),
       "please sign this".to_string(),
     );
@@ -352,7 +352,7 @@ mod tests {
 
     let authentication_request = AuthenticationRequest::new(
       "authentication/1.0/authenticationRequest".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       Url::parse("htpps://example.com").unwrap(),
       "please sign this".to_string(),
     );

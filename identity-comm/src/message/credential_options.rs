@@ -2,11 +2,12 @@ use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::DID;
 use serde::Serialize;
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialOptionRequest {
   context: String,
-  thread: String,
+  thread: Uuid,
   callback_url: Url,
   #[serde(skip_serializing_if = "Option::is_none")]
   response_requested: Option<bool>,
@@ -17,7 +18,7 @@ pub struct CredentialOptionRequest {
 }
 
 impl CredentialOptionRequest {
-  pub fn new(context: String, thread: String, callback_url: Url) -> Self {
+  pub fn new(context: String, thread: Uuid, callback_url: Url) -> Self {
     Self {
       context,
       thread,
@@ -44,17 +45,17 @@ impl CredentialOptionRequest {
   }
 
   /// Get a mutable reference to the credential option request's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the credential option request's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the credential option request's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 
@@ -122,7 +123,7 @@ impl CredentialOptionRequest {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialOptionResponse {
   context: String,
-  thread: String,
+  thread: Uuid,
   credential_types: Vec<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
   callback_url: Option<Url>,
@@ -135,7 +136,7 @@ pub struct CredentialOptionResponse {
 }
 
 impl CredentialOptionResponse {
-  pub fn new(context: String, thread: String, credential_types: Vec<String>) -> Self {
+  pub fn new(context: String, thread: Uuid, credential_types: Vec<String>) -> Self {
     Self {
       context,
       thread,
@@ -163,17 +164,17 @@ impl CredentialOptionResponse {
   }
 
   /// Get a mutable reference to the credential option response's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the credential option response's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the credential option response's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 

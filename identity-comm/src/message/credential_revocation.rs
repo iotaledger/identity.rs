@@ -1,11 +1,12 @@
 use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::DID;
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Revocation {
   context: String,
-  thread: String,
+  thread: Uuid,
   credential_id: String,
   #[serde(skip_serializing_if = "Option::is_none")]
   callback_url: Option<Url>,
@@ -20,7 +21,7 @@ pub struct Revocation {
 }
 
 impl Revocation {
-  pub fn new(context: String, thread: String, credential_id: String) -> Self {
+  pub fn new(context: String, thread: Uuid, credential_id: String) -> Self {
     Self {
       context,
       thread,
@@ -49,17 +50,17 @@ impl Revocation {
   }
 
   /// Get a mutable reference to the revocation's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the revocation's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the revocation's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 

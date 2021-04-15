@@ -4,6 +4,7 @@
 use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::DID;
+use uuid::Uuid;
 
 /// A DIDComm Trustping Message
 ///
@@ -16,7 +17,7 @@ pub struct Trustping {
   #[serde(skip_serializing_if = "Option::is_none")]
   callback_url: Option<Url>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  thread: Option<String>,
+  thread: Option<Uuid>,
   #[serde(skip_serializing_if = "Option::is_none")]
   response_requested: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -98,17 +99,17 @@ impl Trustping {
   }
 
   /// Get a mutable reference to the trustping's thread.
-  pub fn thread_mut(&mut self) -> &mut Option<String> {
+  pub fn thread_mut(&mut self) -> &mut Option<Uuid> {
     &mut self.thread
   }
 
   /// Get a reference to the trustping's thread.
-  pub fn thread(&self) -> &Option<String> {
+  pub fn thread(&self) -> &Option<Uuid> {
     &self.thread
   }
 
   /// Set the trustping's thread.
-  pub fn set_thread(&mut self, thread: Option<String>) {
+  pub fn set_thread(&mut self, thread: Option<Uuid>) {
     self.thread = thread;
   }
 

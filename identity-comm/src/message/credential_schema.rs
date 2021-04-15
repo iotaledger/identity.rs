@@ -2,11 +2,12 @@ use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::DID;
 use serde::Serialize;
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialSchemaRequest {
   context: String,
-  thread: String,
+  thread: Uuid,
   callback_url: Url,
   credential_types: Vec<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -18,7 +19,7 @@ pub struct CredentialSchemaRequest {
 }
 
 impl CredentialSchemaRequest {
-  pub fn new(context: String, thread: String, callback_url: Url, credential_types: Vec<String>) -> Self {
+  pub fn new(context: String, thread: Uuid, callback_url: Url, credential_types: Vec<String>) -> Self {
     Self {
       context,
       thread,
@@ -46,17 +47,17 @@ impl CredentialSchemaRequest {
   }
 
   /// Get a mutable reference to the credential schema request's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the credential schema request's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the credential schema request's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 

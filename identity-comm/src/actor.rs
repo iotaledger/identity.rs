@@ -6,6 +6,7 @@ use riker::actor::Context;
 use riker::actor::Receive;
 use riker::actor::Sender;
 use std::fmt::Debug;
+use uuid::Uuid;
 
 pub trait DidCommunicator {
   type Msg: 'static + Clone + Debug + Send;
@@ -25,7 +26,7 @@ pub trait DidCommunicator {
       .try_tell(
         DidResponse::new(
           "did-discovery/1.0/didResponse".to_string(),
-          "test-thread".to_string(),
+          Uuid::new_v4(),
           "did:example:123".parse().unwrap(),
         ),
         None,

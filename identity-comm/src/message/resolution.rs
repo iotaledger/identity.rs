@@ -5,6 +5,7 @@ use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::Document;
 use identity_iota::did::DID;
+use uuid::Uuid;
 
 /// A DIDComm  Did Resolution Message
 ///
@@ -13,7 +14,7 @@ use identity_iota::did::DID;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ResolutionRequest {
   context: String,
-  thread: String,
+  thread: Uuid,
   callback_url: Url,
   #[serde(skip_serializing_if = "Option::is_none")]
   response_requested: Option<bool>,
@@ -24,7 +25,7 @@ pub struct ResolutionRequest {
 }
 //todo: maybe merge with did discovery, because they are exactly the same
 impl ResolutionRequest {
-  pub fn new(context: String, thread: String, callback_url: Url) -> Self {
+  pub fn new(context: String, thread: Uuid, callback_url: Url) -> Self {
     Self {
       context,
       thread,
@@ -96,17 +97,17 @@ impl ResolutionRequest {
   }
 
   /// Get a mutable reference to the resolution request's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the resolution request's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the resolution request's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 
@@ -129,7 +130,7 @@ impl ResolutionRequest {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ResolutionResponse {
   context: String,
-  thread: String,
+  thread: Uuid,
   did_document: Document,
   #[serde(skip_serializing_if = "Option::is_none")]
   callback_url: Option<Url>,
@@ -140,7 +141,7 @@ pub struct ResolutionResponse {
 }
 
 impl ResolutionResponse {
-  pub fn new(context: String, thread: String, did_document: Document) -> Self {
+  pub fn new(context: String, thread: Uuid, did_document: Document) -> Self {
     Self {
       context,
       thread,
@@ -197,17 +198,17 @@ impl ResolutionResponse {
   }
 
   /// Get a mutable reference to the resolution response's thread.
-  pub fn thread_mut(&mut self) -> &mut String {
+  pub fn thread_mut(&mut self) -> &mut Uuid {
     &mut self.thread
   }
 
   /// Get a reference to the resolution response's thread.
-  pub fn thread(&self) -> &String {
+  pub fn thread(&self) -> &Uuid {
     &self.thread
   }
 
   /// Set the resolution response's thread.
-  pub fn set_thread(&mut self, thread: String) {
+  pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
   }
 
@@ -263,12 +264,12 @@ mod tests {
     let keypair = KeyPair::new_ed25519().unwrap();
     let resolution_request = ResolutionRequest::new(
       "did-discovery/1.0/did-resolution/1.0/resolutionRequest".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       Url::parse("https://example.com").unwrap(),
     );
     let resolotion_respone = ResolutionResponse::new(
       "did-resolution/1.0/resolutionResponse".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       Document::from_keypair(&keypair).unwrap(),
     );
 
@@ -287,12 +288,12 @@ mod tests {
 
     let resolution_request = ResolutionRequest::new(
       "did-discovery/1.0/did-resolution/1.0/resolutionRequest".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       Url::parse("https://example.com").unwrap(),
     );
     let resolotion_respone = ResolutionResponse::new(
       "did-resolution/1.0/resolutionResponse".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       Document::from_keypair(&keypair).unwrap(),
     );
     let signed_envelope_request = resolution_request
@@ -340,12 +341,12 @@ mod tests {
 
     let resolution_request = ResolutionRequest::new(
       "did-discovery/1.0/did-resolution/1.0/resolutionRequest".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       Url::parse("https://example.com").unwrap(),
     );
     let resolotion_respone = ResolutionResponse::new(
       "did-resolution/1.0/resolutionResponse".to_string(),
-      "test-thread".to_string(),
+      Uuid::new_v4(),
       Document::from_keypair(&keypair).unwrap(),
     );
 
