@@ -21,6 +21,8 @@ use crate::verifiable::Properties;
 use crate::verification::Method;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
+use crate::verification::MethodUriType;
+use crate::verification::TryMethod;
 
 #[derive(Debug, Serialize)]
 struct That {
@@ -51,6 +53,9 @@ impl SetSignature for That {
   fn set_signature(&mut self, signature: Signature) {
     self.proof = Some(signature);
   }
+}
+impl TryMethod for That {
+  const TYPE: MethodUriType = MethodUriType::Relative;
 }
 
 // ===========================================================================

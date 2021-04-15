@@ -15,6 +15,8 @@ use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
+use identity_did::verification::MethodUriType;
+use identity_did::verification::TryMethod;
 use serde::Serialize;
 
 use crate::credential::CredentialBuilder;
@@ -193,6 +195,10 @@ impl<T> SetSignature for Credential<T> {
   fn set_signature(&mut self, value: Signature) {
     self.proof.replace(value);
   }
+}
+
+impl<T> TryMethod for Credential<T> {
+  const TYPE: MethodUriType = MethodUriType::Absolute;
 }
 #[cfg(test)]
 mod tests {

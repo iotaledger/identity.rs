@@ -11,6 +11,8 @@ mod method_type;
 
 pub use self::builder::MethodBuilder;
 pub use self::method::Method;
+pub use self::method::MethodUriType;
+pub use self::method::TryMethod;
 pub use self::method_data::MethodData;
 pub use self::method_query::MethodQuery;
 pub use self::method_ref::MethodRef;

@@ -11,6 +11,8 @@ use identity_core::crypto::TrySignatureMut;
 use identity_core::diff::Diff;
 use identity_did::diff::DiffDocument;
 use identity_did::document::Document as CoreDocument;
+use identity_did::verification::MethodUriType;
+use identity_did::verification::TryMethod;
 
 use crate::client::Client;
 use crate::client::Network;
@@ -142,4 +144,8 @@ impl SetSignature for DocumentDiff {
   fn set_signature(&mut self, value: Signature) {
     self.proof = Some(value);
   }
+}
+
+impl TryMethod for DocumentDiff {
+  const TYPE: MethodUriType = MethodUriType::Relative;
 }

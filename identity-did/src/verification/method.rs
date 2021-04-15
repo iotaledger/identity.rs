@@ -132,3 +132,30 @@ impl<T> AsRef<DID> for Method<T> {
     self.id()
   }
 }
+
+/// Represents all possible verification method types
+///
+/// see [W3C DID-core spec](https://www.w3.org/TR/did-core/#relative-did-urls)
+pub enum MethodUriType {
+  Absolute,
+  Relative,
+}
+/// Used to return absolute or relative method URI.
+///
+/// This trait is used to determine whether absolute or relative method URIs
+/// should be used to signing data.
+///
+/// see [W3C DID-core spec](https://www.w3.org/TR/did-core/#relative-did-urls)
+pub trait TryMethod {
+  /// Flag that determines whether absolute or rleative URI
+  const TYPE: MethodUriType;
+  /// Returns String representation of absolute or relative method URI
+  fn method(method_id: &DID) -> Result<String> {
+    let fragment = method_id.fragment().ok_or(Error::InvalidMethodFragment)?;
+
+    Ok(match Self::TYPE {
+      MethodUriType::Absolute => method_id.to_string(),
+      MethodUriType::Relative => core::iter::once('#').chain(fragment.chars()).collect(),
+    })
+  }
+}
