@@ -7,6 +7,7 @@ use identity_iota::tangle::MessageId;
 
 use crate::chain::ChainData;
 use crate::chain::TinyMethod;
+use crate::chain::TinyService;
 use crate::error::Result;
 use crate::types::ChainId;
 use crate::types::Timestamp;
@@ -33,6 +34,14 @@ pub enum Event {
   MethodDeleted {
     fragment: String,
     scope: Option<MethodScope>,
+    timestamp: Timestamp,
+  },
+  ServiceCreated {
+    service: TinyService,
+    timestamp: Timestamp,
+  },
+  ServiceDeleted {
+    fragment: String,
     timestamp: Timestamp,
   },
 }
@@ -91,6 +100,14 @@ impl Event {
         } else {
           state.methods_mut().delete(&fragment);
         }
+      }
+      Self::ServiceCreated { service, timestamp } => {
+        state.set_updated(timestamp);
+        state.services_mut().insert(service);
+      }
+      Self::ServiceDeleted { fragment, timestamp } => {
+        state.set_updated(timestamp);
+        state.services_mut().delete(&fragment);
       }
     }
 

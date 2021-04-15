@@ -35,8 +35,8 @@ macro_rules! impl_command_builder {
 
       impl [<$ident Builder>] {
         $(
-          pub fn $field(mut self, value: $ty) -> Self {
-            self.$field = Some(value);
+          pub fn $field<VALUE: Into<$ty>>(mut self, value: VALUE) -> Self {
+            self.$field = Some(value.into());
             self
           }
         )*

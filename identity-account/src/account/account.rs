@@ -7,6 +7,7 @@ use core::fmt::Result as FmtResult;
 use core::num::NonZeroUsize;
 use futures::executor;
 use hashbrown::HashMap;
+use identity_core::common::Url;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_did::verification::MethodScope;
@@ -177,7 +178,7 @@ impl<T: Storage> Account<T> {
     key: K,
     type_: MethodType,
     scope: MethodScope,
-    fragment: String,
+    fragment: &str,
   ) -> Result<()> {
     let command: Command = Command::create_method()
       .type_(type_)
@@ -188,20 +189,36 @@ impl<T: Storage> Account<T> {
     self.execute(key, command).await
   }
 
-  pub async fn delete_method<K: Key>(&self, key: K, fragment: String) -> Result<()> {
+  pub async fn delete_method<K: Key>(&self, key: K, fragment: &str) -> Result<()> {
     let command: Command = Command::delete_method().fragment(fragment).finish()?;
 
     self.execute(key, command).await
   }
 
-  pub async fn detach_method<K: Key>(&self, key: K, fragment: String, scope: MethodScope) -> Result<()> {
+  pub async fn detach_method<K: Key>(&self, key: K, fragment: &str, scope: MethodScope) -> Result<()> {
     let command: Command = Command::delete_method().fragment(fragment).scope(scope).finish()?;
 
     self.execute(key, command).await
   }
 
+  pub async fn create_service<K: Key>(&self, key: K, fragment: &str, type_: &str, endpoint: Url) -> Result<()> {
+    let command: Command = Command::create_service()
+      .fragment(fragment)
+      .type_(type_)
+      .endpoint(endpoint)
+      .finish()?;
+
+    self.execute(key, command).await
+  }
+
+  pub async fn delete_service<K: Key>(&self, key: K, fragment: &str) -> Result<()> {
+    let command: Command = Command::delete_service().fragment(fragment).finish()?;
+
+    self.execute(key, command).await
+  }
+
   pub async fn snapshot(&self, chain: ChainId) -> Result<Snapshot> {
-    Repository::new(chain, &self.store).load().await
+    Repository::new(&self.store).load(chain).await
   }
 
   pub async fn execute<K: Key>(&self, key: K, command: Command) -> Result<()> {
@@ -220,8 +237,8 @@ impl<T: Storage> Account<T> {
   #[doc(hidden)]
   pub async fn process(&self, chain: ChainId, command: Command, persist: bool) -> Result<()> {
     // Load chain snapshot from storage
-    let repo: Repository<'_, T> = Repository::new(chain, &self.store);
-    let root: Snapshot = repo.load().await?;
+    let repo: Repository<'_, T> = Repository::new(&self.store);
+    let root: Snapshot = repo.load(chain).await?;
 
     trace!("[Account::process] Repo = {:#?}", repo);
     trace!("[Account::process] Root = {:#?}", root);
@@ -244,8 +261,8 @@ impl<T: Storage> Account<T> {
       trace!("[Account::process] Change = {:?}", change);
 
       match change {
-        Change::Auth => self.process_auth_change(repo).await?,
-        Change::Diff => self.process_diff_change(repo, root).await?,
+        Change::Auth => self.process_auth_change(chain, repo).await?,
+        Change::Diff => self.process_diff_change(chain, repo, root).await?,
         Change::None => {}
       }
     }
@@ -260,9 +277,9 @@ impl<T: Storage> Account<T> {
     Ok(())
   }
 
-  async fn process_auth_change(&self, repo: Repository<'_, T>) -> Result<()> {
+  async fn process_auth_change(&self, chain: ChainId, repo: Repository<'_, T>) -> Result<()> {
     // TODO: Sign with previous auth key
-    let new_root: Snapshot = repo.load().await?;
+    let new_root: Snapshot = repo.load(chain).await?;
     let new_data: Document = new_root.state().to_signed_document(&self.store).await?;
 
     let client: Arc<Client> = self.client(new_data.id().into()).await?;
@@ -275,8 +292,8 @@ impl<T: Storage> Account<T> {
     Ok(())
   }
 
-  async fn process_diff_change(&self, repo: Repository<'_, T>, old_root: Snapshot) -> Result<()> {
-    let new_root: Snapshot = repo.load().await?;
+  async fn process_diff_change(&self, chain: ChainId, repo: Repository<'_, T>, old_root: Snapshot) -> Result<()> {
+    let new_root: Snapshot = repo.load(chain).await?;
 
     let new_state: &ChainData = new_root.state();
     let old_state: &ChainData = old_root.state();
@@ -288,8 +305,8 @@ impl<T: Storage> Account<T> {
     new_doc.try_signature_mut().unwrap().hide_value();
     old_doc.try_signature_mut().unwrap().hide_value();
 
-    let diff_id: &MessageId = old_state.try_diff_message_id()?;
-    let auth_id: &MessageId = old_state.try_this_message_id()?;
+    let diff_id: &MessageId = new_state.diff_message_id();
+    let auth_id: &MessageId = new_state.this_message_id();
 
     let auth: &ChainKey = old_state.authentication()?.location();
     let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
@@ -307,13 +324,11 @@ impl<T: Storage> Account<T> {
   }
 
   async fn save(&self, force: bool) -> Result<()> {
-    let count: usize = self.commands.load(OSC);
-
     match self.autosave {
       AutoSave::Every => {
         self.store.flush_changes().await?;
       }
-      AutoSave::Batch(step) if force || count % step.get() == 0 => {
+      AutoSave::Batch(step) if force || self.commands() % step.get() == 0 => {
         self.store.flush_changes().await?;
       }
       AutoSave::Batch(_) | AutoSave::Never => {}
@@ -346,7 +361,7 @@ impl<T: Storage> Account<T> {
 impl<T: Storage> Drop for Account<T> {
   fn drop(&mut self) {
     // if we've executed any commands...
-    if self.commands.load(OSC) > 0 {
+    if self.commands() > 0 {
       // ...ensure we write any outstanding changes
       let _ = executor::block_on(self.store.flush_changes());
     }

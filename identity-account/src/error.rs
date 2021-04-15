@@ -69,6 +69,8 @@ pub enum Error {
   AuthMessageIdNotFound,
   #[error("Verification method not found")]
   MethodNotFound,
+  #[error("Service not found")]
+  ServiceNotFound,
   #[error("Command Error: {0}")]
   CommandError(#[from] CommandError),
 }

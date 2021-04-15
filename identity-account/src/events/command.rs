@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::crypto::PublicKey;
-use identity_core::common::Url;
 use identity_core::common::Object;
+use identity_core::common::Url;
+use identity_core::crypto::PublicKey;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
@@ -12,6 +12,7 @@ use identity_iota::did::DID;
 use crate::chain::ChainData;
 use crate::chain::ChainKey;
 use crate::chain::TinyMethod;
+use crate::chain::TinyService;
 use crate::error::Result;
 use crate::events::CommandError;
 use crate::events::Context;
@@ -21,25 +22,7 @@ use crate::types::ChainId;
 use crate::types::Index;
 use crate::types::Timestamp;
 
-const INVALID_AUTH: &[MethodType] = &[MethodType::MerkleKeyCollection2021];
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum Command {
-  CreateChain {
-    network: Option<String>,
-    shard: Option<String>,
-    authentication: MethodType,
-  },
-  CreateMethod {
-    type_: MethodType,
-    scope: MethodScope,
-    fragment: String,
-  },
-  DeleteMethod {
-    fragment: String,
-    scope: Option<MethodScope>,
-  },
-}
+const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
 impl_command_builder!(CreateChain {
   @optional network String,
@@ -62,8 +45,39 @@ impl_command_builder!(CreateService {
   @required fragment String,
   @required type_ String,
   @required endpoint Url,
-  @default properties Object,
+  @optional properties Object,
 });
+
+impl_command_builder!(DeleteService {
+  @required fragment String,
+});
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Command {
+  CreateChain {
+    network: Option<String>,
+    shard: Option<String>,
+    authentication: MethodType,
+  },
+  CreateMethod {
+    type_: MethodType,
+    scope: MethodScope,
+    fragment: String,
+  },
+  DeleteMethod {
+    fragment: String,
+    scope: Option<MethodScope>,
+  },
+  CreateService {
+    fragment: String,
+    type_: String,
+    endpoint: Url,
+    properties: Option<Object>,
+  },
+  DeleteService {
+    fragment: String,
+  },
+}
 
 impl Command {
   pub async fn process<T>(self, context: Context<'_, T>) -> Result<Option<Vec<Event>>>
@@ -74,10 +88,10 @@ impl Command {
     let store: &T = context.store();
     let chain: ChainId = state.chain();
 
-    debug!("[Command::process] Chain   = {:#?}", chain);
+    debug!("[Command::process] Chain = {:#?}", chain);
     debug!("[Command::process] Command = {:#?}", self);
-    trace!("[Command::process] State   = {:#?}", state);
-    trace!("[Command::process] Store   = {:#?}", store);
+    trace!("[Command::process] State = {:#?}", state);
+    trace!("[Command::process] Store = {:#?}", store);
 
     match self {
       Self::CreateChain {
@@ -88,7 +102,7 @@ impl Command {
         ensure!(state.document().is_none(), CommandError::DocumentAlreadyExists);
 
         ensure!(
-          !INVALID_AUTH.contains(&authentication),
+          AUTH_TYPES.contains(&authentication),
           CommandError::InvalidMethodType(authentication)
         );
 
@@ -162,6 +176,35 @@ impl Command {
         Event::respond_one(Event::MethodDeleted {
           fragment,
           scope,
+          timestamp: Timestamp::now(),
+        })
+      }
+      Self::CreateService {
+        fragment,
+        type_,
+        endpoint,
+        properties,
+      } => {
+        ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+
+        ensure!(
+          !state.services().contains(&fragment),
+          CommandError::DuplicateServiceFragment(fragment),
+        );
+
+        let service: TinyService = TinyService::new(fragment, type_, endpoint, properties);
+
+        Event::respond_one(Event::ServiceCreated {
+          service,
+          timestamp: Timestamp::now(),
+        })
+      }
+      Self::DeleteService { fragment } => {
+        ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.services().contains(&fragment), CommandError::ServiceNotFound);
+
+        Event::respond_one(Event::ServiceDeleted {
+          fragment,
           timestamp: Timestamp::now(),
         })
       }

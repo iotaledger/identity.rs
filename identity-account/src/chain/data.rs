@@ -41,150 +41,6 @@ type BaseDocument = CoreDocument<Properties, Object, Object>;
 
 pub type RemoteEd25519<'a, T> = JcsEd25519<RemoteSign<'a, T>>;
 
-type Service = CoreService<Object>;
-
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-#[serde(untagged)]
-pub enum TinyMethodRef {
-  Embed(TinyMethod),
-  Refer(Fragment),
-}
-
-impl TinyMethodRef {
-  fn fragment(&self) -> &str {
-    match self {
-      Self::Embed(inner) => inner.location.fragment(),
-      Self::Refer(inner) => inner.value(),
-    }
-  }
-
-  fn __filter(method: &TinyMethodRef) -> Option<&TinyMethod> {
-    match method {
-      Self::Embed(inner) => Some(inner),
-      Self::Refer(_) => None,
-    }
-  }
-
-  fn to_core(&self, document: &DID) -> Result<CoreMethodRef> {
-    match self {
-      Self::Embed(inner) => inner.to_core(document).map(CoreMethodRef::Embed),
-      Self::Refer(inner) => document
-        .join(inner.ident())
-        .map(Into::into)
-        .map(CoreMethodRef::Refer)
-        .map_err(Into::into),
-    }
-  }
-}
-
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct TinyMethod {
-  #[serde(rename = "1")]
-  location: ChainKey,
-  #[serde(rename = "2")]
-  key_data: MethodData,
-  #[serde(rename = "3")]
-  properties: Option<Object>,
-}
-
-impl TinyMethod {
-  pub fn new(location: ChainKey, key_data: MethodData) -> Self {
-    Self {
-      location,
-      key_data,
-      properties: None,
-    }
-  }
-
-  pub fn location(&self) -> &ChainKey {
-    &self.location
-  }
-
-  pub fn key_data(&self) -> &MethodData {
-    &self.key_data
-  }
-
-  pub fn properties(&self) -> Option<&Object> {
-    self.properties.as_ref()
-  }
-
-  fn to_core(&self, document: &DID) -> Result<CoreMethod> {
-    let kdata: MethodData = self.key_data.clone();
-    let extra: Option<Object> = self.properties.clone();
-
-    self.location.to_core(document, kdata, extra.unwrap_or_default())
-  }
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-#[serde(transparent)]
-pub struct Methods {
-  data: HashMap<MethodScope, Vec<TinyMethodRef>>,
-}
-
-impl Methods {
-  pub fn new() -> Self {
-    Self { data: HashMap::new() }
-  }
-
-  pub fn len(&self) -> usize {
-    self.iter().count()
-  }
-
-  pub fn is_empty(&self) -> bool {
-    self.len() == 0
-  }
-
-  pub fn slice(&self, scope: MethodScope) -> &[TinyMethodRef] {
-    self.data.get(&scope).map(|data| &**data).unwrap_or_default()
-  }
-
-  pub fn iter(&self) -> impl Iterator<Item = &TinyMethod> {
-    self.iter_ref().filter_map(TinyMethodRef::__filter)
-  }
-
-  pub fn iter_ref(&self) -> impl Iterator<Item = &TinyMethodRef> {
-    self
-      .slice(MethodScope::VerificationMethod)
-      .iter()
-      .chain(self.slice(MethodScope::Authentication).iter())
-      .chain(self.slice(MethodScope::AssertionMethod).iter())
-      .chain(self.slice(MethodScope::KeyAgreement).iter())
-      .chain(self.slice(MethodScope::CapabilityDelegation).iter())
-      .chain(self.slice(MethodScope::CapabilityInvocation).iter())
-  }
-
-  pub fn get(&self, fragment: &str) -> Option<&TinyMethod> {
-    self.iter().find(|method| method.location.fragment() == fragment)
-  }
-
-  pub fn fetch(&self, fragment: &str) -> Result<&TinyMethod> {
-    self.get(fragment).ok_or(Error::MethodNotFound)
-  }
-
-  pub fn contains(&self, fragment: &str) -> bool {
-    self.iter().any(|method| method.location.fragment() == fragment)
-  }
-
-  pub fn insert(&mut self, scope: MethodScope, method: TinyMethod) {
-    self.delete(method.location.fragment());
-
-    self.data.entry(scope).or_default().push(TinyMethodRef::Embed(method));
-  }
-
-  pub fn detach(&mut self, scope: MethodScope, fragment: &str) {
-    if let Some(list) = self.data.get_mut(&scope) {
-      list.retain(|method| method.fragment() != fragment);
-    }
-  }
-
-  pub fn delete(&mut self, fragment: &str) {
-    for (_, list) in self.data.iter_mut() {
-      list.retain(|method| method.fragment() != fragment);
-    }
-  }
-}
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ChainData {
   // =========== //
@@ -210,8 +66,8 @@ pub struct ChainData {
   also_known_as: Option<Vec<Url>>,
   #[serde(skip_serializing_if = "Methods::is_empty")]
   methods: Methods,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  services: Option<Vec<Service>>,
+  #[serde(skip_serializing_if = "Services::is_empty")]
+  services: Services,
   #[serde(skip_serializing_if = "Timestamp::is_epoch")]
   created: Timestamp,
   #[serde(skip_serializing_if = "Timestamp::is_epoch")]
@@ -231,7 +87,7 @@ impl ChainData {
       controller: None,
       also_known_as: None,
       methods: Methods::new(),
-      services: None,
+      services: Services::new(),
       created: Timestamp::EPOCH,
       updated: Timestamp::EPOCH,
     }
@@ -337,6 +193,14 @@ impl ChainData {
     &mut self.methods
   }
 
+  pub fn services(&self) -> &Services {
+    &self.services
+  }
+
+  pub fn services_mut(&mut self) -> &mut Services {
+    &mut self.services
+  }
+
   pub fn authentication(&self) -> Result<&TinyMethod> {
     self.methods.fetch(ChainKey::AUTH)
   }
@@ -400,10 +264,8 @@ impl ChainData {
       builder = builder.capability_invocation(method.to_core(document_id)?);
     }
 
-    if let Some(values) = self.services.as_ref() {
-      for value in values {
-        builder = builder.service(value.clone());
-      }
+    for service in self.services.iter() {
+      builder = builder.service(service.to_core(document_id)?);
     }
 
     // TODO: This completely bypasses method validation...
@@ -486,5 +348,242 @@ impl ChainData {
         Err(DIDError::InvalidMethodType.into())
       }
     }
+  }
+}
+
+// =============================================================================
+// =============================================================================
+
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum TinyMethodRef {
+  Embed(TinyMethod),
+  Refer(Fragment),
+}
+
+impl TinyMethodRef {
+  fn fragment(&self) -> &str {
+    match self {
+      Self::Embed(inner) => inner.location.fragment(),
+      Self::Refer(inner) => inner.value(),
+    }
+  }
+
+  fn __filter(method: &TinyMethodRef) -> Option<&TinyMethod> {
+    match method {
+      Self::Embed(inner) => Some(inner),
+      Self::Refer(_) => None,
+    }
+  }
+
+  fn to_core(&self, document: &DID) -> Result<CoreMethodRef> {
+    match self {
+      Self::Embed(inner) => inner.to_core(document).map(CoreMethodRef::Embed),
+      Self::Refer(inner) => document
+        .join(inner.ident())
+        .map(Into::into)
+        .map(CoreMethodRef::Refer)
+        .map_err(Into::into),
+    }
+  }
+}
+
+// =============================================================================
+// =============================================================================
+
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub struct TinyMethod {
+  #[serde(rename = "1")]
+  location: ChainKey,
+  #[serde(rename = "2")]
+  key_data: MethodData,
+  #[serde(rename = "3")]
+  properties: Option<Object>,
+}
+
+impl TinyMethod {
+  pub fn new(location: ChainKey, key_data: MethodData) -> Self {
+    Self {
+      location,
+      key_data,
+      properties: None,
+    }
+  }
+
+  pub fn location(&self) -> &ChainKey {
+    &self.location
+  }
+
+  pub fn key_data(&self) -> &MethodData {
+    &self.key_data
+  }
+
+  pub fn properties(&self) -> Option<&Object> {
+    self.properties.as_ref()
+  }
+
+  fn to_core(&self, document: &DID) -> Result<CoreMethod> {
+    let kdata: MethodData = self.key_data.clone();
+    let extra: Option<Object> = self.properties.clone();
+
+    self.location.to_core(document, kdata, extra.unwrap_or_default())
+  }
+}
+
+// =============================================================================
+// =============================================================================
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(transparent)]
+pub struct Methods {
+  data: HashMap<MethodScope, Vec<TinyMethodRef>>,
+}
+
+impl Methods {
+  pub fn new() -> Self {
+    Self { data: HashMap::new() }
+  }
+
+  pub fn len(&self) -> usize {
+    self.iter().count()
+  }
+
+  pub fn is_empty(&self) -> bool {
+    self.len() == 0
+  }
+
+  pub fn slice(&self, scope: MethodScope) -> &[TinyMethodRef] {
+    self.data.get(&scope).map(|data| &**data).unwrap_or_default()
+  }
+
+  pub fn iter(&self) -> impl Iterator<Item = &TinyMethod> {
+    self.iter_ref().filter_map(TinyMethodRef::__filter)
+  }
+
+  pub fn iter_ref(&self) -> impl Iterator<Item = &TinyMethodRef> {
+    self
+      .slice(MethodScope::VerificationMethod)
+      .iter()
+      .chain(self.slice(MethodScope::Authentication).iter())
+      .chain(self.slice(MethodScope::AssertionMethod).iter())
+      .chain(self.slice(MethodScope::KeyAgreement).iter())
+      .chain(self.slice(MethodScope::CapabilityDelegation).iter())
+      .chain(self.slice(MethodScope::CapabilityInvocation).iter())
+  }
+
+  pub fn get(&self, fragment: &str) -> Option<&TinyMethod> {
+    self.iter().find(|method| method.location.fragment() == fragment)
+  }
+
+  pub fn fetch(&self, fragment: &str) -> Result<&TinyMethod> {
+    self.get(fragment).ok_or(Error::MethodNotFound)
+  }
+
+  pub fn contains(&self, fragment: &str) -> bool {
+    self.iter().any(|method| method.location.fragment() == fragment)
+  }
+
+  pub fn insert(&mut self, scope: MethodScope, method: TinyMethod) {
+    self.delete(method.location.fragment());
+
+    self.data.entry(scope).or_default().push(TinyMethodRef::Embed(method));
+  }
+
+  pub fn detach(&mut self, scope: MethodScope, fragment: &str) {
+    if let Some(list) = self.data.get_mut(&scope) {
+      list.retain(|method| method.fragment() != fragment);
+    }
+  }
+
+  pub fn delete(&mut self, fragment: &str) {
+    for (_, list) in self.data.iter_mut() {
+      list.retain(|method| method.fragment() != fragment);
+    }
+  }
+}
+
+// =============================================================================
+// =============================================================================
+
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub struct TinyService {
+  #[serde(rename = "1")]
+  fragment: Fragment,
+  #[serde(rename = "2")]
+  type_: String,
+  #[serde(rename = "3")]
+  endpoint: Url,
+  #[serde(rename = "4")]
+  properties: Option<Object>,
+}
+
+impl TinyService {
+  pub fn new(fragment: String, type_: String, endpoint: Url, properties: Option<Object>) -> Self {
+    Self {
+      fragment: Fragment::new(fragment),
+      type_,
+      endpoint,
+      properties,
+    }
+  }
+
+  fn fragment(&self) -> &str {
+    self.fragment.value()
+  }
+
+  fn to_core(&self, document: &DID) -> Result<CoreService<Object>> {
+    CoreService::builder(self.properties.clone().unwrap_or_default())
+      .id(document.join(self.fragment.ident()).map(Into::into)?)
+      .type_(&self.type_)
+      .service_endpoint(self.endpoint.clone())
+      .build()
+      .map_err(Into::into)
+  }
+}
+
+// =============================================================================
+// =============================================================================
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(transparent)]
+pub struct Services {
+  data: Vec<TinyService>,
+}
+
+impl Services {
+  pub fn new() -> Self {
+    Self { data: Vec::new() }
+  }
+
+  pub fn len(&self) -> usize {
+    self.data.len()
+  }
+
+  pub fn is_empty(&self) -> bool {
+    self.data.is_empty()
+  }
+
+  pub fn iter(&self) -> impl Iterator<Item = &TinyService> {
+    self.data.iter()
+  }
+
+  pub fn get(&self, fragment: &str) -> Option<&TinyService> {
+    self.iter().find(|service| service.fragment() == fragment)
+  }
+
+  pub fn fetch(&self, fragment: &str) -> Result<&TinyService> {
+    self.get(fragment).ok_or(Error::ServiceNotFound)
+  }
+
+  pub fn contains(&self, fragment: &str) -> bool {
+    self.iter().any(|service| service.fragment() == fragment)
+  }
+
+  pub fn insert(&mut self, service: TinyService) {
+    self.data.push(service);
+  }
+
+  pub fn delete(&mut self, fragment: &str) {
+    self.data.retain(|service| service.fragment() != fragment);
   }
 }

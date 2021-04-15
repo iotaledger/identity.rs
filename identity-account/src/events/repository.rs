@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::cell::Cell;
 use futures::TryStreamExt;
 
 use crate::chain::ChainData;
@@ -12,68 +11,47 @@ use crate::storage::Storage;
 use crate::types::ChainId;
 use crate::types::Index;
 
+// TODO: Make configurable
 const MILESTONE: Index = Index::from_u32(10);
 
-#[derive(Clone, Debug)]
-pub struct Repository<'a, T> {
-  chain: ChainId,
-  store: &'a T,
-  version: Cell<Index>,
-}
+#[derive(Clone, Copy, Debug)]
+#[repr(transparent)]
+pub struct Repository<'a, T>(&'a T);
 
 impl<'a, T: Storage> Repository<'a, T> {
-  pub fn new(chain: ChainId, store: &'a T) -> Self {
-    Self {
-      chain,
-      store,
-      version: Cell::new(Index::ZERO),
-    }
-  }
-
-  pub fn chain(&self) -> ChainId {
-    self.chain
+  pub fn new(store: &'a T) -> Self {
+    Self(store)
   }
 
   pub fn store(&self) -> &T {
-    self.store
+    self.0
   }
 
-  pub fn version(&self) -> Index {
-    self.version.get()
-  }
-
-  pub async fn load(&self) -> Result<Snapshot> {
+  pub async fn load(&self, chain: ChainId) -> Result<Snapshot> {
     // Retrieve the state snapshot from storage or create a new one.
     let initial: Snapshot = self
-      .store
-      .get_snapshot(self.chain)
+      .store()
+      .get_snapshot(chain)
       .await?
-      .unwrap_or_else(|| Snapshot::new(ChainData::new(self.chain)));
+      .unwrap_or_else(|| Snapshot::new(ChainData::new(chain)));
 
     // Get the initial version of the snapshot
     let version: Index = initial.version();
 
     // Apply all recent events to the state and create a new snapshot
     let snapshot: Snapshot = self
-      .store
-      .stream(self.chain, version)
+      .store()
+      .stream(chain, version)
       .await?
       .try_fold(initial, fold)
       .await?;
 
     trace!("[Repository::load] Version = {} -> {}", version, snapshot.version());
-    trace!("[Repository::load] Snapshot = {:#?}", snapshot);
-
-    self.version.set(snapshot.version());
 
     Ok(snapshot)
   }
 
   pub async fn commit(&self, events: &[Event], state: &Snapshot) -> Result<Vec<Commit>> {
-    // Sanity check - snapshot needs to be one retrieved by `load`
-    assert_eq!(self.chain(), state.chain(), "Invalid Chain Id");
-    assert_eq!(self.version(), state.version(), "Invalid Snapshot Version");
-
     trace!("[Repository::commit] Count = {}", events.len());
 
     // Bail early if there are no new events
@@ -92,7 +70,7 @@ impl<'a, T: Storage> Repository<'a, T> {
     }
 
     // Append the list of commits to the store
-    self.store.append(state.chain(), &commits).await?;
+    self.store().append(state.chain(), &commits).await?;
 
     // Store a snapshot every N events
     if version > Index::ZERO && version % MILESTONE == Index::ZERO {
@@ -103,7 +81,7 @@ impl<'a, T: Storage> Repository<'a, T> {
         state = fold(state, commit.clone()).await?;
       }
 
-      self.store.set_snapshot(state.chain(), &state).await?;
+      self.store().set_snapshot(state.chain(), &state).await?;
     }
 
     Ok(commits)

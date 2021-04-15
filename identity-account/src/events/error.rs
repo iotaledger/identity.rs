@@ -13,6 +13,8 @@ pub enum CommandError {
   DocumentNotFound,
   #[error("verification method not found")]
   MethodNotFound,
+  #[error("service not found")]
+  ServiceNotFound,
   #[error("invalid method type - {}", .0.as_str())]
   InvalidMethodType(MethodType),
   #[error("invalid method fragment - {0}")]
@@ -23,4 +25,6 @@ pub enum CommandError {
   DuplicateKeyLocation(ChainKey),
   #[error("duplicate key fragment - {}", .0.fragment())]
   DuplicateKeyFragment(ChainKey),
+  #[error("duplicate service fragment - {0}")]
+  DuplicateServiceFragment(String),
 }
