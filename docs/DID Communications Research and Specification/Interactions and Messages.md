@@ -8,7 +8,7 @@
 
 `reference` as URL/String, e.g. `did-resolution/1.0/resolutionResponse`: Defines the context that a report message refers to.
 
-`thread` as UUID, e.g. `f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c`: A UUID as String, defined by the agent that initiated an interaction, to be used to identify this specific interaction to track it agent-locally. Together with the context, these two fields can be used to identity a message / state within a specific interaction.
+`thread` as UUID, e.g. `936DA01F9ABD4d9d80C702AF85C822A8`: A [UUID](https://docs.rs/uuid/0.8.2/uuid/) as String, defined by the agent that initiated an interaction, to be used to identify this specific interaction to track it agent-locally. Together with the context, these two fields can be used to identity a message / state within a specific interaction.
 
 `callbackURL` as URL/String, e.g. `https://www.bobsworld.com/` or `https://www.aliceswonderland/serviceEndpoint`: Defines the URL (or API call) where a message is to be delivered to.
 
