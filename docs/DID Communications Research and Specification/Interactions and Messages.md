@@ -77,9 +77,9 @@ The <u>sender</u> sends a `report` message to the <u>receiver</u> to provide him
 
 ```JSON
 report: {
-    "context",
-    "thread",
-    "reference",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "reference", // REQUIRED!
     "comment", // OPTIONAL!
     "timing" // OPTIONAL! All subfields OPTIONAL!
 }
@@ -139,7 +139,7 @@ The <u>sender</u> sends the `ping` to the <u>receiver</u>. The `responseRequeste
 
 ```JSON
 ping: {
-    "context",
+    "context", // REQUIRED!
     "callbackURL", // OPTIONAL!
     "thread", // OPTIONAL!
     "responseRequested", //OPTIONAL!
@@ -183,9 +183,9 @@ The <u>requester</u> sends the `didRequest` to the <u>endpoint</u>, specifying a
 
 ```JSON
 didRequest: {
-    "context",
-    "thread",
-    "callbackURL",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "callbackURL", // REQUIRED!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
@@ -210,9 +210,9 @@ The <u>endpoint</u> answers with a `didResponse`, containing its DID.
 
 ```JSON
 didResponse: {
-    "context",
-    "thread",
-    "id",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "id", // REQUIRED!
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
     "timing" // OPTIONAL!
@@ -249,9 +249,9 @@ The Requester broadcasts a message which may or may not contain a DID (see below
 
 ```JSON
 resolutionRequest: {
-    "context",
-    "thread",
-    "callbackURL",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "callbackURL", // REQUIRED!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
@@ -276,9 +276,9 @@ If the message contains a DID (in the `id` field), the Resolver resolves the DID
 
 ```JSON
 resolutionResponse: {
-    "context",
-    "thread",
-    "didDocument",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "didDocument", // REQUIRED!
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
     "timing" // OPTIONAL!
@@ -327,10 +327,10 @@ The <u>verifier</u> sends the `authenticationRequest` to the authentication serv
 
 ```JSON
 authenticationRequest: {
-    "context",
-    "thread",
-    "callbackURL",
-    "challenge",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "callbackURL", // REQUIRED!
+    "challenge", // REQUIRED!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
@@ -361,9 +361,9 @@ The <u>authenticator</u> answers with an `authenticationResponse`, providing a `
 
 ```JSON
 authenticationResponse: {
-    "context",
-    "thread",
-    "signature",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "signature", // REQUIRED!
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
@@ -411,9 +411,9 @@ The <u>holder</u> queries the <u>issuer</u> for a list of VC types that the <u>i
 
 ```JSON
 credentialOptionsRequest: {
-    "context",
-    "thread",
-    "callbackURL",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "callbackURL", // REQUIRED!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
@@ -437,13 +437,13 @@ The <u>issuer</u> responds with a list of offered VC types.
 
 ```JSON
 credentialOptionsResponse: {
-    "context",
-    "thread",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
     "credentialTypes": [
         "credentialType 1",
         "credentialType 2",
         "credentialType n"
-    ],
+    ], // REQUIRED!
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
@@ -487,10 +487,10 @@ The <u>holder</u> queries the <u>issuer</u> for the schema of a specific VC that
 
 ```JSON
 credentialSchemaRequest: {
-    "context",
-    "thread",
-    "callbackURL",
-    "credentialTypes",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "callbackURL", // REQUIRED!
+    "credentialTypes", // REQUIRED!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
@@ -518,9 +518,9 @@ The <u>issuer</u> responds with the schemata of the requested `credentialTypes`.
 
 ```JSON
 credentialSchemaResponse: {
-    "context",
-    "thread",
-    "schemata",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "schemata", // REQUIRED!
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
@@ -568,10 +568,10 @@ The <u>holder</u> sends a message containing a list of selected credentials.
 
 ```JSON
 credentialSelection: {
-    "context",
-    "thread",
-    "callbackURL",
-    "credentialTypes",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "callbackURL", // REQUIRED!
+    "credentialTypes", // REQUIRED!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
@@ -599,9 +599,9 @@ The <u>issuer</u> responds with a message containing a list of newly issued cred
 
 ```JSON
 credentialIssuance: {
-    "context",
-    "thread",
-    "credentials",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "credentials", // REQUIRED!
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
@@ -644,9 +644,9 @@ The <u>issuer</u> sends the `revocation` to the <u>holder</u>, notifying him of 
 
 ```JSON
 revocation: {
-    "context",
-    "thread",
-    "credentialId",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "credentialId", // REQUIRED!
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
@@ -691,9 +691,9 @@ The <u>verifier</u> requests a set of Verifiable Credentials from the <u>prover<
 
 ```JSON
 presentationRequest: {
-    "context",
-    "thread",
-    "callbackURL",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "callbackURL", // REQUIRED!
     "credentialTypes", // OPTIONAL!
     "supportedIssuers", // OPTIONAL!
     "responseRequested", //OPTIONAL!
@@ -728,8 +728,8 @@ The <u>holder</u> sends a Verifiable Presentation to the <u>verifier</u> using a
 
 ```JSON
 presentationResponse: {
-    "context",
-    "thread",
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
     "verifiablePresentation",
