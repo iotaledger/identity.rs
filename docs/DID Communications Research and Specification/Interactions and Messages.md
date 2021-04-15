@@ -292,7 +292,6 @@ resolutionResponse: {
     "context": "did-resolution/1.0/resolutionResponse",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "didDocument": {
-        "@context": "https://www.w3.org/ns/did/v1",
         "id": "did:iota:57edacef81828010b3--SNIP--a1b56678c174eef2e8",
         "authentication": [{
             "id": "did:iota:57edacef81828010b314--SNIP--a1b56678c174eef2e8#keys-1",
