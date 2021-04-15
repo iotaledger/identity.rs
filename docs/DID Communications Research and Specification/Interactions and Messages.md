@@ -32,7 +32,9 @@
 
 `credentialTypes` as JSON, e.g. `["YouHaveNiceHairCredential", "YourLasagnaIsDeliciousCredential"]`: Contains an array of possible credential types, see e.g. <a href="#credential-options">Credential Options</a>.
 
-`supportedIssuers` as JSON: Contains a list of supported issuer `id`, see <a href="#credential-options">Credential Options</a>.
+`supportedIssuers` as JSON: Contains an array of supported issuer `id`, see <a href="#credential-options">Credential Options</a>.
+
+`trustedIssuers` as JSON: An array of `{credentialTypes, supportedIssuers}` pairs, see e.g. <a href="#presentation-verification">Presentation Verification</a>.
 
 `schemata` as JSON: A named list of credential schemata, see <a href="#credential-schema">Credential Schema</a>.
 
@@ -693,8 +695,7 @@ presentationRequest: {
     "context", // REQUIRED!
     "thread", // REQUIRED!
     "callbackURL", // REQUIRED!
-    "credentialTypes", // OPTIONAL!
-    "supportedIssuers", // OPTIONAL!
+    "trustedIssuers", // OPTIONAL!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
@@ -708,14 +709,25 @@ presentationRequest: {
     "context": "presentation-verification/1.0/presentationRequest",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
     "callbackURL": "https://www.bobsworld.com/",
-    "credentialTypes": [
-        "YourCatHasAnAttitudeCredential",
-        "YouHaveNiceHairCredential",
-        "YourLasagnaIsDeliciousCredential"
-    ],
-    "supportedIssuers": [
-        "did:iota:58c35471071b3dbb97585ee06bb1dd0239ca338629534296cfbb2db6bc857e21",
-        "did:iota:23f0b94812c402a1dea1c424303b178d01485a5dcf26cf977333f3b629bd90ec"
+    "trustedIssuers" : [
+        {
+            "credentialTypes": [
+                "YourCatHasAnAttitudeCredential",
+                "YouHaveNiceHairCredential"
+            ],
+            "supportedIssuers": [
+                "did:iota:58c35471071b3dbb97585ee06bb1dd0239ca338629534296cfbb2db6bc857e21"
+            ]
+        },
+        {
+            "credentialTypes": [
+                "YourLasagnaIsDeliciousCredential"
+            ],
+            "supportedIssuers": [
+                "did:iota:58c35471071b3dbb97585ee06bb1dd0239ca338629534296cfbb2db6bc857e21",
+                "did:iota:23f0b94812c402a1dea1c424303b178d01485a5dcf26cf977333f3b629bd90ec"
+            ]
+        }
     ]
 }
 ```
