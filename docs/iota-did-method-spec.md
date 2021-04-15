@@ -78,6 +78,11 @@ A DID message can be part of one of two different message chains, the "Integrati
 
 Any DID message uploaded to the Tangle, with the exception of the very first DID message that creates the DID, MUST contain a `previous_message_id` field. This field MUST carry the MessageId, an IOTA indexation for a single message, of the previous DID Document that is updated with this DID message. This value SHOULD be used to order DID messages during the resolving procedure. If two or more DID messages reference the same `previous_message_id` an ordering conflict is identified and is resolved using a deterministic ordering mechanism. 
 
+Example of a IOTA MessageId:
+```json
+"previous_message_id": "cd8bb7baca6bbfa1de7813bd1753a2de026b6ec75dba8a3cf32c0d4cf6038917"
+```
+
 ### Signing Key
 
 DID Documents published to the Tangle must be cryptographically signed. As such the DID Document MUST include one verification method with a public key. It is recommended, for security reasons, to not use this keypair for other purposes as the control over this private key is vital for controlling the identity. It is RECOMMENDED to name this public key #_sign-x, where x is the index of the signing key, which is incredemented everytime the signing key is updated, starting at index 1. 
@@ -94,6 +99,27 @@ A DID Integration message MUST contain a valid DID Document according to the W3C
     * `previous_message_id` (REQUIRED): This field provides an immutable link to the previous DID document that is updated and is used for basic ordering of the DID messages, creating a chain. The value of `previous_message_id` MUST be a string that contains an IOTA MessageId from the previous DID message it updates, which MUST reference an Int Chain message. The field can be ommited, otherwise the field is REQUIRED. Read the [Previous Message Id](#previous-message-id) section for more information. 
     * `proof` (REQUIRED): This field provides a cryptographic proof on the message that proves ownership over the DID Document. The value of the `proof` object MUST contain an object as defined by [Autonomy of the Proof object](#autonomy-of-the-proof-object).
 
+Example of a DID Integration Message:
+```json
+{
+  "id": "did:iota:GzXeqBXGCbuebiFtKo4JDNo6CmYmGbqxyh2fDVKadiBG",
+  "authentication": [
+    {
+      "id": "did:iota:GzXeqBXGCbuebiFtKo4JDNo6CmYmGbqxyh2fDVKadiBG#key-2",
+      "controller": "did:iota:GzXeqBXGCbuebiFtKo4JDNo6CmYmGbqxyh2fDVKadiBG",
+      "type": "Ed25519VerificationKey2018",
+      "publicKeyBase58": "iNhcgDu34kt4fdpZ2826qA7g8g3aqG8uLZzvWwUd9AE"
+    }
+  ],
+  "previous_message_id": "cd8bb7baca6bbfa1de7813bd1753a2de026b6ec75dba8a3cf32c0d4cf6038917",
+  "proof": {
+    "type": "JcsEd25519Signature2020",
+    "verificationMethod": "#authentication",
+    "signatureValue": "3fLtv3KUU4T5bHNLprV3UQ2Te3bcRZ9uUYSFouEA7fmYthieV35NNLqbKUu8t2QmzYgnfp1KMzCqPzGNi3RjU822"
+  }
+}
+```
+
 ### Autonomy of the Diff DID Messages
 
 A Diff DID message does not contain a valid DID Document. Instead the chain creates a list of changes compared to the a DID Integration message that is used as a basis. The Diff DID messages are hosted on a different indexation on the Tangle, which allows skipping older Diff DID messages during a query, optimizing the client verification speed significantly.  
@@ -105,6 +131,20 @@ A Diff DID message does not contain a valid DID Document. Instead the chain crea
     * `previous_message_id` (REQUIRED): This field provides an immutable link to the previous DID document that is updated and is used for basic ordering of the DID messages, creating a chain. The value of `previous_message_id` MUST be a string that contains an IOTA MessageId from the previous DID message it updates, which references either a Diff or Int Chain message. Read the [Previous Message Id](#previous-message-id) section for more information.
     * `diff` (REQUIRED): A Differentiation object containing all the changes compared to the DID Document it references in the `previous_message_id` field. The value of `diff` MUST be an escaped JSON string following the [Autonomy of the Diff object](#autonomy-of-the-diff-object) definition.
     * `proof` (REQUIRED): This field provides a cryptographic proof on the message that proves ownership over the DID Document. The value of the `proof` object MUST contain an object as defined by [Autonomy of the Proof object](#autonomy-of-the-proof-object).
+
+Example of a Diff DID message:
+```json
+{
+  "did": "did:iota:7EhyBxAhFXojqzrKt8Zq7QBvxNZWJJ4xj1mm2QgLmcKj",
+  "diff": "{\"authentication\":[{\"index\":0,\"item\":{\"Embed\":{\"id\":\"did:iota:7EhyBxAhFXojqzrKt8Zq7QBvxNZWJJ4xj1mm2QgLmcKj#key-3\",\"key_data\":{\"PublicKeyBase58\":\"TJqJAnV387wTUfzq8BVE7iJ9LYs7xJYM4SEF86LkB8E\"}}}}],\"properties\":[{\"c:k\":\"updated\",\"c:v\":\"2021-04-15T10:31:21Z\"}]}",
+  "previous_message_id": "9cd2e34c049099246d247ffcf19ba0d54063add9cb7787662b5d51a2a36a8a3b",
+  "proof": {
+    "type": "JcsEd25519Signature2020",
+    "verificationMethod": "#key-2",
+    "signatureValue": "G4otnurZMiXwKYpFxZ5Nk99R95FZQ2YSYjztDosaXbyDz8qFrzH8FHbLzFp8doUEPuyHN6CPm58QbAKUqrvq8PV"
+  }
+}
+```
 
 ### Autonomy of the Proof object
 
@@ -127,9 +167,25 @@ The proof object MUST include a `verificationMethod` which references a verifica
 
 Depending on the verification method, a set of fields are REQUIRED to provide the cryptographic proof of the DID Document. For example, the `JcsEd25519Signature2020` method has a `signatureValue` field. 
 
+Example `proof` using the `JcsEd25519Signature2020` method:
+```json
+"proof": {
+    "type": "JcsEd25519Signature2020",
+    "verificationMethod": "did:iota:GzXeqBXGCbuebiFtKo4JDNo6CmYmGbqxyh2fDVKadiBG#authentication",
+    "signatureValue": "3fLtv3KUU4T5bHNLprV3UQ2Te3bcRZ9uUYSFouEA7fmYthieV35NNLqbKUu8t2QmzYgnfp1KMzCqPzGNi3RjU822"
+}
+```
+
 ### Autonomy of the Diff object
 
-TODO: With guidance from Tensor
+The `diff` object MUST contain all the differences between the previous DID Document and the current DID Document. The differentiation is formatted as an escaped JSON object that compares the two DID Document objects to generate a difference JSON object. Exact details of how this is generated will be added later. 
+
+Example `diff` of adding an `authentication` key and changing the `updated` field:
+```json
+{
+  "diff": "{\"authentication\":[{\"index\":0,\"item\":{\"Embed\":{\"id\":\"did:iota:7EhyBxAhFXojqzrKt8Zq7QBvxNZWJJ4xj1mm2QgLmcKj#key-3\",\"key_data\":{\"PublicKeyBase58\":\"TJqJAnV387wTUfzq8BVE7iJ9LYs7xJYM4SEF86LkB8E\"}}}}],\"properties\":[{\"c:k\":\"updated\",\"c:v\":\"2021-04-15T10:31:21Z\"}]}"
+} 
+```
 
 ## CRUD Operations
 
