@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use hashbrown::hash_map::Entry;
 use hashbrown::HashMap;
 use identity_core::common::Object;
 use identity_core::common::Url;
@@ -22,6 +21,7 @@ use identity_iota::did::Document;
 use identity_iota::did::Properties as BaseProperties;
 use identity_iota::did::DID;
 use identity_iota::tangle::MessageId;
+use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::TangleRef;
 use serde::Serialize;
 
@@ -34,7 +34,6 @@ use crate::storage::Storage;
 use crate::types::ChainId;
 use crate::types::Fragment;
 use crate::types::Index;
-use crate::types::IndexMap;
 use crate::types::Timestamp;
 
 type Properties = VerifiableProperties<BaseProperties>;
@@ -193,10 +192,13 @@ pub struct ChainData {
   // =========== //
   chain: ChainId,
   auth_index: Index,
-  diff_index: IndexMap<Index>,
-  this_message_id: Option<MessageId>,
-  last_auth_message_id: Option<MessageId>,
-  last_diff_message_id: Option<MessageId>,
+  diff_index: Index,
+  #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
+  this_message_id: MessageId,
+  #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
+  last_auth_message_id: MessageId,
+  #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
+  last_diff_message_id: MessageId,
   // ============== //
   // Document State //
   // ============== //
@@ -221,10 +223,10 @@ impl ChainData {
     Self {
       chain,
       auth_index: Index::ZERO,
-      diff_index: IndexMap::new(),
-      this_message_id: None,
-      last_auth_message_id: None,
-      last_diff_message_id: None,
+      diff_index: Index::ZERO,
+      this_message_id: MessageId::null(),
+      last_auth_message_id: MessageId::null(),
+      last_diff_message_id: MessageId::null(),
       document: None,
       controller: None,
       also_known_as: None,
@@ -248,23 +250,18 @@ impl ChainData {
   }
 
   pub fn diff_index(&self) -> Index {
-    self.diff_index.get(self.auth_index).copied().unwrap_or(Index::ZERO)
+    self.diff_index
   }
 
   pub fn increment_auth_index(&mut self) -> Result<()> {
     self.auth_index = self.auth_index.try_increment()?;
+    self.diff_index = Index::ZERO;
+
     Ok(())
   }
 
   pub fn increment_diff_index(&mut self) -> Result<()> {
-    match self.diff_index.entry(self.auth_index) {
-      Entry::Occupied(mut entry) => {
-        entry.insert(entry.get().try_increment()?);
-      }
-      Entry::Vacant(entry) => {
-        entry.insert(Index::ONE);
-      }
-    }
+    self.diff_index = self.diff_index.try_increment()?;
 
     Ok(())
   }
@@ -273,40 +270,30 @@ impl ChainData {
   // Tangle State
   // ===========================================================================
 
-  pub fn this_message_id(&self) -> Option<&MessageId> {
-    self.this_message_id.as_ref()
+  pub fn this_message_id(&self) -> &MessageId {
+    &self.this_message_id
   }
 
-  pub fn try_this_message_id(&self) -> Result<&MessageId> {
-    self.this_message_id().ok_or(Error::AuthMessageIdNotFound)
+  pub fn last_message_id(&self) -> &MessageId {
+    &self.last_auth_message_id
   }
 
-  pub fn last_message_id(&self) -> Option<&MessageId> {
-    self.last_auth_message_id.as_ref()
-  }
-
-  pub fn try_last_message_id(&self) -> Result<&MessageId> {
-    self.last_message_id().ok_or(Error::AuthMessageIdNotFound)
-  }
-
-  pub fn diff_message_id(&self) -> Option<&MessageId> {
-    self.last_diff_message_id.as_ref().or_else(|| self.this_message_id())
-  }
-
-  pub fn try_diff_message_id(&self) -> Result<&MessageId> {
-    self.diff_message_id().ok_or(Error::DiffMessageIdNotFound)
+  pub fn diff_message_id(&self) -> &MessageId {
+    if !self.last_diff_message_id.is_null() {
+      &self.last_diff_message_id
+    } else {
+      &self.this_message_id
+    }
   }
 
   pub fn set_auth_message_id(&mut self, message: MessageId) {
-    if let Some(previous) = self.this_message_id.replace(message) {
-      self.last_auth_message_id = Some(previous);
-    }
-
-    self.last_diff_message_id = None;
+    self.last_auth_message_id = self.this_message_id;
+    self.last_diff_message_id = MessageId::null();
+    self.this_message_id = message;
   }
 
   pub fn set_diff_message_id(&mut self, message: MessageId) {
-    self.last_diff_message_id = Some(message);
+    self.last_diff_message_id = message;
   }
 
   // ===========================================================================
@@ -422,12 +409,12 @@ impl ChainData {
     // TODO: This completely bypasses method validation...
     let mut document: Document = builder.build().map(Into::into)?;
 
-    if let Some(message) = self.this_message_id {
-      document.set_message_id(message);
+    if !self.this_message_id.is_null() {
+      document.set_message_id(self.this_message_id);
     }
 
-    if let Some(message) = self.last_auth_message_id {
-      document.set_previous_message_id(message);
+    if !self.last_auth_message_id.is_null() {
+      document.set_previous_message_id(self.last_auth_message_id);
     }
 
     document.set_created(self.created.into());
