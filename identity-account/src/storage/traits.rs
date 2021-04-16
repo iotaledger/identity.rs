@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
-use futures::stream::LocalBoxStream;
+use futures::stream::BoxStream;
 use futures::TryStreamExt;
 use identity_core::crypto::PublicKey;
 
@@ -16,7 +16,7 @@ use crate::types::Index;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
 
-#[async_trait::async_trait(?Send)]
+#[async_trait::async_trait]
 pub trait Storage: Debug {
   /// Sets the account password.
   async fn set_password(&self, password: EncryptionKey) -> Result<()>;
@@ -48,7 +48,7 @@ pub trait Storage: Debug {
 
   async fn append(&self, chain: ChainId, commits: &[Commit]) -> Result<()>;
 
-  async fn stream(&self, chain: ChainId, version: Index) -> Result<LocalBoxStream<'_, Result<Commit>>>;
+  async fn stream(&self, chain: ChainId, version: Index) -> Result<BoxStream<'_, Result<Commit>>>;
 
   async fn collect(&self, chain: ChainId, version: Index) -> Result<Vec<Commit>> {
     self.stream(chain, version).await?.try_collect().await
