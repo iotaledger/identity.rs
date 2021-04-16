@@ -14,11 +14,11 @@
 
 `responseRequested` as Boolean, e.g. `true` or `false`: Undefined counts as `false`. In messages where it is defined it asks the recipient of the message to repond in the form of an acknowledging report. This request SHOULD be honored. The only exception to this behaviour is in `trust-ping`, where the acknowledging report MUST be sent if and only if this field is `true` - if it is `false`, the report MUST NOT be send.
 
-`features` as an array of Strings, e.g. `["trust-ping/1.0", "did-discovery/1.0"]`: An array used for <a href="#features-discovery">Features Discovery</a> that lists all available interactions that an agent supports, and their respective versions.
+`features` as an array of Strings, e.g. `["trust-ping/1.0", "did-discovery/1.0"]`: An array used for <a href="#features-discovery">features-discovery</a> that lists all available interactions that an agent supports, and their respective versions.
 
 `id` as String, e.g. `did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8`: A decentralized identifier.
 
-`didDocument` as JSON: A DID Document (see e.g. in <a href="#did-resolution">DID Resolution</a>).
+`didDocument` as JSON: A DID Document (see e.g. in <a href="#did-resolution">did-resolution</a>).
 
 `comment` as String: A comment, mostly used to provide more information about something. Can be literally any String.
 
@@ -32,13 +32,13 @@
 
 `credentialType` as String, e.g. `YouHaveNiceHairCredential`: A VC type.
 
-`credentialTypes` as JSON, e.g. `["YouHaveNiceHairCredential", "YourLasagnaIsDeliciousCredential"]`: Contains an array of possible credential types, see e.g. <a href="#credential-options">Credential Options</a>.
+`credentialTypes` as JSON, e.g. `["YouHaveNiceHairCredential", "YourLasagnaIsDeliciousCredential"]`: Contains an array of possible credential types, see e.g. <a href="#credential-options">credential-options</a>.
 
-`supportedIssuers` as JSON: Contains an array of supported issuer `id`, see <a href="#credential-options">Credential Options</a>.
+`supportedIssuers` as JSON: Contains an array of supported issuer `id`, see <a href="#credential-options">credential-options</a>.
 
-`trustedIssuers` as JSON: An array of `{credentialTypes, supportedIssuers}` pairs, see e.g. <a href="#presentation-verification">Presentation Verification</a>.
+`trustedIssuers` as JSON: An array of `{credentialTypes, supportedIssuers}` pairs, see e.g. <a href="#presentation-verification">presentation-verification</a>.
 
-`schemata` as JSON: A named list of credential schemata, see <a href="#credential-schema">Credential Schema</a>.
+`schemata` as JSON: A named list of credential schemata, see <a href="#credential-schema">credential-schema</a>.
 
 `verifiablePresentation` as JSON: A Verifiable Presentation.
 
