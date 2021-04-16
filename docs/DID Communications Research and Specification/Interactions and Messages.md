@@ -741,9 +741,9 @@ The <u>holder</u> sends a Verifiable Presentation to the <u>verifier</u> using a
 presentationResponse: {
     "context", // REQUIRED!
     "thread", // REQUIRED!
+    "verifiablePresentation", // REQUIRED!
     "callbackURL", // OPTIONAL!
     "responseRequested", //OPTIONAL!
-    "verifiablePresentation",
     "id", // OPTIONAL!
     "timing" // OPTIONAL!
 }
@@ -755,8 +755,8 @@ presentationResponse: {
 {
     "context": "presentation-verification/1.0/presentationResponse",
     "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
-    "callbackURL": "https://www.aliceswonderland.com/",
-    "verifiablePresentation": {...} // Omitted for brevity
+    "verifiablePresentation": {...}, // Omitted for brevity
+    "callbackURL": "https://www.aliceswonderland.com/"
 }
 ```
 
