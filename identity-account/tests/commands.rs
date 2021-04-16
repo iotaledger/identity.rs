@@ -136,7 +136,7 @@ async fn test_create_method() -> Result<()> {
 
   let command: Command = Command::create_method()
     .type_(MethodType::Ed25519VerificationKey2018)
-    .fragment("key-1".into())
+    .fragment("key-1")
     .finish()
     .unwrap();
 
@@ -207,7 +207,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
 
   let command: Command = Command::create_method()
     .type_(MethodType::Ed25519VerificationKey2018)
-    .fragment("key-1".into())
+    .fragment("key-1")
     .finish()
     .unwrap();
 
@@ -241,7 +241,7 @@ async fn test_delete_method() -> Result<()> {
 
   let command: Command = Command::create_method()
     .type_(MethodType::Ed25519VerificationKey2018)
-    .fragment("key-1".into())
+    .fragment("key-1")
     .finish()
     .unwrap();
 
@@ -256,7 +256,7 @@ async fn test_delete_method() -> Result<()> {
   assert_eq!(state.state().methods().contains("key-1"), true);
   assert_eq!(state.state().methods().get("key-1").is_some(), true);
 
-  let command: Command = Command::delete_method().fragment("key-1".into()).finish().unwrap();
+  let command: Command = Command::delete_method().fragment("key-1").finish().unwrap();
 
   account.process(chain, command, false).await?;
 
