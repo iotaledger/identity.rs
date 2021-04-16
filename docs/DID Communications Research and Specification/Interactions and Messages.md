@@ -1,6 +1,6 @@
 # DID Communications Message Specification
 
-*version 0.2, last changed April 2021*
+*version 0.3, last changed April 2021*
 
 ## Field Definitions
 
