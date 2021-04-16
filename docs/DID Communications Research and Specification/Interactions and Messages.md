@@ -14,6 +14,8 @@
 
 `responseRequested` as Boolean, e.g. `true` or `false`: Undefined counts as `false`. In messages where it is defined it asks the recipient of the message to repond in the form of an acknowledging report. This request SHOULD be honored. The only exception to this behaviour is in `trust-ping`, where the acknowledging report MUST be sent if and only if this field is `true` - if it is `false`, the report MUST NOT be send.
 
+`features` as an array of Strings, e.g. `["trust-ping/1.0", "did-discovery/1.0"]`: An array used for <a href="#features-discovery">Features Discovery</a> that lists all available interactions that an agent supports, and their respective versions.
+
 `id` as String, e.g. `did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8`: A decentralized identifier.
 
 `didDocument` as JSON: A DID Document (see e.g. in <a href="#did-resolution">DID Resolution</a>).
@@ -108,6 +110,8 @@ report: {
 ◈ <a href="#trust-ping">**trust-ping**</a> (*ping*, *pingResponse*): Testing a pairwise channel.
 
 ◈ <a href="#did-discovery">**did-discovery**</a> (*didRequest*, *didResponse*): Requesting a DID from an agent.
+
+◈ <a href="#features-discovery">**features-discovery**</a> (*featuresRequest*, *featuresResponse*): Enabling agents to discover which interactions other agents support.
 
 ◈ <a href="#did-resolution">**did-resolution**</a> (*resolutionRequest*, *resolutionResponse*): Using another agent as a Resolver.
 
@@ -230,6 +234,77 @@ didResponse: {
     "id": "did:iota:42edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef242"
 }
 ```
+
+---
+### features-discovery
+
+Enabling agents to discover which interactions other agents support.
+
+#### Roles
+- <u>**Requester**</u>: Agent who requests an array of interactions that the <u>responder</u> supports
+- <u>**Responder**</u>: Agent who provides the requested array of interactions to the <u>requester</u>
+
+#### Messages
+
+#### featuresRequest
+The <u>requester</u> sends the `featuresRequest` to the <u>responder</u>, asking for the array of supported interactions. 
+
+###### Layout
+
+```JSON
+featuresRequest: {
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "callbackURL", // REQUIRED!
+    "responseRequested", //OPTIONAL!
+    "id", // OPTIONAL!
+    "timing" // OPTIONAL!
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "context": "features-discovery/1.0/featuresRequest",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "callbackURL": "https://www.bobsworld.com/"
+}
+```
+
+#### featuresResponse
+The <u>responder</u> answers with a `featuresResponse`, containing the array of supported interactions.
+
+###### Layout
+
+```JSON
+featuresResponse: {
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "features", // REQUIRED!
+    "callbackURL", // OPTIONAL!
+    "responseRequested", //OPTIONAL!
+    "id", // OPTIONAL!
+    "timing" // OPTIONAL!
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "context": "features-discovery/1.0/featuresResponse",
+    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "features": [
+        "trust-ping/1.0",
+        "did-discovery/1.0",
+        "features-discovery/1.0",
+        "authentication/1.0",
+    ]
+}
+```
+
+[Source 1: Aries Discover Features Protocol](https://github.com/hyperledger/aries-rfcs/blob/master/features/0031-discover-features/README.md); [Source 2: DIF Discover Features Protocol](https://identity.foundation/didcomm-messaging/spec/#discover-features-protocol-10);
 
 ---
 ### did-resolution
