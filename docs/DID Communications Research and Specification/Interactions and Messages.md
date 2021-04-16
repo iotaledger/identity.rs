@@ -94,7 +94,7 @@ report: {
 ```JSON
 {
     "context": "report/1.0/report",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "reference": "did-resolution/1.0/resolutionResponse",
     "comment": "Can't resolve DID: Signature invalid!",
     "timing": {
@@ -160,7 +160,7 @@ ping: {
 {
     "context": "trust-ping/1.0/ping",
     "callbackURL": "https://www.bobsworld.com/",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "responseRequested": true,
     "id": "did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8",
     "timing": {
@@ -203,7 +203,7 @@ didRequest: {
 ```JSON
 {
     "context": "did-discovery/1.0/didRequest",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "callbackURL": "https://www.bobsworld.com/",
     "id": "did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8",
 }
@@ -230,7 +230,7 @@ didResponse: {
 ```JSON
 {
     "context": "did-discovery/1.0/didResponse",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "id": "did:iota:42edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef242"
 }
 ```
@@ -267,7 +267,7 @@ featuresRequest: {
 ```JSON
 {
     "context": "features-discovery/1.0/featuresRequest",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "callbackURL": "https://www.bobsworld.com/"
 }
 ```
@@ -294,7 +294,7 @@ featuresResponse: {
 ```JSON
 {
     "context": "features-discovery/1.0/featuresResponse",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "features": [
         "trust-ping/1.0",
         "did-discovery/1.0",
@@ -340,7 +340,7 @@ resolutionRequest: {
 ```JSON
 {
     "context": "did-resolution/1.0/resolutionRequest",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "callbackURL": "https://www.bobsworld.com/",
     "id": "did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8",
 }
@@ -367,7 +367,7 @@ resolutionResponse: {
 ```JSON
 {
     "context": "did-resolution/1.0/resolutionResponse",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "didDocument": {
         "id": "did:iota:57edacef81828010b3--SNIP--a1b56678c174eef2e8",
         "authentication": [{
@@ -418,7 +418,7 @@ authenticationRequest: {
 ```JSON
 {
     "context": "authentication/1.0/authenticationRequest",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "callbackURL": "https://www.bobsworld.com/",
     "challenge": "Sign this!",
     "id": "did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8",
@@ -452,7 +452,7 @@ authenticationResponse: {
 ```JSON
 {
     "context": "authentication/1.0/authenticationResponse",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "signature": {
         "type": "JcsEd25519Signature2020",
         "verificationMethod": "did:iota:42edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef242#authentication",
@@ -501,7 +501,7 @@ credentialOptionsRequest: {
 ```JSON
 {
     "context": "credential-options/1.0/credentialOptionsRequest",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "callbackURL": "https://www.bobsworld.com/"
 }
 ```
@@ -532,7 +532,7 @@ credentialOptionsResponse: {
 ```JSON
 {
     "context": "credential-options/1.0/credentialOptionsResponse",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "credentialTypes": [
         "YourCatHasAnAttitudeCredential",
         "YouHaveNiceHairCredential",
@@ -578,7 +578,7 @@ credentialSchemaRequest: {
 ```JSON
 {
     "context": "credential-options/1.0/credentialSchemaRequest",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "callbackURL": "https://www.bobsworld.com/",
     "credentialTypes": [
         "YouHaveNiceHairCredential",
@@ -609,7 +609,7 @@ credentialSchemaResponse: {
 ```JSON
 {
     "context": "credential-options/1.0/credentialSchemaResponse",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "schemata": [
         "YouHaveNiceHairCredential": {
             "type": "YouHaveNiceHairCredential",
@@ -659,7 +659,7 @@ credentialSelection: {
 ```JSON
 {
     "context": "credential-issuance/1.0/credentialSelection",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "callbackURL": "https://www.bobsworld.com/",
     "credentialTypes": [
         "YourCatHasAnAttitudeCredential",
@@ -690,7 +690,7 @@ credentialIssuance: {
 ```JSON
 {
     "context": "credential-issuance/1.0/credentialIssuance",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "credentials": [
             "credential 1",
             "credential 2",
@@ -737,7 +737,7 @@ revocation: {
 ```JSON
 {
     "context": "credential-revocation/1.0/revocation",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "credentialId": "credential-69420-delicious-lasagna",
     "callbackURL": "https://www.aliceswonderland.com/",
     "id": "did:iota:42edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef242",
@@ -782,7 +782,7 @@ presentationRequest: {
 ```JSON
 {
     "context": "presentation-verification/1.0/presentationRequest",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "callbackURL": "https://www.bobsworld.com/",
     "trustedIssuers" : [
         {
@@ -829,7 +829,7 @@ presentationResponse: {
 ```JSON
 {
     "context": "presentation-verification/1.0/presentationResponse",
-    "thread": "f7771b285a971ba25d66dbe2d82f0bf5f956f4fe548bdf8617c3f24ebc10ed8c",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "verifiablePresentation": {...}, // Omitted for brevity
     "callbackURL": "https://www.aliceswonderland.com/"
 }
