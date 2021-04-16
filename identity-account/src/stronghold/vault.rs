@@ -77,6 +77,23 @@ impl Vault<'_> {
       .to_result()
   }
 
+  /// Returns true if the specified location exists.
+  pub async fn exists(&self, location: Location) -> Result<bool> {
+    let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
+    let exists: bool = scope.vault_exists(location).await;
+
+    Ok(exists)
+  }
+
+  /// Runs the Stronghold garbage collector.
+  pub async fn garbage_collect(&self, vault: &[u8]) -> Result<()> {
+    Context::scope(self.path, &self.name, &self.flags)
+      .await?
+      .garbage_collect(vault.to_vec())
+      .await
+      .to_result()
+  }
+
   /// Executes a runtime [`procedure`][`Procedure`].
   pub async fn execute(&self, procedure: Procedure) -> Result<ProcedureResult> {
     Context::scope(self.path, &self.name, &self.flags)

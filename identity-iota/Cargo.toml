@@ -30,9 +30,7 @@ default-features = false
 features = ["wasm"]
 
 [dependencies.iota-crypto]
-git = "https://github.com/iotaledger/crypto.rs"
-rev = "c3bf565eba62d0b81144174c2ff917bfde282e49"
-default-features = false
+version = "0.4"
 features = ["blake2b"]
 
 [package.metadata.docs.rs]

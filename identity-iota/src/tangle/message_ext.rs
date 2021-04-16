@@ -4,6 +4,7 @@
 use identity_core::convert::FromJson;
 use iota::Message;
 use iota::MessageId;
+use iota::MESSAGE_ID_LENGTH;
 use iota::Payload;
 
 use crate::did::Document;
@@ -11,6 +12,9 @@ use crate::did::DocumentDiff;
 use crate::did::DID;
 use crate::error::Result;
 use crate::tangle::TangleRef;
+
+// TODO: Use MessageId when it has a const ctor
+static NULL: &[u8; MESSAGE_ID_LENGTH] = &[0; MESSAGE_ID_LENGTH];
 
 macro_rules! try_extract {
   ($ty:ty, $this:expr, $did:expr) => {{
@@ -40,7 +44,7 @@ pub trait MessageIdExt: Sized {
 
 impl MessageIdExt for MessageId {
   fn is_null(&self) -> bool {
-    MessageId::null().eq(self)
+    self.as_ref() == NULL
   }
 
   fn encode_hex(&self) -> String {

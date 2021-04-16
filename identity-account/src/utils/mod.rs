@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod crypto;
+mod method;
+mod shared;
 
 pub mod fs;
 
-pub use self::crypto::derive_encryption_key;
-pub use self::crypto::EncryptionKey;
+pub use self::crypto::*;
+pub use self::method::*;
+pub use self::shared::*;
