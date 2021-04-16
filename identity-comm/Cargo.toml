@@ -13,6 +13,8 @@ homepage = "https://www.iota.org"
 [dependencies]
 async-std = "1.9.0"
 futures-util = "0.3.14"
+futures = "0.3.14"
+identity-account = { path = "../identity-account", version = "=0.2.0" }
 identity-core = { path = "../identity-core", version = "=0.2.0" }
 identity-did = { path = "../identity-did", version = "=0.2.0" }
 identity-iota = { path = "../identity-iota", version = "=0.2.0" }
