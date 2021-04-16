@@ -54,8 +54,8 @@ impl MethodData {
 impl Debug for MethodData {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     match self {
-      Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({:?})", inner)),
-      Self::PublicKeyHex(inner) => f.write_fmt(format_args!("PublicKeyHex({:?})", inner)),
+      Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({})", inner)),
+      Self::PublicKeyHex(inner) => f.write_fmt(format_args!("PublicKeyHex({})", inner)),
       Self::PublicKeyJwk(inner) => f.debug_tuple("PublicKeyJwk").field(inner).finish(),
     }
   }

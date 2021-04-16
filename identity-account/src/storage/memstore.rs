@@ -8,7 +8,7 @@ use core::iter::Map;
 use core::pin::Pin;
 use futures::stream;
 use futures::stream::Iter;
-use futures::stream::LocalBoxStream;
+use futures::stream::BoxStream;
 use futures::task::Context;
 use futures::task::Poll;
 use futures::Stream;
@@ -164,7 +164,7 @@ impl MemStore {
   }
 }
 
-#[async_trait::async_trait(?Send)]
+#[async_trait::async_trait]
 impl Storage for MemStore {
   async fn set_password(&self, _password: EncryptionKey) -> Result<()> {
     Ok(())
@@ -273,12 +273,12 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn stream(&self, chain: ChainId, version: Index) -> Result<LocalBoxStream<'_, Result<Commit>>> {
+  async fn stream(&self, chain: ChainId, version: Index) -> Result<BoxStream<'_, Result<Commit>>> {
     let state: RwLockReadGuard<_> = self.events.read()?;
     let queue: Vec<Commit> = state.get(&chain).cloned().unwrap_or_default();
     let index: usize = version.to_u32() as usize;
 
-    Ok(stream::iter(queue.into_iter().skip(index)).map(Ok).boxed_local())
+    Ok(stream::iter(queue.into_iter().skip(index)).map(Ok).boxed())
   }
 }
 

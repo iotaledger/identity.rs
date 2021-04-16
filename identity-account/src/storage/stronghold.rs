@@ -6,7 +6,7 @@ use crypto::keys::slip10::Chain;
 use futures::future;
 use futures::stream;
 use futures::stream::Iter;
-use futures::stream::LocalBoxStream;
+use futures::stream::BoxStream;
 use futures::stream::Map;
 use futures::StreamExt;
 use futures::TryStreamExt;
@@ -75,7 +75,7 @@ impl Stronghold {
   }
 }
 
-#[async_trait::async_trait(?Send)]
+#[async_trait::async_trait]
 impl Storage for Stronghold {
   async fn set_password(&self, password: EncryptionKey) -> Result<()> {
     self.snapshot.set_password(password)
@@ -217,7 +217,7 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn stream(&self, chain: ChainId, version: Index) -> Result<LocalBoxStream<'_, Result<Commit>>> {
+  async fn stream(&self, chain: ChainId, version: Index) -> Result<BoxStream<'_, Result<Commit>>> {
     type IterA = Iter<RangeFrom<u32>>;
     type IterB = Map<IterA, fn(u32) -> Index>;
     type IterC = Map<IterB, fn(Index) -> Result<Index>>;
@@ -228,7 +228,7 @@ impl Storage for Stronghold {
     let iter: IterB = iter.map(Index::from);
     let iter: IterC = iter.map(Ok);
 
-    let stream: LocalBoxStream<'_, Result<Commit>> = iter
+    let stream: BoxStream<'_, Result<Commit>> = iter
       // ================================
       // Load the event from the snapshot
       // ================================
@@ -259,7 +259,7 @@ impl Storage for Stronghold {
       // ================================
       // Create a boxed version
       // ================================
-      .boxed_local();
+      .boxed();
 
     Ok(stream)
   }
