@@ -87,7 +87,7 @@ impl DocumentDiff {
   where
     C: Into<Option<&'client Client>>,
   {
-    let network: Network = (&self.did).into();
+    let network = Network::from_did(&self.did);
 
     // Publish the DID Document diff to the Tangle.
     let message: MessageId = match client.into() {
