@@ -18,7 +18,9 @@ use crate::verification::MethodData;
 use crate::verification::MethodRef;
 use crate::verification::MethodType;
 
-/// A DID Document Verification Method
+/// A DID Document Verification Method.
+///
+/// [Specification](https://www.w3.org/TR/did-core/#verification-method-properties)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Method<T = Object> {
   pub(crate) id: DID,

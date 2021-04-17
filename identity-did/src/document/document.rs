@@ -23,7 +23,9 @@ use crate::verification::MethodQuery;
 use crate::verification::MethodRef;
 use crate::verification::MethodScope;
 
-/// A DID Document
+/// A DID Document.
+///
+/// [Specification](https://www.w3.org/TR/did-core/#did-document-properties)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[rustfmt::skip]
 pub struct Document<T = Object, U = Object, V = Object> {
