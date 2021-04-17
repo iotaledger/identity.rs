@@ -8,9 +8,10 @@ use std::borrow::Cow;
 use crate::common::BitSet;
 use crate::convert::ToJson;
 use crate::crypto::merkle_key::MerkleDigest;
+use crate::crypto::merkle_key::MerkleDigestTag;
 use crate::crypto::merkle_key::MerkleKey;
 use crate::crypto::merkle_key::MerkleSignature;
-use crate::crypto::merkle_key::MerkleTag;
+use crate::crypto::merkle_key::MerkleSignatureTag;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Proof;
 use crate::crypto::Named;
@@ -127,16 +128,16 @@ where
   D: MerkleDigest,
   S: MerkleSignature,
 {
-  let (tag_s, tag_d): (MerkleTag, MerkleTag) = MerkleKey::extract_tags(&key.merkle_key)?;
+  let (tag_s, tag_d): (MerkleSignatureTag, MerkleDigestTag) = MerkleKey::extract_tags(&key.merkle_key)?;
 
   // Validate the signature algorithm tag
   if tag_s != S::TAG {
-    return Err(Error::InvalidMerkleKeyTag(Some(tag_d)));
+    return Err(Error::InvalidMerkleSignatureKeyTag(Some(tag_s)));
   }
 
   // Validate the digest algorithm tag
   if tag_d != D::TAG {
-    return Err(Error::InvalidMerkleKeyTag(Some(tag_d)));
+    return Err(Error::InvalidMerkleDigestKeyTag(Some(tag_d)));
   }
 
   // Extract and return the Merkle root hash
