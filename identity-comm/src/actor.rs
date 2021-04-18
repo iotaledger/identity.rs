@@ -1,290 +1,267 @@
-// use crate::{
-//   envelope::{self, Encrypted, EncryptionAlgorithm},
-//   message::{DidRequest, DidResponse, Message, Trustping, TrustpingResponse},
-// };
-// use futures_util::future::RemoteHandle;
-// use identity_core::crypto::{KeyPair, PublicKey, SecretKey};
-// use identity_iota::did::Document;
-// use riker::actor::BasicActorRef;
-// use riker::actor::Context;
-// use riker::actor::Receive;
-// use riker::actor::Sender;
-// use riker::actor::{actor, ActorRef};
-// use riker::actor::{Actor, ActorFactoryArgs};
-// use serde::Deserialize;
-// use std::{any::TypeId, collections::HashMap, fmt::Debug, sync::{Arc, Mutex}};
-// use crate::riker::system::Run;
-// use riker_patterns::ask::ask;
-// #[derive(Clone, Debug, Deserialize, Serialize)]
-// #[serde(tag = "type", content = "value")]
-// pub enum DidCommActorMsg {
-//   Trustping(Trustping),
-//   DidRequest(DidRequest),
-// }
+use crate::riker::system::Run;
+use crate::{
+  envelope::{self, Encrypted, EncryptionAlgorithm},
+  message::{DidRequest, DidResponse, Message, Trustping, TrustpingResponse},
+};
+use futures_util::future::RemoteHandle;
+use identity_core::crypto::{KeyPair, PublicKey, SecretKey};
+use identity_iota::did::Document;
+use riker::actor::BasicActorRef;
+use riker::actor::Context;
+use riker::actor::Receive;
+use riker::actor::Sender;
+use riker::actor::{actor, ActorRef};
+use riker::actor::{Actor, ActorFactoryArgs};
+use riker_patterns::ask::ask;
+use serde::{Deserialize, Serialize};
+use std::{
+  any::{Any, TypeId},
+  collections::HashMap,
+  fmt::Debug,
+  marker::PhantomData,
+  sync::{Arc, Mutex},
+};
 
-// impl From<Trustping> for DidCommActorMsg {
-//   fn from(other: Trustping) -> Self {
-//     DidCommActorMsg::Trustping(other)
-//   }
-// }
-// impl From<DidRequest> for DidCommActorMsg {
-//   fn from(other: DidRequest) -> Self {
-//     DidCommActorMsg::DidRequest(other)
-//   }
-// }
-// // Communicator trait specifies all default request->response mappings
-// // The drawback is that we can't refer to fields
-// // TODO: add account (adapter trait)
-// pub trait DidCommunicator {
-//   type Msg: 'static + Clone + Debug + Send;
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum Request {
+  Trustping(Trustping),
+  Did(DidRequest),
+}
 
-//   fn receive_trustping(&mut self, _ctx: &Context<Self::Msg>, _msg: Trustping, sender: Sender) {
-//     println!("trustping received");
-//     sender
-//       .expect("Sender should exists")
-//       // TODO get rid of the Response enum?!
-//       .try_tell(DidCommActorResponse::Trustping(TrustpingResponse::default()), None)
-//       .expect("Sender should receive the response");
-//   }
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum Response {
+  Trustping(TrustpingResponse),
+  Did(DidResponse),
+}
 
-//   fn receive_did_request(&mut self, _ctx: &Context<Self::Msg>, _msg: DidRequest, sender: Sender) {
-//     println!("didrequest received");
-//     sender
-//       .expect("Sender should exists")
-//       .try_tell(
-//         DidCommActorResponse::DidComm(DidResponse::new("did:example:123".parse().unwrap())),
-//         None,
-//       )
-//       .expect("Sender should receive the response");
-//   }
-// }
+impl From<Trustping> for Request {
+  fn from(other: Trustping) -> Self {
+    Request::Trustping(other)
+  }
+}
+impl From<DidRequest> for Request {
+  fn from(other: DidRequest) -> Self {
+    Request::Did(other)
+  }
+}
+// Communicator trait specifies all default request->response mappings
+// The drawback is that we can't refer to fields
+pub trait DidCommunicator {
+  type Msg: riker::Message;
 
-// // Apparently we need to use dynamic dispatch to get around a generic DidCommActor<T: DidCommunicator>. The workaround seems to be needed, since the #actor macro does
-// // not seem to respect a generic type parameter. Not clear if this really is the case, did https://github.com/riker-rs/riker/pull/124 solve another issue?
-// pub struct DidCommActor {
-//   actor: Box<dyn DidCommunicator<Msg = DidCommActorMsg> + Send>,
-// }
+  fn receive_trustping(&mut self, _ctx: &Context<Self::Msg>, _msg: Trustping, sender: Sender) {
+    println!("trustping received");
+    sender
+      .expect("Sender should exists")
+      // TODO get rid of the Response enum?!
+      .try_tell(Response::Trustping(TrustpingResponse::default()), None)
+      .expect("Sender should receive the response");
+  }
 
-// impl DidCommActor {
-//   fn new<T: 'static + DidCommunicator<Msg = DidCommActorMsg> + Send>(actor: T) -> Self {
-//     Self { actor: Box::new(actor) }
-//   }
-// }
+  fn receive_did_request(&mut self, _ctx: &Context<Self::Msg>, _msg: DidRequest, sender: Sender) {
+    println!("didrequest received");
+    sender
+      .expect("Sender should exists")
+      .try_tell(
+        Response::Did(DidResponse::new("did:example:123".parse().unwrap())),
+        None,
+      )
+      .expect("Sender should receive the response");
+  }
+}
 
-// impl Default for DidCommActor {
-//   fn default() -> Self {
-//     Self::new(DefaultCommunicator)
-//   }
-// }
+// Apparently we need to use dynamic dispatch to get around a generic DidCommActor<T: DidCommunicator>. The workaround seems to be needed, since the #actor macro does
+// not seem to respect a generic type parameter. (Actor::Msg needs to be a struct or Enum). Not clear if this really is the case, did https://github.com/riker-rs/riker/pull/124 solve another issue?
+pub struct DidCommActor {
+  actor: Box<dyn DidCommunicator<Msg = Request> + Send>,
+}
 
-// impl Receive<Trustping> for DidCommActor {
-//   type Msg = DidCommActorMsg;
+impl DidCommActor {
+  fn new<T: 'static + DidCommunicator<Msg = Request> + Send>(actor: T) -> Self {
+    Self { actor: Box::new(actor) }
+  }
+}
 
-//   fn receive(&mut self, ctx: &Context<Self::Msg>, msg: Trustping, sender: Sender) {
-//     self.actor.receive_trustping(ctx, msg, sender);
-//   }
-// }
+impl Default for DidCommActor {
+  fn default() -> Self {
+    Self::new(DefaultCommunicator)
+  }
+}
 
-// impl Receive<DidRequest> for DidCommActor {
-//   type Msg = DidCommActorMsg;
+impl Receive<Trustping> for DidCommActor {
+  type Msg = Request;
 
-//   fn receive(&mut self, ctx: &Context<Self::Msg>, msg: DidRequest, sender: Sender) {
-//     self.actor.receive_did_request(ctx, msg, sender)
-//   }
-// }
+  fn receive(&mut self, ctx: &Context<Self::Msg>, msg: Trustping, sender: Sender) {
+    self.actor.receive_trustping(ctx, msg, sender);
+  }
+}
 
-// impl Actor for DidCommActor {
-//   // we used the #[actor] attribute so DidCommActorMsg is the Msg type
-//   type Msg = DidCommActorMsg;
+impl Receive<DidRequest> for DidCommActor {
+  type Msg = Request;
 
-//   fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
-//     // Use the respective Receive<T> implementation
-//     match msg {
-//       DidCommActorMsg::Trustping(msg) => Receive::<Trustping>::receive(self, ctx, msg, sender),
-//       DidCommActorMsg::DidRequest(msg) => Receive::<DidRequest>::receive(self, ctx, msg, sender),
-//     }
-//   }
-// }
+  fn receive(&mut self, ctx: &Context<Self::Msg>, msg: DidRequest, sender: Sender) {
+    self.actor.receive_did_request(ctx, msg, sender)
+  }
+}
 
-// pub struct EncryptedDidCommActor {
-//   // this prevents from wrapping signed envelopes in encrypted envelopes
-//   inner: ActorRef<DidCommActorMsg>,
-//   recipients: PublicKey,
-//   keypair: KeyPair,
-//   algorithm: EncryptionAlgorithm,
-// }
+impl Actor for DidCommActor {
+  type Msg = Request;
 
-// #[derive(Clone, Debug, Deserialize, Serialize)]
-// pub enum DidCommActorResponse {
-//   Trustping(TrustpingResponse),
-//   DidComm(DidResponse),
-// }
+  fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
+    // Use the respective Receive<T> implementation
+    match msg {
+      Request::Trustping(msg) => Receive::<Trustping>::receive(self, ctx, msg, sender),
+      Request::Did(msg) => Receive::<DidRequest>::receive(self, ctx, msg, sender),
+    }
+  }
+}
 
-// impl Actor for EncryptedDidCommActor {
-//   type Msg = envelope::Encrypted;
-//   fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
-//     // TODO async tasks vs channel?
-//     let msg = msg
-//       .unpack::<DidCommActorMsg>(self.algorithm, &self.keypair.secret(), &self.recipients)
-//       .unwrap();
-//     let handle: RemoteHandle<DidCommActorResponse> =
-//       ask::<DidCommActorMsg, _, _, _>(&ctx.system.clone(), &self.inner, msg);
-//     ctx
-//       .run(handle)
-//       .map(|fut| {
-//         let did_comm_msg = async_std::task::block_on(async { fut.await });
-//         let response_envelope =
-//           Encrypted::pack(&did_comm_msg, self.algorithm, &[self.recipients.clone()], &self.keypair).unwrap();
+pub struct DefaultCommunicator;
+impl DidCommunicator for DefaultCommunicator {
+  type Msg = Request;
+}
 
-//         sender
-//           .expect("sender must be present")
-//           .try_tell(response_envelope, ctx.myself())
-//           .expect("could not send");
-//       })
-//       .expect("could not run");
-//   }
-// }
+/// An actor that wraps communication of another actor in an [Encrypted] envelope
+pub struct EncryptedActor<I: riker::Message, O> {
+  // this prevents from wrapping signed envelopes in encrypted envelopes
+  inner: ActorRef<I>,
+  recipients: PublicKey,
+  keypair: KeyPair,
+  algorithm: EncryptionAlgorithm,
+  _output: PhantomData<O>,
+}
 
-// impl ActorFactoryArgs<(ActorRef<DidCommActorMsg>, PublicKey, KeyPair, EncryptionAlgorithm)> for EncryptedDidCommActor {
-//   fn create_args(config: (ActorRef<DidCommActorMsg>, PublicKey, KeyPair, EncryptionAlgorithm)) -> Self {
-//     Self {
-//       inner: config.0,
-//       recipients: config.1,
-//       keypair: config.2,
-//       algorithm: config.3,
-//     }
-//   }
-// }
-// pub struct DefaultCommunicator;
-// impl DidCommunicator for DefaultCommunicator {
-//   type Msg = DidCommActorMsg;
-// }
+// I: Request, O: Response
+impl<I, O> Actor for EncryptedActor<I, O>
+where
+  I: riker::Message + Message,
+  O: riker::Message + Message + Serialize,
+  for<'de> I: Deserialize<'de>,
+{
+  type Msg = envelope::Encrypted;
+  fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
+    // unpack request
+    let msg = msg
+      .unpack::<I>(self.algorithm, &self.keypair.secret(), &self.recipients)
+      .expect("could not unpack message");
 
-// // !  overwriting handlers requires a tiny bit of boilerplate, creating the Actor should be as easy as DidCommActor { actor: MyCommunicator }
+    // pass unpacked request to inner actor and await response
+    let handle: RemoteHandle<O> = ask::<I, _, _, _>(&ctx.system.clone(), &self.inner, msg);
+    let response: O = ctx
+      .run(handle)
+      .map(|fut| async_std::task::block_on(async { fut.await }))
+      .expect("could not run");
 
-// /// Custom communicator that overwrites receive_trustping
-// pub struct MyCommunicator;
-// impl DidCommunicator for MyCommunicator {
-//   type Msg = DidCommActorMsg;
+    // pack response
+    let response_envelope = Encrypted::pack(&response, self.algorithm, &[self.recipients.clone()], &self.keypair)
+      .expect("could not pack message");
 
-//   fn receive_trustping(&mut self, _ctx: &Context<Self::Msg>, _msg: Trustping, sender: Sender) {
-//     dbg!("trustping received - custom response");
-//     sender
-//       .expect("Sender should exists")
-//       .try_tell(TrustpingResponse::default(), None)
-//       .expect("Sender should receive the response");
-//   }
-// }
+    sender
+      .expect("sender must be present")
+      .try_tell(response_envelope, ctx.myself())
+      .expect("could not send");
+  }
+}
 
-// // ! Implementing a custom actor that has custom fields and overwrites the trustping handler.
-// // ! It takes the default DidRequest handler (requires some boilerplate per Default-request handled)
+impl<I, O> ActorFactoryArgs<(ActorRef<I>, PublicKey, KeyPair, EncryptionAlgorithm)> for EncryptedActor<I, O>
+where
+  I: riker::Message + Message,
+  O: riker::Message + Message + Serialize,
+  for<'de> I: Deserialize<'de>,
+{
+  fn create_args(config: (ActorRef<I>, PublicKey, KeyPair, EncryptionAlgorithm)) -> Self {
+    Self {
+      inner: config.0,
+      recipients: config.1,
+      keypair: config.2,
+      algorithm: config.3,
+      _output: PhantomData::default(),
+    }
+  }
+}
 
-// #[actor(Trustping, DidRequest)]
-// pub struct MyActor {
-//   my_state: bool,
-// }
+// !  overwriting handlers requires a tiny bit of boilerplate, creating the Actor should be as easy as DidCommActor { actor: MyCommunicator }
 
-// impl Actor for MyActor {
-//   // we used the #[actor] attribute so MyActorMsg is the Msg type
-//   type Msg = MyActorMsg;
+/// Custom communicator that overwrites receive_trustping
+pub struct MyCommunicator;
+impl DidCommunicator for MyCommunicator {
+  type Msg = Request;
 
-//   fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
-//     // Use the respective Receive<T> implementation
-//     self.receive(ctx, msg, sender);
-//   }
-// }
+  fn receive_trustping(&mut self, _ctx: &Context<Request>, _msg: Trustping, sender: Sender) {
+    dbg!("trustping received - custom response");
+    sender
+      .expect("Sender should exists")
+      .try_tell(TrustpingResponse::default(), None)
+      .expect("Sender should receive the response");
+  }
+}
 
-// impl DidCommunicator for MyActor {
-//   type Msg = MyActorMsg;
-// }
+// ! Implementing a custom actor that has custom fields and overwrites the trustping handler.
+// ! It takes the default DidRequest handler (requires some boilerplate per Default-request handled)
 
-// /// impl custom behavior for trustpings
-// /// we can insert behavior before and after the default call or implement a whole new method
-// impl Receive<Trustping> for MyActor {
-//   type Msg = MyActorMsg;
-//   fn receive(&mut self, ctx: &Context<Self::Msg>, msg: Trustping, sender: Sender) {
-//     dbg!("trustping received - custom conditional response");
-//     if self.my_state {
-//       self.receive_trustping(ctx, msg, sender);
-//     } else {
-//       dbg!("do something else");
-//     }
-//   }
-// }
+#[actor(Trustping, DidRequest)]
+pub struct MyActor {
+  my_state: bool,
+}
 
-// /// Using default behavior boiler plate for DidRequest
-// impl Receive<DidRequest> for MyActor {
-//   type Msg = MyActorMsg;
-//   fn receive(&mut self, ctx: &Context<Self::Msg>, msg: DidRequest, sender: Sender) {
-//     self.receive_did_request(ctx, msg, sender);
-//   }
-// }
+impl Actor for MyActor {
+  // we used the #[actor] attribute so MyActorMsg is the Msg type
+  type Msg = MyActorMsg;
 
-// #[cfg(test)]
-// mod test {
-//   use super::*;
+  fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
+    // Use the respective Receive<T> implementation
+    self.receive(ctx, msg, sender);
+  }
+}
 
-//   #[test]
-//   fn test_my_communicator() {
-//     let _actor = DidCommActor::new(MyCommunicator);
-//   }
-// }
+impl DidCommunicator for MyActor {
+  type Msg = MyActorMsg;
+}
 
+/// impl custom behavior for trustpings
+/// we can insert behavior before and after the default call or implement a whole new method
+impl Receive<Trustping> for MyActor {
+  type Msg = MyActorMsg;
+  fn receive(&mut self, ctx: &Context<Self::Msg>, msg: Trustping, sender: Sender) {
+    dbg!("trustping received - custom conditional response");
+    if self.my_state {
+      self.receive_trustping(ctx, msg, sender);
+    } else {
+      dbg!("do something else");
+    }
+  }
+}
 
+/// Using default behavior boiler plate for DidRequest
+impl Receive<DidRequest> for MyActor {
+  type Msg = MyActorMsg;
+  fn receive(&mut self, ctx: &Context<Self::Msg>, msg: DidRequest, sender: Sender) {
+    self.receive_did_request(ctx, msg, sender);
+  }
+}
 
-// /// Dynamic request handler for Actors with Enum Messages.
-// /// Allows to 
-// struct RequestHandler<'a, A: Actor, M> {
-//   mapping: HashMap<TypeId, Box<dyn Fn(&'a mut A, &'a Context<A::Msg>, M, Sender)>>
-// }
+#[cfg(test)]
+mod test {
+  use super::*;
 
-// type HandlerFn<'a, A: Actor, M> = dyn Fn(&'a mut A, &'a Context<A::Msg>, M, Sender);
-
-// impl <'a, A: Actor, M: 'static + Message> RequestHandler<'a, A, M> {
-//   fn register(&'a mut self, callback: Box<HandlerFn<'a, A, M>>) -> Option<Box<HandlerFn<'a, A, M>>> {
-//     self.mapping.insert(TypeId::of::<M>(), callback)
-//   }
-//   fn get(&'a self, key: &TypeId) -> Option<&Box<HandlerFn<'a, A, M>>> {
-//     self.mapping.get(key)
-//   }
-//   fn handle(&'a self, actor: &'a mut A, ctx: &'a Context<A::Msg>, msg: M, sender: Sender) -> Result<(), String>{
-  
-//     let callback = self.get(&TypeId::of::<M>()).ok_or_else(|| format!("callback not found for  {}", std::any::type_name::<M>()))?;
-//     callback(actor, ctx, msg, sender);
-//     Ok(())
-//   }
-// }
-
-// trait Handler<'a, A: Actor> {
-//   type Request;
-//   type Response;
-
-//   fn handle(&'a self, actor: &'a mut A, ctx: &'a Context<A::Msg>, msg: Self::Request, sender: Sender) -> Result<Self::Response, String>;
-// }
-
-// struct TrustPingHandler;
-// impl <'a> Handler<'a, DidCommActor> for TrustPingHandler {
-//   type Request = Trustping;
-//   type Response = TrustpingResponse;
-
-//   fn handle(&'a self, actor: &'a mut DidCommActor, ctx: &'a Context<<DidCommActor as Actor>::Msg>, msg: Self::Request, sender: Sender) -> Result<Self::Response, String> {
-//       dbg!("trustping received");
-//       Ok(TrustpingResponse::default())
-//   }
-// }
-
-// use identity_account::account::Account;
-// use identity_account::storage::MemStore;
-// use identity_account::storage::Storage;
-
-// struct Acti {
-//   account: Arc<Account<MemStore>>
-//   //account: Account<S>
-// }
-
-// use identity_iota::did::DID;
+  #[test]
+  fn test_my_communicator() {
+    let _actor = DidCommActor::new(MyCommunicator);
+  }
+}
 
 
+use identity_account::account::Account;
+use identity_account::storage::MemStore;
+use identity_account::storage::Storage;
+
+struct Acti {
+  account: Arc<Account<MemStore>>, //account: Account<S>
+}
+
+use identity_iota::did::DID;
 
 // #[actor(DidRequest)]
 // pub struct MyActor2 {
@@ -304,42 +281,64 @@
 //   }
 // }
 
-use identity_account::{account::Account, storage::MemStore};
-use riker::actor::actor;
-use riker::actor::{Actor, BasicActorRef, Context, Receive, Sender};
-use riker::system::Run;
-use identity_iota::did::DID;
+// use identity_account::{account::Account, storage::MemStore};
+// use riker::actor::actor;
+// use riker::actor::{Actor, BasicActorRef, Context, Receive, Sender};
+// use riker::system::Run;
+// use identity_iota::did::DID;
+
+// #[derive(Clone, Debug)]
+// pub struct DidRequest {
+
+// }
+
+// impl Receive<DidRequest> for MyActor {
+//   type Msg = MyActorMsg;
+
+//   fn receive(&mut self, ctx: &Context<Self::Msg>, msg: DidRequest, sender: Sender) {
+
+//   }
+// }
+
+// use std::sync::Arc;
+
+// #[actor(DidRequest)]
+// pub struct MyActor {
+//   account: Arc<Account<MemStore>>,
+// }
+
+// impl Actor for MyActor {
+//   type Msg = MyActorMsg;
+
+//   fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
+//     let did: &DID = todo!();
+//     let account: Arc<Account<_>> = Arc::clone(&self.account);
+
+//     ctx.run(async move {
+//       account.get(did.clone()).await;
+//     });
+//   }
+// }
 
 
-#[derive(Clone, Debug)]
-pub struct DidRequest {
+trait Mes: Message {}
 
+trait Blubb<T> {
+  fn call(&self, b: T) -> bool;
 }
-
-impl Receive<DidRequest> for MyActor {
-  type Msg = MyActorMsg;
-
-  fn receive(&mut self, ctx: &Context<Self::Msg>, msg: DidRequest, sender: Sender) {
-
+impl<T: Fn(bool) -> bool > Blubb<bool> for T{
+  fn call(&self, b: bool) -> bool {
+      self(b)
   }
 }
 
-use std::sync::Arc;
-
-#[actor(DidRequest)]
-pub struct MyActor {
-  account: Arc<Account<MemStore>>,
+fn yes(b: bool)-> bool {
+  true
 }
 
-impl Actor for MyActor {
-  type Msg = MyActorMsg;
-
-  fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
-    let did: &DID = todo!();
-    let account: Arc<Account<_>> = Arc::clone(&self.account);
-
-    ctx.run(async move {
-      account.get(did.clone()).await;
-    });
-  }
+fn b<B: Blubb<bool>>(f: B, b: bool) -> bool {
+  f.call(b)
+}
+fn bla(c: bool) -> bool {
+  b(yes, true)
 }

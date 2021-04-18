@@ -1,8 +1,8 @@
 use async_std::task;
 use identity_comm::actor::DidCommActor;
-use identity_comm::actor::DidCommActorMsg;
-use identity_comm::actor::DidCommActorResponse;
-use identity_comm::actor::EncryptedDidCommActor;
+use identity_comm::actor::Request;
+use identity_comm::actor::Response;
+use identity_comm::actor::EncryptedActor;
 use identity_comm::message::Message;
 use identity_comm::message::Trustping;
 use identity_comm::message::TrustpingResponse;
@@ -46,11 +46,11 @@ fn main() -> Result<(), String> {
 
   // ask the actor
   let msg = Trustping::new(Url::parse("http://bobsworld.com").unwrap());
-  let r: DidCommActorResponse = task::block_on(ask(&sys, &actor, msg.clone()));
+  let r: Response = task::block_on(ask(&sys, &actor, msg.clone()));
 
   assert_eq!(
     format!("{:?}", r),
-    format!("{:?}", DidCommActorResponse::Trustping(TrustpingResponse::default()))
+    format!("{:?}", Response::Trustping(TrustpingResponse::default()))
   );
 
   /* -------------------------------------------------------------------------- */
@@ -59,24 +59,24 @@ fn main() -> Result<(), String> {
 
   // send another trustping, this time in an encrypted envelope
   let encrypted_actor = sys
-    .actor_of_args::<EncryptedDidCommActor, (ActorRef<DidCommActorMsg>, PublicKey, KeyPair, EncryptionAlgorithm)>(
+    .actor_of_args::<EncryptedActor<Request, Response>, (ActorRef<Request>, PublicKey, KeyPair, EncryptionAlgorithm)>(
       "did_comm_enc_actor",
       (actor, keypair.public().clone(), keypair.clone(), algo),
     )
     .unwrap();
 
-  let encrypted_msg = DidCommActorMsg::Trustping(msg)
+  let encrypted_msg = Request::Trustping(msg)
     .pack_auth(algo, &[keypair.public().clone()], &keypair)
     .unwrap();
   // send encrypted msg to encrypted actor
   let r_encrypted: Encrypted = task::block_on(ask(&sys, &encrypted_actor, encrypted_msg.clone()));
   let res = r_encrypted
-    .unpack::<DidCommActorResponse>(algo, keypair.secret(), keypair.public())
+    .unpack::<Response>(algo, keypair.secret(), keypair.public())
     .unwrap();
 
   assert_eq!(
     format!("{:?}", res),
-    format!("{:?}", DidCommActorResponse::Trustping(TrustpingResponse::default()))
+    format!("{:?}", Response::Trustping(TrustpingResponse::default()))
   );
 
   Ok(())
