@@ -1,5 +1,3 @@
-
----
 ### credential-schema
 Querying an agent for the schema of a specific VC that the agent can issue.
 

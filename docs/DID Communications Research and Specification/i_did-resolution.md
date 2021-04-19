@@ -1,5 +1,3 @@
-
----
 ### did-resolution
 
 Using another Agent as a Resolver.

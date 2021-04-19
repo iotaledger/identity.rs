@@ -1,4 +1,3 @@
----
 ### credential-options
 
 Querying an agent for the VCs that the agent can issue.

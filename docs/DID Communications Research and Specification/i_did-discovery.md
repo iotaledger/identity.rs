@@ -1,4 +1,3 @@
----
 ### did-discovery
 
 Requesting a DID from an agent.

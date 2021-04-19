@@ -1,5 +1,3 @@
-
----
 ### presentation-verification
 
 Proving a set of statements about an identifier.

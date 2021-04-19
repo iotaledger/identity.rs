@@ -1,4 +1,3 @@
----
 ### authentication
 
 Proving control over an identifier.

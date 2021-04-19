@@ -1,4 +1,3 @@
----
 ### trust-ping
 
 Testing a pairwise channel.

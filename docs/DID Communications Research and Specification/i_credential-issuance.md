@@ -1,5 +1,3 @@
-
----
 ### credential-issuance
 Creating an authenticated statement about a DID.
 

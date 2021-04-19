@@ -1,5 +1,3 @@
-
----
 ### credential-revocation
 
 Notifying a holder that a previously issued credential has been revoked. Note that this revocation is declaratory, not constitutive, so the actual revocation has to be done elsewhere (e.g. in the backend of the issuer).

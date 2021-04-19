@@ -1,4 +1,3 @@
----
 ### features-discovery
 
 Enabling agents to discover which interactions other agents support.
