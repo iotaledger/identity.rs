@@ -1,7 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::{core::decode_b58, did::Service as IotaService};
+use identity::core::decode_b58;
+use identity::did::Service as IotaService;
 use identity::core::FromJson;
 use identity::crypto::merkle_key::MerkleKey;
 use identity::crypto::merkle_key::MerkleTag;
@@ -17,7 +18,7 @@ use identity::iota::DocumentDiff;
 use identity::iota::Method as IotaMethod;
 use iota::MessageId;
 use std::str::FromStr;
-use wasm_bindgen::{ prelude::*};
+use wasm_bindgen::prelude::*;
 
 use crate::credential::VerifiableCredential;
 use crate::credential::VerifiablePresentation;
@@ -26,8 +27,6 @@ use crate::crypto::KeyType;
 use crate::did::DID;
 use crate::method::Method;
 use crate::utils::err;
-use identity::core::SerdeInto;
-use core::ops::Deref;
 
 
 #[wasm_bindgen(inspectable)]
@@ -125,20 +124,14 @@ impl Document {
     self.0.remove_method(&did.0).map_err(err)
   }
 
-  //TODO: insert and remove services
   #[wasm_bindgen(js_name = insertService)]
   pub fn insert_service(&mut self, service: Service) -> Result<bool, JsValue> {
-    if service.0.id().fragment().is_none() {
-      Ok(false)
-    } else {
-      Ok(self.0.service_mut().append(service.0.serde_into().unwrap()))
-    }
+    Ok(self.0.insert_service(service.0))
   }
 
   #[wasm_bindgen(js_name = removeService)]
   pub fn remove_service(&mut self, did: &DID) -> Result<(), JsValue> {
-    self.0.service_mut().remove(did.0.deref());
-    Ok(())
+    self.0.remove_service(&did.0).map_err(err)
   }
   
 
