@@ -35,7 +35,7 @@ introductionProposal: {
 
 ```JSON
 {
-    "context": "features-discovery/1.0/featuresRequest",
+    "context": "did-introduction/1.0/introductionProposal",
     "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
     "callbackURL": "https://www.bobsworld.com/"
 }
@@ -50,10 +50,10 @@ The <u>introducee</u>s answer with a `introductionResponse`, signaling their con
 introductionResponse: {
     "context", // REQUIRED!
     "thread", // REQUIRED!
-    "features", // REQUIRED!
     "callbackURL", // OPTIONAL!
-    "responseRequested", //OPTIONAL!
+    "responseRequested", // OPTIONAL!
     "id", // OPTIONAL!
+    "comment", // OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -62,14 +62,8 @@ introductionResponse: {
 
 ```JSON
 {
-    "context": "features-discovery/1.0/featuresResponse",
-    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
-    "features": [
-        "trust-ping/1.0",
-        "did-discovery/1.0",
-        "features-discovery/1.0",
-        "authentication/1.0",
-    ]
+    "context": "did-introduction/1.0/introductionResponse",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8"
 }
 ```
 
@@ -82,10 +76,11 @@ The <u>introducer</u> finishes with a series of `introduction` messages, introdu
 introduction: {
     "context", // REQUIRED!
     "thread", // REQUIRED!
-    "features", // REQUIRED!
+    "ids", // REQUIRED!
     "callbackURL", // OPTIONAL!
-    "responseRequested", //OPTIONAL!
+    "responseRequested", // OPTIONAL!
     "id", // OPTIONAL!
+    "comment", // OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
@@ -94,16 +89,13 @@ introduction: {
 
 ```JSON
 {
-    "context": "features-discovery/1.0/featuresResponse",
+    "context": "did-introduction/1.0/introduction",
     "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
-    "features": [
-        "trust-ping/1.0",
-        "did-discovery/1.0",
-        "features-discovery/1.0",
-        "authentication/1.0",
+    "ids": [
+        "did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8",
+        "did:iota:bg73b4g8734b59g8beriugb9e87gh854giu3b54g09e8gh3othg9ewhg8we7ghb4"
     ]
 }
 ```
 
 [Source 1: Aries Introduce Protocol](https://github.com/hyperledger/aries-rfcs/blob/master/features/0028-introduce/README.md);
-
