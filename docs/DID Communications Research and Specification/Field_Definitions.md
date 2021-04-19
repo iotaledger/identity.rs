@@ -14,6 +14,8 @@
 
 `id` as String, e.g. `did:iota:57edacef81828010b314b96c0915780f206341e0ce8892a1b56678c174eef2e8`: A decentralized identifier.
 
+`ids` as JSON: An array of `id`s as defined above.
+
 `didDocument` as JSON: A DID Document (see e.g. in <a href="#did-resolution">did-resolution</a>).
 
 `comment` as String: A comment, mostly used to provide more information about something. Can be literally any String.
