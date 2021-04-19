@@ -6,6 +6,10 @@ Testing a pairwise channel.
 - <u>**Sender**</u>: Agent who initiates the trust ping
 - <u>**Receiver**</u>: Agent who responds to the <u>senders</u> trust ping
 
+### Flow
+
+![trust-ping flow](./img/trust-ping.png)
+
 ### Messages
 
 #### ping
