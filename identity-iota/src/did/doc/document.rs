@@ -7,6 +7,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
+use core::ops::DerefMut;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::convert::SerdeInto;
@@ -415,6 +416,13 @@ impl Deref for Document {
   fn deref(&self) -> &Self::Target {
     &self.document
   }
+}
+
+impl DerefMut for Document {
+
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.document
+}
 }
 
 impl From<BaseDocument> for Document {
