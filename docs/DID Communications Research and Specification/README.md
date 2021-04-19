@@ -27,3 +27,14 @@
 ◈ <a href="#credential-revocation">**credential-revocation**</a> (*revocation*): Notifying a holder that a previously issued credential has been revoked.
 
 ◈ <a href="#presentation-verification">**presentation-verification**</a> (*presentationRequest*, *presentationResponse*): Proving a set of statements about an identifier.
+
+
+
+
+
+
+
+
+
+
+TODO future work: authZ
