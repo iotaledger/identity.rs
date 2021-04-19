@@ -1,10 +1,28 @@
-![banner](./.meta/identity_banner.png)
+![banner](./../../.meta/identity_banner.png)
 
 # DID Communications Message Specification
 
 *version 0.3, last changed April 2021*
 
+## Resources
+
+| Name | Description |
+| :--- | :--- |
+| [Field Definitions](Field_Definitions.md) | Definitions for fields used within interactions. |
+| [Standalone Messages](Standalone_Messages.md) | Definitions for messages that are defined outside of a specific interaction context. |
+
 ## Interactions
+
+| Name | Version | Messages | Description |
+| :--- | :---: | :--- | :--- |
+| [trust-ping](i_trust-ping.md) | 1.0 | *ping*, *pingResponse* | Testing a pairwise channel. |
+
+
+
+
+
+
+
 
 ◈ <a href="#trust-ping">**trust-ping**</a> (*ping*, *pingResponse*): Testing a pairwise channel.
 
@@ -28,7 +46,7 @@
 
 ◈ <a href="#presentation-verification">**presentation-verification**</a> (*presentationRequest*, *presentationResponse*): Proving a set of statements about an identifier.
 
-
+## Future Work
 
 
 
