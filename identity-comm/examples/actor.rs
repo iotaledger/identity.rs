@@ -1,8 +1,11 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use async_std::task;
 use identity_comm::actor::DidCommActor;
+use identity_comm::actor::EncryptedActor;
 use identity_comm::actor::Request;
 use identity_comm::actor::Response;
-use identity_comm::actor::EncryptedActor;
 use identity_comm::message::Message;
 use identity_comm::message::Trustping;
 use identity_comm::message::TrustpingResponse;
@@ -54,7 +57,7 @@ fn main() -> Result<(), String> {
   );
 
   /* -------------------------------------------------------------------------- */
-  /*                                  ENCRYPTED                                 */
+  /* ENCRYPTED */
   /* -------------------------------------------------------------------------- */
 
   // send another trustping, this time in an encrypted envelope
@@ -70,7 +73,7 @@ fn main() -> Result<(), String> {
     .unwrap();
   // send encrypted msg to encrypted actor
   let r_encrypted: Encrypted = task::block_on(ask(&sys, &encrypted_actor, encrypted_msg.clone()));
-  let res = r_encrypted
+  let res: Response = r_encrypted
     .unpack::<Response>(algo, keypair.secret(), keypair.public())
     .unwrap();
 

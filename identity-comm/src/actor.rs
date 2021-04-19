@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::riker::system::Run;
 use crate::{
   envelope::{self, Encrypted, EncryptionAlgorithm},
@@ -23,14 +26,12 @@ use std::{
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(untagged)]
 pub enum Request {
   Trustping(Trustping),
   Did(DidRequest),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(untagged)]
 pub enum Response {
   Trustping(TrustpingResponse),
   Did(DidResponse),
@@ -46,6 +47,7 @@ impl From<DidRequest> for Request {
     Request::Did(other)
   }
 }
+
 // Communicator trait specifies all default request->response mappings
 // The drawback is that we can't refer to fields
 pub trait DidCommunicator {
@@ -72,8 +74,8 @@ pub trait DidCommunicator {
   }
 }
 
-// Apparently we need to use dynamic dispatch to get around a generic DidCommActor<T: DidCommunicator>. The workaround seems to be needed, since the #actor macro does
-// not seem to respect a generic type parameter. (Actor::Msg needs to be a struct or Enum). Not clear if this really is the case, did https://github.com/riker-rs/riker/pull/124 solve another issue?
+// Apparently we need to use dynamic dispatch to get around a generic DidCommActor<T: DidCommunicator>. The workaround
+// seems to be needed, since the #actor macro does not seem to respect a generic type parameter. (Actor::Msg needs to be a struct or Enum). Not clear if this really is the case, did https://github.com/riker-rs/riker/pull/124 solve another issue?
 pub struct DidCommActor {
   actor: Box<dyn DidCommunicator<Msg = Request> + Send>,
 }
@@ -182,7 +184,7 @@ where
   }
 }
 
-// !  overwriting handlers requires a tiny bit of boilerplate, creating the Actor should be as easy as DidCommActor { actor: MyCommunicator }
+// !  overwriting handlers requires a tiny bit of boilerplate
 
 /// Custom communicator that overwrites receive_trustping
 pub struct MyCommunicator;
@@ -252,7 +254,6 @@ mod test {
   }
 }
 
-
 use identity_account::account::Account;
 use identity_account::storage::MemStore;
 use identity_account::storage::Storage;
@@ -319,26 +320,3 @@ use identity_iota::did::DID;
 //     });
 //   }
 // }
-
-
-trait Mes: Message {}
-
-trait Blubb<T> {
-  fn call(&self, b: T) -> bool;
-}
-impl<T: Fn(bool) -> bool > Blubb<bool> for T{
-  fn call(&self, b: bool) -> bool {
-      self(b)
-  }
-}
-
-fn yes(b: bool)-> bool {
-  true
-}
-
-fn b<B: Blubb<bool>>(f: B, b: bool) -> bool {
-  f.call(b)
-}
-fn bla(c: bool) -> bool {
-  b(yes, true)
-}
