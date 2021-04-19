@@ -3,14 +3,13 @@
 
 use crate::tangle::TangleRef;
 use core::borrow::Borrow;
-use core::hash::Hash;
 use core::iter::FromIterator;
 use core::ops::Deref;
 use core::ops::DerefMut;
 use iota::MessageId;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
-type __Index<T> = HashMap<MessageId, Vec<T>>;
+type __Index<T> = BTreeMap<MessageId, Vec<T>>;
 
 #[derive(Clone, Debug)]
 pub struct MessageIndex<T> {
@@ -20,7 +19,7 @@ pub struct MessageIndex<T> {
 impl<T> MessageIndex<T> {
   /// Creates a new `MessageIndex`.
   pub fn new() -> Self {
-    Self { inner: HashMap::new() }
+    Self { inner: BTreeMap::new() }
   }
 
   /// Returns the total size of the index.
@@ -31,7 +30,7 @@ impl<T> MessageIndex<T> {
   pub fn remove_where<U>(&mut self, key: &U, f: impl Fn(&T) -> bool) -> Option<T>
   where
     MessageId: Borrow<U>,
-    U: Hash + Eq + ?Sized,
+    U: Ord,
   {
     if let Some(list) = self.inner.get_mut(key) {
       list.iter().position(f).map(|index| list.remove(index))
