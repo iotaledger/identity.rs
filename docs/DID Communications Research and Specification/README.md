@@ -29,4 +29,4 @@
 
 ## Future Work
 
-TODO future work: authZ
+◈ DID Comms - Interaction - DID Authorization (AuthZ): We can do authorization through Verifiable Credentials, but this requires a standardisation of FROST (or any other policy language) and an implementation of that beforehand. The idea is to then include that in a VC `policy` field (or similar).
