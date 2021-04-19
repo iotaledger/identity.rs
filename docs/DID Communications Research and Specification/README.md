@@ -30,3 +30,6 @@
 ## Future Work
 
 ◈ DID Comms - Interaction - DID Authorization (AuthZ): We can do authorization through Verifiable Credentials, but this requires a standardisation of FROST (or any other policy language) and an implementation of that beforehand. The idea is to then include that in a VC `policy` field (or similar).
+◈ DID Comms - Interaction - DID Introduction: If applicable, discuss opening up the protocol to n introducees, where n > 2.
+◈ Standardize communication about supported signature suites in e.g. interactions about VCs.
+◈ If neccessary, discuss ways for some agent to request the start of an interaction. This has narrow use cases, but might be interesting in the long run.
