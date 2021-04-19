@@ -1,16 +1,16 @@
-WIP
-
-
----
 ### did-introduction
 
-Describes how a go-between can introduce parties that it already knows, but that do not know each other.
+Describes how a go-between can introduce two parties that it already knows, but that do not know each other.
 
 #### Roles
 - <u>**Introducer**</u>: Agent who introduces multiple <u>introducee</u>s to each other
-- <u>**Introducee**</u>: Agents that are introduced to each other through the <u>introducer</u>
+- <u>**Introducee**</u>: Two agents that are introduced to each other through the <u>introducer</u>
 
-Note that we have two roles here, but multiple introducees.
+Note that we have two roles here, but three agents.
+
+The ´comment´ field can be used to provide a rationale for the introduction, however, that only matters for humans, not for e.g. IoT devices. A rationale for devices would need to be standardized.
+
+When one of the <u>introducee</u>s denies the proposal and the other accepts, then the accepting party will know about the other party having denied the request, since it will not be followed through. This is akin to somebody denying a social media friend request and might pose somewhat of a privacy risk.
 
 #### Messages
 
@@ -18,9 +18,7 @@ Note that we have two roles here, but multiple introducees.
 The <u>introducer</u> sends the `introductionProposal` to every <u>introducee</u>, asking for their consent to the introduction.
 
 ###### Layout
-TODO comment as question
-TODO introduction rationale for IoT devices / standardize comment field? -> reason? -> explanation into intro
-TODO write about privacy in the intro -> cant have privacy of intro when 1 denies, other accepts
+
 ```JSON
 introductionProposal: {
     "context", // REQUIRED!
@@ -28,6 +26,7 @@ introductionProposal: {
     "callbackURL", // REQUIRED!
     "responseRequested", //OPTIONAL!
     "id", // OPTIONAL!
+    "comment", // OPTIONAL!
     "timing" // OPTIONAL!
 }
 ```
