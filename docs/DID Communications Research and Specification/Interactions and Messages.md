@@ -78,12 +78,17 @@ Messages that are shared across interactions.
 The <u>sender</u> sends a `report` message to the <u>receiver</u> to provide him with details about a previously received message. This can be a simple acknowledgement or e.g. an error report. The `reference` field refers to the message that is either acknowledged or has resulted in an error. Further information can be passed through the `comment` field.
 
 ###### Layout
+TODO standardize error
+
 
 ```JSON
 report: {
     "context", // REQUIRED!
     "thread", // REQUIRED!
     "reference", // REQUIRED!
+    TODO
+    "error" : 200
+    TODO source https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
     "comment", // OPTIONAL!
     "timing" // OPTIONAL! All subfields OPTIONAL!
 }
@@ -110,6 +115,8 @@ report: {
 ◈ <a href="#trust-ping">**trust-ping**</a> (*ping*, *pingResponse*): Testing a pairwise channel.
 
 ◈ <a href="#did-discovery">**did-discovery**</a> (*didRequest*, *didResponse*): Requesting a DID from an agent.
+
+◈ <a href="#did-introduction">**did-introduction**</a> (*introductionProposal*, *introductionResponse*, *introduction*): Describes how a go-between can introduce parties that it already knows, but that do not know each other.
 
 ◈ <a href="#features-discovery">**features-discovery**</a> (*featuresRequest*, *featuresResponse*): Enabling agents to discover which interactions other agents support.
 
@@ -235,6 +242,154 @@ didResponse: {
 }
 ```
 
+
+
+
+
+
+
+
+vvvvvv did introduction
+
+
+
+---
+### did-introduction
+
+Describes how a go-between can introduce parties that it already knows, but that do not know each other.
+
+#### Roles
+- <u>**Introducer**</u>: Agent who introduces multiple <u>introducee</u>s to each other
+- <u>**Introducee**</u>: Agents that are introduced to each other through the <u>introducer</u>
+
+Note that we have two roles here, but multiple introducees.
+
+#### Messages
+
+#### introductionProposal
+The <u>introducer</u> sends the `introductionProposal` to every <u>introducee</u>, asking for their consent to the introduction.
+
+###### Layout
+TODO comment as question
+TODO introduction rationale for IoT devices / standardize comment field? -> reason? -> explanation into intro
+TODO write about privacy in the intro -> cant have privacy of intro when 1 denies, other accepts
+```JSON
+introductionProposal: {
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "callbackURL", // REQUIRED!
+    "responseRequested", //OPTIONAL!
+    "id", // OPTIONAL!
+    "timing" // OPTIONAL!
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "context": "features-discovery/1.0/featuresRequest",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
+    "callbackURL": "https://www.bobsworld.com/"
+}
+```
+
+#### introductionResponse
+The <u>introducee</u>s answer with a `introductionResponse`, signaling their consent.
+
+###### Layout
+
+```JSON
+introductionResponse: {
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "features", // REQUIRED!
+    "callbackURL", // OPTIONAL!
+    "responseRequested", //OPTIONAL!
+    "id", // OPTIONAL!
+    "timing" // OPTIONAL!
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "context": "features-discovery/1.0/featuresResponse",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
+    "features": [
+        "trust-ping/1.0",
+        "did-discovery/1.0",
+        "features-discovery/1.0",
+        "authentication/1.0",
+    ]
+}
+```
+
+#### introduction
+The <u>introducer</u> finishes with a series of `introduction` messages, introducing all <u>introducee</u>s that consented to each other.
+
+###### Layout
+
+```JSON
+introduction: {
+    "context", // REQUIRED!
+    "thread", // REQUIRED!
+    "features", // REQUIRED!
+    "callbackURL", // OPTIONAL!
+    "responseRequested", //OPTIONAL!
+    "id", // OPTIONAL!
+    "timing" // OPTIONAL!
+}
+```
+
+###### Example(s)
+
+```JSON
+{
+    "context": "features-discovery/1.0/featuresResponse",
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
+    "features": [
+        "trust-ping/1.0",
+        "did-discovery/1.0",
+        "features-discovery/1.0",
+        "authentication/1.0",
+    ]
+}
+```
+
+[Source 1: Aries Introduce Protocol](https://github.com/hyperledger/aries-rfcs/blob/master/features/0028-introduce/README.md);
+
+
+
+
+
+
+
+
+^^^^^^ did introduction
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ---
 ### features-discovery
 
@@ -299,7 +454,7 @@ featuresResponse: {
         "trust-ping/1.0",
         "did-discovery/1.0",
         "features-discovery/1.0",
-        "authentication/1.0",
+        "authentication/1.0"
     ]
 }
 ```
@@ -836,3 +991,6 @@ presentationResponse: {
 ```
 
 [Source 1: Jolocom Credential Verification](https://jolocom.github.io/jolocom-sdk/1.0.0/guides/interaction_flows/#credential-verification);
+
+
+TODO future work: authZ
