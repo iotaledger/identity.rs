@@ -1,12 +1,12 @@
-### trust-ping
+# trust-ping
 
 Testing a pairwise channel.
 
-#### Roles
+### Roles
 - <u>**Sender**</u>: Agent who initiates the trust ping
 - <u>**Receiver**</u>: Agent who responds to the <u>senders</u> trust ping
 
-#### Messages
+### Messages
 
 #### ping
 The <u>sender</u> sends the `ping` to the <u>receiver</u>. The `responseRequested` field counts as `false` if omitted. If and only if the `responseRequested` field is true should the <u>receiver</u> respond to the ping with a `report` message, posted to the `callbackURL`. If it is `true`, a `thread` should be passed as well to reference the `ping`. The `callbackURL` is OPTIONAL here because the <u>sender</u> could, for example, just include the `id` field and timing information to let the <u>receiver</u> know of transport delays.

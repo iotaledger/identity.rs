@@ -1,13 +1,13 @@
-### credential-issuance
+# credential-issuance
 Creating an authenticated statement about a DID.
 
 The Verifiable Credential (VC) issuance flow consists of a three step interaction process between two parties, the <u>issuer</u> and the <u>holder</u>. This is the third interaction in this process. In this interaction, the <u>holder</u> asks the <u>issuer</u> for issuance of a specific VC.
 
-#### Roles
+### Roles
 - **Issuer**: Agent who offers and issues one or more Verifiable Credentials
 - **Holder**: Agent who selects and receives one or more Verifiable Credentials
 
-#### Messages
+### Messages
 
 #### credentialSelection
 The <u>holder</u> sends a message containing a list of selected credentials.

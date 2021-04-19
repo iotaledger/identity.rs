@@ -1,14 +1,14 @@
-### authentication
+# authentication
 
 Proving control over an identifier.
 
 The authentication flow consists of a simple request-response message exchange, where the contents of the response must match those of the request. Because all messages are signed and authenticated, the response functions as proof of control by nature of being correctly signed by the keys listed in the DID Document of the issuer. Because of this, in scenarios where a more complex functionality (e.g. Credential Verification) is needed, an additional authentication flow is not necessary.
 
-#### Roles
+### Roles
 - <u>**Verifier**</u>: Agent who requests and verifies the authenticity of the <u>authenticator</u>
 - <u>**Authenticator**</u>: Agent who proves control over their identifier
 
-#### Messages
+### Messages
 
 #### authenticationRequest
 The <u>verifier</u> sends the `authenticationRequest` to the authentication service endpoint of the <u>authenticator</u>, specifying a `callbackURL` for the `authenticationResponse` to be posted to. The whole request is to be signed by the <u>authenticator</u>. 

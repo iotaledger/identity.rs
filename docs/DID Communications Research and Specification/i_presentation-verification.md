@@ -1,14 +1,14 @@
-### presentation-verification
+# presentation-verification
 
 Proving a set of statements about an identifier.
 
 The credential verification flow is a simple request-response message exchange between the <u>verifier</u> and the <u>prover</u>. The interaction can consist of up to two messages, the first one is OPTIONAL.
 
-#### Roles
+### Roles
 - **Verifier**: Agent who requests a set of Verifiable Credentials with associated requirements
 - **Prover**: Agent who provides a set of Verifiable Credentials in the form of a Verifiable Presentation attempting to satisfy the request
 
-#### Messages
+### Messages
 
 #### presentationRequest
 The <u>verifier</u> requests a set of Verifiable Credentials from the <u>prover</u>. This message is OPTIONAL within this interaction.

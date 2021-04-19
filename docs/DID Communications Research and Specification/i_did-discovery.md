@@ -1,12 +1,12 @@
-### did-discovery
+# did-discovery
 
 Requesting a DID from an agent.
 
-#### Roles
+### Roles
 - <u>**Requester**</u>: Agent who requests a DID from the <u>endpoint</u>
 - <u>**Endpoint**</u>: Agent who provides the requested DID to the <u>requester</u>
 
-#### Messages
+### Messages
 
 #### didRequest
 The <u>requester</u> sends the `didRequest` to the <u>endpoint</u>, specifying a `callbackURL` for the `didResponse` to be posted to. 

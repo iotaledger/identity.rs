@@ -1,13 +1,13 @@
-### credential-schema
+# credential-schema
 Querying an agent for the schema of a specific VC that the agent can issue.
 
 The Verifiable Credential (VC) issuance flow consists of a three step interaction process between two parties, the <u>issuer</u> and the <u>holder</u>. This is the second interaction in this process. In this interaction, the <u>holder</u> queries the <u>issuer</u> for the precise schema of one of the VCs that the <u>issuer</u> offers to issue, with it's own list of requirements which must be satisfied by the <u>holder</u> in order to qualify for the credential.
 
-#### Roles
+### Roles
 - **Issuer**: Agent who offers and issues one or more Verifiable Credentials
 - **Holder**: Agent who selects and receives one or more Verifiable Credentials
 
-#### Messages
+### Messages
 
 #### credentialSchemaRequest
 The <u>holder</u> queries the <u>issuer</u> for the schema of a specific VC that the <u>issuer</u> offers.

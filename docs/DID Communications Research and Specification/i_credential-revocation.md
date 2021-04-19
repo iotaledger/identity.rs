@@ -1,12 +1,12 @@
-### credential-revocation
+# credential-revocation
 
 Notifying a holder that a previously issued credential has been revoked. Note that this revocation is declaratory, not constitutive, so the actual revocation has to be done elsewhere (e.g. in the backend of the issuer).
 
-#### Roles
+### Roles
 - <u>**Issuer**</u>: Agent who revokes the credential
 - <u>**Holder**</u>: Agent who holds the credential to be revoked
 
-#### Messages
+### Messages
 
 #### revocation
 The <u>issuer</u> sends the `revocation` to the <u>holder</u>, notifying him of the revocation. The most important field here is `credentialId`, which specifies the credential that has been revoked.

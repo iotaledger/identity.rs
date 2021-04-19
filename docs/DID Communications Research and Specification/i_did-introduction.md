@@ -1,8 +1,8 @@
-### did-introduction
+# did-introduction
 
 Describes how a go-between can introduce two parties that it already knows, but that do not know each other.
 
-#### Roles
+### Roles
 - <u>**Introducer**</u>: Agent who introduces multiple <u>introducee</u>s to each other
 - <u>**Introducee**</u>: Two agents that are introduced to each other through the <u>introducer</u>
 
@@ -12,7 +12,7 @@ The ´comment´ field can be used to provide a rationale for the introduction, h
 
 When one of the <u>introducee</u>s denies the proposal and the other accepts, then the accepting party will know about the other party having denied the request, since it will not be followed through. This is akin to somebody denying a social media friend request and might pose somewhat of a privacy risk.
 
-#### Messages
+### Messages
 
 #### introductionProposal
 The <u>introducer</u> sends the `introductionProposal` to every <u>introducee</u>, asking for their consent to the introduction.

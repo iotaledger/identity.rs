@@ -1,14 +1,14 @@
-### did-resolution
+# did-resolution
 
 Using another Agent as a Resolver.
 
 DID resolution consists of a simple request-response message exchange, where the Requester asks the Resolver to perform DID resolution and return the result.
 
-#### Roles
+### Roles
 - **Requester**: Agent who requests the resolution of a DID
 - **Resolver**: Agent who resolves the given DID (or their own) and returns the result
 
-#### Messages
+### Messages
 
 #### resolutionRequest
 The Requester broadcasts a message which may or may not contain a DID (see below).

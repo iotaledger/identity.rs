@@ -1,12 +1,12 @@
-### features-discovery
+# features-discovery
 
 Enabling agents to discover which interactions other agents support.
 
-#### Roles
+### Roles
 - <u>**Requester**</u>: Agent who requests an array of interactions that the <u>responder</u> supports
 - <u>**Responder**</u>: Agent who provides the requested array of interactions to the <u>requester</u>
 
-#### Messages
+### Messages
 
 #### featuresRequest
 The <u>requester</u> sends the `featuresRequest` to the <u>responder</u>, asking for the array of supported interactions. 
