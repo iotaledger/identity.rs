@@ -8,6 +8,10 @@ The credential verification flow is a simple request-response message exchange b
 - **Verifier**: Agent who requests a set of Verifiable Credentials with associated requirements
 - **Prover**: Agent who provides a set of Verifiable Credentials in the form of a Verifiable Presentation attempting to satisfy the request
 
+### Flow
+
+![presentation-verification flow](./img/presentation-verification.png)
+
 ### Messages
 
 #### presentationRequest

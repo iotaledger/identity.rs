@@ -8,6 +8,10 @@ DID resolution consists of a simple request-response message exchange, where the
 - **Requester**: Agent who requests the resolution of a DID
 - **Resolver**: Agent who resolves the given DID (or their own) and returns the result
 
+### Flow
+
+![did-resolution flow](./img/did-resolution.png)
+
 ### Messages
 
 #### resolutionRequest

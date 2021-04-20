@@ -6,6 +6,10 @@ Requesting a DID from an agent.
 - <u>**Requester**</u>: Agent who requests a DID from the <u>endpoint</u>
 - <u>**Endpoint**</u>: Agent who provides the requested DID to the <u>requester</u>
 
+### Flow
+
+![did-discovery flow](./img/did-discovery.png)
+
 ### Messages
 
 #### didRequest

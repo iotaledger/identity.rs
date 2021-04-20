@@ -6,6 +6,10 @@ Enabling agents to discover which interactions other agents support.
 - <u>**Requester**</u>: Agent who requests an array of interactions that the <u>responder</u> supports
 - <u>**Responder**</u>: Agent who provides the requested array of interactions to the <u>requester</u>
 
+### Flow
+
+![features-discovery flow](./img/features-discovery.png)
+
 ### Messages
 
 #### featuresRequest

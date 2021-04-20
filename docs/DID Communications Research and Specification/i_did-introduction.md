@@ -12,6 +12,10 @@ The ´comment´ field can be used to provide a rationale for the introduction, h
 
 When one of the <u>introducee</u>s denies the proposal and the other accepts, then the accepting party will know about the other party having denied the request, since it will not be followed through. This is akin to somebody denying a social media friend request and might pose somewhat of a privacy risk.
 
+### Flow
+
+![did-introduction flow](./img/did-introduction.png)
+
 ### Messages
 
 #### introductionProposal

@@ -6,6 +6,10 @@ Notifying a holder that a previously issued credential has been revoked. Note th
 - <u>**Issuer**</u>: Agent who revokes the credential
 - <u>**Holder**</u>: Agent who holds the credential to be revoked
 
+### Flow
+
+![credential-revocation flow](./img/credential-revocation.png)
+
 ### Messages
 
 #### revocation

@@ -8,6 +8,10 @@ The Verifiable Credential (VC) issuance flow consists of a three step interactio
 - **Issuer**: Agent who offers and issues one or more Verifiable Credentials
 - **Holder**: Agent who selects and receives one or more Verifiable Credentials
 
+### Flow
+
+![credential-options flow](./img/credential-options.png)
+
 ### Messages
 
 #### credentialOptionsRequest

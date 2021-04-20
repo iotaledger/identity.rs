@@ -8,6 +8,10 @@ The authentication flow consists of a simple request-response message exchange, 
 - <u>**Verifier**</u>: Agent who requests and verifies the authenticity of the <u>authenticator</u>
 - <u>**Authenticator**</u>: Agent who proves control over their identifier
 
+### Flow
+
+![authentication flow](./img/authentication.png)
+
 ### Messages
 
 #### authenticationRequest
