@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! An example that utilizes a diff and int chain to publish updates to a
+//! An example that utilizes a diff and auth chain to publish updates to a
 //! DID Document.
 //!
 //! cargo run --example diff_chain
@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
   }
 
   // =========================================================================
-  // Publish Int Chain Update
+  // Publish Auth Chain Update
   // =========================================================================
 
   sleep(Duration::from_secs(1));
