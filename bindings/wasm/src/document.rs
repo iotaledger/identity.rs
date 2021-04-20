@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::core::decode_b58;
-use identity::did::Service as IotaService;
 use identity::core::FromJson;
 use identity::crypto::merkle_key::MerkleKey;
 use identity::crypto::merkle_key::MerkleTag;
@@ -27,7 +26,7 @@ use crate::crypto::KeyType;
 use crate::did::DID;
 use crate::method::Method;
 use crate::utils::err;
-
+use crate::service::Service;
 
 #[wasm_bindgen(inspectable)]
 pub struct NewDocument {
@@ -54,10 +53,6 @@ impl NewDocument {
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Document(pub(crate) IotaDocument);
-
-#[wasm_bindgen(inspectable)]
-#[derive(Clone, Debug, PartialEq)]
-pub struct Service(pub(crate) IotaService);
 
 #[wasm_bindgen]
 impl Document {
@@ -125,8 +120,8 @@ impl Document {
   }
 
   #[wasm_bindgen(js_name = insertService)]
-  pub fn insert_service(&mut self, service: Service) -> Result<bool, JsValue> {
-    Ok(self.0.insert_service(service.0))
+  pub fn insert_service(&mut self, service: &Service) -> Result<bool, JsValue> {
+    Ok(self.0.insert_service(service.0.clone()))
   }
 
   #[wasm_bindgen(js_name = removeService)]

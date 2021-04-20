@@ -18,6 +18,7 @@ pub mod did;
 pub mod document;
 pub mod iota;
 pub mod method;
+pub mod service;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]
