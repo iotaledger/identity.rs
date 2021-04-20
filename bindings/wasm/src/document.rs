@@ -5,7 +5,6 @@ use identity::core::decode_b58;
 use identity::core::FromJson;
 use identity::crypto::merkle_key::MerkleDigestTag;
 use identity::crypto::merkle_key::MerkleKey;
-use identity::crypto::merkle_key::MerkleSignatureTag;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PublicKey;
