@@ -65,7 +65,7 @@ impl Document {
   /// The authentication method will have the DID URL fragment `#authentication`
   /// and can be easily retrieved with [Document::authentication].
   pub fn from_keypair(keypair: &KeyPair) -> Result<Self> {
-    let method: Method = Method::from_keypair(keypair, "authentication")?;
+    let method: Method = Method::from_keypair(keypair, "_sign-1")?;
 
     // SAFETY: We don't create invalid Methods
     Ok(unsafe { Self::from_authentication_unchecked(method) })
