@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! An example that utilizes a diff and auth chain to publish updates to a
+//! An example that utilizes a diff and int chain to publish updates to a
 //! DID Document.
 //!
 //! cargo run --example diff_chain
@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
   }
 
   // =========================================================================
-  // Publish Auth Chain Update
+  // Publish Int Chain Update
   // =========================================================================
 
   sleep(Duration::from_secs(1));
@@ -165,7 +165,7 @@ async fn main() -> Result<()> {
 
   // =========================================================================
   // Read Document Chain with no query parameter given
-  // No query parameter => Read out Auth- and Diff Chain
+  // No query parameter => Read out Int- and Diff Chain
   // =========================================================================
 
   let remote: DocumentChain = client.read_document_chain(chain.id()).await?;
@@ -182,7 +182,7 @@ async fn main() -> Result<()> {
 
   // =========================================================================
   // Test Read Document Chain with diff true
-  // query parameter diff=true => Read out Auth- and Diff Chain
+  // query parameter diff=true => Read out Int- and Diff Chain
   // =========================================================================
 
   let mut did = chain.id().clone();
@@ -206,7 +206,7 @@ async fn main() -> Result<()> {
 
   // =========================================================================
   // Test Read Document Chain with query parameter diff false
-  // query parameter diff=false => Read Auth Chain, Skip Diff Chain
+  // query parameter diff=false => Read Int Chain, Skip Diff Chain
   // Warning: this leads to an outdated version & is therefore not recommended
   // =========================================================================
 
