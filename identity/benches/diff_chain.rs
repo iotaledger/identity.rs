@@ -23,7 +23,7 @@ fn setup() -> (Document, KeyPair) {
   (document, keypair)
 }
 
-fn update_diff_chain(n: usize, document: Document, keypair: KeyPair) {
+fn update_diff_chain(n: usize, document: Document, keypair: &KeyPair) {
   let mut chain: DocumentChain;
   chain = DocumentChain::new(AuthChain::new(document).unwrap());
 
@@ -50,7 +50,7 @@ fn bench_diff_chain_updates(c: &mut Criterion) {
   for size in ITERATIONS.iter() {
     group.throughput(Throughput::Elements(*size as u64));
     group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
-      b.iter(|| update_diff_chain(size, doc.clone(), keys.clone()));
+      b.iter(|| update_diff_chain(size, doc.clone(), &keys));
     });
   }
   group.finish();
