@@ -26,7 +26,7 @@ async fn main() -> Result<()> {
   document.publish(&client).await?;
 
   // Print the DID Document IOTA transaction link.
-  let network: Network = document.id().into();
+  let network = Network::from_did(document.id());
   let explore: String = format!("{}/message/{}", network.explorer_url(), document.message_id());
   println!("DID Document Transaction > {}", explore);
 
