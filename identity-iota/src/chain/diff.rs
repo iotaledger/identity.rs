@@ -8,7 +8,7 @@ use core::fmt::Result as FmtResult;
 use core::slice::Iter;
 use identity_core::convert::ToJson;
 
-use crate::chain::AuthChain;
+use crate::chain::IntChain;
 use crate::chain::DocumentChain;
 use crate::did::DocumentDiff;
 use crate::did::DID;
@@ -28,8 +28,8 @@ pub struct DiffChain {
 }
 
 impl DiffChain {
-  /// Constructs a new `DiffChain` for the given `AuthChain` from a slice of `Message`s.
-  pub fn try_from_messages(auth: &AuthChain, messages: &[Message]) -> Result<Self> {
+  /// Constructs a new `DiffChain` for the given `IntChain` from a slice of `Message`s.
+  pub fn try_from_messages(auth: &IntChain, messages: &[Message]) -> Result<Self> {
     if messages.is_empty() {
       return Ok(Self::new());
     }
@@ -91,7 +91,7 @@ impl DiffChain {
   ///
   /// Fails if the diff signature is invalid or the Tangle message
   /// references within the diff are invalid.
-  pub fn try_push(&mut self, auth: &AuthChain, diff: DocumentDiff) -> Result<()> {
+  pub fn try_push(&mut self, auth: &IntChain, diff: DocumentDiff) -> Result<()> {
     self.check_validity(auth, &diff)?;
 
     // SAFETY: we performed the necessary validation in `check_validity`.
@@ -113,7 +113,7 @@ impl DiffChain {
   }
 
   /// Returns `true` if the `DocumentDiff` can be added to the `DiffChain`.
-  pub fn is_valid(&self, auth: &AuthChain, diff: &DocumentDiff) -> bool {
+  pub fn is_valid(&self, auth: &IntChain, diff: &DocumentDiff) -> bool {
     self.check_validity(auth, diff).is_ok()
   }
 
@@ -122,7 +122,7 @@ impl DiffChain {
   /// # Errors
   ///
   /// Fails if the `DocumentDiff` is not a valid addition.
-  pub fn check_validity(&self, auth: &AuthChain, diff: &DocumentDiff) -> Result<()> {
+  pub fn check_validity(&self, auth: &IntChain, diff: &DocumentDiff) -> Result<()> {
     if auth.current().verify_data(diff).is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",

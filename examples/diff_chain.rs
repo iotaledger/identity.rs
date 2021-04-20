@@ -11,7 +11,7 @@ use identity::did::MethodBuilder;
 use identity::did::MethodData;
 use identity::did::MethodRef;
 use identity::did::MethodType;
-use identity::iota::AuthChain;
+use identity::iota::IntChain;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
 use identity::prelude::*;
@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
     document.sign(keypair.secret())?;
     document.publish(&client).await?;
 
-    chain = DocumentChain::new(AuthChain::new(document)?);
+    chain = DocumentChain::new(IntChain::new(document)?);
     keys.push(keypair);
 
     println!("Chain (1) > {:#}", chain);

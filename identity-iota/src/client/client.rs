@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::chain::AuthChain;
+use crate::chain::IntChain;
 use crate::chain::DiffChain;
 use crate::chain::DocumentChain;
 use crate::client::ClientBuilder;
@@ -146,7 +146,7 @@ impl Client {
 
     // Fetch all messages for the auth chain.
     let messages: Messages = self.read_messages(did.tag()).await?;
-    let auth: AuthChain = AuthChain::try_from_messages(did, &messages.messages)?;
+    let auth: IntChain = IntChain::try_from_messages(did, &messages.messages)?;
 
     // Check if there is any query given and return
     let skip_diff: bool = did.query_pairs().any(|(key, value)| key == "diff" && value == "false");

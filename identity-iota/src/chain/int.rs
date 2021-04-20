@@ -20,14 +20,14 @@ use iota::Message;
 use iota::MessageId;
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct AuthChain {
+pub struct IntChain {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) history: Option<Vec<Document>>,
   pub(crate) current: Document,
 }
 
-impl AuthChain {
-  /// Constructs a new `AuthChain` from a slice of `Message`s.
+impl IntChain {
+  /// Constructs a new `IntChain` from a slice of `Message`s.
   pub fn try_from_messages(did: &DID, messages: &[Message]) -> Result<Self> {
     let mut index: MessageIndex<Document> = messages
       .iter()
@@ -53,7 +53,7 @@ impl AuthChain {
     Ok(this)
   }
 
-  /// Creates a new `AuthChain` with the given `Document` as the latest.
+  /// Creates a new `IntChain` with the given `Document` as the latest.
   pub fn new(current: Document) -> Result<Self> {
     if current.verify().is_err() {
       return Err(Error::ChainError {
@@ -85,7 +85,7 @@ impl AuthChain {
     self.current.message_id()
   }
 
-  /// Adds a new `Document` to the `AuthChain`.
+  /// Adds a new `Document` to the `IntChain`.
   ///
   /// # Errors
   ///
@@ -102,12 +102,12 @@ impl AuthChain {
     Ok(())
   }
 
-  /// Returns `true` if the `Document` can be added to the `AuthChain`.
+  /// Returns `true` if the `Document` can be added to the `IntChain`.
   pub fn is_valid(&self, document: &Document) -> bool {
     self.check_validity(document).is_ok()
   }
 
-  /// Checks if the `Document` can be added to the `AuthChain`.
+  /// Checks if the `Document` can be added to the `IntChain`.
   ///
   /// # Errors
   ///
@@ -141,7 +141,7 @@ impl AuthChain {
   }
 }
 
-impl Display for AuthChain {
+impl Display for IntChain {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     if f.alternate() {
       f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
