@@ -7,10 +7,11 @@ members = [
   "identity-did",
   "identity-diff",
   "identity-iota",
-  "bindings/wasm",
+ 
   "examples",
 ]
 
 exclude = [
+   "bindings/wasm",
   "libjose",
 ]
