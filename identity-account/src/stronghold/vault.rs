@@ -10,6 +10,7 @@ use iota_stronghold::SLIP10DeriveInput;
 use iota_stronghold::StrongholdFlags;
 use iota_stronghold::VaultFlags;
 use std::path::Path;
+use vault::RecordId;
 
 use crate::error::Error;
 use crate::error::PleaseDontMakeYourOwnResult;
@@ -17,7 +18,7 @@ use crate::error::Result;
 use crate::stronghold::Context;
 use crate::stronghold::ProcedureResult;
 
-pub type Record = (usize, RecordHint);
+pub type Record = (RecordId, RecordHint);
 
 #[derive(Debug)]
 pub struct Vault<'snapshot> {

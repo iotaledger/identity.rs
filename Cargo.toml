@@ -16,3 +16,6 @@ exclude = [
   "bindings/wasm",
   "libjose",
 ]
+
+[profile.dev]
+split-debuginfo = "unpacked"

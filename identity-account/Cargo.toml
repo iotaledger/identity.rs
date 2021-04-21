@@ -31,15 +31,16 @@ tokio = { version = "1.3", default-features = false, features = ["rt", "rt-multi
 zeroize = { version = "1.2"}
 
 [dependencies.iota-crypto]
-git = "https://github.com/iotaledger/crypto.rs"
-branch = "dev"
-# version = "0.4"
-# rev = "b849861b86c3f7357b7477de4253b7352b363627"
+version = "0.5"
 features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std"]
 
 [dependencies.iota-stronghold]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "65ec786b9da4e084c719aac8eb8159e0ca118969"
+rev = "2e192f8e8b2b9a5a1fdef46f70e23f88664504a0"
+
+[dependencies.vault]
+git = "https://github.com/iotaledger/stronghold.rs"
+rev = "2e192f8e8b2b9a5a1fdef46f70e23f88664504a0"
 
 [dev-dependencies]
 pretty_env_logger = { version = "0.4" }
