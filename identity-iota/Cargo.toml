@@ -30,7 +30,7 @@ default-features = false
 features = ["wasm"]
 
 [dependencies.iota-crypto]
-version = "0.4"
+version = "0.5"
 features = ["blake2b"]
 
 [package.metadata.docs.rs]
