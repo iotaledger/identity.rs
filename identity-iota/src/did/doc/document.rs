@@ -357,7 +357,7 @@ impl Document {
   where
     C: Into<Option<&'client Client>>,
   {
-    let network: Network = self.id().into();
+    let network = Network::from_did(self.id());
 
     // Publish the DID Document to the Tangle.
     let message: MessageId = match client.into() {

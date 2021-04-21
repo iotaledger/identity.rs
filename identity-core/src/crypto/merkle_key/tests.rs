@@ -9,8 +9,8 @@ use crate::common::BitSet;
 use crate::crypto::merkle_key::Blake2b256;
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleSignature;
+use crate::crypto::merkle_key::MerkleSignatureTag;
 use crate::crypto::merkle_key::MerkleSigner;
-use crate::crypto::merkle_key::MerkleTag;
 use crate::crypto::merkle_key::MerkleVerifier;
 use crate::crypto::merkle_key::Sha256;
 use crate::crypto::merkle_key::SigningKey;
@@ -43,7 +43,7 @@ where
   S: MerkleSignature + Sign<Secret = [u8]> + Verify<Public = [u8]>,
   S::Output: AsRef<[u8]>,
 {
-  assert_eq!(S::TAG, MerkleTag::ED25519);
+  assert_eq!(S::TAG, MerkleSignatureTag::ED25519);
 
   let input: &[u8] = b"IOTA Identity";
   let total: usize = 1 << OsRng.gen_range(6..10);
