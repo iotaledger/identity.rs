@@ -17,7 +17,7 @@ use identity::iota::DocumentDiff;
 use identity::prelude::*;
 use std::thread::sleep;
 use std::time::Duration;
-
+use identity::iota::DID;
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a new client connected to the Testnet (Chrysalis).
@@ -33,7 +33,7 @@ async fn main() -> Result<()> {
   {
     let keypair: KeyPair = KeyPair::new_ed25519()?;
     let mut document: Document = Document::from_keypair(&keypair)?;
-    document.sign(keypair.secret())?;
+    document.sign(keypair.secret(),&DID::parse(document.verification_method().head().unwrap().as_did().to_string()).unwrap())?;
     document.publish(&client).await?;
 
     chain = DocumentChain::new(IntChain::new(document)?);
@@ -54,7 +54,7 @@ async fn main() -> Result<()> {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
 
     let authentication: MethodRef = MethodBuilder::default()
-      .id(chain.id().join("#key-2")?.into())
+      .id(chain.id().join("#_sign-2")?.into())
       .controller(chain.id().clone().into())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::new_b58(keypair.public()))
@@ -62,18 +62,18 @@ async fn main() -> Result<()> {
       .map(Into::into)?;
 
     unsafe {
-      new.as_document_mut().authentication_mut().clear();
-      new.as_document_mut().authentication_mut().append(authentication.into());
+      new.as_document_mut().verification_method_mut().clear();
+      new.as_document_mut().verification_method_mut().append(authentication.try_into_embedded().unwrap().into());
     }
 
     new.set_updated(Timestamp::now());
     new.set_previous_message_id(*chain.auth_message_id());
 
-    chain.current().sign_data(&mut new, keys[0].secret())?;
+    chain.current().sign_data(&mut new, keys[0].secret()).unwrap();
     new.publish(&client).await?;
 
     keys.push(keypair);
-    chain.try_push_auth(new)?;
+    chain.try_push_auth(new).unwrap();
 
     println!("Chain (2) > {:#}", chain);
     println!();
@@ -95,10 +95,10 @@ async fn main() -> Result<()> {
     };
 
     let message_id = *chain.diff_message_id();
-    let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
+    let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret()).unwrap();
 
-    diff.publish(chain.auth_message_id(), &client).await?;
-    chain.try_push_diff(diff)?;
+    diff.publish(chain.auth_message_id(), &client).await.unwrap();
+    chain.try_push_diff(diff).unwrap();
     let message_id2 = *chain.diff_message_id();
 
     println!("Chain (3) > {:#}", chain);
@@ -125,14 +125,14 @@ async fn main() -> Result<()> {
       .map(Into::into)?;
 
     unsafe {
-      new.as_document_mut().authentication_mut().clear();
-      new.as_document_mut().authentication_mut().append(authentication.into());
+      new.as_document_mut().verification_method_mut().clear();
+      new.as_document_mut().verification_method_mut().append(authentication.try_into_embedded().unwrap().into());
     }
 
     new.set_updated(Timestamp::now());
     new.set_previous_message_id(*chain.auth_message_id());
 
-    new.sign(keypair.secret())?;
+    new.sign(keypair.secret(),&DID::parse(new.verification_method().head().unwrap().as_did().to_string()).unwrap())?;
     new.publish(&client).await?;
 
     println!("Chain Err > {:?}", chain.try_push_auth(new).unwrap_err());
