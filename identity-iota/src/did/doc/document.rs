@@ -582,10 +582,7 @@ mod tests {
 
     document
       .remove_service(
-        &DID::parse(
-          "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain".to_string()
-        )
-        .unwrap(),
+        &DID::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain".to_string()).unwrap(),
       )
       .ok();
     assert_eq!(0, document.service().len());
