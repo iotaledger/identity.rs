@@ -392,7 +392,7 @@ impl Document {
   }
 
   pub fn remove_service(&mut self, did: &DID) -> Result<()> {
-    self.document.service_mut().remove(did.deref());
+    self.document.service_mut().remove(did.as_ref());
     Ok(())
   }
 }
