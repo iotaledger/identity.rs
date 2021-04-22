@@ -10,11 +10,11 @@ use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PublicKey;
 use identity::crypto::SecretKey;
 use identity::did::verifiable;
-use identity::did::Method as CoreMethod;
 use identity::did::MethodScope;
-use identity::iota::Document as IotaDocument;
+use identity::did::VerificationMethod;
 use identity::iota::DocumentDiff;
-use identity::iota::Method as IotaMethod;
+use identity::iota::IotaDocument;
+use identity::iota::IotaMethod;
 use iota::MessageId;
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
@@ -31,7 +31,7 @@ use crate::utils::err;
 #[wasm_bindgen(inspectable)]
 pub struct NewDocument {
   key: KeyPair,
-  doc: Document,
+  doc: WasmDocument,
 }
 
 #[wasm_bindgen]
@@ -42,7 +42,7 @@ impl NewDocument {
   }
 
   #[wasm_bindgen(getter)]
-  pub fn doc(&self) -> Document {
+  pub fn doc(&self) -> WasmDocument {
     self.doc.clone()
   }
 }
@@ -52,10 +52,10 @@ impl NewDocument {
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct Document(pub(crate) IotaDocument);
+pub struct WasmDocument(pub(crate) IotaDocument);
 
 #[wasm_bindgen]
-impl Document {
+impl WasmDocument {
   /// Creates a new DID Document from the given KeyPair.
   #[wasm_bindgen(constructor)]
   #[allow(clippy::new_ret_no_self)]
@@ -72,13 +72,13 @@ impl Document {
 
   /// Creates a new DID Document from the given KeyPair.
   #[wasm_bindgen(js_name = fromKeyPair)]
-  pub fn from_keypair(key: &KeyPair) -> Result<Document, JsValue> {
+  pub fn from_keypair(key: &KeyPair) -> Result<WasmDocument, JsValue> {
     IotaDocument::from_keypair(&key.0).map_err(err).map(Self)
   }
 
   /// Creates a new DID Document from the given verification [`method`][`Method`].
   #[wasm_bindgen(js_name = fromAuthentication)]
-  pub fn from_authentication(method: &Method) -> Result<Document, JsValue> {
+  pub fn from_authentication(method: &Method) -> Result<WasmDocument, JsValue> {
     IotaDocument::from_authentication(method.0.clone())
       .map_err(err)
       .map(Self)
@@ -236,7 +236,7 @@ impl Document {
 
   #[wasm_bindgen(js_name = resolveKey)]
   pub fn resolve_key(&mut self, query: &str) -> Result<Method, JsValue> {
-    let method: CoreMethod = self.0.try_resolve(query).map_err(err)?.clone();
+    let method: VerificationMethod = self.0.try_resolve(query).map_err(err)?.clone();
 
     IotaMethod::try_from_core(method).map_err(err).map(Method)
   }
@@ -258,7 +258,7 @@ impl Document {
 
   /// Generate the difference between two DID Documents and sign it
   #[wasm_bindgen]
-  pub fn diff(&self, other: &Document, message: &str, key: &KeyPair) -> Result<JsValue, JsValue> {
+  pub fn diff(&self, other: &WasmDocument, message: &str, key: &KeyPair) -> Result<JsValue, JsValue> {
     self
       .0
       .diff(&other.0, MessageId::from_str(message).map_err(err)?, key.0.secret())

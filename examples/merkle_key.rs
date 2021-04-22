@@ -22,7 +22,7 @@ use identity::crypto::SecretKey;
 use identity::did::resolution::resolve;
 use identity::did::resolution::Resolution;
 use identity::did::MethodScope;
-use identity::iota::Method;
+use identity::iota::IotaMethod;
 use identity::iota::TangleRef;
 use identity::prelude::*;
 use rand::rngs::OsRng;
@@ -36,14 +36,14 @@ async fn main() -> Result<()> {
   let client: Client = Client::new().await?;
 
   // Create a new DID Document, signed and published.
-  let (mut doc, auth): (Document, KeyPair) = common::create_did_document(&client).await?;
+  let (mut doc, auth): (IotaDocument, KeyPair) = common::create_did_document(&client).await?;
 
   // Generate a collection of ed25519 keys for signing credentials
   let keys: KeyCollection = KeyCollection::new_ed25519(LEAVES)?;
 
   // Generate a Merkle Key Collection Verification Method
   // with SHA-256 as  the digest algorithm.
-  let method: Method = Method::create_merkle_key::<Sha256, _>(doc.id().clone(), &keys, "key-collection")?;
+  let method: IotaMethod = IotaMethod::create_merkle_key::<Sha256, _>(doc.id().clone(), &keys, "key-collection")?;
 
   // Append the new verification method to the set of existing methods
   doc.insert_method(MethodScope::VerificationMethod, method);
@@ -122,7 +122,11 @@ async fn main() -> Result<()> {
 
   // Resolve the DID and receive the latest document version
   let resolution: Resolution = resolve(doc.id().as_str(), Default::default(), &client).await?;
-  let document: Document = resolution.document.map(Document::try_from_core).transpose()?.unwrap();
+  let document: IotaDocument = resolution
+    .document
+    .map(IotaDocument::try_from_core)
+    .transpose()?
+    .unwrap();
 
   println!("metadata: {:#?}", resolution.metadata);
   println!("document: {:#?}", document);

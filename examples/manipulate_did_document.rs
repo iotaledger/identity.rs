@@ -6,14 +6,14 @@
 //! cargo run --example manipulate_did_document
 
 use identity::crypto::KeyPair;
-use identity::iota::Document;
+use identity::iota::IotaDocument;
 use identity::iota::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a DID Document out of an ed25519 keypair.
   let keypair: KeyPair = KeyPair::new_ed25519()?;
-  let mut document: identity::iota::Document = Document::from_keypair(&keypair)?;
+  let mut document: identity::iota::IotaDocument = IotaDocument::from_keypair(&keypair)?;
 
   // Sign the DID Document with the default authentication key.
   document.sign(keypair.secret())?;
@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
   println!();
 
   // We can also add and remove methods from a DID Document using insert_method() and remove_method() respectively.
-  let method: &identity::did::Method = document.methods().next().unwrap();
+  let method: &identity::did::VerificationMethod = document.methods().next().unwrap();
   let _method_did: &identity::did::DID = method.id();
   // document.remove_method(identity::iota::DID::new(public: &[u8]));
 

@@ -4,7 +4,7 @@
 use async_trait::async_trait;
 
 use crate::did::DID;
-use crate::document::Document;
+use crate::document::CoreDocument;
 use crate::error::Result;
 use crate::resolution::DocumentMetadata;
 use crate::resolution::InputMetadata;
@@ -13,7 +13,7 @@ use crate::resolution::InputMetadata;
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct MetaDocument {
   /// A resolved DID Document.
-  pub data: Document,
+  pub data: CoreDocument,
   /// Information regarding the associated Documents resolution process.
   pub meta: DocumentMetadata,
 }

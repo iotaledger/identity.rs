@@ -6,9 +6,9 @@ use iota::Message;
 use iota::MessageId;
 use iota::Payload;
 
-use crate::did::Document;
 use crate::did::DocumentDiff;
-use crate::did::DID;
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
 use crate::error::Result;
 use crate::tangle::TangleRef;
 
@@ -53,17 +53,17 @@ impl MessageIdExt for MessageId {
 }
 
 pub trait MessageExt {
-  fn try_extract_document(&self, did: &DID) -> Option<Document>;
+  fn try_extract_document(&self, did: &IotaDID) -> Option<IotaDocument>;
 
-  fn try_extract_diff(&self, did: &DID) -> Option<DocumentDiff>;
+  fn try_extract_diff(&self, did: &IotaDID) -> Option<DocumentDiff>;
 }
 
 impl MessageExt for Message {
-  fn try_extract_document(&self, did: &DID) -> Option<Document> {
-    try_extract!(Document, self, did)
+  fn try_extract_document(&self, did: &IotaDID) -> Option<IotaDocument> {
+    try_extract!(IotaDocument, self, did)
   }
 
-  fn try_extract_diff(&self, did: &DID) -> Option<DocumentDiff> {
+  fn try_extract_diff(&self, did: &IotaDID) -> Option<DocumentDiff> {
     try_extract!(DocumentDiff, self, did)
   }
 }

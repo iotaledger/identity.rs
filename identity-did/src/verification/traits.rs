@@ -3,7 +3,7 @@
 
 use crate::error::Error;
 use crate::error::Result;
-use crate::verification::Method;
+use crate::verification::VerificationMethod;
 
 /// Represents all possible verification method URI types
 ///
@@ -24,7 +24,7 @@ pub trait TryMethod {
   const TYPE: MethodUriType;
 
   /// Returns String representation of absolute or relative method URI, if any.
-  fn method<U>(method: &Method<U>) -> Option<String> {
+  fn method<U>(method: &VerificationMethod<U>) -> Option<String> {
     method.id().fragment()?;
 
     match Self::TYPE {
@@ -38,7 +38,7 @@ pub trait TryMethod {
   /// # Errors
   ///
   /// Fails if an unsupported verification method is used.
-  fn try_method<U>(method: &Method<U>) -> Result<String> {
+  fn try_method<U>(method: &VerificationMethod<U>) -> Result<String> {
     Self::method(method).ok_or(Error::InvalidMethodFragment)
   }
 }
