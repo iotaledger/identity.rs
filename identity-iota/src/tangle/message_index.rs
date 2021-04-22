@@ -47,8 +47,8 @@ where
 {
   pub fn insert(&mut self, element: T) {
     let key: &MessageId = element.previous_message_id();
-    let msg_id: &MessageId = element.message_id();
     if let Some(scope) = self.inner.get_mut(key) {
+      let msg_id: &MessageId = element.message_id();
       let idx = match scope.binary_search_by(|elem| elem.message_id().cmp(msg_id)) {
         Ok(idx) => idx,
         Err(idx) => idx,
