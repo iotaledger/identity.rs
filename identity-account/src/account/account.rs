@@ -282,7 +282,7 @@ impl<T: Storage> Account<T> {
     let new_root: Snapshot = repo.load(chain).await?;
     let new_data: Document = new_root.state().to_signed_document(&self.store).await?;
 
-    let client: Arc<Client> = self.client(new_data.id().into()).await?;
+    let client: Arc<Client> = self.client(Network::from_did(new_data.id().into())).await?;
     let message: MessageId = client.publish_document(&new_data).await?;
 
     debug!("[Account::process_auth_change] Message Id = {:?}", message);
@@ -313,7 +313,7 @@ impl<T: Storage> Account<T> {
 
     old_state.sign_data(&self.store, auth, &mut diff).await?;
 
-    let client: Arc<Client> = self.client(old_doc.id().into()).await?;
+    let client: Arc<Client> = self.client(Network::from_did(old_doc.id().into())).await?;
     let message: MessageId = client.publish_diff(auth_id, &diff).await?;
 
     debug!("[Account::process_diff_change] Message Id = {:?}", message);
