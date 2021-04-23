@@ -6,7 +6,6 @@ use identity::core::OneOrMany;
 use identity::core::SerdeInto;
 use identity::core::Timestamp;
 use identity::core::Url;
-use identity::core::Value;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
@@ -51,8 +50,6 @@ impl VerifiableCredential {
     if !base.contains_key("issuanceDate") {
       base.insert("issuanceDate".into(), Timestamp::now().to_string().into());
     }
-
-    base.insert("proof".into(), Value::Array(Vec::new()));
 
     base.serde_into().map_err(err).map(Self)
   }
