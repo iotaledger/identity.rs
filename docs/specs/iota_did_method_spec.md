@@ -4,13 +4,17 @@ Version 0.2-draft by Jelle Millenaar, IOTA Foundation
 
 ## Abstract
 
-The IOTA DID Method Specification describes a method of implementing the [Decentralized Identifiers](https://www.w3.org/TR/did-core/) (DID) standard on the IOTA Tangle, a Distributed Ledger Technology (DLT). It conforms to the [DID specifications v1.0 Working Draft 20200731](https://www.w3.org/TR/2020/WD-did-core-20200731/) and describes how to publish DID Document Create, Read, Update and Delete (CRUD) operations to the IOTA Tangle. In addition, it lists additional non-standardized features that are built for the IOTA Identity implementation. 
+The IOTA DID Method Specification describes a method of implementing the [Decentralized Identifiers](https://www.w3.org/TR/did-core/) (DID) standard on the [IOTA Tangle](https://iota.org), a Distributed Ledger Technology (DLT). It conforms to the [DID specifications v1.0 Working Draft 20200731](https://www.w3.org/TR/2020/WD-did-core-20200731/) and describes how to publish DID Document Create, Read, Update and Delete (CRUD) operations to the IOTA Tangle. In addition, it lists additional non-standardized features that are built for the IOTA Identity implementation. 
 
 ## Introduction
 
 ### The IOTA Tangle
 
-This specification defines a method of implementing DID on top of the IOTA Tangle, which is a Distributed Ledger Technology (DLT) using a Tangle data structure. In contrast to a Blockchain, the Tangle does not store messages in blocks and chain them together, but rather creates a data structure where a message references between one and eight previous messages, creating a parallel structure. 
+This specification defines a method of implementing DID on top of the [IOTA Tangle](https://iota.org), which is a Distributed Ledger Technology (DLT) using a Tangle data structure. In contrast to a Blockchain, the Tangle does not store messages in blocks and chain them together, but rather creates a data structure where a message references between one and eight previous messages (used to be two, as the gif shows), creating a parallel structure. 
+
+Blockchain | Tangle
+:---------:|:---------:
+<img src="./../images/blockchain-bottleneck.gif" alt="blockchain" style="max-height:100px"/> | <img src="./../images/tangle-bottleneck.gif" alt="tangle" style="max-height:100px"/>
 
 For this method, the most important features of IOTA are: 
 
@@ -46,7 +50,7 @@ The following values are reserved and cannot reference other networks:
 1. `main` references the main network which refers to the Tangle known to host the IOTA cryptocurrency
 2. `dev` references the test network known as "devnet" or "testnet" maintained by the IOTA Foundation.
 
-Note that when no IOTA network is specified, it is assumed that the DID is located on the `main` network. This means that the following DIDs will resolve to the same DID Document:
+When no IOTA network is specified, it is assumed that the DID is located on the `main` network. This means that the following DIDs will resolve to the same DID Document:
 ```
 did:iota:main:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV
 did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV
@@ -54,7 +58,7 @@ did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV
 
 ### Network-Shard
 
-In a future update to the network, IOTA will likely have shards containing subsets of the Tangle. While this is currently not the case, the space in the DID is reserved and implementations should be able to handle this extra field. The value can currently be ignored. 
+In a future update to the network, IOTA will likely have shards containing subsets of the Tangle. While this is currently not the case, the space in the DID is reserved and implementations should be able to handle this extra field. The value can currently be ignored. If the `network-shard` is present, `iota-network` must be present and therefore cannot be omitted.  
 
 ### IOTA-Tag
 
@@ -66,7 +70,7 @@ The following steps MUST be taken to generate a valid Tag:
 * Generate an asymmetric keypair using a supported verification method type.
 * Hash the public key using `BLAKE2b-256` and encode using base58.
 
-Note that this public key MUST also be embedded into the DID Document (See [CRUD: Create](#Create)).
+This public key MUST be embedded into the DID Document (See [CRUD: Create](#Create)).
 
 ## DID Messages
 
@@ -76,7 +80,7 @@ A DID message can be part of one of two different message chains, the "Integrati
 
 ### Previous Message Id
 
-Any DID message uploaded to the Tangle, with the exception of the very first DID message that creates the DID, MUST contain a `previous_message_id` field. This field MUST carry the MessageId, an IOTA indexation for a single message, of the previous DID Document that is updated with this DID message. This value SHOULD be used to order DID messages during the resolving procedure. If two or more DID messages reference the same `previous_message_id` an ordering conflict is identified and is resolved using a deterministic ordering mechanism. 
+All DID message uploaded to the Tangle, with the exception of the very first DID message that creates the DID, MUST contain a `previous_message_id` field. This field MUST carry the MessageId, an IOTA indexation for a single message, of the previous DID Document that is updated with this DID message. This value SHOULD be used to order DID messages during the resolving procedure. If two or more DID messages reference the same `previous_message_id` an ordering conflict is identified and is resolved using a [deterministic ordering mechanism](#determining-order). 
 
 Example of an IOTA MessageId:
 ```json
@@ -91,7 +95,7 @@ DID Documents published to the Tangle must be cryptographically signed. As such 
 
 A DID Integration message MUST contain a valid DID Document according to the W3C DID standard. In addition, the message has further restrictions:
 
-* The DID Document MUST always contain one or more verification methods with a public key in the `verificationMethod` object of the DID Document. It is RECOMMENDED to only use this key for updating the DID Document and name this public key #_sign-x. 
+* The DID Document MUST contain one or more verification methods with a public key in the `verificationMethod` property of the DID Document. It is RECOMMENDED to only use this key for updating the DID Document and name this public key #_sign-x. 
 * The first DID Document in the chain MUST contain a `verificationMethod` that contains a public key that, when hashed using the `Blake2b-256` hashing function, equals the tag section of the DID. This prevents the creation of conflicting entry messages of the chain by adversaries.
 * An Integration DID message must be published to an IOTA Tangle on an index that is generated by the `BLAKE2b-256` of the public key, created in the [generation](#generation) event, encoded in `hex`. 
 * DID Integration messages SHOULD contain all cumulative changes from the Diff Chain associated to the last Integration Chain message. Any changes added in the Diff Chain that are not added to the new DID Integration message will be lost. 
