@@ -3,8 +3,8 @@
 
 use identity::core::decode_b58;
 use identity::core::FromJson;
+use identity::crypto::merkle_key::MerkleDigestTag;
 use identity::crypto::merkle_key::MerkleKey;
-use identity::crypto::merkle_key::MerkleTag;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PublicKey;
@@ -191,13 +191,13 @@ impl Document {
         let public: PublicKey = decode_b58(&public).map_err(err).map(Into::into)?;
         let secret: SecretKey = decode_b58(&secret).map_err(err).map(Into::into)?;
 
-        let digest: MerkleTag = MerkleKey::extract_tags(&merkle_key).map_err(err)?.1;
+        let digest: MerkleDigestTag = MerkleKey::extract_tags(&merkle_key).map_err(err)?.1;
         let proof: Vec<u8> = decode_b58(&proof).map_err(err)?;
 
         let signer: _ = self.0.signer(&secret).method(&method);
 
         match digest {
-          MerkleTag::SHA256 => match Proof::<Sha256>::decode(&proof) {
+          MerkleDigestTag::SHA256 => match Proof::<Sha256>::decode(&proof) {
             Some(proof) => signer.merkle_key((&public, &proof)).sign(&mut data).map_err(err)?,
             None => return Err("Invalid Public Key Proof".into()),
           },

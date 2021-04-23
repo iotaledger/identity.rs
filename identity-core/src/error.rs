@@ -6,7 +6,8 @@
 /// Alias for a `Result` with the error type [`Error`].
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
-use crate::crypto::merkle_key::MerkleTag;
+use crate::crypto::merkle_key::MerkleDigestTag;
+use crate::crypto::merkle_key::MerkleSignatureTag;
 
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error)]
@@ -59,9 +60,12 @@ pub enum Error {
   /// Caused byt attempting to parse as invalid digital signature.
   #[error("Invalid Signature Length. Received {0}, Expected {1}")]
   InvalidSigLength(usize, usize),
-  /// Caused by attempting to parse an invalid Merkle Key Collection tag.
-  #[error("Invalid Merkle Key Tag: {0:?}")]
-  InvalidMerkleKeyTag(Option<MerkleTag>),
+  /// Caused by attempting to parse an invalid Merkle Digest Key Collection tag.
+  #[error("Invalid Merkle Digest Key Tag: {0:?}")]
+  InvalidMerkleDigestKeyTag(Option<MerkleDigestTag>),
+  /// Caused by attempting to parse an invalid Merkle Signature Key Collection tag.
+  #[error("Invalid Merkle Signature Key Tag: {0:?}")]
+  InvalidMerkleSignatureKeyTag(Option<MerkleSignatureTag>),
   /// Caused by a failed attempt at retrieving a digital signature.
   #[error("Signature Not Found")]
   MissingSignature,
