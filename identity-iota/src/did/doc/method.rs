@@ -26,6 +26,7 @@ use crate::did::DID;
 use crate::error::Error;
 use crate::error::Result;
 
+/// A DID Document verification method
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(into = "CoreMethod", try_from = "CoreMethod")]
@@ -66,6 +67,9 @@ impl Method {
   }
 
   /// Creates a new [`Method`] object from the given `did` and `keypair`.
+  ///
+  /// If the `fragment` resolves to `Option::None` then the default verification method tag will be
+  /// used ("key").
   pub fn from_did<'a, F>(did: DID, keypair: &KeyPair, fragment: F) -> Result<Self>
   where
     F: Into<Option<&'a str>>,

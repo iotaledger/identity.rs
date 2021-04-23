@@ -67,7 +67,8 @@ impl Document {
   pub fn from_keypair(keypair: &KeyPair) -> Result<Self> {
     let method: Method = Method::from_keypair(keypair, "authentication")?;
 
-    // SAFETY: We don't create invalid Methods
+    // SAFETY: We don't create invalid Methods.  Method::from_keypair() uses the MethodBuilder
+    // internally which verifies correctness on construction.
     Ok(unsafe { Self::from_authentication_unchecked(method) })
   }
 

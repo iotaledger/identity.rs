@@ -35,10 +35,10 @@ impl DID {
   /// The URL scheme for Decentralized Identifiers.
   pub const SCHEME: &'static str = CoreDID::SCHEME;
 
-  /// The DID method name.
+  /// The IOTA DID method name (`"iota"`).
   pub const METHOD: &'static str = "iota";
 
-  /// The default Tangle network.
+  /// The default Tangle network (`"main"`).
   pub const DEFAULT_NETWORK: &'static str = "main";
 
   /// Converts a borrowed `DID` to an IOTA DID.
@@ -145,7 +145,7 @@ impl DID {
     self.0.set_fragment(value);
   }
 
-  /// Checks if the given `DID` has a valid IOTA DID `method`.
+  /// Checks if the given `DID` has a valid IOTA DID `method` (i.e. `"iota"`).
   ///
   /// # Errors
   ///
