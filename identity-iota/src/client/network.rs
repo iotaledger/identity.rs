@@ -26,6 +26,11 @@ impl Network {
     }
   }
 
+  /// Returns the `Network` the `DID` is associated with.
+  pub fn from_did(did: &DID) -> Self {
+    Self::from_name(did.network())
+  }
+
   pub fn matches_did(self, did: &DID) -> bool {
     did.network() == self.as_str()
   }
@@ -58,12 +63,6 @@ impl Network {
 impl Default for Network {
   fn default() -> Self {
     Network::Mainnet
-  }
-}
-
-impl<'a> From<&'a DID> for Network {
-  fn from(other: &'a DID) -> Self {
-    Self::from_name(other.network())
   }
 }
 

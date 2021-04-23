@@ -5,10 +5,11 @@ use core::any::Any;
 use identity_core::common::BitSet;
 use identity_core::crypto::merkle_key::Blake2b256;
 use identity_core::crypto::merkle_key::MerkleDigest;
+use identity_core::crypto::merkle_key::MerkleDigestTag;
 use identity_core::crypto::merkle_key::MerkleKey;
 use identity_core::crypto::merkle_key::MerkleSignature;
+use identity_core::crypto::merkle_key::MerkleSignatureTag;
 use identity_core::crypto::merkle_key::MerkleSigner;
-use identity_core::crypto::merkle_key::MerkleTag;
 use identity_core::crypto::merkle_key::MerkleVerifier;
 use identity_core::crypto::merkle_key::Sha256;
 use identity_core::crypto::merkle_key::SigningKey;
@@ -218,10 +219,10 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
         let data: Vec<u8> = method.key_data().try_decode()?;
 
         match MerkleKey::extract_tags(&data)? {
-          (MerkleTag::ED25519, MerkleTag::SHA256) => {
+          (MerkleSignatureTag::ED25519, MerkleDigestTag::SHA256) => {
             self.merkle_key_sign::<X, Sha256, Ed25519>(that, method_uri)?;
           }
-          (MerkleTag::ED25519, MerkleTag::BLAKE2B_256) => {
+          (MerkleSignatureTag::ED25519, MerkleDigestTag::BLAKE2B_256) => {
             self.merkle_key_sign::<X, Blake2b256, Ed25519>(that, method_uri)?;
           }
           (_, _) => {
@@ -295,10 +296,10 @@ where
         JcsEd25519::<Ed25519>::verify_signature(that, &data)?;
       }
       MethodType::MerkleKeyCollection2021 => match MerkleKey::extract_tags(&data)? {
-        (MerkleTag::ED25519, MerkleTag::SHA256) => {
+        (MerkleSignatureTag::ED25519, MerkleDigestTag::SHA256) => {
           self.merkle_key_verify::<X, Sha256, Ed25519>(that, method, &data)?;
         }
-        (MerkleTag::ED25519, MerkleTag::BLAKE2B_256) => {
+        (MerkleSignatureTag::ED25519, MerkleDigestTag::BLAKE2B_256) => {
           self.merkle_key_verify::<X, Blake2b256, Ed25519>(that, method, &data)?;
         }
         (_, _) => {
