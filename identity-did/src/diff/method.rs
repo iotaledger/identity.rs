@@ -133,11 +133,7 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `method.key_data`"))?;
 
-    let properties: T = diff
-      .properties
-      .map(T::from_diff)
-      .transpose()?
-      .unwrap_or_default();
+    let properties: T = diff.properties.map(T::from_diff).transpose()?.unwrap_or_default();
 
     Ok(Method {
       id,

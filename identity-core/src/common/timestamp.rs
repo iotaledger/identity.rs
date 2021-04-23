@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use chrono::DateTime;
+use chrono::NaiveDateTime;
 use chrono::SecondsFormat;
 use chrono::Timelike;
 use chrono::Utc;
-use chrono::NaiveDateTime;
 use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;

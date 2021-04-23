@@ -4,8 +4,8 @@
 use identity_core::convert::FromJson;
 use iota::Message;
 use iota::MessageId;
-use iota::MESSAGE_ID_LENGTH;
 use iota::Payload;
+use iota::MESSAGE_ID_LENGTH;
 
 use crate::did::Document;
 use crate::did::DocumentDiff;

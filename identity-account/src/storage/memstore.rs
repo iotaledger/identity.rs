@@ -7,8 +7,8 @@ use core::fmt::Result as FmtResult;
 use core::iter::Map;
 use core::pin::Pin;
 use futures::stream;
-use futures::stream::Iter;
 use futures::stream::BoxStream;
+use futures::stream::Iter;
 use futures::task::Context;
 use futures::task::Poll;
 use futures::Stream;
@@ -53,6 +53,7 @@ type MemStream = Iter<Map<IntoIter<Commit>, MemChange>>;
 type MemVault = HashMap<ChainKey, KeyPair>;
 
 pub struct MemStore {
+  expand: bool,
   events: Shared<HashMap<ChainId, Vec<Commit>>>,
   chains: Shared<ChainIndex>,
   states: Shared<HashMap<ChainId, Snapshot>>,
@@ -62,11 +63,20 @@ pub struct MemStore {
 impl MemStore {
   pub fn new() -> Self {
     Self {
+      expand: false,
       events: Shared::new(HashMap::new()),
       chains: Shared::new(ChainIndex::new()),
       states: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
     }
+  }
+
+  pub fn expand(&self) -> bool {
+    self.expand
+  }
+
+  pub fn set_expand(&mut self, value: bool) {
+    self.expand = value;
   }
 
   pub fn import_or_default<P: AsRef<Path> + ?Sized>(path: &P) -> Self {
@@ -124,6 +134,7 @@ impl MemStore {
     }
 
     Ok(Self {
+      expand: false,
       chains: Shared::new(chains),
       events: Shared::new(events),
       vaults: Shared::new(vaults),
@@ -283,19 +294,17 @@ impl Storage for MemStore {
 }
 
 impl Debug for MemStore {
-  #[cfg(feature = "mem-store-debug")]
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.debug_struct("MemStore")
-      .field("events", &self.events)
-      .field("chains", &self.chains)
-      .field("states", &self.states)
-      .field("vaults", &self.vaults)
-      .finish()
-  }
-
-  #[cfg(not(feature = "mem-store-debug"))]
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_str("MemStore")
+    if self.expand {
+      f.debug_struct("MemStore")
+        .field("events", &self.events)
+        .field("chains", &self.chains)
+        .field("states", &self.states)
+        .field("vaults", &self.vaults)
+        .finish()
+    } else {
+      f.write_str("MemStore")
+    }
   }
 }
 

@@ -12,6 +12,8 @@ use identity_core::crypto::SetSignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
+use identity_iota::chain::DocumentChain;
+use identity_iota::client::Client;
 use identity_iota::client::Network;
 use identity_iota::did::Document;
 use identity_iota::did::DocumentDiff;
@@ -21,10 +23,8 @@ use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
-use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 
-use crate::account::Client;
 use crate::chain::ChainData;
 use crate::chain::ChainIndex;
 use crate::chain::ChainKey;
@@ -103,18 +103,29 @@ impl<T: Storage> Account<T> {
   // Identity Management
   // ===========================================================================
 
+  pub async fn resolve<K: Key>(&self, key: K) -> Result<DocumentChain> {
+    let chain: ChainId = self.chain_id(key)?;
+    let root: Snapshot = self.snapshot(chain).await?;
+    let document: &DID = root.state().try_document()?;
+
+    // Fetch the DID Document from the Tangle
+    self
+      .client(document.into())
+      .await?
+      .read_document_chain(document)
+      .await
+      .map_err(Into::into)
+  }
+
+  pub fn chain_id<K: Key>(&self, key: K) -> Result<ChainId> {
+    self.index.read()?.get(key).ok_or(Error::ChainIdNotFound)
+  }
+
   pub async fn get<K: Key>(&self, key: K) -> Result<Document> {
-    // Acquire read access to the index
-    let index: RwLockReadGuard<_> = self.index.read()?;
-
-    // Read the chain id from the index
-    let chain: ChainId = index.get(key).ok_or(Error::ChainIdNotFound)?;
-
-    // Fetch the latest state snapshot
+    let chain: ChainId = self.chain_id(key)?;
     let root: Snapshot = self.snapshot(chain).await?;
 
-    // Create a DID Document from the snapshot
-    root.state().to_document()
+    root.state().to_signed_document(&self.store).await
   }
 
   pub async fn create(&self, config: IdentityConfig) -> Result<ChainId> {
@@ -156,15 +167,8 @@ impl<T: Storage> Account<T> {
     K: Key,
     U: Serialize + SetSignature,
   {
-    // Acquire read access to the index
-    let index: RwLockReadGuard<_> = self.index.read()?;
-
-    // Read the chain id from the index
-    let chain: ChainId = index.get(key).ok_or(Error::ChainIdNotFound)?;
-
-    // Fetch the latest state snapshot
+    let chain: ChainId = self.chain_id(key)?;
     let root: Snapshot = self.snapshot(chain).await?;
-
     let data: &ChainData = root.state();
     let method: &TinyMethod = data.methods().fetch(fragment)?;
 
@@ -222,16 +226,9 @@ impl<T: Storage> Account<T> {
   }
 
   pub async fn execute<K: Key>(&self, key: K, command: Command) -> Result<()> {
-    // Acquire read access to the index
-    let index: RwLockReadGuard<_> = self.index.read()?;
+    let chain: ChainId = self.chain_id(key)?;
 
-    // Read the chain id from the index
-    let chain: ChainId = index.get(key).ok_or(Error::ChainIdNotFound)?;
-
-    // Process the command
-    self.process(chain, command, true).await?;
-
-    Ok(())
+    self.process(chain, command, true).await
   }
 
   #[doc(hidden)]

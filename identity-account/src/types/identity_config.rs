@@ -9,7 +9,6 @@ pub struct IdentityConfig {
   pub(crate) name: Option<String>,
   pub(crate) network: Option<String>,
   pub(crate) shard: Option<String>,
-  pub(crate) persist: bool,
   pub(crate) publish: bool,
 }
 
@@ -20,8 +19,7 @@ impl IdentityConfig {
       name: None,
       network: None,
       shard: None,
-      persist: true,
-      publish: false, // TODO: true
+      publish: true,
     }
   }
 
@@ -61,12 +59,6 @@ impl IdentityConfig {
   #[must_use]
   pub fn publish(mut self, value: bool) -> Self {
     self.publish = value;
-    self
-  }
-
-  #[must_use]
-  pub fn persist(mut self, value: bool) -> Self {
-    self.persist = value;
     self
   }
 }
