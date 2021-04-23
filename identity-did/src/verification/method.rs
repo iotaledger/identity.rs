@@ -145,17 +145,26 @@ pub enum MethodUriType {
 /// This trait is used to determine whether absolute or relative method URIs
 /// should be used to signing data.
 ///
-/// see [W3C DID-core spec](https://www.w3.org/TR/did-core/#relative-did-urls)
+/// [More Info](https://www.w3.org/TR/did-core/#relative-did-urls)
 pub trait TryMethod {
   /// Flag that determines whether absolute or rleative URI
   const TYPE: MethodUriType;
-  /// Returns String representation of absolute or relative method URI
-  fn method(method_id: &DID) -> Result<String> {
-    let fragment = method_id.fragment().ok_or(Error::InvalidMethodFragment)?;
+  /// Returns String representation of absolute or relative method URI, if any.
+  fn method(method_id: &DID) -> Option<String> {
+    let fragment = method_id.fragment()?;
 
-    Ok(match Self::TYPE {
+    Some(match Self::TYPE {
       MethodUriType::Absolute => method_id.to_string(),
       MethodUriType::Relative => core::iter::once('#').chain(fragment.chars()).collect(),
     })
+  }
+
+  /// Returns String representation of absolute or relative method URI.
+  ///
+  /// # Errors
+  ///
+  /// Fails if an unsupported verification method is used.
+  fn try_method(method_id: &DID) -> Result<String> {
+    Self::method(method_id).ok_or(Error::InvalidMethodFragment)
   }
 }

@@ -209,7 +209,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
   {
     let query: MethodQuery<'_> = self.method.ok_or(Error::QueryMethodNotFound)?;
     let method: &Method<U> = self.document.try_resolve(query)?;
-    let method_uri: String = X::method(method.id())?;
+    let method_uri: String = X::try_method(method.id())?;
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
