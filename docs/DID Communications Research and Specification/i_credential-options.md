@@ -2,7 +2,7 @@
 
 Querying an agent for the VCs that the agent can issue.
 
-The Verifiable Credential (VC) issuance flow consists of a three step interaction process between two parties, the <u>issuer</u> and the <u>holder</u>. This is the first interaction in this process. In this interaction, the <u>holder</u> queries the <u>issuer</u> for a list of VC types that the <u>issuer</u> offers to issue.
+The Verifiable Credential (VC) issuance flow consists of a three step interaction process ([credential-options](i_credential-options.md), [credential-schema](i_credential-schema.md) & [credential-issuance](i_credential-issuance.md) between two parties, the <u>issuer</u> and the <u>holder</u>. This is the first interaction in this process. In this interaction, the <u>holder</u> queries the <u>issuer</u> for a list of VC types that the <u>issuer</u> offers to issue.
 
 ### Roles
 - **Issuer**: Agent who offers and issues one or more Verifiable Credentials
