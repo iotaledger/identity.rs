@@ -20,6 +20,8 @@
 
 `comment` as String: A comment, mostly used to provide more information about something. Can be literally any String.
 
+`consent` as Boolean: Signal of consent, either `yes` or `no`, as response to a previous message.
+
 `challenge` as String, e.g. `Sign this`: A String acting as a signing challenge. Can contain basically anything.
 
 `credential` as [VC JSON](https://w3c-ccg.github.io/vc-json-schemas/): A syntactically valid credential.

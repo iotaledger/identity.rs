@@ -54,6 +54,7 @@ The <u>introducee</u>s answer with a `introductionResponse`, signaling their con
 introductionResponse: {
     "context", // REQUIRED!
     "thread", // REQUIRED!
+    "consent", // REQUIRED!
     "callbackURL", // OPTIONAL!
     "responseRequested", // OPTIONAL!
     "id", // OPTIONAL!
@@ -67,7 +68,8 @@ introductionResponse: {
 ```JSON
 {
     "context": "did-introduction/1.0/introductionResponse",
-    "thread": "936DA01F9ABD4d9d80C702AF85C822A8"
+    "thread": "936DA01F9ABD4d9d80C702AF85C822A8",
+    "consent": true
 }
 ```
 
