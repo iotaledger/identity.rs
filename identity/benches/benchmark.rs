@@ -5,14 +5,16 @@ use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
 use criterion::Throughput;
-use identity::{crypto::*, iota::{AuthChain, DocumentChain}};
+use diff_chain::create_diff_chain;
+use diff_chain::setup_diff_chain_bench;
+use diff_chain::update_diff_chain;
 use identity::iota::did::Document;
 use identity::iota::did::DID;
-use diff_chain::create_diff_chain;
-use diff_chain::update_diff_chain;
-use diff_chain::setup_diff_chain_bench;
+use identity::{
+  crypto::*,
+  iota::{AuthChain, DocumentChain},
+};
 mod diff_chain;
-
 
 fn generate_signed_document(keypair: &KeyPair) {
   let mut document: Document = Document::from_keypair(&keypair).unwrap();
@@ -34,7 +36,6 @@ fn bench_generate_did(c: &mut Criterion) {
   let keypair = KeyPair::new_ed25519().unwrap();
   c.bench_function("generate did", |b| b.iter(|| generate_did(&keypair)));
 }
-
 
 fn bench_generate_doc_chain(c: &mut Criterion) {
   let (doc, _) = setup_diff_chain_bench();
@@ -58,5 +59,11 @@ fn bench_diff_chain_updates(c: &mut Criterion) {
   group.finish();
 }
 
-criterion_group!(benches, bench_generate_signed_document, bench_generate_did, bench_generate_doc_chain, bench_diff_chain_updates);
+criterion_group!(
+  benches,
+  bench_generate_signed_document,
+  bench_generate_did,
+  bench_generate_doc_chain,
+  bench_diff_chain_updates
+);
 criterion_main!(benches);

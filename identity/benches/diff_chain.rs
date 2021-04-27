@@ -23,7 +23,6 @@ pub fn create_diff_chain(document: Document) {
 }
 /// Creates a diff chain and updates it `n` times
 pub fn update_diff_chain(n: usize, chain: &mut DocumentChain, keypair: &KeyPair) {
- 
   for i in 0..n {
     let new: Document = {
       let mut this: Document = chain.current().clone();
