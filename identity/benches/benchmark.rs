@@ -4,7 +4,6 @@ use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
-use criterion::Throughput;
 use diff_chain::create_diff_chain;
 use diff_chain::setup_diff_chain_bench;
 use diff_chain::update_diff_chain;
@@ -52,7 +51,7 @@ fn bench_diff_chain_updates(c: &mut Criterion) {
     chain = DocumentChain::new(AuthChain::new(doc.clone()).unwrap());
     update_diff_chain(*size, &mut chain, &keys);
     // group.throughput(Throughput::Elements(*size as u64));
-    group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
+    group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &_| {
       b.iter(|| update_diff_chain(1, &mut chain.clone(), &keys));
     });
   }
