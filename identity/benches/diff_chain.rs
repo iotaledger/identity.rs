@@ -22,10 +22,8 @@ pub fn create_diff_chain(document: Document) {
   let _ = DocumentChain::new(AuthChain::new(document).unwrap());
 }
 /// Creates a diff chain and updates it `n` times
-pub fn update_diff_chain(n: usize, document: Document, keypair: &KeyPair) {
-  let mut chain: DocumentChain;
-  chain = DocumentChain::new(AuthChain::new(document).unwrap());
-
+pub fn update_diff_chain(n: usize, chain: &mut DocumentChain, keypair: &KeyPair) {
+ 
   for i in 0..n {
     let new: Document = {
       let mut this: Document = chain.current().clone();

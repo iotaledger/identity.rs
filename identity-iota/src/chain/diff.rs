@@ -21,7 +21,7 @@ use crate::tangle::TangleRef;
 use iota::Message;
 use iota::MessageId;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct DiffChain {
   inner: Vec<DocumentDiff>,

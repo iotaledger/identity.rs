@@ -5,7 +5,7 @@ use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
 use criterion::Throughput;
-use identity::crypto::*;
+use identity::{crypto::*, iota::{AuthChain, DocumentChain}};
 use identity::iota::did::Document;
 use identity::iota::did::DID;
 use diff_chain::create_diff_chain;
@@ -42,14 +42,17 @@ fn bench_generate_doc_chain(c: &mut Criterion) {
 }
 
 fn bench_diff_chain_updates(c: &mut Criterion) {
-  static ITERATIONS: &[usize] = &[1, 10, 100];
+  static ITERATIONS: &[usize] = &[1, 10, 100, 1000];
   let (doc, keys) = setup_diff_chain_bench();
 
   let mut group = c.benchmark_group("update diff chain");
   for size in ITERATIONS.iter() {
-    group.throughput(Throughput::Elements(*size as u64));
+    let mut chain: DocumentChain;
+    chain = DocumentChain::new(AuthChain::new(doc.clone()).unwrap());
+    update_diff_chain(*size, &mut chain, &keys);
+    // group.throughput(Throughput::Elements(*size as u64));
     group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
-      b.iter(|| update_diff_chain(size, doc.clone(), &keys));
+      b.iter(|| update_diff_chain(1, &mut chain.clone(), &keys));
     });
   }
   group.finish();

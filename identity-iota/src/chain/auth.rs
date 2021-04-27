@@ -19,7 +19,7 @@ use crate::tangle::TangleRef;
 use iota::Message;
 use iota::MessageId;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AuthChain {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) history: Option<Vec<Document>>,

@@ -15,7 +15,7 @@ use crate::did::DID;
 use crate::error::Result;
 use iota::MessageId;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DocumentChain {
   #[serde(rename = "diff")]
   diff_chain: DiffChain,
