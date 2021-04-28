@@ -11,7 +11,7 @@ use uuid::Uuid;
 ///
 /// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md#authentication)
 ///
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct AuthenticationRequest {
   context: String,
   thread: Uuid,
@@ -144,7 +144,7 @@ impl AuthenticationRequest {
   }
 }
 // Todo: implement new method for signing of the whole AuthenticationRequest
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct AuthenticationResponse {
   context: String,
   thread: Uuid,

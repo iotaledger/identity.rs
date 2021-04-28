@@ -4,7 +4,7 @@ use identity_iota::did::DID;
 use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct CredentialOptionRequest {
   context: String,
   thread: Uuid,
@@ -120,7 +120,7 @@ impl CredentialOptionRequest {
   }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct CredentialOptionResponse {
   context: String,
   thread: Uuid,

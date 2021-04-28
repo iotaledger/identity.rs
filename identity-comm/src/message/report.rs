@@ -1,9 +1,8 @@
 use crate::message::Timing;
 use uuid::Uuid;
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Report {
   context: String,
-  //todo: needs to be an uuid -> https://github.com/uuid-rs/uuid
   thread: Uuid,
   reference: String,
   #[serde(skip_serializing_if = "Option::is_none")]

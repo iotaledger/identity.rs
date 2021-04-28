@@ -11,7 +11,7 @@ use uuid::Uuid;
 /// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md#trust-ping)
 ///
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct Trustping {
   context: String,
   #[serde(skip_serializing_if = "Option::is_none")]

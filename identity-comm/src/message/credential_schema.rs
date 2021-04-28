@@ -4,7 +4,7 @@ use identity_iota::did::DID;
 use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct CredentialSchemaRequest {
   context: String,
   thread: Uuid,
@@ -137,7 +137,7 @@ impl CredentialSchemaRequest {
   }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct CredentialSchemaResponse {
   context: String,
   thread: String,

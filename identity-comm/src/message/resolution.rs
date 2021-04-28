@@ -11,7 +11,7 @@ use uuid::Uuid;
 ///
 /// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md#did-resolution)
 ///
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ResolutionRequest {
   context: String,
   thread: Uuid,
@@ -127,7 +127,7 @@ impl ResolutionRequest {
   }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ResolutionResponse {
   context: String,
   thread: Uuid,

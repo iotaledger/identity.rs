@@ -3,7 +3,7 @@ use identity_core::common::Url;
 use identity_iota::did::DID;
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct CredentialSelection {
   context: String,
   thread: Uuid,
@@ -136,7 +136,7 @@ impl CredentialSelection {
   }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct CredentialIssuance {
   context: String,
   thread: Uuid,

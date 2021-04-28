@@ -5,7 +5,7 @@ use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::DID;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct IntroductionProposal {
   context: String,
   thread: String,
@@ -138,7 +138,7 @@ impl IntroductionProposal {
     self.timing = timing;
   }
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct IntroductionResponse {
   context: String,
   thread: String,
