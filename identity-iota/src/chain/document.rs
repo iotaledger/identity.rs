@@ -7,8 +7,8 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use identity_core::convert::ToJson;
 
-use crate::chain::IntChain;
 use crate::chain::DiffChain;
+use crate::chain::IntChain;
 use crate::did::Document;
 use crate::did::DocumentDiff;
 use crate::did::DID;
@@ -143,10 +143,7 @@ impl DocumentChain {
   pub fn try_push_diff(&mut self, diff: DocumentDiff) -> Result<()> {
     self.diff_chain.check_validity(&self.int_chain, &diff)?;
 
-    let mut document: Document = self
-      .document
-      .take()
-      .unwrap_or_else(|| self.int_chain.current().clone());
+    let mut document: Document = self.document.take().unwrap_or_else(|| self.int_chain.current().clone());
 
     document.merge(&diff)?;
 

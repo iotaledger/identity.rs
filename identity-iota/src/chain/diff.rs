@@ -8,8 +8,8 @@ use core::fmt::Result as FmtResult;
 use core::slice::Iter;
 use identity_core::convert::ToJson;
 
-use crate::chain::IntChain;
 use crate::chain::DocumentChain;
+use crate::chain::IntChain;
 use crate::did::DocumentDiff;
 use crate::did::DID;
 use crate::error::Error;
