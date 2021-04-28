@@ -2,7 +2,7 @@ use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::DID;
 use uuid::Uuid;
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct PresentationRequest {
   context: String,
   thread: Uuid,
@@ -136,7 +136,7 @@ impl PresentationRequest {
   }
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct PresentationResponse {
   context: String,
   thread: Uuid,
