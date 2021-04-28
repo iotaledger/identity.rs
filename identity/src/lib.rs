@@ -90,6 +90,12 @@ pub mod iota {
   pub use identity_iota::try_did;
 }
 
+#[cfg(feature = "comm")]
+#[cfg_attr(docsrs, doc(cfg(feature = "comm")))]
+pub mod comm {
+  pub use identity_comm::message::*;
+}
+
 pub mod prelude {
   //! Prelude of commonly used types
 
