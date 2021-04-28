@@ -476,7 +476,7 @@ mod tests {
   use identity_did::verification::MethodType;
 
   const DID_ID: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
-  const DID_AUTH: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
+  const DID_AUTH: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#_sign-1";
 
   fn generate_testkey() -> KeyPair {
     let secret_key: Vec<u8> = vec![
