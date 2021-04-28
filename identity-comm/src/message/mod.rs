@@ -15,6 +15,7 @@ mod report;
 mod resolution;
 mod timing;
 mod trustping;
+mod introduction;
 
 pub use self::authentication::*;
 pub use self::credential_issuance::*;
@@ -28,3 +29,4 @@ pub use self::report::*;
 pub use self::resolution::*;
 pub use self::timing::*;
 pub use self::trustping::*;
+pub use self::introduction::*;

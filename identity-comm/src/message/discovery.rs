@@ -11,7 +11,7 @@ use uuid::Uuid;
 /// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md#did-discovery)
 ///
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct DidRequest {
+pub struct FeaturesRequest {
   context: String,
   thread: Uuid,
   callback_url: Url,
@@ -23,7 +23,7 @@ pub struct DidRequest {
   timing: Option<Timing>,
 }
 
-impl DidRequest {
+impl FeaturesRequest {
   pub fn new(context: String, thread: Uuid, callback_url: Url) -> Self {
     Self {
       context,
@@ -112,7 +112,7 @@ impl DidRequest {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct DidResponse {
+pub struct FeaturesResponse {
   context: String,
   thread: Uuid,
   id: DID,
@@ -124,7 +124,7 @@ pub struct DidResponse {
   timing: Option<Timing>,
 }
 
-impl DidResponse {
+impl FeaturesResponse {
   pub fn new(context: String, thread: Uuid, id: DID) -> Self {
     Self {
       context,
@@ -246,12 +246,12 @@ mod tests {
   #[test]
   pub fn test_plaintext_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
-    let did_request = DidRequest::new(
+    let did_request = FeaturesRequest::new(
       "did-discovery/1.0/didRequest".to_string(),
       Uuid::new_v4(),
       Url::parse("https://example.com").unwrap(),
     );
-    let did_response = DidResponse::new(
+    let did_response = FeaturesResponse::new(
       "did-discovery/1.0/didResponse".to_string(),
       Uuid::new_v4(),
       DID::new(&keypair.public().as_ref()).unwrap(),
@@ -260,8 +260,8 @@ mod tests {
     let plain_envelope_request = did_request.pack_plain().unwrap();
     let plain_envelope_response = did_response.pack_plain().unwrap();
 
-    let request: DidRequest = plain_envelope_request.unpack().unwrap();
-    let response: DidResponse = plain_envelope_response.unpack().unwrap();
+    let request: FeaturesRequest = plain_envelope_request.unpack().unwrap();
+    let response: FeaturesResponse = plain_envelope_response.unpack().unwrap();
 
     assert_eq!(format!("{:?}", request), format!("{:?}", did_request));
     assert_eq!(format!("{:?}", response), format!("{:?}", did_response));
@@ -271,12 +271,12 @@ mod tests {
   pub fn test_signed_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
 
-    let did_request = DidRequest::new(
+    let did_request = FeaturesRequest::new(
       "did-discovery/1.0/didRequest".to_string(),
       Uuid::new_v4(),
       Url::parse("https://example.com").unwrap(),
     );
-    let did_response = DidResponse::new(
+    let did_response = FeaturesResponse::new(
       "did-discovery/1.0/didResponse".to_string(),
       Uuid::new_v4(),
       DID::new(&keypair.public().as_ref()).unwrap(),
@@ -290,11 +290,11 @@ mod tests {
       .unwrap();
 
     let request = signed_request
-      .unpack::<DidRequest>(SignatureAlgorithm::EdDSA, &keypair.public())
+      .unpack::<FeaturesRequest>(SignatureAlgorithm::EdDSA, &keypair.public())
       .unwrap();
 
     let response = signed_response
-      .unpack::<DidResponse>(SignatureAlgorithm::EdDSA, &keypair.public())
+      .unpack::<FeaturesResponse>(SignatureAlgorithm::EdDSA, &keypair.public())
       .unwrap();
 
     assert_eq!(format!("{:?}", request), format!("{:?}", did_request));
@@ -324,12 +324,12 @@ mod tests {
     let key_bob = KeyPair::new_ed25519().unwrap();
     let key_bob = ed25519_to_x25519_keypair(key_bob).unwrap();
 
-    let did_request = DidRequest::new(
+    let did_request = FeaturesRequest::new(
       "did-discovery/1.0/didRequest".to_string(),
       Uuid::new_v4(),
       Url::parse("https://example.com").unwrap(),
     );
-    let did_response = DidResponse::new(
+    let did_response = FeaturesResponse::new(
       "did-discovery/1.0/didResponse".to_string(),
       Uuid::new_v4(),
       DID::new(&keypair.public().as_ref()).unwrap(),
@@ -344,11 +344,11 @@ mod tests {
       .pack_auth(EncryptionAlgorithm::A256GCM, recipients, &key_bob)
       .unwrap();
 
-    let decoded_request: DidRequest = encoded_request
+    let decoded_request: FeaturesRequest = encoded_request
       .unpack(EncryptionAlgorithm::A256GCM, key_alice.secret(), key_bob.public())
       .unwrap();
 
-    let decoded_response: DidResponse = encoded_response
+    let decoded_response: FeaturesResponse = encoded_response
       .unpack(EncryptionAlgorithm::A256GCM, key_alice.secret(), key_bob.public())
       .unwrap();
 

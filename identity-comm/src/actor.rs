@@ -1,4 +1,4 @@
-use crate::message::{DidRequest, DidResponse, Report, Trustping};
+use crate::message::{FeaturesRequest, FeaturesResponse, Report, Trustping};
 use riker::actor::actor;
 use riker::actor::Actor;
 use riker::actor::BasicActorRef;
@@ -19,12 +19,12 @@ pub trait DidCommunicator {
       .expect("Sender should receive the response");
   }
 
-  fn receive_did_request(&mut self, _ctx: &Context<Self::Msg>, _msg: DidRequest, sender: Sender) {
+  fn receive_did_request(&mut self, _ctx: &Context<Self::Msg>, _msg: FeaturesRequest, sender: Sender) {
     dbg!("didrequest received");
     sender
       .expect("Sender should exists")
       .try_tell(
-        DidResponse::new(
+        FeaturesResponse::new(
           "did-discovery/1.0/didResponse".to_string(),
           Uuid::new_v4(),
           "did:example:123".parse().unwrap(),
@@ -37,7 +37,7 @@ pub trait DidCommunicator {
 
 // Apparently we need to use dynamic dispatch to get around a generic DidCommActor<T: DidCommunicator>. The workaround seems to be needed, since the #actor macro does
 // not seem to respect a generic type parameter. Not clear if this really is the case, did https://github.com/riker-rs/riker/pull/124 solve another issue?
-#[actor(Trustping, DidRequest)]
+#[actor(Trustping, FeaturesRequest)]
 pub struct DidCommActor {
   actor: Box<dyn DidCommunicator<Msg = DidCommActorMsg> + Send>,
 }
@@ -62,10 +62,10 @@ impl Receive<Trustping> for DidCommActor {
   }
 }
 
-impl Receive<DidRequest> for DidCommActor {
+impl Receive<FeaturesRequest> for DidCommActor {
   type Msg = DidCommActorMsg;
 
-  fn receive(&mut self, ctx: &Context<Self::Msg>, msg: DidRequest, sender: Sender) {
+  fn receive(&mut self, ctx: &Context<Self::Msg>, msg: FeaturesRequest, sender: Sender) {
     self.actor.receive_did_request(ctx, msg, sender)
   }
 }
@@ -104,7 +104,7 @@ impl DidCommunicator for MyCommunicator {
 // ! Implementing a custom actor that has custom fields and overwrites the trustping handler.
 // ! It takes the default DidRequest handler (requires some boilerplate per Default-request handled)
 
-#[actor(Trustping, DidRequest)]
+#[actor(Trustping, FeaturesRequest)]
 pub struct MyActor {
   my_state: bool,
 }
@@ -134,9 +134,9 @@ impl Receive<Trustping> for MyActor {
   }
 }
 /// Using default behavior boiler plate for DidRequest
-impl Receive<DidRequest> for MyActor {
+impl Receive<FeaturesRequest> for MyActor {
   type Msg = MyActorMsg;
-  fn receive(&mut self, ctx: &Context<Self::Msg>, msg: DidRequest, sender: Sender) {
+  fn receive(&mut self, ctx: &Context<Self::Msg>, msg: FeaturesRequest, sender: Sender) {
     self.receive_did_request(ctx, msg, sender);
   }
 }
