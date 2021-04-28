@@ -13,6 +13,8 @@ use identity::{
   crypto::*,
   iota::{AuthChain, DocumentChain},
 };
+
+use crate::diff_chain::update_auth_chain;
 mod diff_chain;
 
 fn generate_signed_document(keypair: &KeyPair) {
@@ -50,9 +52,23 @@ fn bench_diff_chain_updates(c: &mut Criterion) {
     let mut chain: DocumentChain;
     chain = DocumentChain::new(AuthChain::new(doc.clone()).unwrap());
     update_diff_chain(*size, &mut chain, &keys);
-    // group.throughput(Throughput::Elements(*size as u64));
     group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &_| {
       b.iter(|| update_diff_chain(1, &mut chain.clone(), &keys));
+    });
+  }
+  group.finish();
+}
+fn bench_auth_chain_updates(c: &mut Criterion) {
+  static ITERATIONS: &[usize] = &[1, 10, 100, 1000];
+  let (doc, keys) = setup_diff_chain_bench();
+
+  let mut group = c.benchmark_group("update auth chain");
+  for size in ITERATIONS.iter() {
+    let mut chain: DocumentChain;
+    chain = DocumentChain::new(AuthChain::new(doc.clone()).unwrap());
+    update_auth_chain(*size, &mut chain, &keys);
+    group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &_| {
+      b.iter(|| update_auth_chain(1, &mut chain.clone(), &keys));
     });
   }
   group.finish();
@@ -63,6 +79,7 @@ criterion_group!(
   bench_generate_signed_document,
   bench_generate_did,
   bench_generate_doc_chain,
-  bench_diff_chain_updates
+  bench_diff_chain_updates,
+  bench_auth_chain_updates,
 );
 criterion_main!(benches);
