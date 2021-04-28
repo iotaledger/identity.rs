@@ -25,8 +25,8 @@ use crate::crypto::KeyPair;
 use crate::crypto::KeyType;
 use crate::did::DID;
 use crate::method::Method;
-use crate::utils::err;
 use crate::service::Service;
+use crate::utils::err;
 
 #[wasm_bindgen(inspectable)]
 pub struct NewDocument {
@@ -128,7 +128,6 @@ impl Document {
   pub fn remove_service(&mut self, did: &DID) -> Result<(), JsValue> {
     self.0.remove_service(&did.0).map_err(err)
   }
-  
 
   // ===========================================================================
   // Signatures
