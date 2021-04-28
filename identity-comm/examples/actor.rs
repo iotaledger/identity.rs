@@ -1,8 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::sync::Arc;
+
 use async_std::task;
-use identity_comm::actor::EncryptedActor;
+use identity_account::{account::Account, storage::MemStore};
 use identity_comm::actor::Request;
 use identity_comm::actor::Response;
 use identity_comm::actor::SignedActor;
@@ -10,11 +12,16 @@ use identity_comm::message::Message;
 use identity_comm::message::Trustping;
 use identity_comm::message::TrustpingResponse;
 use identity_comm::{
+  actor::DefaultCommunicator,
   actor::DidCommActor,
   envelope::{SignatureAlgorithm, Signed},
 };
 use identity_comm::{
-  envelope::{self, Encrypted, EncryptionAlgorithm},
+  actor::EncryptedActor,
+  message::{DidRequest, DidResponse},
+};
+use identity_comm::{
+  envelope::{Encrypted, EncryptionAlgorithm},
   error::Result,
 };
 use identity_core::common::Url;
@@ -40,7 +47,8 @@ fn ed25519_to_x25519_keypair(keypair: KeyPair) -> Result<KeyPair> {
   Ok((type_, public, secret).into())
 }
 
-fn main() -> Result<(), String> {
+#[tokio::main]
+async fn main() -> Result<(), String> {
   let keypair_sig = KeyPair::new_ed25519().unwrap();
   let keypair_enc = ed25519_to_x25519_keypair(keypair_sig.clone()).unwrap();
 
@@ -48,8 +56,21 @@ fn main() -> Result<(), String> {
   // set up the actor system
   let sys = ActorSystem::new().unwrap();
 
+  // create test account
+  let account = Account::new(MemStore::default()).await.unwrap();
+  account.create(Default::default()).await.unwrap(); // create new chain
+  let doc = {
+    let chain = account.try_with_index(|index| index.try_first()).unwrap();
+    account.get(chain).await
+  }
+  .unwrap();
   // create instance of DidCommActor actor
-  let actor = sys.actor_of::<DidCommActor>("did_comm_actor").unwrap();
+  let actor = sys
+    .actor_of_args::<DidCommActor<MemStore>, (DefaultCommunicator, Arc<Account<MemStore>>)>(
+      "didcomm_actor",
+      (DefaultCommunicator, Arc::new(account)),
+    )
+    .unwrap();
 
   // ask the actor
   let msg = Trustping::new(Url::parse("http://bobsworld.com").unwrap());
@@ -58,6 +79,15 @@ fn main() -> Result<(), String> {
   assert_eq!(
     format!("{:?}", r),
     format!("{:?}", Response::Trustping(TrustpingResponse::default()))
+  );
+
+  // ask the actor
+  let did_msg = DidRequest::new(Url::parse("http://bobsworld.com").unwrap());
+  let r: Response = task::block_on(ask(&sys, &actor, did_msg.clone()));
+
+  assert_eq!(
+    format!("{:?}", r),
+    format!("{:?}", Response::Did(DidResponse::new(doc.id().clone())))
   );
 
   /* -------------------------------------------------------------------------- */

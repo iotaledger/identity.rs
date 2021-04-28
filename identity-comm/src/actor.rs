@@ -7,6 +7,7 @@ use crate::{
   message::{DidRequest, DidResponse, Message, Trustping, TrustpingResponse},
 };
 use futures_util::future::RemoteHandle;
+use identity_account::{account::Account, storage::Storage};
 use identity_core::crypto::{KeyPair, PublicKey, SecretKey};
 use identity_iota::did::Document;
 use riker::actor::BasicActorRef;
@@ -76,23 +77,32 @@ pub trait DidCommunicator {
 
 // Apparently we need to use dynamic dispatch to get around a generic DidCommActor<T: DidCommunicator>. The workaround
 // seems to be needed, since the #actor macro does not seem to respect a generic type parameter. (Actor::Msg needs to be a struct or Enum). Not clear if this really is the case, did https://github.com/riker-rs/riker/pull/124 solve another issue?
-pub struct DidCommActor {
+pub struct DidCommActor<S: Storage> {
   actor: Box<dyn DidCommunicator<Msg = Request> + Send>,
+  account: Arc<Account<S>>,
 }
 
-impl DidCommActor {
-  fn new<T: 'static + DidCommunicator<Msg = Request> + Send>(actor: T) -> Self {
-    Self { actor: Box::new(actor) }
+impl<S: 'static + Storage + Send + Sync, A: 'static + DidCommunicator<Msg = Request> + Send + Sync + Clone>
+  ActorFactoryArgs<(A, Arc<Account<S>>)> for DidCommActor<S>
+{
+  fn create_args(config: (A, Arc<Account<S>>)) -> Self {
+    Self {
+      actor: Box::new(config.0),
+      account: config.1,
+    }
   }
 }
 
-impl Default for DidCommActor {
-  fn default() -> Self {
-    Self::new(DefaultCommunicator)
+impl<S: Storage> DidCommActor<S> {
+  fn new<T: 'static + DidCommunicator<Msg = Request> + Send>(actor: T, account: Account<S>) -> Self {
+    Self {
+      actor: Box::new(actor),
+      account: Arc::new(account),
+    }
   }
 }
 
-impl Receive<Trustping> for DidCommActor {
+impl<S: Storage> Receive<Trustping> for DidCommActor<S> {
   type Msg = Request;
 
   fn receive(&mut self, ctx: &Context<Self::Msg>, msg: Trustping, sender: Sender) {
@@ -100,15 +110,29 @@ impl Receive<Trustping> for DidCommActor {
   }
 }
 
-impl Receive<DidRequest> for DidCommActor {
+impl<S: Storage + Send + Sync> Receive<DidRequest> for DidCommActor<S> {
   type Msg = Request;
 
   fn receive(&mut self, ctx: &Context<Self::Msg>, msg: DidRequest, sender: Sender) {
-    self.actor.receive_did_request(ctx, msg, sender)
+    let did = async_std::task::block_on(async {
+      if let Some(id) = msg.id() {
+        self.account.get(id).await
+      } else {
+        let chain = self.account.try_with_index(|index| index.try_first())?;
+        self.account.get(chain).await
+      }
+    })
+    .unwrap();
+
+    let response = Response::Did(DidResponse::new(did.id().clone()));
+    sender
+      .expect("sender should exist")
+      .try_tell(response, ctx.myself())
+      .expect("could not send")
   }
 }
 
-impl Actor for DidCommActor {
+impl<S: 'static + Storage + Send + Sync> Actor for DidCommActor<S> {
   type Msg = Request;
 
   fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
@@ -120,6 +144,7 @@ impl Actor for DidCommActor {
   }
 }
 
+#[derive(Clone)]
 pub struct DefaultCommunicator;
 impl DidCommunicator for DefaultCommunicator {
   type Msg = Request;
@@ -367,16 +392,8 @@ mod test {
 
   #[test]
   fn test_my_communicator() {
-    let _actor = DidCommActor::new(MyCommunicator);
+    // let _actor = DidCommActor::new(MyCommunicator);
   }
-}
-
-use identity_account::account::Account;
-use identity_account::storage::MemStore;
-use identity_account::storage::Storage;
-
-struct Acti {
-  account: Arc<Account<MemStore>>, //account: Account<S>
 }
 
 use identity_iota::did::DID;
