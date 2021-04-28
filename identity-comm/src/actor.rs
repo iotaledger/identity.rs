@@ -49,54 +49,26 @@ impl From<DidRequest> for Request {
   }
 }
 
-// Communicator trait specifies all default request->response mappings
-// The drawback is that we can't refer to fields
-pub trait DidCommunicator {
-  type Msg: riker::Message;
-
-  fn receive_trustping(&mut self, _ctx: &Context<Self::Msg>, _msg: Trustping, sender: Sender) {
-    println!("trustping received");
-    sender
-      .expect("Sender should exists")
-      // TODO get rid of the Response enum?!
-      .try_tell(Response::Trustping(TrustpingResponse::default()), None)
-      .expect("Sender should receive the response");
-  }
-
-  fn receive_did_request(&mut self, _ctx: &Context<Self::Msg>, _msg: DidRequest, sender: Sender) {
-    println!("didrequest received");
-    sender
-      .expect("Sender should exists")
-      .try_tell(
-        Response::Did(DidResponse::new("did:example:123".parse().unwrap())),
-        None,
-      )
-      .expect("Sender should receive the response");
-  }
-}
 
 // Apparently we need to use dynamic dispatch to get around a generic DidCommActor<T: DidCommunicator>. The workaround
 // seems to be needed, since the #actor macro does not seem to respect a generic type parameter. (Actor::Msg needs to be a struct or Enum). Not clear if this really is the case, did https://github.com/riker-rs/riker/pull/124 solve another issue?
 pub struct DidCommActor<S: Storage> {
-  actor: Box<dyn DidCommunicator<Msg = Request> + Send>,
   account: Arc<Account<S>>,
 }
 
-impl<S: 'static + Storage + Send + Sync, A: 'static + DidCommunicator<Msg = Request> + Send + Sync + Clone>
-  ActorFactoryArgs<(A, Arc<Account<S>>)> for DidCommActor<S>
+impl<S: 'static + Storage + Send + Sync>
+  ActorFactoryArgs<Arc<Account<S>>> for DidCommActor<S>
 {
-  fn create_args(config: (A, Arc<Account<S>>)) -> Self {
+  fn create_args(config: Arc<Account<S>>) -> Self {
     Self {
-      actor: Box::new(config.0),
-      account: config.1,
+      account: config,
     }
   }
 }
 
 impl<S: Storage> DidCommActor<S> {
-  fn new<T: 'static + DidCommunicator<Msg = Request> + Send>(actor: T, account: Account<S>) -> Self {
+  fn new(account: Account<S>) -> Self {
     Self {
-      actor: Box::new(actor),
       account: Arc::new(account),
     }
   }
@@ -106,7 +78,12 @@ impl<S: Storage> Receive<Trustping> for DidCommActor<S> {
   type Msg = Request;
 
   fn receive(&mut self, ctx: &Context<Self::Msg>, msg: Trustping, sender: Sender) {
-    self.actor.receive_trustping(ctx, msg, sender);
+    println!("trustping received");
+    sender
+      .expect("Sender should exists")
+      // TODO get rid of the Response enum?!
+      .try_tell(Response::Trustping(TrustpingResponse::default()), None)
+      .expect("Sender should receive the response");
   }
 }
 
@@ -142,12 +119,6 @@ impl<S: 'static + Storage + Send + Sync> Actor for DidCommActor<S> {
       Request::Did(msg) => Receive::<DidRequest>::receive(self, ctx, msg, sender),
     }
   }
-}
-
-#[derive(Clone)]
-pub struct DefaultCommunicator;
-impl DidCommunicator for DefaultCommunicator {
-  type Msg = Request;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -326,66 +297,6 @@ where
   }
 }
 
-// !  overwriting handlers requires a tiny bit of boilerplate
-
-/// Custom communicator that overwrites receive_trustping
-pub struct MyCommunicator;
-impl DidCommunicator for MyCommunicator {
-  type Msg = Request;
-
-  fn receive_trustping(&mut self, _ctx: &Context<Request>, _msg: Trustping, sender: Sender) {
-    dbg!("trustping received - custom response");
-    sender
-      .expect("Sender should exists")
-      .try_tell(TrustpingResponse::default(), None)
-      .expect("Sender should receive the response");
-  }
-}
-
-// ! Implementing a custom actor that has custom fields and overwrites the trustping handler.
-// ! It takes the default DidRequest handler (requires some boilerplate per Default-request handled)
-
-#[actor(Trustping, DidRequest)]
-pub struct MyActor {
-  my_state: bool,
-}
-
-impl Actor for MyActor {
-  // we used the #[actor] attribute so MyActorMsg is the Msg type
-  type Msg = MyActorMsg;
-
-  fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
-    // Use the respective Receive<T> implementation
-    self.receive(ctx, msg, sender);
-  }
-}
-
-impl DidCommunicator for MyActor {
-  type Msg = MyActorMsg;
-}
-
-/// impl custom behavior for trustpings
-/// we can insert behavior before and after the default call or implement a whole new method
-impl Receive<Trustping> for MyActor {
-  type Msg = MyActorMsg;
-  fn receive(&mut self, ctx: &Context<Self::Msg>, msg: Trustping, sender: Sender) {
-    dbg!("trustping received - custom conditional response");
-    if self.my_state {
-      self.receive_trustping(ctx, msg, sender);
-    } else {
-      dbg!("do something else");
-    }
-  }
-}
-
-/// Using default behavior boiler plate for DidRequest
-impl Receive<DidRequest> for MyActor {
-  type Msg = MyActorMsg;
-  fn receive(&mut self, ctx: &Context<Self::Msg>, msg: DidRequest, sender: Sender) {
-    self.receive_did_request(ctx, msg, sender);
-  }
-}
-
 #[cfg(test)]
 mod test {
   use super::*;
@@ -396,61 +307,3 @@ mod test {
   }
 }
 
-use identity_iota::did::DID;
-
-// #[actor(DidRequest)]
-// pub struct MyActor2 {
-//   account: Arc<Account<MemStore>>,
-// }
-
-// impl Actor for MyActor2 {
-//   type Msg = MyActor2Msg;
-
-//   fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
-//     let did: &DID = todo!();
-//     let account: Arc<Account<_>> = Arc::clone(&self.account);
-
-//     ctx.run(async move {
-//       account.get(did.clone()).await;
-//     });
-//   }
-// }
-
-// use identity_account::{account::Account, storage::MemStore};
-// use riker::actor::actor;
-// use riker::actor::{Actor, BasicActorRef, Context, Receive, Sender};
-// use riker::system::Run;
-// use identity_iota::did::DID;
-
-// #[derive(Clone, Debug)]
-// pub struct DidRequest {
-
-// }
-
-// impl Receive<DidRequest> for MyActor {
-//   type Msg = MyActorMsg;
-
-//   fn receive(&mut self, ctx: &Context<Self::Msg>, msg: DidRequest, sender: Sender) {
-
-//   }
-// }
-
-// use std::sync::Arc;
-
-// #[actor(DidRequest)]
-// pub struct MyActor {
-//   account: Arc<Account<MemStore>>,
-// }
-
-// impl Actor for MyActor {
-//   type Msg = MyActorMsg;
-
-//   fn recv(&mut self, ctx: &Context<Self::Msg>, msg: Self::Msg, sender: Sender) {
-//     let did: &DID = todo!();
-//     let account: Arc<Account<_>> = Arc::clone(&self.account);
-
-//     ctx.run(async move {
-//       account.get(did.clone()).await;
-//     });
-//   }
-// }

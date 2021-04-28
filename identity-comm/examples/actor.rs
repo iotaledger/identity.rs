@@ -12,7 +12,6 @@ use identity_comm::message::Message;
 use identity_comm::message::Trustping;
 use identity_comm::message::TrustpingResponse;
 use identity_comm::{
-  actor::DefaultCommunicator,
   actor::DidCommActor,
   envelope::{SignatureAlgorithm, Signed},
 };
@@ -66,13 +65,13 @@ async fn main() -> Result<(), String> {
   .unwrap();
   // create instance of DidCommActor actor
   let actor = sys
-    .actor_of_args::<DidCommActor<MemStore>, (DefaultCommunicator, Arc<Account<MemStore>>)>(
+    .actor_of_args::<DidCommActor<MemStore>, Arc<Account<MemStore>>>(
       "didcomm_actor",
-      (DefaultCommunicator, Arc::new(account)),
+      Arc::new(account),
     )
     .unwrap();
 
-  // ask the actor
+  // ask the actor for trustping
   let msg = Trustping::new(Url::parse("http://bobsworld.com").unwrap());
   let r: Response = task::block_on(ask(&sys, &actor, msg.clone()));
 
@@ -81,7 +80,7 @@ async fn main() -> Result<(), String> {
     format!("{:?}", Response::Trustping(TrustpingResponse::default()))
   );
 
-  // ask the actor
+  // ask the actor for did
   let did_msg = DidRequest::new(Url::parse("http://bobsworld.com").unwrap());
   let r: Response = task::block_on(ask(&sys, &actor, did_msg.clone()));
 
