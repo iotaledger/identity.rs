@@ -1,6 +1,6 @@
 [package]
-name = "identity_comm"
-version = "0.1.0"
+name = "identity-comm"
+version = "0.2.0"
 authors = ["IOTA Identity"]
 edition = "2018"
 description = "A DID communication library"
