@@ -29,7 +29,7 @@ pub trait Message {
   fn pack_non_repudiable(&self, algorithm: SignatureAlgorithm, sender: &KeyPair) -> Result<Signed>;
 }
 
-impl<T: Clone + std::fmt::Debug + Send + Sync + 'static + Serialize> Message for T {
+impl<T: Serialize> Message for T {
   fn pack_plain(&self) -> Result<Plaintext> {
     Plaintext::pack(self)
   }

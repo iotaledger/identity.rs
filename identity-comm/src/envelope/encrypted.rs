@@ -26,7 +26,7 @@ use crate::error::Result;
 /// # Layout
 ///
 ///   `JWE(Plaintext | Signed)`
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Encrypted(pub(crate) String);
 
 impl Encrypted {

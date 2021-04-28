@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use async_std::task;
-use identity_comm::actor::DidCommActor;
 use identity_comm::actor::EncryptedActor;
 use identity_comm::actor::Request;
 use identity_comm::actor::Response;
+use identity_comm::actor::SignedActor;
 use identity_comm::message::Message;
 use identity_comm::message::Trustping;
 use identity_comm::message::TrustpingResponse;
+use identity_comm::{
+  actor::DidCommActor,
+  envelope::{SignatureAlgorithm, Signed},
+};
 use identity_comm::{
   envelope::{self, Encrypted, EncryptionAlgorithm},
   error::Result,
@@ -37,8 +41,8 @@ fn ed25519_to_x25519_keypair(keypair: KeyPair) -> Result<KeyPair> {
 }
 
 fn main() -> Result<(), String> {
-  let keypair = KeyPair::new_ed25519().unwrap();
-  let keypair = ed25519_to_x25519_keypair(keypair).unwrap();
+  let keypair_sig = KeyPair::new_ed25519().unwrap();
+  let keypair_enc = ed25519_to_x25519_keypair(keypair_sig.clone()).unwrap();
 
   let algo = EncryptionAlgorithm::A256GCM;
   // set up the actor system
@@ -61,20 +65,52 @@ fn main() -> Result<(), String> {
   /* -------------------------------------------------------------------------- */
 
   // send another trustping, this time in an encrypted envelope
-  let encrypted_actor = sys
+  let encrypting_actor = sys
     .actor_of_args::<EncryptedActor<Request, Response>, (ActorRef<Request>, PublicKey, KeyPair, EncryptionAlgorithm)>(
       "did_comm_enc_actor",
-      (actor, keypair.public().clone(), keypair.clone(), algo),
+      (actor, keypair_enc.public().clone(), keypair_enc.clone(), algo),
     )
     .unwrap();
 
   let encrypted_msg = Request::Trustping(msg)
-    .pack_auth(algo, &[keypair.public().clone()], &keypair)
+    .pack_auth(algo, &[keypair_enc.public().clone()], &keypair_enc)
     .unwrap();
   // send encrypted msg to encrypted actor
-  let r_encrypted: Encrypted = task::block_on(ask(&sys, &encrypted_actor, encrypted_msg.clone()));
+  let r_encrypted: Encrypted = task::block_on(ask(&sys, &encrypting_actor, encrypted_msg.clone()));
   let res: Response = r_encrypted
-    .unpack::<Response>(algo, keypair.secret(), keypair.public())
+    .unpack::<Response>(algo, keypair_enc.secret(), keypair_enc.public())
+    .unwrap();
+
+  assert_eq!(
+    format!("{:?}", res),
+    format!("{:?}", Response::Trustping(TrustpingResponse::default()))
+  );
+
+  /* -------------------------------------------------------------------------- */
+  /* Signed<Encrypted> */
+  /* -------------------------------------------------------------------------- */
+
+  let algo_sig = SignatureAlgorithm::EdDSA;
+  let signing_actor = sys
+    .actor_of_args::<SignedActor<Encrypted, Encrypted>, (ActorRef<Encrypted>, PublicKey, KeyPair, SignatureAlgorithm)>(
+      "did_comm_sig_actor",
+      (
+        encrypting_actor,
+        keypair_sig.public().clone(),
+        keypair_sig.clone(),
+        algo_sig,
+      ),
+    )
+    .unwrap();
+
+  let signed_msg = encrypted_msg.pack_non_repudiable(algo_sig, &keypair_sig).unwrap();
+  // send signed msg to signed actor
+  let r_signed: Signed = task::block_on(ask(&sys, &signing_actor, signed_msg.clone()));
+  // The signed response wraps an encrypted response which wraps the actual response
+  let res: Response = r_signed
+    .unpack::<Encrypted>(algo_sig, keypair_sig.public())
+    .unwrap()
+    .unpack::<Response>(algo, keypair_enc.secret(), keypair_enc.public())
     .unwrap();
 
   assert_eq!(

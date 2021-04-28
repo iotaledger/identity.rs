@@ -24,7 +24,7 @@ use crate::error::Result;
 /// # Layout
 ///
 ///   `JWS(Plaintext)`
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Signed(pub(crate) String);
 
 impl Signed {
