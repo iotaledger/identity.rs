@@ -104,12 +104,8 @@ impl<T: Storage> Account<T> {
   // ===========================================================================
 
   pub async fn get<K: Key>(&self, key: K) -> Result<Document> {
-    // Acquire read access to the index
-    let index: RwLockReadGuard<_> = self.index.read()?;
-
     // Read the chain id from the index
-    let chain: ChainId = index.get(key).ok_or(Error::ChainIdNotFound)?;
-
+    let chain: ChainId = self.index.read()?.get(key).ok_or(Error::ChainIdNotFound)?;
     // Fetch the latest state snapshot
     let root: Snapshot = self.snapshot(chain).await?;
 
