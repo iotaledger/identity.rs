@@ -88,7 +88,7 @@ impl Document {
   pub unsafe fn from_authentication_unchecked(method: Method) -> Self {
     CoreDocument::builder(Default::default())
       .id(method.controller().clone().into())
-      .verification_method(method.into())
+      .authentication(method)
       .build()
       .map(CoreDocument::into_verifiable)
       .map(Into::into)
@@ -103,23 +103,18 @@ impl Document {
   pub fn try_from_core(document: CoreDocument) -> Result<Self> {
     let did: &DID = DID::try_from_borrowed(document.id())?;
 
-    for i in document
-      .verification_method()
-      .iter().cloned() {
-        let m = i.into_inner().into();
-        let cm: &CoreMethod = document.resolve_ref(&m).unwrap();
-        Self::check_authentication(cm)?;
-        // Ensure the authentication method DID matches the document DID
-        if cm.id().authority() != did.authority() {
-          return Err(Error::InvalidDocumentAuthAuthority);
-        }
-      }
-            // .map(|method| method.into_ref()).unwrap();
-      // .and_then(|method| document.resolve_ref(&method.into_ref().try_into_embedded().unwrap())).unwrap();
-      //.ok_or(Error::MissingAuthenticationMethod)?;
-    //   let method2: &CoreMethod = document.resolve_ref(&method).unwrap();
-    // Self::check_authentication(method2)?;
+    let method: &CoreMethod = document
+      .authentication()
+      .head()
+      .and_then(|method| document.resolve_ref(method))
+      .ok_or(Error::MissingAuthenticationMethod)?;
 
+    Self::check_authentication(method)?;
+
+    // Ensure the authentication method DID matches the document DID
+    if method.id().authority() != did.authority() {
+      return Err(Error::InvalidDocumentAuthAuthority);
+    }
 
     Ok(Self {
       document: document.serde_into()?,
@@ -265,13 +260,9 @@ impl Document {
   ///
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the signature operation fails.
-  pub fn sign(&mut self, secret: &SecretKey,did: &DID) -> Result<()> {
-    //let key: String = self.authentication_id().to_string();
-    let key = did.to_string();
-    if !self.verification_method().iter().find(|id| {id.as_did().to_string()==key}).is_some(){
-      //TODO take right error
-      return Err(Error::InvalidBundleTail);
-    }
+  pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
+    let key: String = self.authentication_id().to_string();
+
     self.document.sign_this(&key, secret).map_err(Into::into)
   }
 
@@ -298,8 +289,7 @@ impl Document {
     self
       .document
       .signer(secret)
-      //TODO: ask for feedback which method to use
-      .method(self.document.verification_method().head().unwrap().id().as_str())
+      .method(self.authentication_id())
       .sign(data)
       .map_err(Into::into)
   }
@@ -543,7 +533,7 @@ mod tests {
     let document2: Document = Document::from_json(&json_doc).unwrap();
     assert_eq!(document, document2);
 
-    //assert_eq!(document.sign(keypair.secret()).is_ok(), true);
+    assert_eq!(document.sign(keypair.secret()).is_ok(), true);
 
     let json_doc: String = document.to_string();
     let document2: Document = Document::from_json(&json_doc).unwrap();
