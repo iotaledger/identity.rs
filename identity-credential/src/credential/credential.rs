@@ -200,6 +200,7 @@ impl<T> SetSignature for Credential<T> {
 impl<T> TryMethod for Credential<T> {
   const TYPE: MethodUriType = MethodUriType::Absolute;
 }
+
 #[cfg(test)]
 mod tests {
   use identity_core::convert::FromJson;

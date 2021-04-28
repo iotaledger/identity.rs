@@ -61,6 +61,7 @@ pub struct Document {
 impl TryMethod for Document {
   const TYPE: MethodUriType = MethodUriType::Absolute;
 }
+
 impl Document {
   /// Creates a new DID Document from the given KeyPair.
   ///

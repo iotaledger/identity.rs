@@ -54,6 +54,7 @@ impl SetSignature for That {
     self.proof = Some(signature);
   }
 }
+
 impl TryMethod for That {
   const TYPE: MethodUriType = MethodUriType::Relative;
 }
