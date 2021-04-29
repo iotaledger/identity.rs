@@ -114,7 +114,7 @@ impl FeaturesRequest {
 pub struct FeaturesResponse {
   context: String,
   thread: Uuid,
-  id: DID,
+  features: Vec<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
   callback_url: Option<Url>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -124,11 +124,11 @@ pub struct FeaturesResponse {
 }
 
 impl FeaturesResponse {
-  pub fn new(context: String, thread: Uuid, id: DID) -> Self {
+  pub fn new(context: String, thread: Uuid, features: Vec<String>) -> Self {
     Self {
       context,
       thread,
-      id,
+      features,
       callback_url: None,
       response_requested: None,
       timing: None,
@@ -163,21 +163,6 @@ impl FeaturesResponse {
   /// Set the did response's thread.
   pub fn set_thread(&mut self, thread: Uuid) {
     self.thread = thread;
-  }
-
-  /// Get a mutable reference to the did response's id.
-  pub fn id_mut(&mut self) -> &mut DID {
-    &mut self.id
-  }
-
-  /// Get a reference to the did response's id.
-  pub fn id(&self) -> &DID {
-    &self.id
-  }
-
-  /// Set the did response's id.
-  pub fn set_id(&mut self, id: DID) {
-    self.id = id;
   }
 
   /// Get a mutable reference to the did response's callback url.
@@ -224,6 +209,21 @@ impl FeaturesResponse {
   pub fn set_timing(&mut self, timing: Option<Timing>) {
     self.timing = timing;
   }
+
+  /// Get a mutable reference to the features response's features.
+  pub fn features_mut(&mut self) -> &mut Vec<String> {
+    &mut self.features
+  }
+
+  /// Get a reference to the features response's features.
+  pub fn features(&self) -> &Vec<String> {
+    &self.features
+  }
+
+  /// Set the features response's features.
+  pub fn set_features(&mut self, features: Vec<String>) {
+    self.features = features;
+  }
 }
 
 #[cfg(test)]
@@ -244,7 +244,6 @@ mod tests {
 
   #[test]
   pub fn test_plaintext_roundtrip() {
-    let keypair = KeyPair::new_ed25519().unwrap();
     let did_request = FeaturesRequest::new(
       "did-discovery/1.0/didRequest".to_string(),
       Uuid::new_v4(),
@@ -253,7 +252,7 @@ mod tests {
     let did_response = FeaturesResponse::new(
       "did-discovery/1.0/didResponse".to_string(),
       Uuid::new_v4(),
-      DID::new(&keypair.public().as_ref()).unwrap(),
+      vec!["trust-ping/1.0".to_string(), "did-discovery/1.0".to_string()],
     );
 
     let plain_envelope_request = did_request.pack_plain().unwrap();
@@ -278,7 +277,7 @@ mod tests {
     let did_response = FeaturesResponse::new(
       "did-discovery/1.0/didResponse".to_string(),
       Uuid::new_v4(),
-      DID::new(&keypair.public().as_ref()).unwrap(),
+      vec!["trust-ping/1.0".to_string(), "did-discovery/1.0".to_string()],
     );
     let signed_request = did_request
       .pack_non_repudiable(SignatureAlgorithm::EdDSA, &keypair)
@@ -316,7 +315,6 @@ mod tests {
 
   #[test]
   pub fn test_encrypted_roundtrip() {
-    let keypair = KeyPair::new_ed25519().unwrap();
     let key_alice = KeyPair::new_ed25519().unwrap();
     let key_alice = ed25519_to_x25519_keypair(key_alice).unwrap();
 
@@ -331,7 +329,7 @@ mod tests {
     let did_response = FeaturesResponse::new(
       "did-discovery/1.0/didResponse".to_string(),
       Uuid::new_v4(),
-      DID::new(&keypair.public().as_ref()).unwrap(),
+      vec!["trust-ping/1.0".to_string(), "did-discovery/1.0".to_string()],
     );
     let recipients = slice::from_ref(key_alice.public());
 
