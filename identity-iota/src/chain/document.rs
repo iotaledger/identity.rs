@@ -50,7 +50,7 @@ impl DocumentChain {
   }
 
   /// Creates a new `DocumentChain` from given the `IntChain` and `DiffChain`.
-  pub fn with_diff_chain(int_chain: IntChain, diff_chain: DiffChain) -> Result<Self> {
+  pub fn with_diff_chain(diff_chain: DiffChain, int_chain: IntChain) -> Result<Self> {
     let document: Option<Document> = if diff_chain.is_empty() {
       None
     } else {
@@ -58,8 +58,8 @@ impl DocumentChain {
     };
 
     Ok(Self {
-      int_chain,
       diff_chain,
+      int_chain,
       document,
     })
   }
