@@ -163,7 +163,7 @@ impl Client {
       DiffChain::try_from_messages(&int, &messages.messages)?
     };
 
-    DocumentChain::with_diff_chain( diff,int)
+    DocumentChain::with_diff_chain(diff, int)
   }
 
   pub async fn read_messages(&self, address: &str) -> Result<Messages> {
