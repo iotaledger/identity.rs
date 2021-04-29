@@ -9,7 +9,7 @@ use crate::crypto::KeyPair;
 use crate::utils::err;
 
 /// @typicalname did
-#[wasm_bindgen(inspectable)]
+#[wasm_bindgen(js_name = DID, inspectable)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct WasmDID(pub(crate) IotaDID);
 
