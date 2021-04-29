@@ -10,7 +10,7 @@ pub enum Error {
   #[error("IOTA Core Error: {0}")]
   CoreError(#[from] identity_core::Error),
   #[error("DID Error: {0}")]
-  DIDError(#[from] identity_did::Error),
+  DidError(#[from] identity_did::Error),
   #[error("JOSE Error: {0}")]
   JoseError(#[from] libjose::Error),
   #[error(transparent)]
