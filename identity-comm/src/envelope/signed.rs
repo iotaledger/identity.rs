@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(non_camel_case_types)]
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;
@@ -81,6 +82,7 @@ impl EnvelopeExt for Signed {
 /// Supported digital signature algorithms
 ///
 /// [Reference](https://identity.foundation/didcomm-messaging/spec/#algorithms)
+#[warn(clippy::upper_case_acronyms)]
 #[derive(Clone, Copy, Debug)]
 pub enum SignatureAlgorithm {
   EdDSA, // crv=Ed25519
