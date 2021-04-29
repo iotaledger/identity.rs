@@ -19,7 +19,7 @@ pub mod document;
 pub mod iota;
 pub mod method;
 
-//this will currently not build https://github.com/uuid-rs/uuid/pull/512 
+//this will currently not build https://github.com/uuid-rs/uuid/pull/512
 //pub mod message;
 
 /// Initializes the console error panic hook for better error messages
