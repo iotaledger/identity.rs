@@ -41,10 +41,10 @@ use crate::tangle::MessageIdExt;
 use crate::tangle::TangleRef;
 
 type Properties = VerifiableProperties<BaseProperties>;
-type BaseDocument = CoreDocument<Properties, Object, ()>;
+type BaseDocument = CoreDocument<Properties, Object, Object>;
 
-pub type Signer<'a, 'b, 'c> = DocumentSigner<'a, 'b, 'c, Properties, Object, ()>;
-pub type Verifier<'a> = DocumentVerifier<'a, Properties, Object, ()>;
+pub type Signer<'a, 'b, 'c> = DocumentSigner<'a, 'b, 'c, Properties, Object, Object>;
+pub type Verifier<'a> = DocumentVerifier<'a, Properties, Object, Object>;
 
 /// A DID Document adhering to the IOTA DID method specification.
 ///
@@ -387,7 +387,7 @@ impl Document {
     if service.id().fragment().is_none() {
       false
     } else {
-      self.document.service_mut().append(service.serde_into().unwrap())
+      self.document.service_mut().append(service.into())
     }
   }
 
