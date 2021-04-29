@@ -1,8 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
 use crate::utils::err;
 use identity::did::Service as IotaService;
 use wasm_bindgen::prelude::*;
+
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Service(pub(crate) IotaService);
