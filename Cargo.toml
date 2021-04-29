@@ -12,6 +12,6 @@ members = [
 ]
 
 exclude = [
-  "bindings/wasm",
+   "bindings/wasm",
   "libjose",
 ]
