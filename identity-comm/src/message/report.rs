@@ -28,18 +28,6 @@ impl Report {
       timing: None,
     }
   }
-  pub fn default() -> Self {
-    let default_context = "default-context".to_string();
-    let default_thread = Uuid::new_v4();
-    let default_reference = "default-reference".to_string();
-    Self {
-      context: default_context,
-      thread: default_thread,
-      reference: default_reference,
-      comment: None,
-      timing: None,
-    }
-  }
 
   /// Get a mutable reference to the report's context.
   pub fn context_mut(&mut self) -> &mut String {
