@@ -23,10 +23,10 @@ use crate::credential::VerifiableCredential;
 use crate::credential::VerifiablePresentation;
 use crate::crypto::KeyPair;
 use crate::crypto::KeyType;
-use crate::did::DID;
-use crate::method::Method;
 use crate::service::Service;
 use crate::utils::err;
+use crate::wasm_did::WasmDID;
+use crate::wasm_method::WasmMethod;
 
 #[wasm_bindgen(inspectable)]
 pub struct NewDocument {
@@ -78,7 +78,7 @@ impl WasmDocument {
 
   /// Creates a new DID Document from the given verification [`method`][`Method`].
   #[wasm_bindgen(js_name = fromAuthentication)]
-  pub fn from_authentication(method: &Method) -> Result<WasmDocument, JsValue> {
+  pub fn from_authentication(method: &WasmMethod) -> Result<WasmDocument, JsValue> {
     IotaDocument::from_authentication(method.0.clone())
       .map_err(err)
       .map(Self)
@@ -90,8 +90,8 @@ impl WasmDocument {
 
   /// Returns the DID Document `id`.
   #[wasm_bindgen(getter)]
-  pub fn id(&self) -> DID {
-    DID(self.0.id().clone())
+  pub fn id(&self) -> WasmDID {
+    WasmDID(self.0.id().clone())
   }
 
   /// Returns the DID Document `proof` object.
@@ -108,14 +108,14 @@ impl WasmDocument {
   // ===========================================================================
 
   #[wasm_bindgen(js_name = insertMethod)]
-  pub fn insert_method(&mut self, method: &Method, scope: Option<String>) -> Result<bool, JsValue> {
+  pub fn insert_method(&mut self, method: &WasmMethod, scope: Option<String>) -> Result<bool, JsValue> {
     let scope: MethodScope = scope.unwrap_or_default().parse().map_err(err)?;
 
     Ok(self.0.insert_method(scope, method.0.clone()))
   }
 
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: &DID) -> Result<(), JsValue> {
+  pub fn remove_method(&mut self, did: &WasmDID) -> Result<(), JsValue> {
     self.0.remove_method(&did.0).map_err(err)
   }
 
@@ -235,10 +235,10 @@ impl WasmDocument {
   }
 
   #[wasm_bindgen(js_name = resolveKey)]
-  pub fn resolve_key(&mut self, query: &str) -> Result<Method, JsValue> {
+  pub fn resolve_key(&mut self, query: &str) -> Result<WasmMethod, JsValue> {
     let method: VerificationMethod = self.0.try_resolve(query).map_err(err)?.clone();
 
-    IotaMethod::try_from_core(method).map_err(err).map(Method)
+    IotaMethod::try_from_core(method).map_err(err).map(WasmMethod)
   }
 
   #[wasm_bindgen(js_name = revokeMerkleKey)]
@@ -276,15 +276,15 @@ impl WasmDocument {
     Ok(())
   }
 
-  /// Serializes a `Document` object as a JSON object.
+  /// Serializes a `WasmDocument` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
     JsValue::from_serde(&self.0).map_err(err)
   }
 
-  /// Deserializes a `Document` object from a JSON object.
+  /// Deserializes a `WasmDocument` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(json: &JsValue) -> Result<Document, JsValue> {
+  pub fn from_json(json: &JsValue) -> Result<WasmDocument, JsValue> {
     json.into_serde().map_err(err).map(Self)
   }
 }

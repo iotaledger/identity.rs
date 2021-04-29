@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::crypto::merkle_key::Sha256;
-use identity::iota::Method as Method_;
+use identity::iota::IotaMethod as Method_;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
 use crate::crypto::KeyCollection;
 use crate::crypto::KeyPair;
-use crate::did::DID;
 use crate::utils::err;
+use crate::wasm_did::WasmDID;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
@@ -25,7 +25,7 @@ impl WasmMethod {
 
   /// Creates a new `WasmMethod` object from the given `did` and `key`.
   #[wasm_bindgen(js_name = fromDID)]
-  pub fn from_did(did: &DID, key: &KeyPair, tag: Option<String>) -> Result<WasmMethod, JsValue> {
+  pub fn from_did(did: &WasmDID, key: &KeyPair, tag: Option<String>) -> Result<WasmMethod, JsValue> {
     Method_::from_did(did.0.clone(), &key.0, tag.as_deref())
       .map_err(err)
       .map(Self)
@@ -35,7 +35,7 @@ impl WasmMethod {
   #[wasm_bindgen(js_name = createMerkleKey)]
   pub fn create_merkle_key(
     digest: Digest,
-    did: &DID,
+    did: &WasmDID,
     keys: &KeyCollection,
     tag: Option<String>,
   ) -> Result<WasmMethod, JsValue> {
@@ -48,14 +48,14 @@ impl WasmMethod {
 
   /// Returns the `id` DID of the `WasmMethod` object.
   #[wasm_bindgen(getter)]
-  pub fn id(&self) -> DID {
-    DID(self.0.id().clone())
+  pub fn id(&self) -> WasmDID {
+    WasmDID(self.0.id().clone())
   }
 
   /// Returns the `controller` DID of the `WasmMethod` object.
   #[wasm_bindgen(getter)]
-  pub fn controller(&self) -> DID {
-    DID(self.0.controller().clone())
+  pub fn controller(&self) -> WasmDID {
+    WasmDID(self.0.controller().clone())
   }
 
   /// Returns the `WasmMethod` type.
