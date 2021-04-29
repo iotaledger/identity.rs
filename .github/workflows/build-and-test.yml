@@ -42,7 +42,8 @@ jobs:
         with:
           path: ~/.cargo/registry
           # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: "test"
+          #key: ${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
             ${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}
@@ -52,7 +53,8 @@ jobs:
         with:
           path: ~/.cargo/git
           # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: "test"
+          #key: ${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
             ${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}
@@ -62,7 +64,8 @@ jobs:
         with:
           path: target
           # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: "test"
+          #key: ${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
             ${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}
@@ -72,7 +75,8 @@ jobs:
         with:
           path: bindings/wasm/target
           # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-build-wasm-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: "test"
+          #key: ${{ matrix.os }}-cargo-build-wasm-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
             ${{ matrix.os }}-cargo-build-wasm-target-${{ hashFiles('**/Cargo.toml') }}
@@ -82,7 +86,8 @@ jobs:
         with:
           path: libjose/target
           # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-build-libjose-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: "test"
+          #key: ${{ matrix.os }}-cargo-build-libjose-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
             ${{ matrix.os }}-cargo-build-libjose-target-${{ hashFiles('**/Cargo.toml') }}
