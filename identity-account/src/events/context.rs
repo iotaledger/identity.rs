@@ -1,23 +1,27 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::chain::ChainData;
+use crate::identity::IdentityState;
 
+/// A read-only view of an identity state with a read-write storage instance.
 #[derive(Debug)]
 pub struct Context<'a, T> {
-  state: &'a ChainData,
+  state: &'a IdentityState,
   store: &'a T,
 }
 
 impl<'a, T> Context<'a, T> {
-  pub fn new(state: &'a ChainData, store: &'a T) -> Self {
+  /// Creates a new `Context`.
+  pub fn new(state: &'a IdentityState, store: &'a T) -> Self {
     Self { state, store }
   }
 
-  pub fn state(&self) -> &ChainData {
+  /// Returns the context `state`.
+  pub fn state(&self) -> &IdentityState {
     self.state
   }
 
+  /// Returns the context `store`.
   pub fn store(&self) -> &T {
     self.store
   }

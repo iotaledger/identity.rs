@@ -1,42 +1,45 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::chain::ChainData;
-use crate::error::Result;
 use crate::events::Event;
-use crate::types::ChainId;
-use crate::types::Index;
+use crate::identity::IdentityId;
+use crate::types::Generation;
 
+/// An [event][Event] and position in an identity event sequence.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Commit {
-  chain: ChainId,
-  index: Index,
-  #[serde(flatten)]
-  pub(crate) event: Event,
+  identity: IdentityId,
+  sequence: Generation,
+  event: Event,
 }
 
 impl Commit {
-  pub fn new(chain: ChainId, index: Index, event: Event) -> Self {
-    Self { chain, index, event }
+  /// Creates a new `Commit`.
+  pub const fn new(identity: IdentityId, sequence: Generation, event: Event) -> Self {
+    Self {
+      identity,
+      sequence,
+      event,
+    }
   }
 
-  pub fn chain(&self) -> ChainId {
-    self.chain
+  /// Returns the identifier of the associated identity.
+  pub const fn identity(&self) -> IdentityId {
+    self.identity
   }
 
-  pub fn index(&self) -> Index {
-    self.index
+  /// Returns the sequence index of the event.
+  pub const fn sequence(&self) -> Generation {
+    self.sequence
   }
 
-  pub fn event(&self) -> &Event {
+  /// Returns a reference to the underlying event.
+  pub const fn event(&self) -> &Event {
     &self.event
   }
 
+  /// Consumes the commit and returns the underlying event.
   pub fn into_event(self) -> Event {
     self.event
-  }
-
-  pub async fn apply(self, state: ChainData) -> Result<ChainData> {
-    self.event.apply(state).await
   }
 }

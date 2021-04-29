@@ -4,15 +4,12 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
-use core::num::NonZeroUsize;
 use futures::executor;
+use futures::TryStreamExt;
 use hashbrown::HashMap;
-use identity_core::common::Url;
+use identity_core::crypto::KeyType;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::TrySignatureMut;
-use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_iota::chain::DocumentChain;
 use identity_iota::client::Client;
 use identity_iota::client::Network;
 use identity_iota::did::Document;
@@ -23,249 +20,225 @@ use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
-use std::sync::RwLockWriteGuard;
+use tokio::sync::RwLock;
+use tokio::sync::RwLockWriteGuard;
 
-use crate::chain::ChainData;
-use crate::chain::ChainIndex;
-use crate::chain::ChainKey;
-use crate::chain::Key;
-use crate::chain::TinyMethod;
 use crate::error::Error;
 use crate::error::Result;
 use crate::events::Command;
 use crate::events::Commit;
 use crate::events::Context;
 use crate::events::Event;
-use crate::events::Repository;
-use crate::events::Snapshot;
+use crate::events::EventData;
+use crate::identity::IdentityCreate;
+use crate::identity::IdentityId;
+use crate::identity::IdentityIndex;
+use crate::identity::IdentityKey;
+use crate::identity::IdentitySnapshot;
+use crate::identity::IdentityState;
+use crate::identity::IdentityTag;
+use crate::identity::TinyMethod;
 use crate::storage::Storage;
-use crate::types::ChainId;
-use crate::types::IdentityConfig;
-use crate::utils::key_to_method;
+use crate::types::Fragment;
+use crate::types::Generation;
+use crate::types::KeyLocation;
 use crate::utils::Shared;
 
 const OSC: Ordering = Ordering::SeqCst;
 
+#[derive(Debug)]
 pub struct Account<T: Storage> {
+  config: Arc<Config>,
+  state: State,
   store: T,
-  index: Shared<ChainIndex>,
-  clients: Shared<HashMap<Network, Arc<Client>>>,
-  autosave: AutoSave,
-  commands: AtomicUsize,
+  index: RwLock<IdentityIndex>,
 }
 
 impl<T: Storage> Account<T> {
+  /// Creates a new `Account` instance.
   pub async fn new(store: T) -> Result<Self> {
-    let index: ChainIndex = store.get_chain_index().await?;
+    Self::with_config(store, Config::new()).await
+  }
+
+  /// Creates a new `Account` instance with the given `config`.
+  pub async fn with_config(store: T, config: Config) -> Result<Self> {
+    let index: IdentityIndex = store.index().await?;
 
     Ok(Self {
       store,
-      index: Shared::new(index),
-      clients: Shared::new(HashMap::new()),
-      autosave: AutoSave::Every,
-      commands: AtomicUsize::new(0),
+      state: State::new(),
+      config: Arc::new(config),
+      index: RwLock::new(index),
     })
   }
 
+  /// Returns a reference to the [Storage] implementation.
   pub fn store(&self) -> &T {
     &self.store
   }
 
+  /// Returns the auto-save configuration value.
   pub fn autosave(&self) -> AutoSave {
-    self.autosave
+    self.config.autosave
   }
 
-  pub fn set_autosave(&mut self, value: AutoSave) {
-    self.autosave = value;
+  /// Returns the save-on-drop configuration value.
+  pub fn dropsave(&self) -> bool {
+    self.config.dropsave
   }
 
-  pub fn commands(&self) -> usize {
-    self.commands.load(OSC)
-  }
-
-  // ===========================================================================
-  // Identity Index
-  // ===========================================================================
-
-  pub fn index(&self) -> Result<ChainIndex> {
-    self.index.read().map(|index| index.clone())
-  }
-
-  pub fn with_index<U>(&self, f: impl Fn(&ChainIndex) -> U) -> Result<U> {
-    self.index.read().map(|index| f(&index))
-  }
-
-  pub fn try_with_index<U>(&self, f: impl Fn(&ChainIndex) -> Result<U>) -> Result<U> {
-    self.index.read().and_then(|index| f(&index))
+  /// Returns the total number of actions executed by this instance.
+  pub fn actions(&self) -> usize {
+    self.state.actions.load(OSC)
   }
 
   // ===========================================================================
-  // Identity Management
+  // Identity
   // ===========================================================================
 
-  pub async fn resolve<K: Key>(&self, key: K) -> Result<DocumentChain> {
-    let chain: ChainId = self.chain_id(key)?;
-    let root: Snapshot = self.snapshot(chain).await?;
-    let document: &DID = root.state().try_document()?;
-
-    // Fetch the DID Document from the Tangle
-    self
-      .client(document.into())
-      .await?
-      .read_document_chain(document)
-      .await
-      .map_err(Into::into)
+  // Returns a list of tags identifying the identities in the account.
+  pub async fn list(&self) -> Vec<IdentityTag> {
+    self.index.read().await.tags()
   }
 
-  pub fn chain_id<K: Key>(&self, key: K) -> Result<ChainId> {
-    self.index.read()?.get(key).ok_or(Error::ChainIdNotFound)
+  /// Finds and returns the state snapshot for the identity specified by given `key`.
+  pub async fn find<K: IdentityKey>(&self, key: K) -> Result<Option<IdentitySnapshot>> {
+    match self.resolve_id(key).await {
+      Some(identity) => self.load_snapshot(identity).await.map(Some),
+      None => Ok(None),
+    }
   }
 
-  pub async fn get<K: Key>(&self, key: K) -> Result<Document> {
-    let chain: ChainId = self.chain_id(key)?;
-    let root: Snapshot = self.snapshot(chain).await?;
-
-    root.state().to_signed_document(&self.store).await
-  }
-
-  pub async fn create(&self, config: IdentityConfig) -> Result<ChainId> {
+  pub async fn create(&self, input: IdentityCreate) -> Result<IdentitySnapshot> {
     // Acquire write access to the index.
-    let mut index: RwLockWriteGuard<_> = self.index.write()?;
+    let mut index: RwLockWriteGuard<'_, _> = self.index.write().await;
 
-    let chain: ChainId = index.next_id();
+    let identity: IdentityId = index.try_next_id()?;
 
     // Create the initialization command
-    let command: Command = Command::CreateChain {
-      network: config.network,
-      shard: config.shard,
-      authentication: key_to_method(config.key_type),
+    let command: Command = Command::CreateIdentity {
+      network: input.network,
+      shard: input.shard,
+      authentication: Self::key_to_method(input.key_type),
     };
 
     // Process the command
-    self.process(chain, command, false).await?;
+    self.process(identity, command, false).await?;
 
     // Read the latest snapshot
-    let snapshot: Snapshot = self.snapshot(chain).await?;
-    let document: &DID = snapshot.state().try_document()?;
+    let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
+    let document: &DID = snapshot.identity().try_document()?;
 
-    // Add the chain to the index
-    if let Some(name) = config.name {
-      index.set_named(chain, document, name)?;
+    // Add the identity to the index
+    if let Some(name) = input.name {
+      index.set_named(identity, document, name)?;
     } else {
-      index.set(chain, document)?;
+      index.set(identity, document)?;
     }
 
-    // Store the updated index
-    self.store.set_chain_index(&index).await?;
+    // Store the updated identity index
+    self.store.set_index(&index).await?;
+
+    // Write the changes to disk
     self.save(false).await?;
 
-    Ok(chain)
+    // Return the state snapshot
+    Ok(snapshot)
   }
 
-  pub async fn sign<K, U>(&self, key: K, fragment: &str, target: &mut U) -> Result<()>
-  where
-    K: Key,
-    U: Serialize + SetSignature,
-  {
-    let chain: ChainId = self.chain_id(key)?;
-    let root: Snapshot = self.snapshot(chain).await?;
-    let data: &ChainData = root.state();
-    let method: &TinyMethod = data.methods().fetch(fragment)?;
+  /// Updates the identity specified by the given `key` with the given `command`.
+  pub async fn update<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
+    let identity: IdentityId = self.try_resolve_id(key).await?;
 
-    data.sign_data(&self.store, method.location(), target).await?;
+    self.process(identity, command, true).await?;
 
     Ok(())
   }
 
-  pub async fn create_method<K: Key>(
-    &self,
-    key: K,
-    type_: MethodType,
-    scope: MethodScope,
-    fragment: &str,
-  ) -> Result<()> {
-    let command: Command = Command::create_method()
-      .type_(type_)
-      .scope(scope)
-      .fragment(fragment)
-      .finish()?;
-
-    self.execute(key, command).await
+  /// Removes the identity specified by the given `key`.
+  ///
+  /// Note: This will remove all associated events and key material - recovery is NOT POSSIBLE!
+  pub async fn delete<K: IdentityKey>(&self, _key: K) -> Result<()> {
+    todo!("Implement Me")
   }
 
-  pub async fn delete_method<K: Key>(&self, key: K, fragment: &str) -> Result<()> {
-    let command: Command = Command::delete_method().fragment(fragment).finish()?;
+  /// Signs `data` with the key specified by `fragment`.
+  pub async fn sign<K, U>(&self, key: K, fragment: &str, target: &mut U) -> Result<()>
+  where
+    K: IdentityKey,
+    U: Serialize + SetSignature,
+  {
+    let identity: IdentityId = self.try_resolve_id(key).await?;
+    let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
+    let state: &IdentityState = snapshot.identity();
 
-    self.execute(key, command).await
+    let fragment: Fragment = Fragment::new(fragment.into());
+    let method: &TinyMethod = state.methods().fetch(fragment.name())?;
+    let location: &KeyLocation = method.location();
+
+    state.sign_data(&self.store, location, target).await?;
+
+    Ok(())
   }
 
-  pub async fn detach_method<K: Key>(&self, key: K, fragment: &str, scope: MethodScope) -> Result<()> {
-    let command: Command = Command::delete_method().fragment(fragment).scope(scope).finish()?;
+  /// Resolves the DID Document associated with the specified `key`.
+  pub async fn resolve<K: IdentityKey>(&self, key: K) -> Result<Document> {
+    let identity: IdentityId = self.try_resolve_id(key).await?;
+    let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
+    let document: &DID = snapshot.identity().try_document()?;
+    let network: Network = document.into();
 
-    self.execute(key, command).await
+    // Fetch the DID Document from the Tangle
+    self
+      .state
+      .clients
+      .load(network)
+      .await?
+      .read_document(document)
+      .await
+      .map_err(Into::into)
   }
 
-  pub async fn create_service<K: Key>(&self, key: K, fragment: &str, type_: &str, endpoint: Url) -> Result<()> {
-    let command: Command = Command::create_service()
-      .fragment(fragment)
-      .type_(type_)
-      .endpoint(endpoint)
-      .finish()?;
-
-    self.execute(key, command).await
+  async fn resolve_id<K: IdentityKey>(&self, key: K) -> Option<IdentityId> {
+    self.index.read().await.get(key)
   }
 
-  pub async fn delete_service<K: Key>(&self, key: K, fragment: &str) -> Result<()> {
-    let command: Command = Command::delete_service().fragment(fragment).finish()?;
-
-    self.execute(key, command).await
+  async fn try_resolve_id<K: IdentityKey>(&self, key: K) -> Result<IdentityId> {
+    self.resolve_id(key).await.ok_or(Error::IdentityNotFound)
   }
 
-  pub async fn snapshot(&self, chain: ChainId) -> Result<Snapshot> {
-    Repository::new(&self.store).load(chain).await
-  }
-
-  pub async fn execute<K: Key>(&self, key: K, command: Command) -> Result<()> {
-    let chain: ChainId = self.chain_id(key)?;
-
-    self.process(chain, command, true).await
-  }
+  // ===========================================================================
+  // Misc. Private
+  // ===========================================================================
 
   #[doc(hidden)]
-  pub async fn process(&self, chain: ChainId, command: Command, persist: bool) -> Result<()> {
-    // Load chain snapshot from storage
-    let repo: Repository<'_, T> = Repository::new(&self.store);
-    let root: Snapshot = repo.load(chain).await?;
+  pub async fn process(&self, id: IdentityId, command: Command, persist: bool) -> Result<()> {
+    // Load the latest state snapshot from storage
+    let root: IdentitySnapshot = self.load_snapshot(id).await?;
 
-    trace!("[Account::process] Repo = {:#?}", repo);
-    trace!("[Account::process] Root = {:#?}", root);
+    debug!("[Account::process] Root = {:#?}", root);
 
     // Process the command with a read-only view of the state
-    let context: Context<'_, T> = Context::new(root.state(), &self.store);
+    let context: Context<'_, T> = Context::new(root.identity(), &self.store);
     let events: Option<Vec<Event>> = command.process(context).await?;
 
     debug!("[Account::process] Events = {:#?}", events);
 
     if let Some(events) = events {
       // Commit all events returned by the command
-      let commits: Vec<Commit> = repo.commit(&events, &root).await?;
+      let commits: Vec<Commit> = self.commit_events(&root, &events).await?;
 
-      trace!("[Account::process] Commits = {:#?}", commits);
-      trace!("[Account::process] Self = {:#?}", self);
+      debug!("[Account::process] Commits = {:#?}", commits);
 
-      let change: Change = Change::new(&commits);
-
-      trace!("[Account::process] Change = {:?}", change);
-
-      match change {
-        Change::Auth => self.process_auth_change(chain, repo).await?,
-        Change::Diff => self.process_diff_change(chain, repo, root).await?,
-        Change::None => {}
+      match Publish::new(&commits) {
+        Publish::Auth => self.process_auth_change(root).await?,
+        Publish::Diff => self.process_diff_change(root).await?,
+        Publish::None => {}
       }
     }
 
-    // Update the command counter
-    self.commands.fetch_add(1, OSC);
+    // Update the total number of executions
+    self.state.actions.fetch_add(1, OSC);
 
     if persist {
       self.save(false).await?;
@@ -274,58 +247,147 @@ impl<T: Storage> Account<T> {
     Ok(())
   }
 
-  async fn process_auth_change(&self, chain: ChainId, repo: Repository<'_, T>) -> Result<()> {
-    // TODO: Sign with previous auth key
-    let new_root: Snapshot = repo.load(chain).await?;
-    let new_data: Document = new_root.state().to_signed_document(&self.store).await?;
+  async fn sign_document(
+    &self,
+    old_state: &IdentityState,
+    new_state: &IdentityState,
+    document: &mut Document,
+  ) -> Result<()> {
+    if new_state.auth_generation() == Generation::new() {
+      let method: &TinyMethod = new_state.authentication()?;
+      let location: &KeyLocation = method.location();
 
-    let client: Arc<Client> = self.client(new_data.id().into()).await?;
-    let message: MessageId = client.publish_document(&new_data).await?;
+      // Sign the DID Document with the current authentication method
+      new_state.sign_data(&self.store, location, document).await?;
+    } else {
+      let method: &TinyMethod = old_state.authentication()?;
+      let location: &KeyLocation = method.location();
 
-    debug!("[Account::process_auth_change] Message Id = {:?}", message);
-
-    repo.commit(&[Event::AuthMessage { message }], &new_root).await?;
+      // Sign the DID Document with the previous authentication method
+      old_state.sign_data(&self.store, location, document).await?;
+    }
 
     Ok(())
   }
 
-  async fn process_diff_change(&self, chain: ChainId, repo: Repository<'_, T>, old_root: Snapshot) -> Result<()> {
-    let new_root: Snapshot = repo.load(chain).await?;
+  async fn process_auth_change(&self, old_root: IdentitySnapshot) -> Result<()> {
+    let new_root: IdentitySnapshot = self.load_snapshot(old_root.id()).await?;
 
-    let new_state: &ChainData = new_root.state();
-    let old_state: &ChainData = old_root.state();
+    let old_state: &IdentityState = old_root.identity();
+    let new_state: &IdentityState = new_root.identity();
 
-    let mut new_doc: Document = new_state.to_signed_document(&self.store).await?;
-    let mut old_doc: Document = old_state.to_signed_document(&self.store).await?;
+    let mut new_doc: Document = new_state.to_document()?;
 
-    // Should never fail - to_signed_document always adds signatures
-    new_doc.try_signature_mut().unwrap().hide_value();
-    old_doc.try_signature_mut().unwrap().hide_value();
+    self.sign_document(old_state, new_state, &mut new_doc).await?;
 
-    let diff_id: &MessageId = new_state.diff_message_id();
-    let auth_id: &MessageId = new_state.this_message_id();
+    let network: Network = new_doc.id().into();
+    let client: Arc<Client> = self.state.clients.load(network).await?;
+    let message: MessageId = client.publish_document(&new_doc).await?;
 
-    let auth: &ChainKey = old_state.authentication()?.location();
-    let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
+    let events: [Event; 1] = [Event::new(EventData::AuthMessage(message))];
 
-    old_state.sign_data(&self.store, auth, &mut diff).await?;
-
-    let client: Arc<Client> = self.client(old_doc.id().into()).await?;
-    let message: MessageId = client.publish_diff(auth_id, &diff).await?;
-
-    debug!("[Account::process_diff_change] Message Id = {:?}", message);
-
-    repo.commit(&[Event::DiffMessage { message }], &new_root).await?;
+    self.commit_events(&new_root, &events).await?;
 
     Ok(())
+  }
+
+  async fn process_diff_change(&self, old_root: IdentitySnapshot) -> Result<()> {
+    let new_root: IdentitySnapshot = self.load_snapshot(old_root.id()).await?;
+
+    let old_state: &IdentityState = old_root.identity();
+    let new_state: &IdentityState = new_root.identity();
+
+    let old_doc: Document = old_state.to_document()?;
+    let new_doc: Document = new_state.to_document()?;
+
+    let auth_id: &MessageId = old_state.this_message_id();
+    let diff_id: &MessageId = old_state.diff_message_id();
+
+    let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
+
+    let method: &TinyMethod = old_state.authentication()?;
+    let location: &KeyLocation = method.location();
+
+    old_state.sign_data(&self.store, location, &mut diff).await?;
+
+    let network: Network = old_doc.id().into();
+    let client: Arc<Client> = self.state.clients.load(network).await?;
+    let message: MessageId = client.publish_diff(auth_id, &diff).await?;
+
+    let events: [Event; 1] = [Event::new(EventData::DiffMessage(message))];
+
+    self.commit_events(&new_root, &events).await?;
+
+    Ok(())
+  }
+
+  async fn fold_snapshot(snapshot: IdentitySnapshot, commit: Commit) -> Result<IdentitySnapshot> {
+    Ok(IdentitySnapshot {
+      sequence: commit.sequence().max(snapshot.sequence),
+      identity: commit.into_event().apply(snapshot.identity).await?,
+    })
+  }
+
+  #[doc(hidden)]
+  pub async fn load_snapshot(&self, id: IdentityId) -> Result<IdentitySnapshot> {
+    // Retrieve the state snapshot from storage or create a new one.
+    let initial: IdentitySnapshot = self
+      .store
+      .snapshot(id)
+      .await?
+      .unwrap_or_else(|| IdentitySnapshot::new(IdentityState::new(id)));
+
+    // Apply all recent events to the state and create a new snapshot
+    self
+      .store
+      .stream(id, initial.sequence())
+      .await?
+      .try_fold(initial, Self::fold_snapshot)
+      .await
+  }
+
+  async fn commit_events(&self, state: &IdentitySnapshot, events: &[Event]) -> Result<Vec<Commit>> {
+    // Bail early if there are no new events
+    if events.is_empty() {
+      return Ok(Vec::new());
+    }
+
+    // Get the current sequence index of the snapshot
+    let mut sequence: Generation = state.sequence();
+    let mut commits: Vec<Commit> = Vec::with_capacity(events.len());
+
+    // Iterate over the events and create a new commit with the correct sequence
+    for event in events {
+      sequence = sequence.try_increment()?;
+      commits.push(Commit::new(state.id(), sequence, event.clone()));
+    }
+
+    // Append the list of commits to the store
+    self.store.append(state.id(), &commits).await?;
+
+    // Store a snapshot every N events
+    if sequence.to_u32() % self.config.milestone == 0 {
+      let mut state: IdentitySnapshot = state.clone();
+
+      // Fold the new commits into the snapshot
+      for commit in commits.iter().cloned() {
+        state = Self::fold_snapshot(state, commit).await?;
+      }
+
+      // Store the new snapshot
+      self.store.set_snapshot(state.id(), &state).await?;
+    }
+
+    // Return the list of stored events
+    Ok(commits)
   }
 
   async fn save(&self, force: bool) -> Result<()> {
-    match self.autosave {
+    match self.config.autosave {
       AutoSave::Every => {
         self.store.flush_changes().await?;
       }
-      AutoSave::Batch(step) if force || self.commands() % step.get() == 0 => {
+      AutoSave::Batch(step) if force || (step != 0 && self.actions() % step == 0) => {
         self.store.flush_changes().await?;
       }
       AutoSave::Batch(_) | AutoSave::Never => {}
@@ -334,48 +396,71 @@ impl<T: Storage> Account<T> {
     Ok(())
   }
 
-  // ===========================================================================
-  // Tangle
-  // ===========================================================================
-
-  async fn client(&self, network: Network) -> Result<Arc<Client>> {
-    // If we have a client for the given network, return it
-    if let Some(client) = self.clients.read()?.get(&network).cloned() {
-      return Ok(client);
+  fn key_to_method(type_: KeyType) -> MethodType {
+    match type_ {
+      KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
     }
-
-    // Initialize a new client for the given network
-    let client: Client = Client::from_network(network).await?;
-    let client: Arc<Client> = Arc::new(client);
-
-    // Store the newly created client
-    self.clients.write()?.insert(network, Arc::clone(&client));
-
-    Ok(client)
   }
 }
 
 impl<T: Storage> Drop for Account<T> {
   fn drop(&mut self) {
-    // if we've executed any commands...
-    if self.commands() > 0 {
-      // ...ensure we write any outstanding changes
+    if self.config.dropsave && self.actions() != 0 {
+      // TODO: Handle Result (?)
       let _ = executor::block_on(self.store.flush_changes());
     }
   }
 }
 
-impl<T: Storage> Debug for Account<T> {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    let clients: Result<Vec<_>> = self.clients.read().map(|data| data.keys().cloned().collect());
+// =============================================================================
+// Config
+// =============================================================================
 
-    f.debug_struct("Account")
-      .field("store", &self.store)
-      .field("index", &self.index)
-      .field("clients", &clients)
-      .field("autosave", &self.autosave)
-      .field("commands", &self.commands)
-      .finish()
+/// Top-level configuration for Identity [Account]s
+#[derive(Clone, Debug)]
+pub struct Config {
+  autosave: AutoSave,
+  dropsave: bool,
+  milestone: u32,
+}
+
+impl Config {
+  #[cfg(test)]
+  const MILESTONE: u32 = 1;
+  #[cfg(not(test))]
+  const MILESTONE: u32 = 1; // 10
+
+  /// Creates a new default `Config`.
+  pub fn new() -> Self {
+    Self {
+      autosave: AutoSave::Every,
+      dropsave: true,
+      milestone: Self::MILESTONE,
+    }
+  }
+
+  /// Sets the account auto-save behaviour.
+  pub fn autosave(mut self, value: AutoSave) -> Self {
+    self.autosave = value;
+    self
+  }
+
+  /// Save the account state on drop.
+  pub fn dropsave(mut self, value: bool) -> Self {
+    self.dropsave = value;
+    self
+  }
+
+  /// Save a state snapshot every N actions.
+  pub fn milestone(mut self, value: u32) -> Self {
+    self.milestone = value;
+    self
+  }
+}
+
+impl Default for Config {
+  fn default() -> Self {
+    Self::new()
   }
 }
 
@@ -383,6 +468,7 @@ impl<T: Storage> Debug for Account<T> {
 // AutoSave
 // =============================================================================
 
+/// Available auto-save behaviours.
 #[derive(Clone, Copy, Debug)]
 pub enum AutoSave {
   /// Never save
@@ -390,44 +476,93 @@ pub enum AutoSave {
   /// Save after every action
   Every,
   /// Save after every N actions
-  Batch(NonZeroUsize),
+  Batch(usize),
 }
 
 // =============================================================================
-// Change
+// ClientMap
+// =============================================================================
+
+// A cache of clients to be used for publishing/resolving multiple identities
+struct ClientMap {
+  data: Shared<HashMap<Network, Arc<Client>>>,
+}
+
+impl ClientMap {
+  /// Creates a new `ClientMap`.
+  fn new() -> Self {
+    Self {
+      data: Shared::new(HashMap::new()),
+    }
+  }
+
+  async fn load(&self, network: Network) -> Result<Arc<Client>> {
+    // If we have a client for the given network, return it
+    if let Some(client) = self.data.read()?.get(&network).map(Arc::clone) {
+      return Ok(client);
+    }
+
+    // Initialize a new client for the given network
+    let client: Arc<Client> = Client::from_network(network).await.map(Arc::new)?;
+
+    // Store the newly created client
+    self.data.write()?.insert(network, Arc::clone(&client));
+
+    // Return the newly created client
+    Ok(client)
+  }
+}
+
+impl Debug for ClientMap {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    f.write_str("ClientMap")
+  }
+}
+
+// =============================================================================
+// State
+// =============================================================================
+
+// Internal account state
+#[derive(Debug)]
+struct State {
+  actions: AtomicUsize,
+  clients: ClientMap,
+}
+
+impl State {
+  /// Creates a new `State` instance.
+  fn new() -> Self {
+    Self {
+      actions: AtomicUsize::new(0),
+      clients: ClientMap::new(),
+    }
+  }
+}
+
+// =============================================================================
+// Publish
 // =============================================================================
 
 #[derive(Clone, Copy, Debug)]
-pub enum Change {
+enum Publish {
   None,
   Auth,
   Diff,
 }
 
-impl Change {
-  pub fn new(commits: &[Commit]) -> Self {
+impl Publish {
+  fn new(commits: &[Commit]) -> Self {
     commits.iter().fold(Self::None, Self::apply)
   }
 
-  pub const fn apply(self, commit: &Commit) -> Self {
-    match commit.event {
-      Event::ChainCreated { .. } => self.auth(),
-      Event::AuthMessage { .. } | Event::DiffMessage { .. } => self,
-      _ => self.diff(),
-    }
-  }
-
-  pub const fn auth(self) -> Self {
-    match self {
-      Self::Diff | Self::None => Self::Auth,
-      Self::Auth => self,
-    }
-  }
-
-  pub const fn diff(self) -> Self {
-    match self {
-      Self::None => Self::Diff,
-      Self::Auth | Self::Diff => self,
+  const fn apply(self, commit: &Commit) -> Self {
+    match (self, commit.event().data()) {
+      (Self::Auth, _) => Self::Auth,
+      (_, EventData::IdentityCreated(..)) => Self::Auth,
+      (_, EventData::AuthMessage(_)) => self,
+      (_, EventData::DiffMessage(_)) => self,
+      (_, _) => Self::Diff,
     }
   }
 }

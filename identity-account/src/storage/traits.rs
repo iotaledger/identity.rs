@@ -6,16 +6,19 @@ use futures::stream::BoxStream;
 use futures::TryStreamExt;
 use identity_core::crypto::PublicKey;
 
-use crate::chain::ChainIndex;
-use crate::chain::ChainKey;
 use crate::error::Result;
 use crate::events::Commit;
-use crate::events::Snapshot;
-use crate::types::ChainId;
-use crate::types::Index;
+use crate::identity::IdentityId;
+use crate::identity::IdentityIndex;
+use crate::identity::IdentitySnapshot;
+use crate::types::Generation;
+use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
 
+/// An interface for Identity Account storage implementations.
+///
+/// See [MemStore][crate::storage::MemStore] for a test/example implementation.
 #[async_trait::async_trait]
 pub trait Storage: Debug {
   /// Sets the account password.
@@ -25,32 +28,44 @@ pub trait Storage: Debug {
   async fn flush_changes(&self) -> Result<()>;
 
   /// Creates a new keypair at the specified `location`
-  async fn key_new(&self, chain: ChainId, location: &ChainKey) -> Result<PublicKey>;
+  async fn key_new(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey>;
 
   /// Retrieves the public key at the specified `location`.
-  async fn key_get(&self, chain: ChainId, location: &ChainKey) -> Result<PublicKey>;
+  async fn key_get(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey>;
 
   /// Deletes the keypair specified by `location`.
-  async fn key_del(&self, chain: ChainId, location: &ChainKey) -> Result<()>;
+  async fn key_del(&self, id: IdentityId, location: &KeyLocation) -> Result<()>;
 
   /// Signs `data` with the private key at the specified `location`.
-  async fn key_sign(&self, chain: ChainId, location: &ChainKey, data: Vec<u8>) -> Result<Signature>;
+  async fn key_sign(&self, id: IdentityId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature>;
 
-  async fn key_exists(&self, chain: ChainId, location: &ChainKey) -> Result<bool>;
+  /// Returns `true` if a keypair exists at the specified `location`.
+  async fn key_exists(&self, id: IdentityId, location: &KeyLocation) -> Result<bool>;
 
-  async fn get_chain_index(&self) -> Result<ChainIndex>;
+  /// Returns the account identity index.
+  async fn index(&self) -> Result<IdentityIndex>;
 
-  async fn set_chain_index(&self, index: &ChainIndex) -> Result<()>;
+  /// Sets a new account identity index.
+  async fn set_index(&self, index: &IdentityIndex) -> Result<()>;
 
-  async fn get_snapshot(&self, chain: ChainId) -> Result<Option<Snapshot>>;
+  /// Returns the state snapshot of the identity specified by `id`.
+  async fn snapshot(&self, id: IdentityId) -> Result<Option<IdentitySnapshot>>;
 
-  async fn set_snapshot(&self, chain: ChainId, snapshot: &Snapshot) -> Result<()>;
+  /// Sets a new state snapshot for the identity specified by `id`.
+  async fn set_snapshot(&self, id: IdentityId, snapshot: &IdentitySnapshot) -> Result<()>;
 
-  async fn append(&self, chain: ChainId, commits: &[Commit]) -> Result<()>;
+  /// Appends a set of commits to the event stream for the identity specified by `id`.
+  async fn append(&self, id: IdentityId, commits: &[Commit]) -> Result<()>;
 
-  async fn stream(&self, chain: ChainId, version: Index) -> Result<BoxStream<'_, Result<Commit>>>;
+  /// Returns a stream of commits for the identity specified by `id`.
+  ///
+  /// The stream may be offset by `index`.
+  async fn stream(&self, id: IdentityId, index: Generation) -> Result<BoxStream<'_, Result<Commit>>>;
 
-  async fn collect(&self, chain: ChainId, version: Index) -> Result<Vec<Commit>> {
-    self.stream(chain, version).await?.try_collect().await
+  /// Returns a list of all commits for the identity specified by `id`.
+  ///
+  /// The list may be offset by `index`.
+  async fn collect(&self, id: IdentityId, index: Generation) -> Result<Vec<Commit>> {
+    self.stream(id, index).await?.try_collect().await
   }
 }

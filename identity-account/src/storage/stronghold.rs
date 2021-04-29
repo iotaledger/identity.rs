@@ -6,8 +6,6 @@ use crypto::keys::slip10::Chain;
 use futures::future;
 use futures::stream;
 use futures::stream::BoxStream;
-use futures::stream::Iter;
-use futures::stream::Map;
 use futures::StreamExt;
 use futures::TryStreamExt;
 use identity_core::convert::FromJson;
@@ -19,19 +17,20 @@ use iota_stronghold::SLIP10DeriveInput;
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::chain::ChainIndex;
-use crate::chain::ChainKey;
 use crate::error::Error;
 use crate::error::Result;
 use crate::events::Commit;
-use crate::events::Snapshot as EventSnapshot;
+use crate::events::Event;
+use crate::identity::IdentityId;
+use crate::identity::IdentityIndex;
+use crate::identity::IdentitySnapshot;
 use crate::storage::Storage;
 use crate::stronghold::default_hint;
 use crate::stronghold::Snapshot;
 use crate::stronghold::Store;
 use crate::stronghold::Vault;
-use crate::types::ChainId;
-use crate::types::Index;
+use crate::types::Generation;
+use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::EncryptionKey;
 
@@ -70,8 +69,8 @@ impl Stronghold {
     self.snapshot.store(name, &[])
   }
 
-  fn vault(&self, chain: ChainId) -> Vault<'_> {
-    self.snapshot.vault(&fmt_chain(chain), &[])
+  fn vault(&self, id: IdentityId) -> Vault<'_> {
+    self.snapshot.vault(&fmt_id(id), &[])
   }
 }
 
@@ -85,11 +84,10 @@ impl Storage for Stronghold {
     self.snapshot.save().await
   }
 
-  async fn key_new(&self, chain: ChainId, location: &ChainKey) -> Result<PublicKey> {
-    // Load the chain-specific vault
-    let vault: Vault<'_> = self.vault(chain);
+  async fn key_new(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey> {
+    let vault: Vault<'_> = self.vault(id);
 
-    let public: PublicKey = match location.type_() {
+    let public: PublicKey = match location.method() {
       MethodType::Ed25519VerificationKey2018 => generate_ed25519(&vault, location).await?,
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_new] Handle MerkleKeyCollection2021"),
     };
@@ -97,24 +95,23 @@ impl Storage for Stronghold {
     Ok(public)
   }
 
-  async fn key_get(&self, chain: ChainId, location: &ChainKey) -> Result<PublicKey> {
-    // Load the chain-specific vault
-    let vault: Vault<'_> = self.vault(chain);
+  async fn key_get(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey> {
+    let vault: Vault<'_> = self.vault(id);
 
-    match location.type_() {
+    match location.method() {
       MethodType::Ed25519VerificationKey2018 => retrieve_ed25519(&vault, location).await,
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_get] Handle MerkleKeyCollection2021"),
     }
   }
 
-  async fn key_del(&self, chain: ChainId, location: &ChainKey) -> Result<()> {
-    // Load the chain-specific vault
-    let vault: Vault<'_> = self.vault(chain);
+  async fn key_del(&self, id: IdentityId, location: &KeyLocation) -> Result<()> {
+    let vault: Vault<'_> = self.vault(id);
 
-    match location.type_() {
+    match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
         vault.delete(location_seed(location), false).await?;
         vault.delete(location_skey(location), false).await?;
+
         // TODO: Garbage Collection (?)
       }
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_del] Handle MerkleKeyCollection2021"),
@@ -123,25 +120,25 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn key_sign(&self, chain: ChainId, location: &ChainKey, data: Vec<u8>) -> Result<Signature> {
-    let vault: Vault<'_> = self.vault(chain);
+  async fn key_sign(&self, id: IdentityId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
+    let vault: Vault<'_> = self.vault(id);
 
-    match location.type_() {
+    match location.method() {
       MethodType::Ed25519VerificationKey2018 => sign_ed25519(&vault, data, location).await,
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_sign] Handle MerkleKeyCollection2021"),
     }
   }
 
-  async fn key_exists(&self, chain: ChainId, location: &ChainKey) -> Result<bool> {
-    let vault: Vault<'_> = self.vault(chain);
+  async fn key_exists(&self, id: IdentityId, location: &KeyLocation) -> Result<bool> {
+    let vault: Vault<'_> = self.vault(id);
 
-    match location.type_() {
+    match location.method() {
       MethodType::Ed25519VerificationKey2018 => vault.exists(location_skey(location)).await,
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_exists] Handle MerkleKeyCollection2021"),
     }
   }
 
-  async fn get_chain_index(&self) -> Result<ChainIndex> {
+  async fn index(&self) -> Result<IdentityIndex> {
     // Load the metadata actor
     let store: Store<'_> = self.store(META);
 
@@ -150,14 +147,14 @@ impl Storage for Stronghold {
 
     // No index data (new snapshot)
     if data.is_empty() {
-      return Ok(ChainIndex::new());
+      return Ok(IdentityIndex::new());
     }
 
     // Deserialize and return
-    Ok(ChainIndex::from_json_slice(&data)?)
+    Ok(IdentityIndex::from_json_slice(&data)?)
   }
 
-  async fn set_chain_index(&self, index: &ChainIndex) -> Result<()> {
+  async fn set_index(&self, index: &IdentityIndex) -> Result<()> {
     // Load the metadata actor
     let store: Store<'_> = self.store(META);
 
@@ -170,9 +167,9 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn get_snapshot(&self, chain: ChainId) -> Result<Option<EventSnapshot>> {
+  async fn snapshot(&self, id: IdentityId) -> Result<Option<IdentitySnapshot>> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_chain(chain));
+    let store: Store<'_> = self.store(&fmt_id(id));
 
     // Read the event snapshot from the stronghold snapshot
     let data: Vec<u8> = store.get(location_snapshot()).await?;
@@ -183,12 +180,12 @@ impl Storage for Stronghold {
     }
 
     // Deserialize and return
-    Ok(Some(EventSnapshot::from_json_slice(&data)?))
+    Ok(Some(IdentitySnapshot::from_json_slice(&data)?))
   }
 
-  async fn set_snapshot(&self, chain: ChainId, snapshot: &EventSnapshot) -> Result<()> {
+  async fn set_snapshot(&self, id: IdentityId, snapshot: &IdentitySnapshot) -> Result<()> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_chain(chain));
+    let store: Store<'_> = self.store(&fmt_id(id));
 
     // Serialize the state snapshot
     let json: Vec<u8> = snapshot.to_json_vec()?;
@@ -199,12 +196,12 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn append(&self, chain: ChainId, commits: &[Commit]) -> Result<()> {
-    fn encode(commit: &Commit) -> Result<(Index, Vec<u8>)> {
-      Ok((commit.index(), commit.to_json_vec()?))
+  async fn append(&self, id: IdentityId, commits: &[Commit]) -> Result<()> {
+    fn encode(commit: &Commit) -> Result<(Generation, Vec<u8>)> {
+      Ok((commit.sequence(), commit.event().to_json_vec()?))
     }
 
-    let store: Store<'_> = self.store(&fmt_chain(chain));
+    let store: Store<'_> = self.store(&fmt_id(id));
 
     let future: _ = stream::iter(commits.iter().map(encode))
       .into_stream()
@@ -217,18 +214,13 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn stream(&self, chain: ChainId, version: Index) -> Result<BoxStream<'_, Result<Commit>>> {
-    type IterA = Iter<RangeFrom<u32>>;
-    type IterB = Map<IterA, fn(u32) -> Index>;
-    type IterC = Map<IterB, fn(Index) -> Result<Index>>;
+  async fn stream(&self, id: IdentityId, index: Generation) -> Result<BoxStream<'_, Result<Commit>>> {
+    let name: String = fmt_id(id);
+    let range: RangeFrom<u32> = (index.to_u32() + 1)..;
 
-    let name: String = fmt_chain(chain);
-
-    let iter: IterA = stream::iter((version.to_u32() + 1)..);
-    let iter: IterB = iter.map(Index::from);
-    let iter: IterC = iter.map(Ok);
-
-    let stream: BoxStream<'_, Result<Commit>> = iter
+    let stream: BoxStream<'_, Result<Commit>> = stream::iter(range)
+      .map(Generation::from)
+      .map(Ok)
       // ================================
       // Load the event from the snapshot
       // ================================
@@ -236,36 +228,34 @@ impl Storage for Stronghold {
         let name: String = name.clone();
         let snap: Arc<Snapshot> = Arc::clone(&self.snapshot);
 
-        async move { snap.store(&name, &[]).get(location_event(index)).await }
+        async move {
+          let location: Location = location_event(index);
+          let store: Store<'_> = snap.store(&name, &[]);
+          let event: Vec<u8> = store.get(location).await?;
+
+          Ok((index, event))
+        }
       })
       // ================================
       // Parse the event
       // ================================
-      .try_filter_map(|data| async move {
-        if data.is_empty() {
-          Err(Error::ChainEventNotFound)
+      .try_filter_map(move |(index, event)| async move {
+        if event.is_empty() {
+          Err(Error::EventNotFound)
         } else {
-          Commit::from_json_slice(&data).map(Some).map_err(Into::into)
+          let event: Event = Event::from_json_slice(&event)?;
+          let commit: Commit = Commit::new(id, index, event);
+
+          Ok(Some(commit))
         }
       })
-      // ================================
-      // Downcast to "traditional" stream
-      // ================================
-      .into_stream()
-      // ================================
-      // Bail on any invalid event
-      // ================================
-      .take_while(|event| future::ready(event.is_ok()))
-      // ================================
-      // Create a boxed version
-      // ================================
       .boxed();
 
     Ok(stream)
   }
 }
 
-async fn generate_ed25519(vault: &Vault<'_>, location: &ChainKey) -> Result<PublicKey> {
+async fn generate_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
   // Generate a SLIP10 seed as the private key
   vault
     .slip10_generate(location_seed(location), default_hint(), None)
@@ -283,14 +273,14 @@ async fn generate_ed25519(vault: &Vault<'_>, location: &ChainKey) -> Result<Publ
   retrieve_ed25519(vault, location).await
 }
 
-async fn retrieve_ed25519(vault: &Vault<'_>, location: &ChainKey) -> Result<PublicKey> {
+async fn retrieve_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
   vault
     .ed25519_public_key(location_skey(location))
     .await
     .map(|public| public.to_vec().into())
 }
 
-async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &ChainKey) -> Result<Signature> {
+async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
   let public_key: PublicKey = retrieve_ed25519(&vault, location).await?;
   let signature: [u8; 64] = vault.ed25519_sign(payload, location_skey(location)).await?;
 
@@ -305,29 +295,29 @@ fn location_snapshot() -> Location {
   Location::generic("$snapshot", Vec::new())
 }
 
-fn location_event(index: Index) -> Location {
+fn location_event(index: Generation) -> Location {
   Location::generic(format!("$event:{}", index), Vec::new())
 }
 
-fn location_seed(location: &ChainKey) -> Location {
+fn location_seed(location: &KeyLocation) -> Location {
   Location::generic(fmt_key("$seed", location), Vec::new())
 }
 
-fn location_skey(location: &ChainKey) -> Location {
+fn location_skey(location: &KeyLocation) -> Location {
   Location::generic(fmt_key("$skey", location), Vec::new())
 }
 
-fn fmt_key(prefix: &str, location: &ChainKey) -> Vec<u8> {
+fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {
   format!(
-    "{}:{}-{}-{}",
+    "{}:{}:{}:{}",
     prefix,
-    location.auth_index(),
-    location.diff_index(),
+    location.auth_generation(),
+    location.diff_generation(),
     location.fragment(),
   )
   .into_bytes()
 }
 
-fn fmt_chain(chain: ChainId) -> String {
-  format!("$chain:{}", chain)
+fn fmt_id(id: IdentityId) -> String {
+  format!("$identity:{}", id)
 }

@@ -1,16 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-mod chain_id;
 mod fragment;
-mod identity_config;
-mod index;
+mod generation;
+mod key_location;
 mod signature;
-mod timestamp;
+mod unix_timestamp;
 
-pub use self::chain_id::*;
 pub use self::fragment::*;
-pub use self::identity_config::*;
-pub use self::index::*;
+pub use self::generation::*;
+pub use self::key_location::*;
 pub use self::signature::*;
-pub use self::timestamp::*;
+pub use self::unix_timestamp::*;

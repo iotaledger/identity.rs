@@ -9,64 +9,44 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::DID;
 
-use crate::chain::ChainData;
-use crate::chain::ChainKey;
-use crate::chain::TinyMethod;
-use crate::chain::TinyService;
 use crate::error::Result;
 use crate::events::CommandError;
 use crate::events::Context;
 use crate::events::Event;
+use crate::events::EventData;
+use crate::identity::IdentityState;
+use crate::identity::TinyMethod;
+use crate::identity::TinyService;
 use crate::storage::Storage;
-use crate::types::ChainId;
-use crate::types::Index;
-use crate::types::Timestamp;
+use crate::types::Fragment;
+use crate::types::Generation;
+use crate::types::KeyLocation;
 
+// Supported authentication method types.
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
-
-impl_command_builder!(CreateChain {
-  @optional network String,
-  @optional shard String,
-  @required authentication MethodType,
-});
-
-impl_command_builder!(CreateMethod {
-  @required type_ MethodType,
-  @default  scope MethodScope,
-  @required fragment String,
-});
-
-impl_command_builder!(DeleteMethod {
-  @required fragment String,
-  @optional scope MethodScope,
-});
-
-impl_command_builder!(CreateService {
-  @required fragment String,
-  @required type_ String,
-  @required endpoint Url,
-  @optional properties Object,
-});
-
-impl_command_builder!(DeleteService {
-  @required fragment String,
-});
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Command {
-  CreateChain {
+  CreateIdentity {
     network: Option<String>,
     shard: Option<String>,
     authentication: MethodType,
   },
   CreateMethod {
-    type_: MethodType,
     scope: MethodScope,
+    type_: MethodType,
     fragment: String,
   },
   DeleteMethod {
     fragment: String,
-    scope: Option<MethodScope>,
+  },
+  AttachMethod {
+    fragment: String,
+    scopes: Vec<MethodScope>,
+  },
+  DetachMethod {
+    fragment: String,
+    scopes: Vec<MethodScope>,
   },
   CreateService {
     fragment: String,
@@ -84,100 +64,135 @@ impl Command {
   where
     T: Storage,
   {
-    let state: &ChainData = context.state();
+    let state: &IdentityState = context.state();
     let store: &T = context.store();
-    let chain: ChainId = state.chain();
 
-    debug!("[Command::process] Chain = {:#?}", chain);
-    debug!("[Command::process] Command = {:#?}", self);
-    trace!("[Command::process] State = {:#?}", state);
-    trace!("[Command::process] Store = {:#?}", store);
+    debug!("[Command::process] Command = {:?}", self);
+    trace!("[Command::process] State = {:?}", state);
+    trace!("[Command::process] Store = {:?}", store);
 
     match self {
-      Self::CreateChain {
+      Self::CreateIdentity {
         network,
         shard,
         authentication,
       } => {
+        // The state must not be initialized
         ensure!(state.document().is_none(), CommandError::DocumentAlreadyExists);
 
+        // The authentication method type must be valid
         ensure!(
           AUTH_TYPES.contains(&authentication),
           CommandError::InvalidMethodType(authentication)
         );
 
-        let location: ChainKey = ChainKey::auth(authentication, Index::ZERO);
+        let generation: Generation = state.auth_generation();
+        let location: KeyLocation = KeyLocation::new_authentication(authentication, generation);
 
-        trace!("[Command::process] Chain Key = {:#?}", location);
-
+        // The key location must be available
+        // TODO: config: strict
         ensure!(
-          !store.key_exists(chain, &location).await?,
+          !store.key_exists(state.id(), &location).await?,
           CommandError::DuplicateKeyLocation(location)
         );
 
-        // Generate a private key at the initial auth index (`0`)
-        let public: PublicKey = store.key_new(chain, &location).await?;
+        // Generate an authentication key
+        let public: PublicKey = store.key_new(state.id(), &location).await?;
         let data: MethodData = MethodData::new_b58(public.as_ref());
-        let method: TinyMethod = TinyMethod::new(location, data);
+        let method: TinyMethod = TinyMethod::new(location, data, None);
 
         // Generate a new DID URL from the public key
         let network: Option<&str> = network.as_deref();
         let shard: Option<&str> = shard.as_deref();
         let document: DID = DID::from_components(public.as_ref(), network, shard)?;
 
-        Event::respond_one(Event::ChainCreated {
-          document,
-          method,
-          timestamp: Timestamp::now(),
-        })
+        Ok(Some(vec![
+          Event::new(EventData::IdentityCreated(document)),
+          // TODO: MethodScope::VerificationMethod when possible
+          Event::new(EventData::MethodCreated(MethodScope::Authentication, method)),
+        ]))
       }
       Self::CreateMethod { type_, scope, fragment } => {
+        // The state must be initialized
         ensure!(state.document().is_some(), CommandError::DocumentNotFound);
 
+        let location: KeyLocation = state.key_location(type_, fragment)?;
+
+        // The key location must not be an authentication location
         ensure!(
-          fragment != ChainKey::AUTH,
+          !location.is_authentication(),
           CommandError::InvalidMethodFragment("reserved")
         );
 
-        let location: ChainKey = state.key(type_, fragment)?;
-
-        trace!("[Command::process] Chain Key = {:#?}", location);
-
+        // The key location must be available
+        // TODO: config: strict
         ensure!(
-          !store.key_exists(chain, &location).await?,
+          !store.key_exists(state.id(), &location).await?,
           CommandError::DuplicateKeyLocation(location)
         );
 
+        // The verification method must not exist
         ensure!(
           !state.methods().contains(location.fragment()),
-          CommandError::DuplicateKeyFragment(location),
+          CommandError::DuplicateKeyFragment(location.fragment.clone()),
         );
 
-        let pkey: PublicKey = store.key_new(chain, &location).await?;
-        let data: MethodData = MethodData::new_b58(pkey.as_ref());
-        let method: TinyMethod = TinyMethod::new(location, data);
+        let public: PublicKey = store.key_new(state.id(), &location).await?;
+        let data: MethodData = MethodData::new_b58(public.as_ref());
+        let method: TinyMethod = TinyMethod::new(location, data, None);
 
-        Event::respond_one(Event::MethodCreated {
-          scope,
-          method,
-          timestamp: Timestamp::now(),
-        })
+        Ok(Some(vec![Event::new(EventData::MethodCreated(scope, method))]))
       }
-      Self::DeleteMethod { fragment, scope } => {
+      Self::DeleteMethod { fragment } => {
+        // The state must be initialized
         ensure!(state.document().is_some(), CommandError::DocumentNotFound);
 
+        let fragment: Fragment = Fragment::new(fragment);
+
+        // The fragment must not be an authentication location
         ensure!(
-          fragment != ChainKey::AUTH,
+          !fragment.is_authentication(),
           CommandError::InvalidMethodFragment("reserved")
         );
 
-        ensure!(state.methods().contains(&fragment), CommandError::MethodNotFound);
+        // The verification method must exist
+        ensure!(state.methods().contains(fragment.name()), CommandError::MethodNotFound);
 
-        Event::respond_one(Event::MethodDeleted {
-          fragment,
-          scope,
-          timestamp: Timestamp::now(),
-        })
+        Ok(Some(vec![Event::new(EventData::MethodDeleted(fragment))]))
+      }
+      Self::AttachMethod { fragment, scopes } => {
+        // The state must be initialized
+        ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+
+        let fragment: Fragment = Fragment::new(fragment);
+
+        // The fragment must not be an authentication location
+        ensure!(
+          !fragment.is_authentication(),
+          CommandError::InvalidMethodFragment("reserved")
+        );
+
+        // The verification method must exist
+        ensure!(state.methods().contains(fragment.name()), CommandError::MethodNotFound);
+
+        Ok(Some(vec![Event::new(EventData::MethodAttached(fragment, scopes))]))
+      }
+      Self::DetachMethod { fragment, scopes } => {
+        // The state must be initialized
+        ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+
+        let fragment: Fragment = Fragment::new(fragment);
+
+        // The fragment must not be an authentication location
+        ensure!(
+          !fragment.is_authentication(),
+          CommandError::InvalidMethodFragment("reserved")
+        );
+
+        // The verification method must exist
+        ensure!(state.methods().contains(fragment.name()), CommandError::MethodNotFound);
+
+        Ok(Some(vec![Event::new(EventData::MethodDetached(fragment, scopes))]))
       }
       Self::CreateService {
         fragment,
@@ -185,8 +200,10 @@ impl Command {
         endpoint,
         properties,
       } => {
+        // The state must be initialized
         ensure!(state.document().is_some(), CommandError::DocumentNotFound);
 
+        // The service must not exist
         ensure!(
           !state.services().contains(&fragment),
           CommandError::DuplicateServiceFragment(fragment),
@@ -194,20 +211,63 @@ impl Command {
 
         let service: TinyService = TinyService::new(fragment, type_, endpoint, properties);
 
-        Event::respond_one(Event::ServiceCreated {
-          service,
-          timestamp: Timestamp::now(),
-        })
+        Ok(Some(vec![Event::new(EventData::ServiceCreated(service))]))
       }
       Self::DeleteService { fragment } => {
+        // The state must be initialized
         ensure!(state.document().is_some(), CommandError::DocumentNotFound);
-        ensure!(state.services().contains(&fragment), CommandError::ServiceNotFound);
 
-        Event::respond_one(Event::ServiceDeleted {
-          fragment,
-          timestamp: Timestamp::now(),
-        })
+        let fragment: Fragment = Fragment::new(fragment);
+
+        // The service must exist
+        ensure!(
+          state.services().contains(fragment.name()),
+          CommandError::ServiceNotFound
+        );
+
+        Ok(Some(vec![Event::new(EventData::ServiceDeleted(fragment))]))
       }
     }
   }
 }
+
+// =============================================================================
+// Command Builders
+// =============================================================================
+
+impl_command_builder!(CreateIdentity {
+  @optional network String,
+  @optional shard String,
+  @required authentication MethodType,
+});
+
+impl_command_builder!(CreateMethod {
+  @required type_ MethodType,
+  @default  scope MethodScope,
+  @required fragment String,
+});
+
+impl_command_builder!(DeleteMethod {
+  @required fragment String,
+});
+
+impl_command_builder!(AttachMethod {
+  @required fragment String,
+  @default scopes Vec<MethodScope>,
+});
+
+impl_command_builder!(DetachMethod {
+  @required fragment String,
+  @default scopes Vec<MethodScope>,
+});
+
+impl_command_builder!(CreateService {
+  @required fragment String,
+  @required type_ String,
+  @required endpoint Url,
+  @optional properties Object,
+});
+
+impl_command_builder!(DeleteService {
+  @required fragment String,
+});

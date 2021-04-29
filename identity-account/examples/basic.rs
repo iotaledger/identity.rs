@@ -5,32 +5,31 @@
 
 use identity_account::account::Account;
 use identity_account::error::Result;
+use identity_account::identity::IdentitySnapshot;
 use identity_account::storage::MemStore;
-use identity_account::types::ChainId;
-use identity_account::types::IdentityConfig;
-use identity_iota::chain::DocumentChain;
 use identity_iota::did::Document;
 
 #[tokio::main]
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  let storage: MemStore = MemStore::import_or_default("example-basic.json");
-  let account: Account<_> = Account::new(storage).await?;
+  let storage: MemStore = MemStore::new();
+  let account: Account<MemStore> = Account::new(storage).await?;
 
-  // Create a new Identity chain
-  let chain: ChainId = account.create(IdentityConfig::new()).await?;
-  let document: Document = account.get(chain).await?;
+  // Create a new Identity with default settings
+  let snapshot: IdentitySnapshot = account.create(Default::default()).await?;
 
-  println!("[Account] Document = {:#?}", document);
+  println!("[Example] Local Snapshot = {:#?}", snapshot);
+  println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);
+  println!("[Example] Local Document List = {:#?}", account.list().await);
 
   // Fetch the DID Document from the Tangle
-  let resolved: DocumentChain = account.resolve(document.id()).await?;
+  let resolved: Document = account.resolve(snapshot.id()).await?;
 
-  println!("[Tangle] Document = {:#?}", resolved.current());
+  println!("[Example] Tangle Document = {:#?}", resolved);
 
-  // Export the current state of the account
-  account.store().export("example-basic.json")?;
+  // // Delete the identity
+  // account.delete(snapshot.id()).await?;
 
   Ok(())
 }

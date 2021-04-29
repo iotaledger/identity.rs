@@ -3,32 +3,34 @@
 
 use identity_core::crypto::KeyType;
 
+/// Configuration used to create a new Identity.
 #[derive(Clone, Debug)]
-pub struct IdentityConfig {
+pub struct IdentityCreate {
   pub(crate) key_type: KeyType,
   pub(crate) name: Option<String>,
   pub(crate) network: Option<String>,
   pub(crate) shard: Option<String>,
-  pub(crate) publish: bool,
 }
 
-impl IdentityConfig {
+impl IdentityCreate {
+  /// Creates a new `IdentityCreate` instance.
   pub const fn new() -> Self {
     Self {
       key_type: KeyType::Ed25519,
       name: None,
       network: None,
       shard: None,
-      publish: true,
     }
   }
 
+  /// Sets the key type of the initial authentication method.
   #[must_use]
   pub fn key_type(mut self, value: KeyType) -> Self {
     self.key_type = value;
     self
   }
 
+  /// Sets the name of the Identity.
   #[must_use]
   pub fn name<T>(mut self, value: T) -> Self
   where
@@ -38,6 +40,7 @@ impl IdentityConfig {
     self
   }
 
+  /// Sets the IOTA Tangle network of the Identity DID.
   #[must_use]
   pub fn network<T>(mut self, value: T) -> Self
   where
@@ -47,6 +50,7 @@ impl IdentityConfig {
     self
   }
 
+  /// Sets the IOTA Tangle shard of the Identity DID.
   #[must_use]
   pub fn shard<T>(mut self, value: T) -> Self
   where
@@ -55,15 +59,9 @@ impl IdentityConfig {
     self.shard = Some(value.into());
     self
   }
-
-  #[must_use]
-  pub fn publish(mut self, value: bool) -> Self {
-    self.publish = value;
-    self
-  }
 }
 
-impl Default for IdentityConfig {
+impl Default for IdentityCreate {
   fn default() -> Self {
     Self::new()
   }

@@ -5,56 +5,78 @@
 
 use identity_account::account::Account;
 use identity_account::error::Result;
+use identity_account::events::Command;
+use identity_account::identity::IdentitySnapshot;
 use identity_account::storage::MemStore;
-use identity_account::types::ChainId;
-use identity_account::types::IdentityConfig;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_iota::chain::DocumentChain;
-use identity_iota::client::Client;
-use identity_iota::client::Network;
-use identity_iota::did::Document;
-use identity_iota::did::DID;
 
 #[tokio::main]
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  let storage: MemStore = MemStore::import_or_default("example-methods.json");
-  let account: Account<_> = Account::new(storage).await?;
+  let storage: MemStore = MemStore::new();
+  let account: Account<MemStore> = Account::new(storage).await?;
 
-  // Create a new Identity chain. The chain will be published to the Tangle
-  let chain: ChainId = account.create(IdentityConfig::new()).await?;
-  let document: DID = account.get(chain).await?.id().clone();
+  // Create a new Identity with default settings
+  let snapshot: IdentitySnapshot = account.create(Default::default()).await?;
 
-  let mt: MethodType = MethodType::Ed25519VerificationKey2018;
-  let ms: MethodScope = MethodScope::Authentication;
+  // Add a new Ed25519 verification method to the identity - the verification
+  // method is included as an embedded authentication method.
+  let command: Command = Command::create_method()
+    .type_(MethodType::Ed25519VerificationKey2018)
+    .scope(MethodScope::Authentication)
+    .fragment("my-auth-key")
+    .finish()?;
 
-  // Add a new Verification Method to the Identity chain. The change is
-  // published to the Tangle as a signed DocumentDiff.
-  account.create_method(chain, mt, ms, "key-1").await?;
+  // Process the command and update the identity state.
+  account.update(snapshot.id(), command).await?;
 
-  // Add another Verification Method to the chain
-  account.create_method(chain, mt, ms, "key-2").await?;
+  // Fetch and log the DID Document from the Tangle
+  println!(
+    "[Example] Tangle Document (1) = {:#?}",
+    account.resolve(snapshot.id()).await?
+  );
 
-  println!("[Tangle] Document = {:#?}", account.resolve(&document).await?);
+  // Add another Ed25519 verification method to the identity
+  let command: Command = Command::create_method()
+    .type_(MethodType::Ed25519VerificationKey2018)
+    .scope(MethodScope::VerificationMethod)
+    .fragment("my-next-key")
+    .finish()?;
 
-  // account.attach_method(chain, "key-2", MethodScope::AssertionMethod).await?;
-  // account.detach_method(chain, "key-2", MethodScope::Authentication).await?;
+  // Process the command and update the identity state.
+  account.update(snapshot.id(), command).await?;
 
-  // account.create_method(chain, mt, ms, "key-3").await?;
+  // Associate the newly created method with additional verification relationships
+  let command: Command = Command::attach_method()
+    .fragment("my-next-key")
+    .scopes(vec![
+      MethodScope::CapabilityDelegation,
+      MethodScope::CapabilityInvocation,
+    ])
+    .finish()?;
 
-  // let document: Document = account.get(chain).await?;
+  // Process the command and update the identity state.
+  account.update(snapshot.id(), command).await?;
 
-  // println!("[Account] Document = {:#?}", document);
+  // Fetch and log the DID Document from the Tangle
+  println!(
+    "[Example] Tangle Document (2) = {:#?}",
+    account.resolve(snapshot.id()).await?
+  );
 
-  // // Fetch the DID Document from the Tangle
-  // let resolved: DocumentChain = account.resolve(document).await?;
+  // Remove the original Ed25519 verification method
+  let command: Command = Command::delete_method().fragment("my-auth-key").finish()?;
 
-  // println!("[Tangle] Document = {:#?}", resolved.current());
+  // Process the command and update the identity state.
+  account.update(snapshot.id(), command).await?;
 
-  // Export the current state of the account
-  account.store().export("example-methods.json")?;
+  // Fetch and log the DID Document from the Tangle
+  println!(
+    "[Example] Tangle Document (3) = {:#?}",
+    account.resolve(snapshot.id()).await?
+  );
 
   Ok(())
 }

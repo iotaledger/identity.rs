@@ -10,13 +10,12 @@ extern crate log;
 extern crate serde;
 
 pub mod account;
-pub mod chain;
 pub mod crypto;
 pub mod error;
 pub mod events;
+pub mod identity;
 pub mod storage;
 pub mod stronghold;
-pub mod traits;
 pub mod types;
 pub mod utils;
 

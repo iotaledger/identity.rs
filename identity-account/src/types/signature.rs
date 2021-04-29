@@ -3,6 +3,7 @@
 
 use identity_core::crypto::PublicKey;
 
+/// A digital signature and associated public key.
 #[derive(Clone, Debug)]
 pub struct Signature {
   pub(crate) pkey: PublicKey,
@@ -10,14 +11,17 @@ pub struct Signature {
 }
 
 impl Signature {
+  /// Creates a new `Signature`.
   pub const fn new(pkey: PublicKey, data: Vec<u8>) -> Self {
     Self { pkey, data }
   }
 
+  /// Returns the public key used to verify this signature.
   pub fn pkey(&self) -> &PublicKey {
     &self.pkey
   }
 
+  /// Returns the the signature data as a slice of bytes.
   pub fn data(&self) -> &[u8] {
     &self.data
   }

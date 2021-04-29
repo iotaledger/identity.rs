@@ -1,10 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::events::CommandError;
+//! Errors that may occur when working with Identity Accounts.
 
+/// Alias for a `Result` with the error type [`Error`].
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
+/// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
   #[error(transparent)]
@@ -37,42 +39,32 @@ pub enum Error {
   SharedReadPoisoned,
   #[error("Shared resource poisoned: write")]
   SharedWritePoisoned,
-  #[error("Failed to parse integer: {0}")]
-  InvalidIntegerBytes(&'static str),
-  #[error("Failed to increment index: overflow")]
-  IndexOverflow,
-  #[error("Failed to increment index: underflow")]
-  IndexUnderflow,
-  #[error("Failed to parse chain id")]
-  InvalidChainId,
-  #[error("Failed to parse chain key")]
-  InvalidChainKey,
-  #[error("Failed to parse chain slot")]
-  InvalidChainSlot,
-  #[error("Chain document not found")]
-  MissingChainDocument,
-  #[error("Chain key vault not found")]
+  #[error("Generation overflow")]
+  GenerationOverflow,
+  #[error("Generation underflow")]
+  GenerationUnderflow,
+  #[error("Too many identities")]
+  IdentityIdOverflow,
+  #[error("Invalid identity id")]
+  IdentityIdInvalid,
+  #[error("Document id not found")]
+  MissingDocumentId,
+  #[error("Key vault not found")]
   KeyVaultNotFound,
-  #[error("Chain key pair not found")]
+  #[error("Key pair not found")]
   KeyPairNotFound,
-  #[error("Chain id not found")]
-  ChainIdNotFound,
-  #[error("Chain event not found")]
-  ChainEventNotFound,
-  #[error("Chain already exists")]
-  ChainAlreadyExists,
-  #[error("No chains found")]
-  NoChainsFound,
-  #[error("Diff message id not found")]
-  DiffMessageIdNotFound,
-  #[error("Auth message id not found")]
-  AuthMessageIdNotFound,
-  #[error("Verification method not found")]
+  #[error("Identity not found")]
+  IdentityNotFound,
+  #[error("Event not found")]
+  EventNotFound,
+  #[error("Identity already exists")]
+  IdentityAlreadyExists,
+  #[error("Verification Method not found")]
   MethodNotFound,
   #[error("Service not found")]
   ServiceNotFound,
   #[error("Command Error: {0}")]
-  CommandError(#[from] CommandError),
+  CommandError(#[from] crate::events::CommandError),
 }
 
 #[doc(hidden)]

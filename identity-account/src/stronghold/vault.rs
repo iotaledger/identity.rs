@@ -3,6 +3,7 @@
 
 use crypto::keys::slip10::Chain;
 use crypto::keys::slip10::ChainCode;
+use engine::vault::RecordId;
 use iota_stronghold::Location;
 use iota_stronghold::Procedure;
 use iota_stronghold::RecordHint;
@@ -10,7 +11,6 @@ use iota_stronghold::SLIP10DeriveInput;
 use iota_stronghold::StrongholdFlags;
 use iota_stronghold::VaultFlags;
 use std::path::Path;
-use vault::RecordId;
 
 use crate::error::Error;
 use crate::error::PleaseDontMakeYourOwnResult;

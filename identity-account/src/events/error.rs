@@ -3,8 +3,10 @@
 
 use identity_did::verification::MethodType;
 
-use crate::chain::ChainKey;
+use crate::types::Fragment;
+use crate::types::KeyLocation;
 
+/// Errors than may occur while processing a [Command][crate::events::Command].
 #[derive(Debug, thiserror::Error)]
 pub enum CommandError {
   #[error("document already exists")]
@@ -22,9 +24,9 @@ pub enum CommandError {
   #[error("missing required field - {0}")]
   MissingRequiredField(&'static str),
   #[error("duplicate key location - {0}")]
-  DuplicateKeyLocation(ChainKey),
-  #[error("duplicate key fragment - {}", .0.fragment())]
-  DuplicateKeyFragment(ChainKey),
+  DuplicateKeyLocation(KeyLocation),
+  #[error("duplicate key fragment - {0}")]
+  DuplicateKeyFragment(Fragment),
   #[error("duplicate service fragment - {0}")]
   DuplicateServiceFragment(String),
 }

@@ -101,7 +101,10 @@ impl Client {
   /// Note: The only validation performed is to ensure the correct Tangle
   /// network is selected.
   pub async fn publish_document(&self, document: &Document) -> Result<MessageId> {
-    trace!("Publish Document: {}", document.id());
+    debug!("Publish Document: {}", document.id());
+    debug!("Document JSON = {:#}", document);
+
+    debug_assert!(document.verify().is_ok());
 
     self.check_network(document.id())?;
 
@@ -121,7 +124,8 @@ impl Client {
   /// Note: The only validation performed is to ensure the correct Tangle
   /// network is selected.
   pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<MessageId> {
-    trace!("Publish Diff: {}", diff.id());
+    debug!("Publish Diff: {}", diff.id());
+    debug!("Diff JSON = {}", diff.to_json_pretty()?);
 
     self.check_network(diff.id())?;
 

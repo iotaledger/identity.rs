@@ -5,112 +5,121 @@ use identity_did::verification::MethodScope;
 use identity_iota::did::DID;
 use identity_iota::tangle::MessageId;
 
-use crate::chain::ChainData;
-use crate::chain::TinyMethod;
-use crate::chain::TinyService;
 use crate::error::Result;
-use crate::types::ChainId;
-use crate::types::Timestamp;
+use crate::identity::IdentityState;
+use crate::identity::TinyMethod;
+use crate::identity::TinyMethodRef;
+use crate::identity::TinyService;
+use crate::types::Fragment;
+use crate::types::UnixTimestamp;
 
+/// Event data tagged with a timestamp.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-#[serde(tag = "type", content = "data")]
-pub enum Event {
-  AuthMessage {
-    message: MessageId,
-  },
-  DiffMessage {
-    message: MessageId,
-  },
-  ChainCreated {
-    document: DID,
-    method: TinyMethod,
-    timestamp: Timestamp,
-  },
-  MethodCreated {
-    scope: MethodScope,
-    method: TinyMethod,
-    timestamp: Timestamp,
-  },
-  MethodDeleted {
-    fragment: String,
-    scope: Option<MethodScope>,
-    timestamp: Timestamp,
-  },
-  ServiceCreated {
-    service: TinyService,
-    timestamp: Timestamp,
-  },
-  ServiceDeleted {
-    fragment: String,
-    timestamp: Timestamp,
-  },
+pub struct Event {
+  data: EventData,
+  time: UnixTimestamp,
 }
 
 impl Event {
-  pub fn respond_one(event: Self) -> Result<Option<Vec<Self>>> {
-    Self::respond_many(vec![event])
+  /// Creates a new `Event` instance.
+  pub fn new(data: EventData) -> Self {
+    Self {
+      data,
+      time: UnixTimestamp::now(),
+    }
   }
 
-  pub fn respond_many(events: Vec<Self>) -> Result<Option<Vec<Self>>> {
-    Ok(Some(events))
+  /// Returns a reference to the raw event data.
+  pub const fn data(&self) -> &EventData {
+    &self.data
   }
 
-  pub async fn apply(self, mut state: ChainData) -> Result<ChainData> {
-    let chain: ChainId = state.chain();
+  /// Returns the unix timestamp of when the event was created.
+  pub const fn time(&self) -> UnixTimestamp {
+    self.time
+  }
 
-    debug!("[Commit::apply] Chain = {:#?}", chain);
-    debug!("[Commit::apply] Event = {:#?}", self);
-    trace!("[Commit::apply] State = {:#?}", state);
+  /// Returns a new state created by applying the event to the given `state`.
+  pub async fn apply(self, mut state: IdentityState) -> Result<IdentityState> {
+    debug!("[Event::apply] Event = {:?}", self);
+    trace!("[Event::apply] State = {:?}", state);
 
-    match self {
-      Self::AuthMessage { message } => {
+    match self.data {
+      EventData::AuthMessage(message) => {
         state.set_auth_message_id(message);
-        state.increment_auth_index()?;
+        state.increment_auth_generation()?;
       }
-      Self::DiffMessage { message } => {
+      EventData::DiffMessage(message) => {
         state.set_diff_message_id(message);
-        state.increment_diff_index()?;
+        state.increment_diff_generation()?;
       }
-      Self::ChainCreated {
-        document,
-        method,
-        timestamp,
-      } => {
+      EventData::IdentityCreated(document) => {
         state.set_document(document);
-        state.set_created(timestamp);
-        state.methods_mut().insert(MethodScope::Authentication, method);
+        state.set_created(self.time);
+        state.set_updated(self.time);
       }
-      Self::MethodCreated {
-        scope,
-        method,
-        timestamp,
-      } => {
-        state.set_updated(timestamp);
-        state.methods_mut().insert(scope, method);
+      EventData::MethodCreated(scope, method) => {
+        state.methods_mut().insert(scope, TinyMethodRef::Embed(method));
+        state.set_updated(self.time);
       }
-      Self::MethodDeleted {
-        fragment,
-        scope,
-        timestamp,
-      } => {
-        state.set_updated(timestamp);
+      EventData::MethodDeleted(fragment) => {
+        state.methods_mut().delete(fragment.name());
+        state.set_updated(self.time);
+      }
+      EventData::MethodAttached(fragment, scopes) => {
+        let method: TinyMethodRef = TinyMethodRef::Refer(fragment);
 
-        if let Some(scope) = scope {
-          state.methods_mut().detach(scope, &fragment);
-        } else {
-          state.methods_mut().delete(&fragment);
+        for scope in scopes {
+          state.methods_mut().insert(scope, method.clone());
         }
+
+        state.set_updated(self.time);
       }
-      Self::ServiceCreated { service, timestamp } => {
-        state.set_updated(timestamp);
+      EventData::MethodDetached(fragment, scopes) => {
+        for scope in scopes {
+          state.methods_mut().detach(scope, fragment.name());
+        }
+
+        state.set_updated(self.time);
+      }
+      EventData::ServiceCreated(service) => {
         state.services_mut().insert(service);
+        state.set_updated(self.time);
       }
-      Self::ServiceDeleted { fragment, timestamp } => {
-        state.set_updated(timestamp);
-        state.services_mut().delete(&fragment);
+      EventData::ServiceDeleted(fragment) => {
+        state.services_mut().delete(fragment.name());
+        state.set_updated(self.time);
       }
     }
 
     Ok(state)
   }
+}
+
+// =============================================================================
+// EventData
+// =============================================================================
+
+/// Raw event data.
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(tag = "type", content = "data")]
+pub enum EventData {
+  /// Emitted when a new auth message is published to the IOTA Tangle.
+  AuthMessage(MessageId),
+  /// Emitted when a new diff message is published to the IOTA Tangle.
+  DiffMessage(MessageId),
+  /// Emitted when a new identity state is created.
+  IdentityCreated(DID),
+  /// Emitted when a new verification method is created.
+  MethodCreated(MethodScope, TinyMethod),
+  /// Emitted when a verification method is deleted.
+  MethodDeleted(Fragment),
+  /// Emitted when a verification method is attached to one or more scopes.
+  MethodAttached(Fragment, Vec<MethodScope>),
+  /// Emitted when a verification method is detached from one or more scopes.
+  MethodDetached(Fragment, Vec<MethodScope>),
+  /// Emitted when a new service is created.
+  ServiceCreated(TinyService),
+  /// Emitted when a service is deleted.
+  ServiceDeleted(Fragment),
 }
