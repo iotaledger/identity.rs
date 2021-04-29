@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Definitions of common types.
+//! Definitions of common types (`Url`, `Timestamp`, JSON types, etc).
 
 mod bitset;
 mod context;

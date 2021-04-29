@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::crypto::merkle_key::MerkleDigest;
+use crate::crypto::merkle_key::MerkleDigestTag;
 use crate::crypto::merkle_key::MerkleSignature;
-use crate::crypto::merkle_key::MerkleTag;
+use crate::crypto::merkle_key::MerkleSignatureTag;
 use crate::crypto::merkle_tree::Hash;
 use crate::error::Error;
 use crate::error::Result;
@@ -20,9 +21,9 @@ impl MerkleKey {
   pub const TYPE_SIG: &'static str = "MerkleKeySignature2021";
 
   /// Extracts the signature and digest algorithm tags from the public key value.
-  pub fn extract_tags(data: &[u8]) -> Result<(MerkleTag, MerkleTag)> {
-    let tag_s: MerkleTag = Self::tag(data, 0)?;
-    let tag_d: MerkleTag = Self::tag(data, 1)?;
+  pub fn extract_tags(data: &[u8]) -> Result<(MerkleSignatureTag, MerkleDigestTag)> {
+    let tag_s: MerkleSignatureTag = Self::signature_tag(data, 0)?;
+    let tag_d: MerkleDigestTag = Self::digest_tag(data, 1)?;
 
     Ok((tag_s, tag_d))
   }
@@ -40,12 +41,20 @@ impl MerkleKey {
     output
   }
 
-  fn tag(data: &[u8], index: usize) -> Result<MerkleTag> {
+  fn digest_tag(data: &[u8], index: usize) -> Result<MerkleDigestTag> {
     data
       .get(index)
       .copied()
-      .map(MerkleTag::new)
-      .ok_or(Error::InvalidMerkleKeyTag(None))
+      .map(MerkleDigestTag::new)
+      .ok_or(Error::InvalidMerkleDigestKeyTag(None))
+  }
+
+  fn signature_tag(data: &[u8], index: usize) -> Result<MerkleSignatureTag> {
+    data
+      .get(index)
+      .copied()
+      .map(MerkleSignatureTag::new)
+      .ok_or(Error::InvalidMerkleSignatureKeyTag(None))
   }
 }
 
@@ -53,9 +62,10 @@ impl MerkleKey {
 mod tests {
   use crate::crypto::merkle_key::Blake2b256;
   use crate::crypto::merkle_key::MerkleDigest;
+  use crate::crypto::merkle_key::MerkleDigestTag;
   use crate::crypto::merkle_key::MerkleKey;
   use crate::crypto::merkle_key::MerkleSignature;
-  use crate::crypto::merkle_key::MerkleTag;
+  use crate::crypto::merkle_key::MerkleSignatureTag;
   use crate::crypto::merkle_key::Sha256;
   use crate::crypto::merkle_tree::Hash;
   use crate::crypto::Ed25519;
@@ -68,7 +78,7 @@ mod tests {
     let mut digest: D = D::new();
     let root: Hash<D> = digest.hash_leaf(b"Merkle Key Collection");
     let data: Vec<u8> = MerkleKey::encode_key::<D, S>(&root);
-    let tags: (MerkleTag, MerkleTag) = MerkleKey::extract_tags(&data).unwrap();
+    let tags: (MerkleSignatureTag, MerkleDigestTag) = MerkleKey::extract_tags(&data).unwrap();
 
     assert_eq!(tags.0, S::TAG);
     assert_eq!(tags.1, D::TAG);

@@ -26,6 +26,8 @@ use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
+use identity_did::verification::MethodUriType;
+use identity_did::verification::TryMethod;
 use iota::MessageId;
 use serde::Serialize;
 
@@ -57,6 +59,10 @@ pub struct Document {
   message_id: MessageId,
 }
 
+impl TryMethod for Document {
+  const TYPE: MethodUriType = MethodUriType::Absolute;
+}
+
 impl Document {
   /// Creates a new DID Document from the given KeyPair.
   ///
@@ -68,7 +74,8 @@ impl Document {
   pub fn from_keypair(keypair: &KeyPair) -> Result<Self> {
     let method: Method = Method::from_keypair(keypair, "authentication")?;
 
-    // SAFETY: We don't create invalid Methods
+    // SAFETY: We don't create invalid Methods.  Method::from_keypair() uses the MethodBuilder
+    // internally which verifies correctness on construction.
     Ok(unsafe { Self::from_authentication_unchecked(method) })
   }
 
@@ -285,7 +292,7 @@ impl Document {
   /// serialization fails, or the signature operation fails.
   pub fn sign_data<X>(&self, data: &mut X, secret: &SecretKey) -> Result<()>
   where
-    X: Serialize + SetSignature,
+    X: Serialize + SetSignature + TryMethod,
   {
     self
       .document
@@ -359,7 +366,7 @@ impl Document {
   where
     C: Into<Option<&'client Client>>,
   {
-    let network: Network = self.id().into();
+    let network = Network::from_did(self.id());
 
     // Publish the DID Document to the Tangle.
     let message: MessageId = match client.into() {
@@ -586,5 +593,15 @@ mod tests {
       )
       .ok();
     assert_eq!(0, document.service().len());
+  }
+  #[test]
+  fn test_relative_method_uri() {
+    let keypair: KeyPair = generate_testkey();
+    let mut document: Document = Document::from_keypair(&keypair).unwrap();
+
+    assert!(document.proof().is_none());
+    assert_eq!(document.sign(keypair.secret()).is_ok(), true);
+
+    assert_eq!(document.proof().unwrap().verification_method(), "#authentication");
   }
 }

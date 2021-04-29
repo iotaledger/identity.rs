@@ -11,6 +11,8 @@ use identity_core::crypto::TrySignatureMut;
 use identity_core::diff::Diff;
 use identity_did::diff::DiffDocument;
 use identity_did::document::Document as CoreDocument;
+use identity_did::verification::MethodUriType;
+use identity_did::verification::TryMethod;
 
 use crate::client::Client;
 use crate::client::Network;
@@ -22,6 +24,7 @@ use crate::tangle::MessageIdExt;
 use crate::tangle::TangleRef;
 use iota::MessageId;
 
+/// Defines the difference between two DID [`Document`]s' JSON representations.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DocumentDiff {
   pub(crate) did: DID,
@@ -35,6 +38,10 @@ pub struct DocumentDiff {
 }
 
 impl DocumentDiff {
+  /// Construct a new `DocumentDiff` by diffing the JSON representations of `current` and `updated`.
+  ///
+  /// The `previous_message_id` is included verbatim in the output, and the `proof` is `None`. To
+  /// set a proof, use the `set_signature()` method.
   pub fn new(current: &Document, updated: &Document, previous_message_id: MessageId) -> Result<Self> {
     let a: CoreDocument = current.serde_into()?;
     let b: CoreDocument = updated.serde_into()?;
@@ -87,7 +94,7 @@ impl DocumentDiff {
   where
     C: Into<Option<&'client Client>>,
   {
-    let network: Network = (&self.did).into();
+    let network = Network::from_did(&self.did);
 
     // Publish the DID Document diff to the Tangle.
     let message: MessageId = match client.into() {
@@ -142,4 +149,8 @@ impl SetSignature for DocumentDiff {
   fn set_signature(&mut self, value: Signature) {
     self.proof = Some(value);
   }
+}
+
+impl TryMethod for DocumentDiff {
+  const TYPE: MethodUriType = MethodUriType::Relative;
 }

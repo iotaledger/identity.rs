@@ -5,6 +5,9 @@ use identity_core::common::Url;
 
 use crate::did::DID;
 
+const MAIN_NETWORK_NAME: &str = "main";
+const TEST_NETWORK_NAME: &str = "test";
+
 lazy_static! {
   static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/chrysalis").unwrap();
   static ref EXPLORER_TEST: Url = Url::parse("https://explorer.iota.org/chrysalis").unwrap();
@@ -12,6 +15,7 @@ lazy_static! {
   static ref NODE_TEST: Url = Url::parse("https://api.lb-0.testnet.chrysalis2.com:443").unwrap();
 }
 
+/// The Tangle network to use (`Mainnet` or `Testnet`).
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Network {
   Mainnet,
@@ -19,13 +23,22 @@ pub enum Network {
 }
 
 impl Network {
+  /// Parses the provided string to a `Network`.
+  ///
+  /// If the input is `"test"` then `Testnet` is returned, otherwise `Mainnet` is returned.
   pub fn from_name(string: &str) -> Self {
     match string {
-      "test" => Self::Testnet,
+      TEST_NETWORK_NAME => Self::Testnet,
       _ => Self::Mainnet,
     }
   }
 
+  /// Returns the `Network` the `DID` is associated with.
+  pub fn from_did(did: &DID) -> Self {
+    Self::from_name(did.network())
+  }
+
+  /// Returns true if this network is the same network as the DID.
   pub fn matches_did(self, did: &DID) -> bool {
     did.network() == self.as_str()
   }
@@ -49,21 +62,16 @@ impl Network {
   /// Returns the name of the network as a static `str`.
   pub const fn as_str(self) -> &'static str {
     match self {
-      Self::Mainnet => "main",
-      Self::Testnet => "test",
+      Self::Mainnet => MAIN_NETWORK_NAME,
+      Self::Testnet => TEST_NETWORK_NAME,
     }
   }
 }
 
 impl Default for Network {
+  /// The default `Network` is the `Mainnet`.
   fn default() -> Self {
     Network::Mainnet
-  }
-}
-
-impl<'a> From<&'a DID> for Network {
-  fn from(other: &'a DID) -> Self {
-    Self::from_name(other.network())
   }
 }
 
