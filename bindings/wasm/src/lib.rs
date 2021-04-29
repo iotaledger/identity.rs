@@ -18,7 +18,7 @@ pub mod iota;
 pub mod service;
 pub mod wasm_did;
 pub mod wasm_document;
-pub mod wasm_method;
+pub mod wasm_verification_method;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]

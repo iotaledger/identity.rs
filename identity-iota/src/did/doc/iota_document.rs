@@ -35,7 +35,7 @@ use crate::client::Client;
 use crate::client::Network;
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
-use crate::did::IotaMethod;
+use crate::did::IotaVerificationMethod;
 use crate::did::Properties as BaseProperties;
 use crate::error::Error;
 use crate::error::Result;
@@ -72,7 +72,7 @@ impl IotaDocument {
   /// The authentication method will have the DID URL fragment `#authentication`
   /// and can be easily retrieved with [Document::authentication].
   pub fn from_keypair(keypair: &KeyPair) -> Result<Self> {
-    let method: IotaMethod = IotaMethod::from_keypair(keypair, "authentication")?;
+    let method: IotaVerificationMethod = IotaVerificationMethod::from_keypair(keypair, "authentication")?;
 
     // SAFETY: We don't create invalid Methods.  Method::from_keypair() uses the MethodBuilder
     // internally which verifies correctness on construction.
@@ -80,20 +80,20 @@ impl IotaDocument {
   }
 
   /// Creates a new DID Document from the given verification [`method`][VerificationMethod].
-  pub fn from_authentication(method: IotaMethod) -> Result<Self> {
+  pub fn from_authentication(method: IotaVerificationMethod) -> Result<Self> {
     Self::check_authentication(&method)?;
 
     // SAFETY: We just checked the validity of the verification method.
     Ok(unsafe { Self::from_authentication_unchecked(method) })
   }
 
-  /// Creates a new DID Document from the given verification [`method`][IotaMethod]
+  /// Creates a new DID Document from the given verification [`method`][IotaVerificationMethod]
   /// without performing validation checks.
   ///
   /// # Safety
   ///
   /// This must be guaranteed safe by the caller.
-  pub unsafe fn from_authentication_unchecked(method: IotaMethod) -> Self {
+  pub unsafe fn from_authentication_unchecked(method: IotaVerificationMethod) -> Self {
     CoreDocument::builder(Default::default())
       .id(method.controller().clone().into())
       .authentication(method)
@@ -131,7 +131,7 @@ impl IotaDocument {
   }
 
   fn check_authentication(method: &VerificationMethod) -> Result<()> {
-    IotaMethod::check_validity(method)?;
+    IotaVerificationMethod::check_validity(method)?;
 
     // Ensure the verification method type is supported
     match method.key_type() {
@@ -174,14 +174,14 @@ impl IotaDocument {
   }
 
   /// Returns the default authentication method of the DID document.
-  pub fn authentication(&self) -> &IotaMethod {
+  pub fn authentication(&self) -> &IotaVerificationMethod {
     // This `unwrap` is "fine" - a valid document will
     // always have a resolvable authentication method.
     let method: &MethodRef = self.document.authentication().head().unwrap();
     let method: &VerificationMethod = self.document.resolve_ref(method).unwrap();
 
     // SAFETY: We don't allow invalid authentication methods.
-    unsafe { IotaMethod::new_unchecked_ref(method) }
+    unsafe { IotaVerificationMethod::new_unchecked_ref(method) }
   }
 
   fn authentication_id(&self) -> &str {
@@ -235,7 +235,7 @@ impl IotaDocument {
   // ===========================================================================
 
   /// Adds a new Verification Method to the DID Document.
-  pub fn insert_method(&mut self, scope: MethodScope, method: IotaMethod) -> bool {
+  pub fn insert_method(&mut self, scope: MethodScope, method: IotaVerificationMethod) -> bool {
     self.document.insert_method(scope, method.into())
   }
 

@@ -9,7 +9,7 @@ mod url;
 
 pub use self::doc::DocumentDiff;
 pub use self::doc::IotaDocument;
-pub use self::doc::IotaMethod;
+pub use self::doc::IotaVerificationMethod;
 pub use self::doc::Properties;
 pub use self::doc::Signer;
 pub use self::doc::Verifier;

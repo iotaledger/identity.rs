@@ -14,7 +14,7 @@ use identity::did::MethodScope;
 use identity::did::VerificationMethod;
 use identity::iota::DocumentDiff;
 use identity::iota::IotaDocument;
-use identity::iota::IotaMethod;
+use identity::iota::IotaVerificationMethod;
 use iota::MessageId;
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
@@ -26,7 +26,7 @@ use crate::crypto::KeyType;
 use crate::service::Service;
 use crate::utils::err;
 use crate::wasm_did::WasmDID;
-use crate::wasm_method::WasmMethod;
+use crate::wasm_verification_method::WasmVerificationMethod;
 
 #[wasm_bindgen(inspectable)]
 pub struct NewDocument {
@@ -61,7 +61,7 @@ impl WasmDocument {
   #[allow(clippy::new_ret_no_self)]
   pub fn new(type_: KeyType, tag: Option<String>) -> Result<NewDocument, JsValue> {
     let key: KeyPair = KeyPair::new(type_)?;
-    let method: IotaMethod = IotaMethod::from_keypair(&key.0, tag.as_deref()).map_err(err)?;
+    let method: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&key.0, tag.as_deref()).map_err(err)?;
     let document: IotaDocument = IotaDocument::from_authentication(method).map_err(err)?;
 
     Ok(NewDocument {
@@ -78,7 +78,7 @@ impl WasmDocument {
 
   /// Creates a new DID Document from the given verification [`method`][`Method`].
   #[wasm_bindgen(js_name = fromAuthentication)]
-  pub fn from_authentication(method: &WasmMethod) -> Result<WasmDocument, JsValue> {
+  pub fn from_authentication(method: &WasmVerificationMethod) -> Result<WasmDocument, JsValue> {
     IotaDocument::from_authentication(method.0.clone())
       .map_err(err)
       .map(Self)
@@ -108,7 +108,7 @@ impl WasmDocument {
   // ===========================================================================
 
   #[wasm_bindgen(js_name = insertMethod)]
-  pub fn insert_method(&mut self, method: &WasmMethod, scope: Option<String>) -> Result<bool, JsValue> {
+  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: Option<String>) -> Result<bool, JsValue> {
     let scope: MethodScope = scope.unwrap_or_default().parse().map_err(err)?;
 
     Ok(self.0.insert_method(scope, method.0.clone()))
@@ -235,18 +235,20 @@ impl WasmDocument {
   }
 
   #[wasm_bindgen(js_name = resolveKey)]
-  pub fn resolve_key(&mut self, query: &str) -> Result<WasmMethod, JsValue> {
+  pub fn resolve_key(&mut self, query: &str) -> Result<WasmVerificationMethod, JsValue> {
     let method: VerificationMethod = self.0.try_resolve(query).map_err(err)?.clone();
 
-    IotaMethod::try_from_core(method).map_err(err).map(WasmMethod)
+    IotaVerificationMethod::try_from_core(method)
+      .map_err(err)
+      .map(WasmVerificationMethod)
   }
 
   #[wasm_bindgen(js_name = revokeMerkleKey)]
   pub fn revoke_merkle_key(&mut self, query: &str, index: usize) -> Result<bool, JsValue> {
-    let method: &mut IotaMethod = self
+    let method: &mut IotaVerificationMethod = self
       .0
       .try_resolve_mut(query)
-      .and_then(IotaMethod::try_from_mut)
+      .and_then(IotaVerificationMethod::try_from_mut)
       .map_err(err)?;
 
     method.revoke_merkle_key(index).map_err(err)

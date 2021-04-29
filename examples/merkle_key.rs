@@ -22,7 +22,7 @@ use identity::crypto::SecretKey;
 use identity::did::resolution::resolve;
 use identity::did::resolution::Resolution;
 use identity::did::MethodScope;
-use identity::iota::IotaMethod;
+use identity::iota::IotaVerificationMethod;
 use identity::iota::TangleRef;
 use identity::prelude::*;
 use rand::rngs::OsRng;
@@ -43,7 +43,8 @@ async fn main() -> Result<()> {
 
   // Generate a Merkle Key Collection Verification Method
   // with SHA-256 as  the digest algorithm.
-  let method: IotaMethod = IotaMethod::create_merkle_key::<Sha256, _>(doc.id().clone(), &keys, "key-collection")?;
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::create_merkle_key::<Sha256, _>(doc.id().clone(), &keys, "key-collection")?;
 
   // Append the new verification method to the set of existing methods
   doc.insert_method(MethodScope::VerificationMethod, method);

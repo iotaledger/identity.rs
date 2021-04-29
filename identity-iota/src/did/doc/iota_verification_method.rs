@@ -30,9 +30,9 @@ use crate::error::Result;
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(into = "VerificationMethod", try_from = "VerificationMethod")]
-pub struct IotaMethod(VerificationMethod);
+pub struct IotaVerificationMethod(VerificationMethod);
 
-impl IotaMethod {
+impl IotaVerificationMethod {
   /// The default verification method tag.
   pub const TAG: &'static str = "key";
 
@@ -55,7 +55,7 @@ impl IotaMethod {
       .map(Self)
   }
 
-  /// Creates a new [`IotaMethod`] object from the given `keypair`.
+  /// Creates a new [`IotaVerificationMethod`] object from the given `keypair`.
   pub fn from_keypair<'a, F>(keypair: &KeyPair, fragment: F) -> Result<Self>
   where
     F: Into<Option<&'a str>>,
@@ -106,7 +106,7 @@ impl IotaMethod {
     Self::check_validity(method)?;
 
     // SAFETY: We just checked the validity of the verification method.
-    Ok(unsafe { &mut *(method as *mut VerificationMethod as *mut IotaMethod) })
+    Ok(unsafe { &mut *(method as *mut VerificationMethod as *mut IotaVerificationMethod) })
   }
 
   /// Converts a `Method` reference to an IOTA Verification Method reference
@@ -117,7 +117,7 @@ impl IotaMethod {
   /// This must be guaranteed safe by the caller.
   pub unsafe fn new_unchecked_ref(method: &VerificationMethod) -> &Self {
     // SAFETY: This is guaranteed safe by the caller.
-    &*(method as *const VerificationMethod as *const IotaMethod)
+    &*(method as *const VerificationMethod as *const IotaVerificationMethod)
   }
 
   /// Checks if the given verification method is valid according to the IOTA
@@ -182,19 +182,19 @@ impl IotaMethod {
   }
 }
 
-impl Display for IotaMethod {
+impl Display for IotaVerificationMethod {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     Display::fmt(&self.0, f)
   }
 }
 
-impl Debug for IotaMethod {
+impl Debug for IotaVerificationMethod {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     Debug::fmt(&self.0, f)
   }
 }
 
-impl Deref for IotaMethod {
+impl Deref for IotaVerificationMethod {
   type Target = VerificationMethod;
 
   fn deref(&self) -> &Self::Target {
@@ -202,19 +202,19 @@ impl Deref for IotaMethod {
   }
 }
 
-impl From<IotaMethod> for VerificationMethod {
-  fn from(other: IotaMethod) -> Self {
+impl From<IotaVerificationMethod> for VerificationMethod {
+  fn from(other: IotaVerificationMethod) -> Self {
     other.0
   }
 }
 
-impl From<IotaMethod> for MethodRef {
-  fn from(other: IotaMethod) -> Self {
+impl From<IotaVerificationMethod> for MethodRef {
+  fn from(other: IotaVerificationMethod) -> Self {
     other.0.into()
   }
 }
 
-impl TryFrom<VerificationMethod> for IotaMethod {
+impl TryFrom<VerificationMethod> for IotaVerificationMethod {
   type Error = Error;
 
   fn try_from(other: VerificationMethod) -> Result<Self, Self::Error> {
@@ -222,7 +222,7 @@ impl TryFrom<VerificationMethod> for IotaMethod {
   }
 }
 
-impl Revocation for IotaMethod {
+impl Revocation for IotaVerificationMethod {
   fn revocation(&self) -> DIDResult<Option<BitSet>> {
     self.0.properties().revocation()
   }
