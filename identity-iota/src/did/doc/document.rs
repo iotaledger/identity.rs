@@ -25,6 +25,8 @@ use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
+use identity_did::verification::MethodUriType;
+use identity_did::verification::TryMethod;
 use iota::MessageId;
 use serde::Serialize;
 
@@ -54,6 +56,10 @@ pub type Verifier<'a> = DocumentVerifier<'a, Properties, Object, ()>;
 pub struct Document {
   document: BaseDocument,
   message_id: MessageId,
+}
+
+impl TryMethod for Document {
+  const TYPE: MethodUriType = MethodUriType::Absolute;
 }
 
 impl Document {
@@ -285,7 +291,7 @@ impl Document {
   /// serialization fails, or the signature operation fails.
   pub fn sign_data<X>(&self, data: &mut X, secret: &SecretKey) -> Result<()>
   where
-    X: Serialize + SetSignature,
+    X: Serialize + SetSignature + TryMethod,
   {
     self
       .document
@@ -547,5 +553,15 @@ mod tests {
     let document: Document = Document::from_keypair(&keypair).unwrap();
 
     assert_eq!(Document::check_authentication(document.authentication()).is_ok(), true);
+  }
+  #[test]
+  fn test_relative_method_uri() {
+    let keypair: KeyPair = generate_testkey();
+    let mut document: Document = Document::from_keypair(&keypair).unwrap();
+
+    assert!(document.proof().is_none());
+    assert_eq!(document.sign(keypair.secret()).is_ok(), true);
+
+    assert_eq!(document.proof().unwrap().verification_method(), "#authentication");
   }
 }

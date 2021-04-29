@@ -38,6 +38,8 @@ use crate::verifiable::Revocation;
 use crate::verification::Method;
 use crate::verification::MethodQuery;
 use crate::verification::MethodType;
+use crate::verification::MethodUriType;
+use crate::verification::TryMethod;
 
 // =============================================================================
 // Generic Crypto Extensions
@@ -83,6 +85,10 @@ impl<T, U, V> SetSignature for Document<Properties<T>, U, V> {
   fn set_signature(&mut self, signature: Signature) {
     self.set_proof(signature)
   }
+}
+
+impl<T, U, V> TryMethod for Document<Properties<T>, U, V> {
+  const TYPE: MethodUriType = MethodUriType::Relative;
 }
 
 // =============================================================================
@@ -199,25 +205,25 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
   /// serialization fails, or the signature operation fails.
   pub fn sign<X>(&self, that: &mut X) -> Result<()>
   where
-    X: Serialize + SetSignature,
+    X: Serialize + SetSignature + TryMethod,
   {
     let query: MethodQuery<'_> = self.method.ok_or(Error::QueryMethodNotFound)?;
     let method: &Method<U> = self.document.try_resolve(query)?;
-    let fragment: String = method.try_into_fragment()?;
+    let method_uri: String = X::try_method(method)?;
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(that, &fragment, self.secret.as_ref())?;
+        JcsEd25519::<Ed25519>::create_signature(that, &method_uri, self.secret.as_ref())?;
       }
       MethodType::MerkleKeyCollection2021 => {
         let data: Vec<u8> = method.key_data().try_decode()?;
 
         match MerkleKey::extract_tags(&data)? {
           (MerkleSignatureTag::ED25519, MerkleDigestTag::SHA256) => {
-            self.merkle_key_sign::<X, Sha256, Ed25519>(that, fragment)?;
+            self.merkle_key_sign::<X, Sha256, Ed25519>(that, method_uri)?;
           }
           (MerkleSignatureTag::ED25519, MerkleDigestTag::BLAKE2B_256) => {
-            self.merkle_key_sign::<X, Blake2b256, Ed25519>(that, fragment)?;
+            self.merkle_key_sign::<X, Blake2b256, Ed25519>(that, method_uri)?;
           }
           (_, _) => {
             return Err(Error::InvalidMethodType);
@@ -229,7 +235,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
     Ok(())
   }
 
-  fn merkle_key_sign<X, D, S>(&self, that: &mut X, fragment: String) -> Result<()>
+  fn merkle_key_sign<X, D, S>(&self, that: &mut X, method: String) -> Result<()>
   where
     X: Serialize + SetSignature,
     D: MerkleDigest,
@@ -244,7 +250,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 
         let skey: SigningKey<'_, D> = SigningKey::from_borrowed(public, self.secret, proof);
 
-        MerkleSigner::<D, S>::create_signature(that, &fragment, &skey)?;
+        MerkleSigner::<D, S>::create_signature(that, &method, &skey)?;
 
         Ok(())
       }
