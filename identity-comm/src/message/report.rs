@@ -3,6 +3,10 @@
 
 use crate::message::Timing;
 use uuid::Uuid;
+
+/// A DIDComm  report message
+///
+/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Standalone_Messages.md)
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Report {
   context: String,

@@ -9,7 +9,7 @@ use serde::Serialize;
 use uuid::Uuid;
 /// A DIDComm Autentication Request
 ///
-/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md#authentication)
+/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/i_authentication.md)
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct AuthenticationRequest {
   context: String,

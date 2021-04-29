@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 /// A DIDComm  Did Resolution Message
 ///
-/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md#did-resolution)
+/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/i_did-resolution.md)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ResolutionRequest {
   context: String,

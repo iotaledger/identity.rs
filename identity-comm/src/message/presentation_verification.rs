@@ -5,6 +5,10 @@ use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::DID;
 use uuid::Uuid;
+
+/// A DIDComm  presentation verification message
+///
+/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/i_presentation-verification.md)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct PresentationRequest {
   context: String,

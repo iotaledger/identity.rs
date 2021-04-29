@@ -6,9 +6,9 @@ use identity_core::common::Url;
 use identity_iota::did::DID;
 use uuid::Uuid;
 
-/// A DIDComm Did Discovery Message
+/// A DIDComm features-discovery message
 ///
-/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md#did-discovery)
+/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/i_features-discovery.md)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct FeaturesRequest {
   context: String,

@@ -6,6 +6,9 @@ use identity_core::common::Url;
 use identity_iota::did::DID;
 use uuid::Uuid;
 
+/// A DIDComm credential issuance message
+///
+/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/i_credential-issuance.md)
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct CredentialSelection {
   context: String,

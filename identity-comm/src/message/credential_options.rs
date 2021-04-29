@@ -7,6 +7,9 @@ use identity_iota::did::DID;
 use serde::Serialize;
 use uuid::Uuid;
 
+/// A DIDComm credential options message
+///
+/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/i_credential-options.md)
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct CredentialOptionRequest {
   context: String,

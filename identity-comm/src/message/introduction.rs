@@ -5,6 +5,9 @@ use crate::message::Timing;
 use identity_core::common::Url;
 use identity_iota::did::DID;
 
+/// A DIDComm  did introduction message
+///
+/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/i_did-introduction.md)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct IntroductionProposal {
   context: String,
