@@ -35,8 +35,8 @@ pub trait DidCommunicator {
   }
 }
 
-// Apparently we need to use dynamic dispatch to get around a generic DidCommActor<T: DidCommunicator>. The workaround seems to be needed, since the #actor macro does
-// not seem to respect a generic type parameter. Not clear if this really is the case, did https://github.com/riker-rs/riker/pull/124 solve another issue?
+// Apparently we need to use dynamic dispatch to get around a generic DidCommActor<T: DidCommunicator>. The workaround
+// seems to be needed, since the #actor macro does not seem to respect a generic type parameter. Not clear if this really is the case, did https://github.com/riker-rs/riker/pull/124 solve another issue?
 #[actor(Trustping, FeaturesRequest)]
 pub struct DidCommActor {
   actor: Box<dyn DidCommunicator<Msg = DidCommActorMsg> + Send>,
@@ -85,7 +85,8 @@ impl DidCommunicator for DefaultCommunicator {
   type Msg = DidCommActorMsg;
 }
 
-// !  overwriting handlers requires a tiny bit of boilerplate, creating the Actor should be as easy as DidCommActor { actor: MyCommunicator }
+// !  overwriting handlers requires a tiny bit of boilerplate, creating the Actor should be as easy as DidCommActor {
+// actor: MyCommunicator }
 
 /// Custom communicator that overwrites receive_trustping
 pub struct MyCommunicator;

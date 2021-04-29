@@ -9,7 +9,6 @@ use uuid::Uuid;
 /// A DIDComm Did Discovery Message
 ///
 /// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Interactions%20and%20Messages.md#did-discovery)
-///
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct FeaturesRequest {
   context: String,
