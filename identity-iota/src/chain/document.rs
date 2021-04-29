@@ -111,8 +111,8 @@ impl DocumentChain {
     }
   }
 
-  /// Returns the Tangle message Id of the latest auth document.
-  pub fn auth_message_id(&self) -> &MessageId {
+  /// Returns the Tangle message Id of the latest int document.
+  pub fn int_message_id(&self) -> &MessageId {
     self.int_chain.current_message_id()
   }
 
@@ -121,12 +121,12 @@ impl DocumentChain {
     Self::__diff_message_id(&self.int_chain, &self.diff_chain)
   }
 
-  /// Adds a new auth document to the chain.
+  /// Adds a new int document to the chain.
   ///
   /// # Errors
   ///
-  /// Fails if the document is not a valid auth document.
-  pub fn try_push_auth(&mut self, document: Document) -> Result<()> {
+  /// Fails if the document is not a valid int document.
+  pub fn try_push_int(&mut self, document: Document) -> Result<()> {
     self.int_chain.try_push(document)?;
     self.diff_chain.clear();
 
