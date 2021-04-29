@@ -145,7 +145,7 @@ mod tests {
   use crate::message::Message;
 
   #[test]
-  pub fn test_plaintext_roundtrip() {
+  fn test_plaintext_roundtrip() {
     let ping = Trustping::new("trust-ping/1.0/ping".to_string());
 
     let plain_envelope_ping = ping.pack_plain().unwrap();
@@ -156,7 +156,7 @@ mod tests {
   }
 
   #[test]
-  pub fn test_signed_roundtrip() {
+  fn test_signed_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
 
     let ping = Trustping::new("trust-ping/1.0/ping".to_string());
@@ -185,7 +185,7 @@ mod tests {
   }
 
   #[test]
-  pub fn test_encrypted_roundtrip() {
+  fn test_encrypted_roundtrip() {
     let key_alice = KeyPair::new_ed25519().unwrap();
     let key_alice = ed25519_to_x25519_keypair(key_alice).unwrap();
 

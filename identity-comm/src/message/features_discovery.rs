@@ -243,7 +243,7 @@ mod tests {
   use crate::message::Message;
 
   #[test]
-  pub fn test_plaintext_roundtrip() {
+  fn test_plaintext_roundtrip() {
     let did_request = FeaturesRequest::new(
       "did-discovery/1.0/didRequest".to_string(),
       Uuid::new_v4(),
@@ -266,7 +266,7 @@ mod tests {
   }
 
   #[test]
-  pub fn test_signed_roundtrip() {
+  fn test_signed_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
 
     let did_request = FeaturesRequest::new(
@@ -314,7 +314,7 @@ mod tests {
   }
 
   #[test]
-  pub fn test_encrypted_roundtrip() {
+  fn test_encrypted_roundtrip() {
     let key_alice = KeyPair::new_ed25519().unwrap();
     let key_alice = ed25519_to_x25519_keypair(key_alice).unwrap();
 

@@ -66,7 +66,7 @@ impl Encrypted {
   ) -> Result<Self> {
     let header: JweHeader = JweHeader::new(JweAlgorithm::ECDH_1PU, algorithm.into());
 
-    let encoder: Encoder = Encoder::new()
+    let encoder: Encoder<'_> = Encoder::new()
       .format(JweFormat::General)
       .protected(&header)
       .secret(sender.secret());

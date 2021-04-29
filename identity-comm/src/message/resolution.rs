@@ -259,7 +259,7 @@ mod tests {
   use crate::message::Message;
 
   #[test]
-  pub fn test_plaintext_roundtrip() {
+  fn test_plaintext_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
     let resolution_request = ResolutionRequest::new(
       "did-discovery/1.0/did-resolution/1.0/resolutionRequest".to_string(),
@@ -282,7 +282,7 @@ mod tests {
   }
 
   #[test]
-  pub fn test_signed_roundtrip() {
+  fn test_signed_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
 
     let resolution_request = ResolutionRequest::new(
@@ -330,7 +330,7 @@ mod tests {
   }
 
   #[test]
-  pub fn test_encrypted_roundtrip() {
+  fn test_encrypted_roundtrip() {
     let keypair = KeyPair::new_ed25519().unwrap();
     let key_alice = KeyPair::new_ed25519().unwrap();
     let key_alice = ed25519_to_x25519_keypair(key_alice).unwrap();
