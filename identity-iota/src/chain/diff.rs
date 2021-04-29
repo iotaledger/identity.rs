@@ -29,12 +29,12 @@ pub struct DiffChain {
 
 impl DiffChain {
   /// Constructs a new `DiffChain` for the given `IntChain` from a slice of `Message`s.
-  pub fn try_from_messages(auth: &IntChain, messages: &[Message]) -> Result<Self> {
+  pub fn try_from_messages(int: &IntChain, messages: &[Message]) -> Result<Self> {
     if messages.is_empty() {
       return Ok(Self::new());
     }
 
-    let did: &DID = auth.current().id();
+    let did: &DID = int.current().id();
 
     let mut index: MessageIndex<DocumentDiff> = messages
       .iter()
@@ -43,9 +43,9 @@ impl DiffChain {
 
     let mut this: Self = Self::new();
 
-    while let Some(mut list) = index.remove(DocumentChain::__diff_message_id(auth, &this)) {
+    while let Some(mut list) = index.remove(DocumentChain::__diff_message_id(int, &this)) {
       'inner: while let Some(next) = list.pop() {
-        if auth.current().verify_data(&next).is_ok() {
+        if int.current().verify_data(&next).is_ok() {
           this.inner.push(next);
           break 'inner;
         }
@@ -91,8 +91,8 @@ impl DiffChain {
   ///
   /// Fails if the diff signature is invalid or the Tangle message
   /// references within the diff are invalid.
-  pub fn try_push(&mut self, auth: &IntChain, diff: DocumentDiff) -> Result<()> {
-    self.check_validity(auth, &diff)?;
+  pub fn try_push(&mut self, int: &IntChain, diff: DocumentDiff) -> Result<()> {
+    self.check_validity(int, &diff)?;
 
     // SAFETY: we performed the necessary validation in `check_validity`.
     unsafe {
@@ -113,8 +113,8 @@ impl DiffChain {
   }
 
   /// Returns `true` if the `DocumentDiff` can be added to the `DiffChain`.
-  pub fn is_valid(&self, auth: &IntChain, diff: &DocumentDiff) -> bool {
-    self.check_validity(auth, diff).is_ok()
+  pub fn is_valid(&self, int: &IntChain, diff: &DocumentDiff) -> bool {
+    self.check_validity(int, diff).is_ok()
   }
 
   /// Checks if the `DocumentDiff` can be added to the `DiffChain`n.
@@ -122,8 +122,8 @@ impl DiffChain {
   /// # Errors
   ///
   /// Fails if the `DocumentDiff` is not a valid addition.
-  pub fn check_validity(&self, auth: &IntChain, diff: &DocumentDiff) -> Result<()> {
-    if auth.current().verify_data(diff).is_err() {
+  pub fn check_validity(&self, int: &IntChain, diff: &DocumentDiff) -> Result<()> {
+    if int.current().verify_data(diff).is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
       });
@@ -141,7 +141,7 @@ impl DiffChain {
       });
     }
 
-    if diff.previous_message_id() != DocumentChain::__diff_message_id(auth, self) {
+    if diff.previous_message_id() != DocumentChain::__diff_message_id(int, self) {
       return Err(Error::ChainError {
         error: "Invalid Previous Message Id",
       });

@@ -19,15 +19,15 @@ use iota::MessageId;
 pub struct DocumentChain {
   #[serde(rename = "diff")]
   diff_chain: DiffChain,
-  #[serde(rename = "auth")]
+  #[serde(rename = "int")]
   int_chain: IntChain,
   #[serde(rename = "latest", skip_serializing_if = "Option::is_none")]
   document: Option<Document>,
 }
 
 impl DocumentChain {
-  pub(crate) fn __diff_message_id<'a>(auth: &'a IntChain, diff: &'a DiffChain) -> &'a MessageId {
-    diff.current_message_id().unwrap_or_else(|| auth.current_message_id())
+  pub(crate) fn __diff_message_id<'a>(int: &'a IntChain, diff: &'a DiffChain) -> &'a MessageId {
+    diff.current_message_id().unwrap_or_else(|| int.current_message_id())
   }
 
   pub(crate) fn __fold(int_chain: &IntChain, diff_chain: &DiffChain) -> Result<Document> {
@@ -70,12 +70,12 @@ impl DocumentChain {
   }
 
   /// Returns a reference to the `IntChain`.
-  pub fn auth(&self) -> &IntChain {
+  pub fn int_chain(&self) -> &IntChain {
     &self.int_chain
   }
 
   /// Returns a mutable reference to the `IntChain`.
-  pub fn auth_mut(&mut self) -> &mut IntChain {
+  pub fn int_chain_mut(&mut self) -> &mut IntChain {
     &mut self.int_chain
   }
 
@@ -116,7 +116,7 @@ impl DocumentChain {
     self.int_chain.current_message_id()
   }
 
-  /// Returns the Tangle message Id of the latest diff or auth document.
+  /// Returns the Tangle message Id of the latest diff or int document.
   pub fn diff_message_id(&self) -> &MessageId {
     Self::__diff_message_id(&self.int_chain, &self.diff_chain)
   }

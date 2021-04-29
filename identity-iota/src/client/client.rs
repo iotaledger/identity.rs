@@ -142,11 +142,11 @@ impl Client {
 
   pub async fn read_document_chain(&self, did: &DID) -> Result<DocumentChain> {
     trace!("Read Document Chain: {}", did);
-    trace!("Auth Chain Address: {}", did.tag());
+    trace!("Int Chain Address: {}", did.tag());
 
-    // Fetch all messages for the auth chain.
+    // Fetch all messages for the int chain.
     let messages: Messages = self.read_messages(did.tag()).await?;
-    let auth: IntChain = IntChain::try_from_messages(did, &messages.messages)?;
+    let int: IntChain = IntChain::try_from_messages(did, &messages.messages)?;
 
     // Check if there is any query given and return
     let skip_diff: bool = did.query_pairs().any(|(key, value)| key == "diff" && value == "false");
@@ -155,15 +155,15 @@ impl Client {
       DiffChain::new()
     } else {
       // Fetch all messages for the diff chain.
-      let address: String = Document::diff_address(auth.current_message_id())?;
+      let address: String = Document::diff_address(int.current_message_id())?;
       let messages: Messages = self.read_messages(&address).await?;
 
       trace!("Tangle Messages: {:?}", messages);
 
-      DiffChain::try_from_messages(&auth, &messages.messages)?
+      DiffChain::try_from_messages(&int, &messages.messages)?
     };
 
-    DocumentChain::with_diff_chain(auth, diff)
+    DocumentChain::with_diff_chain(int, diff)
   }
 
   pub async fn read_messages(&self, address: &str) -> Result<Messages> {

@@ -28,5 +28,5 @@ The following examples are currently available:
 | 4    | [verifiable_credential](verifiable_credential.rs)      | A basic example that generates and publishes subject and issuer DID Documents, then creates a Verifiable Credential (vc) specifying claims about the subject, and retrieves information through the CredentialValidator API. |
 | 5    | [verifiable_presentation](verifiable_presentation.rs)  | This example explains how to create a Verifiable Presentation from a set of credentials and sign it. |
 | 6    | [resolution](resolution.rs)                            | A basic example that generates a DID Document, publishes it to the Tangle, and retrieves information through DID Document resolution/dereferencing. |
-| 7    | [diff_chain](diff_chain.rs)                            | An example that utilizes a diff and auth chain to publish updates to a DID Document. |
+| 7    | [diff_chain](diff_chain.rs)                            | An example that utilizes a diff and int chain to publish updates to a DID Document. |
 | 8    | [merkle_key](merkle_key.rs)                            | An example that revokes a key and shows how verification fails as a consequence. |

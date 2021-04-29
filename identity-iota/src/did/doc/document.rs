@@ -62,8 +62,9 @@ impl Document {
   /// The DID Document will be pre-populated with a single authentication
   /// method based on the provided [KeyPair].
   ///
-  /// The authentication method will have the DID URL fragment `#authentication`
+  /// The authentication method will have the DID URL fragment `#_sign-1`
   /// and can be easily retrieved with [Document::authentication].
+  /// It needs to 
   pub fn from_keypair(keypair: &KeyPair) -> Result<Self> {
     let method: Method = Method::from_keypair(keypair, "_sign-1")?;
 
