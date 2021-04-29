@@ -25,6 +25,7 @@ use crate::crypto::KeyPair;
 use crate::crypto::KeyType;
 use crate::did::DID;
 use crate::method::Method;
+use crate::service::Service;
 use crate::utils::err;
 
 #[wasm_bindgen(inspectable)]
@@ -116,6 +117,16 @@ impl Document {
   #[wasm_bindgen(js_name = removeMethod)]
   pub fn remove_method(&mut self, did: &DID) -> Result<(), JsValue> {
     self.0.remove_method(&did.0).map_err(err)
+  }
+
+  #[wasm_bindgen(js_name = insertService)]
+  pub fn insert_service(&mut self, service: &Service) -> Result<bool, JsValue> {
+    Ok(self.0.insert_service(service.0.clone()))
+  }
+
+  #[wasm_bindgen(js_name = removeService)]
+  pub fn remove_service(&mut self, did: &DID) -> Result<(), JsValue> {
+    self.0.remove_service(&did.0).map_err(err)
   }
 
   // ===========================================================================
