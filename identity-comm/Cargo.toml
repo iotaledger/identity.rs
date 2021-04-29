@@ -14,9 +14,7 @@ homepage = "https://www.iota.org"
 identity-core = { path = "../identity-core", version = "=0.2.0" }
 identity-did = { path = "../identity-did", version = "=0.2.0" }
 identity-iota = { path = "../identity-iota", version = "=0.2.0" }
-# libjose = { path = "../libjose", version = "=0.1.0" }
 libjose = { git = "https://github.com/iotaledger/identity.rs", branch = "dev" }
-riker = "0.4.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
 thiserror = { version = "1.0" }
