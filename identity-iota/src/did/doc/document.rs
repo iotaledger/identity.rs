@@ -17,6 +17,7 @@ use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_did::document::Document as CoreDocument;
+use identity_did::service::Service;
 use identity_did::verifiable::DocumentSigner;
 use identity_did::verifiable::DocumentVerifier;
 use identity_did::verifiable::Properties as VerifiableProperties;
@@ -25,6 +26,8 @@ use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
+use identity_did::verification::MethodUriType;
+use identity_did::verification::TryMethod;
 use iota::MessageId;
 use serde::Serialize;
 
@@ -56,6 +59,10 @@ pub struct Document {
   message_id: MessageId,
 }
 
+impl TryMethod for Document {
+  const TYPE: MethodUriType = MethodUriType::Absolute;
+}
+
 impl Document {
   /// Creates a new DID Document from the given KeyPair.
   ///
@@ -67,7 +74,8 @@ impl Document {
   pub fn from_keypair(keypair: &KeyPair) -> Result<Self> {
     let method: Method = Method::from_keypair(keypair, "authentication")?;
 
-    // SAFETY: We don't create invalid Methods
+    // SAFETY: We don't create invalid Methods.  Method::from_keypair() uses the MethodBuilder
+    // internally which verifies correctness on construction.
     Ok(unsafe { Self::from_authentication_unchecked(method) })
   }
 
@@ -283,7 +291,7 @@ impl Document {
   /// serialization fails, or the signature operation fails.
   pub fn sign_data<X>(&self, data: &mut X, secret: &SecretKey) -> Result<()>
   where
-    X: Serialize + SetSignature,
+    X: Serialize + SetSignature + TryMethod,
   {
     self
       .document
@@ -357,7 +365,7 @@ impl Document {
   where
     C: Into<Option<&'client Client>>,
   {
-    let network: Network = self.id().into();
+    let network = Network::from_did(self.id());
 
     // Publish the DID Document to the Tangle.
     let message: MessageId = match client.into() {
@@ -379,6 +387,19 @@ impl Document {
     }
 
     Ok(DID::encode_key(message_id.encode_hex().as_bytes()))
+  }
+
+  pub fn insert_service(&mut self, service: Service) -> bool {
+    if service.id().fragment().is_none() {
+      false
+    } else {
+      self.document.service_mut().append(service.into())
+    }
+  }
+
+  pub fn remove_service(&mut self, did: &DID) -> Result<()> {
+    self.document.service_mut().remove(did.as_ref());
+    Ok(())
   }
 }
 
@@ -465,12 +486,14 @@ impl TangleRef for Document {
 mod tests {
 
   use crate::did::doc::Document;
+  use crate::did::url::DID;
   use identity_core::convert::FromJson;
   use identity_core::convert::SerdeInto;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
   use identity_core::crypto::PublicKey;
   use identity_core::crypto::SecretKey;
+  use identity_did::service::Service;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodType;
 
@@ -545,5 +568,39 @@ mod tests {
     let document: Document = Document::from_keypair(&keypair).unwrap();
 
     assert_eq!(Document::check_authentication(document.authentication()).is_ok(), true);
+  }
+
+  #[test]
+  fn test_document_services() {
+    let keypair: KeyPair = generate_testkey();
+    let mut document: Document = Document::from_keypair(&keypair).unwrap();
+    let service: Service = Service::from_json(
+      r#"{
+      "id":"did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain",
+      "type": "LinkedDomains", 
+      "serviceEndpoint": "https://bar.example.com"
+    }"#,
+    )
+    .unwrap();
+    document.insert_service(service);
+
+    assert_eq!(1, document.service().len());
+
+    document
+      .remove_service(
+        &DID::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain".to_string()).unwrap(),
+      )
+      .ok();
+    assert_eq!(0, document.service().len());
+  }
+  #[test]
+  fn test_relative_method_uri() {
+    let keypair: KeyPair = generate_testkey();
+    let mut document: Document = Document::from_keypair(&keypair).unwrap();
+
+    assert!(document.proof().is_none());
+    assert_eq!(document.sign(keypair.secret()).is_ok(), true);
+
+    assert_eq!(document.proof().unwrap().verification_method(), "#authentication");
   }
 }

@@ -23,7 +23,7 @@ const {
 
 const CLIENT_CONFIG = {
   network: "main",
-  node: "https://nodes.thetangle.org:443",
+  node: "https://api.lb-0.testnet.chrysalis2.com",
 }
 
 function generateUser(name) {

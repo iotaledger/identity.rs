@@ -3,8 +3,8 @@
 
 use identity::core::decode_b58;
 use identity::core::FromJson;
+use identity::crypto::merkle_key::MerkleDigestTag;
 use identity::crypto::merkle_key::MerkleKey;
-use identity::crypto::merkle_key::MerkleTag;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PublicKey;
@@ -25,6 +25,7 @@ use crate::crypto::KeyPair;
 use crate::crypto::KeyType;
 use crate::did::DID;
 use crate::method::Method;
+use crate::service::Service;
 use crate::utils::err;
 
 #[wasm_bindgen(inspectable)]
@@ -118,6 +119,16 @@ impl Document {
     self.0.remove_method(&did.0).map_err(err)
   }
 
+  #[wasm_bindgen(js_name = insertService)]
+  pub fn insert_service(&mut self, service: &Service) -> Result<bool, JsValue> {
+    Ok(self.0.insert_service(service.0.clone()))
+  }
+
+  #[wasm_bindgen(js_name = removeService)]
+  pub fn remove_service(&mut self, did: &DID) -> Result<(), JsValue> {
+    self.0.remove_service(&did.0).map_err(err)
+  }
+
   // ===========================================================================
   // Signatures
   // ===========================================================================
@@ -191,13 +202,13 @@ impl Document {
         let public: PublicKey = decode_b58(&public).map_err(err).map(Into::into)?;
         let secret: SecretKey = decode_b58(&secret).map_err(err).map(Into::into)?;
 
-        let digest: MerkleTag = MerkleKey::extract_tags(&merkle_key).map_err(err)?.1;
+        let digest: MerkleDigestTag = MerkleKey::extract_tags(&merkle_key).map_err(err)?.1;
         let proof: Vec<u8> = decode_b58(&proof).map_err(err)?;
 
         let signer: _ = self.0.signer(&secret).method(&method);
 
         match digest {
-          MerkleTag::SHA256 => match Proof::<Sha256>::decode(&proof) {
+          MerkleDigestTag::SHA256 => match Proof::<Sha256>::decode(&proof) {
             Some(proof) => signer.merkle_key((&public, &proof)).sign(&mut data).map_err(err)?,
             None => return Err("Invalid Public Key Proof".into()),
           },
