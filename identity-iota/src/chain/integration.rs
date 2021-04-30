@@ -20,13 +20,13 @@ use iota::Message;
 use iota::MessageId;
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct AuthChain {
+pub struct IntegrationChain {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) history: Option<Vec<Document>>,
   pub(crate) current: Document,
 }
 
-impl AuthChain {
+impl IntegrationChain {
   /// Constructs a new `AuthChain` from a slice of `Message`s.
   pub fn try_from_messages(did: &DID, messages: &[Message]) -> Result<Self> {
     let mut index: MessageIndex<Document> = messages
@@ -80,12 +80,12 @@ impl AuthChain {
     &mut self.current
   }
 
-  /// Returns the Tangle message Id of the latest auth document.
+  /// Returns the Tangle message Id of the latest integration document.
   pub fn current_message_id(&self) -> &MessageId {
     self.current.message_id()
   }
 
-  /// Adds a new `Document` to the `AuthChain`.
+  /// Adds a new `Document` to the `IntegrationChain`.
   ///
   /// # Errors
   ///
@@ -141,7 +141,7 @@ impl AuthChain {
   }
 }
 
-impl Display for AuthChain {
+impl Display for IntegrationChain {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     if f.alternate() {
       f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)

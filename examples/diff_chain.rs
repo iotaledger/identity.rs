@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! An example that utilizes a diff and auth chain to publish updates to a
+//! An example that utilizes a diff and integration chain to publish updates to a
 //! DID Document.
 //!
 //! cargo run --example diff_chain
@@ -11,7 +11,7 @@ use identity::did::MethodBuilder;
 use identity::did::MethodData;
 use identity::did::MethodRef;
 use identity::did::MethodType;
-use identity::iota::AuthChain;
+use identity::iota::IntegrationChain;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
 use identity::prelude::*;
@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
     document.sign(keypair.secret())?;
     document.publish(&client).await?;
 
-    chain = DocumentChain::new(AuthChain::new(document)?);
+    chain = DocumentChain::new(IntegrationChain::new(document)?);
     keys.push(keypair);
 
     println!("Chain (1) > {:#}", chain);
@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
   }
 
   // =========================================================================
-  // Publish Auth Chain Update
+  // Publish Integration Chain Update
   // =========================================================================
 
   sleep(Duration::from_secs(1));
@@ -73,7 +73,7 @@ async fn main() -> Result<()> {
     new.publish(&client).await?;
 
     keys.push(keypair);
-    chain.try_push_auth(new)?;
+    chain.try_push_integration(new)?;
 
     println!("Chain (2) > {:#}", chain);
     println!();
@@ -107,7 +107,7 @@ async fn main() -> Result<()> {
   }
 
   // =========================================================================
-  // Publish Phony Auth Update
+  // Publish Phony Integration Update
   // =========================================================================
 
   sleep(Duration::from_secs(1));
@@ -135,7 +135,7 @@ async fn main() -> Result<()> {
     new.sign(keypair.secret())?;
     new.publish(&client).await?;
 
-    println!("Chain Err > {:?}", chain.try_push_auth(new).unwrap_err());
+    println!("Chain Err > {:?}", chain.try_push_integration(new).unwrap_err());
   }
 
   // =========================================================================
@@ -165,7 +165,7 @@ async fn main() -> Result<()> {
 
   // =========================================================================
   // Read Document Chain with no query parameter given
-  // No query parameter => Read out Auth- and Diff Chain
+  // No query parameter => Read out Integration- and Diff Chain
   // =========================================================================
 
   let remote: DocumentChain = client.read_document_chain(chain.id()).await?;
@@ -182,7 +182,7 @@ async fn main() -> Result<()> {
 
   // =========================================================================
   // Test Read Document Chain with diff true
-  // query parameter diff=true => Read out Auth- and Diff Chain
+  // query parameter diff=true => Read out integration- and Diff Chain
   // =========================================================================
 
   let mut did = chain.id().clone();
@@ -206,7 +206,7 @@ async fn main() -> Result<()> {
 
   // =========================================================================
   // Test Read Document Chain with query parameter diff false
-  // query parameter diff=false => Read Auth Chain, Skip Diff Chain
+  // query parameter diff=false => Read Integeration Chain, Skip Diff Chain
   // Warning: this leads to an outdated version & is therefore not recommended
   // =========================================================================
 
