@@ -3,8 +3,8 @@
 
 mod diff;
 mod document;
-mod int;
+mod integration;
 
 pub use self::diff::DiffChain;
 pub use self::document::DocumentChain;
-pub use self::int::IntChain;
+pub use self::integration::IntegrationChain;

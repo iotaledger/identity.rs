@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! An example that utilizes a diff and int chain to publish updates to a
+//! An example that utilizes a diff and integration chain to publish updates to a
 //! DID Document.
 //!
 //! cargo run --example diff_chain
@@ -13,7 +13,7 @@ use identity::did::MethodRef;
 use identity::did::MethodType;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
-use identity::iota::IntChain;
+use identity::iota::IntegrationChain;
 use identity::prelude::*;
 use std::thread::sleep;
 use std::time::Duration;
@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
     document.sign(keypair.secret())?;
     document.publish(&client).await?;
 
-    chain = DocumentChain::new(IntChain::new(document)?);
+    chain = DocumentChain::new(IntegrationChain::new(document)?);
     keys.push(keypair);
 
     println!("Chain (1) > {:#}", chain);
@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
   }
 
   // =========================================================================
-  // Publish Int Chain Update
+  // Publish Integration Chain Update
   // =========================================================================
 
   sleep(Duration::from_secs(1));
@@ -67,13 +67,13 @@ async fn main() -> Result<()> {
     }
 
     new.set_updated(Timestamp::now());
-    new.set_previous_message_id(*chain.int_message_id());
+    new.set_previous_message_id(*chain.integration_message_id());
 
     chain.current().sign_data(&mut new, keys[0].secret())?;
     new.publish(&client).await?;
 
     keys.push(keypair);
-    chain.try_push_int(new)?;
+    chain.try_push_integration(new)?;
 
     println!("Chain (2) > {:#}", chain);
     println!();
@@ -97,7 +97,7 @@ async fn main() -> Result<()> {
     let message_id = *chain.diff_message_id();
     let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
-    diff.publish(chain.int_message_id(), &client).await?;
+    diff.publish(chain.integration_message_id(), &client).await?;
     chain.try_push_diff(diff)?;
     let message_id2 = *chain.diff_message_id();
 
@@ -130,12 +130,12 @@ async fn main() -> Result<()> {
     }
 
     new.set_updated(Timestamp::now());
-    new.set_previous_message_id(*chain.int_message_id());
+    new.set_previous_message_id(*chain.integration_message_id());
 
     new.sign(keypair.secret())?;
     new.publish(&client).await?;
 
-    println!("Chain Err > {:?}", chain.try_push_int(new).unwrap_err());
+    println!("Chain Err > {:?}", chain.try_push_integration(new).unwrap_err());
   }
 
   // =========================================================================
@@ -156,7 +156,7 @@ async fn main() -> Result<()> {
     let message_id = *chain.diff_message_id();
     let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
-    diff.publish(chain.int_message_id(), &client).await?;
+    diff.publish(chain.integration_message_id(), &client).await?;
     chain.try_push_diff(diff)?;
 
     println!("Chain (4) > {:#}", chain);
@@ -165,7 +165,7 @@ async fn main() -> Result<()> {
 
   // =========================================================================
   // Read Document Chain with no query parameter given
-  // No query parameter => Read out Int- and Diff Chain
+  // No query parameter => Read out Integration- and Diff Chain
   // =========================================================================
 
   let remote: DocumentChain = client.read_document_chain(chain.id()).await?;
@@ -182,7 +182,7 @@ async fn main() -> Result<()> {
 
   // =========================================================================
   // Test Read Document Chain with diff true
-  // query parameter diff=true => Read out Int- and Diff Chain
+  // query parameter diff=true => Read out Integration- and Diff Chain
   // =========================================================================
 
   let mut did = chain.id().clone();
@@ -206,7 +206,7 @@ async fn main() -> Result<()> {
 
   // =========================================================================
   // Test Read Document Chain with query parameter diff false
-  // query parameter diff=false => Read Int Chain, Skip Diff Chain
+  // query parameter diff=false => Read Integration Chain, Skip Diff Chain
   // Warning: this leads to an outdated version & is therefore not recommended
   // =========================================================================
 

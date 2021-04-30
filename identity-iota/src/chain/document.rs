@@ -8,7 +8,7 @@ use core::fmt::Result as FmtResult;
 use identity_core::convert::ToJson;
 
 use crate::chain::DiffChain;
-use crate::chain::IntChain;
+use crate::chain::IntegrationChain;
 use crate::did::Document;
 use crate::did::DocumentDiff;
 use crate::did::DID;
@@ -19,19 +19,21 @@ use iota::MessageId;
 pub struct DocumentChain {
   #[serde(rename = "diff")]
   diff_chain: DiffChain,
-  #[serde(rename = "int")]
-  int_chain: IntChain,
+  #[serde(rename = "integration")]
+  integration_chain: IntegrationChain,
   #[serde(rename = "latest", skip_serializing_if = "Option::is_none")]
   document: Option<Document>,
 }
 
 impl DocumentChain {
-  pub(crate) fn __diff_message_id<'a>(int: &'a IntChain, diff: &'a DiffChain) -> &'a MessageId {
-    diff.current_message_id().unwrap_or_else(|| int.current_message_id())
+  pub(crate) fn __diff_message_id<'a>(integration: &'a IntegrationChain, diff: &'a DiffChain) -> &'a MessageId {
+    diff
+      .current_message_id()
+      .unwrap_or_else(|| integration.current_message_id())
   }
 
-  pub(crate) fn __fold(int_chain: &IntChain, diff_chain: &DiffChain) -> Result<Document> {
-    let mut this: Document = int_chain.current.clone();
+  pub(crate) fn __fold(integration_chain: &IntegrationChain, diff_chain: &DiffChain) -> Result<Document> {
+    let mut this: Document = integration_chain.current.clone();
 
     for diff in diff_chain.iter() {
       this.merge(diff)?;
@@ -41,42 +43,42 @@ impl DocumentChain {
   }
 
   /// Creates a new `DocumentChain` from given the `IntChain`.
-  pub fn new(int_chain: IntChain) -> Self {
+  pub fn new(integration_chain: IntegrationChain) -> Self {
     Self {
-      int_chain,
+      integration_chain,
       diff_chain: DiffChain::new(),
       document: None,
     }
   }
 
-  /// Creates a new `DocumentChain` from given the `IntChain` and `DiffChain`.
-  pub fn with_diff_chain(diff_chain: DiffChain, int_chain: IntChain) -> Result<Self> {
+  /// Creates a new `DocumentChain` from given the `IntegrationChain` and `DiffChain`.
+  pub fn with_diff_chain(diff_chain: DiffChain, integration_chain: IntegrationChain) -> Result<Self> {
     let document: Option<Document> = if diff_chain.is_empty() {
       None
     } else {
-      Some(Self::__fold(&int_chain, &diff_chain)?)
+      Some(Self::__fold(&integration_chain, &diff_chain)?)
     };
 
     Ok(Self {
       diff_chain,
-      int_chain,
+      integration_chain,
       document,
     })
   }
 
   /// Returns a reference to the DID identifying the document chain.
   pub fn id(&self) -> &DID {
-    self.int_chain.current.id()
+    self.integration_chain.current.id()
   }
 
-  /// Returns a reference to the `IntChain`.
-  pub fn int_chain(&self) -> &IntChain {
-    &self.int_chain
+  /// Returns a reference to the `IntegrationChain`.
+  pub fn integration_chain(&self) -> &IntegrationChain {
+    &self.integration_chain
   }
 
-  /// Returns a mutable reference to the `IntChain`.
-  pub fn int_chain_mut(&mut self) -> &mut IntChain {
-    &mut self.int_chain
+  /// Returns a mutable reference to the `IntegrationChain`.
+  pub fn integration_chain_mut(&mut self) -> &mut IntegrationChain {
+    &mut self.integration_chain
   }
 
   /// Returns a reference to the `DiffChain`.
@@ -91,15 +93,18 @@ impl DocumentChain {
 
   pub fn fold(mut self) -> Result<Document> {
     for diff in self.diff_chain.iter() {
-      self.int_chain.current.merge(diff)?;
+      self.integration_chain.current.merge(diff)?;
     }
 
-    Ok(self.int_chain.current)
+    Ok(self.integration_chain.current)
   }
 
   /// Returns a reference to the latest document.
   pub fn current(&self) -> &Document {
-    self.document.as_ref().unwrap_or_else(|| self.int_chain.current())
+    self
+      .document
+      .as_ref()
+      .unwrap_or_else(|| self.integration_chain.current())
   }
 
   /// Returns a mutable reference to the latest document.
@@ -107,27 +112,27 @@ impl DocumentChain {
     if let Some(document) = self.document.as_mut() {
       document
     } else {
-      self.int_chain.current_mut()
+      self.integration_chain.current_mut()
     }
   }
 
-  /// Returns the Tangle message Id of the latest int document.
-  pub fn int_message_id(&self) -> &MessageId {
-    self.int_chain.current_message_id()
+  /// Returns the Tangle message Id of the latest integration document.
+  pub fn integration_message_id(&self) -> &MessageId {
+    self.integration_chain.current_message_id()
   }
 
-  /// Returns the Tangle message Id of the latest diff or int document.
+  /// Returns the Tangle message Id of the latest diff or integration document.
   pub fn diff_message_id(&self) -> &MessageId {
-    Self::__diff_message_id(&self.int_chain, &self.diff_chain)
+    Self::__diff_message_id(&self.integration_chain, &self.diff_chain)
   }
 
-  /// Adds a new int document to the chain.
+  /// Adds a new integration document to the chain.
   ///
   /// # Errors
   ///
-  /// Fails if the document is not a valid int document.
-  pub fn try_push_int(&mut self, document: Document) -> Result<()> {
-    self.int_chain.try_push(document)?;
+  /// Fails if the document is not a valid integration document.
+  pub fn try_push_integration(&mut self, document: Document) -> Result<()> {
+    self.integration_chain.try_push(document)?;
     self.diff_chain.clear();
 
     self.document = None;
@@ -141,9 +146,12 @@ impl DocumentChain {
   ///
   /// Fails if the document diff is invalid.
   pub fn try_push_diff(&mut self, diff: DocumentDiff) -> Result<()> {
-    self.diff_chain.check_validity(&self.int_chain, &diff)?;
+    self.diff_chain.check_validity(&self.integration_chain, &diff)?;
 
-    let mut document: Document = self.document.take().unwrap_or_else(|| self.int_chain.current().clone());
+    let mut document: Document = self
+      .document
+      .take()
+      .unwrap_or_else(|| self.integration_chain.current().clone());
 
     document.merge(&diff)?;
 
