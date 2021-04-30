@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::crypto::merkle_key::Sha256;
-use identity::iota::IotaVerificationMethod as Method_;
+use identity::iota::IotaVerificationMethod;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
@@ -13,7 +13,7 @@ use crate::wasm_did::WasmDID;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct WasmVerificationMethod(pub(crate) Method_);
+pub struct WasmVerificationMethod(pub(crate) IotaVerificationMethod);
 
 #[wasm_bindgen]
 impl WasmVerificationMethod {

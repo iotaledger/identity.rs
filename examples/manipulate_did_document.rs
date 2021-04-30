@@ -13,7 +13,7 @@ use identity::iota::Result;
 async fn main() -> Result<()> {
   // Create a DID Document out of an ed25519 keypair.
   let keypair: KeyPair = KeyPair::new_ed25519()?;
-  let mut document: identity::iota::IotaDocument = IotaDocument::from_keypair(&keypair)?;
+  let mut document: IotaDocument = IotaDocument::from_keypair(&keypair)?;
 
   // Sign the DID Document with the default authentication key.
   document.sign(keypair.secret())?;
