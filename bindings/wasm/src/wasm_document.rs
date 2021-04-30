@@ -125,7 +125,7 @@ impl WasmDocument {
   }
 
   #[wasm_bindgen(js_name = removeService)]
-  pub fn remove_service(&mut self, did: &DID) -> Result<(), JsValue> {
+  pub fn remove_service(&mut self, did: &WasmDID) -> Result<(), JsValue> {
     self.0.remove_service(&did.0).map_err(err)
   }
 

@@ -20,13 +20,15 @@ impl WasmVerificationMethod {
   /// Creates a new `WasmVerificationMethod` object from the given `key`.
   #[wasm_bindgen(constructor)]
   pub fn new(key: &KeyPair, tag: Option<String>) -> Result<WasmVerificationMethod, JsValue> {
-    Method_::from_keypair(&key.0, tag.as_deref()).map_err(err).map(Self)
+    IotaVerificationMethod::from_keypair(&key.0, tag.as_deref())
+      .map_err(err)
+      .map(Self)
   }
 
   /// Creates a new `WasmVerificationMethod` object from the given `did` and `key`.
   #[wasm_bindgen(js_name = fromDID)]
   pub fn from_did(did: &WasmDID, key: &KeyPair, tag: Option<String>) -> Result<WasmVerificationMethod, JsValue> {
-    Method_::from_did(did.0.clone(), &key.0, tag.as_deref())
+    IotaVerificationMethod::from_did(did.0.clone(), &key.0, tag.as_deref())
       .map_err(err)
       .map(Self)
   }
@@ -40,7 +42,7 @@ impl WasmVerificationMethod {
     tag: Option<String>,
   ) -> Result<WasmVerificationMethod, JsValue> {
     match digest {
-      Digest::Sha256 => Method_::create_merkle_key::<Sha256, _>(did.0.clone(), &keys.0, tag.as_deref())
+      Digest::Sha256 => IotaVerificationMethod::create_merkle_key::<Sha256, _>(did.0.clone(), &keys.0, tag.as_deref())
         .map_err(err)
         .map(Self),
     }
