@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::chain::AuthChain;
 use crate::chain::DiffChain;
 use crate::chain::DocumentChain;
+use crate::chain::IntegrationChain;
 use crate::client::ClientBuilder;
 use crate::client::Network;
 use crate::did::Document;
@@ -142,11 +142,11 @@ impl Client {
 
   pub async fn read_document_chain(&self, did: &DID) -> Result<DocumentChain> {
     trace!("Read Document Chain: {}", did);
-    trace!("Auth Chain Address: {}", did.tag());
+    trace!("Integration Chain Address: {}", did.tag());
 
-    // Fetch all messages for the auth chain.
+    // Fetch all messages for the integration chain.
     let messages: Messages = self.read_messages(did.tag()).await?;
-    let auth: AuthChain = AuthChain::try_from_messages(did, &messages.messages)?;
+    let integration_chain: IntegrationChain = IntegrationChain::try_from_messages(did, &messages.messages)?;
 
     // Check if there is any query given and return
     let skip_diff: bool = did.query_pairs().any(|(key, value)| key == "diff" && value == "false");
@@ -155,15 +155,15 @@ impl Client {
       DiffChain::new()
     } else {
       // Fetch all messages for the diff chain.
-      let address: String = Document::diff_address(auth.current_message_id())?;
+      let address: String = Document::diff_address(integration_chain.current_message_id())?;
       let messages: Messages = self.read_messages(&address).await?;
 
       trace!("Tangle Messages: {:?}", messages);
 
-      DiffChain::try_from_messages(&auth, &messages.messages)?
+      DiffChain::try_from_messages(&integration_chain, &messages.messages)?
     };
 
-    DocumentChain::with_diff_chain(auth, diff)
+    DocumentChain::with_diff_chain(integration_chain, diff)
   }
 
   pub async fn read_messages(&self, address: &str) -> Result<Messages> {
