@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::chain::IntegrationChain;
 use crate::chain::DiffChain;
 use crate::chain::DocumentChain;
+use crate::chain::IntegrationChain;
 use crate::client::ClientBuilder;
 use crate::client::Network;
 use crate::did::Document;

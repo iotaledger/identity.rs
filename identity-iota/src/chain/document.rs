@@ -7,8 +7,8 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use identity_core::convert::ToJson;
 
-use crate::chain::IntegrationChain;
 use crate::chain::DiffChain;
+use crate::chain::IntegrationChain;
 use crate::did::Document;
 use crate::did::DocumentDiff;
 use crate::did::DID;
@@ -27,7 +27,9 @@ pub struct DocumentChain {
 
 impl DocumentChain {
   pub(crate) fn __diff_message_id<'a>(integration_chain: &'a IntegrationChain, diff: &'a DiffChain) -> &'a MessageId {
-    diff.current_message_id().unwrap_or_else(|| integration_chain.current_message_id())
+    diff
+      .current_message_id()
+      .unwrap_or_else(|| integration_chain.current_message_id())
   }
 
   pub(crate) fn __fold(auth_chain: &IntegrationChain, diff_chain: &DiffChain) -> Result<Document> {
@@ -99,7 +101,10 @@ impl DocumentChain {
 
   /// Returns a reference to the latest document.
   pub fn current(&self) -> &Document {
-    self.document.as_ref().unwrap_or_else(|| self.integration_chain.current())
+    self
+      .document
+      .as_ref()
+      .unwrap_or_else(|| self.integration_chain.current())
   }
 
   /// Returns a mutable reference to the latest document.
