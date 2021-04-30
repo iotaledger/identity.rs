@@ -6,7 +6,7 @@ use identity_core::common::Object;
 use identity_core::convert::FromJson;
 
 use crate::error::Result;
-use crate::verification::Method;
+use crate::verification::VerificationMethod;
 
 pub trait Revocation {
   /// Returns a [`set`][BitSet] of Merkle Key Collection revocation flags.
@@ -28,7 +28,7 @@ impl Revocation for Object {
   }
 }
 
-impl<T> Revocation for Method<T>
+impl<T> Revocation for VerificationMethod<T>
 where
   T: Revocation,
 {

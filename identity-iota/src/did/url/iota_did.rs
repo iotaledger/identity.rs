@@ -29,9 +29,9 @@ const BLAKE2B_256_LEN: usize = 32;
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(into = "CoreDID", try_from = "CoreDID")]
-pub struct DID(CoreDID);
+pub struct IotaDID(CoreDID);
 
-impl DID {
+impl IotaDID {
   /// The URL scheme for Decentralized Identifiers.
   pub const SCHEME: &'static str = CoreDID::SCHEME;
 
@@ -41,11 +41,11 @@ impl DID {
   /// The default Tangle network (`"main"`).
   pub const DEFAULT_NETWORK: &'static str = "main";
 
-  /// Converts a borrowed `DID` to an IOTA DID.
+  /// Converts a borrowed `DID` to an `IotaDID`.
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid IOTA DID.
+  /// Returns `Err` if the input is not a valid `IotaDID`.
   pub fn try_from_borrowed(did: &CoreDID) -> Result<&Self> {
     Self::check_validity(did)?;
 
@@ -53,18 +53,18 @@ impl DID {
     Ok(unsafe { Self::new_unchecked_ref(did) })
   }
 
-  /// Converts an owned `DID` to an IOTA DID.
+  /// Converts an owned `DID` to an `IotaDID`.
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid IOTA DID.
+  /// Returns `Err` if the input is not a valid `IotaDID`.
   pub fn try_from_owned(did: CoreDID) -> Result<Self> {
     Self::check_validity(&did)?;
 
     Ok(Self(Self::normalize(did)))
   }
 
-  /// Converts a `DID` reference to an IOTA DID reference without performing
+  /// Converts a `DID` reference to an `IotaDID` reference without performing
   /// validation checks.
   ///
   /// # Safety
@@ -72,41 +72,41 @@ impl DID {
   /// This must be guaranteed safe by the caller.
   pub unsafe fn new_unchecked_ref(did: &CoreDID) -> &Self {
     // SAFETY: This is guaranteed safe by the caller.
-    &*(did as *const CoreDID as *const DID)
+    &*(did as *const CoreDID as *const IotaDID)
   }
 
-  /// Parses an IOTA DID from the given `input`.
+  /// Parses an `IotaDID` from the given `input`.
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid IOTA DID.
+  /// Returns `Err` if the input is not a valid `IotaDID`.
   pub fn parse(input: impl AsRef<str>) -> Result<Self> {
     CoreDID::parse(input).map_err(Into::into).and_then(Self::try_from_owned)
   }
 
-  /// Creates a new IOTA DID with a tag derived from the given `public` key.
+  /// Creates a new `IotaDID` with a tag derived from the given `public` key.
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input does not form a valid IOTA DID.
+  /// Returns `Err` if the input does not form a valid `IotaDID`.
   pub fn new(public: &[u8]) -> Result<Self> {
     try_did!(public)
   }
 
-  /// Creates a new IOTA DID from the given `public` key and `network`.
+  /// Creates a new `IotaDID` from the given `public` key and `network`.
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input does not form a valid IOTA DID.
+  /// Returns `Err` if the input does not form a valid `IotaDID`.
   pub fn with_network(public: &[u8], network: &str) -> Result<Self> {
     try_did!(public, network)
   }
 
-  /// Creates a new IOTA DID from the given `public` key, `network`, and `shard`.
+  /// Creates a new `IotaDID` from the given `public` key, `network`, and `shard`.
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input does not form a valid IOTA DID.
+  /// Returns `Err` if the input does not form a valid `IotaDID`.
   pub fn with_network_and_shard(public: &[u8], network: &str, shard: &str) -> Result<Self> {
     try_did!(public, network, shard)
   }
@@ -149,7 +149,7 @@ impl DID {
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid IOTA DID.
+  /// Returns `Err` if the input is not a valid `IotaDID`.
   pub fn check_method(did: &CoreDID) -> Result<()> {
     if did.method() != Self::METHOD {
       Err(Error::InvalidDID(DIDError::InvalidMethodName))
@@ -158,11 +158,11 @@ impl DID {
     }
   }
 
-  /// Checks if the given `DID` has a valid IOTA DID `method_id`.
+  /// Checks if the given `DID` has a valid `IotaDID` `method_id`.
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid IOTA DID.
+  /// Returns `Err` if the input is not a valid `IotaDID`.
   pub fn check_method_id(did: &CoreDID) -> Result<()> {
     let segments: Vec<&str> = did.method_id().split(':').collect();
 
@@ -181,12 +181,12 @@ impl DID {
     }
   }
 
-  /// Checks if the given `DID` is valid according to the IOTA DID method
+  /// Checks if the given `DID` is valid according to the `IotaDID` method
   /// specification.
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid IOTA DID.
+  /// Returns `Err` if the input is not a valid `IotaDID`.
   pub fn check_validity(did: &CoreDID) -> Result<()> {
     Self::check_method(did)?;
     Self::check_method_id(did)?;
@@ -195,7 +195,7 @@ impl DID {
   }
 
   /// Returns a `bool` indicating if the given `DID` is valid according to the
-  /// IOTA DID method specification.
+  /// `IotaDID` method specification.
   pub fn is_valid(did: &CoreDID) -> bool {
     Self::check_validity(did).is_ok()
   }
@@ -238,19 +238,19 @@ impl DID {
   }
 }
 
-impl Display for DID {
+impl Display for IotaDID {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     write!(f, "{}", self.0)
   }
 }
 
-impl Debug for DID {
+impl Debug for IotaDID {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     write!(f, "{}", self.0)
   }
 }
 
-impl Deref for DID {
+impl Deref for IotaDID {
   type Target = CoreDID;
 
   fn deref(&self) -> &Self::Target {
@@ -258,19 +258,19 @@ impl Deref for DID {
   }
 }
 
-impl AsRef<CoreDID> for DID {
+impl AsRef<CoreDID> for IotaDID {
   fn as_ref(&self) -> &CoreDID {
     &self.0
   }
 }
 
-impl From<DID> for CoreDID {
-  fn from(other: DID) -> Self {
+impl From<IotaDID> for CoreDID {
+  fn from(other: IotaDID) -> Self {
     other.0
   }
 }
 
-impl TryFrom<CoreDID> for DID {
+impl TryFrom<CoreDID> for IotaDID {
   type Error = Error;
 
   fn try_from(other: CoreDID) -> Result<Self, Self::Error> {
@@ -278,15 +278,15 @@ impl TryFrom<CoreDID> for DID {
   }
 }
 
-impl<'a> TryFrom<&'a CoreDID> for &'a DID {
+impl<'a> TryFrom<&'a CoreDID> for &'a IotaDID {
   type Error = Error;
 
   fn try_from(other: &'a CoreDID) -> Result<Self, Self::Error> {
-    DID::try_from_borrowed(other)
+    IotaDID::try_from_borrowed(other)
   }
 }
 
-impl FromStr for DID {
+impl FromStr for IotaDID {
   type Err = Error;
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
@@ -299,102 +299,102 @@ mod tests {
   use identity_core::crypto::KeyPair;
   use identity_did::did::DID as CoreDID;
 
-  use crate::did::DID;
+  use crate::did::IotaDID;
 
   const TAG: &str = "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
 
   #[test]
   fn test_parse_valid() {
-    assert!(DID::parse(format!("did:iota:{}", TAG)).is_ok());
-    assert!(DID::parse(format!("did:iota:main:{}", TAG)).is_ok());
-    assert!(DID::parse(format!("did:iota:test:{}", TAG)).is_ok());
-    assert!(DID::parse(format!("did:iota:rainbow:{}", TAG)).is_ok());
-    assert!(DID::parse(format!("did:iota:rainbow:shard-1:{}", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:{}", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:main:{}", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:test:{}", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:rainbow:{}", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:rainbow:shard-1:{}", TAG)).is_ok());
   }
 
   #[test]
   fn test_parse_invalid() {
-    assert!(DID::parse("did:foo::").is_err());
-    assert!(DID::parse("did:::").is_err());
-    assert!(DID::parse("did:iota---::").is_err());
-    assert!(DID::parse("did:iota:").is_err());
+    assert!(IotaDID::parse("did:foo::").is_err());
+    assert!(IotaDID::parse("did:::").is_err());
+    assert!(IotaDID::parse("did:iota---::").is_err());
+    assert!(IotaDID::parse("did:iota:").is_err());
   }
 
   #[test]
   fn test_from_did() {
-    let key: String = DID::encode_key(b"123");
+    let key: String = IotaDID::encode_key(b"123");
 
     let did: CoreDID = format!("did:iota:{}", key).parse().unwrap();
-    assert!(DID::try_from_owned(did).is_ok());
+    assert!(IotaDID::try_from_owned(did).is_ok());
 
     let did: CoreDID = "did:iota:123".parse().unwrap();
-    assert!(DID::try_from_owned(did).is_err());
+    assert!(IotaDID::try_from_owned(did).is_err());
 
     let did: CoreDID = format!("did:web:{}", key).parse().unwrap();
-    assert!(DID::try_from_owned(did).is_err());
+    assert!(IotaDID::try_from_owned(did).is_err());
   }
 
   #[test]
   fn test_network() {
-    let key: String = DID::encode_key(b"123");
+    let key: String = IotaDID::encode_key(b"123");
 
-    let did: DID = format!("did:iota:test:{}", key).parse().unwrap();
+    let did: IotaDID = format!("did:iota:test:{}", key).parse().unwrap();
     assert_eq!(did.network(), "test");
 
-    let did: DID = format!("did:iota:{}", key).parse().unwrap();
+    let did: IotaDID = format!("did:iota:{}", key).parse().unwrap();
     assert_eq!(did.network(), "main");
 
-    let did: DID = format!("did:iota:rainbow:{}", key).parse().unwrap();
+    let did: IotaDID = format!("did:iota:rainbow:{}", key).parse().unwrap();
     assert_eq!(did.network(), "rainbow");
   }
 
   #[test]
   fn test_shard() {
-    let key: String = DID::encode_key(b"123");
+    let key: String = IotaDID::encode_key(b"123");
 
-    let did: DID = format!("did:iota:dev:{}", key).parse().unwrap();
+    let did: IotaDID = format!("did:iota:dev:{}", key).parse().unwrap();
     assert_eq!(did.shard(), None);
 
-    let did: DID = format!("did:iota:dev:shard:{}", key).parse().unwrap();
+    let did: IotaDID = format!("did:iota:dev:shard:{}", key).parse().unwrap();
     assert_eq!(did.shard(), Some("shard"));
   }
 
   #[test]
   fn test_tag() {
-    let did: DID = format!("did:iota:{}", TAG).parse().unwrap();
+    let did: IotaDID = format!("did:iota:{}", TAG).parse().unwrap();
     assert_eq!(did.tag(), TAG);
 
-    let did: DID = format!("did:iota:main:{}", TAG).parse().unwrap();
+    let did: IotaDID = format!("did:iota:main:{}", TAG).parse().unwrap();
     assert_eq!(did.tag(), TAG);
 
-    let did: DID = format!("did:iota:main:shard:{}", TAG).parse().unwrap();
+    let did: IotaDID = format!("did:iota:main:shard:{}", TAG).parse().unwrap();
     assert_eq!(did.tag(), TAG);
   }
 
   #[test]
   fn test_new() {
     let key: KeyPair = KeyPair::new_ed25519().unwrap();
-    let did: DID = DID::new(key.public().as_ref()).unwrap();
-    let tag: String = DID::encode_key(key.public().as_ref());
+    let did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
+    let tag: String = IotaDID::encode_key(key.public().as_ref());
 
     assert_eq!(did.tag(), tag);
-    assert_eq!(did.network(), DID::DEFAULT_NETWORK);
+    assert_eq!(did.network(), IotaDID::DEFAULT_NETWORK);
     assert_eq!(did.shard(), None);
 
-    let did = DID::from_components(key.public().as_ref(), None, None).unwrap();
+    let did = IotaDID::from_components(key.public().as_ref(), None, None).unwrap();
     assert_eq!(did.tag(), tag);
-    assert_eq!(did.network(), DID::DEFAULT_NETWORK);
+    assert_eq!(did.network(), IotaDID::DEFAULT_NETWORK);
     assert_eq!(did.shard(), None);
 
-    let did = DID::from_components(key.public().as_ref(), Some(DID::DEFAULT_NETWORK), None).unwrap();
-    assert_eq!(did.network(), DID::DEFAULT_NETWORK);
+    let did = IotaDID::from_components(key.public().as_ref(), Some(IotaDID::DEFAULT_NETWORK), None).unwrap();
+    assert_eq!(did.network(), IotaDID::DEFAULT_NETWORK);
   }
 
   #[test]
   fn test_with_network() {
     let key: KeyPair = KeyPair::new_ed25519().unwrap();
-    let did: DID = DID::with_network(key.public().as_ref(), "foo").unwrap();
-    let tag: String = DID::encode_key(key.public().as_ref());
+    let did: IotaDID = IotaDID::with_network(key.public().as_ref(), "foo").unwrap();
+    let tag: String = IotaDID::encode_key(key.public().as_ref());
 
     assert_eq!(did.tag(), tag);
     assert_eq!(did.network(), "foo");
@@ -404,8 +404,8 @@ mod tests {
   #[test]
   fn test_with_network_and_shard() {
     let key: KeyPair = KeyPair::new_ed25519().unwrap();
-    let did: DID = DID::with_network_and_shard(key.public().as_ref(), "foo", "shard-1").unwrap();
-    let tag: String = DID::encode_key(key.public().as_ref());
+    let did: IotaDID = IotaDID::with_network_and_shard(key.public().as_ref(), "foo", "shard-1").unwrap();
+    let tag: String = IotaDID::encode_key(key.public().as_ref());
 
     assert_eq!(did.tag(), tag);
     assert_eq!(did.network(), "foo");
@@ -415,16 +415,16 @@ mod tests {
   #[test]
   fn test_normalize() {
     let key: KeyPair = KeyPair::new_ed25519().unwrap();
-    let tag: String = DID::encode_key(key.public().as_ref());
+    let tag: String = IotaDID::encode_key(key.public().as_ref());
 
-    // A DID with "main" as the network can be normalized ("main" removed)
-    let did1: DID = format!("did:iota:{}", tag).parse().unwrap();
-    let did2: DID = format!("did:iota:main:{}", tag).parse().unwrap();
+    // A IotaDID with "main" as the network can be normalized ("main" removed)
+    let did1: IotaDID = format!("did:iota:{}", tag).parse().unwrap();
+    let did2: IotaDID = format!("did:iota:main:{}", tag).parse().unwrap();
     assert_eq!(did1, did2);
 
-    // A DID with a shard cannot be normalized
+    // A IotaDID with a shard cannot be normalized
     let did_str: String = format!("did:iota:main:shard:{}", tag);
-    let did: DID = did_str.parse().unwrap();
+    let did: IotaDID = did_str.parse().unwrap();
 
     assert_eq!(did.as_str(), did_str);
   }
@@ -432,7 +432,7 @@ mod tests {
   #[test]
   fn test_setter() {
     let key: KeyPair = KeyPair::new_ed25519().unwrap();
-    let mut did: DID = DID::new(key.public().as_ref()).unwrap();
+    let mut did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
 
     did.set_path("#foo");
     did.set_query(Some("diff=true"));

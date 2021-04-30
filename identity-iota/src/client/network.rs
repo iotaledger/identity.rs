@@ -3,7 +3,7 @@
 
 use identity_core::common::Url;
 
-use crate::did::DID;
+use crate::did::IotaDID;
 
 const MAIN_NETWORK_NAME: &str = "main";
 const TEST_NETWORK_NAME: &str = "test";
@@ -33,13 +33,13 @@ impl Network {
     }
   }
 
-  /// Returns the `Network` the `DID` is associated with.
-  pub fn from_did(did: &DID) -> Self {
+  /// Returns the `Network` the `IotaDID` is associated with.
+  pub fn from_did(did: &IotaDID) -> Self {
     Self::from_name(did.network())
   }
 
   /// Returns true if this network is the same network as the DID.
-  pub fn matches_did(self, did: &DID) -> bool {
+  pub fn matches_did(self, did: &IotaDID) -> bool {
     did.network() == self.as_str()
   }
 
@@ -88,11 +88,11 @@ mod tests {
 
   #[test]
   fn test_matches_did() {
-    let did: DID = DID::new(b"").unwrap();
+    let did: IotaDID = IotaDID::new(b"").unwrap();
     assert!(Network::matches_did(Network::Mainnet, &did));
     assert!(!Network::matches_did(Network::Testnet, &did));
 
-    let did: DID = DID::with_network(b"", "test").unwrap();
+    let did: IotaDID = IotaDID::with_network(b"", "test").unwrap();
     assert!(Network::matches_did(Network::Testnet, &did));
     assert!(!Network::matches_did(Network::Mainnet, &did));
   }

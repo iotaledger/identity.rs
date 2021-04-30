@@ -11,7 +11,7 @@ use identity_core::convert::ToJson;
 use crate::chain::DocumentChain;
 use crate::chain::IntegrationChain;
 use crate::did::DocumentDiff;
-use crate::did::DID;
+use crate::did::IotaDID;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::MessageExt;
@@ -34,7 +34,7 @@ impl DiffChain {
       return Ok(Self::new());
     }
 
-    let did: &DID = integration_chain.current().id();
+    let did: &IotaDID = integration_chain.current().id();
 
     let mut index: MessageIndex<DocumentDiff> = messages
       .iter()
@@ -171,8 +171,8 @@ impl Display for DiffChain {
 mod test {
   use crate::chain::DocumentChain;
   use crate::chain::IntegrationChain;
-  use crate::did::Document;
   use crate::did::DocumentDiff;
+  use crate::did::IotaDocument;
   use crate::tangle::TangleRef;
   use identity_core::common::Timestamp;
   use identity_core::crypto::KeyPair;
@@ -193,7 +193,7 @@ mod test {
 
     {
       let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
-      let mut document: Document = Document::from_keypair(&keypair).unwrap();
+      let mut document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
       document.sign(keypair.secret()).unwrap();
       document.set_message_id(MessageId::new([8; 32]));
       chain = DocumentChain::new(IntegrationChain::new(document).unwrap());
@@ -209,7 +209,7 @@ mod test {
     // Push Integration Chain Update
     // =========================================================================
     {
-      let mut new: Document = chain.current().clone();
+      let mut new: IotaDocument = chain.current().clone();
       let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
 
       let authentication: MethodRef = MethodBuilder::default()
@@ -243,8 +243,8 @@ mod test {
     // Push Diff Chain Update
     // =========================================================================
     {
-      let new: Document = {
-        let mut this: Document = chain.current().clone();
+      let new: IotaDocument = {
+        let mut this: IotaDocument = chain.current().clone();
         this.properties_mut().insert("foo".into(), 123.into());
         this.properties_mut().insert("bar".into(), 456.into());
         this.set_updated(Timestamp::now());

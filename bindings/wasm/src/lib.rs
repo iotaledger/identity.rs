@@ -14,11 +14,11 @@ mod utils;
 
 pub mod credential;
 pub mod crypto;
-pub mod did;
-pub mod document;
 pub mod iota;
-pub mod method;
 pub mod service;
+pub mod wasm_did;
+pub mod wasm_document;
+pub mod wasm_verification_method;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]

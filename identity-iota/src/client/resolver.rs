@@ -12,19 +12,19 @@ use identity_did::resolution::MetaDocument;
 use identity_did::resolution::ResolverMethod;
 
 use crate::client::Client;
-use crate::did::Document;
-use crate::did::DID;
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
 
 #[async_trait(?Send)]
 impl ResolverMethod for Client {
   fn is_supported(&self, did: &CoreDID) -> bool {
-    DID::try_from_borrowed(did)
+    IotaDID::try_from_borrowed(did)
       .map(|did| self.check_network(did).is_ok())
       .unwrap_or(false)
   }
 
   async fn read(&self, did: &CoreDID, _input: InputMetadata) -> Result<Option<MetaDocument>> {
-    let document: Document = DID::try_from_borrowed(did)
+    let document: IotaDocument = IotaDID::try_from_borrowed(did)
       .map_err(|_| Error::MissingResolutionDID)
       .map(|did| self.read_document(&did))?
       .await

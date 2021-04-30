@@ -4,11 +4,11 @@
 use identity_core::common::Url;
 
 use crate::did::DID;
-use crate::document::Document;
+use crate::document::CoreDocument;
 use crate::service::Service;
 use crate::utils::DIDKey;
-use crate::verification::Method;
 use crate::verification::MethodRef;
+use crate::verification::VerificationMethod;
 
 /// A resource returned from a [DID URL dereferencing][SPEC] process.
 ///
@@ -40,13 +40,13 @@ impl From<SecondaryResource> for Resource {
 #[serde(untagged)]
 pub enum PrimaryResource {
   /// A dereferenced DID Document.
-  Document(Document),
+  Document(CoreDocument),
   /// A dereferenced DID Document service endpoint.
   Service(Url),
 }
 
-impl From<Document> for PrimaryResource {
-  fn from(other: Document) -> Self {
+impl From<CoreDocument> for PrimaryResource {
+  fn from(other: CoreDocument) -> Self {
     Self::Document(other)
   }
 }
@@ -67,7 +67,7 @@ pub enum SecondaryResource {
   /// A DID Document Method Id.
   VerificationDID(DID),
   /// A DID Document Verification Method.
-  VerificationKey(Method),
+  VerificationKey(VerificationMethod),
   /// A DID Document Service.
   Service(Service),
 }
@@ -78,8 +78,8 @@ impl From<DID> for SecondaryResource {
   }
 }
 
-impl From<Method> for SecondaryResource {
-  fn from(other: Method) -> Self {
+impl From<VerificationMethod> for SecondaryResource {
+  fn from(other: VerificationMethod) -> Self {
     Self::VerificationKey(other)
   }
 }

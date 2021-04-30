@@ -22,7 +22,7 @@ use crate::verification::MethodType;
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#verification-method-properties)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct Method<T = Object> {
+pub struct VerificationMethod<T = Object> {
   pub(crate) id: DID,
   pub(crate) controller: DID,
   #[serde(rename = "type")]
@@ -33,7 +33,7 @@ pub struct Method<T = Object> {
   pub(crate) properties: T,
 }
 
-impl<T> Method<T> {
+impl<T> VerificationMethod<T> {
   /// Creates a `MethodBuilder` to configure a new `Method`.
   ///
   /// This is the same as `MethodBuilder::new()`.
@@ -43,7 +43,7 @@ impl<T> Method<T> {
 
   /// Returns a new `Method` based on the `MethodBuilder` configuration.
   pub fn from_builder(builder: MethodBuilder<T>) -> Result<Self> {
-    Ok(Method {
+    Ok(VerificationMethod {
       id: builder.id.ok_or(Error::BuilderInvalidMethodId)?,
       controller: builder.controller.ok_or(Error::BuilderInvalidMethodController)?,
       key_type: builder.key_type.ok_or(Error::BuilderInvalidMethodType)?,
@@ -116,7 +116,7 @@ impl<T> Method<T> {
   }
 }
 
-impl<T> Display for Method<T>
+impl<T> Display for VerificationMethod<T>
 where
   T: Serialize,
 {
@@ -129,7 +129,7 @@ where
   }
 }
 
-impl<T> AsRef<DID> for Method<T> {
+impl<T> AsRef<DID> for VerificationMethod<T> {
   fn as_ref(&self) -> &DID {
     self.id()
   }

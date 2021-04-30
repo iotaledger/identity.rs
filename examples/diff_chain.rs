@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
 
   {
     let keypair: KeyPair = KeyPair::new_ed25519()?;
-    let mut document: Document = Document::from_keypair(&keypair)?;
+    let mut document: IotaDocument = IotaDocument::from_keypair(&keypair)?;
     document.sign(keypair.secret())?;
     document.publish(&client).await?;
 
@@ -50,7 +50,7 @@ async fn main() -> Result<()> {
   sleep(Duration::from_secs(1));
 
   {
-    let mut new: Document = chain.current().clone();
+    let mut new: IotaDocument = chain.current().clone();
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
 
     let authentication: MethodRef = MethodBuilder::default()
@@ -86,8 +86,8 @@ async fn main() -> Result<()> {
   sleep(Duration::from_secs(1));
 
   {
-    let new: Document = {
-      let mut this: Document = chain.current().clone();
+    let new: IotaDocument = {
+      let mut this: IotaDocument = chain.current().clone();
       this.properties_mut().insert("foo".into(), 123.into());
       this.properties_mut().insert("bar".into(), 456.into());
       this.set_updated(Timestamp::now());
@@ -113,7 +113,7 @@ async fn main() -> Result<()> {
   sleep(Duration::from_secs(1));
 
   {
-    let mut new: Document = chain.current().clone();
+    let mut new: IotaDocument = chain.current().clone();
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
 
     let authentication: MethodRef = MethodBuilder::default()
@@ -145,8 +145,8 @@ async fn main() -> Result<()> {
   sleep(Duration::from_secs(1));
 
   {
-    let new: Document = {
-      let mut this: Document = chain.current().clone();
+    let new: IotaDocument = {
+      let mut this: IotaDocument = chain.current().clone();
       this.properties_mut().insert("baz".into(), 789.into());
       this.properties_mut().remove("bar");
       this.set_updated(Timestamp::now());
@@ -173,8 +173,8 @@ async fn main() -> Result<()> {
   println!("Chain (R) {:#}", remote);
   println!();
 
-  let a: &Document = chain.current();
-  let b: &Document = remote.current();
+  let a: &IotaDocument = chain.current();
+  let b: &IotaDocument = remote.current();
 
   // The current document in the resolved chain should be identical to the
   // current document in our local chain.
@@ -197,8 +197,8 @@ async fn main() -> Result<()> {
   println!("Chain (R) {:#}", remote);
   println!();
 
-  let a: &Document = chain.current();
-  let b: &Document = remote.current();
+  let a: &IotaDocument = chain.current();
+  let b: &IotaDocument = remote.current();
 
   // The current document in the resolved chain should be identical to the
   // current document in our local chain.
@@ -221,8 +221,8 @@ async fn main() -> Result<()> {
   println!("Chain (R) {:#}", remote);
   println!();
 
-  let a: &Document = chain.current();
-  let b: &Document = remote.current();
+  let a: &IotaDocument = chain.current();
+  let b: &IotaDocument = remote.current();
 
   // The current document in the resolved chain should not be identical to
   // the current document in our local chain because you read an outdated
