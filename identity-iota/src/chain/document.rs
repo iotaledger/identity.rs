@@ -32,8 +32,8 @@ impl DocumentChain {
       .unwrap_or_else(|| integration_chain.current_message_id())
   }
 
-  pub(crate) fn __fold(auth_chain: &IntegrationChain, diff_chain: &DiffChain) -> Result<IotaDocument> {
-    let mut this: IotaDocument = auth_chain.current.clone();
+  pub(crate) fn __fold(integration_chain: &IntegrationChain, diff_chain: &DiffChain) -> Result<IotaDocument> {
+    let mut this: IotaDocument = integration_chain.current.clone();
 
     for diff in diff_chain.iter() {
       this.merge(diff)?;
@@ -42,25 +42,25 @@ impl DocumentChain {
     Ok(this)
   }
 
-  /// Creates a new `DocumentChain` from given the `AuthChain`.
-  pub fn new(auth_chain: IntegrationChain) -> Self {
+  /// Creates a new `DocumentChain` from given the `IntegrationChain`.
+  pub fn new(integration_chain: IntegrationChain) -> Self {
     Self {
-      integration_chain: auth_chain,
+      integration_chain,
       diff_chain: DiffChain::new(),
       document: None,
     }
   }
 
-  /// Creates a new `DocumentChain` from given the `AuthChain` and `DiffChain`.
-  pub fn with_diff_chain(auth_chain: IntegrationChain, diff_chain: DiffChain) -> Result<Self> {
+  /// Creates a new `DocumentChain` from given the `IntegrationChain` and `DiffChain`.
+  pub fn with_diff_chain(integration_chain: IntegrationChain, diff_chain: DiffChain) -> Result<Self> {
     let document: Option<IotaDocument> = if diff_chain.is_empty() {
       None
     } else {
-      Some(Self::__fold(&auth_chain, &diff_chain)?)
+      Some(Self::__fold(&integration_chain, &diff_chain)?)
     };
 
     Ok(Self {
-      integration_chain: auth_chain,
+      integration_chain,
       diff_chain,
       document,
     })
@@ -71,12 +71,12 @@ impl DocumentChain {
     self.integration_chain.current.id()
   }
 
-  /// Returns a reference to the `AuthChain`.
+  /// Returns a reference to the `IntegrationChain`.
   pub fn integration_chain(&self) -> &IntegrationChain {
     &self.integration_chain
   }
 
-  /// Returns a mutable reference to the `AuthChain`.
+  /// Returns a mutable reference to the `IntegrationChain`.
   pub fn integration_chain_mut(&mut self) -> &mut IntegrationChain {
     &mut self.integration_chain
   }
@@ -117,7 +117,7 @@ impl DocumentChain {
   }
 
   /// Returns the Tangle message Id of the latest integration document.
-  pub fn auth_message_id(&self) -> &MessageId {
+  pub fn integration_message_id(&self) -> &MessageId {
     self.integration_chain.current_message_id()
   }
 

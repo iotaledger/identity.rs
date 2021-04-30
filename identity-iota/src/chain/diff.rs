@@ -227,7 +227,7 @@ mod test {
       }
 
       new.set_updated(Timestamp::now());
-      new.set_previous_message_id(*chain.auth_message_id());
+      new.set_previous_message_id(*chain.integration_message_id());
 
       assert!(chain.current().sign_data(&mut new, keys[0].secret()).is_ok());
       assert_eq!(

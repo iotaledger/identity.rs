@@ -27,7 +27,7 @@ pub struct IntegrationChain {
 }
 
 impl IntegrationChain {
-  /// Constructs a new `AuthChain` from a slice of `Message`s.
+  /// Constructs a new `IntegrationChain` from a slice of `Message`s.
   pub fn try_from_messages(did: &IotaDID, messages: &[Message]) -> Result<Self> {
     let mut index: MessageIndex<IotaDocument> = messages
       .iter()
@@ -53,7 +53,7 @@ impl IntegrationChain {
     Ok(this)
   }
 
-  /// Creates a new `AuthChain` with the given `IotaDocument` as the latest.
+  /// Creates a new `IntegrationChain` with the given `IotaDocument` as the latest.
   pub fn new(current: IotaDocument) -> Result<Self> {
     if current.verify().is_err() {
       return Err(Error::ChainError {
@@ -102,12 +102,12 @@ impl IntegrationChain {
     Ok(())
   }
 
-  /// Returns `true` if the `IotaDocument` can be added to the `AuthChain`.
+  /// Returns `true` if the `IotaDocument` can be added to the `IntegrationChain`.
   pub fn is_valid(&self, document: &IotaDocument) -> bool {
     self.check_validity(document).is_ok()
   }
 
-  /// Checks if the `IotaDocument` can be added to the `AuthChain`.
+  /// Checks if the `IotaDocument` can be added to the `IntegrationChain`.
   ///
   /// # Errors
   ///

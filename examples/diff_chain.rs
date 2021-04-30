@@ -67,7 +67,7 @@ async fn main() -> Result<()> {
     }
 
     new.set_updated(Timestamp::now());
-    new.set_previous_message_id(*chain.auth_message_id());
+    new.set_previous_message_id(*chain.integration_message_id());
 
     chain.current().sign_data(&mut new, keys[0].secret())?;
     new.publish(&client).await?;
@@ -97,7 +97,7 @@ async fn main() -> Result<()> {
     let message_id = *chain.diff_message_id();
     let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
-    diff.publish(chain.auth_message_id(), &client).await?;
+    diff.publish(chain.integration_message_id(), &client).await?;
     chain.try_push_diff(diff)?;
     let message_id2 = *chain.diff_message_id();
 
@@ -130,7 +130,7 @@ async fn main() -> Result<()> {
     }
 
     new.set_updated(Timestamp::now());
-    new.set_previous_message_id(*chain.auth_message_id());
+    new.set_previous_message_id(*chain.integration_message_id());
 
     new.sign(keypair.secret())?;
     new.publish(&client).await?;
@@ -156,7 +156,7 @@ async fn main() -> Result<()> {
     let message_id = *chain.diff_message_id();
     let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
-    diff.publish(chain.auth_message_id(), &client).await?;
+    diff.publish(chain.integration_message_id(), &client).await?;
     chain.try_push_diff(diff)?;
 
     println!("Chain (4) > {:#}", chain);
