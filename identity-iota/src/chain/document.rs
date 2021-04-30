@@ -99,10 +99,7 @@ impl DocumentChain {
 
   /// Returns a reference to the latest document.
   pub fn current(&self) -> &IotaDocument {
-    self
-      .document
-      .as_ref()
-      .unwrap_or_else(|| self.chain_i.current())
+    self.document.as_ref().unwrap_or_else(|| self.chain_i.current())
   }
 
   /// Returns a mutable reference to the latest document.
@@ -146,10 +143,7 @@ impl DocumentChain {
   pub fn try_push_diff(&mut self, diff: DocumentDiff) -> Result<()> {
     self.chain_d.check_validity(&self.chain_i, &diff)?;
 
-    let mut document: IotaDocument = self
-      .document
-      .take()
-      .unwrap_or_else(|| self.chain_i.current().clone());
+    let mut document: IotaDocument = self.document.take().unwrap_or_else(|| self.chain_i.current().clone());
 
     document.merge(&diff)?;
 
