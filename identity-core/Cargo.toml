@@ -27,8 +27,7 @@ url = { version = "2.2", default-features = false, features = ["serde"] }
 zeroize = { version = "1.2", default-features = false }
 
 [dependencies.iota-crypto]
-git = "https://github.com/iotaledger/crypto.rs"
-rev = "b849861b86c3f7357b7477de4253b7352b363627"
+version = "0.5"
 default-features = false
 features = ["blake2b", "ed25519", "random", "sha"]
 
