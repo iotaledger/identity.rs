@@ -15,7 +15,7 @@ use identity::did::MethodScope;
 use identity::iota::Document as IotaDocument;
 use identity::iota::DocumentDiff;
 use identity::iota::Method as IotaMethod;
-use iota::MessageId;
+use identity::iota::MessageId;
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 

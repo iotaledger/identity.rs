@@ -40,6 +40,12 @@ impl Display for UnixTimestamp {
   }
 }
 
+impl Default for UnixTimestamp {
+  fn default() -> Self {
+    Self::EPOCH
+  }
+}
+
 impl From<Timestamp> for UnixTimestamp {
   fn from(other: Timestamp) -> Self {
     Self(other.to_unix())

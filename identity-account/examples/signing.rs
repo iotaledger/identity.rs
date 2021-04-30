@@ -12,7 +12,6 @@ use identity_core::common::Url;
 use identity_core::convert::SerdeInto;
 use identity_core::json;
 use identity_credential::credential::Credential;
-use identity_credential::credential::Subject;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::Document;
@@ -21,7 +20,10 @@ use identity_iota::did::Document;
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
+  // Create an in-memory storage instance for the account
   let storage: MemStore = MemStore::new();
+
+  // Create a new Account with the default configuration
   let account: Account<MemStore> = Account::new(storage).await?;
 
   // Create a new Identity with default settings
@@ -56,6 +58,7 @@ async fn main() -> Result<()> {
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 
+  // Ensure the resolved DID Document can verify the credential signature
   let verified: bool = resolved.verify_data(&credential).is_ok();
 
   println!("[Example] Credential Verified = {}", verified);

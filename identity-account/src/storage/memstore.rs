@@ -195,6 +195,14 @@ impl Storage for MemStore {
 
     Ok(stream::iter(queue.into_iter().skip(index)).map(Ok).boxed())
   }
+
+  async fn purge(&self, id: IdentityId) -> Result<()> {
+    let _ = self.events.write()?.remove(&id);
+    let _ = self.states.write()?.remove(&id);
+    let _ = self.vaults.write()?.remove(&id);
+
+    Ok(())
+  }
 }
 
 impl Debug for MemStore {

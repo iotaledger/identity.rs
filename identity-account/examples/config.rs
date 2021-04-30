@@ -20,7 +20,10 @@ async fn main() -> Result<()> {
     .dropsave(false) // save the account state on drop
     .milestone(4); // save a snapshot every 4 actions
 
+  // Create an in-memory storage instance for the account
   let storage: MemStore = MemStore::new();
+
+  // Create a new Account with explicit configuration
   let account: Account<MemStore> = Account::with_config(storage, config).await?;
 
   println!("[Example] Account = {:#?}", account);

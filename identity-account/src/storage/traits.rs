@@ -68,4 +68,7 @@ pub trait Storage: Debug {
   async fn collect(&self, id: IdentityId, index: Generation) -> Result<Vec<Commit>> {
     self.stream(id, index).await?.try_collect().await
   }
+
+  /// Removes the event stream and state snapshot for the identity specified by `id`.
+  async fn purge(&self, id: IdentityId) -> Result<()>;
 }

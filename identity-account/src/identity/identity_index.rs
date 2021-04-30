@@ -33,9 +33,14 @@ impl IdentityIndex {
     self.data.values().max().copied().unwrap_or_default().try_next()
   }
 
+  /// Returns a list of all tags in the index.
+  pub fn tags(&self) -> Vec<IdentityTag> {
+    self.data.keys().cloned().collect()
+  }
+
   /// Returns the id of the identity matching the given `key`.
   pub fn get<K: IdentityKey>(&self, key: K) -> Option<IdentityId> {
-    key.find_iter(self.data.iter())
+    key.scan(self.data.iter())
   }
 
   /// Adds a new unnamed identity to the index.
@@ -48,9 +53,13 @@ impl IdentityIndex {
     self.insert(id, IdentityTag::named(did.method_id().into(), name))
   }
 
-  /// Returns a list of all tags in the index.
-  pub fn tags(&self) -> Vec<IdentityTag> {
-    self.data.keys().cloned().collect()
+  /// Removes the identity specified by `key` from the index.
+  pub fn del<K: IdentityKey>(&mut self, key: K) -> Result<(IdentityTag, IdentityId)> {
+    self
+      .data
+      .drain_filter(|tag, id| key.equals(tag, *id))
+      .next()
+      .ok_or(Error::IdentityNotFound)
   }
 
   fn insert(&mut self, id: IdentityId, tag: IdentityTag) -> Result<()> {
@@ -67,5 +76,55 @@ impl IdentityIndex {
 impl Default for IdentityIndex {
   fn default() -> Self {
     Self::new()
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_basics() {
+    let mut index: IdentityIndex = IdentityIndex::new();
+    assert_eq!(index.tags().is_empty(), true);
+
+    let target1: DID = format!("did:iota:{}", DID::encode_key(b"123")).parse().unwrap();
+    let target2: DID = format!("did:iota:{}", DID::encode_key(b"456")).parse().unwrap();
+    let target3: DID = format!("did:iota:{}", DID::encode_key(b"789")).parse().unwrap();
+
+    index.set(1.into(), &target1).unwrap();
+    index.set(2.into(), &target2).unwrap();
+    index.set(3.into(), &target3).unwrap();
+
+    assert_eq!(index.tags().len(), 3);
+
+    assert_eq!(index.get(&target1).unwrap().to_u32(), 1);
+    assert_eq!(index.get(&target2).unwrap().to_u32(), 2);
+    assert_eq!(index.get(&target3).unwrap().to_u32(), 3);
+
+    assert_eq!(index.del(&target1).unwrap().1.to_u32(), 1);
+    assert_eq!(index.del(&target2).unwrap().1.to_u32(), 2);
+
+    assert_eq!(index.tags().len(), 1);
+  }
+
+  #[test]
+  fn test_next_id() {
+    let mut index: IdentityIndex = IdentityIndex::new();
+    assert_eq!(index.try_next_id().unwrap().to_u32(), 1);
+
+    index.insert(1.into(), IdentityTag::new("foo-1".into())).unwrap();
+    assert_eq!(index.try_next_id().unwrap().to_u32(), 2);
+
+    index.insert(2.into(), IdentityTag::new("foo-2".into())).unwrap();
+    assert_eq!(index.try_next_id().unwrap().to_u32(), 3);
+
+    let target: IdentityId = IdentityId::from(1);
+    let (tag, id): (IdentityTag, IdentityId) = index.del(target).unwrap();
+    assert_eq!(tag.name(), None);
+    assert_eq!(tag.method_id(), "foo-1");
+    assert_eq!(id, target);
+
+    assert_eq!(index.try_next_id().unwrap().to_u32(), 3);
   }
 }

@@ -66,11 +66,11 @@ pub struct IdentityState {
   also_known_as: Option<Vec<Url>>,
   #[serde(skip_serializing_if = "Methods::is_empty")]
   methods: Methods,
-  #[serde(skip_serializing_if = "Services::is_empty")]
+  #[serde(default, skip_serializing_if = "Services::is_empty")]
   services: Services,
-  #[serde(skip_serializing_if = "UnixTimestamp::is_epoch")]
+  #[serde(default, skip_serializing_if = "UnixTimestamp::is_epoch")]
   created: UnixTimestamp,
-  #[serde(skip_serializing_if = "UnixTimestamp::is_epoch")]
+  #[serde(default, skip_serializing_if = "UnixTimestamp::is_epoch")]
   updated: UnixTimestamp,
 }
 

@@ -25,7 +25,7 @@ thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-core]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "2b84478c71b0078d7776974bb066bd7aa74cea38"
+rev = "60892fa6b649d9efa540349b68dd70a57cc300a9"
 default-features = false
 features = ["wasm"]
 

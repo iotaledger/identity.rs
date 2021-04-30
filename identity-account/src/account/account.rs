@@ -96,7 +96,7 @@ impl<T: Storage> Account<T> {
   // Identity
   // ===========================================================================
 
-  // Returns a list of tags identifying the identities in the account.
+  /// Returns a list of tags identifying the identities in the account.
   pub async fn list(&self) -> Vec<IdentityTag> {
     self.index.read().await.tags()
   }
@@ -158,8 +158,23 @@ impl<T: Storage> Account<T> {
   /// Removes the identity specified by the given `key`.
   ///
   /// Note: This will remove all associated events and key material - recovery is NOT POSSIBLE!
-  pub async fn delete<K: IdentityKey>(&self, _key: K) -> Result<()> {
-    todo!("Implement Me")
+  pub async fn delete<K: IdentityKey>(&self, key: K) -> Result<()> {
+    // Acquire write access to the index.
+    let mut index: RwLockWriteGuard<'_, _> = self.index.write().await;
+
+    // Remove the identity from the index
+    let identity: IdentityId = index.del(key)?.1;
+
+    // Remove all associated keys and events
+    self.store.purge(identity).await?;
+
+    // Store the updated identity index
+    self.store.set_index(&index).await?;
+
+    // Write the changes to disk
+    self.save(false).await?;
+
+    Ok(())
   }
 
   /// Signs `data` with the key specified by `fragment`.

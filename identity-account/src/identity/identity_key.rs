@@ -11,14 +11,14 @@ type Item<'a> = (&'a IdentityTag, &'a IdentityId);
 pub trait IdentityKey {
   fn equals(&self, tag: &IdentityTag, id: IdentityId) -> bool;
 
-  fn find_iter<'a, I: Iterator<Item = Item<'a>>>(&self, mut iter: I) -> Option<IdentityId> {
+  fn scan<'a, I: Iterator<Item = Item<'a>>>(&self, mut iter: I) -> Option<IdentityId> {
     iter.find(|(tag, id)| self.equals(tag, **id)).map(|(_, id)| *id)
   }
 }
 
 impl<'a, T> IdentityKey for &'a T
 where
-  T: IdentityKey,
+  T: IdentityKey + ?Sized,
 {
   fn equals(&self, tag: &IdentityTag, id: IdentityId) -> bool {
     (**self).equals(tag, id)
@@ -48,7 +48,7 @@ impl IdentityKey for IdentityId {
     id == *self
   }
 
-  fn find_iter<'a, I: Iterator<Item = Item<'a>>>(&self, _: I) -> Option<IdentityId> {
+  fn scan<'a, I: Iterator<Item = Item<'a>>>(&self, _: I) -> Option<IdentityId> {
     Some(*self)
   }
 }

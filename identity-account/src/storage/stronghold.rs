@@ -8,6 +8,7 @@ use futures::stream;
 use futures::stream::BoxStream;
 use futures::StreamExt;
 use futures::TryStreamExt;
+use hashbrown::HashSet;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_core::crypto::PublicKey;
@@ -21,6 +22,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::events::Commit;
 use crate::events::Event;
+use crate::events::EventData;
 use crate::identity::IdentityId;
 use crate::identity::IdentityIndex;
 use crate::identity::IdentitySnapshot;
@@ -239,19 +241,79 @@ impl Storage for Stronghold {
       // ================================
       // Parse the event
       // ================================
-      .try_filter_map(move |(index, event)| async move {
-        if event.is_empty() {
+      .try_filter_map(move |(index, json)| async move {
+        if json.is_empty() {
           Err(Error::EventNotFound)
         } else {
-          let event: Event = Event::from_json_slice(&event)?;
+          let event: Event = Event::from_json_slice(&json)?;
           let commit: Commit = Commit::new(id, index, event);
 
           Ok(Some(commit))
         }
       })
+      // ================================
+      // Downcast to "traditional" stream
+      // ================================
+      .into_stream()
+      // ================================
+      // Bail on any invalid event
+      // ================================
+      .take_while(|event| future::ready(event.is_ok()))
+      // ================================
+      // Create a boxed stream
+      // ================================
       .boxed();
 
     Ok(stream)
+  }
+
+  async fn purge(&self, id: IdentityId) -> Result<()> {
+    type PurgeSet = (Generation, HashSet<KeyLocation>);
+
+    async fn fold(mut output: PurgeSet, commit: Commit) -> Result<PurgeSet> {
+      if let EventData::MethodCreated(_, method) = commit.event().data() {
+        output.1.insert(method.location().clone());
+      }
+
+      let gen_a: u32 = commit.sequence().to_u32();
+      let gen_b: u32 = output.0.to_u32();
+
+      Ok((Generation::from_u32(gen_a.max(gen_b)), output.1))
+    }
+
+    // Load the chain-specific store/vault
+    let store: Store<'_> = self.store(&fmt_id(id));
+    let vault: Vault<'_> = self.vault(id);
+
+    // Scan the event stream and collect a set of all key locations
+    let output: (Generation, HashSet<KeyLocation>) = self
+      .stream(id, Generation::new())
+      .await?
+      .try_fold((Generation::new(), HashSet::new()), fold)
+      .await?;
+
+    // Remove the state snapshot
+    store.del(location_snapshot()).await?;
+
+    // Remove all events
+    for index in 0..output.0.to_u32() {
+      store.del(location_event(Generation::from_u32(index))).await?;
+    }
+
+    // Remove all keys
+    for location in output.1 {
+      match location.method() {
+        MethodType::Ed25519VerificationKey2018 => {
+          vault.delete(location_seed(&location), false).await?;
+          vault.delete(location_skey(&location), false).await?;
+        }
+        MethodType::MerkleKeyCollection2021 => {
+          todo!("[Stronghold::purge] Handle MerkleKeyCollection2021")
+        }
+      }
+    }
+
+    Ok(())
   }
 }
 

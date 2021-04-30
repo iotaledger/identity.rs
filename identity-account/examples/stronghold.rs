@@ -1,23 +1,28 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! cargo run --example basic
+//! cargo run --example stronghold
 
 use identity_account::account::Account;
 use identity_account::error::Result;
 use identity_account::identity::IdentitySnapshot;
-use identity_account::storage::MemStore;
+use identity_account::storage::Stronghold;
+use identity_account::utils::derive_encryption_key;
+use identity_account::utils::EncryptionKey;
 use identity_iota::did::Document;
 
 #[tokio::main]
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  // Create an in-memory storage instance for the account
-  let storage: MemStore = MemStore::new();
+  let filename: &str = "./example-strong.hodl";
+  let password: EncryptionKey = derive_encryption_key("password");
+
+  // Create a Stronghold storage instance for the account
+  let storage: Stronghold = Stronghold::new(filename, password).await?;
 
   // Create a new Account with the default configuration
-  let account: Account<MemStore> = Account::new(storage).await?;
+  let account: Account<Stronghold> = Account::new(storage).await?;
 
   // Create a new Identity with default settings
   let snapshot: IdentitySnapshot = account.create(Default::default()).await?;
@@ -31,7 +36,10 @@ async fn main() -> Result<()> {
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 
-  // Delete the identity and all associated keys
+  // Create another new Identity
+  let snapshot: IdentitySnapshot = account.create(Default::default()).await?;
+
+  // Anndddd delete it
   account.delete(snapshot.id()).await?;
 
   Ok(())

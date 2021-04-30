@@ -15,7 +15,10 @@ use identity_did::verification::MethodType;
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
+  // Create an in-memory storage instance for the account
   let storage: MemStore = MemStore::new();
+
+  // Create a new Account with the default configuration
   let account: Account<MemStore> = Account::new(storage).await?;
 
   // Create a new Identity with default settings
