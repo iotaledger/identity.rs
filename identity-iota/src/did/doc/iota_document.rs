@@ -488,18 +488,58 @@ mod tests {
 
   use crate::did::doc::IotaDocument;
   use crate::did::url::IotaDID;
+  use identity_core::common::Value;
   use identity_core::convert::FromJson;
   use identity_core::convert::SerdeInto;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
   use identity_core::crypto::PublicKey;
   use identity_core::crypto::SecretKey;
+  use identity_did::did::DID;
+  use identity_did::document::CoreDocument;
   use identity_did::service::Service;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodType;
+  use identity_did::verification::VerificationMethod;
+  use std::collections::BTreeMap;
 
   const DID_ID: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
   const DID_AUTH: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
+
+  fn controller() -> DID {
+    DID_ID.parse().unwrap()
+  }
+
+  fn verification_method(controller: &DID, fragment: &str) -> VerificationMethod {
+    VerificationMethod::builder(Default::default())
+      .id(controller.join(fragment).unwrap())
+      .controller(controller.clone())
+      .key_type(MethodType::Ed25519VerificationKey2018)
+      .key_data(MethodData::new_b58(fragment.as_bytes()))
+      .build()
+      .unwrap()
+  }
+
+  fn iota_document_from_core(controller: &DID) -> IotaDocument {
+    let mut properties: BTreeMap<String, Value> = BTreeMap::default();
+    properties.insert("created".to_string(), "2020-01-01T00:00:00Z".into());
+    properties.insert("updated".to_string(), "2020-01-02T00:00:00Z".into());
+
+    IotaDocument::try_from_core(
+      CoreDocument::builder(properties)
+        .id(controller.clone())
+        .verification_method(verification_method(&controller, "#key-1"))
+        .verification_method(verification_method(&controller, "#key-2"))
+        .verification_method(verification_method(&controller, "#key-3"))
+        .authentication(verification_method(&controller, "#auth-key"))
+        .authentication(controller.join("#key-3").unwrap())
+        .key_agreement(controller.join("#key-4").unwrap())
+        .controller(controller.clone())
+        .build()
+        .unwrap(),
+    )
+    .unwrap()
+  }
 
   fn generate_testkey() -> KeyPair {
     let secret_key: Vec<u8> = vec![
@@ -546,6 +586,70 @@ mod tests {
     let document: IotaDocument = IotaDocument::try_from_core(document.serde_into().unwrap()).unwrap();
     compare_document(&document);
   }
+
+  #[test]
+  fn test_no_controler() {
+    let keypair: KeyPair = generate_testkey();
+    let document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+    assert_eq!(document.controller(), None);
+  }
+
+  #[test]
+  fn test_controller_from_core() {
+    let controller: DID = controller();
+    let document: IotaDocument = iota_document_from_core(&controller);
+    let expected_controller: Option<DID> = Some(controller);
+    assert_eq!(document.controller(), expected_controller.as_ref());
+  }
+
+  #[test]
+  fn test_methods_from_keypair() {
+    let keypair: KeyPair = generate_testkey();
+    let document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+
+    // An IotaDocument created from a keypair has a single verification method, namely an
+    // Ed25519 signature.
+    let expected: VerificationMethod = VerificationMethod::builder(Default::default())
+      .id(
+        "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication"
+          .parse()
+          .unwrap(),
+      )
+      .controller(controller())
+      .key_type(MethodType::Ed25519VerificationKey2018)
+      .key_data(MethodData::PublicKeyBase58(
+        "FJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".into(),
+      ))
+      .build()
+      .unwrap();
+
+    let mut methods = document.methods();
+
+    assert_eq!(methods.next(), Some(expected).as_ref());
+    assert_eq!(methods.next(), None);
+  }
+
+  #[test]
+  fn test_methods_from_core() {
+    let controller: DID = controller();
+    let document: IotaDocument = iota_document_from_core(&controller);
+    let expected: Vec<VerificationMethod> = vec![
+      verification_method(&controller, "#key-1"),
+      verification_method(&controller, "#key-2"),
+      verification_method(&controller, "#key-3"),
+      verification_method(&controller, "#auth-key"),
+    ];
+
+    let mut methods = document.methods();
+    assert_eq!(methods.next(), Some(&expected[0]));
+    assert_eq!(methods.next(), Some(&expected[1]));
+    assert_eq!(methods.next(), Some(&expected[2]));
+    assert_eq!(methods.next(), Some(&expected[3]));
+    assert_eq!(methods.next(), None);
+  }
+
+  #[test]
+  fn test_signer() {}
 
   #[test]
   fn test_json() {
