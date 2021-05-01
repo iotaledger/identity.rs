@@ -6,7 +6,6 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
-use core::ops::Deref;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::convert::SerdeInto;
@@ -413,14 +412,6 @@ impl Display for IotaDocument {
 impl Debug for IotaDocument {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     Debug::fmt(&self.document, f)
-  }
-}
-
-impl Deref for IotaDocument {
-  type Target = BaseDocument;
-
-  fn deref(&self) -> &Self::Target {
-    &self.document
   }
 }
 
