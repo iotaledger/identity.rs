@@ -649,9 +649,6 @@ mod tests {
   }
 
   #[test]
-  fn test_signer() {}
-
-  #[test]
   fn test_json() {
     let keypair: KeyPair = generate_testkey();
     let mut document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
