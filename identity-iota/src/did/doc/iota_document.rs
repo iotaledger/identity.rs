@@ -135,6 +135,11 @@ impl IotaDocument {
     })
   }
 
+  /// Performs validation that a `CoreDocument` adheres to the IOTA spec.
+  ///
+  /// # Errors
+  ///
+  /// Returns `Err` if the document is not a valid IOTA DID Document.
   fn validate_core_document<T, U, V>(document: &CoreDocument<T, U, V>) -> Result<()> {
     // Validate that the DID conforms to the IotaDID specification.
     // This check is required to ensure the correctness of the `IotaDocument::id()` method which
