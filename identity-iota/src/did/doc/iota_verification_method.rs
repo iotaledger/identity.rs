@@ -126,7 +126,7 @@ impl IotaVerificationMethod {
   /// # Errors
   ///
   /// Returns `Err` if the input is not a valid IOTA verification method.
-  pub fn check_validity(method: &VerificationMethod) -> Result<()> {
+  pub fn check_validity<T>(method: &VerificationMethod<T>) -> Result<()> {
     // Ensure all associated DIDs are IOTA Identity DIDs
     IotaDID::check_validity(method.id())?;
     IotaDID::check_validity(method.controller())?;

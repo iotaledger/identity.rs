@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
+use core::convert::TryInto;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
@@ -101,7 +102,8 @@ impl IotaDocument {
       .authentication(method)
       .build()
       .map(CoreDocument::into_verifiable)
-      .map(Into::into)
+      .map(TryInto::try_into)
+      .map(Result::unwrap)
       .unwrap() // `unwrap` is fine - we provided all the necessary properties
   }
 
@@ -111,6 +113,29 @@ impl IotaDocument {
   ///
   /// Returns `Err` if the document is not a valid IOTA DID Document.
   pub fn try_from_core(document: CoreDocument) -> Result<Self> {
+    IotaDocument::validate_core_document(&document)?;
+
+    Ok(Self {
+      document: document.serde_into()?,
+      message_id: MessageId::null(),
+    })
+  }
+
+  /// Converts a generic DID [`Document`][`BaseDocument`] to an IOTA DID Document.
+  ///
+  /// # Errors
+  ///
+  /// Returns `Err` if the document is not a valid IOTA DID Document.
+  pub fn try_from_base(document: BaseDocument) -> Result<Self> {
+    IotaDocument::validate_core_document(&document)?;
+
+    Ok(Self {
+      document: document.serde_into()?,
+      message_id: MessageId::null(),
+    })
+  }
+
+  fn validate_core_document<T, U, V>(document: &CoreDocument<T, U, V>) -> Result<()> {
     // Validate that the DID conforms to the IotaDID specification.
     // This check is required to ensure the correctness of the `IotaDocument::id()` method which
     // creates an `IotaDID::new_unchecked_ref()` from the underlying DID.
@@ -130,7 +155,7 @@ impl IotaDocument {
       IotaVerificationMethod::check_validity(method)?;
     }
 
-    let method: &VerificationMethod = document
+    let method = document
       .authentication()
       .head()
       .and_then(|method| document.resolve_ref(method))
@@ -142,14 +167,10 @@ impl IotaDocument {
     if method.id().authority() != did.authority() {
       return Err(Error::InvalidDocumentAuthAuthority);
     }
-
-    Ok(Self {
-      document: document.serde_into()?,
-      message_id: MessageId::null(),
-    })
+    Ok(())
   }
 
-  fn check_authentication(method: &VerificationMethod) -> Result<()> {
+  fn check_authentication<T>(method: &VerificationMethod<T>) -> Result<()> {
     IotaVerificationMethod::check_validity(method)?;
 
     // Ensure the verification method type is supported
@@ -511,12 +532,11 @@ impl Debug for IotaDocument {
   }
 }
 
-impl From<BaseDocument> for IotaDocument {
-  fn from(other: BaseDocument) -> Self {
-    Self {
-      document: other,
-      message_id: MessageId::null(),
-    }
+impl TryFrom<BaseDocument> for IotaDocument {
+  type Error = Error;
+
+  fn try_from(other: BaseDocument) -> Result<Self, Self::Error> {
+    IotaDocument::try_from_base(other)
   }
 }
 
