@@ -7,7 +7,7 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 ```rust
 use identity::crypto::KeyPair;
 use identity::iota::Client;
-use identity::iota::Document;
+use identity::iota::IotaDocument;
 use identity::iota::Network;
 use identity::iota::Result;
 use identity::iota::TangleRef;
@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
 
   // Create a DID Document (an identity).
   let keypair: KeyPair = KeyPair::new_ed25519()?;
-  let mut document: Document = Document::from_keypair(&keypair)?;
+  let mut document: IotaDocument = IotaDocument::from_keypair(&keypair)?;
 
   // Sign the DID Document with the default authentication key.
   document.sign(keypair.secret())?;
