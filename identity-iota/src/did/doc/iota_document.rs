@@ -8,6 +8,7 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
+use identity_core::common::Url;
 use identity_core::convert::SerdeInto;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::SecretKey;
@@ -17,6 +18,8 @@ use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_did::document::CoreDocument;
 use identity_did::service::Service;
+use identity_did::utils::DIDKey;
+use identity_did::utils::OrderedSet;
 use identity_did::verifiable::DocumentSigner;
 use identity_did::verifiable::DocumentVerifier;
 use identity_did::verifiable::Properties as VerifiableProperties;
@@ -102,13 +105,30 @@ impl IotaDocument {
       .unwrap() // `unwrap` is fine - we provided all the necessary properties
   }
 
-  /// Converts a generic DID [`Document`][CoreDocument] to an IOTA DID Document.
+  /// Converts a generic DID [`Document`][`CoreDocument`] to an IOTA DID Document.
   ///
   /// # Errors
   ///
   /// Returns `Err` if the document is not a valid IOTA DID Document.
   pub fn try_from_core(document: CoreDocument) -> Result<Self> {
+    // Validate that the DID conforms to the IotaDID specification.
+    // This check is required to ensure the correctness of the `IotaDocument::id()` method which
+    // creates an `IotaDID::new_unchecked_ref()` from the underlying DID.
     let did: &IotaDID = IotaDID::try_from_borrowed(document.id())?;
+
+    // Validate that the document controller (if any) conforms to the IotaDID specification.
+    // This check is required to ensure the correctness of the `IotaDocument::controller()` method which
+    // creates an `IotaDID::new_unchecked_ref()` from the underlying controller.
+    document.controller().map_or(Ok(()), |c| IotaDID::check_validity(c))?;
+
+    // Validate that the validation methods conform to the IotaDID specification.
+    // This check is required to ensure the correctness of the `IotaDocument::methods()`,
+    // `IotaDocument::resolve()`, `IotaDocument::try_resolve()`, IotaDocument::resolve_mut()`,
+    // and IotaDocument::try_resolve_mut()` methods which creates an `IotaDID::new_unchecked_ref()`
+    // from the underlying controller.
+    for method in document.methods() {
+      IotaVerificationMethod::check_validity(method)?;
+    }
 
     let method: &VerificationMethod = document
       .authentication()
@@ -172,6 +192,16 @@ impl IotaDocument {
     unsafe { IotaDID::new_unchecked_ref(self.document.id()) }
   }
 
+  /// Returns a reference to the `IotaDocument` controller.
+  pub fn controller(&self) -> Option<&IotaDID> {
+    unsafe { self.document.controller().map(|d| IotaDID::new_unchecked_ref(d)) }
+  }
+
+  /// Returns a reference to the `CoreDocument` alsoKnownAs set.
+  pub fn also_known_as(&self) -> &[Url] {
+    self.document.also_known_as()
+  }
+
   /// Returns the default authentication method of the DID document.
   pub fn authentication(&self) -> &IotaVerificationMethod {
     // This `unwrap` is "fine" - a valid document will
@@ -229,9 +259,24 @@ impl IotaDocument {
     &mut self.document.properties_mut().properties
   }
 
+  /// Returns a reference to the [`proof`][`Signature`], if one exists.
+  pub fn proof(&self) -> Option<&Signature> {
+    return self.document.proof();
+  }
+
   // ===========================================================================
   // Verification Methods
   // ===========================================================================
+
+  /// Returns an iterator over all verification methods in the DID Document.
+  pub fn methods(&self) -> impl Iterator<Item = &IotaVerificationMethod> {
+    unsafe {
+      self
+        .document
+        .methods()
+        .map(|m| IotaVerificationMethod::new_unchecked_ref(m))
+    }
+  }
 
   /// Adds a new Verification Method to the DID Document.
   pub fn insert_method(&mut self, scope: MethodScope, method: IotaVerificationMethod) -> bool {
@@ -247,6 +292,39 @@ impl IotaDocument {
     self.document.remove_method(did);
 
     Ok(())
+  }
+
+  /// Returns the first verification [`method`][`IotaverificationMethod`] with an `id` property
+  /// matching the provided `query`.
+  pub fn resolve<'query, Q>(&self, query: Q) -> Option<&IotaVerificationMethod>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    unsafe {
+      self
+        .document
+        .resolve(query)
+        .map(|m| IotaVerificationMethod::new_unchecked_ref(m))
+    }
+  }
+
+  /// Returns the first verification [`method`][`IotaVerificationMethod`] with an `id` property
+  /// matching the provided `query`.
+  ///
+  /// # Errors
+  ///
+  /// Fails if no matching verification `IotaVerificationMethod` is found.
+  pub fn try_resolve<'query, Q>(&self, query: Q) -> Result<&IotaVerificationMethod>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    unsafe {
+      self
+        .document
+        .try_resolve(query)
+        .map(|m| IotaVerificationMethod::new_unchecked_ref(m))
+        .map_err(|e| Error::InvalidDoc(e))
+    }
   }
 
   #[doc(hidden)]
@@ -273,6 +351,12 @@ impl IotaDocument {
     self.document.sign_this(&key, secret).map_err(Into::into)
   }
 
+  /// Creates a new [`DocumentSigner`] that can be used to create digital
+  /// signatures from verification methods in this DID Document.
+  pub fn signer<'base>(&'base self, secret: &'base SecretKey) -> Signer<'base, 'base, 'base> {
+    self.document.signer(secret)
+  }
+
   /// Verifies the signature of the DID document.
   ///
   /// # Errors
@@ -281,6 +365,12 @@ impl IotaDocument {
   /// serialization fails, or the verification operation fails.
   pub fn verify(&self) -> Result<()> {
     self.document.verify_this().map_err(Into::into)
+  }
+
+  /// Creates a new [`DocumentVerifier`] that can be used to verify signatures
+  /// created with this DID Document.
+  pub fn verifier(&self) -> Verifier<'_> {
+    self.document.verifier()
   }
 
   /// Signs the provided data with the default authentication method.
@@ -389,6 +479,10 @@ impl IotaDocument {
     Ok(IotaDID::encode_key(message_id.encode_hex().as_bytes()))
   }
 
+  pub fn service(&self) -> &OrderedSet<DIDKey<Service>> {
+    self.document.service()
+  }
+
   pub fn insert_service(&mut self, service: Service) -> bool {
     if service.id().fragment().is_none() {
       false
@@ -402,6 +496,8 @@ impl IotaDocument {
     Ok(())
   }
 }
+
+impl<'a, 'b, 'c> IotaDocument {}
 
 impl Display for IotaDocument {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
