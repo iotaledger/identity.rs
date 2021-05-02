@@ -11,8 +11,8 @@ use identity::crypto::PublicKey;
 use identity::crypto::SecretKey;
 use identity::did::verifiable;
 use identity::did::MethodScope;
-use identity::did::VerificationMethod;
 use identity::iota::DocumentDiff;
+use identity::iota::Error;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
@@ -220,7 +220,7 @@ impl WasmDocument {
         let merkle_key: Vec<u8> = self
           .0
           .try_resolve(&*method)
-          .and_then(|method| method.key_data().try_decode())
+          .and_then(|method| method.key_data().try_decode().map_err(Error::InvalidDoc))
           .map_err(err)?;
 
         let public: PublicKey = decode_b58(&public).map_err(err).map(Into::into)?;
@@ -260,11 +260,7 @@ impl WasmDocument {
 
   #[wasm_bindgen(js_name = resolveKey)]
   pub fn resolve_key(&mut self, query: &str) -> Result<WasmVerificationMethod, JsValue> {
-    let method: VerificationMethod = self.0.try_resolve(query).map_err(err)?.clone();
-
-    IotaVerificationMethod::try_from_core(method)
-      .map_err(err)
-      .map(WasmVerificationMethod)
+    Ok(WasmVerificationMethod(self.0.try_resolve(query).map_err(err)?.clone()))
   }
 
   #[wasm_bindgen(js_name = revokeMerkleKey)]

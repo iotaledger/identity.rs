@@ -261,7 +261,7 @@ impl IotaDocument {
 
   /// Returns a reference to the [`proof`][`Signature`], if one exists.
   pub fn proof(&self) -> Option<&Signature> {
-    return self.document.proof();
+    self.document.proof()
   }
 
   // ===========================================================================
@@ -323,7 +323,7 @@ impl IotaDocument {
         .document
         .try_resolve(query)
         .map(|m| IotaVerificationMethod::new_unchecked_ref(m))
-        .map_err(|e| Error::InvalidDoc(e))
+        .map_err(Error::InvalidDoc)
     }
   }
 
