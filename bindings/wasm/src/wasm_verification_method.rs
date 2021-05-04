@@ -17,7 +17,7 @@ pub struct WasmVerificationMethod(pub(crate) IotaVerificationMethod);
 
 #[wasm_bindgen(js_class = VerificationMethod)]
 impl WasmVerificationMethod {
-  /// Creates a new `WasmVerificationMethod` object from the given `key`.
+  /// Creates a new `VerificationMethod` object from the given `key`.
   #[wasm_bindgen(constructor)]
   pub fn new(key: &KeyPair, tag: Option<String>) -> Result<WasmVerificationMethod, JsValue> {
     IotaVerificationMethod::from_keypair(&key.0, tag.as_deref())
@@ -25,7 +25,7 @@ impl WasmVerificationMethod {
       .map(Self)
   }
 
-  /// Creates a new `WasmVerificationMethod` object from the given `did` and `key`.
+  /// Creates a new `VerificationMethod` object from the given `did` and `key`.
   #[wasm_bindgen(js_name = fromDID)]
   pub fn from_did(did: &WasmDID, key: &KeyPair, tag: Option<String>) -> Result<WasmVerificationMethod, JsValue> {
     IotaVerificationMethod::from_did(did.0.clone(), &key.0, tag.as_deref())
@@ -48,37 +48,37 @@ impl WasmVerificationMethod {
     }
   }
 
-  /// Returns the `id` DID of the `WasmVerificationMethod` object.
+  /// Returns the `id` DID of the `VerificationMethod` object.
   #[wasm_bindgen(getter)]
   pub fn id(&self) -> WasmDID {
     WasmDID(self.0.id().clone())
   }
 
-  /// Returns the `controller` DID of the `WasmVerificationMethod` object.
+  /// Returns the `controller` DID of the `VerificationMethod` object.
   #[wasm_bindgen(getter)]
   pub fn controller(&self) -> WasmDID {
     WasmDID(self.0.controller().clone())
   }
 
-  /// Returns the `WasmVerificationMethod` type.
+  /// Returns the `VerificationMethod` type.
   #[wasm_bindgen(getter, js_name = type)]
   pub fn type_(&self) -> String {
     self.0.key_type().as_str().into()
   }
 
-  /// Returns the `WasmVerificationMethod` public key data.
+  /// Returns the `VerificationMethod` public key data.
   #[wasm_bindgen(getter)]
   pub fn data(&self) -> Result<JsValue, JsValue> {
     JsValue::from_serde(self.0.key_data()).map_err(err)
   }
 
-  /// Serializes a `WasmVerificationMethod` object as a JSON object.
+  /// Serializes a `VerificationMethod` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
     JsValue::from_serde(&self.0).map_err(err)
   }
 
-  /// Deserializes a `WasmVerificationMethod` object from a JSON object.
+  /// Deserializes a `VerificationMethod` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(value: &JsValue) -> Result<WasmVerificationMethod, JsValue> {
     value.into_serde().map_err(err).map(Self)

@@ -278,13 +278,13 @@ impl WasmDocument {
     Ok(())
   }
 
-  /// Serializes a `WasmDocument` object as a JSON object.
+  /// Serializes a `Document` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
     JsValue::from_serde(&self.0).map_err(err)
   }
 
-  /// Deserializes a `WasmDocument` object from a JSON object.
+  /// Deserializes a `Document` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<WasmDocument, JsValue> {
     json.into_serde().map_err(err).map(Self)
