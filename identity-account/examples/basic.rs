@@ -7,6 +7,7 @@ use identity_account::account::Account;
 use identity_account::error::Result;
 use identity_account::identity::IdentitySnapshot;
 use identity_account::storage::MemStore;
+use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDocument;
 
 #[tokio::main]
@@ -22,17 +23,22 @@ async fn main() -> Result<()> {
   // Create a new Identity with default settings
   let snapshot: IdentitySnapshot = account.create(Default::default()).await?;
 
+  // Retrieve the DID from the newly created Identity state.
+  let document: &IotaDID = snapshot.identity().try_document()?;
+
   println!("[Example] Local Snapshot = {:#?}", snapshot);
   println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);
   println!("[Example] Local Document List = {:#?}", account.list().await);
 
   // Fetch the DID Document from the Tangle
-  let resolved: IotaDocument = account.resolve(snapshot.id()).await?;
+  //
+  // This is an optional step to ensure DID Document consistency.
+  let resolved: IotaDocument = account.resolve(document).await?;
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 
   // Delete the identity and all associated keys
-  account.delete(snapshot.id()).await?;
+  account.delete(document).await?;
 
   Ok(())
 }

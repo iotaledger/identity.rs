@@ -9,11 +9,12 @@ use identity_account::events::Command;
 use identity_account::identity::IdentitySnapshot;
 use identity_account::storage::MemStore;
 use identity_core::common::Url;
-use identity_core::convert::SerdeInto;
+use identity_core::convert::FromJson;
+use identity_core::crypto::KeyPair;
 use identity_core::json;
 use identity_credential::credential::Credential;
-use identity_did::verification::MethodScope;
-use identity_did::verification::MethodType;
+use identity_credential::credential::Subject;
+use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDocument;
 
 #[tokio::main]
@@ -29,32 +30,47 @@ async fn main() -> Result<()> {
   // Create a new Identity with default settings
   let snapshot: IdentitySnapshot = account.create(Default::default()).await?;
 
+  // Retrieve the DID from the newly created Identity state.
+  let document: &IotaDID = snapshot.identity().try_document()?;
+
   println!("[Example] Local Snapshot = {:#?}", snapshot);
   println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);
 
-  // Add a new Ed25519 verification method to the identity
-  let command: Command = Command::create_method()
-    .type_(MethodType::Ed25519VerificationKey2018)
-    .scope(MethodScope::VerificationMethod)
-    .fragment("key-1")
-    .finish()?;
+  // Add a new Ed25519 Verification Method to the identity
+  let command: Command = Command::create_method().fragment("key-1").finish()?;
 
   // Process the command and update the identity state.
-  account.update(snapshot.id(), command).await?;
+  account.update(document, command).await?;
 
+  // Create a subject DID for the recipient of a `UniversityDegree` credential.
+  let subject_key: KeyPair = KeyPair::new_ed25519()?;
+  let subject_did: IotaDID = IotaDID::new(subject_key.public().as_ref())?;
+
+  // Create the actual Verifiable Credential subject.
+  let subject: Subject = Subject::from_json_value(json!({
+    "id": subject_did.as_str(),
+    "degree": {
+      "type": "BachelorDegree",
+      "name": "Bachelor of Science and Arts"
+    }
+  }))?;
+
+  // Issue an unsigned Credential...
   let mut credential: Credential = Credential::builder(Default::default())
-    .issuer(Url::parse("https://example.com")?)
-    .type_("ExampleCredential")
-    .subject(json!({"foo": "bar"}).serde_into()?)
+    .issuer(Url::parse(document.as_str())?)
+    .type_("UniversityDegreeCredential")
+    .subject(subject)
     .build()?;
 
-  // Sign the credential with the previously created verification method
-  account.sign(snapshot.id(), "key-1", &mut credential).await?;
+  // ...and sign the Credential with the previously created Verification Method
+  account.sign(document, "key-1", &mut credential).await?;
 
   println!("[Example] Local Credential = {:#}", credential);
 
   // Fetch the DID Document from the Tangle
-  let resolved: IotaDocument = account.resolve(snapshot.id()).await?;
+  //
+  // This is an optional step to ensure DID Document consistency.
+  let resolved: IotaDocument = account.resolve(document).await?;
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 

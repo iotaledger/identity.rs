@@ -238,12 +238,12 @@ impl Command {
 impl_command_builder!(CreateIdentity {
   @optional network String,
   @optional shard String,
-  @required authentication MethodType,
+  @defaulte authentication MethodType = Ed25519VerificationKey2018,
 });
 
 impl_command_builder!(CreateMethod {
-  @required type_ MethodType,
-  @default  scope MethodScope,
+  @defaulte type_ MethodType = Ed25519VerificationKey2018,
+  @default scope MethodScope,
   @required fragment String,
 });
 
@@ -256,10 +256,24 @@ impl_command_builder!(AttachMethod {
   @default scopes Vec<MethodScope>,
 });
 
+impl AttachMethodBuilder {
+  pub fn scope(mut self, value: MethodScope) -> Self {
+    self.scopes.get_or_insert_with(Default::default).push(value);
+    self
+  }
+}
+
 impl_command_builder!(DetachMethod {
   @required fragment String,
   @default scopes Vec<MethodScope>,
 });
+
+impl DetachMethodBuilder {
+  pub fn scope(mut self, value: MethodScope) -> Self {
+    self.scopes.get_or_insert_with(Default::default).push(value);
+    self
+  }
+}
 
 impl_command_builder!(CreateService {
   @required fragment String,

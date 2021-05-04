@@ -297,6 +297,10 @@ impl<T: Storage> Account<T> {
 
     let network: Network = Network::from_did(new_doc.id());
     let client: Arc<Client> = self.state.clients.load(network).await?;
+
+    #[cfg(test)]
+    let message: MessageId = MessageId::null();
+    #[cfg(not(test))]
     let message: MessageId = client.publish_document(&new_doc).await?;
 
     let events: [Event; 1] = [Event::new(EventData::AuthMessage(message))];
@@ -327,6 +331,10 @@ impl<T: Storage> Account<T> {
 
     let network: Network = Network::from_did(old_doc.id());
     let client: Arc<Client> = self.state.clients.load(network).await?;
+
+    #[cfg(test)]
+    let message: MessageId = MessageId::null();
+    #[cfg(not(test))]
     let message: MessageId = client.publish_diff(auth_id, &diff).await?;
 
     let events: [Event; 1] = [Event::new(EventData::DiffMessage(message))];

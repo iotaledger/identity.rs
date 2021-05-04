@@ -9,7 +9,7 @@ use identity_account::events::Command;
 use identity_account::identity::IdentitySnapshot;
 use identity_account::storage::MemStore;
 use identity_did::verification::MethodScope;
-use identity_did::verification::MethodType;
+use identity_iota::did::IotaDID;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -24,61 +24,63 @@ async fn main() -> Result<()> {
   // Create a new Identity with default settings
   let snapshot: IdentitySnapshot = account.create(Default::default()).await?;
 
-  // Add a new Ed25519 verification method to the identity - the verification
-  // method is included as an embedded authentication method.
+  // Retrieve the DID from the newly created Identity state.
+  let document: &IotaDID = snapshot.identity().try_document()?;
+
+  // Add a new Ed25519 (defualt) verification method to the identity - the
+  // verification method is included as an embedded authentication method.
   let command: Command = Command::create_method()
-    .type_(MethodType::Ed25519VerificationKey2018)
     .scope(MethodScope::Authentication)
     .fragment("my-auth-key")
     .finish()?;
 
   // Process the command and update the identity state.
-  account.update(snapshot.id(), command).await?;
+  account.update(document, command).await?;
 
   // Fetch and log the DID Document from the Tangle
+  //
+  // This is an optional step to ensure DID Document consistency.
   println!(
     "[Example] Tangle Document (1) = {:#?}",
-    account.resolve(snapshot.id()).await?
+    account.resolve(document).await?
   );
 
   // Add another Ed25519 verification method to the identity
-  let command: Command = Command::create_method()
-    .type_(MethodType::Ed25519VerificationKey2018)
-    .scope(MethodScope::VerificationMethod)
-    .fragment("my-next-key")
-    .finish()?;
+  let command: Command = Command::create_method().fragment("my-next-key").finish()?;
 
   // Process the command and update the identity state.
-  account.update(snapshot.id(), command).await?;
+  account.update(document, command).await?;
 
   // Associate the newly created method with additional verification relationships
   let command: Command = Command::attach_method()
     .fragment("my-next-key")
-    .scopes(vec![
-      MethodScope::CapabilityDelegation,
-      MethodScope::CapabilityInvocation,
-    ])
+    .scope(MethodScope::CapabilityDelegation)
+    .scope(MethodScope::CapabilityInvocation)
     .finish()?;
 
   // Process the command and update the identity state.
-  account.update(snapshot.id(), command).await?;
+  account.update(document, command).await?;
 
   // Fetch and log the DID Document from the Tangle
+  //
+  // This is an optional step to ensure DID Document consistency.
   println!(
     "[Example] Tangle Document (2) = {:#?}",
-    account.resolve(snapshot.id()).await?
+    account.resolve(document).await?
   );
 
   // Remove the original Ed25519 verification method
   let command: Command = Command::delete_method().fragment("my-auth-key").finish()?;
 
   // Process the command and update the identity state.
-  account.update(snapshot.id(), command).await?;
+  account.update(document, command).await?;
 
   // Fetch and log the DID Document from the Tangle
+  //
+  // This is an optional step to ensure DID Document consistency.
   println!(
     "[Example] Tangle Document (3) = {:#?}",
-    account.resolve(snapshot.id()).await?
+    account.resolve(document).await?
   );
 
   Ok(())

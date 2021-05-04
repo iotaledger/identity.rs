@@ -16,6 +16,12 @@ macro_rules! impl_command_builder {
   (@finish $this:ident default $field:ident $ty:ty) => {
     $this.$field.unwrap_or_default()
   };
+  (@finish $this:ident defaulte $field:ident $ty:ty = $variant:ident) => {
+    $this.$field.unwrap_or(<$ty>::$variant)
+  };
+  (@finish $this:ident defaultv $field:ident $ty:ty = $value:expr) => {
+    $this.$field.unwrap_or_else(|| $value)
+  };
   (@finish $this:ident required $field:ident $ty:ty) => {
     match $this.$field {
       Some(value) => value,
@@ -24,7 +30,7 @@ macro_rules! impl_command_builder {
       )),
     }
   };
-  ($ident:ident { $(@ $requirement:ident $field:ident $ty:ty),* $(,)* }) => {
+  ($ident:ident { $(@ $requirement:ident $field:ident $ty:ty $(= $value:expr)?),* $(,)* }) => {
     paste::paste! {
       #[derive(Clone, Debug, PartialEq)]
       pub struct [<$ident Builder>] {
@@ -52,7 +58,7 @@ macro_rules! impl_command_builder {
         pub fn finish(self) -> $crate::Result<$crate::events::Command> {
           Ok($crate::events::Command::$ident {
             $(
-              $field: impl_command_builder!(@finish self $requirement $field $ty),
+              $field: impl_command_builder!(@finish self $requirement $field $ty $(= $value)?),
             )*
           })
         }

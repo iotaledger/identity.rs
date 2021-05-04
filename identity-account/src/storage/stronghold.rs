@@ -34,6 +34,7 @@ use crate::stronghold::Vault;
 use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::types::Signature;
+use crate::utils::derive_encryption_key;
 use crate::utils::EncryptionKey;
 
 // name of the metadata store
@@ -51,15 +52,15 @@ pub struct Stronghold {
 }
 
 impl Stronghold {
-  pub async fn new<T, U>(snapshot: &T, password: U) -> Result<Self>
+  pub async fn new<'a, T, U>(snapshot: &T, password: U) -> Result<Self>
   where
     T: AsRef<Path> + ?Sized,
-    U: Into<Option<EncryptionKey>>,
+    U: Into<Option<&'a str>>,
   {
     let snapshot: Snapshot = Snapshot::new(snapshot);
 
     if let Some(password) = password.into() {
-      snapshot.load(password).await?;
+      snapshot.load(derive_encryption_key(password)).await?;
     }
 
     Ok(Self {
