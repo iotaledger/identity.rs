@@ -15,7 +15,7 @@ use crate::did::IotaDocument;
 use crate::error::Result;
 use iota_client::bee_message::MessageId;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DocumentChain {
   chain_d: DiffChain,
   chain_i: IntegrationChain,

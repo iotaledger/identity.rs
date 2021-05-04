@@ -19,7 +19,7 @@ use crate::tangle::TangleRef;
 use iota_client::bee_message::Message;
 use iota_client::bee_message::MessageId;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct IntegrationChain {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) history: Option<Vec<IotaDocument>>,
