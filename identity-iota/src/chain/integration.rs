@@ -16,10 +16,10 @@ use crate::tangle::MessageExt;
 use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
-use iota::Message;
-use iota::MessageId;
+use iota_client::bee_message::Message;
+use iota_client::bee_message::MessageId;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct IntegrationChain {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) history: Option<Vec<IotaDocument>>,

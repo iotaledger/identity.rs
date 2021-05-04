@@ -9,13 +9,15 @@
 <dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
-<dt><a href="#Method">Method</a></dt>
-<dd></dd>
 <dt><a href="#NewDocument">NewDocument</a></dt>
+<dd></dd>
+<dt><a href="#Service">Service</a></dt>
 <dd></dd>
 <dt><a href="#VerifiableCredential">VerifiableCredential</a></dt>
 <dd></dd>
 <dt><a href="#VerifiablePresentation">VerifiablePresentation</a></dt>
+<dd></dd>
+<dt><a href="#VerificationMethod">VerificationMethod</a></dt>
 <dd></dd>
 </dl>
 
@@ -59,7 +61,6 @@
         * [.network](#DID+network) ⇒ <code>string</code>
         * [.shard](#DID+shard) ⇒ <code>string</code> \| <code>undefined</code>
         * [.tag](#DID+tag) ⇒ <code>string</code>
-        * [.address](#DID+address) ⇒ <code>string</code>
         * [.toString()](#DID+toString) ⇒ <code>string</code>
     * _static_
         * [.fromBase58(key, network, shard)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
@@ -93,12 +94,6 @@ Returns the IOTA tangle shard of the `DID` (if any).
 
 ### did.tag ⇒ <code>string</code>
 Returns the unique tag of the `DID`.
-
-**Kind**: instance property of [<code>DID</code>](#DID)  
-<a name="DID+address"></a>
-
-### did.address ⇒ <code>string</code>
-Returns the IOTA tangle address of the `DID`.
 
 **Kind**: instance property of [<code>DID</code>](#DID)  
 <a name="DID+toString"></a>
@@ -143,13 +138,15 @@ Parses a `DID` from the input string.
         * [.proof](#Document+proof) ⇒ <code>any</code>
         * [.insertMethod(method, scope)](#Document+insertMethod) ⇒ <code>boolean</code>
         * [.removeMethod(did)](#Document+removeMethod)
+        * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
+        * [.removeService(did)](#Document+removeService)
         * [.sign(key)](#Document+sign)
         * [.verify()](#Document+verify) ⇒ <code>boolean</code>
         * [.signCredential(data, args)](#Document+signCredential) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
         * [.signPresentation(data, args)](#Document+signPresentation) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
         * [.signData(data, args)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data)](#Document+verifyData) ⇒ <code>boolean</code>
-        * [.resolveKey(query)](#Document+resolveKey) ⇒ [<code>Method</code>](#Method)
+        * [.resolveKey(query)](#Document+resolveKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
         * [.diff(other, message, key)](#Document+diff) ⇒ <code>any</code>
         * [.merge(diff)](#Document+merge)
@@ -189,12 +186,30 @@ Returns the DID Document `proof` object.
 
 | Param | Type |
 | --- | --- |
-| method | [<code>Method</code>](#Method) | 
+| method | [<code>VerificationMethod</code>](#VerificationMethod) | 
 | scope | <code>string</code> \| <code>undefined</code> | 
 
 <a name="Document+removeMethod"></a>
 
 ### document.removeMethod(did)
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>DID</code>](#DID) | 
+
+<a name="Document+insertService"></a>
+
+### document.insertService(service) ⇒ <code>boolean</code>
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| service | [<code>Service</code>](#Service) | 
+
+<a name="Document+removeService"></a>
+
+### document.removeService(did)
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -267,7 +282,7 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="Document+resolveKey"></a>
 
-### document.resolveKey(query) ⇒ [<code>Method</code>](#Method)
+### document.resolveKey(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -334,7 +349,7 @@ Creates a new DID Document from the given verification [`method`][`Method`].
 
 | Param | Type |
 | --- | --- |
-| method | [<code>Method</code>](#Method) | 
+| method | [<code>VerificationMethod</code>](#VerificationMethod) | 
 
 <a name="Document.fromJSON"></a>
 
@@ -525,103 +540,6 @@ Deserializes a `KeyPair` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="Method"></a>
-
-## Method
-**Kind**: global class  
-
-* [Method](#Method)
-    * [new Method(key, tag)](#new_Method_new)
-    * _instance_
-        * [.id](#Method+id) ⇒ [<code>DID</code>](#DID)
-        * [.controller](#Method+controller) ⇒ [<code>DID</code>](#DID)
-        * [.type](#Method+type) ⇒ <code>string</code>
-        * [.data](#Method+data) ⇒ <code>any</code>
-        * [.toJSON()](#Method+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromDID(did, key, tag)](#Method.fromDID) ⇒ [<code>Method</code>](#Method)
-        * [.createMerkleKey(digest, did, keys, tag)](#Method.createMerkleKey) ⇒ [<code>Method</code>](#Method)
-        * [.fromJSON(value)](#Method.fromJSON) ⇒ [<code>Method</code>](#Method)
-
-<a name="new_Method_new"></a>
-
-### new Method(key, tag)
-Creates a new `Method` object from the given `key`.
-
-
-| Param | Type |
-| --- | --- |
-| key | [<code>KeyPair</code>](#KeyPair) | 
-| tag | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Method+id"></a>
-
-### method.id ⇒ [<code>DID</code>](#DID)
-Returns the `id` DID of the `Method` object.
-
-**Kind**: instance property of [<code>Method</code>](#Method)  
-<a name="Method+controller"></a>
-
-### method.controller ⇒ [<code>DID</code>](#DID)
-Returns the `controller` DID of the `Method` object.
-
-**Kind**: instance property of [<code>Method</code>](#Method)  
-<a name="Method+type"></a>
-
-### method.type ⇒ <code>string</code>
-Returns the `Method` type.
-
-**Kind**: instance property of [<code>Method</code>](#Method)  
-<a name="Method+data"></a>
-
-### method.data ⇒ <code>any</code>
-Returns the `Method` public key data.
-
-**Kind**: instance property of [<code>Method</code>](#Method)  
-<a name="Method+toJSON"></a>
-
-### method.toJSON() ⇒ <code>any</code>
-Serializes a `Method` object as a JSON object.
-
-**Kind**: instance method of [<code>Method</code>](#Method)  
-<a name="Method.fromDID"></a>
-
-### Method.fromDID(did, key, tag) ⇒ [<code>Method</code>](#Method)
-Creates a new `Method` object from the given `did` and `key`.
-
-**Kind**: static method of [<code>Method</code>](#Method)  
-
-| Param | Type |
-| --- | --- |
-| did | [<code>DID</code>](#DID) | 
-| key | [<code>KeyPair</code>](#KeyPair) | 
-| tag | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Method.createMerkleKey"></a>
-
-### Method.createMerkleKey(digest, did, keys, tag) ⇒ [<code>Method</code>](#Method)
-Creates a new Merkle Key Collection Method from the given key collection.
-
-**Kind**: static method of [<code>Method</code>](#Method)  
-
-| Param | Type |
-| --- | --- |
-| digest | <code>number</code> | 
-| did | [<code>DID</code>](#DID) | 
-| keys | [<code>KeyCollection</code>](#KeyCollection) | 
-| tag | <code>string</code> \| <code>undefined</code> | 
-
-<a name="Method.fromJSON"></a>
-
-### Method.fromJSON(value) ⇒ [<code>Method</code>](#Method)
-Deserializes a `Method` object from a JSON object.
-
-**Kind**: static method of [<code>Method</code>](#Method)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
 <a name="NewDocument"></a>
 
 ## NewDocument
@@ -639,6 +557,34 @@ Deserializes a `Method` object from a JSON object.
 
 ### newDocument.doc ⇒ [<code>Document</code>](#Document)
 **Kind**: instance property of [<code>NewDocument</code>](#NewDocument)  
+<a name="Service"></a>
+
+## Service
+**Kind**: global class  
+
+* [Service](#Service)
+    * _instance_
+        * [.toJSON()](#Service+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#Service.fromJSON) ⇒ [<code>Service</code>](#Service)
+
+<a name="Service+toJSON"></a>
+
+### service.toJSON() ⇒ <code>any</code>
+Serializes a `Service` object as a JSON object.
+
+**Kind**: instance method of [<code>Service</code>](#Service)  
+<a name="Service.fromJSON"></a>
+
+### Service.fromJSON(value) ⇒ [<code>Service</code>](#Service)
+Deserializes a `Method` object from a JSON object.
+
+**Kind**: static method of [<code>Service</code>](#Service)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
 <a name="VerifiableCredential"></a>
 
 ## VerifiableCredential
@@ -729,6 +675,103 @@ Deserializes a `VerifiablePresentation` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="VerificationMethod"></a>
+
+## VerificationMethod
+**Kind**: global class  
+
+* [VerificationMethod](#VerificationMethod)
+    * [new VerificationMethod(key, tag)](#new_VerificationMethod_new)
+    * _instance_
+        * [.id](#VerificationMethod+id) ⇒ [<code>DID</code>](#DID)
+        * [.controller](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
+        * [.type](#VerificationMethod+type) ⇒ <code>string</code>
+        * [.data](#VerificationMethod+data) ⇒ <code>any</code>
+        * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromDID(did, key, tag)](#VerificationMethod.fromDID) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.createMerkleKey(digest, did, keys, tag)](#VerificationMethod.createMerkleKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.fromJSON(value)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+
+<a name="new_VerificationMethod_new"></a>
+
+### new VerificationMethod(key, tag)
+Creates a new `VerificationMethod` object from the given `key`.
+
+
+| Param | Type |
+| --- | --- |
+| key | [<code>KeyPair</code>](#KeyPair) | 
+| tag | <code>string</code> \| <code>undefined</code> | 
+
+<a name="VerificationMethod+id"></a>
+
+### verificationMethod.id ⇒ [<code>DID</code>](#DID)
+Returns the `id` DID of the `VerificationMethod` object.
+
+**Kind**: instance property of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+controller"></a>
+
+### verificationMethod.controller ⇒ [<code>DID</code>](#DID)
+Returns the `controller` DID of the `VerificationMethod` object.
+
+**Kind**: instance property of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+type"></a>
+
+### verificationMethod.type ⇒ <code>string</code>
+Returns the `VerificationMethod` type.
+
+**Kind**: instance property of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+data"></a>
+
+### verificationMethod.data ⇒ <code>any</code>
+Returns the `VerificationMethod` public key data.
+
+**Kind**: instance property of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+toJSON"></a>
+
+### verificationMethod.toJSON() ⇒ <code>any</code>
+Serializes a `VerificationMethod` object as a JSON object.
+
+**Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod.fromDID"></a>
+
+### VerificationMethod.fromDID(did, key, tag) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Creates a new `VerificationMethod` object from the given `did` and `key`.
+
+**Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>DID</code>](#DID) | 
+| key | [<code>KeyPair</code>](#KeyPair) | 
+| tag | <code>string</code> \| <code>undefined</code> | 
+
+<a name="VerificationMethod.createMerkleKey"></a>
+
+### VerificationMethod.createMerkleKey(digest, did, keys, tag) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Creates a new Merkle Key Collection Method from the given key collection.
+
+**Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| digest | <code>number</code> | 
+| did | [<code>DID</code>](#DID) | 
+| keys | [<code>KeyCollection</code>](#KeyCollection) | 
+| tag | <code>string</code> \| <code>undefined</code> | 
+
+<a name="VerificationMethod.fromJSON"></a>
+
+### VerificationMethod.fromJSON(value) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Deserializes a `VerificationMethod` object from a JSON object.
+
+**Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
 
 <a name="Digest"></a>
 
