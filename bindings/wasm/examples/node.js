@@ -16,7 +16,7 @@ const {
   KeyCollection,
   KeyPair,
   KeyType,
-  Method,
+  VerificationMethod,
   VerifiableCredential,
   VerifiablePresentation,
 } = Identity
@@ -46,7 +46,7 @@ async function run() {
 
   // Add a Merkle Key Collection method for Bob, so compromised keys can be revoked.
   const keys = new KeyCollection(KeyType.Ed25519, 8)
-  const method = Method.createMerkleKey(Digest.Sha256, user2.doc.id, keys, "key-collection")
+  const method = VerificationMethod.createMerkleKey(Digest.Sha256, user2.doc.id, keys, "key-collection")
 
   // Add to the DID Document as a general-purpose verification method
   user2.doc.insertMethod(method, "VerificationMethod")
