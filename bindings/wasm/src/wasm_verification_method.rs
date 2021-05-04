@@ -11,7 +11,7 @@ use crate::crypto::KeyPair;
 use crate::utils::err;
 use crate::wasm_did::WasmDID;
 
-#[wasm_bindgen(inspectable)]
+#[wasm_bindgen(js_name = VerificationMethod, inspectable)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct WasmVerificationMethod(pub(crate) IotaVerificationMethod);
 

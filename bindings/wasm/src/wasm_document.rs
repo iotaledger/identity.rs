@@ -50,7 +50,7 @@ impl NewDocument {
 // =============================================================================
 // =============================================================================
 
-#[wasm_bindgen(inspectable)]
+#[wasm_bindgen(js_name = Document, inspectable)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct WasmDocument(pub(crate) IotaDocument);
 
