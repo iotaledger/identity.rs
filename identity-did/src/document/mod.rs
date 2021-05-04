@@ -6,7 +6,7 @@
 #![allow(clippy::module_inception)]
 
 mod builder;
-mod document;
+mod core_document;
 
 pub use self::builder::DocumentBuilder;
-pub use self::document::Document;
+pub use self::core_document::CoreDocument;

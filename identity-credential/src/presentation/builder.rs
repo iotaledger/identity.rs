@@ -139,12 +139,12 @@ mod tests {
   use identity_core::crypto::KeyPair;
   use identity_core::utils::encode_b58;
   use identity_did::did::DID;
-  use identity_did::document::Document;
+  use identity_did::document::CoreDocument;
   use identity_did::document::DocumentBuilder;
-  use identity_did::verification::Method;
   use identity_did::verification::MethodBuilder;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodType;
+  use identity_did::verification::VerificationMethod;
   use serde_json::json;
   use serde_json::Value;
 
@@ -175,7 +175,7 @@ mod tests {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let controller: DID = "did:example:1234".parse().unwrap();
 
-    let method: Method = MethodBuilder::default()
+    let method: VerificationMethod = MethodBuilder::default()
       .id(controller.join("#key-1").unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
@@ -183,7 +183,7 @@ mod tests {
       .build()
       .unwrap();
 
-    let document: Document = DocumentBuilder::default()
+    let document: CoreDocument = DocumentBuilder::default()
       .id(controller)
       .verification_method(method)
       .build()

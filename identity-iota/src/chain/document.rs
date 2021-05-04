@@ -7,128 +7,128 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use identity_core::convert::ToJson;
 
-use crate::chain::AuthChain;
 use crate::chain::DiffChain;
-use crate::did::Document;
+use crate::chain::IntegrationChain;
 use crate::did::DocumentDiff;
-use crate::did::DID;
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
 use crate::error::Result;
 use iota::MessageId;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DocumentChain {
-  #[serde(rename = "diff")]
-  diff_chain: DiffChain,
-  #[serde(rename = "auth")]
-  auth_chain: AuthChain,
-  #[serde(rename = "latest", skip_serializing_if = "Option::is_none")]
-  document: Option<Document>,
+  chain_d: DiffChain,
+  chain_i: IntegrationChain,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  document: Option<IotaDocument>,
 }
 
 impl DocumentChain {
-  pub(crate) fn __diff_message_id<'a>(auth: &'a AuthChain, diff: &'a DiffChain) -> &'a MessageId {
-    diff.current_message_id().unwrap_or_else(|| auth.current_message_id())
+  pub(crate) fn __diff_message_id<'a>(chain_i: &'a IntegrationChain, diff: &'a DiffChain) -> &'a MessageId {
+    diff
+      .current_message_id()
+      .unwrap_or_else(|| chain_i.current_message_id())
   }
 
-  pub(crate) fn __fold(auth_chain: &AuthChain, diff_chain: &DiffChain) -> Result<Document> {
-    let mut this: Document = auth_chain.current.clone();
+  pub(crate) fn __fold(chain_i: &IntegrationChain, chain_d: &DiffChain) -> Result<IotaDocument> {
+    let mut this: IotaDocument = chain_i.current.clone();
 
-    for diff in diff_chain.iter() {
+    for diff in chain_d.iter() {
       this.merge(diff)?;
     }
 
     Ok(this)
   }
 
-  /// Creates a new `DocumentChain` from given the `AuthChain`.
-  pub fn new(auth_chain: AuthChain) -> Self {
+  /// Creates a new `DocumentChain` from given the `IntegrationChain`.
+  pub fn new(chain_i: IntegrationChain) -> Self {
     Self {
-      auth_chain,
-      diff_chain: DiffChain::new(),
+      chain_i,
+      chain_d: DiffChain::new(),
       document: None,
     }
   }
 
-  /// Creates a new `DocumentChain` from given the `AuthChain` and `DiffChain`.
-  pub fn with_diff_chain(auth_chain: AuthChain, diff_chain: DiffChain) -> Result<Self> {
-    let document: Option<Document> = if diff_chain.is_empty() {
+  /// Creates a new `DocumentChain` from given the `IntegrationChain` and `DiffChain`.
+  pub fn with_diff_chain(chain_i: IntegrationChain, chain_d: DiffChain) -> Result<Self> {
+    let document: Option<IotaDocument> = if chain_d.is_empty() {
       None
     } else {
-      Some(Self::__fold(&auth_chain, &diff_chain)?)
+      Some(Self::__fold(&chain_i, &chain_d)?)
     };
 
     Ok(Self {
-      auth_chain,
-      diff_chain,
+      chain_i,
+      chain_d,
       document,
     })
   }
 
   /// Returns a reference to the DID identifying the document chain.
-  pub fn id(&self) -> &DID {
-    self.auth_chain.current.id()
+  pub fn id(&self) -> &IotaDID {
+    self.chain_i.current.id()
   }
 
-  /// Returns a reference to the `AuthChain`.
-  pub fn auth(&self) -> &AuthChain {
-    &self.auth_chain
+  /// Returns a reference to the `IntegrationChain`.
+  pub fn integration_chain(&self) -> &IntegrationChain {
+    &self.chain_i
   }
 
-  /// Returns a mutable reference to the `AuthChain`.
-  pub fn auth_mut(&mut self) -> &mut AuthChain {
-    &mut self.auth_chain
+  /// Returns a mutable reference to the `IntegrationChain`.
+  pub fn integration_chain_mut(&mut self) -> &mut IntegrationChain {
+    &mut self.chain_i
   }
 
   /// Returns a reference to the `DiffChain`.
   pub fn diff(&self) -> &DiffChain {
-    &self.diff_chain
+    &self.chain_d
   }
 
   /// Returns a mutable reference to the `DiffChain`.
   pub fn diff_mut(&mut self) -> &mut DiffChain {
-    &mut self.diff_chain
+    &mut self.chain_d
   }
 
-  pub fn fold(mut self) -> Result<Document> {
-    for diff in self.diff_chain.iter() {
-      self.auth_chain.current.merge(diff)?;
+  pub fn fold(mut self) -> Result<IotaDocument> {
+    for diff in self.chain_d.iter() {
+      self.chain_i.current.merge(diff)?;
     }
 
-    Ok(self.auth_chain.current)
+    Ok(self.chain_i.current)
   }
 
   /// Returns a reference to the latest document.
-  pub fn current(&self) -> &Document {
-    self.document.as_ref().unwrap_or_else(|| self.auth_chain.current())
+  pub fn current(&self) -> &IotaDocument {
+    self.document.as_ref().unwrap_or_else(|| self.chain_i.current())
   }
 
   /// Returns a mutable reference to the latest document.
-  pub fn current_mut(&mut self) -> &mut Document {
+  pub fn current_mut(&mut self) -> &mut IotaDocument {
     if let Some(document) = self.document.as_mut() {
       document
     } else {
-      self.auth_chain.current_mut()
+      self.chain_i.current_mut()
     }
   }
 
-  /// Returns the Tangle message Id of the latest auth document.
-  pub fn auth_message_id(&self) -> &MessageId {
-    self.auth_chain.current_message_id()
+  /// Returns the Tangle message Id of the latest integration document.
+  pub fn integration_message_id(&self) -> &MessageId {
+    self.chain_i.current_message_id()
   }
 
-  /// Returns the Tangle message Id of the latest diff or auth document.
+  /// Returns the Tangle message Id of the latest diff or integration document.
   pub fn diff_message_id(&self) -> &MessageId {
-    Self::__diff_message_id(&self.auth_chain, &self.diff_chain)
+    Self::__diff_message_id(&self.chain_i, &self.chain_d)
   }
 
-  /// Adds a new auth document to the chain.
+  /// Adds a new integration document to the chain.
   ///
   /// # Errors
   ///
-  /// Fails if the document is not a valid auth document.
-  pub fn try_push_auth(&mut self, document: Document) -> Result<()> {
-    self.auth_chain.try_push(document)?;
-    self.diff_chain.clear();
+  /// Fails if the document is not a valid integration document.
+  pub fn try_push_integration(&mut self, document: IotaDocument) -> Result<()> {
+    self.chain_i.try_push(document)?;
+    self.chain_d.clear();
 
     self.document = None;
 
@@ -141,12 +141,9 @@ impl DocumentChain {
   ///
   /// Fails if the document diff is invalid.
   pub fn try_push_diff(&mut self, diff: DocumentDiff) -> Result<()> {
-    self.diff_chain.check_validity(&self.auth_chain, &diff)?;
+    self.chain_d.check_validity(&self.chain_i, &diff)?;
 
-    let mut document: Document = self
-      .document
-      .take()
-      .unwrap_or_else(|| self.auth_chain.current().clone());
+    let mut document: IotaDocument = self.document.take().unwrap_or_else(|| self.chain_i.current().clone());
 
     document.merge(&diff)?;
 
@@ -154,7 +151,7 @@ impl DocumentChain {
 
     // SAFETY: we performed the necessary validation in `DiffChain::check_validity`.
     unsafe {
-      self.diff_chain.push_unchecked(diff);
+      self.chain_d.push_unchecked(diff);
     }
 
     Ok(())

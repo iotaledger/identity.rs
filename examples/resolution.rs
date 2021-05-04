@@ -12,7 +12,7 @@ use identity::core::SerdeInto;
 use identity::did::resolution;
 use identity::did::resolution::Resource;
 use identity::did::resolution::SecondaryResource;
-use identity::iota::DID;
+use identity::iota::IotaDID;
 use identity::prelude::*;
 
 #[tokio::main]
@@ -25,7 +25,7 @@ async fn main() -> Result<()> {
 
   // Create a DID Document using the Ed25519 public key as the authentication
   // method. The DID URL is also derived from the public key value.
-  let mut doc: Document = Document::from_keypair(&key)?;
+  let mut doc: IotaDocument = IotaDocument::from_keypair(&key)?;
 
   // Sign the document with our Ed25519 secret key.
   doc.sign(key.secret())?;
@@ -50,7 +50,7 @@ async fn main() -> Result<()> {
   // DID Dereferencing
   // ===========================================================================
 
-  let url: DID = doc.id().join("#authentication")?;
+  let url: IotaDID = doc.id().join("#authentication")?;
 
   // Retrieve a subset of the published DID Document properties.
   let future: _ = resolution::dereference(url.as_str(), Default::default(), &client);

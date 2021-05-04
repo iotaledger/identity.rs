@@ -95,6 +95,6 @@ pub mod prelude {
 
   pub use identity_core::crypto::KeyPair;
   pub use identity_iota::client::Client;
-  pub use identity_iota::did::Document;
+  pub use identity_iota::did::IotaDocument;
   pub use identity_iota::Result;
 }

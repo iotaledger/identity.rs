@@ -14,7 +14,7 @@ use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use identity::crypto::KeyPair;
 use identity::iota::Client;
-use identity::iota::Document;
+use identity::iota::IotaDocument;
 use identity::iota::Result;
 
 #[tokio::main]
@@ -23,10 +23,10 @@ async fn main() -> Result<()> {
   let client: Client = Client::new().await?;
 
   // Create a signed DID Document/KeyPair for the credential issuer (see previous example).
-  let (doc_iss, key_iss): (Document, KeyPair) = common::create_did_document(&client).await?;
+  let (doc_iss, key_iss): (IotaDocument, KeyPair) = common::create_did_document(&client).await?;
 
   // Create a signed DID Document/KeyPair for the credential subject (see previous example).
-  let (doc_sub, _key_sub): (Document, KeyPair) = common::create_did_document(&client).await?;
+  let (doc_sub, _key_sub): (IotaDocument, KeyPair) = common::create_did_document(&client).await?;
 
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
   let mut credential: Credential = common::issue_degree(&doc_iss, &doc_sub)?;

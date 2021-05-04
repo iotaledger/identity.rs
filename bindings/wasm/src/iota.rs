@@ -9,9 +9,9 @@ use identity::iota::Network;
 use identity::iota::PresentationValidation;
 use wasm_bindgen::prelude::*;
 
-use crate::did::DID;
-use crate::document::Document;
 use crate::utils::err;
+use crate::wasm_did::WasmDID;
+use crate::wasm_document::WasmDocument;
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
@@ -52,7 +52,7 @@ async fn client(params: JsValue) -> Result<Client, JsValue> {
 #[wasm_bindgen]
 pub async fn publish(document: JsValue, params: JsValue) -> Result<JsValue, JsValue> {
   let client: Client = client(params).await?;
-  let document: Document = Document::from_json(&document)?;
+  let document: WasmDocument = WasmDocument::from_json(&document)?;
 
   client
     .publish_document(&document.0)
@@ -66,7 +66,7 @@ pub async fn publish(document: JsValue, params: JsValue) -> Result<JsValue, JsVa
 #[wasm_bindgen]
 pub async fn resolve(did: String, params: JsValue) -> Result<JsValue, JsValue> {
   let client: Client = client(params).await?;
-  let did: DID = DID::parse(&did)?;
+  let did: WasmDID = WasmDID::parse(&did)?;
 
   client
     .read_document(&did.0)

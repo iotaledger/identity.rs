@@ -11,9 +11,9 @@ use serde::Serialize;
 
 use crate::did::DID;
 use crate::diff::DiffMethodData;
-use crate::verification::Method;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
+use crate::verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DiffMethod<T = Object>
@@ -32,7 +32,7 @@ where
   properties: Option<<T as Diff>::Type>,
 }
 
-impl<T> Diff for Method<T>
+impl<T> Diff for VerificationMethod<T>
 where
   T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
@@ -99,7 +99,7 @@ where
       .transpose()?
       .unwrap_or_else(|| self.properties().clone());
 
-    Ok(Method {
+    Ok(VerificationMethod {
       id,
       controller,
       key_type,
@@ -135,7 +135,7 @@ where
 
     let properties: T = diff.properties.map(T::from_diff).transpose()?.unwrap_or_default();
 
-    Ok(Method {
+    Ok(VerificationMethod {
       id,
       controller,
       key_type,
@@ -161,8 +161,8 @@ mod test {
   use identity_core::common::Object;
   use identity_core::common::Value;
 
-  fn test_method() -> Method {
-    Method::builder(Default::default())
+  fn test_method() -> VerificationMethod {
+    VerificationMethod::builder(Default::default())
       .id("did:example:123".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
@@ -310,7 +310,7 @@ mod test {
     let mut new = method.clone();
 
     let diff = method.diff(&new).unwrap();
-    let diff_method = Method::from_diff(diff);
+    let diff_method = VerificationMethod::from_diff(diff);
     assert!(diff_method.is_err());
 
     // add property
@@ -319,31 +319,31 @@ mod test {
     *new.properties_mut() = properties;
 
     let diff = method.diff(&new).unwrap();
-    let diff_method = Method::from_diff(diff);
+    let diff_method = VerificationMethod::from_diff(diff);
     assert!(diff_method.is_err());
 
     // add id
     *new.id_mut() = "did:diff:123".parse().unwrap();
     let diff = method.diff(&new).unwrap();
-    let diff_method = Method::from_diff(diff);
+    let diff_method = VerificationMethod::from_diff(diff);
     assert!(diff_method.is_err());
 
     // add controller
     *new.controller_mut() = "did:diff:123".parse().unwrap();
     let diff = method.diff(&new).unwrap();
-    let diff_method = Method::from_diff(diff);
+    let diff_method = VerificationMethod::from_diff(diff);
     assert!(diff_method.is_err());
 
     // add key_type
     *new.key_type_mut() = MethodType::MerkleKeyCollection2021;
     let diff = method.diff(&new).unwrap();
-    let diff_method = Method::from_diff(diff);
+    let diff_method = VerificationMethod::from_diff(diff);
     assert!(diff_method.is_err());
 
     // add key_data
     *new.key_data_mut() = MethodData::PublicKeyBase58("diff".into());
     let diff = method.diff(&new).unwrap();
-    let diff_method = Method::from_diff(diff.clone());
+    let diff_method = VerificationMethod::from_diff(diff.clone());
     assert!(diff_method.is_ok());
     let diff_method = diff_method.unwrap();
     assert_eq!(diff_method, new);

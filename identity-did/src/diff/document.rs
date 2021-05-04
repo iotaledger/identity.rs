@@ -12,12 +12,12 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::did::DID;
-use crate::document::Document;
+use crate::document::CoreDocument;
 use crate::service::Service;
 use crate::utils::DIDKey;
 use crate::utils::OrderedSet;
-use crate::verification::Method;
 use crate::verification::MethodRef;
+use crate::verification::VerificationMethod;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(bound(deserialize = ""))]
@@ -34,7 +34,7 @@ where
   #[serde(skip_serializing_if = "Option::is_none")]
   also_known_as: Option<DiffVec<Url>>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  verification_method: Option<DiffVec<DIDKey<Method<U>>>>,
+  verification_method: Option<DiffVec<DIDKey<VerificationMethod<U>>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
   authentication: Option<DiffVec<DIDKey<MethodRef<U>>>>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -51,7 +51,7 @@ where
   properties: Option<<T as Diff>::Type>,
 }
 
-impl<T, U, V> Diff for Document<T, U, V>
+impl<T, U, V> Diff for CoreDocument<T, U, V>
 where
   T: Diff + Serialize + for<'de> Deserialize<'de>,
   U: Diff + Serialize + for<'de> Deserialize<'de> + Default,
@@ -143,7 +143,7 @@ where
       .transpose()?
       .unwrap_or_else(|| self.also_known_as().to_vec());
 
-    let verification_method: OrderedSet<DIDKey<Method<U>>> = diff
+    let verification_method: OrderedSet<DIDKey<VerificationMethod<U>>> = diff
       .verification_method
       .map(|value| self.verification_method().merge(value))
       .transpose()?
@@ -191,7 +191,7 @@ where
       .transpose()?
       .unwrap_or_else(|| self.properties().clone());
 
-    Ok(Document {
+    Ok(CoreDocument {
       id,
       controller,
       also_known_as,
@@ -228,7 +228,7 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.also_known_as`"))?;
 
-    let verification_method: OrderedSet<DIDKey<Method<U>>> = diff
+    let verification_method: OrderedSet<DIDKey<VerificationMethod<U>>> = diff
       .verification_method
       .map(Diff::from_diff)
       .transpose()?
@@ -276,7 +276,7 @@ where
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.properties`"))?;
 
-    Ok(Document {
+    Ok(CoreDocument {
       id,
       controller,
       also_known_as,
@@ -322,7 +322,7 @@ mod test {
     "did:example:1234".parse().unwrap()
   }
 
-  fn method(controller: &DID, fragment: &str) -> Method {
+  fn method(controller: &DID, fragment: &str) -> VerificationMethod {
     MethodBuilder::default()
       .id(controller.join(fragment).unwrap())
       .controller(controller.clone())
@@ -339,12 +339,12 @@ mod test {
       .build()
       .unwrap()
   }
-  fn document() -> Document {
+  fn document() -> CoreDocument {
     let controller = controller();
     let mut properties: BTreeMap<String, Value> = BTreeMap::default();
     properties.insert("key1".to_string(), "value1".into());
 
-    Document::builder(properties)
+    CoreDocument::builder(properties)
       .id(controller.clone())
       .controller(controller.clone())
       .verification_method(method(&controller, "#key-1"))
@@ -742,7 +742,7 @@ mod test {
     let doc = document();
 
     let diff = doc.clone().into_diff().unwrap();
-    let new = Document::from_diff(diff).unwrap();
+    let new = CoreDocument::from_diff(diff).unwrap();
     assert_eq!(doc, new);
   }
 }

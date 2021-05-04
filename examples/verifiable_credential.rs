@@ -24,7 +24,7 @@ use identity::prelude::*;
 
 // Helper that takes two DID Documents (identities) for issuer and subject, and
 // creates a credential with claims about subject by issuer.
-fn issue_degree(issuer: &Document, subject: &Document) -> Result<Credential> {
+fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Credential> {
   // Create VC "subject" field containing subject ID and claims about it.
   let subject: Subject = Subject::from_json_value(json!({
     "id": subject.id().as_str(),
@@ -50,10 +50,10 @@ async fn main() -> Result<()> {
   let client: Client = Client::new().await?;
 
   // Create a signed DID Document/KeyPair for the credential issuer (see previous example).
-  let (doc_iss, key_iss): (Document, KeyPair) = common::create_did_document(&client).await?;
+  let (doc_iss, key_iss): (IotaDocument, KeyPair) = common::create_did_document(&client).await?;
 
   // Create a signed DID Document/KeyPair for the credential subject (see previous example).
-  let (doc_sub, _key_sub): (Document, KeyPair) = common::create_did_document(&client).await?;
+  let (doc_sub, _key_sub): (IotaDocument, KeyPair) = common::create_did_document(&client).await?;
 
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
   let mut credential: Credential = issue_degree(&doc_iss, &doc_sub)?;

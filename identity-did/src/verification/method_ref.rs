@@ -7,13 +7,13 @@ use core::fmt::Result as FmtResult;
 use identity_core::common::Object;
 
 use crate::did::DID;
-use crate::verification::Method;
+use crate::verification::VerificationMethod;
 
 /// A reference to a verification method, either a `DID` or embedded `Method`.
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum MethodRef<T = Object> {
-  Embed(Method<T>),
+  Embed(VerificationMethod<T>),
   Refer(DID),
 }
 
@@ -53,7 +53,7 @@ impl<T> MethodRef<T> {
   /// # Errors
   ///
   /// Fails if `MethodRef` is not an embedded method.
-  pub fn try_into_embedded(self) -> Result<Method<T>, Self> {
+  pub fn try_into_embedded(self) -> Result<VerificationMethod<T>, Self> {
     match self {
       Self::Embed(inner) => Ok(inner),
       Self::Refer(_) => Err(self),
@@ -87,9 +87,9 @@ where
   }
 }
 
-impl<T> From<Method<T>> for MethodRef<T> {
+impl<T> From<VerificationMethod<T>> for MethodRef<T> {
   #[inline]
-  fn from(other: Method<T>) -> Self {
+  fn from(other: VerificationMethod<T>) -> Self {
     Self::Embed(other)
   }
 }
