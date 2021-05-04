@@ -15,8 +15,8 @@ use futures::stream::FuturesUnordered;
 use futures::stream::TryStreamExt;
 use identity_core::common::Url;
 use identity_core::convert::ToJson;
-use iota::Message;
-use iota::MessageId;
+use iota_client::bee_message::Message;
+use iota_client::bee_message::MessageId;
 
 #[derive(Clone, Debug)]
 pub struct Messages {
@@ -26,7 +26,7 @@ pub struct Messages {
 
 #[derive(Debug)]
 pub struct Client {
-  pub(crate) client: iota::Client,
+  pub(crate) client: iota_client::Client,
   pub(crate) network: Network,
 }
 
@@ -54,7 +54,7 @@ impl Client {
 
   /// Creates a new `Client` based on the `ClientBuilder` configuration.
   pub async fn from_builder(builder: ClientBuilder) -> Result<Self> {
-    let mut client: iota::ClientBuilder = iota::ClientBuilder::new();
+    let mut client: iota_client::ClientBuilder = iota_client::ClientBuilder::new();
 
     if builder.nodes.is_empty() {
       client = client.with_node(builder.network.node_url().as_str())?;

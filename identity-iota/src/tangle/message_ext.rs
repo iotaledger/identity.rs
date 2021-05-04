@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::convert::FromJson;
-use iota::Message;
-use iota::MessageId;
-use iota::Payload;
+use iota_client::bee_message::payload::Payload;
+use iota_client::bee_message::Message;
+use iota_client::bee_message::MessageId;
 
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
