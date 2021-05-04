@@ -7,7 +7,7 @@ use core::hash::Hash;
 use core::iter::FromIterator;
 use core::ops::Deref;
 use core::ops::DerefMut;
-use iota::MessageId;
+use iota_client::bee_message::MessageId;
 use std::collections::HashMap;
 
 type __Index<T> = HashMap<MessageId, Vec<T>>;

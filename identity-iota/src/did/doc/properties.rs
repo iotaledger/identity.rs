@@ -4,7 +4,7 @@
 use crate::tangle::MessageIdExt;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
-use iota::MessageId;
+use iota_client::bee_message::MessageId;
 
 /// Additional properties stored in an IOTA DID Document.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

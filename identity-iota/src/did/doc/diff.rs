@@ -22,7 +22,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::MessageIdExt;
 use crate::tangle::TangleRef;
-use iota::MessageId;
+use iota_client::bee_message::MessageId;
 
 /// Defines the difference between two DID [`Document`]s' JSON representations.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

@@ -20,7 +20,7 @@ serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
-[dependencies.iota-core]
+[dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
 rev = "2b84478c71b0078d7776974bb066bd7aa74cea38"
 default-features = false

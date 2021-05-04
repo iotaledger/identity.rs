@@ -28,7 +28,7 @@ use identity_did::verification::MethodType;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 use identity_did::verification::VerificationMethod;
-use iota::MessageId;
+use iota_client::bee_message::MessageId;
 use serde::Serialize;
 
 use crate::client::Client;
