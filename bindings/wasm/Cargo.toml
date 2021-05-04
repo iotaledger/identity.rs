@@ -22,9 +22,9 @@ wasm-bindgen-futures = { version = "0.4", default-features = false }
 
 [dependencies.iota-core]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "28016d596113a08db96c664f0b202b6b152b35be"
+rev = "2b84478c71b0078d7776974bb066bd7aa74cea38"
 default-features = false
-features = ["async", "wasm"]
+features = ["wasm"]
 
 [dependencies.web-sys]
 version = "0.3"

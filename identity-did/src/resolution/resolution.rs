@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::document::Document;
+use crate::document::CoreDocument;
 use crate::resolution::DocumentMetadata;
 use crate::resolution::ResolutionMetadata;
 
@@ -15,7 +15,7 @@ pub struct Resolution {
   pub metadata: ResolutionMetadata,
   /// The DID Document of a successful resolution.
   #[serde(rename = "did-document", skip_serializing_if = "Option::is_none")]
-  pub document: Option<Document>,
+  pub document: Option<CoreDocument>,
   /// Document-specific metadata.
   #[serde(rename = "did-document-metadata", skip_serializing_if = "Option::is_none")]
   pub document_metadata: Option<DocumentMetadata>,

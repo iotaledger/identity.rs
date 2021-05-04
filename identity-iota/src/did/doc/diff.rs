@@ -10,21 +10,24 @@ use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_core::diff::Diff;
 use identity_did::diff::DiffDocument;
-use identity_did::document::Document as CoreDocument;
+use identity_did::document::CoreDocument;
+use identity_did::verification::MethodUriType;
+use identity_did::verification::TryMethod;
 
 use crate::client::Client;
 use crate::client::Network;
-use crate::did::Document;
-use crate::did::DID;
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::MessageIdExt;
 use crate::tangle::TangleRef;
 use iota::MessageId;
 
+/// Defines the difference between two DID [`Document`]s' JSON representations.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DocumentDiff {
-  pub(crate) did: DID,
+  pub(crate) did: IotaDID,
   pub(crate) diff: String,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageIdExt::is_null")]
   pub(crate) previous_message_id: MessageId,
@@ -35,7 +38,11 @@ pub struct DocumentDiff {
 }
 
 impl DocumentDiff {
-  pub fn new(current: &Document, updated: &Document, previous_message_id: MessageId) -> Result<Self> {
+  /// Construct a new `DocumentDiff` by diffing the JSON representations of `current` and `updated`.
+  ///
+  /// The `previous_message_id` is included verbatim in the output, and the `proof` is `None`. To
+  /// set a proof, use the `set_signature()` method.
+  pub fn new(current: &IotaDocument, updated: &IotaDocument, previous_message_id: MessageId) -> Result<Self> {
     let a: CoreDocument = current.serde_into()?;
     let b: CoreDocument = updated.serde_into()?;
     let diff: String = Diff::diff(&a, &b)?.to_json()?;
@@ -50,7 +57,7 @@ impl DocumentDiff {
   }
 
   /// Returns the DID of associated DID Document.
-  pub fn id(&self) -> &DID {
+  pub fn id(&self) -> &IotaDID {
     &self.did
   }
 
@@ -71,7 +78,7 @@ impl DocumentDiff {
 
   /// Returns a new DID Document which is the result of merging `self`
   /// with the given Document.
-  pub fn merge(&self, document: &Document) -> Result<Document> {
+  pub fn merge(&self, document: &IotaDocument) -> Result<IotaDocument> {
     let data: DiffDocument = DiffDocument::from_json(&self.diff)?;
     let core: CoreDocument = document.serde_into()?;
     let this: CoreDocument = Diff::merge(&core, data)?;
@@ -87,7 +94,7 @@ impl DocumentDiff {
   where
     C: Into<Option<&'client Client>>,
   {
-    let network: Network = (&self.did).into();
+    let network = Network::from_did(&self.did);
 
     // Publish the DID Document diff to the Tangle.
     let message: MessageId = match client.into() {
@@ -142,4 +149,8 @@ impl SetSignature for DocumentDiff {
   fn set_signature(&mut self, value: Signature) {
     self.proof = Some(value);
   }
+}
+
+impl TryMethod for DocumentDiff {
+  const TYPE: MethodUriType = MethodUriType::Relative;
 }

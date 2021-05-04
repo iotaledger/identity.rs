@@ -9,6 +9,9 @@ use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 
+use crate::verification::MethodUriType;
+use crate::verification::TryMethod;
+
 /// A generic container for a set of properties (`T`) and a
 /// [`digital signature`][Signature].
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -83,4 +86,8 @@ impl<T> SetSignature for Properties<T> {
   fn set_signature(&mut self, signature: Signature) {
     self.set_proof(signature)
   }
+}
+
+impl<T> TryMethod for Properties<T> {
+  const TYPE: MethodUriType = MethodUriType::Relative;
 }

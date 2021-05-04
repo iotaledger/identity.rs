@@ -8,8 +8,8 @@ use core::fmt::Result as FmtResult;
 use core::mem;
 use identity_core::convert::ToJson;
 
-use crate::did::Document;
-use crate::did::DID;
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::MessageExt;
@@ -20,21 +20,21 @@ use iota::Message;
 use iota::MessageId;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct AuthChain {
+pub struct IntegrationChain {
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub(crate) history: Option<Vec<Document>>,
-  pub(crate) current: Document,
+  pub(crate) history: Option<Vec<IotaDocument>>,
+  pub(crate) current: IotaDocument,
 }
 
-impl AuthChain {
-  /// Constructs a new `AuthChain` from a slice of `Message`s.
-  pub fn try_from_messages(did: &DID, messages: &[Message]) -> Result<Self> {
-    let mut index: MessageIndex<Document> = messages
+impl IntegrationChain {
+  /// Constructs a new `IntegrationChain` from a slice of `Message`s.
+  pub fn try_from_messages(did: &IotaDID, messages: &[Message]) -> Result<Self> {
+    let mut index: MessageIndex<IotaDocument> = messages
       .iter()
       .flat_map(|message| message.try_extract_document(did))
       .collect();
 
-    let current: Document = index
+    let current: IotaDocument = index
       .remove_where(&MessageId::null(), |doc| doc.verify().is_ok())
       .ok_or(Error::ChainError {
         error: "Invalid Root Document",
@@ -53,8 +53,8 @@ impl AuthChain {
     Ok(this)
   }
 
-  /// Creates a new `AuthChain` with the given `Document` as the latest.
-  pub fn new(current: Document) -> Result<Self> {
+  /// Creates a new `IntegrationChain` with the given `IotaDocument` as the latest.
+  pub fn new(current: IotaDocument) -> Result<Self> {
     if current.verify().is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
@@ -70,28 +70,28 @@ impl AuthChain {
     Ok(Self { current, history: None })
   }
 
-  /// Returns a reference to the latest `Document`.
-  pub fn current(&self) -> &Document {
+  /// Returns a reference to the latest `IotaDocument`.
+  pub fn current(&self) -> &IotaDocument {
     &self.current
   }
 
-  /// Returns a mutable reference to the latest `Document`.
-  pub fn current_mut(&mut self) -> &mut Document {
+  /// Returns a mutable reference to the latest `IotaDocument`.
+  pub fn current_mut(&mut self) -> &mut IotaDocument {
     &mut self.current
   }
 
-  /// Returns the Tangle message Id of the latest auth document.
+  /// Returns the Tangle message Id of the latest integration document.
   pub fn current_message_id(&self) -> &MessageId {
     self.current.message_id()
   }
 
-  /// Adds a new `Document` to the `AuthChain`.
+  /// Adds a new `IotaDocument` to the `IntegrationChain`.
   ///
   /// # Errors
   ///
   /// Fails if the document signature is invalid or the Tangle message
-  /// references within the `Document` are invalid.
-  pub fn try_push(&mut self, document: Document) -> Result<()> {
+  /// references within the `IotaDocument` are invalid.
+  pub fn try_push(&mut self, document: IotaDocument) -> Result<()> {
     self.check_validity(&document)?;
 
     self
@@ -102,17 +102,17 @@ impl AuthChain {
     Ok(())
   }
 
-  /// Returns `true` if the `Document` can be added to the `AuthChain`.
-  pub fn is_valid(&self, document: &Document) -> bool {
+  /// Returns `true` if the `IotaDocument` can be added to the `IntegrationChain`.
+  pub fn is_valid(&self, document: &IotaDocument) -> bool {
     self.check_validity(document).is_ok()
   }
 
-  /// Checks if the `Document` can be added to the `AuthChain`.
+  /// Checks if the `IotaDocument` can be added to the `IntegrationChain`.
   ///
   /// # Errors
   ///
   /// Fails if the `Document` is not a valid addition.
-  pub fn check_validity(&self, document: &Document) -> Result<()> {
+  pub fn check_validity(&self, document: &IotaDocument) -> Result<()> {
     if self.current.verify_data(document).is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
@@ -141,7 +141,7 @@ impl AuthChain {
   }
 }
 
-impl Display for AuthChain {
+impl Display for IntegrationChain {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     if f.alternate() {
       f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)

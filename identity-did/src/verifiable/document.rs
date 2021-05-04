@@ -5,10 +5,11 @@ use core::any::Any;
 use identity_core::common::BitSet;
 use identity_core::crypto::merkle_key::Blake2b256;
 use identity_core::crypto::merkle_key::MerkleDigest;
+use identity_core::crypto::merkle_key::MerkleDigestTag;
 use identity_core::crypto::merkle_key::MerkleKey;
 use identity_core::crypto::merkle_key::MerkleSignature;
+use identity_core::crypto::merkle_key::MerkleSignatureTag;
 use identity_core::crypto::merkle_key::MerkleSigner;
-use identity_core::crypto::merkle_key::MerkleTag;
 use identity_core::crypto::merkle_key::MerkleVerifier;
 use identity_core::crypto::merkle_key::Sha256;
 use identity_core::crypto::merkle_key::SigningKey;
@@ -29,30 +30,32 @@ use identity_core::crypto::Verify;
 use identity_core::error::Error as CoreError;
 use serde::Serialize;
 
-use crate::document::Document;
+use crate::document::CoreDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::verifiable::Properties;
 use crate::verifiable::Revocation;
-use crate::verification::Method;
 use crate::verification::MethodQuery;
 use crate::verification::MethodType;
+use crate::verification::MethodUriType;
+use crate::verification::TryMethod;
+use crate::verification::VerificationMethod;
 
 // =============================================================================
 // Generic Crypto Extensions
 // =============================================================================
 
-impl<T, U, V> Document<T, U, V> {
-  pub fn into_verifiable(self) -> Document<Properties<T>, U, V> {
+impl<T, U, V> CoreDocument<T, U, V> {
+  pub fn into_verifiable(self) -> CoreDocument<Properties<T>, U, V> {
     self.map(Properties::new)
   }
 
-  pub fn into_verifiable_with_proof(self, proof: Signature) -> Document<Properties<T>, U, V> {
+  pub fn into_verifiable_with_proof(self, proof: Signature) -> CoreDocument<Properties<T>, U, V> {
     self.map(|old| Properties::with_proof(old, proof))
   }
 }
 
-impl<T, U, V> Document<Properties<T>, U, V> {
+impl<T, U, V> CoreDocument<Properties<T>, U, V> {
   pub fn proof(&self) -> Option<&Signature> {
     self.properties().proof()
   }
@@ -66,29 +69,33 @@ impl<T, U, V> Document<Properties<T>, U, V> {
   }
 }
 
-impl<T, U, V> TrySignature for Document<Properties<T>, U, V> {
+impl<T, U, V> TrySignature for CoreDocument<Properties<T>, U, V> {
   fn signature(&self) -> Option<&Signature> {
     self.proof()
   }
 }
 
-impl<T, U, V> TrySignatureMut for Document<Properties<T>, U, V> {
+impl<T, U, V> TrySignatureMut for CoreDocument<Properties<T>, U, V> {
   fn signature_mut(&mut self) -> Option<&mut Signature> {
     self.proof_mut()
   }
 }
 
-impl<T, U, V> SetSignature for Document<Properties<T>, U, V> {
+impl<T, U, V> SetSignature for CoreDocument<Properties<T>, U, V> {
   fn set_signature(&mut self, signature: Signature) {
     self.set_proof(signature)
   }
+}
+
+impl<T, U, V> TryMethod for CoreDocument<Properties<T>, U, V> {
+  const TYPE: MethodUriType = MethodUriType::Relative;
 }
 
 // =============================================================================
 // Signature Extensions
 // =============================================================================
 
-impl<T, U, V> Document<Properties<T>, U, V>
+impl<T, U, V> CoreDocument<Properties<T>, U, V>
 where
   T: Serialize,
   U: Serialize,
@@ -98,7 +105,7 @@ where
   where
     Q: Into<MethodQuery<'query>>,
   {
-    let method: &Method<U> = self.try_resolve(query)?;
+    let method: &VerificationMethod<U> = self.try_resolve(query)?;
     let fragment: String = method.try_into_fragment()?;
 
     match method.key_type() {
@@ -106,7 +113,7 @@ where
         JcsEd25519::<Ed25519>::create_signature(self, &fragment, secret.as_ref())?;
       }
       MethodType::MerkleKeyCollection2021 => {
-        // Documents can't be signed with Merkle Key Collections
+        // CoreDocuments can't be signed with Merkle Key Collections
         return Err(Error::InvalidMethodType);
       }
     }
@@ -116,7 +123,7 @@ where
 
   pub fn verify_this(&self) -> Result<()> {
     let signature: &Signature = self.try_signature()?;
-    let method: &Method<U> = self.try_resolve(signature)?;
+    let method: &VerificationMethod<U> = self.try_resolve(signature)?;
     let public: PublicKey = method.key_data().try_decode()?.into();
 
     match method.key_type() {
@@ -124,7 +131,7 @@ where
         JcsEd25519::<Ed25519>::verify_signature(self, public.as_ref())?;
       }
       MethodType::MerkleKeyCollection2021 => {
-        // Documents can't be signed with Merkle Key Collections
+        // CoreDocuments can't be signed with Merkle Key Collections
         return Err(Error::InvalidMethodType);
       }
     }
@@ -133,7 +140,7 @@ where
   }
 }
 
-impl<T, U, V> Document<T, U, V> {
+impl<T, U, V> CoreDocument<T, U, V> {
   /// Creates a new [`DocumentSigner`] that can be used to create digital
   /// signatures from verification methods in this DID Document.
   pub fn signer<'base>(&'base self, secret: &'base SecretKey) -> DocumentSigner<'base, '_, '_, T, U, V> {
@@ -152,14 +159,14 @@ impl<T, U, V> Document<T, U, V> {
 // =============================================================================
 
 pub struct DocumentSigner<'base, 'query, 'proof, T, U, V> {
-  document: &'base Document<T, U, V>,
+  document: &'base CoreDocument<T, U, V>,
   secret: &'base SecretKey,
   method: Option<MethodQuery<'query>>,
   merkle_key: Option<(&'proof PublicKey, &'proof dyn Any)>,
 }
 
 impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
-  pub fn new(document: &'base Document<T, U, V>, secret: &'base SecretKey) -> Self {
+  pub fn new(document: &'base CoreDocument<T, U, V>, secret: &'base SecretKey) -> Self {
     Self {
       document,
       secret,
@@ -198,25 +205,25 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
   /// serialization fails, or the signature operation fails.
   pub fn sign<X>(&self, that: &mut X) -> Result<()>
   where
-    X: Serialize + SetSignature,
+    X: Serialize + SetSignature + TryMethod,
   {
     let query: MethodQuery<'_> = self.method.ok_or(Error::QueryMethodNotFound)?;
-    let method: &Method<U> = self.document.try_resolve(query)?;
-    let fragment: String = method.try_into_fragment()?;
+    let method: &VerificationMethod<U> = self.document.try_resolve(query)?;
+    let method_uri: String = X::try_method(method)?;
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(that, &fragment, self.secret.as_ref())?;
+        JcsEd25519::<Ed25519>::create_signature(that, &method_uri, self.secret.as_ref())?;
       }
       MethodType::MerkleKeyCollection2021 => {
         let data: Vec<u8> = method.key_data().try_decode()?;
 
         match MerkleKey::extract_tags(&data)? {
-          (MerkleTag::ED25519, MerkleTag::SHA256) => {
-            self.merkle_key_sign::<X, Sha256, Ed25519>(that, fragment)?;
+          (MerkleSignatureTag::ED25519, MerkleDigestTag::SHA256) => {
+            self.merkle_key_sign::<X, Sha256, Ed25519>(that, method_uri)?;
           }
-          (MerkleTag::ED25519, MerkleTag::BLAKE2B_256) => {
-            self.merkle_key_sign::<X, Blake2b256, Ed25519>(that, fragment)?;
+          (MerkleSignatureTag::ED25519, MerkleDigestTag::BLAKE2B_256) => {
+            self.merkle_key_sign::<X, Blake2b256, Ed25519>(that, method_uri)?;
           }
           (_, _) => {
             return Err(Error::InvalidMethodType);
@@ -228,7 +235,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
     Ok(())
   }
 
-  fn merkle_key_sign<X, D, S>(&self, that: &mut X, fragment: String) -> Result<()>
+  fn merkle_key_sign<X, D, S>(&self, that: &mut X, method: String) -> Result<()>
   where
     X: Serialize + SetSignature,
     D: MerkleDigest,
@@ -243,7 +250,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 
         let skey: SigningKey<'_, D> = SigningKey::from_borrowed(public, self.secret, proof);
 
-        MerkleSigner::<D, S>::create_signature(that, &fragment, &skey)?;
+        MerkleSigner::<D, S>::create_signature(that, &method, &skey)?;
 
         Ok(())
       }
@@ -257,11 +264,11 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 // =============================================================================
 
 pub struct DocumentVerifier<'base, T, U, V> {
-  document: &'base Document<T, U, V>,
+  document: &'base CoreDocument<T, U, V>,
 }
 
 impl<'base, T, U, V> DocumentVerifier<'base, T, U, V> {
-  pub fn new(document: &'base Document<T, U, V>) -> Self {
+  pub fn new(document: &'base CoreDocument<T, U, V>) -> Self {
     Self { document }
   }
 }
@@ -281,7 +288,7 @@ where
     X: Serialize + TrySignature,
   {
     let signature: &Signature = that.try_signature()?;
-    let method: &Method<U> = self.document.try_resolve(signature)?;
+    let method: &VerificationMethod<U> = self.document.try_resolve(signature)?;
     let data: Vec<u8> = method.key_data().try_decode()?;
 
     match method.key_type() {
@@ -289,10 +296,10 @@ where
         JcsEd25519::<Ed25519>::verify_signature(that, &data)?;
       }
       MethodType::MerkleKeyCollection2021 => match MerkleKey::extract_tags(&data)? {
-        (MerkleTag::ED25519, MerkleTag::SHA256) => {
+        (MerkleSignatureTag::ED25519, MerkleDigestTag::SHA256) => {
           self.merkle_key_verify::<X, Sha256, Ed25519>(that, method, &data)?;
         }
-        (MerkleTag::ED25519, MerkleTag::BLAKE2B_256) => {
+        (MerkleSignatureTag::ED25519, MerkleDigestTag::BLAKE2B_256) => {
           self.merkle_key_verify::<X, Blake2b256, Ed25519>(that, method, &data)?;
         }
         (_, _) => {
@@ -304,7 +311,7 @@ where
     Ok(())
   }
 
-  fn merkle_key_verify<X, D, S>(&self, that: &X, method: &Method<U>, data: &[u8]) -> Result<()>
+  fn merkle_key_verify<X, D, S>(&self, that: &X, method: &VerificationMethod<U>, data: &[u8]) -> Result<()>
   where
     X: Serialize + TrySignature,
     D: MerkleDigest,

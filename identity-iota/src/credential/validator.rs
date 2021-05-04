@@ -10,8 +10,8 @@ use serde::Serialize;
 use std::collections::BTreeMap;
 
 use crate::client::Client;
-use crate::did::Document;
-use crate::did::DID;
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -33,8 +33,8 @@ pub struct PresentationValidation<T = Object, U = Object> {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DocumentValidation {
-  pub did: DID,
-  pub document: Document,
+  pub did: IotaDID,
+  pub document: IotaDocument,
   pub metadata: Object,
   pub verified: bool,
 }
@@ -156,8 +156,8 @@ impl<'a> CredentialValidator<'a> {
   }
 
   async fn validate_document(&self, did: &str) -> Result<DocumentValidation> {
-    let did: DID = did.parse()?;
-    let document: Document = self.client.read_document(&did).await?;
+    let did: IotaDID = did.parse()?;
+    let document: IotaDocument = self.client.read_document(&did).await?;
     let verified: bool = document.verify().is_ok();
 
     Ok(DocumentValidation {

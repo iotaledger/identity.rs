@@ -14,7 +14,7 @@ use identity::prelude::*;
 async fn main() -> Result<()> {
   // Create a DID Document (an identity).
   let keypair: KeyPair = KeyPair::new_ed25519()?;
-  let mut document: Document = Document::from_keypair(&keypair)?;
+  let mut document: IotaDocument = IotaDocument::from_keypair(&keypair)?;
 
   // Sign the DID Document with the default authentication key.
   document.sign(keypair.secret())?;
@@ -26,7 +26,7 @@ async fn main() -> Result<()> {
   document.publish(&client).await?;
 
   // Print the DID Document IOTA transaction link.
-  let network: Network = document.id().into();
+  let network = Network::from_did(document.id());
   let explore: String = format!("{}/message/{}", network.explorer_url(), document.message_id());
   println!("DID Document Transaction > {}", explore);
 

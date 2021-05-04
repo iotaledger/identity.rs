@@ -18,22 +18,24 @@ use crate::error::Result;
 use crate::service::Service;
 use crate::utils::DIDKey;
 use crate::utils::OrderedSet;
-use crate::verification::Method;
 use crate::verification::MethodQuery;
 use crate::verification::MethodRef;
 use crate::verification::MethodScope;
+use crate::verification::VerificationMethod;
 
-/// A DID Document
+/// A DID Document.
+///
+/// [Specification](https://www.w3.org/TR/did-core/#did-document-properties)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[rustfmt::skip]
-pub struct Document<T = Object, U = Object, V = Object> {
+pub struct CoreDocument<T = Object, U = Object, V = Object> {
   pub(crate) id: DID,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) controller: Option<DID>,
   #[serde(default = "Default::default", rename = "alsoKnownAs", skip_serializing_if = "Vec::is_empty")]
   pub(crate) also_known_as: Vec<Url>,
   #[serde(default = "Default::default", rename = "verificationMethod", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) verification_method: OrderedSet<DIDKey<Method<U>>>,
+  pub(crate) verification_method: OrderedSet<DIDKey<VerificationMethod<U>>>,
   #[serde(default = "Default::default", skip_serializing_if = "OrderedSet::is_empty")]
   pub(crate) authentication: OrderedSet<DIDKey<MethodRef<U>>>,
   #[serde(default = "Default::default", rename = "assertionMethod", skip_serializing_if = "OrderedSet::is_empty")]
@@ -50,15 +52,15 @@ pub struct Document<T = Object, U = Object, V = Object> {
   pub(crate) properties: T,
 }
 
-impl<T, U, V> Document<T, U, V> {
-  /// Creates a `DocumentBuilder` to configure a new `Document`.
+impl<T, U, V> CoreDocument<T, U, V> {
+  /// Creates a `DocumentBuilder` to configure a new `CoreDocument`.
   ///
   /// This is the same as `DocumentBuilder::new()`.
   pub fn builder(properties: T) -> DocumentBuilder<T, U, V> {
     DocumentBuilder::new(properties)
   }
 
-  /// Returns a new `Document` based on the `DocumentBuilder` configuration.
+  /// Returns a new `CoreDocument` based on the `DocumentBuilder` configuration.
   pub fn from_builder(builder: DocumentBuilder<T, U, V>) -> Result<Self> {
     Ok(Self {
       id: builder.id.ok_or(Error::BuilderInvalidDocumentId)?,
@@ -75,123 +77,123 @@ impl<T, U, V> Document<T, U, V> {
     })
   }
 
-  /// Returns a reference to the `Document` id.
+  /// Returns a reference to the `CoreDocument` id.
   pub fn id(&self) -> &DID {
     &self.id
   }
 
-  /// Returns a mutable reference to the `Document` id.
+  /// Returns a mutable reference to the `CoreDocument` id.
   pub fn id_mut(&mut self) -> &mut DID {
     &mut self.id
   }
 
-  /// Returns a reference to the `Document` controller.
+  /// Returns a reference to the `CoreDocument` controller.
   pub fn controller(&self) -> Option<&DID> {
     self.controller.as_ref()
   }
 
-  /// Returns a mutable reference to the `Document` controller.
+  /// Returns a mutable reference to the `CoreDocument` controller.
   pub fn controller_mut(&mut self) -> Option<&mut DID> {
     self.controller.as_mut()
   }
 
-  /// Returns a reference to the `Document` alsoKnownAs set.
+  /// Returns a reference to the `CoreDocument` alsoKnownAs set.
   pub fn also_known_as(&self) -> &[Url] {
     &self.also_known_as
   }
 
-  /// Returns a mutable reference to the `Document` alsoKnownAs set.
+  /// Returns a mutable reference to the `CoreDocument` alsoKnownAs set.
   pub fn also_known_as_mut(&mut self) -> &mut Vec<Url> {
     &mut self.also_known_as
   }
 
-  /// Returns a reference to the `Document` verificationMethod set.
-  pub fn verification_method(&self) -> &OrderedSet<DIDKey<Method<U>>> {
+  /// Returns a reference to the `CoreDocument` verificationMethod set.
+  pub fn verification_method(&self) -> &OrderedSet<DIDKey<VerificationMethod<U>>> {
     &self.verification_method
   }
 
-  /// Returns a mutable reference to the `Document` verificationMethod set.
-  pub fn verification_method_mut(&mut self) -> &mut OrderedSet<DIDKey<Method<U>>> {
+  /// Returns a mutable reference to the `CoreDocument` verificationMethod set.
+  pub fn verification_method_mut(&mut self) -> &mut OrderedSet<DIDKey<VerificationMethod<U>>> {
     &mut self.verification_method
   }
 
-  /// Returns a reference to the `Document` authentication set.
+  /// Returns a reference to the `CoreDocument` authentication set.
   pub fn authentication(&self) -> &OrderedSet<DIDKey<MethodRef<U>>> {
     &self.authentication
   }
 
-  /// Returns a mutable reference to the `Document` authentication set.
+  /// Returns a mutable reference to the `CoreDocument` authentication set.
   pub fn authentication_mut(&mut self) -> &mut OrderedSet<DIDKey<MethodRef<U>>> {
     &mut self.authentication
   }
 
-  /// Returns a reference to the `Document` assertionMethod set.
+  /// Returns a reference to the `CoreDocument` assertionMethod set.
   pub fn assertion_method(&self) -> &OrderedSet<DIDKey<MethodRef<U>>> {
     &self.assertion_method
   }
 
-  /// Returns a mutable reference to the `Document` assertionMethod set.
+  /// Returns a mutable reference to the `CoreDocument` assertionMethod set.
   pub fn assertion_method_mut(&mut self) -> &mut OrderedSet<DIDKey<MethodRef<U>>> {
     &mut self.assertion_method
   }
 
-  /// Returns a reference to the `Document` keyAgreement set.
+  /// Returns a reference to the `CoreDocument` keyAgreement set.
   pub fn key_agreement(&self) -> &OrderedSet<DIDKey<MethodRef<U>>> {
     &self.key_agreement
   }
 
-  /// Returns a mutable reference to the `Document` keyAgreement set.
+  /// Returns a mutable reference to the `CoreDocument` keyAgreement set.
   pub fn key_agreement_mut(&mut self) -> &mut OrderedSet<DIDKey<MethodRef<U>>> {
     &mut self.key_agreement
   }
 
-  /// Returns a reference to the `Document` capabilityDelegation set.
+  /// Returns a reference to the `CoreDocument` capabilityDelegation set.
   pub fn capability_delegation(&self) -> &OrderedSet<DIDKey<MethodRef<U>>> {
     &self.capability_delegation
   }
 
-  /// Returns a mutable reference to the `Document` capabilityDelegation set.
+  /// Returns a mutable reference to the `CoreDocument` capabilityDelegation set.
   pub fn capability_delegation_mut(&mut self) -> &mut OrderedSet<DIDKey<MethodRef<U>>> {
     &mut self.capability_delegation
   }
 
-  /// Returns a reference to the `Document` capabilityInvocation set.
+  /// Returns a reference to the `CoreDocument` capabilityInvocation set.
   pub fn capability_invocation(&self) -> &OrderedSet<DIDKey<MethodRef<U>>> {
     &self.capability_invocation
   }
 
-  /// Returns a mutable reference to the `Document` capabilityInvocation set.
+  /// Returns a mutable reference to the `CoreDocument` capabilityInvocation set.
   pub fn capability_invocation_mut(&mut self) -> &mut OrderedSet<DIDKey<MethodRef<U>>> {
     &mut self.capability_invocation
   }
 
-  /// Returns a reference to the `Document` service set.
+  /// Returns a reference to the `CoreDocument` service set.
   pub fn service(&self) -> &OrderedSet<DIDKey<Service<V>>> {
     &self.service
   }
 
-  /// Returns a mutable reference to the `Document` service set.
+  /// Returns a mutable reference to the `CoreDocument` service set.
   pub fn service_mut(&mut self) -> &mut OrderedSet<DIDKey<Service<V>>> {
     &mut self.service
   }
 
-  /// Returns a reference to the custom `Document` properties.
+  /// Returns a reference to the custom `CoreDocument` properties.
   pub fn properties(&self) -> &T {
     &self.properties
   }
 
-  /// Returns a mutable reference to the custom `Document` properties.
+  /// Returns a mutable reference to the custom `CoreDocument` properties.
   pub fn properties_mut(&mut self) -> &mut T {
     &mut self.properties
   }
 
-  /// Maps `Document<T>` to `Document<U>` by applying a function to the custom
+  /// Maps `CoreDocument<T>` to `CoreDocument<U>` by applying a function to the custom
   /// properties.
-  pub fn map<A, F>(self, f: F) -> Document<A, U, V>
+  pub fn map<A, F>(self, f: F) -> CoreDocument<A, U, V>
   where
     F: FnOnce(T) -> A,
   {
-    Document {
+    CoreDocument {
       id: self.id,
       controller: self.controller,
       also_known_as: self.also_known_as,
@@ -211,11 +213,11 @@ impl<T, U, V> Document<T, U, V> {
   /// # Errors
   ///
   /// `try_map` can fail if the provided function fails.
-  pub fn try_map<A, F, E>(self, f: F) -> Result<Document<A, U, V>, E>
+  pub fn try_map<A, F, E>(self, f: F) -> Result<CoreDocument<A, U, V>, E>
   where
     F: FnOnce(T) -> Result<A, E>,
   {
-    Ok(Document {
+    Ok(CoreDocument {
       id: self.id,
       controller: self.controller,
       also_known_as: self.also_known_as,
@@ -231,7 +233,7 @@ impl<T, U, V> Document<T, U, V> {
   }
 
   /// Adds a new [`Method<U>`][`Method`] to the Document.
-  pub fn insert_method(&mut self, scope: MethodScope, method: Method<U>) -> bool {
+  pub fn insert_method(&mut self, scope: MethodScope, method: VerificationMethod<U>) -> bool {
     match scope {
       MethodScope::VerificationMethod => self.verification_method.append(method.into()),
       MethodScope::Authentication => self.authentication.append(MethodRef::Embed(method).into()),
@@ -253,8 +255,8 @@ impl<T, U, V> Document<T, U, V> {
   }
 
   /// Returns an iterator over all verification methods in the DID Document.
-  pub fn methods(&self) -> impl Iterator<Item = &Method<U>> {
-    fn __filter_ref<T>(method: &DIDKey<MethodRef<T>>) -> Option<&Method<T>> {
+  pub fn methods(&self) -> impl Iterator<Item = &VerificationMethod<U>> {
+    fn __filter_ref<T>(method: &DIDKey<MethodRef<T>>) -> Option<&VerificationMethod<T>> {
       match &**method {
         MethodRef::Embed(method) => Some(method),
         MethodRef::Refer(_) => None,
@@ -274,7 +276,7 @@ impl<T, U, V> Document<T, U, V> {
 
   /// Returns the first verification [`method`][`Method`] with an `id` property
   /// matching the provided `query`.
-  pub fn resolve<'query, Q>(&self, query: Q) -> Option<&Method<U>>
+  pub fn resolve<'query, Q>(&self, query: Q) -> Option<&VerificationMethod<U>>
   where
     Q: Into<MethodQuery<'query>>,
   {
@@ -287,29 +289,29 @@ impl<T, U, V> Document<T, U, V> {
   /// # Errors
   ///
   /// Fails if no matching verification `Method` is found.
-  pub fn try_resolve<'query, Q>(&self, query: Q) -> Result<&Method<U>>
+  pub fn try_resolve<'query, Q>(&self, query: Q) -> Result<&VerificationMethod<U>>
   where
     Q: Into<MethodQuery<'query>>,
   {
     self.resolve(query).ok_or(Error::QueryMethodNotFound)
   }
 
-  /// Returns a mutable reference to the first verification [`method`][`Method`]
+  /// Returns a mutable reference to the first verification [`method`][`VerificationMethod`]
   /// with an `id` property matching the provided `query`.
-  pub fn resolve_mut<'query, Q>(&mut self, query: Q) -> Option<&mut Method<U>>
+  pub fn resolve_mut<'query, Q>(&mut self, query: Q) -> Option<&mut VerificationMethod<U>>
   where
     Q: Into<MethodQuery<'query>>,
   {
     self.resolve_method_mut(query.into())
   }
 
-  /// Returns a mutable reference to the first verification [`method`][`Method`]
+  /// Returns a mutable reference to the first verification [`method`][`VerificationMethod`]
   /// with an `id` property matching the provided `query`.
   ///
   /// # Errors
   ///
-  /// Fails if no matching verification `Method` is found.
-  pub fn try_resolve_mut<'query, Q>(&mut self, query: Q) -> Result<&mut Method<U>>
+  /// Fails if no matching `VerificationMethod` is found.
+  pub fn try_resolve_mut<'query, Q>(&mut self, query: Q) -> Result<&mut VerificationMethod<U>>
   where
     Q: Into<MethodQuery<'query>>,
   {
@@ -317,14 +319,14 @@ impl<T, U, V> Document<T, U, V> {
   }
 
   #[doc(hidden)]
-  pub fn resolve_ref<'a>(&'a self, method: &'a MethodRef<U>) -> Option<&'a Method<U>> {
+  pub fn resolve_ref<'a>(&'a self, method: &'a MethodRef<U>) -> Option<&'a VerificationMethod<U>> {
     match method {
       MethodRef::Embed(method) => Some(method),
       MethodRef::Refer(did) => self.verification_method.query(did.as_str()),
     }
   }
 
-  fn resolve_method(&self, query: MethodQuery<'_>) -> Option<&Method<U>> {
+  fn resolve_method(&self, query: MethodQuery<'_>) -> Option<&VerificationMethod<U>> {
     let mut method: Option<&MethodRef<U>> = None;
 
     if method.is_none() {
@@ -354,7 +356,7 @@ impl<T, U, V> Document<T, U, V> {
     }
   }
 
-  fn resolve_method_mut(&mut self, query: MethodQuery<'_>) -> Option<&mut Method<U>> {
+  fn resolve_method_mut(&mut self, query: MethodQuery<'_>) -> Option<&mut VerificationMethod<U>> {
     let mut method: Option<&mut MethodRef<U>> = None;
 
     if method.is_none() {
@@ -385,7 +387,7 @@ impl<T, U, V> Document<T, U, V> {
   }
 }
 
-impl<T, U, V> Display for Document<T, U, V>
+impl<T, U, V> Display for CoreDocument<T, U, V>
 where
   T: Serialize,
   U: Serialize,
@@ -403,17 +405,17 @@ where
 #[cfg(test)]
 mod tests {
   use crate::did::DID;
-  use crate::document::Document;
-  use crate::verification::Method;
+  use crate::document::CoreDocument;
   use crate::verification::MethodData;
   use crate::verification::MethodType;
+  use crate::verification::VerificationMethod;
 
   fn controller() -> DID {
     "did:example:1234".parse().unwrap()
   }
 
-  fn method(controller: &DID, fragment: &str) -> Method {
-    Method::builder(Default::default())
+  fn method(controller: &DID, fragment: &str) -> VerificationMethod {
+    VerificationMethod::builder(Default::default())
       .id(controller.join(fragment).unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
@@ -422,10 +424,10 @@ mod tests {
       .unwrap()
   }
 
-  fn document() -> Document {
+  fn document() -> CoreDocument {
     let controller: DID = controller();
 
-    Document::builder(Default::default())
+    CoreDocument::builder(Default::default())
       .id(controller.clone())
       .verification_method(method(&controller, "#key-1"))
       .verification_method(method(&controller, "#key-2"))
@@ -439,7 +441,7 @@ mod tests {
 
   #[test]
   fn test_resolve_fragment_identifier() {
-    let document: Document = document();
+    let document: CoreDocument = document();
 
     // Resolve methods by fragment
     assert_eq!(document.resolve("#key-1").unwrap().id(), "did:example:1234#key-1");
@@ -454,7 +456,7 @@ mod tests {
 
   #[test]
   fn test_resolve_index_identifier() {
-    let document: Document = document();
+    let document: CoreDocument = document();
 
     // Resolve methods by index
     assert_eq!(document.methods().next().unwrap().id(), "did:example:1234#key-1");
@@ -463,7 +465,7 @@ mod tests {
 
   #[test]
   fn test_resolve_reference_missing() {
-    let document: Document = document();
+    let document: CoreDocument = document();
 
     // Resolving an existing reference to a missing method returns None
     assert_eq!(document.resolve("#key-4"), None);
