@@ -15,7 +15,7 @@ use crate::wasm_did::WasmDID;
 #[derive(Clone, Debug, PartialEq)]
 pub struct WasmVerificationMethod(pub(crate) IotaVerificationMethod);
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = VerificationMethod)]
 impl WasmVerificationMethod {
   /// Creates a new `WasmVerificationMethod` object from the given `key`.
   #[wasm_bindgen(constructor)]

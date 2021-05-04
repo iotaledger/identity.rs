@@ -54,7 +54,7 @@ impl NewDocument {
 #[derive(Clone, Debug, PartialEq)]
 pub struct WasmDocument(pub(crate) IotaDocument);
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = Document)]
 impl WasmDocument {
   /// Creates a new DID Document from the given KeyPair.
   #[wasm_bindgen(constructor)]

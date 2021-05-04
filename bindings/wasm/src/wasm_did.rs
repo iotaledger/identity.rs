@@ -13,7 +13,7 @@ use crate::utils::err;
 #[derive(Clone, Debug, PartialEq)]
 pub struct WasmDID(pub(crate) IotaDID);
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = DID)]
 impl WasmDID {
   /// Creates a new `WasmDID` from a `KeyPair` object.
   #[wasm_bindgen(constructor)]
