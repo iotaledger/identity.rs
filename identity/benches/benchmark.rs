@@ -1,33 +1,36 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
 use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
-use diff_chain::create_diff_chain;
-use diff_chain::setup_diff_chain_bench;
-use diff_chain::update_diff_chain;
-use identity::iota::did::Document;
-use identity::iota::did::DID;
-use identity::{
-  crypto::*,
-  iota::{AuthChain, DocumentChain},
-};
+use identity::crypto::KeyPair;
+use identity::iota::DocumentChain;
+use identity::iota::IntegrationChain;
+use identity::iota::IotaDID;
+use identity::iota::IotaDocument;
 
-use crate::diff_chain::update_auth_chain;
 mod diff_chain;
 
+use self::diff_chain::create_diff_chain;
+use self::diff_chain::setup_diff_chain_bench;
+use self::diff_chain::update_diff_chain;
+use self::diff_chain::update_integration_chain;
+
 fn generate_signed_document(keypair: &KeyPair) {
-  let mut document: Document = Document::from_keypair(&keypair).unwrap();
+  let mut document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+
   document.sign(keypair.secret()).unwrap();
 }
 
 fn generate_did(keypair: &KeyPair) {
-  let _ = DID::new(keypair.public().as_ref()).unwrap();
+  let _ = IotaDID::new(keypair.public().as_ref()).unwrap();
 }
 
 fn bench_generate_signed_document(c: &mut Criterion) {
   let keypair = KeyPair::new_ed25519().unwrap();
+
   c.bench_function("generate signed document", |b| {
     b.iter(|| generate_signed_document(&keypair))
   });
@@ -45,30 +48,36 @@ fn bench_generate_doc_chain(c: &mut Criterion) {
 
 fn bench_diff_chain_updates(c: &mut Criterion) {
   static ITERATIONS: &[usize] = &[1, 10, 100, 1000];
+
   let (doc, keys) = setup_diff_chain_bench();
 
   let mut group = c.benchmark_group("update diff chain");
   for size in ITERATIONS.iter() {
-    let mut chain: DocumentChain;
-    chain = DocumentChain::new(AuthChain::new(doc.clone()).unwrap());
+    let mut chain: DocumentChain = DocumentChain::new(IntegrationChain::new(doc.clone()).unwrap());
+
     update_diff_chain(*size, &mut chain, &keys);
+
     group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &_| {
       b.iter(|| update_diff_chain(1, &mut chain.clone(), &keys));
     });
   }
   group.finish();
 }
+
 fn bench_auth_chain_updates(c: &mut Criterion) {
   static ITERATIONS: &[usize] = &[1, 10, 100, 1000];
+
   let (doc, keys) = setup_diff_chain_bench();
 
   let mut group = c.benchmark_group("update auth chain");
+
   for size in ITERATIONS.iter() {
-    let mut chain: DocumentChain;
-    chain = DocumentChain::new(AuthChain::new(doc.clone()).unwrap());
-    update_auth_chain(*size, &mut chain, &keys);
+    let mut chain: DocumentChain = DocumentChain::new(IntegrationChain::new(doc.clone()).unwrap());
+
+    update_integration_chain(*size, &mut chain, &keys);
+
     group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &_| {
-      b.iter(|| update_auth_chain(1, &mut chain.clone(), &keys));
+      b.iter(|| update_integration_chain(1, &mut chain.clone(), &keys));
     });
   }
   group.finish();
