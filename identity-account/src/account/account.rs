@@ -201,7 +201,7 @@ impl<T: Storage> Account<T> {
     let identity: IdentityId = self.try_resolve_id(key).await?;
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
     let document: &DID = snapshot.identity().try_document()?;
-    let network: Network = document.into();
+    let network: Network = Network::from_did(document);
 
     // Fetch the DID Document from the Tangle
     self
@@ -295,7 +295,7 @@ impl<T: Storage> Account<T> {
 
     self.sign_document(old_state, new_state, &mut new_doc).await?;
 
-    let network: Network = new_doc.id().into();
+    let network: Network = Network::from_did(new_doc.id());
     let client: Arc<Client> = self.state.clients.load(network).await?;
     let message: MessageId = client.publish_document(&new_doc).await?;
 
@@ -325,7 +325,7 @@ impl<T: Storage> Account<T> {
 
     old_state.sign_data(&self.store, location, &mut diff).await?;
 
-    let network: Network = old_doc.id().into();
+    let network: Network = Network::from_did(old_doc.id());
     let client: Arc<Client> = self.state.clients.load(network).await?;
     let message: MessageId = client.publish_diff(auth_id, &diff).await?;
 
