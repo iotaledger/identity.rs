@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_iota::did::DID;
+use identity_iota::did::IotaDID;
 
 use crate::identity::IdentityId;
 use crate::identity::IdentityTag;
@@ -25,7 +25,7 @@ where
   }
 }
 
-impl IdentityKey for DID {
+impl IdentityKey for IotaDID {
   fn equals(&self, tag: &IdentityTag, _: IdentityId) -> bool {
     tag.method_id() == self.method_id()
   }

@@ -7,18 +7,18 @@ use identity_core::common::Url;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
-use identity_did::document::Document as CoreDocument;
+use identity_did::document::CoreDocument;
 use identity_did::document::DocumentBuilder;
 use identity_did::service::Service as CoreService;
 use identity_did::verifiable::Properties as VerifiableProperties;
-use identity_did::verification::Method as CoreMethod;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodRef as CoreMethodRef;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_iota::did::Document;
+use identity_did::verification::VerificationMethod;
+use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDocument;
 use identity_iota::did::Properties as BaseProperties;
-use identity_iota::did::DID;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::TangleRef;
@@ -59,9 +59,9 @@ pub struct IdentityState {
   // Document State //
   // ============== //
   #[serde(skip_serializing_if = "Option::is_none")]
-  document: Option<DID>,
+  document: Option<IotaDID>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  controller: Option<DID>,
+  controller: Option<IotaDID>,
   #[serde(skip_serializing_if = "Option::is_none")]
   also_known_as: Option<Vec<Url>>,
   #[serde(skip_serializing_if = "Methods::is_empty")]
@@ -172,7 +172,7 @@ impl IdentityState {
   // ===========================================================================
 
   /// Returns the DID identifying the DID Document for the state.
-  pub fn document(&self) -> Option<&DID> {
+  pub fn document(&self) -> Option<&IotaDID> {
     self.document.as_ref()
   }
 
@@ -181,12 +181,12 @@ impl IdentityState {
   /// # Errors
   ///
   /// Fails if the DID is not set.
-  pub fn try_document(&self) -> Result<&DID> {
+  pub fn try_document(&self) -> Result<&IotaDID> {
     self.document().ok_or(Error::MissingDocumentId)
   }
 
   /// Sets the DID identifying the DID Document for the state.
-  pub fn set_document(&mut self, document: DID) {
+  pub fn set_document(&mut self, document: IotaDID) {
     self.document = Some(document);
   }
 
@@ -255,12 +255,12 @@ impl IdentityState {
   // ===========================================================================
 
   /// Creates a new DID Document based on the identity state.
-  pub fn to_document(&self) -> Result<Document> {
+  pub fn to_document(&self) -> Result<IotaDocument> {
     let properties: BaseProperties = BaseProperties::new();
     let properties: Properties = VerifiableProperties::new(properties);
     let mut builder: DocumentBuilder<_, _, _> = BaseDocument::builder(properties);
 
-    let document_id: &DID = self.try_document()?;
+    let document_id: &IotaDID = self.try_document()?;
 
     builder = builder.id(document_id.clone().into());
 
@@ -306,7 +306,7 @@ impl IdentityState {
     }
 
     // TODO: This completely bypasses method validation...
-    let mut document: Document = builder.build().map(Into::into)?;
+    let mut document: IotaDocument = builder.build().map(Into::into)?;
 
     if !self.this_message_id.is_null() {
       document.set_message_id(self.this_message_id);
@@ -330,9 +330,9 @@ impl IdentityState {
     // Create a secret key suitable for identity_core::crypto
     let secret: RemoteKey<'_, T> = RemoteKey::new(self.id, location, store);
 
-    // Create the verification method identifier
+    // Create the Verification Method identifier
     let fragment: &str = location.fragment.identifier();
-    let method: DID = self.try_document()?.join(fragment)?;
+    let method: IotaDID = self.try_document()?.join(fragment)?;
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
@@ -351,7 +351,7 @@ impl IdentityState {
 // TinyMethodRef
 // =============================================================================
 
-/// A thin representation of a verification method reference.
+/// A thin representation of a Verification Method reference.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum TinyMethodRef {
@@ -368,7 +368,7 @@ impl TinyMethodRef {
     }
   }
 
-  /// Returns the fragment identifying the verification method reference.
+  /// Returns the fragment identifying the Verification Method reference.
   pub fn fragment(&self) -> &Fragment {
     match self {
       Self::Embed(inner) => &inner.location.fragment,
@@ -377,7 +377,7 @@ impl TinyMethodRef {
   }
 
   /// Creates a new `CoreMethodRef` from the method reference state.
-  pub fn to_core(&self, document: &DID) -> Result<CoreMethodRef> {
+  pub fn to_core(&self, document: &IotaDID) -> Result<CoreMethodRef> {
     match self {
       Self::Embed(inner) => inner.to_core(document).map(CoreMethodRef::Embed),
       Self::Refer(inner) => document
@@ -400,7 +400,7 @@ impl TinyMethodRef {
 // TinyMethod
 // =============================================================================
 
-/// A thin representation of a verification method.
+/// A thin representation of a Verification Method.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct TinyMethod {
   #[serde(rename = "1")]
@@ -421,32 +421,32 @@ impl TinyMethod {
     }
   }
 
-  /// Returns the key location of the verification method.
+  /// Returns the key location of the Verification Method.
   pub fn location(&self) -> &KeyLocation {
     &self.location
   }
 
-  /// Returns the computed method data of the verification method.
+  /// Returns the computed method data of the Verification Method.
   pub fn key_data(&self) -> &MethodData {
     &self.key_data
   }
 
-  /// Returns any additional properties associated with the verification method.
+  /// Returns any additional Verification Method properties.
   pub fn properties(&self) -> Option<&Object> {
     self.properties.as_ref()
   }
 
-  /// Returns true if the verification method is an authentication method.
+  /// Returns true if the Verification Method is an internal authentication method.
   pub fn is_authentication(&self) -> bool {
     self.location.is_authentication()
   }
 
-  /// Creates a new `CoreMethod` from the verification method state.
-  pub fn to_core(&self, document: &DID) -> Result<CoreMethod> {
+  /// Creates a new [VerificationMethod].
+  pub fn to_core(&self, document: &IotaDID) -> Result<VerificationMethod> {
     let properties: Object = self.properties.clone().unwrap_or_default();
-    let id: DID = document.join(self.location.fragment.identifier())?;
+    let id: IotaDID = document.join(self.location.fragment.identifier())?;
 
-    CoreMethod::builder(properties)
+    VerificationMethod::builder(properties)
       .id(id.into())
       .controller(document.clone().into())
       .key_type(self.location.method())
@@ -460,7 +460,7 @@ impl TinyMethod {
 // Methods
 // =============================================================================
 
-/// A map of verification method states.
+/// A map of Verification Method states.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct Methods {
@@ -473,31 +473,31 @@ impl Methods {
     Self { data: HashMap::new() }
   }
 
-  /// Returns the total number of verification methods in the map.
+  /// Returns the total number of Verification Methods in the map.
   ///
-  /// Note: This does not include verification method references.
+  /// Note: This does not include Verification Method references.
   pub fn len(&self) -> usize {
     self.iter().count()
   }
 
-  /// Returns true if the map has no verification methods.
+  /// Returns true if the map has no Verification Methods.
   pub fn is_empty(&self) -> bool {
     self.len() == 0
   }
 
-  /// Returns a slice of the verification methods applicable to the given `scope`.
+  /// Returns a slice of the Verification Methods applicable to the given `scope`.
   pub fn slice(&self, scope: MethodScope) -> &[TinyMethodRef] {
     self.data.get(&scope).map(|data| &**data).unwrap_or_default()
   }
 
-  /// Returns an iterator over all embedded verification methods.
+  /// Returns an iterator over all embedded Verification Methods.
   pub fn iter(&self) -> impl Iterator<Item = &TinyMethod> {
     self.iter_ref().filter_map(TinyMethodRef::__embed)
   }
 
-  /// Returns an iterator over all verification methods.
+  /// Returns an iterator over all Verification Methods.
   ///
-  /// Note: This includes verification method references.
+  /// Note: This includes Verification Method references.
   pub fn iter_ref(&self) -> impl Iterator<Item = &TinyMethodRef> {
     self
       .slice(MethodScope::VerificationMethod)
@@ -509,18 +509,18 @@ impl Methods {
       .chain(self.slice(MethodScope::CapabilityInvocation).iter())
   }
 
-  /// Returns a reference to the verification method identified by the given
+  /// Returns a reference to the Verification Method identified by the given
   /// `fragment`.
   pub fn get(&self, fragment: &str) -> Option<&TinyMethod> {
     self.iter().find(|method| method.location().fragment() == fragment)
   }
 
-  /// Returns a reference to the verification method identified by the given
+  /// Returns a reference to the Verification Method identified by the given
   /// `fragment`.
   ///
   /// # Errors
   ///
-  /// Fails if no matching verification method is found.
+  /// Fails if no matching Verification Method is found.
   pub fn fetch(&self, fragment: &str) -> Result<&TinyMethod> {
     self.get(fragment).ok_or(Error::MethodNotFound)
   }
@@ -542,7 +542,7 @@ impl Methods {
     }
   }
 
-  /// Removes the verification method specified by the given `fragment`.
+  /// Removes the Verification Method specified by the given `fragment`.
   ///
   /// Note: This includes both references and embedded structures.
   pub fn delete(&mut self, fragment: &str) {
@@ -586,9 +586,9 @@ impl TinyService {
   }
 
   /// Creates a new `CoreService` from the service state.
-  pub fn to_core(&self, document: &DID) -> Result<CoreService<Object>> {
+  pub fn to_core(&self, document: &IotaDID) -> Result<CoreService<Object>> {
     let properties: Object = self.properties.clone().unwrap_or_default();
-    let id: DID = document.join(self.fragment().identifier())?;
+    let id: IotaDID = document.join(self.fragment().identifier())?;
 
     CoreService::builder(properties)
       .id(id.into())

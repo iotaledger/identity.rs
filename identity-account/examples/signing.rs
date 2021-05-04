@@ -14,7 +14,7 @@ use identity_core::json;
 use identity_credential::credential::Credential;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_iota::did::Document;
+use identity_iota::did::IotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -54,7 +54,7 @@ async fn main() -> Result<()> {
   println!("[Example] Local Credential = {:#}", credential);
 
   // Fetch the DID Document from the Tangle
-  let resolved: Document = account.resolve(snapshot.id()).await?;
+  let resolved: IotaDocument = account.resolve(snapshot.id()).await?;
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 

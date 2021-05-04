@@ -3,7 +3,7 @@
 
 use hashbrown::hash_map::Entry;
 use hashbrown::HashMap;
-use identity_iota::did::DID;
+use identity_iota::did::IotaDID;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -44,12 +44,12 @@ impl IdentityIndex {
   }
 
   /// Adds a new unnamed identity to the index.
-  pub fn set(&mut self, id: IdentityId, did: &DID) -> Result<()> {
+  pub fn set(&mut self, id: IdentityId, did: &IotaDID) -> Result<()> {
     self.insert(id, IdentityTag::new(did.method_id().into()))
   }
 
   /// Adds a new named identity to the index.
-  pub fn set_named(&mut self, id: IdentityId, did: &DID, name: String) -> Result<()> {
+  pub fn set_named(&mut self, id: IdentityId, did: &IotaDID, name: String) -> Result<()> {
     self.insert(id, IdentityTag::named(did.method_id().into(), name))
   }
 
@@ -88,9 +88,9 @@ mod tests {
     let mut index: IdentityIndex = IdentityIndex::new();
     assert_eq!(index.tags().is_empty(), true);
 
-    let target1: DID = format!("did:iota:{}", DID::encode_key(b"123")).parse().unwrap();
-    let target2: DID = format!("did:iota:{}", DID::encode_key(b"456")).parse().unwrap();
-    let target3: DID = format!("did:iota:{}", DID::encode_key(b"789")).parse().unwrap();
+    let target1: IotaDID = format!("did:iota:{}", IotaDID::encode_key(b"123")).parse().unwrap();
+    let target2: IotaDID = format!("did:iota:{}", IotaDID::encode_key(b"456")).parse().unwrap();
+    let target3: IotaDID = format!("did:iota:{}", IotaDID::encode_key(b"789")).parse().unwrap();
 
     index.set(1.into(), &target1).unwrap();
     index.set(2.into(), &target2).unwrap();

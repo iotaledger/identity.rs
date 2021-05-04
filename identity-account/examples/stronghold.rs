@@ -9,7 +9,7 @@ use identity_account::identity::IdentitySnapshot;
 use identity_account::storage::Stronghold;
 use identity_account::utils::derive_encryption_key;
 use identity_account::utils::EncryptionKey;
-use identity_iota::did::Document;
+use identity_iota::did::IotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
   println!("[Example] Local Document List = {:#?}", account.list().await);
 
   // Fetch the DID Document from the Tangle
-  let resolved: Document = account.resolve(snapshot.id()).await?;
+  let resolved: IotaDocument = account.resolve(snapshot.id()).await?;
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 

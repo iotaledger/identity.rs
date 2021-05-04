@@ -12,9 +12,9 @@ use identity_core::crypto::SetSignature;
 use identity_did::verification::MethodType;
 use identity_iota::client::Client;
 use identity_iota::client::Network;
-use identity_iota::did::Document;
 use identity_iota::did::DocumentDiff;
-use identity_iota::did::DID;
+use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDocument;
 use identity_iota::tangle::MessageId;
 use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
@@ -127,7 +127,7 @@ impl<T: Storage> Account<T> {
 
     // Read the latest snapshot
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
-    let document: &DID = snapshot.identity().try_document()?;
+    let document: &IotaDID = snapshot.identity().try_document()?;
 
     // Add the identity to the index
     if let Some(name) = input.name {
@@ -197,10 +197,10 @@ impl<T: Storage> Account<T> {
   }
 
   /// Resolves the DID Document associated with the specified `key`.
-  pub async fn resolve<K: IdentityKey>(&self, key: K) -> Result<Document> {
+  pub async fn resolve<K: IdentityKey>(&self, key: K) -> Result<IotaDocument> {
     let identity: IdentityId = self.try_resolve_id(key).await?;
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
-    let document: &DID = snapshot.identity().try_document()?;
+    let document: &IotaDID = snapshot.identity().try_document()?;
     let network: Network = Network::from_did(document);
 
     // Fetch the DID Document from the Tangle
@@ -266,7 +266,7 @@ impl<T: Storage> Account<T> {
     &self,
     old_state: &IdentityState,
     new_state: &IdentityState,
-    document: &mut Document,
+    document: &mut IotaDocument,
   ) -> Result<()> {
     if new_state.auth_generation() == Generation::new() {
       let method: &TinyMethod = new_state.authentication()?;
@@ -291,7 +291,7 @@ impl<T: Storage> Account<T> {
     let old_state: &IdentityState = old_root.identity();
     let new_state: &IdentityState = new_root.identity();
 
-    let mut new_doc: Document = new_state.to_document()?;
+    let mut new_doc: IotaDocument = new_state.to_document()?;
 
     self.sign_document(old_state, new_state, &mut new_doc).await?;
 
@@ -312,8 +312,8 @@ impl<T: Storage> Account<T> {
     let old_state: &IdentityState = old_root.identity();
     let new_state: &IdentityState = new_root.identity();
 
-    let old_doc: Document = old_state.to_document()?;
-    let new_doc: Document = new_state.to_document()?;
+    let old_doc: IotaDocument = old_state.to_document()?;
+    let new_doc: IotaDocument = new_state.to_document()?;
 
     let auth_id: &MessageId = old_state.this_message_id();
     let diff_id: &MessageId = old_state.diff_message_id();

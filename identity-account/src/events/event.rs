@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_did::verification::MethodScope;
-use identity_iota::did::DID;
+use identity_iota::did::IotaDID;
 use identity_iota::tangle::MessageId;
 
 use crate::error::Result;
@@ -109,7 +109,7 @@ pub enum EventData {
   /// Emitted when a new diff message is published to the IOTA Tangle.
   DiffMessage(MessageId),
   /// Emitted when a new identity state is created.
-  IdentityCreated(DID),
+  IdentityCreated(IotaDID),
   /// Emitted when a new verification method is created.
   MethodCreated(MethodScope, TinyMethod),
   /// Emitted when a verification method is deleted.

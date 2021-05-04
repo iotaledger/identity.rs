@@ -7,7 +7,7 @@ use identity_core::crypto::PublicKey;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_iota::did::DID;
+use identity_iota::did::IotaDID;
 
 use crate::error::Result;
 use crate::events::CommandError;
@@ -104,7 +104,7 @@ impl Command {
         // Generate a new DID URL from the public key
         let network: Option<&str> = network.as_deref();
         let shard: Option<&str> = shard.as_deref();
-        let document: DID = DID::from_components(public.as_ref(), network, shard)?;
+        let document: IotaDID = IotaDID::from_components(public.as_ref(), network, shard)?;
 
         Ok(Some(vec![
           Event::new(EventData::IdentityCreated(document)),
