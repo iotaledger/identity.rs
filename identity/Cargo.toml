@@ -37,6 +37,9 @@ credential = ["identifier", "identity-credential"]
 # Enables support for reading/writing from the IOTA Tangle
 iota = ["identifier", "credential", "identity-iota"]
 
+# Enables Web Assembly support
+wasm = ["identity-iota/wasm"]
+
 [package.metadata.docs.rs]
 # To build locally:
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open

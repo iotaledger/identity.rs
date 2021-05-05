@@ -29,7 +29,11 @@ use iota_client::bee_message::MessageId;
 pub struct DocumentDiff {
   pub(crate) did: IotaDID,
   pub(crate) diff: String,
-  #[serde(default = "MessageId::null", skip_serializing_if = "MessageIdExt::is_null")]
+  #[serde(
+    rename = "previousMessageId",
+    default = "MessageId::null",
+    skip_serializing_if = "MessageIdExt::is_null"
+  )]
   pub(crate) previous_message_id: MessageId,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) proof: Option<Signature>,

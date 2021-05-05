@@ -25,14 +25,20 @@ thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "60892fa6b649d9efa540349b68dd70a57cc300a9"
+rev = "ee7245dfe056b6bc9d59739865d25ebd431f6e9b"
 default-features = false
-features = ["wasm"]
 
 [dependencies.iota-crypto]
 version = "0.5"
 default-features = false
 features = ["blake2b"]
+
+[features]
+# default = ["iota-client/async", "iota-client/futures", "iota-client/tokio"]
+default = ["iota-client/wasm"]
+
+# Enables Web Assembly support
+wasm = ["iota-client/wasm"]
 
 [package.metadata.docs.rs]
 # To build locally:
