@@ -220,6 +220,7 @@ impl IotaDocument {
 
   /// Returns a reference to the `IotaDocument` controller.
   pub fn controller(&self) -> Option<&IotaDID> {
+    // SAFETY: Validity of controller checked in DID Document constructors.
     unsafe { self.document.controller().map(|d| IotaDID::new_unchecked_ref(d)) }
   }
 
@@ -296,6 +297,7 @@ impl IotaDocument {
 
   /// Returns an iterator over all verification methods in the DID Document.
   pub fn methods(&self) -> impl Iterator<Item = &IotaVerificationMethod> {
+    // SAFETY: Validity of verification methods checked in `IotaDocument::check_authentication`.
     unsafe {
       self
         .document
@@ -326,6 +328,7 @@ impl IotaDocument {
   where
     Q: Into<MethodQuery<'query>>,
   {
+    // SAFETY: Validity of verification methods checked in `IotaDocument::check_authentication`.
     unsafe {
       self
         .document
@@ -344,6 +347,7 @@ impl IotaDocument {
   where
     Q: Into<MethodQuery<'query>>,
   {
+    // SAFETY: Validity of verification methods checked in `IotaDocument::check_authentication`.
     unsafe {
       self
         .document
