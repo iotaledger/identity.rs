@@ -49,12 +49,12 @@ async function run(Identity) {
   console.log("Verified (user1): ", user1.doc.verify())
   console.log("Verified (user2): ", user2.doc.verify())
 
-  user1.message = await Identity.publish(user1.doc.toJSON(), CLIENT_CONFIG)
-  user2.message = await Identity.publish(user2.doc.toJSON(), CLIENT_CONFIG)
+  user1MessageId = await Identity.publish(user1.doc.toJSON(), CLIENT_CONFIG)
+  user2MessageId = await Identity.publish(user2.doc.toJSON(), CLIENT_CONFIG)
 
   // Publish all DID documents
-  console.log(`Publish Result (user1): https://explorer.iota.org/mainnet/transaction/${user1.message}`)
-  console.log(`Publish Result (user2): https://explorer.iota.org/mainnet/transaction/${user2.message}`)
+  console.log(`Publish Result (user1): https://explorer.iota.org/mainnet/transaction/${user1MessageId}`)
+  console.log(`Publish Result (user2): https://explorer.iota.org/mainnet/transaction/${user2MessageId}`)
 
   // Prepare a credential subject indicating the degree earned by Alice
   let credentialSubject = {
@@ -103,17 +103,15 @@ async function run(Identity) {
   // Bobs key was compromised - mark it as revoked and publish an update
   user2.doc.revokeMerkleKey(method.id.toString(), 0)
 
-  user2.doc = Document.fromJSON({
-    previous_message_id: user2.message,
-    ...user2.doc.toJSON()
-  })
+  // Set the Tangle message id of the previously published DID Document
+  user2.doc.previousMessageId = user2MessageId
 
   // The "authentication" key was not compromised so it's safe to publish an update
   user2.doc.sign(user2.key)
 
-  user2.message = await Identity.publish(user2.doc.toJSON(), CLIENT_CONFIG)
+  user2MessageId = await Identity.publish(user2.doc.toJSON(), CLIENT_CONFIG)
 
-  console.log("Publish Result (user2): https://explorer.iota.org/mainnet/transaction/" + user2.message)
+  console.log("Publish Result (user2): https://explorer.iota.org/mainnet/transaction/" + user2MessageId)
 
   // Resolve DID documents
   console.log("Resolve Result (user1): ", await Identity.resolve(user1.doc.id.toString(), CLIENT_CONFIG))
