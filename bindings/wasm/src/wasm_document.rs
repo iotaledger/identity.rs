@@ -13,6 +13,7 @@ use identity::did::verifiable;
 use identity::did::MethodScope;
 use identity::did::VerificationMethod;
 use identity::iota::DocumentDiff;
+use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
@@ -59,13 +60,22 @@ impl WasmDocument {
   /// Creates a new DID Document from the given KeyPair.
   #[wasm_bindgen(constructor)]
   #[allow(clippy::new_ret_no_self)]
-  pub fn new(type_: KeyType, tag: Option<String>) -> Result<NewDocument, JsValue> {
-    let key: KeyPair = KeyPair::new(type_)?;
-    let method: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&key.0, tag.as_deref()).map_err(err)?;
+  pub fn new(type_: KeyType, network: Option<String>, tag: Option<String>) -> Result<NewDocument, JsValue> {
+    let keypair: KeyPair = KeyPair::new(type_)?;
+    let public: &PublicKey = keypair.0.public();
+
+    let did: IotaDID = if let Some(network) = network.as_deref() {
+      IotaDID::with_network(public.as_ref(), network).map_err(err)?
+    } else {
+      IotaDID::new(public.as_ref()).map_err(err)?
+    };
+
+    let method: IotaVerificationMethod =
+      IotaVerificationMethod::from_did(did, &keypair.0, tag.as_deref()).map_err(err)?;
     let document: IotaDocument = IotaDocument::from_authentication(method).map_err(err)?;
 
     Ok(NewDocument {
-      key,
+      key: keypair,
       doc: Self(document),
     })
   }
@@ -101,6 +111,20 @@ impl WasmDocument {
       Some(proof) => JsValue::from_serde(proof).map_err(err),
       None => Ok(JsValue::NULL),
     }
+  }
+
+  #[wasm_bindgen(getter = previousMessageId)]
+  pub fn previous_message_id(&self) -> String {
+    self.0.previous_message_id().to_string()
+  }
+
+  #[wasm_bindgen(setter = setPreviousMessageId)]
+  pub fn set_previous_message_id(&mut self, value: &str) -> Result<(), JsValue> {
+    let message: MessageId = MessageId::from_str(value).map_err(err)?;
+
+    self.0.set_previous_message_id(message);
+
+    Ok(())
   }
 
   // ===========================================================================

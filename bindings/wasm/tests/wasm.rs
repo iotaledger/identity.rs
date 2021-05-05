@@ -72,16 +72,16 @@ fn test_did() {
   assert_eq!(did.to_string(), parsed.to_string());
 
   let public = key.public();
-  let base58 = WasmDID::from_base58(&public, Some("com".to_string()), Some("xyz".to_string())).unwrap();
+  let base58 = WasmDID::from_base58(&public, Some("test".to_string()), Some("xyz".to_string())).unwrap();
 
   assert_eq!(base58.tag(), did.tag());
-  assert_eq!(base58.network(), "com");
+  assert_eq!(base58.network(), "test");
   assert_eq!(base58.shard().unwrap(), "xyz");
 }
 
 #[test]
 fn test_document() {
-  let output = WasmDocument::new(KeyType::Ed25519, None).unwrap();
+  let output = WasmDocument::new(KeyType::Ed25519, None, None).unwrap();
 
   let mut doc = output.doc();
   let key = output.key();
