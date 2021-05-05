@@ -9,10 +9,11 @@ const MAIN_NETWORK_NAME: &str = "main";
 const TEST_NETWORK_NAME: &str = "test";
 
 lazy_static! {
-  static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/chrysalis").unwrap();
-  static ref EXPLORER_TEST: Url = Url::parse("https://explorer.iota.org/chrysalis").unwrap();
-  static ref NODE_MAIN: Url = Url::parse("https://api.lb-0.testnet.chrysalis2.com:443").unwrap();
-  static ref NODE_TEST: Url = Url::parse("https://api.lb-0.testnet.chrysalis2.com:443").unwrap();
+  static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/mainnet").unwrap();
+  static ref EXPLORER_TEST: Url = Url::parse("https://explorer.iota.org/testnet").unwrap();
+
+  static ref NODE_MAIN: Url = Url::parse("https://chrysalis-nodes.iota.org").unwrap();
+  static ref NODE_TEST: Url = Url::parse("https://api.lb-0.testnet.chrysalis2.com").unwrap();
 }
 
 /// The Tangle network to use (`Mainnet` or `Testnet`).
