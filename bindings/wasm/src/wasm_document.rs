@@ -15,7 +15,7 @@ use identity::did::VerificationMethod;
 use identity::iota::DocumentDiff;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
-use iota_client::bee_message::MessageId;
+use identity::iota::MessageId;
 use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
