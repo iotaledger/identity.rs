@@ -11,7 +11,11 @@ use iota_client::bee_message::MessageId;
 pub struct Properties {
   pub(crate) created: Timestamp,
   pub(crate) updated: Timestamp,
-  #[serde(default = "MessageId::null", skip_serializing_if = "MessageIdExt::is_null")]
+  #[serde(
+    rename = "previousMessageId",
+    default = "MessageId::null",
+    skip_serializing_if = "MessageIdExt::is_null"
+  )]
   pub(crate) previous_message_id: MessageId,
   #[serde(flatten)]
   pub(crate) properties: Object,
