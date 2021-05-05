@@ -59,7 +59,7 @@ pub struct IdentityState {
   // Document State //
   // ============== //
   #[serde(skip_serializing_if = "Option::is_none")]
-  document: Option<IotaDID>,
+  did: Option<IotaDID>,
   #[serde(skip_serializing_if = "Option::is_none")]
   controller: Option<IotaDID>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -83,7 +83,7 @@ impl IdentityState {
       this_message_id: MessageId::null(),
       last_auth_message_id: MessageId::null(),
       last_diff_message_id: MessageId::null(),
-      document: None,
+      did: None,
       controller: None,
       also_known_as: None,
       methods: Methods::new(),
@@ -172,8 +172,8 @@ impl IdentityState {
   // ===========================================================================
 
   /// Returns the DID identifying the DID Document for the state.
-  pub fn document(&self) -> Option<&IotaDID> {
-    self.document.as_ref()
+  pub fn did(&self) -> Option<&IotaDID> {
+    self.did.as_ref()
   }
 
   /// Returns the DID identifying the DID Document for the state.
@@ -181,13 +181,13 @@ impl IdentityState {
   /// # Errors
   ///
   /// Fails if the DID is not set.
-  pub fn try_document(&self) -> Result<&IotaDID> {
-    self.document().ok_or(Error::MissingDocumentId)
+  pub fn try_did(&self) -> Result<&IotaDID> {
+    self.did().ok_or(Error::MissingDocumentId)
   }
 
   /// Sets the DID identifying the DID Document for the state.
-  pub fn set_document(&mut self, document: IotaDID) {
-    self.document = Some(document);
+  pub fn set_did(&mut self, did: IotaDID) {
+    self.did = Some(did);
   }
 
   /// Returns the timestamp of when the state was created.
@@ -260,7 +260,7 @@ impl IdentityState {
     let properties: Properties = VerifiableProperties::new(properties);
     let mut builder: DocumentBuilder<_, _, _> = BaseDocument::builder(properties);
 
-    let document_id: &IotaDID = self.try_document()?;
+    let document_id: &IotaDID = self.try_did()?;
 
     builder = builder.id(document_id.clone().into());
 
@@ -332,7 +332,7 @@ impl IdentityState {
 
     // Create the Verification Method identifier
     let fragment: &str = location.fragment.identifier();
-    let method: IotaDID = self.try_document()?.join(fragment)?;
+    let method: IotaDID = self.try_did()?.join(fragment)?;
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
@@ -377,10 +377,10 @@ impl TinyMethodRef {
   }
 
   /// Creates a new `CoreMethodRef` from the method reference state.
-  pub fn to_core(&self, document: &IotaDID) -> Result<CoreMethodRef> {
+  pub fn to_core(&self, did: &IotaDID) -> Result<CoreMethodRef> {
     match self {
-      Self::Embed(inner) => inner.to_core(document).map(CoreMethodRef::Embed),
-      Self::Refer(inner) => document
+      Self::Embed(inner) => inner.to_core(did).map(CoreMethodRef::Embed),
+      Self::Refer(inner) => did
         .join(inner.identifier())
         .map(Into::into)
         .map(CoreMethodRef::Refer)
@@ -442,13 +442,13 @@ impl TinyMethod {
   }
 
   /// Creates a new [VerificationMethod].
-  pub fn to_core(&self, document: &IotaDID) -> Result<VerificationMethod> {
+  pub fn to_core(&self, did: &IotaDID) -> Result<VerificationMethod> {
     let properties: Object = self.properties.clone().unwrap_or_default();
-    let id: IotaDID = document.join(self.location.fragment.identifier())?;
+    let id: IotaDID = did.join(self.location.fragment.identifier())?;
 
     VerificationMethod::builder(properties)
       .id(id.into())
-      .controller(document.clone().into())
+      .controller(did.clone().into())
       .key_type(self.location.method())
       .key_data(self.key_data.clone())
       .build()
@@ -586,9 +586,9 @@ impl TinyService {
   }
 
   /// Creates a new `CoreService` from the service state.
-  pub fn to_core(&self, document: &IotaDID) -> Result<CoreService<Object>> {
+  pub fn to_core(&self, did: &IotaDID) -> Result<CoreService<Object>> {
     let properties: Object = self.properties.clone().unwrap_or_default();
-    let id: IotaDID = document.join(self.fragment().identifier())?;
+    let id: IotaDID = did.join(self.fragment().identifier())?;
 
     CoreService::builder(properties)
       .id(id.into())

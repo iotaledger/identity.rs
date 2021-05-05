@@ -53,8 +53,8 @@ impl Event {
         state.set_diff_message_id(message);
         state.increment_diff_generation()?;
       }
-      EventData::IdentityCreated(document) => {
-        state.set_document(document);
+      EventData::IdentityCreated(did) => {
+        state.set_did(did);
         state.set_created(self.time);
         state.set_updated(self.time);
       }

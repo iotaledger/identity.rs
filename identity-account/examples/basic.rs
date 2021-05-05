@@ -25,7 +25,7 @@ async fn main() -> Result<()> {
   let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let document: &IotaDID = snapshot.identity().try_document()?;
+  let document: &IotaDID = snapshot.identity().try_did()?;
 
   println!("[Example] Local Snapshot = {:#?}", snapshot);
   println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);

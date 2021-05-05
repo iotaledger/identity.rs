@@ -78,7 +78,7 @@ impl Command {
         authentication,
       } => {
         // The state must not be initialized
-        ensure!(state.document().is_none(), CommandError::DocumentAlreadyExists);
+        ensure!(state.did().is_none(), CommandError::DocumentAlreadyExists);
 
         // The authentication method type must be valid
         ensure!(
@@ -114,7 +114,7 @@ impl Command {
       }
       Self::CreateMethod { type_, scope, fragment } => {
         // The state must be initialized
-        ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
 
         let location: KeyLocation = state.key_location(type_, fragment)?;
 
@@ -145,7 +145,7 @@ impl Command {
       }
       Self::DeleteMethod { fragment } => {
         // The state must be initialized
-        ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
@@ -162,7 +162,7 @@ impl Command {
       }
       Self::AttachMethod { fragment, scopes } => {
         // The state must be initialized
-        ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
@@ -179,7 +179,7 @@ impl Command {
       }
       Self::DetachMethod { fragment, scopes } => {
         // The state must be initialized
-        ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
@@ -201,7 +201,7 @@ impl Command {
         properties,
       } => {
         // The state must be initialized
-        ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
 
         // The service must not exist
         ensure!(
@@ -215,7 +215,7 @@ impl Command {
       }
       Self::DeleteService { fragment } => {
         // The state must be initialized
-        ensure!(state.document().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 

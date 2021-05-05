@@ -25,7 +25,7 @@ async fn main() -> Result<()> {
   let snapshot1: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let document1: &IotaDID = snapshot1.identity().try_document()?;
+  let document1: &IotaDID = snapshot1.identity().try_did()?;
 
   println!("[Example] Local Snapshot = {:#?}", snapshot1);
   println!("[Example] Local Document = {:#?}", snapshot1.identity().to_document()?);
@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
 
   // Create another new Identity
   let snapshot2: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
-  let document2: &IotaDID = snapshot2.identity().try_document()?;
+  let document2: &IotaDID = snapshot2.identity().try_did()?;
 
   // Anndddd delete it
   account.delete_identity(document2).await?;

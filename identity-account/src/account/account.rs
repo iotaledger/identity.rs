@@ -127,7 +127,7 @@ impl<T: Storage> Account<T> {
 
     // Read the latest snapshot
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
-    let document: &IotaDID = snapshot.identity().try_document()?;
+    let document: &IotaDID = snapshot.identity().try_did()?;
 
     // Add the identity to the index
     if let Some(name) = input.name {
@@ -181,7 +181,7 @@ impl<T: Storage> Account<T> {
   pub async fn resolve_identity<K: IdentityKey>(&self, key: K) -> Result<IotaDocument> {
     let identity: IdentityId = self.try_resolve_id(key).await?;
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
-    let document: &IotaDID = snapshot.identity().try_document()?;
+    let document: &IotaDID = snapshot.identity().try_did()?;
     let network: Network = Network::from_did(document);
 
     // Fetch the DID Document from the Tangle

@@ -26,7 +26,7 @@ async fn main() -> Result<()> {
   let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let document: &IotaDID = snapshot.identity().try_document()?;
+  let document: &IotaDID = snapshot.identity().try_did()?;
 
   // Add a new Ed25519 (defualt) verification method to the identity - the
   // verification method is included as an embedded authentication method.

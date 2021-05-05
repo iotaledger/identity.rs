@@ -26,7 +26,7 @@ async fn test_create_identity() -> Result<()> {
 
   assert_eq!(snapshot.sequence(), Generation::new());
   assert_eq!(snapshot.id(), identity);
-  assert_eq!(snapshot.identity().document().is_some(), false);
+  assert_eq!(snapshot.identity().did().is_some(), false);
   assert_eq!(snapshot.identity().created() == UnixTimestamp::EPOCH, true);
   assert_eq!(snapshot.identity().updated() == UnixTimestamp::EPOCH, true);
 
@@ -38,7 +38,7 @@ async fn test_create_identity() -> Result<()> {
 
   assert_eq!(snapshot.sequence(), Generation::from_u32(3));
   assert_eq!(snapshot.id(), identity);
-  assert_eq!(snapshot.identity().document().is_some(), true);
+  assert_eq!(snapshot.identity().did().is_some(), true);
   assert_eq!(snapshot.identity().created() == UnixTimestamp::EPOCH, false);
   assert_eq!(snapshot.identity().updated() == UnixTimestamp::EPOCH, false);
 
@@ -134,7 +134,7 @@ async fn test_create_method() -> Result<()> {
 
   assert_eq!(snapshot.sequence(), Generation::from_u32(5));
   assert_eq!(snapshot.id(), identity);
-  assert_eq!(snapshot.identity().document().is_some(), true);
+  assert_eq!(snapshot.identity().did().is_some(), true);
   assert_eq!(snapshot.identity().created() == UnixTimestamp::EPOCH, false);
   assert_eq!(snapshot.identity().updated() == UnixTimestamp::EPOCH, false);
   assert_eq!(snapshot.identity().methods().len(), 2);
