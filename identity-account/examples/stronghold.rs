@@ -5,6 +5,7 @@
 
 use identity_account::account::Account;
 use identity_account::error::Result;
+use identity_account::identity::IdentityCreate;
 use identity_account::identity::IdentitySnapshot;
 use identity_account::storage::Stronghold;
 use identity_iota::did::IotaDID;
@@ -21,28 +22,28 @@ async fn main() -> Result<()> {
   let account: Account<Stronghold> = Account::new(storage).await?;
 
   // Create a new Identity with default settings
-  let snapshot1: IdentitySnapshot = account.create(Default::default()).await?;
+  let snapshot1: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
   let document1: &IotaDID = snapshot1.identity().try_document()?;
 
   println!("[Example] Local Snapshot = {:#?}", snapshot1);
   println!("[Example] Local Document = {:#?}", snapshot1.identity().to_document()?);
-  println!("[Example] Local Document List = {:#?}", account.list().await);
+  println!("[Example] Local Document List = {:#?}", account.list_identities().await);
 
   // Fetch the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
-  let resolved: IotaDocument = account.resolve(document1).await?;
+  let resolved: IotaDocument = account.resolve_identity(document1).await?;
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 
   // Create another new Identity
-  let snapshot2: IdentitySnapshot = account.create(Default::default()).await?;
+  let snapshot2: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
   let document2: &IotaDID = snapshot2.identity().try_document()?;
 
   // Anndddd delete it
-  account.delete(document2).await?;
+  account.delete_identity(document2).await?;
 
   Ok(())
 }

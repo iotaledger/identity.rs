@@ -6,6 +6,7 @@
 use identity_account::account::Account;
 use identity_account::error::Result;
 use identity_account::events::Command;
+use identity_account::identity::IdentityCreate;
 use identity_account::identity::IdentitySnapshot;
 use identity_account::storage::MemStore;
 use identity_did::verification::MethodScope;
@@ -22,7 +23,7 @@ async fn main() -> Result<()> {
   let account: Account<MemStore> = Account::new(storage).await?;
 
   // Create a new Identity with default settings
-  let snapshot: IdentitySnapshot = account.create(Default::default()).await?;
+  let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
   let document: &IotaDID = snapshot.identity().try_document()?;
@@ -35,21 +36,21 @@ async fn main() -> Result<()> {
     .finish()?;
 
   // Process the command and update the identity state.
-  account.update(document, command).await?;
+  account.update_identity(document, command).await?;
 
   // Fetch and log the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
   println!(
     "[Example] Tangle Document (1) = {:#?}",
-    account.resolve(document).await?
+    account.resolve_identity(document).await?
   );
 
   // Add another Ed25519 verification method to the identity
   let command: Command = Command::create_method().fragment("my-next-key").finish()?;
 
   // Process the command and update the identity state.
-  account.update(document, command).await?;
+  account.update_identity(document, command).await?;
 
   // Associate the newly created method with additional verification relationships
   let command: Command = Command::attach_method()
@@ -59,28 +60,28 @@ async fn main() -> Result<()> {
     .finish()?;
 
   // Process the command and update the identity state.
-  account.update(document, command).await?;
+  account.update_identity(document, command).await?;
 
   // Fetch and log the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
   println!(
     "[Example] Tangle Document (2) = {:#?}",
-    account.resolve(document).await?
+    account.resolve_identity(document).await?
   );
 
   // Remove the original Ed25519 verification method
   let command: Command = Command::delete_method().fragment("my-auth-key").finish()?;
 
   // Process the command and update the identity state.
-  account.update(document, command).await?;
+  account.update_identity(document, command).await?;
 
   // Fetch and log the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
   println!(
     "[Example] Tangle Document (3) = {:#?}",
-    account.resolve(document).await?
+    account.resolve_identity(document).await?
   );
 
   Ok(())

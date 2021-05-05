@@ -5,6 +5,7 @@
 
 use identity_account::account::Account;
 use identity_account::error::Result;
+use identity_account::identity::IdentityCreate;
 use identity_account::identity::IdentitySnapshot;
 use identity_account::storage::MemStore;
 use identity_iota::did::IotaDID;
@@ -21,24 +22,24 @@ async fn main() -> Result<()> {
   let account: Account<MemStore> = Account::new(storage).await?;
 
   // Create a new Identity with default settings
-  let snapshot: IdentitySnapshot = account.create(Default::default()).await?;
+  let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
   let document: &IotaDID = snapshot.identity().try_document()?;
 
   println!("[Example] Local Snapshot = {:#?}", snapshot);
   println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);
-  println!("[Example] Local Document List = {:#?}", account.list().await);
+  println!("[Example] Local Document List = {:#?}", account.list_identities().await);
 
   // Fetch the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
-  let resolved: IotaDocument = account.resolve(document).await?;
+  let resolved: IotaDocument = account.resolve_identity(document).await?;
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 
   // Delete the identity and all associated keys
-  account.delete(document).await?;
+  account.delete_identity(document).await?;
 
   Ok(())
 }

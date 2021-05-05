@@ -97,19 +97,19 @@ impl<T: Storage> Account<T> {
   // ===========================================================================
 
   /// Returns a list of tags identifying the identities in the account.
-  pub async fn list(&self) -> Vec<IdentityTag> {
+  pub async fn list_identities(&self) -> Vec<IdentityTag> {
     self.index.read().await.tags()
   }
 
   /// Finds and returns the state snapshot for the identity specified by given `key`.
-  pub async fn find<K: IdentityKey>(&self, key: K) -> Result<Option<IdentitySnapshot>> {
+  pub async fn find_identity<K: IdentityKey>(&self, key: K) -> Result<Option<IdentitySnapshot>> {
     match self.resolve_id(key).await {
       Some(identity) => self.load_snapshot(identity).await.map(Some),
       None => Ok(None),
     }
   }
 
-  pub async fn create(&self, input: IdentityCreate) -> Result<IdentitySnapshot> {
+  pub async fn create_identity(&self, input: IdentityCreate) -> Result<IdentitySnapshot> {
     // Acquire write access to the index.
     let mut index: RwLockWriteGuard<'_, _> = self.index.write().await;
 
@@ -147,7 +147,7 @@ impl<T: Storage> Account<T> {
   }
 
   /// Updates the identity specified by the given `key` with the given `command`.
-  pub async fn update<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
+  pub async fn update_identity<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
     let identity: IdentityId = self.try_resolve_id(key).await?;
 
     self.process(identity, command, true).await?;
@@ -158,7 +158,7 @@ impl<T: Storage> Account<T> {
   /// Removes the identity specified by the given `key`.
   ///
   /// Note: This will remove all associated events and key material - recovery is NOT POSSIBLE!
-  pub async fn delete<K: IdentityKey>(&self, key: K) -> Result<()> {
+  pub async fn delete_identity<K: IdentityKey>(&self, key: K) -> Result<()> {
     // Acquire write access to the index.
     let mut index: RwLockWriteGuard<'_, _> = self.index.write().await;
 
@@ -175,6 +175,24 @@ impl<T: Storage> Account<T> {
     self.save(false).await?;
 
     Ok(())
+  }
+
+  /// Resolves the DID Document associated with the specified `key`.
+  pub async fn resolve_identity<K: IdentityKey>(&self, key: K) -> Result<IotaDocument> {
+    let identity: IdentityId = self.try_resolve_id(key).await?;
+    let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
+    let document: &IotaDID = snapshot.identity().try_document()?;
+    let network: Network = Network::from_did(document);
+
+    // Fetch the DID Document from the Tangle
+    self
+      .state
+      .clients
+      .load(network)
+      .await?
+      .read_document(document)
+      .await
+      .map_err(Into::into)
   }
 
   /// Signs `data` with the key specified by `fragment`.
@@ -194,24 +212,6 @@ impl<T: Storage> Account<T> {
     state.sign_data(&self.store, location, target).await?;
 
     Ok(())
-  }
-
-  /// Resolves the DID Document associated with the specified `key`.
-  pub async fn resolve<K: IdentityKey>(&self, key: K) -> Result<IotaDocument> {
-    let identity: IdentityId = self.try_resolve_id(key).await?;
-    let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
-    let document: &IotaDID = snapshot.identity().try_document()?;
-    let network: Network = Network::from_did(document);
-
-    // Fetch the DID Document from the Tangle
-    self
-      .state
-      .clients
-      .load(network)
-      .await?
-      .read_document(document)
-      .await
-      .map_err(Into::into)
   }
 
   async fn resolve_id<K: IdentityKey>(&self, key: K) -> Option<IdentityId> {
@@ -295,13 +295,16 @@ impl<T: Storage> Account<T> {
 
     self.sign_document(old_state, new_state, &mut new_doc).await?;
 
-    let network: Network = Network::from_did(new_doc.id());
-    let client: Arc<Client> = self.state.clients.load(network).await?;
-
     #[cfg(test)]
     let message: MessageId = MessageId::null();
+
     #[cfg(not(test))]
-    let message: MessageId = client.publish_document(&new_doc).await?;
+    let message: MessageId = {
+      let network: Network = Network::from_did(new_doc.id());
+      let client: Arc<Client> = self.state.clients.load(network).await?;
+
+      client.publish_document(&new_doc).await?
+    };
 
     let events: [Event; 1] = [Event::new(EventData::AuthMessage(message))];
 
@@ -319,7 +322,6 @@ impl<T: Storage> Account<T> {
     let old_doc: IotaDocument = old_state.to_document()?;
     let new_doc: IotaDocument = new_state.to_document()?;
 
-    let auth_id: &MessageId = old_state.this_message_id();
     let diff_id: &MessageId = old_state.diff_message_id();
 
     let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
@@ -329,13 +331,17 @@ impl<T: Storage> Account<T> {
 
     old_state.sign_data(&self.store, location, &mut diff).await?;
 
-    let network: Network = Network::from_did(old_doc.id());
-    let client: Arc<Client> = self.state.clients.load(network).await?;
-
     #[cfg(test)]
     let message: MessageId = MessageId::null();
+
     #[cfg(not(test))]
-    let message: MessageId = client.publish_diff(auth_id, &diff).await?;
+    let message: MessageId = {
+      let auth_id: &MessageId = old_state.this_message_id();
+      let network: Network = Network::from_did(old_doc.id());
+      let client: Arc<Client> = self.state.clients.load(network).await?;
+
+      client.publish_diff(auth_id, &diff).await?
+    };
 
     let events: [Event; 1] = [Event::new(EventData::DiffMessage(message))];
 

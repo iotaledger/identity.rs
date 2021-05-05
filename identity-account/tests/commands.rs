@@ -30,7 +30,11 @@ async fn test_create_identity() -> Result<()> {
   assert_eq!(snapshot.identity().created() == UnixTimestamp::EPOCH, true);
   assert_eq!(snapshot.identity().updated() == UnixTimestamp::EPOCH, true);
 
-  let snapshot: IdentitySnapshot = account.create(Default::default()).await?;
+  account
+    .process(identity, Command::create_identity().finish().unwrap(), false)
+    .await?;
+
+  let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
   assert_eq!(snapshot.sequence(), Generation::from_u32(3));
   assert_eq!(snapshot.id(), identity);

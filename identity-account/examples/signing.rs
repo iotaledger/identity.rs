@@ -6,6 +6,7 @@
 use identity_account::account::Account;
 use identity_account::error::Result;
 use identity_account::events::Command;
+use identity_account::identity::IdentityCreate;
 use identity_account::identity::IdentitySnapshot;
 use identity_account::storage::MemStore;
 use identity_core::common::Url;
@@ -28,7 +29,7 @@ async fn main() -> Result<()> {
   let account: Account<MemStore> = Account::new(storage).await?;
 
   // Create a new Identity with default settings
-  let snapshot: IdentitySnapshot = account.create(Default::default()).await?;
+  let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
   let document: &IotaDID = snapshot.identity().try_document()?;
@@ -40,7 +41,7 @@ async fn main() -> Result<()> {
   let command: Command = Command::create_method().fragment("key-1").finish()?;
 
   // Process the command and update the identity state.
-  account.update(document, command).await?;
+  account.update_identity(document, command).await?;
 
   // Create a subject DID for the recipient of a `UniversityDegree` credential.
   let subject_key: KeyPair = KeyPair::new_ed25519()?;
@@ -70,7 +71,7 @@ async fn main() -> Result<()> {
   // Fetch the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
-  let resolved: IotaDocument = account.resolve(document).await?;
+  let resolved: IotaDocument = account.resolve_identity(document).await?;
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 
