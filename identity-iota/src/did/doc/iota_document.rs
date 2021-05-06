@@ -151,13 +151,22 @@ impl IotaDocument {
     // creates an `IotaDID::new_unchecked_ref()` from the underlying controller.
     document.controller().map_or(Ok(()), |c| IotaDID::check_validity(c))?;
 
-    // Validate that the validation methods conform to the IotaDID specification.
+    // Validate that the verification methods conform to the IotaDID specification.
     // This check is required to ensure the correctness of the `IotaDocument::methods()`,
     // `IotaDocument::resolve()`, `IotaDocument::try_resolve()`, IotaDocument::resolve_mut()`,
     // and IotaDocument::try_resolve_mut()` methods which creates an `IotaDID::new_unchecked_ref()`
     // from the underlying controller.
-    for method in document.methods() {
-      IotaVerificationMethod::check_validity(method)?;
+    //
+    // We check these `document.verification_method()` and `document.verification_relationships()`
+    // separately because they have separate types.
+    for verification_method in document.verification_method().iter() {
+      Self::check_authentication(&*verification_method)?;
+    }
+    for method_ref in document.verification_relationships() {
+      match method_ref {
+        MethodRef::Embed(method) => IotaVerificationMethod::check_validity(method)?,
+        MethodRef::Refer(did) => IotaDID::check_validity(did)?,
+      }
     }
 
     let method = document
