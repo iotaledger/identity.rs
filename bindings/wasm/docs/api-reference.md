@@ -61,6 +61,8 @@
         * [.network](#DID+network) ⇒ <code>string</code>
         * [.shard](#DID+shard) ⇒ <code>string</code> \| <code>undefined</code>
         * [.tag](#DID+tag) ⇒ <code>string</code>
+        * [.tangleNode](#DID+tangleNode) ⇒ <code>string</code>
+        * [.tangleExplorer](#DID+tangleExplorer) ⇒ <code>string</code>
         * [.toString()](#DID+toString) ⇒ <code>string</code>
     * _static_
         * [.fromBase58(key, network, shard)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
@@ -94,6 +96,18 @@ Returns the IOTA tangle shard of the `DID` (if any).
 
 ### did.tag ⇒ <code>string</code>
 Returns the unique tag of the `DID`.
+
+**Kind**: instance property of [<code>DID</code>](#DID)
+<a name="DID+tangleNode"></a>
+
+### did.tangleNode ⇒ <code>string</code>
+Returns the node URL of the target Tangle network.
+
+**Kind**: instance property of [<code>DID</code>](#DID)
+<a name="DID+tangleExplorer"></a>
+
+### did.tangleExplorer ⇒ <code>string</code>
+Returns the web explorer URL of the target Tangle network.
 
 **Kind**: instance property of [<code>DID</code>](#DID)  
 <a name="DID+toString"></a>
@@ -132,10 +146,12 @@ Parses a `DID` from the input string.
 **Kind**: global class  
 
 * [Document](#Document)
-    * [new Document(type_, tag)](#new_Document_new)
+    * [new Document(type_, network, tag)](#new_Document_new)
     * _instance_
         * [.id](#Document+id) ⇒ [<code>DID</code>](#DID)
         * [.proof](#Document+proof) ⇒ <code>any</code>
+        * [.previousMessageId](#Document+previousMessageId) ⇒ <code>string</code>
+        * [.setPreviousMessageId](#Document+setPreviousMessageId)
         * [.insertMethod(method, scope)](#Document+insertMethod) ⇒ <code>boolean</code>
         * [.removeMethod(did)](#Document+removeMethod)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
@@ -158,13 +174,14 @@ Parses a `DID` from the input string.
 
 <a name="new_Document_new"></a>
 
-### new Document(type_, tag)
+### new Document(type_, network, tag)
 Creates a new DID Document from the given KeyPair.
 
 
 | Param | Type |
 | --- | --- |
 | type_ | <code>number</code> | 
+| network | <code>string</code> \| <code>undefined</code> |
 | tag | <code>string</code> \| <code>undefined</code> | 
 
 <a name="Document+id"></a>
@@ -179,6 +196,19 @@ Returns the DID Document `id`.
 Returns the DID Document `proof` object.
 
 **Kind**: instance property of [<code>Document</code>](#Document)  
+<a name="Document+previousMessageId"></a>
+
+### document.previousMessageId ⇒ <code>string</code>
+**Kind**: instance property of [<code>Document</code>](#Document)
+<a name="Document+setPreviousMessageId"></a>
+
+### document.setPreviousMessageId
+**Kind**: instance property of [<code>Document</code>](#Document)
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> |
+
 <a name="Document+insertMethod"></a>
 
 ### document.insertMethod(method, scope) ⇒ <code>boolean</code>

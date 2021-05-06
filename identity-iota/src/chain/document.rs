@@ -58,8 +58,8 @@ impl DocumentChain {
     };
 
     Ok(Self {
-      chain_i,
       chain_d,
+      chain_i,
       document,
     })
   }

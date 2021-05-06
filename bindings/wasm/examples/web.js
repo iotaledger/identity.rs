@@ -13,11 +13,6 @@ async function run(Identity) {
     VerifiablePresentation,
   } = Identity
 
-  const CLIENT_CONFIG = {
-    network: "main",
-    node: "https://api.lb-0.testnet.chrysalis2.com",
-  }
-
   function generateUser(name) {
     const { doc, key } = new Document(KeyType.Ed25519)
 
@@ -49,12 +44,12 @@ async function run(Identity) {
   console.log("Verified (user1): ", user1.doc.verify())
   console.log("Verified (user2): ", user2.doc.verify())
 
-  user1.message = await Identity.publish(user1.doc.toJSON(), CLIENT_CONFIG)
-  user2.message = await Identity.publish(user2.doc.toJSON(), CLIENT_CONFIG)
+  user1MessageId = await Identity.publish(user1.doc.toJSON())
+  user2MessageId = await Identity.publish(user2.doc.toJSON())
 
   // Publish all DID documents
-  console.log(`Publish Result (user1): https://explorer.iota.org/mainnet/transaction/${user1.message}`)
-  console.log(`Publish Result (user2): https://explorer.iota.org/mainnet/transaction/${user2.message}`)
+  console.log(`Publish Result (user1): ${user1.doc.id.tangleExplorer}/transaction/${user1MessageId}`)
+  console.log(`Publish Result (user2): ${user2.doc.id.tangleExplorer}/transaction/${user2MessageId}`)
 
   // Prepare a credential subject indicating the degree earned by Alice
   let credentialSubject = {
@@ -87,7 +82,7 @@ async function run(Identity) {
   console.log("Verified (credential)", user2.doc.verify(signedVc))
 
   // Check the validation status of the Verifiable Credential
-  console.log("Credential Validation", await Identity.checkCredential(signedVc.toString(), CLIENT_CONFIG))
+  console.log("Credential Validation", await Identity.checkCredential(signedVc.toString()))
 
   // Create a Verifiable Presentation from the Credential - signed by Alice's key
   const unsignedVp = new VerifiablePresentation(user1.doc, signedVc.toJSON())
@@ -98,31 +93,29 @@ async function run(Identity) {
   })
 
   // Check the validation status of the Verifiable Presentation
-  console.log("Presentation Validation", await Identity.checkPresentation(signedVp.toString(), CLIENT_CONFIG))
+  console.log("Presentation Validation", await Identity.checkPresentation(signedVp.toString()))
 
   // Bobs key was compromised - mark it as revoked and publish an update
   user2.doc.revokeMerkleKey(method.id.toString(), 0)
 
-  user2.doc = Document.fromJSON({
-    previous_message_id: user2.message,
-    ...user2.doc.toJSON()
-  })
+  // Set the Tangle message id of the previously published DID Document
+  user2.doc.previousMessageId = user2MessageId
 
   // The "authentication" key was not compromised so it's safe to publish an update
   user2.doc.sign(user2.key)
 
-  user2.message = await Identity.publish(user2.doc.toJSON(), CLIENT_CONFIG)
+  user2MessageId = await Identity.publish(user2.doc.toJSON())
 
-  console.log("Publish Result (user2): https://explorer.iota.org/mainnet/transaction/" + user2.message)
+  console.log(`Publish Result (user2): ${user2.doc.id.tangleExplorer}/transaction/${user2MessageId}`)
 
   // Resolve DID documents
-  console.log("Resolve Result (user1): ", await Identity.resolve(user1.doc.id.toString(), CLIENT_CONFIG))
-  console.log("Resolve Result (user2): ", await Identity.resolve(user2.doc.id.toString(), CLIENT_CONFIG))
+  console.log("Resolve Result (user1): ", await Identity.resolve(user1.doc.id.toString()))
+  console.log("Resolve Result (user2): ", await Identity.resolve(user2.doc.id.toString()))
 
   // Check the validation status of the Verifiable Presentation
   //
   // This should return `false` since we revoked the key used to sign the credential
-  console.log("Presentation Validation", await Identity.checkPresentation(signedVp.toString(), CLIENT_CONFIG))
+  console.log("Presentation Validation", await Identity.checkPresentation(signedVp.toString()))
 }
 
 import("../pkg/index.js").then(async identity => {

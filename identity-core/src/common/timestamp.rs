@@ -37,6 +37,7 @@ impl Timestamp {
   }
 
   /// Returns the `Timestamp` as a Unix timestamp.
+  #[allow(clippy::wrong_self_convention)]
   pub fn to_unix(&self) -> i64 {
     self.0.timestamp()
   }
@@ -47,6 +48,7 @@ impl Timestamp {
   }
 
   /// Returns the `Timestamp` as an RFC 3339 `String`.
+  #[allow(clippy::wrong_self_convention)]
   pub fn to_rfc3339(&self) -> String {
     self.0.to_rfc3339_opts(SecondsFormat::Secs, true)
   }
