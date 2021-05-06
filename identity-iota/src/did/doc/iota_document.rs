@@ -657,7 +657,7 @@ mod tests {
     let document2: IotaDocument = IotaDocument::from_json(&json_doc).unwrap();
     assert_eq!(document, document2);
 
-    assert_eq!(document.sign(keypair.secret()).is_ok(), true);
+    assert!(document.sign(keypair.secret()).is_ok());
 
     let json_doc: String = document.to_string();
     let document2: IotaDocument = IotaDocument::from_json(&json_doc).unwrap();
@@ -669,10 +669,7 @@ mod tests {
     let keypair: KeyPair = generate_testkey();
     let document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
 
-    assert_eq!(
-      IotaDocument::check_authentication(document.authentication()).is_ok(),
-      true
-    );
+    assert!(IotaDocument::check_authentication(document.authentication()).is_ok());
   }
 
   #[test]
@@ -704,7 +701,7 @@ mod tests {
     let mut document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
 
     assert!(document.proof().is_none());
-    assert_eq!(document.sign(keypair.secret()).is_ok(), true);
+    assert!(document.sign(keypair.secret()).is_ok());
 
     assert_eq!(document.proof().unwrap().verification_method(), "#authentication");
   }

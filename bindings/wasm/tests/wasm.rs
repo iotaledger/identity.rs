@@ -36,7 +36,7 @@ fn test_key_collection() {
   let keys = KeyCollection::new(KeyType::Ed25519, size).unwrap();
 
   assert_eq!(keys.length(), size);
-  assert_eq!(keys.is_empty(), false);
+  assert!(!keys.is_empty());
 
   for index in 0..keys.length() {
     let key = keys.keypair(index).unwrap();
@@ -88,7 +88,7 @@ fn test_document() {
 
   document.sign(&keypair).unwrap();
 
-  assert_eq!(document.verify(), true);
+  assert!(document.verify());
 }
 
 #[test]
