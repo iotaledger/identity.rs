@@ -1,14 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! cargo run --example basic
+//! cargo run --example services
 
 use identity_account::account::Account;
 use identity_account::error::Result;
+use identity_account::events::Command;
 use identity_account::identity::IdentityCreate;
 use identity_account::identity::IdentitySnapshot;
+use identity_core::common::Url;
 use identity_iota::did::IotaDID;
-use identity_iota::did::IotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -23,19 +24,22 @@ async fn main() -> Result<()> {
   // Retrieve the DID from the newly created Identity state.
   let document: &IotaDID = snapshot.identity().try_did()?;
 
-  println!("[Example] Local Snapshot = {:#?}", snapshot);
-  println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);
-  println!("[Example] Local Document List = {:#?}", account.list_identities().await);
+  let command: Command = Command::create_service()
+    .fragment("my-service-1")
+    .type_("MyCustomService")
+    .endpoint(Url::parse("https://example.com")?)
+    .finish()?;
 
-  // Fetch the DID Document from the Tangle
+  // Process the command and update the identity state.
+  account.update_identity(document, command).await?;
+
+  // Fetch and log the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
-  let resolved: IotaDocument = account.resolve_identity(document).await?;
-
-  println!("[Example] Tangle Document = {:#?}", resolved);
-
-  // Delete the identity and all associated keys
-  account.delete_identity(document).await?;
+  println!(
+    "[Example] Tangle Document (1) = {:#?}",
+    account.resolve_identity(document).await?
+  );
 
   Ok(())
 }

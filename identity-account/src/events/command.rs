@@ -60,12 +60,9 @@ pub enum Command {
 }
 
 impl Command {
-  pub async fn process<T>(self, context: Context<'_, T>) -> Result<Option<Vec<Event>>>
-  where
-    T: Storage,
-  {
+  pub async fn process(self, context: Context<'_>) -> Result<Option<Vec<Event>>> {
     let state: &IdentityState = context.state();
-    let store: &T = context.store();
+    let store: &dyn Storage = context.store();
 
     debug!("[Command::process] Command = {:?}", self);
     trace!("[Command::process] State = {:?}", state);

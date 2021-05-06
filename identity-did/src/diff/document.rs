@@ -25,7 +25,7 @@ pub struct DiffDocument<T = Object, U = Object, V = Object>
 where
   T: Diff + Serialize + for<'__de> Deserialize<'__de>,
   U: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
-  V: Diff + Serialize + for<'__de> Deserialize<'__de>,
+  V: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
 {
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<DiffString>,
@@ -55,7 +55,7 @@ impl<T, U, V> Diff for CoreDocument<T, U, V>
 where
   T: Diff + Serialize + for<'de> Deserialize<'de>,
   U: Diff + Serialize + for<'de> Deserialize<'de> + Default,
-  V: Diff + Serialize + for<'de> Deserialize<'de>,
+  V: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
   type Type = DiffDocument<T, U, V>;
 

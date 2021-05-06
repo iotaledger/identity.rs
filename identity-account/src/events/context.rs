@@ -2,17 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::identity::IdentityState;
+use crate::storage::Storage;
 
 /// A read-only view of an identity state with a read-write storage instance.
 #[derive(Debug)]
-pub struct Context<'a, T> {
+pub struct Context<'a> {
   state: &'a IdentityState,
-  store: &'a T,
+  store: &'a dyn Storage,
 }
 
-impl<'a, T> Context<'a, T> {
+impl<'a> Context<'a> {
   /// Creates a new `Context`.
-  pub fn new(state: &'a IdentityState, store: &'a T) -> Self {
+  pub fn new(state: &'a IdentityState, store: &'a dyn Storage) -> Self {
     Self { state, store }
   }
 
@@ -22,7 +23,7 @@ impl<'a, T> Context<'a, T> {
   }
 
   /// Returns the context `store`.
-  pub fn store(&self) -> &T {
+  pub fn store(&self) -> &dyn Storage {
     self.store
   }
 }

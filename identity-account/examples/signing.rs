@@ -8,7 +8,6 @@ use identity_account::error::Result;
 use identity_account::events::Command;
 use identity_account::identity::IdentityCreate;
 use identity_account::identity::IdentitySnapshot;
-use identity_account::storage::MemStore;
 use identity_core::common::Url;
 use identity_core::convert::FromJson;
 use identity_core::crypto::KeyPair;
@@ -22,11 +21,8 @@ use identity_iota::did::IotaDocument;
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  // Create an in-memory storage instance for the account
-  let storage: MemStore = MemStore::new();
-
   // Create a new Account with the default configuration
-  let account: Account<MemStore> = Account::new(storage).await?;
+  let account: Account = Account::builder().build().await?;
 
   // Create a new Identity with default settings
   let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;

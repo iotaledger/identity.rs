@@ -23,6 +23,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::sync::RwLockWriteGuard;
 
+use crate::account::AccountBuilder;
 use crate::error::Error;
 use crate::error::Result;
 use crate::events::Command;
@@ -47,25 +48,30 @@ use crate::utils::Shared;
 const OSC: Ordering = Ordering::SeqCst;
 
 #[derive(Debug)]
-pub struct Account<T: Storage> {
+pub struct Account {
   config: Arc<Config>,
   state: State,
-  store: T,
+  store: Box<dyn Storage>,
   index: RwLock<IdentityIndex>,
 }
 
-impl<T: Storage> Account<T> {
+impl Account {
+  /// Creates a new [AccountBuilder].
+  pub fn builder() -> AccountBuilder {
+    AccountBuilder::new()
+  }
+
   /// Creates a new `Account` instance.
-  pub async fn new(store: T) -> Result<Self> {
+  pub async fn new(store: impl Storage) -> Result<Self> {
     Self::with_config(store, Config::new()).await
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  pub async fn with_config(store: T, config: Config) -> Result<Self> {
+  pub async fn with_config(store: impl Storage, config: Config) -> Result<Self> {
     let index: IdentityIndex = store.index().await?;
 
     Ok(Self {
-      store,
+      store: Box::new(store),
       state: State::new(),
       config: Arc::new(config),
       index: RwLock::new(index),
@@ -73,8 +79,8 @@ impl<T: Storage> Account<T> {
   }
 
   /// Returns a reference to the [Storage] implementation.
-  pub fn store(&self) -> &T {
-    &self.store
+  pub fn store(&self) -> &dyn Storage {
+    &*self.store
   }
 
   /// Returns the auto-save configuration value.
@@ -234,7 +240,7 @@ impl<T: Storage> Account<T> {
     debug!("[Account::process] Root = {:#?}", root);
 
     // Process the command with a read-only view of the state
-    let context: Context<'_, T> = Context::new(root.identity(), &self.store);
+    let context: Context<'_> = Context::new(root.identity(), self.store());
     let events: Option<Vec<Event>> = command.process(context).await?;
 
     debug!("[Account::process] Events = {:#?}", events);
@@ -432,7 +438,7 @@ impl<T: Storage> Account<T> {
   }
 }
 
-impl<T: Storage> Drop for Account<T> {
+impl Drop for Account {
   fn drop(&mut self) {
     if self.config.dropsave && self.actions() != 0 {
       // TODO: Handle Result (?)

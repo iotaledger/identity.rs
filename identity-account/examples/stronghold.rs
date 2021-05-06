@@ -3,11 +3,13 @@
 
 //! cargo run --example stronghold
 
+use std::path::PathBuf;
+
 use identity_account::account::Account;
+use identity_account::account::AccountStorage;
 use identity_account::error::Result;
 use identity_account::identity::IdentityCreate;
 use identity_account::identity::IdentitySnapshot;
-use identity_account::storage::Stronghold;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDocument;
 
@@ -15,11 +17,14 @@ use identity_iota::did::IotaDocument;
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  // Create a Stronghold storage instance for the account
-  let storage: Stronghold = Stronghold::new("./example-strong.hodl", "my-password").await?;
+  let snapshot: PathBuf = "./example-strong.hodl".into();
+  let password: String = "my-password".into();
 
-  // Create a new Account with the default configuration
-  let account: Account<Stronghold> = Account::new(storage).await?;
+  // Create a new Account with Stronghold as the storage adapter
+  let account: Account = Account::builder()
+    .storage(AccountStorage::Stronghold(snapshot, Some(password)))
+    .build()
+    .await?;
 
   // Create a new Identity with default settings
   let snapshot1: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;

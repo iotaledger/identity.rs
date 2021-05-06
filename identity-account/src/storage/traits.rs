@@ -20,7 +20,7 @@ use crate::utils::EncryptionKey;
 ///
 /// See [MemStore][crate::storage::MemStore] for a test/example implementation.
 #[async_trait::async_trait]
-pub trait Storage: Debug {
+pub trait Storage: Debug + Send + Sync + 'static {
   /// Sets the account password.
   async fn set_password(&self, password: EncryptionKey) -> Result<()>;
 
@@ -71,4 +71,63 @@ pub trait Storage: Debug {
 
   /// Removes the event stream and state snapshot for the identity specified by `id`.
   async fn purge(&self, id: IdentityId) -> Result<()>;
+}
+
+#[async_trait::async_trait]
+impl Storage for Box<dyn Storage> {
+  async fn set_password(&self, password: EncryptionKey) -> Result<()> {
+    (**self).set_password(password).await
+  }
+
+  async fn flush_changes(&self) -> Result<()> {
+    (**self).flush_changes().await
+  }
+
+  async fn key_new(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey> {
+    (**self).key_new(id, location).await
+  }
+
+  async fn key_get(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey> {
+    (**self).key_get(id, location).await
+  }
+
+  async fn key_del(&self, id: IdentityId, location: &KeyLocation) -> Result<()> {
+    (**self).key_del(id, location).await
+  }
+
+  async fn key_sign(&self, id: IdentityId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
+    (**self).key_sign(id, location, data).await
+  }
+
+  async fn key_exists(&self, id: IdentityId, location: &KeyLocation) -> Result<bool> {
+    (**self).key_exists(id, location).await
+  }
+
+  async fn index(&self) -> Result<IdentityIndex> {
+    (**self).index().await
+  }
+
+  async fn set_index(&self, index: &IdentityIndex) -> Result<()> {
+    (**self).set_index(index).await
+  }
+
+  async fn snapshot(&self, id: IdentityId) -> Result<Option<IdentitySnapshot>> {
+    (**self).snapshot(id).await
+  }
+
+  async fn set_snapshot(&self, id: IdentityId, snapshot: &IdentitySnapshot) -> Result<()> {
+    (**self).set_snapshot(id, snapshot).await
+  }
+
+  async fn append(&self, id: IdentityId, commits: &[Commit]) -> Result<()> {
+    (**self).append(id, commits).await
+  }
+
+  async fn stream(&self, id: IdentityId, index: Generation) -> Result<BoxStream<'_, Result<Commit>>> {
+    (**self).stream(id, index).await
+  }
+
+  async fn purge(&self, id: IdentityId) -> Result<()> {
+    (**self).purge(id).await
+  }
 }

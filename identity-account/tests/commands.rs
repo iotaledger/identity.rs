@@ -14,21 +14,21 @@ use identity_account::types::Generation;
 use identity_account::types::UnixTimestamp;
 use identity_did::verification::MethodType;
 
-async fn new_account() -> Result<Account<MemStore>> {
+async fn new_account() -> Result<Account> {
   Account::new(MemStore::new()).await
 }
 
 #[tokio::test]
 async fn test_create_identity() -> Result<()> {
-  let account: Account<MemStore> = new_account().await?;
+  let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
   assert_eq!(snapshot.sequence(), Generation::new());
   assert_eq!(snapshot.id(), identity);
-  assert_eq!(snapshot.identity().did().is_some(), false);
-  assert_eq!(snapshot.identity().created() == UnixTimestamp::EPOCH, true);
-  assert_eq!(snapshot.identity().updated() == UnixTimestamp::EPOCH, true);
+  assert!(snapshot.identity().did().is_none());
+  assert_eq!(snapshot.identity().created(), UnixTimestamp::EPOCH);
+  assert_eq!(snapshot.identity().updated(), UnixTimestamp::EPOCH);
 
   account
     .process(identity, Command::create_identity().finish().unwrap(), false)
@@ -38,9 +38,9 @@ async fn test_create_identity() -> Result<()> {
 
   assert_eq!(snapshot.sequence(), Generation::from_u32(3));
   assert_eq!(snapshot.id(), identity);
-  assert_eq!(snapshot.identity().did().is_some(), true);
-  assert_eq!(snapshot.identity().created() == UnixTimestamp::EPOCH, false);
-  assert_eq!(snapshot.identity().updated() == UnixTimestamp::EPOCH, false);
+  assert!(snapshot.identity().did().is_some());
+  assert_ne!(snapshot.identity().created(), UnixTimestamp::EPOCH);
+  assert_ne!(snapshot.identity().updated(), UnixTimestamp::EPOCH);
 
   Ok(())
 }
@@ -49,7 +49,7 @@ async fn test_create_identity() -> Result<()> {
 async fn test_create_identity_invalid_method() -> Result<()> {
   const TYPES: &[MethodType] = &[MethodType::MerkleKeyCollection2021];
 
-  let account: Account<MemStore> = new_account().await?;
+  let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
@@ -76,7 +76,7 @@ async fn test_create_identity_invalid_method() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_identity_already_exists() -> Result<()> {
-  let account: Account<MemStore> = new_account().await?;
+  let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
@@ -112,7 +112,7 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_method() -> Result<()> {
-  let account: Account<MemStore> = new_account().await?;
+  let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
   let command: Command = Command::create_identity()
@@ -134,9 +134,9 @@ async fn test_create_method() -> Result<()> {
 
   assert_eq!(snapshot.sequence(), Generation::from_u32(5));
   assert_eq!(snapshot.id(), identity);
-  assert_eq!(snapshot.identity().did().is_some(), true);
-  assert_eq!(snapshot.identity().created() == UnixTimestamp::EPOCH, false);
-  assert_eq!(snapshot.identity().updated() == UnixTimestamp::EPOCH, false);
+  assert!(snapshot.identity().did().is_some());
+  assert_ne!(snapshot.identity().created(), UnixTimestamp::EPOCH);
+  assert_ne!(snapshot.identity().updated(), UnixTimestamp::EPOCH);
   assert_eq!(snapshot.identity().methods().len(), 2);
 
   let method: &TinyMethod = snapshot.identity().methods().fetch("key-1")?;
@@ -149,7 +149,7 @@ async fn test_create_method() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_method_reserved_fragment() -> Result<()> {
-  let account: Account<MemStore> = new_account().await?;
+  let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
   let command: Command = Command::create_identity()
@@ -187,7 +187,7 @@ async fn test_create_method_reserved_fragment() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_method_duplicate_fragment() -> Result<()> {
-  let account: Account<MemStore> = new_account().await?;
+  let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
   let command: Command = Command::create_identity()
@@ -226,7 +226,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
 
 #[tokio::test]
 async fn test_delete_method() -> Result<()> {
-  let account: Account<MemStore> = new_account().await?;
+  let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
   let command: Command = Command::create_identity()
@@ -251,9 +251,9 @@ async fn test_delete_method() -> Result<()> {
 
   assert_eq!(snapshot.sequence(), Generation::from_u32(5));
   assert_eq!(snapshot.identity().methods().len(), 2);
-  assert_eq!(snapshot.identity().methods().contains("key-1"), true);
-  assert_eq!(snapshot.identity().methods().get("key-1").is_some(), true);
-  assert_eq!(snapshot.identity().methods().fetch("key-1").is_ok(), true);
+  assert!(snapshot.identity().methods().contains("key-1"));
+  assert!(snapshot.identity().methods().get("key-1").is_some());
+  assert!(snapshot.identity().methods().fetch("key-1").is_ok());
 
   let command: Command = Command::delete_method().fragment("key-1").finish().unwrap();
 
@@ -263,9 +263,9 @@ async fn test_delete_method() -> Result<()> {
 
   assert_eq!(snapshot.sequence(), Generation::from_u32(7));
   assert_eq!(snapshot.identity().methods().len(), 1);
-  assert_eq!(snapshot.identity().methods().contains("key-1"), false);
-  assert_eq!(snapshot.identity().methods().get("key-1").is_none(), true);
-  assert_eq!(snapshot.identity().methods().fetch("key-1").is_err(), true);
+  assert!(!snapshot.identity().methods().contains("key-1"));
+  assert!(snapshot.identity().methods().get("key-1").is_none());
+  assert!(snapshot.identity().methods().fetch("key-1").is_err());
 
   Ok(())
 }
