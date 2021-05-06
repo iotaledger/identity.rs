@@ -254,7 +254,9 @@ impl<T, U, V> CoreDocument<T, U, V> {
     self.verification_method.remove(did);
   }
 
-  /// Returns an iterator over all verification methods in the DID Document.
+  /// Returns an iterator over all embedded verification methods in the DID Document.
+  ///
+  /// This excludes verification methods that are referenced by the DID Document.
   pub fn methods(&self) -> impl Iterator<Item = &VerificationMethod<U>> {
     fn __filter_ref<T>(method: &DIDKey<MethodRef<T>>) -> Option<&VerificationMethod<T>> {
       match &**method {
@@ -272,6 +274,23 @@ impl<T, U, V> CoreDocument<T, U, V> {
       .chain(self.key_agreement.iter().filter_map(__filter_ref))
       .chain(self.capability_delegation.iter().filter_map(__filter_ref))
       .chain(self.capability_invocation.iter().filter_map(__filter_ref))
+  }
+
+  /// Returns an iterator over all verification relationships.
+  ///
+  /// This includes embeded and referenced verification methods.
+  pub fn verification_relationships(&self) -> impl Iterator<Item = &MethodRef<U>> {
+    fn __method_ref<T>(method: &DIDKey<MethodRef<T>>) -> &MethodRef<T> {
+      &**method
+    }
+    self
+      .authentication
+      .iter()
+      .map(__method_ref)
+      .chain(self.assertion_method.iter().map(__method_ref))
+      .chain(self.key_agreement.iter().map(__method_ref))
+      .chain(self.capability_delegation.iter().map(__method_ref))
+      .chain(self.capability_invocation.iter().map(__method_ref))
   }
 
   /// Returns the first verification [`method`][`Method`] with an `id` property
