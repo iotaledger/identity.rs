@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::convert::TryInto;
 use hashbrown::HashMap;
 use identity_core::common::Object;
 use identity_core::common::Url;
@@ -305,8 +306,7 @@ impl IdentityState {
       builder = builder.service(service.to_core(document_id)?);
     }
 
-    // TODO: This completely bypasses method validation...
-    let mut document: IotaDocument = builder.build().map(Into::into)?;
+    let mut document: IotaDocument = builder.build()?.try_into()?;
 
     if !self.this_message_id.is_null() {
       document.set_message_id(self.this_message_id);

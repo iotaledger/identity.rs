@@ -86,7 +86,7 @@ mod tests {
   #[test]
   fn test_basics() {
     let mut index: IdentityIndex = IdentityIndex::new();
-    assert_eq!(index.tags().is_empty(), true);
+    assert!(index.tags().is_empty());
 
     let target1: IotaDID = format!("did:iota:{}", IotaDID::encode_key(b"123")).parse().unwrap();
     let target2: IotaDID = format!("did:iota:{}", IotaDID::encode_key(b"456")).parse().unwrap();
