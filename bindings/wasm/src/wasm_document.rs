@@ -118,7 +118,7 @@ impl WasmDocument {
     self.0.previous_message_id().to_string()
   }
 
-  #[wasm_bindgen(setter = setPreviousMessageId)]
+  #[wasm_bindgen(setter = previousMessageId)]
   pub fn set_previous_message_id(&mut self, value: &str) -> Result<(), JsValue> {
     let message: MessageId = MessageId::from_str(value).map_err(err)?;
 

@@ -10,6 +10,7 @@ use crate::error::PleaseDontMakeYourOwnResult;
 use crate::error::Result;
 
 impl<T> PleaseDontMakeYourOwnResult<T> for ResultMessage<T> {
+  #[allow(clippy::wrong_self_convention)]
   fn to_result(self) -> Result<T, Error> {
     match self {
       Self::Ok(data) => Ok(data),
@@ -30,6 +31,7 @@ pub enum ProcedureResult {
 }
 
 impl PleaseDontMakeYourOwnResult<ProcedureResult> for ProcResult {
+  #[allow(clippy::wrong_self_convention)]
   fn to_result(self) -> Result<ProcedureResult> {
     match self {
       ProcResult::SLIP10Generate(inner) => inner.to_result().map(|_| ProcedureResult::SLIP10Generate),

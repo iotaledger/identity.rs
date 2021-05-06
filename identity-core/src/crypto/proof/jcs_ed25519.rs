@@ -139,7 +139,7 @@ mod tests {
     let signature: SignatureValue = Signer::sign(&MSG, &secret).unwrap();
 
     assert_eq!(signature.as_str().as_bytes(), SIG);
-    assert_eq!(Verifier::verify(&MSG, &signature, &public).is_ok(), true);
+    assert!(Verifier::verify(&MSG, &signature, &public).is_ok());
   }
 
   #[test]
