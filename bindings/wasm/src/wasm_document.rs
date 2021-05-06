@@ -92,7 +92,7 @@ impl WasmDocument {
   #[wasm_bindgen(getter)]
   pub fn id(&self) -> WasmDID {
     WasmDID(self.0.id().clone())
-  }
+  }  
 
   /// Returns the DID Document `proof` object.
   #[wasm_bindgen(getter)]
@@ -127,6 +127,11 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = removeService)]
   pub fn remove_service(&mut self, did: &WasmDID) -> Result<(), JsValue> {
     self.0.remove_service(&did.0).map_err(err)
+  }
+
+  #[wasm_bindgen(js_name = setPreviousMessageId)]
+  pub fn set(&mut self, messageId: &MessageId) -> Result<bool, JsValue> {
+    Ok(self.0.set_previous_message_id(messageId))
   }
 
   // ===========================================================================
