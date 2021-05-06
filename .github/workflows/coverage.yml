@@ -9,8 +9,11 @@ on:
     branches:
       - main
       - dev
-    paths-ignore:
-      - 'docs/**'
+    paths:
+      - '.github/workflows/coverage.yml'
+      - '.github/workflows/scripts/coverage.sh'
+      - '**.rs'
+      - '**.toml'
 
 jobs:
   coverage:

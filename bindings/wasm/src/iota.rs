@@ -43,6 +43,8 @@ async fn client(params: JsValue) -> Result<Client, JsValue> {
     builder.network(network).build().await.map_err(err)
   } else if let Some(node) = params.as_string() {
     ClientBuilder::new().node(node).build().await.map_err(err)
+  } else if params.is_undefined() {
+    Client::new().await.map_err(err)
   } else {
     Err("Invalid Arguments for `new Client(..)`".into())
   }

@@ -3,6 +3,7 @@
 
 use identity::core::decode_b58;
 use identity::iota::IotaDID;
+use identity::iota::Network;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::KeyPair;
@@ -57,6 +58,16 @@ impl WasmDID {
   #[wasm_bindgen(getter)]
   pub fn tag(&self) -> String {
     self.0.tag().into()
+  }
+
+  #[wasm_bindgen(getter = tangleNode)]
+  pub fn tangle_node(&self) -> String {
+    Network::from_did(&self.0).node_url().to_string()
+  }
+
+  #[wasm_bindgen(getter = tangleExplorer)]
+  pub fn tangle_explorer(&self) -> String {
+    Network::from_did(&self.0).explorer_url().to_string()
   }
 
   /// Returns the `DID` object as a string.
