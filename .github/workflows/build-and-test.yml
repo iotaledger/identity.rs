@@ -165,7 +165,6 @@ jobs:
 
       - name: Run tests
         uses: actions-rs/cargo@v1
-        working-directory: bindings/wasm
         with:
           command: test
-          args: --release
+          args: --manifest-path ./bindings/wasm/Cargo.toml --release
