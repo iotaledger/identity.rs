@@ -1,21 +1,21 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! cargo run --example signing
+//! cargo run --example account_signing
 
-use identity_account::account::Account;
-use identity_account::error::Result;
-use identity_account::events::Command;
-use identity_account::identity::IdentityCreate;
-use identity_account::identity::IdentitySnapshot;
-use identity_core::common::Url;
-use identity_core::convert::FromJson;
-use identity_core::crypto::KeyPair;
-use identity_core::json;
-use identity_credential::credential::Credential;
-use identity_credential::credential::Subject;
-use identity_iota::did::IotaDID;
-use identity_iota::did::IotaDocument;
+use identity::account::Account;
+use identity::account::Command;
+use identity::account::IdentityCreate;
+use identity::account::IdentitySnapshot;
+use identity::account::Result;
+use identity::core::json;
+use identity::core::FromJson;
+use identity::core::Url;
+use identity::credential::Credential;
+use identity::credential::Subject;
+use identity::crypto::KeyPair;
+use identity::iota::IotaDID;
+use identity::iota::IotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {

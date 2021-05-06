@@ -1,15 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! cargo run --example methods
+//! cargo run --example account_methods
 
-use identity_account::account::Account;
-use identity_account::error::Result;
-use identity_account::events::Command;
-use identity_account::identity::IdentityCreate;
-use identity_account::identity::IdentitySnapshot;
-use identity_did::verification::MethodScope;
-use identity_iota::did::IotaDID;
+use identity::account::Account;
+use identity::account::Command;
+use identity::account::IdentityCreate;
+use identity::account::IdentitySnapshot;
+use identity::account::Result;
+use identity::did::MethodScope;
+use identity::iota::IotaDID;
 
 #[tokio::main]
 async fn main() -> Result<()> {

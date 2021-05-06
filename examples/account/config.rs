@@ -1,12 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! cargo run --example config
+//! cargo run --example account_config
 
-use identity_account::account::Account;
-use identity_account::account::AccountStorage;
-use identity_account::account::AutoSave;
-use identity_account::error::Result;
+use identity::account::Account;
+use identity::account::AccountStorage;
+use identity::account::AutoSave;
+use identity::account::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
