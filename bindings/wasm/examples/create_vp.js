@@ -5,8 +5,13 @@ const { VerifiablePresentation, checkPresentation } = require('../node/identity_
 const { createVC } = require('./create_VC');
 const { CLIENT_CONFIG } = require('./config')
 
+/*
+    This example shows how to create a Verifiable Presentation and validate it. 
+    A Verifiable Presentation is the format in which a (collection of) Verifiable Credential(s) gets shared. 
+    It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
+*/
 async function createVP() {
-    // Creates a new identity (See "create_did" and "manipulate_did" examples)
+    // Creates new identities (See "createVC" example)
     const {alice, issuer, signedVc} = await createVC();
 
     // Create a Verifiable Presentation from the Credential - signed by Alice's key

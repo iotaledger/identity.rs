@@ -5,6 +5,14 @@ const { KeyPair, KeyType, publish, VerificationMethod, Service } = require('../n
 const { createIdentity } = require('./create_did');
 const { CLIENT_CONFIG, EXPLORER_URL } = require('./config');
 
+/*
+    This example shows how to add more to an existing DID Document.
+    The two main things to add are Verification Methods and Services.
+    A verification method adds public keys, which can be used to digitally sign things as an identity.
+    The services provide metadata around the identity via URIs. These can be URLs, but can also emails or IOTA indices. 
+    An important detail to note is the previousMessageId. This is an important field as it links the new DID Document to the old DID Document, creating a chain. 
+    Without setting this value, the new DID Document won't get used during resolution of the DID!
+*/
 async function manipulateIdentity() {
     //Creates a new identity (See "create_did" example)
     let { key, doc, messageId } = await createIdentity();
@@ -23,9 +31,9 @@ async function manipulateIdentity() {
     doc.insertService(Service.fromJSON(serviceJSON));
 
     /*
-    Add the messageId of the previous message in the chain.
-    This is REQUIRED in order for the messages to form a chain. 
-    Skipping / forgetting this will render the publication useless.
+        Add the messageId of the previous message in the chain.
+        This is REQUIRED in order for the messages to form a chain. 
+        Skipping / forgetting this will render the publication useless.
     */
     doc.previousMessageId = messageId;
 

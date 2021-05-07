@@ -5,12 +5,19 @@ const { Digest, checkCredential, KeyType, publish, VerifiableCredential, Verific
 const { createIdentity } = require('./create_did');
 const { EXPLORER_URL, CLIENT_CONFIG } = require('./config')
 
+/*
+    This example shows how to sign/revoke verifiable credentials on scale.
+    Instead of revoking the entire verification method, a single key can be revoked from a MerkleKeyCollection.
+    This MerkleKeyCollection can be created as a collection of a power of 2 amount of keys. 
+    Every key should be used once by the issuer for signing a verifiable credential.
+    When the verifiable credential must be revoked, the issuer revokes the index of the revoked key. 
+*/
 async function merkleKey() {
-    //Creates a new identity (See "create_did" example)
+    //Creates new identities (See "create_did" example)
     const alice = await createIdentity();
     const issuer = await createIdentity();
 
-    //Add a Merkle Key Collection Verification Method with 8 keys
+    //Add a Merkle Key Collection Verification Method with 8 keys (Must be a power of 2)
     const keys = new KeyCollection(KeyType.Ed25519, 8);
     const method = VerificationMethod.createMerkleKey(Digest.Sha256, issuer.doc.id, keys, "key-collection")
     
@@ -40,7 +47,7 @@ async function merkleKey() {
         credentialSubject,
     });
 
-    // Sign the credential with Issuer's Merkle Key Collection method
+    // Sign the credential with Issuer's Merkle Key Collection method, with key index 0
     const signedVc = issuer.doc.signCredential(unsignedVc, {
         method: method.id.toString(),
         public: keys.public(0),
