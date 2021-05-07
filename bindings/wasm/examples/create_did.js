@@ -19,7 +19,7 @@ async function createIdentity() {
     console.log(`Identity Creation: ${EXPLORER_URL}/${messageId}`);
 
     //Return the results
-    return {key, doc};
+    return {key, doc, messageId};
 }
 
 exports.createIdentity = createIdentity;

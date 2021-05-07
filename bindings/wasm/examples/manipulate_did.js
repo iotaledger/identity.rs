@@ -7,9 +7,9 @@ const { CLIENT_CONFIG, EXPLORER_URL } = require('./config');
 
 async function manipulateIdentity() {
     //Creates a new identity (See "create_did" example)
-    let { key, doc } = await createIdentity();
+    let { key, doc, messageId } = await createIdentity();
 
-    //Add a new VerificationMethod 
+    //Add a new VerificationMethod with a new KeyPair
     const newKey = new KeyPair(KeyType.Ed25519);
     const method = VerificationMethod.fromDID(doc.id, newKey, "newKey");
     doc.insertMethod(method, "VerificationMethod");
@@ -20,20 +20,24 @@ async function manipulateIdentity() {
         "type": "LinkedDomains",
         "serviceEndpoint" : "https://iota.org"
     };
-    const service = Service.fromJSON(serviceJSON);
-    doc.insertService(service);
+    doc.insertService(Service.fromJSON(serviceJSON));
+
+    /*
+    Add the messageId of the previous message in the chain.
+    This is REQUIRED in order for the messages to form a chain. 
+    Skipping / forgetting this will render the publication useless.
+    */
+    doc.previousMessageId = messageId;
 
     //Sign the DID Document with the appropriate key
-    console.log(doc.messageId);
-    //doc = {previous_message_id: doc.messageId, ...doc.toJSON()}
     doc.sign(key);
 
     //Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
-    const messageId = await publish(doc.toJSON(), CLIENT_CONFIG);
+    const nextMessageId = await publish(doc.toJSON(), CLIENT_CONFIG);
 
     //Log the results
-    console.log(`Identity Update: ${EXPLORER_URL}/${messageId}`);
-    return {key, doc};
+    console.log(`Identity Update: ${EXPLORER_URL}/${nextMessageId}`);
+    return {key, newKey, doc, nextMessageId};
 }
 
 exports.manipulateIdentity = manipulateIdentity;
