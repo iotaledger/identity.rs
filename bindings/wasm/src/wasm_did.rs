@@ -60,11 +60,13 @@ impl WasmDID {
     self.0.tag().into()
   }
 
+  /// Returns the node URL of the target Tangle network.
   #[wasm_bindgen(getter = tangleNode)]
   pub fn tangle_node(&self) -> String {
     Network::from_did(&self.0).node_url().to_string()
   }
 
+  /// Returns the web explorer URL of the target Tangle network.
   #[wasm_bindgen(getter = tangleExplorer)]
   pub fn tangle_explorer(&self) -> String {
     Network::from_did(&self.0).explorer_url().to_string()

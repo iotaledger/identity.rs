@@ -36,7 +36,7 @@ fn test_key_collection() {
   let keys = KeyCollection::new(KeyType::Ed25519, size).unwrap();
 
   assert_eq!(keys.length(), size);
-  assert_eq!(keys.is_empty(), false);
+  assert!(!keys.is_empty());
 
   for index in 0..keys.length() {
     let key = keys.keypair(index).unwrap();
@@ -83,10 +83,18 @@ fn test_did() {
 fn test_document() {
   let output = WasmDocument::new(KeyType::Ed25519, None, None).unwrap();
 
-  let mut doc = output.doc();
-  let key = output.key();
+  let mut document = output.doc();
+  let keypair = output.key();
 
-  doc.sign(&key).unwrap();
+  document.sign(&keypair).unwrap();
 
-  assert_eq!(doc.verify(), true);
+  assert!(document.verify());
+}
+
+#[test]
+fn test_document_network() {
+  let output = WasmDocument::new(KeyType::Ed25519, Some("test".into()), None).unwrap();
+  let document = output.doc();
+
+  assert_eq!(document.id().network(), "test");
 }

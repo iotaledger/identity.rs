@@ -163,6 +163,8 @@ jobs:
         run: yarn build
         working-directory: bindings/wasm
 
-      # - name: Run tests
-      #   run: yarn test
-      #   working-directory: bindings/wasm
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path ./bindings/wasm/Cargo.toml --release

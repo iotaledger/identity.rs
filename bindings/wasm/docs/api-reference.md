@@ -61,6 +61,8 @@
         * [.network](#DID+network) ⇒ <code>string</code>
         * [.shard](#DID+shard) ⇒ <code>string</code> \| <code>undefined</code>
         * [.tag](#DID+tag) ⇒ <code>string</code>
+        * [.tangleNode](#DID+tangleNode) ⇒ <code>string</code>
+        * [.tangleExplorer](#DID+tangleExplorer) ⇒ <code>string</code>
         * [.toString()](#DID+toString) ⇒ <code>string</code>
     * _static_
         * [.fromBase58(key, network, shard)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
@@ -94,6 +96,18 @@ Returns the IOTA tangle shard of the `DID` (if any).
 
 ### did.tag ⇒ <code>string</code>
 Returns the unique tag of the `DID`.
+
+**Kind**: instance property of [<code>DID</code>](#DID)
+<a name="DID+tangleNode"></a>
+
+### did.tangleNode ⇒ <code>string</code>
+Returns the node URL of the target Tangle network.
+
+**Kind**: instance property of [<code>DID</code>](#DID)
+<a name="DID+tangleExplorer"></a>
+
+### did.tangleExplorer ⇒ <code>string</code>
+Returns the web explorer URL of the target Tangle network.
 
 **Kind**: instance property of [<code>DID</code>](#DID)  
 <a name="DID+toString"></a>
