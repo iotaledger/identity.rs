@@ -16,11 +16,13 @@ use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 
 use crate::did::DID;
-use crate::document::Document;
+use crate::document::CoreDocument;
 use crate::verifiable::Properties;
-use crate::verification::Method;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
+use crate::verification::MethodUriType;
+use crate::verification::TryMethod;
+use crate::verification::VerificationMethod;
 
 #[derive(Debug, Serialize)]
 struct That {
@@ -53,6 +55,10 @@ impl SetSignature for That {
   }
 }
 
+impl TryMethod for That {
+  const TYPE: MethodUriType = MethodUriType::Relative;
+}
+
 // ===========================================================================
 // ===========================================================================
 
@@ -61,7 +67,7 @@ fn test_sign_verify_this_ed25519() {
   let key: KeyPair = KeyPair::new_ed25519().unwrap();
   let controller: DID = "did:example:1234".parse().unwrap();
 
-  let method: Method = Method::builder(Default::default())
+  let method: VerificationMethod = VerificationMethod::builder(Default::default())
     .id(controller.join("#key-1").unwrap())
     .controller(controller.clone())
     .key_type(MethodType::Ed25519VerificationKey2018)
@@ -69,7 +75,7 @@ fn test_sign_verify_this_ed25519() {
     .build()
     .unwrap();
 
-  let mut document: Document<Properties> = Document::builder(Default::default())
+  let mut document: CoreDocument<Properties> = CoreDocument::builder(Default::default())
     .id(controller)
     .verification_method(method)
     .build()
@@ -94,7 +100,7 @@ fn test_sign_verify_that_merkle_key_ed25519_sha256() {
   let proof: Proof<Sha256> = keys.merkle_proof(index).unwrap();
   let mkey: Vec<u8> = MerkleKey::encode_key::<Sha256, Ed25519>(&root);
 
-  let method: Method = Method::builder(Default::default())
+  let method: VerificationMethod = VerificationMethod::builder(Default::default())
     .id(controller.join("#key-collection").unwrap())
     .controller(controller.clone())
     .key_type(MethodType::MerkleKeyCollection2021)
@@ -102,7 +108,7 @@ fn test_sign_verify_that_merkle_key_ed25519_sha256() {
     .build()
     .unwrap();
 
-  let document: Document<Properties> = Document::builder(Default::default())
+  let document: CoreDocument<Properties> = CoreDocument::builder(Default::default())
     .id(controller)
     .verification_method(method)
     .build()

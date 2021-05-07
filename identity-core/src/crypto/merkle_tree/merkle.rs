@@ -144,8 +144,8 @@ mod tests {
 
         assert_eq!(proof.index(), index);
         assert_eq!(proof.root(*hash), root);
-        assert_eq!(proof.verify(&root, &nodes[index]), true);
-        assert_eq!(proof.verify_hash(&root, *hash), true);
+        assert!(proof.verify(&root, &nodes[index]));
+        assert!(proof.verify_hash(&root, *hash));
       }
 
       assert!(compute_merkle_proof::<Sha256, _>(&hashes, hashes.len()).is_none());

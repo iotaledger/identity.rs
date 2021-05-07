@@ -38,6 +38,22 @@ pub mod crypto {
   pub use identity_core::crypto::*;
 }
 
+#[cfg(feature = "account")]
+#[cfg_attr(docsrs, doc(cfg(feature = "account")))]
+pub mod account {
+  //! Secure storage for Decentralized Identifiers
+
+  pub use identity_account::account::*;
+  pub use identity_account::crypto::*;
+  pub use identity_account::error::*;
+  pub use identity_account::events::*;
+  pub use identity_account::identity::*;
+  pub use identity_account::storage::*;
+  pub use identity_account::stronghold::*;
+  pub use identity_account::types::*;
+  pub use identity_account::utils::*;
+}
+
 #[cfg(feature = "credential")]
 #[cfg_attr(docsrs, doc(cfg(feature = "credential")))]
 pub mod credential {
@@ -103,7 +119,16 @@ pub mod prelude {
   //! Prelude of commonly used types
 
   pub use identity_core::crypto::KeyPair;
+
+  #[cfg(feature = "iota")]
+  #[cfg_attr(docsrs, doc(cfg(feature = "iota")))]
   pub use identity_iota::client::Client;
-  pub use identity_iota::did::Document;
+
+  #[cfg(feature = "iota")]
+  #[cfg_attr(docsrs, doc(cfg(feature = "iota")))]
+  pub use identity_iota::did::IotaDocument;
+
+  #[cfg(feature = "iota")]
+  #[cfg_attr(docsrs, doc(cfg(feature = "iota")))]
   pub use identity_iota::Result;
 }

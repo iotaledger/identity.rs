@@ -1,12 +1,13 @@
 ## IOTA Identity
+
 IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized identity, also known as Self Sovereign Identity (SSI), through the [W3C Decentralized Identifiers (DID)](https://w3c.github.io/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) standards alongside supporting methods, utilizing the [IOTA Distributed Ledger](https://www.iota.org).
 
-
 ## Example
+
 ```rust
 use identity::crypto::KeyPair;
 use identity::iota::Client;
-use identity::iota::Document;
+use identity::iota::IotaDocument;
 use identity::iota::Network;
 use identity::iota::Result;
 use identity::iota::TangleRef;
@@ -21,7 +22,7 @@ async fn main() -> Result<()> {
 
   // Create a DID Document (an identity).
   let keypair: KeyPair = KeyPair::new_ed25519()?;
-  let mut document: Document = Document::from_keypair(&keypair)?;
+  let mut document: IotaDocument = IotaDocument::from_keypair(&keypair)?;
 
   // Sign the DID Document with the default authentication key.
   document.sign(keypair.secret())?;
@@ -30,7 +31,7 @@ async fn main() -> Result<()> {
   document.publish(&client).await?;
 
   // Print the DID Document transaction link.
-  let network: Network = document.id().into();
+  let network = Network::from_did(document.id());
   let explore: String = format!("{}/transaction/{}", network.explorer_url(), document.message_id());
 
   println!("DID Document Transaction > {}", explore);
@@ -42,6 +43,7 @@ async fn main() -> Result<()> {
 **Output**: Example DID Document in the [Tangle Explorer](https://explorer.iota.org/mainnet/transaction/LESUXJUMJCOWGHU9CQQUIHCIPYELOBMHZT9CHCYHJPO9BONQ9IQIFJSREYNOCTYCTQYBHBMBBWJJZ9999).
 
 ## Documentation & Community Resources
+
 - [identity.rs](https://github.com/iotaledger/identity.rs): Rust source code of this library on GitHub.
 - [Identity Documentation Pages](https://identity.docs.iota.org/welcome.html): Supplementing documentation with simple examples on library usage to get you started.
 - [More Examples](https://github.com/iotaledger/identity.rs/tree/dev/examples): Practical examples to get started with the library.
@@ -55,7 +57,5 @@ async fn main() -> Result<()> {
 - Simple Example
 - Architecture/Overview
 - Get
-
-
 
 License: Apache-2.0

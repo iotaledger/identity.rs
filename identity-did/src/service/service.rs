@@ -15,7 +15,9 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::service::ServiceBuilder;
 
-/// A DID Document Service
+/// A DID Document Service used to enable trusted interactions associated with a DID subject.
+///
+/// [Specification](https://www.w3.org/TR/did-core/#services)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Service<T = Object> {
   pub(crate) id: DID,

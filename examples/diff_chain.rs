@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! An example that utilizes a diff and auth chain to publish updates to a
+//! An example that utilizes a diff and integration chain to publish updates to a
 //! DID Document.
 //!
 //! cargo run --example diff_chain
@@ -11,9 +11,9 @@ use identity::did::MethodBuilder;
 use identity::did::MethodData;
 use identity::did::MethodRef;
 use identity::did::MethodType;
-use identity::iota::AuthChain;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
+use identity::iota::IntegrationChain;
 use identity::prelude::*;
 use std::thread::sleep;
 use std::time::Duration;
@@ -32,11 +32,11 @@ async fn main() -> Result<()> {
 
   {
     let keypair: KeyPair = KeyPair::new_ed25519()?;
-    let mut document: Document = Document::from_keypair(&keypair)?;
+    let mut document: IotaDocument = IotaDocument::from_keypair(&keypair)?;
     document.sign(keypair.secret())?;
     document.publish(&client).await?;
 
-    chain = DocumentChain::new(AuthChain::new(document)?);
+    chain = DocumentChain::new(IntegrationChain::new(document)?);
     keys.push(keypair);
 
     println!("Chain (1) > {:#}", chain);
@@ -44,13 +44,13 @@ async fn main() -> Result<()> {
   }
 
   // =========================================================================
-  // Publish Auth Chain Update
+  // Publish Integration Chain Update
   // =========================================================================
 
   sleep(Duration::from_secs(1));
 
   {
-    let mut new: Document = chain.current().clone();
+    let mut new: IotaDocument = chain.current().clone();
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
 
     let authentication: MethodRef = MethodBuilder::default()
@@ -67,13 +67,13 @@ async fn main() -> Result<()> {
     }
 
     new.set_updated(Timestamp::now());
-    new.set_previous_message_id(*chain.auth_message_id());
+    new.set_previous_message_id(*chain.integration_message_id());
 
     chain.current().sign_data(&mut new, keys[0].secret())?;
     new.publish(&client).await?;
 
     keys.push(keypair);
-    chain.try_push_auth(new)?;
+    chain.try_push_integration(new)?;
 
     println!("Chain (2) > {:#}", chain);
     println!();
@@ -86,8 +86,8 @@ async fn main() -> Result<()> {
   sleep(Duration::from_secs(1));
 
   {
-    let new: Document = {
-      let mut this: Document = chain.current().clone();
+    let new: IotaDocument = {
+      let mut this: IotaDocument = chain.current().clone();
       this.properties_mut().insert("foo".into(), 123.into());
       this.properties_mut().insert("bar".into(), 456.into());
       this.set_updated(Timestamp::now());
@@ -97,21 +97,23 @@ async fn main() -> Result<()> {
     let message_id = *chain.diff_message_id();
     let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
-    diff.publish(chain.auth_message_id(), &client).await?;
+    diff.publish(chain.integration_message_id(), &client).await?;
     chain.try_push_diff(diff)?;
+    let message_id2 = *chain.diff_message_id();
 
     println!("Chain (3) > {:#}", chain);
-    println!();
+    let text: String = format!("Diff Message: {}", message_id2);
+    println!("Diff Document Tx: {}", text);
   }
 
   // =========================================================================
-  // Publish Phony Auth Update
+  // Publish Phony Integration Update
   // =========================================================================
 
   sleep(Duration::from_secs(1));
 
   {
-    let mut new: Document = chain.current().clone();
+    let mut new: IotaDocument = chain.current().clone();
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
 
     let authentication: MethodRef = MethodBuilder::default()
@@ -128,12 +130,12 @@ async fn main() -> Result<()> {
     }
 
     new.set_updated(Timestamp::now());
-    new.set_previous_message_id(*chain.auth_message_id());
+    new.set_previous_message_id(*chain.integration_message_id());
 
     new.sign(keypair.secret())?;
     new.publish(&client).await?;
 
-    println!("Chain Err > {:?}", chain.try_push_auth(new).unwrap_err());
+    println!("Chain Err > {:?}", chain.try_push_integration(new).unwrap_err());
   }
 
   // =========================================================================
@@ -143,8 +145,8 @@ async fn main() -> Result<()> {
   sleep(Duration::from_secs(1));
 
   {
-    let new: Document = {
-      let mut this: Document = chain.current().clone();
+    let new: IotaDocument = {
+      let mut this: IotaDocument = chain.current().clone();
       this.properties_mut().insert("baz".into(), 789.into());
       this.properties_mut().remove("bar");
       this.set_updated(Timestamp::now());
@@ -154,7 +156,7 @@ async fn main() -> Result<()> {
     let message_id = *chain.diff_message_id();
     let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
 
-    diff.publish(chain.auth_message_id(), &client).await?;
+    diff.publish(chain.integration_message_id(), &client).await?;
     chain.try_push_diff(diff)?;
 
     println!("Chain (4) > {:#}", chain);
@@ -163,7 +165,7 @@ async fn main() -> Result<()> {
 
   // =========================================================================
   // Read Document Chain with no query parameter given
-  // No query parameter => Read out Auth- and Diff Chain
+  // No query parameter => Read out Integration- and Diff Chain
   // =========================================================================
 
   let remote: DocumentChain = client.read_document_chain(chain.id()).await?;
@@ -171,8 +173,8 @@ async fn main() -> Result<()> {
   println!("Chain (R) {:#}", remote);
   println!();
 
-  let a: &Document = chain.current();
-  let b: &Document = remote.current();
+  let a: &IotaDocument = chain.current();
+  let b: &IotaDocument = remote.current();
 
   // The current document in the resolved chain should be identical to the
   // current document in our local chain.
@@ -180,7 +182,7 @@ async fn main() -> Result<()> {
 
   // =========================================================================
   // Test Read Document Chain with diff true
-  // query parameter diff=true => Read out Auth- and Diff Chain
+  // query parameter diff=true => Read out integration- and Diff Chain
   // =========================================================================
 
   let mut did = chain.id().clone();
@@ -195,8 +197,8 @@ async fn main() -> Result<()> {
   println!("Chain (R) {:#}", remote);
   println!();
 
-  let a: &Document = chain.current();
-  let b: &Document = remote.current();
+  let a: &IotaDocument = chain.current();
+  let b: &IotaDocument = remote.current();
 
   // The current document in the resolved chain should be identical to the
   // current document in our local chain.
@@ -204,7 +206,7 @@ async fn main() -> Result<()> {
 
   // =========================================================================
   // Test Read Document Chain with query parameter diff false
-  // query parameter diff=false => Read Auth Chain, Skip Diff Chain
+  // query parameter diff=false => Read Integeration Chain, Skip Diff Chain
   // Warning: this leads to an outdated version & is therefore not recommended
   // =========================================================================
 
@@ -219,8 +221,8 @@ async fn main() -> Result<()> {
   println!("Chain (R) {:#}", remote);
   println!();
 
-  let a: &Document = chain.current();
-  let b: &Document = remote.current();
+  let a: &IotaDocument = chain.current();
+  let b: &IotaDocument = remote.current();
 
   // The current document in the resolved chain should not be identical to
   // the current document in our local chain because you read an outdated

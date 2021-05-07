@@ -12,6 +12,7 @@ homepage = "https://www.iota.org"
 documentation = "https://identity.docs.iota.org"
 
 [dependencies]
+identity-account = { version = "=0.2.0", path = "../identity-account", optional = true }
 identity-core = { version = "=0.2.0", path = "../identity-core" }
 identity-credential = { version = "=0.2.0", path = "../identity-credential", optional = true }
 identity-did = { version = "=0.2.0", path = "../identity-did", optional = true }
@@ -19,7 +20,12 @@ identity-iota = { version = "=0.2.0", path = "../identity-iota", optional = true
 identity-comm = { version = "=0.2.0", path = "../identity-comm", optional = true }
 
 [dev-dependencies]
+criterion = { version = "0.3" }
 tokio = { version = "1.3", features = ["full"] }
+
+[[bench]]
+name = "benchmark"
+harness = false
 
 [features]
 default = ["identifier", "credential", "iota","comm"]
@@ -33,8 +39,14 @@ credential = ["identifier", "identity-credential"]
 # Enables support for reading/writing from the IOTA Tangle
 iota = ["identifier", "credential", "identity-iota"]
 
+# Enables Web Assembly support
+wasm = ["identity-iota/wasm"]
+
+# Enables support for secure storage of DID Documents
+account = ["identity-account"]
+
 # Enables support for Did Communication
-comm = ["identifier","credential","identity-comm"]
+comm = ["identifier", "credential", "identity-comm"]
 
 [package.metadata.docs.rs]
 # To build locally:

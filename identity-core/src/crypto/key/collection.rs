@@ -206,7 +206,7 @@ mod tests {
     let keys: KeyCollection = KeyCollection::new_ed25519(100).unwrap();
 
     assert_eq!(keys.len(), 100);
-    assert_eq!(keys.is_empty(), false);
+    assert!(!keys.is_empty());
 
     let public: Vec<_> = keys.iter_public().cloned().collect();
     let secret: Vec<_> = keys.iter_secret().cloned().collect();

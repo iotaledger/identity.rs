@@ -5,7 +5,7 @@ use identity_core::common::Url;
 use std::time::Instant;
 
 use crate::did::DID;
-use crate::document::Document;
+use crate::document::CoreDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::resolution::Dereference;
@@ -90,7 +90,8 @@ where
 
   // Extract the document and metadata - Both properties MUST exist as we
   // checked for resolution errors above.
-  let (document, metadata): (Document, DocumentMetadata) = match (resolution.document, resolution.document_metadata) {
+  let (document, metadata): (CoreDocument, DocumentMetadata) = match (resolution.document, resolution.document_metadata)
+  {
     (Some(document), Some(metadata)) => (document, metadata),
     (Some(_), None) => return Err(Error::MissingResolutionMetadata),
     (None, Some(_)) => return Err(Error::MissingResolutionDocument),
@@ -150,7 +151,7 @@ impl ResolveContext {
     Self(Resolution::new(), Instant::now())
   }
 
-  fn set_document(&mut self, value: Document) {
+  fn set_document(&mut self, value: CoreDocument) {
     self.0.document = Some(value);
   }
 
@@ -208,7 +209,7 @@ impl DerefContext {
   }
 }
 
-fn dereference_primary(document: Document, mut did: DID) -> Result<Option<PrimaryResource>> {
+fn dereference_primary(document: CoreDocument, mut did: DID) -> Result<Option<PrimaryResource>> {
   // Remove the DID fragment from the input DID URL.
   did.set_fragment(None);
 
@@ -238,7 +239,7 @@ fn dereference_primary(document: Document, mut did: DID) -> Result<Option<Primar
   }
 }
 
-fn dereference_document(document: Document, fragment: &str) -> Result<Option<SecondaryResource>> {
+fn dereference_document(document: CoreDocument, fragment: &str) -> Result<Option<SecondaryResource>> {
   #[inline]
   fn dereference<T>(base: &DID, query: &str, resources: &OrderedSet<DIDKey<T>>) -> Result<Option<SecondaryResource>>
   where

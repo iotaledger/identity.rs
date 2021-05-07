@@ -11,4 +11,4 @@ pub use self::message_index::MessageIndex;
 pub use self::traits::TangleRef;
 
 #[doc(inline)]
-pub use iota::MessageId;
+pub use iota_client::bee_message::MessageId;

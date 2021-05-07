@@ -5,12 +5,12 @@ use identity_core::common::Object;
 use identity_core::common::Url;
 
 use crate::did::DID;
-use crate::document::Document;
+use crate::document::CoreDocument;
 use crate::error::Result;
 use crate::service::Service;
 use crate::utils::DIDKey;
-use crate::verification::Method;
 use crate::verification::MethodRef;
+use crate::verification::VerificationMethod;
 
 /// A `DocumentBuilder` is used to generate a customized [Document].
 #[derive(Clone, Debug)]
@@ -18,7 +18,7 @@ pub struct DocumentBuilder<T = Object, U = Object, V = Object> {
   pub(crate) id: Option<DID>,
   pub(crate) controller: Option<DID>,
   pub(crate) also_known_as: Vec<Url>,
-  pub(crate) verification_method: Vec<DIDKey<Method<U>>>,
+  pub(crate) verification_method: Vec<DIDKey<VerificationMethod<U>>>,
   pub(crate) authentication: Vec<DIDKey<MethodRef<U>>>,
   pub(crate) assertion_method: Vec<DIDKey<MethodRef<U>>>,
   pub(crate) key_agreement: Vec<DIDKey<MethodRef<U>>>,
@@ -69,7 +69,7 @@ impl<T, U, V> DocumentBuilder<T, U, V> {
 
   /// Adds a value to the `verificationMethod` set.
   #[must_use]
-  pub fn verification_method(mut self, value: Method<U>) -> Self {
+  pub fn verification_method(mut self, value: VerificationMethod<U>) -> Self {
     self.verification_method.push(DIDKey::new(value));
     self
   }
@@ -117,8 +117,8 @@ impl<T, U, V> DocumentBuilder<T, U, V> {
   }
 
   /// Returns a new `Document` based on the `DocumentBuilder` configuration.
-  pub fn build(self) -> Result<Document<T, U, V>> {
-    Document::from_builder(self)
+  pub fn build(self) -> Result<CoreDocument<T, U, V>> {
+    CoreDocument::from_builder(self)
   }
 }
 
@@ -138,6 +138,6 @@ mod tests {
   #[test]
   #[should_panic = "InvalidDocumentId"]
   fn test_missing_id() {
-    let _: Document = DocumentBuilder::default().build().unwrap();
+    let _: CoreDocument = DocumentBuilder::default().build().unwrap();
   }
 }

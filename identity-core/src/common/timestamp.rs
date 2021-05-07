@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use chrono::DateTime;
+use chrono::NaiveDateTime;
 use chrono::SecondsFormat;
 use chrono::Timelike;
 use chrono::Utc;
@@ -22,7 +23,7 @@ use crate::error::Result;
 pub struct Timestamp(DateTime<Utc>);
 
 impl Timestamp {
-  /// Parses a [`Timestamp`] from the provided input string.
+  /// Parses a `Timestamp` from the provided input string.
   pub fn parse(input: &str) -> Result<Self> {
     let this: DateTime<Utc> = DateTime::parse_from_rfc3339(input)?.into();
     let this: DateTime<Utc> = Self::truncate(this);
@@ -30,17 +31,24 @@ impl Timestamp {
     Ok(Self(this))
   }
 
-  /// Creates a new [`Timestamp`] with the current date and time.
+  /// Creates a new `Timestamp` with the current date and time.
   pub fn now() -> Self {
     Self(Self::truncate(Utc::now()))
   }
 
-  /// Returns the [`Timestamp`] as a Unix timestamp.
+  /// Returns the `Timestamp` as a Unix timestamp.
+  #[allow(clippy::wrong_self_convention)]
   pub fn to_unix(&self) -> i64 {
     self.0.timestamp()
   }
 
-  /// Returns the [`Timestamp`] as an RFC 3339 `String`.
+  /// Creates a new `Timestamp` from the given Unix timestamp.
+  pub fn from_unix(seconds: i64) -> Self {
+    Self(DateTime::from_utc(NaiveDateTime::from_timestamp(seconds, 0), Utc))
+  }
+
+  /// Returns the `Timestamp` as an RFC 3339 `String`.
+  #[allow(clippy::wrong_self_convention)]
   pub fn to_rfc3339(&self) -> String {
     self.0.to_rfc3339_opts(SecondsFormat::Secs, true)
   }

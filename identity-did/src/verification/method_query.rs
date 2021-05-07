@@ -5,7 +5,7 @@ use identity_core::crypto::Signature;
 
 use crate::did::DID;
 
-/// Specifies the  conditions of a DID document method resolution query.
+/// Specifies the conditions of a DID document method resolution query.
 ///
 /// See `Document::resolve`.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]

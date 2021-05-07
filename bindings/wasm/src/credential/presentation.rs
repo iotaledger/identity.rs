@@ -8,8 +8,8 @@ use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use wasm_bindgen::prelude::*;
 
-use crate::document::Document;
 use crate::utils::err;
+use crate::wasm_document::WasmDocument;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
@@ -19,7 +19,7 @@ pub struct VerifiablePresentation(pub(crate) Presentation);
 impl VerifiablePresentation {
   #[wasm_bindgen(constructor)]
   pub fn new(
-    holder_doc: &Document,
+    holder_doc: &WasmDocument,
     credential_data: JsValue,
     presentation_type: Option<String>,
     presentation_id: Option<String>,

@@ -45,7 +45,7 @@ fn async_runtime() -> Result<&'static Mutex<AsyncRuntime>> {
 }
 
 fn async_runtime_guard() -> Result<MutexGuard<'static, AsyncRuntime>> {
-  async_runtime().and_then(|mutex| mutex.lock().map_err(|_| Error::MutexPoisoned))
+  async_runtime().and_then(|mutex| mutex.lock().map_err(|_| Error::StrongholdMutexPoisoned("runtime")))
 }
 
 async fn clear_expired_passwords() -> Result<()> {
@@ -453,14 +453,23 @@ impl Runtime {
   }
 
   fn event_listeners(&self) -> Result<MutexGuard<'_, Vec<Listener>>> {
-    self.event_listeners.lock().map_err(|_| Error::MutexPoisoned)
+    self
+      .event_listeners
+      .lock()
+      .map_err(|_| Error::StrongholdMutexPoisoned("listeners"))
   }
 
   fn password_store(&self) -> Result<MutexGuard<'_, PasswordMap>> {
-    self.password_store.lock().map_err(|_| Error::MutexPoisoned)
+    self
+      .password_store
+      .lock()
+      .map_err(|_| Error::StrongholdMutexPoisoned("passwords"))
   }
 
   fn password_clear(&self) -> Result<MutexGuard<'_, Duration>> {
-    self.password_clear.lock().map_err(|_| Error::MutexPoisoned)
+    self
+      .password_clear
+      .lock()
+      .map_err(|_| Error::StrongholdMutexPoisoned("passwords"))
   }
 }

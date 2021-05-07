@@ -7,7 +7,7 @@ use core::hash::Hash;
 use core::iter::FromIterator;
 use core::ops::Deref;
 use core::ops::DerefMut;
-use iota::MessageId;
+use iota_client::bee_message::MessageId;
 use std::collections::HashMap;
 
 type __Index<T> = HashMap<MessageId, Vec<T>>;
@@ -47,9 +47,13 @@ where
 {
   pub fn insert(&mut self, element: T) {
     let key: &MessageId = element.previous_message_id();
-
     if let Some(scope) = self.inner.get_mut(key) {
-      scope.insert(0, element);
+      let msg_id: &MessageId = element.message_id();
+      let idx = match scope.binary_search_by(|elem| elem.message_id().cmp(msg_id)) {
+        Ok(idx) => idx,
+        Err(idx) => idx,
+      };
+      scope.insert(idx, element);
     } else {
       self.inner.insert(*key, vec![element]);
     }
@@ -111,8 +115,7 @@ mod tests {
   }
 
   impl Case {
-    fn new(message_id: [u8; 32], previous_message_id: [u8; 32], state: bool) -> Self
-where {
+    fn new(message_id: [u8; 32], previous_message_id: [u8; 32], state: bool) -> Self {
       Self {
         message_id: MessageId::new(message_id),
         previous_message_id: MessageId::new(previous_message_id),
