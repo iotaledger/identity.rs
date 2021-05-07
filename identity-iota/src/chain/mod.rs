@@ -3,8 +3,8 @@
 
 mod diff_chain;
 mod document_chain;
-mod integration;
+mod integration_chain;
 
 pub use self::diff_chain::DiffChain;
 pub use self::document_chain::DocumentChain;
-pub use self::integration::IntegrationChain;
+pub use self::integration_chain::IntegrationChain;
