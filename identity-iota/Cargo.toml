@@ -25,7 +25,7 @@ thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "ee7245dfe056b6bc9d59739865d25ebd431f6e9b"
+rev = "a0fd8bab1fb36bc8bafdfdbc4d7d030481ed7ff8"
 default-features = false
 
 [dependencies.iota-crypto]
