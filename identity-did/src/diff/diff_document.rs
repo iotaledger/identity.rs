@@ -24,8 +24,8 @@ use crate::verification::VerificationMethod;
 pub struct DiffDocument<T = Object, U = Object, V = Object>
 where
   T: Diff + Serialize + for<'__de> Deserialize<'__de>,
-  U: Diff + Serialize + for<'__de> Deserialize<'__de>,
-  V: Diff + Serialize + for<'__de> Deserialize<'__de>,
+  U: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
+  V: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
 {
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<DiffString>,
@@ -54,8 +54,8 @@ where
 impl<T, U, V> Diff for CoreDocument<T, U, V>
 where
   T: Diff + Serialize + for<'de> Deserialize<'de>,
-  U: Diff + Serialize + for<'de> Deserialize<'de>,
-  V: Diff + Serialize + for<'de> Deserialize<'de>,
+  U: Diff + Serialize + for<'de> Deserialize<'de> + Default,
+  V: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
   type Type = DiffDocument<T, U, V>;
 
@@ -211,7 +211,7 @@ where
       .id
       .map(DID::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `id`"))?;
+      .ok_or_else(|| Error::convert("Missing field `document.id`"))?;
 
     let controller: Option<DID> = diff
       .controller
@@ -220,61 +220,61 @@ where
         None => Ok(None),
       })
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `controller`"))?;
+      .ok_or_else(|| Error::convert("Missing field `document.controller`"))?;
 
     let also_known_as: Vec<Url> = diff
       .also_known_as
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `also_known_as`"))?;
+      .ok_or_else(|| Error::convert("Missing field `document.also_known_as`"))?;
 
     let verification_method: OrderedSet<DIDKey<VerificationMethod<U>>> = diff
       .verification_method
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `verification_method`"))?;
+      .ok_or_else(|| Error::convert("Missing field `document.verification_method`"))?;
 
     let authentication: OrderedSet<DIDKey<MethodRef<U>>> = diff
       .authentication
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `authentication`"))?;
+      .ok_or_else(|| Error::convert("Missing field `document.authentication`"))?;
 
     let assertion_method: OrderedSet<DIDKey<MethodRef<U>>> = diff
       .assertion_method
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `assertion_method`"))?;
+      .ok_or_else(|| Error::convert("Missing field `document.assertion_method`"))?;
 
     let key_agreement: OrderedSet<DIDKey<MethodRef<U>>> = diff
       .key_agreement
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `key_agreement`"))?;
+      .ok_or_else(|| Error::convert("Missing field `document.key_agreement`"))?;
 
     let capability_delegation: OrderedSet<DIDKey<MethodRef<U>>> = diff
       .capability_delegation
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `capability_delegation`"))?;
+      .ok_or_else(|| Error::convert("Missing field `document.capability_delegation`"))?;
 
     let capability_invocation: OrderedSet<DIDKey<MethodRef<U>>> = diff
       .capability_invocation
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `capability_invocation`"))?;
+      .ok_or_else(|| Error::convert("Missing field `document.capability_invocation`"))?;
 
     let service: OrderedSet<DIDKey<Service<V>>> = diff
       .service
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `service`"))?;
+      .ok_or_else(|| Error::convert("Missing field `document.service`"))?;
 
     let properties: T = diff
       .properties
       .map(T::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `properties`"))?;
+      .ok_or_else(|| Error::convert("Missing field `document.properties`"))?;
 
     Ok(CoreDocument {
       id,

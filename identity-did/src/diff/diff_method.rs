@@ -34,7 +34,7 @@ where
 
 impl<T> Diff for VerificationMethod<T>
 where
-  T: Diff + Serialize + for<'de> Deserialize<'de>,
+  T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
   type Type = DiffMethod<T>;
 
@@ -113,31 +113,27 @@ where
       .id
       .map(DID::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `id`"))?;
+      .ok_or_else(|| Error::convert("Missing field `method.id`"))?;
 
     let controller: DID = diff
       .controller
       .map(DID::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `controller`"))?;
+      .ok_or_else(|| Error::convert("Missing field `method.controller`"))?;
 
     let key_type: MethodType = diff
       .key_type
       .map(MethodType::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `key_type`"))?;
+      .ok_or_else(|| Error::convert("Missing field `method.key_type`"))?;
 
     let key_data: MethodData = diff
       .key_data
       .map(MethodData::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `key_data`"))?;
+      .ok_or_else(|| Error::convert("Missing field `method.key_data`"))?;
 
-    let properties: T = diff
-      .properties
-      .map(T::from_diff)
-      .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `properties`"))?;
+    let properties: T = diff.properties.map(T::from_diff).transpose()?.unwrap_or_default();
 
     Ok(VerificationMethod {
       id,

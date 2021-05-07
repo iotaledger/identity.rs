@@ -89,4 +89,12 @@ impl Store<'_> {
       .await
       .to_result()
   }
+
+  /// Returns true if the specified location exists.
+  pub async fn exists(&self, location: Location) -> Result<bool> {
+    let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
+    let exists: bool = scope.record_exists(location).await;
+
+    Ok(exists)
+  }
 }

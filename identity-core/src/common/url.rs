@@ -40,13 +40,13 @@ impl Url {
 
 impl Debug for Url {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    Debug::fmt(&self.0, f)
+    f.write_fmt(format_args!("Url({})", self.0.as_str()))
   }
 }
 
 impl Display for Url {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    Display::fmt(&self.0, f)
+    f.write_str(self.0.as_str())
   }
 }
 

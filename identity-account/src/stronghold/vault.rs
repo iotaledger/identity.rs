@@ -3,6 +3,7 @@
 
 use crypto::keys::slip10::Chain;
 use crypto::keys::slip10::ChainCode;
+use engine::vault::RecordId;
 use iota_stronghold::Location;
 use iota_stronghold::Procedure;
 use iota_stronghold::RecordHint;
@@ -17,7 +18,7 @@ use crate::error::Result;
 use crate::stronghold::Context;
 use crate::stronghold::ProcedureResult;
 
-pub type Record = (usize, RecordHint);
+pub type Record = (RecordId, RecordHint);
 
 #[derive(Debug)]
 pub struct Vault<'snapshot> {
@@ -73,6 +74,23 @@ impl Vault<'_> {
     Context::scope(self.path, &self.name, &self.flags)
       .await?
       .delete_data(location, gc)
+      .await
+      .to_result()
+  }
+
+  /// Returns true if the specified location exists.
+  pub async fn exists(&self, location: Location) -> Result<bool> {
+    let scope: _ = Context::scope(self.path, &self.name, &self.flags).await?;
+    let exists: bool = scope.vault_exists(location).await;
+
+    Ok(exists)
+  }
+
+  /// Runs the Stronghold garbage collector.
+  pub async fn garbage_collect(&self, vault: &[u8]) -> Result<()> {
+    Context::scope(self.path, &self.name, &self.flags)
+      .await?
+      .garbage_collect(vault.to_vec())
       .await
       .to_result()
   }

@@ -115,8 +115,7 @@ mod tests {
   }
 
   impl Case {
-    fn new(message_id: [u8; 32], previous_message_id: [u8; 32], state: bool) -> Self
-where {
+    fn new(message_id: [u8; 32], previous_message_id: [u8; 32], state: bool) -> Self {
       Self {
         message_id: MessageId::new(message_id),
         previous_message_id: MessageId::new(previous_message_id),
