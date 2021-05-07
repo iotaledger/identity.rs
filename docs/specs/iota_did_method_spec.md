@@ -36,7 +36,6 @@ The DIDs that follow this method have the following format:
 iota-did = "did:iota:" iota-specific-idstring
 iota-specific-idstring = [ iota-network ":" ] [ network-shard ":" ] iota-tag
 iota-network = char{,6}
-network-shard = char{,6}
 iota-tag = base-char{44}
 char = 0-9 a-z
 base-char = 1-9 A-H J-N P-Z a-k m-z
@@ -48,17 +47,13 @@ The iota-network is an identifer of the network where the DID is stored. This ne
 
 The following values are reserved and cannot reference other networks:
 1. `main` references the main network which refers to the Tangle known to host the IOTA cryptocurrency
-2. `dev` references the test network known as "devnet" or "testnet" maintained by the IOTA Foundation.
+2. `test` references the test network known as "devnet" or "testnet" maintained by the IOTA Foundation.
 
 When no IOTA network is specified, it is assumed that the DID is located on the `main` network. This means that the following DIDs will resolve to the same DID Document:
 ```
 did:iota:main:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV
 did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV
 ```
-
-### Network-Shard
-
-In a future update to the network, IOTA will likely have shards containing subsets of the Tangle. While this is currently not the case, the space in the DID is reserved and implementations should be able to handle this extra field. The value can currently be ignored. If the `network-shard` is present, `iota-network` must be present and therefore cannot be omitted.  
 
 ### IOTA-Tag
 
