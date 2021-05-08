@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![allow(non_camel_case_types)]
+
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;

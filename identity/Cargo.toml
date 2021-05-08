@@ -40,7 +40,7 @@ credential = ["identifier", "identity-credential"]
 iota = ["identifier", "credential", "identity-iota"]
 
 # Enables Web Assembly support
-wasm = ["identity-iota/wasm"]
+wasm = ["identity-iota/wasm", "identity-comm/wasm"]
 
 # Enables support for secure storage of DID Documents
 account = ["identity-account"]

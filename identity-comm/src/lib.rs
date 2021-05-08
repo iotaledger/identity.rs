@@ -7,7 +7,7 @@
 #![allow(clippy::upper_case_acronyms)]
 #![warn(
   rust_2018_idioms,
-  unreachable_pub,
+  // unreachable_pub,
   // missing_docs,
   missing_crate_level_docs,
   broken_intra_doc_links,
@@ -23,4 +23,4 @@ extern crate serde;
 pub mod envelope;
 pub mod error;
 pub mod message;
-pub mod utils;
+pub mod types;

@@ -3,7 +3,7 @@
 
 use identity_core::common::Timestamp;
 
-/// A DIDComm Timing
+/// A DIDComm Timing Decorator
 ///
 /// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Field_Definitions.md)
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
@@ -17,110 +17,106 @@ pub struct Timing {
   #[serde(skip_serializing_if = "Option::is_none")]
   expires_time: Option<Timestamp>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  delay_milli: Option<i32>,
-  #[serde(skip_serializing_if = "Option::is_none")]
   wait_until_time: Option<Timestamp>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  delay_milli: Option<u64>,
 }
 
 impl Timing {
+  /// Creates a new `Timing` decorator.
   pub fn new() -> Self {
     Self {
       out_time: None,
       in_time: None,
       stale_time: None,
       expires_time: None,
-      delay_milli: None,
       wait_until_time: None,
+      delay_milli: None,
     }
   }
 
-  /// Get a mutable reference to the timing's out time.
-  pub fn out_time_mut(&mut self) -> &mut Option<Timestamp> {
-    &mut self.out_time
+  /// Returns a reference to the `out_time` field.
+  pub fn out_time(&self) -> Option<&Timestamp> {
+    self.out_time.as_ref()
   }
 
-  /// Get a reference to the timing's out time.
-  pub fn out_time(&self) -> &Option<Timestamp> {
-    &self.out_time
+  /// Returns a mutable reference to the `out_time` field.
+  pub fn out_time_mut(&mut self) -> Option<&mut Timestamp> {
+    self.out_time.as_mut()
   }
 
-  /// Set the timing's out time.
-  pub fn set_out_time(&mut self, out_time: Option<Timestamp>) {
-    self.out_time = out_time;
+  /// Sets the value of the `out_time` field.
+  pub fn set_out_time<T: Into<Option<Timestamp>>>(&mut self, value: T) {
+    self.out_time = value.into();
   }
 
-  /// Get a mutable reference to the timing's in time.
-  pub fn in_time_mut(&mut self) -> &mut Option<Timestamp> {
-    &mut self.in_time
+  /// Returns a reference to the `in_time` field.
+  pub fn in_time(&self) -> Option<&Timestamp> {
+    self.in_time.as_ref()
   }
 
-  /// Get a reference to the timing's in time.
-  pub fn in_time(&self) -> &Option<Timestamp> {
-    &self.in_time
+  /// Returns a mutable reference to the `in_time` field.
+  pub fn in_time_mut(&mut self) -> Option<&mut Timestamp> {
+    self.in_time.as_mut()
   }
 
-  /// Set the timing's in time.
-  pub fn set_in_time(&mut self, in_time: Option<Timestamp>) {
-    self.in_time = in_time;
+  /// Sets the value of the `in_time` field.
+  pub fn set_in_time<T: Into<Option<Timestamp>>>(&mut self, value: T) {
+    self.in_time = value.into();
   }
 
-  /// Get a mutable reference to the timing's stale time.
-  pub fn stale_time_mut(&mut self) -> &mut Option<Timestamp> {
-    &mut self.stale_time
+  /// Returns a reference to the `stale_time` field.
+  pub fn stale_time(&self) -> Option<&Timestamp> {
+    self.stale_time.as_ref()
   }
 
-  /// Get a reference to the timing's stale time.
-  pub fn stale_time(&self) -> &Option<Timestamp> {
-    &self.stale_time
+  /// Returns a mutable reference to the `stale_time` field.
+  pub fn stale_time_mut(&mut self) -> Option<&mut Timestamp> {
+    self.stale_time.as_mut()
   }
 
-  /// Set the timing's stale time.
-  pub fn set_stale_time(&mut self, stale_time: Option<Timestamp>) {
-    self.stale_time = stale_time;
+  /// Sets the value of the `stale_time` field.
+  pub fn set_stale_time<T: Into<Option<Timestamp>>>(&mut self, value: T) {
+    self.stale_time = value.into();
   }
 
-  /// Get a mutable reference to the timing's expires time.
-  pub fn expires_time_mut(&mut self) -> &mut Option<Timestamp> {
-    &mut self.expires_time
+  /// Returns a reference to the `expires_time` field.
+  pub fn expires_time(&self) -> Option<&Timestamp> {
+    self.expires_time.as_ref()
   }
 
-  /// Get a reference to the timing's expires time.
-  pub fn expires_time(&self) -> &Option<Timestamp> {
-    &self.expires_time
+  /// Returns a mutable reference to the `expires_time` field.
+  pub fn expires_time_mut(&mut self) -> Option<&mut Timestamp> {
+    self.expires_time.as_mut()
   }
 
-  /// Set the timing's expires time.
-  pub fn set_expires_time(&mut self, expires_time: Option<Timestamp>) {
-    self.expires_time = expires_time;
+  /// Sets the value of the `expires_time` field.
+  pub fn set_expires_time<T: Into<Option<Timestamp>>>(&mut self, value: T) {
+    self.expires_time = value.into();
   }
 
-  /// Get a mutable reference to the timing's delay milli.
-  pub fn delay_milli_mut(&mut self) -> &mut Option<i32> {
-    &mut self.delay_milli
+  /// Returns a reference to the `wait_until_time` field.
+  pub fn wait_until_time(&self) -> Option<&Timestamp> {
+    self.wait_until_time.as_ref()
   }
 
-  /// Get a reference to the timing's delay milli.
-  pub fn delay_milli(&self) -> &Option<i32> {
-    &self.delay_milli
+  /// Returns a mutable reference to the `wait_until_time` field.
+  pub fn wait_until_time_mut(&mut self) -> Option<&mut Timestamp> {
+    self.wait_until_time.as_mut()
   }
 
-  /// Set the timing's delay milli.
-  pub fn set_delay_milli(&mut self, delay_milli: Option<i32>) {
-    self.delay_milli = delay_milli;
+  /// Sets the value of the `wait_until_time` field.
+  pub fn set_wait_until_time<T: Into<Option<Timestamp>>>(&mut self, value: T) {
+    self.wait_until_time = value.into();
   }
 
-  /// Get a mutable reference to the timing's wait until time.
-  pub fn wait_until_time_mut(&mut self) -> &mut Option<Timestamp> {
-    &mut self.wait_until_time
+  /// Returns the value of the `delay_milli` field.
+  pub fn delay_milli(&self) -> Option<u64> {
+    self.delay_milli
   }
 
-  /// Get a reference to the timing's wait until time.
-  pub fn wait_until_time(&self) -> &Option<Timestamp> {
-    &self.wait_until_time
-  }
-
-  /// Set the timing's wait until time.
-  pub fn set_wait_until_time(&mut self, wait_until_time: Option<Timestamp>) {
-    self.wait_until_time = wait_until_time;
+  /// Sets the value of the `delay_milli` field.
+  pub fn set_delay_milli<T: Into<Option<u64>>>(&mut self, value: T) {
+    self.delay_milli = value.into();
   }
 }

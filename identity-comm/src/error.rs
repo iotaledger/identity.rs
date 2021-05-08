@@ -5,13 +5,13 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-  #[error("IOTA Error: {0}")]
+  #[error(transparent)]
   IotaError(#[from] identity_iota::Error),
-  #[error("IOTA Core Error: {0}")]
+  #[error(transparent)]
   CoreError(#[from] identity_core::Error),
-  #[error("DID Error: {0}")]
+  #[error(transparent)]
   DidError(#[from] identity_did::Error),
-  #[error("JOSE Error: {0}")]
+  #[error(transparent)]
   JoseError(#[from] libjose::Error),
   #[error(transparent)]
   Utf8Error(#[from] std::string::FromUtf8Error),
