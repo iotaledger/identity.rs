@@ -30,7 +30,7 @@ where
 
 impl<T> Diff for Service<T>
 where
-  T: Diff + Serialize + for<'de> Deserialize<'de>,
+  T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
   type Type = DiffService<T>;
 
@@ -97,25 +97,21 @@ where
       .id
       .map(DID::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `id`"))?;
+      .ok_or_else(|| Error::convert("Missing field `service.id`"))?;
 
     let type_: String = diff
       .type_
       .map(String::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `type_`"))?;
+      .ok_or_else(|| Error::convert("Missing field `service.type_`"))?;
 
     let service_endpoint: Url = diff
       .service_endpoint
       .map(Url::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `service_endpoint`"))?;
+      .ok_or_else(|| Error::convert("Missing field `service.service_endpoint`"))?;
 
-    let properties: T = diff
-      .properties
-      .map(T::from_diff)
-      .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `properties`"))?;
+    let properties: T = diff.properties.map(T::from_diff).transpose()?.unwrap_or_default();
 
     Ok(Service {
       id,

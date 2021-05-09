@@ -70,7 +70,7 @@ rusty_fork_test! {
 
       thread::sleep(interval * 3);
 
-      let store: Store = snapshot.store("", &[]);
+      let store: Store<'_> = snapshot.store("", &[]);
       let error: Error = store.get(location("expires")).await.unwrap_err();
 
       assert!(
@@ -98,7 +98,7 @@ rusty_fork_test! {
 
       snapshot.load(Default::default()).await.unwrap();
 
-      let store: Store = snapshot.store("", &[]);
+      let store: Store<'_> = snapshot.store("", &[]);
 
       for index in 1..6 {
         let instant: Instant = Instant::now();
@@ -149,7 +149,7 @@ rusty_fork_test! {
       let password: EncryptionKey = derive_encryption_key("my-password:test_store_basics");
       let snapshot: Snapshot = open_snapshot(&generate_filename(), password).await;
 
-      let store: Store = snapshot.store(b"store", &[]);
+      let store: Store<'_> = snapshot.store(b"store", &[]);
 
       assert!(store.get(location("A")).await.unwrap().is_empty());
       assert!(store.get(location("B")).await.unwrap().is_empty());
@@ -182,9 +182,9 @@ rusty_fork_test! {
       let snapshot2: Snapshot = open_snapshot(&generate_filename(), password).await;
       let snapshot3: Snapshot = open_snapshot(&generate_filename(), password).await;
 
-      let store1: Store = snapshot1.store(b"store1", &[]);
-      let store2: Store = snapshot2.store(b"store2", &[]);
-      let store3: Store = snapshot3.store(b"store3", &[]);
+      let store1: Store<'_> = snapshot1.store(b"store1", &[]);
+      let store2: Store<'_> = snapshot2.store(b"store2", &[]);
+      let store3: Store<'_> = snapshot3.store(b"store3", &[]);
       let stores: &[_] = &[&store1, &store2, &store3];
 
       for store in stores {
@@ -232,7 +232,7 @@ rusty_fork_test! {
 
       {
         let snapshot: Snapshot = open_snapshot(&filename, password).await;
-        let store: Store = snapshot.store(b"persistence", &[]);
+        let store: Store<'_> = snapshot.store(b"persistence", &[]);
 
         assert!(store.get(location("A")).await.unwrap().is_empty());
         assert!(store.get(location("B")).await.unwrap().is_empty());
@@ -251,7 +251,7 @@ rusty_fork_test! {
 
       {
         let snapshot: Snapshot = load_snapshot(&filename, password).await;
-        let store: Store = snapshot.store(b"persistence", &[]);
+        let store: Store<'_> = snapshot.store(b"persistence", &[]);
 
         assert_eq!(store.get(location("A")).await.unwrap(), b"foo".to_vec());
         assert_eq!(store.get(location("B")).await.unwrap(), b"bar".to_vec());

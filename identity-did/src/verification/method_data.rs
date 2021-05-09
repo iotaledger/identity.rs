@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::fmt::Debug;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
 use identity_core::common::Object;
 use identity_core::utils::decode_b16;
 use identity_core::utils::decode_b58;
@@ -11,7 +14,7 @@ use crate::error::Error;
 use crate::error::Result;
 
 /// Supported verification method data formats.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 #[non_exhaustive]
 pub enum MethodData {
@@ -44,6 +47,16 @@ impl MethodData {
       Self::PublicKeyBase58(input) => decode_b58(input).map_err(|_| Error::InvalidKeyDataBase58),
       Self::PublicKeyHex(input) => decode_b16(input).map_err(|_| Error::InvalidKeyDataBase16),
       Self::PublicKeyJwk(_) => Err(Error::InvalidKeyData),
+    }
+  }
+}
+
+impl Debug for MethodData {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    match self {
+      Self::PublicKeyBase58(inner) => f.write_fmt(format_args!("PublicKeyBase58({})", inner)),
+      Self::PublicKeyHex(inner) => f.write_fmt(format_args!("PublicKeyHex({})", inner)),
+      Self::PublicKeyJwk(inner) => f.debug_tuple("PublicKeyJwk").field(inner).finish(),
     }
   }
 }
