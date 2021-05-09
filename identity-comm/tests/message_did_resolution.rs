@@ -1,5 +1,5 @@
-// // Copyright 2020-2021 IOTA Stiftung
-// // SPDX-License-Identifier: Apache-2.0
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
 // use core::slice;
 // use identity_core::crypto::KeyPair;
