@@ -16,8 +16,6 @@ futures = { version = "0.3" }
 identity-core = { version = "=0.2.0", path = "../identity-core" }
 identity-credential = { version = "=0.2.0", path = "../identity-credential" }
 identity-did = { version = "=0.2.0", path = "../identity-did" }
-iota-constants = { version = "0.2", default-features = false }
-iota-conversion = { version = "0.5", default-features = false }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
@@ -25,7 +23,7 @@ thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "ee7245dfe056b6bc9d59739865d25ebd431f6e9b"
+rev = "30673c4bb5fd1ba5b5d15e95d652b05491604d94"
 default-features = false
 
 [dependencies.iota-crypto]
