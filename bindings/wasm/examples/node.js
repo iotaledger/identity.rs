@@ -12,7 +12,7 @@ const { merkleKey } = require('./merkle_key');
 async function main() {
     //Check if an example is mentioned
     if(process.argv.length != 3) {
-        throw 'Please provide one command line argument with the example name.'; 
+        throw 'Please provide one command line argument with the example name.';
     }
 
     //Take out the argument

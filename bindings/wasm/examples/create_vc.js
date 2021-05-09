@@ -7,8 +7,8 @@ const { manipulateIdentity } = require('./manipulate_did');
 const { CLIENT_CONFIG } = require('./config')
 
 /*
-    This example shows how to create a Verifiable Credential and validate it. 
-    In this example, alice takes the role of the subject, while we also have an issuer. 
+    This example shows how to create a Verifiable Credential and validate it.
+    In this example, alice takes the role of the subject, while we also have an issuer.
     The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
     This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whoever they please.
 */

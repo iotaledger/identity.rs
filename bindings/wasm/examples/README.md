@@ -4,16 +4,16 @@
 
 This folder provides code examples for you to learn how the IOTA Identity WASM bindings can be used in JavaScript.
 
-You can run each example using 
+You can run each example using
 
 ```
-npm run example:nodejs -- <example_name>
+npm run example:node -- <example_name>
 ```
 
 For Instance, to run the example `create_did`, use
 
 ```
-npm run example:nodejs -- create_did
+npm run example:node -- create_did
 ```
 
 The following examples are currently available:

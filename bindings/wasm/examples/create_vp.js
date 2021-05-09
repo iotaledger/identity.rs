@@ -6,8 +6,8 @@ const { createVC } = require('./create_VC');
 const { CLIENT_CONFIG } = require('./config')
 
 /*
-    This example shows how to create a Verifiable Presentation and validate it. 
-    A Verifiable Presentation is the format in which a (collection of) Verifiable Credential(s) gets shared. 
+    This example shows how to create a Verifiable Presentation and validate it.
+    A Verifiable Presentation is the format in which a (collection of) Verifiable Credential(s) gets shared.
     It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
 */
 async function createVP() {
@@ -17,7 +17,7 @@ async function createVP() {
     // Create a Verifiable Presentation from the Credential - signed by Alice's key
     // TODO: Sign with a challenge
     const unsignedVp = new VerifiablePresentation(alice.doc, signedVc.toJSON())
-    
+
     const signedVp = alice.doc.signPresentation(unsignedVp, {
         method: "#key",
         secret: alice.key.secret,

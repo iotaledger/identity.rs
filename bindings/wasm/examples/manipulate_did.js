@@ -9,8 +9,8 @@ const { CLIENT_CONFIG, EXPLORER_URL } = require('./config');
     This example shows how to add more to an existing DID Document.
     The two main things to add are Verification Methods and Services.
     A verification method adds public keys, which can be used to digitally sign things as an identity.
-    The services provide metadata around the identity via URIs. These can be URLs, but can also emails or IOTA indices. 
-    An important detail to note is the previousMessageId. This is an important field as it links the new DID Document to the old DID Document, creating a chain. 
+    The services provide metadata around the identity via URIs. These can be URLs, but can also emails or IOTA indices.
+    An important detail to note is the previousMessageId. This is an important field as it links the new DID Document to the old DID Document, creating a chain.
     Without setting this value, the new DID Document won't get used during resolution of the DID!
 */
 async function manipulateIdentity() {
@@ -32,7 +32,7 @@ async function manipulateIdentity() {
 
     /*
         Add the messageId of the previous message in the chain.
-        This is REQUIRED in order for the messages to form a chain. 
+        This is REQUIRED in order for the messages to form a chain.
         Skipping / forgetting this will render the publication useless.
     */
     doc.previousMessageId = messageId;

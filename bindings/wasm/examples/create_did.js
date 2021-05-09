@@ -4,7 +4,7 @@
 const { Document, KeyType, publish } = require('../node/identity_wasm')
 const { CLIENT_CONFIG, EXPLORER_URL } = require('./config')
 
-/* 
+/*
     This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle.
     A ED25519 Keypair is generated, from which the public key is hashed, becoming the DID.
     The keypair becomes part of the DID Document in order to prove a link between the DID and the published DID Document.
