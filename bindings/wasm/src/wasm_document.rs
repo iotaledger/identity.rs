@@ -102,7 +102,7 @@ impl WasmDocument {
   #[wasm_bindgen(getter)]
   pub fn id(&self) -> WasmDID {
     WasmDID(self.0.id().clone())
-  }  
+  }
 
   /// Returns the DID Document `proof` object.
   #[wasm_bindgen(getter)]
