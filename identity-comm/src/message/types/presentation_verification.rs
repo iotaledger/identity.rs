@@ -92,7 +92,7 @@ impl PresentationResponse {
   impl_message_accessor!(timing => Option<Timing>);
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct TrustedIssuer {
   #[serde(rename = "credentialTypes")]
   credential_types: Vec<String>,
