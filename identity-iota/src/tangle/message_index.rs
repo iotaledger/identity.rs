@@ -1,16 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::tangle::TangleRef;
 use core::borrow::Borrow;
+use core::hash::Hash;
 use core::iter::FromIterator;
 use core::ops::Deref;
 use core::ops::DerefMut;
-use std::collections::BTreeMap;
+use iota_client::bee_message::MessageId;
+use std::collections::HashMap;
 
-use crate::tangle::MessageId;
-use crate::tangle::TangleRef;
-
-type __Index<T> = BTreeMap<MessageId, Vec<T>>;
+type __Index<T> = HashMap<MessageId, Vec<T>>;
 
 #[derive(Clone, Debug)]
 pub struct MessageIndex<T> {
@@ -20,7 +20,7 @@ pub struct MessageIndex<T> {
 impl<T> MessageIndex<T> {
   /// Creates a new `MessageIndex`.
   pub fn new() -> Self {
-    Self { inner: BTreeMap::new() }
+    Self { inner: HashMap::new() }
   }
 
   /// Returns the total size of the index.
@@ -31,7 +31,7 @@ impl<T> MessageIndex<T> {
   pub fn remove_where<U>(&mut self, key: &U, f: impl Fn(&T) -> bool) -> Option<T>
   where
     MessageId: Borrow<U>,
-    U: Ord + ?Sized,
+    U: Hash + Eq + ?Sized,
   {
     if let Some(list) = self.inner.get_mut(key) {
       list.iter().position(f).map(|index| list.remove(index))
@@ -47,11 +47,15 @@ where
 {
   pub fn insert(&mut self, element: T) {
     let key: &MessageId = element.previous_message_id();
-
     if let Some(scope) = self.inner.get_mut(key) {
-      scope.insert(0, element);
+      let msg_id: &MessageId = element.message_id();
+      let idx = match scope.binary_search_by(|elem| elem.message_id().cmp(msg_id)) {
+        Ok(idx) => idx,
+        Err(idx) => idx,
+      };
+      scope.insert(idx, element);
     } else {
-      self.inner.insert(key.clone(), vec![element]);
+      self.inner.insert(*key, vec![element]);
     }
   }
 
@@ -111,14 +115,10 @@ mod tests {
   }
 
   impl Case {
-    fn new<T, U>(message_id: T, previous_message_id: U, state: bool) -> Self
-    where
-      T: Into<String>,
-      U: Into<String>,
-    {
+    fn new(message_id: [u8; 32], previous_message_id: [u8; 32], state: bool) -> Self {
       Self {
-        message_id: MessageId::new(message_id.into()),
-        previous_message_id: MessageId::new(previous_message_id.into()),
+        message_id: MessageId::new(message_id),
+        previous_message_id: MessageId::new(previous_message_id),
         state,
       }
     }
@@ -142,15 +142,38 @@ mod tests {
     }
   }
 
-  #[rustfmt::skip]
   fn setup() -> MessageIndex<Case> {
     let cases: Vec<Case> = vec![
-      Case::new("99999999999999999999999999999999999999999999999999999999999999999999999999999999A", "", true),
-      Case::new("99999999999999999999999999999999999999999999999999999999999999999999999999999999B", "99999999999999999999999999999999999999999999999999999999999999999999999999999999A", false),
-      Case::new("99999999999999999999999999999999999999999999999999999999999999999999999999999999C", "99999999999999999999999999999999999999999999999999999999999999999999999999999999A", true),
-      Case::new("99999999999999999999999999999999999999999999999999999999999999999999999999999999D", "99999999999999999999999999999999999999999999999999999999999999999999999999999999C", false),
-      Case::new("99999999999999999999999999999999999999999999999999999999999999999999999999999999E", "99999999999999999999999999999999999999999999999999999999999999999999999999999999B", false),
-      Case::new("99999999999999999999999999999999999999999999999999999999999999999999999999999999F", "99999999999999999999999999999999999999999999999999999999999999999999999999999999B", true),
+      Case::new(
+        *b"9999999999999999999999999999999A",
+        *b"99999999999999999999999999999990",
+        true,
+      ),
+      Case::new(
+        *b"9999999999999999999999999999999B",
+        *b"9999999999999999999999999999999A",
+        false,
+      ),
+      Case::new(
+        *b"9999999999999999999999999999999C",
+        *b"9999999999999999999999999999999A",
+        true,
+      ),
+      Case::new(
+        *b"9999999999999999999999999999999D",
+        *b"9999999999999999999999999999999C",
+        false,
+      ),
+      Case::new(
+        *b"9999999999999999999999999999999E",
+        *b"9999999999999999999999999999999B",
+        false,
+      ),
+      Case::new(
+        *b"9999999999999999999999999999999F",
+        *b"9999999999999999999999999999999B",
+        true,
+      ),
     ];
 
     let mut index: MessageIndex<Case> = MessageIndex::new();
@@ -159,39 +182,59 @@ mod tests {
   }
 
   #[test]
-  #[rustfmt::skip]
   fn test_works() {
     let index: MessageIndex<Case> = setup();
 
     assert_eq!(index.size(), 6);
-    assert_eq!(index[&MessageId::new("")].len(), 1);
-    assert_eq!(index[&MessageId::new("99999999999999999999999999999999999999999999999999999999999999999999999999999999A")].len(), 2);
-    assert_eq!(index[&MessageId::new("99999999999999999999999999999999999999999999999999999999999999999999999999999999B")].len(), 2);
-    assert_eq!(index[&MessageId::new("99999999999999999999999999999999999999999999999999999999999999999999999999999999C")].len(), 1);
+    assert_eq!(index[&MessageId::new(*b"99999999999999999999999999999990")].len(), 1);
+    assert_eq!(index[&MessageId::new(*b"9999999999999999999999999999999A")].len(), 2);
+    assert_eq!(index[&MessageId::new(*b"9999999999999999999999999999999B")].len(), 2);
+    assert_eq!(index[&MessageId::new(*b"9999999999999999999999999999999C")].len(), 1);
   }
 
   #[test]
-  #[rustfmt::skip]
   fn test_remove_where() {
     let mut index: MessageIndex<Case> = setup();
 
-    let removed: Case = index.remove_where(&MessageId::new(""), |_| true).unwrap();
-    assert_eq!(removed.message_id, "99999999999999999999999999999999999999999999999999999999999999999999999999999999A");
-    assert_eq!(removed.previous_message_id, MessageId::NONE);
-    assert!(index.remove_where(&MessageId::new(""), |_| true).is_none());
+    let removed: Case = index
+      .remove_where(&MessageId::new(*b"99999999999999999999999999999990"), |_| true)
+      .unwrap();
+
+    assert_eq!(removed.message_id, MessageId::new(*b"9999999999999999999999999999999A"));
+
+    assert_eq!(
+      removed.previous_message_id,
+      MessageId::new(*b"99999999999999999999999999999990")
+    );
+
+    let removed: bool = index
+      .remove_where(&MessageId::new(*b"99999999999999999999999999999990"), |_| true)
+      .is_none();
+
+    assert!(removed);
 
     let first: Case = index
-      .remove_where(&MessageId::new("99999999999999999999999999999999999999999999999999999999999999999999999999999999B"), |case| !case.state)
+      .remove_where(&MessageId::new(*b"9999999999999999999999999999999B"), |case| {
+        !case.state
+      })
       .unwrap();
 
-    assert_eq!(first.message_id, "99999999999999999999999999999999999999999999999999999999999999999999999999999999E");
-    assert_eq!(first.previous_message_id, "99999999999999999999999999999999999999999999999999999999999999999999999999999999B");
+    assert_eq!(first.message_id, MessageId::new(*b"9999999999999999999999999999999E"));
+
+    assert_eq!(
+      first.previous_message_id,
+      MessageId::new(*b"9999999999999999999999999999999B")
+    );
 
     let second: Case = index
-      .remove_where(&MessageId::new("99999999999999999999999999999999999999999999999999999999999999999999999999999999B"), |_| true)
+      .remove_where(&MessageId::new(*b"9999999999999999999999999999999B"), |_| true)
       .unwrap();
 
-    assert_eq!(second.message_id, "99999999999999999999999999999999999999999999999999999999999999999999999999999999F");
-    assert_eq!(second.previous_message_id, "99999999999999999999999999999999999999999999999999999999999999999999999999999999B");
+    assert_eq!(second.message_id, MessageId::new(*b"9999999999999999999999999999999F"));
+
+    assert_eq!(
+      second.previous_message_id,
+      MessageId::new(*b"9999999999999999999999999999999B")
+    );
   }
 }

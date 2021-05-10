@@ -6,11 +6,15 @@
 /// Alias for a `Result` with the error type [`Error`].
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
-use crate::crypto::merkle_key::MerkleTag;
+use crate::crypto::merkle_key::MerkleDigestTag;
+use crate::crypto::merkle_key::MerkleSignatureTag;
 
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+  /// Caused when a cryptographic operation fails.
+  #[error("Crypto Error: {0}")]
+  Crypto(crypto::Error),
   /// Caused by a failure to encode Rust types as JSON.
   #[error("Failed to encode JSON: {0}")]
   EncodeJSON(serde_json::Error),
@@ -42,21 +46,36 @@ pub enum Error {
   #[error("Invalid Timestamp: {0}")]
   InvalidTimestamp(#[from] chrono::ParseError),
   /// Raised by a validation attempt against an invalid DID proof.
-  #[error("Invalid Proof Value")]
-  InvalidProofValue,
+  #[error("Invalid Proof Value: {0}")]
+  InvalidProofValue(&'static str),
   /// Caused by attempting to parse an invalid DID proof.
   #[error("Invalid Proof Format")]
   InvalidProofFormat,
   /// Caused by attempting to parse an invalid cryptographic key.
   #[error("Invalid Key Format")]
   InvalidKeyFormat,
-  /// Caused by attempting to parse an invalid Merkle Key Collection tag.
-  #[error("Invalid Merkle Key Tag: {0:?}")]
-  InvalidMerkleKeyTag(Option<MerkleTag>),
+  /// Caused byt attempting to parse as invalid cryptographic key.
+  #[error("Invalid Key Length. Received {0}, Expected {1}")]
+  InvalidKeyLength(usize, usize),
+  /// Caused byt attempting to parse as invalid digital signature.
+  #[error("Invalid Signature Length. Received {0}, Expected {1}")]
+  InvalidSigLength(usize, usize),
+  /// Caused by attempting to parse an invalid Merkle Digest Key Collection tag.
+  #[error("Invalid Merkle Digest Key Tag: {0:?}")]
+  InvalidMerkleDigestKeyTag(Option<MerkleDigestTag>),
+  /// Caused by attempting to parse an invalid Merkle Signature Key Collection tag.
+  #[error("Invalid Merkle Signature Key Tag: {0:?}")]
+  InvalidMerkleSignatureKeyTag(Option<MerkleSignatureTag>),
   /// Caused by a failed attempt at retrieving a digital signature.
   #[error("Signature Not Found")]
   MissingSignature,
   /// Caused by attempting to create a KeyCollection of invalid size.
   #[error("Invalid Key Collection Size: {0}")]
   InvalidKeyCollectionSize(usize),
+}
+
+impl From<crypto::Error> for Error {
+  fn from(other: crypto::Error) -> Self {
+    Self::Crypto(other)
+  }
 }

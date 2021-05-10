@@ -7,7 +7,7 @@ use crate::error::Error;
 use crate::error::Result;
 
 /// Verification method group used to refine the scope of a method query.
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum MethodScope {
   VerificationMethod,
   Authentication,

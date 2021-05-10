@@ -1,64 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! # IOTA Identity
-//! IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentralized identity, also known as Self Sovereign Identity (SSI), through the [W3C Decentralized Identifiers (DID)](https://w3c.github.io/did-core/) and [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) standards alongside supporting methods, utilizing the [IOTA Distributed Ledger](https://www.iota.org).
-//!
-//!
-//! # Example
-//! ```
-//! use identity::crypto::KeyPair;
-//! use identity::iota::Client;
-//! use identity::iota::Document;
-//! use identity::iota::Network;
-//! use identity::iota::Result;
-//! use identity::iota::TangleRef;
-//!
-//! #[smol_potat::main]
-//! async fn main() -> Result<()> {
-//!   // Create a client to interact with the IOTA Tangle.
-//!   let client: Client = Client::new()?;
-//!
-//!   // Create a DID Document (an identity).
-//!   let keypair: KeyPair = KeyPair::new_ed25519()?;
-//!   let mut document: Document = Document::from_keypair(&keypair)?;
-//!
-//!   // Sign the DID Document with the default authentication key.
-//!   document.sign(keypair.secret())?;
-//!
-//!   // Use the client to publish the DID Document to the IOTA Tangle.
-//!   document.publish(&client).await?;
-//!
-//!   // Print the DID Document transaction link.
-//!   let network: Network = document.id().into();
-//!   let explore: String = format!("{}/transaction/{}", network.explorer_url(), document.message_id());
-//!
-//!   println!("DID Document Transaction > {}", explore);
-//!
-//!   Ok(())
-//! }
-//! ```
-//!
-//! **Output**: Example DID Document in the [Tangle Explorer](https://explorer.iota.org/mainnet/transaction/LESUXJUMJCOWGHU9CQQUIHCIPYELOBMHZT9CHCYHJPO9BONQ9IQIFJSREYNOCTYCTQYBHBMBBWJJZ9999).
-//!
-//! # Documentation & Community Resources
-//! - [identity.rs](https://github.com/iotaledger/identity.rs): Rust source code of this library on GitHub.
-//! - [Identity Documentation Pages](https://identity.docs.iota.org/welcome.html): Supplementing documentation with
-//!   simple examples on library usage to get you started.
-//! - [More Examples](https://github.com/iotaledger/identity.rs/tree/dev/examples): Practical examples to get started
-//!   with the library.
-//! - [IOTA Identity Experience Team Website](https://iota-community.github.io/X-Team_IOTA_Identity/): Website of
-//!   aforementioned team.
-//!
-//! # Structure (Temporary)
-//!
-//! - Resources
-//!   - Docs Link (Website & User Guide)
-//!   - X-Team
-//! - Simple Example
-//! - Architecture/Overview
-//! - Get
-
+#![cfg_attr(docsrs, feature(doc_cfg, extended_key_value_attributes))]
+#![cfg_attr(docsrs, cfg_attr(docsrs, doc = include_str!("../README.md")))]
+#![cfg_attr(not(docsrs), doc = "")]
+#![allow(clippy::upper_case_acronyms)]
 #![warn(
   rust_2018_idioms,
   unreachable_pub,
@@ -70,7 +16,6 @@
   clippy::missing_safety_doc,
   clippy::missing_errors_doc
 )]
-#![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub mod core {
   //! Core Traits and Types
@@ -91,6 +36,22 @@ pub mod crypto {
   //! Cryptographic Utilities
 
   pub use identity_core::crypto::*;
+}
+
+#[cfg(feature = "account")]
+#[cfg_attr(docsrs, doc(cfg(feature = "account")))]
+pub mod account {
+  //! Secure storage for Decentralized Identifiers
+
+  pub use identity_account::account::*;
+  pub use identity_account::crypto::*;
+  pub use identity_account::error::*;
+  pub use identity_account::events::*;
+  pub use identity_account::identity::*;
+  pub use identity_account::storage::*;
+  pub use identity_account::stronghold::*;
+  pub use identity_account::types::*;
+  pub use identity_account::utils::*;
 }
 
 #[cfg(feature = "credential")]
@@ -143,4 +104,35 @@ pub mod iota {
 
   #[doc(inline)]
   pub use identity_iota::try_did;
+}
+
+#[cfg(feature = "comm")]
+#[cfg_attr(docsrs, doc(cfg(feature = "comm")))]
+pub mod comm {
+  //! DID Communications Message Specification
+  //!
+  //! [Specification](https://github.com/iotaledger/identity.rs/tree/dev/docs/DID%20Communications%20Research%20and%20Specification)
+
+  pub use identity_comm::envelope::*;
+  pub use identity_comm::error::*;
+  pub use identity_comm::message::*;
+  pub use identity_comm::types::*;
+}
+
+pub mod prelude {
+  //! Prelude of commonly used types
+
+  pub use identity_core::crypto::KeyPair;
+
+  #[cfg(feature = "iota")]
+  #[cfg_attr(docsrs, doc(cfg(feature = "iota")))]
+  pub use identity_iota::client::Client;
+
+  #[cfg(feature = "iota")]
+  #[cfg_attr(docsrs, doc(cfg(feature = "iota")))]
+  pub use identity_iota::did::IotaDocument;
+
+  #[cfg(feature = "iota")]
+  #[cfg_attr(docsrs, doc(cfg(feature = "iota")))]
+  pub use identity_iota::Result;
 }

@@ -5,19 +5,34 @@ edition = "2018"
 publish = false
 
 [dependencies]
-identity = { path = "../identity" }
-rand = { version = "0.7" }
-sha2 = { version = "0.9" }
-smol = { version = "0.1", features = ["tokio02"] }
-smol-potat = { version = "0.3" }
+identity = { path = "../identity", features = ["account"] }
+pretty_env_logger = { version = "0.4" }
+rand = { version = "0.8" }
+tokio = { version = "1.5", features = ["full"] }
 
 [[example]]
-name = "create_did"
-path = "create_did.rs"
+name = "getting_started"
+path = "getting_started.rs"
 
 [[example]]
-name = "credential"
-path = "credential.rs"
+name = "create_did_document"
+path = "create_did_document.rs"
+
+[[example]]
+name = "manipulate_did_document"
+path = "manipulate_did_document.rs"
+
+[[example]]
+name = "verifiable_credential"
+path = "verifiable_credential.rs"
+
+[[example]]
+name = "verifiable_presentation"
+path = "verifiable_presentation.rs"
+
+[[example]]
+name = "resolution"
+path = "resolution.rs"
 
 [[example]]
 name = "diff_chain"
@@ -28,5 +43,25 @@ name = "merkle_key"
 path = "merkle_key.rs"
 
 [[example]]
-name = "resolution"
-path = "resolution.rs"
+name = "account_basic"
+path = "account/basic.rs"
+
+[[example]]
+name = "account_config"
+path = "account/config.rs"
+
+[[example]]
+name = "account_methods"
+path = "account/methods.rs"
+
+[[example]]
+name = "account_services"
+path = "account/services.rs"
+
+[[example]]
+name = "account_signing"
+path = "account/signing.rs"
+
+[[example]]
+name = "account_stronghold"
+path = "account/stronghold.rs"

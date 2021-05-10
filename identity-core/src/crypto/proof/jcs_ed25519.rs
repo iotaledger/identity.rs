@@ -1,54 +1,71 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use erased_serde::Serialize;
+use core::marker::PhantomData;
+use serde::Serialize;
 
 use crate::convert::ToJson;
-use crate::crypto::ed25519_sign;
-use crate::crypto::ed25519_verify;
-use crate::crypto::SignatureName;
-use crate::crypto::SignatureSign;
+use crate::crypto::Ed25519;
+use crate::crypto::Named;
+use crate::crypto::Sign;
 use crate::crypto::SignatureValue;
-use crate::crypto::SignatureVerify;
+use crate::crypto::Signer;
+use crate::crypto::Verifier;
+use crate::crypto::Verify;
 use crate::error::Error;
 use crate::error::Result;
 use crate::utils::decode_b58;
 use crate::utils::encode_b58;
 
-const SIGNATURE_NAME: &str = "JcsEd25519Signature2020";
+// TODO: Marker trait for Ed25519 implementations (?)
 
 /// An implementation of the [JCS Ed25519 Signature 2020][SPEC1] signature suite
 /// for [Linked Data Proofs][SPEC2].
 ///
-/// Users should use the [`SignatureSign`]/[`SignatureVerify`] traits to access
+/// Users should use the [`Sign`]/[`Verify`] traits to access
 /// this implementation.
 ///
 /// [SPEC1]: https://identity.foundation/JcsEd25519Signature2020/
 /// [SPEC2]: https://w3c-ccg.github.io/ld-proofs/
-#[derive(Clone, Copy, Debug)]
-pub struct JcsEd25519Signature2020;
+pub struct JcsEd25519<T = Ed25519>(PhantomData<T>);
 
-impl SignatureName for JcsEd25519Signature2020 {
-  fn name(&self) -> String {
-    SIGNATURE_NAME.to_string()
-  }
+impl<T> Named for JcsEd25519<T> {
+  const NAME: &'static str = "JcsEd25519Signature2020";
 }
 
-impl SignatureSign for JcsEd25519Signature2020 {
-  fn sign(&self, data: &dyn Serialize, secret: &[u8]) -> Result<SignatureValue> {
-    let signature: _ = ed25519_sign(&data.to_jcs()?, secret)?;
-    let signature: String = encode_b58(&signature);
+impl<T> Signer<T::Secret> for JcsEd25519<T>
+where
+  T: Sign,
+  T::Output: AsRef<[u8]>,
+{
+  fn sign<X>(data: &X, secret: &T::Secret) -> Result<SignatureValue>
+  where
+    X: Serialize,
+  {
+    let message: Vec<u8> = data.to_jcs()?;
+    let signature: T::Output = T::sign(&message, secret)?;
+    let signature: String = encode_b58(signature.as_ref());
 
     Ok(SignatureValue::Signature(signature))
   }
 }
 
-impl SignatureVerify for JcsEd25519Signature2020 {
-  fn verify(&self, data: &dyn Serialize, signature: &SignatureValue, public: &[u8]) -> Result<()> {
-    let signature: &str = signature.as_signature().ok_or(Error::InvalidProofValue)?;
-    let signature: Vec<u8> = decode_b58(signature)?;
+impl<T> Verifier<T::Public> for JcsEd25519<T>
+where
+  T: Verify,
+{
+  fn verify<X>(data: &X, signature: &SignatureValue, public: &T::Public) -> Result<()>
+  where
+    X: Serialize,
+  {
+    let signature: &str = signature
+      .as_signature()
+      .ok_or(Error::InvalidProofValue("jcs ed25519"))?;
 
-    ed25519_verify(&data.to_jcs()?, &signature, public)?;
+    let signature: Vec<u8> = decode_b58(signature)?;
+    let message: Vec<u8> = data.to_jcs()?;
+
+    T::verify(&message, &signature, public)?;
 
     Ok(())
   }
@@ -59,13 +76,20 @@ mod tests {
   use crate::common::Object;
   use crate::common::Value;
   use crate::convert::FromJson;
-  use crate::crypto::JcsEd25519Signature2020 as Ed25519;
+  use crate::crypto::Ed25519;
+  use crate::crypto::JcsEd25519;
   use crate::crypto::KeyPair;
-  use crate::crypto::SignatureSign;
+  use crate::crypto::PublicKey;
+  use crate::crypto::SecretKey;
   use crate::crypto::SignatureValue;
-  use crate::crypto::SignatureVerify;
+  use crate::crypto::Signer as _;
+  use crate::crypto::Verifier as _;
   use crate::json;
   use crate::utils::decode_b58;
+
+  type Signer = JcsEd25519<Ed25519<SecretKey>>;
+
+  type Verifier = JcsEd25519<Ed25519<PublicKey>>;
 
   struct TestVector {
     public: &'static str,
@@ -79,24 +103,25 @@ mod tests {
   #[test]
   fn test_tvs() {
     for tv in TVS {
-      let public: Vec<u8> = decode_b58(tv.public).unwrap();
-      let secret: Vec<u8> = decode_b58(tv.secret).unwrap();
+      let public: PublicKey = decode_b58(tv.public).unwrap().into();
+      let secret: SecretKey = decode_b58(tv.secret).unwrap().into();
+      let badkey: PublicKey = b"IOTA".to_vec().into();
 
       let input: Object = Object::from_json(tv.input).unwrap();
       let output: Object = Object::from_json(tv.output).unwrap();
 
-      let signature: SignatureValue = Ed25519.sign(&input, &secret).unwrap();
+      let signature: SignatureValue = Signer::sign(&input, &secret).unwrap();
 
       assert_eq!(output["proof"]["signatureValue"], signature.as_str());
 
-      assert!(Ed25519.verify(&input, &signature, &public).is_ok());
+      assert!(Verifier::verify(&input, &signature, &public).is_ok());
 
       // Fails when the key is mutated
-      assert!(Ed25519.verify(&input, &signature, b"IOTA").is_err());
+      assert!(Verifier::verify(&input, &signature, &badkey).is_err());
 
       // Fails when the signature is mutated
       let signature: _ = SignatureValue::Signature("IOTA".into());
-      assert!(Ed25519.verify(&input, &signature, &public).is_err());
+      assert!(Verifier::verify(&input, &signature, &public).is_err());
     }
   }
 
@@ -108,14 +133,13 @@ mod tests {
     const SIG: &[u8] = b"4VjbV3672WRhKqUVn4Cdp6e7AaXYYv2f71dM8ZDHqWexfku4oLUeDVFuxGRXxpkVUwZ924zFHu527Z2ZNiPKZVeF";
     const MSG: &[u8] = b"hello";
 
-    let public: Vec<u8> = decode_b58(PUBLIC).unwrap();
-    let secret: Vec<u8> = decode_b58(SECRET).unwrap();
+    let public: PublicKey = decode_b58(PUBLIC).unwrap().into();
+    let secret: SecretKey = decode_b58(SECRET).unwrap().into();
 
-    let signature: _ = Ed25519.sign(&MSG, &secret).unwrap();
+    let signature: SignatureValue = Signer::sign(&MSG, &secret).unwrap();
+
     assert_eq!(signature.as_str().as_bytes(), SIG);
-
-    let verified: _ = Ed25519.verify(&MSG, &signature, &public);
-    assert!(verified.is_ok());
+    assert!(Verifier::verify(&MSG, &signature, &public).is_ok());
   }
 
   #[test]
@@ -123,22 +147,18 @@ mod tests {
     let key1: KeyPair = KeyPair::new_ed25519().unwrap();
     let key2: KeyPair = KeyPair::new_ed25519().unwrap();
 
-    let public1: &[u8] = key1.public().as_ref();
-    let secret1: &[u8] = key1.secret().as_ref();
-    let public2: &[u8] = key2.public().as_ref();
-
     let data1: Value = json!({ "msg": "IOTA Identity" });
     let data2: Value = json!({ "msg": "IOTA Identity 2" });
 
-    let signature: _ = Ed25519.sign(&data1, secret1).unwrap();
+    let signature: _ = Signer::sign(&data1, key1.secret()).unwrap();
 
     // The signature should be valid
-    assert!(Ed25519.verify(&data1, &signature, public1).is_ok());
+    assert!(Verifier::verify(&data1, &signature, key1.public()).is_ok());
 
     // Modified data should be invaldid
-    assert!(Ed25519.verify(&data2, &signature, public1).is_err());
+    assert!(Verifier::verify(&data2, &signature, key1.public()).is_err());
 
     // A modified key should be invaldid
-    assert!(Ed25519.verify(&data1, &signature, public2).is_err());
+    assert!(Verifier::verify(&data1, &signature, key2.public()).is_err());
   }
 }

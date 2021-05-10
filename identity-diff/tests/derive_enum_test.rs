@@ -4,7 +4,8 @@
 #![allow(unused_variables)]
 
 use identity_diff::Diff;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
 #[derive(Diff, Debug, Clone, PartialEq)]
 pub enum StructEnum {

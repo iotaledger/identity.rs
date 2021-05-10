@@ -3,7 +3,11 @@
 
 /// Creates a new IOTA DID from a `public` key and optional `network`/`shard`.
 ///
-/// [`panics`][`panic`] if the DID format is not valid.
+/// # Panics
+///
+/// Panics if the DID format is not valid.
+///
+/// # Example
 ///
 /// ```
 /// # use identity_iota::did;
@@ -37,34 +41,34 @@ macro_rules! did {
   };
 }
 
-/// A fallible version of the `did` macro.
+/// A fallible version of the [did] macro.
 #[macro_export]
 macro_rules! try_did {
   ($public:expr, $network:expr, $shard:expr) => {
-    $crate::did::DID::parse(format!(
+    $crate::did::IotaDID::parse(format!(
       "{}:{}:{}:{}:{}",
-      $crate::did::DID::SCHEME,
-      $crate::did::DID::METHOD,
+      $crate::did::IotaDID::SCHEME,
+      $crate::did::IotaDID::METHOD,
       $network,
       $shard,
-      $crate::did::DID::encode_key($public),
+      $crate::did::IotaDID::encode_key($public),
     ))
   };
   ($public:expr, $network:expr) => {
-    $crate::did::DID::parse(format!(
+    $crate::did::IotaDID::parse(format!(
       "{}:{}:{}:{}",
-      $crate::did::DID::SCHEME,
-      $crate::did::DID::METHOD,
+      $crate::did::IotaDID::SCHEME,
+      $crate::did::IotaDID::METHOD,
       $network,
-      $crate::did::DID::encode_key($public),
+      $crate::did::IotaDID::encode_key($public),
     ))
   };
   ($public:expr) => {
-    $crate::did::DID::parse(format!(
+    $crate::did::IotaDID::parse(format!(
       "{}:{}:{}",
-      $crate::did::DID::SCHEME,
-      $crate::did::DID::METHOD,
-      $crate::did::DID::encode_key($public),
+      $crate::did::IotaDID::SCHEME,
+      $crate::did::IotaDID::METHOD,
+      $crate::did::IotaDID::encode_key($public),
     ))
   };
 }

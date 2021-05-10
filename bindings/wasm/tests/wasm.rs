@@ -7,8 +7,8 @@ use identity_wasm::crypto::Digest;
 use identity_wasm::crypto::KeyCollection;
 use identity_wasm::crypto::KeyPair;
 use identity_wasm::crypto::KeyType;
-use identity_wasm::did::DID;
-use identity_wasm::document::Document;
+use identity_wasm::wasm_did::WasmDID;
+use identity_wasm::wasm_document::WasmDocument;
 
 #[wasm_bindgen_test]
 fn test_keypair() {
@@ -36,7 +36,7 @@ fn test_key_collection() {
   let keys = KeyCollection::new(KeyType::Ed25519, size).unwrap();
 
   assert_eq!(keys.length(), size);
-  assert_eq!(keys.is_empty(), false);
+  assert!(!keys.is_empty());
 
   for index in 0..keys.length() {
     let key = keys.keypair(index).unwrap();
@@ -62,31 +62,39 @@ fn test_key_collection() {
 #[test]
 fn test_did() {
   let key = KeyPair::new(KeyType::Ed25519).unwrap();
-  let did = DID::new(&key, None, None).unwrap();
+  let did = WasmDID::new(&key, None, None).unwrap();
 
   assert_eq!(did.network(), "main");
   assert_eq!(did.shard(), None);
 
-  let parsed = DID::parse(&did.to_string()).unwrap();
+  let parsed = WasmDID::parse(&did.to_string()).unwrap();
 
   assert_eq!(did.to_string(), parsed.to_string());
 
   let public = key.public();
-  let base58 = DID::from_base58(&public, Some("com".to_string()), Some("xyz".to_string())).unwrap();
+  let base58 = WasmDID::from_base58(&public, Some("test".to_string()), Some("xyz".to_string())).unwrap();
 
   assert_eq!(base58.tag(), did.tag());
-  assert_eq!(base58.network(), "com");
+  assert_eq!(base58.network(), "test");
   assert_eq!(base58.shard().unwrap(), "xyz");
 }
 
 #[test]
 fn test_document() {
-  let output = Document::new(KeyType::Ed25519, None).unwrap();
+  let output = WasmDocument::new(KeyType::Ed25519, None, None).unwrap();
 
-  let mut doc = output.doc();
-  let key = output.key();
+  let mut document = output.doc();
+  let keypair = output.key();
 
-  doc.sign(&key).unwrap();
+  document.sign(&keypair).unwrap();
 
-  assert_eq!(doc.verify(), true);
+  assert!(document.verify());
+}
+
+#[test]
+fn test_document_network() {
+  let output = WasmDocument::new(KeyType::Ed25519, Some("test".into()), None).unwrap();
+  let document = output.doc();
+
+  assert_eq!(document.id().network(), "test");
 }

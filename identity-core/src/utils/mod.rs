@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! Misc. utility functions.
+//! Misc. utility functions (encoding, decoding, and ed25519 utils).
 
 mod base_encoding;
-mod generate_ed25519;
+mod ed25519;
 
 pub use self::base_encoding::*;
-pub use self::generate_ed25519::*;
+pub use self::ed25519::*;

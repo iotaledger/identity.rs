@@ -11,9 +11,12 @@ use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::ToJson;
-use identity_core::crypto::SecretKey;
-use identity_did::document::Document;
-use identity_did::verification::MethodQuery;
+use identity_core::crypto::SetSignature;
+use identity_core::crypto::Signature;
+use identity_core::crypto::TrySignature;
+use identity_core::crypto::TrySignatureMut;
+use identity_did::verification::MethodUriType;
+use identity_did::verification::TryMethod;
 use serde::Serialize;
 
 use crate::credential::CredentialBuilder;
@@ -24,7 +27,6 @@ use crate::credential::Refresh;
 use crate::credential::Schema;
 use crate::credential::Status;
 use crate::credential::Subject;
-use crate::credential::VerifiableCredential;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -32,9 +34,7 @@ lazy_static! {
   static ref BASE_CONTEXT: Context = Context::Url(Url::parse("https://www.w3.org/2018/credentials/v1").unwrap());
 }
 
-/// A `Credential` represents a set of claims describing an entity.
-///
-/// `Credential`s can be signed with `Document`s to create `VerifiableCredential`s.
+/// Represents a set of claims describing an entity.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Credential<T = Object> {
   /// The JSON-LD context(s) applicable to the `Credential`.
@@ -73,28 +73,31 @@ pub struct Credential<T = Object> {
   #[serde(default, skip_serializing_if = "OneOrMany::is_empty")]
   pub evidence: OneOrMany<Evidence>,
   /// Indicates that the `Credential` must only be contained within a
-  /// `Presentation` with a proof issued from the `Credential` subject.
+  /// [`Presentation`][crate::presentation::Presentation] with a proof issued from the `Credential` subject.
   #[serde(rename = "nonTransferable", skip_serializing_if = "Option::is_none")]
   pub non_transferable: Option<bool>,
   /// Miscellaneous properties.
   #[serde(flatten)]
   pub properties: T,
+  /// Proof(s) used to verify a `Credential`
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub proof: Option<Signature>,
 }
 
 impl<T> Credential<T> {
-  /// Returns the base JSON-LD context for `Credential`s.
+  /// Returns the base JSON-LD context.
   pub fn base_context() -> &'static Context {
     &*BASE_CONTEXT
   }
 
-  /// Returns the base type for `Credential`s.
+  /// Returns the base type.
   pub const fn base_type() -> &'static str {
     "VerifiableCredential"
   }
 
   /// Creates a new `CredentialBuilder` to configure a `Credential`.
   ///
-  /// This is the same as `CredentialBuilder::new()`.
+  /// This is the same as [CredentialBuilder::new].
   pub fn builder(properties: T) -> CredentialBuilder<T> {
     CredentialBuilder::new(properties)
   }
@@ -116,6 +119,7 @@ impl<T> Credential<T> {
       evidence: builder.evidence.into(),
       non_transferable: builder.non_transferable,
       properties: builder.properties,
+      proof: None,
     };
 
     this.check_structure()?;
@@ -150,25 +154,15 @@ impl<T> Credential<T> {
 
     Ok(())
   }
-}
 
-impl<T> Credential<T>
-where
-  T: Serialize,
-{
-  /// Creates a new [`VerifiableCredential`] by signing `self` with
-  /// [`document`][`Document`] and [`secret`][`SecretKey`].
-  pub fn sign<D1, D2, D3>(
-    self,
-    document: &Document<D1, D2, D3>,
-    query: MethodQuery<'_>,
-    secret: &SecretKey,
-  ) -> Result<VerifiableCredential<T>> {
-    let mut target: VerifiableCredential<T> = VerifiableCredential::new(self, Vec::new());
+  /// Returns a reference to the proof.
+  pub fn proof(&self) -> Option<&Signature> {
+    self.proof.as_ref()
+  }
 
-    document.signer(secret).method(query).sign(&mut target)?;
-
-    Ok(target)
+  /// Returns a mutable reference to the proof.
+  pub fn proof_mut(&mut self) -> Option<&mut Signature> {
+    self.proof.as_mut()
   }
 }
 
@@ -183,6 +177,28 @@ where
       f.write_str(&self.to_json().map_err(|_| FmtError)?)
     }
   }
+}
+
+impl<T> TrySignature for Credential<T> {
+  fn signature(&self) -> Option<&Signature> {
+    self.proof.as_ref()
+  }
+}
+
+impl<T> TrySignatureMut for Credential<T> {
+  fn signature_mut(&mut self) -> Option<&mut Signature> {
+    self.proof.as_mut()
+  }
+}
+
+impl<T> SetSignature for Credential<T> {
+  fn set_signature(&mut self, value: Signature) {
+    self.proof.replace(value);
+  }
+}
+
+impl<T> TryMethod for Credential<T> {
+  const TYPE: MethodUriType = MethodUriType::Absolute;
 }
 
 #[cfg(test)]

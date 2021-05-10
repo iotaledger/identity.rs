@@ -14,6 +14,7 @@ use crate::diff::DiffMethod;
 use crate::verification::MethodRef;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(untagged)]
 pub enum DiffMethodRef<T = Object>
 where
   T: Diff,
@@ -24,7 +25,7 @@ where
 
 impl<T> Diff for MethodRef<T>
 where
-  T: Diff + Serialize + for<'de> Deserialize<'de>,
+  T: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
   type Type = DiffMethodRef<T>;
 

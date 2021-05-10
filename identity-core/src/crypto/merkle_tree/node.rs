@@ -62,7 +62,7 @@ impl<D: DigestExt> Debug for Node<D> {
 
 #[cfg(test)]
 mod tests {
-  use sha2::Sha256;
+  use crypto::hashes::sha::Sha256;
 
   use crate::crypto::merkle_tree::Digest;
   use crate::crypto::merkle_tree::DigestExt;

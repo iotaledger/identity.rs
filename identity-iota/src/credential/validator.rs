@@ -3,21 +3,21 @@
 
 use identity_core::common::Object;
 use identity_core::convert::FromJson;
-use identity_credential::credential::VerifiableCredential;
-use identity_credential::presentation::VerifiablePresentation;
+use identity_credential::credential::Credential;
+use identity_credential::presentation::Presentation;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::collections::BTreeMap;
 
 use crate::client::Client;
-use crate::did::Document;
-use crate::did::DID;
+use crate::did::IotaDID;
+use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CredentialValidation<T = Object> {
-  pub credential: VerifiableCredential<T>,
+  pub credential: Credential<T>,
   pub issuer: DocumentValidation,
   pub subjects: BTreeMap<String, DocumentValidation>,
   pub verified: bool,
@@ -25,7 +25,7 @@ pub struct CredentialValidation<T = Object> {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PresentationValidation<T = Object, U = Object> {
-  pub presentation: VerifiablePresentation<T, U>,
+  pub presentation: Presentation<T, U>,
   pub holder: DocumentValidation,
   pub credentials: Vec<CredentialValidation<U>>,
   pub verified: bool,
@@ -33,8 +33,8 @@ pub struct PresentationValidation<T = Object, U = Object> {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DocumentValidation {
-  pub did: DID,
-  pub document: Document,
+  pub did: IotaDID,
+  pub document: IotaDocument,
   pub metadata: Object,
   pub verified: bool,
 }
@@ -50,33 +50,31 @@ impl<'a> CredentialValidator<'a> {
     Self { client }
   }
 
-  /// Deserializes the given JSON-encoded `VerifiableCredential` and validates
+  /// Deserializes the given JSON-encoded `Credential` and validates
   /// all associated DID documents.
   pub async fn check<T>(&self, data: &str) -> Result<CredentialValidation<T>>
   where
     T: DeserializeOwned + Serialize,
   {
-    self.validate_credential(VerifiableCredential::from_json(data)?).await
+    self.validate_credential(Credential::from_json(data)?).await
   }
 
-  /// Deserializes the given JSON-encoded `VerifiablePresentation` and
-  /// validates all associated DID documents/`VerifiableCredential`s.
+  /// Deserializes the given JSON-encoded `Presentation` and
+  /// validates all associated DID documents/`Credential`s.
   pub async fn check_presentation<T, U>(&self, data: &str) -> Result<PresentationValidation<T, U>>
   where
     T: Clone + DeserializeOwned + Serialize,
     U: Clone + DeserializeOwned + Serialize,
   {
-    self
-      .validate_presentation(VerifiablePresentation::from_json(data)?)
-      .await
+    self.validate_presentation(Presentation::from_json(data)?).await
   }
 
-  /// Validates the `VerifiableCredential` proof and all relevant DID documents.
+  /// Validates the `Credential` proof and all relevant DID documents.
   ///
   /// Note: The credential is expected to have a proof created by the issuing party.
   /// Note: The credential issuer URL is expected to be a valid DID.
   /// Note: Credential subject IDs are expected to be valid DIDs (if present).
-  pub async fn validate_credential<T>(&self, credential: VerifiableCredential<T>) -> Result<CredentialValidation<T>>
+  pub async fn validate_credential<T>(&self, credential: Credential<T>) -> Result<CredentialValidation<T>>
   where
     T: Serialize,
   {
@@ -112,13 +110,13 @@ impl<'a> CredentialValidator<'a> {
     })
   }
 
-  /// Validates the `VerifiablePresentation` proof and all relevant DID documents.
+  /// Validates the `Presentation` proof and all relevant DID documents.
   ///
   /// Note: The presentation holder is expected to be a valid DID.
   /// Note: The presentation is expected to have a proof created by the holder.
   pub async fn validate_presentation<T, U>(
     &self,
-    presentation: VerifiablePresentation<T, U>,
+    presentation: Presentation<T, U>,
   ) -> Result<PresentationValidation<T, U>>
   where
     T: Clone + Serialize,
@@ -158,8 +156,8 @@ impl<'a> CredentialValidator<'a> {
   }
 
   async fn validate_document(&self, did: &str) -> Result<DocumentValidation> {
-    let did: DID = did.parse()?;
-    let document: Document = self.client.read_document(&did).await?;
+    let did: IotaDID = did.parse()?;
+    let document: IotaDocument = self.client.read_document(&did).await?;
     let verified: bool = document.verify().is_ok();
 
     Ok(DocumentValidation {

@@ -17,7 +17,9 @@ use crate::error::Result;
 use crate::utils::DIDKey;
 use crate::verification::MethodQuery;
 
-/// An ordered set based on a `Vec<T>`.
+/// An ordered set backed by a `Vec<T>`.
+///
+/// Note: Ordering is based on insert order and **not** [`Ord`].
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(bound(deserialize = "T: PartialEq + Deserialize<'de>"), try_from = "Vec<T>")]

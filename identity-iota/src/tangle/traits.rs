@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::tangle::MessageId;
+use iota_client::bee_message::MessageId;
 
 pub trait TangleRef {
   fn message_id(&self) -> &MessageId;

@@ -1,7 +1,7 @@
 [package]
 name = "identity-iota"
-version = "0.2.0"
-authors = ["IOTA Identity"]
+version = "0.3.0"
+authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "An IOTA Tangle intergration for the identity-rs library."
 readme = "../README.md"
@@ -12,14 +12,34 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
-identity-core = { version = "=0.2.0", path = "../identity-core" }
-identity-credential = { version = "=0.2.0", path = "../identity-credential" }
-identity-did = { version = "=0.2.0", path = "../identity-did" }
-iota-constants = { version = "0.2", default-features = false }
-iota-conversion = { version = "0.5", default-features = false }
-iota-core = { git = "https://github.com/Thoralf-M/iota.rs", rev = "d7c8c64fc3ac2340f0148708a916c245f42fd454" }
+futures = { version = "0.3" }
+identity-core = { version = "=0.3.0", path = "../identity-core" }
+identity-credential = { version = "=0.3.0", path = "../identity-credential" }
+identity-did = { version = "=0.3.0", path = "../identity-did" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
-multihash = { version = "0.13", default-features = false, features = ["blake2b"] }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
+
+[dependencies.iota-client]
+git = "https://github.com/iotaledger/iota.rs"
+rev = "30673c4bb5fd1ba5b5d15e95d652b05491604d94"
+default-features = false
+
+[dependencies.iota-crypto]
+version = "0.5"
+default-features = false
+features = ["blake2b"]
+
+[features]
+# default = ["iota-client/async", "iota-client/futures", "iota-client/tokio"]
+default = ["iota-client/wasm"]
+
+# Enables Web Assembly support
+wasm = ["iota-client/wasm"]
+
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

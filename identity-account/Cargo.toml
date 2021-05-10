@@ -1,0 +1,50 @@
+[package]
+name = "identity-account"
+version = "0.3.0"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+description = "Secure storage for Decentralized Identifiers and Verifiable Credentials."
+readme = "../README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+license = "Apache-2.0"
+keywords = ["iota", "tangle", "identity"]
+homepage = "https://www.iota.org"
+
+[dependencies]
+async-trait = { version = "0.1", default-features = false }
+futures = { version = "0.3" }
+hashbrown = { version = "0.9", features = ["serde"] }
+identity-core = { version = "=0.3.0", path = "../identity-core" }
+identity-credential = { version = "=0.3.0", path = "../identity-credential" }
+identity-did = { version = "=0.3.0", path = "../identity-did" }
+identity-iota = { version = "=0.3.0", path = "../identity-iota" }
+itoa = { version = "0.4" }
+log = { version = "0.4", default-features = false }
+once_cell = { version = "1.7", default-features = false, features = ["std"] }
+paste = { version = "1.0" }
+riker = { version = "0.4" }
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+slog = { version = "2.7" }
+thiserror = { version = "1.0" }
+tokio = { version = "1.5", default-features = false, features = ["rt", "rt-multi-thread", "sync"] }
+zeroize = { version = "1.3" }
+
+[dependencies.iota-crypto]
+version = "0.5"
+features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std"]
+
+[dependencies.iota_stronghold]
+git = "https://github.com/iotaledger/stronghold.rs"
+rev = "6dd92dc9743eba2f3b4126425e7572470d92c80b"
+
+[dependencies.stronghold_engine]
+git = "https://github.com/iotaledger/stronghold.rs"
+rev = "6dd92dc9743eba2f3b4126425e7572470d92c80b"
+
+[dev-dependencies]
+rand = { version = "0.8" }
+rusty-fork = { version = "0.3" }
+tokio = { version = "1.5", features = ["macros", "rt", "rt-multi-thread", "sync"] }
+
+[features]
+mem-client = []

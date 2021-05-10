@@ -9,8 +9,10 @@ on:
     branches:
       - main
       - dev
-    paths-ignore:
-      - 'docs/**'
+    paths:
+      - '.github/workflows/format.yml'
+      - '**.rs'
+      - '**.toml'
 
 jobs:
   build-and-test:
@@ -18,16 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project:
-          [
-            identity,
-            identity-core,
-            identity-credential,
-            identity-did,
-            identity-diff,
-            identity-iota,
-          ]
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v2
@@ -39,7 +32,7 @@ jobs:
           override: true
 
       - name: Get current date
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
         run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
       - name: Get current date
@@ -47,46 +40,92 @@ jobs:
         run: echo "CURRENT_DATE=$(Get-Date -Format "yyyy-MM-dd")" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Cache cargo registry
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.cargo/registry
           # Add date to the cache to keep it up to date
-          key: ${{ matrix.project }}-${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: ${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
-            ${{ matrix.project }}-${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}
+            ${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}
 
       - name: Cache cargo index
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.cargo/git
           # Add date to the cache to keep it up to date
-          key: ${{ matrix.project }}-${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: ${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
-            ${{ matrix.project }}-${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}
+            ${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}
 
       - name: Cache cargo target
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
-          path: ${{ matrix.project}}/target
+          path: target
           # Add date to the cache to keep it up to date
-          key: ${{ matrix.project }}-${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: ${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
-            ${{ matrix.project }}-${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}
+            ${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}
 
-      - name: Build ${{ matrix.project }}
+      - name: Cache wasm cargo target
+        uses: actions/cache@v2.1.4
+        with:
+          path: bindings/wasm/target
+          # Add date to the cache to keep it up to date
+          key: ${{ matrix.os }}-cargo-build-wasm-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          # Restore from outdated cache for speed
+          restore-keys: |
+            ${{ matrix.os }}-cargo-build-wasm-target-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Cache libjose cargo target
+        uses: actions/cache@v2.1.4
+        with:
+          path: libjose/target
+          # Add date to the cache to keep it up to date
+          key: ${{ matrix.os }}-cargo-build-libjose-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          # Restore from outdated cache for speed
+          restore-keys: |
+            ${{ matrix.os }}-cargo-build-libjose-target-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Build
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --manifest-path=${{ matrix.project }}/Cargo.toml --all --release
+          args: --all --release
 
-      - name: Run tests for ${{ matrix.project }}
+      - name: Run tests
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --manifest-path=${{ matrix.project }}/Cargo.toml --all --release
+          args: --all --release
+
+  build-and-test-libjose:
+    runs-on: ubuntu-latest
+    strategy:
+        fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --manifest-path ./libjose/Cargo.toml --release
+
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path ./libjose/Cargo.toml --release
 
   build-and-test-wasm:
     runs-on: ubuntu-latest
@@ -111,7 +150,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: 12.x
+          node-version: 15.x
 
       - name: Install wasm-pack
         run: yarn global add wasm-pack
@@ -124,6 +163,8 @@ jobs:
         run: yarn build
         working-directory: bindings/wasm
 
-      # - name: Run tests
-      #   run: yarn test
-      #   working-directory: bindings/wasm
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path ./bindings/wasm/Cargo.toml --release

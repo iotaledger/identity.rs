@@ -1,8 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::fmt::Debug;
+use core::fmt::Formatter;
+use core::fmt::Result;
+
 /// A DID Document signature with a dynamic JSON field name.
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum SignatureValue {
   /// An empty signature value.
   #[serde(skip)]
@@ -62,30 +66,35 @@ impl SignatureValue {
   /// Returns the `Jws` type signature data as a string slice.
   pub fn as_jws(&self) -> Option<&str> {
     match self {
-      Self::None => None,
       Self::Jws(inner) => Some(&*inner),
-      Self::Proof(_) => None,
-      Self::Signature(_) => None,
+      _ => None,
     }
   }
 
   /// Returns the `Proof` type signature data as a string slice.
   pub fn as_proof(&self) -> Option<&str> {
     match self {
-      Self::None => None,
-      Self::Jws(_) => None,
       Self::Proof(inner) => Some(&*inner),
-      Self::Signature(_) => None,
+      _ => None,
     }
   }
 
   /// Returns the `Signature` type signature data as a string slice.
   pub fn as_signature(&self) -> Option<&str> {
     match self {
-      Self::None => None,
-      Self::Jws(_) => None,
-      Self::Proof(_) => None,
       Self::Signature(inner) => Some(&*inner),
+      _ => None,
+    }
+  }
+}
+
+impl Debug for SignatureValue {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    match self {
+      Self::None => f.write_str("None"),
+      Self::Jws(inner) => f.write_fmt(format_args!("Jws({})", inner)),
+      Self::Proof(inner) => f.write_fmt(format_args!("Proof({})", inner)),
+      Self::Signature(inner) => f.write_fmt(format_args!("Signature({})", inner)),
     }
   }
 }

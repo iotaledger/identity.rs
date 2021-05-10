@@ -3,7 +3,9 @@
 
 use crate::traits::Diff;
 
-use std::fmt::{Debug, Formatter, Result as FmtResult};
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::Result as FmtResult;
 
 /// A macro to implement the `Diff` traits on primitive values and the `Debug` trait on the resulting `Diff*` types.
 /// Follows this syntax, impl_diff_on_primitives { type | DiffTypeName + TraitBounds}`

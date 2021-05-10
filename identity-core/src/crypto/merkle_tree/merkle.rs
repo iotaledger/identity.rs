@@ -109,7 +109,7 @@ fn __split_pow2<T>(slice: &[T]) -> (&[T], &[T]) {
 
 #[cfg(test)]
 mod tests {
-  use sha2::Sha256;
+  use crypto::hashes::sha::Sha256;
 
   use crate::crypto::merkle_tree::compute_merkle_proof;
   use crate::crypto::merkle_tree::compute_merkle_root;
@@ -144,8 +144,8 @@ mod tests {
 
         assert_eq!(proof.index(), index);
         assert_eq!(proof.root(*hash), root);
-        assert_eq!(proof.verify(&root, &nodes[index]), true);
-        assert_eq!(proof.verify_hash(&root, *hash), true);
+        assert!(proof.verify(&root, &nodes[index]));
+        assert!(proof.verify_hash(&root, *hash));
       }
 
       assert!(compute_merkle_proof::<Sha256, _>(&hashes, hashes.len()).is_none());

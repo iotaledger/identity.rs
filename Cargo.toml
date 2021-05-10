@@ -1,6 +1,8 @@
 [workspace]
 members = [
   "identity",
+  "identity-comm",
+  "identity-account",
   "identity-core",
   "identity-credential",
   "identity-did",
@@ -12,4 +14,8 @@ members = [
 
 exclude = [
   "bindings/wasm",
+  "libjose",
 ]
+
+[profile.dev]
+split-debuginfo = "unpacked"

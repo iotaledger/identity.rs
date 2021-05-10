@@ -1,7 +1,7 @@
 [package]
 name = "identity"
-version = "0.2.0"
-authors = ["IOTA Identity"]
+version = "0.3.0"
+authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "Tools for working with Self-sovereign Identity."
 readme = "../README.md"
@@ -12,17 +12,23 @@ homepage = "https://www.iota.org"
 documentation = "https://identity.docs.iota.org"
 
 [dependencies]
-identity-core = { version = "=0.2.0", path = "../identity-core" }
-identity-credential = { version = "=0.2.0", path = "../identity-credential", optional = true }
-identity-did = { version = "=0.2.0", path = "../identity-did", optional = true }
-identity-iota = { version = "=0.2.0", path = "../identity-iota", optional = true }
+identity-account = { version = "=0.3.0", path = "../identity-account", optional = true }
+identity-comm = { version = "=0.3.0", path = "../identity-comm", optional = true }
+identity-core = { version = "=0.3.0", path = "../identity-core" }
+identity-credential = { version = "=0.3.0", path = "../identity-credential", optional = true }
+identity-did = { version = "=0.3.0", path = "../identity-did", optional = true }
+identity-iota = { version = "=0.3.0", path = "../identity-iota", optional = true }
 
 [dev-dependencies]
-smol = { version = "0.1", features = ["tokio02"] }
-smol-potat = { version = "0.3" }
+criterion = { version = "0.3" }
+tokio = { version = "1.5", features = ["full"] }
+
+[[bench]]
+name = "benchmark"
+harness = false
 
 [features]
-default = ["identifier", "credential", "iota"]
+default = ["identifier", "credential", "iota","comm"]
 
 # Enables support for Decentralized Identifiers
 identifier = ["identity-did"]
@@ -33,8 +39,17 @@ credential = ["identifier", "identity-credential"]
 # Enables support for reading/writing from the IOTA Tangle
 iota = ["identifier", "credential", "identity-iota"]
 
+# Enables Web Assembly support
+wasm = ["identity-iota/wasm", "identity-comm/wasm"]
+
+# Enables support for secure storage of DID Documents
+account = ["identity-account"]
+
+# Enables support for Did Communication
+comm = ["identifier", "credential", "identity-comm"]
+
 [package.metadata.docs.rs]
 # To build locally:
-# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --open
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --workspace --open
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]

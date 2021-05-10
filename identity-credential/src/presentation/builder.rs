@@ -6,19 +6,19 @@ use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::common::Value;
 
+use crate::credential::Credential;
 use crate::credential::Policy;
 use crate::credential::Refresh;
-use crate::credential::VerifiableCredential;
 use crate::error::Result;
 use crate::presentation::Presentation;
 
-/// A `PresentationBuilder` is used to create a customized `Presentation`.
+/// A `PresentationBuilder` is used to create a customized [Presentation].
 #[derive(Clone, Debug)]
 pub struct PresentationBuilder<T = Object, U = Object> {
   pub(crate) context: Vec<Context>,
   pub(crate) id: Option<Url>,
   pub(crate) types: Vec<String>,
-  pub(crate) credentials: Vec<VerifiableCredential<U>>,
+  pub(crate) credentials: Vec<Credential<U>>,
   pub(crate) holder: Option<Url>,
   pub(crate) refresh: Vec<Refresh>,
   pub(crate) policy: Vec<Policy>,
@@ -40,35 +40,35 @@ impl<T, U> PresentationBuilder<T, U> {
     }
   }
 
-  /// Adds a value to the `Presentation` context set.
+  /// Adds a value to the `context` set.
   #[must_use]
   pub fn context(mut self, value: impl Into<Context>) -> Self {
     self.context.push(value.into());
     self
   }
 
-  /// Sets the value of the `Presentation` `id`.
+  /// Sets the value of `id`.
   #[must_use]
   pub fn id(mut self, value: Url) -> Self {
     self.id = Some(value);
     self
   }
 
-  /// Adds a value to the `Presentation` type set.
+  /// Adds a value to the `type` set.
   #[must_use]
   pub fn type_(mut self, value: impl Into<String>) -> Self {
     self.types.push(value.into());
     self
   }
 
-  /// Adds a value to the `verifiableCredential` set.
+  /// Adds a value to the `Credential` set.
   #[must_use]
-  pub fn credential(mut self, value: VerifiableCredential<U>) -> Self {
+  pub fn credential(mut self, value: Credential<U>) -> Self {
     self.credentials.push(value);
     self
   }
 
-  /// Sets the value of the `Credential` `holder`.
+  /// Sets the value of the `holder`.
   #[must_use]
   pub fn holder(mut self, value: Url) -> Self {
     self.holder = Some(value);
@@ -96,7 +96,7 @@ impl<T, U> PresentationBuilder<T, U> {
 }
 
 impl<T> PresentationBuilder<Object, T> {
-  /// Adds a new custom property to the `Presentation`.
+  /// Adds a new custom property.
   #[must_use]
   pub fn property<K, V>(mut self, key: K, value: V) -> Self
   where
@@ -107,7 +107,7 @@ impl<T> PresentationBuilder<Object, T> {
     self
   }
 
-  /// Adds a series of custom properties to the `Presentation`.
+  /// Adds a series of custom properties.
   #[must_use]
   pub fn properties<K, V, I>(mut self, iter: I) -> Self
   where
@@ -139,19 +139,18 @@ mod tests {
   use identity_core::crypto::KeyPair;
   use identity_core::utils::encode_b58;
   use identity_did::did::DID;
-  use identity_did::document::Document;
+  use identity_did::document::CoreDocument;
   use identity_did::document::DocumentBuilder;
-  use identity_did::verification::Method;
   use identity_did::verification::MethodBuilder;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodType;
+  use identity_did::verification::VerificationMethod;
   use serde_json::json;
   use serde_json::Value;
 
   use crate::credential::Credential;
   use crate::credential::CredentialBuilder;
   use crate::credential::Subject;
-  use crate::credential::VerifiableCredential;
   use crate::presentation::Presentation;
   use crate::presentation::PresentationBuilder;
 
@@ -172,12 +171,11 @@ mod tests {
   }
 
   #[test]
-  #[rustfmt::skip]
   fn test_presentation_builder_valid() {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let controller: DID = "did:example:1234".parse().unwrap();
 
-    let method: Method = MethodBuilder::default()
+    let method: VerificationMethod = MethodBuilder::default()
       .id(controller.join("#key-1").unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
@@ -185,19 +183,23 @@ mod tests {
       .build()
       .unwrap();
 
-    let document: Document = DocumentBuilder::default()
+    let document: CoreDocument = DocumentBuilder::default()
       .id(controller)
       .verification_method(method)
       .build()
       .unwrap();
 
-    let credential: VerifiableCredential = CredentialBuilder::default()
+    let mut credential: Credential = CredentialBuilder::default()
       .type_("ExampleCredential")
       .subject(subject())
       .issuer(issuer())
       .build()
-      .unwrap()
-      .sign(&document, "#key-1".into(), keypair.secret())
+      .unwrap();
+
+    document
+      .signer(keypair.secret())
+      .method("#key-1")
+      .sign(&mut credential)
       .unwrap();
 
     let presentation: Presentation = PresentationBuilder::default()
@@ -207,12 +209,21 @@ mod tests {
       .unwrap();
 
     assert_eq!(presentation.context.len(), 1);
-    assert_eq!(presentation.context.get(0).unwrap(), Presentation::<Object>::base_context());
+    assert_eq!(
+      presentation.context.get(0).unwrap(),
+      Presentation::<Object>::base_context()
+    );
     assert_eq!(presentation.types.len(), 2);
     assert_eq!(presentation.types.get(0).unwrap(), Presentation::<Object>::base_type());
     assert_eq!(presentation.types.get(1).unwrap(), "ExamplePresentation");
     assert_eq!(presentation.verifiable_credential.len(), 1);
-    assert_eq!(presentation.verifiable_credential.get(0).unwrap().types.get(0).unwrap(), Credential::<Object>::base_type());
-    assert_eq!(presentation.verifiable_credential.get(0).unwrap().types.get(1).unwrap(), "ExampleCredential");
+    assert_eq!(
+      presentation.verifiable_credential.get(0).unwrap().types.get(0).unwrap(),
+      Credential::<Object>::base_type()
+    );
+    assert_eq!(
+      presentation.verifiable_credential.get(0).unwrap().types.get(1).unwrap(),
+      "ExampleCredential"
+    );
   }
 }

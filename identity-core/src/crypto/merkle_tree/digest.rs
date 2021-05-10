@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #[doc(inline)]
-pub use digest::Digest;
+pub use crypto::hashes::Digest;
 #[doc(inline)]
-pub use digest::Output;
+pub use crypto::hashes::Output;
 
-use digest::generic_array::typenum::Unsigned;
+use typenum::Unsigned;
 
 use crate::crypto::merkle_tree::Hash;
 
