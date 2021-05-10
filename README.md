@@ -77,34 +77,51 @@ edition = "2018"
 
 [dependencies]
 identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
-smol = { version = "0.1", features = ["tokio02"] }
-smol-potat = { version = "0.3" }
+pretty_env_logger = { version = "0.4" }
+tokio = { version = "1.5", features = ["full"] }
 ```
 *main.*<span></span>*rs*
 ```rust
-use identity::crypto::KeyPair;
-use identity::iota::{Client, Document, Network, Result, TangleRef};
+use std::path::PathBuf;
 
-#[smol_potat::main] // Using this allows us to have an async main function.
+use identity::account::Account;
+use identity::account::AccountStorage;
+use identity::account::IdentityCreate;
+use identity::account::IdentitySnapshot;
+use identity::account::Result;
+use identity::iota::IotaDID;
+use identity::iota::IotaDocument;
+
+#[tokio::main]
 async fn main() -> Result<()> {
+  pretty_env_logger::init();
 
-  // Create a DID Document (an identity).
-  let keypair: KeyPair = KeyPair::new_ed25519()?;
-  let mut document: Document = Document::from_keypair(&keypair)?;
+  // The Stronghold settings for the storage
+  let snapshot: PathBuf = "./example-strong.hodl".into();
+  let password: String = "my-password".into();
 
-  // Sign the DID Document with the default authentication key.
-  document.sign(keypair.secret())?;
+  // Create a new Account with Stronghold as the storage adapter
+  let account: Account = Account::builder()
+    .storage(AccountStorage::Stronghold(snapshot, Some(password)))
+    .build()
+    .await?;
 
-  // Create a client to interact with the IOTA Tangle.
-  let client: Client = Client::new()?;
+  // Create a new Identity with default settings
+  let snapshot1: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
-  // Use the client to publish the DID Document to the IOTA Tangle.
-  document.publish(&client).await?;
+  // Retrieve the DID from the newly created Identity state.
+  let document1: &IotaDID = snapshot1.identity().try_did()?;
 
-  // Print the DID Document IOTA transaction link.
-  let network = Network::from_did(document.id());
-  let explore: String = format!("{}/transaction/{}", network.explorer_url(), document.message_id());
-  println!("DID Document Transaction > {}", explore);
+  println!("[Example] Local Snapshot = {:#?}", snapshot1);
+  println!("[Example] Local Document = {:#?}", snapshot1.identity().to_document()?);
+  println!("[Example] Local Document List = {:#?}", account.list_identities().await);
+
+  // Fetch the DID Document from the Tangle
+  //
+  // This is an optional step to ensure DID Document consistency.
+  let resolved: IotaDocument = account.resolve_identity(document1).await?;
+
+  println!("[Example] Tangle Document = {:#?}", resolved);
 
   Ok(())
 }
