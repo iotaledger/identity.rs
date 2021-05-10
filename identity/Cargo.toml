@@ -1,6 +1,6 @@
 [package]
 name = "identity"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "Tools for working with Self-sovereign Identity."
@@ -12,11 +12,11 @@ homepage = "https://www.iota.org"
 documentation = "https://identity.docs.iota.org"
 
 [dependencies]
-identity-account = { version = "=0.2.0", path = "../identity-account", optional = true }
-identity-core = { version = "=0.2.0", path = "../identity-core" }
-identity-credential = { version = "=0.2.0", path = "../identity-credential", optional = true }
-identity-did = { version = "=0.2.0", path = "../identity-did", optional = true }
-identity-iota = { version = "=0.2.0", path = "../identity-iota", optional = true }
+identity-account = { version = "=0.3.0", path = "../identity-account", optional = true }
+identity-core = { version = "=0.3.0", path = "../identity-core" }
+identity-credential = { version = "=0.3.0", path = "../identity-credential", optional = true }
+identity-did = { version = "=0.3.0", path = "../identity-did", optional = true }
+identity-iota = { version = "=0.3.0", path = "../identity-iota", optional = true }
 
 [dev-dependencies]
 criterion = { version = "0.3" }
