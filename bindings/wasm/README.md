@@ -1,15 +1,23 @@
 # IOTA Identity WASM
 
-> This is the alpha version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
+> This is the beta version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
 
 ## [API Reference](docs/api-reference.md)
 
 ## Install the library:
 
+Latest Release: This version matches the main branch of this repository, is stable and will have changelogs.
 ```bash
 $ npm install @iota/identity-wasm
 // or using yarn
 $ yarn add @iota/identity-wasm
+```
+
+Development Release: This version matches the dev branch of this repository, may see frequent breaking changes and has the latest code changes.
+```bash
+$ npm install @iota/identity-wasm@dev
+// or using yarn
+$ yarn add @iota/identity-wasm@dev
 ```
 
 ## NodeJS Setup
