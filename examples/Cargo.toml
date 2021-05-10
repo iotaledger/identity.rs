@@ -15,32 +15,32 @@ name = "getting_started"
 path = "getting_started.rs"
 
 [[example]]
-name = "create_did_document"
-path = "create_did_document.rs"
+name = "low_create_did"
+path = "low-level-api/create_did_document.rs"
 
 [[example]]
-name = "manipulate_did_document"
-path = "manipulate_did_document.rs"
+name = "low_manipulate_did"
+path = "low-level-api/manipulate_did_document.rs"
 
 [[example]]
-name = "verifiable_credential"
-path = "verifiable_credential.rs"
+name = "low_verifiable_credential"
+path = "low-level-api/verifiable_credential.rs"
 
 [[example]]
-name = "verifiable_presentation"
-path = "verifiable_presentation.rs"
+name = "low_verifiable_presentation"
+path = "low-level-api/verifiable_presentation.rs"
 
 [[example]]
-name = "resolution"
-path = "resolution.rs"
+name = "low_resolution"
+path = "low-level-api/resolution.rs"
 
 [[example]]
-name = "diff_chain"
-path = "diff_chain.rs"
+name = "low_diff_chain"
+path = "low-level-api/diff_chain.rs"
 
 [[example]]
-name = "merkle_key"
-path = "merkle_key.rs"
+name = "low_merkle_key"
+path = "low-level-api/merkle_key.rs"
 
 [[example]]
 name = "account_basic"
