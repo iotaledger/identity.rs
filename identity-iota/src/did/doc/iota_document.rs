@@ -160,7 +160,7 @@ impl IotaDocument {
     // We check these `document.verification_method()` and `document.verification_relationships()`
     // separately because they have separate types.
     for verification_method in document.verification_method().iter() {
-      Self::check_authentication(&*verification_method)?;
+      IotaVerificationMethod::check_validity(&*verification_method)?;
     }
     for method_ref in document.verification_relationships() {
       match method_ref {
@@ -305,7 +305,7 @@ impl IotaDocument {
 
   /// Returns an iterator over all verification methods in the DID Document.
   pub fn methods(&self) -> impl Iterator<Item = &IotaVerificationMethod> {
-    // SAFETY: Validity of verification methods checked in `IotaDocument::check_authentication`.
+    // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
     unsafe {
       self
         .document
@@ -336,7 +336,7 @@ impl IotaDocument {
   where
     Q: Into<MethodQuery<'query>>,
   {
-    // SAFETY: Validity of verification methods checked in `IotaDocument::check_authentication`.
+    // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
     unsafe {
       self
         .document
@@ -355,7 +355,7 @@ impl IotaDocument {
   where
     Q: Into<MethodQuery<'query>>,
   {
-    // SAFETY: Validity of verification methods checked in `IotaDocument::check_authentication`.
+    // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
     unsafe {
       self
         .document

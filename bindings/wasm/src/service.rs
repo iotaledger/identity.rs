@@ -17,7 +17,7 @@ impl Service {
     JsValue::from_serde(&self.0).map_err(err)
   }
 
-  /// Deserializes a `Method` object from a JSON object.
+  /// Deserializes a `Service` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(value: &JsValue) -> Result<Service, JsValue> {
     value.into_serde().map_err(err).map(Self)
