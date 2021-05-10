@@ -17,6 +17,7 @@ identity-core = { version = "=0.2.0", path = "../identity-core" }
 identity-credential = { version = "=0.2.0", path = "../identity-credential", optional = true }
 identity-did = { version = "=0.2.0", path = "../identity-did", optional = true }
 identity-iota = { version = "=0.2.0", path = "../identity-iota", optional = true }
+identity-comm = { version = "=0.2.0", path = "../identity-comm", optional = true }
 
 [dev-dependencies]
 criterion = { version = "0.3" }
@@ -27,7 +28,7 @@ name = "benchmark"
 harness = false
 
 [features]
-default = ["identifier", "credential", "iota"]
+default = ["identifier", "credential", "iota","comm"]
 
 # Enables support for Decentralized Identifiers
 identifier = ["identity-did"]
@@ -39,10 +40,13 @@ credential = ["identifier", "identity-credential"]
 iota = ["identifier", "credential", "identity-iota"]
 
 # Enables Web Assembly support
-wasm = ["identity-iota/wasm"]
+wasm = ["identity-iota/wasm", "identity-comm/wasm"]
 
 # Enables support for secure storage of DID Documents
 account = ["identity-account"]
+
+# Enables support for Did Communication
+comm = ["identifier", "credential", "identity-comm"]
 
 [package.metadata.docs.rs]
 # To build locally:
