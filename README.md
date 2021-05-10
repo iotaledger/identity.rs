@@ -28,13 +28,9 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 
 The individual libraries are developed to be agnostic about the utilized [Distributed Ledger Technology (DLT)](https://en.wikipedia.org/wiki/Distributed_ledger), with the exception of the [IOTA](https://www.iota.org) integration and higher level libraries. Written in stable Rust, it has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
 
-> :warning: **WARNING #1** :warning: 
->
-> **The Framework only works on the Chrysalis Phase 2 network, use [v0.2](https://github.com/iotaledger/identity.rs/releases/tag/v0.2.0) or older for pre-chrysalis phase 2 networks.**
+> :warning: **WARNING** :warning:
 > 
-> :warning: **WARNING #2** :warning:
-> 
-> This library is currently in its **alpha stage** and **under development** and might undergo large changes!
+> This library is currently in its **beta stage** and **under development** and might undergo large changes!
 > Until a formal third-party security audit has taken place, the [IOTA Foundation](https://www.iota.org/) makes no guarantees to the fitness of this library. As such, it is to be seen as **experimental** and not ready for real-world applications.
 > Nevertheless, we are very interested in feedback about user experience, design and implementation, and encourage you to reach out with any concerns or suggestions you may have.
 
@@ -115,13 +111,13 @@ async fn main() -> Result<()> {
 ```
 *Example output*
 ```rust
-DID Document Transaction > https://explorer.iota.org/mainnet/transaction/YARETIQBJLER9BC9U9MOAXEBWVIHXYRMJAYFQSJDCPQXXWSEKQOFKGFMXYCNXPLTRAYQZTCLJJRXZ9999
+DID Document Transaction > https://explorer.iota.org/mainnet/message/de795095cc7970c2aa4efabfe9885bd07be6664219464697b4b7506d9a87fbe3
 ```
-The output link points towards the DID Document transaction, viewable through the IOTA Tangle Explorer, see [here](https://explorer.iota.org/mainnet/transaction/YARETIQBJLER9BC9U9MOAXEBWVIHXYRMJAYFQSJDCPQXXWSEKQOFKGFMXYCNXPLTRAYQZTCLJJRXZ9999). You can see the full DID Document as transaction payload.
+The output link points towards the DID Document transaction, viewable through the IOTA Tangle Explorer, see [here](https://explorer.iota.org/mainnet/message/de795095cc7970c2aa4efabfe9885bd07be6664219464697b4b7506d9a87fbe3). You can see the full DID Document as transaction payload.
 
 ## Roadmap and Milestones
 
-For detailed development progress, see also the IOTA Identity development [canban board](https://github.com/iotaledger/identity.rs/projects/3).
+For detailed development progress, see the IOTA Identity development [kanban board](https://github.com/iotaledger/identity.rs/projects/3).
 
 IOTA Identity is in heavy development, and will naturally change as it matures and people use it. The chart below isn't meant to be exhaustive, but rather helps to give an idea for some of the areas of development and their relative completion:
 
@@ -129,45 +125,27 @@ IOTA Identity is in heavy development, and will naturally change as it matures a
 
 | Feature                   | Not started | In Research | In Development | Done | Notes                                                                |
 | :------------------------- | :---------: | :------: | :---------------: | :-:  | :-------------------------------------------------------------------- |
-| DID Document Manager      |             |          |                        | :heavy_check_mark: | Finished implementation. |
-| IOTA Integration          |             |          |                        | :heavy_check_mark: | Finished implementation. |
-| Resolver                  |             |          |                        | :heavy_check_mark: | Finished implementation. |
-| Stronghold Integration    |             |          | :large_orange_diamond: |                    | Basically done, mostly testing right now. |
-| [DID Comms](https://identity.foundation/didcomm-messaging/spec/)                 |             |          | :large_orange_diamond: |                    | Partially done. |
-| [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/)    |             |          |                        | :heavy_check_mark: | Finished implementation. |
-| VC Comms                  | :large_orange_diamond: | |                      |                    | |
-| Schema Validation         | :large_orange_diamond: | |                      |                    | |
-| C FFI Bindings            | :large_orange_diamond: | |                      |                    | |
-| JavaScript FFI Bindings   |             |          | :large_orange_diamond: |                    | Initial implementation done. |
-| [WASM Bindings](https://github.com/iotaledger/identity.rs/tree/main/bindings/wasm)             |             | :large_orange_diamond: |          |                    | |
-| [Code Examples](https://github.com/iotaledger/identity.rs/tree/main/examples)             |             |          | :large_orange_diamond: |                    | Working on more exhaustive examples. |
-| [API Reference](https://identity-docs.iota.org/docs/identity/index.html)             |             |          | :large_orange_diamond: |                    | |
-| [mdBook Documentation](https://identity-docs.iota.org/welcome.html)      |             |          | :large_orange_diamond: |                    | |
+| Implement IOTA DID Method | | | | :heavy_check_mark: | Finished implementation. |
+| [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) | | | | :heavy_check_mark: | Finished implementation. |
+| Account | | | :large_orange_diamond: | | Base implementation done, more features to be added. |
+| [DID Comms](https://identity.foundation/didcomm-messaging/spec/) | | | :large_orange_diamond: | | Initial version done, but more to come |
+| Identity Actor | | :large_orange_diamond: | | | |
+| Selective Disclosure | :large_orange_diamond: | | | | |
+| Zero Knowledge Proofs | | :large_orange_diamond: | | | |
+| Support Embedded Rust | | :large_orange_diamond: | | | |
+| [WASM Bindings](https://github.com/iotaledger/identity.rs/tree/main/bindings/wasm) | | | :large_orange_diamond: | | implemented for low-level APIs |
+| [Code Examples](https://github.com/iotaledger/identity.rs/tree/main/examples) | | | | :large_orange_diamond: | |
+| [API Reference](https://identity-docs.iota.org/docs/identity/index.html) | | | :large_orange_diamond: | | |
+| [mdBook Documentation](https://identity-docs.iota.org/welcome.html) | | | :large_orange_diamond: | | |
 
-#### Extended Features (2021+)
 
-| Feature                   | Not started | In Research | In Development | Done | Notes                                                                |
-| :------------------------- | :---------: | :------: | :---------------: | :-:  | :-------------------------------------------------------------------- |
-| Mobile App Wrapper        | :large_orange_diamond: | |                      |                    | |
-| VC Standardization        |             | :large_orange_diamond: |          |                    | Needs quite a bit of research. |
-| Identity Agent            |             | :large_orange_diamond: |          |                    | |
-| Pairwise DID              | :large_orange_diamond: | |                      |                    | |
-| Zero-Knowledge Proofs     | :large_orange_diamond: | |                      |                    | |
-| Trust Fabric              | :large_orange_diamond: | |                      |                    | |
-| eID Integrations          | :large_orange_diamond: | |                      |                    | |
-| IoT Reputation System     | :large_orange_diamond: | |                      |                    | |
-| Identity for Objects      | :large_orange_diamond: | |                      |                    | |
+#### Next Milestones
 
-#### Planned Milestones
+At the current state, the framework is in beta. As the framework matures we expect to support more and more types of applications. We recommend no use in real-world applications until the consumed libraries are audited, but experimentation and Proof-of-Concept projects are encouraged at the different stages.
 
-At the current state, the framework is in alpha. As the framework matures we expect to support more and more types of applications. We recommend no use in real-world applications until the consumed libraries are audited, but experimentation and Proof-of-Concept projects are encouraged at the different stages.
+The next milestone is the release of version 1.0, which will stabilize the APIs, support backwards compatibility and versioned identities. This makes updating to future versions much easier. In addition it will provide full documentation coverage and the release will be audited. 
 
-| Milestone                 | Topic                                                      | Completion     | Notes                                                                                              |
-| :----------------- | :-------------------------------------------------------- | :----- | :------------------------------------------------------------------------------------------------ |
-|    1:heavy_check_mark: | [DID](https://www.w3.org/TR/did-core/)                     | Q4 2020 | As the DID standard is implemented and the IOTA ledger is integrated first experimentations are possible. DIDs can be created, updated and ownership can be proven. This allows simple experimentations where ownership of an identity is the main requirement. |
-|    2:heavy_check_mark: | [VCs](https://www.w3.org/TR/vc-data-model/)                | Q4 2020 | With the Verifiable Credentials standard implemented, not only ownership can be proven, but also other attributes. At this stage PoCs are possible similarly to [Selv](https://selv.iota.org). However, the communications between actors are not yet implemented, identities are not easily recognized nor are credential layouts standardized. Real-world applications are possible at this stage (after audit), but require extra effort. |
-|    3:large_orange_diamond: | [DID Comms](https://identity.foundation/didcomm-messaging/spec/) | Q1 2021 | Once the communications between DID actors have been implemented, any application using identity can communicate out-of-the-box in an interoperable manner. This makes applications easier to develop, yet as mentioned in Milestone 2, identities are still not easily recognized nor are the credential layouts standarized. Real-world applications are therefore easier to develop (after audit), but scaling the application outside of a consortium is difficult. |
-|    4+             | TBD                                                        | TBD     | TBD                                                                                                |
+Afterwards, we are already planning a future update containing privacy enhancing features such as Selective Disclosure and Zero Knowledge Proofs.
 
 ## Contributing
 
