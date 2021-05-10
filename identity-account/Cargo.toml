@@ -1,6 +1,6 @@
 [package]
 name = "identity-account"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 description = "Secure storage for Decentralized Identifiers and Verifiable Credentials."
@@ -14,10 +14,10 @@ homepage = "https://www.iota.org"
 async-trait = { version = "0.1", default-features = false }
 futures = { version = "0.3" }
 hashbrown = { version = "0.9", features = ["serde"] }
-identity-core = { version = "=0.2.0", path = "../identity-core" }
-identity-credential = { version = "=0.2.0", path = "../identity-credential" }
-identity-did = { version = "=0.2.0", path = "../identity-did" }
-identity-iota = { version = "=0.2.0", path = "../identity-iota" }
+identity-core = { version = "=0.3.0", path = "../identity-core" }
+identity-credential = { version = "=0.3.0", path = "../identity-credential" }
+identity-did = { version = "=0.3.0", path = "../identity-did" }
+identity-iota = { version = "=0.3.0", path = "../identity-iota" }
 itoa = { version = "0.4" }
 log = { version = "0.4", default-features = false }
 once_cell = { version = "1.7", default-features = false, features = ["std"] }
