@@ -1,9 +1,37 @@
 ## Classes
 
 <dl>
+<dt><a href="#AuthenticationRequest">AuthenticationRequest</a></dt>
+<dd></dd>
+<dt><a href="#AuthenticationResponse">AuthenticationResponse</a></dt>
+<dd></dd>
+<dt><a href="#CredentialIssuance">CredentialIssuance</a></dt>
+<dd></dd>
+<dt><a href="#CredentialOptionRequest">CredentialOptionRequest</a></dt>
+<dd></dd>
+<dt><a href="#CredentialOptionResponse">CredentialOptionResponse</a></dt>
+<dd></dd>
+<dt><a href="#CredentialRevocation">CredentialRevocation</a></dt>
+<dd></dd>
+<dt><a href="#CredentialSelection">CredentialSelection</a></dt>
+<dd></dd>
 <dt><a href="#DID">DID</a></dt>
 <dd></dd>
+<dt><a href="#DidRequest">DidRequest</a></dt>
+<dd></dd>
+<dt><a href="#DidResponse">DidResponse</a></dt>
+<dd></dd>
 <dt><a href="#Document">Document</a></dt>
+<dd></dd>
+<dt><a href="#FeaturesRequest">FeaturesRequest</a></dt>
+<dd></dd>
+<dt><a href="#FeaturesResponse">FeaturesResponse</a></dt>
+<dd></dd>
+<dt><a href="#Introduction">Introduction</a></dt>
+<dd></dd>
+<dt><a href="#IntroductionProposal">IntroductionProposal</a></dt>
+<dd></dd>
+<dt><a href="#IntroductionResponse">IntroductionResponse</a></dt>
 <dd></dd>
 <dt><a href="#KeyCollection">KeyCollection</a></dt>
 <dd></dd>
@@ -11,7 +39,21 @@
 <dd></dd>
 <dt><a href="#NewDocument">NewDocument</a></dt>
 <dd></dd>
+<dt><a href="#PresentationRequest">PresentationRequest</a></dt>
+<dd></dd>
+<dt><a href="#PresentationResponse">PresentationResponse</a></dt>
+<dd></dd>
+<dt><a href="#ResolutionRequest">ResolutionRequest</a></dt>
+<dd></dd>
+<dt><a href="#ResolutionResponse">ResolutionResponse</a></dt>
+<dd></dd>
 <dt><a href="#Service">Service</a></dt>
+<dd></dd>
+<dt><a href="#Timing">Timing</a></dt>
+<dd></dd>
+<dt><a href="#TrustPing">TrustPing</a></dt>
+<dd></dd>
+<dt><a href="#TrustedIssuer">TrustedIssuer</a></dt>
 <dd></dd>
 <dt><a href="#VerifiableCredential">VerifiableCredential</a></dt>
 <dd></dd>
@@ -33,9 +75,6 @@
 ## Functions
 
 <dl>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
-</dd>
 <dt><a href="#publish">publish(document, params)</a> ⇒ <code>any</code></dt>
 <dd><p>Publishes a DID Document to the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
 </dd>
@@ -48,7 +87,283 @@
 <dt><a href="#checkPresentation">checkPresentation(data, params)</a> ⇒ <code>any</code></dt>
 <dd><p>Validates a presentation with the DID Document from the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
 </dd>
+<dt><a href="#start">start()</a></dt>
+<dd><p>Initializes the console error panic hook for better error messages</p>
+</dd>
 </dl>
+
+<a name="AuthenticationRequest"></a>
+
+## AuthenticationRequest
+**Kind**: global class
+
+* [AuthenticationRequest](#AuthenticationRequest)
+    * _instance_
+        * [.context](#AuthenticationRequest+context) ⇒ <code>string</code>
+        * [.context](#AuthenticationRequest+context)
+        * [.thread](#AuthenticationRequest+thread) ⇒ <code>string</code>
+        * [.thread](#AuthenticationRequest+thread)
+        * [.callbackURL](#AuthenticationRequest+callbackURL) ⇒ <code>string</code>
+        * [.callbackURL](#AuthenticationRequest+callbackURL)
+        * [.challenge](#AuthenticationRequest+challenge) ⇒ <code>string</code>
+        * [.challenge](#AuthenticationRequest+challenge)
+        * [.responseRequested](#AuthenticationRequest+responseRequested) ⇒ <code>boolean</code> \| <code>undefined</code>
+        * [.responseRequested](#AuthenticationRequest+responseRequested)
+        * [.id](#AuthenticationRequest+id) ⇒ [<code>DID</code>](#DID) \| <code>undefined</code>
+        * [.id](#AuthenticationRequest+id)
+        * [.timing](#AuthenticationRequest+timing) ⇒ [<code>Timing</code>](#Timing) \| <code>undefined</code>
+        * [.timing](#AuthenticationRequest+timing)
+        * [.toJSON()](#AuthenticationRequest+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#AuthenticationRequest.fromJSON) ⇒ [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+
+<a name="AuthenticationRequest+context"></a>
+
+### authenticationRequest.context ⇒ <code>string</code>
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+<a name="AuthenticationRequest+context"></a>
+
+### authenticationRequest.context
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> |
+
+<a name="AuthenticationRequest+thread"></a>
+
+### authenticationRequest.thread ⇒ <code>string</code>
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+<a name="AuthenticationRequest+thread"></a>
+
+### authenticationRequest.thread
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> |
+
+<a name="AuthenticationRequest+callbackURL"></a>
+
+### authenticationRequest.callbackURL ⇒ <code>string</code>
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+<a name="AuthenticationRequest+callbackURL"></a>
+
+### authenticationRequest.callbackURL
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> |
+
+<a name="AuthenticationRequest+challenge"></a>
+
+### authenticationRequest.challenge ⇒ <code>string</code>
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+<a name="AuthenticationRequest+challenge"></a>
+
+### authenticationRequest.challenge
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> |
+
+<a name="AuthenticationRequest+responseRequested"></a>
+
+### authenticationRequest.responseRequested ⇒ <code>boolean</code> \| <code>undefined</code>
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+<a name="AuthenticationRequest+responseRequested"></a>
+
+### authenticationRequest.responseRequested
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+
+| Param | Type |
+| --- | --- |
+| value | <code>boolean</code> |
+
+<a name="AuthenticationRequest+id"></a>
+
+### authenticationRequest.id ⇒ [<code>DID</code>](#DID) \| <code>undefined</code>
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+<a name="AuthenticationRequest+id"></a>
+
+### authenticationRequest.id
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> |
+
+<a name="AuthenticationRequest+timing"></a>
+
+### authenticationRequest.timing ⇒ [<code>Timing</code>](#Timing) \| <code>undefined</code>
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+<a name="AuthenticationRequest+timing"></a>
+
+### authenticationRequest.timing
+**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+
+| Param | Type |
+| --- | --- |
+| value | [<code>Timing</code>](#Timing) |
+
+<a name="AuthenticationRequest+toJSON"></a>
+
+### authenticationRequest.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+<a name="AuthenticationRequest.fromJSON"></a>
+
+### AuthenticationRequest.fromJSON(value) ⇒ [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+**Kind**: static method of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="AuthenticationResponse"></a>
+
+## AuthenticationResponse
+**Kind**: global class
+
+* [AuthenticationResponse](#AuthenticationResponse)
+    * _instance_
+        * [.toJSON()](#AuthenticationResponse+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#AuthenticationResponse.fromJSON) ⇒ [<code>AuthenticationResponse</code>](#AuthenticationResponse)
+
+<a name="AuthenticationResponse+toJSON"></a>
+
+### authenticationResponse.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>AuthenticationResponse</code>](#AuthenticationResponse)
+<a name="AuthenticationResponse.fromJSON"></a>
+
+### AuthenticationResponse.fromJSON(value) ⇒ [<code>AuthenticationResponse</code>](#AuthenticationResponse)
+**Kind**: static method of [<code>AuthenticationResponse</code>](#AuthenticationResponse)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="CredentialIssuance"></a>
+
+## CredentialIssuance
+**Kind**: global class
+
+* [CredentialIssuance](#CredentialIssuance)
+    * _instance_
+        * [.toJSON()](#CredentialIssuance+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#CredentialIssuance.fromJSON) ⇒ [<code>CredentialIssuance</code>](#CredentialIssuance)
+
+<a name="CredentialIssuance+toJSON"></a>
+
+### credentialIssuance.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>CredentialIssuance</code>](#CredentialIssuance)
+<a name="CredentialIssuance.fromJSON"></a>
+
+### CredentialIssuance.fromJSON(value) ⇒ [<code>CredentialIssuance</code>](#CredentialIssuance)
+**Kind**: static method of [<code>CredentialIssuance</code>](#CredentialIssuance)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="CredentialOptionRequest"></a>
+
+## CredentialOptionRequest
+**Kind**: global class
+
+* [CredentialOptionRequest](#CredentialOptionRequest)
+    * _instance_
+        * [.toJSON()](#CredentialOptionRequest+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#CredentialOptionRequest.fromJSON) ⇒ [<code>CredentialOptionRequest</code>](#CredentialOptionRequest)
+
+<a name="CredentialOptionRequest+toJSON"></a>
+
+### credentialOptionRequest.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>CredentialOptionRequest</code>](#CredentialOptionRequest)
+<a name="CredentialOptionRequest.fromJSON"></a>
+
+### CredentialOptionRequest.fromJSON(value) ⇒ [<code>CredentialOptionRequest</code>](#CredentialOptionRequest)
+**Kind**: static method of [<code>CredentialOptionRequest</code>](#CredentialOptionRequest)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="CredentialOptionResponse"></a>
+
+## CredentialOptionResponse
+**Kind**: global class
+
+* [CredentialOptionResponse](#CredentialOptionResponse)
+    * _instance_
+        * [.toJSON()](#CredentialOptionResponse+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#CredentialOptionResponse.fromJSON) ⇒ [<code>CredentialOptionResponse</code>](#CredentialOptionResponse)
+
+<a name="CredentialOptionResponse+toJSON"></a>
+
+### credentialOptionResponse.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>CredentialOptionResponse</code>](#CredentialOptionResponse)
+<a name="CredentialOptionResponse.fromJSON"></a>
+
+### CredentialOptionResponse.fromJSON(value) ⇒ [<code>CredentialOptionResponse</code>](#CredentialOptionResponse)
+**Kind**: static method of [<code>CredentialOptionResponse</code>](#CredentialOptionResponse)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="CredentialRevocation"></a>
+
+## CredentialRevocation
+**Kind**: global class
+
+* [CredentialRevocation](#CredentialRevocation)
+    * _instance_
+        * [.toJSON()](#CredentialRevocation+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#CredentialRevocation.fromJSON) ⇒ [<code>CredentialRevocation</code>](#CredentialRevocation)
+
+<a name="CredentialRevocation+toJSON"></a>
+
+### credentialRevocation.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>CredentialRevocation</code>](#CredentialRevocation)
+<a name="CredentialRevocation.fromJSON"></a>
+
+### CredentialRevocation.fromJSON(value) ⇒ [<code>CredentialRevocation</code>](#CredentialRevocation)
+**Kind**: static method of [<code>CredentialRevocation</code>](#CredentialRevocation)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="CredentialSelection"></a>
+
+## CredentialSelection
+**Kind**: global class
+
+* [CredentialSelection](#CredentialSelection)
+    * _instance_
+        * [.toJSON()](#CredentialSelection+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#CredentialSelection.fromJSON) ⇒ [<code>CredentialSelection</code>](#CredentialSelection)
+
+<a name="CredentialSelection+toJSON"></a>
+
+### credentialSelection.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>CredentialSelection</code>](#CredentialSelection)
+<a name="CredentialSelection.fromJSON"></a>
+
+### CredentialSelection.fromJSON(value) ⇒ [<code>CredentialSelection</code>](#CredentialSelection)
+**Kind**: static method of [<code>CredentialSelection</code>](#CredentialSelection)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
 
 <a name="DID"></a>
 
@@ -140,6 +455,54 @@ Parses a `DID` from the input string.
 | --- | --- |
 | input | <code>string</code> | 
 
+<a name="DidRequest"></a>
+
+## DidRequest
+**Kind**: global class
+
+* [DidRequest](#DidRequest)
+    * _instance_
+        * [.toJSON()](#DidRequest+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#DidRequest.fromJSON) ⇒ [<code>DidRequest</code>](#DidRequest)
+
+<a name="DidRequest+toJSON"></a>
+
+### didRequest.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>DidRequest</code>](#DidRequest)
+<a name="DidRequest.fromJSON"></a>
+
+### DidRequest.fromJSON(value) ⇒ [<code>DidRequest</code>](#DidRequest)
+**Kind**: static method of [<code>DidRequest</code>](#DidRequest)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="DidResponse"></a>
+
+## DidResponse
+**Kind**: global class
+
+* [DidResponse](#DidResponse)
+    * _instance_
+        * [.toJSON()](#DidResponse+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#DidResponse.fromJSON) ⇒ [<code>DidResponse</code>](#DidResponse)
+
+<a name="DidResponse+toJSON"></a>
+
+### didResponse.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>DidResponse</code>](#DidResponse)
+<a name="DidResponse.fromJSON"></a>
+
+### DidResponse.fromJSON(value) ⇒ [<code>DidResponse</code>](#DidResponse)
+**Kind**: static method of [<code>DidResponse</code>](#DidResponse)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
 <a name="Document"></a>
 
 ## Document
@@ -151,7 +514,7 @@ Parses a `DID` from the input string.
         * [.id](#Document+id) ⇒ [<code>DID</code>](#DID)
         * [.proof](#Document+proof) ⇒ <code>any</code>
         * [.previousMessageId](#Document+previousMessageId) ⇒ <code>string</code>
-        * [.setPreviousMessageId](#Document+setPreviousMessageId)
+        * [.previousMessageId](#Document+previousMessageId)
         * [.insertMethod(method, scope)](#Document+insertMethod) ⇒ <code>boolean</code>
         * [.removeMethod(did)](#Document+removeMethod)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
@@ -200,9 +563,9 @@ Returns the DID Document `proof` object.
 
 ### document.previousMessageId ⇒ <code>string</code>
 **Kind**: instance property of [<code>Document</code>](#Document)
-<a name="Document+setPreviousMessageId"></a>
+<a name="Document+previousMessageId"></a>
 
-### document.setPreviousMessageId
+### document.previousMessageId
 **Kind**: instance property of [<code>Document</code>](#Document)
 
 | Param | Type |
@@ -391,6 +754,126 @@ Deserializes a `Document` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="FeaturesRequest"></a>
+
+## FeaturesRequest
+**Kind**: global class
+
+* [FeaturesRequest](#FeaturesRequest)
+    * _instance_
+        * [.toJSON()](#FeaturesRequest+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#FeaturesRequest.fromJSON) ⇒ [<code>FeaturesRequest</code>](#FeaturesRequest)
+
+<a name="FeaturesRequest+toJSON"></a>
+
+### featuresRequest.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>FeaturesRequest</code>](#FeaturesRequest)
+<a name="FeaturesRequest.fromJSON"></a>
+
+### FeaturesRequest.fromJSON(value) ⇒ [<code>FeaturesRequest</code>](#FeaturesRequest)
+**Kind**: static method of [<code>FeaturesRequest</code>](#FeaturesRequest)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="FeaturesResponse"></a>
+
+## FeaturesResponse
+**Kind**: global class
+
+* [FeaturesResponse](#FeaturesResponse)
+    * _instance_
+        * [.toJSON()](#FeaturesResponse+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#FeaturesResponse.fromJSON) ⇒ [<code>FeaturesResponse</code>](#FeaturesResponse)
+
+<a name="FeaturesResponse+toJSON"></a>
+
+### featuresResponse.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>FeaturesResponse</code>](#FeaturesResponse)
+<a name="FeaturesResponse.fromJSON"></a>
+
+### FeaturesResponse.fromJSON(value) ⇒ [<code>FeaturesResponse</code>](#FeaturesResponse)
+**Kind**: static method of [<code>FeaturesResponse</code>](#FeaturesResponse)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="Introduction"></a>
+
+## Introduction
+**Kind**: global class
+
+* [Introduction](#Introduction)
+    * _instance_
+        * [.toJSON()](#Introduction+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#Introduction.fromJSON) ⇒ [<code>Introduction</code>](#Introduction)
+
+<a name="Introduction+toJSON"></a>
+
+### introduction.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>Introduction</code>](#Introduction)
+<a name="Introduction.fromJSON"></a>
+
+### Introduction.fromJSON(value) ⇒ [<code>Introduction</code>](#Introduction)
+**Kind**: static method of [<code>Introduction</code>](#Introduction)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="IntroductionProposal"></a>
+
+## IntroductionProposal
+**Kind**: global class
+
+* [IntroductionProposal](#IntroductionProposal)
+    * _instance_
+        * [.toJSON()](#IntroductionProposal+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#IntroductionProposal.fromJSON) ⇒ [<code>IntroductionProposal</code>](#IntroductionProposal)
+
+<a name="IntroductionProposal+toJSON"></a>
+
+### introductionProposal.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>IntroductionProposal</code>](#IntroductionProposal)
+<a name="IntroductionProposal.fromJSON"></a>
+
+### IntroductionProposal.fromJSON(value) ⇒ [<code>IntroductionProposal</code>](#IntroductionProposal)
+**Kind**: static method of [<code>IntroductionProposal</code>](#IntroductionProposal)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="IntroductionResponse"></a>
+
+## IntroductionResponse
+**Kind**: global class
+
+* [IntroductionResponse](#IntroductionResponse)
+    * _instance_
+        * [.toJSON()](#IntroductionResponse+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#IntroductionResponse.fromJSON) ⇒ [<code>IntroductionResponse</code>](#IntroductionResponse)
+
+<a name="IntroductionResponse+toJSON"></a>
+
+### introductionResponse.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>IntroductionResponse</code>](#IntroductionResponse)
+<a name="IntroductionResponse.fromJSON"></a>
+
+### IntroductionResponse.fromJSON(value) ⇒ [<code>IntroductionResponse</code>](#IntroductionResponse)
+**Kind**: static method of [<code>IntroductionResponse</code>](#IntroductionResponse)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
 
 <a name="KeyCollection"></a>
 
@@ -587,6 +1070,102 @@ Deserializes a `KeyPair` object from a JSON object.
 
 ### newDocument.doc ⇒ [<code>Document</code>](#Document)
 **Kind**: instance property of [<code>NewDocument</code>](#NewDocument)  
+<a name="PresentationRequest"></a>
+
+## PresentationRequest
+**Kind**: global class
+
+* [PresentationRequest](#PresentationRequest)
+    * _instance_
+        * [.toJSON()](#PresentationRequest+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#PresentationRequest.fromJSON) ⇒ [<code>PresentationRequest</code>](#PresentationRequest)
+
+<a name="PresentationRequest+toJSON"></a>
+
+### presentationRequest.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>PresentationRequest</code>](#PresentationRequest)
+<a name="PresentationRequest.fromJSON"></a>
+
+### PresentationRequest.fromJSON(value) ⇒ [<code>PresentationRequest</code>](#PresentationRequest)
+**Kind**: static method of [<code>PresentationRequest</code>](#PresentationRequest)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="PresentationResponse"></a>
+
+## PresentationResponse
+**Kind**: global class
+
+* [PresentationResponse](#PresentationResponse)
+    * _instance_
+        * [.toJSON()](#PresentationResponse+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#PresentationResponse.fromJSON) ⇒ [<code>PresentationResponse</code>](#PresentationResponse)
+
+<a name="PresentationResponse+toJSON"></a>
+
+### presentationResponse.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>PresentationResponse</code>](#PresentationResponse)
+<a name="PresentationResponse.fromJSON"></a>
+
+### PresentationResponse.fromJSON(value) ⇒ [<code>PresentationResponse</code>](#PresentationResponse)
+**Kind**: static method of [<code>PresentationResponse</code>](#PresentationResponse)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="ResolutionRequest"></a>
+
+## ResolutionRequest
+**Kind**: global class
+
+* [ResolutionRequest](#ResolutionRequest)
+    * _instance_
+        * [.toJSON()](#ResolutionRequest+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#ResolutionRequest.fromJSON) ⇒ [<code>ResolutionRequest</code>](#ResolutionRequest)
+
+<a name="ResolutionRequest+toJSON"></a>
+
+### resolutionRequest.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>ResolutionRequest</code>](#ResolutionRequest)
+<a name="ResolutionRequest.fromJSON"></a>
+
+### ResolutionRequest.fromJSON(value) ⇒ [<code>ResolutionRequest</code>](#ResolutionRequest)
+**Kind**: static method of [<code>ResolutionRequest</code>](#ResolutionRequest)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="ResolutionResponse"></a>
+
+## ResolutionResponse
+**Kind**: global class
+
+* [ResolutionResponse](#ResolutionResponse)
+    * _instance_
+        * [.toJSON()](#ResolutionResponse+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#ResolutionResponse.fromJSON) ⇒ [<code>ResolutionResponse</code>](#ResolutionResponse)
+
+<a name="ResolutionResponse+toJSON"></a>
+
+### resolutionResponse.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>ResolutionResponse</code>](#ResolutionResponse)
+<a name="ResolutionResponse.fromJSON"></a>
+
+### ResolutionResponse.fromJSON(value) ⇒ [<code>ResolutionResponse</code>](#ResolutionResponse)
+**Kind**: static method of [<code>ResolutionResponse</code>](#ResolutionResponse)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
 <a name="Service"></a>
 
 ## Service
@@ -614,6 +1193,168 @@ Deserializes a `Method` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | value | <code>any</code> | 
+
+<a name="Timing"></a>
+
+## Timing
+**Kind**: global class
+
+* [Timing](#Timing)
+    * _instance_
+        * [.outTime](#Timing+outTime) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.outTime](#Timing+outTime)
+        * [.inTime](#Timing+inTime) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.inTime](#Timing+inTime)
+        * [.staleTime](#Timing+staleTime) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.staleTime](#Timing+staleTime)
+        * [.expiresTime](#Timing+expiresTime) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.expiresTime](#Timing+expiresTime)
+        * [.waitUntilTime](#Timing+waitUntilTime) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.waitUntilTime](#Timing+waitUntilTime)
+        * [.delayMilli](#Timing+delayMilli) ⇒ <code>BigInt</code> \| <code>undefined</code>
+        * [.delayMilli](#Timing+delayMilli)
+        * [.toJSON()](#Timing+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#Timing.fromJSON) ⇒ [<code>Timing</code>](#Timing)
+
+<a name="Timing+outTime"></a>
+
+### timing.outTime ⇒ <code>string</code> \| <code>undefined</code>
+**Kind**: instance property of [<code>Timing</code>](#Timing)
+<a name="Timing+outTime"></a>
+
+### timing.outTime
+**Kind**: instance property of [<code>Timing</code>](#Timing)
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> |
+
+<a name="Timing+inTime"></a>
+
+### timing.inTime ⇒ <code>string</code> \| <code>undefined</code>
+**Kind**: instance property of [<code>Timing</code>](#Timing)
+<a name="Timing+inTime"></a>
+
+### timing.inTime
+**Kind**: instance property of [<code>Timing</code>](#Timing)
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> |
+
+<a name="Timing+staleTime"></a>
+
+### timing.staleTime ⇒ <code>string</code> \| <code>undefined</code>
+**Kind**: instance property of [<code>Timing</code>](#Timing)
+<a name="Timing+staleTime"></a>
+
+### timing.staleTime
+**Kind**: instance property of [<code>Timing</code>](#Timing)
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> |
+
+<a name="Timing+expiresTime"></a>
+
+### timing.expiresTime ⇒ <code>string</code> \| <code>undefined</code>
+**Kind**: instance property of [<code>Timing</code>](#Timing)
+<a name="Timing+expiresTime"></a>
+
+### timing.expiresTime
+**Kind**: instance property of [<code>Timing</code>](#Timing)
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> |
+
+<a name="Timing+waitUntilTime"></a>
+
+### timing.waitUntilTime ⇒ <code>string</code> \| <code>undefined</code>
+**Kind**: instance property of [<code>Timing</code>](#Timing)
+<a name="Timing+waitUntilTime"></a>
+
+### timing.waitUntilTime
+**Kind**: instance property of [<code>Timing</code>](#Timing)
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> |
+
+<a name="Timing+delayMilli"></a>
+
+### timing.delayMilli ⇒ <code>BigInt</code> \| <code>undefined</code>
+**Kind**: instance property of [<code>Timing</code>](#Timing)
+<a name="Timing+delayMilli"></a>
+
+### timing.delayMilli
+**Kind**: instance property of [<code>Timing</code>](#Timing)
+
+| Param | Type |
+| --- | --- |
+| value | <code>BigInt</code> |
+
+<a name="Timing+toJSON"></a>
+
+### timing.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>Timing</code>](#Timing)
+<a name="Timing.fromJSON"></a>
+
+### Timing.fromJSON(value) ⇒ [<code>Timing</code>](#Timing)
+**Kind**: static method of [<code>Timing</code>](#Timing)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="TrustPing"></a>
+
+## TrustPing
+**Kind**: global class
+
+* [TrustPing](#TrustPing)
+    * _instance_
+        * [.toJSON()](#TrustPing+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#TrustPing.fromJSON) ⇒ [<code>TrustPing</code>](#TrustPing)
+
+<a name="TrustPing+toJSON"></a>
+
+### trustPing.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>TrustPing</code>](#TrustPing)
+<a name="TrustPing.fromJSON"></a>
+
+### TrustPing.fromJSON(value) ⇒ [<code>TrustPing</code>](#TrustPing)
+**Kind**: static method of [<code>TrustPing</code>](#TrustPing)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
+
+<a name="TrustedIssuer"></a>
+
+## TrustedIssuer
+**Kind**: global class
+
+* [TrustedIssuer](#TrustedIssuer)
+    * _instance_
+        * [.toJSON()](#TrustedIssuer+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#TrustedIssuer.fromJSON) ⇒ [<code>TrustedIssuer</code>](#TrustedIssuer)
+
+<a name="TrustedIssuer+toJSON"></a>
+
+### trustedIssuer.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>TrustedIssuer</code>](#TrustedIssuer)
+<a name="TrustedIssuer.fromJSON"></a>
+
+### TrustedIssuer.fromJSON(value) ⇒ [<code>TrustedIssuer</code>](#TrustedIssuer)
+**Kind**: static method of [<code>TrustedIssuer</code>](#TrustedIssuer)
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> |
 
 <a name="VerifiableCredential"></a>
 
@@ -811,12 +1552,6 @@ Deserializes a `VerificationMethod` object from a JSON object.
 
 ## KeyType
 **Kind**: global variable  
-<a name="start"></a>
-
-## start()
-Initializes the console error panic hook for better error messages
-
-**Kind**: global function  
 <a name="publish"></a>
 
 ## publish(document, params) ⇒ <code>any</code>
@@ -865,3 +1600,9 @@ Validates a presentation with the DID Document from the Tangle, params looks lik
 | data | <code>string</code> | 
 | params | <code>any</code> | 
 
+<a name="start"></a>
+
+## start()
+Initializes the console error panic hook for better error messages
+
+**Kind**: global function
