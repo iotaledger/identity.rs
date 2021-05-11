@@ -79,3 +79,15 @@ impl WasmDID {
     self.0.to_string()
   }
 }
+
+impl From<IotaDID> for WasmDID {
+  fn from(other: IotaDID) -> Self {
+    Self(other)
+  }
+}
+
+impl From<WasmDID> for IotaDID {
+  fn from(other: WasmDID) -> Self {
+    other.0
+  }
+}

@@ -4,38 +4,29 @@
 use identity::comm;
 use wasm_bindgen::prelude::*;
 
-use crate::utils::err;
+use crate::wasm_did::WasmDID;
+use crate::wasm_url::WasmUrl;
+use crate::wasm_uuid::WasmUuid;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct FeaturesRequest(pub(crate) comm::FeaturesRequest);
 
-#[wasm_bindgen]
-impl FeaturesRequest {
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(&self.0).map_err(err)
-  }
-
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(value: &JsValue) -> Result<FeaturesRequest, JsValue> {
-    value.into_serde().map_err(err).map(Self)
-  }
-}
+impl_wasm_accessors!(FeaturesRequest, {
+  context => String,
+  thread => WasmUuid,
+  callback_url => WasmUrl,
+  response_requested => Option<bool>,
+  id => Option<WasmDID>,
+});
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct FeaturesResponse(pub(crate) comm::FeaturesResponse);
 
-#[wasm_bindgen]
-impl FeaturesResponse {
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(&self.0).map_err(err)
-  }
-
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(value: &JsValue) -> Result<FeaturesResponse, JsValue> {
-    value.into_serde().map_err(err).map(Self)
-  }
-}
+impl_wasm_accessors!(FeaturesResponse, {
+  context => String,
+  thread => WasmUuid,
+  callback_url => Option<WasmUrl>,
+  response_requested => Option<bool>,
+});

@@ -19,6 +19,8 @@ pub mod message;
 pub mod service;
 pub mod wasm_did;
 pub mod wasm_document;
+pub mod wasm_url;
+pub mod wasm_uuid;
 pub mod wasm_verification_method;
 
 /// Initializes the console error panic hook for better error messages
