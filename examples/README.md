@@ -6,7 +6,7 @@
 
 This folder provides code examples for you to learn how IOTA Identity can be used.
 
-You can run each example using 
+You can run each example using
 
 ```rust
 cargo run --example <example_name>
@@ -20,6 +20,7 @@ cargo run --example getting_started
 
 The following examples are avaliable for using the basic account (A high level API):
 
+| # | Name | Information |
 | :--: | :----------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
 | 1 | [getting_started](./getting_started.rs) | Introductory example for you to test whether the library is set up / working properly and compiles.                        |
 | 2 | [account_basic](./account/basic.rs) | A basic example that generates and publishes a DID Document, the fundamental building block for decentralized identity.    |
