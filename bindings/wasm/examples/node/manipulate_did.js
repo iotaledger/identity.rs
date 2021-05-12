@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { KeyPair, KeyType, publish, VerificationMethod, Service } = require('../node/identity_wasm')
+const { KeyPair, KeyType, publish, VerificationMethod, Service } = require('../..')
 const { createIdentity } = require('./create_did');
 const { CLIENT_CONFIG, EXPLORER_URL } = require('./config');
 

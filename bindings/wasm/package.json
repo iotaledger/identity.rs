@@ -27,20 +27,26 @@
     "example": "examples"
   },
   "files": [
-    "pkg/bundler",
-    "pkg/node",
-    "pkg/web"
+    "pkg/bundler/identity_wasm_bg.wasm",
+    "pkg/bundler/identity_wasm.js",
+    "pkg/bundler/identity_wasm.d.ts",
+    "pkg/node/identity_wasm_bg.wasm",
+    "pkg/node/identity_wasm.js",
+    "pkg/node/identity_wasm_bg.js",
+    "pkg/node/identity_wasm.d.ts"
   ],
+  "main": "pkg/node/identity_wasm.js",
+  "module": "pkg/bundler/identity_wasm.js",
+  "types": "pkg/bundler/identity_wasm.d.ts",
+  "sideEffects": "false",
   "scripts": {
     "build:bundler": "wasm-pack build --target bundler --out-dir pkg/bundler",
     "build:nodejs": "wasm-pack build --target nodejs --out-dir pkg/node && node ./build/node",
-    "build:web": "wasm-pack build --target web --out-dir pkg/web",
     "build:docs": "node ./build/docs",
-    "build": "npm run build:web && npm run build:nodejs && npm run build:bundler && npm run build:docs",
+    "build": "npm run build:nodejs && npm run build:bundler && npm run build:docs",
     "pretest": "npm run build:nodejs",
     "prepublishOnly": "npm run build",
-    "example:serve-webpack": "webpack serve",
-    "example:serve": "scripts/serve.sh",
+    "example:serve": "webpack serve",
     "example:node": "node examples/node.js"
   },
   "devDependencies": {
