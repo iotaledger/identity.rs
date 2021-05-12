@@ -624,6 +624,7 @@ mod tests {
   use identity_did::document::CoreDocument;
   use identity_did::service::Service;
   use identity_did::verification::MethodData;
+  use identity_did::verification::MethodRef;
   use identity_did::verification::MethodType;
   use identity_did::verification::VerificationMethod;
   use std::collections::BTreeMap;
@@ -631,8 +632,15 @@ mod tests {
   const DID_ID: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
   const DID_AUTH: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
 
-  fn controller() -> DID {
+  fn valid_did() -> DID {
     DID_ID.parse().unwrap()
+  }
+
+  fn valid_properties() -> BTreeMap<String, Value> {
+    let mut properties: BTreeMap<String, Value> = BTreeMap::default();
+    properties.insert("created".to_string(), "2020-01-02T00:00:00Z".into());
+    properties.insert("updated".to_string(), "2020-01-02T00:00:00Z".into());
+    properties
   }
 
   fn core_verification_method(controller: &DID, fragment: &str) -> VerificationMethod {
@@ -709,6 +717,164 @@ mod tests {
   }
 
   #[test]
+  fn test_invalid_try_from_core_invalid_id() {
+    let invalid_did: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+      .parse()
+      .unwrap();
+    let doc = IotaDocument::try_from_core(
+      CoreDocument::builder(valid_properties())
+        // INVALID
+        .id(invalid_did.clone())
+        .authentication(core_verification_method(&valid_did(), "#auth-key"))
+        .build()
+        .unwrap(),
+    );
+
+    assert!(doc.is_err());
+  }
+
+  #[test]
+  fn test_invalid_try_from_core_no_created_field() {
+    let mut properties: BTreeMap<String, Value> = BTreeMap::default();
+    properties.insert("updated".to_string(), "2020-01-02T00:00:00Z".into());
+    // INVALID - missing "created" field.
+
+    let doc = IotaDocument::try_from_core(
+      CoreDocument::builder(properties)
+        .id(valid_did())
+        .authentication(core_verification_method(&valid_did(), "#auth-key"))
+        .build()
+        .unwrap(),
+    );
+
+    assert!(doc.is_err());
+  }
+
+  #[test]
+  fn test_invalid_try_from_core_no_updated_field() {
+    let mut properties: BTreeMap<String, Value> = BTreeMap::default();
+    properties.insert("created".to_string(), "2020-01-02T00:00:00Z".into());
+    // INVALID - missing "updated" field.
+
+    let doc = IotaDocument::try_from_core(
+      CoreDocument::builder(properties)
+        .id(valid_did())
+        .authentication(core_verification_method(&valid_did(), "#auth-key"))
+        .build()
+        .unwrap(),
+    );
+
+    assert!(doc.is_err());
+  }
+
+  #[test]
+  fn test_invalid_try_from_core_invalid_controller() {
+    let invalid_controller: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+      .parse()
+      .unwrap();
+    let doc = IotaDocument::try_from_core(
+      CoreDocument::builder(valid_properties())
+        .id(valid_did())
+        // INVALID
+        .authentication(core_verification_method(&invalid_controller, "#auth-key"))
+        .build()
+        .unwrap(),
+    );
+
+    assert!(doc.is_err());
+  }
+
+  #[test]
+  fn test_invalid_try_from_core_invalid_authentication_method_ref() {
+    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+      .parse()
+      .unwrap();
+    let doc = IotaDocument::try_from_core(
+      CoreDocument::builder(valid_properties())
+        .id(valid_did())
+        .authentication(core_verification_method(&valid_did(), "#auth-key"))
+        // INVALID
+        .authentication(MethodRef::Refer(invalid_ref))
+        .build()
+        .unwrap(),
+    );
+
+    assert!(doc.is_err());
+  }
+
+  #[test]
+  fn test_invalid_try_from_core_invalid_assertion_method_ref() {
+    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+      .parse()
+      .unwrap();
+    let doc = IotaDocument::try_from_core(
+      CoreDocument::builder(valid_properties())
+        .id(valid_did())
+        .authentication(core_verification_method(&valid_did(), "#auth-key"))
+        // INVALID
+        .assertion_method(MethodRef::Refer(invalid_ref))
+        .build()
+        .unwrap(),
+    );
+
+    assert!(doc.is_err());
+  }
+
+  #[test]
+  fn test_invalid_try_from_core_invalid_key_agreement_ref() {
+    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+      .parse()
+      .unwrap();
+    let doc = IotaDocument::try_from_core(
+      CoreDocument::builder(valid_properties())
+        .id(valid_did())
+        .authentication(core_verification_method(&valid_did(), "#auth-key"))
+        // INVALID
+        .key_agreement(MethodRef::Refer(invalid_ref))
+        .build()
+        .unwrap(),
+    );
+
+    assert!(doc.is_err());
+  }
+
+  #[test]
+  fn test_invalid_try_from_core_invalid_capability_delegation_ref() {
+    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+      .parse()
+      .unwrap();
+    let doc = IotaDocument::try_from_core(
+      CoreDocument::builder(valid_properties())
+        .id(valid_did())
+        .authentication(core_verification_method(&valid_did(), "#auth-key"))
+        // INVALID
+        .capability_delegation(MethodRef::Refer(invalid_ref))
+        .build()
+        .unwrap(),
+    );
+
+    assert!(doc.is_err());
+  }
+
+  #[test]
+  fn test_invalid_try_from_core_invalid_capability_invocation_ref() {
+    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+      .parse()
+      .unwrap();
+    let doc = IotaDocument::try_from_core(
+      CoreDocument::builder(valid_properties())
+        .id(valid_did())
+        .authentication(core_verification_method(&valid_did(), "#auth-key"))
+        // INVALID
+        .capability_invocation(MethodRef::Refer(invalid_ref))
+        .build()
+        .unwrap(),
+    );
+
+    assert!(doc.is_err());
+  }
+
+  #[test]
   fn test_new() {
     //from keypair
     let keypair: KeyPair = generate_testkey();
@@ -734,7 +900,7 @@ mod tests {
 
   #[test]
   fn test_controller_from_core() {
-    let controller: DID = controller();
+    let controller: DID = valid_did();
     let document: IotaDocument = iota_document_from_core(&controller);
     let expected_controller: Option<IotaDID> = Some(IotaDID::try_from_owned(controller).unwrap());
     assert_eq!(document.controller(), expected_controller.as_ref());
@@ -754,7 +920,7 @@ mod tests {
             .parse()
             .unwrap(),
         )
-        .controller(controller())
+        .controller(valid_did())
         .key_type(MethodType::Ed25519VerificationKey2018)
         .key_data(MethodData::PublicKeyBase58(
           "FJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".into(),
@@ -772,7 +938,7 @@ mod tests {
 
   #[test]
   fn test_methods_from_core() {
-    let controller: DID = controller();
+    let controller: DID = valid_did();
     let document: IotaDocument = iota_document_from_core(&controller);
     let expected: Vec<IotaVerificationMethod> = vec![
       iota_verification_method(&controller, "#key-1"),
