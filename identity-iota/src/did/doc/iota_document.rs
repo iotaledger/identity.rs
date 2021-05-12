@@ -724,7 +724,7 @@ mod tests {
     let doc = IotaDocument::try_from_core(
       CoreDocument::builder(valid_properties())
         // INVALID
-        .id(invalid_did.clone())
+        .id(invalid_did)
         .authentication(core_verification_method(&valid_did(), "#auth-key"))
         .build()
         .unwrap(),
