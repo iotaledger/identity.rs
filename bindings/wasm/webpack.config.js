@@ -1,13 +1,13 @@
-const path = require("path");
-const CopyWebPlugin = require('copy-webpack-plugin');
-const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
+const path = require("path")
+const CopyWebPlugin = require("copy-webpack-plugin")
+const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin")
 
-const dist = path.resolve(__dirname, "dist");
+const dist = path.resolve(__dirname, "dist")
 
 module.exports = {
   mode: "production",
   entry: {
-    index: "./examples/web.js"
+    index: "./examples/bundler.js"
   },
   output: {
     path: dist,
@@ -24,9 +24,10 @@ module.exports = {
         }
       ]
     }),
-
     new WasmPackPlugin({
       crateDirectory: __dirname,
+      outDir: "pkg/bundler",
+      outName: "identity_wasm",
     }),
   ],
   // Makes the output less verbose
@@ -36,6 +37,7 @@ module.exports = {
     hints: false,
   },
   experiments: {
-    asyncWebAssembly: true
+    asyncWebAssembly: true,
+    topLevelAwait: true
   }
-};
+}

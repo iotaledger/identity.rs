@@ -1,13 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { createIdentity } = require('./create_did');
-const { manipulateIdentity } = require('./manipulate_did');
-const { resolution } = require('./resolution');
-const { createVC } = require('./create_vc');
-const { createVP } = require('./create_vp');
-const { revokeVC } = require('./revocation');
-const { merkleKey } = require('./merkle_key');
+const { createIdentity } = require('./node/create_did');
+const { manipulateIdentity } = require('./node/manipulate_did');
+const { resolution } = require('./node/resolution');
+const { createVC } = require('./node/create_vc');
+const { createVP } = require('./node/create_vp');
+const { revokeVC } = require('./node/revocation');
+const { merkleKey } = require('./node/merkle_key');
 
 async function main() {
     //Check if an example is mentioned

@@ -10,13 +10,14 @@
     "example": "examples"
   },
   "scripts": {
-    "build:nodejs": "wasm-pack build --target nodejs --out-dir node && node ./build/node",
-    "build:web": "wasm-pack build --target web --out-dir web && node ./build/web",
+    "build:bundler": "wasm-pack build --target bundler --out-dir pkg/bundler",
+    "build:nodejs": "wasm-pack build --target nodejs --out-dir pkg/node && node ./build/node",
+    "build:web": "wasm-pack build --target web --out-dir pkg/web",
     "build:docs": "node ./build/docs",
-    "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
+    "build": "npm run build:web && npm run build:nodejs && npm run build:bundler && npm run build:docs",
     "pretest": "npm run build:nodejs",
     "prepublishOnly": "npm run build",
-    "serve": "webpack serve",
+    "example:serve": "scripts/serve.sh",
     "example:node": "node examples/node.js"
   },
   "contributors": [
