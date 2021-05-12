@@ -306,18 +306,44 @@ mod tests {
   #[test]
   fn test_parse_valid() {
     assert!(IotaDID::parse(format!("did:iota:{}", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:{}#fragment", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:{}?somequery=somevalue", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:{}?somequery=somevalue#fragment", TAG)).is_ok());
+
     assert!(IotaDID::parse(format!("did:iota:main:{}", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:main:{}#fragment", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:main:{}?somequery=somevalue", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:main:{}?somequery=somevalue#fragment", TAG)).is_ok());
+
     assert!(IotaDID::parse(format!("did:iota:test:{}", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:test:{}#fragment", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:test:{}?somequery=somevalue", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:test:{}?somequery=somevalue#fragment", TAG)).is_ok());
+
     assert!(IotaDID::parse(format!("did:iota:rainbow:{}", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:rainbow:{}#fragment", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:rainbow:{}?somequery=somevalue", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:rainbow:{}?somequery=somevalue#fragment", TAG)).is_ok());
+
     assert!(IotaDID::parse(format!("did:iota:rainbow:shard-1:{}", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:rainbow:shard-1:{}#fragment", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:rainbow:shard-1:{}?somequery=somevalue", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:rainbow:shard-1:{}?somequery=somevalue#fragment", TAG)).is_ok());
   }
 
   #[test]
   fn test_parse_invalid() {
+    // A non-"iota" DID method is invalid.
     assert!(IotaDID::parse("did:foo::").is_err());
+    // An empty DID method is invalid.
     assert!(IotaDID::parse("did:::").is_err());
+    assert!(IotaDID::parse(format!("did::rainbow:shard-1:{}", TAG)).is_err());
+    // A non-"iota" DID method is invalid.
     assert!(IotaDID::parse("did:iota---::").is_err());
+    // An empty `iota-specific-idstring` is invalid.
     assert!(IotaDID::parse("did:iota:").is_err());
+    // Too many components is invalid.
+    assert!(IotaDID::parse(format!("did:iota:rainbow:shard-1:random:{}", TAG)).is_err());
   }
 
   #[test]
@@ -325,7 +351,12 @@ mod tests {
     let key: String = IotaDID::encode_key(b"123");
 
     let did: CoreDID = format!("did:iota:{}", key).parse().unwrap();
-    assert!(IotaDID::try_from_owned(did).is_ok());
+    let iota_did = IotaDID::try_from_owned(did).unwrap();
+    assert_eq!(iota_did.network(), "main");
+    assert_eq!(iota_did.shard(), None);
+    assert_eq!(iota_did.tag(), key);
+    assert_eq!(iota_did.path(), "");
+    assert_eq!(iota_did.query(), None);
 
     let did: CoreDID = "did:iota:123".parse().unwrap();
     assert!(IotaDID::try_from_owned(did).is_err());
@@ -351,6 +382,9 @@ mod tests {
   #[test]
   fn test_shard() {
     let key: String = IotaDID::encode_key(b"123");
+
+    let did: IotaDID = format!("did:iota:{}", key).parse().unwrap();
+    assert_eq!(did.shard(), None);
 
     let did: IotaDID = format!("did:iota:dev:{}", key).parse().unwrap();
     assert_eq!(did.shard(), None);
