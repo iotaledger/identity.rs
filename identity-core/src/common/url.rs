@@ -29,7 +29,7 @@ impl Url {
 
   /// Consumes the [`Url`] and returns the value as a `String`.
   pub fn into_string(self) -> String {
-    self.0.into()
+    self.0.to_string()
   }
 
   /// Parses the given input string as a [`Url`], with `self` as the base Url.
