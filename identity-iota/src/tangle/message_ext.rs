@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::convert::FromJson;
+use iota_client::bee_message::payload::transaction::Essence;
 use iota_client::bee_message::payload::Payload;
 use iota_client::bee_message::Message;
 use iota_client::bee_message::MessageId;
@@ -18,18 +19,35 @@ static NULL: &[u8; MESSAGE_ID_LENGTH] = &[0; MESSAGE_ID_LENGTH];
 
 macro_rules! try_extract {
   ($ty:ty, $this:expr, $did:expr) => {{
-    if let Some(Payload::Indexation(payload)) = $this.payload() {
-      let mut resource: $ty = <$ty>::from_json_slice(payload.data()).ok()?;
+    match $this.payload() {
+      Some(Payload::Indexation(payload)) => {
+        let mut resource: $ty = <$ty>::from_json_slice(payload.data()).ok()?;
 
-      if $did.authority() != resource.id().authority() {
-        return None;
+        if $did.authority() != resource.id().authority() {
+          return None;
+        }
+
+        TangleRef::set_message_id(&mut resource, $this.id().0);
+
+        Some(resource)
       }
+      Some(Payload::Transaction(tx_payload)) => match tx_payload.essence() {
+        Essence::Regular(regular_essence) => match regular_essence.payload() {
+          Some(Payload::Indexation(payload)) => {
+            let mut resource: $ty = <$ty>::from_json_slice(payload.data()).ok()?;
 
-      TangleRef::set_message_id(&mut resource, $this.id().0);
+            if $did.authority() != resource.id().authority() {
+              return None;
+            }
 
-      Some(resource)
-    } else {
-      None
+            TangleRef::set_message_id(&mut resource, $this.id().0);
+
+            Some(resource)
+          }
+          _ => None,
+        },
+      },
+      _ => None,
     }
   }};
 }
