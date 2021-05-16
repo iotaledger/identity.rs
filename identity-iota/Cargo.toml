@@ -36,7 +36,7 @@ features = ["blake2b"]
 default = ["iota-client/async", "iota-client/wasm"]
 
 # Enables Web Assembly support
-wasm = ["iota-client/async", "iota-client/wasm"]
+wasm = ["iota-client/wasm"]
 
 [package.metadata.docs.rs]
 # To build locally:
