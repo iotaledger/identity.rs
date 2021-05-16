@@ -46,6 +46,7 @@ macro_rules! try_extract {
           }
           _ => None,
         },
+        _ => None,
       },
       _ => None,
     }
