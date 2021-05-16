@@ -6,7 +6,6 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
-use core::ops::Deref;
 use core::str::FromStr;
 use crypto::hashes::blake2b::Blake2b256;
 use crypto::hashes::Digest;
@@ -130,6 +129,16 @@ impl IotaDID {
     self.0.join(other).map_err(Into::into).and_then(Self::try_from_owned)
   }
 
+  /// Change the method of the [`IotaDID`].
+  pub fn set_method(&mut self, value: impl AsRef<str>) {
+    self.0.set_method(value);
+  }
+
+  /// Change the method-specific-id of the [`IotaDID`].
+  pub fn set_method_id(&mut self, value: impl AsRef<str>) {
+    self.0.set_method_id(value);
+  }
+
   /// Sets the `path` component of the DID Url.
   pub fn set_path(&mut self, value: impl AsRef<str>) {
     self.0.set_path(value);
@@ -200,6 +209,58 @@ impl IotaDID {
     Self::check_validity(did).is_ok()
   }
 
+  /// Returns the serialized [`IotaDID`].
+  ///
+  /// This is fast since the serialized value is stored in the [`DID`].
+  pub fn as_str(&self) -> &str {
+    self.0.as_str()
+  }
+
+  /// Consumes the [`IotaDID`] and returns the serialization.
+  pub fn into_string(self) -> String {
+    self.0.into_string()
+  }
+
+  /// Returns the [`IotaDID`] scheme. See [`DID::SCHEME`].
+  pub fn scheme(&self) -> &'static str {
+    self.0.scheme()
+  }
+
+  /// Returns the [`IotaDID`] authority.
+  pub fn authority(&self) -> &str {
+    self.0.authority()
+  }
+
+  /// Returns the [`IotaDID`] method name.
+  pub fn method(&self) -> &str {
+    self.0.method()
+  }
+
+  /// Returns the [`IotaDID`] method-specific ID.
+  pub fn method_id(&self) -> &str {
+    self.0.method_id()
+  }
+
+  /// Returns the [`IotaDID`] path.
+  pub fn path(&self) -> &str {
+    self.0.path()
+  }
+
+  /// Returns the [`IotaDID`] method query, if any.
+  pub fn query(&self) -> Option<&str> {
+    self.0.query()
+  }
+
+  /// Returns the [`IotaDID`] method fragment, if any.
+  pub fn fragment(&self) -> Option<&str> {
+    self.0.fragment()
+  }
+
+  /// Parses the [`IotaDID`] query and returns an iterator of (key, value) pairs.
+  pub fn query_pairs(&self) -> form_urlencoded::Parse<'_> {
+    self.0.query_pairs()
+  }
+
   /// Returns the Tangle `network` of the `DID`.
   pub fn network(&self) -> &str {
     self.segments().network()
@@ -247,14 +308,6 @@ impl Display for IotaDID {
 impl Debug for IotaDID {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     write!(f, "{}", self.0)
-  }
-}
-
-impl Deref for IotaDID {
-  type Target = CoreDID;
-
-  fn deref(&self) -> &Self::Target {
-    self.as_ref()
   }
 }
 
