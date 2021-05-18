@@ -129,11 +129,6 @@ impl IotaDID {
     self.0.join(other).map_err(Into::into).and_then(Self::try_from_owned)
   }
 
-  /// Change the method of the [`IotaDID`].
-  pub fn set_method(&mut self, value: impl AsRef<str>) {
-    self.0.set_method(value);
-  }
-
   /// Change the method-specific-id of the [`IotaDID`].
   pub fn set_method_id(&mut self, value: impl AsRef<str>) {
     self.0.set_method_id(value);
