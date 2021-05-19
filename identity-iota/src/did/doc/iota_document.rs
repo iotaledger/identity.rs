@@ -325,7 +325,7 @@ impl IotaDocument {
       return Err(Error::CannotRemoveAuthMethod);
     }
 
-    self.document.remove_method(did);
+    self.document.remove_method(did.as_ref());
 
     Ok(())
   }
