@@ -65,7 +65,6 @@ fn test_did() {
   let did = WasmDID::new(&key, None, None).unwrap();
 
   assert_eq!(did.network(), "main");
-  assert_eq!(did.shard(), None);
 
   let parsed = WasmDID::parse(&did.to_string()).unwrap();
 
@@ -76,7 +75,6 @@ fn test_did() {
 
   assert_eq!(base58.tag(), did.tag());
   assert_eq!(base58.network(), "test");
-  assert_eq!(base58.shard().unwrap(), "xyz");
 }
 
 #[test]

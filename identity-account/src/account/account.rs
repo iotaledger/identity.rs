@@ -124,7 +124,6 @@ impl Account {
     // Create the initialization command
     let command: Command = Command::CreateIdentity {
       network: input.network,
-      shard: input.shard,
       authentication: Self::key_to_method(input.key_type),
     };
 
