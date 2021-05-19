@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { DID, checkCredential, publish } = require('../node/identity_wasm')
-const { createVC } = require('./create_VC');
+const { DID, checkCredential, publish } = require('../..')
+const { createVC } = require('./create_vc');
 const { EXPLORER_URL, CLIENT_CONFIG } = require('./config')
 
 /*

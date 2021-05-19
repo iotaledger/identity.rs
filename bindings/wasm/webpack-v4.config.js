@@ -7,7 +7,7 @@ const dist = path.resolve(__dirname, "dist")
 module.exports = {
   mode: "production",
   entry: {
-    index: "./examples/bundler.js"
+    index: "./examples/bundler-v4.js"
   },
   output: {
     path: dist,
@@ -17,13 +17,9 @@ module.exports = {
     contentBase: dist,
   },
   plugins: [
-    new CopyWebPlugin({
-      patterns: [
-        {
-          from: path.resolve(__dirname, "static")
-        }
-      ]
-    }),
+    new CopyWebPlugin([
+      path.resolve(__dirname, "static"),
+    ]),
     new WasmPackPlugin({
       crateDirectory: __dirname,
       outDir: "pkg/bundler",
@@ -36,8 +32,4 @@ module.exports = {
   performance: {
     hints: false,
   },
-  experiments: {
-    asyncWebAssembly: true,
-    topLevelAwait: true
-  }
 }

@@ -1,27 +1,32 @@
-async function run(Identity) {
-  console.log(Identity)
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
 
-  const {
-    Digest,
-    DID,
-    Document,
-    KeyCollection,
-    KeyPair,
-    KeyType,
-    VerificationMethod,
-    VerifiableCredential,
-    VerifiablePresentation,
-  } = Identity
+import * as Identity from "../pkg/bundler/identity_wasm.js"
 
-  function generateUser(name) {
-    const { doc, key } = new Document(KeyType.Ed25519)
+const {
+  Digest,
+  DID,
+  Document,
+  KeyCollection,
+  KeyPair,
+  KeyType,
+  VerificationMethod,
+  VerifiableCredential,
+  VerifiablePresentation,
+} = Identity
 
-    return {
-      doc,
-      key,
-      name,
-    }
+function generateUser(name) {
+  const { doc, key } = new Document(KeyType.Ed25519)
+
+  return {
+    doc,
+    key,
+    name
   }
+}
+
+async function example() {
+  console.group("Example")
 
   // Generate a KeyPair, DID, and Document for Alice and Bob
   const user1 = generateUser("Alice")
@@ -44,8 +49,8 @@ async function run(Identity) {
   console.log("Verified (user1): ", user1.doc.verify())
   console.log("Verified (user2): ", user2.doc.verify())
 
-  user1MessageId = await Identity.publish(user1.doc.toJSON())
-  user2MessageId = await Identity.publish(user2.doc.toJSON())
+  let user1MessageId = await Identity.publish(user1.doc.toJSON())
+  let user2MessageId = await Identity.publish(user2.doc.toJSON())
 
   // Publish all DID documents
   console.log(`Publish Result (user1): ${user1.doc.id.tangleExplorer}/transaction/${user1MessageId}`)
@@ -116,12 +121,10 @@ async function run(Identity) {
   //
   // This should return `false` since we revoked the key used to sign the credential
   console.log("Presentation Validation", await Identity.checkPresentation(signedVp.toString()))
+
+  console.groupEnd("Example")
 }
 
-import("../pkg/index.js").then(async identity => {
-  try {
-    await run(identity)
-  } catch (e) {
-    console.error(e)
-  }
-})
+console.log("Identity", Identity)
+
+await example()
