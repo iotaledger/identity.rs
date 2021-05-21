@@ -4,16 +4,15 @@
 
 This folder provides code examples for you to learn how the IOTA Identity WASM bindings can be used in JavaScript.
 
-The examples by default use the main network, which is configured in `config.js`.
-
-Ff you are writing code against the test network then most function calls will need to include information about the
+If you are writing code against the test network then, most function calls will need to include information about the
 network, since this is not automatically inferred from the arguments in all cases currently.
 
 We recommend that you **always** use a `CLIENT_CONFIG` parameter that you define when calling any functions that take a
 `ClientConfig` object. This will ensure that all the API calls use a consistent node and network throughout. If you
 mismatch the network across calls you will encounter errors.
 
-A `ClientConfig` is a record consisting of two string fields: `network` and `node`.
+A `ClientConfig` is a record consisting of two string fields: `network` and `node`. There is an example client config
+that can be found in the `config.js` file.
 
 You can run each example using
 
