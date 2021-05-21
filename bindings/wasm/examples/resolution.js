@@ -3,17 +3,18 @@
 
 const { resolve } = require('../node/identity_wasm')
 const { manipulateIdentity } = require('./manipulate_did');
-const { CLIENT_CONFIG } = require('./config');
 
 /*
     A short example to show how to resolve a DID. This returns the latest DID Document.
+
+    @param {{network: string, node: string}} clientConfig
 */
-async function resolution() {
-    //Creates a new identity, that also is updated (See "manipulate_did" example)
+async function resolution(clientConfig) {
+    // Creates a new identity, that also is updated (See "manipulate_did" example).
     const result = await manipulateIdentity();
 
-    //Resolve a DID
-    return await resolve(result.doc.id.toString(), CLIENT_CONFIG);
+    // Resolve a DID.
+    return await resolve(result.doc.id.toString(), clientConfig);
 }
 
 exports.resolution = resolution;
