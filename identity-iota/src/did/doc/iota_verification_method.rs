@@ -66,6 +66,17 @@ impl IotaVerificationMethod {
     Self::from_did(did, keypair, fragment)
   }
 
+  /// Creates a new [`IotaVerificationMethod`] object from the given `keypair` on the specified `network`.
+  pub fn from_keypair_with_network<'a, F>(keypair: &KeyPair, fragment: F, network: &str) -> Result<Self>
+  where
+    F: Into<Option<&'a str>>,
+  {
+    let key: &[u8] = keypair.public().as_ref();
+    let did: IotaDID = IotaDID::with_network(key, &network)?;
+
+    Self::from_did(did, keypair, fragment)
+  }
+
   /// Creates a new [`Method`] object from the given `did` and `keypair`.
   ///
   /// If the `fragment` resolves to `Option::None` then the default verification method tag will be

@@ -532,6 +532,7 @@ Parses a `DID` from the input string.
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromKeyPair(key)](#Document.fromKeyPair) ⇒ [<code>Document</code>](#Document)
+        * [.fromKeyPairWithNetwork(key, network)](#Document.fromKeyPairWithNetwork) ⇒ [<code>Document</code>](#Document)
         * [.fromAuthentication(method)](#Document.fromAuthentication) ⇒ [<code>Document</code>](#Document)
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
 
@@ -732,6 +733,18 @@ Creates a new DID Document from the given KeyPair.
 | Param | Type |
 | --- | --- |
 | key | [<code>KeyPair</code>](#KeyPair) | 
+
+<a name="Document.fromKeyPairWithNetwork"></a>
+
+### Document.fromKeyPairWithNetwork(key, network) ⇒ [<code>Document</code>](#Document)
+Creates a new DID Document from the given KeyPair on the specified network.
+
+**Kind**: static method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| key | [<code>KeyPair</code>](#KeyPair) | 
+| network | <code>string</code> | 
 
 <a name="Document.fromAuthentication"></a>
 

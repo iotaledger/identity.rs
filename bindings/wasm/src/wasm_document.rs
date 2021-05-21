@@ -86,6 +86,14 @@ impl WasmDocument {
     IotaDocument::from_keypair(&key.0).map_err(err).map(Self)
   }
 
+  /// Creates a new DID Document from the given KeyPair on the specified network.
+  #[wasm_bindgen(js_name = fromKeyPairWithNetwork)]
+  pub fn from_keypair_with_network(key: &KeyPair, network: &str) -> Result<WasmDocument, JsValue> {
+    IotaDocument::from_keypair_with_network(&key.0, &network)
+      .map_err(err)
+      .map(Self)
+  }
+
   /// Creates a new DID Document from the given verification [`method`][`Method`].
   #[wasm_bindgen(js_name = fromAuthentication)]
   pub fn from_authentication(method: &WasmVerificationMethod) -> Result<WasmDocument, JsValue> {

@@ -7,6 +7,7 @@
 ## Install the library:
 
 Latest Release: This version matches the main branch of this repository, is stable and will have changelogs.
+
 ```bash
 $ npm install @iota/identity-wasm
 // or using yarn
@@ -14,6 +15,7 @@ $ yarn add @iota/identity-wasm
 ```
 
 Development Release: This version matches the dev branch of this repository, may see frequent breaking changes and has the latest code changes.
+
 ```bash
 $ npm install @iota/identity-wasm@dev
 // or using yarn
@@ -23,25 +25,30 @@ $ yarn add @iota/identity-wasm@dev
 ## NodeJS Setup
 
 ```js
-const identity = require('@iota/identity-wasm/node')
+const identity = require("@iota/identity-wasm/node");
 
 // Generate a new KeyPair
-const key = new identity.KeyPair(identity.KeyType.Ed25519)
+const key = new identity.KeyPair(identity.KeyType.Ed25519);
 
 // Create a new DID Document with the KeyPair as the default authentication method
-const doc = identity.Document.fromKeyPair(key)
+const doc = identity.Document.fromKeyPair(key);
 
 // Sign the DID Document with the sceret key
-doc.sign(key)
+doc.sign(key);
 
 // Publish the DID Document to the IOTA Tangle
-identity.publish(doc.toJSON(), { node: "https://nodes.thetangle.org:443" })
+identity
+  .publish(doc.toJSON(), { node: "https://nodes.thetangle.org:443" })
   .then((message) => {
-    console.log("Tangle Message Id: ", message)
-    console.log("Tangle Message Url", `https://explorer.iota.org/mainnet/transaction/${message}`)
-  }).catch((error) => {
-    console.error("Error: ", error)
+    console.log("Tangle Message Id: ", message);
+    console.log(
+      "Tangle Message Url",
+      `https://explorer.iota.org/mainnet/transaction/${message}`,
+    );
   })
+  .catch((error) => {
+    console.error("Error: ", error);
+  });
 ```
 
 ## Web Setup
@@ -62,16 +69,18 @@ $ yarn add rollup-plugin-copy --dev
 
 ```js
 // Include the copy plugin
-import copy from 'rollup-plugin-copy'
+import copy from "rollup-plugin-copy";
 
 // Add the copy plugin to the `plugins` array of your rollup config:
 copy({
-  targets: [{
-    src: 'node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm',
-    dest: 'public',
-    rename: 'identity_wasm_bg.wasm'
-  }]
-})
+  targets: [
+    {
+      src: "node_modules/@iota/identity-wasm/web/identity_wasm_bg.wasm",
+      dest: "public",
+      rename: "identity_wasm_bg.wasm",
+    },
+  ],
+});
 ```
 
 ### Webpack
@@ -106,21 +115,25 @@ new CopyWebPlugin({
 import * as identity from "@iota/identity-wasm/web";
 
 identity.init().then(() => {
-  const key = new identity.KeyPair(identity.KeyType.Ed25519)
-  const doc = identity.Document.fromKeyPair(key)
-  console.log("Key Pair", key)
-  console.log("DID Document: ", doc)
+  const key = new identity.KeyPair(identity.KeyType.Ed25519);
+  const doc = identity.Document.fromKeyPair(key);
+  // Or, if using the testnet:
+  // const doc = identity.Document.fromKeyPairWithNetwork(key, "test")
+  console.log("Key Pair", key);
+  console.log("DID Document: ", doc);
 });
 
 // or
 
 (async () => {
-  await identity.init()
-  const key = new identity.KeyPair(identity.KeyType.Ed25519)
-  const doc = identity.Document.fromKeyPair(key)
-  console.log("Key Pair", key)
-  console.log("DID Document: ", doc)
-})()
+  await identity.init();
+  const key = new identity.KeyPair(identity.KeyType.Ed25519);
+  const doc = identity.Document.fromKeyPair(key);
+  // Or, if using the testnet:
+  // const doc = identity.Document.fromKeyPairWithNetwork(key, "test")
+  console.log("Key Pair", key);
+  console.log("DID Document: ", doc);
+})();
 
 // Default path is "identity_wasm_bg.wasm", but you can override it like this
 await identity.init("./static/identity_wasm_bg.wasm");
