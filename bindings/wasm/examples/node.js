@@ -8,6 +8,7 @@ const { createVC } = require('./create_vc');
 const { createVP } = require('./create_vp');
 const { revokeVC } = require('./revocation');
 const { merkleKey } = require('./merkle_key');
+const { CLIENT_CONFIG } = require('./config')
 
 async function main() {
     //Check if an example is mentioned
@@ -19,19 +20,19 @@ async function main() {
     let argument = process.argv[2];
     switch(argument) {
         case 'create_did':
-            return await createIdentity();
+            return await createIdentity(CLIENT_CONFIG);
         case 'manipulate_did':
-            return await manipulateIdentity();
+            return await manipulateIdentity(CLIENT_CONFIG);
         case 'resolution':
-            return await resolution();
+            return await resolution(CLIENT_CONFIG);
         case 'create_vc':
-            return await createVC();
+            return await createVC(CLIENT_CONFIG);
         case 'revocation':
-            return await revokeVC();
+            return await revokeVC(CLIENT_CONFIG);
         case 'create_vp':
-            return await createVP();
+            return await createVP(CLIENT_CONFIG);
         case 'merkle_key':
-            return await merkleKey();
+            return await merkleKey(CLIENT_CONFIG);
         default:
             throw 'Unknown example name';
     }
