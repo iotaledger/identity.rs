@@ -108,6 +108,8 @@ import * as identity from "@iota/identity-wasm/web";
 identity.init().then(() => {
   const key = new identity.KeyPair(identity.KeyType.Ed25519)
   const doc = identity.Document.fromKeyPair(key)
+  // Or, if using the testnet:
+  // const doc = identity.Document.fromKeyPair(key, "test")  
   console.log("Key Pair", key)
   console.log("DID Document: ", doc)
 });
@@ -118,6 +120,8 @@ identity.init().then(() => {
   await identity.init()
   const key = new identity.KeyPair(identity.KeyType.Ed25519)
   const doc = identity.Document.fromKeyPair(key)
+  // Or, if using the testnet:
+  // const doc = identity.Document.fromKeyPair(key, "test")
   console.log("Key Pair", key)
   console.log("DID Document: ", doc)
 })()

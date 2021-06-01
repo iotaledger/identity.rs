@@ -725,13 +725,16 @@ Serializes a `Document` object as a JSON object.
 <a name="Document.fromKeyPair"></a>
 
 ### Document.fromKeyPair(key) ⇒ [<code>Document</code>](#Document)
-Creates a new DID Document from the given KeyPair.
+Creates a new DID Document from the given KeyPair and optional network.
+
+If unspecified, the network defaults to the mainnet.
 
 **Kind**: static method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | key | [<code>KeyPair</code>](#KeyPair) | 
+| network | <code>string</code> \| <code>undefined</code> |
 
 <a name="Document.fromAuthentication"></a>
 
