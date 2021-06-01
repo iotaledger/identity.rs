@@ -80,10 +80,16 @@ impl WasmDocument {
     })
   }
 
-  /// Creates a new DID Document from the given KeyPair.
+  /// Creates a new DID Document from the given KeyPair and optional network.
+  ///
+  /// If unspecified, network defaults to the mainnet.
   #[wasm_bindgen(js_name = fromKeyPair)]
-  pub fn from_keypair(key: &KeyPair) -> Result<WasmDocument, JsValue> {
-    IotaDocument::from_keypair(&key.0).map_err(err).map(Self)
+  pub fn from_keypair(key: &KeyPair, network: Option<String>) -> Result<WasmDocument, JsValue> {
+    let doc = match network {
+      Some(net) => IotaDocument::from_keypair_with_network(&key.0, &net),
+      None => IotaDocument::from_keypair(&key.0)
+    };
+    doc.map_err(err).map(Self)
   }
 
   /// Creates a new DID Document from the given verification [`method`][`Method`].
