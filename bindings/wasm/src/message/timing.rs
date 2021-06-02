@@ -64,12 +64,12 @@ impl Timing {
   }
 
   #[wasm_bindgen(getter = delayMilli)]
-  pub fn delay_milli(&self) -> Option<u64> {
+  pub fn delay_milli(&self) -> Option<u32> {
     self.0.delay_milli()
   }
 
   #[wasm_bindgen(setter = delayMilli)]
-  pub fn set_delay_milli(&mut self, value: u64) {
+  pub fn set_delay_milli(&mut self, value: u32) {
     self.0.set_delay_milli(value);
   }
 

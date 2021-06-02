@@ -87,7 +87,7 @@ impl WasmDocument {
   pub fn from_keypair(key: &KeyPair, network: Option<String>) -> Result<WasmDocument, JsValue> {
     let doc = match network {
       Some(net) => IotaDocument::from_keypair_with_network(&key.0, &net),
-      None => IotaDocument::from_keypair(&key.0)
+      None => IotaDocument::from_keypair(&key.0),
     };
     doc.map_err(err).map(Self)
   }
