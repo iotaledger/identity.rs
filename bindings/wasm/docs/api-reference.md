@@ -75,6 +75,9 @@
 ## Functions
 
 <dl>
+<dt><a href="#start">start()</a></dt>
+<dd><p>Initializes the console error panic hook for better error messages</p>
+</dd>
 <dt><a href="#publish">publish(document, params)</a> ⇒ <code>any</code></dt>
 <dd><p>Publishes a DID Document to the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
 </dd>
@@ -87,9 +90,6 @@
 <dt><a href="#checkPresentation">checkPresentation(data, params)</a> ⇒ <code>any</code></dt>
 <dd><p>Validates a presentation with the DID Document from the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
 </dd>
-<dt><a href="#start">start()</a></dt>
-<dd><p>Initializes the console error panic hook for better error messages</p>
-</dd>
 </dl>
 
 <a name="AuthenticationRequest"></a>
@@ -99,114 +99,9 @@
 
 * [AuthenticationRequest](#AuthenticationRequest)
     * _instance_
-        * [.context](#AuthenticationRequest+context) ⇒ <code>string</code>
-        * [.context](#AuthenticationRequest+context)
-        * [.thread](#AuthenticationRequest+thread) ⇒ <code>string</code>
-        * [.thread](#AuthenticationRequest+thread)
-        * [.callbackURL](#AuthenticationRequest+callbackURL) ⇒ <code>string</code>
-        * [.callbackURL](#AuthenticationRequest+callbackURL)
-        * [.challenge](#AuthenticationRequest+challenge) ⇒ <code>string</code>
-        * [.challenge](#AuthenticationRequest+challenge)
-        * [.responseRequested](#AuthenticationRequest+responseRequested) ⇒ <code>boolean</code> \| <code>undefined</code>
-        * [.responseRequested](#AuthenticationRequest+responseRequested)
-        * [.id](#AuthenticationRequest+id) ⇒ [<code>DID</code>](#DID) \| <code>undefined</code>
-        * [.id](#AuthenticationRequest+id)
-        * [.timing](#AuthenticationRequest+timing) ⇒ [<code>Timing</code>](#Timing) \| <code>undefined</code>
-        * [.timing](#AuthenticationRequest+timing)
         * [.toJSON()](#AuthenticationRequest+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(value)](#AuthenticationRequest.fromJSON) ⇒ [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-
-<a name="AuthenticationRequest+context"></a>
-
-### authenticationRequest.context ⇒ <code>string</code>
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-<a name="AuthenticationRequest+context"></a>
-
-### authenticationRequest.context
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> |
-
-<a name="AuthenticationRequest+thread"></a>
-
-### authenticationRequest.thread ⇒ <code>string</code>
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-<a name="AuthenticationRequest+thread"></a>
-
-### authenticationRequest.thread
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> |
-
-<a name="AuthenticationRequest+callbackURL"></a>
-
-### authenticationRequest.callbackURL ⇒ <code>string</code>
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-<a name="AuthenticationRequest+callbackURL"></a>
-
-### authenticationRequest.callbackURL
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> |
-
-<a name="AuthenticationRequest+challenge"></a>
-
-### authenticationRequest.challenge ⇒ <code>string</code>
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-<a name="AuthenticationRequest+challenge"></a>
-
-### authenticationRequest.challenge
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> |
-
-<a name="AuthenticationRequest+responseRequested"></a>
-
-### authenticationRequest.responseRequested ⇒ <code>boolean</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-<a name="AuthenticationRequest+responseRequested"></a>
-
-### authenticationRequest.responseRequested
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-
-| Param | Type |
-| --- | --- |
-| value | <code>boolean</code> |
-
-<a name="AuthenticationRequest+id"></a>
-
-### authenticationRequest.id ⇒ [<code>DID</code>](#DID) \| <code>undefined</code>
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-<a name="AuthenticationRequest+id"></a>
-
-### authenticationRequest.id
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> |
-
-<a name="AuthenticationRequest+timing"></a>
-
-### authenticationRequest.timing ⇒ [<code>Timing</code>](#Timing) \| <code>undefined</code>
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-<a name="AuthenticationRequest+timing"></a>
-
-### authenticationRequest.timing
-**Kind**: instance property of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-
-| Param | Type |
-| --- | --- |
-| value | [<code>Timing</code>](#Timing) |
 
 <a name="AuthenticationRequest+toJSON"></a>
 
@@ -531,7 +426,7 @@ Parses a `DID` from the input string.
         * [.merge(diff)](#Document+merge)
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromKeyPair(key)](#Document.fromKeyPair) ⇒ [<code>Document</code>](#Document)
+        * [.fromKeyPair(key, network)](#Document.fromKeyPair) ⇒ [<code>Document</code>](#Document)
         * [.fromAuthentication(method)](#Document.fromAuthentication) ⇒ [<code>Document</code>](#Document)
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
 
@@ -724,10 +619,10 @@ Serializes a `Document` object as a JSON object.
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document.fromKeyPair"></a>
 
-### Document.fromKeyPair(key) ⇒ [<code>Document</code>](#Document)
+### Document.fromKeyPair(key, network) ⇒ [<code>Document</code>](#Document)
 Creates a new DID Document from the given KeyPair and optional network.
 
-If unspecified, the network defaults to the mainnet.
+If unspecified, network defaults to the mainnet.
 
 **Kind**: static method of [<code>Document</code>](#Document)  
 
@@ -1189,7 +1084,7 @@ Serializes a `Service` object as a JSON object.
 <a name="Service.fromJSON"></a>
 
 ### Service.fromJSON(value) ⇒ [<code>Service</code>](#Service)
-Deserializes a `Method` object from a JSON object.
+Deserializes a `Service` object from a JSON object.
 
 **Kind**: static method of [<code>Service</code>](#Service)  
 
@@ -1214,7 +1109,7 @@ Deserializes a `Method` object from a JSON object.
         * [.expiresTime](#Timing+expiresTime)
         * [.waitUntilTime](#Timing+waitUntilTime) ⇒ <code>string</code> \| <code>undefined</code>
         * [.waitUntilTime](#Timing+waitUntilTime)
-        * [.delayMilli](#Timing+delayMilli) ⇒ <code>BigInt</code> \| <code>undefined</code>
+        * [.delayMilli](#Timing+delayMilli) ⇒ <code>number</code> \| <code>undefined</code>
         * [.delayMilli](#Timing+delayMilli)
         * [.toJSON()](#Timing+toJSON) ⇒ <code>any</code>
     * _static_
@@ -1287,7 +1182,7 @@ Deserializes a `Method` object from a JSON object.
 
 <a name="Timing+delayMilli"></a>
 
-### timing.delayMilli ⇒ <code>BigInt</code> \| <code>undefined</code>
+### timing.delayMilli ⇒ <code>number</code> \| <code>undefined</code>
 **Kind**: instance property of [<code>Timing</code>](#Timing)
 <a name="Timing+delayMilli"></a>
 
@@ -1296,7 +1191,7 @@ Deserializes a `Method` object from a JSON object.
 
 | Param | Type |
 | --- | --- |
-| value | <code>BigInt</code> |
+| value | <code>number</code> |
 
 <a name="Timing+toJSON"></a>
 
@@ -1555,6 +1450,12 @@ Deserializes a `VerificationMethod` object from a JSON object.
 
 ## KeyType
 **Kind**: global variable  
+<a name="start"></a>
+
+## start()
+Initializes the console error panic hook for better error messages
+
+**Kind**: global function
 <a name="publish"></a>
 
 ## publish(document, params) ⇒ <code>any</code>
@@ -1603,9 +1504,3 @@ Validates a presentation with the DID Document from the Tangle, params looks lik
 | data | <code>string</code> | 
 | params | <code>any</code> | 
 
-<a name="start"></a>
-
-## start()
-Initializes the console error panic hook for better error messages
-
-**Kind**: global function
