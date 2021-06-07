@@ -5,7 +5,8 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
-use identity_core::common::Timestamp;
+
+use crate::common::Timestamp;
 
 /// A simple representation of a unix timestamp.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -14,6 +15,7 @@ use identity_core::common::Timestamp;
 pub struct UnixTimestamp(i64);
 
 impl UnixTimestamp {
+  /// Returns the default timestamp value.
   pub const EPOCH: Self = Self(0);
 
   /// Returns the current time as a unix timestamp.

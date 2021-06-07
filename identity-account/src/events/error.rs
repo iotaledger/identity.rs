@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Fragment;
 use identity_did::verification::MethodType;
 
-use crate::types::Fragment;
 use crate::types::KeyLocation;
 
 /// Errors than may occur while processing a [Command][crate::events::Command].

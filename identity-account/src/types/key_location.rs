@@ -5,9 +5,9 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
+use identity_core::common::Fragment;
 use identity_did::verification::MethodType;
 
-use crate::types::Fragment;
 use crate::types::Generation;
 
 /// The storage location of a verification method key.
@@ -56,7 +56,12 @@ impl KeyLocation {
 
   /// Returns true if the key location points to an authentication method.
   pub fn is_authentication(&self) -> bool {
-    self.fragment.is_authentication()
+    Self::is_authentication_fragment(&self.fragment)
+  }
+
+  /// Returns true if the fragment points to an authentication method.
+  pub fn is_authentication_fragment(fragment: &Fragment) -> bool {
+    fragment.name().starts_with(Self::AUTH)
   }
 }
 

@@ -6,8 +6,6 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result;
 
-use crate::types::KeyLocation;
-
 /// Represents a DID URL fragment.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(from = "String", into = "String")]
@@ -35,11 +33,6 @@ impl Fragment {
   pub fn name(&self) -> &str {
     assert!(!self.0.is_empty());
     &self.0[1..]
-  }
-
-  /// Returns true if the fragment points to an authentication method.
-  pub fn is_authentication(&self) -> bool {
-    self.name().starts_with(KeyLocation::AUTH)
   }
 }
 
