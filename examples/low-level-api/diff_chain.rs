@@ -66,7 +66,7 @@ async fn main() -> Result<()> {
       new.as_document_mut().authentication_mut().append(authentication.into());
     }
 
-    new.set_updated(Timestamp::now());
+    new.set_updated(Timestamp::now_utc());
     new.set_previous_message_id(*chain.integration_message_id());
 
     chain.current().sign_data(&mut new, keys[0].secret())?;
@@ -90,7 +90,7 @@ async fn main() -> Result<()> {
       let mut this: IotaDocument = chain.current().clone();
       this.properties_mut().insert("foo".into(), 123.into());
       this.properties_mut().insert("bar".into(), 456.into());
-      this.set_updated(Timestamp::now());
+      this.set_updated(Timestamp::now_utc());
       this
     };
 
@@ -129,7 +129,7 @@ async fn main() -> Result<()> {
       new.as_document_mut().authentication_mut().append(authentication.into());
     }
 
-    new.set_updated(Timestamp::now());
+    new.set_updated(Timestamp::now_utc());
     new.set_previous_message_id(*chain.integration_message_id());
 
     new.sign(keypair.secret())?;
@@ -149,7 +149,7 @@ async fn main() -> Result<()> {
       let mut this: IotaDocument = chain.current().clone();
       this.properties_mut().insert("baz".into(), 789.into());
       this.properties_mut().remove("bar");
-      this.set_updated(Timestamp::now());
+      this.set_updated(Timestamp::now_utc());
       this
     };
 

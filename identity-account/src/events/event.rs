@@ -25,7 +25,7 @@ impl Event {
   pub fn new(data: EventData) -> Self {
     Self {
       data,
-      time: UnixTimestamp::now(),
+      time: UnixTimestamp::now_utc(),
     }
   }
 

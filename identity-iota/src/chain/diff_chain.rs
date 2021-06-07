@@ -226,7 +226,7 @@ mod test {
         new.as_document_mut().authentication_mut().append(authentication.into());
       }
 
-      new.set_updated(Timestamp::now());
+      new.set_updated(Timestamp::now_utc());
       new.set_previous_message_id(*chain.integration_message_id());
 
       assert!(chain.current().sign_data(&mut new, keys[0].secret()).is_ok());
@@ -247,7 +247,7 @@ mod test {
         let mut this: IotaDocument = chain.current().clone();
         this.properties_mut().insert("foo".into(), 123.into());
         this.properties_mut().insert("bar".into(), 456.into());
-        this.set_updated(Timestamp::now());
+        this.set_updated(Timestamp::now_utc());
         this
       };
 

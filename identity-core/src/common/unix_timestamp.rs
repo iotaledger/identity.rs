@@ -19,8 +19,8 @@ impl UnixTimestamp {
   pub const EPOCH: Self = Self(0);
 
   /// Returns the current time as a unix timestamp.
-  pub fn now() -> Self {
-    Timestamp::now().into()
+  pub fn now_utc() -> Self {
+    Timestamp::now_utc().into()
   }
 
   /// Returns true if this time is the unix epoch.
@@ -66,7 +66,7 @@ mod tests {
 
   #[test]
   fn test_roundtrip() {
-    let time: UnixTimestamp = UnixTimestamp::now();
+    let time: UnixTimestamp = UnixTimestamp::now_utc();
     let core: Timestamp = time.into();
 
     assert_eq!(time, UnixTimestamp::from(core));
