@@ -1100,7 +1100,7 @@ Deserializes a `Service` object from a JSON object.
         * [.expiresTime](#Timing+expiresTime)
         * [.waitUntilTime](#Timing+waitUntilTime) ⇒ <code>string</code> \| <code>undefined</code>
         * [.waitUntilTime](#Timing+waitUntilTime)
-        * [.delayMilli](#Timing+delayMilli) ⇒ <code>BigInt</code> \| <code>undefined</code>
+        * [.delayMilli](#Timing+delayMilli) ⇒ <code>number</code> \| <code>undefined</code>
         * [.delayMilli](#Timing+delayMilli)
         * [.toJSON()](#Timing+toJSON) ⇒ <code>any</code>
     * _static_
@@ -1173,7 +1173,7 @@ Deserializes a `Service` object from a JSON object.
 
 <a name="Timing+delayMilli"></a>
 
-### timing.delayMilli ⇒ <code>BigInt</code> \| <code>undefined</code>
+### timing.delayMilli ⇒ <code>number</code> \| <code>undefined</code>
 **Kind**: instance property of [<code>Timing</code>](#Timing)
 <a name="Timing+delayMilli"></a>
 
@@ -1182,7 +1182,7 @@ Deserializes a `Service` object from a JSON object.
 
 | Param | Type |
 | --- | --- |
-| value | <code>BigInt</code> |
+| value | <code>number</code> |
 
 <a name="Timing+toJSON"></a>
 

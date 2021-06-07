@@ -19,7 +19,7 @@ pub struct Timing {
   #[serde(skip_serializing_if = "Option::is_none")]
   wait_until_time: Option<Timestamp>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  delay_milli: Option<u64>,
+  delay_milli: Option<u32>,
 }
 
 impl Timing {
@@ -111,12 +111,12 @@ impl Timing {
   }
 
   /// Returns the value of the `delay_milli` field.
-  pub fn delay_milli(&self) -> Option<u64> {
+  pub fn delay_milli(&self) -> Option<u32> {
     self.delay_milli
   }
 
   /// Sets the value of the `delay_milli` field.
-  pub fn set_delay_milli<T: Into<Option<u64>>>(&mut self, value: T) {
+  pub fn set_delay_milli<T: Into<Option<u32>>>(&mut self, value: T) {
     self.delay_milli = value.into();
   }
 }
