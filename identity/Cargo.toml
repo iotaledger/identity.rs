@@ -15,9 +15,9 @@ documentation = "https://identity.docs.iota.org"
 identity-account = { version = "=0.3.0", path = "../identity-account", optional = true }
 identity-comm = { version = "=0.3.0", path = "../identity-comm", optional = true }
 identity-core = { version = "=0.3.0", path = "../identity-core" }
-identity-credential = { version = "=0.3.0", path = "../identity-credential", optional = true }
-identity-did = { version = "=0.3.0", path = "../identity-did", optional = true }
-identity-iota = { version = "=0.3.0", path = "../identity-iota", optional = true }
+identity-credential = { version = "=0.3.0", path = "../identity-credential" }
+identity-did = { version = "=0.3.0", path = "../identity-did" }
+identity-iota = { version = "=0.3.0", path = "../identity-iota", default-features = false }
 
 [dev-dependencies]
 criterion = { version = "0.3" }
@@ -28,16 +28,7 @@ name = "benchmark"
 harness = false
 
 [features]
-default = ["identifier", "credential", "iota","comm"]
-
-# Enables support for Decentralized Identifiers
-identifier = ["identity-did"]
-
-# Enables support for Verifiable Credentials/Presentations
-credential = ["identifier", "identity-credential"]
-
-# Enables support for reading/writing from the IOTA Tangle
-iota = ["identifier", "credential", "identity-iota"]
+default = ["identity-iota/async"]
 
 # Enables Web Assembly support
 wasm = ["identity-iota/wasm", "identity-comm/wasm"]
@@ -45,8 +36,8 @@ wasm = ["identity-iota/wasm", "identity-comm/wasm"]
 # Enables support for secure storage of DID Documents
 account = ["identity-account"]
 
-# Enables support for Did Communication
-comm = ["identifier", "credential", "identity-comm"]
+# Enables support for DID Communication
+comm = ["identity-comm"]
 
 [package.metadata.docs.rs]
 # To build locally:
