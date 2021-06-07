@@ -82,6 +82,22 @@ impl IotaDocument {
     Ok(unsafe { Self::from_authentication_unchecked(method) })
   }
 
+  /// Creates a new DID Document from the given KeyPair and network.
+  ///
+  /// The DID Document will be pre-populated with a single authentication
+  /// method based on the provided [KeyPair].
+  ///
+  /// The authentication method will have the DID URL fragment `#authentication`
+  /// and can be easily retrieved with [Document::authentication].
+  pub fn from_keypair_with_network(keypair: &KeyPair, network: &str) -> Result<Self> {
+    let method: IotaVerificationMethod =
+      IotaVerificationMethod::from_keypair_with_network(keypair, "authentication", network)?;
+
+    // SAFETY: We don't create invalid Methods.  Method::from_keypair() uses the MethodBuilder
+    // internally which verifies correctness on construction.
+    Ok(unsafe { Self::from_authentication_unchecked(method) })
+  }
+
   /// Creates a new DID Document from the given verification [`method`][VerificationMethod].
   pub fn from_authentication(method: IotaVerificationMethod) -> Result<Self> {
     Self::check_authentication(&method)?;
@@ -325,7 +341,7 @@ impl IotaDocument {
       return Err(Error::CannotRemoveAuthMethod);
     }
 
-    self.document.remove_method(did);
+    self.document.remove_method(did.as_ref());
 
     Ok(())
   }
@@ -631,6 +647,8 @@ mod tests {
 
   const DID_ID: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
   const DID_AUTH: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
+  const DID_TESTNET_ID: &str = "did:iota:test:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
+  const DID_TESTNET_AUTH: &str = "did:iota:test:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
 
   fn valid_did() -> DID {
     DID_ID.parse().unwrap()
@@ -706,6 +724,19 @@ mod tests {
   fn compare_document(document: &IotaDocument) {
     assert_eq!(document.id().to_string(), DID_ID);
     assert_eq!(document.authentication_id(), DID_AUTH);
+    assert_eq!(
+      document.authentication().key_type(),
+      MethodType::Ed25519VerificationKey2018
+    );
+    assert_eq!(
+      document.authentication().key_data(),
+      &MethodData::PublicKeyBase58(String::from("FJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT"))
+    );
+  }
+
+  fn compare_document_testnet(document: &IotaDocument) {
+    assert_eq!(document.id().to_string(), DID_TESTNET_ID);
+    assert_eq!(document.authentication_id(), DID_TESTNET_AUTH);
     assert_eq!(
       document.authentication().key_type(),
       MethodType::Ed25519VerificationKey2018
@@ -889,6 +920,14 @@ mod tests {
     //from core
     let document: IotaDocument = IotaDocument::try_from_core(document.serde_into().unwrap()).unwrap();
     compare_document(&document);
+  }
+
+  #[test]
+  fn test_from_keypair_with_network() {
+    //from keypair
+    let keypair: KeyPair = generate_testkey();
+    let document: IotaDocument = IotaDocument::from_keypair_with_network(&keypair, "test").unwrap();
+    compare_document_testnet(&document);
   }
 
   #[test]
