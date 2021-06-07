@@ -20,12 +20,6 @@
 ///   did.as_str(),
 ///   "did:iota:com:2xQiiGHDq5gCi1H7utY1ni7cf65fTay3G11S4xKp1vkS"
 /// );
-///
-/// let did = did!(b"public-key", "com", "xyz");
-/// assert_eq!(
-///   did.as_str(),
-///   "did:iota:com:xyz:2xQiiGHDq5gCi1H7utY1ni7cf65fTay3G11S4xKp1vkS"
-/// );
 /// ```
 #[macro_export]
 macro_rules! did {
