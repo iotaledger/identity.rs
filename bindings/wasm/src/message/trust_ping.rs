@@ -4,21 +4,18 @@
 use identity::comm;
 use wasm_bindgen::prelude::*;
 
-use crate::utils::err;
+use crate::wasm_did::WasmDID;
+use crate::wasm_url::WasmUrl;
+use crate::wasm_uuid::WasmUuid;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct TrustPing(pub(crate) comm::TrustPing);
 
-#[wasm_bindgen]
-impl TrustPing {
-  #[wasm_bindgen(js_name = toJSON)]
-  pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(&self.0).map_err(err)
-  }
-
-  #[wasm_bindgen(js_name = fromJSON)]
-  pub fn from_json(value: &JsValue) -> Result<TrustPing, JsValue> {
-    value.into_serde().map_err(err).map(Self)
-  }
-}
+impl_wasm_accessors!(TrustPing, {
+  context => String,
+  thread => Option<WasmUuid>,
+  callback_url => Option<WasmUrl>,
+  response_requested => Option<bool>,
+  id => Option<WasmDID>,
+});

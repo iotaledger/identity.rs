@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[macro_use]
+mod macros;
+
 mod authentication;
 mod credential_issuance;
 mod credential_options;
@@ -12,6 +15,7 @@ mod did_resolution;
 mod features_discovery;
 mod presentation_verification;
 mod timing;
+mod traits;
 mod trust_ping;
 
 pub use self::authentication::*;
@@ -25,4 +29,5 @@ pub use self::did_resolution::*;
 pub use self::features_discovery::*;
 pub use self::presentation_verification::*;
 pub use self::timing::*;
+pub use self::traits::*;
 pub use self::trust_ping::*;
