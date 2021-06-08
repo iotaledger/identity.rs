@@ -84,7 +84,7 @@ Example of an IOTA MessageId:
 
 ### Signing Key
 
-DID Documents published to the Tangle must be cryptographically signed. As such the DID Document MUST include one verification method with a public key. It is recommended, for security reasons, to not use this keypair for other purposes as the control over this private key is vital for controlling the identity. It is RECOMMENDED to name this public key #_sign-x, where x is the index of the signing key, which is incredemented everytime the signing key is updated, starting at index 1. 
+DID Documents published to the Tangle must be cryptographically signed. As such the DID Document MUST include one verification method with a public key. It is recommended, for security reasons, to not use this keypair for other purposes as the control over this private key is vital for controlling the identity. It is RECOMMENDED to name this public key #_sign-x, where x is the index of the signing key, which is incremented every time the signing key is updated, starting at index 1. 
 
 ### Autonomy of DID Integration Messages
 
@@ -192,7 +192,7 @@ Create, Read, Update and Delete (CRUD) operations that change the DID Documents 
 
 ### Create
 
-To generate a new DID, the method described in [generation](#generation) must be followed. A basic DID Document must be created that includes the public key used in the DID creation process as an `verificationMethod`. This DID Document must be formatted as an Integration DID message and published to an IOTA Tangle on the index generated out of the public key used in the DID creation process. 
+To generate a new DID, the method described in [generation](#generation) must be followed. A basic DID Document must be created that includes the public key used in the DID creation process as a `verificationMethod`. This DID Document must be formatted as an Integration DID message and published to an IOTA Tangle on the index generated out of the public key used in the DID creation process. 
 
 ### Read
 
@@ -224,7 +224,7 @@ In order to update a DID Document, either an Integration or a Differentation DID
 
 An Integration DID message is unrestricted in its operations and may add or remove any fields to the DID Document. In order to query the DID Document, every Integration DID message must be processed, therefore it is RECOMMENDED to reduce the usage of these messages unless the DID Document is updated very infrequently. 
 
-In order to create a valid Integeration DID message, the following steps are to be performed:
+In order to create a valid Integration DID message, the following steps are to be performed:
 1. Create a new DID Document that contains all the new target state. This SHOULD include the new desired changes and all the changes inside the previous Diff Chain, otherwise these changes are lost!
 2. Retrieve the IOTA MessageId from the previous Integration DID message and a keypair for signing the DID Document.
 3. Set the `previousMessageId` field to the IOTA MessageId value.
@@ -245,7 +245,7 @@ In order to create a valid Integration DID message, the following steps are to b
 
 ### Delete
 
-In order to deactivate a DID document, a valid Integration DID message must be published that removes all content from a DID Document, effectively deactivating the DID Document. Keep in mind that this is irreversable. 
+In order to deactivate a DID document, a valid Integration DID message must be published that removes all content from a DID Document, effectively deactivating the DID Document. Keep in mind that this is irreversible.
 
 ## IOTA Identity standards
 
@@ -253,7 +253,7 @@ The `did:iota` method is implemented in the [IOTA Identity framework](https://gi
 
 ### Standardized Verification Method Types
 
-We support two different Verification Method Types. Verification methods that can be used for signing DID Documents, and verification methods that are only used for signing [W3C standardized Verifiable Credentials](https://www.w3.org/TR/vc-data-model/). This set differs as the IOTA Identity implements revocation through public key removal, which means every Verifiable Credential must be signed by a different keypair. We create collection of keypairs in a Merkle Tree in order to save space in the DID Document.
+We support two different Verification Method Types. Verification methods that can be used for signing DID Documents, and verification methods that are only used for signing [W3C standardized Verifiable Credentials](https://www.w3.org/TR/vc-data-model/). This set differs as the IOTA Identity implements revocation of Verifiable Credentials through public key removal, which requires every credential to be signed by a different keypair. We create collection of keypairs in a Merkle Tree in order to save space in the DID Document.
 
 Verification Methods that can be used to sign DID Documents and do other repeatable activities:
 * `Ed25519VerificationKey2018` to create a `JcsEd25519Signature2020`.
@@ -263,7 +263,7 @@ Verification Methods that can be used to sign Verifiable Credentials:
 
 ### Revocation
 
-As mentioned above, revocation Verifiable Credentials is done through revoking public keys in the IOTA Identity framework. IOTA Identity has a highly scalable solution since some identities might sign and want to revoke thousands if not millions of Verifiable Credentials. It is also GDPR compliant, leaving no trace, not even a hash, of a verifiable credential on the Tangle. Below will be a brief overview of how this mechanism works, but you may read all the details in the [MerkleKeyCollection standardization document](./merkle_key_collection.md). 
+As mentioned above, revocation of Verifiable Credentials is done through revoking public keys in the IOTA Identity framework. IOTA Identity has a highly scalable solution since some identities might sign and want to revoke thousands if not millions of Verifiable Credentials. It is also GDPR compliant, leaving no trace, not even a hash, of a verifiable credential on the Tangle. Below will be a brief overview of how this mechanism works, but you may read all the details in the [MerkleKeyCollection standardization document](./merkle_key_collection.md). 
 
 #### Key Collections
 
@@ -296,7 +296,7 @@ Unlike for-purpose blockchains or Smart Contract based DID methods, the IOTA Tan
 
 ### Snapshotting
 
-IOTA allows feeless data and value messages. As such, it has a large history of messages amounting to several TBs at the time of writing. Most nodes 'snapshot' (forget/delete) older transactions, while they keep the UTXOs stored in the ledger. The snapshot settings are local, therefore all nodes may store a different length of history. As such, older DID messages would not be avaliable at every node. Since the entire history of the DID Document is required for client-side validation, this may become problematic. It is currently recommended to either use your own node that does not snapshot, or use the [Chronicle Permanode](https://github.com/iotaledger/chronicle.rs), which keeps the entire history of the Tangle. This is not a longterm scalable solution, which is why other methods for either keeping state or selective storage is considered. 
+IOTA allows feeless data and value messages. As such, it has a large history of messages amounting to several TBs at the time of writing. Most nodes 'snapshot' (forget/delete) older transactions, while they keep the UTXOs stored in the ledger. The snapshot settings are local, therefore all nodes may store a different length of history. As such, older DID messages would not be avaliable at every node. Since the entire history of the DID Document is required for client-side validation, this may become problematic. It is currently recommended to either use your own node that does not snapshot, or use the [Chronicle Permanode](https://github.com/iotaledger/chronicle.rs), which keeps the entire history of the Tangle. This is not a longterm scalable solution, which is why other methods for either keeping state or selective storage are considered. 
 
 ### Denial of Service Attacks
 
@@ -306,7 +306,7 @@ IOTA nodes provide pagination for more then 100 messages on an index, requiring 
 
 ### Quantum Computer Threats
 
-The `did:iota` method is not more vulnerable to quantum computers then other DID methods. The IOTA Identity framework currently utilizes elliptic curve based cryptographic suites, however adding support in the future for quantum secure cryptographic suites is very easy. The `MerkleKeyCollection2021` verification method is quantum secure in the sense that public keys are only revealed to the holders and verifiers of the Verifiable Credentials, keeping the exposure to this very limited. 
+The `did:iota` method is not more vulnerable to quantum computers than other DID methods. The IOTA Identity framework currently utilizes elliptic curve based cryptographic suites, however adding support for quantum secure cryptographic suites in the future is very easy. The `MerkleKeyCollection2021` verification method is quantum secure in the sense that public keys are only revealed to the holders and verifiers of the Verifiable Credentials, keeping the exposure to this very limited. 
 
 ### Private Key Management
 
