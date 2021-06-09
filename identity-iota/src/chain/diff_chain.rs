@@ -14,12 +14,12 @@ use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::Message;
 use crate::tangle::MessageExt;
+use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
-use iota_client::bee_message::Message;
-use iota_client::bee_message::MessageId;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
@@ -169,18 +169,19 @@ impl Display for DiffChain {
 
 #[cfg(test)]
 mod test {
-  use crate::chain::DocumentChain;
-  use crate::chain::IntegrationChain;
-  use crate::did::DocumentDiff;
-  use crate::did::IotaDocument;
-  use crate::tangle::TangleRef;
   use identity_core::common::Timestamp;
   use identity_core::crypto::KeyPair;
   use identity_did::verification::MethodBuilder;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodRef;
   use identity_did::verification::MethodType;
-  use iota_client::bee_message::MessageId;
+
+  use crate::chain::DocumentChain;
+  use crate::chain::IntegrationChain;
+  use crate::did::DocumentDiff;
+  use crate::did::IotaDocument;
+  use crate::tangle::MessageId;
+  use crate::tangle::TangleRef;
 
   #[test]
   fn test_diff_chain() {

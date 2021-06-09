@@ -11,7 +11,7 @@ use identity_did::resolution::InputMetadata;
 use identity_did::resolution::MetaDocument;
 use identity_did::resolution::ResolverMethod;
 
-use crate::client::Client;
+use crate::tangle::Client;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 

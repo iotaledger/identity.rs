@@ -16,9 +16,11 @@ lazy_static! {
 }
 
 /// The Tangle network to use (`Mainnet` or `Testnet`).
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum Network {
+  #[serde(rename = "main")]
   Mainnet,
+  #[serde(rename = "test")]
   Testnet,
 }
 
@@ -35,12 +37,12 @@ impl Network {
 
   /// Returns the `Network` the `IotaDID` is associated with.
   pub fn from_did(did: &IotaDID) -> Self {
-    Self::from_name(did.network())
+    did.network()
   }
 
   /// Returns true if this network is the same network as the DID.
   pub fn matches_did(self, did: &IotaDID) -> bool {
-    did.network() == self.as_str()
+    did.network_str() == self.as_str()
   }
 
   /// Returns the default node URL of the Tangle network.
@@ -69,9 +71,9 @@ impl Network {
 }
 
 impl Default for Network {
-  /// The default `Network` is the `Mainnet`.
+  /// The default `Network` is the `Testnet`.
   fn default() -> Self {
-    Network::Mainnet
+    Network::Testnet
   }
 }
 

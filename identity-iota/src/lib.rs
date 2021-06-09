@@ -26,8 +26,9 @@ extern crate log;
 #[macro_use]
 extern crate serde;
 
+mod resolver;
+
 pub mod chain;
-pub mod client;
 pub mod credential;
 pub mod did;
 pub mod error;

@@ -1,14 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::tangle::TangleRef;
 use core::borrow::Borrow;
 use core::hash::Hash;
 use core::iter::FromIterator;
 use core::ops::Deref;
 use core::ops::DerefMut;
-use iota_client::bee_message::MessageId;
 use std::collections::HashMap;
+
+use crate::tangle::MessageId;
+use crate::tangle::TangleRef;
 
 type __Index<T> = HashMap<MessageId, Vec<T>>;
 
