@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { DID, checkCredential, publish } = require('../node/identity_wasm')
+const { DID, checkCredential, Client, Config } = require('../node/identity_wasm')
 const { createVC } = require('./create_VC');
 const { logExplorerUrl } = require('./explorer_util')
 
@@ -22,6 +22,12 @@ const { logExplorerUrl } = require('./explorer_util')
     @param {{network: string, node: string}} clientConfig
 */
 async function revoke(clientConfig) {
+    // Create a default client configuration from the parent config network.
+    const config = Config.fromNetwork(clientConfig.network);
+
+    // Create a client instance to publish messages to the Tangle.
+    const client = Client.fromConfig(config);
+
     //Creates new identities (See "create_did" and "manipulate_did" examples)
     const {alice, issuer, signedVc} = await createVC(clientConfig);
 
@@ -29,13 +35,17 @@ async function revoke(clientConfig) {
     issuer.doc.removeMethod(DID.parse(issuer.doc.id.toString()+"#newKey"));
     issuer.doc.previousMessageId = issuer.nextMessageId;
     issuer.doc.sign(issuer.key);
-    const messageId = await publish(issuer.doc, clientConfig);
+    const messageId = await client.publishDocument(issuer.doc.toJSON());
 
     //Log the resulting Identity update
-    logExplorerUrl("Identity Update:", clientConfig.network, messageId);
+    logExplorerUrl("Identity Update:", clientConfig.network.toString(), messageId);
 
     //Check the verifiable credential
-    const result = await checkCredential(signedVc.toString(), clientConfig);
+    const result = await checkCredential(signedVc.toString(), {
+        network: clientConfig.network.toString(),
+        node: clientConfig.defaultNodeURL,
+    });
+
     console.log(`VC verification result: ${result.verified}`);
 }
 
