@@ -14,6 +14,8 @@ mismatch the network across calls you will encounter errors.
 A `ClientConfig` is a record consisting of two string fields: `network` and `node`. There is an example client config
 that can be found in the `config.js` file.
 
+Before running the examples, make sure you have [built the bindings](../README.md#Build) for `node.js`.
+
 You can run each example using
 
 ```
