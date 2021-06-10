@@ -23,14 +23,15 @@ impl WasmNetwork {
 
   #[wasm_bindgen(getter = defaultNodeURL)]
   pub fn default_node_url(&self) -> String {
-    IotaNetwork::from(self.0).node_url().to_string()
+    self.0.node_url().to_string()
   }
 
   #[wasm_bindgen(getter = explorerURL)]
   pub fn explorer_url(&self) -> String {
-    IotaNetwork::from(self.0).explorer_url().to_string()
+    self.0.explorer_url().to_string()
   }
 
+  #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {
     self.0.as_str().into()

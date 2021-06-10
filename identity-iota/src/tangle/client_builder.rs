@@ -28,7 +28,6 @@ impl ClientBuilder {
   }
 
   /// Sets the IOTA Tangle network.
-  #[must_use]
   pub fn network(mut self, network: Network) -> Self {
     self.builder = self.builder.with_network(network.as_str());
     self.network = network;
@@ -43,7 +42,6 @@ impl ClientBuilder {
   }
 
   /// Adds an IOTA node by its URL to be used as primary node.
-  #[must_use]
   pub fn primary_node(mut self, url: &str, jwt: Option<String>, basic_auth: Option<(&str, &str)>) -> Result<Self> {
     self.builder = self.builder.with_primary_node(url, jwt, basic_auth)?;
     self.nodeset = true;
@@ -51,7 +49,6 @@ impl ClientBuilder {
   }
 
   /// Adds an IOTA node by its URL to be used as primary PoW node (for remote PoW).
-  #[must_use]
   pub fn primary_pow_node(mut self, url: &str, jwt: Option<String>, basic_auth: Option<(&str, &str)>) -> Result<Self> {
     self.builder = self.builder.with_primary_pow_node(url, jwt, basic_auth)?;
     self.nodeset = true;
@@ -59,7 +56,6 @@ impl ClientBuilder {
   }
 
   /// Adds a permanode by its URL.
-  #[must_use]
   pub fn permanode(mut self, url: &str, jwt: Option<String>, basic_auth: Option<(&str, &str)>) -> Result<Self> {
     self.builder = self.builder.with_permanode(url, jwt, basic_auth)?;
     self.nodeset = true;
@@ -67,7 +63,6 @@ impl ClientBuilder {
   }
 
   /// Adds an IOTA node by its URL.
-  #[must_use]
   pub fn node_auth(mut self, url: &str, jwt: Option<String>, basic_auth: Option<(&str, &str)>) -> Result<Self> {
     self.builder = self.builder.with_node_auth(url, jwt, basic_auth)?;
     self.nodeset = true;
@@ -75,7 +70,6 @@ impl ClientBuilder {
   }
 
   /// Adds a list of IOTA nodes by their URLs.
-  #[must_use]
   pub fn nodes(mut self, urls: &[&str]) -> Result<Self> {
     self.builder = self.builder.with_nodes(urls)?;
     self.nodeset = !urls.is_empty();
@@ -83,21 +77,18 @@ impl ClientBuilder {
   }
 
   /// Sets the node sync interval.
-  #[must_use]
   pub fn node_sync_interval(mut self, value: Duration) -> Self {
     self.builder = self.builder.with_node_sync_interval(value);
     self
   }
 
   /// Disables the node sync process.
-  #[must_use]
   pub fn node_sync_disabled(mut self) -> Self {
     self.builder = self.builder.with_node_sync_disabled();
     self
   }
 
   /// Get node list from the `urls`.
-  #[must_use]
   pub async fn node_pool_urls(mut self, urls: &[String]) -> Result<Self> {
     self.builder = self.builder.with_node_pool_urls(urls).await?;
     self.nodeset = true;
@@ -105,42 +96,36 @@ impl ClientBuilder {
   }
 
   /// Enables/disables quorum.
-  #[must_use]
   pub fn quorum(mut self, value: bool) -> Self {
     self.builder = self.builder.with_quorum(value);
     self
   }
 
   /// Sets the number of nodes used for quorum.
-  #[must_use]
   pub fn quorum_size(mut self, value: usize) -> Self {
     self.builder = self.builder.with_quorum_size(value);
     self
   }
 
   /// Sets the quorum threshold.
-  #[must_use]
   pub fn quorum_threshold(mut self, value: usize) -> Self {
     self.builder = self.builder.with_quorum_threshold(value);
     self
   }
 
   /// Sets whether PoW is performed locally or remotely.
-  #[must_use]
   pub fn local_pow(mut self, value: bool) -> Self {
     self.builder = self.builder.with_local_pow(value);
     self
   }
 
   /// Sets the number of seconds that new tips will be requested during PoW.
-  #[must_use]
   pub fn tips_interval(mut self, value: u64) -> Self {
     self.builder = self.builder.with_tips_interval(value);
     self
   }
 
   /// Sets the default request timeout.
-  #[must_use]
   pub fn request_timeout(mut self, value: Duration) -> Self {
     self.builder = self.builder.with_request_timeout(value);
     self

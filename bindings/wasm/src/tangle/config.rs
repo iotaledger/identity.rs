@@ -162,3 +162,9 @@ impl Config {
     Ok(())
   }
 }
+
+impl Default for Config {
+  fn default() -> Self {
+    Self::new()
+  }
+}
