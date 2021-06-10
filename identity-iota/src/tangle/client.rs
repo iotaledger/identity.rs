@@ -32,7 +32,7 @@ pub struct Client {
 }
 
 impl Client {
-  /// Creates a new `Client`  with default settings.
+  /// Creates a new `Client` with default settings.
   pub async fn new() -> Result<Self> {
     Self::builder().build().await
   }
@@ -88,7 +88,7 @@ impl Client {
     url
   }
 
-  /// Publishes an `Document` to the Tangle.
+  /// Publishes an `IotaDocument` to the Tangle.
   ///
   /// Note: The only validation performed is to ensure the correct Tangle
   /// network is selected.

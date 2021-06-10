@@ -28,7 +28,10 @@ name = "benchmark"
 harness = false
 
 [features]
-default = ["identity-iota/async"]
+default = ["async"]
+
+# Enables async runtime support (Tokio)
+async = ["identity-iota/async"]
 
 # Enables Web Assembly support
 wasm = ["identity-iota/wasm", "identity-comm/wasm"]

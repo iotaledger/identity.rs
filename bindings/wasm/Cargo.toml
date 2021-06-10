@@ -15,6 +15,8 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 console_error_panic_hook = { version = "0.1" }
+futures = { version = "0.3" }
+js-sys = { version = "0.3" }
 serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }

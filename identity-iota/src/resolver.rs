@@ -11,9 +11,9 @@ use identity_did::resolution::InputMetadata;
 use identity_did::resolution::MetaDocument;
 use identity_did::resolution::ResolverMethod;
 
-use crate::tangle::Client;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
+use crate::tangle::Client;
 
 #[async_trait(?Send)]
 impl ResolverMethod for Client {

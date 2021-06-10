@@ -35,6 +35,7 @@ features = ["blake2b"]
 [features]
 default = ["async"]
 
+# Enables async runtime support (Tokio)
 async = ["iota-client/async"]
 
 # Enables Web Assembly support

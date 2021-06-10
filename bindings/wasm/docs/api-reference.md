@@ -5,6 +5,10 @@
 <dd></dd>
 <dt><a href="#AuthenticationResponse">AuthenticationResponse</a></dt>
 <dd></dd>
+<dt><a href="#Client">Client</a></dt>
+<dd></dd>
+<dt><a href="#Config">Config</a></dt>
+<dd></dd>
 <dt><a href="#CredentialIssuance">CredentialIssuance</a></dt>
 <dd></dd>
 <dt><a href="#CredentialOptionRequest">CredentialOptionRequest</a></dt>
@@ -36,6 +40,8 @@
 <dt><a href="#KeyCollection">KeyCollection</a></dt>
 <dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
+<dd></dd>
+<dt><a href="#Network">Network</a></dt>
 <dd></dd>
 <dt><a href="#NewDocument">NewDocument</a></dt>
 <dd></dd>
@@ -77,18 +83,6 @@
 <dl>
 <dt><a href="#start">start()</a></dt>
 <dd><p>Initializes the console error panic hook for better error messages</p>
-</dd>
-<dt><a href="#publish">publish(document, params)</a> ⇒ <code>any</code></dt>
-<dd><p>Publishes a DID Document to the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
-</dd>
-<dt><a href="#resolve">resolve(did, params)</a> ⇒ <code>any</code></dt>
-<dd><p>Resolves the latest DID Document from the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
-</dd>
-<dt><a href="#checkCredential">checkCredential(data, params)</a> ⇒ <code>any</code></dt>
-<dd><p>Validates a credential with the DID Document from the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
-</dd>
-<dt><a href="#checkPresentation">checkPresentation(data, params)</a> ⇒ <code>any</code></dt>
-<dd><p>Validates a presentation with the DID Document from the Tangle, params looks like { node: &quot;<a href="http://localhost:14265&quot;">http://localhost:14265&quot;</a>, network: &quot;main&quot; }</p>
 </dd>
 </dl>
 
@@ -139,6 +133,279 @@
 | Param | Type |
 | --- | --- |
 | value | <code>any</code> |
+
+<a name="Client"></a>
+
+## Client
+**Kind**: global class
+
+* [Client](#Client)
+    * [new Client()](#new_Client_new)
+    * _instance_
+        * [.defaultNodeURL](#Client+defaultNodeURL) ⇒ <code>string</code>
+        * [.explorerURL](#Client+explorerURL) ⇒ <code>string</code>
+        * [.network()](#Client+network) ⇒ [<code>Network</code>](#Network)
+        * [.transactionURL(message_id)](#Client+transactionURL) ⇒ <code>string</code>
+        * [.publishDocument(document)](#Client+publishDocument) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.publishDiff(message_id, value)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.readDocument(did)](#Client+readDocument) ⇒ <code>Promise.&lt;any&gt;</code>
+    * _static_
+        * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Client</code>](#Client)
+        * [.fromNetwork(network)](#Client.fromNetwork) ⇒ [<code>Client</code>](#Client)
+
+<a name="new_Client_new"></a>
+
+### new Client()
+Creates a new `Client` with default settings.
+
+<a name="Client+defaultNodeURL"></a>
+
+### client.defaultNodeURL ⇒ <code>string</code>
+Returns the default node URL of the `Client` network.
+
+**Kind**: instance property of [<code>Client</code>](#Client)
+<a name="Client+explorerURL"></a>
+
+### client.explorerURL ⇒ <code>string</code>
+Returns the web explorer URL of the `Client` network.
+
+**Kind**: instance property of [<code>Client</code>](#Client)
+<a name="Client+network"></a>
+
+### client.network() ⇒ [<code>Network</code>](#Network)
+Returns the `Client` Tangle network.
+
+**Kind**: instance method of [<code>Client</code>](#Client)
+<a name="Client+transactionURL"></a>
+
+### client.transactionURL(message_id) ⇒ <code>string</code>
+Returns the web explorer URL of the given `transaction`.
+
+**Kind**: instance method of [<code>Client</code>](#Client)
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> |
+
+<a name="Client+publishDocument"></a>
+
+### client.publishDocument(document) ⇒ <code>Promise.&lt;any&gt;</code>
+Publishes an `IotaDocument` to the Tangle.
+
+**Kind**: instance method of [<code>Client</code>](#Client)
+
+| Param | Type |
+| --- | --- |
+| document | <code>any</code> |
+
+<a name="Client+publishDiff"></a>
+
+### client.publishDiff(message_id, value) ⇒ <code>Promise.&lt;any&gt;</code>
+Publishes a `DocumentDiff` to the Tangle.
+
+**Kind**: instance method of [<code>Client</code>](#Client)
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> |
+| value | <code>any</code> |
+
+<a name="Client+readDocument"></a>
+
+### client.readDocument(did) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>Client</code>](#Client)
+
+| Param | Type |
+| --- | --- |
+| did | <code>string</code> |
+
+<a name="Client.fromConfig"></a>
+
+### Client.fromConfig(config) ⇒ [<code>Client</code>](#Client)
+Creates a new `Client` with settings from the given `Config`.
+
+**Kind**: static method of [<code>Client</code>](#Client)
+
+| Param | Type |
+| --- | --- |
+| config | [<code>Config</code>](#Config) |
+
+<a name="Client.fromNetwork"></a>
+
+### Client.fromNetwork(network) ⇒ [<code>Client</code>](#Client)
+Creates a new `Client` with default settings for the given `Network`.
+
+**Kind**: static method of [<code>Client</code>](#Client)
+
+| Param | Type |
+| --- | --- |
+| network | [<code>Network</code>](#Network) |
+
+<a name="Config"></a>
+
+## Config
+**Kind**: global class
+
+* [Config](#Config)
+    * _instance_
+        * [.setNetwork(network)](#Config+setNetwork)
+        * [.setNode(url)](#Config+setNode)
+        * [.setPrimaryNode(url, jwt, username, password)](#Config+setPrimaryNode)
+        * [.setPrimaryPoWNode(url, jwt, username, password)](#Config+setPrimaryPoWNode)
+        * [.setPermanode(url, jwt, username, password)](#Config+setPermanode)
+        * [.setNodeAuth(url, jwt, username, password)](#Config+setNodeAuth)
+        * [.setNodeSyncInterval(value)](#Config+setNodeSyncInterval)
+        * [.setNodeSyncDisabled()](#Config+setNodeSyncDisabled)
+        * [.setQuorum(value)](#Config+setQuorum)
+        * [.setQuorumSize(value)](#Config+setQuorumSize)
+        * [.setQuorumThreshold(value)](#Config+setQuorumThreshold)
+        * [.setLocalPoW(value)](#Config+setLocalPoW)
+        * [.setTipsInterval(value)](#Config+setTipsInterval)
+        * [.setRequestTimeout(value)](#Config+setRequestTimeout)
+    * _static_
+        * [.fromNetwork(network)](#Config.fromNetwork) ⇒ [<code>Config</code>](#Config)
+
+<a name="Config+setNetwork"></a>
+
+### config.setNetwork(network)
+**Kind**: instance method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| network | [<code>Network</code>](#Network) |
+
+<a name="Config+setNode"></a>
+
+### config.setNode(url)
+**Kind**: instance method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> |
+
+<a name="Config+setPrimaryNode"></a>
+
+### config.setPrimaryNode(url, jwt, username, password)
+**Kind**: instance method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> |
+| jwt | <code>string</code> \| <code>undefined</code> |
+| username | <code>string</code> \| <code>undefined</code> |
+| password | <code>string</code> \| <code>undefined</code> |
+
+<a name="Config+setPrimaryPoWNode"></a>
+
+### config.setPrimaryPoWNode(url, jwt, username, password)
+**Kind**: instance method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> |
+| jwt | <code>string</code> \| <code>undefined</code> |
+| username | <code>string</code> \| <code>undefined</code> |
+| password | <code>string</code> \| <code>undefined</code> |
+
+<a name="Config+setPermanode"></a>
+
+### config.setPermanode(url, jwt, username, password)
+**Kind**: instance method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> |
+| jwt | <code>string</code> \| <code>undefined</code> |
+| username | <code>string</code> \| <code>undefined</code> |
+| password | <code>string</code> \| <code>undefined</code> |
+
+<a name="Config+setNodeAuth"></a>
+
+### config.setNodeAuth(url, jwt, username, password)
+**Kind**: instance method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> |
+| jwt | <code>string</code> \| <code>undefined</code> |
+| username | <code>string</code> \| <code>undefined</code> |
+| password | <code>string</code> \| <code>undefined</code> |
+
+<a name="Config+setNodeSyncInterval"></a>
+
+### config.setNodeSyncInterval(value)
+**Kind**: instance method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| value | <code>number</code> |
+
+<a name="Config+setNodeSyncDisabled"></a>
+
+### config.setNodeSyncDisabled()
+**Kind**: instance method of [<code>Config</code>](#Config)
+<a name="Config+setQuorum"></a>
+
+### config.setQuorum(value)
+**Kind**: instance method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| value | <code>boolean</code> |
+
+<a name="Config+setQuorumSize"></a>
+
+### config.setQuorumSize(value)
+**Kind**: instance method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| value | <code>number</code> |
+
+<a name="Config+setQuorumThreshold"></a>
+
+### config.setQuorumThreshold(value)
+**Kind**: instance method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| value | <code>number</code> |
+
+<a name="Config+setLocalPoW"></a>
+
+### config.setLocalPoW(value)
+**Kind**: instance method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| value | <code>boolean</code> |
+
+<a name="Config+setTipsInterval"></a>
+
+### config.setTipsInterval(value)
+**Kind**: instance method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| value | <code>number</code> |
+
+<a name="Config+setRequestTimeout"></a>
+
+### config.setRequestTimeout(value)
+**Kind**: instance method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| value | <code>number</code> |
+
+<a name="Config.fromNetwork"></a>
+
+### Config.fromNetwork(network) ⇒ [<code>Config</code>](#Config)
+**Kind**: static method of [<code>Config</code>](#Config)
+
+| Param | Type |
+| --- | --- |
+| network | [<code>Network</code>](#Network) |
 
 <a name="CredentialIssuance"></a>
 
@@ -951,6 +1218,40 @@ Deserializes a `KeyPair` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="Network"></a>
+
+## Network
+**Kind**: global class
+
+* [Network](#Network)
+    * _instance_
+        * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code>
+        * [.explorerURL](#Network+explorerURL) ⇒ <code>string</code>
+        * [.toString()](#Network+toString) ⇒ <code>string</code>
+    * _static_
+        * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
+        * [.testnet()](#Network.testnet) ⇒ [<code>Network</code>](#Network)
+
+<a name="Network+defaultNodeURL"></a>
+
+### network.defaultNodeURL ⇒ <code>string</code>
+**Kind**: instance property of [<code>Network</code>](#Network)
+<a name="Network+explorerURL"></a>
+
+### network.explorerURL ⇒ <code>string</code>
+**Kind**: instance property of [<code>Network</code>](#Network)
+<a name="Network+toString"></a>
+
+### network.toString() ⇒ <code>string</code>
+**Kind**: instance method of [<code>Network</code>](#Network)
+<a name="Network.mainnet"></a>
+
+### Network.mainnet() ⇒ [<code>Network</code>](#Network)
+**Kind**: static method of [<code>Network</code>](#Network)
+<a name="Network.testnet"></a>
+
+### Network.testnet() ⇒ [<code>Network</code>](#Network)
+**Kind**: static method of [<code>Network</code>](#Network)
 <a name="NewDocument"></a>
 
 ## NewDocument
@@ -1455,52 +1756,4 @@ Deserializes a `VerificationMethod` object from a JSON object.
 ## start()
 Initializes the console error panic hook for better error messages
 
-**Kind**: global function
-<a name="publish"></a>
-
-## publish(document, params) ⇒ <code>any</code>
-Publishes a DID Document to the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
-
 **Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| document | <code>any</code> | 
-| params | <code>any</code> | 
-
-<a name="resolve"></a>
-
-## resolve(did, params) ⇒ <code>any</code>
-Resolves the latest DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| did | <code>string</code> | 
-| params | <code>any</code> | 
-
-<a name="checkCredential"></a>
-
-## checkCredential(data, params) ⇒ <code>any</code>
-Validates a credential with the DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| data | <code>string</code> | 
-| params | <code>any</code> | 
-
-<a name="checkPresentation"></a>
-
-## checkPresentation(data, params) ⇒ <code>any</code>
-Validates a presentation with the DID Document from the Tangle, params looks like { node: "http://localhost:14265", network: "main" }
-
-**Kind**: global function  
-
-| Param | Type |
-| --- | --- |
-| data | <code>string</code> | 
-| params | <code>any</code> | 
-
