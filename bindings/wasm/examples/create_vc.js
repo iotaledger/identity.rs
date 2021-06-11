@@ -43,7 +43,11 @@ async function createVC(clientConfig) {
     });
 
     // Check if the credential is verifiable.
-    const result = await checkCredential(signedVc.toString(), clientConfig);
+    const result = await checkCredential(signedVc.toString(), {
+        network: clientConfig.network.toString(),
+        node: clientConfig.defaultNodeURL,
+    });
+
     console.log(`VC verification result: ${result.verified}`);
 
     return {alice, issuer, signedVc};

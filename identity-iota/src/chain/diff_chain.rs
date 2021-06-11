@@ -14,12 +14,12 @@ use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::Message;
 use crate::tangle::MessageExt;
+use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
-use iota_client::bee_message::Message;
-use iota_client::bee_message::MessageId;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
@@ -169,18 +169,19 @@ impl Display for DiffChain {
 
 #[cfg(test)]
 mod test {
-  use crate::chain::DocumentChain;
-  use crate::chain::IntegrationChain;
-  use crate::did::DocumentDiff;
-  use crate::did::IotaDocument;
-  use crate::tangle::TangleRef;
   use identity_core::common::Timestamp;
   use identity_core::crypto::KeyPair;
   use identity_did::verification::MethodBuilder;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodRef;
   use identity_did::verification::MethodType;
-  use iota_client::bee_message::MessageId;
+
+  use crate::chain::DocumentChain;
+  use crate::chain::IntegrationChain;
+  use crate::did::DocumentDiff;
+  use crate::did::IotaDocument;
+  use crate::tangle::MessageId;
+  use crate::tangle::TangleRef;
 
   #[test]
   fn test_diff_chain() {
@@ -226,7 +227,7 @@ mod test {
         new.as_document_mut().authentication_mut().append(authentication.into());
       }
 
-      new.set_updated(Timestamp::now());
+      new.set_updated(Timestamp::now_utc());
       new.set_previous_message_id(*chain.integration_message_id());
 
       assert!(chain.current().sign_data(&mut new, keys[0].secret()).is_ok());
@@ -247,7 +248,7 @@ mod test {
         let mut this: IotaDocument = chain.current().clone();
         this.properties_mut().insert("foo".into(), 123.into());
         this.properties_mut().insert("bar".into(), 456.into());
-        this.set_updated(Timestamp::now());
+        this.set_updated(Timestamp::now_utc());
         this
       };
 

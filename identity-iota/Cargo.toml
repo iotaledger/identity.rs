@@ -24,7 +24,7 @@ thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "30673c4bb5fd1ba5b5d15e95d652b05491604d94"
+rev = "0a011ec37f70874358cf530d3b8e4817c69c9a4c"
 default-features = false
 
 [dependencies.iota-crypto]
@@ -33,8 +33,10 @@ default-features = false
 features = ["blake2b"]
 
 [features]
-# default = ["iota-client/async", "iota-client/futures", "iota-client/tokio"]
-default = ["iota-client/wasm"]
+default = ["async"]
+
+# Enables async runtime support (Tokio)
+async = ["iota-client/async"]
 
 # Enables Web Assembly support
 wasm = ["iota-client/wasm"]

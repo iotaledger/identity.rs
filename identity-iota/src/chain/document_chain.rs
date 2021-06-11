@@ -13,7 +13,7 @@ use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Result;
-use iota_client::bee_message::MessageId;
+use crate::tangle::MessageId;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DocumentChain {

@@ -12,12 +12,12 @@ use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::Message;
 use crate::tangle::MessageExt;
+use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
-use iota_client::bee_message::Message;
-use iota_client::bee_message::MessageId;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct IntegrationChain {

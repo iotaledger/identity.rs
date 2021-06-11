@@ -15,15 +15,17 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 console_error_panic_hook = { version = "0.1" }
-identity = { version = "=0.3.0", path = "../../identity", features = ["wasm"] }
+futures = { version = "0.3" }
+js-sys = { version = "0.3" }
 serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
-[dependencies.web-sys]
-version = "0.3"
+[dependencies.identity]
+version = "=0.3.0"
+path = "../../identity"
 default-features = false
-features = ["console"]
+features = ["comm", "wasm"]
 
 [dev-dependencies]
 wasm-bindgen-test = { version = "0.3" }

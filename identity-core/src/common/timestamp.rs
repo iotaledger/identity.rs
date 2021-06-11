@@ -32,7 +32,7 @@ impl Timestamp {
   }
 
   /// Creates a new `Timestamp` with the current date and time.
-  pub fn now() -> Self {
+  pub fn now_utc() -> Self {
     Self(Self::truncate(Utc::now()))
   }
 
@@ -61,7 +61,7 @@ impl Timestamp {
 
 impl Default for Timestamp {
   fn default() -> Self {
-    Self::now()
+    Self::now_utc()
   }
 }
 
@@ -155,7 +155,7 @@ mod tests {
 
   #[test]
   fn test_json_roundtrip() {
-    let time1: Timestamp = Timestamp::now();
+    let time1: Timestamp = Timestamp::now_utc();
     let json: Vec<u8> = time1.to_json_vec().unwrap();
     let time2: Timestamp = Timestamp::from_json_slice(&json).unwrap();
 

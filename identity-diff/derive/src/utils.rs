@@ -37,11 +37,11 @@ pub fn should_ignore(field: &Field) -> bool {
     let arg_iter = field.tokens.clone().into_iter().next();
 
     let should_ignore = match arg_iter {
-      Some(TokenTree::Group(gr)) if gr.delimiter() == PARENS => {
-        let tokens: Vec<String> = gr.stream().into_iter().map(|tt| format!("{}", tt)).collect();
-
-        tokens.contains(&"should_ignore".into())
-      }
+      Some(TokenTree::Group(gr)) if gr.delimiter() == PARENS => gr
+        .stream()
+        .into_iter()
+        .map(|tt| format!("{}", tt))
+        .any(|x| x == "should_ignore"),
       _ => false,
     };
 

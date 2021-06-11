@@ -10,7 +10,6 @@ use proc_macro2::TokenStream;
 use quote::format_ident;
 use quote::quote;
 use syn::GenericParam;
-use syn::Type;
 
 /// Derive the difference struct code from the `InputModel`
 pub fn derive_diff_struct(input: &InputModel) -> TokenStream {
@@ -184,10 +183,7 @@ pub fn debug_impl(input: &InputModel) -> TokenStream {
     }
     // Tuple Struct.
     SVariant::Tuple => {
-      // create buffer and logic.
-      let ftyps: Vec<&Type> = fields.iter().map(|field| field.typ()).collect();
-
-      let count = ftyps.len();
+      let count = fields.len();
 
       let mut f_tokens = TokenStream::new();
       let buf = format_ident!("buf");
@@ -497,9 +493,7 @@ pub fn diff_impl(input: &InputModel) -> TokenStream {
     // Tuple struct.
     SVariant::Tuple => {
       // get types and create markers for the positioned fields.
-      let field_typs: Vec<_> = fields.iter().map(|f| f.typ()).collect();
-      let field_max = field_typs.len();
-      let field_markers: Vec<Ident> = (0..field_max).map(|t| format_ident!("field_{}", t)).collect();
+      let field_markers: Vec<Ident> = (0..fields.len()).map(|t| format_ident!("field_{}", t)).collect();
 
       // get merge field logic.
       let field_merge: Vec<TokenStream> = fields

@@ -31,18 +31,18 @@ use identity_did::verification::MethodType;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 use identity_did::verification::VerificationMethod;
-use iota_client::bee_message::MessageId;
 use serde::Serialize;
 
-use crate::client::Client;
-use crate::client::Network;
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaVerificationMethod;
 use crate::did::Properties as BaseProperties;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::Client;
+use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
+use crate::tangle::Network;
 use crate::tangle::TangleRef;
 
 type Properties = VerifiableProperties<BaseProperties>;

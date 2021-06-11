@@ -14,7 +14,6 @@ use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
 use syn::GenericParam;
-use syn::Type;
 use syn::WhereClause;
 
 /// derive a Diff type Enum from an incoming `InputModel`.
@@ -337,10 +336,7 @@ fn parse_evariants(evariants: &[EVariant], diff: &Ident) -> (Vec<TokenStream>, V
       }
       // Tuple variants.
       (SVariant::Tuple, vname, vfields) => {
-        // setup data.
-        let field_typs: Vec<&Type> = vfields.iter().map(|f| f.typ()).collect();
-
-        let field_max = field_typs.len();
+        let field_max = vfields.len();
         let field_names: Vec<Ident> = (0..field_max).map(|ident| format_ident!("field_{}", ident)).collect();
 
         let buf: Ident = format_ident!("buf");
@@ -481,12 +477,7 @@ fn parse_merge(
     }
     // tuple variants.
     SVariant::Tuple => {
-      // get field names based on position.
-      let ftyps: Vec<&Type> = vfields.iter().map(|f| f.typ()).collect();
-
-      let fmax = ftyps.len();
-
-      let (left_names, right_names) = populate_field_names(vfields, fmax, struct_type);
+      let (left_names, right_names) = populate_field_names(vfields, vfields.len(), struct_type);
 
       // setup merge logic.
       let merge_fvalues: Vec<TokenStream> = vfields
@@ -647,11 +638,7 @@ fn parse_diff(
     }
     // tuple variants.
     SVariant::Tuple => {
-      let ftyps: Vec<&Type> = vfields.iter().map(|f| f.typ()).collect();
-
-      let fmax = ftyps.len();
-
-      let (left_names, right_names) = populate_field_names(vfields, fmax, struct_type);
+      let (left_names, right_names) = populate_field_names(vfields, vfields.len(), struct_type);
 
       // setup diff logic.
       let diff_fvalues: Vec<TokenStream> = vfields
@@ -808,9 +795,9 @@ fn parse_from_into(
     }
     // tuple variants.
     SVariant::Tuple => {
-      let ftyps: Vec<&Type> = vfields.iter().map(|f| f.typ()).collect();
-      let fmax = ftyps.len();
-      let fnames: Vec<Ident> = (0..fmax).map(|ident| format_ident!("field_{}", ident)).collect();
+      let fnames: Vec<Ident> = (0..vfields.len())
+        .map(|ident| format_ident!("field_{}", ident))
+        .collect();
 
       // from logic.
       let from_fassign: Vec<TokenStream> = var

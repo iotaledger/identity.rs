@@ -14,7 +14,10 @@ async function resolution(clientConfig) {
     const result = await manipulateIdentity();
 
     // Resolve a DID.
-    return await resolve(result.doc.id.toString(), clientConfig);
+    return await resolve(result.doc.id.toString(), {
+        network: clientConfig.network.toString(),
+        node: clientConfig.defaultNodeURL,
+    });
 }
 
 exports.resolution = resolution;

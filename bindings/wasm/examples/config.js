@@ -1,7 +1,15 @@
-/* @type {{network: string, node: string}} */
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+const { Network, defaultNodeURL, explorerURL } = require('../node/identity_wasm')
+
+const MAINNET = Network.mainnet();
+
+/* @type {{network: Network, defaultNodeURL: string, explorerURL: string}} */
 const CLIENT_CONFIG = {
-    network: "main",
-    node: "https://chrysalis-nodes.iota.org:443",
+    network: MAINNET,
+    defaultNodeURL: MAINNET.defaultNodeURL,
+    explorerURL: MAINNET.explorerURL,
 }
 
 exports.CLIENT_CONFIG = CLIENT_CONFIG;

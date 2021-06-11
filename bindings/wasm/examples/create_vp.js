@@ -25,7 +25,11 @@ async function createVP(clientConfig) {
     })
 
     // Check the validation status of the Verifiable Presentation
-    const result = await checkPresentation(signedVp.toString(), clientConfig);
+    const result = await checkPresentation(signedVp.toString(), {
+        network: clientConfig.network.toString(),
+        node: clientConfig.defaultNodeURL,
+    });
+
     console.log(`VP verification result: ${result.verified}`);
 }
 
