@@ -1,7 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::crypto::merkle_key::Blake2b256;
 use identity::crypto::merkle_key::Sha256;
+use identity::iota::IotaDID;
 use identity::iota::IotaVerificationMethod;
 use wasm_bindgen::prelude::*;
 
@@ -41,8 +43,14 @@ impl WasmVerificationMethod {
     keys: &KeyCollection,
     tag: Option<String>,
   ) -> Result<WasmVerificationMethod, JsValue> {
+    let did: IotaDID = did.0.clone();
+    let tag: Option<&str> = tag.as_deref();
+
     match digest {
-      Digest::Sha256 => IotaVerificationMethod::create_merkle_key::<Sha256, _>(did.0.clone(), &keys.0, tag.as_deref())
+      Digest::Sha256 => IotaVerificationMethod::create_merkle_key::<Sha256, _>(did, &keys.0, tag)
+        .map_err(err)
+        .map(Self),
+      Digest::Blake2b256 => IotaVerificationMethod::create_merkle_key::<Blake2b256, _>(did, &keys.0, tag)
         .map_err(err)
         .map(Self),
     }

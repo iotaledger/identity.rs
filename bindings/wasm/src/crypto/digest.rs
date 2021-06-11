@@ -7,6 +7,7 @@ use wasm_bindgen::prelude::*;
 #[derive(Clone, Copy, Debug)]
 pub enum Digest {
   Sha256 = 1,
+  Blake2b256 = 2,
 }
 
 impl Default for Digest {

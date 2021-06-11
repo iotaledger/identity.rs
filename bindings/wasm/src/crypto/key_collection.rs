@@ -3,6 +3,7 @@
 
 use identity::core::decode_b58;
 use identity::core::encode_b58;
+use identity::crypto::merkle_key::Blake2b256;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection as KeyCollection_;
@@ -77,6 +78,7 @@ impl KeyCollection {
   pub fn merkle_root(&self, digest: Digest) -> String {
     match digest {
       Digest::Sha256 => encode_b58(self.0.merkle_root::<Sha256>().as_slice()),
+      Digest::Blake2b256 => encode_b58(self.0.merkle_root::<Blake2b256>().as_slice()),
     }
   }
 
@@ -85,6 +87,14 @@ impl KeyCollection {
     match digest {
       Digest::Sha256 => {
         let proof: Proof<Sha256> = match self.0.merkle_proof(index) {
+          Some(proof) => proof,
+          None => return None,
+        };
+
+        Some(encode_b58(&proof.encode()))
+      }
+      Digest::Blake2b256 => {
+        let proof: Proof<Blake2b256> = match self.0.merkle_proof(index) {
           Some(proof) => proof,
           None => return None,
         };
