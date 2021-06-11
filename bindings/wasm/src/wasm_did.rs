@@ -18,22 +18,20 @@ pub struct WasmDID(pub(crate) IotaDID);
 impl WasmDID {
   /// Creates a new `DID` from a `KeyPair` object.
   #[wasm_bindgen(constructor)]
-  pub fn new(key: &KeyPair, network: Option<String>, shard: Option<String>) -> Result<WasmDID, JsValue> {
+  pub fn new(key: &KeyPair, network: Option<String>) -> Result<WasmDID, JsValue> {
     let public: &[u8] = key.0.public().as_ref();
     let network: Option<&str> = network.as_deref();
-    let shard: Option<&str> = shard.as_deref();
 
-    IotaDID::from_components(public, network, shard).map_err(err).map(Self)
+    IotaDID::from_components(public, network).map_err(err).map(Self)
   }
 
   /// Creates a new `DID` from a base58-encoded public key.
   #[wasm_bindgen(js_name = fromBase58)]
-  pub fn from_base58(key: &str, network: Option<String>, shard: Option<String>) -> Result<WasmDID, JsValue> {
+  pub fn from_base58(key: &str, network: Option<String>) -> Result<WasmDID, JsValue> {
     let public: Vec<u8> = decode_b58(key).map_err(err)?;
     let network: Option<&str> = network.as_deref();
-    let shard: Option<&str> = shard.as_deref();
 
-    IotaDID::from_components(&public, network, shard).map_err(err).map(Self)
+    IotaDID::from_components(&public, network).map_err(err).map(Self)
   }
 
   /// Parses a `DID` from the input string.
@@ -46,12 +44,6 @@ impl WasmDID {
   #[wasm_bindgen(getter)]
   pub fn network(&self) -> String {
     self.0.network_str().into()
-  }
-
-  /// Returns the IOTA tangle shard of the `DID` (if any).
-  #[wasm_bindgen(getter)]
-  pub fn shard(&self) -> Option<String> {
-    self.0.shard().map(Into::into)
   }
 
   /// Returns the unique tag of the `DID`.

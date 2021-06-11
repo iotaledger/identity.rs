@@ -102,22 +102,11 @@ impl IotaDID {
     try_did!(public, network)
   }
 
-  /// Creates a new `IotaDID` from the given `public` key, `network`, and `shard`.
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` if the input does not form a valid `IotaDID`.
-  pub fn with_network_and_shard(public: &[u8], network: &str, shard: &str) -> Result<Self> {
-    try_did!(public, network, shard)
-  }
-
   #[doc(hidden)]
-  pub fn from_components(public: &[u8], network: Option<&str>, shard: Option<&str>) -> Result<Self> {
-    match (network, shard) {
-      (Some(network), Some(shard)) => try_did!(public, network, shard),
-      (Some(network), None) => try_did!(public, network),
-      (None, Some(shard)) => try_did!(public, Self::DEFAULT_NETWORK, shard),
-      (None, None) => try_did!(public),
+  pub fn from_components(public: &[u8], network: Option<&str>) -> Result<Self> {
+    match network {
+      Some(network) => try_did!(public, network),
+      None => try_did!(public),
     }
   }
 
@@ -267,11 +256,6 @@ impl IotaDID {
     self.segments().network()
   }
 
-  /// Returns the Tangle network `shard` of the `DID`.
-  pub fn shard(&self) -> Option<&str> {
-    self.segments().shard()
-  }
-
   /// Returns the unique Tangle tag of the `DID`.
   pub fn tag(&self) -> &str {
     self.segments().tag()
@@ -378,11 +362,6 @@ mod tests {
     assert!(IotaDID::parse(format!("did:iota:rainbow:{}#fragment", TAG)).is_ok());
     assert!(IotaDID::parse(format!("did:iota:rainbow:{}?somequery=somevalue", TAG)).is_ok());
     assert!(IotaDID::parse(format!("did:iota:rainbow:{}?somequery=somevalue#fragment", TAG)).is_ok());
-
-    assert!(IotaDID::parse(format!("did:iota:rainbow:shard-1:{}", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:rainbow:shard-1:{}#fragment", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:rainbow:shard-1:{}?somequery=somevalue", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:rainbow:shard-1:{}?somequery=somevalue#fragment", TAG)).is_ok());
   }
 
   #[test]
@@ -407,7 +386,6 @@ mod tests {
     let did: CoreDID = format!("did:iota:{}", key).parse().unwrap();
     let iota_did = IotaDID::try_from_owned(did).unwrap();
     assert_eq!(iota_did.network_str(), "main");
-    assert_eq!(iota_did.shard(), None);
     assert_eq!(iota_did.tag(), key);
     assert_eq!(iota_did.path(), "");
     assert_eq!(iota_did.query(), None);
@@ -434,28 +412,11 @@ mod tests {
   }
 
   #[test]
-  fn test_shard() {
-    let key: String = IotaDID::encode_key(b"123");
-
-    let did: IotaDID = format!("did:iota:{}", key).parse().unwrap();
-    assert_eq!(did.shard(), None);
-
-    let did: IotaDID = format!("did:iota:dev:{}", key).parse().unwrap();
-    assert_eq!(did.shard(), None);
-
-    let did: IotaDID = format!("did:iota:dev:shard:{}", key).parse().unwrap();
-    assert_eq!(did.shard(), Some("shard"));
-  }
-
-  #[test]
   fn test_tag() {
     let did: IotaDID = format!("did:iota:{}", TAG).parse().unwrap();
     assert_eq!(did.tag(), TAG);
 
     let did: IotaDID = format!("did:iota:main:{}", TAG).parse().unwrap();
-    assert_eq!(did.tag(), TAG);
-
-    let did: IotaDID = format!("did:iota:main:shard:{}", TAG).parse().unwrap();
     assert_eq!(did.tag(), TAG);
   }
 
@@ -467,14 +428,12 @@ mod tests {
 
     assert_eq!(did.tag(), tag);
     assert_eq!(did.network_str(), IotaDID::DEFAULT_NETWORK);
-    assert_eq!(did.shard(), None);
 
-    let did = IotaDID::from_components(key.public().as_ref(), None, None).unwrap();
+    let did = IotaDID::from_components(key.public().as_ref(), None).unwrap();
     assert_eq!(did.tag(), tag);
     assert_eq!(did.network_str(), IotaDID::DEFAULT_NETWORK);
-    assert_eq!(did.shard(), None);
 
-    let did = IotaDID::from_components(key.public().as_ref(), Some(IotaDID::DEFAULT_NETWORK), None).unwrap();
+    let did = IotaDID::from_components(key.public().as_ref(), Some(IotaDID::DEFAULT_NETWORK)).unwrap();
     assert_eq!(did.network_str(), IotaDID::DEFAULT_NETWORK);
   }
 
@@ -486,18 +445,6 @@ mod tests {
 
     assert_eq!(did.tag(), tag);
     assert_eq!(did.network_str(), "foo");
-    assert_eq!(did.shard(), None);
-  }
-
-  #[test]
-  fn test_with_network_and_shard() {
-    let key: KeyPair = KeyPair::new_ed25519().unwrap();
-    let did: IotaDID = IotaDID::with_network_and_shard(key.public().as_ref(), "foo", "shard-1").unwrap();
-    let tag: String = IotaDID::encode_key(key.public().as_ref());
-
-    assert_eq!(did.tag(), tag);
-    assert_eq!(did.network_str(), "foo");
-    assert_eq!(did.shard(), Some("shard-1"));
   }
 
   #[test]
@@ -505,16 +452,10 @@ mod tests {
     let key: KeyPair = KeyPair::new_ed25519().unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
-    // A IotaDID with "main" as the network can be normalized ("main" removed)
+    // An IotaDID with "main" as the network can be normalized ("main" removed)
     let did1: IotaDID = format!("did:iota:{}", tag).parse().unwrap();
     let did2: IotaDID = format!("did:iota:main:{}", tag).parse().unwrap();
     assert_eq!(did1, did2);
-
-    // A IotaDID with a shard cannot be normalized
-    let did_str: String = format!("did:iota:main:shard:{}", tag);
-    let did: IotaDID = did_str.parse().unwrap();
-
-    assert_eq!(did.as_str(), did_str);
   }
 
   #[test]

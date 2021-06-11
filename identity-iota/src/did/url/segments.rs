@@ -7,9 +7,6 @@ macro_rules! get {
   (@network $this:expr) => {
     &$this.0[..get!(@head $this)]
   };
-  (@shard $this:expr) => {
-    &$this.0[&get!(@head $this) + 1..get!(@tail $this)]
-  };
   (@tag $this:expr) => {
     &$this.0[get!(@tail $this) + 1..]
   };
@@ -31,7 +28,7 @@ impl<'id> Segments<'id> {
   pub fn is_default_network(&self) -> bool {
     match self.count() {
       1 => true,
-      2 | 3 => get!(@network self) == IotaDID::DEFAULT_NETWORK,
+      2 => get!(@network self) == IotaDID::DEFAULT_NETWORK,
       _ => unreachable!("Segments::is_default_network called for invalid IOTA DID"),
     }
   }
@@ -39,23 +36,15 @@ impl<'id> Segments<'id> {
   pub fn network(&self) -> &'id str {
     match self.count() {
       1 => IotaDID::DEFAULT_NETWORK,
-      2 | 3 => get!(@network self),
+      2 => get!(@network self),
       _ => unreachable!("Segments::network called for invalid IOTA DID"),
-    }
-  }
-
-  pub fn shard(&self) -> Option<&'id str> {
-    match self.count() {
-      1 | 2 => None,
-      3 => Some(get!(@shard self)),
-      _ => unreachable!("Segments::shard called for invalid IOTA DID"),
     }
   }
 
   pub fn tag(&self) -> &'id str {
     match self.count() {
       1 => self.0,
-      2 | 3 => get!(@tag self),
+      2 => get!(@tag self),
       _ => unreachable!("Segments::tag called for invalid IOTA DID"),
     }
   }

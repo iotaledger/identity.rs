@@ -533,21 +533,20 @@ Creates a new `Client` with default settings for the given `Network`.
 **Kind**: global class  
 
 * [DID](#DID)
-    * [new DID(key, network, shard)](#new_DID_new)
+    * [new DID(key, network)](#new_DID_new)
     * _instance_
         * [.network](#DID+network) ⇒ <code>string</code>
-        * [.shard](#DID+shard) ⇒ <code>string</code> \| <code>undefined</code>
         * [.tag](#DID+tag) ⇒ <code>string</code>
         * [.tangleNode](#DID+tangleNode) ⇒ <code>string</code>
         * [.tangleExplorer](#DID+tangleExplorer) ⇒ <code>string</code>
         * [.toString()](#DID+toString) ⇒ <code>string</code>
     * _static_
-        * [.fromBase58(key, network, shard)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
+        * [.fromBase58(key, network)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
         * [.parse(input)](#DID.parse) ⇒ [<code>DID</code>](#DID)
 
 <a name="new_DID_new"></a>
 
-### new DID(key, network, shard)
+### new DID(key, network)
 Creates a new `DID` from a `KeyPair` object.
 
 
@@ -555,18 +554,11 @@ Creates a new `DID` from a `KeyPair` object.
 | --- | --- |
 | key | [<code>KeyPair</code>](#KeyPair) | 
 | network | <code>string</code> \| <code>undefined</code> | 
-| shard | <code>string</code> \| <code>undefined</code> | 
 
 <a name="DID+network"></a>
 
 ### did.network ⇒ <code>string</code>
 Returns the IOTA tangle network of the `DID`.
-
-**Kind**: instance property of [<code>DID</code>](#DID)  
-<a name="DID+shard"></a>
-
-### did.shard ⇒ <code>string</code> \| <code>undefined</code>
-Returns the IOTA tangle shard of the `DID` (if any).
 
 **Kind**: instance property of [<code>DID</code>](#DID)  
 <a name="DID+tag"></a>
@@ -595,7 +587,7 @@ Returns the `DID` object as a string.
 **Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID.fromBase58"></a>
 
-### DID.fromBase58(key, network, shard) ⇒ [<code>DID</code>](#DID)
+### DID.fromBase58(key, network) ⇒ [<code>DID</code>](#DID)
 Creates a new `DID` from a base58-encoded public key.
 
 **Kind**: static method of [<code>DID</code>](#DID)  
@@ -604,7 +596,6 @@ Creates a new `DID` from a base58-encoded public key.
 | --- | --- |
 | key | <code>string</code> | 
 | network | <code>string</code> \| <code>undefined</code> | 
-| shard | <code>string</code> \| <code>undefined</code> | 
 
 <a name="DID.parse"></a>
 

@@ -29,7 +29,6 @@ const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 pub enum Command {
   CreateIdentity {
     network: Option<String>,
-    shard: Option<String>,
     authentication: MethodType,
   },
   CreateMethod {
@@ -71,7 +70,6 @@ impl Command {
     match self {
       Self::CreateIdentity {
         network,
-        shard,
         authentication,
       } => {
         // The state must not be initialized
@@ -100,8 +98,7 @@ impl Command {
 
         // Generate a new DID URL from the public key
         let network: Option<&str> = network.as_deref();
-        let shard: Option<&str> = shard.as_deref();
-        let document: IotaDID = IotaDID::from_components(public.as_ref(), network, shard)?;
+        let document: IotaDID = IotaDID::from_components(public.as_ref(), network)?;
 
         Ok(Some(vec![
           Event::new(EventData::IdentityCreated(document)),
@@ -234,7 +231,6 @@ impl Command {
 
 impl_command_builder!(CreateIdentity {
   @optional network String,
-  @optional shard String,
   @defaulte authentication MethodType = Ed25519VerificationKey2018,
 });
 

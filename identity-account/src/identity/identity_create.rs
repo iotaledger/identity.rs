@@ -9,7 +9,6 @@ pub struct IdentityCreate {
   pub(crate) key_type: KeyType,
   pub(crate) name: Option<String>,
   pub(crate) network: Option<String>,
-  pub(crate) shard: Option<String>,
 }
 
 impl IdentityCreate {
@@ -19,7 +18,6 @@ impl IdentityCreate {
       key_type: KeyType::Ed25519,
       name: None,
       network: None,
-      shard: None,
     }
   }
 
@@ -47,16 +45,6 @@ impl IdentityCreate {
     T: Into<String>,
   {
     self.network = Some(value.into());
-    self
-  }
-
-  /// Sets the IOTA Tangle shard of the Identity DID.
-  #[must_use]
-  pub fn shard<T>(mut self, value: T) -> Self
-  where
-    T: Into<String>,
-  {
-    self.shard = Some(value.into());
     self
   }
 }

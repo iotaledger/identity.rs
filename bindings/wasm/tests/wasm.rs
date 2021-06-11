@@ -62,21 +62,19 @@ fn test_key_collection() {
 #[test]
 fn test_did() {
   let key = KeyPair::new(KeyType::Ed25519).unwrap();
-  let did = WasmDID::new(&key, None, None).unwrap();
+  let did = WasmDID::new(&key, None).unwrap();
 
   assert_eq!(did.network(), "main");
-  assert_eq!(did.shard(), None);
 
   let parsed = WasmDID::parse(&did.to_string()).unwrap();
 
   assert_eq!(did.to_string(), parsed.to_string());
 
   let public = key.public();
-  let base58 = WasmDID::from_base58(&public, Some("test".to_string()), Some("xyz".to_string())).unwrap();
+  let base58 = WasmDID::from_base58(&public, Some("test".to_string())).unwrap();
 
   assert_eq!(base58.tag(), did.tag());
   assert_eq!(base58.network(), "test");
-  assert_eq!(base58.shard().unwrap(), "xyz");
 }
 
 #[test]
