@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::crypto::PublicKey;
@@ -18,7 +19,6 @@ use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::identity::TinyService;
 use crate::storage::Storage;
-use crate::types::Fragment;
 use crate::types::Generation;
 use crate::types::KeyLocation;
 
@@ -148,7 +148,7 @@ impl Command {
 
         // The fragment must not be an authentication location
         ensure!(
-          !fragment.is_authentication(),
+          !KeyLocation::is_authentication_fragment(&fragment),
           CommandError::InvalidMethodFragment("reserved")
         );
 
@@ -165,7 +165,7 @@ impl Command {
 
         // The fragment must not be an authentication location
         ensure!(
-          !fragment.is_authentication(),
+          !KeyLocation::is_authentication_fragment(&fragment),
           CommandError::InvalidMethodFragment("reserved")
         );
 
@@ -182,7 +182,7 @@ impl Command {
 
         // The fragment must not be an authentication location
         ensure!(
-          !fragment.is_authentication(),
+          !KeyLocation::is_authentication_fragment(&fragment),
           CommandError::InvalidMethodFragment("reserved")
         );
 

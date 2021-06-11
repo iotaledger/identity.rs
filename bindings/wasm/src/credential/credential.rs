@@ -48,7 +48,7 @@ impl VerifiableCredential {
     base.insert("type".into(), types.serde_into().map_err(err)?);
 
     if !base.contains_key("issuanceDate") {
-      base.insert("issuanceDate".into(), Timestamp::now().to_string().into());
+      base.insert("issuanceDate".into(), Timestamp::now_utc().to_string().into());
     }
 
     base.serde_into().map_err(err).map(Self)

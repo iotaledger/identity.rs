@@ -3,7 +3,9 @@
 
 use core::convert::TryInto;
 use hashbrown::HashMap;
+use identity_core::common::Fragment;
 use identity_core::common::Object;
+use identity_core::common::UnixTimestamp;
 use identity_core::common::Url;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::SetSignature;
@@ -31,10 +33,8 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::identity::IdentityId;
 use crate::storage::Storage;
-use crate::types::Fragment;
 use crate::types::Generation;
 use crate::types::KeyLocation;
-use crate::types::UnixTimestamp;
 
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, Object>;

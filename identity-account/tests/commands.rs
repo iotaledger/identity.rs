@@ -11,7 +11,7 @@ use identity_account::identity::IdentitySnapshot;
 use identity_account::identity::TinyMethod;
 use identity_account::storage::MemStore;
 use identity_account::types::Generation;
-use identity_account::types::UnixTimestamp;
+use identity_core::common::UnixTimestamp;
 use identity_did::verification::MethodType;
 
 async fn new_account() -> Result<Account> {

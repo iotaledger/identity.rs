@@ -25,8 +25,8 @@ pub struct Properties {
 impl Properties {
   pub fn new() -> Self {
     Self {
-      created: Timestamp::now(),
-      updated: Timestamp::now(),
+      created: Timestamp::now_utc(),
+      updated: Timestamp::now_utc(),
       previous_message_id: MessageId::null(),
       properties: Object::new(),
     }

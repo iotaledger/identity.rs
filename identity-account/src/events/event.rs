@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Fragment;
+use identity_core::common::UnixTimestamp;
 use identity_did::verification::MethodScope;
 use identity_iota::did::IotaDID;
 use identity_iota::tangle::MessageId;
@@ -10,8 +12,6 @@ use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::identity::TinyMethodRef;
 use crate::identity::TinyService;
-use crate::types::Fragment;
-use crate::types::UnixTimestamp;
 
 /// Event data tagged with a timestamp.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -25,7 +25,7 @@ impl Event {
   pub fn new(data: EventData) -> Self {
     Self {
       data,
-      time: UnixTimestamp::now(),
+      time: UnixTimestamp::now_utc(),
     }
   }
 
