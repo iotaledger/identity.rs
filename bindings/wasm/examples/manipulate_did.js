@@ -52,7 +52,7 @@ async function manipulateIdentity(clientConfig) {
     const nextMessageId = await client.publishDocument(doc.toJSON());
 
     // Log the results.
-    logExplorerUrl("Identity Update:", clientConfig.network.toString(), messageId);
+    logExplorerUrl("Identity Update:", clientConfig.network.toString(), nextMessageId);
     return {key, newKey, doc, nextMessageId};
 }
 
