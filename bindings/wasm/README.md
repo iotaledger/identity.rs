@@ -20,6 +20,20 @@ $ npm install @iota/identity-wasm@dev
 $ yarn add @iota/identity-wasm@dev
 ```
 
+## Build
+
+Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. Then install the necessary dependencies using:
+
+```npm install```
+
+and then build the bindings for `node.js` with
+
+```npm run build:nodejs```
+
+or for the `web` with
+
+```npm run build:web```
+
 ## NodeJS Setup
 
 ```js
