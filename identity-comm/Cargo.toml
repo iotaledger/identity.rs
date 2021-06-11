@@ -14,7 +14,7 @@ homepage = "https://www.iota.org"
 identity-core = { path = "../identity-core", version = "=0.3.0" }
 identity-credential = { path = "../identity-credential", version = "=0.3.0" }
 identity-did = { path = "../identity-did", version = "=0.3.0" }
-identity-iota = { path = "../identity-iota", version = "=0.3.0" }
+identity-iota = { path = "../identity-iota", version = "=0.3.0", default-features = false }
 libjose = { path = "../libjose", version = "=0.1.0" }
 paste = { version = "1.0" }
 serde = { version = "1.0", features = ["derive"] }

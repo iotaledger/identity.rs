@@ -1,22 +1,23 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use futures::stream::FuturesUnordered;
+use futures::stream::TryStreamExt;
+use identity_core::common::Url;
+use identity_core::convert::ToJson;
+
 use crate::chain::DiffChain;
 use crate::chain::DocumentChain;
 use crate::chain::IntegrationChain;
-use crate::client::ClientBuilder;
-use crate::client::Network;
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
-use futures::stream::FuturesUnordered;
-use futures::stream::TryStreamExt;
-use identity_core::common::Url;
-use identity_core::convert::ToJson;
-use iota_client::bee_message::Message;
-use iota_client::bee_message::MessageId;
+use crate::tangle::ClientBuilder;
+use crate::tangle::Message;
+use crate::tangle::MessageId;
+use crate::tangle::Network;
 
 #[derive(Clone, Debug)]
 pub struct Messages {
@@ -31,9 +32,9 @@ pub struct Client {
 }
 
 impl Client {
-  /// Creates a new `Client`  with default settings.
+  /// Creates a new `Client` with default settings.
   pub async fn new() -> Result<Self> {
-    Self::from_builder(Self::builder()).await
+    Self::builder().build().await
   }
 
   /// Creates a `ClientBuilder` to configure a new `Client`.
@@ -45,28 +46,16 @@ impl Client {
 
   /// Creates a new `Client` with default settings for the given `Network`.
   pub async fn from_network(network: Network) -> Result<Self> {
-    Self::builder()
-      .node(network.node_url().as_str())
-      .network(network)
-      .build()
-      .await
+    Self::builder().network(network).build().await
   }
 
   /// Creates a new `Client` based on the `ClientBuilder` configuration.
   pub async fn from_builder(builder: ClientBuilder) -> Result<Self> {
-    let mut client: iota_client::ClientBuilder = iota_client::ClientBuilder::new();
+    let mut client: iota_client::ClientBuilder = builder.builder;
 
-    if builder.nodes.is_empty() {
+    if !builder.nodeset {
       client = client.with_node(builder.network.node_url().as_str())?;
-    } else {
-      let nodes: Vec<&str> = builder.nodes.iter().map(|node| node.as_str()).collect();
-      client = client.with_nodes(&nodes)?;
     }
-    if !builder.node_sync_enabled {
-      client = client.with_node_sync_disabled();
-    }
-
-    client = client.with_network(builder.network.as_str());
 
     Ok(Self {
       client: client.finish().await?,
@@ -91,12 +80,15 @@ impl Client {
 
   /// Returns the web explorer URL of the given `transaction`.
   pub fn transaction_url(&self, message_id: &str) -> Url {
-    format!("{}/message/{}", self.network.explorer_url(), message_id)
-      .parse()
-      .unwrap()
+    let mut url: Url = self.explorer_url().clone();
+
+    // unwrap is safe, the explorer URL is always a valid base URL
+    url.path_segments_mut().unwrap().push("messages").push(message_id);
+
+    url
   }
 
-  /// Publishes an `Document` to the Tangle.
+  /// Publishes an `IotaDocument` to the Tangle.
   ///
   /// Note: The only validation performed is to ensure the correct Tangle
   /// network is selected.

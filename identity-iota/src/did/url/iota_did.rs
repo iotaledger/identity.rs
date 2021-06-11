@@ -17,6 +17,7 @@ use identity_did::did::DID as CoreDID;
 use crate::did::Segments;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::Network;
 
 // The hash size of BLAKE2b-256 (32-bytes)
 const BLAKE2B_256_LEN: usize = 32;
@@ -257,7 +258,12 @@ impl IotaDID {
   }
 
   /// Returns the Tangle `network` of the `DID`.
-  pub fn network(&self) -> &str {
+  pub fn network(&self) -> Network {
+    Network::from_name(self.network_str())
+  }
+
+  /// Returns the Tangle `network` name of the `DID`.
+  pub fn network_str(&self) -> &str {
     self.segments().network()
   }
 
@@ -400,7 +406,7 @@ mod tests {
 
     let did: CoreDID = format!("did:iota:{}", key).parse().unwrap();
     let iota_did = IotaDID::try_from_owned(did).unwrap();
-    assert_eq!(iota_did.network(), "main");
+    assert_eq!(iota_did.network_str(), "main");
     assert_eq!(iota_did.shard(), None);
     assert_eq!(iota_did.tag(), key);
     assert_eq!(iota_did.path(), "");
@@ -418,13 +424,13 @@ mod tests {
     let key: String = IotaDID::encode_key(b"123");
 
     let did: IotaDID = format!("did:iota:test:{}", key).parse().unwrap();
-    assert_eq!(did.network(), "test");
+    assert_eq!(did.network_str(), "test");
 
     let did: IotaDID = format!("did:iota:{}", key).parse().unwrap();
-    assert_eq!(did.network(), "main");
+    assert_eq!(did.network_str(), "main");
 
     let did: IotaDID = format!("did:iota:rainbow:{}", key).parse().unwrap();
-    assert_eq!(did.network(), "rainbow");
+    assert_eq!(did.network_str(), "rainbow");
   }
 
   #[test]
@@ -460,16 +466,16 @@ mod tests {
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
     assert_eq!(did.tag(), tag);
-    assert_eq!(did.network(), IotaDID::DEFAULT_NETWORK);
+    assert_eq!(did.network_str(), IotaDID::DEFAULT_NETWORK);
     assert_eq!(did.shard(), None);
 
     let did = IotaDID::from_components(key.public().as_ref(), None, None).unwrap();
     assert_eq!(did.tag(), tag);
-    assert_eq!(did.network(), IotaDID::DEFAULT_NETWORK);
+    assert_eq!(did.network_str(), IotaDID::DEFAULT_NETWORK);
     assert_eq!(did.shard(), None);
 
     let did = IotaDID::from_components(key.public().as_ref(), Some(IotaDID::DEFAULT_NETWORK), None).unwrap();
-    assert_eq!(did.network(), IotaDID::DEFAULT_NETWORK);
+    assert_eq!(did.network_str(), IotaDID::DEFAULT_NETWORK);
   }
 
   #[test]
@@ -479,7 +485,7 @@ mod tests {
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
     assert_eq!(did.tag(), tag);
-    assert_eq!(did.network(), "foo");
+    assert_eq!(did.network_str(), "foo");
     assert_eq!(did.shard(), None);
   }
 
@@ -490,7 +496,7 @@ mod tests {
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
     assert_eq!(did.tag(), tag);
-    assert_eq!(did.network(), "foo");
+    assert_eq!(did.network_str(), "foo");
     assert_eq!(did.shard(), Some("shard-1"));
   }
 

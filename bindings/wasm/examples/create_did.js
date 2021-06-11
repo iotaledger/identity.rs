@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { Document, KeyType, publish } = require('../node/identity_wasm')
+const { Document, KeyType, Client, Config } = require('../node/identity_wasm')
 const { logExplorerUrl } = require('./explorer_util')
 
 /*
@@ -12,16 +12,22 @@ const { logExplorerUrl } = require('./explorer_util')
 */
 async function createIdentity(clientConfig) {
     // Create a DID Document (an identity).
-    const { doc, key } = new Document(KeyType.Ed25519, clientConfig.network);
+    const { doc, key } = new Document(KeyType.Ed25519, clientConfig.network.toString());
 
     // Sign the DID Document with the generated key.
     doc.sign(key);
 
+    // Create a default client configuration from the parent config network.
+    const config = Config.fromNetwork(clientConfig.network);
+
+    // Create a client instance to publish messages to the Tangle.
+    const client = Client.fromConfig(config);
+
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
-    const messageId = await publish(doc.toJSON(), clientConfig);
+    const messageId = await client.publishDocument(doc.toJSON());
 
     // Log the results.
-    logExplorerUrl("Identity Creation:", clientConfig.network, messageId);
+    logExplorerUrl("Identity Creation:", clientConfig.network.toString(), messageId);
 
     // Return the results.
     return {key, doc, messageId};

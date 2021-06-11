@@ -14,9 +14,9 @@ mod utils;
 
 pub mod credential;
 pub mod crypto;
-pub mod iota;
 pub mod message;
 pub mod service;
+pub mod tangle;
 pub mod wasm_did;
 pub mod wasm_document;
 pub mod wasm_verification_method;

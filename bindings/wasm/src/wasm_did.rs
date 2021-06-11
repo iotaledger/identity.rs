@@ -45,7 +45,7 @@ impl WasmDID {
   /// Returns the IOTA tangle network of the `DID`.
   #[wasm_bindgen(getter)]
   pub fn network(&self) -> String {
-    self.0.network().into()
+    self.0.network_str().into()
   }
 
   /// Returns the IOTA tangle shard of the `DID` (if any).

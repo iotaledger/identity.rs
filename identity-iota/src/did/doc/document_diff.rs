@@ -14,15 +14,15 @@ use identity_did::document::CoreDocument;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 
-use crate::client::Client;
-use crate::client::Network;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::Client;
+use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
+use crate::tangle::Network;
 use crate::tangle::TangleRef;
-use iota_client::bee_message::MessageId;
 
 /// Defines the difference between two DID [`Document`]s' JSON representations.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

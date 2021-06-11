@@ -1,10 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::tangle::MessageIdExt;
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
-use iota_client::bee_message::MessageId;
+
+use crate::tangle::MessageId;
+use crate::tangle::MessageIdExt;
 
 /// Additional properties stored in an IOTA DID Document.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
