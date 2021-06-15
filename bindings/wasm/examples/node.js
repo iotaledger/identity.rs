@@ -33,6 +33,18 @@ async function main() {
             return await createVP(CLIENT_CONFIG);
         case 'merkle_key':
             return await merkleKey(CLIENT_CONFIG);
+        case 'all':
+            console.log(">>> Run All Examples");
+
+            await createIdentity(CLIENT_CONFIG);
+            await manipulateIdentity(CLIENT_CONFIG);
+            await resolution(CLIENT_CONFIG);
+            await createVC(CLIENT_CONFIG);
+            await revokeVC(CLIENT_CONFIG);
+            await createVP(CLIENT_CONFIG);
+            await merkleKey(CLIENT_CONFIG);
+
+            console.log(">>> End All Examples");
         default:
             throw 'Unknown example name';
     }

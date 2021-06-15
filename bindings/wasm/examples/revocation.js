@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { DID, checkCredential, Client, Config } = require('../node/identity_wasm')
+const { Client, Config, DID } = require('../node/identity_wasm')
 const { createVC } = require('./create_VC');
 const { logExplorerUrl } = require('./explorer_util')
 
@@ -41,10 +41,7 @@ async function revoke(clientConfig) {
     logExplorerUrl("Identity Update:", clientConfig.network.toString(), messageId);
 
     //Check the verifiable credential
-    const result = await checkCredential(signedVc.toString(), {
-        network: clientConfig.network.toString(),
-        node: clientConfig.defaultNodeURL,
-    });
+    const result = await client.checkCredential(signedVc.toString());
 
     console.log(`VC verification result: ${result.verified}`);
 }

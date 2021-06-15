@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { KeyPair, KeyType, Client, Config, VerificationMethod, Service } = require('../node/identity_wasm')
+const { Client, Config, KeyPair, KeyType, VerificationMethod, Service } = require('../node/identity_wasm')
 const { createIdentity } = require('./create_did');
 const { logExplorerUrl } = require('./explorer_util');
 
@@ -52,7 +52,7 @@ async function manipulateIdentity(clientConfig) {
     const nextMessageId = await client.publishDocument(doc.toJSON());
 
     // Log the results.
-    logExplorerUrl("Identity Update:", clientConfig.network.toString(), messageId);
+    logExplorerUrl("Identity Update:", clientConfig.network.toString(), nextMessageId);
     return {key, newKey, doc, nextMessageId};
 }
 

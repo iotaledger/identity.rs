@@ -149,6 +149,8 @@
         * [.publishDocument(document)](#Client+publishDocument) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.publishDiff(message_id, value)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.readDocument(did)](#Client+readDocument) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.checkCredential(data)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.checkPresentation(data)](#Client+checkPresentation) ⇒ <code>Promise.&lt;any&gt;</code>
     * _static_
         * [.fromConfig(config)](#Client.fromConfig) ⇒ [<code>Client</code>](#Client)
         * [.fromNetwork(network)](#Client.fromNetwork) ⇒ [<code>Client</code>](#Client)
@@ -218,6 +220,28 @@ Publishes a `DocumentDiff` to the Tangle.
 | Param | Type |
 | --- | --- |
 | did | <code>string</code> |
+
+<a name="Client+checkCredential"></a>
+
+### client.checkCredential(data) ⇒ <code>Promise.&lt;any&gt;</code>
+Validates a credential with the DID Document from the Tangle.
+
+**Kind**: instance method of [<code>Client</code>](#Client)
+
+| Param | Type |
+| --- | --- |
+| data | <code>string</code> |
+
+<a name="Client+checkPresentation"></a>
+
+### client.checkPresentation(data) ⇒ <code>Promise.&lt;any&gt;</code>
+Validates a presentation with the DID Document from the Tangle.
+
+**Kind**: instance method of [<code>Client</code>](#Client)
+
+| Param | Type |
+| --- | --- |
+| data | <code>string</code> |
 
 <a name="Client.fromConfig"></a>
 
@@ -535,7 +559,8 @@ Creates a new `Client` with default settings for the given `Network`.
 * [DID](#DID)
     * [new DID(key, network)](#new_DID_new)
     * _instance_
-        * [.network](#DID+network) ⇒ <code>string</code>
+        * [.network](#DID+network) ⇒ [<code>Network</code>](#Network)
+        * [.networkName](#DID+networkName) ⇒ <code>string</code>
         * [.tag](#DID+tag) ⇒ <code>string</code>
         * [.tangleNode](#DID+tangleNode) ⇒ <code>string</code>
         * [.tangleExplorer](#DID+tangleExplorer) ⇒ <code>string</code>
@@ -557,7 +582,13 @@ Creates a new `DID` from a `KeyPair` object.
 
 <a name="DID+network"></a>
 
-### did.network ⇒ <code>string</code>
+### did.network ⇒ [<code>Network</code>](#Network)
+Returns the IOTA tangle network of the `DID`.
+
+**Kind**: instance property of [<code>DID</code>](#DID)
+<a name="DID+networkName"></a>
+
+### did.networkName ⇒ <code>string</code>
 Returns the IOTA tangle network of the `DID`.
 
 **Kind**: instance property of [<code>DID</code>](#DID)  

@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { Digest, checkCredential, KeyType, publish, VerifiableCredential, VerificationMethod, KeyCollection } = require('../node/identity_wasm')
+const { Client, Config, Digest, KeyType, VerifiableCredential, VerificationMethod, KeyCollection } = require('../node/identity_wasm')
 const { createIdentity } = require('./create_did');
 const { logExplorerUrl } = require('./explorer_util')
 
@@ -15,6 +15,12 @@ const { logExplorerUrl } = require('./explorer_util')
     @param {{network: string, node: string}} clientConfig
 */
 async function merkleKey(clientConfig) {
+    // Create a default client configuration from the parent config network.
+    const config = Config.fromNetwork(clientConfig.network);
+
+    // Create a client instance to publish messages to the Tangle.
+    const client = Client.fromConfig(config);
+
     //Creates new identities (See "create_did" example)
     const alice = await createIdentity(clientConfig);
     const issuer = await createIdentity(clientConfig);
@@ -29,8 +35,8 @@ async function merkleKey(clientConfig) {
     issuer.doc.sign(issuer.key);
 
     //Publish the Identity to the IOTA Network and log the results, this may take a few seconds to complete Proof-of-Work.
-    const nextMessageId = await publish(issuer.doc.toJSON(), clientConfig);
-    logExplorerUrl("Identity Update:", clientConfig.network, nextMessageId);
+    const nextMessageId = await client.publishDocument(issuer.doc.toJSON());
+    logExplorerUrl("Identity Update:", clientConfig.network.toString(), nextMessageId);
 
     // Prepare a credential subject indicating the degree earned by Alice
     let credentialSubject = {
@@ -58,17 +64,17 @@ async function merkleKey(clientConfig) {
     });
 
     //Check the verifiable credential
-    const result = await checkCredential(signedVc.toString(), clientConfig);
+    const result = await client.checkCredential(signedVc.toString());
     console.log(`VC verification result: ${result.verified}`);
 
     // The Issuer would like to revoke the credential (and therefore revokes key 0)
     issuer.doc.revokeMerkleKey(method.id.toString(), 0);
     issuer.doc.previousMessageId = nextMessageId;
-    const revokeMessageId = await publish(issuer.doc.toJSON(), clientConfig);
-    logExplorerUrl("Identity Update:", clientConfig.network, revokeMessageId);
+    const revokeMessageId = await client.publishDocument(issuer.doc.toJSON());
+    logExplorerUrl("Identity Update:", clientConfig.network.toString(), revokeMessageId);
 
     //Check the verifiable credential
-    const newResult = await checkCredential(signedVc.toString(), clientConfig);
+    const newResult = await client.checkCredential(signedVc.toString());
     console.log(`VC verification result: ${newResult.verified}`);
 }
 

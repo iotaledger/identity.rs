@@ -3,8 +3,11 @@
 
 use core::str::FromStr;
 use futures::executor;
-use identity::core::ToJson;
+use identity::core::FromJson;
+use identity::credential::Credential;
+use identity::credential::Presentation;
 use identity::iota::Client as IotaClient;
+use identity::iota::CredentialValidator;
 use identity::iota::DocumentDiff;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
@@ -131,8 +134,41 @@ impl Client {
         .read_document(&did)
         .await
         .map_err(err)
-        .and_then(|document| document.to_json().map_err(err))
-        .map(Into::into)
+        .and_then(|document| JsValue::from_serde(&document).map_err(err))
+    });
+
+    Ok(promise)
+  }
+
+  /// Validates a credential with the DID Document from the Tangle.
+  #[wasm_bindgen(js_name = checkCredential)]
+  pub fn check_credential(&self, data: &str) -> Result<Promise, JsValue> {
+    let client: Shared<IotaClient> = self.client.clone();
+    let data: Credential = Credential::from_json(&data).map_err(err)?;
+
+    let promise: Promise = future_to_promise(async move {
+      CredentialValidator::new(&client.borrow())
+        .validate_credential(data)
+        .await
+        .map_err(err)
+        .and_then(|output| JsValue::from_serde(&output).map_err(err))
+    });
+
+    Ok(promise)
+  }
+
+  /// Validates a presentation with the DID Document from the Tangle.
+  #[wasm_bindgen(js_name = checkPresentation)]
+  pub fn check_presentation(&self, data: &str) -> Result<Promise, JsValue> {
+    let client: Shared<IotaClient> = self.client.clone();
+    let data: Presentation = Presentation::from_json(&data).map_err(err)?;
+
+    let promise: Promise = future_to_promise(async move {
+      CredentialValidator::new(&client.borrow())
+        .validate_presentation(data)
+        .await
+        .map_err(err)
+        .and_then(|output| JsValue::from_serde(&output).map_err(err))
     });
 
     Ok(promise)

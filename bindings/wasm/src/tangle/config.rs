@@ -32,15 +32,15 @@ impl Config {
   }
 
   #[wasm_bindgen(js_name = fromNetwork)]
-  pub fn from_network(network: WasmNetwork) -> Result<Config, JsValue> {
+  pub fn from_network(network: &WasmNetwork) -> Result<Config, JsValue> {
     let mut this: Self = Self::new();
     this.set_network(network)?;
     Ok(this)
   }
 
   #[wasm_bindgen(js_name = setNetwork)]
-  pub fn set_network(&mut self, network: WasmNetwork) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.network(network.into()))
+  pub fn set_network(&mut self, network: &WasmNetwork) -> Result<(), JsValue> {
+    self.with_mut(|builder| builder.network((*network).into()))
   }
 
   #[wasm_bindgen(js_name = setNode)]

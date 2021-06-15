@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { VerifiableCredential, checkCredential } = require('../node/identity_wasm')
+const { Client, Config, VerifiableCredential } = require('../node/identity_wasm')
 const { createIdentity } = require('./create_did');
 const { manipulateIdentity } = require('./manipulate_did');
 
@@ -14,6 +14,12 @@ const { manipulateIdentity } = require('./manipulate_did');
     @param {{network: string, node: string}} clientConfig
 */
 async function createVC(clientConfig) {
+    // Create a default client configuration from the parent config network.
+    const config = Config.fromNetwork(clientConfig.network);
+
+    // Create a client instance to publish messages to the Tangle.
+    const client = Client.fromConfig(config);
+
     // Creates new identities (See "create_did" and "manipulate_did" examples)
     const alice = await createIdentity(clientConfig);
     const issuer = await manipulateIdentity(clientConfig);
@@ -43,10 +49,7 @@ async function createVC(clientConfig) {
     });
 
     // Check if the credential is verifiable.
-    const result = await checkCredential(signedVc.toString(), {
-        network: clientConfig.network.toString(),
-        node: clientConfig.defaultNodeURL,
-    });
+    const result = await client.checkCredential(signedVc.toString());
 
     console.log(`VC verification result: ${result.verified}`);
 
