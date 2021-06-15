@@ -6,12 +6,12 @@ use futures::executor;
 use identity::core::FromJson;
 use identity::credential::Credential;
 use identity::credential::Presentation;
-use identity::iota::Client as IotaClient;
 use identity::iota::CredentialValidator;
 use identity::iota::DocumentDiff;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
+use identity::iota::{Client as IotaClient, TangleRef};
 use js_sys::Promise;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -125,16 +125,25 @@ impl Client {
 
   #[wasm_bindgen]
   pub fn resolve(&self, did: &str) -> Result<Promise, JsValue> {
+    #[derive(Serialize)]
+    pub struct DocWrapper<'a> {
+      document: &'a IotaDocument,
+      #[serde(rename = "messageId")]
+      message_id: &'a MessageId,
+    }
+
     let client: Shared<IotaClient> = self.client.clone();
     let did: IotaDID = did.parse().map_err(err)?;
 
     let promise: Promise = future_to_promise(async move {
-      client
-        .borrow()
-        .resolve(&did)
-        .await
-        .map_err(err)
-        .and_then(|document| JsValue::from_serde(&document).map_err(err))
+      client.borrow().resolve(&did).await.map_err(err).and_then(|document| {
+        let wrapper = DocWrapper {
+          document: &document,
+          message_id: document.message_id(),
+        };
+
+        JsValue::from_serde(&wrapper).map_err(err)
+      })
     });
 
     Ok(promise)
