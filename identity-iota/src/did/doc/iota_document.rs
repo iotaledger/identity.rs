@@ -56,10 +56,9 @@ pub type Verifier<'a> = DocumentVerifier<'a, Properties, Object, Object>;
 /// This is a thin wrapper around the [`CoreDocument`][CoreDocument] type from the
 /// [identity_did] crate.
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
-#[serde(try_from = "CoreDocument")]
+#[serde(try_from = "CoreDocument", into = "BaseDocument")]
 pub struct IotaDocument {
   document: BaseDocument,
-  #[serde(rename = "messageId")]
   message_id: MessageId,
 }
 
