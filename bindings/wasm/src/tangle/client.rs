@@ -123,15 +123,15 @@ impl Client {
     Ok(promise)
   }
 
-  #[wasm_bindgen(js_name = readDocument)]
-  pub fn read_document(&self, did: &str) -> Result<Promise, JsValue> {
+  #[wasm_bindgen]
+  pub fn resolve(&self, did: &str) -> Result<Promise, JsValue> {
     let client: Shared<IotaClient> = self.client.clone();
     let did: IotaDID = did.parse().map_err(err)?;
 
     let promise: Promise = future_to_promise(async move {
       client
         .borrow()
-        .read_document(&did)
+        .resolve(&did)
         .await
         .map_err(err)
         .and_then(|document| JsValue::from_serde(&document).map_err(err))

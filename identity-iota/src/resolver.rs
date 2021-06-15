@@ -26,7 +26,7 @@ impl ResolverMethod for Client {
   async fn read(&self, did: &CoreDID, _input: InputMetadata) -> Result<Option<MetaDocument>> {
     let document: IotaDocument = IotaDID::try_from_borrowed(did)
       .map_err(|_| Error::MissingResolutionDID)
-      .map(|did| self.read_document(&did))?
+      .map(|did| self.resolve(&did))?
       .await
       .map_err(|_| Error::MissingResolutionDocument)?;
 

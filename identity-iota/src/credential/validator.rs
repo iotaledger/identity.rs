@@ -157,7 +157,7 @@ impl<'a> CredentialValidator<'a> {
 
   async fn validate_document(&self, did: &str) -> Result<DocumentValidation> {
     let did: IotaDID = did.parse()?;
-    let document: IotaDocument = self.client.read_document(&did).await?;
+    let document: IotaDocument = self.client.resolve(&did).await?;
     let verified: bool = document.verify().is_ok();
 
     Ok(DocumentValidation {
