@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 const { Client, Config, DID } = require('../node/identity_wasm')
-const { createVC } = require('./create_VC');
+const { createVC } = require('./create_vc');
 const { logExplorerUrl } = require('./explorer_util')
 
 /*

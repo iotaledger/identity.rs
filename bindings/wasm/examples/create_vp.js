@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 const { Client, Config, VerifiablePresentation } = require('../node/identity_wasm')
-const { createVC } = require('./create_VC');
+const { createVC } = require('./create_vc');
 
 /*
     This example shows how to create a Verifiable Presentation and validate it.
