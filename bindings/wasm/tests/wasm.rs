@@ -64,7 +64,7 @@ fn test_did() {
   let key = KeyPair::new(KeyType::Ed25519).unwrap();
   let did = WasmDID::new(&key, None).unwrap();
 
-  assert_eq!(did.network(), "main");
+  assert_eq!(did.network_name(), "main");
 
   let parsed = WasmDID::parse(&did.to_string()).unwrap();
 
@@ -74,7 +74,7 @@ fn test_did() {
   let base58 = WasmDID::from_base58(&public, Some("test".to_string())).unwrap();
 
   assert_eq!(base58.tag(), did.tag());
-  assert_eq!(base58.network(), "test");
+  assert_eq!(base58.network_name(), "test");
 }
 
 #[test]
@@ -94,5 +94,5 @@ fn test_document_network() {
   let output = WasmDocument::new(KeyType::Ed25519, Some("test".into()), None).unwrap();
   let document = output.doc();
 
-  assert_eq!(document.id().network(), "test");
+  assert_eq!(document.id().network_name(), "test");
 }

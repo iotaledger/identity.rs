@@ -195,7 +195,7 @@ impl Account {
       .clients
       .load(network)
       .await?
-      .read_document(document)
+      .resolve(document)
       .await
       .map_err(Into::into)
   }

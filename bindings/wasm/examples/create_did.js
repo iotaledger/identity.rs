@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { Document, KeyType, Client, Config } = require('../node/identity_wasm')
+const { Client, Config, Document, KeyType } = require('../node/identity_wasm')
 const { logExplorerUrl } = require('./explorer_util')
 
 /*

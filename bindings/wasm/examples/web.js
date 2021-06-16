@@ -2,6 +2,8 @@ async function run(Identity) {
   console.log(Identity)
 
   const {
+    Client,
+    Config,
     Digest,
     DID,
     Document,
@@ -30,6 +32,12 @@ async function run(Identity) {
   console.log("User (user1): ", user1)
   console.log("User (user2): ", user2)
 
+  // Create a default client configuration from the parent config network.
+  const config = Config.fromNetwork(user1.id.network)
+
+  // Create a client instance to publish messages to the Tangle.
+  const client = Client.fromConfig(config)
+
   // Add a Merkle Key Collection method for Bob, so compromised keys can be revoked.
   const keys = new KeyCollection(KeyType.Ed25519, 8)
   const method = VerificationMethod.createMerkleKey(Digest.Sha256, user2.doc.id, keys, "key-collection")
@@ -44,8 +52,8 @@ async function run(Identity) {
   console.log("Verified (user1): ", user1.doc.verify())
   console.log("Verified (user2): ", user2.doc.verify())
 
-  user1MessageId = await Identity.publish(user1.doc.toJSON())
-  user2MessageId = await Identity.publish(user2.doc.toJSON())
+  user1MessageId = await client.publishDocument(user1.doc.toJSON())
+  user2MessageId = await client.publishDocument(user2.doc.toJSON())
 
   // Publish all DID documents
   console.log(`Publish Result (user1): ${user1.doc.id.tangleExplorer}/transaction/${user1MessageId}`)
@@ -82,7 +90,7 @@ async function run(Identity) {
   console.log("Verified (credential)", user2.doc.verify(signedVc))
 
   // Check the validation status of the Verifiable Credential
-  console.log("Credential Validation", await Identity.checkCredential(signedVc.toString()))
+  console.log("Credential Validation", await client.checkCredential(signedVc.toString()))
 
   // Create a Verifiable Presentation from the Credential - signed by Alice's key
   const unsignedVp = new VerifiablePresentation(user1.doc, signedVc.toJSON())
@@ -93,7 +101,7 @@ async function run(Identity) {
   })
 
   // Check the validation status of the Verifiable Presentation
-  console.log("Presentation Validation", await Identity.checkPresentation(signedVp.toString()))
+  console.log("Presentation Validation", await client.checkPresentation(signedVp.toString()))
 
   // Bobs key was compromised - mark it as revoked and publish an update
   user2.doc.revokeMerkleKey(method.id.toString(), 0)
@@ -104,18 +112,18 @@ async function run(Identity) {
   // The "authentication" key was not compromised so it's safe to publish an update
   user2.doc.sign(user2.key)
 
-  user2MessageId = await Identity.publish(user2.doc.toJSON())
+  user2MessageId = await client.publishDocument(user2.doc.toJSON())
 
   console.log(`Publish Result (user2): ${user2.doc.id.tangleExplorer}/transaction/${user2MessageId}`)
 
   // Resolve DID documents
-  console.log("Resolve Result (user1): ", await Identity.resolve(user1.doc.id.toString()))
-  console.log("Resolve Result (user2): ", await Identity.resolve(user2.doc.id.toString()))
+  console.log("Resolve Result (user1): ", await client.readDocument(user1.doc.id.toString()))
+  console.log("Resolve Result (user2): ", await client.readDocument(user2.doc.id.toString()))
 
   // Check the validation status of the Verifiable Presentation
   //
   // This should return `false` since we revoked the key used to sign the credential
-  console.log("Presentation Validation", await Identity.checkPresentation(signedVp.toString()))
+  console.log("Presentation Validation", await client.checkPresentation(signedVp.toString()))
 }
 
 import("../pkg/index.js").then(async identity => {

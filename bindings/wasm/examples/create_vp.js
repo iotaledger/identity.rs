@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { VerifiablePresentation, checkPresentation } = require('../node/identity_wasm')
-const { createVC } = require('./create_VC');
+const { Client, Config, VerifiablePresentation } = require('../node/identity_wasm')
+const { createVC } = require('./create_vc');
 
 /*
     This example shows how to create a Verifiable Presentation and validate it.
@@ -12,6 +12,12 @@ const { createVC } = require('./create_VC');
     @param {{network: string, node: string}} clientConfig
 */
 async function createVP(clientConfig) {
+    // Create a default client configuration from the parent config network.
+    const config = Config.fromNetwork(clientConfig.network);
+
+    // Create a client instance to publish messages to the Tangle.
+    const client = Client.fromConfig(config);
+
     // Creates new identities (See "createVC" example)
     const {alice, issuer, signedVc} = await createVC(clientConfig);
 
@@ -25,10 +31,7 @@ async function createVP(clientConfig) {
     })
 
     // Check the validation status of the Verifiable Presentation
-    const result = await checkPresentation(signedVp.toString(), {
-        network: clientConfig.network.toString(),
-        node: clientConfig.defaultNodeURL,
-    });
+    const result = await client.checkPresentation(signedVp.toString());
 
     console.log(`VP verification result: ${result.verified}`);
 }

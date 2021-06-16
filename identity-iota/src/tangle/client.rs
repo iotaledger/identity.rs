@@ -132,7 +132,7 @@ impl Client {
     Ok(message.id().0)
   }
 
-  pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
+  pub async fn resolve(&self, did: &IotaDID) -> Result<IotaDocument> {
     self.read_document_chain(did).await.and_then(DocumentChain::fold)
   }
 

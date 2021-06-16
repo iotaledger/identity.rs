@@ -7,6 +7,7 @@ use identity::iota::Network;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::KeyPair;
+use crate::tangle::WasmNetwork;
 use crate::utils::err;
 
 /// @typicalname did
@@ -42,7 +43,13 @@ impl WasmDID {
 
   /// Returns the IOTA tangle network of the `DID`.
   #[wasm_bindgen(getter)]
-  pub fn network(&self) -> String {
+  pub fn network(&self) -> WasmNetwork {
+    self.0.network().into()
+  }
+
+  /// Returns the IOTA tangle network of the `DID`.
+  #[wasm_bindgen(getter = networkName)]
+  pub fn network_name(&self) -> String {
     self.0.network_str().into()
   }
 
