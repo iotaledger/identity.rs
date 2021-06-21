@@ -12,12 +12,15 @@ module.exports = {
   favicon: 'img/favicon.ico',
   organizationName: 'iotaledger', // Usually your GitHub org/user name.
   projectName: 'identity.rs', // Usually your repo name.
+  stylesheets: [
+    'https://fonts.googleapis.com/css?family=Material+Icons',
+  ],
   themeConfig: {
     navbar: {
-      title: 'My Site',
+      title: 'Identity',
       logo: {
-        alt: 'My Site Logo',
-        src: 'img/logo.svg',
+        alt: 'IOTA Identity Logo',
+        src: 'img/iota_logo.svg',
       },
       items: [
         {
