@@ -148,7 +148,7 @@
         * [.transactionURL(message_id)](#Client+transactionURL) ⇒ <code>string</code>
         * [.publishDocument(document)](#Client+publishDocument) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.publishDiff(message_id, value)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.readDocument(did)](#Client+readDocument) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.resolve(did)](#Client+resolve) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.checkCredential(data)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.checkPresentation(data)](#Client+checkPresentation) ⇒ <code>Promise.&lt;any&gt;</code>
     * _static_
@@ -212,9 +212,9 @@ Publishes a `DocumentDiff` to the Tangle.
 | message_id | <code>string</code> |
 | value | <code>any</code> |
 
-<a name="Client+readDocument"></a>
+<a name="Client+resolve"></a>
 
-### client.readDocument(did) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.resolve(did) ⇒ <code>Promise.&lt;any&gt;</code>
 **Kind**: instance method of [<code>Client</code>](#Client)
 
 | Param | Type |
