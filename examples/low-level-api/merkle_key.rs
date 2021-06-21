@@ -3,7 +3,7 @@
 
 //! An example that revokes a key and shows how verification fails as a consequence.
 //!
-//! cargo run --example merkle_key
+//! cargo run --example low_merkle_key
 
 mod common;
 
@@ -22,6 +22,7 @@ use identity::crypto::SecretKey;
 use identity::did::resolution::resolve;
 use identity::did::resolution::Resolution;
 use identity::did::MethodScope;
+use identity::iota::ClientMap;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::TangleRef;
 use identity::prelude::*;
@@ -33,7 +34,7 @@ const LEAVES: usize = 1 << 10;
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a Client to interact with the IOTA Tangle.
-  let client: Client = Client::new().await?;
+  let client: ClientMap = ClientMap::new();
 
   // Create a new DID Document, signed and published.
   let (mut doc, auth): (IotaDocument, KeyPair) = common::create_did_document(&client).await?;
@@ -52,7 +53,7 @@ async fn main() -> Result<()> {
   // Sign and publish the updated document
   doc.set_previous_message_id(*doc.message_id());
   doc.sign(auth.secret())?;
-  doc.publish(&client).await?;
+  client.publish_document(&doc).await?;
 
   println!("document: {:#}", doc);
 
@@ -103,7 +104,7 @@ async fn main() -> Result<()> {
   // Publish the new document with the updated revocation state
   doc.set_previous_message_id(*doc.message_id());
   doc.sign(auth.secret())?;
-  doc.publish(&client).await?;
+  client.publish_document(&doc).await?;
 
   println!("document: {:#}", doc);
 

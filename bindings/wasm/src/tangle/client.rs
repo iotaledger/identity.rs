@@ -6,12 +6,14 @@ use futures::executor;
 use identity::core::FromJson;
 use identity::credential::Credential;
 use identity::credential::Presentation;
+use identity::iota::Client as IotaClient;
 use identity::iota::CredentialValidator;
 use identity::iota::DocumentDiff;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
-use identity::iota::{Client as IotaClient, TangleRef};
+use identity::iota::TangleRef;
+use identity::iota::TangleResolve;
 use js_sys::Promise;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -27,7 +29,7 @@ type Shared<T> = Rc<RefCell<T>>;
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct Client {
-  client: Shared<IotaClient>,
+  pub(crate) client: Shared<IotaClient>,
 }
 
 #[wasm_bindgen]
@@ -156,7 +158,7 @@ impl Client {
     let data: Credential = Credential::from_json(&data).map_err(err)?;
 
     let promise: Promise = future_to_promise(async move {
-      CredentialValidator::new(&client.borrow())
+      CredentialValidator::new(&*client.borrow())
         .validate_credential(data)
         .await
         .map_err(err)
@@ -173,7 +175,7 @@ impl Client {
     let data: Presentation = Presentation::from_json(&data).map_err(err)?;
 
     let promise: Promise = future_to_promise(async move {
-      CredentialValidator::new(&client.borrow())
+      CredentialValidator::new(&*client.borrow())
         .validate_presentation(data)
         .await
         .map_err(err)

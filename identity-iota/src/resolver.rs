@@ -14,6 +14,8 @@ use identity_did::resolution::ResolverMethod;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::tangle::Client;
+use crate::tangle::ClientMap;
+use crate::tangle::TangleResolve;
 
 #[async_trait(?Send)]
 impl ResolverMethod for Client {
@@ -26,7 +28,7 @@ impl ResolverMethod for Client {
   async fn read(&self, did: &CoreDID, _input: InputMetadata) -> Result<Option<MetaDocument>> {
     let document: IotaDocument = IotaDID::try_from_borrowed(did)
       .map_err(|_| Error::MissingResolutionDID)
-      .map(|did| self.resolve(&did))?
+      .map(|did| self.resolve(did))?
       .await
       .map_err(|_| Error::MissingResolutionDocument)?;
 
@@ -38,5 +40,23 @@ impl ResolverMethod for Client {
       data: document.serde_into()?,
       meta,
     }))
+  }
+}
+
+#[async_trait(?Send)]
+impl ResolverMethod for ClientMap {
+  fn is_supported(&self, did: &CoreDID) -> bool {
+    IotaDID::try_from_borrowed(did).is_ok()
+  }
+
+  async fn read(&self, did: &CoreDID, input: InputMetadata) -> Result<Option<MetaDocument>> {
+    let did: &IotaDID = IotaDID::try_from_borrowed(did).map_err(|_| Error::MissingResolutionDID)?;
+
+    self
+      .client(did.network())
+      .await
+      .map_err(|_| Error::MissingResolutionDocument)?
+      .read(did.as_ref(), input)
+      .await
   }
 }

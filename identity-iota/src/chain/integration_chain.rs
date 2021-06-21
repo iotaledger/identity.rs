@@ -34,6 +34,9 @@ impl IntegrationChain {
       .flat_map(|message| message.try_extract_document(did))
       .collect();
 
+    trace!("[Int] Message Index = {:#?}", index);
+    debug!("[Int] Valid Messages = {}/{}", messages.len(), index.len());
+
     let current: IotaDocument = index
       .remove_where(&MessageId::null(), |doc| doc.verify().is_ok())
       .ok_or(Error::ChainError {

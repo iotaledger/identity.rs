@@ -70,7 +70,7 @@ where
         None
       } else {
         match (self.controller(), other.controller()) {
-          (Some(a), Some(b)) => Some(Some(a.diff(&b)?)),
+          (Some(a), Some(b)) => Some(Some(a.diff(b)?)),
           (None, Some(b)) => Some(Some(b.clone().into_diff()?)),
           _ => Some(None),
         }
@@ -113,7 +113,7 @@ where
       service: if self.service() == other.service() {
         None
       } else {
-        Some(self.service().diff(&other.service())?)
+        Some(self.service().diff(other.service())?)
       },
       properties: if self.properties() == other.properties() {
         None

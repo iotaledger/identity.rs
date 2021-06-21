@@ -41,6 +41,9 @@ impl DiffChain {
       .flat_map(|message| message.try_extract_diff(did))
       .collect();
 
+    trace!("[Diff] Message Index = {:#?}", index);
+    debug!("[Diff] Valid Messages = {}/{}", messages.len(), index.len());
+
     let mut this: Self = Self::new();
 
     while let Some(mut list) = index.remove(DocumentChain::__diff_message_id(integration_chain, &this)) {

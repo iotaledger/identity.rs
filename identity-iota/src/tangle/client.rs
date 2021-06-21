@@ -18,6 +18,7 @@ use crate::tangle::ClientBuilder;
 use crate::tangle::Message;
 use crate::tangle::MessageId;
 use crate::tangle::Network;
+use crate::tangle::TangleResolve;
 
 #[derive(Clone, Debug)]
 pub struct Messages {
@@ -41,7 +42,7 @@ impl Client {
   ///
   /// This is the same as [ClientBuilder::new]`.
   pub fn builder() -> ClientBuilder {
-    ClientBuilder::new()
+    ClientBuilder::new().local_pow(false)
   }
 
   /// Creates a new `Client` with default settings for the given `Network`.
@@ -96,15 +97,13 @@ impl Client {
     debug!("Publish Document: {}", document.id());
     debug!("Document JSON = {:#}", document);
 
-    debug_assert!(document.verify().is_ok());
-
     self.check_network(document.id())?;
 
     let message_builder = self
       .client
       .message()
       .with_index(document.id().tag())
-      .with_data(document.to_json()?.into_bytes());
+      .with_data(document.to_json_vec()?);
 
     let message = message_builder.finish().await?;
 
@@ -121,18 +120,22 @@ impl Client {
 
     self.check_network(diff.id())?;
 
+    let address: String = IotaDocument::diff_address(message_id)?;
+
+    debug!("Diff Message Address = {}", address);
+
     let message: Message = self
       .client
       .message()
-      .with_index(&IotaDocument::diff_address(message_id)?)
-      .with_data(diff.to_json()?.into_bytes())
+      .with_index(&address)
+      .with_data(diff.to_json_vec()?)
       .finish()
       .await?;
 
     Ok(message.id().0)
   }
 
-  pub async fn resolve(&self, did: &IotaDID) -> Result<IotaDocument> {
+  pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
     self.read_document_chain(did).await.and_then(DocumentChain::fold)
   }
 
@@ -154,7 +157,7 @@ impl Client {
       let address: String = IotaDocument::diff_address(integration_chain.current_message_id())?;
       let messages: Messages = self.read_messages(&address).await?;
 
-      trace!("Tangle Messages: {:?}", messages);
+      trace!("Diff Messages: {:#?}", messages);
 
       DiffChain::try_from_messages(&integration_chain, &messages.messages)?
     };
@@ -181,5 +184,12 @@ impl Client {
     }
 
     Ok(())
+  }
+}
+
+#[async_trait::async_trait(?Send)]
+impl TangleResolve for Client {
+  async fn resolve(&self, did: &IotaDID) -> Result<IotaDocument> {
+    Client::read_document(self, did).await
   }
 }

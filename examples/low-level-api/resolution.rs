@@ -6,19 +6,20 @@
 //!
 //! See also https://www.w3.org/TR/did-core/#did-resolution and https://www.w3.org/TR/did-core/#did-url-dereferencing
 //!
-//! cargo run --example resolution
+//! cargo run --example low_resolution
 
 use identity::core::SerdeInto;
 use identity::did::resolution;
 use identity::did::resolution::Resource;
 use identity::did::resolution::SecondaryResource;
+use identity::iota::ClientMap;
 use identity::iota::IotaDID;
 use identity::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a Client to interact with the IOTA Tangle.
-  let client: Client = Client::new().await?;
+  let client: ClientMap = ClientMap::new();
 
   // Create a pair of Ed25519 public/secret keys.
   let key: KeyPair = KeyPair::new_ed25519()?;
@@ -31,7 +32,7 @@ async fn main() -> Result<()> {
   doc.sign(key.secret())?;
 
   // Publish the DID Document to the Tangle - Use a custom Client instance.
-  doc.publish(&client).await?;
+  client.publish_document(&doc).await?;
 
   // ===========================================================================
   // DID Resolution

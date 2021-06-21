@@ -4,8 +4,9 @@
 //! A basic example that generates and publishes a DID Document,
 //! the fundamental building block for decentralized identity.
 //!
-//! cargo run --example create_did_document
+//! cargo run --example low_create_did
 
+use identity::iota::ClientMap;
 use identity::iota::Network;
 use identity::iota::TangleRef;
 use identity::prelude::*;
@@ -20,14 +21,15 @@ async fn main() -> Result<()> {
   document.sign(keypair.secret())?;
 
   // Create a new client connected to the Testnet (Chrysalis).
-  let client: Client = Client::new().await?;
+  let client: ClientMap = ClientMap::new();
 
   // Use the client to publish the DID Document to the Tangle.
-  document.publish(&client).await?;
+  client.publish_document(&document).await?;
 
   // Print the DID Document IOTA transaction link.
   let network = Network::from_did(document.id());
   let explore: String = format!("{}/message/{}", network.explorer_url(), document.message_id());
+
   println!("DID Document Transaction > {}", explore);
 
   Ok(())

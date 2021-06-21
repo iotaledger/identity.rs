@@ -17,6 +17,7 @@ use identity_iota::did::IotaDocument;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::Network;
+use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;

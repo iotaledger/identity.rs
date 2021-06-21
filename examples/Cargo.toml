@@ -16,11 +16,11 @@ path = "getting_started.rs"
 
 [[example]]
 name = "low_create_did"
-path = "low-level-api/create_did_document.rs"
+path = "low-level-api/create_did.rs"
 
 [[example]]
 name = "low_manipulate_did"
-path = "low-level-api/manipulate_did_document.rs"
+path = "low-level-api/manipulate_did.rs"
 
 [[example]]
 name = "low_verifiable_credential"

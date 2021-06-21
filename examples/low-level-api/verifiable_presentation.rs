@@ -4,7 +4,7 @@
 //! A Verifiable Presentation (VP) represents a bundle of one or more Verifiable Credentials.
 //! This example demonstrates building and usage of VPs.
 //!
-//! cargo run --example verifiable_presentation
+//! cargo run --example low_verifiable_presentation
 
 mod common;
 
@@ -13,14 +13,14 @@ use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use identity::crypto::KeyPair;
-use identity::iota::Client;
+use identity::iota::ClientMap;
 use identity::iota::IotaDocument;
 use identity::iota::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
   // Initialize a `Client` to interact with the IOTA Tangle.
-  let client: Client = Client::new().await?;
+  let client: ClientMap = ClientMap::new();
 
   // Create a signed DID Document/KeyPair for the credential issuer (see previous example).
   let (doc_iss, key_iss): (IotaDocument, KeyPair) = common::create_did_document(&client).await?;

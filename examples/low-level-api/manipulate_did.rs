@@ -3,7 +3,7 @@
 
 //! This example goes into more detail regarding the useage of DID Documents.
 //!
-//! cargo run --example manipulate_did_document
+//! cargo run --example low_manipulate_did
 
 use identity::crypto::KeyPair;
 use identity::iota::IotaDID;

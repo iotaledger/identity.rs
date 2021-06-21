@@ -344,7 +344,7 @@ async fn retrieve_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<P
 }
 
 async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
-  let public_key: PublicKey = retrieve_ed25519(&vault, location).await?;
+  let public_key: PublicKey = retrieve_ed25519(vault, location).await?;
   let signature: [u8; 64] = vault.ed25519_sign(payload, location_skey(location)).await?;
 
   Ok(Signature::new(public_key, signature.into()))

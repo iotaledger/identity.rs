@@ -4,16 +4,19 @@
 //! An example that utilizes a diff and integration chain to publish updates to a
 //! DID Document.
 //!
-//! cargo run --example diff_chain
+//! cargo run --example low_diff_chain
 
 use identity::core::Timestamp;
 use identity::did::MethodBuilder;
 use identity::did::MethodData;
 use identity::did::MethodRef;
 use identity::did::MethodType;
+use identity::iota::ClientMap;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
 use identity::iota::IntegrationChain;
+use identity::iota::MessageId;
+use identity::iota::TangleRef;
 use identity::prelude::*;
 use std::thread::sleep;
 use std::time::Duration;
@@ -21,7 +24,8 @@ use std::time::Duration;
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a new client connected to the Testnet (Chrysalis).
-  let client: Client = Client::new().await?;
+  let client: ClientMap = ClientMap::new();
+
   // Keep track of the chain state locally, for reference
   let mut chain: DocumentChain;
   let mut keys: Vec<KeyPair> = Vec::new();
@@ -33,8 +37,12 @@ async fn main() -> Result<()> {
   {
     let keypair: KeyPair = KeyPair::new_ed25519()?;
     let mut document: IotaDocument = IotaDocument::from_keypair(&keypair)?;
+
     document.sign(keypair.secret())?;
-    document.publish(&client).await?;
+
+    let message_id: MessageId = client.publish_document(&document).await?;
+
+    document.set_message_id(message_id);
 
     chain = DocumentChain::new(IntegrationChain::new(document)?);
     keys.push(keypair);
@@ -70,8 +78,10 @@ async fn main() -> Result<()> {
     new.set_previous_message_id(*chain.integration_message_id());
 
     chain.current().sign_data(&mut new, keys[0].secret())?;
-    new.publish(&client).await?;
 
+    let message_id: MessageId = client.publish_document(&new).await?;
+
+    new.set_message_id(message_id);
     keys.push(keypair);
     chain.try_push_integration(new)?;
 
@@ -94,16 +104,20 @@ async fn main() -> Result<()> {
       this
     };
 
-    let message_id = *chain.diff_message_id();
-    let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
+    let message_id: &MessageId = chain.diff_message_id();
+    let secret = keys[1].secret();
 
-    diff.publish(chain.integration_message_id(), &client).await?;
+    let mut diff: DocumentDiff = chain.current().diff(&new, *message_id, secret)?;
+
+    let message_id: MessageId = client.publish_diff(chain.integration_message_id(), &diff).await?;
+
+    diff.set_message_id(message_id);
     chain.try_push_diff(diff)?;
-    let message_id2 = *chain.diff_message_id();
+
+    println!("Diff Document Tx: {}", chain.diff_message_id());
 
     println!("Chain (3) > {:#}", chain);
-    let text: String = format!("Diff Message: {}", message_id2);
-    println!("Diff Document Tx: {}", text);
+    println!();
   }
 
   // =========================================================================
@@ -133,7 +147,7 @@ async fn main() -> Result<()> {
     new.set_previous_message_id(*chain.integration_message_id());
 
     new.sign(keypair.secret())?;
-    new.publish(&client).await?;
+    client.publish_document(&new).await?;
 
     println!("Chain Err > {:?}", chain.try_push_integration(new).unwrap_err());
   }
@@ -153,10 +167,13 @@ async fn main() -> Result<()> {
       this
     };
 
-    let message_id = *chain.diff_message_id();
-    let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret())?;
+    let message_id = chain.diff_message_id();
+    let secret = keys[1].secret();
 
-    diff.publish(chain.integration_message_id(), &client).await?;
+    let mut diff: DocumentDiff = chain.current().diff(&new, *message_id, secret)?;
+    let message_id: MessageId = client.publish_diff(chain.integration_message_id(), &diff).await?;
+
+    diff.set_message_id(message_id);
     chain.try_push_diff(diff)?;
 
     println!("Chain (4) > {:#}", chain);

@@ -5,7 +5,7 @@
 //! Documents, then creates a Verifiable Credential (vc) specifying claims about the
 //! subject, and retrieves information through the CredentialValidator API.
 //!
-//! cargo run --example verifiable_credential
+//! cargo run --example low_verifiable_credential
 
 mod common;
 
@@ -17,7 +17,7 @@ use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
 use identity::crypto::KeyPair;
-use identity::iota::Client;
+use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
 use identity::prelude::*;
@@ -47,7 +47,7 @@ fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Credent
 #[tokio::main]
 async fn main() -> Result<()> {
   // Initialize a `Client` to interact with the IOTA Tangle.
-  let client: Client = Client::new().await?;
+  let client: ClientMap = ClientMap::new();
 
   // Create a signed DID Document/KeyPair for the credential issuer (see previous example).
   let (doc_iss, key_iss): (IotaDocument, KeyPair) = common::create_did_document(&client).await?;
@@ -69,7 +69,7 @@ async fn main() -> Result<()> {
 
   // Create a `CredentialValidator` instance that will fetch
   // and validate all associated documents from the IOTA Tangle.
-  let validator: CredentialValidator = CredentialValidator::new(&client);
+  let validator: CredentialValidator<ClientMap> = CredentialValidator::new(&client);
 
   // Perform the validation operation.
   let validation: CredentialValidation = validator.check(&message).await?;

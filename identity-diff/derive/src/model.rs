@@ -252,7 +252,7 @@ impl InputModel {
 impl InputEnum {
   /// create a new `InputEnum`.
   pub fn new(input: &DeriveInput) -> Self {
-    let from_into = parse_from_into(&input);
+    let from_into = parse_from_into(input);
     Self {
       name: input.ident.clone(),
       diff: format_ident!("Diff{}", &input.ident),
@@ -304,7 +304,7 @@ impl InputEnum {
 impl InputStruct {
   /// create a new `InputStruct`.
   pub fn new(input: &DeriveInput) -> Self {
-    let from_into = parse_from_into(&input);
+    let from_into = parse_from_into(input);
 
     Self {
       variant: SVariant::Unit,
