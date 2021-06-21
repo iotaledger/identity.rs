@@ -1,30 +1,50 @@
-name: deploy docs to github pages
+name: deploy
 
 on:
+  pull_request:
+    branches: [docs/setup-docusaurus]
   push:
-    branches:
-      - main
+    branches: [docs/setup-docusaurus]
 
 jobs:
-  deploy:
-    runs-on: ubuntu-18.04
+  checks:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup mdBook
-        uses: peaceiris/actions-mdbook@v1
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
         with:
-          mdbook-version: 'latest'
-
-      - run: mdbook build
-
-      - run: cargo doc --document-private-items --no-deps --release
-      - run: cp -r target/doc book/docs
-
-      - name: Deploy
+          node-version: '12.x'
+      - name: Test Build
+        run: |
+          if [ -e yarn.lock ]; then
+          yarn install --frozen-lockfile
+          elif [ -e package-lock.json ]; then
+          npm ci
+          else
+          npm i
+          fi
+          npm run build
+  gh-release:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - name: Build
+        run: |
+          if [ -e yarn.lock ]; then
+          yarn install --frozen-lockfile
+          elif [ -e package-lock.json ]; then
+          npm ci
+          else
+          npm i
+          fi
+          npm run build
+      - name: Release to GitHub Pages
         uses: iotaledger/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./book
-          cname: identity.docs.iota.org
+          publish_dir: ./build
