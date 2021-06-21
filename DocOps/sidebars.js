@@ -34,5 +34,15 @@ module.exports = {
         },
       ],
     },
+    {
+      type: 'category',
+      label: 'Specificatons',
+      collapsed: false,
+      items: [
+        'specs/README',
+        'specs/iota_did_method_spec',
+        'specs/merkle_key_collection',
+      ],
+    },
   ],
 };
