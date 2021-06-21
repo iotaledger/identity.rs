@@ -6,7 +6,7 @@ module.exports = {
   title: 'IOTA IDENTITY',
   tagline: 'Providing Trust between Individuals, Organizations and Things.',
   url: 'https://your-docusaurus-test-site.com',
-  baseUrl: '/',
+  baseUrl: '/identity.rs/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
@@ -31,7 +31,7 @@ module.exports = {
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/facebook/docusaurus',
+          href: 'https://github.com/iotaledger/identity.rs',
           label: 'GitHub',
           position: 'right',
         },
