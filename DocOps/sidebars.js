@@ -25,6 +25,7 @@ module.exports = {
         'getting-started/overview',
         {
           DID: [
+            'getting-started/did/README',
             'getting-started/did/create',
             'getting-started/did/resolve',
             'getting-started/did/update',
