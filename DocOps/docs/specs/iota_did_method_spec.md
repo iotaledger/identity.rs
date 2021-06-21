@@ -19,7 +19,7 @@ This specification defines a method of implementing DID on top of the [IOTA Tang
 
 Blockchain | Tangle
 :---------:|:---------:
-<img src="./../images/blockchain-bottleneck.gif" alt="blockchain" style="max-height:100px"/> | <img src="./../images/tangle-bottleneck.gif" alt="tangle" style="max-height:100px"/>
+![](/img/blockchain-bottleneck.gif) | ![](/img/tangle-bottleneck.gif)
 
 For this method, the most important features of IOTA are: 
 
