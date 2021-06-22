@@ -80,9 +80,25 @@ impl HandlerGenerator {
     }
   }
 
+  fn generate_from_impls(&self) -> proc_macro2::TokenStream {
+    let variants = &self.field_idents;
+    let types = &self.field_types;
+
+    quote! {
+      #(
+        impl From<<#types as identity_actor::IdentityRequestHandler>::Request> for __RequestWrapper {
+          fn from(req: <#types as identity_actor::IdentityRequestHandler>::Request) -> Self {
+            Self::#variants(req)
+          }
+        }
+      )*
+    }
+  }
+
   fn generate(&self) -> proc_macro2::TokenStream {
     let request_wrapper_enum = self.generate_request_wrapper();
     let response_wrapper_enum = self.generate_response_wrapper();
+    let from_impls = self.generate_from_impls();
     let handler_trait = self.impl_handler_trait();
 
     let ident = &self.ident;
@@ -95,10 +111,12 @@ impl HandlerGenerator {
 
         #response_wrapper_enum
 
+        #from_impls
+
         #handler_trait
       }
 
-      type CustomIdentityCommunicator = identity_actor::IdentityCommunicator<
+      pub type CustomIdentityCommunicator = identity_actor::IdentityCommunicator<
         __generated::__RequestWrapper,
         __generated::__ResponseWrapper,
         __generated::__RequestWrapperPermission,
