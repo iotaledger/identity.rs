@@ -1,0 +1,30 @@
+[package]
+name = "identity-actor"
+version = "0.1.0"
+authors = ["IOTA Stiftung"]
+edition = "2018"
+license = "Apache-2.0"
+
+[dependencies]
+async-trait = "0.1.50"
+serde = { version="1.0", features=["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+async-std = { version="1.9", features=["attributes"] }
+futures = "0.3"
+identity-macros = { path="../identity-macros" }
+identity-account = { path="../identity-account" }
+identity-core = { path="../identity-core" }
+identity-did = { path="../identity-did" }
+libp2p = { version="0.38", default-features=false, features=[
+    "dns-async-std",
+    "mdns",
+    "noise",
+    "relay",
+    "tcp-async-io",
+    "yamux",
+] }
+
+[dependencies.stronghold-communication-refactored]
+git = "https://github.com/iotaledger/stronghold.rs"
+rev = "7c6847e55c58c9f250101c4c352e7d0e7e575de8"
