@@ -8,6 +8,7 @@ pub use communication_refactored::firewall::{
 pub mod communicator;
 pub mod handler;
 pub mod types;
+pub mod errors;
 
 pub use communicator::{DefaultIdentityHandler, IdentityCommunicator};
 pub use handler::IdentityStorageHandler;

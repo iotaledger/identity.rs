@@ -8,4 +8,5 @@ async fn main() {
   let handler = DefaultIdentityHandler::new();
   let mut comm = DefaultIdentityCommunicator::new(handler).await;
   comm.start_listening(None).await;
+  comm.handle_requests().await.unwrap();
 }

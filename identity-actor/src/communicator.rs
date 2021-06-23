@@ -1,18 +1,15 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::errors::{Error, Result};
 use communication_refactored::{
   firewall::{FirewallConfiguration, PermissionValue, ToPermissionVariants, VariantPermission},
   Keypair, NetworkEvent, ReceiveRequest, RequestMessage, ShCommunication, ShCommunicationBuilder,
 };
 use communication_refactored::{InitKeypair, Multiaddr, PeerId, RqRsMessage};
+use futures::{channel::mpsc, lock::Mutex, StreamExt};
 use identity_macros::IdentityHandler;
 use libp2p::tcp::TcpConfig;
-
-use futures::{
-  channel::mpsc,
-  StreamExt,
-};
 use std::fmt;
 
 use crate::{handler::IdentityStorageHandler, IdentityRequestHandler};
@@ -24,10 +21,9 @@ where
   ReqPerm: VariantPermission,
   ReqHandler: IdentityRequestHandler<Request = Req, Response = Res>,
 {
-  receiver: mpsc::Receiver<ReceiveRequest<Req, Res>>,
   net_events_receiver: mpsc::Receiver<NetworkEvent>,
   comm: ShCommunication<Req, Res, ReqPerm>,
-  handler: ReqHandler,
+  receiver_handler: Mutex<(ReqHandler, mpsc::Receiver<ReceiveRequest<Req, Res>>)>,
 }
 
 impl<Req, Res, ReqPerm, ReqHandler> IdentityCommunicator<Req, Res, ReqPerm, ReqHandler>
@@ -51,26 +47,31 @@ where
       .await;
 
     Self {
-      receiver: rq_rx,
       net_events_receiver,
       comm,
-      handler,
+      receiver_handler: Mutex::new((handler, rq_rx)),
     }
   }
 
-  pub async fn start_listening(&mut self, address: Option<Multiaddr>) {
+  pub async fn start_listening(&mut self, address: Option<Multiaddr>) -> Multiaddr {
     let addr = self.comm.start_listening(address).await.unwrap();
 
     println!("{} {}", addr, self.comm.get_peer_id());
+
+    addr
+  }
+
+  pub async fn handle_requests(&self) -> Result<()> {
+    let mut handler_receiver = self.receiver_handler.try_lock().ok_or(Error::LockInUse)?;
 
     loop {
       let ReceiveRequest {
         peer: _,
         request_id: _,
         request: RequestMessage { response_tx, data },
-      } = self.receiver.next().await.unwrap();
+      } = handler_receiver.1.next().await.unwrap();
 
-      let response = self.handler.handle(data);
+      let response = handler_receiver.0.handle(data);
 
       response_tx.send(response).unwrap();
     }
