@@ -37,7 +37,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+pub async fn main() -> Result<()> {
   let _ = run().await?;
 
   Ok(())
