@@ -1,56 +1,62 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! This example goes into more detail regarding the useage of DID Documents.
+//! An example that utilizes a diff and integration chain to publish updates to a
+//! DID Document.
 //!
-//! cargo run --example low_manipulate_did
+//! cargo run --example manipulate_did
 
+mod create_did;
+
+use identity::core::json;
+use identity::core::FromJson;
 use identity::crypto::KeyPair;
-use identity::iota::IotaDID;
+use identity::did::MethodScope;
+use identity::did::Service;
+use identity::iota::ClientMap;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
+use identity::iota::Receipt;
 use identity::iota::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  // Create a DID Document out of an ed25519 keypair.
-  let keypair: KeyPair = KeyPair::new_ed25519()?;
-  let mut document: IotaDocument = IotaDocument::from_keypair(&keypair)?;
+  // Create a client instance to send messages to the Tangle.
+  let client: ClientMap = ClientMap::new();
 
-  // Sign the DID Document with the default authentication key.
+  // Create a signed DID Document/KeyPair for the credential issuer (see create_did.rs).
+  let (mut document, keypair, receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
+
+  // Add a new VerificationMethod with a new keypair
+  let new_key: KeyPair = KeyPair::new_ed25519()?;
+  let method: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&new_key, "newKey")?;
+
+  assert!(document.insert_method(MethodScope::VerificationMethod, method));
+
+  // Add a new ServiceEndpoint
+  let service: Service = Service::from_json_value(json!({
+    "id": document.id().join("#linked-domain")?,
+    "type": "LinkedDomains",
+    "serviceEndpoint": "https://iota.org"
+  }))?;
+
+  assert!(document.insert_service(service));
+
+  // Add the messageId of the previous message in the chain.
+  // This is REQUIRED in order for the messages to form a chain.
+  // Skipping / forgetting this will render the publication useless.
+  document.set_previous_message_id(*receipt.message_id());
+
+  // Sign the DID Document with the appropriate key.
   document.sign(keypair.secret())?;
-  println!("DID Document (signed) > {:#}", document);
-  println!();
 
-  // We can access individual fields of the DID Document as defined below using the appropriate getters:
-  let _did: &IotaDID = document.id(); // The Document ID.
-  let _controller: Option<&IotaDID> = document.controller(); // The Document controller.
-  let _aka: &[identity::core::Url] = document.also_known_as(); // AKA: Subject of this identifier is also identified by one or more other identifiers.
-                                                               // ... etc. Each getter also has a _mut variant returning a mutable reference instead of an immutable one, e.g.
-                                                               // .id_mut() See also https://identity.docs.iota.org/docs/identity/did/struct.Document.html
+  // Publish the updated DID Document to the Tangle.
+  let receipt: Receipt = client.publish_document(&document).await?;
 
-  // We can iterate over a DID Document's verification methods using document.methods(), which returns an iterator:
-  for m in document.methods() {
-    // m is of type &IotaVerificationMethod
-    println!("Method > {:#}", m);
-  }
-  println!();
+  println!("Publish Receipt > {:#?}", receipt);
 
-  // We can also add and remove methods from a DID Document using insert_method() and remove_method() respectively.
-  let method: &IotaVerificationMethod = document.methods().next().unwrap();
-  let _method_did: &IotaDID = method.id();
-  // document.remove_method(identity::iota::DID::new(public: &[u8]));
-
-  // We can search for a specific method using .resolve(), for instance if we want to have the first #authentication
-  // method, we can use:
-  let auth_meth = document.resolve("#authentication").unwrap();
-  println!("Authentication Method > {:#}", auth_meth);
-  println!();
-
-  // We can sign arbitrary structs using the DID Document signer if they implement the trait
-  // `identity::crypto::SetSignature`
-  //
-  // e.g. document.signer(keypair.secret()).method("#authentication").sign(&mut test);
+  // Display the web explorer url that shows the published message.
+  println!("DID Document Transaction > {}", receipt.message_url());
 
   Ok(())
 }

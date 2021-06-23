@@ -4,33 +4,41 @@
 //! A basic example that generates and publishes a DID Document,
 //! the fundamental building block for decentralized identity.
 //!
-//! cargo run --example low_create_did
+//! cargo run --example create_did
 
 use identity::iota::ClientMap;
-use identity::iota::Network;
-use identity::iota::TangleRef;
+use identity::iota::Receipt;
 use identity::prelude::*;
 
-#[tokio::main] // Using this allows us to have an async main function.
-async fn main() -> Result<()> {
-  // Create a DID Document (an identity).
+pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
+  // Create a client instance to send messages to the Tangle.
+  let client: ClientMap = ClientMap::new();
+
+  // Generate a new ed25519 public/private key pair.
   let keypair: KeyPair = KeyPair::new_ed25519()?;
+
+  // Create a DID Document (an identity) from the generated key pair.
   let mut document: IotaDocument = IotaDocument::from_keypair(&keypair)?;
 
   // Sign the DID Document with the default authentication key.
   document.sign(keypair.secret())?;
 
-  // Create a new client connected to the Testnet (Chrysalis).
-  let client: ClientMap = ClientMap::new();
+  println!("DID Document JSON > {:#}", document);
 
-  // Use the client to publish the DID Document to the Tangle.
-  client.publish_document(&document).await?;
+  // Publish the DID Document to the Tangle.
+  let receipt: Receipt = client.publish_document(&document).await?;
 
-  // Print the DID Document IOTA transaction link.
-  let network = Network::from_did(document.id());
-  let explore: String = format!("{}/message/{}", network.explorer_url(), document.message_id());
+  println!("Publish Receipt > {:#?}", receipt);
 
-  println!("DID Document Transaction > {}", explore);
+  // Display the web explorer url that shows the published message.
+  println!("DID Document Transaction > {}", receipt.message_url());
+
+  Ok((document, keypair, receipt))
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+  let _ = run().await?;
 
   Ok(())
 }

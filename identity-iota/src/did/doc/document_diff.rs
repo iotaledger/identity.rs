@@ -16,12 +16,9 @@ use identity_did::verification::TryMethod;
 
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
-use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::Client;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
-use crate::tangle::Network;
 use crate::tangle::TangleRef;
 
 /// Defines the difference between two DID [`Document`]s' JSON representations.
@@ -88,34 +85,6 @@ impl DocumentDiff {
     let this: CoreDocument = Diff::merge(&core, data)?;
 
     Ok(this.serde_into()?)
-  }
-
-  /// Publishes the DID Document diff to the Tangle
-  ///
-  /// Uses the provided [`client`][``Client``] or a default `Client` based on
-  /// the DID network.
-  pub async fn publish<'client, C>(&mut self, message_id: &MessageId, client: C) -> Result<()>
-  where
-    C: Into<Option<&'client Client>>,
-  {
-    let network = Network::from_did(&self.did);
-
-    // Publish the DID Document diff to the Tangle.
-    let message: MessageId = match client.into() {
-      Some(client) if client.network() == network => client.publish_diff(message_id, self).await?,
-      Some(_) => return Err(Error::InvalidDIDNetwork),
-      None => {
-        Client::from_network(network)
-          .await?
-          .publish_diff(message_id, self)
-          .await?
-      }
-    };
-
-    // Update `self` with the `MessageId` of the bundled transaction.
-    self.set_message_id(message);
-
-    Ok(())
   }
 }
 

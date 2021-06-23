@@ -10,6 +10,8 @@ use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::Network;
 
+const DEFAULT_LOCAL_POW: bool = false;
+
 /// A `ClientBuilder` is used to generated a customized `Client`.
 pub struct ClientBuilder {
   pub(super) nodeset: bool,
@@ -23,7 +25,7 @@ impl ClientBuilder {
     Self {
       nodeset: false,
       network: Default::default(),
-      builder: iota_client::ClientBuilder::new(),
+      builder: iota_client::ClientBuilder::new().with_local_pow(DEFAULT_LOCAL_POW),
     }
   }
 

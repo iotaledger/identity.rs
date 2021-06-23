@@ -15,34 +15,6 @@ name = "getting_started"
 path = "getting_started.rs"
 
 [[example]]
-name = "low_create_did"
-path = "low-level-api/create_did.rs"
-
-[[example]]
-name = "low_manipulate_did"
-path = "low-level-api/manipulate_did.rs"
-
-[[example]]
-name = "low_verifiable_credential"
-path = "low-level-api/verifiable_credential.rs"
-
-[[example]]
-name = "low_verifiable_presentation"
-path = "low-level-api/verifiable_presentation.rs"
-
-[[example]]
-name = "low_resolution"
-path = "low-level-api/resolution.rs"
-
-[[example]]
-name = "low_diff_chain"
-path = "low-level-api/diff_chain.rs"
-
-[[example]]
-name = "low_merkle_key"
-path = "low-level-api/merkle_key.rs"
-
-[[example]]
 name = "account_basic"
 path = "account/basic.rs"
 
@@ -65,3 +37,27 @@ path = "account/signing.rs"
 [[example]]
 name = "account_stronghold"
 path = "account/stronghold.rs"
+
+[[example]]
+name = "create_did"
+path = "low-level-api/create_did.rs"
+
+[[example]]
+name = "create_vc"
+path = "low-level-api/create_vc.rs"
+
+[[example]]
+name = "create_vp"
+path = "low-level-api/create_vp.rs"
+
+[[example]]
+name = "manipulate_did"
+path = "low-level-api/manipulate_did.rs"
+
+[[example]]
+name = "merkle_key"
+path = "low-level-api/merkle_key.rs"
+
+[[example]]
+name = "resolution"
+path = "low-level-api/resolution.rs"

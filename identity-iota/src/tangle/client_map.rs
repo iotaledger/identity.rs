@@ -15,6 +15,7 @@ use crate::tangle::Client;
 use crate::tangle::ClientBuilder;
 use crate::tangle::MessageId;
 use crate::tangle::Network;
+use crate::tangle::Receipt;
 use crate::tangle::TangleResolve;
 
 type State = HashMap<Network, Arc<Client>>;
@@ -57,14 +58,14 @@ impl ClientMap {
     self.data.read().unwrap().keys().copied().collect()
   }
 
-  pub async fn publish_document(&self, document: &IotaDocument) -> Result<MessageId> {
+  pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
     let network: Network = document.id().network();
     let client: Arc<Client> = self.client(network).await?;
 
     client.publish_document(document).await
   }
 
-  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<MessageId> {
+  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
     let network: Network = diff.id().network();
     let client: Arc<Client> = self.client(network).await?;
 

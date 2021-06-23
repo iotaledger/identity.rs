@@ -2,23 +2,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::str::FromStr;
-use js_sys::Promise;
 use futures::executor;
-use identity::iota::MessageId;
-use identity::iota::DocumentDiff;
-use identity::iota::IotaDocument;
 use identity::iota::Client as IotaClient;
 use identity::iota::ClientMap as IotaClientMap;
+use identity::iota::DocumentDiff;
+use identity::iota::IotaDID;
+use identity::iota::IotaDocument;
+use identity::iota::MessageId;
+use identity::iota::TangleRef;
+use js_sys::Promise;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use crate::tangle::Client;
 use crate::tangle::Config;
 use crate::tangle::WasmNetwork;
 use crate::utils::err;
-use crate::wasm_document::WasmDocument;
 
 type Shared<T> = Rc<RefCell<T>>;
 
@@ -65,7 +65,7 @@ impl ClientMap {
         .publish_document(&document)
         .await
         .map_err(err)
-        .map(|message| message.to_string().into())
+        .and_then(|receipt| JsValue::from_serde(&receipt).map_err(err))
     });
 
     Ok(promise)
@@ -82,14 +82,35 @@ impl ClientMap {
         .publish_diff(&message, &diff)
         .await
         .map_err(err)
-        .map(|message| message.to_string().into())
+        .and_then(|receipt| JsValue::from_serde(&receipt).map_err(err))
     });
 
     Ok(promise)
   }
 
   pub fn resolve(&self, did: &str) -> Result<Promise, JsValue> {
-    todo!()
+    #[derive(Serialize)]
+    pub struct DocWrapper<'a> {
+      document: &'a IotaDocument,
+      #[serde(rename = "messageId")]
+      message_id: &'a MessageId,
+    }
+
+    let client: Shared<IotaClientMap> = self.client.clone();
+    let did: IotaDID = did.parse().map_err(err)?;
+
+    let promise: Promise = future_to_promise(async move {
+      client.borrow().resolve(&did).await.map_err(err).and_then(|document| {
+        let wrapper = DocWrapper {
+          document: &document,
+          message_id: document.message_id(),
+        };
+
+        JsValue::from_serde(&wrapper).map_err(err)
+      })
+    });
+
+    Ok(promise)
   }
 }
 

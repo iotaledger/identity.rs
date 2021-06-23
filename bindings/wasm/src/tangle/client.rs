@@ -82,10 +82,10 @@ impl Client {
     self.client.borrow().explorer_url().to_string()
   }
 
-  /// Returns the web explorer URL of the given `transaction`.
-  #[wasm_bindgen(js_name = transactionURL)]
-  pub fn transaction_url(&self, message_id: &str) -> String {
-    self.client.borrow().transaction_url(message_id).to_string()
+  /// Returns the web explorer URL of the given `message`.
+  #[wasm_bindgen(js_name = messageURL)]
+  pub fn message_url(&self, message_id: &str) -> String {
+    self.client.borrow().message_url(message_id).to_string()
   }
 
   /// Publishes an `IotaDocument` to the Tangle.
@@ -100,7 +100,7 @@ impl Client {
         .publish_document(&document)
         .await
         .map_err(err)
-        .map(|message| message.to_string().into())
+        .and_then(|receipt| JsValue::from_serde(&receipt).map_err(err))
     });
 
     Ok(promise)
@@ -119,7 +119,7 @@ impl Client {
         .publish_diff(&message, &diff)
         .await
         .map_err(err)
-        .map(|message| message.to_string().into())
+        .and_then(|receipt| JsValue::from_serde(&receipt).map_err(err))
     });
 
     Ok(promise)

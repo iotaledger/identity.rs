@@ -7,6 +7,8 @@
 <dd></dd>
 <dt><a href="#Client">Client</a></dt>
 <dd></dd>
+<dt><a href="#ClientMap">ClientMap</a></dt>
+<dd></dd>
 <dt><a href="#Config">Config</a></dt>
 <dd></dd>
 <dt><a href="#CredentialIssuance">CredentialIssuance</a></dt>
@@ -145,7 +147,7 @@
         * [.defaultNodeURL](#Client+defaultNodeURL) ⇒ <code>string</code>
         * [.explorerURL](#Client+explorerURL) ⇒ <code>string</code>
         * [.network()](#Client+network) ⇒ [<code>Network</code>](#Network)
-        * [.transactionURL(message_id)](#Client+transactionURL) ⇒ <code>string</code>
+        * [.messageURL(message_id)](#Client+messageURL) ⇒ <code>string</code>
         * [.publishDocument(document)](#Client+publishDocument) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.publishDiff(message_id, value)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolve(did)](#Client+resolve) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -178,10 +180,10 @@ Returns the web explorer URL of the `Client` network.
 Returns the `Client` Tangle network.
 
 **Kind**: instance method of [<code>Client</code>](#Client)
-<a name="Client+transactionURL"></a>
+<a name="Client+messageURL"></a>
 
-### client.transactionURL(message_id) ⇒ <code>string</code>
-Returns the web explorer URL of the given `transaction`.
+### client.messageURL(message_id) ⇒ <code>string</code>
+Returns the web explorer URL of the given `message`.
 
 **Kind**: instance method of [<code>Client</code>](#Client)
 
@@ -260,6 +262,66 @@ Creates a new `Client` with settings from the given `Config`.
 Creates a new `Client` with default settings for the given `Network`.
 
 **Kind**: static method of [<code>Client</code>](#Client)
+
+| Param | Type |
+| --- | --- |
+| network | [<code>Network</code>](#Network) |
+
+<a name="ClientMap"></a>
+
+## ClientMap
+**Kind**: global class
+
+* [ClientMap](#ClientMap)
+    * _instance_
+        * [.publish_document(document)](#ClientMap+publish_document) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.publish_diff(message_id, value)](#ClientMap+publish_diff) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.resolve(did)](#ClientMap+resolve) ⇒ <code>Promise.&lt;any&gt;</code>
+    * _static_
+        * [.from_config(config)](#ClientMap.from_config) ⇒ [<code>ClientMap</code>](#ClientMap)
+        * [.from_network(network)](#ClientMap.from_network) ⇒ [<code>ClientMap</code>](#ClientMap)
+
+<a name="ClientMap+publish_document"></a>
+
+### clientMap.publish\_document(document) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>ClientMap</code>](#ClientMap)
+
+| Param | Type |
+| --- | --- |
+| document | <code>any</code> |
+
+<a name="ClientMap+publish_diff"></a>
+
+### clientMap.publish\_diff(message_id, value) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>ClientMap</code>](#ClientMap)
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> |
+| value | <code>any</code> |
+
+<a name="ClientMap+resolve"></a>
+
+### clientMap.resolve(did) ⇒ <code>Promise.&lt;any&gt;</code>
+**Kind**: instance method of [<code>ClientMap</code>](#ClientMap)
+
+| Param | Type |
+| --- | --- |
+| did | <code>string</code> |
+
+<a name="ClientMap.from_config"></a>
+
+### ClientMap.from\_config(config) ⇒ [<code>ClientMap</code>](#ClientMap)
+**Kind**: static method of [<code>ClientMap</code>](#ClientMap)
+
+| Param | Type |
+| --- | --- |
+| config | [<code>Config</code>](#Config) |
+
+<a name="ClientMap.from_network"></a>
+
+### ClientMap.from\_network(network) ⇒ [<code>ClientMap</code>](#ClientMap)
+**Kind**: static method of [<code>ClientMap</code>](#ClientMap)
 
 | Param | Type |
 | --- | --- |
