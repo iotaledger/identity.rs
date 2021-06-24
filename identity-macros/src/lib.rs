@@ -95,10 +95,32 @@ impl HandlerGenerator {
     }
   }
 
+  fn generate_try_into_impls(&self) -> proc_macro2::TokenStream {
+    let variants = &self.field_idents;
+    let types = &self.field_types;
+
+    quote! {
+      #(
+        impl TryInto<<#types as identity_actor::IdentityRequestHandler>::Response> for __ResponseWrapper {
+          type Error = identity_actor::Error;
+
+          fn try_into(self) -> std::result::Result<<#types as identity_actor::IdentityRequestHandler>::Response, Self::Error> {
+            if let __ResponseWrapper::#variants(inner) = self {
+              Ok(inner)
+            } else {
+              Err(identity_actor::Error::UnexpectedRequest)
+            }
+          }
+        }
+      )*
+    }
+  }
+
   fn generate(&self) -> proc_macro2::TokenStream {
     let request_wrapper_enum = self.generate_request_wrapper();
     let response_wrapper_enum = self.generate_response_wrapper();
     let from_impls = self.generate_from_impls();
+    let try_into_impls = self.generate_try_into_impls();
     let handler_trait = self.impl_handler_trait();
 
     let ident = &self.ident;
@@ -112,6 +134,8 @@ impl HandlerGenerator {
         #response_wrapper_enum
 
         #from_impls
+
+        #try_into_impls
 
         #handler_trait
       }
