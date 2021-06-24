@@ -4,13 +4,13 @@
 use crate::errors::{Error, Result};
 use communication_refactored::{
   firewall::{FirewallConfiguration, PermissionValue, ToPermissionVariants, VariantPermission},
-  Keypair, NetworkEvent, ReceiveRequest, RequestMessage, ShCommunication, ShCommunicationBuilder,
+  Keypair, ReceiveRequest, ShCommunication, ShCommunicationBuilder,
 };
 use communication_refactored::{InitKeypair, Multiaddr, PeerId, RqRsMessage};
 use futures::{channel::mpsc, lock::Mutex, StreamExt};
 use identity_macros::IdentityHandler;
 use libp2p::tcp::TcpConfig;
-use std::fmt;
+use std::{convert::TryInto, fmt};
 
 use crate::{handler::IdentityStorageHandler, IdentityRequestHandler};
 
@@ -21,7 +21,6 @@ where
   ReqPerm: VariantPermission,
   ReqHandler: IdentityRequestHandler<Request = Req, Response = Res>,
 {
-  net_events_receiver: mpsc::Receiver<NetworkEvent>,
   comm: ShCommunication<Req, Res, ReqPerm>,
   receiver_handler: Mutex<(ReqHandler, mpsc::Receiver<ReceiveRequest<Req, Res>>)>,
 }
@@ -39,15 +38,13 @@ where
     let transport = TcpConfig::new().nodelay(true);
     let (dummy_tx, _) = mpsc::channel(1);
     let (rq_tx, rq_rx) = mpsc::channel(1);
-    let (net_events_sender, net_events_receiver) = mpsc::channel(1);
-    let comm = ShCommunicationBuilder::new(dummy_tx, rq_tx, Some(net_events_sender))
+    let comm = ShCommunicationBuilder::new(dummy_tx, rq_tx, None)
       .with_firewall_config(FirewallConfiguration::allow_all())
       .with_keys(InitKeypair::IdKeys(id_keys))
       .build_with_transport(transport)
       .await;
 
     Self {
-      net_events_receiver,
       comm,
       receiver_handler: Mutex::new((handler, rq_rx)),
     }
@@ -61,6 +58,9 @@ where
     addr
   }
 
+  /// Start handling incoming requests. This method does not return unless [`stop_listening`] is called.
+  /// This method should only be called once on any given instance.
+  /// A second caller would immediately receive an [`Error::LockInUse`].
   pub async fn handle_requests(&self) -> Result<()> {
     let mut handler_receiver = self.receiver_handler.try_lock().ok_or(Error::LockInUse)?;
 
@@ -68,27 +68,26 @@ where
       let ReceiveRequest {
         peer: _,
         request_id: _,
-        request: RequestMessage { response_tx, data },
-      } = handler_receiver.1.next().await.unwrap();
+        response_tx,
+        request,
+      } = handler_receiver.1.next().await.expect("Is only called on shutdown");
 
-      let response = handler_receiver.0.handle(data);
+      let response = handler_receiver.0.handle(request);
 
       response_tx.send(response).unwrap();
     }
   }
 
-  pub async fn send_command(&mut self, addr: Multiaddr, peer: PeerId, command: impl Into<Req>) -> Res {
+  pub async fn send_command<Ret, Cmd>(&self, addr: Multiaddr, peer: PeerId, command: Cmd) -> Result<Ret>
+  where
+    Res: TryInto<Ret, Error = crate::Error>,
+    Cmd: Into<Req>,
+  {
     self.comm.add_address(peer, addr);
     let recv = self.comm.send_request(peer, command.into());
-    match recv.response_rx.await {
-      Ok(res) => res,
-      Err(err) => {
-        println!("{:?}", err);
-        let ev = self.net_events_receiver.next().await;
-        println!("{:#?}", ev);
-        todo!()
-      }
-    }
+    let response = recv.response_rx.await.unwrap()?;
+
+    response.try_into()
   }
 }
 

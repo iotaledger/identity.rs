@@ -28,4 +28,4 @@ libp2p = { version="0.38", default-features=false, features=[
 
 [dependencies.stronghold-communication-refactored]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "7c6847e55c58c9f250101c4c352e7d0e7e575de8"
+rev = "6c9ff5d8b38d68475c200a2916f5683658284537"

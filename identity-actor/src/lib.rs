@@ -13,3 +13,4 @@ pub mod errors;
 pub use communicator::{DefaultIdentityHandler, IdentityCommunicator};
 pub use handler::IdentityStorageHandler;
 pub use types::IdentityRequestHandler;
+pub use errors::{Error, Result};

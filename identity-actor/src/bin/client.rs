@@ -7,7 +7,9 @@ use identity_account::{
   types::{Generation, KeyLocation},
 };
 use identity_actor::{
-  communicator::DefaultIdentityCommunicator, types::IdentityStorageRequest, DefaultIdentityHandler,
+  communicator::DefaultIdentityCommunicator,
+  types::{IdentityStorageRequest, IdentityStorageResponse},
+  DefaultIdentityHandler,
 };
 use identity_did::verification::MethodType;
 use std::str::FromStr;
@@ -22,18 +24,16 @@ async fn main() {
   println!("Connecting to {:?} with id: {:?}", address, peer_id);
 
   let handler = DefaultIdentityHandler::new();
-  let mut comm = DefaultIdentityCommunicator::new(handler).await;
+  let comm = DefaultIdentityCommunicator::new(handler).await;
 
-  let response = comm
-    .send_command(
-      Multiaddr::from_str(address).unwrap(),
-      PeerId::from_str(peer_id).unwrap(),
-      IdentityStorageRequest::KeyNew {
-        id: IdentityId::from_u32(0),
-        location: KeyLocation::new_authentication(MethodType::Ed25519VerificationKey2018, Generation::new()),
-      },
-    )
-    .await;
+  let addr = Multiaddr::from_str(address).unwrap();
+  let peer_id = PeerId::from_str(peer_id).unwrap();
+  let request = IdentityStorageRequest::KeyNew {
+    id: IdentityId::from_u32(0),
+    location: KeyLocation::new_authentication(MethodType::Ed25519VerificationKey2018, Generation::new()),
+  };
+
+  let response: IdentityStorageResponse = comm.send_command(addr, peer_id, request).await.unwrap();
 
   println!("Received: {:?}", response);
 }
