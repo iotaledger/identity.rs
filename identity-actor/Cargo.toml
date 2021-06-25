@@ -17,6 +17,7 @@ identity-macros = { path="../identity-macros" }
 identity-account = { path="../identity-account" }
 identity-core = { path="../identity-core" }
 identity-did = { path="../identity-did" }
+identity-iota = { path="../identity-iota" }
 libp2p = { version="0.38", default-features=false, features=[
     "dns-async-std",
     "mdns",

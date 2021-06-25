@@ -6,11 +6,11 @@ pub use communication_refactored::firewall::{
 };
 
 pub mod communicator;
+pub mod errors;
 pub mod handler;
 pub mod types;
-pub mod errors;
 
 pub use communicator::{DefaultIdentityHandler, IdentityCommunicator};
+pub use errors::{Error, Result};
 pub use handler::IdentityStorageHandler;
 pub use types::IdentityRequestHandler;
-pub use errors::{Error, Result};

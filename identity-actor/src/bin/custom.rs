@@ -19,14 +19,15 @@ pub enum CustomResponse {
   MyCustomResponse,
 }
 
+#[async_trait::async_trait]
 impl IdentityRequestHandler for CustomIdentityHandler {
   type Request = CustomRequest;
   type Response = CustomResponse;
   // type RequestPermission = CustomRequestPermission;
 
-  fn handle(&mut self, request: Self::Request) -> Self::Response {
+  async fn handle(&mut self, request: Self::Request) -> identity_account::Result<Self::Response> {
     match request {
-      CustomRequest::MyCustomRequest => CustomResponse::MyCustomResponse,
+      CustomRequest::MyCustomRequest => Ok(CustomResponse::MyCustomResponse),
     }
   }
 }

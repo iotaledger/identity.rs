@@ -72,7 +72,11 @@ where
         request,
       } = handler_receiver.1.next().await.expect("Is only called on shutdown");
 
-      let response = handler_receiver.0.handle(request);
+      let response = handler_receiver
+        .0
+        .handle(request)
+        .await
+        .expect("TODO: Change return type of this fn");
 
       response_tx.send(response).unwrap();
     }
@@ -98,9 +102,9 @@ pub struct DefaultIdentityHandler {
 }
 
 impl DefaultIdentityHandler {
-  pub fn new() -> Self {
+  pub async fn new() -> Self {
     Self {
-      identity_storage_handler: IdentityStorageHandler::new(),
+      identity_storage_handler: IdentityStorageHandler::new().await.unwrap(),
     }
   }
 }

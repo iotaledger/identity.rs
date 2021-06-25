@@ -37,7 +37,7 @@ impl HandlerGenerator {
     let types = &self.field_types;
 
     quote! {
-      #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, identity_actor::RequestPermissions)]
+      #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, identity_actor::RequestPermissions)]
       #[doc(hidden)]
       #[automatically_derived]
       pub enum __RequestWrapper {
@@ -51,7 +51,7 @@ impl HandlerGenerator {
     let types = &self.field_types;
 
     quote! {
-      #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, identity_actor::RequestPermissions)]
+      #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, identity_actor::RequestPermissions)]
       #[doc(hidden)]
       #[automatically_derived]
       pub enum __ResponseWrapper {
@@ -65,14 +65,15 @@ impl HandlerGenerator {
     let variants = &self.field_idents;
 
     quote! {
+      #[async_trait::async_trait]
       impl identity_actor::IdentityRequestHandler for #ident {
         type Request = __RequestWrapper;
         type Response = __ResponseWrapper;
 
-        fn handle(&mut self, request: Self::Request) -> Self::Response {
+        async fn handle(&mut self, request: Self::Request) -> identity_account::Result<Self::Response> {
           match request {
             #(
-              Self::Request::#variants(request) => Self::Response::#variants(self.#variants.handle(request)),
+              Self::Request::#variants(inner) => Ok(Self::Response::#variants(self.#variants.handle(inner).await?)),
             )*
           }
         }

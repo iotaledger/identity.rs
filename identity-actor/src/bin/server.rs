@@ -4,21 +4,16 @@
 use std::{str::FromStr, sync::Arc};
 
 use futures::future::join;
-use identity_account::{
-  identity::IdentityId,
-  types::{Generation, KeyLocation},
-};
 use identity_actor::{
   communicator::DefaultIdentityCommunicator,
   types::{IdentityStorageRequest, IdentityStorageResponse},
   DefaultIdentityHandler,
 };
-use identity_did::verification::MethodType;
 use libp2p::PeerId;
 
 #[async_std::main]
 async fn main() {
-  let handler = DefaultIdentityHandler::new();
+  let handler = DefaultIdentityHandler::new().await;
   let mut comm = DefaultIdentityCommunicator::new(handler).await;
   let addr = comm.start_listening(None).await;
 
@@ -33,10 +28,7 @@ async fn main() {
       .send_command::<IdentityStorageResponse, _>(
         addr,
         PeerId::from_str("12D3KooWQb2MDHhqhXj5cgnprciKHUTpcLQkD6dSawtkXVDQQmdS").unwrap(),
-        IdentityStorageRequest::KeyNew {
-          id: IdentityId::from_u32(0),
-          location: KeyLocation::new_authentication(MethodType::Ed25519VerificationKey2018, Generation::new()),
-        },
+        IdentityStorageRequest::List,
       )
       .await
   });

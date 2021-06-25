@@ -1,42 +1,36 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use communication_refactored::{
-  firewall::{PermissionValue, RequestPermissions, ToPermissionVariants, VariantPermission},
-  RqRsMessage,
-};
-use identity_account::{identity::IdentityId, types::KeyLocation};
+use communication_refactored::RqRsMessage;
+use identity_account::{events::Command, identity::IdentityCreate, types::Signature};
+use identity_iota::did::{IotaDID, IotaDocument};
 use serde::{Deserialize, Serialize};
-
 use std::fmt;
 
+#[async_trait::async_trait]
 pub trait IdentityRequestHandler {
   type Request: fmt::Debug + RqRsMessage;
   type Response: fmt::Debug + RqRsMessage;
 
-  fn handle(&mut self, request: Self::Request) -> Self::Response;
+  async fn handle(&mut self, request: Self::Request) -> identity_account::Result<Self::Response>;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, RequestPermissions)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum IdentityStorageRequest {
-  KeyNew { id: IdentityId, location: KeyLocation },
-  KeyGet { id: IdentityId, location: KeyLocation },
+  Create(IdentityCreate),
+  Read(IotaDID),
+  Update(IotaDID, Command),
+  Delete(IotaDID),
+  Sign(IotaDID, Vec<u8>),
+  List,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, RequestPermissions)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum IdentityStorageResponse {
-  KeyNew { public_key: Box<[u8]> },
-  KeyGet { public_key: Box<[u8]> },
-}
-
-pub struct ForeignLanguageHandler {}
-
-impl IdentityRequestHandler for ForeignLanguageHandler {
-  type Request = Vec<u8>;
-  type Response = Vec<u8>;
-
-  fn handle(&mut self, _request: Self::Request) -> Self::Response {
-    // Pass bytes off to foreign language
-    todo!()
-  }
+  Create(IotaDocument),
+  Read(Option<IotaDocument>),
+  Update,
+  Delete,
+  Sign(Signature),
+  List(Vec<IotaDocument>),
 }
