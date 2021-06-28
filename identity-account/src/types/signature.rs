@@ -6,6 +6,7 @@ use identity_core::crypto::PublicKey;
 /// A digital signature and associated public key.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Signature {
+  #[serde(with = "identity_core::utils::public_key_serde")]
   pub(crate) pkey: PublicKey,
   pub(crate) data: Vec<u8>,
 }
