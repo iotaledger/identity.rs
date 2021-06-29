@@ -6,6 +6,7 @@ mod client_builder;
 mod message_ext;
 mod message_index;
 mod network;
+mod receipt;
 mod traits;
 
 pub use self::client::Client;
@@ -14,7 +15,9 @@ pub use self::message_ext::MessageExt;
 pub use self::message_ext::MessageIdExt;
 pub use self::message_index::MessageIndex;
 pub use self::network::Network;
+pub use self::receipt::Receipt;
 pub use self::traits::TangleRef;
+pub use self::traits::TangleResolve;
 
 #[doc(inline)]
 pub use iota_client::bee_message::Message;

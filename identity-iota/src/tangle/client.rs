@@ -18,12 +18,8 @@ use crate::tangle::ClientBuilder;
 use crate::tangle::Message;
 use crate::tangle::MessageId;
 use crate::tangle::Network;
-
-#[derive(Clone, Debug)]
-pub struct Messages {
-  message_ids: Box<[MessageId]>,
-  messages: Vec<Message>,
-}
+use crate::tangle::Receipt;
+use crate::tangle::TangleResolve;
 
 #[derive(Debug)]
 pub struct Client {
@@ -78,61 +74,38 @@ impl Client {
     self.network.explorer_url()
   }
 
-  /// Returns the web explorer URL of the given `transaction`.
-  pub fn transaction_url(&self, message_id: &str) -> Url {
-    let mut url: Url = self.explorer_url().clone();
-
-    // unwrap is safe, the explorer URL is always a valid base URL
-    url.path_segments_mut().unwrap().push("messages").push(message_id);
-
-    url
+  /// Returns the web explorer URL of the given `message`.
+  pub fn message_url(&self, message_id: &str) -> Url {
+    self.network().message_url(message_id)
   }
 
   /// Publishes an `IotaDocument` to the Tangle.
-  ///
-  /// Note: The only validation performed is to ensure the correct Tangle
-  /// network is selected.
-  pub async fn publish_document(&self, document: &IotaDocument) -> Result<MessageId> {
-    debug!("Publish Document: {}", document.id());
-    debug!("Document JSON = {:#}", document);
-
-    debug_assert!(document.verify().is_ok());
-
-    self.check_network(document.id())?;
-
-    let message_builder = self
+  pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
+    self
       .client
       .message()
       .with_index(document.id().tag())
-      .with_data(document.to_json()?.into_bytes());
-
-    let message = message_builder.finish().await?;
-
-    Ok(message.id().0)
+      .with_data(document.to_json_vec()?)
+      .finish()
+      .await
+      .map_err(Into::into)
+      .map(|message| Receipt::new(self.network, message))
   }
 
   /// Publishes a `DocumentDiff` to the Tangle.
-  ///
-  /// Note: The only validation performed is to ensure the correct Tangle
-  /// network is selected.
-  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<MessageId> {
-    debug!("Publish Diff: {}", diff.id());
-    debug!("Diff JSON = {}", diff.to_json_pretty()?);
-
-    self.check_network(diff.id())?;
-
-    let message: Message = self
+  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
+    self
       .client
       .message()
       .with_index(&IotaDocument::diff_address(message_id)?)
-      .with_data(diff.to_json()?.into_bytes())
+      .with_data(diff.to_json_vec()?)
       .finish()
-      .await?;
-
-    Ok(message.id().0)
+      .await
+      .map_err(Into::into)
+      .map(|message| Receipt::new(self.network, message))
   }
 
-  pub async fn resolve(&self, did: &IotaDID) -> Result<IotaDocument> {
+  pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
     self.read_document_chain(did).await.and_then(DocumentChain::fold)
   }
 
@@ -141,8 +114,8 @@ impl Client {
     trace!("Integration Chain Address: {}", did.tag());
 
     // Fetch all messages for the integration chain.
-    let messages: Messages = self.read_messages(did.tag()).await?;
-    let integration_chain: IntegrationChain = IntegrationChain::try_from_messages(did, &messages.messages)?;
+    let messages: Vec<Message> = self.read_messages(did.tag()).await?;
+    let integration_chain: IntegrationChain = IntegrationChain::try_from_messages(did, &messages)?;
 
     // Check if there is any query given and return
     let skip_diff: bool = did.query_pairs().any(|(key, value)| key == "diff" && value == "false");
@@ -152,27 +125,18 @@ impl Client {
     } else {
       // Fetch all messages for the diff chain.
       let address: String = IotaDocument::diff_address(integration_chain.current_message_id())?;
-      let messages: Messages = self.read_messages(&address).await?;
+      let messages: Vec<Message> = self.read_messages(&address).await?;
 
-      trace!("Tangle Messages: {:?}", messages);
+      trace!("Diff Messages: {:#?}", messages);
 
-      DiffChain::try_from_messages(&integration_chain, &messages.messages)?
+      DiffChain::try_from_messages(&integration_chain, &messages)?
     };
 
     DocumentChain::with_diff_chain(integration_chain, diff)
   }
 
-  pub async fn read_messages(&self, address: &str) -> Result<Messages> {
-    let message_ids: Box<[MessageId]> = self.client.get_message().index(address).await?;
-
-    let messages: Vec<Message> = message_ids
-      .iter()
-      .map(|message| self.client.get_message().data(message))
-      .collect::<FuturesUnordered<_>>()
-      .try_collect()
-      .await?;
-
-    Ok(Messages { message_ids, messages })
+  pub async fn read_messages(&self, address: &str) -> Result<Vec<Message>> {
+    self.read_message_data(&self.read_message_index(address).await?).await
   }
 
   pub fn check_network(&self, did: &IotaDID) -> Result<()> {
@@ -181,5 +145,26 @@ impl Client {
     }
 
     Ok(())
+  }
+
+  async fn read_message_index(&self, address: &str) -> Result<Box<[MessageId]>> {
+    self.client.get_message().index(address).await.map_err(Into::into)
+  }
+
+  async fn read_message_data(&self, messages: &[MessageId]) -> Result<Vec<Message>> {
+    messages
+      .iter()
+      .map(|message| self.client.get_message().data(message))
+      .collect::<FuturesUnordered<_>>()
+      .try_collect()
+      .await
+      .map_err(Into::into)
+  }
+}
+
+#[async_trait::async_trait(?Send)]
+impl TangleResolve for Client {
+  async fn resolve(&self, did: &IotaDID) -> Result<IotaDocument> {
+    Client::read_document(self, did).await
   }
 }

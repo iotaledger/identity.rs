@@ -145,7 +145,7 @@
         * [.defaultNodeURL](#Client+defaultNodeURL) ⇒ <code>string</code>
         * [.explorerURL](#Client+explorerURL) ⇒ <code>string</code>
         * [.network()](#Client+network) ⇒ [<code>Network</code>](#Network)
-        * [.transactionURL(message_id)](#Client+transactionURL) ⇒ <code>string</code>
+        * [.messageURL(message_id)](#Client+messageURL) ⇒ <code>string</code>
         * [.publishDocument(document)](#Client+publishDocument) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.publishDiff(message_id, value)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolve(did)](#Client+resolve) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -178,10 +178,10 @@ Returns the web explorer URL of the `Client` network.
 Returns the `Client` Tangle network.
 
 **Kind**: instance method of [<code>Client</code>](#Client)
-<a name="Client+transactionURL"></a>
+<a name="Client+messageURL"></a>
 
-### client.transactionURL(message_id) ⇒ <code>string</code>
-Returns the web explorer URL of the given `transaction`.
+### client.messageURL(message_id) ⇒ <code>string</code>
+Returns the web explorer URL of the given `message`.
 
 **Kind**: instance method of [<code>Client</code>](#Client)
 

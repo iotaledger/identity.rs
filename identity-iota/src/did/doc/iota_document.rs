@@ -39,10 +39,8 @@ use crate::did::IotaVerificationMethod;
 use crate::did::Properties as BaseProperties;
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::Client;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
-use crate::tangle::Network;
 use crate::tangle::TangleRef;
 
 type Properties = VerifiableProperties<BaseProperties>;
@@ -316,6 +314,27 @@ impl IotaDocument {
   }
 
   // ===========================================================================
+  // Services
+  // ===========================================================================
+
+  pub fn service(&self) -> &OrderedSet<DIDKey<Service>> {
+    self.document.service()
+  }
+
+  pub fn insert_service(&mut self, service: Service) -> bool {
+    if service.id().fragment().is_none() {
+      false
+    } else {
+      self.document.service_mut().append(service.into())
+    }
+  }
+
+  pub fn remove_service(&mut self, did: &IotaDID) -> Result<()> {
+    self.document.service_mut().remove(did.as_ref());
+    Ok(())
+  }
+
+  // ===========================================================================
   // Verification Methods
   // ===========================================================================
 
@@ -501,29 +520,6 @@ impl IotaDocument {
   // Publishing
   // ===========================================================================
 
-  /// Publishes the DID Document to the Tangle
-  ///
-  /// Uses the provided [`client`][``Client``] or a default `Client` based on
-  /// the DID network.
-  pub async fn publish<'client, C>(&mut self, client: C) -> Result<()>
-  where
-    C: Into<Option<&'client Client>>,
-  {
-    let network = Network::from_did(self.id());
-
-    // Publish the DID Document to the Tangle.
-    let message: MessageId = match client.into() {
-      Some(client) if client.network() == network => client.publish_document(self).await?,
-      Some(_) => return Err(Error::InvalidDIDNetwork),
-      None => Client::from_network(network).await?.publish_document(self).await?,
-    };
-
-    // Update the `self` with the `MessageId` of the bundled transaction.
-    self.set_message_id(message);
-
-    Ok(())
-  }
-
   /// Returns the Tangle address of the DID diff chain.
   pub fn diff_address(message_id: &MessageId) -> Result<String> {
     if message_id.is_null() {
@@ -531,23 +527,6 @@ impl IotaDocument {
     }
 
     Ok(IotaDID::encode_key(message_id.encode_hex().as_bytes()))
-  }
-
-  pub fn service(&self) -> &OrderedSet<DIDKey<Service>> {
-    self.document.service()
-  }
-
-  pub fn insert_service(&mut self, service: Service) -> bool {
-    if service.id().fragment().is_none() {
-      false
-    } else {
-      self.document.service_mut().append(service.into())
-    }
-  }
-
-  pub fn remove_service(&mut self, did: &IotaDID) -> Result<()> {
-    self.document.service_mut().remove(did.as_ref());
-    Ok(())
   }
 }
 
