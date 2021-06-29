@@ -46,7 +46,7 @@ impl Network {
   }
 
   /// Returns the default node URL of the Tangle network.
-  pub fn node_url(self) -> &'static Url {
+  pub fn default_node_url(self) -> &'static Url {
     match self {
       Self::Mainnet => &*NODE_MAIN,
       Self::Testnet => &*NODE_TEST,

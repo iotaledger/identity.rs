@@ -51,4 +51,10 @@ pub enum Error {
   CannotRemoveAuthMethod,
   #[error("Cannot Revoke Verification Method")]
   CannotRevokeMethod,
+  /// Caused by attempting to read a poisoned shared resource.
+  #[error("Shared resource poisoned: read")]
+  SharedReadPoisoned,
+  /// Caused by attempting to write a poisoned shared resource.
+  #[error("Shared resource poisoned: write")]
+  SharedWritePoisoned,
 }

@@ -3,8 +3,8 @@
 
 use futures::stream::FuturesUnordered;
 use futures::stream::TryStreamExt;
-use identity_core::common::Url;
 use identity_core::convert::ToJson;
+use iota_client::Client as IotaClient;
 
 use crate::chain::DiffChain;
 use crate::chain::DocumentChain;
@@ -12,7 +12,6 @@ use crate::chain::IntegrationChain;
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
-use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::ClientBuilder;
 use crate::tangle::Message;
@@ -23,7 +22,7 @@ use crate::tangle::TangleResolve;
 
 #[derive(Debug)]
 pub struct Client {
-  pub(crate) client: iota_client::Client,
+  pub(crate) client: IotaClient,
   pub(crate) network: Network,
 }
 
@@ -50,7 +49,7 @@ impl Client {
     let mut client: iota_client::ClientBuilder = builder.builder;
 
     if !builder.nodeset {
-      client = client.with_node(builder.network.node_url().as_str())?;
+      client = client.with_node(builder.network.default_node_url().as_str())?;
     }
 
     Ok(Self {
@@ -62,21 +61,6 @@ impl Client {
   /// Returns the `Client` Tangle network.
   pub fn network(&self) -> Network {
     self.network
-  }
-
-  /// Returns the default node URL of the `Client` network.
-  pub fn default_node_url(&self) -> &'static Url {
-    self.network.node_url()
-  }
-
-  /// Returns the web explorer URL of the `Client` network.
-  pub fn explorer_url(&self) -> &'static Url {
-    self.network.explorer_url()
-  }
-
-  /// Returns the web explorer URL of the given `message`.
-  pub fn message_url(&self, message_id: &str) -> Url {
-    self.network().message_url(message_id)
   }
 
   /// Publishes an `IotaDocument` to the Tangle.
@@ -114,7 +98,7 @@ impl Client {
     trace!("Integration Chain Address: {}", did.tag());
 
     // Fetch all messages for the integration chain.
-    let messages: Vec<Message> = self.read_messages(did.tag()).await?;
+    let messages: Vec<Message> = Self::read_messages(&self.client, did.tag()).await?;
     let integration_chain: IntegrationChain = IntegrationChain::try_from_messages(did, &messages)?;
 
     // Check if there is any query given and return
@@ -125,7 +109,7 @@ impl Client {
     } else {
       // Fetch all messages for the diff chain.
       let address: String = IotaDocument::diff_address(integration_chain.current_message_id())?;
-      let messages: Vec<Message> = self.read_messages(&address).await?;
+      let messages: Vec<Message> = Self::read_messages(&self.client, &address).await?;
 
       trace!("Diff Messages: {:#?}", messages);
 
@@ -135,26 +119,21 @@ impl Client {
     DocumentChain::with_diff_chain(integration_chain, diff)
   }
 
-  pub async fn read_messages(&self, address: &str) -> Result<Vec<Message>> {
-    self.read_message_data(&self.read_message_index(address).await?).await
+  async fn read_messages(client: &IotaClient, address: &str) -> Result<Vec<Message>> {
+    let message_ids: Box<[MessageId]> = Self::read_message_index(client, address).await?;
+    let messages: Vec<Message> = Self::read_message_data(client, &message_ids).await?;
+
+    Ok(messages)
   }
 
-  pub fn check_network(&self, did: &IotaDID) -> Result<()> {
-    if !self.network.matches_did(did) {
-      return Err(Error::InvalidDIDNetwork);
-    }
-
-    Ok(())
+  async fn read_message_index(client: &IotaClient, address: &str) -> Result<Box<[MessageId]>> {
+    client.get_message().index(address).await.map_err(Into::into)
   }
 
-  async fn read_message_index(&self, address: &str) -> Result<Box<[MessageId]>> {
-    self.client.get_message().index(address).await.map_err(Into::into)
-  }
-
-  async fn read_message_data(&self, messages: &[MessageId]) -> Result<Vec<Message>> {
+  async fn read_message_data(client: &IotaClient, messages: &[MessageId]) -> Result<Vec<Message>> {
     messages
       .iter()
-      .map(|message| self.client.get_message().data(message))
+      .map(|message| client.get_message().data(message))
       .collect::<FuturesUnordered<_>>()
       .try_collect()
       .await
@@ -165,6 +144,6 @@ impl Client {
 #[async_trait::async_trait(?Send)]
 impl TangleResolve for Client {
   async fn resolve(&self, did: &IotaDID) -> Result<IotaDocument> {
-    Client::read_document(self, did).await
+    self.read_document(did).await
   }
 }

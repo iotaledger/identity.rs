@@ -67,24 +67,6 @@ impl Client {
     self.client.network().into()
   }
 
-  /// Returns the default node URL of the `Client` network.
-  #[wasm_bindgen(getter = defaultNodeURL)]
-  pub fn default_node_url(&self) -> String {
-    self.client.default_node_url().to_string()
-  }
-
-  /// Returns the web explorer URL of the `Client` network.
-  #[wasm_bindgen(getter = explorerURL)]
-  pub fn explorer_url(&self) -> String {
-    self.client.explorer_url().to_string()
-  }
-
-  /// Returns the web explorer URL of the given `message`.
-  #[wasm_bindgen(js_name = messageURL)]
-  pub fn message_url(&self, message_id: &str) -> String {
-    self.client.message_url(message_id).to_string()
-  }
-
   /// Publishes an `IotaDocument` to the Tangle.
   #[wasm_bindgen(js_name = publishDocument)]
   pub fn publish_document(&self, document: &JsValue) -> Result<Promise, JsValue> {
