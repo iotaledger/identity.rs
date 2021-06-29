@@ -53,14 +53,12 @@ impl ClientBuilder {
   /// Adds an IOTA node by its URL to be used as primary PoW node (for remote PoW).
   pub fn primary_pow_node(mut self, url: &str, jwt: Option<String>, basic_auth: Option<(&str, &str)>) -> Result<Self> {
     self.builder = self.builder.with_primary_pow_node(url, jwt, basic_auth)?;
-    self.nodeset = true;
     Ok(self)
   }
 
   /// Adds a permanode by its URL.
   pub fn permanode(mut self, url: &str, jwt: Option<String>, basic_auth: Option<(&str, &str)>) -> Result<Self> {
     self.builder = self.builder.with_permanode(url, jwt, basic_auth)?;
-    self.nodeset = true;
     Ok(self)
   }
 
@@ -93,7 +91,7 @@ impl ClientBuilder {
   /// Get node list from the `urls`.
   pub async fn node_pool_urls(mut self, urls: &[String]) -> Result<Self> {
     self.builder = self.builder.with_node_pool_urls(urls).await?;
-    self.nodeset = true;
+    self.nodeset = !urls.is_empty();
     Ok(self)
   }
 
