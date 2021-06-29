@@ -71,9 +71,9 @@ impl Network {
 }
 
 impl Default for Network {
-  /// The default `Network` is the `Testnet`.
+  /// The default `Network` is the `Mainnet`.
   fn default() -> Self {
-    Network::Testnet
+    Network::Mainnet
   }
 }
 
