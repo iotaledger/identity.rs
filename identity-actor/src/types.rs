@@ -1,13 +1,16 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use communication_refactored::RqRsMessage;
+use communication_refactored::{
+  firewall::{PermissionValue, RequestPermissions, VariantPermission},
+  RqRsMessage,
+};
 use identity_account::{events::Command, identity::IdentityCreate, types::Signature};
 use identity_iota::did::{IotaDID, IotaDocument};
 use serde::{Deserialize, Serialize};
 
 #[async_trait::async_trait]
-pub trait IdentityRequestHandler {
+pub trait IdentityRequestHandler: Send + Sync {
   type Request: RqRsMessage;
   type Response: RqRsMessage;
 
@@ -32,4 +35,19 @@ pub enum IdentityStorageResponse {
   Delete,
   Sign(Signature),
   List(Vec<IotaDocument>),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, RequestPermissions)]
+pub struct NamedRequest {
+  pub name: String,
+  pub data: Vec<u8>,
+}
+
+impl NamedRequest {
+  pub fn new<S: Into<String>>(name: S, data: Vec<u8>) -> Self {
+    Self {
+      name: name.into(),
+      data,
+    }
+  }
 }

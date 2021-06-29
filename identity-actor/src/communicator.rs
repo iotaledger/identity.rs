@@ -1,35 +1,39 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::errors::{Error, Result};
-use communication_refactored::{Keypair, ReceiveRequest, ShCommunication, ShCommunicationBuilder, TransportErr, firewall::{FirewallConfiguration, PermissionValue, ToPermissionVariants, VariantPermission}};
-use communication_refactored::{InitKeypair, Multiaddr, PeerId, RqRsMessage};
+use crate::{
+  errors::{Error, Result},
+  types::NamedRequest,
+};
+use communication_refactored::{
+  firewall::FirewallConfiguration, Keypair, ReceiveRequest, ShCommunication, ShCommunicationBuilder, TransportErr,
+};
+use communication_refactored::{InitKeypair, Multiaddr, PeerId};
+use dashmap::DashMap;
 use futures::{channel::mpsc, lock::Mutex, StreamExt};
-use identity_macros::IdentityHandler;
 use libp2p::tcp::TcpConfig;
-use std::{convert::TryInto, fmt};
+use serde::{de::DeserializeOwned, Serialize};
 
-use crate::{handler::IdentityStorageHandler, IdentityRequestHandler};
+use crate::IdentityRequestHandler;
 
-pub struct IdentityCommunicator<Req, Res, ReqPerm, ReqHandler>
-where
-  Req: fmt::Debug + RqRsMessage + ToPermissionVariants<ReqPerm>,
-  Res: fmt::Debug + RqRsMessage,
-  ReqPerm: VariantPermission,
-  ReqHandler: IdentityRequestHandler<Request = Req, Response = Res>,
-{
-  comm: ShCommunication<Req, Res, ReqPerm>,
-  receiver_handler: Mutex<(ReqHandler, mpsc::Receiver<ReceiveRequest<Req, Res>>)>,
+pub struct IdentityCommunicator {
+  comm: ShCommunication<NamedRequest, NamedRequest, NamedRequest>,
+  handler_map: DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>,
+  receiver: Mutex<mpsc::Receiver<ReceiveRequest<NamedRequest, NamedRequest>>>,
 }
 
-impl<Req, Res, ReqPerm, ReqHandler> IdentityCommunicator<Req, Res, ReqPerm, ReqHandler>
-where
-  Req: fmt::Debug + RqRsMessage + ToPermissionVariants<ReqPerm>,
-  Res: fmt::Debug + RqRsMessage,
-  ReqPerm: VariantPermission,
-  ReqHandler: IdentityRequestHandler<Request = Req, Response = Res>,
-{
-  pub async fn new(handler: ReqHandler) -> Self {
+impl IdentityCommunicator {
+  pub fn register_command<H: IdentityRequestHandler + 'static>(&self, command_name: &str, mut handler: H) {
+    let closure = Box::new(move |obj_bytes: Vec<u8>| {
+      let request = serde_json::from_slice(&obj_bytes).unwrap();
+      let ret = futures::executor::block_on(handler.handle(request)).unwrap();
+      serde_json::to_vec(&ret).unwrap()
+    });
+
+    self.handler_map.insert(command_name.into(), closure);
+  }
+
+  pub async fn new() -> Self {
     let id_keys = Keypair::generate_ed25519();
 
     let transport = TcpConfig::new().nodelay(true);
@@ -42,8 +46,9 @@ where
       .await;
 
     Self {
+      handler_map: DashMap::new(),
       comm,
-      receiver_handler: Mutex::new((handler, rq_rx)),
+      receiver: Mutex::new(rq_rx),
     }
   }
 
@@ -63,7 +68,7 @@ where
   /// This method should only be called once on any given instance.
   /// A second caller would immediately receive an [`Error::LockInUse`].
   pub async fn handle_requests(&self) -> Result<()> {
-    let mut handler_receiver = self.receiver_handler.try_lock().ok_or(Error::LockInUse)?;
+    let mut receiver = self.receiver.try_lock().ok_or(Error::LockInUse)?;
 
     loop {
       let ReceiveRequest {
@@ -71,44 +76,40 @@ where
         request_id: _,
         response_tx,
         request,
-      } = handler_receiver.1.next().await.expect("Is only called on shutdown");
+      } = receiver.next().await.expect("Is only called on shutdown");
 
-      let response = handler_receiver
-        .0
-        .handle(request)
-        .await
-        .expect("TODO: Change return type of this fn");
+      let response_data = match self.handler_map.get_mut(&request.name) {
+        Some(mut handler) => handler(request.data),
+        None => {
+          // TODO: Return as `Err`
+          panic!("Unknown request name");
+        }
+      };
+
+      let response = NamedRequest {
+        name: request.name,
+        data: response_data,
+      };
 
       response_tx.send(response).unwrap();
     }
   }
 
-  pub async fn send_command<Ret, Cmd>(&self, addr: Multiaddr, peer: PeerId, command: Cmd) -> Result<Ret>
-  where
-    Res: TryInto<Ret, Error = crate::Error>,
-    Cmd: Into<Req>,
-  {
+  pub fn add_peer(&self, peer: PeerId, addr: Multiaddr) {
     self.comm.add_address(peer, addr);
-    let recv = self.comm.send_request(peer, command.into());
+  }
+
+  pub async fn send_command<Ret, Cmd>(&self, peer: PeerId, command: Cmd) -> Result<Ret>
+  where
+    Cmd: Serialize,
+    Ret: DeserializeOwned,
+  {
+    // TODO: Get string from somewhere based on given type
+    let request = NamedRequest::new("IdentityStorage", serde_json::to_vec(&command).unwrap());
+    let recv = self.comm.send_request(peer, request);
     let response = recv.response_rx.await.unwrap()?;
 
-    response.try_into()
+    let response: Ret = serde_json::from_slice(&response.data).unwrap();
+    Ok(response)
   }
 }
-
-use crate as identity_actor;
-#[derive(IdentityHandler)]
-pub struct DefaultIdentityHandler {
-  identity_storage_handler: IdentityStorageHandler,
-}
-
-impl DefaultIdentityHandler {
-  pub async fn new() -> Self {
-    Self {
-      identity_storage_handler: IdentityStorageHandler::new().await.unwrap(),
-    }
-  }
-}
-
-/// The default communicator that handles storage and DIDComm requests
-pub use CustomIdentityCommunicator as DefaultIdentityCommunicator;

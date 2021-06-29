@@ -8,17 +8,20 @@ mod tests {
   use libp2p::{Multiaddr, PeerId};
 
   use crate::{
-    communicator::DefaultIdentityCommunicator,
+    communicator::IdentityCommunicator,
     types::{IdentityStorageRequest, IdentityStorageResponse},
-    DefaultIdentityHandler,
+    IdentityStorageHandler,
   };
 
   use identity_account::Result;
 
   #[async_std::test]
   async fn test_list_identities() -> Result<()> {
-    let handler = DefaultIdentityHandler::new().await;
-    let mut comm = DefaultIdentityCommunicator::new(handler).await;
+    let handler = IdentityStorageHandler::new().await?;
+    let mut comm = IdentityCommunicator::new().await;
+
+    comm.register_command("IdentityStorage", handler);
+
     // TODO: Handle error
     let addr = comm.start_listening(None).await.unwrap();
     let peer_id = comm.peer_id();
@@ -29,13 +32,14 @@ mod tests {
     let _listener_handle = task::spawn(async move { shared_clone.handle_requests().await });
 
     let sender = task::spawn(async move {
-      let handler = DefaultIdentityHandler::new().await;
-      let comm = DefaultIdentityCommunicator::new(handler).await;
+      let other_comm = IdentityCommunicator::new().await;
+      other_comm.add_peer(peer_id, addr);
 
-      comm
-        .send_command::<IdentityStorageResponse, _>(addr, peer_id, IdentityStorageRequest::List)
-        .await
-        .unwrap()
+      let res = other_comm
+        .send_command::<IdentityStorageResponse, _>(peer_id, IdentityStorageRequest::List)
+        .await;
+
+      res.unwrap()
     });
 
     let sender_result = sender.await;

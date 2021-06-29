@@ -26,6 +26,7 @@ libp2p = { version="0.38", default-features=false, features=[
     "tcp-async-io",
     "yamux",
 ] }
+dashmap = "4.0"
 
 [dependencies.stronghold-communication-refactored]
 git = "https://github.com/iotaledger/stronghold.rs"
