@@ -32,12 +32,12 @@ where
       None
     } else {
       let mut val_diffs: Vec<InnerValue<T>> = vec![];
-      for add in other.difference(&self) {
+      for add in other.difference(self) {
         let add = add.clone().into_diff()?;
         val_diffs.push(InnerValue::Add(add));
       }
 
-      for remove in self.difference(&other) {
+      for remove in self.difference(other) {
         let remove = remove.clone().into_diff()?;
         val_diffs.push(InnerValue::Remove { remove });
       }

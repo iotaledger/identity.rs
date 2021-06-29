@@ -72,7 +72,7 @@ impl IotaVerificationMethod {
     F: Into<Option<&'a str>>,
   {
     let key: &[u8] = keypair.public().as_ref();
-    let did: IotaDID = IotaDID::with_network(key, &network)?;
+    let did: IotaDID = IotaDID::with_network(key, network)?;
 
     Self::from_did(did, keypair, fragment)
   }

@@ -60,10 +60,10 @@ where
 
       if index < k {
         __generate::<D, L>(digest, path, this, index);
-        path.push(Node::R(compute_merkle_root::<D, L>(&that)));
+        path.push(Node::R(compute_merkle_root::<D, L>(that)));
       } else {
         __generate::<D, L>(digest, path, that, index - k);
-        path.push(Node::L(compute_merkle_root::<D, L>(&this)));
+        path.push(Node::L(compute_merkle_root::<D, L>(this)));
       }
     }
   }
