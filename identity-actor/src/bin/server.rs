@@ -15,7 +15,7 @@ use libp2p::PeerId;
 async fn main() {
   let handler = DefaultIdentityHandler::new().await;
   let mut comm = DefaultIdentityCommunicator::new(handler).await;
-  let addr = comm.start_listening(None).await;
+  let addr = comm.start_listening(None).await.unwrap();
 
   let shared_comm = Arc::new(comm);
   let shared_clone = Arc::clone(&shared_comm);

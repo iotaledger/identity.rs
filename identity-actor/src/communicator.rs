@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::errors::{Error, Result};
-use communication_refactored::{
-  firewall::{FirewallConfiguration, PermissionValue, ToPermissionVariants, VariantPermission},
-  Keypair, ReceiveRequest, ShCommunication, ShCommunicationBuilder,
-};
+use communication_refactored::{Keypair, ReceiveRequest, ShCommunication, ShCommunicationBuilder, TransportErr, firewall::{FirewallConfiguration, PermissionValue, ToPermissionVariants, VariantPermission}};
 use communication_refactored::{InitKeypair, Multiaddr, PeerId, RqRsMessage};
 use futures::{channel::mpsc, lock::Mutex, StreamExt};
 use identity_macros::IdentityHandler;
@@ -50,12 +47,16 @@ where
     }
   }
 
-  pub async fn start_listening(&mut self, address: Option<Multiaddr>) -> Multiaddr {
-    let addr = self.comm.start_listening(address).await.unwrap();
+  pub async fn start_listening(&mut self, address: Option<Multiaddr>) -> std::result::Result<Multiaddr, TransportErr> {
+    self.comm.start_listening(address).await
+  }
 
-    println!("{} {}", addr, self.comm.get_peer_id());
+  pub fn peer_id(&self) -> PeerId {
+    self.comm.get_peer_id()
+  }
 
-    addr
+  pub fn stop_listening(&mut self) {
+    self.comm.stop_listening();
   }
 
   /// Start handling incoming requests. This method does not return unless [`stop_listening`] is called.

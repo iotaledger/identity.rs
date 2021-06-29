@@ -5,12 +5,11 @@ use communication_refactored::RqRsMessage;
 use identity_account::{events::Command, identity::IdentityCreate, types::Signature};
 use identity_iota::did::{IotaDID, IotaDocument};
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 #[async_trait::async_trait]
 pub trait IdentityRequestHandler {
-  type Request: fmt::Debug + RqRsMessage;
-  type Response: fmt::Debug + RqRsMessage;
+  type Request: RqRsMessage;
+  type Response: RqRsMessage;
 
   async fn handle(&mut self, request: Self::Request) -> identity_account::Result<Self::Response>;
 }
