@@ -11,7 +11,7 @@ serde = { version="1.0", features=["derive"] }
 serde_json = "1.0"
 anyhow = "1.0"
 thiserror = "1.0"
-async-std = { version="1.9", features=["attributes"] }
+tokio = { version = "1.0", features = ["full"]}
 futures = "0.3"
 identity-macros = { path="../identity-macros" }
 identity-account = { path="../identity-account" }
@@ -30,4 +30,7 @@ dashmap = "4.0"
 
 [dependencies.stronghold-communication-refactored]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "6c9ff5d8b38d68475c200a2916f5683658284537"
+rev = "c08b66f1342127e3514f5be05d9976185814cbfa"
+
+[dev-dependencies]
+anyhow = "1.0"

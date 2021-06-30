@@ -8,11 +8,12 @@ use communication_refactored::{
 use identity_account::{events::Command, identity::IdentityCreate, types::Signature};
 use identity_iota::did::{IotaDID, IotaDocument};
 use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
 
 #[async_trait::async_trait]
 pub trait IdentityRequestHandler: Send + Sync {
-  type Request: RqRsMessage;
-  type Response: RqRsMessage;
+  type Request: Debug + RqRsMessage;
+  type Response: Debug + RqRsMessage;
 
   async fn handle(&mut self, request: Self::Request) -> identity_account::Result<Self::Response>;
 }

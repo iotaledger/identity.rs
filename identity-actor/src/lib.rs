@@ -6,6 +6,7 @@ pub use communication_refactored::firewall::{
 };
 
 pub mod dynamic;
+#[cfg(test)]
 mod tests;
 pub mod communicator;
 pub mod errors;

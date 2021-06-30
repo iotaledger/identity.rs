@@ -52,7 +52,7 @@ impl IdentityCommunicator {
     }
   }
 
-  pub async fn start_listening(&mut self, address: Option<Multiaddr>) -> std::result::Result<Multiaddr, TransportErr> {
+  pub async fn start_listening(&self, address: Option<Multiaddr>) -> std::result::Result<Multiaddr, TransportErr> {
     self.comm.start_listening(address).await
   }
 
@@ -60,7 +60,7 @@ impl IdentityCommunicator {
     self.comm.get_peer_id()
   }
 
-  pub fn stop_listening(&mut self) {
+  pub fn stop_listening(&self) {
     self.comm.stop_listening();
   }
 
@@ -71,27 +71,26 @@ impl IdentityCommunicator {
     let mut receiver = self.receiver.try_lock().ok_or(Error::LockInUse)?;
 
     loop {
-      let ReceiveRequest {
-        peer: _,
-        request_id: _,
-        response_tx,
-        request,
-      } = receiver.next().await.expect("Is only called on shutdown");
+      if let Some(ReceiveRequest {
+        response_tx, request, ..
+      }) = receiver.next().await
+      {
+        let response_data = match self.handler_map.get_mut(&request.name) {
+          Some(mut handler) => handler(request.data),
+          None => {
+            return Err(Error::UnknownRequest(request.name))
+          }
+        };
 
-      let response_data = match self.handler_map.get_mut(&request.name) {
-        Some(mut handler) => handler(request.data),
-        None => {
-          // TODO: Return as `Err`
-          panic!("Unknown request name");
-        }
-      };
+        let response = NamedRequest {
+          name: request.name,
+          data: response_data,
+        };
 
-      let response = NamedRequest {
-        name: request.name,
-        data: response_data,
-      };
-
-      response_tx.send(response).unwrap();
+        response_tx.send(response).unwrap();
+      } else {
+        return Ok(());
+      }
     }
   }
 
