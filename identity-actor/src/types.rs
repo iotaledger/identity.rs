@@ -39,12 +39,12 @@ pub enum IdentityStorageResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, RequestPermissions)]
-pub struct NamedRequest {
+pub struct NamedMessage {
   pub name: String,
   pub data: Vec<u8>,
 }
 
-impl NamedRequest {
+impl NamedMessage {
   pub fn new<S: Into<String>>(name: S, data: Vec<u8>) -> Self {
     Self {
       name: name.into(),

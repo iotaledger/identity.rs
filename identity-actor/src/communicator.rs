@@ -3,7 +3,7 @@
 
 use crate::{
   errors::{Error, Result},
-  types::NamedRequest,
+  types::NamedMessage,
 };
 use communication_refactored::{
   firewall::FirewallConfiguration, Keypair, ReceiveRequest, ShCommunication, ShCommunicationBuilder, TransportErr,
@@ -17,9 +17,9 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::IdentityRequestHandler;
 
 pub struct IdentityCommunicator {
-  comm: ShCommunication<NamedRequest, NamedRequest, NamedRequest>,
+  comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
   handler_map: DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>,
-  receiver: Mutex<mpsc::Receiver<ReceiveRequest<NamedRequest, NamedRequest>>>,
+  receiver: Mutex<mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>>,
 }
 
 impl IdentityCommunicator {
@@ -77,15 +77,10 @@ impl IdentityCommunicator {
       {
         let response_data = match self.handler_map.get_mut(&request.name) {
           Some(mut handler) => handler(request.data),
-          None => {
-            return Err(Error::UnknownRequest(request.name))
-          }
+          None => return Err(Error::UnknownRequest(request.name)),
         };
 
-        let response = NamedRequest {
-          name: request.name,
-          data: response_data,
-        };
+        let response = NamedMessage::new(request.name, response_data);
 
         response_tx.send(response).unwrap();
       } else {
@@ -104,7 +99,7 @@ impl IdentityCommunicator {
     Ret: DeserializeOwned,
   {
     // TODO: Get string from somewhere based on given type
-    let request = NamedRequest::new("IdentityStorage", serde_json::to_vec(&command).unwrap());
+    let request = NamedMessage::new("IdentityStorage", serde_json::to_vec(&command).unwrap());
     let recv = self.comm.send_request(peer, request);
     let response = recv.response_rx.await.unwrap()?;
 
