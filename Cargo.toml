@@ -1,6 +1,5 @@
 [workspace]
 resolver = "2"
-
 members = [
   "identity",
   "identity-comm",

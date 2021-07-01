@@ -4,7 +4,9 @@
 use hashbrown::HashMap;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota::tangle::Network;
+#[cfg(feature = "stronghold")]
 use std::path::PathBuf;
+#[cfg(feature = "stronghold")]
 use zeroize::Zeroize;
 
 use crate::account::Account;
@@ -13,12 +15,17 @@ use crate::account::Config;
 use crate::error::Result;
 use crate::storage::MemStore;
 use crate::storage::Storage;
+#[cfg(feature = "stronghold")]
 use crate::storage::Stronghold;
 
 /// The storage adapter used by an [Account].
+///
+/// Note that [AccountStorage::Stronghold] is only available if the `stronghold` feature is activated, which it is by
+/// default.
 #[derive(Debug)]
 pub enum AccountStorage {
   Memory,
+  #[cfg(feature = "stronghold")]
   Stronghold(PathBuf, Option<String>),
   Custom(Box<dyn Storage>),
 }
@@ -81,6 +88,7 @@ impl AccountBuilder {
   pub async fn build(mut self) -> Result<Account> {
     let account: Account = match self.storage {
       AccountStorage::Memory => Account::with_config(MemStore::new(), self.config).await?,
+      #[cfg(feature = "stronghold")]
       AccountStorage::Stronghold(snapshot, password) => {
         let passref: Option<&str> = password.as_deref();
         let adapter: Stronghold = Stronghold::new(&snapshot, passref).await?;

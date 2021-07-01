@@ -26,6 +26,7 @@ pub mod error;
 pub mod events;
 pub mod identity;
 pub mod storage;
+#[cfg(feature = "stronghold")]
 pub mod stronghold;
 pub mod types;
 pub mod utils;
