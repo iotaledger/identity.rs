@@ -10,7 +10,7 @@ pub mod errors;
 pub mod storage_handler;
 pub mod types;
 
-pub use communicator::IdentityCommunicator;
+pub use communicator::Communicator;
 pub use errors::{Error, Result};
 pub use libp2p::{Multiaddr, PeerId};
 pub use storage_handler::IdentityStorageHandler;

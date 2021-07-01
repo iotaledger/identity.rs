@@ -16,13 +16,13 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::IdentityRequestHandler;
 
-pub struct IdentityCommunicator {
+pub struct Communicator {
   comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
   handler_map: DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>,
   receiver: Mutex<mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>>,
 }
 
-impl IdentityCommunicator {
+impl Communicator {
   pub fn register_command<H: IdentityRequestHandler + 'static>(&self, command_name: &str, mut handler: H) {
     let closure = Box::new(move |obj_bytes: Vec<u8>| {
       let request = serde_json::from_slice(&obj_bytes).unwrap();

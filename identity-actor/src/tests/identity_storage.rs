@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio::task;
 
 use crate::{
-  communicator::IdentityCommunicator,
+  communicator::Communicator,
   types::{IdentityStorageRequest, IdentityStorageResponse},
   IdentityStorageHandler,
 };
@@ -11,7 +11,7 @@ use crate::{
 
 #[tokio::test]
 async fn test_list_identities() -> anyhow::Result<()> {
-  let comm = IdentityCommunicator::new().await;
+  let comm = Communicator::new().await;
 
   let handler = IdentityStorageHandler::new().await?;
   comm.register_command("IdentityStorage", handler);
@@ -25,7 +25,7 @@ async fn test_list_identities() -> anyhow::Result<()> {
   let listener_handle = task::spawn(async move { shared_clone.handle_requests().await });
 
   let sender = task::spawn(async move {
-    let other_comm = IdentityCommunicator::new().await;
+    let other_comm = Communicator::new().await;
     other_comm.add_peer(peer_id, addr);
 
     let res = other_comm
