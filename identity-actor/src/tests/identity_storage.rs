@@ -9,7 +9,7 @@ use crate::{
 };
 
 
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test]
 async fn test_list_identities() -> anyhow::Result<()> {
   let comm = IdentityCommunicator::new().await;
 
