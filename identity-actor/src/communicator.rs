@@ -24,6 +24,21 @@ pub struct Communicator {
 
 impl Communicator {
   pub fn register_command<H: IdentityRequestHandler + 'static>(&self, command_name: &str, mut handler: H) {
+    // An approach to directly produce a future from the closure, to work around the lack of async closures.
+    // However, we cannot move the handler in directly, because
+    // "cannot move out of `handler`, a captured variable in an `FnMut` closure"
+    // The issue is always that the produced Future has a reference to the handler
+    // let other =
+    //   Box::new(move |bytes: Vec<u8>| {
+    //     let future = Box::new(async {
+    //       let force_bytes_move = bytes;
+    //       let request = serde_json::from_slice(&force_bytes_move).unwrap();
+    //       let ret = handler.handle(request).await.unwrap();
+    //       serde_json::to_vec(&ret).unwrap()
+    //     });
+    //     future
+    //   });
+
     let closure = Box::new(move |obj_bytes: Vec<u8>| {
       let request = serde_json::from_slice(&obj_bytes).unwrap();
       let ret = futures::executor::block_on(handler.handle(request)).unwrap();
