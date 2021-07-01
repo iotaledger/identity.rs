@@ -10,7 +10,6 @@ members = [
   "identity-diff",
   "identity-iota",
   "identity-actor",
-  "identity-macros",
   "examples",
 ]
 
