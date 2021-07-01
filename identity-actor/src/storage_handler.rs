@@ -1,11 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_account::account::Account;
-use identity_iota::did::IotaDocument;
 use core::convert;
 use futures::stream::FuturesOrdered;
 use futures::TryStreamExt;
+use identity_account::account::Account;
 
 use crate::types::{IdentityStorageRequest, IdentityStorageResponse};
 use crate::IdentityRequestHandler;
