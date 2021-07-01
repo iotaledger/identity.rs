@@ -5,6 +5,7 @@
 mod tests;
 
 pub mod communicator;
+pub mod communicator_builder;
 pub mod errors;
 #[cfg(feature = "account")]
 pub mod storage_handler;

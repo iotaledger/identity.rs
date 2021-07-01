@@ -1,17 +1,24 @@
 use std::sync::Arc;
 
+use communication_refactored::{InitKeypair, Keypair};
+use libp2p::tcp::TcpConfig;
 use tokio::task;
 
 use crate::{
-  communicator::Communicator,
+  communicator_builder::CommunicatorBuilder,
   types::{IdentityStorageRequest, IdentityStorageResponse},
   IdentityStorageHandler,
 };
 
-
 #[tokio::test]
 async fn test_list_identities() -> anyhow::Result<()> {
-  let comm = Communicator::new().await;
+  let id_keys = Keypair::generate_ed25519();
+  let transport = TcpConfig::new().nodelay(true);
+
+  let comm = CommunicatorBuilder::new()
+    .keys(InitKeypair::IdKeys(id_keys))
+    .build_with_transport(transport)
+    .await;
 
   let handler = IdentityStorageHandler::new().await?;
   comm.register_command("IdentityStorage", handler);
@@ -25,7 +32,7 @@ async fn test_list_identities() -> anyhow::Result<()> {
   let listener_handle = task::spawn(async move { shared_clone.handle_requests().await });
 
   let sender = task::spawn(async move {
-    let other_comm = Communicator::new().await;
+    let other_comm = CommunicatorBuilder::new().build().await;
     other_comm.add_peer(peer_id, addr);
 
     let res = other_comm

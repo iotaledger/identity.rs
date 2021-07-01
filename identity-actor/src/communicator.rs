@@ -6,12 +6,11 @@ use crate::{
   types::NamedMessage,
 };
 use communication_refactored::{
-  firewall::FirewallConfiguration, Keypair, ReceiveRequest, ShCommunication, ShCommunicationBuilder, TransportErr,
+  ReceiveRequest, ShCommunication, TransportErr,
 };
-use communication_refactored::{InitKeypair, Multiaddr, PeerId};
+use communication_refactored::{Multiaddr, PeerId};
 use dashmap::DashMap;
 use futures::{channel::mpsc, lock::Mutex, StreamExt};
-use libp2p::tcp::TcpConfig;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::IdentityRequestHandler;
@@ -48,22 +47,14 @@ impl Communicator {
     self.handler_map.insert(command_name.into(), closure);
   }
 
-  pub async fn new() -> Self {
-    let id_keys = Keypair::generate_ed25519();
-
-    let transport = TcpConfig::new().nodelay(true);
-    let (dummy_tx, _) = mpsc::channel(1);
-    let (rq_tx, rq_rx) = mpsc::channel(1);
-    let comm = ShCommunicationBuilder::new(dummy_tx, rq_tx, None)
-      .with_firewall_config(FirewallConfiguration::allow_all())
-      .with_keys(InitKeypair::IdKeys(id_keys))
-      .build_with_transport(transport)
-      .await;
-
+  pub(crate) fn from_builder(
+    receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
+    comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
+  ) -> Self {
     Self {
-      handler_map: DashMap::new(),
       comm,
-      receiver: Mutex::new(rq_rx),
+      handler_map: DashMap::new(),
+      receiver: Mutex::new(receiver),
     }
   }
 
