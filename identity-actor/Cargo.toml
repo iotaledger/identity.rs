@@ -10,16 +10,14 @@ async-trait = "0.1.50"
 serde = { version="1.0", features=["derive"] }
 serde_json = "1.0"
 thiserror = "1.0"
-tokio = { version="1.0", features=["rt"], default-features = false }
 futures = "0.3"
 # identity-macros = { path="../identity-macros" }
-identity-account = { path="../identity-account", optional=true }
+identity-account = { path="../identity-account", default-features=false, optional=true }
 identity-core = { path="../identity-core" }
 identity-did = { path="../identity-did" }
-identity-iota = { path="../identity-iota", default-features = false, features = ["async"] }
+identity-iota = { path="../identity-iota", default-features=false }
 libp2p = { version="0.38", default-features=false, features=[
     "dns-async-std",
-    "mdns",
     "noise",
     "relay",
     "tcp-async-io",
@@ -27,14 +25,22 @@ libp2p = { version="0.38", default-features=false, features=[
 ] }
 dashmap = "4.0"
 
+[dependencies.tokio]
+git = "https://github.com/tokio-rs/tokio"
+# version = 1.7.1
+rev = "7601dc6d2a5c2902e78e220f44646960f910f38f"
+default-features = false
+features = ["rt"]
+
 [dependencies.stronghold-communication-refactored]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "c08b66f1342127e3514f5be05d9976185814cbfa"
+rev = "0efbfe31ae526e5e0aaec4e8e1da26e799c28b55"
+default-features = false
 
 [dev-dependencies]
 anyhow = "1.0"
 
 [features]
-account = ["identity-account"]
-wasm = ["identity-iota/wasm"]
-default = ["account"]
+account = ["identity-account/default"]
+wasm = ["identity-iota/wasm", "identity-account/wasm"]
+default = ["account", "stronghold-communication-refactored/tcp-transport"]
