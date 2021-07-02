@@ -17,6 +17,7 @@ pub mod error;
 
 pub mod chain;
 pub mod common;
+pub mod actor;
 pub mod credential;
 pub mod crypto;
 pub mod did;
