@@ -34,7 +34,7 @@ default = ["async"]
 async = ["identity-iota/async"]
 
 # Enables support for secure storage of DID Documents
-account = ["identity-account"]
+account = ["identity-account", "identity-actor/account"]
 
 # Enables support for DID Communication
 comm = ["identity-comm"]

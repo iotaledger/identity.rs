@@ -117,3 +117,9 @@ pub mod prelude {
   pub use identity_iota::tangle::Client;
   pub use identity_iota::Result;
 }
+
+pub mod actor {
+  //! Identity actor types
+
+  pub use identity_actor::*;
+}
