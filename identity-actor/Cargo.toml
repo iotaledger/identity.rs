@@ -7,16 +7,15 @@ license = "Apache-2.0"
 
 [dependencies]
 async-trait = "0.1.50"
-serde = { version="1.0", features=["derive"] }
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "1.0"
 futures = "0.3"
-# identity-macros = { path="../identity-macros" }
-identity-account = { path="../identity-account", default-features=false, optional=true }
-identity-core = { path="../identity-core" }
-identity-did = { path="../identity-did" }
-identity-iota = { path="../identity-iota", default-features=false }
-libp2p = { version="0.38", default-features=false, features=[
+identity-account = { path = "../identity-account", default-features = false, optional = true }
+identity-core = { path = "../identity-core" }
+identity-did = { path = "../identity-did" }
+identity-iota = { path = "../identity-iota", default-features = false }
+libp2p = { version = "0.38", default-features = false, features = [
     "dns-async-std",
     "noise",
     "relay",
@@ -24,13 +23,7 @@ libp2p = { version="0.38", default-features=false, features=[
     "yamux",
 ] }
 dashmap = "4.0"
-
-[dependencies.tokio]
-git = "https://github.com/tokio-rs/tokio"
-# version = 1.7.1
-rev = "7601dc6d2a5c2902e78e220f44646960f910f38f"
-default-features = false
-features = ["rt"]
+tokio = { version = "1.7", features = ["rt"] }
 
 [dependencies.stronghold-communication-refactored]
 git = "https://github.com/iotaledger/stronghold.rs"
