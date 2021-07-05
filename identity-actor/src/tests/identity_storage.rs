@@ -21,7 +21,7 @@ async fn test_list_identities() -> anyhow::Result<()> {
     .await;
 
   let handler = IdentityStorageHandler::new().await?;
-  comm.register_command("IdentityStorage", handler);
+  comm.set_handler("IdentityStorage", handler);
 
   let addr = comm.start_listening(None).await?;
   let peer_id = comm.peer_id();

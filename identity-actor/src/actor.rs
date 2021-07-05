@@ -22,7 +22,7 @@ pub struct Actor {
 }
 
 impl Actor {
-  pub fn register_command<H: IdentityRequestHandler + 'static>(&self, command_name: &str, mut handler: H) {
+  pub fn set_handler<H: IdentityRequestHandler + 'static>(&self, command_name: &str, mut handler: H) {
     // An approach to directly produce a future from the closure, to work around the lack of async closures.
     // However, we cannot move the handler in directly, because
     // "cannot move out of `handler`, a captured variable in an `FnMut` closure"
