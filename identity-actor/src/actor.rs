@@ -15,13 +15,13 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::IdentityRequestHandler;
 
-pub struct Communicator {
+pub struct Actor {
   comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
   handler_map: DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>,
   receiver: Mutex<mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>>,
 }
 
-impl Communicator {
+impl Actor {
   pub fn register_command<H: IdentityRequestHandler + 'static>(&self, command_name: &str, mut handler: H) {
     // An approach to directly produce a future from the closure, to work around the lack of async closures.
     // However, we cannot move the handler in directly, because

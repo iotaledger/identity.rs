@@ -5,7 +5,7 @@ use libp2p::tcp::TcpConfig;
 use tokio::task;
 
 use crate::{
-  actor_builder::CommunicatorBuilder,
+  actor_builder::ActorBuilder,
   types::{IdentityStorageRequest, IdentityStorageResponse},
   IdentityStorageHandler,
 };
@@ -15,7 +15,7 @@ async fn test_list_identities() -> anyhow::Result<()> {
   let id_keys = Keypair::generate_ed25519();
   let transport = TcpConfig::new().nodelay(true);
 
-  let comm = CommunicatorBuilder::new()
+  let comm = ActorBuilder::new()
     .keys(InitKeypair::IdKeys(id_keys))
     .build_with_transport(transport)
     .await;
@@ -32,7 +32,7 @@ async fn test_list_identities() -> anyhow::Result<()> {
   let listener_handle = task::spawn(async move { shared_clone.handle_requests().await });
 
   let sender = task::spawn(async move {
-    let other_comm = CommunicatorBuilder::new().build().await;
+    let other_comm = ActorBuilder::new().build().await;
     other_comm.add_peer(peer_id, addr);
 
     let res = other_comm

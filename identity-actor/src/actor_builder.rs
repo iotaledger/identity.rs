@@ -1,19 +1,19 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{types::NamedMessage, Communicator};
+use crate::{types::NamedMessage, Actor};
 use communication_refactored::firewall::FirewallConfiguration;
 use communication_refactored::InitKeypair;
 use communication_refactored::{ReceiveRequest, ShCommunicationBuilder};
 use futures::{channel::mpsc, AsyncRead, AsyncWrite};
 use libp2p::Transport;
 
-pub struct CommunicatorBuilder {
+pub struct ActorBuilder {
   receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
   comm_builder: ShCommunicationBuilder<NamedMessage, NamedMessage, NamedMessage>,
 }
 
-impl CommunicatorBuilder {
+impl ActorBuilder {
   pub fn new() -> Self {
     let (sender, receiver) = mpsc::channel(512);
     let (firewall_sender, _) = mpsc::channel(512);
@@ -22,12 +22,12 @@ impl CommunicatorBuilder {
     Self { receiver, comm_builder }
   }
 
-  pub async fn build(self) -> Communicator {
+  pub async fn build(self) -> Actor {
     let comm = self.comm_builder.build().await;
-    Communicator::from_builder(self.receiver, comm)
+    Actor::from_builder(self.receiver, comm)
   }
 
-  pub async fn build_with_transport<TRA>(self, transport: TRA) -> Communicator
+  pub async fn build_with_transport<TRA>(self, transport: TRA) -> Actor
   where
     TRA: Transport + Sized + Clone + Send + Sync + 'static,
     TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
@@ -37,7 +37,7 @@ impl CommunicatorBuilder {
     TRA::Error: Send + Sync,
   {
     let comm = self.comm_builder.build_with_transport(transport).await;
-    Communicator::from_builder(self.receiver, comm)
+    Actor::from_builder(self.receiver, comm)
   }
 
   pub fn keys(mut self, keys: InitKeypair) -> Self {

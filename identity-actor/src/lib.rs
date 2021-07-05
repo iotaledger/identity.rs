@@ -11,7 +11,7 @@ pub mod errors;
 pub mod storage_handler;
 pub mod types;
 
-pub use actor::Communicator;
+pub use actor::Actor;
 pub use errors::{Error, Result};
 pub use libp2p::{Multiaddr, PeerId};
 pub use storage_handler::IdentityStorageHandler;
