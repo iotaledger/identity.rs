@@ -5,7 +5,7 @@ use libp2p::tcp::TcpConfig;
 use tokio::task;
 
 use crate::{
-  communicator_builder::CommunicatorBuilder,
+  actor_builder::CommunicatorBuilder,
   types::{IdentityStorageRequest, IdentityStorageResponse},
   IdentityStorageHandler,
 };

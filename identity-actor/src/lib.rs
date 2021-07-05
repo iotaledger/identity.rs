@@ -4,14 +4,14 @@
 #[cfg(test)]
 mod tests;
 
-pub mod communicator;
-pub mod communicator_builder;
+pub mod actor;
+pub mod actor_builder;
 pub mod errors;
 #[cfg(feature = "account")]
 pub mod storage_handler;
 pub mod types;
 
-pub use communicator::Communicator;
+pub use actor::Communicator;
 pub use errors::{Error, Result};
 pub use libp2p::{Multiaddr, PeerId};
 pub use storage_handler::IdentityStorageHandler;
