@@ -129,11 +129,13 @@ impl Actor {
   }
 
   pub async fn send_request<Request: ActorRequest>(&self, peer: PeerId, command: Request) -> Result<Request::Response> {
-    // TODO: Get string from somewhere based on given type
-    let request = NamedMessage::new("IdentityStorage", serde_json::to_vec(&command).unwrap());
+    let request = NamedMessage::new(Request::request_name(), serde_json::to_vec(&command).unwrap());
     let recv = self.comm.send_request(peer, request);
     let response = recv.response_rx.await.unwrap()?;
 
+    // Map to a `could not deserialize` error
+    // And deserialize to a Result<Request::Response>
+    // as the request we sent could have been an unkown one (probably other errors exist)
     let response = serde_json::from_slice(&response.data).unwrap();
     Ok(response)
   }

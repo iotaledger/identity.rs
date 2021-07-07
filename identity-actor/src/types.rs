@@ -19,6 +19,8 @@ pub trait IdentityRequestHandler: Send + Sync {
 
 pub trait ActorRequest: Debug + Serialize + DeserializeOwned {
   type Response: Debug + Serialize + DeserializeOwned;
+
+  fn request_name() -> &'static str;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,6 +35,10 @@ pub enum IdentityStorageRequest {
 
 impl ActorRequest for IdentityStorageRequest {
   type Response = IdentityStorageResponse;
+
+  fn request_name() -> &'static str {
+    "Storage"
+  }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

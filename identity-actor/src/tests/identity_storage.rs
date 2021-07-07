@@ -1,6 +1,5 @@
 use communication_refactored::{InitKeypair, Keypair};
 use libp2p::tcp::TcpConfig;
-use tokio::task;
 
 use crate::{
   actor_builder::ActorBuilder,
@@ -19,7 +18,7 @@ async fn test_list_identities() -> anyhow::Result<()> {
     .await?;
 
   let handler = IdentityStorageHandler::new().await?;
-  comm.set_handler("IdentityStorage", handler);
+  comm.set_handler("Storage", handler);
 
   let addr = comm.addrs().pop().unwrap();
   let peer_id = comm.peer_id();
@@ -27,15 +26,9 @@ async fn test_list_identities() -> anyhow::Result<()> {
   let other_comm = ActorBuilder::new().build().await?;
   other_comm.add_peer(peer_id, addr);
 
-  let sender = task::spawn(async move {
-    let res = other_comm.send_request(peer_id, IdentityStorageRequest::List).await;
+  let result = other_comm.send_request(peer_id, IdentityStorageRequest::List).await?;
 
-    res.unwrap()
-  });
-
-  let sender_result = sender.await.unwrap();
-
-  assert!(matches!(sender_result, IdentityStorageResponse::List(vec) if vec.is_empty()));
+  assert!(matches!(result, IdentityStorageResponse::List(vec) if vec.is_empty()));
 
   comm.stop_handling_requests().await.unwrap();
 
