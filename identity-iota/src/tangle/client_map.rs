@@ -54,6 +54,16 @@ impl ClientMap {
     Client::from_builder(builder).await.map(Self::from_client)
   }
 
+  pub fn insert(&self, client: Client) -> Result<()> {
+    self
+      .data
+      .write()
+      .map_err(|_| Error::SharedWritePoisoned)?
+      .insert(client.network, Arc::new(client));
+
+    Ok(())
+  }
+
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
     let network: Network = document.id().network();
     let client: Arc<Client> = self.client(network).await?;

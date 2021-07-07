@@ -7,6 +7,7 @@ use identity::account::Account;
 use identity::account::AccountStorage;
 use identity::account::AutoSave;
 use identity::account::Result;
+use identity::iota::Network;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -20,6 +21,14 @@ async fn main() -> Result<()> {
     .dropsave(false) // save the account state on drop
     .milestone(4) // save a snapshot every 4 actions
     .storage(AccountStorage::Memory) // use the default in-memory storage adapter
+    // configure the mainnet Tangle client
+    .client(Network::Mainnet, |scope| {
+      scope
+        .node("https://chrysalis-nodes.iota.org")
+        .unwrap() // unwrap is safe, we provided a valid node URL
+        .permanode("https://chrysalis-chronicle.iota.org/api/mainnet/", None, None)
+        .unwrap() // unwrap is safe, we provided a valid permanode URL
+    })
     .build()
     .await?;
 
