@@ -6,7 +6,7 @@ use futures::stream::FuturesOrdered;
 use futures::TryStreamExt;
 use identity_account::account::Account;
 
-use crate::types::{IdentityStorageRequest, IdentityStorageResponse};
+use crate::types::{ActorRequest, IdentityStorageRequest, IdentityStorageResponse};
 use crate::IdentityRequestHandler;
 
 pub struct IdentityStorageHandler {
@@ -24,9 +24,8 @@ impl IdentityStorageHandler {
 #[async_trait::async_trait]
 impl IdentityRequestHandler for IdentityStorageHandler {
   type Request = IdentityStorageRequest;
-  type Response = IdentityStorageResponse;
 
-  async fn handle(&mut self, request: Self::Request) -> identity_account::Result<Self::Response> {
+  async fn handle(&mut self, request: Self::Request) -> identity_account::Result<<Self::Request as ActorRequest>::Response> {
     println!("Received {:?}", request);
 
     // TODO: PreProcessingHook

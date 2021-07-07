@@ -1,21 +1,24 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use communication_refactored::{
-  firewall::{PermissionValue, RequestPermissions, VariantPermission},
-  RqRsMessage,
-};
+use communication_refactored::firewall::{PermissionValue, RequestPermissions, VariantPermission};
 use identity_account::{events::Command, identity::IdentityCreate, types::Signature};
 use identity_iota::did::{IotaDID, IotaDocument};
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt::Debug;
 
 #[async_trait::async_trait]
 pub trait IdentityRequestHandler: Send + Sync {
-  type Request: Debug + RqRsMessage;
-  type Response: Debug + RqRsMessage;
+  type Request: ActorRequest;
 
-  async fn handle(&mut self, request: Self::Request) -> identity_account::Result<Self::Response>;
+  async fn handle(
+    &mut self,
+    request: Self::Request,
+  ) -> identity_account::Result<<Self::Request as ActorRequest>::Response>;
+}
+
+pub trait ActorRequest: Debug + Serialize + DeserializeOwned {
+  type Response: Debug + Serialize + DeserializeOwned;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,6 +29,10 @@ pub enum IdentityStorageRequest {
   Delete(IotaDID),
   Sign(IotaDID, Vec<u8>),
   List,
+}
+
+impl ActorRequest for IdentityStorageRequest {
+  type Response = IdentityStorageResponse;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

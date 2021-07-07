@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use communication_refactored::{InitKeypair, Keypair};
 use libp2p::tcp::TcpConfig;
 use tokio::task;
@@ -30,10 +28,7 @@ async fn test_list_identities() -> anyhow::Result<()> {
   other_comm.add_peer(peer_id, addr);
 
   let sender = task::spawn(async move {
-    // TODO: Let each request implement a trait that specifies the return type via an asssociated type
-    let res = other_comm
-      .send_command::<IdentityStorageResponse, _>(peer_id, IdentityStorageRequest::List)
-      .await;
+    let res = other_comm.send_request(peer_id, IdentityStorageRequest::List).await;
 
     res.unwrap()
   });

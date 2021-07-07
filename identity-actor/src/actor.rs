@@ -5,14 +5,12 @@ use std::sync::Arc;
 
 use crate::{
   errors::{Error, Result},
-  types::NamedMessage,
+  types::{ActorRequest, NamedMessage},
 };
 use communication_refactored::{Multiaddr, PeerId};
 use communication_refactored::{ReceiveRequest, ShCommunication, TransportErr};
 use dashmap::DashMap;
 use futures::{channel::mpsc, StreamExt};
-use identity_core::crypto::Named;
-use serde::{de::DeserializeOwned, Serialize};
 use tokio::task::{self, JoinHandle};
 
 use crate::IdentityRequestHandler;
@@ -130,17 +128,13 @@ impl Actor {
     self.comm.add_address(peer, addr);
   }
 
-  pub async fn send_command<Ret, Cmd>(&self, peer: PeerId, command: Cmd) -> Result<Ret>
-  where
-    Cmd: Serialize,
-    Ret: DeserializeOwned,
-  {
+  pub async fn send_request<Request: ActorRequest>(&self, peer: PeerId, command: Request) -> Result<Request::Response> {
     // TODO: Get string from somewhere based on given type
     let request = NamedMessage::new("IdentityStorage", serde_json::to_vec(&command).unwrap());
     let recv = self.comm.send_request(peer, request);
     let response = recv.response_rx.await.unwrap()?;
 
-    let response: Ret = serde_json::from_slice(&response.data).unwrap();
+    let response = serde_json::from_slice(&response.data).unwrap();
     Ok(response)
   }
 }
