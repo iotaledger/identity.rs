@@ -1,61 +1,55 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::sync::Arc;
+
 use crate::{
   errors::{Error, Result},
   types::NamedMessage,
 };
-use communication_refactored::{
-  ReceiveRequest, ShCommunication, TransportErr,
-};
 use communication_refactored::{Multiaddr, PeerId};
+use communication_refactored::{ReceiveRequest, ShCommunication, TransportErr};
 use dashmap::DashMap;
-use futures::{channel::mpsc, lock::Mutex, StreamExt};
+use futures::{channel::mpsc, StreamExt};
 use serde::{de::DeserializeOwned, Serialize};
+use tokio::task::{self, JoinHandle};
 
 use crate::IdentityRequestHandler;
 
 pub struct Actor {
   comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
-  handler_map: DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>,
-  receiver: Mutex<mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>>,
+  handler_map: Arc<DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>>,
+  listener_handle: JoinHandle<Result<()>>,
 }
 
 impl Actor {
-  pub fn set_handler<H: IdentityRequestHandler + 'static>(&self, command_name: &str, mut handler: H) {
-    // An approach to directly produce a future from the closure, to work around the lack of async closures.
-    // However, we cannot move the handler in directly, because
-    // "cannot move out of `handler`, a captured variable in an `FnMut` closure"
-    // The issue is always that the produced Future has a reference to the handler
-    // let other =
-    //   Box::new(move |bytes: Vec<u8>| {
-    //     let future = Box::new(async {
-    //       let force_bytes_move = bytes;
-    //       let request = serde_json::from_slice(&force_bytes_move).unwrap();
-    //       let ret = handler.handle(request).await.unwrap();
-    //       serde_json::to_vec(&ret).unwrap()
-    //     });
-    //     future
-    //   });
-
-    let closure = Box::new(move |obj_bytes: Vec<u8>| {
-      let request = serde_json::from_slice(&obj_bytes).unwrap();
-      let ret = futures::executor::block_on(handler.handle(request)).unwrap();
-      serde_json::to_vec(&ret).unwrap()
-    });
-
-    self.handler_map.insert(command_name.into(), closure);
-  }
-
-  pub(crate) fn from_builder(
+  pub(crate) async fn from_builder(
     receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
     comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
-  ) -> Self {
-    Self {
-      comm,
-      handler_map: DashMap::new(),
-      receiver: Mutex::new(receiver),
+    handler_map: DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>,
+    listening_addresses: Vec<Multiaddr>,
+  ) -> Result<Self> {
+    if listening_addresses.is_empty() {
+      comm.start_listening(None).await?;
     }
+
+    for addr in listening_addresses {
+      comm.start_listening(Some(addr)).await?;
+    }
+
+    let handler_map = Arc::new(handler_map);
+
+    let listener_handle = Self::spawn_listener(receiver, Arc::clone(&handler_map));
+
+    Ok(Self {
+      comm,
+      handler_map,
+      listener_handle,
+    })
+  }
+
+  pub fn set_handler<H: IdentityRequestHandler + 'static>(&self, command_name: &str, handler: H) {
+    set_handler(command_name, handler, &self.handler_map);
   }
 
   pub async fn start_listening(&self, address: Option<Multiaddr>) -> std::result::Result<Multiaddr, TransportErr> {
@@ -70,29 +64,50 @@ impl Actor {
     self.comm.stop_listening();
   }
 
+  pub fn addrs(&self) -> Vec<Multiaddr> {
+    let listeners = self.comm.get_listeners();
+    listeners.into_iter().map(|l| l.addrs).flatten().collect()
+  }
+
   /// Start handling incoming requests. This method does not return unless [`stop_listening`] is called.
   /// This method should only be called once on any given instance.
   /// A second caller would immediately receive an [`Error::LockInUse`].
-  pub async fn handle_requests(&self) -> Result<()> {
-    let mut receiver = self.receiver.try_lock().ok_or(Error::LockInUse)?;
+  fn spawn_listener(
+    mut receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
+    handler_map: Arc<DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>>,
+  ) -> JoinHandle<Result<()>> {
+    task::spawn(async move {
+      loop {
+        if let Some(ReceiveRequest {
+          response_tx, request, ..
+        }) = receiver.next().await
+        {
+          let response_data = match handler_map.get_mut(&request.name) {
+            Some(mut handler) => handler(request.data),
+            // TODO: Send error *back to peer*
+            None => return Err(Error::UnknownRequest(request.name)),
+          };
 
-    loop {
-      if let Some(ReceiveRequest {
-        response_tx, request, ..
-      }) = receiver.next().await
-      {
-        let response_data = match self.handler_map.get_mut(&request.name) {
-          Some(mut handler) => handler(request.data),
-          None => return Err(Error::UnknownRequest(request.name)),
-        };
+          let response = NamedMessage::new(request.name, response_data);
 
-        let response = NamedMessage::new(request.name, response_data);
-
-        response_tx.send(response).unwrap();
-      } else {
-        return Ok(());
+          // TODO: can return an error when
+          // - connection times out, when
+          // - when handler takes too long to respond (configurable via SwarmBuilder.with_timeout)
+          // - error on the transport layer
+          // - potentially others...
+          response_tx.send(response).unwrap();
+        } else {
+          return Ok(());
+        }
       }
-    }
+    })
+  }
+
+  pub async fn stop_handling_requests(self) -> Result<()> {
+    // aborting means that even requests that have been received and are being processed are cancelled
+    // We should instead use some signalling mechanism that breaks the loop
+    self.listener_handle.abort();
+    self.listener_handle.await.unwrap()
   }
 
   pub fn add_peer(&self, peer: PeerId, addr: Multiaddr) {
@@ -112,4 +127,32 @@ impl Actor {
     let response: Ret = serde_json::from_slice(&response.data).unwrap();
     Ok(response)
   }
+}
+
+pub(crate) fn set_handler<H: IdentityRequestHandler + 'static>(
+  command_name: &str,
+  mut handler: H,
+  handler_map: &DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>,
+) {
+  // An approach to directly produce a future from the closure, to work around the lack of async closures.
+  // However, we cannot move the handler in directly, because
+  // "cannot move out of `handler`, a captured variable in an `FnMut` closure"
+  // The issue is always that the produced Future has a reference to the handler
+  // let other =
+  //   Box::new(move |bytes: Vec<u8>| {
+  //     let future = Box::new(async {
+  //       let force_bytes_move = bytes;
+  //       let request = serde_json::from_slice(&force_bytes_move).unwrap();
+  //       let ret = handler.handle(request).await.unwrap();
+  //       serde_json::to_vec(&ret).unwrap()
+  //     });
+  //     future
+  //   });
+  let closure = Box::new(move |obj_bytes: Vec<u8>| {
+    let request = serde_json::from_slice(&obj_bytes).unwrap();
+    let ret = futures::executor::block_on(handler.handle(request)).unwrap();
+    serde_json::to_vec(&ret).unwrap()
+  });
+
+  handler_map.insert(command_name.into(), closure);
 }

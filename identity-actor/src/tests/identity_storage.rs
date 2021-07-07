@@ -18,23 +18,19 @@ async fn test_list_identities() -> anyhow::Result<()> {
   let comm = ActorBuilder::new()
     .keys(InitKeypair::IdKeys(id_keys))
     .build_with_transport(transport)
-    .await;
+    .await?;
 
   let handler = IdentityStorageHandler::new().await?;
   comm.set_handler("IdentityStorage", handler);
 
-  let addr = comm.start_listening(None).await?;
+  let addr = comm.addrs().pop().unwrap();
   let peer_id = comm.peer_id();
 
-  let shared_comm = Arc::new(comm);
-  let shared_clone = Arc::clone(&shared_comm);
-
-  let listener_handle = task::spawn(async move { shared_clone.handle_requests().await });
+  let other_comm = ActorBuilder::new().build().await?;
+  other_comm.add_peer(peer_id, addr);
 
   let sender = task::spawn(async move {
-    let other_comm = ActorBuilder::new().build().await;
-    other_comm.add_peer(peer_id, addr);
-
+    // TODO: Let each request implement a trait that specifies the return type via an asssociated type
     let res = other_comm
       .send_command::<IdentityStorageResponse, _>(peer_id, IdentityStorageRequest::List)
       .await;
@@ -46,8 +42,7 @@ async fn test_list_identities() -> anyhow::Result<()> {
 
   assert!(matches!(sender_result, IdentityStorageResponse::List(vec) if vec.is_empty()));
 
-  listener_handle.abort();
-  let _ = listener_handle.await;
+  comm.stop_handling_requests().await.unwrap();
 
   Ok(())
 }
