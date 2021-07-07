@@ -13,7 +13,7 @@ use dashmap::DashMap;
 use futures::{channel::mpsc, StreamExt};
 use tokio::task::{self, JoinHandle};
 
-use crate::IdentityRequestHandler;
+use crate::RequestHandler;
 
 pub struct Actor {
   comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
@@ -47,7 +47,7 @@ impl Actor {
     })
   }
 
-  pub fn set_handler<H: IdentityRequestHandler + 'static>(&self, command_name: &str, handler: H) {
+  pub fn set_handler<H: RequestHandler + 'static>(&self, command_name: &str, handler: H) {
     set_handler(command_name, handler, &self.handler_map);
   }
 
@@ -141,7 +141,7 @@ impl Actor {
   }
 }
 
-pub(crate) fn set_handler<H: IdentityRequestHandler + 'static>(
+pub(crate) fn set_handler<H: RequestHandler + 'static>(
   command_name: &str,
   mut handler: H,
   handler_map: &DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>,

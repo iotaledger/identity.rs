@@ -15,4 +15,4 @@ pub use actor::Actor;
 pub use errors::{Error, Result};
 pub use libp2p::{Multiaddr, PeerId};
 pub use storage_handler::IdentityStorageHandler;
-pub use types::{IdentityRequestHandler, IdentityStorageRequest, IdentityStorageResponse, NamedMessage};
+pub use types::{RequestHandler, StorageRequest, StorageResponse, NamedMessage};

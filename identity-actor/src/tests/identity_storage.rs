@@ -3,7 +3,7 @@ use libp2p::tcp::TcpConfig;
 
 use crate::{
   actor_builder::ActorBuilder,
-  types::{IdentityStorageRequest, IdentityStorageResponse},
+  types::{StorageRequest, StorageResponse},
   IdentityStorageHandler,
 };
 
@@ -26,9 +26,9 @@ async fn test_list_identities() -> anyhow::Result<()> {
   let other_comm = ActorBuilder::new().build().await?;
   other_comm.add_peer(peer_id, addr);
 
-  let result = other_comm.send_request(peer_id, IdentityStorageRequest::List).await?;
+  let result = other_comm.send_request(peer_id, StorageRequest::List).await?;
 
-  assert!(matches!(result, IdentityStorageResponse::List(vec) if vec.is_empty()));
+  assert!(matches!(result, StorageResponse::List(vec) if vec.is_empty()));
 
   comm.stop_handling_requests().await.unwrap();
 

@@ -3,7 +3,7 @@
 
 use crate::actor::set_handler;
 use crate::errors::Result;
-use crate::IdentityRequestHandler;
+use crate::RequestHandler;
 use crate::{types::NamedMessage, Actor};
 use communication_refactored::firewall::FirewallConfiguration;
 use communication_refactored::InitKeypair;
@@ -61,7 +61,7 @@ impl ActorBuilder {
     self
   }
 
-  pub fn handler<H: IdentityRequestHandler + 'static>(&self, command_name: &str, handler: H) {
+  pub fn handler<H: RequestHandler + 'static>(&self, command_name: &str, handler: H) {
     set_handler(command_name, handler, &self.handler_map);
   }
 }

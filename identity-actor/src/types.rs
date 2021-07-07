@@ -8,7 +8,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt::Debug;
 
 #[async_trait::async_trait]
-pub trait IdentityRequestHandler: Send + Sync {
+pub trait RequestHandler: Send + Sync {
   type Request: ActorRequest;
 
   async fn handle(
@@ -24,7 +24,7 @@ pub trait ActorRequest: Debug + Serialize + DeserializeOwned {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum IdentityStorageRequest {
+pub enum StorageRequest {
   Create(IdentityCreate),
   Read(IotaDID),
   Update(IotaDID, Command),
@@ -33,8 +33,8 @@ pub enum IdentityStorageRequest {
   List,
 }
 
-impl ActorRequest for IdentityStorageRequest {
-  type Response = IdentityStorageResponse;
+impl ActorRequest for StorageRequest {
+  type Response = StorageResponse;
 
   fn request_name() -> &'static str {
     "Storage"
@@ -42,7 +42,7 @@ impl ActorRequest for IdentityStorageRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum IdentityStorageResponse {
+pub enum StorageResponse {
   Create(IotaDocument),
   Read(Option<IotaDocument>),
   Update,

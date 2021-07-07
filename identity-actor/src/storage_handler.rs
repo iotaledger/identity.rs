@@ -6,8 +6,8 @@ use futures::stream::FuturesOrdered;
 use futures::TryStreamExt;
 use identity_account::account::Account;
 
-use crate::types::{ActorRequest, IdentityStorageRequest, IdentityStorageResponse};
-use crate::IdentityRequestHandler;
+use crate::types::{ActorRequest, StorageRequest, StorageResponse};
+use crate::RequestHandler;
 
 pub struct IdentityStorageHandler {
   account: Account,
@@ -22,8 +22,8 @@ impl IdentityStorageHandler {
 }
 
 #[async_trait::async_trait]
-impl IdentityRequestHandler for IdentityStorageHandler {
-  type Request = IdentityStorageRequest;
+impl RequestHandler for IdentityStorageHandler {
+  type Request = StorageRequest;
 
   async fn handle(&mut self, request: Self::Request) -> identity_account::Result<<Self::Request as ActorRequest>::Response> {
     println!("Received {:?}", request);
@@ -31,16 +31,16 @@ impl IdentityRequestHandler for IdentityStorageHandler {
     // TODO: PreProcessingHook
 
     let response = match request {
-      IdentityStorageRequest::Create(req) => {
+      StorageRequest::Create(req) => {
         let snapshot = self.account.create_identity(req).await?;
 
         let did = snapshot.identity().try_did()?;
 
         let document = self.account.resolve_identity(did).await?;
 
-        IdentityStorageResponse::Create(document)
+        StorageResponse::Create(document)
       }
-      IdentityStorageRequest::List => {
+      StorageRequest::List => {
         let list = self
           .account
           .list_identities()
@@ -55,7 +55,7 @@ impl IdentityRequestHandler for IdentityStorageHandler {
           .map(|snapshot| snapshot.identity().to_document())
           .collect::<identity_account::Result<Vec<_>>>()?;
 
-        IdentityStorageResponse::List(list)
+        StorageResponse::List(list)
       }
       _ => todo!(),
     };
