@@ -68,7 +68,7 @@ impl AccountBuilder {
   /// Apply configuration to the IOTA Tangle client for the given `Network`.
   pub fn client<F>(mut self, network: Network, f: F) -> Self
   where
-    F: Fn(ClientBuilder) -> ClientBuilder,
+    F: FnOnce(ClientBuilder) -> ClientBuilder,
   {
     self
       .clients
