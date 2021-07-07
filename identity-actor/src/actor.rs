@@ -11,6 +11,7 @@ use communication_refactored::{Multiaddr, PeerId};
 use communication_refactored::{ReceiveRequest, ShCommunication, TransportErr};
 use dashmap::DashMap;
 use futures::{channel::mpsc, StreamExt};
+use identity_core::crypto::Named;
 use serde::{de::DeserializeOwned, Serialize};
 use tokio::task::{self, JoinHandle};
 
@@ -77,25 +78,11 @@ impl Actor {
     handler_map: Arc<DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>>,
   ) -> JoinHandle<Result<()>> {
     task::spawn(async move {
+      let mut handles = vec![];
       loop {
-        if let Some(ReceiveRequest {
-          response_tx, request, ..
-        }) = receiver.next().await
-        {
-          let response_data = match handler_map.get_mut(&request.name) {
-            Some(mut handler) => handler(request.data),
-            // TODO: Send error *back to peer*
-            None => return Err(Error::UnknownRequest(request.name)),
-          };
-
-          let response = NamedMessage::new(request.name, response_data);
-
-          // TODO: can return an error when
-          // - connection times out, when
-          // - when handler takes too long to respond (configurable via SwarmBuilder.with_timeout)
-          // - error on the transport layer
-          // - potentially others...
-          response_tx.send(response).unwrap();
+        if let Some(receive_request) = receiver.next().await {
+          let handler_handle = Self::spawn_handler(receive_request, Arc::clone(&handler_map));
+          handles.push(handler_handle);
         } else {
           return Ok(());
         }
@@ -103,11 +90,40 @@ impl Actor {
     })
   }
 
+  fn spawn_handler(
+    receive_request: ReceiveRequest<NamedMessage, NamedMessage>,
+    handler_map: Arc<DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>>,
+  ) -> JoinHandle<Result<()>> {
+    task::spawn(async move {
+      let request = receive_request.request;
+      let response_tx = receive_request.response_tx;
+      let request_name = request.name;
+
+      let response_data = match handler_map.get_mut(&request_name) {
+        Some(mut handler) => handler(request.data),
+        // TODO: Send error *back to peer*
+        None => todo!(), //return Err(Error::UnknownRequest(request.name)),
+      };
+
+      let response = NamedMessage::new(request_name, response_data);
+
+      // TODO: can return an error when
+      // - connection times out, when
+      // - when handler takes too long to respond (configurable via SwarmBuilder.with_timeout)
+      // - error on the transport layer
+      // - potentially others...
+      response_tx
+        .send(response)
+        .map_err(|response| Error::CouldNotRespond(response.name))
+    })
+  }
+
   pub async fn stop_handling_requests(self) -> Result<()> {
-    // aborting means that even requests that have been received and are being processed are cancelled
+    // TODO: aborting means that even requests that have been received and are being processed are cancelled
     // We should instead use some signalling mechanism that breaks the loop
     self.listener_handle.abort();
-    self.listener_handle.await.unwrap()
+    let _ = self.listener_handle.await;
+    Ok(())
   }
 
   pub fn add_peer(&self, peer: PeerId, addr: Multiaddr) {

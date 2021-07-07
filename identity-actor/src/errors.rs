@@ -16,6 +16,8 @@ pub enum Error {
   IoError(std::io::Error),
   #[error("Multiaddr {0} is not supported")]
   MultiaddrNotSupported(Multiaddr),
+  #[error("could not respond to a {0} request, due to the handler taking too long to produce a response, the connection timing out or a transport error.")]
+  CouldNotRespond(String),
 }
 
 impl From<TransportErr> for Error {
