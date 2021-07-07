@@ -20,7 +20,7 @@ async function resolution(clientConfig) {
     const result = await manipulateIdentity(clientConfig);
 
     // Resolve a DID.
-    return await client.readDocument(result.doc.id.toString());
+    return await client.resolve(result.doc.id.toString());
 }
 
 exports.resolution = resolution;
