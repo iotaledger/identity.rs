@@ -22,8 +22,8 @@ async fn main() -> Result<()> {
     .milestone(4) // save a snapshot every 4 actions
     .storage(AccountStorage::Memory) // use the default in-memory storage adapter
     // configure the mainnet Tangle client
-    .client(Network::Mainnet, |scope| {
-      scope
+    .client(Network::Mainnet, |builder| {
+      builder
         .node("https://chrysalis-nodes.iota.org")
         .unwrap() // unwrap is safe, we provided a valid node URL
         .permanode("https://chrysalis-chronicle.iota.org/api/mainnet/", None, None)
