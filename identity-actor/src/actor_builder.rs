@@ -32,6 +32,7 @@ impl ActorBuilder {
     }
   }
 
+  #[cfg(feature = "tcp")]
   pub async fn build(self) -> Result<Actor> {
     let comm = self.comm_builder.build().await?;
     Actor::from_builder(self.receiver, comm, self.handler_map, self.listening_addresses).await

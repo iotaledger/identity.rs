@@ -35,4 +35,5 @@ anyhow = "1.0"
 [features]
 account = ["identity-account/default"]
 wasm = ["identity-iota/wasm", "identity-account/wasm"]
-default = ["account", "stronghold-communication-refactored/tcp-transport"]
+tcp = ["stronghold-communication-refactored/tcp-transport"]
+default = ["account", "tcp"]

@@ -14,5 +14,6 @@ pub mod types;
 pub use actor::Actor;
 pub use errors::{Error, Result};
 pub use libp2p::{Multiaddr, PeerId};
+#[cfg(feature = "account")]
 pub use storage_handler::IdentityStorageHandler;
 pub use types::{RequestHandler, StorageRequest, StorageResponse, NamedMessage};
