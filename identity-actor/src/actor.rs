@@ -7,10 +7,10 @@ use crate::{
   errors::{Error, Result},
   types::{ActorRequest, NamedMessage},
 };
-use communication_refactored::{Multiaddr, PeerId};
-use communication_refactored::{ReceiveRequest, ShCommunication, TransportErr};
+use communication_refactored::{ListenErr, Multiaddr, PeerId};
+use communication_refactored::{ReceiveRequest, ShCommunication};
 use dashmap::DashMap;
-use futures::{channel::mpsc, Future, StreamExt};
+use futures::{channel::mpsc, StreamExt};
 use tokio::task::{self, JoinHandle};
 
 use crate::RequestHandler;
@@ -24,7 +24,7 @@ pub struct Actor {
 impl Actor {
   pub(crate) async fn from_builder(
     receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
-    comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
+    mut comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
     handler_map: DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>,
     listening_addresses: Vec<Multiaddr>,
   ) -> Result<Self> {
@@ -62,7 +62,7 @@ impl Actor {
     self.handler_map.insert(command_name.into(), closure);
   }
 
-  pub async fn start_listening(&self, address: Option<Multiaddr>) -> std::result::Result<Multiaddr, TransportErr> {
+  pub async fn start_listening(&mut self, address: Option<Multiaddr>) -> std::result::Result<Multiaddr, ListenErr> {
     self.comm.start_listening(address).await
   }
 
@@ -70,12 +70,12 @@ impl Actor {
     self.comm.get_peer_id()
   }
 
-  pub fn stop_listening(&self) {
-    self.comm.stop_listening();
+  pub async fn stop_listening(&mut self) {
+    self.comm.stop_listening().await;
   }
 
-  pub fn addrs(&self) -> Vec<Multiaddr> {
-    let listeners = self.comm.get_listeners();
+  pub async fn addrs(&mut self) -> Vec<Multiaddr> {
+    let listeners = self.comm.get_listeners().await;
     listeners.into_iter().map(|l| l.addrs).flatten().collect()
   }
 
@@ -135,14 +135,13 @@ impl Actor {
     Ok(())
   }
 
-  pub fn add_peer(&self, peer: PeerId, addr: Multiaddr) {
-    self.comm.add_address(peer, addr);
+  pub async fn add_peer(&mut self, peer: PeerId, addr: Multiaddr) {
+    self.comm.add_address(peer, addr).await;
   }
 
-  pub async fn send_request<Request: ActorRequest>(&self, peer: PeerId, command: Request) -> Result<Request::Response> {
+  pub async fn send_request<Request: ActorRequest>(&mut self, peer: PeerId, command: Request) -> Result<Request::Response> {
     let request = NamedMessage::new(Request::request_name(), serde_json::to_vec(&command).unwrap());
-    let recv = self.comm.send_request(peer, request);
-    let response = recv.response_rx.await.unwrap()?;
+    let response = self.comm.send_request(peer, request).await.unwrap();
 
     // Map to a `could not deserialize` error
     // And deserialize to a Result<Request::Response>

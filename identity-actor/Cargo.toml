@@ -15,19 +15,18 @@ identity-account = { path = "../identity-account", default-features = false, opt
 identity-core = { path = "../identity-core" }
 identity-did = { path = "../identity-did" }
 identity-iota = { path = "../identity-iota", default-features = false }
-libp2p = { version = "0.38", default-features = false, features = [
-    "dns-async-std",
-    "noise",
-    "relay",
-    "tcp-async-io",
-    "yamux",
-] }
 dashmap = "4.0"
 tokio = { version = "1.7", features = ["rt"] }
 
+[dependencies.libp2p]
+git = "https://github.com/libp2p/rust-libp2p"
+version = "0.39"
+default-features = false
+features = ["tcp-async-io"]
+
 [dependencies.stronghold-communication-refactored]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "0efbfe31ae526e5e0aaec4e8e1da26e799c28b55"
+rev = "3075df68dc26676008682f60ef42b5a3192135e1"
 default-features = false
 
 [dev-dependencies]

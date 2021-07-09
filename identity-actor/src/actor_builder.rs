@@ -3,14 +3,13 @@
 
 use crate::actor::set_handler;
 use crate::errors::Result;
-use crate::RequestHandler;
 use crate::{types::NamedMessage, Actor};
 use communication_refactored::firewall::FirewallConfiguration;
 use communication_refactored::InitKeypair;
 use communication_refactored::{ReceiveRequest, ShCommunicationBuilder};
 use dashmap::DashMap;
 use futures::{channel::mpsc, AsyncRead, AsyncWrite};
-use libp2p::{Multiaddr, Transport};
+use libp2p::{Multiaddr, core::{Transport}};
 
 pub struct ActorBuilder {
   receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
@@ -34,7 +33,7 @@ impl ActorBuilder {
   }
 
   pub async fn build(self) -> Result<Actor> {
-    let comm = self.comm_builder.build().await;
+    let comm = self.comm_builder.build().await?;
     Actor::from_builder(self.receiver, comm, self.handler_map, self.listening_addresses).await
   }
 
