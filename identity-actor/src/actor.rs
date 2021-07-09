@@ -1,7 +1,10 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
+use std::{
+  any::{Any, TypeId},
+  sync::Arc,
+};
 
 use crate::{
   errors::{Error, Result},
@@ -18,6 +21,7 @@ use crate::RequestHandler;
 pub struct Actor {
   comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
   handler_map: Arc<DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>>,
+  handler_type_map: Arc<DashMap<TypeId, Box<dyn Any + Send + Sync + 'static>>>,
   listener_handle: JoinHandle<Result<()>>,
 }
 
@@ -37,26 +41,42 @@ impl Actor {
     }
 
     let handler_map = Arc::new(handler_map);
-
+    let handler_type_map = Arc::new(DashMap::new());
     let listener_handle = Self::spawn_listener(receiver, Arc::clone(&handler_map));
 
     Ok(Self {
       comm,
       handler_map,
+      handler_type_map,
       listener_handle,
     })
+  }
+
+  pub fn set_handler_type<H: Send + Sync + 'static>(&self, handler: H) {
+    self.handler_type_map.insert(TypeId::of::<H>(), Box::new(handler));
   }
 
   pub fn set_handler<H: Send + Sync + 'static, Req: ActorRequest>(
     &self,
     command_name: &str,
-    handler: H,
     handler_func: fn(&H, Req) -> <Req as ActorRequest>::Response,
   ) {
+    let handler_type_map = Arc::clone(&self.handler_type_map);
+
     let closure = Box::new(move |obj_bytes: Vec<u8>| {
       let request = serde_json::from_slice(&obj_bytes).unwrap();
-      let ret = handler_func(&handler, request);
-      serde_json::to_vec(&ret).unwrap()
+
+      let ret = if let Some(handler_ty) = handler_type_map.get(&TypeId::of::<H>()) {
+        if let Some(handler_concrete_type) = handler_ty.downcast_ref() {
+          Some(handler_func(&handler_concrete_type, request))
+        } else {
+          None
+        }
+      } else {
+        None
+      };
+
+      serde_json::to_vec(&ret.unwrap()).unwrap()
     });
 
     self.handler_map.insert(command_name.into(), closure);
@@ -139,7 +159,11 @@ impl Actor {
     self.comm.add_address(peer, addr).await;
   }
 
-  pub async fn send_request<Request: ActorRequest>(&mut self, peer: PeerId, command: Request) -> Result<Request::Response> {
+  pub async fn send_request<Request: ActorRequest>(
+    &mut self,
+    peer: PeerId,
+    command: Request,
+  ) -> Result<Request::Response> {
     let request = NamedMessage::new(Request::request_name(), serde_json::to_vec(&command).unwrap());
     let response = self.comm.send_request(peer, request).await.unwrap();
 

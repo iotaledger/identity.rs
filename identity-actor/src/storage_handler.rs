@@ -3,10 +3,10 @@
 
 use identity_account::account::Account;
 use identity_account::identity::IdentityCreate;
-use identity_iota::did::IotaDocument;
+use identity_iota::did::{IotaDID, IotaDocument};
 use serde::{Deserialize, Serialize};
 
-use crate::types::{ActorRequest};
+use crate::types::ActorRequest;
 
 pub struct IdentityStorageHandler {
   account: Account,
@@ -31,6 +31,17 @@ impl ActorRequest for List {
   }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Resolve(IotaDID);
+
+impl ActorRequest for Resolve {
+  type Response = Option<IotaDocument>;
+
+  fn request_name() -> &'static str {
+    "storage/resolve"
+  }
+}
+
 impl IdentityStorageHandler {
   pub async fn new() -> identity_account::Result<Self> {
     Ok(Self {
@@ -40,5 +51,9 @@ impl IdentityStorageHandler {
 
   pub fn list(&self, _input: List) -> Vec<IotaDocument> {
     vec![]
+  }
+
+  pub fn resolve(&self, _input: Resolve) -> Option<IotaDocument> {
+    None
   }
 }
