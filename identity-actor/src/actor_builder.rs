@@ -61,7 +61,7 @@ impl ActorBuilder {
     self
   }
 
-  pub fn handler<H: RequestHandler + 'static>(&self, command_name: &str, handler: H) {
-    set_handler(command_name, handler, &self.handler_map);
-  }
+  // pub fn handler<H: RequestHandler + 'static>(&self, command_name: &str, handler: H) {
+  //   set_handler(command_name, handler, &self.handler_map);
+  // }
 }

@@ -10,7 +10,7 @@ use crate::{
 use communication_refactored::{Multiaddr, PeerId};
 use communication_refactored::{ReceiveRequest, ShCommunication, TransportErr};
 use dashmap::DashMap;
-use futures::{channel::mpsc, StreamExt};
+use futures::{channel::mpsc, Future, StreamExt};
 use tokio::task::{self, JoinHandle};
 
 use crate::RequestHandler;
@@ -47,8 +47,19 @@ impl Actor {
     })
   }
 
-  pub fn set_handler<H: RequestHandler + 'static>(&self, command_name: &str, handler: H) {
-    set_handler(command_name, handler, &self.handler_map);
+  pub fn set_handler<H: Send + Sync + 'static, Req: ActorRequest>(
+    &self,
+    command_name: &str,
+    handler: H,
+    handler_func: fn(&H, Req) -> <Req as ActorRequest>::Response,
+  ) {
+    let closure = Box::new(move |obj_bytes: Vec<u8>| {
+      let request = serde_json::from_slice(&obj_bytes).unwrap();
+      let ret = handler_func(&handler, request);
+      serde_json::to_vec(&ret).unwrap()
+    });
+
+    self.handler_map.insert(command_name.into(), closure);
   }
 
   pub async fn start_listening(&self, address: Option<Multiaddr>) -> std::result::Result<Multiaddr, TransportErr> {

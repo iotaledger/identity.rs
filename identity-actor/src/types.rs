@@ -17,8 +17,8 @@ pub trait RequestHandler: Send + Sync {
   ) -> identity_account::Result<<Self::Request as ActorRequest>::Response>;
 }
 
-pub trait ActorRequest: Debug + Serialize + DeserializeOwned {
-  type Response: Debug + Serialize + DeserializeOwned;
+pub trait ActorRequest: Debug + Serialize + DeserializeOwned + 'static {
+  type Response: Debug + Serialize + DeserializeOwned + 'static;
 
   fn request_name() -> &'static str;
 }
