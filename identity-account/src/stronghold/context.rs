@@ -86,8 +86,8 @@ impl Context {
 
     let this: &'static Self = __THIS.get_or_try_init::<_, Error>(|| {
       let system: ActorSystem = SystemBuilder::new()
-        // // Disable the default actor system logger
-        // .log(slog::Logger::root(slog::Discard, slog::o!()))
+        // Disable the default actor system logger
+        .log(slog::Logger::root(slog::Discard, slog::o!()))
         .create()?;
 
       let stronghold: Stronghold = Stronghold::init_stronghold_system(system, Vec::new(), Vec::new());
