@@ -12,7 +12,6 @@ use crate::verification::MethodData;
 pub enum DiffMethodData {
   PublicKeyMultibase(#[serde(skip_serializing_if = "Option::is_none")] Option<DiffString>),
   PublicKeyBase58(#[serde(skip_serializing_if = "Option::is_none")] Option<DiffString>),
-  PublicKeyHex(#[serde(skip_serializing_if = "Option::is_none")] Option<DiffString>),
   PublicKeyJwk(#[serde(skip_serializing_if = "Option::is_none")] Option<DiffObject>),
 }
 
@@ -29,8 +28,6 @@ impl Diff for MethodData {
       }
       (Self::PublicKeyBase58(a), Self::PublicKeyBase58(b)) if a == b => Ok(DiffMethodData::PublicKeyBase58(None)),
       (Self::PublicKeyBase58(a), Self::PublicKeyBase58(b)) => a.diff(b).map(Some).map(DiffMethodData::PublicKeyBase58),
-      (Self::PublicKeyHex(a), Self::PublicKeyHex(b)) if a == b => Ok(DiffMethodData::PublicKeyHex(None)),
-      (Self::PublicKeyHex(a), Self::PublicKeyHex(b)) => a.diff(b).map(Some).map(DiffMethodData::PublicKeyHex),
       (Self::PublicKeyJwk(a), Self::PublicKeyJwk(b)) if a == b => Ok(DiffMethodData::PublicKeyJwk(None)),
       (Self::PublicKeyJwk(a), Self::PublicKeyJwk(b)) => a.diff(b).map(Some).map(DiffMethodData::PublicKeyJwk),
       (_, _) => other.clone().into_diff(),
@@ -47,8 +44,6 @@ impl Diff for MethodData {
       }
       (Self::PublicKeyBase58(a), DiffMethodData::PublicKeyBase58(Some(b))) => a.merge(b).map(Self::PublicKeyBase58),
       (Self::PublicKeyBase58(a), DiffMethodData::PublicKeyBase58(None)) => Ok(Self::PublicKeyBase58(a.clone())),
-      (Self::PublicKeyHex(a), DiffMethodData::PublicKeyHex(Some(b))) => a.merge(b).map(Self::PublicKeyHex),
-      (Self::PublicKeyHex(a), DiffMethodData::PublicKeyHex(None)) => Ok(Self::PublicKeyHex(a.clone())),
       (Self::PublicKeyJwk(a), DiffMethodData::PublicKeyJwk(Some(b))) => a.merge(b).map(Self::PublicKeyJwk),
       (Self::PublicKeyJwk(a), DiffMethodData::PublicKeyJwk(None)) => Ok(Self::PublicKeyJwk(a.clone())),
       (_, diff) => Self::from_diff(diff),
@@ -61,8 +56,6 @@ impl Diff for MethodData {
       DiffMethodData::PublicKeyMultibase(None) => Ok(Self::PublicKeyMultibase(Default::default())),
       DiffMethodData::PublicKeyBase58(Some(value)) => Diff::from_diff(value).map(Self::PublicKeyBase58),
       DiffMethodData::PublicKeyBase58(None) => Ok(Self::PublicKeyBase58(Default::default())),
-      DiffMethodData::PublicKeyHex(Some(value)) => Diff::from_diff(value).map(Self::PublicKeyHex),
-      DiffMethodData::PublicKeyHex(None) => Ok(Self::PublicKeyHex(Default::default())),
       DiffMethodData::PublicKeyJwk(Some(value)) => Diff::from_diff(value).map(Self::PublicKeyJwk),
       DiffMethodData::PublicKeyJwk(None) => Ok(Self::PublicKeyJwk(Default::default())),
     }
@@ -72,7 +65,6 @@ impl Diff for MethodData {
     match self {
       Self::PublicKeyMultibase(value) => value.into_diff().map(Some).map(DiffMethodData::PublicKeyMultibase),
       Self::PublicKeyBase58(value) => value.into_diff().map(Some).map(DiffMethodData::PublicKeyBase58),
-      Self::PublicKeyHex(value) => value.into_diff().map(Some).map(DiffMethodData::PublicKeyHex),
       Self::PublicKeyJwk(value) => value.into_diff().map(Some).map(DiffMethodData::PublicKeyJwk),
     }
   }

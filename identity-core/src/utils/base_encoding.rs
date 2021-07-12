@@ -115,22 +115,6 @@ where
   bs58::encode(data).with_alphabet(bs58::Alphabet::BITCOIN).into_string()
 }
 
-/// Decodes the given `data` as base16 (hex).
-pub fn decode_b16<T>(data: &T) -> Result<Vec<u8>>
-where
-  T: AsRef<[u8]> + ?Sized,
-{
-  hex::decode(data).map_err(Error::DecodeBase16)
-}
-
-/// Encodes the given `data` as base16 (hex).
-pub fn encode_b16<T>(data: &T) -> String
-where
-  T: AsRef<[u8]> + ?Sized,
-{
-  hex::encode(data)
-}
-
 /// Decodes the given `data` as base64.
 pub fn decode_b64<T>(data: &T) -> Result<Vec<u8>>
 where
@@ -154,11 +138,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn test_decode_b16_empty() {
-    assert_eq!(decode_b16("").unwrap(), Vec::<u8>::new());
-  }
-
-  #[test]
   fn test_decode_b58_empty() {
     assert_eq!(decode_b58("").unwrap(), Vec::<u8>::new());
   }
@@ -171,11 +150,6 @@ mod tests {
   #[test]
   fn test_decode_multibase_empty() {
     assert_eq!(decode_multibase("").unwrap(), Vec::<u8>::new());
-  }
-
-  #[quickcheck]
-  fn test_b16_random(data: Vec<u8>) {
-    assert_eq!(decode_b16(&encode_b16(&data)).unwrap(), data);
   }
 
   #[quickcheck]
