@@ -30,6 +30,9 @@ pub enum Error {
   /// Caused by a failure to decode base64-encoded data.
   #[error("Failed to decode base64 data: {0}")]
   DecodeBase64(#[from] base64::DecodeError),
+  /// Caused by a failure to decode multibase-encoded data.
+  #[error("Failed to decode multibase data: {0}")]
+  DecodeMultibase(#[from] multibase::Error),
   /// Cause by a failure to encode a Roaring Bitmap.
   #[error("Failed to encode roaring bitmap: {0}")]
   EncodeBitmap(std::io::Error),

@@ -69,6 +69,19 @@ mod tests {
   use super::*;
 
   #[test]
+  fn test_method_builder_success() {
+    for method_data_fn in [MethodData::new_b58, MethodData::new_multibase] {
+      let result: Result<VerificationMethod> = MethodBuilder::default()
+        .id("did:example:123".parse().unwrap())
+        .controller("did:example:123".parse().unwrap())
+        .key_type(MethodType::Ed25519VerificationKey2018)
+        .key_data(method_data_fn(""))
+        .build();
+      assert!(result.is_ok());
+    }
+  }
+
+  #[test]
   #[should_panic = "InvalidMethodId"]
   fn test_missing_id() {
     let _: VerificationMethod = MethodBuilder::default()

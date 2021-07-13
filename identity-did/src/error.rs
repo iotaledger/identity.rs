@@ -60,6 +60,8 @@ pub enum Error {
   InvalidKeyDataBase16,
   #[error("Invalid Base58 Key Data")]
   InvalidKeyDataBase58,
+  #[error("Invalid Multibase Key Data")]
+  InvalidKeyDataMultibase,
 
   #[error("Missing Resolution DID")]
   MissingResolutionDID,
