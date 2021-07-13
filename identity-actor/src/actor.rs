@@ -3,25 +3,26 @@
 
 use std::{
   any::{Any, TypeId},
+  ops::Deref,
   sync::Arc,
 };
 
 use crate::{
+  asyncfn::AsyncFn,
   errors::{Error, Result},
-  types::{ActorRequest, NamedMessage},
+  traits::{ActorRequest,  RequestHandler},
+  types::NamedMessage,
 };
 use communication_refactored::{ListenErr, Multiaddr, PeerId};
 use communication_refactored::{ReceiveRequest, ShCommunication};
 use dashmap::DashMap;
-use futures::{channel::mpsc, StreamExt};
+use futures::{channel::mpsc, Future, StreamExt};
 use tokio::task::{self, JoinHandle};
-
-use crate::RequestHandler;
 
 pub struct Actor {
   comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
-  handler_map: Arc<DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>>,
-  handler_type_map: Arc<DashMap<TypeId, Box<dyn Any + Send + Sync + 'static>>>,
+  handlers: Arc<DashMap<String, Box<dyn RequestHandler>>>,
+  objects: Arc<DashMap<TypeId, Box<dyn Any + Send + Sync + 'static>>>,
   listener_handle: JoinHandle<Result<()>>,
 }
 
@@ -29,7 +30,8 @@ impl Actor {
   pub(crate) async fn from_builder(
     receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
     mut comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
-    handler_map: DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>,
+    handlers: DashMap<String, Box<dyn RequestHandler>>,
+    objects: DashMap<TypeId, Box<dyn Any + Send + Sync + 'static>>,
     listening_addresses: Vec<Multiaddr>,
   ) -> Result<Self> {
     if listening_addresses.is_empty() {
@@ -40,46 +42,33 @@ impl Actor {
       comm.start_listening(Some(addr)).await?;
     }
 
-    let handler_map = Arc::new(handler_map);
-    let handler_type_map = Arc::new(DashMap::new());
-    let listener_handle = Self::spawn_listener(receiver, Arc::clone(&handler_map));
+    let handlers = Arc::new(handlers);
+    let objects = Arc::new(objects);
+
+    let listener_handle = Self::spawn_listener(receiver, Arc::clone(&objects), Arc::clone(&handlers));
 
     Ok(Self {
       comm,
-      handler_map,
-      handler_type_map,
+      handlers,
+      objects,
       listener_handle,
     })
   }
 
-  pub fn set_handler_type<H: Send + Sync + 'static>(&self, handler: H) {
-    self.handler_type_map.insert(TypeId::of::<H>(), Box::new(handler));
+  pub fn add_handler_object<H>(&mut self, handler: H)
+  where
+    H: Clone + Any + Send + Sync,
+  {
+    self.objects.insert(TypeId::of::<H>(), Box::new(handler));
   }
 
-  pub fn set_handler<H: Send + Sync + 'static, Req: ActorRequest>(
-    &self,
-    command_name: &str,
-    handler_func: fn(&H, Req) -> <Req as ActorRequest>::Response,
-  ) {
-    let handler_type_map = Arc::clone(&self.handler_type_map);
-
-    let closure = Box::new(move |obj_bytes: Vec<u8>| {
-      let request = serde_json::from_slice(&obj_bytes).unwrap();
-
-      let ret = if let Some(handler_ty) = handler_type_map.get(&TypeId::of::<H>()) {
-        if let Some(handler_concrete_type) = handler_ty.downcast_ref() {
-          Some(handler_func(&handler_concrete_type, request))
-        } else {
-          None
-        }
-      } else {
-        None
-      };
-
-      serde_json::to_vec(&ret.unwrap()).unwrap()
-    });
-
-    self.handler_map.insert(command_name.into(), closure);
+  pub fn add_handler_method<H, R, F>(&mut self, cmd: &'static str, handler: AsyncFn<H, R, F>)
+  where
+    H: Clone + Send + Sync,
+    R: ActorRequest + Send + 'static,
+    F: Future<Output = R::Response> + Send + 'static,
+  {
+    self.handlers.insert(cmd.into(), Box::new(handler));
   }
 
   pub async fn start_listening(&mut self, address: Option<Multiaddr>) -> std::result::Result<Multiaddr, ListenErr> {
@@ -104,13 +93,14 @@ impl Actor {
   /// A second caller would immediately receive an [`Error::LockInUse`].
   fn spawn_listener(
     mut receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
-    handler_map: Arc<DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>>,
+    objects: Arc<DashMap<TypeId, Box<dyn Any + Send + Sync>>>,
+    handlers: Arc<DashMap<String, Box<dyn RequestHandler>>>,
   ) -> JoinHandle<Result<()>> {
     task::spawn(async move {
       let mut handles = vec![];
       loop {
         if let Some(receive_request) = receiver.next().await {
-          let handler_handle = Self::spawn_handler(receive_request, Arc::clone(&handler_map));
+          let handler_handle = Self::spawn_handler(receive_request, Arc::clone(&objects), Arc::clone(&handlers));
           handles.push(handler_handle);
         } else {
           return Ok(());
@@ -121,17 +111,29 @@ impl Actor {
 
   fn spawn_handler(
     receive_request: ReceiveRequest<NamedMessage, NamedMessage>,
-    handler_map: Arc<DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>>,
+    objects: Arc<DashMap<TypeId, Box<dyn Any + Send + Sync>>>,
+    handlers: Arc<DashMap<String, Box<dyn RequestHandler>>>,
   ) -> JoinHandle<Result<()>> {
     task::spawn(async move {
       let request = receive_request.request;
       let response_tx = receive_request.response_tx;
       let request_name = request.name;
 
-      let response_data = match handler_map.get_mut(&request_name) {
-        Some(mut handler) => handler(request.data),
+      let response_data = match handlers.get(&request_name) {
+        Some(handler) => {
+          let object_type_id = handler.object_type_id();
+
+          let obj = if let Some(object) = objects.get(&object_type_id) {
+            let object_clone = handler.clone_object(object.deref());
+            object_clone
+          } else {
+            todo!("Unhandled object-not-found case.")
+          };
+
+          handler.invoke(obj, request.data).await
+        }
         // TODO: Send error *back to peer*
-        None => todo!(), //return Err(Error::UnknownRequest(request.name)),
+        None => todo!("Unhandled handler-not-found case"), //return Err(Error::UnknownRequest(request.name)),
       };
 
       let response = NamedMessage::new(request_name, response_data);
@@ -173,32 +175,4 @@ impl Actor {
     let response = serde_json::from_slice(&response.data).unwrap();
     Ok(response)
   }
-}
-
-pub(crate) fn set_handler<H: RequestHandler + 'static>(
-  command_name: &str,
-  mut handler: H,
-  handler_map: &DashMap<String, Box<dyn Send + Sync + FnMut(Vec<u8>) -> Vec<u8>>>,
-) {
-  // An approach to directly produce a future from the closure, to work around the lack of async closures.
-  // However, we cannot move the handler in directly, because
-  // "cannot move out of `handler`, a captured variable in an `FnMut` closure"
-  // The issue is always that the produced Future has a reference to the handler
-  // let other =
-  //   Box::new(move |bytes: Vec<u8>| {
-  //     let future = Box::new(async {
-  //       let force_bytes_move = bytes;
-  //       let request = serde_json::from_slice(&force_bytes_move).unwrap();
-  //       let ret = handler.handle(request).await.unwrap();
-  //       serde_json::to_vec(&ret).unwrap()
-  //     });
-  //     future
-  //   });
-  let closure = Box::new(move |obj_bytes: Vec<u8>| {
-    let request = serde_json::from_slice(&obj_bytes).unwrap();
-    let ret = futures::executor::block_on(handler.handle(request)).unwrap();
-    serde_json::to_vec(&ret).unwrap()
-  });
-
-  handler_map.insert(command_name.into(), closure);
 }

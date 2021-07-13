@@ -1,15 +1,18 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::sync::Arc;
+
 use identity_account::account::Account;
 use identity_account::identity::IdentityCreate;
 use identity_iota::did::{IotaDID, IotaDocument};
 use serde::{Deserialize, Serialize};
 
-use crate::types::ActorRequest;
+use crate::traits::ActorRequest;
 
+#[derive(Clone)]
 pub struct IdentityStorageHandler {
-  account: Account,
+  account: Arc<Account>,
 }
 
 impl ActorRequest for IdentityCreate {
@@ -21,10 +24,10 @@ impl ActorRequest for IdentityCreate {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct List;
+pub struct IdentityList;
 
-impl ActorRequest for List {
-  type Response = Vec<IotaDocument>;
+impl ActorRequest for IdentityList {
+  type Response = Vec<IotaDID>;
 
   fn request_name() -> &'static str {
     "storage/list"
@@ -45,15 +48,19 @@ impl ActorRequest for Resolve {
 impl IdentityStorageHandler {
   pub async fn new() -> identity_account::Result<Self> {
     Ok(Self {
-      account: Account::builder().build().await?,
+      account: Arc::new(Account::builder().build().await?),
     })
   }
 
-  pub fn list(&self, _input: List) -> Vec<IotaDocument> {
+  pub async fn create(self, _input: IdentityCreate) -> IotaDocument {
+    todo!()
+  }
+
+  pub async fn list(self, _input: IdentityList) -> Vec<IotaDID> {
     vec![]
   }
 
-  pub fn resolve(&self, _input: Resolve) -> Option<IotaDocument> {
+  pub async fn resolve(self, _input: Resolve) -> Option<IotaDocument> {
     None
   }
 }
