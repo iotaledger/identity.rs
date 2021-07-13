@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_account::account::Account;
+use identity_account::account::Config;
 use identity_account::error::Error;
 use identity_account::error::Result;
 use identity_account::events::Command;
@@ -15,7 +16,10 @@ use identity_core::common::UnixTimestamp;
 use identity_did::verification::MethodType;
 
 async fn new_account() -> Result<Account> {
-  Account::new(MemStore::new()).await
+  let store: MemStore = MemStore::new();
+  let config: Config = Config::new().testmode(true);
+
+  Account::with_config(store, config).await
 }
 
 #[tokio::test]

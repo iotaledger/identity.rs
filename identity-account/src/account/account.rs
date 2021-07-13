@@ -287,11 +287,11 @@ impl Account {
 
     self.sign_document(old_state, new_state, &mut new_doc).await?;
 
-    #[cfg(test)]
-    let message: MessageId = MessageId::null();
-
-    #[cfg(not(test))]
-    let message: MessageId = self.state.clients.publish_document(&new_doc).await?.into();
+    let message: MessageId = if self.config.testmode {
+      MessageId::null()
+    } else {
+      self.state.clients.publish_document(&new_doc).await?.into()
+    };
 
     let events: [Event; 1] = [Event::new(EventData::AuthMessage(message))];
 
@@ -318,16 +318,16 @@ impl Account {
 
     old_state.sign_data(&self.store, location, &mut diff).await?;
 
-    #[cfg(test)]
-    let message: MessageId = MessageId::null();
-
-    #[cfg(not(test))]
-    let message: MessageId = self
-      .state
-      .clients
-      .publish_diff(old_state.this_message_id(), &diff)
-      .await?
-      .into();
+    let message: MessageId = if self.config.testmode {
+      MessageId::null()
+    } else {
+      self
+        .state
+        .clients
+        .publish_diff(old_state.this_message_id(), &diff)
+        .await?
+        .into()
+    };
 
     let events: [Event; 1] = [Event::new(EventData::DiffMessage(message))];
 
@@ -436,20 +436,19 @@ impl Drop for Account {
 pub struct Config {
   autosave: AutoSave,
   dropsave: bool,
+  testmode: bool,
   milestone: u32,
 }
 
 impl Config {
-  #[cfg(test)]
   const MILESTONE: u32 = 1;
-  #[cfg(not(test))]
-  const MILESTONE: u32 = 1; // 10
 
   /// Creates a new default `Config`.
   pub fn new() -> Self {
     Self {
       autosave: AutoSave::Every,
       dropsave: true,
+      testmode: false,
       milestone: Self::MILESTONE,
     }
   }
@@ -469,6 +468,12 @@ impl Config {
   /// Save a state snapshot every N actions.
   pub fn milestone(mut self, value: u32) -> Self {
     self.milestone = value;
+    self
+  }
+
+  #[doc(hidden)]
+  pub fn testmode(mut self, value: bool) -> Self {
+    self.testmode = value;
     self
   }
 }
