@@ -94,8 +94,9 @@ impl Account {
     self.state.actions.load(OSC)
   }
 
-  pub fn set_client(&self, client: Client) -> Result<()> {
-    self.state.clients.insert(client).map_err(Into::into)
+  /// Adds a pre-configured `Client` for Tangle interactions.
+  pub fn set_client(&self, client: Client) {
+    self.state.clients.insert(client);
   }
 
   // ===========================================================================

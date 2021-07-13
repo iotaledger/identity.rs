@@ -96,7 +96,7 @@ impl AccountBuilder {
 
     if let Some(clients) = self.clients.take() {
       for (_, client) in clients.into_iter() {
-        account.set_client(client.build().await?)?;
+        account.set_client(client.build().await?);
       }
     }
 
