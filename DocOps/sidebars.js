@@ -32,6 +32,61 @@ module.exports = {
             'getting-started/did/merkle_key_collection',
           ],
         },
+        {
+          'Verifiable Credentials': [
+            'getting-started/vc/README',
+            'getting-started/vc/create',
+            'getting-started/vc/revoke',
+            'getting-started/vc/vp',
+          ]  
+        },
+        {
+          'DID Communication': [
+            'getting-started/didcomm/README',
+            'getting-started/didcomm/did_comm_messages',
+            'getting-started/didcomm/protocols',
+          ],
+          'Advanced Concepts':[
+            'getting-started/advanced/README',
+            'getting-started/advanced/client',
+            'getting-started/advanced/did_messages',
+            'getting-started/advanced/storage_adapter',
+            'getting-started/advanced/signature_schemes',
+
+          ]  
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Programming Languages',
+      collapsed: false,
+      items: [
+        {
+          type: 'category',
+          label: 'Rust',
+          collapsed: true,
+          items: [
+            'libraries/rust/README',
+            'libraries/rust/getting_started',
+            'libraries/rust/examples',
+            'libraries/rust/api_reference',
+            'libraries/rust/troubleshooting',
+          ],
+          
+        },
+        {
+          type: 'category',
+          label: 'WASM',
+          collapsed: true,
+          items: [
+            'libraries/wasm/README',
+            'libraries/wasm/getting_started',
+            'libraries/wasm/examples',
+            'libraries/wasm/api_reference',
+            'libraries/wasm/troubleshooting',
+          ],
+        },
       ],
     },
     {
