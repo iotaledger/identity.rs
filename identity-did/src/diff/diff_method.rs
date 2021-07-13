@@ -283,7 +283,7 @@ mod test {
   }
 
   #[test]
-  fn test_key_data() {
+  fn test_key_data_base58() {
     let method = test_method();
     let mut new = method.clone();
     *new.key_data_mut() = MethodData::PublicKeyBase58("diff".into());
@@ -296,6 +296,28 @@ mod test {
     assert_eq!(
       diff.key_data,
       Some(DiffMethodData::PublicKeyBase58(Some(DiffString(Some(
+        "diff".to_string()
+      )))))
+    );
+
+    let merge = method.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_key_data_multibase() {
+    let method = test_method();
+    let mut new = method.clone();
+    *new.key_data_mut() = MethodData::PublicKeyMultibase("diff".into());
+
+    let diff = method.diff(&new).unwrap();
+    assert!(diff.id.is_none());
+    assert!(diff.controller.is_none());
+    assert!(diff.key_type.is_none());
+    assert!(diff.properties.is_none());
+    assert_eq!(
+      diff.key_data,
+      Some(DiffMethodData::PublicKeyMultibase(Some(DiffString(Some(
         "diff".to_string()
       )))))
     );
