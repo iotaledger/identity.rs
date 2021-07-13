@@ -10,6 +10,7 @@ use identity_did::verification::MethodType;
 use identity_iota::did::DocumentDiff;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDocument;
+use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::TangleResolve;
@@ -91,6 +92,10 @@ impl Account {
   /// Returns the total number of actions executed by this instance.
   pub fn actions(&self) -> usize {
     self.state.actions.load(OSC)
+  }
+
+  pub fn set_client(&self, client: Client) -> Result<()> {
+    self.state.clients.insert(client).map_err(Into::into)
   }
 
   // ===========================================================================
