@@ -1,12 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::fmt::Debug;
-use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 use futures::executor;
 use futures::TryStreamExt;
-use hashbrown::HashMap;
 use identity_core::common::Fragment;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::SetSignature;
@@ -15,8 +11,9 @@ use identity_iota::did::DocumentDiff;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDocument;
 use identity_iota::tangle::Client;
+use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
-use identity_iota::tangle::Network;
+use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
@@ -43,7 +40,6 @@ use crate::identity::TinyMethod;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
-use crate::utils::Shared;
 
 const OSC: Ordering = Ordering::SeqCst;
 
@@ -96,6 +92,11 @@ impl Account {
   /// Returns the total number of actions executed by this instance.
   pub fn actions(&self) -> usize {
     self.state.actions.load(OSC)
+  }
+
+  /// Adds a pre-configured `Client` for Tangle interactions.
+  pub fn set_client(&self, client: Client) {
+    self.state.clients.insert(client);
   }
 
   // ===========================================================================
@@ -187,17 +188,9 @@ impl Account {
     let identity: IdentityId = self.try_resolve_id(key).await?;
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
     let document: &IotaDID = snapshot.identity().try_did()?;
-    let network: Network = Network::from_did(document);
 
     // Fetch the DID Document from the Tangle
-    self
-      .state
-      .clients
-      .load(network)
-      .await?
-      .resolve(document)
-      .await
-      .map_err(Into::into)
+    self.state.clients.resolve(document).await.map_err(Into::into)
   }
 
   /// Signs `data` with the key specified by `fragment`.
@@ -300,15 +293,10 @@ impl Account {
 
     self.sign_document(old_state, new_state, &mut new_doc).await?;
 
-    #[cfg(test)]
-    let message: MessageId = MessageId::null();
-
-    #[cfg(not(test))]
-    let message: MessageId = {
-      let network: Network = Network::from_did(new_doc.id());
-      let client: Arc<Client> = self.state.clients.load(network).await?;
-
-      client.publish_document(&new_doc).await?
+    let message: MessageId = if self.config.testmode {
+      MessageId::null()
+    } else {
+      self.state.clients.publish_document(&new_doc).await?.into()
     };
 
     let events: [Event; 1] = [Event::new(EventData::AuthMessage(message))];
@@ -336,16 +324,15 @@ impl Account {
 
     old_state.sign_data(&self.store, location, &mut diff).await?;
 
-    #[cfg(test)]
-    let message: MessageId = MessageId::null();
-
-    #[cfg(not(test))]
-    let message: MessageId = {
-      let auth_id: &MessageId = old_state.this_message_id();
-      let network: Network = Network::from_did(old_doc.id());
-      let client: Arc<Client> = self.state.clients.load(network).await?;
-
-      client.publish_diff(auth_id, &diff).await?
+    let message: MessageId = if self.config.testmode {
+      MessageId::null()
+    } else {
+      self
+        .state
+        .clients
+        .publish_diff(old_state.this_message_id(), &diff)
+        .await?
+        .into()
     };
 
     let events: [Event; 1] = [Event::new(EventData::DiffMessage(message))];
@@ -455,20 +442,19 @@ impl Drop for Account {
 pub struct Config {
   autosave: AutoSave,
   dropsave: bool,
+  testmode: bool,
   milestone: u32,
 }
 
 impl Config {
-  #[cfg(test)]
   const MILESTONE: u32 = 1;
-  #[cfg(not(test))]
-  const MILESTONE: u32 = 1; // 10
 
   /// Creates a new default `Config`.
   pub fn new() -> Self {
     Self {
       autosave: AutoSave::Every,
       dropsave: true,
+      testmode: false,
       milestone: Self::MILESTONE,
     }
   }
@@ -488,6 +474,12 @@ impl Config {
   /// Save a state snapshot every N actions.
   pub fn milestone(mut self, value: u32) -> Self {
     self.milestone = value;
+    self
+  }
+
+  #[doc(hidden)]
+  pub fn testmode(mut self, value: bool) -> Self {
+    self.testmode = value;
     self
   }
 }
@@ -511,46 +503,6 @@ pub enum AutoSave {
   Every,
   /// Save after every N actions
   Batch(usize),
-}
-
-// =============================================================================
-// ClientMap
-// =============================================================================
-
-// A cache of clients to be used for publishing/resolving multiple identities
-struct ClientMap {
-  data: Shared<HashMap<Network, Arc<Client>>>,
-}
-
-impl ClientMap {
-  /// Creates a new `ClientMap`.
-  fn new() -> Self {
-    Self {
-      data: Shared::new(HashMap::new()),
-    }
-  }
-
-  async fn load(&self, network: Network) -> Result<Arc<Client>> {
-    // If we have a client for the given network, return it
-    if let Some(client) = self.data.read()?.get(&network).map(Arc::clone) {
-      return Ok(client);
-    }
-
-    // Initialize a new client for the given network
-    let client: Arc<Client> = Client::from_network(network).await.map(Arc::new)?;
-
-    // Store the newly created client
-    self.data.write()?.insert(network, Arc::clone(&client));
-
-    // Return the newly created client
-    Ok(client)
-  }
-}
-
-impl Debug for ClientMap {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_str("ClientMap")
-  }
 }
 
 // =============================================================================

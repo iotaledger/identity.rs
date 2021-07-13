@@ -142,10 +142,7 @@
 * [Client](#Client)
     * [new Client()](#new_Client_new)
     * _instance_
-        * [.defaultNodeURL](#Client+defaultNodeURL) ⇒ <code>string</code>
-        * [.explorerURL](#Client+explorerURL) ⇒ <code>string</code>
         * [.network()](#Client+network) ⇒ [<code>Network</code>](#Network)
-        * [.transactionURL(message_id)](#Client+transactionURL) ⇒ <code>string</code>
         * [.publishDocument(document)](#Client+publishDocument) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.publishDiff(message_id, value)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolve(did)](#Client+resolve) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -160,35 +157,12 @@
 ### new Client()
 Creates a new `Client` with default settings.
 
-<a name="Client+defaultNodeURL"></a>
-
-### client.defaultNodeURL ⇒ <code>string</code>
-Returns the default node URL of the `Client` network.
-
-**Kind**: instance property of [<code>Client</code>](#Client)
-<a name="Client+explorerURL"></a>
-
-### client.explorerURL ⇒ <code>string</code>
-Returns the web explorer URL of the `Client` network.
-
-**Kind**: instance property of [<code>Client</code>](#Client)
 <a name="Client+network"></a>
 
 ### client.network() ⇒ [<code>Network</code>](#Network)
 Returns the `Client` Tangle network.
 
 **Kind**: instance method of [<code>Client</code>](#Client)
-<a name="Client+transactionURL"></a>
-
-### client.transactionURL(message_id) ⇒ <code>string</code>
-Returns the web explorer URL of the given `transaction`.
-
-**Kind**: instance method of [<code>Client</code>](#Client)
-
-| Param | Type |
-| --- | --- |
-| message_id | <code>string</code> |
-
 <a name="Client+publishDocument"></a>
 
 ### client.publishDocument(document) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -562,8 +536,6 @@ Creates a new `Client` with default settings for the given `Network`.
         * [.network](#DID+network) ⇒ [<code>Network</code>](#Network)
         * [.networkName](#DID+networkName) ⇒ <code>string</code>
         * [.tag](#DID+tag) ⇒ <code>string</code>
-        * [.tangleNode](#DID+tangleNode) ⇒ <code>string</code>
-        * [.tangleExplorer](#DID+tangleExplorer) ⇒ <code>string</code>
         * [.toString()](#DID+toString) ⇒ <code>string</code>
     * _static_
         * [.fromBase58(key, network)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
@@ -596,18 +568,6 @@ Returns the IOTA tangle network of the `DID`.
 
 ### did.tag ⇒ <code>string</code>
 Returns the unique tag of the `DID`.
-
-**Kind**: instance property of [<code>DID</code>](#DID)
-<a name="DID+tangleNode"></a>
-
-### did.tangleNode ⇒ <code>string</code>
-Returns the node URL of the target Tangle network.
-
-**Kind**: instance property of [<code>DID</code>](#DID)
-<a name="DID+tangleExplorer"></a>
-
-### did.tangleExplorer ⇒ <code>string</code>
-Returns the web explorer URL of the target Tangle network.
 
 **Kind**: instance property of [<code>DID</code>](#DID)  
 <a name="DID+toString"></a>
@@ -1249,6 +1209,7 @@ Deserializes a `KeyPair` object from a JSON object.
     * _instance_
         * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code>
         * [.explorerURL](#Network+explorerURL) ⇒ <code>string</code>
+        * [.messageURL(message_id)](#Network+messageURL) ⇒ <code>string</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
     * _static_
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
@@ -1257,11 +1218,26 @@ Deserializes a `KeyPair` object from a JSON object.
 <a name="Network+defaultNodeURL"></a>
 
 ### network.defaultNodeURL ⇒ <code>string</code>
+Returns the node URL of the Tangle network.
+
 **Kind**: instance property of [<code>Network</code>](#Network)
 <a name="Network+explorerURL"></a>
 
 ### network.explorerURL ⇒ <code>string</code>
+Returns the web explorer URL of the Tangle network.
+
 **Kind**: instance property of [<code>Network</code>](#Network)
+<a name="Network+messageURL"></a>
+
+### network.messageURL(message_id) ⇒ <code>string</code>
+Returns the web explorer URL of the given `message`.
+
+**Kind**: instance method of [<code>Network</code>](#Network)
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> |
+
 <a name="Network+toString"></a>
 
 ### network.toString() ⇒ <code>string</code>

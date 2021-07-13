@@ -59,7 +59,7 @@ rusty_fork_test! {
   #[test]
   fn test_password_expiration() {
     block_on(async {
-      let interval: Duration = Duration::from_millis(500);
+      let interval: Duration = Duration::from_millis(25);
 
       Snapshot::set_password_clear(interval).unwrap();
 
@@ -89,7 +89,7 @@ rusty_fork_test! {
   #[test]
   fn test_password_persistence() {
     block_on(async {
-      let interval: Duration = Duration::from_millis(900);
+      let interval: Duration = Duration::from_millis(25);
 
       Snapshot::set_password_clear(interval).unwrap();
 

@@ -21,14 +21,22 @@ impl WasmNetwork {
     Self(IotaNetwork::Testnet)
   }
 
+  /// Returns the node URL of the Tangle network.
   #[wasm_bindgen(getter = defaultNodeURL)]
   pub fn default_node_url(&self) -> String {
-    self.0.node_url().to_string()
+    self.0.default_node_url().to_string()
   }
 
+  /// Returns the web explorer URL of the Tangle network.
   #[wasm_bindgen(getter = explorerURL)]
   pub fn explorer_url(&self) -> String {
     self.0.explorer_url().to_string()
+  }
+
+  /// Returns the web explorer URL of the given `message`.
+  #[wasm_bindgen(js_name = messageURL)]
+  pub fn message_url(&self, message_id: &str) -> String {
+    self.0.message_url(message_id).to_string()
   }
 
   #[allow(clippy::inherent_to_string, clippy::wrong_self_convention)]

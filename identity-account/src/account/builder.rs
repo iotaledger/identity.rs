@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use hashbrown::HashMap;
+use identity_iota::tangle::ClientBuilder;
+use identity_iota::tangle::Network;
 use std::path::PathBuf;
 use zeroize::Zeroize;
 
@@ -25,6 +28,7 @@ pub enum AccountStorage {
 pub struct AccountBuilder {
   config: Config,
   storage: AccountStorage,
+  clients: Option<HashMap<Network, ClientBuilder>>,
 }
 
 impl AccountBuilder {
@@ -33,6 +37,7 @@ impl AccountBuilder {
     Self {
       config: Config::new(),
       storage: AccountStorage::Memory,
+      clients: None,
     }
   }
 
@@ -60,10 +65,22 @@ impl AccountBuilder {
     self
   }
 
+  /// Apply configuration to the IOTA Tangle client for the given `Network`.
+  pub fn client<F>(mut self, network: Network, f: F) -> Self
+  where
+    F: FnOnce(ClientBuilder) -> ClientBuilder,
+  {
+    self
+      .clients
+      .get_or_insert_with(HashMap::new)
+      .insert(network, f(ClientBuilder::new().network(network)));
+    self
+  }
+
   /// Creates a new [Account] based on the builder configuration.
-  pub async fn build(self) -> Result<Account> {
-    match self.storage {
-      AccountStorage::Memory => Account::with_config(MemStore::new(), self.config).await,
+  pub async fn build(mut self) -> Result<Account> {
+    let account: Account = match self.storage {
+      AccountStorage::Memory => Account::with_config(MemStore::new(), self.config).await?,
       AccountStorage::Stronghold(snapshot, password) => {
         let passref: Option<&str> = password.as_deref();
         let adapter: Stronghold = Stronghold::new(&snapshot, passref).await?;
@@ -72,10 +89,18 @@ impl AccountBuilder {
           password.zeroize();
         }
 
-        Account::with_config(adapter, self.config).await
+        Account::with_config(adapter, self.config).await?
       }
-      AccountStorage::Custom(adapter) => Account::with_config(adapter, self.config).await,
+      AccountStorage::Custom(adapter) => Account::with_config(adapter, self.config).await?,
+    };
+
+    if let Some(clients) = self.clients.take() {
+      for (_, client) in clients.into_iter() {
+        account.set_client(client.build().await?);
+      }
     }
+
+    Ok(account)
   }
 }
 
