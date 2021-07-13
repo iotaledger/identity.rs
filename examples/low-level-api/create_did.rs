@@ -36,6 +36,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
   Ok((document, keypair, receipt))
 }
 
+#[allow(dead_code)]
 #[tokio::main]
 async fn main() -> Result<()> {
   let _ = run().await?;
