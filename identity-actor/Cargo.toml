@@ -36,4 +36,5 @@ anyhow = "1.0"
 account = ["identity-account/default"]
 wasm = ["identity-iota/wasm", "identity-account/wasm"]
 tcp = ["stronghold-communication-refactored/tcp-transport"]
-default = ["account", "tcp"]
+websocket = ["libp2p/websocket"]
+default = ["account", "tcp", "websocket"]

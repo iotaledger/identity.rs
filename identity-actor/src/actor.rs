@@ -10,7 +10,7 @@ use std::{
 use crate::{
   asyncfn::AsyncFn,
   errors::{Error, Result},
-  traits::{ActorRequest,  RequestHandler},
+  traits::{ActorRequest, RequestHandler},
   types::NamedMessage,
 };
 use communication_refactored::{ListenErr, Multiaddr, PeerId};
@@ -174,5 +174,9 @@ impl Actor {
     // as the request we sent could have been an unkown one (probably other errors exist)
     let response = serde_json::from_slice(&response.data).unwrap();
     Ok(response)
+  }
+
+  pub async fn join(self) {
+    self.listener_handle.await.unwrap().unwrap();
   }
 }

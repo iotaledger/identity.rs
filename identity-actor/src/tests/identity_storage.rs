@@ -1,7 +1,7 @@
 use communication_refactored::{InitKeypair, Keypair};
 use libp2p::{tcp::TcpConfig, Multiaddr};
 
-use crate::{actor_builder::ActorBuilder, asyncfn::AsyncFn, storage_handler::IdentityList, IdentityStorageHandler};
+use crate::{actor_builder::ActorBuilder, asyncfn::AsyncFn, storage::requests::IdentityList, IdentityStorageHandler};
 
 #[tokio::test]
 async fn test_list_identities() -> anyhow::Result<()> {
