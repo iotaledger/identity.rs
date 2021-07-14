@@ -1,13 +1,23 @@
-import { getExplorerUrl } from "./utils.js";
+import {
+    getExplorerUrl,
+    logExplorerUrlToScreen,
+    logObjectToScreen,
+    logToScreen,
+} from "./utils.js";
 import * as identity from "../../web/identity_wasm.js";
 import { createIdentity } from "./create_did.js";
 
-export async function manipulateIdentity() {
+export async function manipulateIdentity(clientConfig, log = true) {
+    if (log) logToScreen("creating identity...");
+
     //Creates a new identity (See "create_did" example)
-    let { key, doc, messageId } = await createIdentity();
+    let { key, doc, messageId } = await createIdentity(clientConfig, false);
+
+    if (log) logObjectToScreen(doc);
+    if (log) logToScreen("manipulating identity...");
 
     // Create a default client configuration from the parent config network.
-    const config = identity.Config.fromNetwork(doc.id.network);
+    const config = identity.Config.fromNetwork(clientConfig.network);
 
     // Create a client instance to publish messages to the Tangle.
     const client = identity.Client.fromConfig(config);
@@ -42,6 +52,10 @@ export async function manipulateIdentity() {
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const nextMessageId = await client.publishDocument(doc.toJSON());
 
+    if (log) logObjectToScreen(doc);
+
     const explorerUrl = getExplorerUrl(doc, nextMessageId);
+    if (log) logExplorerUrlToScreen(explorerUrl);
+
     return { key, newKey, doc, nextMessageId, explorerUrl };
 }
