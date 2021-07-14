@@ -1,12 +1,11 @@
-use std::{
-  convert::{Infallible, TryFrom, TryInto},
-  rc::Rc,
-  sync::Arc,
-};
+use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 
 use crate::utils::err;
 use futures::executor;
-use identity::{actor, prelude::*};
+use identity::{
+  actor::{self, actor_builder::ActorBuilder},
+  prelude::*,
+};
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
@@ -14,50 +13,66 @@ use wasm_bindgen_futures::future_to_promise;
 #[wasm_bindgen]
 // #[derive(Debug)]
 pub struct IdentityActor {
-  comm: Rc<identity::actor::IdentityCommunicator>,
+  // TODO: Maybe replace with WasmRefCell
+  comm: Rc<RefCell<identity::actor::Actor>>,
 }
 
 #[wasm_bindgen]
 impl IdentityActor {
   pub fn new() -> Result<IdentityActor, JsValue> {
+    let transport = unsafe { libp2p::wasm_ext::ffi::websocket_transport() };
+    let transport = libp2p::wasm_ext::ExtTransport::new(transport);
     let comm = executor::block_on(async {
-      let comm = identity::actor::IdentityCommunicator::new().await;
+      let comm = ActorBuilder::new().build_with_transport(transport).await.map_err(err);
       comm
-    });
+    })?;
 
-    Ok(Self { comm: Rc::new(comm) })
+    Ok(Self {
+      comm: Rc::new(RefCell::new(comm)),
+    })
   }
 
-  #[wasm_bindgen(js_name = handleRequests)]
-  pub fn handle_requests(&self) -> Result<Promise, JsValue> {
+  // #[wasm_bindgen(js_name = handleRequests)]
+  // pub fn handle_requests(&self) -> Result<Promise, JsValue> {
+  //   let comm_clone = self.comm.clone();
+  //   let promise = future_to_promise(async move {
+  //     comm_clone
+  //       .handle_requests()
+  //       .await
+  //       .map(|_| JsValue::undefined())
+  //       .map_err(err)
+  //   });
+
+  //   Ok(promise)
+  // }
+
+  #[wasm_bindgen(js_name = addPeer)]
+  pub fn add_peer(&self, peer_id: PeerId, addr: Multiaddr) -> Result<Promise, JsValue> {
+    let addr = addr.into();
+    let peer_id = peer_id.into();
+
     let comm_clone = self.comm.clone();
+
     let promise = future_to_promise(async move {
-      comm_clone
-        .handle_requests()
-        .await
-        .map(|_| JsValue::undefined())
-        .map_err(err)
+      comm_clone.borrow_mut().add_peer(peer_id, addr).await;
+
+      Ok(JsValue::undefined())
     });
 
     Ok(promise)
   }
 
-  #[wasm_bindgen(js_name = addPeer)]
-  pub fn add_peer(&self, peer_id: PeerId, addr: Multiaddr) {
-    let addr = addr.into();
-    let peer_id = peer_id.into();
-    self.comm.add_peer(peer_id, addr);
-  }
-
-  #[wasm_bindgen(js_name = sendCommand)]
-  pub fn send_message(&self, peer_id: PeerId, message: NamedMessage) -> Result<Promise, JsValue> {
+  #[wasm_bindgen(js_name = sendRequest)]
+  pub fn send_request(&self, peer_id: PeerId) -> Result<Promise, JsValue> {
     let peer_id = peer_id.into();
 
     let comm_clone = self.comm.clone();
 
     let promise = future_to_promise(async move {
+      // TODO: Most likely unsafe to borrow_mut
       let retval = comm_clone
-        .send_command::<serde_json::Value, _>(peer_id, message.0)
+        .borrow_mut()
+        .send_request(peer_id, identity::actor::storage::requests::IdentityList)
         .await;
 
       match retval {
