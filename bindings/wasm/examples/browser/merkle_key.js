@@ -1,6 +1,11 @@
 import * as identity from "../../web/identity_wasm.js";
 import { createIdentity } from "./create_did.js";
-import { getExplorerUrl, logExplorerUrlToScreen, logObjectToScreen, logToScreen } from "./utils.js";
+import {
+    getExplorerUrl,
+    logExplorerUrlToScreen,
+    logObjectToScreen,
+    logToScreen,
+} from "./utils.js";
 
 /*
     This example shows how to sign/revoke verifiable credentials on scale.
@@ -10,22 +15,23 @@ import { getExplorerUrl, logExplorerUrlToScreen, logObjectToScreen, logToScreen 
     When the verifiable credential must be revoked, the issuer revokes the index of the revoked key.
 
     @param {{network: string, node: string}} clientConfig
+    @param {boolean} log log the events to the output window
 */
-export async function merkleKey(clientConfig, log=true) {
+export async function merkleKey(clientConfig, log = true) {
     // Create a default client configuration from the parent config network.
     const config = identity.Config.fromNetwork(clientConfig.network);
 
     // Create a client instance to publish messages to the Tangle.
     const client = identity.Client.fromConfig(config);
 
-    if(log) logToScreen("Creating identities..")
+    if (log) logToScreen("Creating identities..");
 
     //Creates new identities (See "create_did" example)
     const alice = await createIdentity(clientConfig, false);
     const issuer = await createIdentity(clientConfig, false);
 
-    if(log) logObjectToScreen(alice.doc)
-    if(log) logObjectToScreen(issuer.doc)
+    if (log) logObjectToScreen(alice.doc);
+    if (log) logObjectToScreen(issuer.doc);
 
     //Add a Merkle Key Collection Verification Method with 8 keys (Must be a power of 2)
     const keys = new identity.KeyCollection(identity.KeyType.Ed25519, 8);
@@ -75,7 +81,7 @@ export async function merkleKey(clientConfig, log=true) {
 
     //Check the verifiable credential
     const result = await client.checkCredential(signedVc.toString());
-    console.log(`VC verification result: ${result.verified}`);
+    if (log) logToScreen(`VC verification result: ${result.verified}`);
 
     // The Issuer would like to revoke the credential (and therefore revokes key 0)
     issuer.doc.revokeMerkleKey(method.id.toString(), 0);

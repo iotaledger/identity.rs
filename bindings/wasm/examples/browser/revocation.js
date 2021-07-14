@@ -18,6 +18,7 @@ import { getExplorerUrl, logExplorerUrlToScreen, logToScreen } from "./utils.js"
     ClientConfig object. This will ensure that all the API calls use a consistent node and network.
     
     @param {{network: string, node: string}} clientConfig
+    @param {boolean} log log the events to the output window
 */
 export async function revoke(clientConfig, log = true) {
     // Create a default client configuration from the parent config network.

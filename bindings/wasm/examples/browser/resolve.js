@@ -4,6 +4,8 @@ import { logObjectToScreen } from "./utils.js";
 /*
     A short example to show how to resolve a DID. This returns the latest DID Document.
 
+    @param {{network: string, node: string}} clientConfig
+    @param {boolean} log log the events to the output window
 */
 export async function resolveIdentity(clientConfig, log = true) {
     //get the DID string from the input field

@@ -8,6 +8,7 @@ import { logObjectToScreen, logToScreen } from "./utils.js";
     It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
 
     @param {{network: string, node: string}} clientConfig
+    @param {boolean} log log the events to the output window
 */
 export async function createVP(clientConfig, log = true) {
 
