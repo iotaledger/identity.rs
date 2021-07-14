@@ -12,7 +12,9 @@ We recommend that you **always** use a `CLIENT_CONFIG` parameter that you define
 mismatch the network across calls you will encounter errors.
 
 A `ClientConfig` is a record consisting of two string fields: `network` and `node`. There is an example client config
-that can be found in the `config.js` file.
+that can be found in the `config.js` file for node and in `main.js` for the browser.
+
+### Node.js Examples
 
 Before running the examples, make sure you have [built the bindings](../README.md#Build) for `node.js`.
 
@@ -39,3 +41,17 @@ The following examples are currently available:
 |  5  | [revocation](revocation.js)         | Remove a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC.                                                                                      |
 |  6  | [create_vp](create_vp.js)           | Create a Verifiable Presentation, the data model for sharing VCs, out of a Verifiable Credential and verifies it.                                                                                                                          |
 |  7  | [merkle_key](merkle_key.js)         | Adds a MerkleKeyCollection verification method to an Issuers DID Document and signs a Verifiable Credential with the key on index 0. Afterwards the key on index 0 is deactivated, making the Verifiable Credential fail its verification. |
+
+
+
+### Browser Examples
+All the Node.js examples are also available for the browser.
+
+Before running the examples, make sure you have [built the bindings](../README.md#Build) for `web`.
+
+You can run the browser examples using
+
+```
+npm run example:browser
+```
+Note: The webpage will be served on port 8080
