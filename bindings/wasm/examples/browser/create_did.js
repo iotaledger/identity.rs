@@ -17,10 +17,14 @@ import {
 */
 export async function createIdentity(clientConfig, log = true) {
     if (log) logToScreen("Identity creation started...");
-    if (log) logToScreen("This might take a few seconds to complete proof of work!");
+    if (log)
+        logToScreen("This might take a few seconds to complete proof of work!");
 
     // Create a DID Document (an identity).
-    const { doc, key } = new identity.Document(identity.KeyType.Ed25519, clientConfig.network.toString());
+    const { doc, key } = new identity.Document(
+        identity.KeyType.Ed25519,
+        clientConfig.network.toString()
+    );
 
     // Sign the DID Document with the generated key.
     doc.sign(key);

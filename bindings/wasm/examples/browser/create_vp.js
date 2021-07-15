@@ -11,8 +11,7 @@ import { logObjectToScreen, logToScreen } from "./utils.js";
     @param {boolean} log log the events to the output window
 */
 export async function createVP(clientConfig, log = true) {
-
-    if(log) logToScreen("creating Verifiable Presentation...")
+    if (log) logToScreen("creating Verifiable Presentation...");
 
     // Create a default client configuration from mainNet.
     const config = identity.Config.fromNetwork(clientConfig.network);
@@ -35,13 +34,13 @@ export async function createVP(clientConfig, log = true) {
         secret: alice.key.secret,
     });
 
-    if(log) logToScreen("signed VP:")
-    if(log) logObjectToScreen(signedVp)
+    if (log) logToScreen("signed VP:");
+    if (log) logObjectToScreen(signedVp);
 
     // Check the validation status of the Verifiable Presentation
     const checkResult = await client.checkPresentation(signedVp.toString());
 
-    if(log) logToScreen(`VP verification result: ${checkResult.verified}`)
+    if (log) logToScreen(`VP verification result: ${checkResult.verified}`);
 
     return { alice, issuer, signedVc, signedVp, checkResult };
 }

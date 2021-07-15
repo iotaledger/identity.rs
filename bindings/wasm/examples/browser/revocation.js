@@ -1,7 +1,10 @@
 import * as identity from "../../web/identity_wasm.js";
 import { createVC } from "./create_vc.js";
-import { getExplorerUrl, logExplorerUrlToScreen, logToScreen } from "./utils.js";
-
+import {
+    getExplorerUrl,
+    logExplorerUrlToScreen,
+    logToScreen,
+} from "./utils.js";
 
 /*
     This example shows how to revoke a verifiable credential.
@@ -26,24 +29,26 @@ export async function revoke(clientConfig, log = true) {
 
     // Create a client instance to publish messages to the Tangle.
     const client = identity.Client.fromConfig(config);
-    
+
     //Creates new identities (See "create_did" and "manipulate_did" examples)
     const { alice, issuer, signedVc } = await createVC(clientConfig, true);
 
-    if(log) logToScreen("Revoking VC...")
+    if (log) logToScreen("Revoking VC...");
 
     //Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
-    issuer.doc.removeMethod(identity.DID.parse(issuer.doc.id.toString() + "#newKey"));
+    issuer.doc.removeMethod(
+        identity.DID.parse(issuer.doc.id.toString() + "#newKey")
+    );
     issuer.doc.previousMessageId = issuer.nextMessageId;
     issuer.doc.sign(issuer.key);
     const messageId = await client.publishDocument(issuer.doc.toJSON());
 
     //Log the resulting Identity update
-    const explorerUrl = getExplorerUrl(issuer.doc, messageId)
-    if(log) logExplorerUrlToScreen(explorerUrl)
+    const explorerUrl = getExplorerUrl(issuer.doc, messageId);
+    if (log) logExplorerUrlToScreen(explorerUrl);
 
     //Check the verifiable credential
     const result = await client.checkCredential(signedVc.toString());
 
-    if(log) logToScreen(`VC verification result: ${result.verified}`);
+    if (log) logToScreen(`VC verification result: ${result.verified}`);
 }

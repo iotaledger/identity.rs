@@ -60,7 +60,7 @@ export async function createVC(clientConfig, log = true) {
     // Check if the credential is verifiable.
     const checkResult = await client.checkCredential(signedVc.toString());
 
-    if(log) logToScreen("Check credential result: " + checkResult.verified);
+    if (log) logToScreen("Check credential result: " + checkResult.verified);
 
     return { alice, issuer, signedVc, checkResult };
 }
