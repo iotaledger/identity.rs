@@ -1,14 +1,32 @@
 use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 
 use crate::utils::err;
-use futures::executor;
 use identity::{
   actor::{self, actor_builder::ActorBuilder},
   prelude::*,
 };
 use js_sys::Promise;
+use libp2p::identity::{
+  ed25519::{Keypair as EdKeypair, SecretKey},
+  Keypair,
+};
+
+use once_cell::sync::Lazy;
+use tokio::runtime::{Builder, Runtime};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
+
+static RUNTIME: Lazy<Runtime> = Lazy::new(|| Builder::new_current_thread().build().unwrap());
+
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(js_namespace = console)]
+  fn log(s: &str);
+}
+
+pub fn clog(s: &str) {
+  unsafe { log(s) };
+}
 
 #[wasm_bindgen]
 // #[derive(Debug)]
@@ -22,8 +40,20 @@ impl IdentityActor {
   pub fn new() -> Result<IdentityActor, JsValue> {
     let transport = unsafe { libp2p::wasm_ext::ffi::websocket_transport() };
     let transport = libp2p::wasm_ext::ExtTransport::new(transport);
-    let comm = executor::block_on(async {
-      let comm = ActorBuilder::new().build_with_transport(transport).await.map_err(err);
+
+    let comm = RUNTIME.block_on(async {
+      // TODO: "Works around" the missing `getrandom` wasm support *somewhere* in the dependency tree.
+      let mut bytes = vec![
+        128, 213, 9, 67, 34, 200, 197, 2, 128, 213, 9, 67, 34, 200, 197, 2, 128, 213, 9, 67, 34, 200, 197, 2, 128, 213,
+        9, 67, 34, 200, 197, 2,
+      ];
+      let keys = Keypair::Ed25519(EdKeypair::from(SecretKey::from_bytes(&mut bytes).unwrap()));
+
+      let comm = ActorBuilder::new()
+        .keys(identity::actor::InitKeypair::IdKeys(keys))
+        .build_with_transport(transport)
+        .await
+        .map_err(err);
       comm
     })?;
 
