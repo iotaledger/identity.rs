@@ -1,7 +1,7 @@
 use communication_refactored::{InitKeypair, Keypair};
 use libp2p::{tcp::TcpConfig, Multiaddr};
 
-use crate::{actor_builder::ActorBuilder, asyncfn::AsyncFn, storage::requests::IdentityList, IdentityStorageHandler};
+use crate::{actor_builder::ActorBuilder, asyncfn::AsyncFn, storage::requests::IdentityList, StorageHandler};
 
 #[tokio::test]
 async fn test_list_identities() -> anyhow::Result<()> {
@@ -16,11 +16,11 @@ async fn test_list_identities() -> anyhow::Result<()> {
     .build_with_transport(transport)
     .await?;
 
-  let handler = IdentityStorageHandler::new().await?;
+  let handler = StorageHandler::new().await?;
   comm.add_handler_object(handler);
 
-  comm.add_handler_method("storage/list", AsyncFn::new(IdentityStorageHandler::list));
-  comm.add_handler_method("storage/resolve", AsyncFn::new(IdentityStorageHandler::resolve));
+  comm.add_handler_method("storage/list", AsyncFn::new(StorageHandler::list));
+  comm.add_handler_method("storage/resolve", AsyncFn::new(StorageHandler::resolve));
 
   let peer_id = comm.peer_id();
 

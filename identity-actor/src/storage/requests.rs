@@ -27,7 +27,7 @@ impl ActorRequest for IdentityList {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct IdentityResolve(IotaDID);
+pub struct IdentityResolve(pub IotaDID);
 
 impl ActorRequest for IdentityResolve {
   type Response = Option<IotaDocument>;
