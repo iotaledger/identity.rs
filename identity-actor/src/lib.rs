@@ -20,3 +20,5 @@ pub use libp2p::{Multiaddr, PeerId};
 pub use storage::handler::StorageHandler;
 pub use storage::requests::{IdentityList, IdentityResolve};
 pub use types::NamedMessage;
+
+pub use communication_refactored::InitKeypair;
