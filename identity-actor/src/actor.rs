@@ -23,7 +23,7 @@ pub struct Actor {
   comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
   handlers: Arc<DashMap<String, Box<dyn RequestHandler>>>,
   objects: Arc<DashMap<TypeId, Box<dyn Any + Send + Sync + 'static>>>,
-  listener_handle: JoinHandle<Result<()>>,
+  listener_handle: Option<JoinHandle<Result<()>>>,
 }
 
 impl Actor {
@@ -34,18 +34,22 @@ impl Actor {
     objects: DashMap<TypeId, Box<dyn Any + Send + Sync + 'static>>,
     listening_addresses: Vec<Multiaddr>,
   ) -> Result<Self> {
-    if listening_addresses.is_empty() {
-      comm.start_listening(None).await?;
-    }
+    let handlers = Arc::new(handlers);
+    let objects = Arc::new(objects);
+
+    let listener_handle = if !listening_addresses.is_empty() {
+      Some(Self::spawn_listener(
+        receiver,
+        Arc::clone(&objects),
+        Arc::clone(&handlers),
+      ))
+    } else {
+      None
+    };
 
     for addr in listening_addresses {
       comm.start_listening(Some(addr)).await?;
     }
-
-    let handlers = Arc::new(handlers);
-    let objects = Arc::new(objects);
-
-    let listener_handle = Self::spawn_listener(receiver, Arc::clone(&objects), Arc::clone(&handlers));
 
     Ok(Self {
       comm,
@@ -152,8 +156,10 @@ impl Actor {
   pub async fn stop_handling_requests(self) -> Result<()> {
     // TODO: aborting means that even requests that have been received and are being processed are cancelled
     // We should instead use some signalling mechanism that breaks the loop
-    self.listener_handle.abort();
-    let _ = self.listener_handle.await;
+    if let Some(listener_handle) = self.listener_handle {
+      listener_handle.abort();
+      let _ = listener_handle.await;
+    }
     Ok(())
   }
 
@@ -177,6 +183,8 @@ impl Actor {
   }
 
   pub async fn join(self) {
-    self.listener_handle.await.unwrap().unwrap();
+    if let Some(listener_handle) = self.listener_handle {
+      listener_handle.await.unwrap().unwrap();
+    }
   }
 }
