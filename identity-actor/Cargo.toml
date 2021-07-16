@@ -4,6 +4,11 @@ version = "0.1.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
 license = "Apache-2.0"
+description = "A peer-to-peer identity communication framework"
+readme = "../README.md"
+repository = "https://github.com/iotaledger/identity.rs"
+keywords = ["iota", "tangle", "identity"]
+homepage = "https://www.iota.org"
 
 [dependencies]
 async-trait = "0.1.50"
