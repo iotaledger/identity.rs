@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { Network, defaultNodeURL, explorerURL } = require('../node/identity_wasm')
+const { Network, defaultNodeURL, explorerURL } = require('../../node/identity_wasm')
 
 const MAINNET = Network.mainnet();
 

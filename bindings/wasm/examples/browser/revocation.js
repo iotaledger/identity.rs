@@ -1,9 +1,10 @@
-// Copyright 2020-2021 IOTA Stiftung
-// SPDX-License-Identifier: Apache-2.0
-
-const { Client, Config, DID } = require('../node/identity_wasm')
-const { createVC } = require('./create_vc');
-const { logExplorerUrl } = require('./explorer_util')
+import * as identity from "../../web/identity_wasm.js";
+import { createVC } from "./create_vc.js";
+import {
+    getExplorerUrl,
+    logExplorerUrlToScreen,
+    logToScreen,
+} from "./utils.js";
 
 /*
     This example shows how to revoke a verifiable credential.
@@ -18,32 +19,36 @@ const { logExplorerUrl } = require('./explorer_util')
 
     We recommend that you ALWAYS using a CLIENT_CONFIG parameter that you define when calling any functions that take a
     ClientConfig object. This will ensure that all the API calls use a consistent node and network.
-
+    
     @param {{network: string, node: string}} clientConfig
+    @param {boolean} log log the events to the output window
 */
-async function revoke(clientConfig) {
+export async function revoke(clientConfig, log = true) {
     // Create a default client configuration from the parent config network.
-    const config = Config.fromNetwork(clientConfig.network);
+    const config = identity.Config.fromNetwork(clientConfig.network);
 
     // Create a client instance to publish messages to the Tangle.
-    const client = Client.fromConfig(config);
+    const client = identity.Client.fromConfig(config);
 
     //Creates new identities (See "create_did" and "manipulate_did" examples)
-    const {alice, issuer, signedVc} = await createVC(clientConfig);
+    const { alice, issuer, signedVc } = await createVC(clientConfig, true);
+
+    if (log) logToScreen("Revoking VC...");
 
     //Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
-    issuer.doc.removeMethod(DID.parse(issuer.doc.id.toString()+"#newKey"));
+    issuer.doc.removeMethod(
+        identity.DID.parse(issuer.doc.id.toString() + "#newKey")
+    );
     issuer.doc.previousMessageId = issuer.nextMessageId;
     issuer.doc.sign(issuer.key);
     const messageId = await client.publishDocument(issuer.doc.toJSON());
 
     //Log the resulting Identity update
-    logExplorerUrl("Identity Update:", clientConfig.network.toString(), messageId);
+    const explorerUrl = getExplorerUrl(issuer.doc, messageId);
+    if (log) logExplorerUrlToScreen(explorerUrl);
 
     //Check the verifiable credential
     const result = await client.checkCredential(signedVc.toString());
 
-    console.log(`VC verification result: ${result.verified}`);
+    if (log) logToScreen(`VC verification result: ${result.verified}`);
 }
-
-exports.revokeVC = revoke;

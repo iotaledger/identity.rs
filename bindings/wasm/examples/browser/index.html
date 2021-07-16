@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>WASM Examples Browser</title>
+    </head>
+    <body>
+        <style>
+            .ma-md {
+                margin: 5px;
+            }
+            .block {
+                display: block;
+            }
+            .content {
+                border: 1px solid black;
+                margin: 5px;
+                padding: 10px;
+            }
+        </style>
+
+        <script type="module" src="./main.js" defer async></script>
+
+        <button class="ma-md block" id="create-identity-btn">
+            Create Identity
+        </button>
+        <div class="ma-md">
+            <input placeholder="DID" id="resolve-did-input" />
+            <button id="resolve-did-btn">Resolve</button>
+        </div>
+        <button class="ma-md block" id="manipulate_did_btn">
+            Manipulate Identity
+        </button>
+        <button class="ma-md block" id="create_vc_btn">
+            Create Verifiable Credential
+        </button>
+
+        <button class="ma-md block" id="create_vp_btn">
+            Create Verifiable Presentation
+        </button>
+
+        <button class="ma-md block" id="revoke_vc_btn">
+            Revoke Verifiable Credential
+        </button>
+
+        <button class="ma-md block" id="merkle_key_btn">Merkle Key</button>
+
+        <button
+            class="ma-md block"
+            id="create_vc_btn"
+            onclick="
+            document.querySelector('#content').innerHTML = ''"
+        >
+            Clear Output
+        </button>
+
+        <h4 class="ma-md">Output:</h4>
+        <div id="content" class="content"></div>
+    </body>
+</html>
