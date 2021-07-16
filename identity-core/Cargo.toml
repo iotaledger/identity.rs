@@ -20,7 +20,7 @@ identity-diff = { version = "=0.3.0", path = "../identity-diff", default-feature
 roaring = { version = "0.7", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 serde_jcs = { version = "0.1", default-features = false }
-serde_json = { version = "1.0", default-features = false, features = ["preserve_order", "std"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
 subtle = { version = "2.4", default-features = false }
 thiserror = { version = "1.0", default-features = false }
 typenum = { version = "1.13", default-features = false }
