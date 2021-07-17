@@ -2,5 +2,5 @@
 
 We currently support the following libraries:
 
-- [Rust](./rust/) 
-- [WASM](./wasm/) 
+- [Rust](./rust/README) 
+- [WASM](./wasm/README) 
