@@ -1,4 +1,4 @@
 ---
-title: Examples
-sidebar_label: WASM Examples
+title: WASM Examples
+sidebar_label: Examples
 ---

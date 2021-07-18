@@ -17,14 +17,15 @@ module.exports = {
 
   docs: [
     'intro',
+    'intro_ssi',
     {
       type: 'category',
       label: 'Getting Started',
-      collapsed: false,
+      collapsed: true,
       items: [
         'getting-started/overview',
         {
-          DID: [
+          'Decentralized Identifiers (DID)': [
             'getting-started/did/README',
             'getting-started/did/create',
             'getting-started/did/resolve',
@@ -60,7 +61,7 @@ module.exports = {
     {
       type: 'category',
       label: 'Programming Languages',
-      collapsed: false,
+      collapsed: true,
       items: [
         {
           type: 'category',
@@ -92,12 +93,16 @@ module.exports = {
     {
       type: 'category',
       label: 'Specificatons',
-      collapsed: false,
+      collapsed: true,
       items: [
         'specs/README',
         'specs/iota_did_method_spec',
         'specs/merkle_key_collection',
       ],
     },
+    'glossary',
+    'contribute',
+    'contact',
+    'faq'
   ],
 };

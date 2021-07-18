@@ -1,6 +1,6 @@
 ---
 title: Decentralized Identifiers (DID)
-sidebar_label: Decentralized Identifiers
+sidebar_label: Overview
 ---
 
 The Decentralized Identifiers (DID) standard from W3C is the fundamental standard that supports the concept of a decentralized digital identity. A DID is a unique identifier that contains  information that can be resolved to a DID Document. This document contains data such as public keys, enabling the holder to prove ownership over their personal data, but also URIs that link to public information about the identity. This implementation complies to the [DID specifications v1.0 Working](https://www.w3.org/TR/did-core//). 
