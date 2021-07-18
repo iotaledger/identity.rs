@@ -90,8 +90,11 @@ module.exports = {
   presets: [
     [
       '@docusaurus/preset-classic',
+      
       {
+
         docs: {
+          remarkPlugins: [require('remark-import-partial')],
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           editUrl:
