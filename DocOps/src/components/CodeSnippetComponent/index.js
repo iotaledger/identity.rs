@@ -47,7 +47,7 @@ export default function CodeSnippet({ nodeReplitLink, rustReplitLink }) {
                     <iframe
                         frameborder="0"
                         width="100%"
-                        height="800px"
+                        height="600px"
                         src={nodeReplitLink}
                         // src="https://repl.it/@abdulmth/Create-did?lite=true"
                     ></iframe>
@@ -55,7 +55,7 @@ export default function CodeSnippet({ nodeReplitLink, rustReplitLink }) {
                     <iframe
                         frameborder="0"
                         width="100%"
-                        height="800px"
+                        height="600px"
                         src={rustReplitLink}
                         // src="https://repl.it/@abdulmth/create-did-rust?lite=true"
                     ></iframe>

@@ -22,7 +22,7 @@
 }
 
 .codeSnippetContainer {
-    height: 800px;
+    height: 600px;
     width: 100%;
     background-color: var(--ifm-color-emphasis-500);
     border-radius:10px;
