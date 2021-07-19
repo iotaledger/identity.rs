@@ -29,7 +29,8 @@ module.exports = {
           position: 'left',
           label: 'Documentation',
         },
-        {to: '/blog', label: 'Blog', position: 'left'},
+        {to: '/blog', label: 'Blog/Tutorial', position: 'left'},
+        {to: '/team', label: 'Team', position: 'left'},
         {
           href: 'https://github.com/iotaledger/identity.rs',
           label: 'GitHub',
@@ -41,11 +42,19 @@ module.exports = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Identity',
           items: [
             {
-              label: 'Tutorial',
+              label: 'Documentation',
               to: '/docs/intro',
+            },
+            {
+              label: 'Blog/Tutorial',
+              to: 'blog',
+            },
+            {
+              label: 'Team',
+              to: 'team',
             },
           ],
         },
@@ -53,16 +62,20 @@ module.exports = {
           title: 'Community',
           items: [
             {
-              label: 'Stack Exchange',
-              href: 'https://iota.stackexchange.com/',
-            },
-            {
               label: 'Discord',
               href: 'https://discord.iota.org/',
             },
             {
+              label: 'Stack Exchange',
+              href: 'https://iota.stackexchange.com/',
+            },
+            {
               label: 'Twitter',
               href: 'https://twitter.com/iota',
+            },
+            {
+              label: 'Reddit',
+              href: 'https://www.reddit.com/r/Iota/',
             },
           ],
         },
@@ -70,8 +83,8 @@ module.exports = {
           title: 'More',
           items: [
             {
-              label: 'Blog',
-              to: '/blog',
+              label: 'IOTA',
+              href: 'https://www.iota.org/',
             },
             {
               label: 'GitHub',
@@ -92,7 +105,6 @@ module.exports = {
       '@docusaurus/preset-classic',
       
       {
-
         docs: {
           remarkPlugins: [require('remark-import-partial')],
           sidebarPath: require.resolve('./sidebars.js'),
