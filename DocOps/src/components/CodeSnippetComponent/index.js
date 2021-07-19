@@ -2,7 +2,7 @@ import clsx from "clsx";
 import React, { useEffect } from "react";
 import "./styles.css";
 
-export default function CodeSnippet({ nodeReplitLink, RustReplitLink }) {
+export default function CodeSnippet({ nodeReplitLink, rustReplitLink }) {
     const [lang, setLang] = React.useState("node");
 
     useEffect(() => {
@@ -56,7 +56,7 @@ export default function CodeSnippet({ nodeReplitLink, RustReplitLink }) {
                         frameborder="0"
                         width="100%"
                         height="800px"
-                        src={RustReplitLink}
+                        src={rustReplitLink}
                         // src="https://repl.it/@abdulmth/create-did-rust?lite=true"
                     ></iframe>
                 )}
