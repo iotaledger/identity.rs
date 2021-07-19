@@ -1,30 +1,46 @@
 import clsx from "clsx";
-import React from "react";
+import React, { useEffect } from "react";
 import "./styles.css";
 
-export default function CodeSnippet({nodeReplitLink, RustReplitLink}) {
+export default function CodeSnippet({ nodeReplitLink, RustReplitLink }) {
     const [lang, setLang] = React.useState("node");
+
+    useEffect(() => {
+        let langFromStorage = localStorage.getItem("lang");
+        if (!langFromStorage) {
+            setLang("node");
+        } else {
+            setLang(langFromStorage);
+        }
+    });
+
     return (
         <div>
             <div className={clsx("langSelector")}>
-            <button
-                className={clsx("button", "languageButton", "mr-sm", {
-                    activeButton: lang === "node",
-                    inactiveButton: lang !== "node",
-                })}
-                onClick={() => setLang("node")}
-            >
-                Node.js
-            </button>
-            <button
-                className={clsx("button", "languageButton", {
-                    activeButton: lang == "rust",
-                    inactiveButton: lang !== "rust",
-                })}
-                onClick={() => setLang("rust")}
-            >
-                Rust
-            </button>
+                <button
+                    className={clsx("button", "languageButton", "mr-sm", {
+                        activeButton: lang === "node",
+                        inactiveButton: lang !== "node",
+                    })}
+                    onClick={() => {
+                        localStorage.setItem("lang", "node");
+                        setLang("node");
+                    }}
+                >
+                    Node.js
+                </button>
+                <button
+                    className={clsx("button", "languageButton", {
+                        activeButton: lang == "rust",
+                        inactiveButton: lang !== "rust",
+                    })}
+                    onClick={() => {
+                        localStorage.setItem("lang", "rust");
+                        setLang("rust");
+                    }}
+                >
+                    Rust
+                </button>
             </div>
             <div className={clsx("codeSnippetContainer")}>
                 {lang === "node" ? (
