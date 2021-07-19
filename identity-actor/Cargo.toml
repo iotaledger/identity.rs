@@ -22,16 +22,13 @@ identity-did = { path = "../identity-did" }
 identity-iota = { path = "../identity-iota", default-features = false }
 dashmap = "4.0"
 tokio = { version = "1.7", features = ["rt"] }
-
-[dependencies.libp2p]
-git = "https://github.com/libp2p/rust-libp2p"
-version = "0.39"
-default-features = false
-features = ["tcp-async-io"]
+libp2p = { version = "0.39", default-features = false, features = [
+    "tcp-async-io",
+] }
 
 [dependencies.stronghold-communication-refactored]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "49df5e3f15abed6cec2d67115db3872971595dd1"
+rev = "5a21c45ec19fcee8f6031fbc1be9e29c1a6cdbd9"
 default-features = false
 
 [dev-dependencies]
