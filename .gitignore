@@ -14,6 +14,9 @@ Cargo.lock
 .idea/
 .vscode/
 
+# Ignore temporary test files
+test-storage/
+
 # remove book
 book
 
