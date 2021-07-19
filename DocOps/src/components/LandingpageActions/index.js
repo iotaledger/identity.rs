@@ -5,7 +5,7 @@ import styles from './styles.module.css';
 
 const ActionList = [
   {
-    title: 'Learn',
+    title: 'Documentation',
     link: 'docs/intro',
     description: (
       <>
@@ -14,20 +14,20 @@ const ActionList = [
     ),
   },
   {
-    title: 'Build',
-    link: '/',
+    title: 'Blog/Tutorial',
+    link: 'blog',
     description: (
       <>
-        Follow our tutorial to build your own application. IOTA Identity supports Rust and Javascript (with WASM).
+        Follow our blog for the latest news and tutorials about IOTA identity.
       </>
     ),
   },
   {
-    title: 'Participate',
-    link: '/',
+    title: 'Links',
+    link: 'https://docs.iota.org/',
     description: (
       <>
-        You want to be a part of the IOTA mission? Join the IOTA community or join the IOTA Identity X-Team.
+        Find Developer Documentations for other IOTA projects.
       </>
     ),
   },
@@ -39,7 +39,12 @@ function Action({ title, link, description}) {
 
   const handleClick = (e) => {
     e.preventDefault();
-    history.push(link);
+    if(link.startsWith('http')){
+      window.open(link,'_blank');
+    }else{
+      history.push(link);
+
+    }
   }
 
   return (
