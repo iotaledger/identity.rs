@@ -4,6 +4,7 @@
     "title": "Identity Team Leader",
     "discord_handle": "Yell0w#0645",
     "image_url": "https://avatars.githubusercontent.com/u/29886335?v=4",
+    "desc": "Team managament, Framework Architecture, Interactions with community and partners.",
     "social_links": [
       {
         "type": "github",
@@ -24,6 +25,7 @@
     "title": "Rust Developer",
     "discord_handle": "Devin Turner [IF]#1157",
     "image_url": "https://avatars.githubusercontent.com/u/5410284?v=4",
+    "desc": "Core framework Development",
     "social_links": [
       {
         "type": "github",
@@ -40,6 +42,7 @@
     "title": "Rust Developer",
     "discord_handle": "Philipp Gackstatter#9527",
     "image_url": "https://avatars.githubusercontent.com/u/18741416?v=4",
+    "desc": "Core framework Development",
     "social_links": [
       {
         "type": "github",
@@ -56,6 +59,7 @@
     "title": "Rust Developer",
     "discord_handle": "Craig Bester#4452",
     "image_url": "https://avatars.githubusercontent.com/u/5772887?v=4",
+    "desc": "Core framework Development",
     "social_links": [
       {
         "type": "github",
@@ -72,6 +76,7 @@
     "title": "Full Stack Developer",
     "discord_handle": "Abdulrahim Al Methiab#9733",
     "image_url": "https://avatars.githubusercontent.com/u/31316147?v=4",
+    "desc": "Improving the usability of the framework, Building developer tools",
     "social_links": [
       {
         "type": "github",
