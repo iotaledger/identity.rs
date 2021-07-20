@@ -4,7 +4,7 @@
 use crate::errors::Result;
 use crate::{types::NamedMessage, Actor};
 use communication_refactored::firewall::FirewallConfiguration;
-use communication_refactored::InitKeypair;
+use communication_refactored::{Executor, InitKeypair};
 use communication_refactored::{ReceiveRequest, ShCommunicationBuilder};
 use dashmap::DashMap;
 use futures::{channel::mpsc, AsyncRead, AsyncWrite};
@@ -37,6 +37,22 @@ impl ActorBuilder {
     Actor::from_builder(self.receiver, comm, handlers, objects, self.listening_addresses).await
   }
 
+  pub async fn build_with_transport_and_executor<TRA, EXE>(self, transport: TRA, executor: EXE) -> Result<Actor>
+  where
+    TRA: Transport + Sized + Clone + Send + Sync + 'static,
+    TRA::Output: AsyncRead + AsyncWrite + Unpin + Send + 'static,
+    TRA::Dial: Send + 'static,
+    TRA::Listener: Send + 'static,
+    TRA::ListenerUpgrade: Send + 'static,
+    TRA::Error: Send + Sync,
+    EXE: Executor + Send + 'static + Clone,
+  {
+    let comm = self.comm_builder.build_with_transport(transport, executor).await;
+    let handlers = DashMap::new();
+    let objects = DashMap::new();
+    Actor::from_builder(self.receiver, comm, handlers, objects, self.listening_addresses).await
+  }
+
   pub async fn build_with_transport<TRA>(self, transport: TRA) -> Result<Actor>
   where
     TRA: Transport + Sized + Clone + Send + Sync + 'static,
@@ -46,7 +62,10 @@ impl ActorBuilder {
     TRA::ListenerUpgrade: Send + 'static,
     TRA::Error: Send + Sync,
   {
-    let comm = self.comm_builder.build_with_transport(transport).await;
+    let executor = |fut| {
+      tokio::spawn(fut);
+    };
+    let comm = self.comm_builder.build_with_transport(transport, executor).await;
     let handlers = DashMap::new();
     let objects = DashMap::new();
     Actor::from_builder(self.receiver, comm, handlers, objects, self.listening_addresses).await

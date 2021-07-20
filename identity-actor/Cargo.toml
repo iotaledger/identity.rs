@@ -28,11 +28,12 @@ libp2p = { version = "0.39", default-features = false, features = [
 
 [dependencies.stronghold-communication-refactored]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "5a21c45ec19fcee8f6031fbc1be9e29c1a6cdbd9"
+rev = "442f846d489f98c9913f8d06a3c2e9daa8151afc"
 default-features = false
 
 [dev-dependencies]
 anyhow = "1.0"
+pretty_env_logger = "0.4.0"
 
 [features]
 account = ["identity-account/default"]

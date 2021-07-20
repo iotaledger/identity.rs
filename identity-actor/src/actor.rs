@@ -48,7 +48,7 @@ impl Actor {
     };
 
     for addr in listening_addresses {
-      comm.start_listening(Some(addr)).await?;
+      comm.start_listening(addr).await?;
     }
 
     Ok(Self {
@@ -75,7 +75,7 @@ impl Actor {
     self.handlers.insert(cmd.into(), Box::new(handler));
   }
 
-  pub async fn start_listening(&mut self, address: Option<Multiaddr>) -> std::result::Result<Multiaddr, ListenErr> {
+  pub async fn start_listening(&mut self, address: Multiaddr) -> std::result::Result<Multiaddr, ListenErr> {
     self.comm.start_listening(address).await
   }
 
