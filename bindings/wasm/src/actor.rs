@@ -11,12 +11,8 @@ use libp2p::identity::{
   Keypair,
 };
 
-use once_cell::sync::Lazy;
-use tokio::runtime::{Builder, Runtime};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
-
-static RUNTIME: Lazy<Runtime> = Lazy::new(|| Builder::new_current_thread().build().unwrap());
 
 #[wasm_bindgen]
 extern "C" {
@@ -25,7 +21,10 @@ extern "C" {
 }
 
 pub fn clog(s: &str) {
-  unsafe { log(s) };
+  #[allow(unused_unsafe)]
+  unsafe {
+    log(s)
+  };
 }
 
 #[wasm_bindgen]
@@ -38,10 +37,13 @@ pub struct IdentityActor {
 #[wasm_bindgen]
 impl IdentityActor {
   pub fn new() -> Result<IdentityActor, JsValue> {
+    wasm_logger::init(wasm_logger::Config::new(log::Level::Debug));
+
+    #[allow(unused_unsafe)]
     let transport = unsafe { libp2p::wasm_ext::ffi::websocket_transport() };
     let transport = libp2p::wasm_ext::ExtTransport::new(transport);
 
-    let comm = RUNTIME.block_on(async {
+    let comm = futures::executor::block_on(async {
       // TODO: "Works around" the missing `getrandom` wasm support *somewhere* in the dependency tree.
       let mut bytes = vec![
         128, 213, 9, 67, 34, 200, 197, 2, 128, 213, 9, 67, 34, 200, 197, 2, 128, 213, 9, 67, 34, 200, 197, 2, 128, 213,
@@ -62,20 +64,6 @@ impl IdentityActor {
     })
   }
 
-  // #[wasm_bindgen(js_name = handleRequests)]
-  // pub fn handle_requests(&self) -> Result<Promise, JsValue> {
-  //   let comm_clone = self.comm.clone();
-  //   let promise = future_to_promise(async move {
-  //     comm_clone
-  //       .handle_requests()
-  //       .await
-  //       .map(|_| JsValue::undefined())
-  //       .map_err(err)
-  //   });
-
-  //   Ok(promise)
-  // }
-
   #[wasm_bindgen(js_name = addPeer)]
   pub fn add_peer(&self, peer_id: PeerId, addr: Multiaddr) -> Result<Promise, JsValue> {
     let addr = addr.into();
@@ -84,6 +72,7 @@ impl IdentityActor {
     let comm_clone = self.comm.clone();
 
     let promise = future_to_promise(async move {
+      clog(&format!("Adding peer {} with address {}", peer_id, addr));
       comm_clone.borrow_mut().add_peer(peer_id, addr).await;
 
       Ok(JsValue::undefined())
@@ -100,6 +89,7 @@ impl IdentityActor {
 
     let promise = future_to_promise(async move {
       // TODO: Most likely unsafe to borrow_mut
+      clog("Sending request...");
       let retval = comm_clone
         .borrow_mut()
         .send_request(peer_id, identity::actor::storage::requests::IdentityList)
