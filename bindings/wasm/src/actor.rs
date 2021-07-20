@@ -51,9 +51,11 @@ impl IdentityActor {
       ];
       let keys = Keypair::Ed25519(EdKeypair::from(SecretKey::from_bytes(&mut bytes).unwrap()));
 
+      let executor = |fut| { wasm_bindgen_futures::spawn_local(fut); };
+
       let comm = ActorBuilder::new()
         .keys(identity::actor::InitKeypair::IdKeys(keys))
-        .build_with_transport(transport)
+        .build_with_transport_and_executor(transport, executor)
         .await
         .map_err(err);
       comm
