@@ -1,0 +1,74 @@
+.section {
+  padding: 40px 0;
+}
+
+.teamMemberCard {
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  background: var(--ifm-menu-color-background-active);
+  height: 100%;
+}
+
+.cardHeader {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.image {
+  border-radius: 50%;
+  max-width: 200px;
+  margin-bottom: 24px;
+}
+
+.name {
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.title {
+  color: #909FBE;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.cardFooter {
+  display: flex;
+}
+
+.socialLink {
+  margin: 0 8px;
+  padding: 4px;
+  border-radius: 4px;
+  line-height: 0;
+  color: #909FBE;
+  background: rgba(0,0,0,0);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: 'background' ease-in-out 200ms;
+}
+
+.socialLink:hover {
+  color: #909FBE;
+  background: rgba(0,0,0,0.1);
+}
+
+.socialLinkLabel {
+  margin-left: 8px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.cardFooter svg {
+  color: #909FBE;
+  max-width: 24px;
+  max-height: 24px;
+  margin: 0;
+}
+
