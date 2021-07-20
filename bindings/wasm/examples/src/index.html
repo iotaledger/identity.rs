@@ -21,6 +21,9 @@
         </style>
 
         <script type="module" src="./web.js" defer async></script>
+        <!-- Required for the actor example -->
+        <script src="https://unpkg.com/multiaddr/dist/index.min.js"></script>
+        <script src="https://unpkg.com/peer-id/dist/index.min.js"></script>
 
         <button class="ma-md block" id="create-identity-btn">
             Create Identity
@@ -44,6 +47,14 @@
         <button class="ma-md block" id="revoke_vc_btn">
             Revoke Verifiable Credential
         </button>
+
+        <div class="ma-md">
+            <input placeholder="PeerId" id="actor-peer-id" />
+            <input placeholder="Address" id="actor-addr" />
+            <button class="ma-md block" id="actor_btn">
+                Send List Request
+            </button>
+        </div>
 
         <button class="ma-md block" id="merkle_key_btn">Merkle Key</button>
 
