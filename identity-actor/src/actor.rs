@@ -22,11 +22,12 @@ pub struct HandlerBuilder {
 }
 
 impl HandlerBuilder {
-  pub fn add_method<H, R, F>(self, cmd: &'static str, handler: AsyncFn<H, R, F>) -> Self
+  pub fn add_method<H, R, F, C>(self, cmd: &'static str, handler: AsyncFn<H, R, F, C>) -> Self
   where
     H: Clone + Send + Sync,
-    R: ActorRequest + Send + 'static,
+    R: ActorRequest + Send + Sync + 'static,
     F: Future<Output = R::Response> + Send + 'static,
+    C: 'static + Send + Sync + Fn(H, R) -> F,
   {
     self.handlers.insert(cmd.into(), (self.object_id, Box::new(handler)));
     self

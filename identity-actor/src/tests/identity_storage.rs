@@ -21,6 +21,10 @@ async fn test_list_identities() -> anyhow::Result<()> {
   listening_actor
     .add_handler(handler)
     .add_method("storage/list", AsyncFn::new(StorageHandler::list))
+    .add_method(
+      "storage/list2",
+      AsyncFn::new(|_obj: StorageHandler, _req: IdentityList| async { vec![] }),
+    )
     .add_method("storage/resolve", AsyncFn::new(StorageHandler::resolve));
 
   let peer_id = listening_actor.peer_id();

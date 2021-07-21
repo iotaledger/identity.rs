@@ -1,5 +1,6 @@
 use std::{
   any::{Any, TypeId},
+  marker::PhantomData,
   pin::Pin,
 };
 
@@ -8,31 +9,44 @@ use futures::Future;
 use crate::traits::{ActorRequest, RequestHandler};
 
 #[derive(Clone)]
-pub struct AsyncFn<H, R, F>
+pub struct AsyncFn<H, R, F, C>
 where
   H: 'static,
   R: ActorRequest,
   F: Future<Output = R::Response>,
+  C: Fn(H, R) -> F,
 {
-  func: fn(H, R) -> F,
+  func: C,
+  // Need to use the types that appear in the closure's arguments here,
+  // as it is otherwise considered unused.
+  // Since this type does not actually own any of these types, we use a reference.
+  // See alos the drop check section in the PhantomData doc.
+  _marker_obj: PhantomData<&'static H>,
+  _marker_req: PhantomData<&'static R>,
 }
 
-impl<H, R, F> AsyncFn<H, R, F>
+impl<H, R, F, C> AsyncFn<H, R, F, C>
 where
   H: 'static,
   R: ActorRequest,
   F: Future<Output = R::Response>,
+  C: Fn(H, R) -> F,
 {
-  pub fn new(func: fn(H, R) -> F) -> Self {
-    Self { func }
+  pub fn new(func: C) -> Self {
+    Self {
+      func,
+      _marker_obj: PhantomData,
+      _marker_req: PhantomData,
+    }
   }
 }
 
-impl<OBJ, REQ, FUT> RequestHandler for AsyncFn<OBJ, REQ, FUT>
+impl<OBJ, REQ, FUT, CLO> RequestHandler for AsyncFn<OBJ, REQ, FUT, CLO>
 where
   OBJ: Clone + Send + Sync + 'static,
-  REQ: ActorRequest + Send,
+  REQ: ActorRequest + Send + Sync,
   FUT: Future<Output = REQ::Response> + Send,
+  CLO: Send + Sync + Fn(OBJ, REQ) -> FUT,
 {
   fn invoke<'this>(
     &'this self,
