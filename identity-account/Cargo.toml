@@ -66,4 +66,5 @@ stronghold = [
 ]
 wasm = ["identity-iota/wasm"]
 async = ["identity-iota/async"]
-default = ["stronghold", "async"]
+serde-errors = []
+default = ["stronghold", "serde-errors", "async"]

@@ -102,3 +102,117 @@ pub trait PleaseDontMakeYourOwnResult<T> {
   #[allow(clippy::wrong_self_convention)]
   fn to_result(self) -> Result<T>;
 }
+
+#[cfg(feature = "serde-errors")]
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+pub struct SerdeError {
+  pub code: ErrorCode,
+  pub description: Option<String>,
+}
+
+#[cfg(feature = "serde-errors")]
+impl SerdeError {
+  pub fn new(code: ErrorCode, description: Option<String>) -> Self {
+    Self {
+      code,
+      description,
+    }
+  }
+}
+
+#[cfg(feature = "serde-errors")]
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+pub enum ErrorCode {
+  /// [Error::CryptoError]
+  CryptoError,
+  /// [Error::CoreError]
+  CoreError,
+  /// [Error::DIDError]
+  DIDError,
+  /// [Error::CredentialError]
+  CredentialError,
+  /// [Error::IotaError]
+  IotaError,
+  /// [Error::IoError]
+  IoError,
+  /// [Error::ActorSystemError]
+  ActorSystemError,
+  /// [Error::StrongholdError]
+  StrongholdError,
+  /// [Error::StrongholdResult]
+  StrongholdResult,
+  /// [Error::InvalidResourceIndex]
+  InvalidResourceIndex,
+  /// [Error::StrongholdPasswordNotSet]
+  StrongholdPasswordNotSet,
+  /// [Error::StrongholdProcedureFailure]
+  StrongholdProcedureFailure,
+  /// [Error::StrongholdMutexPoisoned]
+  StrongholdMutexPoisoned,
+  /// [Error::SharedReadPoisoned]
+  SharedReadPoisoned,
+  /// [Error::SharedWritePoisoned]
+  SharedWritePoisoned,
+  /// [Error::GenerationOverflow]
+  GenerationOverflow,
+  /// [Error::GenerationUnderflow]
+  GenerationUnderflow,
+  /// [Error::IdentityIdOverflow]
+  IdentityIdOverflow,
+  /// [Error::IdentityIdInvalid]
+  IdentityIdInvalid,
+  /// [Error::MissingDocumentId]
+  MissingDocumentId,
+  /// [Error::KeyVaultNotFound]
+  KeyVaultNotFound,
+  /// [Error::KeyPairNotFound]
+  KeyPairNotFound,
+  /// [Error::IdentityNotFound]
+  IdentityNotFound,
+  /// [Error::EventNotFound]
+  EventNotFound,
+  /// [Error::IdentityAlreadyExists]
+  IdentityAlreadyExists,
+  /// [Error::MethodNotFound]
+  MethodNotFound,
+  /// [Error::ServiceNotFound]
+  ServiceNotFound,
+  /// [Error::CommandError]
+  CommandError,
+}
+
+#[cfg(feature = "serde-errors")]
+impl From<Error> for SerdeError {
+  fn from(error: Error) -> Self {
+    match error {
+      Error::CryptoError(inner) => Self::new(ErrorCode::CryptoError, Some(inner.to_string())),
+      Error::CoreError(inner) => Self::new(ErrorCode::CoreError, Some(inner.to_string())),
+      Error::DIDError(inner) => Self::new(ErrorCode::CoreError, Some(inner.to_string())),
+      Error::CredentialError(inner) => Self::new(ErrorCode::CredentialError, Some(inner.to_string())),
+      Error::IotaError(inner) => Self::new(ErrorCode::IotaError, Some(inner.to_string())),
+      Error::IoError(inner) => Self::new(ErrorCode::IoError, Some(inner.to_string())),
+      Error::ActorSystemError(inner) => Self::new(ErrorCode::ActorSystemError, Some(inner.to_string())),
+      Error::StrongholdError(inner) => Self::new(ErrorCode::StrongholdError, Some(inner.to_string())),
+      Error::StrongholdResult(inner) => Self::new(ErrorCode::StrongholdResult, Some(inner.to_string())),
+      Error::InvalidResourceIndex => Self::new(ErrorCode::InvalidResourceIndex, None),
+      Error::StrongholdPasswordNotSet => Self::new(ErrorCode::StrongholdPasswordNotSet, None),
+      Error::StrongholdProcedureFailure => Self::new(ErrorCode::StrongholdProcedureFailure, None),
+      Error::StrongholdMutexPoisoned(inner) => Self::new(ErrorCode::StrongholdMutexPoisoned, Some(inner.to_string())),
+      Error::SharedReadPoisoned => Self::new(ErrorCode::SharedReadPoisoned, None),
+      Error::SharedWritePoisoned => Self::new(ErrorCode::SharedWritePoisoned, None),
+      Error::GenerationOverflow => Self::new(ErrorCode::GenerationOverflow, None),
+      Error::GenerationUnderflow => Self::new(ErrorCode::GenerationUnderflow, None),
+      Error::IdentityIdOverflow => Self::new(ErrorCode::IdentityIdOverflow, None),
+      Error::IdentityIdInvalid => Self::new(ErrorCode::IdentityIdInvalid, None),
+      Error::MissingDocumentId => Self::new(ErrorCode::MissingDocumentId, None),
+      Error::KeyVaultNotFound => Self::new(ErrorCode::KeyVaultNotFound, None),
+      Error::KeyPairNotFound => Self::new(ErrorCode::KeyPairNotFound, None),
+      Error::IdentityNotFound => Self::new(ErrorCode::IdentityNotFound, None),
+      Error::EventNotFound => Self::new(ErrorCode::EventNotFound, None),
+      Error::IdentityAlreadyExists => Self::new(ErrorCode::IdentityAlreadyExists, None),
+      Error::MethodNotFound => Self::new(ErrorCode::MethodNotFound, None),
+      Error::ServiceNotFound => Self::new(ErrorCode::ServiceNotFound, None),
+      Error::CommandError(inner) => Self::new(ErrorCode::CommandError, Some(inner.to_string())),
+    }
+  }
+}
