@@ -1,11 +1,7 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{
-  any::{Any, TypeId},
-  ops::Deref,
-  sync::Arc,
-};
+use std::{any::Any, ops::Deref, sync::Arc};
 
 use crate::{
   asyncfn::AsyncFn,
@@ -18,11 +14,29 @@ use communication_refactored::{ReceiveRequest, ShCommunication};
 use dashmap::DashMap;
 use futures::{channel::mpsc, Future, StreamExt};
 use tokio::task::{self, JoinHandle};
+use uuid::Uuid;
+
+pub struct HandlerBuilder {
+  object_id: Uuid,
+  handlers: Arc<DashMap<String, (Uuid, Box<dyn RequestHandler>)>>,
+}
+
+impl HandlerBuilder {
+  pub fn add_method<H, R, F>(self, cmd: &'static str, handler: AsyncFn<H, R, F>) -> Self
+  where
+    H: Clone + Send + Sync,
+    R: ActorRequest + Send + 'static,
+    F: Future<Output = R::Response> + Send + 'static,
+  {
+    self.handlers.insert(cmd.into(), (self.object_id, Box::new(handler)));
+    self
+  }
+}
 
 pub struct Actor {
   comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
-  handlers: Arc<DashMap<String, Box<dyn RequestHandler>>>,
-  objects: Arc<DashMap<TypeId, Box<dyn Any + Send + Sync + 'static>>>,
+  handlers: Arc<DashMap<String, (Uuid, Box<dyn RequestHandler>)>>,
+  objects: Arc<DashMap<Uuid, Box<dyn Any + Send + Sync + 'static>>>,
   listener_handle: Option<JoinHandle<Result<()>>>,
 }
 
@@ -30,8 +44,8 @@ impl Actor {
   pub(crate) async fn from_builder(
     receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
     mut comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
-    handlers: DashMap<String, Box<dyn RequestHandler>>,
-    objects: DashMap<TypeId, Box<dyn Any + Send + Sync + 'static>>,
+    handlers: DashMap<String, (Uuid, Box<dyn RequestHandler>)>,
+    objects: DashMap<Uuid, Box<dyn Any + Send + Sync + 'static>>,
     listening_addresses: Vec<Multiaddr>,
   ) -> Result<Self> {
     let handlers = Arc::new(handlers);
@@ -59,20 +73,16 @@ impl Actor {
     })
   }
 
-  pub fn add_handler_object<H>(&mut self, handler: H)
+  pub fn add_handler<H>(&mut self, handler: H) -> HandlerBuilder
   where
     H: Clone + Any + Send + Sync,
   {
-    self.objects.insert(TypeId::of::<H>(), Box::new(handler));
-  }
-
-  pub fn add_handler_method<H, R, F>(&mut self, cmd: &'static str, handler: AsyncFn<H, R, F>)
-  where
-    H: Clone + Send + Sync,
-    R: ActorRequest + Send + 'static,
-    F: Future<Output = R::Response> + Send + 'static,
-  {
-    self.handlers.insert(cmd.into(), Box::new(handler));
+    let object_id = Uuid::new_v4();
+    self.objects.insert(object_id, Box::new(handler));
+    HandlerBuilder {
+      object_id,
+      handlers: Arc::clone(&self.handlers),
+    }
   }
 
   pub async fn start_listening(&mut self, address: Multiaddr) -> std::result::Result<Multiaddr, ListenErr> {
@@ -97,8 +107,8 @@ impl Actor {
   /// A second caller would immediately receive an [`Error::LockInUse`].
   fn spawn_listener(
     mut receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
-    objects: Arc<DashMap<TypeId, Box<dyn Any + Send + Sync>>>,
-    handlers: Arc<DashMap<String, Box<dyn RequestHandler>>>,
+    objects: Arc<DashMap<Uuid, Box<dyn Any + Send + Sync>>>,
+    handlers: Arc<DashMap<String, (Uuid, Box<dyn RequestHandler>)>>,
   ) -> JoinHandle<Result<()>> {
     task::spawn(async move {
       let mut handles = vec![];
@@ -115,8 +125,8 @@ impl Actor {
 
   fn spawn_handler(
     receive_request: ReceiveRequest<NamedMessage, NamedMessage>,
-    objects: Arc<DashMap<TypeId, Box<dyn Any + Send + Sync>>>,
-    handlers: Arc<DashMap<String, Box<dyn RequestHandler>>>,
+    objects: Arc<DashMap<Uuid, Box<dyn Any + Send + Sync>>>,
+    handlers: Arc<DashMap<String, (Uuid, Box<dyn RequestHandler>)>>,
   ) -> JoinHandle<Result<()>> {
     task::spawn(async move {
       let request = receive_request.request;
@@ -124,10 +134,11 @@ impl Actor {
       let request_name = request.name;
 
       let response_data = match handlers.get(&request_name) {
-        Some(handler) => {
-          let object_type_id = handler.object_type_id();
+        Some(handler_tuple) => {
+          let object_id = handler_tuple.0;
+          let handler = &handler_tuple.1;
 
-          let obj = if let Some(object) = objects.get(&object_type_id) {
+          let obj = if let Some(object) = objects.get(&object_id) {
             let object_clone = handler.clone_object(object.deref());
             object_clone
           } else {

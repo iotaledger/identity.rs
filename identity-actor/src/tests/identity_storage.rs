@@ -10,28 +10,29 @@ async fn test_list_identities() -> anyhow::Result<()> {
 
   let addr: Multiaddr = "/ip4/127.0.0.1/tcp/1337".parse().unwrap();
 
-  let mut comm = ActorBuilder::new()
+  let mut listening_actor = ActorBuilder::new()
     .keys(InitKeypair::IdKeys(id_keys))
     .listen_on(addr.clone())
     .build_with_transport(transport)
     .await?;
 
   let handler = StorageHandler::new().await?;
-  comm.add_handler_object(handler);
 
-  comm.add_handler_method("storage/list", AsyncFn::new(StorageHandler::list));
-  comm.add_handler_method("storage/resolve", AsyncFn::new(StorageHandler::resolve));
+  listening_actor
+    .add_handler(handler)
+    .add_method("storage/list", AsyncFn::new(StorageHandler::list))
+    .add_method("storage/resolve", AsyncFn::new(StorageHandler::resolve));
 
-  let peer_id = comm.peer_id();
+  let peer_id = listening_actor.peer_id();
 
-  let mut other_comm = ActorBuilder::new().build().await?;
-  other_comm.add_peer(peer_id, addr).await;
+  let mut sending_actor = ActorBuilder::new().build().await?;
+  sending_actor.add_peer(peer_id, addr).await;
 
-  let result = other_comm.send_request(peer_id, IdentityList).await?;
+  let result = sending_actor.send_request(peer_id, IdentityList).await?;
 
   assert!(result.is_empty());
 
-  comm.stop_handling_requests().await.unwrap();
+  listening_actor.stop_handling_requests().await.unwrap();
 
   Ok(())
 }
