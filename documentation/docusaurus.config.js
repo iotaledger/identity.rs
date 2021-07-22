@@ -12,6 +12,7 @@ module.exports = {
   favicon: 'img/favicon.ico',
   organizationName: 'iotaledger', // Usually your GitHub org/user name.
   projectName: 'identity.rs', // Usually your repo name.
+  onBrokenLinks: 'warn',
   stylesheets: [
     'https://fonts.googleapis.com/css?family=Material+Icons',
   ],
