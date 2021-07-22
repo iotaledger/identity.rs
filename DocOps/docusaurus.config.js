@@ -42,19 +42,23 @@ module.exports = {
       style: 'dark',
       links: [
         {
-          title: 'Identity',
+          title: 'Documentation',
           items: [
             {
-              label: 'Documentation',
-              to: '/docs/intro',
+              label: 'Getting started',
+              to: '/docs/getting-started/overview',
             },
             {
-              label: 'Blog/Tutorial',
-              to: 'blog',
+              label: 'Rust',
+              to: '/docs/libraries/rust/README',
             },
             {
-              label: 'Team',
-              to: 'team',
+              label: 'WASM',
+              to: '/docs/libraries/wasm/README',
+            },
+            {
+              label: 'Specification',
+              to: '/docs/specs/README',
             },
           ],
         },
@@ -93,7 +97,7 @@ module.exports = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} IOTA Foundation, Inc. Built with Docusaurus.`,
     },
     prism: {
       theme: lightCodeTheme,
