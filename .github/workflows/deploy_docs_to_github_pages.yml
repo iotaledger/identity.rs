@@ -5,6 +5,7 @@ on:
     branches: [dev, main]
     paths:
       - 'documentation/**'
+      - '.github/workflows/deploy_docs_to_github_pages.yml'
 
 jobs:
   checks:
