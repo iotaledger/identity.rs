@@ -6,7 +6,7 @@ module.exports = {
   title: 'IOTA IDENTITY',
   tagline: 'Providing Trust between Individuals, Organizations and Things.',
   url: 'https://identity-docs.iota.org',
-  baseUrl: '/identity.rs/',
+  baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
