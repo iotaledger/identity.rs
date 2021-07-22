@@ -9,7 +9,9 @@ members = [
   "identity-did",
   "identity-diff",
   "identity-iota",
-  "flat-error",
+
+  "flat-enum",
+  "flat-enum-tests",
 
   "examples",
 ]

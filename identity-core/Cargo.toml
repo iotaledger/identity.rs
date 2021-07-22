@@ -26,6 +26,7 @@ thiserror = { version = "1.0", default-features = false }
 typenum = { version = "1.13", default-features = false }
 url = { version = "2.2", default-features = false, features = ["serde"] }
 zeroize = { version = "1.3", default-features = false }
+flat-enum = { version = "0.1", path = "../flat-enum" }
 
 [dependencies.iota-crypto]
 version = "0.5"
