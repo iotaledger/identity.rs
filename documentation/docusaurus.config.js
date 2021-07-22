@@ -5,7 +5,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 module.exports = {
   title: 'IOTA IDENTITY',
   tagline: 'Providing Trust between Individuals, Organizations and Things.',
-  url: 'https://your-docusaurus-test-site.com',
+  url: 'https://identity-docs.iota.org',
   baseUrl: '/identity.rs/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -97,7 +97,7 @@ module.exports = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} IOTA Foundation, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} IOTA Foundation, Built with Docusaurus.`,
     },
     prism: {
       theme: lightCodeTheme,
