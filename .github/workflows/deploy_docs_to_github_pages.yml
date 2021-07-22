@@ -1,10 +1,10 @@
 name: deploy
 
 on:
-  pull_request:
-    branches: [docs/setup-docusaurus]
   push:
-    branches: [docs/setup-docusaurus]
+    branches: [dev, main]
+    paths:
+      - 'documentation/**'
 
 jobs:
   checks:
