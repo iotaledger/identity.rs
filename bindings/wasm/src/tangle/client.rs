@@ -6,14 +6,15 @@ use futures::executor;
 use identity::core::FromJson;
 use identity::credential::Credential;
 use identity::credential::Presentation;
+use identity::iota::Client as IotaClient;
 use identity::iota::CredentialValidator;
 use identity::iota::DocumentDiff;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
-use identity::iota::{Client as IotaClient, TangleRef};
+use identity::iota::TangleRef;
+use identity::iota::TangleResolve;
 use js_sys::Promise;
-use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
@@ -22,19 +23,17 @@ use crate::tangle::Config;
 use crate::tangle::WasmNetwork;
 use crate::utils::err;
 
-type Shared<T> = Rc<RefCell<T>>;
-
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct Client {
-  client: Shared<IotaClient>,
+  pub(crate) client: Rc<IotaClient>,
 }
 
 #[wasm_bindgen]
 impl Client {
   fn from_client(client: IotaClient) -> Client {
     Self {
-      client: Rc::new(RefCell::new(client)),
+      client: Rc::new(client),
     }
   }
 
@@ -65,40 +64,21 @@ impl Client {
   /// Returns the `Client` Tangle network.
   #[wasm_bindgen]
   pub fn network(&self) -> WasmNetwork {
-    self.client.borrow().network().into()
-  }
-
-  /// Returns the default node URL of the `Client` network.
-  #[wasm_bindgen(getter = defaultNodeURL)]
-  pub fn default_node_url(&self) -> String {
-    self.client.borrow().default_node_url().to_string()
-  }
-
-  /// Returns the web explorer URL of the `Client` network.
-  #[wasm_bindgen(getter = explorerURL)]
-  pub fn explorer_url(&self) -> String {
-    self.client.borrow().explorer_url().to_string()
-  }
-
-  /// Returns the web explorer URL of the given `transaction`.
-  #[wasm_bindgen(js_name = transactionURL)]
-  pub fn transaction_url(&self, message_id: &str) -> String {
-    self.client.borrow().transaction_url(message_id).to_string()
+    self.client.network().into()
   }
 
   /// Publishes an `IotaDocument` to the Tangle.
   #[wasm_bindgen(js_name = publishDocument)]
   pub fn publish_document(&self, document: &JsValue) -> Result<Promise, JsValue> {
     let document: IotaDocument = document.into_serde().map_err(err)?;
-    let client: Shared<IotaClient> = self.client.clone();
+    let client: Rc<IotaClient> = self.client.clone();
 
     let promise: Promise = future_to_promise(async move {
       client
-        .borrow()
         .publish_document(&document)
         .await
         .map_err(err)
-        .map(|message| message.to_string().into())
+        .and_then(|receipt| JsValue::from_serde(&receipt).map_err(err))
     });
 
     Ok(promise)
@@ -109,15 +89,14 @@ impl Client {
   pub fn publish_diff(&self, message_id: &str, value: &JsValue) -> Result<Promise, JsValue> {
     let diff: DocumentDiff = value.into_serde().map_err(err)?;
     let message: MessageId = MessageId::from_str(message_id).map_err(err)?;
-    let client: Shared<IotaClient> = self.client.clone();
+    let client: Rc<IotaClient> = self.client.clone();
 
     let promise: Promise = future_to_promise(async move {
       client
-        .borrow()
         .publish_diff(&message, &diff)
         .await
         .map_err(err)
-        .map(|message| message.to_string().into())
+        .and_then(|receipt| JsValue::from_serde(&receipt).map_err(err))
     });
 
     Ok(promise)
@@ -132,11 +111,11 @@ impl Client {
       message_id: &'a MessageId,
     }
 
-    let client: Shared<IotaClient> = self.client.clone();
+    let client: Rc<IotaClient> = self.client.clone();
     let did: IotaDID = did.parse().map_err(err)?;
 
     let promise: Promise = future_to_promise(async move {
-      client.borrow().resolve(&did).await.map_err(err).and_then(|document| {
+      client.resolve(&did).await.map_err(err).and_then(|document| {
         let wrapper = DocWrapper {
           document: &document,
           message_id: document.message_id(),
@@ -152,11 +131,11 @@ impl Client {
   /// Validates a credential with the DID Document from the Tangle.
   #[wasm_bindgen(js_name = checkCredential)]
   pub fn check_credential(&self, data: &str) -> Result<Promise, JsValue> {
-    let client: Shared<IotaClient> = self.client.clone();
+    let client: Rc<IotaClient> = self.client.clone();
     let data: Credential = Credential::from_json(&data).map_err(err)?;
 
     let promise: Promise = future_to_promise(async move {
-      CredentialValidator::new(&client.borrow())
+      CredentialValidator::new(&*client)
         .validate_credential(data)
         .await
         .map_err(err)
@@ -169,11 +148,11 @@ impl Client {
   /// Validates a presentation with the DID Document from the Tangle.
   #[wasm_bindgen(js_name = checkPresentation)]
   pub fn check_presentation(&self, data: &str) -> Result<Promise, JsValue> {
-    let client: Shared<IotaClient> = self.client.clone();
+    let client: Rc<IotaClient> = self.client.clone();
     let data: Presentation = Presentation::from_json(&data).map_err(err)?;
 
     let promise: Promise = future_to_promise(async move {
-      CredentialValidator::new(&client.borrow())
+      CredentialValidator::new(&*client)
         .validate_presentation(data)
         .await
         .map_err(err)

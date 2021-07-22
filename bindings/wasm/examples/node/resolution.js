@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { Client, Config } = require('../node/identity_wasm')
-const { manipulateIdentity } = require('./manipulate_did');
+const { Client, Config } = require('../../node/identity_wasm')
+const { manipulateIdentity } = require("./manipulate_did");
 
 /*
     A short example to show how to resolve a DID. This returns the latest DID Document.

@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::cell::Cell;
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
@@ -9,6 +8,7 @@ use serde::__private::ser::FlatMapSerializer;
 use serde::ser::SerializeMap;
 use serde::ser::Serializer;
 use serde::Serialize;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::crypto::SignatureValue;
 use crate::error::Result;
@@ -23,7 +23,7 @@ pub struct Signature {
   #[serde(rename = "verificationMethod")]
   method: String,
   #[serde(default, skip_deserializing)]
-  hidden: Cell<bool>,
+  hidden: AtomicBoolCell,
 }
 
 impl Signature {
@@ -33,7 +33,7 @@ impl Signature {
       type_: type_.into(),
       value: SignatureValue::None,
       method: method.into(),
-      hidden: Cell::new(false),
+      hidden: AtomicBoolCell(AtomicBool::new(false)),
     }
   }
 
@@ -113,5 +113,54 @@ impl Serialize for Signature {
     }
 
     state.end()
+  }
+}
+
+/// Cell-style wrapper around an AtomicBool.
+/// This is essentially a `Cell` but with `Sync` implemented.
+pub(crate) struct AtomicBoolCell(AtomicBool);
+
+impl AtomicBoolCell {
+  pub(crate) fn set(&self, value: bool) {
+    self.0.store(value, Ordering::Relaxed);
+  }
+
+  pub(crate) fn get(&self) -> bool {
+    self.0.load(Ordering::Relaxed)
+  }
+}
+
+impl Clone for AtomicBoolCell {
+  fn clone(&self) -> Self {
+    Self(AtomicBool::new(self.0.load(Ordering::Relaxed)))
+  }
+}
+
+impl PartialEq for AtomicBoolCell {
+  fn eq(&self, other: &Self) -> bool {
+    self.0.load(Ordering::Relaxed) == other.0.load(Ordering::Relaxed)
+  }
+}
+
+impl Eq for AtomicBoolCell {}
+
+impl Default for AtomicBoolCell {
+  fn default() -> Self {
+    Self(AtomicBool::new(false))
+  }
+}
+
+impl PartialOrd for AtomicBoolCell {
+  fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+    self
+      .0
+      .load(Ordering::Relaxed)
+      .partial_cmp(&other.0.load(Ordering::Relaxed))
+  }
+}
+
+impl Ord for AtomicBoolCell {
+  fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    self.0.load(Ordering::Relaxed).cmp(&other.0.load(Ordering::Relaxed))
   }
 }

@@ -49,6 +49,7 @@ impl IotaVerificationMethod {
       .id(key.into())
       .controller(did.into())
       .key_type(MethodType::MerkleKeyCollection2021)
+      // TODO: replace publicKeyBase58 with publicKeyMultibase
       .key_data(MethodData::new_b58(&keys.encode_merkle_key::<D>()))
       .build()
       .map_err(Into::into)
@@ -72,7 +73,7 @@ impl IotaVerificationMethod {
     F: Into<Option<&'a str>>,
   {
     let key: &[u8] = keypair.public().as_ref();
-    let did: IotaDID = IotaDID::with_network(key, &network)?;
+    let did: IotaDID = IotaDID::with_network(key, network)?;
 
     Self::from_did(did, keypair, fragment)
   }

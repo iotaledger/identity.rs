@@ -46,7 +46,7 @@ impl Network {
   }
 
   /// Returns the default node URL of the Tangle network.
-  pub fn node_url(self) -> &'static Url {
+  pub fn default_node_url(self) -> &'static Url {
     match self {
       Self::Mainnet => &*NODE_MAIN,
       Self::Testnet => &*NODE_TEST,
@@ -61,6 +61,15 @@ impl Network {
     }
   }
 
+  /// Returns the web explorer URL of the given `message`.
+  pub fn message_url(&self, message_id: &str) -> Url {
+    let mut url: Url = self.explorer_url().clone();
+
+    // unwrap is safe, the explorer URL is always a valid base URL
+    url.path_segments_mut().unwrap().push("message").push(message_id);
+    url
+  }
+
   /// Returns the name of the network as a static `str`.
   pub const fn as_str(self) -> &'static str {
     match self {
@@ -71,9 +80,9 @@ impl Network {
 }
 
 impl Default for Network {
-  /// The default `Network` is the `Testnet`.
+  /// The default `Network` is the `Mainnet`.
   fn default() -> Self {
-    Network::Testnet
+    Network::Mainnet
   }
 }
 

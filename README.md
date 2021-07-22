@@ -47,9 +47,14 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 - [Examples in /examples folder](https://github.com/iotaledger/identity.rs/tree/main/examples): Practical code snippets to get you started with the library.
 - [IOTA Identity Experience Team Website](https://iota-community.github.io/X-Team_IOTA_Identity/): Website for a collaborative effort to provide help, guidance and spotlight to the IOTA Identity Community through offering feedback and introducing consistent workflows around IOTA Identity.
 
+## Prerequisites
+
+- [Rust](https://www.rust-lang.org/) (>= 1.51)
+- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.51)
+
 ## Getting Started
 
-If you want to include IOTA Identity in your project, simply add it as a dependency in your `cargo.toml`:
+If you want to include IOTA Identity in your project, simply add it as a dependency in your `Cargo.toml`:
 ```rust
 [dependencies]
 identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}

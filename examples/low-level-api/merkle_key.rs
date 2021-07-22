@@ -6,67 +6,56 @@
 //! cargo run --example merkle_key
 
 mod common;
+mod create_did;
 
-use identity::core::BitSet;
-use identity::core::FromJson;
 use identity::core::ToJson;
-use identity::core::Url;
 use identity::credential::Credential;
-use identity::credential::CredentialBuilder;
-use identity::credential::Subject;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
 use identity::crypto::PublicKey;
 use identity::crypto::SecretKey;
-use identity::did::resolution::resolve;
-use identity::did::resolution::Resolution;
 use identity::did::MethodScope;
+use identity::iota::ClientMap;
+use identity::iota::CredentialValidation;
+use identity::iota::CredentialValidator;
+use identity::iota::IotaDID;
 use identity::iota::IotaVerificationMethod;
-use identity::iota::TangleRef;
+use identity::iota::Receipt;
 use identity::prelude::*;
 use rand::rngs::OsRng;
 use rand::Rng;
 
-const LEAVES: usize = 1 << 10;
-
 #[tokio::main]
 async fn main() -> Result<()> {
-  // Create a Client to interact with the IOTA Tangle.
-  let client: Client = Client::new().await?;
+  // Create a client instance to send messages to the Tangle.
+  let client: ClientMap = ClientMap::new();
 
-  // Create a new DID Document, signed and published.
-  let (mut doc, auth): (IotaDocument, KeyPair) = common::create_did_document(&client).await?;
+  // Create a signed DID Document/KeyPair for the credential issuer (see create_did.rs).
+  let (mut doc_iss, key_iss, receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
-  // Generate a collection of ed25519 keys for signing credentials
-  let keys: KeyCollection = KeyCollection::new_ed25519(LEAVES)?;
+  // Create a signed DID Document/KeyPair for the credential subject (see create_did.rs).
+  let (doc_sub, _, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
-  // Generate a Merkle Key Collection Verification Method
-  // with SHA-256 as  the digest algorithm.
-  let method: IotaVerificationMethod =
-    IotaVerificationMethod::create_merkle_key::<Sha256, _>(doc.id().clone(), &keys, "key-collection")?;
+  // Generate a Merkle Key Collection Verification Method with 8 keys (Must be a power of 2)
+  let keys: KeyCollection = KeyCollection::new_ed25519(8)?;
+  let method_did: IotaDID = doc_iss.id().clone();
+  let method = IotaVerificationMethod::create_merkle_key::<Sha256, _>(method_did, &keys, "merkle-key")?;
 
-  // Append the new verification method to the set of existing methods
-  doc.insert_method(MethodScope::VerificationMethod, method);
+  // Add to the DID Document as a general-purpose verification method
+  doc_iss.insert_method(MethodScope::VerificationMethod, method);
+  doc_iss.set_previous_message_id(*receipt.message_id());
+  doc_iss.sign(key_iss.secret())?;
 
-  // Sign and publish the updated document
-  doc.set_previous_message_id(*doc.message_id());
-  doc.sign(auth.secret())?;
-  doc.publish(&client).await?;
+  let receipt: Receipt = client.publish_document(&doc_iss).await?;
 
-  println!("document: {:#}", doc);
+  println!("Publish Receipt > {:#?}", receipt);
 
-  // Create a Verifiable Credential
-  let mut credential: Credential = CredentialBuilder::default()
-    .issuer(Url::parse(doc.id().as_str())?)
-    .type_("MyCredential")
-    .subject(Subject::from_json(r#"{"claim": true}"#)?)
-    .build()?;
-
-  println!("credential (unsigned): {:#}", credential);
+  // Create an unsigned Credential with claims about `subject` specified by `issuer`.
+  let mut credential: Credential = common::issue_degree(&doc_iss, &doc_sub)?;
 
   // Select a random key from the collection
-  let index: usize = OsRng.gen_range(0..LEAVES);
+  let index: usize = OsRng.gen_range(0..keys.len());
 
   let public: &PublicKey = keys.public(index).unwrap();
   let secret: &SecretKey = keys.secret(index).unwrap();
@@ -74,68 +63,41 @@ async fn main() -> Result<()> {
   // Generate an inclusion proof for the selected key
   let proof: Proof<Sha256> = keys.merkle_proof(index).unwrap();
 
-  // Sign the Verifiable Credential with the DID Document
-  doc
+  // Sign the Credential with the issuers secret key
+  doc_iss
     .signer(secret)
-    .method("key-collection")
+    .method("merkle-key")
     .merkle_key((public, &proof))
     .sign(&mut credential)?;
 
-  println!("credential (signed): {:#}", credential);
+  println!("Credential JSON > {:#}", credential);
 
-  let verified: Result<(), _> = doc.verifier().verify(&credential);
+  let credential_json: String = credential.to_json()?;
 
-  println!("verified: {:?}", verified.is_ok());
+  // Check the verifiable credential
+  let validator: CredentialValidator<ClientMap> = CredentialValidator::new(&client);
+  let validation: CredentialValidation = validator.check(&credential_json).await?;
+  assert!(validation.verified);
 
-  // Revoke the previously used key - assume it was compromised
-  let mut revocation: BitSet = BitSet::new();
+  println!("Credential Validation > {:#?}", validation);
 
-  revocation.insert(index as u32);
+  // The Issuer would like to revoke the credential (and therefore revokes key at `index`)
+  doc_iss
+    .try_resolve_mut("merkle-key")
+    .and_then(IotaVerificationMethod::try_from_mut)?
+    .revoke_merkle_key(index)?;
+  doc_iss.set_previous_message_id(*receipt.message_id());
+  doc_iss.sign(key_iss.secret())?;
 
-  unsafe {
-    doc
-      .as_document_mut()
-      .try_resolve_mut("key-collection")?
-      .properties_mut()
-      .insert("revocation".into(), revocation.to_json_value()?);
-  }
+  let receipt: Receipt = client.publish_document(&doc_iss).await?;
 
-  // Publish the new document with the updated revocation state
-  doc.set_previous_message_id(*doc.message_id());
-  doc.sign(auth.secret())?;
-  doc.publish(&client).await?;
+  println!("Publish Receipt > {:#?}", receipt);
 
-  println!("document: {:#}", doc);
+  // Check the verifiable credential
+  let validation: CredentialValidation = validator.check(&credential_json).await?;
+  assert!(!validation.verified);
 
-  // Set false claims about the credential subject
-  let subject = credential.credential_subject.get_mut(0).unwrap();
-  subject.properties.insert("claim".into(), false.into());
-  subject.properties.insert("new-claim".into(), "not-false".into());
-
-  // Sign the Credential with the compromised key
-  doc
-    .signer(secret)
-    .method("key-collection")
-    .merkle_key((public, &proof))
-    .sign(&mut credential)?;
-
-  println!("credential (compro-signed): {:#}", credential);
-
-  // Resolve the DID and receive the latest document version
-  let resolution: Resolution = resolve(doc.id().as_str(), Default::default(), &client).await?;
-  let document: IotaDocument = resolution
-    .document
-    .map(IotaDocument::try_from_core)
-    .transpose()?
-    .unwrap();
-
-  println!("metadata: {:#?}", resolution.metadata);
-  println!("document: {:#?}", document);
-
-  // Check the verification status again - the credential SHOULD NOT be valid
-  let verified: Result<(), _> = doc.verifier().verify(&credential);
-
-  println!("verified: {:?}", verified.is_ok());
+  println!("Credential Validation > {:#?}", validation);
 
   Ok(())
 }

@@ -14,6 +14,7 @@ use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Client;
+use crate::tangle::TangleResolve;
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CredentialValidation<T = Object> {
@@ -40,13 +41,13 @@ pub struct DocumentValidation {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct CredentialValidator<'a> {
-  client: &'a Client,
+pub struct CredentialValidator<'a, R: TangleResolve = Client> {
+  client: &'a R,
 }
 
-impl<'a> CredentialValidator<'a> {
+impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
   /// Creates a new `CredentialValidator`.
-  pub const fn new(client: &'a Client) -> Self {
+  pub fn new(client: &'a R) -> Self {
     Self { client }
   }
 

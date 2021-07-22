@@ -372,7 +372,7 @@ impl TinyMethodRef {
   pub fn fragment(&self) -> &Fragment {
     match self {
       Self::Embed(inner) => &inner.location.fragment,
-      Self::Refer(inner) => &inner,
+      Self::Refer(inner) => inner,
     }
   }
 

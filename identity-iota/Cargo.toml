@@ -12,6 +12,7 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
+dashmap = { version = "4.0" }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
 identity-core = { version = "=0.3.0", path = "../identity-core" }
