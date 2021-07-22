@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Jelle Millenaar",
+    "title": "Identity Team Leader",
+    "discord_handle": "Yell0w#0645",
+    "image_url": "https://avatars.githubusercontent.com/u/29886335?v=4",
+    "desc": "Team Managament, Framework Architecture, Interactions with community and partners.",
+    "social_links": [
+      {
+        "type": "github",
+        "link": "https://github.com/JelleMillenaar"
+      },
+      {
+        "type": "twitter",
+        "link": "https://twitter.com/JelleFm"
+      },
+      {
+        "type": "discord",
+        "label": "Yell0w#0645"
+      }
+    ]
+  },
+  {
+    "name": "Devin Turner",
+    "title": "Rust Developer",
+    "discord_handle": "Devin Turner [IF]#1157",
+    "image_url": "https://avatars.githubusercontent.com/u/5410284?v=4",
+    "desc": "Core framework Development",
+    "social_links": [
+      {
+        "type": "github",
+        "link": "https://github.com/l1h3r"
+      },
+      {
+        "type": "discord",
+        "label": "Devin Turner [IF]#1157"
+      }
+    ]
+  },
+  {
+    "name": "Philipp Gackstatter",
+    "title": "Rust Developer",
+    "discord_handle": "Philipp Gackstatter#9527",
+    "image_url": "https://avatars.githubusercontent.com/u/18741416?v=4",
+    "desc": "Core framework Development.",
+    "social_links": [
+      {
+        "type": "github",
+        "link": "https://github.com/PhilippGackstatter"
+      },
+      {
+        "type": "discord",
+        "label": "Philipp Gackstatter#9527"
+      }
+    ]
+  },
+  {
+    "name": "Craig Bester",
+    "title": "Rust Developer",
+    "discord_handle": "Craig Bester#4452",
+    "image_url": "https://avatars.githubusercontent.com/u/5772887?v=4",
+    "desc": "Core framework Development.",
+    "social_links": [
+      {
+        "type": "github",
+        "link": "https://github.com/cycraig"
+      },
+      {
+        "type": "discord",
+        "label": "Craig Bester#4452"
+      }
+    ]
+  },
+  {
+    "name": "Abdulrahim Al Mehtiab",
+    "title": "Full Stack Developer",
+    "discord_handle": "Abdulrahim Al Methiab#9733",
+    "image_url": "https://avatars.githubusercontent.com/u/31316147?v=4",
+    "desc": "Improving the usability of the framework, Building developer tools.",
+    "social_links": [
+      {
+        "type": "github",
+        "link": "https://github.com/abdulmth"
+      },
+      {
+        "type": "discord",
+        "label": "Abdulrahim Al Methiab#9733"
+      }
+    ]
+  }
+
+]

@@ -1,0 +1,38 @@
+.languageButton:hover {
+    color: var(--ifm-color-emphasis-1000);
+}
+
+.activeButton {
+    background-color: var(--ifm-color-primary);
+    color: white;
+    border-color: transparent;
+}
+
+.activeButton:hover {
+    color: white;
+}
+
+.inactiveButton {
+    border-color: transparent;
+    background-color: var(--ifm-color-emphasis-300);
+    color: var(--ifm-color-emphasis-600);
+}
+.inactiveButton:hover {
+    color: var(--ifm-color-emphasis-1000);
+}
+
+.codeSnippetContainer {
+    height: 600px;
+    width: 100%;
+    background-color: var(--ifm-color-emphasis-500);
+    border-radius:10px;
+    overflow: hidden;
+    border-radius:0px 10px 10px 10px; 
+}
+
+.langSelector {
+    background-color: var(--ifm-color-emphasis-300);
+    padding: 5px;
+    display: inline-block;
+    border-radius:10px 10px 0px 0px; 
+}
