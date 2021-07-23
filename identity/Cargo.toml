@@ -15,8 +15,8 @@ documentation = "https://identity.docs.iota.org"
 identity-account = { version = "=0.3.0", path = "../identity-account", optional = true }
 identity-comm = { version = "=0.3.0", path = "../identity-comm", optional = true }
 identity-core = { version = "=0.3.0", path = "../identity-core" }
-identity-credential = { version = "=0.3.0", path = "../identity-credential" }
-identity-did = { version = "=0.3.0", path = "../identity-did" }
+identity-credential = { version = "=0.3.0", path = "../identity-credential", default-features = false }
+identity-did = { version = "=0.3.0", path = "../identity-did", default-features = false }
 identity-iota = { version = "=0.3.0", path = "../identity-iota", default-features = false }
 
 [dev-dependencies]
@@ -34,7 +34,7 @@ default = ["async"]
 async = ["identity-iota/async"]
 
 # Enables Web Assembly support
-wasm = ["identity-iota/wasm", "identity-comm/wasm"]
+wasm = ["identity-iota/wasm", "identity-comm/wasm", "identity-core/wasm", "identity-credential/wasm", "identity-did/wasm"]
 
 # Enables support for secure storage of DID Documents
 account = ["identity-account"]

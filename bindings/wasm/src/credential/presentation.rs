@@ -25,7 +25,7 @@ impl VerifiablePresentation {
     presentation_id: Option<String>,
   ) -> Result<VerifiablePresentation, JsValue> {
     let credentials: OneOrMany<Credential> = credential_data.into_serde().map_err(err)?;
-    let holder_url: Url = Url::parse(holder_doc.0.id().as_str()).map_err(err)?;
+    let holder_url: Url = Url::parse(holder_doc.0.id().as_str())?;
 
     let mut builder: PresentationBuilder = PresentationBuilder::default().holder(holder_url);
 
@@ -38,10 +38,10 @@ impl VerifiablePresentation {
     }
 
     if let Some(presentation_id) = presentation_id {
-      builder = builder.id(Url::parse(presentation_id).map_err(err)?);
+      builder = builder.id(Url::parse(presentation_id)?);
     }
 
-    builder.build().map_err(err).map(Self)
+    builder.build().map_err(Into::into).map(Self)
   }
 
   /// Serializes a `VerifiablePresentation` object as a JSON object.

@@ -16,7 +16,7 @@ dashmap = { version = "4.0" }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
 identity-core = { version = "=0.3.0", path = "../identity-core" }
-identity-credential = { version = "=0.3.0", path = "../identity-credential" }
+identity-credential = { version = "=0.3.0", path = "../identity-credential", default-features = false }
 identity-did = { version = "=0.3.0", path = "../identity-did" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
@@ -40,7 +40,7 @@ default = ["async"]
 async = ["iota-client/async"]
 
 # Enables Web Assembly support
-wasm = ["iota-client/wasm"]
+wasm = ["iota-client/wasm", "identity-credential/wasm"]
 
 [package.metadata.docs.rs]
 # To build locally:

@@ -31,14 +31,14 @@ impl KeyPair {
   /// Generates a new `KeyPair` object.
   #[wasm_bindgen(constructor)]
   pub fn new(type_: KeyType) -> Result<KeyPair, JsValue> {
-    KeyPair_::new(type_.into()).map_err(err).map(Self)
+    KeyPair_::new(type_.into()).map_err(Into::into).map(Self)
   }
 
   /// Parses a `KeyPair` object from base58-encoded public/secret keys.
   #[wasm_bindgen(js_name = fromBase58)]
   pub fn from_base58(type_: KeyType, public_key: &str, secret_key: &str) -> Result<KeyPair, JsValue> {
-    let public: PublicKey = decode_b58(public_key).map_err(err)?.into();
-    let secret: SecretKey = decode_b58(secret_key).map_err(err)?.into();
+    let public: PublicKey = decode_b58(public_key)?.into();
+    let secret: SecretKey = decode_b58(secret_key)?.into();
 
     Ok(Self((type_.into(), public, secret).into()))
   }

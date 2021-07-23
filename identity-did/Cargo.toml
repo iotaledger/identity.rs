@@ -10,12 +10,18 @@ license = "Apache-2.0"
 keywords = ["iota", "tangle", "identity"]
 homepage = "https://www.iota.org"
 
+[features]
+default = []
+wasm = ["flat-enum/wasm", "wasm-bindgen"]
+
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
 identity-core = { version = "=0.3.0", path = "../identity-core" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 thiserror = { version = "1.0", default-features = false }
+flat-enum = { version = "0.1", default-features = false, features = ["derive"], path = "../flat-enum" }
+wasm-bindgen = { version = "0.2", default-features = false, optional = true }
 
 [package.metadata.docs.rs]
 # To build locally:

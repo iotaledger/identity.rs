@@ -35,23 +35,23 @@ impl VerifiableCredential {
     if !base.contains_key("@context") {
       base.insert(
         "@context".into(),
-        Credential::<()>::base_context().serde_into().map_err(err)?,
+        Credential::<()>::base_context().serde_into()?,
       );
     }
 
     let mut types: Vec<String> = match base.remove("type") {
-      Some(value) => value.serde_into().map(OneOrMany::into_vec).map_err(err)?,
+      Some(value) => value.serde_into().map(OneOrMany::into_vec)?,
       None => Vec::new(),
     };
 
     types.insert(0, Credential::<()>::base_type().into());
-    base.insert("type".into(), types.serde_into().map_err(err)?);
+    base.insert("type".into(), types.serde_into()?);
 
     if !base.contains_key("issuanceDate") {
       base.insert("issuanceDate".into(), Timestamp::now_utc().to_string().into());
     }
 
-    base.serde_into().map_err(err).map(Self)
+    base.serde_into().map_err(Into::into).map(Self)
   }
 
   #[wasm_bindgen]

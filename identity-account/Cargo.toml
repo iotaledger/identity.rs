@@ -31,7 +31,8 @@ slog = { version = "2.7" }
 thiserror = { version = "1.0" }
 tokio = { version = "1.5", features = ["sync"] }
 zeroize = { version = "1.3" }
-flat-enum = { version = "0.1", path = "../flat-enum" }
+flat-enum = { version = "0.1", default-features = false, features = ["derive"], path = "../flat-enum" }
+wasm-bindgen = { version = "0.2", default-features = false, optional = true }
 
 [dependencies.iota-crypto]
 version = "0.5"
@@ -65,7 +66,7 @@ stronghold = [
     "riker",
     "tokio/rt-multi-thread",
 ]
-wasm = ["identity-iota/wasm"]
+wasm = ["identity-iota/wasm", "identity-credential/wasm", "identity-did/wasm", "identity-core/wasm"]
 async = ["identity-iota/async"]
 serde-errors = []
 default = ["stronghold", "serde-errors", "async"]
