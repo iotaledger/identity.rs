@@ -120,7 +120,8 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           SCCACHE_PREFIX="sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl"
-          DOWNLOAD_LINK="${SCCACHE_DOWNLOAD_LINK}/${SCCACHE_VERSION}/${SCCACHE_PREFIX}.tar.gz"
+          SCCACHE_TAR="${SCCACHE_PREFIX}.tar.gz"
+          DOWNLOAD_LINK="${SCCACHE_DOWNLOAD_LINK}/${SCCACHE_VERSION}/${SCCACHE_TAR}"
           BIN_DIR="$HOME/.local/bin"
           mkdir -p ${BIN_DIR}
           curl -L "${DOWNLOAD_LINK}.sha256" --output ${SCCACHE_TAR}.sha256
@@ -142,6 +143,7 @@ jobs:
         run: |
           Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
           scoop install sccache
+          echo "C:\\Users\\runner\\scoop\\shims\\" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Start sccache
         run: |
