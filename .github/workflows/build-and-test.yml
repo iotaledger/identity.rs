@@ -143,7 +143,11 @@ jobs:
         run: |
           Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
           scoop install sccache
-          echo "C:\\Users\\runner\\scoop\\shims\\" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo $env:GITHUB_PATH
+          echo ${HOME}
+          cat $env:GITHUB_PATH | echo
+          Get-Command sccache
+          echo "${HOME}/scoop/apps/sccache/current" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Start sccache
         run: |
