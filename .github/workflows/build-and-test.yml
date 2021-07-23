@@ -10,7 +10,7 @@ on:
       - main
       - dev
     paths:
-      - '.github/workflows/format.yml'
+      - '.github/workflows/build-and-test.yml'
       - '**.rs'
       - '**.toml'
 
