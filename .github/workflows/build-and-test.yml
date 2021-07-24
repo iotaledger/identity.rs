@@ -14,13 +14,22 @@ on:
       - '**.rs'
       - '**.toml'
 
+env:
+  RUST_BACKTRACE: full
+  RUSTC_WRAPPER: sccache
+  SCCACHE_DOWNLOAD_LINK: https://github.com/mozilla/sccache/releases/download
+  SCCACHE_VERSION: v0.2.15
+  SCCACHE_CACHE_SIZE: 2G
+  SCCACHE_IDLE_TIMEOUT: 0
+  # SCCACHE_RECACHE: 1 # uncomment to clear sccache cache, then re-comment
+
 jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
         include:
           - os: ubuntu-latest
             sccache-path: /home/runner/.cache/sccache
@@ -28,17 +37,8 @@ jobs:
             sccache-path: /Users/runner/Library/Caches/Mozilla.sccache
           - os: windows-latest
             sccache-path: C:\\Users\\runner\\AppData\\Local\\Mozilla\\sccache\\cache
-
     env:
-      RUST_BACKTRACE: full
-      RUSTC_WRAPPER: sccache
-      RUSTV: ${{ matrix.rust }}
-      SCCACHE_DOWNLOAD_LINK: https://github.com/mozilla/sccache/releases/download
-      SCCACHE_VERSION: v0.2.15
-      SCCACHE_CACHE_SIZE: 2G
-      SCCACHE_IDLE_TIMEOUT: 0
       SCCACHE_DIR: ${{ matrix.sccache-path }}
-      # SCCACHE_RECACHE: 1 # uncomment to clear cache
 
     steps:
       - uses: actions/checkout@v2
@@ -57,55 +57,34 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: echo "CURRENT_DATE=$(Get-Date -Format "yyyy-MM-dd")" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Cache cargo registry
+      - name: Cache cargo
         uses: actions/cache@v2.1.4
         with:
-          path: ~/.cargo/registry
+          # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
           # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
-            ${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.toml') }}
+            ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.os }}-cargo-${{ github.job }}-
+            ${{ matrix.os }}-cargo-
 
-      - name: Cache cargo index
-        uses: actions/cache@v2.1.4
-        with:
-          path: ~/.cargo/git
-          # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
-          # Restore from outdated cache for speed
-          restore-keys: |
-            ${{ matrix.os }}-cargo-index-${{ hashFiles('**/Cargo.toml') }}
-
-      - name: Cache cargo target
+      - name: Cache build target
         uses: actions/cache@v2.1.4
         with:
           path: target
           # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          key: ${{ matrix.os }}-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
           # Restore from outdated cache for speed
           restore-keys: |
-            ${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.toml') }}
-
-      - name: Cache wasm cargo target
-        uses: actions/cache@v2.1.4
-        with:
-          path: bindings/wasm/target
-          # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-build-wasm-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
-          # Restore from outdated cache for speed
-          restore-keys: |
-            ${{ matrix.os }}-cargo-build-wasm-target-${{ hashFiles('**/Cargo.toml') }}
-
-      - name: Cache libjose cargo target
-        uses: actions/cache@v2.1.4
-        with:
-          path: libjose/target
-          # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-cargo-build-libjose-target-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
-          # Restore from outdated cache for speed
-          restore-keys: |
-            ${{ matrix.os }}-cargo-build-libjose-target-${{ hashFiles('**/Cargo.toml') }}
+            ${{ matrix.os }}-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.os }}-target-${{ github.job }}-
+            ${{ matrix.os }}-target-
 
       - name: Cache sccache
         uses: actions/cache@v2.1.6
@@ -122,12 +101,11 @@ jobs:
           SCCACHE_PREFIX="sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl"
           SCCACHE_TAR="${SCCACHE_PREFIX}.tar.gz"
           DOWNLOAD_LINK="${SCCACHE_DOWNLOAD_LINK}/${SCCACHE_VERSION}/${SCCACHE_TAR}"
+          curl -L "${DOWNLOAD_LINK}" --output ${SCCACHE_TAR}
+          echo "$(curl -L ${DOWNLOAD_LINK}.sha256)  ${SCCACHE_TAR}" | shasum -a 256 --check --status
+          tar xzf ${SCCACHE_TAR}
           BIN_DIR="$HOME/.local/bin"
           mkdir -p ${BIN_DIR}
-          curl -L "${DOWNLOAD_LINK}.sha256" --output ${SCCACHE_TAR}.sha256
-          curl -L "${DOWNLOAD_LINK}" --output ${SCCACHE_TAR}
-          echo "$(cat ${SCCACHE_TAR}.sha256)  ${SCCACHE_TAR}" | shasum -a 256 --check --status
-          tar xzf ${SCCACHE_TAR}
           mv -f ${SCCACHE_PREFIX}/sccache ${BIN_DIR}/sccache
           chmod a+x "${BIN_DIR}/sccache"
           echo ${BIN_DIR} >> $GITHUB_PATH
@@ -143,10 +121,6 @@ jobs:
         run: |
           Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
           scoop install sccache
-          echo $env:GITHUB_PATH
-          echo ${HOME}
-          cat $env:GITHUB_PATH | echo
-          Get-Command sccache
           echo "${HOME}/scoop/apps/sccache/current" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Start sccache
@@ -175,7 +149,14 @@ jobs:
   build-and-test-libjose:
     runs-on: ubuntu-latest
     strategy:
-        fail-fast: false
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        include:
+          - os: ubuntu-latest
+            sccache-path: /home/runner/.cache/sccache
+    env:
+      SCCACHE_DIR: ${{ matrix.sccache-path }}
 
     steps:
       - uses: actions/checkout@v2
@@ -185,6 +166,67 @@ jobs:
         with:
           toolchain: stable
           override: true
+
+      - name: Get current date
+        run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+      - name: Cache cargo
+        uses: actions/cache@v2.1.4
+        with:
+          # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          # Add date to the cache to keep it up to date
+          key: ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          # Restore from outdated cache for speed
+          restore-keys: |
+            ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.os }}-cargo-${{ github.job }}-
+            ${{ matrix.os }}-cargo-
+
+      - name: Cache libjose build target
+        uses: actions/cache@v2.1.4
+        with:
+          path: libjose/target
+          # Add date to the cache to keep it up to date
+          key: ${{ matrix.os }}-libjose-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          # Restore from outdated cache for speed
+          restore-keys: |
+            ${{ matrix.os }}-libjose-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.os }}-libjose-target-${{ github.job }}-
+            ${{ matrix.os }}-libjose-target-
+
+      - name: Cache sccache
+        uses: actions/cache@v2.1.6
+        continue-on-error: false
+        with:
+          path: ${{ matrix.sccache-path }}
+          key: ${{ runner.os }}-sccache-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-sccache-
+
+      - name: Install sccache (ubuntu-latest)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          SCCACHE_PREFIX="sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl"
+          SCCACHE_TAR="${SCCACHE_PREFIX}.tar.gz"
+          DOWNLOAD_LINK="${SCCACHE_DOWNLOAD_LINK}/${SCCACHE_VERSION}/${SCCACHE_TAR}"
+          curl -L "${DOWNLOAD_LINK}" --output ${SCCACHE_TAR}
+          echo "$(curl -L ${DOWNLOAD_LINK}.sha256)  ${SCCACHE_TAR}" | shasum -a 256 --check --status
+          tar xzf ${SCCACHE_TAR}
+          BIN_DIR="$HOME/.local/bin"
+          mkdir -p ${BIN_DIR}
+          mv -f ${SCCACHE_PREFIX}/sccache ${BIN_DIR}/sccache
+          chmod a+x "${BIN_DIR}/sccache"
+          echo ${BIN_DIR} >> $GITHUB_PATH
+
+      - name: Start sccache
+        run: |
+          sccache --start-server
+          sccache -s
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -198,10 +240,23 @@ jobs:
           command: test
           args: --manifest-path ./libjose/Cargo.toml --release
 
+      - name: Print sccache stats
+        run: sccache --show-stats
+
+      - name: Stop sccache server
+        run: sccache --stop-server || true
+
   build-and-test-wasm:
     runs-on: ubuntu-latest
     strategy:
-        fail-fast: false
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        include:
+          - os: ubuntu-latest
+            sccache-path: /home/runner/.cache/sccache
+    env:
+      SCCACHE_DIR: ${{ matrix.sccache-path }}
 
     steps:
       - uses: actions/checkout@v2
@@ -217,6 +272,55 @@ jobs:
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
+
+      - name: Cache cargo
+        uses: actions/cache@v2.1.4
+        with:
+          # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          # Add date to the cache to keep it up to date
+          key: ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          # Restore from outdated cache for speed
+          restore-keys: |
+            ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.os }}-cargo-${{ github.job }}-
+            ${{ matrix.os }}-cargo-
+
+      - name: Cache wasm target
+        uses: actions/cache@v2.1.4
+        with:
+          path: bindings/wasm/target
+          # Add date to the cache to keep it up to date
+          key: ${{ matrix.os }}-wasm-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          # Restore from outdated cache for speed
+          restore-keys: |
+            ${{ matrix.os }}-wasm-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.os }}-wasm-target-${{ github.job }}-
+            ${{ matrix.os }}-wasm-target-
+
+      - name: Install sccache (ubuntu-latest)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          SCCACHE_PREFIX="sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl"
+          SCCACHE_TAR="${SCCACHE_PREFIX}.tar.gz"
+          DOWNLOAD_LINK="${SCCACHE_DOWNLOAD_LINK}/${SCCACHE_VERSION}/${SCCACHE_TAR}"
+          curl -L "${DOWNLOAD_LINK}" --output ${SCCACHE_TAR}
+          echo "$(curl -L ${DOWNLOAD_LINK}.sha256)  ${SCCACHE_TAR}" | shasum -a 256 --check --status
+          tar xzf ${SCCACHE_TAR}
+          BIN_DIR="$HOME/.local/bin"
+          mkdir -p ${BIN_DIR}
+          mv -f ${SCCACHE_PREFIX}/sccache ${BIN_DIR}/sccache
+          chmod a+x "${BIN_DIR}/sccache"
+          echo ${BIN_DIR} >> $GITHUB_PATH
+
+      - name: Start sccache
+        run: |
+          sccache --start-server
+          sccache -s
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
@@ -239,3 +343,9 @@ jobs:
         with:
           command: test
           args: --manifest-path ./bindings/wasm/Cargo.toml --release
+
+      - name: Print sccache stats
+        run: sccache --show-stats
+
+      - name: Stop sccache server
+        run: sccache --stop-server || true
