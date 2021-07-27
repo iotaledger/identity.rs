@@ -10,7 +10,9 @@ use crate::tangle::Network;
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Receipt {
   network: Network,
+  #[serde(rename = "messageId")]
   message_id: MessageId,
+  #[serde(rename = "networkId")]
   network_id: u64,
   nonce: u64,
 }
