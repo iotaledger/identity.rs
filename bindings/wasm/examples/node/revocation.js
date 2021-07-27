@@ -35,7 +35,7 @@ async function revoke(clientConfig) {
     issuer.doc.removeMethod(DID.parse(issuer.doc.id.toString()+"#newKey"));
     issuer.doc.previousMessageId = issuer.nextMessageId;
     issuer.doc.sign(issuer.key);
-    const messageId = await client.publishDocument(issuer.doc.toJSON());
+    const {messageId} = await client.publishDocument(issuer.doc.toJSON());
 
     //Log the resulting Identity update
     logExplorerUrl("Identity Update:", clientConfig.network.toString(), messageId);

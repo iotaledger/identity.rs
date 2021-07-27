@@ -41,7 +41,7 @@ export async function revoke(clientConfig, log = true) {
     );
     issuer.doc.previousMessageId = issuer.nextMessageId;
     issuer.doc.sign(issuer.key);
-    const messageId = await client.publishDocument(issuer.doc.toJSON());
+    const {messageId} = await client.publishDocument(issuer.doc.toJSON());
 
     //Log the resulting Identity update
     const explorerUrl = getExplorerUrl(issuer.doc, messageId);
