@@ -4,11 +4,11 @@ const fs = require('fs')
 const entryFilePath = path.join(__dirname, '../web/identity_wasm.js')
 const entryFile = fs.readFileSync(entryFilePath).toString()
 let changedFile = entryFile
-    // Comment out generated code as a workaround for Webpack (does not recognise import.meta)
+    // Comment out generated code as a workaround for webpack (does not recognise import.meta)
     // Regex to avoid hard-coding 'identity_wasm_bg.wasm'
     .replace(
-        /input = new URL\('(.*)', import\.meta\.url\);/i,
-        "// input = new URL('$1', import.meta.url);"
+        /input = new URL\((.*), import\.meta\.url\);/i,
+        "// input = new URL($1, import.meta.url);"
     )
     // Rename original init function, because we want to use the name for our own function
     .replace(
