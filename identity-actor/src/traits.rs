@@ -22,5 +22,5 @@ pub trait RequestHandler: Send + Sync {
 pub trait ActorRequest: Debug + Serialize + DeserializeOwned + 'static {
   type Response: Debug + Serialize + DeserializeOwned + 'static;
 
-  fn request_name() -> &'static str;
+  fn request_name(&self) -> &'static str;
 }

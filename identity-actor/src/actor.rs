@@ -184,7 +184,7 @@ impl Actor {
     peer: PeerId,
     command: Request,
   ) -> Result<Request::Response> {
-    let request = NamedMessage::new(Request::request_name(), serde_json::to_vec(&command).unwrap());
+    let request = NamedMessage::new(command.request_name(), serde_json::to_vec(&command).unwrap());
     let response = self.comm.send_request(peer, request).await.unwrap();
 
     // Map to a `could not deserialize` error

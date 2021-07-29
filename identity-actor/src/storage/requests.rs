@@ -10,7 +10,7 @@ use crate::traits::ActorRequest;
 impl ActorRequest for IdentityCreate {
   type Response = IotaDocument;
 
-  fn request_name() -> &'static str {
+  fn request_name(&self) -> &'static str {
     "storage/create"
   }
 }
@@ -21,7 +21,7 @@ pub struct IdentityList;
 impl ActorRequest for IdentityList {
   type Response = Vec<IotaDID>;
 
-  fn request_name() -> &'static str {
+  fn request_name(&self) -> &'static str {
     "storage/list"
   }
 }
@@ -32,7 +32,7 @@ pub struct IdentityResolve(pub IotaDID);
 impl ActorRequest for IdentityResolve {
   type Response = Option<IotaDocument>;
 
-  fn request_name() -> &'static str {
+  fn request_name(&self) -> &'static str {
     "storage/resolve"
   }
 }

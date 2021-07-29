@@ -11,7 +11,7 @@ pub struct AuthenticationRequest;
 impl ActorRequest for AuthenticationRequest {
   type Response = ();
 
-  fn request_name() -> &'static str {
+  fn request_name(&self) -> &'static str {
     "didcomm/authenticate"
   }
 }
