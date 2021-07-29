@@ -44,6 +44,7 @@ features = ["wasm-ext", "websocket", "wasm-ext-websocket"]
 
 [patch.crates-io]
 libp2p = { path = "../../../rust-libp2p" }
+wasm-timer = { path = "../../../wasm-timer" }
 
 [dev-dependencies]
 wasm-bindgen-test = { version = "0.3" }
