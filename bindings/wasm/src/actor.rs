@@ -1,16 +1,14 @@
 use std::{cell::RefCell, convert::TryFrom, rc::Rc};
 
 use crate::utils::err;
-use identity::{
-  actor::{self, actor_builder::ActorBuilder},
-  prelude::*,
-};
+use identity::{actor::{self, actor_builder::ActorBuilder, asyncfn::AsyncFn, traits::ActorRequest}, prelude::*};
 use js_sys::Promise;
 use libp2p::identity::{
   ed25519::{Keypair as EdKeypair, SecretKey},
   Keypair,
 };
 
+use serde::Serialize;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
@@ -78,6 +76,18 @@ impl IdentityActor {
       comm_clone.borrow_mut().add_peer(peer_id, addr).await;
 
       Ok(JsValue::undefined())
+    });
+
+    Ok(promise)
+  }
+
+  #[wasm_bindgen(js_name = addHandlerMethod)]
+  pub fn add_handler_method(&self, obj: JsValue, method: js_sys::Function) -> Result<Promise, JsValue> {
+    let promise = future_to_promise(async move {
+      let retval = method.call0(&obj).unwrap();
+      let promise = js_sys::Promise::from(retval);
+      let result = wasm_bindgen_futures::JsFuture::from(promise).await.unwrap();
+      Ok(result)
     });
 
     Ok(promise)
