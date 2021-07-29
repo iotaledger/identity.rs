@@ -23,7 +23,7 @@ async function manipulateIdentity(clientConfig) {
     const client = Client.fromConfig(config);
 
     //Creates a new identity (See "create_did" example)
-    let { key, doc, messageId } = await createIdentity(clientConfig);
+    let { key, doc, receipt } = await createIdentity(clientConfig);
 
     //Add a new VerificationMethod with a new KeyPair
     const newKey = new KeyPair(KeyType.Ed25519);
@@ -43,17 +43,17 @@ async function manipulateIdentity(clientConfig) {
         This is REQUIRED in order for the messages to form a chain.
         Skipping / forgetting this will render the publication useless.
     */
-    doc.previousMessageId = messageId;
+    doc.previousMessageId = receipt.messageId;
 
     // Sign the DID Document with the appropriate key.
     doc.sign(key);
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
-    const nextMessageId = await client.publishDocument(doc.toJSON());
+    const nextReceipt = await client.publishDocument(doc.toJSON());
 
     // Log the results.
-    logExplorerUrl("Identity Update:", clientConfig.network.toString(), nextMessageId);
-    return {key, newKey, doc, nextMessageId};
+    logExplorerUrl("Identity Update:", clientConfig.network.toString(), nextReceipt.messageId);
+    return {key, newKey, doc, receipt: nextReceipt};
 }
 
 exports.manipulateIdentity = manipulateIdentity;

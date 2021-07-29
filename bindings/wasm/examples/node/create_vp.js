@@ -19,7 +19,7 @@ async function createVP(clientConfig) {
     const client = Client.fromConfig(config);
 
     // Creates new identities (See "createVC" example)
-    const {alice, issuer, signedVc} = await createVC(clientConfig);
+    const {alice, signedVc} = await createVC(clientConfig);
 
     // Create a Verifiable Presentation from the Credential - signed by Alice's key
     // TODO: Sign with a challenge

@@ -22,7 +22,7 @@ export async function manipulateIdentity(clientConfig, log = true) {
     if (log) logToScreen("creating identity...");
 
     //Creates a new identity (See "create_did" example)
-    let { key, doc, messageId } = await createIdentity(clientConfig, false);
+    let { key, doc, receipt } = await createIdentity(clientConfig, false);
 
     if (log) logObjectToScreen(doc);
     if (log) logToScreen("manipulating identity...");
@@ -55,18 +55,18 @@ export async function manipulateIdentity(clientConfig, log = true) {
         This is REQUIRED in order for the messages to form a chain.
         Skipping / forgetting this will render the publication useless.
     */
-    doc.previousMessageId = messageId;
+    doc.previousMessageId = receipt.messageId;
 
     // Sign the DID Document with the appropriate key.
     doc.sign(key);
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
-    const nextMessageId = await client.publishDocument(doc.toJSON());
+    const nextReceipt = await client.publishDocument(doc.toJSON());
 
     if (log) logObjectToScreen(doc);
 
-    const explorerUrl = getExplorerUrl(doc, nextMessageId);
+    const explorerUrl = getExplorerUrl(doc, nextReceipt.messageId);
     if (log) logExplorerUrlToScreen(explorerUrl);
 
-    return { key, newKey, doc, nextMessageId, explorerUrl };
+    return { key, newKey, doc, receipt, explorerUrl };
 }
