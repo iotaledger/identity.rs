@@ -1,5 +1,5 @@
 export function getExplorerUrl(doc, messageId) {
-    return `${doc.id.tangleExplorer}/transaction/${messageId}`;
+    return doc.id.network.messageURL(messageId);
 }
 
 /**
