@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { Client, Config, Document, KeyType, CoreError, CoreErrorCode } = require('../../node/identity_wasm')
-const { logExplorerUrl } = require('./explorer_util')
+const {Client, Config, Document, KeyType, CoreError, CoreErrorCode} = require('../../node/identity_wasm')
+const {logExplorerUrl} = require('./explorer_util')
 
 /*
     This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle.
@@ -12,7 +12,7 @@ const { logExplorerUrl } = require('./explorer_util')
 */
 async function createIdentity(clientConfig) {
     // Create a DID Document (an identity).
-    const { doc, key } = new Document(KeyType.Ed25519, clientConfig.network.toString());
+    const {doc, key} = new Document(KeyType.Ed25519, clientConfig.network.toString());
 
     // Sign the DID Document with the generated key.
     doc.sign(key);
@@ -29,13 +29,22 @@ async function createIdentity(clientConfig) {
     try {
         messageId = await client.publishDocument(doc.toJSON());
     } catch (e) {
+        // Example error handling
         if (e instanceof Error) {
             console.log(`e is an Error! ${e}`)
         } else if (e instanceof CoreError) {
-            if (e.code === CoreErrorCode.Crypto) {
-                console.log(`CryptoError: ${e}`)
-            } else {
-                console.log(`Unknown CoreError: ${e}`)
+            switch (e.code) {
+                case CoreErrorCode.Crypto: {
+                    console.log(`CryptoError: ${e}`);
+                    break;
+                }
+                case CoreErrorCode.InvalidUrl: {
+                    console.log(`InvalidUrl: ${e}`);
+                    break;
+                }
+                default: {
+                    console.log(`Unhandled CoreError: ${e}`)
+                }
             }
         } else {
             console.log(`not an Error: ${e}`)
