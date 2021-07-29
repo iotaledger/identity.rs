@@ -19,7 +19,7 @@ use crate::crypto::PublicKey;
 use crate::crypto::SignatureValue;
 use crate::crypto::Verifier;
 use crate::crypto::Verify;
-use crate::error::Error;
+use crate::error::CoreError;
 use crate::error::Result;
 use crate::utils::decode_b58;
 
@@ -96,20 +96,20 @@ where
     let (target, proof, signature): _ = expand_signature_value(signature)?;
 
     let merkle_root: Hash<D> = decompose_public_key::<D, S>(public)?;
-    let merkle_proof: Proof<D> = Proof::decode(&proof).ok_or(Error::InvalidProofFormat)?;
+    let merkle_proof: Proof<D> = Proof::decode(&proof).ok_or(CoreError::InvalidProofFormat)?;
     let target_hash: Hash<D> = digest.hash_leaf(target.as_ref());
 
     // Ensure the target hash of the user-provided public key is part
     // of the Merkle tree
     if !merkle_proof.verify(&merkle_root, target_hash) {
-      return Err(Error::InvalidProofValue("merkle key - bad proof"));
+      return Err(CoreError::InvalidProofValue("merkle key - bad proof"));
     }
 
     // If a set of revocation flags was provided, ensure the public key
     // was not revoked
     if let Some(revocation) = public.revocation {
       if revocation.contains(merkle_proof.index() as u32) {
-        return Err(Error::InvalidProofValue("merkle key - revoked"));
+        return Err(CoreError::InvalidProofValue("merkle key - revoked"));
       }
     }
 
@@ -132,12 +132,12 @@ where
 
   // Validate the signature algorithm tag
   if tag_s != S::TAG {
-    return Err(Error::InvalidMerkleSignatureKeyTag(Some(tag_s)));
+    return Err(CoreError::InvalidMerkleSignatureKeyTag(Some(tag_s)));
   }
 
   // Validate the digest algorithm tag
   if tag_d != D::TAG {
-    return Err(Error::InvalidMerkleDigestKeyTag(Some(tag_d)));
+    return Err(CoreError::InvalidMerkleDigestKeyTag(Some(tag_d)));
   }
 
   // Extract and return the Merkle root hash
@@ -145,7 +145,7 @@ where
     .merkle_key
     .get(2..)
     .and_then(Hash::from_slice)
-    .ok_or(Error::InvalidKeyFormat)
+    .ok_or(CoreError::InvalidKeyFormat)
 }
 
 fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<u8>, Vec<u8>)> {
@@ -153,17 +153,17 @@ fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<
   let mut parts: _ = data.split('.');
 
   // Split the signature data into `public-key/proof/signature`
-  let public: &str = parts.next().ok_or(Error::InvalidProofFormat)?;
-  let proof: &str = parts.next().ok_or(Error::InvalidProofFormat)?;
-  let signature: &str = parts.next().ok_or(Error::InvalidProofFormat)?;
+  let public: &str = parts.next().ok_or(CoreError::InvalidProofFormat)?;
+  let proof: &str = parts.next().ok_or(CoreError::InvalidProofFormat)?;
+  let signature: &str = parts.next().ok_or(CoreError::InvalidProofFormat)?;
 
   // Extract bytes of the base58-encoded public key
   let public: PublicKey = decode_b58(public)
-    .map_err(|_| Error::InvalidProofFormat)
+    .map_err(|_| CoreError::InvalidProofFormat)
     .map(Into::into)?;
 
   // Extract bytes of the base58-encoded proof
-  let proof: Vec<u8> = decode_b58(proof).map_err(|_| Error::InvalidProofFormat)?;
+  let proof: Vec<u8> = decode_b58(proof).map_err(|_| CoreError::InvalidProofFormat)?;
 
   // Decode the signature value for the underlying signature implementation
   let signature: Vec<u8> = decode_b58(signature)?;

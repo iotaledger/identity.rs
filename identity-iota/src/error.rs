@@ -1,20 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub type Result<T, E = Error> = core::result::Result<T, E>;
+pub type Result<T, E = IotaError> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum IotaError {
   #[error("{0}")]
-  CoreError(#[from] identity_core::Error),
+  CoreError(#[from] identity_core::CoreError),
   #[error("{0}")]
-  DiffError(#[from] identity_core::diff::Error),
+  DiffError(#[from] identity_core::diff::DiffError),
   #[error("{0}")]
-  CredError(#[from] identity_credential::Error),
+  CredError(#[from] identity_credential::CredentialError),
   #[error("{0}")]
   InvalidDID(#[from] identity_did::did::Error),
   #[error("{0}")]
-  InvalidDoc(#[from] identity_did::Error),
+  InvalidDoc(#[from] identity_did::DIDError),
   #[error("{0}")]
   ClientError(#[from] iota_client::error::Error),
   #[error("Invalid Message: {0}")]

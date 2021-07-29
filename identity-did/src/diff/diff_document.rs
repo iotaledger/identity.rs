@@ -6,7 +6,7 @@ use identity_core::common::Url;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 use identity_core::diff::DiffVec;
-use identity_core::diff::Error;
+use identity_core::diff::DiffError;
 use identity_core::diff::Result;
 use serde::Deserialize;
 use serde::Serialize;
@@ -211,7 +211,7 @@ where
       .id
       .map(DID::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `document.id`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `document.id`"))?;
 
     let controller: Option<DID> = diff
       .controller
@@ -220,61 +220,61 @@ where
         None => Ok(None),
       })
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `document.controller`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `document.controller`"))?;
 
     let also_known_as: Vec<Url> = diff
       .also_known_as
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `document.also_known_as`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `document.also_known_as`"))?;
 
     let verification_method: OrderedSet<DIDKey<VerificationMethod<U>>> = diff
       .verification_method
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `document.verification_method`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `document.verification_method`"))?;
 
     let authentication: OrderedSet<DIDKey<MethodRef<U>>> = diff
       .authentication
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `document.authentication`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `document.authentication`"))?;
 
     let assertion_method: OrderedSet<DIDKey<MethodRef<U>>> = diff
       .assertion_method
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `document.assertion_method`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `document.assertion_method`"))?;
 
     let key_agreement: OrderedSet<DIDKey<MethodRef<U>>> = diff
       .key_agreement
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `document.key_agreement`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `document.key_agreement`"))?;
 
     let capability_delegation: OrderedSet<DIDKey<MethodRef<U>>> = diff
       .capability_delegation
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `document.capability_delegation`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `document.capability_delegation`"))?;
 
     let capability_invocation: OrderedSet<DIDKey<MethodRef<U>>> = diff
       .capability_invocation
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `document.capability_invocation`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `document.capability_invocation`"))?;
 
     let service: OrderedSet<DIDKey<Service<V>>> = diff
       .service
       .map(Diff::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `document.service`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `document.service`"))?;
 
     let properties: T = diff
       .properties
       .map(T::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `document.properties`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `document.properties`"))?;
 
     Ok(CoreDocument {
       id,

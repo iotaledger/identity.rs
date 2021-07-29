@@ -3,7 +3,7 @@
 
 use did_url::DID;
 
-use crate::error::Error;
+use crate::error::DiffError;
 use crate::error::Result;
 use crate::string::DiffString;
 use crate::traits::Diff;
@@ -19,11 +19,11 @@ impl Diff for DID {
     self
       .to_string()
       .merge(diff)
-      .and_then(|this| Self::parse(&this).map_err(Error::merge))
+      .and_then(|this| Self::parse(&this).map_err(DiffError::merge))
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    String::from_diff(diff).and_then(|this| Self::parse(&this).map_err(Error::convert))
+    String::from_diff(diff).and_then(|this| Self::parse(&this).map_err(DiffError::convert))
   }
 
   fn into_diff(self) -> Result<Self::Type> {

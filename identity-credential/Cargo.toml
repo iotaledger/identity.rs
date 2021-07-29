@@ -12,7 +12,7 @@ homepage = "https://www.iota.org"
 
 [features]
 default = []
-wasm = ["flat-enum/wasm", "wasm-bindgen"]
+wasm = ["wasm-error", "wasm-bindgen"]
 
 [dependencies]
 identity-core = { version = "=0.3.0", path = "../identity-core" }
@@ -20,8 +20,8 @@ identity-did = { version = "=0.3.0", path = "../identity-did" }
 lazy_static = { version = "1.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 thiserror = { version = "1.0", default-features = false }
-flat-enum = { version = "0.1", default-features = false, features = ["derive"], path = "../flat-enum" }
-wasm-bindgen = { version = "0.2", default-features = false, optional = true }
+wasm-error = { version = "0.1", default-features = false, features = ["derive"], path = "../wasm-error", optional = true }
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"], optional = true }
 
 [dev-dependencies]
 serde_json = { version = "1.0" }

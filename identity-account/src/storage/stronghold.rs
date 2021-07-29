@@ -18,7 +18,7 @@ use iota_stronghold::SLIP10DeriveInput;
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::error::Result;
 use crate::events::Commit;
 use crate::events::Event;
@@ -244,7 +244,7 @@ impl Storage for Stronghold {
       // ================================
       .try_filter_map(move |(index, json)| async move {
         if json.is_empty() {
-          Err(Error::EventNotFound)
+          Err(AccountError::EventNotFound)
         } else {
           let event: Event = Event::from_json_slice(&json)?;
           let commit: Commit = Commit::new(id, index, event);

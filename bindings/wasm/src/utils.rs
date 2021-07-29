@@ -11,20 +11,20 @@ where
   error.to_string().into()
 }
 
-// Alternative to implementing From for JsValue when deriving FlatEnum
-// /// Convert errors that derive FlatEnum into JS
+// Alternative to implementing From for JsValue when deriving WasmError
+// /// Convert errors that derive WasmError into JS
 // pub fn flat_err<T, V>(error: T) -> JsValue
 // where
-//   T: flat_enum::IntoFlatEnum<V>,
-//   V: flat_enum::FlatEnum,
+//   T: wasm_error::IntoWasmError<V>,
+//   V: wasm_error::WasmError,
 // {
 //   // TODO: check that unwrap is infallible here?
-//   JsValue::from_serde(&error.into_flat_enum()).unwrap()
+//   JsValue::from_serde(&error.into_wasm_error()).unwrap()
 // }
 
 #[cfg(test)]
 mod tests {
-  use flat_enum::IntoFlatEnum;
+  use wasm_error::IntoWasmError;
 
   #[test]
   fn test_js_error() {
@@ -38,7 +38,7 @@ mod tests {
     println!("{}", err.to_string()); // Failed to decode roaring bitmap: something went wrong!
     let json_str = serde_json::to_string(&err.to_string()).unwrap();
     println!("{}", json_str); // "Failed to decode roaring bitmap: something went wrong!"
-    let json = serde_json::to_string(&err.into_flat_enum()).unwrap();
+    let json = serde_json::to_string(&err.into_wasm_error()).unwrap();
     println!("{}", json); // {"code":"DIDError","description":"Failed to decode roaring bitmap: something went wrong!"}
   }
 }

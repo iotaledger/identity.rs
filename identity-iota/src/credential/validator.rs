@@ -11,7 +11,7 @@ use std::collections::BTreeMap;
 
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
-use crate::error::Error;
+use crate::error::IotaError;
 use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::TangleResolve;
@@ -127,7 +127,7 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
       .holder
       .as_ref()
       .map(|holder| holder.as_str())
-      .ok_or(Error::InvalidPresentationHolder)?;
+      .ok_or(IotaError::InvalidPresentationHolder)?;
 
     // Resolve the holder DID Document and validate the digital signature.
     let holder_doc: DocumentValidation = self.validate_document(holder_url).await?;

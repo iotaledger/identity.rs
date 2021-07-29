@@ -14,7 +14,7 @@ use iota_stronghold::Location;
 use iota_stronghold::StrongholdFlags;
 use std::path::Path;
 
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::error::Result;
 use crate::stronghold::Store;
 
@@ -132,7 +132,7 @@ impl RecordIndex {
 
   pub(crate) fn try_new(data: Vec<u8>) -> Result<Self> {
     if data.len() % Self::CHUNK != 0 {
-      return Err(Error::InvalidResourceIndex);
+      return Err(AccountError::InvalidResourceIndex);
     }
 
     Ok(Self(data))

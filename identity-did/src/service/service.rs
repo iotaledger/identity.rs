@@ -11,7 +11,7 @@ use identity_core::convert::ToJson;
 use serde::Serialize;
 
 use crate::did::DID;
-use crate::error::Error;
+use crate::error::DIDError;
 use crate::error::Result;
 use crate::service::ServiceBuilder;
 
@@ -40,9 +40,9 @@ impl<T> Service<T> {
   /// Returns a new `Service` based on the `ServiceBuilder` configuration.
   pub fn from_builder(builder: ServiceBuilder<T>) -> Result<Self> {
     Ok(Self {
-      id: builder.id.ok_or(Error::BuilderInvalidServiceId)?,
-      type_: builder.type_.ok_or(Error::BuilderInvalidServiceType)?,
-      service_endpoint: builder.service_endpoint.ok_or(Error::BuilderInvalidServiceEndpoint)?,
+      id: builder.id.ok_or(DIDError::BuilderInvalidServiceId)?,
+      type_: builder.type_.ok_or(DIDError::BuilderInvalidServiceType)?,
+      service_endpoint: builder.service_endpoint.ok_or(DIDError::BuilderInvalidServiceEndpoint)?,
       properties: builder.properties,
     })
   }

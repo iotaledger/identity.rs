@@ -4,7 +4,7 @@
 use core::convert::TryFrom;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffVec;
-use identity_core::diff::Error;
+use identity_core::diff::DiffError;
 use identity_core::diff::Result;
 use serde::Deserialize;
 use serde::Serialize;
@@ -26,11 +26,11 @@ where
       .clone()
       .into_vec()
       .merge(diff)
-      .and_then(|this| Self::try_from(this).map_err(Error::merge))
+      .and_then(|this| Self::try_from(this).map_err(DiffError::merge))
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    Vec::from_diff(diff).and_then(|this| Self::try_from(this).map_err(Error::convert))
+    Vec::from_diff(diff).and_then(|this| Self::try_from(this).map_err(DiffError::convert))
   }
 
   fn into_diff(self) -> Result<Self::Type> {

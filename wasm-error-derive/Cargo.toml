@@ -1,17 +1,13 @@
 [package]
-name = "flat-enum-derive"
+name = "wasm-error-derive"
 version = "0.1.0"
 edition = "2018"
 license = "Apache-2.0"
 publish = false
 
 [lib]
-name = "flat_enum_derive"
+name = "wasm_error_derive"
 proc-macro = true
-
-[features]
-default = []
-wasm = []
 
 [dependencies]
 proc-macro-error = { version = "1.0", default-features = false }

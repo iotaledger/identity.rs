@@ -17,7 +17,7 @@ use identity_did::verification::MethodType;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::error::Result;
 use crate::events::Commit;
 use crate::identity::IdentityId;
@@ -121,15 +121,15 @@ impl Storage for MemStore {
 
   async fn key_get(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
-    let vault: &MemVault = vaults.get(&id).ok_or(Error::KeyVaultNotFound)?;
-    let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyPairNotFound)?;
+    let vault: &MemVault = vaults.get(&id).ok_or(AccountError::KeyVaultNotFound)?;
+    let keypair: &KeyPair = vault.get(location).ok_or(AccountError::KeyPairNotFound)?;
 
     Ok(keypair.public().clone())
   }
 
   async fn key_del(&self, id: IdentityId, location: &KeyLocation) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-    let vault: &mut MemVault = vaults.get_mut(&id).ok_or(Error::KeyVaultNotFound)?;
+    let vault: &mut MemVault = vaults.get_mut(&id).ok_or(AccountError::KeyVaultNotFound)?;
 
     vault.remove(location);
 
@@ -138,8 +138,8 @@ impl Storage for MemStore {
 
   async fn key_sign(&self, id: IdentityId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
-    let vault: &MemVault = vaults.get(&id).ok_or(Error::KeyVaultNotFound)?;
-    let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyPairNotFound)?;
+    let vault: &MemVault = vaults.get(&id).ok_or(AccountError::KeyVaultNotFound)?;
+    let keypair: &KeyPair = vault.get(location).ok_or(AccountError::KeyPairNotFound)?;
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {

@@ -34,5 +34,5 @@ pub mod did;
 pub mod error;
 pub mod tangle;
 
-pub use self::error::Error;
+pub use self::error::IotaError;
 pub use self::error::Result;

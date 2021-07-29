@@ -41,7 +41,7 @@ impl Diff for String {
   fn from_diff(diff: Self::Type) -> crate::Result<Self> {
     match diff.0 {
       Some(s) => Ok(s),
-      None => Err(crate::Error::ConversionError(
+      None => Err(crate::DiffError::ConversionError(
         "Problem converting from DiffString".into(),
       )),
     }

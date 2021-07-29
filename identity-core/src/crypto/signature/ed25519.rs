@@ -10,7 +10,7 @@ use crypto::signatures::ed25519::SIGNATURE_LENGTH;
 
 use crate::crypto::Sign;
 use crate::crypto::Verify;
-use crate::error::Error;
+use crate::error::CoreError;
 use crate::error::Result;
 
 /// An implementation of `Ed25519` signatures.
@@ -42,7 +42,7 @@ where
     if key.verify(&sig, message) {
       Ok(())
     } else {
-      Err(Error::InvalidProofValue("ed25519"))
+      Err(CoreError::InvalidProofValue("ed25519"))
     }
   }
 }
@@ -51,7 +51,7 @@ fn parse_public(slice: &[u8]) -> Result<ed25519::PublicKey> {
   let bytes: [u8; PUBLIC_KEY_LENGTH] = slice
     .get(..PUBLIC_KEY_LENGTH)
     .and_then(|bytes| bytes.try_into().ok())
-    .ok_or_else(|| Error::InvalidKeyLength(slice.len(), PUBLIC_KEY_LENGTH))?;
+    .ok_or_else(|| CoreError::InvalidKeyLength(slice.len(), PUBLIC_KEY_LENGTH))?;
 
   ed25519::PublicKey::from_compressed_bytes(bytes).map_err(Into::into)
 }
@@ -60,7 +60,7 @@ fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey> {
   let bytes: [u8; SECRET_KEY_LENGTH] = slice
     .get(..SECRET_KEY_LENGTH)
     .and_then(|bytes| bytes.try_into().ok())
-    .ok_or_else(|| Error::InvalidKeyLength(slice.len(), SECRET_KEY_LENGTH))?;
+    .ok_or_else(|| CoreError::InvalidKeyLength(slice.len(), SECRET_KEY_LENGTH))?;
 
   ed25519::SecretKey::from_le_bytes(bytes).map_err(Into::into)
 }
@@ -69,7 +69,7 @@ fn parse_signature(slice: &[u8]) -> Result<ed25519::Signature> {
   let bytes: [u8; SIGNATURE_LENGTH] = slice
     .get(..SIGNATURE_LENGTH)
     .and_then(|bytes| bytes.try_into().ok())
-    .ok_or_else(|| Error::InvalidSigLength(slice.len(), SIGNATURE_LENGTH))?;
+    .ok_or_else(|| CoreError::InvalidSigLength(slice.len(), SIGNATURE_LENGTH))?;
 
   Ok(ed25519::Signature::from_bytes(bytes))
 }

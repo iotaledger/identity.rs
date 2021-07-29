@@ -32,5 +32,5 @@ pub mod utils;
 pub mod verifiable;
 pub mod verification;
 
-pub use self::error::Error;
+pub use self::error::DIDError;
 pub use self::error::Result;

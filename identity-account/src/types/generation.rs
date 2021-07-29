@@ -6,7 +6,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::error::Result;
 
 #[derive(Clone, Copy, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
@@ -39,7 +39,7 @@ impl Generation {
   ///
   /// Fails if the generation overflows.
   pub fn try_increment(self) -> Result<Self> {
-    self.0.checked_add(1).map(Self).ok_or(Error::GenerationOverflow)
+    self.0.checked_add(1).map(Self).ok_or(AccountError::GenerationOverflow)
   }
 
   /// Decrements the generation.
@@ -48,7 +48,7 @@ impl Generation {
   ///
   /// Fails if the generation underflows.
   pub fn try_decrement(self) -> Result<Self> {
-    self.0.checked_sub(1).map(Self).ok_or(Error::GenerationUnderflow)
+    self.0.checked_sub(1).map(Self).ok_or(AccountError::GenerationUnderflow)
   }
 }
 

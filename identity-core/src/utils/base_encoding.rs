@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::Error;
+use crate::error::CoreError;
 use crate::error::Result;
 
 /// A [Multibase]-supported base. See [multibase::Base] for more information.
@@ -79,7 +79,7 @@ where
   }
   multibase::decode(&data)
     .map(|(_base, output)| output)
-    .map_err(Error::DecodeMultibase)
+    .map_err(CoreError::DecodeMultibase)
 }
 
 /// Encodes the given `data` as [Multibase] with the given [`base`](Base), defaults to
@@ -104,7 +104,7 @@ where
   bs58::decode(data)
     .with_alphabet(bs58::Alphabet::BITCOIN)
     .into_vec()
-    .map_err(Error::DecodeBase58)
+    .map_err(CoreError::DecodeBase58)
 }
 
 /// Encodes the given `data` as base58-btc.
@@ -120,7 +120,7 @@ pub fn decode_b64<T>(data: &T) -> Result<Vec<u8>>
 where
   T: AsRef<[u8]> + ?Sized,
 {
-  base64::decode_config(data.as_ref(), base64::URL_SAFE).map_err(Error::DecodeBase64)
+  base64::decode_config(data.as_ref(), base64::URL_SAFE).map_err(CoreError::DecodeBase64)
 }
 
 /// Encodes the given `data` as base64.

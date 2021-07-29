@@ -15,7 +15,7 @@ use identity_did::did::Error as DIDError;
 use identity_did::did::DID as CoreDID;
 
 use crate::did::Segments;
-use crate::error::Error;
+use crate::error::IotaError;
 use crate::error::Result;
 use crate::tangle::Network;
 
@@ -146,7 +146,7 @@ impl IotaDID {
   /// Returns `Err` if the input is not a valid `IotaDID`.
   pub fn check_method(did: &CoreDID) -> Result<()> {
     if did.method() != Self::METHOD {
-      Err(Error::InvalidDID(DIDError::InvalidMethodName))
+      Err(IotaError::InvalidDID(DIDError::InvalidMethodName))
     } else {
       Ok(())
     }
@@ -161,7 +161,7 @@ impl IotaDID {
     let segments: Vec<&str> = did.method_id().split(':').collect();
 
     if segments.is_empty() || segments.len() > 3 {
-      return Err(Error::InvalidDID(DIDError::InvalidMethodId));
+      return Err(IotaError::InvalidDID(DIDError::InvalidMethodId));
     }
 
     // We checked if `id_segments` was empty so this should not panic
@@ -171,7 +171,7 @@ impl IotaDID {
     if len == BLAKE2B_256_LEN {
       Ok(())
     } else {
-      Err(Error::InvalidDID(DIDError::InvalidMethodId))
+      Err(IotaError::InvalidDID(DIDError::InvalidMethodId))
     }
   }
 
@@ -309,7 +309,7 @@ impl From<IotaDID> for CoreDID {
 }
 
 impl TryFrom<CoreDID> for IotaDID {
-  type Error = Error;
+  type Error = IotaError;
 
   fn try_from(other: CoreDID) -> Result<Self, Self::Error> {
     Self::try_from_owned(other)
@@ -317,7 +317,7 @@ impl TryFrom<CoreDID> for IotaDID {
 }
 
 impl<'a> TryFrom<&'a CoreDID> for &'a IotaDID {
-  type Error = Error;
+  type Error = IotaError;
 
   fn try_from(other: &'a CoreDID) -> Result<Self, Self::Error> {
     IotaDID::try_from_borrowed(other)
@@ -325,7 +325,7 @@ impl<'a> TryFrom<&'a CoreDID> for &'a IotaDID {
 }
 
 impl FromStr for IotaDID {
-  type Err = Error;
+  type Err = IotaError;
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
     Self::parse(string)

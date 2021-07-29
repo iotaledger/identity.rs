@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::crypto::Signature;
-use crate::error::Error;
+use crate::error::CoreError;
 use crate::error::Result;
 
 /// A trait for types that can provide a reference to a [`Signature`].
@@ -16,7 +16,7 @@ pub trait TrySignature {
   ///
   /// Fails if the signature is not found.
   fn try_signature(&self) -> Result<&Signature> {
-    self.signature().ok_or(Error::MissingSignature)
+    self.signature().ok_or(CoreError::MissingSignature)
   }
 }
 
@@ -52,7 +52,7 @@ pub trait TrySignatureMut: TrySignature {
   ///
   /// Fails if the signature is not found.
   fn try_signature_mut(&mut self) -> Result<&mut Signature> {
-    self.signature_mut().ok_or(Error::MissingSignature)
+    self.signature_mut().ok_or(CoreError::MissingSignature)
   }
 }
 

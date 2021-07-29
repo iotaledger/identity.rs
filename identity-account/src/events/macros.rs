@@ -4,7 +4,7 @@
 macro_rules! ensure {
   ($cond:expr, $error:expr $(,)?) => {
     if !$cond {
-      return Err($crate::Error::CommandError($error));
+      return Err($crate::AccountError::CommandError($error));
     }
   };
 }
@@ -25,7 +25,7 @@ macro_rules! impl_command_builder {
   (@finish $this:ident required $field:ident $ty:ty) => {
     match $this.$field {
       Some(value) => value,
-      None => return Err($crate::Error::CommandError(
+      None => return Err($crate::AccountError::CommandError(
         $crate::events::CommandError::MissingRequiredField(stringify!($field)),
       )),
     }

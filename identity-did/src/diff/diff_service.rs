@@ -5,7 +5,7 @@ use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
-use identity_core::diff::Error;
+use identity_core::diff::DiffError;
 use identity_core::diff::Result;
 use serde::Deserialize;
 use serde::Serialize;
@@ -97,19 +97,19 @@ where
       .id
       .map(DID::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `service.id`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `service.id`"))?;
 
     let type_: String = diff
       .type_
       .map(String::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `service.type_`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `service.type_`"))?;
 
     let service_endpoint: Url = diff
       .service_endpoint
       .map(Url::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `service.service_endpoint`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `service.service_endpoint`"))?;
 
     let properties: T = diff.properties.map(T::from_diff).transpose()?.unwrap_or_default();
 

@@ -12,7 +12,7 @@ use crate::chain::DocumentChain;
 use crate::chain::IntegrationChain;
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
-use crate::error::Error;
+use crate::error::IotaError;
 use crate::error::Result;
 use crate::tangle::Message;
 use crate::tangle::MessageExt;
@@ -127,25 +127,25 @@ impl DiffChain {
   /// Fails if the `DocumentDiff` is not a valid addition.
   pub fn check_validity(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> Result<()> {
     if integration_chain.current().verify_data(diff).is_err() {
-      return Err(Error::ChainError {
+      return Err(IotaError::ChainError {
         error: "Invalid Signature",
       });
     }
 
     if diff.message_id().is_null() {
-      return Err(Error::ChainError {
+      return Err(IotaError::ChainError {
         error: "Invalid Message Id",
       });
     }
 
     if diff.previous_message_id().is_null() {
-      return Err(Error::ChainError {
+      return Err(IotaError::ChainError {
         error: "Invalid Previous Message Id",
       });
     }
 
     if diff.previous_message_id() != DocumentChain::__diff_message_id(integration_chain, self) {
-      return Err(Error::ChainError {
+      return Err(IotaError::ChainError {
         error: "Invalid Previous Message Id",
       });
     }

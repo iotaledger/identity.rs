@@ -24,7 +24,7 @@ use tokio::sync::Mutex as AsyncMutex;
 use tokio::sync::MutexGuard as AsyncMutexGuard;
 use zeroize::Zeroize;
 
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::error::PleaseDontMakeYourOwnResult;
 use crate::error::Result;
 use crate::stronghold::SnapshotStatus;
@@ -45,7 +45,7 @@ fn async_runtime() -> Result<&'static Mutex<AsyncRuntime>> {
 }
 
 fn async_runtime_guard() -> Result<MutexGuard<'static, AsyncRuntime>> {
-  async_runtime().and_then(|mutex| mutex.lock().map_err(|_| Error::StrongholdMutexPoisoned("runtime")))
+  async_runtime().and_then(|mutex| mutex.lock().map_err(|_| AccountError::StrongholdMutexPoisoned("runtime")))
 }
 
 async fn clear_expired_passwords() -> Result<()> {
@@ -84,7 +84,7 @@ impl Context {
     static __POOL: OnceCell<AsyncRuntime> = OnceCell::new();
     static __SWEEP: Once = Once::new();
 
-    let this: &'static Self = __THIS.get_or_try_init::<_, Error>(|| {
+    let this: &'static Self = __THIS.get_or_try_init::<_, AccountError>(|| {
       let system: ActorSystem = SystemBuilder::new()
         // Disable the default actor system logger
         .log(slog::Logger::root(slog::Discard, slog::o!()))
@@ -419,7 +419,7 @@ impl Runtime {
       .password_store()?
       .get(path)
       .map(|(password, _)| *password)
-      .ok_or(Error::StrongholdPasswordNotSet)
+      .ok_or(AccountError::StrongholdPasswordNotSet)
   }
 
   fn password_elapsed(&self, path: &Path) -> Result<Option<Duration>> {
@@ -440,7 +440,7 @@ impl Runtime {
     if let Some((_, ref mut time)) = self.password_store()?.get_mut(path) {
       *time = Instant::now();
     } else {
-      return Err(Error::StrongholdPasswordNotSet);
+      return Err(AccountError::StrongholdPasswordNotSet);
     }
 
     Ok(())
@@ -456,20 +456,20 @@ impl Runtime {
     self
       .event_listeners
       .lock()
-      .map_err(|_| Error::StrongholdMutexPoisoned("listeners"))
+      .map_err(|_| AccountError::StrongholdMutexPoisoned("listeners"))
   }
 
   fn password_store(&self) -> Result<MutexGuard<'_, PasswordMap>> {
     self
       .password_store
       .lock()
-      .map_err(|_| Error::StrongholdMutexPoisoned("passwords"))
+      .map_err(|_| AccountError::StrongholdMutexPoisoned("passwords"))
   }
 
   fn password_clear(&self) -> Result<MutexGuard<'_, Duration>> {
     self
       .password_clear
       .lock()
-      .map_err(|_| Error::StrongholdMutexPoisoned("passwords"))
+      .map_err(|_| AccountError::StrongholdMutexPoisoned("passwords"))
   }
 }

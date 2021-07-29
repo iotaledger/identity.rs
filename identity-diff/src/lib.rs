@@ -32,7 +32,7 @@ mod url;
 mod value;
 mod vec;
 
-pub use self::error::Error;
+pub use self::error::DiffError;
 pub use self::error::Result;
 pub use self::hashmap::DiffHashMap;
 pub use self::hashset::DiffHashSet;

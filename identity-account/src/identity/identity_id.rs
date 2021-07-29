@@ -7,7 +7,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::error::Result;
 
 /// A 32-bit identifier for stored Identities.
@@ -27,7 +27,7 @@ impl IdentityId {
   pub fn from_slice(slice: &[u8]) -> Result<Self> {
     slice
       .try_into()
-      .map_err(|_| Error::IdentityIdInvalid)
+      .map_err(|_| AccountError::IdentityIdInvalid)
       .map(Self::from_bytes)
   }
 
@@ -66,7 +66,7 @@ impl IdentityId {
       .to_u32()
       .checked_add(1)
       .map(Self::from_u32)
-      .ok_or(Error::IdentityIdOverflow)
+      .ok_or(AccountError::IdentityIdOverflow)
   }
 }
 

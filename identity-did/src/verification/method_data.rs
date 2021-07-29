@@ -11,7 +11,7 @@ use identity_core::utils::decode_multibase;
 use identity_core::utils::encode_b58;
 use identity_core::utils::encode_multibase;
 
-use crate::error::Error;
+use crate::error::DIDError;
 use crate::error::Result;
 
 /// Supported verification method data formats.
@@ -47,9 +47,9 @@ impl MethodData {
   /// represented as a vector of bytes.
   pub fn try_decode(&self) -> Result<Vec<u8>> {
     match self {
-      Self::PublicKeyMultibase(input) => decode_multibase(input).map_err(|_| Error::InvalidKeyDataMultibase),
-      Self::PublicKeyBase58(input) => decode_b58(input).map_err(|_| Error::InvalidKeyDataBase58),
-      Self::PublicKeyJwk(_) => Err(Error::InvalidKeyData),
+      Self::PublicKeyMultibase(input) => decode_multibase(input).map_err(|_| DIDError::InvalidKeyDataMultibase),
+      Self::PublicKeyBase58(input) => decode_b58(input).map_err(|_| DIDError::InvalidKeyDataBase58),
+      Self::PublicKeyJwk(_) => Err(DIDError::InvalidKeyData),
     }
   }
 }

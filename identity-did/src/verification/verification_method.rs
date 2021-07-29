@@ -11,7 +11,7 @@ use identity_core::convert::ToJson;
 use serde::Serialize;
 
 use crate::did::DID;
-use crate::error::Error;
+use crate::error::DIDError;
 use crate::error::Result;
 use crate::verification::MethodBuilder;
 use crate::verification::MethodData;
@@ -44,10 +44,10 @@ impl<T> VerificationMethod<T> {
   /// Returns a new `Method` based on the `MethodBuilder` configuration.
   pub fn from_builder(builder: MethodBuilder<T>) -> Result<Self> {
     Ok(VerificationMethod {
-      id: builder.id.ok_or(Error::BuilderInvalidMethodId)?,
-      controller: builder.controller.ok_or(Error::BuilderInvalidMethodController)?,
-      key_type: builder.key_type.ok_or(Error::BuilderInvalidMethodType)?,
-      key_data: builder.key_data.ok_or(Error::BuilderInvalidMethodData)?,
+      id: builder.id.ok_or(DIDError::BuilderInvalidMethodId)?,
+      controller: builder.controller.ok_or(DIDError::BuilderInvalidMethodController)?,
+      key_type: builder.key_type.ok_or(DIDError::BuilderInvalidMethodType)?,
+      key_data: builder.key_data.ok_or(DIDError::BuilderInvalidMethodData)?,
       properties: builder.properties,
     })
   }
@@ -106,7 +106,7 @@ impl<T> VerificationMethod<T> {
     self
       .id
       .fragment()
-      .ok_or(Error::InvalidMethodFragment)
+      .ok_or(DIDError::InvalidMethodFragment)
       .map(|fragment| once('#').chain(fragment.chars()).collect())
   }
 

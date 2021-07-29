@@ -22,7 +22,7 @@ use tokio::sync::RwLock;
 use tokio::sync::RwLockWriteGuard;
 
 use crate::account::AccountBuilder;
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::error::Result;
 use crate::events::Command;
 use crate::events::Commit;
@@ -217,7 +217,7 @@ impl Account {
   }
 
   async fn try_resolve_id<K: IdentityKey>(&self, key: K) -> Result<IdentityId> {
-    self.resolve_id(key).await.ok_or(Error::IdentityNotFound)
+    self.resolve_id(key).await.ok_or(AccountError::IdentityNotFound)
   }
 
   // ===========================================================================

@@ -27,11 +27,11 @@ use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_core::crypto::Verifier;
 use identity_core::crypto::Verify;
-use identity_core::error::Error as CoreError;
+use identity_core::error::CoreError as CoreError;
 use serde::Serialize;
 
 use crate::document::CoreDocument;
-use crate::error::Error;
+use crate::error::DIDError;
 use crate::error::Result;
 use crate::verifiable::Properties;
 use crate::verifiable::Revocation;
@@ -114,7 +114,7 @@ where
       }
       MethodType::MerkleKeyCollection2021 => {
         // CoreDocuments can't be signed with Merkle Key Collections
-        return Err(Error::InvalidMethodType);
+        return Err(DIDError::InvalidMethodType);
       }
     }
 
@@ -132,7 +132,7 @@ where
       }
       MethodType::MerkleKeyCollection2021 => {
         // CoreDocuments can't be signed with Merkle Key Collections
-        return Err(Error::InvalidMethodType);
+        return Err(DIDError::InvalidMethodType);
       }
     }
 
@@ -207,7 +207,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
   where
     X: Serialize + SetSignature + TryMethod,
   {
-    let query: MethodQuery<'_> = self.method.ok_or(Error::QueryMethodNotFound)?;
+    let query: MethodQuery<'_> = self.method.ok_or(DIDError::QueryMethodNotFound)?;
     let method: &VerificationMethod<U> = self.document.try_resolve(query)?;
     let method_uri: String = X::try_method(method)?;
 
@@ -226,7 +226,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
             self.merkle_key_sign::<X, Blake2b256, Ed25519>(that, method_uri)?;
           }
           (_, _) => {
-            return Err(Error::InvalidMethodType);
+            return Err(DIDError::InvalidMethodType);
           }
         }
       }
@@ -246,7 +246,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
       Some((public, proof)) => {
         let proof: &Proof<D> = proof
           .downcast_ref()
-          .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))?;
+          .ok_or(DIDError::CoreError(CoreError::InvalidKeyFormat))?;
 
         let skey: SigningKey<'_, D> = SigningKey::from_borrowed(public, self.secret, proof);
 
@@ -254,7 +254,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 
         Ok(())
       }
-      None => Err(Error::CoreError(CoreError::InvalidKeyFormat)),
+      None => Err(DIDError::CoreError(CoreError::InvalidKeyFormat)),
     }
   }
 }
@@ -303,7 +303,7 @@ where
           self.merkle_key_verify::<X, Blake2b256, Ed25519>(that, method, &data)?;
         }
         (_, _) => {
-          return Err(Error::InvalidMethodType);
+          return Err(DIDError::InvalidMethodType);
         }
       },
     }

@@ -21,7 +21,7 @@ use serde::Serialize;
 use crate::credential::Credential;
 use crate::credential::Policy;
 use crate::credential::Refresh;
-use crate::error::Error;
+use crate::error::CredentialError;
 use crate::error::Result;
 use crate::presentation::PresentationBuilder;
 
@@ -99,12 +99,12 @@ impl<T, U> Presentation<T, U> {
     // Ensure the base context is present and in the correct location
     match self.context.get(0) {
       Some(context) if context == Self::base_context() => {}
-      Some(_) | None => return Err(Error::MissingBaseContext),
+      Some(_) | None => return Err(CredentialError::MissingBaseContext),
     }
 
     // The set of types MUST contain the base type
     if !self.types.iter().any(|type_| type_ == Self::base_type()) {
-      return Err(Error::MissingBaseType);
+      return Err(CredentialError::MissingBaseType);
     }
 
     // Check all credentials.

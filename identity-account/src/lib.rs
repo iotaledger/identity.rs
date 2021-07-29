@@ -31,5 +31,5 @@ pub mod stronghold;
 pub mod types;
 pub mod utils;
 
-pub use self::error::Error;
+pub use self::error::AccountError;
 pub use self::error::Result;

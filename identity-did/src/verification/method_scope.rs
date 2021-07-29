@@ -3,7 +3,7 @@
 
 use core::str::FromStr;
 
-use crate::error::Error;
+use crate::error::DIDError;
 use crate::error::Result;
 
 /// Verification method group used to refine the scope of a method query.
@@ -37,7 +37,7 @@ impl Default for MethodScope {
 }
 
 impl FromStr for MethodScope {
-  type Err = Error;
+  type Err = DIDError;
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
     match string {
@@ -47,7 +47,7 @@ impl FromStr for MethodScope {
       "KeyAgreement" => Ok(Self::KeyAgreement),
       "CapabilityDelegation" => Ok(Self::CapabilityDelegation),
       "CapabilityInvocation" => Ok(Self::CapabilityInvocation),
-      _ => Err(Error::UnknownMethodScope),
+      _ => Err(DIDError::UnknownMethodScope),
     }
   }
 }

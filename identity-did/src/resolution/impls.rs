@@ -6,7 +6,7 @@ use std::time::Instant;
 
 use crate::did::DID;
 use crate::document::CoreDocument;
-use crate::error::Error;
+use crate::error::DIDError;
 use crate::error::Result;
 use crate::resolution::Dereference;
 use crate::resolution::DocumentMetadata;
@@ -93,14 +93,14 @@ where
   let (document, metadata): (CoreDocument, DocumentMetadata) = match (resolution.document, resolution.document_metadata)
   {
     (Some(document), Some(metadata)) => (document, metadata),
-    (Some(_), None) => return Err(Error::MissingResolutionMetadata),
-    (None, Some(_)) => return Err(Error::MissingResolutionDocument),
-    (None, None) => return Err(Error::MissingResolutionData),
+    (Some(_), None) => return Err(DIDError::MissingResolutionMetadata),
+    (None, Some(_)) => return Err(DIDError::MissingResolutionDocument),
+    (None, None) => return Err(DIDError::MissingResolutionData),
   };
 
   // Extract the parsed DID from the resolution output - It MUST exist as we
   // checked for resolution errors above.
-  let did: DID = resolution.metadata.resolved.ok_or(Error::MissingResolutionDID)?;
+  let did: DID = resolution.metadata.resolved.ok_or(DIDError::MissingResolutionDID)?;
 
   // Add the resolution document metadata to the response.
   context.set_metadata(metadata);
@@ -296,18 +296,18 @@ fn service_endpoint_ctor(did: DID, url: &Url) -> Result<Url> {
   // The input DID URL and input service endpoint URL MUST NOT both have a
   // query component.
   if did.query().is_some() && url.query().is_some() {
-    return Err(Error::InvalidDIDQuery);
+    return Err(DIDError::InvalidDIDQuery);
   }
 
   // The input DID URL and input service endpoint URL MUST NOT both have a
   // fragment component.
   if did.fragment().is_some() && url.fragment().is_some() {
-    return Err(Error::InvalidDIDFragment);
+    return Err(DIDError::InvalidDIDFragment);
   }
 
   // The input service endpoint URL MUST be an HTTP(S) URL.
   if url.scheme() != "https" {
-    return Err(Error::InvalidServiceProtocol);
+    return Err(DIDError::InvalidServiceProtocol);
   }
 
   // 1. Initialize a string output service endpoint URL to the value of
@@ -384,7 +384,7 @@ mod test {
         did.join("?query=this").unwrap(),
         &Url::parse("https://my-service.endpoint.net?query=this").unwrap()
       ),
-      Err(Error::InvalidDIDQuery)
+      Err(DIDError::InvalidDIDQuery)
     ));
 
     assert!(service_endpoint_ctor(
@@ -403,7 +403,7 @@ mod test {
         did.join("#fragment").unwrap(),
         &Url::parse("https://my-service.endpoint.net#fragment").unwrap()
       ),
-      Err(Error::InvalidDIDFragment)
+      Err(DIDError::InvalidDIDFragment)
     ));
 
     assert!(service_endpoint_ctor(

@@ -23,7 +23,7 @@ use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
 use crate::did::IotaDID;
-use crate::error::Error;
+use crate::error::IotaError;
 use crate::error::Result;
 
 /// A DID Document verification method
@@ -145,13 +145,13 @@ impl IotaVerificationMethod {
 
     // Ensure the authentication method has an identifying fragment
     if method.id().fragment().is_none() {
-      return Err(Error::InvalidDocumentAuthFragment);
+      return Err(IotaError::InvalidDocumentAuthFragment);
     }
 
     // Ensure the id and controller are the same - we don't support DIDs
     // controlled by 3rd parties - yet.
     if method.id().authority() != method.controller().authority() {
-      return Err(Error::InvalidDocumentAuthAuthority);
+      return Err(IotaError::InvalidDocumentAuthAuthority);
     }
 
     Ok(())
@@ -178,11 +178,11 @@ impl IotaVerificationMethod {
   /// Revokes the public key of a Merkle Key Collection at the specified `index`.
   pub fn revoke_merkle_key(&mut self, index: usize) -> Result<bool> {
     if !matches!(self.key_type(), MethodType::MerkleKeyCollection2021) {
-      return Err(Error::CannotRevokeMethod);
+      return Err(IotaError::CannotRevokeMethod);
     }
 
     let mut revocation: BitSet = self.revocation()?.unwrap_or_else(BitSet::new);
-    let index: u32 = index.try_into().map_err(|_| Error::CannotRevokeMethod)?;
+    let index: u32 = index.try_into().map_err(|_| IotaError::CannotRevokeMethod)?;
     let revoked: bool = revocation.insert(index);
 
     self
@@ -227,7 +227,7 @@ impl From<IotaVerificationMethod> for MethodRef {
 }
 
 impl TryFrom<VerificationMethod> for IotaVerificationMethod {
-  type Error = Error;
+  type Error = IotaError;
 
   fn try_from(other: VerificationMethod) -> Result<Self, Self::Error> {
     Self::try_from_core(other)

@@ -6,7 +6,7 @@ use crate::crypto::merkle_key::MerkleDigestTag;
 use crate::crypto::merkle_key::MerkleSignature;
 use crate::crypto::merkle_key::MerkleSignatureTag;
 use crate::crypto::merkle_tree::Hash;
-use crate::error::Error;
+use crate::error::CoreError;
 use crate::error::Result;
 
 /// Common utilities for working with Merkle Key Collection Signatures.
@@ -46,7 +46,7 @@ impl MerkleKey {
       .get(index)
       .copied()
       .map(MerkleDigestTag::new)
-      .ok_or(Error::InvalidMerkleDigestKeyTag(None))
+      .ok_or(CoreError::InvalidMerkleDigestKeyTag(None))
   }
 
   fn signature_tag(data: &[u8], index: usize) -> Result<MerkleSignatureTag> {
@@ -54,7 +54,7 @@ impl MerkleKey {
       .get(index)
       .copied()
       .map(MerkleSignatureTag::new)
-      .ok_or(Error::InvalidMerkleSignatureKeyTag(None))
+      .ok_or(CoreError::InvalidMerkleSignatureKeyTag(None))
   }
 }
 

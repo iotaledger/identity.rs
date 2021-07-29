@@ -3,7 +3,7 @@
 
 use core::str::FromStr;
 
-use crate::error::Error;
+use crate::error::DIDError;
 use crate::error::Result;
 
 /// Supported verification method types.
@@ -36,13 +36,13 @@ impl MethodType {
 }
 
 impl FromStr for MethodType {
-  type Err = Error;
+  type Err = DIDError;
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
     match string {
       "Ed25519VerificationKey2018" => Ok(Self::Ed25519VerificationKey2018),
       "MerkleKeyCollection2021" => Ok(Self::MerkleKeyCollection2021),
-      _ => Err(Error::UnknownMethodType),
+      _ => Err(DIDError::UnknownMethodType),
     }
   }
 }

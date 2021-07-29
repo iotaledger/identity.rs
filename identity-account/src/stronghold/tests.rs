@@ -15,7 +15,7 @@ use std::thread;
 use std::time::Duration;
 use std::time::Instant;
 
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::stronghold::Snapshot;
 use crate::stronghold::SnapshotStatus;
 use crate::stronghold::Store;
@@ -72,10 +72,10 @@ rusty_fork_test! {
       thread::sleep(interval * 3);
 
       let store: Store<'_> = snapshot.store("", &[]);
-      let error: Error = store.get(location("expires")).await.unwrap_err();
+      let error: AccountError = store.get(location("expires")).await.unwrap_err();
 
       assert!(
-        matches!(error, Error::StrongholdPasswordNotSet),
+        matches!(error, AccountError::StrongholdPasswordNotSet),
         "unexpected error: {:?}",
         error
       );
@@ -127,10 +127,10 @@ rusty_fork_test! {
         }
       }
 
-      let mut result: Result<Vec<u8>, Error> = store.get(location("persists1")).await;
+      let mut result: Result<Vec<u8>, AccountError> = store.get(location("persists1")).await;
 
       // Test may have taken too long / been interrupted and cleared the password already, retry
-      if matches!(result, Err(Error::StrongholdPasswordNotSet)) && interval.checked_sub(instant.elapsed()).is_none() {
+      if matches!(result, Err(AccountError::StrongholdPasswordNotSet)) && interval.checked_sub(instant.elapsed()).is_none() {
         snapshot.set_password(Default::default()).unwrap();
         result = store.get(location("persists1")).await;
       }
@@ -139,9 +139,9 @@ rusty_fork_test! {
       // Wait for password to be cleared
       thread::sleep(interval * 2);
 
-      let error: Error = store.get(location("persists1")).await.unwrap_err();
+      let error: AccountError = store.get(location("persists1")).await.unwrap_err();
       assert!(
-        matches!(error, Error::StrongholdPasswordNotSet),
+        matches!(error, AccountError::StrongholdPasswordNotSet),
         "unexpected error: {:?}",
         error
       );

@@ -12,7 +12,7 @@ use crate::crypto::SignatureValue;
 use crate::crypto::Signer;
 use crate::crypto::Verifier;
 use crate::crypto::Verify;
-use crate::error::Error;
+use crate::error::CoreError;
 use crate::error::Result;
 use crate::utils::decode_b58;
 use crate::utils::encode_b58;
@@ -60,7 +60,7 @@ where
   {
     let signature: &str = signature
       .as_signature()
-      .ok_or(Error::InvalidProofValue("jcs ed25519"))?;
+      .ok_or(CoreError::InvalidProofValue("jcs ed25519"))?;
 
     let signature: Vec<u8> = decode_b58(signature)?;
     let message: Vec<u8> = data.to_jcs()?;

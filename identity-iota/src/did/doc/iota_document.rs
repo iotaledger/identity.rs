@@ -37,7 +37,7 @@ use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaVerificationMethod;
 use crate::did::Properties as BaseProperties;
-use crate::error::Error;
+use crate::error::IotaError;
 use crate::error::Result;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
@@ -187,13 +187,13 @@ impl IotaDocument {
       .authentication()
       .head()
       .and_then(|method| document.resolve_ref(method))
-      .ok_or(Error::MissingAuthenticationMethod)?;
+      .ok_or(IotaError::MissingAuthenticationMethod)?;
 
     Self::check_authentication(method)?;
 
     // Ensure the authentication method DID matches the document DID
     if method.id().authority() != did.authority() {
-      return Err(Error::InvalidDocumentAuthAuthority);
+      return Err(IotaError::InvalidDocumentAuthAuthority);
     }
     Ok(())
   }
@@ -204,7 +204,7 @@ impl IotaDocument {
     // Ensure the verification method type is supported
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {}
-      MethodType::MerkleKeyCollection2021 => return Err(Error::InvalidDocumentAuthType),
+      MethodType::MerkleKeyCollection2021 => return Err(IotaError::InvalidDocumentAuthType),
     }
 
     Ok(())
@@ -357,7 +357,7 @@ impl IotaDocument {
   /// Removes all references to the specified Verification Method.
   pub fn remove_method(&mut self, did: &IotaDID) -> Result<()> {
     if self.authentication_id() == did.as_str() {
-      return Err(Error::CannotRemoveAuthMethod);
+      return Err(IotaError::CannotRemoveAuthMethod);
     }
 
     self.document.remove_method(did.as_ref());
@@ -396,7 +396,7 @@ impl IotaDocument {
         .document
         .try_resolve(query)
         .map(|m| IotaVerificationMethod::new_unchecked_ref(m))
-        .map_err(Error::InvalidDoc)
+        .map_err(IotaError::InvalidDoc)
     }
   }
 
@@ -523,7 +523,7 @@ impl IotaDocument {
   /// Returns the Tangle address of the DID diff chain.
   pub fn diff_address(message_id: &MessageId) -> Result<String> {
     if message_id.is_null() {
-      return Err(Error::InvalidDocumentMessageId);
+      return Err(IotaError::InvalidDocumentMessageId);
     }
 
     Ok(IotaDID::encode_key(message_id.encode_hex().as_bytes()))
@@ -545,7 +545,7 @@ impl Debug for IotaDocument {
 }
 
 impl TryFrom<BaseDocument> for IotaDocument {
-  type Error = Error;
+  type Error = IotaError;
 
   fn try_from(other: BaseDocument) -> Result<Self, Self::Error> {
     IotaDocument::try_from_base(other)
@@ -559,7 +559,7 @@ impl From<IotaDocument> for BaseDocument {
 }
 
 impl TryFrom<CoreDocument> for IotaDocument {
-  type Error = Error;
+  type Error = IotaError;
 
   fn try_from(other: CoreDocument) -> Result<Self, Self::Error> {
     Self::try_from_core(other)

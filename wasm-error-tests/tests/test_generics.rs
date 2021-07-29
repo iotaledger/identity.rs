@@ -3,12 +3,12 @@ extern crate alloc;
 
 use alloc::borrow::ToOwned;
 use alloc::string::String;
-use flat_enum::derive::FlatEnum;
-use flat_enum::IntoFlatEnum;
+use wasm_error::derive::WasmError;
+use wasm_error::IntoWasmError;
 use core::fmt::Formatter;
 use crate::alloc::string::ToString;
 
-#[derive(Debug, FlatEnum)]
+#[derive(Debug, WasmError)]
 pub enum GenericEnum<T>
 where
   T: core::fmt::Debug,
@@ -26,7 +26,7 @@ impl<T> core::fmt::Display for GenericEnum<T> where
   }
 }
 
-#[derive(Debug, FlatEnum)]
+#[derive(Debug, WasmError)]
 pub enum TwoGenericsEnum<T, V>
 where
   T: core::fmt::Debug,
@@ -50,35 +50,35 @@ impl<T, V> core::fmt::Display for TwoGenericsEnum<T, V> where
 }
 
 #[test]
-fn test_flat_enum_generic_basic() {
-  let a = FlatGenericEnum {
-    code: FlatGenericEnumCode::A,
+fn test_wasm_error_generic_basic() {
+  let a = WasmGenericEnum {
+    code: WasmGenericEnumCode::A,
     description: "A".to_owned(),
   };
-  assert_eq!(a.code, FlatGenericEnumCode::A);
+  assert_eq!(a.code, WasmGenericEnumCode::A);
   assert_eq!(a.description, "A".to_owned());
 }
 
 #[test]
-fn test_flat_enum_two_generics_basic() {
-  let a = FlatTwoGenericsEnum {
-    code: FlatTwoGenericsEnumCode::A,
+fn test_wasm_error_two_generics_basic() {
+  let a = WasmTwoGenericsEnum {
+    code: WasmTwoGenericsEnumCode::A,
     description: "A".to_owned(),
   };
-  assert_eq!(a.code, FlatTwoGenericsEnumCode::A);
+  assert_eq!(a.code, WasmTwoGenericsEnumCode::A);
   assert_eq!(a.description, "A".to_owned());
 }
 
 #[test]
-fn test_flat_enum_two_generics() {
-  let g = FlatTwoGenericsEnum::from(TwoGenericsEnum::G::<u8, i64> { a: 42, b: 123 });
-  assert_eq!(g.code, FlatTwoGenericsEnumCode::G);
+fn test_wasm_error_two_generics() {
+  let g = WasmTwoGenericsEnum::from(TwoGenericsEnum::G::<u8, i64> { a: 42, b: 123 });
+  assert_eq!(g.code, WasmTwoGenericsEnumCode::G);
   assert_eq!(g.description, "G { a: 42, b: 123 }".to_owned());
 }
 
 #[test]
-fn test_two_generics_to_flat_enum() {
-  let g = TwoGenericsEnum::G::<u8, i64> { a: 42, b: 123 }.into_flat_enum();
-  assert_eq!(g.code, FlatTwoGenericsEnumCode::G);
+fn test_two_generics_to_wasm_error() {
+  let g = TwoGenericsEnum::G::<u8, i64> { a: 42, b: 123 }.into_wasm_error();
+  assert_eq!(g.code, WasmTwoGenericsEnumCode::G);
   assert_eq!(g.description, "G { a: 42, b: 123 }".to_owned());
 }

@@ -4,7 +4,7 @@
 use core::marker::PhantomData;
 use futures::executor;
 use identity_core::crypto::Sign;
-use identity_core::error::Error;
+use identity_core::error::CoreError;
 use identity_core::error::Result;
 
 use crate::identity::IdentityId;
@@ -49,7 +49,7 @@ where
     let future: _ = key.store.key_sign(key.id, key.location, message.to_vec());
 
     executor::block_on(future)
-      .map_err(|_| Error::InvalidProofValue("remote sign"))
+      .map_err(|_| CoreError::InvalidProofValue("remote sign"))
       .map(|signature| signature.data)
   }
 }

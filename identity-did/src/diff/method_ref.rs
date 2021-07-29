@@ -4,7 +4,7 @@
 use identity_core::common::Object;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
-use identity_core::diff::Error;
+use identity_core::diff::DiffError;
 use identity_core::diff::Result;
 use serde::Deserialize;
 use serde::Serialize;
@@ -52,9 +52,9 @@ where
   fn from_diff(diff: Self::Type) -> Result<Self> {
     match diff {
       DiffMethodRef::Embed(Some(value)) => Diff::from_diff(value).map(Self::Embed),
-      DiffMethodRef::Embed(None) => Err(Error::convert("Invalid MethodRef Diff")),
+      DiffMethodRef::Embed(None) => Err(DiffError::convert("Invalid MethodRef Diff")),
       DiffMethodRef::Refer(Some(value)) => DID::from_diff(value).map(Self::Refer),
-      DiffMethodRef::Refer(None) => Err(Error::convert("Invalid MethodRef Diff")),
+      DiffMethodRef::Refer(None) => Err(DiffError::convert("Invalid MethodRef Diff")),
     }
   }
 

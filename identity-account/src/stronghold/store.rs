@@ -6,7 +6,7 @@ use iota_stronghold::StrongholdFlags;
 use std::path::Path;
 use std::time::Duration;
 
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::error::PleaseDontMakeYourOwnResult;
 use crate::error::Result;
 use crate::stronghold::Context;
@@ -54,7 +54,7 @@ impl Store<'_> {
   pub async fn get(&self, location: Location) -> Result<Vec<u8>> {
     match self.get_strict(location).await {
       Ok(data) => Ok(data),
-      Err(Error::StrongholdResult(message)) if message == STRONG_404 => Ok(Vec::new()),
+      Err(AccountError::StrongholdResult(message)) if message == STRONG_404 => Ok(Vec::new()),
       Err(error) => Err(error),
     }
   }

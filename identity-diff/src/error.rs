@@ -3,10 +3,10 @@
 
 use core::fmt::Display;
 
-pub type Result<T, E = Error> = ::core::result::Result<T, E>;
+pub type Result<T, E = DiffError> = ::core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum DiffError {
   #[error("Diff Error: {0}")]
   DiffError(String),
   #[error("Merge Error: {0}")]
@@ -15,7 +15,7 @@ pub enum Error {
   ConversionError(String),
 }
 
-impl Error {
+impl DiffError {
   pub fn diff<T>(message: T) -> Self
   where
     T: Display,

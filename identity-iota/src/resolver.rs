@@ -4,7 +4,7 @@
 use async_trait::async_trait;
 use identity_core::convert::SerdeInto;
 use identity_did::did::DID as CoreDID;
-use identity_did::error::Error;
+use identity_did::error::DIDError;
 use identity_did::error::Result;
 use identity_did::resolution::DocumentMetadata;
 use identity_did::resolution::InputMetadata;
@@ -25,10 +25,10 @@ impl ResolverMethod for Client {
 
   async fn read(&self, did: &CoreDID, _input: InputMetadata) -> Result<Option<MetaDocument>> {
     let document: IotaDocument = IotaDID::try_from_borrowed(did)
-      .map_err(|_| Error::MissingResolutionDID)
+      .map_err(|_| DIDError::MissingResolutionDID)
       .map(|did| self.resolve(did))?
       .await
-      .map_err(|_| Error::MissingResolutionDocument)?;
+      .map_err(|_| DIDError::MissingResolutionDocument)?;
 
     let mut meta: DocumentMetadata = DocumentMetadata::new();
     meta.created = Some(document.created());
@@ -48,12 +48,12 @@ impl ResolverMethod for ClientMap {
   }
 
   async fn read(&self, did: &CoreDID, input: InputMetadata) -> Result<Option<MetaDocument>> {
-    let did: &IotaDID = IotaDID::try_from_borrowed(did).map_err(|_| Error::MissingResolutionDID)?;
+    let did: &IotaDID = IotaDID::try_from_borrowed(did).map_err(|_| DIDError::MissingResolutionDID)?;
 
     self
       .client(did.network())
       .await
-      .map_err(|_| Error::MissingResolutionDocument)?
+      .map_err(|_| DIDError::MissingResolutionDocument)?
       .read(did.as_ref(), input)
       .await
   }

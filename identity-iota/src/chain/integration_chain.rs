@@ -10,7 +10,7 @@ use identity_core::convert::ToJson;
 
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
-use crate::error::Error;
+use crate::error::IotaError;
 use crate::error::Result;
 use crate::tangle::Message;
 use crate::tangle::MessageExt;
@@ -39,7 +39,7 @@ impl IntegrationChain {
 
     let current: IotaDocument = index
       .remove_where(&MessageId::null(), |doc| doc.verify().is_ok())
-      .ok_or(Error::ChainError {
+      .ok_or(IotaError::ChainError {
         error: "Invalid Root Document",
       })?;
 
@@ -59,13 +59,13 @@ impl IntegrationChain {
   /// Creates a new `IntegrationChain` with the given `IotaDocument` as the latest.
   pub fn new(current: IotaDocument) -> Result<Self> {
     if current.verify().is_err() {
-      return Err(Error::ChainError {
+      return Err(IotaError::ChainError {
         error: "Invalid Signature",
       });
     }
 
     if current.message_id().is_null() {
-      return Err(Error::ChainError {
+      return Err(IotaError::ChainError {
         error: "Invalid Message Id",
       });
     }
@@ -117,25 +117,25 @@ impl IntegrationChain {
   /// Fails if the `Document` is not a valid addition.
   pub fn check_validity(&self, document: &IotaDocument) -> Result<()> {
     if self.current.verify_data(document).is_err() {
-      return Err(Error::ChainError {
+      return Err(IotaError::ChainError {
         error: "Invalid Signature",
       });
     }
 
     if document.message_id().is_null() {
-      return Err(Error::ChainError {
+      return Err(IotaError::ChainError {
         error: "Invalid Message Id",
       });
     }
 
     if document.previous_message_id().is_null() {
-      return Err(Error::ChainError {
+      return Err(IotaError::ChainError {
         error: "Invalid Previous Message Id",
       });
     }
 
     if self.current_message_id() != document.previous_message_id() {
-      return Err(Error::ChainError {
+      return Err(IotaError::ChainError {
         error: "Invalid Previous Message Id",
       });
     }

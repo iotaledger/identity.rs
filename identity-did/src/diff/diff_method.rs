@@ -4,7 +4,7 @@
 use identity_core::common::Object;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
-use identity_core::diff::Error;
+use identity_core::diff::DiffError;
 use identity_core::diff::Result;
 use serde::Deserialize;
 use serde::Serialize;
@@ -113,25 +113,25 @@ where
       .id
       .map(DID::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `method.id`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `method.id`"))?;
 
     let controller: DID = diff
       .controller
       .map(DID::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `method.controller`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `method.controller`"))?;
 
     let key_type: MethodType = diff
       .key_type
       .map(MethodType::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `method.key_type`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `method.key_type`"))?;
 
     let key_data: MethodData = diff
       .key_data
       .map(MethodData::from_diff)
       .transpose()?
-      .ok_or_else(|| Error::convert("Missing field `method.key_data`"))?;
+      .ok_or_else(|| DiffError::convert("Missing field `method.key_data`"))?;
 
     let properties: T = diff.properties.map(T::from_diff).transpose()?.unwrap_or_default();
 

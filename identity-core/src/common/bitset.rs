@@ -12,7 +12,7 @@ use serde::ser::Serializer;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::error::Error;
+use crate::error::CoreError;
 use crate::error::Result;
 use crate::utils::decode_b64;
 use crate::utils::encode_b64;
@@ -76,7 +76,7 @@ impl BitSet {
   pub fn serialize_vec(&self) -> Result<Vec<u8>> {
     let mut output: Vec<u8> = Vec::with_capacity(self.0.serialized_size());
 
-    self.0.serialize_into(&mut output).map_err(Error::EncodeBitmap)?;
+    self.0.serialize_into(&mut output).map_err(CoreError::EncodeBitmap)?;
 
     Ok(output)
   }
@@ -89,7 +89,7 @@ impl BitSet {
   /// Deserializes a [`BitSet`] from a slice of bytes.
   pub fn deserialize_slice(data: &[u8]) -> Result<Self> {
     RoaringBitmap::deserialize_from(data)
-      .map_err(Error::DecodeBitmap)
+      .map_err(CoreError::DecodeBitmap)
       .map(Self)
   }
 }

@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::Error;
+use crate::error::DIDError;
 use crate::error::Result;
 use crate::verification::VerificationMethod;
 
@@ -39,6 +39,6 @@ pub trait TryMethod {
   ///
   /// Fails if an unsupported verification method is used.
   fn try_method<U>(method: &VerificationMethod<U>) -> Result<String> {
-    Self::method(method).ok_or(Error::InvalidMethodFragment)
+    Self::method(method).ok_or(DIDError::InvalidMethodFragment)
   }
 }

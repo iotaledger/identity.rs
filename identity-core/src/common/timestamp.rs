@@ -13,7 +13,7 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::str::FromStr;
 
-use crate::error::Error;
+use crate::error::CoreError;
 use crate::error::Result;
 
 /// A parsed Timestamp.
@@ -84,7 +84,7 @@ impl From<Timestamp> for String {
 }
 
 impl TryFrom<&'_ str> for Timestamp {
-  type Error = Error;
+  type Error = CoreError;
 
   fn try_from(string: &'_ str) -> Result<Self, Self::Error> {
     Self::parse(string)
@@ -92,7 +92,7 @@ impl TryFrom<&'_ str> for Timestamp {
 }
 
 impl TryFrom<String> for Timestamp {
-  type Error = Error;
+  type Error = CoreError;
 
   fn try_from(string: String) -> Result<Self, Self::Error> {
     Self::parse(&string)
@@ -100,7 +100,7 @@ impl TryFrom<String> for Timestamp {
 }
 
 impl FromStr for Timestamp {
-  type Err = Error;
+  type Err = CoreError;
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
     Self::parse(string)

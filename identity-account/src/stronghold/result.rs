@@ -5,16 +5,16 @@ use crypto::keys::slip10::ChainCode;
 use iota_stronghold::ProcResult;
 use iota_stronghold::ResultMessage;
 
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::error::PleaseDontMakeYourOwnResult;
 use crate::error::Result;
 
 impl<T> PleaseDontMakeYourOwnResult<T> for ResultMessage<T> {
   #[allow(clippy::wrong_self_convention)]
-  fn to_result(self) -> Result<T, Error> {
+  fn to_result(self) -> Result<T, AccountError> {
     match self {
       Self::Ok(data) => Ok(data),
-      Self::Error(error) => Err(Error::StrongholdResult(error)),
+      Self::Error(error) => Err(AccountError::StrongholdResult(error)),
     }
   }
 }
@@ -41,7 +41,7 @@ impl PleaseDontMakeYourOwnResult<ProcedureResult> for ProcResult {
       ProcResult::BIP39MnemonicSentence(inner) => inner.to_result().map(ProcedureResult::BIP39MnemonicSentence),
       ProcResult::Ed25519PublicKey(inner) => inner.to_result().map(ProcedureResult::Ed25519PublicKey),
       ProcResult::Ed25519Sign(inner) => inner.to_result().map(ProcedureResult::Ed25519Sign),
-      ProcResult::Error(inner) => Err(Error::StrongholdResult(inner)),
+      ProcResult::Error(inner) => Err(AccountError::StrongholdResult(inner)),
     }
   }
 }

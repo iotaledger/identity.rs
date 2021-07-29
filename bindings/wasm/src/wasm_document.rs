@@ -12,7 +12,7 @@ use identity::crypto::SecretKey;
 use identity::did::verifiable;
 use identity::did::MethodScope;
 use identity::iota::DocumentDiff;
-use identity::iota::Error;
+use identity::iota::IotaError;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
@@ -226,7 +226,7 @@ impl WasmDocument {
         let merkle_key: Vec<u8> = self
           .0
           .try_resolve(&*method)
-          .and_then(|method| method.key_data().try_decode().map_err(Error::InvalidDoc))
+          .and_then(|method| method.key_data().try_decode().map_err(IotaError::InvalidDoc))
           .map_err(err)?;
 
         let public: PublicKey = decode_b58(&public).map_err(err).map(Into::into)?;

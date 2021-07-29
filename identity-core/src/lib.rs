@@ -32,5 +32,5 @@ pub mod crypto;
 pub mod error;
 pub mod utils;
 
-pub use self::error::Error;
+pub use self::error::CoreError;
 pub use self::error::Result;

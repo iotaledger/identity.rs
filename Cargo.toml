@@ -10,9 +10,9 @@ members = [
   "identity-diff",
   "identity-iota",
 
-  "flat-enum",
-  "flat-enum-derive",
-  "flat-enum-tests",
+  "wasm-error",
+  "wasm-error-derive",
+  "wasm-error-tests",
 
   "examples",
 ]

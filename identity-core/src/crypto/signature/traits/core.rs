@@ -7,7 +7,7 @@ use crate::crypto::SetSignature;
 use crate::crypto::Signature;
 use crate::crypto::SignatureValue;
 use crate::crypto::TrySignature;
-use crate::error::Error;
+use crate::error::CoreError;
 use crate::error::Result;
 
 /// A common interface for digital signature creation.
@@ -87,7 +87,7 @@ pub trait Verifier<Public: ?Sized>: Named {
     let signature: &Signature = data.try_signature()?;
 
     if signature.type_() != Self::NAME {
-      return Err(Error::InvalidProofValue("signature name"));
+      return Err(CoreError::InvalidProofValue("signature name"));
     }
 
     signature.hide_value();

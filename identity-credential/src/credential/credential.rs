@@ -27,7 +27,7 @@ use crate::credential::Refresh;
 use crate::credential::Schema;
 use crate::credential::Status;
 use crate::credential::Subject;
-use crate::error::Error;
+use crate::error::CredentialError;
 use crate::error::Result;
 
 lazy_static! {
@@ -109,7 +109,7 @@ impl<T> Credential<T> {
       id: builder.id,
       types: builder.types.into(),
       credential_subject: builder.subject.into(),
-      issuer: builder.issuer.ok_or(Error::MissingIssuer)?,
+      issuer: builder.issuer.ok_or(CredentialError::MissingIssuer)?,
       issuance_date: builder.issuance_date.unwrap_or_default(),
       expiration_date: builder.expiration_date,
       credential_status: builder.status.into(),
@@ -132,23 +132,23 @@ impl<T> Credential<T> {
     // Ensure the base context is present and in the correct location
     match self.context.get(0) {
       Some(context) if context == Self::base_context() => {}
-      Some(_) | None => return Err(Error::MissingBaseContext),
+      Some(_) | None => return Err(CredentialError::MissingBaseContext),
     }
 
     // The set of types MUST contain the base type
     if !self.types.iter().any(|type_| type_ == Self::base_type()) {
-      return Err(Error::MissingBaseType);
+      return Err(CredentialError::MissingBaseType);
     }
 
     // Credentials MUST have at least one subject
     if self.credential_subject.is_empty() {
-      return Err(Error::MissingSubject);
+      return Err(CredentialError::MissingSubject);
     }
 
     // Each subject is defined as one or more properties - no empty objects
     for subject in self.credential_subject.iter() {
       if subject.id.is_none() && subject.properties.is_empty() {
-        return Err(Error::InvalidSubject);
+        return Err(CredentialError::InvalidSubject);
       }
     }
 

@@ -1,0 +1,14 @@
+[package]
+name = "wasm-error"
+version = "0.1.0"
+edition = "2018"
+license = "Apache-2.0"
+publish = false
+
+[features]
+default = ["derive"]
+derive = ["wasm-error-derive"]
+
+[dependencies]
+wasm-error-derive = { version = "0.1", default-features = false, path = "../wasm-error-derive", optional = true }
+serde = { version = "1.0", default-features = false }

@@ -8,7 +8,7 @@ use std::sync::RwLock;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::error::Result;
 
 #[derive(Default, Deserialize, Serialize)]
@@ -20,11 +20,11 @@ impl<T> Shared<T> {
   }
 
   pub fn read(&self) -> Result<RwLockReadGuard<'_, T>> {
-    self.0.read().map_err(|_| Error::SharedReadPoisoned)
+    self.0.read().map_err(|_| AccountError::SharedReadPoisoned)
   }
 
   pub fn write(&self) -> Result<RwLockWriteGuard<'_, T>> {
-    self.0.write().map_err(|_| Error::SharedWritePoisoned)
+    self.0.write().map_err(|_| AccountError::SharedWritePoisoned)
   }
 }
 

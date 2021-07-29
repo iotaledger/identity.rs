@@ -27,5 +27,5 @@ pub mod credential;
 pub mod error;
 pub mod presentation;
 
-pub use self::error::Error;
+pub use self::error::CredentialError;
 pub use self::error::Result;

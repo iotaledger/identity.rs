@@ -68,7 +68,7 @@ impl Client {
   }
 
   /// Publishes an `IotaDocument` to the Tangle.
-  #[wasm_bindgen(js_name = publishDocument)]
+  #[wasm_bindgen(js_name = publishDocument, catch)]
   pub fn publish_document(&self, document: &JsValue) -> Result<Promise, JsValue> {
     let document: IotaDocument = document.into_serde().map_err(err)?;
     let client: Rc<IotaClient> = self.client.clone();
@@ -162,3 +162,37 @@ impl Client {
     Ok(promise)
   }
 }
+
+// #[wasm_bindgen]
+// #[derive(Clone, Debug)]
+// pub struct WasmError {
+//   code: WasmErrorCode,
+//   description: String,
+// }
+//
+// #[wasm_bindgen]
+// impl WasmError {
+//   #[wasm_bindgen(constructor)]
+//   pub fn new(code: WasmErrorCode, description: String) -> Self {
+//     Self {
+//       code,
+//       description,
+//     }
+//   }
+//
+//   #[wasm_bindgen(getter)]
+//   pub fn code(&self) -> WasmErrorCode {
+//     self.code
+//   }
+//
+//   #[wasm_bindgen(getter)]
+//   pub fn description(&self) -> String {
+//     self.description.clone()
+//   }
+// }
+//
+// #[wasm_bindgen]
+// #[derive(Clone, Copy, Debug)]
+// pub enum WasmErrorCode {
+//   CryptoError,
+// }

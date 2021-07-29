@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { Client, Config, Document, KeyType } = require('../../node/identity_wasm')
+const { Client, Config, Document, KeyType, CoreError, CoreErrorCode } = require('../../node/identity_wasm')
 const { logExplorerUrl } = require('./explorer_util')
 
 /*
@@ -24,7 +24,23 @@ async function createIdentity(clientConfig) {
     const client = Client.fromConfig(config);
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
-    const messageId = await client.publishDocument(doc.toJSON());
+    // const messageId = await client.publishDocument(doc.toJSON());
+    let messageId;
+    try {
+        messageId = await client.publishDocument(doc.toJSON());
+    } catch (e) {
+        if (e instanceof Error) {
+            console.log(`e is an Error! ${e}`)
+        } else if (e instanceof CoreError) {
+            if (e.code === CoreErrorCode.Crypto) {
+                console.log(`CryptoError: ${e}`)
+            } else {
+                console.log(`Unknown CoreError: ${e}`)
+            }
+        } else {
+            console.log(`not an Error: ${e}`)
+        }
+    }
 
     // Log the results.
     logExplorerUrl("Identity Creation:", clientConfig.network.toString(), messageId);

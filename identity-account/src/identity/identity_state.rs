@@ -29,7 +29,7 @@ use serde::Serialize;
 
 use crate::crypto::RemoteKey;
 use crate::crypto::RemoteSign;
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::error::Result;
 use crate::identity::IdentityId;
 use crate::storage::Storage;
@@ -183,7 +183,7 @@ impl IdentityState {
   ///
   /// Fails if the DID is not set.
   pub fn try_did(&self) -> Result<&IotaDID> {
-    self.did().ok_or(Error::MissingDocumentId)
+    self.did().ok_or(AccountError::MissingDocumentId)
   }
 
   /// Sets the DID identifying the DID Document for the state.
@@ -238,7 +238,7 @@ impl IdentityState {
       .iter()
       .filter(|method| method.is_authentication())
       .max_by_key(|method| method.location().auth_generation())
-      .ok_or(Error::MethodNotFound)
+      .ok_or(AccountError::MethodNotFound)
   }
 
   /// Returns a key location suitable for the specified `fragment`.
@@ -522,7 +522,7 @@ impl Methods {
   ///
   /// Fails if no matching Verification Method is found.
   pub fn fetch(&self, fragment: &str) -> Result<&TinyMethod> {
-    self.get(fragment).ok_or(Error::MethodNotFound)
+    self.get(fragment).ok_or(AccountError::MethodNotFound)
   }
 
   /// Returns true if the map contains a method with the given `fragment`.
@@ -642,7 +642,7 @@ impl Services {
   ///
   /// Fails if no matching service is found.
   pub fn fetch(&self, fragment: &str) -> Result<&TinyService> {
-    self.get(fragment).ok_or(Error::ServiceNotFound)
+    self.get(fragment).ok_or(AccountError::ServiceNotFound)
   }
 
   /// Returns true if the set contains a service with the given `fragment`.

@@ -12,7 +12,7 @@ use core::slice::Iter;
 use serde::Deserialize;
 
 use crate::did::DID;
-use crate::error::Error;
+use crate::error::DIDError;
 use crate::error::Result;
 use crate::utils::DIDKey;
 use crate::verification::MethodQuery;
@@ -236,14 +236,14 @@ impl<T> TryFrom<Vec<T>> for OrderedSet<T>
 where
   T: PartialEq,
 {
-  type Error = Error;
+  type Error = DIDError;
 
   fn try_from(other: Vec<T>) -> Result<Self, Self::Error> {
     let mut this: Self = Self::with_capacity(other.len());
 
     for item in other {
       if !this.append(item) {
-        return Err(Error::OrderedSetDuplicate);
+        return Err(DIDError::OrderedSetDuplicate);
       }
     }
 

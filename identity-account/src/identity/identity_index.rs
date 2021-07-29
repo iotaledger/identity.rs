@@ -5,7 +5,7 @@ use hashbrown::hash_map::Entry;
 use hashbrown::HashMap;
 use identity_iota::did::IotaDID;
 
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::error::Result;
 use crate::identity::IdentityId;
 use crate::identity::IdentityKey;
@@ -59,12 +59,12 @@ impl IdentityIndex {
       .data
       .drain_filter(|tag, id| key.equals(tag, *id))
       .next()
-      .ok_or(Error::IdentityNotFound)
+      .ok_or(AccountError::IdentityNotFound)
   }
 
   fn insert(&mut self, id: IdentityId, tag: IdentityTag) -> Result<()> {
     match self.data.entry(tag) {
-      Entry::Occupied(_) => Err(Error::IdentityAlreadyExists),
+      Entry::Occupied(_) => Err(AccountError::IdentityAlreadyExists),
       Entry::Vacant(entry) => {
         entry.insert(id);
         Ok(())

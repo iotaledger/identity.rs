@@ -31,8 +31,8 @@ slog = { version = "2.7" }
 thiserror = { version = "1.0" }
 tokio = { version = "1.5", features = ["sync"] }
 zeroize = { version = "1.3" }
-flat-enum = { version = "0.1", default-features = false, features = ["derive"], path = "../flat-enum" }
-wasm-bindgen = { version = "0.2", default-features = false, optional = true }
+wasm-error = { version = "0.1", default-features = false, features = ["derive"], path = "../wasm-error", optional = true }
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"], optional = true }
 
 [dependencies.iota-crypto]
 version = "0.5"

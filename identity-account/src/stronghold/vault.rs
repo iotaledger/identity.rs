@@ -12,7 +12,7 @@ use iota_stronghold::StrongholdFlags;
 use iota_stronghold::VaultFlags;
 use std::path::Path;
 
-use crate::error::Error;
+use crate::error::AccountError;
 use crate::error::PleaseDontMakeYourOwnResult;
 use crate::error::Result;
 use crate::stronghold::Context;
@@ -126,7 +126,7 @@ impl Vault<'_> {
 
     match self.execute(procedure).await? {
       ProcedureResult::SLIP10Generate => Ok(()),
-      _ => Err(Error::StrongholdProcedureFailure),
+      _ => Err(AccountError::StrongholdProcedureFailure),
     }
   }
 
@@ -146,7 +146,7 @@ impl Vault<'_> {
 
     match self.execute(procedure).await? {
       ProcedureResult::SLIP10Derive(chaincode) => Ok(chaincode),
-      _ => Err(Error::StrongholdProcedureFailure),
+      _ => Err(AccountError::StrongholdProcedureFailure),
     }
   }
 
@@ -169,7 +169,7 @@ impl Vault<'_> {
 
     match self.execute(procedure).await? {
       ProcedureResult::BIP39Recover => Ok(()),
-      _ => Err(Error::StrongholdProcedureFailure),
+      _ => Err(AccountError::StrongholdProcedureFailure),
     }
   }
 
@@ -185,7 +185,7 @@ impl Vault<'_> {
 
     match self.execute(procedure).await? {
       ProcedureResult::BIP39Generate => Ok(()),
-      _ => Err(Error::StrongholdProcedureFailure),
+      _ => Err(AccountError::StrongholdProcedureFailure),
     }
   }
 
@@ -194,7 +194,7 @@ impl Vault<'_> {
 
     match self.execute(procedure).await? {
       ProcedureResult::BIP39MnemonicSentence(mnemonic) => Ok(mnemonic),
-      _ => Err(Error::StrongholdProcedureFailure),
+      _ => Err(AccountError::StrongholdProcedureFailure),
     }
   }
 
@@ -203,7 +203,7 @@ impl Vault<'_> {
 
     match self.execute(procedure).await? {
       ProcedureResult::Ed25519PublicKey(public_key) => Ok(public_key),
-      _ => Err(Error::StrongholdProcedureFailure),
+      _ => Err(AccountError::StrongholdProcedureFailure),
     }
   }
 
@@ -212,7 +212,7 @@ impl Vault<'_> {
 
     match self.execute(procedure).await? {
       ProcedureResult::Ed25519Sign(signature) => Ok(signature),
-      _ => Err(Error::StrongholdProcedureFailure),
+      _ => Err(AccountError::StrongholdProcedureFailure),
     }
   }
 }

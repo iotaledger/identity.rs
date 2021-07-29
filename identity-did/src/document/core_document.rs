@@ -13,7 +13,7 @@ use serde::Serialize;
 
 use crate::did::DID;
 use crate::document::DocumentBuilder;
-use crate::error::Error;
+use crate::error::DIDError;
 use crate::error::Result;
 use crate::service::Service;
 use crate::utils::DIDKey;
@@ -63,7 +63,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Returns a new `CoreDocument` based on the `DocumentBuilder` configuration.
   pub fn from_builder(builder: DocumentBuilder<T, U, V>) -> Result<Self> {
     Ok(Self {
-      id: builder.id.ok_or(Error::BuilderInvalidDocumentId)?,
+      id: builder.id.ok_or(DIDError::BuilderInvalidDocumentId)?,
       controller: builder.controller,
       also_known_as: builder.also_known_as,
       verification_method: builder.verification_method.try_into()?,
@@ -312,7 +312,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   where
     Q: Into<MethodQuery<'query>>,
   {
-    self.resolve(query).ok_or(Error::QueryMethodNotFound)
+    self.resolve(query).ok_or(DIDError::QueryMethodNotFound)
   }
 
   /// Returns a mutable reference to the first verification [`method`][`VerificationMethod`]
@@ -334,7 +334,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   where
     Q: Into<MethodQuery<'query>>,
   {
-    self.resolve_mut(query).ok_or(Error::QueryMethodNotFound)
+    self.resolve_mut(query).ok_or(DIDError::QueryMethodNotFound)
   }
 
   #[doc(hidden)]

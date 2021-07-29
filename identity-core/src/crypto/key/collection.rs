@@ -20,7 +20,7 @@ use crate::crypto::KeyRef;
 use crate::crypto::KeyType;
 use crate::crypto::PublicKey;
 use crate::crypto::SecretKey;
-use crate::error::Error;
+use crate::error::CoreError;
 use crate::error::Result;
 use crate::utils::generate_ed25519_keypairs;
 
@@ -42,11 +42,11 @@ impl KeyCollection {
     let (public, secret): (Vec<_>, Vec<_>) = iter.into_iter().unzip();
 
     if public.is_empty() {
-      return Err(Error::InvalidKeyCollectionSize(public.len()));
+      return Err(CoreError::InvalidKeyCollectionSize(public.len()));
     }
 
     if secret.is_empty() {
-      return Err(Error::InvalidKeyCollectionSize(secret.len()));
+      return Err(CoreError::InvalidKeyCollectionSize(secret.len()));
     }
 
     Ok(Self {

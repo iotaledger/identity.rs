@@ -4,14 +4,15 @@
 //! Errors that may occur when Self-sovereign Identity goes wrong.
 
 /// Alias for a `Result` with the error type [`Error`].
-pub type Result<T, E = Error> = ::core::result::Result<T, E>;
+pub type Result<T, E = CoreError> = ::core::result::Result<T, E>;
 
 use crate::crypto::merkle_key::MerkleDigestTag;
 use crate::crypto::merkle_key::MerkleSignatureTag;
 
 /// This type represents all possible errors that can occur in the library.
-#[derive(Debug, thiserror::Error, flat_enum::derive::FlatEnum)]
-pub enum Error {
+#[derive(Debug, thiserror::Error)]
+#[cfg_attr(feature = "wasm", derive(wasm_error::derive::WasmError))]
+pub enum CoreError {
   /// Caused when a cryptographic operation fails.
   #[error("Crypto Error: {0}")]
   Crypto(crypto::Error),
@@ -41,7 +42,7 @@ pub enum Error {
   DecodeBitmap(std::io::Error),
   /// Caused by attempting to perform an invalid `Diff` operation.
   #[error("Invalid Document Diff: {0}")]
-  InvalidDiff(#[from] identity_diff::Error),
+  InvalidDiff(#[from] identity_diff::DiffError),
   /// Caused by attempting to parse an invalid `Url`.
   #[error("Invalid Url: {0}")]
   InvalidUrl(#[from] url::ParseError),
@@ -77,7 +78,7 @@ pub enum Error {
   InvalidKeyCollectionSize(usize),
 }
 
-impl From<crypto::Error> for Error {
+impl From<crypto::Error> for CoreError {
   fn from(other: crypto::Error) -> Self {
     Self::Crypto(other)
   }

@@ -3,7 +3,7 @@
 
 use identity_account::account::Account;
 use identity_account::account::Config;
-use identity_account::error::Error;
+use identity_account::error::AccountError;
 use identity_account::error::Result;
 use identity_account::events::Command;
 use identity_account::events::CommandError;
@@ -66,7 +66,7 @@ async fn test_create_identity_invalid_method() -> Result<()> {
 
     assert!(matches!(
       output.unwrap_err(),
-      Error::CommandError(CommandError::InvalidMethodType(_))
+      AccountError::CommandError(CommandError::InvalidMethodType(_))
     ));
 
     let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
@@ -103,7 +103,7 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
   assert!(matches!(
     output.unwrap_err(),
-    Error::CommandError(CommandError::DocumentAlreadyExists),
+    AccountError::CommandError(CommandError::DocumentAlreadyExists),
   ));
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
@@ -178,7 +178,7 @@ async fn test_create_method_reserved_fragment() -> Result<()> {
 
   assert!(matches!(
     output.unwrap_err(),
-    Error::CommandError(CommandError::InvalidMethodFragment(_)),
+    AccountError::CommandError(CommandError::InvalidMethodFragment(_)),
   ));
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
@@ -219,7 +219,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
 
   assert!(matches!(
     output.unwrap_err(),
-    Error::CommandError(CommandError::DuplicateKeyFragment(_)),
+    AccountError::CommandError(CommandError::DuplicateKeyFragment(_)),
   ));
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;

@@ -4,26 +4,27 @@
 //! Errors that may occur when working with Identity Accounts.
 
 /// Alias for a `Result` with the error type [`Error`].
-pub type Result<T, E = Error> = ::core::result::Result<T, E>;
+pub type Result<T, E = AccountError> = ::core::result::Result<T, E>;
 
 /// This type represents all possible errors that can occur in the library.
-#[derive(Debug, thiserror::Error, flat_enum::derive::FlatEnum)]
-pub enum Error {
+#[derive(Debug, thiserror::Error)]
+#[cfg_attr(feature = "wasm", derive(wasm_error::derive::WasmError))]
+pub enum AccountError {
   /// Caused by errors from the [crypto] crate.
   #[error(transparent)]
   CryptoError(#[from] crypto::Error),
   /// Caused by errors from the [identity_core] crate.
   #[error(transparent)]
-  CoreError(#[from] identity_core::Error),
+  CoreError(#[from] identity_core::CoreError),
   /// Caused by errors from the [identity_did] crate.
   #[error(transparent)]
-  DIDError(#[from] identity_did::Error),
+  DIDError(#[from] identity_did::DIDError),
   /// Caused by errors from the [identity_credential] crate.
   #[error(transparent)]
-  CredentialError(#[from] identity_credential::Error),
+  CredentialError(#[from] identity_credential::CredentialError),
   /// Caused by errors from the [identity_iota] crate.
   #[error(transparent)]
-  IotaError(#[from] identity_iota::Error),
+  IotaError(#[from] identity_iota::IotaError),
   /// Caused by attempting to perform an invalid IO operation.
   #[error(transparent)]
   IoError(#[from] std::io::Error),
@@ -106,24 +107,38 @@ pub trait PleaseDontMakeYourOwnResult<T> {
 // #[cfg(feature = "serde-errors")]
 // #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 // #[repr(C)]
+// #[wasm_bindgen]
 // pub struct SerdeError {
 //   pub code: ErrorCode,
 //   pub description: Option<String>,
 // }
 //
 // #[cfg(feature = "serde-errors")]
+// #[wasm_bindgen]
 // impl SerdeError {
+//   #[wasm_bindgen(constructor)]
 //   pub fn new(code: ErrorCode, description: Option<String>) -> Self {
 //     Self {
 //       code,
 //       description,
 //     }
 //   }
+//
+//   #[wasm_bindgen(getter)]
+//   pub fn code(&self) -> ErrorCode {
+//     self.code
+//   }
+//
+//   #[wasm_bindgen(getter)]
+//   pub fn description(&self) -> String {
+//     self.description.unwrap_or_default()
+//   }
 // }
 //
 // #[cfg(feature = "serde-errors")]
 // #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 // #[repr(C)]
+// #[wasm_bindgen]
 // pub enum ErrorCode {
 //   /// [Error::CryptoError]
 //   CryptoError,
