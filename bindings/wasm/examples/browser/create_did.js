@@ -36,13 +36,13 @@ export async function createIdentity(clientConfig, log = true) {
     const client = identity.Client.fromConfig(config);
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
-    const messageId = await client.publishDocument(doc.toJSON());
+    const receipt = await client.publishDocument(doc.toJSON());
 
-    const explorerUrl = getExplorerUrl(doc, messageId);
+    const explorerUrl = getExplorerUrl(doc, receipt.messageId);
 
     if (log) logToScreen("Identity creation done!");
     if (log) logObjectToScreen(doc);
     if (log) logExplorerUrlToScreen(explorerUrl);
 
-    return { key, doc, messageId, explorerUrl };
+    return { key, doc, receipt, explorerUrl };
 }

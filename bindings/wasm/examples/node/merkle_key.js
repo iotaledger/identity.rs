@@ -31,12 +31,12 @@ async function merkleKey(clientConfig) {
 
     // Add to the DID Document as a general-purpose verification method
     issuer.doc.insertMethod(method, "VerificationMethod");
-    issuer.doc.previousMessageId = issuer.messageId;
+    issuer.doc.previousMessageId = issuer.receipt.messageId;
     issuer.doc.sign(issuer.key);
 
     //Publish the Identity to the IOTA Network and log the results, this may take a few seconds to complete Proof-of-Work.
-    const nextMessageId = await client.publishDocument(issuer.doc.toJSON());
-    logExplorerUrl("Identity Update:", clientConfig.network.toString(), nextMessageId);
+    const receipt = await client.publishDocument(issuer.doc.toJSON());
+    logExplorerUrl("Identity Update:", clientConfig.network.toString(), receipt.messageId);
 
     // Prepare a credential subject indicating the degree earned by Alice
     let credentialSubject = {
@@ -69,9 +69,9 @@ async function merkleKey(clientConfig) {
 
     // The Issuer would like to revoke the credential (and therefore revokes key 0)
     issuer.doc.revokeMerkleKey(method.id.toString(), 0);
-    issuer.doc.previousMessageId = nextMessageId;
-    const revokeMessageId = await client.publishDocument(issuer.doc.toJSON());
-    logExplorerUrl("Identity Update:", clientConfig.network.toString(), revokeMessageId);
+    issuer.doc.previousMessageId = receipt.messageId;
+    const nextReceipt = await client.publishDocument(issuer.doc.toJSON());
+    logExplorerUrl("Identity Update:", clientConfig.network.toString(), nextReceipt.messageId);
 
     //Check the verifiable credential
     const newResult = await client.checkCredential(signedVc.toString());

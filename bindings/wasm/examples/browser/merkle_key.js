@@ -48,10 +48,10 @@ export async function merkleKey(clientConfig, log = true) {
     issuer.doc.sign(issuer.key);
 
     //Publish the Identity to the IOTA Network and log the results, this may take a few seconds to complete Proof-of-Work.
-    const nextMessageId = await client.publishDocument(issuer.doc.toJSON());
+    const receipt = await client.publishDocument(issuer.doc.toJSON());
 
     //Log the resulting Identity update
-    const explorerUrl = getExplorerUrl(issuer.doc, nextMessageId);
+    const explorerUrl = getExplorerUrl(issuer.doc, receipt.messageId);
     if (log) logExplorerUrlToScreen(explorerUrl);
 
     // Prepare a credential subject indicating the degree earned by Alice
@@ -85,7 +85,7 @@ export async function merkleKey(clientConfig, log = true) {
 
     // The Issuer would like to revoke the credential (and therefore revokes key 0)
     issuer.doc.revokeMerkleKey(method.id.toString(), 0);
-    issuer.doc.previousMessageId = nextMessageId;
+    issuer.doc.previousMessageId = receipt.messageId;
     const revokeMessageId = await client.publishDocument(issuer.doc.toJSON());
 
     //Log the resulting Identity update

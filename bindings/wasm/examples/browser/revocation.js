@@ -19,7 +19,7 @@ import {
 
     We recommend that you ALWAYS using a CLIENT_CONFIG parameter that you define when calling any functions that take a
     ClientConfig object. This will ensure that all the API calls use a consistent node and network.
-    
+
     @param {{network: string, node: string}} clientConfig
     @param {boolean} log log the events to the output window
 */
@@ -39,9 +39,9 @@ export async function revoke(clientConfig, log = true) {
     issuer.doc.removeMethod(
         identity.DID.parse(issuer.doc.id.toString() + "#newKey")
     );
-    issuer.doc.previousMessageId = issuer.nextMessageId;
+    issuer.doc.previousMessageId = issuer.receipt.messageId;
     issuer.doc.sign(issuer.key);
-    const messageId = await client.publishDocument(issuer.doc.toJSON());
+    const {messageId} = await client.publishDocument(issuer.doc.toJSON());
 
     //Log the resulting Identity update
     const explorerUrl = getExplorerUrl(issuer.doc, messageId);
