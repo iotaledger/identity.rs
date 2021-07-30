@@ -4,7 +4,7 @@
 use identity::comm;
 use wasm_bindgen::prelude::*;
 
-use crate::utils::err;
+use crate::error::wasm_error;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
@@ -14,12 +14,12 @@ pub struct FeaturesRequest(pub(crate) comm::FeaturesRequest);
 impl FeaturesRequest {
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(&self.0).map_err(err)
+    JsValue::from_serde(&self.0).map_err(wasm_error)
   }
 
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(value: &JsValue) -> Result<FeaturesRequest, JsValue> {
-    value.into_serde().map_err(err).map(Self)
+    value.into_serde().map_err(wasm_error).map(Self)
   }
 }
 
@@ -31,11 +31,11 @@ pub struct FeaturesResponse(pub(crate) comm::FeaturesResponse);
 impl FeaturesResponse {
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(&self.0).map_err(err)
+    JsValue::from_serde(&self.0).map_err(wasm_error)
   }
 
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(value: &JsValue) -> Result<FeaturesResponse, JsValue> {
-    value.into_serde().map_err(err).map(Self)
+    value.into_serde().map_err(wasm_error).map(Self)
   }
 }

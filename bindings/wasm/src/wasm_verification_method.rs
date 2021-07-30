@@ -10,7 +10,7 @@ use wasm_bindgen::prelude::*;
 use crate::crypto::Digest;
 use crate::crypto::KeyCollection;
 use crate::crypto::KeyPair;
-use crate::utils::err;
+use crate::error::wasm_error;
 use crate::wasm_did::WasmDID;
 
 #[wasm_bindgen(js_name = VerificationMethod, inspectable)]
@@ -23,7 +23,7 @@ impl WasmVerificationMethod {
   #[wasm_bindgen(constructor)]
   pub fn new(key: &KeyPair, tag: Option<String>) -> Result<WasmVerificationMethod, JsValue> {
     IotaVerificationMethod::from_keypair(&key.0, tag.as_deref())
-      .map_err(err)
+      .map_err(wasm_error)
       .map(Self)
   }
 
@@ -31,7 +31,7 @@ impl WasmVerificationMethod {
   #[wasm_bindgen(js_name = fromDID)]
   pub fn from_did(did: &WasmDID, key: &KeyPair, tag: Option<String>) -> Result<WasmVerificationMethod, JsValue> {
     IotaVerificationMethod::from_did(did.0.clone(), &key.0, tag.as_deref())
-      .map_err(err)
+      .map_err(wasm_error)
       .map(Self)
   }
 
@@ -48,10 +48,10 @@ impl WasmVerificationMethod {
 
     match digest {
       Digest::Sha256 => IotaVerificationMethod::create_merkle_key::<Sha256, _>(did, &keys.0, tag)
-        .map_err(err)
+        .map_err(wasm_error)
         .map(Self),
       Digest::Blake2b256 => IotaVerificationMethod::create_merkle_key::<Blake2b256, _>(did, &keys.0, tag)
-        .map_err(err)
+        .map_err(wasm_error)
         .map(Self),
     }
   }
@@ -77,18 +77,18 @@ impl WasmVerificationMethod {
   /// Returns the `VerificationMethod` public key data.
   #[wasm_bindgen(getter)]
   pub fn data(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(self.0.key_data()).map_err(err)
+    JsValue::from_serde(self.0.key_data()).map_err(wasm_error)
   }
 
   /// Serializes a `VerificationMethod` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(&self.0).map_err(err)
+    JsValue::from_serde(&self.0).map_err(wasm_error)
   }
 
   /// Deserializes a `VerificationMethod` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(value: &JsValue) -> Result<WasmVerificationMethod, JsValue> {
-    value.into_serde().map_err(err).map(Self)
+    value.into_serde().map_err(wasm_error).map(Self)
   }
 }

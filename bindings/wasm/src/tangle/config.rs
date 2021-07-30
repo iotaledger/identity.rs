@@ -5,8 +5,8 @@ use identity::iota::ClientBuilder;
 use std::time::Duration;
 use wasm_bindgen::prelude::*;
 
+use crate::error::wasm_error;
 use crate::tangle::WasmNetwork;
-use crate::utils::err;
 
 fn to_duration(seconds: u32) -> Duration {
   Duration::from_secs(u64::from(seconds))
@@ -45,7 +45,7 @@ impl Config {
 
   #[wasm_bindgen(js_name = setNode)]
   pub fn set_node(&mut self, url: &str) -> Result<(), JsValue> {
-    self.try_with_mut(|builder| builder.node(url).map_err(err))
+    self.try_with_mut(|builder| builder.node(url).map_err(wasm_error))
   }
 
   #[wasm_bindgen(js_name = setPrimaryNode)]
@@ -59,7 +59,7 @@ impl Config {
     self.try_with_mut(|builder| {
       builder
         .primary_node(url, jwt.clone(), to_basic_auth(&username, &password))
-        .map_err(err)
+        .map_err(wasm_error)
     })
   }
 
@@ -74,7 +74,7 @@ impl Config {
     self.try_with_mut(|builder| {
       builder
         .primary_pow_node(url, jwt.clone(), to_basic_auth(&username, &password))
-        .map_err(err)
+        .map_err(wasm_error)
     })
   }
 
@@ -89,7 +89,7 @@ impl Config {
     self.try_with_mut(|builder| {
       builder
         .permanode(url, jwt.clone(), to_basic_auth(&username, &password))
-        .map_err(err)
+        .map_err(wasm_error)
     })
   }
 
@@ -104,7 +104,7 @@ impl Config {
     self.try_with_mut(|builder| {
       builder
         .node_auth(url, jwt.clone(), to_basic_auth(&username, &password))
-        .map_err(err)
+        .map_err(wasm_error)
     })
   }
 

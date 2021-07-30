@@ -5,7 +5,7 @@ use identity::comm;
 use identity::core::Timestamp;
 use wasm_bindgen::prelude::*;
 
-use crate::utils::err;
+use crate::error::wasm_error;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
@@ -75,11 +75,11 @@ impl Timing {
 
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(&self.0).map_err(err)
+    JsValue::from_serde(&self.0).map_err(wasm_error)
   }
 
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(value: &JsValue) -> Result<Timing, JsValue> {
-    value.into_serde().map_err(err).map(Self)
+    value.into_serde().map_err(wasm_error).map(Self)
   }
 }

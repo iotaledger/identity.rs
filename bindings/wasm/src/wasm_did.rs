@@ -6,8 +6,8 @@ use identity::iota::IotaDID;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::KeyPair;
+use crate::error::wasm_error;
 use crate::tangle::WasmNetwork;
-use crate::utils::err;
 
 /// @typicalname did
 #[wasm_bindgen(js_name = DID, inspectable)]
@@ -22,22 +22,22 @@ impl WasmDID {
     let public: &[u8] = key.0.public().as_ref();
     let network: Option<&str> = network.as_deref();
 
-    IotaDID::from_components(public, network).map_err(err).map(Self)
+    IotaDID::from_components(public, network).map_err(wasm_error).map(Self)
   }
 
   /// Creates a new `DID` from a base58-encoded public key.
   #[wasm_bindgen(js_name = fromBase58)]
   pub fn from_base58(key: &str, network: Option<String>) -> Result<WasmDID, JsValue> {
-    let public: Vec<u8> = decode_b58(key).map_err(err)?;
+    let public: Vec<u8> = decode_b58(key).map_err(wasm_error)?;
     let network: Option<&str> = network.as_deref();
 
-    IotaDID::from_components(&public, network).map_err(err).map(Self)
+    IotaDID::from_components(&public, network).map_err(wasm_error).map(Self)
   }
 
   /// Parses a `DID` from the input string.
   #[wasm_bindgen]
   pub fn parse(input: &str) -> Result<WasmDID, JsValue> {
-    IotaDID::parse(input).map_err(err).map(Self)
+    IotaDID::parse(input).map_err(wasm_error).map(Self)
   }
 
   /// Returns the IOTA tangle network of the `DID`.

@@ -19,9 +19,9 @@ use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
+use crate::error::wasm_error;
 use crate::tangle::Config;
 use crate::tangle::WasmNetwork;
-use crate::utils::err;
 
 #[wasm_bindgen]
 #[derive(Debug)]
@@ -47,7 +47,7 @@ impl Client {
   #[wasm_bindgen(js_name = fromConfig)]
   pub fn from_config(config: &mut Config) -> Result<Client, JsValue> {
     let future = config.take_builder()?.build();
-    let output = executor::block_on(future).map_err(err);
+    let output = executor::block_on(future).map_err(wasm_error);
 
     output.map(Self::from_client)
   }
@@ -56,7 +56,7 @@ impl Client {
   #[wasm_bindgen(js_name = fromNetwork)]
   pub fn from_network(network: WasmNetwork) -> Result<Client, JsValue> {
     let future = IotaClient::from_network(network.into());
-    let output = executor::block_on(future).map_err(err);
+    let output = executor::block_on(future).map_err(wasm_error);
 
     output.map(Self::from_client)
   }
@@ -70,15 +70,15 @@ impl Client {
   /// Publishes an `IotaDocument` to the Tangle.
   #[wasm_bindgen(js_name = publishDocument)]
   pub fn publish_document(&self, document: &JsValue) -> Result<Promise, JsValue> {
-    let document: IotaDocument = document.into_serde().map_err(err)?;
+    let document: IotaDocument = document.into_serde().map_err(wasm_error)?;
     let client: Rc<IotaClient> = self.client.clone();
 
     let promise: Promise = future_to_promise(async move {
       client
         .publish_document(&document)
         .await
-        .map_err(err)
-        .and_then(|receipt| JsValue::from_serde(&receipt).map_err(err))
+        .map_err(wasm_error)
+        .and_then(|receipt| JsValue::from_serde(&receipt).map_err(wasm_error))
     });
 
     Ok(promise)
@@ -87,16 +87,16 @@ impl Client {
   /// Publishes a `DocumentDiff` to the Tangle.
   #[wasm_bindgen(js_name = publishDiff)]
   pub fn publish_diff(&self, message_id: &str, value: &JsValue) -> Result<Promise, JsValue> {
-    let diff: DocumentDiff = value.into_serde().map_err(err)?;
-    let message: MessageId = MessageId::from_str(message_id).map_err(err)?;
+    let diff: DocumentDiff = value.into_serde().map_err(wasm_error)?;
+    let message: MessageId = MessageId::from_str(message_id).map_err(wasm_error)?;
     let client: Rc<IotaClient> = self.client.clone();
 
     let promise: Promise = future_to_promise(async move {
       client
         .publish_diff(&message, &diff)
         .await
-        .map_err(err)
-        .and_then(|receipt| JsValue::from_serde(&receipt).map_err(err))
+        .map_err(wasm_error)
+        .and_then(|receipt| JsValue::from_serde(&receipt).map_err(wasm_error))
     });
 
     Ok(promise)
@@ -112,16 +112,16 @@ impl Client {
     }
 
     let client: Rc<IotaClient> = self.client.clone();
-    let did: IotaDID = did.parse().map_err(err)?;
+    let did: IotaDID = did.parse().map_err(wasm_error)?;
 
     let promise: Promise = future_to_promise(async move {
-      client.resolve(&did).await.map_err(err).and_then(|document| {
+      client.resolve(&did).await.map_err(wasm_error).and_then(|document| {
         let wrapper = DocWrapper {
           document: &document,
           message_id: document.message_id(),
         };
 
-        JsValue::from_serde(&wrapper).map_err(err)
+        JsValue::from_serde(&wrapper).map_err(wasm_error)
       })
     });
 
@@ -132,14 +132,14 @@ impl Client {
   #[wasm_bindgen(js_name = checkCredential)]
   pub fn check_credential(&self, data: &str) -> Result<Promise, JsValue> {
     let client: Rc<IotaClient> = self.client.clone();
-    let data: Credential = Credential::from_json(&data).map_err(err)?;
+    let data: Credential = Credential::from_json(&data).map_err(wasm_error)?;
 
     let promise: Promise = future_to_promise(async move {
       CredentialValidator::new(&*client)
         .validate_credential(data)
         .await
-        .map_err(err)
-        .and_then(|output| JsValue::from_serde(&output).map_err(err))
+        .map_err(wasm_error)
+        .and_then(|output| JsValue::from_serde(&output).map_err(wasm_error))
     });
 
     Ok(promise)
@@ -149,14 +149,14 @@ impl Client {
   #[wasm_bindgen(js_name = checkPresentation)]
   pub fn check_presentation(&self, data: &str) -> Result<Promise, JsValue> {
     let client: Rc<IotaClient> = self.client.clone();
-    let data: Presentation = Presentation::from_json(&data).map_err(err)?;
+    let data: Presentation = Presentation::from_json(&data).map_err(wasm_error)?;
 
     let promise: Promise = future_to_promise(async move {
       CredentialValidator::new(&*client)
         .validate_presentation(data)
         .await
-        .map_err(err)
-        .and_then(|output| JsValue::from_serde(&output).map_err(err))
+        .map_err(wasm_error)
+        .and_then(|output| JsValue::from_serde(&output).map_err(wasm_error))
     });
 
     Ok(promise)

@@ -10,7 +10,7 @@ use wasm_bindgen::prelude::*;
 
 #[macro_use]
 mod macros;
-mod utils;
+mod error;
 
 pub mod credential;
 pub mod crypto;
