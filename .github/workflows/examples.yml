@@ -1,4 +1,4 @@
-name: Wasm Examples (dev)
+name: Wasm Examples
 
 on:
   schedule:
