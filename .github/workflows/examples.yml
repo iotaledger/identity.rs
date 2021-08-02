@@ -24,6 +24,9 @@ jobs:
         with:
           node-version: 15.x
 
+      - name: Install txm # for running README.md examples https://github.com/anko/txm
+        run: yarn global add txm
+
       - name: Install wasm-pack
         run: yarn global add wasm-pack
 
@@ -37,3 +40,8 @@ jobs:
 
       - name: Run Wasm examples (node)
         run: yarn run example:node -- all
+        working-directory: bindings/wasm
+
+      - name: Run Wasm README.md examples (node)
+        run: txm README.md
+        working-directory: bindings/wasm

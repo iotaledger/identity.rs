@@ -45,6 +45,7 @@ async function main() {
             await merkleKey(CLIENT_CONFIG);
 
             console.log(">>> End All Examples");
+            return "all"
         default:
             throw 'Unknown example name';
     }
