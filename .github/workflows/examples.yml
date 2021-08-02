@@ -9,9 +9,6 @@ on:
         description: "Branch/ref (default dev branch)"
         required: true
         default: 'dev' # checkout dev branch by default, not main
-  pull_request: # TODO: remove
-    branches:   # TODO: remove
-      - dev     # TODO: remove
 
 jobs:
   build-and-run-examples:
