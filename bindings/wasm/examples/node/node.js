@@ -12,13 +12,13 @@ const { CLIENT_CONFIG } = require('./config')
 
 async function main() {
     //Check if an example is mentioned
-    if(process.argv.length != 3) {
+    if (process.argv.length != 3) {
         throw 'Please provide one command line argument with the example name.';
     }
 
     //Take out the argument
     let argument = process.argv[2];
-    switch(argument) {
+    switch (argument) {
         case 'create_did':
             return await createIdentity(CLIENT_CONFIG);
         case 'manipulate_did':
@@ -55,4 +55,9 @@ main().then((output) => {
     console.log("Ok >", output)
 }).catch((error) => {
     console.log("Err >", error)
+
+    // Return an error code for Github Actions
+    if (process.env.CI) {
+        process.exit(1);
+    }
 })

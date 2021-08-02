@@ -64,13 +64,15 @@ const config = identity.Config.fromNetwork(identity.Network.mainnet())
 const client = identity.Client.fromConfig(config)
 
 // Publish the DID Document to the IOTA Tangle
+// The message can be viewed at https://explorer.iota.org/<mainnet|testnet>/transaction/<messageId>
 client.publishDocument(doc.toJSON())
     .then((receipt) => {
         console.log("Tangle Message Receipt: ", receipt)
-        console.log("Tangle Message Url:", `https://explorer.iota.org/mainnet/transaction/${receipt.messageId}`)
+        console.log("Tangle Message Url:", doc.id.network.messageURL(receipt.messageId))
     })
     .catch((error) => {
         console.error("Error: ", error)
+        throw error
     })
 ```
 

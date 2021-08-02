@@ -1,7 +1,7 @@
-import { createIdentity } from "./create_did.js";
 import * as identity from "../../web/identity_wasm.js";
 
-import { logToScreen } from "./utils.js";
+import { init_identity } from "./utils.js";
+import { createIdentity } from "./create_did.js";
 import { createVC } from "./create_vc.js";
 import { manipulateIdentity } from "./mainpulate_did.js";
 import { resolveIdentity } from "./resolve.js";
@@ -9,14 +9,7 @@ import { createVP } from "./create_vp.js";
 import { revoke } from "./revocation.js";
 import { merkleKey } from "./merkle_key.js";
 
-logToScreen("Initialization started...");
-
-try {
-    await identity.init("../../web/identity_wasm_bg.wasm");
-    logToScreen("Initialization success!");
-} catch (err) {
-    logToScreen(err);
-}
+await init_identity()
 
 const mainNet = identity.Network.mainnet();
 
