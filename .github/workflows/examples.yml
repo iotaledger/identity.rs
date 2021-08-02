@@ -1,0 +1,39 @@
+name: Wasm Examples (dev)
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # run at midnight every day
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: 'dev' # checkout dev branch, not main
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 15.x
+
+      - name: Install wasm-pack
+        run: yarn global add wasm-pack
+
+      - name: Install JS dependencies
+        run: yarn
+        working-directory: bindings/wasm
+
+      - name: Build Wasm bindings
+        run: yarn build
+        working-directory: bindings/wasm
+
+      - name: Run Wasm examples (node)
+        run: yarn run example:node -- all

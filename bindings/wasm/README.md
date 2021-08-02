@@ -34,7 +34,7 @@ or for the `web` with
 
 ```npm run build:web```
 
-## NodeJS Setup
+## NodeJS Usage
 
 ```js
 const identity = require('@iota/identity-wasm/node')
@@ -44,18 +44,25 @@ const key = new identity.KeyPair(identity.KeyType.Ed25519)
 
 // Create a new DID Document with the KeyPair as the default authentication method
 const doc = identity.Document.fromKeyPair(key)
+// const doc = identity.Document.fromKeyPair(key, "test") // if using the testnet
 
-// Sign the DID Document with the sceret key
+// Sign the DID Document with the private key
 doc.sign(key)
 
+// Create a default client instance for the mainnet
+const config = identity.Config.fromNetwork(identity.Network.mainnet())
+// const config = identity.Config.fromNetwork(identity.Network.testnet()); // if using the testnet
+const client = identity.Client.fromConfig(config)
+
 // Publish the DID Document to the IOTA Tangle
-identity.publish(doc.toJSON(), { node: "https://nodes.thetangle.org:443" })
-  .then((message) => {
-    console.log("Tangle Message Id: ", message)
-    console.log("Tangle Message Url", `https://explorer.iota.org/mainnet/transaction/${message}`)
-  }).catch((error) => {
-    console.error("Error: ", error)
-  })
+client.publishDocument(doc.toJSON())
+    .then((receipt) => {
+        console.log("Tangle Message Receipt: ", receipt)
+        console.log("Tangle Message Url:", `https://explorer.iota.org/mainnet/transaction/${receipt.messageId}`)
+    })
+    .catch((error) => {
+        console.error("Error: ", error)
+    })
 ```
 
 ## Web Setup
@@ -114,7 +121,7 @@ new CopyWebPlugin({
 }),
 ```
 
-### Usage
+### Web Usage
 
 ```js
 import * as identity from "@iota/identity-wasm/web";
