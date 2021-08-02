@@ -4,17 +4,22 @@ on:
   schedule:
     - cron: '0 0 * * *' # run at midnight every day
   workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch/ref (default dev branch)"
+        required: true
+        default: 'dev' # checkout dev branch by default, not main
   pull_request: # TODO: remove
     branches:   # TODO: remove
       - dev     # TODO: remove
 
 jobs:
-  audit:
+  build-and-run-examples:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: 'dev' # checkout dev branch, not main
+          ref: ${{ github.event.inputs.ref }}
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
