@@ -7,8 +7,10 @@ use identity_wasm::crypto::Digest;
 use identity_wasm::crypto::KeyCollection;
 use identity_wasm::crypto::KeyPair;
 use identity_wasm::crypto::KeyType;
+use identity_wasm::error::WasmError;
 use identity_wasm::wasm_did::WasmDID;
 use identity_wasm::wasm_document::WasmDocument;
+use std::borrow::Cow;
 
 #[wasm_bindgen_test]
 fn test_keypair() {
@@ -57,6 +59,14 @@ fn test_key_collection() {
     assert_eq!(keys.public(index).unwrap(), from.public(index).unwrap());
     assert_eq!(keys.secret(index).unwrap(), from.secret(index).unwrap());
   }
+}
+
+#[wasm_bindgen_test]
+fn test_js_error_from_wasm_error() {
+  let error = WasmError::new(Cow::Borrowed("Some name"), Cow::Owned("Error message".to_owned()));
+  let js_error = js_sys::Error::from(error);
+  assert_eq!(js_error.name(), "Some name");
+  assert_eq!(js_error.message(), "Error message");
 }
 
 #[test]

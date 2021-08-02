@@ -19,24 +19,38 @@ where
 ///
 /// This is a workaround for orphan rules so we can implement [core::convert::From] on errors from
 /// dependencies.
+#[derive(Debug, Clone)]
 pub struct WasmError<'a> {
-  name: Cow<'a, str>,
-  message: Cow<'a, str>,
+  pub name: Cow<'a, str>,
+  pub message: Cow<'a, str>,
 }
 
-/// Convert [WasmError] into [wasm_bindgen::JsValue], represented as a [js_sys::Error] for idiomatic
-/// error handling.
-impl From<WasmError<'_>> for JsValue {
+impl<'a> WasmError<'a> {
+  pub fn new(name: Cow<'a, str>, message: Cow<'a, str>) -> Self {
+    Self { name, message }
+  }
+}
+
+/// Convert [WasmError] into [js_sys::Error] for idiomatic error handling.
+impl From<WasmError<'_>> for js_sys::Error {
   fn from(error: WasmError<'_>) -> Self {
     let js_error = js_sys::Error::new(&error.message);
     js_error.set_name(&error.name);
-    JsValue::from(js_error)
+    js_error
+  }
+}
+
+/// Convert [WasmError] into [wasm_bindgen::JsValue].
+impl From<WasmError<'_>> for JsValue {
+  fn from(error: WasmError<'_>) -> Self {
+    JsValue::from(js_sys::Error::from(error))
   }
 }
 
 /// Implement WasmError for each type individually rather than a trait due to Rust's orphan rules.
 /// Each type must implement `Into<&'static str> + Display`. The `Into<&'static str>` trait can be
 /// derived using `strum::IntoStaticStr`.
+#[macro_export]
 macro_rules! impl_wasm_error_from {
   ( $($t:ty),* ) => {
   $(impl From<$t> for WasmError<'_> {
