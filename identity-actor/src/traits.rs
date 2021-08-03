@@ -1,8 +1,4 @@
-use std::{
-  any::{Any, TypeId},
-  fmt::Debug,
-  pin::Pin,
-};
+use std::{any::{Any, TypeId}, borrow::Cow, fmt::Debug, pin::Pin};
 
 use futures::Future;
 use serde::{de::DeserializeOwned, Serialize};
@@ -22,5 +18,5 @@ pub trait RequestHandler: Send + Sync {
 pub trait ActorRequest: Debug + Serialize + DeserializeOwned + 'static {
   type Response: Debug + Serialize + DeserializeOwned + 'static;
 
-  fn request_name(&self) -> &'static str;
+  fn request_name<'cow>(&self) -> Cow<'cow, str>;
 }
