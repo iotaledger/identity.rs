@@ -15,6 +15,7 @@ use crate::did::IotaDocument;
 use crate::error::Result;
 use crate::tangle::ClientBuilder;
 use crate::tangle::Message;
+use crate::tangle::MessageHistory;
 use crate::tangle::MessageId;
 use crate::tangle::Network;
 use crate::tangle::Receipt;
@@ -65,24 +66,20 @@ impl Client {
 
   /// Publishes an `IotaDocument` to the Tangle.
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
-    self
-      .client
-      .message()
-      .with_index(document.id().tag())
-      .with_data(document.to_json_vec()?)
-      .finish()
-      .await
-      .map_err(Into::into)
-      .map(|message| Receipt::new(self.network, message))
+    self.publish_json(document.id().tag(), document).await
   }
 
   /// Publishes a `DocumentDiff` to the Tangle.
   pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
+    self.publish_json(&IotaDocument::diff_address(message_id)?, diff).await
+  }
+
+  pub async fn publish_json<T: ToJson>(&self, index: &str, data: &T) -> Result<Receipt> {
     self
       .client
       .message()
-      .with_index(&IotaDocument::diff_address(message_id)?)
-      .with_data(diff.to_json_vec()?)
+      .with_index(index)
+      .with_data(data.to_json_vec()?)
       .finish()
       .await
       .map_err(Into::into)
@@ -98,7 +95,7 @@ impl Client {
     trace!("Integration Chain Address: {}", did.tag());
 
     // Fetch all messages for the integration chain.
-    let messages: Vec<Message> = Self::read_messages(&self.client, did.tag()).await?;
+    let messages: Vec<Message> = self.read_messages(did.tag()).await?;
     let integration_chain: IntegrationChain = IntegrationChain::try_from_messages(did, &messages)?;
 
     // Check if there is any query given and return
@@ -109,7 +106,7 @@ impl Client {
     } else {
       // Fetch all messages for the diff chain.
       let address: String = IotaDocument::diff_address(integration_chain.current_message_id())?;
-      let messages: Vec<Message> = Self::read_messages(&self.client, &address).await?;
+      let messages: Vec<Message> = self.read_messages(&address).await?;
 
       trace!("Diff Messages: {:#?}", messages);
 

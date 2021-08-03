@@ -48,13 +48,16 @@ where
 {
   pub fn insert(&mut self, element: T) {
     let key: &MessageId = element.previous_message_id();
+
     if let Some(scope) = self.inner.get_mut(key) {
-      let msg_id: &MessageId = element.message_id();
-      let idx = match scope.binary_search_by(|elem| elem.message_id().cmp(msg_id)) {
-        Ok(idx) => idx,
-        Err(idx) => idx,
+      let message_id: &MessageId = element.message_id();
+
+      let index: usize = match scope.binary_search_by(|elem| elem.message_id().cmp(message_id)) {
+        Ok(index) => index,
+        Err(index) => index,
       };
-      scope.insert(idx, element);
+
+      scope.insert(index, element);
     } else {
       self.inner.insert(*key, vec![element]);
     }
@@ -107,9 +110,11 @@ where
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::did::IotaDID;
 
   #[derive(Debug)]
   struct Case {
+    did: IotaDID,
     message_id: MessageId,
     previous_message_id: MessageId,
     state: bool,
@@ -118,6 +123,7 @@ mod tests {
   impl Case {
     fn new(message_id: [u8; 32], previous_message_id: [u8; 32], state: bool) -> Self {
       Self {
+        did: IotaDID::new(&[]).unwrap(),
         message_id: MessageId::new(message_id),
         previous_message_id: MessageId::new(previous_message_id),
         state,
@@ -126,6 +132,10 @@ mod tests {
   }
 
   impl TangleRef for Case {
+    fn did(&self) -> &IotaDID {
+      &self.did
+    }
+
     fn message_id(&self) -> &MessageId {
       &self.message_id
     }

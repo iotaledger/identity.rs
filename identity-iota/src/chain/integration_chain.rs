@@ -29,13 +29,19 @@ pub struct IntegrationChain {
 impl IntegrationChain {
   /// Constructs a new `IntegrationChain` from a slice of `Message`s.
   pub fn try_from_messages(did: &IotaDID, messages: &[Message]) -> Result<Self> {
-    let mut index: MessageIndex<IotaDocument> = messages
+    let index: MessageIndex<IotaDocument> = messages
       .iter()
       .flat_map(|message| message.try_extract_document(did))
       .collect();
 
-    trace!("[Int] Message Index = {:#?}", index);
     debug!("[Int] Valid Messages = {}/{}", messages.len(), index.len());
+
+    Self::try_from_index(index)
+  }
+
+  /// Constructs a new `IntegrationChain` from the given `MessageIndex`.
+  pub fn try_from_index(mut index: MessageIndex<IotaDocument>) -> Result<Self> {
+    trace!("[Int] Message Index = {:#?}", index);
 
     let current: IotaDocument = index
       .remove_where(&MessageId::null(), |doc| doc.verify().is_ok())

@@ -30,19 +30,25 @@ pub struct DiffChain {
 impl DiffChain {
   /// Constructs a new `DiffChain` for the given `IntegrationChain` from a slice of `Message`s.
   pub fn try_from_messages(integration_chain: &IntegrationChain, messages: &[Message]) -> Result<Self> {
-    if messages.is_empty() {
-      return Ok(Self::new());
-    }
-
     let did: &IotaDID = integration_chain.current().id();
 
-    let mut index: MessageIndex<DocumentDiff> = messages
+    let index: MessageIndex<DocumentDiff> = messages
       .iter()
       .flat_map(|message| message.try_extract_diff(did))
       .collect();
 
-    trace!("[Diff] Message Index = {:#?}", index);
     debug!("[Diff] Valid Messages = {}/{}", messages.len(), index.len());
+
+    Self::try_from_index(integration_chain, index)
+  }
+
+  /// Constructs a new `DiffChain` for the given `IntegrationChain` from the given `MessageIndex`.
+  pub fn try_from_index(integration_chain: &IntegrationChain, mut index: MessageIndex<DocumentDiff>) -> Result<Self> {
+    trace!("[Diff] Message Index = {:#?}", index);
+
+    if index.is_empty() {
+      return Ok(Self::new());
+    }
 
     let mut this: Self = Self::new();
 

@@ -585,6 +585,10 @@ impl SetSignature for IotaDocument {
 }
 
 impl TangleRef for IotaDocument {
+  fn did(&self) -> &IotaDID {
+    self.id()
+  }
+
   fn message_id(&self) -> &MessageId {
     &self.message_id
   }
