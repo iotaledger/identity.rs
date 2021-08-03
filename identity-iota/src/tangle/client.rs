@@ -12,13 +12,19 @@ use crate::chain::IntegrationChain;
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
+use crate::did::IotaVerificationMethod;
+use crate::did::Verifier;
 use crate::error::Result;
 use crate::tangle::ClientBuilder;
 use crate::tangle::Message;
 use crate::tangle::MessageHistory;
 use crate::tangle::MessageId;
+use crate::tangle::MessageIdExt;
+use crate::tangle::MessageIndex;
+use crate::tangle::MessageSet;
 use crate::tangle::Network;
 use crate::tangle::Receipt;
+use crate::tangle::TangleRef;
 use crate::tangle::TangleResolve;
 
 #[derive(Debug)]
@@ -116,9 +122,42 @@ impl Client {
     DocumentChain::with_diff_chain(integration_chain, diff)
   }
 
-  async fn read_messages(client: &IotaClient, address: &str) -> Result<Vec<Message>> {
-    let message_ids: Box<[MessageId]> = Self::read_message_index(client, address).await?;
-    let messages: Vec<Message> = Self::read_message_data(client, &message_ids).await?;
+  /// Returns the message history of the given DID.
+  pub async fn resolve_history(&self, did: &IotaDID) -> Result<MessageHistory> {
+    MessageHistory::read(self, did).await
+  }
+
+  /// Returns the diff chain for the integration chain specified by `message_id`.
+  pub async fn resolve_diffs(
+    &self,
+    did: &IotaDID,
+    method: &IotaVerificationMethod,
+    message_id: &MessageId,
+  ) -> Result<Vec<DocumentDiff>> {
+    let diff_address: String = IotaDocument::diff_address(message_id)?;
+    let diff_messages: Vec<Message> = self.read_messages(&diff_address).await?;
+    let diff_message_set: MessageSet<DocumentDiff> = MessageSet::new(did, &diff_messages);
+
+    let mut index: MessageIndex<DocumentDiff> = diff_message_set.to_index();
+    let mut target: MessageId = *message_id;
+    let mut output: Vec<DocumentDiff> = Vec::new();
+
+    while let Some(mut list) = index.remove(&target) {
+      'inner: while let Some(next) = list.pop() {
+        if Verifier::do_verify(method, &next).is_ok() {
+          target = *next.message_id();
+          output.push(next);
+          break 'inner;
+        }
+      }
+    }
+
+    Ok(output)
+  }
+
+  pub(crate) async fn read_messages(&self, address: &str) -> Result<Vec<Message>> {
+    let message_ids: Box<[MessageId]> = Self::read_message_index(&self.client, address).await?;
+    let messages: Vec<Message> = Self::read_message_data(&self.client, &message_ids).await?;
 
     Ok(messages)
   }

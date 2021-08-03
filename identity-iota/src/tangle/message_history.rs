@@ -12,6 +12,7 @@ use crate::tangle::Message;
 use crate::tangle::MessageId;
 use crate::tangle::MessageSet;
 
+/// A representation of a DID Document message history.
 #[derive(Clone, Debug, Serialize)]
 pub struct MessageHistory {
   #[serde(rename = "intChainData")]

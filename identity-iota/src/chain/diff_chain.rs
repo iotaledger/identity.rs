@@ -176,6 +176,12 @@ impl Display for DiffChain {
   }
 }
 
+impl From<DiffChain> for Vec<DocumentDiff> {
+  fn from(other: DiffChain) -> Self {
+    other.inner
+  }
+}
+
 #[cfg(test)]
 mod test {
   use identity_core::common::Timestamp;
