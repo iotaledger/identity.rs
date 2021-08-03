@@ -63,9 +63,9 @@
     "webpack-cli": "^4.9.2"
   },
   "dependencies": {
-    "node-fetch": "^2.6.0",
     "multiaddr": "^9.0.2",
-    "peer-id": "^0.14.8"
+    "peer-id": "^0.14.8",
+    "ws": "^6.2.2"
   },
   "engines": {
     "node": ">=16"
