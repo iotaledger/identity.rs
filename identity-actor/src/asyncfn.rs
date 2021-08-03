@@ -53,6 +53,7 @@ where
     object: Box<dyn Any + Send + Sync>,
     input: Vec<u8>,
   ) -> Pin<Box<dyn Future<Output = Vec<u8>> + Send + 'this>> {
+    log::debug!("Attempt deserialization into {:?}", std::any::type_name::<REQ>());
     let request: REQ = serde_json::from_slice(&input).unwrap();
     let boxed_object: Box<OBJ> = object.downcast().unwrap();
     let future = async move {

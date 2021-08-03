@@ -26,6 +26,7 @@ libp2p = { version = "0.39", default-features = false, features = [
     "tcp-async-io",
 ] }
 uuid = { version = "0.8", features = ["v4"] }
+log = "0.4"
 
 [dependencies.stronghold-communication-refactored]
 git = "https://github.com/iotaledger/stronghold.rs"
