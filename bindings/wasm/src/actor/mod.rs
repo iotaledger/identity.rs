@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use self::interface::ActorRequest;
+use self::{interface::ActorRequest, multiaddr::Multiaddr, peer_id::PeerId};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JSON(serde_json::Value);
