@@ -184,8 +184,20 @@ impl Actor {
     peer: PeerId,
     command: Request,
   ) -> Result<Request::Response> {
-    let request = NamedMessage::new(command.request_name(), serde_json::to_vec(&command).unwrap());
+    self.send_named_request(peer, &*command.request_name(), command).await
+  }
+
+  pub async fn send_named_request<Request: ActorRequest>(
+    &mut self,
+    peer: PeerId,
+    name: &str,
+    command: Request,
+  ) -> Result<Request::Response> {
+    let request = NamedMessage::new(name, serde_json::to_vec(&command).unwrap());
+    log::info!("Sending NamedMessage: {:?}, json payload: {:?}", request, serde_json::to_value(&command).unwrap());
     let response = self.comm.send_request(peer, request).await.unwrap();
+
+    log::info!("Json response: {:?}", serde_json::from_slice::<'_, serde_json::Value>(&response.data).unwrap());
 
     // Map to a `could not deserialize` error
     // And deserialize to a Result<Request::Response>
