@@ -26,8 +26,8 @@ use crate::crypto::KeyPair;
 use crate::crypto::KeyType;
 use crate::service::Service;
 use crate::utils::err;
-use crate::wasm_did::WasmDID;
-use crate::wasm_verification_method::WasmVerificationMethod;
+use crate::did::WasmDID;
+use crate::did::WasmVerificationMethod;
 
 #[wasm_bindgen(inspectable)]
 pub struct NewDocument {

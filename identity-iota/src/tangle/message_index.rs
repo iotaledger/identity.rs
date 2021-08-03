@@ -40,6 +40,10 @@ impl<T> MessageIndex<T> {
       None
     }
   }
+
+  pub fn drain_keys(&mut self) -> impl Iterator<Item = MessageId> + '_ {
+    self.inner.drain().map(|(data, _)| data)
+  }
 }
 
 impl<T> MessageIndex<T>

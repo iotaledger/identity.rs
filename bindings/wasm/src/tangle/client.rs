@@ -14,6 +14,7 @@ use identity::iota::IotaDocument;
 use identity::iota::MessageId;
 use identity::iota::TangleRef;
 use identity::iota::TangleResolve;
+use identity::iota::IotaVerificationMethod;
 use js_sys::Promise;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
@@ -22,6 +23,7 @@ use wasm_bindgen_futures::future_to_promise;
 use crate::tangle::Config;
 use crate::tangle::WasmNetwork;
 use crate::utils::err;
+use crate::did::WasmVerificationMethod;
 
 #[wasm_bindgen]
 #[derive(Debug)]
@@ -123,6 +125,47 @@ impl Client {
 
         JsValue::from_serde(&wrapper).map_err(err)
       })
+    });
+
+    Ok(promise)
+  }
+
+  /// Returns the message history of the given DID.
+  #[wasm_bindgen(js_name = resolveHistory)]
+  pub fn resolve_history(&self, did: &str) -> Result<Promise, JsValue> {
+    let did: IotaDID = did.parse().map_err(err)?;
+    let client: Rc<IotaClient> = self.client.clone();
+
+    let promise: Promise = future_to_promise(async move {
+      client
+        .resolve_history(&did)
+        .await
+        .map_err(err)
+        .and_then(|output| JsValue::from_serde(&output).map_err(err))
+    });
+
+    Ok(promise)
+  }
+
+  /// Returns the diff chain for the integration chain specified by `message_id`.
+  #[wasm_bindgen(js_name = resolveDiffs)]
+  pub fn resolve_diffs(
+    &self,
+    did: &str,
+    method: &WasmVerificationMethod,
+    message_id: &str,
+  ) -> Result<Promise, JsValue> {
+    let did: IotaDID = did.parse().map_err(err)?;
+    let message_id: MessageId = message_id.parse().map_err(err)?;
+    let client: Rc<IotaClient> = self.client.clone();
+    let method: IotaVerificationMethod = method.0.clone();
+
+    let promise: Promise = future_to_promise(async move {
+      client
+        .resolve_diffs(&did, &method, &message_id)
+        .await
+        .map_err(err)
+        .and_then(|output| JsValue::from_serde(&output).map_err(err))
     });
 
     Ok(promise)

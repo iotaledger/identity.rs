@@ -146,6 +146,8 @@
         * [.publishDocument(document)](#Client+publishDocument) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.publishDiff(message_id, value)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolve(did)](#Client+resolve) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.resolveHistory(did)](#Client+resolveHistory) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.resolveDiffs(did, method, message_id)](#Client+resolveDiffs) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.checkCredential(data)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.checkPresentation(data)](#Client+checkPresentation) ⇒ <code>Promise.&lt;any&gt;</code>
     * _static_
@@ -194,6 +196,30 @@ Publishes a `DocumentDiff` to the Tangle.
 | Param | Type |
 | --- | --- |
 | did | <code>string</code> |
+
+<a name="Client+resolveHistory"></a>
+
+### client.resolveHistory(did) ⇒ <code>Promise.&lt;any&gt;</code>
+Returns the message history of the given DID.
+
+**Kind**: instance method of [<code>Client</code>](#Client)
+
+| Param | Type |
+| --- | --- |
+| did | <code>string</code> |
+
+<a name="Client+resolveDiffs"></a>
+
+### client.resolveDiffs(did, method, message_id) ⇒ <code>Promise.&lt;any&gt;</code>
+Returns the diff chain for the integration chain specified by `message_id`.
+
+**Kind**: instance method of [<code>Client</code>](#Client)
+
+| Param | Type |
+| --- | --- |
+| did | <code>string</code> |
+| method | [<code>VerificationMethod</code>](#VerificationMethod) |
+| message_id | <code>string</code> |
 
 <a name="Client+checkCredential"></a>
 

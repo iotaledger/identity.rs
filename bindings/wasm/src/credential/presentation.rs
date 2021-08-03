@@ -9,7 +9,7 @@ use identity::credential::PresentationBuilder;
 use wasm_bindgen::prelude::*;
 
 use crate::utils::err;
-use crate::wasm_document::WasmDocument;
+use crate::did::WasmDocument;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]

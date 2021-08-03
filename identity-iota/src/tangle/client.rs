@@ -13,18 +13,14 @@ use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::did::IotaVerificationMethod;
-use crate::did::Verifier;
 use crate::error::Result;
 use crate::tangle::ClientBuilder;
+use crate::tangle::DiffSet;
 use crate::tangle::Message;
 use crate::tangle::MessageHistory;
 use crate::tangle::MessageId;
-use crate::tangle::MessageIdExt;
-use crate::tangle::MessageIndex;
-use crate::tangle::MessageSet;
 use crate::tangle::Network;
 use crate::tangle::Receipt;
-use crate::tangle::TangleRef;
 use crate::tangle::TangleResolve;
 
 #[derive(Debug)]
@@ -133,26 +129,11 @@ impl Client {
     did: &IotaDID,
     method: &IotaVerificationMethod,
     message_id: &MessageId,
-  ) -> Result<Vec<DocumentDiff>> {
+  ) -> Result<DiffSet> {
     let diff_address: String = IotaDocument::diff_address(message_id)?;
     let diff_messages: Vec<Message> = self.read_messages(&diff_address).await?;
-    let diff_message_set: MessageSet<DocumentDiff> = MessageSet::new(did, &diff_messages);
 
-    let mut index: MessageIndex<DocumentDiff> = diff_message_set.to_index();
-    let mut target: MessageId = *message_id;
-    let mut output: Vec<DocumentDiff> = Vec::new();
-
-    while let Some(mut list) = index.remove(&target) {
-      'inner: while let Some(next) = list.pop() {
-        if Verifier::do_verify(method, &next).is_ok() {
-          target = *next.message_id();
-          output.push(next);
-          break 'inner;
-        }
-      }
-    }
-
-    Ok(output)
+    Ok(DiffSet::new(did, method, message_id, &diff_messages))
   }
 
   pub(crate) async fn read_messages(&self, address: &str) -> Result<Vec<Message>> {

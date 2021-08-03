@@ -7,8 +7,8 @@ use identity_wasm::crypto::Digest;
 use identity_wasm::crypto::KeyCollection;
 use identity_wasm::crypto::KeyPair;
 use identity_wasm::crypto::KeyType;
-use identity_wasm::wasm_did::WasmDID;
-use identity_wasm::wasm_document::WasmDocument;
+use identity_wasm::did::WasmDID;
+use identity_wasm::did::WasmDocument;
 
 #[wasm_bindgen_test]
 fn test_keypair() {

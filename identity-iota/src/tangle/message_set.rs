@@ -4,7 +4,10 @@
 use std::collections::BTreeMap;
 // use identity_common::core::FromJson;
 
+use crate::did::DocumentDiff;
 use crate::did::IotaDID;
+use crate::did::IotaVerificationMethod;
+use crate::did::Verifier;
 use crate::tangle::Message;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIndex;
@@ -64,5 +67,39 @@ impl<T: TryFromMessage> MessageSet<T> {
 impl<T: Clone + TangleRef> MessageSet<T> {
   pub fn to_index(&self) -> MessageIndex<T> {
     self.resources().cloned().collect()
+  }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct DiffSet {
+  data: Vec<DocumentDiff>,
+  spam: Option<Vec<MessageId>>,
+}
+
+impl DiffSet {
+  pub fn new(did: &IotaDID, method: &IotaVerificationMethod, message_id: &MessageId, messages: &[Message]) -> Self {
+    let message_set: MessageSet<DocumentDiff> = MessageSet::new(did, messages);
+
+    let mut index: MessageIndex<DocumentDiff> = message_set.to_index();
+    let mut target: MessageId = *message_id;
+
+    let mut data: Vec<DocumentDiff> = Vec::new();
+    let mut spam: Option<Vec<MessageId>> = None;
+
+    while let Some(mut list) = index.remove(&target) {
+      'inner: while let Some(next) = list.pop() {
+        if Verifier::do_verify(method, &next).is_ok() {
+          target = *next.message_id();
+          data.push(next);
+          break 'inner;
+        } else {
+          spam.get_or_insert_with(Vec::new).push(*next.message_id());
+        }
+      }
+    }
+
+    spam.get_or_insert_with(Vec::new).extend(index.drain_keys());
+
+    Self { data, spam }
   }
 }

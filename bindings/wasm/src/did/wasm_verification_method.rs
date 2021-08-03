@@ -11,7 +11,7 @@ use crate::crypto::Digest;
 use crate::crypto::KeyCollection;
 use crate::crypto::KeyPair;
 use crate::utils::err;
-use crate::wasm_did::WasmDID;
+use crate::did::WasmDID;
 
 #[wasm_bindgen(js_name = VerificationMethod, inspectable)]
 #[derive(Clone, Debug, PartialEq)]
