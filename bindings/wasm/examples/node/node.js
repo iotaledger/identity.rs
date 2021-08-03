@@ -55,9 +55,4 @@ main().then((output) => {
     console.log("Ok >", output)
 }).catch((error) => {
     console.log("Err >", error)
-
-    // Return an error code for Github Actions
-    if (process.env.CI) {
-        process.exit(1);
-    }
 })

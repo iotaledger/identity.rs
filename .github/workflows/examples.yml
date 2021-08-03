@@ -11,7 +11,7 @@ on:
         default: 'dev' # checkout dev branch by default, not main
 
 jobs:
-  build-and-run-examples:
+  build-and-test-examples:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -43,10 +43,10 @@ jobs:
         run: yarn build
         working-directory: bindings/wasm
 
-      - name: Run Wasm examples (node)
-        run: yarn run example:node -- all
+      - name: Test Wasm examples (node)
+        run: yarn run test:node
         working-directory: bindings/wasm
 
-      - name: Run Wasm README.md examples (node)
-        run: txm README.md
+      - name: Test Wasm README.md examples (node)
+        run: yarn run test:readme
         working-directory: bindings/wasm

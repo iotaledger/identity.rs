@@ -5,13 +5,29 @@ import * as identity from "../../web/identity_wasm.js";
  *
  * @returns {Promise<void>}
  */
-export async function init_identity() {
-    logToScreen("Initialization started...");
+export async function initIdentity(log=true) {
+    if(log) logToScreen("Initialization started...");
     try {
         await identity.init("../../web/identity_wasm_bg.wasm");
-        logToScreen("Initialization success!");
+        if(log) logToScreen("Initialization success!");
     } catch (err) {
-        logToScreen(err);
+        if(log) logToScreen(err);
+    }
+}
+
+/**
+ * Returns the default client configuration to connect to the IOTA mainnet.
+ *
+ * N.B. initIdentity() must be called prior to this function.
+ *
+ * @returns {{defaultNodeURL: string, explorerURL: string, network: Network}}
+ */
+export function defaultClientConfig() {
+    const mainNet = identity.Network.mainnet();
+    return {
+        network: mainNet,
+        defaultNodeURL: mainNet.defaultNodeURL,
+        explorerURL: mainNet.explorerURL,
     }
 }
 
