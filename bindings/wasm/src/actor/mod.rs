@@ -1,3 +1,6 @@
+mod interface;
+mod multiaddr;
+mod peer_id;
 mod requests;
 
 use std::{borrow::Cow, cell::RefCell, convert::TryFrom, rc::Rc};
@@ -17,27 +20,7 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-#[wasm_bindgen]
-extern "C" {
-  #[wasm_bindgen(js_namespace = console)]
-  fn log(s: &str);
-}
-
-pub fn clog(s: &str) {
-  #[allow(unused_unsafe)]
-  unsafe {
-    log(s)
-  };
-}
-
-// The duck-typed JS ActorRequest interface defined in Rust.
-#[wasm_bindgen]
-extern "C" {
-  pub type ActorRequest;
-
-  #[wasm_bindgen(structural, method, js_name = requestName)]
-  pub fn request_name(this: &ActorRequest) -> String;
-}
+use self::interface::ActorRequest;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JSON(serde_json::Value);
@@ -100,7 +83,7 @@ impl IdentityActor {
     let comm_clone = self.comm.clone();
 
     let promise = future_to_promise(async move {
-      clog(&format!("Adding peer {} with address {}", peer_id, addr));
+      log::info!("Adding peer {} with address {}", peer_id, addr);
       comm_clone.borrow_mut().add_peer(peer_id, addr).await;
 
       Ok(JsValue::undefined())
@@ -174,33 +157,3 @@ impl IdentityActor {
 
 #[wasm_bindgen]
 pub struct NamedMessage(actor::NamedMessage);
-
-#[wasm_bindgen(module = "multiaddr")]
-extern "C" {
-  pub type Multiaddr;
-
-  #[wasm_bindgen(method, getter)]
-  fn bytes(this: &Multiaddr) -> Vec<u8>;
-}
-
-impl Into<actor::Multiaddr> for Multiaddr {
-  fn into(self) -> actor::Multiaddr {
-    let addr_bytes = self.bytes();
-    actor::Multiaddr::try_from(addr_bytes).unwrap()
-  }
-}
-
-#[wasm_bindgen(module = "peer-id")]
-extern "C" {
-  pub type PeerId;
-
-  #[wasm_bindgen(method)]
-  fn toBytes(this: &PeerId) -> Vec<u8>;
-}
-
-impl Into<actor::PeerId> for PeerId {
-  fn into(self) -> actor::PeerId {
-    let addr_bytes = self.toBytes();
-    actor::PeerId::try_from(addr_bytes).unwrap()
-  }
-}
