@@ -4,21 +4,22 @@
 use std::sync::Arc;
 
 use crate::IdentityList;
-use identity_account::account::Account;
 use identity_account::identity::IdentityCreate;
-use identity_iota::did::{IotaDID, IotaDocument};
+use identity_iota::{did::{IotaDID, IotaDocument}, tangle::{ClientBuilder, ClientMap, Network, TangleResolve}};
 
 use super::requests::IdentityResolve;
 
 #[derive(Clone)]
 pub struct StorageHandler {
-  account: Arc<Account>,
+  client: Arc<ClientMap>,
 }
 
 impl StorageHandler {
   pub async fn new() -> identity_account::Result<Self> {
+    let builder = ClientBuilder::new().network(Network::Mainnet);
+
     Ok(Self {
-      account: Arc::new(Account::builder().build().await?),
+      client: Arc::new(ClientMap::from_builder(builder).await?),
     })
   }
 
@@ -31,6 +32,12 @@ impl StorageHandler {
   }
 
   pub async fn resolve(self, input: IdentityResolve) -> Option<IotaDocument> {
-    Some(self.account.resolve_identity(input.0).await.unwrap())
+    log::info!("Resolving {:?}", input.did);
+
+    let res = self.client.resolve(&input.did).await;
+
+    log::info!("Resolved into: {:?}", res);
+
+    res.ok()
   }
 }
