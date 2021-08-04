@@ -15,11 +15,12 @@ describe(
     },
     () => {
         beforeEach(async () => {
-            // The test working directory is under __cypress, so we need to go up one more level than usual
+            // The working directory is under __cypress at test runtime, so we need to go up one more level than usual
             await initIdentity("../../../web/identity_wasm_bg.wasm", false);
 
             // NOTE: `cy.wrap(defaultClientConfig()).as('config')` does not always work to make the config available
             // from the shared context as `this.config` because it has a race condition with initializing the wasm.
+            // So call `defaultClientConfig()` manually for now.
         })
         it('create identity', async function () {
             const identityResult = await createIdentity(defaultClientConfig(), false);

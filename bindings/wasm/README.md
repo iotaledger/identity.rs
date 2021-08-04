@@ -24,7 +24,7 @@ $ yarn add @iota/identity-wasm@dev
 
 Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. Then install the necessary dependencies using:
 
-```npm install```
+```yarn``` or ```npm install```
 
 and then build the bindings for `node.js` with
 
