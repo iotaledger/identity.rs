@@ -24,10 +24,10 @@ use crate::credential::VerifiableCredential;
 use crate::credential::VerifiablePresentation;
 use crate::crypto::KeyPair;
 use crate::crypto::KeyType;
-use crate::service::Service;
-use crate::utils::err;
 use crate::did::WasmDID;
 use crate::did::WasmVerificationMethod;
+use crate::service::Service;
+use crate::utils::err;
 
 #[wasm_bindgen(inspectable)]
 pub struct NewDocument {

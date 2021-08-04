@@ -11,19 +11,19 @@ use identity::iota::CredentialValidator;
 use identity::iota::DocumentDiff;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
+use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
 use identity::iota::TangleRef;
 use identity::iota::TangleResolve;
-use identity::iota::IotaVerificationMethod;
 use js_sys::Promise;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
+use crate::did::WasmVerificationMethod;
 use crate::tangle::Config;
 use crate::tangle::WasmNetwork;
 use crate::utils::err;
-use crate::did::WasmVerificationMethod;
 
 #[wasm_bindgen]
 #[derive(Debug)]

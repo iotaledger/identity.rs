@@ -10,8 +10,8 @@ use wasm_bindgen::prelude::*;
 use crate::crypto::Digest;
 use crate::crypto::KeyCollection;
 use crate::crypto::KeyPair;
-use crate::utils::err;
 use crate::did::WasmDID;
+use crate::utils::err;
 
 #[wasm_bindgen(js_name = VerificationMethod, inspectable)]
 #[derive(Clone, Debug, PartialEq)]
