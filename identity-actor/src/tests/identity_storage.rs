@@ -1,4 +1,4 @@
-use communication_refactored::{InitKeypair, Keypair};
+use p2p::{InitKeypair, Keypair};
 use libp2p::{tcp::TcpConfig, Multiaddr};
 
 use crate::{actor_builder::ActorBuilder, asyncfn::AsyncFn, storage::requests::IdentityList, StorageHandler};

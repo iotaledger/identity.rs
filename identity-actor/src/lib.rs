@@ -21,4 +21,4 @@ pub use storage::handler::StorageHandler;
 pub use storage::requests::{IdentityList, IdentityResolve};
 pub use types::NamedMessage;
 
-pub use communication_refactored::InitKeypair;
+pub use p2p::InitKeypair;

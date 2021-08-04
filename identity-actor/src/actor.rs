@@ -9,10 +9,10 @@ use crate::{
   traits::{ActorRequest, RequestHandler},
   types::NamedMessage,
 };
-use communication_refactored::{ListenErr, Multiaddr, PeerId};
-use communication_refactored::{ReceiveRequest, ShCommunication};
 use dashmap::DashMap;
 use futures::{channel::mpsc, Future, StreamExt};
+use libp2p::{Multiaddr, PeerId};
+use p2p::{ListenErr, ReceiveRequest, StrongholdP2p};
 use tokio::task::{self, JoinHandle};
 use uuid::Uuid;
 
@@ -35,7 +35,7 @@ impl HandlerBuilder {
 }
 
 pub struct Actor {
-  comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
+  comm: StrongholdP2p<NamedMessage, NamedMessage, NamedMessage>,
   handlers: Arc<DashMap<String, (Uuid, Box<dyn RequestHandler>)>>,
   objects: Arc<DashMap<Uuid, Box<dyn Any + Send + Sync + 'static>>>,
   listener_handle: Option<JoinHandle<Result<()>>>,
@@ -44,7 +44,7 @@ pub struct Actor {
 impl Actor {
   pub(crate) async fn from_builder(
     receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
-    mut comm: ShCommunication<NamedMessage, NamedMessage, NamedMessage>,
+    mut comm: StrongholdP2p<NamedMessage, NamedMessage, NamedMessage>,
     handlers: DashMap<String, (Uuid, Box<dyn RequestHandler>)>,
     objects: DashMap<Uuid, Box<dyn Any + Send + Sync + 'static>>,
     listening_addresses: Vec<Multiaddr>,

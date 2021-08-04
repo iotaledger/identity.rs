@@ -3,24 +3,26 @@
 
 use crate::errors::Result;
 use crate::{types::NamedMessage, Actor};
-use communication_refactored::firewall::FirewallConfiguration;
-use communication_refactored::{Executor, InitKeypair};
-use communication_refactored::{ReceiveRequest, ShCommunicationBuilder};
 use dashmap::DashMap;
 use futures::{channel::mpsc, AsyncRead, AsyncWrite};
 use libp2p::{core::Transport, Multiaddr};
+use p2p::firewall::FirewallConfiguration;
+use p2p::{EventChannel, Executor, InitKeypair, ReceiveRequest, StrongholdP2pBuilder};
 
 pub struct ActorBuilder {
   receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
-  comm_builder: ShCommunicationBuilder<NamedMessage, NamedMessage, NamedMessage>,
+  comm_builder: StrongholdP2pBuilder<NamedMessage, NamedMessage, NamedMessage>,
   listening_addresses: Vec<Multiaddr>,
 }
 
+const DEFAULT_CAPACITY: usize = 1024;
+
 impl ActorBuilder {
   pub fn new() -> Self {
-    let (sender, receiver) = mpsc::channel(512);
-    let (firewall_sender, _) = mpsc::channel(512);
-    let comm_builder = ShCommunicationBuilder::new(firewall_sender, sender, None)
+    let (sender, receiver) = EventChannel::new(DEFAULT_CAPACITY, p2p::ChannelSinkConfig::BufferLatest);
+    let (firewall_sender, _) = mpsc::channel(1);
+
+    let comm_builder = StrongholdP2pBuilder::new(firewall_sender, sender, None)
       .with_firewall_config(FirewallConfiguration::allow_all());
     Self {
       receiver,

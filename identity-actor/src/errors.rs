@@ -1,5 +1,5 @@
-use communication_refactored::{ListenErr, TransportErr};
 use libp2p::Multiaddr;
+use p2p::{ListenErr, TransportErr};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -9,7 +9,7 @@ pub enum Error {
   #[error("Lock In Use")]
   LockInUse,
   #[error("{0}")]
-  OutboundFailure(#[from] communication_refactored::OutboundFailure),
+  OutboundFailure(#[from] p2p::OutboundFailure),
   #[error("Unkown Request {0}")]
   UnknownRequest(String),
   #[error("IoError: {0}")]
