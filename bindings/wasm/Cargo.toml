@@ -40,7 +40,7 @@ default-features = false
 [dependencies.libp2p]
 version = "0.39"
 default-features = false
-features = ["wasm-ext", "websocket", "wasm-ext-websocket"]
+features = ["wasm-bindgen", "wasm-ext", "websocket", "wasm-ext-websocket"]
 
 [patch.crates-io]
 libp2p = { path = "../../../rust-libp2p" }
