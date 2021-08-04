@@ -37,7 +37,6 @@ fn parse_payload<T: FromJson + TangleRef>(message_id: MessageId, payload: Option
         Some(Payload::Indexation(payload)) => parse_data(message_id, payload.data()),
         _ => None,
       },
-      _ => None,
     },
     _ => None,
   }
