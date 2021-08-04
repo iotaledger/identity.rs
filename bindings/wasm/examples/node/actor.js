@@ -8,13 +8,13 @@ const PeerId = require('peer-id')
 async function actor() {
 
     const addr = "/ip4/0.0.0.0/tcp/12346/ws"
-    const peer_id = "12D3KooWMP7sWFDzuzxeQZojBFMazwKXcXMyZ8KGX14JGgrzUkAm"
+    const peer_id = "12D3KooWFxNBfQWCSkf7DiBWPT2q4L1dwvhA2JHUrADMcM9yNj4b"
 
     const address = new Multiaddr(addr)
 
     const peerId = PeerId.createFromB58String(peer_id)
 
-    const actor = IdentityActor.new();
+    const actor = new IdentityActor();
 
     const resolve = new IdentityResolve("did:iota:Gq9tCpiNTYGewnQbTUBxB5K1GCYsAscXdrvYEFkjJ1JJ")
 

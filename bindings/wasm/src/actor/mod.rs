@@ -3,7 +3,7 @@ mod multiaddr;
 mod peer_id;
 mod requests;
 
-use std::{borrow::Cow, cell::RefCell, convert::TryFrom, rc::Rc};
+use std::{borrow::Cow, cell::RefCell, rc::Rc};
 
 use crate::utils::err;
 use identity::{
@@ -43,6 +43,7 @@ pub struct IdentityActor {
 
 #[wasm_bindgen]
 impl IdentityActor {
+  #[wasm_bindgen(constructor)]
   pub fn new() -> Result<IdentityActor, JsValue> {
     wasm_logger::init(wasm_logger::Config::new(log::Level::Info));
 
