@@ -52,6 +52,8 @@ wasm-bindgen-test = { version = "0.3" }
 [target.'cfg(all(target_arch = "wasm32", not(target_os = "wasi")))'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }
 parking_lot = { version = "0.11.2", features = ["wasm-bindgen"] }
+# Also use JavaScript randomness APIs for v0.1.X, where this feature is called wasm-bindgen.
+getrandom01 = { package = "getrandom", version = "0.1", features = ["wasm-bindgen"] }
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = true

@@ -52,12 +52,7 @@ impl IdentityActor {
     let transport = libp2p::wasm_ext::ExtTransport::new(transport);
 
     let comm = futures::executor::block_on(async {
-      // TODO: "Works around" the missing `getrandom` wasm support *somewhere* in the dependency tree.
-      let mut bytes = vec![
-        128, 213, 9, 67, 34, 200, 197, 2, 128, 213, 9, 67, 34, 200, 197, 2, 128, 213, 9, 67, 34, 200, 197, 2, 128, 213,
-        9, 67, 34, 200, 197, 2,
-      ];
-      let keys = Keypair::Ed25519(EdKeypair::from(SecretKey::from_bytes(&mut bytes).unwrap()));
+      let keys = Keypair::generate_ed25519();
 
       let executor = |fut| {
         wasm_bindgen_futures::spawn_local(fut);
