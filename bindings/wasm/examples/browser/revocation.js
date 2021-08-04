@@ -6,7 +6,7 @@ import {
     logToScreen,
 } from "./utils.js";
 
-/*
+/**
     This example shows how to revoke a verifiable credential.
     The Verifiable Credential is revoked by actually removing a verification method (public key) from the DID Document of the Issuer.
     As such, the Verifiable Credential can no longer be validated.
@@ -20,9 +20,9 @@ import {
     We recommend that you ALWAYS using a CLIENT_CONFIG parameter that you define when calling any functions that take a
     ClientConfig object. This will ensure that all the API calls use a consistent node and network.
 
-    @param {{network: string, node: string}} clientConfig
+    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
     @param {boolean} log log the events to the output window
-*/
+**/
 export async function revoke(clientConfig, log = true) {
     // Create a default client configuration from the parent config network.
     const config = identity.Config.fromNetwork(clientConfig.network);
@@ -31,7 +31,7 @@ export async function revoke(clientConfig, log = true) {
     const client = identity.Client.fromConfig(config);
 
     //Creates new identities (See "create_did" and "manipulate_did" examples)
-    const { alice, issuer, signedVc } = await createVC(clientConfig, true);
+    const { alice, issuer, signedVc } = await createVC(clientConfig, log);
 
     if (log) logToScreen("Revoking VC...");
 

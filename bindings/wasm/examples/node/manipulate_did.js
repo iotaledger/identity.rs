@@ -5,7 +5,7 @@ const { Client, Config, KeyPair, KeyType, VerificationMethod, Service } = requir
 const { createIdentity } = require('./create_did');
 const { logExplorerUrl } = require('./explorer_util');
 
-/*
+/**
     This example shows how to add more to an existing DID Document.
     The two main things to add are Verification Methods and Services.
     A verification method adds public keys, which can be used to digitally sign things as an identity.
@@ -13,8 +13,8 @@ const { logExplorerUrl } = require('./explorer_util');
     An important detail to note is the previousMessageId. This is an important field as it links the new DID Document to the old DID Document, creating a chain.
     Without setting this value, the new DID Document won't get used during resolution of the DID!
 
-    @param {{network: string, node: string}} clientConfig
-*/
+    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+**/
 async function manipulateIdentity(clientConfig) {
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);

@@ -2,15 +2,16 @@ import * as identity from "../../web/identity_wasm.js";
 import { manipulateIdentity } from "./mainpulate_did.js";
 import { createIdentity } from "./create_did.js";
 import { logObjectToScreen, logToScreen } from "./utils.js";
-/*
+
+/**
     This example shows how to create a Verifiable Credential and validate it.
     In this example, alice takes the role of the subject, while we also have an issuer.
     The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
     This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whoever they please.
-    @param {{network: string, node: string}} clientConfig
-    @param {boolean} log log the events to the output window
 
-*/
+    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+    @param {boolean} log log the events to the output window
+**/
 export async function createVC(clientConfig, log = true) {
     if (log) logToScreen("Verifiable Credential creation started...");
 

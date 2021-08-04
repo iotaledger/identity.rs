@@ -5,10 +5,10 @@ import * as identity from "../../web/identity_wasm.js";
  *
  * @returns {Promise<void>}
  */
-export async function initIdentity(log=true) {
+export async function initIdentity(path = "../../web/identity_wasm_bg.wasm", log = true) {
     if(log) logToScreen("Initialization started...");
     try {
-        await identity.init("../../web/identity_wasm_bg.wasm");
+        await identity.init(path);
         if(log) logToScreen("Initialization success!");
     } catch (err) {
         if(log) logToScreen(err);
