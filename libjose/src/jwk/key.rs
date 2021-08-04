@@ -521,7 +521,7 @@ impl Jwk {
           [..] => return Err(Error::KeyError("multi prime keys are not supported")),
         };
 
-        let values: RsaComputed = RsaComputed::new(secret.d(), &p, &q)?;
+        let values: RsaComputed = RsaComputed::new(secret.d(), p, q)?;
 
         Ok(Jwk::from_params(JwkParamsRsa {
           n: encode_b64(secret.n().to_bytes_be()),
