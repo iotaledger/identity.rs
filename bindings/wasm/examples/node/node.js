@@ -46,6 +46,7 @@ async function main() {
             await revokeVC(CLIENT_CONFIG);
             await createVP(CLIENT_CONFIG);
             await merkleKey(CLIENT_CONFIG);
+            await resolveHistory(CLIENT_CONFIG)
 
             console.log(">>> End All Examples");
         default:

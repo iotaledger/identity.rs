@@ -8,6 +8,7 @@ import { resolveIdentity } from "./resolve.js";
 import { createVP } from "./create_vp.js";
 import { revoke } from "./revocation.js";
 import { merkleKey } from "./merkle_key.js";
+import { resolveHistory } from "./history.js";
 
 logToScreen("Initialization started...");
 
@@ -60,3 +61,8 @@ document
 document
     .querySelector("#merkle_key_btn")
     .addEventListener("click", () => merkleKey(CLIENT_CONFIG));
+
+//handle DID history on click event
+document
+.querySelector("#did_history_btn")
+.addEventListener("click", () => resolveHistory(CLIENT_CONFIG));
