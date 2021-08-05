@@ -18,7 +18,11 @@
     "prepublishOnly": "npm run build",
     "serve": "webpack serve",
     "example:node": "node examples/node/node.js",
-    "example:browser": "http-server -c-1 -o ./examples/browser/index.html"
+    "example:browser": "http-server -c-1 -o ./examples/browser/index.html",
+    "test:node": "jest",
+    "test:browser": "cypress run --headless",
+    "test:readme": "txm README.md",
+    "cypress": "cypress open"
   },
   "contributors": [
     "Jelle Millenaar <jelle.millenaar@iota.org>",
@@ -42,7 +46,9 @@
   "devDependencies": {
     "@wasm-tool/wasm-pack-plugin": "^1.3.3",
     "copy-webpack-plugin": "^7.0.0",
+    "cypress": "^8.1.0",
     "http-server": "^0.12.3",
+    "jest": "^27.0.6",
     "jsdoc-to-markdown": "^7.0.0",
     "wasm-pack": "^0.9.1",
     "webpack": "^5.24.2",

@@ -7,7 +7,7 @@ import {
 import * as identity from "../../web/identity_wasm.js";
 import { createIdentity } from "./create_did.js";
 
-/*
+/**
     This example shows how to add more to an existing DID Document.
     The two main things to add are Verification Methods and Services.
     A verification method adds public keys, which can be used to digitally sign things as an identity.
@@ -15,9 +15,9 @@ import { createIdentity } from "./create_did.js";
     An important detail to note is the previousMessageId. This is an important field as it links the new DID Document to the old DID Document, creating a chain.
     Without setting this value, the new DID Document won't get used during resolution of the DID!
 
-    @param {{network: string, node: string}} clientConfig
+    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
     @param {boolean} log log the events to the output window
-*/
+**/
 export async function manipulateIdentity(clientConfig, log = true) {
     if (log) logToScreen("creating identity...");
 

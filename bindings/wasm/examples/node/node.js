@@ -12,13 +12,13 @@ const { CLIENT_CONFIG } = require('./config')
 
 async function main() {
     //Check if an example is mentioned
-    if(process.argv.length != 3) {
+    if (process.argv.length != 3) {
         throw 'Please provide one command line argument with the example name.';
     }
 
     //Take out the argument
     let argument = process.argv[2];
-    switch(argument) {
+    switch (argument) {
         case 'create_did':
             return await createIdentity(CLIENT_CONFIG);
         case 'manipulate_did':
@@ -45,6 +45,7 @@ async function main() {
             await merkleKey(CLIENT_CONFIG);
 
             console.log(">>> End All Examples");
+            return "all"
         default:
             throw 'Unknown example name';
     }

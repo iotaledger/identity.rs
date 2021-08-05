@@ -1,11 +1,19 @@
-/target
+# Rust
+target/
 Cargo.lock
 
-node_modules
-wasm-web
-wasm-node
-web
-node
-pkg
+# npm / yarn
+node_modules/
+
+# Build artifacts
+wasm-web/
+wasm-node/
+web/
+node/
+pkg/
+
+# cypress
+cypress/screenshots/
+cypress/videos/
 
 .DS_STORE

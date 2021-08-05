@@ -5,7 +5,7 @@ const { Client, Config, DID } = require('../../node/identity_wasm')
 const { createVC } = require('./create_vc');
 const { logExplorerUrl } = require('./explorer_util')
 
-/*
+/**
     This example shows how to revoke a verifiable credential.
     The Verifiable Credential is revoked by actually removing a verification method (public key) from the DID Document of the Issuer.
     As such, the Verifiable Credential can no longer be validated.
@@ -19,8 +19,8 @@ const { logExplorerUrl } = require('./explorer_util')
     We recommend that you ALWAYS using a CLIENT_CONFIG parameter that you define when calling any functions that take a
     ClientConfig object. This will ensure that all the API calls use a consistent node and network.
 
-    @param {{network: string, node: string}} clientConfig
-*/
+    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+**/
 async function revoke(clientConfig) {
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);

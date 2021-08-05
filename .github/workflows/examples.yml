@@ -1,0 +1,56 @@
+name: Wasm Examples
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # run at midnight every day
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch/ref (default dev branch)"
+        required: true
+        default: 'dev' # checkout dev branch by default, not main
+
+jobs:
+  build-and-test-examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.ref }}
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 15.x
+
+      - name: Install txm # for running README.md examples https://github.com/anko/txm
+        run: yarn global add txm
+
+      - name: Install wasm-pack
+        run: yarn global add wasm-pack
+
+      - name: Install JS dependencies
+        run: yarn
+        working-directory: bindings/wasm
+
+      - name: Build Wasm bindings
+        run: yarn build
+        working-directory: bindings/wasm
+
+      - name: Test Wasm examples (node)
+        run: yarn run test:node
+        working-directory: bindings/wasm
+
+      - name: Test Wasm examples (browser)
+        run: yarn run test:browser
+        working-directory: bindings/wasm
+
+      - name: Test Wasm README.md examples
+        run: yarn run test:readme
+        working-directory: bindings/wasm
