@@ -9,6 +9,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::traits::ActorRequest;
 
+use super::StorageError;
+
 impl ActorRequest for IdentityCreate {
   type Response = IotaDocument;
 
@@ -40,7 +42,7 @@ impl IdentityResolve {
 }
 
 impl ActorRequest for IdentityResolve {
-  type Response = Option<IotaDocument>;
+  type Response = Result<IotaDocument, StorageError>;
 
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("storage/resolve")

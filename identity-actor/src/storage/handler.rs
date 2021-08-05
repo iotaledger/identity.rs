@@ -7,7 +7,7 @@ use crate::IdentityList;
 use identity_account::identity::IdentityCreate;
 use identity_iota::{did::{IotaDID, IotaDocument}, tangle::{ClientBuilder, ClientMap, Network, TangleResolve}};
 
-use super::requests::IdentityResolve;
+use super::{StorageError, requests::IdentityResolve};
 
 #[derive(Clone)]
 pub struct StorageHandler {
@@ -31,13 +31,13 @@ impl StorageHandler {
     vec![]
   }
 
-  pub async fn resolve(self, input: IdentityResolve) -> Option<IotaDocument> {
+  pub async fn resolve(self, input: IdentityResolve) -> Result<IotaDocument, StorageError> {
     log::info!("Resolving {:?}", input.did);
 
-    let res = self.client.resolve(&input.did).await;
+    let res = self.client.resolve(&input.did).await?;
 
     log::info!("Resolved into: {:?}", res);
 
-    res.ok()
+    Ok(res)
   }
 }
