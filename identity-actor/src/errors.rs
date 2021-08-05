@@ -8,10 +8,6 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
   #[error("Lock In Use")]
   LockInUse,
-  #[error("{0}")]
-  OutboundFailure(#[from] p2p::OutboundFailure),
-  #[error("Unkown Request {0}")]
-  UnknownRequest(String),
   #[error("IoError: {0}")]
   IoError(#[from] std::io::Error),
   #[error("Multiaddr {0} is not supported")]
@@ -28,6 +24,33 @@ impl From<ListenErr> for Error {
       ListenErr::Shutdown => Error::Shutdown,
       ListenErr::Transport(TransportErr::Io(io_err)) => Error::IoError(io_err),
       ListenErr::Transport(TransportErr::MultiaddrNotSupported(addr)) => Error::MultiaddrNotSupported(addr),
+    }
+  }
+}
+
+/// Errors that can occur during [Actor::send_request] calls.
+#[derive(Debug, PartialEq, thiserror::Error)]
+pub enum SendError {
+  #[error("{0}")]
+  OutboundFailure(#[from] p2p::OutboundFailure),
+  /// No handler was set on the receiver and thus we cannot process this request.
+  #[error("unkown request: `{0}`")]
+  UnknownRequest(String),
+  #[error("failed to deserialize the response: {0}")]
+  ResponseDeserializationFailure(String),
+}
+
+/// Errors that can occur on the remote actor during [Actor::send_request] calls.
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub enum RemoteSendError {
+  /// No handler was set on the receiver and thus this request is not processable.
+  UnknownRequest(String),
+}
+
+impl From<RemoteSendError> for SendError {
+  fn from(err: RemoteSendError) -> Self {
+    match err {
+      RemoteSendError::UnknownRequest(req) => SendError::UnknownRequest(req),
     }
   }
 }

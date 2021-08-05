@@ -5,7 +5,7 @@ use std::{any::Any, ops::Deref, sync::Arc};
 
 use crate::{
   asyncfn::AsyncFn,
-  errors::{Error, Result},
+  errors::{Error, RemoteSendError, Result, SendError},
   traits::{ActorRequest, RequestHandler},
   types::NamedMessage,
 };
@@ -13,6 +13,7 @@ use dashmap::DashMap;
 use futures::{channel::mpsc, Future, StreamExt};
 use libp2p::{Multiaddr, PeerId};
 use p2p::{ListenErr, ReceiveRequest, StrongholdP2p};
+use serde_json::error::Category;
 use tokio::task::{self, JoinHandle};
 use uuid::Uuid;
 
@@ -149,10 +150,13 @@ impl Actor {
           handler.invoke(obj, request.data).await
         }
         // TODO: Send error *back to peer*
-        None => todo!("Unhandled handler-not-found case"), //return Err(Error::UnknownRequest(request.name)),
+        None => {
+          // SAFETY: Serialization never fails
+          serde_json::to_vec(&RemoteSendError::UnknownRequest(request_name)).unwrap()
+        }
       };
 
-      let response = NamedMessage::new(request_name, response_data);
+      let response = NamedMessage::new("temporary_solution", response_data);
 
       // TODO: can return an error when
       // - connection times out, when
@@ -183,7 +187,7 @@ impl Actor {
     &mut self,
     peer: PeerId,
     command: Request,
-  ) -> Result<Request::Response> {
+  ) -> std::result::Result<Request::Response, SendError> {
     self.send_named_request(peer, &*command.request_name(), command).await
   }
 
@@ -192,18 +196,37 @@ impl Actor {
     peer: PeerId,
     name: &str,
     command: Request,
-  ) -> Result<Request::Response> {
+  ) -> std::result::Result<Request::Response, SendError> {
     let request = NamedMessage::new(name, serde_json::to_vec(&command).unwrap());
-    log::info!("Sending NamedMessage: {:?}, json payload: {:?}", request, serde_json::to_value(&command).unwrap());
+
+    log::info!(
+      "Sending `{}` request with payload: {}",
+      request.name,
+      serde_json::to_string_pretty(&command).unwrap()
+    );
+
     let response = self.comm.send_request(peer, request).await.unwrap();
 
-    log::info!("Json response: {:?}", serde_json::from_slice::<'_, serde_json::Value>(&response.data).unwrap());
+    log::info!("Response: {}", std::str::from_utf8(&response.data).unwrap());
 
-    // Map to a `could not deserialize` error
-    // And deserialize to a Result<Request::Response>
-    // as the request we sent could have been an unkown one (probably other errors exist)
-    let response = serde_json::from_slice(&response.data).unwrap();
-    Ok(response)
+    let request_response: serde_json::Result<Request::Response> = serde_json::from_slice(&response.data);
+
+    match request_response {
+      Ok(res) => Ok(res),
+      Err(err) => match err.classify() {
+        // If we failed to deserialize into the expected response, due to syntactically or
+        // semantically incorrect bytes, we attempt deserialization into a `RemoteSendError`.
+        Category::Data | Category::Syntax => {
+          let remote_send_err: serde_json::Result<RemoteSendError> = serde_json::from_slice(&response.data);
+
+          match remote_send_err {
+            Ok(remote_err) => Err(SendError::from(remote_err)),
+            Err(err) => Err(SendError::ResponseDeserializationFailure(err.to_string())),
+          }
+        }
+        _ => Err(SendError::ResponseDeserializationFailure(err.to_string())),
+      },
+    }
   }
 
   pub async fn join(self) {
