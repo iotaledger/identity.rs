@@ -5,12 +5,12 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct NamedMessage {
+pub struct RequestMessage {
   pub name: String,
   pub data: Vec<u8>,
 }
 
-impl NamedMessage {
+impl RequestMessage {
   pub fn new<S: Into<String>>(name: S, data: Vec<u8>) -> Self {
     Self {
       name: name.into(),
@@ -18,3 +18,5 @@ impl NamedMessage {
     }
   }
 }
+
+pub type ResponseMessage = Vec<u8>;

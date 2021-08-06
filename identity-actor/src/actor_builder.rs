@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::errors::Result;
-use crate::{types::NamedMessage, Actor};
+use crate::types::ResponseMessage;
+use crate::{types::RequestMessage, Actor};
 use dashmap::DashMap;
 use futures::{channel::mpsc, AsyncRead, AsyncWrite};
 use libp2p::{core::Transport, Multiaddr};
@@ -10,8 +11,8 @@ use p2p::firewall::FirewallConfiguration;
 use p2p::{EventChannel, Executor, InitKeypair, ReceiveRequest, StrongholdP2pBuilder};
 
 pub struct ActorBuilder {
-  receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
-  comm_builder: StrongholdP2pBuilder<NamedMessage, NamedMessage, NamedMessage>,
+  receiver: mpsc::Receiver<ReceiveRequest<RequestMessage, ResponseMessage>>,
+  comm_builder: StrongholdP2pBuilder<RequestMessage, ResponseMessage>,
   listening_addresses: Vec<Multiaddr>,
 }
 
@@ -22,8 +23,8 @@ impl ActorBuilder {
     let (sender, receiver) = EventChannel::new(DEFAULT_CAPACITY, p2p::ChannelSinkConfig::BufferLatest);
     let (firewall_sender, _) = mpsc::channel(1);
 
-    let comm_builder = StrongholdP2pBuilder::new(firewall_sender, sender, None)
-      .with_firewall_config(FirewallConfiguration::allow_all());
+    let comm_builder =
+      StrongholdP2pBuilder::new(firewall_sender, sender, None).with_firewall_config(FirewallConfiguration::allow_all());
     Self {
       receiver,
       comm_builder,

@@ -5,9 +5,9 @@ use std::{any::Any, ops::Deref, sync::Arc};
 
 use crate::{
   asyncfn::AsyncFn,
-  errors::{Error, RemoteSendError, Result, SendError},
+  errors::{RemoteSendError, Result, SendError},
   traits::{ActorRequest, RequestHandler},
-  types::NamedMessage,
+  types::{RequestMessage, ResponseMessage},
 };
 use dashmap::DashMap;
 use futures::{channel::mpsc, Future, StreamExt};
@@ -36,7 +36,7 @@ impl HandlerBuilder {
 }
 
 pub struct Actor {
-  comm: StrongholdP2p<NamedMessage, NamedMessage, NamedMessage>,
+  comm: StrongholdP2p<RequestMessage, ResponseMessage>,
   handlers: Arc<DashMap<String, (Uuid, Box<dyn RequestHandler>)>>,
   objects: Arc<DashMap<Uuid, Box<dyn Any + Send + Sync + 'static>>>,
   listener_handle: Option<JoinHandle<Result<()>>>,
@@ -44,8 +44,8 @@ pub struct Actor {
 
 impl Actor {
   pub(crate) async fn from_builder(
-    receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
-    mut comm: StrongholdP2p<NamedMessage, NamedMessage, NamedMessage>,
+    receiver: mpsc::Receiver<ReceiveRequest<RequestMessage, ResponseMessage>>,
+    mut comm: StrongholdP2p<RequestMessage, ResponseMessage>,
     handlers: DashMap<String, (Uuid, Box<dyn RequestHandler>)>,
     objects: DashMap<Uuid, Box<dyn Any + Send + Sync + 'static>>,
     listening_addresses: Vec<Multiaddr>,
@@ -108,7 +108,7 @@ impl Actor {
   /// This method should only be called once on any given instance.
   /// A second caller would immediately receive an [`Error::LockInUse`].
   fn spawn_listener(
-    mut receiver: mpsc::Receiver<ReceiveRequest<NamedMessage, NamedMessage>>,
+    mut receiver: mpsc::Receiver<ReceiveRequest<RequestMessage, ResponseMessage>>,
     objects: Arc<DashMap<Uuid, Box<dyn Any + Send + Sync>>>,
     handlers: Arc<DashMap<String, (Uuid, Box<dyn RequestHandler>)>>,
   ) -> JoinHandle<Result<()>> {
@@ -126,7 +126,7 @@ impl Actor {
   }
 
   fn spawn_handler(
-    receive_request: ReceiveRequest<NamedMessage, NamedMessage>,
+    receive_request: ReceiveRequest<RequestMessage, ResponseMessage>,
     objects: Arc<DashMap<Uuid, Box<dyn Any + Send + Sync>>>,
     handlers: Arc<DashMap<String, (Uuid, Box<dyn RequestHandler>)>>,
   ) -> JoinHandle<Result<()>> {
@@ -158,14 +158,12 @@ impl Actor {
         }
       };
 
-      let response = NamedMessage::new("temporary_solution", response_data);
-
       // TODO: can return an error when
       // - connection times out, when
       // - when handler takes too long to respond (configurable via SwarmBuilder.with_timeout)
       // - error on the transport layer
       // - potentially others...
-      let response_result = response_tx.send(response);
+      let response_result = response_tx.send(response_data);
 
       if let Err(_) = response_result {
         log::error!("could not respond to `{}` request", request_name);
@@ -203,7 +201,7 @@ impl Actor {
     name: &str,
     command: Request,
   ) -> std::result::Result<Request::Response, SendError> {
-    let request = NamedMessage::new(name, serde_json::to_vec(&command).unwrap());
+    let request = RequestMessage::new(name, serde_json::to_vec(&command).unwrap());
 
     log::info!(
       "Sending `{}` request with payload: {}",
@@ -213,9 +211,9 @@ impl Actor {
 
     let response = self.comm.send_request(peer, request).await.unwrap();
 
-    log::info!("Response: {}", std::str::from_utf8(&response.data).unwrap());
+    log::info!("Response: {}", std::str::from_utf8(&response).unwrap());
 
-    let request_response: serde_json::Result<Request::Response> = serde_json::from_slice(&response.data);
+    let request_response: serde_json::Result<Request::Response> = serde_json::from_slice(&response);
 
     match request_response {
       Ok(res) => Ok(res),
@@ -223,7 +221,7 @@ impl Actor {
         // If we failed to deserialize into the expected response, due to syntactically or
         // semantically incorrect bytes, we attempt deserialization into a `RemoteSendError`.
         Category::Data | Category::Syntax => {
-          let remote_send_err: serde_json::Result<RemoteSendError> = serde_json::from_slice(&response.data);
+          let remote_send_err: serde_json::Result<RemoteSendError> = serde_json::from_slice(&response);
 
           match remote_send_err {
             Ok(remote_err) => Err(SendError::from(remote_err)),
