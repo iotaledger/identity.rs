@@ -12,7 +12,7 @@ use crate::traits::ActorRequest;
 use super::StorageError;
 
 impl ActorRequest for IdentityCreate {
-  type Response = IotaDocument;
+  type Response = Result<IotaDocument, StorageError>;
 
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("storage/create")

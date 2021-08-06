@@ -58,3 +58,12 @@ impl From<RemoteSendError> for SendError {
     }
   }
 }
+
+/// Categories that errors can be classified in, to learn about where the
+/// error originated from.
+pub enum Category {
+  /// An error that the client is responsible for.
+  Client,
+  /// An error that the peer is responsible for.
+  Remote,
+}

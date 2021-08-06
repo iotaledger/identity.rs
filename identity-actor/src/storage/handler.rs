@@ -4,10 +4,13 @@
 use std::sync::Arc;
 
 use crate::IdentityList;
-use identity_account::identity::IdentityCreate;
-use identity_iota::{did::{IotaDID, IotaDocument}, tangle::{ClientBuilder, ClientMap, Network, TangleResolve}};
+use identity_account::{account::Account, identity::IdentityCreate};
+use identity_iota::{
+  did::{IotaDID, IotaDocument},
+  tangle::{ClientBuilder, ClientMap, Network, TangleResolve},
+};
 
-use super::{StorageError, requests::IdentityResolve};
+use super::{requests::IdentityResolve, StorageError};
 
 #[derive(Clone)]
 pub struct StorageHandler {
@@ -23,8 +26,11 @@ impl StorageHandler {
     })
   }
 
-  pub async fn create(self, _input: IdentityCreate) -> IotaDocument {
-    todo!()
+  pub async fn create(self, input: IdentityCreate) -> Result<IotaDocument, StorageError> {
+    let acc = Account::builder().build().await.unwrap();
+    let snapshot = acc.create_identity(input).await?;
+    let doc = snapshot.identity().to_document()?;
+    Ok(doc)
   }
 
   pub async fn list(self, _input: IdentityList) -> Vec<IotaDID> {
