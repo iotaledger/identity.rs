@@ -36,21 +36,25 @@ pub enum SendError {
   /// No handler was set on the receiver and thus we cannot process this request.
   #[error("unkown request: `{0}`")]
   UnknownRequest(String),
+  #[error("could not invoke the handler: {0}")]
+  HandlerInvocationError(String),
   #[error("failed to deserialize the response: {0}")]
   ResponseDeserializationFailure(String),
 }
 
 /// Errors that can occur on the remote actor during [Actor::send_request] calls.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub enum RemoteSendError {
+pub(crate) enum RemoteSendError {
   /// No handler was set on the receiver and thus this request is not processable.
   UnknownRequest(String),
+  HandlerInvocationError(String),
 }
 
 impl From<RemoteSendError> for SendError {
   fn from(err: RemoteSendError) -> Self {
     match err {
       RemoteSendError::UnknownRequest(req) => SendError::UnknownRequest(req),
+      RemoteSendError::HandlerInvocationError(err) => SendError::HandlerInvocationError(err),
     }
   }
 }

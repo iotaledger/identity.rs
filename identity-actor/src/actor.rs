@@ -140,19 +140,21 @@ impl Actor {
           let object_id = handler_tuple.0;
           let handler = &handler_tuple.1;
 
-          let obj = if let Some(object) = objects.get(&object_id) {
+          if let Some(object) = objects.get(&object_id) {
             let object_clone = handler.clone_object(object.deref());
-            object_clone
+            handler.invoke(object_clone, request.data).await
           } else {
-            todo!("Unhandled object-not-found case.")
-          };
-
-          handler.invoke(obj, request.data).await
+            // SAFETY: Serialization of this type never fails
+            serde_json::to_vec(&RemoteSendError::HandlerInvocationError(format!(
+              "no object set for {}",
+              request_name
+            )))
+            .unwrap()
+          }
         }
-        // TODO: Send error *back to peer*
         None => {
-          // SAFETY: Serialization never fails
-          serde_json::to_vec(&RemoteSendError::UnknownRequest(request_name)).unwrap()
+          // SAFETY: Serialization of this type never fails
+          serde_json::to_vec(&RemoteSendError::UnknownRequest(request_name.clone())).unwrap()
         }
       };
 
@@ -163,9 +165,13 @@ impl Actor {
       // - when handler takes too long to respond (configurable via SwarmBuilder.with_timeout)
       // - error on the transport layer
       // - potentially others...
-      response_tx
-        .send(response)
-        .map_err(|response| Error::CouldNotRespond(response.name))
+      let response_result = response_tx.send(response);
+
+      if let Err(_) = response_result {
+        log::error!("could not respond to `{}` request", request_name);
+      }
+
+      Ok(())
     })
   }
 
