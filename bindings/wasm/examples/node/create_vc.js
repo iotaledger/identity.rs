@@ -5,14 +5,14 @@ const { Client, Config, VerifiableCredential } = require('../../node/identity_wa
 const { createIdentity } = require('./create_did');
 const { manipulateIdentity } = require('./manipulate_did');
 
-/*
+/**
     This example shows how to create a Verifiable Credential and validate it.
     In this example, alice takes the role of the subject, while we also have an issuer.
     The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
     This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whoever they please.
 
-    @param {{network: string, node: string}} clientConfig
-*/
+    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+**/
 async function createVC(clientConfig) {
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);

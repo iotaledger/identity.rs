@@ -359,6 +359,10 @@ jobs:
           command: test
           args: --manifest-path ./bindings/wasm/Cargo.toml --release
 
+      - name: Run wasm-bindgen tests # tests annotated with #[wasm_bindgen_test]
+        run: wasm-pack test --node
+        working-directory: bindings/wasm
+
       - name: Print sccache stats
         run: sccache --show-stats
 
