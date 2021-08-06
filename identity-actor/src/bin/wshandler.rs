@@ -1,4 +1,4 @@
-use communication_refactored::{InitKeypair, Keypair};
+use p2p::{InitKeypair, Keypair};
 use libp2p::{tcp::TcpConfig, websocket::WsConfig, Multiaddr};
 
 use identity_actor::{actor_builder::ActorBuilder, asyncfn::AsyncFn, errors::Result, StorageHandler};
