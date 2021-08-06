@@ -8,7 +8,7 @@ use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use wasm_bindgen::prelude::*;
 
-use crate::utils::err;
+use crate::error::wasm_error;
 use crate::wasm_document::WasmDocument;
 
 #[wasm_bindgen(inspectable)]
@@ -24,8 +24,8 @@ impl VerifiablePresentation {
     presentation_type: Option<String>,
     presentation_id: Option<String>,
   ) -> Result<VerifiablePresentation, JsValue> {
-    let credentials: OneOrMany<Credential> = credential_data.into_serde().map_err(err)?;
-    let holder_url: Url = Url::parse(holder_doc.0.id().as_str()).map_err(err)?;
+    let credentials: OneOrMany<Credential> = credential_data.into_serde().map_err(wasm_error)?;
+    let holder_url: Url = Url::parse(holder_doc.0.id().as_str()).map_err(wasm_error)?;
 
     let mut builder: PresentationBuilder = PresentationBuilder::default().holder(holder_url);
 
@@ -38,21 +38,21 @@ impl VerifiablePresentation {
     }
 
     if let Some(presentation_id) = presentation_id {
-      builder = builder.id(Url::parse(presentation_id).map_err(err)?);
+      builder = builder.id(Url::parse(presentation_id).map_err(wasm_error)?);
     }
 
-    builder.build().map_err(err).map(Self)
+    builder.build().map_err(wasm_error).map(Self)
   }
 
   /// Serializes a `VerifiablePresentation` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(&self.0).map_err(err)
+    JsValue::from_serde(&self.0).map_err(wasm_error)
   }
 
   /// Deserializes a `VerifiablePresentation` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<VerifiablePresentation, JsValue> {
-    json.into_serde().map_err(err).map(Self)
+    json.into_serde().map_err(wasm_error).map(Self)
   }
 }

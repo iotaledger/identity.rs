@@ -3,7 +3,7 @@
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   #[error("{0}")]
   CoreError(#[from] identity_core::Error),

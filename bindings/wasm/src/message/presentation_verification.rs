@@ -4,7 +4,7 @@
 use identity::comm;
 use wasm_bindgen::prelude::*;
 
-use crate::utils::err;
+use crate::error::wasm_error;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]
@@ -14,12 +14,12 @@ pub struct PresentationRequest(pub(crate) comm::PresentationRequest);
 impl PresentationRequest {
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(&self.0).map_err(err)
+    JsValue::from_serde(&self.0).map_err(wasm_error)
   }
 
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(value: &JsValue) -> Result<PresentationRequest, JsValue> {
-    value.into_serde().map_err(err).map(Self)
+    value.into_serde().map_err(wasm_error).map(Self)
   }
 }
 
@@ -31,12 +31,12 @@ pub struct PresentationResponse(pub(crate) comm::PresentationResponse);
 impl PresentationResponse {
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(&self.0).map_err(err)
+    JsValue::from_serde(&self.0).map_err(wasm_error)
   }
 
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(value: &JsValue) -> Result<PresentationResponse, JsValue> {
-    value.into_serde().map_err(err).map(Self)
+    value.into_serde().map_err(wasm_error).map(Self)
   }
 }
 
@@ -48,11 +48,11 @@ pub struct TrustedIssuer(pub(crate) comm::TrustedIssuer);
 impl TrustedIssuer {
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
-    JsValue::from_serde(&self.0).map_err(err)
+    JsValue::from_serde(&self.0).map_err(wasm_error)
   }
 
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(value: &JsValue) -> Result<TrustedIssuer, JsValue> {
-    value.into_serde().map_err(err).map(Self)
+    value.into_serde().map_err(wasm_error).map(Self)
   }
 }

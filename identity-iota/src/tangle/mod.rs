@@ -26,3 +26,7 @@ pub use iota_client::bee_message::Message;
 
 #[doc(inline)]
 pub use iota_client::bee_message::MessageId;
+
+// Re-export bee_message::Error to use it directly in bindings
+#[doc(inline)]
+pub use iota_client::bee_message::Error as BeeMessageError;

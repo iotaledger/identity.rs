@@ -3,7 +3,7 @@
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   #[error(transparent)]
   IotaError(#[from] identity_iota::Error),

@@ -14,7 +14,7 @@ use wasm_bindgen::prelude::*;
 use crate::crypto::Digest;
 use crate::crypto::KeyPair;
 use crate::crypto::KeyType;
-use crate::utils::err;
+use crate::error::wasm_error;
 
 #[derive(Deserialize, Serialize)]
 struct JsonData {
@@ -41,7 +41,7 @@ impl KeyCollection {
   /// Creates a new `KeyCollection` with the specified key type.
   #[wasm_bindgen(constructor)]
   pub fn new(type_: KeyType, count: usize) -> Result<KeyCollection, JsValue> {
-    KeyCollection_::new(type_.into(), count).map_err(err).map(Self)
+    KeyCollection_::new(type_.into(), count).map_err(wasm_error).map(Self)
   }
 
   /// Returns the number of keys in the collection.
@@ -123,13 +123,13 @@ impl KeyCollection {
       type_: self.0.type_().into(),
     };
 
-    JsValue::from_serde(&data).map_err(err)
+    JsValue::from_serde(&data).map_err(wasm_error)
   }
 
   /// Deserializes a `KeyCollection` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<KeyCollection, JsValue> {
-    let data: JsonData = json.into_serde().map_err(err)?;
+    let data: JsonData = json.into_serde().map_err(wasm_error)?;
 
     let iter: _ = data.keys.iter().flat_map(|data| {
       let pk: PublicKey = decode_b58(&data.public).ok()?.into();
@@ -139,7 +139,7 @@ impl KeyCollection {
     });
 
     KeyCollection_::from_iterator(data.type_.into(), iter)
-      .map_err(err)
+      .map_err(wasm_error)
       .map(Self)
   }
 }
