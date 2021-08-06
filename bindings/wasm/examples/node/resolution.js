@@ -4,11 +4,11 @@
 const { Client, Config } = require('../../node/identity_wasm')
 const { manipulateIdentity } = require("./manipulate_did");
 
-/*
+/**
     A short example to show how to resolve a DID. This returns the latest DID Document.
 
-    @param {{network: string, node: string}} clientConfig
-*/
+    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+**/
 async function resolution(clientConfig) {
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);

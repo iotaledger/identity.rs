@@ -4,13 +4,13 @@
 const { Client, Config, VerifiablePresentation } = require('../../node/identity_wasm')
 const { createVC } = require('./create_vc');
 
-/*
+/**
     This example shows how to create a Verifiable Presentation and validate it.
     A Verifiable Presentation is the format in which a (collection of) Verifiable Credential(s) gets shared.
     It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
 
-    @param {{network: string, node: string}} clientConfig
-*/
+    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+**/
 async function createVP(clientConfig) {
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);

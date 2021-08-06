@@ -24,7 +24,7 @@ $ yarn add @iota/identity-wasm@dev
 
 Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. Then install the necessary dependencies using:
 
-```npm install```
+```yarn``` or ```npm install```
 
 and then build the bindings for `node.js` with
 
@@ -34,9 +34,18 @@ or for the `web` with
 
 ```npm run build:web```
 
-## NodeJS Setup
+## NodeJS Usage
+<!-- 
+Test this example using https://github.com/anko/txm: `txm README.md`
 
-```js
+Replace imports with local paths for txm:
+!test program
+cat \
+| sed -e "s#require('@iota/identity-wasm/node')#require('./node/identity_wasm.js')#" \
+| node
+-->
+<!-- !test check Nodejs Example -->
+```javascript
 const identity = require('@iota/identity-wasm/node')
 
 // Generate a new KeyPair
@@ -44,18 +53,27 @@ const key = new identity.KeyPair(identity.KeyType.Ed25519)
 
 // Create a new DID Document with the KeyPair as the default authentication method
 const doc = identity.Document.fromKeyPair(key)
+// const doc = identity.Document.fromKeyPair(key, "test") // if using the testnet
 
-// Sign the DID Document with the sceret key
+// Sign the DID Document with the private key
 doc.sign(key)
 
+// Create a default client instance for the mainnet
+const config = identity.Config.fromNetwork(identity.Network.mainnet())
+// const config = identity.Config.fromNetwork(identity.Network.testnet()); // if using the testnet
+const client = identity.Client.fromConfig(config)
+
 // Publish the DID Document to the IOTA Tangle
-identity.publish(doc.toJSON(), { node: "https://nodes.thetangle.org:443" })
-  .then((message) => {
-    console.log("Tangle Message Id: ", message)
-    console.log("Tangle Message Url", `https://explorer.iota.org/mainnet/transaction/${message}`)
-  }).catch((error) => {
-    console.error("Error: ", error)
-  })
+// The message can be viewed at https://explorer.iota.org/<mainnet|testnet>/transaction/<messageId>
+client.publishDocument(doc.toJSON())
+    .then((receipt) => {
+        console.log("Tangle Message Receipt: ", receipt)
+        console.log("Tangle Message Url:", doc.id.network.messageURL(receipt.messageId))
+    })
+    .catch((error) => {
+        console.error("Error: ", error)
+        throw error
+    })
 ```
 
 ## Web Setup
@@ -114,7 +132,7 @@ new CopyWebPlugin({
 }),
 ```
 
-### Usage
+### Web Usage
 
 ```js
 import * as identity from "@iota/identity-wasm/web";

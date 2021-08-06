@@ -5,15 +5,15 @@ const { Client, Config, Digest, KeyType, VerifiableCredential, VerificationMetho
 const { createIdentity } = require('./create_did');
 const { logExplorerUrl } = require('./explorer_util')
 
-/*
+/**
     This example shows how to sign/revoke verifiable credentials on scale.
     Instead of revoking the entire verification method, a single key can be revoked from a MerkleKeyCollection.
     This MerkleKeyCollection can be created as a collection of a power of 2 amount of keys.
     Every key should be used once by the issuer for signing a verifiable credential.
     When the verifiable credential must be revoked, the issuer revokes the index of the revoked key.
 
-    @param {{network: string, node: string}} clientConfig
-*/
+    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+**/
 async function merkleKey(clientConfig) {
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);

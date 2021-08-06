@@ -6,15 +6,15 @@ import {
     getExplorerUrl,
 } from "./utils.js";
 
-/*
+/**
     This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle.
     A ED25519 Keypair is generated, from which the public key is hashed, becoming the DID.
     The keypair becomes part of the DID Document in order to prove a link between the DID and the published DID Document.
     That same keypair should be used to sign the original DID Document.
 
-    @param {{network: string, node: string}} clientConfig
+    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
     @param {boolean} log log the events to the output window
-*/
+**/
 export async function createIdentity(clientConfig, log = true) {
     if (log) logToScreen("Identity creation started...");
     if (log)
