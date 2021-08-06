@@ -3,7 +3,6 @@
 
 const { Client, Config } = require("../../node/identity_wasm");
 const { manipulateIdentity } = require("./manipulate_did");
-const { CLIENT_CONFIG } = require("./config");
 
 /*
     An example for resolving the integration-message-history of a DID.

@@ -9,6 +9,7 @@ import { createVP } from "./create_vp.js";
 import { revoke } from "./revocation.js";
 import { merkleKey } from "./merkle_key.js";
 import { resolveHistory } from "./history.js";
+import { createDiff } from "./create_diff.js";
 
 logToScreen("Initialization started...");
 
@@ -66,3 +67,8 @@ document
 document
 .querySelector("#did_history_btn")
 .addEventListener("click", () => resolveHistory(CLIENT_CONFIG));
+
+//handle create diff on click event
+document
+.querySelector("#create_diff_btn")
+.addEventListener("click", () => createDiff(CLIENT_CONFIG));
