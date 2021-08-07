@@ -1,9 +1,4 @@
-import {
-    getExplorerUrl,
-    logExplorerUrlToScreen,
-    logObjectToScreen,
-    logToScreen,
-} from "./utils.js";
+import { getExplorerUrl, logExplorerUrlToScreen, logObjectToScreen, logToScreen } from "./utils.js";
 import * as identity from "../../web/identity_wasm.js";
 import { createIdentity } from "./create_did.js";
 
@@ -35,11 +30,7 @@ export async function manipulateIdentity(clientConfig, log = true) {
 
     //Add a new VerificationMethod with a new KeyPair
     const newKey = new identity.KeyPair(identity.KeyType.Ed25519);
-    const method = identity.VerificationMethod.fromDID(
-        doc.id,
-        newKey,
-        "newKey"
-    );
+    const method = identity.VerificationMethod.fromDID(doc.id, newKey, "newKey");
     doc.insertMethod(method, "VerificationMethod");
 
     //Add a new ServiceEndpoint
@@ -68,5 +59,12 @@ export async function manipulateIdentity(clientConfig, log = true) {
     const explorerUrl = getExplorerUrl(doc, nextReceipt.messageId);
     if (log) logExplorerUrlToScreen(explorerUrl);
 
-    return { key, newKey, doc, receipt, explorerUrl };
+    return {
+        key,
+        newKey,
+        doc,
+        messageIdOfOriginalMessage: receipt.messageId,
+        messageIdOfSecondMessage: nextReceipt.messageId,
+        explorerUrl,
+    };
 }

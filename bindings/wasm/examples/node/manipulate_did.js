@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { Client, Config, KeyPair, KeyType, VerificationMethod, Service } = require('../../node/identity_wasm')
-const { createIdentity } = require('./create_did');
-const { logExplorerUrl } = require('./explorer_util');
+const { Client, Config, KeyPair, KeyType, VerificationMethod, Service } = require("../../node/identity_wasm");
+const { createIdentity } = require("./create_did");
+const { logExplorerUrl } = require("./explorer_util");
 
 /**
     This example shows how to add more to an existing DID Document.
@@ -32,9 +32,9 @@ async function manipulateIdentity(clientConfig) {
 
     //Add a new ServiceEndpoint
     const serviceJSON = {
-        "id":doc.id+"#linked-domain",
-        "type": "LinkedDomains",
-        "serviceEndpoint" : "https://iota.org"
+        id: doc.id + "#linked-domain",
+        type: "LinkedDomains",
+        serviceEndpoint: "https://iota.org",
     };
     doc.insertService(Service.fromJSON(serviceJSON));
 
@@ -53,7 +53,13 @@ async function manipulateIdentity(clientConfig) {
 
     // Log the results.
     logExplorerUrl("Identity Update:", clientConfig.network.toString(), nextReceipt.messageId);
-    return {key, newKey, doc, receipt: nextReceipt};
+    return {
+        key,
+        newKey,
+        doc,
+        messageIdOfOriginalMessage: receipt.messageId,
+        messageIdOfSecondMessage: nextReceipt.messageId,
+    };
 }
 
 exports.manipulateIdentity = manipulateIdentity;

@@ -6,6 +6,7 @@ import { resolveIdentity } from "./resolve.js";
 import { createVP } from "./create_vp.js";
 import { revoke } from "./revocation.js";
 import { merkleKey } from "./merkle_key.js";
+import { createDiff } from "./create_diff.js";
 
 await initIdentity();
 const clientConfig = defaultClientConfig();
@@ -44,3 +45,14 @@ document
 document
     .querySelector("#merkle_key_btn")
     .addEventListener("click", () => merkleKey(clientConfig));
+
+
+//handle DID history on click event
+document
+.querySelector("#did_history_btn")
+.addEventListener("click", () => resolveHistory(clientConfig));
+
+//handle create diff on click event
+document
+.querySelector("#create_diff_btn")
+.addEventListener("click", () => createDiff(clientConfig));
