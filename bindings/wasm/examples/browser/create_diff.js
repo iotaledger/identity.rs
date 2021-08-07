@@ -24,7 +24,7 @@ export async function createDiff(clientConfig, log = true) {
     // Creates a new identity, that also is updated (See "manipulate_did" example).
     const { doc, key, messageIdOfSecondMessage } = await manipulateIdentity(clientConfig, false);
 
-    // clone the DID 
+    // clone the Document 
     const doc2 = identity.Document.fromJSON(doc.toJSON());
 
     //Add a second ServiceEndpoint
@@ -43,5 +43,5 @@ export async function createDiff(clientConfig, log = true) {
 
     const diffRes = await client.publishDiff(messageIdOfSecondMessage, diff);
 
-    return { doc, key, diffMessageId: diffRes.messageId };
+    return { doc2, key, diffMessageId: diffRes.messageId };
 }
