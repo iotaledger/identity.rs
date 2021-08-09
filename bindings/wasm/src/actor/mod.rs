@@ -5,7 +5,6 @@ mod requests;
 
 use std::{borrow::Cow, cell::RefCell, rc::Rc};
 
-use crate::utils::err;
 use identity::{
   actor::{self, actor_builder::ActorBuilder, traits::ActorRequest as IotaActorRequest},
   prelude::*,
@@ -19,6 +18,8 @@ use libp2p::identity::{
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
+
+use crate::error::wasm_error;
 
 use self::{interface::ActorRequest, multiaddr::Multiaddr, peer_id::PeerId};
 
@@ -62,7 +63,7 @@ impl IdentityActor {
         .keys(identity::actor::InitKeypair::IdKeys(keys))
         .build_with_transport_and_executor(transport, executor)
         .await
-        .map_err(err);
+        .map_err(wasm_error);
       comm
     })?;
 
@@ -142,8 +143,8 @@ impl IdentityActor {
       log::info!("Response: {:?}", response);
 
       match response {
-        Ok(value) => JsValue::from_serde(&value).map_err(err),
-        Err(error) => Err(err(error)),
+        Ok(value) => JsValue::from_serde(&value).map_err(wasm_error),
+        Err(error) => Err(wasm_error(error)),
       }
     });
 

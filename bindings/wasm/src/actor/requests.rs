@@ -8,7 +8,7 @@ use identity::{
 };
 use wasm_bindgen::prelude::*;
 
-use crate::utils::err;
+use crate::error::wasm_error;
 
 #[wasm_bindgen]
 #[derive(Debug)]
@@ -39,7 +39,7 @@ pub struct IdentityResolve(ActorIdentityResolve);
 impl IdentityResolve {
   #[wasm_bindgen(constructor)]
   pub fn new(did: &str) -> Result<IdentityResolve, JsValue> {
-    let did: IotaDID = did.parse().map_err(err)?;
+    let did: IotaDID = did.parse().map_err(wasm_error)?;
     let resolve = ActorIdentityResolve::new(did);
     Ok(Self(resolve))
   }
