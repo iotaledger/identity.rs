@@ -6,14 +6,11 @@ mod requests;
 use std::{borrow::Cow, cell::RefCell, rc::Rc};
 
 use identity::{
-  actor::{self, actor_builder::ActorBuilder, traits::ActorRequest as IotaActorRequest},
+  actor::{actor_builder::ActorBuilder, traits::ActorRequest as IotaActorRequest},
   prelude::*,
 };
 use js_sys::{Function, Promise};
-use libp2p::identity::{
-  ed25519::{Keypair as EdKeypair, SecretKey},
-  Keypair,
-};
+use libp2p::identity::Keypair;
 
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -112,7 +109,7 @@ impl IdentityActor {
 
     let js_val: JsValue = request.into();
 
-    // SAFETY: Unsafe because it calls into JS.
+    // SAFETY: Unsafe can be removed, but rust-analyzer displays a hard error in that case.
     // Only our Rust-defined ActorRequests *should* have this method, so we can use it
     // to differentiate between a native JsValue and one we provided, as they differ in how they are serialized.
     let serialize_property = unsafe { js_sys::Reflect::get(&js_val, &JsValue::from_str("__serialize")) }?;
