@@ -1,12 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+const { logExplorerUrl } = require("./explorer_util");
 const { Client, Config, Document, Service } = require("../../node/identity_wasm");
 const { manipulateIdentity } = require("./manipulate_did");
-const { CLIENT_CONFIG } = require("./config");
 
-/*
-    This example is a baisc introduction to creating a diff message and publishing it to the tangle. 
+/**
+    This example is a basic introduction to creating a diff message and publishing it to the tangle.
     1. A did document is created and published with one service.
     2. The document is cloned and another service is added.
     3. The difference between the two documents is created and published as a diff message.
@@ -14,8 +14,8 @@ const { CLIENT_CONFIG } = require("./config");
 
     @param {{network: string, node: string}} clientConfig
     @param {boolean} log log the events to the output window
-*/
-async function createDiff(clientConfig) {
+**/
+async function createDiffChain(clientConfig) {
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);
 
@@ -23,29 +23,30 @@ async function createDiff(clientConfig) {
     const client = Client.fromConfig(config);
 
     // Creates a new identity, that also is updated (See "manipulate_did" example).
-    const { doc, key, messageIdOfSecondMessage } = await manipulateIdentity(clientConfig);
+    const { doc, key, updatedMessageId } = await manipulateIdentity(clientConfig);
 
     // clone the Document
     const doc2 = Document.fromJSON(doc.toJSON());
 
-    //Add a second ServiceEndpoint
+    // Add a second ServiceEndpoint
     let serviceJSON = {
         id: doc.id + "#new-linked-domain",
-        type: "new-LinkedDomains",
+        type: "LinkedDomains",
         serviceEndpoint: "https://identity.iota.org",
     };
-
     doc2.insertService(Service.fromJSON(serviceJSON));
     console.log(doc2);
 
-    //create diff
-    const diff = doc.diff(doc2, messageIdOfSecondMessage, key);
+    // Create diff update
+    const diff = doc.diff(doc2, updatedMessageId, key);
     console.log(diff);
 
-    const diffRes = await client.publishDiff(messageIdOfSecondMessage, diff);
-    console.log(diffRes);
+    // Publish diff to the Tangle
+    const diffReceipt = await client.publishDiff(updatedMessageId, diff);
+    console.log(diffReceipt);
+    logExplorerUrl("Diff Chain Transaction:", clientConfig.network.toString(), diffReceipt.messageId);
 
-    return { doc2, key, diffMessageId: diffRes.messageId };
+    return { doc2, key, diffMessageId: diffReceipt.messageId };
 }
 
-exports.createDiff = createDiff;
+exports.createDiffChain = createDiffChain;
