@@ -13,7 +13,7 @@ import { resolveHistory } from "../../examples/browser/resolve_history";
 describe(
     "Test browser examples",
     {
-        defaultCommandTimeout: 120000, // 2 minutes to account for spurious network delays
+        defaultCommandTimeout: 180000, // 3 minutes to account for spurious network delays
     },
     () => {
         beforeEach(async () => {

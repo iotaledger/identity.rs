@@ -38,11 +38,11 @@ impl<T> MessageSet<T> {
     self.spam.deref()
   }
 
-  pub fn message_ids(&self) -> impl Iterator<Item=&MessageId> {
+  pub fn message_ids(&self) -> impl Iterator<Item = &MessageId> {
     self.data.keys()
   }
 
-  pub fn resources(&self) -> impl Iterator<Item=&T> {
+  pub fn resources(&self) -> impl Iterator<Item = &T> {
     self.data.values()
   }
 }
@@ -66,10 +66,7 @@ impl<T: TryFromMessage> MessageSet<T> {
       }
     }
 
-    Self {
-      data,
-      spam,
-    }
+    Self { data, spam }
   }
 }
 
@@ -121,9 +118,6 @@ impl DiffSet {
 
     spam.extend(index.drain_keys());
 
-    Self {
-      data,
-      spam,
-    }
+    Self { data, spam }
   }
 }

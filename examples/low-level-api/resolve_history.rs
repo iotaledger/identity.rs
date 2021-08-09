@@ -146,7 +146,9 @@ async fn main() -> Result<()> {
   // We can still retrieve old diff chains, but they do not affect DID resolution.
   let method: &IotaVerificationMethod = document.authentication();
   let previous_integration_chain_message_id: &MessageId = int1_update_receipt.message_id();
-  let previous_diffs: DiffSet = client.resolve_diffs(document.id(), method, previous_integration_chain_message_id).await?;
+  let previous_diffs: DiffSet = client
+    .resolve_diffs(document.id(), method, previous_integration_chain_message_id)
+    .await?;
 
   println!("Diffs = {:#?}", previous_diffs);
 

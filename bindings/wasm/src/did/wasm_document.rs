@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::str::FromStr;
+
 use identity::core::decode_b58;
 use identity::core::FromJson;
 use identity::crypto::merkle_key::MerkleDigestTag;
@@ -9,15 +11,14 @@ use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PublicKey;
 use identity::crypto::SecretKey;
-use identity::did::verifiable;
 use identity::did::MethodScope;
+use identity::did::verifiable;
 use identity::iota::DocumentDiff;
 use identity::iota::Error;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
-use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 
 use crate::credential::VerifiableCredential;
@@ -117,6 +118,12 @@ impl WasmDocument {
       Some(proof) => JsValue::from_serde(proof).map_err(wasm_error),
       None => Ok(JsValue::NULL),
     }
+  }
+
+  /// Returns the default Verification Method of the DID Document.
+  #[wasm_bindgen]
+  pub fn authentication(&self) -> WasmVerificationMethod {
+    WasmVerificationMethod(self.0.authentication().clone())
   }
 
   #[wasm_bindgen(getter = previousMessageId)]

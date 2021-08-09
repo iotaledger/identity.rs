@@ -60,7 +60,7 @@ export async function resolveHistory(clientConfig, log = true) {
         type: "LinkedDomains",
         serviceEndpoint: "https://fake-domain.org",
     };
-    doc2.insertService(Service.fromJSON(serviceJSON3));
+    doc2.insertService(identity.Service.fromJSON(serviceJSON3));
 
     // Create a signed diff update.
     //

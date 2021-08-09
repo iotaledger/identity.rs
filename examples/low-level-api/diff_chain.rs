@@ -6,13 +6,11 @@
 //!
 //! cargo run --example update_did
 
-use identity::core::{FromJson, Timestamp};
 use identity::core::json;
-use identity::did::MethodScope;
+use identity::core::FromJson;
 use identity::did::Service;
-use identity::iota::{ClientMap, DocumentDiff};
-use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
+use identity::iota::{ClientMap, DocumentDiff};
 use identity::prelude::*;
 
 mod create_did;
@@ -23,7 +21,7 @@ async fn main() -> Result<()> {
   let client: ClientMap = ClientMap::new();
 
   // Create a signed DID Document and KeyPair (see create_did.rs).
-  let (mut document, keypair, receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
+  let (document, keypair, receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
   // Update the document by adding a new service endpoint
   let updated_document: IotaDocument = {

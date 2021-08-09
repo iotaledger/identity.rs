@@ -35,11 +35,11 @@ export async function revoke(clientConfig, log = true) {
 
     if (log) logToScreen("Revoking VC...");
 
-    //Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
+    // Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
     issuer.doc.removeMethod(
         identity.DID.parse(issuer.doc.id.toString() + "#newKey")
     );
-    issuer.doc.previousMessageId = issuer.receipt.messageId;
+    issuer.doc.previousMessageId = issuer.updatedMessageId;
     issuer.doc.sign(issuer.key);
     const {messageId} = await client.publishDocument(issuer.doc.toJSON());
 

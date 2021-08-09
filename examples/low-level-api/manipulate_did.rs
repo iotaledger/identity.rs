@@ -6,8 +6,8 @@
 //!
 //! cargo run --example update_did
 
-use identity::core::FromJson;
 use identity::core::json;
+use identity::core::FromJson;
 use identity::did::MethodScope;
 use identity::did::Service;
 use identity::iota::ClientMap;

@@ -746,7 +746,7 @@ Returns the DID Document `proof` object.
 <a name="Document+authentication"></a>
 
 ### document.authentication() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Returns the default authentication method of the DID document.
+Returns the default Verification Method of the DID Document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+insertMethod"></a>
