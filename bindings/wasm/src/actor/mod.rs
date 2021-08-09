@@ -151,6 +151,3 @@ impl IdentityActor {
     Ok(promise)
   }
 }
-
-#[wasm_bindgen]
-pub struct NamedMessage(actor::NamedMessage);
