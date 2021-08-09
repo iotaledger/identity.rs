@@ -9,7 +9,7 @@ use identity::crypto::SecretKey;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::KeyType;
-use crate::utils::err;
+use crate::error::wasm_error;
 
 #[derive(Deserialize, Serialize)]
 struct JsonData {
@@ -31,14 +31,14 @@ impl KeyPair {
   /// Generates a new `KeyPair` object.
   #[wasm_bindgen(constructor)]
   pub fn new(type_: KeyType) -> Result<KeyPair, JsValue> {
-    KeyPair_::new(type_.into()).map_err(err).map(Self)
+    KeyPair_::new(type_.into()).map_err(wasm_error).map(Self)
   }
 
   /// Parses a `KeyPair` object from base58-encoded public/secret keys.
   #[wasm_bindgen(js_name = fromBase58)]
   pub fn from_base58(type_: KeyType, public_key: &str, secret_key: &str) -> Result<KeyPair, JsValue> {
-    let public: PublicKey = decode_b58(public_key).map_err(err)?.into();
-    let secret: SecretKey = decode_b58(secret_key).map_err(err)?.into();
+    let public: PublicKey = decode_b58(public_key).map_err(wasm_error)?.into();
+    let secret: SecretKey = decode_b58(secret_key).map_err(wasm_error)?.into();
 
     Ok(Self((type_.into(), public, secret).into()))
   }
@@ -64,13 +64,13 @@ impl KeyPair {
       secret: self.secret(),
     };
 
-    JsValue::from_serde(&data).map_err(err)
+    JsValue::from_serde(&data).map_err(wasm_error)
   }
 
   /// Deserializes a `KeyPair` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<KeyPair, JsValue> {
-    let data: JsonData = json.into_serde().map_err(err)?;
+    let data: JsonData = json.into_serde().map_err(wasm_error)?;
 
     Self::from_base58(data.type_, &data.public, &data.secret)
   }

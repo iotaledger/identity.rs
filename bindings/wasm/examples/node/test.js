@@ -3,8 +3,10 @@ const { manipulateIdentity } = require("./manipulate_did");
 const { resolution } = require("./resolution");
 const { createVC } = require("./create_vc");
 const { createVP } = require("./create_vp");
+const { createDiffChain } = require("./diff_chain");
 const { revokeVC } = require("./revocation");
 const { merkleKey } = require("./merkle_key");
+const { resolveHistory } = require("./resolve_history");
 const { CLIENT_CONFIG } = require("./config");
 
 jest.setTimeout(120000); // 2 minutes to account for spurious network delays, most tests pass in a few seconds
@@ -59,5 +61,19 @@ test.concurrent("Merkle Key", async () => {
         await merkleKey(CLIENT_CONFIG);
     } catch (e) {
         await merkleKey(CLIENT_CONFIG);
+    }
+});
+test.concurrent("Diff Chain", async () => {
+    try {
+        await createDiffChain(CLIENT_CONFIG);
+    } catch (e) {
+        await createDiffChain(CLIENT_CONFIG);
+    }
+});
+test.concurrent("Resolve History", async () => {
+    try {
+        await resolveHistory(CLIENT_CONFIG);
+    } catch (e) {
+        await resolveHistory(CLIENT_CONFIG);
     }
 });

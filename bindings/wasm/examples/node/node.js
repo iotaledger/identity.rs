@@ -9,8 +9,8 @@ const { createVP } = require("./create_vp");
 const { revokeVC } = require("./revocation");
 const { merkleKey } = require("./merkle_key");
 const { CLIENT_CONFIG } = require("./config");
-const { resolveHistory } = require("./history");
-const { createDiff } = require("./create_diff");
+const { resolveHistory } = require("./resolve_history");
+const { createDiff } = require("./diff_chain");
 
 async function main() {
     //Check if an example is mentioned
@@ -37,7 +37,7 @@ async function main() {
             return await merkleKey(CLIENT_CONFIG);
         case "resolve_history":
             return await resolveHistory(CLIENT_CONFIG);
-        case "create_diff":
+        case "update_diff":
             return await createDiff(CLIENT_CONFIG);
         case "all":
             console.log(">>> Run All Examples");

@@ -10,7 +10,8 @@ const { logExplorerUrl } = require("./explorer_util");
     The two main things to add are Verification Methods and Services.
     A verification method adds public keys, which can be used to digitally sign things as an identity.
     The services provide metadata around the identity via URIs. These can be URLs, but can also emails or IOTA indices.
-    An important detail to note is the previousMessageId. This is an important field as it links the new DID Document to the old DID Document, creating a chain.
+    An important detail to note is the previousMessageId:
+    This is an important field as it links the new DID Document to the old DID Document, creating a chain.
     Without setting this value, the new DID Document won't get used during resolution of the DID!
 
     @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
@@ -22,15 +23,15 @@ async function manipulateIdentity(clientConfig) {
     // Create a client instance to publish messages to the Tangle.
     const client = Client.fromConfig(config);
 
-    //Creates a new identity (See "create_did" example)
+    // Creates a new identity (See "create_did" example)
     let { key, doc, receipt } = await createIdentity(clientConfig);
 
-    //Add a new VerificationMethod with a new KeyPair
+    // Add a new VerificationMethod with a new KeyPair
     const newKey = new KeyPair(KeyType.Ed25519);
     const method = VerificationMethod.fromDID(doc.id, newKey, "newKey");
     doc.insertMethod(method, "VerificationMethod");
 
-    //Add a new ServiceEndpoint
+    // Add a new ServiceEndpoint
     const serviceJSON = {
         id: doc.id + "#linked-domain",
         type: "LinkedDomains",
@@ -49,16 +50,16 @@ async function manipulateIdentity(clientConfig) {
     doc.sign(key);
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
-    const nextReceipt = await client.publishDocument(doc.toJSON());
+    const updateReceipt = await client.publishDocument(doc.toJSON());
 
     // Log the results.
-    logExplorerUrl("Identity Update:", clientConfig.network.toString(), nextReceipt.messageId);
+    logExplorerUrl("Identity Update:", clientConfig.network.toString(), updateReceipt.messageId);
     return {
         key,
         newKey,
         doc,
-        messageIdOfOriginalMessage: receipt.messageId,
-        messageIdOfSecondMessage: nextReceipt.messageId,
+        originalMessageId: receipt.messageId,
+        updatedMessageId: updateReceipt.messageId,
     };
 }
 

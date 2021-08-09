@@ -33,7 +33,7 @@ async function revoke(clientConfig) {
 
     //Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
     issuer.doc.removeMethod(DID.parse(issuer.doc.id.toString()+"#newKey"));
-    issuer.doc.previousMessageId = issuer.messageIdOfSecondMessage;
+    issuer.doc.previousMessageId = issuer.updatedMessageId;
     issuer.doc.sign(issuer.key);
     const {messageId} = await client.publishDocument(issuer.doc.toJSON());
 

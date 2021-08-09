@@ -13,8 +13,9 @@ homepage = "https://www.iota.org"
 [dependencies]
 did_url = { version = "0.1", default-features = false, features = ["alloc"] }
 identity-derive = { version = "=0.3.0", path = "derive" }
-serde = { version = "1.0", features = [ "derive" ] }
+serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
+strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0" }
 
 [dev-dependencies]

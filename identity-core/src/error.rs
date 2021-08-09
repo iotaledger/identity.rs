@@ -10,7 +10,7 @@ use crate::crypto::merkle_key::MerkleDigestTag;
 use crate::crypto::merkle_key::MerkleSignatureTag;
 
 /// This type represents all possible errors that can occur in the library.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   /// Caused when a cryptographic operation fails.
   #[error("Crypto Error: {0}")]

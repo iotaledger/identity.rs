@@ -89,7 +89,7 @@
 <a name="AuthenticationRequest"></a>
 
 ## AuthenticationRequest
-**Kind**: global class
+**Kind**: global class  
 
 * [AuthenticationRequest](#AuthenticationRequest)
     * _instance_
@@ -100,20 +100,20 @@
 <a name="AuthenticationRequest+toJSON"></a>
 
 ### authenticationRequest.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+**Kind**: instance method of [<code>AuthenticationRequest</code>](#AuthenticationRequest)  
 <a name="AuthenticationRequest.fromJSON"></a>
 
 ### AuthenticationRequest.fromJSON(value) ⇒ [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-**Kind**: static method of [<code>AuthenticationRequest</code>](#AuthenticationRequest)
+**Kind**: static method of [<code>AuthenticationRequest</code>](#AuthenticationRequest)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="AuthenticationResponse"></a>
 
 ## AuthenticationResponse
-**Kind**: global class
+**Kind**: global class  
 
 * [AuthenticationResponse](#AuthenticationResponse)
     * _instance_
@@ -124,20 +124,20 @@
 <a name="AuthenticationResponse+toJSON"></a>
 
 ### authenticationResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>AuthenticationResponse</code>](#AuthenticationResponse)
+**Kind**: instance method of [<code>AuthenticationResponse</code>](#AuthenticationResponse)  
 <a name="AuthenticationResponse.fromJSON"></a>
 
 ### AuthenticationResponse.fromJSON(value) ⇒ [<code>AuthenticationResponse</code>](#AuthenticationResponse)
-**Kind**: static method of [<code>AuthenticationResponse</code>](#AuthenticationResponse)
+**Kind**: static method of [<code>AuthenticationResponse</code>](#AuthenticationResponse)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="Client"></a>
 
 ## Client
-**Kind**: global class
+**Kind**: global class  
 
 * [Client](#Client)
     * [new Client()](#new_Client_new)
@@ -164,111 +164,111 @@ Creates a new `Client` with default settings.
 ### client.network() ⇒ [<code>Network</code>](#Network)
 Returns the `Client` Tangle network.
 
-**Kind**: instance method of [<code>Client</code>](#Client)
+**Kind**: instance method of [<code>Client</code>](#Client)  
 <a name="Client+publishDocument"></a>
 
 ### client.publishDocument(document) ⇒ <code>Promise.&lt;any&gt;</code>
 Publishes an `IotaDocument` to the Tangle.
 
-**Kind**: instance method of [<code>Client</code>](#Client)
+**Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| document | <code>any</code> |
+| document | <code>any</code> | 
 
 <a name="Client+publishDiff"></a>
 
 ### client.publishDiff(message_id, value) ⇒ <code>Promise.&lt;any&gt;</code>
 Publishes a `DocumentDiff` to the Tangle.
 
-**Kind**: instance method of [<code>Client</code>](#Client)
+**Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| message_id | <code>string</code> |
-| value | <code>any</code> |
+| message_id | <code>string</code> | 
+| value | <code>any</code> | 
 
 <a name="Client+resolve"></a>
 
 ### client.resolve(did) ⇒ <code>Promise.&lt;any&gt;</code>
-**Kind**: instance method of [<code>Client</code>](#Client)
+**Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| did | <code>string</code> |
+| did | <code>string</code> | 
 
 <a name="Client+resolveHistory"></a>
 
 ### client.resolveHistory(did) ⇒ <code>Promise.&lt;any&gt;</code>
 Returns the message history of the given DID.
 
-**Kind**: instance method of [<code>Client</code>](#Client)
+**Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| did | <code>string</code> |
+| did | <code>string</code> | 
 
 <a name="Client+resolveDiffs"></a>
 
 ### client.resolveDiffs(did, method, message_id) ⇒ <code>Promise.&lt;any&gt;</code>
 Returns the diff chain for the integration chain specified by `message_id`.
 
-**Kind**: instance method of [<code>Client</code>](#Client)
+**Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| did | <code>string</code> |
-| method | [<code>VerificationMethod</code>](#VerificationMethod) |
-| message_id | <code>string</code> |
+| did | <code>string</code> | 
+| method | [<code>VerificationMethod</code>](#VerificationMethod) | 
+| message_id | <code>string</code> | 
 
 <a name="Client+checkCredential"></a>
 
 ### client.checkCredential(data) ⇒ <code>Promise.&lt;any&gt;</code>
 Validates a credential with the DID Document from the Tangle.
 
-**Kind**: instance method of [<code>Client</code>](#Client)
+**Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| data | <code>string</code> |
+| data | <code>string</code> | 
 
 <a name="Client+checkPresentation"></a>
 
 ### client.checkPresentation(data) ⇒ <code>Promise.&lt;any&gt;</code>
 Validates a presentation with the DID Document from the Tangle.
 
-**Kind**: instance method of [<code>Client</code>](#Client)
+**Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| data | <code>string</code> |
+| data | <code>string</code> | 
 
 <a name="Client.fromConfig"></a>
 
 ### Client.fromConfig(config) ⇒ [<code>Client</code>](#Client)
 Creates a new `Client` with settings from the given `Config`.
 
-**Kind**: static method of [<code>Client</code>](#Client)
+**Kind**: static method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| config | [<code>Config</code>](#Config) |
+| config | [<code>Config</code>](#Config) | 
 
 <a name="Client.fromNetwork"></a>
 
 ### Client.fromNetwork(network) ⇒ [<code>Client</code>](#Client)
 Creates a new `Client` with default settings for the given `Network`.
 
-**Kind**: static method of [<code>Client</code>](#Client)
+**Kind**: static method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| network | [<code>Network</code>](#Network) |
+| network | [<code>Network</code>](#Network) | 
 
 <a name="Config"></a>
 
 ## Config
-**Kind**: global class
+**Kind**: global class  
 
 * [Config](#Config)
     * _instance_
@@ -292,149 +292,149 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="Config+setNetwork"></a>
 
 ### config.setNetwork(network)
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| network | [<code>Network</code>](#Network) |
+| network | [<code>Network</code>](#Network) | 
 
 <a name="Config+setNode"></a>
 
 ### config.setNode(url)
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| url | <code>string</code> |
+| url | <code>string</code> | 
 
 <a name="Config+setPrimaryNode"></a>
 
 ### config.setPrimaryNode(url, jwt, username, password)
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| url | <code>string</code> |
-| jwt | <code>string</code> \| <code>undefined</code> |
-| username | <code>string</code> \| <code>undefined</code> |
-| password | <code>string</code> \| <code>undefined</code> |
+| url | <code>string</code> | 
+| jwt | <code>string</code> \| <code>undefined</code> | 
+| username | <code>string</code> \| <code>undefined</code> | 
+| password | <code>string</code> \| <code>undefined</code> | 
 
 <a name="Config+setPrimaryPoWNode"></a>
 
 ### config.setPrimaryPoWNode(url, jwt, username, password)
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| url | <code>string</code> |
-| jwt | <code>string</code> \| <code>undefined</code> |
-| username | <code>string</code> \| <code>undefined</code> |
-| password | <code>string</code> \| <code>undefined</code> |
+| url | <code>string</code> | 
+| jwt | <code>string</code> \| <code>undefined</code> | 
+| username | <code>string</code> \| <code>undefined</code> | 
+| password | <code>string</code> \| <code>undefined</code> | 
 
 <a name="Config+setPermanode"></a>
 
 ### config.setPermanode(url, jwt, username, password)
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| url | <code>string</code> |
-| jwt | <code>string</code> \| <code>undefined</code> |
-| username | <code>string</code> \| <code>undefined</code> |
-| password | <code>string</code> \| <code>undefined</code> |
+| url | <code>string</code> | 
+| jwt | <code>string</code> \| <code>undefined</code> | 
+| username | <code>string</code> \| <code>undefined</code> | 
+| password | <code>string</code> \| <code>undefined</code> | 
 
 <a name="Config+setNodeAuth"></a>
 
 ### config.setNodeAuth(url, jwt, username, password)
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| url | <code>string</code> |
-| jwt | <code>string</code> \| <code>undefined</code> |
-| username | <code>string</code> \| <code>undefined</code> |
-| password | <code>string</code> \| <code>undefined</code> |
+| url | <code>string</code> | 
+| jwt | <code>string</code> \| <code>undefined</code> | 
+| username | <code>string</code> \| <code>undefined</code> | 
+| password | <code>string</code> \| <code>undefined</code> | 
 
 <a name="Config+setNodeSyncInterval"></a>
 
 ### config.setNodeSyncInterval(value)
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>number</code> |
+| value | <code>number</code> | 
 
 <a name="Config+setNodeSyncDisabled"></a>
 
 ### config.setNodeSyncDisabled()
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 <a name="Config+setQuorum"></a>
 
 ### config.setQuorum(value)
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>boolean</code> |
+| value | <code>boolean</code> | 
 
 <a name="Config+setQuorumSize"></a>
 
 ### config.setQuorumSize(value)
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>number</code> |
+| value | <code>number</code> | 
 
 <a name="Config+setQuorumThreshold"></a>
 
 ### config.setQuorumThreshold(value)
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>number</code> |
+| value | <code>number</code> | 
 
 <a name="Config+setLocalPoW"></a>
 
 ### config.setLocalPoW(value)
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>boolean</code> |
+| value | <code>boolean</code> | 
 
 <a name="Config+setTipsInterval"></a>
 
 ### config.setTipsInterval(value)
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>number</code> |
+| value | <code>number</code> | 
 
 <a name="Config+setRequestTimeout"></a>
 
 ### config.setRequestTimeout(value)
-**Kind**: instance method of [<code>Config</code>](#Config)
+**Kind**: instance method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>number</code> |
+| value | <code>number</code> | 
 
 <a name="Config.fromNetwork"></a>
 
 ### Config.fromNetwork(network) ⇒ [<code>Config</code>](#Config)
-**Kind**: static method of [<code>Config</code>](#Config)
+**Kind**: static method of [<code>Config</code>](#Config)  
 
 | Param | Type |
 | --- | --- |
-| network | [<code>Network</code>](#Network) |
+| network | [<code>Network</code>](#Network) | 
 
 <a name="CredentialIssuance"></a>
 
 ## CredentialIssuance
-**Kind**: global class
+**Kind**: global class  
 
 * [CredentialIssuance](#CredentialIssuance)
     * _instance_
@@ -445,20 +445,20 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="CredentialIssuance+toJSON"></a>
 
 ### credentialIssuance.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>CredentialIssuance</code>](#CredentialIssuance)
+**Kind**: instance method of [<code>CredentialIssuance</code>](#CredentialIssuance)  
 <a name="CredentialIssuance.fromJSON"></a>
 
 ### CredentialIssuance.fromJSON(value) ⇒ [<code>CredentialIssuance</code>](#CredentialIssuance)
-**Kind**: static method of [<code>CredentialIssuance</code>](#CredentialIssuance)
+**Kind**: static method of [<code>CredentialIssuance</code>](#CredentialIssuance)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="CredentialOptionRequest"></a>
 
 ## CredentialOptionRequest
-**Kind**: global class
+**Kind**: global class  
 
 * [CredentialOptionRequest](#CredentialOptionRequest)
     * _instance_
@@ -469,20 +469,20 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="CredentialOptionRequest+toJSON"></a>
 
 ### credentialOptionRequest.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>CredentialOptionRequest</code>](#CredentialOptionRequest)
+**Kind**: instance method of [<code>CredentialOptionRequest</code>](#CredentialOptionRequest)  
 <a name="CredentialOptionRequest.fromJSON"></a>
 
 ### CredentialOptionRequest.fromJSON(value) ⇒ [<code>CredentialOptionRequest</code>](#CredentialOptionRequest)
-**Kind**: static method of [<code>CredentialOptionRequest</code>](#CredentialOptionRequest)
+**Kind**: static method of [<code>CredentialOptionRequest</code>](#CredentialOptionRequest)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="CredentialOptionResponse"></a>
 
 ## CredentialOptionResponse
-**Kind**: global class
+**Kind**: global class  
 
 * [CredentialOptionResponse](#CredentialOptionResponse)
     * _instance_
@@ -493,20 +493,20 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="CredentialOptionResponse+toJSON"></a>
 
 ### credentialOptionResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>CredentialOptionResponse</code>](#CredentialOptionResponse)
+**Kind**: instance method of [<code>CredentialOptionResponse</code>](#CredentialOptionResponse)  
 <a name="CredentialOptionResponse.fromJSON"></a>
 
 ### CredentialOptionResponse.fromJSON(value) ⇒ [<code>CredentialOptionResponse</code>](#CredentialOptionResponse)
-**Kind**: static method of [<code>CredentialOptionResponse</code>](#CredentialOptionResponse)
+**Kind**: static method of [<code>CredentialOptionResponse</code>](#CredentialOptionResponse)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="CredentialRevocation"></a>
 
 ## CredentialRevocation
-**Kind**: global class
+**Kind**: global class  
 
 * [CredentialRevocation](#CredentialRevocation)
     * _instance_
@@ -517,20 +517,20 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="CredentialRevocation+toJSON"></a>
 
 ### credentialRevocation.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>CredentialRevocation</code>](#CredentialRevocation)
+**Kind**: instance method of [<code>CredentialRevocation</code>](#CredentialRevocation)  
 <a name="CredentialRevocation.fromJSON"></a>
 
 ### CredentialRevocation.fromJSON(value) ⇒ [<code>CredentialRevocation</code>](#CredentialRevocation)
-**Kind**: static method of [<code>CredentialRevocation</code>](#CredentialRevocation)
+**Kind**: static method of [<code>CredentialRevocation</code>](#CredentialRevocation)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="CredentialSelection"></a>
 
 ## CredentialSelection
-**Kind**: global class
+**Kind**: global class  
 
 * [CredentialSelection](#CredentialSelection)
     * _instance_
@@ -541,15 +541,15 @@ Creates a new `Client` with default settings for the given `Network`.
 <a name="CredentialSelection+toJSON"></a>
 
 ### credentialSelection.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>CredentialSelection</code>](#CredentialSelection)
+**Kind**: instance method of [<code>CredentialSelection</code>](#CredentialSelection)  
 <a name="CredentialSelection.fromJSON"></a>
 
 ### CredentialSelection.fromJSON(value) ⇒ [<code>CredentialSelection</code>](#CredentialSelection)
-**Kind**: static method of [<code>CredentialSelection</code>](#CredentialSelection)
+**Kind**: static method of [<code>CredentialSelection</code>](#CredentialSelection)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="DID"></a>
 
@@ -583,7 +583,7 @@ Creates a new `DID` from a `KeyPair` object.
 ### did.network ⇒ [<code>Network</code>](#Network)
 Returns the IOTA tangle network of the `DID`.
 
-**Kind**: instance property of [<code>DID</code>](#DID)
+**Kind**: instance property of [<code>DID</code>](#DID)  
 <a name="DID+networkName"></a>
 
 ### did.networkName ⇒ <code>string</code>
@@ -628,7 +628,7 @@ Parses a `DID` from the input string.
 <a name="DidRequest"></a>
 
 ## DidRequest
-**Kind**: global class
+**Kind**: global class  
 
 * [DidRequest](#DidRequest)
     * _instance_
@@ -639,20 +639,20 @@ Parses a `DID` from the input string.
 <a name="DidRequest+toJSON"></a>
 
 ### didRequest.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>DidRequest</code>](#DidRequest)
+**Kind**: instance method of [<code>DidRequest</code>](#DidRequest)  
 <a name="DidRequest.fromJSON"></a>
 
 ### DidRequest.fromJSON(value) ⇒ [<code>DidRequest</code>](#DidRequest)
-**Kind**: static method of [<code>DidRequest</code>](#DidRequest)
+**Kind**: static method of [<code>DidRequest</code>](#DidRequest)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="DidResponse"></a>
 
 ## DidResponse
-**Kind**: global class
+**Kind**: global class  
 
 * [DidResponse](#DidResponse)
     * _instance_
@@ -663,15 +663,15 @@ Parses a `DID` from the input string.
 <a name="DidResponse+toJSON"></a>
 
 ### didResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>DidResponse</code>](#DidResponse)
+**Kind**: instance method of [<code>DidResponse</code>](#DidResponse)  
 <a name="DidResponse.fromJSON"></a>
 
 ### DidResponse.fromJSON(value) ⇒ [<code>DidResponse</code>](#DidResponse)
-**Kind**: static method of [<code>DidResponse</code>](#DidResponse)
+**Kind**: static method of [<code>DidResponse</code>](#DidResponse)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="Document"></a>
 
@@ -685,6 +685,7 @@ Parses a `DID` from the input string.
         * [.proof](#Document+proof) ⇒ <code>any</code>
         * [.previousMessageId](#Document+previousMessageId) ⇒ <code>string</code>
         * [.previousMessageId](#Document+previousMessageId)
+        * [.authentication()](#Document+authentication) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.insertMethod(method, scope)](#Document+insertMethod) ⇒ <code>boolean</code>
         * [.removeMethod(did)](#Document+removeMethod)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
@@ -714,7 +715,7 @@ Creates a new DID Document from the given KeyPair.
 | Param | Type |
 | --- | --- |
 | type_ | <code>number</code> | 
-| network | <code>string</code> \| <code>undefined</code> |
+| network | <code>string</code> \| <code>undefined</code> | 
 | tag | <code>string</code> \| <code>undefined</code> | 
 
 <a name="Document+id"></a>
@@ -732,16 +733,22 @@ Returns the DID Document `proof` object.
 <a name="Document+previousMessageId"></a>
 
 ### document.previousMessageId ⇒ <code>string</code>
-**Kind**: instance property of [<code>Document</code>](#Document)
+**Kind**: instance property of [<code>Document</code>](#Document)  
 <a name="Document+previousMessageId"></a>
 
 ### document.previousMessageId
-**Kind**: instance property of [<code>Document</code>](#Document)
+**Kind**: instance property of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>string</code> |
+| value | <code>string</code> | 
 
+<a name="Document+authentication"></a>
+
+### document.authentication() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Returns the default authentication method of the DID document.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+insertMethod"></a>
 
 ### document.insertMethod(method, scope) ⇒ <code>boolean</code>
@@ -904,7 +911,7 @@ If unspecified, network defaults to the mainnet.
 | Param | Type |
 | --- | --- |
 | key | [<code>KeyPair</code>](#KeyPair) | 
-| network | <code>string</code> \| <code>undefined</code> |
+| network | <code>string</code> \| <code>undefined</code> | 
 
 <a name="Document.fromAuthentication"></a>
 
@@ -931,7 +938,7 @@ Deserializes a `Document` object from a JSON object.
 <a name="FeaturesRequest"></a>
 
 ## FeaturesRequest
-**Kind**: global class
+**Kind**: global class  
 
 * [FeaturesRequest](#FeaturesRequest)
     * _instance_
@@ -942,20 +949,20 @@ Deserializes a `Document` object from a JSON object.
 <a name="FeaturesRequest+toJSON"></a>
 
 ### featuresRequest.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>FeaturesRequest</code>](#FeaturesRequest)
+**Kind**: instance method of [<code>FeaturesRequest</code>](#FeaturesRequest)  
 <a name="FeaturesRequest.fromJSON"></a>
 
 ### FeaturesRequest.fromJSON(value) ⇒ [<code>FeaturesRequest</code>](#FeaturesRequest)
-**Kind**: static method of [<code>FeaturesRequest</code>](#FeaturesRequest)
+**Kind**: static method of [<code>FeaturesRequest</code>](#FeaturesRequest)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="FeaturesResponse"></a>
 
 ## FeaturesResponse
-**Kind**: global class
+**Kind**: global class  
 
 * [FeaturesResponse](#FeaturesResponse)
     * _instance_
@@ -966,20 +973,20 @@ Deserializes a `Document` object from a JSON object.
 <a name="FeaturesResponse+toJSON"></a>
 
 ### featuresResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>FeaturesResponse</code>](#FeaturesResponse)
+**Kind**: instance method of [<code>FeaturesResponse</code>](#FeaturesResponse)  
 <a name="FeaturesResponse.fromJSON"></a>
 
 ### FeaturesResponse.fromJSON(value) ⇒ [<code>FeaturesResponse</code>](#FeaturesResponse)
-**Kind**: static method of [<code>FeaturesResponse</code>](#FeaturesResponse)
+**Kind**: static method of [<code>FeaturesResponse</code>](#FeaturesResponse)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="Introduction"></a>
 
 ## Introduction
-**Kind**: global class
+**Kind**: global class  
 
 * [Introduction](#Introduction)
     * _instance_
@@ -990,20 +997,20 @@ Deserializes a `Document` object from a JSON object.
 <a name="Introduction+toJSON"></a>
 
 ### introduction.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>Introduction</code>](#Introduction)
+**Kind**: instance method of [<code>Introduction</code>](#Introduction)  
 <a name="Introduction.fromJSON"></a>
 
 ### Introduction.fromJSON(value) ⇒ [<code>Introduction</code>](#Introduction)
-**Kind**: static method of [<code>Introduction</code>](#Introduction)
+**Kind**: static method of [<code>Introduction</code>](#Introduction)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="IntroductionProposal"></a>
 
 ## IntroductionProposal
-**Kind**: global class
+**Kind**: global class  
 
 * [IntroductionProposal](#IntroductionProposal)
     * _instance_
@@ -1014,20 +1021,20 @@ Deserializes a `Document` object from a JSON object.
 <a name="IntroductionProposal+toJSON"></a>
 
 ### introductionProposal.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>IntroductionProposal</code>](#IntroductionProposal)
+**Kind**: instance method of [<code>IntroductionProposal</code>](#IntroductionProposal)  
 <a name="IntroductionProposal.fromJSON"></a>
 
 ### IntroductionProposal.fromJSON(value) ⇒ [<code>IntroductionProposal</code>](#IntroductionProposal)
-**Kind**: static method of [<code>IntroductionProposal</code>](#IntroductionProposal)
+**Kind**: static method of [<code>IntroductionProposal</code>](#IntroductionProposal)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="IntroductionResponse"></a>
 
 ## IntroductionResponse
-**Kind**: global class
+**Kind**: global class  
 
 * [IntroductionResponse](#IntroductionResponse)
     * _instance_
@@ -1038,15 +1045,15 @@ Deserializes a `Document` object from a JSON object.
 <a name="IntroductionResponse+toJSON"></a>
 
 ### introductionResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>IntroductionResponse</code>](#IntroductionResponse)
+**Kind**: instance method of [<code>IntroductionResponse</code>](#IntroductionResponse)  
 <a name="IntroductionResponse.fromJSON"></a>
 
 ### IntroductionResponse.fromJSON(value) ⇒ [<code>IntroductionResponse</code>](#IntroductionResponse)
-**Kind**: static method of [<code>IntroductionResponse</code>](#IntroductionResponse)
+**Kind**: static method of [<code>IntroductionResponse</code>](#IntroductionResponse)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="KeyCollection"></a>
 
@@ -1229,7 +1236,7 @@ Deserializes a `KeyPair` object from a JSON object.
 <a name="Network"></a>
 
 ## Network
-**Kind**: global class
+**Kind**: global class  
 
 * [Network](#Network)
     * _instance_
@@ -1246,36 +1253,36 @@ Deserializes a `KeyPair` object from a JSON object.
 ### network.defaultNodeURL ⇒ <code>string</code>
 Returns the node URL of the Tangle network.
 
-**Kind**: instance property of [<code>Network</code>](#Network)
+**Kind**: instance property of [<code>Network</code>](#Network)  
 <a name="Network+explorerURL"></a>
 
 ### network.explorerURL ⇒ <code>string</code>
 Returns the web explorer URL of the Tangle network.
 
-**Kind**: instance property of [<code>Network</code>](#Network)
+**Kind**: instance property of [<code>Network</code>](#Network)  
 <a name="Network+messageURL"></a>
 
 ### network.messageURL(message_id) ⇒ <code>string</code>
 Returns the web explorer URL of the given `message`.
 
-**Kind**: instance method of [<code>Network</code>](#Network)
+**Kind**: instance method of [<code>Network</code>](#Network)  
 
 | Param | Type |
 | --- | --- |
-| message_id | <code>string</code> |
+| message_id | <code>string</code> | 
 
 <a name="Network+toString"></a>
 
 ### network.toString() ⇒ <code>string</code>
-**Kind**: instance method of [<code>Network</code>](#Network)
+**Kind**: instance method of [<code>Network</code>](#Network)  
 <a name="Network.mainnet"></a>
 
 ### Network.mainnet() ⇒ [<code>Network</code>](#Network)
-**Kind**: static method of [<code>Network</code>](#Network)
+**Kind**: static method of [<code>Network</code>](#Network)  
 <a name="Network.testnet"></a>
 
 ### Network.testnet() ⇒ [<code>Network</code>](#Network)
-**Kind**: static method of [<code>Network</code>](#Network)
+**Kind**: static method of [<code>Network</code>](#Network)  
 <a name="NewDocument"></a>
 
 ## NewDocument
@@ -1296,7 +1303,7 @@ Returns the web explorer URL of the given `message`.
 <a name="PresentationRequest"></a>
 
 ## PresentationRequest
-**Kind**: global class
+**Kind**: global class  
 
 * [PresentationRequest](#PresentationRequest)
     * _instance_
@@ -1307,20 +1314,20 @@ Returns the web explorer URL of the given `message`.
 <a name="PresentationRequest+toJSON"></a>
 
 ### presentationRequest.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>PresentationRequest</code>](#PresentationRequest)
+**Kind**: instance method of [<code>PresentationRequest</code>](#PresentationRequest)  
 <a name="PresentationRequest.fromJSON"></a>
 
 ### PresentationRequest.fromJSON(value) ⇒ [<code>PresentationRequest</code>](#PresentationRequest)
-**Kind**: static method of [<code>PresentationRequest</code>](#PresentationRequest)
+**Kind**: static method of [<code>PresentationRequest</code>](#PresentationRequest)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="PresentationResponse"></a>
 
 ## PresentationResponse
-**Kind**: global class
+**Kind**: global class  
 
 * [PresentationResponse](#PresentationResponse)
     * _instance_
@@ -1331,20 +1338,20 @@ Returns the web explorer URL of the given `message`.
 <a name="PresentationResponse+toJSON"></a>
 
 ### presentationResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>PresentationResponse</code>](#PresentationResponse)
+**Kind**: instance method of [<code>PresentationResponse</code>](#PresentationResponse)  
 <a name="PresentationResponse.fromJSON"></a>
 
 ### PresentationResponse.fromJSON(value) ⇒ [<code>PresentationResponse</code>](#PresentationResponse)
-**Kind**: static method of [<code>PresentationResponse</code>](#PresentationResponse)
+**Kind**: static method of [<code>PresentationResponse</code>](#PresentationResponse)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="ResolutionRequest"></a>
 
 ## ResolutionRequest
-**Kind**: global class
+**Kind**: global class  
 
 * [ResolutionRequest](#ResolutionRequest)
     * _instance_
@@ -1355,20 +1362,20 @@ Returns the web explorer URL of the given `message`.
 <a name="ResolutionRequest+toJSON"></a>
 
 ### resolutionRequest.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>ResolutionRequest</code>](#ResolutionRequest)
+**Kind**: instance method of [<code>ResolutionRequest</code>](#ResolutionRequest)  
 <a name="ResolutionRequest.fromJSON"></a>
 
 ### ResolutionRequest.fromJSON(value) ⇒ [<code>ResolutionRequest</code>](#ResolutionRequest)
-**Kind**: static method of [<code>ResolutionRequest</code>](#ResolutionRequest)
+**Kind**: static method of [<code>ResolutionRequest</code>](#ResolutionRequest)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="ResolutionResponse"></a>
 
 ## ResolutionResponse
-**Kind**: global class
+**Kind**: global class  
 
 * [ResolutionResponse](#ResolutionResponse)
     * _instance_
@@ -1379,15 +1386,15 @@ Returns the web explorer URL of the given `message`.
 <a name="ResolutionResponse+toJSON"></a>
 
 ### resolutionResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>ResolutionResponse</code>](#ResolutionResponse)
+**Kind**: instance method of [<code>ResolutionResponse</code>](#ResolutionResponse)  
 <a name="ResolutionResponse.fromJSON"></a>
 
 ### ResolutionResponse.fromJSON(value) ⇒ [<code>ResolutionResponse</code>](#ResolutionResponse)
-**Kind**: static method of [<code>ResolutionResponse</code>](#ResolutionResponse)
+**Kind**: static method of [<code>ResolutionResponse</code>](#ResolutionResponse)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="Service"></a>
 
@@ -1420,7 +1427,7 @@ Deserializes a `Service` object from a JSON object.
 <a name="Timing"></a>
 
 ## Timing
-**Kind**: global class
+**Kind**: global class  
 
 * [Timing](#Timing)
     * _instance_
@@ -1443,98 +1450,98 @@ Deserializes a `Service` object from a JSON object.
 <a name="Timing+outTime"></a>
 
 ### timing.outTime ⇒ <code>string</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>Timing</code>](#Timing)
+**Kind**: instance property of [<code>Timing</code>](#Timing)  
 <a name="Timing+outTime"></a>
 
 ### timing.outTime
-**Kind**: instance property of [<code>Timing</code>](#Timing)
+**Kind**: instance property of [<code>Timing</code>](#Timing)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>string</code> |
+| value | <code>string</code> | 
 
 <a name="Timing+inTime"></a>
 
 ### timing.inTime ⇒ <code>string</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>Timing</code>](#Timing)
+**Kind**: instance property of [<code>Timing</code>](#Timing)  
 <a name="Timing+inTime"></a>
 
 ### timing.inTime
-**Kind**: instance property of [<code>Timing</code>](#Timing)
+**Kind**: instance property of [<code>Timing</code>](#Timing)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>string</code> |
+| value | <code>string</code> | 
 
 <a name="Timing+staleTime"></a>
 
 ### timing.staleTime ⇒ <code>string</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>Timing</code>](#Timing)
+**Kind**: instance property of [<code>Timing</code>](#Timing)  
 <a name="Timing+staleTime"></a>
 
 ### timing.staleTime
-**Kind**: instance property of [<code>Timing</code>](#Timing)
+**Kind**: instance property of [<code>Timing</code>](#Timing)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>string</code> |
+| value | <code>string</code> | 
 
 <a name="Timing+expiresTime"></a>
 
 ### timing.expiresTime ⇒ <code>string</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>Timing</code>](#Timing)
+**Kind**: instance property of [<code>Timing</code>](#Timing)  
 <a name="Timing+expiresTime"></a>
 
 ### timing.expiresTime
-**Kind**: instance property of [<code>Timing</code>](#Timing)
+**Kind**: instance property of [<code>Timing</code>](#Timing)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>string</code> |
+| value | <code>string</code> | 
 
 <a name="Timing+waitUntilTime"></a>
 
 ### timing.waitUntilTime ⇒ <code>string</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>Timing</code>](#Timing)
+**Kind**: instance property of [<code>Timing</code>](#Timing)  
 <a name="Timing+waitUntilTime"></a>
 
 ### timing.waitUntilTime
-**Kind**: instance property of [<code>Timing</code>](#Timing)
+**Kind**: instance property of [<code>Timing</code>](#Timing)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>string</code> |
+| value | <code>string</code> | 
 
 <a name="Timing+delayMilli"></a>
 
 ### timing.delayMilli ⇒ <code>number</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>Timing</code>](#Timing)
+**Kind**: instance property of [<code>Timing</code>](#Timing)  
 <a name="Timing+delayMilli"></a>
 
 ### timing.delayMilli
-**Kind**: instance property of [<code>Timing</code>](#Timing)
+**Kind**: instance property of [<code>Timing</code>](#Timing)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>number</code> |
+| value | <code>number</code> | 
 
 <a name="Timing+toJSON"></a>
 
 ### timing.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>Timing</code>](#Timing)
+**Kind**: instance method of [<code>Timing</code>](#Timing)  
 <a name="Timing.fromJSON"></a>
 
 ### Timing.fromJSON(value) ⇒ [<code>Timing</code>](#Timing)
-**Kind**: static method of [<code>Timing</code>](#Timing)
+**Kind**: static method of [<code>Timing</code>](#Timing)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="TrustPing"></a>
 
 ## TrustPing
-**Kind**: global class
+**Kind**: global class  
 
 * [TrustPing](#TrustPing)
     * _instance_
@@ -1545,20 +1552,20 @@ Deserializes a `Service` object from a JSON object.
 <a name="TrustPing+toJSON"></a>
 
 ### trustPing.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>TrustPing</code>](#TrustPing)
+**Kind**: instance method of [<code>TrustPing</code>](#TrustPing)  
 <a name="TrustPing.fromJSON"></a>
 
 ### TrustPing.fromJSON(value) ⇒ [<code>TrustPing</code>](#TrustPing)
-**Kind**: static method of [<code>TrustPing</code>](#TrustPing)
+**Kind**: static method of [<code>TrustPing</code>](#TrustPing)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="TrustedIssuer"></a>
 
 ## TrustedIssuer
-**Kind**: global class
+**Kind**: global class  
 
 * [TrustedIssuer](#TrustedIssuer)
     * _instance_
@@ -1569,15 +1576,15 @@ Deserializes a `Service` object from a JSON object.
 <a name="TrustedIssuer+toJSON"></a>
 
 ### trustedIssuer.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>TrustedIssuer</code>](#TrustedIssuer)
+**Kind**: instance method of [<code>TrustedIssuer</code>](#TrustedIssuer)  
 <a name="TrustedIssuer.fromJSON"></a>
 
 ### TrustedIssuer.fromJSON(value) ⇒ [<code>TrustedIssuer</code>](#TrustedIssuer)
-**Kind**: static method of [<code>TrustedIssuer</code>](#TrustedIssuer)
+**Kind**: static method of [<code>TrustedIssuer</code>](#TrustedIssuer)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> |
+| value | <code>any</code> | 
 
 <a name="VerifiableCredential"></a>
 

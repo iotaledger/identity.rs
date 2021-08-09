@@ -492,8 +492,8 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if the diff operation or signature operation fails.
-  pub fn diff(&self, other: &Self, message: MessageId, secret: &SecretKey) -> Result<DocumentDiff> {
-    let mut diff: DocumentDiff = DocumentDiff::new(self, other, message)?;
+  pub fn diff(&self, other: &Self, message_id: MessageId, secret: &SecretKey) -> Result<DocumentDiff> {
+    let mut diff: DocumentDiff = DocumentDiff::new(self, other, message_id)?;
 
     self.sign_data(&mut diff, secret)?;
 

@@ -28,7 +28,7 @@ pub struct DiffChain {
 }
 
 impl DiffChain {
-  /// Constructs a new `DiffChain` for the given `IntegrationChain` from a slice of `Message`s.
+  /// Constructs a new [`DiffChain`] for the given [`IntegrationChain`] from a slice of [`Messages`][Message].
   pub fn try_from_messages(integration_chain: &IntegrationChain, messages: &[Message]) -> Result<Self> {
     let did: &IotaDID = integration_chain.current().id();
 
@@ -42,7 +42,7 @@ impl DiffChain {
     Self::try_from_index(integration_chain, index)
   }
 
-  /// Constructs a new `DiffChain` for the given `IntegrationChain` from the given `MessageIndex`.
+  /// Constructs a new [`DiffChain`] for the given [`IntegrationChain`] from the given [`MessageIndex`].
   pub fn try_from_index(integration_chain: &IntegrationChain, mut index: MessageIndex<DocumentDiff>) -> Result<Self> {
     trace!("[Diff] Message Index = {:#?}", index);
 
@@ -64,7 +64,7 @@ impl DiffChain {
     Ok(this)
   }
 
-  /// Creates a new `DiffChain`.
+  /// Creates a new [`DiffChain`].
   pub fn new() -> Self {
     Self { inner: Vec::new() }
   }
@@ -74,27 +74,27 @@ impl DiffChain {
     self.inner.len()
   }
 
-  /// Returns `true` if the `DiffChain` is empty.
+  /// Returns `true` if the [`DiffChain`] is empty.
   pub fn is_empty(&self) -> bool {
     self.inner.is_empty()
   }
 
-  /// Empties the `DiffChain`, removing all diffs.
+  /// Empties the [`DiffChain`], removing all diffs.
   pub fn clear(&mut self) {
     self.inner.clear();
   }
 
-  /// Returns an iterator yielding references to `DocumentDiff`s.
+  /// Returns an iterator yielding references to [`DocumentDiffs`][DocumentDiff].
   pub fn iter(&self) -> Iter<'_, DocumentDiff> {
     self.inner.iter()
   }
 
-  /// Returns the `MessageId` of the latest diff if the chain, if any.
+  /// Returns the [`MessageId`] of the latest diff if the chain, if any.
   pub fn current_message_id(&self) -> Option<&MessageId> {
     self.inner.last().map(|diff| diff.message_id())
   }
 
-  /// Adds a new diff to the `DiffChain`.
+  /// Adds a new diff to the [`DiffChain`].
   ///
   /// # Errors
   ///
@@ -111,26 +111,26 @@ impl DiffChain {
     Ok(())
   }
 
-  /// Adds a new diff to the `DiffChain` with performing validation checks.
+  /// Adds a new diff to the [`DiffChain`] with performing validation checks.
   ///
   /// # Safety
   ///
   /// This function is unsafe because it does not check the validity of
-  /// the signature or Tangle references of the `DocumentDiff`.
+  /// the signature or Tangle references of the [`DocumentDiff`].
   pub unsafe fn push_unchecked(&mut self, diff: DocumentDiff) {
     self.inner.push(diff);
   }
 
-  /// Returns `true` if the `DocumentDiff` can be added to the `DiffChain`.
+  /// Returns `true` if the [`DocumentDiff`] can be added to the [`DiffChain`].
   pub fn is_valid(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> bool {
     self.check_validity(integration_chain, diff).is_ok()
   }
 
-  /// Checks if the `DocumentDiff` can be added to the `DiffChain`n.
+  /// Checks if the [`DocumentDiff`] can be added to the [`DiffChain`].
   ///
   /// # Errors
   ///
-  /// Fails if the `DocumentDiff` is not a valid addition.
+  /// Fails if the [`DocumentDiff`] is not a valid addition.
   pub fn check_validity(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> Result<()> {
     if integration_chain.current().verify_data(diff).is_err() {
       return Err(Error::ChainError {

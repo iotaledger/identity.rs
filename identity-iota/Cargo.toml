@@ -21,6 +21,7 @@ identity-did = { version = "=0.3.0", path = "../identity-did" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]

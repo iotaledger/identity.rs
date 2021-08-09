@@ -13,7 +13,7 @@ import { manipulateIdentity } from "./mainpulate_did.js";
     @param {boolean} log log the events to the output window
 **/
 export async function createDiffChain(clientConfig, log = true) {
-    if (log) logToScreen("creating diff chain ...");
+    if (log) logToScreen("Creating diff chain ...");
 
     // Create a default client configuration from network.
     const config = identity.Config.fromNetwork(clientConfig.network);
@@ -38,7 +38,7 @@ export async function createDiffChain(clientConfig, log = true) {
     // Create diff
     const diff = doc.diff(updatedDoc, updatedMessageId, key);
 
-    if (log) logToScreen("Diff object:");
+    if (log) logToScreen("Diff:");
     if (log) logObjectToScreen(diff);
 
     // Publish the diff to the Tangle

@@ -13,13 +13,14 @@ use crate::tangle::TangleRef;
 
 type __Index<T> = HashMap<MessageId, Vec<T>>;
 
+/// Index of [TangleRef] instances where the index key is the `previous_message_id`.
 #[derive(Clone, Debug)]
 pub struct MessageIndex<T> {
   inner: __Index<T>,
 }
 
 impl<T> MessageIndex<T> {
-  /// Creates a new `MessageIndex`.
+  /// Creates a new [`MessageIndex`].
   pub fn new() -> Self {
     Self { inner: HashMap::new() }
   }
@@ -30,9 +31,9 @@ impl<T> MessageIndex<T> {
   }
 
   pub fn remove_where<U>(&mut self, key: &U, f: impl Fn(&T) -> bool) -> Option<T>
-  where
-    MessageId: Borrow<U>,
-    U: Hash + Eq + ?Sized,
+    where
+      MessageId: Borrow<U>,
+      U: Hash + Eq + ?Sized,
   {
     if let Some(list) = self.inner.get_mut(key) {
       list.iter().position(f).map(|index| list.remove(index))
@@ -41,14 +42,14 @@ impl<T> MessageIndex<T> {
     }
   }
 
-  pub fn drain_keys(&mut self) -> impl Iterator<Item = MessageId> + '_ {
+  pub fn drain_keys(&mut self) -> impl Iterator<Item=MessageId> + '_ {
     self.inner.drain().map(|(data, _)| data)
   }
 }
 
 impl<T> MessageIndex<T>
-where
-  T: TangleRef,
+  where
+    T: TangleRef,
 {
   pub fn insert(&mut self, element: T) {
     let key: &MessageId = element.previous_message_id();
@@ -68,8 +69,8 @@ where
   }
 
   pub fn extend<I>(&mut self, iter: I)
-  where
-    I: IntoIterator<Item = T>,
+    where
+      I: IntoIterator<Item=T>,
   {
     for element in iter.into_iter() {
       self.insert(element);
@@ -98,12 +99,12 @@ impl<T> DerefMut for MessageIndex<T> {
 }
 
 impl<T> FromIterator<T> for MessageIndex<T>
-where
-  T: TangleRef,
+  where
+    T: TangleRef,
 {
   fn from_iter<I>(iter: I) -> Self
-  where
-    I: IntoIterator<Item = T>,
+    where
+      I: IntoIterator<Item=T>,
   {
     let mut this: Self = Self::new();
     this.extend(iter);
@@ -113,8 +114,9 @@ where
 
 #[cfg(test)]
 mod tests {
-  use super::*;
   use crate::did::IotaDID;
+
+  use super::*;
 
   #[derive(Debug)]
   struct Case {

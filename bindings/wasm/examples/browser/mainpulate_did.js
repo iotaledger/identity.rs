@@ -14,7 +14,7 @@ import { createIdentity } from "./create_did.js";
     @param {boolean} log log the events to the output window
 **/
 export async function manipulateIdentity(clientConfig, log = true) {
-    if (log) logToScreen("creating identity...");
+    if (log) logToScreen("Creating identity...");
 
     //Creates a new identity (See "create_did" example)
     let { key, doc, receipt } = await createIdentity(clientConfig, false);
@@ -52,19 +52,19 @@ export async function manipulateIdentity(clientConfig, log = true) {
     doc.sign(key);
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
-    const nextReceipt = await client.publishDocument(doc.toJSON());
+    const updateReceipt = await client.publishDocument(doc.toJSON());
 
     if (log) logObjectToScreen(doc);
 
-    const explorerUrl = getExplorerUrl(doc, nextReceipt.messageId);
+    const explorerUrl = getExplorerUrl(doc, updateReceipt.messageId);
     if (log) logExplorerUrlToScreen(explorerUrl);
 
     return {
         key,
         newKey,
         doc,
-        messageIdOfOriginalMessage: receipt.messageId,
-        messageIdOfSecondMessage: nextReceipt.messageId,
+        originalMessageId: receipt.messageId,
+        updatedMessageId: updateReceipt.messageId,
         explorerUrl,
     };
 }

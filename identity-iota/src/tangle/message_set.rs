@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::BTreeMap;
-// use identity_common::core::FromJson;
+use std::ops::Deref;
 
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
@@ -14,10 +14,15 @@ use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
 use crate::tangle::TryFromMessage;
 
+/// Set of messages for a particular DID.
+///
+/// Retains a list of "spam" messages not matching the given message type or DID.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct MessageSet<T> {
+  /// Valid messages.
   data: BTreeMap<MessageId, T>,
-  spam: Option<Vec<MessageId>>,
+  /// Invalid messages that do not match the given DID or type.
+  spam: Vec<MessageId>,
 }
 
 impl<T> MessageSet<T> {
@@ -29,23 +34,24 @@ impl<T> MessageSet<T> {
     &self.data
   }
 
-  pub fn spam(&self) -> Option<&[MessageId]> {
-    self.spam.as_deref()
+  pub fn spam(&self) -> &[MessageId] {
+    self.spam.deref()
   }
 
-  pub fn message_ids(&self) -> impl Iterator<Item = &MessageId> {
+  pub fn message_ids(&self) -> impl Iterator<Item=&MessageId> {
     self.data.keys()
   }
 
-  pub fn resources(&self) -> impl Iterator<Item = &T> {
+  pub fn resources(&self) -> impl Iterator<Item=&T> {
     self.data.values()
   }
 }
 
 impl<T: TryFromMessage> MessageSet<T> {
+  /// Construct a new [`MessageSet`] from a list of [`Messages`][Message].
   pub fn new(did: &IotaDID, messages: &[Message]) -> Self {
     let mut data: BTreeMap<MessageId, T> = BTreeMap::new();
-    let mut spam: Option<Vec<MessageId>> = None;
+    let mut spam: Vec<MessageId> = Vec::new();
 
     for message in messages {
       let message_id: MessageId = message.id().0;
@@ -55,12 +61,15 @@ impl<T: TryFromMessage> MessageSet<T> {
           data.insert(message_id, resource);
         }
         None => {
-          spam.get_or_insert_with(Default::default).push(message_id);
+          spam.push(message_id);
         }
       }
     }
 
-    Self { data, spam }
+    Self {
+      data,
+      spam,
+    }
   }
 }
 
@@ -70,13 +79,20 @@ impl<T: Clone + TangleRef> MessageSet<T> {
   }
 }
 
+/// List of [`DocumentDiff`] messages forming a diff chain.
+///
+/// Retains a list of "spam" messages that are valid but do not form part of the resulting chain.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DiffSet {
+  /// Diff chain
   data: Vec<DocumentDiff>,
-  spam: Option<Vec<MessageId>>,
+  /// Messages that are valid [`DocumentDiffs`][DocumentDiff] but not part of the resulting chain
+  spam: Vec<MessageId>,
 }
 
 impl DiffSet {
+  /// Constructs a [`DiffSet`] from a list of [`Messages`][Message], starting from a particular
+  /// [`MessageId`].
   pub fn new(did: &IotaDID, method: &IotaVerificationMethod, message_id: &MessageId, messages: &[Message]) -> Self {
     let message_set: MessageSet<DocumentDiff> = MessageSet::new(did, messages);
 
@@ -84,22 +100,30 @@ impl DiffSet {
     let mut target: MessageId = *message_id;
 
     let mut data: Vec<DocumentDiff> = Vec::new();
-    let mut spam: Option<Vec<MessageId>> = None;
+    let mut spam: Vec<MessageId> = Vec::new();
 
     while let Some(mut list) = index.remove(&target) {
-      'inner: while let Some(next) = list.pop() {
-        if Verifier::do_verify(method, &next).is_ok() {
+      let mut found: bool = false;
+      while let Some(next) = list.pop() {
+        // TODO: ensure this matches document resolution behaviour when there are multiple diff
+        //       documents with the same previous_message_id.
+        if !found && Verifier::do_verify(method, &next).is_ok() {
           target = *next.message_id();
           data.push(next);
-          break 'inner;
+          found = true;
+          // Do not break early, otherwise we may miss some spam message that are valid documents
+          // but not part of the resulting diff chain.
         } else {
-          spam.get_or_insert_with(Vec::new).push(*next.message_id());
+          spam.push(*next.message_id());
         }
       }
     }
 
-    spam.get_or_insert_with(Vec::new).extend(index.drain_keys());
+    spam.extend(index.drain_keys());
 
-    Self { data, spam }
+    Self {
+      data,
+      spam,
+    }
   }
 }

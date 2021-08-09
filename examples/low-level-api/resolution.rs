@@ -8,8 +8,6 @@
 //!
 //! cargo run --example resolution
 
-mod create_did;
-
 use identity::core::SerdeInto;
 use identity::did::resolution;
 use identity::did::resolution::Dereference;
@@ -22,12 +20,14 @@ use identity::iota::IotaDID;
 use identity::iota::Receipt;
 use identity::prelude::*;
 
+mod create_did;
+
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a client instance to send messages to the Tangle.
   let client: ClientMap = ClientMap::new();
 
-  // Create a signed DID Document/KeyPair for the credential subject (see create_did.rs).
+  // Create a signed DID Document and KeyPair (see create_did.rs).
   let (document, _, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
   // ===========================================================================

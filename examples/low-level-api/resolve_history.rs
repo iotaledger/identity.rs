@@ -70,12 +70,12 @@ async fn main() -> Result<()> {
     new
   };
 
-  // Generate a signed diff object.
+  // Create a signed diff update.
   //
   // This is the first diff therefore the `previous_message_id` property is
   // set to the last DID document published.
   let diff1: DocumentDiff = document.diff(&update1, *int1_update_receipt.message_id(), keypair.secret())?;
-  // Publish the diff object to the Tangle, starting a diff chain.
+  // Publish the diff to the Tangle, starting a diff chain.
   let diff1_update_receipt: Receipt = client.publish_diff(int1_update_receipt.message_id(), &diff1).await?;
 
   // ===========================================================================
@@ -90,14 +90,13 @@ async fn main() -> Result<()> {
     new
   };
 
-  // Generate a signed diff object.
-  //
   // This is the second diff therefore the `previous_message_id` property is
-  // set to the first published diff object to keep the diff chain intact.
+  // set to the first published diff to keep the diff chain intact.
   let diff2: DocumentDiff = document.diff(&update2, *diff1_update_receipt.message_id(), keypair.secret())?;
 
-  // Publish the diff object to the Tangle.
-  // Note that we still use the message_id from the last integration chain message here.
+  // Publish the diff to the Tangle.
+  // Note that we still use the message_id from the last integration chain message here to link
+  // the current diff chain to that point on the integration chain.
   let _diff2_update_receipt: Receipt = client.publish_diff(int1_update_receipt.message_id(), &diff2).await?;
 
   // ===========================================================================
@@ -134,10 +133,14 @@ async fn main() -> Result<()> {
   // Retrieve the updated message history of the DID.
   let history2: MessageHistory = client.resolve_history(document.id()).await?;
 
-  // The history shows two documents in the integration chain (plus the current document), and no
+  // The history now shows two documents in the integration chain (plus the current document), and no
   // diffs in the diff chain. This is because the previous document published included those updates
   // and we have not added any diffs pointing to the latest document.
   println!("History (2) = {:#?}", history2);
+
+  // ===========================================================================
+  // Diff Chain History
+  // ===========================================================================
 
   // Fetch the diff chain of the previous integration chain message.
   // We can still retrieve old diff chains, but they do not affect DID resolution.
