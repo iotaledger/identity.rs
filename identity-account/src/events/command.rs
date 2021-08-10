@@ -5,6 +5,7 @@ use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::crypto::PublicKey;
+use identity_core::crypto::SecretKey;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
@@ -25,10 +26,11 @@ use crate::types::KeyLocation;
 // Supported authentication method types.
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum Command {
   CreateIdentity {
     network: Option<String>,
+    secret_key: Option<SecretKey>,
     authentication: MethodType,
   },
   CreateMethod {
@@ -70,6 +72,7 @@ impl Command {
     match self {
       Self::CreateIdentity {
         network,
+        secret_key,
         authentication,
       } => {
         // The state must not be initialized
@@ -91,8 +94,13 @@ impl Command {
           CommandError::DuplicateKeyLocation(location)
         );
 
-        // Generate an authentication key
-        let public: PublicKey = store.key_new(state.id(), &location).await?;
+        let public: PublicKey = if let Some(secret_key) = secret_key {
+          store.key_insert(state.id(), &location, secret_key).await
+        } else {
+          // Generate an authentication kek
+          store.key_new(state.id(), &location).await
+        }?;
+
         let data: MethodData = MethodData::new_b58(public.as_ref());
         let method: TinyMethod = TinyMethod::new(location, data, None);
 
@@ -231,6 +239,7 @@ impl Command {
 
 impl_command_builder!(CreateIdentity {
   @optional network String,
+  @optional secret_key SecretKey,
   @defaulte authentication MethodType = Ed25519VerificationKey2018,
 });
 

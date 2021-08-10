@@ -12,6 +12,7 @@ use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
+use identity_core::crypto::SecretKey;
 use identity_core::crypto::Sign;
 use identity_did::verification::MethodType;
 use std::sync::RwLockReadGuard;
@@ -107,6 +108,10 @@ impl Storage for MemStore {
         todo!("[MemStore::key_new] Handle MerkleKeyCollection2021")
       }
     }
+  }
+
+  async fn key_insert(&self, id: IdentityId, location: &KeyLocation, secret_key: SecretKey) -> Result<PublicKey> {
+    todo!("MemStore::key_insert")
   }
 
   async fn key_exists(&self, id: IdentityId, location: &KeyLocation) -> Result<bool> {
