@@ -6,7 +6,10 @@ mod requests;
 use std::{borrow::Cow, cell::RefCell, rc::Rc};
 
 use identity::{
-  actor::{actor_builder::ActorBuilder, traits::ActorRequest as IotaActorRequest},
+  actor::{
+    actor::HandlerBuilder as _HandlerBuilder, actor_builder::ActorBuilder, asyncfn::AsyncFn,
+    traits::ActorRequest as IotaActorRequest,
+  },
   prelude::*,
 };
 use js_sys::{Function, Promise};
@@ -20,7 +23,7 @@ use crate::error::wasm_error;
 
 use self::{interface::ActorRequest, multiaddr::Multiaddr, peer_id::PeerId};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JSON(serde_json::Value);
 
 impl IotaActorRequest for JSON {
@@ -86,16 +89,10 @@ impl IdentityActor {
     Ok(promise)
   }
 
-  #[wasm_bindgen(js_name = addHandlerMethod)]
-  pub fn add_handler_method(&self, obj: JsValue, method: js_sys::Function) -> Result<Promise, JsValue> {
-    let promise = future_to_promise(async move {
-      let retval = method.call0(&obj).unwrap();
-      let promise = js_sys::Promise::from(retval);
-      let result = wasm_bindgen_futures::JsFuture::from(promise).await.unwrap();
-      Ok(result)
-    });
-
-    Ok(promise)
+  #[wasm_bindgen(js_name = addHandler)]
+  pub fn add_handler(&self, object: JsValue) -> HandlerBuilder {
+    // self.comm.borrow_mut().add_handler(object)
+    todo!()
   }
 
   #[wasm_bindgen(js_name = sendRequest)]
@@ -146,5 +143,37 @@ impl IdentityActor {
     });
 
     Ok(promise)
+  }
+}
+
+#[wasm_bindgen]
+pub struct HandlerBuilder {
+  builder: _HandlerBuilder,
+}
+
+#[wasm_bindgen]
+impl HandlerBuilder {
+  #[wasm_bindgen(js_name = addHandlerMethod)]
+  pub fn add_handler_method(self, endpoint: &str, method: js_sys::Function) {
+    let fun = AsyncFn::new(|handler: JsValue, request: JSON| {
+      let method_clone = method.clone();
+
+      async move {
+        // SAFETY: A JSON value can always be successfully converted
+        let val = JsValue::from_serde(&request.0).unwrap();
+        let promise = method_clone.call1(&handler, &val).unwrap();
+
+        let promise = js_sys::Promise::from(promise);
+        let result = wasm_bindgen_futures::JsFuture::from(promise).await;
+
+        // TODO: Is this correct?
+        match result {
+          Ok(js_val) => JSON(js_val.into_serde().unwrap()),
+          Err(js_val) => JSON(js_val.into_serde().unwrap()),
+        }
+      }
+    });
+
+    self.builder.add_method("endpoint", fun);
   }
 }
