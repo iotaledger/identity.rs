@@ -42,8 +42,8 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 
 ## Documentation and Resources
 
-- [API Reference](https://identity-docs.iota.org/docs/identity/index.html): Package documentation (cargo docs).
-- [Identity Documentation Pages](https://identity-docs.iota.org/welcome.html): Supplementing documentation with context around identity and simple examples on library usage.
+- [API Reference](https://identity.docs.iota.org/docs/libraries/rust/api_reference): Package documentation (cargo docs).
+- [Identity Documentation Pages](https://identity.docs.iota.org/): Supplementing documentation with context around identity and simple examples on library usage.
 - [Examples in /examples folder](https://github.com/iotaledger/identity.rs/tree/main/examples): Practical code snippets to get you started with the library.
 - [IOTA Identity Experience Team Website](https://iota-community.github.io/X-Team_IOTA_Identity/): Website for a collaborative effort to provide help, guidance and spotlight to the IOTA Identity Community through offering feedback and introducing consistent workflows around IOTA Identity.
 
