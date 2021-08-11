@@ -16,7 +16,7 @@ use crate::tangle::MessageSet;
 ///
 /// Note that the diff chain messages are only for the current (last) valid integration chain
 /// message.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageHistory {
   #[serde(rename = "intChainData")]
   pub int_chain_data: IntegrationChain,

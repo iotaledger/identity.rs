@@ -14,6 +14,7 @@ mod macros;
 #[macro_use]
 pub mod error;
 
+pub mod chain;
 pub mod credential;
 pub mod crypto;
 pub mod did;

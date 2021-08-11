@@ -21,28 +21,35 @@ use crate::tangle::TryFromMessage;
 pub struct MessageSet<T> {
   /// Valid messages.
   data: BTreeMap<MessageId, T>,
-  /// Invalid messages that do not match the given DID or type.
+  /// Messages that do not match the type `T`.
   spam: Vec<MessageId>,
 }
 
 impl<T> MessageSet<T> {
+  /// Returns the message corresponding to the given [`MessageId`] if it is in the set and
+  /// successfully converts to the type `T`.
   pub fn get(&self, message_id: &MessageId) -> Option<&T> {
     self.data.get(message_id)
   }
 
+  /// Returns the map of valid messages of type `T`.
   pub fn data(&self) -> &BTreeMap<MessageId, T> {
     &self.data
   }
 
+  /// Returns a slice of [`MessageIds`](MessageIds) for spam messages on the index that are not
+  /// valid messages.
   pub fn spam(&self) -> &[MessageId] {
     self.spam.deref()
   }
 
-  pub fn message_ids(&self) -> impl Iterator<Item = &MessageId> {
+  /// Returns an iterator of [`MessageIds`](MessageIds) in the set in arbitrary order.
+  pub fn message_ids_unordered(&self) -> impl Iterator<Item = &MessageId> {
     self.data.keys()
   }
 
-  pub fn resources(&self) -> impl Iterator<Item = &T> {
+  /// Returns an iterator of messages of type `T` in the set in arbitrary order.
+  pub fn resources_unordered(&self) -> impl Iterator<Item = &T> {
     self.data.values()
   }
 }
@@ -72,7 +79,7 @@ impl<T: TryFromMessage> MessageSet<T> {
 
 impl<T: Clone + TangleRef> MessageSet<T> {
   pub fn to_index(&self) -> MessageIndex<T> {
-    self.resources().cloned().collect()
+    self.resources_unordered().cloned().collect()
   }
 }
 
@@ -119,5 +126,16 @@ impl DiffSet {
     spam.extend(index.drain_keys());
 
     Self { data, spam }
+  }
+
+  /// Returns a slice of [`DocumentDiffs`](DocumentDiff) forming a diff chain.
+  pub fn data(&self) -> &[DocumentDiff] {
+    &self.data
+  }
+
+  /// Returns a slice of [`MessageIds`](MessageIds) for spam messages on the index that are not
+  /// part of the diff chain.
+  pub fn spam(&self) -> &[MessageId] {
+    self.spam.deref()
   }
 }

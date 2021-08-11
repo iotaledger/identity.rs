@@ -89,7 +89,7 @@ impl DiffChain {
     self.inner.iter()
   }
 
-  /// Returns the [`MessageId`] of the latest diff if the chain, if any.
+  /// Returns the [`MessageId`] of the latest diff in the chain, if any.
   pub fn current_message_id(&self) -> Option<&MessageId> {
     self.inner.last().map(|diff| diff.message_id())
   }
@@ -101,7 +101,7 @@ impl DiffChain {
   /// Fails if the diff signature is invalid or the Tangle message
   /// references within the diff are invalid.
   pub fn try_push(&mut self, integration_chain: &IntegrationChain, diff: DocumentDiff) -> Result<()> {
-    self.check_validity(integration_chain, &diff)?;
+    self.check_valid_addition(integration_chain, &diff)?;
 
     // SAFETY: we performed the necessary validation in `check_validity`.
     unsafe {
@@ -122,8 +122,8 @@ impl DiffChain {
   }
 
   /// Returns `true` if the [`DocumentDiff`] can be added to the [`DiffChain`].
-  pub fn is_valid(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> bool {
-    self.check_validity(integration_chain, diff).is_ok()
+  pub fn is_valid_addition(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> bool {
+    self.check_valid_addition(integration_chain, diff).is_ok()
   }
 
   /// Checks if the [`DocumentDiff`] can be added to the [`DiffChain`].
@@ -131,7 +131,7 @@ impl DiffChain {
   /// # Errors
   ///
   /// Fails if the [`DocumentDiff`] is not a valid addition.
-  pub fn check_validity(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> Result<()> {
+  pub fn check_valid_addition(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> Result<()> {
     if integration_chain.current().verify_data(diff).is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",

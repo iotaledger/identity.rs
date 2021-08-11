@@ -5,6 +5,7 @@ use core::fmt::Display;
 use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
+
 use identity_core::convert::ToJson;
 
 use crate::chain::DiffChain;
@@ -31,7 +32,7 @@ impl DocumentChain {
   }
 
   pub(crate) fn __fold(chain_i: &IntegrationChain, chain_d: &DiffChain) -> Result<IotaDocument> {
-    let mut this: IotaDocument = chain_i.current.clone();
+    let mut this: IotaDocument = chain_i.current().clone();
 
     for diff in chain_d.iter() {
       this.merge(diff)?;
@@ -49,7 +50,7 @@ impl DocumentChain {
     }
   }
 
-  /// Creates a new `DocumentChain` from given the `IntegrationChain` and `DiffChain`.
+  /// Creates a new [`DocumentChain`] from given the [`IntegrationChain`] and [`DiffChain`].
   pub fn with_diff_chain(chain_i: IntegrationChain, chain_d: DiffChain) -> Result<Self> {
     let document: Option<IotaDocument> = if chain_d.is_empty() {
       None
@@ -66,43 +67,41 @@ impl DocumentChain {
 
   /// Returns a reference to the DID identifying the document chain.
   pub fn id(&self) -> &IotaDID {
-    self.chain_i.current.id()
+    self.chain_i.current().id()
   }
 
-  /// Returns a reference to the `IntegrationChain`.
+  /// Returns a reference to the [`IntegrationChain`].
   pub fn integration_chain(&self) -> &IntegrationChain {
     &self.chain_i
   }
 
-  /// Returns a mutable reference to the `IntegrationChain`.
+  /// Returns a mutable reference to the [`IntegrationChain`].
   pub fn integration_chain_mut(&mut self) -> &mut IntegrationChain {
     &mut self.chain_i
   }
 
-  /// Returns a reference to the `DiffChain`.
+  /// Returns a reference to the [`DiffChain`].
   pub fn diff(&self) -> &DiffChain {
     &self.chain_d
   }
 
-  /// Returns a mutable reference to the `DiffChain`.
+  /// Returns a mutable reference to the [`DiffChain`].
   pub fn diff_mut(&mut self) -> &mut DiffChain {
     &mut self.chain_d
   }
 
-  pub fn fold(mut self) -> Result<IotaDocument> {
-    for diff in self.chain_d.iter() {
-      self.chain_i.current.merge(diff)?;
-    }
-
-    Ok(self.chain_i.current)
+  /// Merges the changes from the [`DiffChain`] into the current [`IotaDocument`] from
+  /// the [`IntegrationChain`].
+  pub fn fold(self) -> Result<IotaDocument> {
+    Self::__fold(&self.chain_i, &self.chain_d)
   }
 
-  /// Returns a reference to the latest document.
+  /// Returns a reference to the latest [`IotaDocument`].
   pub fn current(&self) -> &IotaDocument {
     self.document.as_ref().unwrap_or_else(|| self.chain_i.current())
   }
 
-  /// Returns a mutable reference to the latest document.
+  /// Returns a mutable reference to the latest [`IotaDocument`].
   pub fn current_mut(&mut self) -> &mut IotaDocument {
     if let Some(document) = self.document.as_mut() {
       document
@@ -111,12 +110,12 @@ impl DocumentChain {
     }
   }
 
-  /// Returns the Tangle message Id of the latest integration document.
+  /// Returns the Tangle message Id of the latest integration [`IotaDocument`].
   pub fn integration_message_id(&self) -> &MessageId {
     self.chain_i.current_message_id()
   }
 
-  /// Returns the Tangle message Id of the latest diff or integration document.
+  /// Returns the Tangle message Id of the latest diff or integration [`IotaDocument`].
   pub fn diff_message_id(&self) -> &MessageId {
     Self::__diff_message_id(&self.chain_i, &self.chain_d)
   }
@@ -141,7 +140,7 @@ impl DocumentChain {
   ///
   /// Fails if the document diff is invalid.
   pub fn try_push_diff(&mut self, diff: DocumentDiff) -> Result<()> {
-    self.chain_d.check_validity(&self.chain_i, &diff)?;
+    self.chain_d.check_valid_addition(&self.chain_i, &diff)?;
 
     let mut document: IotaDocument = self.document.take().unwrap_or_else(|| self.chain_i.current().clone());
 

@@ -25,11 +25,22 @@
 <dd></dd>
 <dt><a href="#DidResponse">DidResponse</a></dt>
 <dd></dd>
+<dt><a href="#DiffChain">DiffChain</a></dt>
+<dd></dd>
+<dt><a href="#DiffSet">DiffSet</a></dt>
+<dd><p>List of [<code>DocumentDiff</code>] messages forming a diff chain.</p>
+<p>Retains a list of &quot;spam&quot; messages that are valid but do not form part of the resulting chain.</p>
+</dd>
 <dt><a href="#Document">Document</a></dt>
 <dd></dd>
+<dt><a href="#DocumentDiff">DocumentDiff</a></dt>
+<dd><p>Defines the difference between two DID [<code>Document</code>]s&#39; JSON representations.</p>
+</dd>
 <dt><a href="#FeaturesRequest">FeaturesRequest</a></dt>
 <dd></dd>
 <dt><a href="#FeaturesResponse">FeaturesResponse</a></dt>
+<dd></dd>
+<dt><a href="#IntegrationChain">IntegrationChain</a></dt>
 <dd></dd>
 <dt><a href="#Introduction">Introduction</a></dt>
 <dd></dd>
@@ -40,6 +51,8 @@
 <dt><a href="#KeyCollection">KeyCollection</a></dt>
 <dd></dd>
 <dt><a href="#KeyPair">KeyPair</a></dt>
+<dd></dd>
+<dt><a href="#MessageHistory">MessageHistory</a></dt>
 <dd></dd>
 <dt><a href="#Network">Network</a></dt>
 <dd></dd>
@@ -144,7 +157,7 @@
     * _instance_
         * [.network()](#Client+network) ⇒ [<code>Network</code>](#Network)
         * [.publishDocument(document)](#Client+publishDocument) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.publishDiff(message_id, value)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolve(did)](#Client+resolve) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolveDiffs(did, method, message_id)](#Client+resolveDiffs) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -178,7 +191,7 @@ Publishes an `IotaDocument` to the Tangle.
 
 <a name="Client+publishDiff"></a>
 
-### client.publishDiff(message_id, value) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.publishDiff(message_id, diff) ⇒ <code>Promise.&lt;any&gt;</code>
 Publishes a `DocumentDiff` to the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -186,7 +199,7 @@ Publishes a `DocumentDiff` to the Tangle.
 | Param | Type |
 | --- | --- |
 | message_id | <code>string</code> | 
-| value | <code>any</code> | 
+| diff | [<code>DocumentDiff</code>](#DocumentDiff) | 
 
 <a name="Client+resolve"></a>
 
@@ -673,6 +686,160 @@ Parses a `DID` from the input string.
 | --- | --- |
 | value | <code>any</code> | 
 
+<a name="DiffChain"></a>
+
+## DiffChain
+**Kind**: global class  
+
+* [DiffChain](#DiffChain)
+    * _instance_
+        * [.len()](#DiffChain+len) ⇒ <code>number</code>
+        * [.isEmpty()](#DiffChain+isEmpty) ⇒ <code>boolean</code>
+        * [.clear()](#DiffChain+clear)
+        * [.currentMessageId()](#DiffChain+currentMessageId) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.tryPush(integration_chain, diff)](#DiffChain+tryPush)
+        * [.isValidAddition(integration_chain, diff)](#DiffChain+isValidAddition) ⇒ <code>boolean</code>
+        * [.checkValidAddition(integration_chain, diff)](#DiffChain+checkValidAddition)
+        * [.intoArray()](#DiffChain+intoArray) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.toJSON()](#DiffChain+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#DiffChain.fromJSON) ⇒ [<code>DiffChain</code>](#DiffChain)
+
+<a name="DiffChain+len"></a>
+
+### diffChain.len() ⇒ <code>number</code>
+Returns the total number of diffs.
+
+**Kind**: instance method of [<code>DiffChain</code>](#DiffChain)  
+<a name="DiffChain+isEmpty"></a>
+
+### diffChain.isEmpty() ⇒ <code>boolean</code>
+Returns `true` if the [`DiffChain`] is empty.
+
+**Kind**: instance method of [<code>DiffChain</code>](#DiffChain)  
+<a name="DiffChain+clear"></a>
+
+### diffChain.clear()
+Empties the [`DiffChain`], removing all diffs.
+
+**Kind**: instance method of [<code>DiffChain</code>](#DiffChain)  
+<a name="DiffChain+currentMessageId"></a>
+
+### diffChain.currentMessageId() ⇒ <code>string</code> \| <code>undefined</code>
+Returns the [`MessageId`] of the latest diff in the chain, if any.
+
+**Kind**: instance method of [<code>DiffChain</code>](#DiffChain)  
+<a name="DiffChain+tryPush"></a>
+
+### diffChain.tryPush(integration_chain, diff)
+Adds a new diff to the [`DiffChain`].
+
+# Errors
+
+Fails if the diff signature is invalid or the Tangle message
+references within the diff are invalid.
+
+**Kind**: instance method of [<code>DiffChain</code>](#DiffChain)  
+
+| Param | Type |
+| --- | --- |
+| integration_chain | [<code>IntegrationChain</code>](#IntegrationChain) | 
+| diff | [<code>DocumentDiff</code>](#DocumentDiff) | 
+
+<a name="DiffChain+isValidAddition"></a>
+
+### diffChain.isValidAddition(integration_chain, diff) ⇒ <code>boolean</code>
+Returns `true` if the [`DocumentDiff`] can be added to the [`DiffChain`].
+
+**Kind**: instance method of [<code>DiffChain</code>](#DiffChain)  
+
+| Param | Type |
+| --- | --- |
+| integration_chain | [<code>IntegrationChain</code>](#IntegrationChain) | 
+| diff | [<code>DocumentDiff</code>](#DocumentDiff) | 
+
+<a name="DiffChain+checkValidAddition"></a>
+
+### diffChain.checkValidAddition(integration_chain, diff)
+Checks if the [`DocumentDiff`] can be added to the [`DiffChain`].
+
+# Errors
+
+Fails if the [`DocumentDiff`] is not a valid addition.
+
+**Kind**: instance method of [<code>DiffChain</code>](#DiffChain)  
+
+| Param | Type |
+| --- | --- |
+| integration_chain | [<code>IntegrationChain</code>](#IntegrationChain) | 
+| diff | [<code>DocumentDiff</code>](#DocumentDiff) | 
+
+<a name="DiffChain+intoArray"></a>
+
+### diffChain.intoArray() ⇒ <code>Array.&lt;any&gt;</code>
+Converts the chain into a [`js_sys::Array`] of [`WasmDocumentDiffs`](WasmDocumentDiff).
+
+**Kind**: instance method of [<code>DiffChain</code>](#DiffChain)  
+<a name="DiffChain+toJSON"></a>
+
+### diffChain.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>DiffChain</code>](#DiffChain)  
+<a name="DiffChain.fromJSON"></a>
+
+### DiffChain.fromJSON(value) ⇒ [<code>DiffChain</code>](#DiffChain)
+**Kind**: static method of [<code>DiffChain</code>](#DiffChain)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
+<a name="DiffSet"></a>
+
+## DiffSet
+List of [`DocumentDiff`] messages forming a diff chain.
+
+Retains a list of "spam" messages that are valid but do not form part of the resulting chain.
+
+**Kind**: global class  
+
+* [DiffSet](#DiffSet)
+    * _instance_
+        * [.data](#DiffSet+data) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.spam](#DiffSet+spam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.toJSON()](#DiffSet+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#DiffSet.fromJSON) ⇒ [<code>DiffSet</code>](#DiffSet)
+
+<a name="DiffSet+data"></a>
+
+### diffSet.data ⇒ <code>Array.&lt;any&gt;</code>
+Returns a [`js_sys::Array`] of [`WasmDocumentDiffs`](WasmDocumentDiff) forming a diff chain.
+
+NOTE: clones the data.
+
+**Kind**: instance property of [<code>DiffSet</code>](#DiffSet)  
+<a name="DiffSet+spam"></a>
+
+### diffSet.spam ⇒ <code>Array.&lt;any&gt;</code>
+Returns a [`js_sys::Array`] of spam message ids on the same index but not forming part of the
+diff chain.
+
+NOTE: clones the data.
+
+**Kind**: instance property of [<code>DiffSet</code>](#DiffSet)  
+<a name="DiffSet+toJSON"></a>
+
+### diffSet.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>DiffSet</code>](#DiffSet)  
+<a name="DiffSet.fromJSON"></a>
+
+### DiffSet.fromJSON(value) ⇒ [<code>DiffSet</code>](#DiffSet)
+**Kind**: static method of [<code>DiffSet</code>](#DiffSet)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
 <a name="Document"></a>
 
 ## Document
@@ -683,6 +850,7 @@ Parses a `DID` from the input string.
     * _instance_
         * [.id](#Document+id) ⇒ [<code>DID</code>](#DID)
         * [.proof](#Document+proof) ⇒ <code>any</code>
+        * [.messageId](#Document+messageId) ⇒ <code>string</code>
         * [.previousMessageId](#Document+previousMessageId) ⇒ <code>string</code>
         * [.previousMessageId](#Document+previousMessageId)
         * [.authentication()](#Document+authentication) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
@@ -698,7 +866,7 @@ Parses a `DID` from the input string.
         * [.verifyData(data)](#Document+verifyData) ⇒ <code>boolean</code>
         * [.resolveKey(query)](#Document+resolveKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
-        * [.diff(other, message, key)](#Document+diff) ⇒ <code>any</code>
+        * [.diff(other, message, key)](#Document+diff) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
         * [.merge(diff)](#Document+merge)
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
@@ -729,6 +897,10 @@ Returns the DID Document `id`.
 ### document.proof ⇒ <code>any</code>
 Returns the DID Document `proof` object.
 
+**Kind**: instance property of [<code>Document</code>](#Document)  
+<a name="Document+messageId"></a>
+
+### document.messageId ⇒ <code>string</code>
 **Kind**: instance property of [<code>Document</code>](#Document)  
 <a name="Document+previousMessageId"></a>
 
@@ -871,7 +1043,7 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="Document+diff"></a>
 
-### document.diff(other, message, key) ⇒ <code>any</code>
+### document.diff(other, message, key) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
 Generate the difference between two DID Documents and sign it
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -935,6 +1107,78 @@ Deserializes a `Document` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="DocumentDiff"></a>
+
+## DocumentDiff
+Defines the difference between two DID [`Document`]s' JSON representations.
+
+**Kind**: global class  
+
+* [DocumentDiff](#DocumentDiff)
+    * [.did](#DocumentDiff+did) ⇒ [<code>DID</code>](#DID)
+    * [.diff](#DocumentDiff+diff) ⇒ <code>string</code>
+    * [.messageId](#DocumentDiff+messageId) ⇒ <code>string</code>
+    * [.messageId](#DocumentDiff+messageId)
+    * [.previousMessageId](#DocumentDiff+previousMessageId) ⇒ <code>string</code>
+    * [.previousMessageId](#DocumentDiff+previousMessageId)
+    * [.id()](#DocumentDiff+id) ⇒ [<code>DID</code>](#DID)
+
+<a name="DocumentDiff+did"></a>
+
+### documentDiff.did ⇒ [<code>DID</code>](#DID)
+Returns the DID of the associated DID Document.
+
+**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
+<a name="DocumentDiff+diff"></a>
+
+### documentDiff.diff ⇒ <code>string</code>
+Returns the raw contents of the DID Document diff.
+
+NOTE: clones the data.
+
+**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
+<a name="DocumentDiff+messageId"></a>
+
+### documentDiff.messageId ⇒ <code>string</code>
+Returns the message_id of the DID Document diff.
+
+**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
+<a name="DocumentDiff+messageId"></a>
+
+### documentDiff.messageId
+Sets the message_id of the DID Document diff.
+
+**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> | 
+
+<a name="DocumentDiff+previousMessageId"></a>
+
+### documentDiff.previousMessageId ⇒ <code>string</code>
+Returns the Tangle message id of the previous DID Document diff.
+
+**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
+<a name="DocumentDiff+previousMessageId"></a>
+
+### documentDiff.previousMessageId
+Sets the Tangle message id of the previous DID Document diff.
+
+**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> | 
+
+<a name="DocumentDiff+id"></a>
+
+### documentDiff.id() ⇒ [<code>DID</code>](#DID)
+Returns the DID of the associated DID Document.
+
+NOTE: clones the data.
+
+**Kind**: instance method of [<code>DocumentDiff</code>](#DocumentDiff)  
 <a name="FeaturesRequest"></a>
 
 ## FeaturesRequest
@@ -978,6 +1222,91 @@ Deserializes a `Document` object from a JSON object.
 
 ### FeaturesResponse.fromJSON(value) ⇒ [<code>FeaturesResponse</code>](#FeaturesResponse)
 **Kind**: static method of [<code>FeaturesResponse</code>](#FeaturesResponse)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
+<a name="IntegrationChain"></a>
+
+## IntegrationChain
+**Kind**: global class  
+
+* [IntegrationChain](#IntegrationChain)
+    * _instance_
+        * [.current()](#IntegrationChain+current) ⇒ [<code>Document</code>](#Document)
+        * [.currentMessageId()](#IntegrationChain+currentMessageId) ⇒ <code>string</code>
+        * [.history()](#IntegrationChain+history) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.tryPush(document)](#IntegrationChain+tryPush)
+        * [.isValidAddition(document)](#IntegrationChain+isValidAddition) ⇒ <code>boolean</code>
+        * [.checkValidAddition(document)](#IntegrationChain+checkValidAddition)
+        * [.toJSON()](#IntegrationChain+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#IntegrationChain.fromJSON) ⇒ [<code>IntegrationChain</code>](#IntegrationChain)
+
+<a name="IntegrationChain+current"></a>
+
+### integrationChain.current() ⇒ [<code>Document</code>](#Document)
+Returns the latest [`WasmDocument`].
+
+NOTE: this clones the data.
+
+**Kind**: instance method of [<code>IntegrationChain</code>](#IntegrationChain)  
+<a name="IntegrationChain+currentMessageId"></a>
+
+### integrationChain.currentMessageId() ⇒ <code>string</code>
+Returns the message id of the latest [`WasmDocument`].
+
+**Kind**: instance method of [<code>IntegrationChain</code>](#IntegrationChain)  
+<a name="IntegrationChain+history"></a>
+
+### integrationChain.history() ⇒ <code>Array.&lt;any&gt;</code>
+Returns an array of documents in the integration chain (excluding the current document).
+
+NOTE: this clones the data.
+
+**Kind**: instance method of [<code>IntegrationChain</code>](#IntegrationChain)  
+<a name="IntegrationChain+tryPush"></a>
+
+### integrationChain.tryPush(document)
+Tries to append the document to this integration chain.
+
+**Kind**: instance method of [<code>IntegrationChain</code>](#IntegrationChain)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>Document</code>](#Document) | 
+
+<a name="IntegrationChain+isValidAddition"></a>
+
+### integrationChain.isValidAddition(document) ⇒ <code>boolean</code>
+Returns whether the document may be appended to this integration chain.
+
+**Kind**: instance method of [<code>IntegrationChain</code>](#IntegrationChain)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>Document</code>](#Document) | 
+
+<a name="IntegrationChain+checkValidAddition"></a>
+
+### integrationChain.checkValidAddition(document)
+Checks whether the document may be appended to this integration chain.
+
+**Kind**: instance method of [<code>IntegrationChain</code>](#IntegrationChain)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>Document</code>](#Document) | 
+
+<a name="IntegrationChain+toJSON"></a>
+
+### integrationChain.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>IntegrationChain</code>](#IntegrationChain)  
+<a name="IntegrationChain.fromJSON"></a>
+
+### IntegrationChain.fromJSON(value) ⇒ [<code>IntegrationChain</code>](#IntegrationChain)
+**Kind**: static method of [<code>IntegrationChain</code>](#IntegrationChain)  
 
 | Param | Type |
 | --- | --- |
@@ -1232,6 +1561,68 @@ Deserializes a `KeyPair` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="MessageHistory"></a>
+
+## MessageHistory
+**Kind**: global class  
+
+* [MessageHistory](#MessageHistory)
+    * _instance_
+        * [.intChainData](#MessageHistory+intChainData) ⇒ [<code>IntegrationChain</code>](#IntegrationChain)
+        * [.intChainSpam](#MessageHistory+intChainSpam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.diffChainData](#MessageHistory+diffChainData) ⇒ [<code>DiffChain</code>](#DiffChain)
+        * [.diffChainSpam](#MessageHistory+diffChainSpam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.toJSON()](#MessageHistory+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(value)](#MessageHistory.fromJSON) ⇒ [<code>MessageHistory</code>](#MessageHistory)
+
+<a name="MessageHistory+intChainData"></a>
+
+### messageHistory.intChainData ⇒ [<code>IntegrationChain</code>](#IntegrationChain)
+Returns the integration chain.
+
+NOTE: clones the data.
+
+**Kind**: instance property of [<code>MessageHistory</code>](#MessageHistory)  
+<a name="MessageHistory+intChainSpam"></a>
+
+### messageHistory.intChainSpam ⇒ <code>Array.&lt;any&gt;</code>
+Returns a [`js_sys::Array`] of message id strings for the spam messages on the same index
+as the integration chain but do not map to a valid DID document.
+
+NOTE: clones the data.
+
+**Kind**: instance property of [<code>MessageHistory</code>](#MessageHistory)  
+<a name="MessageHistory+diffChainData"></a>
+
+### messageHistory.diffChainData ⇒ [<code>DiffChain</code>](#DiffChain)
+Returns the diff chain.
+
+NOTE: clones the data.
+
+**Kind**: instance property of [<code>MessageHistory</code>](#MessageHistory)  
+<a name="MessageHistory+diffChainSpam"></a>
+
+### messageHistory.diffChainSpam ⇒ <code>Array.&lt;any&gt;</code>
+Returns a [`js_sys::Array`] of message id strings for the spam messages on the same index
+as the integration chain but do not map to a valid DID document.
+
+NOTE: clones the data.
+
+**Kind**: instance property of [<code>MessageHistory</code>](#MessageHistory)  
+<a name="MessageHistory+toJSON"></a>
+
+### messageHistory.toJSON() ⇒ <code>any</code>
+**Kind**: instance method of [<code>MessageHistory</code>](#MessageHistory)  
+<a name="MessageHistory.fromJSON"></a>
+
+### MessageHistory.fromJSON(value) ⇒ [<code>MessageHistory</code>](#MessageHistory)
+**Kind**: static method of [<code>MessageHistory</code>](#MessageHistory)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
 
 <a name="Network"></a>
 
