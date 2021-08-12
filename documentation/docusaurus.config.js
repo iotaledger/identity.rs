@@ -5,7 +5,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 module.exports = {
   title: 'IOTA IDENTITY',
   tagline: 'Providing Trust between Individuals, Organizations and Things.',
-  url: 'https://identity-docs.iota.org',
+  url: 'https://identity.docs.iota.org',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
