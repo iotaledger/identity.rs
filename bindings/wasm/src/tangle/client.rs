@@ -22,8 +22,8 @@ use wasm_bindgen_futures::future_to_promise;
 
 use crate::did::{WasmDocument, WasmDocumentDiff, WasmVerificationMethod};
 use crate::error::{Result, WasmResult};
-use crate::tangle::{Config, WasmDiffSet, WasmMessageHistory};
 use crate::tangle::WasmNetwork;
+use crate::tangle::{Config, WasmDiffSet, WasmMessageHistory};
 
 #[wasm_bindgen]
 #[derive(Debug)]
@@ -95,6 +95,24 @@ impl Client {
     let promise: Promise = future_to_promise(async move {
       client
         .publish_diff(&message, diff.deref())
+        .await
+        .wasm_result()
+        .and_then(|receipt| JsValue::from_serde(&receipt).wasm_result())
+    });
+
+    Ok(promise)
+  }
+
+  /// Publishes arbitrary JSON data to the specified index on the Tangle.
+  #[wasm_bindgen(js_name = publishJSON)]
+  pub fn publish_json(&self, index: &str, data: &JsValue) -> Result<Promise> {
+    let client: Rc<IotaClient> = self.client.clone();
+
+    let index = index.to_owned();
+    let value: serde_json::Value = data.into_serde().wasm_result()?;
+    let promise: Promise = future_to_promise(async move {
+      client
+        .publish_json(&index, &value)
         .await
         .wasm_result()
         .and_then(|receipt| JsValue::from_serde(&receipt).wasm_result())

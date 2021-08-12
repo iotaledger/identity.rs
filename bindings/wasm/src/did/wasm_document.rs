@@ -314,6 +314,31 @@ impl WasmDocument {
     Ok(())
   }
 
+  // ===========================================================================
+  // Publishing
+  // ===========================================================================
+
+  /// Returns the Tangle address of the integration chain index for this DID.
+  ///
+  /// This is simply the tag segment of the [`IotaDID`].
+  /// E.g.
+  /// For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
+  /// `doc.integration_address()` == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"
+  #[wasm_bindgen(js_name = integrationAddress)]
+  pub fn integration_address(&self) -> String {
+    self.0.integration_address().to_owned()
+  }
+
+  /// Returns the Tangle address of the DID diff chain index. This should only be called on messages
+  /// from documents published on the integration chain.
+  ///
+  /// This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
+  #[wasm_bindgen(js_name = diffAddress)]
+  pub fn diff_address(message_id: &str) -> Result<String> {
+    let message_id = MessageId::from_str(message_id).wasm_result()?;
+    IotaDocument::diff_address(&message_id).wasm_result()
+  }
+
   /// Serializes a `Document` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {

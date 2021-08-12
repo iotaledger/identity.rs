@@ -70,7 +70,7 @@ impl Client {
 
   /// Publishes an [`IotaDocument`] to the Tangle.
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
-    self.publish_json(document.id().tag(), document).await
+    self.publish_json(document.integration_address(), document).await
   }
 
   /// Publishes a [`DocumentDiff`] to the Tangle to form part of the diff chain for the integration

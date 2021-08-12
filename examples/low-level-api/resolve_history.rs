@@ -33,15 +33,29 @@ async fn main() -> Result<()> {
   // Create a signed DID Document and KeyPair (see create_did.rs).
   let (mut document, keypair, original_receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
-  // Publish some unrelated spam messages to the same index as the DID on the Tangle.
-  // These are not valid DID documents and are simply to demonstrate that invalid messages are
-  // included in the history, potentially for debugging invalid DID documents.
-  let index: &str = document.id().tag();
-  client.publish_json(index, &json!({ "spam:1": true })).await?;
-  client.publish_json(index, &json!({ "spam:2": true })).await?;
-  client.publish_json(index, &json!({ "spam:3": true })).await?;
-  client.publish_json(index, &json!({ "spam:4": true })).await?;
-  client.publish_json(index, &json!({ "spam:5": true })).await?;
+  // ===========================================================================
+  // Integration Chain Spam
+  // ===========================================================================
+
+  // Publish several spam messages to the same index as the integration chain on the Tangle.
+  // These are not valid DID messages and are simply to demonstrate that invalid messages
+  // can be included in the history for debugging invalid DID documents.
+  let integration_index: &str = document.integration_address();
+  client
+    .publish_json(integration_index, &json!({ "intSpam:1": true }))
+    .await?;
+  client
+    .publish_json(integration_index, &json!({ "intSpam:2": true }))
+    .await?;
+  client
+    .publish_json(integration_index, &json!({ "intSpam:3": true }))
+    .await?;
+  client
+    .publish_json(integration_index, &json!({ "intSpam:4": true }))
+    .await?;
+  client
+    .publish_json(integration_index, &json!({ "intSpam:5": true }))
+    .await?;
 
   // ===========================================================================
   // Integration Chain Update 1
@@ -92,12 +106,22 @@ async fn main() -> Result<()> {
 
   // This is the second diff therefore the `previous_message_id` property is
   // set to the first published diff to keep the diff chain intact.
-  let diff2: DocumentDiff = document.diff(&update2, *diff1_update_receipt.message_id(), keypair.secret())?;
+  let diff2: DocumentDiff = update1.diff(&update2, *diff1_update_receipt.message_id(), keypair.secret())?;
 
   // Publish the diff to the Tangle.
   // Note that we still use the message_id from the last integration chain message here to link
   // the current diff chain to that point on the integration chain.
   let _diff2_update_receipt: Receipt = client.publish_diff(int1_update_receipt.message_id(), &diff2).await?;
+
+  // ===========================================================================
+  // Diff Chain Spam
+  // ===========================================================================
+
+  // Publish several spam messages to the same index as the new diff chain on the Tangle.
+  let diff_index: &str = &IotaDocument::diff_address(&int1_update_receipt.message_id())?;
+  client.publish_json(diff_index, &json!({ "diffSpam:1": true })).await?;
+  client.publish_json(diff_index, &json!({ "diffSpam:2": true })).await?;
+  client.publish_json(diff_index, &json!({ "diffSpam:3": true })).await?;
 
   // ===========================================================================
   // DID History 1

@@ -152,22 +152,6 @@ impl IntegrationChain {
       });
     }
 
-    // Ensure message_id does not appear in the chain (duplicate message)
-    let same_message_id_in_history = self
-      .history
-      .as_ref()
-      .map(|history| {
-        history
-          .iter()
-          .any(|previous_document| previous_document.message_id() == document.message_id())
-      })
-      .unwrap_or(false);
-    if document.message_id() == self.current_message_id() || same_message_id_in_history {
-      return Err(Error::ChainError {
-        error: "Invalid Message Id",
-      });
-    }
-
     if document.previous_message_id().is_null() {
       return Err(Error::ChainError {
         error: "Missing Previous Message Id",

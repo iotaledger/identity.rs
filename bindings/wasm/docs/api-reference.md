@@ -158,6 +158,7 @@
         * [.network()](#Client+network) ⇒ [<code>Network</code>](#Network)
         * [.publishDocument(document)](#Client+publishDocument) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.publishJSON(index, data)](#Client+publishJSON) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolve(did)](#Client+resolve) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolveDiffs(did, method, message_id)](#Client+resolveDiffs) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -200,6 +201,18 @@ Publishes a `DocumentDiff` to the Tangle.
 | --- | --- |
 | message_id | <code>string</code> | 
 | diff | [<code>DocumentDiff</code>](#DocumentDiff) | 
+
+<a name="Client+publishJSON"></a>
+
+### client.publishJSON(index, data) ⇒ <code>Promise.&lt;any&gt;</code>
+Publishes arbitrary JSON data to the specified index on the Tangle.
+
+**Kind**: instance method of [<code>Client</code>](#Client)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>string</code> | 
+| data | <code>any</code> | 
 
 <a name="Client+resolve"></a>
 
@@ -868,10 +881,12 @@ NOTE: clones the data.
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
         * [.diff(other, message, key)](#Document+diff) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
         * [.merge(diff)](#Document+merge)
+        * [.integrationAddress()](#Document+integrationAddress) ⇒ <code>string</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromKeyPair(key, network)](#Document.fromKeyPair) ⇒ [<code>Document</code>](#Document)
         * [.fromAuthentication(method)](#Document.fromAuthentication) ⇒ [<code>Document</code>](#Document)
+        * [.diffAddress(message_id)](#Document.diffAddress) ⇒ <code>string</code>
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
 
 <a name="new_Document_new"></a>
@@ -1065,6 +1080,17 @@ Verifies the `diff` signature and merges the changes into `self`.
 | --- | --- |
 | diff | <code>string</code> | 
 
+<a name="Document+integrationAddress"></a>
+
+### document.integrationAddress() ⇒ <code>string</code>
+Returns the Tangle address of the integration chain index for this DID.
+
+This is simply the tag segment of the [`IotaDID`].
+E.g.
+For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
+`doc.integration_address()` == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+toJSON"></a>
 
 ### document.toJSON() ⇒ <code>any</code>
@@ -1095,6 +1121,20 @@ Creates a new DID Document from the given verification [`method`][`Method`].
 | Param | Type |
 | --- | --- |
 | method | [<code>VerificationMethod</code>](#VerificationMethod) | 
+
+<a name="Document.diffAddress"></a>
+
+### Document.diffAddress(message_id) ⇒ <code>string</code>
+Returns the Tangle address of the DID diff chain index. This should only be called on messages
+from documents published on the integration chain.
+
+This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
+
+**Kind**: static method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> | 
 
 <a name="Document.fromJSON"></a>
 

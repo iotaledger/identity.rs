@@ -1,14 +1,14 @@
-import { getExplorerUrl, logExplorerUrlToScreen, logObjectToScreen, logToScreen } from "./utils.js";
+import {getExplorerUrl, logExplorerUrlToScreen, logObjectToScreen, logToScreen} from "./utils.js";
 import * as identity from "../../web/identity_wasm.js";
-import { manipulateIdentity } from "./mainpulate_did.js";
+import {manipulateIdentity} from "./mainpulate_did.js";
 
 /**
-    Advanced example that performs multiple diff chain and integration chain updates and
-    demonstrates how to resolve the DID Document history to view these chains.
+ Advanced example that performs multiple diff chain and integration chain updates and
+ demonstrates how to resolve the DID Document history to view these chains.
 
-    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
-    @param {boolean} log log the events to the output window
-**/
+ @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+ @param {boolean} log log the events to the output window
+ **/
 export async function resolveHistory(clientConfig, log = true) {
     if (log) logToScreen("Resolve History Example");
 
@@ -23,7 +23,18 @@ export async function resolveHistory(clientConfig, log = true) {
     // ===========================================================================
 
     // Creates a new identity and performs one integration chain update (See "manipulate_did" example).
-    const { doc, key, updatedMessageId } = await manipulateIdentity(clientConfig, false);
+    const {doc, key, updatedMessageId} = await manipulateIdentity(clientConfig, false);
+
+    // Publish some unrelated spam messages to the same index as the integration chain on the Tangle.
+    // These are not valid DID messages and are simply to demonstrate that invalid messages
+    // can be included in the history for debugging invalid DID documents.
+    const integration_index = doc.integrationAddress();
+    await client.publishJSON(integration_index, key);
+    await client.publishJSON(integration_index, {"spam:1": true});
+    await client.publishJSON(integration_index, {"spam:2": true});
+    await client.publishJSON(integration_index, {"spam:3": true});
+    await client.publishJSON(integration_index, {"spam:4": true});
+    await client.publishJSON(integration_index, {"spam:5": true});
 
     // ===========================================================================
     // Diff Chain Update 1
@@ -72,6 +83,16 @@ export async function resolveHistory(clientConfig, log = true) {
     const diff2Receipt = await client.publishDiff(updatedMessageId, diff2);
     if (log) logToScreen("Diff Chain Update (2):");
     if (log) logExplorerUrlToScreen(getExplorerUrl(doc, diff2Receipt.messageId));
+
+    // ===========================================================================
+    // Diff Chain Spam
+    // ===========================================================================
+
+    // Publish several spam messages to the same index as the new diff chain on the Tangle.
+    let diffIndex = Document.diffAddress(updatedMessageId);
+    await client.publishJSON(diffIndex, { "diffSpam:1": true });
+    await client.publishJSON(diffIndex, { "diffSpam:2": true });
+    await client.publishJSON(diffIndex, { "diffSpam:3": true });
 
     // ===========================================================================
     // DID History 1
