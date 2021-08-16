@@ -1,16 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { createIdentity } = require("./create_did");
-const { manipulateIdentity } = require("./manipulate_did");
-const { resolution } = require("./resolution");
-const { createVC } = require("./create_vc");
-const { createVP } = require("./create_vp");
-const { revokeVC } = require("./revoke_vc");
-const { merkleKey } = require("./merkle_key");
-const { CLIENT_CONFIG } = require("./config");
-const { resolveHistory } = require("./resolve_history");
-const { createDiff } = require("./diff_chain");
+const {createIdentity} = require("./create_did");
+const {manipulateIdentity} = require("./manipulate_did");
+const {resolution} = require("./resolution");
+const {createVC} = require("./create_vc");
+const {createVP} = require("./create_vp");
+const {revokeVC} = require("./revoke_vc");
+const {merkleKey} = require("./merkle_key");
+const {CLIENT_CONFIG} = require("./config");
+const {resolveHistory} = require("./resolve_history");
+const {createDiff} = require("./diff_chain");
 
 async function main() {
     //Check if an example is mentioned
@@ -29,7 +29,7 @@ async function main() {
             return await resolution(CLIENT_CONFIG);
         case "create_vc":
             return await createVC(CLIENT_CONFIG);
-        case "revocation":
+        case "revoke_vc":
             return await revokeVC(CLIENT_CONFIG);
         case "create_vp":
             return await createVP(CLIENT_CONFIG);
@@ -37,7 +37,7 @@ async function main() {
             return await merkleKey(CLIENT_CONFIG);
         case "resolve_history":
             return await resolveHistory(CLIENT_CONFIG);
-        case "update_diff":
+        case "diff_chain":
             return await createDiff(CLIENT_CONFIG);
         case "all":
             console.log(">>> Run All Examples");

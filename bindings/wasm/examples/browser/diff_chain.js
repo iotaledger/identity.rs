@@ -12,7 +12,7 @@ import {createIdentity} from "./create_did.js";
  @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
  @param {boolean} log log the events to the output window
  **/
-export async function createDiffChain(clientConfig, log = true) {
+export async function createDiff(clientConfig, log = true) {
     if (log) logToScreen("Creating diff chain ...");
 
     // Create a default client configuration from network.

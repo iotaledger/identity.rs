@@ -4,7 +4,7 @@ import { createVC } from "../../examples/browser/create_vc.js";
 import { manipulateIdentity } from "../../examples/browser/mainpulate_did.js";
 import { resolveIdentity } from "../../examples/browser/resolve.js";
 import { createVP } from "../../examples/browser/create_vp.js";
-import { createDiffChain } from "../../examples/browser/diff_chain.js";
+import { createDiff } from "../../examples/browser/diff_chain.js";
 import { revoke } from "../../examples/browser/revoke_vc.js";
 import { merkleKey } from "../../examples/browser/merkle_key.js";
 import { resolveHistory } from "../../examples/browser/resolve_history";
@@ -85,9 +85,9 @@ describe(
         });
         it("diff chain", async function () {
             try {
-                await createDiffChain(defaultClientConfig(), false);
+                await createDiff(defaultClientConfig(), false);
             } catch (e) {
-                await createDiffChain(defaultClientConfig(), false);
+                await createDiff(defaultClientConfig(), false);
             }
         });
         it("resolve history", async function () {

@@ -14,7 +14,7 @@ const {createIdentity} = require("./create_did");
 
  @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
  **/
-async function createDiffChain(clientConfig) {
+async function createDiff(clientConfig) {
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);
 
@@ -48,4 +48,4 @@ async function createDiffChain(clientConfig) {
     return {updatedDoc, key, diffMessageId: diffReceipt.messageId};
 }
 
-exports.createDiffChain = createDiffChain;
+exports.createDiff = createDiff;

@@ -1,10 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const {Client, Config, DID} = require('../../node/identity_wasm')
+const {Client, Config, DID, Timestamp} = require('../../node/identity_wasm')
 const {createVC} = require('./create_vc');
 const {logExplorerUrl} = require('./utils')
-const identity = require("../../web");
 
 /**
  This example shows how to revoke a verifiable credential.
@@ -35,7 +34,7 @@ async function revoke(clientConfig) {
     // Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
     issuer.doc.removeMethod(DID.parse(issuer.doc.id.toString() + "#newKey"));
     issuer.doc.previousMessageId = issuer.updatedMessageId;
-    issuer.doc.updated = identity.Timestamp.nowUTC();
+    issuer.doc.updated = Timestamp.nowUTC();
     issuer.doc.sign(issuer.key);
     // This is an integration chain update, so we publish the full document.
     const {messageId} = await client.publishDocument(issuer.doc.toJSON());
@@ -46,7 +45,6 @@ async function revoke(clientConfig) {
     // Check the verifiable credential
     const result = await client.checkCredential(signedVc.toString());
     console.log(`VC verification result (false = revoked): ${result.verified}`);
-    assert(result.verified, "VC not revoked")
 }
 
 exports.revokeVC = revoke;

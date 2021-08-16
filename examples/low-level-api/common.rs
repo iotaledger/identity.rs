@@ -18,7 +18,7 @@ use identity::iota::{
 use identity::prelude::*;
 
 /// Helper that takes two DID Documents (identities) for issuer and subject, and
-/// creates a credential with claims about subject by issuer.
+/// creates an unsigned credential with claims about subject by issuer.
 pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Credential> {
   // Create VC "subject" field containing subject ID and claims about it.
   let subject: Subject = Subject::from_json_value(json!({
