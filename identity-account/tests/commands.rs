@@ -7,13 +7,19 @@ use identity_account::error::Error;
 use identity_account::error::Result;
 use identity_account::events::Command;
 use identity_account::events::CommandError;
+use identity_account::identity::IdentityCreate;
 use identity_account::identity::IdentityId;
 use identity_account::identity::IdentitySnapshot;
 use identity_account::identity::TinyMethod;
 use identity_account::storage::MemStore;
 use identity_account::types::Generation;
 use identity_core::common::UnixTimestamp;
+use identity_core::crypto::KeyType;
+use identity_core::crypto::SecretKey;
 use identity_did::verification::MethodType;
+use rand::rngs::OsRng;
+use rand::thread_rng;
+use rand::RngCore;
 
 async fn new_account() -> Result<Account> {
   let store: MemStore = MemStore::new();
@@ -270,6 +276,32 @@ async fn test_delete_method() -> Result<()> {
   assert!(!snapshot.identity().methods().contains("key-1"));
   assert!(snapshot.identity().methods().get("key-1").is_none());
   assert!(snapshot.identity().methods().fetch("key-1").is_err());
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_from_secret_key() -> Result<()> {
+  let account: Account = new_account().await?;
+  let account2: Account = new_account().await?;
+
+  let identity: IdentityId = IdentityId::from_u32(1);
+
+  let mut bytes = [0u8; 32];
+  OsRng.fill_bytes(&mut bytes);
+  let boxed_bytes: Box<[u8]> = Box::new(bytes);
+  let secret_key = SecretKey::from(boxed_bytes);
+
+  let id_create = IdentityCreate::new().key_type(KeyType::Ed25519).secret_key(secret_key);
+
+  account.create_identity(id_create.clone()).await?;
+  account2.create_identity(id_create).await?;
+
+  let ident = account.find_identity(identity).await.unwrap().unwrap();
+  let ident2 = account.find_identity(identity).await.unwrap().unwrap();
+
+  // The same secret key should result in the same did
+  assert_eq!(ident.identity().did(), ident2.identity().did());
 
   Ok(())
 }

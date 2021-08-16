@@ -126,8 +126,7 @@ impl Account {
     // Create the initialization command
     let command: Command = Command::CreateIdentity {
       network: input.network,
-      // TODO: Get from field on `IdentityCreate`
-      secret_key: Some(SecretKey::from(vec![0; 32])),
+      secret_key: input.secret_key,
       authentication: Self::key_to_method(input.key_type),
     };
 
