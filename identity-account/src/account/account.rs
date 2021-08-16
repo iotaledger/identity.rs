@@ -5,7 +5,6 @@ use futures::executor;
 use futures::TryStreamExt;
 use identity_core::common::Fragment;
 use identity_core::crypto::KeyType;
-use identity_core::crypto::SecretKey;
 use identity_core::crypto::SetSignature;
 use identity_did::verification::MethodType;
 use identity_iota::did::DocumentDiff;

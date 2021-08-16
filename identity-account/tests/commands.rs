@@ -18,7 +18,6 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::SecretKey;
 use identity_did::verification::MethodType;
 use rand::rngs::OsRng;
-use rand::thread_rng;
 use rand::RngCore;
 
 async fn new_account() -> Result<Account> {
