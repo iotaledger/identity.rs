@@ -5,14 +5,14 @@
 //!
 //! cargo run --example merkle_key
 
-use rand::Rng;
 use rand::rngs::OsRng;
+use rand::Rng;
 
 use identity::core::ToJson;
 use identity::credential::Credential;
-use identity::crypto::KeyCollection;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
+use identity::crypto::KeyCollection;
 use identity::crypto::PublicKey;
 use identity::crypto::SecretKey;
 use identity::did::MethodScope;

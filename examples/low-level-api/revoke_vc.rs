@@ -34,7 +34,7 @@ async fn main() -> Result<()> {
   // - effectively revoking the VC as it will no longer be able to verified.
   let (mut issuer_doc, issuer_key, issuer_receipt) = issuer;
   issuer_doc.remove_method(&issuer_doc.id().join("#newKey")?)?;
-  issuer_doc.set_previous_message_id(issuer_receipt.message_id().clone());
+  issuer_doc.set_previous_message_id(*issuer_receipt.message_id());
   issuer_doc.set_updated(Timestamp::now_utc());
   issuer_doc.sign(issuer_key.secret())?;
   // This is an integration chain update, so we publish the full document.
@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
   // Check the verifiable credential
   let validation: CredentialValidation = common::check_credential(&client, &signed_vc).await?;
   println!("VC verification result (false = revoked) > {:#?}", validation.verified);
-  assert_eq!(validation.verified, false);
+  assert!(!validation.verified);
   Ok(())
 }
 
@@ -69,7 +69,7 @@ async fn create_vc_helper(
   // Add a new VerificationMethod to the issuer with tag #newKey
   // NOTE: this allows us to revoke it without removing the default authentication key.
   let (issuer_doc, issuer_new_key, issuer_updated_receipt) =
-    common::add_new_key(&client, &issuer_doc, &issuer_key, &issuer_receipt).await?;
+    common::add_new_key(client, &issuer_doc, &issuer_key, &issuer_receipt).await?;
 
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
   let mut credential: Credential = common::issue_degree(&issuer_doc, &subject_doc)?;

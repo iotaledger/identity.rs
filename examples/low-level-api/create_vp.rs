@@ -20,7 +20,7 @@ use identity::prelude::*;
 mod common;
 mod create_did;
 
-pub async fn create_vp(client: &ClientMap) -> Result<Presentation> {
+pub async fn create_vp() -> Result<Presentation> {
   // Create a signed DID Document/KeyPair for the credential issuer (see create_did.rs).
   let (doc_iss, key_iss, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
@@ -52,7 +52,7 @@ async fn main() -> Result<()> {
   let client: ClientMap = ClientMap::new();
 
   // Issue a Verifiable Presentation with a newly created DID Document.
-  let presentation: Presentation = create_vp(&client).await?;
+  let presentation: Presentation = create_vp().await?;
 
   // Convert the Verifiable Presentation to JSON and "exchange" with a verifier
   let presentation_json: String = presentation.to_json()?;

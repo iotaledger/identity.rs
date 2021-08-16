@@ -49,7 +49,7 @@ pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Re
 
   // Create a `CredentialValidator` instance to fetch and validate all
   // associated DID Documents from the Tangle.
-  let validator: CredentialValidator<ClientMap> = CredentialValidator::new(&client);
+  let validator: CredentialValidator<ClientMap> = CredentialValidator::new(client);
 
   // Perform the validation operation.
   let validation: CredentialValidation = validator.check(&credential_json).await?;

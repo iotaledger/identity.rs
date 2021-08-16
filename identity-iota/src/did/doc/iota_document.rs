@@ -1057,7 +1057,7 @@ mod tests {
   #[test]
   fn test_integration_address() {
     let keypair: KeyPair = generate_testkey();
-    let mut document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+    let document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
 
     // The integration chain address should just be the tag of the DID
     let tag = document.id().tag();
