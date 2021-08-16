@@ -5,7 +5,7 @@ import { manipulateIdentity } from "../../examples/browser/mainpulate_did.js";
 import { resolveIdentity } from "../../examples/browser/resolve.js";
 import { createVP } from "../../examples/browser/create_vp.js";
 import { createDiffChain } from "../../examples/browser/diff_chain.js";
-import { revoke } from "../../examples/browser/revocation.js";
+import { revoke } from "../../examples/browser/revoke_vc.js";
 import { merkleKey } from "../../examples/browser/merkle_key.js";
 import { resolveHistory } from "../../examples/browser/resolve_history";
 

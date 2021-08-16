@@ -4,7 +4,7 @@ import { createVC } from "./create_vc.js";
 import { manipulateIdentity } from "./mainpulate_did.js";
 import { resolveIdentity } from "./resolve.js";
 import { createVP } from "./create_vp.js";
-import { revoke } from "./revocation.js";
+import { revoke } from "./revoke_vc.js";
 import { merkleKey } from "./merkle_key.js";
 import { createDiffChain } from "./diff_chain.js";
 import { resolveHistory } from "./resolve_history.js";

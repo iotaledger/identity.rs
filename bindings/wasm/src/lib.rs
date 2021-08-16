@@ -15,6 +15,7 @@ mod macros;
 pub mod error;
 
 pub mod chain;
+pub mod common;
 pub mod credential;
 pub mod crypto;
 pub mod did;

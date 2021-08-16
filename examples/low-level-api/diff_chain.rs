@@ -26,6 +26,8 @@ async fn main() -> Result<()> {
   // Update the document by adding a new service endpoint
   let updated_document: IotaDocument = {
     let mut doc: IotaDocument = document.clone();
+
+    // Add a Service
     let service: Service = Service::from_json_value(json!({
       "id": doc.id().join("#linked-domain")?,
       "type": "LinkedDomains",

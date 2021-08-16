@@ -3,7 +3,7 @@
 
 const { Client, Config, Digest, KeyType, VerifiableCredential, VerificationMethod, KeyCollection } = require('../../node/identity_wasm')
 const { createIdentity } = require('./create_did');
-const { logExplorerUrl } = require('./explorer_util')
+const { logExplorerUrl } = require('./utils')
 
 /**
     This example shows how to sign/revoke verifiable credentials on scale.

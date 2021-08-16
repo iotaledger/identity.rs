@@ -68,6 +68,8 @@
 <dd></dd>
 <dt><a href="#Service">Service</a></dt>
 <dd></dd>
+<dt><a href="#Timestamp">Timestamp</a></dt>
+<dd></dd>
 <dt><a href="#Timing">Timing</a></dt>
 <dd></dd>
 <dt><a href="#TrustPing">TrustPing</a></dt>
@@ -862,6 +864,10 @@ NOTE: clones the data.
     * [new Document(type_, network, tag)](#new_Document_new)
     * _instance_
         * [.id](#Document+id) ⇒ [<code>DID</code>](#DID)
+        * [.created](#Document+created) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.created](#Document+created)
+        * [.updated](#Document+updated) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.updated](#Document+updated)
         * [.proof](#Document+proof) ⇒ <code>any</code>
         * [.messageId](#Document+messageId) ⇒ <code>string</code>
         * [.previousMessageId](#Document+previousMessageId) ⇒ <code>string</code>
@@ -907,6 +913,40 @@ Creates a new DID Document from the given KeyPair.
 Returns the DID Document `id`.
 
 **Kind**: instance property of [<code>Document</code>](#Document)  
+<a name="Document+created"></a>
+
+### document.created ⇒ [<code>Timestamp</code>](#Timestamp)
+Returns the timestamp of when the DID document was created.
+
+**Kind**: instance property of [<code>Document</code>](#Document)  
+<a name="Document+created"></a>
+
+### document.created
+Sets the timestamp of when the DID document was created.
+
+**Kind**: instance property of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| timestamp | [<code>Timestamp</code>](#Timestamp) | 
+
+<a name="Document+updated"></a>
+
+### document.updated ⇒ [<code>Timestamp</code>](#Timestamp)
+Returns the timestamp of the last DID document update.
+
+**Kind**: instance property of [<code>Document</code>](#Document)  
+<a name="Document+updated"></a>
+
+### document.updated
+Sets the timestamp of the last DID document update.
+
+**Kind**: instance property of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| timestamp | [<code>Timestamp</code>](#Timestamp) | 
+
 <a name="Document+proof"></a>
 
 ### document.proof ⇒ <code>any</code>
@@ -1854,6 +1894,60 @@ Deserializes a `Service` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | value | <code>any</code> | 
+
+<a name="Timestamp"></a>
+
+## Timestamp
+**Kind**: global class  
+
+* [Timestamp](#Timestamp)
+    * _instance_
+        * [.toUnix()](#Timestamp+toUnix) ⇒ <code>BigInt</code>
+        * [.toRFC3339()](#Timestamp+toRFC3339) ⇒ <code>string</code>
+    * _static_
+        * [.parse(input)](#Timestamp.parse) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.nowUTC()](#Timestamp.nowUTC) ⇒ [<code>Timestamp</code>](#Timestamp)
+        * [.fromUnix(seconds)](#Timestamp.fromUnix) ⇒ [<code>Timestamp</code>](#Timestamp)
+
+<a name="Timestamp+toUnix"></a>
+
+### timestamp.toUnix() ⇒ <code>BigInt</code>
+Returns the `Timestamp` as a Unix timestamp.
+
+**Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
+<a name="Timestamp+toRFC3339"></a>
+
+### timestamp.toRFC3339() ⇒ <code>string</code>
+Returns the `Timestamp` as an RFC 3339 `String`.
+
+**Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
+<a name="Timestamp.parse"></a>
+
+### Timestamp.parse(input) ⇒ [<code>Timestamp</code>](#Timestamp)
+Parses a `Timestamp` from the provided input string.
+
+**Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
+
+<a name="Timestamp.nowUTC"></a>
+
+### Timestamp.nowUTC() ⇒ [<code>Timestamp</code>](#Timestamp)
+Creates a new `Timestamp` with the current date and time.
+
+**Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
+<a name="Timestamp.fromUnix"></a>
+
+### Timestamp.fromUnix(seconds) ⇒ [<code>Timestamp</code>](#Timestamp)
+Creates a new `Timestamp` from the given Unix timestamp.
+
+**Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
+
+| Param | Type |
+| --- | --- |
+| seconds | <code>BigInt</code> | 
 
 <a name="Timing"></a>
 

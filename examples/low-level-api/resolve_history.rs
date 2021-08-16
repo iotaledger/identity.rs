@@ -6,21 +6,22 @@
 //!
 //! cargo run --example did_history
 
-use identity::core::json;
 use identity::core::Timestamp;
+use identity::core::{json, FromJson};
 use identity::crypto::KeyPair;
+use identity::did::{MethodScope, Service};
 use identity::iota::Client;
 use identity::iota::DiffSet;
 use identity::iota::DocumentDiff;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageHistory;
-use identity::iota::MessageId;
 use identity::iota::Receipt;
 use identity::iota::Result;
 
 mod create_did;
 
+#[rustfmt::skip]
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a client instance to send messages to the Tangle.
@@ -30,8 +31,8 @@ async fn main() -> Result<()> {
   // DID Creation
   // ===========================================================================
 
-  // Create a signed DID Document and KeyPair (see create_did.rs).
-  let (mut document, keypair, original_receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
+  // Create a signed DID Document and KeyPair (see "create_did.rs" example).
+  let (document, keypair, original_receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
   // ===========================================================================
   // Integration Chain Spam
@@ -40,85 +41,106 @@ async fn main() -> Result<()> {
   // Publish several spam messages to the same index as the integration chain on the Tangle.
   // These are not valid DID messages and are simply to demonstrate that invalid messages
   // can be included in the history for debugging invalid DID documents.
-  let integration_index: &str = document.integration_address();
-  client
-    .publish_json(integration_index, &json!({ "intSpam:1": true }))
-    .await?;
-  client
-    .publish_json(integration_index, &json!({ "intSpam:2": true }))
-    .await?;
-  client
-    .publish_json(integration_index, &json!({ "intSpam:3": true }))
-    .await?;
-  client
-    .publish_json(integration_index, &json!({ "intSpam:4": true }))
-    .await?;
-  client
-    .publish_json(integration_index, &json!({ "intSpam:5": true }))
-    .await?;
+  let int_index: &str = document.integration_address();
+  client.publish_json(int_index, &json!({ "intSpam:1": true })).await?;
+  client.publish_json(int_index, &json!({ "intSpam:2": true })).await?;
+  client.publish_json(int_index, &json!({ "intSpam:3": true })).await?;
+  client.publish_json(int_index, &json!({ "intSpam:4": true })).await?;
+  client.publish_json(int_index, &json!({ "intSpam:5": true })).await?;
 
   // ===========================================================================
   // Integration Chain Update 1
   // ===========================================================================
 
-  // Update the DID Document with new values and sign once again.
-  document.properties_mut().insert("foo".into(), 123.into());
-  // Setting the previous message id is REQUIRED in order for the messages to form a chain.
-  document.set_previous_message_id(*original_receipt.message_id());
-  document.set_updated(Timestamp::now_utc());
-  document.sign(keypair.secret())?;
+  // Prepare an integration chain update, which writes the full updated DID document to the Tangle.
+  let int_doc_1 = {
+    let mut int_doc_1 = document.clone();
+
+    // Add a new VerificationMethod with a new KeyPair, with the tag "keys-1"
+    let keys_1: KeyPair = KeyPair::new_ed25519()?;
+    let method_1: IotaVerificationMethod = IotaVerificationMethod::from_did(int_doc_1.id().clone(), &keys_1, "keys-1")?;
+    assert!(int_doc_1.insert_method(MethodScope::VerificationMethod, method_1));
+
+    // Add the `message_id` of the previous message in the chain.
+    // This is REQUIRED in order for the messages to form a chain.
+    // Skipping / forgetting this will render the publication useless.
+    int_doc_1.set_previous_message_id(*original_receipt.message_id());
+    int_doc_1.set_updated(Timestamp::now_utc());
+
+    // Sign the DID Document with the original private key.
+    int_doc_1.sign(keypair.secret())?;
+
+    int_doc_1
+  };
 
   // Publish the updated DID Document to the Tangle, updating the integration chain.
-  let int1_update_receipt: Receipt = client.publish_document(&document).await?;
+  // This may take a few seconds to complete proof-of-work.
+  let int_receipt_1: Receipt = client.publish_document(&int_doc_1).await?;
 
   // ===========================================================================
   // Diff Chain Update 1
   // ===========================================================================
 
-  // Prepare a diff chain DID Document update.
-  let update1: IotaDocument = {
-    let mut new: IotaDocument = document.clone();
-    new.properties_mut().insert("foo".into(), 0.into()); // change `foo`
-    new.properties_mut().insert("bar".into(), 456.into()); // insert `bar`
-    new.set_updated(Timestamp::now_utc());
-    new
+  // Prepare a diff chain DID Document update, which writes only the changes to the Tangle.
+  let diff_doc_1: IotaDocument = {
+    let mut diff_doc_1: IotaDocument = int_doc_1.clone();
+
+    // Add a new Service with the tag "linked-domain-1"
+    let service: Service = Service::from_json_value(json!({
+      "id": diff_doc_1.id().join("#linked-domain-1")?,
+      "type": "LinkedDomains",
+      "serviceEndpoint": "https://iota.org"
+    }))?;
+    assert!(diff_doc_1.insert_service(service));
+    diff_doc_1.set_updated(Timestamp::now_utc());
+    diff_doc_1
   };
 
   // Create a signed diff update.
   //
   // This is the first diff therefore the `previous_message_id` property is
   // set to the last DID document published.
-  let diff1: DocumentDiff = document.diff(&update1, *int1_update_receipt.message_id(), keypair.secret())?;
+  let diff_1: DocumentDiff = int_doc_1.diff(&diff_doc_1, *int_receipt_1.message_id(), keypair.secret())?;
+
   // Publish the diff to the Tangle, starting a diff chain.
-  let diff1_update_receipt: Receipt = client.publish_diff(int1_update_receipt.message_id(), &diff1).await?;
+  let diff_receipt_1: Receipt = client.publish_diff(int_receipt_1.message_id(), &diff_1).await?;
 
   // ===========================================================================
   // Diff Chain Update 2
   // ===========================================================================
 
   // Prepare another diff chain update.
-  let update2: IotaDocument = {
-    let mut new: IotaDocument = document.clone();
-    new.properties_mut().insert("baz".into(), 789.into()); // insert `baz`
-    new.set_updated(Timestamp::now_utc());
-    new
+  let diff_doc_2: IotaDocument = {
+    let mut diff_doc_2: IotaDocument = diff_doc_1.clone();
+
+    // Add a second Service with the tag "linked-domain-2"
+    let service: Service = Service::from_json_value(json!({
+      "id": diff_doc_2.id().join("#linked-domain-2")?,
+      "type": "LinkedDomains",
+      "serviceEndpoint": "https://example.com"
+    }))?;
+    diff_doc_2.insert_service(service);
+    diff_doc_2.set_updated(Timestamp::now_utc());
+    diff_doc_2
   };
 
-  // This is the second diff therefore the `previous_message_id` property is
-  // set to the first published diff to keep the diff chain intact.
-  let diff2: DocumentDiff = update1.diff(&update2, *diff1_update_receipt.message_id(), keypair.secret())?;
+  // This is the second diff therefore its `previous_message_id` property is
+  // set to the first published diff to extend the diff chain.
+  let diff_2: DocumentDiff = diff_doc_1.diff(&diff_doc_2, *diff_receipt_1.message_id(), keypair.secret())?;
 
   // Publish the diff to the Tangle.
-  // Note that we still use the message_id from the last integration chain message here to link
+  // Note that we still use the `message_id` from the last integration chain message here to link
   // the current diff chain to that point on the integration chain.
-  let _diff2_update_receipt: Receipt = client.publish_diff(int1_update_receipt.message_id(), &diff2).await?;
+  let _diff_receipt_2: Receipt = client.publish_diff(int_receipt_1.message_id(), &diff_2).await?;
 
   // ===========================================================================
   // Diff Chain Spam
   // ===========================================================================
 
   // Publish several spam messages to the same index as the new diff chain on the Tangle.
-  let diff_index: &str = &IotaDocument::diff_address(&int1_update_receipt.message_id())?;
+  // These are not valid DID diffs and are simply to demonstrate that invalid messages
+  // can be included in the history for debugging invalid DID diffs.
+  let diff_index: &str = &IotaDocument::diff_address(&int_receipt_1.message_id())?;
   client.publish_json(diff_index, &json!({ "diffSpam:1": true })).await?;
   client.publish_json(diff_index, &json!({ "diffSpam:2": true })).await?;
   client.publish_json(diff_index, &json!({ "diffSpam:3": true })).await?;
@@ -128,53 +150,65 @@ async fn main() -> Result<()> {
   // ===========================================================================
 
   // Retrieve the message history of the DID.
-  let history1: MessageHistory = client.resolve_history(document.id()).await?;
+  let history_1: MessageHistory = client.resolve_history(document.id()).await?;
 
-  // The history shows one document in the integration chain (plus the current document), and two
-  // diffs in the diff chain.
-  println!("History (1) = {:#?}", history1);
+  // The history shows one document in the integration chain (plus the current document),
+  // and two diffs in the diff chain.
+  println!("History (1) = {:#?}", history_1);
 
   // ===========================================================================
   // Integration Chain Update 2
   // ===========================================================================
 
-  // Publish an integration chain update, which writes the full updated DID document to the Tangle.
-  document = update2;
-  document.properties_mut().insert("foo".into(), 123456789.into());
-  document.properties_mut().remove("bar");
-  document.properties_mut().remove("baz");
-  // Note: the previous_message_id points to the message_id of the last integration chain update,
-  //       not the last diff chain message.
-  document.set_previous_message_id(*int1_update_receipt.message_id());
-  document.set_updated(Timestamp::now_utc());
-  document.sign(keypair.secret())?;
-  let _int2_update_receipt: Receipt = client.publish_document(&document).await?;
+  // Publish a second integration chain update
+  let int_doc_2 = {
+    let mut int_doc_2 = diff_doc_2.clone();
+
+    // Remove the #keys-1 VerificationMethod
+    int_doc_2.remove_method(&int_doc_2.id().join("#keys-1")?)?;
+
+    // Remove the #linked-domain-1 Service
+    int_doc_2.remove_service(&int_doc_2.id().join("#linked-domain-1")?)?;
+
+    // Add a VerificationMethod with a new KeyPair, called "keys-2"
+    let keys_2: KeyPair = KeyPair::new_ed25519()?;
+    let method_2: IotaVerificationMethod = IotaVerificationMethod::from_did(int_doc_2.id().clone(), &keys_2, "keys-2")?;
+    assert!(int_doc_2.insert_method(MethodScope::VerificationMethod, method_2));
+
+    // Note: the `previous_message_id` points to the `message_id` of the last integration chain
+    //       update, NOT the last diff chain message.
+    int_doc_2.set_previous_message_id(*int_receipt_1.message_id());
+    int_doc_2.set_updated(Timestamp::now_utc());
+    int_doc_2.sign(keypair.secret())?;
+
+    int_doc_2
+  };
+  let _int_receipt_2: Receipt = client.publish_document(&int_doc_2).await?;
 
   // ===========================================================================
   // DID History 2
   // ===========================================================================
 
   // Retrieve the updated message history of the DID.
-  let history2: MessageHistory = client.resolve_history(document.id()).await?;
+  let history_2: MessageHistory = client.resolve_history(document.id()).await?;
 
   // The history now shows two documents in the integration chain (plus the current document), and no
   // diffs in the diff chain. This is because the previous document published included those updates
   // and we have not added any diffs pointing to the latest document.
-  println!("History (2) = {:#?}", history2);
+  println!("History (2) = {:#?}", history_2);
 
   // ===========================================================================
   // Diff Chain History
   // ===========================================================================
 
   // Fetch the diff chain of the previous integration chain message.
-  // We can still retrieve old diff chains, but they do not affect DID resolution.
+  // Old diff chains can be retrieved but they do no longer affect DID resolution.
   let method: &IotaVerificationMethod = document.authentication();
-  let previous_integration_chain_message_id: &MessageId = int1_update_receipt.message_id();
-  let previous_diffs: DiffSet = client
-    .resolve_diffs(document.id(), method, previous_integration_chain_message_id)
+  let old_diffset: DiffSet = client
+    .resolve_diffs(document.id(), method, int_receipt_1.message_id())
     .await?;
 
-  println!("Diffs = {:#?}", previous_diffs);
+  println!("Old DiffSet = {:#?}", old_diffset);
 
   Ok(())
 }

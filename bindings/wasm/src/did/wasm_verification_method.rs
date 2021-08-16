@@ -69,7 +69,7 @@ impl WasmVerificationMethod {
   }
 
   /// Returns the `VerificationMethod` type.
-  #[wasm_bindgen(getter, js_name = type)]
+  #[wasm_bindgen(getter = type)]
   pub fn type_(&self) -> String {
     self.0.key_type().as_str().into()
   }

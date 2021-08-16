@@ -42,4 +42,5 @@ The following examples are avaliable for using the low-level APIs, which provide
 | 5 | [create_vc](./low-level-api/create_vc.rs) | Generates and publishes subject and issuer DID Documents, then creates a Verifiable Credential (vc) specifying claims about the subject, and retrieves information through the CredentialValidator API. |
 | 6 | [create_vp](./low-level-api/create_vp.rs) | This example explains how to create a Verifiable Presentation from a set of credentials and sign it. |
 | 7 | [resolution](./low-level-api/resolution.rs) | A basic example that shows how to retrieve information through DID Document resolution/dereferencing. |
+| 7 | [revoke_vc](./low-level-api/revoke_vc.rs) | A basic example that shows how to retrieve information through DID Document resolution/dereferencing. |
 | 8 | [merkle_key](./low-level-api/merkle_key.rs) | An example that revokes a key and shows how verification fails as a consequence. |

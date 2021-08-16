@@ -1,9 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const {logExplorerUrl} = require("./explorer_util");
-const {Client, Config, Document, Service} = require("../../node/identity_wasm");
-const {manipulateIdentity} = require("./manipulate_did");
+const {logExplorerUrl, prettyPrintJSON} = require("./utils");
+const {
+    Client,
+    Config,
+    Document,
+    Service,
+    KeyPair,
+    VerificationMethod,
+    KeyType,
+    Timestamp, DID
+} = require("../../node/identity_wasm");
+const {createIdentity} = require("./create_did");
 
 /**
  Advanced example that performs multiple diff chain and integration chain updates and
@@ -19,11 +28,11 @@ async function resolveHistory(clientConfig) {
     const client = Client.fromConfig(config);
 
     // ===========================================================================
-    // DID Creation + Integration Chain Update 1
+    // DID Creation
     // ===========================================================================
 
-    // Creates a new identity, that also is updated on the integration chain (See "manipulate_did" example).
-    const {doc, key, updatedMessageId} = await manipulateIdentity(clientConfig);
+    // Create a new identity (see "create_did.js" example).
+    const {doc, key, receipt: originalReceipt} = await createIdentity(clientConfig);
 
     // ===========================================================================
     // Integration Chain Spam
@@ -32,73 +41,104 @@ async function resolveHistory(clientConfig) {
     // Publish several spam messages to the same index as the integration chain on the Tangle.
     // These are not valid DID documents and are simply to demonstrate that invalid messages can be
     // included in the history, potentially for debugging invalid DID documents.
-    const integration_index = doc.integrationAddress();
-    await client.publishJSON(integration_index, {"intSpam:1": true});
-    await client.publishJSON(integration_index, {"intSpam:2": true});
-    await client.publishJSON(integration_index, {"intSpam:3": true});
-    await client.publishJSON(integration_index, {"intSpam:4": true});
-    await client.publishJSON(integration_index, {"intSpam:5": true});
+    const intIndex = doc.integrationAddress();
+    await client.publishJSON(intIndex, {"intSpam:1": true});
+    await client.publishJSON(intIndex, {"intSpam:2": true});
+    await client.publishJSON(intIndex, {"intSpam:3": true});
+    await client.publishJSON(intIndex, {"intSpam:4": true});
+    await client.publishJSON(intIndex, {"intSpam:5": true});
+
+    // ===========================================================================
+    // Integration Chain Update 1
+    // ===========================================================================
+
+    // Prepare an integration chain update, which writes the full updated DID document to the Tangle.
+    const intDoc1 = Document.fromJSON(doc.toJSON()); // clone the Document
+
+    // Add a new VerificationMethod with a new KeyPair, with the tag "keys-1"
+    const keys1 = new KeyPair(KeyType.Ed25519);
+    const method1 = VerificationMethod.fromDID(intDoc1.id, keys1, "keys-1");
+    intDoc1.insertMethod(method1, "VerificationMethod");
+
+    // Add the `messageId` of the previous message in the chain.
+    // This is REQUIRED in order for the messages to form a chain.
+    // Skipping / forgetting this will render the publication useless.
+    intDoc1.previousMessageId = originalReceipt.messageId;
+    intDoc1.updated = Timestamp.nowUTC();
+
+    // Sign the DID Document with the original private key.
+    intDoc1.sign(key);
+
+    // Publish the updated DID Document to the Tangle, updating the integration chain.
+    // This may take a few seconds to complete proof-of-work.
+    const intReceipt1 = await client.publishDocument(intDoc1.toJSON());
+
+    // Log the results.
+    logExplorerUrl("Int. Chain Update (1):", clientConfig.network.toString(), intReceipt1.messageId);
 
     // ===========================================================================
     // Diff Chain Update 1
     // ===========================================================================
 
-    // Clone the Document
-    const doc2 = Document.fromJSON(doc.toJSON());
+    // Prepare a diff chain DID Document update.
+    const diffDoc1 = Document.fromJSON(intDoc1.toJSON()); // clone the Document
 
-    // Add a second ServiceEndpoint
-    let serviceJSON2 = {
-        id: doc.id + "#new-linked-domain",
+    // Add a new Service with the tag "linked-domain-1"
+    let serviceJSON1 = {
+        id: diffDoc1.id + "#linked-domain-1",
         type: "LinkedDomains",
-        serviceEndpoint: "https://identity.iota.org",
+        serviceEndpoint: "https://iota.org",
     };
-    doc2.insertService(Service.fromJSON(serviceJSON2));
+    diffDoc1.insertService(Service.fromJSON(serviceJSON1));
+    diffDoc1.updated = Timestamp.nowUTC();
 
     // Create a signed diff update.
     //
-    // This is the first diff therefore the `previous_message_id` property is
-    // set to the last DID document published.
-    const diff1 = doc.diff(doc2, updatedMessageId, key);
+    // This is the first diff so the `previousMessageId` property is
+    // set to the last DID document published on the integration chain.
+    const diff1 = intDoc1.diff(diffDoc1, intReceipt1.messageId, key);
 
     // Publish the diff to the Tangle, starting a diff chain.
-    const diff1Receipt = await client.publishDiff(updatedMessageId, diff1);
-    logExplorerUrl("Diff Chain Transaction (1):", clientConfig.network.toString(), diff1Receipt.messageId);
+    const diffReceipt1 = await client.publishDiff(intReceipt1.messageId, diff1);
+    logExplorerUrl("Diff Chain Transaction (1):", clientConfig.network.toString(), diffReceipt1.messageId);
 
     // ===========================================================================
     // Diff Chain Update 2
     // ===========================================================================
 
-    const doc3 = Document.fromJSON(doc2.toJSON());
+    // Prepare another diff chain update.
+    const diffDoc2 = Document.fromJSON(diffDoc1.toJSON());
 
-    // Add a third ServiceEndpoint
-    let serviceJSON3 = {
-        id: doc3.id + "#third-linked-domain",
+    // Add a second Service with the tag "linked-domain-2"
+    let serviceJSON2 = {
+        id: diffDoc2.id + "#linked-domain-2",
         type: "LinkedDomains",
-        serviceEndpoint: "https://fake-domain.org",
+        serviceEndpoint: "https://example.com",
     };
-    doc3.insertService(Service.fromJSON(serviceJSON3));
+    diffDoc2.insertService(Service.fromJSON(serviceJSON2));
+    diffDoc2.updated = Timestamp.nowUTC();
 
-    // Create a signed diff update.
-    //
-    // This is the first diff therefore the `previous_message_id` property is
-    // set to the last DID document published.
-    const diff2 = doc2.diff(doc3, diff1Receipt.messageId, key);
+    // This is the second diff therefore its `previousMessageId` property is
+    // set to the first published diff to extend the diff chain.
+    const diff2 = diffDoc1.diff(diffDoc2, diffReceipt1.messageId, key);
 
     // Publish the diff to the Tangle.
-    // Note that we still use the message_id from the last integration chain message here to link
+    // Note that we still use the `messageId` from the last integration chain message here to link
     // the current diff chain to that point on the integration chain.
-    const diff2Receipt = await client.publishDiff(updatedMessageId, diff2);
-    logExplorerUrl("Diff Chain Transaction (2):", clientConfig.network.toString(), diff2Receipt.messageId);
+    const diffReceipt2 = await client.publishDiff(intReceipt1.messageId, diff2);
+    logExplorerUrl("Diff Chain Transaction (2):", clientConfig.network.toString(), diffReceipt2.messageId);
 
     // ===========================================================================
     // Diff Chain Spam
     // ===========================================================================
 
     // Publish several spam messages to the same index as the new diff chain on the Tangle.
-    let diffIndex = Document.diffAddress(updatedMessageId);
-    await client.publishJSON(diffIndex, { "diffSpam:1": true });
-    await client.publishJSON(diffIndex, { "diffSpam:2": true });
-    await client.publishJSON(diffIndex, { "diffSpam:3": true });
+    // These are not valid DID diffs and are simply to demonstrate that invalid messages
+    // can be included in the history for debugging invalid DID diffs.
+    let diffIndex = Document.diffAddress(intReceipt1.messageId);
+    await client.publishJSON(diffIndex, {"diffSpam:1": true});
+    await client.publishJSON(diffIndex, {"diffSpam:2": true});
+    await client.publishJSON(diffIndex, {"diffSpam:3": true});
 
     // ===========================================================================
     // DID History 1
@@ -107,28 +147,37 @@ async function resolveHistory(clientConfig) {
     // Retrieve the message history of the DID.
     const history1 = await client.resolveHistory(doc.id.toString());
 
-    // The history shows one document in the integration chain (plus the current document), and two
-    // diffs in the diff chain.
-    console.log("History 1:");
-    console.log(history1);
+    // The history shows one document in the integration chain (plus the current document),
+    // and two diffs in the diff chain.
+    prettyPrintJSON(history1, "History (1):");
 
     // ===========================================================================
     // Integration Chain Update 2
     // ===========================================================================
 
-    // Publish an integration chain update, which writes the full updated DID document to the Tangle.
-    // Note: the previousMessageId points to the messageId of the last integration chain update,
-    //       not the last diff chain message.
-    doc3.previousMessageId = updatedMessageId;
+    // Publish a second integration chain update
+    let intDoc2 = Document.fromJSON(diffDoc2.toJSON());
 
-    // Sign the DID Document with the appropriate key.
-    doc3.sign(key);
+    // Remove the #keys-1 VerificationMethod
+    intDoc2.removeMethod(DID.parse(intDoc2.id.toString() + "#keys-1"));
 
-    // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
-    const intChainUpdateReceipt = await client.publishDocument(doc.toJSON());
+    // Remove the #linked-domain-1 Service
+    intDoc2.removeService(DID.parse(intDoc2.id.toString() + "#linked-domain-1"));
+
+    // Add a VerificationMethod with a new KeyPair, called "keys-2"
+    const keys2 = new KeyPair(KeyType.Ed25519);
+    const method2 = VerificationMethod.fromDID(intDoc1.id, keys2, "keys-2");
+    intDoc2.insertMethod(method2, "VerificationMethod");
+
+    // Note: the `previous_message_id` points to the `message_id` of the last integration chain
+    //       update, NOT the last diff chain message.
+    intDoc2.previousMessageId = intReceipt1.messageId;
+    intDoc2.updated = Timestamp.nowUTC();
+    intDoc2.sign(key);
+    const intReceipt2 = await client.publishDocument(intDoc2.toJSON());
 
     // Log the results.
-    logExplorerUrl("Int. Chain Update (2):", clientConfig.network.toString(), intChainUpdateReceipt.messageId);
+    logExplorerUrl("Int. Chain Update (2):", clientConfig.network.toString(), intReceipt2.messageId);
 
     // ===========================================================================
     // DID History 2
@@ -137,22 +186,20 @@ async function resolveHistory(clientConfig) {
     // Retrieve the updated message history of the DID.
     const history2 = await client.resolveHistory(doc.id.toString());
 
-    // The history now shows two documents in the integration chain (plus the current document), and no
-    // diffs in the diff chain. This is because the previous document published included those updates
+    // The history now shows two documents in the integration chain (plus the current document).
+    // There are no diffs because the previous document published included those updates
     // and we have not added any diffs pointing to the latest document.
-    console.log("History 2:");
-    console.log(history2)
+    prettyPrintJSON(history2, "History (2):");
 
     // ===========================================================================
     // Diff Chain History
     // ===========================================================================
 
     // Fetch the diff chain of the previous integration chain message.
-    // We can still retrieve old diff chains, but they do not affect DID resolution.
+    // Old diff chains can be retrieved but they no longer affect DID resolution.
     let verificationMethod = doc.authentication();
-    let diffSet = await client.resolveDiffs(doc.id.toString(), verificationMethod, updatedMessageId);
-    console.log("DiffSet:");
-    console.log(diffSet);
+    let oldDiffSet = await client.resolveDiffs(doc.id.toString(), verificationMethod, intReceipt1.messageId);
+    prettyPrintJSON(oldDiffSet, "Old DiffSet:");
 }
 
 exports.resolveHistory = resolveHistory;

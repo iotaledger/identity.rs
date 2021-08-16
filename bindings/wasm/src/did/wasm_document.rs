@@ -21,6 +21,7 @@ use identity::iota::MessageId;
 use identity::iota::{DocumentDiff, TangleRef};
 use wasm_bindgen::prelude::*;
 
+use crate::common::WasmTimestamp;
 use crate::credential::VerifiableCredential;
 use crate::credential::VerifiablePresentation;
 use crate::crypto::KeyPair;
@@ -109,6 +110,30 @@ impl WasmDocument {
   #[wasm_bindgen(getter)]
   pub fn id(&self) -> WasmDID {
     WasmDID(self.0.id().clone())
+  }
+
+  /// Returns the timestamp of when the DID document was created.
+  #[wasm_bindgen(getter)]
+  pub fn created(&self) -> WasmTimestamp {
+    WasmTimestamp::from(self.0.created())
+  }
+
+  /// Sets the timestamp of when the DID document was created.
+  #[wasm_bindgen(setter = created)]
+  pub fn set_created(&mut self, timestamp: WasmTimestamp) {
+    self.0.set_created(timestamp.0)
+  }
+
+  /// Returns the timestamp of the last DID document update.
+  #[wasm_bindgen(getter)]
+  pub fn updated(&self) -> WasmTimestamp {
+    WasmTimestamp::from(self.0.updated())
+  }
+
+  /// Sets the timestamp of the last DID document update.
+  #[wasm_bindgen(setter = updated)]
+  pub fn set_updated(&mut self, timestamp: WasmTimestamp) {
+    self.0.set_updated(timestamp.0)
   }
 
   /// Returns the DID Document `proof` object.
