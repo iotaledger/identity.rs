@@ -103,7 +103,7 @@ impl Storage for Stronghold {
     let vault = self.vault(id);
 
     vault
-      .insert(location_skey(&location), secret_key.as_ref(), default_hint(), &[])
+      .insert(location_skey(location), secret_key.as_ref(), default_hint(), &[])
       .await?;
 
     match location.method() {
