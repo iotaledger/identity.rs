@@ -51,6 +51,7 @@ impl IdentityCreate {
   }
 
   /// Sets the [SecretKey] for the Identity creation.
+  /// This needs to be the correct number of bytes for the respective [KeyType].
   ///
   /// For [KeyType::Ed25519] the key needs to be 64 bytes in size.
   #[must_use]
