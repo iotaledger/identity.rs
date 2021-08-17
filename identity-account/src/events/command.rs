@@ -97,7 +97,6 @@ impl Command {
         let public: PublicKey = if let Some(secret_key) = secret_key {
           store.key_insert(state.id(), &location, secret_key).await
         } else {
-          // Generate an authentication kek
           store.key_new(state.id(), &location).await
         }?;
 
