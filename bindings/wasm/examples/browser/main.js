@@ -6,6 +6,7 @@ import { resolveIdentity } from "./resolve.js";
 import { createVP } from "./create_vp.js";
 import { revoke } from "./revocation.js";
 import { merkleKey } from "./merkle_key.js";
+import { createIdentityPrivateTangle } from "./private_tangle.js";
 
 await initIdentity();
 const clientConfig = defaultClientConfig();
@@ -44,3 +45,8 @@ document
 document
     .querySelector("#merkle_key_btn")
     .addEventListener("click", () => merkleKey(clientConfig));
+
+//handle private tangle DID creation on click event
+document
+    .querySelector("#private_tangle_btn")
+    .addEventListener("click", () => createIdentityPrivateTangle());
