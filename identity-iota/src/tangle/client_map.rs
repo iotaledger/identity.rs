@@ -31,7 +31,7 @@ impl ClientMap {
   pub fn from_client(client: Client) -> Self {
     let data: State = State::new();
 
-    data.insert(client.network, Arc::new(client));
+    data.insert(client.network.clone(), Arc::new(client));
 
     Self { data }
   }
@@ -49,7 +49,7 @@ impl ClientMap {
   }
 
   pub fn insert(&self, client: Client) {
-    self.data.insert(client.network, Arc::new(client));
+    self.data.insert(client.network.clone(), Arc::new(client));
   }
 
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
@@ -85,7 +85,7 @@ impl ClientMap {
       return Ok(Arc::clone(&client));
     }
 
-    let client: Arc<Client> = Client::from_network(network).await.map(Arc::new)?;
+    let client: Arc<Client> = Client::from_network(network.clone()).await.map(Arc::new)?;
 
     self.data.insert(network, Arc::clone(&client));
 

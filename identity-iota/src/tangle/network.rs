@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::borrow::Cow;
+
 use identity_core::common::Url;
 
 use crate::did::IotaDID;
@@ -16,7 +18,7 @@ lazy_static! {
 }
 
 /// The Tangle network to use (`Mainnet` or `Testnet`).
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum Network {
   #[serde(rename = "main")]
   Mainnet,
@@ -46,7 +48,7 @@ impl Network {
   }
 
   /// Returns the default node URL of the Tangle network.
-  pub fn default_node_url(self) -> &'static Url {
+  pub fn default_node_url(&self) -> &'static Url {
     match self {
       Self::Mainnet => &*NODE_MAIN,
       Self::Testnet => &*NODE_TEST,
@@ -54,7 +56,7 @@ impl Network {
   }
 
   /// Returns the web explorer URL of the Tangle network.
-  pub fn explorer_url(self) -> &'static Url {
+  pub fn explorer_url(&self) -> &'static Url {
     match self {
       Self::Mainnet => &*EXPLORER_MAIN,
       Self::Testnet => &*EXPLORER_TEST,
@@ -71,10 +73,10 @@ impl Network {
   }
 
   /// Returns the name of the network as a static `str`.
-  pub const fn as_str(self) -> &'static str {
+  pub const fn as_str(&self) -> Cow<'static, str> {
     match self {
-      Self::Mainnet => MAIN_NETWORK_NAME,
-      Self::Testnet => TEST_NETWORK_NAME,
+      Self::Mainnet => Cow::Borrowed(MAIN_NETWORK_NAME),
+      Self::Testnet => Cow::Borrowed(TEST_NETWORK_NAME),
     }
   }
 }

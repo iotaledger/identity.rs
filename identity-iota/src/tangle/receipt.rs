@@ -29,7 +29,7 @@ impl Receipt {
 
   /// Returns the associated IOTA Tangle `Network`.
   pub fn network(&self) -> Network {
-    self.network
+    self.network.clone()
   }
 
   /// Returns the message `id`.

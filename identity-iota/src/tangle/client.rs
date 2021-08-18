@@ -60,7 +60,7 @@ impl Client {
 
   /// Returns the `Client` Tangle network.
   pub fn network(&self) -> Network {
-    self.network
+    self.network.clone()
   }
 
   /// Publishes an `IotaDocument` to the Tangle.
@@ -73,7 +73,7 @@ impl Client {
       .finish()
       .await
       .map_err(Into::into)
-      .map(|message| Receipt::new(self.network, message))
+      .map(|message| Receipt::new(self.network.clone(), message))
   }
 
   /// Publishes a `DocumentDiff` to the Tangle.
@@ -86,7 +86,7 @@ impl Client {
       .finish()
       .await
       .map_err(Into::into)
-      .map(|message| Receipt::new(self.network, message))
+      .map(|message| Receipt::new(self.network.clone(), message))
   }
 
   pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
