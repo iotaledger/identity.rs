@@ -7,22 +7,19 @@ use iota_client::Client as IotaClient;
 
 use identity_core::convert::ToJson;
 
-use crate::chain::DiffChain;
 use crate::chain::DocumentChain;
 use crate::chain::IntegrationChain;
+use crate::chain::{ChainHistory, DiffChain, DocumentHistory};
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
-use crate::did::IotaVerificationMethod;
 use crate::error::Result;
-use crate::tangle::ClientBuilder;
-use crate::tangle::DiffSet;
 use crate::tangle::Message;
-use crate::tangle::MessageHistory;
 use crate::tangle::MessageId;
 use crate::tangle::Network;
 use crate::tangle::Receipt;
 use crate::tangle::TangleResolve;
+use crate::tangle::{ClientBuilder, TangleRef};
 
 /// Client for performing IOTA Identity operations on the Tangle.
 #[derive(Debug)]
@@ -121,25 +118,23 @@ impl Client {
       DiffChain::try_from_messages(&integration_chain, &messages)?
     };
 
-    DocumentChain::with_diff_chain(integration_chain, diff)
+    DocumentChain::new_with_diff_chain(integration_chain, diff)
   }
 
   /// Returns the [`MessageHistory`] of the given [`IotaDID`].
-  pub async fn resolve_history(&self, did: &IotaDID) -> Result<MessageHistory> {
-    MessageHistory::read(self, did).await
+  pub async fn resolve_history(&self, did: &IotaDID) -> Result<DocumentHistory> {
+    DocumentHistory::read(self, did).await
   }
 
-  /// Returns the diff chain [`DiffSet`] starting from the specified integration chain [`MessageId`].
-  pub async fn resolve_diffs(
-    &self,
-    did: &IotaDID,
-    method: &IotaVerificationMethod,
-    message_id: &MessageId,
-  ) -> Result<DiffSet> {
-    let diff_address: String = IotaDocument::diff_address(message_id)?;
+  /// Returns the [`ChainHistory`] of a diff chain starting from an [`IotaDocument`] on the
+  /// integration chain.
+  ///
+  /// NOTE: the document must have been published to the tangle and have a valid message id and
+  /// authentication method.
+  pub async fn resolve_diff_history(&self, document: &IotaDocument) -> Result<ChainHistory<DocumentDiff>> {
+    let diff_address: String = IotaDocument::diff_address(document.message_id())?;
     let diff_messages: Vec<Message> = self.read_messages(&diff_address).await?;
-
-    Ok(DiffSet::new(did, method, message_id, &diff_messages))
+    ChainHistory::try_from_raw_messages(document, &diff_messages)
   }
 
   /// Fetch all [`Messages`][Message] from the given index on the IOTA Tangle.

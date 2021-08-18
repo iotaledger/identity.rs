@@ -177,3 +177,13 @@ impl Display for IntegrationChain {
     }
   }
 }
+
+/// Convert an [`IntegrationChain`] into an ordered list of documents with the current document
+/// as the last entry.
+impl From<IntegrationChain> for Vec<IotaDocument> {
+  fn from(integration_chain: IntegrationChain) -> Self {
+    let mut documents = integration_chain.history.unwrap_or_default();
+    documents.push(integration_chain.current);
+    documents
+  }
+}

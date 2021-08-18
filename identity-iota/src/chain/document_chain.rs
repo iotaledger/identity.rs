@@ -18,8 +18,8 @@ use crate::tangle::MessageId;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DocumentChain {
-  chain_d: DiffChain,
   chain_i: IntegrationChain,
+  chain_d: DiffChain,
   #[serde(skip_serializing_if = "Option::is_none")]
   document: Option<IotaDocument>,
 }
@@ -41,7 +41,7 @@ impl DocumentChain {
     Ok(this)
   }
 
-  /// Creates a new `DocumentChain` from given the `IntegrationChain`.
+  /// Creates a new [`DocumentChain`] from given the [`IntegrationChain`].
   pub fn new(chain_i: IntegrationChain) -> Self {
     Self {
       chain_i,
@@ -51,7 +51,7 @@ impl DocumentChain {
   }
 
   /// Creates a new [`DocumentChain`] from given the [`IntegrationChain`] and [`DiffChain`].
-  pub fn with_diff_chain(chain_i: IntegrationChain, chain_d: DiffChain) -> Result<Self> {
+  pub fn new_with_diff_chain(chain_i: IntegrationChain, chain_d: DiffChain) -> Result<Self> {
     let document: Option<IotaDocument> = if chain_d.is_empty() {
       None
     } else {
@@ -65,7 +65,7 @@ impl DocumentChain {
     })
   }
 
-  /// Returns a reference to the DID identifying the document chain.
+  /// Returns a reference to the [`IotaDID`] identifying this document chain.
   pub fn id(&self) -> &IotaDID {
     self.chain_i.current().id()
   }
@@ -110,12 +110,12 @@ impl DocumentChain {
     }
   }
 
-  /// Returns the Tangle message Id of the latest integration [`IotaDocument`].
+  /// Returns the Tangle [`MessageId`] of the latest integration [`IotaDocument`].
   pub fn integration_message_id(&self) -> &MessageId {
     self.chain_i.current_message_id()
   }
 
-  /// Returns the Tangle message Id of the latest diff or integration [`IotaDocument`].
+  /// Returns the Tangle [`MessageId`] of the latest diff or integration [`IotaDocument`].
   pub fn diff_message_id(&self) -> &MessageId {
     Self::__diff_message_id(&self.chain_i, &self.chain_d)
   }
@@ -134,11 +134,11 @@ impl DocumentChain {
     Ok(())
   }
 
-  /// Adds a new diff to the chain.
+  /// Adds a new [`DocumentDiff`] to the chain.
   ///
   /// # Errors
   ///
-  /// Fails if the document diff is invalid.
+  /// Fails if the diff is invalid.
   pub fn try_push_diff(&mut self, diff: DocumentDiff) -> Result<()> {
     self.chain_d.check_valid_addition(&self.chain_i, &diff)?;
 
