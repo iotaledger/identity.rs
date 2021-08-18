@@ -14,7 +14,7 @@ async function createIdentityPrivateTangle() {
     const network = Network.from_name("private-tangle");
 
     // Create a DID Document (an identity).
-    const { doc, key } = new Document(KeyType.Ed25519, clientConfig.network.toString());
+    const { doc, key } = new Document(KeyType.Ed25519, network.toString());
 
     // Sign the DID Document with the generated key.
     doc.sign(key);
