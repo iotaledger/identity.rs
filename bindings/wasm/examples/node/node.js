@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 const { createIdentity } = require('./create_did');
+const { createIdentityPrivateTangle } = require('./private_tangle');
 const { manipulateIdentity } = require('./manipulate_did');
 const { resolution } = require('./resolution');
 const { createVC } = require('./create_vc');
@@ -33,6 +34,8 @@ async function main() {
             return await createVP(CLIENT_CONFIG);
         case 'merkle_key':
             return await merkleKey(CLIENT_CONFIG);
+        case 'private_tangle':
+            return await createIdentityPrivateTangle();
         case 'all':
             console.log(">>> Run All Examples");
 
