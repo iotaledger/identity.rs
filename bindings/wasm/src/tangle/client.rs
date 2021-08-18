@@ -13,17 +13,17 @@ use identity::iota::Client as IotaClient;
 use identity::iota::CredentialValidator;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
-use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
 use identity::iota::TangleResolve;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use crate::did::{WasmDocument, WasmDocumentDiff, WasmVerificationMethod};
+use crate::chain::{WasmDiffChainHistory, WasmDocumentHistory};
+use crate::did::{WasmDocument, WasmDocumentDiff};
 use crate::error::{Result, WasmResult};
+use crate::tangle::Config;
 use crate::tangle::WasmNetwork;
-use crate::tangle::{Config, WasmDiffSet, WasmMessageHistory};
 
 #[wasm_bindgen]
 #[derive(Debug)]
@@ -155,7 +155,7 @@ impl Client {
       client
         .resolve_history(&did)
         .await
-        .map(WasmMessageHistory::from)
+        .map(WasmDocumentHistory::from)
         .map(JsValue::from)
         .wasm_result()
     });
@@ -163,19 +163,21 @@ impl Client {
     Ok(promise)
   }
 
-  /// Returns the diff chain for the integration chain specified by `message_id`.
-  #[wasm_bindgen(js_name = resolveDiffs)]
-  pub fn resolve_diffs(&self, did: &str, method: &WasmVerificationMethod, message_id: &str) -> Result<Promise> {
-    let did: IotaDID = did.parse().wasm_result()?;
-    let message_id: MessageId = message_id.parse().wasm_result()?;
+  /// Returns the [`DiffChainHistory`] of a diff chain starting from a document on the
+  /// integration chain.
+  ///
+  /// NOTE: the document must have been published to the tangle and have a valid message id and
+  /// authentication method.
+  #[wasm_bindgen(js_name = resolveDiffHistory)]
+  pub fn resolve_diffs(&self, document: &WasmDocument) -> Result<Promise> {
     let client: Rc<IotaClient> = self.client.clone();
-    let method: IotaVerificationMethod = method.0.clone();
+    let iota_document: IotaDocument = document.0.clone();
 
     let promise: Promise = future_to_promise(async move {
       client
-        .resolve_diffs(&did, &method, &message_id)
+        .resolve_diff_history(&iota_document)
         .await
-        .map(WasmDiffSet::from)
+        .map(WasmDiffChainHistory::from)
         .map(JsValue::from)
         .wasm_result()
     });

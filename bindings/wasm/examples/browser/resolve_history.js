@@ -142,8 +142,7 @@ export async function resolveHistory(clientConfig, log = true) {
     // Retrieve the message history of the DID.
     const history1 = await client.resolveHistory(doc.id.toString());
 
-    // The history shows one document in the integration chain (plus the current document),
-    // and two diffs in the diff chain.
+    // The history shows two documents in the integration chain, and two diffs in the diff chain.
     if (log) logToScreen("History (1):")
     if (log) logObjectToScreen(history1);
 
@@ -183,9 +182,9 @@ export async function resolveHistory(clientConfig, log = true) {
     // Retrieve the updated message history of the DID.
     const history2 = await client.resolveHistory(doc.id.toString());
 
-    // The history now shows two documents in the integration chain (plus the current document).
-    // There are no diffs because the previous document published included those updates
-    // and we have not added any diffs pointing to the latest document.
+    // The history now shows three documents in the integration chain, and no diffs in the diff chain.
+    // This is because each integration chain document has its own diff chain but only the last one
+    // is used during resolution.
     if (log) logToScreen("History (2):")
     if (log) logObjectToScreen(history2);
 
@@ -194,9 +193,9 @@ export async function resolveHistory(clientConfig, log = true) {
     // ===========================================================================
 
     // Fetch the diff chain of the previous integration chain message.
-    // Old diff chains can be retrieved but they do not affect DID resolution.
-    let verificationMethod = doc.authentication();
-    let oldDiffSet = await client.resolveDiffs(doc.id.toString(), verificationMethod, intReceipt1.messageId);
-    if (log) logToScreen("Old DiffSet:")
-    if (log) logObjectToScreen(oldDiffSet);
+    // Old diff chains can be retrieved but they no longer affect DID resolution.
+    let previousIntegrationDocument = history2.integrationChainData()[1];
+    let previousDiffHistory = await client.resolveDiffHistory(previousIntegrationDocument);
+    if (log) logToScreen("Previous Diff History:")
+    if (log) logObjectToScreen(previousDiffHistory);
 }

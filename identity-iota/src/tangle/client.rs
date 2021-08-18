@@ -129,7 +129,7 @@ impl Client {
   /// Returns the [`ChainHistory`] of a diff chain starting from an [`IotaDocument`] on the
   /// integration chain.
   ///
-  /// NOTE: the document must have been published to the tangle and have a valid message id and
+  /// NOTE: the document must have been published to the Tangle and have a valid message id and
   /// authentication method.
   pub async fn resolve_diff_history(&self, document: &IotaDocument) -> Result<ChainHistory<DocumentDiff>> {
     let diff_address: String = IotaDocument::diff_address(document.message_id())?;

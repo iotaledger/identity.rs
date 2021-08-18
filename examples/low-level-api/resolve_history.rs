@@ -6,18 +6,16 @@
 //!
 //! cargo run --example did_history
 
-use identity::core::{FromJson, json};
 use identity::core::Timestamp;
+use identity::core::{json, FromJson};
 use identity::crypto::KeyPair;
 use identity::did::{MethodScope, Service};
-use identity::iota::{ChainHistory, Client, DocumentHistory};
-// use identity::iota::DiffSet;
 use identity::iota::DocumentDiff;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
-// use identity::iota::MessageHistory;
 use identity::iota::Receipt;
 use identity::iota::Result;
+use identity::iota::{ChainHistory, Client, DocumentHistory};
 
 mod create_did;
 
@@ -152,8 +150,7 @@ async fn main() -> Result<()> {
   // Retrieve the message history of the DID.
   let history_1: DocumentHistory = client.resolve_history(document.id()).await?;
 
-  // The history shows one document in the integration chain (plus the current document),
-  // and two diffs in the diff chain.
+  // The history shows two documents in the integration chain, and two diffs in the diff chain.
   println!("History (1) = {:#?}", history_1);
 
   // ===========================================================================
@@ -192,9 +189,9 @@ async fn main() -> Result<()> {
   // Retrieve the updated message history of the DID.
   let history_2: DocumentHistory = client.resolve_history(document.id()).await?;
 
-  // The history now shows two documents in the integration chain (plus the current document), and no
-  // diffs in the diff chain. This is because the previous document published included those updates
-  // and we have not added any diffs pointing to the latest document.
+  // The history now shows three documents in the integration chain, and no diffs in the diff chain.
+  // This is because each integration chain document has its own diff chain but only the last one
+  // is used during resolution.
   println!("History (2) = {:#?}", history_2);
 
   // ===========================================================================
@@ -203,12 +200,12 @@ async fn main() -> Result<()> {
 
   // Fetch the diff chain history of the previous integration chain document.
   // Old diff chains can be retrieved but they no longer affect DID resolution.
-  let int_chain_documents = &history_2.integration_chain_history.chain_data;
-  let diff_history: ChainHistory<DocumentDiff> = client
-    .resolve_diff_history(&int_chain_documents[int_chain_documents.len() - 2])
+  let previous_integration_document = &history_2.integration_chain_data[1];
+  let previous_diff_history: ChainHistory<DocumentDiff> = client
+    .resolve_diff_history(previous_integration_document)
     .await?;
 
-  println!("Diff History = {:#?}", diff_history);
+  println!("Previous Diff History = {:#?}", previous_diff_history);
 
   Ok(())
 }

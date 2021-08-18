@@ -200,8 +200,8 @@ impl Display for DiffChain {
 }
 
 impl From<DiffChain> for Vec<DocumentDiff> {
-  fn from(other: DiffChain) -> Self {
-    other.inner
+  fn from(diff_chain: DiffChain) -> Self {
+    diff_chain.inner
   }
 }
 

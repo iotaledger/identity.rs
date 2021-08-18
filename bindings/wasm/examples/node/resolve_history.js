@@ -147,8 +147,7 @@ async function resolveHistory(clientConfig) {
     // Retrieve the message history of the DID.
     const history1 = await client.resolveHistory(doc.id.toString());
 
-    // The history shows one document in the integration chain (plus the current document),
-    // and two diffs in the diff chain.
+    // The history shows two documents in the integration chain, and two diffs in the diff chain.
     prettyPrintJSON(history1, "History (1):");
 
     // ===========================================================================
@@ -186,9 +185,9 @@ async function resolveHistory(clientConfig) {
     // Retrieve the updated message history of the DID.
     const history2 = await client.resolveHistory(doc.id.toString());
 
-    // The history now shows two documents in the integration chain (plus the current document).
-    // There are no diffs because the previous document published included those updates
-    // and we have not added any diffs pointing to the latest document.
+    // The history now shows three documents in the integration chain, and no diffs in the diff chain.
+    // This is because each integration chain document has its own diff chain but only the last one
+    // is used during resolution.
     prettyPrintJSON(history2, "History (2):");
 
     // ===========================================================================
@@ -197,9 +196,9 @@ async function resolveHistory(clientConfig) {
 
     // Fetch the diff chain of the previous integration chain message.
     // Old diff chains can be retrieved but they no longer affect DID resolution.
-    let verificationMethod = doc.authentication();
-    let oldDiffSet = await client.resolveDiffs(doc.id.toString(), verificationMethod, intReceipt1.messageId);
-    prettyPrintJSON(oldDiffSet, "Old DiffSet:");
+    let previousIntegrationDocument = history2.integrationChainData()[1];
+    let previousDiffHistory = await client.resolveDiffHistory(previousIntegrationDocument);
+    prettyPrintJSON(previousDiffHistory, "Previous Diff History:");
 }
 
 exports.resolveHistory = resolveHistory;
