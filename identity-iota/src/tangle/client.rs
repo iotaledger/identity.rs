@@ -12,6 +12,7 @@ use crate::chain::IntegrationChain;
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
+use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::ClientBuilder;
 use crate::tangle::Message;
@@ -49,7 +50,11 @@ impl Client {
     let mut client: iota_client::ClientBuilder = builder.builder;
 
     if !builder.nodeset {
-      client = client.with_node(builder.network.default_node_url().as_str())?;
+      if let Some(network_url) = builder.network.default_node_url() {
+        client = client.with_node(network_url.as_str())?;
+      } else {
+        return Err(Error::NoClientNodesProvided);
+      }
     }
 
     Ok(Self {

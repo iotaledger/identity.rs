@@ -6,6 +6,7 @@ use std::borrow::Cow;
 use identity_core::common::Url;
 
 use crate::did::IotaDID;
+use crate::error::{Error, Result};
 
 const MAIN_NETWORK_NAME: &str = "main";
 const TEST_NETWORK_NAME: &str = "test";
@@ -24,16 +25,23 @@ pub enum Network {
   Mainnet,
   #[serde(rename = "test")]
   Testnet,
+  Other(String),
 }
 
 impl Network {
-  /// Parses the provided string to a `Network`.
+  /// Parses the provided string to a [`Network`].
   ///
-  /// If the input is `"test"` then `Testnet` is returned, otherwise `Mainnet` is returned.
-  pub fn from_name(string: &str) -> Self {
+  /// The inputs `"test"` and `"main"` will be mapped to the well-known [`Testnet`][Network::Testnet]
+  /// and [`Mainnet`][Network::Mainnet] variants respectively.
+  /// Other inputs will return an instance of [`Other`][Network::Other].
+  ///
+  /// Note that empty strings are not valid network names.
+  pub fn from_name(string: &str) -> Result<Self> {
     match string {
-      TEST_NETWORK_NAME => Self::Testnet,
-      _ => Self::Mainnet,
+      "" => Err(Error::InvalidDIDNetwork),
+      TEST_NETWORK_NAME => Ok(Self::Testnet),
+      MAIN_NETWORK_NAME => Ok(Self::Mainnet),
+      other => Ok(Self::Other(other.to_owned())),
     }
   }
 
@@ -48,35 +56,37 @@ impl Network {
   }
 
   /// Returns the default node URL of the Tangle network.
-  pub fn default_node_url(&self) -> &'static Url {
+  pub fn default_node_url(&self) -> Option<&'static Url> {
     match self {
-      Self::Mainnet => &*NODE_MAIN,
-      Self::Testnet => &*NODE_TEST,
+      Self::Mainnet => Some(&*NODE_MAIN),
+      Self::Testnet => Some(&*NODE_TEST),
+      _ => None,
     }
   }
 
   /// Returns the web explorer URL of the Tangle network.
-  pub fn explorer_url(&self) -> &'static Url {
+  pub fn explorer_url(&self) -> Result<&'static Url> {
     match self {
-      Self::Mainnet => &*EXPLORER_MAIN,
-      Self::Testnet => &*EXPLORER_TEST,
+      Self::Mainnet => Ok(&*EXPLORER_MAIN),
+      Self::Testnet => Ok(&*EXPLORER_TEST),
+      _ => Err(Error::NoExplorerForPrivateTangles),
     }
   }
 
   /// Returns the web explorer URL of the given `message`.
-  pub fn message_url(&self, message_id: &str) -> Url {
-    let mut url: Url = self.explorer_url().clone();
-
+  pub fn message_url(&self, message_id: &str) -> Result<Url> {
+    let mut url = self.explorer_url()?.clone();
     // unwrap is safe, the explorer URL is always a valid base URL
     url.path_segments_mut().unwrap().push("message").push(message_id);
-    url
+    Ok(url)
   }
 
   /// Returns the name of the network as a static `str`.
-  pub const fn as_str(&self) -> Cow<'static, str> {
+  pub fn as_str(&self) -> Cow<'static, str> {
     match self {
       Self::Mainnet => Cow::Borrowed(MAIN_NETWORK_NAME),
       Self::Testnet => Cow::Borrowed(TEST_NETWORK_NAME),
+      Self::Other(network) => Cow::Owned(network.clone()),
     }
   }
 }
@@ -94,9 +104,13 @@ mod tests {
 
   #[test]
   fn test_from_name() {
-    assert_eq!(Network::from_name("test"), Network::Testnet);
-    assert_eq!(Network::from_name("main"), Network::Mainnet);
-    assert_eq!(Network::from_name("anything"), Network::Mainnet);
+    assert_eq!(Network::from_name("test").unwrap(), Network::Testnet);
+    assert_eq!(Network::from_name("main").unwrap(), Network::Mainnet);
+    assert_eq!(
+      Network::from_name("anything").unwrap(),
+      Network::Other("anything".to_owned())
+    );
+    assert!(Network::from_name("").is_err());
   }
 
   #[test]

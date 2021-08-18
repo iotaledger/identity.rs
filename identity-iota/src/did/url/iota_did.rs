@@ -248,7 +248,8 @@ impl IotaDID {
 
   /// Returns the Tangle `network` of the `DID`.
   pub fn network(&self) -> Network {
-    Network::from_name(self.network_str())
+    // SAFETY: `network_str` never returns an empty string.
+    Network::from_name(self.network_str()).unwrap()
   }
 
   /// Returns the Tangle `network` name of the `DID`.

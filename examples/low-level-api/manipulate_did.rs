@@ -54,7 +54,7 @@ async fn main() -> Result<()> {
   println!("Publish Receipt > {:#?}", receipt);
 
   // Display the web explorer url that shows the published message.
-  println!("DID Document Transaction > {}", receipt.message_url());
+  println!("DID Document Transaction > {}", receipt.message_url()?);
 
   Ok(())
 }

@@ -51,4 +51,8 @@ pub enum Error {
   CannotRemoveAuthMethod,
   #[error("Cannot Revoke Verification Method")]
   CannotRevokeMethod,
+  #[error("No Client Nodes Provided")]
+  NoClientNodesProvided,
+  #[error("No Explorer for Private Tangles")]
+  NoExplorerForPrivateTangles,
 }
