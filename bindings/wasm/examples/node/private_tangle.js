@@ -1,9 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { createIdentity } = require('./create_did');
 const { Client, Config, Document, KeyType, Network } = require('../../node/identity_wasm')
-const { logExplorerUrl } = require('./explorer_util')
 
 /**
     This example shows how a DID document can be created on a private tangle.
