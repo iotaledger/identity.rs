@@ -52,7 +52,7 @@ impl Network {
 
   /// Returns true if this network is the same network as the DID.
   pub fn matches_did(self, did: &IotaDID) -> bool {
-    did.network_str() == self.as_str()
+    did.network_str() == self.name()
   }
 
   /// Returns the default node URL of the Tangle network.
@@ -81,8 +81,8 @@ impl Network {
     Ok(url)
   }
 
-  /// Returns the name of the network as a static `str`.
-  pub fn as_str(&self) -> Cow<'static, str> {
+  /// Returns the name of the network.
+  pub fn name(&self) -> Cow<'static, str> {
     match self {
       Self::Mainnet => Cow::Borrowed(MAIN_NETWORK_NAME),
       Self::Testnet => Cow::Borrowed(TEST_NETWORK_NAME),
