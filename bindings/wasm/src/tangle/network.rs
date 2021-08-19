@@ -44,7 +44,11 @@ impl WasmNetwork {
   /// Returns the web explorer URL of the given `message`.
   #[wasm_bindgen(js_name = messageURL)]
   pub fn message_url(&self, message_id: &str) -> Result<String, JsValue> {
-    self.0.message_url(message_id).map(|url| url.to_string()).map_err(wasm_error)
+    self
+      .0
+      .message_url(message_id)
+      .map(|url| url.to_string())
+      .map_err(wasm_error)
   }
 
   #[allow(clippy::inherent_to_string, clippy::wrong_self_convention)]
