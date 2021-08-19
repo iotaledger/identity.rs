@@ -39,6 +39,10 @@ name = "account_stronghold"
 path = "account/stronghold.rs"
 
 [[example]]
+name = "account_private_tangle"
+path = "account/private_tangle.rs"
+
+[[example]]
 name = "create_did"
 path = "low-level-api/create_did.rs"
 
