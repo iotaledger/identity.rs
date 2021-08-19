@@ -18,12 +18,15 @@ use identity::prelude::*;
 #[tokio::main]
 pub async fn main() -> Result<()> {
   // This is the `networkID` defined in hornet's node configuration.
-  let network = Network::from_name("private-tangle")?;
+  let network_name = "private-tangle";
+
+  // Unwrap is fine since we provided a non-empty string.
+  let network = Network::from_name(network_name).unwrap();
 
   // Set the network and the URL that points to
   // the REST API of the locally running hornet node.
   let client = ClientBuilder::new()
-    .network(network.clone())
+    .network(network)
     .node("http://127.0.0.1:14265/")?
     .build()
     .await?;
@@ -36,7 +39,7 @@ pub async fn main() -> Result<()> {
 
   // Create a DID with the explicitly set network.
   // This will result in a DID prefixed by `did:iota:private-tangle`.
-  let mut document: IotaDocument = IotaDocument::from_keypair_with_network(&keypair, &network.as_str())?;
+  let mut document: IotaDocument = IotaDocument::from_keypair_with_network(&keypair, network_name)?;
 
   // Sign the DID Document with the default authentication key.
   document.sign(keypair.secret())?;
