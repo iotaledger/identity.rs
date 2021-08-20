@@ -10,8 +10,8 @@ const { Client, Config, Document, KeyType, Network } = require('../../node/ident
     for setup instructions.
 **/
 async function createIdentityPrivateTangle() {
-    // This is the `networkID` defined in hornet's node configuration.
-    const network = Network.from_name("private-tangle");
+    // This is an arbitrarily defined network name
+    const network = Network.from_name("atoi");
 
     // Create a DID Document (an identity).
     const { doc, key } = new Document(KeyType.Ed25519, network.toString());
@@ -32,8 +32,11 @@ async function createIdentityPrivateTangle() {
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const receipt = await client.publishDocument(doc.toJSON());
 
+    // Make sure the DID can be resolved on the private tangle
+    const resolved = await client.resolve(doc.id.toString());
+
     // Return the results.
-    return { key, doc, receipt };
+    return { key, resolved, receipt };
 }
 
 exports.createIdentityPrivateTangle = createIdentityPrivateTangle;

@@ -18,8 +18,12 @@ export async function createIdentityPrivateTangle(log = true) {
     if (log)
         logToScreen("This might take a few seconds to complete proof of work!");
 
-    // This is the `networkID` defined in hornet's node configuration.
-    const network = Network.from_name("private-tangle");
+    // Get the required parameters from the input fields
+    const restURL = document.querySelector("#create-private-rest-url").value;
+    const networkName = document.querySelector("#create-private-network-name").value;
+
+    // This is an arbitrarily defined network name
+    const network = Network.from_name(networkName);
 
     // Create a DID Document (an identity).
     const { doc, key } = new Document(KeyType.Ed25519, network.toString());
@@ -31,8 +35,8 @@ export async function createIdentityPrivateTangle(log = true) {
     const config = new Config();
     config.setNetwork(network);
 
-    // This URL points to the REST API of the locally running hornet node.
-    config.setNode("http://127.0.0.1:14265/");
+    // This URL should point to the REST API of a node.
+    config.setNode(restURL);
 
     // Create a client instance from the configuration to publish messages to the Tangle.
     const client = Client.fromConfig(config);
@@ -41,7 +45,12 @@ export async function createIdentityPrivateTangle(log = true) {
     const receipt = await client.publishDocument(doc.toJSON());
 
     if (log) logToScreen("Identity creation done!");
-    if (log) logObjectToScreen(doc);
+
+    // Make sure the DID can be resolved on the private tangle
+    const resolved = await client.resolve(doc.id.toString());
+
+    if (log) logToScreen("Resolved DID document:");
+    if (log) logObjectToScreen(resolved);
 
     // Return the results.
     return { key, doc, receipt };
