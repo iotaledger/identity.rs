@@ -29,20 +29,40 @@ pub enum Network {
 }
 
 impl Network {
-  /// Parses the provided string to a [`Network`].
+  /// Parses the provided string to a [Network].
   ///
-  /// The inputs `"test"` and `"main"` will be mapped to the well-known [`Testnet`][Network::Testnet]
-  /// and [`Mainnet`][Network::Mainnet] variants respectively.
-  /// Other inputs will return an instance of [`Other`][Network::Other].
+  /// The inputs `"test"` and `"main"` will be mapped to the well-known [Testnet][Network::Testnet]
+  /// and [Mainnet][Network::Mainnet] variants, respectively.
+  /// Other inputs will return an instance of [Other][Network::Other].
   ///
-  /// Note that empty strings are not valid network names.
+  /// Note that the empty string is not a valid network name, and that names have to be compliant
+  /// with the IOTA DID Method spec, that is, be at most 6 characters long and only include
+  /// characters `0-9` or `a-z`.
   pub fn from_name(string: &str) -> Result<Self> {
     match string {
-      "" => Err(Error::InvalidDIDNetwork),
+      "" => Err(Error::InvalidDIDNetwork("network name cannot be the empty string")),
       TEST_NETWORK_NAME => Ok(Self::Testnet),
       MAIN_NETWORK_NAME => Ok(Self::Mainnet),
-      other => Ok(Self::Other(other.to_owned())),
+      other => {
+        Self::check_name_compliance(other)?;
+        Ok(Self::Other(other.to_owned()))
+      }
     }
+  }
+
+  /// Checks if a string is a spec-compliant network name.
+  fn check_name_compliance(string: &str) -> Result<()> {
+    if string.len() > 6 {
+      return Err(Error::InvalidDIDNetwork("network name cannot exceed 6 characters"));
+    };
+
+    if !string.chars().all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit()) {
+      return Err(Error::InvalidDIDNetwork(
+        "network name may only contain characters `0-9` and `a-z`",
+      ));
+    }
+
+    Ok(())
   }
 
   /// Returns the `Network` the `IotaDID` is associated with.
@@ -107,10 +127,29 @@ mod tests {
     assert_eq!(Network::from_name("test").unwrap(), Network::Testnet);
     assert_eq!(Network::from_name("main").unwrap(), Network::Mainnet);
     assert_eq!(
-      Network::from_name("anything").unwrap(),
-      Network::Other("anything".to_owned())
+      Network::from_name("6chars").unwrap(),
+      Network::Other("6chars".to_owned())
     );
-    assert!(Network::from_name("").is_err());
+
+    assert!(matches!(
+      Network::from_name("7seven7").unwrap_err(),
+      Error::InvalidDIDNetwork("network name cannot exceed 6 characters")
+    ));
+
+    assert!(matches!(
+      Network::from_name("täst").unwrap_err(),
+      Error::InvalidDIDNetwork("network name may only contain characters `0-9` and `a-z`")
+    ));
+
+    assert!(matches!(
+      Network::from_name(" ").unwrap_err(),
+      Error::InvalidDIDNetwork("network name may only contain characters `0-9` and `a-z`")
+    ));
+
+    assert!(matches!(
+      Network::from_name("").unwrap_err(),
+      Error::InvalidDIDNetwork("network name cannot be the empty string")
+    ));
   }
 
   #[test]

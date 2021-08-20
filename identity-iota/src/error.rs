@@ -27,8 +27,8 @@ pub enum Error {
   InvalidDocumentAuthFragment,
   #[error("Invalid Document - Authentication Type Not Supported")]
   InvalidDocumentAuthType,
-  #[error("Invalid DID Network")]
-  InvalidDIDNetwork,
+  #[error("Invalid DID Network: {0}")]
+  InvalidDIDNetwork(&'static str),
   #[error("Invalid Tryte Conversion")]
   InvalidTryteConversion,
   #[error("Invalid Transaction Bundle")]
