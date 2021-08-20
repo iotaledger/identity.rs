@@ -41,7 +41,7 @@ impl DocumentChain {
     Ok(this)
   }
 
-  /// Creates a new [`DocumentChain`] from given the [`IntegrationChain`].
+  /// Creates a new [`DocumentChain`] from the given [`IntegrationChain`].
   pub fn new(chain_i: IntegrationChain) -> Self {
     Self {
       chain_i,
