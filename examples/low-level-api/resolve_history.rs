@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
   // Publish several spam messages to the same index as the integration chain on the Tangle.
   // These are not valid DID messages and are simply to demonstrate that invalid messages
   // can be included in the history for debugging invalid DID documents.
-  let int_index: &str = document.integration_address();
+  let int_index: &str = document.integration_index();
   client.publish_json(int_index, &json!({ "intSpam:1": true })).await?;
   client.publish_json(int_index, &json!({ "intSpam:2": true })).await?;
   client.publish_json(int_index, &json!({ "intSpam:3": true })).await?;
@@ -138,7 +138,7 @@ async fn main() -> Result<()> {
   // Publish several spam messages to the same index as the new diff chain on the Tangle.
   // These are not valid DID diffs and are simply to demonstrate that invalid messages
   // can be included in the history for debugging invalid DID diffs.
-  let diff_index: &str = &IotaDocument::diff_address(int_receipt_1.message_id())?;
+  let diff_index: &str = &IotaDocument::diff_index(int_receipt_1.message_id())?;
   client.publish_json(diff_index, &json!({ "diffSpam:1": true })).await?;
   client.publish_json(diff_index, &json!({ "diffSpam:2": true })).await?;
   client.publish_json(diff_index, &json!({ "diffSpam:3": true })).await?;

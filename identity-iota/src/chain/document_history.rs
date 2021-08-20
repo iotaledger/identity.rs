@@ -41,8 +41,8 @@ impl DocumentHistory {
     let integration_chain = IntegrationChain::try_from_messages(did, &integration_messages)?;
 
     // Fetch and parse the diff chain for the last integration message
-    let diff_address: String = IotaDocument::diff_address(integration_chain.current_message_id())?;
-    let diff_messages: Vec<Message> = client.read_messages(&diff_address).await?;
+    let diff_index: String = IotaDocument::diff_index(integration_chain.current_message_id())?;
+    let diff_messages: Vec<Message> = client.read_messages(&diff_index).await?;
     let diff_chain: DiffChain = DiffChain::try_from_messages(&integration_chain, &diff_messages)?;
 
     let integration_chain_history: ChainHistory<IotaDocument> =

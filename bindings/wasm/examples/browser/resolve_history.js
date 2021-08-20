@@ -33,7 +33,7 @@ export async function resolveHistory(clientConfig, log = true) {
     // Publish several spam messages to the same index as the integration chain on the Tangle.
     // These are not valid DID documents and are simply to demonstrate that invalid messages can be
     // included in the history, potentially for debugging invalid DID documents.
-    const intIndex = doc.integrationAddress();
+    const intIndex = doc.integrationIndex();
     await client.publishJSON(intIndex, {"intSpam:1": true});
     await client.publishJSON(intIndex, {"intSpam:2": true});
     await client.publishJSON(intIndex, {"intSpam:3": true});
@@ -130,7 +130,7 @@ export async function resolveHistory(clientConfig, log = true) {
     // Publish several spam messages to the same index as the new diff chain on the Tangle.
     // These are not valid DID diffs and are simply to demonstrate that invalid messages
     // can be included in the history for debugging invalid DID diffs.
-    let diffIndex = identity.Document.diffAddress(intReceipt1.messageId);
+    let diffIndex = identity.Document.diffIndex(intReceipt1.messageId);
     await client.publishJSON(diffIndex, {"diffSpam:1": true});
     await client.publishJSON(diffIndex, {"diffSpam:2": true});
     await client.publishJSON(diffIndex, {"diffSpam:3": true});

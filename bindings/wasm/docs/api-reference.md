@@ -732,12 +732,12 @@ Parses a `DID` from the input string.
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
         * [.diff(other, message, key)](#Document+diff) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
         * [.merge(diff)](#Document+merge)
-        * [.integrationAddress()](#Document+integrationAddress) ⇒ <code>string</code>
+        * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromKeyPair(key, network)](#Document.fromKeyPair) ⇒ [<code>Document</code>](#Document)
         * [.fromAuthentication(method)](#Document.fromAuthentication) ⇒ [<code>Document</code>](#Document)
-        * [.diffAddress(message_id)](#Document.diffAddress) ⇒ <code>string</code>
+        * [.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
 
 <a name="new_Document_new"></a>
@@ -965,15 +965,15 @@ Verifies the `diff` signature and merges the changes into `self`.
 | --- | --- |
 | diff | <code>string</code> | 
 
-<a name="Document+integrationAddress"></a>
+<a name="Document+integrationIndex"></a>
 
-### document.integrationAddress() ⇒ <code>string</code>
-Returns the Tangle address of the integration chain index for this DID.
+### document.integrationIndex() ⇒ <code>string</code>
+Returns the Tangle index of the integration chain for this DID.
 
 This is simply the tag segment of the [`IotaDID`].
 E.g.
 For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
-`doc.integration_address()` == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"
+`doc.integration_index()` == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+toJSON"></a>
@@ -1007,11 +1007,11 @@ Creates a new DID Document from the given verification [`method`][`Method`].
 | --- | --- |
 | method | [<code>VerificationMethod</code>](#VerificationMethod) | 
 
-<a name="Document.diffAddress"></a>
+<a name="Document.diffIndex"></a>
 
-### Document.diffAddress(message_id) ⇒ <code>string</code>
-Returns the Tangle address of the DID diff chain index. This should only be called on messages
-from documents published on the integration chain.
+### Document.diffIndex(message_id) ⇒ <code>string</code>
+Returns the Tangle index of the DID diff chain. This should only be called on documents
+published on the integration chain.
 
 This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
 

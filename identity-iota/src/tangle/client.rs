@@ -67,13 +67,13 @@ impl Client {
 
   /// Publishes an [`IotaDocument`] to the Tangle.
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
-    self.publish_json(document.integration_address(), document).await
+    self.publish_json(document.integration_index(), document).await
   }
 
   /// Publishes a [`DocumentDiff`] to the Tangle to form part of the diff chain for the integration
   /// chain message specified by the given [`MessageId`].
   pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
-    self.publish_json(&IotaDocument::diff_address(message_id)?, diff).await
+    self.publish_json(&IotaDocument::diff_index(message_id)?, diff).await
   }
 
   /// Publishes arbitrary JSON data to the specified index on the Tangle.
@@ -110,8 +110,8 @@ impl Client {
       DiffChain::new()
     } else {
       // Fetch all messages for the diff chain.
-      let address: String = IotaDocument::diff_address(integration_chain.current_message_id())?;
-      let messages: Vec<Message> = self.read_messages(&address).await?;
+      let index: String = IotaDocument::diff_index(integration_chain.current_message_id())?;
+      let messages: Vec<Message> = self.read_messages(&index).await?;
 
       trace!("Diff Messages: {:#?}", messages);
 
@@ -132,8 +132,8 @@ impl Client {
   /// NOTE: the document must have been published to the Tangle and have a valid message id and
   /// authentication method.
   pub async fn resolve_diff_history(&self, document: &IotaDocument) -> Result<ChainHistory<DocumentDiff>> {
-    let diff_address: String = IotaDocument::diff_address(document.message_id())?;
-    let diff_messages: Vec<Message> = self.read_messages(&diff_address).await?;
+    let diff_index: String = IotaDocument::diff_index(document.message_id())?;
+    let diff_messages: Vec<Message> = self.read_messages(&diff_index).await?;
     ChainHistory::try_from_raw_messages(document, &diff_messages)
   }
 
