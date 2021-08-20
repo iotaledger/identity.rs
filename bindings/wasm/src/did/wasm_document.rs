@@ -354,8 +354,8 @@ impl WasmDocument {
     self.0.integration_address().to_owned()
   }
 
-  /// Returns the Tangle address of the DID diff chain index. This should only be called on messages
-  /// from documents published on the integration chain.
+  /// Returns the Tangle address of the DID diff chain index. This should only be called on documents
+  /// published on the integration chain.
   ///
   /// This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
   #[wasm_bindgen(js_name = diffAddress)]
