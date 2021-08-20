@@ -54,7 +54,7 @@ impl WasmNetwork {
   #[allow(clippy::inherent_to_string, clippy::wrong_self_convention)]
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {
-    self.0.as_str().into()
+    self.0.name().into()
   }
 }
 
