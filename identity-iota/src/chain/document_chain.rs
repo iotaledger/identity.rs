@@ -16,7 +16,8 @@ use crate::did::IotaDocument;
 use crate::error::Result;
 use crate::tangle::MessageId;
 
-/// Holds an [`IntegrationChain`] and the latest [`DiffChain`] that can be used to resolve the latest version of an [`IotaDocument`].
+/// Holds an [`IntegrationChain`] and its corresponding [`DiffChain`] that can be used to resolve the 
+/// latest version of an [`IotaDocument`].
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DocumentChain {
   chain_i: IntegrationChain,
