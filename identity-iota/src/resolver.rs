@@ -49,9 +49,10 @@ impl ResolverMethod for ClientMap {
 
   async fn read(&self, did: &CoreDID, input: InputMetadata) -> Result<Option<MetaDocument>> {
     let did: &IotaDID = IotaDID::try_from_borrowed(did).map_err(|_| Error::MissingResolutionDID)?;
+    let network = did.network().map_err(|_| Error::MissingResolutionDID)?;
 
     self
-      .client(did.network())
+      .client(network)
       .await
       .map_err(|_| Error::MissingResolutionDocument)?
       .read(did.as_ref(), input)

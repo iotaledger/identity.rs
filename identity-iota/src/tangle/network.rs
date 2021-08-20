@@ -65,8 +65,8 @@ impl Network {
     Ok(())
   }
 
-  /// Returns the `Network` the `IotaDID` is associated with.
-  pub fn from_did(did: &IotaDID) -> Self {
+  /// Returns the [Network] the [IotaDID] is associated with, if it is a valid one.
+  pub fn try_from_did(did: &IotaDID) -> Result<Self> {
     did.network()
   }
 

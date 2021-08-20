@@ -53,28 +53,28 @@ impl ClientMap {
   }
 
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
-    let network: Network = document.id().network();
+    let network: Network = document.id().network()?;
     let client: Arc<Client> = self.client(network).await?;
 
     client.publish_document(document).await
   }
 
   pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
-    let network: Network = diff.id().network();
+    let network: Network = diff.id().network()?;
     let client: Arc<Client> = self.client(network).await?;
 
     client.publish_diff(message_id, diff).await
   }
 
   pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
-    let network: Network = did.network();
+    let network: Network = did.network()?;
     let client: Arc<Client> = self.client(network).await?;
 
     client.read_document(did).await
   }
 
   pub async fn read_document_chain(&self, did: &IotaDID) -> Result<DocumentChain> {
-    let network: Network = did.network();
+    let network: Network = did.network()?;
     let client: Arc<Client> = self.client(network).await?;
 
     client.read_document_chain(did).await
