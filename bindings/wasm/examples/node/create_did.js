@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 const { Client, Config, Document, KeyType } = require('../../node/identity_wasm')
-const { logExplorerUrl } = require('./explorer_util')
+const { logExplorerUrl } = require('./utils')
 
 /**
     This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle.

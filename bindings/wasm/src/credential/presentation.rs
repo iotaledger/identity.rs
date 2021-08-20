@@ -8,8 +8,8 @@ use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
 use wasm_bindgen::prelude::*;
 
+use crate::did::WasmDocument;
 use crate::error::wasm_error;
-use crate::wasm_document::WasmDocument;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]

@@ -8,6 +8,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
+
 use identity_core::common::BitSet;
 use identity_core::convert::ToJson;
 use identity_core::crypto::merkle_key::MerkleDigest;
@@ -34,7 +35,7 @@ pub struct IotaVerificationMethod(VerificationMethod);
 
 impl IotaVerificationMethod {
   /// The default verification method tag.
-  pub const TAG: &'static str = "key";
+  pub const DEFAULT_TAG: &'static str = "key";
 
   /// Creates a new Merkle Key Collection Method from the given key collection.
   pub fn create_merkle_key<'a, D, F>(did: IotaDID, keys: &KeyCollection, fragment: F) -> Result<Self>
@@ -42,7 +43,7 @@ impl IotaVerificationMethod {
     F: Into<Option<&'a str>>,
     D: MerkleDigest,
   {
-    let tag: String = format!("#{}", fragment.into().unwrap_or(Self::TAG));
+    let tag: String = format!("#{}", fragment.into().unwrap_or(Self::DEFAULT_TAG));
     let key: IotaDID = did.join(tag)?;
 
     MethodBuilder::default()
@@ -57,6 +58,9 @@ impl IotaVerificationMethod {
   }
 
   /// Creates a new [`IotaVerificationMethod`] object from the given `keypair`.
+  ///
+  /// WARNING: this derives a new DID from the keypair, which will not match the DID of a document
+  /// created with a different keypair. Use [`IotaVerificationMethod::from_did`] instead.
   pub fn from_keypair<'a, F>(keypair: &KeyPair, fragment: F) -> Result<Self>
   where
     F: Into<Option<&'a str>>,
@@ -67,7 +71,8 @@ impl IotaVerificationMethod {
     Self::from_did(did, keypair, fragment)
   }
 
-  /// Creates a new [`IotaVerificationMethod`] object from the given `keypair` on the specified `network`.
+  /// Creates a new [`IotaVerificationMethod`] object from the given [`KeyPair`] on the specified
+  /// `network`.
   pub fn from_keypair_with_network<'a, F>(keypair: &KeyPair, fragment: F, network: &str) -> Result<Self>
   where
     F: Into<Option<&'a str>>,
@@ -86,7 +91,7 @@ impl IotaVerificationMethod {
   where
     F: Into<Option<&'a str>>,
   {
-    let tag: String = format!("#{}", fragment.into().unwrap_or(Self::TAG));
+    let tag: String = format!("#{}", fragment.into().unwrap_or(Self::DEFAULT_TAG));
     let key: IotaDID = did.join(tag)?;
 
     let mut builder: MethodBuilder = MethodBuilder::default().id(key.into()).controller(did.into());

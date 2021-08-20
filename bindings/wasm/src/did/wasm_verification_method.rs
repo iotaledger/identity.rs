@@ -10,8 +10,8 @@ use wasm_bindgen::prelude::*;
 use crate::crypto::Digest;
 use crate::crypto::KeyCollection;
 use crate::crypto::KeyPair;
+use crate::did::WasmDID;
 use crate::error::wasm_error;
-use crate::wasm_did::WasmDID;
 
 #[wasm_bindgen(js_name = VerificationMethod, inspectable)]
 #[derive(Clone, Debug, PartialEq)]
@@ -69,7 +69,7 @@ impl WasmVerificationMethod {
   }
 
   /// Returns the `VerificationMethod` type.
-  #[wasm_bindgen(getter, js_name = type)]
+  #[wasm_bindgen(getter = type)]
   pub fn type_(&self) -> String {
     self.0.key_type().as_str().into()
   }

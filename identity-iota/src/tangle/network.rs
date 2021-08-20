@@ -15,7 +15,7 @@ lazy_static! {
   static ref NODE_TEST: Url = Url::parse("https://api.lb-0.testnet.chrysalis2.com").unwrap();
 }
 
-/// The Tangle network to use (`Mainnet` or `Testnet`).
+/// The Tangle network to use ([`Mainnet`][Network::Mainnet] or [`Testnet`][Network::Testnet]).
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum Network {
   #[serde(rename = "main")]

@@ -5,13 +5,33 @@ use std::borrow::Cow;
 
 use wasm_bindgen::JsValue;
 
+/// Convenience wrapper for `Result<T, JsValue>`.
+///
+/// All exported errors must be converted to [`JsValue`] when using wasm_bindgen.
+/// See: https://rustwasm.github.io/docs/wasm-bindgen/reference/types/result.html
+pub type Result<T> = core::result::Result<T, JsValue>;
+
 /// Convert an error into an idiomatic [js_sys::Error].
-pub fn wasm_error<'a, T>(error: T) -> JsValue
+pub fn wasm_error<'a, E>(error: E) -> JsValue
 where
-  T: Into<WasmError<'a>>,
+  E: Into<WasmError<'a>>,
 {
   let wasm_err: WasmError = error.into();
   JsValue::from(wasm_err)
+}
+
+/// Convenience trait to simplify `result.map_err(wasm_error)` to `result.wasm_result()`
+pub(crate) trait WasmResult<T> {
+  fn wasm_result(self) -> Result<T>;
+}
+
+impl<'a, T, E> WasmResult<T> for core::result::Result<T, E>
+where
+  E: Into<WasmError<'a>>,
+{
+  fn wasm_result(self) -> Result<T> {
+    self.map_err(wasm_error)
+  }
 }
 
 /// Convenience struct to convert internal errors to [js_sys::Error]. Uses [std::borrow::Cow]

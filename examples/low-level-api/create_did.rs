@@ -6,8 +6,8 @@
 //!
 //! cargo run --example create_did
 
-use identity::iota::ClientMap;
 use identity::iota::Receipt;
+use identity::iota::{ClientMap, TangleRef};
 use identity::prelude::*;
 
 pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
@@ -27,6 +27,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
 
   // Publish the DID Document to the Tangle.
   let receipt: Receipt = client.publish_document(&document).await?;
+  document.set_message_id(*receipt.message_id());
 
   println!("Publish Receipt > {:#?}", receipt);
 

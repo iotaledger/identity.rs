@@ -12,7 +12,7 @@ use crate::tangle::Network;
 
 const DEFAULT_LOCAL_POW: bool = false;
 
-/// A `ClientBuilder` is used to generated a customized `Client`.
+/// A [`ClientBuilder`] is used to generated a customized [`Client`].
 pub struct ClientBuilder {
   pub(super) nodeset: bool,
   pub(super) network: Network,

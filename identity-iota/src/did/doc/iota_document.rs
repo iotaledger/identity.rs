@@ -7,6 +7,9 @@ use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
+
+use serde::Serialize;
+
 use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
@@ -31,7 +34,6 @@ use identity_did::verification::MethodType;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 use identity_did::verification::VerificationMethod;
-use serde::Serialize;
 
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
@@ -492,8 +494,8 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if the diff operation or signature operation fails.
-  pub fn diff(&self, other: &Self, message: MessageId, secret: &SecretKey) -> Result<DocumentDiff> {
-    let mut diff: DocumentDiff = DocumentDiff::new(self, other, message)?;
+  pub fn diff(&self, other: &Self, message_id: MessageId, secret: &SecretKey) -> Result<DocumentDiff> {
+    let mut diff: DocumentDiff = DocumentDiff::new(self, other, message_id)?;
 
     self.sign_data(&mut diff, secret)?;
 
@@ -520,8 +522,21 @@ impl IotaDocument {
   // Publishing
   // ===========================================================================
 
-  /// Returns the Tangle address of the DID diff chain.
-  pub fn diff_address(message_id: &MessageId) -> Result<String> {
+  /// Returns the Tangle index of the integration chain for this DID.
+  ///
+  /// This is simply the tag segment of the [`IotaDID`].
+  /// E.g.
+  /// For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
+  /// `doc.integration_index()` == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"
+  pub fn integration_index(&self) -> &str {
+    self.did().tag()
+  }
+
+  /// Returns the Tangle index of the DID diff chain. This should only be called on messages
+  /// from documents published on the integration chain.
+  ///
+  /// This is the Base58-btc encoded SHA-256 digest of the hex-encoded message id.
+  pub fn diff_index(message_id: &MessageId) -> Result<String> {
     if message_id.is_null() {
       return Err(Error::InvalidDocumentMessageId);
     }
@@ -585,6 +600,10 @@ impl SetSignature for IotaDocument {
 }
 
 impl TangleRef for IotaDocument {
+  fn did(&self) -> &IotaDID {
+    self.id()
+  }
+
   fn message_id(&self) -> &MessageId {
     &self.message_id
   }
@@ -604,10 +623,9 @@ impl TangleRef for IotaDocument {
 
 #[cfg(test)]
 mod tests {
+  use std::collections::BTreeMap;
+  use std::str::FromStr;
 
-  use crate::did::doc::IotaDocument;
-  use crate::did::doc::IotaVerificationMethod;
-  use crate::did::url::IotaDID;
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
   use identity_core::convert::SerdeInto;
@@ -622,7 +640,11 @@ mod tests {
   use identity_did::verification::MethodRef;
   use identity_did::verification::MethodType;
   use identity_did::verification::VerificationMethod;
-  use std::collections::BTreeMap;
+
+  use crate::did::doc::IotaDocument;
+  use crate::did::doc::IotaVerificationMethod;
+  use crate::did::url::IotaDID;
+  use crate::tangle::MessageId;
 
   const DID_ID: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
   const DID_AUTH: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
@@ -1020,6 +1042,7 @@ mod tests {
       .ok();
     assert_eq!(0, document.service().len());
   }
+
   #[test]
   fn test_relative_method_uri() {
     let keypair: KeyPair = generate_testkey();
@@ -1029,5 +1052,22 @@ mod tests {
     assert!(document.sign(keypair.secret()).is_ok());
 
     assert_eq!(document.proof().unwrap().verification_method(), "#authentication");
+  }
+
+  #[test]
+  fn test_integration_index() {
+    let keypair: KeyPair = generate_testkey();
+    let document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+
+    // The integration chain index should just be the tag of the DID
+    let tag = document.id().tag();
+    assert_eq!(document.integration_index(), tag);
+  }
+
+  #[test]
+  fn test_diff_index() {
+    let message_id = MessageId::from_str("c38d6c541f98f780ddca6ad648ff0e073cd86c4dee248149c2de789d84d42132").unwrap();
+    let diff_index = IotaDocument::diff_index(&message_id).expect("failed to generate diff_index");
+    assert_eq!(diff_index, "2g45GsCAmkvQfcrHGUgqwQJLbYY3Gic8f23wf71sGGGP");
   }
 }

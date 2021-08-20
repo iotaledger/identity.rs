@@ -11,7 +11,7 @@ import { logObjectToScreen, logToScreen } from "./utils.js";
     @param {boolean} log log the events to the output window
 **/
 export async function createVP(clientConfig, log = true) {
-    if (log) logToScreen("creating Verifiable Presentation...");
+    if (log) logToScreen("Creating Verifiable Presentation...");
 
     // Create a default client configuration from mainNet.
     const config = identity.Config.fromNetwork(clientConfig.network);
