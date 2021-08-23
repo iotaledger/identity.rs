@@ -6,6 +6,7 @@ const { createVP } = require("./create_vp");
 const { revokeVC } = require("./revocation");
 const { merkleKey } = require("./merkle_key");
 const { CLIENT_CONFIG } = require("./config");
+const { createIdentityPrivateTangle } = require("./private_tangle");
 
 jest.setTimeout(120000); // 2 minutes to account for spurious network delays, most tests pass in a few seconds
 
@@ -59,5 +60,16 @@ test.concurrent("Merkle Key", async () => {
         await merkleKey(CLIENT_CONFIG);
     } catch (e) {
         await merkleKey(CLIENT_CONFIG);
+    }
+});
+test.concurrent("Private Tangle", async () => {
+    try {
+        await createIdentityPrivateTangle()
+        throw new Error("Did not throw.")
+    } catch (err) {
+        // Can't access the properties contained in the stringified variant on the object itself
+        const errString = err.toString();
+        expect(errString.startsWith("ClientError: error sending request")).toBeTruthy()
+        expect(errString.includes("ECONNREFUSED")).toBeTruthy()
     }
 });
