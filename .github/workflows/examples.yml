@@ -18,11 +18,40 @@ jobs:
         with:
           ref: ${{ github.event.inputs.ref }}
 
+      - name: Cache cargo
+        uses: actions/cache@v2.1.4
+        with:
+          # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          # Add date to the cache to keep it up to date
+          key: ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          # Restore from outdated cache for speed
+          restore-keys: |
+            ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.os }}-cargo-${{ github.job }}-
+            ${{ matrix.os }}-cargo-
+
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --examples
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: --example getting_started
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
