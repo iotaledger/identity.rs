@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
   let network_name = "private-tangle";
 
   // Unwrap is fine since we provided a non-empty string.
-  let network = Network::from_name(network_name).unwrap();
+  let network = Network::from_name(network_name)?;
 
   // Create a new Account with the default configuration
   let account: Account = Account::builder()

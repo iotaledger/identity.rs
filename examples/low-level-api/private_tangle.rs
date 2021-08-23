@@ -18,10 +18,10 @@ use identity::prelude::*;
 #[tokio::main]
 pub async fn main() -> Result<()> {
   // This is the `networkID` defined in hornet's node configuration.
-  let network_name = "private-tangle";
+  let network_name = "atoi";
 
   // Unwrap is fine since we provided a non-empty string.
-  let network = Network::from_name(network_name).unwrap();
+  let network = Network::from_name(network_name)?;
 
   // Set the network and the URL that points to
   // the REST API of the locally running hornet node.
