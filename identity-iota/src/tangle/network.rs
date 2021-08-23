@@ -191,4 +191,29 @@ mod tests {
     assert!(Network::matches_did(Network::Testnet, &did));
     assert!(!Network::matches_did(Network::Mainnet, &did));
   }
+
+  #[test]
+  fn test_explorer_url() {
+    let testnet = Network::Testnet;
+
+    assert!(testnet.explorer_url().is_ok());
+
+    let mut other = Network::from_name("atoi").unwrap();
+
+    assert!(matches!(other.explorer_url().unwrap_err(), Error::NoExplorerURLSet));
+
+    // Try setting a `cannot_be_a_base` url.
+    assert!(matches!(
+      other
+        .set_explorer_url(Url::parse("data:text/plain,stuff").unwrap())
+        .unwrap_err(),
+      Error::InvalidExplorerURL
+    ));
+
+    let url = Url::parse("https://explorer.iota.org/testnet").unwrap();
+
+    assert!(other.set_explorer_url(url.clone()).is_ok());
+
+    assert_eq!(other.explorer_url().unwrap(), url);
+  }
 }
