@@ -26,7 +26,7 @@ export async function createIdentityPrivateTangle(inBrowser = true, log = true) 
         networkName = document.querySelector("#create-private-network-name").value;
     } else {
         restURL = "http://127.0.0.1:14265/";
-        networkName = "priv";
+        networkName = "custom";
     }
 
     // This is an arbitrarily defined network name
