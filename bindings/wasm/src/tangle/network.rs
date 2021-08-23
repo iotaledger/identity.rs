@@ -38,7 +38,7 @@ impl WasmNetwork {
   /// Returns the web explorer URL of the Tangle network.
   #[wasm_bindgen(getter = explorerURL)]
   pub fn explorer_url(&self) -> Result<String, JsValue> {
-    self.0.explorer_url().map(ToString::to_string).map_err(wasm_error)
+    self.0.explorer_url().map(|url| url.to_string()).map_err(wasm_error)
   }
 
   /// Returns the web explorer URL of the given `message`.
