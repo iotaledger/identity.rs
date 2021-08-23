@@ -48,10 +48,8 @@ jobs:
           args: --examples --verbose
 
       - name: Run Rust examples
-        uses: actions-rs/cargo@v1
-        with:
-          command: run
-          args: --example getting_started
+        run: |
+          cargo read-manifest | for entry in $(python3 -c "import sys, json; print(' '.join(list(map(lambda x: x['name'], json.load(sys.stdin)['targets']))))"); do cargo run --example "$entry"; done
   build-and-test-examples:
     runs-on: ubuntu-latest
     steps:
