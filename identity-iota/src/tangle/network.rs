@@ -25,7 +25,10 @@ pub enum Network {
   Mainnet,
   #[serde(rename = "test")]
   Testnet,
-  Other(String),
+  Other {
+    name: String,
+    explorer_url: Option<Url>,
+  },
 }
 
 impl Network {
@@ -40,12 +43,15 @@ impl Network {
   /// characters `0-9` or `a-z`.
   pub fn from_name(string: &str) -> Result<Self> {
     match string {
-      "" => Err(Error::InvalidDIDNetwork("network name cannot be the empty string")),
+      "" => Err(Error::InvalidNetworkName("name cannot be the empty string")),
       TEST_NETWORK_NAME => Ok(Self::Testnet),
       MAIN_NETWORK_NAME => Ok(Self::Mainnet),
       other => {
         Self::check_name_compliance(other)?;
-        Ok(Self::Other(other.to_owned()))
+        Ok(Self::Other {
+          name: other.to_owned(),
+          explorer_url: None,
+        })
       }
     }
   }
@@ -53,13 +59,29 @@ impl Network {
   /// Checks if a string is a spec-compliant network name.
   fn check_name_compliance(string: &str) -> Result<()> {
     if string.len() > 6 {
-      return Err(Error::InvalidDIDNetwork("network name cannot exceed 6 characters"));
+      return Err(Error::InvalidNetworkName("name cannot exceed 6 characters"));
     };
 
     if !string.chars().all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit()) {
-      return Err(Error::InvalidDIDNetwork(
-        "network name may only contain characters `0-9` and `a-z`",
+      return Err(Error::InvalidNetworkName(
+        "name may only contain characters `0-9` and `a-z`",
       ));
+    }
+
+    Ok(())
+  }
+
+  /// Sets the explorer url if `self` is an `Other` variant.
+  ///
+  /// The `Url` needs to be a valid base url, i.e. `url.cannot_be_a_base()`
+  /// must be false. An [InvalidExplorerUrl][Error::InvalidExplorerURL] is returned otherwise.
+  pub fn set_explorer_url(&mut self, url: Url) -> Result<()> {
+    if url.cannot_be_a_base() {
+      return Err(Error::InvalidExplorerURL);
+    }
+
+    if let Self::Other { explorer_url, .. } = self {
+      explorer_url.replace(url);
     }
 
     Ok(())
@@ -85,17 +107,21 @@ impl Network {
   }
 
   /// Returns the web explorer URL of the Tangle network.
-  pub fn explorer_url(&self) -> Result<&'static Url> {
+  pub fn explorer_url(&self) -> Result<Url> {
     match self {
-      Self::Mainnet => Ok(&*EXPLORER_MAIN),
-      Self::Testnet => Ok(&*EXPLORER_TEST),
-      _ => Err(Error::NoExplorerForPrivateTangles),
+      Self::Mainnet => Ok(EXPLORER_MAIN.clone()),
+      Self::Testnet => Ok(EXPLORER_TEST.clone()),
+      Self::Other {
+        explorer_url: Some(url),
+        ..
+      } => Ok(url.clone()),
+      _ => Err(Error::NoExplorerURLSet),
     }
   }
 
   /// Returns the web explorer URL of the given `message`.
   pub fn message_url(&self, message_id: &str) -> Result<Url> {
-    let mut url = self.explorer_url()?.clone();
+    let mut url = self.explorer_url()?;
     // unwrap is safe, the explorer URL is always a valid base URL
     url.path_segments_mut().unwrap().push("message").push(message_id);
     Ok(url)
@@ -106,7 +132,7 @@ impl Network {
     match self {
       Self::Mainnet => Cow::Borrowed(MAIN_NETWORK_NAME),
       Self::Testnet => Cow::Borrowed(TEST_NETWORK_NAME),
-      Self::Other(network) => Cow::Owned(network.clone()),
+      Self::Other { name, .. } => Cow::Owned(name.clone()),
     }
   }
 }
@@ -128,27 +154,30 @@ mod tests {
     assert_eq!(Network::from_name("main").unwrap(), Network::Mainnet);
     assert_eq!(
       Network::from_name("6chars").unwrap(),
-      Network::Other("6chars".to_owned())
+      Network::Other {
+        name: "6chars".to_owned(),
+        explorer_url: None
+      }
     );
 
     assert!(matches!(
       Network::from_name("7seven7").unwrap_err(),
-      Error::InvalidDIDNetwork("network name cannot exceed 6 characters")
+      Error::InvalidNetworkName("name cannot exceed 6 characters")
     ));
 
     assert!(matches!(
       Network::from_name("täst").unwrap_err(),
-      Error::InvalidDIDNetwork("network name may only contain characters `0-9` and `a-z`")
+      Error::InvalidNetworkName("name may only contain characters `0-9` and `a-z`")
     ));
 
     assert!(matches!(
       Network::from_name(" ").unwrap_err(),
-      Error::InvalidDIDNetwork("network name may only contain characters `0-9` and `a-z`")
+      Error::InvalidNetworkName("name may only contain characters `0-9` and `a-z`")
     ));
 
     assert!(matches!(
       Network::from_name("").unwrap_err(),
-      Error::InvalidDIDNetwork("network name cannot be the empty string")
+      Error::InvalidNetworkName("name cannot be the empty string")
     ));
   }
 
