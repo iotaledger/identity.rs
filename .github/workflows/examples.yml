@@ -49,6 +49,7 @@ jobs:
 
       - name: Run Rust examples
         run: |
+          cd examples
           cargo read-manifest | for entry in $(python3 -c "import sys, json; print(' '.join(list(map(lambda x: x['name'], json.load(sys.stdin)['targets']))))"); do cargo run --example "$entry"; done
   build-and-test-examples:
     runs-on: ubuntu-latest
