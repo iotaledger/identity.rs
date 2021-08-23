@@ -6,6 +6,7 @@ import { resolveIdentity } from "../../examples/browser/resolve.js";
 import { createVP } from "../../examples/browser/create_vp.js";
 import { revoke } from "../../examples/browser/revocation.js";
 import { merkleKey } from "../../examples/browser/merkle_key.js";
+import { createIdentityPrivateTangle } from "../../examples/browser/private_tangle";
 
 // Test that the browser examples do not throw uncaught exceptions twice, including syntax errors etc.
 describe(
@@ -79,6 +80,19 @@ describe(
                 await merkleKey(defaultClientConfig(), false);
             } catch (e) {
                 await merkleKey(defaultClientConfig(), false);
+            }
+        });
+
+        it("private tangle", async function () {
+            try {
+                await createIdentityPrivateTangle(false, false)
+                throw new Error("Did not throw.")
+            } catch (err) {
+                console.log(err)
+                // Can't access the properties contained in the stringified variant on the object itself
+                const errString = err.toString();
+                expect(errString.startsWith("ClientError: error sending request")).to.be.true
+                expect(errString.includes("Failed to fetch")).to.be.true
             }
         });
     }

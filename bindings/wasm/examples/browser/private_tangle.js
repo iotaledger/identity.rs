@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Document, KeyType, Network} from "../../web/identity_wasm.js";
+import { Client, Config, Document, KeyType, Network } from "../../web/identity_wasm.js";
 import {
     logObjectToScreen,
     logToScreen,
@@ -13,14 +13,21 @@ import {
     Refer to https://github.com/iotaledger/one-click-tangle/tree/chrysalis/hornet-private-net
     for setup instructions.
 **/
-export async function createIdentityPrivateTangle(log = true) {
+export async function createIdentityPrivateTangle(inBrowser = true, log = true) {
     if (log) logToScreen("Identity creation started...");
-    if (log)
-        logToScreen("This might take a few seconds to complete proof of work!");
+    if (log) logToScreen("This might take a few seconds to complete proof of work!");
 
-    // Get the required parameters from the input fields
-    const restURL = document.querySelector("#create-private-rest-url").value;
-    const networkName = document.querySelector("#create-private-network-name").value;
+    let restURL
+    let networkName
+
+    if (inBrowser) {
+        // Get the required parameters from the input fields
+        restURL = document.querySelector("#create-private-rest-url").value;
+        networkName = document.querySelector("#create-private-network-name").value;
+    } else {
+        restURL = "http://127.0.0.1:14265/";
+        networkName = "priv";
+    }
 
     // This is an arbitrarily defined network name
     const network = Network.from_name(networkName);
