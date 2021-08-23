@@ -90,11 +90,9 @@ describe(
                 await createIdentityPrivateTangle(false, false)
                 throw new Error("Did not throw.")
             } catch (err) {
-                console.log(err)
-                // Can't access the properties contained in the stringified variant on the object itself
-                const errString = err.toString();
-                expect(errString.startsWith("ClientError: error sending request")).to.be.true
-                expect(errString.includes("Failed to fetch")).to.be.true
+                // Example is expected to throw an error because no private Tangle is running
+                expect(err.name).to.eq("ClientError")
+                expect(err.message).to.contain("error sending request")
             }
         });
 
