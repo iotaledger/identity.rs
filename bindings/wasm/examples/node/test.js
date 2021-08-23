@@ -69,10 +69,9 @@ test.concurrent("Private Tangle", async () => {
         await createIdentityPrivateTangle()
         throw new Error("Did not throw.")
     } catch (err) {
-        // Can't access the properties contained in the stringified variant on the object itself
-        const errString = err.toString();
-        expect(errString.startsWith("ClientError: error sending request")).toBeTruthy()
-        expect(errString.includes("ECONNREFUSED")).toBeTruthy()
+        // Example is expected to throw an error because no private Tangle is running
+        expect(err.name).toEqual("ClientError")
+        expect(err.message).toContain("error sending request")
     }
 });
 test.concurrent("Diff Chain", async () => {
