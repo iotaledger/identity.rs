@@ -37,6 +37,7 @@ pub enum Command {
     scope: MethodScope,
     type_: MethodType,
     fragment: String,
+    secret_key: Option<SecretKey>,
   },
   DeleteMethod {
     fragment: String,
@@ -114,7 +115,12 @@ impl Command {
           Event::new(EventData::MethodCreated(MethodScope::Authentication, method)),
         ]))
       }
-      Self::CreateMethod { type_, scope, fragment } => {
+      Self::CreateMethod {
+        type_,
+        scope,
+        fragment,
+        secret_key,
+      } => {
         // The state must be initialized
         ensure!(state.did().is_some(), CommandError::DocumentNotFound);
 
@@ -139,7 +145,12 @@ impl Command {
           CommandError::DuplicateKeyFragment(location.fragment.clone()),
         );
 
-        let public: PublicKey = store.key_new(state.id(), &location).await?;
+        let public: PublicKey = if let Some(secret_key) = secret_key {
+          store.key_insert(state.id(), &location, secret_key).await?
+        } else {
+          store.key_new(state.id(), &location).await?
+        };
+
         let data: MethodData = MethodData::new_b58(public.as_ref());
         let method: TinyMethod = TinyMethod::new(location, data, None);
 
@@ -247,6 +258,7 @@ impl_command_builder!(CreateMethod {
   @defaulte type_ MethodType = Ed25519VerificationKey2018,
   @default scope MethodScope,
   @required fragment String,
+  @optional secret_key SecretKey
 });
 
 impl_command_builder!(DeleteMethod {
