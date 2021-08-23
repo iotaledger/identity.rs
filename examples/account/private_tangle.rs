@@ -21,7 +21,8 @@ use identity::iota::Network;
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  let network_name = "private-tangle";
+  // This is an arbitrarily defined network name
+  let network_name = "atoi";
 
   // Unwrap is fine since we provided a non-empty string.
   let network = Network::from_name(network_name)?;

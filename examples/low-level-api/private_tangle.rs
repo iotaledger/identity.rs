@@ -17,7 +17,7 @@ use identity::prelude::*;
 
 #[tokio::main]
 pub async fn main() -> Result<()> {
-  // This is the `networkID` defined in hornet's node configuration.
+  // This is an arbitrarily defined network name
   let network_name = "atoi";
 
   // Unwrap is fine since we provided a non-empty string.
