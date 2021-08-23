@@ -6,9 +6,6 @@
 //!
 //! cargo run --example create_vp
 
-mod common;
-mod create_did;
-
 use identity::core::ToJson;
 use identity::core::Url;
 use identity::credential::Credential;
@@ -20,7 +17,10 @@ use identity::iota::PresentationValidation;
 use identity::iota::Receipt;
 use identity::prelude::*;
 
-pub async fn issue() -> Result<String> {
+mod common;
+mod create_did;
+
+pub async fn create_vp() -> Result<Presentation> {
   // Create a signed DID Document/KeyPair for the credential issuer (see create_did.rs).
   let (doc_iss, key_iss, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
@@ -43,19 +43,19 @@ pub async fn issue() -> Result<String> {
   // Sign the presentation with the holders secret key
   doc_sub.sign_data(&mut presentation, key_sub.secret())?;
 
-  println!("Presentation JSON > {:#}", presentation);
-
-  // Convert the Verifiable Presentation to JSON and "exchange" with a verifier
-  presentation.to_json().map_err(Into::into)
+  Ok(presentation)
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  // Issue a Verifiable Presentation with a newly created DID Document.
-  let presentation_json: String = issue().await?;
-
   // Create a client instance to send messages to the Tangle.
   let client: ClientMap = ClientMap::new();
+
+  // Issue a Verifiable Presentation with a newly created DID Document.
+  let presentation: Presentation = create_vp().await?;
+
+  // Convert the Verifiable Presentation to JSON and "exchange" with a verifier
+  let presentation_json: String = presentation.to_json()?;
 
   // Create a `CredentialValidator` instance to fetch and validate all
   // associated DID Documents from the Tangle.

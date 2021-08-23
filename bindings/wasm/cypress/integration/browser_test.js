@@ -4,15 +4,17 @@ import { createVC } from "../../examples/browser/create_vc.js";
 import { manipulateIdentity } from "../../examples/browser/mainpulate_did.js";
 import { resolveIdentity } from "../../examples/browser/resolve.js";
 import { createVP } from "../../examples/browser/create_vp.js";
-import { revoke } from "../../examples/browser/revocation.js";
+import { createDiff } from "../../examples/browser/diff_chain.js";
+import { revoke } from "../../examples/browser/revoke_vc.js";
 import { merkleKey } from "../../examples/browser/merkle_key.js";
 import { createIdentityPrivateTangle } from "../../examples/browser/private_tangle";
+import { resolveHistory } from "../../examples/browser/resolve_history";
 
 // Test that the browser examples do not throw uncaught exceptions twice, including syntax errors etc.
 describe(
     "Test browser examples",
     {
-        defaultCommandTimeout: 120000, // 2 minutes to account for spurious network delays
+        defaultCommandTimeout: 180000, // 3 minutes to account for spurious network delays
     },
     () => {
         beforeEach(async () => {
@@ -93,6 +95,22 @@ describe(
                 const errString = err.toString();
                 expect(errString.startsWith("ClientError: error sending request")).to.be.true
                 expect(errString.includes("Failed to fetch")).to.be.true
+            }
+        });
+
+        it("diff chain", async function () {
+            try {
+                await createDiff(defaultClientConfig(), false);
+            } catch (e) {
+                await createDiff(defaultClientConfig(), false);
+            }
+        });
+
+        it("resolve history", async function () {
+            try {
+                await resolveHistory(defaultClientConfig(), false);
+            } catch (e) {
+                await resolveHistory(defaultClientConfig(), false);
             }
         });
     }

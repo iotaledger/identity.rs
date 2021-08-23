@@ -7,6 +7,8 @@ use crate::error::Result;
 use crate::tangle::MessageId;
 
 pub trait TangleRef {
+  fn did(&self) -> &IotaDID;
+
   fn message_id(&self) -> &MessageId;
 
   fn set_message_id(&mut self, message_id: MessageId);

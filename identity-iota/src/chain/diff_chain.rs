@@ -6,12 +6,13 @@ use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::slice::Iter;
+
 use identity_core::convert::ToJson;
 
 use crate::chain::DocumentChain;
 use crate::chain::IntegrationChain;
-use crate::did::DocumentDiff;
 use crate::did::IotaDID;
+use crate::did::{DocumentDiff, IotaDocument};
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Message;
@@ -28,27 +29,44 @@ pub struct DiffChain {
 }
 
 impl DiffChain {
-  /// Constructs a new `DiffChain` for the given `IntegrationChain` from a slice of `Message`s.
+  /// Constructs a new [`DiffChain`] for the given [`IntegrationChain`] from a slice of [`Messages`][Message].
   pub fn try_from_messages(integration_chain: &IntegrationChain, messages: &[Message]) -> Result<Self> {
-    if messages.is_empty() {
-      return Ok(Self::new());
-    }
-
     let did: &IotaDID = integration_chain.current().id();
 
-    let mut index: MessageIndex<DocumentDiff> = messages
+    let index: MessageIndex<DocumentDiff> = messages
       .iter()
       .flat_map(|message| message.try_extract_diff(did))
       .collect();
 
-    trace!("[Diff] Message Index = {:#?}", index);
     debug!("[Diff] Valid Messages = {}/{}", messages.len(), index.len());
 
-    let mut this: Self = Self::new();
+    Self::try_from_index(integration_chain, index)
+  }
 
-    while let Some(mut list) = index.remove(DocumentChain::__diff_message_id(integration_chain, &this)) {
+  /// Constructs a new [`DiffChain`] for the given [`IntegrationChain`] from the given [`MessageIndex`].
+  pub fn try_from_index(integration_chain: &IntegrationChain, index: MessageIndex<DocumentDiff>) -> Result<Self> {
+    trace!("[Diff] Message Index = {:#?}", index);
+    Self::try_from_index_with_document(integration_chain.current(), index)
+  }
+
+  /// Constructs a new [`DiffChain`] from the given [`MessageIndex`], using an integration document
+  /// to validate.
+  pub(in crate::chain) fn try_from_index_with_document(
+    integration_document: &IotaDocument,
+    mut index: MessageIndex<DocumentDiff>,
+  ) -> Result<Self> {
+    if index.is_empty() {
+      return Ok(Self::new());
+    }
+
+    let mut this: Self = Self::new();
+    while let Some(mut list) = index.remove(
+      this
+        .current_message_id()
+        .unwrap_or_else(|| integration_document.message_id()),
+    ) {
       'inner: while let Some(next) = list.pop() {
-        if integration_chain.current().verify_data(&next).is_ok() {
+        if integration_document.verify_data(&next).is_ok() {
           this.inner.push(next);
           break 'inner;
         }
@@ -58,7 +76,7 @@ impl DiffChain {
     Ok(this)
   }
 
-  /// Creates a new `DiffChain`.
+  /// Creates a new [`DiffChain`].
   pub fn new() -> Self {
     Self { inner: Vec::new() }
   }
@@ -68,34 +86,34 @@ impl DiffChain {
     self.inner.len()
   }
 
-  /// Returns `true` if the `DiffChain` is empty.
+  /// Returns `true` if the [`DiffChain`] is empty.
   pub fn is_empty(&self) -> bool {
     self.inner.is_empty()
   }
 
-  /// Empties the `DiffChain`, removing all diffs.
+  /// Empties the [`DiffChain`], removing all diffs.
   pub fn clear(&mut self) {
     self.inner.clear();
   }
 
-  /// Returns an iterator yielding references to `DocumentDiff`s.
+  /// Returns an iterator yielding references to [`DocumentDiffs`][DocumentDiff].
   pub fn iter(&self) -> Iter<'_, DocumentDiff> {
     self.inner.iter()
   }
 
-  /// Returns the `MessageId` of the latest diff if the chain, if any.
+  /// Returns the [`MessageId`] of the latest diff in the chain, if any.
   pub fn current_message_id(&self) -> Option<&MessageId> {
     self.inner.last().map(|diff| diff.message_id())
   }
 
-  /// Adds a new diff to the `DiffChain`.
+  /// Adds a new diff to the [`DiffChain`].
   ///
   /// # Errors
   ///
   /// Fails if the diff signature is invalid or the Tangle message
   /// references within the diff are invalid.
   pub fn try_push(&mut self, integration_chain: &IntegrationChain, diff: DocumentDiff) -> Result<()> {
-    self.check_validity(integration_chain, &diff)?;
+    self.check_valid_addition(integration_chain, &diff)?;
 
     // SAFETY: we performed the necessary validation in `check_validity`.
     unsafe {
@@ -105,28 +123,39 @@ impl DiffChain {
     Ok(())
   }
 
-  /// Adds a new diff to the `DiffChain` with performing validation checks.
+  /// Adds a new diff to the [`DiffChain`] with performing validation checks.
   ///
   /// # Safety
   ///
   /// This function is unsafe because it does not check the validity of
-  /// the signature or Tangle references of the `DocumentDiff`.
+  /// the signature or Tangle references of the [`DocumentDiff`].
   pub unsafe fn push_unchecked(&mut self, diff: DocumentDiff) {
     self.inner.push(diff);
   }
 
-  /// Returns `true` if the `DocumentDiff` can be added to the `DiffChain`.
-  pub fn is_valid(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> bool {
-    self.check_validity(integration_chain, diff).is_ok()
+  /// Returns `true` if the [`DocumentDiff`] can be added to the [`DiffChain`].
+  pub fn is_valid_addition(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> bool {
+    self.check_valid_addition(integration_chain, diff).is_ok()
   }
 
-  /// Checks if the `DocumentDiff` can be added to the `DiffChain`n.
+  /// Checks if the [`DocumentDiff`] can be added to the [`DiffChain`].
   ///
   /// # Errors
   ///
-  /// Fails if the `DocumentDiff` is not a valid addition.
-  pub fn check_validity(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> Result<()> {
-    if integration_chain.current().verify_data(diff).is_err() {
+  /// Fails if the [`DocumentDiff`] is not a valid addition.
+  pub fn check_valid_addition(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> Result<()> {
+    let current_document: &IotaDocument = integration_chain.current();
+    let expected_prev_message_id: &MessageId = DocumentChain::__diff_message_id(integration_chain, self);
+    Self::__check_valid_addition(diff, current_document, expected_prev_message_id)
+  }
+
+  /// Validates the [`DocumentDiff`] is signed by the document and may form part of its diff chain.
+  pub(in crate::chain) fn __check_valid_addition(
+    diff: &DocumentDiff,
+    document: &IotaDocument,
+    expected_prev_message_id: &MessageId,
+  ) -> Result<()> {
+    if document.verify_data(diff).is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
       });
@@ -144,7 +173,7 @@ impl DiffChain {
       });
     }
 
-    if diff.previous_message_id() != DocumentChain::__diff_message_id(integration_chain, self) {
+    if diff.previous_message_id() != expected_prev_message_id {
       return Err(Error::ChainError {
         error: "Invalid Previous Message Id",
       });
@@ -167,6 +196,12 @@ impl Display for DiffChain {
     } else {
       f.write_str(&self.to_json().map_err(|_| FmtError)?)
     }
+  }
+}
+
+impl From<DiffChain> for Vec<DocumentDiff> {
+  fn from(diff_chain: DiffChain) -> Self {
+    diff_chain.inner
   }
 }
 
