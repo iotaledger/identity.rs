@@ -18,9 +18,7 @@ use identity::prelude::*;
 #[tokio::main]
 pub async fn main() -> Result<()> {
   // This is an arbitrarily defined network name
-  let network_name = "atoi";
-
-  // Unwrap is fine since we provided a non-empty string.
+  let network_name = "custom";
   let network = Network::from_name(network_name)?;
 
   // Set the network and the URL that points to
