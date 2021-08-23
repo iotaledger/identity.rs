@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
   let update_receipt = client.publish_document(&issuer_doc).await?;
 
   // Log the resulting Identity update
-  println!("Issuer Identity Update > {}", update_receipt.message_url());
+  println!("Issuer Identity Update > {}", update_receipt.message_url()?);
 
   // Check the verifiable credential
   let validation: CredentialValidation = common::check_credential(&client, &signed_vc).await?;
