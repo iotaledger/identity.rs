@@ -5,7 +5,6 @@ use futures::executor;
 use futures::TryStreamExt;
 use identity_core::common::Fragment;
 use identity_core::crypto::KeyType;
-use identity_core::crypto::SecretKey;
 use identity_core::crypto::SetSignature;
 use identity_did::verification::MethodType;
 use identity_iota::did::DocumentDiff;
@@ -126,8 +125,7 @@ impl Account {
     // Create the initialization command
     let command: Command = Command::CreateIdentity {
       network: input.network,
-      // TODO: Get from field on `IdentityCreate`
-      secret_key: Some(SecretKey::from(vec![0; 32])),
+      secret_key: input.secret_key,
       authentication: Self::key_to_method(input.key_type),
     };
 

@@ -11,12 +11,10 @@ use futures::TryStreamExt;
 use hashbrown::HashSet;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
-use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SecretKey;
 use identity_did::verification::MethodType;
 use iota_stronghold::Location;
-use iota_stronghold::RecordHint;
 use iota_stronghold::SLIP10DeriveInput;
 use std::path::Path;
 use std::sync::Arc;
@@ -105,7 +103,7 @@ impl Storage for Stronghold {
     let vault = self.vault(id);
 
     vault
-      .insert(location_skey(&location), secret_key.as_ref(), default_hint(), &[])
+      .insert(location_skey(location), secret_key.as_ref(), default_hint(), &[])
       .await?;
 
     match location.method() {
