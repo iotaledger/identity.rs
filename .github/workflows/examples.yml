@@ -11,7 +11,7 @@ on:
         default: 'dev' # checkout dev branch by default, not main
 
 jobs:
-  build-and-test-examples:
+  build-and-test-rust-examples:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -45,13 +45,19 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --examples
+          args: --examples --verbose
 
-      - name: Build
+      - name: Run Rust examples
         uses: actions-rs/cargo@v1
         with:
           command: run
           args: --example getting_started
+  build-and-test-examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
