@@ -22,9 +22,7 @@ async fn main() -> Result<()> {
   pretty_env_logger::init();
 
   // This is an arbitrarily defined network name
-  let network_name = "atoi";
-
-  // Unwrap is fine since we provided a non-empty string.
+  let network_name = "custom";
   let network = Network::from_name(network_name)?;
 
   // Create a new Account with the default configuration
