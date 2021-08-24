@@ -31,7 +31,7 @@ impl ClientMap {
   pub fn from_client(client: Client) -> Self {
     let data: State = State::new();
 
-    data.insert(client.network, Arc::new(client));
+    data.insert(client.network.clone(), Arc::new(client));
 
     Self { data }
   }
@@ -49,32 +49,32 @@ impl ClientMap {
   }
 
   pub fn insert(&self, client: Client) {
-    self.data.insert(client.network, Arc::new(client));
+    self.data.insert(client.network.clone(), Arc::new(client));
   }
 
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
-    let network: Network = document.id().network();
+    let network: Network = document.id().network()?;
     let client: Arc<Client> = self.client(network).await?;
 
     client.publish_document(document).await
   }
 
   pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
-    let network: Network = diff.id().network();
+    let network: Network = diff.id().network()?;
     let client: Arc<Client> = self.client(network).await?;
 
     client.publish_diff(message_id, diff).await
   }
 
   pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
-    let network: Network = did.network();
+    let network: Network = did.network()?;
     let client: Arc<Client> = self.client(network).await?;
 
     client.read_document(did).await
   }
 
   pub async fn read_document_chain(&self, did: &IotaDID) -> Result<DocumentChain> {
-    let network: Network = did.network();
+    let network: Network = did.network()?;
     let client: Arc<Client> = self.client(network).await?;
 
     client.read_document_chain(did).await
@@ -85,7 +85,7 @@ impl ClientMap {
       return Ok(Arc::clone(&client));
     }
 
-    let client: Arc<Client> = Client::from_network(network).await.map(Arc::new)?;
+    let client: Arc<Client> = Client::from_network(network.clone()).await.map(Arc::new)?;
 
     self.data.insert(network, Arc::clone(&client));
 

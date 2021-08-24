@@ -7,6 +7,7 @@ import { createVP } from "../../examples/browser/create_vp.js";
 import { createDiff } from "../../examples/browser/diff_chain.js";
 import { revoke } from "../../examples/browser/revoke_vc.js";
 import { merkleKey } from "../../examples/browser/merkle_key.js";
+import { createIdentityPrivateTangle } from "../../examples/browser/private_tangle";
 import { resolveHistory } from "../../examples/browser/resolve_history";
 
 // Test that the browser examples do not throw uncaught exceptions twice, including syntax errors etc.
@@ -83,6 +84,18 @@ describe(
                 await merkleKey(defaultClientConfig(), false);
             }
         });
+
+        it("private tangle", async function () {
+            try {
+                await createIdentityPrivateTangle(false, false)
+                throw new Error("Did not throw.")
+            } catch (err) {
+                // Example is expected to throw an error because no private Tangle is running
+                expect(err.name).to.eq("ClientError")
+                expect(err.message).to.contain("error sending request")
+            }
+        });
+
         it("diff chain", async function () {
             try {
                 await createDiff(defaultClientConfig(), false);
@@ -90,6 +103,7 @@ describe(
                 await createDiff(defaultClientConfig(), false);
             }
         });
+
         it("resolve history", async function () {
             try {
                 await resolveHistory(defaultClientConfig(), false);

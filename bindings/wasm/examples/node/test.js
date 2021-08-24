@@ -8,6 +8,7 @@ const { revokeVC } = require("./revoke_vc");
 const { merkleKey } = require("./merkle_key");
 const { resolveHistory } = require("./resolve_history");
 const { CLIENT_CONFIG } = require("./config");
+const { createIdentityPrivateTangle } = require("./private_tangle");
 
 jest.setTimeout(180000); // 3 minutes to account for spurious network delays, most tests pass in a few seconds
 
@@ -61,6 +62,16 @@ test.concurrent("Merkle Key", async () => {
         await merkleKey(CLIENT_CONFIG);
     } catch (e) {
         await merkleKey(CLIENT_CONFIG);
+    }
+});
+test.concurrent("Private Tangle", async () => {
+    try {
+        await createIdentityPrivateTangle()
+        throw new Error("Did not throw.")
+    } catch (err) {
+        // Example is expected to throw an error because no private Tangle is running
+        expect(err.name).toEqual("ClientError")
+        expect(err.message).toContain("error sending request")
     }
 });
 test.concurrent("Diff Chain", async () => {

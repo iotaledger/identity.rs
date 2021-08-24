@@ -42,8 +42,8 @@ impl WasmDID {
 
   /// Returns the IOTA tangle network of the `DID`.
   #[wasm_bindgen(getter)]
-  pub fn network(&self) -> WasmNetwork {
-    self.0.network().into()
+  pub fn network(&self) -> Result<WasmNetwork, JsValue> {
+    self.0.network().map(Into::into).map_err(wasm_error)
   }
 
   /// Returns the IOTA tangle network of the `DID`.

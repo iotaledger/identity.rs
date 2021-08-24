@@ -3,6 +3,7 @@
 
 use identity_core::common::Url;
 
+use crate::error::Result;
 use crate::tangle::Message;
 use crate::tangle::MessageId;
 use crate::tangle::Network;
@@ -29,7 +30,7 @@ impl Receipt {
 
   /// Returns the associated IOTA Tangle `Network`.
   pub fn network(&self) -> Network {
-    self.network
+    self.network.clone()
   }
 
   /// Returns the message `id`.
@@ -48,7 +49,7 @@ impl Receipt {
   }
 
   /// Returns the web explorer URL of the associated `message`.
-  pub fn message_url(&self) -> Url {
+  pub fn message_url(&self) -> Result<Url> {
     self.network.message_url(&self.message_id.to_string())
   }
 }

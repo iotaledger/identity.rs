@@ -3,6 +3,7 @@
 
 const {createIdentity} = require("./create_did");
 const {manipulateIdentity} = require("./manipulate_did");
+const {createIdentityPrivateTangle} = require("./private_tangle");
 const {resolution} = require("./resolution");
 const {createVC} = require("./create_vc");
 const {createVP} = require("./create_vp");
@@ -35,6 +36,8 @@ async function main() {
             return await createVP(CLIENT_CONFIG);
         case "merkle_key":
             return await merkleKey(CLIENT_CONFIG);
+        case "private_tangle":
+            return await createIdentityPrivateTangle();
         case "resolve_history":
             return await resolveHistory(CLIENT_CONFIG);
         case "diff_chain":

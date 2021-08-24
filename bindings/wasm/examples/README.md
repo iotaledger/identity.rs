@@ -43,7 +43,7 @@ The following examples are currently available:
 |  7  | [revoke_vc](node/revoke_vc.js)           | Remove a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC.                                                                                      |
 |  8  | [resolution](node/resolution.js)         | Resolves an existing DID to return the latest DID Document.                                                                                                                                                                                |
 |  9  | [merkle_key](node/merkle_key.js)         | Adds a MerkleKeyCollection verification method to an Issuers DID Document and signs a Verifiable Credential with the key on index 0. Afterwards the key on index 0 is deactivated, making the Verifiable Credential fail its verification. |
-
+|  10 | [private_tangle](node/private_tangle.js) | Showcases the same procedure as `create_did`, but on a private tangle - a locally running hornet node. |
 
 
 ### Browser Examples

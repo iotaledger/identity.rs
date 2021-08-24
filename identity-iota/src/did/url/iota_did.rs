@@ -246,8 +246,8 @@ impl IotaDID {
     self.0.query_pairs()
   }
 
-  /// Returns the Tangle `network` of the `DID`.
-  pub fn network(&self) -> Network {
+  /// Returns the Tangle `network` of the `DID`, if it is valid.
+  pub fn network(&self) -> Result<Network> {
     Network::from_name(self.network_str())
   }
 

@@ -52,7 +52,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   println!("Publish Receipt > {:#?}", update_receipt);
 
   // Display the web explorer url that shows the published message.
-  println!("DID Document Transaction > {}", update_receipt.message_url());
+  println!("DID Document Transaction > {}", update_receipt.message_url()?);
 
   Ok((document, keypair, new_key, receipt, update_receipt))
 }

@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
   println!("Diff Update Receipt > {:#?}", update_receipt);
 
   // Display the web explorer url that shows the published diff message.
-  println!("Diff Transaction > {}", update_receipt.message_url());
+  println!("Diff Transaction > {}", update_receipt.message_url()?);
 
   Ok(())
 }

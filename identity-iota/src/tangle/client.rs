@@ -13,6 +13,7 @@ use crate::chain::{ChainHistory, DiffChain, DocumentHistory};
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
+use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Message;
 use crate::tangle::MessageId;
@@ -51,7 +52,11 @@ impl Client {
     let mut client: iota_client::ClientBuilder = builder.builder;
 
     if !builder.nodeset {
-      client = client.with_node(builder.network.default_node_url().as_str())?;
+      if let Some(network_url) = builder.network.default_node_url() {
+        client = client.with_node(network_url.as_str())?;
+      } else {
+        return Err(Error::NoClientNodesProvided);
+      }
     }
 
     Ok(Self {
@@ -62,7 +67,7 @@ impl Client {
 
   /// Returns the IOTA [`Network`] that the [`Client`] is configured to use.
   pub fn network(&self) -> Network {
-    self.network
+    self.network.clone()
   }
 
   /// Publishes an [`IotaDocument`] to the Tangle.
@@ -86,7 +91,7 @@ impl Client {
       .finish()
       .await
       .map_err(Into::into)
-      .map(|message| Receipt::new(self.network, message))
+      .map(|message| Receipt::new(self.network.clone(), message))
   }
 
   /// Fetch the [`IotaDocument`] specified by the given [`IotaDID`].

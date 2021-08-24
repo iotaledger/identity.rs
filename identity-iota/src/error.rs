@@ -27,8 +27,8 @@ pub enum Error {
   InvalidDocumentAuthFragment,
   #[error("Invalid Document - Authentication Type Not Supported")]
   InvalidDocumentAuthType,
-  #[error("Invalid DID Network")]
-  InvalidDIDNetwork,
+  #[error("Invalid Network Name: {0}")]
+  InvalidNetworkName(&'static str),
   #[error("Invalid Tryte Conversion")]
   InvalidTryteConversion,
   #[error("Invalid Transaction Bundle")]
@@ -51,4 +51,10 @@ pub enum Error {
   CannotRemoveAuthMethod,
   #[error("Cannot Revoke Verification Method")]
   CannotRevokeMethod,
+  #[error("No Client Nodes Provided")]
+  NoClientNodesProvided,
+  #[error("No Explorer URL Set")]
+  NoExplorerURLSet,
+  #[error("Invalid Explorer Url")]
+  InvalidExplorerURL,
 }
