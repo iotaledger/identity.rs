@@ -74,18 +74,6 @@ jobs:
             ${{ matrix.os }}-cargo-${{ github.job }}-
             ${{ matrix.os }}-cargo-
 
-      - name: Cache build target
-        uses: actions/cache@v2.1.4
-        with:
-          path: target
-          # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
-          # Restore from outdated cache for speed
-          restore-keys: |
-            ${{ matrix.os }}-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ matrix.os }}-target-${{ github.job }}-
-            ${{ matrix.os }}-target-
-
       - name: Cache sccache
         uses: actions/cache@v2.1.6
         continue-on-error: false
@@ -189,18 +177,6 @@ jobs:
             ${{ matrix.os }}-cargo-${{ github.job }}-
             ${{ matrix.os }}-cargo-
 
-      - name: Cache libjose build target
-        uses: actions/cache@v2.1.4
-        with:
-          path: libjose/target
-          # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-libjose-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
-          # Restore from outdated cache for speed
-          restore-keys: |
-            ${{ matrix.os }}-libjose-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ matrix.os }}-libjose-target-${{ github.job }}-
-            ${{ matrix.os }}-libjose-target-
-
       - name: Cache sccache
         uses: actions/cache@v2.1.6
         continue-on-error: false
@@ -293,18 +269,6 @@ jobs:
             ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
             ${{ matrix.os }}-cargo-${{ github.job }}-
             ${{ matrix.os }}-cargo-
-
-      - name: Cache wasm target
-        uses: actions/cache@v2.1.4
-        with:
-          path: bindings/wasm/target
-          # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-wasm-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
-          # Restore from outdated cache for speed
-          restore-keys: |
-            ${{ matrix.os }}-wasm-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ matrix.os }}-wasm-target-${{ github.job }}-
-            ${{ matrix.os }}-wasm-target-
 
       - name: Cache sccache
         uses: actions/cache@v2.1.6
