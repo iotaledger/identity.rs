@@ -1,4 +1,4 @@
-name: Build and test examples
+name: Build and run examples
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test-rust-examples:
+  rust-examples:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -56,7 +56,7 @@ jobs:
         run: |
           cargo read-manifest | for entry in $(jq -r '.targets[].name'); do cargo run --example "$entry" || exit 1; done
   
-  build-and-test-wasm-examples:       
+  wasm-examples:       
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
