@@ -49,7 +49,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --examples --verbose
+          args: --examples --release
 
       - name: Run Rust examples
         working-directory: examples
