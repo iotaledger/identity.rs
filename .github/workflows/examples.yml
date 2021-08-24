@@ -1,28 +1,99 @@
-name: Wasm Examples
+name: Examples
 
 on:
   schedule:
     - cron: '0 0 * * *' # run at midnight every day
   workflow_dispatch:
-    inputs:
-      ref:
-        description: "Branch/ref (default dev branch)"
-        required: true
-        default: 'dev' # checkout dev branch by default, not main
 
 jobs:
-  build-and-test-examples:
-    runs-on: ubuntu-latest
+  rust-examples:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        include:
+          - os: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.inputs.ref }}
+          ref: ${{ github.ref }}
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
+
+      - name: Get current date
+        run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+      
+      - name: Cache cargo
+        uses: actions/cache@v2.1.4
+        with:
+          # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          # Add date to the cache to keep it up to date
+          key: ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          # Restore from outdated cache for speed
+          restore-keys: |
+            ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.os }}-cargo-${{ github.job }}-
+            ${{ matrix.os }}-cargo-
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --examples --release
+
+      - name: Run Rust examples
+        working-directory: examples
+        run: |
+          cargo read-manifest | for entry in $(jq -r '.targets[].name'); do cargo run --example "$entry" || exit 1; done
+  
+  wasm-examples:       
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        include:
+          - os: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Get current date
+        run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+      
+      - name: Cache cargo
+        uses: actions/cache@v2.1.4
+        with:
+          # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          # Add date to the cache to keep it up to date
+          key: ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          # Restore from outdated cache for speed
+          restore-keys: |
+            ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.os }}-cargo-${{ github.job }}-
+            ${{ matrix.os }}-cargo-
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
