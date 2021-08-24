@@ -1477,17 +1477,18 @@ Deserializes a `KeyPair` object from a JSON object.
 
 * [Network](#Network)
     * _instance_
-        * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code>
+        * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
         * [.explorerURL](#Network+explorerURL) ⇒ <code>string</code>
         * [.messageURL(message_id)](#Network+messageURL) ⇒ <code>string</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
     * _static_
+        * [.from_name(string)](#Network.from_name) ⇒ [<code>Network</code>](#Network)
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
         * [.testnet()](#Network.testnet) ⇒ [<code>Network</code>](#Network)
 
 <a name="Network+defaultNodeURL"></a>
 
-### network.defaultNodeURL ⇒ <code>string</code>
+### network.defaultNodeURL ⇒ <code>string</code> \| <code>undefined</code>
 Returns the node URL of the Tangle network.
 
 **Kind**: instance property of [<code>Network</code>](#Network)  
@@ -1512,6 +1513,15 @@ Returns the web explorer URL of the given `message`.
 
 ### network.toString() ⇒ <code>string</code>
 **Kind**: instance method of [<code>Network</code>](#Network)  
+<a name="Network.from_name"></a>
+
+### Network.from\_name(string) ⇒ [<code>Network</code>](#Network)
+**Kind**: static method of [<code>Network</code>](#Network)  
+
+| Param | Type |
+| --- | --- |
+| string | <code>string</code> | 
+
 <a name="Network.mainnet"></a>
 
 ### Network.mainnet() ⇒ [<code>Network</code>](#Network)
