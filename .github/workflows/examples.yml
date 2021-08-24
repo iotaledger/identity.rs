@@ -24,14 +24,6 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Debug 1
-        run: |
-          jq --help
-
-      - name: Debug 2
-        run: |
-          echo $GITHUB_JOB
-
       - name: Get current date
         run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
       
@@ -73,7 +65,7 @@ jobs:
       - name: Run Rust examples
         working-directory: examples
         run: |
-          cargo read-manifest | for entry in $(python3 -c "import sys, json; print(' '.join(list(map(lambda x: x['name'], json.load(sys.stdin)['targets']))))"); do cargo run --example "$entry"; done
+          cargo read-manifest | for entry in $(jq -r '.targets[].name'); do cargo run --example "$entry"; done
   
   build-and-test-wasm-examples:
     runs-on: ubuntu-latest
