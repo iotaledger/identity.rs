@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.inputs.ref }}
+          ref: ${{ github.ref }}
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -84,7 +84,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.inputs.ref }}
+          ref: ${{ github.ref }}
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
