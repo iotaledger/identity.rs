@@ -4,11 +4,6 @@ on:
   schedule:
     - cron: '0 0 * * *' # run at midnight every day
   workflow_dispatch:
-    # inputs:
-    #   ref:
-    #     description: "Branch/ref (default dev branch)"
-    #     required: true
-    #     default: 'dev' # checkout dev branch by default, not main
 
 jobs:
   build-and-test-rust-examples:
@@ -49,18 +44,6 @@ jobs:
             ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
             ${{ matrix.os }}-cargo-${{ github.job }}-
             ${{ matrix.os }}-cargo-
-
-      - name: Cache build target
-        uses: actions/cache@v2.1.4
-        with:
-          path: target
-          # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
-          # Restore from outdated cache for speed
-          restore-keys: |
-            ${{ matrix.os }}-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ matrix.os }}-target-${{ github.job }}-
-            ${{ matrix.os }}-target-
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -111,18 +94,6 @@ jobs:
             ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
             ${{ matrix.os }}-cargo-${{ github.job }}-
             ${{ matrix.os }}-cargo-
-
-      - name: Cache build target
-        uses: actions/cache@v2.1.4
-        with:
-          path: target
-          # Add date to the cache to keep it up to date
-          key: ${{ matrix.os }}-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
-          # Restore from outdated cache for speed
-          restore-keys: |
-            ${{ matrix.os }}-target-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
-            ${{ matrix.os }}-target-${{ github.job }}-
-            ${{ matrix.os }}-target-
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
