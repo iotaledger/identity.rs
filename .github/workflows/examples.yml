@@ -54,7 +54,7 @@ jobs:
       - name: Run Rust examples
         working-directory: examples
         run: |
-          cargo read-manifest | for entry in $(jq -r '.targets[].name'); do cargo run --example "$entry"; done
+          cargo read-manifest | for entry in $(jq -r '.targets[].name'); do cargo run --example "$entry" || exit 1; done
   
   build-and-test-wasm-examples:       
     runs-on: ${{ matrix.os }}
