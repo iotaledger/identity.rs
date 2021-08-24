@@ -5,7 +5,7 @@ function lintBigInt(content) {
         console.error("Build artifacts should not include BigInt64Array/BigUint64Array imports")
         console.error("to ensure React Native/WebKit compatibility.")
         console.error("Remove any u64 and i64 occurrence from the public Wasm interface.")
-        console.error("See also issue 362.")
+        console.error("See: https://github.com/iotaledger/identity.rs/issues/362")
         process.exit(1)
     }
 }
