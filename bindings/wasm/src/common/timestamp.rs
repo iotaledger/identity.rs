@@ -24,19 +24,6 @@ impl WasmTimestamp {
     Self(Timestamp::now_utc())
   }
 
-  /// Returns the `Timestamp` as a Unix timestamp.
-  #[wasm_bindgen(js_name = toUnix)]
-  #[allow(clippy::wrong_self_convention)]
-  pub fn to_unix(&self) -> i64 {
-    self.0.to_unix()
-  }
-
-  /// Creates a new `Timestamp` from the given Unix timestamp.
-  #[wasm_bindgen(js_name = fromUnix)]
-  pub fn from_unix(seconds: i64) -> Self {
-    Self(Timestamp::from_unix(seconds))
-  }
-
   /// Returns the `Timestamp` as an RFC 3339 `String`.
   #[wasm_bindgen(js_name = toRFC3339)]
   #[allow(clippy::wrong_self_convention)]
