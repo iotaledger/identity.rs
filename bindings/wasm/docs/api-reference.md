@@ -1668,19 +1668,11 @@ Deserializes a `Service` object from a JSON object.
 
 * [Timestamp](#Timestamp)
     * _instance_
-        * [.toUnix()](#Timestamp+toUnix) ⇒ <code>BigInt</code>
         * [.toRFC3339()](#Timestamp+toRFC3339) ⇒ <code>string</code>
     * _static_
         * [.parse(input)](#Timestamp.parse) ⇒ [<code>Timestamp</code>](#Timestamp)
         * [.nowUTC()](#Timestamp.nowUTC) ⇒ [<code>Timestamp</code>](#Timestamp)
-        * [.fromUnix(seconds)](#Timestamp.fromUnix) ⇒ [<code>Timestamp</code>](#Timestamp)
 
-<a name="Timestamp+toUnix"></a>
-
-### timestamp.toUnix() ⇒ <code>BigInt</code>
-Returns the `Timestamp` as a Unix timestamp.
-
-**Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
 <a name="Timestamp+toRFC3339"></a>
 
 ### timestamp.toRFC3339() ⇒ <code>string</code>
@@ -1704,17 +1696,6 @@ Parses a `Timestamp` from the provided input string.
 Creates a new `Timestamp` with the current date and time.
 
 **Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
-<a name="Timestamp.fromUnix"></a>
-
-### Timestamp.fromUnix(seconds) ⇒ [<code>Timestamp</code>](#Timestamp)
-Creates a new `Timestamp` from the given Unix timestamp.
-
-**Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
-
-| Param | Type |
-| --- | --- |
-| seconds | <code>BigInt</code> | 
-
 <a name="Timing"></a>
 
 ## Timing
