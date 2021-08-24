@@ -1,8 +1,12 @@
 const path = require('path')
 const fs = require('fs')
+const { lintBigInt } = require('./lints')
 
 const entryFilePath = path.join(__dirname, '../web/identity_wasm.js')
 const entryFile = fs.readFileSync(entryFilePath).toString()
+
+lintBigInt(entryFile);
+
 let changedFile = entryFile
     // Comment out generated code as a workaround for webpack (does not recognise import.meta)
     // Regex to avoid hard-coding 'identity_wasm_bg.wasm'
