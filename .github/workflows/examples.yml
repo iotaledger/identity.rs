@@ -1,4 +1,4 @@
-name: Build and run examples
+name: Examples
 
 on:
   schedule:
