@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {createIdentity} from "./create_did";
-// const {manipulateIdentity} = require("./manipulate_did");
+import {manipulateIdentity} from "./manipulate_did";
 // const {createIdentityPrivateTangle} = require("./private_tangle");
 // const {resolution} = require("./resolution");
-// const {createVC} = require("./create_vc");
+import {createVC} from "./create_vc";
 // const {createVP} = require("./create_vp");
 // const {revokeVC} = require("./revoke_vc");
 // const {merkleKey} = require("./merkle_key");

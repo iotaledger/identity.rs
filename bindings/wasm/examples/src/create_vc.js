@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const {Client, Config, VerifiableCredential} = require('../../node/identity_wasm')
-const {createIdentity} = require('./create_did');
-const {manipulateIdentity} = require('./manipulate_did');
+import {Client, Config, VerifiableCredential} from '@iota/identity-wasm';
+import {createIdentity} from './create_did';
+import {manipulateIdentity} from './manipulate_did';
 
 /**
  This example shows how to create a Verifiable Credential and validate it.
@@ -56,4 +56,4 @@ async function createVC(clientConfig) {
     return {alice, issuer, signedVc};
 }
 
-exports.createVC = createVC;
+export {createVC};

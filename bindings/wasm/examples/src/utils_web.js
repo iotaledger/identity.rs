@@ -1,17 +1,19 @@
 import * as identity from "@iota/identity-wasm";
 
+export const LINK_REGEX = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+
 /**
  * Loads the identity wasm library.
  *
  * @returns {Promise<void>}
  */
-export async function initIdentity(path = "../../web/identity_wasm_bg.wasm", log = true) {
-    if(log) logToScreen("Initialization started...");
+export async function initIdentity(path = "../../web/identity_wasm_bg.wasm") {
+    console.log("Initialization started...");
     try {
         await identity.init(path);
-        if(log) logToScreen("Initialization success!");
+        console.log("Initialization success!");
     } catch (err) {
-        if(log) logToScreen(err);
+        console.error(err);
     }
 }
 
@@ -55,12 +57,10 @@ export function logToScreen(message) {
         "<br/>-------------------------------------<br/>";
 }
 
-/**
- *
- * @param {string} url
- */
-export function logExplorerUrlToScreen(url) {
-    logToScreen(`Explorer URL: <a target="_blank" href="${url}"> ${url} </a>`);
+export function linkify(inputText) {
+
+    return inputText.replace(LINK_REGEX, '<a href="$1" target="_blank">$1</a>');
+
 }
 
 /**

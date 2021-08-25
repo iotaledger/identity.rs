@@ -14,7 +14,6 @@ import { logExplorerUrl } from './utils';
 **/
 async function createIdentity(clientConfig) {
 
-    console.log(Client, Config, Document, KeyType);
     // Create a DID Document (an identity).
     const { doc, key } = new Document(KeyType.Ed25519, clientConfig.network.toString());
 
