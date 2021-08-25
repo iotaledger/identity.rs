@@ -23,9 +23,10 @@ pub async fn main() -> Result<()> {
 
   // Set the network and the URL that points to
   // the REST API of the locally running hornet node.
+  let private_node_url = "http://127.0.0.1:14265/";
   let client = ClientBuilder::new()
     .network(network)
-    .node("http://127.0.0.1:14265/")?
+    .node(private_node_url)?
     .build()
     .await?;
 
@@ -45,7 +46,14 @@ pub async fn main() -> Result<()> {
   println!("DID Document JSON > {:#}", document);
 
   // Publish the DID Document to the Tangle.
-  let receipt: Receipt = client.publish_document(&document).await?;
+  let receipt: Receipt = match client.publish_document(&document).await {
+    Ok(receipt) => receipt,
+    Err(err) => {
+      eprintln!("Error > {:?} {}", err, err.to_string());
+      eprintln!("Is your private Tangle node listening on {}?", private_node_url);
+      return Ok(());
+    }
+  };
 
   println!("Publish Receipt > {:#?}", receipt);
 
