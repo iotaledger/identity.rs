@@ -1477,17 +1477,18 @@ Deserializes a `KeyPair` object from a JSON object.
 
 * [Network](#Network)
     * _instance_
-        * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code>
+        * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
         * [.explorerURL](#Network+explorerURL) ⇒ <code>string</code>
         * [.messageURL(message_id)](#Network+messageURL) ⇒ <code>string</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
     * _static_
+        * [.from_name(string)](#Network.from_name) ⇒ [<code>Network</code>](#Network)
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
         * [.testnet()](#Network.testnet) ⇒ [<code>Network</code>](#Network)
 
 <a name="Network+defaultNodeURL"></a>
 
-### network.defaultNodeURL ⇒ <code>string</code>
+### network.defaultNodeURL ⇒ <code>string</code> \| <code>undefined</code>
 Returns the node URL of the Tangle network.
 
 **Kind**: instance property of [<code>Network</code>](#Network)  
@@ -1512,6 +1513,15 @@ Returns the web explorer URL of the given `message`.
 
 ### network.toString() ⇒ <code>string</code>
 **Kind**: instance method of [<code>Network</code>](#Network)  
+<a name="Network.from_name"></a>
+
+### Network.from\_name(string) ⇒ [<code>Network</code>](#Network)
+**Kind**: static method of [<code>Network</code>](#Network)  
+
+| Param | Type |
+| --- | --- |
+| string | <code>string</code> | 
+
 <a name="Network.mainnet"></a>
 
 ### Network.mainnet() ⇒ [<code>Network</code>](#Network)
@@ -1668,19 +1678,11 @@ Deserializes a `Service` object from a JSON object.
 
 * [Timestamp](#Timestamp)
     * _instance_
-        * [.toUnix()](#Timestamp+toUnix) ⇒ <code>BigInt</code>
         * [.toRFC3339()](#Timestamp+toRFC3339) ⇒ <code>string</code>
     * _static_
         * [.parse(input)](#Timestamp.parse) ⇒ [<code>Timestamp</code>](#Timestamp)
         * [.nowUTC()](#Timestamp.nowUTC) ⇒ [<code>Timestamp</code>](#Timestamp)
-        * [.fromUnix(seconds)](#Timestamp.fromUnix) ⇒ [<code>Timestamp</code>](#Timestamp)
 
-<a name="Timestamp+toUnix"></a>
-
-### timestamp.toUnix() ⇒ <code>BigInt</code>
-Returns the `Timestamp` as a Unix timestamp.
-
-**Kind**: instance method of [<code>Timestamp</code>](#Timestamp)  
 <a name="Timestamp+toRFC3339"></a>
 
 ### timestamp.toRFC3339() ⇒ <code>string</code>
@@ -1704,17 +1706,6 @@ Parses a `Timestamp` from the provided input string.
 Creates a new `Timestamp` with the current date and time.
 
 **Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
-<a name="Timestamp.fromUnix"></a>
-
-### Timestamp.fromUnix(seconds) ⇒ [<code>Timestamp</code>](#Timestamp)
-Creates a new `Timestamp` from the given Unix timestamp.
-
-**Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
-
-| Param | Type |
-| --- | --- |
-| seconds | <code>BigInt</code> | 
-
 <a name="Timing"></a>
 
 ## Timing
