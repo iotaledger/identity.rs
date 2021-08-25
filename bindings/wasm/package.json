@@ -13,6 +13,7 @@
     "build:nodejs": "wasm-pack build --target nodejs --out-dir node && node ./build/node",
     "build:web": "wasm-pack build --target web --out-dir web && node ./build/web",
     "build:docs": "node ./build/docs",
+    "build:examples": "webpack --config ./examples/webpack.config.js --mode=production",
     "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
     "pretest": "npm run build:nodejs",
     "prepublishOnly": "npm run build",
@@ -51,7 +52,7 @@
     "jest": "^27.0.6",
     "jsdoc-to-markdown": "^7.0.0",
     "wasm-pack": "^0.9.1",
-    "webpack": "^5.24.2",
+    "webpack": "^5.51.1",
     "webpack-cli": "^4.5.0",
     "webpack-dev-server": "^3.11.2"
   },
