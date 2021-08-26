@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { Client, Config, Document, KeyType, Network } = require('../../node/identity_wasm')
+import { Client, Config, Document, KeyType, Network } from '@iota/identity-wasm';
 
 /**
     This example shows how a DID document can be created on a private tangle.
@@ -9,9 +9,10 @@ const { Client, Config, Document, KeyType, Network } = require('../../node/ident
     Refer to https://github.com/iotaledger/one-click-tangle/tree/chrysalis/hornet-private-net
     for setup instructions.
 **/
-async function createIdentityPrivateTangle() {
+async function createIdentityPrivateTangle(restURL, networkName) {
+
     // This is an arbitrarily defined network name
-    const network = Network.from_name("custom");
+    const network = Network.from_name(networkName ?? "custom");
 
     // Create a DID Document (an identity).
     const { doc, key } = new Document(KeyType.Ed25519, network.toString());
@@ -24,7 +25,7 @@ async function createIdentityPrivateTangle() {
     config.setNetwork(network);
 
     // This URL points to the REST API of the locally running hornet node.
-    config.setNode("http://127.0.0.1:14265/");
+    config.setNode(restURL ?? "http://127.0.0.1:14265/");
 
     // Create a client instance from the configuration to publish messages to the Tangle.
     const client = Client.fromConfig(config);
@@ -39,4 +40,4 @@ async function createIdentityPrivateTangle() {
     return { key, resolved, receipt };
 }
 
-exports.createIdentityPrivateTangle = createIdentityPrivateTangle;
+export {createIdentityPrivateTangle};

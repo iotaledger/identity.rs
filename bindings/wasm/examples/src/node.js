@@ -3,8 +3,8 @@
 
 import {createIdentity} from "./create_did";
 import {manipulateIdentity} from "./manipulate_did";
-//const {createIdentityPrivateTangle} = require("./private_tangle");
-// const {resolution} = require("./resolution");
+import {createIdentityPrivateTangle} from "./private_tangle";
+import {resolution} from "./resolution";
 import {createVC} from "./create_vc";
 import {createVP} from "./create_vp";
 import {revokeVC} from "./revoke_vc";
