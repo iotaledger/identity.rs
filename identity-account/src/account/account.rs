@@ -27,6 +27,7 @@ use crate::error::Result;
 use crate::events::Command;
 use crate::events::Commit;
 use crate::events::Context;
+use crate::events::CreateMethodBuilder;
 use crate::events::Event;
 use crate::events::EventData;
 use crate::identity::IdentityCreate;
@@ -43,6 +44,17 @@ use crate::types::KeyLocation;
 
 const OSC: Ordering = Ordering::SeqCst;
 
+pub struct Updater<'account, K: IdentityKey> {
+  account: &'account Account,
+  key: K,
+}
+
+impl<'account, K: IdentityKey> Updater<'account, K> {
+  pub fn create_method(self) -> CreateMethodBuilder<'account, K> {
+    CreateMethodBuilder::new(self.account, self.key)
+  }
+}
+
 #[derive(Debug)]
 pub struct Account {
   config: Arc<Config>,
@@ -52,6 +64,19 @@ pub struct Account {
 }
 
 impl Account {
+  pub fn new_update<'account, K: IdentityKey>(&'account self, key: K) -> Updater<'account, K> {
+    Updater { account: &self, key }
+  }
+
+  pub async fn batch_update(&self, updates: &[Command]) -> Result<()> {
+
+    // for update in updates {
+    //   self.update_identity(key, update)?;
+    // }
+
+    Ok(())
+  }
+
   /// Creates a new [AccountBuilder].
   pub fn builder() -> AccountBuilder {
     AccountBuilder::new()

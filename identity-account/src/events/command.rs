@@ -21,6 +21,8 @@ use crate::identity::TinyService;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
+use crate::account::Account;
+use crate::identity::IdentityKey;
 
 // Supported authentication method types.
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
@@ -249,7 +251,7 @@ impl_command_builder!(AttachMethod {
   @default scopes Vec<MethodScope>,
 });
 
-impl AttachMethodBuilder {
+impl<'account, K: IdentityKey> AttachMethodBuilder<'account, K> {
   pub fn scope(mut self, value: MethodScope) -> Self {
     self.scopes.get_or_insert_with(Default::default).push(value);
     self
@@ -261,7 +263,7 @@ impl_command_builder!(DetachMethod {
   @default scopes Vec<MethodScope>,
 });
 
-impl DetachMethodBuilder {
+impl<'account, K: IdentityKey> DetachMethodBuilder<'account, K> {
   pub fn scope(mut self, value: MethodScope) -> Self {
     self.scopes.get_or_insert_with(Default::default).push(value);
     self

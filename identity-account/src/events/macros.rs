@@ -32,14 +32,16 @@ macro_rules! impl_command_builder {
   };
   ($ident:ident { $(@ $requirement:ident $field:ident $ty:ty $(= $value:expr)?),* $(,)* }) => {
     paste::paste! {
-      #[derive(Clone, Debug, PartialEq)]
-      pub struct [<$ident Builder>] {
+      #[derive(Clone, Debug)]
+      pub struct [<$ident Builder>]<'account, K: IdentityKey> {
+        account: &'account Account,
+        key: K,
         $(
           $field: Option<$ty>,
         )*
       }
 
-      impl [<$ident Builder>] {
+      impl<'account, K: IdentityKey> [<$ident Builder>]<'account, K> {
         $(
           pub fn $field<VALUE: Into<$ty>>(mut self, value: VALUE) -> Self {
             self.$field = Some(value.into());
@@ -47,8 +49,10 @@ macro_rules! impl_command_builder {
           }
         )*
 
-        pub fn new() -> [<$ident Builder>] {
+        pub fn new(account: &'account Account, key: K) -> [<$ident Builder>]<'account, K> {
           [<$ident Builder>] {
+            account,
+            key,
             $(
               $field: None,
             )*
@@ -62,19 +66,26 @@ macro_rules! impl_command_builder {
             )*
           })
         }
-      }
 
-      impl Default for [<$ident Builder>] {
-        fn default() -> Self {
-          Self::new()
+        pub async fn apply(self) -> $crate::Result<()> {
+          let account = self.account;
+          let update = self.finish()?;
+          account.update_identity(self.key, update).await?;
+          Ok(())
         }
       }
 
-      impl $crate::events::Command {
-        pub fn [<$ident:snake>]() -> [<$ident Builder>] {
-          [<$ident Builder>]::new()
-        }
-      }
+      // impl Default for [<$ident Builder>] {
+      //   fn default() -> Self {
+      //     Self::new()
+      //   }
+      // }
+
+      // impl $crate::events::Command {
+      //   pub fn [<$ident:snake>]() -> [<$ident Builder>] {
+      //     [<$ident Builder>]::new()
+      //   }
+      // }
     }
   };
 }
