@@ -65,6 +65,16 @@ const clientConfig = {
             '@iota/identity-wasm': path.resolve(__dirname, '../web/identity_wasm.js'),
         },
     },
+    plugins: [
+        new CopyWebPlugin({
+            patterns: [
+                {
+                    from: path.resolve(__dirname, "./src/index.html"),
+                    to: path.resolve(__dirname, "dist"),
+                }
+            ]
+        }),
+    ],
 };
 
 module.exports = [serverConfig, serverTestConfig, clientConfig];
