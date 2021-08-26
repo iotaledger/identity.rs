@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const {
+import {
     Client,
     Config,
     Digest,
@@ -10,9 +10,9 @@ const {
     VerifiableCredential,
     VerificationMethod,
     KeyCollection
-} = require('../../node/identity_wasm')
-const {createIdentity} = require('./create_did');
-const {logExplorerUrl} = require('./utils')
+} from '@iota/identity-wasm';
+import {createIdentity} from './create_did';
+import {logExplorerUrl} from './utils';
 
 /**
  This example shows how to sign/revoke verifiable credentials on scale.
@@ -93,4 +93,4 @@ async function merkleKey(clientConfig) {
     if (newResult.verified) throw new Error("VC not revoked");
 }
 
-exports.merkleKey = merkleKey;
+export {merkleKey};

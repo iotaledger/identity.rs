@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const {Client, Config, DID, Timestamp} = require('../../node/identity_wasm')
-const {createVC} = require('./create_vc');
-const {logExplorerUrl} = require('./utils')
+import {Client, Config, DID, Timestamp} from '@iota/identity-wasm';
+import {createVC} from './create_vc';
+import {logExplorerUrl} from './utils';
 
 /**
  This example shows how to revoke a verifiable credential.
@@ -21,7 +21,7 @@ const {logExplorerUrl} = require('./utils')
 
  @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
  **/
-async function revoke(clientConfig) {
+async function revokeVC(clientConfig) {
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);
 
@@ -47,4 +47,4 @@ async function revoke(clientConfig) {
     console.log(`VC verification result (false = revoked): ${result.verified}`);
 }
 
-exports.revokeVC = revoke;
+export {revokeVC};

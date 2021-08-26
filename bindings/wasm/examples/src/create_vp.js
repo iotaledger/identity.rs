@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { Client, Config, VerifiablePresentation } = require('../../node/identity_wasm')
-const { createVC } = require('./create_vc');
+import { Client, Config, VerifiablePresentation } from '@iota/identity-wasm';
+import { createVC } from './create_vc';
 
 /**
     This example shows how to create a Verifiable Presentation and validate it.
@@ -36,4 +36,4 @@ async function createVP(clientConfig) {
     console.log(`VP verification result: ${result.verified}`);
 }
 
-exports.createVP = createVP;
+export {createVP};

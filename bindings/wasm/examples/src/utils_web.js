@@ -34,18 +34,6 @@ export function defaultClientConfig() {
 }
 
 /**
- * Returns a URL to view a message published to the Tangle, depending on the network:
- * https://explorer.iota.org/<mainnet|testnet>/transaction/<messageId>
- *
- * @param doc
- * @param messageId
- * @returns {string}
- */
-export function getExplorerUrl(doc, messageId) {
-    return doc.id.network.messageURL(messageId);
-}
-
-/**
  * logs a string to the output window
  *
  * @param {string} message
@@ -69,4 +57,24 @@ export function linkify(inputText) {
  */
 export function logObjectToScreen(obj) {
     logToScreen("<pre>" + JSON.stringify(obj, null, 4) + "</pre>");
+}
+
+export function setupDOMLog() {
+    var orig = console.log;
+
+    console.log = function() {
+
+        
+        Array.from(arguments).forEach(argument => {
+            if (typeof argument === 'object') {
+                return logObjectToScreen(argument);
+            } else if (typeof argument === 'string' && argument.match(LINK_REGEX)) {
+                return logToScreen(linkify(argument));
+            }
+            logToScreen(argument);
+        });
+
+        orig.apply(console, arguments);
+    };
+
 }
