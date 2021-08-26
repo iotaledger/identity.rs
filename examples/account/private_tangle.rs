@@ -26,13 +26,14 @@ async fn main() -> Result<()> {
   let network = Network::from_name(network_name)?;
 
   // Create a new Account with the default configuration
+  let private_node_url = "http://127.0.0.1:14265/";
   let account: Account = Account::builder()
     // Configure a client for the private network.
     // Also set the URL that points to the REST API
     // of the locally running hornet node.
     .client(network, |builder| {
       // unwrap is safe, we provided a valid node URL
-      builder.node("http://127.0.0.1:14265/").unwrap()
+      builder.node(private_node_url).unwrap()
     })
     .build()
     .await?;
@@ -40,7 +41,17 @@ async fn main() -> Result<()> {
   let id_create = IdentityCreate::new().network(network_name);
 
   // Create a new Identity with default settings
-  let snapshot: IdentitySnapshot = account.create_identity(id_create).await?;
+  let snapshot: IdentitySnapshot = match account.create_identity(id_create).await {
+    Ok(snapshot) => snapshot,
+    Err(err) => {
+      eprintln!("[Example] Error: {:?} {}", err, err.to_string());
+      eprintln!(
+        "[Example] Is your private Tangle node listening on {}?",
+        private_node_url
+      );
+      return Ok(());
+    }
+  };
 
   // Retrieve the DID from the newly created Identity state.
   let document: &IotaDID = snapshot.identity().try_did()?;
