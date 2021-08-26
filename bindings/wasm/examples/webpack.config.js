@@ -20,7 +20,26 @@ const serverConfig = {
     externals: [
         function ({ context, request }, callback) {
           if (/^@iota\/identity-wasm$/.test(request)) {
-              console.log(request);
+            // Externalize to a commonjs module
+            return callback(null, 'commonjs ' + path.resolve(__dirname, '../node/identity_wasm.js'));
+          }
+    
+          // Continue without externalizing the import
+          callback();
+        },
+      ],
+};
+
+const serverTestConfig = {
+    target: 'node',
+    entry: './examples/src/test.js',
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'test.js',
+    },
+    externals: [
+        function ({ context, request }, callback) {
+          if (/^@iota\/identity-wasm$/.test(request)) {
             // Externalize to a commonjs module
             return callback(null, 'commonjs ' + path.resolve(__dirname, '../node/identity_wasm.js'));
           }
@@ -48,4 +67,4 @@ const clientConfig = {
     },
 };
 
-module.exports = [serverConfig, clientConfig];
+module.exports = [serverConfig, serverTestConfig, clientConfig];
