@@ -26,10 +26,11 @@ module.exports = {
         'getting-started/overview',
         {
           'Decentralized Identifiers (DID)': [
-            'getting-started/did/README',
+            'getting-started/did/intro',
             'getting-started/did/create',
-            'getting-started/did/resolve',
             'getting-started/did/update',
+            'getting-started/did/resolve',
+            'getting-started/did/manage',
             'getting-started/did/merkle_key_collection',
           ],
         },
