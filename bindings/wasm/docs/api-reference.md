@@ -715,6 +715,7 @@ Parses a `DID` from the input string.
         * [.updated](#Document+updated)
         * [.proof](#Document+proof) ⇒ <code>any</code>
         * [.messageId](#Document+messageId) ⇒ <code>string</code>
+        * [.messageId](#Document+messageId)
         * [.previousMessageId](#Document+previousMessageId) ⇒ <code>string</code>
         * [.previousMessageId](#Document+previousMessageId)
         * [.authentication()](#Document+authentication) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
@@ -801,7 +802,20 @@ Returns the DID Document `proof` object.
 <a name="Document+messageId"></a>
 
 ### document.messageId ⇒ <code>string</code>
+Get the message_id of the DID Document.
+
 **Kind**: instance property of [<code>Document</code>](#Document)  
+<a name="Document+messageId"></a>
+
+### document.messageId
+Set the message_id of the DID Document.
+
+**Kind**: instance property of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> | 
+
 <a name="Document+previousMessageId"></a>
 
 ### document.previousMessageId ⇒ <code>string</code>
