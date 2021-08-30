@@ -120,12 +120,12 @@ impl Storage for MemStore {
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
         let mut secret_key_bytes: [u8; 32] = secret_key.as_ref().try_into().expect("expected a slice of 32 bytes");
-        let secret: ed25519::SecretKey = ed25519::SecretKey::from_le_bytes(secret_key_bytes)?;
+        let secret: ed25519::SecretKey = ed25519::SecretKey::from_bytes(secret_key_bytes);
         secret_key_bytes.zeroize();
 
         let public: ed25519::PublicKey = secret.public_key();
 
-        let public_key: PublicKey = public.to_compressed_bytes().to_vec().into();
+        let public_key: PublicKey = public.to_bytes().to_vec().into();
 
         let keypair: KeyPair = KeyPair::from((KeyType::Ed25519, public_key.clone(), secret_key));
 
