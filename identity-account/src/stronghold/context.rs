@@ -1,25 +1,22 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use actix::System;
 use core::ops::Deref;
 use core::ops::DerefMut;
 use hashbrown::HashMap;
 use hashbrown::HashSet;
 use iota_stronghold::Stronghold;
 use iota_stronghold::StrongholdFlags;
-use once_cell::sync::OnceCell;
-use riker::actors::ActorSystem;
-use riker::actors::SystemBuilder;
+use once_cell::sync::Lazy;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
-use std::sync::Once;
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
-use tokio::runtime::Runtime as AsyncRuntime;
 use tokio::sync::Mutex as AsyncMutex;
 use tokio::sync::MutexGuard as AsyncMutexGuard;
 use zeroize::Zeroize;
@@ -38,21 +35,11 @@ pub struct Context {
   runtime: Runtime,
 }
 
-fn async_runtime() -> Result<&'static Mutex<AsyncRuntime>> {
-  static __THIS: OnceCell<Mutex<AsyncRuntime>> = OnceCell::new();
-
-  __THIS.get_or_try_init(|| AsyncRuntime::new().map_err(Into::into).map(Mutex::new))
-}
-
-fn async_runtime_guard() -> Result<MutexGuard<'static, AsyncRuntime>> {
-  async_runtime().and_then(|mutex| mutex.lock().map_err(|_| Error::StrongholdMutexPoisoned("runtime")))
-}
-
 async fn clear_expired_passwords() -> Result<()> {
-  let this: &'static Context = Context::get()?;
+  let this: &'static Context = Context::get().await?;
   let interval: Duration = *this.runtime.password_clear()?;
 
-  thread::sleep(interval);
+  tokio::time::sleep(interval).await;
 
   if interval.as_nanos() == 0 {
     return Ok(());
@@ -78,41 +65,51 @@ async fn clear_expired_passwords() -> Result<()> {
   Ok(())
 }
 
-impl Context {
-  pub(crate) fn get() -> Result<&'static Self> {
-    static __THIS: OnceCell<Context> = OnceCell::new();
-    static __POOL: OnceCell<AsyncRuntime> = OnceCell::new();
-    static __SWEEP: Once = Once::new();
+static CONTEXT: Lazy<core::result::Result<Context, String>> = Lazy::new(|| {
+  let (sender, receiver) = std::sync::mpsc::channel();
 
-    let this: &'static Self = __THIS.get_or_try_init::<_, Error>(|| {
-      let system: ActorSystem = SystemBuilder::new()
-        // Disable the default actor system logger
-        .log(slog::Logger::root(slog::Discard, slog::o!()))
-        .create()?;
+  thread::spawn(move || {
+    let system_runner = System::new();
 
-      let stronghold: Stronghold = Stronghold::init_stronghold_system(system, Vec::new(), Vec::new());
-      let database: Arc<AsyncMutex<Database>> = Arc::new(AsyncMutex::new(Database::new(stronghold)));
+    // TODO: convert error properly once anyhow is no longer used
+    let stronghold = system_runner
+      .block_on(Stronghold::init_stronghold_system(vec![], vec![]))
+      .map_err(|err| err.to_string());
 
-      Ok(Self {
+    let context = stronghold.map(|sh| {
+      let database: Arc<AsyncMutex<Database>> = Arc::new(AsyncMutex::new(Database::new(sh)));
+      Context {
         database,
         runtime: Runtime::new(),
-      })
-    })?;
-
-    // Spawn a background-process to clear expired passwords
-    __SWEEP.call_once(|| {
-      thread::spawn(|| {
-        // unwrap so an error kills the thread
-        async_runtime_guard().unwrap().spawn(async {
-          loop {
-            // unwrap so an error kills the thread
-            clear_expired_passwords().await.unwrap();
-          }
-        });
-      });
+      }
     });
 
-    Ok(this)
+    sender.send(context).expect("receiver channel has been dropped");
+
+    let spawn_successful = System::current().arbiter().spawn(async {
+      loop {
+        clear_expired_passwords()
+          .await
+          .expect("background password clearing failed");
+      }
+    });
+
+    if !spawn_successful {
+      panic!("failed to send background task to arbiter");
+    }
+
+    system_runner.run().expect("system runner failed");
+  });
+
+  receiver.recv().expect("sender has been disconnected")
+});
+
+impl Context {
+  pub(crate) async fn get() -> Result<&'static Self> {
+    match CONTEXT.deref() {
+      Ok(ctx) => Ok(ctx),
+      Err(err) => Err(Error::StrongholdResult(err.to_owned())),
+    }
   }
 
   pub(crate) async fn scope(
@@ -120,7 +117,7 @@ impl Context {
     name: &[u8],
     flags: &[StrongholdFlags],
   ) -> Result<AsyncMutexGuard<'static, Database>> {
-    let this: &Self = Self::get()?;
+    let this: &Self = Self::get().await?;
     let mut database: _ = this.database.lock().await;
 
     database.switch_snapshot(&this.runtime, path).await?;
@@ -129,27 +126,31 @@ impl Context {
     Ok(database)
   }
 
-  pub(crate) fn on_change<T>(listener: T) -> Result<()>
+  pub(crate) async fn on_change<T>(listener: T) -> Result<()>
   where
     T: FnMut(&Path, &SnapshotStatus) + Send + 'static,
   {
-    Self::get().and_then(|this| this.runtime.on_change(listener))
+    Self::get().await.and_then(|this| this.runtime.on_change(listener))
   }
 
-  pub(crate) fn set_password(path: &Path, password: Password) -> Result<()> {
-    Self::get().and_then(|this| this.runtime.set_password(path, password))
+  pub(crate) async fn set_password(path: &Path, password: Password) -> Result<()> {
+    Self::get()
+      .await
+      .and_then(|this| this.runtime.set_password(path, password))
   }
 
-  pub(crate) fn set_password_clear(interval: Duration) -> Result<()> {
-    Self::get().and_then(|this| this.runtime.set_password_clear(interval))
+  pub(crate) async fn set_password_clear(interval: Duration) -> Result<()> {
+    Self::get()
+      .await
+      .and_then(|this| this.runtime.set_password_clear(interval))
   }
 
-  pub(crate) fn snapshot_status(path: &Path) -> Result<SnapshotStatus> {
-    Self::get().and_then(|this| this.runtime.snapshot_status(path))
+  pub(crate) async fn snapshot_status(path: &Path) -> Result<SnapshotStatus> {
+    Self::get().await.and_then(|this| this.runtime.snapshot_status(path))
   }
 
   pub(crate) async fn load(path: &Path, password: Password) -> Result<()> {
-    let this: &Self = Self::get()?;
+    let this: &Self = Self::get().await?;
     let mut database: _ = this.database.lock().await;
 
     this.runtime.set_password(path, password)?;
@@ -160,7 +161,7 @@ impl Context {
   }
 
   pub(crate) async fn unload(path: &Path, persist: bool) -> Result<()> {
-    let this: &Self = Self::get()?;
+    let this: &Self = Self::get().await?;
     let mut database: _ = this.database.lock().await;
 
     database.flush(&this.runtime, path, persist).await?;
@@ -169,7 +170,7 @@ impl Context {
   }
 
   pub(crate) async fn save(path: &Path) -> Result<()> {
-    let this: &Self = Self::get()?;
+    let this: &Self = Self::get().await?;
     let mut database: _ = this.database.lock().await;
 
     database.write(&this.runtime, path).await?;

@@ -12,8 +12,8 @@ pub fn generate_ed25519_keypair() -> Result<(PublicKey, SecretKey)> {
   let secret: ed25519::SecretKey = ed25519::SecretKey::generate()?;
   let public: ed25519::PublicKey = secret.public_key();
 
-  let secret: SecretKey = secret.to_le_bytes().to_vec().into();
-  let public: PublicKey = public.to_compressed_bytes().to_vec().into();
+  let secret: SecretKey = secret.to_bytes().to_vec().into();
+  let public: PublicKey = public.to_bytes().to_vec().into();
 
   Ok((public, secret))
 }
