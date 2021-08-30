@@ -14,11 +14,9 @@ use identity_account::identity::TinyMethod;
 use identity_account::storage::MemStore;
 use identity_account::types::Generation;
 use identity_core::common::UnixTimestamp;
+use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
-use identity_core::crypto::SecretKey;
 use identity_did::verification::MethodType;
-use rand::rngs::OsRng;
-use rand::RngCore;
 
 async fn new_account() -> Result<Account> {
   let store: MemStore = MemStore::new();
@@ -115,6 +113,29 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
   // version is still 3, no events have been committed
   assert_eq!(snapshot.sequence(), Generation::from(3));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_identity_from_secret_key() -> Result<()> {
+  let account: Account = new_account().await?;
+  let account2: Account = new_account().await?;
+
+  let identity: IdentityId = IdentityId::from_u32(1);
+
+  let secret_key = KeyPair::new_ed25519()?.secret().clone();
+
+  let id_create = IdentityCreate::new().key_type(KeyType::Ed25519).secret_key(secret_key);
+
+  account.create_identity(id_create.clone()).await?;
+  account2.create_identity(id_create).await?;
+
+  let ident = account.find_identity(identity).await.unwrap().unwrap();
+  let ident2 = account.find_identity(identity).await.unwrap().unwrap();
+
+  // The same secret key should result in the same did
+  assert_eq!(ident.identity().did(), ident2.identity().did());
 
   Ok(())
 }
@@ -234,6 +255,40 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
 }
 
 #[tokio::test]
+async fn test_create_method_from_secret_key() -> Result<()> {
+  let account: Account = new_account().await?;
+  let identity: IdentityId = IdentityId::from_u32(1);
+
+  let command: Command = Command::create_identity()
+    .authentication(MethodType::Ed25519VerificationKey2018)
+    .finish()
+    .unwrap();
+
+  account.process(identity, command, false).await?;
+
+  let keypair = KeyPair::new_ed25519()?;
+
+  let command: Command = Command::create_method()
+    .type_(MethodType::Ed25519VerificationKey2018)
+    .fragment("key-1")
+    .secret_key(keypair.secret().clone())
+    .finish()
+    .unwrap();
+
+  account.process(identity, command, false).await?;
+
+  let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
+
+  let method: &TinyMethod = snapshot.identity().methods().fetch("key-1")?;
+
+  let public_key = account.store().key_get(identity, method.location()).await?;
+
+  assert_eq!(public_key.as_ref(), keypair.public().as_ref());
+
+  Ok(())
+}
+
+#[tokio::test]
 async fn test_delete_method() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
@@ -275,32 +330,6 @@ async fn test_delete_method() -> Result<()> {
   assert!(!snapshot.identity().methods().contains("key-1"));
   assert!(snapshot.identity().methods().get("key-1").is_none());
   assert!(snapshot.identity().methods().fetch("key-1").is_err());
-
-  Ok(())
-}
-
-#[tokio::test]
-async fn test_create_from_secret_key() -> Result<()> {
-  let account: Account = new_account().await?;
-  let account2: Account = new_account().await?;
-
-  let identity: IdentityId = IdentityId::from_u32(1);
-
-  let mut bytes = [0u8; 32];
-  OsRng.fill_bytes(&mut bytes);
-  let boxed_bytes: Box<[u8]> = Box::new(bytes);
-  let secret_key = SecretKey::from(boxed_bytes);
-
-  let id_create = IdentityCreate::new().key_type(KeyType::Ed25519).secret_key(secret_key);
-
-  account.create_identity(id_create.clone()).await?;
-  account2.create_identity(id_create).await?;
-
-  let ident = account.find_identity(identity).await.unwrap().unwrap();
-  let ident2 = account.find_identity(identity).await.unwrap().unwrap();
-
-  // The same secret key should result in the same did
-  assert_eq!(ident.identity().did(), ident2.identity().did());
 
   Ok(())
 }
