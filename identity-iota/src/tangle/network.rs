@@ -265,7 +265,7 @@ mod tests {
     assert!(Network::matches_did(Network::Mainnet, &did));
     assert!(!Network::matches_did(Network::Testnet, &did));
 
-    let did: IotaDID = IotaDID::with_network(b"", "test").unwrap();
+    let did: IotaDID = IotaDID::new_with_network(b"", "test").unwrap();
     assert!(Network::matches_did(Network::Testnet, &did));
     assert!(!Network::matches_did(Network::Mainnet, &did));
   }

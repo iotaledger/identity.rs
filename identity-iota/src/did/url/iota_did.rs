@@ -7,8 +7,10 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::str::FromStr;
+
 use crypto::hashes::blake2b::Blake2b256;
 use crypto::hashes::Digest;
+
 use identity_core::utils::decode_b58;
 use identity_core::utils::encode_b58;
 use identity_did::did::Error as DIDError;
@@ -18,6 +20,7 @@ use crate::did::Segments;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Network;
+use crate::tangle::NetworkName;
 
 // The hash size of BLAKE2b-256 (32-bytes)
 const BLAKE2B_256_LEN: usize = 32;
@@ -41,11 +44,11 @@ impl IotaDID {
   /// The default Tangle network (`"main"`).
   pub const DEFAULT_NETWORK: &'static str = "main";
 
-  /// Converts a borrowed `DID` to an `IotaDID`.
+  /// Converts a borrowed `DID` to an [`IotaDID`].
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid `IotaDID`.
+  /// Returns `Err` if the input is not a valid [`IotaDID`].
   pub fn try_from_borrowed(did: &CoreDID) -> Result<&Self> {
     Self::check_validity(did)?;
 
@@ -53,18 +56,18 @@ impl IotaDID {
     Ok(unsafe { Self::new_unchecked_ref(did) })
   }
 
-  /// Converts an owned `DID` to an `IotaDID`.
+  /// Converts an owned `DID` to an [`IotaDID`].
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid `IotaDID`.
+  /// Returns `Err` if the input is not a valid [`IotaDID`].
   pub fn try_from_owned(did: CoreDID) -> Result<Self> {
     Self::check_validity(&did)?;
 
     Ok(Self(Self::normalize(did)))
   }
 
-  /// Converts a `DID` reference to an `IotaDID` reference without performing
+  /// Converts a `DID` reference to an [`IotaDID`] reference without performing
   /// validation checks.
   ///
   /// # Safety
@@ -75,30 +78,32 @@ impl IotaDID {
     &*(did as *const CoreDID as *const IotaDID)
   }
 
-  /// Parses an `IotaDID` from the given `input`.
+  /// Parses an [`IotaDID`] from the given `input`.
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid `IotaDID`.
+  /// Returns `Err` if the input is not a valid [`IotaDID`].
   pub fn parse(input: impl AsRef<str>) -> Result<Self> {
     CoreDID::parse(input).map_err(Into::into).and_then(Self::try_from_owned)
   }
 
-  /// Creates a new `IotaDID` with a tag derived from the given `public` key.
+  /// Creates a new [`IotaDID`] with a tag derived from the given `public` key.
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input does not form a valid `IotaDID`.
+  /// Returns `Err` if the input does not form a valid [`IotaDID`].
   pub fn new(public: &[u8]) -> Result<Self> {
     try_did!(public)
   }
 
-  /// Creates a new `IotaDID` from the given `public` key and `network`.
+  /// Creates a new [`IotaDID`] from the given `public` key and `network`.
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input does not form a valid `IotaDID`.
-  pub fn with_network(public: &[u8], network: &str) -> Result<Self> {
+  /// Returns `Err` if the input does not form a valid [`IotaDID`] or the `network` is invalid.
+  /// See [`NetworkName`] for validation requirements.
+  pub fn new_with_network(public: &[u8], network: &str) -> Result<Self> {
+    NetworkName::validate_network_name(network)?;
     try_did!(public, network)
   }
 
@@ -143,7 +148,7 @@ impl IotaDID {
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid `IotaDID`.
+  /// Returns `Err` if the input is not a valid [`IotaDID`].
   pub fn check_method(did: &CoreDID) -> Result<()> {
     if did.method() != Self::METHOD {
       Err(Error::InvalidDID(DIDError::InvalidMethodName))
@@ -152,11 +157,11 @@ impl IotaDID {
     }
   }
 
-  /// Checks if the given `DID` has a valid `IotaDID` `method_id`.
+  /// Checks if the given `DID` has a valid [`IotaDID`] `method_id`.
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid `IotaDID`.
+  /// Returns `Err` if the input is not a valid [`IotaDID`].
   pub fn check_method_id(did: &CoreDID) -> Result<()> {
     let segments: Vec<&str> = did.method_id().split(':').collect();
 
@@ -175,21 +180,33 @@ impl IotaDID {
     }
   }
 
-  /// Checks if the given `DID` is valid according to the `IotaDID` method
+  /// Checks if the given `DID` has a valid [`IotaDID`] network name, e.g. "main", "test".
+  ///
+  /// # Errors
+  ///
+  /// Returns `Err` if the input is not a valid [`IotaDID`].
+  /// See [`NetworkName`] for validation requirements.
+  pub fn check_network(did: &CoreDID) -> Result<()> {
+    let network_name = Segments(did.method_id()).network();
+    NetworkName::validate_network_name(network_name)
+  }
+
+  /// Checks if the given `DID` is valid according to the [`IotaDID`] method
   /// specification.
   ///
   /// # Errors
   ///
-  /// Returns `Err` if the input is not a valid `IotaDID`.
+  /// Returns `Err` if the input is not a valid [`IotaDID`].
   pub fn check_validity(did: &CoreDID) -> Result<()> {
     Self::check_method(did)?;
     Self::check_method_id(did)?;
+    Self::check_network(did)?;
 
     Ok(())
   }
 
   /// Returns a `bool` indicating if the given `DID` is valid according to the
-  /// `IotaDID` method specification.
+  /// [`IotaDID`] method specification.
   pub fn is_valid(did: &CoreDID) -> bool {
     Self::check_validity(did).is_ok()
   }
@@ -358,10 +375,10 @@ mod tests {
     assert!(IotaDID::parse(format!("did:iota:test:{}?somequery=somevalue", TAG)).is_ok());
     assert!(IotaDID::parse(format!("did:iota:test:{}?somequery=somevalue#fragment", TAG)).is_ok());
 
-    assert!(IotaDID::parse(format!("did:iota:rainbow:{}", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:rainbow:{}#fragment", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:rainbow:{}?somequery=somevalue", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:rainbow:{}?somequery=somevalue#fragment", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:custom:{}", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:custom:{}#fragment", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:custom:{}?somequery=somevalue", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:custom:{}?somequery=somevalue#fragment", TAG)).is_ok());
   }
 
   #[test]
@@ -370,13 +387,17 @@ mod tests {
     assert!(IotaDID::parse("did:foo::").is_err());
     // An empty DID method is invalid.
     assert!(IotaDID::parse("did:::").is_err());
-    assert!(IotaDID::parse(format!("did::rainbow:shard-1:{}", TAG)).is_err());
+    assert!(IotaDID::parse(format!("did::main:{}", TAG)).is_err());
     // A non-"iota" DID method is invalid.
     assert!(IotaDID::parse("did:iota---::").is_err());
     // An empty `iota-specific-idstring` is invalid.
     assert!(IotaDID::parse("did:iota:").is_err());
     // Too many components is invalid.
-    assert!(IotaDID::parse(format!("did:iota:rainbow:shard-1:random:{}", TAG)).is_err());
+    assert!(IotaDID::parse(format!("did:iota:custom:shard-1:random:{}", TAG)).is_err());
+    // Explicit empty network name is invalid (omitting it is still fine)
+    assert!(IotaDID::parse(format!("did:iota::{}", TAG)).is_err());
+    // Invalid network name is invalid.
+    assert!(IotaDID::parse(format!("did:iota:Invalid-Network:{}", TAG)).is_err());
   }
 
   #[test]
@@ -407,8 +428,8 @@ mod tests {
     let did: IotaDID = format!("did:iota:{}", key).parse().unwrap();
     assert_eq!(did.network_str(), "main");
 
-    let did: IotaDID = format!("did:iota:rainbow:{}", key).parse().unwrap();
-    assert_eq!(did.network_str(), "rainbow");
+    let did: IotaDID = format!("did:iota:custom:{}", key).parse().unwrap();
+    assert_eq!(did.network_str(), "custom");
   }
 
   #[test]
@@ -440,7 +461,7 @@ mod tests {
   #[test]
   fn test_with_network() {
     let key: KeyPair = KeyPair::new_ed25519().unwrap();
-    let did: IotaDID = IotaDID::with_network(key.public().as_ref(), "foo").unwrap();
+    let did: IotaDID = IotaDID::new_with_network(key.public().as_ref(), "foo").unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
     assert_eq!(did.tag(), tag);
