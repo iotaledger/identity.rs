@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::convert::TryFrom;
+use core::fmt::{Display, Formatter};
+use core::ops::Deref;
 use std::borrow::Cow;
 
 use identity_core::common::Url;
@@ -8,8 +11,8 @@ use identity_core::common::Url;
 use crate::did::IotaDID;
 use crate::error::{Error, Result};
 
-const MAIN_NETWORK_NAME: &str = "main";
-const TEST_NETWORK_NAME: &str = "test";
+const NETWORK_NAME_MAIN: &str = "main";
+const NETWORK_NAME_TEST: &str = "test";
 
 lazy_static! {
   static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/mainnet").unwrap();
@@ -19,56 +22,46 @@ lazy_static! {
 }
 
 /// The Tangle network to use ([`Mainnet`][Network::Mainnet] or [`Testnet`][Network::Testnet]).
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Network {
   #[serde(rename = "main")]
   Mainnet,
   #[serde(rename = "test")]
   Testnet,
   Other {
-    name: String,
+    name: NetworkName,
     explorer_url: Option<Url>,
   },
 }
 
 impl Network {
-  /// Parses the provided string to a [Network].
+  /// Parses the provided string to a [`Network`].
   ///
-  /// The inputs `"test"` and `"main"` will be mapped to the well-known [Testnet][Network::Testnet]
-  /// and [Mainnet][Network::Mainnet] variants, respectively.
-  /// Other inputs will return an instance of [Other][Network::Other].
+  /// The names `"test"` and `"main"` will be mapped to the well-known [`Testnet`][Network::Testnet]
+  /// and [`Mainnet`][Network::Mainnet] networks respectively. Other inputs will return an instance
+  /// of [`Other`][Network::Other] if the name is valid.
   ///
-  /// Note that the empty string is not a valid network name, and that names have to be compliant
-  /// with the IOTA DID Method spec, that is, be at most 6 characters long and only include
-  /// characters `0-9` or `a-z`.
-  pub fn from_name(string: &str) -> Result<Self> {
-    match string {
-      "" => Err(Error::InvalidNetworkName("name cannot be the empty string")),
-      TEST_NETWORK_NAME => Ok(Self::Testnet),
-      MAIN_NETWORK_NAME => Ok(Self::Mainnet),
-      other => {
-        Self::check_name_compliance(other)?;
+  /// Network names must comply with the IOTA DID Method spec, that is: be non-empty, at most
+  /// 6 characters long, and only include alphanumeric characters `0-9` and `a-z`.
+  ///
+  /// See [`NetworkName`].
+  pub fn from_name<S>(name: S) -> Result<Self>
+  where
+    // Allow String, &'static str, Cow<'static, str>
+    S: AsRef<str> + Into<Cow<'static, str>>,
+  {
+    match name.as_ref() {
+      NETWORK_NAME_TEST => Ok(Self::Testnet),
+      NETWORK_NAME_MAIN => Ok(Self::Mainnet),
+      _ => {
+        // Accept any other valid string - validation is performed by NetworkName
+        let network_name: NetworkName = NetworkName::try_from_name(name)?;
         Ok(Self::Other {
-          name: other.to_owned(),
+          name: network_name,
           explorer_url: None,
         })
       }
     }
-  }
-
-  /// Checks if a string is a spec-compliant network name.
-  fn check_name_compliance(string: &str) -> Result<()> {
-    if string.len() > 6 {
-      return Err(Error::InvalidNetworkName("name cannot exceed 6 characters"));
-    };
-
-    if !string.chars().all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit()) {
-      return Err(Error::InvalidNetworkName(
-        "name may only contain characters `0-9` and `a-z`",
-      ));
-    }
-
-    Ok(())
   }
 
   /// Sets the explorer url if `self` is an `Other` variant.
@@ -92,12 +85,12 @@ impl Network {
     did.network()
   }
 
-  /// Returns true if this network is the same network as the DID.
+  /// Returns true if this network is the same network as specified in the DID.
   pub fn matches_did(self, did: &IotaDID) -> bool {
-    did.network_str() == self.name()
+    did.network_str() == self.name().deref()
   }
 
-  /// Returns the default node URL of the Tangle network.
+  /// Returns the default node [`Url`] of the Tangle network.
   pub fn default_node_url(&self) -> Option<&'static Url> {
     match self {
       Self::Mainnet => Some(&*NODE_MAIN),
@@ -106,33 +99,32 @@ impl Network {
     }
   }
 
-  /// Returns the web explorer URL of the Tangle network.
-  pub fn explorer_url(&self) -> Result<Url> {
+  /// Returns the web explorer [`Url`] of the Tangle network.
+  pub fn explorer_url(&self) -> Option<&Url> {
     match self {
-      Self::Mainnet => Ok(EXPLORER_MAIN.clone()),
-      Self::Testnet => Ok(EXPLORER_TEST.clone()),
-      Self::Other {
-        explorer_url: Some(url),
-        ..
-      } => Ok(url.clone()),
-      _ => Err(Error::NoExplorerURLSet),
+      Self::Mainnet => Some(&EXPLORER_MAIN),
+      Self::Testnet => Some(&EXPLORER_TEST),
+      Self::Other { explorer_url, .. } => explorer_url.as_ref(),
     }
   }
 
-  /// Returns the web explorer URL of the given `message`.
+  /// Returns the web explorer URL of the given `message_id`.
   pub fn message_url(&self, message_id: &str) -> Result<Url> {
-    let mut url = self.explorer_url()?;
-    // unwrap is safe, the explorer URL is always a valid base URL
-    url.path_segments_mut().unwrap().push("message").push(message_id);
+    let mut url = self.explorer_url().ok_or(Error::NoExplorerURLSet)?.clone();
+    url
+      .path_segments_mut()
+      .map_err(|_| Error::InvalidExplorerURL)?
+      .push("message")
+      .push(message_id);
     Ok(url)
   }
 
-  /// Returns the name of the network.
-  pub fn name(&self) -> Cow<'static, str> {
+  /// Returns the [`NetworkName`] of the network.
+  pub fn name(&self) -> NetworkName {
     match self {
-      Self::Mainnet => Cow::Borrowed(MAIN_NETWORK_NAME),
-      Self::Testnet => Cow::Borrowed(TEST_NETWORK_NAME),
-      Self::Other { name, .. } => Cow::Owned(name.clone()),
+      Self::Mainnet => NetworkName(Cow::from(NETWORK_NAME_MAIN)),
+      Self::Testnet => NetworkName(Cow::from(NETWORK_NAME_TEST)),
+      Self::Other { name, .. } => name.clone(),
     }
   }
 }
@@ -144,40 +136,126 @@ impl Default for Network {
   }
 }
 
+/// Network name compliant with the IOTA DID method specification:
+/// https://github.com/iotaledger/identity.rs/blob/dev/documentation/docs/specs/iota_did_method_spec.md
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[repr(transparent)]
+pub struct NetworkName(Cow<'static, str>);
+
+impl NetworkName {
+  /// Creates a new [`NetworkName`] if the name passes validation.
+  pub fn try_from_name<T>(name: T) -> Result<Self>
+  where
+    T: Into<Cow<'static, str>>,
+  {
+    let name_cow: Cow<'static, str> = name.into();
+    Self::validate_network_name(&name_cow)?;
+    Ok(Self(name_cow))
+  }
+
+  /// Validates whether a string is a spec-compliant IOTA DID [`NetworkName`].
+  pub fn validate_network_name(name: &str) -> Result<()> {
+    if name.is_empty() {
+      return Err(Error::InvalidNetworkName("network name must not be empty"));
+    }
+
+    if name.len() > 6 {
+      return Err(Error::InvalidNetworkName("network name cannot exceed 6 characters"));
+    };
+
+    if !name.chars().all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit()) {
+      return Err(Error::InvalidNetworkName(
+        "network name must only contain characters `0-9` and `a-z`",
+      ));
+    }
+
+    Ok(())
+  }
+}
+
+impl Deref for NetworkName {
+  type Target = Cow<'static, str>;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
+
+impl TryFrom<&'static str> for NetworkName {
+  type Error = Error;
+
+  fn try_from(name: &'static str) -> Result<Self, Self::Error> {
+    Self::try_from_name(Cow::Borrowed(name))
+  }
+}
+
+impl TryFrom<String> for NetworkName {
+  type Error = Error;
+
+  fn try_from(name: String) -> Result<Self, Self::Error> {
+    Self::try_from_name(Cow::Owned(name))
+  }
+}
+
+impl Display for NetworkName {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    f.write_str(self.as_ref())
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
 
   #[test]
+  fn test_from_name_standard_networks() {
+    assert_eq!(Network::from_name(NETWORK_NAME_TEST).unwrap(), Network::Testnet);
+    assert_eq!(Network::from_name(NETWORK_NAME_MAIN).unwrap(), Network::Mainnet);
+  }
+
+  #[test]
+  fn test_from_name_types() {
+    let static_str = "custom";
+    assert!(Network::from_name(static_str).is_ok());
+
+    let string = static_str.to_owned();
+    assert!(Network::from_name(string.clone()).is_ok());
+
+    let cow_owned = Cow::Owned(string);
+    assert!(Network::from_name(cow_owned).is_ok());
+
+    let cow_borrowed = Cow::Borrowed(static_str);
+    assert!(Network::from_name(cow_borrowed).is_ok());
+  }
+
+  #[test]
   fn test_from_name() {
-    assert_eq!(Network::from_name("test").unwrap(), Network::Testnet);
-    assert_eq!(Network::from_name("main").unwrap(), Network::Mainnet);
     assert_eq!(
       Network::from_name("6chars").unwrap(),
       Network::Other {
-        name: "6chars".to_owned(),
-        explorer_url: None
+        name: NetworkName::try_from("6chars").unwrap(),
+        explorer_url: None,
       }
     );
 
     assert!(matches!(
       Network::from_name("7seven7").unwrap_err(),
-      Error::InvalidNetworkName("name cannot exceed 6 characters")
+      Error::InvalidNetworkName("network name cannot exceed 6 characters")
     ));
 
     assert!(matches!(
       Network::from_name("täst").unwrap_err(),
-      Error::InvalidNetworkName("name may only contain characters `0-9` and `a-z`")
+      Error::InvalidNetworkName("network name must only contain characters `0-9` and `a-z`")
     ));
 
     assert!(matches!(
       Network::from_name(" ").unwrap_err(),
-      Error::InvalidNetworkName("name may only contain characters `0-9` and `a-z`")
+      Error::InvalidNetworkName("network name must only contain characters `0-9` and `a-z`")
     ));
 
     assert!(matches!(
       Network::from_name("").unwrap_err(),
-      Error::InvalidNetworkName("name cannot be the empty string")
+      Error::InvalidNetworkName("network name must not be empty")
     ));
   }
 
@@ -194,13 +272,16 @@ mod tests {
 
   #[test]
   fn test_explorer_url() {
-    let testnet = Network::Testnet;
+    let mainnet = Network::Mainnet;
+    assert!(mainnet.explorer_url().is_some());
+    assert_eq!(mainnet.explorer_url().unwrap().as_str(), EXPLORER_MAIN.as_str());
 
-    assert!(testnet.explorer_url().is_ok());
+    let testnet = Network::Testnet;
+    assert!(testnet.explorer_url().is_some());
+    assert_eq!(testnet.explorer_url().unwrap().as_str(), EXPLORER_TEST.as_str());
 
     let mut other = Network::from_name("atoi").unwrap();
-
-    assert!(matches!(other.explorer_url().unwrap_err(), Error::NoExplorerURLSet));
+    assert!(other.explorer_url().is_none());
 
     // Try setting a `cannot_be_a_base` url.
     assert!(matches!(
@@ -211,9 +292,7 @@ mod tests {
     ));
 
     let url = Url::parse("https://explorer.iota.org/testnet").unwrap();
-
     assert!(other.set_explorer_url(url.clone()).is_ok());
-
-    assert_eq!(other.explorer_url().unwrap(), url);
+    assert_eq!(other.explorer_url().unwrap().clone(), url);
   }
 }

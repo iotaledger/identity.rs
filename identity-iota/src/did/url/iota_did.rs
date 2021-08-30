@@ -248,7 +248,7 @@ impl IotaDID {
 
   /// Returns the Tangle `network` of the `DID`, if it is valid.
   pub fn network(&self) -> Result<Network> {
-    Network::from_name(self.network_str())
+    Network::from_name(self.network_str().to_owned())
   }
 
   /// Returns the Tangle `network` name of the `DID`.
