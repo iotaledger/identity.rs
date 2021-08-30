@@ -12,7 +12,7 @@ use crate::tangle::Network;
 
 const DEFAULT_LOCAL_POW: bool = false;
 
-/// A `ClientBuilder` is used to generated a customized `Client`.
+/// A [`ClientBuilder`] is used to generated a customized [`Client`].
 pub struct ClientBuilder {
   pub(super) nodeset: bool,
   pub(super) network: Network,
@@ -31,7 +31,7 @@ impl ClientBuilder {
 
   /// Sets the IOTA Tangle network.
   pub fn network(mut self, network: Network) -> Self {
-    self.builder = self.builder.with_network(network.as_str());
+    self.builder = self.builder.with_network(&network.name());
     self.network = network;
     self
   }

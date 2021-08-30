@@ -8,7 +8,7 @@ publish = false
 identity = { path = "../identity", features = ["account"] }
 pretty_env_logger = { version = "0.4" }
 rand = { version = "0.8" }
-tokio = { version = "1.5", features = ["full"] }
+tokio = { version = "1.10", features = ["full"] }
 
 [[example]]
 name = "getting_started"
@@ -39,6 +39,10 @@ name = "account_stronghold"
 path = "account/stronghold.rs"
 
 [[example]]
+name = "account_private_tangle"
+path = "account/private_tangle.rs"
+
+[[example]]
 name = "create_did"
 path = "low-level-api/create_did.rs"
 
@@ -51,6 +55,14 @@ name = "create_vp"
 path = "low-level-api/create_vp.rs"
 
 [[example]]
+name = "diff_chain"
+path = "low-level-api/diff_chain.rs"
+
+[[example]]
+name = "resolve_history"
+path = "low-level-api/resolve_history.rs"
+
+[[example]]
 name = "manipulate_did"
 path = "low-level-api/manipulate_did.rs"
 
@@ -61,3 +73,11 @@ path = "low-level-api/merkle_key.rs"
 [[example]]
 name = "resolution"
 path = "low-level-api/resolution.rs"
+
+[[example]]
+name = "private_tangle"
+path = "low-level-api/private_tangle.rs"
+
+[[example]]
+name = "revoke_vc"
+path = "low-level-api/revoke_vc.rs"

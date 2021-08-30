@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 const { Client, Config, Document, KeyType } = require('../../node/identity_wasm')
-const { logExplorerUrl } = require('./explorer_util')
+const { logExplorerUrl } = require('./utils')
 
 /**
     This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle.
@@ -27,6 +27,7 @@ async function createIdentity(clientConfig) {
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const receipt = await client.publishDocument(doc.toJSON());
+    doc.messageId = receipt.messageId;
 
     // Log the results.
     logExplorerUrl("Identity Creation:", clientConfig.network.toString(), receipt.messageId);

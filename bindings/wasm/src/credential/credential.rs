@@ -11,8 +11,8 @@ use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
 use wasm_bindgen::prelude::*;
 
+use crate::did::WasmDocument;
 use crate::error::wasm_error;
-use crate::wasm_document::WasmDocument;
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, PartialEq)]

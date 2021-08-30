@@ -5,7 +5,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 module.exports = {
   title: 'IOTA IDENTITY',
   tagline: 'Providing Trust between Individuals, Organizations and Things.',
-  url: 'https://identity-docs.iota.org',
+  url: 'https://identity.docs.iota.org',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -111,7 +111,7 @@ module.exports = {
       
       {
         docs: {
-          remarkPlugins: [require('remark-import-partial')],
+          remarkPlugins: [require('remark-import-partial'), require('remark-remove-comments')],
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           editUrl:

@@ -89,6 +89,10 @@ impl DocumentDiff {
 }
 
 impl TangleRef for DocumentDiff {
+  fn did(&self) -> &IotaDID {
+    self.id()
+  }
+
   fn message_id(&self) -> &MessageId {
     &self.message_id
   }

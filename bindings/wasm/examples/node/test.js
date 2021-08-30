@@ -3,11 +3,14 @@ const { manipulateIdentity } = require("./manipulate_did");
 const { resolution } = require("./resolution");
 const { createVC } = require("./create_vc");
 const { createVP } = require("./create_vp");
-const { revokeVC } = require("./revocation");
+const { createDiff } = require("./diff_chain");
+const { revokeVC } = require("./revoke_vc");
 const { merkleKey } = require("./merkle_key");
+const { resolveHistory } = require("./resolve_history");
 const { CLIENT_CONFIG } = require("./config");
+const { createIdentityPrivateTangle } = require("./private_tangle");
 
-jest.setTimeout(120000); // 2 minutes to account for spurious network delays, most tests pass in a few seconds
+jest.setTimeout(180000); // 3 minutes to account for spurious network delays, most tests pass in a few seconds
 
 // Run all Node.js examples as jest tests in parallel.
 // If a function throws an exception, it will run again to make the tests more consistent (less prone to network issues). 
@@ -59,5 +62,29 @@ test.concurrent("Merkle Key", async () => {
         await merkleKey(CLIENT_CONFIG);
     } catch (e) {
         await merkleKey(CLIENT_CONFIG);
+    }
+});
+test.concurrent("Private Tangle", async () => {
+    try {
+        await createIdentityPrivateTangle()
+        throw new Error("Did not throw.")
+    } catch (err) {
+        // Example is expected to throw an error because no private Tangle is running
+        expect(err.name).toEqual("ClientError")
+        expect(err.message).toContain("error sending request")
+    }
+});
+test.concurrent("Diff Chain", async () => {
+    try {
+        await createDiff(CLIENT_CONFIG);
+    } catch (e) {
+        await createDiff(CLIENT_CONFIG);
+    }
+});
+test.concurrent("Resolve History", async () => {
+    try {
+        await resolveHistory(CLIENT_CONFIG);
+    } catch (e) {
+        await resolveHistory(CLIENT_CONFIG);
     }
 });

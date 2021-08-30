@@ -40,7 +40,7 @@ impl Config {
 
   #[wasm_bindgen(js_name = setNetwork)]
   pub fn set_network(&mut self, network: &WasmNetwork) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.network((*network).into()))
+    self.with_mut(|builder| builder.network(network.clone().into()))
   }
 
   #[wasm_bindgen(js_name = setNode)]

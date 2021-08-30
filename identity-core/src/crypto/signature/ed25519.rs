@@ -4,7 +4,7 @@
 use core::convert::TryInto;
 use core::marker::PhantomData;
 use crypto::signatures::ed25519;
-use crypto::signatures::ed25519::COMPRESSED_PUBLIC_KEY_LENGTH as PUBLIC_KEY_LENGTH;
+use crypto::signatures::ed25519::PUBLIC_KEY_LENGTH;
 use crypto::signatures::ed25519::SECRET_KEY_LENGTH;
 use crypto::signatures::ed25519::SIGNATURE_LENGTH;
 
@@ -53,7 +53,7 @@ fn parse_public(slice: &[u8]) -> Result<ed25519::PublicKey> {
     .and_then(|bytes| bytes.try_into().ok())
     .ok_or_else(|| Error::InvalidKeyLength(slice.len(), PUBLIC_KEY_LENGTH))?;
 
-  ed25519::PublicKey::from_compressed_bytes(bytes).map_err(Into::into)
+  ed25519::PublicKey::try_from_bytes(bytes).map_err(Into::into)
 }
 
 fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey> {
@@ -62,7 +62,7 @@ fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey> {
     .and_then(|bytes| bytes.try_into().ok())
     .ok_or_else(|| Error::InvalidKeyLength(slice.len(), SECRET_KEY_LENGTH))?;
 
-  ed25519::SecretKey::from_le_bytes(bytes).map_err(Into::into)
+  Ok(ed25519::SecretKey::from_bytes(bytes))
 }
 
 fn parse_signature(slice: &[u8]) -> Result<ed25519::Signature> {

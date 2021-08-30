@@ -81,7 +81,7 @@ impl Stronghold {
 #[async_trait::async_trait]
 impl Storage for Stronghold {
   async fn set_password(&self, password: EncryptionKey) -> Result<()> {
-    self.snapshot.set_password(password)
+    self.snapshot.set_password(password).await
   }
 
   async fn flush_changes(&self) -> Result<()> {

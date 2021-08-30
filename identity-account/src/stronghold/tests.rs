@@ -61,7 +61,7 @@ rusty_fork_test! {
     block_on(async {
       let interval: Duration = Duration::from_millis(100);
 
-      Snapshot::set_password_clear(interval).unwrap();
+      Snapshot::set_password_clear(interval).await.unwrap();
 
       let filename: PathBuf = generate_filename();
       let snapshot: Snapshot = Snapshot::new(&filename);
@@ -81,7 +81,7 @@ rusty_fork_test! {
       );
 
       assert!(
-        matches!(snapshot.status().unwrap(), SnapshotStatus::Locked),
+        matches!(snapshot.status().await.unwrap(), SnapshotStatus::Locked),
         "unexpected snapshot status",
       );
     })
@@ -92,7 +92,7 @@ rusty_fork_test! {
     block_on(async {
       let interval: Duration = Duration::from_millis(300);
 
-      Snapshot::set_password_clear(interval).unwrap();
+      Snapshot::set_password_clear(interval).await.unwrap();
 
       let filename: PathBuf = generate_filename();
       let snapshot: Snapshot = Snapshot::new(&filename);
@@ -105,7 +105,7 @@ rusty_fork_test! {
         let location: Location = location(&format!("persists{}", index));
 
         let set_result = store.set(location, format!("STRONGHOLD{}", index), None).await;
-        let status: SnapshotStatus = snapshot.status().unwrap();
+        let status: SnapshotStatus = snapshot.status().await.unwrap();
 
         if let Some(timeout) = interval.checked_sub(instant.elapsed()) {
           // Prior to the expiration time, the password should not be cleared yet
@@ -122,7 +122,7 @@ rusty_fork_test! {
         } else {
           // If elapsed > interval, set the password again.
           // This might happen if the test is stopped by another thread.
-          snapshot.set_password(Default::default()).unwrap();
+          snapshot.set_password(Default::default()).await.unwrap();
           instant = Instant::now();
         }
       }
@@ -131,7 +131,7 @@ rusty_fork_test! {
 
       // Test may have taken too long / been interrupted and cleared the password already, retry
       if matches!(result, Err(Error::StrongholdPasswordNotSet)) && interval.checked_sub(instant.elapsed()).is_none() {
-        snapshot.set_password(Default::default()).unwrap();
+        snapshot.set_password(Default::default()).await.unwrap();
         result = store.get(location("persists1")).await;
       }
       assert_eq!(result.unwrap(), b"STRONGHOLD1");
@@ -146,7 +146,7 @@ rusty_fork_test! {
         error
       );
       assert!(
-        matches!(snapshot.status().unwrap(), SnapshotStatus::Locked),
+        matches!(snapshot.status().await.unwrap(), SnapshotStatus::Locked),
         "unexpected snapshot status",
       );
     })

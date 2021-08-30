@@ -80,7 +80,7 @@ impl AccountBuilder {
     self
       .clients
       .get_or_insert_with(HashMap::new)
-      .insert(network, f(ClientBuilder::new().network(network)));
+      .insert(network.clone(), f(ClientBuilder::new().network(network)));
     self
   }
 

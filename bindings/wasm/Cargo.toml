@@ -9,6 +9,7 @@ repository = "https://github.com/iotaledger/identity.rs"
 license = "Apache-2.0"
 keywords = ["iota", "tangle", "identity", "wasm"]
 homepage = "https://www.iota.org"
+resolver = "2"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
