@@ -87,7 +87,7 @@ impl Network {
 
   /// Returns true if this network is the same network as specified in the DID.
   pub fn matches_did(self, did: &IotaDID) -> bool {
-    did.network_str() == self.name().deref()
+    did.network_str() == self.name_str()
   }
 
   /// Returns the default node [`Url`] of the Tangle network.
@@ -125,6 +125,15 @@ impl Network {
       Self::Mainnet => NetworkName(Cow::from(NETWORK_NAME_MAIN)),
       Self::Testnet => NetworkName(Cow::from(NETWORK_NAME_TEST)),
       Self::Other { name, .. } => name.clone(),
+    }
+  }
+
+  /// Returns the name of the network.
+  pub fn name_str(&self) -> &str {
+    match self {
+      Self::Mainnet => NETWORK_NAME_MAIN,
+      Self::Testnet => NETWORK_NAME_TEST,
+      Self::Other { name, .. } => name.as_ref(),
     }
   }
 }
