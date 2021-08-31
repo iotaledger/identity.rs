@@ -27,10 +27,6 @@ pub enum Error {
   /// Caused by attempting to perform an invalid IO operation.
   #[error(transparent)]
   IoError(#[from] std::io::Error),
-  /// Caused by an internal failure of the riker actor system.
-  #[cfg(feature = "stronghold")]
-  #[error(transparent)]
-  ActorSystemError(#[from] riker::system::SystemError),
   /// Caused by errors from the [iota_stronghold] crate.
   #[cfg(feature = "stronghold")]
   #[error(transparent)]

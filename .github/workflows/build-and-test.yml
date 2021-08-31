@@ -115,7 +115,7 @@ jobs:
       - name: Install sccache (macos-latest)
         if: matrix.os == 'macos-latest'
         run: |
-          brew update
+          brew update --preinstall
           brew install sccache
 
       - name: Install sccache (windows-latest)
