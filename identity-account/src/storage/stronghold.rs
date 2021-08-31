@@ -316,6 +316,14 @@ impl Storage for Stronghold {
 
     Ok(())
   }
+
+  async fn published_generation(&self, id: IdentityId) -> Result<Generation> {
+    todo!()
+  }
+
+  async fn set_published_generation(&self, id: IdentityId, index: Generation) -> Result<()> {
+    todo!()
+  }
 }
 
 async fn generate_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {

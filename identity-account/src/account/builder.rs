@@ -54,6 +54,12 @@ impl AccountBuilder {
     self
   }
 
+  /// Sets the account auto-save behaviour.
+  pub fn autopublish(mut self, value: bool) -> Self {
+    self.config = self.config.autopublish(value);
+    self
+  }
+
   /// Save the account state on drop.
   pub fn dropsave(mut self, value: bool) -> Self {
     self.config = self.config.dropsave(value);

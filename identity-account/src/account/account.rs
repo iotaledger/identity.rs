@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use futures::executor;
+use futures::StreamExt;
 use futures::TryStreamExt;
 use identity_core::common::Fragment;
 use identity_core::crypto::KeyType;
@@ -243,11 +244,7 @@ impl Account {
 
       debug!("[Account::process] Commits = {:#?}", commits);
 
-      match Publish::new(&commits) {
-        Publish::Auth => self.process_auth_change(root).await?,
-        Publish::Diff => self.process_diff_change(root).await?,
-        Publish::None => {}
-      }
+      self.publish(root, commits, false).await?;
     }
 
     // Update the total number of executions
@@ -367,6 +364,22 @@ impl Account {
       .await
   }
 
+  #[doc(hidden)]
+  async fn load_snapshot_at(&self, id: IdentityId, generation: Generation) -> Result<IdentitySnapshot> {
+    let initial: IdentitySnapshot = IdentitySnapshot::new(IdentityState::new(id));
+
+    println!("Loading snapshot at generation {}", generation);
+
+    // Apply all events up to `generation`
+    self
+      .store
+      .stream(id, Generation::new())
+      .await?
+      .take(generation.to_u32() as usize)
+      .try_fold(initial, Self::fold_snapshot)
+      .await
+  }
+
   async fn commit_events(&self, state: &IdentitySnapshot, events: &[Event]) -> Result<Vec<Commit>> {
     // Bail early if there are no new events
     if events.is_empty() {
@@ -417,6 +430,53 @@ impl Account {
     Ok(())
   }
 
+  /// Push all unpublished commits for the given identity to the tangle in a single message.
+  pub async fn publish_updates<K: IdentityKey>(&self, key: K) -> Result<()> {
+    let identity: IdentityId = self.try_resolve_id(key).await?;
+
+    // Get the last commit generation that was published to the tangle.
+    let last_published = match self.store.published_generation(identity).await {
+      ok @ Ok(_) => ok,
+      // If no generation is stored for this id yet, consider all commits unpublished.
+      Err(Error::IdentityNotFound) => Ok(Generation::new()),
+      err @ Err(_) => err,
+    }?;
+
+    // Get the commits that need to be published.
+    let commits = self.store.collect(identity, last_published).await?;
+
+    // Load the snapshot that represents the state on the tangle.
+    let snapshot = self.load_snapshot_at(identity, last_published).await?;
+
+    self.publish(snapshot, commits, true).await?;
+
+    Ok(())
+  }
+
+  /// Publishes according to the autopublish configuration.
+  async fn publish(&self, snapshot: IdentitySnapshot, commits: Vec<Commit>, force: bool) -> Result<()> {
+    if force || self.config.autopublish {
+      let id = snapshot.id();
+
+      match Publish::new(&commits) {
+        Publish::Auth => self.process_auth_change(snapshot).await.unwrap(),
+        Publish::Diff => self.process_diff_change(snapshot).await.unwrap(),
+        Publish::None => {}
+      }
+
+      if commits.len() > 0 {
+        let last_commit_generation = commits.last().unwrap().sequence();
+        // Publishing adds an AuthMessage or DiffMessage event, that contains the message id
+        // which is required to be set for subsequent updates.
+        // The next snapshot that loads the tangle state will require this message id to be set.
+        let generation = Generation::from_u32(last_commit_generation.to_u32() + 1);
+        self.store.set_published_generation(id, generation).await?;
+      }
+    }
+
+    Ok(())
+  }
+
   fn key_to_method(type_: KeyType) -> MethodType {
     match type_ {
       KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
@@ -441,6 +501,7 @@ impl Drop for Account {
 #[derive(Clone, Debug)]
 pub struct Config {
   autosave: AutoSave,
+  autopublish: bool,
   dropsave: bool,
   testmode: bool,
   milestone: u32,
@@ -453,6 +514,7 @@ impl Config {
   pub fn new() -> Self {
     Self {
       autosave: AutoSave::Every,
+      autopublish: true,
       dropsave: true,
       testmode: false,
       milestone: Self::MILESTONE,
@@ -462,6 +524,12 @@ impl Config {
   /// Sets the account auto-save behaviour.
   pub fn autosave(mut self, value: AutoSave) -> Self {
     self.autosave = value;
+    self
+  }
+
+  /// Sets the account auto-publish behaviour.
+  pub fn autopublish(mut self, value: bool) -> Self {
+    self.autopublish = value;
     self
   }
 
