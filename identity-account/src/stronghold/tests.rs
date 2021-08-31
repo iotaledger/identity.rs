@@ -16,11 +16,13 @@ use std::time::Duration;
 use std::time::Instant;
 
 use crate::error::Error;
+use crate::stronghold::default_hint;
 use crate::stronghold::Snapshot;
 use crate::stronghold::SnapshotStatus;
 use crate::stronghold::Store;
 use crate::utils::derive_encryption_key;
 use crate::utils::EncryptionKey;
+use identity_core::crypto::KeyPair;
 
 const TEST_DIR: &str = "./test-storage";
 const RANDOM_FILENAME_SIZE: usize = 10;
@@ -267,6 +269,39 @@ rusty_fork_test! {
         assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
 
         fs::remove_file(store.path()).unwrap();
+      }
+    })
+  }
+
+
+  #[test]
+  fn test_store_secret_key() {
+    block_on(async {
+      let password: EncryptionKey = derive_encryption_key("my-password:test_vault_persistence");
+      let filename: PathBuf = generate_filename();
+
+      let keypair = KeyPair::new_ed25519().unwrap();
+
+      {
+        let snapshot: Snapshot = open_snapshot(&filename, password).await;
+        let vault = snapshot.vault(b"persistence", &[]);
+
+        vault.insert(location("A"), keypair.secret().as_ref(), default_hint(), &[]).await.unwrap();
+
+        snapshot.unload(true).await.unwrap();
+      }
+
+      {
+        let snapshot: Snapshot = load_snapshot(&filename, password).await;
+
+        let vault = snapshot.vault(b"persistence", &[]);
+        assert!(vault.exists(location("A")).await.unwrap());
+
+        let pubkey = vault.ed25519_public_key(location("A")).await.unwrap();
+
+        assert_eq!(pubkey, keypair.public().as_ref());
+
+        fs::remove_file(filename).unwrap();
       }
     })
   }
