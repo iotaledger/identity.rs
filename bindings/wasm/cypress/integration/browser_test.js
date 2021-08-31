@@ -1,5 +1,5 @@
 import {
-    defaultClientConfig, initIdentity, createIdentity, createVC, manipulateIdentity, resolveIdentity, createVP, createDiff, revoke, merkleKey, createIdentityPrivateTangle, resolveHistory
+    defaultClientConfig, initIdentity, createIdentity, createVC, manipulateIdentity, resolution, createVP, createDiff, revokeVC, merkleKey, createIdentityPrivateTangle, resolveHistory
 } from '../../examples/dist/web'
 
 // Test that the browser examples do not throw uncaught exceptions twice, including syntax errors etc.
@@ -26,7 +26,7 @@ describe(
                 identityResult = await createIdentity(defaultClientConfig());
             }
             // example of testing the output, can remove if needed
-            expect(identityResult).to.have.all.keys("key", "doc", "receipt", "explorerUrl");
+            expect(identityResult).to.have.all.keys("key", "doc", "receipt");
         });
 
         it("manipulate identity", async function () {
@@ -39,9 +39,9 @@ describe(
 
         it("resolve identity", async function () {
             try {
-                await resolveIdentity(defaultClientConfig());
+                await resolution(defaultClientConfig());
             } catch (e) {
-                await resolveIdentity(defaultClientConfig());
+                await resolution(defaultClientConfig());
             }
         });
 
@@ -55,9 +55,9 @@ describe(
 
         it("revoke verifiable credential", async function () {
             try {
-                await revoke(defaultClientConfig());
+                await revokeVC(defaultClientConfig());
             } catch (e) {
-                await revoke(defaultClientConfig());
+                await revokeVC(defaultClientConfig());
             }
         });
 
