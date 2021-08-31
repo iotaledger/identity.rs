@@ -7,27 +7,17 @@ const serverConfig = {
         path: path.resolve(__dirname, 'dist'),
         filename: 'node.js',
     },
-    plugins: [
-        new CopyWebPlugin({
-            patterns: [
-                {
-                    from: path.resolve(__dirname, "../node/identity_wasm_bg.wasm"),
-                    to: path.resolve(__dirname, "dist"),
-                }
-            ]
-        }),
-    ],
     externals: [
         function ({ context, request }, callback) {
-          if (/^@iota\/identity-wasm$/.test(request)) {
-            // Externalize to a commonjs module
-            return callback(null, 'commonjs ' + path.resolve(__dirname, '../node/identity_wasm.js'));
-          }
-    
-          // Continue without externalizing the import
-          callback();
+            if (/^@iota\/identity-wasm$/.test(request)) {
+                // Externalize to a commonjs module
+                return callback(null, 'commonjs ' + path.resolve(__dirname, '../node/identity_wasm.js'));
+            }
+
+            // Continue without externalizing the import
+            callback();
         },
-      ],
+    ],
 };
 
 const serverTestConfig = {
@@ -39,15 +29,15 @@ const serverTestConfig = {
     },
     externals: [
         function ({ context, request }, callback) {
-          if (/^@iota\/identity-wasm$/.test(request)) {
-            // Externalize to a commonjs module
-            return callback(null, 'commonjs ' + path.resolve(__dirname, '../node/identity_wasm.js'));
-          }
-    
-          // Continue without externalizing the import
-          callback();
+            if (/^@iota\/identity-wasm$/.test(request)) {
+                // Externalize to a commonjs module
+                return callback(null, 'commonjs ' + path.resolve(__dirname, '../node/identity_wasm.js'));
+            }
+
+            // Continue without externalizing the import
+            callback();
         },
-      ],
+    ],
 };
 
 const clientConfig = {
@@ -56,9 +46,13 @@ const clientConfig = {
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 'web.js',
+        library: {
+            type: 'module',
+        },
     },
     experiments: {
         topLevelAwait: true,
+        outputModule: true,
     },
     resolve: {
         alias: {
@@ -71,8 +65,14 @@ const clientConfig = {
                 {
                     from: path.resolve(__dirname, "./src/index.html"),
                     to: path.resolve(__dirname, "dist"),
+                },
+
+                {
+                    from: path.resolve(__dirname, "../web/identity_wasm_bg.wasm"),
+                    to: path.resolve(__dirname, "dist"),
                 }
             ]
+
         }),
     ],
 };

@@ -10,65 +10,71 @@ import { createIdentityPrivateTangle } from "./private_tangle.js";
 import { createDiff } from "./diff_chain.js";
 import { resolveHistory } from "./resolve_history.js";
 
-setupDOMLog();
+export { initIdentity, defaultClientConfig, createIdentity, createVC, manipulateIdentity, resolution, createVP, revokeVC, merkleKey, createIdentityPrivateTangle, createDiff, resolveHistory };
 
-await initIdentity();
-const CLIENT_CONFIG = defaultClientConfig();
+window.onload = async() => {
 
-//handle create identity on click event
-document
-    .querySelector("#create-identity-btn")
-    .addEventListener("click", () => createIdentity(CLIENT_CONFIG));
+    setupDOMLog();
 
-//handle resolve DID on click event
-document
-    .querySelector("#resolve-did-btn")
-    .addEventListener("click", async () => {
-        const inputDid = document.querySelector("#resolve-did-input").value;
-        const result = await resolution(CLIENT_CONFIG, inputDid);
-        console.log(result);
-    });
+    await initIdentity();
+    const CLIENT_CONFIG = defaultClientConfig();
 
-//handle manipulate DID on click event
-document
-    .querySelector("#manipulate_did_btn")
-    .addEventListener("click", () => manipulateIdentity(CLIENT_CONFIG));
+    //handle create identity on click event
+    document
+        .querySelector("#create-identity-btn")
+        .addEventListener("click", () => createIdentity(CLIENT_CONFIG));
 
-//handle create VC on click event
-document
-    .querySelector("#create_vc_btn")
-    .addEventListener("click", () => createVC(CLIENT_CONFIG));
+    //handle resolve DID on click event
+    document
+        .querySelector("#resolve-did-btn")
+        .addEventListener("click", async () => {
+            const inputDid = document.querySelector("#resolve-did-input").value;
+            const result = await resolution(CLIENT_CONFIG, inputDid);
+            console.log(result);
+        });
 
-//handle create VP on click event
-document
-    .querySelector("#create_vp_btn")
-    .addEventListener("click", () => createVP(CLIENT_CONFIG));
+    //handle manipulate DID on click event
+    document
+        .querySelector("#manipulate_did_btn")
+        .addEventListener("click", () => manipulateIdentity(CLIENT_CONFIG));
 
-//handle revoke VC on click event
-document
-    .querySelector("#revoke_vc_btn")
-    .addEventListener("click", () => revokeVC(CLIENT_CONFIG));
+    //handle create VC on click event
+    document
+        .querySelector("#create_vc_btn")
+        .addEventListener("click", () => createVC(CLIENT_CONFIG));
 
-//handle merkle key on click event
-document
-    .querySelector("#merkle_key_btn")
-    .addEventListener("click", () => merkleKey(CLIENT_CONFIG));
+    //handle create VP on click event
+    document
+        .querySelector("#create_vp_btn")
+        .addEventListener("click", () => createVP(CLIENT_CONFIG));
 
-//handle private tangle DID creation on click event
-document
-    .querySelector("#private_tangle_btn")
-    .addEventListener("click", () => {
-        const restURL = document.querySelector("#create-private-rest-url").value;
-        const networkName = document.querySelector("#create-private-network-name").value;
-        createIdentityPrivateTangle(restURL, networkName);
-    });
+    //handle revoke VC on click event
+    document
+        .querySelector("#revoke_vc_btn")
+        .addEventListener("click", () => revokeVC(CLIENT_CONFIG));
 
-//handle diff chain on click event
-document
-    .querySelector("#diff_chain_btn")
-    .addEventListener("click", () => createDiff(CLIENT_CONFIG));
+    //handle merkle key on click event
+    document
+        .querySelector("#merkle_key_btn")
+        .addEventListener("click", () => merkleKey(CLIENT_CONFIG));
 
-//handle resolve history on click event
-document
-.querySelector("#did_history_btn")
-.addEventListener("click", () => resolveHistory(CLIENT_CONFIG));
+    //handle private tangle DID creation on click event
+    document
+        .querySelector("#private_tangle_btn")
+        .addEventListener("click", () => {
+            const restURL = document.querySelector("#create-private-rest-url").value;
+            const networkName = document.querySelector("#create-private-network-name").value;
+            createIdentityPrivateTangle(restURL, networkName);
+        });
+
+    //handle diff chain on click event
+    document
+        .querySelector("#diff_chain_btn")
+        .addEventListener("click", () => createDiff(CLIENT_CONFIG));
+
+    //handle resolve history on click event
+    document
+        .querySelector("#did_history_btn")
+        .addEventListener("click", () => resolveHistory(CLIENT_CONFIG));
+
+};
