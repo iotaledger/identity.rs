@@ -18,6 +18,12 @@ that can be found in the `config.js` file for node and in `main.js` for the brow
 
 Before running the examples, make sure you have [built the bindings](../README.md#Build) for `node.js`.
 
+To build the examples use
+
+```
+npm run build:examples
+```
+
 You can run each example using
 
 ```
@@ -50,6 +56,11 @@ The following examples are currently available:
 All the Node.js examples are also available for the browser.
 
 Before running the examples, make sure you have [built the bindings](../README.md#Build) for `web`.
+
+To build the examples use
+```
+npm run build:examples
+```
 
 You can run the browser examples using
 
