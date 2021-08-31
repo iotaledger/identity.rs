@@ -114,7 +114,7 @@ jobs:
         run: yarn build
         working-directory: bindings/wasm
 
-      - name: Build Wasm bindings
+      - name: Build Wasm examples
         run: yarn build:examples
         working-directory: bindings/wasm
 
