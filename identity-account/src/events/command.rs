@@ -17,13 +17,13 @@ use crate::events::CommandError;
 use crate::events::Context;
 use crate::events::Event;
 use crate::events::EventData;
-use crate::events::MethodSecret;
 use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::identity::TinyService;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
+use crate::types::MethodSecret;
 
 // Supported authentication method types.
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
@@ -98,6 +98,15 @@ impl Command {
         );
 
         let public: PublicKey = if let Some(secret_key) = secret_key {
+          ensure!(
+            secret_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+            CommandError::InvalidMethodSecret(format!(
+              "an ed25519 secret key requires {} bytes, found {}",
+              ed25519::SECRET_KEY_LENGTH,
+              secret_key.as_ref().len()
+            ))
+          );
+
           store.key_insert(state.id(), &location, secret_key).await
         } else {
           store.key_new(state.id(), &location).await

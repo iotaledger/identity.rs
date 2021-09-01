@@ -7,13 +7,13 @@ use identity_account::error::Error;
 use identity_account::error::Result;
 use identity_account::events::Command;
 use identity_account::events::CommandError;
-use identity_account::events::MethodSecret;
 use identity_account::identity::IdentityCreate;
 use identity_account::identity::IdentityId;
 use identity_account::identity::IdentitySnapshot;
 use identity_account::identity::TinyMethod;
 use identity_account::storage::MemStore;
 use identity_account::types::Generation;
+use identity_account::types::MethodSecret;
 use identity_core::common::UnixTimestamp;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
@@ -128,9 +128,7 @@ async fn test_create_identity_from_secret_key() -> Result<()> {
 
   let secret_key = KeyPair::new_ed25519()?.secret().clone();
 
-  let id_create = IdentityCreate::new()
-    .key_type(KeyType::Ed25519)
-    .method_secret(MethodSecret::Ed25519(secret_key));
+  let id_create = IdentityCreate::new().key_type(KeyType::Ed25519).secret_key(secret_key);
 
   account.create_identity(id_create.clone()).await?;
   account2.create_identity(id_create).await?;
@@ -140,6 +138,28 @@ async fn test_create_identity_from_secret_key() -> Result<()> {
 
   // The same secret key should result in the same did
   assert_eq!(ident.identity().did(), ident2.identity().did());
+  assert_eq!(ident.identity().authentication()?, ident2.identity().authentication()?);
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_identity_from_invalid_secret_key() -> Result<()> {
+  let account: Account = new_account().await?;
+
+  let secret_bytes: Box<[u8]> = Box::new([0; 33]);
+  let secret_key: SecretKey = SecretKey::from(secret_bytes);
+
+  let id_create = IdentityCreate::new().key_type(KeyType::Ed25519).secret_key(secret_key);
+
+  let err = account.create_identity(id_create).await.unwrap_err();
+
+  // The same secret key should result in the same did
+  assert!(matches!(
+    err,
+    Error::CommandError(CommandError::InvalidMethodSecret(err_string))
+    if err_string == "an ed25519 secret key requires 32 bytes, found 33"
+  ));
 
   Ok(())
 }
