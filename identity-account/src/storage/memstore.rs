@@ -16,7 +16,7 @@ use identity_core::crypto::PublicKey;
 use identity_core::crypto::SecretKey;
 use identity_core::crypto::Sign;
 use identity_did::verification::MethodType;
-use std::convert::TryInto;
+use std::convert::TryFrom;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 use zeroize::Zeroize;
@@ -119,7 +119,9 @@ impl Storage for MemStore {
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        let mut secret_key_bytes: [u8; 32] = secret_key.as_ref().try_into().expect("expected a slice of 32 bytes");
+        let mut secret_key_bytes: [u8; 32] = <[u8; 32]>::try_from(secret_key.as_ref())
+          .map_err(|err| Error::InvalidSecretKey(format!("expected a slice of 32 bytes - {}", err)))?;
+
         let secret: ed25519::SecretKey = ed25519::SecretKey::from_bytes(secret_key_bytes);
         secret_key_bytes.zeroize();
 
