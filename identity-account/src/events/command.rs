@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crypto::signatures::ed25519;
 use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::Url;
@@ -16,6 +17,7 @@ use crate::events::CommandError;
 use crate::events::Context;
 use crate::events::Event;
 use crate::events::EventData;
+use crate::events::MethodSecret;
 use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::identity::TinyService;
@@ -37,7 +39,7 @@ pub enum Command {
     scope: MethodScope,
     type_: MethodType,
     fragment: String,
-    secret_key: Option<SecretKey>,
+    method_secret: Option<MethodSecret>,
   },
   DeleteMethod {
     fragment: String,
@@ -118,7 +120,7 @@ impl Command {
         type_,
         scope,
         fragment,
-        secret_key,
+        method_secret,
       } => {
         // The state must be initialized
         ensure!(state.did().is_some(), CommandError::DocumentNotFound);
@@ -144,11 +146,27 @@ impl Command {
           CommandError::DuplicateKeyFragment(location.fragment.clone()),
         );
 
-        let public: PublicKey = if let Some(secret_key) = secret_key {
-          store.key_insert(state.id(), &location, secret_key).await?
+        let public: PublicKey = if let Some(method_secret_key) = method_secret {
+          match method_secret_key {
+            MethodSecret::Ed25519(secret_key) => {
+              ensure!(
+                secret_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+                CommandError::InvalidMethodSecret(format!(
+                  "an ed25519 secret key requires {} bytes, found {}",
+                  ed25519::SECRET_KEY_LENGTH,
+                  secret_key.as_ref().len()
+                ))
+              );
+
+              store.key_insert(state.id(), &location, secret_key).await
+            }
+            MethodSecret::MerkleKeyCollection(_) => {
+              todo!("[Command::CreateMethod] Handle MerkleKeyCollection")
+            }
+          }
         } else {
-          store.key_new(state.id(), &location).await?
-        };
+          store.key_new(state.id(), &location).await
+        }?;
 
         let data: MethodData = MethodData::new_b58(public.as_ref());
         let method: TinyMethod = TinyMethod::new(location, data, None);
@@ -257,7 +275,7 @@ impl_command_builder!(CreateMethod {
   @defaulte type_ MethodType = Ed25519VerificationKey2018,
   @default scope MethodScope,
   @required fragment String,
-  @optional secret_key SecretKey
+  @optional method_secret MethodSecret
 });
 
 impl_command_builder!(DeleteMethod {

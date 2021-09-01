@@ -7,6 +7,7 @@ use identity_account::error::Error;
 use identity_account::error::Result;
 use identity_account::events::Command;
 use identity_account::events::CommandError;
+use identity_account::events::MethodSecret;
 use identity_account::identity::IdentityCreate;
 use identity_account::identity::IdentityId;
 use identity_account::identity::IdentitySnapshot;
@@ -16,6 +17,7 @@ use identity_account::types::Generation;
 use identity_core::common::UnixTimestamp;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_core::crypto::SecretKey;
 use identity_did::verification::MethodType;
 
 async fn new_account() -> Result<Account> {
@@ -126,7 +128,9 @@ async fn test_create_identity_from_secret_key() -> Result<()> {
 
   let secret_key = KeyPair::new_ed25519()?.secret().clone();
 
-  let id_create = IdentityCreate::new().key_type(KeyType::Ed25519).secret_key(secret_key);
+  let id_create = IdentityCreate::new()
+    .key_type(KeyType::Ed25519)
+    .method_secret(MethodSecret::Ed25519(secret_key));
 
   account.create_identity(id_create.clone()).await?;
   account2.create_identity(id_create).await?;
@@ -271,7 +275,7 @@ async fn test_create_method_from_secret_key() -> Result<()> {
   let command: Command = Command::create_method()
     .type_(MethodType::Ed25519VerificationKey2018)
     .fragment("key-1")
-    .secret_key(keypair.secret().clone())
+    .method_secret(MethodSecret::Ed25519(keypair.secret().clone()))
     .finish()
     .unwrap();
 
@@ -284,6 +288,41 @@ async fn test_create_method_from_secret_key() -> Result<()> {
   let public_key = account.store().key_get(identity, method.location()).await?;
 
   assert_eq!(public_key.as_ref(), keypair.public().as_ref());
+
+  Ok(())
+}
+#[tokio::test]
+async fn test_create_method_from_invalid_secret_key() -> Result<()> {
+  let account: Account = new_account().await?;
+  let identity: IdentityId = IdentityId::from_u32(1);
+
+  let command: Command = Command::create_identity()
+    .authentication(MethodType::Ed25519VerificationKey2018)
+    .finish()
+    .unwrap();
+
+  account.process(identity, command, false).await?;
+
+  let secret_bytes: Box<[u8]> = Box::new([0; 33]);
+  let secret_key = SecretKey::from(secret_bytes);
+
+  println!("creating method");
+  let command: Command = Command::create_method()
+    .type_(MethodType::Ed25519VerificationKey2018)
+    .fragment("key-1")
+    .method_secret(MethodSecret::Ed25519(secret_key))
+    .finish()
+    .unwrap();
+
+  let err = account.process(identity, command, false).await.unwrap_err();
+
+  println!("{:?}", err);
+
+  assert!(matches!(
+    err,
+    Error::CommandError(CommandError::InvalidMethodSecret(err_string))
+    if err_string == "an ed25519 secret key requires 32 bytes, found 33"
+  ));
 
   Ok(())
 }
