@@ -110,8 +110,8 @@ impl IotaDID {
   #[doc(hidden)]
   pub fn from_components(public: &[u8], network: Option<&str>) -> Result<Self> {
     match network {
-      Some(network) => try_did!(public, network),
-      None => try_did!(public),
+      Some(network) => Self::new_with_network(public, network),
+      None => Self::new(public),
     }
   }
 

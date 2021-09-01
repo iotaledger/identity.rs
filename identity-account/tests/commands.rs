@@ -7,12 +7,13 @@ use identity_account::error::Error;
 use identity_account::error::Result;
 use identity_account::events::Command;
 use identity_account::events::CommandError;
-use identity_account::identity::IdentityId;
 use identity_account::identity::IdentitySnapshot;
 use identity_account::identity::TinyMethod;
+use identity_account::identity::{IdentityCreate, IdentityId};
 use identity_account::storage::MemStore;
 use identity_account::types::Generation;
 use identity_core::common::UnixTimestamp;
+use identity_core::crypto::KeyType;
 use identity_did::verification::MethodType;
 
 async fn new_account() -> Result<Account> {
@@ -74,6 +75,40 @@ async fn test_create_identity_invalid_method() -> Result<()> {
     // version is still 0, no events have been committed
     assert_eq!(snapshot.sequence(), Generation::new());
   }
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_identity_network() -> Result<()> {
+  let account: Account = new_account().await?;
+
+  // Create an identity with a valid network string
+  let create_identity: IdentityCreate = IdentityCreate::new().network("test").key_type(KeyType::Ed25519);
+  let snapshot: IdentitySnapshot = account.create_identity(create_identity).await?;
+
+  // Ensure the identity creation was successful
+  assert!(snapshot.identity().did().is_some());
+  assert!(snapshot.identity().authentication().is_ok());
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_identity_invalid_network() -> Result<()> {
+  let account: Account = new_account().await?;
+
+  // Attempt to create an identity with an invalid network string
+  let create_identity: IdentityCreate = IdentityCreate::new()
+    .network("Invalid=Network!")
+    .key_type(KeyType::Ed25519);
+  let result = account.create_identity(create_identity).await;
+
+  // Ensure an `InvalidNetworkName` error is thrown
+  assert!(matches!(
+    result.unwrap_err(),
+    Error::IotaError(identity_iota::Error::InvalidNetworkName(_)),
+  ));
 
   Ok(())
 }
