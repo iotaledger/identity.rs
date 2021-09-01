@@ -1,8 +1,3 @@
----
-sidebar_position: 1
-title: Introduction
----
-
 # IOTA Identity Framework Guide
 
 ![IOTA Identity](https://github.com/iotaledger/identity.rs/raw/dev/.meta/identity_banner.png)

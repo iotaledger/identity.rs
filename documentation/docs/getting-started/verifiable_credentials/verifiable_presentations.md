@@ -1,5 +1,5 @@
 ---
-title: Verifiable Presentations
+title: verifiable Presentations
 sidebar_label: Verifiable Presentations
 ---
 

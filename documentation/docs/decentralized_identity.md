@@ -1,7 +1,7 @@
 ---
-title: Introduction to Decentralized Identity
 sidebar_label: Decentralized Identity
 ---
+# Introduction to Decentralized Identity
 
 Decentralized Identity or Self Sovereign Identity (SSI) defines a new method for identity management and authentication. It removes the centralized aspects and puts the Identity subject in full control over its own identity. Decentralized identity provides a solution for the increasing amount of database breaches, the lack of trust in any digital setting and the increasingly difficult to comply to privacy legislation, such as GDPR.
 
