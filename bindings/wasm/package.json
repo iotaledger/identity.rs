@@ -18,7 +18,7 @@
     "pretest": "npm run build:nodejs",
     "prepublishOnly": "npm run build",
     "serve": "webpack serve",
-    "example:node": "node examples/node/node.js",
+    "example:node": "node examples/dist/node.js",
     "example:browser": "http-server ./examples/dist/ -c-1 -o ",
     "test:node": "jest dist/test.js",
     "test:browser": "cypress run --headless",
