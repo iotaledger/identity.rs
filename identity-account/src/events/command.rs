@@ -6,7 +6,6 @@ use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::crypto::PublicKey;
-use identity_core::crypto::SecretKey;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
@@ -17,6 +16,7 @@ use crate::events::CommandError;
 use crate::events::Context;
 use crate::events::Event;
 use crate::events::EventData;
+use crate::identity::IdentityId;
 use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::identity::TinyService;
@@ -24,7 +24,6 @@ use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::types::MethodSecret;
-use crate::Error;
 
 // Supported authentication method types.
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
@@ -99,25 +98,7 @@ impl Command {
         );
 
         let public: PublicKey = if let Some(method_secret_key) = method_secret {
-          match method_secret_key {
-            MethodSecret::Ed25519(secret_key) => {
-              ensure!(
-                secret_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
-                CommandError::InvalidMethodSecret(format!(
-                  "an ed25519 secret key requires {} bytes, found {}",
-                  ed25519::SECRET_KEY_LENGTH,
-                  secret_key.as_ref().len()
-                ))
-              );
-
-              store.key_insert(state.id(), &location, secret_key).await
-            }
-            MethodSecret::MerkleKeyCollection(_) => {
-              return Err(Error::CommandError(CommandError::InvalidMethodSecret(
-                "merkle key collection cannot be used to create an identity".to_owned(),
-              )));
-            }
-          }
+          insert_method_secret(store, state.id(), &location, authentication, method_secret_key).await
         } else {
           store.key_new(state.id(), &location).await
         }?;
@@ -166,23 +147,7 @@ impl Command {
         );
 
         let public: PublicKey = if let Some(method_secret_key) = method_secret {
-          match method_secret_key {
-            MethodSecret::Ed25519(secret_key) => {
-              ensure!(
-                secret_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
-                CommandError::InvalidMethodSecret(format!(
-                  "an ed25519 secret key requires {} bytes, found {}",
-                  ed25519::SECRET_KEY_LENGTH,
-                  secret_key.as_ref().len()
-                ))
-              );
-
-              store.key_insert(state.id(), &location, secret_key).await
-            }
-            MethodSecret::MerkleKeyCollection(_) => {
-              todo!("[Command::CreateMethod] Handle MerkleKeyCollection")
-            }
-          }
+          insert_method_secret(store, state.id(), &location, type_, method_secret_key).await
         } else {
           store.key_new(state.id(), &location).await
         }?;
@@ -276,6 +241,46 @@ impl Command {
 
         Ok(Some(vec![Event::new(EventData::ServiceDeleted(fragment))]))
       }
+    }
+  }
+}
+
+async fn insert_method_secret(
+  store: &dyn Storage,
+  identity_id: IdentityId,
+  location: &KeyLocation,
+  method_type: MethodType,
+  method_secret: MethodSecret,
+) -> Result<PublicKey> {
+  match method_secret {
+    MethodSecret::Ed25519(secret_key) => {
+      ensure!(
+        secret_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+        CommandError::InvalidMethodSecret(format!(
+          "an ed25519 secret key requires {} bytes, found {}",
+          ed25519::SECRET_KEY_LENGTH,
+          secret_key.as_ref().len()
+        ))
+      );
+
+      ensure!(
+        matches!(method_type, MethodType::Ed25519VerificationKey2018),
+        CommandError::InvalidMethodSecret(
+          "MethodType::Ed25519VerificationKey2018 can only be used with an ed25519 method secret".to_owned(),
+        )
+      );
+
+      store.key_insert(identity_id, location, secret_key).await
+    }
+    MethodSecret::MerkleKeyCollection(_) => {
+      ensure!(
+        matches!(method_type, MethodType::MerkleKeyCollection2021),
+        CommandError::InvalidMethodSecret(
+          "MethodType::MerkleKeyCollection2021 can only be used with a MerkleKeyCollection method secret".to_owned(),
+        )
+      );
+
+      todo!("[Command::CreateMethod] Handle MerkleKeyCollection")
     }
   }
 }
