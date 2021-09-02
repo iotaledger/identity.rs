@@ -3,6 +3,7 @@ const CopyWebPlugin = require('copy-webpack-plugin');
 const serverConfig = {
     target: 'node',
     entry: './examples/src/node.js',
+    devtool: "source-map",
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 'node.js',
@@ -23,6 +24,7 @@ const serverConfig = {
 const serverTestConfig = {
     target: 'node',
     entry: './examples/src/test.js',
+    devtool: "source-map",
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 'test.js',
@@ -43,6 +45,7 @@ const serverTestConfig = {
 const clientConfig = {
     target: 'web',
     entry: './examples/src/web.js',
+    devtool: "source-map",
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 'web.js',
