@@ -6,7 +6,7 @@ import styles from './styles.module.css';
 const ActionList = [
   {
     title: 'Documentation',
-    link: 'docs/intro',
+    link: 'docs/introduction',
     description: (
       <>
         Learn the Basics about the IOTA Identity Framework and the concepts behind the Digital Identifier W3C standard. 

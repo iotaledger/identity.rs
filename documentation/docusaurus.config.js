@@ -13,7 +13,7 @@ module.exports = {
   organizationName: 'iotaledger', // Usually your GitHub org/user name.
   projectName: 'identity.rs', // Usually your repo name.
   stylesheets: [
-    // 'https://fonts.googleapis.com/css?family=Material+Icons',
+    'https://fonts.googleapis.com/css?family=Material+Icons',
   ],
   themeConfig: {
     navbar: {
@@ -50,15 +50,15 @@ module.exports = {
             },
             {
               label: 'Rust',
-              to: '/docs/libraries/rust/README',
+              to: '/docs/libraries/rust/overview',
             },
             {
               label: 'WASM',
-              to: '/docs/libraries/wasm/README',
+              to: '/docs/libraries/wasm/overview',
             },
             {
               label: 'Specification',
-              to: '/docs/specs/README',
+              to: '/docs/specs/overview',
             },
           ],
         },

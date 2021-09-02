@@ -1,6 +1,15 @@
 ---
 title: IOTA DID Method Specification
 sidebar_label: DID Method
+description: How IOTA Identity implements the Decentralized Identifiers Standard on the IOTA Tangle.
+image: /img/Identity_icon.png
+keywords:
+- DID
+- specs
+- specifications
+- Decentralized Identifiers
+- Tangle
+- format
 ---
 
 # IOTA DID Method Specification
@@ -19,7 +28,8 @@ This specification defines a method of implementing DID on top of the [IOTA Tang
 
 Blockchain | Tangle
 :---------:|:---------:
-![](/img/blockchain-bottleneck.gif) | ![](/img/tangle-bottleneck.gif)
+
+![Blockchain bottleneck](/img/blockchain-bottleneck.gif) | ![Tangle Bottleneck](/img/tangle-bottleneck.gif)
 
 For this method, the most important features of IOTA are: 
 
