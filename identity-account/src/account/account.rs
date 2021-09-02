@@ -428,9 +428,7 @@ impl Account {
   }
 
   /// Push all unpublished changes for the given identity to the tangle in a single message.
-  ///
-  /// Returns the latest snapshot which is equivalent to the state on-tangle.
-  pub async fn publish_changes<K: IdentityKey>(&self, key: K) -> Result<IdentitySnapshot> {
+  pub async fn publish_changes<K: IdentityKey>(&self, key: K) -> Result<()> {
     let identity: IdentityId = self.try_resolve_id(key).await?;
 
     // Get the last commit generation that was published to the tangle.
@@ -443,12 +441,16 @@ impl Account {
     // Get the commits that need to be published.
     let commits = self.store.collect(identity, last_published).await?;
 
+    if commits.len() == 0 {
+      return Ok(());
+    }
+
     // Load the snapshot that represents the state on the tangle.
     let snapshot = self.load_snapshot_at(identity, last_published).await?;
 
     self.publish(snapshot, commits, true).await?;
 
-    self.load_snapshot(identity).await
+    Ok(())
   }
 
   /// Publishes according to the autopublish configuration.
