@@ -15,6 +15,7 @@ use identity_account::storage::MemStore;
 use identity_account::types::Generation;
 use identity_account::types::MethodSecret;
 use identity_core::common::UnixTimestamp;
+use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::SecretKey;
@@ -158,7 +159,6 @@ async fn test_create_identity_from_invalid_secret_key() -> Result<()> {
 
   let err = account.create_identity(id_create).await.unwrap_err();
 
-  // The same secret key should result in the same did
   assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
 
   Ok(())
@@ -311,6 +311,7 @@ async fn test_create_method_from_secret_key() -> Result<()> {
 
   Ok(())
 }
+
 #[tokio::test]
 async fn test_create_method_from_invalid_secret_key() -> Result<()> {
   let account: Account = new_account().await?;
@@ -326,7 +327,6 @@ async fn test_create_method_from_invalid_secret_key() -> Result<()> {
   let secret_bytes: Box<[u8]> = Box::new([0; 33]);
   let secret_key = SecretKey::from(secret_bytes);
 
-  println!("creating method");
   let command: Command = Command::create_method()
     .type_(MethodType::Ed25519VerificationKey2018)
     .fragment("key-1")
@@ -336,7 +336,47 @@ async fn test_create_method_from_invalid_secret_key() -> Result<()> {
 
   let err = account.process(identity, command, false).await.unwrap_err();
 
-  println!("{:?}", err);
+  assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
+  let account: Account = new_account().await?;
+  let identity: IdentityId = IdentityId::from_u32(1);
+
+  let command: Command = Command::create_identity()
+    .authentication(MethodType::Ed25519VerificationKey2018)
+    .finish()
+    .unwrap();
+
+  account.process(identity, command, false).await?;
+
+  let secret_bytes: Box<[u8]> = Box::new([0; 32]);
+  let secret_key = SecretKey::from(secret_bytes);
+
+  let command: Command = Command::create_method()
+    .type_(MethodType::MerkleKeyCollection2021)
+    .fragment("key-1")
+    .method_secret(MethodSecret::Ed25519(secret_key))
+    .finish()
+    .unwrap();
+
+  let err = account.process(identity, command, false).await.unwrap_err();
+
+  assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
+
+  let key_collection = KeyCollection::new_ed25519(4).unwrap();
+
+  let command: Command = Command::create_method()
+    .type_(MethodType::Ed25519VerificationKey2018)
+    .fragment("key-2")
+    .method_secret(MethodSecret::MerkleKeyCollection(key_collection))
+    .finish()
+    .unwrap();
+
+  let err = account.process(identity, command, false).await.unwrap_err();
 
   assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
 
