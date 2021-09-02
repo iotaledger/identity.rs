@@ -1,5 +1,5 @@
 ---
-title: verifiable Presentations
+title: Verifiable Presentations
 sidebar_label: Verifiable Presentations
 description: Explain how a VC is created and verified.
 image: /img/Identity_icon.png

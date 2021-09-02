@@ -1,5 +1,5 @@
 ---
-description: The Decentralized Identifiers (DID) standard from W3C is the fundamental standard that supports the concept of a decentralized digital identity.  Explore the basic aspects of the DID standard.
+description: The Decentralized Identifiers (DID) standard from W3C is the fundamental standard that supports the concept of a decentralized digital identity. Explore the basic aspects of the DID standard.
 image: /img/Identity_icon.png
 keywords:
 - public keys
@@ -11,14 +11,14 @@ keywords:
 
 # Decentralized Identifiers (DID)
 
-The Decentralized Identifiers (DID) standard from W3C is the fundamental standard that supports the concept of a decentralized digital identity. A DID is a unique identifier that contains  information that can be resolved to a DID Document. This document contains data such as public keys, enabling the holder to prove ownership over their personal data, but also URIs that link to public information about the identity. This implementation complies to the [DID specifications v1.0 Working](https://www.w3.org/TR/did-core//). 
+The Decentralized Identifiers (DID) standard from W3C is the fundamental standard that supports the concept of a decentralized digital identity. A DID is a unique identifier that contains information that can be resolved to a DID Document. This document contains data such as public keys, enabling the holder to prove ownership over their personal data, but also URIs that link to public information about the identity. This implementation complies to the [DID specifications v1.0 Working](https://www.w3.org/TR/did-core//). 
 
-In the IOTA Identity framework, we have implemented the DID standard according to the `iota` [DID Method Specification](./specs/iota_did_method_spec.md). We recommend to see the `iota` DID Method Specification as the golden standard for DID on IOTA. Other implementations of DID on IOTA is recommended to follow the `iota` DID Method Specification. However, it is not necassary to implement a novel Method implementation for every project, so feel free to utilize this framework directly. 
+In the IOTA Identity framework, we have implemented the DID standard according to the `iota` [DID Method Specification](./specs/iota_did_method_spec.md). We recommend seeing the `iota` DID Method Specification as the golden standard for DID on IOTA. Other implementations of DID on IOTA are recommended to follow the `iota` DID Method Specification. However, it is not necassary to implement a novel Method implementation for every project, so feel free to utilize this framework directly. 
 
 An example of DID conforming to the `iota` method specification:
 `did:iota:8dQAzVbbf6FLW9ckwyCBnKmcMGcUV9LYJoXtgQkHcNQy`
 
-## Chapter overview
+## Chapter Overview
 
 In this chapter we will explain the basic aspects of the DID standard. We will explore the how and why of DID Documents and why IOTA is a very suitable technology to host the DID Documents and the rest of a Self Sovereign Identity Framework.
 
@@ -60,7 +60,7 @@ DIDs become really interesting in combination with Verifiable Credentials, that 
 
 ## Why use IOTA Identity over other implementations?
 
-IOTA Identity is a framework to implement Self Sovereign Identities on IOTA. Inheritly, IOTA provides some unique features that have a major impact on the usability of the framework.
+IOTA Identity is a framework to implement Self Sovereign Identities on IOTA. Inherently, IOTA provides some unique features that have a major impact on the usability of the framework.
 
 ### Feeless
 

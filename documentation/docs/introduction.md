@@ -4,7 +4,7 @@ keywords:
 - guide
 - TOC
 - overview
-description: The most important concepts that developers will need to know to utilize IOTA Identity to its full potential
+description: The most important concepts that developers will need to know to utilize IOTA Identity to its full potential.
 image: /img/Identity_icon.png
 ---
 
@@ -28,7 +28,7 @@ Explains the DID standard from W3C, how to manipulate DID Documents and Merkle K
 
 ### Chapter 3.2: Verifiable Credentials (VC)
 
-Explains the VC standard from W3C, how to create and revoke VCs and how to use Verifiable Presentations.
+Explains the VC standard from W3C, how to create and revoke VCs, and how to use Verifiable Presentations.
 
 ### Chapter 3.3: DID Communications (DID Comm)
 
