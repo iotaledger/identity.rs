@@ -14,8 +14,8 @@ pub struct WasmNetwork(IotaNetwork);
 impl WasmNetwork {
   /// Parses the provided string to a [`WasmNetwork`].
   #[wasm_bindgen]
-  pub fn from_name(name: String) -> Result<WasmNetwork> {
-    IotaNetwork::from_name(name).map(Self).wasm_result()
+  pub fn try_from_name(name: String) -> Result<WasmNetwork> {
+    IotaNetwork::try_from_name(name).map(Self).wasm_result()
   }
 
   #[wasm_bindgen]

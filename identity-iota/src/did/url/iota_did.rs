@@ -93,7 +93,7 @@ impl IotaDID {
   ///
   /// Returns `Err` if the input does not form a valid [`IotaDID`].
   pub fn new(public: &[u8]) -> Result<Self> {
-    try_did!(public)
+    try_construct_did!(public)
   }
 
   /// Creates a new [`IotaDID`] from the given `public` key and `network`.
@@ -104,7 +104,7 @@ impl IotaDID {
   /// See [`NetworkName`] for validation requirements.
   pub fn new_with_network(public: &[u8], network: &str) -> Result<Self> {
     NetworkName::validate_network_name(network)?;
-    try_did!(public, network)
+    try_construct_did!(public, network)
   }
 
   #[doc(hidden)]
@@ -265,7 +265,7 @@ impl IotaDID {
 
   /// Returns the Tangle `network` of the `DID`, if it is valid.
   pub fn network(&self) -> Result<Network> {
-    Network::from_name(self.network_str().to_owned())
+    Network::try_from_name(self.network_str().to_owned())
   }
 
   /// Returns the Tangle `network` name of the `DID`.

@@ -1496,7 +1496,7 @@ Deserializes a `KeyPair` object from a JSON object.
         * [.messageURL(message_id)](#Network+messageURL) ⇒ <code>string</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
     * _static_
-        * [.from_name(name)](#Network.from_name) ⇒ [<code>Network</code>](#Network)
+        * [.try_from_name(name)](#Network.try_from_name) ⇒ [<code>Network</code>](#Network)
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
         * [.testnet()](#Network.testnet) ⇒ [<code>Network</code>](#Network)
 
@@ -1527,9 +1527,9 @@ Returns the web explorer URL of the given `message`.
 
 ### network.toString() ⇒ <code>string</code>
 **Kind**: instance method of [<code>Network</code>](#Network)  
-<a name="Network.from_name"></a>
+<a name="Network.try_from_name"></a>
 
-### Network.from\_name(name) ⇒ [<code>Network</code>](#Network)
+### Network.try\_from\_name(name) ⇒ [<code>Network</code>](#Network)
 Parses the provided string to a [`WasmNetwork`].
 
 **Kind**: static method of [<code>Network</code>](#Network)  

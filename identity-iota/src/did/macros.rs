@@ -10,19 +10,19 @@
 /// # Example
 ///
 /// ```
-/// # use identity_iota::try_did;
+/// # use identity_iota::try_construct_did;
 /// #
-/// let did = try_did!(b"public-key").unwrap();
+/// let did = try_construct_did!(b"public-key").unwrap();
 /// assert_eq!(did.as_str(), "did:iota:2xQiiGHDq5gCi1H7utY1ni7cf65fTay3G11S4xKp1vkS");
 ///
-/// let did = try_did!(b"public-key", "com").unwrap();
+/// let did = try_construct_did!(b"public-key", "com").unwrap();
 /// assert_eq!(
 ///   did.as_str(),
 ///   "did:iota:com:2xQiiGHDq5gCi1H7utY1ni7cf65fTay3G11S4xKp1vkS"
 /// );
 /// ```
 #[macro_export]
-macro_rules! try_did {
+macro_rules! try_construct_did {
   // Defining explicit branches rather than `$($tt:tt)+` gives much better docs.
   ($public:expr, $network:expr) => {
     $crate::did::IotaDID::parse(format!(

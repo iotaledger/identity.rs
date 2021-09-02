@@ -77,7 +77,7 @@ pub mod iota {
   pub use identity_iota::tangle::*;
 
   #[doc(inline)]
-  pub use identity_iota::try_did;
+  pub use identity_iota::try_construct_did;
 }
 
 #[cfg(feature = "account")]

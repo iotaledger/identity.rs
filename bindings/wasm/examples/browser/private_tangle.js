@@ -30,7 +30,7 @@ export async function createIdentityPrivateTangle(inBrowser = true, log = true) 
     }
 
     // This is an arbitrarily defined network name
-    const network = Network.from_name(networkName);
+    const network = Network.try_from_name(networkName);
 
     // Create a DID Document (an identity).
     const { doc, key } = new Document(KeyType.Ed25519, network.toString());

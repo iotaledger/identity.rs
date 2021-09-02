@@ -45,7 +45,7 @@ impl Network {
   /// 6 characters long, and only include alphanumeric characters `0-9` and `a-z`.
   ///
   /// See [`NetworkName`].
-  pub fn from_name<S>(name: S) -> Result<Self>
+  pub fn try_from_name<S>(name: S) -> Result<Self>
   where
     // Allow String, &'static str, Cow<'static, str>
     S: AsRef<str> + Into<Cow<'static, str>>,
@@ -55,7 +55,7 @@ impl Network {
       NETWORK_NAME_MAIN => Ok(Self::Mainnet),
       _ => {
         // Accept any other valid string - validation is performed by NetworkName
-        let network_name: NetworkName = NetworkName::try_from_name(name)?;
+        let network_name: NetworkName = NetworkName::try_from(name)?;
         Ok(Self::Other {
           name: network_name,
           explorer_url: None,
@@ -153,7 +153,7 @@ pub struct NetworkName(Cow<'static, str>);
 
 impl NetworkName {
   /// Creates a new [`NetworkName`] if the name passes validation.
-  pub fn try_from_name<T>(name: T) -> Result<Self>
+  pub fn try_from<T>(name: T) -> Result<Self>
   where
     T: Into<Cow<'static, str>>,
   {
@@ -194,7 +194,7 @@ impl TryFrom<&'static str> for NetworkName {
   type Error = Error;
 
   fn try_from(name: &'static str) -> Result<Self, Self::Error> {
-    Self::try_from_name(Cow::Borrowed(name))
+    Self::try_from(Cow::Borrowed(name))
   }
 }
 
@@ -202,7 +202,7 @@ impl TryFrom<String> for NetworkName {
   type Error = Error;
 
   fn try_from(name: String) -> Result<Self, Self::Error> {
-    Self::try_from_name(Cow::Owned(name))
+    Self::try_from(Cow::Owned(name))
   }
 }
 
@@ -218,29 +218,29 @@ mod tests {
 
   #[test]
   fn test_from_name_standard_networks() {
-    assert_eq!(Network::from_name(NETWORK_NAME_TEST).unwrap(), Network::Testnet);
-    assert_eq!(Network::from_name(NETWORK_NAME_MAIN).unwrap(), Network::Mainnet);
+    assert_eq!(Network::try_from_name(NETWORK_NAME_TEST).unwrap(), Network::Testnet);
+    assert_eq!(Network::try_from_name(NETWORK_NAME_MAIN).unwrap(), Network::Mainnet);
   }
 
   #[test]
   fn test_from_name_types() {
     let static_str = "custom";
-    assert!(Network::from_name(static_str).is_ok());
+    assert!(Network::try_from_name(static_str).is_ok());
 
     let string = static_str.to_owned();
-    assert!(Network::from_name(string.clone()).is_ok());
+    assert!(Network::try_from_name(string.clone()).is_ok());
 
     let cow_owned = Cow::Owned(string);
-    assert!(Network::from_name(cow_owned).is_ok());
+    assert!(Network::try_from_name(cow_owned).is_ok());
 
     let cow_borrowed = Cow::Borrowed(static_str);
-    assert!(Network::from_name(cow_borrowed).is_ok());
+    assert!(Network::try_from_name(cow_borrowed).is_ok());
   }
 
   #[test]
   fn test_from_name() {
     assert_eq!(
-      Network::from_name("6chars").unwrap(),
+      Network::try_from_name("6chars").unwrap(),
       Network::Other {
         name: NetworkName::try_from("6chars").unwrap(),
         explorer_url: None,
@@ -248,22 +248,22 @@ mod tests {
     );
 
     assert!(matches!(
-      Network::from_name("7seven7").unwrap_err(),
+      Network::try_from_name("7seven7").unwrap_err(),
       Error::InvalidNetworkName("network name cannot exceed 6 characters")
     ));
 
     assert!(matches!(
-      Network::from_name("täst").unwrap_err(),
+      Network::try_from_name("täst").unwrap_err(),
       Error::InvalidNetworkName("network name must only contain characters `0-9` and `a-z`")
     ));
 
     assert!(matches!(
-      Network::from_name(" ").unwrap_err(),
+      Network::try_from_name(" ").unwrap_err(),
       Error::InvalidNetworkName("network name must only contain characters `0-9` and `a-z`")
     ));
 
     assert!(matches!(
-      Network::from_name("").unwrap_err(),
+      Network::try_from_name("").unwrap_err(),
       Error::InvalidNetworkName("network name must not be empty")
     ));
   }
@@ -289,7 +289,7 @@ mod tests {
     assert!(testnet.explorer_url().is_some());
     assert_eq!(testnet.explorer_url().unwrap().as_str(), EXPLORER_TEST.as_str());
 
-    let mut other = Network::from_name("atoi").unwrap();
+    let mut other = Network::try_from_name("atoi").unwrap();
     assert!(other.explorer_url().is_none());
 
     // Try setting a `cannot_be_a_base` url.
