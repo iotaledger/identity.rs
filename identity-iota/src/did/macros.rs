@@ -3,41 +3,27 @@
 
 /// Creates a new IOTA DID from a `public` key and optional `network`.
 ///
-/// # Panics
+/// # Errors
 ///
-/// Panics if the DID format is not valid.
+/// Errors if the [`IotaDID`][crate::did::IotaDID] is invalid.
 ///
 /// # Example
 ///
 /// ```
-/// # use identity_iota::did;
+/// # use identity_iota::try_construct_did;
 /// #
-/// let did = did!(b"public-key");
+/// let did = try_construct_did!(b"public-key").unwrap();
 /// assert_eq!(did.as_str(), "did:iota:2xQiiGHDq5gCi1H7utY1ni7cf65fTay3G11S4xKp1vkS");
 ///
-/// let did = did!(b"public-key", "com");
+/// let did = try_construct_did!(b"public-key", "com").unwrap();
 /// assert_eq!(
 ///   did.as_str(),
 ///   "did:iota:com:2xQiiGHDq5gCi1H7utY1ni7cf65fTay3G11S4xKp1vkS"
 /// );
 /// ```
 #[macro_export]
-macro_rules! did {
+macro_rules! try_construct_did {
   // Defining explicit branches rather than `$($tt:tt)+` gives much better docs.
-  ($public:expr, $network:expr) => {
-    $crate::try_did!($public, $network).unwrap()
-  };
-  ($public:expr, $network:expr) => {
-    $crate::try_did!($public, $network).unwrap()
-  };
-  ($public:expr) => {
-    $crate::try_did!($public).unwrap()
-  };
-}
-
-/// A fallible version of the [did] macro.
-#[macro_export]
-macro_rules! try_did {
   ($public:expr, $network:expr) => {
     $crate::did::IotaDID::parse(format!(
       "{}:{}:{}:{}",

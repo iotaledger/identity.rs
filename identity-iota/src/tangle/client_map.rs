@@ -1,8 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use dashmap::DashMap;
 use std::sync::Arc;
+
+use dashmap::DashMap;
 
 use crate::chain::DocumentChain;
 use crate::did::DocumentDiff;
@@ -13,10 +14,11 @@ use crate::tangle::Client;
 use crate::tangle::ClientBuilder;
 use crate::tangle::MessageId;
 use crate::tangle::Network;
+use crate::tangle::NetworkName;
 use crate::tangle::Receipt;
 use crate::tangle::TangleResolve;
 
-type State = DashMap<Network, Arc<Client>>;
+type State = DashMap<NetworkName, Arc<Client>>;
 
 #[derive(Debug)]
 pub struct ClientMap {
@@ -31,7 +33,7 @@ impl ClientMap {
   pub fn from_client(client: Client) -> Self {
     let data: State = State::new();
 
-    data.insert(client.network.clone(), Arc::new(client));
+    data.insert(client.network.name(), Arc::new(client));
 
     Self { data }
   }
@@ -49,7 +51,7 @@ impl ClientMap {
   }
 
   pub fn insert(&self, client: Client) {
-    self.data.insert(client.network.clone(), Arc::new(client));
+    self.data.insert(client.network.name(), Arc::new(client));
   }
 
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
@@ -81,13 +83,14 @@ impl ClientMap {
   }
 
   pub async fn client(&self, network: Network) -> Result<Arc<Client>> {
-    if let Some(client) = self.data.get(&network) {
+    let network_name = network.name();
+    if let Some(client) = self.data.get(&network_name) {
       return Ok(Arc::clone(&client));
     }
 
     let client: Arc<Client> = Client::from_network(network.clone()).await.map(Arc::new)?;
 
-    self.data.insert(network, Arc::clone(&client));
+    self.data.insert(network_name, Arc::clone(&client));
 
     Ok(client)
   }

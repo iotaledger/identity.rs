@@ -85,6 +85,40 @@ async fn test_create_identity_invalid_method() -> Result<()> {
 }
 
 #[tokio::test]
+async fn test_create_identity_network() -> Result<()> {
+  let account: Account = new_account().await?;
+
+  // Create an identity with a valid network string
+  let create_identity: IdentityCreate = IdentityCreate::new().network("test").key_type(KeyType::Ed25519);
+  let snapshot: IdentitySnapshot = account.create_identity(create_identity).await?;
+
+  // Ensure the identity creation was successful
+  assert!(snapshot.identity().did().is_some());
+  assert!(snapshot.identity().authentication().is_ok());
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_identity_invalid_network() -> Result<()> {
+  let account: Account = new_account().await?;
+
+  // Attempt to create an identity with an invalid network string
+  let create_identity: IdentityCreate = IdentityCreate::new()
+    .network("Invalid=Network!")
+    .key_type(KeyType::Ed25519);
+  let result = account.create_identity(create_identity).await;
+
+  // Ensure an `InvalidNetworkName` error is thrown
+  assert!(matches!(
+    result.unwrap_err(),
+    Error::IotaError(identity_iota::Error::InvalidNetworkName(_)),
+  ));
+
+  Ok(())
+}
+
+#[tokio::test]
 async fn test_create_identity_already_exists() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
