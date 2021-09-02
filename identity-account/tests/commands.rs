@@ -184,7 +184,7 @@ async fn test_create_identity_from_secret_key() -> Result<()> {
 async fn test_create_identity_from_invalid_secret_key() -> Result<()> {
   let account: Account = new_account().await?;
 
-  let secret_bytes: Box<[u8]> = Box::new(*[0; 33]);
+  let secret_bytes: Box<[u8]> = Box::new([0; 33]);
   let secret_key: SecretKey = SecretKey::from(secret_bytes);
 
   let id_create = IdentityCreate::new()
@@ -358,7 +358,7 @@ async fn test_create_method_from_invalid_secret_key() -> Result<()> {
 
   account.process(identity, command, false).await?;
 
-  let secret_bytes: Box<[u8]> = Box::new(*[0; 33]);
+  let secret_bytes: Box<[u8]> = Box::new([0; 33]);
   let secret_key = SecretKey::from(secret_bytes);
 
   let command: Command = Command::create_method()
@@ -387,7 +387,7 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
 
   account.process(identity, command, false).await?;
 
-  let secret_bytes: Box<[u8]> = Box::new(*[0; 32]);
+  let secret_bytes: Box<[u8]> = Box::new([0; 32]);
   let secret_key = SecretKey::from(secret_bytes);
 
   let command: Command = Command::create_method()
