@@ -155,11 +155,7 @@ async fn test_create_identity_from_invalid_secret_key() -> Result<()> {
   let err = account.create_identity(id_create).await.unwrap_err();
 
   // The same secret key should result in the same did
-  assert!(matches!(
-    err,
-    Error::CommandError(CommandError::InvalidMethodSecret(err_string))
-    if err_string == "an ed25519 secret key requires 32 bytes, found 33"
-  ));
+  assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
 
   Ok(())
 }
@@ -338,11 +334,7 @@ async fn test_create_method_from_invalid_secret_key() -> Result<()> {
 
   println!("{:?}", err);
 
-  assert!(matches!(
-    err,
-    Error::CommandError(CommandError::InvalidMethodSecret(err_string))
-    if err_string == "an ed25519 secret key requires 32 bytes, found 33"
-  ));
+  assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
 
   Ok(())
 }
