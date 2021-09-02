@@ -364,11 +364,8 @@ impl Account {
       .await
   }
 
-  #[doc(hidden)]
   async fn load_snapshot_at(&self, id: IdentityId, generation: Generation) -> Result<IdentitySnapshot> {
     let initial: IdentitySnapshot = IdentitySnapshot::new(IdentityState::new(id));
-
-    println!("Loading snapshot at generation {}", generation);
 
     // Apply all events up to `generation`
     self
@@ -430,17 +427,18 @@ impl Account {
     Ok(())
   }
 
-  /// Push all unpublished commits for the given identity to the tangle in a single message.
-  pub async fn publish_updates<K: IdentityKey>(&self, key: K) -> Result<()> {
+  /// Push all unpublished changes for the given identity to the tangle in a single message.
+  ///
+  /// Returns the latest snapshot which is equivalent to the state on-tangle.
+  pub async fn publish_changes<K: IdentityKey>(&self, key: K) -> Result<IdentitySnapshot> {
     let identity: IdentityId = self.try_resolve_id(key).await?;
 
     // Get the last commit generation that was published to the tangle.
-    let last_published = match self.store.published_generation(identity).await {
-      ok @ Ok(_) => ok,
-      // If no generation is stored for this id yet, consider all commits unpublished.
-      Err(Error::IdentityNotFound) => Ok(Generation::new()),
-      err @ Err(_) => err,
-    }?;
+    let last_published = self
+      .store
+      .published_generation(identity)
+      .await?
+      .unwrap_or(Generation::new());
 
     // Get the commits that need to be published.
     let commits = self.store.collect(identity, last_published).await?;
@@ -450,7 +448,7 @@ impl Account {
 
     self.publish(snapshot, commits, true).await?;
 
-    Ok(())
+    self.load_snapshot(identity).await
   }
 
   /// Publishes according to the autopublish configuration.

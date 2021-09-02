@@ -207,13 +207,8 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn published_generation(&self, id: IdentityId) -> Result<Generation> {
-    self
-      .published_generations
-      .read()?
-      .get(&id)
-      .cloned()
-      .ok_or(Error::IdentityNotFound)
+  async fn published_generation(&self, id: IdentityId) -> Result<Option<Generation>> {
+    Ok(self.published_generations.read()?.get(&id).copied())
   }
 
   async fn set_published_generation(&self, id: IdentityId, index: Generation) -> Result<()> {

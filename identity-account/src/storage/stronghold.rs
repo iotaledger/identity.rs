@@ -317,7 +317,7 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn published_generation(&self, id: IdentityId) -> Result<Generation> {
+  async fn published_generation(&self, id: IdentityId) -> Result<Option<Generation>> {
     todo!()
   }
 
