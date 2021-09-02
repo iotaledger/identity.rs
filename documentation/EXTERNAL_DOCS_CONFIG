@@ -1,0 +1,9 @@
+ [
+    "@docusaurus/plugin-content-docs",
+    {
+    id: "identity-rs",
+    path: "external/identity.rs/documentation/docs",
+    routeBasePath: "identity.rs",
+    sidebarPath: require.resolve("./external/identity.rs/documentation/sidebars.js"),
+    }
+],

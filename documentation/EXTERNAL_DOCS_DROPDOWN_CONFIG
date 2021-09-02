@@ -1,0 +1,76 @@
+            {
+              label: 'Chrysalis (IOTA 1.5)',
+              to: 'category-header'
+            },
+            {
+              label: "Chrysalis Docs",
+              to: "chrysalis-docs/welcome",
+              className: 'icon-chrysalis',
+              activeBaseRegex: 'chrysalis-docs/.*',
+            },
+            {
+              label: "Bee Node",
+              to: "bee/getting_started/getting_started",
+              className: "icon-bee",
+              activeBaseRegex: 'bee/.*'
+            },
+            {
+              label: "Hornet Node",
+              to: "hornet/welcome",
+              className: "icon-hornet",
+              activeBaseRegex: 'hornet/.*'
+            },
+            {
+              label: 'Libraries',
+              to: 'category-header'
+            },
+            {
+              label: "Core",
+              to: "iota.rs/welcome",
+              className: "icon-iota-mark",
+              activeBaseRegex: 'iota.rs/.*'
+            },
+            {
+              label: "Wallet",
+              to: "wallet.rs/welcome",
+              className: "icon-wallet",
+              activeBaseRegex: 'wallet.rs/.*'
+            },
+            {
+              label: "Stronghold",
+              to: "stronghold.rs/welcome",
+              className: "icon-stronghold",
+              activeBaseRegex: 'stronghold.rs/.*'
+            },
+            {
+              label: "Identity",
+              to: "identity.rs/intro",
+              className: "icon-identity",
+              activeBaseRegex: 'identity.rs/.*'
+            },
+            {
+              label: 'Smart Contracts',
+              to: 'category-header'
+            },
+            {
+              label: "Wasp Node",
+              to: "wasp/welcome",
+              className: "icon-wasp",
+              activeBaseRegex: 'wasp/.*',
+            },
+            {
+              label: 'Coordicide (IOTA 2.0)',
+              to: 'category-header'
+            },
+            {
+              label: "Coordicide Specs",
+              to: "IOTA-2.0-Research-Specifications/Preface",
+              className: "icon-iota-20",
+              activeBaseRegex: 'IOTA-2.0-Research-Specifications/.*'
+            },
+            {
+              label: "GoShimmer Node",
+              to: "goshimmer/welcome",
+              className: "icon-goshimmer",
+              activeBaseRegex: 'goshimmer/.*'
+            },
