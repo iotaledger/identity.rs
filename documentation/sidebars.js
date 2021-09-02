@@ -39,7 +39,7 @@ module.exports = {
             'getting-started/vc/create',
             'getting-started/vc/revoke',
             'getting-started/vc/vp',
-          ]  
+          ]
         },
         {
           'DID Communication': [
@@ -54,7 +54,7 @@ module.exports = {
             'getting-started/advanced/storage_adapter',
             'getting-started/advanced/signature_schemes',
 
-          ]  
+          ]
         },
       ],
     },
@@ -74,7 +74,7 @@ module.exports = {
             'libraries/rust/api_reference',
             'libraries/rust/troubleshooting',
           ],
-          
+
         },
         {
           type: 'category',
@@ -92,12 +92,36 @@ module.exports = {
     },
     {
       type: 'category',
-      label: 'Specificatons',
+      label: 'Specifications',
       collapsed: true,
       items: [
-        'specs/README',
-        'specs/iota_did_method_spec',
-        'specs/merkle_key_collection',
+        {
+          type: 'category',
+          label: 'IOTA DID',
+          collapsed: true,
+          items: [
+            'specs/did/README',
+            'specs/did/iota_did_method_spec',
+            'specs/did/merkle_key_collection',
+          ]
+        },
+        {
+          type: 'category',
+          label: 'IOTA DIDComm',
+          collapsed: true,
+          items: [
+            {
+              type: 'category',
+              label: 'IOTA DIDComm Protocols',
+              collapsed: true,
+              items: [
+                'specs/didcomm/protocols/presentation',
+              ]
+            },
+            'specs/didcomm/README',
+            'specs/didcomm/CHANGELOG',
+          ]
+        },
       ],
     },
     'glossary',
