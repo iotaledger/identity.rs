@@ -91,6 +91,8 @@ pub enum Error {
   /// Caused by attempting to perform a command in an invalid context.
   #[error("Command Error: {0}")]
   CommandError(#[from] crate::events::CommandError),
+  #[error("Invalid Secret Key: {0}")]
+  InvalidSecretKey(String),
 }
 
 #[doc(hidden)]

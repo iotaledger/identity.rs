@@ -125,6 +125,7 @@ impl Account {
     // Create the initialization command
     let command: Command = Command::CreateIdentity {
       network: input.network,
+      method_secret: input.method_secret,
       authentication: Self::key_to_method(input.key_type),
     };
 
