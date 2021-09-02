@@ -24,6 +24,7 @@ use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::types::MethodSecret;
+use crate::Error;
 
 // Supported authentication method types.
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
@@ -32,7 +33,7 @@ const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 pub enum Command {
   CreateIdentity {
     network: Option<String>,
-    secret_key: Option<SecretKey>,
+    method_secret: Option<MethodSecret>,
     authentication: MethodType,
   },
   CreateMethod {
@@ -75,7 +76,7 @@ impl Command {
     match self {
       Self::CreateIdentity {
         network,
-        secret_key,
+        method_secret,
         authentication,
       } => {
         // The state must not be initialized
@@ -97,17 +98,26 @@ impl Command {
           CommandError::DuplicateKeyLocation(location)
         );
 
-        let public: PublicKey = if let Some(secret_key) = secret_key {
-          ensure!(
-            secret_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
-            CommandError::InvalidMethodSecret(format!(
-              "an ed25519 secret key requires {} bytes, found {}",
-              ed25519::SECRET_KEY_LENGTH,
-              secret_key.as_ref().len()
-            ))
-          );
+        let public: PublicKey = if let Some(method_secret_key) = method_secret {
+          match method_secret_key {
+            MethodSecret::Ed25519(secret_key) => {
+              ensure!(
+                secret_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+                CommandError::InvalidMethodSecret(format!(
+                  "an ed25519 secret key requires {} bytes, found {}",
+                  ed25519::SECRET_KEY_LENGTH,
+                  secret_key.as_ref().len()
+                ))
+              );
 
-          store.key_insert(state.id(), &location, secret_key).await
+              store.key_insert(state.id(), &location, secret_key).await
+            }
+            MethodSecret::MerkleKeyCollection(_) => {
+              return Err(Error::CommandError(CommandError::InvalidMethodSecret(
+                "merkle key collection cannot be used to create an identity".to_owned(),
+              )));
+            }
+          }
         } else {
           store.key_new(state.id(), &location).await
         }?;
@@ -276,7 +286,7 @@ impl Command {
 
 impl_command_builder!(CreateIdentity {
   @optional network String,
-  @optional secret_key SecretKey,
+  @optional method_secret MethodSecret,
   @defaulte authentication MethodType = Ed25519VerificationKey2018,
 });
 

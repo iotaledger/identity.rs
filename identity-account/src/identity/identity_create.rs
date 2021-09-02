@@ -1,7 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::crypto::{KeyType, SecretKey};
+use identity_core::crypto::KeyType;
+
+use crate::types::MethodSecret;
 
 /// Configuration used to create a new Identity.
 #[derive(Clone, Debug)]
@@ -9,7 +11,7 @@ pub struct IdentityCreate {
   pub(crate) key_type: KeyType,
   pub(crate) name: Option<String>,
   pub(crate) network: Option<String>,
-  pub(crate) secret_key: Option<SecretKey>,
+  pub(crate) method_secret: Option<MethodSecret>,
 }
 
 impl IdentityCreate {
@@ -19,7 +21,7 @@ impl IdentityCreate {
       key_type: KeyType::Ed25519,
       name: None,
       network: None,
-      secret_key: None,
+      method_secret: None,
     }
   }
 
@@ -50,13 +52,12 @@ impl IdentityCreate {
     self
   }
 
-  /// Sets the [SecretKey] for the Identity creation.
-  /// This needs to be the correct number of bytes for the respective [KeyType].
+  /// Sets the [`MethodSecret`] for the Identity creation.
   ///
-  /// For [KeyType::Ed25519] the key needs to be 32 bytes in size.
+  /// Note that only [`MethodSecret::Ed25519`] is currently supported.
   #[must_use]
-  pub fn secret_key(mut self, value: SecretKey) -> Self {
-    self.secret_key = Some(value);
+  pub fn method_secret(mut self, value: MethodSecret) -> Self {
+    self.method_secret = Some(value);
     self
   }
 }

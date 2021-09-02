@@ -128,7 +128,9 @@ async fn test_create_identity_from_secret_key() -> Result<()> {
 
   let secret_key = KeyPair::new_ed25519()?.secret().clone();
 
-  let id_create = IdentityCreate::new().key_type(KeyType::Ed25519).secret_key(secret_key);
+  let id_create = IdentityCreate::new()
+    .key_type(KeyType::Ed25519)
+    .method_secret(MethodSecret::Ed25519(secret_key));
 
   account.create_identity(id_create.clone()).await?;
   account2.create_identity(id_create).await?;
@@ -150,7 +152,9 @@ async fn test_create_identity_from_invalid_secret_key() -> Result<()> {
   let secret_bytes: Box<[u8]> = Box::new([0; 33]);
   let secret_key: SecretKey = SecretKey::from(secret_bytes);
 
-  let id_create = IdentityCreate::new().key_type(KeyType::Ed25519).secret_key(secret_key);
+  let id_create = IdentityCreate::new()
+    .key_type(KeyType::Ed25519)
+    .method_secret(MethodSecret::Ed25519(secret_key));
 
   let err = account.create_identity(id_create).await.unwrap_err();
 
