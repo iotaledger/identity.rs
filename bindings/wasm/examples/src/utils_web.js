@@ -9,12 +9,8 @@ export const LINK_REGEX = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0
  */
 export async function initIdentity(path = "./identity_wasm_bg.wasm") {
     console.log("Initialization started...");
-    try {
-        await identity.init(path);
-        console.log("Initialization success!");
-    } catch (err) {
-        throw new Error(err);
-    }
+    await identity.init(path);
+    console.log("Initialization success!");
 }
 
 /**
