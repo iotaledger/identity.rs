@@ -32,7 +32,7 @@ macro_rules! impl_command_builder {
   };
   ($ident:ident { $(@ $requirement:ident $field:ident $ty:ty $(= $value:expr)?),* $(,)* }) => {
     paste::paste! {
-      #[derive(Clone, Debug, PartialEq)]
+      #[derive(Clone, Debug)]
       pub struct [<$ident Builder>] {
         $(
           $field: Option<$ty>,
