@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crypto::signatures::ed25519;
 use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::Url;
@@ -15,26 +16,30 @@ use crate::events::CommandError;
 use crate::events::Context;
 use crate::events::Event;
 use crate::events::EventData;
+use crate::identity::IdentityId;
 use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::identity::TinyService;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
+use crate::types::MethodSecret;
 
 // Supported authentication method types.
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum Command {
   CreateIdentity {
     network: Option<String>,
+    method_secret: Option<MethodSecret>,
     authentication: MethodType,
   },
   CreateMethod {
     scope: MethodScope,
     type_: MethodType,
     fragment: String,
+    method_secret: Option<MethodSecret>,
   },
   DeleteMethod {
     fragment: String,
@@ -70,6 +75,7 @@ impl Command {
     match self {
       Self::CreateIdentity {
         network,
+        method_secret,
         authentication,
       } => {
         // The state must not be initialized
@@ -91,8 +97,12 @@ impl Command {
           CommandError::DuplicateKeyLocation(location)
         );
 
-        // Generate an authentication key
-        let public: PublicKey = store.key_new(state.id(), &location).await?;
+        let public: PublicKey = if let Some(method_secret_key) = method_secret {
+          insert_method_secret(store, state.id(), &location, authentication, method_secret_key).await
+        } else {
+          store.key_new(state.id(), &location).await
+        }?;
+
         let data: MethodData = MethodData::new_b58(public.as_ref());
         let method: TinyMethod = TinyMethod::new(location, data, None);
 
@@ -106,7 +116,12 @@ impl Command {
           Event::new(EventData::MethodCreated(MethodScope::Authentication, method)),
         ]))
       }
-      Self::CreateMethod { type_, scope, fragment } => {
+      Self::CreateMethod {
+        type_,
+        scope,
+        fragment,
+        method_secret,
+      } => {
         // The state must be initialized
         ensure!(state.did().is_some(), CommandError::DocumentNotFound);
 
@@ -131,7 +146,12 @@ impl Command {
           CommandError::DuplicateKeyFragment(location.fragment.clone()),
         );
 
-        let public: PublicKey = store.key_new(state.id(), &location).await?;
+        let public: PublicKey = if let Some(method_secret_key) = method_secret {
+          insert_method_secret(store, state.id(), &location, type_, method_secret_key).await
+        } else {
+          store.key_new(state.id(), &location).await
+        }?;
+
         let data: MethodData = MethodData::new_b58(public.as_ref());
         let method: TinyMethod = TinyMethod::new(location, data, None);
 
@@ -225,12 +245,53 @@ impl Command {
   }
 }
 
+async fn insert_method_secret(
+  store: &dyn Storage,
+  identity_id: IdentityId,
+  location: &KeyLocation,
+  method_type: MethodType,
+  method_secret: MethodSecret,
+) -> Result<PublicKey> {
+  match method_secret {
+    MethodSecret::Ed25519(secret_key) => {
+      ensure!(
+        secret_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+        CommandError::InvalidMethodSecret(format!(
+          "an ed25519 secret key requires {} bytes, found {}",
+          ed25519::SECRET_KEY_LENGTH,
+          secret_key.as_ref().len()
+        ))
+      );
+
+      ensure!(
+        matches!(method_type, MethodType::Ed25519VerificationKey2018),
+        CommandError::InvalidMethodSecret(
+          "MethodType::Ed25519VerificationKey2018 can only be used with an ed25519 method secret".to_owned(),
+        )
+      );
+
+      store.key_insert(identity_id, location, secret_key).await
+    }
+    MethodSecret::MerkleKeyCollection(_) => {
+      ensure!(
+        matches!(method_type, MethodType::MerkleKeyCollection2021),
+        CommandError::InvalidMethodSecret(
+          "MethodType::MerkleKeyCollection2021 can only be used with a MerkleKeyCollection method secret".to_owned(),
+        )
+      );
+
+      todo!("[Command::CreateMethod] Handle MerkleKeyCollection")
+    }
+  }
+}
+
 // =============================================================================
 // Command Builders
 // =============================================================================
 
 impl_command_builder!(CreateIdentity {
   @optional network String,
+  @optional method_secret MethodSecret,
   @defaulte authentication MethodType = Ed25519VerificationKey2018,
 });
 
@@ -238,6 +299,7 @@ impl_command_builder!(CreateMethod {
   @defaulte type_ MethodType = Ed25519VerificationKey2018,
   @default scope MethodScope,
   @required fragment String,
+  @optional method_secret MethodSecret
 });
 
 impl_command_builder!(DeleteMethod {

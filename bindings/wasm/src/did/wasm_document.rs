@@ -67,7 +67,7 @@ impl WasmDocument {
     let public: &PublicKey = keypair.0.public();
 
     let did: IotaDID = if let Some(network) = network.as_deref() {
-      IotaDID::with_network(public.as_ref(), network).wasm_result()?
+      IotaDID::new_with_network(public.as_ref(), network).wasm_result()?
     } else {
       IotaDID::new(public.as_ref()).wasm_result()?
     };
