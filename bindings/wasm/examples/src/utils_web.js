@@ -41,6 +41,12 @@ export function logToScreen(message) {
         "<br/>-------------------------------------<br/>";
 }
 
+/**
+ * parses a string for urls and wraps them with link tags
+ *
+ * @param {string} inputText
+ * @returns {string}
+ */
 export function linkify(inputText) {
 
     return inputText.replace(LINK_REGEX, '<a href="$1" target="_blank">$1</a>');
