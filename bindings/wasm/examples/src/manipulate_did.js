@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const {Client, Config, KeyPair, KeyType, VerificationMethod, Service, Timestamp} = require("../../node/identity_wasm");
-const {createIdentity} = require("./create_did");
-const {logExplorerUrl} = require("./utils");
+import {Client, Config, KeyPair, KeyType, VerificationMethod, Service, Timestamp} from '@iota/identity-wasm';
+import {createIdentity} from "./create_did";
+import {logExplorerUrl} from "./utils";
 
 /**
  This example shows how to add more to an existing DID Document.
@@ -64,4 +64,4 @@ async function manipulateIdentity(clientConfig) {
     };
 }
 
-exports.manipulateIdentity = manipulateIdentity;
+export {manipulateIdentity};

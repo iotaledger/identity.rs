@@ -26,5 +26,4 @@ function prettyPrintJSON(data, title=null) {
     console.log(JSON.stringify(JSON.parse(data.toString()), null, 2));
 }
 
-exports.logExplorerUrl = logExplorerUrl;
-exports.prettyPrintJSON = prettyPrintJSON;
+export {logExplorerUrl, prettyPrintJSON}
