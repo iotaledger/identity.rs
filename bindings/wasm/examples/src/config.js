@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const { Network } = require('../../node/identity_wasm')
+import { Network } from '@iota/identity-wasm';
 
 const MAINNET = Network.mainnet();
 
@@ -12,4 +12,4 @@ const CLIENT_CONFIG = {
     explorerURL: MAINNET.explorerURL,
 }
 
-exports.CLIENT_CONFIG = CLIENT_CONFIG;
+export {CLIENT_CONFIG};

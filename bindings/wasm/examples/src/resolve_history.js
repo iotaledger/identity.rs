@@ -1,8 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const {logExplorerUrl, prettyPrintJSON} = require("./utils");
-const {
+import {
     Client,
     Config,
     Document,
@@ -11,8 +10,9 @@ const {
     VerificationMethod,
     KeyType,
     Timestamp, DID
-} = require("../../node/identity_wasm");
-const {createIdentity} = require("./create_did");
+} from '@iota/identity-wasm';
+import {logExplorerUrl, prettyPrintJSON} from "./utils";
+import {createIdentity} from "./create_did";
 
 /**
  Advanced example that performs multiple diff chain and integration chain updates and
@@ -201,4 +201,4 @@ async function resolveHistory(clientConfig) {
     prettyPrintJSON(previousDiffHistory, "Previous Diff History:");
 }
 
-exports.resolveHistory = resolveHistory;
+export {resolveHistory};

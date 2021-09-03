@@ -18,6 +18,12 @@ that can be found in the `config.js` file for node and in `main.js` for the brow
 
 Before running the examples, make sure you have [built the bindings](../README.md#Build) for `node.js`.
 
+To build the examples use
+
+```
+npm run build:examples
+```
+
 You can run each example using
 
 ```
@@ -34,22 +40,27 @@ The following examples are currently available:
 
 |  #  | Name                                | Information                                                                                                                                                                                                                                |
 | :-: | :---------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  1  | [create_did](node/create_did.js)         | Generates and publishes a DID Document, the fundamental building block for decentralized identity.                                                                                                                                         |
-|  2  | [manipulate_did](node/manipulate_did.js) | Add verification methods and service endpoints to a DID Document and update an already existing DID Document.                                                                                                                              |
-|  3  | [diff_chain](node/diff_chain.js)     | Creates a diff chain update for a DID Document and publishes it to the Tangle.                                                                                                                                                             |
-|  4  | [resolve_history](node/resolve_history.js) | Advanced example that performs multiple diff chain and integration chain updates and demonstrates how to resolve the DID Document history to view these chains.                                                                          |
-|  5  | [create_vc](node/create_vc.js)           | Generates and publishes subject and issuer DID Documents, then creates a Verifiable Credential (VC) specifying claims about the subject, and verifies it.                                                                                  |
-|  6  | [create_vp](node/create_vp.js)           | Create a Verifiable Presentation, the data model for sharing VCs, out of a Verifiable Credential and verifies it.                                                                                                                          |
-|  7  | [revoke_vc](node/revoke_vc.js)           | Remove a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC.                                                                                      |
-|  8  | [resolution](node/resolution.js)         | Resolves an existing DID to return the latest DID Document.                                                                                                                                                                                |
-|  9  | [merkle_key](node/merkle_key.js)         | Adds a MerkleKeyCollection verification method to an Issuers DID Document and signs a Verifiable Credential with the key on index 0. Afterwards the key on index 0 is deactivated, making the Verifiable Credential fail its verification. |
-|  10 | [private_tangle](node/private_tangle.js) | Showcases the same procedure as `create_did`, but on a private tangle - a locally running hornet node. |
+|  1  | [create_did](src/create_did.js)         | Generates and publishes a DID Document, the fundamental building block for decentralized identity.                                                                                                                                         |
+|  2  | [manipulate_did](src/manipulate_did.js) | Add verification methods and service endpoints to a DID Document and update an already existing DID Document.                                                                                                                              |
+|  3  | [diff_chain](src/diff_chain.js)     | Creates a diff chain update for a DID Document and publishes it to the Tangle.                                                                                                                                                             |
+|  4  | [resolve_history](src/resolve_history.js) | Advanced example that performs multiple diff chain and integration chain updates and demonstrates how to resolve the DID Document history to view these chains.                                                                          |
+|  5  | [create_vc](src/create_vc.js)           | Generates and publishes subject and issuer DID Documents, then creates a Verifiable Credential (VC) specifying claims about the subject, and verifies it.                                                                                  |
+|  6  | [create_vp](src/create_vp.js)           | Create a Verifiable Presentation, the data model for sharing VCs, out of a Verifiable Credential and verifies it.                                                                                                                          |
+|  7  | [revoke_vc](src/revoke_vc.js)           | Remove a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC.                                                                                      |
+|  8  | [resolution](src/resolution.js)         | Resolves an existing DID to return the latest DID Document.                                                                                                                                                                                |
+|  9  | [merkle_key](src/merkle_key.js)         | Adds a MerkleKeyCollection verification method to an Issuers DID Document and signs a Verifiable Credential with the key on index 0. Afterwards the key on index 0 is deactivated, making the Verifiable Credential fail its verification. |
+|  10 | [private_tangle](src/private_tangle.js) | Showcases the same procedure as `create_did`, but on a private tangle - a locally running hornet node. |
 
 
 ### Browser Examples
 All the Node.js examples are also available for the browser.
 
 Before running the examples, make sure you have [built the bindings](../README.md#Build) for `web`.
+
+To build the examples use
+```
+npm run build:examples
+```
 
 You can run the browser examples using
 
