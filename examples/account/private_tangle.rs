@@ -21,11 +21,13 @@ use identity::iota::Network;
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  // This is an arbitrarily defined network name
-  let network_name = "custom";
+  // This name needs to match the id of the network or part of it.
+  // Since the id of the one-click private tangle is `private-tangle`
+  // but we can only use 6 characters, we use just `tangle`.
+  let network_name = "tangle";
   let network = Network::try_from_name(network_name)?;
 
-  // Create a new Account with the default configuration
+  // Create a new Account with a custom client configuration.
   let private_node_url = "http://127.0.0.1:14265/";
   let account: Account = Account::builder()
     // Configure a client for the private network.
@@ -40,7 +42,7 @@ async fn main() -> Result<()> {
 
   let id_create = IdentityCreate::new().network(network_name);
 
-  // Create a new Identity with default settings
+  // Create a new Identity with the network name set.
   let snapshot: IdentitySnapshot = match account.create_identity(id_create).await {
     Ok(snapshot) => snapshot,
     Err(err) => {
