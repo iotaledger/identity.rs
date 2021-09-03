@@ -11,11 +11,16 @@ sidebar_label: Presentation
 
 ## Summary/Goals
 
-Allows verification of unrevoked credentials that are undeniable issued for the holder and uniquely presented to the verifier.
+Allows presentation of verifiable credentials that are issued to a holder and uniquely presented to a third-party verifier.
 
 ## Example Use-Cases
 
 ## Specification
+
+### Roles: 
+- [Holder](https://www.w3.org/TR/vc-data-model/#dfn-holders): possesses one or more credentials that are combined in a verifiable presentation to show proof of ownership to the verifier.
+- [Verifier](https://www.w3.org/TR/vc-data-model/#dfn-verifier): receives and validates the credentials presented by the holder.
+
 
 ```mermaid
 sequenceDiagram
@@ -85,23 +90,76 @@ stop
 
 #### 1. presentation-offer
 
-```typescript
-PresentationOffer: {
-  offers: [credentialOffer]; // REQUIRED
-  requireSignature: bool; // OPTIONAL - indicates whether the request will be rejected automatically if not signed by the requester?
-};
-```
+- Type: `didcomm:iota/presentation/0.1/presentation-offer`
+- Role: [holder](#roles)
 
-```js
-credentialOffer = {
-  context: [string], // optional
-  types: [string], // required
-  issuer: string, // optional
+This message is sent by the holder to offer one or more credentials for a verifier to view. 
+The context and types are included to allow the verifier to choose whether they are interested in the offer, negotiate the type of credentials they want or accept and by which issuers they trust.
+
+The issuer is optional when the holder may not want to reveal too much information up-front on the exact credentials they possess, they may want a non-repudiable signed request from the verifier first? 
+```json
+didcomm:iota/presentation/0.1/presentation-offer
+spec:iota-didcomm/presentation/0.1/presentation-offer
+{
+  "offers": [{
+    "@context": [string], // OPTIONAL
+    "type": [string], // REQUIRED
+    "issuer": string, // OPTIONAL
+  }], // REQUIRED
+  "requireSignature": bool, // OPTIONAL
 }
-
 ```
-TODO: ZKP / selective disclosure fields?
+
+| Field | Description | Required |
+| :--- | :--- | :--- |
+| offers | Array of one or more offers, each specifying a single credential possessed by the holder. | REQUIRED |
+| [@context](https://www.w3.org/TR/vc-data-model/#contexts) | Array of JSON-LD contexts referenced in the credential. | OPTIONAL |
+| [type](https://www.w3.org/TR/vc-data-model/#types) | Array of credential types specifying . | REQUIRED | 
+| [issuer](https://www.w3.org/TR/vc-data-model/#issuer) | The ID or URI of the credential issuer. | OPTIONAL |
+| requireSignature | Request that the verifier sign its `presentation-request` for non-repudiation. It is RECOMMENDED that the holder issues a problem-report if not the verifier does not sign the message when this is true. | OPTIONAL |
+
+TODO: how do we elaborate on design decision? E.g. issuer is optional because one may not want to reveal too much information up-front (privacy)
+
+TODO: selective disclosure / ZKP fields?
+
+##### Examples
+
+1. Offering a single verifiable credential:
+
+```json
+{
+  "offers": [{
+    "types": ["VerifiableCredential", "UniversityDegreeCredential"],
+    "issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f"
+  }]
+}
+```
+
+2. Offering two verifiable credentials with different issuers:
+
+```json
+{
+  "offers": [{
+    "types": ["VerifiableCredential", "UniversityDegreeCredential"],
+    "issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f"
+  }, 
+  {
+    "types": ["VerifiableCredential", "UniversityDegreeCredential"],
+    "issuer": "https://example.edu/issuers/565049"
+  }]
+}
+```
+
 #### 2. presentation-request
+
+```json
+didcomm:iota/presentation/0.1/presentation-offer
+{
+  requests: [credentialRequest], // required
+  challenge: string, //required
+  signature: Signature, // optional - recommended since some parties may be unable to sign requests but holder implementations should reject unsigned requests by default
+}
+```
 
 #### 3. presentation
 
@@ -118,7 +176,16 @@ TODO: ZKP / selective disclosure fields?
 - Identification:
 - Authorisation:
 
-## Unresolved Questions/Concerns?
+## Problem Reports
+
+TODO
+
+Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
+- prot.iota.presentation.xxx
+
+## Unresolved Questions
+
+- Is a `schema` field needed for the `presentation-offer` and `presentation-request` to identify the types of verifiable credentials and allow forward compatibility for different fields in the message? The E.g. a `SelectiveDisclosure` message may only offer or request certain fields in the credential.  
 
 ## Related Work
 
