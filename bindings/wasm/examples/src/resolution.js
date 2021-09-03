@@ -17,15 +17,14 @@ async function resolution(clientConfig, did) {
     // Create a client instance to publish messages to the Tangle.
     const client = Client.fromConfig(config);
 
-    let newDid;
-    if(!did) {
+    if (!did) {
         // Creates a new identity, that also is updated (See "manipulate_did" example).
-        newDid = await manipulateIdentity(clientConfig);
+        let {doc} = await manipulateIdentity(clientConfig);
+        did = doc.id.toString();
     }
 
-
     // Resolve a DID.
-    return await client.resolve(did ?? newDid.doc.id.toString());
+    return await client.resolve(did);
 }
 
 export {resolution};
