@@ -39,7 +39,8 @@ impl Network {
   ///
   /// The names `"test"` and `"main"` will be mapped to the well-known [`Testnet`][Network::Testnet]
   /// and [`Mainnet`][Network::Mainnet] networks respectively. Other inputs will return an instance
-  /// of [`Other`][Network::Other] if the name is valid.
+  /// of [`Other`][Network::Other] if the name is valid. It must match a part or all of the networkId returned in the
+  /// nodeinfo from a node. For exampe, if the networkId is `"private-tangle"`, `"tangle"` can be used.
   ///
   /// Network names must comply with the IOTA DID Method spec, that is: be non-empty, at most
   /// 6 characters long, and only include alphanumeric characters `0-9` and `a-z`.
