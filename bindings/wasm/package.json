@@ -20,7 +20,7 @@
     "serve": "webpack serve",
     "example:node": "node examples/dist/node.js",
     "example:browser": "http-server ./examples/dist/ -c-1 -o ",
-    "test:node": "jest dist/test.js",
+    "test:node": "jest examples/dist/test.js",
     "test:browser": "cypress run --headless",
     "test:readme": "txm README.md",
     "cypress": "cypress open"
