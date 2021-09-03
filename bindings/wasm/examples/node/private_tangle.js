@@ -11,7 +11,7 @@ const { Client, Config, Document, KeyType, Network } = require('../../node/ident
 **/
 async function createIdentityPrivateTangle() {
     // This is an arbitrarily defined network name
-    const network = Network.from_name("custom");
+    const network = Network.try_from_name("custom");
 
     // Create a DID Document (an identity).
     const { doc, key } = new Document(KeyType.Ed25519, network.toString());

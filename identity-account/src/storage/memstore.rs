@@ -4,6 +4,7 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
+use crypto::signatures::ed25519;
 use futures::stream;
 use futures::stream::BoxStream;
 use futures::StreamExt;
@@ -12,10 +13,13 @@ use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
+use identity_core::crypto::SecretKey;
 use identity_core::crypto::Sign;
 use identity_did::verification::MethodType;
+use std::convert::TryFrom;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
+use zeroize::Zeroize;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -108,6 +112,34 @@ impl Storage for MemStore {
       }
       MethodType::MerkleKeyCollection2021 => {
         todo!("[MemStore::key_new] Handle MerkleKeyCollection2021")
+      }
+    }
+  }
+
+  async fn key_insert(&self, id: IdentityId, location: &KeyLocation, secret_key: SecretKey) -> Result<PublicKey> {
+    let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
+    let vault: &mut MemVault = vaults.entry(id).or_default();
+
+    match location.method() {
+      MethodType::Ed25519VerificationKey2018 => {
+        let mut secret_key_bytes: [u8; 32] = <[u8; 32]>::try_from(secret_key.as_ref())
+          .map_err(|err| Error::InvalidSecretKey(format!("expected a slice of 32 bytes - {}", err)))?;
+
+        let secret: ed25519::SecretKey = ed25519::SecretKey::from_bytes(secret_key_bytes);
+        secret_key_bytes.zeroize();
+
+        let public: ed25519::PublicKey = secret.public_key();
+
+        let public_key: PublicKey = public.to_bytes().to_vec().into();
+
+        let keypair: KeyPair = KeyPair::from((KeyType::Ed25519, public_key.clone(), secret_key));
+
+        vault.insert(location.clone(), keypair);
+
+        Ok(public_key)
+      }
+      MethodType::MerkleKeyCollection2021 => {
+        todo!("[MemStore::key_insert] Handle MerkleKeyCollection2021")
       }
     }
   }

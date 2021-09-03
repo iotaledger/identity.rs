@@ -23,7 +23,7 @@ async fn main() -> Result<()> {
 
   // This is an arbitrarily defined network name
   let network_name = "custom";
-  let network = Network::from_name(network_name)?;
+  let network = Network::try_from_name(network_name)?;
 
   // Create a new Account with the default configuration
   let private_node_url = "http://127.0.0.1:14265/";

@@ -19,7 +19,7 @@ use identity::prelude::*;
 pub async fn main() -> Result<()> {
   // This is an arbitrarily defined network name
   let network_name = "custom";
-  let network = Network::from_name(network_name)?;
+  let network = Network::try_from_name(network_name)?;
 
   // Set the network and the URL that points to
   // the REST API of the locally running hornet node.

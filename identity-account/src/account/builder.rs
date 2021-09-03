@@ -4,6 +4,7 @@
 use hashbrown::HashMap;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota::tangle::Network;
+use identity_iota::tangle::NetworkName;
 #[cfg(feature = "stronghold")]
 use std::path::PathBuf;
 #[cfg(feature = "stronghold")]
@@ -35,7 +36,7 @@ pub enum AccountStorage {
 pub struct AccountBuilder {
   config: Config,
   storage: AccountStorage,
-  clients: Option<HashMap<Network, ClientBuilder>>,
+  clients: Option<HashMap<NetworkName, ClientBuilder>>,
 }
 
 impl AccountBuilder {
@@ -86,7 +87,7 @@ impl AccountBuilder {
     self
       .clients
       .get_or_insert_with(HashMap::new)
-      .insert(network.clone(), f(ClientBuilder::new().network(network)));
+      .insert(network.name(), f(ClientBuilder::new().network(network)));
     self
   }
 
