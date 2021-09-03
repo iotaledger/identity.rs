@@ -1,10 +1,8 @@
-import * as identity from "../../web/identity_wasm.js";
-import {
-    logExplorerUrlToScreen,
-    logObjectToScreen,
-    logToScreen,
-    getExplorerUrl,
-} from "./utils.js";
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+import { Client, Config, Document, KeyType } from '@iota/identity-wasm';
+import { logExplorerUrl } from './utils';
 
 /**
     This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle.
@@ -13,37 +11,30 @@ import {
     That same keypair should be used to sign the original DID Document.
 
     @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
-    @param {boolean} log log the events to the output window
 **/
-export async function createIdentity(clientConfig, log = true) {
-    if (log) logToScreen("Identity creation started...");
-    if (log)
-        logToScreen("This might take a few seconds to complete proof of work!");
+async function createIdentity(clientConfig) {
 
     // Create a DID Document (an identity).
-    const { doc, key } = new identity.Document(
-        identity.KeyType.Ed25519,
-        clientConfig.network.toString()
-    );
+    const { doc, key } = new Document(KeyType.Ed25519, clientConfig.network.toString());
 
     // Sign the DID Document with the generated key.
     doc.sign(key);
 
     // Create a default client configuration from the parent config network.
-    const config = identity.Config.fromNetwork(clientConfig.network);
+    const config = Config.fromNetwork(clientConfig.network);
 
     // Create a client instance to publish messages to the Tangle.
-    const client = identity.Client.fromConfig(config);
+    const client = Client.fromConfig(config);
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const receipt = await client.publishDocument(doc.toJSON());
     doc.messageId = receipt.messageId;
 
-    const explorerUrl = getExplorerUrl(doc, receipt.messageId);
+    // Log the results.
+    logExplorerUrl("Identity Creation:", clientConfig.network.toString(), receipt.messageId);
 
-    if (log) logToScreen("Identity creation done!");
-    if (log) logObjectToScreen(doc);
-    if (log) logExplorerUrlToScreen(explorerUrl);
-
-    return { key, doc, receipt, explorerUrl };
+    // Return the results.
+    return {key, doc, receipt};
 }
+
+export {createIdentity};

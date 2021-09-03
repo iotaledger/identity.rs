@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-const {logExplorerUrl} = require("./utils");
-const {Client, Config, Document, Service} = require("../../node/identity_wasm");
-const {createIdentity} = require("./create_did");
+import {Client, Config, Document, Service} from '@iota/identity-wasm';
+import {createIdentity} from "./create_did";
+import {logExplorerUrl} from "./utils";
 
 /**
  This example is a basic introduction to creating a diff message and publishing it to the tangle.
@@ -48,4 +48,4 @@ async function createDiff(clientConfig) {
     return {updatedDoc, key, diffMessageId: diffReceipt.messageId};
 }
 
-exports.createDiff = createDiff;
+export {createDiff};
