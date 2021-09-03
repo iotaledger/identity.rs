@@ -437,12 +437,12 @@ impl Account {
       .store
       .published_generation(identity)
       .await?
-      .unwrap_or(Generation::new());
+      .unwrap_or_default();
 
     // Get the commits that need to be published.
     let commits = self.store.collect(identity, last_published).await?;
 
-    if commits.len() == 0 {
+    if commits.is_empty() {
       return Ok(());
     }
 
@@ -465,7 +465,7 @@ impl Account {
         Publish::None => {}
       }
 
-      if commits.len() > 0 {
+      if !commits.is_empty() {
         let last_commit_generation = commits.last().unwrap().sequence();
         // Publishing adds an AuthMessage or DiffMessage event, that contains the message id
         // which is required to be set for subsequent updates.
