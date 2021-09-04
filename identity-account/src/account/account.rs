@@ -433,11 +433,7 @@ impl Account {
     let identity: IdentityId = self.try_resolve_id(key).await?;
 
     // Get the last commit generation that was published to the tangle.
-    let last_published = self
-      .store
-      .published_generation(identity)
-      .await?
-      .unwrap_or_default();
+    let last_published = self.store.published_generation(identity).await?.unwrap_or_default();
 
     // Get the commits that need to be published.
     let commits = self.store.collect(identity, last_published).await?;
