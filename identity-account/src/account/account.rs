@@ -456,8 +456,8 @@ impl Account {
       let id = snapshot.id();
 
       match Publish::new(&commits) {
-        Publish::Auth => self.process_auth_change(snapshot).await.unwrap(),
-        Publish::Diff => self.process_diff_change(snapshot).await.unwrap(),
+        Publish::Auth => self.process_auth_change(snapshot).await?,
+        Publish::Diff => self.process_diff_change(snapshot).await?,
         Publish::None => {}
       }
 
