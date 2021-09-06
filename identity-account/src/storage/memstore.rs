@@ -53,7 +53,7 @@ pub struct MemStore {
 impl MemStore {
   pub fn new() -> Self {
     Self {
-      expand: true,
+      expand: false,
       index: Shared::new(IdentityIndex::new()),
       published_generations: Shared::new(HashMap::new()),
       events: Shared::new(HashMap::new()),

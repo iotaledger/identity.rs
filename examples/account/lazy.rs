@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! cargo run --example account_methods
+//! cargo run --example account_lazy
 
 use identity::account::Account;
 use identity::account::Command;

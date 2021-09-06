@@ -458,23 +458,25 @@ impl Account {
 
   /// Publishes according to the autopublish configuration.
   async fn publish(&self, snapshot: IdentitySnapshot, commits: Vec<Commit>, force: bool) -> Result<()> {
-    if force || self.config.autopublish {
-      let id = snapshot.id();
+    if !force && !self.config.autopublish {
+      return Ok(());
+    }
 
-      match Publish::new(&commits) {
-        Publish::Auth => self.process_auth_change(snapshot).await?,
-        Publish::Diff => self.process_diff_change(snapshot).await?,
-        Publish::None => {}
-      }
+    let id = snapshot.id();
 
-      if !commits.is_empty() {
-        let last_commit_generation = commits.last().unwrap().sequence();
-        // Publishing adds an AuthMessage or DiffMessage event, that contains the message id
-        // which is required to be set for subsequent updates.
-        // The next snapshot that loads the tangle state will require this message id to be set.
-        let generation = Generation::from_u32(last_commit_generation.to_u32() + 1);
-        self.store.set_published_generation(id, generation).await?;
-      }
+    match Publish::new(&commits) {
+      Publish::Auth => self.process_auth_change(snapshot).await?,
+      Publish::Diff => self.process_diff_change(snapshot).await?,
+      Publish::None => {}
+    }
+
+    if !commits.is_empty() {
+      let last_commit_generation = commits.last().unwrap().sequence();
+      // Publishing adds an AuthMessage or DiffMessage event, that contains the message id
+      // which is required to be set for subsequent updates.
+      // The next snapshot that loads the tangle state will require this message id to be set.
+      let generation = Generation::from_u32(last_commit_generation.to_u32() + 1);
+      self.store.set_published_generation(id, generation).await?;
     }
 
     Ok(())
@@ -525,18 +527,34 @@ impl Config {
   }
 
   /// Sets the account auto-save behaviour.
+  /// - [`Every`][AutoSave::Every] => Save to storage on every update
+  /// - [`Never`][AutoSave::Never] => Never save to storage when updating
+  /// - [`Batch(n)`][AutoSave::Batch] => Save to storage after every `n` updates.
+  ///
+  /// Note that when [`Never`][AutoSave::Never] is selected, you will most
+  /// likely want to set [`dropsave`][Self::dropsave] to `true`.
+  ///
+  /// Default: [`Every`][AutoSave::Every]
   pub fn autosave(mut self, value: AutoSave) -> Self {
     self.autosave = value;
     self
   }
 
   /// Sets the account auto-publish behaviour.
+  /// - `true` => publish to the Tangle on every DID document change
+  /// - `false` => never publish automatically
+  ///
+  /// Default: `true`
   pub fn autopublish(mut self, value: bool) -> Self {
     self.autopublish = value;
     self
   }
 
   /// Save the account state on drop.
+  /// If set to `false`, set [`autosave`][Self::autosave] to
+  /// either [`Every`][AutoSave::Every] or [`Batch(n)`][AutoSave::Batch].
+  ///
+  /// Default: `true`
   pub fn dropsave(mut self, value: bool) -> Self {
     self.dropsave = value;
     self
