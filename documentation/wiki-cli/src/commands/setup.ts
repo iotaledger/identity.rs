@@ -25,13 +25,13 @@ export default class Setup extends Command {
     if (!existsSync(WORKING_FOLDER)) {
       mkdirSync(WORKING_FOLDER)
     }
-    this.log(ref)
-    spawnSync('git', [
-      'clone',
-      '--branch',
-      ref,
-      'https://github.com/iota-community/iota-wiki.git',
-    ], {
+    const GIT_ARGS = ['clone']
+    if (ref) {
+      GIT_ARGS.push('--branch',
+        ref,)
+    }
+    GIT_ARGS.push('https://github.com/iota-community/iota-wiki.git')
+    spawnSync('git', GIT_ARGS, {
       cwd: join(PWD, WORKING_FOLDER),
       shell: true,
       stdio: 'inherit',
@@ -55,9 +55,7 @@ export default class Setup extends Command {
       this.log(`linking ${target} to ${path}`)
       symlinkSync(target, path)
     })
-    spawnSync('npm', [
-      'i',
-    ], {
+    spawnSync('yarn', {
       cwd: WIKI_CONTENT_REPO_FOLDER,
       shell: true,
       stdio: 'inherit',

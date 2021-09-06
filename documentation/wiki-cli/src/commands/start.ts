@@ -3,6 +3,7 @@ import {spawnSync} from 'child_process'
 import {join} from 'path'
 const  replaceInFile = require('replace-in-file')
 import {readFileSync} from 'fs'
+import {copySync} from 'fs-extra'
 
 export default class Start extends Command {
   static description = 'start local wiki'
@@ -31,7 +32,9 @@ export default class Start extends Command {
       to: EXTERNAL_DOCS_DROPDOWN_CONFIG,
     })
 
-    spawnSync('npm', [
+    copySync(join(WIKI_GIT_FOLDER, 'external', 'identity.rs', 'documentation', 'static', 'img'), join(WIKI_GIT_FOLDER, 'static', 'img'))
+
+    spawnSync('yarn', [
       'start',
       '--',
       '--host',
