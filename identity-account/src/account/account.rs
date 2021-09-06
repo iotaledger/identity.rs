@@ -156,9 +156,11 @@ impl Account {
 
   /// Updates the identity specified by the given `key` with the given `command`.
   pub async fn update_identity<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
-    let identity: IdentityId = self.try_resolve_id(key).await?;
+    // Hold on to an `IdentityId`s individual lock until we've finished processing the update.
+    let identity_lock = self.try_resolve_id_lock(key).await?;
+    let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
 
-    self.process(identity, command, true).await?;
+    self.process(*identity, command, true).await?;
 
     Ok(())
   }
@@ -220,6 +222,10 @@ impl Account {
 
   async fn try_resolve_id<K: IdentityKey>(&self, key: K) -> Result<IdentityId> {
     self.resolve_id(key).await.ok_or(Error::IdentityNotFound)
+  }
+
+  async fn try_resolve_id_lock<K: IdentityKey>(&self, key: K) -> Result<Arc<RwLock<IdentityId>>> {
+    self.index.read().await.get_lock(key).ok_or(Error::IdentityNotFound)
   }
 
   // ===========================================================================
