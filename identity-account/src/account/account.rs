@@ -44,14 +44,14 @@ use crate::types::KeyLocation;
 
 const OSC: Ordering = Ordering::SeqCst;
 
-pub struct Updater<'account, K: IdentityKey> {
+pub struct Updater<'account, K: IdentityKey + Clone> {
   account: &'account Account,
   key: K,
 }
 
-impl<'account, K: IdentityKey> Updater<'account, K> {
-  pub fn create_method(self) -> CreateMethodBuilder<'account, K> {
-    CreateMethodBuilder::new(self.account, self.key)
+impl<'account, K: IdentityKey + Clone> Updater<'account, K> {
+  pub fn create_method(&self) -> CreateMethodBuilder<'account, K> {
+    CreateMethodBuilder::new(self.account, self.key.clone())
   }
 }
 
@@ -64,17 +64,8 @@ pub struct Account {
 }
 
 impl Account {
-  pub fn new_update<'account, K: IdentityKey>(&'account self, key: K) -> Updater<'account, K> {
+  pub fn update_identity<'account, K: IdentityKey + Clone>(&'account self, key: K) -> Updater<'account, K> {
     Updater { account: &self, key }
-  }
-
-  pub async fn batch_update(&self, updates: &[Command]) -> Result<()> {
-
-    // for update in updates {
-    //   self.update_identity(key, update)?;
-    // }
-
-    Ok(())
   }
 
   /// Creates a new [AccountBuilder].
@@ -178,7 +169,7 @@ impl Account {
   }
 
   /// Updates the identity specified by the given `key` with the given `command`.
-  pub async fn update_identity<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
+  pub async fn update_identity_old<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
     let identity: IdentityId = self.try_resolve_id(key).await?;
 
     self.process(identity, command, true).await?;

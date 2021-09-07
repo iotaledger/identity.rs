@@ -69,8 +69,12 @@ macro_rules! impl_command_builder {
 
         pub async fn apply(self) -> $crate::Result<()> {
           let account = self.account;
-          let update = self.finish()?;
-          account.update_identity(self.key, update).await?;
+          let update = $crate::events::Command::$ident {
+            $(
+              $field: impl_command_builder!(@finish self $requirement $field $ty $(= $value)?),
+            )*
+          };
+          account.update_identity_old(self.key, update).await?;
           Ok(())
         }
       }

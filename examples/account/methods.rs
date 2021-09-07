@@ -32,28 +32,12 @@ async fn main() -> Result<()> {
   //   .finish()?;
 
   account
-    .new_update()
+    .update_identity(did)
     .create_method()
     .scope(MethodScope::Authentication)
     .fragment("my-auth-key")
-    .apply(did)
+    .apply()
     .await?;
-
-  let command1 = account
-    .new_update()
-    .create_method()
-    .scope(MethodScope::Authentication)
-    .fragment("my-auth-key")
-    .finish()?;
-
-  let command2 = account
-    .new_update()
-    .create_method()
-    .scope(MethodScope::Authentication)
-    .fragment("my-auth-key")
-    .finish()?;
-
-  account.batch_update(did, &[command1, command2]).await?;
 
   // Process the command and update the identity state.
   // account.update_identity(document, command).await?;
