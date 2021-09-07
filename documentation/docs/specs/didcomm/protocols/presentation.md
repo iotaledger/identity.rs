@@ -7,7 +7,7 @@ sidebar_label: Presentation
 
 - Status: IN-PROGRESS
 - Start Date: 2021-09-02
-- Last Updated: 2021-09-06
+- Last Updated: 2021-09-07
 
 ## Summary/Goals
 
@@ -124,7 +124,7 @@ TODO: selective disclosure / ZKP fields?
 
 #### Examples
 
-1. Offering a single verifiable credential:
+1. Offer a single verifiable credential:
 
 ```json
 {
@@ -135,7 +135,7 @@ TODO: selective disclosure / ZKP fields?
 }
 ```
 
-2. Offering two verifiable credentials with different issuers:
+2. Offer two verifiable credentials with different issuers:
 
 ```json
 {
@@ -181,25 +181,49 @@ The context and types are included, as well as trusted issuers, to allow the hol
 | [`challenge`](https://w3c-ccg.github.io/ld-proofs/#dfn-challenge) | A random string unique per [`presentation-request`](#presentation-request) by a verifier to help mitigate replay attacks. | REQUIRED |
 | [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the verifier; RECOMMENDED to include if preceded by a [`presentation-offer`](#presentation-offer) with `requireSignature = true`. | OPTIONAL |
 
-Verifiers are RECOMMENDED to include a proof whenever possible to avoid rejections from holders that enforce non-repudiation. Holders could use this to prove that a verifier is non-compliant with laws or regulations, e.g. over-requesting information protected by [GDPR](https://gdpr-info.eu/). Holders may still choose to accept unsigned [`presentation-requests`](#presentation-request) on a case-by-case basis, even if `requireSignature` was `true` in their [`presentation-offer`](#presentation-offer), as some verifiers may be unable to perform cryptographic signing operations.
+Verifiers are RECOMMENDED to include a proof whenever possible to avoid rejections from holders that enforce non-repudiation. Holders could use this to prove that a verifier is non-compliant with laws or regulations, e.g. over-requesting information protected by [GDPR](https://gdpr-info.eu/). Holders may still choose to accept unsigned [`presentation-requests`](#presentation-request) on a case-by-case basis, even if `requireSignature` was `true` in their [`presentation-offer`](#presentation-offer), as some verifiers may be unable to perform cryptographic signing operations. If the `proof` is invalid, the receiving holder MUST send a `problem-report`.
 
 Note that the `proof` is not required for authentication of the verifier in general; it is RECOMMENDED to use [Sender Authenticated Encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) for authentication of parties in a DID-Comm thread.
 
 #### Examples
 
-1. TBD
+1. Request a single credential matching both specified types.
 
 ```json
 {
-  "challenge": string,          // REQUIRED
+  "requests": [{
+    "type": ["VerifiableCredential", "UniversityDegreeCredential"]
+  }],
+  "challenge": "06da6f1c-26b0-4976-915d-670b8f407f2d"
 }
 ```
 
-2. TBD
+2. Signed request of a required credential from a particular trusted issuer and an optional credential. 
 
 ```json
 {
+  "requests": [{
+    "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+    "trustedIssuers": ["did:example:76e12ec712ebc6f1c221ebfeb1f"]
+  }, {
+    "type": ["VerifiableCredential", "DriversLicence"],
+    "optional": true
+  }], 
+  "challenge": "06da6f1c-26b0-4976-915d-670b8f407f2d",
+  "proof": { ... }
+}
+```
 
+3. Request a single credential signed by one of several trusted issuers.
+
+```json
+{
+  "requests": [{
+    "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+    "trustedIssuers": ["did:example:76e12ec712ebc6f1c221ebfeb1f", "did:example:f1befbe122c1f6cbe217ce21e67", "did:example:c6ef1fe11eb22cb711e6e227fbc"],
+    "optional": false
+  }], 
+  "challenge": "06da6f1c-26b0-4976-915d-670b8f407f2d",
 }
 ```
 
@@ -212,31 +236,55 @@ TBD
 
 ```json
 {
-  "vp": string          // REQUIRED
+  "vp": VP  // REQUIRED
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`vp`](https://www.w3.org/TR/vc-data-model/#presentations-0) | TBD | REQUIRED |
+| [`vp`](https://www.w3.org/TR/vc-data-model/#presentations-0) | Signed [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) containing one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) matching the [presentation-request](#presentation-request) | REQUIRED |
+
+The [presentation `proof`](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section in `vp` MUST include the `challenge` sent by the verifier in the preceding [`presentation-request`](#presentation-request). The included credentials SHOULD match all `type` fields and one or more `trustedIssuers` if included in the [`presentation-request`](#presentation-request). Revoked, disputed, or otherwise invalid presentations or credentials MUST result in a rejected [`presentation-result`](#presentation-result) sent back to the holder, NOT a separate [`problem-report`].
 
 #### Examples
 
-1. TBD
+1. Presentation of a Verifiable Presentation credential.
 
 ```json
 {
-  
+  "vp": {
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://www.w3.org/2018/credentials/examples/v1"
+  ],
+  "type": "VerifiablePresentation",
+  "verifiableCredential": [{
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1",
+      "https://www.w3.org/2018/credentials/examples/v1"
+    ],
+    "id": "6c1a1477-e452-4da7-b2db-65ad0b369d1a",
+    "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+    "issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f",
+    "issuanceDate": "2021-05-03T19:73:24Z",
+    "credentialSubject": {
+      "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "degree": {
+        "type": "BachelorDegree",
+        "name": "Bachelor of Science and Arts"
+      }
+    },
+    "proof": {...}
+  }],
+  "proof": {
+    "challenge": "06da6f1c-26b0-4976-915d-670b8f407f2d",
+    ...
+  }
+}
 }
 ```
 
-2. TBD
-
-```json
-{
-
-}
-```
+TODO: recommend the type being a UUID (what version?) in issuance. Needs to be a URI https://www.w3.org/TR/vc-data-model/#identifiers ...
 
 ### 4. `presentation-result` {#presentation-result}
 
@@ -263,23 +311,31 @@ TBD
 | `problems` | TBD | OPTIONAL |
 | `problemReport` | TBD | REQUIRED | 
 | `allowRetry` | TBD | OPTIONAL |
-| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | TBD  | OPTIONAL |
+| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the verifier; RECOMMENDED to include.  | OPTIONAL |
+
+Similar to [`presentation-request`](#presentation-request), verifiers are RECOMMENDED to include a proof whenever possible for non-repudiation of receipt of the presentation. Holders may choose to blocklist verifiers that refuse to provide non-repudiable signatures.
 
 #### Examples
 
-1. TBD
+1. Result confirming a sucessful presentation including a proof for non-repudiation.
 
 ```json
 {
-
+  "accepted": true,
+  "proof": {...}
 }
 ```
 
-2. TBD
+2. Result informing of an unsucessful presentation, disallowing retries. 
 
 ```json
 {
-
+  "accepted": false,
+  "problems": [{
+    "problemReport": ProblemReport,
+    "dispute": Dispute,
+  }],
+  "allowRetry": false
 }
 ```
 
@@ -296,14 +352,11 @@ TBD
 
 ## Problem Reports
 
+See: https://identity.foundation/didcomm-messaging/spec/#descriptors
 TODO
 
 Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
 - prot.iota.presentation.reject-request
-- prot.issuance.reject-vc
-- prot.signing.reject-request
-- prot.revocation.reject-request
-- prot.feature-discovery.reject-request
 
 ## Unresolved Questions
 
