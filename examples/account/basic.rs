@@ -21,7 +21,7 @@ async fn main() -> Result<()> {
   let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let document: &IotaDID = snapshot.identity().try_did()?;
+  let did: &IotaDID = snapshot.identity().try_did()?;
 
   println!("[Example] Local Snapshot = {:#?}", snapshot);
   println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);
@@ -30,12 +30,12 @@ async fn main() -> Result<()> {
   // Fetch the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
-  let resolved: IotaDocument = account.resolve_identity(document).await?;
+  let resolved: IotaDocument = account.resolve_identity(did).await?;
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 
   // Delete the identity and all associated keys
-  account.delete_identity(document).await?;
+  account.delete_identity(did).await?;
 
   Ok(())
 }
