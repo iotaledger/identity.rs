@@ -15,7 +15,7 @@ use crate::identity::IdentityKey;
 use crate::identity::IdentityTag;
 
 /// An mapping between [IdentityTag]s and [IdentityId]s.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct IdentityIndex {
   data: HashMap<IdentityTag, IdentityId>,
@@ -104,20 +104,6 @@ impl IdentityIndex {
 impl Default for IdentityIndex {
   fn default() -> Self {
     Self::new()
-  }
-}
-
-impl Clone for IdentityIndex {
-  fn clone(&self) -> Self {
-    let mut locks = HashMap::new();
-    self.data.values().for_each(|id| {
-      locks.insert(*id, Arc::new(RwLock::new(*id)));
-    });
-
-    Self {
-      data: self.data.clone(),
-      locks,
-    }
   }
 }
 
