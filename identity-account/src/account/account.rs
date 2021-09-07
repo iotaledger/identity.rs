@@ -44,12 +44,12 @@ use crate::types::KeyLocation;
 
 const OSC: Ordering = Ordering::SeqCst;
 
-pub struct Updater<'account, K: IdentityKey + Clone> {
+pub struct IdentityUpdater<'account, K: IdentityKey + Clone> {
   account: &'account Account,
   key: K,
 }
 
-impl<'account, K: IdentityKey + Clone> Updater<'account, K> {
+impl<'account, K: IdentityKey + Clone> IdentityUpdater<'account, K> {
   pub fn create_method(&self) -> CreateMethodBuilder<'account, K> {
     CreateMethodBuilder::new(self.account, self.key.clone())
   }
@@ -64,8 +64,8 @@ pub struct Account {
 }
 
 impl Account {
-  pub fn update_identity<'account, K: IdentityKey + Clone>(&'account self, key: K) -> Updater<'account, K> {
-    Updater { account: &self, key }
+  pub fn update_identity<'account, K: IdentityKey + Clone>(&'account self, key: K) -> IdentityUpdater<'account, K> {
+    IdentityUpdater { account: &self, key }
   }
 
   /// Creates a new [AccountBuilder].

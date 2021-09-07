@@ -10,19 +10,19 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 
+use crate::account::Account;
 use crate::error::Result;
 use crate::events::CommandError;
 use crate::events::Context;
 use crate::events::Event;
 use crate::events::EventData;
+use crate::identity::IdentityKey;
 use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::identity::TinyService;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
-use crate::account::Account;
-use crate::identity::IdentityKey;
 
 // Supported authentication method types.
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
