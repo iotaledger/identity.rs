@@ -15,7 +15,7 @@ use crate::identity::IdentityKey;
 use crate::identity::IdentityTag;
 
 /// An mapping between [IdentityTag]s and [IdentityId]s.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct IdentityIndex {
   data: HashMap<IdentityTag, IdentityId>,
@@ -52,10 +52,15 @@ impl IdentityIndex {
   }
 
   /// Returns the id of the identity matching the given `key` wrapped in a lock.
-  pub fn get_lock<K: IdentityKey>(&self, key: K) -> Option<Arc<RwLock<IdentityId>>> {
+  pub fn get_lock<K: IdentityKey>(&mut self, key: K) -> Option<Arc<RwLock<IdentityId>>> {
     if let Some(identity_id) = key.scan(self.data.iter()) {
-      let lock = self.locks.get(&identity_id).unwrap();
-      Some(Arc::clone(lock))
+      match self.locks.entry(identity_id) {
+        Entry::Occupied(lock) => Some(Arc::clone(lock.get())),
+        Entry::Vacant(thing) => {
+          let lock = thing.insert(Arc::new(RwLock::new(identity_id)));
+          Some(Arc::clone(lock))
+        }
+      }
     } else {
       None
     }
@@ -88,8 +93,6 @@ impl IdentityIndex {
       }
     }
 
-    self.locks.insert(id, Arc::new(RwLock::new(id)));
-
     Ok(())
   }
 }
@@ -117,26 +120,6 @@ impl Clone for IdentityIndex {
 impl PartialEq for IdentityIndex {
   fn eq(&self, other: &Self) -> bool {
     self.data == other.data
-  }
-}
-
-impl<'de> serde::Deserialize<'de> for IdentityIndex {
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where
-    D: serde::Deserializer<'de>,
-  {
-    Result::map(
-      serde::Deserialize::deserialize(deserializer),
-      |data: HashMap<IdentityTag, IdentityId>| {
-        let mut locks = HashMap::new();
-
-        for value in data.values() {
-          locks.insert(*value, Arc::new(RwLock::new(*value)));
-        }
-
-        IdentityIndex { data, locks }
-      },
-    )
   }
 }
 

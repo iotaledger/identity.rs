@@ -225,7 +225,7 @@ impl Account {
   }
 
   async fn try_resolve_id_lock<K: IdentityKey>(&self, key: K) -> Result<Arc<RwLock<IdentityId>>> {
-    self.index.read().await.get_lock(key).ok_or(Error::IdentityNotFound)
+    self.index.write().await.get_lock(key).ok_or(Error::IdentityNotFound)
   }
 
   // ===========================================================================
