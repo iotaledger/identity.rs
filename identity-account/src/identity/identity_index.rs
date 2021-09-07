@@ -78,11 +78,15 @@ impl IdentityIndex {
 
   /// Removes the identity specified by `key` from the index.
   pub fn del<K: IdentityKey>(&mut self, key: K) -> Result<(IdentityTag, IdentityId)> {
-    self
+    let removed_id = self
       .data
       .drain_filter(|tag, id| key.equals(tag, *id))
       .next()
-      .ok_or(Error::IdentityNotFound)
+      .ok_or(Error::IdentityNotFound)?;
+
+    self.locks.remove(&removed_id.1);
+
+    Ok(removed_id)
   }
 
   fn insert(&mut self, id: IdentityId, tag: IdentityTag) -> Result<()> {
