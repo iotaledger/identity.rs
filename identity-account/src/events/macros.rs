@@ -85,11 +85,11 @@ macro_rules! impl_command_builder {
       //   }
       // }
 
-      // impl $crate::events::Command {
-      //   pub fn [<$ident:snake>]() -> [<$ident Builder>] {
-      //     [<$ident Builder>]::new()
-      //   }
-      // }
+      impl<'account, K: IdentityKey + Clone> $crate::identity::IdentityUpdater<'account, K> {
+        pub fn [<$ident:snake>](&self) -> [<$ident Builder>]<'account, K> {
+          [<$ident Builder>]::new(self.account(), self.key().clone())
+        }
+      }
     }
   };
 }

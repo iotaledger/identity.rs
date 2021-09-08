@@ -27,7 +27,6 @@ use crate::error::Result;
 use crate::events::Command;
 use crate::events::Commit;
 use crate::events::Context;
-use crate::events::CreateMethodBuilder;
 use crate::events::Event;
 use crate::events::EventData;
 use crate::identity::IdentityCreate;
@@ -37,23 +36,13 @@ use crate::identity::IdentityKey;
 use crate::identity::IdentitySnapshot;
 use crate::identity::IdentityState;
 use crate::identity::IdentityTag;
+use crate::identity::IdentityUpdater;
 use crate::identity::TinyMethod;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
 
 const OSC: Ordering = Ordering::SeqCst;
-
-pub struct IdentityUpdater<'account, K: IdentityKey + Clone> {
-  account: &'account Account,
-  key: K,
-}
-
-impl<'account, K: IdentityKey + Clone> IdentityUpdater<'account, K> {
-  pub fn create_method(&self) -> CreateMethodBuilder<'account, K> {
-    CreateMethodBuilder::new(self.account, self.key.clone())
-  }
-}
 
 #[derive(Debug)]
 pub struct Account {
@@ -64,8 +53,8 @@ pub struct Account {
 }
 
 impl Account {
-  pub fn update_identity<'account, K: IdentityKey + Clone>(&'account self, key: K) -> IdentityUpdater<'account, K> {
-    IdentityUpdater { account: &self, key }
+  pub fn update_identity<K: IdentityKey + Clone>(&self, key: K) -> IdentityUpdater<'_, K> {
+    IdentityUpdater::new(&self, key)
   }
 
   /// Creates a new [AccountBuilder].
