@@ -42,7 +42,7 @@ impl WasmDocumentDiff {
   /// Returns the message_id of the DID Document diff.
   #[wasm_bindgen(getter = messageId)]
   pub fn message_id(&self) -> String {
-    self.0.previous_message_id().to_string()
+    self.0.message_id().to_string()
   }
 
   /// Sets the message_id of the DID Document diff.
