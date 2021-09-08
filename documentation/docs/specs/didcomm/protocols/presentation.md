@@ -5,86 +5,31 @@ sidebar_label: Presentation
 
 # Presentation
 
+- Version: 0.1
 - Status: `IN-PROGRESS`
 - Start Date: 2021-09-02
-- Last Updated: 2021-09-07
+- Last Updated: 2021-09-08
 
-## Summary/Goals
+## Overview
 
 Allows presentation of verifiable credentials that are issued to a holder and uniquely presented to a third-party verifier.
 
-## Example Use-Cases
+### Example Use-Cases
 
-## Specification
+- A company founder wants to prove they have a bank account in order to apply for insurance.
+- A traveller proves to the border agency that he has a valid visa.
 
-### Roles: 
+### Roles
 - [Holder](https://www.w3.org/TR/vc-data-model/#dfn-holders): possesses one or more credentials that are combined in a verifiable presentation to show proof of ownership to the verifier.
 - [Verifier](https://www.w3.org/TR/vc-data-model/#dfn-verifier): receives and validates the credentials presented by the holder.
 
+### Interaction
 
-```mermaid
-sequenceDiagram
-    autonumber
-    Holder->>Verifier: presentation-offer
-    Note right of Holder: Rational thoughts!
-    Verifier->>Holder: presentation-request
-    Holder-->>Verifier: presentation
-    Verifier-->>Holder: presentation-result
-```
+<div style={{textAlign: 'center'}}>
 
-```mermaid
-graph TD;
-    presentation-offer --> dc1;
-    dc1{accept/reject?};
-    dc1 --> ac1;
-    ac1[/Select VCs. Prepare VP./];
-    ac1 --> presentation;
-```
+![PresentationDiagram](/img/protocols/presentation.svg)
 
-```mermaid
-graph TD;
-    presentation-request --> receive-presentation;
-    receive-presentation --> ac1;
-    ac1[/Verify VP & VCs/];
-    ac1 --> presentation-result;
-    
-```
-    
-    presentation-result --> end;
-    
-```plantuml
-@startuml
-|Holder|
-start
-if (color?) is (red) then
-#pink:**action red**;
-:foo1;
-else (not red)
-|Verifier|
-#lightgray:**action not red**;
-:foo2;
-endif
-stop
-@enduml
-```
-
-```plantuml
-@startuml
-|A|
-start
-fork
-    :W1;
-fork again
-|B|
-    :W2;
-end fork
-|C|
-stop
-@enduml
-@enduml
-```
-
-<iframe frameBorder="0" style={{width:'100%',height:'393px',}} src="https://viewer.diagrams.net/?highlight=0000ff&edit=_blank&layers=1&nav=1&title=Untitled%20Diagram.drawio#R7Vhbl9IwEP41HJ%2F09IIFHi277Kq4Z5XVPT6GNrSRtFPTlIu%2F3glNaUuRi8peOMsDJzMdJsl831xoy%2B5HiytBkvAT%2BJS3LMNftOyLlmX1rC5%2BK8UyVzjtdq4IBPNzlVkqRuwX1UpDazPm07RmKAG4ZEld6UEcU0%2FWdEQImNfNJsDruyYkoA3FyCO8qb1nvgxzbdfqlPpryoKw2Nl0evmTiBTG%2BiZpSHyYV1T2ZcvuCwCZr6JFn3IVuyIu9%2B%2BX93w4da4%2BfE5%2Fkq%2Fux7ubb69zZ4NjfrK%2BgqCx%2FL%2Burdz1jPBMx0vfVS6LAArIYp8qJ0bLdkMZcVyauPxBpVxqwEkmAVUgZAgBxIQPARJtN4FYajNTyTT23ylgUR5z8Ka5asA413ugpO27KKVSwHSNnXKwBkIZczKm3CXeNFgdtA8cBD6KIabKlY9k0HcpD3dZat0DY6sxSCETHt1hZ2uKExHQXf6c3E6dr8JTjdwVhYhKsUQDQTmRbFYnM9E5EaztStxxoaE%2FggZ2gwZDEiUq64Gm8SuJqzmI6Q5uKFzmIZN0lJBVgOZYTep8qfIAr%2BoGnKSpRnEPyMeBNKNC0sXOsBZPHZ3burh1tTgvK4VZpH9YqRJt40RAtBtAfMfi%2BZKS%2F5KSzoEpWXSsvTmpyVIQ4%2BAU1Z5ugcWyYgKTSYoH26TOesO%2FZ9PbBptuoEGm%2FXg8a7o9Epk6x3HJfPJccv7QIhyOYXDHAleBWiU8CwIkC7qLW%2FagWbtCiMZZur9d1DBWDBqQiHEVr2vKZ1Qyj2xpKoSzAPe98BBuKraTB7dkcYCSU0p3K7Ji%2FT1hs%2BnUm81arnYbY0u36Z6q23QamN4iejl0lsFX%2BJ5Zx7etDRB6j93yu4cU6Wddgh%2B84xfVdH%2FLNw8s05o9xhsbPzUCPf0poHfQTPkyBpyGYda5DQLFCSt8cjM%2Bbk4C40zEq0EAMvkyCeyaBKxtTehBJ4GiEFZA%2FUITwhBMY3iOc8DmP%2F%2B2%2FdhzQFEp6hBwFVPLyDPszDDYnMVs83QYoFi%2Bqc1LYfm62778DQ%3D%3D"></iframe>
+</div>
 
 ## Messages
 
@@ -96,7 +41,6 @@ stop
 Sent by the holder to offer one or more credentials for a verifier to view. 
 The context and types are included to allow the verifier to choose whether they are interested in the offer, negotiate the type of credentials they want or accept and by which issuers they trust.
 
-The issuer is optional when the holder may not want to reveal too much information up-front on the exact credentials they possess, they may want a non-repudiable signed request from the verifier first? 
 ```json
 {
   "offers": [{
@@ -112,11 +56,13 @@ The issuer is optional when the holder may not want to reveal too much informati
 | :--- | :--- | :--- |
 | `offers` | Array of one or more offers, each specifying a single credential possessed by the holder. | REQUIRED |
 | [`@context`](https://www.w3.org/TR/vc-data-model/#contexts) | Array of JSON-LD contexts referenced in the credential. | OPTIONAL |
-| [`type`](https://www.w3.org/TR/vc-data-model/#types) | Array of credential types specifying . | REQUIRED | 
-| [`issuer`](https://www.w3.org/TR/vc-data-model/#issuer) | The ID or URI of the credential issuer. | OPTIONAL |
+| [`type`](https://www.w3.org/TR/vc-data-model/#types) | Array of credential types specifying the kind of credential offered.[^1] | REQUIRED | 
+| [`issuer`](https://www.w3.org/TR/vc-data-model/#issuer) | The ID or URI of the credential issuer.[^2] | OPTIONAL |
 | `requireSignature` | Request that the verifier sign its [`presentation-request`](#presentation-request) with a proof. It is RECOMMENDED that the holder issues a `problem-report` if the verifier does not sign the message when this is true. | OPTIONAL |
 
-TODO: how do we elaborate on design decision? E.g. issuer is optional because one may not want to reveal too much information up-front (privacy)
+[^1] The types may be underspecified to preserve privacy but should always include the most general types, e.g. `["VerifiableCredential", "DriversLicence", "EUDriversLicence", "GermanDriversLicence"]` could be specified as `["VerifiableCredential", "DriversLicence"]`.
+
+[^2] The issuer is optional as the holder may not want to reveal too much information up-front on the exact credentials they possess; they may want a non-repudiable signed request from the verifier first? 
 
 TODO: selective disclosure / ZKP fields?
 
@@ -177,9 +123,9 @@ The context and types are included, as well as trusted issuers, to allow the hol
 | [`trustedIssuer`](https://www.w3.org/TR/vc-data-model/#issuer) | Array of credential issuer IDs or URIs that the verifier would accept. | OPTIONAL |
 | `optional` | Whether this credential is required (`false`) or optional (`true`) to present by the holder. A holder should send a problem report if unable to satisfy a non-optional credential request. Default: `false`. | OPTIONAL |
 | [`challenge`](https://w3c-ccg.github.io/ld-proofs/#dfn-challenge) | A random string unique per [`presentation-request`](#presentation-request) by a verifier to help mitigate replay attacks. | REQUIRED |
-| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the verifier; RECOMMENDED to include if preceded by a [`presentation-offer`](#presentation-offer) with `requireSignature = true`. | OPTIONAL |
+| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the verifier; RECOMMENDED to include if preceded by a [`presentation-offer`](#presentation-offer) with `requireSignature = true`.[^3] | OPTIONAL |
 
-Verifiers are RECOMMENDED to include a proof whenever possible to avoid rejections from holders that enforce non-repudiation. Holders could use this to prove that a verifier is non-compliant with laws or regulations, e.g. over-requesting information protected by [GDPR](https://gdpr-info.eu/). Holders may still choose to accept unsigned [`presentation-requests`](#presentation-request) on a case-by-case basis, even if `requireSignature` was `true` in their [`presentation-offer`](#presentation-offer), as some verifiers may be unable to perform cryptographic signing operations. If the `proof` is invalid, the receiving holder MUST send a `problem-report`.
+[^3] Verifiers are RECOMMENDED to include a proof whenever possible to avoid rejections from holders that enforce non-repudiation. Holders could use this to prove that a verifier is non-compliant with laws or regulations, e.g. over-requesting information protected by [GDPR](https://gdpr-info.eu/). Holders may still choose to accept unsigned [`presentation-requests`](#presentation-request) on a case-by-case basis, even if `requireSignature` was `true` in their [`presentation-offer`](#presentation-offer), as some verifiers may be unable to perform cryptographic signing operations. If the `proof` is invalid, the receiving holder MUST send a `problem-report`.
 
 Note that the `proof` is not required for authentication of the verifier in general; it is RECOMMENDED to use [Sender Authenticated Encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) for authentication of parties in a DID-Comm thread.
 
@@ -240,9 +186,11 @@ Sent by the holder to present a [verifiable presentation](https://www.w3.org/TR/
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`vp`](https://www.w3.org/TR/vc-data-model/#presentations-0) | Signed [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) containing one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) matching the [presentation-request](#presentation-request) | REQUIRED |
+| [`vp`](https://www.w3.org/TR/vc-data-model/#presentations-0) | Signed [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) containing one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) matching the [presentation-request](#presentation-request).[^4] | REQUIRED |
 
-The [presentation `proof`](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section in `vp` MUST include the `challenge` sent by the verifier in the preceding [`presentation-request`](#presentation-request). The included credentials SHOULD match all `type` fields and one or more `trustedIssuer` if included in the [`presentation-request`](#presentation-request). Revoked, disputed, or otherwise invalid presentations or credentials MUST result in a rejected [`presentation-result`](#presentation-result) sent back to the holder, NOT a separate [`problem-report`].
+[^4] The [presentation `proof`](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section in `vp` MUST include the `challenge` sent by the verifier in the preceding [`presentation-request`](#presentation-request). The included credentials SHOULD match all `type` fields and one or more `trustedIssuer` if included in the [`presentation-request`](#presentation-request). Revoked, disputed, or otherwise invalid presentations or credentials MUST result in a rejected [`presentation-result`](#presentation-result) sent back to the holder, NOT a separate [`problem-report`].
+
+TODO: we may want separate problem-reports instead, as mixing disputes with problem-reports if improperly implemented may reveal information to a fake holder trying to discover information about what content a verifier accepts.
 
 #### Examples
 
@@ -314,9 +262,9 @@ Sent by the verifier to communicate the result of the presentation. It allows th
 | `problems` | Array of problem-reports | OPTIONAL |
 | `problemReport` | A [`problem-report`](https://identity.foundation/didcomm-messaging/spec/#problem-reports) indicating something wrong with the credential, e.g. signature validation failed or the credential is expired. | REQUIRED | 
 | `allowRetry` | Indicates if the holder may retry the [`presentation`](#presentation) with different credentials. Default: `false` | OPTIONAL |
-| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the verifier; RECOMMENDED to include. | OPTIONAL |
+| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the verifier; RECOMMENDED to include.[^5] | OPTIONAL |
 
-Similar to [`presentation-request`](#presentation-request), verifiers are RECOMMENDED to include a proof whenever possible for non-repudiation of receipt of the presentation. Holders may choose to blocklist verifiers that refuse to provide non-repudiable signatures.
+[^5] Similar to [`presentation-request`](#presentation-request), verifiers are RECOMMENDED to include a proof whenever possible for non-repudiation of receipt of the presentation. Holders may choose to blocklist verifiers that refuse to provide non-repudiable signatures.
 
 #### Examples
 
@@ -385,18 +333,7 @@ Similar to [`presentation-request`](#presentation-request), verifiers are RECOMM
 
 TODO: change problem-report here, or remove them from the result altogether? Example of a hacker trying to brute-force disputes with unsigned credentials, in which case the problem report (trust.crypto) should just end the flow and not return disputes.
 
-## Concerns?
-
-- Non-repudiation - credentials cannot be spoofed, guaranteed to be current and valid from issuer.
-- Ease of use - easy for holder to present (and retry)?
-
-## Non-goals?
-
-- Security: implementors should ensure the presentation is transmitted over an encrypted channel etc.
-- Identification:
-- Authorisation:
-
-## Problem Reports
+### Problem Reports
 
 See: https://identity.foundation/didcomm-messaging/spec/#descriptors
 TODO
@@ -425,11 +362,21 @@ Custom error messages for problem-reports that are expected in the course of thi
 }
 ```
 
+## Considerations
+
+This section is non-normative.
+
+- Security: implementors should ensure the presentation is transmitted over an encrypted channel etc. (TODO mention/link to DIDComm encryption?)
+- Authentication: it is recommended to use the authentication protocol (TODO link?) for once-off authentication, or sender-authenticated encryption for continuous authentication of both parties in the DIDComm thread. Signatures (`proof` fields) should not be relied upon for this (TODO link?).
+- Authorisation: establishing whether either party is allowed to request/offer presentations is an application-level concern.
+- Validation: apart from verifying the presentation and credentials are signed by a trusted issuer, how credential subject matter fields are checked for disputes is out-of-scope.
+
 ## Unresolved Questions
 
 - Is a `schema` field needed for the `presentation-offer` and `presentation-request` to identify the types of verifiable credentials and allow forward compatibility for different fields in the message? The E.g. a `SelectiveDisclosure` or ZKP message may only offer or request certain fields in the credential. Does this relate to the [`credentialSchema`](https://www.w3.org/TR/vc-data-model/#data-schemas) field in credentials?
 - Identifiers (`id` field) are [optional in verifiable credentials](https://www.w3.org/TR/vc-data-model/#identifiers). The spec suggests content-addressed identifiers when the `id` is not available but their particulars are unclear as there is no spec referenced. This affects the `problems` reported in the [`presentation-result`](#presentation-result).
-- We should RECOMMENDED the `id` of a verifiable credential being a UUID (what version?) in issuance. Needs to be a URI https://www.w3.org/TR/vc-data-model/#identifiers , do UUIDs qualify?
+- We should RECOMMENDED the `id` of a verifiable credential being a UUID (what version?) in issuance. Needs to be a URI https://www.w3.org/TR/vc-data-model/#identifiers, do UUIDs qualify?
+- Should we specifically list non-functional requirements e.g in a Goals / Non-Goals section. 
 
 ## Related Work
 
