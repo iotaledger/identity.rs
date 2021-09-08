@@ -23,6 +23,7 @@ async fn main() -> Result<()> {
   // Retrieve the DID from the newly created Identity state.
   let did: &IotaDID = snapshot.identity().try_did()?;
 
+  // Add a new service to the identity.
   account
     .update_identity(did)
     .create_service()

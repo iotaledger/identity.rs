@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
   // Get the updater for the given `did`, so we can run multiple updates on it.
   let did_updater: IdentityUpdater<'_, _> = account.update_identity(did);
 
-  // Add a new Ed25519 (defualt) verification method to the identity - the
+  // Add a new Ed25519 (default) verification method to the identity - the
   // verification method is included as an embedded authentication method.
   did_updater
     .create_method()

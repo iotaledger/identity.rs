@@ -153,6 +153,10 @@ impl Account {
     Ok(snapshot)
   }
 
+  /// Return the `IdentityUpdater` for the given `key`.
+  ///
+  /// On this type, various operations can be executed
+  /// that modify an identity, such as creating services or methods.
   pub fn update_identity<K: IdentityKey + Clone>(&self, key: K) -> IdentityUpdater<'_, K> {
     IdentityUpdater::new(self, key)
   }
