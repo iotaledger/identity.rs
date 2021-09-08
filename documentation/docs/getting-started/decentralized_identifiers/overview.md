@@ -17,7 +17,7 @@ The Decentralized Identifiers (DID) standard from W3C is the fundamental standar
 
 In the IOTA Identity framework, we have implemented the DID standard according to the `iota` [DID Method Specification](./specs/iota_did_method_spec.md). We recommend seeing the `iota` DID Method Specification as the golden standard for DID on IOTA. Other implementations of DID on IOTA are recommended to follow the `iota` DID Method Specification. However, it is not necessary to implement a novel Method implementation for every project, so feel free to utilize this framework directly. 
 
-An example of DID conforming to the `iota` method specification:
+An example of a DID conforming to the `iota` method specification:
 `did:iota:8dQAzVbbf6FLW9ckwyCBnKmcMGcUV9LYJoXtgQkHcNQy`
 
 ## Chapter Overview
@@ -52,13 +52,13 @@ Never share your private keys, seeds, passphrases with anyone. Not even IOTA Fou
 
 :::
 
-Services are URIs that point to more information about the identity. This could be something as simple as a website for a organizational identity. These services are publicly available for all to read and should therefore not contain Personal Identifiable Information (PII) in the case of human identities. 
+Services are URIs that point to more information about the identity. This could be something as simple as a website for an organizational identity. These services are publicly available for all to read and should therefore not contain Personal Identifiable Information (PII) in the case of human identities. 
 
 ## Why use DIDs?
 
 DIDs have some limited use cases. It allows any subject to have a unique identifier, that they can prove ownership of and at the same time provide a way to send them encrypted messages. The Identity is Self Sovereign, meaning the subject is in control of when the identity is created but also destroyed. 
 
-DIDs become really interesting in combination with Verifiable Credentials, which will be covered in a later section. In essence, Verifiable Credentials (VCs) are signed statements by trusted third parties about a certain identity. The signer, or Issuer, is referenced by DID and so is the subject, often called the Holder. The Holder can control a copy of this statement and share this with other parties, the Verifiers, that can verify the statement and check which party gave out the statement, without having to ask the Issuer. Instead, they can verify the signature of the Issuer by checking the Issuers DID Document. This whole setup puts Holders back into control over their own data, but also makes the data much more trustworthy as it has become verifiable. 
+DIDs become interesting in combination with Verifiable Credentials, which will be covered in a later section. In essence, Verifiable Credentials (VCs) are signed statements by trusted third parties about a certain identity. The signer, or Issuer, is referenced by the DID and so is the subject, often called the Holder. The Holder controls a copy of this statement and share it with other parties, the Verifiers, that can verify the statement and check which party made the statement, without having to ask the Issuer. Instead, they can verify the signature of the Issuer by checking the Issuers DID Document. This whole setup puts Holders back in control over their own data, but also makes the data much more trustworthy as it has become verifiable. 
 
 ## Why use IOTA Identity over other implementations?
 
