@@ -59,14 +59,6 @@ macro_rules! impl_command_builder {
           }
         }
 
-        pub fn finish(self) -> $crate::Result<$crate::events::Command> {
-          Ok($crate::events::Command::$ident {
-            $(
-              $field: impl_command_builder!(@finish self $requirement $field $ty $(= $value)?),
-            )*
-          })
-        }
-
         pub async fn apply(self) -> $crate::Result<()> {
           let account = self.account;
           let update = $crate::events::Command::$ident {
@@ -74,7 +66,7 @@ macro_rules! impl_command_builder {
               $field: impl_command_builder!(@finish self $requirement $field $ty $(= $value)?),
             )*
           };
-          account.update_identity_old(self.key, update).await?;
+          account.apply_command(self.key, update).await?;
           Ok(())
         }
       }

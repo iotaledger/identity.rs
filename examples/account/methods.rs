@@ -4,7 +4,6 @@
 //! cargo run --example account_methods
 
 use identity::account::Account;
-use identity::account::Command;
 use identity::account::IdentityCreate;
 use identity::account::IdentitySnapshot;
 use identity::account::IdentityUpdater;
@@ -54,7 +53,8 @@ async fn main() -> Result<()> {
     .fragment("my-next-key")
     .scope(MethodScope::CapabilityDelegation)
     .scope(MethodScope::CapabilityInvocation)
-    .finish()?;
+    .apply()
+    .await?;
 
   // Fetch and log the DID Document from the Tangle
   //
@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
   );
 
   // Remove the original Ed25519 verification method
-  did_updater.delete_method().fragment("my-auth-key").finish()?;
+  did_updater.delete_method().fragment("my-auth-key").apply().await?;
 
   // Fetch and log the DID Document from the Tangle
   //

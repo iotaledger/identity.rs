@@ -13,6 +13,7 @@ use identity_account::identity::TinyMethod;
 use identity_account::storage::MemStore;
 use identity_account::types::Generation;
 use identity_core::common::UnixTimestamp;
+use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 
 async fn new_account() -> Result<Account> {
@@ -34,9 +35,12 @@ async fn test_create_identity() -> Result<()> {
   assert_eq!(snapshot.identity().created(), UnixTimestamp::EPOCH);
   assert_eq!(snapshot.identity().updated(), UnixTimestamp::EPOCH);
 
-  account
-    .process(identity, Command::create_identity().finish().unwrap(), false)
-    .await?;
+  let command: Command = Command::CreateIdentity {
+    network: None,
+    authentication: MethodType::Ed25519VerificationKey2018,
+  };
+
+  account.process(identity, command, false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
@@ -61,7 +65,11 @@ async fn test_create_identity_invalid_method() -> Result<()> {
   assert_eq!(snapshot.sequence(), Generation::new());
 
   for type_ in TYPES.iter().copied() {
-    let command: Command = Command::create_identity().authentication(type_).finish().unwrap();
+    let command: Command = Command::CreateIdentity {
+      network: None,
+      authentication: type_,
+    };
+
     let output: Result<()> = account.process(identity, command, false).await;
 
     assert!(matches!(
@@ -87,10 +95,10 @@ async fn test_create_identity_already_exists() -> Result<()> {
   // initial snapshot version = 0
   assert_eq!(snapshot.sequence(), Generation::new());
 
-  let command: Command = Command::create_identity()
-    .authentication(MethodType::Ed25519VerificationKey2018)
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateIdentity {
+    network: None,
+    authentication: MethodType::Ed25519VerificationKey2018,
+  };
 
   account.process(identity, command.clone(), false).await?;
 
@@ -119,18 +127,18 @@ async fn test_create_method() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::create_identity()
-    .authentication(MethodType::Ed25519VerificationKey2018)
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateIdentity {
+    network: None,
+    authentication: MethodType::Ed25519VerificationKey2018,
+  };
 
   account.process(identity, command, false).await?;
 
-  let command: Command = Command::create_method()
-    .type_(MethodType::Ed25519VerificationKey2018)
-    .fragment("key-1")
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateMethod {
+    scope: MethodScope::default(),
+    type_: MethodType::Ed25519VerificationKey2018,
+    fragment: "key-1".to_owned(),
+  };
 
   account.process(identity, command, false).await?;
 
@@ -156,18 +164,18 @@ async fn test_create_method_reserved_fragment() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::create_identity()
-    .authentication(MethodType::Ed25519VerificationKey2018)
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateIdentity {
+    network: None,
+    authentication: MethodType::Ed25519VerificationKey2018,
+  };
 
   account.process(identity, command, false).await?;
 
-  let command: Command = Command::create_method()
-    .type_(MethodType::Ed25519VerificationKey2018)
-    .fragment("_sign-123")
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateMethod {
+    scope: MethodScope::default(),
+    type_: MethodType::Ed25519VerificationKey2018,
+    fragment: "_sign-123".to_owned(),
+  };
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
@@ -194,18 +202,18 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::create_identity()
-    .authentication(MethodType::Ed25519VerificationKey2018)
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateIdentity {
+    network: None,
+    authentication: MethodType::Ed25519VerificationKey2018,
+  };
 
   account.process(identity, command, false).await?;
 
-  let command: Command = Command::create_method()
-    .type_(MethodType::Ed25519VerificationKey2018)
-    .fragment("key-1")
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateMethod {
+    scope: MethodScope::default(),
+    type_: MethodType::Ed25519VerificationKey2018,
+    fragment: "key-1".to_owned(),
+  };
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
   assert_eq!(snapshot.sequence(), Generation::from_u32(3));
@@ -233,18 +241,18 @@ async fn test_delete_method() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::create_identity()
-    .authentication(MethodType::Ed25519VerificationKey2018)
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateIdentity {
+    network: None,
+    authentication: MethodType::Ed25519VerificationKey2018,
+  };
 
   account.process(identity, command, false).await?;
 
-  let command: Command = Command::create_method()
-    .type_(MethodType::Ed25519VerificationKey2018)
-    .fragment("key-1")
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateMethod {
+    scope: MethodScope::default(),
+    type_: MethodType::Ed25519VerificationKey2018,
+    fragment: "key-1".to_owned(),
+  };
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
   assert_eq!(snapshot.sequence(), Generation::from_u32(3));
@@ -259,7 +267,9 @@ async fn test_delete_method() -> Result<()> {
   assert!(snapshot.identity().methods().get("key-1").is_some());
   assert!(snapshot.identity().methods().fetch("key-1").is_ok());
 
-  let command: Command = Command::delete_method().fragment("key-1").finish().unwrap();
+  let command: Command = Command::DeleteMethod {
+    fragment: "key-1".to_owned(),
+  };
 
   account.process(identity, command, false).await?;
 

@@ -53,10 +53,6 @@ pub struct Account {
 }
 
 impl Account {
-  pub fn update_identity<K: IdentityKey + Clone>(&self, key: K) -> IdentityUpdater<'_, K> {
-    IdentityUpdater::new(&self, key)
-  }
-
   /// Creates a new [AccountBuilder].
   pub fn builder() -> AccountBuilder {
     AccountBuilder::new()
@@ -157,13 +153,8 @@ impl Account {
     Ok(snapshot)
   }
 
-  /// Updates the identity specified by the given `key` with the given `command`.
-  pub async fn update_identity_old<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
-    let identity: IdentityId = self.try_resolve_id(key).await?;
-
-    self.process(identity, command, true).await?;
-
-    Ok(())
+  pub fn update_identity<K: IdentityKey + Clone>(&self, key: K) -> IdentityUpdater<'_, K> {
+    IdentityUpdater::new(self, key)
   }
 
   /// Removes the identity specified by the given `key`.
@@ -228,6 +219,16 @@ impl Account {
   // ===========================================================================
   // Misc. Private
   // ===========================================================================
+
+  #[doc(hidden)]
+  // Updates the identity specified by the given `key` with the given `command`.
+  pub async fn apply_command<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
+    let identity: IdentityId = self.try_resolve_id(key).await?;
+
+    self.process(identity, command, true).await?;
+
+    Ok(())
+  }
 
   #[doc(hidden)]
   pub async fn process(&self, id: IdentityId, command: Command, persist: bool) -> Result<()> {
