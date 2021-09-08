@@ -224,9 +224,8 @@ impl Account {
   // Misc. Private
   // ===========================================================================
 
-  #[doc(hidden)]
-  // Updates the identity specified by the given `key` with the given `command`.
-  pub async fn apply_command<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
+  /// Updates the identity specified by the given `key` with the given `command`.
+  pub(crate) async fn apply_command<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
     let identity: IdentityId = self.try_resolve_id(key).await?;
 
     self.process(identity, command, true).await?;

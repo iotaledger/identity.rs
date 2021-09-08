@@ -5,21 +5,24 @@ use crate::account::Account;
 
 use super::IdentityKey;
 
+/// A struct created by the [`Account::update_identity`] method, that
+/// allows executing various updates on the identity it was created on.
+#[derive(Debug, Clone)]
 pub struct IdentityUpdater<'account, K: IdentityKey + Clone> {
   account: &'account Account,
   key: K,
 }
 
 impl<'account, K: IdentityKey + Clone> IdentityUpdater<'account, K> {
-  pub fn new(account: &'account Account, key: K) -> Self {
+  pub(crate) fn new(account: &'account Account, key: K) -> Self {
     Self { account, key }
   }
 
-  pub fn account(&self) -> &'account Account {
+  pub(crate) fn account(&self) -> &'account Account {
     self.account
   }
 
-  pub fn key(&self) -> &K {
+  pub(crate) fn key(&self) -> &K {
     &self.key
   }
 }
