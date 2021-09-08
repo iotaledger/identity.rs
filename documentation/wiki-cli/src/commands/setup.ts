@@ -49,7 +49,7 @@ export default class Setup extends Command {
     if (!existsSync(WIKI_CONTENT_DOCS_FOLDER)) {
       mkdirSync(WIKI_CONTENT_DOCS_FOLDER)
     }
-    ['blog', 'docs', 'static', 'sidebars.js'].forEach(folder => {
+    ['blog', 'docs', 'src', 'sidebars.js'].forEach(folder => {
       const target = join(PWD, folder)
       const path = join(WIKI_CONTENT_DOCS_FOLDER, folder)
       this.log(`linking ${target} to ${path}`)

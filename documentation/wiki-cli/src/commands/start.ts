@@ -32,7 +32,7 @@ export default class Start extends Command {
       to: EXTERNAL_DOCS_DROPDOWN_CONFIG,
     })
 
-    copySync(join(WIKI_GIT_FOLDER, 'external', 'identity.rs', 'documentation', 'static', 'img'), join(WIKI_GIT_FOLDER, 'static', 'img'))
+    copySync(join(PWD, 'static', 'img'), join(WIKI_GIT_FOLDER, 'static', 'img'))
 
     spawnSync('yarn', [
       'start',
