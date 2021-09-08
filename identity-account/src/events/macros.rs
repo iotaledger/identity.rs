@@ -33,7 +33,7 @@ macro_rules! impl_command_builder {
   ($ident:ident { $(@ $requirement:ident $field:ident $ty:ty $(= $value:expr)?),* $(,)* }) => {
     paste::paste! {
       #[derive(Clone, Debug)]
-      pub struct [<$ident Builder>]<'account, K: IdentityKey> {
+      pub struct [<$ident Builder>]<'account, K: $crate::identity::IdentityKey> {
         account: &'account Account,
         key: K,
         $(
@@ -41,7 +41,7 @@ macro_rules! impl_command_builder {
         )*
       }
 
-      impl<'account, K: IdentityKey> [<$ident Builder>]<'account, K> {
+      impl<'account, K: $crate::identity::IdentityKey> [<$ident Builder>]<'account, K> {
         $(
           pub fn $field<VALUE: Into<$ty>>(mut self, value: VALUE) -> Self {
             self.$field = Some(value.into());
@@ -71,13 +71,7 @@ macro_rules! impl_command_builder {
         }
       }
 
-      // impl Default for [<$ident Builder>] {
-      //   fn default() -> Self {
-      //     Self::new()
-      //   }
-      // }
-
-      impl<'account, K: IdentityKey + Clone> $crate::identity::IdentityUpdater<'account, K> {
+      impl<'account, K: $crate::identity::IdentityKey + Clone> $crate::identity::IdentityUpdater<'account, K> {
         pub fn [<$ident:snake>](&self) -> [<$ident Builder>]<'account, K> {
           [<$ident Builder>]::new(self.account(), self.key().clone())
         }
