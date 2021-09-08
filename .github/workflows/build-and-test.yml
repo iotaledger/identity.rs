@@ -16,7 +16,6 @@ on:
 
 env:
   RUST_BACKTRACE: full
-  RUSTC_WRAPPER: sccache
   SCCACHE_DOWNLOAD_LINK: https://github.com/mozilla/sccache/releases/download
   SCCACHE_VERSION: v0.2.15
   SCCACHE_CACHE_SIZE: 2G
@@ -39,6 +38,7 @@ jobs:
             sccache-path: C:\\Users\\runner\\AppData\\Local\\Mozilla\\sccache\\cache
     env:
       SCCACHE_DIR: ${{ matrix.sccache-path }}
+      RUSTC_WRAPPER: sccache
 
     steps:
       - uses: actions/checkout@v2
@@ -191,6 +191,7 @@ jobs:
             sccache-path: /home/runner/.cache/sccache
     env:
       SCCACHE_DIR: ${{ matrix.sccache-path }}
+      RUSTC_WRAPPER: sccache
 
     steps:
       - uses: actions/checkout@v2
