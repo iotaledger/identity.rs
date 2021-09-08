@@ -334,21 +334,22 @@ async fn test_create_method_from_secret_key() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::create_identity()
-    .authentication(MethodType::Ed25519VerificationKey2018)
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateIdentity {
+    network: None,
+    method_secret: None,
+    authentication: MethodType::Ed25519VerificationKey2018,
+  };
 
   account.process(identity, command, false).await?;
 
   let keypair = KeyPair::new_ed25519()?;
 
-  let command: Command = Command::create_method()
-    .type_(MethodType::Ed25519VerificationKey2018)
-    .fragment("key-1")
-    .method_secret(MethodSecret::Ed25519(keypair.secret().clone()))
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateMethod {
+    scope: MethodScope::default(),
+    method_secret: Some(MethodSecret::Ed25519(keypair.secret().clone())),
+    type_: MethodType::Ed25519VerificationKey2018,
+    fragment: "key-1".to_owned(),
+  };
 
   account.process(identity, command, false).await?;
 
@@ -368,22 +369,23 @@ async fn test_create_method_from_invalid_secret_key() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::create_identity()
-    .authentication(MethodType::Ed25519VerificationKey2018)
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateIdentity {
+    network: None,
+    method_secret: None,
+    authentication: MethodType::Ed25519VerificationKey2018,
+  };
 
   account.process(identity, command, false).await?;
 
   let secret_bytes: Box<[u8]> = Box::new([0; 33]);
   let secret_key = SecretKey::from(secret_bytes);
 
-  let command: Command = Command::create_method()
-    .type_(MethodType::Ed25519VerificationKey2018)
-    .fragment("key-1")
-    .method_secret(MethodSecret::Ed25519(secret_key))
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateMethod {
+    scope: MethodScope::default(),
+    method_secret: Some(MethodSecret::Ed25519(secret_key)),
+    type_: MethodType::Ed25519VerificationKey2018,
+    fragment: "key-1".to_owned(),
+  };
 
   let err = account.process(identity, command, false).await.unwrap_err();
 
@@ -397,22 +399,23 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::create_identity()
-    .authentication(MethodType::Ed25519VerificationKey2018)
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateIdentity {
+    network: None,
+    method_secret: None,
+    authentication: MethodType::Ed25519VerificationKey2018,
+  };
 
   account.process(identity, command, false).await?;
 
   let secret_bytes: Box<[u8]> = Box::new([0; 32]);
   let secret_key = SecretKey::from(secret_bytes);
 
-  let command: Command = Command::create_method()
-    .type_(MethodType::MerkleKeyCollection2021)
-    .fragment("key-1")
-    .method_secret(MethodSecret::Ed25519(secret_key))
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateMethod {
+    scope: MethodScope::default(),
+    method_secret: Some(MethodSecret::Ed25519(secret_key)),
+    type_: MethodType::MerkleKeyCollection2021,
+    fragment: "key-1".to_owned(),
+  };
 
   let err = account.process(identity, command, false).await.unwrap_err();
 
@@ -420,12 +423,12 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
 
   let key_collection = KeyCollection::new_ed25519(4).unwrap();
 
-  let command: Command = Command::create_method()
-    .type_(MethodType::Ed25519VerificationKey2018)
-    .fragment("key-2")
-    .method_secret(MethodSecret::MerkleKeyCollection(key_collection))
-    .finish()
-    .unwrap();
+  let command: Command = Command::CreateMethod {
+    scope: MethodScope::default(),
+    method_secret: Some(MethodSecret::MerkleKeyCollection(key_collection)),
+    type_: MethodType::Ed25519VerificationKey2018,
+    fragment: "key-1".to_owned(),
+  };
 
   let err = account.process(identity, command, false).await.unwrap_err();
 
