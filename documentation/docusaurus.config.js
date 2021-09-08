@@ -7,12 +7,11 @@ module.exports = {
   tagline: 'Providing Trust between Individuals, Organizations and Things.',
   url: 'https://identity.docs.iota.org',
   baseUrl: '/',
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
   organizationName: 'iotaledger', // Usually your GitHub org/user name.
   projectName: 'identity.rs', // Usually your repo name.
-  onBrokenLinks: 'warn',
   stylesheets: [
     'https://fonts.googleapis.com/css?family=Material+Icons',
   ],
@@ -26,7 +25,7 @@ module.exports = {
       items: [
         {
           type: 'doc',
-          docId: 'intro',
+          docId: 'introduction',
           position: 'left',
           label: 'Documentation',
         },
@@ -51,15 +50,15 @@ module.exports = {
             },
             {
               label: 'Rust',
-              to: '/docs/libraries/rust/README',
+              to: '/docs/libraries/rust/overview',
             },
             {
               label: 'WASM',
-              to: '/docs/libraries/wasm/README',
+              to: '/docs/libraries/wasm/overview',
             },
             {
               label: 'Specification',
-              to: '/docs/specs/README',
+              to: '/docs/specs/overview',
             },
           ],
         },

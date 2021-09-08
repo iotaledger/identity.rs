@@ -1,6 +1,13 @@
 ---
 title: IOTA Identity Rust Library
 sidebar_label: Overview
+description: Overview of the IOTA Identity Rust Library.
+image: /img/Identity_icon.png
+keywords:
+- Rust
+- API Reference
+- Examples
+- Troubleshooting
 ---
 
 # IOTA Identity Rust Library

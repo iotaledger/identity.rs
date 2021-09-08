@@ -1,13 +1,18 @@
 ---
-sidebar_position: 2
-title: Overview
+description: Using IOTA Identity, a new digital identity can be created by anyone or anything at any time by generating a Decentralized Identifier (DID) combined with Verifiable Credentials.
+image: /img/Identity_icon.png
+keywords:
+- Identity
+- verifiable
+- credentials
+- Rust
+- WASM
 ---
-
 
 # Overview
 Using the standards proposed by W3C, this chapter will explain the IOTA Identity implementation. Using this implementation, a new digital identity can be created by anyone or anything at any time. To do so, a Decentralized Identifier (DID) is generated, that serves as a reference to a DID Document. The DID Document contains public keys, and other mechanisms, to enable the subject to prove their association with the DID. 
 
-However a DID alone tells you little about the subject. It must be combined with Verifiable Credentials. Verifiable Credentials are statements about the creator of the DID. They can be shared and verified online in a BYOI manner, and the DID creator remains in complete control of the process. 
+However, a DID alone tells you little about the subject. It must be combined with Verifiable Credentials. Verifiable Credentials are statements about the creator of the DID. They can be shared and verified online in a BYOI manner, and the DID creator remains in complete control of the process. 
 
 This framework can be used in processes such as:
 - Address validation: Customers can prove where they live for shipping and billing addresses

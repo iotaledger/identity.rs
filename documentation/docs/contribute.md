@@ -1,6 +1,14 @@
 ---
 title: Contribute to the project
 sidebar_label: Contribute
+description: Contribute to IOTA Identity by joining the Identity initiative, via the projects GitHub repository, documentation, or sharing your knowledge.
+image: /img/Identity_icon.png
+keywords:
+- Contribute
+- GitHub
+- Identity Initiative
+- Documentation
+- Discord
 ---
 
 **Thanks for thinking about contributing to the project! We have the following ways that you can contribute.**
