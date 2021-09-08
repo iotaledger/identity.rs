@@ -53,7 +53,7 @@ export default class Setup extends Command {
       const target = join(PWD, folder)
       const path = join(WIKI_CONTENT_DOCS_FOLDER, folder)
       this.log(`linking ${target} to ${path}`)
-      symlinkSync(target, path)
+      symlinkSync(target, path, 'junction')
     })
     spawnSync('yarn', {
       cwd: WIKI_CONTENT_REPO_FOLDER,
