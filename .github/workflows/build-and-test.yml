@@ -227,10 +227,12 @@ jobs:
             ${{ matrix.os }}-cargo-${{ github.job }}-
             ${{ matrix.os }}-cargo-
 
+      # Generate Cargo.lock files for build, sccache cache keys.
+      # Allows dependencies updated on crates.io between runs to trigger storing an updated cache, 
+      # which hashing Cargo.toml files alone does not.
       - name: Cargo update
         uses: actions-rs/cargo@v1
         with:
-          # Create Cargo.lock file for more accurate caches
           command: update
 
       - name: Cache wasm target
