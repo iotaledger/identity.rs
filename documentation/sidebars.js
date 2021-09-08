@@ -38,6 +38,7 @@ module.exports = {
                         'getting-started/decentralized_identifiers/create',
                         'getting-started/decentralized_identifiers/resolve',
                         'getting-started/decentralized_identifiers/update',
+                        'getting-started/decentralized_identifiers/manage',
                         'getting-started/decentralized_identifiers/merkle_key_collection',
                     ],
                 },
