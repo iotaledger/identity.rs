@@ -7,12 +7,18 @@ use identity_account::error::Error;
 use identity_account::error::Result;
 use identity_account::events::Command;
 use identity_account::events::CommandError;
+use identity_account::identity::IdentityCreate;
 use identity_account::identity::IdentityId;
 use identity_account::identity::IdentitySnapshot;
 use identity_account::identity::TinyMethod;
 use identity_account::storage::MemStore;
 use identity_account::types::Generation;
+use identity_account::types::MethodSecret;
 use identity_core::common::UnixTimestamp;
+use identity_core::crypto::KeyCollection;
+use identity_core::crypto::KeyPair;
+use identity_core::crypto::KeyType;
+use identity_core::crypto::SecretKey;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 
@@ -37,6 +43,7 @@ async fn test_create_identity() -> Result<()> {
 
   let command: Command = Command::CreateIdentity {
     network: None,
+    method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
@@ -67,6 +74,7 @@ async fn test_create_identity_invalid_method() -> Result<()> {
   for type_ in TYPES.iter().copied() {
     let command: Command = Command::CreateIdentity {
       network: None,
+      method_secret: None,
       authentication: type_,
     };
 
@@ -87,6 +95,40 @@ async fn test_create_identity_invalid_method() -> Result<()> {
 }
 
 #[tokio::test]
+async fn test_create_identity_network() -> Result<()> {
+  let account: Account = new_account().await?;
+
+  // Create an identity with a valid network string
+  let create_identity: IdentityCreate = IdentityCreate::new().network("test").key_type(KeyType::Ed25519);
+  let snapshot: IdentitySnapshot = account.create_identity(create_identity).await?;
+
+  // Ensure the identity creation was successful
+  assert!(snapshot.identity().did().is_some());
+  assert!(snapshot.identity().authentication().is_ok());
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_identity_invalid_network() -> Result<()> {
+  let account: Account = new_account().await?;
+
+  // Attempt to create an identity with an invalid network string
+  let create_identity: IdentityCreate = IdentityCreate::new()
+    .network("Invalid=Network!")
+    .key_type(KeyType::Ed25519);
+  let result = account.create_identity(create_identity).await;
+
+  // Ensure an `InvalidNetworkName` error is thrown
+  assert!(matches!(
+    result.unwrap_err(),
+    Error::IotaError(identity_iota::Error::InvalidNetworkName(_)),
+  ));
+
+  Ok(())
+}
+
+#[tokio::test]
 async fn test_create_identity_already_exists() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
@@ -97,6 +139,7 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
   let command: Command = Command::CreateIdentity {
     network: None,
+    method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
@@ -123,12 +166,57 @@ async fn test_create_identity_already_exists() -> Result<()> {
 }
 
 #[tokio::test]
+async fn test_create_identity_from_secret_key() -> Result<()> {
+  let account: Account = new_account().await?;
+  let account2: Account = new_account().await?;
+
+  let identity: IdentityId = IdentityId::from_u32(1);
+
+  let secret_key = KeyPair::new_ed25519()?.secret().clone();
+
+  let id_create = IdentityCreate::new()
+    .key_type(KeyType::Ed25519)
+    .method_secret(MethodSecret::Ed25519(secret_key));
+
+  account.create_identity(id_create.clone()).await?;
+  account2.create_identity(id_create).await?;
+
+  let ident = account.find_identity(identity).await.unwrap().unwrap();
+  let ident2 = account.find_identity(identity).await.unwrap().unwrap();
+
+  // The same secret key should result in the same did
+  assert_eq!(ident.identity().did(), ident2.identity().did());
+  assert_eq!(ident.identity().authentication()?, ident2.identity().authentication()?);
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_identity_from_invalid_secret_key() -> Result<()> {
+  let account: Account = new_account().await?;
+
+  let secret_bytes: Box<[u8]> = Box::new([0; 33]);
+  let secret_key: SecretKey = SecretKey::from(secret_bytes);
+
+  let id_create = IdentityCreate::new()
+    .key_type(KeyType::Ed25519)
+    .method_secret(MethodSecret::Ed25519(secret_key));
+
+  let err = account.create_identity(id_create).await.unwrap_err();
+
+  assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
+
+  Ok(())
+}
+
+#[tokio::test]
 async fn test_create_method() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
   let command: Command = Command::CreateIdentity {
     network: None,
+    method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
@@ -136,6 +224,7 @@ async fn test_create_method() -> Result<()> {
 
   let command: Command = Command::CreateMethod {
     scope: MethodScope::default(),
+    method_secret: None,
     type_: MethodType::Ed25519VerificationKey2018,
     fragment: "key-1".to_owned(),
   };
@@ -166,6 +255,7 @@ async fn test_create_method_reserved_fragment() -> Result<()> {
 
   let command: Command = Command::CreateIdentity {
     network: None,
+    method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
@@ -173,6 +263,7 @@ async fn test_create_method_reserved_fragment() -> Result<()> {
 
   let command: Command = Command::CreateMethod {
     scope: MethodScope::default(),
+    method_secret: None,
     type_: MethodType::Ed25519VerificationKey2018,
     fragment: "_sign-123".to_owned(),
   };
@@ -204,6 +295,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
 
   let command: Command = Command::CreateIdentity {
     network: None,
+    method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
@@ -211,6 +303,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
 
   let command: Command = Command::CreateMethod {
     scope: MethodScope::default(),
+    method_secret: None,
     type_: MethodType::Ed25519VerificationKey2018,
     fragment: "key-1".to_owned(),
   };
@@ -237,12 +330,118 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
 }
 
 #[tokio::test]
+async fn test_create_method_from_secret_key() -> Result<()> {
+  let account: Account = new_account().await?;
+  let identity: IdentityId = IdentityId::from_u32(1);
+
+  let command: Command = Command::create_identity()
+    .authentication(MethodType::Ed25519VerificationKey2018)
+    .finish()
+    .unwrap();
+
+  account.process(identity, command, false).await?;
+
+  let keypair = KeyPair::new_ed25519()?;
+
+  let command: Command = Command::create_method()
+    .type_(MethodType::Ed25519VerificationKey2018)
+    .fragment("key-1")
+    .method_secret(MethodSecret::Ed25519(keypair.secret().clone()))
+    .finish()
+    .unwrap();
+
+  account.process(identity, command, false).await?;
+
+  let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
+
+  let method: &TinyMethod = snapshot.identity().methods().fetch("key-1")?;
+
+  let public_key = account.store().key_get(identity, method.location()).await?;
+
+  assert_eq!(public_key.as_ref(), keypair.public().as_ref());
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_method_from_invalid_secret_key() -> Result<()> {
+  let account: Account = new_account().await?;
+  let identity: IdentityId = IdentityId::from_u32(1);
+
+  let command: Command = Command::create_identity()
+    .authentication(MethodType::Ed25519VerificationKey2018)
+    .finish()
+    .unwrap();
+
+  account.process(identity, command, false).await?;
+
+  let secret_bytes: Box<[u8]> = Box::new([0; 33]);
+  let secret_key = SecretKey::from(secret_bytes);
+
+  let command: Command = Command::create_method()
+    .type_(MethodType::Ed25519VerificationKey2018)
+    .fragment("key-1")
+    .method_secret(MethodSecret::Ed25519(secret_key))
+    .finish()
+    .unwrap();
+
+  let err = account.process(identity, command, false).await.unwrap_err();
+
+  assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
+  let account: Account = new_account().await?;
+  let identity: IdentityId = IdentityId::from_u32(1);
+
+  let command: Command = Command::create_identity()
+    .authentication(MethodType::Ed25519VerificationKey2018)
+    .finish()
+    .unwrap();
+
+  account.process(identity, command, false).await?;
+
+  let secret_bytes: Box<[u8]> = Box::new([0; 32]);
+  let secret_key = SecretKey::from(secret_bytes);
+
+  let command: Command = Command::create_method()
+    .type_(MethodType::MerkleKeyCollection2021)
+    .fragment("key-1")
+    .method_secret(MethodSecret::Ed25519(secret_key))
+    .finish()
+    .unwrap();
+
+  let err = account.process(identity, command, false).await.unwrap_err();
+
+  assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
+
+  let key_collection = KeyCollection::new_ed25519(4).unwrap();
+
+  let command: Command = Command::create_method()
+    .type_(MethodType::Ed25519VerificationKey2018)
+    .fragment("key-2")
+    .method_secret(MethodSecret::MerkleKeyCollection(key_collection))
+    .finish()
+    .unwrap();
+
+  let err = account.process(identity, command, false).await.unwrap_err();
+
+  assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
+
+  Ok(())
+}
+
+#[tokio::test]
 async fn test_delete_method() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
   let command: Command = Command::CreateIdentity {
     network: None,
+    method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
@@ -250,6 +449,7 @@ async fn test_delete_method() -> Result<()> {
 
   let command: Command = Command::CreateMethod {
     scope: MethodScope::default(),
+    method_secret: None,
     type_: MethodType::Ed25519VerificationKey2018,
     fragment: "key-1".to_owned(),
   };

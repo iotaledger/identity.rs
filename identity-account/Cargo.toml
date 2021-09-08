@@ -11,9 +11,10 @@ keywords = ["iota", "tangle", "identity"]
 homepage = "https://www.iota.org"
 
 [dependencies]
+actix = { version = "0.12.0", optional = true }
 async-trait = { version = "0.1", default-features = false }
 futures = { version = "0.3" }
-hashbrown = { version = "0.9", features = ["serde"] }
+hashbrown = { version = "0.11", features = ["serde"] }
 identity-core = { version = "=0.3.0", path = "../identity-core" }
 identity-credential = { version = "=0.3.0", path = "../identity-credential" }
 identity-did = { version = "=0.3.0", path = "../identity-did" }
@@ -22,29 +23,28 @@ itoa = { version = "0.4" }
 log = { version = "0.4", default-features = false }
 once_cell = { version = "1.7", default-features = false, features = ["std"] }
 paste = { version = "1.0" }
-riker = { version = "0.4", optional = true }
 serde = { version = "1.0", default-features = false, features = [
     "alloc",
-    "derive"
+    "derive",
 ] }
 slog = { version = "2.7" }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0" }
 tokio = { version = "1.5", features = ["sync"] }
-zeroize = { version = "1.3" }
+zeroize = { version = "1.4" }
 
 [dependencies.iota-crypto]
-version = "0.5"
+version = "0.7"
 features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std"]
 
 [dependencies.iota_stronghold]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "6dd92dc9743eba2f3b4126425e7572470d92c80b"
+rev = "aea8a9dc8c3fa12e5444c5b4bb3303876e4c1a2f"
 optional = true
 
 [dependencies.stronghold_engine]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "6dd92dc9743eba2f3b4126425e7572470d92c80b"
+rev = "aea8a9dc8c3fa12e5444c5b4bb3303876e4c1a2f"
 optional = true
 
 [dev-dependencies]
@@ -54,7 +54,7 @@ tokio = { version = "1.5", features = [
     "macros",
     "rt",
     "rt-multi-thread",
-    "sync"
+    "sync",
 ] }
 
 [features]
@@ -62,7 +62,7 @@ mem-client = []
 stronghold = [
     "iota_stronghold",
     "stronghold_engine",
-    "riker",
+    "actix",
     "tokio/rt-multi-thread",
 ]
 wasm = ["identity-iota/wasm"]

@@ -20,15 +20,15 @@ pub struct Snapshot {
 }
 
 impl Snapshot {
-  pub fn set_password_clear(interval: Duration) -> Result<()> {
-    Context::set_password_clear(interval)
+  pub async fn set_password_clear(interval: Duration) -> Result<()> {
+    Context::set_password_clear(interval).await
   }
 
-  pub fn on_change<T>(listener: T) -> Result<()>
+  pub async fn on_change<T>(listener: T) -> Result<()>
   where
     T: FnMut(&Path, &SnapshotStatus) + Send + 'static,
   {
-    Context::on_change(listener)
+    Context::on_change(listener).await
   }
 
   pub fn new<P>(path: &P) -> Self
@@ -65,12 +65,12 @@ impl Snapshot {
     Records::new(&self.path, name, flags)
   }
 
-  pub fn status(&self) -> Result<SnapshotStatus> {
-    Context::snapshot_status(&self.path)
+  pub async fn status(&self) -> Result<SnapshotStatus> {
+    Context::snapshot_status(&self.path).await
   }
 
-  pub fn set_password(&self, password: Password) -> Result<()> {
-    Context::set_password(&self.path, password)
+  pub async fn set_password(&self, password: Password) -> Result<()> {
+    Context::set_password(&self.path, password).await
   }
 
   pub async fn load(&self, password: Password) -> Result<()> {

@@ -6,17 +6,24 @@ export default function CodeSnippet({ nodeReplitLink, rustReplitLink }) {
     const [lang, setLang] = React.useState("node");
 
     useEffect(() => {
+        //Set Language from storage, default to node
         let langFromStorage = localStorage.getItem("lang");
-        if (!langFromStorage) {
-            setLang("node");
-        } else {
-            setLang(langFromStorage);
+        let lang = langFromStorage ? langFromStorage : "node";
+
+        //If Replit doesn't exist default to next option
+        if(lang === "node" && !nodeReplitLink) {
+            lang = "rust";
         }
+        if(lang === "rust" && !rustReplitLink) {
+            lang = "node";
+        }
+        setLang(lang);
     });
 
     return (
         <div>
             <div className={clsx("langSelector")}>
+                { nodeReplitLink &&
                 <button
                     className={clsx("button", "languageButton", "mr-sm", {
                         activeButton: lang === "node",
@@ -29,6 +36,8 @@ export default function CodeSnippet({ nodeReplitLink, rustReplitLink }) {
                 >
                     Node.js
                 </button>
+                }
+                { rustReplitLink &&
                 <button
                     className={clsx("button", "languageButton", {
                         activeButton: lang == "rust",
@@ -41,6 +50,7 @@ export default function CodeSnippet({ nodeReplitLink, rustReplitLink }) {
                 >
                     Rust
                 </button>
+                }
             </div>
             <div className={clsx("codeSnippetContainer")}>
                 {lang === "node" ? (
@@ -49,7 +59,6 @@ export default function CodeSnippet({ nodeReplitLink, rustReplitLink }) {
                         width="100%"
                         height="600px"
                         src={nodeReplitLink}
-                        // src="https://repl.it/@abdulmth/Create-did?lite=true"
                     ></iframe>
                 ) : (
                     <iframe
@@ -57,7 +66,6 @@ export default function CodeSnippet({ nodeReplitLink, rustReplitLink }) {
                         width="100%"
                         height="600px"
                         src={rustReplitLink}
-                        // src="https://repl.it/@abdulmth/create-did-rust?lite=true"
                     ></iframe>
                 )}
             </div>

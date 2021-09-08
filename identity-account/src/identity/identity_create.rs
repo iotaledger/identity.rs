@@ -3,12 +3,15 @@
 
 use identity_core::crypto::KeyType;
 
+use crate::types::MethodSecret;
+
 /// Configuration used to create a new Identity.
 #[derive(Clone, Debug)]
 pub struct IdentityCreate {
   pub(crate) key_type: KeyType,
   pub(crate) name: Option<String>,
   pub(crate) network: Option<String>,
+  pub(crate) method_secret: Option<MethodSecret>,
 }
 
 impl IdentityCreate {
@@ -18,6 +21,7 @@ impl IdentityCreate {
       key_type: KeyType::Ed25519,
       name: None,
       network: None,
+      method_secret: None,
     }
   }
 
@@ -45,6 +49,15 @@ impl IdentityCreate {
     T: Into<String>,
   {
     self.network = Some(value.into());
+    self
+  }
+
+  /// Sets the [`MethodSecret`] for the Identity creation.
+  ///
+  /// Note that only [`MethodSecret::Ed25519`] is currently supported.
+  #[must_use]
+  pub fn method_secret(mut self, value: MethodSecret) -> Self {
+    self.method_secret = Some(value);
     self
   }
 }

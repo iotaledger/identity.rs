@@ -67,7 +67,7 @@ impl WasmDocument {
     let public: &PublicKey = keypair.0.public();
 
     let did: IotaDID = if let Some(network) = network.as_deref() {
-      IotaDID::with_network(public.as_ref(), network).wasm_result()?
+      IotaDID::new_with_network(public.as_ref(), network).wasm_result()?
     } else {
       IotaDID::new(public.as_ref()).wasm_result()?
     };
@@ -151,9 +151,18 @@ impl WasmDocument {
     WasmVerificationMethod(self.0.authentication().clone())
   }
 
+  /// Get the message_id of the DID Document.
   #[wasm_bindgen(getter = messageId)]
   pub fn message_id(&self) -> String {
     self.0.message_id().to_string()
+  }
+
+  /// Set the message_id of the DID Document.
+  #[wasm_bindgen(setter = messageId)]
+  pub fn set_message_id(&mut self, message_id: &str) -> Result<()> {
+    let message_id: MessageId = MessageId::from_str(message_id).wasm_result()?;
+    self.0.set_message_id(message_id);
+    Ok(())
   }
 
   #[wasm_bindgen(getter = previousMessageId)]
@@ -164,9 +173,7 @@ impl WasmDocument {
   #[wasm_bindgen(setter = previousMessageId)]
   pub fn set_previous_message_id(&mut self, value: &str) -> Result<()> {
     let message: MessageId = MessageId::from_str(value).wasm_result()?;
-
     self.0.set_previous_message_id(message);
-
     Ok(())
   }
 

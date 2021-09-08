@@ -31,7 +31,7 @@ impl ClientBuilder {
 
   /// Sets the IOTA Tangle network.
   pub fn network(mut self, network: Network) -> Self {
-    self.builder = self.builder.with_network(&network.name());
+    self.builder = self.builder.with_network(network.name_str());
     self.network = network;
     self
   }

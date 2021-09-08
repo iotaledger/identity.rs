@@ -1,3 +1,14 @@
+---
+description: Glossary for IOTA Identity, defines the terms used in this specification and throughout decentralized identifier infrastructure.
+image: /img/Identity_icon.png
+keywords:
+- W3C
+- terminology
+- IOTA
+- verification method
+- verifiable data registry
+---
+
 # Glossary
 
 The first part describes the terminology by the W3C.

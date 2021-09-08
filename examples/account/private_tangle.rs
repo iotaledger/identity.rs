@@ -21,26 +21,39 @@ use identity::iota::Network;
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  // This is an arbitrarily defined network name
-  let network_name = "custom";
-  let network = Network::from_name(network_name)?;
+  // This name needs to match the id of the network or part of it.
+  // Since the id of the one-click private tangle is `private-tangle`
+  // but we can only use 6 characters, we use just `tangle`.
+  let network_name = "tangle";
+  let network = Network::try_from_name(network_name)?;
 
-  // Create a new Account with the default configuration
+  // Create a new Account with a custom client configuration.
+  let private_node_url = "http://127.0.0.1:14265/";
   let account: Account = Account::builder()
     // Configure a client for the private network.
     // Also set the URL that points to the REST API
     // of the locally running hornet node.
     .client(network, |builder| {
       // unwrap is safe, we provided a valid node URL
-      builder.node("http://127.0.0.1:14265/").unwrap()
+      builder.node(private_node_url).unwrap()
     })
     .build()
     .await?;
 
   let id_create = IdentityCreate::new().network(network_name);
 
-  // Create a new Identity with default settings
-  let snapshot: IdentitySnapshot = account.create_identity(id_create).await?;
+  // Create a new Identity with the network name set.
+  let snapshot: IdentitySnapshot = match account.create_identity(id_create).await {
+    Ok(snapshot) => snapshot,
+    Err(err) => {
+      eprintln!("[Example] Error: {:?} {}", err, err.to_string());
+      eprintln!(
+        "[Example] Is your private Tangle node listening on {}?",
+        private_node_url
+      );
+      return Ok(());
+    }
+  };
 
   // Retrieve the DID from the newly created Identity state.
   let did: &IotaDID = snapshot.identity().try_did()?;
