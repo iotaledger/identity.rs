@@ -427,7 +427,7 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
     scope: MethodScope::default(),
     method_secret: Some(MethodSecret::MerkleKeyCollection(key_collection)),
     type_: MethodType::Ed25519VerificationKey2018,
-    fragment: "key-1".to_owned(),
+    fragment: "key-2".to_owned(),
   };
 
   let err = account.process(identity, command, false).await.unwrap_err();
