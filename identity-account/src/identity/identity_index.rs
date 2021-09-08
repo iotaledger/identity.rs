@@ -52,12 +52,14 @@ impl IdentityIndex {
   }
 
   /// Returns the id of the identity matching the given `key` wrapped in a lock.
+  ///
+  /// Should be used to synchronize write access to the given `key`.
   pub fn get_lock<K: IdentityKey>(&mut self, key: K) -> Option<Arc<RwLock<IdentityId>>> {
     if let Some(identity_id) = key.scan(self.data.iter()) {
       match self.locks.entry(identity_id) {
         Entry::Occupied(lock) => Some(Arc::clone(lock.get())),
-        Entry::Vacant(thing) => {
-          let lock = thing.insert(Arc::new(RwLock::new(identity_id)));
+        Entry::Vacant(entry) => {
+          let lock = entry.insert(Arc::new(RwLock::new(identity_id)));
           Some(Arc::clone(lock))
         }
       }

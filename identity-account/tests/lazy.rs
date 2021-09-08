@@ -121,7 +121,7 @@ async fn test_lazy_updates() -> Result<()> {
 }
 
 // Repeats the test in the closure `test_runs` number of times.
-// Network problems, i.e. a ClientError triggers a re-run.
+// Network problems, i.e. a ClientError trigger a re-run.
 // Other errors end the test immediately.
 async fn network_resilient_test(
   test_runs: u32,
