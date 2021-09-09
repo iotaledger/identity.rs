@@ -49,7 +49,7 @@ async fn test_lazy_updates() -> Result<()> {
         .finish()?;
       account.update_identity(did, command).await?;
 
-      account.publish_changes(did).await?;
+      account.publish_updates(did).await?;
 
       // ===========================================================================
       // First round of assertions
@@ -82,7 +82,7 @@ async fn test_lazy_updates() -> Result<()> {
       let command: Command = Command::create_method().fragment("new-method").finish()?;
       account.update_identity(did, command).await?;
 
-      account.publish_changes(did).await?;
+      account.publish_updates(did).await?;
 
       // ===========================================================================
       // Second round of assertions

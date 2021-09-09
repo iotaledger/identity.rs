@@ -436,7 +436,7 @@ impl Account {
   }
 
   /// Push all unpublished changes for the given identity to the tangle in a single message.
-  pub async fn publish_changes<K: IdentityKey>(&self, key: K) -> Result<()> {
+  pub async fn publish_updates<K: IdentityKey>(&self, key: K) -> Result<()> {
     let identity_lock: IdentityLock = self.try_resolve_id_lock(key).await?;
     let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
 

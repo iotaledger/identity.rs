@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
 
   // Publish the newly created DID document,
   // including the new service, to the tangle.
-  account.publish_changes(did).await?;
+  account.publish_updates(did).await?;
 
   // Add another service.
   let command: Command = Command::create_service()
@@ -51,7 +51,7 @@ async fn main() -> Result<()> {
   account.update_identity(did, command).await?;
 
   // Publish the updates as one message to the tangle.
-  account.publish_changes(did).await?;
+  account.publish_updates(did).await?;
 
   // Resolve the document to confirm its consistency.
   let doc = account.resolve_identity(did).await?;
