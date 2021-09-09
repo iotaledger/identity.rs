@@ -1,6 +1,15 @@
 ---
 title: Merkle Key Collection Specification
 sidebar_label: Merkle Key Collection
+description: The Merkle Key Collection Specification provides authentication and integrity protection to DID Documents without a dependency on any particular Distributed Ledger Technology (DLT).
+image: /img/Identity_icon.png
+keywords:
+- Merkle Key Collection
+- Documents
+- DID
+- DLT
+- Specifications
+- Specs
 ---
 
 Version 0.1-draft by Devin Turner, IOTA Foundation

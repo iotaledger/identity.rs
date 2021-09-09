@@ -1,6 +1,13 @@
 ---
 title: IOTA Identity WASM Library
 sidebar_label: Overview
+description: Overview of the IOTA Identity WASM Library.
+image: /img/Identity_icon.png
+keywords:
+- WASM
+- API Reference
+- Examples
+- Troubleshooting
 ---
 
 
