@@ -71,8 +71,8 @@ macro_rules! impl_command_builder {
         }
       }
 
-      /// Creates a new builder to modify the identity. See the documentation of the return type for details.
       impl<'account, 'key, K: $crate::identity::IdentityKey> $crate::identity::IdentityUpdater<'account, 'key, K> {
+        /// Creates a new builder to modify the identity. See the documentation of the return type for details.
         pub fn [<$ident:snake>](&self) -> [<$ident Builder>]<'account, 'key, K> {
           [<$ident Builder>]::new(self.account, self.key)
         }
