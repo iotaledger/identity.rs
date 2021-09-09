@@ -131,19 +131,14 @@ async fn network_resilient_test(
     let test_attempt = f(test_run).await;
 
     match test_attempt {
-      ok @ Ok(_) => {
-        return ok;
-      }
-      Err(AccountError::IotaError(IotaError::ClientError(client_err))) => {
-        eprintln!("test run {} errored with {:?}", test_run, client_err);
+      error @ Err(AccountError::IotaError(IotaError::ClientError(_))) => {
+        eprintln!("test run {} errored with {:?}", test_run, error);
 
         if test_run == test_runs - 1 {
-          return Err(AccountError::IotaError(IotaError::ClientError(client_err)));
+          return error;
         }
       }
-      error @ Err(_) => {
-        return error;
-      }
+      other => return other,
     }
   }
 

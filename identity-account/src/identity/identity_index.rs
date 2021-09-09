@@ -93,13 +93,12 @@ impl IdentityIndex {
 
   fn insert(&mut self, id: IdentityId, tag: IdentityTag) -> Result<()> {
     match self.data.entry(tag) {
-      Entry::Occupied(_) => return Err(Error::IdentityAlreadyExists),
+      Entry::Occupied(_) => Err(Error::IdentityAlreadyExists),
       Entry::Vacant(entry) => {
         entry.insert(id);
+        Ok(())
       }
     }
-
-    Ok(())
   }
 }
 

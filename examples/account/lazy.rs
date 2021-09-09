@@ -29,7 +29,7 @@ async fn main() -> Result<()> {
 
   let command: Command = Command::create_service()
     .fragment("example-service")
-    .type_("Website")
+    .type_("LinkedDomains")
     .endpoint(Url::parse("https://example.org")?)
     .finish()?;
   account.update_identity(did, command).await?;
@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
   // Add another service.
   let command: Command = Command::create_service()
     .fragment("another-service")
-    .type_("Website")
+    .type_("LinkedDomains")
     .endpoint(Url::parse("https://example.org")?)
     .finish()?;
   account.update_identity(did, command).await?;

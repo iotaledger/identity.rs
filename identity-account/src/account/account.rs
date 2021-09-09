@@ -436,21 +436,21 @@ impl Account {
 
   /// Push all unpublished changes for the given identity to the tangle in a single message.
   pub async fn publish_changes<K: IdentityKey>(&self, key: K) -> Result<()> {
-    let identity_lock = self.try_resolve_id_lock(key).await?;
-    let identity = identity_lock.write().await;
+    let identity_lock: Arc<RwLock<IdentityId>> = self.try_resolve_id_lock(key).await?;
+    let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
 
     // Get the last commit generation that was published to the tangle.
-    let last_published = self.store.published_generation(*identity).await?.unwrap_or_default();
+    let last_published: Generation = self.store.published_generation(*identity).await?.unwrap_or_default();
 
     // Get the commits that need to be published.
-    let commits = self.store.collect(*identity, last_published).await?;
+    let commits: Vec<Commit> = self.store.collect(*identity, last_published).await?;
 
     if commits.is_empty() {
       return Ok(());
     }
 
     // Load the snapshot that represents the state on the tangle.
-    let snapshot = self.load_snapshot_at(*identity, last_published).await?;
+    let snapshot: IdentitySnapshot = self.load_snapshot_at(*identity, last_published).await?;
 
     self.publish(snapshot, commits, true).await?;
 
@@ -463,7 +463,7 @@ impl Account {
       return Ok(());
     }
 
-    let id = snapshot.id();
+    let id: IdentityId = snapshot.id();
 
     match Publish::new(&commits) {
       Publish::Auth => self.process_auth_change(snapshot).await?,
@@ -472,11 +472,11 @@ impl Account {
     }
 
     if !commits.is_empty() {
-      let last_commit_generation = commits.last().unwrap().sequence();
+      let last_commit_generation: Generation = commits.last().unwrap().sequence();
       // Publishing adds an AuthMessage or DiffMessage event, that contains the message id
       // which is required to be set for subsequent updates.
       // The next snapshot that loads the tangle state will require this message id to be set.
-      let generation = Generation::from_u32(last_commit_generation.to_u32() + 1);
+      let generation: Generation = Generation::from_u32(last_commit_generation.to_u32() + 1);
       self.store.set_published_generation(id, generation).await?;
     }
 
