@@ -226,7 +226,7 @@ impl Account {
     self.resolve_id(key).await.ok_or(Error::IdentityNotFound)
   }
 
-  async fn try_resolve_id_lock<K: IdentityKey>(&self, key: K) -> Result<IdentityLock> {
+  async fn try_resolve_id_lock<K: IdentityKey>(&self, key: &K) -> Result<IdentityLock> {
     self.index.write().await.get_lock(key).ok_or(Error::IdentityNotFound)
   }
 
@@ -448,7 +448,7 @@ impl Account {
 
   /// Push all unpublished changes for the given identity to the tangle in a single message.
   pub async fn publish_updates<K: IdentityKey>(&self, key: K) -> Result<()> {
-    let identity_lock: IdentityLock = self.try_resolve_id_lock(key).await?;
+    let identity_lock: IdentityLock = self.try_resolve_id_lock(&key).await?;
     let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
 
     // Get the last commit generation that was published to the tangle.
