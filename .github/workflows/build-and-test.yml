@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - id: build-and-test
-        uses: '.github/actions/build-and-test'
+        uses: './.github/actions/build-and-test'
 
 
   build-and-test-libjose:
