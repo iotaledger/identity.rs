@@ -16,6 +16,8 @@ use identity_core::crypto::SecretKey;
 use identity_did::verification::MethodType;
 use iota_stronghold::Location;
 use iota_stronghold::SLIP10DeriveInput;
+use std::convert::TryFrom;
+use std::io;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -330,6 +332,40 @@ impl Storage for Stronghold {
 
     Ok(())
   }
+
+  async fn published_generation(&self, id: IdentityId) -> Result<Option<Generation>> {
+    let store: Store<'_> = self.store(&fmt_id(id));
+
+    let bytes = store.get(location_published_generation()).await?;
+
+    if bytes.is_empty() {
+      return Ok(None);
+    }
+
+    let le_bytes: [u8; 4] = <[u8; 4]>::try_from(bytes.as_ref()).map_err(|_| {
+      io::Error::new(
+        io::ErrorKind::InvalidData,
+        format!(
+          "expected to read 4 bytes as the published generation, found {} instead",
+          bytes.len()
+        ),
+      )
+    })?;
+
+    let gen = Generation::from_u32(u32::from_le_bytes(le_bytes));
+
+    Ok(Some(gen))
+  }
+
+  async fn set_published_generation(&self, id: IdentityId, index: Generation) -> Result<()> {
+    let store: Store<'_> = self.store(&fmt_id(id));
+
+    store
+      .set(location_published_generation(), index.to_u32().to_le_bytes(), None)
+      .await?;
+
+    Ok(())
+  }
 }
 
 async fn generate_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
@@ -382,6 +418,10 @@ fn location_seed(location: &KeyLocation) -> Location {
 
 fn location_skey(location: &KeyLocation) -> Location {
   Location::generic(fmt_key("$skey", location), Vec::new())
+}
+
+fn location_published_generation() -> Location {
+  Location::generic("$published_generation", Vec::new())
 }
 
 fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {

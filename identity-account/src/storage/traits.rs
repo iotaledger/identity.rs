@@ -49,6 +49,12 @@ pub trait Storage: Debug + Send + Sync + 'static {
   /// Returns the account identity index.
   async fn index(&self) -> Result<IdentityIndex>;
 
+  /// Returns the last generation that has been published to the tangle for the given `id`.
+  async fn published_generation(&self, id: IdentityId) -> Result<Option<Generation>>;
+
+  /// Sets the last generation that has been published to the tangle for the given `id`.
+  async fn set_published_generation(&self, id: IdentityId, index: Generation) -> Result<()>;
+
   /// Sets a new account identity index.
   async fn set_index(&self, index: &IdentityIndex) -> Result<()>;
 
@@ -137,5 +143,13 @@ impl Storage for Box<dyn Storage> {
 
   async fn purge(&self, id: IdentityId) -> Result<()> {
     (**self).purge(id).await
+  }
+
+  async fn published_generation(&self, id: IdentityId) -> Result<Option<Generation>> {
+    (**self).published_generation(id).await
+  }
+
+  async fn set_published_generation(&self, id: IdentityId, index: Generation) -> Result<()> {
+    (**self).set_published_generation(id, index).await
   }
 }
