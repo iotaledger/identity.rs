@@ -24,12 +24,10 @@ async fn main() -> Result<()> {
   // Retrieve the DID from the newly created Identity state.
   let did: &IotaDID = snapshot.identity().try_did()?;
 
-  // Get the updater for the given `did`, so we can run multiple updates on it.
-  let did_updater: IdentityUpdater<'_, '_, _> = account.update_identity(did);
-
   // Add a new Ed25519 (default) verification method to the identity - the
   // verification method is included as an embedded authentication method.
-  did_updater
+  account
+    .update_identity(did)
     .create_method()
     .scope(MethodScope::Authentication)
     .fragment("my-auth-key")
@@ -45,10 +43,16 @@ async fn main() -> Result<()> {
   );
 
   // Add another Ed25519 verification method to the identity
-  did_updater.create_method().fragment("my-next-key").apply().await?;
+  account
+    .update_identity(did)
+    .create_method()
+    .fragment("my-next-key")
+    .apply()
+    .await?;
 
   // Associate the newly created method with additional verification relationships
-  did_updater
+  account
+    .update_identity(did)
     .attach_method()
     .fragment("my-next-key")
     .scope(MethodScope::CapabilityDelegation)
@@ -65,7 +69,12 @@ async fn main() -> Result<()> {
   );
 
   // Remove the original Ed25519 verification method
-  did_updater.delete_method().fragment("my-auth-key").apply().await?;
+  account
+    .update_identity(did)
+    .delete_method()
+    .fragment("my-auth-key")
+    .apply()
+    .await?;
 
   // Fetch and log the DID Document from the Tangle
   //
