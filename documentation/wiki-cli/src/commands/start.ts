@@ -1,6 +1,6 @@
 import {Command, flags} from '@oclif/command'
 import {spawn} from 'child_process'
-import {join} from 'path'
+import {join, resolve} from 'path'
 const  replaceInFile = require('replace-in-file')
 import {readFileSync} from 'fs'
 import {copySync} from 'fs-extra'
@@ -40,7 +40,7 @@ export default class Start extends Command {
 
     copySync(join(PWD, 'static', 'img'), join(WIKI_GIT_FOLDER, 'static', 'img'))
 
-    syncDirectory(join(PWD, '..'), WIKI_CONTENT_REPO_FOLDER, {
+    syncDirectory(resolve(join(PWD, '..')), resolve(WIKI_CONTENT_REPO_FOLDER), {
       exclude: ['local', 'wiki-cli', 'node_modules', 'target', '.git'],
       watch: true,
       afterSync({type, relativePath}) {
@@ -49,16 +49,14 @@ export default class Start extends Command {
     })
 
     setTimeout(() => {
-      const yarnProcess = spawn('yarn', [
+      spawn('yarn', [
         'start',
         '--host',
         '0.0.0.0',
       ], {
         cwd: WIKI_GIT_FOLDER,
         shell: true,
-      })
-      yarnProcess.stdout.on('data', function (data) {
-        log(data.toString())
+        stdio: 'inherit',
       })
     }, 1000)
   }
