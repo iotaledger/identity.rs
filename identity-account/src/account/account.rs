@@ -34,6 +34,7 @@ use crate::identity::IdentityCreate;
 use crate::identity::IdentityId;
 use crate::identity::IdentityIndex;
 use crate::identity::IdentityKey;
+use crate::identity::IdentityLock;
 use crate::identity::IdentitySnapshot;
 use crate::identity::IdentityState;
 use crate::identity::IdentityTag;
@@ -224,7 +225,7 @@ impl Account {
     self.resolve_id(key).await.ok_or(Error::IdentityNotFound)
   }
 
-  async fn try_resolve_id_lock<K: IdentityKey>(&self, key: K) -> Result<Arc<RwLock<IdentityId>>> {
+  async fn try_resolve_id_lock<K: IdentityKey>(&self, key: K) -> Result<IdentityLock> {
     self.index.write().await.get_lock(key).ok_or(Error::IdentityNotFound)
   }
 
@@ -436,7 +437,7 @@ impl Account {
 
   /// Push all unpublished changes for the given identity to the tangle in a single message.
   pub async fn publish_changes<K: IdentityKey>(&self, key: K) -> Result<()> {
-    let identity_lock: Arc<RwLock<IdentityId>> = self.try_resolve_id_lock(key).await?;
+    let identity_lock: IdentityLock = self.try_resolve_id_lock(key).await?;
     let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
 
     // Get the last commit generation that was published to the tangle.

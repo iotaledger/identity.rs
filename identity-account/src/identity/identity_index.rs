@@ -14,13 +14,15 @@ use crate::identity::IdentityId;
 use crate::identity::IdentityKey;
 use crate::identity::IdentityTag;
 
+pub(crate) type IdentityLock = Arc<RwLock<IdentityId>>;
+
 /// An mapping between [IdentityTag]s and [IdentityId]s.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct IdentityIndex {
   data: HashMap<IdentityTag, IdentityId>,
   #[serde(skip)]
-  locks: HashMap<IdentityId, Arc<RwLock<IdentityId>>>,
+  locks: HashMap<IdentityId, IdentityLock>,
 }
 
 impl IdentityIndex {
@@ -54,7 +56,7 @@ impl IdentityIndex {
   /// Returns the id of the identity matching the given `key` wrapped in a lock.
   ///
   /// Should be used to synchronize write access to the given `key`.
-  pub fn get_lock<K: IdentityKey>(&mut self, key: K) -> Option<Arc<RwLock<IdentityId>>> {
+  pub fn get_lock<K: IdentityKey>(&mut self, key: K) -> Option<IdentityLock> {
     if let Some(identity_id) = key.scan(self.data.iter()) {
       match self.locks.entry(identity_id) {
         Entry::Occupied(lock) => Some(Arc::clone(lock.get())),
