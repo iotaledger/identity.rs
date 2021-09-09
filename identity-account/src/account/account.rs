@@ -111,7 +111,7 @@ impl Account {
 
   /// Finds and returns the state snapshot for the identity specified by given `key`.
   pub async fn find_identity<K: IdentityKey>(&self, key: K) -> Result<Option<IdentitySnapshot>> {
-    match self.resolve_id(key).await {
+    match self.resolve_id(&key).await {
       Some(identity) => self.load_snapshot(identity).await.map(Some),
       None => Ok(None),
     }
@@ -154,11 +154,14 @@ impl Account {
     Ok(snapshot)
   }
 
-  /// Return the `IdentityUpdater` for the given `key`.
+  /// Returns the `IdentityUpdater` for the given `key`.
   ///
   /// On this type, various operations can be executed
   /// that modify an identity, such as creating services or methods.
-  pub fn update_identity<K: IdentityKey + Clone>(&self, key: K) -> IdentityUpdater<'_, K> {
+  pub fn update_identity<'account, 'key, K: IdentityKey>(
+    &'account self,
+    key: &'key K,
+  ) -> IdentityUpdater<'account, 'key, K> {
     IdentityUpdater::new(self, key)
   }
 
@@ -186,7 +189,7 @@ impl Account {
 
   /// Resolves the DID Document associated with the specified `key`.
   pub async fn resolve_identity<K: IdentityKey>(&self, key: K) -> Result<IotaDocument> {
-    let identity: IdentityId = self.try_resolve_id(key).await?;
+    let identity: IdentityId = self.try_resolve_id(&key).await?;
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
     let document: &IotaDID = snapshot.identity().try_did()?;
 
@@ -200,7 +203,7 @@ impl Account {
     K: IdentityKey,
     U: Serialize + SetSignature,
   {
-    let identity: IdentityId = self.try_resolve_id(key).await?;
+    let identity: IdentityId = self.try_resolve_id(&key).await?;
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
     let state: &IdentityState = snapshot.identity();
 
@@ -213,11 +216,11 @@ impl Account {
     Ok(())
   }
 
-  async fn resolve_id<K: IdentityKey>(&self, key: K) -> Option<IdentityId> {
+  async fn resolve_id<K: IdentityKey>(&self, key: &K) -> Option<IdentityId> {
     self.index.read().await.get(key)
   }
 
-  async fn try_resolve_id<K: IdentityKey>(&self, key: K) -> Result<IdentityId> {
+  async fn try_resolve_id<K: IdentityKey>(&self, key: &K) -> Result<IdentityId> {
     self.resolve_id(key).await.ok_or(Error::IdentityNotFound)
   }
 
@@ -226,7 +229,7 @@ impl Account {
   // ===========================================================================
 
   /// Updates the identity specified by the given `key` with the given `command`.
-  pub(crate) async fn apply_command<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
+  pub(crate) async fn apply_command<K: IdentityKey>(&self, key: &K, command: Command) -> Result<()> {
     let identity: IdentityId = self.try_resolve_id(key).await?;
 
     self.process(identity, command, true).await?;

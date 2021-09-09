@@ -8,21 +8,13 @@ use super::IdentityKey;
 /// A struct created by the [`Account::update_identity`] method, that
 /// allows executing various updates on the identity it was created on.
 #[derive(Debug, Clone)]
-pub struct IdentityUpdater<'account, K: IdentityKey + Clone> {
-  account: &'account Account,
-  key: K,
+pub struct IdentityUpdater<'account, 'key, K: IdentityKey> {
+  pub(crate) account: &'account Account,
+  pub(crate) key: &'key K,
 }
 
-impl<'account, K: IdentityKey + Clone> IdentityUpdater<'account, K> {
-  pub(crate) fn new(account: &'account Account, key: K) -> Self {
+impl<'account, 'key, K: IdentityKey> IdentityUpdater<'account, 'key, K> {
+  pub(crate) fn new(account: &'account Account, key: &'key K) -> Self {
     Self { account, key }
-  }
-
-  pub(crate) fn account(&self) -> &'account Account {
-    self.account
-  }
-
-  pub(crate) fn key(&self) -> &K {
-    &self.key
   }
 }

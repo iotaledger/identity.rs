@@ -33,15 +33,15 @@ macro_rules! impl_command_builder {
   ($ident:ident { $(@ $requirement:ident $field:ident $ty:ty $(= $value:expr)?),* $(,)* }) => {
     paste::paste! {
       #[derive(Clone, Debug)]
-      pub struct [<$ident Builder>]<'account, K: $crate::identity::IdentityKey> {
+      pub struct [<$ident Builder>]<'account, 'key, K: $crate::identity::IdentityKey> {
         account: &'account Account,
-        key: K,
+        key: &'key K,
         $(
           $field: Option<$ty>,
         )*
       }
 
-      impl<'account, K: $crate::identity::IdentityKey> [<$ident Builder>]<'account, K> {
+      impl<'account, 'key, K: $crate::identity::IdentityKey> [<$ident Builder>]<'account, 'key, K> {
         $(
           pub fn $field<VALUE: Into<$ty>>(mut self, value: VALUE) -> Self {
             self.$field = Some(value.into());
@@ -49,7 +49,7 @@ macro_rules! impl_command_builder {
           }
         )*
 
-        pub fn new(account: &'account Account, key: K) -> [<$ident Builder>]<'account, K> {
+        pub fn new(account: &'account Account, key: &'key K) -> [<$ident Builder>]<'account, 'key, K> {
           [<$ident Builder>] {
             account,
             key,
@@ -60,20 +60,20 @@ macro_rules! impl_command_builder {
         }
 
         pub async fn apply(self) -> $crate::Result<()> {
-          let account = self.account;
           let update = $crate::events::Command::$ident {
             $(
               $field: impl_command_builder!(@finish self $requirement $field $ty $(= $value)?),
             )*
           };
-          account.apply_command(self.key, update).await?;
+
+          self.account.apply_command(self.key, update).await?;
           Ok(())
         }
       }
 
-      impl<'account, K: $crate::identity::IdentityKey + Clone> $crate::identity::IdentityUpdater<'account, K> {
-        pub fn [<$ident:snake>](&self) -> [<$ident Builder>]<'account, K> {
-          [<$ident Builder>]::new(self.account(), self.key().clone())
+      impl<'account, 'key, K: $crate::identity::IdentityKey + Clone> $crate::identity::IdentityUpdater<'account, 'key, K> {
+        pub fn [<$ident:snake>](&self) -> [<$ident Builder>]<'account, 'key, K> {
+          [<$ident Builder>]::new(self.account, self.key)
         }
       }
     }

@@ -313,7 +313,7 @@ impl_command_builder!(AttachMethod {
   @default scopes Vec<MethodScope>,
 });
 
-impl<'account, K: IdentityKey> AttachMethodBuilder<'account, K> {
+impl<'account, 'key, K: IdentityKey> AttachMethodBuilder<'account, 'key, K> {
   pub fn scope(mut self, value: MethodScope) -> Self {
     self.scopes.get_or_insert_with(Default::default).push(value);
     self
@@ -325,7 +325,7 @@ impl_command_builder!(DetachMethod {
   @default scopes Vec<MethodScope>,
 });
 
-impl<'account, K: IdentityKey> DetachMethodBuilder<'account, K> {
+impl<'account, 'key, K: IdentityKey> DetachMethodBuilder<'account, 'key, K> {
   pub fn scope(mut self, value: MethodScope) -> Self {
     self.scopes.get_or_insert_with(Default::default).push(value);
     self
