@@ -5,13 +5,13 @@ const  replaceInFile = require('replace-in-file')
 import {readFileSync} from 'fs'
 import {copySync} from 'fs-extra'
 const syncDirectory = require('sync-directory')
+const debounce = require('lodash.debounce')
 
 export default class Start extends Command {
   static description = 'start local wiki'
 
   static flags = {
     help: flags.help({char: 'h'}),
-    // flag with a value (-n, --name=VALUE)
   }
 
   async run() {
@@ -40,15 +40,9 @@ export default class Start extends Command {
 
     copySync(join(PWD, 'static', 'img'), join(WIKI_GIT_FOLDER, 'static', 'img'))
 
-    syncDirectory(resolve(join(PWD, '..')), resolve(WIKI_CONTENT_REPO_FOLDER), {
-      exclude: ['local', 'wiki-cli', 'node_modules', 'target', '.git'],
-      watch: true,
-      afterSync({type, relativePath}) {
-        log(`${type}: ${relativePath}`)
-      },
-    })
+    log(resolve(join(PWD, '..')))
 
-    setTimeout(() => {
+    const runYarn = debounce(() => {
       spawn('yarn', [
         'start',
         '--host',
@@ -58,6 +52,17 @@ export default class Start extends Command {
         shell: true,
         stdio: 'inherit',
       })
-    }, 1000)
+    }, 100)
+
+    syncDirectory(resolve(join(PWD, '..')), resolve(WIKI_CONTENT_REPO_FOLDER), {
+      exclude: ['local', 'wiki-cli', 'node_modules', 'target', '.git'],
+      watch: true,
+      afterSync({type, relativePath}) {
+        log(`${type}: ${relativePath}`)
+        if (type === 'init:hardlink') {
+          runYarn()
+        }
+      },
+    })
   }
 }

@@ -1,6 +1,6 @@
 import {Command, flags} from '@oclif/command'
 import {spawnSync} from 'child_process'
-import {existsSync, mkdirSync, readdirSync, symlinkSync} from 'fs'
+import {existsSync, mkdirSync, readdirSync} from 'fs'
 import {join} from 'path'
 
 export default class Setup extends Command {
@@ -12,7 +12,6 @@ export default class Setup extends Command {
 
   static flags = {
     help: flags.help({char: 'h'}),
-    // flag with a value (-r, --ref=VALUE)
     ref: flags.string({char: 'r', description: 'wiki revison to checkout'}),
   }
 
