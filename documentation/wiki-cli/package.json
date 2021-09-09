@@ -12,6 +12,7 @@
     "@oclif/plugin-help": "^3.2.3",
     "fs-extra": "^10.0.0",
     "replace-in-file": "^6.2.0",
+    "sync-directory": "^2.2.22",
     "tslib": "^1.14.1"
   },
   "devDependencies": {
