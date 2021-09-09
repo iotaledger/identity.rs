@@ -30,9 +30,9 @@ macro_rules! impl_command_builder {
       )),
     }
   };
-  ($(#[$meta:meta])* $ident:ident { $(@ $requirement:ident $field:ident $ty:ty $(= $value:expr)?),* $(,)* }) => {
+  ($(#[$doc:meta])* $ident:ident { $(@ $requirement:ident $field:ident $ty:ty $(= $value:expr)?),* $(,)* }) => {
     paste::paste! {
-      $(#[$meta])*
+      $(#[$doc])*
       #[derive(Clone, Debug)]
       pub struct [<$ident Builder>]<'account, 'key, K: $crate::identity::IdentityKey> {
         account: &'account Account,
