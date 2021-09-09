@@ -28,6 +28,8 @@ pub mod identity;
 pub mod storage;
 #[cfg(feature = "stronghold")]
 pub mod stronghold;
+#[cfg(test)]
+mod tests;
 pub mod types;
 pub mod utils;
 

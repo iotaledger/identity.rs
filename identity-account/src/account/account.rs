@@ -237,8 +237,7 @@ impl Account {
     Ok(())
   }
 
-  #[doc(hidden)]
-  pub async fn process(&self, id: IdentityId, command: Command, persist: bool) -> Result<()> {
+  pub(crate) async fn process(&self, id: IdentityId, command: Command, persist: bool) -> Result<()> {
     // Load the latest state snapshot from storage
     let root: IdentitySnapshot = self.load_snapshot(id).await?;
 

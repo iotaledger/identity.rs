@@ -1,19 +1,19 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_account::account::Account;
-use identity_account::account::Config;
-use identity_account::error::Error;
-use identity_account::error::Result;
-use identity_account::events::Command;
-use identity_account::events::CommandError;
-use identity_account::identity::IdentityCreate;
-use identity_account::identity::IdentityId;
-use identity_account::identity::IdentitySnapshot;
-use identity_account::identity::TinyMethod;
-use identity_account::storage::MemStore;
-use identity_account::types::Generation;
-use identity_account::types::MethodSecret;
+use crate::account::Account;
+use crate::account::Config;
+use crate::error::Error;
+use crate::error::Result;
+use crate::events::Command;
+use crate::events::CommandError;
+use crate::identity::IdentityCreate;
+use crate::identity::IdentityId;
+use crate::identity::IdentitySnapshot;
+use crate::identity::TinyMethod;
+use crate::storage::MemStore;
+use crate::types::Generation;
+use crate::types::MethodSecret;
 use identity_core::common::UnixTimestamp;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;

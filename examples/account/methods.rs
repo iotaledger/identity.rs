@@ -6,7 +6,6 @@
 use identity::account::Account;
 use identity::account::IdentityCreate;
 use identity::account::IdentitySnapshot;
-use identity::account::IdentityUpdater;
 use identity::account::Result;
 use identity::did::MethodScope;
 use identity::iota::IotaDID;

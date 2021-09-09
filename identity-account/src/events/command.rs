@@ -31,7 +31,7 @@ use crate::types::MethodSecret;
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
 #[derive(Clone, Debug)]
-pub enum Command {
+pub(crate) enum Command {
   CreateIdentity {
     network: Option<String>,
     method_secret: Option<MethodSecret>,
@@ -66,7 +66,7 @@ pub enum Command {
 }
 
 impl Command {
-  pub async fn process(self, context: Context<'_>) -> Result<Option<Vec<Event>>> {
+  pub(crate) async fn process(self, context: Context<'_>) -> Result<Option<Vec<Event>>> {
     let state: &IdentityState = context.state();
     let store: &dyn Storage = context.store();
 
