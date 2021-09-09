@@ -90,7 +90,7 @@ pub enum Error {
   ServiceNotFound,
   /// Caused by attempting to perform a command in an invalid context.
   #[error("Command Error: {0}")]
-  CommandError(#[from] crate::events::CommandError),
+  CommandError(#[from] crate::events::UpdateError),
   #[error("Invalid Secret Key: {0}")]
   InvalidSecretKey(String),
 }

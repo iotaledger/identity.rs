@@ -13,10 +13,10 @@ use identity_iota::did::IotaDID;
 
 use crate::account::Account;
 use crate::error::Result;
-use crate::events::CommandError;
 use crate::events::Context;
 use crate::events::Event;
 use crate::events::EventData;
+use crate::events::UpdateError;
 use crate::identity::IdentityId;
 use crate::identity::IdentityKey;
 use crate::identity::IdentityState;
@@ -81,12 +81,12 @@ impl Command {
         authentication,
       } => {
         // The state must not be initialized
-        ensure!(state.did().is_none(), CommandError::DocumentAlreadyExists);
+        ensure!(state.did().is_none(), UpdateError::DocumentAlreadyExists);
 
         // The authentication method type must be valid
         ensure!(
           AUTH_TYPES.contains(&authentication),
-          CommandError::InvalidMethodType(authentication)
+          UpdateError::InvalidMethodType(authentication)
         );
 
         let generation: Generation = state.auth_generation();
@@ -96,7 +96,7 @@ impl Command {
         // TODO: config: strict
         ensure!(
           !store.key_exists(state.id(), &location).await?,
-          CommandError::DuplicateKeyLocation(location)
+          UpdateError::DuplicateKeyLocation(location)
         );
 
         let public: PublicKey = if let Some(method_secret_key) = method_secret {
@@ -125,27 +125,27 @@ impl Command {
         method_secret,
       } => {
         // The state must be initialized
-        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let location: KeyLocation = state.key_location(type_, fragment)?;
 
         // The key location must not be an authentication location
         ensure!(
           !location.is_authentication(),
-          CommandError::InvalidMethodFragment("reserved")
+          UpdateError::InvalidMethodFragment("reserved")
         );
 
         // The key location must be available
         // TODO: config: strict
         ensure!(
           !store.key_exists(state.id(), &location).await?,
-          CommandError::DuplicateKeyLocation(location)
+          UpdateError::DuplicateKeyLocation(location)
         );
 
         // The verification method must not exist
         ensure!(
           !state.methods().contains(location.fragment()),
-          CommandError::DuplicateKeyFragment(location.fragment.clone()),
+          UpdateError::DuplicateKeyFragment(location.fragment.clone()),
         );
 
         let public: PublicKey = if let Some(method_secret_key) = method_secret {
@@ -161,52 +161,52 @@ impl Command {
       }
       Self::DeleteMethod { fragment } => {
         // The state must be initialized
-        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
         // The fragment must not be an authentication location
         ensure!(
           !KeyLocation::is_authentication_fragment(&fragment),
-          CommandError::InvalidMethodFragment("reserved")
+          UpdateError::InvalidMethodFragment("reserved")
         );
 
         // The verification method must exist
-        ensure!(state.methods().contains(fragment.name()), CommandError::MethodNotFound);
+        ensure!(state.methods().contains(fragment.name()), UpdateError::MethodNotFound);
 
         Ok(Some(vec![Event::new(EventData::MethodDeleted(fragment))]))
       }
       Self::AttachMethod { fragment, scopes } => {
         // The state must be initialized
-        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
         // The fragment must not be an authentication location
         ensure!(
           !KeyLocation::is_authentication_fragment(&fragment),
-          CommandError::InvalidMethodFragment("reserved")
+          UpdateError::InvalidMethodFragment("reserved")
         );
 
         // The verification method must exist
-        ensure!(state.methods().contains(fragment.name()), CommandError::MethodNotFound);
+        ensure!(state.methods().contains(fragment.name()), UpdateError::MethodNotFound);
 
         Ok(Some(vec![Event::new(EventData::MethodAttached(fragment, scopes))]))
       }
       Self::DetachMethod { fragment, scopes } => {
         // The state must be initialized
-        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
         // The fragment must not be an authentication location
         ensure!(
           !KeyLocation::is_authentication_fragment(&fragment),
-          CommandError::InvalidMethodFragment("reserved")
+          UpdateError::InvalidMethodFragment("reserved")
         );
 
         // The verification method must exist
-        ensure!(state.methods().contains(fragment.name()), CommandError::MethodNotFound);
+        ensure!(state.methods().contains(fragment.name()), UpdateError::MethodNotFound);
 
         Ok(Some(vec![Event::new(EventData::MethodDetached(fragment, scopes))]))
       }
@@ -217,12 +217,12 @@ impl Command {
         properties,
       } => {
         // The state must be initialized
-        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         // The service must not exist
         ensure!(
           !state.services().contains(&fragment),
-          CommandError::DuplicateServiceFragment(fragment),
+          UpdateError::DuplicateServiceFragment(fragment),
         );
 
         let service: TinyService = TinyService::new(fragment, type_, endpoint, properties);
@@ -231,15 +231,12 @@ impl Command {
       }
       Self::DeleteService { fragment } => {
         // The state must be initialized
-        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
         // The service must exist
-        ensure!(
-          state.services().contains(fragment.name()),
-          CommandError::ServiceNotFound
-        );
+        ensure!(state.services().contains(fragment.name()), UpdateError::ServiceNotFound);
 
         Ok(Some(vec![Event::new(EventData::ServiceDeleted(fragment))]))
       }
@@ -258,7 +255,7 @@ async fn insert_method_secret(
     MethodSecret::Ed25519(secret_key) => {
       ensure!(
         secret_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
-        CommandError::InvalidMethodSecret(format!(
+        UpdateError::InvalidMethodSecret(format!(
           "an ed25519 secret key requires {} bytes, found {}",
           ed25519::SECRET_KEY_LENGTH,
           secret_key.as_ref().len()
@@ -267,7 +264,7 @@ async fn insert_method_secret(
 
       ensure!(
         matches!(method_type, MethodType::Ed25519VerificationKey2018),
-        CommandError::InvalidMethodSecret(
+        UpdateError::InvalidMethodSecret(
           "MethodType::Ed25519VerificationKey2018 can only be used with an ed25519 method secret".to_owned(),
         )
       );
@@ -277,7 +274,7 @@ async fn insert_method_secret(
     MethodSecret::MerkleKeyCollection(_) => {
       ensure!(
         matches!(method_type, MethodType::MerkleKeyCollection2021),
-        CommandError::InvalidMethodSecret(
+        UpdateError::InvalidMethodSecret(
           "MethodType::MerkleKeyCollection2021 can only be used with a MerkleKeyCollection method secret".to_owned(),
         )
       );

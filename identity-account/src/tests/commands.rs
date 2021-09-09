@@ -6,7 +6,7 @@ use crate::account::Config;
 use crate::error::Error;
 use crate::error::Result;
 use crate::events::Command;
-use crate::events::CommandError;
+use crate::events::UpdateError;
 use crate::identity::IdentityCreate;
 use crate::identity::IdentityId;
 use crate::identity::IdentitySnapshot;
@@ -82,7 +82,7 @@ async fn test_create_identity_invalid_method() -> Result<()> {
 
     assert!(matches!(
       output.unwrap_err(),
-      Error::CommandError(CommandError::InvalidMethodType(_))
+      Error::CommandError(UpdateError::InvalidMethodType(_))
     ));
 
     let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
@@ -154,7 +154,7 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
   assert!(matches!(
     output.unwrap_err(),
-    Error::CommandError(CommandError::DocumentAlreadyExists),
+    Error::CommandError(UpdateError::DocumentAlreadyExists),
   ));
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
@@ -204,7 +204,7 @@ async fn test_create_identity_from_invalid_secret_key() -> Result<()> {
 
   let err = account.create_identity(id_create).await.unwrap_err();
 
-  assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
+  assert!(matches!(err, Error::CommandError(UpdateError::InvalidMethodSecret(_))));
 
   Ok(())
 }
@@ -277,7 +277,7 @@ async fn test_create_method_reserved_fragment() -> Result<()> {
 
   assert!(matches!(
     output.unwrap_err(),
-    Error::CommandError(CommandError::InvalidMethodFragment(_)),
+    Error::CommandError(UpdateError::InvalidMethodFragment(_)),
   ));
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
@@ -320,7 +320,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
 
   assert!(matches!(
     output.unwrap_err(),
-    Error::CommandError(CommandError::DuplicateKeyFragment(_)),
+    Error::CommandError(UpdateError::DuplicateKeyFragment(_)),
   ));
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
@@ -389,7 +389,7 @@ async fn test_create_method_from_invalid_secret_key() -> Result<()> {
 
   let err = account.process(identity, command, false).await.unwrap_err();
 
-  assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
+  assert!(matches!(err, Error::CommandError(UpdateError::InvalidMethodSecret(_))));
 
   Ok(())
 }
@@ -419,7 +419,7 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
 
   let err = account.process(identity, command, false).await.unwrap_err();
 
-  assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
+  assert!(matches!(err, Error::CommandError(UpdateError::InvalidMethodSecret(_))));
 
   let key_collection = KeyCollection::new_ed25519(4).unwrap();
 
@@ -432,7 +432,7 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
 
   let err = account.process(identity, command, false).await.unwrap_err();
 
-  assert!(matches!(err, Error::CommandError(CommandError::InvalidMethodSecret(_))));
+  assert!(matches!(err, Error::CommandError(UpdateError::InvalidMethodSecret(_))));
 
   Ok(())
 }
