@@ -291,18 +291,37 @@ async fn insert_method_secret(
 // Command Builders
 // =============================================================================
 
-impl_command_builder!(CreateMethod {
+impl_command_builder!(
+/// Create a new method on an identity.
+///
+/// # Parameters
+/// - `type_`: the type of the method, defaults to [`MethodType::Ed25519VerificationKey2018`].
+/// - `scope`: the scope of the method, defaults to [`MethodScope::default`].
+/// - `fragment`: the identifier of the method in the document, required.
+/// - `method_secret`: the secret key to use for the method, optional. Will be generated when omitted.
+CreateMethod {
   @defaulte type_ MethodType = Ed25519VerificationKey2018,
   @default scope MethodScope,
   @required fragment String,
   @optional method_secret MethodSecret
 });
 
-impl_command_builder!(DeleteMethod {
+impl_command_builder!(
+/// Delete a method on an identity.
+///
+/// # Parameters
+/// - `fragment`: the identifier of the method in the document, required.
+DeleteMethod {
   @required fragment String,
 });
 
-impl_command_builder!(AttachMethod {
+impl_command_builder!(
+/// Attach one or more verification relationships to a method on an identity.
+///
+/// # Parameters
+/// - `scopes`: the scopes to add, defaults to an empty [`Vec`].
+/// - `fragment`: the identifier of the method in the document, required.
+AttachMethod {
   @required fragment String,
   @default scopes Vec<MethodScope>,
 });
@@ -314,7 +333,13 @@ impl<'account, 'key, K: IdentityKey> AttachMethodBuilder<'account, 'key, K> {
   }
 }
 
-impl_command_builder!(DetachMethod {
+impl_command_builder!(
+/// Detaches one or more verification relationships from a method on an identity.
+///
+/// # Parameters
+/// - `scopes`: the scopes to remove, defaults to an empty [`Vec`].
+/// - `fragment`: the identifier of the method in the document, required.
+DetachMethod {
   @required fragment String,
   @default scopes Vec<MethodScope>,
 });
@@ -326,13 +351,26 @@ impl<'account, 'key, K: IdentityKey> DetachMethodBuilder<'account, 'key, K> {
   }
 }
 
-impl_command_builder!(CreateService {
+impl_command_builder!(
+/// Create a new service on an identity.
+///
+/// # Parameters
+/// - `type_`: the type of the service, e.g. `"LinkedDomains"`, required.
+/// - `fragment`: the identifier of the service in the document, required.
+/// - `endpoint`: the url of the service, required.
+/// - `properties`: additional properties of the service, optional.
+CreateService {
   @required fragment String,
   @required type_ String,
   @required endpoint Url,
   @optional properties Object,
 });
 
-impl_command_builder!(DeleteService {
+impl_command_builder!(
+/// Delete a service on an identity.
+///
+/// # Parameters
+/// - `fragment`: the identifier of the service in the document, required.
+DeleteService {
   @required fragment String,
 });

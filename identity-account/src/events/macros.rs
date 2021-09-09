@@ -30,8 +30,9 @@ macro_rules! impl_command_builder {
       )),
     }
   };
-  ($ident:ident { $(@ $requirement:ident $field:ident $ty:ty $(= $value:expr)?),* $(,)* }) => {
+  ($(#[$meta:meta])* $ident:ident { $(@ $requirement:ident $field:ident $ty:ty $(= $value:expr)?),* $(,)* }) => {
     paste::paste! {
+      $(#[$meta])*
       #[derive(Clone, Debug)]
       pub struct [<$ident Builder>]<'account, 'key, K: $crate::identity::IdentityKey> {
         account: &'account Account,
@@ -66,11 +67,11 @@ macro_rules! impl_command_builder {
             )*
           };
 
-          self.account.apply_command(self.key, update).await?;
-          Ok(())
+          self.account.apply_command(self.key, update).await
         }
       }
 
+      /// Creates a new builder to modify the identity. See the documentation of the return type for details.
       impl<'account, 'key, K: $crate::identity::IdentityKey + Clone> $crate::identity::IdentityUpdater<'account, 'key, K> {
         pub fn [<$ident:snake>](&self) -> [<$ident Builder>]<'account, 'key, K> {
           [<$ident Builder>]::new(self.account, self.key)
