@@ -3,11 +3,10 @@
 
 use std::pin::Pin;
 
+use crate::account::Account;
+use crate::identity::{IdentityCreate, IdentitySnapshot, IdentityUpdater};
+use crate::{Error as AccountError, Result};
 use futures::Future;
-use identity_account::account::Account;
-use identity_account::events::Command;
-use identity_account::identity::{IdentityCreate, IdentitySnapshot};
-use identity_account::{Error as AccountError, Result};
 use identity_core::common::Url;
 use identity_iota::chain::DocumentHistory;
 use identity_iota::did::{IotaDID, IotaVerificationMethod};
@@ -35,19 +34,23 @@ async fn test_lazy_updates() -> Result<()> {
 
       let did: &IotaDID = snapshot.identity().try_did()?;
 
-      let command: Command = Command::create_service()
-        .fragment("my-service")
-        .type_("url")
-        .endpoint(Url::parse("https://example.org").unwrap())
-        .finish()?;
-      account.update_identity(did, command).await?;
+      let did_updater: IdentityUpdater<'_, '_, _> = account.update_identity(did);
 
-      let command: Command = Command::create_service()
-        .fragment("my-other-service")
-        .type_("url")
+      did_updater
+        .create_service()
+        .fragment("my-service")
+        .type_("LinkedDomains")
         .endpoint(Url::parse("https://example.org").unwrap())
-        .finish()?;
-      account.update_identity(did, command).await?;
+        .apply()
+        .await?;
+
+      did_updater
+        .create_service()
+        .fragment("my-other-service")
+        .type_("LinkedDomains")
+        .endpoint(Url::parse("https://example.org").unwrap())
+        .apply()
+        .await?;
 
       account.publish_updates(did).await?;
 
@@ -73,14 +76,15 @@ async fn test_lazy_updates() -> Result<()> {
       // More updates to the identity
       // ===========================================================================
 
-      let command: Command = Command::delete_service().fragment("my-service").finish()?;
-      account.update_identity(did, command).await?;
+      did_updater.delete_service().fragment("my-service").apply().await?;
 
-      let command: Command = Command::delete_service().fragment("my-other-service").finish()?;
-      account.update_identity(did, command).await?;
+      did_updater
+        .delete_service()
+        .fragment("my-other-service")
+        .apply()
+        .await?;
 
-      let command: Command = Command::create_method().fragment("new-method").finish()?;
-      account.update_identity(did, command).await?;
+      did_updater.create_method().fragment("new-method").apply().await?;
 
       account.publish_updates(did).await?;
 
