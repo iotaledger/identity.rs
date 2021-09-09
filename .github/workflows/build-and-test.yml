@@ -43,8 +43,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - id: build-and-test
-        uses: '../.github/actions/build-and-test'
+      - uses: './.github/actions/build-and-test'
+        name: Test
 
 
   build-and-test-libjose:
