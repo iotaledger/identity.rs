@@ -42,6 +42,7 @@ jobs:
       RUSTC_WRAPPER: sccache
 
     steps:
+      - uses: actions/checkout@v2
       - id: build-and-test
         uses: './.github/actions/build-and-test'
 
