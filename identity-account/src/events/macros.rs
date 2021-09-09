@@ -26,7 +26,7 @@ macro_rules! impl_command_builder {
     match $this.$field {
       Some(value) => value,
       None => return Err($crate::Error::CommandError(
-        $crate::events::CommandError::MissingRequiredField(stringify!($field)),
+        $crate::events::UpdateError::MissingRequiredField(stringify!($field)),
       )),
     }
   };
