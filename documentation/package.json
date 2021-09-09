@@ -1,6 +1,7 @@
 {
   "name": "documentation",
   "version": "0.0.0",
+  "private": "true",
   "scripts": {
     "start": "wiki-cli start",
     "nuke": "wiki-cli nuke",

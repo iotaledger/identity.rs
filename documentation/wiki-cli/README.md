@@ -28,30 +28,10 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`wiki-cli hello [FILE]`](#wiki-cli-hello-file)
 * [`wiki-cli help [COMMAND]`](#wiki-cli-help-command)
+* [`wiki-cli nuke`](#wiki-cli-nuke)
 * [`wiki-cli setup`](#wiki-cli-setup)
-* [`wiki-cli start [FILE]`](#wiki-cli-start-file)
-
-## `wiki-cli hello [FILE]`
-
-describe the command here
-
-```
-USAGE
-  $ wiki-cli hello [FILE]
-
-OPTIONS
-  -f, --force
-  -h, --help       show CLI help
-  -n, --name=name  name to print
-
-EXAMPLE
-  $ wiki-cli hello
-  hello world from ./src/hello.ts!
-```
-
-_See code: [src/commands/hello.ts](https://github.com/eike-hass/wiki-cli/blob/v0.0.0/src/commands/hello.ts)_
+* [`wiki-cli start`](#wiki-cli-start)
 
 ## `wiki-cli help [COMMAND]`
 
@@ -70,6 +50,18 @@ OPTIONS
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.2.3/src/commands/help.ts)_
 
+## `wiki-cli nuke`
+
+completely removes local wiki
+
+```
+USAGE
+  $ wiki-cli nuke
+
+OPTIONS
+  -h, --help  show CLI help
+```
+
 ## `wiki-cli setup`
 
 setup local wiki
@@ -86,21 +78,15 @@ EXAMPLE
   $ wiki-cli setup --ref main
 ```
 
-_See code: [src/commands/setup.ts](https://github.com/eike-hass/wiki-cli/blob/v0.0.0/src/commands/setup.ts)_
+## `wiki-cli start`
 
-## `wiki-cli start [FILE]`
-
-describe the command here
+start local wiki
 
 ```
 USAGE
-  $ wiki-cli start [FILE]
+  $ wiki-cli start
 
 OPTIONS
-  -f, --force
-  -h, --help       show CLI help
-  -n, --name=name  name to print
+  -h, --help  show CLI help
 ```
-
-_See code: [src/commands/start.ts](https://github.com/eike-hass/wiki-cli/blob/v0.0.0/src/commands/start.ts)_
 <!-- commandsstop -->

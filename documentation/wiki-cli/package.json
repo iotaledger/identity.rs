@@ -1,11 +1,14 @@
 {
   "name": "wiki-cli",
   "version": "0.0.0",
-  "author": "Eike Haß @eike-hass",
+  "author": "",
+  "private": "true",
   "bin": {
     "wiki-cli": "./bin/run"
   },
-  "bugs": "https://github.com/eike-hass/wiki-cli/issues",
+  "engines": {
+    "node": ">=14.14.0"
+  },
   "dependencies": {
     "@oclif/command": "^1.8.0",
     "@oclif/config": "^1.17.0",
@@ -19,7 +22,7 @@
   "devDependencies": {
     "@oclif/dev-cli": "^1.26.0",
     "@types/fs-extra": "^9.0.12",
-    "@types/node": "^10.17.60",
+    "@types/node": "^16.9.0",
     "eslint": "^5.16.0",
     "eslint-config-oclif": "^3.1.0",
     "eslint-config-oclif-typescript": "^0.1.0",
@@ -27,20 +30,16 @@
     "ts-node": "^8.10.2",
     "typescript": "^3.9.10"
   },
-  "engines": {
-    "node": ">=8.0.0"
-  },
   "files": [
     "/bin",
     "/lib",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
-  "homepage": "https://github.com/eike-hass/wiki-cli",
   "keywords": [
     "oclif"
   ],
-  "license": "MIT",
+  "license": "UNLICENSED",
   "main": "lib/index.js",
   "oclif": {
     "commands": "./lib/commands",
@@ -49,7 +48,6 @@
       "@oclif/plugin-help"
     ]
   },
-  "repository": "eike-hass/wiki-cli",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
     "posttest": "eslint . --ext .ts --config .eslintrc",

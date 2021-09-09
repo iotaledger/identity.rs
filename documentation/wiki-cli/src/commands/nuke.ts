@@ -1,6 +1,6 @@
 import {Command, flags} from '@oclif/command'
 import {join} from 'path'
-import {rmdirSync} from 'fs'
+import {rmSync} from 'fs'
 
 export default class Nuke extends Command {
   static description = 'completely removes local wiki'
@@ -13,6 +13,6 @@ export default class Nuke extends Command {
   async run() {
     const PWD = process.env.PWD ?? ''
     const LOCAL_WIKI_FOLDER = join(PWD, 'local')
-    rmdirSync(LOCAL_WIKI_FOLDER, {recursive: true})
+    rmSync(LOCAL_WIKI_FOLDER, {recursive: true, force: true})
   }
 }
