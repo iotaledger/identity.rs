@@ -291,12 +291,6 @@ async fn insert_method_secret(
 // Command Builders
 // =============================================================================
 
-impl_command_builder!(CreateIdentity {
-  @optional network String,
-  @optional method_secret MethodSecret,
-  @defaulte authentication MethodType = Ed25519VerificationKey2018,
-});
-
 impl_command_builder!(CreateMethod {
   @defaulte type_ MethodType = Ed25519VerificationKey2018,
   @default scope MethodScope,
