@@ -39,10 +39,12 @@ type MemVault = HashMap<KeyLocation, KeyPair>;
 type Events = HashMap<IdentityId, Vec<Commit>>;
 type States = HashMap<IdentityId, IdentitySnapshot>;
 type Vaults = HashMap<IdentityId, MemVault>;
+type PublishedGenerations = HashMap<IdentityId, Generation>;
 
 pub struct MemStore {
   expand: bool,
   index: Shared<IdentityIndex>,
+  published_generations: Shared<PublishedGenerations>,
   events: Shared<Events>,
   states: Shared<States>,
   vaults: Shared<Vaults>,
@@ -53,6 +55,7 @@ impl MemStore {
     Self {
       expand: false,
       index: Shared::new(IdentityIndex::new()),
+      published_generations: Shared::new(HashMap::new()),
       events: Shared::new(HashMap::new()),
       states: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
@@ -233,6 +236,15 @@ impl Storage for MemStore {
     let _ = self.states.write()?.remove(&id);
     let _ = self.vaults.write()?.remove(&id);
 
+    Ok(())
+  }
+
+  async fn published_generation(&self, id: IdentityId) -> Result<Option<Generation>> {
+    Ok(self.published_generations.read()?.get(&id).copied())
+  }
+
+  async fn set_published_generation(&self, id: IdentityId, index: Generation) -> Result<()> {
+    self.published_generations.write()?.insert(id, index);
     Ok(())
   }
 }
