@@ -1,0 +1,11 @@
+{
+  "$schema": "https://dprint.dev/schemas/v0.json",
+  "incremental": true,
+  "toml": {
+  },
+  "includes": ["**/*.toml"],
+  "excludes": [],
+  "plugins": [
+    "https://plugins.dprint.dev/toml-0.5.1.wasm"
+  ]
+}
