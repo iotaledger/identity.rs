@@ -61,6 +61,5 @@ jobs:
       # Use `dprint` to check Cargo.toml formatting.
       # To fix, run `dprint fmt` locally.
       - name: Cargo.toml dprint check
-        uses: actions-rs/cargo@v1
         run:
           dprint check
