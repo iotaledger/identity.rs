@@ -31,8 +31,8 @@ jobs:
           components: rustfmt
 
       - name: Install dprint
-        run: cargo install dprint
-        # run: npm install -g dprint
+        run: npm install -g dprint
+        #run: cargo install dprint # installing from source is slow, ~5 minutes
 
       - name: Cargo.toml fmt check
         uses: actions-rs/cargo@v1
