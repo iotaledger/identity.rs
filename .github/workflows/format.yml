@@ -34,12 +34,6 @@ jobs:
         run: npm install -g dprint
         #run: cargo install dprint # installing from source is slow, ~5 minutes
 
-      - name: Cargo.toml fmt check
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --manifest-path ./libjose/Cargo.toml --all -- --check
-
       - name: core fmt check
         uses: actions-rs/cargo@v1
         with:
@@ -60,6 +54,6 @@ jobs:
 
       # Use `dprint` to check Cargo.toml formatting.
       # To fix, run `dprint fmt` locally.
-      - name: Cargo.toml dprint check
+      - name: Cargo.toml fmt check
         run:
           dprint check
