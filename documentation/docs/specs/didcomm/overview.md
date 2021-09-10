@@ -1,9 +1,9 @@
 ---
-title: IOTA DIDComm Protocols
+title: IOTA DIDComm Specification
 sidebar_label: Overview
 ---
 
-# IOTA DID-Communications Message Specification
+# IOTA DIDComm Specification
 
 *version 0.1, last changed April 2021*
 

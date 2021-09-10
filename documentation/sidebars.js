@@ -110,16 +110,16 @@ module.exports = {
           label: 'IOTA DIDComm',
           collapsed: true,
           items: [
+            'specs/didcomm/overview',
+            'specs/didcomm/CHANGELOG',
             {
               type: 'category',
-              label: 'IOTA DIDComm Protocols',
+              label: 'Protocols',
               collapsed: true,
               items: [
                 'specs/didcomm/protocols/presentation',
               ]
             },
-            'specs/didcomm/README',
-            'specs/didcomm/CHANGELOG',
           ]
         },
       ],

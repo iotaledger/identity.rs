@@ -27,7 +27,19 @@ Allows presentation of verifiable credentials that are issued to a holder and un
 
 <div style={{textAlign: 'center'}}>
 
-![PresentationDiagram](/img/protocols/presentation.svg)
+![PresentationDiagram](/img/didcomm/presentation.svg)
+
+</div>
+
+<div style={{textAlign: 'center'}}>
+
+![PresentationDiagram](/img/didcomm/presentation_vertical.svg)
+
+</div>
+
+<div style={{textAlign: 'center'}}>
+
+![PresentationDiagram](/img/didcomm/presentation_horizontal.svg)
 
 </div>
 
@@ -366,10 +378,10 @@ Custom error messages for problem-reports that are expected in the course of thi
 
 This section is non-normative.
 
-- Security: implementors should ensure the presentation is transmitted over an encrypted channel etc. (TODO mention/link to DIDComm encryption?)
-- Authentication: it is recommended to use the authentication protocol (TODO link?) for once-off authentication, or sender-authenticated encryption for continuous authentication of both parties in the DIDComm thread. Signatures (`proof` fields) should not be relied upon for this (TODO link?).
-- Authorisation: establishing whether either party is allowed to request/offer presentations is an application-level concern.
-- Validation: apart from verifying the presentation and credentials are signed by a trusted issuer, how credential subject matter fields are checked for disputes is out-of-scope.
+- **Security**: implementors should ensure the presentation is transmitted over an encrypted channel etc. (TODO mention/link to DIDComm encryption?)
+- **Authentication**: it is recommended to use the authentication protocol (TODO link?) for once-off authentication, or sender-authenticated encryption (TODO link?) for continuous authentication of both parties in the DIDComm thread. Signatures (`proof` fields) should not be relied upon for this (TODO link?).
+- **Authorisation**: establishing whether either party is allowed to request/offer presentations is an application-level concern.
+- **Validation**: apart from verifying the presentation and credentials are signed by a trusted issuer, how credential subject matter fields are checked for disputes is out-of-scope.
 
 ## Unresolved Questions
 
