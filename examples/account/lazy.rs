@@ -4,7 +4,6 @@
 //! cargo run --example account_lazy
 
 use identity::account::Account;
-use identity::account::Command;
 use identity::account::IdentityCreate;
 use identity::account::IdentitySnapshot;
 use identity::account::Result;
@@ -27,28 +26,36 @@ async fn main() -> Result<()> {
   // Retrieve the DID from the newly created Identity state.
   let did: &IotaDID = snapshot.identity().try_did()?;
 
-  let command: Command = Command::create_service()
+  account
+    .update_identity(did)
+    .create_service()
     .fragment("example-service")
     .type_("LinkedDomains")
     .endpoint(Url::parse("https://example.org")?)
-    .finish()?;
-  account.update_identity(did, command).await?;
+    .apply()
+    .await?;
 
   // Publish the newly created DID document,
   // including the new service, to the tangle.
   account.publish_updates(did).await?;
 
   // Add another service.
-  let command: Command = Command::create_service()
+  account
+    .update_identity(did)
+    .create_service()
     .fragment("another-service")
     .type_("LinkedDomains")
     .endpoint(Url::parse("https://example.org")?)
-    .finish()?;
-  account.update_identity(did, command).await?;
+    .apply()
+    .await?;
 
   // Delete the previously added service.
-  let command: Command = Command::delete_service().fragment("example-service").finish()?;
-  account.update_identity(did, command).await?;
+  account
+    .update_identity(did)
+    .delete_service()
+    .fragment("example-service")
+    .apply()
+    .await?;
 
   // Publish the updates as one message to the tangle.
   account.publish_updates(did).await?;

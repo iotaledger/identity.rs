@@ -38,6 +38,7 @@ use crate::identity::IdentityLock;
 use crate::identity::IdentitySnapshot;
 use crate::identity::IdentityState;
 use crate::identity::IdentityTag;
+use crate::identity::IdentityUpdater;
 use crate::identity::TinyMethod;
 use crate::storage::Storage;
 use crate::types::Generation;
@@ -112,7 +113,7 @@ impl Account {
 
   /// Finds and returns the state snapshot for the identity specified by given `key`.
   pub async fn find_identity<K: IdentityKey>(&self, key: K) -> Result<Option<IdentitySnapshot>> {
-    match self.resolve_id(key).await {
+    match self.resolve_id(&key).await {
       Some(identity) => self.load_snapshot(identity).await.map(Some),
       None => Ok(None),
     }
@@ -155,15 +156,15 @@ impl Account {
     Ok(snapshot)
   }
 
-  /// Updates the identity specified by the given `key` with the given `command`.
-  pub async fn update_identity<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
-    // Hold on to an `IdentityId`s individual lock until we've finished processing the update.
-    let identity_lock = self.try_resolve_id_lock(key).await?;
-    let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
-
-    self.process(*identity, command, true).await?;
-
-    Ok(())
+  /// Returns the `IdentityUpdater` for the given `key`.
+  ///
+  /// On this type, various operations can be executed
+  /// that modify an identity, such as creating services or methods.
+  pub fn update_identity<'account, 'key, K: IdentityKey>(
+    &'account self,
+    key: &'key K,
+  ) -> IdentityUpdater<'account, 'key, K> {
+    IdentityUpdater::new(self, key)
   }
 
   /// Removes the identity specified by the given `key`.
@@ -190,7 +191,7 @@ impl Account {
 
   /// Resolves the DID Document associated with the specified `key`.
   pub async fn resolve_identity<K: IdentityKey>(&self, key: K) -> Result<IotaDocument> {
-    let identity: IdentityId = self.try_resolve_id(key).await?;
+    let identity: IdentityId = self.try_resolve_id(&key).await?;
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
     let document: &IotaDID = snapshot.identity().try_did()?;
 
@@ -204,7 +205,7 @@ impl Account {
     K: IdentityKey,
     U: Serialize + SetSignature,
   {
-    let identity: IdentityId = self.try_resolve_id(key).await?;
+    let identity: IdentityId = self.try_resolve_id(&key).await?;
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
     let state: &IdentityState = snapshot.identity();
 
@@ -217,15 +218,15 @@ impl Account {
     Ok(())
   }
 
-  async fn resolve_id<K: IdentityKey>(&self, key: K) -> Option<IdentityId> {
+  async fn resolve_id<K: IdentityKey>(&self, key: &K) -> Option<IdentityId> {
     self.index.read().await.get(key)
   }
 
-  async fn try_resolve_id<K: IdentityKey>(&self, key: K) -> Result<IdentityId> {
+  async fn try_resolve_id<K: IdentityKey>(&self, key: &K) -> Result<IdentityId> {
     self.resolve_id(key).await.ok_or(Error::IdentityNotFound)
   }
 
-  async fn try_resolve_id_lock<K: IdentityKey>(&self, key: K) -> Result<IdentityLock> {
+  async fn try_resolve_id_lock<K: IdentityKey>(&self, key: &K) -> Result<IdentityLock> {
     self.index.write().await.get_lock(key).ok_or(Error::IdentityNotFound)
   }
 
@@ -233,8 +234,18 @@ impl Account {
   // Misc. Private
   // ===========================================================================
 
-  #[doc(hidden)]
-  pub async fn process(&self, id: IdentityId, command: Command, persist: bool) -> Result<()> {
+  /// Updates the identity specified by the given `key` with the given `command`.
+  pub(crate) async fn apply_command<K: IdentityKey>(&self, key: &K, command: Command) -> Result<()> {
+    // Hold on to an `IdentityId`s individual lock until we've finished processing the update.
+    let identity_lock = self.try_resolve_id_lock(key).await?;
+    let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
+
+    self.process(*identity, command, true).await?;
+
+    Ok(())
+  }
+
+  pub(crate) async fn process(&self, id: IdentityId, command: Command, persist: bool) -> Result<()> {
     // Load the latest state snapshot from storage
     let root: IdentitySnapshot = self.load_snapshot(id).await?;
 
@@ -437,7 +448,7 @@ impl Account {
 
   /// Push all unpublished changes for the given identity to the tangle in a single message.
   pub async fn publish_updates<K: IdentityKey>(&self, key: K) -> Result<()> {
-    let identity_lock: IdentityLock = self.try_resolve_id_lock(key).await?;
+    let identity_lock: IdentityLock = self.try_resolve_id_lock(&key).await?;
     let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
 
     // Get the last commit generation that was published to the tangle.

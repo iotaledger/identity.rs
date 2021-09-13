@@ -49,7 +49,7 @@ impl IdentityIndex {
   }
 
   /// Returns the id of the identity matching the given `key`.
-  pub fn get<K: IdentityKey>(&self, key: K) -> Option<IdentityId> {
+  pub fn get<K: IdentityKey>(&self, key: &K) -> Option<IdentityId> {
     key.scan(self.data.iter())
   }
 
