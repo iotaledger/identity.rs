@@ -10,6 +10,6 @@
   },
   "license": "UNLICENSED",
   "dependencies": {
-    "wiki-cli": "file:./iota-wiki-cli"
+    "wiki-cli": "git+ssh://git@github.com/iota-community/iota-wiki-cli"
   }
 }
