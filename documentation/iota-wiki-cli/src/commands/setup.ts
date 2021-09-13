@@ -1,6 +1,7 @@
 import {Command, flags} from '@oclif/command'
 import {spawnSync} from 'child_process'
 import {existsSync, mkdirSync, readdirSync} from 'fs'
+import {getLocalConfig} from '../local-config'
 import {join} from 'path'
 
 export default class Setup extends Command {
@@ -19,7 +20,8 @@ export default class Setup extends Command {
     const {flags} = this.parse(Setup)
     const ref = flags.ref ?? ''
     const PWD = process.env.PWD ?? ''
-    const WORKING_FOLDER = 'local'
+    const userConfig = await getLocalConfig()
+    const WORKING_FOLDER = userConfig.localWikiFolder
     this.log(`Working in ${join(PWD, WORKING_FOLDER)}`)
     if (!existsSync(WORKING_FOLDER)) {
       mkdirSync(WORKING_FOLDER)
@@ -40,11 +42,11 @@ export default class Setup extends Command {
     if (!existsSync(WIKI_EXTERNAL_FOLDER)) {
       mkdirSync(WIKI_EXTERNAL_FOLDER)
     }
-    const WIKI_CONTENT_REPO_FOLDER = join(WIKI_EXTERNAL_FOLDER, 'identity.rs')
+    const WIKI_CONTENT_REPO_FOLDER = join(WIKI_EXTERNAL_FOLDER, userConfig.repoName)
     if (!existsSync(WIKI_CONTENT_REPO_FOLDER)) {
       mkdirSync(WIKI_CONTENT_REPO_FOLDER)
     }
-    const WIKI_CONTENT_DOCS_FOLDER = join(WIKI_CONTENT_REPO_FOLDER, 'documentation')
+    const WIKI_CONTENT_DOCS_FOLDER = join(WIKI_CONTENT_REPO_FOLDER, userConfig.contentFolder)
     if (!existsSync(WIKI_CONTENT_DOCS_FOLDER)) {
       mkdirSync(WIKI_CONTENT_DOCS_FOLDER)
     }

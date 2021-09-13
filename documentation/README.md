@@ -5,6 +5,7 @@ The documentation is built using [Docusaurus 2](https://docusaurus.io/). The dep
 ## Installation
 
 ```console
+npm i
 npm run setup
 ```
 
@@ -21,7 +22,7 @@ This command starts a local development server and opens up a browser window. Mo
 ## Tear Down
 
 ```console
-npm run nuke
+npm run clean
 ```
 
 This command deletes the local wiki and local links.

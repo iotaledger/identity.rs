@@ -1,0 +1,6 @@
+{
+    "repoName": "identity.rs",
+    "contentFolder": "documentation",
+    "localWikiFolder": "local-wiki",
+    "excludeList": ["local", "iota-wiki-cli", "node_modules", "target", ".git/"]
+}

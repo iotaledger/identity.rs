@@ -68,7 +68,7 @@ OPTIONS
   -r, --ref=ref  wiki revison to checkout
 
 EXAMPLE
-  $ wiki-cli setup --ref main
+  $ iota-wiki-cli setup --ref main
 ```
 
 ## `iota-wiki-cli start`

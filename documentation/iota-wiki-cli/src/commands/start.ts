@@ -6,6 +6,7 @@ import {readFileSync} from 'fs'
 import {copySync} from 'fs-extra'
 const syncDirectory = require('sync-directory')
 const debounce = require('lodash.debounce')
+import {getLocalConfig} from '../local-config'
 
 export default class Start extends Command {
   static description = 'start local wiki'
@@ -16,7 +17,8 @@ export default class Start extends Command {
 
   async run() {
     const PWD = process.env.PWD ?? ''
-    const WIKI_GIT_FOLDER = join(PWD, 'local', 'iota-wiki')
+    const userConfig = await getLocalConfig()
+    const WIKI_GIT_FOLDER = join(PWD, userConfig.localWikiFolder, 'iota-wiki')
     const DOCUSAURUS_CONFIG_PATH = join(WIKI_GIT_FOLDER, 'docusaurus.config.js')
     const log = this.log
 
@@ -36,7 +38,7 @@ export default class Start extends Command {
 
     const WIKI_EXTERNAL_FOLDER = join(WIKI_GIT_FOLDER, 'external')
 
-    const WIKI_CONTENT_REPO_FOLDER = join(WIKI_EXTERNAL_FOLDER, 'identity.rs')
+    const WIKI_CONTENT_REPO_FOLDER = join(WIKI_EXTERNAL_FOLDER, userConfig.repoName)
 
     copySync(join(PWD, 'static', 'img'), join(WIKI_GIT_FOLDER, 'static', 'img'))
 
@@ -55,7 +57,7 @@ export default class Start extends Command {
     }, 100)
 
     syncDirectory(resolve(join(PWD, '..')), resolve(WIKI_CONTENT_REPO_FOLDER), {
-      exclude: ['local', 'wiki-cli', 'node_modules', 'target', '.git'],
+      exclude: userConfig.excludeList,
       watch: true,
       afterSync: ({type, relativePath}: {type: string; relativePath: string}) => {
         this.log(`${type}: ${relativePath}`)
