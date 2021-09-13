@@ -193,6 +193,7 @@ jobs:
             sccache-path: /home/runner/.cache/sccache
     env:
       SCCACHE_DIR: ${{ matrix.sccache-path }}
+      CARGO_INCREMENTAL: 0 # disabled to reduce target cache size
       RUSTC_WRAPPER: sccache
 
     steps:

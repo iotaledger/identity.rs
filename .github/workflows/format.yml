@@ -26,21 +26,34 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2021-07-05
+          toolchain: nightly-2021-09-07
           override: true
           components: rustfmt
+
+      - name: Install dprint
+        run: npm install -g dprint
+        #run: cargo install dprint # installing from source is slow, ~5 minutes
+
       - name: core fmt check
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: --all -- --check
+
       - name: wasm fmt check
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: --manifest-path ./bindings/wasm/Cargo.toml --all -- --check
+
       - name: libjose fmt check
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: --manifest-path ./libjose/Cargo.toml --all -- --check
+
+      # Use `dprint` to check Cargo.toml formatting.
+      # To fix, run `dprint fmt` locally.
+      - name: Cargo.toml fmt check
+        run:
+          dprint check
