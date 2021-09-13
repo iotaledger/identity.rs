@@ -75,7 +75,7 @@ jobs:
             ${{ matrix.os }}-cargo-
 
       # Generate Cargo.lock files for build, sccache cache keys.
-      # Allows dependencies updated on crates.io between runs to trigger storing an updated cache, 
+      # Allows dependencies updated on crates.io between runs to trigger storing an updated cache,
       # which hashing Cargo.toml files alone does not.
       - name: Cargo update
         uses: actions-rs/cargo@v1
@@ -228,7 +228,7 @@ jobs:
             ${{ matrix.os }}-cargo-
 
       # Generate Cargo.lock files for build, sccache cache keys.
-      # Allows dependencies updated on crates.io between runs to trigger storing an updated cache, 
+      # Allows dependencies updated on crates.io between runs to trigger storing an updated cache,
       # which hashing Cargo.toml files alone does not.
       - name: Cargo update
         uses: actions-rs/cargo@v1
@@ -282,18 +282,18 @@ jobs:
           node-version: 15.x
 
       - name: Install wasm-pack
-        run: yarn global add wasm-pack
+        run: npm install -g wasm-pack
 
       - name: Install JS dependencies
-        run: yarn
+        run: npm install
         working-directory: bindings/wasm
 
       - name: Build WASM bindings
-        run: yarn build
+        run: npm run build
         working-directory: bindings/wasm
 
       - name: Build Wasm examples
-        run: yarn build:examples
+        run: npm run build:examples
         working-directory: bindings/wasm
 
       - name: Run tests

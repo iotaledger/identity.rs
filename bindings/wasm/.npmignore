@@ -1,6 +1,7 @@
 /target
 Cargo.lock
 
+examples
 node_modules
 wasm-web
 wasm-node
