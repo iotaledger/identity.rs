@@ -3,13 +3,13 @@
   "version": "0.0.0",
   "private": "true",
   "scripts": {
-    "start": "wiki-cli start",
-    "nuke": "wiki-cli nuke",
-    "setup": "wiki-cli setup",
+    "start": "iota-wiki-cli start",
+    "nuke": "iota-wiki-cli nuke",
+    "setup": "iota-wiki-cli setup",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "license": "UNLICENSED",
   "dependencies": {
-    "wiki-cli": "file:./wiki-cli"
+    "wiki-cli": "file:./iota-wiki-cli"
   }
 }

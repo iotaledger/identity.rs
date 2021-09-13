@@ -7,7 +7,7 @@ export default class Setup extends Command {
   static description = 'setup local wiki'
 
   static examples = [
-    '$ wiki-cli setup --ref main',
+    '$ iota-wiki-cli setup --ref main',
   ]
 
   static flags = {

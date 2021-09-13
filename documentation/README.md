@@ -1,36 +1,30 @@
-# Website
+# Documentation
 
-This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
+The documentation is built using [Docusaurus 2](https://docusaurus.io/). The deployment is done through a centralized build from [IOTA WIKI](https://github.com/iota-community/iota-wiki). To run a local instance the [IOTA WIKI CLI](TBD) is used.
 
 ## Installation
 
 ```console
-yarn install
+npm run setup
 ```
+
+This command checks out a local copy of the wiki and creates links to the content.
 
 ## Local Development
 
 ```console
-yarn start
+npm start
 ```
 
 This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
 
-## Build
+## Tear Down
 
 ```console
-yarn build
+npm run nuke
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-## Deployment
-
-```console
-GIT_USER=<Your GitHub username> USE_SSH=true yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+This command deletes the local wiki and local links.
 
 
 ## Including .md file 

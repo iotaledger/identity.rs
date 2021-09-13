@@ -4,7 +4,6 @@ import {join, resolve} from 'path'
 const  replaceInFile = require('replace-in-file')
 import {readFileSync} from 'fs'
 import {copySync} from 'fs-extra'
-import { string } from '@oclif/parser/lib/flags'
 const syncDirectory = require('sync-directory')
 const debounce = require('lodash.debounce')
 
@@ -58,7 +57,7 @@ export default class Start extends Command {
     syncDirectory(resolve(join(PWD, '..')), resolve(WIKI_CONTENT_REPO_FOLDER), {
       exclude: ['local', 'wiki-cli', 'node_modules', 'target', '.git'],
       watch: true,
-      afterSync: ({type, relativePath}:{type: string, relativePath: string}) => {
+      afterSync: ({type, relativePath}: {type: string; relativePath: string}) => {
         this.log(`${type}: ${relativePath}`)
         if (type === 'init:hardlink') {
           runYarn()

@@ -2,7 +2,7 @@ import {Command, flags} from '@oclif/command'
 import {join} from 'path'
 import {rmSync} from 'fs'
 
-export default class Nuke extends Command {
+export default class Clean extends Command {
   static description = 'completely removes local wiki'
 
   static flags = {

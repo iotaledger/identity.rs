@@ -1,10 +1,10 @@
 {
-  "name": "wiki-cli",
+  "name": "iota-wiki-cli",
   "version": "0.0.0",
   "author": "",
   "private": "true",
   "bin": {
-    "wiki-cli": "./bin/run"
+    "iota-wiki-cli": "./bin/run"
   },
   "engines": {
     "node": ">=14.14.0"
@@ -43,7 +43,7 @@
   "main": "lib/index.js",
   "oclif": {
     "commands": "./lib/commands",
-    "bin": "wiki-cli",
+    "bin": "iota-wiki-cli",
     "plugins": [
       "@oclif/plugin-help"
     ]
