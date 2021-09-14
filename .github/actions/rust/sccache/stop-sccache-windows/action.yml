@@ -1,4 +1,4 @@
-name: 'stop-sccache-ubuntu-macos'
+name: 'stop-sccache-windows'
 description: ''
 runs:
   using: "composite"
