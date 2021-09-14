@@ -42,11 +42,11 @@ jobs:
       - uses: actions/checkout@v2
 
       - uses: './.github/actions/utils/get-current-time-windows'
-        name: install-and-start-sccache-windows
+        name: get-current-time-windows
         if: matrix.os == 'windows-latest'
 
       - uses: './.github/actions/utils/get-current-time-ubuntu-macos'
-        name: install-and-start-sccache-macos
+        name: get-current-time-ubuntu-macos
         if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
 
       - uses: './.github/actions/rust/setup'
@@ -83,11 +83,11 @@ jobs:
           args: --all --release
 
       - uses: './.github/actions/rust/sccache/stop-sccache-windows'
-        name: install-and-start-sccache-windows
+        name: stop-sccache-windows
         if: matrix.os == 'windows-latest'
 
       - uses: './.github/actions/rust/sccache/stop-sccache-ubuntu-macos'
-        name: install-and-start-sccache-macos
+        name: stop-sccache-ubuntu-macos
         if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
 
   build-and-test-libjose:
