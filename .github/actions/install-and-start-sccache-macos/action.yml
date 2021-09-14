@@ -16,9 +16,9 @@ runs:
     - name: Cache sccache
       uses: actions/cache@v2.1.6
       with:
-        path: ${{ cache-path }}
-        key: ${{ cache-key }}
-        restore-keys: ${{ cache-restore-keys }}
+        path: ${{ inputs.cache-path }}
+        key: ${{ inputs.cache-key }}
+        restore-keys: ${{ inputs.cache-restore-keys }}
 
     - name: Install sccache (macos-latest)
       shell: sh
