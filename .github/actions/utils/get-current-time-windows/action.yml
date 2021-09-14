@@ -1,0 +1,8 @@
+name: 'get-current-time-windows'
+description: ''
+runs:
+  using: "composite"
+  steps:
+    - name: Get current date
+      shell: pwsh
+      run: echo "CURRENT_DATE=$(Get-Date -Format "yyyy-MM-dd")" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append

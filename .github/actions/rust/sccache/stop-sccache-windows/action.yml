@@ -1,0 +1,8 @@
+name: 'stop-sccache-ubuntu-macos'
+description: ''
+runs:
+  using: "composite"
+  steps:
+    - name: Stop sccache server
+      shell: pwsh
+      run: sccache --stop-server || true

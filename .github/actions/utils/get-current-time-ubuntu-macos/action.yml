@@ -1,0 +1,8 @@
+name: 'get-current-time-ubuntu-macos'
+description: ''
+runs:
+  using: "composite"
+  steps:
+    - name: Get current date
+      shell: sh
+      run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
