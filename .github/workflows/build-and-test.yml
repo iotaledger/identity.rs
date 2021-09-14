@@ -49,7 +49,7 @@ jobs:
         name: get-current-time-ubuntu-macos
         if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
 
-      - uses: './.github/actions/rust/setup'
+      - uses: './.github/actions/rust/rust-setup'
         name: rust-setup
         with:
           os: ${{ runner.os }}
