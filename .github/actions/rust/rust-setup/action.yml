@@ -13,6 +13,10 @@ inputs:
   current-date:
     description: ''
     required: true
+  target-cache-path:
+    description: ''
+    required: false
+    default: target
 runs:
   using: "composite"
   steps:
@@ -50,7 +54,7 @@ runs:
     - name: Cache build target
       uses: actions/cache@v2.1.4
       with:
-        path: target
+        path: ${{ inputs.target-cache-path }}
         # Add date to the cache to keep it up to date
         key: ${{ inputs.os }}-target-${{ inputs.job }}-${{ hashFiles('**/Cargo.lock') }}
         # Restore from outdated cache for speed
