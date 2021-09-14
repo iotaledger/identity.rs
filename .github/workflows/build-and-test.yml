@@ -91,7 +91,7 @@ jobs:
             ${{ matrix.os }}-target-${{ github.job }}-
             ${{ matrix.os }}-target-
 
-      - uses: './.github/actions/install-and-start-sccache-ubuntu'
+      - uses: './.github/actions/sccache/install-and-start-sccache-ubuntu'
         name: install-and-start-sccache-ubuntu
         if: matrix.os == 'ubuntu-latest'
         with:
@@ -101,7 +101,7 @@ jobs:
             ${{ runner.os }}-sccache-${{ github.job }}-
             ${{ runner.os }}-sccache-
 
-      - uses: './.github/actions/install-and-start-sccache-windows'
+      - uses: './.github/actions/sccache/install-and-start-sccache-windows'
         name: install-and-start-sccache-windows
         if: matrix.os == 'windows-latest'
         with:
@@ -111,7 +111,7 @@ jobs:
             ${{ runner.os }}-sccache-${{ github.job }}-
             ${{ runner.os }}-sccache-
 
-      - uses: './.github/actions/install-and-start-sccache-macos'
+      - uses: './.github/actions/sccache/install-and-start-sccache-macos'
         name: install-and-start-sccache-macos
         if: matrix.os == 'macos-latest'
         with:
@@ -232,35 +232,15 @@ jobs:
             ${{ matrix.os }}-wasm-target-${{ github.job }}-
             ${{ matrix.os }}-wasm-target-
 
-      - name: Cache sccache
-        uses: actions/cache@v2.1.6
-        continue-on-error: false
+      - uses: './.github/actions/sccache/install-and-start-sccache-ubuntu'
+        name: install-and-start-sccache-ubuntu
+        if: matrix.os == 'ubuntu-latest'
         with:
-          path: ${{ matrix.sccache-path }}
-          key: ${{ runner.os }}-sccache-${{ github.job }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
+          cache-path: ${{ matrix.sccache-path }}
+          cache-key: ${{ runner.os }}-sccache-${{ github.job }}-${{ hashFiles('**/Cargo.lock') }}
+          cache-restore-keys: |
             ${{ runner.os }}-sccache-${{ github.job }}-
             ${{ runner.os }}-sccache-
-
-      - name: Install sccache (ubuntu-latest)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          SCCACHE_PREFIX="sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl"
-          SCCACHE_TAR="${SCCACHE_PREFIX}.tar.gz"
-          DOWNLOAD_LINK="${SCCACHE_DOWNLOAD_LINK}/${SCCACHE_VERSION}/${SCCACHE_TAR}"
-          curl -L "${DOWNLOAD_LINK}" --output ${SCCACHE_TAR}
-          echo "$(curl -L ${DOWNLOAD_LINK}.sha256)  ${SCCACHE_TAR}" | shasum -a 256 --check --status
-          tar xzf ${SCCACHE_TAR}
-          BIN_DIR="$HOME/.local/bin"
-          mkdir -p ${BIN_DIR}
-          mv -f ${SCCACHE_PREFIX}/sccache ${BIN_DIR}/sccache
-          chmod a+x "${BIN_DIR}/sccache"
-          echo ${BIN_DIR} >> $GITHUB_PATH
-
-      - name: Start sccache
-        run: |
-          sccache --start-server
-          sccache -s
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
