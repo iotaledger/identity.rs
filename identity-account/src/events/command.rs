@@ -11,12 +11,14 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 
+use crate::account::Account;
 use crate::error::Result;
-use crate::events::CommandError;
 use crate::events::Context;
 use crate::events::Event;
 use crate::events::EventData;
+use crate::events::UpdateError;
 use crate::identity::IdentityId;
+use crate::identity::IdentityKey;
 use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::identity::TinyService;
@@ -29,7 +31,7 @@ use crate::types::MethodSecret;
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
 #[derive(Clone, Debug)]
-pub enum Command {
+pub(crate) enum Command {
   CreateIdentity {
     network: Option<String>,
     method_secret: Option<MethodSecret>,
@@ -64,7 +66,7 @@ pub enum Command {
 }
 
 impl Command {
-  pub async fn process(self, context: Context<'_>) -> Result<Option<Vec<Event>>> {
+  pub(crate) async fn process(self, context: Context<'_>) -> Result<Option<Vec<Event>>> {
     let state: &IdentityState = context.state();
     let store: &dyn Storage = context.store();
 
@@ -79,12 +81,12 @@ impl Command {
         authentication,
       } => {
         // The state must not be initialized
-        ensure!(state.did().is_none(), CommandError::DocumentAlreadyExists);
+        ensure!(state.did().is_none(), UpdateError::DocumentAlreadyExists);
 
         // The authentication method type must be valid
         ensure!(
           AUTH_TYPES.contains(&authentication),
-          CommandError::InvalidMethodType(authentication)
+          UpdateError::InvalidMethodType(authentication)
         );
 
         let generation: Generation = state.auth_generation();
@@ -94,7 +96,7 @@ impl Command {
         // TODO: config: strict
         ensure!(
           !store.key_exists(state.id(), &location).await?,
-          CommandError::DuplicateKeyLocation(location)
+          UpdateError::DuplicateKeyLocation(location)
         );
 
         let public: PublicKey = if let Some(method_secret_key) = method_secret {
@@ -123,27 +125,27 @@ impl Command {
         method_secret,
       } => {
         // The state must be initialized
-        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let location: KeyLocation = state.key_location(type_, fragment)?;
 
         // The key location must not be an authentication location
         ensure!(
           !location.is_authentication(),
-          CommandError::InvalidMethodFragment("reserved")
+          UpdateError::InvalidMethodFragment("reserved")
         );
 
         // The key location must be available
         // TODO: config: strict
         ensure!(
           !store.key_exists(state.id(), &location).await?,
-          CommandError::DuplicateKeyLocation(location)
+          UpdateError::DuplicateKeyLocation(location)
         );
 
         // The verification method must not exist
         ensure!(
           !state.methods().contains(location.fragment()),
-          CommandError::DuplicateKeyFragment(location.fragment.clone()),
+          UpdateError::DuplicateKeyFragment(location.fragment.clone()),
         );
 
         let public: PublicKey = if let Some(method_secret_key) = method_secret {
@@ -159,52 +161,52 @@ impl Command {
       }
       Self::DeleteMethod { fragment } => {
         // The state must be initialized
-        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
         // The fragment must not be an authentication location
         ensure!(
           !KeyLocation::is_authentication_fragment(&fragment),
-          CommandError::InvalidMethodFragment("reserved")
+          UpdateError::InvalidMethodFragment("reserved")
         );
 
         // The verification method must exist
-        ensure!(state.methods().contains(fragment.name()), CommandError::MethodNotFound);
+        ensure!(state.methods().contains(fragment.name()), UpdateError::MethodNotFound);
 
         Ok(Some(vec![Event::new(EventData::MethodDeleted(fragment))]))
       }
       Self::AttachMethod { fragment, scopes } => {
         // The state must be initialized
-        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
         // The fragment must not be an authentication location
         ensure!(
           !KeyLocation::is_authentication_fragment(&fragment),
-          CommandError::InvalidMethodFragment("reserved")
+          UpdateError::InvalidMethodFragment("reserved")
         );
 
         // The verification method must exist
-        ensure!(state.methods().contains(fragment.name()), CommandError::MethodNotFound);
+        ensure!(state.methods().contains(fragment.name()), UpdateError::MethodNotFound);
 
         Ok(Some(vec![Event::new(EventData::MethodAttached(fragment, scopes))]))
       }
       Self::DetachMethod { fragment, scopes } => {
         // The state must be initialized
-        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
         // The fragment must not be an authentication location
         ensure!(
           !KeyLocation::is_authentication_fragment(&fragment),
-          CommandError::InvalidMethodFragment("reserved")
+          UpdateError::InvalidMethodFragment("reserved")
         );
 
         // The verification method must exist
-        ensure!(state.methods().contains(fragment.name()), CommandError::MethodNotFound);
+        ensure!(state.methods().contains(fragment.name()), UpdateError::MethodNotFound);
 
         Ok(Some(vec![Event::new(EventData::MethodDetached(fragment, scopes))]))
       }
@@ -215,12 +217,12 @@ impl Command {
         properties,
       } => {
         // The state must be initialized
-        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         // The service must not exist
         ensure!(
           !state.services().contains(&fragment),
-          CommandError::DuplicateServiceFragment(fragment),
+          UpdateError::DuplicateServiceFragment(fragment),
         );
 
         let service: TinyService = TinyService::new(fragment, type_, endpoint, properties);
@@ -229,15 +231,12 @@ impl Command {
       }
       Self::DeleteService { fragment } => {
         // The state must be initialized
-        ensure!(state.did().is_some(), CommandError::DocumentNotFound);
+        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
         // The service must exist
-        ensure!(
-          state.services().contains(fragment.name()),
-          CommandError::ServiceNotFound
-        );
+        ensure!(state.services().contains(fragment.name()), UpdateError::ServiceNotFound);
 
         Ok(Some(vec![Event::new(EventData::ServiceDeleted(fragment))]))
       }
@@ -256,7 +255,7 @@ async fn insert_method_secret(
     MethodSecret::Ed25519(secret_key) => {
       ensure!(
         secret_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
-        CommandError::InvalidMethodSecret(format!(
+        UpdateError::InvalidMethodSecret(format!(
           "an ed25519 secret key requires {} bytes, found {}",
           ed25519::SECRET_KEY_LENGTH,
           secret_key.as_ref().len()
@@ -265,7 +264,7 @@ async fn insert_method_secret(
 
       ensure!(
         matches!(method_type, MethodType::Ed25519VerificationKey2018),
-        CommandError::InvalidMethodSecret(
+        UpdateError::InvalidMethodSecret(
           "MethodType::Ed25519VerificationKey2018 can only be used with an ed25519 method secret".to_owned(),
         )
       );
@@ -275,7 +274,7 @@ async fn insert_method_secret(
     MethodSecret::MerkleKeyCollection(_) => {
       ensure!(
         matches!(method_type, MethodType::MerkleKeyCollection2021),
-        CommandError::InvalidMethodSecret(
+        UpdateError::InvalidMethodSecret(
           "MethodType::MerkleKeyCollection2021 can only be used with a MerkleKeyCollection method secret".to_owned(),
         )
       );
@@ -289,54 +288,86 @@ async fn insert_method_secret(
 // Command Builders
 // =============================================================================
 
-impl_command_builder!(CreateIdentity {
-  @optional network String,
-  @optional method_secret MethodSecret,
-  @defaulte authentication MethodType = Ed25519VerificationKey2018,
-});
-
-impl_command_builder!(CreateMethod {
+impl_command_builder!(
+/// Create a new method on an identity.
+///
+/// # Parameters
+/// - `type_`: the type of the method, defaults to [`MethodType::Ed25519VerificationKey2018`].
+/// - `scope`: the scope of the method, defaults to [`MethodScope::default`].
+/// - `fragment`: the identifier of the method in the document, required.
+/// - `method_secret`: the secret key to use for the method, optional. Will be generated when omitted.
+CreateMethod {
   @defaulte type_ MethodType = Ed25519VerificationKey2018,
   @default scope MethodScope,
   @required fragment String,
   @optional method_secret MethodSecret
 });
 
-impl_command_builder!(DeleteMethod {
+impl_command_builder!(
+/// Delete a method on an identity.
+///
+/// # Parameters
+/// - `fragment`: the identifier of the method in the document, required.
+DeleteMethod {
   @required fragment String,
 });
 
-impl_command_builder!(AttachMethod {
+impl_command_builder!(
+/// Attach one or more verification relationships to a method on an identity.
+///
+/// # Parameters
+/// - `scopes`: the scopes to add, defaults to an empty [`Vec`].
+/// - `fragment`: the identifier of the method in the document, required.
+AttachMethod {
   @required fragment String,
   @default scopes Vec<MethodScope>,
 });
 
-impl AttachMethodBuilder {
+impl<'account, 'key, K: IdentityKey> AttachMethodBuilder<'account, 'key, K> {
   pub fn scope(mut self, value: MethodScope) -> Self {
     self.scopes.get_or_insert_with(Default::default).push(value);
     self
   }
 }
 
-impl_command_builder!(DetachMethod {
+impl_command_builder!(
+/// Detaches one or more verification relationships from a method on an identity.
+///
+/// # Parameters
+/// - `scopes`: the scopes to remove, defaults to an empty [`Vec`].
+/// - `fragment`: the identifier of the method in the document, required.
+DetachMethod {
   @required fragment String,
   @default scopes Vec<MethodScope>,
 });
 
-impl DetachMethodBuilder {
+impl<'account, 'key, K: IdentityKey> DetachMethodBuilder<'account, 'key, K> {
   pub fn scope(mut self, value: MethodScope) -> Self {
     self.scopes.get_or_insert_with(Default::default).push(value);
     self
   }
 }
 
-impl_command_builder!(CreateService {
+impl_command_builder!(
+/// Create a new service on an identity.
+///
+/// # Parameters
+/// - `type_`: the type of the service, e.g. `"LinkedDomains"`, required.
+/// - `fragment`: the identifier of the service in the document, required.
+/// - `endpoint`: the url of the service, required.
+/// - `properties`: additional properties of the service, optional.
+CreateService {
   @required fragment String,
   @required type_ String,
   @required endpoint Url,
   @optional properties Object,
 });
 
-impl_command_builder!(DeleteService {
+impl_command_builder!(
+/// Delete a service on an identity.
+///
+/// # Parameters
+/// - `fragment`: the identifier of the service in the document, required.
+DeleteService {
   @required fragment String,
 });

@@ -4,7 +4,6 @@
 //! cargo run --example account_signing
 
 use identity::account::Account;
-use identity::account::Command;
 use identity::account::IdentityCreate;
 use identity::account::IdentitySnapshot;
 use identity::account::Result;
@@ -34,10 +33,12 @@ async fn main() -> Result<()> {
   println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);
 
   // Add a new Ed25519 Verification Method to the identity
-  let command: Command = Command::create_method().fragment("key-1").finish()?;
-
-  // Process the command and update the identity state.
-  account.update_identity(did, command).await?;
+  account
+    .update_identity(did)
+    .create_method()
+    .fragment("key-1")
+    .apply()
+    .await?;
 
   // Create a subject DID for the recipient of a `UniversityDegree` credential.
   let subject_key: KeyPair = KeyPair::new_ed25519()?;

@@ -3,12 +3,12 @@ name = "identity-derive"
 version = "0.3.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = "Derive `Diff` support for the identity-rs library."
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "identity"]
+license = "Apache-2.0"
 readme = "../../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-license = "Apache-2.0"
-keywords = ["iota", "tangle", "identity"]
-homepage = "https://www.iota.org"
+description = "Derive `Diff` support for the identity-rs library."
 
 [lib]
 name = "identity_derive"

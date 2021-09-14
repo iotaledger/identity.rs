@@ -3,13 +3,13 @@ name = "identity-wasm"
 version = "0.3.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = "Web Assembly bindings for the identity-rs crate."
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "identity", "wasm"]
+license = "Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-license = "Apache-2.0"
-keywords = ["iota", "tangle", "identity", "wasm"]
-homepage = "https://www.iota.org"
 resolver = "2"
+description = "Web Assembly bindings for the identity-rs crate."
 
 [lib]
 crate-type = ["cdylib", "rlib"]

@@ -4,7 +4,6 @@
 //! cargo run --example account_methods
 
 use identity::account::Account;
-use identity::account::Command;
 use identity::account::IdentityCreate;
 use identity::account::IdentitySnapshot;
 use identity::account::Result;
@@ -24,15 +23,15 @@ async fn main() -> Result<()> {
   // Retrieve the DID from the newly created Identity state.
   let did: &IotaDID = snapshot.identity().try_did()?;
 
-  // Add a new Ed25519 (defualt) verification method to the identity - the
+  // Add a new Ed25519 (default) verification method to the identity - the
   // verification method is included as an embedded authentication method.
-  let command: Command = Command::create_method()
+  account
+    .update_identity(did)
+    .create_method()
     .scope(MethodScope::Authentication)
     .fragment("my-auth-key")
-    .finish()?;
-
-  // Process the command and update the identity state.
-  account.update_identity(did, command).await?;
+    .apply()
+    .await?;
 
   // Fetch and log the DID Document from the Tangle
   //
@@ -43,20 +42,22 @@ async fn main() -> Result<()> {
   );
 
   // Add another Ed25519 verification method to the identity
-  let command: Command = Command::create_method().fragment("my-next-key").finish()?;
-
-  // Process the command and update the identity state.
-  account.update_identity(did, command).await?;
+  account
+    .update_identity(did)
+    .create_method()
+    .fragment("my-next-key")
+    .apply()
+    .await?;
 
   // Associate the newly created method with additional verification relationships
-  let command: Command = Command::attach_method()
+  account
+    .update_identity(did)
+    .attach_method()
     .fragment("my-next-key")
     .scope(MethodScope::CapabilityDelegation)
     .scope(MethodScope::CapabilityInvocation)
-    .finish()?;
-
-  // Process the command and update the identity state.
-  account.update_identity(did, command).await?;
+    .apply()
+    .await?;
 
   // Fetch and log the DID Document from the Tangle
   //
@@ -67,10 +68,12 @@ async fn main() -> Result<()> {
   );
 
   // Remove the original Ed25519 verification method
-  let command: Command = Command::delete_method().fragment("my-auth-key").finish()?;
-
-  // Process the command and update the identity state.
-  account.update_identity(did, command).await?;
+  account
+    .update_identity(did)
+    .delete_method()
+    .fragment("my-auth-key")
+    .apply()
+    .await?;
 
   // Fetch and log the DID Document from the Tangle
   //
