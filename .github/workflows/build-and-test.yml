@@ -13,12 +13,9 @@ on:
       - '.github/workflows/build-and-test.yml'
       - '**.rs'
       - '**.toml'
-    workflow_dispatch:
 
 env:
   RUST_BACKTRACE: full
-  SCCACHE_DOWNLOAD_LINK: https://github.com/mozilla/sccache/releases/download
-  SCCACHE_VERSION: v0.2.15
   SCCACHE_CACHE_SIZE: 2G
   SCCACHE_IDLE_TIMEOUT: 0
   # SCCACHE_RECACHE: 1 # uncomment to clear sccache cache, then re-comment
@@ -43,9 +40,102 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: './.github/actions/build-and-test'
-        name: Test
 
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Get current date
+        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+        run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+      - name: Get current date
+        if: matrix.os == 'windows-latest'
+        run: echo "CURRENT_DATE=$(Get-Date -Format "yyyy-MM-dd")" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Cache cargo
+        uses: actions/cache@v2.1.4
+        with:
+          # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          # Add date to the cache to keep it up to date
+          key: ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ env.CURRENT_DATE }}
+          # Restore from outdated cache for speed
+          restore-keys: |
+            ${{ matrix.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.toml') }}-
+            ${{ matrix.os }}-cargo-${{ github.job }}-
+            ${{ matrix.os }}-cargo-
+
+      # Generate Cargo.lock files for build, sccache cache keys.
+      # Allows dependencies updated on crates.io between runs to trigger storing an updated cache,
+      # which hashing Cargo.toml files alone does not.
+      - name: Cargo update
+        uses: actions-rs/cargo@v1
+        with:
+          command: update
+
+      - name: Cache build target
+        uses: actions/cache@v2.1.4
+        with:
+          path: target
+          # Add date to the cache to keep it up to date
+          key: ${{ matrix.os }}-target-${{ github.job }}-${{ hashFiles('**/Cargo.lock') }}
+          # Restore from outdated cache for speed
+          restore-keys: |
+            ${{ matrix.os }}-target-${{ github.job }}-
+            ${{ matrix.os }}-target-
+
+      - uses: './.github/actions/install-and-start-sccache-ubuntu'
+        name: install-and-start-sccache-ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          cache-path: ${{ matrix.sccache-path }}
+          cache-key: ${{ runner.os }}-sccache-${{ github.job }}-${{ hashFiles('**/Cargo.lock') }}
+          cache-restore-keys: |
+            ${{ runner.os }}-sccache-${{ github.job }}-
+            ${{ runner.os }}-sccache-
+
+      - uses: './.github/actions/install-and-start-sccache-windows'
+        name: install-and-start-sccache-windows
+        if: matrix.os == 'windows-latest'
+        with:
+          cache-path: ${{ matrix.sccache-path }}
+          cache-key: ${{ runner.os }}-sccache-${{ github.job }}-${{ hashFiles('**/Cargo.lock') }}
+          cache-restore-keys: |
+            ${{ runner.os }}-sccache-${{ github.job }}-
+            ${{ runner.os }}-sccache-
+
+      - uses: './.github/actions/install-and-start-sccache-macos'
+        name: install-and-start-sccache-macos
+        if: matrix.os == 'macos-latest'
+        with:
+          cache-path: ${{ matrix.sccache-path }}
+          cache-key: ${{ runner.os }}-sccache-${{ github.job }}-${{ hashFiles('**/Cargo.lock') }}
+          cache-restore-keys: |
+            ${{ runner.os }}-sccache-${{ github.job }}-
+            ${{ runner.os }}-sccache-
+     
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          # Build the library, tests, and examples without running them to avoid recompilation in the run tests step
+          command: test
+          args: --all --release --no-run
+
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all --release
+
+      - name: Stop sccache server
+        run: sccache --stop-server || true
 
   build-and-test-libjose:
     runs-on: ubuntu-latest
@@ -88,6 +178,7 @@ jobs:
             sccache-path: /home/runner/.cache/sccache
     env:
       SCCACHE_DIR: ${{ matrix.sccache-path }}
+      CARGO_INCREMENTAL: 0 # disabled to reduce target cache size
       RUSTC_WRAPPER: sccache
 
     steps:
@@ -123,7 +214,7 @@ jobs:
             ${{ matrix.os }}-cargo-
 
       # Generate Cargo.lock files for build, sccache cache keys.
-      # Allows dependencies updated on crates.io between runs to trigger storing an updated cache, 
+      # Allows dependencies updated on crates.io between runs to trigger storing an updated cache,
       # which hashing Cargo.toml files alone does not.
       - name: Cargo update
         uses: actions-rs/cargo@v1
@@ -177,18 +268,18 @@ jobs:
           node-version: 15.x
 
       - name: Install wasm-pack
-        run: yarn global add wasm-pack
+        run: npm install -g wasm-pack
 
       - name: Install JS dependencies
-        run: yarn
+        run: npm install
         working-directory: bindings/wasm
 
       - name: Build WASM bindings
-        run: yarn build
+        run: npm run build
         working-directory: bindings/wasm
 
       - name: Build Wasm examples
-        run: yarn build:examples
+        run: npm run build:examples
         working-directory: bindings/wasm
 
       - name: Run tests

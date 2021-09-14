@@ -1,0 +1,33 @@
+name: 'install-and-start-sccache-macos'
+description: ''
+inputs:
+  cache-path:
+    description: ''
+    required: true
+  cache-key:
+    description: ''
+    required: true
+  cache-restore-keys:
+    description: ''
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Cache sccache
+      uses: actions/cache@v2.1.6
+      with:
+        path: ${{ cache-path }}
+        key: ${{ cache-key }}
+        restore-keys: ${{ cache-restore-keys }}
+
+    - name: Install sccache (macos-latest)
+      shell: sh
+      run: |
+        brew update --preinstall
+        brew install sccache
+        
+    - name: Start sccache
+      shell: sh
+      run: |
+        sccache --start-server
+        sccache -s
