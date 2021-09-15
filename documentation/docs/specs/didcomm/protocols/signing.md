@@ -20,7 +20,8 @@ This protocol may be embedded in the `issuance` protocol.
 ### Example Use-Cases
 
 - A seperate department requests a signature by the the legal department of a company.
-- A subsidiary requests the sparent company to sign a credential.
+- A subsidiary requests the parent company to sign a credential.
+- A device generates an unsigned TODO
 
 ### Roles
 - Trusted-Party: A party that is trusted by the issuer to present valid unsigned credential.
