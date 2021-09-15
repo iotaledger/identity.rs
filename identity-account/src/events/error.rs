@@ -6,9 +6,9 @@ use identity_did::verification::MethodType;
 
 use crate::types::KeyLocation;
 
-/// Errors than may occur while processing a [Command][crate::events::Command].
+/// Errors than may occur while processing an update in the [`Account`][crate::account::Account].
 #[derive(Debug, thiserror::Error)]
-pub enum CommandError {
+pub enum UpdateError {
   #[error("document already exists")]
   DocumentAlreadyExists,
   #[error("document not found")]

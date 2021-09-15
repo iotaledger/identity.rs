@@ -27,6 +27,10 @@ name = "account_methods"
 path = "account/methods.rs"
 
 [[example]]
+name = "account_lazy"
+path = "account/lazy.rs"
+
+[[example]]
 name = "account_services"
 path = "account/services.rs"
 

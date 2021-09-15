@@ -4,7 +4,6 @@
 //! cargo run --example account_services
 
 use identity::account::Account;
-use identity::account::Command;
 use identity::account::IdentityCreate;
 use identity::account::IdentitySnapshot;
 use identity::account::Result;
@@ -22,23 +21,24 @@ async fn main() -> Result<()> {
   let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let document: &IotaDID = snapshot.identity().try_did()?;
+  let did: &IotaDID = snapshot.identity().try_did()?;
 
-  let command: Command = Command::create_service()
+  // Add a new service to the identity.
+  account
+    .update_identity(did)
+    .create_service()
     .fragment("my-service-1")
     .type_("MyCustomService")
     .endpoint(Url::parse("https://example.com")?)
-    .finish()?;
-
-  // Process the command and update the identity state.
-  account.update_identity(document, command).await?;
+    .apply()
+    .await?;
 
   // Fetch and log the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
   println!(
     "[Example] Tangle Document (1) = {:#?}",
-    account.resolve_identity(document).await?
+    account.resolve_identity(did).await?
   );
 
   Ok(())

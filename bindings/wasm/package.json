@@ -41,8 +41,8 @@
     "access": "public"
   },
   "files": [
-    "web",
-    "node"
+    "web/*",
+    "node/*"
   ],
   "devDependencies": {
     "@wasm-tool/wasm-pack-plugin": "^1.3.3",

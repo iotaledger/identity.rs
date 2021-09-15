@@ -3,12 +3,12 @@ name = "identity-comm"
 version = "0.3.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = "An implementation of the DIDComm Messaging Specification."
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "identity"]
+license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-license = "Apache-2.0"
-keywords = ["iota", "tangle", "identity"]
-homepage = "https://www.iota.org"
+description = "An implementation of the DIDComm Messaging Specification."
 
 [dependencies]
 identity-core = { path = "../identity-core", version = "=0.3.0" }

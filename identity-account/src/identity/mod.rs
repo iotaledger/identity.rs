@@ -9,6 +9,7 @@ mod identity_name;
 mod identity_snapshot;
 mod identity_state;
 mod identity_tag;
+mod identity_updater;
 
 pub use self::identity_create::*;
 pub use self::identity_id::*;
@@ -18,3 +19,4 @@ pub use self::identity_name::*;
 pub use self::identity_snapshot::*;
 pub use self::identity_state::*;
 pub use self::identity_tag::*;
+pub use self::identity_updater::*;
