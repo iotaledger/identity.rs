@@ -39,6 +39,6 @@ async fn main() -> Result<()> {
 
   // Print the local state of the DID Document
   println!("[Example] Local Document from {} = {:#?}", did, snapshot.identity().to_document()?);
-
+  println!("[Example] Explore the DID Document = {}", format!("{}/{}",did.network()?.explorer_url().unwrap().to_string(), did));
   Ok(())
 }
