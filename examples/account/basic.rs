@@ -3,39 +3,42 @@
 
 //! cargo run --example account_basic
 
+use std::path::PathBuf;
+
 use identity::account::Account;
+use identity::account::AccountStorage;
 use identity::account::IdentityCreate;
 use identity::account::IdentitySnapshot;
 use identity::account::Result;
 use identity::iota::IotaDID;
-use identity::iota::IotaDocument;
 
 #[tokio::main]
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
+  // Sets the location and password for the Stronghold
+  //
+  // Stronghold is an encrypted file that manages private keys.
+  // It implements all security recommendation and is the recommended way of handling private keys.
+  let snapshot: PathBuf = "./example-strong.hodl".into();
+  let password: String = "my-password".into();
+
   // Create a new Account with the default configuration
-  let account: Account = Account::builder().build().await?;
+  let account: Account = Account::builder()
+    .storage(AccountStorage::Stronghold(snapshot, Some(password)))
+    .build()
+    .await?;
 
   // Create a new Identity with default settings
+  //
+  // This step generates a keypair, creates an identity and publishes it too the IOTA mainnet.
   let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let document: &IotaDID = snapshot.identity().try_did()?;
+  let did: &IotaDID = snapshot.identity().try_did()?;
 
-  println!("[Example] Local Snapshot = {:#?}", snapshot);
-  println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);
-  println!("[Example] Local Document List = {:#?}", account.list_identities().await);
-
-  // Fetch the DID Document from the Tangle
-  //
-  // This is an optional step to ensure DID Document consistency.
-  let resolved: IotaDocument = account.resolve_identity(document).await?;
-
-  println!("[Example] Tangle Document = {:#?}", resolved);
-
-  // Delete the identity and all associated keys
-  account.delete_identity(document).await?;
+  // Print the local state of the DID Document
+  println!("[Example] Local Document from {} = {:#?}", did, snapshot.identity().to_document()?);
 
   Ok(())
 }
