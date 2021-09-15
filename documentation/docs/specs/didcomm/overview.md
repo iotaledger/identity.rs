@@ -3,21 +3,28 @@ title: IOTA DIDComm Specification
 sidebar_label: Overview
 ---
 
-# IOTA DIDComm Specification
-
 *version 0.1, last changed April 2021*
+
+
+## Conformance
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
+NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
+"OPTIONAL" in this specification are to be interpreted as described in
+[BCP 14](https://www.rfc-editor.org/info/bcp14)[[RFC 2119]](https://www.rfc-editor.org/rfc/rfc2119.txt).
 
 ## Resources
 
 | Name | Description |
 | :--- | :--- |
-| [Field Definitions](Field_Definitions.md) | Definitions for fields used within interactions. |
+| [Error Reports](./resources/error-reports.md) | Definitions of expected error reports and guidance on global handling  |
 
-## Interactions
+## Protocols
 
-| Name | Version | Messages | Description |
+| Name | Version | Description | Messages |
 | :--- | :---: | :--- | :--- |
-| [trust-ping](i_trust-ping.md) | 1.0 | *ping* | Testing a pairwise channel. |
+| [presentation](./protocols/presentation.md) | 0.1 | Allows presentation of verifiable credentials that are issued to a holder and uniquely presented to a third-party verifier. | *presentation-offer*, *presentation-request*, *presentation*, *presentation-result* |
+| [trust-ping](i_trust-ping.md) | 1.0 | Testing a pairwise channel. | *ping* |
 
 ## Changelog
 

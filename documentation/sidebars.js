@@ -114,6 +114,14 @@ module.exports = {
             'specs/didcomm/CHANGELOG',
             {
               type: 'category',
+              label: 'Resources',
+              collapsed: true,
+              items: [
+                'specs/didcomm/resources/error-reports',
+              ]
+            },
+            {
+              type: 'category',
               label: 'Protocols',
               collapsed: true,
               items: [
