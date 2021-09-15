@@ -156,9 +156,9 @@ jobs:
           toolchain: stable
           target: wasm32-unknown-unknown
         
-      - uses: './.github/actions/rust/sccache/install-and-start-sccache-windows'
-        name: install-and-start-sccache-windows
-        if: matrix.os == 'windows-latest'
+      - uses: './.github/actions/rust/sccache/install-and-start-sccache-ubuntu'
+        name: install-and-start-sccache-ubuntu
+        if: matrix.os == 'ubuntu-latest'
 
       - name: Set up Node.js
         uses: actions/setup-node@v1
