@@ -15,8 +15,8 @@ const NETWORK_NAME_MAIN: &str = "main";
 const NETWORK_NAME_TEST: &str = "test";
 
 lazy_static! {
-  static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/mainnet").unwrap();
-  static ref EXPLORER_TEST: Url = Url::parse("https://explorer.iota.org/testnet").unwrap();
+  static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/mainnet/identity-resolver").unwrap();
+  static ref EXPLORER_TEST: Url = Url::parse("https://explorer.iota.org/testnet/identity-resolver/").unwrap();
   static ref NODE_MAIN: Url = Url::parse("https://chrysalis-nodes.iota.org").unwrap();
   static ref NODE_TEST: Url = Url::parse("https://api.lb-0.testnet.chrysalis2.com").unwrap();
 }
