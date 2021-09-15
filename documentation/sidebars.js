@@ -126,6 +126,7 @@ module.exports = {
               collapsed: true,
               items: [
                 'specs/didcomm/protocols/presentation',
+                'specs/didcomm/protocols/signing',
               ]
             },
           ]
