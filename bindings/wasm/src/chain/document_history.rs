@@ -95,11 +95,11 @@ impl From<DocumentHistory> for WasmDocumentHistory {
   }
 }
 
-#[wasm_bindgen(inspectable)]
+#[wasm_bindgen(js_name = IntegrationChainHistory, inspectable)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WasmIntegrationChainHistory(ChainHistory<IotaDocument>);
 
-#[wasm_bindgen(inspectable)]
+#[wasm_bindgen(js_name = DiffChainHistory, inspectable)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WasmDiffChainHistory(ChainHistory<DocumentDiff>);
 

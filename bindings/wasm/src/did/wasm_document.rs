@@ -4,21 +4,20 @@
 use std::str::FromStr;
 
 use identity::core::decode_b58;
-use identity::core::FromJson;
 use identity::crypto::merkle_key::MerkleDigestTag;
 use identity::crypto::merkle_key::MerkleKey;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PublicKey;
 use identity::crypto::SecretKey;
-use identity::did::verifiable;
 use identity::did::MethodScope;
+use identity::did::verifiable;
 use identity::iota::Error;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
-use identity::iota::{DocumentDiff, TangleRef};
+use identity::iota::TangleRef;
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
@@ -26,8 +25,8 @@ use crate::credential::VerifiableCredential;
 use crate::credential::VerifiablePresentation;
 use crate::crypto::KeyPair;
 use crate::crypto::KeyType;
-use crate::did::WasmVerificationMethod;
 use crate::did::{WasmDID, WasmDocumentDiff};
+use crate::did::WasmVerificationMethod;
 use crate::error::{Result, WasmResult};
 use crate::service::Service;
 
@@ -338,12 +337,10 @@ impl WasmDocument {
       .wasm_result()
   }
 
-  /// Verifies the `diff` signature and merges the changes into `self`.
+  /// Verifies a `DocumentDiff` signature and merges the changes into `self`.
   #[wasm_bindgen]
-  pub fn merge(&mut self, diff: &str) -> Result<()> {
-    let diff: DocumentDiff = DocumentDiff::from_json(diff).wasm_result()?;
-    self.0.merge(&diff).wasm_result()?;
-    Ok(())
+  pub fn merge(&mut self, diff: &WasmDocumentDiff) -> Result<()> {
+    self.0.merge(&diff.0).wasm_result()
   }
 
   // ===========================================================================
