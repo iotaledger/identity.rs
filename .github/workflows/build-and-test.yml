@@ -45,8 +45,8 @@ jobs:
         uses: './.github/actions/utils/get-current-date-windows'
         if: matrix.os == 'windows-latest'
 
-      - uses: './.github/actions/utils/get-current-time-ubuntu-macos'
-        name: get-current-time-ubuntu-macos
+      - name: Get current date (Ubuntu/MacOS)
+        uses: './.github/actions/utils/get-current-date-ubuntu-macos'
         if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
 
       - uses: './.github/actions/rust/rust-setup'
