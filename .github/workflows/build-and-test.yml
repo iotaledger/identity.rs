@@ -156,8 +156,8 @@ jobs:
           toolchain: stable
           target: wasm32-unknown-unknown
         
-      - uses: './.github/actions/rust/sccache/install-and-start-sccache-ubuntu'
-        name: install-and-start-sccache-ubuntu
+      - name: Setup sccache (Ubuntu)
+        uses: './.github/actions/rust/sccache/install-and-start-sccache-ubuntu'
         if: matrix.os == 'ubuntu-latest'
 
       - name: Set up Node.js
