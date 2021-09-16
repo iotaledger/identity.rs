@@ -21,23 +21,23 @@ TBD
 - TBD
 
 ### Roles
-- [Holder](https://www.w3.org/TR/vc-data-model/#dfn-holders): TBD.
+- [Holder](https://www.w3.org/TR/vc-data-model/#dfn-holders): entity that stores one or more verifiable credentials. A holder is usually but 
 - [Issuer](https://www.w3.org/TR/vc-data-model/#dfn-issuers): TBD.
 
 ### Interaction
 
 <div style={{textAlign: 'center'}}>
 
-![PresentationDiagram](/img/didcomm/presentation.drawio.svg)
+![IssuanceDiagram](/img/didcomm/issuance.drawio.svg)
 
 </div>
 
 
 ## Messages
 
-### 1. credential-request {#credential-request}
+### 1. issuance-request {#issuance-request}
 
-- Type: `didcomm:iota/issuance/0.1/credential-request`
+- Type: `didcomm:iota/issuance/0.1/issuance-request`
 - Role: [holder](#roles)
 
 TBD
@@ -45,7 +45,10 @@ TBD
 #### Structure
 ```json
 {
-  TBD
+  "subject": DID,             // REQUIRED
+  "@context": [string],       // OPTIONAL
+  "types": [string],          // REQUIRED
+  "trustedIssuers": [string]  // OPTIONAL
 }
 ```
 
@@ -59,12 +62,12 @@ TBD
 
 ```json
 {
- TBD
+  TBD
 }
 ```
-### 2. credential-offer {#credential-offer}
+### 2. issuance-offer {#issuance-offer}
 
-- Type: `didcomm:iota/issuance/0.1/credential-offer`
+- Type: `didcomm:iota/issuance/0.1/issuance-offer`
 - Role: [issuer](#roles)
 
 TBD
@@ -72,7 +75,9 @@ TBD
 #### Structure
 ```json
 {
-  TBD
+  "unsignedCredential": Credential, // REQUIRED
+  "requestSignature": bool,         // OPTIONAL
+  "expiry": IOSDateTime,            // OPTIONAL
 }
 ```
 
@@ -90,9 +95,9 @@ TBD
 }
 ```
 
-### 3. credential-response {#credential-response}
+### 3. issuance-response {#issuance-response}
 
-- Type: `didcomm:iota/issuance/0.1/credential-response`
+- Type: `didcomm:iota/issuance/0.1/issuance-response`
 - Role: [holder](#roles)
 
 TBD
@@ -100,7 +105,9 @@ TBD
 #### Structure
 ```json
 {
-  TBD
+  "accept": bool,         // REQUIRED
+  "disputes": [Dispute],  // OPTIONAL
+  "signature": Signature, // OPTIONAL
 }
 ```
 
@@ -118,9 +125,9 @@ TBD
 }
 ```
 
-### 4. credential-issuance {#credential-issuance}
+### 4. issuance {#issuance}
 
-- Type: `didcomm:iota/issuance/0.1/credential-issuance`
+- Type: `didcomm:iota/issuance/0.1/issuance`
 - Role: [issuer](#roles)
 
 TBD
@@ -128,7 +135,8 @@ TBD
 #### Structure
 ```json
 {
-  TBD
+  "signedCredential": Credential, // REQUIRED
+  "signatureChallenge": string,   // OPTIONAL
 }
 ```
 
@@ -146,9 +154,9 @@ TBD
 }
 ```
 
-### 4. credential-acknowledgment {#credential-acknowledgment}
+### 5. issuance-acknowledgment {#issuance-acknowledgment}
 
-- Type: `didcomm:iota/issuance/0.1/credential-acknowledgment`
+- Type: `didcomm:iota/issuance/0.1/issuance-acknowledgment`
 - Role: [holder](#roles)
 
 TBD
@@ -156,7 +164,8 @@ TBD
 #### Structure
 ```json
 {
-  TBD
+  "signature": string,          // OPTIONAL
+  "signatureChallenge": string, // OPTIONAL
 }
 ```
 
