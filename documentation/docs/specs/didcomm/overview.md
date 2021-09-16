@@ -3,7 +3,7 @@ title: IOTA DIDComm Specification
 sidebar_label: Overview
 ---
 
-*version 0.1, last changed April 2021*
+*version 0.1, last changed September 2021*
 
 
 ## Conformance
@@ -17,20 +17,20 @@ NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
 
 | Name | Description |
 | :--- | :--- |
-| [Error Reports](./resources/error-reports.md) | Definitions of expected error reports and guidance on global handling  |
+| [Problem Reports](./resources/problem-reports.md) | Definitions of expected problem reports and guidance on global handling |
+| [Credential Types](./resources/credential-types.md) | Guidance on how to identify a specific type of verifiable credential |
 
 ## Protocols
 
 | Name | Version | Description | Messages |
 | :--- | :---: | :--- | :--- |
 | [presentation](./protocols/presentation.md) | 0.1 | Allows presentation of verifiable credentials that are issued to a holder and uniquely presented to a third-party verifier. | *presentation-offer*, *presentation-request*, *presentation*, *presentation-result* |
-| [signing](./protocols/signing.md) | 0.1 | TBD | *signing-request*, *signing-response*, *signing-acknowledgement* |
-| [issuance](./protocols/issuance.md) | 0.1 | TBD | *issuance-request*, *issuance-offer*, *issuance-response*, *issuance*, *issuance-acknowledgment* |
-| [trust-ping](i_trust-ping.md) | 1.0 | Testing a pairwise channel. | *ping* |
+| [signing](./protocols/signing.md) | 0.1 | Allows a trusted-party to request the signing of an unsigned verifiable credential by an issuer. | *signing-request*, *signing-response*, *signing-acknowledgement* |
+| [issuance](./protocols/issuance.md) | 0.1 | Allows the exchange of a verfiable credential between an issuer and a holder. | *issuance-request*, *issuance-offer*, *issuance-response*, *issuance*, *issuance-acknowledgment* |
 
 ## Changelog
 
-See 
+See [CHANGELOG](./CHANGELOG)
 
 ## Future Work
 
