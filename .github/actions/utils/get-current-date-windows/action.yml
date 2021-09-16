@@ -1,4 +1,4 @@
-name: 'get-current-time-windows'
+name: 'get-current-date-windows'
 description: 'Script for getting the current date on windows.'
 runs:
   using: "composite"
