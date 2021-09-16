@@ -3,7 +3,7 @@ title: Signing
 sidebar_label: Signing
 ---
 
-# Presentation
+# Signing
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
@@ -15,7 +15,7 @@ Allows a trusted-party to request the signing of an unsigned verifiable credenti
 
 ### Relationships
 
-This protocol may be embedded in the `issuance` protocol.
+This protocol may be embedded in the [issuane](./issuance) protocol.
 
 ### Example Use-Cases
 
@@ -165,6 +165,8 @@ Acknowledgement by the [trusted-party](#roles) that the credential was received 
 ### Problem Reports
 
 TODO
+
+For gerneral guidance see [problem reports](../resources/problem-reports).
 
 e.p.prot.iota.signing.reject-signing-request // issuer rejects request by the trusted-party due to invalid/malformed/incomplete credential, 
 e.p.prot.iota.signing.reject-singing-response // the trusted-party rejects the returned credential due to being unsigned/altered, signed with an invalid key etc.

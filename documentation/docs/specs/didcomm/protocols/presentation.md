@@ -14,7 +14,7 @@ sidebar_label: Presentation
 Allows presentation of verifiable credentials that are issued to a holder and uniquely presented to a third-party verifier.
 
 ### Relationships
-This protocol may be embedded in the `issuance` protocol.
+This protocol may be embedded in the [issuane](./issuance) protocol.
 
 ### Example Use-Cases
 
@@ -125,7 +125,7 @@ The context and types are included, as well as trusted issuers, to allow the hol
 | `requests` | Array of one or more requests, each specifying a single credential possessed by the holder. | ✔ |
 | [`@context`](https://www.w3.org/TR/vc-data-model/#contexts) | Array of JSON-LD contexts referenced in a credential. | ✖ |
 | [`type`](https://www.w3.org/TR/vc-data-model/#types) | Array of credential types; a presented credential SHOULD match all types specified. | ✔ | 
-| [`trustedIssuer`](https://www.w3.org/TR/vc-data-model/#issuer) | Array of credential issuer IDs or URIs that the verifier would accept. | ✖ |
+| [`trustedIssuer`](https://www.w3.org/TR/vc-data-model/#issuer) | Array of credential issuer IDs or URIs; any of which the verifier would accept. | ✖ |
 | `optional` | Whether this credential is required (`false`) or optional (`true`) to present by the holder. A holder SHOULD send a problem report if unable to satisfy a non-optional credential request. Default: `false`. | ✖ |
 | [`challenge`](https://w3c-ccg.github.io/ld-proofs/#dfn-challenge) | A random string unique per [`presentation-request`](#presentation-request) by a verifier to help mitigate replay attacks. | ✔ |
 | [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the verifier; RECOMMENDED to include if preceded by a [`presentation-offer`](#presentation-offer) with `requireSignature = true`.[^3] | ✖ |
@@ -344,6 +344,8 @@ TODO: change problem-report here, or remove them from the result altogether? Exa
 
 See: https://identity.foundation/didcomm-messaging/spec/#descriptors
 TODO
+
+For gerneral guidance see [problem reports](../resources/problem-reports).
 
 Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
 - e.p.prot.iota.presentation.reject-request
