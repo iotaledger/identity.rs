@@ -57,8 +57,8 @@ jobs:
           sccache-path: ${{ matrix.sccache-path }}
           current-date: ${{ env.CURRENT_DATE }}
 
-      - uses: './.github/actions/rust/sccache/install-and-start-sccache-ubuntu'
-        name: install-and-start-sccache-ubuntu
+      - name: Setup sccache (Ubuntu)
+        uses: './.github/actions/rust/sccache/install-and-start-sccache-ubuntu'     
         if: matrix.os == 'ubuntu-latest'
         
       - uses: './.github/actions/rust/sccache/install-and-start-sccache-windows'
