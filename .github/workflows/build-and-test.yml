@@ -41,8 +41,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: './.github/actions/utils/get-current-time-windows'
-        name: get-current-time-windows
+      - name: Get current date (Windows)
+        uses: './.github/actions/utils/get-current-date-windows'
         if: matrix.os == 'windows-latest'
 
       - uses: './.github/actions/utils/get-current-time-ubuntu-macos'
