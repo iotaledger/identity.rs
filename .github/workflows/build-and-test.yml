@@ -86,8 +86,8 @@ jobs:
         uses: './.github/actions/rust/sccache/stop-sccache-windows'
         if: matrix.os == 'windows-latest'
 
-      - uses: './.github/actions/rust/sccache/stop-sccache-ubuntu-macos'
-        name: stop-sccache-ubuntu-macos
+      - name: Stop sccache (Ubuntu/MacOS)
+        uses: './.github/actions/rust/sccache/stop-sccache-ubuntu-macos'
         if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
 
   build-and-test-libjose:
