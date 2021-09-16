@@ -61,8 +61,8 @@ jobs:
         uses: './.github/actions/rust/sccache/install-and-start-sccache-ubuntu'     
         if: matrix.os == 'ubuntu-latest'
         
-      - uses: './.github/actions/rust/sccache/install-and-start-sccache-windows'
-        name: install-and-start-sccache-windows
+      - name: Setup sccache (Windows)
+        uses: './.github/actions/rust/sccache/install-and-start-sccache-windows'        
         if: matrix.os == 'windows-latest'
 
       - uses: './.github/actions/rust/sccache/install-and-start-sccache-macos'
