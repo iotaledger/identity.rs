@@ -49,8 +49,8 @@ jobs:
         uses: './.github/actions/utils/get-current-date-ubuntu-macos'
         if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
 
-      - uses: './.github/actions/rust/rust-setup'
-        name: rust-setup
+      - name: Setup Rust and cache
+        uses: './.github/actions/rust/rust-setup'
         with:
           os: ${{ runner.os }}
           job: ${{ github.job }}
