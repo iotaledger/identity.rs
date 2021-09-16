@@ -1,5 +1,5 @@
-name: 'install-and-start-sccache-windows'
-description: ''
+name: 'setup-sccache-windows'
+description: 'Setup sccache for windows.'
 runs:
   using: "composite"
   steps:

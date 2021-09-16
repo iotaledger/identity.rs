@@ -1,5 +1,5 @@
 name: 'stop-sccache-windows'
-description: ''
+description: 'Stop sccache on windows.'
 runs:
   using: "composite"
   steps:

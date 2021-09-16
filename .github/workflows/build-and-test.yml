@@ -58,15 +58,15 @@ jobs:
           current-date: ${{ env.CURRENT_DATE }}
 
       - name: Setup sccache (Ubuntu)
-        uses: './.github/actions/rust/sccache/install-and-start-sccache-ubuntu'     
+        uses: './.github/actions/rust/sccache/setup-sccache-ubuntu'     
         if: matrix.os == 'ubuntu-latest'
         
       - name: Setup sccache (Windows)
-        uses: './.github/actions/rust/sccache/install-and-start-sccache-windows'        
+        uses: './.github/actions/rust/sccache/setup-sccache-windows'        
         if: matrix.os == 'windows-latest'
 
       - name: Setup sccache (MacOS)
-        uses: './.github/actions/rust/sccache/install-and-start-sccache-macos'
+        uses: './.github/actions/rust/sccache/setup-sccache-macos'
         if: matrix.os == 'macos-latest'
      
       - name: Build
@@ -157,7 +157,7 @@ jobs:
           target: wasm32-unknown-unknown
         
       - name: Setup sccache (Ubuntu)
-        uses: './.github/actions/rust/sccache/install-and-start-sccache-ubuntu'
+        uses: './.github/actions/rust/sccache/setup-sccache-ubuntu'
         if: matrix.os == 'ubuntu-latest'
 
       - name: Set up Node.js

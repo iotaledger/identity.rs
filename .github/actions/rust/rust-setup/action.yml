@@ -1,20 +1,20 @@
 name: 'rust-setup'
-description: ''
+description: 'Prepares a rust environment and relevant caches.'
 inputs:
   sccache-path:
-    description: ''
+    description: 'Path of the sccache.'
     required: true
   os:
-    description: ''
+    description: 'OS of the runner, used for cache key construction.'
     required: true
   job:
-    description: ''
+    description: 'Name of the job, used for cache key construction.'
     required: true
   current-date:
-    description: ''
+    description: 'Current date, used for cache key construction.'
     required: true
   target-cache-path:
-    description: ''
+    description: 'Path of the target cache.'
     required: false
     default: target
 runs:

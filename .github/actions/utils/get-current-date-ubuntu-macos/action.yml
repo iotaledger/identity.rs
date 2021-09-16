@@ -1,5 +1,5 @@
-name: 'get-current-time-ubuntu-macos'
-description: ''
+name: 'get-current-date-ubuntu-macos'
+description: 'Script for getting the current date on ubuntu and macos.'
 runs:
   using: "composite"
   steps:

@@ -1,5 +1,5 @@
 name: 'get-current-time-windows'
-description: ''
+description: 'Script for getting the current date on windows.'
 runs:
   using: "composite"
   steps:

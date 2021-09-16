@@ -1,5 +1,5 @@
 name: 'stop-sccache-ubuntu-macos'
-description: ''
+description: 'Stop sccache on ubuntu and macos.'
 runs:
   using: "composite"
   steps:

@@ -1,4 +1,5 @@
-name: 'install-and-start-sccache-ubuntu'
+name: 'setup-sccache-ubuntu'
+description: 'Setup sccache for ubuntu.'
 runs:
   using: "composite"
   steps:
