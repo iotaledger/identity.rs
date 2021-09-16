@@ -127,6 +127,7 @@ module.exports = {
               items: [
                 'specs/didcomm/protocols/presentation',
                 'specs/didcomm/protocols/signing',
+                'specs/didcomm/protocols/issuance',
               ]
             },
           ]
