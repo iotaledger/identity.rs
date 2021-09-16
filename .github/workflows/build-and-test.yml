@@ -82,8 +82,8 @@ jobs:
           command: test
           args: --all --release
 
-      - uses: './.github/actions/rust/sccache/stop-sccache-windows'
-        name: stop-sccache-windows
+      - name: Stop sccache (Windows)
+        uses: './.github/actions/rust/sccache/stop-sccache-windows'
         if: matrix.os == 'windows-latest'
 
       - uses: './.github/actions/rust/sccache/stop-sccache-ubuntu-macos'
