@@ -42,7 +42,7 @@ This protocol may use the [presentation](./presentation.md) and [signing](./sign
 - Type: `didcomm:iota/issuance/0.1/issuance-request`
 - Role: [holder](#roles)
 
-TBD
+The [holder](#roles) requests a single verifiable credential from the [issuer](#roles).
 
 #### Structure
 ```json
@@ -56,13 +56,16 @@ TBD
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `subject` | [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of the subject of the requested credential. | ✔ |
-| `@context` | Array of JSON-LD contexts referencing the credential types. | ✖ |
-| `type` | Array of credential types; an issued credential SHOULD match all types specified.[^1] | ✔ |
-| `trustedIssuers` | Array of credential issuer IDs or URIs, any of which the holder would accept.[^2] | ✖ |
+| [`subject`](https://www.w3.org/TR/vc-data-model/#credential-subject-0) | [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of the [credential subject](https://www.w3.org/TR/vc-data-model/#credential-subject-0). | ✔ |
+| [`@context`](https://www.w3.org/TR/vc-data-model/#contexts) | Array of JSON-LD contexts referencing the credential types. | ✖ |
+| [`type`](https://www.w3.org/TR/vc-data-model/#types) | Array of credential types; an issued credential SHOULD match all types specified.[^1] | ✔ |
+| [`trustedIssuer`](https://www.w3.org/TR/vc-data-model/#issuer) | Array of credential issuer IDs or URIs, any of which the holder would accept.[^2] | ✖ |
 
-[^1] The credential `type` could be discovered out-of-band or be pre-sent by an issuer. The types MAY be underspecified if the exact type is not known or if the resulting type depends on the identity or information of the subject or holder. The `type` could be as general as `["VerifiableCredential"]` for example, if the issuer issues only a singular type of credential or decides the credential based on other information related to the subject.
-[^2] The [holder](#roles) MAY
+[^1] The credential `type` could be discovered out-of-band or be pre-sent by an [issuer](#roles). The types MAY be underspecified if the exact type is not known or if the resulting type depends on the identity or information of the subject or holder. The `type` could be as general as `["VerifiableCredential"]` for example, if the issuer issues only a singular type of credential or decides the credential based on other information related to the subject. The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support the requested `type`.
+
+[^2] The [holder](#roles) MAY specify one or more `trustedIssuers` they would like to sign the resulting credential. The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support any of the requested `trustedIssuers`. However, there are circumstances where a `trustedIssuer` is no longer supported or was compromised, so this behaviour should be decided based on the application.
+
+An [issuer](#roles) wanting to preserve privacy regarding which exact credential types or issuers they support should be careful with the information they disclose in `problem-reports` when rejecting requests. E.g. a `problem-report` with an `invalid-request` code discloses less information than the `invalid-credential-type` or `invalid-trusted-issuer` codes, as the latter two could be used to determine supported types or issuers by process of elimination.
 
 #### Examples
 
@@ -80,30 +83,36 @@ TBD
 ```json
 {
   "subject": "did:example:c6ef1fe11eb22cb711e6e227fbc",
-  "type": ["VerifiableCredential", "UniversityDegreeCredential"],
-  "trustedIssuers":
+  "type": ["VerifiableCredential", "UniversityDegreeCredential", "BachelorOfArtsDegreeCredential"],
+  "trustedIssuers": ["did:example:76e12ec712ebc6f1c221ebfeb1f", "did:example:f1befbe122c1f6cbe217ce21e67"]
 }
 ```
+
 ### 2. issuance-offer {#issuance-offer}
 
 - Type: `didcomm:iota/issuance/0.1/issuance-offer`
 - Role: [issuer](#roles)
 
-TBD
+The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles), matching the preceding [`issuance-request`](#issuance-request) if present.
 
 #### Structure
 ```json
 {
   "unsignedCredential": Credential, // REQUIRED
-  "requestSignature": bool,         // OPTIONAL
-  "expiry": IOSDateTime,            // OPTIONAL
+  "signatureChallenge": {
+    "challenge": string,            // REQUIRED
+    "credentialHash": string,       // REQUIRED
+  }, // OPTIONAL
+  "expiry": ISODateTime             // OPTIONAL
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`unsignedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | Unsigned [verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) being offered to [holder](#roles). | ✔ |
-| `requestSignature` | Indicates if the [issuer](#issuer) requires the acceptance of the credential to be signed by the [holder](#holder). | ✖ |
+| [`unsignedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | Unsigned [verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) being offered to the[holder](#roles). | ✔ |
+| `signatureChallenge` | If present, indicates the [issuer](#issuer) requires the acceptance of the credential to be signed by the [holder](#holder) for non-repudiation. | ✖ |
+| `challenge` |  A random string that should be unique per [issuance-offer](#issuance-offer). | ✔ |
+| `credentialHash` | The SHA-256? (TODO link) hash of the `unsignedCredential`. | ✔ |
 | `expiry` | Allows the [issuer](#issuer) to specify until when he will uphold the the offer. | ✖ |
 
 #### Examples
@@ -217,6 +226,9 @@ For gerneral guidance see [problem reports](../resources/problem-reports).
 
 Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
 - e.p.prot.iota.issuance.reject-vc
+- e.p.prot.iota.issuance.invalid-request
+- e.p.prot.iota.issuance.invalid-credential-type
+- e.p.prot.iota.issuance.invalid-trusted-issuer
 
 Also problem reports from embedded protocols can be thrown.
 
