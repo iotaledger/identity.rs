@@ -65,8 +65,8 @@ jobs:
         uses: './.github/actions/rust/sccache/install-and-start-sccache-windows'        
         if: matrix.os == 'windows-latest'
 
-      - uses: './.github/actions/rust/sccache/install-and-start-sccache-macos'
-        name: install-and-start-sccache-macos
+      - name: Setup sccache (MacOS)
+        uses: './.github/actions/rust/sccache/install-and-start-sccache-macos'
         if: matrix.os == 'macos-latest'
      
       - name: Build
