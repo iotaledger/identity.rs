@@ -19,7 +19,7 @@ use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use crate::chain::{WasmDiffChainHistory, WasmDocumentHistory};
+use crate::chain::{DiffChainHistory, WasmDocumentHistory};
 use crate::did::{WasmDocument, WasmDocumentDiff};
 use crate::error::{Result, WasmResult};
 use crate::tangle::Config;
@@ -169,7 +169,7 @@ impl Client {
   /// NOTE: the document must have been published to the tangle and have a valid message id and
   /// authentication method.
   #[wasm_bindgen(js_name = resolveDiffHistory)]
-  pub fn resolve_diffs(&self, document: &WasmDocument) -> Result<Promise> {
+  pub fn resolve_diff_history(&self, document: &WasmDocument) -> Result<Promise> {
     let client: Rc<IotaClient> = self.client.clone();
     let iota_document: IotaDocument = document.0.clone();
 
@@ -177,7 +177,7 @@ impl Client {
       client
         .resolve_diff_history(&iota_document)
         .await
-        .map(WasmDiffChainHistory::from)
+        .map(DiffChainHistory::from)
         .map(JsValue::from)
         .wasm_result()
     });

@@ -704,6 +704,48 @@ Parses a `DID` from the input string.
 
 ## DiffChainHistory
 **Kind**: global class  
+
+* [DiffChainHistory](#DiffChainHistory)
+    * _instance_
+        * [.chainData()](#DiffChainHistory+chainData) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.spam()](#DiffChainHistory+spam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.toJSON()](#DiffChainHistory+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#DiffChainHistory.fromJSON) ⇒ [<code>DiffChainHistory</code>](#DiffChainHistory)
+
+<a name="DiffChainHistory+chainData"></a>
+
+### diffChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
+Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
+
+NOTE: this clones the field.
+
+**Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
+<a name="DiffChainHistory+spam"></a>
+
+### diffChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
+Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
+
+NOTE: this clones the field.
+
+**Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
+<a name="DiffChainHistory+toJSON"></a>
+
+### diffChainHistory.toJSON() ⇒ <code>any</code>
+Serializes a `$ident` object as a JSON object.
+
+**Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
+<a name="DiffChainHistory.fromJSON"></a>
+
+### DiffChainHistory.fromJSON(json) ⇒ [<code>DiffChainHistory</code>](#DiffChainHistory)
+Deserializes a `$ident` object from a JSON object.
+
+**Kind**: static method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Document"></a>
 
 ## Document
@@ -1255,6 +1297,48 @@ Deserializes a [`WasmDocumentHistory`] object from a JSON object.
 
 ## IntegrationChainHistory
 **Kind**: global class  
+
+* [IntegrationChainHistory](#IntegrationChainHistory)
+    * _instance_
+        * [.chainData()](#IntegrationChainHistory+chainData) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.spam()](#IntegrationChainHistory+spam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.toJSON()](#IntegrationChainHistory+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#IntegrationChainHistory.fromJSON) ⇒ [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)
+
+<a name="IntegrationChainHistory+chainData"></a>
+
+### integrationChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
+Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
+
+NOTE: this clones the field.
+
+**Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
+<a name="IntegrationChainHistory+spam"></a>
+
+### integrationChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
+Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
+
+NOTE: this clones the field.
+
+**Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
+<a name="IntegrationChainHistory+toJSON"></a>
+
+### integrationChainHistory.toJSON() ⇒ <code>any</code>
+Serializes a `$ident` object as a JSON object.
+
+**Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
+<a name="IntegrationChainHistory.fromJSON"></a>
+
+### IntegrationChainHistory.fromJSON(json) ⇒ [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)
+Deserializes a `$ident` object from a JSON object.
+
+**Kind**: static method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Introduction"></a>
 
 ## Introduction
