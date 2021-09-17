@@ -3,12 +3,12 @@ name = "identity-account"
 version = "0.3.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = "Secure storage for Decentralized Identifiers and Verifiable Credentials."
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "identity"]
+license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-license = "Apache-2.0"
-keywords = ["iota", "tangle", "identity"]
-homepage = "https://www.iota.org"
+description = "Secure storage for Decentralized Identifiers and Verifiable Credentials."
 
 [dependencies]
 actix = { version = "0.12.0", optional = true }
@@ -23,10 +23,7 @@ itoa = { version = "0.4" }
 log = { version = "0.4", default-features = false }
 once_cell = { version = "1.7", default-features = false, features = ["std"] }
 paste = { version = "1.0" }
-serde = { version = "1.0", default-features = false, features = [
-    "alloc",
-    "derive",
-] }
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 slog = { version = "2.7" }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0" }
@@ -39,31 +36,26 @@ features = ["blake2b", "ed25519", "hmac", "pbkdf", "sha", "slip10", "std"]
 
 [dependencies.iota_stronghold]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "ad57181e7c5baa4b6ccb66fb464667c97967db08"
+rev = "aea8a9dc8c3fa12e5444c5b4bb3303876e4c1a2f"
 optional = true
 
 [dependencies.stronghold_engine]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "ad57181e7c5baa4b6ccb66fb464667c97967db08"
+rev = "aea8a9dc8c3fa12e5444c5b4bb3303876e4c1a2f"
 optional = true
 
 [dev-dependencies]
 rand = { version = "0.8" }
 rusty-fork = { version = "0.3" }
-tokio = { version = "1.5", features = [
-    "macros",
-    "rt",
-    "rt-multi-thread",
-    "sync",
-] }
+tokio = { version = "1.5", features = ["macros", "rt", "rt-multi-thread", "sync"] }
 
 [features]
 mem-client = []
 stronghold = [
-    "iota_stronghold",
-    "stronghold_engine",
-    "actix",
-    "tokio/rt-multi-thread",
+  "iota_stronghold",
+  "stronghold_engine",
+  "actix",
+  "tokio/rt-multi-thread",
 ]
 wasm = ["identity-iota/wasm"]
 async = ["identity-iota/async"]

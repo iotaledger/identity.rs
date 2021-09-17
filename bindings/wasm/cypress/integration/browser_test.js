@@ -1,14 +1,6 @@
-import { defaultClientConfig, initIdentity } from "../../examples/browser/utils";
-import { createIdentity } from "../../examples/browser/create_did.js";
-import { createVC } from "../../examples/browser/create_vc.js";
-import { manipulateIdentity } from "../../examples/browser/mainpulate_did.js";
-import { resolveIdentity } from "../../examples/browser/resolve.js";
-import { createVP } from "../../examples/browser/create_vp.js";
-import { createDiff } from "../../examples/browser/diff_chain.js";
-import { revoke } from "../../examples/browser/revoke_vc.js";
-import { merkleKey } from "../../examples/browser/merkle_key.js";
-import { createIdentityPrivateTangle } from "../../examples/browser/private_tangle";
-import { resolveHistory } from "../../examples/browser/resolve_history";
+import {
+    defaultClientConfig, initIdentity, createIdentity, createVC, manipulateIdentity, resolution, createVP, createDiff, revokeVC, merkleKey, createIdentityPrivateTangle, resolveHistory
+} from '../../examples/dist/web'
 
 // Test that the browser examples do not throw uncaught exceptions twice, including syntax errors etc.
 describe(
@@ -19,7 +11,7 @@ describe(
     () => {
         beforeEach(async () => {
             // The working directory is under __cypress at test runtime, so we need to go up one more level than usual
-            await initIdentity("../../../web/identity_wasm_bg.wasm", false);
+            await initIdentity('../../../examples/dist/identity_wasm_bg.wasm');
 
             // NOTE: `cy.wrap(defaultClientConfig()).as('config')` does not always work to make the config available
             // from the shared context as `this.config` because it has a race condition with initializing the wasm.
@@ -29,65 +21,65 @@ describe(
         it("create identity", async function () {
             let identityResult;
             try {
-                identityResult = await createIdentity(defaultClientConfig(), false);
+                identityResult = await createIdentity(defaultClientConfig());
             } catch (e) {
-                identityResult = await createIdentity(defaultClientConfig(), false);
+                identityResult = await createIdentity(defaultClientConfig());
             }
             // example of testing the output, can remove if needed
-            expect(identityResult).to.have.all.keys("key", "doc", "receipt", "explorerUrl");
+            expect(identityResult).to.have.all.keys("key", "doc", "receipt");
         });
 
         it("manipulate identity", async function () {
             try {
-                await manipulateIdentity(defaultClientConfig(), false);
+                await manipulateIdentity(defaultClientConfig());
             } catch (e) {
-                await manipulateIdentity(defaultClientConfig(), false);
+                await manipulateIdentity(defaultClientConfig());
             }
         });
 
         it("resolve identity", async function () {
             try {
-                await resolveIdentity(defaultClientConfig(), false, false);
+                await resolution(defaultClientConfig());
             } catch (e) {
-                await resolveIdentity(defaultClientConfig(), false, false);
+                await resolution(defaultClientConfig());
             }
         });
 
         it("create verifiable credential", async function () {
             try {
-                await createVC(defaultClientConfig(), false);
+                await createVC(defaultClientConfig());
             } catch (e) {
-                await createVC(defaultClientConfig(), false);
+                await createVC(defaultClientConfig());
             }
         });
 
         it("revoke verifiable credential", async function () {
             try {
-                await revoke(defaultClientConfig(), false);
+                await revokeVC(defaultClientConfig());
             } catch (e) {
-                await revoke(defaultClientConfig(), false);
+                await revokeVC(defaultClientConfig());
             }
         });
 
         it("create verifiable presentation", async function () {
             try {
-                await createVP(defaultClientConfig(), false);
+                await createVP(defaultClientConfig());
             } catch (e) {
-                await createVP(defaultClientConfig(), false);
+                await createVP(defaultClientConfig());
             }
         });
-        
+
         it("merkle key", async function () {
             try {
-                await merkleKey(defaultClientConfig(), false);
+                await merkleKey(defaultClientConfig());
             } catch (e) {
-                await merkleKey(defaultClientConfig(), false);
+                await merkleKey(defaultClientConfig());
             }
         });
 
         it("private tangle", async function () {
             try {
-                await createIdentityPrivateTangle(false, false)
+                await createIdentityPrivateTangle()
                 throw new Error("Did not throw.")
             } catch (err) {
                 // Example is expected to throw an error because no private Tangle is running
@@ -98,17 +90,17 @@ describe(
 
         it("diff chain", async function () {
             try {
-                await createDiff(defaultClientConfig(), false);
+                await createDiff(defaultClientConfig());
             } catch (e) {
-                await createDiff(defaultClientConfig(), false);
+                await createDiff(defaultClientConfig());
             }
         });
 
         it("resolve history", async function () {
             try {
-                await resolveHistory(defaultClientConfig(), false);
+                await resolveHistory(defaultClientConfig());
             } catch (e) {
-                await resolveHistory(defaultClientConfig(), false);
+                await resolveHistory(defaultClientConfig());
             }
         });
     }

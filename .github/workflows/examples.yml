@@ -27,7 +27,7 @@ jobs:
 
       - name: Get current date
         run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-      
+
       - name: Cache cargo
         uses: actions/cache@v2.1.4
         with:
@@ -55,8 +55,8 @@ jobs:
         working-directory: examples
         run: |
           cargo read-manifest | for entry in $(jq -r '.targets[].name'); do cargo run --example "$entry" || exit 1; done
-  
-  wasm-examples:       
+
+  wasm-examples:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -77,7 +77,7 @@ jobs:
 
       - name: Get current date
         run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-      
+
       - name: Cache cargo
         uses: actions/cache@v2.1.4
         with:
@@ -101,27 +101,31 @@ jobs:
           node-version: 15.x
 
       - name: Install txm # for running README.md examples https://github.com/anko/txm
-        run: yarn global add txm
+        run: npm install -g txm
 
       - name: Install wasm-pack
-        run: yarn global add wasm-pack
+        run: npm install -g wasm-pack
 
       - name: Install JS dependencies
-        run: yarn
+        run: npm install
         working-directory: bindings/wasm
 
       - name: Build Wasm bindings
-        run: yarn build
+        run: npm run build
+        working-directory: bindings/wasm
+
+      - name: Build Wasm examples
+        run: npm run build:examples
         working-directory: bindings/wasm
 
       - name: Test Wasm examples (node)
-        run: yarn run test:node
+        run: npm run test:node
         working-directory: bindings/wasm
 
       - name: Test Wasm examples (browser)
-        run: yarn run test:browser
+        run: npm run test:browser
         working-directory: bindings/wasm
 
       - name: Test Wasm README.md examples
-        run: yarn run test:readme
+        run: npm run test:readme
         working-directory: bindings/wasm

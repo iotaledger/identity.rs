@@ -4,7 +4,7 @@
 macro_rules! ensure {
   ($cond:expr, $error:expr $(,)?) => {
     if !$cond {
-      return Err($crate::Error::CommandError($error));
+      return Err($crate::Error::UpdateError($error));
     }
   };
 }
@@ -25,21 +25,24 @@ macro_rules! impl_command_builder {
   (@finish $this:ident required $field:ident $ty:ty) => {
     match $this.$field {
       Some(value) => value,
-      None => return Err($crate::Error::CommandError(
-        $crate::events::CommandError::MissingRequiredField(stringify!($field)),
+      None => return Err($crate::Error::UpdateError(
+        $crate::events::UpdateError::MissingRequiredField(stringify!($field)),
       )),
     }
   };
-  ($ident:ident { $(@ $requirement:ident $field:ident $ty:ty $(= $value:expr)?),* $(,)* }) => {
+  ($(#[$doc:meta])* $ident:ident { $(@ $requirement:ident $field:ident $ty:ty $(= $value:expr)?),* $(,)* }) => {
     paste::paste! {
-      #[derive(Clone, Debug, PartialEq)]
-      pub struct [<$ident Builder>] {
+      $(#[$doc])*
+      #[derive(Clone, Debug)]
+      pub struct [<$ident Builder>]<'account, 'key, K: $crate::identity::IdentityKey> {
+        account: &'account Account,
+        key: &'key K,
         $(
           $field: Option<$ty>,
         )*
       }
 
-      impl [<$ident Builder>] {
+      impl<'account, 'key, K: $crate::identity::IdentityKey> [<$ident Builder>]<'account, 'key, K> {
         $(
           pub fn $field<VALUE: Into<$ty>>(mut self, value: VALUE) -> Self {
             self.$field = Some(value.into());
@@ -47,32 +50,31 @@ macro_rules! impl_command_builder {
           }
         )*
 
-        pub fn new() -> [<$ident Builder>] {
+        pub fn new(account: &'account Account, key: &'key K) -> [<$ident Builder>]<'account, 'key, K> {
           [<$ident Builder>] {
+            account,
+            key,
             $(
               $field: None,
             )*
           }
         }
 
-        pub fn finish(self) -> $crate::Result<$crate::events::Command> {
-          Ok($crate::events::Command::$ident {
+        pub async fn apply(self) -> $crate::Result<()> {
+          let update = $crate::events::Command::$ident {
             $(
               $field: impl_command_builder!(@finish self $requirement $field $ty $(= $value)?),
             )*
-          })
+          };
+
+          self.account.apply_command(self.key, update).await
         }
       }
 
-      impl Default for [<$ident Builder>] {
-        fn default() -> Self {
-          Self::new()
-        }
-      }
-
-      impl $crate::events::Command {
-        pub fn [<$ident:snake>]() -> [<$ident Builder>] {
-          [<$ident Builder>]::new()
+      impl<'account, 'key, K: $crate::identity::IdentityKey> $crate::identity::IdentityUpdater<'account, 'key, K> {
+        /// Creates a new builder to modify the identity. See the documentation of the return type for details.
+        pub fn [<$ident:snake>](&self) -> [<$ident Builder>]<'account, 'key, K> {
+          [<$ident Builder>]::new(self.account, self.key)
         }
       }
     }

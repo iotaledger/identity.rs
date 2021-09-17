@@ -88,9 +88,11 @@ pub enum Error {
   /// Caused by attempting to find a service that does not exist.
   #[error("Service not found")]
   ServiceNotFound,
-  /// Caused by attempting to perform a command in an invalid context.
-  #[error("Command Error: {0}")]
-  CommandError(#[from] crate::events::CommandError),
+  /// Caused by attempting to perform an upate in an invalid context.
+  #[error("Update Error: {0}")]
+  UpdateError(#[from] crate::events::UpdateError),
+  #[error("Invalid Secret Key: {0}")]
+  InvalidSecretKey(String),
 }
 
 #[doc(hidden)]

@@ -1,9 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::sync::Arc;
+
 use hashbrown::hash_map::Entry;
 use hashbrown::HashMap;
 use identity_iota::did::IotaDID;
+use tokio::sync::RwLock;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -11,17 +14,24 @@ use crate::identity::IdentityId;
 use crate::identity::IdentityKey;
 use crate::identity::IdentityTag;
 
+pub(crate) type IdentityLock = Arc<RwLock<IdentityId>>;
+
 /// An mapping between [IdentityTag]s and [IdentityId]s.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct IdentityIndex {
   data: HashMap<IdentityTag, IdentityId>,
+  #[serde(skip)]
+  locks: HashMap<IdentityId, IdentityLock>,
 }
 
 impl IdentityIndex {
   /// Creates a new `IdentityIndex`.
   pub fn new() -> Self {
-    Self { data: HashMap::new() }
+    Self {
+      data: HashMap::new(),
+      locks: HashMap::new(),
+    }
   }
 
   /// Returns the next IdentityId in the sequence.
@@ -39,8 +49,25 @@ impl IdentityIndex {
   }
 
   /// Returns the id of the identity matching the given `key`.
-  pub fn get<K: IdentityKey>(&self, key: K) -> Option<IdentityId> {
+  pub fn get<K: IdentityKey>(&self, key: &K) -> Option<IdentityId> {
     key.scan(self.data.iter())
+  }
+
+  /// Returns the id of the identity matching the given `key` wrapped in a lock.
+  ///
+  /// Should be used to synchronize write access to the given `key`.
+  pub fn get_lock<K: IdentityKey>(&mut self, key: K) -> Option<IdentityLock> {
+    if let Some(identity_id) = key.scan(self.data.iter()) {
+      match self.locks.entry(identity_id) {
+        Entry::Occupied(lock) => Some(Arc::clone(lock.get())),
+        Entry::Vacant(entry) => {
+          let lock = entry.insert(Arc::new(RwLock::new(identity_id)));
+          Some(Arc::clone(lock))
+        }
+      }
+    } else {
+      None
+    }
   }
 
   /// Adds a new unnamed identity to the index.
@@ -55,11 +82,15 @@ impl IdentityIndex {
 
   /// Removes the identity specified by `key` from the index.
   pub fn del<K: IdentityKey>(&mut self, key: K) -> Result<(IdentityTag, IdentityId)> {
-    self
+    let removed_id = self
       .data
       .drain_filter(|tag, id| key.equals(tag, *id))
       .next()
-      .ok_or(Error::IdentityNotFound)
+      .ok_or(Error::IdentityNotFound)?;
+
+    self.locks.remove(&removed_id.1);
+
+    Ok(removed_id)
   }
 
   fn insert(&mut self, id: IdentityId, tag: IdentityTag) -> Result<()> {
@@ -76,6 +107,12 @@ impl IdentityIndex {
 impl Default for IdentityIndex {
   fn default() -> Self {
     Self::new()
+  }
+}
+
+impl PartialEq for IdentityIndex {
+  fn eq(&self, other: &Self) -> bool {
+    self.data == other.data
   }
 }
 

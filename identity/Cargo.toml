@@ -2,14 +2,14 @@
 name = "identity"
 version = "0.3.0"
 authors = ["IOTA Stiftung"]
+documentation = "https://identity.docs.iota.org"
 edition = "2018"
-description = "Tools for working with Self-sovereign Identity."
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "identity", "did"]
+license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-license = "Apache-2.0"
-keywords = ["iota", "tangle", "identity", "did"]
-homepage = "https://www.iota.org"
-documentation = "https://identity.docs.iota.org"
+description = "Tools for working with Self-sovereign Identity."
 
 [dependencies]
 identity-account = { version = "=0.3.0", path = "../identity-account", optional = true }

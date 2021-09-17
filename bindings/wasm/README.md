@@ -3,36 +3,38 @@
 > This is the beta version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
 
 ## [API Reference](https://identity.docs.iota.org/docs/libraries/wasm/api_reference)
+## [Examples](./examples/README.md)
 
 ## Install the library:
 
-Latest Release: This version matches the main branch of this repository, is stable and will have changelogs.
+Latest Release: this version matches the main branch of this repository, is stable and will have changelogs.
 ```bash
-$ npm install @iota/identity-wasm
-// or using yarn
-$ yarn add @iota/identity-wasm
+npm install @iota/identity-wasm
 ```
 
-Development Release: This version matches the dev branch of this repository, may see frequent breaking changes and has the latest code changes.
+Development Release: this version matches the dev branch of this repository, may see frequent breaking changes and has the latest code changes.
 ```bash
-$ npm install @iota/identity-wasm@dev
-// or using yarn
-$ yarn add @iota/identity-wasm@dev
+npm install @iota/identity-wasm@dev
 ```
 
 ## Build
 
 Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. Then install the necessary dependencies using:
-
-```yarn``` or ```npm install```
+```bash
+npm install
+```
 
 and then build the bindings for `node.js` with
 
-```npm run build:nodejs```
+```bash
+npm run build:nodejs
+```
 
 or for the `web` with
 
-```npm run build:web```
+```bash
+npm run build:web
+```
 
 ## NodeJS Usage
 <!-- 
@@ -86,8 +88,6 @@ The library loads the WASM file with an HTTP GET request, so the .wasm file must
 
 ```bash
 $ npm install rollup-plugin-copy --save-dev
-// or using yarn
-$ yarn add rollup-plugin-copy --dev
 ```
 
 - Add the copy plugin usage to the `plugins` array under `rollup.config.js`:
@@ -112,8 +112,6 @@ copy({
 
 ```bash
 $ npm install copy-webpack-plugin --save-dev
-// or using yarn
-$ yarn add copy-webpack-plugin --dev
 ```
 
 ```js

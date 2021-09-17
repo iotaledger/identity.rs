@@ -34,15 +34,15 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install JS dependencies
-        run: yarn
+        run: npm install
         working-directory: bindings/wasm
 
       - name: Build WASM bindings
-        run: yarn build
+        run: npm run build
         working-directory: bindings/wasm
 
       - name: Publish WASM bindings to NPM
-        run: yarn publish --tag dev --access public --loglevel silly
+        run: npm publish --tag dev --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         working-directory: bindings/wasm

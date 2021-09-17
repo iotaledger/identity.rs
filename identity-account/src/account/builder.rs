@@ -4,6 +4,7 @@
 use hashbrown::HashMap;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota::tangle::Network;
+use identity_iota::tangle::NetworkName;
 #[cfg(feature = "stronghold")]
 use std::path::PathBuf;
 #[cfg(feature = "stronghold")]
@@ -35,7 +36,7 @@ pub enum AccountStorage {
 pub struct AccountBuilder {
   config: Config,
   storage: AccountStorage,
-  clients: Option<HashMap<Network, ClientBuilder>>,
+  clients: Option<HashMap<NetworkName, ClientBuilder>>,
 }
 
 impl AccountBuilder {
@@ -49,12 +50,24 @@ impl AccountBuilder {
   }
 
   /// Sets the account auto-save behaviour.
+  ///
+  /// See the config's [`autosave`][Config::autosave] documentation for details.
   pub fn autosave(mut self, value: AutoSave) -> Self {
     self.config = self.config.autosave(value);
     self
   }
 
+  /// Sets the account auto-publish behaviour.
+  ///
+  /// See the config's [`autopublish`][Config::autopublish] documentation for details.
+  pub fn autopublish(mut self, value: bool) -> Self {
+    self.config = self.config.autopublish(value);
+    self
+  }
+
   /// Save the account state on drop.
+  ///
+  /// See the config's [`dropsave`][Config::dropsave] documentation for details.
   pub fn dropsave(mut self, value: bool) -> Self {
     self.config = self.config.dropsave(value);
     self
@@ -80,7 +93,7 @@ impl AccountBuilder {
     self
       .clients
       .get_or_insert_with(HashMap::new)
-      .insert(network.clone(), f(ClientBuilder::new().network(network)));
+      .insert(network.name(), f(ClientBuilder::new().network(network)));
     self
   }
 

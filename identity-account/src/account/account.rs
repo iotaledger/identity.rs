@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use futures::executor;
+use futures::StreamExt;
 use futures::TryStreamExt;
 use identity_core::common::Fragment;
 use identity_core::crypto::KeyType;
@@ -33,9 +34,11 @@ use crate::identity::IdentityCreate;
 use crate::identity::IdentityId;
 use crate::identity::IdentityIndex;
 use crate::identity::IdentityKey;
+use crate::identity::IdentityLock;
 use crate::identity::IdentitySnapshot;
 use crate::identity::IdentityState;
 use crate::identity::IdentityTag;
+use crate::identity::IdentityUpdater;
 use crate::identity::TinyMethod;
 use crate::storage::Storage;
 use crate::types::Generation;
@@ -110,7 +113,7 @@ impl Account {
 
   /// Finds and returns the state snapshot for the identity specified by given `key`.
   pub async fn find_identity<K: IdentityKey>(&self, key: K) -> Result<Option<IdentitySnapshot>> {
-    match self.resolve_id(key).await {
+    match self.resolve_id(&key).await {
       Some(identity) => self.load_snapshot(identity).await.map(Some),
       None => Ok(None),
     }
@@ -125,6 +128,7 @@ impl Account {
     // Create the initialization command
     let command: Command = Command::CreateIdentity {
       network: input.network,
+      method_secret: input.method_secret,
       authentication: Self::key_to_method(input.key_type),
     };
 
@@ -152,13 +156,15 @@ impl Account {
     Ok(snapshot)
   }
 
-  /// Updates the identity specified by the given `key` with the given `command`.
-  pub async fn update_identity<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
-    let identity: IdentityId = self.try_resolve_id(key).await?;
-
-    self.process(identity, command, true).await?;
-
-    Ok(())
+  /// Returns the `IdentityUpdater` for the given `key`.
+  ///
+  /// On this type, various operations can be executed
+  /// that modify an identity, such as creating services or methods.
+  pub fn update_identity<'account, 'key, K: IdentityKey>(
+    &'account self,
+    key: &'key K,
+  ) -> IdentityUpdater<'account, 'key, K> {
+    IdentityUpdater::new(self, key)
   }
 
   /// Removes the identity specified by the given `key`.
@@ -185,7 +191,7 @@ impl Account {
 
   /// Resolves the DID Document associated with the specified `key`.
   pub async fn resolve_identity<K: IdentityKey>(&self, key: K) -> Result<IotaDocument> {
-    let identity: IdentityId = self.try_resolve_id(key).await?;
+    let identity: IdentityId = self.try_resolve_id(&key).await?;
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
     let document: &IotaDID = snapshot.identity().try_did()?;
 
@@ -199,7 +205,7 @@ impl Account {
     K: IdentityKey,
     U: Serialize + SetSignature,
   {
-    let identity: IdentityId = self.try_resolve_id(key).await?;
+    let identity: IdentityId = self.try_resolve_id(&key).await?;
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
     let state: &IdentityState = snapshot.identity();
 
@@ -212,20 +218,34 @@ impl Account {
     Ok(())
   }
 
-  async fn resolve_id<K: IdentityKey>(&self, key: K) -> Option<IdentityId> {
+  async fn resolve_id<K: IdentityKey>(&self, key: &K) -> Option<IdentityId> {
     self.index.read().await.get(key)
   }
 
-  async fn try_resolve_id<K: IdentityKey>(&self, key: K) -> Result<IdentityId> {
+  async fn try_resolve_id<K: IdentityKey>(&self, key: &K) -> Result<IdentityId> {
     self.resolve_id(key).await.ok_or(Error::IdentityNotFound)
+  }
+
+  async fn try_resolve_id_lock<K: IdentityKey>(&self, key: &K) -> Result<IdentityLock> {
+    self.index.write().await.get_lock(key).ok_or(Error::IdentityNotFound)
   }
 
   // ===========================================================================
   // Misc. Private
   // ===========================================================================
 
-  #[doc(hidden)]
-  pub async fn process(&self, id: IdentityId, command: Command, persist: bool) -> Result<()> {
+  /// Updates the identity specified by the given `key` with the given `command`.
+  pub(crate) async fn apply_command<K: IdentityKey>(&self, key: &K, command: Command) -> Result<()> {
+    // Hold on to an `IdentityId`s individual lock until we've finished processing the update.
+    let identity_lock = self.try_resolve_id_lock(key).await?;
+    let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
+
+    self.process(*identity, command, true).await?;
+
+    Ok(())
+  }
+
+  pub(crate) async fn process(&self, id: IdentityId, command: Command, persist: bool) -> Result<()> {
     // Load the latest state snapshot from storage
     let root: IdentitySnapshot = self.load_snapshot(id).await?;
 
@@ -243,11 +263,7 @@ impl Account {
 
       debug!("[Account::process] Commits = {:#?}", commits);
 
-      match Publish::new(&commits) {
-        Publish::Auth => self.process_auth_change(root).await?,
-        Publish::Diff => self.process_diff_change(root).await?,
-        Publish::None => {}
-      }
+      self.publish(root, commits, false).await?;
     }
 
     // Update the total number of executions
@@ -367,6 +383,19 @@ impl Account {
       .await
   }
 
+  async fn load_snapshot_at(&self, id: IdentityId, generation: Generation) -> Result<IdentitySnapshot> {
+    let initial: IdentitySnapshot = IdentitySnapshot::new(IdentityState::new(id));
+
+    // Apply all events up to `generation`
+    self
+      .store
+      .stream(id, Generation::new())
+      .await?
+      .take(generation.to_u32() as usize)
+      .try_fold(initial, Self::fold_snapshot)
+      .await
+  }
+
   async fn commit_events(&self, state: &IdentitySnapshot, events: &[Event]) -> Result<Vec<Commit>> {
     // Bail early if there are no new events
     if events.is_empty() {
@@ -417,6 +446,55 @@ impl Account {
     Ok(())
   }
 
+  /// Push all unpublished changes for the given identity to the tangle in a single message.
+  pub async fn publish_updates<K: IdentityKey>(&self, key: K) -> Result<()> {
+    let identity_lock: IdentityLock = self.try_resolve_id_lock(&key).await?;
+    let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
+
+    // Get the last commit generation that was published to the tangle.
+    let last_published: Generation = self.store.published_generation(*identity).await?.unwrap_or_default();
+
+    // Get the commits that need to be published.
+    let commits: Vec<Commit> = self.store.collect(*identity, last_published).await?;
+
+    if commits.is_empty() {
+      return Ok(());
+    }
+
+    // Load the snapshot that represents the state on the tangle.
+    let snapshot: IdentitySnapshot = self.load_snapshot_at(*identity, last_published).await?;
+
+    self.publish(snapshot, commits, true).await?;
+
+    Ok(())
+  }
+
+  /// Publishes according to the autopublish configuration.
+  async fn publish(&self, snapshot: IdentitySnapshot, commits: Vec<Commit>, force: bool) -> Result<()> {
+    if !force && !self.config.autopublish {
+      return Ok(());
+    }
+
+    let id: IdentityId = snapshot.id();
+
+    match Publish::new(&commits) {
+      Publish::Auth => self.process_auth_change(snapshot).await?,
+      Publish::Diff => self.process_diff_change(snapshot).await?,
+      Publish::None => {}
+    }
+
+    if !commits.is_empty() {
+      let last_commit_generation: Generation = commits.last().unwrap().sequence();
+      // Publishing adds an AuthMessage or DiffMessage event, that contains the message id
+      // which is required to be set for subsequent updates.
+      // The next snapshot that loads the tangle state will require this message id to be set.
+      let generation: Generation = Generation::from_u32(last_commit_generation.to_u32() + 1);
+      self.store.set_published_generation(id, generation).await?;
+    }
+
+    Ok(())
+  }
+
   fn key_to_method(type_: KeyType) -> MethodType {
     match type_ {
       KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
@@ -441,6 +519,7 @@ impl Drop for Account {
 #[derive(Clone, Debug)]
 pub struct Config {
   autosave: AutoSave,
+  autopublish: bool,
   dropsave: bool,
   testmode: bool,
   milestone: u32,
@@ -453,6 +532,7 @@ impl Config {
   pub fn new() -> Self {
     Self {
       autosave: AutoSave::Every,
+      autopublish: true,
       dropsave: true,
       testmode: false,
       milestone: Self::MILESTONE,
@@ -460,12 +540,34 @@ impl Config {
   }
 
   /// Sets the account auto-save behaviour.
+  /// - [`Every`][AutoSave::Every] => Save to storage on every update
+  /// - [`Never`][AutoSave::Never] => Never save to storage when updating
+  /// - [`Batch(n)`][AutoSave::Batch] => Save to storage after every `n` updates.
+  ///
+  /// Note that when [`Never`][AutoSave::Never] is selected, you will most
+  /// likely want to set [`dropsave`][Self::dropsave] to `true`.
+  ///
+  /// Default: [`Every`][AutoSave::Every]
   pub fn autosave(mut self, value: AutoSave) -> Self {
     self.autosave = value;
     self
   }
 
+  /// Sets the account auto-publish behaviour.
+  /// - `true` => publish to the Tangle on every DID document change
+  /// - `false` => never publish automatically
+  ///
+  /// Default: `true`
+  pub fn autopublish(mut self, value: bool) -> Self {
+    self.autopublish = value;
+    self
+  }
+
   /// Save the account state on drop.
+  /// If set to `false`, set [`autosave`][Self::autosave] to
+  /// either [`Every`][AutoSave::Every] or [`Batch(n)`][AutoSave::Batch].
+  ///
+  /// Default: `true`
   pub fn dropsave(mut self, value: bool) -> Self {
     self.dropsave = value;
     self

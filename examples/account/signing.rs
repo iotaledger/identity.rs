@@ -4,7 +4,6 @@
 //! cargo run --example account_signing
 
 use identity::account::Account;
-use identity::account::Command;
 use identity::account::IdentityCreate;
 use identity::account::IdentitySnapshot;
 use identity::account::Result;
@@ -28,16 +27,18 @@ async fn main() -> Result<()> {
   let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let document: &IotaDID = snapshot.identity().try_did()?;
+  let did: &IotaDID = snapshot.identity().try_did()?;
 
   println!("[Example] Local Snapshot = {:#?}", snapshot);
   println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);
 
   // Add a new Ed25519 Verification Method to the identity
-  let command: Command = Command::create_method().fragment("key-1").finish()?;
-
-  // Process the command and update the identity state.
-  account.update_identity(document, command).await?;
+  account
+    .update_identity(did)
+    .create_method()
+    .fragment("key-1")
+    .apply()
+    .await?;
 
   // Create a subject DID for the recipient of a `UniversityDegree` credential.
   let subject_key: KeyPair = KeyPair::new_ed25519()?;
@@ -54,20 +55,20 @@ async fn main() -> Result<()> {
 
   // Issue an unsigned Credential...
   let mut credential: Credential = Credential::builder(Default::default())
-    .issuer(Url::parse(document.as_str())?)
+    .issuer(Url::parse(did.as_str())?)
     .type_("UniversityDegreeCredential")
     .subject(subject)
     .build()?;
 
   // ...and sign the Credential with the previously created Verification Method
-  account.sign(document, "key-1", &mut credential).await?;
+  account.sign(did, "key-1", &mut credential).await?;
 
   println!("[Example] Local Credential = {:#}", credential);
 
   // Fetch the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
-  let resolved: IotaDocument = account.resolve_identity(document).await?;
+  let resolved: IotaDocument = account.resolve_identity(did).await?;
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 
