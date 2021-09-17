@@ -15,7 +15,7 @@ Allows a trusted-party to request the signing of an unsigned verifiable credenti
 
 ### Relationships
 
-This protocol may be embedded in the [issuane](./issuance) protocol.
+This protocol may be embedded in the [issuance](./issuance) protocol.
 
 ### Example Use-Cases
 

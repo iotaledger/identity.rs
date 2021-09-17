@@ -7,14 +7,14 @@ sidebar_label: Presentation
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-09-15
+- Last Updated: 2021-09-17
 
 ## Overview
 
 Allows presentation of verifiable credentials that are issued to a holder and uniquely presented to a third-party verifier.
 
 ### Relationships
-This protocol may be embedded in the [issuane](./issuance) protocol.
+This protocol may be embedded in the [issuance](./issuance) protocol.
 
 ### Example Use-Cases
 
@@ -204,7 +204,7 @@ TODO: we may want separate problem-reports instead, as mixing disputes with prob
 
 ```json
 {
-  "vp": {
+  "presentation": {
     "@context": [
       "https://www.w3.org/2018/credentials/v1",
       "https://www.w3.org/2018/credentials/examples/v1"
