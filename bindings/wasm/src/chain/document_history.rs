@@ -95,17 +95,17 @@ impl From<DocumentHistory> for WasmDocumentHistory {
   }
 }
 
-#[wasm_bindgen(js_name = IntegrationChainHistory, inspectable)]
+#[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IntegrationChainHistory(ChainHistory<IotaDocument>);
 
-#[wasm_bindgen(js_name = DiffChainHistory, inspectable)]
+#[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DiffChainHistory(ChainHistory<DocumentDiff>);
 
 macro_rules! impl_wasm_chain_history {
   ($ident:ident, $ty:ty, $wasm_ty:ty) => {
-    #[wasm_bindgen(js_class = $ident)]
+    #[wasm_bindgen]
     impl $ident {
       /// Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
       ///
