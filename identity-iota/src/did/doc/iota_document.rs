@@ -648,8 +648,8 @@ mod tests {
 
   const DID_ID: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
   const DID_AUTH: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
-  const DID_TESTNET_ID: &str = "did:iota:test:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
-  const DID_TESTNET_AUTH: &str = "did:iota:test:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
+  const DID_DEVNET_ID: &str = "did:iota:dev:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
+  const DID_DEVNET_AUTH: &str = "did:iota:dev:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
 
   fn valid_did() -> DID {
     DID_ID.parse().unwrap()
@@ -736,8 +736,8 @@ mod tests {
   }
 
   fn compare_document_testnet(document: &IotaDocument) {
-    assert_eq!(document.id().to_string(), DID_TESTNET_ID);
-    assert_eq!(document.authentication_id(), DID_TESTNET_AUTH);
+    assert_eq!(document.id().to_string(), DID_DEVNET_ID);
+    assert_eq!(document.authentication_id(), DID_DEVNET_AUTH);
     assert_eq!(
       document.authentication().key_type(),
       MethodType::Ed25519VerificationKey2018
@@ -927,7 +927,7 @@ mod tests {
   fn test_from_keypair_with_network() {
     //from keypair
     let keypair: KeyPair = generate_testkey();
-    let document: IotaDocument = IotaDocument::from_keypair_with_network(&keypair, "test").unwrap();
+    let document: IotaDocument = IotaDocument::from_keypair_with_network(&keypair, "dev").unwrap();
     compare_document_testnet(&document);
   }
 

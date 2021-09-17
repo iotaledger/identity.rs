@@ -55,18 +55,18 @@ const key = new identity.KeyPair(identity.KeyType.Ed25519)
 
 // Create a new DID Document with the KeyPair as the default authentication method
 const doc = identity.Document.fromKeyPair(key)
-// const doc = identity.Document.fromKeyPair(key, "test") // if using the testnet
+// const doc = identity.Document.fromKeyPair(key, "dev") // if using the devnet
 
 // Sign the DID Document with the private key
 doc.sign(key)
 
 // Create a default client instance for the mainnet
 const config = identity.Config.fromNetwork(identity.Network.mainnet())
-// const config = identity.Config.fromNetwork(identity.Network.testnet()); // if using the testnet
+// const config = identity.Config.fromNetwork(identity.Network.devnet()); // if using the devnet
 const client = identity.Client.fromConfig(config)
 
 // Publish the DID Document to the IOTA Tangle
-// The message can be viewed at https://explorer.iota.org/<mainnet|testnet>/transaction/<messageId>
+// The message can be viewed at https://explorer.iota.org/<mainnet|devnet>/transaction/<messageId>
 client.publishDocument(doc.toJSON())
     .then((receipt) => {
         console.log("Tangle Message Receipt: ", receipt)
@@ -138,8 +138,8 @@ import * as identity from "@iota/identity-wasm/web";
 identity.init().then(() => {
   const key = new identity.KeyPair(identity.KeyType.Ed25519)
   const doc = identity.Document.fromKeyPair(key)
-  // Or, if using the testnet:
-  // const doc = identity.Document.fromKeyPair(key, "test")  
+  // Or, if using the devnet:
+  // const doc = identity.Document.fromKeyPair(key, "dev")  
   console.log("Key Pair", key)
   console.log("DID Document: ", doc)
 });
@@ -150,8 +150,8 @@ identity.init().then(() => {
   await identity.init()
   const key = new identity.KeyPair(identity.KeyType.Ed25519)
   const doc = identity.Document.fromKeyPair(key)
-  // Or, if using the testnet:
-  // const doc = identity.Document.fromKeyPair(key, "test")
+  // Or, if using the devnet:
+  // const doc = identity.Document.fromKeyPair(key, "dev")
   console.log("Key Pair", key)
   console.log("DID Document: ", doc)
 })()

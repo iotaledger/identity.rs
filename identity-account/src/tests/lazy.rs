@@ -23,7 +23,7 @@ async fn test_lazy_updates() -> Result<()> {
       let account: Account = Account::builder().autopublish(false).build().await?;
 
       let network = if test_run % 2 == 0 {
-        Network::Testnet
+        Network::Devnet
       } else {
         Network::Mainnet
       };

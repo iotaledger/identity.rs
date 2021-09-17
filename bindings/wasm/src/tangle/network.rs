@@ -24,8 +24,8 @@ impl WasmNetwork {
   }
 
   #[wasm_bindgen]
-  pub fn testnet() -> WasmNetwork {
-    Self(IotaNetwork::Testnet)
+  pub fn devnet() -> WasmNetwork {
+    Self(IotaNetwork::Devnet)
   }
 
   /// Returns the node URL of the Tangle network.

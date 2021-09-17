@@ -81,10 +81,10 @@ fn test_did() {
   assert_eq!(did.to_string(), parsed.to_string());
 
   let public = key.public();
-  let base58 = WasmDID::from_base58(&public, Some("test".to_string())).unwrap();
+  let base58 = WasmDID::from_base58(&public, Some("dev".to_string())).unwrap();
 
   assert_eq!(base58.tag(), did.tag());
-  assert_eq!(base58.network_name(), "test");
+  assert_eq!(base58.network_name(), "dev");
 }
 
 #[test]
@@ -101,8 +101,8 @@ fn test_document() {
 
 #[test]
 fn test_document_network() {
-  let output = WasmDocument::new(KeyType::Ed25519, Some("test".into()), None).unwrap();
+  let output = WasmDocument::new(KeyType::Ed25519, Some("dev".into()), None).unwrap();
   let document = output.doc();
 
-  assert_eq!(document.id().network_name(), "test");
+  assert_eq!(document.id().network_name(), "dev");
 }
