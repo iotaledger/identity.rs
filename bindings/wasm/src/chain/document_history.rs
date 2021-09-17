@@ -97,11 +97,11 @@ impl From<DocumentHistory> for WasmDocumentHistory {
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct WasmIntegrationChainHistory(ChainHistory<IotaDocument>);
+pub struct IntegrationChainHistory(ChainHistory<IotaDocument>);
 
 #[wasm_bindgen(inspectable)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct WasmDiffChainHistory(ChainHistory<DocumentDiff>);
+pub struct DiffChainHistory(ChainHistory<DocumentDiff>);
 
 macro_rules! impl_wasm_chain_history {
   ($ident:ident, $ty:ty, $wasm_ty:ty) => {
@@ -158,5 +158,5 @@ macro_rules! impl_wasm_chain_history {
   };
 }
 
-impl_wasm_chain_history!(WasmIntegrationChainHistory, IotaDocument, WasmDocument);
-impl_wasm_chain_history!(WasmDiffChainHistory, DocumentDiff, WasmDocumentDiff);
+impl_wasm_chain_history!(IntegrationChainHistory, IotaDocument, WasmDocument);
+impl_wasm_chain_history!(DiffChainHistory, DocumentDiff, WasmDocumentDiff);
