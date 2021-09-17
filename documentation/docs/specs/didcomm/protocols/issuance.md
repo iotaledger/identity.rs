@@ -289,7 +289,7 @@ The [issuer](#roles) transmits the signed credential following a [`issuance-resp
 | `credentialHash` | The [Base58](https://tools.ietf.org/id/draft-msporny-base58-01.html)-encoded [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the `signedCredential`, including the `proof`, formatted according to the [JSON Canonicalization Scheme](https://tools.ietf.org/id/draft-rundgren-json-canonicalization-scheme-00.html). | ✔ |
 | `expiry` | A string formatted as an [XML Datetime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision. E.g: `"2021-12-30T19:17:47Z"`. | ✖ |
 
-[^1] The [holder](#roles) SHOULD validate both that the `proof` on the `signedCredential` is correctly signed by a trusted issuer and that the contents match those of the `unsignedCredential` from the [issuance-offer](#issuance-offer) they accepted.
+[^1] The [holder](#roles) SHOULD validate both that the `proof` on the `signedCredential` is correctly signed by a trusted issuer and that the contents match those of the `unsignedCredential` from the [issuance-offer](#issuance-offer) they accepted. If not, a relevant problem-report should be sent.
 
 #### Examples
 
