@@ -113,12 +113,14 @@ The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | [`unsignedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | Unsigned [credential](https://www.w3.org/TR/vc-data-model/#credentials) being offered to the [holder](#roles). This MUST NOT include a `proof` section. | ✔ |
-| `signatureChallenge` | If present, indicates the [issuer](#issuer) requires the acceptance of the credential to be signed by the [holder](#holder) in the following [issuance-response](#issuance-response) for non-repudiation. | ✖ |
+| `signatureChallenge` | If present, indicates the [issuer](#issuer) requires the acceptance of the credential to be signed by the [holder](#holder) in the following [issuance-response](#issuance-response) for non-repudiation.[^1] | ✖ |
 | `challenge` |  A random string that should be unique per [issuance-offer](#issuance-offer). | ✔ |
 | `credentialHash` | The [Base58](https://tools.ietf.org/id/draft-msporny-base58-01.html)-encoded [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the `unsignedCredential` formatted according to the [JSON Canonicalization Scheme](https://tools.ietf.org/id/draft-rundgren-json-canonicalization-scheme-00.html). | ✔ |
-| `expiry` | A string formatted as an [XML DateTime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision. E.g: `"2021-12-30T19:17:47Z"`.[^1] | ✖ |
+| `expiry` | A string formatted as an [XML DateTime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision. E.g: `"2021-12-30T19:17:47Z"`.[^2] | ✖ |
 
-[^1] If present, an `expiry` indicates that the [issuer](#roles) MAY rescind the offer and abandon the protcol if an affirmative [issuance-response](#issuance-response) is not received before the specified datetime. Note that the `expiry` should override any default message timeouts.
+[^1] Issuing challenges should be done with due consideration to security and privacy concerns: not all applications require non-repudiation to third-parties and a [holder](#roles) [may wish to deny that they ever requested or accepted a particular credential](https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0049-repudiation/README.md#summary). The challenge SHOULD NOT be used for authentication of the [holder](#roles); see (TODO link on sender-authenticated encryption?).
+
+[^2] If present, an `expiry` indicates that the [issuer](#roles) MAY rescind the offer and abandon the protcol if an affirmative [issuance-response](#issuance-response) is not received before the specified datetime. Note that the `expiry` should override any default message timeouts.
 
 #### Examples
 
@@ -158,7 +160,7 @@ The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles
     "id": "6c1a1477-e452-4da7-b2db-65ad0b369d1a",
     "type": ["VerifiableCredential", "UniversityDegreeCredential"],
     "issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f",
-    "issuanceDate": "2021-05-03T19:73:24Z",
+    "issuanceDate": "2021-01-05T19:37:24Z",
     "credentialSubject": {
       "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
       "degree": {
@@ -171,7 +173,7 @@ The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles
     "challenge": "d7b7869e-fec3-4de9-84bb-c3a43bacff33",
     "credentialHash": "28Ae7AdqzyMyF9pmnwUNK1Q7VT3EzDDGEj1Huk7uYQT94KYAhQzEPyhoF5Ugs3totUugLPpghGmE9HaG8usJZcZv",
   },
-  "expiry": "2021-11-01T21:04:31Z"
+  "expiry": "2021-01-05T20:07:24Z"
 }
 ```
 
@@ -201,29 +203,66 @@ The [holder](#roles) responds to a [`issuance-offer`](#issuance-offer) by aceept
 | :--- | :--- | :--- |
 | `accepted` | Indicates if the [holder](#roles) accepts the offered credential from [`issuance-offer`](#issuance-offer). MUST be `false` if any `disputes` are present. | ✔ |
 | [`disputes`](https://www.w3.org/TR/vc-data-model/#disputes) | Allows the [holder](#roles) to [`dispute`](https://www.w3.org/TR/vc-data-model/#disputes) one or more claims in the credential. | ✖ |
-| `signature` | Allows the [issuer](#roles) to prove that a credential was accepted by the [holder](#roles). SHOULD be present if a `signatureChallenge` was included in the preceding [`issuance-offer`](#issuance-offer). | ✖ |
-| `signatureChallenge` | MUST match the `signatureChallenge` in the preceding [`issuance-offer`](#issuance-offer). | ✔ |
+| `signature` | This SHOULD be present if a `signatureChallenge` was included in the preceding [`issuance-offer`](#issuance-offer).[^1] | ✖ |
+| `signatureChallenge` | This MUST match the `signatureChallenge` in the preceding [`issuance-offer`](#issuance-offer). | ✔ |
 | [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the [holder](#roles) on the `signatureChallenge`. | ✔ |
+
+[^1] A valid `signature` allows the [issuer](#roles) to prove that the credential was accepted by the [holder](#roles). If present, the [issuer](#roles) MUST validate the `proof` is correct and signed with an unrevoked [verification method](https://www.w3.org/TR/did-core/#dfn-verification-method), and issue a problem-report if not.
 
 #### Examples
 
-1. Rejecting a credential offer with disputes:
+1. Accept a credential offer:
 
 ```json
 {
- TBD
+  "accepted": true,
+  "disputes": [],
 }
 ```
 
-2. Acception a credential offer including a proof:
+2. Accept a credential offer including a signature:
 
 ```json
 {
- TBD
+  "accepted": true,
+  "disputes": [],
+  "signature": {
+    "signatureChallenge": {
+      "challenge": "d7b7869e-fec3-4de9-84bb-c3a43bacff33",
+      "credentialHash": "28Ae7AdqzyMyF9pmnwUNK1Q7VT3EzDDGEj1Huk7uYQT94KYAhQzEPyhoF5Ugs3totUugLPpghGmE9HaG8usJZcZv",
+    },
+    "proof": {...}
+  }
 }
 ```
 
-### 4. issuance {#issuance}
+3. Reject a credential offer with disputes:
+
+```json
+{
+  "accepted": false,
+  "disputes": [{
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1",
+    ],
+    "id": "6e8e989e-749e-4ed8-885b-b2a2bb64835f",
+    "type": ["VerifiableCredential", "DisputeCredential"],
+    "credentialSubject": {
+      "id": "6c1a1477-e452-4da7-b2db-65ad0b369d1a",
+      "currentStatus": "Disputed",
+      "statusReason": {
+        "value": "Incorrect name.",
+        "lang": "en"
+      },
+    },
+    "issuer": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+    "issuanceDate": "2021-01-05T19:46:24Z",
+    "proof": {...}
+  }],
+}
+```
+
+### 4. issuance {#issuance-message}
 
 - Type: `didcomm:iota/issuance/0.1/issuance`
 - Role: [issuer](#roles)
@@ -244,11 +283,13 @@ The [issuer](#roles) transmits the signed credential following a [`issuance-resp
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`signedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | [Verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) signed by the [issuer](#roles). | ✔ |
+| [`signedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | [Verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) signed by the [issuer](#roles).[^1] | ✔ |
 | `signatureChallenge` | If present, indicates the [issuer](#issuer) requires the receival of the credential to be signed for non-repudiation. | ✖ |
 | `challenge` |  A random string that should be unique per [issuance](#issuance). | ✔ |
-| `credentialHash` | The SHA-256? (TODO link) hash of the `signedCredential`. | ✔ |
+| `credentialHash` | The [Base58](https://tools.ietf.org/id/draft-msporny-base58-01.html)-encoded [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the `signedCredential`, including the `proof`, formatted according to the [JSON Canonicalization Scheme](https://tools.ietf.org/id/draft-rundgren-json-canonicalization-scheme-00.html). | ✔ |
 | `expiry` | A string formatted as an [XML Datetime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision. E.g: `"2021-12-30T19:17:47Z"`. | ✖ |
+
+[^1] The [holder](#roles) SHOULD validate both that the `proof` on the `signedCredential` is correctly signed by a trusted issuer and that the contents match those of the `unsignedCredential` from the [issuance-offer](#issuance-offer) they accepted.
 
 #### Examples
 
@@ -256,7 +297,33 @@ The [issuer](#roles) transmits the signed credential following a [`issuance-resp
 
 ```json
 {
- TBD
+ "unsignedCredential": {
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1",
+      "https://www.w3.org/2018/credentials/examples/v1"
+    ],
+    "id": "6c1a1477-e452-4da7-b2db-65ad0b369d1a",
+    "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+    "issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f",
+    "issuanceDate": "2021-01-05T19:37:24Z",
+    "credentialSubject": {
+      "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "degree": {
+        "type": "BachelorDegree",
+        "name": "Bachelor of Science and Arts"
+      }
+    },
+    "proof": {
+      "type": "JcsEd25519Signature2020",
+      "verificationMethod": "did:example:ebfeb1f712ebc6f1c276e12ec21#key",
+      "signatureValue": "3KpeHSW4LybMy1smFEYriRmj5FsFfnxQiEsBnQdYzwkXMnjF3Jjn5RS1KGzheNpUgHW5yua8DoLbfYmZFAvaUVwv"
+    }
+  },
+  "signatureChallenge": {
+    "challenge": "6ff5f616-2f9c-4e47-b9d2-5553deeac01d",
+    "credentialHash": "21DtABsnYNb7oGEY8aybb9Bghq6NJJWvrQgtC2SBdhgQ8v6cZGjnT8RmEmBLZfHyfEYMAik3D1EoNQZCaT4RUKEX",
+  },
+  "expiry": "2021-01-05T20:07:24Z"
 }
 ```
 
@@ -265,28 +332,46 @@ The [issuer](#roles) transmits the signed credential following a [`issuance-resp
 - Type: `didcomm:iota/issuance/0.1/issuance-acknowledgment`
 - Role: [holder](#roles)
 
-The [holder](#roles) responds to an [`issuance`](#issuance) confirming he received the credential, optionally including non-repudiable proof.
+The [holder](#roles) confirms receipt of a successful credential [`issuance`](#issuance-message), optionally including non-repudiable proof.
 
 #### Structure
 ```json
 {
-  "signatureChallenge": string, // OPTIONAL
-  "signature": Proof,           // OPTIONAL
+  "signature": {
+    "signatureChallenge": {
+      "challenge": string,      // REQUIRED
+      "credentialHash": string, // REQUIRED
+    }, // REQUIRED
+    "proof": Proof,             // REQUIRED
+  } // OPTIONAL
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `signature` | TBD | ✖ |
-| `signatureChallenge` | TBD | ✖ |
+| `signature` | This SHOULD be present if a `signatureChallenge` was included in the preceding [`issuance`](#issuance-message) message. | ✖ |
+| `signatureChallenge` | This MUST match the `signatureChallenge` in the preceding [`issuance`](#issuance-message) message. | ✔ |
+| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the [holder](#roles) on the `signatureChallenge`. | ✔ |
 
 #### Examples
 
-1. Acknowledging the receival of a credential including proof:
+1. Acknowledge receipt of the credential:
+
+```json
+{}
+```
+
+2. Acknowledge receipt of the credential including a signature:
 
 ```json
 {
- TBD
+  "signature": {
+    "signatureChallenge": {
+      "challenge": "6ff5f616-2f9c-4e47-b9d2-5553deeac01d",
+      "credentialHash": "21DtABsnYNb7oGEY8aybb9Bghq6NJJWvrQgtC2SBdhgQ8v6cZGjnT8RmEmBLZfHyfEYMAik3D1EoNQZCaT4RUKEX",
+    },
+    "proof": {...}
+  }
 }
 ```
 
@@ -313,7 +398,9 @@ TBD
 
 ## Related Work
 
-TBD
+- Aries Hyperledger: 
+  - https://github.com/hyperledger/aries-rfcs/blob/08653f21a489bf4717b54e4d7fd2d0bdfe6b4d1a/features/0036-issue-credential/README.md
+  - https://github.com/hyperledger/aries-rfcs/blob/08653f21a489bf4717b54e4d7fd2d0bdfe6b4d1a/features/0453-issue-credential-v2/README.md
 
 ## Further Reading
 
