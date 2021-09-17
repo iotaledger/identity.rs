@@ -23,8 +23,8 @@ This protocol may use the [presentation](./presentation.md) and [signing](./sign
 - An insurer issues proof that a company has liability issurance.
 
 ### Roles
-- [Holder](https://www.w3.org/TR/vc-data-model/#dfn-holders): stores one or more verifiable credentials. A holder is usually but not always the subject of those credentials.
-- [Issuer](https://www.w3.org/TR/vc-data-model/#dfn-issuers): creates verifiable credentials asserting claims about one or more subjects, transmitted to a holder.
+- [Holder](https://www.w3.org/TR/vc-data-model/#dfn-holders): stores one or more verifiable credentials. A holder is usually but not always the [subject](https://www.w3.org/TR/vc-data-model/#credential-subject-0) of those credentials.
+- [Issuer](https://www.w3.org/TR/vc-data-model/#dfn-issuers): creates verifiable credentials asserting claims about one or more [subjects](https://www.w3.org/TR/vc-data-model/#credential-subject-0), transmitted to a holder.
 
 ### Interaction
 
@@ -103,17 +103,17 @@ The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles
     "challenge": string,            // REQUIRED
     "credentialHash": string,       // REQUIRED
   }, // OPTIONAL
-  "expiry": ISODateTime             // OPTIONAL
+  "expiry": DateTime                // OPTIONAL
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | [`unsignedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | Unsigned [verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) being offered to the[holder](#roles). | ✔ |
-| `signatureChallenge` | If present, indicates the [issuer](#issuer) requires the acceptance of the credential to be signed by the [holder](#holder) for non-repudiation. | ✖ |
+| `signatureChallenge` | If present, indicates the [issuer](#issuer) requires the acceptance of the credential to be signed by the [holder](#holder) in the following [issuance-response](#issuance-response) for non-repudiation. | ✖ |
 | `challenge` |  A random string that should be unique per [issuance-offer](#issuance-offer). | ✔ |
 | `credentialHash` | The SHA-256? (TODO link) hash of the `unsignedCredential`. | ✔ |
-| `expiry` | Allows the [issuer](#issuer) to specify until when he will uphold the the offer. | ✖ |
+| `expiry` | A string formatted as an [XML DateTime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision. If present, indicates that the [issuer](#roles) will rescind the offer and abandon the protcol if an affirmative [issuance-response](#issuance-response) is not received before the specified datetime. E.g: `"2021-12-30T19:17:47Z"`. | ✖ |
 
 #### Examples
 
@@ -135,17 +135,25 @@ TBD
 #### Structure
 ```json
 {
-  "accept": bool,         // REQUIRED
-  "disputes": [Dispute],  // OPTIONAL
-  "signature": Signature, // OPTIONAL
+  "accepted": bool,             // REQUIRED
+  "disputes": [Dispute],        // OPTIONAL
+  "signature": {
+    "signatureChallenge": {
+      "challenge": string,      // REQUIRED
+      "credentialHash": string, // REQUIRED
+    }, // REQUIRED
+    "proof": Proof,             // REQUIRED
+  } // OPTIONAL
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `accept` | Indicates if the [holder](#roles) accepts the offered credential from [`issuance-offer`](#issuance-offer). | ✔ |
-| `disputes` | Allows the [holder](#roles) to dispute the credential. MAY only be present if the field `accept` is `false`. | ✖ |
-| `signature` | Allows the [issuer](#roles) to proof that a credentail was accepted by the [holder](#roles). SHOULD be set if the [issuer](#roles) requested the signature by setting `requestSignature` in the [`issuance-offer`](#issuance-offer). | ✖ |
+| `accepted` | Indicates if the [holder](#roles) accepts the offered credential from [`issuance-offer`](#issuance-offer). MUST be `false` if any `disputes` are present. | ✔ |
+| [`disputes`](https://www.w3.org/TR/vc-data-model/#disputes) | Allows the [holder](#roles) to [`dispute`](https://www.w3.org/TR/vc-data-model/#disputes) one or more claims in the credential. | ✖ |
+| `signature` | Allows the [issuer](#roles) to prove that a credential was accepted by the [holder](#roles). SHOULD be present if a `signatureChallenge` was included in the preceding [`issuance-offer`](#issuance-offer). | ✖ |
+| `signatureChallenge` | MUST match the `signatureChallenge` in the preceding [`issuance-offer`](#issuance-offer). | ✔ |
+| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the [holder](#roles) on the `signatureChallenge`. | ✔ |
 
 #### Examples
 
@@ -167,15 +175,22 @@ TBD
 #### Structure
 ```json
 {
-  "signedCredential": Credential, // REQUIRED
-  "signatureChallenge": string,   // OPTIONAL
+  "signedCredential": Credential,   // REQUIRED
+  "signatureChallenge": {
+    "challenge": string,            // REQUIRED
+    "credentialHash": string,       // REQUIRED
+  }, // OPTIONAL
+  "expiry": DateTime
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `signedCredential` | TBD | ✔ |
-| `signatureChallenge` | TBD | ✖ |
+| [`signedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | [Verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) signed by the [issuer](#roles). | ✔ |
+| `signatureChallenge` | If present, indicates the [issuer](#issuer) requires the receival of the credential to be signed for non-repudiation. | ✖ |
+| `challenge` |  A random string that should be unique per [issuance](#issuance). | ✔ |
+| `credentialHash` | The SHA-256? (TODO link) hash of the `signedCredential`. | ✔ |
+| `expiry` | A string formatted as an [XML Datetime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision. E.g: `"2021-12-30T19:17:47Z"`. | ✖ |
 
 #### Examples
 
@@ -197,8 +212,8 @@ TBD
 #### Structure
 ```json
 {
-  "signature": string,          // OPTIONAL
   "signatureChallenge": string, // OPTIONAL
+  "signature": Proof,           // OPTIONAL
 }
 ```
 
