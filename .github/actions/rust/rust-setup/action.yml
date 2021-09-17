@@ -1,0 +1,72 @@
+name: 'rust-setup'
+description: 'Prepares a rust environment and relevant caches.'
+inputs:
+  sccache-path:
+    description: 'Path of the sccache.'
+    required: true
+  os:
+    description: 'OS of the runner, used for cache key construction.'
+    required: true
+  job:
+    description: 'Name of the job, used for cache key construction.'
+    required: true
+  current-date:
+    description: 'Current date, used for cache key construction.'
+    required: true
+  target-cache-path:
+    description: 'Path of the target cache.'
+    required: false
+    default: target
+runs:
+  using: "composite"
+  steps:
+    - name: Install stable toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Cache cargo
+      uses: actions/cache@v2.1.4
+      with:
+        # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        # Add date to the cache to keep it up to date
+        key: ${{ inputs.os }}-cargo-${{ inputs.job }}-${{ hashFiles('**/Cargo.toml') }}-${{ inputs.current-date }}
+        # Restore from outdated cache for speed
+        restore-keys: |
+          ${{ inputs.os }}-cargo-${{ inputs.job }}-${{ hashFiles('**/Cargo.toml') }}-
+          ${{ inputs.os }}-cargo-${{ inputs.job }}-
+          ${{ inputs.os }}-cargo-
+
+    # Generate Cargo.lock files for build, sccache cache keys.
+    # Allows dependencies updated on crates.io between runs to trigger storing an updated cache,
+    # which hashing Cargo.toml files alone does not.
+    - name: Cargo update
+      uses: actions-rs/cargo@v1
+      with:
+        command: update
+
+    - name: Cache build target
+      uses: actions/cache@v2.1.4
+      with:
+        path: ${{ inputs.target-cache-path }}
+        # Add date to the cache to keep it up to date
+        key: ${{ inputs.os }}-target-${{ inputs.job }}-${{ hashFiles('**/Cargo.lock') }}
+        # Restore from outdated cache for speed
+        restore-keys: |
+          ${{ inputs.os }}-target-${{ inputs.job }}-
+          ${{ inputs.os }}-target-
+
+    - name: Cache sccache
+      uses: actions/cache@v2.1.6
+      with:
+          path: ${{ inputs.sccache-path }}
+          key: ${{ inputs.os }}-sccache-${{ inputs.job }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ inputs.os }}-sccache-${{ inputs.job }}-
+            ${{ inputs.os }}-sccache-
