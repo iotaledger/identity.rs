@@ -19,14 +19,14 @@ TBD
 TBD
 
 ### Roles
-- [Trusted Party](TBD): TBD.
-- [Revoker](TBD): TBD.
+- Trusted-Party: trusted by the issuer to generate unsigned credentials asserting claims about one or more subjects.
+- [Issuer](https://www.w3.org/TR/vc-data-model/#dfn-issuers): signer of the verifiable credential.
 
 ### Interaction
 
 <div style={{textAlign: 'center'}}>
 
-![PresentationDiagram](/img/didcomm/presentation.drawio.svg)
+![RevocationDiagram](/img/didcomm/revocation.drawio.svg)
 
 </div>
 
@@ -37,6 +37,34 @@ TBD
 
 - Type: `didcomm:iota/revocation/0.1/revocation-request`
 - Role: [trusted-party](#roles)
+
+TBD
+
+#### Structure
+```json
+{
+  TBD
+}
+```
+
+| Field | Description | Required |
+| :--- | :--- | :--- |
+| `TBD` | TBD | ✔ |
+
+#### Examples
+
+1. TBD:
+
+```json
+{
+  TBD
+}
+```
+
+### 2. revocation-response {#revocation-response}
+
+- Type: `didcomm:iota/revocation/0.1/revocation-response`
+- Role: [issuer](#roles)
 
 TBD
 
@@ -73,9 +101,7 @@ This section is non-normative.
 TBD
 
 ## Unresolved Questions
-
-TBD
-
+non-repudiation: should the trusted party be able to prove that the revoker claimed to have revoked the credential by making him include a signature in the `revocation-response`
 ## Related Work
 
 TBD
