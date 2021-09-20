@@ -20,6 +20,10 @@ NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
 | [Problem Reports](./resources/problem-reports.md) | Definitions of expected problem reports and guidance on global handling |
 | [Credential Types](./resources/credential-types.md) | Guidance on how to identify a specific type of verifiable credential |
 
+## Versioning
+
+
+
 ## Protocols
 
 | Name | Version | Description | Messages |
@@ -27,6 +31,7 @@ NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
 | [presentation](./protocols/presentation.md) | 0.1 | Allows presentation of verifiable credentials that are issued to a holder and uniquely presented to a third-party verifier. | *presentation-offer*, *presentation-request*, *presentation*, *presentation-result* |
 | [signing](./protocols/signing.md) | 0.1 | Allows a trusted-party to request the signing of an unsigned verifiable credential by an issuer. | *signing-request*, *signing-response*, *signing-acknowledgement* |
 | [issuance](./protocols/issuance.md) | 0.1 | Allows the exchange of a verfiable credential between an issuer and a holder. | *issuance-request*, *issuance-offer*, *issuance-response*, *issuance*, *issuance-acknowledgment* |
+| [revocation](./protocols/revocation.md) | 0.1 | TBD | *revocation-request*, *revocation-acknowledgment* |
 
 ## Changelog
 
