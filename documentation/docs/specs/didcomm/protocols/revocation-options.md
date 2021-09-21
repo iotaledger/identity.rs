@@ -13,7 +13,8 @@ sidebar_label: Revocation Options
 Allows negotiation of available modes revocation.
 
 ### Relationships
-This protocol is used to negotiate the `revocationType` options available to a [trusted-party](#roles) for a [revocation request message](./revocation#revocation-request) in the [revocation](./revocation) protocol.
+
+- [revocation](./revocation): this protocol is used to discover the `revocationType` options available to a [trusted-party](#roles) for use in a [revocation request message](./revocation#revocation-request) in the [revocation](./revocation) protocol.
 
 ### Example Use-Cases
 TBD
@@ -25,7 +26,7 @@ TBD
 
 <div style={{textAlign: 'center'}}>
 
-![RevocationDiagram](/img/didcomm/revocation.drawio.svg)
+![RevocationOptionsDiagram](/img/didcomm/revocation-options.drawio.svg)
 
 </div>
 
