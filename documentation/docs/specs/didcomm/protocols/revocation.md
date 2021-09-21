@@ -39,7 +39,7 @@ This protocol may rely on a `revocationType` negotiated in the [revocation-optio
 - Type: `didcomm:iota/revocation/0.1/revocation-request`
 - Role: [trusted-party](#roles)
 
-TBD
+Send by the trusted-party or holder to request revocation of a credential. This message conveys which credential should be revoced and which method should be used. The message may also include a signature so the revoker has proof the request as issued. 
 
 #### Structure
 ```json
@@ -71,7 +71,7 @@ TBD
 - Type: `didcomm:iota/revocation/0.1/revocation-response`
 - Role: [revoker](#roles)
 
-TBD
+Send by the revoker as soon as the credentials is revoked.
 
 #### Structure
 ```json
@@ -83,6 +83,8 @@ TBD
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | `TBD` | TBD | ✔ |
+
+The trusted party may check if the crednetial is actually revoked after this message is received.
 
 #### Examples
 
@@ -107,10 +109,12 @@ TBD
 
 This section is non-normative.
 
-TBD
+The revoker needs to check if the credential may actually be revoked and if the trusted party actually has the authority to request the revocation.
 
 ## Unresolved Questions
 non-repudiation: should the trusted party be able to prove that the revoker claimed to have revoked the credential by making him include a signature in the `revocation-response`
+
+Should this protocol optionally embed the presentation protocl to present relevant information?
 ## Related Work
 
 TBD
