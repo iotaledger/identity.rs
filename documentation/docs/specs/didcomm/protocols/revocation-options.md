@@ -10,10 +10,10 @@ sidebar_label: Revocation Options
 - Last Updated: 2021-09-21
 
 ## Overview
-TBD
+Allows negotiation of available modes revocation.
 
 ### Relationships
-[revocation](./revocation): this protocol is used to negotiate the `revocationType` options available to a [trusted-party](#roles) for a [revocation request message](./revocation#revocation-request).
+This protocol is used to negotiate the `revocationType` options available to a [trusted-party](#roles) for a [revocation request message](./revocation#revocation-request) in the [revocation](./revocation) protocol.
 
 ### Example Use-Cases
 TBD

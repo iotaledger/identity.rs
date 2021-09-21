@@ -13,6 +13,7 @@ sidebar_label: Revocation
 Allows to request revocation of an issued credential, either by the holder or a trusted-party. If the revoker is unable to revoke the credential themselves, they may delegate the revocation to a different issuer, in which case they take on the role of trusted-party in their request.
 
 ### Relationships
+This protocol may rely on a `revocationType` negotiated in the [revocation-options](./revocation-options) protocol.
 <!-- [revocation-options](./revocation-o) protocol. -->
 
 ### Example Use-Cases
@@ -51,9 +52,8 @@ TBD
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `type` | TBD | ✔ |
-| `revocationInfo` | TBD | ✔ |
-| `key` | The [DID URL](https://www.w3.org/TR/did-core/#did-url-syntax) of the key used to sign the credential to be revoked. | ✔ |
+| `revocationType` | TBD | ✔ |
+| `revocationInfo` | TBD [RevocationInfo](#RevocationInfo) | ✔ |
 | `signature` | TBD | ✖ |
 
 #### Examples
@@ -69,7 +69,7 @@ TBD
 ### 2. revocation-response {#revocation-response}
 
 - Type: `didcomm:iota/revocation/0.1/revocation-response`
-- Role: [issuer](#roles)
+- Role: [revoker](#roles)
 
 TBD
 
@@ -94,7 +94,7 @@ TBD
 }
 ```
 
-### RevocationInfo
+### RevocationInfo {#RevocationInfo}
 
 The `RevocationInfo` object contains the information necessary for a [revoker](#roles) to revoke a verifiable credential. For instance, this may include the `id` field of the credential, in which case a [revoker](#roles) must maintain a map to the signing key used for each credential to revoke them. It could also be the identifier for the signing key itself on the DID document of the issuer. Implementors are free to construct their own `RevocationInfo` types as different singing keys may require different information for revocation. For example, revoking a `MerkleKeyCollection2021` requires both the key identifier and its index in the collection.
 
