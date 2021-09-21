@@ -99,7 +99,7 @@ async fn test_create_identity_network() -> Result<()> {
   let account: Account = new_account().await?;
 
   // Create an identity with a valid network string
-  let create_identity: IdentityCreate = IdentityCreate::new().network("test").key_type(KeyType::Ed25519);
+  let create_identity: IdentityCreate = IdentityCreate::new().network("dev").key_type(KeyType::Ed25519);
   let snapshot: IdentitySnapshot = account.create_identity(create_identity).await?;
 
   // Ensure the identity creation was successful

@@ -1603,7 +1603,7 @@ Deserializes a `KeyPair` object from a JSON object.
     * _static_
         * [.try_from_name(name)](#Network.try_from_name) ⇒ [<code>Network</code>](#Network)
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
-        * [.testnet()](#Network.testnet) ⇒ [<code>Network</code>](#Network)
+        * [.devnet()](#Network.devnet) ⇒ [<code>Network</code>](#Network)
 
 <a name="Network+defaultNodeURL"></a>
 
@@ -1647,9 +1647,9 @@ Parses the provided string to a [`WasmNetwork`].
 
 ### Network.mainnet() ⇒ [<code>Network</code>](#Network)
 **Kind**: static method of [<code>Network</code>](#Network)  
-<a name="Network.testnet"></a>
+<a name="Network.devnet"></a>
 
-### Network.testnet() ⇒ [<code>Network</code>](#Network)
+### Network.devnet() ⇒ [<code>Network</code>](#Network)
 **Kind**: static method of [<code>Network</code>](#Network)  
 <a name="NewDocument"></a>
 

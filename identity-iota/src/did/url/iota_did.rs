@@ -180,7 +180,7 @@ impl IotaDID {
     }
   }
 
-  /// Checks if the given `DID` has a valid [`IotaDID`] network name, e.g. "main", "test".
+  /// Checks if the given `DID` has a valid [`IotaDID`] network name, e.g. "main", "dev".
   ///
   /// # Errors
   ///
@@ -370,10 +370,10 @@ mod tests {
     assert!(IotaDID::parse(format!("did:iota:main:{}?somequery=somevalue", TAG)).is_ok());
     assert!(IotaDID::parse(format!("did:iota:main:{}?somequery=somevalue#fragment", TAG)).is_ok());
 
-    assert!(IotaDID::parse(format!("did:iota:test:{}", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:test:{}#fragment", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:test:{}?somequery=somevalue", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:test:{}?somequery=somevalue#fragment", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:dev:{}", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:dev:{}#fragment", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:dev:{}?somequery=somevalue", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:dev:{}?somequery=somevalue#fragment", TAG)).is_ok());
 
     assert!(IotaDID::parse(format!("did:iota:custom:{}", TAG)).is_ok());
     assert!(IotaDID::parse(format!("did:iota:custom:{}#fragment", TAG)).is_ok());
@@ -422,11 +422,14 @@ mod tests {
   fn test_network() {
     let key: String = IotaDID::encode_key(b"123");
 
-    let did: IotaDID = format!("did:iota:test:{}", key).parse().unwrap();
-    assert_eq!(did.network_str(), "test");
-
     let did: IotaDID = format!("did:iota:{}", key).parse().unwrap();
     assert_eq!(did.network_str(), "main");
+
+    let did: IotaDID = format!("did:iota:dev:{}", key).parse().unwrap();
+    assert_eq!(did.network_str(), "dev");
+
+    let did: IotaDID = format!("did:iota:test:{}", key).parse().unwrap();
+    assert_eq!(did.network_str(), "test");
 
     let did: IotaDID = format!("did:iota:custom:{}", key).parse().unwrap();
     assert_eq!(did.network_str(), "custom");
