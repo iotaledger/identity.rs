@@ -7,20 +7,21 @@ sidebar_label: Revocation
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-09-20
+- Last Updated: 2021-09-21
 
 ## Overview
-TBD
+Allows to request revocation of an issued credential, either by the holder or a trusted-party. If the revoker is unable to revoke the credential themselves, they may delegate the revocation to a different issuer, in which case they take on the role of trusted-party in their request.
 
 ### Relationships
-TBD
+<!-- [revocation-options](./revocation-o) protocol. -->
 
 ### Example Use-Cases
-TBD
+- A member of an organisation asks the organisation to revoke their membership
+- A subsidiary of a company asks central to revoke a credential concerning one of their customers. 
 
 ### Roles
-- Trusted-Party: trusted by the issuer to generate unsigned credentials asserting claims about one or more subjects.
-- [Issuer](https://www.w3.org/TR/vc-data-model/#dfn-issuers): signer of the verifiable credential.
+- Trusted-Party: has the authority to request the revocation of verifiable credentials. May also be the holder of the credential but not necessarily.
+- Revoker: able to revoke the key used to sign a verifiable credential. May also be the [issuer](https://www.w3.org/TR/vc-data-model/#dfn-issuers) of the credential but not necessarily.
 
 ### Interaction
 
@@ -32,7 +33,6 @@ TBD
 
 
 ## Messages
-
 ### 1. revocation-request {#revocation-request}
 
 - Type: `didcomm:iota/revocation/0.1/revocation-request`
@@ -43,13 +43,18 @@ TBD
 #### Structure
 ```json
 {
-  TBD
+  "revocationType": string,         // REQUIRED
+  "revocationInfo": RevocationInfo, // REQUIRED
+  "signature": Proof,               // OPTIONAL
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `TBD` | TBD | ✔ |
+| `type` | TBD | ✔ |
+| `revocationInfo` | TBD | ✔ |
+| `key` | The [DID URL](https://www.w3.org/TR/did-core/#did-url-syntax) of the key used to sign the credential to be revoked. | ✔ |
+| `signature` | TBD | ✖ |
 
 #### Examples
 
@@ -88,6 +93,10 @@ TBD
   TBD
 }
 ```
+
+### RevocationInfo
+
+The `RevocationInfo` object contains the information necessary for a [revoker](#roles) to revoke a verifiable credential. For instance, this may include the `id` field of the credential, in which case a [revoker](#roles) must maintain a map to the signing key used for each credential to revoke them. It could also be the identifier for the signing key itself on the DID document of the issuer. Implementors are free to construct their own `RevocationInfo` types as different singing keys may require different information for revocation. For example, revoking a `MerkleKeyCollection2021` requires both the key identifier and its index in the collection.
 
 ### Problem Reports
 
