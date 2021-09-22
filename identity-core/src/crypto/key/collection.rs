@@ -24,6 +24,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::utils::generate_ed25519_keypairs;
 
+/// Sets an upper limit to the amount of keys that can be created
 const MAX_KEYS_ALLOWED: usize = 2048;
 
 /// A collection of cryptographic keys.
@@ -59,11 +60,13 @@ impl KeyCollection {
   }
 
   /// Creates a new [`KeyCollection`] with [`Ed25519`][`KeyType::Ed25519`] keys.
+  /// If count is not a power of two, it will be round up to the next one
   pub fn new_ed25519(count: usize) -> Result<Self> {
     Self::new(KeyType::Ed25519, count)
   }
 
   /// Creates a new [`KeyCollection`] with the given [`key type`][`KeyType`].
+  /// If count is not a power of two, it will be round up to the next one
   pub fn new(type_: KeyType, count: usize) -> Result<Self> {
     let count_next_power = count.checked_next_power_of_two().unwrap_or(0);
     if count_next_power == 0 || count_next_power > MAX_KEYS_ALLOWED {
