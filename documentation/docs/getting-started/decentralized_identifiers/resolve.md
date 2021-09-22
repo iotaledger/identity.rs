@@ -8,11 +8,11 @@ keywords:
 - DID
 ---
 
-In the previous section we created a decentralized identity and published the associated DID Document to the Tangle; in this section we'll show you how to look up a DID document.
+The previous section showed how to create a decentralized identity and publish the associated DID Document to the Tangle; this section explores resolving a published DID document.
 
 :::info Definition
 
-_DID resolution_ is the process of obtaining a DID document for a given DID.
+_DID resolution_ is the process of obtaining the latest version of a DID document for a given DID.
 
 :::
 
@@ -37,6 +37,10 @@ In simplified terms, resolution works by querying the Tangle for DID Document me
 Normal nodes in the IOTA network do not store a full history of the Tangle, which means that at some point DID messages will be dropped. The solution is to use an IOTA permanode ([Chronicle](https://github.com/iotaledger/chronicle.rs)) which stores the entire history of the Tangle. For more information see the section on [Valid DID Documents](../advanced/did_messages#valid-did-documents).
 
 :::
+
+### Resolving an Identity using the Identity Resolver tool
+
+The [Identity Resolver](https://explorer.iota.org/mainnet/identity-resolver/) is a web-based tool for resolving Decentralized Identifiers (DIDs) into their associated DID Document. This tool can be used during the development of a DID application to easily browse and verify the correctness of documents being published to the Tangle. It supports both the mainnet and devnet.
 
 ### Dereferencing resources associated with a DID Document
 
