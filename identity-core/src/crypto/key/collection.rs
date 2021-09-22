@@ -74,7 +74,7 @@ impl KeyCollection {
     }
 
     let keys: Vec<(PublicKey, SecretKey)> = match type_ {
-      KeyType::Ed25519 => generate_ed25519_keypairs(count)?,
+      KeyType::Ed25519 => generate_ed25519_keypairs(count_next_power)?,
     };
 
     Self::from_iterator(type_, keys.into_iter())
@@ -215,7 +215,7 @@ mod tests {
   fn test_ed25519() {
     let keys: KeyCollection = KeyCollection::new_ed25519(100).unwrap();
 
-    assert_eq!(keys.len(), 100);
+    assert_eq!(keys.len(), 128);
     assert!(!keys.is_empty());
 
     let public: Vec<_> = keys.iter_public().cloned().collect();
