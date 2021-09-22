@@ -9,9 +9,9 @@ keywords:
 - person
 ---
 
-Credentials are statements about an entity, such as properties that the entity posseses or capabilities that they have (like drivers licences, passports, or a person's age). Verifiable Credentials (VCs) are statements about the holder of the credential that can be cryptographically verified by a third party, either online or in person. Additionally, the holder decides what is shared and who it is shared.
+Credentials are statements about an entity, such as properties that the entity posseses or capabilities that they have (like drivers licences, passports, or a person's age). Verifiable Credentials (VCs) are statements (eg. Alice has a drivers licence) that can be cryptographically verified by a third party, either online or in person. Additionally, the holder of the VC decides what is shared and who it is shared with.
 
-There are several types of actors that play different roles in a verifiable credential system. We'll start with a common example from the world today and outline the roles that various entities play.
+There are several types of actors that play different roles in a verifiable credential system. We'll start with a common example of how things work in the world today using physical credentials and centralized databases, and outline the roles that various entities play in the Verifiable Credential system.
 
 :::tip Example - Passport Issuance
 
@@ -39,8 +39,8 @@ In the IOTA Identity framework, instead of a physical passport being given to Al
 
 At a high level, the creation and verification of a VC on IOTA works as follows:
 
-The first step is to create a verifiable credential which requires the subject (Alice) and issuer (the government) to have DIDs published to the tangle, and a set of statements being asserted (that Alice has a passport). The issuer then publishes a credential to the Tangle which contains the `credentialSubject` (Alice's DID in our example), the set of statements, and a proof that can be used to assert the authenticity of the credentials by verifiers.
+The first step is to create a verifiable credential which requires the subject (Alice) and issuer (the government) to have DIDs published to the Tangle, and a set of statements being asserted (that Alice has a passport). The issuer signs the credential with their private key and publishes the public key to the Tangle. In the future, a proof can be used to assert the authenticity of the credentials by verifiers using the issuer's public key.
 
-After the credential is published to the tangle, validation is performed by looking up the credential on the tangle, the holder proving ownership of their DID to the verifier (evidence), and validating that the credential has indeed been signed by the issuing party.
+After the credential is published to the tangle, Validation is performed by looking up the issuer's key on the Tangle, the holder proving ownership of their DID to the verifier (evidence), and validating that the credential has indeed been signed by the issuing party.
 
 The remaining chapters in this section explore creation, verification, and revocation of VCs in more detail.
