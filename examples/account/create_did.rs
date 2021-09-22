@@ -12,23 +12,20 @@ use identity::account::IdentitySnapshot;
 use identity::account::Result;
 use identity::iota::IotaDID;
 
-#[tokio::main]
-async fn main() -> Result<()> {
-  pretty_env_logger::init();
-
+pub async fn create_identity() -> Result<(Account, IotaDID)> {
   // Sets the location and password for the Stronghold
   //
   // Stronghold is an encrypted file that manages private keys.
   // It implements all security recommendation and is the recommended way of handling private keys.
-  let snapshot: PathBuf = "./example-strong.hodl".into();
+  let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
 
   // Create a new Account with the default configuration
   let account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(snapshot, Some(password)))
+    .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
     .build()
     .await?;
-
+  
   // Create a new Identity with default settings
   //
   // This step generates a keypair, creates an identity and publishes it too the IOTA mainnet.
@@ -37,8 +34,21 @@ async fn main() -> Result<()> {
   // Retrieve the DID from the newly created Identity state.
   let did: &IotaDID = snapshot.identity().try_did()?;
 
+  Ok((account, did.clone()))
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+  pretty_env_logger::init();
+
+  //Calls the create_identity function 
+  let (account, iota_did): (Account, IotaDID) = create_identity().await?;
+
+  // Retrieve the DID from the newly created Identity state.
+  let snapshot: IdentitySnapshot = account.find_identity(iota_did.clone()).await?.unwrap();
+
   // Print the local state of the DID Document
-  println!("[Example] Local Document from {} = {:#?}", did, snapshot.identity().to_document()?);
-  println!("[Example] Explore the DID Document = {}", format!("{}/{}",did.network()?.explorer_url().unwrap().to_string(), did));
+  println!("[Example] Local Document from {} = {:#?}", iota_did.clone(), snapshot.identity().to_document());
+  println!("[Example] Explore the DID Document = {}", format!("{}/{}", iota_did.clone().network()?.explorer_url().unwrap().to_string(), iota_did.to_string()));
   Ok(())
 }
