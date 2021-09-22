@@ -24,6 +24,8 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::utils::generate_ed25519_keypairs;
 
+const MAX_KEYS_ALLOWED: usize = 2048;
+
 /// A collection of cryptographic keys.
 #[derive(Clone, Debug)]
 pub struct KeyCollection {
@@ -63,6 +65,11 @@ impl KeyCollection {
 
   /// Creates a new [`KeyCollection`] with the given [`key type`][`KeyType`].
   pub fn new(type_: KeyType, count: usize) -> Result<Self> {
+    let count_next_power = count.checked_next_power_of_two().unwrap_or(0);
+    if count_next_power == 0 || count_next_power > MAX_KEYS_ALLOWED {
+      return Err(Error::InvalidKeyCollectionSize(count_next_power));
+    }
+
     let keys: Vec<(PublicKey, SecretKey)> = match type_ {
       KeyType::Ed25519 => generate_ed25519_keypairs(count)?,
     };
