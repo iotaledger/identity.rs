@@ -4,7 +4,7 @@
 // use core::slice;
 // use identity_core::crypto::KeyPair;
 // use identity_core::crypto::PublicKey;
-// use identity_core::crypto::SecretKey;
+// use identity_core::crypto::PrivateKey;
 // use libjose::utils::ed25519_to_x25519_public;
 // use libjose::utils::ed25519_to_x25519_secret;
 
@@ -72,7 +72,7 @@
 //   assert_eq!(format!("{:?}", response), format!("{:?}", did_response));
 // }
 
-// fn ed25519_to_x25519(keypair: KeyPair) -> Result<(PublicKey, SecretKey)> {
+// fn ed25519_to_x25519(keypair: KeyPair) -> Result<(PublicKey, PrivateKey)> {
 //   Ok((
 //     ed25519_to_x25519_public(keypair.public())?.to_vec().into(),
 //     ed25519_to_x25519_secret(keypair.secret())?.to_vec().into(),

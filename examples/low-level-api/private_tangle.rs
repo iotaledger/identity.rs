@@ -39,7 +39,7 @@ pub async fn main() -> Result<()> {
   let mut document: IotaDocument = IotaDocument::from_keypair_with_network(&keypair, network_name)?;
 
   // Sign the DID Document with the default authentication key.
-  document.sign(keypair.secret())?;
+  document.sign(keypair.private())?;
 
   println!("DID Document JSON > {:#}", document);
 

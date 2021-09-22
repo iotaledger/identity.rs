@@ -91,8 +91,8 @@ pub enum Error {
   /// Caused by attempting to perform an upate in an invalid context.
   #[error("Update Error: {0}")]
   UpdateError(#[from] crate::events::UpdateError),
-  #[error("Invalid Secret Key: {0}")]
-  InvalidSecretKey(String),
+  #[error("Invalid Private Key: {0}")]
+  InvalidPrivateKey(String),
 }
 
 #[doc(hidden)]

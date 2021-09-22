@@ -8,8 +8,8 @@ use identity::crypto::merkle_key::MerkleDigestTag;
 use identity::crypto::merkle_key::MerkleKey;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
+use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
-use identity::crypto::SecretKey;
 use identity::did::verifiable;
 use identity::did::MethodScope;
 use identity::iota::Error;
@@ -209,7 +209,7 @@ impl WasmDocument {
   /// Signs the DID Document with the default authentication method.
   #[wasm_bindgen]
   pub fn sign(&mut self, key: &KeyPair) -> Result<()> {
-    self.0.sign(key.0.secret()).wasm_result()
+    self.0.sign(key.0.private()).wasm_result()
   }
 
   /// Verify the signature with the authentication_key
@@ -247,12 +247,12 @@ impl WasmDocument {
       MerkleKey {
         method: String,
         public: String,
-        secret: String,
+        private: String,
         proof: String,
       },
       Default {
         method: String,
-        secret: String,
+        private: String,
       },
     }
 
@@ -263,7 +263,7 @@ impl WasmDocument {
       Args::MerkleKey {
         method,
         public,
-        secret,
+        private,
         proof,
       } => {
         let merkle_key: Vec<u8> = self
@@ -273,12 +273,12 @@ impl WasmDocument {
           .wasm_result()?;
 
         let public: PublicKey = decode_b58(&public).map(Into::into).wasm_result()?;
-        let secret: SecretKey = decode_b58(&secret).map(Into::into).wasm_result()?;
+        let private: PrivateKey = decode_b58(&private).map(Into::into).wasm_result()?;
 
         let digest: MerkleDigestTag = MerkleKey::extract_tags(&merkle_key).wasm_result()?.1;
         let proof: Vec<u8> = decode_b58(&proof).wasm_result()?;
 
-        let signer: _ = self.0.signer(&secret).method(&method);
+        let signer: _ = self.0.signer(&private).method(&method);
 
         match digest {
           MerkleDigestTag::SHA256 => match Proof::<Sha256>::decode(&proof) {
@@ -288,10 +288,10 @@ impl WasmDocument {
           _ => return Err("Invalid Merkle Key Digest".into()),
         }
       }
-      Args::Default { method, secret } => {
-        let secret: SecretKey = decode_b58(&secret).wasm_result().map(Into::into)?;
+      Args::Default { method, private } => {
+        let private: PrivateKey = decode_b58(&private).wasm_result().map(Into::into)?;
 
-        self.0.signer(&secret).method(&method).sign(&mut data).wasm_result()?;
+        self.0.signer(&private).method(&method).sign(&mut data).wasm_result()?;
       }
     }
 
@@ -332,7 +332,7 @@ impl WasmDocument {
   pub fn diff(&self, other: &WasmDocument, message: &str, key: &KeyPair) -> Result<WasmDocumentDiff> {
     self
       .0
-      .diff(&other.0, MessageId::from_str(message).wasm_result()?, key.0.secret())
+      .diff(&other.0, MessageId::from_str(message).wasm_result()?, key.0.private())
       .map(WasmDocumentDiff::from)
       .wasm_result()
   }

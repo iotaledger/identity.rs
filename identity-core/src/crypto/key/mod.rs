@@ -11,7 +11,7 @@ mod type_;
 
 pub use self::collection::KeyCollection;
 pub use self::key::PublicKey;
-pub use self::key::SecretKey;
+pub use self::key::PrivateKey;
 pub use self::pair::KeyPair;
 pub use self::reference::KeyRef;
 pub use self::type_::KeyType;

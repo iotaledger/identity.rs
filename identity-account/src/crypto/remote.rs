@@ -42,10 +42,10 @@ impl<'a, T> Sign for RemoteSign<'a, T>
 where
   T: Storage,
 {
-  type Secret = RemoteKey<'a, T>;
+  type Private = RemoteKey<'a, T>;
   type Output = Vec<u8>;
 
-  fn sign(message: &[u8], key: &Self::Secret) -> Result<Self::Output> {
+  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output> {
     let future: _ = key.store.key_sign(key.id, key.location, message.to_vec());
 
     executor::block_on(future)

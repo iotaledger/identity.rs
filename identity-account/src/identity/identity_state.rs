@@ -327,8 +327,8 @@ impl IdentityState {
     T: Storage,
     U: Serialize + SetSignature,
   {
-    // Create a secret key suitable for identity_core::crypto
-    let secret: RemoteKey<'_, T> = RemoteKey::new(self.id, location, store);
+    // Create a private key suitable for identity_core::crypto
+    let private: RemoteKey<'_, T> = RemoteKey::new(self.id, location, store);
 
     // Create the Verification Method identifier
     let fragment: &str = location.fragment.identifier();
@@ -336,7 +336,7 @@ impl IdentityState {
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        RemoteEd25519::create_signature(target, method.as_str(), &secret)?;
+        RemoteEd25519::create_signature(target, method.as_str(), &private)?;
       }
       MethodType::MerkleKeyCollection2021 => {
         todo!("Handle MerkleKeyCollection2021")

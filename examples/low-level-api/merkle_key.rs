@@ -13,8 +13,8 @@ use identity::credential::Credential;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection;
+use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
-use identity::crypto::SecretKey;
 use identity::did::MethodScope;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
   // Add to the DID Document as a general-purpose verification method
   issuer_doc.insert_method(MethodScope::VerificationMethod, method);
   issuer_doc.set_previous_message_id(*issuer_receipt.message_id());
-  issuer_doc.sign(issuer_key.secret())?;
+  issuer_doc.sign(issuer_key.private())?;
 
   // Publish the Identity to the IOTA Network and log the results.
   // This may take a few seconds to complete proof-of-work.
@@ -60,14 +60,14 @@ async fn main() -> Result<()> {
   let index: usize = OsRng.gen_range(0..keys.len());
 
   let public: &PublicKey = keys.public(index).unwrap();
-  let secret: &SecretKey = keys.secret(index).unwrap();
+  let private: &PrivateKey = keys.private(index).unwrap();
 
   // Generate an inclusion proof for the selected key
   let proof: Proof<Sha256> = keys.merkle_proof(index).unwrap();
 
-  // Sign the Credential with the issuers secret key
+  // Sign the Credential with the issuers private key
   issuer_doc
-    .signer(secret)
+    .signer(private)
     .method("merkle-key")
     .merkle_key((public, &proof))
     .sign(&mut credential)?;
@@ -89,7 +89,7 @@ async fn main() -> Result<()> {
     .and_then(IotaVerificationMethod::try_from_mut)?
     .revoke_merkle_key(index)?;
   issuer_doc.set_previous_message_id(*receipt.message_id());
-  issuer_doc.sign(issuer_key.secret())?;
+  issuer_doc.sign(issuer_key.private())?;
 
   let receipt: Receipt = client.publish_document(&issuer_doc).await?;
 
