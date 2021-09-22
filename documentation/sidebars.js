@@ -138,8 +138,8 @@ module.exports = {
                     'specs/didcomm/protocols/presentation',
                     'specs/didcomm/protocols/signing',
                     'specs/didcomm/protocols/issuance',
-                    'specs/didcomm/protocols/revocation-options',
                     'specs/didcomm/protocols/revocation',
+                    'specs/didcomm/protocols/revocation-options',
                   ]
                 },
               ]

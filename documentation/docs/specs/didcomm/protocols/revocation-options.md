@@ -7,20 +7,18 @@ sidebar_label: Revocation Options
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-09-21
+- Last Updated: 2021-09-22
 
 ## Overview
-Allows negotiation of available modes revocation.
+Allows discovery of available [`RevocationInfo`](./revocation#RevocationInfo) types for use with the [revocation](./revocation) protocol.
 
 ### Relationships
 
-- [revocation](./revocation): this protocol is used to discover the `revocationType` options available to a [trusted-party](#roles) for use in a [revocation request message](./revocation#revocation-request) in the [revocation](./revocation) protocol.
-
-### Example Use-Cases
-TBD
+- [revocation](./revocation): this protocol is used to discover the `revocationType` options available to a [trusted-party](#roles) for use in a [revocation-request](./revocation#revocation-request).
 
 ### Roles
-TBD
+- Trusted-Party: has the authority to request the revocation of verifiable credentials.
+- Revoker: able to revoke the key used to sign a verifiable credential.
 
 ### Interaction
 
@@ -32,29 +30,51 @@ TBD
 
 
 ## Messages
-### 1. revocation-request {#revocation-request}
+### 1. revocation-options-request {#revocation-options-request}
 
-- Type: `didcomm:iota/revocation/0.1/revocation-request`
+- Type: `didcomm:iota/revocation-options/0.1/revocation-options-request`
 - Role: [trusted-party](#roles)
 
-TBD
+Empty messsage requesting all available [`RevocationInfo`](./revocation#RevocationInfo) types.
 
 #### Structure
 ```json
+{}
+```
 
+### 2. revocation-options {#revocation-options}
+
+- Type: `didcomm:iota/revocation-options/0.1/revocation-options`
+- Role: [revoker](#roles)
+
+Response including all available [RevocationInfo](./revocation#RevocationInfo) types supported by the [revoker](#roles).
+
+#### Structure
+```json
+{
+  "revocationInfoTypes": [string], // REQUIRED
+}
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `type` | TBD | ✔ |
+| `revocationInfoTypes` | List of supported [RevocationInfo](./revocation#RevocationInfo) types. | ✔ |
 
 #### Examples
 
-1. TBD:
+1. Response including multiple [RevocationInfo](./revocation#RevocationInfo) types:
 
 ```json
 {
-  TBD
+  "revocationInfoTypes": ["KeyRevocation2021", "CredentialRevocation2021"]
+}
+```
+
+2. Response including a single [RevocationInfo](./revocation#RevocationInfo) type:
+
+```json
+{
+  "revocationInfoTypes": ["CredentialRevocation2021"]
 }
 ```
 
