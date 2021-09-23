@@ -25,7 +25,7 @@ use crate::error::Result;
 use crate::utils::generate_ed25519_keypairs;
 
 /// Sets an upper limit to the amount of keys that can be created
-const MAX_KEYS_ALLOWED: usize = 2048;
+const MAX_KEYS_ALLOWED: usize = 4_294_967_296;
 
 /// A collection of cryptographic keys.
 #[derive(Clone, Debug)]
