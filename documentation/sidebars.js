@@ -140,6 +140,7 @@ module.exports = {
                     'specs/didcomm/protocols/issuance',
                     'specs/didcomm/protocols/revocation',
                     'specs/didcomm/protocols/revocation-options',
+                    'specs/didcomm/protocols/termination',
                   ]
                 },
               ]

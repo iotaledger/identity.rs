@@ -1,0 +1,83 @@
+---
+title: Termination
+sidebar_label: Termination
+---
+
+# Termination
+
+- Version: 0.1
+- Status: `IN-PROGRESS`
+- Last Updated: 2021-09-23
+
+## Overview
+
+Indicates the graceful termination of a connection. It is expected that no reconnection attempt will be made on any of the message thread/s in this connection following termination. This provides a chance for the receiver to clean up or archive any resources allocated to the connection.
+
+### Relationships
+
+- connection: this protocol terminates a communication initiated by the connection protocol.
+
+### Example Use-Cases
+
+- A verifier terminates the connection following a succesful presentation from a holder.
+- One participant experiences an error and terminates the connection gracefully after sending a problem-report.
+
+### Roles
+
+- Sender: initiates the connection termination.
+- Receiver: is notified of the termination.
+
+### Interaction
+
+<div style={{textAlign: 'center'}}>
+
+![TerminationDiagram](/img/didcomm/termination.drawio.svg)
+
+</div>
+
+
+## Messages
+
+### 1. termination {#termination}
+
+- Type: `didcomm:iota/termination/0.1/termination`
+- Role: [sender](#roles)
+
+Used to inform the [receiver](#roles) that the [sender](#roles) wishes to terminate the established connection. 
+
+#### Structure
+```json
+{}
+```
+
+### 2. termination-response {#termination-response}
+
+- Type: `didcomm:iota/termination/0.1/termination-response`
+- Role: [receiver](#roles)
+
+Response from the [receiver](#roles) that the request to terminate the connection was acknowledged. MUST be sent if the field [`please_ack`](https://identity.foundation/didcomm-messaging/spec/#acks) is present in the [termination](#termination) message. 
+
+#### Structure
+```json
+{}
+```
+
+### Problem Reports
+
+TODO
+
+## Considerations
+
+This section is non-normative.
+
+- Which party terminates a connection depends on the application, but is usually the same as the one that initiated it following a succesful interaction.
+- Any party may terminate a connection at any time, even during a protocol.
+- A termination message indicates a graceful end to a connection, the underlying transport layer connection may terminate without this message. Implementors should implement reasonable timeouts and reconnection capabilities in the latter case.
+
+## Related Work
+
+- Aries Hyperledger: https://github.com/hyperledger/aries-rfcs/blob/main/features/0030-sync-connection/abandon-connection-protocol/README.md
+
+## Further Reading
+
+TODO

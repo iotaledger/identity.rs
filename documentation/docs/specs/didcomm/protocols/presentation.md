@@ -11,10 +11,10 @@ sidebar_label: Presentation
 
 ## Overview
 
-Allows presentation of verifiable credentials that are issued to a holder and uniquely presented to a third-party verifier.
+Allows presentation of [verifiable credentials](https://www.w3.org/TR/vc-data-model) that are issued to a [holder](#roles) and uniquely presented to a third-party [verifier](#roles).
 
 ### Relationships
-This protocol may be embedded in the [issuance](./issuance) protocol.
+- [Issuance](./issuance): a presentation may be used to provide request extra information from the [holder](#roles) during a credential issuance.
 
 ### Example Use-Cases
 
