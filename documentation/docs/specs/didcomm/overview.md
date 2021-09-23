@@ -10,7 +10,7 @@ TODO: make clear that we only show message payloads in the protocol examples
 
 ## Conformance
 
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
+The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
 NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
 "OPTIONAL" in this specification are to be interpreted as described in
 [BCP 14](https://www.rfc-editor.org/info/bcp14)[[RFC 2119]](https://www.rfc-editor.org/rfc/rfc2119.txt).
@@ -28,13 +28,22 @@ NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
 
 ## Protocols
 
-| Name | Version | Description | Messages |
-| :--- | :---: | :--- | :--- |
-| [presentation](./protocols/presentation.md) | 0.1 | Allows presentation of verifiable credentials that are issued to a holder and uniquely presented to a third-party verifier. | *presentation-offer*, *presentation-request*, *presentation*, *presentation-result* |
-| [signing](./protocols/signing.md) | 0.1 | Allows a trusted-party to request the signing of an unsigned verifiable credential by an issuer. | *signing-request*, *signing-response*, *signing-acknowledgement* |
-| [issuance](./protocols/issuance.md) | 0.1 | Allows the exchange of a verfiable credential between an issuer and a holder. | *issuance-request*, *issuance-offer*, *issuance-response*, *issuance*, *issuance-acknowledgment* |
-| [revocation-options](./protocols/revocation-options.md) | 0.1 | TBD | TBD |
-| [revocation](./protocols/revocation.md) | 0.1 | Allows to request revocation of an issued credential, either by the holder or a trusted-party. | *revocation-request*, *revocation-response* |
+| Name | Version | Description | 
+| :--- | :---: | :--- |
+| [Presentation](./protocols/presentation.md) | 0.1 | Allows presentation of verifiable credentials that are issued to a holder and uniquely presented to a third-party verifier. |
+| [Signing](./protocols/signing.md) | 0.1 | Allows a trusted-party to request the signing of an unsigned verifiable credential by an issuer. |
+| [Issuance](./protocols/issuance.md) | 0.1 | Allows the exchange of a verfiable credential between an issuer and a holder. | 
+| [Revocation](./protocols/revocation.md) | 0.1 | Allows to request revocation of an issued credential, either by the holder or a trusted-party. | 
+| [Revocation Options](./protocols/revocation-options.md) | 0.1 | Allows discovery of available [`RevocationInfo`](./protocols/revocation#RevocationInfo) types for use with the [revocation](./protocols/revocation) protocol. |
+
+## External Protocols
+
+In addition to the protocols defined in this specification, we recommend implementors use the following well-known protocols:
+
+| Name | Version | Description |
+| :--- | :---: | :--- | 
+| [Discover Features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md) | 1.0 | Describes how agents can query one another to discover which features it supports, and to what extent. |
+| [Trust Ping](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/trustping.md) | 1.0 | A standard way for agents to test connectivity, responsiveness, and security of a DIDComm channel. | 
 
 ## Changelog
 
