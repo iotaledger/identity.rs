@@ -391,6 +391,7 @@ This section is non-normative.
 
 - Aries Hyperledger: https://github.com/hyperledger/aries-rfcs/tree/main/features/0454-present-proof-v2
 - Jolocom: https://jolocom.github.io/jolocom-sdk/1.0.0/guides/interaction_flows/#credential-verification
+- Presentation Exchange: https://identity.foundation/presentation-exchange/spec/v1.0.0/
 
 ## Further Reading
 
