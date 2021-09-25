@@ -11,7 +11,7 @@ pub enum ErrorKind {
   #[serde(rename = "invalidDid")]
   InvalidDID,
   /// The DID resolver does not support the specified method.
-  #[serde(rename = "notSupported")]
+  #[serde(rename = "representationNotSupported")]
   NotSupported,
   /// The DID resolver was unable to return the DID document resulting from
   /// this resolution request.
