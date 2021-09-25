@@ -5,7 +5,7 @@
 
 use identity::account::Account;
 use identity::account::IdentityCreate;
-use identity::account::IdentitySnapshot;
+use identity::account::IdentityState;
 use identity::account::Result;
 use identity::core::Url;
 use identity::iota::IotaDID;
@@ -21,10 +21,10 @@ async fn main() -> Result<()> {
 
   // Create a new Identity with default settings.
   // The identity will only be written to the local storage - not published to the tangle.
-  let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
+  let identity: IdentityState = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let did: &IotaDID = snapshot.identity().try_did()?;
+  let did: &IotaDID = identity.try_did()?;
 
   account
     .update_identity(did)

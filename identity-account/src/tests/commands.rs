@@ -10,6 +10,7 @@ use crate::events::UpdateError;
 use crate::identity::IdentityCreate;
 use crate::identity::IdentityId;
 use crate::identity::IdentitySnapshot;
+use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::storage::MemStore;
 use crate::types::Generation;
@@ -100,11 +101,11 @@ async fn test_create_identity_network() -> Result<()> {
 
   // Create an identity with a valid network string
   let create_identity: IdentityCreate = IdentityCreate::new().network("dev")?.key_type(KeyType::Ed25519);
-  let snapshot: IdentitySnapshot = account.create_identity(create_identity).await?;
+  let identity: IdentityState = account.create_identity(create_identity).await?;
 
   // Ensure the identity creation was successful
-  assert!(snapshot.identity().did().is_some());
-  assert!(snapshot.identity().authentication().is_ok());
+  assert!(identity.did().is_some());
+  assert!(identity.authentication().is_ok());
 
   Ok(())
 }

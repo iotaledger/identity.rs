@@ -119,7 +119,8 @@ impl Account {
     }
   }
 
-  pub async fn create_identity(&self, input: IdentityCreate) -> Result<IdentitySnapshot> {
+  /// Create an identity from the specified configuration options.
+  pub async fn create_identity(&self, input: IdentityCreate) -> Result<IdentityState> {
     // Acquire write access to the index.
     let mut index: RwLockWriteGuard<'_, _> = self.index.write().await;
 
@@ -152,8 +153,8 @@ impl Account {
     // Write the changes to disk
     self.save(false).await?;
 
-    // Return the state snapshot
-    Ok(snapshot)
+    // Return the identity state
+    Ok(snapshot.into_identity())
   }
 
   /// Returns the `IdentityUpdater` for the given `key`.
