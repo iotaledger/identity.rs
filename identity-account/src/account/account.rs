@@ -111,10 +111,14 @@ impl Account {
     self.index.read().await.tags()
   }
 
-  /// Finds and returns the state snapshot for the identity specified by given `key`.
-  pub async fn find_identity<K: IdentityKey>(&self, key: K) -> Result<Option<IdentitySnapshot>> {
+  /// Finds and returns the identity state for the identity specified by given `key`.
+  pub async fn find_identity<K: IdentityKey>(&self, key: K) -> Result<Option<IdentityState>> {
     match self.resolve_id(&key).await {
-      Some(identity) => self.load_snapshot(identity).await.map(Some),
+      Some(identity) => self
+        .load_snapshot(identity)
+        .await
+        .map(IdentitySnapshot::into_identity)
+        .map(Some),
       None => Ok(None),
     }
   }

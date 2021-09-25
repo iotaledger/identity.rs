@@ -181,8 +181,8 @@ async fn test_create_identity_from_private_key() -> Result<()> {
   let ident2 = account.find_identity(identity).await.unwrap().unwrap();
 
   // The same private key should result in the same did
-  assert_eq!(ident.identity().did(), ident2.identity().did());
-  assert_eq!(ident.identity().authentication()?, ident2.identity().authentication()?);
+  assert_eq!(ident.did(), ident2.did());
+  assert_eq!(ident.authentication()?, ident2.authentication()?);
 
   Ok(())
 }
