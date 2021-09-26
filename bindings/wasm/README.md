@@ -19,6 +19,8 @@ npm install @iota/identity-wasm@dev
 
 ## Build
 
+**NOTE:** _If you're on an M1 Mac the `npm install` command below will fail due to missing support for the architecture in the `npm` version of `wasm-pack`. To work around this use `cargo install wasm-pack` and then go directly to the `npm run` step._
+
 Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. Then install the necessary dependencies using:
 ```bash
 npm install
