@@ -60,7 +60,7 @@ Response including all available [RevocationInfo](./revocation#RevocationInfo) t
 | :--- | :--- | :--- |
 | `revocationInfoTypes` | List of supported [RevocationInfo](./revocation#RevocationInfo) types.[^1] | ✔ |
 
-[^1] The actual 
+[^1] The actual list of supported types may be vague or exact depending on how much the [revoker](#roles) trusts the requester. The supported types may also differ per requester.
 
 #### Examples
 
