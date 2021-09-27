@@ -1,0 +1,33 @@
+---
+title: Configure a DID
+sidebar_label: Configure a DID
+description: Configure DID using the IOTA Identity Rust Library or its WASM binding.
+image: /img/Identity_icon.png
+keywords:
+- Rust
+- WASM
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import config_js from  '!!raw-loader!./../../../bindings/wasm/examples/src/config.js';
+import config_rs from  '!!raw-loader!./../../../examples/account/config.rs';
+
+<Tabs
+groupId="programming-languages"
+defaultValue="rust"
+values={[
+{label: 'Rust', value: 'rust'},
+{label: 'Node.js', value: 'nodejs'},
+]
+}>
+<TabItem value="rust">
+    <CodeBlock className="language-javascript">
+        {config_rs}
+    </CodeBlock>
+</TabItem>
+<TabItem value='nodejs'>
+    <CodeBlock className="language-javascript">
+        {config_js}
+    </CodeBlock></TabItem>
+</Tabs>

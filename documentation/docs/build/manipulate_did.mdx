@@ -1,0 +1,33 @@
+---
+title: Manipulate a DID
+sidebar_label: Manipulate a DID
+description: Manipulate a DID using the IOTA Identity Rust Library or its WASM binding.
+image: /img/Identity_icon.png
+keywords:
+- Rust
+- WASM
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import manipulate_did_js from  '!!raw-loader!./../../../bindings/wasm/examples/src/manipulate_did.js';
+import manipulate_did_rs from  '!!raw-loader!./../../../examples/low-level-api/manipulate_did.rs';
+
+<Tabs
+    groupId="programming-languages"
+    defaultValue="rust"
+    values={[
+        {label: 'Rust', value: 'rust'},
+        {label: 'Node.js', value: 'nodejs'},
+    ]
+    }>
+    <TabItem value="rust">
+        <CodeBlock className="language-rust">
+            {manipulate_did_rs}
+        </CodeBlock>
+    </TabItem>
+    <TabItem value='nodejs'>
+        <CodeBlock className="language-javascript">
+            {manipulate_did_js}
+        </CodeBlock></TabItem>
+</Tabs>

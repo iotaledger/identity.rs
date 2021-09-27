@@ -1,0 +1,33 @@
+---
+title: Revoke a VC
+sidebar_label: Revoke a VC
+description:  Revoke a VC using the IOTA Identity Rust Library or its WASM binding.
+image: /img/Identity_icon.png
+keywords:
+- Rust
+- WASM
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import revoke_vc_js from  '!!raw-loader!./../../../bindings/wasm/examples/src/revoke_vc.js';
+import revoke_vc_rs from  '!!raw-loader!./../../../examples/low-level-api/revoke_vc.rs';
+
+<Tabs
+    groupId="programming-languages"
+    defaultValue="rust"
+    values={[
+        {label: 'Rust', value: 'rust'},
+        {label: 'Node.js', value: 'nodejs'},
+    ]
+    }>
+    <TabItem value="rust">
+        <CodeBlock className="language-rust">
+            {revoke_vc_rs}
+        </CodeBlock>
+    </TabItem>
+    <TabItem value='nodejs'>
+        <CodeBlock className="language-javascript">
+            {revoke_vc_js}
+        </CodeBlock></TabItem>
+</Tabs>

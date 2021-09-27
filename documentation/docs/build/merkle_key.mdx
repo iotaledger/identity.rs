@@ -1,0 +1,33 @@
+---
+title: Merkle Key
+sidebar_label: Merkle Key
+description: Create a Merkle Key using the IOTA Identity Rust Library or its WASM binding.
+image: /img/Identity_icon.png
+keywords:
+- Rust
+- WASM
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import merkle_key_js from  '!!raw-loader!./../../../bindings/wasm/examples/src/merkle_key.js';
+import merkle_key_rs from  '!!raw-loader!./../../../examples/low-level-api/merkle_key.rs';
+
+<Tabs
+    groupId="programming-languages"
+    defaultValue="rust"
+    values={[
+        {label: 'Rust', value: 'rust'},
+        {label: 'Node.js', value: 'nodejs'},
+    ]
+    }>
+    <TabItem value="rust">
+        <CodeBlock className="language-rust">
+            {merkle_key_rs}
+        </CodeBlock>
+    </TabItem>
+    <TabItem value='nodejs'>
+        <CodeBlock className="language-javascript">
+            {merkle_key_js}
+        </CodeBlock></TabItem>
+</Tabs>

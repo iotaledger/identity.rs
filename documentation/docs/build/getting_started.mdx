@@ -1,48 +1,92 @@
-# IOTA Identity WASM
+---
+sidebar_label: Getting Started
+description: Install the IOTA Identity Rust Library or its WASM binding.
+image: /img/Identity_icon.png
+keywords:
+- Rust
+- WASM
+- cargo
+- JS
+- NPM
+- Identity
+- clone
+- build
+---
+# Getting Started
 
-:::info beta
+## Rust
 
-This is the beta version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
+If you want to include IOTA Identity in your project, simply add it as a dependency in your `Cargo.toml`:
 
-:::
+```rust
+[dependencies]
+identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
+```
 
-## [API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference)
-## [Examples](./examples/README.md)
+If you would like to try out the [examples](https://github.com/iotaledger/identity.rs/tree/main/examples), you should:
 
-## Install the library:
+1. Clone the repository.
+    ```bash
+    git clone https://github.com/iotaledger/identity.rs
+    ```
+2. Build the repository.
+    ```rust
+      cargo build
+    ```
+3. Run your first example.
 
-Latest Release: this version matches the main branch of this repository, is stable and will have changelogs.
+    ```rust
+    cargo run --example getting_started
+    ```
+
+4. If you would like to build the [API Reference](https://wiki.iota.org/identity.rs/api_reference) yourself from source, you can do so by running:
+
+    ```rust
+    cargo doc --document-private-items --no-deps --open
+    ```
+
+## WASM
+
+### Latest Release
+
+This version matches the main branch of this repository, is stable and will have changelogs.
 
 ```bash
 npm install @iota/identity-wasm
 ```
 
-Development Release: this version matches the dev branch of this repository, may see frequent breaking changes and has the latest code changes.
+### Development Release
+
+This version matches the dev branch of this repository, may see frequent breaking changes and has the latest code changes.
+
 ```bash
 npm install @iota/identity-wasm@dev
 ```
 
-## Build
+### Build
 
-Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. Then install the necessary dependencies using:
+Alternatively, you can build the bindings if you have Rust installed.
+If not, refer to [rustup.rs](https://rustup.rs) for the installation.
+Then install the necessary dependencies using:
+
 ```bash
 npm install
 ```
 
-and then build the bindings for `node.js` with
+After the installation process has finished, you can build the bindings for `node.js` by running:
 
 ```bash
 npm run build:nodejs
 ```
 
-or for the `web` with
+Or for the `web` by running:
 
 ```bash
 npm run build:web
 ```
 
-## NodeJS Usage
-<!-- 
+### NodeJS Usage
+<!--
 Test this example using https://github.com/anko/txm: `txm README.md`
 
 Replace imports with local paths for txm:
@@ -52,6 +96,7 @@ cat \
 | node
 -->
 <!-- !test check Nodejs Example -->
+
 ```javascript
 const identity = require('@iota/identity-wasm/node')
 
@@ -60,18 +105,18 @@ const key = new identity.KeyPair(identity.KeyType.Ed25519)
 
 // Create a new DID Document with the KeyPair as the default authentication method
 const doc = identity.Document.fromKeyPair(key)
-// const doc = identity.Document.fromKeyPair(key, "dev") // if using the devnet
+// const doc = identity.Document.fromKeyPair(key, "test") // if using the testnet
 
 // Sign the DID Document with the private key
 doc.sign(key)
 
 // Create a default client instance for the mainnet
 const config = identity.Config.fromNetwork(identity.Network.mainnet())
-// const config = identity.Config.fromNetwork(identity.Network.devnet()); // if using the devnet
+// const config = identity.Config.fromNetwork(identity.Network.testnet()); // if using the testnet
 const client = identity.Client.fromConfig(config)
 
 // Publish the DID Document to the IOTA Tangle
-// The message can be viewed at https://explorer.iota.org/<mainnet|devnet>/transaction/<messageId>
+// The message can be viewed at https://explorer.iota.org/<mainnet|testnet>/transaction/<messageId>
 client.publishDocument(doc.toJSON())
     .then((receipt) => {
         console.log("Tangle Message Receipt: ", receipt)
@@ -83,19 +128,19 @@ client.publishDocument(doc.toJSON())
     })
 ```
 
-## Web Setup
+### Web Setup
 
 The library loads the WASM file with an HTTP GET request, so the .wasm file must be copied to the root of the dist folder.
 
-### Rollup
+#### Rollup
 
-- Install `rollup-plugin-copy`:
+1. Install `rollup-plugin-copy`:
 
 ```bash
 $ npm install rollup-plugin-copy --save-dev
 ```
 
-- Add the copy plugin usage to the `plugins` array under `rollup.config.js`:
+2. Add the copy plugin usage to the `plugins` array under `rollup.config.js`:
 
 ```js
 // Include the copy plugin
@@ -111,9 +156,9 @@ copy({
 })
 ```
 
-### Webpack
+#### Webpack
 
-- Install `copy-webpack-plugin`:
+1. Install `copy-webpack-plugin`:
 
 ```bash
 $ npm install copy-webpack-plugin --save-dev
@@ -135,7 +180,7 @@ new CopyWebPlugin({
 }),
 ```
 
-### Web Usage
+#### Web Usage
 
 ```js
 import * as identity from "@iota/identity-wasm/web";
@@ -143,8 +188,8 @@ import * as identity from "@iota/identity-wasm/web";
 identity.init().then(() => {
   const key = new identity.KeyPair(identity.KeyType.Ed25519)
   const doc = identity.Document.fromKeyPair(key)
-  // Or, if using the devnet:
-  // const doc = identity.Document.fromKeyPair(key, "dev")  
+  // Or, if using the testnet:
+  // const doc = identity.Document.fromKeyPair(key, "test")
   console.log("Key Pair", key)
   console.log("DID Document: ", doc)
 });
@@ -155,8 +200,8 @@ identity.init().then(() => {
   await identity.init()
   const key = new identity.KeyPair(identity.KeyType.Ed25519)
   const doc = identity.Document.fromKeyPair(key)
-  // Or, if using the devnet:
-  // const doc = identity.Document.fromKeyPair(key, "dev")
+  // Or, if using the testnet:
+  // const doc = identity.Document.fromKeyPair(key, "test")
   console.log("Key Pair", key)
   console.log("DID Document: ", doc)
 })()

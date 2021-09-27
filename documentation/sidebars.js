@@ -69,36 +69,75 @@ module.exports = {
         },
         {
             type: 'category',
-            label: 'Programming Languages',
+            label: 'Build',
             collapsed: true,
-            items: [
-                {
-                    type: 'category',
-                    label: 'Rust',
-                    collapsed: true,
-                    items: [
-                        'libraries/rust/overview',
-                        'libraries/rust/getting_started',
-                        'libraries/rust/examples',
-                        'libraries/rust/api_reference',
-                        'libraries/rust/troubleshooting',
-                    ],
+            items:[
+                'build/getting_started',
+                {type: 'category',
+                    label: 'Decentralized Identifiers (DID)',
+                    items:[
+                        'build/create_did',
+                        'build/manipulate_did',
+                        'build/resolution',
+                        'build/private_tangle',]
+                },
+                {type: 'category',
+                    label: 'Verifiable Credentials (VC)',
+                    items:[
+                        'build/create_vc',
+                        'build/revoke_vc',
+                        'build/merkle_key',]
+                },
+                {type: 'category',
+                    label: 'Verifiable Presentations (VP)',
+                    items:[
+                        'build/create_vp',
+                        'build/revoke_vc',]
+                },
+                {type: 'category',
+                    label: 'Diff Chains',
+                    items:[
+                        'build/diff_chain',
+                        'build/resolve_history',]
+                },
+                // 'build/tutorials',
+                'build/api_reference',
+                'build/troubleshooting',
+            ]
 
-                },
-                {
-                    type: 'category',
-                    label: 'WASM',
-                    collapsed: true,
-                    items: [
-                        'libraries/wasm/overview',
-                        'libraries/wasm/getting_started',
-                        'libraries/wasm/examples',
-                        'libraries/wasm/api_reference',
-                        'libraries/wasm/troubleshooting',
-                    ],
-                },
-            ],
         },
+        // {
+        //     type: 'category',
+        //     label: 'Programming Languages',
+        //     collapsed: true,
+        //     items: [
+        //         {
+        //             type: 'category',
+        //             label: 'Rust',
+        //             collapsed: true,
+        //             items: [
+        //                 'libraries/rust/overview',
+        //                 'libraries/rust/getting_started',
+        //                 'libraries/rust/examples',
+        //                 'libraries/rust/api_reference',
+        //                 'libraries/rust/troubleshooting',
+        //             ],
+        //
+        //         },
+        //         {
+        //             type: 'category',
+        //             label: 'WASM',
+        //             collapsed: true,
+        //             items: [
+        //                 'libraries/wasm/overview',
+        //                 'libraries/wasm/getting_started',
+        //                 'libraries/wasm/examples',
+        //                 'libraries/wasm/api_reference',
+        //                 'libraries/wasm/troubleshooting',
+        //             ],
+        //         },
+        //     ],
+        // },
         {
             type: 'category',
             label: 'Specificatons',

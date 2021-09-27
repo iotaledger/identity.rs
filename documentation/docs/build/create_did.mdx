@@ -1,0 +1,36 @@
+---
+sidebar_label: Create a DID
+title:  Create a Decentralized Identifiers (DID)
+description: Create a DID using the IOTA Identity Rust Library or its WASM binding.
+image: /img/Identity_icon.png
+keywords:
+- Rust
+- WASM
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import create_did_js from  '!!raw-loader!./../../../bindings/wasm/examples/src/create_did.js';
+import create_did_rs from  '!!raw-loader!./../../../examples/low-level-api/create_did.rs';
+
+<Tabs
+    groupId="programming-languages"
+    defaultValue="rust"
+    values={[
+        {label: 'Rust', value: 'rust'},
+        {label: 'Node.js', value: 'nodejs'},
+    ]
+    }>
+    <TabItem value="rust">
+        <CodeBlock className="language-rust">
+            {create_did_rs}
+        </CodeBlock>
+    </TabItem>
+    <TabItem value='nodejs'>
+        <CodeBlock className="language-javascript">
+            {create_did_js}
+        </CodeBlock>
+    </TabItem>
+</Tabs>
+
+## Example Output

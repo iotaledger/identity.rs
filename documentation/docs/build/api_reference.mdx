@@ -1,0 +1,33 @@
+---
+title: Api Reference
+sidebar_label: Api Reference
+description: Api Reference for the IOTA Identity Rust Library or its WASM binding.
+image: /img/Identity_icon.png
+keywords:
+- Rust
+- WASM
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import ApiJS from  './../../../bindings/wasm/docs/api-reference.md';
+
+<Tabs
+groupId="programming-languages"
+defaultValue="rust"
+values={[
+{label: 'Rust', value: 'rust'},
+{label: 'Node.js', value: 'nodejs'},
+]
+}>
+<TabItem value="rust">
+
+If you'd like to explore the implementation in more depth, the following command generates docs for the whole crate:
+
+```
+cargo doc --document-private-items --no-deps --open
+```
+</TabItem>
+<TabItem value='nodejs'>
+    <ApiJS />
+</TabItem>
+</Tabs>
