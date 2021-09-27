@@ -7,15 +7,16 @@ sidebar_label: Revocation
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-09-22
+- Last Updated: 2021-09-27
 
 ## Overview
 Allows to request revocation of an issued [verifiable credential](https://www.w3.org/TR/vc-data-model/), either by the holder or a trusted-party. If the revoker is unable to revoke the credential themselves, they may delegate the revocation to a different issuer, in which case they take on the role of trusted-party in their request.
 
-Note that the exact method of revocation is unspecified. The typical procedure is to revoke the verification method with the key used to sign the credential, causing subsequent verification attempts of the credential revocation to fail. However, implementors may instead choose to follow an alternative procedure such as [RevocationList2020](https://w3c-ccgithub.io/vc-status-rl-2020/).
+Note that the exact method of revocation is unspecified. The typical procedure is to revoke the verification method with the key used to sign the credential, causing subsequent verification attempts of the credential revocation to fail. However, implementors may instead choose to follow an alternative procedure such as [RevocationList2020](https://w3c-ccg.github.io/vc-status-rl-2020/).
 
 ### Relationships
 - [revocation-options](./revocation-options): this may be preceded by the the [revocation-options](./revocation-options) protocol for the [trusted-party](#roles) to discover the available [`RevocationInfo` types](#RevocationInfo).
+- [presentation](./presentation): this may include a [presentation](./presentation) by the [revoker](#roles) to request additional information, such as the entire credential being revoked or authorisation information.
 
 ### Example Use-Cases
 - A member of an organisation asks the organisation to revoke their membership
@@ -195,8 +196,7 @@ Allows to request the revocation of a verifiable credential by its identifier fi
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `credentialId` | TODO | ✔ |
-
+| `credentialId` | A [URI](https://www.w3.org/TR/vc-data-model/#dfn-uri) corresponding to the [id property](https://www.w3.org/TR/vc-data-model/#identifiers) of a verifiable credential. | ✔ |
 #### Examples
 
 1. Specify the identifier of the credential to revoke:
@@ -204,6 +204,50 @@ Allows to request the revocation of a verifiable credential by its identifier fi
 ```json
 {
   "credentialId": "1dd5bbc6-b0bc-4f82-94a9-c723e11075b5",
+}
+```
+
+### CredentialStatusRevocation2021
+
+- Type: `CredentialStatusRevocation2021`
+
+Allows to request the revocation of a verifiable credential by sending its corresponding [credential status](https://www.w3.org/TR/vc-data-model/#status) information. The [revoker](#roles) should ensure that this information is correct and that the requester is authorised.
+
+```json
+{
+  "credentialStatus": CredentialStatus,  // REQUIRED
+}
+```
+
+| Field | Description | Required |
+| :--- | :--- | :--- |
+| [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) | A [credential status](https://www.w3.org/TR/vc-data-model/#status) object.[^1] | ✔ |
+
+[^1] This SHOULD correspond with one of the suppported credential status methods in the [verifiable credentials extension registry](https://w3c-ccg.github.io/vc-extension-registry/#status-methods).
+
+#### Examples
+
+1. Specifying a [Credential Status List 2017](https://w3c-ccg.github.io/vc-csl2017/) entry:
+
+```json
+{
+  "credentialStatus": {
+    "id": "https://example.edu/status/24",
+    "type": "CredentialStatusList2017"
+  },
+}
+```
+
+2. Specifying a [Revocation List 2020](https://w3c-ccg.github.io/vc-status-rl-2020/) entry:
+
+```json
+{
+  "credentialStatus": {
+    "id": "https://dmv.example.gov/credentials/status/3#94567",
+    "type": "RevocationList2020Status",
+    "revocationListIndex": "94567",
+    "revocationListCredential": "https://example.com/credentials/status/3"
+  },
 }
 ```
 
@@ -216,7 +260,10 @@ The revoker needs to check if the credential may actually be revoked and if the 
 ## Unresolved Questions
 non-repudiation: should the trusted party be able to prove that the revoker claimed to have revoked the credential by making him include a signature in the `revocation-response`
 
-TODO: Should this protocol optionally embed the presentation protocol to present relevant information?
+- Should revocation-options include the credential status sub-types for `CredentialStatusRevocation2021`?
+- Separate revocation-notification flow for notifying the holder that their credential was revoked, optionally including the reason? Dual-entry for a holder to request the revocation reason?
+- Include reason-code/reason-comment in the request? Could be used by the revoker for auditing/validating the request but overall seems not useful - trusted-party would store those reasons internally, holder comments aren't very useful. Can be achieved via embedded presentation and self-signed credentials?
+
 ## Related Work
 
 - Aries Hyperledger: https://github.com/hyperledger/aries-rfcs/blob/main/features/0183-revocation-notification/README.md
@@ -225,4 +272,3 @@ TODO: Should this protocol optionally embed the presentation protocol to present
 
 - https://www.w3.org/TR/vc-data-model/
 - https://hyperledger-indy.readthedocs.io/projects/hipe/en/latest/text/0011-cred-revocation/README.html
-

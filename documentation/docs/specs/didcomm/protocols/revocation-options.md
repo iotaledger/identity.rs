@@ -7,7 +7,7 @@ sidebar_label: Revocation Options
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-09-22
+- Last Updated: 2021-09-27
 
 ## Overview
 Allows discovery of available [`RevocationInfo`](./revocation#RevocationInfo) types for use with the [revocation](./revocation) protocol.
@@ -66,7 +66,7 @@ Response including all available [RevocationInfo](./revocation#RevocationInfo) t
 
 ```json
 {
-  "revocationInfoTypes": ["KeyRevocation2021", "CredentialRevocation2021"]
+  "revocationInfoTypes": ["KeyRevocation2021", "CredentialRevocation2021", "CredentialStatusRevocation2021"]
 }
 ```
 
@@ -90,7 +90,7 @@ This section is non-normative.
 TBD
 
 ## Unresolved Questions
-TBD
+- Should revocation-options include the credential status sub-types for `CredentialStatusRevocation2021`?
 
 ## Related Work
 
