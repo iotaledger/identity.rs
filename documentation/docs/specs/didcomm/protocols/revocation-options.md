@@ -17,8 +17,8 @@ Allows discovery of available [`RevocationInfo`](./revocation#RevocationInfo) ty
 - [revocation](./revocation): this protocol is used to discover the `revocationType` options available to a [trusted-party](#roles) for use in a [revocation-request](./revocation#revocation-request).
 
 ### Roles
-- Trusted-Party: has the authority to request the revocation of verifiable credentials.
-- Revoker: able to revoke the key used to sign a verifiable credential.
+- Trusted-Party: requests supported methods of revocation.
+- Revoker: offers supported methods of revocation.
 
 ### Interaction
 
@@ -58,7 +58,9 @@ Response including all available [RevocationInfo](./revocation#RevocationInfo) t
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `revocationInfoTypes` | List of supported [RevocationInfo](./revocation#RevocationInfo) types. | ✔ |
+| `revocationInfoTypes` | List of supported [RevocationInfo](./revocation#RevocationInfo) types.[^1] | ✔ |
+
+[^1] The actual 
 
 #### Examples
 
@@ -80,22 +82,19 @@ Response including all available [RevocationInfo](./revocation#RevocationInfo) t
 
 ### Problem Reports
 
-TBD
+For gerneral guidance see [problem reports](../resources/problem-reports).
 
+Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
+- e.p.prot.iota.revocation-options.reject-revocation-options-request
+- e.p.prot.iota.revocation-options.reject-request
 
 ## Considerations
 
 This section is non-normative.
 
-TBD
+- Privacy: similar to [discover features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md), this protocol could be used to fingerprint a server partially or reveal its capabilities. If privacy is a concern, implementors should take care to accept requests only from parties authorised to perform [revocation](./revocation) or return a subset/superset of its actual supported options.
+- Authorisation: TODO
+- Authentication: TODO
 
 ## Unresolved Questions
 - Should revocation-options include the credential status sub-types for `CredentialStatusRevocation2021`?
-
-## Related Work
-
-TBD
-
-## Further Reading
-
-TBD

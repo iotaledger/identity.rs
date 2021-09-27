@@ -54,11 +54,13 @@ Sent by the [trusted-party](#roles) or holder to request revocation of an issued
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `revocationInfoType` | The type of [RevocationInfo](#RevocationInfo). | ✔ |
+| `revocationInfoType` | The type of [RevocationInfo](#RevocationInfo).[^1] | ✔ |
 | [`revocationInfo`](#RevocationInfo) | Contains information sufficient to identity which credential should be revoked. See [`revocationInfo`](#RevocationInfo). | ✔ |
-| `signature` | [Proof](https://w3c-ccg.github.io/ld-proofs/) with the signature of the [trusted-party](#roles) on the [revocation-request message](#revocation-request).[^1] | ✖ |
+| `signature` | [Proof](https://w3c-ccg.github.io/ld-proofs/) with the signature of the [trusted-party](#roles) on the [revocation-request message](#revocation-request).[^2] | ✖ |
 
-[^1] The `signature` allows for non-repudiation of the request to third-parties. A [revoker](#roles) MAY choose to reject [revocation-requests](#revocation-request) that do not include a `signature`.
+[^1] If an unsupported `revocationInfoType` is received, the [revoker](#roles) MUST issue a problem-report. The specific problem-report code is `unsupported-revocation-info-type` but if privacy is a concern, a [revoker](#roles) may send a more generic code such as `reject-request` to avoid disclosing its capabilities more than the [revocation-options](./revocation-options#Considerations) protocol would reveal.
+
+[^2] The `signature` allows for non-repudiation of the request to third-parties. A [revoker](#roles) MAY choose to reject [revocation-requests](#revocation-request) that do not include a `signature`.
 
 #### Examples
 
@@ -132,6 +134,7 @@ For gerneral guidance see [problem reports](../resources/problem-reports).
 
 Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
 - e.p.prot.iota.revocation.reject-revocation
+- e.p.prot.iota.revocation.unsupported-revocation-info-type
 
 Also problem reports from embedded protocols can be thrown.
 
@@ -261,7 +264,7 @@ The revoker needs to check if the credential may actually be revoked and if the 
 non-repudiation: should the trusted party be able to prove that the revoker claimed to have revoked the credential by making him include a signature in the `revocation-response`
 
 - Should revocation-options include the credential status sub-types for `CredentialStatusRevocation2021`?
-- Separate revocation-notification flow for notifying the holder that their credential was revoked, optionally including the reason? Dual-entry for a holder to request the revocation reason?
+- Separate revocation-notification (https://github.com/hyperledger/aries-rfcs/blob/main/features/0183-revocation-notification/README.md) flow for notifying the holder that their credential was revoked, optionally including the reason? Dual-entry for a holder to request the revocation reason?
 - Include reason-code/reason-comment in the request? Could be used by the revoker for auditing/validating the request but overall seems not useful - trusted-party would store those reasons internally, holder comments aren't very useful. Can be achieved via embedded presentation and self-signed credentials?
 
 ## Related Work
