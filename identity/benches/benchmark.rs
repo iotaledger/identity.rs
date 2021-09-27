@@ -64,12 +64,12 @@ fn bench_diff_chain_updates(c: &mut Criterion) {
   group.finish();
 }
 
-fn bench_auth_chain_updates(c: &mut Criterion) {
+fn bench_int_chain_updates(c: &mut Criterion) {
   static ITERATIONS: &[usize] = &[1, 10, 100, 1000];
 
   let (doc, keys) = setup_diff_chain_bench();
 
-  let mut group = c.benchmark_group("update auth chain");
+  let mut group = c.benchmark_group("update int chain");
 
   for size in ITERATIONS.iter() {
     let mut chain: DocumentChain = DocumentChain::new(IntegrationChain::new(doc.clone()).unwrap());
@@ -89,6 +89,6 @@ criterion_group!(
   bench_generate_did,
   bench_generate_doc_chain,
   bench_diff_chain_updates,
-  bench_auth_chain_updates,
+  bench_int_chain_updates,
 );
 criterion_main!(benches);

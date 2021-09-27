@@ -89,7 +89,7 @@ impl Command {
           UpdateError::InvalidMethodType(authentication)
         );
 
-        let generation: Generation = state.auth_generation();
+        let generation: Generation = state.int_generation();
         let location: KeyLocation = KeyLocation::new_authentication(authentication, generation);
 
         // The key location must be available

@@ -45,9 +45,9 @@ impl Event {
     trace!("[Event::apply] State = {:?}", state);
 
     match self.data {
-      EventData::AuthMessage(message) => {
-        state.set_auth_message_id(message);
-        state.increment_auth_generation()?;
+      EventData::IntMessage(message) => {
+        state.set_int_message_id(message);
+        state.increment_int_generation()?;
       }
       EventData::DiffMessage(message) => {
         state.set_diff_message_id(message);
@@ -104,8 +104,8 @@ impl Event {
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(tag = "type", content = "data")]
 pub enum EventData {
-  /// Emitted when a new auth message is published to the IOTA Tangle.
-  AuthMessage(MessageId),
+  /// Emitted when a new int message is published to the IOTA Tangle.
+  IntMessage(MessageId),
   /// Emitted when a new diff message is published to the IOTA Tangle.
   DiffMessage(MessageId),
   /// Emitted when a new identity state is created.
