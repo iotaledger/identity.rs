@@ -67,6 +67,15 @@ impl WasmDocumentDiff {
     Ok(())
   }
 
+  /// Returns the `proof` object.
+  #[wasm_bindgen(getter)]
+  pub fn proof(&self) -> Result<JsValue> {
+    match self.0.proof() {
+      Some(proof) => JsValue::from_serde(proof).wasm_result(),
+      None => Ok(JsValue::NULL),
+    }
+  }
+
   /// Returns a new DID Document which is the result of merging `self`
   /// with the given Document.
   pub fn merge(&self, document: &WasmDocument) -> Result<WasmDocument> {

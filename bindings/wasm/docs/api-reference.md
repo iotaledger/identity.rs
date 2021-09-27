@@ -1106,6 +1106,7 @@ Defines the difference between two DID [`Document`]s' JSON representations.
     * [.messageId](#DocumentDiff+messageId)
     * [.previousMessageId](#DocumentDiff+previousMessageId) ⇒ <code>string</code>
     * [.previousMessageId](#DocumentDiff+previousMessageId)
+    * [.proof](#DocumentDiff+proof) ⇒ <code>any</code>
     * [.id()](#DocumentDiff+id) ⇒ [<code>DID</code>](#DID)
     * [.merge(document)](#DocumentDiff+merge) ⇒ [<code>Document</code>](#Document)
 
@@ -1157,6 +1158,12 @@ Sets the Tangle message id of the previous DID Document diff.
 | --- | --- |
 | message_id | <code>string</code> | 
 
+<a name="DocumentDiff+proof"></a>
+
+### documentDiff.proof ⇒ <code>any</code>
+Returns the `proof` object.
+
+**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
 <a name="DocumentDiff+id"></a>
 
 ### documentDiff.id() ⇒ [<code>DID</code>](#DID)
