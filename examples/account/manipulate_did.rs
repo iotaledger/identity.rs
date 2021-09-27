@@ -1,14 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! cargo run --example account_methods
+//! cargo run --example account_manipulate
 
 use identity::account::Account;
-use identity::account::IdentityCreate;
-use identity::account::IdentitySnapshot;
 use identity::account::Result;
 use identity::did::MethodScope;
 use identity::iota::IotaDID;
+use identity::core::Url;
 
 mod create_did;
 
@@ -16,29 +15,12 @@ mod create_did;
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  let (account, iota_did): (Account, IotaDID) = create_did::create_identity().await?;
-
-  // Add a new Ed25519 (default) verification method to the identity - the
-  // verification method is included as an embedded authentication method.
-  account
-    .update_identity(did)
-    .create_method()
-    .scope(MethodScope::Authentication)
-    .fragment("my-auth-key")
-    .apply()
-    .await?;
-
-  // Fetch and log the DID Document from the Tangle
-  //
-  // This is an optional step to ensure DID Document consistency.
-  println!(
-    "[Example] Tangle Document (1) = {:#?}",
-    account.resolve_identity(did).await?
-  );
+  //Calls the create_identity function from the create_did example - this is not part of the framework, but rather reusing the previous example.
+  let (account, iota_did): (Account, IotaDID) = create_did::run().await?;
 
   // Add another Ed25519 verification method to the identity
   account
-    .update_identity(did)
+    .update_identity(&iota_did)
     .create_method()
     .fragment("my-next-key")
     .apply()
@@ -46,7 +28,7 @@ async fn main() -> Result<()> {
 
   // Associate the newly created method with additional verification relationships
   account
-    .update_identity(did)
+    .update_identity(&iota_did)
     .attach_method()
     .fragment("my-next-key")
     .scope(MethodScope::CapabilityDelegation)
@@ -54,29 +36,25 @@ async fn main() -> Result<()> {
     .apply()
     .await?;
 
-  // Fetch and log the DID Document from the Tangle
-  //
-  // This is an optional step to ensure DID Document consistency.
-  println!(
-    "[Example] Tangle Document (2) = {:#?}",
-    account.resolve_identity(did).await?
-  );
-
-  // Remove the original Ed25519 verification method
-  account
-    .update_identity(did)
-    .delete_method()
-    .fragment("my-auth-key")
+  // Add a new service to the identity.
+    account
+    .update_identity(&iota_did)
+    .create_service()
+    .fragment("my-service-1")
+    .type_("MyCustomService")
+    .endpoint(Url::parse("https://example.com")?)
     .apply()
     .await?;
 
-  // Fetch and log the DID Document from the Tangle
-  //
-  // This is an optional step to ensure DID Document consistency.
-  println!(
-    "[Example] Tangle Document (3) = {:#?}",
-    account.resolve_identity(did).await?
-  );
+  // Remove the Ed25519 verification method
+  account
+    .update_identity(&iota_did)
+    .delete_method()
+    .fragment("my-next-key")
+    .apply()
+    .await?;
 
+  //Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
+  println!("[Example] Explore the DID Document = {}", format!("{}/{}", iota_did.network()?.explorer_url().unwrap().to_string(), iota_did.to_string()));
   Ok(())
 }

@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! cargo run --example account_basic
+//! cargo run --example create_did
 
 use std::path::PathBuf;
 
@@ -12,7 +12,25 @@ use identity::account::IdentitySnapshot;
 use identity::account::Result;
 use identity::iota::IotaDID;
 
-pub async fn create_identity() -> Result<(Account, IotaDID)> {
+#[tokio::main]
+async fn main() -> Result<()> {
+  pretty_env_logger::init();
+
+  // Calls the create_identity function 
+  let (account, iota_did): (Account, IotaDID) = run().await?;
+
+  // Retrieve the DID from the newly created Identity state.
+  let snapshot: IdentitySnapshot = account.find_identity(iota_did.clone()).await?.unwrap();
+
+  // Print the local state of the DID Document
+  println!("[Example] Local Document from {} = {:#?}", iota_did.clone(), snapshot.identity().to_document());
+  // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
+  println!("[Example] Explore the DID Document = {}", format!("{}/{}", iota_did.network()?.explorer_url().unwrap().to_string(), iota_did.to_string()));
+  Ok(())
+}
+
+
+pub async fn run() -> Result<(Account, IotaDID)> {
   // Sets the location and password for the Stronghold
   //
   // Stronghold is an encrypted file that manages private keys.
@@ -35,20 +53,4 @@ pub async fn create_identity() -> Result<(Account, IotaDID)> {
   let did: &IotaDID = snapshot.identity().try_did()?;
 
   Ok((account, did.clone()))
-}
-
-#[tokio::main]
-async fn main() -> Result<()> {
-  pretty_env_logger::init();
-
-  //Calls the create_identity function 
-  let (account, iota_did): (Account, IotaDID) = create_identity().await?;
-
-  // Retrieve the DID from the newly created Identity state.
-  let snapshot: IdentitySnapshot = account.find_identity(iota_did.clone()).await?.unwrap();
-
-  // Print the local state of the DID Document
-  println!("[Example] Local Document from {} = {:#?}", iota_did.clone(), snapshot.identity().to_document());
-  println!("[Example] Explore the DID Document = {}", format!("{}/{}", iota_did.clone().network()?.explorer_url().unwrap().to_string(), iota_did.to_string()));
-  Ok(())
 }

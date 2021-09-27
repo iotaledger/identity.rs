@@ -23,16 +23,12 @@ name = "account_config"
 path = "account/config.rs"
 
 [[example]]
-name = "account_methods"
-path = "account/methods.rs"
+name = "account_manipulate"
+path = "account/manipulate_did.rs"
 
 [[example]]
 name = "account_lazy"
 path = "account/lazy.rs"
-
-[[example]]
-name = "account_services"
-path = "account/services.rs"
 
 [[example]]
 name = "account_signing"
