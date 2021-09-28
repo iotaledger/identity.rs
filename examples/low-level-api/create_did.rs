@@ -18,7 +18,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
   let keypair: KeyPair = KeyPair::new_ed25519()?;
 
   // Create a DID Document (an identity) from the generated key pair.
-  let mut document: IotaDocument = IotaDocument::from_keypair(&keypair)?;
+  let mut document: IotaDocument = IotaDocument::new(&keypair, None)?;
 
   // Sign the DID Document with the default authentication key.
   document.sign(keypair.private())?;

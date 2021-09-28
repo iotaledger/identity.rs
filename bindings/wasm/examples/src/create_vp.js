@@ -26,7 +26,7 @@ async function createVP(clientConfig) {
     const unsignedVp = new VerifiablePresentation(alice.doc, signedVc.toJSON())
 
     const signedVp = alice.doc.signPresentation(unsignedVp, {
-        method: "#key",
+        method: "#authentication",
         private: alice.key.private,
     })
 

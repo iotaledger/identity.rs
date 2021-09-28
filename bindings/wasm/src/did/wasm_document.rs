@@ -13,7 +13,6 @@ use identity::crypto::PublicKey;
 use identity::did::verifiable;
 use identity::did::MethodScope;
 use identity::iota::Error;
-use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
@@ -24,30 +23,10 @@ use crate::common::WasmTimestamp;
 use crate::credential::VerifiableCredential;
 use crate::credential::VerifiablePresentation;
 use crate::crypto::KeyPair;
-use crate::crypto::KeyType;
 use crate::did::WasmVerificationMethod;
 use crate::did::{WasmDID, WasmDocumentDiff};
 use crate::error::{Result, WasmResult};
 use crate::service::Service;
-
-#[wasm_bindgen(inspectable)]
-pub struct NewDocument {
-  key: KeyPair,
-  doc: WasmDocument,
-}
-
-#[wasm_bindgen]
-impl NewDocument {
-  #[wasm_bindgen(getter)]
-  pub fn key(&self) -> KeyPair {
-    self.key.clone()
-  }
-
-  #[wasm_bindgen(getter)]
-  pub fn doc(&self) -> WasmDocument {
-    self.doc.clone()
-  }
-}
 
 // =============================================================================
 // =============================================================================
@@ -58,42 +37,24 @@ pub struct WasmDocument(pub(crate) IotaDocument);
 
 #[wasm_bindgen(js_class = Document)]
 impl WasmDocument {
-  /// Creates a new DID Document from the given KeyPair.
-  #[wasm_bindgen(constructor)]
-  #[allow(clippy::new_ret_no_self)]
-  pub fn new(type_: KeyType, network: Option<String>, tag: Option<String>) -> Result<NewDocument> {
-    let keypair: KeyPair = KeyPair::new(type_)?;
-    let public: &PublicKey = keypair.0.public();
-
-    let did: IotaDID = if let Some(network) = network.as_deref() {
-      IotaDID::new_with_network(public.as_ref(), network).wasm_result()?
-    } else {
-      IotaDID::new(public.as_ref()).wasm_result()?
-    };
-
-    let method: IotaVerificationMethod =
-      IotaVerificationMethod::from_did(did, &keypair.0, tag.as_deref()).wasm_result()?;
-    let document: IotaDocument = IotaDocument::from_authentication(method).wasm_result()?;
-
-    Ok(NewDocument {
-      key: keypair,
-      doc: Self(document),
-    })
-  }
-
-  /// Creates a new DID Document from the given KeyPair and optional network.
+  /// Creates a new DID Document from the given `KeyPair` and network, defaulting to
+  /// `Network::Mainnet` if unspecified.
   ///
-  /// If unspecified, network defaults to the mainnet.
-  #[wasm_bindgen(js_name = fromKeyPair)]
-  pub fn from_keypair(key: &KeyPair, network: Option<String>) -> Result<WasmDocument> {
-    let doc = match network {
-      Some(net) => IotaDocument::from_keypair_with_network(&key.0, &net),
-      None => IotaDocument::from_keypair(&key.0),
-    };
-    doc.map(Self).wasm_result()
+  /// The DID Document will be pre-populated with a single authentication verification method
+  /// derived from the provided `KeyPair`. This method will have the DID URL fragment
+  /// `#authentication` and can be easily retrieved with `Document::authentication`.
+  ///
+  /// NOTE: the generated document is unsigned, see `Document::sign`.
+  #[wasm_bindgen(constructor)]
+  pub fn new(keypair: &KeyPair, network: Option<String>) -> Result<WasmDocument> {
+    IotaDocument::new(&keypair.0, network.as_deref())
+      .map(Self)
+      .wasm_result()
   }
 
-  /// Creates a new DID Document from the given verification [`method`][`Method`].
+  /// Creates a new DID Document from the given `VerificationMethod`.
+  ///
+  /// NOTE: the generated document is unsigned, see Document::sign.
   #[wasm_bindgen(js_name = fromAuthentication)]
   pub fn from_authentication(method: &WasmVerificationMethod) -> Result<WasmDocument> {
     IotaDocument::from_authentication(method.0.clone())

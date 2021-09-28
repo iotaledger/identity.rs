@@ -36,7 +36,7 @@ pub async fn main() -> Result<()> {
 
   // Create a DID with the network set explicitly.
   // This will result in a DID prefixed by `did:iota:tangle`.
-  let mut document: IotaDocument = IotaDocument::from_keypair_with_network(&keypair, network_name)?;
+  let mut document: IotaDocument = IotaDocument::new(&keypair, Some(network_name))?;
 
   // Sign the DID Document with the default authentication key.
   document.sign(keypair.private())?;

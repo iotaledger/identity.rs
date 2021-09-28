@@ -16,7 +16,7 @@ use identity::iota::TangleRef;
 
 pub fn setup_diff_chain_bench() -> (IotaDocument, KeyPair) {
   let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
-  let mut document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+  let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
   document.sign(keypair.private()).unwrap();
   document.set_message_id(MessageId::new([8; 32]));

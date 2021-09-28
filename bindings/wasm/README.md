@@ -54,8 +54,8 @@ const identity = require('@iota/identity-wasm/node')
 const key = new identity.KeyPair(identity.KeyType.Ed25519)
 
 // Create a new DID Document with the KeyPair as the default authentication method
-const doc = identity.Document.fromKeyPair(key)
-// const doc = identity.Document.fromKeyPair(key, "dev") // if using the devnet
+const doc = new identity.Document(key)
+// const doc = new identity.Document(key, "dev") // if using the devnet
 
 // Sign the DID Document with the private key
 doc.sign(key)
@@ -137,9 +137,8 @@ import * as identity from "@iota/identity-wasm/web";
 
 identity.init().then(() => {
   const key = new identity.KeyPair(identity.KeyType.Ed25519)
-  const doc = identity.Document.fromKeyPair(key)
-  // Or, if using the devnet:
-  // const doc = identity.Document.fromKeyPair(key, "dev")  
+  const doc = new identity.Document(key)
+  // const doc = new identity.Document(key, "dev") // if using the devnet
   console.log("Key Pair", key)
   console.log("DID Document: ", doc)
 });
@@ -149,9 +148,8 @@ identity.init().then(() => {
 (async () => {
   await identity.init()
   const key = new identity.KeyPair(identity.KeyType.Ed25519)
-  const doc = identity.Document.fromKeyPair(key)
-  // Or, if using the devnet:
-  // const doc = identity.Document.fromKeyPair(key, "dev")
+  const doc = new identity.Document(key)
+  // const doc = new identity.Document(key, "dev") // if using the devnet
   console.log("Key Pair", key)
   console.log("DID Document: ", doc)
 })()
