@@ -112,10 +112,16 @@ impl Command {
         let network: Option<&str> = network.as_deref();
         let document: IotaDID = IotaDID::from_components(public.as_ref(), network)?;
 
+        let method_fragment = Fragment::new(method.location().fragment());
+
         Ok(Some(vec![
           Event::new(EventData::IdentityCreated(document)),
           // TODO: MethodScope::VerificationMethod when possible
-          Event::new(EventData::MethodCreated(MethodScope::Authentication, method)),
+          Event::new(EventData::MethodCreated(MethodScope::VerificationMethod, method)),
+          Event::new(EventData::MethodAttached(
+            method_fragment,
+            vec![MethodScope::Authentication],
+          )),
         ]))
       }
       Self::CreateMethod {

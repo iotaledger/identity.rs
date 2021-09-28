@@ -209,7 +209,7 @@ impl Account {
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
     let state: &IdentityState = snapshot.identity();
 
-    let fragment: Fragment = Fragment::new(fragment.into());
+    let fragment: Fragment = Fragment::new(fragment);
     let method: &TinyMethod = state.methods().fetch(fragment.name())?;
     let location: &KeyLocation = method.location();
 
