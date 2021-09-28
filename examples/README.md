@@ -24,10 +24,10 @@ The following examples are available for using the basic account (A high-level A
 | :--: | :----------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
 | 1 | [getting_started](./getting_started.rs) | Introductory example for you to test whether the library is set up / working properly and compiles.                        |
 | 2 | [account_create_did](./account/create_did.rs) | A basic example that generates and publishes a DID Document, the fundamental building block for decentralized identity.    |
-| 3 | [account_config](./account/config.rs) | This example goes into more detail regarding the usage of DID Documents. |
-| 4 | [account_manipulate](./account/manipulate_did.rs) | This example shows how to manipulate a DID Document by adding/removing Verification Methods and Services. |
-| 5 | [account_lazy](./account/lazy.rs) | This example shows how to take control over publishing DID updates manually, instead of the default automated behavior. |
-| 6 | [account_signing](./account/signing.rs) | A basic example that generates a DID Document, publishes it to the Tangle, and retrieves information through DID Document resolution/dereferencing. |
+| 3 | [account_config](./account/config.rs) | How to configure the account to work with different networks and other settings. |
+| 4 | [account_manipulate](./account/manipulate_did.rs) | How to manipulate a DID Document by adding/removing Verification Methods and Services. |
+| 5 | [account_lazy](./account/lazy.rs) | How to take control over publishing DID updates manually, instead of the default automated behavior. |
+| 6 | [account_signing](./account/signing.rs) | Using a DID to sign arbitrary statements and validating them. |
 
 
 The following examples are available for using the low-level APIs, which provides more flexibility at the cost of complexity:
