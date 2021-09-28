@@ -116,7 +116,6 @@ impl Command {
 
         Ok(Some(vec![
           Event::new(EventData::IdentityCreated(document)),
-          // TODO: MethodScope::VerificationMethod when possible
           Event::new(EventData::MethodCreated(MethodScope::VerificationMethod, method)),
           Event::new(EventData::MethodAttached(
             method_fragment,
