@@ -147,7 +147,7 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  // version is now 3
+  // version is now 4
   assert_eq!(snapshot.sequence(), Generation::from(4));
 
   let output: Result<()> = account.process(identity, command, false).await;
@@ -159,8 +159,8 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  // version is still 3, no events have been committed
-  assert_eq!(snapshot.sequence(), Generation::from(3));
+  // version is still 4, no events have been committed
+  assert_eq!(snapshot.sequence(), Generation::from(4));
 
   Ok(())
 }
@@ -270,7 +270,7 @@ async fn test_create_method_reserved_fragment() -> Result<()> {
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  // version is now 3
+  // version is now 4
   assert_eq!(snapshot.sequence(), Generation::from_u32(4));
 
   let output: _ = account.process(identity, command, false).await;
@@ -282,7 +282,7 @@ async fn test_create_method_reserved_fragment() -> Result<()> {
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  // version is still 3, no new events have been committed
+  // version is still 4, no new events have been committed
   assert_eq!(snapshot.sequence(), Generation::from_u32(4));
 
   Ok(())
