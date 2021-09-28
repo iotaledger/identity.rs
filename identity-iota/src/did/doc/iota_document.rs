@@ -8,6 +8,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 
+use identity_did::did::DID;
 use serde::Serialize;
 
 use identity_core::common::Object;
@@ -113,9 +114,12 @@ impl IotaDocument {
   ///
   /// This must be guaranteed safe by the caller.
   pub unsafe fn from_authentication_unchecked(method: IotaVerificationMethod) -> Self {
+    let verification_method_did: DID = method.id().as_ref().clone();
+
     CoreDocument::builder(Default::default())
       .id(method.controller().clone().into())
-      .authentication(method)
+      .verification_method(method.into())
+      .authentication(MethodRef::Refer(verification_method_did))
       .build()
       .map(CoreDocument::into_verifiable)
       .map(TryInto::try_into)
