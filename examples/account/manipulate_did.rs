@@ -5,9 +5,9 @@
 
 use identity::account::Account;
 use identity::account::Result;
+use identity::core::Url;
 use identity::did::MethodScope;
 use identity::iota::IotaDID;
-use identity::core::Url;
 
 mod create_did;
 
@@ -37,7 +37,7 @@ async fn main() -> Result<()> {
     .await?;
 
   // Add a new service to the identity.
-    account
+  account
     .update_identity(&iota_did)
     .create_service()
     .fragment("my-service-1")
@@ -55,6 +55,13 @@ async fn main() -> Result<()> {
     .await?;
 
   //Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
-  println!("[Example] Explore the DID Document = {}", format!("{}/{}", iota_did.network()?.explorer_url().unwrap().to_string(), iota_did.to_string()));
+  println!(
+    "[Example] Explore the DID Document = {}",
+    format!(
+      "{}/{}",
+      iota_did.network()?.explorer_url().unwrap().to_string(),
+      iota_did.to_string()
+    )
+  );
   Ok(())
 }

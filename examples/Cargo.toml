@@ -35,10 +35,6 @@ name = "account_signing"
 path = "account/signing.rs"
 
 [[example]]
-name = "account_stronghold"
-path = "account/stronghold.rs"
-
-[[example]]
 name = "account_private_tangle"
 path = "account/private_tangle.rs"
 

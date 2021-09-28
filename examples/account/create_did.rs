@@ -16,19 +16,29 @@ use identity::iota::IotaDID;
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  // Calls the create_identity function 
+  // Calls the create_identity function
   let (account, iota_did): (Account, IotaDID) = run().await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let snapshot: IdentitySnapshot = account.find_identity(iota_did.clone()).await?.unwrap();
+  let snapshot: IdentitySnapshot = account.find_identity(&iota_did).await?.unwrap();
 
   // Print the local state of the DID Document
-  println!("[Example] Local Document from {} = {:#?}", iota_did.clone(), snapshot.identity().to_document());
+  println!(
+    "[Example] Local Document from {} = {:#?}",
+    iota_did,
+    snapshot.identity().to_document()
+  );
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
-  println!("[Example] Explore the DID Document = {}", format!("{}/{}", iota_did.network()?.explorer_url().unwrap().to_string(), iota_did.to_string()));
+  println!(
+    "[Example] Explore the DID Document = {}",
+    format!(
+      "{}/{}",
+      iota_did.network()?.explorer_url().unwrap().to_string(),
+      iota_did.to_string()
+    )
+  );
   Ok(())
 }
-
 
 pub async fn run() -> Result<(Account, IotaDID)> {
   // Sets the location and password for the Stronghold
@@ -43,7 +53,7 @@ pub async fn run() -> Result<(Account, IotaDID)> {
     .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
     .build()
     .await?;
-  
+
   // Create a new Identity with default settings
   //
   // This step generates a keypair, creates an identity and publishes it too the IOTA mainnet.
