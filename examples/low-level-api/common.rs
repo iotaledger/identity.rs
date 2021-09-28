@@ -76,7 +76,7 @@ pub async fn add_new_key(
   // Prepare the update
   updated_doc.set_previous_message_id(*receipt.message_id());
   updated_doc.set_updated(Timestamp::now_utc());
-  updated_doc.sign(key.secret())?;
+  updated_doc.sign(key.private())?;
 
   // Publish the update to the Tangle
   let update_receipt: Receipt = client.publish_document(&updated_doc).await?;

@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
   issuer_doc.remove_method(&issuer_doc.id().join("#newKey")?)?;
   issuer_doc.set_previous_message_id(*issuer_receipt.message_id());
   issuer_doc.set_updated(Timestamp::now_utc());
-  issuer_doc.sign(issuer_key.secret())?;
+  issuer_doc.sign(issuer_key.private())?;
   // This is an integration chain update, so we publish the full document.
   let update_receipt = client.publish_document(&issuer_doc).await?;
 
@@ -74,8 +74,8 @@ async fn create_vc_helper(
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
   let mut credential: Credential = common::issue_degree(&issuer_doc, &subject_doc)?;
 
-  // Sign the Credential with the issuer's #newKey secret key, so we can later revoke it
-  issuer_doc.sign_data(&mut credential, issuer_new_key.secret())?;
+  // Sign the Credential with the issuer's #newKey private key, so we can later revoke it
+  issuer_doc.sign_data(&mut credential, issuer_new_key.private())?;
 
   let issuer = (issuer_doc, issuer_key, issuer_updated_receipt);
   Ok((issuer, credential))
@@ -101,7 +101,7 @@ pub async fn add_new_key(
   // Prepare the update
   updated_doc.set_previous_message_id(*receipt.message_id());
   updated_doc.set_updated(Timestamp::now_utc());
-  updated_doc.sign(key.secret())?;
+  updated_doc.sign(key.private())?;
 
   // Publish the update to the Tangle
   let update_receipt: Receipt = client.publish_document(&updated_doc).await?;

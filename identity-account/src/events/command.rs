@@ -99,8 +99,8 @@ impl Command {
           UpdateError::DuplicateKeyLocation(location)
         );
 
-        let public: PublicKey = if let Some(method_secret_key) = method_secret {
-          insert_method_secret(store, state.id(), &location, authentication, method_secret_key).await
+        let public: PublicKey = if let Some(method_private_key) = method_secret {
+          insert_method_secret(store, state.id(), &location, authentication, method_private_key).await
         } else {
           store.key_new(state.id(), &location).await
         }?;
@@ -148,8 +148,8 @@ impl Command {
           UpdateError::DuplicateKeyFragment(location.fragment.clone()),
         );
 
-        let public: PublicKey = if let Some(method_secret_key) = method_secret {
-          insert_method_secret(store, state.id(), &location, type_, method_secret_key).await
+        let public: PublicKey = if let Some(method_private_key) = method_secret {
+          insert_method_secret(store, state.id(), &location, type_, method_private_key).await
         } else {
           store.key_new(state.id(), &location).await
         }?;
@@ -252,13 +252,13 @@ async fn insert_method_secret(
   method_secret: MethodSecret,
 ) -> Result<PublicKey> {
   match method_secret {
-    MethodSecret::Ed25519(secret_key) => {
+    MethodSecret::Ed25519(private_key) => {
       ensure!(
-        secret_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+        private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
         UpdateError::InvalidMethodSecret(format!(
-          "an ed25519 secret key requires {} bytes, found {}",
+          "an ed25519 private key requires {} bytes, found {}",
           ed25519::SECRET_KEY_LENGTH,
-          secret_key.as_ref().len()
+          private_key.as_ref().len()
         ))
       );
 
@@ -269,7 +269,7 @@ async fn insert_method_secret(
         )
       );
 
-      store.key_insert(identity_id, location, secret_key).await
+      store.key_insert(identity_id, location, private_key).await
     }
     MethodSecret::MerkleKeyCollection(_) => {
       ensure!(

@@ -38,7 +38,7 @@ async fn main() -> Result<()> {
   };
 
   // Generate a signed diff object.
-  let diff: DocumentDiff = document.diff(&updated_document, *receipt.message_id(), keypair.secret())?;
+  let diff: DocumentDiff = document.diff(&updated_document, *receipt.message_id(), keypair.private())?;
 
   println!("Diff > {:#?}", diff);
 

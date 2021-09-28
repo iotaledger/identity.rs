@@ -275,7 +275,7 @@ rusty_fork_test! {
 
 
   #[test]
-  fn test_store_secret_key() {
+  fn test_store_private_key() {
     block_on(async {
       let password: EncryptionKey = derive_encryption_key("my-password:test_vault_persistence");
       let filename: PathBuf = generate_filename();
@@ -286,7 +286,7 @@ rusty_fork_test! {
         let snapshot: Snapshot = open_snapshot(&filename, password).await;
         let vault = snapshot.vault(b"persistence", &[]);
 
-        vault.insert(location("A"), keypair.secret().as_ref(), default_hint(), &[]).await.unwrap();
+        vault.insert(location("A"), keypair.private().as_ref(), default_hint(), &[]).await.unwrap();
 
         snapshot.unload(true).await.unwrap();
       }

@@ -21,7 +21,7 @@ use self::diff_chain::update_integration_chain;
 fn generate_signed_document(keypair: &KeyPair) {
   let mut document: IotaDocument = IotaDocument::from_keypair(keypair).unwrap();
 
-  document.sign(keypair.secret()).unwrap();
+  document.sign(keypair.private()).unwrap();
 }
 
 fn generate_did(keypair: &KeyPair) {

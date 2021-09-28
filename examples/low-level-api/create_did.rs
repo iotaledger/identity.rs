@@ -21,7 +21,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
   let mut document: IotaDocument = IotaDocument::from_keypair(&keypair)?;
 
   // Sign the DID Document with the default authentication key.
-  document.sign(keypair.secret())?;
+  document.sign(keypair.private())?;
 
   println!("DID Document JSON > {:#}", document);
 

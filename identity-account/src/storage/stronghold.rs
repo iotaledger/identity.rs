@@ -11,8 +11,8 @@ use futures::TryStreamExt;
 use hashbrown::HashSet;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
+use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_core::crypto::SecretKey;
 use identity_did::verification::MethodType;
 use iota_stronghold::Location;
 use iota_stronghold::SLIP10DeriveInput;
@@ -101,11 +101,11 @@ impl Storage for Stronghold {
     Ok(public)
   }
 
-  async fn key_insert(&self, id: IdentityId, location: &KeyLocation, secret_key: SecretKey) -> Result<PublicKey> {
+  async fn key_insert(&self, id: IdentityId, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey> {
     let vault = self.vault(id);
 
     vault
-      .insert(location_skey(location), secret_key.as_ref(), default_hint(), &[])
+      .insert(location_skey(location), private_key.as_ref(), default_hint(), &[])
       .await?;
 
     match location.method() {

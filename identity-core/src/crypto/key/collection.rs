@@ -18,8 +18,8 @@ use crate::crypto::merkle_tree::Proof;
 use crate::crypto::KeyPair;
 use crate::crypto::KeyRef;
 use crate::crypto::KeyType;
+use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
-use crate::crypto::SecretKey;
 use crate::error::Error;
 use crate::error::Result;
 use crate::utils::generate_ed25519_keypairs;
@@ -29,30 +29,30 @@ use crate::utils::generate_ed25519_keypairs;
 pub struct KeyCollection {
   type_: KeyType,
   public: Box<[PublicKey]>,
-  secret: Box<[SecretKey]>,
+  private: Box<[PrivateKey]>,
 }
 
 impl KeyCollection {
   /// Creates a new [`KeyCollection`] from an iterator of
-  /// [`PublicKey`]/[`SecretKey`] pairs.
+  /// [`PublicKey`]/[`PrivateKey`] pairs.
   pub fn from_iterator<I>(type_: KeyType, iter: I) -> Result<Self>
   where
-    I: IntoIterator<Item = (PublicKey, SecretKey)>,
+    I: IntoIterator<Item = (PublicKey, PrivateKey)>,
   {
-    let (public, secret): (Vec<_>, Vec<_>) = iter.into_iter().unzip();
+    let (public, private): (Vec<_>, Vec<_>) = iter.into_iter().unzip();
 
     if public.is_empty() {
       return Err(Error::InvalidKeyCollectionSize(public.len()));
     }
 
-    if secret.is_empty() {
-      return Err(Error::InvalidKeyCollectionSize(secret.len()));
+    if private.is_empty() {
+      return Err(Error::InvalidKeyCollectionSize(private.len()));
     }
 
     Ok(Self {
       type_,
       public: public.into_boxed_slice(),
-      secret: secret.into_boxed_slice(),
+      private: private.into_boxed_slice(),
     })
   }
 
@@ -63,7 +63,7 @@ impl KeyCollection {
 
   /// Creates a new [`KeyCollection`] with the given [`key type`][`KeyType`].
   pub fn new(type_: KeyType, count: usize) -> Result<Self> {
-    let keys: Vec<(PublicKey, SecretKey)> = match type_ {
+    let keys: Vec<(PublicKey, PrivateKey)> = match type_ {
       KeyType::Ed25519 => generate_ed25519_keypairs(count)?,
     };
 
@@ -95,28 +95,28 @@ impl KeyCollection {
     self.public.get(index).map(|key| KeyRef::new(self.type_, key.as_ref()))
   }
 
-  /// Returns a reference to the secret key at the specified `index`.
-  pub fn secret(&self, index: usize) -> Option<&SecretKey> {
-    self.secret.get(index)
+  /// Returns a reference to the private key at the specified `index`.
+  pub fn private(&self, index: usize) -> Option<&PrivateKey> {
+    self.private.get(index)
   }
 
-  /// Returns a [`KeyRef`] object referencing the secret key at the specified `index`.
-  pub fn secret_ref(&self, index: usize) -> Option<KeyRef<'_>> {
-    self.secret.get(index).map(|key| KeyRef::new(self.type_, key.as_ref()))
+  /// Returns a [`KeyRef`] object referencing the private key at the specified `index`.
+  pub fn private_ref(&self, index: usize) -> Option<KeyRef<'_>> {
+    self.private.get(index).map(|key| KeyRef::new(self.type_, key.as_ref()))
   }
 
   /// Returns a [`KeyPair`] object for the keys at the specified `index`.
   pub fn keypair(&self, index: usize) -> Option<KeyPair> {
-    if let (Some(public), Some(secret)) = (self.public.get(index), self.secret.get(index)) {
-      Some((self.type_, public.clone(), secret.clone()).into())
+    if let (Some(public), Some(private)) = (self.public.get(index), self.private.get(index)) {
+      Some((self.type_, public.clone(), private.clone()).into())
     } else {
       None
     }
   }
 
   /// Returns an iterator over the key pairs in the collection.
-  pub fn iter(&self) -> impl Iterator<Item = (&PublicKey, &SecretKey)> {
-    self.public.iter().zip(self.secret.iter())
+  pub fn iter(&self) -> impl Iterator<Item = (&PublicKey, &PrivateKey)> {
+    self.public.iter().zip(self.private.iter())
   }
 
   /// Returns an iterator over the public keys in the collection.
@@ -124,9 +124,9 @@ impl KeyCollection {
     self.public.iter()
   }
 
-  /// Returns an iterator over the secret keys in the collection.
-  pub fn iter_secret(&self) -> Iter<'_, SecretKey> {
-    self.secret.iter()
+  /// Returns an iterator over the private keys in the collection.
+  pub fn iter_private(&self) -> Iter<'_, PrivateKey> {
+    self.private.iter()
   }
 
   /// Returns the Merkle root hash of the public keys in the collection.
@@ -153,9 +153,9 @@ impl KeyCollection {
   {
     let proof: Proof<D> = self.merkle_proof(index)?;
     let public: &PublicKey = self.public(index)?;
-    let secret: &SecretKey = self.secret(index)?;
+    let private: &PrivateKey = self.private(index)?;
 
-    Some(SigningKey::from_owned(public, secret, proof))
+    Some(SigningKey::from_owned(public, private, proof))
   }
 
   /// Creates a DID Document public key value for the Merkle root of
@@ -189,11 +189,11 @@ where
 }
 
 impl IntoIterator for KeyCollection {
-  type Item = (PublicKey, SecretKey);
-  type IntoIter = Zip<IntoIter<PublicKey>, IntoIter<SecretKey>>;
+  type Item = (PublicKey, PrivateKey);
+  type IntoIter = Zip<IntoIter<PublicKey>, IntoIter<PrivateKey>>;
 
   fn into_iter(self) -> Self::IntoIter {
-    self.public.to_vec().into_iter().zip(self.secret.to_vec().into_iter())
+    self.public.to_vec().into_iter().zip(self.private.to_vec().into_iter())
   }
 }
 
@@ -209,27 +209,27 @@ mod tests {
     assert!(!keys.is_empty());
 
     let public: Vec<_> = keys.iter_public().cloned().collect();
-    let secret: Vec<_> = keys.iter_secret().cloned().collect();
+    let private: Vec<_> = keys.iter_private().cloned().collect();
 
     assert_eq!(public.len(), keys.len());
-    assert_eq!(secret.len(), keys.len());
+    assert_eq!(private.len(), keys.len());
 
-    for (index, (public, secret)) in public.iter().zip(secret.iter()).enumerate() {
+    for (index, (public, private)) in public.iter().zip(private.iter()).enumerate() {
       assert_eq!(public.as_ref(), keys.public(index).unwrap().as_ref());
-      assert_eq!(secret.as_ref(), keys.secret(index).unwrap().as_ref());
+      assert_eq!(private.as_ref(), keys.private(index).unwrap().as_ref());
     }
 
-    let iter: _ = public.into_iter().zip(secret.into_iter());
+    let iter: _ = public.into_iter().zip(private.into_iter());
     let next: KeyCollection = KeyCollection::from_iterator(keys.type_(), iter).unwrap();
 
     assert_eq!(next.len(), keys.len());
 
     let public: Vec<_> = next.iter_public().cloned().collect();
-    let secret: Vec<_> = next.iter_secret().cloned().collect();
+    let private: Vec<_> = next.iter_private().cloned().collect();
 
-    for (index, (public, secret)) in public.iter().zip(secret.iter()).enumerate() {
+    for (index, (public, private)) in public.iter().zip(private.iter()).enumerate() {
       assert_eq!(public.as_ref(), keys.public(index).unwrap().as_ref());
-      assert_eq!(secret.as_ref(), keys.secret(index).unwrap().as_ref());
+      assert_eq!(private.as_ref(), keys.private(index).unwrap().as_ref());
     }
   }
 }

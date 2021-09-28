@@ -17,8 +17,8 @@ use identity_core::crypto::merkle_key::VerificationKey;
 use identity_core::crypto::merkle_tree::Proof;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::JcsEd25519;
+use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_core::crypto::SecretKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Sign;
 use identity_core::crypto::Signature;
@@ -101,7 +101,7 @@ where
   U: Serialize,
   V: Serialize,
 {
-  pub fn sign_this<'query, Q>(&mut self, query: Q, secret: &SecretKey) -> Result<()>
+  pub fn sign_this<'query, Q>(&mut self, query: Q, private: &PrivateKey) -> Result<()>
   where
     Q: Into<MethodQuery<'query>>,
   {
@@ -110,7 +110,7 @@ where
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(self, &fragment, secret.as_ref())?;
+        JcsEd25519::<Ed25519>::create_signature(self, &fragment, private.as_ref())?;
       }
       MethodType::MerkleKeyCollection2021 => {
         // CoreDocuments can't be signed with Merkle Key Collections
@@ -143,8 +143,8 @@ where
 impl<T, U, V> CoreDocument<T, U, V> {
   /// Creates a new [`DocumentSigner`] that can be used to create digital
   /// signatures from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, secret: &'base SecretKey) -> DocumentSigner<'base, '_, '_, T, U, V> {
-    DocumentSigner::new(self, secret)
+  pub fn signer<'base>(&'base self, private: &'base PrivateKey) -> DocumentSigner<'base, '_, '_, T, U, V> {
+    DocumentSigner::new(self, private)
   }
 
   /// Creates a new [`DocumentVerifier`] that can be used to verify signatures
@@ -160,16 +160,16 @@ impl<T, U, V> CoreDocument<T, U, V> {
 
 pub struct DocumentSigner<'base, 'query, 'proof, T, U, V> {
   document: &'base CoreDocument<T, U, V>,
-  secret: &'base SecretKey,
+  private: &'base PrivateKey,
   method: Option<MethodQuery<'query>>,
   merkle_key: Option<(&'proof PublicKey, &'proof dyn Any)>,
 }
 
 impl<'base, T, U, V> DocumentSigner<'base, '_, '_, T, U, V> {
-  pub fn new(document: &'base CoreDocument<T, U, V>, secret: &'base SecretKey) -> Self {
+  pub fn new(document: &'base CoreDocument<T, U, V>, private: &'base PrivateKey) -> Self {
     Self {
       document,
-      secret,
+      private,
       method: None,
       merkle_key: None,
     }
@@ -213,7 +213,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(that, &method_uri, self.secret.as_ref())?;
+        JcsEd25519::<Ed25519>::create_signature(that, &method_uri, self.private.as_ref())?;
       }
       MethodType::MerkleKeyCollection2021 => {
         let data: Vec<u8> = method.key_data().try_decode()?;
@@ -239,7 +239,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
   where
     X: Serialize + SetSignature,
     D: MerkleDigest,
-    S: MerkleSignature + Sign<Secret = [u8]>,
+    S: MerkleSignature + Sign<Private = [u8]>,
     S::Output: AsRef<[u8]>,
   {
     match self.merkle_key {
@@ -248,7 +248,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
           .downcast_ref()
           .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))?;
 
-        let skey: SigningKey<'_, D> = SigningKey::from_borrowed(public, self.secret, proof);
+        let skey: SigningKey<'_, D> = SigningKey::from_borrowed(public, self.private, proof);
 
         MerkleSigner::<D, S>::create_signature(that, &method, &skey)?;
 
