@@ -256,7 +256,7 @@ async fn insert_method_secret(
       ensure!(
         private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
         UpdateError::InvalidMethodSecret(format!(
-          "an ed25519 secret key requires {} bytes, found {}",
+          "an ed25519 private key requires {} bytes, found {}",
           ed25519::SECRET_KEY_LENGTH,
           private_key.as_ref().len()
         ))

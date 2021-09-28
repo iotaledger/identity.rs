@@ -12,7 +12,7 @@ use crate::error::Result;
 
 /// A common interface for digital signature creation.
 pub trait Sign {
-  /// The secret key type of this signature implementation.
+  /// The private key type of this signature implementation.
   type Private: ?Sized;
 
   /// The output type of this signature implementation.

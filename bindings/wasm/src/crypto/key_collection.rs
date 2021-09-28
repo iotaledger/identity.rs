@@ -132,10 +132,10 @@ impl KeyCollection {
     let data: JsonData = json.into_serde().map_err(wasm_error)?;
 
     let iter: _ = data.keys.iter().flat_map(|data| {
-      let pk: PublicKey = decode_b58(&data.public).ok()?.into();
-      let sk: PrivateKey = decode_b58(&data.private).ok()?.into();
+      let public_key: PublicKey = decode_b58(&data.public).ok()?.into();
+      let private_key: PrivateKey = decode_b58(&data.private).ok()?.into();
 
-      Some((pk, sk))
+      Some((public_key, private_key))
     });
 
     KeyCollection_::from_iterator(data.type_.into(), iter)
