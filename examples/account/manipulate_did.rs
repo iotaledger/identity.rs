@@ -15,7 +15,7 @@ mod create_did;
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  //Calls the create_identity function from the create_did example - this is not part of the framework, but rather reusing the previous example.
+  // Calls the create_identity function from the create_did example - this is not part of the framework, but rather reusing the previous example.
   let (account, iota_did): (Account, IotaDID) = create_did::run().await?;
 
   // Add another Ed25519 verification method to the identity

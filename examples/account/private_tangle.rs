@@ -8,8 +8,10 @@
 //! for setup instructions.
 //!
 //! cargo run --example account_private_tangle
+use std::path::PathBuf;
 
 use identity::account::Account;
+use identity::account::AccountStorage;
 use identity::account::IdentityCreate;
 use identity::account::IdentitySnapshot;
 use identity::account::Result;
@@ -21,6 +23,10 @@ use identity::iota::Network;
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
+  // Stronghold settings
+  let stronghold_path: PathBuf = "./example-strong.hodl".into();
+  let password: String = "my-password".into();
+
   // This name needs to match the id of the network or part of it.
   // Since the id of the one-click private tangle is `private-tangle`
   // but we can only use 6 characters, we use just `tangle`.
@@ -30,6 +36,8 @@ async fn main() -> Result<()> {
   // Create a new Account with a custom client configuration.
   let private_node_url = "http://127.0.0.1:14265/";
   let account: Account = Account::builder()
+    //Set Stronghold as storage
+    .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
     // Configure a client for the private network.
     // Also set the URL that points to the REST API
     // of the locally running hornet node.
