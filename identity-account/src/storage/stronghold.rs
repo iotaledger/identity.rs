@@ -428,7 +428,7 @@ fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {
   format!(
     "{}:{}:{}:{}",
     prefix,
-    location.auth_generation(),
+    location.integration_generation(),
     location.diff_generation(),
     location.fragment(),
   )

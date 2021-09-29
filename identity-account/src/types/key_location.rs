@@ -15,7 +15,7 @@ use crate::types::Generation;
 pub struct KeyLocation {
   pub(crate) method: MethodType,
   pub(crate) fragment: Fragment,
-  pub(crate) auth_generation: Generation,
+  pub(crate) integration_generation: Generation,
   pub(crate) diff_generation: Generation,
 }
 
@@ -29,7 +29,7 @@ impl KeyLocation {
     Self {
       method,
       fragment: Fragment::new(fragment),
-      auth_generation: generation,
+      integration_generation: generation,
       diff_generation: Generation::new(),
     }
   }
@@ -44,9 +44,9 @@ impl KeyLocation {
     self.fragment.name()
   }
 
-  /// Returns the auth generation when this key was created.
-  pub fn auth_generation(&self) -> Generation {
-    self.auth_generation
+  /// Returns the integration generation when this key was created.
+  pub fn integration_generation(&self) -> Generation {
+    self.integration_generation
   }
 
   /// Returns the diff generation when this key was created.
@@ -69,7 +69,7 @@ impl Display for KeyLocation {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_fmt(format_args!(
       "({}:{}:{}:{})",
-      self.auth_generation,
+      self.integration_generation,
       self.diff_generation,
       self.fragment,
       self.method.as_u32()

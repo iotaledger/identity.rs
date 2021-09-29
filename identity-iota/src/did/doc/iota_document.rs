@@ -8,6 +8,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 
+use identity_did::did::DID;
 use serde::Serialize;
 
 use identity_core::common::Object;
@@ -106,9 +107,12 @@ impl IotaDocument {
   ///
   /// This must be guaranteed safe by the caller.
   pub unsafe fn from_authentication_unchecked(method: IotaVerificationMethod) -> Self {
+    let verification_method_did: DID = method.id().as_ref().clone();
+
     CoreDocument::builder(Default::default())
       .id(method.controller().clone().into())
-      .authentication(method)
+      .verification_method(method.into())
+      .authentication(MethodRef::Refer(verification_method_did))
       .build()
       .map(CoreDocument::into_verifiable)
       .map(TryInto::try_into)
@@ -1055,5 +1059,26 @@ mod tests {
     let message_id = MessageId::from_str("c38d6c541f98f780ddca6ad648ff0e073cd86c4dee248149c2de789d84d42132").unwrap();
     let diff_index = IotaDocument::diff_index(&message_id).expect("failed to generate diff_index");
     assert_eq!(diff_index, "2g45GsCAmkvQfcrHGUgqwQJLbYY3Gic8f23wf71sGGGP");
+  }
+
+  #[test]
+  fn test_new_document_has_verification_method_with_authentication_relationship() {
+    let keypair: KeyPair = generate_testkey();
+    let document: IotaDocument = IotaDocument::new(&keypair, None).unwrap();
+
+    let verif_method = document.resolve("#authentication").unwrap();
+    let auth_method = document.authentication();
+
+    // `methods` returns all embedded verification methods, so only one is expected.
+    assert_eq!(document.methods().count(), 1);
+
+    // Assert that the verification method and the authentication method are the same
+    assert_eq!(verif_method, auth_method);
+
+    // Assert that the fragment of the authentication method reference is `authentication`
+    match document.document.authentication().first().unwrap().clone().into_inner() {
+      MethodRef::Refer(did) => assert_eq!(did.fragment().unwrap_or_default(), "authentication"),
+      MethodRef::Embed(_) => panic!("authentication method should be a reference"),
+    }
   }
 }
