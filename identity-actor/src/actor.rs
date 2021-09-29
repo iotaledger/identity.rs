@@ -17,9 +17,14 @@ use serde_json::error::Category;
 use tokio::task::{self, JoinHandle};
 use uuid::Uuid;
 
+/// A map from the uuid of a handler to the object that contains the state of that handler.
+type ObjectMap = DashMap<Uuid, Box<dyn Any + Send + Sync>>;
+/// A map from a request name to the uuid of the state object and the method that handles that request.
+type HandlerMap = DashMap<String, (Uuid, Box<dyn RequestHandler>)>;
+
 pub struct HandlerBuilder {
   object_id: Uuid,
-  handlers: Arc<DashMap<String, (Uuid, Box<dyn RequestHandler>)>>,
+  handlers: Arc<HandlerMap>,
 }
 
 impl HandlerBuilder {
@@ -37,8 +42,8 @@ impl HandlerBuilder {
 
 pub struct Actor {
   comm: StrongholdP2p<RequestMessage, ResponseMessage>,
-  handlers: Arc<DashMap<String, (Uuid, Box<dyn RequestHandler>)>>,
-  objects: Arc<DashMap<Uuid, Box<dyn Any + Send + Sync + 'static>>>,
+  handlers: Arc<HandlerMap>,
+  objects: Arc<ObjectMap>,
   listener_handle: Option<JoinHandle<Result<()>>>,
 }
 
@@ -46,8 +51,8 @@ impl Actor {
   pub(crate) async fn from_builder(
     receiver: mpsc::Receiver<ReceiveRequest<RequestMessage, ResponseMessage>>,
     mut comm: StrongholdP2p<RequestMessage, ResponseMessage>,
-    handlers: DashMap<String, (Uuid, Box<dyn RequestHandler>)>,
-    objects: DashMap<Uuid, Box<dyn Any + Send + Sync + 'static>>,
+    handlers: HandlerMap,
+    objects: ObjectMap,
     listening_addresses: Vec<Multiaddr>,
   ) -> Result<Self> {
     let handlers = Arc::new(handlers);
@@ -109,8 +114,8 @@ impl Actor {
   /// A second caller would immediately receive an [`Error::LockInUse`].
   fn spawn_listener(
     mut receiver: mpsc::Receiver<ReceiveRequest<RequestMessage, ResponseMessage>>,
-    objects: Arc<DashMap<Uuid, Box<dyn Any + Send + Sync>>>,
-    handlers: Arc<DashMap<String, (Uuid, Box<dyn RequestHandler>)>>,
+    objects: Arc<ObjectMap>,
+    handlers: Arc<HandlerMap>,
   ) -> JoinHandle<Result<()>> {
     task::spawn(async move {
       let mut handles = vec![];
@@ -127,8 +132,8 @@ impl Actor {
 
   fn spawn_handler(
     receive_request: ReceiveRequest<RequestMessage, ResponseMessage>,
-    objects: Arc<DashMap<Uuid, Box<dyn Any + Send + Sync>>>,
-    handlers: Arc<DashMap<String, (Uuid, Box<dyn RequestHandler>)>>,
+    objects: Arc<ObjectMap>,
+    handlers: Arc<HandlerMap>,
   ) -> JoinHandle<Result<()>> {
     task::spawn(async move {
       let request = receive_request.request;
