@@ -16,7 +16,8 @@ impl Fragment {
   const PREFIX: char = '#';
 
   /// Creates a new Fragment from the given `value`.
-  pub fn new(value: String) -> Self {
+  pub fn new(value: impl Into<String>) -> Self {
+    let value = value.into();
     if value.starts_with(Self::PREFIX) {
       Self(value)
     } else {
