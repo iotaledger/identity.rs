@@ -1,4 +1,12 @@
-use std::{any::{Any, TypeId}, borrow::Cow, fmt::Debug, pin::Pin};
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
+use std::{
+  any::{Any, TypeId},
+  borrow::Cow,
+  fmt::Debug,
+  pin::Pin,
+};
 
 use futures::Future;
 use serde::{de::DeserializeOwned, Serialize};

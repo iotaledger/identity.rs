@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use libp2p::{Multiaddr, PeerId};
 
 use crate::{asyncfn::AsyncFn, storage::requests::IdentityList, Actor, IdentityResolve, StorageHandler};

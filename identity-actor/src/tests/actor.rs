@@ -1,3 +1,6 @@
+// Copyright 2020-2021 IOTA Stiftung
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::{errors::SendError, IdentityResolve};
 
 use super::{default_listening_actor, default_sending_actor};
