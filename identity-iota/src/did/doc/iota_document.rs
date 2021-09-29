@@ -72,9 +72,10 @@ impl IotaDocument {
   /// Creates a new DID Document from the given [`KeyPair`] and network, defaulting to
   /// [`Network::Mainnet`](crate::tangle::Network::Mainnet) if unspecified.
   ///
-  /// The DID Document will be pre-populated with a single authentication verification method
-  /// derived from the provided [`KeyPair`]. This method will have the DID URL fragment
-  /// `#authentication` and can be easily retrieved with [`Document::authentication`].
+  /// The DID Document will be pre-populated with a single verification method
+  /// derived from the provided [`KeyPair`], with an attached authentication relationship.
+  /// This method will have the DID URL fragment `#authentication` and can be easily
+  /// retrieved with [`Document::authentication`].
   ///
   /// NOTE: the generated document is unsigned, see [`Document::sign`].
   pub fn new(keypair: &KeyPair, network: Option<&str>) -> Result<Self> {
@@ -516,7 +517,7 @@ impl IotaDocument {
 
   /// Returns the Tangle index of the integration chain for this DID.
   ///
-  /// This corresponds with the tag segment of the [`IotaDID`].
+  /// This is equivalent to the tag segment of the [`IotaDID`].
   ///
   /// E.g.
   /// For an [`IotaDocument`] `doc` with `"did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"`,
