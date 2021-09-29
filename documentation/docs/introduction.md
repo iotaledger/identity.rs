@@ -18,47 +18,54 @@ In this guide, we will go through the most important concepts that developers wi
 
 ## Overview
 
-### Chapter 2: Decentralized Identity
+### [Decentralized Identity](decentralized_identity)
 
-Describes the concept of Decentralized or Self Sovereign Identities (SSI), how it applies to People, Organizations and Things, and why IOTA is used. 
+Describes the concept of Decentralized or Self Sovereign Identities (SSI), how it applies to People, Organizations and Things, and why IOTA is used.
 
-### Chapter 3.1: Decentralized Identifiers (DID)
+### [Getting Started](getting_started/install)
+
+Get started with the IOTA Identity Framework: [Install the library](getting_started/install) and [create and publish](getting_started/create_and_publish) your first DID Document.
+
+### [Decentralized Identifiers (DID)](decentralized_identifiers/overview)
 
 Explains the DID standard from W3C, how to manipulate DID Documents and Merkle Key Collections, the basis of our revocation mechanism.
 
-### Chapter 3.2: Verifiable Credentials (VC)
+### [Verifiable Credentials (VC)](verifiable_credentials/overview)
 
 Explains the VC standard from W3C, how to create and revoke VCs, and how to use Verifiable Presentations.
 
-### Chapter 3.3: DID Communications (DID Comm)
+### [DID Communications (DID Comm)](did_communications/overview)
 
 This chapter covers the DID Comm standard, which is being developed by the Decentralized Identity Foundation (DIF). It also describes the different messages agents may send each other and what the expected responses may look like.
 
-### Chapter 3.4: Advanced Concepts
+### [Advanced Concepts](advanced/overview)
 
 This chapter is meant for those that want to push the IOTA Identity framework to its limits, utilizing the more complex, yet more flexible lower level libraries, allowing developers to optimize their implementation, take control over storage/security, and add features to the framework. 
 
-### Chapter 4: Programming Languages
+### Programming Languages
 
-While the framework itself is developed in the Rust programming language, we also provide bindings, or "Foreign Function Interfaces" (FFI), to other languages. These will have separate getting started sections, making the rest of the guide language agnostic, focusing on the conceptual level. 
+While the framework itself is developed in the Rust programming language, we also provide bindings, or "Foreign Function Interfaces" (FFI), to other languages. These will have separate getting started sections, making the rest of the guide language agnostic, focusing on the conceptual level. The full set of language bindings currently available is:
 
-### Chapter 5: Specification
+- [Rust](libraries/rust/getting_started)
+- [WASM](libraries/wasm/getting_started)
+
+### [Specification](specs/overview)
 
 While IOTA Identity implements many existing standards, it also adds some additional features we would like to standardize ourselves. This chapter covers these features and how they work in great detail. These are not light reads and can be skipped. 
 
 
-### Chapter 6: Glossary
+### [Glossary](glossary)
 
 A list of all terminology used in this guide, the framework and all materials surrounding it. 
 
-### Chapter 7: Contribute
+### [Contribute](contribute)
 
 A simple guide on how to contribute to the framework.
 
-### Chapter 8: Contact
+### [Contact](contact)
 
 How to contact the maintainers.
 
-### Chapter 9: FAQ
+### [FAQ](faq)
 
 Overview of the most Frequently Asked Questions, and their answers.

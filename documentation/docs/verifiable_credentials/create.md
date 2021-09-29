@@ -1,12 +1,13 @@
 ---
 title: Creating a Decentralized Identity
 sidebar_label: Create and Publish
-description: DID Documents and publishing them to the Tangle
+description: Create DID Documents and publish them to the Tangle
 image: /img/Identity_icon.png
 keywords:
 - Documents
 - DID
 - Tangle
+- Create
 - Publish
 ---
 
@@ -14,7 +15,7 @@ When someone or something wants to benefit from Self-Sovereign Identity, they mu
 
 The example below utilizes the high-level account module of the IOTA Identity framework to create an identity. The account is the easiest method of using IOTA Identity. It is recommended to use the account for your use cases, a lower-level API is also available, providing more flexibility at the cost of more complexity.
 
-### Creating an Identity using the Account
+## Creating an Identity using the Account
 
 :::tip Using Replit
 
@@ -22,7 +23,7 @@ Select your programming language of choice and press the green play button to ex
 
 :::
 
-import CodeSnippet from '../../../src/components/CodeSnippetComponent'
+import CodeSnippet from '../../src/components/CodeSnippetComponent'
 
 <CodeSnippet nodeReplitLink="https://repl.it/@abdulmth/Create-did?lite=true"
 rustReplitLink="https://replit.com/@JelleMillenaar1/accountbasic?lite=true"></CodeSnippet>

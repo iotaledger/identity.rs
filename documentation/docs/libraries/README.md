@@ -2,5 +2,5 @@
 
 We currently support the following libraries:
 
-- [Rust](rust/overview.md) 
-- [WASM](wasm/overview.md) 
+- [Rust](rust/getting_started) 
+- [WASM](wasm/getting_started) 

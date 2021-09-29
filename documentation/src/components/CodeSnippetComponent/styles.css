@@ -26,9 +26,9 @@
     height: 600px;
     width: 100%;
     background-color: var(--ifm-color-emphasis-500);
-    border-radius:10px;
     overflow: hidden;
-    border-radius:0px 10px 10px 10px; 
+    border-radius:0px 10px 10px 10px;
+    margin-bottom: 20px;
 }
 
 .langSelector {
