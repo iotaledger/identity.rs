@@ -3,7 +3,7 @@
 
 use libp2p::{Multiaddr, PeerId};
 
-use crate::{asyncfn::AsyncFn, storage::requests::IdentityList, Actor, IdentityResolve, StorageHandler};
+use crate::{storage::requests::IdentityList, Actor, IdentityResolve, StorageHandler};
 
 use super::{default_listening_actor, default_sending_actor};
 
@@ -14,8 +14,8 @@ async fn default_storage_listening_actor() -> (Actor, Multiaddr, PeerId) {
 
   listening_actor
     .add_handler(handler)
-    .add_method("storage/list", AsyncFn::new(StorageHandler::list))
-    .add_method("storage/resolve", AsyncFn::new(StorageHandler::resolve));
+    .add_method("storage/list", StorageHandler::list)
+    .add_method("storage/resolve", StorageHandler::resolve);
 
   (listening_actor, addr, peer_id)
 }

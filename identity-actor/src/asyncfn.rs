@@ -23,7 +23,7 @@ where
   // Need to use the types that appear in the closure's arguments here,
   // as it is otherwise considered unused.
   // Since this type does not actually own any of these types, we use a reference.
-  // See alos the drop check section in the PhantomData doc.
+  // See also the drop check section in the PhantomData doc.
   _marker_obj: PhantomData<&'static H>,
   _marker_req: PhantomData<&'static R>,
 }
