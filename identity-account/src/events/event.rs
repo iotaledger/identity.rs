@@ -45,9 +45,9 @@ impl Event {
     trace!("[Event::apply] State = {:?}", state);
 
     match self.data {
-      EventData::IntMessage(message) => {
-        state.set_int_message_id(message);
-        state.increment_int_generation()?;
+      EventData::IntegrationMessage(message) => {
+        state.set_integration_message_id(message);
+        state.increment_integration_generation()?;
       }
       EventData::DiffMessage(message) => {
         state.set_diff_message_id(message);
@@ -105,7 +105,7 @@ impl Event {
 #[serde(tag = "type", content = "data")]
 pub enum EventData {
   /// Emitted when a new int message is published to the IOTA Tangle.
-  IntMessage(MessageId),
+  IntegrationMessage(MessageId),
   /// Emitted when a new diff message is published to the IOTA Tangle.
   DiffMessage(MessageId),
   /// Emitted when a new identity state is created.

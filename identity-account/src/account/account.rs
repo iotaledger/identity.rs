@@ -282,7 +282,7 @@ impl Account {
     new_state: &IdentityState,
     document: &mut IotaDocument,
   ) -> Result<()> {
-    if new_state.int_generation() == Generation::new() {
+    if new_state.integration_generation() == Generation::new() {
       let method: &TinyMethod = new_state.authentication()?;
       let location: &KeyLocation = method.location();
 
@@ -299,7 +299,7 @@ impl Account {
     Ok(())
   }
 
-  async fn process_int_change(&self, old_root: IdentitySnapshot) -> Result<()> {
+  async fn process_integration_change(&self, old_root: IdentitySnapshot) -> Result<()> {
     let new_root: IdentitySnapshot = self.load_snapshot(old_root.id()).await?;
 
     let old_state: &IdentityState = old_root.identity();
@@ -315,7 +315,7 @@ impl Account {
       self.state.clients.publish_document(&new_doc).await?.into()
     };
 
-    let events: [Event; 1] = [Event::new(EventData::IntMessage(message))];
+    let events: [Event; 1] = [Event::new(EventData::IntegrationMessage(message))];
 
     self.commit_events(&new_root, &events).await?;
 
@@ -478,7 +478,7 @@ impl Account {
     let id: IdentityId = snapshot.id();
 
     match Publish::new(&commits) {
-      Publish::Int => self.process_int_change(snapshot).await?,
+      Publish::Integration => self.process_integration_change(snapshot).await?,
       Publish::Diff => self.process_diff_change(snapshot).await?,
       Publish::None => {}
     }
@@ -635,7 +635,7 @@ impl State {
 #[derive(Clone, Copy, Debug)]
 enum Publish {
   None,
-  Int,
+  Integration,
   Diff,
 }
 
@@ -646,9 +646,9 @@ impl Publish {
 
   const fn apply(self, commit: &Commit) -> Self {
     match (self, commit.event().data()) {
-      (Self::Int, _) => Self::Int,
-      (_, EventData::IdentityCreated(..)) => Self::Int,
-      (_, EventData::IntMessage(_)) => self,
+      (Self::Integration, _) => Self::Integration,
+      (_, EventData::IdentityCreated(..)) => Self::Integration,
+      (_, EventData::IntegrationMessage(_)) => self,
       (_, EventData::DiffMessage(_)) => self,
       (_, _) => Self::Diff,
     }

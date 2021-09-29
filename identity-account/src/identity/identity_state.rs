@@ -47,12 +47,12 @@ pub struct IdentityState {
   // Chain State //
   // =========== //
   id: IdentityId,
-  int_generation: Generation,
+  integration_generation: Generation,
   diff_generation: Generation,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
   this_message_id: MessageId,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
-  last_int_message_id: MessageId,
+  last_integration_message_id: MessageId,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
   last_diff_message_id: MessageId,
 
@@ -79,10 +79,10 @@ impl IdentityState {
   pub fn new(id: IdentityId) -> Self {
     Self {
       id,
-      int_generation: Generation::new(),
+      integration_generation: Generation::new(),
       diff_generation: Generation::new(),
       this_message_id: MessageId::null(),
-      last_int_message_id: MessageId::null(),
+      last_integration_message_id: MessageId::null(),
       last_diff_message_id: MessageId::null(),
       did: None,
       controller: None,
@@ -103,9 +103,9 @@ impl IdentityState {
     self.id
   }
 
-  /// Returns the current generation of the identity int chain.
-  pub fn int_generation(&self) -> Generation {
-    self.int_generation
+  /// Returns the current generation of the identity integration chain.
+  pub fn integration_generation(&self) -> Generation {
+    self.integration_generation
   }
 
   /// Returns the current generation of the identity diff chain.
@@ -113,9 +113,9 @@ impl IdentityState {
     self.diff_generation
   }
 
-  /// Increments the generation of the identity int chain.
-  pub fn increment_int_generation(&mut self) -> Result<()> {
-    self.int_generation = self.int_generation.try_increment()?;
+  /// Increments the generation of the identity integration chain.
+  pub fn increment_integration_generation(&mut self) -> Result<()> {
+    self.integration_generation = self.integration_generation.try_increment()?;
     self.diff_generation = Generation::new();
 
     Ok(())
@@ -132,17 +132,17 @@ impl IdentityState {
   // Tangle State
   // ===========================================================================
 
-  /// Returns the current int Tangle message id of the identity.
+  /// Returns the current integration Tangle message id of the identity.
   pub fn this_message_id(&self) -> &MessageId {
     &self.this_message_id
   }
 
-  /// Returns the previous int Tangle message id of the identity.
+  /// Returns the previous integration Tangle message id of the identity.
   pub fn last_message_id(&self) -> &MessageId {
-    &self.last_int_message_id
+    &self.last_integration_message_id
   }
 
-  /// Returns the previous diff Tangle message id, or the current int message id.
+  /// Returns the previous diff Tangle message id, or the current integration message id.
   pub fn diff_message_id(&self) -> &MessageId {
     if self.last_diff_message_id.is_null() {
       &self.this_message_id
@@ -151,15 +151,15 @@ impl IdentityState {
     }
   }
 
-  /// Sets the current Tangle int message id of the identity.
-  pub fn set_int_message_id(&mut self, message: MessageId) {
-    // Set the current int message id as the previous int message.
-    self.last_int_message_id = self.this_message_id;
+  /// Sets the current Tangle integration message id of the identity.
+  pub fn set_integration_message_id(&mut self, message: MessageId) {
+    // Set the current integration message id as the previous integration message.
+    self.last_integration_message_id = self.this_message_id;
 
     // Clear the diff message id
     self.last_diff_message_id = MessageId::null();
 
-    // Set the new int message id
+    // Set the new integration message id
     self.this_message_id = message;
   }
 
@@ -237,7 +237,7 @@ impl IdentityState {
       .methods()
       .iter()
       .filter(|method| method.is_authentication())
-      .max_by_key(|method| method.location().int_generation())
+      .max_by_key(|method| method.location().integration_generation())
       .ok_or(Error::MethodNotFound)
   }
 
@@ -246,7 +246,7 @@ impl IdentityState {
     Ok(KeyLocation {
       method,
       fragment: Fragment::new(fragment),
-      int_generation: self.int_generation(),
+      integration_generation: self.integration_generation(),
       diff_generation: self.diff_generation(),
     })
   }
@@ -312,8 +312,8 @@ impl IdentityState {
       document.set_message_id(self.this_message_id);
     }
 
-    if !self.last_int_message_id.is_null() {
-      document.set_previous_message_id(self.last_int_message_id);
+    if !self.last_integration_message_id.is_null() {
+      document.set_previous_message_id(self.last_integration_message_id);
     }
 
     document.set_created(self.created.into());
