@@ -17,9 +17,11 @@ use serde_json::error::Category;
 use tokio::task::{self, JoinHandle};
 use uuid::Uuid;
 
-/// A map from the uuid of a handler to the object that contains the state of that handler.
+/// A map from an identifier to an object that contains the
+/// shared state of the associated handler functions.
 type ObjectMap = DashMap<Uuid, Box<dyn Any + Send + Sync>>;
-/// A map from a request name to the uuid of the state object and the method that handles that request.
+/// A map from a request name to the identifier of the shared state object
+/// and the method that handles that particular request.
 type HandlerMap = DashMap<String, (Uuid, Box<dyn RequestHandler>)>;
 
 pub struct HandlerBuilder {
@@ -28,12 +30,12 @@ pub struct HandlerBuilder {
 }
 
 impl HandlerBuilder {
-  pub fn add_method<H, R, F, C>(self, cmd: &'static str, handler: C) -> Self
+  pub fn add_method<OBJ, REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Self
   where
-    H: Clone + Send + Sync + 'static,
-    R: ActorRequest + Send + Sync + 'static,
-    F: Future<Output = R::Response> + Send + 'static,
-    C: 'static + Send + Sync + Fn(H, R) -> F,
+    OBJ: Clone + Send + Sync + 'static,
+    REQ: ActorRequest + Send + Sync + 'static,
+    FUT: Future<Output = REQ::Response> + Send + 'static,
+    FUN: 'static + Send + Sync + Fn(OBJ, REQ) -> FUT,
   {
     let handler = AsyncFn::new(handler);
     self.handlers.insert(cmd.into(), (self.object_id, Box::new(handler)));
@@ -81,9 +83,9 @@ impl Actor {
     })
   }
 
-  pub fn add_handler<H>(&mut self, handler: H) -> HandlerBuilder
+  pub fn add_handler<OBJ>(&mut self, handler: OBJ) -> HandlerBuilder
   where
-    H: Clone + Any + Send + Sync,
+    OBJ: Clone + Send + Sync + 'static,
   {
     let object_id = Uuid::new_v4();
     self.objects.insert(object_id, Box::new(handler));
