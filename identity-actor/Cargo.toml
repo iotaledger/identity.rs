@@ -26,9 +26,9 @@ thiserror = "1.0"
 tokio = { version = "1.7", features = ["rt"] }
 uuid = { version = "0.8", features = ["v4"] }
 
-[dependencies.stronghold-p2p-refactored]
+[dependencies.stronghold-p2p]
 git = "https://github.com/iotaledger/stronghold.rs"
-rev = "d93c9f632bbcba336ae70e2b18b86e0e286b5111"
+rev = "292a5af507a3fc712643ccc68b64972da8612e8b"
 default-features = false
 
 [dev-dependencies]
@@ -38,6 +38,6 @@ pretty_env_logger = "0.4.0"
 [features]
 account = ["identity-account/default"]
 wasm = ["identity-iota/wasm", "identity-account/wasm", "uuid/wasm-bindgen"]
-tcp = ["stronghold-p2p-refactored/tcp-transport"]
+tcp = ["stronghold-p2p/tcp-transport"]
 websocket = ["libp2p/websocket"]
 default = ["account", "tcp", "websocket"]
