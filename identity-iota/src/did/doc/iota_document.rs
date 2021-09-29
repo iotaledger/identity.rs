@@ -1088,5 +1088,11 @@ mod tests {
 
     // Assert that the verification method and the authentication method are the same
     assert_eq!(verif_method, auth_method);
+
+    // Assert that the fragment of the authentication method reference is `authentication`
+    match document.document.authentication().first().unwrap().clone().into_inner() {
+      MethodRef::Refer(did) => assert_eq!(did.fragment().unwrap_or_default(), "authentication"),
+      MethodRef::Embed(_) => panic!("authentication method should be a reference"),
+    }
   }
 }
