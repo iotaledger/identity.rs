@@ -84,3 +84,9 @@ impl ActorBuilder {
     self
   }
 }
+
+impl Default for ActorBuilder {
+  fn default() -> Self {
+    Self::new()
+  }
+}

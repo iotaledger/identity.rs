@@ -165,7 +165,7 @@ impl Actor {
       // - potentially others...
       let response_result = response_tx.send(response_data);
 
-      if let Err(_) = response_result {
+      if response_result.is_err() {
         log::error!("could not respond to `{}` request", request_name);
       }
 
