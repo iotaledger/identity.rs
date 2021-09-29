@@ -1074,4 +1074,19 @@ mod tests {
     let diff_index = IotaDocument::diff_index(&message_id).expect("failed to generate diff_index");
     assert_eq!(diff_index, "2g45GsCAmkvQfcrHGUgqwQJLbYY3Gic8f23wf71sGGGP");
   }
+
+  #[test]
+  fn test_new_document_has_verification_method_with_authentication_relationship() {
+    let keypair: KeyPair = generate_testkey();
+    let document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+
+    let verif_method = document.resolve("#authentication").unwrap();
+    let auth_method = document.authentication();
+
+    // `methods` returns all embedded verification methods, so only one is expected.
+    assert_eq!(document.methods().count(), 1);
+
+    // Assert that the verification method and the authentication method are the same
+    assert_eq!(verif_method, auth_method);
+  }
 }
