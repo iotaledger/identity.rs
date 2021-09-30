@@ -90,7 +90,7 @@ fn test_did() {
 #[test]
 fn test_document_new() {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-  let mut document: WasmDocument = WasmDocument::new(&keypair, None).unwrap();
+  let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
 
   document.sign(&keypair).unwrap();
 
@@ -100,7 +100,7 @@ fn test_document_new() {
 #[test]
 fn test_document_network() {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-  let document: WasmDocument = WasmDocument::new(&keypair, Some("dev".to_owned())).unwrap();
+  let document: WasmDocument = WasmDocument::new(&keypair, Some("dev".to_owned()), None).unwrap();
 
   assert_eq!(document.id().network_name(), "dev");
 }

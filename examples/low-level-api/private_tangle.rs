@@ -31,12 +31,12 @@ pub async fn main() -> Result<()> {
     .build()
     .await?;
 
-  // Generate a new ed25519 public/private key pair.
+  // Generate a new Ed25519 public/private key pair.
   let keypair: KeyPair = KeyPair::new_ed25519()?;
 
   // Create a DID with the network set explicitly.
   // This will result in a DID prefixed by `did:iota:tangle`.
-  let mut document: IotaDocument = IotaDocument::new(&keypair, Some(network_name))?;
+  let mut document: IotaDocument = IotaDocument::new_with_options(&keypair, Some(network_name), None)?;
 
   // Sign the DID Document with the default authentication key.
   document.sign(keypair.private())?;

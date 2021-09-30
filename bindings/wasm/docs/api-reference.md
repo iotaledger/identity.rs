@@ -750,7 +750,7 @@ Deserializes a `$ident` object from a JSON object.
 **Kind**: global class  
 
 * [Document](#Document)
-    * [new Document(keypair, network)](#new_Document_new)
+    * [new Document(keypair, network, fragment)](#new_Document_new)
     * _instance_
         * [.id](#Document+id) ⇒ [<code>DID</code>](#DID)
         * [.created](#Document+created) ⇒ [<code>Timestamp</code>](#Timestamp)
@@ -786,21 +786,29 @@ Deserializes a `$ident` object from a JSON object.
 
 <a name="new_Document_new"></a>
 
-### new Document(keypair, network)
-Creates a new DID Document from the given `KeyPair` and network, defaulting to
-`Network::Mainnet` if unspecified.
+### new Document(keypair, network, fragment)
+Creates a new DID Document from the given `KeyPair`, network, and verification method
+fragment name.
 
-The DID Document will be pre-populated with a single authentication verification method
-derived from the provided `KeyPair`. This method will have the DID URL fragment
-`#authentication` and can be easily retrieved with `Document::authentication`.
+The DID Document will be pre-populated with a single verification method
+derived from the provided `KeyPair`, with an attached authentication relationship.
+This method will have the DID URL fragment `#authentication` by default and can be easily
+retrieved with `Document::authentication`.
 
 NOTE: the generated document is unsigned, see `Document::sign`.
+
+Arguments:
+
+* keypair: the initial verification method is derived from the public key with this keypair.
+* network: Tangle network to use for the DID, default `Network::mainnet`.
+* fragment: name of the initial verification method, default "authentication".
 
 
 | Param | Type |
 | --- | --- |
 | keypair | [<code>KeyPair</code>](#KeyPair) | 
 | network | <code>string</code> \| <code>undefined</code> | 
+| fragment | <code>string</code> \| <code>undefined</code> | 
 
 <a name="Document+id"></a>
 

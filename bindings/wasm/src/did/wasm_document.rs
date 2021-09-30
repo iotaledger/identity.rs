@@ -37,17 +37,24 @@ pub struct WasmDocument(pub(crate) IotaDocument);
 
 #[wasm_bindgen(js_class = Document)]
 impl WasmDocument {
-  /// Creates a new DID Document from the given `KeyPair` and network, defaulting to
-  /// `Network::Mainnet` if unspecified.
+  /// Creates a new DID Document from the given `KeyPair`, network, and verification method
+  /// fragment name.
   ///
-  /// The DID Document will be pre-populated with a single authentication verification method
-  /// derived from the provided `KeyPair`. This method will have the DID URL fragment
-  /// `#authentication` and can be easily retrieved with `Document::authentication`.
+  /// The DID Document will be pre-populated with a single verification method
+  /// derived from the provided `KeyPair`, with an attached authentication relationship.
+  /// This method will have the DID URL fragment `#authentication` by default and can be easily
+  /// retrieved with `Document::authentication`.
   ///
   /// NOTE: the generated document is unsigned, see `Document::sign`.
+  ///
+  /// Arguments:
+  ///
+  /// * keypair: the initial verification method is derived from the public key with this keypair.
+  /// * network: Tangle network to use for the DID, default `Network::mainnet`.
+  /// * fragment: name of the initial verification method, default "authentication".
   #[wasm_bindgen(constructor)]
-  pub fn new(keypair: &KeyPair, network: Option<String>) -> Result<WasmDocument> {
-    IotaDocument::new(&keypair.0, network.as_deref())
+  pub fn new(keypair: &KeyPair, network: Option<String>, fragment: Option<String>) -> Result<WasmDocument> {
+    IotaDocument::new_with_options(&keypair.0, network.as_deref(), fragment.as_deref())
       .map(Self)
       .wasm_result()
   }

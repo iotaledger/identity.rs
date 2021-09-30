@@ -91,6 +91,7 @@ impl IotaVerificationMethod {
   where
     F: Into<Option<&'a str>>,
   {
+    // TODO: validate fragment contents properly
     let tag: String = format!("#{}", fragment.into().unwrap_or(Self::DEFAULT_TAG));
     let key: IotaDID = did.join(tag)?;
 
@@ -149,7 +150,8 @@ impl IotaVerificationMethod {
     IotaDID::check_validity(method.controller())?;
 
     // Ensure the authentication method has an identifying fragment
-    if method.id().fragment().is_none() {
+    // TODO: validate fragment properly
+    if method.id().fragment().is_none() || method.id().fragment().unwrap_or_default().is_empty() {
       return Err(Error::InvalidDocumentAuthFragment);
     }
 
