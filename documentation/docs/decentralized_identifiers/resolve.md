@@ -34,7 +34,7 @@ In simplified terms, resolution works by querying the Tangle for DID Document me
 
 :::important
 
-Normal nodes in the IOTA network do not store a full history of the Tangle, which means that at some point DID messages will be dropped. The solution is to use an IOTA permanode ([Chronicle](https://github.com/iotaledger/chronicle.rs)) which stores the entire history of the Tangle. For more information see the section on [Valid DID Documents](../advanced/did_messages#valid-did-documents).
+Normal nodes in the IOTA network do not store a full history of the Tangle, which means that at some point DID messages will be dropped. The solution is to use an IOTA permanode ([Chronicle](https://github.com/iotaledger/chronicle.rs)) which stores the entire history of the Tangle. For more information see the section on [Valid DID Documents](../../advanced/did_messages#valid-did-documents).
 
 :::
 
