@@ -48,7 +48,7 @@ module.exports = {
             ],
             'Verifiable Credentials': [
                 'verifiable_credentials/overview',
-                'verifiable_credentials/create',
+                'verifiable_credentials/create_and_sign',
                 'verifiable_credentials/revoke',
                 'verifiable_credentials/merkle_key_collection',
                 'verifiable_credentials/verifiable_presentations',
