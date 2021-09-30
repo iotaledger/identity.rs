@@ -7,5 +7,34 @@ keywords:
 - verifiable
 - presentations
 ---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import create_vp_js from  '!!raw-loader!./../../../bindings/wasm/examples/src/create_vp.js';
+import create_vp_rs from  '!!raw-loader!./../../../examples/low-level-api/create_vp.rs';
 
-TODO: Explain the need for and 
+
+TODO: Explain the need for and
+
+## Example
+
+This example shows how you can create and validate a Verifiable Presentation. A Verifiable Presentation is the format in which you can share a (collection of) Verifiable Credential(s). It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
+
+<Tabs
+groupId="programming-languages"
+defaultValue="rust"
+values={[
+{label: 'Rust', value: 'rust'},
+{label: 'Node.js', value: 'nodejs'},
+]
+}>
+<TabItem value="rust">
+<CodeBlock className="language-rust">
+{create_vp_rs}
+</CodeBlock>
+</TabItem>
+<TabItem value='nodejs'>
+<CodeBlock className="language-javascript">
+{create_vp_js}
+</CodeBlock></TabItem>
+</Tabs>

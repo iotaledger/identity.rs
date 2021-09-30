@@ -32,8 +32,25 @@ Once a new Integration chain transaction is created, it will take all Diff Chain
 The improved performance and ability to handle frequently updated DID Documents is especially beneficial for Verifiable Credential Revocation, by utilizing revocation flags. These concepts will be explained in the Verifiable Credentials and Key Collections sections.
 
 
-Example of Utilizing a Diff Chain
-```
-TODO
-```
+## Example of Utilizing a Diff Chain
 
+This example is a basic introduction on how you can create a diff message and publish it to the tangle.
+
+<Tabs
+groupId="programming-languages"
+defaultValue="rust"
+values={[
+{label: 'Rust', value: 'rust'},
+{label: 'Node.js', value: 'nodejs'},
+]
+}>
+<TabItem value="rust">
+<CodeBlock className="language-rust">
+{diff_chain_rs}
+</CodeBlock>
+</TabItem>
+<TabItem value='nodejs'>
+<CodeBlock className="language-javascript">
+{diff_chain_js}
+</CodeBlock></TabItem>
+</Tabs>

@@ -8,4 +8,10 @@ keywords:
 - API Reference
 ---
 
-{@import ../../../../bindings/wasm/docs/api-reference.md}
+```mdx-code-block
+import ApiRef, {toc as ChangelogTOC} from "./@site/../../../../../bindings/wasm/docs/api-reference.md"
+
+<ApiRef />
+
+export const toc = ChangelogTOC;
+```
