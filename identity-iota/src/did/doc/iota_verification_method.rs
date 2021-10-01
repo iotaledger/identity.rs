@@ -26,6 +26,7 @@ use identity_did::verification::VerificationMethod;
 use crate::did::IotaDID;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::NetworkName;
 
 /// A DID Document verification method
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
@@ -73,7 +74,7 @@ impl IotaVerificationMethod {
 
   /// Creates a new [`IotaVerificationMethod`] object from the given [`KeyPair`] on the specified
   /// `network`.
-  pub fn from_keypair_with_network<'a, F>(keypair: &KeyPair, fragment: F, network: &str) -> Result<Self>
+  pub fn from_keypair_with_network<'a, F>(keypair: &KeyPair, fragment: F, network: NetworkName) -> Result<Self>
   where
     F: Into<Option<&'a str>>,
   {

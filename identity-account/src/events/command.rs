@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crypto::signatures::ed25519;
+
 use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::Url;
@@ -10,6 +11,7 @@ use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
+use identity_iota::tangle::NetworkName;
 
 use crate::account::Account;
 use crate::error::Result;
@@ -33,7 +35,7 @@ const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 #[derive(Clone, Debug)]
 pub(crate) enum Command {
   CreateIdentity {
-    network: Option<String>,
+    network: Option<NetworkName>,
     method_secret: Option<MethodSecret>,
     authentication: MethodType,
   },
@@ -109,8 +111,11 @@ impl Command {
         let method: TinyMethod = TinyMethod::new(location, data, None);
 
         // Generate a new DID URL from the public key
-        let network: Option<&str> = network.as_deref();
-        let document: IotaDID = IotaDID::from_components(public.as_ref(), network)?;
+        let document: IotaDID = if let Some(network) = network {
+          IotaDID::new_with_network(public.as_ref(), network)?
+        } else {
+          IotaDID::new(public.as_ref())?
+        };
 
         let method_fragment = Fragment::new(method.location().fragment());
 

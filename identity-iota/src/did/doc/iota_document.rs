@@ -42,9 +42,9 @@ use crate::did::IotaVerificationMethod;
 use crate::did::Properties as BaseProperties;
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::TangleRef;
+use crate::tangle::{MessageId, NetworkName};
 
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, Object>;
@@ -87,7 +87,7 @@ impl IotaDocument {
   /// #
   /// // Create a DID Document from a new Ed25519 keypair.
   /// let keypair = KeyPair::new_ed25519().unwrap();
-  /// let mut document = IotaDocument::new(&keypair).unwrap();
+  /// let document = IotaDocument::new(&keypair).unwrap();
   /// ```
   pub fn new(keypair: &KeyPair) -> Result<Self> {
     Self::new_with_options(keypair, None, None)
@@ -109,18 +109,19 @@ impl IotaDocument {
   /// ```
   /// # use identity_core::crypto::KeyPair;
   /// # use identity_iota::did::IotaDocument;
+  /// # use identity_iota::tangle::Network;
   /// #
   /// // Create a new DID Document for the devnet from a new Ed25519 keypair.
   /// let keypair = KeyPair::new_ed25519().unwrap();
-  /// let mut document = IotaDocument::new_with_options(&keypair, Some("dev"), Some("auth-key")).unwrap();
+  /// let document = IotaDocument::new_with_options(&keypair, Some(Network::Devnet.name()), Some("auth-key")).unwrap();
   /// assert_eq!(document.id().network_str(), "dev");
   /// assert_eq!(document.authentication().try_into_fragment().unwrap(), "#auth-key");
   /// ```
-  pub fn new_with_options(keypair: &KeyPair, network: Option<&str>, fragment: Option<&str>) -> Result<Self> {
+  pub fn new_with_options(keypair: &KeyPair, network: Option<NetworkName>, fragment: Option<&str>) -> Result<Self> {
     let public_key: &PublicKey = keypair.public();
 
-    let did: IotaDID = if let Some(network) = network {
-      IotaDID::new_with_network(public_key.as_ref(), network)?
+    let did: IotaDID = if let Some(network_name) = network {
+      IotaDID::new_with_network(public_key.as_ref(), network_name)?
     } else {
       IotaDID::new(public_key.as_ref())?
     };
@@ -959,8 +960,7 @@ mod tests {
   #[test]
   fn test_new_with_options_network() {
     let keypair: KeyPair = generate_testkey();
-    let document: IotaDocument =
-      IotaDocument::new_with_options(&keypair, Some(Network::Devnet.name_str()), None).unwrap();
+    let document: IotaDocument = IotaDocument::new_with_options(&keypair, Some(Network::Devnet.name()), None).unwrap();
     compare_document_devnet(&document);
   }
 

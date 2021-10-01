@@ -12,11 +12,11 @@ use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::did::verifiable;
 use identity::did::MethodScope;
-use identity::iota::Error;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
 use identity::iota::TangleRef;
+use identity::iota::{Error, NetworkName};
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
@@ -54,7 +54,8 @@ impl WasmDocument {
   /// * fragment: name of the initial verification method, default "authentication".
   #[wasm_bindgen(constructor)]
   pub fn new(keypair: &KeyPair, network: Option<String>, fragment: Option<String>) -> Result<WasmDocument> {
-    IotaDocument::new_with_options(&keypair.0, network.as_deref(), fragment.as_deref())
+    let network_name = network.map(NetworkName::try_from).transpose().wasm_result()?;
+    IotaDocument::new_with_options(&keypair.0, network_name, fragment.as_deref())
       .map(Self)
       .wasm_result()
   }
