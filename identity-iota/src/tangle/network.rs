@@ -50,7 +50,7 @@ impl Network {
   /// See [`NetworkName`].
   pub fn try_from_name<S>(name: S) -> Result<Self>
   where
-    // Allow String, &'static str, Cow<'static, str>
+    // Allow String, &'static str, Cow<'static, str>, NetworkName
     S: AsRef<str> + Into<Cow<'static, str>>,
   {
     match name.as_ref() {
@@ -168,20 +168,30 @@ impl NetworkName {
   /// Validates whether a string is a spec-compliant IOTA DID [`NetworkName`].
   pub fn validate_network_name(name: &str) -> Result<()> {
     if name.is_empty() {
-      return Err(Error::InvalidNetworkName("network name must not be empty"));
+      return Err(Error::InvalidNetworkName);
     }
 
     if name.len() > 6 {
-      return Err(Error::InvalidNetworkName("network name cannot exceed 6 characters"));
+      return Err(Error::InvalidNetworkName);
     };
 
     if !name.chars().all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit()) {
-      return Err(Error::InvalidNetworkName(
-        "network name must only contain characters `0-9` and `a-z`",
-      ));
+      return Err(Error::InvalidNetworkName);
     }
 
     Ok(())
+  }
+}
+
+impl AsRef<str> for NetworkName {
+  fn as_ref(&self) -> &str {
+    self.0.as_ref()
+  }
+}
+
+impl From<NetworkName> for Cow<'static, str> {
+  fn from(network_name: NetworkName) -> Self {
+    network_name.0
   }
 }
 
@@ -242,6 +252,7 @@ mod tests {
 
   #[test]
   fn test_from_name() {
+    // Valid
     assert_eq!(
       Network::try_from_name("6chars").unwrap(),
       Network::Other {
@@ -250,24 +261,30 @@ mod tests {
       }
     );
 
-    assert!(matches!(
-      Network::try_from_name("7seven7").unwrap_err(),
-      Error::InvalidNetworkName("network name cannot exceed 6 characters")
-    ));
-
-    assert!(matches!(
-      Network::try_from_name("täst").unwrap_err(),
-      Error::InvalidNetworkName("network name must only contain characters `0-9` and `a-z`")
-    ));
-
-    assert!(matches!(
-      Network::try_from_name(" ").unwrap_err(),
-      Error::InvalidNetworkName("network name must only contain characters `0-9` and `a-z`")
-    ));
-
+    // Must be non-empty
     assert!(matches!(
       Network::try_from_name("").unwrap_err(),
-      Error::InvalidNetworkName("network name must not be empty")
+      Error::InvalidNetworkName
+    ));
+
+    // Must be <= 6 chars
+    assert!(matches!(
+      Network::try_from_name("7seven7").unwrap_err(),
+      Error::InvalidNetworkName
+    ));
+
+    // Must only include 0-9, a-z
+    assert!(matches!(
+      Network::try_from_name("täst").unwrap_err(),
+      Error::InvalidNetworkName
+    ));
+    assert!(matches!(
+      Network::try_from_name(" ").unwrap_err(),
+      Error::InvalidNetworkName
+    ));
+    assert!(matches!(
+      Network::try_from_name("Test").unwrap_err(),
+      Error::InvalidNetworkName
     ));
   }
 

@@ -29,7 +29,7 @@ async fn test_lazy_updates() -> Result<()> {
       };
 
       let snapshot: IdentitySnapshot = account
-        .create_identity(IdentityCreate::new().network(network.name().as_ref()))
+        .create_identity(IdentityCreate::new().network(network.name()).unwrap())
         .await?;
 
       let did: &IotaDID = snapshot.identity().try_did()?;

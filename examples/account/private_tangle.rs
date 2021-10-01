@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
     .build()
     .await?;
 
-  let id_create = IdentityCreate::new().network(network_name);
+  let id_create = IdentityCreate::new().network(network_name)?;
 
   // Create a new Identity with the network name set.
   let snapshot: IdentitySnapshot = match account.create_identity(id_create).await {

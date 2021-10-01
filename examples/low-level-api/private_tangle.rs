@@ -19,8 +19,7 @@ pub async fn main() -> Result<()> {
   // This name needs to match the id of the network or part of it.
   // Since the id of the one-click private tangle is `private-tangle`
   // but we can only use 6 characters, we use just `tangle`.
-  let network_name = "tangle";
-  let network = Network::try_from_name(network_name)?;
+  let network = Network::try_from_name("tangle")?;
 
   // Set the network and the URL that points to
   // the REST API of the locally running hornet node.
@@ -31,12 +30,12 @@ pub async fn main() -> Result<()> {
     .build()
     .await?;
 
-  // Generate a new ed25519 public/private key pair.
+  // Generate a new Ed25519 public/private key pair.
   let keypair: KeyPair = KeyPair::new_ed25519()?;
 
   // Create a DID with the network set explicitly.
   // This will result in a DID prefixed by `did:iota:tangle`.
-  let mut document: IotaDocument = IotaDocument::from_keypair_with_network(&keypair, network_name)?;
+  let mut document: IotaDocument = IotaDocument::new_with_options(&keypair, Some(client.network().name()), None)?;
 
   // Sign the DID Document with the default authentication key.
   document.sign(keypair.private())?;
