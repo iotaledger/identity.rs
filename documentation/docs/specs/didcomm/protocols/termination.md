@@ -7,7 +7,7 @@ sidebar_label: Termination
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-09-23
+- Last Updated: 2021-10-01
 
 ## Overview
 
@@ -15,7 +15,7 @@ Indicates the graceful termination of a connection. It is expected that no recon
 
 ### Relationships
 
-- connection: this protocol terminates a communication initiated by the connection protocol.
+- [Connection](./connection): this protocol terminates a communication initiated by the [connection protocol](./connection).
 
 ### Example Use-Cases
 
