@@ -30,7 +30,7 @@ A DID is a unique identifier that contains information that can be resolved to a
 
 ####  [new KeyPair( _type)](api_reference#KeyPair)
 
-Generates a new  [KeyPair](api_reference#KeyPair) object of the dedired _type.
+Generates a new  [KeyPair](api_reference#KeyPair) object of the desired _type.
 
 ```js
 new KeyPair(type_: number)
