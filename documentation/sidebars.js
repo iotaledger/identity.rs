@@ -78,6 +78,7 @@ module.exports = {
                     collapsed: true,
                     items: [
                         'libraries/rust/getting_started',
+                        'libraries/rust/cheat_sheet',
                         'libraries/rust/api_reference',
                         'libraries/rust/troubleshooting',
                     ],
@@ -89,6 +90,7 @@ module.exports = {
                     collapsed: true,
                     items: [
                         'libraries/wasm/getting_started',
+                        'libraries/wasm/cheat_sheet',
                         'libraries/wasm/api_reference',
                         'libraries/wasm/troubleshooting',
                     ],
