@@ -40,20 +40,51 @@ Allows establishment of a [DIDComm connection](https://identity.foundation/didco
 - Type: `https://didcomm.org/out-of-band/2.0/invitation`
 - Role: [inviter](#roles)
 
-A message containing information on how to connect to the inviter. This message is delivered out-of-band, e.g. in form of a link or a qr-code. THe message contains all information requires to estblish a connection. 
+A message containing information on how to connect to the inviter. This message is delivered out-of-band, e.g. in form of a link or QR code. The message contains all information required to establish a connection. 
 
 #### Structure
 
-The general structure of the invitation message is decribed in the [Out Of Band Messages in the DIDComm specification](https://github.com/decentralized-identity/didcomm-messaging/blob/49935b7b119591a009ce61d044ba9ad6fa40c7b7/docs/spec-files/out_of_band.md).
+The general structure of the invitation message is described in the [Out Of Band Messages in the DIDComm specification](https://github.com/decentralized-identity/didcomm-messaging/blob/49935b7b119591a009ce61d044ba9ad6fa40c7b7/docs/spec-files/out_of_band.md).
 
-The actual in invitation is contained in the `attachments` field in the message. The structure of the message described by [DID Document Service Endpoint in the DIDComm specification](https://identity.foundation/didcomm-messaging/spec/#did-document-service-endpoint).
+The actual invitation is contained in the `attachments` field in the message, which is structured as following:
 
-The connection information, like which address or channel to connect to, is embedded in the `serviceEndpoint` field, following the [DID Specification](https://www.w3.org/TR/did-core/#service-properties).
 
+```json
+{
+  "serviceId": DIDUrl,                  // OPTIONAL
+  "service": {                          
+    "serviceEndpoint": ServiceEndpoint, // REQUIRED
+    "accept": [string],                 // OPTIONAL
+    "recipientKeys": [string],          // OPTIONAL
+    "routingKeys": [string]             // OPTIONAL
+  }, // OPTIONAL
+```
+
+| Field | Description | Required |
+| :--- | :--- | :--- |
+| `serviceId` | A string representing a [DIDUrl](https://www.w3.org/TR/did-core/#did-url-syntax) referencing a resolvable [service](https://www.w3.org/TR/did-core/#services).[^1] | ✖ |
+| [`service`](https://www.w3.org/TR/did-core/#services) | A structure analogous to the [DID service specification](https://www.w3.org/TR/did-core/#services), including all information necessary to establish a connection with the [inviter](#roles).[^2] | ✖ |
+| [`serviceEndpoint`](https://www.w3.org/TR/did-core/#dfn-serviceendpoint) | TBD | ✔ |
+| [`accept`](https://identity.foundation/didcomm-messaging/spec/#did-document-service-endpoint) | An optional array of DIDComm media types in the order of preference for sending a message to the endpoint. If `accept` is not specified, defer to the `accept` field of the invitation body. | ✖ |
+| [`recipientKeys`](https://www.w3.org/TR/did-core/#services) | TBD[^3]| ✖ |
+| [`routingKeys`](https://identity.foundation/didcomm-messaging/spec/#did-document-service-endpoint) | An optional ordered array of strings referencing keys to be used when preparing the message for transmission; see [DIDComm Routing](https://identity.foundation/didcomm-messaging/spec/#routing).[^4] | ✖ |
+
+One of `serviceId` or `service` MUST be present for the [invitee](#roles) to be able to connect. If both fields are present, the [invitee](#roles) SHOULD default to the `serviceId`.
+
+[^1] A public `serviceId` may reveal the identity of the [inviter](#roles) to anyone able to view the invitation, if privacy is a concern using an inline `service` should be preferred. For a public organisation whose DID is already public knowledge a `serviceId` has several benefits: it establishes trust that the [invitee](#roles) is connecting to the correct party since a service attached to their public DID is used, and the invitation may be re-used indefinitely even if the service referenced is updated with different endpoints. It is RECOMMENDED that the referenced service conform to the [DID Document Service Endpoint in the DIDComm specification](https://identity.foundation/didcomm-messaging/spec/#did-document-service-endpoint).
+
+[^2] TODO
+
+
+[^3] Omitting `recipientKeys` implies that [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) is not to be used in the ensuing DIDComm connection. It is RECOMMENDED to include as [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) ensures message integrity and protects communications from eavesdroppers over insecure channels. [Invitees](#roles) may choose to reject invitations that do not include `recipientKeys` if they want to enforce [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption).
+
+[^4] Implementors should avoid using a `DIDUrl` for the `recipientKeys` or `routingKeys` if privacy is a concern, as it reveals the identity of the [inviter](#roles) to any party other than the [invitee](#roles) that intercepts or otherwise views the invitation. However, using a `DIDUrl` may be useful as it allows for key-rotation without needing to update the invitation. Both `recipientKeys` and `routingKeys` are optional.
+
+The connection information, i.e. the address or channel to connect to, is included in the `serviceEndpoint` field following the [DID Specification](https://www.w3.org/TR/did-core/#service-properties).
 
 #### Examples
 
-1. Full Invitation from https://didcomm.org/out-of-band/%VER/invitation:
+1. Full invitation message with two attachments:
 ```json
 {
   "typ": "application/didcomm-plain+json",
@@ -72,16 +103,20 @@ The connection information, like which address or channel to connect to, is embe
       "mime-type": "application/json",
       "data": {
           "json": {
-
-            "type": "DIDCommMessaging",
-            "serviceEndpoint": "http://example.com/path",
-            "accept": [
-              "didcomm/v2",
-            ],
-            "routingKeys": ["did:example:somemediator#somekey"]
+            "service": {
+              "id": "service-1",
+              "type": "DIDCommMessaging",
+              "serviceEndpoint": "http://example.com/path",
+              "accept": [
+                "didcomm/v2",
+              ],
+              "recipientKeys": ["9hFgmPVfmBZwRvFEyniQDBkz9LmV7gDEqytWyGZLmDXE"],
+              "routingKeys": ["9hFgmPVfmBZwRvFEyniQDBkz9LmV7gDEqytWyGZLmDXE"]
+            }
           }
       }
-    },  {
+    },
+    {
       "@id": "request-1",
       "mime-type": "application/json",
       "data": {
@@ -94,24 +129,48 @@ The connection information, like which address or channel to connect to, is embe
 }
 ```
 
-2. Whitespace removed:
-```json
+2. An invitation with a reference to a service in a DID document encoded in Base 64:
 
-{"typ":"application/didcomm-plain+json","type":"https://didcomm.org/out-of-band/0.1/invitation","id":"69212a3a-d068-4f9d-a2dd-4741bca89af3","from":"did:example:alice","body":{"goal_code":"","goal":""},"attachments":[{"@id":"request-0","mime-type":"application/json","data":{"json":"<json of protocol message>"}}]}
-```
-3. Base 64 URL Encoded:
 `eyJ0eXAiOiJhcHBsaWNhdGlvbi9kaWRjb21tLXBsYWluK2pzb24iLCJ0eXBlIjoiaHR0cHM6Ly9kaWRjb21tLm9yZy9vdXQtb2YtYmFuZC8wLjEvaW52aXRhdGlvbiIsImlkIjoiNjkyMTJhM2EtZDA2OC00ZjlkLWEyZGQtNDc0MWJjYTg5YWYzIiwiZnJvbSI6ImRpZDpleGFtcGxlOmFsaWNlIiwiYm9keSI6eyJnb2FsX2NvZGUiOiIiLCJnb2FsIjoiIn0sImF0dGFjaG1lbnRzIjpbeyJAaWQiOiJyZXF1ZXN0LTAiLCJtaW1lLXR5cGUiOiJhcHBsaWNhdGlvbi9qc29uIiwiZGF0YSI6eyJqc29uIjoiPGpzb24gb2YgcHJvdG9jb2wgbWVzc2FnZT4ifX1dfQ`
 
-4. URL: 
+3. The invitation from Example 2. attached to a URL:
+
 `http://example.com/path?_oob=eyJ0eXAiOiJhcHBsaWNhdGlvbi9kaWRjb21tLXBsYWluK2pzb24iLCJ0eXBlIjoiaHR0cHM6Ly9kaWRjb21tLm9yZy9vdXQtb2YtYmFuZC8wLjEvaW52aXRhdGlvbiIsImlkIjoiNjkyMTJhM2EtZDA2OC00ZjlkLWEyZGQtNDc0MWJjYTg5YWYzIiwiZnJvbSI6ImRpZDpleGFtcGxlOmFsaWNlIiwiYm9keSI6eyJnb2FsX2NvZGUiOiIiLCJnb2FsIjoiIn0sImF0dGFjaG1lbnRzIjpbeyJAaWQiOiJyZXF1ZXN0LTAiLCJtaW1lLXR5cGUiOiJhcHBsaWNhdGlvbi9qc29uIiwiZGF0YSI6eyJqc29uIjoiPGpzb24gb2YgcHJvdG9jb2wgbWVzc2FnZT4ifX1dfQ==`
 
+### 2. connection {#connection}
+
+- Type: `didcomm:iota/connection/0.1/connection`
+- Role: [invitee](#roles)
+
+Following a successful connection, the [invitee](#roles) sends its public keys necessary to establish anonymous encryption.
+
+#### Structure
+```json
+{
+  "recipientKeys": [string], // OPTIONAL
+  "routingKeys": [string],   // OPTIONAL
+}
+```
+
+| Field | Description | Required |
+| :--- | :--- | :--- |
+| `recipientKeys` | TBD | ✖ |
+| `routingKeys` | TBD | ✖ |
+
+#### Examples
+
+1. Connection with no :
+
+```json
+{}
+```
 
 ### Problem Reports
 
 See: https://identity.foundation/didcomm-messaging/spec/#descriptors
 TODO
 
-For gerneral guidance see [problem reports](../resources/problem-reports).
+For general guidance see [problem reports](../resources/problem-reports).
 
 Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
 - TBD
