@@ -43,7 +43,7 @@ Create a new [Document](api_reference#Document) from the given [KeyPair](api_ref
 new Document(type_:number, network:string | undefined, tag:string | undefined)
 ```
 ####  [Document.fromKeyPair(key, network)](api_reference#Document.fromKeyPair)
-Creates a new DID Document from the given [KeyPair](api_reference#KeyPair). and optional network.
+Creates a new DID Document from the given [KeyPair](api_reference#KeyPair) and optional network.
 
 ```js
 Document.fromKeyPair(key:keyPair, network:string|undefined)
@@ -135,7 +135,7 @@ Document.removeMethod(did: DID)
 
 #### [Document.revokeMerkleKey(query, index)](api_reference#Document+revokeMerkleKey)
 
-[Revoke a single key from a MerkleKeyCollection](../verifiable_credentials/merkle_key_collection), Instead of revoking the entire verification method.
+[Revoke a single key from a MerkleKeyCollection](../verifiable_credentials/merkle_key_collection), instead of revoking the entire verification method.
 
 ## Verifiable Presentations (VP)
 
