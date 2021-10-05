@@ -135,13 +135,14 @@ module.exports = {
                   label: 'Protocols',
                   collapsed: true,
                   items: [
-                    'specs/didcomm/protocols/presentation',
-                    'specs/didcomm/protocols/signing',
-                    'specs/didcomm/protocols/issuance',
-                    'specs/didcomm/protocols/revocation',
-                    'specs/didcomm/protocols/revocation-options',
-                    'specs/didcomm/protocols/termination',
                     'specs/didcomm/protocols/connection',
+                    'specs/didcomm/protocols/authentication',
+                    'specs/didcomm/protocols/presentation',
+                    'specs/didcomm/protocols/issuance',
+                    'specs/didcomm/protocols/signing',
+                    'specs/didcomm/protocols/revocation-options',
+                    'specs/didcomm/protocols/revocation',
+                    'specs/didcomm/protocols/termination',
                   ]
                 },
               ]

@@ -7,7 +7,7 @@ sidebar_label: Connection
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-10-01
+- Last Updated: 2021-10-05
 
 ## Overview
 
@@ -21,7 +21,7 @@ Allows establishment of a [DIDComm connection](https://identity.foundation/didco
 
 - A corporation offers a QR code on the website for customers to connect to their services.
 - A person sends an invitation as an email to friend, to exchange information.
-- A machine has a service embedded in their DID, that allows to connect to it, in order to read data.
+- A device has a service embedded in their DID, that allows to connect to it, in order to read data.
 
 ### Roles
 - Inviter: offers methods to establish connections.
@@ -47,7 +47,7 @@ A message containing information on how to connect to the inviter. This message 
 
 #### Structure
 
-The general structure of the invitation message is described in the [Out Of Band Messages of the DIDComm specification](https://github.com/decentralized-identity/didcomm-messaging/blob/49935b7b119591a009ce61d044ba9ad6fa40c7b7/docs/spec-files/out_of_band.md).
+The general structure of the invitation message is described in the [Out Of Band Messages of the DIDComm specification](https://github.com/decentralized-identity/didcomm-messaging/blob/49935b7b119591a009ce61d044ba9ad6fa40c7b7/docs/spec-files/out_of_band.md). Note that the invitation message may be [signed](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) to provide [tamper resistance](https://identity.foundation/didcomm-messaging/spec/#tamper-resistant-oob-messages).
 
 The actual invitation is contained in the `attachments` field in the message, which is structured as follows:
 
@@ -74,7 +74,7 @@ The actual invitation is contained in the `attachments` field in the message, wh
 
 [^1] One of `serviceId` or `service` MUST be present for the [invitee](#roles) to be able to connect. If both fields are present, the [invitee](#roles) SHOULD default to the `serviceId`.
 
-[^2] A public `serviceId` may reveal the identity of the [inviter](#roles) to anyone able to view the invitation, if privacy is a concern using an inline `service` should be preferred. For a public organisation whose DID is already public knowledge a `serviceId` has several benefits: it establishes trust that the [invitee](#roles) is connecting to the correct party since a service from their public DID document is used, and the invitation may be re-used indefinitely even if the service referenced is updated with different endpoints. It is RECOMMENDED that the service referenced by `serviceId` conforms to the ["DIDCommMessaging" service type from the DIDComm specification](https://identity.foundation/didcomm-messaging/spec/#did-document-service-endpoint) as it allows `routingKeys` to be included if necessary. The DID document referenced by `serviceId` SHOULD include one or more [`keyAgreement`](https://www.w3.org/TR/did-core/#key-agreement) sections to use for [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption); the absence of any [`keyAgreement`](https://www.w3.org/TR/did-core/#key-agreement) section implies no [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) will be used for the connection and an [invitee](#roles) may choose to reject such an invitation.
+[^2] It is RECOMMENDED that the service referenced by `serviceId` conforms to the ["DIDCommMessaging" service type from the DIDComm specification](https://identity.foundation/didcomm-messaging/spec/#did-document-service-endpoint) as it allows `routingKeys` to be included if necessary. The DID document referenced by `serviceId` SHOULD include one or more [`keyAgreement`](https://www.w3.org/TR/did-core/#key-agreement) sections to use for [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption); the absence of any [`keyAgreement`](https://www.w3.org/TR/did-core/#key-agreement) section implies no [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) will be used for the connection and an [invitee](#roles) may choose to reject such an invitation. A public `serviceId` may reveal the identity of the [inviter](#roles) to anyone able to view the invitation; if privacy is a concern using an inline `service` should be preferred. For a public organisation whose DID is already public knowledge, using `serviceId` has a few benefits: it establishes some level of trust that the [invitee](#roles) may be connecting to the correct party since a service from their public DID document is used, and the invitation may be re-used indefinitely even if the service referenced is updated with different endpoints. When using `service` instead of `serviceId`, a signed invitation may provide a similar level of trust. However, neither should be used as a complete replacement for interactive authentication due to the risk of man-in-the-middle attacks.
 
 [^3] Note that `recipientKeys` may have multiple entries in order of preference of the [inviter](#roles); this is to offer multiple key types (e.g. Ed25519, X25519) and an [invitee](#roles) may choose any key with which they are compatible. These keys may be static or generated once per invitation. Omitting `recipientKeys` implies that [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) will not be used in the ensuing DIDComm connection. It is RECOMMENDED to include as [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) ensures message integrity and protects communications from eavesdroppers over insecure channels. [Invitees](#roles) may choose to reject invitations that do not include `recipientKeys` if they want to enforce [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption).
 
@@ -82,7 +82,42 @@ The actual invitation is contained in the `attachments` field in the message, wh
 
 #### Examples
 
-1. Invitation with two attachments in order of preference. An [invitee](#roles) should pick the first one with which they are compatible:
+The following examples include the entire DIDComm message structure for illustration, including [message headers](https://identity.foundation/didcomm-messaging/spec/#message-headers) with the actual [invitation payload](#invitation) defined in this specification included in the [attachments](https://identity.foundation/didcomm-messaging/spec/#attachments) section.
+
+For further information on how to encode the invitation message for delivery refer to the [DIDComm specification](https://identity.foundation/didcomm-messaging/spec/#standard-message-encoding).
+
+1. Invitation with a single attachment:
+```json
+{
+  "typ": "application/didcomm-plain+json",
+  "type": "https://didcomm.org/out-of-band/2.0/invitation",
+  "id": "fde5eb9e-0560-48cf-b860-acd178c1e0b0",
+  "body": {
+    "accept": [
+      "didcomm/v2"
+    ],
+  },
+  "attachments": [
+    {
+      "@id": "request-0",
+      "mime-type": "application/json",
+      "data": {
+          "json": {
+            "service": {
+              "serviceEndpoint": "wss://example.com/path",
+              "recipientKeys": ["did:key:z6LSoMdmJz2Djah2P4L9taDmtqeJ6wwd2HhKZvNToBmvaczQ"],
+              "routingKeys": []
+            }
+          }
+      }
+    }
+  ]
+}
+```
+
+Refer to the [DIDComm specification](https://identity.foundation/didcomm-messaging/spec/#standard-message-encoding) for further information on how to encode the invitation message for delivery.
+
+2. Invitation with a goal indicated and two attachments in order of preference. An [invitee](#roles) should pick the first one with which they are compatible:
 ```json
 {
   "typ": "application/didcomm-plain+json",
@@ -102,9 +137,7 @@ The actual invitation is contained in the `attachments` field in the message, wh
       "data": {
           "json": {
             "service": {
-              "id": "service-1",
-              "type": "DIDCommMessaging",
-              "serviceEndpoint": "http://example.com/path",
+              "serviceEndpoint": "wss://example.com/path",
               "accept": [
                 "didcomm/v2",
               ],
@@ -129,14 +162,6 @@ The actual invitation is contained in the `attachments` field in the message, wh
   ]
 }
 ```
-
-2. An invitation with a reference to a service in a DID document encoded in Base 64:
-TODO
-`eyJ0eXAiOiJhcHBsaWNhdGlvbi9kaWRjb21tLXBsYWluK2pzb24iLCJ0eXBlIjoiaHR0cHM6Ly9kaWRjb21tLm9yZy9vdXQtb2YtYmFuZC8wLjEvaW52aXRhdGlvbiIsImlkIjoiNjkyMTJhM2EtZDA2OC00ZjlkLWEyZGQtNDc0MWJjYTg5YWYzIiwiZnJvbSI6ImRpZDpleGFtcGxlOmFsaWNlIiwiYm9keSI6eyJnb2FsX2NvZGUiOiIiLCJnb2FsIjoiIn0sImF0dGFjaG1lbnRzIjpbeyJAaWQiOiJyZXF1ZXN0LTAiLCJtaW1lLXR5cGUiOiJhcHBsaWNhdGlvbi9qc29uIiwiZGF0YSI6eyJqc29uIjoiPGpzb24gb2YgcHJvdG9jb2wgbWVzc2FnZT4ifX1dfQ`
-
-3. The invitation from Example 2. attached to a URL:
-TODO
-`http://example.com/path?_oob=eyJ0eXAiOiJhcHBsaWNhdGlvbi9kaWRjb21tLXBsYWluK2pzb24iLCJ0eXBlIjoiaHR0cHM6Ly9kaWRjb21tLm9yZy9vdXQtb2YtYmFuZC8wLjEvaW52aXRhdGlvbiIsImlkIjoiNjkyMTJhM2EtZDA2OC00ZjlkLWEyZGQtNDc0MWJjYTg5YWYzIiwiZnJvbSI6ImRpZDpleGFtcGxlOmFsaWNlIiwiYm9keSI6eyJnb2FsX2NvZGUiOiIiLCJnb2FsIjoiIn0sImF0dGFjaG1lbnRzIjpbeyJAaWQiOiJyZXF1ZXN0LTAiLCJtaW1lLXR5cGUiOiJhcHBsaWNhdGlvbi9qc29uIiwiZGF0YSI6eyJqc29uIjoiPGpzb24gb2YgcHJvdG9jb2wgbWVzc2FnZT4ifX1dfQ==`
 
 ### 2. connection {#connection}
 
@@ -193,6 +218,7 @@ This section is non-normative.
 TBD
 
 - **Authentication**: implementors SHOULD NOT use any information transmitted in the connection protocol for authentication or proof of identity. 
+
 ## Related Work
 
 - Aries Hyperledger:
