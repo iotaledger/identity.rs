@@ -98,6 +98,11 @@ module.exports = {
             ],
         },
         {
+          type: 'category',
+          label: 'Tutorials',
+          items:['tutorials/validate_university_degree']
+        },
+        {
             type: 'category',
             label: 'Specifications',
             collapsed: true,

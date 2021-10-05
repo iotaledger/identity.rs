@@ -122,7 +122,7 @@ Client.publishDocument(document: IotaDocument);
 * Receipt
 
 ```js
- {
+{
     network: string,// example Mainnet,
     message_id: MessageId,// example MessageId(a4b879ea338041560319ee0aad6826e5ea2a4872f25c59cca091c2a03d87b325),
     network_id: int, // example 1454675179895816119,
