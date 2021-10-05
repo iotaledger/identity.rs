@@ -11,8 +11,9 @@ use identity_core::convert::ToJson;
 
 use crate::chain::DocumentChain;
 use crate::chain::IntegrationChain;
+use crate::did::DocumentDiff;
 use crate::did::IotaDID;
-use crate::did::{DocumentDiff, IotaDocument};
+use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Message;
@@ -209,6 +210,7 @@ impl From<DiffChain> for Vec<DocumentDiff> {
 mod test {
   use identity_core::common::Timestamp;
   use identity_core::crypto::KeyPair;
+  use identity_did::did::DID;
   use identity_did::verification::MethodBuilder;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodRef;

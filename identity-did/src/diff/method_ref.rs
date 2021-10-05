@@ -9,7 +9,7 @@ use identity_core::diff::Result;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::did::DID;
+use crate::did::CoreDIDUrl;
 use crate::diff::DiffMethod;
 use crate::verification::MethodRef;
 
@@ -53,7 +53,7 @@ where
     match diff {
       DiffMethodRef::Embed(Some(value)) => Diff::from_diff(value).map(Self::Embed),
       DiffMethodRef::Embed(None) => Err(Error::convert("Invalid MethodRef Diff")),
-      DiffMethodRef::Refer(Some(value)) => DID::from_diff(value).map(Self::Refer),
+      DiffMethodRef::Refer(Some(value)) => CoreDIDUrl::from_diff(value).map(Self::Refer),
       DiffMethodRef::Refer(None) => Err(Error::convert("Invalid MethodRef Diff")),
     }
   }

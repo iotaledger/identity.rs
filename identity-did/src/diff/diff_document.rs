@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::diff::Diff;
@@ -8,10 +11,8 @@ use identity_core::diff::DiffString;
 use identity_core::diff::DiffVec;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
-use serde::Deserialize;
-use serde::Serialize;
 
-use crate::did::DID;
+use crate::did::CoreDID;
 use crate::document::CoreDocument;
 use crate::service::Service;
 use crate::utils::DIDKey;
@@ -22,10 +23,10 @@ use crate::verification::VerificationMethod;
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(bound(deserialize = ""))]
 pub struct DiffDocument<T = Object, U = Object, V = Object>
-where
-  T: Diff + Serialize + for<'__de> Deserialize<'__de>,
-  U: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
-  V: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
+  where
+    T: Diff + Serialize + for<'__de> Deserialize<'__de>,
+    U: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
+    V: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
 {
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<DiffString>,
@@ -52,10 +53,10 @@ where
 }
 
 impl<T, U, V> Diff for CoreDocument<T, U, V>
-where
-  T: Diff + Serialize + for<'de> Deserialize<'de>,
-  U: Diff + Serialize + for<'de> Deserialize<'de> + Default,
-  V: Diff + Serialize + for<'de> Deserialize<'de> + Default,
+  where
+    T: Diff + Serialize + for<'de> Deserialize<'de>,
+    U: Diff + Serialize + for<'de> Deserialize<'de> + Default,
+    V: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
   type Type = DiffDocument<T, U, V>;
 
@@ -124,13 +125,13 @@ where
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    let id: DID = diff
+    let id: CoreDID = diff
       .id
       .map(|value| self.id().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.id().clone());
 
-    let controller: Option<DID> = diff
+    let controller: Option<CoreDID> = diff
       .controller
       .flatten()
       .and_then(|value| self.controller().map(|controller| controller.merge(value)))
@@ -207,16 +208,16 @@ where
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    let id: DID = diff
+    let id: CoreDID = diff
       .id
-      .map(DID::from_diff)
+      .map(CoreDID::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `document.id`"))?;
 
-    let controller: Option<DID> = diff
+    let controller: Option<CoreDID> = diff
       .controller
       .map(|diff| match diff {
-        Some(diff) => Some(DID::from_diff(diff)).transpose(),
+        Some(diff) => Some(CoreDID::from_diff(diff)).transpose(),
         None => Ok(None),
       })
       .transpose()?
@@ -310,28 +311,32 @@ where
 
 #[cfg(test)]
 mod test {
-  use super::*;
+  use std::collections::BTreeMap;
+
+  use identity_core::common::Value;
+
   use crate::service::ServiceBuilder;
   use crate::verification::MethodBuilder;
   use crate::verification::MethodData;
   use crate::verification::MethodType;
-  use identity_core::common::Value;
-  use std::collections::BTreeMap;
 
-  fn controller() -> DID {
+  use super::*;
+
+  fn controller() -> CoreDIDUrl {
     "did:example:1234".parse().unwrap()
   }
 
-  fn method(controller: &DID, fragment: &str) -> VerificationMethod {
+  fn method(controller: &CoreDIDUrl, fragment: &str) -> VerificationMethod {
     MethodBuilder::default()
-      .id(controller.join(fragment).unwrap())
+      .id(controller.clone().join(fragment).unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::new_b58(fragment.as_bytes()))
       .build()
       .unwrap()
   }
-  fn service(controller: &DID) -> Service {
+
+  fn service(controller: &CoreDIDUrl) -> Service {
     ServiceBuilder::default()
       .id(controller.clone())
       .service_endpoint(Url::parse("did:service:1234").unwrap())
@@ -339,6 +344,7 @@ mod test {
       .build()
       .unwrap()
   }
+
   fn document() -> CoreDocument {
     let controller = controller();
     let mut properties: BTreeMap<String, Value> = BTreeMap::default();
@@ -351,8 +357,8 @@ mod test {
       .verification_method(method(&controller, "#key-2"))
       .verification_method(method(&controller, "#key-3"))
       .authentication(method(&controller, "#auth-key"))
-      .authentication(controller.join("#key-3").unwrap())
-      .key_agreement(controller.join("#key-4").unwrap())
+      .authentication(controller.clone().join("#key-3").unwrap())
+      .key_agreement(controller.clone().join("#key-4").unwrap())
       .assertion_method(method(&controller, "#key-5"))
       .capability_delegation(method(&controller, "#key-6"))
       .capability_invocation(method(&controller, "#key-7"))
@@ -379,7 +385,7 @@ mod test {
   fn test_controller() {
     let doc = document();
     let mut new = doc.clone();
-    let new_controller: DID = "did:diff:1234".parse().unwrap();
+    let new_controller: CoreDID = "did:diff:1234".parse().unwrap();
     *new.controller_mut().unwrap() = new_controller.clone();
     assert_ne!(doc, new);
 

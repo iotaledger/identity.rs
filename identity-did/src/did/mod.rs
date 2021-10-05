@@ -1,0 +1,10 @@
+mod did;
+mod did_url;
+mod error;
+
+pub use self::did::CoreDID;
+pub use self::did::DID;
+pub use self::did_url::CoreDIDUrl;
+pub use self::did_url::DIDUrl;
+pub use self::did_url::RelativeDIDUrl;
+pub use self::error::DIDError;

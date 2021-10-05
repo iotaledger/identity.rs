@@ -6,8 +6,9 @@
 //!
 //! cargo run --example create_did
 
+use identity::iota::ClientMap;
 use identity::iota::Receipt;
-use identity::iota::{ClientMap, TangleRef};
+use identity::iota::TangleRef;
 use identity::prelude::*;
 
 pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {

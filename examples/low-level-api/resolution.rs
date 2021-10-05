@@ -16,7 +16,7 @@ use identity::did::resolution::Resolution;
 use identity::did::resolution::Resource;
 use identity::did::resolution::SecondaryResource;
 use identity::iota::ClientMap;
-use identity::iota::IotaDID;
+use identity::iota::IotaDIDUrl;
 use identity::iota::Receipt;
 use identity::prelude::*;
 
@@ -34,7 +34,7 @@ async fn main() -> Result<()> {
   // DID Resolution
   // ===========================================================================
 
-  let doc_did: &IotaDID = document.id();
+  let doc_did: &IotaDIDUrl = document.id();
   let did_url: &str = doc_did.as_str();
 
   // Retrieve the published DID Document from the Tangle.
@@ -50,7 +50,7 @@ async fn main() -> Result<()> {
   // DID Dereferencing
   // ===========================================================================
 
-  let resource_did: IotaDID = doc_did.join("#authentication")?;
+  let resource_did: IotaDIDUrl = doc_did.join("#authentication")?;
   let resource_url: &str = resource_did.as_str();
 
   // Retrieve a subset of the published DID Document properties.

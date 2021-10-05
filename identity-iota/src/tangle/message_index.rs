@@ -114,13 +114,13 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::did::IotaDID;
+  use crate::did::IotaDIDUrl;
 
   use super::*;
 
   #[derive(Debug)]
   struct Case {
-    did: IotaDID,
+    did: IotaDIDUrl,
     message_id: MessageId,
     previous_message_id: MessageId,
     state: bool,
@@ -129,7 +129,7 @@ mod tests {
   impl Case {
     fn new(message_id: [u8; 32], previous_message_id: [u8; 32], state: bool) -> Self {
       Self {
-        did: IotaDID::new(&[]).unwrap(),
+        did: IotaDIDUrl::new(&[]).unwrap(),
         message_id: MessageId::new(message_id),
         previous_message_id: MessageId::new(previous_message_id),
         state,
@@ -138,7 +138,7 @@ mod tests {
   }
 
   impl TangleRef for Case {
-    fn did(&self) -> &IotaDID {
+    fn did(&self) -> &IotaDIDUrl {
       &self.did
     }
 

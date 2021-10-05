@@ -8,7 +8,7 @@ use identity::account::IdentityCreate;
 use identity::account::IdentitySnapshot;
 use identity::account::Result;
 use identity::core::Url;
-use identity::iota::IotaDID;
+use identity::iota::IotaDIDUrl;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -21,7 +21,7 @@ async fn main() -> Result<()> {
   let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let did: &IotaDID = snapshot.identity().try_did()?;
+  let did: &IotaDIDUrl = snapshot.identity().try_did()?;
 
   // Add a new service to the identity.
   account

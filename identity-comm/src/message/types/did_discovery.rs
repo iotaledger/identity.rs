@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Url;
-use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDIDUrl;
 use uuid::Uuid;
 
 use crate::message::Timing;
@@ -19,7 +19,7 @@ pub struct DidRequest {
   #[serde(rename = "responseRequested", skip_serializing_if = "Option::is_none")]
   response_requested: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<IotaDID>,
+  id: Option<IotaDIDUrl>,
   #[serde(skip_serializing_if = "Option::is_none")]
   timing: Option<Timing>,
 }
@@ -41,7 +41,7 @@ impl DidRequest {
   impl_message_accessor!(thread => Uuid);
   impl_message_accessor!(callback_url => Url);
   impl_message_accessor!(response_requested => Option<bool>);
-  impl_message_accessor!(id => Option<IotaDID>);
+  impl_message_accessor!(id => Option<IotaDIDUrl>);
   impl_message_accessor!(timing => Option<Timing>);
 }
 
@@ -52,7 +52,7 @@ impl DidRequest {
 pub struct DidResponse {
   context: String,
   thread: Uuid,
-  id: IotaDID,
+  id: IotaDIDUrl,
   #[serde(rename = "callbackURL", skip_serializing_if = "Option::is_none")]
   callback_url: Option<Url>,
   #[serde(rename = "responseRequested", skip_serializing_if = "Option::is_none")]
@@ -63,7 +63,7 @@ pub struct DidResponse {
 
 impl DidResponse {
   /// Creates a new `DidResponse`.
-  pub fn new(context: String, thread: Uuid, id: IotaDID) -> Self {
+  pub fn new(context: String, thread: Uuid, id: IotaDIDUrl) -> Self {
     Self {
       context,
       thread,
@@ -76,7 +76,7 @@ impl DidResponse {
 
   impl_message_accessor!(context => String);
   impl_message_accessor!(thread => Uuid);
-  impl_message_accessor!(id => IotaDID);
+  impl_message_accessor!(id => IotaDIDUrl);
   impl_message_accessor!(callback_url => Option<Url>);
   impl_message_accessor!(response_requested => Option<bool>);
   impl_message_accessor!(timing => Option<Timing>);

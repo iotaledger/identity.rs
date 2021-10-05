@@ -13,7 +13,7 @@ use identity::account::Account;
 use identity::account::IdentityCreate;
 use identity::account::IdentitySnapshot;
 use identity::account::Result;
-use identity::iota::IotaDID;
+use identity::iota::IotaDIDUrl;
 use identity::iota::IotaDocument;
 use identity::iota::Network;
 
@@ -56,7 +56,7 @@ async fn main() -> Result<()> {
   };
 
   // Retrieve the DID from the newly created Identity state.
-  let did: &IotaDID = snapshot.identity().try_did()?;
+  let did: &IotaDIDUrl = snapshot.identity().try_did()?;
 
   println!("[Example] Local Snapshot = {:#?}", snapshot);
   println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);

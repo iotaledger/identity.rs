@@ -138,7 +138,7 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
   use identity_core::utils::encode_b58;
-  use identity_did::did::DID;
+  use identity_did::did::CoreDIDUrl;
   use identity_did::document::CoreDocument;
   use identity_did::document::DocumentBuilder;
   use identity_did::verification::MethodBuilder;
@@ -173,7 +173,7 @@ mod tests {
   #[test]
   fn test_presentation_builder_valid() {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
-    let controller: DID = "did:example:1234".parse().unwrap();
+    let controller: CoreDIDUrl = "did:example:1234".parse().unwrap();
 
     let method: VerificationMethod = MethodBuilder::default()
       .id(controller.join("#key-1").unwrap())

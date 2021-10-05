@@ -15,8 +15,12 @@
 use identity::core::Timestamp;
 use identity::credential::Credential;
 use identity::did::MethodScope;
+use identity::iota::ClientMap;
+use identity::iota::CredentialValidation;
+use identity::iota::IotaVerificationMethod;
+use identity::iota::Receipt;
 use identity::iota::Result;
-use identity::iota::{ClientMap, CredentialValidation, IotaVerificationMethod, Receipt, TangleRef};
+use identity::iota::TangleRef;
 use identity::prelude::*;
 
 mod common;

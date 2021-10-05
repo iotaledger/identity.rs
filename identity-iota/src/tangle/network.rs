@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
-use core::fmt::{Display, Formatter};
+use core::fmt::Display;
+use core::fmt::Formatter;
 use core::ops::Deref;
 use std::borrow::Cow;
 
 use identity_core::common::Url;
 
 use crate::did::IotaDID;
-use crate::error::{Error, Result};
+use crate::error::Error;
+use crate::error::Result;
 
 const NETWORK_NAME_MAIN: &str = "main";
 const NETWORK_NAME_DEV: &str = "dev";

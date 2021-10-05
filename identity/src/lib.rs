@@ -59,9 +59,7 @@ pub mod did {
   pub use identity_did::utils::*;
   pub use identity_did::verification::*;
 
-  pub use identity_did::did::did;
-  pub use identity_did::did::Error as DIDError;
-  pub use identity_did::did::DID;
+  pub use identity_did::did::*;
 
   pub use identity_did::resolution;
   pub use identity_did::verifiable;

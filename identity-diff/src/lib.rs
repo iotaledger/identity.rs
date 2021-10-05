@@ -28,7 +28,6 @@ mod object;
 mod option;
 mod string;
 mod traits;
-mod url;
 mod value;
 mod vec;
 

@@ -19,7 +19,7 @@ use identity::did::MethodScope;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
-use identity::iota::IotaDID;
+use identity::iota::IotaDIDUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::prelude::*;
@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
 
   // Generate a Merkle Key Collection Verification Method with 8 keys (Must be a power of 2)
   let keys: KeyCollection = KeyCollection::new_ed25519(8)?;
-  let method_did: IotaDID = issuer_doc.id().clone();
+  let method_did: IotaDIDUrl = issuer_doc.id().clone();
   let method = IotaVerificationMethod::create_merkle_key::<Sha256, _>(method_did, &keys, "merkle-key")?;
 
   // Add to the DID Document as a general-purpose verification method

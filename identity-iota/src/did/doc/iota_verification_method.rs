@@ -15,6 +15,8 @@ use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_did::did::CoreDIDUrl;
+use identity_did::did::DID;
 use identity_did::error::Result as DIDResult;
 use identity_did::verifiable::Revocation;
 use identity_did::verification::MethodBuilder;
@@ -24,6 +26,7 @@ use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
 use crate::did::IotaDID;
+use crate::did::IotaDIDUrl;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::NetworkName;
@@ -45,10 +48,10 @@ impl IotaVerificationMethod {
     D: MerkleDigest,
   {
     let tag: String = format!("#{}", fragment.into().unwrap_or(Self::DEFAULT_TAG));
-    let key: IotaDID = did.join(tag)?;
+    let key: IotaDIDUrl = did.to_url().join(tag)?;
 
     MethodBuilder::default()
-      .id(key.into())
+      .id(CoreDIDUrl::from(key))
       .controller(did.into())
       .key_type(MethodType::MerkleKeyCollection2021)
       // TODO: replace publicKeyBase58 with publicKeyMultibase
@@ -94,9 +97,11 @@ impl IotaVerificationMethod {
   {
     // TODO: validate fragment contents properly
     let tag: String = format!("#{}", fragment.into().unwrap_or(Self::DEFAULT_TAG));
-    let key: IotaDID = did.join(tag)?;
+    let key: IotaDIDUrl = did.to_url().join(tag)?;
 
-    let mut builder: MethodBuilder = MethodBuilder::default().id(key.into()).controller(did.into());
+    let mut builder: MethodBuilder = MethodBuilder::default()
+      .id(CoreDIDUrl::from(key))
+      .controller(did.into());
 
     match keypair.type_() {
       KeyType::Ed25519 => {
@@ -147,7 +152,7 @@ impl IotaVerificationMethod {
   /// Returns `Err` if the input is not a valid IOTA verification method.
   pub fn check_validity<T>(method: &VerificationMethod<T>) -> Result<()> {
     // Ensure all associated DIDs are IOTA Identity DIDs
-    IotaDID::check_validity(method.id())?;
+    IotaDID::check_validity(method.id().did())?;
     IotaDID::check_validity(method.controller())?;
 
     // Ensure the authentication method has an identifying fragment
@@ -158,7 +163,7 @@ impl IotaVerificationMethod {
 
     // Ensure the id and controller are the same - we don't support DIDs
     // controlled by 3rd parties - yet.
-    if method.id().authority() != method.controller().authority() {
+    if method.id().did().authority() != method.controller().authority() {
       return Err(Error::InvalidDocumentAuthAuthority);
     }
 
@@ -172,9 +177,11 @@ impl IotaVerificationMethod {
   }
 
   /// Returns the method `id` property.
-  pub fn id(&self) -> &IotaDID {
-    // SAFETY: We don't create methods with invalid DID's
-    unsafe { IotaDID::new_unchecked_ref(self.0.id()) }
+  pub fn id(&self) -> &IotaDIDUrl {
+    // TODO: check this!!!
+    let did_url: &CoreDIDUrl = self.0.id();
+    // SAFETY: we don't create methods with invalid DID's and IotaDID and CoreDID are the same size.
+    unsafe { &*(did_url as *const CoreDIDUrl as *const IotaDIDUrl) }
   }
 
   /// Returns the method `controller` property.

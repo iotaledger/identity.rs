@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Url;
-use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDIDUrl;
 use uuid::Uuid;
 
 use crate::message::Timing;
@@ -19,7 +19,7 @@ pub struct IntroductionProposal {
   #[serde(rename = "responseRequested", skip_serializing_if = "Option::is_none")]
   response_requested: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<IotaDID>,
+  id: Option<IotaDIDUrl>,
   #[serde(skip_serializing_if = "Option::is_none")]
   comment: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -44,7 +44,7 @@ impl IntroductionProposal {
   impl_message_accessor!(thread => Uuid);
   impl_message_accessor!(callback_url => Url);
   impl_message_accessor!(response_requested => Option<bool>);
-  impl_message_accessor!(id => Option<IotaDID>);
+  impl_message_accessor!(id => Option<IotaDIDUrl>);
   impl_message_accessor!(comment => Option<String>);
   impl_message_accessor!(timing => Option<Timing>);
 }
@@ -62,7 +62,7 @@ pub struct IntroductionResponse {
   #[serde(rename = "responseRequested", skip_serializing_if = "Option::is_none")]
   response_requested: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<IotaDID>,
+  id: Option<IotaDIDUrl>,
   #[serde(skip_serializing_if = "Option::is_none")]
   comment: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -89,7 +89,7 @@ impl IntroductionResponse {
   impl_message_accessor!(consent => bool);
   impl_message_accessor!(callback_url => Option<Url>);
   impl_message_accessor!(response_requested => Option<bool>);
-  impl_message_accessor!(id => Option<IotaDID>);
+  impl_message_accessor!(id => Option<IotaDIDUrl>);
   impl_message_accessor!(comment => Option<String>);
   impl_message_accessor!(timing => Option<Timing>);
 }
@@ -101,13 +101,13 @@ impl IntroductionResponse {
 pub struct Introduction {
   context: String,
   thread: Uuid,
-  ids: Vec<IotaDID>,
+  ids: Vec<IotaDIDUrl>,
   #[serde(rename = "callbackURL", skip_serializing_if = "Option::is_none")]
   callback_url: Option<Url>,
   #[serde(rename = "responseRequested", skip_serializing_if = "Option::is_none")]
   response_requested: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<IotaDID>,
+  id: Option<IotaDIDUrl>,
   #[serde(skip_serializing_if = "Option::is_none")]
   comment: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -116,7 +116,7 @@ pub struct Introduction {
 
 impl Introduction {
   /// Creates a new `Introduction`.
-  pub fn new(context: String, thread: Uuid, ids: Vec<IotaDID>) -> Self {
+  pub fn new(context: String, thread: Uuid, ids: Vec<IotaDIDUrl>) -> Self {
     Self {
       context,
       thread,
@@ -131,10 +131,10 @@ impl Introduction {
 
   impl_message_accessor!(context => String);
   impl_message_accessor!(thread => Uuid);
-  impl_message_accessor!(ids => Vec<IotaDID>);
+  impl_message_accessor!(ids => Vec<IotaDIDUrl>);
   impl_message_accessor!(callback_url => Option<Url>);
   impl_message_accessor!(response_requested => Option<bool>);
-  impl_message_accessor!(id => Option<IotaDID>);
+  impl_message_accessor!(id => Option<IotaDIDUrl>);
   impl_message_accessor!(comment => Option<String>);
   impl_message_accessor!(timing => Option<Timing>);
 }

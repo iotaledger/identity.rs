@@ -5,4 +5,5 @@ mod iota_did;
 mod segments;
 
 pub use self::iota_did::IotaDID;
+pub use self::iota_did::IotaDIDUrl;
 pub use self::segments::Segments;

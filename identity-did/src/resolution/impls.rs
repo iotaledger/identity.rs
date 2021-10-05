@@ -1,9 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::Url;
 use std::time::Instant;
 
+use identity_core::common::Url;
+
+use crate::did::CoreDID;
+use crate::did::CoreDIDUrl;
 use crate::did::DID;
 use crate::document::CoreDocument;
 use crate::error::Error;
@@ -26,14 +29,14 @@ use crate::utils::OrderedSet;
 /// See [DID Resolution][SPEC] for more information.
 ///
 /// [SPEC]: https://www.w3.org/TR/did-core/#did-resolution
-pub async fn resolve<R>(did: &str, input: InputMetadata, method: R) -> Result<Resolution>
+pub async fn resolve<R>(did: impl AsRef<str>, input: InputMetadata, method: R) -> Result<Resolution>
 where
   R: ResolverMethod,
 {
   let mut context: ResolveContext = ResolveContext::new();
 
   // 1. Validate that the input DID conforms to the did rule of the DID Syntax.
-  let did: DID = match did.parse() {
+  let did: CoreDID = match did.as_ref().parse() {
     Ok(did) => did,
     Err(_) => return Ok(context.finish_error(ErrorKind::InvalidDID)),
   };
@@ -67,12 +70,12 @@ where
   Ok(context.finish())
 }
 
-/// Dereferences a DID URL into a primary or secondary resource.
+/// Dereferences a [`DIDUrl`] into a primary or secondary resource.
 ///
 /// See [DID Url Dereferencing][SPEC] for more information.
 ///
 /// [SPEC]: https://www.w3.org/TR/did-core/#did-url-dereferencing
-pub async fn dereference<R>(did: &str, input: InputMetadata, method: R) -> Result<Dereference>
+pub async fn dereference<R>(did_url: impl AsRef<str>, input: InputMetadata, method: R) -> Result<Dereference>
 where
   R: ResolverMethod,
 {
@@ -81,7 +84,11 @@ where
 
   // 1. Obtain the DID document for the input DID by executing the DID
   //    resolution algorithm.
-  let resolution: Resolution = resolve(did, input, method).await?;
+  let did_url: CoreDIDUrl = match did_url.as_ref().parse() {
+    Ok(did) => did,
+    Err(_) => return Ok(context.finish_error(ErrorKind::InvalidDID)),
+  };
+  let resolution: Resolution = resolve(did_url.did(), input, method).await?;
 
   // If the resolution result contains an error, bail early.
   if let Some(error) = resolution.metadata.error {
@@ -100,20 +107,24 @@ where
 
   // Extract the parsed DID from the resolution output - It MUST exist as we
   // checked for resolution errors above.
-  let did: DID = resolution.metadata.resolved.ok_or(Error::MissingResolutionDID)?;
+  let resolved_did: CoreDID = resolution.metadata.resolved.ok_or(Error::MissingResolutionDID)?;
+  if resolved_did != did_url.did() {
+    // TODO dedicated error? Is the above check still necessary at all?
+    return Err(Error::MissingResolutionDID);
+  }
 
   // Add the resolution document metadata to the response.
   context.set_metadata(metadata);
 
   // 2. Execute the algorithm for Dereferencing the Primary Resource.
-  let primary: PrimaryResource = match dereference_primary(document, did.clone())? {
+  let primary: PrimaryResource = match dereference_primary(document, did_url.clone())? {
     Some(primary) => primary,
     None => return Ok(context.finish_error(ErrorKind::NotFound)),
   };
 
-  // 3. If the original input DID URL contained a DID fragment, execute the
+  // 3. If the original input DID URL contained a fragment, execute the
   //    algorithm for Dereferencing the Secondary Resource.
-  if let Some(fragment) = did.fragment() {
+  if let Some(fragment) = did_url.fragment() {
     //
     // Dereferencing the Secondary Resource
     //
@@ -159,7 +170,7 @@ impl ResolveContext {
     self.0.document_metadata = Some(value);
   }
 
-  fn set_resolved(&mut self, value: DID) {
+  fn set_resolved(&mut self, value: CoreDID) {
     self.0.metadata.resolved = Some(value);
   }
 
@@ -209,12 +220,12 @@ impl DerefContext {
   }
 }
 
-fn dereference_primary(document: CoreDocument, mut did: DID) -> Result<Option<PrimaryResource>> {
+fn dereference_primary(document: CoreDocument, mut did_url: CoreDIDUrl) -> Result<Option<PrimaryResource>> {
   // Remove the DID fragment from the input DID URL.
-  did.set_fragment(None);
+  let _ = did_url.set_fragment(None).expect("clearing the fragment is infallible");
 
   // 1. If the input DID URL contains the DID parameter service...
-  if let Some((_, target)) = did.query_pairs().find(|(key, _)| key == "service") {
+  if let Some((_, target)) = did_url.query_pairs().find(|(key, _)| key == "service") {
     // 1.1. From the resolved DID document, select the service endpoint whose
     //      id property contains a fragment which matches the value of the
     //      service DID parameter of the input DID URL.
@@ -224,14 +235,14 @@ fn dereference_primary(document: CoreDocument, mut did: DID) -> Result<Option<Pr
       .find(|service| matches!(service.id().fragment(), Some(fragment) if fragment == target))
       .map(|service| service.service_endpoint())
       // 1.2. Execute the Service Endpoint Construction algorithm.
-      .map(|url| service_endpoint_ctor(did, url))
+      .map(|url| service_endpoint_ctor(did_url, url))
       .transpose()?
       // 1.3. Return the output service endpoint URL.
       .map(Into::into)
       .map(Ok)
       .transpose()
-  // 3. Otherwise, if the input DID URL contains no DID path and no DID query.
-  } else if did.path().is_empty() && did.query().is_none() {
+    // 3. Otherwise, if the input DID URL contains no DID path and no DID query.
+  } else if did_url.path().unwrap_or_default().is_empty() && did_url.query().is_none() {
     // 3.1. Return the resolved DID document.
     Ok(Some(document.into()))
   } else {
@@ -241,12 +252,17 @@ fn dereference_primary(document: CoreDocument, mut did: DID) -> Result<Option<Pr
 
 fn dereference_document(document: CoreDocument, fragment: &str) -> Result<Option<SecondaryResource>> {
   #[inline]
-  fn dereference<T>(base: &DID, query: &str, resources: &OrderedSet<DIDKey<T>>) -> Result<Option<SecondaryResource>>
+  fn dereference<T>(
+    base: &CoreDIDUrl,
+    query: &str,
+    resources: &OrderedSet<DIDKey<T>>,
+  ) -> Result<Option<SecondaryResource>>
   where
-    T: Clone + AsRef<DID> + Into<SecondaryResource>,
+    T: Clone + AsRef<CoreDIDUrl> + Into<SecondaryResource>,
   {
+    // TODO: use CoreDID as base instead of CoreDIDUrl since fragment/query is overwritten?
     for object in resources.iter() {
-      let did: DID = base.join((**object).as_ref())?;
+      let did: CoreDIDUrl = base.clone().join(object.as_did().to_string())?;
 
       if matches!(did.fragment(), Some(fragment) if fragment == query) {
         return Ok(Some(object.clone().into()));
@@ -256,33 +272,33 @@ fn dereference_document(document: CoreDocument, fragment: &str) -> Result<Option
     Ok(None)
   }
 
-  let base: &DID = document.id();
+  let base: CoreDIDUrl = document.id().to_url();
 
-  if let Some(resource) = dereference(base, fragment, document.verification_method())? {
+  if let Some(resource) = dereference(&base, fragment, document.verification_method())? {
     return Ok(Some(resource));
   }
 
-  if let Some(resource) = dereference(base, fragment, document.authentication())? {
+  if let Some(resource) = dereference(&base, fragment, document.authentication())? {
     return Ok(Some(resource));
   }
 
-  if let Some(resource) = dereference(base, fragment, document.assertion_method())? {
+  if let Some(resource) = dereference(&base, fragment, document.assertion_method())? {
     return Ok(Some(resource));
   }
 
-  if let Some(resource) = dereference(base, fragment, document.key_agreement())? {
+  if let Some(resource) = dereference(&base, fragment, document.key_agreement())? {
     return Ok(Some(resource));
   }
 
-  if let Some(resource) = dereference(base, fragment, document.capability_delegation())? {
+  if let Some(resource) = dereference(&base, fragment, document.capability_delegation())? {
     return Ok(Some(resource));
   }
 
-  if let Some(resource) = dereference(base, fragment, document.capability_invocation())? {
+  if let Some(resource) = dereference(&base, fragment, document.capability_invocation())? {
     return Ok(Some(resource));
   }
 
-  if let Some(resource) = dereference(base, fragment, document.service())? {
+  if let Some(resource) = dereference(&base, fragment, document.service())? {
     return Ok(Some(resource));
   }
 
@@ -292,7 +308,7 @@ fn dereference_document(document: CoreDocument, fragment: &str) -> Result<Option
 // Service Endpoint Construction
 //
 // [Ref](https://w3c-ccg.github.io/did-resolution/#service-endpoint-construction)
-fn service_endpoint_ctor(did: DID, url: &Url) -> Result<Url> {
+fn service_endpoint_ctor(did: CoreDIDUrl, url: &Url) -> Result<Url> {
   // The input DID URL and input service endpoint URL MUST NOT both have a
   // query component.
   if did.query().is_some() && url.query().is_some() {
@@ -331,7 +347,7 @@ fn service_endpoint_ctor(did: DID, url: &Url) -> Result<Url> {
     .path_segments_mut()
     .unwrap()
     .pop_if_empty()
-    .extend(did.path().split('/'));
+    .extend(did.path().unwrap_or_default().split('/'));
 
   // 5. If the input service endpoint URL has a query component, append ?
   //    plus the query to the output service endpoint URL.
@@ -366,7 +382,7 @@ fn service_endpoint_ctor(did: DID, url: &Url) -> Result<Url> {
 mod test {
   use super::*;
 
-  fn did() -> DID {
+  fn did() -> CoreDIDUrl {
     "did:test:1234".parse().unwrap()
   }
 
@@ -381,15 +397,15 @@ mod test {
     let did = did();
     assert!(matches!(
       service_endpoint_ctor(
-        did.join("?query=this").unwrap(),
+        did.clone().join("?query=this").unwrap(),
         &Url::parse("https://my-service.endpoint.net?query=this").unwrap()
       ),
       Err(Error::InvalidDIDQuery)
     ));
 
     assert!(service_endpoint_ctor(
-      did.join("?query=this").unwrap(),
-      &Url::parse("https://my-service.endpoint.net").unwrap()
+      did.clone().join("?query=this").unwrap(),
+      &Url::parse("https://my-service.endpoint.net").unwrap(),
     )
     .is_ok());
     assert!(service_endpoint_ctor(did, &Url::parse("https://my-service.endpoint.net?query=this").unwrap()).is_ok());
@@ -400,15 +416,15 @@ mod test {
     let did = did();
     assert!(matches!(
       service_endpoint_ctor(
-        did.join("#fragment").unwrap(),
+        did.clone().join("#fragment").unwrap(),
         &Url::parse("https://my-service.endpoint.net#fragment").unwrap()
       ),
       Err(Error::InvalidDIDFragment)
     ));
 
     assert!(service_endpoint_ctor(
-      did.join("#fragment").unwrap(),
-      &Url::parse("https://my-service.endpoint.net").unwrap()
+      did.clone().join("#fragment").unwrap(),
+      &Url::parse("https://my-service.endpoint.net").unwrap(),
     )
     .is_ok());
     assert!(service_endpoint_ctor(did, &Url::parse("https://my-service.endpoint.net#fragment").unwrap()).is_ok());

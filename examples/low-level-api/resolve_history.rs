@@ -6,16 +6,20 @@
 //!
 //! cargo run --example did_history
 
+use identity::core::json;
+use identity::core::FromJson;
 use identity::core::Timestamp;
-use identity::core::{json, FromJson};
 use identity::crypto::KeyPair;
-use identity::did::{MethodScope, Service};
+use identity::did::MethodScope;
+use identity::did::Service;
+use identity::iota::ChainHistory;
+use identity::iota::Client;
 use identity::iota::DocumentDiff;
+use identity::iota::DocumentHistory;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::Result;
-use identity::iota::{ChainHistory, Client, DocumentHistory};
 
 mod create_did;
 

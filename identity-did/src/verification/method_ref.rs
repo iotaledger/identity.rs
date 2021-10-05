@@ -4,9 +4,11 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
+
 use identity_core::common::Object;
 
-use crate::did::DID;
+use crate::did::CoreDID;
+use crate::did::CoreDIDUrl;
 use crate::verification::VerificationMethod;
 
 /// A reference to a verification method, either a `DID` or embedded `Method`.
@@ -14,20 +16,22 @@ use crate::verification::VerificationMethod;
 #[serde(untagged)]
 pub enum MethodRef<T = Object> {
   Embed(VerificationMethod<T>),
-  Refer(DID),
+  Refer(CoreDIDUrl), // TODO: could this also be a relative DIDUrl, or another enum variant?
 }
 
 impl<T> MethodRef<T> {
   /// Returns a reference to the `MethodRef` id.
-  pub fn id(&self) -> &DID {
+  pub fn id(&self) -> &CoreDIDUrl {
     match self {
       Self::Embed(inner) => inner.id(),
       Self::Refer(inner) => inner,
     }
   }
 
-  /// Returns a reference to the `MethodRef` controller.
-  pub fn controller(&self) -> Option<&DID> {
+  /// Returns a reference to the [`MethodRef`] controller.
+  ///
+  /// Always `None` for [`MethodRef::Refer`].
+  pub fn controller(&self) -> Option<&CoreDID> {
     match self {
       Self::Embed(inner) => Some(inner.controller()),
       Self::Refer(_) => None,
@@ -67,7 +71,7 @@ impl<T> MethodRef<T> {
   /// # Errors
   ///
   /// Fails if `MethodRef` is not an referenced method.
-  pub fn try_into_referenced(self) -> Result<DID, Self> {
+  pub fn try_into_referenced(self) -> Result<CoreDIDUrl, Self> {
     match self {
       Self::Embed(_) => Err(self),
       Self::Refer(inner) => Ok(inner),
@@ -94,16 +98,16 @@ impl<T> From<VerificationMethod<T>> for MethodRef<T> {
   }
 }
 
-impl<T> From<DID> for MethodRef<T> {
+impl<T> From<CoreDIDUrl> for MethodRef<T> {
   #[inline]
-  fn from(other: DID) -> Self {
+  fn from(other: CoreDIDUrl) -> Self {
     Self::Refer(other)
   }
 }
 
-impl<T> AsRef<DID> for MethodRef<T> {
+impl<T> AsRef<CoreDIDUrl> for MethodRef<T> {
   #[inline]
-  fn as_ref(&self) -> &DID {
+  fn as_ref(&self) -> &CoreDIDUrl {
     self.id()
   }
 }

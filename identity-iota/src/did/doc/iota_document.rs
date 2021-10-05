@@ -14,12 +14,14 @@ use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::SerdeInto;
+use identity_core::crypto::KeyPair;
 use identity_core::crypto::PrivateKey;
+use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
-use identity_core::crypto::{KeyPair, PublicKey};
+use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::service::Service;
@@ -38,13 +40,15 @@ use identity_did::verification::VerificationMethod;
 
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
+use crate::did::IotaDIDUrl;
 use crate::did::IotaVerificationMethod;
 use crate::did::Properties as BaseProperties;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
+use crate::tangle::NetworkName;
 use crate::tangle::TangleRef;
-use crate::tangle::{MessageId, NetworkName};
 
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, Object>;
@@ -149,12 +153,12 @@ impl IotaDocument {
   ///
   /// This must be guaranteed safe by the caller.
   pub unsafe fn from_authentication_unchecked(method: IotaVerificationMethod) -> Self {
-    let verification_method_did: DID = method.id().as_ref().clone();
+    let verification_method_did_url: CoreDIDUrl = CoreDIDUrl::from(method.id().clone());
 
     CoreDocument::builder(Default::default())
       .id(method.controller().clone().into())
       .verification_method(method.into())
-      .authentication(MethodRef::Refer(verification_method_did))
+      .authentication(MethodRef::Refer(verification_method_did_url))
       .build()
       .map(CoreDocument::into_verifiable)
       .map(TryInto::try_into)
@@ -220,7 +224,7 @@ impl IotaDocument {
     for method_ref in document.verification_relationships() {
       match method_ref {
         MethodRef::Embed(method) => IotaVerificationMethod::check_validity(method)?,
-        MethodRef::Refer(did) => IotaDID::check_validity(did)?,
+        MethodRef::Refer(did_url) => IotaDID::check_validity(did_url.did())?, // TODO: check this
       }
     }
 
@@ -233,7 +237,7 @@ impl IotaDocument {
     Self::check_authentication(method)?;
 
     // Ensure the authentication method DID matches the document DID
-    if method.id().authority() != did.authority() {
+    if method.id().did().authority() != did.authority() {
       return Err(Error::InvalidDocumentAuthAuthority);
     }
     Ok(())
@@ -275,6 +279,7 @@ impl IotaDocument {
 
   /// Returns the DID document [`id`][IotaDID].
   pub fn id(&self) -> &IotaDID {
+    // TODO: change to IotaDID
     // SAFETY: We checked the validity of the DID Document ID in the
     // DID Document constructors; we don't provide mutable references so
     // the value cannot change with typical "safe" Rust.
@@ -284,7 +289,7 @@ impl IotaDocument {
   /// Returns a reference to the `IotaDocument` controller.
   pub fn controller(&self) -> Option<&IotaDID> {
     // SAFETY: Validity of controller checked in DID Document constructors.
-    unsafe { self.document.controller().map(|d| IotaDID::new_unchecked_ref(d)) }
+    unsafe { self.document.controller().map(|did| IotaDID::new_unchecked_ref(did)) }
   }
 
   /// Returns a reference to the `CoreDocument` alsoKnownAs set.
@@ -303,10 +308,10 @@ impl IotaDocument {
     unsafe { IotaVerificationMethod::new_unchecked_ref(method) }
   }
 
-  fn authentication_id(&self) -> &str {
+  fn authentication_id(&self) -> &CoreDIDUrl {
     // This `unwrap` is "fine" - a valid document will
     // always have a resolvable authentication method.
-    self.document.authentication().head().unwrap().id().as_str()
+    self.document.authentication().head().unwrap().id()
   }
 
   /// Returns the timestamp of when the DID document was created.
@@ -370,8 +375,10 @@ impl IotaDocument {
     }
   }
 
-  pub fn remove_service(&mut self, did: &IotaDID) -> Result<()> {
-    self.document.service_mut().remove(did.as_ref());
+  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
+    // TODO: avoid
+    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url.clone());
+    self.document.service_mut().remove(&core_did_url);
     Ok(())
   }
 
@@ -396,12 +403,15 @@ impl IotaDocument {
   }
 
   /// Removes all references to the specified Verification Method.
-  pub fn remove_method(&mut self, did: &IotaDID) -> Result<()> {
-    if self.authentication_id() == did.as_str() {
+  pub fn remove_method(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
+    // TODO: better conversions?
+    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url.clone());
+
+    if self.authentication_id() == &core_did_url {
       return Err(Error::CannotRemoveAuthMethod);
     }
 
-    self.document.remove_method(did.as_ref());
+    self.document.remove_method(&core_did_url);
 
     Ok(())
   }
@@ -673,6 +683,8 @@ mod tests {
   use identity_core::crypto::KeyType;
   use identity_core::crypto::PrivateKey;
   use identity_core::crypto::PublicKey;
+  use identity_did::did::CoreDID;
+  use identity_did::did::CoreDIDUrl;
   use identity_did::did::DID;
   use identity_did::document::CoreDocument;
   use identity_did::service::Service;
@@ -684,7 +696,8 @@ mod tests {
   use crate::did::doc::IotaDocument;
   use crate::did::doc::IotaVerificationMethod;
   use crate::did::url::IotaDID;
-  use crate::tangle::{MessageId, Network};
+  use crate::tangle::MessageId;
+  use crate::tangle::Network;
   use crate::Error;
 
   const DID_ID: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
@@ -692,7 +705,7 @@ mod tests {
   const DID_DEVNET_ID: &str = "did:iota:dev:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
   const DID_DEVNET_AUTH: &str = "did:iota:dev:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
 
-  fn valid_did() -> DID {
+  fn valid_did() -> CoreDIDUrl {
     DID_ID.parse().unwrap()
   }
 
@@ -703,7 +716,7 @@ mod tests {
     properties
   }
 
-  fn core_verification_method(controller: &DID, fragment: &str) -> VerificationMethod {
+  fn core_verification_method(controller: &CoreDIDUrl, fragment: &str) -> VerificationMethod {
     VerificationMethod::builder(Default::default())
       .id(controller.join(fragment).unwrap())
       .controller(controller.clone())
@@ -713,12 +726,12 @@ mod tests {
       .unwrap()
   }
 
-  fn iota_verification_method(controller: &DID, fragment: &str) -> IotaVerificationMethod {
+  fn iota_verification_method(controller: &CoreDIDUrl, fragment: &str) -> IotaVerificationMethod {
     let core_method = core_verification_method(controller, fragment);
     IotaVerificationMethod::try_from_core(core_method).unwrap()
   }
 
-  fn iota_document_from_core(controller: &DID) -> IotaDocument {
+  fn iota_document_from_core(controller: &CoreDIDUrl) -> IotaDocument {
     let mut properties: BTreeMap<String, Value> = BTreeMap::default();
     properties.insert("created".to_string(), "2020-01-01T00:00:00Z".into());
     properties.insert("updated".to_string(), "2020-01-02T00:00:00Z".into());
@@ -784,7 +797,7 @@ mod tests {
 
   #[test]
   fn test_invalid_try_from_core_invalid_id() {
-    let invalid_did: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_did: CoreDIDUrl = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
@@ -835,7 +848,7 @@ mod tests {
 
   #[test]
   fn test_invalid_try_from_core_invalid_controller() {
-    let invalid_controller: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_controller: CoreDIDUrl = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
@@ -852,7 +865,7 @@ mod tests {
 
   #[test]
   fn test_invalid_try_from_core_invalid_authentication_method_ref() {
-    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_ref: CoreDIDUrl = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
@@ -870,7 +883,7 @@ mod tests {
 
   #[test]
   fn test_invalid_try_from_core_invalid_assertion_method_ref() {
-    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_ref: CoreDIDUrl = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
@@ -888,7 +901,7 @@ mod tests {
 
   #[test]
   fn test_invalid_try_from_core_invalid_key_agreement_ref() {
-    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_ref: CoreDIDUrl = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
@@ -906,7 +919,7 @@ mod tests {
 
   #[test]
   fn test_invalid_try_from_core_invalid_capability_delegation_ref() {
-    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_ref: CoreDIDUrl = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
@@ -924,7 +937,7 @@ mod tests {
 
   #[test]
   fn test_invalid_try_from_core_invalid_capability_invocation_ref() {
-    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_ref: CoreDIDUrl = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
@@ -987,9 +1000,9 @@ mod tests {
 
   #[test]
   fn test_controller_from_core() {
-    let controller: DID = valid_did();
+    let controller: CoreDIDUrl = valid_did();
     let document: IotaDocument = iota_document_from_core(&controller);
-    let expected_controller: Option<IotaDID> = Some(IotaDID::try_from_owned(controller).unwrap());
+    let expected_controller: Option<IotaDIDUrl> = Some(IotaDIDUrl::try_from_owned(controller).unwrap());
     assert_eq!(document.controller(), expected_controller.as_ref());
   }
 
@@ -1025,7 +1038,7 @@ mod tests {
 
   #[test]
   fn test_methods_from_core() {
-    let controller: DID = valid_did();
+    let controller: CoreDIDUrl = valid_did();
     let document: IotaDocument = iota_document_from_core(&controller);
     let expected: Vec<IotaVerificationMethod> = vec![
       iota_verification_method(&controller, "#key-1"),
@@ -1084,7 +1097,7 @@ mod tests {
 
     document
       .remove_service(
-        &IotaDID::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain".to_string()).unwrap(),
+        &IotaDIDUrl::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain".to_string()).unwrap(),
       )
       .ok();
     assert_eq!(0, document.service().len());

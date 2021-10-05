@@ -9,8 +9,9 @@
 use identity::core::json;
 use identity::core::FromJson;
 use identity::did::Service;
+use identity::iota::ClientMap;
+use identity::iota::DocumentDiff;
 use identity::iota::Receipt;
-use identity::iota::{ClientMap, DocumentDiff};
 use identity::prelude::*;
 
 mod create_did;
