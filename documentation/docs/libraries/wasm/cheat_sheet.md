@@ -30,23 +30,93 @@ A DID is a unique identifier that contains information that can be resolved to a
 
 ####  [new KeyPair( _type)](api_reference#KeyPair)
 
-Generates a new  [KeyPair](api_reference#KeyPair) object of the desired _type.
+Generates a new [KeyPair](api_reference#KeyPair) object of the desired _type.
 
+##### Parameters
+
+* type_ : One of enum identity.KeyType {Ed25519}
+ 
 ```js
 new KeyPair(type_: number);
 ```
 
+##### Returns
+
+* [KeyPair](api_reference#KeyPair).
+
+```js
+{
+  type: string,// example 'ed25519'
+  public: string(44),// example '5Geq8HMRHxBhyesEbzbq8nG78ZRXFcHRUVhny4kfrHRh',
+  secret: string(44),// example 'GeKQa6EhNXkbo74JLuvyxRFR3rouy2iPViwtk9JM9Dyn'
+}
+```
+
 #### [new Document(type_, network, tag)](api_reference#new_Document_new)
+
 Create a new [Document](api_reference#Document) from the given [KeyPair](api_reference#KeyPair).
+
+##### Parameters
+
+* type_ : One of enum identity.KeyType{Ed25519}.
+* network: (optional) The string representation of the chosen network, "mainNet" for example.
+* tag: (optional) String.
 
 ```js
 new Document(type_:number, network:string | undefined, tag:string | undefined);
 ```
+
+#### Returns
+
+* Object consisting of:
+  * [KeyPair](api_reference#KeyPair).
+  * [Document](api_reference#Document).
+
+```js
+{
+  key: {
+    type: string,// example 'ed25519',
+    public: string(44),// example 'C7XrAUAUuM14sRdtN2daAkfA1hwoFxbWDcE5YxXqwveN',
+    secret: string(44),// example 'EsmpiVppDZi6ocYhmMGzerSufwUb7rFcWcmwMNmGRaXA'
+  },
+  doc: {
+    id: string(53),// example 'did:iota:9WnLBWvqU8ULtc6HZ8t9yCwa4FZRqQE3hX6wt7qoJZYK',
+    authentication: [ [Object] ],
+    created: Date, //exaple '2021-10-04T14:55:41Z',
+    updated: Date,// example'2021-10-04T14:55:41Z'
+  }
+}
+```
+
 ####  [Document.fromKeyPair(key, network)](api_reference#Document.fromKeyPair)
 Creates a new DID Document from the given [KeyPair](api_reference#KeyPair) and optional network.
 
+##### Parameters
+
+* key: [KeyPair](api_reference#KeyPair).
+* network: (optional) The string representation of the chosen network, "mainNet" for example.
+
 ```js
 Document.fromKeyPair(key:keyPair, network:string|undefined);
+```
+
+#### Returns
+
+* [Document](api_reference#Document).
+```js
+{
+  id: string(53),// example 'did:iota:4sKRTsLb7xpRC2gBuVN3gpHvw4NtvZGFHXjcHGTnKBGn',
+  authentication: [
+    {
+      id: string(53+),// example 'did:iota:4sKRTsLb7xpRC2gBuVN3gpHvw4NtvZGFHXjcHGTnKBGn#authentication',
+      controller:string(53),// example  'did:iota:4sKRTsLb7xpRC2gBuVN3gpHvw4NtvZGFHXjcHGTnKBGn',
+      type: string,// example 'Ed25519VerificationKey2018',
+      publicKeyBase58: string(44),// example '5Geq8HMRHxBhyesEbzbq8nG78ZRXFcHRUVhny4kfrHRh'
+    }
+  ],
+  created: Date, //example '2021-10-04T14:55:41Z',
+  updated: Date, //example '2021-10-04T14:55:41Z'
+}
 ```
 
 ### [Publish](../../decentralized_identifiers/create.mdx)
@@ -56,23 +126,51 @@ Document.fromKeyPair(key:keyPair, network:string|undefined);
 ```js
 client.publishDocument(document: any);
 ```
+#### Parameters
+
+* document: Any. 
+
+#### Returns
+```js
+{
+  network: string, //example 'dev'
+  messageId: string(64), //example 'cd4e6274a8c3d75fda5ef276562d87aa06366d7e8d87639f03354b24f3de8010'
+  networkId: int, // example 6514788332515804000
+  nonce: int, // example 865163
+}
+```
 ### [Update](../../decentralized_identifiers/update.mdx)
 
 #### [Document.insertMethod(verificationMethod, scope)](api_reference#documentinsertmethodmethod-scope-⇒-boolean)
 
 Add a new [VerificationMethod](api_reference#VerificationMethod).
 
+##### Parameters
+
+* verificationMethod: [VerificationMethod](api_reference#VerificationMethod).
+* scope: (optional) string.
+
 ```js
 Document.insertMethod(verificationMethod: VerificationMethod, scope: string|undefined);
 ```
+##### Returns
+
+* Boolean.
 
 #### [Document.insertService(service)](api_reference#documentinsertserviceservice-⇒-boolean)
 
 Add a new [Service](api_reference#Service).
 
+#### Parameters 
+
+* service: [Service](api_reference#Service).
+
 ```js
 Document.insertService(service: Service);
 ```
+##### Returns
+ 
+* Boolean
 
 ### [Resolve](../../decentralized_identifiers/resolve.mdx) 
 
@@ -80,49 +178,166 @@ Document.insertService(service: Service);
 
 Use a [Client](api_reference#Client) to resolve a DID [Document](api_reference#Document).
 
+##### Parameters
+
+* did: string.  The [Document](api_reference#Document)'s identifier. 
+
 ```js
 client.resolve(did:string);
+```
+##### Returns
+
+* [Document](api_reference#Document).
+```js
+{
+  id: string(53),// example 'did:iota:4sKRTsLb7xpRC2gBuVN3gpHvw4NtvZGFHXjcHGTnKBGn',
+  authentication: [
+    {
+      id: string(53+),// example 'did:iota:4sKRTsLb7xpRC2gBuVN3gpHvw4NtvZGFHXjcHGTnKBGn#authentication',
+      controller:string(53),// example  'did:iota:4sKRTsLb7xpRC2gBuVN3gpHvw4NtvZGFHXjcHGTnKBGn',
+      type: string,// example 'Ed25519VerificationKey2018',
+      publicKeyBase58: string(44),// example '5Geq8HMRHxBhyesEbzbq8nG78ZRXFcHRUVhny4kfrHRh'
+    }
+  ],
+  created: Date, //example '2021-10-04T14:55:41Z',
+  updated: Date, //example '2021-10-04T14:55:41Z'
+}
 ```
 
 #### [resolveHistory(did)](api_reference#clientresolvehistorydid-⇒-promiseany)
 
 Use a [Client](api_reference#Client) to return the message history of a DID [Document](api_reference#Document).
 
+##### Parameters
+
+* did: string.  The [Document](api_reference#Document)'s identifier.
+
 ```js
 client.resolveHistory(did:string);
+```
+##### Returns
+
+The message history of a given [Document](api_reference#Document).
+
+```js
+{
+  integrationChainData: [
+    {
+      id: string, // example 'did:iota:HzXqCmUPyvibPSwsf2TiPL6GnB6dFPgaf2xm62Dcr2z2',
+      authentication: [Array],
+      created: Date,// example '2021-10-05T08:46:37Z',
+      updated: Date,// example'2021-10-05T08:46:37Z',
+      proof: [Object]
+    }
+  ],
+  integrationChainSpam: [],
+  diffChainData: [],
+  diffChainSpam: []
+}
+
 ```
 
 ## Verifiable Credentials (VC)
 
-A [Verifiable Credential](api_reference#VerifiableCredential) can be verified by anyone, allowing you to take control of it and share it with anyone.
+A [VerifiableCredential](api_reference#VerifiableCredential) can be verified by anyone, allowing you to take control of it and share it with anyone.
 
 ### [Create](../../verifiable_credentials/create.mdx)
 
 #### [VerifiableCredential.extend(value)](api_reference#verifiablecredentialextendvalue-⇒-codeverifiablecredentialcode)
 
-Create an [VerifiableCredential](api_reference#VerifiableCredential) from the given value.
+Create a [VerifiableCredential](api_reference#VerifiableCredential) from the given value.
 
 ```js
 VerifiableCredential.extend(value:any);
 ```
+#### Returns
 
+* [VerifiableCredential](api_reference#VerifiableCredential)
+ 
+```js
+{
+  '@context': 'https://www.w3.org/2018/credentials/v1',
+  id: string, // example 'https://example.edu/credentials/3732',
+  type: [ 'VerifiableCredential', 'UniversityDegreeCredential' ],
+  credentialSubject: {
+    id: string(53), // example 'did:iota:95J1FTxKWMEZEGDByw1SwLuDCk6G7rKnM9niQfbjxjaX',
+    GPA:  string, // example'4.0',
+    degreeName:  string, // example 'Bachelor of Science and Arts',
+    degreeType:  string, // example 'BachelorDegree',
+    name:  string, // example 'Alice'
+  },
+  issuer:  string(53), //'did:iota:8X22fe2H6NrHP9sr77S96ym7xhDg5aEgiywi375noTHX',
+  issuanceDate: Date, //'2021-10-05T08:58:33Z'
+}
+```
 ### [Sign](../../verifiable_credentials/create.mdx)
 
 #### [Document.sign(keyPair)](api_reference#Documentsignkey)
 
 Signs a DID [Document](api_reference#Document) with the default authentication method using a [KeyPair](api_reference#KeyPair).
 
+##### Parameters
+
+* [KeyPair](api_reference#KeyPair).
+
 ```js
 Document.sign(key:keyPair);
+```
+
+##### Returns
+
+* [VerifiableCredential](api_reference#VerifiableCredential)
+
+```js
+{
+  '@context': 'https://www.w3.org/2018/credentials/v1',
+  id: string, // example 'https://example.edu/credentials/3732',
+  type: [ 'VerifiableCredential', 'UniversityDegreeCredential' ],
+  credentialSubject: {
+    id: string(53), // example 'did:iota:95J1FTxKWMEZEGDByw1SwLuDCk6G7rKnM9niQfbjxjaX',
+    GPA:  string, // example'4.0',
+    degreeName:  string, // example 'Bachelor of Science and Arts',
+    degreeType:  string, // example 'BachelorDegree',
+    name:  string, // example 'Alice'
+  },
+  issuer:  string(53), //'did:iota:8X22fe2H6NrHP9sr77S96ym7xhDg5aEgiywi375noTHX',
+  issuanceDate: Date, //'2021-10-05T08:58:33Z'
+}
 ```
 
 #### [Document.signCredential(data, args)](api_reference#documentsigncredentialdata-args-⇒-codeverifiablecredentialcode)
 
 Use a [Document](api_reference#Document) to sign a [VerifiableCredential](api_reference#VerifiableCredential). 
 
+##### Parameters
+* data: Any.
+* args: Any.
+ 
 ```js
 Document.signCredential(data: any, args: any);
 ```
+
+##### Returns
+
+* [VerifiableCredential](api_reference#VerifiableCredential)
+
+```js
+{
+  '@context': 'https://www.w3.org/2018/credentials/v1',
+  id: string, // example 'https://example.edu/credentials/3732',
+  type: [ 'VerifiableCredential', 'UniversityDegreeCredential' ],
+  credentialSubject: {
+    id: string(53), // example 'did:iota:95J1FTxKWMEZEGDByw1SwLuDCk6G7rKnM9niQfbjxjaX',
+    GPA:  string, // example'4.0',
+    degreeName:  string, // example 'Bachelor of Science and Arts',
+    degreeType:  string, // example 'BachelorDegree',
+    name:  string, // example 'Alice'
+  },
+  issuer:  string(53), //'did:iota:8X22fe2H6NrHP9sr77S96ym7xhDg5aEgiywi375noTHX',
+  issuanceDate: Date, //'2021-10-05T08:58:33Z'
+}
+```
+
 
 ### [Revoke](../../verifiable_credentials/revoke.mdx)
 
@@ -130,13 +345,34 @@ Document.signCredential(data: any, args: any);
 
 Remove a public key ([DID](api_reference#DID)) that signed a [VerifiableCredential](api_reference#VerifiableCredential) from a [Document](api_reference#Document),  effectively revoking the VC as it will no longer be able to verify.
 
+##### Parameters
+
+* did: [DID](api_reference#DID).
+ 
 ```js
 Document.removeMethod(did: DID);
 ```
+##### Returns
 
+* Void
+ 
 #### [Document.revokeMerkleKey(query, index)](api_reference#Document+revokeMerkleKey)
 
-[Revoke a single key from a MerkleKeyCollection](../../verifiable_credentials/merkle_key_collection.mdx), instead of revoking the entire verification method.
+[Revoke a single key from a MerkleKeyCollection](../../verifiable_credentials/merkle_key_collection.mdx) from a [Document](api_reference#Document), instead of revoking the entire verification method.
+
+##### Parameters
+
+* query: string. For example a [VerificationMethod](api_reference#VerificationMethod)'s string representation.
+* index: number. The credentials key. 
+
+```js
+Document.revokeMerkleKey(query, index);
+```
+
+##### Returns
+
+* Boolean.
+
 
 ## Verifiable Presentations (VP)
 
@@ -146,9 +382,47 @@ A Verifiable Presentation is the format in which you can share a (collection of)
 
 #### [new VerifiablePresentation(holder_doc, credential_data, presentation_type, presentation_id)](api_reference#new-verifiablepresentationholder_doc-credential_data-presentation_type-presentation_id)
 
+##### Parameters
+
+* holder_doc: [Document](api_reference#Document). 
+* credential_data: any.
+* presentation_type: (optional) string.
+* presentation_id : (optional) string.
+ 
 ````js
-new VerifiablePresentation(holder_doc: Document,credential_data: any, presentation_type: string|undefined, presentation_id: string | undefined )
+new VerifiablePresentation(holder_doc: Document, credential_data: any, presentation_type: string|undefined, presentation_id: string | undefined )
 ````
+
+##### Returns
+
+* [Verifiable Presentation](api_reference#VerifiablePresentation) containing a [VerifiableCredential](api_reference#VerifiableCredential).
+
+```js
+{
+  '@context': string, // example 'https://www.w3.org/2018/credentials/v1',
+  type: string, // example  'VerifiablePresentation',
+  verifiableCredential: {
+    '@context':string, // example  'https://www.w3.org/2018/credentials/v1',
+    id: string, // example 'https://example.edu/credentials/3732',
+    type: array, // example [ 'VerifiableCredential', 'UniversityDegreeCredential' ],
+            credentialSubject: {
+      id: string(53), // example 'did:iota:95J1FTxKWMEZEGDByw1SwLuDCk6G7rKnM9niQfbjxjaX',
+              GPA:  string, // example'4.0',
+              degreeName:  string, // example 'Bachelor of Science and Arts',
+              degreeType:  string, // example 'BachelorDegree',
+              name:  string, // example 'Alice'
+    },
+    issuer:  string(53), //'did:iota:8X22fe2H6NrHP9sr77S96ym7xhDg5aEgiywi375noTHX',
+    issuanceDate: Date, //'2021-10-05T08:58:33Z'  
+    proof: {
+      type: string, // example 'JcsEd25519Signature2020',
+      verificationMethod:  string, // example '#newKey',
+      signatureValue:  string(88), // example '56aGDSPBTW3p1AJQWnn1eRwixfGBfq1Gpj3NtSjhA2Qqgk3LrpeNYocvmV73ru4WLRYHPTyHwVKSGfd6JbSsyFRZ'
+    }
+  },
+  holder:  string(53), // 'did:iota:4SgsnbN67cJDwGgpU4woVYNY37kfN4Dr8rSfyDPbVTsR'
+}
+```
 
 ### [Sign](../../verifiable_credentials/verifiable_presentations.mdx)
 
@@ -156,6 +430,42 @@ new VerifiablePresentation(holder_doc: Document,credential_data: any, presentati
 
 Use a [Document](api_reference#Document) to sign a [Verifiable Presentation](api_reference#VerifiablePresentation)
 
+##### Parameters
+
+* data: any.
+* args: any.
+ 
 ```js
 Document.signPresentation(data: any, args: any);
+```
+
+##### Returns
+
+* [Verifiable Presentation](api_reference#VerifiablePresentation) containing a [VerifiableCredential](api_reference#VerifiableCredential).
+
+```js
+{
+  '@context': string, // example 'https://www.w3.org/2018/credentials/v1',
+  type: string, // example  'VerifiablePresentation',
+  verifiableCredential: {
+    '@context':string, // example  'https://www.w3.org/2018/credentials/v1',
+    id: string, // example 'https://example.edu/credentials/3732',
+    type: array, // example [ 'VerifiableCredential', 'UniversityDegreeCredential' ],
+            credentialSubject: {
+      id: string(53), // example 'did:iota:95J1FTxKWMEZEGDByw1SwLuDCk6G7rKnM9niQfbjxjaX',
+              GPA:  string, // example'4.0',
+              degreeName:  string, // example 'Bachelor of Science and Arts',
+              degreeType:  string, // example 'BachelorDegree',
+              name:  string, // example 'Alice'
+    },
+    issuer:  string(53), //'did:iota:8X22fe2H6NrHP9sr77S96ym7xhDg5aEgiywi375noTHX',
+    issuanceDate: Date, //'2021-10-05T08:58:33Z'  
+    proof: {
+      type: string, // example 'JcsEd25519Signature2020',
+      verificationMethod:  string, // example '#newKey',
+      signatureValue:  string(88), // example '56aGDSPBTW3p1AJQWnn1eRwixfGBfq1Gpj3NtSjhA2Qqgk3LrpeNYocvmV73ru4WLRYHPTyHwVKSGfd6JbSsyFRZ'
+    }
+  },
+  holder:  string(53), // 'did:iota:4SgsnbN67cJDwGgpU4woVYNY37kfN4Dr8rSfyDPbVTsR'
+}
 ```
