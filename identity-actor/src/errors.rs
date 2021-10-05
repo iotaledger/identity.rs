@@ -19,6 +19,17 @@ pub enum Error {
   CouldNotRespond(String),
   #[error("the actor was shut down")]
   Shutdown,
+  #[error("invalid endpoint")]
+  InvalidEndpoint,
+  #[error("{0}")]
+  OutboundFailure(#[from] p2p::OutboundFailure),
+  /// No handler was set on the receiver and thus we cannot process this request.
+  #[error("unkown request: `{0}`")]
+  UnknownRequest(String),
+  #[error("could not invoke the handler: {0}")]
+  HandlerInvocationError(String),
+  #[error("failed to deserialize the response: {0}")]
+  ResponseDeserializationFailure(String),
 }
 
 impl From<ListenErr> for Error {
@@ -31,20 +42,6 @@ impl From<ListenErr> for Error {
   }
 }
 
-/// Errors that can occur during [Actor::send_request] calls.
-#[derive(Debug, PartialEq, thiserror::Error)]
-pub enum SendError {
-  #[error("{0}")]
-  OutboundFailure(#[from] p2p::OutboundFailure),
-  /// No handler was set on the receiver and thus we cannot process this request.
-  #[error("unkown request: `{0}`")]
-  UnknownRequest(String),
-  #[error("could not invoke the handler: {0}")]
-  HandlerInvocationError(String),
-  #[error("failed to deserialize the response: {0}")]
-  ResponseDeserializationFailure(String),
-}
-
 /// Errors that can occur on the remote actor during [Actor::send_request] calls.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub(crate) enum RemoteSendError {
@@ -53,11 +50,11 @@ pub(crate) enum RemoteSendError {
   HandlerInvocationError(String),
 }
 
-impl From<RemoteSendError> for SendError {
+impl From<RemoteSendError> for Error {
   fn from(err: RemoteSendError) -> Self {
     match err {
-      RemoteSendError::UnknownRequest(req) => SendError::UnknownRequest(req),
-      RemoteSendError::HandlerInvocationError(err) => SendError::HandlerInvocationError(err),
+      RemoteSendError::UnknownRequest(req) => Error::UnknownRequest(req),
+      RemoteSendError::HandlerInvocationError(err) => Error::HandlerInvocationError(err),
     }
   }
 }

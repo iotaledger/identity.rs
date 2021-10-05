@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{errors::SendError, IdentityResolve};
+use crate::{errors::Error, IdentityResolve};
 
 use super::{default_listening_actor, default_sending_actor};
 
@@ -24,7 +24,7 @@ async fn test_unknown_request() -> anyhow::Result<()> {
     )
     .await;
 
-  assert_eq!(result.unwrap_err(), SendError::UnknownRequest(request_name.into()));
+  assert!(matches!(result.unwrap_err(), Error::UnknownRequest(_)));
 
   listening_actor.stop_handling_requests().await.unwrap();
 

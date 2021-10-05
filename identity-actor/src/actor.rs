@@ -5,7 +5,8 @@ use std::{any::Any, ops::Deref, sync::Arc};
 
 use crate::{
   asyncfn::AsyncFn,
-  errors::{RemoteSendError, Result, SendError},
+  endpoint::Endpoint,
+  errors::{RemoteSendError, Result},
   traits::{ActorRequest, RequestHandler},
   types::{RequestMessage, ResponseMessage},
 };
@@ -13,7 +14,6 @@ use dashmap::DashMap;
 use futures::{channel::mpsc, Future, StreamExt};
 use libp2p::{Multiaddr, PeerId};
 use p2p::{ListenErr, ReceiveRequest, StrongholdP2p};
-use serde_json::error::Category;
 use tokio::task::{self, JoinHandle};
 use uuid::Uuid;
 
@@ -22,7 +22,7 @@ use uuid::Uuid;
 type ObjectMap = DashMap<Uuid, Box<dyn Any + Send + Sync>>;
 /// A map from a request name to the identifier of the shared state object
 /// and the method that handles that particular request.
-type HandlerMap = DashMap<String, (Uuid, Box<dyn RequestHandler>)>;
+type HandlerMap = DashMap<Endpoint, (Uuid, Box<dyn RequestHandler>)>;
 
 pub struct HandlerBuilder {
   object_id: Uuid,
@@ -30,7 +30,7 @@ pub struct HandlerBuilder {
 }
 
 impl HandlerBuilder {
-  pub fn add_method<OBJ, REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Self
+  pub fn add_method<OBJ, REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Result<Self>
   where
     OBJ: Clone + Send + Sync + 'static,
     REQ: ActorRequest + Send + Sync + 'static,
@@ -38,8 +38,10 @@ impl HandlerBuilder {
     FUN: 'static + Send + Sync + Fn(OBJ, REQ) -> FUT,
   {
     let handler = AsyncFn::new(handler);
-    self.handlers.insert(cmd.into(), (self.object_id, Box::new(handler)));
     self
+      .handlers
+      .insert(Endpoint::new(cmd)?, (self.object_id, Box::new(handler)));
+    Ok(self)
   }
 }
 
@@ -161,8 +163,28 @@ impl Actor {
           }
         }
         None => {
-          // SAFETY: Serialization of this type never fails
-          serde_json::to_vec(&RemoteSendError::UnknownRequest(request_name.clone())).unwrap()
+          match handlers.get(&request_name.clone().to_catch_all()) {
+            Some(handler_tuple) => {
+              let object_id = handler_tuple.0;
+              let handler = &handler_tuple.1;
+
+              if let Some(object) = objects.get(&object_id) {
+                let object_clone = handler.clone_object(object.deref());
+                handler.invoke(object_clone, request.data).await
+              } else {
+                // SAFETY: Serialization of this type never fails
+                serde_json::to_vec(&RemoteSendError::HandlerInvocationError(format!(
+                  "no object set for {}",
+                  request_name
+                )))
+                .unwrap()
+              }
+            }
+            None => {
+              // SAFETY: Serialization of this type never fails
+              serde_json::to_vec(&RemoteSendError::UnknownRequest(request_name.to_string())).unwrap()
+            }
+          }
         }
       };
 
@@ -199,7 +221,7 @@ impl Actor {
     &mut self,
     peer: PeerId,
     command: Request,
-  ) -> std::result::Result<Request::Response, SendError> {
+  ) -> Result<Request::Response> {
     self.send_named_request(peer, &*command.request_name(), command).await
   }
 
@@ -208,8 +230,8 @@ impl Actor {
     peer: PeerId,
     name: &str,
     command: Request,
-  ) -> std::result::Result<Request::Response, SendError> {
-    let request = RequestMessage::new(name, serde_json::to_vec(&command).unwrap());
+  ) -> Result<Request::Response> {
+    let request = RequestMessage::new(name, serde_json::to_vec(&command).unwrap())?;
 
     log::info!(
       "Sending `{}` request with payload: {}",
@@ -225,19 +247,7 @@ impl Actor {
 
     match request_response {
       Ok(res) => Ok(res),
-      Err(err) => match err.classify() {
-        // If we failed to deserialize into the expected response, due to syntactically or
-        // semantically incorrect bytes, we attempt deserialization into a `RemoteSendError`.
-        Category::Data | Category::Syntax => {
-          let remote_send_err: serde_json::Result<RemoteSendError> = serde_json::from_slice(&response);
-
-          match remote_send_err {
-            Ok(remote_err) => Err(SendError::from(remote_err)),
-            Err(err) => Err(SendError::ResponseDeserializationFailure(err.to_string())),
-          }
-        }
-        _ => Err(SendError::ResponseDeserializationFailure(err.to_string())),
-      },
+      Err(err) => Err(crate::errors::Error::ResponseDeserializationFailure(err.to_string())),
     }
   }
 

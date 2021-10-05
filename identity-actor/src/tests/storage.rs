@@ -3,26 +3,26 @@
 
 use libp2p::{Multiaddr, PeerId};
 
-use crate::{storage::requests::IdentityList, Actor, IdentityResolve, StorageHandler};
+use crate::{errors::Result, storage::requests::IdentityList, Actor, IdentityResolve, StorageHandler};
 
 use super::{default_listening_actor, default_sending_actor};
 
-async fn default_storage_listening_actor() -> (Actor, Multiaddr, PeerId) {
+async fn default_storage_listening_actor() -> Result<(Actor, Multiaddr, PeerId)> {
   let (mut listening_actor, addr, peer_id) = default_listening_actor().await;
 
   let handler = StorageHandler::new().await.unwrap();
 
   listening_actor
     .add_handler(handler)
-    .add_method("storage/list", StorageHandler::list)
-    .add_method("storage/resolve", StorageHandler::resolve);
+    .add_method("storage/list", StorageHandler::list)?;
+  // .add_method("storage/resolve", StorageHandler::resolve)?;
 
-  (listening_actor, addr, peer_id)
+  Ok((listening_actor, addr, peer_id))
 }
 
 #[tokio::test]
-async fn test_list_identities() -> anyhow::Result<()> {
-  let (listening_actor, addr, peer_id) = default_storage_listening_actor().await;
+async fn test_list_identities() -> Result<()> {
+  let (listening_actor, addr, peer_id) = default_storage_listening_actor().await?;
 
   let mut sending_actor = default_sending_actor().await;
   sending_actor.add_peer(peer_id, addr).await;
@@ -37,8 +37,8 @@ async fn test_list_identities() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn test_resolve_on_unknown_id_returns_err() -> anyhow::Result<()> {
-  let (listening_actor, addr, peer_id) = default_storage_listening_actor().await;
+async fn test_resolve_on_unknown_id_returns_err() -> Result<()> {
+  let (listening_actor, addr, peer_id) = default_storage_listening_actor().await?;
 
   let mut sending_actor = default_sending_actor().await;
   sending_actor.add_peer(peer_id, addr).await;
