@@ -104,7 +104,7 @@ TODO: selective disclosure / ZKP fields?
 - Role: [verifier](#roles)
 
 Sent by the verifier to request one or more verifiable credentials from a holder. 
-The context and types are included, as well as trusted issuers, to allow the holder to determine if he posseses relevant credentials. This message allows a non-repudiable proof, that the verfifier requested data. 
+The context and types are included, as well as trusted issuers, to allow the holder to determine if he possesses relevant credentials. This message allows a non-repudiable proof, that the verifier requested data. 
 
 #### Structure
 ```json
@@ -345,7 +345,7 @@ TODO: change problem-report here, or remove them from the result altogether? Exa
 See: https://identity.foundation/didcomm-messaging/spec/#descriptors
 TODO
 
-For gerneral guidance see [problem reports](../resources/problem-reports).
+For general guidance see [problem reports](../resources/problem-reports).
 
 Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
 - e.p.prot.iota.presentation.reject-request

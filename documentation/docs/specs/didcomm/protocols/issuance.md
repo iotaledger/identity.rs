@@ -11,7 +11,7 @@ sidebar_label: Issuance
 
 ## Overview
 
-Allows a [holder](#roles) to request a [verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) from an [issuer](#roles). The [issuer](#roles) may alternatively initiate the issuance without a request from the [holder](#roles). This protocol also allows the [issuer](#roles) to request additional information and to offload the actual singning to a different party.
+Allows a [holder](#roles) to request a [verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) from an [issuer](#roles). The [issuer](#roles) may alternatively initiate the issuance without a request from the [holder](#roles). This protocol also allows the [issuer](#roles) to request additional information and to offload the actual signing to a different party.
 
 ### Relationships
 - [Presentation](./presentation.md): the [issuer](#roles) may request a [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) from the [holder](#roles) during the course of this protocol if more information is required.
@@ -21,7 +21,7 @@ Allows a [holder](#roles) to request a [verifiable credential](https://www.w3.or
 
 - A university issues a degree to a graduate that can be verified by potential employers.
 - A resident requests proof-of-address from their city council.
-- An insurer issues proof that a company has liability issurance.
+- An insurer issues proof that a company has liability insurance.
 
 ### Roles
 - [Holder](https://www.w3.org/TR/vc-data-model/#dfn-holders): stores one or more verifiable credentials. A holder is usually but not always the [subject](https://www.w3.org/TR/vc-data-model/#credential-subject-0) of those credentials.
@@ -62,11 +62,11 @@ The [holder](#roles) requests a single verifiable credential from the [issuer](#
 | [`type`](https://www.w3.org/TR/vc-data-model/#types) | Array of credential types; an issued credential SHOULD match all types specified.[^2] | ✔ |
 | [`trustedIssuer`](https://www.w3.org/TR/vc-data-model/#issuer) | Array of credential issuer IDs or URIs, any of which the holder would accept.[^3] | ✖ |
 
-[^1] The [holder](#roles) is usually but not always the [subject]((https://www.w3.org/TR/vc-data-model/#credential-subject-0)) of the requested credential. There may be custodial, legal guardianship, or delegation situations where a third-party requests or is issued a credential on behalf of a subject. It is the responsibility of the [issuer](#roles) to ensure authorisation in such cases.
+[^1] The [holder](#roles) is usually but not always the [subject]((https://www.w3.org/TR/vc-data-model/#credential-subject-0)) of the requested credential. There may be custodial, legal guardianship, or delegation situations where a third-party requests or is issued a credential on behalf of a subject. It is the responsibility of the [issuer](#roles) to ensure authorization in such cases.
 
 [^2] The credential `type` could be discovered out-of-band or be pre-sent by an [issuer](#roles). The types MAY be underspecified if the exact type is not known or if the resulting type depends on the identity or information of the subject or holder. The `type` could be as general as `["VerifiableCredential"]` for example, if the issuer issues only a singular type of credential or decides the credential based on other information related to the subject. The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support the requested `type`.
 
-[^3] The [holder](#roles) MAY specify one or more `trustedIssuers` they would like to sign the resulting credential. The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support any of the requested `trustedIssuers`. However, there are circumstances where a `trustedIssuer` is no longer supported or was compromised, so this behaviour should be decided based on the application.
+[^3] The [holder](#roles) MAY specify one or more `trustedIssuers` they would like to sign the resulting credential. The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support any of the requested `trustedIssuers`. However, there are circumstances where a `trustedIssuer` is no longer supported or was compromised, so this behavior should be decided based on the application.
 
 An [issuer](#roles) wanting to preserve privacy regarding which exact credential types or issuers they support should be careful with the information they disclose in `problem-reports` when rejecting requests. E.g. a `problem-report` with an `invalid-request` code discloses less information than the `invalid-credential-type` or `invalid-trusted-issuer` codes, as the latter two could be used to determine supported types or issuers by process of elimination.
 
@@ -120,7 +120,7 @@ The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles
 
 [^1] Issuing challenges should be done with due consideration to security and privacy concerns: not all applications require non-repudiation to third-parties and a [holder](#roles) [may wish to deny that they ever requested or accepted a particular credential](https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0049-repudiation/README.md#summary). The challenge SHOULD NOT be used for authentication of the [holder](#roles); see (TODO link on sender-authenticated encryption?).
 
-[^2] If present, an `expiry` indicates that the [issuer](#roles) MAY rescind the offer and abandon the protcol if an affirmative [issuance-response](#issuance-response) is not received before the specified datetime. Note that the `expiry` should override any default message timeouts.
+[^2] If present, an `expiry` indicates that the [issuer](#roles) MAY rescind the offer and abandon the protocol if an affirmative [issuance-response](#issuance-response) is not received before the specified datetime. Note that the `expiry` should override any default message timeouts.
 
 #### Examples
 
@@ -182,7 +182,7 @@ The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles
 - Type: `didcomm:iota/issuance/0.1/issuance-response`
 - Role: [holder](#roles)
 
-The [holder](#roles) responds to a [`issuance-offer`](#issuance-offer) by aceepting or disputing the offer and optionally signing the response for non-repudiation.
+The [holder](#roles) responds to a [`issuance-offer`](#issuance-offer) by accepting or disputing the offer and optionally signing the response for non-repudiation.
 
 #### Structure
 ```json
@@ -267,7 +267,7 @@ The [holder](#roles) responds to a [`issuance-offer`](#issuance-offer) by aceept
 - Type: `didcomm:iota/issuance/0.1/issuance`
 - Role: [issuer](#roles)
 
-The [issuer](#roles) transmits the signed credential following a [`issuance-response`](#issuance-response) by the [holder](#roles). The [issuer](#roles) may set an expiry until when they expect an achknowledgment and request a cryptographic signature in the acknowledgment for non-repudiation. 
+The [issuer](#roles) transmits the signed credential following a [`issuance-response`](#issuance-response) by the [holder](#roles). The [issuer](#roles) may set an expiry until when they expect an acknowledgment and request a cryptographic signature in the acknowledgment for non-repudiation. 
 
 #### Structure
 ```json
@@ -380,7 +380,7 @@ The [holder](#roles) confirms receipt of a successful credential [`issuance`](#i
 See: https://identity.foundation/didcomm-messaging/spec/#descriptors
 TODO
 
-For gerneral guidance see [problem reports](../resources/problem-reports).
+For general guidance see [problem reports](../resources/problem-reports).
 
 Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
 - e.p.prot.iota.issuance.reject-vc

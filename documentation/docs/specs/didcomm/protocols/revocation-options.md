@@ -82,7 +82,7 @@ Response including all available [RevocationInfo](./revocation#RevocationInfo) t
 
 ### Problem Reports
 
-For gerneral guidance see [problem reports](../resources/problem-reports).
+For general guidance see [problem reports](../resources/problem-reports).
 
 Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
 - e.p.prot.iota.revocation-options.reject-revocation-options-request
@@ -92,8 +92,8 @@ Custom error messages for problem-reports that are expected in the course of thi
 
 This section is non-normative.
 
-- Privacy: similar to [discover features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md), this protocol could be used to fingerprint a server partially or reveal its capabilities. If privacy is a concern, implementors should take care to accept requests only from parties authorised to perform [revocation](./revocation) or return a subset/superset of its actual supported options.
-- Authorisation: TODO
+- Privacy: similar to [discover features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md), this protocol could be used to fingerprint a server partially or reveal its capabilities. If privacy is a concern, implementors should take care to accept requests only from parties authorized to perform [revocation](./revocation) or return a subset/superset of its actual supported options.
+- Authorization: TODO
 - Authentication: TODO
 
 ## Unresolved Questions

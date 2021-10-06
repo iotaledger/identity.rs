@@ -16,7 +16,7 @@ Note that the exact method of revocation is unspecified. The typical procedure i
 
 ### Relationships
 - [revocation-options](./revocation-options): this may be preceded by the the [revocation-options](./revocation-options) protocol for the [trusted-party](#roles) to discover the available [`RevocationInfo` types](#RevocationInfo).
-- [presentation](./presentation): this may include a [presentation](./presentation) by the [revoker](#roles) to request additional information, such as the entire credential being revoked or authorisation information.
+- [presentation](./presentation): this may include a [presentation](./presentation) by the [revoker](#roles) to request additional information, such as the entire credential being revoked or authorization information.
 
 ### Example Use-Cases
 - A member of an organisation asks the organisation to revoke their membership
@@ -92,7 +92,7 @@ Sent by the [trusted-party](#roles) or holder to request revocation of an issued
 - Type: `didcomm:iota/revocation/0.1/revocation-response`
 - Role: [revoker](#roles)
 
-Sent by the [revoker](#roles) as soon as the revocation is performed. It idicates in what state the revocation is.
+Sent by the [revoker](#roles) as soon as the revocation is performed. It indicates in what state the revocation is.
 
 #### Structure
 ```json
@@ -130,7 +130,7 @@ The [trusted-party](#roles) SHOULD verify that the credential is actually revoke
 
 ### Problem Reports {#problem-reports}
 
-For gerneral guidance see [problem reports](../resources/problem-reports).
+For general guidance see [problem reports](../resources/problem-reports).
 
 Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
 - e.p.prot.iota.revocation.reject-revocation
@@ -214,7 +214,7 @@ Allows to request the revocation of a verifiable credential by its identifier fi
 
 - Type: `CredentialStatusRevocation2021`
 
-Allows to request the revocation of a verifiable credential by sending its corresponding [credential status](https://www.w3.org/TR/vc-data-model/#status) information. The [revoker](#roles) should ensure that this information is correct and that the requester is authorised.
+Allows to request the revocation of a verifiable credential by sending its corresponding [credential status](https://www.w3.org/TR/vc-data-model/#status) information. The [revoker](#roles) should ensure that this information is correct and that the requester is authorized.
 
 ```json
 {
@@ -226,7 +226,7 @@ Allows to request the revocation of a verifiable credential by sending its corre
 | :--- | :--- | :--- |
 | [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) | A [credential status](https://www.w3.org/TR/vc-data-model/#status) object.[^1] | ✔ |
 
-[^1] This SHOULD correspond with one of the suppported credential status methods in the [verifiable credentials extension registry](https://w3c-ccg.github.io/vc-extension-registry/#status-methods).
+[^1] This SHOULD correspond with one of the supported credential status methods in the [verifiable credentials extension registry](https://w3c-ccg.github.io/vc-extension-registry/#status-methods).
 
 #### Examples
 

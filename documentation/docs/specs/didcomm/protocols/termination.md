@@ -19,7 +19,7 @@ Indicates the graceful termination of a connection. It is expected that no recon
 
 ### Example Use-Cases
 
-- A verifier terminates the connection following a succesful presentation from a holder.
+- A verifier terminates the connection following a successful presentation from a holder.
 - One participant experiences an error and terminates the connection gracefully after sending a problem-report.
 
 ### Roles
@@ -70,7 +70,7 @@ TODO
 
 This section is non-normative.
 
-- Which party terminates a connection depends on the application, but is usually the same as the one that initiated it following a succesful interaction.
+- Which party terminates a connection depends on the application, but is usually the same as the one that initiated it following a successful interaction.
 - Any party may terminate a connection at any time, even during a protocol.
 - A termination message indicates a graceful end to a connection, the underlying transport layer connection may terminate without this message. Implementors should implement reasonable timeouts and reconnection capabilities in the latter case.
 

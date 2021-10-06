@@ -19,7 +19,7 @@ This protocol may be embedded in the [issuance](./issuance) protocol.
 
 ### Example Use-Cases
 
-- A seperate department requests a signature by the the legal department of a company.
+- A separate department requests a signature by the the legal department of a company.
 - A subsidiary requests the parent company to sign a credential.
 - An IOT device generates an unsigned credential and requests a secure server to sign it.
 
@@ -138,7 +138,7 @@ The [issuer](#roles) may request in turn that the credential be signed by a diff
 - Type: `didcomm:iota/signing/0.1/signing-acknowledgement`
 - Role: [trusted-party](#roles)
 
-Acknowledgement by the [trusted-party](#roles) that the credential was received and accepted. The [issuer](#roles) MAY revoke the credential if no acknowledegment is received.
+Acknowledgement by the [trusted-party](#roles) that the credential was received and accepted. The [issuer](#roles) MAY revoke the credential if no acknowledgement is received.
 
 #### Structure
 ```json
@@ -166,7 +166,7 @@ Acknowledgement by the [trusted-party](#roles) that the credential was received 
 
 TODO
 
-For gerneral guidance see [problem reports](../resources/problem-reports).
+For general guidance see [problem reports](../resources/problem-reports).
 
 e.p.prot.iota.signing.reject-signing-request // issuer rejects request by the trusted-party due to invalid/malformed/incomplete credential, 
 e.p.prot.iota.signing.reject-singing-response // the trusted-party rejects the returned credential due to being unsigned/altered, signed with an invalid key etc.

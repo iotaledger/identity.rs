@@ -51,6 +51,7 @@ The general structure of the invitation message is described in the [Out Of Band
 
 The actual invitation is contained in the `attachments` field in the message, which is structured as follows:
 
+TODO: indicate supported handshake protocols for authentication?
 
 ```json
 {

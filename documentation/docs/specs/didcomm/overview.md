@@ -31,7 +31,7 @@ NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
 | Name | Version | Description | 
 | :--- | :---: | :--- |
 | [Connection](./protocols/connection.md) | 0.1 | Allows establishment of a [DIDComm connection](https://identity.foundation/didcomm-messaging/spec/#connections) between two parties. |
-| [Authentication](./protocols/authentication.md) | 0.1 | TBD |
+| [Authentication](./protocols/authentication.md) | 0.1 | This protocol allows two parties to mutually authenticate each other. |
 | [Presentation](./protocols/presentation.md) | 0.1 | Allows presentation of verifiable credentials that are issued to a holder and uniquely presented to a third-party verifier. |
 | [Issuance](./protocols/issuance.md) | 0.1 | Allows the exchange of a verifiable credential between an issuer and a holder. | 
 | [Signing](./protocols/signing.md) | 0.1 | Allows a trusted-party to request the signing of an unsigned verifiable credential by an issuer. |
