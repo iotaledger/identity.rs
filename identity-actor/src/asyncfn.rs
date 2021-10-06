@@ -8,6 +8,7 @@ use std::{
 };
 
 use futures::Future;
+use libp2p::PeerId;
 
 use crate::{
   traits::{ActorRequest, RequestHandler},
@@ -20,7 +21,7 @@ where
   OBJ: 'static,
   REQ: ActorRequest,
   FUT: Future<Output = REQ::Response>,
-  FUN: Fn(OBJ, Actor, REQ) -> FUT,
+  FUN: Fn(OBJ, Actor, PeerId, REQ) -> FUT,
 {
   func: FUN,
   // Need to use the types that appear in the closure's arguments here,
@@ -36,7 +37,7 @@ where
   OBJ: 'static,
   REQ: ActorRequest,
   FUT: Future<Output = REQ::Response>,
-  FUN: Fn(OBJ, Actor, REQ) -> FUT,
+  FUN: Fn(OBJ, Actor, PeerId, REQ) -> FUT,
 {
   pub fn new(func: FUN) -> Self {
     Self {
@@ -52,11 +53,12 @@ where
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest + Send + Sync,
   FUT: Future<Output = REQ::Response> + Send,
-  FUN: Send + Sync + Fn(OBJ, Actor, REQ) -> FUT,
+  FUN: Send + Sync + Fn(OBJ, Actor, PeerId, REQ) -> FUT,
 {
   fn invoke<'this>(
     &'this self,
     actor: Actor,
+    peer: PeerId,
     object: Box<dyn Any + Send + Sync>,
     input: Vec<u8>,
   ) -> Pin<Box<dyn Future<Output = Vec<u8>> + Send + 'this>> {
@@ -64,7 +66,7 @@ where
     let request: REQ = serde_json::from_slice(&input).unwrap();
     let boxed_object: Box<OBJ> = object.downcast().unwrap();
     let future = async move {
-      let response: REQ::Response = (self.func)(*boxed_object, actor, request).await;
+      let response: REQ::Response = (self.func)(*boxed_object, actor, peer, request).await;
       serde_json::to_vec(&response).unwrap()
     };
     Box::pin(future)

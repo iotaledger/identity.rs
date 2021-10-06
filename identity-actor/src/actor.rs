@@ -38,7 +38,7 @@ impl HandlerBuilder {
     OBJ: Clone + Send + Sync + 'static,
     REQ: ActorRequest + Send + Sync + 'static,
     FUT: Future<Output = REQ::Response> + Send + 'static,
-    FUN: 'static + Send + Sync + Fn(OBJ, Actor, REQ) -> FUT,
+    FUN: 'static + Send + Sync + Fn(OBJ, Actor, PeerId, REQ) -> FUT,
   {
     let handler = AsyncFn::new(handler);
     self
@@ -160,7 +160,9 @@ impl Actor {
 
           if let Some(object) = objects.get(&object_id) {
             let object_clone = handler.clone_object(object.deref());
-            handler.invoke(self, object_clone, request.data).await
+            handler
+              .invoke(self, receive_request.peer, object_clone, request.data)
+              .await
           } else {
             // SAFETY: Serialization of this type never fails
             serde_json::to_vec(&RemoteSendError::HandlerInvocationError(format!(
@@ -178,7 +180,9 @@ impl Actor {
 
               if let Some(object) = objects.get(&object_id) {
                 let object_clone = handler.clone_object(object.deref());
-                handler.invoke(self, object_clone, request.data).await
+                handler
+                  .invoke(self, receive_request.peer, object_clone, request.data)
+                  .await
               } else {
                 // SAFETY: Serialization of this type never fails
                 serde_json::to_vec(&RemoteSendError::HandlerInvocationError(format!(
