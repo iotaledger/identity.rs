@@ -9,7 +9,10 @@ use std::{
 
 use futures::Future;
 
-use crate::traits::{ActorRequest, RequestHandler};
+use crate::{
+  traits::{ActorRequest, RequestHandler},
+  Actor,
+};
 
 #[derive(Clone)]
 pub struct AsyncFn<OBJ, REQ, FUT, FUN>
@@ -17,7 +20,7 @@ where
   OBJ: 'static,
   REQ: ActorRequest,
   FUT: Future<Output = REQ::Response>,
-  FUN: Fn(OBJ, REQ) -> FUT,
+  FUN: Fn(OBJ, Actor, REQ) -> FUT,
 {
   func: FUN,
   // Need to use the types that appear in the closure's arguments here,
@@ -33,7 +36,7 @@ where
   OBJ: 'static,
   REQ: ActorRequest,
   FUT: Future<Output = REQ::Response>,
-  FUN: Fn(OBJ, REQ) -> FUT,
+  FUN: Fn(OBJ, Actor, REQ) -> FUT,
 {
   pub fn new(func: FUN) -> Self {
     Self {
@@ -49,10 +52,11 @@ where
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest + Send + Sync,
   FUT: Future<Output = REQ::Response> + Send,
-  FUN: Send + Sync + Fn(OBJ, REQ) -> FUT,
+  FUN: Send + Sync + Fn(OBJ, Actor, REQ) -> FUT,
 {
   fn invoke<'this>(
     &'this self,
+    actor: Actor,
     object: Box<dyn Any + Send + Sync>,
     input: Vec<u8>,
   ) -> Pin<Box<dyn Future<Output = Vec<u8>> + Send + 'this>> {
@@ -60,7 +64,7 @@ where
     let request: REQ = serde_json::from_slice(&input).unwrap();
     let boxed_object: Box<OBJ> = object.downcast().unwrap();
     let future = async move {
-      let response: REQ::Response = (self.func)(*boxed_object, request).await;
+      let response: REQ::Response = (self.func)(*boxed_object, actor, request).await;
       serde_json::to_vec(&response).unwrap()
     };
     Box::pin(future)

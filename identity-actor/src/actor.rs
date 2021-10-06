@@ -14,7 +14,10 @@ use dashmap::DashMap;
 use futures::{channel::mpsc, Future, StreamExt};
 use libp2p::{Multiaddr, PeerId};
 use p2p::{ListenErr, ReceiveRequest, StrongholdP2p};
-use tokio::task::{self, JoinHandle};
+use tokio::{
+  sync::Mutex,
+  task::{self, JoinHandle},
+};
 use uuid::Uuid;
 
 /// A map from an identifier to an object that contains the
@@ -35,7 +38,7 @@ impl HandlerBuilder {
     OBJ: Clone + Send + Sync + 'static,
     REQ: ActorRequest + Send + Sync + 'static,
     FUT: Future<Output = REQ::Response> + Send + 'static,
-    FUN: 'static + Send + Sync + Fn(OBJ, REQ) -> FUT,
+    FUN: 'static + Send + Sync + Fn(OBJ, Actor, REQ) -> FUT,
   {
     let handler = AsyncFn::new(handler);
     self
@@ -45,17 +48,18 @@ impl HandlerBuilder {
   }
 }
 
+#[derive(Clone)]
 pub struct Actor {
   comm: StrongholdP2p<RequestMessage, ResponseMessage>,
   handlers: Arc<HandlerMap>,
   objects: Arc<ObjectMap>,
-  listener_handle: Option<JoinHandle<Result<()>>>,
+  listener_handle: Arc<Mutex<Option<JoinHandle<Result<()>>>>>,
 }
 
 impl Actor {
   pub(crate) async fn from_builder(
     receiver: mpsc::Receiver<ReceiveRequest<RequestMessage, ResponseMessage>>,
-    mut comm: StrongholdP2p<RequestMessage, ResponseMessage>,
+    comm: StrongholdP2p<RequestMessage, ResponseMessage>,
     handlers: HandlerMap,
     objects: ObjectMap,
     listening_addresses: Vec<Multiaddr>,
@@ -63,26 +67,26 @@ impl Actor {
     let handlers = Arc::new(handlers);
     let objects = Arc::new(objects);
 
-    let listener_handle = if !listening_addresses.is_empty() {
-      Some(Self::spawn_listener(
-        receiver,
-        Arc::clone(&objects),
-        Arc::clone(&handlers),
-      ))
-    } else {
-      None
+    let mut actor = Self {
+      comm,
+      handlers: Arc::clone(&handlers),
+      objects: Arc::clone(&objects),
+      listener_handle: Arc::new(Mutex::new(None)),
+    };
+
+    if !listening_addresses.is_empty() {
+      let handle = actor
+        .clone()
+        .spawn_listener(receiver, Arc::clone(&objects), Arc::clone(&handlers));
+
+      actor.listener_handle.lock().await.replace(handle);
     };
 
     for addr in listening_addresses {
-      comm.start_listening(addr).await?;
+      actor.comm.start_listening(addr).await?;
     }
 
-    Ok(Self {
-      comm,
-      handlers,
-      objects,
-      listener_handle,
-    })
+    Ok(actor)
   }
 
   pub fn add_handler<OBJ>(&mut self, handler: OBJ) -> HandlerBuilder
@@ -118,6 +122,7 @@ impl Actor {
   /// This method should only be called once on any given instance.
   /// A second caller would immediately receive an [`Error::LockInUse`].
   fn spawn_listener(
+    self,
     mut receiver: mpsc::Receiver<ReceiveRequest<RequestMessage, ResponseMessage>>,
     objects: Arc<ObjectMap>,
     handlers: Arc<HandlerMap>,
@@ -126,7 +131,9 @@ impl Actor {
       let mut handles = vec![];
       loop {
         if let Some(receive_request) = receiver.next().await {
-          let handler_handle = Self::spawn_handler(receive_request, Arc::clone(&objects), Arc::clone(&handlers));
+          let handler_handle = self
+            .clone()
+            .spawn_handler(receive_request, Arc::clone(&objects), Arc::clone(&handlers));
           handles.push(handler_handle);
         } else {
           return Ok(());
@@ -136,6 +143,7 @@ impl Actor {
   }
 
   fn spawn_handler(
+    self,
     receive_request: ReceiveRequest<RequestMessage, ResponseMessage>,
     objects: Arc<ObjectMap>,
     handlers: Arc<HandlerMap>,
@@ -152,7 +160,7 @@ impl Actor {
 
           if let Some(object) = objects.get(&object_id) {
             let object_clone = handler.clone_object(object.deref());
-            handler.invoke(object_clone, request.data).await
+            handler.invoke(self, object_clone, request.data).await
           } else {
             // SAFETY: Serialization of this type never fails
             serde_json::to_vec(&RemoteSendError::HandlerInvocationError(format!(
@@ -170,7 +178,7 @@ impl Actor {
 
               if let Some(object) = objects.get(&object_id) {
                 let object_clone = handler.clone_object(object.deref());
-                handler.invoke(object_clone, request.data).await
+                handler.invoke(self, object_clone, request.data).await
               } else {
                 // SAFETY: Serialization of this type never fails
                 serde_json::to_vec(&RemoteSendError::HandlerInvocationError(format!(
@@ -206,7 +214,7 @@ impl Actor {
   pub async fn stop_handling_requests(self) -> Result<()> {
     // TODO: aborting means that even requests that have been received and are being processed are cancelled
     // We should instead use some signalling mechanism that breaks the loop
-    if let Some(listener_handle) = self.listener_handle {
+    if let Some(listener_handle) = self.listener_handle.lock().await.take() {
       listener_handle.abort();
       let _ = listener_handle.await;
     }
@@ -252,7 +260,7 @@ impl Actor {
   }
 
   pub async fn join(self) {
-    if let Some(listener_handle) = self.listener_handle {
+    if let Some(listener_handle) = self.listener_handle.lock().await.take() {
       listener_handle.await.unwrap().unwrap();
     }
   }
