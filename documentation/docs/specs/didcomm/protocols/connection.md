@@ -59,8 +59,8 @@ TODO: indicate supported handshake protocols for authentication?
   "service": {                          
     "serviceEndpoint": string,          // REQUIRED
     "accept": [string],                 // OPTIONAL
-    "recipientKeys": [DIDUrl | KeyDID], // OPTIONAL
-    "routingKeys": [DIDUrl | KeyDID]    // OPTIONAL
+    "recipientKeys": [DIDUrl | DIDKey], // OPTIONAL
+    "routingKeys": [DIDUrl | DIDKey],   // OPTIONAL
   }, // OPTIONAL
 ```
 
@@ -174,8 +174,8 @@ Following a successful connection, the [invitee](#roles) sends its public keys n
 #### Structure
 ```json
 {
-  "recipientKey": DIDUrl | KeyDID,  // OPTIONAL
-  "routingKeys": [DIDUrl | KeyDID], // OPTIONAL
+  "recipientKey": DIDUrl | DIDKey], // OPTIONAL
+  "routingKeys": [DIDUrl | DIDKey], // OPTIONAL
 }
 ```
 

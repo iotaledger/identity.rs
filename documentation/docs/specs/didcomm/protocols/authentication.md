@@ -17,6 +17,9 @@ This protocol allows two parties to mutually authenticate, verifying the DID of 
 - [Connection](./connection): it is RECOMMENDED to establish [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) on [connection](./connection) to prevent revealing the DID of either party to eavesdroppers.
 
 ### Example Use-Cases
+- A connected sensor wants to make sure only valid well known parties connect to it, before allowing access.
+- A customer wants to make sure they are actually connecting to the bank, before presenting information.
+- An organisation wants to verify the DID of the employer before issuing access credentials. 
 
 
 ### Roles
@@ -26,20 +29,20 @@ This protocol allows two parties to mutually authenticate, verifying the DID of 
 ### Interaction
 
 <div style={{textAlign: 'center'}}>
-TODO
-![IssuanceDiagram](/img/didcomm/issuance.drawio.svg)
+
+![AuthenticationDiagram](/img/didcomm/authentication.drawio.svg)
 
 </div>
 
 
 ## Messages
 
-### 1. did-challenge {#did-challenge}
+### 1. authentication-request {#authentication-request}
 
-- Type: `didcomm:iota/authentication/0.1/did-challenge`
+- Type: `didcomm:iota/authentication/0.1/authentication-request`
 - Role: [requester](#roles)
 
-TBD
+Sent to start the authentication process. This MUST be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) to provide some level of trust to the [responder](#roles). However, it is possible to replay [authentication-request](#authentication-request) messages so this alone is insufficient to prove the DID of the [requester](#roles).
 
 #### Structure
 ```json
@@ -51,8 +54,9 @@ TBD
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`subject`](https://www.w3.org/TR/vc-data-model/#credential-subject-0) | [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of the [credential subject](https://www.w3.org/TR/vc-data-model/#credential-subject-0)[^1]. | ✔ |
+| [`did`](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) | [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of the [requester](#roles).[^1]. | ✔ |
 
+[^1] The `did` used in the [authentication-request](#authentication-request) MUST match the signature of the [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) TODO, that is, the corresponding DID document must contain the key used to sign...
 
 #### Examples
 
@@ -64,18 +68,19 @@ TBD
 }
 ```
 
-### 2. did-response {#did-response}
+### 2. authentication-response {#authentication-response}
 
-- Type: `didcomm:iota/authentication/0.1/did-response`
+- Type: `didcomm:iota/authentication/0.1/authentication-response`
 - Role: [responder](#roles)
 
-TBD
+This message is send as a response to a [authentication request](#authentication-request) after checking the validity of the request.
 
-#### Structure
+#### Structure  
 ```json
 {
-  "did": DID,           // REQUIRED
-  "challenge": String,  // REQUIRED
+  "did": DID,                 // REQUIRED
+  "challenge": String,        // REQUIRED
+  "challengeResponse": String // REQUIRED
 }
 ```
 
@@ -94,17 +99,18 @@ TBD
 }
 ```
 
-### 3. did-connection {#did-connection}
+### 3. authentication-result {#authentication-result}
 
-- Type: `didcomm:iota/authentication/0.1/did-connection`
+- Type: `didcomm:iota/authentication/0.1/authentication-result`
 - Role: [requester](#roles)
 
-TBD
+This message finalises the mutual authentication. 
 
 #### Structure
 ```json
 {
-  "did": DID,  // REQUIRED
+  "did": DID,                 // REQUIRED
+  "challengeResponse": String // REQUIRED
 }
 ```
 

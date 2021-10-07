@@ -6,6 +6,7 @@ sidebar_label: Overview
 *version 0.1, last changed September 2021*
 
 TODO: make clear that we only show message payloads in the protocol examples
+TODO: come up with a new protocol, `didcomm://` is VERBOTEN https://identity.foundation/didcomm-messaging/spec/#didcomm-message-uris 
 
 
 ## Conformance
