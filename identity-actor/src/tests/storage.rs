@@ -13,8 +13,8 @@ async fn default_storage_listening_actor() -> Result<(Actor, Multiaddr, PeerId)>
   let handler = StorageHandler::new().await.unwrap();
 
   listening_actor
-    .add_handler(handler)
-    .add_method("storage/list", StorageHandler::list)?;
+    .add_state(handler)
+    .add_handler("storage/list", StorageHandler::list)?;
   // .add_method("storage/resolve", StorageHandler::resolve)?;
 
   Ok((listening_actor, addr, peer_id))

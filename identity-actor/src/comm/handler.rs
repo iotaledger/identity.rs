@@ -104,8 +104,8 @@ impl DidCommHandler {
     let did_comm_actor = DidCommActor::new(actor.clone());
 
     actor
-      .add_handler(did_comm_actor.clone())
-      .add_method("didcomm/*", DidCommActor::catch_all_handler)
+      .add_state(did_comm_actor.clone())
+      .add_handler("didcomm/*", DidCommActor::catch_all_handler)
       .unwrap();
 
     presentation_holder_handler(DidCommActor::new(actor), request.peer, Some(request.input))
@@ -119,8 +119,8 @@ impl DidCommHandler {
     let did_comm_actor = DidCommActor::new(actor.clone());
 
     actor
-      .add_handler(did_comm_actor.clone())
-      .add_method("didcomm/*", DidCommActor::catch_all_handler)
+      .add_state(did_comm_actor.clone())
+      .add_handler("didcomm/*", DidCommActor::catch_all_handler)
       .unwrap();
 
     presentation_verifier_handler(did_comm_actor, request.peer, Some(request.input))

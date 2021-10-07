@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-
 use crate::{
   comm::handler::{presentation_holder_handler, presentation_verifier_handler, DidCommActor, DidCommHandler},
   errors::Result,
@@ -19,7 +18,7 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
 
   let handler = DidCommHandler::new().await;
 
-  verifier_actor.add_handler(handler).add_method(
+  verifier_actor.add_state(handler).add_handler(
     "didcomm/presentation_offer",
     DidCommHandler::presentation_verifier_actor_handler,
   )?;
@@ -32,8 +31,8 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
   let holder_didcomm_actor = DidCommActor::new(holder_actor.clone());
 
   holder_actor
-    .add_handler(holder_didcomm_actor.clone())
-    .add_method("didcomm/*", DidCommActor::catch_all_handler)?;
+    .add_state(holder_didcomm_actor.clone())
+    .add_handler("didcomm/*", DidCommActor::catch_all_handler)?;
 
   presentation_holder_handler(holder_didcomm_actor, peer_id, None)
     .await
@@ -54,7 +53,7 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
 
   let handler = DidCommHandler::new().await;
 
-  holder_actor.add_handler(handler).add_method(
+  holder_actor.add_state(handler).add_handler(
     "didcomm/presentation_request",
     DidCommHandler::presentation_holder_actor_handler,
   )?;
@@ -67,8 +66,8 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
   let verifier_didcomm_actor = DidCommActor::new(verifier_actor.clone());
 
   verifier_actor
-    .add_handler(verifier_didcomm_actor.clone())
-    .add_method("didcomm/*", DidCommActor::catch_all_handler)?;
+    .add_state(verifier_didcomm_actor.clone())
+    .add_handler("didcomm/*", DidCommActor::catch_all_handler)?;
 
   presentation_verifier_handler(verifier_didcomm_actor, peer_id, None)
     .await

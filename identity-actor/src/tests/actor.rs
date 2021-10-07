@@ -67,13 +67,13 @@ async fn test_actors_can_communicate_bidirectionally() -> crate::errors::Result<
   }
 
   actor1
-    .add_handler(State)
-    .add_method("request/test", State::handler)
+    .add_state(State)
+    .add_handler("request/test", State::handler)
     .unwrap();
 
   actor2
-    .add_handler(State)
-    .add_method("request/test", State::handler)
+    .add_state(State)
+    .add_handler("request/test", State::handler)
     .unwrap();
 
   actor1.add_peer(actor2.peer_id(), addr).await;

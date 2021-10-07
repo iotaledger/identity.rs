@@ -39,7 +39,7 @@ pub struct HandlerBuilder {
 }
 
 impl HandlerBuilder {
-  pub fn add_method<OBJ, REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Result<Self>
+  pub fn add_handler<OBJ, REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> Result<Self>
   where
     OBJ: Clone + Send + Sync + 'static,
     REQ: ActorRequest + Send + Sync + 'static,
@@ -96,7 +96,7 @@ impl Actor {
     Ok(actor)
   }
 
-  pub fn add_handler<OBJ>(&mut self, handler: OBJ) -> HandlerBuilder
+  pub fn add_state<OBJ>(&mut self, handler: OBJ) -> HandlerBuilder
   where
     OBJ: Clone + Send + Sync + 'static,
   {
