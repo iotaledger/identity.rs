@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::errors::Result;
+use libp2p::PeerId;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
@@ -23,3 +24,19 @@ impl RequestMessage {
 }
 
 pub type ResponseMessage = Vec<u8>;
+
+pub struct RequestContext<T> {
+  pub input: T,
+  pub peer: PeerId,
+  pub endpoint: Endpoint,
+}
+
+impl<T> RequestContext<T> {
+  pub fn new(input: T, peer: PeerId, endpoint: Endpoint) -> Self {
+    Self { input, peer, endpoint }
+  }
+
+  pub fn convert<I>(self, input: I) -> RequestContext<I> {
+    RequestContext::new(input, self.peer, self.endpoint)
+  }
+}

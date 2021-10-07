@@ -1,7 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{errors::Error, IdentityResolve};
+use libp2p::tcp::TcpConfig;
+
+use crate::{
+  actor_builder::ActorBuilder, errors::Error, traits::ActorRequest, types::RequestContext, Actor, IdentityResolve,
+};
 
 use super::{default_listening_actor, default_sending_actor};
 
@@ -27,6 +31,59 @@ async fn test_unknown_request() -> anyhow::Result<()> {
   assert!(matches!(result.unwrap_err(), Error::UnknownRequest(_)));
 
   listening_actor.stop_handling_requests().await.unwrap();
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_actors_can_communicate_bidirectionally() -> crate::errors::Result<()> {
+  let transport1 = TcpConfig::new().nodelay(true);
+  let transport2 = TcpConfig::new().nodelay(true);
+
+  let mut actor1 = ActorBuilder::new().build_with_transport(transport1).await.unwrap();
+  let mut actor2 = ActorBuilder::new().build_with_transport(transport2).await.unwrap();
+
+  let addr = actor2
+    .start_listening("/ip4/0.0.0.0/tcp/0".parse().unwrap())
+    .await
+    .unwrap();
+
+  #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+  pub struct Dummy;
+
+  impl ActorRequest for Dummy {
+    type Response = ();
+
+    fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
+      std::borrow::Cow::Borrowed("request/test")
+    }
+  }
+
+  #[derive(Clone)]
+  pub struct State;
+
+  impl State {
+    async fn handler(self, _actor: Actor, _req: RequestContext<Dummy>) {}
+  }
+
+  actor1
+    .add_handler(State)
+    .add_method("request/test", State::handler)
+    .unwrap();
+
+  actor2
+    .add_handler(State)
+    .add_method("request/test", State::handler)
+    .unwrap();
+
+  actor1.add_peer(actor2.peer_id(), addr).await;
+
+  actor1.send_request(actor2.peer_id(), Dummy).await.unwrap();
+
+  actor2.send_request(actor1.peer_id(), Dummy).await.unwrap();
+
+  actor1.stop_handling_requests().await.unwrap();
+  actor2.stop_handling_requests().await.unwrap();
 
   Ok(())
 }

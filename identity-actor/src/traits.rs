@@ -9,16 +9,15 @@ use std::{
 };
 
 use futures::Future;
-use libp2p::PeerId;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::Actor;
+use crate::{types::RequestContext, Actor};
 
 pub trait RequestHandler: Send + Sync {
   fn invoke<'this>(
     &'this self,
     actor: Actor,
-    peer: PeerId,
+    request: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     input: Vec<u8>,
   ) -> Pin<Box<dyn Future<Output = Vec<u8>> + Send + 'this>>;

@@ -3,7 +3,7 @@
 
 use std::sync::Arc;
 
-use crate::IdentityList;
+use crate::{types::RequestContext, Actor, IdentityList};
 use identity_account::{account::Account, identity::IdentityCreate};
 use identity_iota::{
   did::{IotaDID, IotaDocument},
@@ -26,21 +26,29 @@ impl StorageHandler {
     })
   }
 
-  pub async fn create(self, input: IdentityCreate) -> Result<IotaDocument, StorageError> {
+  pub async fn create(
+    self,
+    _actor: Actor,
+    request: RequestContext<IdentityCreate>,
+  ) -> Result<IotaDocument, StorageError> {
     let acc = Account::builder().build().await.unwrap();
-    let snapshot = acc.create_identity(input).await?;
+    let snapshot = acc.create_identity(request.input).await?;
     let doc = snapshot.identity().to_document()?;
     Ok(doc)
   }
 
-  pub async fn list(self, _input: IdentityList) -> Vec<IotaDID> {
+  pub async fn list(self, _actor: Actor, _request: RequestContext<IdentityList>) -> Vec<IotaDID> {
     vec![]
   }
 
-  pub async fn resolve(self, input: IdentityResolve) -> Result<IotaDocument, StorageError> {
-    log::info!("Resolving {:?}", input.did);
+  pub async fn resolve(
+    self,
+    _actor: Actor,
+    request: RequestContext<IdentityResolve>,
+  ) -> Result<IotaDocument, StorageError> {
+    log::info!("Resolving {:?}", request.input.did);
 
-    let res = self.client.resolve(&input.did).await?;
+    let res = self.client.resolve(&request.input.did).await?;
 
     log::info!("Resolved into: {:?}", res);
 

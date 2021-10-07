@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod actor;
+mod comm;
 mod storage;
 
 use libp2p::{tcp::TcpConfig, Multiaddr, PeerId};
@@ -13,7 +14,7 @@ async fn default_listening_actor() -> (Actor, Multiaddr, PeerId) {
   let id_keys = Keypair::generate_ed25519();
   let transport = TcpConfig::new().nodelay(true);
 
-  let addr: Multiaddr = "/ip4/127.0.0.1/tcp/0".parse().unwrap();
+  let addr: Multiaddr = "/ip4/0.0.0.0/tcp/0".parse().unwrap();
 
   let mut listening_actor = ActorBuilder::new()
     .keys(InitKeypair::IdKeys(id_keys))
@@ -29,5 +30,11 @@ async fn default_listening_actor() -> (Actor, Multiaddr, PeerId) {
 }
 
 async fn default_sending_actor() -> Actor {
-  ActorBuilder::new().build().await.unwrap()
+  let id_keys = Keypair::generate_ed25519();
+
+  ActorBuilder::new()
+    .keys(InitKeypair::IdKeys(id_keys))
+    .build()
+    .await
+    .unwrap()
 }

@@ -8,10 +8,16 @@ use crate::{
   endpoint::Endpoint,
   errors::{RemoteSendError, Result},
   traits::{ActorRequest, RequestHandler},
-  types::{RequestMessage, ResponseMessage},
+  types::{RequestContext, RequestMessage, ResponseMessage},
 };
 use dashmap::DashMap;
-use futures::{channel::mpsc, Future, StreamExt};
+use futures::{
+  channel::{
+    mpsc::{self},
+    oneshot::Sender,
+  },
+  Future, StreamExt,
+};
 use libp2p::{Multiaddr, PeerId};
 use p2p::{ListenErr, ReceiveRequest, StrongholdP2p};
 use tokio::{
@@ -38,7 +44,7 @@ impl HandlerBuilder {
     OBJ: Clone + Send + Sync + 'static,
     REQ: ActorRequest + Send + Sync + 'static,
     FUT: Future<Output = REQ::Response> + Send + 'static,
-    FUN: 'static + Send + Sync + Fn(OBJ, Actor, PeerId, REQ) -> FUT,
+    FUN: 'static + Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
   {
     let handler = AsyncFn::new(handler);
     self
@@ -74,13 +80,14 @@ impl Actor {
       listener_handle: Arc::new(Mutex::new(None)),
     };
 
-    if !listening_addresses.is_empty() {
-      let handle = actor
-        .clone()
-        .spawn_listener(receiver, Arc::clone(&objects), Arc::clone(&handlers));
+    // TODO: Always start listener, change `listener_handle` in actor accordingly.
+    // if !listening_addresses.is_empty() {
+    let handle = actor
+      .clone()
+      .spawn_listener(receiver, Arc::clone(&objects), Arc::clone(&handlers));
 
-      actor.listener_handle.lock().await.replace(handle);
-    };
+    actor.listener_handle.lock().await.replace(handle);
+    // };
 
     for addr in listening_addresses {
       actor.comm.start_listening(addr).await?;
@@ -142,6 +149,21 @@ impl Actor {
     })
   }
 
+  fn send_ack(response_tx: Sender<Vec<u8>>) {
+    // TODO: can return an error when
+    // - connection times out, when
+    // - when handler takes too long to respond (configurable via SwarmBuilder.with_timeout)
+    // - error on the transport layer
+    // - potentially others...
+    let response = serde_json::to_vec(&serde_json::Value::Null).unwrap();
+    let response_result = response_tx.send(response);
+
+    if response_result.is_err() {
+      log::error!("could not respond to request");
+      // log::error!("could not respond to `{}` request", request_name);
+    }
+  }
+
   fn spawn_handler(
     self,
     receive_request: ReceiveRequest<RequestMessage, ResponseMessage>,
@@ -153,16 +175,22 @@ impl Actor {
       let response_tx = receive_request.response_tx;
       let request_name = request.name;
 
-      let response_data = match handlers.get(&request_name) {
+      match handlers.get(&request_name) {
         Some(handler_tuple) => {
+          log::info!("Invoking named handler for {}", request_name);
+
           let object_id = handler_tuple.0;
           let handler = &handler_tuple.1;
 
           if let Some(object) = objects.get(&object_id) {
             let object_clone = handler.clone_object(object.deref());
-            handler
-              .invoke(self, receive_request.peer, object_clone, request.data)
-              .await
+            let request_context: RequestContext<()> =
+              RequestContext::new((), receive_request.peer, request_name.clone());
+
+            // Send dummy ack that message was received
+            Self::send_ack(response_tx);
+
+            handler.invoke(self, request_context, object_clone, request.data).await
           } else {
             // SAFETY: Serialization of this type never fails
             serde_json::to_vec(&RemoteSendError::HandlerInvocationError(format!(
@@ -175,15 +203,22 @@ impl Actor {
         None => {
           match handlers.get(&request_name.clone().to_catch_all()) {
             Some(handler_tuple) => {
+              log::info!("Invoking catch_all handler for {}", request_name);
+
               let object_id = handler_tuple.0;
               let handler = &handler_tuple.1;
 
               if let Some(object) = objects.get(&object_id) {
                 let object_clone = handler.clone_object(object.deref());
-                handler
-                  .invoke(self, receive_request.peer, object_clone, request.data)
-                  .await
+                let request_context: RequestContext<()> =
+                  RequestContext::new((), receive_request.peer, request_name.clone());
+
+                // Send dummy ack that message was received
+                Self::send_ack(response_tx);
+
+                handler.invoke(self, request_context, object_clone, request.data).await
               } else {
+                log::info!("No catch_all handler for {}", request_name);
                 // SAFETY: Serialization of this type never fails
                 serde_json::to_vec(&RemoteSendError::HandlerInvocationError(format!(
                   "no object set for {}",
@@ -199,17 +234,6 @@ impl Actor {
           }
         }
       };
-
-      // TODO: can return an error when
-      // - connection times out, when
-      // - when handler takes too long to respond (configurable via SwarmBuilder.with_timeout)
-      // - error on the transport layer
-      // - potentially others...
-      let response_result = response_tx.send(response_data);
-
-      if response_result.is_err() {
-        log::error!("could not respond to `{}` request", request_name);
-      }
 
       Ok(())
     })
@@ -251,9 +275,7 @@ impl Actor {
       serde_json::to_string_pretty(&command).unwrap()
     );
 
-    let response = self.comm.send_request(peer, request).await.unwrap();
-
-    log::info!("Response: {}", std::str::from_utf8(&response).unwrap());
+    let response = self.comm.send_request(peer, request).await?;
 
     let request_response: serde_json::Result<Request::Response> = serde_json::from_slice(&response);
 

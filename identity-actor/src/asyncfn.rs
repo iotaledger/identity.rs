@@ -8,10 +8,10 @@ use std::{
 };
 
 use futures::Future;
-use libp2p::PeerId;
 
 use crate::{
   traits::{ActorRequest, RequestHandler},
+  types::RequestContext,
   Actor,
 };
 
@@ -21,7 +21,7 @@ where
   OBJ: 'static,
   REQ: ActorRequest,
   FUT: Future<Output = REQ::Response>,
-  FUN: Fn(OBJ, Actor, PeerId, REQ) -> FUT,
+  FUN: Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
 {
   func: FUN,
   // Need to use the types that appear in the closure's arguments here,
@@ -37,7 +37,7 @@ where
   OBJ: 'static,
   REQ: ActorRequest,
   FUT: Future<Output = REQ::Response>,
-  FUN: Fn(OBJ, Actor, PeerId, REQ) -> FUT,
+  FUN: Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
 {
   pub fn new(func: FUN) -> Self {
     Self {
@@ -53,20 +53,21 @@ where
   OBJ: Clone + Send + Sync + 'static,
   REQ: ActorRequest + Send + Sync,
   FUT: Future<Output = REQ::Response> + Send,
-  FUN: Send + Sync + Fn(OBJ, Actor, PeerId, REQ) -> FUT,
+  FUN: Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
 {
   fn invoke<'this>(
     &'this self,
     actor: Actor,
-    peer: PeerId,
+    request: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     input: Vec<u8>,
   ) -> Pin<Box<dyn Future<Output = Vec<u8>> + Send + 'this>> {
     log::debug!("Attempt deserialization into {:?}", std::any::type_name::<REQ>());
-    let request: REQ = serde_json::from_slice(&input).unwrap();
+    let input: REQ = serde_json::from_slice(&input).unwrap();
+    let request: RequestContext<REQ> = request.convert(input);
     let boxed_object: Box<OBJ> = object.downcast().unwrap();
     let future = async move {
-      let response: REQ::Response = (self.func)(*boxed_object, actor, peer, request).await;
+      let response: REQ::Response = (self.func)(*boxed_object, actor, request).await;
       serde_json::to_vec(&response).unwrap()
     };
     Box::pin(future)
