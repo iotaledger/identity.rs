@@ -56,7 +56,7 @@ Sent to start the authentication process. This MUST be a [signed DIDComm message
 | :--- | :--- | :--- |
 | [`did`](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) | [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of the [requester](#roles).[^1]. | ✔ |
 
-[^1] The `did` used in the [authentication-request](#authentication-request) MUST match the signature of the [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) TODO, that is, the corresponding DID document must contain the key used to sign...
+[^1] The signing key used for the [signed DIDComm envelope](TODO) wrapping this message MUST be authentication section of the DID document corresponding to the `did` used in the [authentication-request](#authentication-request) MUST match the key used for the signature of the [signed DIDComm envelope](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message). 
 
 #### Examples
 
@@ -150,7 +150,17 @@ This section is non-normative.
 - **Security**: TODO - subject to probing if we use sender-authentication encryption?
 - **Man-in-the-Middle**: TODO - note possible attack vectors for the requester and responder, including intercepting or modifying the invitation in the connection protocol.
 
+## Unresolved Questions
+
+1. Make sender-authenticated encryption optional or negotiated (by requester or responder)?
+2. In which messages will negotiation take place (in authentication protocol or subsequent "upgrade" flow)
+3. Explicit proofs/signatures in payload vs signed messages (leaning towards signed) using authentication methods
+
 ## Related Work
 
+- Aries Hyperledger:
+  - DID Exchange protocol: https://github.com/hyperledger/aries-rfcs/tree/main/features/0023-did-exchange
+  - DIDAuthZ: https://github.com/hyperledger/aries-rfcs/tree/main/features/0309-didauthz
+- Jolocom: https://jolocom.github.io/jolocom-sdk/1.0.0/guides/interaction_flows/#authentication
 
 ## Further Reading
