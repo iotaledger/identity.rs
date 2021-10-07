@@ -1,53 +1,80 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use libp2p::{Multiaddr, PeerId};
 
 use crate::{
-  comm::handler::{presentation_holder_handler, DidCommActor, DidCommHandler},
+  comm::handler::{presentation_holder_handler, presentation_verifier_handler, DidCommActor, DidCommHandler},
   errors::Result,
-  Actor,
 };
 
 use super::{default_listening_actor, default_sending_actor};
 
-async fn default_comm_listening_actor() -> Result<(Actor, Multiaddr, PeerId)> {
-  let (mut listening_actor, addr, peer_id) = default_listening_actor().await;
+#[tokio::test]
+async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
+  pretty_env_logger::init();
+
+  let mut holder_actor = default_sending_actor().await;
+
+  let (mut verifier_actor, addr, peer_id) = default_listening_actor().await;
 
   let handler = DidCommHandler::new().await;
 
-  listening_actor.add_handler(handler).add_method(
+  verifier_actor.add_handler(handler).add_method(
     "didcomm/presentation_offer",
     DidCommHandler::presentation_verifier_actor_handler,
   )?;
 
-  Ok((listening_actor, addr, peer_id))
-}
+  log::debug!("verifier peer id: {}", verifier_actor.peer_id());
+  log::debug!("holder peer id: {}", holder_actor.peer_id());
 
-#[tokio::test]
-async fn test_didcomm() -> Result<()> {
-  pretty_env_logger::init();
+  holder_actor.add_peer(peer_id, addr.clone()).await;
 
-  let mut sending_actor = default_sending_actor().await;
+  let holder_didcomm_actor = DidCommActor::new(holder_actor.clone());
 
-  let (listening_actor, addr, peer_id) = default_comm_listening_actor().await?;
-
-  log::info!("verifier peer id: {}", listening_actor.peer_id());
-  log::info!("holder peer id: {}", sending_actor.peer_id());
-
-  sending_actor.add_peer(peer_id, addr.clone()).await;
-
-  let sending_didcomm_actor = DidCommActor::new(sending_actor.clone());
-
-  sending_actor
-    .add_handler(sending_didcomm_actor.clone())
+  holder_actor
+    .add_handler(holder_didcomm_actor.clone())
     .add_method("didcomm/*", DidCommActor::catch_all_handler)?;
 
-  presentation_holder_handler(sending_didcomm_actor, peer_id, None)
+  presentation_holder_handler(holder_didcomm_actor, peer_id, None)
     .await
     .unwrap();
 
-  listening_actor.stop_handling_requests().await.unwrap();
+  verifier_actor.stop_handling_requests().await.unwrap();
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
+  pretty_env_logger::init();
+
+  let (mut holder_actor, addr, peer_id) = default_listening_actor().await;
+
+  let mut verifier_actor = default_sending_actor().await;
+
+  let handler = DidCommHandler::new().await;
+
+  holder_actor.add_handler(handler).add_method(
+    "didcomm/presentation_request",
+    DidCommHandler::presentation_holder_actor_handler,
+  )?;
+
+  log::debug!("verifier peer id: {}", verifier_actor.peer_id());
+  log::debug!("holder peer id: {}", holder_actor.peer_id());
+
+  verifier_actor.add_peer(peer_id, addr.clone()).await;
+
+  let verifier_didcomm_actor = DidCommActor::new(verifier_actor.clone());
+
+  verifier_actor
+    .add_handler(verifier_didcomm_actor.clone())
+    .add_method("didcomm/*", DidCommActor::catch_all_handler)?;
+
+  presentation_verifier_handler(verifier_didcomm_actor, peer_id, None)
+    .await
+    .unwrap();
+
+  holder_actor.stop_handling_requests().await.unwrap();
 
   Ok(())
 }

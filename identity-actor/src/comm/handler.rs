@@ -98,8 +98,16 @@ impl DidCommHandler {
     Self
   }
 
-  pub async fn presentation_holder_actor_handler(self, actor: Actor, request: RequestContext<PresentationRequest>) {
+  pub async fn presentation_holder_actor_handler(self, mut actor: Actor, request: RequestContext<PresentationRequest>) {
     log::debug!("holder: received presentation request");
+
+    let did_comm_actor = DidCommActor::new(actor.clone());
+
+    actor
+      .add_handler(did_comm_actor.clone())
+      .add_method("didcomm/*", DidCommActor::catch_all_handler)
+      .unwrap();
+
     presentation_holder_handler(DidCommActor::new(actor), request.peer, Some(request.input))
       .await
       .unwrap();
