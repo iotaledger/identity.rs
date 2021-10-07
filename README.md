@@ -81,7 +81,7 @@ version = "1.0.0"
 edition = "2018"
 
 [dependencies]
-identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
+identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main", features = ["account"]}
 pretty_env_logger = { version = "0.4" }
 tokio = { version = "1.5", features = ["full"] }
 ```
