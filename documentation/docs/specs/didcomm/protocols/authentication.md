@@ -7,10 +7,10 @@ sidebar_label: Authentication
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-10-06
+- Last Updated: 2021-10-08
 
 ## Overview
-This protocol allows two parties to mutually authenticate, verifying the DID of each other. On completion of this protocol, it is expected that [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) will be used between the parties for continuous authentication.
+This protocol allows two parties to mutually authenticate by disclosing and verifying the [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of each other. On successful completion of this protocol, it is expected that [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) may be used between the parties for continuous authentication.
 
 ### Relationships
 
@@ -20,7 +20,6 @@ This protocol allows two parties to mutually authenticate, verifying the DID of 
 - A connected sensor wants to make sure only valid well known parties connect to it, before allowing access.
 - A customer wants to make sure they are actually connecting to the bank, before presenting information.
 - An organisation wants to verify the DID of the employer before issuing access credentials. 
-
 
 ### Roles
 - Requester: initiates the authentication.
@@ -158,7 +157,9 @@ This message MUST be a [signed DIDComm message](https://identity.foundation/didc
 - Type: `didcomm:iota/authentication/0.1/authentication-result`
 - Role: [requester](#roles)
 
-This message finalises the mutual authentication, proving control over the DID of the [responder](#roles) to the [requester](#roles). MUST use [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) if it was negotiated in the previous messages.
+This message finalises the mutual authentication, proving control over the DID of the [requester](#roles) to the [responder](#roles). Similar to [authentication-response](#authentication-response), this message MUST be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message).
+
+This MUST or MUST NOT use [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) depending on the outcome of the `upgradeEncryption` negotiation in the preceding [authentication-response](#authentication-response) message, otherwise resulting in a problem-report and failure of the authentication protocol. For example, if `upgradeEncryption` was `optional` and the [authentication-response](#authentication-response) used [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption), then the [authentication-result](#authentication-result) MUST be encrypted to be valid. 
 
 #### Structure
 ```json
@@ -169,16 +170,33 @@ This message finalises the mutual authentication, proving control over the DID o
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `responderChallenge` | Must match the `challenge` in the preceding [authentication-response](#authentication-response) | ✔ |
+| `responderChallenge` | Must match the `challenge` in the preceding [authentication-response](#authentication-response).[^1] | ✔ |
 
+[^1] The signing key used for the [signed DIDComm envelope](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) wrapping this message MUST be an [authentication method](https://www.w3.org/TR/did-core/#authentication) in the DID document corresponding to the `did` of the [requester](#roles) in the [authentication-request](#authentication-request), as per the [DIDComm specification](https://identity.foundation/didcomm-messaging/spec/#did-document-keys).
 
 #### Examples
 
-1. Requester responding with the responders challenge:
+1. Requester responding with the responders challenge from the previous message:
 
 ```json
 {
   "responderChallenge": "0768e82d-f498-4f38-8686-918325f9560d"
+}
+```
+
+2. Full signed DIDComm message:
+
+```json
+{
+  TBD
+}
+```
+
+3. Full encrypted DIDComm message:
+
+```json
+{
+  TBD
 }
 ```
 
@@ -190,7 +208,11 @@ TODO
 For general guidance see [problem reports](../resources/problem-reports).
 
 Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
-- TBD
+- e.p.prot.iota.authencation.reject-message
+- e.p.prot.iota.authencation.untrusted-identity
+- e.p.prot.iota.authencation.encyption-required
+- e.p.prot.iota.authencation.encyption-unsupported
+- e.p.prot.iota.authencation.invalid-message
 
 Also problem reports from embedded protocols can be thrown.
 
@@ -198,10 +220,9 @@ Also problem reports from embedded protocols can be thrown.
 
 This section is non-normative.
 
-- **Trust**: TODO - only verifies that the other party has access to a private key corresponding to an authentication section of their DID or establishing verifying their real-world identity is still a problem - requesting a verifiable presentation (credentials) is one possible solution if you have trusted issuers.
-- **Authorisation**: TODO - similar to trust, the capabilities of either party still need to be established, either by verifiable presentation as above or other methods such as JWT tokens etc.
-- **Security**: TODO - subject to probing if we use sender-authentication encryption?
-- **Man-in-the-Middle**: TODO - note possible attack vectors for the requester and responder, including intercepting or modifying the invitation in the connection protocol.
+- **Trust**: this [authentication](#authentication) protocol only verifies that both parties have access to the necessary privates keys (which could become compromised) associated with their DID documents; establishing and verifying their real-world identities may require additional interactions. For instance, requesting a verifiable presentation of credentials issued by a trusted third-party (like a government) is one possible way to verify a real-world identity.
+- **Authorisation**: the permissions and capabalities of either party may still need to be established after [authentication](#authentication), either by verifiable presentation as above or other methods such as JWT tokens
+- **Privacy**: the [responder](#roles) may be subject to probing whereby their DID may be revealed even with the use of [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption), as the `skid` message header is linked to their DID. This is possible if the [responder](#roles) chooses to accept the [authentication-request](#authentication-request) of an unknown [requester](#roles), or the [requester](#roles) succesfully replays an [authentication-request](#authentication-request) from a DID the [requester](#roles) trusts.
 
 ## Unresolved Questions
 
@@ -212,6 +233,10 @@ This section is non-normative.
 - How to protect the DID of the responder (`skid` field)?
   - https://github.com/decentralized-identity/didcomm-messaging/issues/197
   - https://github.com/decentralized-identity/didcomm-messaging/issues/219
+
+- Man-in-the-middle attacks?
+   - note possible attack vectors for the requester and responder, including intercepting or modifying the invitation in the connection protocol.
+   - TODO: links to discussions
 
 ## Related Work
 
