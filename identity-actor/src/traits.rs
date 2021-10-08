@@ -11,18 +11,20 @@ use std::{
 use futures::Future;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::{types::RequestContext, Actor};
+use crate::{errors::RemoteSendError, types::RequestContext, Actor};
 
 pub trait RequestHandler: Send + Sync {
   fn invoke<'this>(
     &'this self,
     actor: Actor,
-    request: RequestContext<()>,
+    context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
-    input: Vec<u8>,
-  ) -> Pin<Box<dyn Future<Output = Vec<u8>> + Send + 'this>>;
+    request: Box<dyn Any + Send + Sync>,
+  ) -> Pin<Box<dyn Future<Output = Box<dyn Any>> + Send + 'this>>;
 
   fn object_type_id(&self) -> TypeId;
+
+  fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError>;
 
   fn clone_object(&self, object: &Box<dyn Any + Send + Sync>) -> Box<dyn Any + Send + Sync>;
 }

@@ -33,6 +33,11 @@ type ObjectMap = DashMap<Uuid, Box<dyn Any + Send + Sync>>;
 /// and the method that handles that particular request.
 type HandlerMap = DashMap<Endpoint, (Uuid, Box<dyn RequestHandler>)>;
 
+type HandlerObjectTuple<'a> = (
+  dashmap::mapref::one::Ref<'a, Endpoint, (Uuid, Box<dyn RequestHandler>)>,
+  Box<dyn Any + Send + Sync>,
+);
+
 pub struct HandlerBuilder {
   object_id: Uuid,
   handlers: Arc<HandlerMap>,
@@ -82,9 +87,7 @@ impl Actor {
 
     // TODO: Always start listener, change `listener_handle` in actor accordingly.
     // if !listening_addresses.is_empty() {
-    let handle = actor
-      .clone()
-      .spawn_listener(receiver, Arc::clone(&objects), Arc::clone(&handlers));
+    let handle = actor.clone().spawn_listener(receiver);
 
     actor.listener_handle.lock().await.replace(handle);
     // };
@@ -131,22 +134,76 @@ impl Actor {
   fn spawn_listener(
     self,
     mut receiver: mpsc::Receiver<ReceiveRequest<RequestMessage, ResponseMessage>>,
-    objects: Arc<ObjectMap>,
-    handlers: Arc<HandlerMap>,
   ) -> JoinHandle<Result<()>> {
     task::spawn(async move {
-      let mut handles = vec![];
       loop {
         if let Some(receive_request) = receiver.next().await {
-          let handler_handle = self
-            .clone()
-            .spawn_handler(receive_request, Arc::clone(&objects), Arc::clone(&handlers));
-          handles.push(handler_handle);
+          self.clone().spawn_handler(receive_request);
         } else {
           return Ok(());
         }
       }
     })
+  }
+
+  fn spawn_handler(self, receive_request: ReceiveRequest<RequestMessage, ResponseMessage>) -> JoinHandle<Result<()>> {
+    task::spawn(async move {
+      let request = receive_request.request;
+      let response_tx = receive_request.response_tx;
+      let endpoint = request.endpoint;
+
+      match self.get_handler(&endpoint) {
+        Ok((handler, object)) => {
+          Self::send_ack(response_tx);
+          let request_context: RequestContext<()> = RequestContext::new((), receive_request.peer, endpoint);
+          let input = handler.value().1.deserialize_request(request.data).unwrap();
+          handler
+            .value()
+            .1
+            .invoke(self.clone(), request_context, object, input)
+            .await;
+        }
+        Err(error) => match self.get_handler(&endpoint.clone().to_catch_all()) {
+          Ok((handler, object)) => {
+            Self::send_ack(response_tx);
+            let request_context: RequestContext<()> = RequestContext::new((), receive_request.peer, endpoint);
+            let input = handler.value().1.deserialize_request(request.data).unwrap();
+            handler
+              .value()
+              .1
+              .invoke(self.clone(), request_context, object, input)
+              .await;
+          }
+          Err(_) => {
+            let response = serde_json::to_vec(&error).unwrap();
+            if response_tx.send(response).is_err() {
+              log::error!("could not respond to `{}` request", endpoint);
+            }
+          }
+        },
+      }
+
+      Ok(())
+    })
+  }
+
+  fn get_handler(&self, endpoint: &Endpoint) -> std::result::Result<HandlerObjectTuple<'_>, RemoteSendError> {
+    match self.handlers.get(endpoint) {
+      Some(handler_tuple) => {
+        let object_id = handler_tuple.0;
+
+        if let Some(object) = self.objects.get(&object_id) {
+          let object_clone = handler_tuple.1.clone_object(object.deref());
+          Ok((handler_tuple, object_clone))
+        } else {
+          Err(RemoteSendError::HandlerInvocationError(format!(
+            "no state set for {}",
+            endpoint
+          )))
+        }
+      }
+      None => Err(RemoteSendError::UnknownRequest(endpoint.to_string())),
+    }
   }
 
   fn send_ack(response_tx: Sender<Vec<u8>>) {
@@ -162,81 +219,6 @@ impl Actor {
       log::error!("could not respond to request");
       // log::error!("could not respond to `{}` request", request_name);
     }
-  }
-
-  fn spawn_handler(
-    self,
-    receive_request: ReceiveRequest<RequestMessage, ResponseMessage>,
-    objects: Arc<ObjectMap>,
-    handlers: Arc<HandlerMap>,
-  ) -> JoinHandle<Result<()>> {
-    task::spawn(async move {
-      let request = receive_request.request;
-      let response_tx = receive_request.response_tx;
-      let request_name = request.name;
-
-      match handlers.get(&request_name) {
-        Some(handler_tuple) => {
-          log::info!("Invoking named handler for {}", request_name);
-
-          let object_id = handler_tuple.0;
-          let handler = &handler_tuple.1;
-
-          if let Some(object) = objects.get(&object_id) {
-            let object_clone = handler.clone_object(object.deref());
-            let request_context: RequestContext<()> =
-              RequestContext::new((), receive_request.peer, request_name.clone());
-
-            // Send dummy ack that message was received
-            Self::send_ack(response_tx);
-
-            handler.invoke(self, request_context, object_clone, request.data).await
-          } else {
-            // SAFETY: Serialization of this type never fails
-            serde_json::to_vec(&RemoteSendError::HandlerInvocationError(format!(
-              "no object set for {}",
-              request_name
-            )))
-            .unwrap()
-          }
-        }
-        None => {
-          match handlers.get(&request_name.clone().to_catch_all()) {
-            Some(handler_tuple) => {
-              log::info!("Invoking catch_all handler for {}", request_name);
-
-              let object_id = handler_tuple.0;
-              let handler = &handler_tuple.1;
-
-              if let Some(object) = objects.get(&object_id) {
-                let object_clone = handler.clone_object(object.deref());
-                let request_context: RequestContext<()> =
-                  RequestContext::new((), receive_request.peer, request_name.clone());
-
-                // Send dummy ack that message was received
-                Self::send_ack(response_tx);
-
-                handler.invoke(self, request_context, object_clone, request.data).await
-              } else {
-                log::info!("No catch_all handler for {}", request_name);
-                // SAFETY: Serialization of this type never fails
-                serde_json::to_vec(&RemoteSendError::HandlerInvocationError(format!(
-                  "no object set for {}",
-                  request_name
-                )))
-                .unwrap()
-              }
-            }
-            None => {
-              // SAFETY: Serialization of this type never fails
-              serde_json::to_vec(&RemoteSendError::UnknownRequest(request_name.to_string())).unwrap()
-            }
-          }
-        }
-      };
-
-      Ok(())
-    })
   }
 
   pub async fn stop_handling_requests(self) -> Result<()> {
@@ -271,7 +253,7 @@ impl Actor {
 
     log::info!(
       "Sending `{}` request with payload: {}",
-      request.name,
+      request.endpoint,
       serde_json::to_string_pretty(&command).unwrap()
     );
 
@@ -281,7 +263,7 @@ impl Actor {
 
     match request_response {
       Ok(res) => Ok(res),
-      Err(err) => Err(crate::errors::Error::ResponseDeserializationFailure(err.to_string())),
+      Err(err) => Err(crate::errors::Error::DeserializationFailure(err.to_string())),
     }
   }
 

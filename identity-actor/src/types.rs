@@ -10,14 +10,14 @@ use crate::endpoint::Endpoint;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RequestMessage {
-  pub name: Endpoint,
+  pub endpoint: Endpoint,
   pub data: Vec<u8>,
 }
 
 impl RequestMessage {
   pub fn new(name: impl AsRef<str>, data: Vec<u8>) -> Result<Self> {
     Ok(Self {
-      name: Endpoint::new(name)?,
+      endpoint: Endpoint::new(name)?,
       data,
     })
   }

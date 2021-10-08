@@ -28,8 +28,8 @@ pub enum Error {
   UnknownRequest(String),
   #[error("could not invoke the handler: {0}")]
   HandlerInvocationError(String),
-  #[error("failed to deserialize the response: {0}")]
-  ResponseDeserializationFailure(String),
+  #[error("failed to deserialize: {0}")]
+  DeserializationFailure(String),
 }
 
 impl From<ListenErr> for Error {
@@ -44,10 +44,11 @@ impl From<ListenErr> for Error {
 
 /// Errors that can occur on the remote actor during [Actor::send_request] calls.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub(crate) enum RemoteSendError {
+pub enum RemoteSendError {
   /// No handler was set on the receiver and thus this request is not processable.
   UnknownRequest(String),
   HandlerInvocationError(String),
+  DeserializationFailure(String),
 }
 
 impl From<RemoteSendError> for Error {
@@ -55,7 +56,14 @@ impl From<RemoteSendError> for Error {
     match err {
       RemoteSendError::UnknownRequest(req) => Error::UnknownRequest(req),
       RemoteSendError::HandlerInvocationError(err) => Error::HandlerInvocationError(err),
+      RemoteSendError::DeserializationFailure(err) => Error::DeserializationFailure(err),
     }
+  }
+}
+
+impl From<serde_json::Error> for RemoteSendError {
+  fn from(err: serde_json::Error) -> Self {
+    Self::DeserializationFailure(err.to_string())
   }
 }
 

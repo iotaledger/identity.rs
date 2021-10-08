@@ -10,6 +10,7 @@ use std::{
 use futures::Future;
 
 use crate::{
+  errors::RemoteSendError,
   traits::{ActorRequest, RequestHandler},
   types::RequestContext,
   Actor,
@@ -58,19 +59,25 @@ where
   fn invoke<'this>(
     &'this self,
     actor: Actor,
-    request: RequestContext<()>,
+    context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
-    input: Vec<u8>,
-  ) -> Pin<Box<dyn Future<Output = Vec<u8>> + Send + 'this>> {
-    log::debug!("Attempt deserialization into {:?}", std::any::type_name::<REQ>());
-    let input: REQ = serde_json::from_slice(&input).unwrap();
-    let request: RequestContext<REQ> = request.convert(input);
+    request: Box<dyn Any + Send + Sync>,
+  ) -> Pin<Box<dyn Future<Output = Box<dyn Any>> + Send + 'this>> {
+    let input: Box<REQ> = request.downcast().unwrap();
+    let request: RequestContext<REQ> = context.convert(*input);
     let boxed_object: Box<OBJ> = object.downcast().unwrap();
     let future = async move {
       let response: REQ::Response = (self.func)(*boxed_object, actor, request).await;
-      serde_json::to_vec(&response).unwrap()
+      let type_erased: Box<dyn Any> = Box::new(response);
+      type_erased
     };
     Box::pin(future)
+  }
+
+  fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError> {
+    log::debug!("Attempt deserialization into {:?}", std::any::type_name::<REQ>());
+    let request: REQ = serde_json::from_slice(&input)?;
+    Ok(Box::new(request))
   }
 
   fn object_type_id(&self) -> TypeId {
