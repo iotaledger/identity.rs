@@ -61,7 +61,7 @@ where
     actor: Actor,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
-    request: Box<dyn Any + Send + Sync>,
+    request: Box<dyn Any + Send>,
   ) -> Pin<Box<dyn Future<Output = Box<dyn Any>> + Send + 'this>> {
     let input: Box<REQ> = request.downcast().unwrap();
     let request: RequestContext<REQ> = context.convert(*input);
@@ -74,7 +74,7 @@ where
     Box::pin(future)
   }
 
-  fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send + Sync>, RemoteSendError> {
+  fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
     log::debug!("Attempt deserialization into {:?}", std::any::type_name::<REQ>());
     let request: REQ = serde_json::from_slice(&input)?;
     Ok(Box::new(request))

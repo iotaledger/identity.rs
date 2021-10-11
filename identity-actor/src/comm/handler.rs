@@ -12,9 +12,14 @@ use libp2p::{Multiaddr, PeerId};
 use serde::de::DeserializeOwned;
 use tokio::sync::RwLock;
 
-use crate::{traits::ActorRequest, types::RequestContext, Actor};
+use crate::{endpoint::Endpoint, errors::RemoteSendError, traits::ActorRequest, types::RequestContext, Actor};
 
 use super::requests::{Presentation, PresentationOffer, PresentationRequest, PresentationResult};
+
+/// Can be returned from a hook to indicate that the protocol should immediately terminate.
+/// This doesn't include any way to set a cause for the termination, as it is expected that
+/// a hook sends a problem report to the peer before returning this type.
+pub struct DidCommTermination;
 
 #[derive(Clone)]
 pub struct DidCommActor {
@@ -67,14 +72,27 @@ impl DidCommActor {
     }
   }
 
-  pub async fn send_request<Request: ActorRequest>(
+  pub async fn send_request<REQ: ActorRequest>(
     &mut self,
     peer: PeerId,
-    command: Request,
-  ) -> crate::errors::Result<Request::Response> {
-    let res = self.actor.send_request(peer, command).await;
-    tokio::time::sleep(Duration::from_millis(100)).await;
-    res
+    command: REQ,
+  ) -> crate::errors::Result<REQ::Response> {
+    let hook_result: Result<Result<REQ, DidCommTermination>, RemoteSendError> = self
+      .actor
+      .call_hook(Endpoint::new_hook(command.request_name())?, peer, command)
+      .await;
+
+    // TODO: Since the hook `RemoteSendError` is somewhat different from `send_request`
+    // we should wrap it in a HookInvocationError or something, to make it clearer for
+    // the caller that the hook caused the error.
+    let hook_result = hook_result?;
+
+    match hook_result {
+      Ok(request) => self.actor.send_request(peer, request).await,
+      Err(_) => {
+        panic!("did comm termination")
+      }
+    }
   }
 
   pub async fn add_peer(&mut self, peer: PeerId, addr: Multiaddr) {

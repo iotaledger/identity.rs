@@ -267,6 +267,33 @@ impl Actor {
     }
   }
 
+  pub async fn call_hook<I, O>(
+    &self,
+    endpoint: Endpoint,
+    peer: PeerId,
+    input: I,
+  ) -> std::result::Result<O, RemoteSendError>
+  where
+    I: Send + 'static,
+    O: 'static,
+  {
+    match self.get_handler(&endpoint) {
+      Ok(handler_object) => {
+        let handler = &handler_object.0.value().1;
+        let state = handler_object.1;
+        let type_erased_input: Box<dyn Any + Send> = Box::new(input);
+        let request_context = RequestContext::new((), peer, endpoint);
+
+        let result = handler
+          .invoke(self.clone(), request_context, state, type_erased_input)
+          .await;
+
+        Ok(*result.downcast::<O>().unwrap())
+      }
+      Err(error) => Err(error),
+    }
+  }
+
   pub async fn join(self) {
     if let Some(listener_handle) = self.listener_handle.lock().await.take() {
       listener_handle.await.unwrap().unwrap();
