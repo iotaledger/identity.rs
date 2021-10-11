@@ -7,7 +7,7 @@ sidebar_label: Connection
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-10-05
+- Last Updated: 2021-10-11
 
 ## Overview
 
@@ -15,8 +15,9 @@ Allows establishment of a [DIDComm connection](https://identity.foundation/didco
 
 ### Relationships
 - [Termination](./termination): the DIDComm connection may be gracefully concluded using the [termination protocol](./termination).
-- [Authentication](./authentication): The authentication protocol can be used to authenticate parties participating in the established[connection](./connection)
-- [Feature Discovery](./feature-discovery): Feature discovery can be used to learn about the capabilities of the other party. 
+- [Authentication](./authentication): The authentication protocol can be used to authenticate parties participating in the established [connection](./connection)
+- [Feature Discovery](./feature-discovery): Feature discovery can be used to learn about the capabilities of the other party.
+
 ### Example Use-Cases
 
 - A corporation offers a QR code on the website for customers to connect to their services.
@@ -174,7 +175,7 @@ Following a successful connection, the [invitee](#roles) sends its public keys n
 #### Structure
 ```json
 {
-  "recipientKey": DIDUrl | DIDKey], // OPTIONAL
+  "recipientKey": DIDUrl | DIDKey,  // OPTIONAL
   "routingKeys": [DIDUrl | DIDKey], // OPTIONAL
 }
 ```
@@ -188,7 +189,7 @@ The `id` of the preceding [invitation](#invitation) message MUST be used as the 
 
 [^1] If present, the `recipientKey` sent by the [`invitee`](#roles) MUST match the key type (e.g. Ed25519, X25519) of one of the `recipientKeys` in the [invitation](#invitation) message, or of a `keyAgreement` public key attached to the [inviter`s](#roles) DID document in the case of an implicit invitation. The `recipientKey` should be omitted if no `recipientKeys` or `keyAgreement` sections are present, or if the [invitee](#roles) does not wish to use [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) for the connection. An [inviter](#roles) may choose to reject connection messages that omit a `recipientKey`, terminating the connection.
 
-[^2] Similar to the considerations for the [invitation](#invitation) message, implementors should avoid using a `DIDUrl` for the `recipientKey` or `routingKeys` as it may reveal the identity of the [invitee](#roles) to eavesdroppers prior to encryption being established. Using a `DIDUrl` for key rotation is less of a concern for a [connection](#connection) message as, unlike an [invitation](#invitation), it is ephemeral and does not persist beyond a single connection attempt.
+[^2] Similar to the considerations for the [invitation](#invitation) message, implementors should avoid using a `DIDUrl` for the `recipientKey` or `routingKeys` as it may reveal the identity of the [invitee](#roles) to eavesdroppers prior to encryption being established. Using a `DIDUrl` for key rotation is less of a concern for a [connection](#connection) message as, unlike an [invitation](#invitation), the message is intended to be transient and should not persist beyond a single connection attempt.
 
 #### Examples
 
@@ -200,17 +201,17 @@ The `id` of the preceding [invitation](#invitation) message MUST be used as the 
 }
 ```
 
-### Problem Reports
+### Problem Reports {#problem-reports}
 
-See: https://identity.foundation/didcomm-messaging/spec/#descriptors
-TODO
+The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-For general guidance see [problem reports](../resources/problem-reports).
+Addionally, problem-reports from embedded protocols can be thrown.
 
-Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
-- TBD
+For general guidance on problem-reports and a list of general errors see [problem reports](../resources/problem-reports).
 
-Also problem reports from embedded protocols can be thrown.
+| Code | Message | Description |
+| :--- | :--- | :--- |
+| `e.p.msg.iota.connection.reject-connection` | [connection](#connection) | [Inviter](#roles) rejects a connection request for any reason, e.g. untrusted [invitee](#roles) or lacking `recipientKey` for anonymous encryption. |
 
 ## Considerations
 
