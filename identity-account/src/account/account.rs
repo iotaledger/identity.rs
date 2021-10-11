@@ -111,15 +111,20 @@ impl Account {
     self.index.read().await.tags()
   }
 
-  /// Finds and returns the state snapshot for the identity specified by given `key`.
-  pub async fn find_identity<K: IdentityKey>(&self, key: K) -> Result<Option<IdentitySnapshot>> {
+  /// Finds and returns the identity state for the identity specified by given `key`.
+  pub async fn find_identity<K: IdentityKey>(&self, key: K) -> Result<Option<IdentityState>> {
     match self.resolve_id(&key).await {
-      Some(identity) => self.load_snapshot(identity).await.map(Some),
+      Some(identity) => self
+        .load_snapshot(identity)
+        .await
+        .map(IdentitySnapshot::into_identity)
+        .map(Some),
       None => Ok(None),
     }
   }
 
-  pub async fn create_identity(&self, input: IdentityCreate) -> Result<IdentitySnapshot> {
+  /// Create an identity from the specified configuration options.
+  pub async fn create_identity(&self, input: IdentityCreate) -> Result<IdentityState> {
     // Acquire write access to the index.
     let mut index: RwLockWriteGuard<'_, _> = self.index.write().await;
 
@@ -152,8 +157,8 @@ impl Account {
     // Write the changes to disk
     self.save(false).await?;
 
-    // Return the state snapshot
-    Ok(snapshot)
+    // Return the identity state
+    Ok(snapshot.into_identity())
   }
 
   /// Returns the `IdentityUpdater` for the given `key`.
