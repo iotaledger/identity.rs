@@ -5,9 +5,9 @@
 
 use identity::account::Account;
 use identity::account::AccountStorage;
+use identity::account::AutoSave;
 use identity::account::IdentityCreate;
 use identity::account::IdentityState;
-use identity::account::AutoSave;
 use identity::account::Result;
 use identity::iota::IotaDID;
 use identity::iota::Network;
@@ -50,22 +50,19 @@ async fn main() -> Result<()> {
     .build()
     .await?;
 
-    // Create an Identity specifically for the mainnet, replace with network_name variable for private Tangle
-    let id_create = IdentityCreate::new().network(network_name)?;
+  // Create an Identity specifically for the mainnet, replace with network_name variable for private Tangle
+  let id_create = IdentityCreate::new().network(network_name)?;
 
-    // Create a new Identity with the network name set.
-    let identity: IdentityState = match account.create_identity(id_create).await {
-      Ok(identity) => identity,
-      Err(err) => {
-        eprintln!("[Example] Error: {:?} {}", err, err.to_string());
-        eprintln!(
-          "[Example] Is your Tangle node listening on {}?",
-          private_node_url
-        );
-        return Ok(());
-      }
-    };
-    let iota_did: &IotaDID = identity.try_did()?;
+  // Create a new Identity with the network name set.
+  let identity: IdentityState = match account.create_identity(id_create).await {
+    Ok(identity) => identity,
+    Err(err) => {
+      eprintln!("[Example] Error: {:?} {}", err, err.to_string());
+      eprintln!("[Example] Is your Tangle node listening on {}?", private_node_url);
+      return Ok(());
+    }
+  };
+  let iota_did: &IotaDID = identity.try_did()?;
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   println!(

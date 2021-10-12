@@ -45,11 +45,11 @@ async fn main() -> Result<()> {
   // This step generates a keypair, creates an identity and publishes it too the IOTA mainnet.
   let identity: IdentityState = account.create_identity(IdentityCreate::default()).await?;
   let iota_did: &IotaDID = identity.try_did()?;
-  
+
   // ===========================================================================
   // Signing Example
   // ===========================================================================
-  
+
   // Add a new Ed25519 Verification Method to the identity
   account
     .update_identity(&iota_did)
