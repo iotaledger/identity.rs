@@ -16,6 +16,7 @@ use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::Sign;
 use identity_did::verification::MethodType;
+use identity_iota::did::IotaDID;
 use std::convert::TryFrom;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
@@ -97,9 +98,9 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn key_new(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey> {
+  async fn key_new(&self, did: IotaDID, location: &KeyLocation) -> Result<PublicKey> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-    let vault: &mut MemVault = vaults.entry(id).or_default();
+    let vault: &mut MemVault = vaults.entry(did).or_default();
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {

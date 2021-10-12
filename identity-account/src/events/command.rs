@@ -6,12 +6,15 @@ use crypto::signatures::ed25519;
 use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::Url;
+use identity_core::crypto::KeyPair;
+use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 use identity_iota::tangle::NetworkName;
+use zeroize::Zeroize;
 
 use crate::account::Account;
 use crate::error::Result;
@@ -101,26 +104,31 @@ impl Command {
           UpdateError::DuplicateKeyLocation(location)
         );
 
-        let public: PublicKey = if let Some(method_private_key) = method_secret {
-          insert_method_secret(store, state.id(), &location, authentication, method_private_key).await
+        let keypair: KeyPair = if let Some(MethodSecret::Ed25519(method_private_key)) = method_secret {
+          KeyPair::from(method_private_key)
         } else {
-          store.key_new(state.id(), &location).await
-        }?;
+          KeyPair::new_ed25519()
+        };
+
+        // Generate a new DID URL from the public key
+        let did: IotaDID = if let Some(network) = network {
+          IotaDID::new_with_network(keypair.public.as_ref(), network)?
+        } else {
+          IotaDID::new(keypair.public.as_ref())?
+        };
+
+        let private_key = keypair.private().to_owned();
+        std::mem::drop(keypair);
+
+        insert_method_secret(store, did, &location, authentication, private_key).await;
 
         let data: MethodData = MethodData::new_b58(public.as_ref());
         let method: TinyMethod = TinyMethod::new(location, data, None);
 
-        // Generate a new DID URL from the public key
-        let document: IotaDID = if let Some(network) = network {
-          IotaDID::new_with_network(public.as_ref(), network)?
-        } else {
-          IotaDID::new(public.as_ref())?
-        };
-
         let method_fragment = Fragment::new(method.location().fragment());
 
         Ok(Some(vec![
-          Event::new(EventData::IdentityCreated(document)),
+          Event::new(EventData::IdentityCreated(did)),
           Event::new(EventData::MethodCreated(MethodScope::VerificationMethod, method)),
           Event::new(EventData::MethodAttached(
             method_fragment,
@@ -256,7 +264,7 @@ impl Command {
 
 async fn insert_method_secret(
   store: &dyn Storage,
-  identity_id: IdentityId,
+  did: IotaDID,
   location: &KeyLocation,
   method_type: MethodType,
   method_secret: MethodSecret,
@@ -279,7 +287,7 @@ async fn insert_method_secret(
         )
       );
 
-      store.key_insert(identity_id, location, private_key).await
+      store.key_insert(did, location, private_key).await
     }
     MethodSecret::MerkleKeyCollection(_) => {
       ensure!(

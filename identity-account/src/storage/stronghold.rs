@@ -14,6 +14,7 @@ use identity_core::convert::ToJson;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_did::verification::MethodType;
+use identity_iota::did::IotaDID;
 use iota_stronghold::Location;
 use iota_stronghold::SLIP10DeriveInput;
 use std::convert::TryFrom;
@@ -78,6 +79,10 @@ impl Stronghold {
   fn vault(&self, id: IdentityId) -> Vault<'_> {
     self.snapshot.vault(&fmt_id(id), &[])
   }
+
+  fn vault_(&self, id: IotaDID) -> Vault<'_> {
+    self.snapshot.vault(&fmt_id(id), &[])
+  }
 }
 
 #[async_trait::async_trait]
@@ -90,8 +95,8 @@ impl Storage for Stronghold {
     self.snapshot.save().await
   }
 
-  async fn key_new(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey> {
-    let vault: Vault<'_> = self.vault(id);
+  async fn key_new(&self, did: IotaDID, location: &KeyLocation) -> Result<PublicKey> {
+    let vault: Vault<'_> = self.vault_(did);
 
     let public: PublicKey = match location.method() {
       MethodType::Ed25519VerificationKey2018 => generate_ed25519(&vault, location).await?,
@@ -101,8 +106,8 @@ impl Storage for Stronghold {
     Ok(public)
   }
 
-  async fn key_insert(&self, id: IdentityId, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey> {
-    let vault = self.vault(id);
+  async fn key_insert(&self, did: IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey> {
+    let vault = self.vault_(did);
 
     vault
       .insert(location_skey(location), private_key.as_ref(), default_hint(), &[])
@@ -437,4 +442,8 @@ fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {
 
 fn fmt_id(id: IdentityId) -> String {
   format!("$identity:{}", id)
+}
+
+fn fmt_did(did: IotaDID) -> String {
+  format!("$identity:{}", did.tag())
 }

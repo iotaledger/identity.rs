@@ -9,6 +9,7 @@ use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
 use crate::error::Result;
 use crate::utils::generate_ed25519_keypair;
+use crate::utils::keypair_from_ed25519_private_key;
 
 /// A convenient type for representing a pair of cryptographic keys.
 #[derive(Clone, Debug)]
@@ -31,6 +32,17 @@ impl KeyPair {
     };
 
     Ok(Self { type_, public, private })
+  }
+
+  /// Reconstructs the [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`] from a private key.
+  pub fn from_ed25519_private_key(private_key: [u8; 32]) -> Self {
+    let (public, private) = keypair_from_ed25519_private_key(private_key);
+
+    Self {
+      type_: KeyType::Ed25519,
+      public,
+      private,
+    }
   }
 
   /// Returns the [`type`][`KeyType`] of the `KeyPair` object.

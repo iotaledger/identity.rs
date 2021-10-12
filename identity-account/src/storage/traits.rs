@@ -6,6 +6,7 @@ use futures::stream::BoxStream;
 use futures::TryStreamExt;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
+use identity_iota::did::IotaDID;
 
 use crate::error::Result;
 use crate::events::Commit;
@@ -29,10 +30,10 @@ pub trait Storage: Debug + Send + Sync + 'static {
   async fn flush_changes(&self) -> Result<()>;
 
   /// Creates a new keypair at the specified `location`
-  async fn key_new(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey>;
+  async fn key_new(&self, did: IotaDID, location: &KeyLocation) -> Result<PublicKey>;
 
   /// Inserts a private key at the specified `location`.
-  async fn key_insert(&self, id: IdentityId, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey>;
+  async fn key_insert(&self, did: IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey>;
 
   /// Retrieves the public key at the specified `location`.
   async fn key_get(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey>;

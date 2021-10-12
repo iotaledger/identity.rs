@@ -18,6 +18,17 @@ pub fn generate_ed25519_keypair() -> Result<(PublicKey, PrivateKey)> {
   Ok((public, private))
 }
 
+/// Reconstructs the ed25519 public key given the private key.
+pub fn keypair_from_ed25519_private_key(private_key: [u8; 32]) -> (PublicKey, PrivateKey) {
+  let secret: ed25519::SecretKey = ed25519::SecretKey::from_bytes(private_key);
+  let public: ed25519::PublicKey = secret.public_key();
+
+  let private: PrivateKey = secret.to_bytes().to_vec().into();
+  let public: PublicKey = public.to_bytes().to_vec().into();
+
+  (public, private)
+}
+
 /// Generates a list of public/private ed25519 keys.
 pub fn generate_ed25519_keypairs(count: usize) -> Result<Vec<(PublicKey, PrivateKey)>> {
   (0..count).map(|_| generate_ed25519_keypair()).collect()
