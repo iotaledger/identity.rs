@@ -205,9 +205,7 @@ The `id` of the preceding [invitation](#invitation) message MUST be used as the 
 
 The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-Addionally, problem-reports from embedded protocols can be thrown.
-
-For general guidance on problem-reports and a list of general errors see [problem reports](../resources/problem-reports).
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
 
 | Code | Message | Description |
 | :--- | :--- | :--- |

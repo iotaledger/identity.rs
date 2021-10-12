@@ -48,7 +48,7 @@ The [holder](#roles) requests a single verifiable credential from the [issuer](#
 #### Structure
 ```json
 {
-  "subject": DID,             // REQUIRED
+  "subject": DID,             // REQUIRED, TODO: DID not always required for all VCs, not always a DID either...
   "@context": [string],       // OPTIONAL
   "type": [string],           // REQUIRED
   "trustedIssuers": [string]  // OPTIONAL
@@ -64,11 +64,11 @@ The [holder](#roles) requests a single verifiable credential from the [issuer](#
 
 [^1] The [holder](#roles) is usually but not always the [subject]((https://www.w3.org/TR/vc-data-model/#credential-subject-0)) of the requested credential. There may be custodial, legal guardianship, or delegation situations where a third-party requests or is issued a credential on behalf of a subject. It is the responsibility of the [issuer](#roles) to ensure authorization in such cases.
 
-[^2] The credential `type` could be discovered out-of-band or be pre-sent by an [issuer](#roles). The types MAY be underspecified if the exact type is not known or if the resulting type depends on the identity or information of the subject or holder. The `type` could be as general as `["VerifiableCredential"]` for example, if the issuer issues only a singular type of credential or decides the credential based on other information related to the subject. The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support the requested `type`.
+[^2] The credential `type` could be discovered out-of-band or be pre-sent by an [issuer](#roles). The types MAY be under-specified if the exact type is not known or if the resulting type depends on the identity or information of the subject or holder. The `type` could be as general as `["VerifiableCredential"]` for example, if the issuer issues only a singular type of credential or decides the credential based on other information related to the subject. The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support the requested `type`.
 
 [^3] The [holder](#roles) MAY specify one or more `trustedIssuers` they would like to sign the resulting credential. The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support any of the requested `trustedIssuers`. However, there are circumstances where a `trustedIssuer` is no longer supported or was compromised, so this behavior should be decided based on the application.
 
-An [issuer](#roles) wanting to preserve privacy regarding which exact credential types or issuers they support should be careful with the information they disclose in `problem-reports` when rejecting requests. E.g. a `problem-report` with an `invalid-request` code discloses less information than the `invalid-credential-type` or `invalid-trusted-issuer` codes, as the latter two could be used to determine supported types or issuers by process of elimination.
+An [issuer](#roles) wanting to preserve privacy regarding which exact credential types or issuers they support should be careful with the information they disclose in `problem-reports` when rejecting requests. E.g. a `problem-report` with an `reject-request` code discloses less information than the `reject-request.invalid-type` or `reject-request.invalid-trusted-issuer` codes, as the latter two could be used to determine supported types or issuers by process of elimination.
 
 #### Examples
 
@@ -118,7 +118,7 @@ The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles
 | `credentialHash` | The [Base58](https://tools.ietf.org/id/draft-msporny-base58-01.html)-encoded [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the `unsignedCredential` formatted according to the [JSON Canonicalization Scheme](https://tools.ietf.org/id/draft-rundgren-json-canonicalization-scheme-00.html). | ✔ |
 | `expiry` | A string formatted as an [XML DateTime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision. E.g: `"2021-12-30T19:17:47Z"`.[^2] | ✖ |
 
-[^1] Issuing challenges should be done with due consideration to security and privacy concerns: not all applications require non-repudiation to third-parties and a [holder](#roles) [may wish to deny that they ever requested or accepted a particular credential](https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0049-repudiation/README.md#summary). The challenge SHOULD NOT be used for authentication of the [holder](#roles); see (TODO link on sender-authenticated encryption?).
+[^1] Issuing challenges should be done with due consideration to security and privacy concerns: not all applications require non-repudiation to third-parties and a [holder](#roles) [may wish to deny that they ever requested or accepted a particular credential](https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0049-repudiation/README.md#summary). The challenge SHOULD NOT be used for authentication of the [holder](#roles); see the [authentication](./authencation) protocol and [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption).
 
 [^2] If present, an `expiry` indicates that the [issuer](#roles) MAY rescind the offer and abandon the protocol if an affirmative [issuance-response](#issuance-response) is not received before the specified datetime. Note that the `expiry` should override any default message timeouts.
 
@@ -207,7 +207,7 @@ The [holder](#roles) responds to a [`issuance-offer`](#issuance-offer) by accept
 | `signatureChallenge` | This MUST match the `signatureChallenge` in the preceding [`issuance-offer`](#issuance-offer). | ✔ |
 | [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the [holder](#roles) on the `signatureChallenge`. | ✔ |
 
-[^1] A valid `signature` allows the [issuer](#roles) to prove that the credential was accepted by the [holder](#roles). If present, the [issuer](#roles) MUST validate the `proof` is correct and signed with an unrevoked [verification method](https://www.w3.org/TR/did-core/#dfn-verification-method), and issue a problem-report if not.
+[^1] A valid `signature` allows the [issuer](#roles) to prove that the credential was accepted by the [holder](#roles). If present, the [issuer](#roles) MUST validate the `proof` is correct and signed with an unrevoked [verification method](https://www.w3.org/TR/did-core/#dfn-verification-method), and issue a problem-report if not. The [issuer](#roles) SHOULD terminate the protocol if no `signature` is present and a `signatureChallenge` was included in the preceding [issuance-offer](#issuance-offer) message.
 
 #### Examples
 
@@ -287,9 +287,11 @@ The [issuer](#roles) transmits the signed credential following a [`issuance-resp
 | `signatureChallenge` | If present, indicates the [issuer](#issuer) requires the receival of the credential to be signed for non-repudiation. | ✖ |
 | `challenge` |  A random string that should be unique per [issuance](#issuance). | ✔ |
 | `credentialHash` | The [Base58](https://tools.ietf.org/id/draft-msporny-base58-01.html)-encoded [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the `signedCredential`, including the `proof`, formatted according to the [JSON Canonicalization Scheme](https://tools.ietf.org/id/draft-rundgren-json-canonicalization-scheme-00.html). | ✔ |
-| `expiry` | A string formatted as an [XML Datetime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision. E.g: `"2021-12-30T19:17:47Z"`. | ✖ |
+| `expiry` | A string formatted as an [XML Datetime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision indicating when the offer expires. E.g: `"2021-12-30T19:17:47Z"`.[^2] | ✖ |
 
 [^1] The [holder](#roles) SHOULD validate both that the `proof` on the `signedCredential` is correctly signed by a trusted issuer and that the contents match those of the `unsignedCredential` from the [issuance-offer](#issuance-offer) they accepted. If not, a relevant problem-report should be sent.
+
+[^2] The [issuer](#roles) SHOULD send a problem-report if the `expiry` datetime passes without receiving an [issuance-acknowledgement](#issuance-acknowledgement) message from the [holder](#roles). The [issuer](#roles) MAY revoke the credential in this case.
 
 #### Examples
 
@@ -349,9 +351,11 @@ The [holder](#roles) confirms receipt of a successful credential [`issuance`](#i
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `signature` | This SHOULD be present if a `signatureChallenge` was included in the preceding [`issuance`](#issuance-message) message. | ✖ |
+| `signature` | This SHOULD be present if a `signatureChallenge` was included in the preceding [`issuance`](#issuance-message) message.[^1] | ✖ |
 | `signatureChallenge` | This MUST match the `signatureChallenge` in the preceding [`issuance`](#issuance-message) message. | ✔ |
 | [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the [holder](#roles) on the `signatureChallenge`. | ✔ |
+
+[^1] The [issuer](#roles) MUST validate the `signature` and MAY revoke the issued credential if a `signature` was requested, e.g. for non-repudiation or auditing, and not received or an invalid `signature` is received.
 
 #### Examples
 
@@ -375,20 +379,21 @@ The [holder](#roles) confirms receipt of a successful credential [`issuance`](#i
 }
 ```
 
-### Problem Reports
+### Problem Reports {#problem-reports}
 
-See: https://identity.foundation/didcomm-messaging/spec/#descriptors
-TODO
+The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-For general guidance see [problem reports](../resources/problem-reports).
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
 
-Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
-- e.p.prot.iota.issuance.reject-vc
-- e.p.prot.iota.issuance.invalid-request
-- e.p.prot.iota.issuance.invalid-credential-type
-- e.p.prot.iota.issuance.invalid-trusted-issuer
-
-Also problem reports from embedded protocols can be thrown.
+| Code | Message | Description |
+| :--- | :--- | :--- |
+| `e.p.msg.iota.issuance.reject-request` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request for any reason, e.g. unrecognised or invalid type, trusted issuer, or subject. |
+| `e.p.msg.iota.issuance.reject-request.invalid-subject` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request due to the `subject` being unrecognised, missing, or otherwise invalid. |
+| `e.p.msg.iota.issuance.reject-request.invalid-type` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request due to the `type` or `@context` being unsupported or otherwise invalid. |
+| `e.p.msg.iota.issuance.reject-request.invalid-trusted-issuer` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request due to the `issuer` being unrecognised, unsupported or otherwise invalid. |
+| `e.p.msg.iota.issuance.presentation-failed` | [issuance-offer](#issuance-offer) | [Issuer](#roles) terminates the protocol due to a failed [presentation](./presentation) request for more information prior to a [issuance-offer](#issuance-offer). |
+| `e.p.msg.iota.issuance.reject-issuance` | [issuance](#issuance-message) | [Holder](#roles) rejects a credential issuance for any reason, e.g. mismatch with the credential in the [issuance-offer](#issuance-offer). Note that disputes are handled in [issuance-response](#issuance-response) prior to [issuance](#issuance-message). |
+| `e.p.msg.iota.issuance.expired` | [issuance](#issuance-message) | [Issuer](#roles) notifies the [holder](#roles) that an [issuance](#issuance-message) message has expired without a valid [issuance-acknowledgement](#issuance-acknowledgement). |
 
 ## Considerations
 

@@ -200,21 +200,19 @@ This MUST or MUST NOT use [sender authenticated encryption](https://identity.fou
 }
 ```
 
-### Problem Reports
+### Problem Reports {#problem-reports}
 
-See: https://identity.foundation/didcomm-messaging/spec/#descriptors
-TODO
+The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-For general guidance see [problem reports](../resources/problem-reports).
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
 
-Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
-- e.p.prot.iota.authencation.reject-message
-- e.p.prot.iota.authencation.untrusted-identity
-- e.p.prot.iota.authencation.encyption-required
-- e.p.prot.iota.authencation.encyption-unsupported
-- e.p.prot.iota.authencation.invalid-message
-
-Also problem reports from embedded protocols can be thrown.
+| Code | Message | Description |
+| :--- | :--- | :--- |
+| `e.p.msg.iota.authentication.reject-authentication` | [authentication-request](#authentication-request), [authentication-response](#authentication-response), [authentication-result](#authentication-result) | The party rejects an authentication request/response/result for any reason. |
+| `e.p.msg.iota.authentication.reject-authentication.missing-keys` | [authentication-request](#authentication-request), [authentication-response](#authentication-response), [authentication-result](#authentication-result) | The party rejects an authentication request/response due to the other party lacking a supported `keyAgreement` section in the DID document. |
+| `e.p.msg.iota.authentication.reject-authentication.untrusted-identity` | [authentication-request](#authentication-request), [authentication-response](#authentication-response) | The party rejects an authentication request/response due to the claimed DID of the other party. |
+| `e.p.msg.iota.authentication.reject-authentication.encyption-required` | [authentication-request](#authentication-request), [authentication-response](#authentication-response), [authentication-result](#authentication-result) | The party rejects an authentication request/response/result due to the lack of [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption). |
+| `e.p.msg.iota.authentication.reject-authentication.encyption-unsupported` | [authentication-request](#authentication-request), [authentication-response](#authentication-response), [authentication-result](#authentication-result) | The party rejects an authentication request/response/result because it does not support [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption). |
 
 ## Considerations
 
