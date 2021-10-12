@@ -21,7 +21,8 @@ pub async fn main() -> Result<()> {
   // This name needs to match the id of the network or part of it.
   // Since the id of the one-click private tangle is `private-tangle`
   // but we can only use 6 characters, we use just `tangle`.
-  // As an example we are treating the devnet as a `private-tangle`, there are easier ways to change to devnet via `Network::Devnet`
+  // As an example we are treating the devnet as a `private-tangle`,
+  // there are easier ways to change to devnet via `Network::Devnet`
   let network = Network::try_from_name("dev")?;
 
   // Set the network and the URL that points to

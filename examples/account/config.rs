@@ -18,8 +18,9 @@ async fn main() -> Result<()> {
 
   // Set-up for private Tangle
   // This name needs to match the id of the network or part of it.
-  // The id of the one-click private tangle is `private-tangle` but we can only use 6 characters, we use recommend `tangle`.
-  // As an example we are treating the devnet as a `private-tangle`, there are easier ways to change to devnet via `Network::Devnet`
+  // The id of the one-click private tangle is `private-tangle` but we can only use 6 characters, we use recommend
+  // `tangle`. As an example we are treating the devnet as a `private-tangle`,
+  // there are easier ways to change to devnet via `Network::Devnet`
   let network_name = "dev"; // Replace this with a `tangle` for the one-click private tangle.
   let network = Network::try_from_name(network_name)?;
   // In a locally running private tangle, this would often be `http://127.0.0.1:14265/`
