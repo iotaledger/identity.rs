@@ -25,6 +25,8 @@
 <dd></dd>
 <dt><a href="#DidResponse">DidResponse</a></dt>
 <dd></dd>
+<dt><a href="#DiffChainHistory">DiffChainHistory</a></dt>
+<dd></dd>
 <dt><a href="#Document">Document</a></dt>
 <dd></dd>
 <dt><a href="#DocumentDiff">DocumentDiff</a></dt>
@@ -37,6 +39,8 @@
 <dd></dd>
 <dt><a href="#FeaturesResponse">FeaturesResponse</a></dt>
 <dd></dd>
+<dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
+<dd></dd>
 <dt><a href="#Introduction">Introduction</a></dt>
 <dd></dd>
 <dt><a href="#IntroductionProposal">IntroductionProposal</a></dt>
@@ -48,8 +52,6 @@
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
 <dt><a href="#Network">Network</a></dt>
-<dd></dd>
-<dt><a href="#NewDocument">NewDocument</a></dt>
 <dd></dd>
 <dt><a href="#PresentationRequest">PresentationRequest</a></dt>
 <dd></dd>
@@ -74,10 +76,6 @@
 <dt><a href="#VerifiablePresentation">VerifiablePresentation</a></dt>
 <dd></dd>
 <dt><a href="#VerificationMethod">VerificationMethod</a></dt>
-<dd></dd>
-<dt><a href="#WasmDiffChainHistory">WasmDiffChainHistory</a></dt>
-<dd></dd>
-<dt><a href="#WasmIntegrationChainHistory">WasmIntegrationChainHistory</a></dt>
 <dd></dd>
 </dl>
 
@@ -700,13 +698,59 @@ Parses a `DID` from the input string.
 | --- | --- |
 | value | <code>any</code> | 
 
+<a name="DiffChainHistory"></a>
+
+## DiffChainHistory
+**Kind**: global class  
+
+* [DiffChainHistory](#DiffChainHistory)
+    * _instance_
+        * [.chainData()](#DiffChainHistory+chainData) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.spam()](#DiffChainHistory+spam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.toJSON()](#DiffChainHistory+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#DiffChainHistory.fromJSON) ⇒ [<code>DiffChainHistory</code>](#DiffChainHistory)
+
+<a name="DiffChainHistory+chainData"></a>
+
+### diffChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
+Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
+
+NOTE: this clones the field.
+
+**Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
+<a name="DiffChainHistory+spam"></a>
+
+### diffChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
+Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
+
+NOTE: this clones the field.
+
+**Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
+<a name="DiffChainHistory+toJSON"></a>
+
+### diffChainHistory.toJSON() ⇒ <code>any</code>
+Serializes a `$ident` object as a JSON object.
+
+**Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
+<a name="DiffChainHistory.fromJSON"></a>
+
+### DiffChainHistory.fromJSON(json) ⇒ [<code>DiffChainHistory</code>](#DiffChainHistory)
+Deserializes a `$ident` object from a JSON object.
+
+**Kind**: static method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Document"></a>
 
 ## Document
 **Kind**: global class  
 
 * [Document](#Document)
-    * [new Document(type_, network, tag)](#new_Document_new)
+    * [new Document(keypair, network, fragment)](#new_Document_new)
     * _instance_
         * [.id](#Document+id) ⇒ [<code>DID</code>](#DID)
         * [.created](#Document+created) ⇒ [<code>Timestamp</code>](#Timestamp)
@@ -736,22 +780,35 @@ Parses a `DID` from the input string.
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromKeyPair(key, network)](#Document.fromKeyPair) ⇒ [<code>Document</code>](#Document)
         * [.fromAuthentication(method)](#Document.fromAuthentication) ⇒ [<code>Document</code>](#Document)
         * [.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
 
 <a name="new_Document_new"></a>
 
-### new Document(type_, network, tag)
-Creates a new DID Document from the given KeyPair.
+### new Document(keypair, network, fragment)
+Creates a new DID Document from the given `KeyPair`, network, and verification method
+fragment name.
+
+The DID Document will be pre-populated with a single verification method
+derived from the provided `KeyPair`, with an attached authentication relationship.
+This method will have the DID URL fragment `#authentication` by default and can be easily
+retrieved with `Document::authentication`.
+
+NOTE: the generated document is unsigned, see `Document::sign`.
+
+Arguments:
+
+* keypair: the initial verification method is derived from the public key with this keypair.
+* network: Tangle network to use for the DID, default `Network::mainnet`.
+* fragment: name of the initial verification method, default "authentication".
 
 
 | Param | Type |
 | --- | --- |
-| type_ | <code>number</code> | 
+| keypair | [<code>KeyPair</code>](#KeyPair) | 
 | network | <code>string</code> \| <code>undefined</code> | 
-| tag | <code>string</code> \| <code>undefined</code> | 
+| fragment | <code>string</code> \| <code>undefined</code> | 
 
 <a name="Document+id"></a>
 
@@ -971,13 +1028,13 @@ Generate the difference between two DID Documents and sign it
 <a name="Document+merge"></a>
 
 ### document.merge(diff)
-Verifies the `diff` signature and merges the changes into `self`.
+Verifies a `DocumentDiff` signature and merges the changes into `self`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| diff | <code>string</code> | 
+| diff | [<code>DocumentDiff</code>](#DocumentDiff) | 
 
 <a name="Document+integrationIndex"></a>
 
@@ -996,24 +1053,12 @@ For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstu
 Serializes a `Document` object as a JSON object.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document.fromKeyPair"></a>
-
-### Document.fromKeyPair(key, network) ⇒ [<code>Document</code>](#Document)
-Creates a new DID Document from the given KeyPair and optional network.
-
-If unspecified, network defaults to the mainnet.
-
-**Kind**: static method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| key | [<code>KeyPair</code>](#KeyPair) | 
-| network | <code>string</code> \| <code>undefined</code> | 
-
 <a name="Document.fromAuthentication"></a>
 
 ### Document.fromAuthentication(method) ⇒ [<code>Document</code>](#Document)
-Creates a new DID Document from the given verification [`method`][`Method`].
+Creates a new DID Document from the given `VerificationMethod`.
+
+NOTE: the generated document is unsigned, see Document::sign.
 
 **Kind**: static method of [<code>Document</code>](#Document)  
 
@@ -1060,7 +1105,9 @@ Defines the difference between two DID [`Document`]s' JSON representations.
     * [.messageId](#DocumentDiff+messageId)
     * [.previousMessageId](#DocumentDiff+previousMessageId) ⇒ <code>string</code>
     * [.previousMessageId](#DocumentDiff+previousMessageId)
+    * [.proof](#DocumentDiff+proof) ⇒ <code>any</code>
     * [.id()](#DocumentDiff+id) ⇒ [<code>DID</code>](#DID)
+    * [.merge(document)](#DocumentDiff+merge) ⇒ [<code>Document</code>](#Document)
 
 <a name="DocumentDiff+did"></a>
 
@@ -1110,6 +1157,12 @@ Sets the Tangle message id of the previous DID Document diff.
 | --- | --- |
 | message_id | <code>string</code> | 
 
+<a name="DocumentDiff+proof"></a>
+
+### documentDiff.proof ⇒ <code>any</code>
+Returns the `proof` object.
+
+**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
 <a name="DocumentDiff+id"></a>
 
 ### documentDiff.id() ⇒ [<code>DID</code>](#DID)
@@ -1118,6 +1171,18 @@ Returns the DID of the associated DID Document.
 NOTE: clones the data.
 
 **Kind**: instance method of [<code>DocumentDiff</code>](#DocumentDiff)  
+<a name="DocumentDiff+merge"></a>
+
+### documentDiff.merge(document) ⇒ [<code>Document</code>](#Document)
+Returns a new DID Document which is the result of merging `self`
+with the given Document.
+
+**Kind**: instance method of [<code>DocumentDiff</code>](#DocumentDiff)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>Document</code>](#Document) | 
+
 <a name="DocumentHistory"></a>
 
 ## DocumentHistory
@@ -1234,6 +1299,52 @@ Deserializes a [`WasmDocumentHistory`] object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
+<a name="IntegrationChainHistory"></a>
+
+## IntegrationChainHistory
+**Kind**: global class  
+
+* [IntegrationChainHistory](#IntegrationChainHistory)
+    * _instance_
+        * [.chainData()](#IntegrationChainHistory+chainData) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.spam()](#IntegrationChainHistory+spam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.toJSON()](#IntegrationChainHistory+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#IntegrationChainHistory.fromJSON) ⇒ [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)
+
+<a name="IntegrationChainHistory+chainData"></a>
+
+### integrationChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
+Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
+
+NOTE: this clones the field.
+
+**Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
+<a name="IntegrationChainHistory+spam"></a>
+
+### integrationChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
+Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
+
+NOTE: this clones the field.
+
+**Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
+<a name="IntegrationChainHistory+toJSON"></a>
+
+### integrationChainHistory.toJSON() ⇒ <code>any</code>
+Serializes a `$ident` object as a JSON object.
+
+**Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
+<a name="IntegrationChainHistory.fromJSON"></a>
+
+### IntegrationChainHistory.fromJSON(json) ⇒ [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)
+Deserializes a `$ident` object from a JSON object.
+
+**Kind**: static method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Introduction"></a>
 
 ## Introduction
@@ -1318,7 +1429,7 @@ Deserializes a [`WasmDocumentHistory`] object from a JSON object.
         * [.isEmpty()](#KeyCollection+isEmpty) ⇒ <code>boolean</code>
         * [.keypair(index)](#KeyCollection+keypair) ⇒ [<code>KeyPair</code>](#KeyPair) \| <code>undefined</code>
         * [.public(index)](#KeyCollection+public) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.secret(index)](#KeyCollection+secret) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.private(index)](#KeyCollection+private) ⇒ <code>string</code> \| <code>undefined</code>
         * [.merkleRoot(digest)](#KeyCollection+merkleRoot) ⇒ <code>string</code>
         * [.merkleProof(digest, index)](#KeyCollection+merkleProof) ⇒ <code>string</code> \| <code>undefined</code>
         * [.toJSON()](#KeyCollection+toJSON) ⇒ <code>any</code>
@@ -1370,10 +1481,10 @@ Returns the public key at the specified `index` as a base58-encoded string.
 | --- | --- |
 | index | <code>number</code> | 
 
-<a name="KeyCollection+secret"></a>
+<a name="KeyCollection+private"></a>
 
-### keyCollection.secret(index) ⇒ <code>string</code> \| <code>undefined</code>
-Returns the secret key at the specified `index` as a base58-encoded string.
+### keyCollection.private(index) ⇒ <code>string</code> \| <code>undefined</code>
+Returns the private key at the specified `index` as a base58-encoded string.
 
 **Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
 
@@ -1426,10 +1537,10 @@ Deserializes a `KeyCollection` object from a JSON object.
     * [new KeyPair(type_)](#new_KeyPair_new)
     * _instance_
         * [.public](#KeyPair+public) ⇒ <code>string</code>
-        * [.secret](#KeyPair+secret) ⇒ <code>string</code>
+        * [.private](#KeyPair+private) ⇒ <code>string</code>
         * [.toJSON()](#KeyPair+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromBase58(type_, public_key, secret_key)](#KeyPair.fromBase58) ⇒ [<code>KeyPair</code>](#KeyPair)
+        * [.fromBase58(type_, public_key, private_key)](#KeyPair.fromBase58) ⇒ [<code>KeyPair</code>](#KeyPair)
         * [.fromJSON(json)](#KeyPair.fromJSON) ⇒ [<code>KeyPair</code>](#KeyPair)
 
 <a name="new_KeyPair_new"></a>
@@ -1448,10 +1559,10 @@ Generates a new `KeyPair` object.
 Returns the public key as a base58-encoded string.
 
 **Kind**: instance property of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair+secret"></a>
+<a name="KeyPair+private"></a>
 
-### keyPair.secret ⇒ <code>string</code>
-Returns the secret key as a base58-encoded string.
+### keyPair.private ⇒ <code>string</code>
+Returns the private key as a base58-encoded string.
 
 **Kind**: instance property of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair+toJSON"></a>
@@ -1462,8 +1573,8 @@ Serializes a `KeyPair` object as a JSON object.
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair.fromBase58"></a>
 
-### KeyPair.fromBase58(type_, public_key, secret_key) ⇒ [<code>KeyPair</code>](#KeyPair)
-Parses a `KeyPair` object from base58-encoded public/secret keys.
+### KeyPair.fromBase58(type_, public_key, private_key) ⇒ [<code>KeyPair</code>](#KeyPair)
+Parses a `KeyPair` object from base58-encoded public/private keys.
 
 **Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
 
@@ -1471,7 +1582,7 @@ Parses a `KeyPair` object from base58-encoded public/secret keys.
 | --- | --- |
 | type_ | <code>number</code> | 
 | public_key | <code>string</code> | 
-| secret_key | <code>string</code> | 
+| private_key | <code>string</code> | 
 
 <a name="KeyPair.fromJSON"></a>
 
@@ -1498,7 +1609,7 @@ Deserializes a `KeyPair` object from a JSON object.
     * _static_
         * [.try_from_name(name)](#Network.try_from_name) ⇒ [<code>Network</code>](#Network)
         * [.mainnet()](#Network.mainnet) ⇒ [<code>Network</code>](#Network)
-        * [.testnet()](#Network.testnet) ⇒ [<code>Network</code>](#Network)
+        * [.devnet()](#Network.devnet) ⇒ [<code>Network</code>](#Network)
 
 <a name="Network+defaultNodeURL"></a>
 
@@ -1542,27 +1653,10 @@ Parses the provided string to a [`WasmNetwork`].
 
 ### Network.mainnet() ⇒ [<code>Network</code>](#Network)
 **Kind**: static method of [<code>Network</code>](#Network)  
-<a name="Network.testnet"></a>
+<a name="Network.devnet"></a>
 
-### Network.testnet() ⇒ [<code>Network</code>](#Network)
+### Network.devnet() ⇒ [<code>Network</code>](#Network)
 **Kind**: static method of [<code>Network</code>](#Network)  
-<a name="NewDocument"></a>
-
-## NewDocument
-**Kind**: global class  
-
-* [NewDocument](#NewDocument)
-    * [.key](#NewDocument+key) ⇒ [<code>KeyPair</code>](#KeyPair)
-    * [.doc](#NewDocument+doc) ⇒ [<code>Document</code>](#Document)
-
-<a name="NewDocument+key"></a>
-
-### newDocument.key ⇒ [<code>KeyPair</code>](#KeyPair)
-**Kind**: instance property of [<code>NewDocument</code>](#NewDocument)  
-<a name="NewDocument+doc"></a>
-
-### newDocument.doc ⇒ [<code>Document</code>](#Document)
-**Kind**: instance property of [<code>NewDocument</code>](#NewDocument)  
 <a name="PresentationRequest"></a>
 
 ## PresentationRequest
@@ -2071,98 +2165,6 @@ Deserializes a `VerificationMethod` object from a JSON object.
 | Param | Type |
 | --- | --- |
 | value | <code>any</code> | 
-
-<a name="WasmDiffChainHistory"></a>
-
-## WasmDiffChainHistory
-**Kind**: global class  
-
-* [WasmDiffChainHistory](#WasmDiffChainHistory)
-    * _instance_
-        * [.chainData()](#WasmDiffChainHistory+chainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.spam()](#WasmDiffChainHistory+spam) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.toJSON()](#WasmDiffChainHistory+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json)](#WasmDiffChainHistory.fromJSON) ⇒ [<code>WasmDiffChainHistory</code>](#WasmDiffChainHistory)
-
-<a name="WasmDiffChainHistory+chainData"></a>
-
-### wasmDiffChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
-
-NOTE: this clones the field.
-
-**Kind**: instance method of [<code>WasmDiffChainHistory</code>](#WasmDiffChainHistory)  
-<a name="WasmDiffChainHistory+spam"></a>
-
-### wasmDiffChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
-
-NOTE: this clones the field.
-
-**Kind**: instance method of [<code>WasmDiffChainHistory</code>](#WasmDiffChainHistory)  
-<a name="WasmDiffChainHistory+toJSON"></a>
-
-### wasmDiffChainHistory.toJSON() ⇒ <code>any</code>
-Serializes a `$ident` object as a JSON object.
-
-**Kind**: instance method of [<code>WasmDiffChainHistory</code>](#WasmDiffChainHistory)  
-<a name="WasmDiffChainHistory.fromJSON"></a>
-
-### WasmDiffChainHistory.fromJSON(json) ⇒ [<code>WasmDiffChainHistory</code>](#WasmDiffChainHistory)
-Deserializes a `$ident` object from a JSON object.
-
-**Kind**: static method of [<code>WasmDiffChainHistory</code>](#WasmDiffChainHistory)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
-
-<a name="WasmIntegrationChainHistory"></a>
-
-## WasmIntegrationChainHistory
-**Kind**: global class  
-
-* [WasmIntegrationChainHistory](#WasmIntegrationChainHistory)
-    * _instance_
-        * [.chainData()](#WasmIntegrationChainHistory+chainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.spam()](#WasmIntegrationChainHistory+spam) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.toJSON()](#WasmIntegrationChainHistory+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(json)](#WasmIntegrationChainHistory.fromJSON) ⇒ [<code>WasmIntegrationChainHistory</code>](#WasmIntegrationChainHistory)
-
-<a name="WasmIntegrationChainHistory+chainData"></a>
-
-### wasmIntegrationChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
-
-NOTE: this clones the field.
-
-**Kind**: instance method of [<code>WasmIntegrationChainHistory</code>](#WasmIntegrationChainHistory)  
-<a name="WasmIntegrationChainHistory+spam"></a>
-
-### wasmIntegrationChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
-
-NOTE: this clones the field.
-
-**Kind**: instance method of [<code>WasmIntegrationChainHistory</code>](#WasmIntegrationChainHistory)  
-<a name="WasmIntegrationChainHistory+toJSON"></a>
-
-### wasmIntegrationChainHistory.toJSON() ⇒ <code>any</code>
-Serializes a `$ident` object as a JSON object.
-
-**Kind**: instance method of [<code>WasmIntegrationChainHistory</code>](#WasmIntegrationChainHistory)  
-<a name="WasmIntegrationChainHistory.fromJSON"></a>
-
-### WasmIntegrationChainHistory.fromJSON(json) ⇒ [<code>WasmIntegrationChainHistory</code>](#WasmIntegrationChainHistory)
-Deserializes a `$ident` object from a JSON object.
-
-**Kind**: static method of [<code>WasmIntegrationChainHistory</code>](#WasmIntegrationChainHistory)  
-
-| Param | Type |
-| --- | --- |
-| json | <code>any</code> | 
 
 <a name="Digest"></a>
 

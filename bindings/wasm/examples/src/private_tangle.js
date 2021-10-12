@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import { Client, Config, Document, KeyType, Network } from '@iota/identity-wasm';
+import {Client, Config, Document, KeyPair, KeyType, Network} from '@iota/identity-wasm';
 
 /**
     This example shows how a DID document can be created on a private tangle.
@@ -15,8 +15,12 @@ async function createIdentityPrivateTangle(restURL, networkName) {
     // but we can only use 6 characters, we use just `tangle`.
     const network = Network.try_from_name(networkName || "tangle");
 
-    // Create a DID Document (an identity).
-    const { doc, key } = new Document(KeyType.Ed25519, network.toString());
+    // Generate a new ed25519 public/private key pair.
+    const key = new KeyPair(KeyType.Ed25519);
+
+    // Create a DID with the network set explicitly.
+    // This will result in a DID prefixed by `did:iota:tangle`.
+    const doc = new Document(key, network.toString());
 
     // Sign the DID Document with the generated key.
     doc.sign(key);

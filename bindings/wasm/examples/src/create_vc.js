@@ -45,7 +45,7 @@ async function createVC(clientConfig) {
     const signedVc = issuer.doc.signCredential(unsignedVc, {
         method: issuer.doc.id.toString() + "#newKey",
         public: issuer.newKey.public,
-        secret: issuer.newKey.secret,
+        private: issuer.newKey.private,
     });
 
     // Check if the credential is verifiable.

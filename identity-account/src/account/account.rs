@@ -111,15 +111,20 @@ impl Account {
     self.index.read().await.tags()
   }
 
-  /// Finds and returns the state snapshot for the identity specified by given `key`.
-  pub async fn find_identity<K: IdentityKey>(&self, key: K) -> Result<Option<IdentitySnapshot>> {
+  /// Finds and returns the identity state for the identity specified by given `key`.
+  pub async fn find_identity<K: IdentityKey>(&self, key: K) -> Result<Option<IdentityState>> {
     match self.resolve_id(&key).await {
-      Some(identity) => self.load_snapshot(identity).await.map(Some),
+      Some(identity) => self
+        .load_snapshot(identity)
+        .await
+        .map(IdentitySnapshot::into_identity)
+        .map(Some),
       None => Ok(None),
     }
   }
 
-  pub async fn create_identity(&self, input: IdentityCreate) -> Result<IdentitySnapshot> {
+  /// Create an identity from the specified configuration options.
+  pub async fn create_identity(&self, input: IdentityCreate) -> Result<IdentityState> {
     // Acquire write access to the index.
     let mut index: RwLockWriteGuard<'_, _> = self.index.write().await;
 
@@ -152,8 +157,8 @@ impl Account {
     // Write the changes to disk
     self.save(false).await?;
 
-    // Return the state snapshot
-    Ok(snapshot)
+    // Return the identity state
+    Ok(snapshot.into_identity())
   }
 
   /// Returns the `IdentityUpdater` for the given `key`.
@@ -209,7 +214,7 @@ impl Account {
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
     let state: &IdentityState = snapshot.identity();
 
-    let fragment: Fragment = Fragment::new(fragment.into());
+    let fragment: Fragment = Fragment::new(fragment);
     let method: &TinyMethod = state.methods().fetch(fragment.name())?;
     let location: &KeyLocation = method.location();
 
@@ -282,7 +287,7 @@ impl Account {
     new_state: &IdentityState,
     document: &mut IotaDocument,
   ) -> Result<()> {
-    if new_state.auth_generation() == Generation::new() {
+    if new_state.integration_generation() == Generation::new() {
       let method: &TinyMethod = new_state.authentication()?;
       let location: &KeyLocation = method.location();
 
@@ -299,7 +304,7 @@ impl Account {
     Ok(())
   }
 
-  async fn process_auth_change(&self, old_root: IdentitySnapshot) -> Result<()> {
+  async fn process_integration_change(&self, old_root: IdentitySnapshot) -> Result<()> {
     let new_root: IdentitySnapshot = self.load_snapshot(old_root.id()).await?;
 
     let old_state: &IdentityState = old_root.identity();
@@ -315,7 +320,7 @@ impl Account {
       self.state.clients.publish_document(&new_doc).await?.into()
     };
 
-    let events: [Event; 1] = [Event::new(EventData::AuthMessage(message))];
+    let events: [Event; 1] = [Event::new(EventData::IntegrationMessage(message))];
 
     self.commit_events(&new_root, &events).await?;
 
@@ -478,7 +483,7 @@ impl Account {
     let id: IdentityId = snapshot.id();
 
     match Publish::new(&commits) {
-      Publish::Auth => self.process_auth_change(snapshot).await?,
+      Publish::Integration => self.process_integration_change(snapshot).await?,
       Publish::Diff => self.process_diff_change(snapshot).await?,
       Publish::None => {}
     }
@@ -635,7 +640,7 @@ impl State {
 #[derive(Clone, Copy, Debug)]
 enum Publish {
   None,
-  Auth,
+  Integration,
   Diff,
 }
 
@@ -646,9 +651,9 @@ impl Publish {
 
   const fn apply(self, commit: &Commit) -> Self {
     match (self, commit.event().data()) {
-      (Self::Auth, _) => Self::Auth,
-      (_, EventData::IdentityCreated(..)) => Self::Auth,
-      (_, EventData::AuthMessage(_)) => self,
+      (Self::Integration, _) => Self::Integration,
+      (_, EventData::IdentityCreated(..)) => Self::Integration,
+      (_, EventData::IntegrationMessage(_)) => self,
       (_, EventData::DiffMessage(_)) => self,
       (_, _) => Self::Diff,
     }

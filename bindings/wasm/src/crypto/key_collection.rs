@@ -7,8 +7,8 @@ use identity::crypto::merkle_key::Blake2b256;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection as KeyCollection_;
+use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
-use identity::crypto::SecretKey;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
@@ -26,7 +26,7 @@ struct JsonData {
 #[derive(Deserialize, Serialize)]
 struct KeyData {
   public: String,
-  secret: String,
+  private: String,
 }
 
 // =============================================================================
@@ -68,10 +68,10 @@ impl KeyCollection {
     self.0.public(index).map(encode_b58)
   }
 
-  /// Returns the secret key at the specified `index` as a base58-encoded string.
+  /// Returns the private key at the specified `index` as a base58-encoded string.
   #[wasm_bindgen]
-  pub fn secret(&self, index: usize) -> Option<String> {
-    self.0.secret(index).map(encode_b58)
+  pub fn private(&self, index: usize) -> Option<String> {
+    self.0.private(index).map(encode_b58)
   }
 
   #[wasm_bindgen(js_name = merkleRoot)]
@@ -108,13 +108,13 @@ impl KeyCollection {
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
     let public: _ = self.0.iter_public();
-    let secret: _ = self.0.iter_secret();
+    let private: _ = self.0.iter_private();
 
     let keys: Vec<KeyData> = public
-      .zip(secret)
-      .map(|(public, secret)| KeyData {
+      .zip(private)
+      .map(|(public, private)| KeyData {
         public: encode_b58(public),
-        secret: encode_b58(secret),
+        private: encode_b58(private),
       })
       .collect();
 
@@ -132,10 +132,10 @@ impl KeyCollection {
     let data: JsonData = json.into_serde().map_err(wasm_error)?;
 
     let iter: _ = data.keys.iter().flat_map(|data| {
-      let pk: PublicKey = decode_b58(&data.public).ok()?.into();
-      let sk: SecretKey = decode_b58(&data.secret).ok()?.into();
+      let public_key: PublicKey = decode_b58(&data.public).ok()?.into();
+      let private_key: PrivateKey = decode_b58(&data.private).ok()?.into();
 
-      Some((pk, sk))
+      Some((public_key, private_key))
     });
 
     KeyCollection_::from_iterator(data.type_.into(), iter)

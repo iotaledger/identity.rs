@@ -13,7 +13,7 @@ use crate::error::Result;
 /// Supported cryptographic key types.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum KeyType {
-  /// Identifies an `Ed25519` public/secret key.
+  /// Identifies an `Ed25519` public/private key.
   #[serde(rename = "ed25519")]
   Ed25519,
 }

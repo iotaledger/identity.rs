@@ -7,6 +7,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::str::FromStr;
+use std::convert::TryInto;
 
 use crypto::hashes::blake2b::Blake2b256;
 use crypto::hashes::Digest;
@@ -102,17 +103,9 @@ impl IotaDID {
   ///
   /// Returns `Err` if the input does not form a valid [`IotaDID`] or the `network` is invalid.
   /// See [`NetworkName`] for validation requirements.
-  pub fn new_with_network(public: &[u8], network: &str) -> Result<Self> {
-    NetworkName::validate_network_name(network)?;
-    try_construct_did!(public, network)
-  }
-
-  #[doc(hidden)]
-  pub fn from_components(public: &[u8], network: Option<&str>) -> Result<Self> {
-    match network {
-      Some(network) => Self::new_with_network(public, network),
-      None => Self::new(public),
-    }
+  pub fn new_with_network(public: &[u8], network: impl TryInto<NetworkName>) -> Result<Self> {
+    let network_name = network.try_into().map_err(|_| Error::InvalidNetworkName)?;
+    try_construct_did!(public, network_name.as_ref())
   }
 
   /// Creates a new `DID` by joining `self` with the relative DID `other`.
@@ -180,7 +173,7 @@ impl IotaDID {
     }
   }
 
-  /// Checks if the given `DID` has a valid [`IotaDID`] network name, e.g. "main", "test".
+  /// Checks if the given `DID` has a valid [`IotaDID`] network name, e.g. "main", "dev".
   ///
   /// # Errors
   ///
@@ -370,10 +363,10 @@ mod tests {
     assert!(IotaDID::parse(format!("did:iota:main:{}?somequery=somevalue", TAG)).is_ok());
     assert!(IotaDID::parse(format!("did:iota:main:{}?somequery=somevalue#fragment", TAG)).is_ok());
 
-    assert!(IotaDID::parse(format!("did:iota:test:{}", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:test:{}#fragment", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:test:{}?somequery=somevalue", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:test:{}?somequery=somevalue#fragment", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:dev:{}", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:dev:{}#fragment", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:dev:{}?somequery=somevalue", TAG)).is_ok());
+    assert!(IotaDID::parse(format!("did:iota:dev:{}?somequery=somevalue#fragment", TAG)).is_ok());
 
     assert!(IotaDID::parse(format!("did:iota:custom:{}", TAG)).is_ok());
     assert!(IotaDID::parse(format!("did:iota:custom:{}#fragment", TAG)).is_ok());
@@ -422,11 +415,14 @@ mod tests {
   fn test_network() {
     let key: String = IotaDID::encode_key(b"123");
 
-    let did: IotaDID = format!("did:iota:test:{}", key).parse().unwrap();
-    assert_eq!(did.network_str(), "test");
-
     let did: IotaDID = format!("did:iota:{}", key).parse().unwrap();
     assert_eq!(did.network_str(), "main");
+
+    let did: IotaDID = format!("did:iota:dev:{}", key).parse().unwrap();
+    assert_eq!(did.network_str(), "dev");
+
+    let did: IotaDID = format!("did:iota:test:{}", key).parse().unwrap();
+    assert_eq!(did.network_str(), "test");
 
     let did: IotaDID = format!("did:iota:custom:{}", key).parse().unwrap();
     assert_eq!(did.network_str(), "custom");
@@ -444,22 +440,15 @@ mod tests {
   #[test]
   fn test_new() {
     let key: KeyPair = KeyPair::new_ed25519().unwrap();
-    let did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());
 
+    let did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
     assert_eq!(did.tag(), tag);
-    assert_eq!(did.network_str(), IotaDID::DEFAULT_NETWORK);
-
-    let did = IotaDID::from_components(key.public().as_ref(), None).unwrap();
-    assert_eq!(did.tag(), tag);
-    assert_eq!(did.network_str(), IotaDID::DEFAULT_NETWORK);
-
-    let did = IotaDID::from_components(key.public().as_ref(), Some(IotaDID::DEFAULT_NETWORK)).unwrap();
     assert_eq!(did.network_str(), IotaDID::DEFAULT_NETWORK);
   }
 
   #[test]
-  fn test_with_network() {
+  fn test_new_with_network() {
     let key: KeyPair = KeyPair::new_ed25519().unwrap();
     let did: IotaDID = IotaDID::new_with_network(key.public().as_ref(), "foo").unwrap();
     let tag: String = IotaDID::encode_key(key.public().as_ref());

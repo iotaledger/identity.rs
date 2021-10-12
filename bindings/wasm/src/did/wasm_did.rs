@@ -7,6 +7,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::crypto::KeyPair;
 use crate::error::wasm_error;
+use crate::error::Result;
 use crate::tangle::WasmNetwork;
 
 /// @typicalname did
@@ -18,31 +19,37 @@ pub struct WasmDID(pub(crate) IotaDID);
 impl WasmDID {
   /// Creates a new `DID` from a `KeyPair` object.
   #[wasm_bindgen(constructor)]
-  pub fn new(key: &KeyPair, network: Option<String>) -> Result<WasmDID, JsValue> {
+  pub fn new(key: &KeyPair, network: Option<String>) -> Result<WasmDID> {
     let public: &[u8] = key.0.public().as_ref();
-    let network: Option<&str> = network.as_deref();
-
-    IotaDID::from_components(public, network).map_err(wasm_error).map(Self)
+    Self::from_public_key(public, network)
   }
 
   /// Creates a new `DID` from a base58-encoded public key.
   #[wasm_bindgen(js_name = fromBase58)]
-  pub fn from_base58(key: &str, network: Option<String>) -> Result<WasmDID, JsValue> {
+  pub fn from_base58(key: &str, network: Option<String>) -> Result<WasmDID> {
     let public: Vec<u8> = decode_b58(key).map_err(wasm_error)?;
-    let network: Option<&str> = network.as_deref();
+    Self::from_public_key(public.as_slice(), network)
+  }
 
-    IotaDID::from_components(&public, network).map_err(wasm_error).map(Self)
+  /// Creates a new `DID` from an arbitrary public key.
+  fn from_public_key(public: &[u8], network: Option<String>) -> Result<WasmDID> {
+    let did = if let Some(network) = network {
+      IotaDID::new_with_network(public, network)
+    } else {
+      IotaDID::new(public)
+    };
+    did.map_err(wasm_error).map(Self)
   }
 
   /// Parses a `DID` from the input string.
   #[wasm_bindgen]
-  pub fn parse(input: &str) -> Result<WasmDID, JsValue> {
+  pub fn parse(input: &str) -> Result<WasmDID> {
     IotaDID::parse(input).map_err(wasm_error).map(Self)
   }
 
   /// Returns the IOTA tangle network of the `DID`.
   #[wasm_bindgen(getter)]
-  pub fn network(&self) -> Result<WasmNetwork, JsValue> {
+  pub fn network(&self) -> Result<WasmNetwork> {
     self.0.network().map(Into::into).map_err(wasm_error)
   }
 

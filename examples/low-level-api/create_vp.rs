@@ -30,8 +30,8 @@ pub async fn create_vp() -> Result<Presentation> {
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
   let mut credential: Credential = common::issue_degree(&doc_iss, &doc_sub)?;
 
-  // Sign the Credential with the issuers secret key
-  doc_iss.sign_data(&mut credential, key_iss.secret())?;
+  // Sign the Credential with the issuers private key.
+  doc_iss.sign_data(&mut credential, key_iss.private())?;
 
   // Create an unsigned Presentation from the previously issued Verifiable Credential.
   let mut presentation: Presentation = PresentationBuilder::default()
@@ -40,8 +40,8 @@ pub async fn create_vp() -> Result<Presentation> {
     .credential(credential)
     .build()?;
 
-  // Sign the presentation with the holders secret key
-  doc_sub.sign_data(&mut presentation, key_sub.secret())?;
+  // Sign the presentation with the holders private key.
+  doc_sub.sign_data(&mut presentation, key_sub.private())?;
 
   Ok(presentation)
 }

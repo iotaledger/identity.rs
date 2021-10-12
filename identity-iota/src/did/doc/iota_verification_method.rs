@@ -26,6 +26,7 @@ use identity_did::verification::VerificationMethod;
 use crate::did::IotaDID;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::NetworkName;
 
 /// A DID Document verification method
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
@@ -73,7 +74,7 @@ impl IotaVerificationMethod {
 
   /// Creates a new [`IotaVerificationMethod`] object from the given [`KeyPair`] on the specified
   /// `network`.
-  pub fn from_keypair_with_network<'a, F>(keypair: &KeyPair, fragment: F, network: &str) -> Result<Self>
+  pub fn from_keypair_with_network<'a, F>(keypair: &KeyPair, fragment: F, network: NetworkName) -> Result<Self>
   where
     F: Into<Option<&'a str>>,
   {
@@ -91,6 +92,7 @@ impl IotaVerificationMethod {
   where
     F: Into<Option<&'a str>>,
   {
+    // TODO: validate fragment contents properly
     let tag: String = format!("#{}", fragment.into().unwrap_or(Self::DEFAULT_TAG));
     let key: IotaDID = did.join(tag)?;
 
@@ -149,7 +151,8 @@ impl IotaVerificationMethod {
     IotaDID::check_validity(method.controller())?;
 
     // Ensure the authentication method has an identifying fragment
-    if method.id().fragment().is_none() {
+    // TODO: validate fragment properly
+    if method.id().fragment().is_none() || method.id().fragment().unwrap_or_default().is_empty() {
       return Err(Error::InvalidDocumentAuthFragment);
     }
 

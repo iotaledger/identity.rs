@@ -8,8 +8,8 @@ use identity_core::crypto::merkle_tree::Proof;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
+use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_core::crypto::SecretKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
@@ -85,7 +85,7 @@ fn test_sign_verify_this_ed25519() {
 
     assert!(document.verify_this().is_err());
 
-    document.sign_this("#key-1", key.secret()).unwrap();
+    document.sign_this("#key-1", key.private()).unwrap();
 
     assert!(document.verify_this().is_ok());
   }
@@ -119,14 +119,14 @@ fn test_sign_verify_that_merkle_key_ed25519_sha256() {
       .unwrap();
 
     let public: &PublicKey = keys.public(index).unwrap();
-    let secret: &SecretKey = keys.secret(index).unwrap();
+    let private: &PrivateKey = keys.private(index).unwrap();
 
     let mut that: That = That::new(123);
 
     assert!(document.verifier().verify(&that).is_err());
 
     document
-      .signer(secret)
+      .signer(private)
       .method("#key-collection")
       .merkle_key((public, &proof))
       .sign(&mut that)
