@@ -1,21 +1,22 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_iota::did::IotaDID;
+
 use crate::events::Event;
-use crate::identity::IdentityId;
 use crate::types::Generation;
 
 /// An [event][Event] and position in an identity event sequence.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Commit {
-  identity: IdentityId,
+  identity: IotaDID,
   sequence: Generation,
   event: Event,
 }
 
 impl Commit {
   /// Creates a new `Commit`.
-  pub const fn new(identity: IdentityId, sequence: Generation, event: Event) -> Self {
+  pub const fn new(identity: IotaDID, sequence: Generation, event: Event) -> Self {
     Self {
       identity,
       sequence,
@@ -24,8 +25,8 @@ impl Commit {
   }
 
   /// Returns the identifier of the associated identity.
-  pub const fn identity(&self) -> IdentityId {
-    self.identity
+  pub const fn identity(&self) -> &IotaDID {
+    &self.identity
   }
 
   /// Returns the sequence index of the event.

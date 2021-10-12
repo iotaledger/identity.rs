@@ -31,7 +31,6 @@ use crate::crypto::RemoteKey;
 use crate::crypto::RemoteSign;
 use crate::error::Error;
 use crate::error::Result;
-use crate::identity::IdentityId;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
@@ -46,7 +45,6 @@ pub struct IdentityState {
   // =========== //
   // Chain State //
   // =========== //
-  id: IdentityId,
   integration_generation: Generation,
   diff_generation: Generation,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
@@ -76,9 +74,8 @@ pub struct IdentityState {
 }
 
 impl IdentityState {
-  pub fn new(id: IdentityId) -> Self {
+  pub fn new() -> Self {
     Self {
-      id,
       integration_generation: Generation::new(),
       diff_generation: Generation::new(),
       this_message_id: MessageId::null(),
@@ -99,9 +96,9 @@ impl IdentityState {
   // ===========================================================================
 
   /// Returns the identifier for this identity.
-  pub fn id(&self) -> IdentityId {
-    self.id
-  }
+  // pub fn id(&self) -> IdentityId {
+  //   self.id
+  // }
 
   /// Returns the current generation of the identity integration chain.
   pub fn integration_generation(&self) -> Generation {
@@ -322,13 +319,13 @@ impl IdentityState {
     Ok(document)
   }
 
-  pub async fn sign_data<T, U>(&self, store: &T, location: &KeyLocation, target: &mut U) -> Result<()>
+  pub async fn sign_data<T, U>(&self, did: &IotaDID, store: &T, location: &KeyLocation, target: &mut U) -> Result<()>
   where
     T: Storage,
     U: Serialize + SetSignature,
   {
     // Create a private key suitable for identity_core::crypto
-    let private: RemoteKey<'_, T> = RemoteKey::new(self.id, location, store);
+    let private: RemoteKey<'_, T> = RemoteKey::new(did, location, store);
 
     // Create the Verification Method identifier
     let fragment: &str = location.fragment.identifier();

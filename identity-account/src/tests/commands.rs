@@ -5,11 +5,12 @@ use crate::account::Account;
 use crate::account::Config;
 use crate::error::Error;
 use crate::error::Result;
-use crate::events::Command;
+use crate::events::Update;
 use crate::events::UpdateError;
 use crate::identity::IdentityCreate;
 use crate::identity::IdentityId;
 use crate::identity::IdentitySnapshot;
+use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::storage::MemStore;
 use crate::types::Generation;
@@ -41,13 +42,13 @@ async fn test_create_identity() -> Result<()> {
   assert_eq!(snapshot.identity().created(), UnixTimestamp::EPOCH);
   assert_eq!(snapshot.identity().updated(), UnixTimestamp::EPOCH);
 
-  let command: Command = Command::CreateIdentity {
+  let command: Update = Update::CreateIdentity {
     network: None,
     method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
-  account.process(identity, command, false).await?;
+  account.process_update(identity, command, false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
@@ -72,13 +73,13 @@ async fn test_create_identity_invalid_method() -> Result<()> {
   assert_eq!(snapshot.sequence(), Generation::new());
 
   for type_ in TYPES.iter().copied() {
-    let command: Command = Command::CreateIdentity {
+    let command: Update = Update::CreateIdentity {
       network: None,
       method_secret: None,
       authentication: type_,
     };
 
-    let output: Result<()> = account.process(identity, command, false).await;
+    let output: Result<()> = account.process_update(identity, command, false).await;
 
     assert!(matches!(
       output.unwrap_err(),
@@ -100,11 +101,11 @@ async fn test_create_identity_network() -> Result<()> {
 
   // Create an identity with a valid network string
   let create_identity: IdentityCreate = IdentityCreate::new().network("dev")?.key_type(KeyType::Ed25519);
-  let snapshot: IdentitySnapshot = account.create_identity(create_identity).await?;
+  let identity: IdentityState = account.create_identity(create_identity).await?;
 
   // Ensure the identity creation was successful
-  assert!(snapshot.identity().did().is_some());
-  assert!(snapshot.identity().authentication().is_ok());
+  assert!(identity.did().is_some());
+  assert!(identity.authentication().is_ok());
 
   Ok(())
 }
@@ -132,20 +133,20 @@ async fn test_create_identity_already_exists() -> Result<()> {
   // initial snapshot version = 0
   assert_eq!(snapshot.sequence(), Generation::new());
 
-  let command: Command = Command::CreateIdentity {
+  let command: Update = Update::CreateIdentity {
     network: None,
     method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
-  account.process(identity, command.clone(), false).await?;
+  account.process_update(identity, command.clone(), false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
   // version is now 4
   assert_eq!(snapshot.sequence(), Generation::from(4));
 
-  let output: Result<()> = account.process(identity, command, false).await;
+  let output: Result<()> = account.process_update(identity, command, false).await;
 
   assert!(matches!(
     output.unwrap_err(),
@@ -180,8 +181,8 @@ async fn test_create_identity_from_private_key() -> Result<()> {
   let ident2 = account.find_identity(identity).await.unwrap().unwrap();
 
   // The same private key should result in the same did
-  assert_eq!(ident.identity().did(), ident2.identity().did());
-  assert_eq!(ident.identity().authentication()?, ident2.identity().authentication()?);
+  assert_eq!(ident.did(), ident2.did());
+  assert_eq!(ident.authentication()?, ident2.authentication()?);
 
   Ok(())
 }
@@ -209,22 +210,22 @@ async fn test_create_method() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::CreateIdentity {
+  let command: Update = Update::CreateIdentity {
     network: None,
     method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
-  account.process(identity, command, false).await?;
+  account.process_update(identity, command, false).await?;
 
-  let command: Command = Command::CreateMethod {
+  let command: Update = Update::CreateMethod {
     scope: MethodScope::default(),
     method_secret: None,
     type_: MethodType::Ed25519VerificationKey2018,
     fragment: "key-1".to_owned(),
   };
 
-  account.process(identity, command, false).await?;
+  account.process_update(identity, command, false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
@@ -248,15 +249,15 @@ async fn test_create_method_reserved_fragment() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::CreateIdentity {
+  let command: Update = Update::CreateIdentity {
     network: None,
     method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
-  account.process(identity, command, false).await?;
+  account.process_update(identity, command, false).await?;
 
-  let command: Command = Command::CreateMethod {
+  let command: Update = Update::CreateMethod {
     scope: MethodScope::default(),
     method_secret: None,
     type_: MethodType::Ed25519VerificationKey2018,
@@ -268,7 +269,7 @@ async fn test_create_method_reserved_fragment() -> Result<()> {
   // version is now 4
   assert_eq!(snapshot.sequence(), Generation::from_u32(4));
 
-  let output: _ = account.process(identity, command, false).await;
+  let output: _ = account.process_update(identity, command, false).await;
 
   assert!(matches!(
     output.unwrap_err(),
@@ -288,15 +289,15 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::CreateIdentity {
+  let command: Update = Update::CreateIdentity {
     network: None,
     method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
-  account.process(identity, command, false).await?;
+  account.process_update(identity, command, false).await?;
 
-  let command: Command = Command::CreateMethod {
+  let command: Update = Update::CreateMethod {
     scope: MethodScope::default(),
     method_secret: None,
     type_: MethodType::Ed25519VerificationKey2018,
@@ -306,12 +307,12 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
   assert_eq!(snapshot.sequence(), Generation::from_u32(4));
 
-  account.process(identity, command.clone(), false).await?;
+  account.process_update(identity, command.clone(), false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
   assert_eq!(snapshot.sequence(), Generation::from_u32(6));
 
-  let output: _ = account.process(identity, command, false).await;
+  let output: _ = account.process_update(identity, command, false).await;
 
   assert!(matches!(
     output.unwrap_err(),
@@ -329,24 +330,24 @@ async fn test_create_method_from_private_key() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::CreateIdentity {
+  let command: Update = Update::CreateIdentity {
     network: None,
     method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
-  account.process(identity, command, false).await?;
+  account.process_update(identity, command, false).await?;
 
   let keypair = KeyPair::new_ed25519()?;
 
-  let command: Command = Command::CreateMethod {
+  let command: Update = Update::CreateMethod {
     scope: MethodScope::default(),
     method_secret: Some(MethodSecret::Ed25519(keypair.private().clone())),
     type_: MethodType::Ed25519VerificationKey2018,
     fragment: "key-1".to_owned(),
   };
 
-  account.process(identity, command, false).await?;
+  account.process_update(identity, command, false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
@@ -364,25 +365,25 @@ async fn test_create_method_from_invalid_private_key() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::CreateIdentity {
+  let command: Update = Update::CreateIdentity {
     network: None,
     method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
-  account.process(identity, command, false).await?;
+  account.process_update(identity, command, false).await?;
 
   let private_bytes: Box<[u8]> = Box::new([0; 33]);
   let private_key = PrivateKey::from(private_bytes);
 
-  let command: Command = Command::CreateMethod {
+  let command: Update = Update::CreateMethod {
     scope: MethodScope::default(),
     method_secret: Some(MethodSecret::Ed25519(private_key)),
     type_: MethodType::Ed25519VerificationKey2018,
     fragment: "key-1".to_owned(),
   };
 
-  let err = account.process(identity, command, false).await.unwrap_err();
+  let err = account.process_update(identity, command, false).await.unwrap_err();
 
   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
 
@@ -394,38 +395,38 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::CreateIdentity {
+  let command: Update = Update::CreateIdentity {
     network: None,
     method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
-  account.process(identity, command, false).await?;
+  account.process_update(identity, command, false).await?;
 
   let private_bytes: Box<[u8]> = Box::new([0; 32]);
   let private_key = PrivateKey::from(private_bytes);
 
-  let command: Command = Command::CreateMethod {
+  let command: Update = Update::CreateMethod {
     scope: MethodScope::default(),
     method_secret: Some(MethodSecret::Ed25519(private_key)),
     type_: MethodType::MerkleKeyCollection2021,
     fragment: "key-1".to_owned(),
   };
 
-  let err = account.process(identity, command, false).await.unwrap_err();
+  let err = account.process_update(identity, command, false).await.unwrap_err();
 
   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
 
   let key_collection = KeyCollection::new_ed25519(4).unwrap();
 
-  let command: Command = Command::CreateMethod {
+  let command: Update = Update::CreateMethod {
     scope: MethodScope::default(),
     method_secret: Some(MethodSecret::MerkleKeyCollection(key_collection)),
     type_: MethodType::Ed25519VerificationKey2018,
     fragment: "key-2".to_owned(),
   };
 
-  let err = account.process(identity, command, false).await.unwrap_err();
+  let err = account.process_update(identity, command, false).await.unwrap_err();
 
   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
 
@@ -437,15 +438,15 @@ async fn test_delete_method() -> Result<()> {
   let account: Account = new_account().await?;
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let command: Command = Command::CreateIdentity {
+  let command: Update = Update::CreateIdentity {
     network: None,
     method_secret: None,
     authentication: MethodType::Ed25519VerificationKey2018,
   };
 
-  account.process(identity, command, false).await?;
+  account.process_update(identity, command, false).await?;
 
-  let command: Command = Command::CreateMethod {
+  let command: Update = Update::CreateMethod {
     scope: MethodScope::default(),
     method_secret: None,
     type_: MethodType::Ed25519VerificationKey2018,
@@ -455,7 +456,7 @@ async fn test_delete_method() -> Result<()> {
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
   assert_eq!(snapshot.sequence(), Generation::from_u32(4));
 
-  account.process(identity, command, false).await?;
+  account.process_update(identity, command, false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
@@ -465,11 +466,11 @@ async fn test_delete_method() -> Result<()> {
   assert!(snapshot.identity().methods().get("key-1").is_some());
   assert!(snapshot.identity().methods().fetch("key-1").is_ok());
 
-  let command: Command = Command::DeleteMethod {
+  let command: Update = Update::DeleteMethod {
     fragment: "key-1".to_owned(),
   };
 
-  account.process(identity, command, false).await?;
+  account.process_update(identity, command, false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 

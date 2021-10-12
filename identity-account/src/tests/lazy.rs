@@ -3,8 +3,9 @@
 
 use std::pin::Pin;
 
-use crate::account::Account;
-use crate::identity::{IdentityCreate, IdentitySnapshot, IdentityUpdater};
+use crate::account::{Account, Config};
+use crate::identity::{IdentityCreate, IdentityUpdater};
+use crate::storage::MemStore;
 use crate::{Error as AccountError, Result};
 use futures::Future;
 use identity_core::common::Url;
@@ -20,7 +21,9 @@ async fn test_lazy_updates() -> Result<()> {
       // ===========================================================================
       // Create, update and publish an identity
       // ===========================================================================
-      let account: Account = Account::builder().autopublish(false).build().await?;
+
+      let mut config = Config::new();
+      config.autopublish(false);
 
       let network = if test_run % 2 == 0 {
         Network::Devnet
@@ -28,13 +31,16 @@ async fn test_lazy_updates() -> Result<()> {
         Network::Mainnet
       };
 
-      let snapshot: IdentitySnapshot = account
-        .create_identity(IdentityCreate::new().network(network.name()).unwrap())
-        .await?;
+      let account = Account::create_identity(
+        config,
+        MemStore::new(),
+        IdentityCreate::new().network(network.name()).unwrap(),
+      )
+      .await?;
 
-      let did: &IotaDID = snapshot.identity().try_did()?;
+      let did: &IotaDID = account.did();
 
-      let did_updater: IdentityUpdater<'_, '_, _> = account.update_identity(did);
+      let did_updater: IdentityUpdater<'_> = account.update_identity();
 
       did_updater
         .create_service()
@@ -52,13 +58,13 @@ async fn test_lazy_updates() -> Result<()> {
         .apply()
         .await?;
 
-      account.publish_updates(did).await?;
+      account.publish_updates().await?;
 
       // ===========================================================================
       // First round of assertions
       // ===========================================================================
 
-      let doc = account.resolve_identity(snapshot.identity().did().unwrap()).await?;
+      let doc = account.resolve_identity().await?;
 
       let services = doc.service();
 
@@ -86,13 +92,13 @@ async fn test_lazy_updates() -> Result<()> {
 
       did_updater.create_method().fragment("new-method").apply().await?;
 
-      account.publish_updates(did).await?;
+      account.publish_updates().await?;
 
       // ===========================================================================
       // Second round of assertions
       // ===========================================================================
 
-      let doc = account.resolve_identity(snapshot.identity().did().unwrap()).await?;
+      let doc = account.resolve_identity().await?;
       let methods = doc.methods().collect::<Vec<&IotaVerificationMethod>>();
 
       assert_eq!(doc.service().len(), 0);

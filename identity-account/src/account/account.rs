@@ -19,25 +19,18 @@ use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
-use tokio::sync::RwLock;
-use tokio::sync::RwLockWriteGuard;
 
 use crate::account::AccountBuilder;
-use crate::error::Error;
 use crate::error::Result;
-use crate::events::Command;
 use crate::events::Commit;
 use crate::events::Context;
+use crate::events::CreateIdentity;
 use crate::events::Event;
 use crate::events::EventData;
+use crate::events::Update;
 use crate::identity::IdentityCreate;
-use crate::identity::IdentityId;
-use crate::identity::IdentityIndex;
-use crate::identity::IdentityKey;
-use crate::identity::IdentityLock;
 use crate::identity::IdentitySnapshot;
 use crate::identity::IdentityState;
-use crate::identity::IdentityTag;
 use crate::identity::IdentityUpdater;
 use crate::identity::TinyMethod;
 use crate::storage::Storage;
@@ -51,7 +44,7 @@ pub struct Account {
   config: Arc<Config>,
   state: State,
   store: Box<dyn Storage>,
-  index: RwLock<IdentityIndex>,
+  did: IotaDID,
 }
 
 impl Account {
@@ -60,20 +53,18 @@ impl Account {
     AccountBuilder::new()
   }
 
-  /// Creates a new `Account` instance.
-  pub async fn new(store: impl Storage) -> Result<Self> {
-    Self::with_config(store, Config::new()).await
+  /// Loads an existing identity into an `Account` instance.
+  pub async fn load_identity(did: IotaDID, store: impl Storage) -> Result<Self> {
+    Self::with_config(did, store, Config::new()).await
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  pub async fn with_config(store: impl Storage, config: Config) -> Result<Self> {
-    let index: IdentityIndex = store.index().await?;
-
+  pub async fn with_config(did: IotaDID, store: impl Storage, config: Config) -> Result<Self> {
     Ok(Self {
       store: Box::new(store),
       state: State::new(),
       config: Arc::new(config),
-      index: RwLock::new(index),
+      did,
     })
   }
 
@@ -102,169 +93,115 @@ impl Account {
     self.state.clients.insert(client);
   }
 
+  pub fn did(&self) -> &IotaDID {
+    &self.did
+  }
+
   // ===========================================================================
   // Identity
   // ===========================================================================
 
-  /// Returns a list of tags identifying the identities in the account.
-  pub async fn list_identities(&self) -> Vec<IdentityTag> {
-    self.index.read().await.tags()
-  }
-
-  /// Finds and returns the state snapshot for the identity specified by given `key`.
-  pub async fn find_identity<K: IdentityKey>(&self, key: K) -> Result<Option<IdentitySnapshot>> {
-    match self.resolve_id(&key).await {
-      Some(identity) => self.load_snapshot(identity).await.map(Some),
-      None => Ok(None),
-    }
-  }
-
-  pub async fn create_identity(&self, input: IdentityCreate) -> Result<IdentitySnapshot> {
-    // Acquire write access to the index.
-    let mut index: RwLockWriteGuard<'_, _> = self.index.write().await;
-
-    let identity: IdentityId = index.try_next_id()?;
-
-    // Create the initialization command
-    let command: Command = Command::CreateIdentity {
-      network: input.network,
-      method_secret: input.method_secret,
-      authentication: Self::key_to_method(input.key_type),
-    };
-
-    // Process the command
-    self.process(identity, command, false).await?;
-
-    // Read the latest snapshot
-    let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
-    let document: &IotaDID = snapshot.identity().try_did()?;
-
-    // Add the identity to the index
-    if let Some(name) = input.name {
-      index.set_named(identity, document, name)?;
-    } else {
-      index.set(identity, document)?;
-    }
-
-    // Store the updated identity index
-    self.store.set_index(&index).await?;
-
-    // Write the changes to disk
-    self.save(false).await?;
-
-    // Return the state snapshot
-    Ok(snapshot)
-  }
-
-  /// Returns the `IdentityUpdater` for the given `key`.
-  ///
-  /// On this type, various operations can be executed
-  /// that modify an identity, such as creating services or methods.
-  pub fn update_identity<'account, 'key, K: IdentityKey>(
-    &'account self,
-    key: &'key K,
-  ) -> IdentityUpdater<'account, 'key, K> {
-    IdentityUpdater::new(self, key)
-  }
-
-  /// Removes the identity specified by the given `key`.
-  ///
-  /// Note: This will remove all associated events and key material - recovery is NOT POSSIBLE!
-  pub async fn delete_identity<K: IdentityKey>(&self, key: K) -> Result<()> {
-    // Acquire write access to the index.
-    let mut index: RwLockWriteGuard<'_, _> = self.index.write().await;
-
-    // Remove the identity from the index
-    let identity: IdentityId = index.del(key)?.1;
-
-    // Remove all associated keys and events
-    self.store.purge(identity).await?;
-
-    // Store the updated identity index
-    self.store.set_index(&index).await?;
-
-    // Write the changes to disk
-    self.save(false).await?;
-
-    Ok(())
-  }
-
   /// Resolves the DID Document associated with the specified `key`.
-  pub async fn resolve_identity<K: IdentityKey>(&self, key: K) -> Result<IotaDocument> {
-    let identity: IdentityId = self.try_resolve_id(&key).await?;
-    let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
+  pub async fn resolve_identity(&self) -> Result<IotaDocument> {
+    let snapshot: IdentitySnapshot = self.load_snapshot(self.did()).await?;
     let document: &IotaDID = snapshot.identity().try_did()?;
 
     // Fetch the DID Document from the Tangle
     self.state.clients.resolve(document).await.map_err(Into::into)
   }
 
+  pub async fn create_identity(config: Config, store: impl Storage, input: IdentityCreate) -> Result<Account> {
+    let command = CreateIdentity {
+      network: input.network,
+      method_secret: input.method_secret,
+      authentication: Self::key_to_method(input.key_type),
+    };
+
+    let snapshot = IdentitySnapshot::new(IdentityState::new());
+
+    let (did, events): (IotaDID, Vec<Event>) = command
+      .process(snapshot.identity().integration_generation(), &store)
+      .await?;
+
+    let commits = Self::commit_events(&did, &store, &config, &snapshot, &events).await?;
+
+    let account = Self::with_config(did, store, config).await?;
+
+    account.publish_commits(snapshot, commits, false).await?;
+
+    Ok(account)
+  }
+
+  /// Returns the `IdentityUpdater` for the given `key`.
+  ///
+  /// On this type, various operations can be executed
+  /// that modify an identity, such as creating services or methods.
+  pub fn update_identity<'account>(&'account self) -> IdentityUpdater<'account> {
+    IdentityUpdater::new(self)
+  }
+
+  /// Removes the identity specified by the given `key`.
+  ///
+  /// Note: This will remove all associated events and key material - recovery is NOT POSSIBLE!
+  pub async fn delete_identity(self) -> Result<()> {
+    // Remove all associated keys and events
+    self.store.purge(self.did()).await?;
+
+    // Write the changes to disk
+    self.save(false).await?;
+
+    Ok(())
+  }
+
   /// Signs `data` with the key specified by `fragment`.
-  pub async fn sign<K, U>(&self, key: K, fragment: &str, target: &mut U) -> Result<()>
+  pub async fn sign<U>(&self, fragment: &str, target: &mut U) -> Result<()>
   where
-    K: IdentityKey,
     U: Serialize + SetSignature,
   {
-    let identity: IdentityId = self.try_resolve_id(&key).await?;
-    let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
+    let snapshot: IdentitySnapshot = self.load_snapshot(self.did()).await?;
     let state: &IdentityState = snapshot.identity();
 
     let fragment: Fragment = Fragment::new(fragment);
     let method: &TinyMethod = state.methods().fetch(fragment.name())?;
     let location: &KeyLocation = method.location();
 
-    state.sign_data(&self.store, location, target).await?;
+    state.sign_data(self.did(), &self.store, location, target).await?;
 
     Ok(())
-  }
-
-  async fn resolve_id<K: IdentityKey>(&self, key: &K) -> Option<IdentityId> {
-    self.index.read().await.get(key)
-  }
-
-  async fn try_resolve_id<K: IdentityKey>(&self, key: &K) -> Result<IdentityId> {
-    self.resolve_id(key).await.ok_or(Error::IdentityNotFound)
-  }
-
-  async fn try_resolve_id_lock<K: IdentityKey>(&self, key: &K) -> Result<IdentityLock> {
-    self.index.write().await.get_lock(key).ok_or(Error::IdentityNotFound)
   }
 
   // ===========================================================================
   // Misc. Private
   // ===========================================================================
-
-  /// Updates the identity specified by the given `key` with the given `command`.
-  pub(crate) async fn apply_command<K: IdentityKey>(&self, key: &K, command: Command) -> Result<()> {
-    // Hold on to an `IdentityId`s individual lock until we've finished processing the update.
-    let identity_lock = self.try_resolve_id_lock(key).await?;
-    let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
-
-    self.process(*identity, command, true).await?;
-
-    Ok(())
-  }
-
-  pub(crate) async fn process(&self, id: IdentityId, command: Command, persist: bool) -> Result<()> {
+  pub(crate) async fn process_update(&self, command: Update, persist: bool) -> Result<()> {
     // Load the latest state snapshot from storage
-    let root: IdentitySnapshot = self.load_snapshot(id).await?;
+    let root: IdentitySnapshot = self.load_snapshot(self.did()).await?;
 
     debug!("[Account::process] Root = {:#?}", root);
 
     // Process the command with a read-only view of the state
-    let context: Context<'_> = Context::new(root.identity(), self.store());
+    let context: Context<'_> = Context::new(self.did(), root.identity(), self.store());
     let events: Option<Vec<Event>> = command.process(context).await?;
 
     debug!("[Account::process] Events = {:#?}", events);
 
     if let Some(events) = events {
-      // Commit all events returned by the command
-      let commits: Vec<Commit> = self.commit_events(&root, &events).await?;
-
-      debug!("[Account::process] Commits = {:#?}", commits);
-
-      self.publish(root, commits, false).await?;
+      let commits: Vec<Commit> = Self::commit_events(self.did(), self.store(), &self.config, &root, &events).await?;
+      self.publish_commits(root, commits, persist).await?;
     }
+
+    Ok(())
+  }
+
+  pub(crate) async fn publish_commits(
+    &self,
+    root: IdentitySnapshot,
+    commits: Vec<Commit>,
+    persist: bool,
+  ) -> Result<()> {
+    debug!("[Account::process] Commits = {:#?}", commits);
+
+    self.publish(root, commits, false).await?;
 
     // Update the total number of executions
     self.state.actions.fetch_add(1, OSC);
@@ -287,20 +224,20 @@ impl Account {
       let location: &KeyLocation = method.location();
 
       // Sign the DID Document with the current authentication method
-      new_state.sign_data(&self.store, location, document).await?;
+      new_state.sign_data(self.did(), &self.store, location, document).await?;
     } else {
       let method: &TinyMethod = old_state.authentication()?;
       let location: &KeyLocation = method.location();
 
       // Sign the DID Document with the previous authentication method
-      old_state.sign_data(&self.store, location, document).await?;
+      old_state.sign_data(self.did(), &self.store, location, document).await?;
     }
 
     Ok(())
   }
 
   async fn process_integration_change(&self, old_root: IdentitySnapshot) -> Result<()> {
-    let new_root: IdentitySnapshot = self.load_snapshot(old_root.id()).await?;
+    let new_root: IdentitySnapshot = self.load_snapshot(self.did()).await?;
 
     let old_state: &IdentityState = old_root.identity();
     let new_state: &IdentityState = new_root.identity();
@@ -317,13 +254,13 @@ impl Account {
 
     let events: [Event; 1] = [Event::new(EventData::IntegrationMessage(message))];
 
-    self.commit_events(&new_root, &events).await?;
+    Self::commit_events(self.did(), self.store(), self.config.as_ref(), &new_root, &events).await?;
 
     Ok(())
   }
 
   async fn process_diff_change(&self, old_root: IdentitySnapshot) -> Result<()> {
-    let new_root: IdentitySnapshot = self.load_snapshot(old_root.id()).await?;
+    let new_root: IdentitySnapshot = self.load_snapshot(self.did()).await?;
 
     let old_state: &IdentityState = old_root.identity();
     let new_state: &IdentityState = new_root.identity();
@@ -338,7 +275,9 @@ impl Account {
     let method: &TinyMethod = old_state.authentication()?;
     let location: &KeyLocation = method.location();
 
-    old_state.sign_data(&self.store, location, &mut diff).await?;
+    old_state
+      .sign_data(self.did(), &self.store, location, &mut diff)
+      .await?;
 
     let message: MessageId = if self.config.testmode {
       MessageId::null()
@@ -353,7 +292,7 @@ impl Account {
 
     let events: [Event; 1] = [Event::new(EventData::DiffMessage(message))];
 
-    self.commit_events(&new_root, &events).await?;
+    Self::commit_events(self.did(), self.store(), self.config.as_ref(), &new_root, &events).await?;
 
     Ok(())
   }
@@ -366,37 +305,43 @@ impl Account {
   }
 
   #[doc(hidden)]
-  pub async fn load_snapshot(&self, id: IdentityId) -> Result<IdentitySnapshot> {
+  pub async fn load_snapshot(&self, did: &IotaDID) -> Result<IdentitySnapshot> {
     // Retrieve the state snapshot from storage or create a new one.
     let initial: IdentitySnapshot = self
       .store
-      .snapshot(id)
+      .snapshot(did)
       .await?
-      .unwrap_or_else(|| IdentitySnapshot::new(IdentityState::new(id)));
+      .unwrap_or_else(|| IdentitySnapshot::new(IdentityState::new()));
 
     // Apply all recent events to the state and create a new snapshot
     self
       .store
-      .stream(id, initial.sequence())
+      .stream(did, initial.sequence())
       .await?
       .try_fold(initial, Self::fold_snapshot)
       .await
   }
 
-  async fn load_snapshot_at(&self, id: IdentityId, generation: Generation) -> Result<IdentitySnapshot> {
-    let initial: IdentitySnapshot = IdentitySnapshot::new(IdentityState::new(id));
+  async fn load_snapshot_at(&self, did: &IotaDID, generation: Generation) -> Result<IdentitySnapshot> {
+    let initial: IdentitySnapshot = IdentitySnapshot::new(IdentityState::new());
 
     // Apply all events up to `generation`
     self
       .store
-      .stream(id, Generation::new())
+      .stream(did, Generation::new())
       .await?
       .take(generation.to_u32() as usize)
       .try_fold(initial, Self::fold_snapshot)
       .await
   }
 
-  async fn commit_events(&self, state: &IdentitySnapshot, events: &[Event]) -> Result<Vec<Commit>> {
+  async fn commit_events(
+    did: &IotaDID,
+    store: &dyn Storage,
+    config: &Config,
+    state: &IdentitySnapshot,
+    events: &[Event],
+  ) -> Result<Vec<Commit>> {
     // Bail early if there are no new events
     if events.is_empty() {
       return Ok(Vec::new());
@@ -409,14 +354,14 @@ impl Account {
     // Iterate over the events and create a new commit with the correct sequence
     for event in events {
       sequence = sequence.try_increment()?;
-      commits.push(Commit::new(state.id(), sequence, event.clone()));
+      commits.push(Commit::new(did.clone(), sequence, event.clone()));
     }
 
     // Append the list of commits to the store
-    self.store.append(state.id(), &commits).await?;
+    store.append(did, &commits).await?;
 
     // Store a snapshot every N events
-    if sequence.to_u32() % self.config.milestone == 0 {
+    if sequence.to_u32() % config.milestone == 0 {
       let mut state: IdentitySnapshot = state.clone();
 
       // Fold the new commits into the snapshot
@@ -425,7 +370,7 @@ impl Account {
       }
 
       // Store the new snapshot
-      self.store.set_snapshot(state.id(), &state).await?;
+      store.set_snapshot(did, &state).await?;
     }
 
     // Return the list of stored events
@@ -447,22 +392,19 @@ impl Account {
   }
 
   /// Push all unpublished changes for the given identity to the tangle in a single message.
-  pub async fn publish_updates<K: IdentityKey>(&self, key: K) -> Result<()> {
-    let identity_lock: IdentityLock = self.try_resolve_id_lock(&key).await?;
-    let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
-
+  pub async fn publish_updates(&self) -> Result<()> {
     // Get the last commit generation that was published to the tangle.
-    let last_published: Generation = self.store.published_generation(*identity).await?.unwrap_or_default();
+    let last_published: Generation = self.store.published_generation(self.did()).await?.unwrap_or_default();
 
     // Get the commits that need to be published.
-    let commits: Vec<Commit> = self.store.collect(*identity, last_published).await?;
+    let commits: Vec<Commit> = self.store.collect(self.did(), last_published).await?;
 
     if commits.is_empty() {
       return Ok(());
     }
 
     // Load the snapshot that represents the state on the tangle.
-    let snapshot: IdentitySnapshot = self.load_snapshot_at(*identity, last_published).await?;
+    let snapshot: IdentitySnapshot = self.load_snapshot_at(self.did(), last_published).await?;
 
     self.publish(snapshot, commits, true).await?;
 
@@ -474,8 +416,6 @@ impl Account {
     if !force && !self.config.autopublish {
       return Ok(());
     }
-
-    let id: IdentityId = snapshot.id();
 
     match Publish::new(&commits) {
       Publish::Integration => self.process_integration_change(snapshot).await?,
@@ -489,7 +429,7 @@ impl Account {
       // which is required to be set for subsequent updates.
       // The next snapshot that loads the tangle state will require this message id to be set.
       let generation: Generation = Generation::from_u32(last_commit_generation.to_u32() + 1);
-      self.store.set_published_generation(id, generation).await?;
+      self.store.set_published_generation(self.did(), generation).await?;
     }
 
     Ok(())

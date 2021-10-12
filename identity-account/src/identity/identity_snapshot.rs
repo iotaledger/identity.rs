@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::identity::IdentityId;
 use crate::identity::IdentityState;
 use crate::types::Generation;
 
@@ -21,11 +20,6 @@ impl IdentitySnapshot {
     }
   }
 
-  /// Returns the identifier for this identity.
-  pub fn id(&self) -> IdentityId {
-    self.identity.id()
-  }
-
   /// Returns the sequence index of the snapshot.
   pub fn sequence(&self) -> Generation {
     self.sequence
@@ -34,5 +28,10 @@ impl IdentitySnapshot {
   /// Returns the identity state of the snapshot.
   pub fn identity(&self) -> &IdentityState {
     &self.identity
+  }
+
+  /// Returns the identity state of the snapshot (consuming self).
+  pub fn into_identity(self) -> IdentityState {
+    self.identity
   }
 }

@@ -15,6 +15,7 @@ use crate::account::AutoSave;
 use crate::account::Config;
 use crate::error::Result;
 use crate::storage::MemStore;
+// use crate::storage::MemStore;
 use crate::storage::Storage;
 #[cfg(feature = "stronghold")]
 use crate::storage::Stronghold;
@@ -99,8 +100,10 @@ impl AccountBuilder {
 
   /// Creates a new [Account] based on the builder configuration.
   pub async fn build(mut self) -> Result<Account> {
+    // TODO: Placeholder
+    let did = "".parse().unwrap();
     let account: Account = match self.storage {
-      AccountStorage::Memory => Account::with_config(MemStore::new(), self.config).await?,
+      AccountStorage::Memory => Account::with_config(did, MemStore::new(), self.config).await?,
       #[cfg(feature = "stronghold")]
       AccountStorage::Stronghold(snapshot, password) => {
         let passref: Option<&str> = password.as_deref();
@@ -110,9 +113,9 @@ impl AccountBuilder {
           password.zeroize();
         }
 
-        Account::with_config(adapter, self.config).await?
+        Account::with_config(did, adapter, self.config).await?
       }
-      AccountStorage::Custom(adapter) => Account::with_config(adapter, self.config).await?,
+      AccountStorage::Custom(adapter) => Account::with_config(did, adapter, self.config).await?,
     };
 
     if let Some(clients) = self.clients.take() {

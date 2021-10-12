@@ -34,15 +34,14 @@ macro_rules! impl_command_builder {
     paste::paste! {
       $(#[$doc])*
       #[derive(Clone, Debug)]
-      pub struct [<$ident Builder>]<'account, 'key, K: $crate::identity::IdentityKey> {
+      pub struct [<$ident Builder>]<'account> {
         account: &'account Account,
-        key: &'key K,
         $(
           $field: Option<$ty>,
         )*
       }
 
-      impl<'account, 'key, K: $crate::identity::IdentityKey> [<$ident Builder>]<'account, 'key, K> {
+      impl<'account> [<$ident Builder>]<'account> {
         $(
           pub fn $field<VALUE: Into<$ty>>(mut self, value: VALUE) -> Self {
             self.$field = Some(value.into());
@@ -50,10 +49,9 @@ macro_rules! impl_command_builder {
           }
         )*
 
-        pub fn new(account: &'account Account, key: &'key K) -> [<$ident Builder>]<'account, 'key, K> {
+        pub fn new(account: &'account Account) -> [<$ident Builder>]<'account> {
           [<$ident Builder>] {
             account,
-            key,
             $(
               $field: None,
             )*
@@ -61,20 +59,20 @@ macro_rules! impl_command_builder {
         }
 
         pub async fn apply(self) -> $crate::Result<()> {
-          let update = $crate::events::Command::$ident {
+          let update = $crate::events::Update::$ident {
             $(
               $field: impl_command_builder!(@finish self $requirement $field $ty $(= $value)?),
             )*
           };
 
-          self.account.apply_command(self.key, update).await
+          self.account.process_update(update, false).await
         }
       }
 
-      impl<'account, 'key, K: $crate::identity::IdentityKey> $crate::identity::IdentityUpdater<'account, 'key, K> {
+      impl<'account> $crate::identity::IdentityUpdater<'account> {
         /// Creates a new builder to modify the identity. See the documentation of the return type for details.
-        pub fn [<$ident:snake>](&self) -> [<$ident Builder>]<'account, 'key, K> {
-          [<$ident Builder>]::new(self.account, self.key)
+        pub fn [<$ident:snake>](&self) -> [<$ident Builder>]<'account> {
+          [<$ident Builder>]::new(self.account)
         }
       }
     }

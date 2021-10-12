@@ -6,23 +6,23 @@ use futures::executor;
 use identity_core::crypto::Sign;
 use identity_core::error::Error;
 use identity_core::error::Result;
+use identity_iota::did::IotaDID;
 
-use crate::identity::IdentityId;
 use crate::storage::Storage;
 use crate::types::KeyLocation;
 
 /// A reference to a storage instance and identity key location.
 #[derive(Debug)]
 pub struct RemoteKey<'a, T> {
-  id: IdentityId,
+  did: &'a IotaDID,
   location: &'a KeyLocation,
   store: &'a T,
 }
 
 impl<'a, T> RemoteKey<'a, T> {
   /// Creates a new `RemoteKey` instance.
-  pub fn new(id: IdentityId, location: &'a KeyLocation, store: &'a T) -> Self {
-    Self { id, location, store }
+  pub fn new(did: &'a IotaDID, location: &'a KeyLocation, store: &'a T) -> Self {
+    Self { did, location, store }
   }
 }
 
@@ -46,7 +46,7 @@ where
   type Output = Vec<u8>;
 
   fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output> {
-    let future: _ = key.store.key_sign(key.id, key.location, message.to_vec());
+    let future: _ = key.store.key_sign(key.did, key.location, message.to_vec());
 
     executor::block_on(future)
       .map_err(|_| Error::InvalidProofValue("remote sign"))
