@@ -20,9 +20,10 @@ async fn main() -> Result<()> {
   // This name needs to match the id of the network or part of it.
   // The id of the one-click private tangle is `private-tangle` but we can only use 6 characters, we use recommend `tangle`.
   // As an example we are treating the devnet as a `private-tangle`, there are easier ways to change to devnet via `Network::Devnet`
-  let network_name = "dev"; //Replace this with a `tangle` for the one-click private tangle.
+  let network_name = "dev"; // Replace this with a `tangle` for the one-click private tangle.
   let network = Network::try_from_name(network_name)?;
-  let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe"; //Replace this with a private tangle node
+  // In a locally running private tangle, this would often be `http://127.0.0.1:14265/`
+  let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe"; // Replace with your node of choice
 
   // Create a new Account with explicit configuration
   let account: Account = Account::builder()
@@ -66,7 +67,7 @@ async fn main() -> Result<()> {
     };
     let iota_did: &IotaDID = identity.try_did()?;
 
-      // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
+  // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   println!(
     "[Example] Explore the DID Document = {}",
     format!(
