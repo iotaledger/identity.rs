@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use identity::account::Account;
 use identity::account::AccountStorage;
 use identity::account::IdentityCreate;
-use identity::account::IdentitySnapshot;
+use identity::account::IdentityState;
 use identity::account::Result;
 use identity::iota::IotaDID;
 
@@ -16,31 +16,6 @@ use identity::iota::IotaDID;
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  // Calls the create_identity function
-  let (account, iota_did): (Account, IotaDID) = run().await?;
-
-  // Retrieve the DID from the newly created Identity state.
-  let snapshot: IdentitySnapshot = account.find_identity(&iota_did).await?.unwrap();
-
-  // Print the local state of the DID Document
-  println!(
-    "[Example] Local Document from {} = {:#?}",
-    iota_did,
-    snapshot.identity().to_document()
-  );
-  // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
-  println!(
-    "[Example] Explore the DID Document = {}",
-    format!(
-      "{}/{}",
-      iota_did.network()?.explorer_url().unwrap().to_string(),
-      iota_did.to_string()
-    )
-  );
-  Ok(())
-}
-
-pub async fn run() -> Result<(Account, IotaDID)> {
   // Sets the location and password for the Stronghold
   //
   // Stronghold is an encrypted file that manages private keys.
@@ -57,10 +32,23 @@ pub async fn run() -> Result<(Account, IotaDID)> {
   // Create a new Identity with default settings
   //
   // This step generates a keypair, creates an identity and publishes it too the IOTA mainnet.
-  let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
+  let identity: IdentityState = account.create_identity(IdentityCreate::default()).await?;
+  let iota_did: &IotaDID = identity.try_did()?;
 
-  // Retrieve the DID from the newly created Identity state.
-  let did: &IotaDID = snapshot.identity().try_did()?;
-
-  Ok((account, did.clone()))
+  // Print the local state of the DID Document
+  println!(
+    "[Example] Local Document from {} = {:#?}",
+    iota_did,
+    identity.to_document()
+  );
+  // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
+  println!(
+    "[Example] Explore the DID Document = {}",
+    format!(
+      "{}/{}",
+      iota_did.network()?.explorer_url().unwrap().to_string(),
+      iota_did.to_string()
+    )
+  );
+  Ok(())
 }

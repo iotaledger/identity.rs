@@ -3,7 +3,12 @@
 
 //! cargo run --example account_signing
 
+use std::path::PathBuf;
+
 use identity::account::Account;
+use identity::account::AccountStorage;
+use identity::account::IdentityCreate;
+use identity::account::IdentityState;
 use identity::account::Result;
 use identity::core::json;
 use identity::core::FromJson;
@@ -14,14 +19,36 @@ use identity::crypto::KeyPair;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 
-mod create_did;
-
 #[tokio::main]
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  // Calls the create_identity function from the create_did example - this is not part of the framework, but rather reusing the previous example.
-  let (account, iota_did): (Account, IotaDID) = create_did::run().await?;
+  // ===========================================================================
+  // Create Identity - Similar to create_did example
+  // ===========================================================================
+
+  // Sets the location and password for the Stronghold
+  //
+  // Stronghold is an encrypted file that manages private keys.
+  // It implements all security recommendation and is the recommended way of handling private keys.
+  let stronghold_path: PathBuf = "./example-strong.hodl".into();
+  let password: String = "my-password".into();
+
+  // Create a new Account with the default configuration
+  let account: Account = Account::builder()
+    .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
+    .build()
+    .await?;
+
+  // Create a new Identity with default settings
+  //
+  // This step generates a keypair, creates an identity and publishes it too the IOTA mainnet.
+  let identity: IdentityState = account.create_identity(IdentityCreate::default()).await?;
+  let iota_did: &IotaDID = identity.try_did()?;
+  
+  // ===========================================================================
+  // Signing Example
+  // ===========================================================================
   
   // Add a new Ed25519 Verification Method to the identity
   account
