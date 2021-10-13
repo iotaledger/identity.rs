@@ -194,7 +194,7 @@ Sent by the holder to present a [verifiable presentation](https://www.w3.org/TR/
 | :--- | :--- | :--- |
 | [`presentation`](https://www.w3.org/TR/vc-data-model/#presentations-0) | Signed [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) containing one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) matching the [presentation-request](#presentation-request).[^4] | ✔ |
 
-[^4] The [`proof`](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section in `presentation` MUST include the `challenge` sent by the verifier in the preceding [`presentation-request`](#presentation-request). The included credentials SHOULD match all `type` fields and one or more `trustedIssuer` if included in the [`presentation-request`](#presentation-request). Revoked, disputed, or otherwise invalid presentations or credentials MUST result in a rejected [`presentation-result`](#presentation-result) sent back to the holder, NOT a separate [`problem-report`].
+[^4] The [`proof`](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section in `presentation` MUST include the `challenge` sent by the verifier in the preceding [`presentation-request`](#presentation-request). The included credentials SHOULD match all `type` fields and one or more `trustedIssuer` if included in the [`presentation-request`](#presentation-request). Revoked, disputed, or otherwise invalid presentations or credentials MUST result in a rejected [`presentation-result`](#presentation-result) sent back to the holder, NOT a separate [`problem-report`]. Other such as the message lacking [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) SHOULD result in a separate [`problem-report`].
 
 TODO: we may want separate problem-reports instead, as mixing disputes with problem-reports if improperly implemented may reveal information to a fake holder trying to discover information about what content a verifier accepts.
 
@@ -264,9 +264,10 @@ Sent by the verifier to communicate the result of the presentation. It allows th
 | :--- | :--- | :--- |
 | `accepted` | Indicates if the verifer accepted the [`presentation`](#presentation) and credentials. | ✔ |
 | `disputes` | Array of disputes | ✖ |
-| [`id`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a problem or dispute. A holder may omit credential identifiers for privacy reasons. | ✖ |
+| [`id`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a dispute. A holder may omit credential identifiers for privacy reasons. | ✖ |
 | [`dispute`](https://www.w3.org/TR/vc-data-model/#disputes) | A [dispute](https://www.w3.org/TR/vc-data-model/#disputes) by the verifier of one or more claims in a presented credential. | ✔ |
 | `problems` | Array of problem-reports | ✖ |
+| [`id`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a problem. A holder may omit credential identifiers for privacy reasons. | ✖ |
 | `problemReport` | A [`problem-report`](https://identity.foundation/didcomm-messaging/spec/#problem-reports) indicating something wrong with the credential, e.g. signature validation failed or the credential is expired. | ✔ | 
 | `allowRetry` | Indicates if the holder may retry the [`presentation`](#presentation) with different credentials. Default: `false` | ✖ |
 | [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the verifier; RECOMMENDED to include.[^5] | ✖ |
@@ -340,36 +341,24 @@ Sent by the verifier to communicate the result of the presentation. It allows th
 
 TODO: change problem-report here, or remove them from the result altogether? Example of a hacker trying to brute-force disputes with unsigned credentials, in which case the problem report (trust.crypto) should just end the flow and not return disputes.
 
-### Problem Reports
+### Problem Reports {#problem-reports}
 
-See: https://identity.foundation/didcomm-messaging/spec/#descriptors
-TODO
+The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-For general guidance see [problem reports](../resources/problem-reports).
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
 
-Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
-- e.p.prot.iota.presentation.reject-request
-- e.p.trust.crypto.prot.iota.presentation
-- e.p.prot.iota.presentation.trust.crypto
-- e.p.prot.iota.trust.crypto
-
-```
-{
-  "type": "https://didcomm.org/notify/1.0/problem-report",
-  "id": "7c9de639-c51c-4d60-ab95-103fa613c805",
-  "pthid": "1e513ad4-48c9-444e-9e7e-5b8b45c5e325",
-  "body": {
-    "code": "e.p.xfer.cant-use-endpoint",
-    "protocol": "didcomm:iota/presentation/0.1", // TODO: add custom fields?
-    "comment": "Unable to use the {1} endpoint for {2}.",
-    "args": [
-      "https://agents.r.us/inbox",
-      "did:sov:C805sNYhMrjHiqZDTUASHg"
-    ],
-    "escalate_to": "mailto:admin@foo.org"
-  }
-}
-```
+| Code | Message | Description |
+| :--- | :--- | :--- |
+| `e.p.msg.iota.presentation.reject-offer` | [presentation-offer](#presentation-offer) | TBD |
+| `e.p.msg.iota.presentation.reject-offer.invalid-type` | [presentation-offer](#presentation-offer) | TBD |
+| `e.p.msg.iota.presentation.reject-offer.invalid-issuer` | [presentation-offer](#presentation-offer) | TBD |
+| `e.p.msg.iota.presentation.reject-offer.reject-require-signature` | [presentation-offer](#presentation-offer) | TBD |
+| `e.p.msg.iota.presentation.reject-request` | [presentation-request](#presentation-request) | TBD |
+| `e.p.msg.iota.presentation.reject-request.invalid-type` | [presentation-request](#presentation-request) | TBD |
+| `e.p.msg.iota.presentation.reject-request.invalid-issuer` | [presentation-request](#presentation-request) | TBD |
+| `e.p.msg.iota.presentation.reject-request.missing-signature` | [presentation-request](#presentation-request) | TBD |
+| `e.p.msg.iota.presentation.reject-presentation` | [presentation](#presentation) | TBD |
+| `e.p.msg.iota.presentation.reject-retry` | [presentation-result](#presentation-result) | TBD |
 
 ## Considerations
 
@@ -383,6 +372,7 @@ This section is non-normative.
 ## Unresolved Questions
 
 - Is a `schema` field needed for the `presentation-offer` and `presentation-request` to identify the types of verifiable credentials and allow forward compatibility for different fields in the message? The E.g. a `SelectiveDisclosure` or ZKP message may only offer or request certain fields in the credential. Does this relate to the [`credentialSchema`](https://www.w3.org/TR/vc-data-model/#data-schemas) field in credentials?
+- Are embedded problem-reports the right way to communicate problems with a presentation in [`presentation-result`](#presentation-result)? Can we come up with a more concise form? Are there relevant specifications?
 - Identifiers (`id` field) are [optional in verifiable credentials](https://www.w3.org/TR/vc-data-model/#identifiers). The spec suggests content-addressed identifiers when the `id` is not available but their particulars are unclear as there is no spec referenced. This affects the `problems` reported in the [`presentation-result`](#presentation-result).
 - We should RECOMMENDED the `id` of a verifiable credential being a UUID (what version?) in issuance. Needs to be a URI https://www.w3.org/TR/vc-data-model/#identifiers, do UUIDs qualify?
 - Should we specifically list non-functional requirements e.g in a Goals / Non-Goals section.

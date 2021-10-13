@@ -60,7 +60,7 @@ The [holder](#roles) requests a single verifiable credential from the [issuer](#
 | [`subject`](https://www.w3.org/TR/vc-data-model/#credential-subject-0) | [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of the [credential subject](https://www.w3.org/TR/vc-data-model/#credential-subject-0)[^1]. | ✔ |
 | [`@context`](https://www.w3.org/TR/vc-data-model/#contexts) | Array of JSON-LD contexts referencing the credential types. | ✖ |
 | [`type`](https://www.w3.org/TR/vc-data-model/#types) | Array of credential types; an issued credential SHOULD match all types specified.[^2] | ✔ |
-| [`trustedIssuer`](https://www.w3.org/TR/vc-data-model/#issuer) | Array of credential issuer IDs or URIs, any of which the holder would accept.[^3] | ✖ |
+| [`trustedIssuers`](https://www.w3.org/TR/vc-data-model/#issuer) | Array of credential issuer IDs or URIs, any of which the holder would accept.[^3] | ✖ |
 
 [^1] The [holder](#roles) is usually but not always the [subject]((https://www.w3.org/TR/vc-data-model/#credential-subject-0)) of the requested credential. There may be custodial, legal guardianship, or delegation situations where a third-party requests or is issued a credential on behalf of a subject. It is the responsibility of the [issuer](#roles) to ensure authorization in such cases.
 
@@ -199,6 +199,9 @@ The [holder](#roles) responds to a [`issuance-offer`](#issuance-offer) by accept
 }
 ```
 
+TODO: use signed DIDComm message instead of explicit proof in payload?
+TODO: disambiguate `signatureChallenge`? E.g. `requestChallenge`, `issuanceChallenge`.
+
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | `accepted` | Indicates if the [holder](#roles) accepts the offered credential from [`issuance-offer`](#issuance-offer). MUST be `false` if any `disputes` are present. | ✔ |
@@ -284,7 +287,7 @@ The [issuer](#roles) transmits the signed credential following a [`issuance-resp
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | [`signedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | [Verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) signed by the [issuer](#roles).[^1] | ✔ |
-| `signatureChallenge` | If present, indicates the [issuer](#issuer) requires the receival of the credential to be signed for non-repudiation. | ✖ |
+| `signatureChallenge` | If present, indicates the [issuer](#issuer) requires the [issuance-acknowledgement](#issuance-acknowledgement) of the credential to be signed for non-repudiation. | ✖ |
 | `challenge` |  A random string that should be unique per [issuance](#issuance). | ✔ |
 | `credentialHash` | The [Base58](https://tools.ietf.org/id/draft-msporny-base58-01.html)-encoded [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the `signedCredential`, including the `proof`, formatted according to the [JSON Canonicalization Scheme](https://tools.ietf.org/id/draft-rundgren-json-canonicalization-scheme-00.html). | ✔ |
 | `expiry` | A string formatted as an [XML Datetime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision indicating when the offer expires. E.g: `"2021-12-30T19:17:47Z"`.[^2] | ✖ |
@@ -349,6 +352,9 @@ The [holder](#roles) confirms receipt of a successful credential [`issuance`](#i
 }
 ```
 
+TODO: use signed DIDComm message instead of explicit proof in payload?
+TODO: disambiguate `signatureChallenge`? E.g. `requestChallenge`, `issuanceChallenge`.
+
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | `signature` | This SHOULD be present if a `signatureChallenge` was included in the preceding [`issuance`](#issuance-message) message.[^1] | ✖ |
@@ -390,10 +396,12 @@ For guidance on problem-reports and a list of general codes see [problem reports
 | `e.p.msg.iota.issuance.reject-request` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request for any reason, e.g. unrecognised or invalid type, trusted issuer, or subject. |
 | `e.p.msg.iota.issuance.reject-request.invalid-subject` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request due to the `subject` being unrecognised, missing, or otherwise invalid. |
 | `e.p.msg.iota.issuance.reject-request.invalid-type` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request due to the `type` or `@context` being unsupported or otherwise invalid. |
-| `e.p.msg.iota.issuance.reject-request.invalid-trusted-issuer` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request due to the `issuer` being unrecognised, unsupported or otherwise invalid. |
+| `e.p.msg.iota.issuance.reject-request.invalid-issuer` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request due to `trustedIssuers` being unrecognised, unsupported or otherwise invalid. |
 | `e.p.msg.iota.issuance.presentation-failed` | [issuance-offer](#issuance-offer) | [Issuer](#roles) terminates the protocol due to a failed [presentation](./presentation) request for more information prior to a [issuance-offer](#issuance-offer). |
+| `e.p.msg.iota.issuance.reject-response.missing-signature` | [issuance-response](#issuance-response) | [Issuer](#roles) rejects an [issuance-response](#issuance-response) missing a `signature` when `signatureChallenge` was included in the preceding [issuance-offer](#issuance-offer) message. |
 | `e.p.msg.iota.issuance.reject-issuance` | [issuance](#issuance-message) | [Holder](#roles) rejects a credential issuance for any reason, e.g. mismatch with the credential in the [issuance-offer](#issuance-offer). Note that disputes are handled in [issuance-response](#issuance-response) prior to [issuance](#issuance-message). |
 | `e.p.msg.iota.issuance.expired` | [issuance](#issuance-message) | [Issuer](#roles) notifies the [holder](#roles) that an [issuance](#issuance-message) message has expired without a valid [issuance-acknowledgement](#issuance-acknowledgement). |
+| `e.p.msg.iota.issuance.reject-acknowledgement.missing-signature` | [issuance-acknowledgement](#issuance-acknowledgement) | [Issuer](#roles) rejects an [issuance-acknowledgement](#issuance-acknowledgement) missing a `signature` when `signatureChallenge` was included in the preceding [issuance](#issuance-message) message. |
 
 ## Considerations
 
