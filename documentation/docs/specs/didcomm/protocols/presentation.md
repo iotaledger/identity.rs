@@ -260,9 +260,11 @@ Sent by the verifier to communicate the result of the presentation. It allows th
 }
 ```
 
+TODO: use DIDComm signed message instead of `proof`?
+
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `accepted` | Indicates if the verifer accepted the [`presentation`](#presentation) and credentials. | ✔ |
+| `accepted` | Indicates if the verifier accepted the [`presentation`](#presentation) and credentials. | ✔ |
 | `disputes` | Array of disputes | ✖ |
 | [`id`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a dispute. A holder may omit credential identifiers for privacy reasons. | ✖ |
 | [`dispute`](https://www.w3.org/TR/vc-data-model/#disputes) | A [dispute](https://www.w3.org/TR/vc-data-model/#disputes) by the verifier of one or more claims in a presented credential. | ✔ |
@@ -349,16 +351,18 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 | Code | Message | Description |
 | :--- | :--- | :--- |
-| `e.p.msg.iota.presentation.reject-offer` | [presentation-offer](#presentation-offer) | TBD |
-| `e.p.msg.iota.presentation.reject-offer.invalid-type` | [presentation-offer](#presentation-offer) | TBD |
-| `e.p.msg.iota.presentation.reject-offer.invalid-issuer` | [presentation-offer](#presentation-offer) | TBD |
-| `e.p.msg.iota.presentation.reject-offer.reject-require-signature` | [presentation-offer](#presentation-offer) | TBD |
-| `e.p.msg.iota.presentation.reject-request` | [presentation-request](#presentation-request) | TBD |
-| `e.p.msg.iota.presentation.reject-request.invalid-type` | [presentation-request](#presentation-request) | TBD |
-| `e.p.msg.iota.presentation.reject-request.invalid-issuer` | [presentation-request](#presentation-request) | TBD |
-| `e.p.msg.iota.presentation.reject-request.missing-signature` | [presentation-request](#presentation-request) | TBD |
-| `e.p.msg.iota.presentation.reject-presentation` | [presentation](#presentation) | TBD |
-| `e.p.msg.iota.presentation.reject-retry` | [presentation-result](#presentation-result) | TBD |
+| `e.p.msg.iota.presentation.reject-offer` | [presentation-offer](#presentation-offer) | [Verifier](#roles) rejects a presentation offer for any reason, e.g. unrecognised type or untrusted issuer. |
+| `e.p.msg.iota.presentation.reject-offer.invalid-type` | [presentation-offer](#presentation-offer) | [Verifier](#roles) rejects a presentation offer due to a `type` or `@context` being unsupported or otherwise invalid. |
+| `e.p.msg.iota.presentation.reject-offer.invalid-issuer` | [presentation-offer](#presentation-offer) | [Verifier](#roles) rejects a presentation offer due to `issuer` being unrecognised, untrusted or otherwise invalid.  |
+| `e.p.msg.iota.presentation.reject-offer.reject-require-signature` | [presentation-offer](#presentation-offer) | [Verifier](#roles) rejects a presentation offer due to being unable or unwilling to provide a signature for the following [presentation-request](#presentation-request) |
+| `e.p.msg.iota.presentation.reject-request` | [presentation-request](#presentation-request) | [Holder](#roles) rejects a request for any reason. |
+| `e.p.msg.iota.presentation.reject-request.invalid-type` | [presentation-request](#presentation-request) | [Holder](#roles) rejects a request due to a `type` or `@context` being unsupported or otherwise invalid. |
+| `e.p.msg.iota.presentation.reject-request.invalid-issuer` | [presentation-request](#presentation-request) | [Holder](#roles) rejects a request due to a `trustedIssuer` being unsupported or otherwise invalid. |
+| `e.p.msg.iota.presentation.reject-request.missing-signature` | [presentation-request](#presentation-request) | [Holder](#roles) rejects a request due to a missing signature from the [verifier](#roles). The [holder](#roles) may choose to blocklist [verifiers](#roles) that fail to sign requests. |
+| `e.p.msg.iota.presentation.reject-presentation` | [presentation](#presentation) | [Verifier](#roles) rejects a presentation and abandons the protocol for any reason other than a disputed or otherwise invalid verifiable presentation, which should instead be communicated via [presentation-result](#presentation-result). |
+| `e.p.msg.iota.presentation.reject-result` | [presentation-result](#presentation-result) | [Holder](#roles) rejects a result for any reason. |
+| `e.p.msg.iota.presentation.reject-result.missing-signature` | [presentation-result](#presentation-result) | [Holder](#roles) rejects a result due to a missing signature requested from the [verifier](#roles). The [holder](#roles) may blocklist the [verifier](#roles) from future requests. |
+| `e.p.msg.iota.presentation.reject-retry` | [presentation-result](#presentation-result) | [Holder](#roles) chooses not to retry the presentation flow and terminates the protocol. |
 
 ## Considerations
 
