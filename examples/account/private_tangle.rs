@@ -11,7 +11,7 @@
 
 use identity::account::Account;
 use identity::account::IdentityCreate;
-use identity::account::IdentitySnapshot;
+use identity::account::IdentityState;
 use identity::account::Result;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
@@ -40,11 +40,11 @@ async fn main() -> Result<()> {
     .build()
     .await?;
 
-  let id_create = IdentityCreate::new().network(network_name);
+  let id_create = IdentityCreate::new().network(network_name)?;
 
   // Create a new Identity with the network name set.
-  let snapshot: IdentitySnapshot = match account.create_identity(id_create).await {
-    Ok(snapshot) => snapshot,
+  let identity: IdentityState = match account.create_identity(id_create).await {
+    Ok(identity) => identity,
     Err(err) => {
       eprintln!("[Example] Error: {:?} {}", err, err.to_string());
       eprintln!(
@@ -56,10 +56,9 @@ async fn main() -> Result<()> {
   };
 
   // Retrieve the DID from the newly created Identity state.
-  let did: &IotaDID = snapshot.identity().try_did()?;
+  let did: &IotaDID = identity.try_did()?;
 
-  println!("[Example] Local Snapshot = {:#?}", snapshot);
-  println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);
+  println!("[Example] Local Document = {:#?}", identity.to_document()?);
   println!("[Example] Local Document List = {:#?}", account.list_identities().await);
 
   // Fetch the DID Document from the Tangle

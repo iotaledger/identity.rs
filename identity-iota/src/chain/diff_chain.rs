@@ -232,8 +232,8 @@ mod test {
 
     {
       let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
-      let mut document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
-      document.sign(keypair.secret()).unwrap();
+      let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+      document.sign(keypair.private()).unwrap();
       document.set_message_id(MessageId::new([8; 32]));
       chain = DocumentChain::new(IntegrationChain::new(document).unwrap());
       keys.push(keypair);
@@ -268,7 +268,7 @@ mod test {
       new.set_updated(Timestamp::now_utc());
       new.set_previous_message_id(*chain.integration_message_id());
 
-      assert!(chain.current().sign_data(&mut new, keys[0].secret()).is_ok());
+      assert!(chain.current().sign_data(&mut new, keys[0].private()).is_ok());
       assert_eq!(
         chain.current().proof().unwrap().verification_method(),
         "#authentication"
@@ -291,7 +291,7 @@ mod test {
       };
 
       let message_id = *chain.diff_message_id();
-      let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret()).unwrap();
+      let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].private()).unwrap();
       diff.set_message_id(message_id);
       assert!(chain.try_push_diff(diff).is_ok());
     }

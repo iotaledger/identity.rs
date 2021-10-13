@@ -40,7 +40,7 @@ fn inject_key(signature: &SignatureValue, key: &PublicKey) -> SignatureValue {
 fn __test_sign_verify<D, S>()
 where
   D: MerkleDigest,
-  S: MerkleSignature + Sign<Secret = [u8]> + Verify<Public = [u8]>,
+  S: MerkleSignature + Sign<Private = [u8]> + Verify<Public = [u8]>,
   S::Output: AsRef<[u8]>,
 {
   assert_eq!(S::TAG, MerkleSignatureTag::ED25519);

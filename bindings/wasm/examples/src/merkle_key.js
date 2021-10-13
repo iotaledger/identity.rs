@@ -70,7 +70,7 @@ async function merkleKey(clientConfig) {
     const signedVc = issuer.doc.signCredential(unsignedVc, {
         method: method.id.toString(),
         public: keys.public(0),
-        secret: keys.secret(0),
+        private: keys.private(0),
         proof: keys.merkleProof(Digest.Sha256, 0)
     });
 

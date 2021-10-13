@@ -38,7 +38,7 @@ impl Signed {
 
     Encoder::new()
       .format(JwsFormat::Compact)
-      .recipient((keypair.secret(), &header))
+      .recipient((keypair.private(), &header))
       .encode(message.as_bytes())
       .map_err(Into::into)
       .map(Self)

@@ -197,7 +197,7 @@ mod tests {
       .unwrap();
 
     document
-      .signer(keypair.secret())
+      .signer(keypair.private())
       .method("#key-1")
       .sign(&mut credential)
       .unwrap();

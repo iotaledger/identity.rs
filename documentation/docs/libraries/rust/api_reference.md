@@ -1,5 +1,5 @@
 ---
-title: API Reference
+title: Rust API Reference
 sidebar_label: API Reference
 description: Rust API reference.  Learn how generate docs for the whole crate.
 image: /img/Identity_icon.png
@@ -8,7 +8,7 @@ keywords:
 - API Reference
 ---
 
-Link to hosted api documentation: 
+Link to hosted api documentation:
 
 > TODO!
 

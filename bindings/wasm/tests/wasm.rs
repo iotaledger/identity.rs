@@ -15,9 +15,9 @@ use std::borrow::Cow;
 #[wasm_bindgen_test]
 fn test_keypair() {
   let key1 = KeyPair::new(KeyType::Ed25519).unwrap();
-  let pk = key1.public();
-  let sk = key1.secret();
-  let key2 = KeyPair::from_base58(KeyType::Ed25519, &pk, &sk).unwrap();
+  let public_key = key1.public();
+  let private_key = key1.private();
+  let key2 = KeyPair::from_base58(KeyType::Ed25519, &public_key, &private_key).unwrap();
 
   let json1 = key1.to_json().unwrap();
   let json2 = key2.to_json().unwrap();
@@ -26,10 +26,10 @@ fn test_keypair() {
   let from2 = KeyPair::from_json(&json2).unwrap();
 
   assert_eq!(from1.public(), key1.public());
-  assert_eq!(from1.secret(), key1.secret());
+  assert_eq!(from1.private(), key1.private());
 
   assert_eq!(from2.public(), key2.public());
-  assert_eq!(from2.secret(), key2.secret());
+  assert_eq!(from2.private(), key2.private());
 }
 
 #[wasm_bindgen_test]
@@ -44,7 +44,7 @@ fn test_key_collection() {
     let key = keys.keypair(index).unwrap();
 
     assert_eq!(key.public(), keys.public(index).unwrap());
-    assert_eq!(key.secret(), keys.secret(index).unwrap());
+    assert_eq!(key.private(), keys.private(index).unwrap());
 
     assert!(keys.merkle_proof(Digest::Sha256, index).is_some());
   }
@@ -57,7 +57,7 @@ fn test_key_collection() {
 
   for index in 0..keys.length() {
     assert_eq!(keys.public(index).unwrap(), from.public(index).unwrap());
-    assert_eq!(keys.secret(index).unwrap(), from.secret(index).unwrap());
+    assert_eq!(keys.private(index).unwrap(), from.private(index).unwrap());
   }
 }
 
@@ -81,18 +81,16 @@ fn test_did() {
   assert_eq!(did.to_string(), parsed.to_string());
 
   let public = key.public();
-  let base58 = WasmDID::from_base58(&public, Some("dev".to_string())).unwrap();
+  let base58 = WasmDID::from_base58(&public, Some("dev".to_owned())).unwrap();
 
   assert_eq!(base58.tag(), did.tag());
   assert_eq!(base58.network_name(), "dev");
 }
 
 #[test]
-fn test_document() {
-  let output = WasmDocument::new(KeyType::Ed25519, None, None).unwrap();
-
-  let mut document = output.doc();
-  let keypair = output.key();
+fn test_document_new() {
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+  let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
 
   document.sign(&keypair).unwrap();
 
@@ -101,8 +99,8 @@ fn test_document() {
 
 #[test]
 fn test_document_network() {
-  let output = WasmDocument::new(KeyType::Ed25519, Some("dev".into()), None).unwrap();
-  let document = output.doc();
+  let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+  let document: WasmDocument = WasmDocument::new(&keypair, Some("dev".to_owned()), None).unwrap();
 
   assert_eq!(document.id().network_name(), "dev");
 }

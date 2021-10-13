@@ -11,8 +11,8 @@ use crate::crypto::merkle_key::MerkleKey;
 use crate::crypto::merkle_key::MerkleSignature;
 use crate::crypto::merkle_tree::Proof;
 use crate::crypto::Named;
+use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
-use crate::crypto::SecretKey;
 use crate::crypto::Sign;
 use crate::crypto::SignatureValue;
 use crate::crypto::Signer;
@@ -26,7 +26,7 @@ where
   D: MerkleDigest,
 {
   public: &'key PublicKey,
-  secret: &'key SecretKey,
+  private: &'key PrivateKey,
   proof: Cow<'key, Proof<D>>,
 }
 
@@ -35,18 +35,18 @@ where
   D: MerkleDigest,
 {
   /// Creates a new [`SigningKey`] instance.
-  pub fn new(public: &'key PublicKey, secret: &'key SecretKey, proof: Cow<'key, Proof<D>>) -> Self {
-    Self { public, secret, proof }
+  pub fn new(public: &'key PublicKey, private: &'key PrivateKey, proof: Cow<'key, Proof<D>>) -> Self {
+    Self { public, private, proof }
   }
 
   /// Creates a new [`SigningKey`] from a borrowed [`proof`][`Proof`].
-  pub fn from_borrowed(public: &'key PublicKey, secret: &'key SecretKey, proof: &'key Proof<D>) -> Self {
-    Self::new(public, secret, Cow::Borrowed(proof))
+  pub fn from_borrowed(public: &'key PublicKey, private: &'key PrivateKey, proof: &'key Proof<D>) -> Self {
+    Self::new(public, private, Cow::Borrowed(proof))
   }
 
   /// Creates a new [`SigningKey`] from an owned [`proof`][`Proof`].
-  pub fn from_owned(public: &'key PublicKey, secret: &'key SecretKey, proof: Proof<D>) -> Self {
-    Self::new(public, secret, Cow::Owned(proof))
+  pub fn from_owned(public: &'key PublicKey, private: &'key PrivateKey, proof: Proof<D>) -> Self {
+    Self::new(public, private, Cow::Owned(proof))
   }
 }
 
@@ -54,7 +54,7 @@ impl<'key, D, S> MerkleSigningKey<D, S> for SigningKey<'key, D>
 where
   D: MerkleDigest,
   S: Sign,
-  SecretKey: AsRef<S::Secret>,
+  PrivateKey: AsRef<S::Private>,
 {
   fn proof(&self) -> String {
     encode_b58(&self.proof.encode())
@@ -64,8 +64,8 @@ where
     encode_b58(self.public.as_ref())
   }
 
-  fn secret(&self) -> &S::Secret {
-    self.secret.as_ref()
+  fn private(&self) -> &S::Private {
+    self.private.as_ref()
   }
 }
 
@@ -84,9 +84,9 @@ where
   /// Returns the target public key as a base58-encoded string.
   fn public(&self) -> String;
 
-  /// Returns a reference to the secret key of the underlying
+  /// Returns a reference to the private key of the underlying
   /// [`signature`][`Sign`] implementation.
-  fn secret(&self) -> &S::Secret;
+  fn private(&self) -> &S::Private;
 }
 
 // =============================================================================
@@ -121,14 +121,14 @@ where
   K: MerkleSigningKey<D, S>,
   S::Output: AsRef<[u8]>,
 {
-  fn sign<X>(data: &X, secret: &K) -> Result<SignatureValue>
+  fn sign<X>(data: &X, private: &K) -> Result<SignatureValue>
   where
     X: Serialize,
   {
     let message: Vec<u8> = data.to_jcs()?;
-    let signature: S::Output = S::sign(&message, secret.secret())?;
+    let signature: S::Output = S::sign(&message, private.private())?;
     let signature: String = encode_b58(signature.as_ref());
-    let formatted: String = format!("{}.{}.{}", secret.public(), secret.proof(), signature);
+    let formatted: String = format!("{}.{}.{}", private.public(), private.proof(), signature);
 
     Ok(SignatureValue::Signature(formatted))
   }

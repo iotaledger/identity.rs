@@ -53,8 +53,6 @@
 <dd></dd>
 <dt><a href="#Network">Network</a></dt>
 <dd></dd>
-<dt><a href="#NewDocument">NewDocument</a></dt>
-<dd></dd>
 <dt><a href="#PresentationRequest">PresentationRequest</a></dt>
 <dd></dd>
 <dt><a href="#PresentationResponse">PresentationResponse</a></dt>
@@ -752,7 +750,7 @@ Deserializes a `$ident` object from a JSON object.
 **Kind**: global class  
 
 * [Document](#Document)
-    * [new Document(type_, network, tag)](#new_Document_new)
+    * [new Document(keypair, network, fragment)](#new_Document_new)
     * _instance_
         * [.id](#Document+id) ⇒ [<code>DID</code>](#DID)
         * [.created](#Document+created) ⇒ [<code>Timestamp</code>](#Timestamp)
@@ -782,22 +780,35 @@ Deserializes a `$ident` object from a JSON object.
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromKeyPair(key, network)](#Document.fromKeyPair) ⇒ [<code>Document</code>](#Document)
         * [.fromAuthentication(method)](#Document.fromAuthentication) ⇒ [<code>Document</code>](#Document)
         * [.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
 
 <a name="new_Document_new"></a>
 
-### new Document(type_, network, tag)
-Creates a new DID Document from the given KeyPair.
+### new Document(keypair, network, fragment)
+Creates a new DID Document from the given `KeyPair`, network, and verification method
+fragment name.
+
+The DID Document will be pre-populated with a single verification method
+derived from the provided `KeyPair`, with an attached authentication relationship.
+This method will have the DID URL fragment `#authentication` by default and can be easily
+retrieved with `Document::authentication`.
+
+NOTE: the generated document is unsigned, see `Document::sign`.
+
+Arguments:
+
+* keypair: the initial verification method is derived from the public key with this keypair.
+* network: Tangle network to use for the DID, default `Network::mainnet`.
+* fragment: name of the initial verification method, default "authentication".
 
 
 | Param | Type |
 | --- | --- |
-| type_ | <code>number</code> | 
+| keypair | [<code>KeyPair</code>](#KeyPair) | 
 | network | <code>string</code> \| <code>undefined</code> | 
-| tag | <code>string</code> \| <code>undefined</code> | 
+| fragment | <code>string</code> \| <code>undefined</code> | 
 
 <a name="Document+id"></a>
 
@@ -1042,24 +1053,12 @@ For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstu
 Serializes a `Document` object as a JSON object.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document.fromKeyPair"></a>
-
-### Document.fromKeyPair(key, network) ⇒ [<code>Document</code>](#Document)
-Creates a new DID Document from the given KeyPair and optional network.
-
-If unspecified, network defaults to the mainnet.
-
-**Kind**: static method of [<code>Document</code>](#Document)  
-
-| Param | Type |
-| --- | --- |
-| key | [<code>KeyPair</code>](#KeyPair) | 
-| network | <code>string</code> \| <code>undefined</code> | 
-
 <a name="Document.fromAuthentication"></a>
 
 ### Document.fromAuthentication(method) ⇒ [<code>Document</code>](#Document)
-Creates a new DID Document from the given verification [`method`][`Method`].
+Creates a new DID Document from the given `VerificationMethod`.
+
+NOTE: the generated document is unsigned, see Document::sign.
 
 **Kind**: static method of [<code>Document</code>](#Document)  
 
@@ -1106,6 +1105,7 @@ Defines the difference between two DID [`Document`]s' JSON representations.
     * [.messageId](#DocumentDiff+messageId)
     * [.previousMessageId](#DocumentDiff+previousMessageId) ⇒ <code>string</code>
     * [.previousMessageId](#DocumentDiff+previousMessageId)
+    * [.proof](#DocumentDiff+proof) ⇒ <code>any</code>
     * [.id()](#DocumentDiff+id) ⇒ [<code>DID</code>](#DID)
     * [.merge(document)](#DocumentDiff+merge) ⇒ [<code>Document</code>](#Document)
 
@@ -1157,6 +1157,12 @@ Sets the Tangle message id of the previous DID Document diff.
 | --- | --- |
 | message_id | <code>string</code> | 
 
+<a name="DocumentDiff+proof"></a>
+
+### documentDiff.proof ⇒ <code>any</code>
+Returns the `proof` object.
+
+**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
 <a name="DocumentDiff+id"></a>
 
 ### documentDiff.id() ⇒ [<code>DID</code>](#DID)
@@ -1423,7 +1429,7 @@ Deserializes a `$ident` object from a JSON object.
         * [.isEmpty()](#KeyCollection+isEmpty) ⇒ <code>boolean</code>
         * [.keypair(index)](#KeyCollection+keypair) ⇒ [<code>KeyPair</code>](#KeyPair) \| <code>undefined</code>
         * [.public(index)](#KeyCollection+public) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.secret(index)](#KeyCollection+secret) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.private(index)](#KeyCollection+private) ⇒ <code>string</code> \| <code>undefined</code>
         * [.merkleRoot(digest)](#KeyCollection+merkleRoot) ⇒ <code>string</code>
         * [.merkleProof(digest, index)](#KeyCollection+merkleProof) ⇒ <code>string</code> \| <code>undefined</code>
         * [.toJSON()](#KeyCollection+toJSON) ⇒ <code>any</code>
@@ -1475,10 +1481,10 @@ Returns the public key at the specified `index` as a base58-encoded string.
 | --- | --- |
 | index | <code>number</code> | 
 
-<a name="KeyCollection+secret"></a>
+<a name="KeyCollection+private"></a>
 
-### keyCollection.secret(index) ⇒ <code>string</code> \| <code>undefined</code>
-Returns the secret key at the specified `index` as a base58-encoded string.
+### keyCollection.private(index) ⇒ <code>string</code> \| <code>undefined</code>
+Returns the private key at the specified `index` as a base58-encoded string.
 
 **Kind**: instance method of [<code>KeyCollection</code>](#KeyCollection)  
 
@@ -1531,10 +1537,10 @@ Deserializes a `KeyCollection` object from a JSON object.
     * [new KeyPair(type_)](#new_KeyPair_new)
     * _instance_
         * [.public](#KeyPair+public) ⇒ <code>string</code>
-        * [.secret](#KeyPair+secret) ⇒ <code>string</code>
+        * [.private](#KeyPair+private) ⇒ <code>string</code>
         * [.toJSON()](#KeyPair+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromBase58(type_, public_key, secret_key)](#KeyPair.fromBase58) ⇒ [<code>KeyPair</code>](#KeyPair)
+        * [.fromBase58(type_, public_key, private_key)](#KeyPair.fromBase58) ⇒ [<code>KeyPair</code>](#KeyPair)
         * [.fromJSON(json)](#KeyPair.fromJSON) ⇒ [<code>KeyPair</code>](#KeyPair)
 
 <a name="new_KeyPair_new"></a>
@@ -1553,10 +1559,10 @@ Generates a new `KeyPair` object.
 Returns the public key as a base58-encoded string.
 
 **Kind**: instance property of [<code>KeyPair</code>](#KeyPair)  
-<a name="KeyPair+secret"></a>
+<a name="KeyPair+private"></a>
 
-### keyPair.secret ⇒ <code>string</code>
-Returns the secret key as a base58-encoded string.
+### keyPair.private ⇒ <code>string</code>
+Returns the private key as a base58-encoded string.
 
 **Kind**: instance property of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair+toJSON"></a>
@@ -1567,8 +1573,8 @@ Serializes a `KeyPair` object as a JSON object.
 **Kind**: instance method of [<code>KeyPair</code>](#KeyPair)  
 <a name="KeyPair.fromBase58"></a>
 
-### KeyPair.fromBase58(type_, public_key, secret_key) ⇒ [<code>KeyPair</code>](#KeyPair)
-Parses a `KeyPair` object from base58-encoded public/secret keys.
+### KeyPair.fromBase58(type_, public_key, private_key) ⇒ [<code>KeyPair</code>](#KeyPair)
+Parses a `KeyPair` object from base58-encoded public/private keys.
 
 **Kind**: static method of [<code>KeyPair</code>](#KeyPair)  
 
@@ -1576,7 +1582,7 @@ Parses a `KeyPair` object from base58-encoded public/secret keys.
 | --- | --- |
 | type_ | <code>number</code> | 
 | public_key | <code>string</code> | 
-| secret_key | <code>string</code> | 
+| private_key | <code>string</code> | 
 
 <a name="KeyPair.fromJSON"></a>
 
@@ -1651,23 +1657,6 @@ Parses the provided string to a [`WasmNetwork`].
 
 ### Network.devnet() ⇒ [<code>Network</code>](#Network)
 **Kind**: static method of [<code>Network</code>](#Network)  
-<a name="NewDocument"></a>
-
-## NewDocument
-**Kind**: global class  
-
-* [NewDocument](#NewDocument)
-    * [.key](#NewDocument+key) ⇒ [<code>KeyPair</code>](#KeyPair)
-    * [.doc](#NewDocument+doc) ⇒ [<code>Document</code>](#Document)
-
-<a name="NewDocument+key"></a>
-
-### newDocument.key ⇒ [<code>KeyPair</code>](#KeyPair)
-**Kind**: instance property of [<code>NewDocument</code>](#NewDocument)  
-<a name="NewDocument+doc"></a>
-
-### newDocument.doc ⇒ [<code>Document</code>](#Document)
-**Kind**: instance property of [<code>NewDocument</code>](#NewDocument)  
 <a name="PresentationRequest"></a>
 
 ## PresentationRequest

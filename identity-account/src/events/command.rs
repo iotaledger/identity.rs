@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crypto::signatures::ed25519;
+
 use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::Url;
@@ -10,6 +11,7 @@ use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
+use identity_iota::tangle::NetworkName;
 
 use crate::account::Account;
 use crate::error::Result;
@@ -33,7 +35,7 @@ const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 #[derive(Clone, Debug)]
 pub(crate) enum Command {
   CreateIdentity {
-    network: Option<String>,
+    network: Option<NetworkName>,
     method_secret: Option<MethodSecret>,
     authentication: MethodType,
   },
@@ -89,7 +91,7 @@ impl Command {
           UpdateError::InvalidMethodType(authentication)
         );
 
-        let generation: Generation = state.auth_generation();
+        let generation: Generation = state.integration_generation();
         let location: KeyLocation = KeyLocation::new_authentication(authentication, generation);
 
         // The key location must be available
@@ -99,8 +101,8 @@ impl Command {
           UpdateError::DuplicateKeyLocation(location)
         );
 
-        let public: PublicKey = if let Some(method_secret_key) = method_secret {
-          insert_method_secret(store, state.id(), &location, authentication, method_secret_key).await
+        let public: PublicKey = if let Some(method_private_key) = method_secret {
+          insert_method_secret(store, state.id(), &location, authentication, method_private_key).await
         } else {
           store.key_new(state.id(), &location).await
         }?;
@@ -109,13 +111,21 @@ impl Command {
         let method: TinyMethod = TinyMethod::new(location, data, None);
 
         // Generate a new DID URL from the public key
-        let network: Option<&str> = network.as_deref();
-        let document: IotaDID = IotaDID::from_components(public.as_ref(), network)?;
+        let document: IotaDID = if let Some(network) = network {
+          IotaDID::new_with_network(public.as_ref(), network)?
+        } else {
+          IotaDID::new(public.as_ref())?
+        };
+
+        let method_fragment = Fragment::new(method.location().fragment());
 
         Ok(Some(vec![
           Event::new(EventData::IdentityCreated(document)),
-          // TODO: MethodScope::VerificationMethod when possible
-          Event::new(EventData::MethodCreated(MethodScope::Authentication, method)),
+          Event::new(EventData::MethodCreated(MethodScope::VerificationMethod, method)),
+          Event::new(EventData::MethodAttached(
+            method_fragment,
+            vec![MethodScope::Authentication],
+          )),
         ]))
       }
       Self::CreateMethod {
@@ -148,8 +158,8 @@ impl Command {
           UpdateError::DuplicateKeyFragment(location.fragment.clone()),
         );
 
-        let public: PublicKey = if let Some(method_secret_key) = method_secret {
-          insert_method_secret(store, state.id(), &location, type_, method_secret_key).await
+        let public: PublicKey = if let Some(method_private_key) = method_secret {
+          insert_method_secret(store, state.id(), &location, type_, method_private_key).await
         } else {
           store.key_new(state.id(), &location).await
         }?;
@@ -252,13 +262,13 @@ async fn insert_method_secret(
   method_secret: MethodSecret,
 ) -> Result<PublicKey> {
   match method_secret {
-    MethodSecret::Ed25519(secret_key) => {
+    MethodSecret::Ed25519(private_key) => {
       ensure!(
-        secret_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+        private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
         UpdateError::InvalidMethodSecret(format!(
-          "an ed25519 secret key requires {} bytes, found {}",
+          "an ed25519 private key requires {} bytes, found {}",
           ed25519::SECRET_KEY_LENGTH,
-          secret_key.as_ref().len()
+          private_key.as_ref().len()
         ))
       );
 
@@ -269,7 +279,7 @@ async fn insert_method_secret(
         )
       );
 
-      store.key_insert(identity_id, location, secret_key).await
+      store.key_insert(identity_id, location, private_key).await
     }
     MethodSecret::MerkleKeyCollection(_) => {
       ensure!(
