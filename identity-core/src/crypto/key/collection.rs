@@ -24,8 +24,8 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::utils::generate_ed25519_keypairs;
 
-/// Sets an upper limit to the amount of keys that can be created
-const MAX_KEYS_ALLOWED: usize = 4_294_967_296;
+/// Defines an upper limit to the amount of keys that can be created (2^12)
+const MAX_KEYS_ALLOWED: usize = 4_096;
 
 /// A collection of cryptographic keys.
 #[derive(Clone, Debug)]
@@ -241,5 +241,18 @@ mod tests {
       assert_eq!(public.as_ref(), keys.public(index).unwrap().as_ref());
       assert_eq!(secret.as_ref(), keys.secret(index).unwrap().as_ref());
     }
+  }
+
+  #[test]
+  fn test_key_collection_size() {
+    // Key Collection can not exceed 2_147_483_647 keys
+    let keys: Result<KeyCollection, Error> = KeyCollection::new_ed25519(2_147_483_648);
+    assert!(keys.is_err());
+    // The number of keys created rounds up to the next power of two
+    let keys: KeyCollection = KeyCollection::new_ed25519(0).unwrap();
+    assert_eq!(keys.len(), 1);
+    // The number of keys created rounds up to the next power of two
+    let keys: KeyCollection = KeyCollection::new_ed25519(2_049).unwrap();
+    assert_eq!(keys.len(), 4_096);
   }
 }
