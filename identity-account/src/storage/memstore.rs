@@ -147,7 +147,7 @@ impl Storage for MemStore {
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
 
-    if let Some(vault) = vaults.get(&did) {
+    if let Some(vault) = vaults.get(did) {
       return Ok(vault.contains_key(location));
     }
 
@@ -156,7 +156,7 @@ impl Storage for MemStore {
 
   async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
-    let vault: &MemVault = vaults.get(&did).ok_or(Error::KeyVaultNotFound)?;
+    let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
     let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyPairNotFound)?;
 
     Ok(keypair.public().clone())
@@ -164,7 +164,7 @@ impl Storage for MemStore {
 
   async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> Result<()> {
     let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
-    let vault: &mut MemVault = vaults.get_mut(&did).ok_or(Error::KeyVaultNotFound)?;
+    let vault: &mut MemVault = vaults.get_mut(did).ok_or(Error::KeyVaultNotFound)?;
 
     vault.remove(location);
 
@@ -173,7 +173,7 @@ impl Storage for MemStore {
 
   async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
-    let vault: &MemVault = vaults.get(&did).ok_or(Error::KeyVaultNotFound)?;
+    let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
     let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyPairNotFound)?;
 
     match location.method() {
@@ -203,7 +203,7 @@ impl Storage for MemStore {
   }
 
   async fn snapshot(&self, did: &IotaDID) -> Result<Option<IdentitySnapshot>> {
-    self.states.read().map(|states| states.get(&did).cloned())
+    self.states.read().map(|states| states.get(did).cloned())
   }
 
   async fn set_snapshot(&self, did: &IotaDID, snapshot: &IdentitySnapshot) -> Result<()> {
@@ -225,22 +225,22 @@ impl Storage for MemStore {
 
   async fn stream(&self, did: &IotaDID, index: Generation) -> Result<BoxStream<'_, Result<Commit>>> {
     let state: RwLockReadGuard<'_, _> = self.events.read()?;
-    let queue: Vec<Commit> = state.get(&did).cloned().unwrap_or_default();
+    let queue: Vec<Commit> = state.get(did).cloned().unwrap_or_default();
     let index: usize = index.to_u32() as usize;
 
     Ok(stream::iter(queue.into_iter().skip(index)).map(Ok).boxed())
   }
 
   async fn purge(&self, did: &IotaDID) -> Result<()> {
-    let _ = self.events.write()?.remove(&did);
-    let _ = self.states.write()?.remove(&did);
-    let _ = self.vaults.write()?.remove(&did);
+    let _ = self.events.write()?.remove(did);
+    let _ = self.states.write()?.remove(did);
+    let _ = self.vaults.write()?.remove(did);
 
     Ok(())
   }
 
   async fn published_generation(&self, did: &IotaDID) -> Result<Option<Generation>> {
-    Ok(self.published_generations.read()?.get(&did).copied())
+    Ok(self.published_generations.read()?.get(did).copied())
   }
 
   async fn set_published_generation(&self, did: &IotaDID, index: Generation) -> Result<()> {
