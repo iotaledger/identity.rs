@@ -11,14 +11,16 @@ use std::path::PathBuf;
 use zeroize::Zeroize;
 
 use crate::account::Account;
-use crate::account::AutoSave;
-use crate::account::Config;
 use crate::error::Result;
 use crate::storage::MemStore;
 // use crate::storage::MemStore;
 use crate::storage::Storage;
 #[cfg(feature = "stronghold")]
 use crate::storage::Stronghold;
+
+use super::config::AccountConfig;
+use super::config::AutoSave;
+use super::config::Config;
 
 /// The storage adapter used by an [Account].
 ///
@@ -54,7 +56,7 @@ impl AccountBuilder {
   ///
   /// See the config's [`autosave`][Config::autosave] documentation for details.
   pub fn autosave(mut self, value: AutoSave) -> Self {
-    self.config = self.config.autosave(value);
+    self.config.autosave = value;
     self
   }
 
@@ -62,7 +64,7 @@ impl AccountBuilder {
   ///
   /// See the config's [`autopublish`][Config::autopublish] documentation for details.
   pub fn autopublish(mut self, value: bool) -> Self {
-    self.config = self.config.autopublish(value);
+    self.config.autopublish = value;
     self
   }
 
@@ -70,13 +72,13 @@ impl AccountBuilder {
   ///
   /// See the config's [`dropsave`][Config::dropsave] documentation for details.
   pub fn dropsave(mut self, value: bool) -> Self {
-    self.config = self.config.dropsave(value);
+    self.config.dropsave = value;
     self
   }
 
   /// Save a state snapshot every N actions.
   pub fn milestone(mut self, value: u32) -> Self {
-    self.config = self.config.milestone(value);
+    self.config.milestone = value;
     self
   }
 
@@ -102,8 +104,15 @@ impl AccountBuilder {
   pub async fn build(mut self) -> Result<Account> {
     // TODO: Placeholder
     let did = "".parse().unwrap();
+
     let account: Account = match self.storage {
-      AccountStorage::Memory => Account::with_config(did, MemStore::new(), self.config).await?,
+      AccountStorage::Memory => {
+        Account::with_config(
+          did,
+          AccountConfig::new_with_config(MemStore::new(), self.config.clone()),
+        )
+        .await?
+      }
       #[cfg(feature = "stronghold")]
       AccountStorage::Stronghold(snapshot, password) => {
         let passref: Option<&str> = password.as_deref();
@@ -113,9 +122,17 @@ impl AccountBuilder {
           password.zeroize();
         }
 
-        Account::with_config(did, adapter, self.config).await?
+        Account::with_config(
+          did,
+          AccountConfig::new_with_config(adapter, self.config.clone()),
+        )
+        .await?
       }
-      AccountStorage::Custom(adapter) => Account::with_config(did, adapter, self.config).await?,
+      AccountStorage::Custom(adapter) => Account::with_config(
+        did,
+        AccountConfig::new_with_config(adapter, self.config.clone()),
+      )
+      .await?
     };
 
     if let Some(clients) = self.clients.take() {

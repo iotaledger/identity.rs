@@ -178,7 +178,7 @@ impl Update {
         let public: PublicKey = if let Some(method_private_key) = method_secret {
           insert_method_secret(store, did, &location, type_, method_private_key).await
         } else {
-          store.key_new(&did, &location).await
+          store.key_new(did, &location).await
         }?;
 
         let data: MethodData = MethodData::new_b58(public.as_ref());

@@ -4,13 +4,13 @@
 #[macro_use]
 mod macros;
 
-mod command;
+mod update;
 mod commit;
 mod context;
 mod error;
 mod event;
 
-pub use self::command::*;
+pub use self::update::*;
 pub use self::commit::*;
 pub use self::context::*;
 pub use self::error::*;

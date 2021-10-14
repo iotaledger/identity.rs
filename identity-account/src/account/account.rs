@@ -18,7 +18,6 @@ use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
-use std::sync::Arc;
 
 use crate::account::AccountBuilder;
 use crate::error::Result;
@@ -37,13 +36,15 @@ use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
 
+use super::config::AccountConfig;
+use super::config::AutoSave;
+
 const OSC: Ordering = Ordering::SeqCst;
 
 #[derive(Debug)]
 pub struct Account {
-  config: Arc<Config>,
+  config: AccountConfig,
   state: State,
-  store: Box<dyn Storage>,
   did: IotaDID,
 }
 
@@ -53,34 +54,33 @@ impl Account {
     AccountBuilder::new()
   }
 
-  /// Loads an existing identity into an `Account` instance.
-  pub async fn load_identity(did: IotaDID, store: impl Storage) -> Result<Self> {
-    Self::with_config(did, store, Config::new()).await
+  /// Loads an existing identity.
+  pub async fn load(did: IotaDID, config: AccountConfig) -> Result<Self> {
+    Self::with_config(did, config).await
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  pub async fn with_config(did: IotaDID, store: impl Storage, config: Config) -> Result<Self> {
+  pub async fn with_config(did: IotaDID, config: AccountConfig) -> Result<Self> {
     Ok(Self {
-      store: Box::new(store),
       state: State::new(),
-      config: Arc::new(config),
+      config,
       did,
     })
   }
 
   /// Returns a reference to the [Storage] implementation.
-  pub fn store(&self) -> &dyn Storage {
-    &*self.store
+  pub fn storage(&self) -> &dyn Storage {
+    &*self.config.storage()
   }
 
   /// Returns the auto-save configuration value.
   pub fn autosave(&self) -> AutoSave {
-    self.config.autosave
+    self.config.autosave()
   }
 
   /// Returns the save-on-drop configuration value.
   pub fn dropsave(&self) -> bool {
-    self.config.dropsave
+    self.config.dropsave()
   }
 
   /// Returns the total number of actions executed by this instance.
@@ -101,6 +101,11 @@ impl Account {
   // Identity
   // ===========================================================================
 
+  /// Return a copy of the latest state of the identity
+  pub async fn state(&self) -> Result<IdentityState> {
+    Ok(self.load_snapshot(self.did()).await?.into_identity())
+  }
+
   /// Resolves the DID Document associated with the specified `key`.
   pub async fn resolve_identity(&self) -> Result<IotaDocument> {
     let snapshot: IdentitySnapshot = self.load_snapshot(self.did()).await?;
@@ -110,7 +115,7 @@ impl Account {
     self.state.clients.resolve(document).await.map_err(Into::into)
   }
 
-  pub async fn create_identity(config: Config, store: impl Storage, input: IdentityCreate) -> Result<Account> {
+  pub async fn create_identity(config: AccountConfig, input: IdentityCreate) -> Result<Account> {
     let command = CreateIdentity {
       network: input.network,
       method_secret: input.method_secret,
@@ -120,12 +125,12 @@ impl Account {
     let snapshot = IdentitySnapshot::new(IdentityState::new());
 
     let (did, events): (IotaDID, Vec<Event>) = command
-      .process(snapshot.identity().integration_generation(), &store)
+      .process(snapshot.identity().integration_generation(), config.storage())
       .await?;
 
-    let commits = Self::commit_events(&did, &store, &config, &snapshot, &events).await?;
+    let commits = Self::commit_events(&did, &config, &snapshot, &events).await?;
 
-    let account = Self::with_config(did, store, config).await?;
+    let account = Self::with_config(did, config).await?;
 
     account.publish_commits(snapshot, commits, false).await?;
 
@@ -145,7 +150,7 @@ impl Account {
   /// Note: This will remove all associated events and key material - recovery is NOT POSSIBLE!
   pub async fn delete_identity(self) -> Result<()> {
     // Remove all associated keys and events
-    self.store.purge(self.did()).await?;
+    self.storage().purge(self.did()).await?;
 
     // Write the changes to disk
     self.save(false).await?;
@@ -165,7 +170,7 @@ impl Account {
     let method: &TinyMethod = state.methods().fetch(fragment.name())?;
     let location: &KeyLocation = method.location();
 
-    state.sign_data(self.did(), &self.store, location, target).await?;
+    state.sign_data(self.did(), self.storage(), location, target).await?;
 
     Ok(())
   }
@@ -180,13 +185,13 @@ impl Account {
     debug!("[Account::process] Root = {:#?}", root);
 
     // Process the command with a read-only view of the state
-    let context: Context<'_> = Context::new(self.did(), root.identity(), self.store());
+    let context: Context<'_> = Context::new(self.did(), root.identity(), self.storage());
     let events: Option<Vec<Event>> = command.process(context).await?;
 
     debug!("[Account::process] Events = {:#?}", events);
 
     if let Some(events) = events {
-      let commits: Vec<Commit> = Self::commit_events(self.did(), self.store(), &self.config, &root, &events).await?;
+      let commits: Vec<Commit> = Self::commit_events(self.did(), &self.config, &root, &events).await?;
       self.publish_commits(root, commits, persist).await?;
     }
 
@@ -224,13 +229,13 @@ impl Account {
       let location: &KeyLocation = method.location();
 
       // Sign the DID Document with the current authentication method
-      new_state.sign_data(self.did(), &self.store, location, document).await?;
+      new_state.sign_data(self.did(), self.storage(), location, document).await?;
     } else {
       let method: &TinyMethod = old_state.authentication()?;
       let location: &KeyLocation = method.location();
 
       // Sign the DID Document with the previous authentication method
-      old_state.sign_data(self.did(), &self.store, location, document).await?;
+      old_state.sign_data(self.did(), self.storage(), location, document).await?;
     }
 
     Ok(())
@@ -246,7 +251,7 @@ impl Account {
 
     self.sign_document(old_state, new_state, &mut new_doc).await?;
 
-    let message: MessageId = if self.config.testmode {
+    let message: MessageId = if self.config.testmode() {
       MessageId::null()
     } else {
       self.state.clients.publish_document(&new_doc).await?.into()
@@ -254,7 +259,7 @@ impl Account {
 
     let events: [Event; 1] = [Event::new(EventData::IntegrationMessage(message))];
 
-    Self::commit_events(self.did(), self.store(), self.config.as_ref(), &new_root, &events).await?;
+    Self::commit_events(self.did(), &self.config, &new_root, &events).await?;
 
     Ok(())
   }
@@ -276,10 +281,10 @@ impl Account {
     let location: &KeyLocation = method.location();
 
     old_state
-      .sign_data(self.did(), &self.store, location, &mut diff)
+      .sign_data(self.did(), self.storage(), location, &mut diff)
       .await?;
 
-    let message: MessageId = if self.config.testmode {
+    let message: MessageId = if self.config.testmode() {
       MessageId::null()
     } else {
       self
@@ -292,7 +297,7 @@ impl Account {
 
     let events: [Event; 1] = [Event::new(EventData::DiffMessage(message))];
 
-    Self::commit_events(self.did(), self.store(), self.config.as_ref(), &new_root, &events).await?;
+    Self::commit_events(self.did(), &self.config, &new_root, &events).await?;
 
     Ok(())
   }
@@ -308,14 +313,14 @@ impl Account {
   pub async fn load_snapshot(&self, did: &IotaDID) -> Result<IdentitySnapshot> {
     // Retrieve the state snapshot from storage or create a new one.
     let initial: IdentitySnapshot = self
-      .store
+      .storage()
       .snapshot(did)
       .await?
       .unwrap_or_else(|| IdentitySnapshot::new(IdentityState::new()));
 
     // Apply all recent events to the state and create a new snapshot
     self
-      .store
+      .storage()
       .stream(did, initial.sequence())
       .await?
       .try_fold(initial, Self::fold_snapshot)
@@ -327,7 +332,7 @@ impl Account {
 
     // Apply all events up to `generation`
     self
-      .store
+      .storage()
       .stream(did, Generation::new())
       .await?
       .take(generation.to_u32() as usize)
@@ -337,8 +342,7 @@ impl Account {
 
   async fn commit_events(
     did: &IotaDID,
-    store: &dyn Storage,
-    config: &Config,
+    config: &AccountConfig,
     state: &IdentitySnapshot,
     events: &[Event],
   ) -> Result<Vec<Commit>> {
@@ -358,10 +362,10 @@ impl Account {
     }
 
     // Append the list of commits to the store
-    store.append(did, &commits).await?;
+    config.storage().append(did, &commits).await?;
 
     // Store a snapshot every N events
-    if sequence.to_u32() % config.milestone == 0 {
+    if sequence.to_u32() % config.milestone() == 0 {
       let mut state: IdentitySnapshot = state.clone();
 
       // Fold the new commits into the snapshot
@@ -370,7 +374,7 @@ impl Account {
       }
 
       // Store the new snapshot
-      store.set_snapshot(did, &state).await?;
+      config.storage().set_snapshot(did, &state).await?;
     }
 
     // Return the list of stored events
@@ -378,12 +382,12 @@ impl Account {
   }
 
   async fn save(&self, force: bool) -> Result<()> {
-    match self.config.autosave {
+    match self.config.autosave() {
       AutoSave::Every => {
-        self.store.flush_changes().await?;
+        self.storage().flush_changes().await?;
       }
       AutoSave::Batch(step) if force || (step != 0 && self.actions() % step == 0) => {
-        self.store.flush_changes().await?;
+        self.storage().flush_changes().await?;
       }
       AutoSave::Batch(_) | AutoSave::Never => {}
     }
@@ -394,10 +398,10 @@ impl Account {
   /// Push all unpublished changes for the given identity to the tangle in a single message.
   pub async fn publish_updates(&self) -> Result<()> {
     // Get the last commit generation that was published to the tangle.
-    let last_published: Generation = self.store.published_generation(self.did()).await?.unwrap_or_default();
+    let last_published: Generation = self.storage().published_generation(self.did()).await?.unwrap_or_default();
 
     // Get the commits that need to be published.
-    let commits: Vec<Commit> = self.store.collect(self.did(), last_published).await?;
+    let commits: Vec<Commit> = self.storage().collect(self.did(), last_published).await?;
 
     if commits.is_empty() {
       return Ok(());
@@ -413,7 +417,7 @@ impl Account {
 
   /// Publishes according to the autopublish configuration.
   async fn publish(&self, snapshot: IdentitySnapshot, commits: Vec<Commit>, force: bool) -> Result<()> {
-    if !force && !self.config.autopublish {
+    if !force && !self.config.autopublish() {
       return Ok(());
     }
 
@@ -429,7 +433,7 @@ impl Account {
       // which is required to be set for subsequent updates.
       // The next snapshot that loads the tangle state will require this message id to be set.
       let generation: Generation = Generation::from_u32(last_commit_generation.to_u32() + 1);
-      self.store.set_published_generation(self.did(), generation).await?;
+      self.storage().set_published_generation(self.did(), generation).await?;
     }
 
     Ok(())
@@ -444,108 +448,14 @@ impl Account {
 
 impl Drop for Account {
   fn drop(&mut self) {
-    if self.config.dropsave && self.actions() != 0 {
+    if self.config.dropsave() && self.actions() != 0 {
       // TODO: Handle Result (?)
-      let _ = executor::block_on(self.store.flush_changes());
+      let _ = executor::block_on(self.storage().flush_changes());
     }
   }
 }
 
-// =============================================================================
-// Config
-// =============================================================================
 
-/// Top-level configuration for Identity [Account]s
-#[derive(Clone, Debug)]
-pub struct Config {
-  autosave: AutoSave,
-  autopublish: bool,
-  dropsave: bool,
-  testmode: bool,
-  milestone: u32,
-}
-
-impl Config {
-  const MILESTONE: u32 = 1;
-
-  /// Creates a new default `Config`.
-  pub fn new() -> Self {
-    Self {
-      autosave: AutoSave::Every,
-      autopublish: true,
-      dropsave: true,
-      testmode: false,
-      milestone: Self::MILESTONE,
-    }
-  }
-
-  /// Sets the account auto-save behaviour.
-  /// - [`Every`][AutoSave::Every] => Save to storage on every update
-  /// - [`Never`][AutoSave::Never] => Never save to storage when updating
-  /// - [`Batch(n)`][AutoSave::Batch] => Save to storage after every `n` updates.
-  ///
-  /// Note that when [`Never`][AutoSave::Never] is selected, you will most
-  /// likely want to set [`dropsave`][Self::dropsave] to `true`.
-  ///
-  /// Default: [`Every`][AutoSave::Every]
-  pub fn autosave(mut self, value: AutoSave) -> Self {
-    self.autosave = value;
-    self
-  }
-
-  /// Sets the account auto-publish behaviour.
-  /// - `true` => publish to the Tangle on every DID document change
-  /// - `false` => never publish automatically
-  ///
-  /// Default: `true`
-  pub fn autopublish(mut self, value: bool) -> Self {
-    self.autopublish = value;
-    self
-  }
-
-  /// Save the account state on drop.
-  /// If set to `false`, set [`autosave`][Self::autosave] to
-  /// either [`Every`][AutoSave::Every] or [`Batch(n)`][AutoSave::Batch].
-  ///
-  /// Default: `true`
-  pub fn dropsave(mut self, value: bool) -> Self {
-    self.dropsave = value;
-    self
-  }
-
-  /// Save a state snapshot every N actions.
-  pub fn milestone(mut self, value: u32) -> Self {
-    self.milestone = value;
-    self
-  }
-
-  #[doc(hidden)]
-  pub fn testmode(mut self, value: bool) -> Self {
-    self.testmode = value;
-    self
-  }
-}
-
-impl Default for Config {
-  fn default() -> Self {
-    Self::new()
-  }
-}
-
-// =============================================================================
-// AutoSave
-// =============================================================================
-
-/// Available auto-save behaviours.
-#[derive(Clone, Copy, Debug)]
-pub enum AutoSave {
-  /// Never save
-  Never,
-  /// Save after every action
-  Every,
-  /// Save after every N actions
-  Batch(usize),
-}
 
 // =============================================================================
 // State

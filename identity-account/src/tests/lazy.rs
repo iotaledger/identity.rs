@@ -3,7 +3,7 @@
 
 use std::pin::Pin;
 
-use crate::account::{Account, Config};
+use crate::account::{Account, AccountConfig};
 use crate::identity::{IdentityCreate, IdentityUpdater};
 use crate::storage::MemStore;
 use crate::{Error as AccountError, Result};
@@ -22,18 +22,17 @@ async fn test_lazy_updates() -> Result<()> {
       // Create, update and publish an identity
       // ===========================================================================
 
-      let mut config = Config::new();
-      config.autopublish(false);
-
       let network = if test_run % 2 == 0 {
         Network::Devnet
       } else {
         Network::Mainnet
       };
 
+      let mut account_config = AccountConfig::new(MemStore::new());
+      account_config.set_autopublish(false);
+
       let account = Account::create_identity(
-        config,
-        MemStore::new(),
+        account_config,
         IdentityCreate::new().network(network.name()).unwrap(),
       )
       .await?;
