@@ -10,11 +10,14 @@
     "example": "examples"
   },
   "scripts": {
-    "build:nodejs": "wasm-pack build --target nodejs --out-dir node && node ./build/node",
-    "build:web": "wasm-pack build --target web --out-dir web && node ./build/web",
+    "build:nodejs": "wasm-pack build --target nodejs --release --out-dir node && node ./build/node",
+    "build:web": "wasm-pack build --target web --release --out-dir web && node ./build/web",
+    "build-dev:nodejs": "wasm-pack build --target nodejs --dev --out-dir node && node ./build/node",
+    "build-dev:web": "wasm-pack build --target web --dev --out-dir web && node ./build/web",
     "build:docs": "node ./build/docs",
     "build:examples": "webpack --config ./examples/webpack.config.js --mode=production",
     "build": "npm run build:web && npm run build:nodejs && npm run build:docs",
+    "build-dev": "npm run build-dev:web && npm run build-dev:nodejs && npm run build:docs",
     "pretest": "npm run build:nodejs",
     "prepublishOnly": "npm run build",
     "serve": "webpack serve",
