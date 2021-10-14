@@ -38,7 +38,7 @@ use crate::types::KeyLocation;
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, Object>;
 
-pub type RemoteEd25519<'a, T> = JcsEd25519<RemoteSign<'a, T>>;
+pub type RemoteEd25519<'a> = JcsEd25519<RemoteSign<'a>>;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct IdentityState {
@@ -319,13 +319,12 @@ impl IdentityState {
     Ok(document)
   }
 
-  pub async fn sign_data<T, U>(&self, did: &IotaDID, store: &T, location: &KeyLocation, target: &mut U) -> Result<()>
+  pub async fn sign_data<U>(&self, did: &IotaDID, store: &dyn Storage, location: &KeyLocation, target: &mut U) -> Result<()>
   where
-    T: Storage,
     U: Serialize + SetSignature,
   {
     // Create a private key suitable for identity_core::crypto
-    let private: RemoteKey<'_, T> = RemoteKey::new(did, location, store);
+    let private: RemoteKey<'_> = RemoteKey::new(did, location, store);
 
     // Create the Verification Method identifier
     let fragment: &str = location.fragment.identifier();

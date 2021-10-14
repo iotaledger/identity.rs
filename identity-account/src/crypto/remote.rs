@@ -13,15 +13,15 @@ use crate::types::KeyLocation;
 
 /// A reference to a storage instance and identity key location.
 #[derive(Debug)]
-pub struct RemoteKey<'a, T> {
+pub struct RemoteKey<'a> {
   did: &'a IotaDID,
   location: &'a KeyLocation,
-  store: &'a T,
+  store: &'a dyn Storage,
 }
 
-impl<'a, T> RemoteKey<'a, T> {
+impl<'a> RemoteKey<'a> {
   /// Creates a new `RemoteKey` instance.
-  pub fn new(did: &'a IotaDID, location: &'a KeyLocation, store: &'a T) -> Self {
+  pub fn new(did: &'a IotaDID, location: &'a KeyLocation, store: &'a dyn Storage) -> Self {
     Self { did, location, store }
   }
 }
@@ -34,15 +34,13 @@ impl<'a, T> RemoteKey<'a, T> {
 ///
 /// Note: The signature implementation is specified by the associated `RemoteKey`.
 #[derive(Clone, Copy, Debug)]
-pub struct RemoteSign<'a, T> {
-  marker: PhantomData<RemoteKey<'a, T>>,
+pub struct RemoteSign<'a> {
+  marker: PhantomData<RemoteKey<'a>>,
 }
 
-impl<'a, T> Sign for RemoteSign<'a, T>
-where
-  T: Storage,
+impl<'a> Sign for RemoteSign<'a>
 {
-  type Private = RemoteKey<'a, T>;
+  type Private = RemoteKey<'a>;
   type Output = Vec<u8>;
 
   fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output> {
