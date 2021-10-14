@@ -42,3 +42,4 @@ wasm-opt = true
 
 [profile.release]
 opt-level = 's'
+lto = true
