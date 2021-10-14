@@ -7,7 +7,7 @@ sidebar_label: Revocation Options
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-09-27
+- Last Updated: 2021-10-14
 
 ## Overview
 Allows discovery of available [`RevocationInfo`](./revocation#RevocationInfo) types for use with the [revocation](./revocation) protocol.
@@ -35,7 +35,7 @@ Allows discovery of available [`RevocationInfo`](./revocation#RevocationInfo) ty
 - Type: `didcomm:iota/revocation-options/0.1/revocation-options-request`
 - Role: [trusted-party](#roles)
 
-Empty messsage requesting all available [`RevocationInfo`](./revocation#RevocationInfo) types.
+Empty message requesting all available [`RevocationInfo`](./revocation#RevocationInfo) types.
 
 #### Structure
 ```json
@@ -80,20 +80,22 @@ Response including all available [RevocationInfo](./revocation#RevocationInfo) t
 }
 ```
 
-### Problem Reports
+### Problem Reports {#problem-reports}
 
-For general guidance see [problem reports](../resources/problem-reports).
+The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
-- e.p.prot.iota.revocation-options.reject-revocation-options-request
-- e.p.prot.iota.revocation-options.reject-request
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
+
+| Code | Message | Description |
+| :--- | :--- | :--- |
+| `e.p.msg.iota.revocation-options.reject-request` | [revocation-options](#revocation-options) | The [revoker](#roles) rejects a request for any reason. |
 
 ## Considerations
 
 This section is non-normative.
 
 - Privacy: similar to [discover features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md), this protocol could be used to fingerprint a server partially or reveal its capabilities. If privacy is a concern, implementors should take care to accept requests only from parties authorized to perform [revocation](./revocation) or return a subset/superset of its actual supported options.
-- Authorization: TODO
+- Authorisation: TODO
 - Authentication: TODO
 
 ## Unresolved Questions

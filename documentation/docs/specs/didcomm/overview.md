@@ -38,6 +38,7 @@ NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
 | [Signing](./protocols/signing.md) | 0.1 | Allows a trusted-party to request the signing of an unsigned verifiable credential by an issuer. |
 | [Revocation Options](./protocols/revocation-options.md) | 0.1 | Allows discovery of available [`RevocationInfo`](./protocols/revocation#RevocationInfo) types for use with the [revocation](./protocols/revocation) protocol. |
 | [Revocation](./protocols/revocation.md) | 0.1 | Allows to request revocation of an issued credential, either by the holder or a trusted-party. | 
+| [Post](./protocols/post.md) | 0.1 | This protocol allows a party to send a generic message. |
 | [Termination](./protocols/termination.md) | 0.1 | Indicates the graceful termination of a connection. |
 
 ## External Protocols
@@ -55,4 +56,4 @@ See [CHANGELOG](./CHANGELOG)
 
 ## Future Work
 
-◈ If neccessary, discuss ways for some agent to request the start of an interaction. This has narrow use cases, but might be interesting in the long run.
+◈ If necessary, discuss ways for some agent to request the start of an interaction. This has narrow use cases, but might be interesting in the long run.

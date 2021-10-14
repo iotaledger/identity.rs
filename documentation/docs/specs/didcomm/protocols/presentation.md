@@ -248,11 +248,11 @@ Sent by the verifier to communicate the result of the presentation. It allows th
 {
   "accepted": bool,                   // REQUIRED
   "disputes": [{
-    "id": string,                     // OPTIONAL
+    "credentialId": string,           // REQUIRED
     "dispute": Dispute,               // REQUIRED
   }], // OPTIONAL
   "problems": [{
-    "id": string,                     // OPTIONAL
+    "credentialId": string,           // REQUIRED
     "problemReport": ProblemReport,   // REQUIRED
   }], // OPTIONAL
   "allowRetry": bool,                 // OPTIONAL
@@ -266,10 +266,10 @@ TODO: use DIDComm signed message instead of `proof`?
 | :--- | :--- | :--- |
 | `accepted` | Indicates if the verifier accepted the [`presentation`](#presentation) and credentials. | ✔ |
 | `disputes` | Array of disputes | ✖ |
-| [`id`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a dispute. A holder may omit credential identifiers for privacy reasons. | ✖ |
+| [`credentialId`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a dispute. If the credential lacks an `id` field, this should be a content-addressed identifier; we RECOMMEND the [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the credential.  | ✔ |
 | [`dispute`](https://www.w3.org/TR/vc-data-model/#disputes) | A [dispute](https://www.w3.org/TR/vc-data-model/#disputes) by the verifier of one or more claims in a presented credential. | ✔ |
-| `problems` | Array of problem-reports | ✖ |
-| [`id`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a problem. A holder may omit credential identifiers for privacy reasons. | ✖ |
+| `problems` | Array of problem-reports. | ✖ |
+| `credentialId`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a problem. If the credential lacks an `id` field, this should be a content-addressed identifier; we RECOMMEND the [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the credential. | ✔ |
 | `problemReport` | A [`problem-report`](https://identity.foundation/didcomm-messaging/spec/#problem-reports) indicating something wrong with the credential, e.g. signature validation failed or the credential is expired. | ✔ | 
 | `allowRetry` | Indicates if the holder may retry the [`presentation`](#presentation) with different credentials. Default: `false` | ✖ |
 | [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the verifier; RECOMMENDED to include.[^5] | ✖ |

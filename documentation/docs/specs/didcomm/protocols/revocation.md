@@ -7,7 +7,7 @@ sidebar_label: Revocation
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-09-27
+- Last Updated: 2021-10-14
 
 ## Overview
 Allows to request revocation of an issued [verifiable credential](https://www.w3.org/TR/vc-data-model/), either by the holder or a trusted-party. If the revoker is unable to revoke the credential themselves, they may delegate the revocation to a different issuer, in which case they take on the role of trusted-party in their request.
@@ -51,6 +51,8 @@ Sent by the [trusted-party](#roles) or holder to request revocation of an issued
   "signature": Proof,               // OPTIONAL
 }
 ```
+
+// TODO: remove `signature` and use a signed DIDComm message instead?
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
@@ -253,6 +255,18 @@ Allows to request the revocation of a verifiable credential by sending its corre
   },
 }
 ```
+### Problem Reports {#problem-reports}
+
+The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
+
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
+
+| Code | Message | Description |
+| :--- | :--- | :--- |
+| `e.p.msg.iota.revocation.reject-request` | [revocation-request](#revocation-request) | The [revoker](#roles) rejects a request for any reason, e.g. the revoker does not have the authority to revoke the particular credential or key, or a relayed revocation request to another [revoker](#roles) failed. |
+| `e.p.msg.iota.revocation.reject-request.invalid-revocation-type` | [revocation-request](#revocation-request) | The [revoker](#roles) rejects a request due to an unrecognised, unsupported, or otherwise invalid `revocationInfoType`. |
+| `e.p.msg.iota.revocation.reject-request.invalid-revocation-info` | [revocation-request](#revocation-request) | The [revoker](#roles) rejects a request due to a malformed or otherwise invalid `revocationInfo`. |
+| `e.p.msg.iota.revocation.presentation-failed` | [revocation-request](#revocation-request) | The [revoker](#roles) terminates the protocol due to a failed presentation from the [trusted-party](#roles), e.g. failed to prove permission to revoke the particular credential. |
 
 ## Considerations
 
@@ -261,8 +275,8 @@ This section is non-normative.
 The revoker needs to check if the credential may actually be revoked and if the trusted party actually has the authority to request the revocation.
 
 ## Unresolved Questions
-non-repudiation: should the trusted party be able to prove that the revoker claimed to have revoked the credential by making him include a signature in the `revocation-response`
 
+- Should the trusted party be able to prove that the revoker claimed to have revoked the credential by making him include a signature in the `revocation-response`, or is it sufficient that they can query the signing key or revocation material in the case of a public ledger?
 - Should revocation-options include the credential status sub-types for `CredentialStatusRevocation2021`?
 - Separate revocation-notification (https://github.com/hyperledger/aries-rfcs/blob/main/features/0183-revocation-notification/README.md) flow for notifying the holder that their credential was revoked, optionally including the reason? Dual-entry for a holder to request the revocation reason?
 - Include reason-code/reason-comment in the request? Could be used by the revoker for auditing/validating the request but overall seems not useful - trusted-party would store those reasons internally, holder comments aren't very useful. Can be achieved via embedded presentation and self-signed credentials?

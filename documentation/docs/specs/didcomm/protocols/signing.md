@@ -7,7 +7,7 @@ sidebar_label: Signing
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-09-16
+- Last Updated: 2021-10-14
 
 ## Overview
 
@@ -15,7 +15,7 @@ Allows a trusted-party to request the signing of an unsigned verifiable credenti
 
 ### Relationships
 
-This protocol may be embedded in the [issuance](./issuance) protocol.
+- [Issuance](./issuance): an [issuer](./issuance#roles) may take on the role of [trusted-party](#roles) to request a different [issuer](#roles) to sign a new credential.
 
 ### Example Use-Cases
 
@@ -43,7 +43,9 @@ This protocol may be embedded in the [issuance](./issuance) protocol.
 - Type: `didcomm:iota/signing/0.1/signing-request`
 - Role: [trusted-party](#roles)
 
-Request by a trusted-party for an issuer to sign a credential.
+Request by a [trusted-party](#roles) for an [issuer](#roles) to sign a credential.
+
+To authenticate the [trusted-party](#roles), this SHOULD be sent using [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) established in a preceding [authentication](./authentication) protocol. For non-repudiation or auditing, the [issuer](#role) MAY enforce that the [signing-request](#signing-request) be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message).
 
 #### Structure
 ```json
@@ -89,7 +91,7 @@ Request by a trusted-party for an issuer to sign a credential.
 - Type: `didcomm:iota/signing/0.1/signing-response`
 - Role: [issuer](#roles)
 
-Response from the issuer returning the signed credential back to the trusted-party.
+Response from the [issuer](#roles) returning the signed credential back to the [trusted-party](#roles).
 
 #### Structure
 ```json
@@ -138,7 +140,7 @@ The [issuer](#roles) may request in turn that the credential be signed by a diff
 - Type: `didcomm:iota/signing/0.1/signing-acknowledgement`
 - Role: [trusted-party](#roles)
 
-Acknowledgement by the [trusted-party](#roles) that the credential was received and accepted. The [issuer](#roles) MAY revoke the credential if no acknowledgement is received.
+Acknowledgement by the [trusted-party](#roles) that the credential was received and accepted. The [issuer](#roles) MAY revoke the credential if no acknowledgement is received. For auditing or non-repudiation the [issuer](#roles) MAY require that the [signing-acknowledgement](#signing-acknowledgement) be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message).
 
 #### Structure
 ```json
@@ -162,19 +164,20 @@ Acknowledgement by the [trusted-party](#roles) that the credential was received 
   "accepted": true
 }
 ```
-### Problem Reports
+### Problem Reports {#problem-reports}
 
-TODO
+The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-For general guidance see [problem reports](../resources/problem-reports).
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
 
-e.p.prot.iota.signing.reject-signing-request // issuer rejects request by the trusted-party due to invalid/malformed/incomplete credential, 
-e.p.prot.iota.signing.reject-singing-response // the trusted-party rejects the returned credential due to being unsigned/altered, signed with an invalid key etc.
+| Code | Message | Description |
+| :--- | :--- | :--- |
+| `e.p.msg.iota.signing.reject-request` | [signing-request](#signing-request) | The [issuer](#roles) rejects a signing request for any reason, e.g. malformed credential, unrecognised credential type, or unwillingness to sign the specific credential for the [trusted-party](#roles). |
+| `e.p.msg.iota.signing.reject-response` | [signing-response](#signing-response) | The [trusted-party](#roles) rejects a signing response for any reason, e.g. mismatch between request and response credentials. |
 
-Shared problem reports?
-unauthenticated / not-authenticated
-unauthorised / not-authorised
-unencrypted / not-encrypted // rejection due to security risks of continuing over an unencrypted channel?
+## Unresolved Questions
+
+- Using a signed DIDComm message for auditing requires retaining the entire message including the credential itself. While this may be desired or required for some purposes, it could complicate or violate GDPR laws. Should an explicit signature of the credential hash be used instead, similar to the [issuance](./issuance) protocol?
 
 ## Considerations
 

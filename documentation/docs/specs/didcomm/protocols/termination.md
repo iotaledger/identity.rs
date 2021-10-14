@@ -62,22 +62,14 @@ Response from the [receiver](#roles) that the request to terminate the connectio
 {}
 ```
 
-### Problem Reports
-
-TODO
-
 ## Considerations
 
 This section is non-normative.
 
-- Which party terminates a connection depends on the application, but is usually the same as the one that initiated it following a successful interaction.
+- Which party terminates a connection depends on the application, but is usually the same as the one that initiated it following a successful interaction to achieve.
 - Any party may terminate a connection at any time, even during a protocol.
-- A termination message indicates a graceful end to a connection, the underlying transport layer connection may terminate without this message. Implementors should implement reasonable timeouts and reconnection capabilities in the latter case.
+- A termination message indicates a graceful end to a connection but the underlying transport layer connection could terminate without this message. Implementors should implement reasonable timeouts and reconnection capabilities.
 
 ## Related Work
 
 - Aries Hyperledger: https://github.com/hyperledger/aries-rfcs/blob/main/features/0030-sync-connection/abandon-connection-protocol/README.md
-
-## Further Reading
-
-TODO
