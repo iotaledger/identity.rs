@@ -15,7 +15,7 @@ name = "getting_started"
 path = "getting_started.rs"
 
 [[example]]
-name = "account_create_did"
+name = "account_create"
 path = "account/create_did.rs"
 
 [[example]]

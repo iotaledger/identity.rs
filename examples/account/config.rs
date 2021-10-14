@@ -17,14 +17,14 @@ async fn main() -> Result<()> {
   pretty_env_logger::init();
 
   // Set-up for private Tangle
-  // This name needs to match the id of the network or part of it.
-  // The id of the one-click private tangle is `private-tangle` but we can only use 6 characters, we use recommend
-  // `tangle`. As an example we are treating the devnet as a `private-tangle`,
-  // there are easier ways to change to devnet via `Network::Devnet`
-  let network_name = "dev"; // Replace this with a `tangle` for the one-click private tangle.
+  // You can use https://github.com/iotaledger/one-click-tangle for a local setup.
+  // The `network_name` needs to match the id of the network or a part of it.
+  // As an example we are treating the devnet as a `private-tangle`, so we use `dev`.
+  // Replace this with `tangle` if you run this against a one-click private tangle.
+  let network_name = "dev";
   let network = Network::try_from_name(network_name)?;
-  // In a locally running private tangle, this would often be `http://127.0.0.1:14265/`
-  let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe"; // Replace with your node of choice
+  // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265/`
+  let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
   // Create a new Account with explicit configuration
   let account: Account = Account::builder()
@@ -37,12 +37,14 @@ async fn main() -> Result<()> {
     // configure a mainnet Tangle client with node and permanode
     .client(Network::Mainnet, |builder| {
       builder
-        .node("https://chrysalis-nodes.iota.org") // Manipulate this in order to manually appoint nodes
+        // Manipulate this in order to manually appoint nodes
+        .node("https://chrysalis-nodes.iota.org")
         .unwrap() // unwrap is safe, we provided a valid node URL
-        .permanode("https://chrysalis-chronicle.iota.org/api/mainnet/", None, None) // Set a permanode from the same network (Important)
+        // Set a permanode from the same network (Important)
+        .permanode("https://chrysalis-chronicle.iota.org/api/mainnet/", None, None)
         .unwrap() // unwrap is safe, we provided a valid permanode URL
     })
-    // Configure a client for the private network, overwrites the mainnet client above
+    // Configure a client for the private network, here `dev`
     // Also set the URL that points to the REST API of the node
     .client(network, |builder| {
       // unwrap is safe, we provided a valid node URL
@@ -51,7 +53,8 @@ async fn main() -> Result<()> {
     .build()
     .await?;
 
-  // Create an Identity specifically for the mainnet, replace with network_name variable for private Tangle
+  // Create an Identity specifically on the devnet by passing `network_name`
+  // The same applies if we wanted to create an identity on a private tangle
   let id_create = IdentityCreate::new().network(network_name)?;
 
   // Create a new Identity with the network name set.
@@ -67,12 +70,9 @@ async fn main() -> Result<()> {
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   println!(
-    "[Example] Explore the DID Document = {}",
-    format!(
-      "{}/{}",
-      iota_did.network()?.explorer_url().unwrap().to_string(),
-      iota_did.to_string()
-    )
+    "[Example] Explore the DID Document = {}/{}",
+    iota_did.network()?.explorer_url().unwrap().to_string(),
+    iota_did.to_string()
   );
 
   Ok(())

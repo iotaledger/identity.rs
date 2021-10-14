@@ -27,10 +27,7 @@ async fn main() -> Result<()> {
   // Create Identity - Similar to create_did example
   // ===========================================================================
 
-  // Sets the location and password for the Stronghold
-  //
-  // Stronghold is an encrypted file that manages private keys.
-  // It implements all security recommendation and is the recommended way of handling private keys.
+  // Stronghold settings
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
 
@@ -42,7 +39,7 @@ async fn main() -> Result<()> {
 
   // Create a new Identity with default settings
   //
-  // This step generates a keypair, creates an identity and publishes it too the IOTA mainnet.
+  // This step generates a keypair, creates an identity and publishes it to the IOTA mainnet.
   let identity: IdentityState = account.create_identity(IdentityCreate::default()).await?;
   let iota_did: &IotaDID = identity.try_did()?;
 
@@ -88,7 +85,12 @@ async fn main() -> Result<()> {
   // This is an optional step to ensure DID Document consistency.
   let resolved: IotaDocument = account.resolve_identity(&iota_did).await?;
 
-  println!("[Example] Tangle Document = {:#?}", resolved);
+  // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
+  println!(
+    "[Example] Explore the DID Document = {}/{}",
+    iota_did.network()?.explorer_url().unwrap().to_string(),
+    iota_did.to_string()
+  );
 
   // Ensure the resolved DID Document can verify the credential signature
   let verified: bool = resolved.verify_data(&credential).is_ok();

@@ -34,10 +34,10 @@ async fn main() -> Result<()> {
   let identity: IdentityState = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let did: &IotaDID = identity.try_did()?;
+  let iota_did: &IotaDID = identity.try_did()?;
 
   account
-    .update_identity(did)
+    .update_identity(iota_did)
     .create_service()
     .fragment("example-service")
     .type_("LinkedDomains")
@@ -47,11 +47,11 @@ async fn main() -> Result<()> {
 
   // Publish the newly created DID document,
   // including the new service, to the tangle.
-  account.publish_updates(did).await?;
+  account.publish_updates(iota_did).await?;
 
   // Add another service.
   account
-    .update_identity(did)
+    .update_identity(iota_did)
     .create_service()
     .fragment("another-service")
     .type_("LinkedDomains")
@@ -61,23 +61,20 @@ async fn main() -> Result<()> {
 
   // Delete the previously added service.
   account
-    .update_identity(did)
+    .update_identity(iota_did)
     .delete_service()
     .fragment("example-service")
     .apply()
     .await?;
 
   // Publish the updates as one message to the tangle.
-  account.publish_updates(did).await?;
+  account.publish_updates(iota_did).await?;
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   println!(
-    "[Example] Explore the DID Document = {}",
-    format!(
-      "{}/{}",
-      did.network()?.explorer_url().unwrap().to_string(),
-      did.to_string()
-    )
+    "[Example] Explore the DID Document = {}/{}",
+    iota_did.network()?.explorer_url().unwrap().to_string(),
+    iota_did.to_string()
   );
 
   Ok(())
