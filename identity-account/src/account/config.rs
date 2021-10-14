@@ -37,17 +37,17 @@ impl Config {
 }
 
 impl AccountConfig {
-  pub fn new(storage: impl Storage) -> Self {
+  pub fn new(storage: Arc<dyn Storage>) -> Self {
     Self {
       inner: Config::new(),
-      storage: Arc::new(storage),
+      storage,
     }
   }
 
-  pub fn new_with_config(storage: impl Storage, config: Config) -> Self {
+  pub fn new_with_config(storage: Arc<dyn Storage>, config: Config) -> Self {
     Self {
       inner: config,
-      storage: Arc::new(storage),
+      storage,
     }
   }
 

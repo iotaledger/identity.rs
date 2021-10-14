@@ -2,18 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use hashbrown::HashMap;
+use identity_iota::did::IotaDID;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota::tangle::Network;
 use identity_iota::tangle::NetworkName;
 #[cfg(feature = "stronghold")]
 use std::path::PathBuf;
+use std::sync::Arc;
 #[cfg(feature = "stronghold")]
 use zeroize::Zeroize;
 
 use crate::account::Account;
 use crate::error::Result;
+use crate::identity::IdentityCreate;
 use crate::storage::MemStore;
-// use crate::storage::MemStore;
 use crate::storage::Storage;
 #[cfg(feature = "stronghold")]
 use crate::storage::Stronghold;
@@ -31,14 +33,14 @@ pub enum AccountStorage {
   Memory,
   #[cfg(feature = "stronghold")]
   Stronghold(PathBuf, Option<String>),
-  Custom(Box<dyn Storage>),
+  Custom(Arc<dyn Storage>),
 }
 
 /// An [Account] builder for easier account configuration.
 #[derive(Debug)]
 pub struct AccountBuilder {
   config: Config,
-  storage: AccountStorage,
+  storage: Arc<dyn Storage>,
   clients: Option<HashMap<NetworkName, ClientBuilder>>,
 }
 
@@ -47,7 +49,7 @@ impl AccountBuilder {
   pub fn new() -> Self {
     Self {
       config: Config::new(),
-      storage: AccountStorage::Memory,
+      storage: Arc::new(MemStore::new()),
       clients: None,
     }
   }
@@ -83,9 +85,24 @@ impl AccountBuilder {
   }
 
   /// Sets the account storage adapter.
-  pub fn storage(mut self, value: AccountStorage) -> Self {
-    self.storage = value;
-    self
+  pub async fn storage(mut self, value: AccountStorage) -> Result<Self> {
+    self.storage = match value {
+      AccountStorage::Memory => Arc::new(MemStore::new()),
+      #[cfg(feature = "stronghold")]
+      AccountStorage::Stronghold(snapshot, password) => {
+        let passref: Option<&str> = password.as_deref();
+        let adapter: Stronghold = Stronghold::new(&snapshot, passref).await?;
+
+        if let Some(mut password) = password {
+          password.zeroize();
+        }
+
+        Arc::new(adapter)
+      }
+      AccountStorage::Custom(adapter) => adapter,
+    };
+
+    Ok(self)
   }
 
   /// Apply configuration to the IOTA Tangle client for the given `Network`.
@@ -101,39 +118,23 @@ impl AccountBuilder {
   }
 
   /// Creates a new [Account] based on the builder configuration.
-  pub async fn build(mut self) -> Result<Account> {
-    // TODO: Placeholder
-    let did = "".parse().unwrap();
+  pub async fn create_identity(mut self, input: IdentityCreate) -> Result<Account> {
+    let config = AccountConfig::new_with_config(Arc::clone(&self.storage), self.config.clone());
+    let account = Account::create_identity(config, input).await?;
 
-    let account: Account = match self.storage {
-      AccountStorage::Memory => {
-        Account::with_config(
-          did,
-          AccountConfig::new_with_config(MemStore::new(), self.config.clone()),
-        )
-        .await?
+    if let Some(clients) = self.clients.take() {
+      for (_, client) in clients.into_iter() {
+        account.set_client(client.build().await?);
       }
-      #[cfg(feature = "stronghold")]
-      AccountStorage::Stronghold(snapshot, password) => {
-        let passref: Option<&str> = password.as_deref();
-        let adapter: Stronghold = Stronghold::new(&snapshot, passref).await?;
+    }
 
-        if let Some(mut password) = password {
-          password.zeroize();
-        }
+    Ok(account)
+  }
 
-        Account::with_config(
-          did,
-          AccountConfig::new_with_config(adapter, self.config.clone()),
-        )
-        .await?
-      }
-      AccountStorage::Custom(adapter) => Account::with_config(
-        did,
-        AccountConfig::new_with_config(adapter, self.config.clone()),
-      )
-      .await?
-    };
+  /// Loads an existing identity from the given did.
+  pub async fn load_identity(mut self, did: IotaDID) -> Result<Account> {
+    let config = AccountConfig::new_with_config(Arc::clone(&self.storage), self.config.clone());
+    let account = Account::load(did, config).await?;
 
     if let Some(clients) = self.clients.take() {
       for (_, client) in clients.into_iter() {
