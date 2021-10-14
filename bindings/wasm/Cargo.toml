@@ -39,4 +39,8 @@ chrono = { version = "0.4", features = ["wasmbind"] }
 getrandom = { version = "0.2", features = ["js"] }
 
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = false
+wasm-opt = true
+
+[profile.release]
+opt-level = 's'
+lto = true
