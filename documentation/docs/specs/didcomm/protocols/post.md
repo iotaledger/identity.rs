@@ -3,88 +3,102 @@ title: Post
 sidebar_label: Post
 ---
 
-# Post
+# Post {#post}
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-10-14
+- Last Updated: 2021-10-15
 
 ## Overview
 
-Allows the sending of a generic message.
+Allows the sending of a single message with arbitrary data. Multiple [post](#post-message) messages MAY be chained together in the same [DIDComm thread](https://identity.foundation/didcomm-messaging/spec/#threads) to achieve bi-directional chat.
 
 ### Relationships
 
-### Example Use-Cases
+- [Authentication](./authentication): can be used to authenticate both parties and establish [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption).
 
+### Example Use-Cases
+- Instant messaging between two parties, where the text payload is displayed in a chat.
+- IOT devices transmit different sensor data to be aggregated in a central hub for processing.
 
 ### Roles
-
+- Sender: sends the message.
+- Receiver: receives the message.
 
 ### Interaction
 
 <div style={{textAlign: 'center'}}>
 
-![SigningDiagram](/img/didcomm/signing.drawio.svg)
+![PostDiagram](/img/didcomm/post.drawio.svg)
 
 </div>
 
 
 ## Messages
 
-### 1. signing-request {#signing-request}
+### 1. post {#post-message}
 
-- Type: `didcomm:iota/signing/0.1/signing-request`
-- Role: [trusted-party](#roles)
+- Type: `didcomm:iota/post/0.1/post`
+- Role: [sender](#roles)
 
-Request by a [trusted-party](#roles) for an [issuer](#roles) to sign a credential.
-
-To authenticate the [trusted-party](#roles), this SHOULD be sent using [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) established in a preceding [authentication](./authentication) protocol. For non-repudiation or auditing, the [issuer](#role) MAY enforce that the [signing-request](#signing-request) be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message).
+The [sender](#roles) transmits a JSON `payload` to the [receiver](#roles). This MAY take advantage of [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) or be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) or both.
 
 #### Structure
 ```json
 {
-  "unsignedCredential": Credential // REQUIRED
+  "payload": JSON // REQUIRED
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`unsignedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | | ✔ |
+| `payload` | Any valid [JSON](https://datatracker.ietf.org/doc/html/rfc7159) text. | ✔ |
 
 #### Examples
 
-1. Request to sign a bachelors degree.
+1. Send a single string:
 
 ```json
 {
-  "unsignedCredential": {
-    "@context": [
-      "https://www.w3.org/2018/credentials/v1",
-      "https://www.w3.org/2018/credentials/examples/v1"
-    ],
-    "id": "6c1a1477-e452-4da7-b2db-65ad0b369d1a",
-    "type": ["VerifiableCredential", "UniversityDegreeCredential"],
-    "issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f",
-    "issuanceDate": "2021-05-03T19:73:24Z",
-    "credentialSubject": {
-      "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
-      "degree": {
-        "type": "BachelorDegree",
-        "name": "Bachelor of Science and Arts"
-      }
-    }
+  "post": "Hello, world"
+}
+```
+
+2. Send a single number:
+
+```json
+{
+  "post": 42
+}
+```
+
+3. Send a JSON object:
+
+```json
+{
+  "post": {
+    "status_code": 100,
+    "status": "Okay",
   }
 }
 ```
 
 ### Problem Reports {#problem-reports}
 
+The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
 
-## Unresolved Questions
+For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
+
+| Code | Message | Description |
+| :--- | :--- | :--- |
+| `e.p.msg.iota.post.reject-post` | [post](#post) | [Receiver](#roles) rejects a post message for any reason. |
 
 ## Considerations
 
+Since the `payload` JSON structure is unrestricted, a [sender](#roles) cannot make assumptions about [receivers](#roles) being able to understand the `payload` in any meaningful way unless both parties have a shared implementation or pre-negotiate the `payload` structure.
+
+If complex and repeatable behaviour between parties is needed, implementors SHOULD define their own protocols with well-defined messages and interactions rather than using generic [post](#post-message) messages.
+
 ## Related Work
 
-## Further Reading
+- Aries Hyperledger: https://github.com/hyperledger/aries-rfcs/blob/main/features/0095-basic-message/README.md

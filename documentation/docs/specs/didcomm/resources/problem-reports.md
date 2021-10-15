@@ -28,7 +28,7 @@ A problem report is a standard DIDComm message:
 
 ## IOTA Problem Codes
 
-We follow the notation for [problem codes defined by the DIDComm specification](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/problems.md#problem-codes). In general we use the error sorter `e` and protocol scope `p` to indicate that errors result in the abandonment of a protocol. 
+We follow the notation for [problem codes defined by the DIDComm specification](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/problems.md#problem-codes). In general, we use the error sorter `e` and protocol scope `p` to indicate that problem reports result in the abandonment of a protocol. 
 
 In addition to the [problem report descriptors in the DIDComm specification](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/problems.md#descriptors), we define the following non-exhaustive list of general problem report codes that may be sent during the course of any protocol:
 
