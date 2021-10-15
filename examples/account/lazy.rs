@@ -7,7 +7,6 @@ use std::path::PathBuf;
 use identity::account::Account;
 use identity::account::AccountStorage;
 use identity::account::IdentityCreate;
-use identity::account::IdentityState;
 use identity::account::Result;
 use identity::core::Url;
 use identity::iota::IotaDID;
@@ -25,19 +24,16 @@ async fn main() -> Result<()> {
   // Rather, when we publish, multiple updates are batched together.
   let account: Account = Account::builder()
     .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
+    .await?
     .autopublish(false)
-    .build()
+    .create_identity(IdentityCreate::default())
     .await?;
 
-  // Create a new Identity with default settings.
-  // The identity will only be written to the local storage - not published to the tangle.
-  let identity: IdentityState = account.create_identity(IdentityCreate::default()).await?;
-
-  // Retrieve the DID from the newly created Identity state.
-  let iota_did: &IotaDID = identity.try_did()?;
+  // Retrieve the DID from the newly created identity.
+  let iota_did: &IotaDID = account.did();
 
   account
-    .update_identity(iota_did)
+    .update_identity()
     .create_service()
     .fragment("example-service")
     .type_("LinkedDomains")
@@ -47,11 +43,11 @@ async fn main() -> Result<()> {
 
   // Publish the newly created DID document,
   // including the new service, to the tangle.
-  account.publish_updates(iota_did).await?;
+  account.publish_updates().await?;
 
   // Add another service.
   account
-    .update_identity(iota_did)
+    .update_identity()
     .create_service()
     .fragment("another-service")
     .type_("LinkedDomains")
@@ -61,14 +57,14 @@ async fn main() -> Result<()> {
 
   // Delete the previously added service.
   account
-    .update_identity(iota_did)
+    .update_identity()
     .delete_service()
     .fragment("example-service")
     .apply()
     .await?;
 
   // Publish the updates as one message to the tangle.
-  account.publish_updates(iota_did).await?;
+  account.publish_updates().await?;
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   println!(

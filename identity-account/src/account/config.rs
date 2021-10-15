@@ -65,6 +65,11 @@ impl AccountSetup {
       client_map: client_map.unwrap_or_else(|| Arc::new(ClientMap::new())),
     }
   }
+
+  pub fn config(mut self, value: Config) -> Self {
+    self.config = value;
+    self
+  }
 }
 
 impl Config {

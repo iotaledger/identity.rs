@@ -128,7 +128,7 @@ impl AccountBuilder {
     Ok(account)
   }
 
-  /// Loads an existing identity from the given did.
+  /// Loads an existing identity from the given did with the builder configuration.
   pub async fn load_identity(&self, did: IotaDID) -> Result<Account> {
     let setup = AccountSetup::new_with_options(
       Arc::clone(&self.storage),

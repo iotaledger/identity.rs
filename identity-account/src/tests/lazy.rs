@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::pin::Pin;
+use std::sync::Arc;
 
-use crate::account::{Account, AccountSetup};
+use crate::account::{Account, AccountSetup, Config};
 use crate::identity::{IdentityCreate, IdentityUpdater};
 use crate::storage::MemStore;
 use crate::{Error as AccountError, Result};
@@ -28,8 +29,8 @@ async fn test_lazy_updates() -> Result<()> {
         Network::Mainnet
       };
 
-      let mut account_config = AccountSetup::new(MemStore::new());
-      account_config.set_autopublish(false);
+      let config = Config::default().autopublish(false);
+      let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
 
       let account =
         Account::create_identity(account_config, IdentityCreate::new().network(network.name()).unwrap()).await?;

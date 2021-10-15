@@ -9,7 +9,6 @@ use identity::account::Account;
 use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::IdentityCreate;
-use identity::account::IdentityState;
 use identity::account::Result;
 use identity::iota::IotaDID;
 
@@ -25,7 +24,7 @@ async fn main() -> Result<()> {
   let password: String = "my-password".into();
 
   // Create a new `AccountBuilder` that can produce any number of accounts.
-  // Accounts share the storage and config that was set when they are built.
+  // Multiple accounts can be built from it, and will share the storage and config.
   let builder: AccountBuilder = Account::builder()
     .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
     .await?;
@@ -35,6 +34,7 @@ async fn main() -> Result<()> {
   // This step generates a keypair, creates an identity and publishes it to the IOTA mainnet.
   let account: Account = builder.create_identity(IdentityCreate::default()).await?;
 
+  // Retrieve the did of the newly created identity.
   let iota_did: &IotaDID = account.did();
 
   // Print the local state of the DID Document
