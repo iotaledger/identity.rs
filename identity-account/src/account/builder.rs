@@ -1,11 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use hashbrown::HashMap;
 use identity_iota::did::IotaDID;
 use identity_iota::tangle::ClientBuilder;
+use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::Network;
-use identity_iota::tangle::NetworkName;
 #[cfg(feature = "stronghold")]
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -20,7 +19,7 @@ use crate::storage::Storage;
 #[cfg(feature = "stronghold")]
 use crate::storage::Stronghold;
 
-use super::config::AccountConfig;
+use super::config::AccountSetup;
 use super::config::AutoSave;
 use super::config::Config;
 
@@ -41,7 +40,7 @@ pub enum AccountStorage {
 pub struct AccountBuilder {
   config: Config,
   storage: Arc<dyn Storage>,
-  clients: Option<HashMap<NetworkName, ClientBuilder>>,
+  client_map: Arc<ClientMap>,
 }
 
 impl AccountBuilder {
@@ -50,7 +49,7 @@ impl AccountBuilder {
     Self {
       config: Config::new(),
       storage: Arc::new(MemStore::new()),
-      clients: None,
+      client_map: Arc::new(ClientMap::new()),
     }
   }
 
@@ -58,7 +57,7 @@ impl AccountBuilder {
   ///
   /// See the config's [`autosave`][Config::autosave] documentation for details.
   pub fn autosave(mut self, value: AutoSave) -> Self {
-    self.config.autosave = value;
+    self.config = self.config.autosave(value);
     self
   }
 
@@ -66,7 +65,7 @@ impl AccountBuilder {
   ///
   /// See the config's [`autopublish`][Config::autopublish] documentation for details.
   pub fn autopublish(mut self, value: bool) -> Self {
-    self.config.autopublish = value;
+    self.config = self.config.autopublish(value);
     self
   }
 
@@ -74,13 +73,13 @@ impl AccountBuilder {
   ///
   /// See the config's [`dropsave`][Config::dropsave] documentation for details.
   pub fn dropsave(mut self, value: bool) -> Self {
-    self.config.dropsave = value;
+    self.config = self.config.dropsave(value);
     self
   }
 
   /// Save a state snapshot every N actions.
   pub fn milestone(mut self, value: u32) -> Self {
-    self.config.milestone = value;
+    self.config = self.config.milestone(value);
     self
   }
 
@@ -106,41 +105,38 @@ impl AccountBuilder {
   }
 
   /// Apply configuration to the IOTA Tangle client for the given `Network`.
-  pub fn client<F>(mut self, network: Network, f: F) -> Self
+  pub async fn client<F>(self, network: Network, f: F) -> Result<Self>
   where
     F: FnOnce(ClientBuilder) -> ClientBuilder,
   {
     self
-      .clients
-      .get_or_insert_with(HashMap::new)
-      .insert(network.name(), f(ClientBuilder::new().network(network)));
-    self
+      .client_map
+      .insert(f(ClientBuilder::new().network(network)).build().await?);
+    Ok(self)
   }
 
   /// Creates a new [Account] based on the builder configuration.
-  pub async fn create_identity(mut self, input: IdentityCreate) -> Result<Account> {
-    let config = AccountConfig::new_with_config(Arc::clone(&self.storage), self.config.clone());
-    let account = Account::create_identity(config, input).await?;
+  pub async fn create_identity(&self, input: IdentityCreate) -> Result<Account> {
+    let setup = AccountSetup::new_with_options(
+      Arc::clone(&self.storage),
+      Some(self.config.clone()),
+      Some(Arc::clone(&self.client_map)),
+    );
 
-    if let Some(clients) = self.clients.take() {
-      for (_, client) in clients.into_iter() {
-        account.set_client(client.build().await?);
-      }
-    }
+    let account = Account::create_identity(setup, input).await?;
 
     Ok(account)
   }
 
   /// Loads an existing identity from the given did.
-  pub async fn load_identity(mut self, did: IotaDID) -> Result<Account> {
-    let config = AccountConfig::new_with_config(Arc::clone(&self.storage), self.config.clone());
-    let account = Account::load(did, config).await?;
+  pub async fn load_identity(&self, did: IotaDID) -> Result<Account> {
+    let setup = AccountSetup::new_with_options(
+      Arc::clone(&self.storage),
+      Some(self.config.clone()),
+      Some(Arc::clone(&self.client_map)),
+    );
 
-    if let Some(clients) = self.clients.take() {
-      for (_, client) in clients.into_iter() {
-        account.set_client(client.build().await?);
-      }
-    }
+    let account = Account::load(did, setup).await?;
 
     Ok(account)
   }

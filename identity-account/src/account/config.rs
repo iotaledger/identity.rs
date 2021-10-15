@@ -3,13 +3,9 @@
 
 use std::sync::Arc;
 
-use crate::storage::Storage;
+use identity_iota::tangle::ClientMap;
 
-#[derive(Clone, Debug)]
-pub struct AccountConfig {
-  pub(crate) inner: Config,
-  pub(crate) storage: Arc<dyn Storage>,
-}
+use crate::storage::{MemStore, Storage};
 
 /// Top-level configuration for Identity [Account]s
 #[derive(Clone, Debug)]
@@ -36,21 +32,42 @@ impl Config {
   }
 }
 
-impl AccountConfig {
+#[derive(Clone, Debug)]
+pub struct AccountSetup {
+  pub(crate) config: Config,
+  pub(crate) storage: Arc<dyn Storage>,
+  pub(crate) client_map: Arc<ClientMap>,
+}
+
+impl Default for AccountSetup {
+  fn default() -> Self {
+    Self::new(Arc::new(MemStore::new()))
+  }
+}
+
+impl AccountSetup {
   pub fn new(storage: Arc<dyn Storage>) -> Self {
     Self {
-      inner: Config::new(),
+      config: Config::new(),
       storage,
+      client_map: Arc::new(ClientMap::new()),
     }
   }
 
-  pub fn new_with_config(storage: Arc<dyn Storage>, config: Config) -> Self {
+  pub fn new_with_options(
+    storage: Arc<dyn Storage>,
+    config: Option<Config>,
+    client_map: Option<Arc<ClientMap>>,
+  ) -> Self {
     Self {
-      inner: config,
+      config: config.unwrap_or_default(),
       storage,
+      client_map: client_map.unwrap_or_else(|| Arc::new(ClientMap::new())),
     }
   }
+}
 
+impl Config {
   /// Sets the account auto-save behaviour.
   /// - [`Every`][AutoSave::Every] => Save to storage on every update
   /// - [`Never`][AutoSave::Never] => Never save to storage when updating
@@ -60,12 +77,9 @@ impl AccountConfig {
   /// likely want to set [`dropsave`][Self::dropsave] to `true`.
   ///
   /// Default: [`Every`][AutoSave::Every]
-  pub fn set_autosave(&mut self, value: AutoSave) {
-    self.inner.autosave = value;
-  }
-
-  pub fn autosave(&self) -> AutoSave {
-      self.inner.autosave
+  pub fn autosave(mut self, value: AutoSave) -> Self {
+    self.autosave = value;
+    self
   }
 
   /// Sets the account auto-publish behaviour.
@@ -73,12 +87,9 @@ impl AccountConfig {
   /// - `false` => never publish automatically
   ///
   /// Default: `true`
-  pub fn set_autopublish(&mut self, value: bool) {
-    self.inner.autopublish = value;
-  }
-
-  pub fn autopublish(&self) -> bool {
-      self.inner.autopublish
+  pub fn autopublish(mut self, value: bool) -> Self {
+    self.autopublish = value;
+    self
   }
 
   /// Save the account state on drop.
@@ -86,35 +97,21 @@ impl AccountConfig {
   /// either [`Every`][AutoSave::Every] or [`Batch(n)`][AutoSave::Batch].
   ///
   /// Default: `true`
-  pub fn set_dropsave(&mut self, value: bool) {
-    self.inner.dropsave = value;
-  }
-
-  pub fn dropsave(&self) -> bool {
-      self.inner.dropsave
+  pub fn dropsave(mut self, value: bool) -> Self {
+    self.dropsave = value;
+    self
   }
 
   /// Save a state snapshot every N actions.
-  pub fn set_milestone(mut self, value: u32) {
-    self.inner.milestone = value;
-  }
-
-  pub fn milestone(&self) -> u32 {
-      self.inner.milestone
+  pub fn milestone(mut self, value: u32) -> Self {
+    self.milestone = value;
+    self
   }
 
   #[doc(hidden)]
-  pub fn set_testmode(&mut self, value: bool) {
-    self.inner.testmode = value;
-  }
-
-  #[doc(hidden)]
-  pub fn testmode(&self) -> bool { 
-      self.inner.testmode
-  }
-
-  pub fn storage(&self) -> &dyn Storage {
-      self.storage.as_ref()
+  pub fn testmode(mut self, value: bool) -> Self {
+    self.testmode = value;
+    self
   }
 }
 

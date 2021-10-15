@@ -18,6 +18,7 @@ use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
+use std::sync::Arc;
 
 use crate::account::AccountBuilder;
 use crate::error::Result;
@@ -36,14 +37,17 @@ use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
 
-use super::config::AccountConfig;
+use super::config::AccountSetup;
 use super::config::AutoSave;
+use super::Config;
 
 const OSC: Ordering = Ordering::SeqCst;
 
 #[derive(Debug)]
 pub struct Account {
-  config: AccountConfig,
+  config: Config,
+  storage: Arc<dyn Storage>,
+  client_map: Arc<ClientMap>,
   state: State,
   did: IotaDID,
 }
@@ -55,32 +59,39 @@ impl Account {
   }
 
   /// Loads an existing identity.
-  pub async fn load(did: IotaDID, config: AccountConfig) -> Result<Self> {
-    Self::with_config(did, config).await
+  pub async fn load(did: IotaDID, setup: AccountSetup) -> Result<Self> {
+    Self::from_setup(did, setup).await
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  pub async fn with_config(did: IotaDID, config: AccountConfig) -> Result<Self> {
+  async fn from_setup(did: IotaDID, setup: AccountSetup) -> Result<Self> {
     Ok(Self {
       state: State::new(),
-      config,
+      config: setup.config,
+      storage: setup.storage,
+      client_map: setup.client_map,
       did,
     })
   }
 
   /// Returns a reference to the [Storage] implementation.
   pub fn storage(&self) -> &dyn Storage {
-    &*self.config.storage()
+    self.storage.as_ref()
+  }
+
+  /// Returns whether auto-publish is enabled.
+  pub fn autopublish(&self) -> bool {
+    self.config.autopublish
   }
 
   /// Returns the auto-save configuration value.
   pub fn autosave(&self) -> AutoSave {
-    self.config.autosave()
+    self.config.autosave
   }
 
-  /// Returns the save-on-drop configuration value.
+  /// Returns whether save-on-drop is enabled.
   pub fn dropsave(&self) -> bool {
-    self.config.dropsave()
+    self.config.dropsave
   }
 
   /// Returns the total number of actions executed by this instance.
@@ -115,7 +126,7 @@ impl Account {
     self.state.clients.resolve(document).await.map_err(Into::into)
   }
 
-  pub async fn create_identity(config: AccountConfig, input: IdentityCreate) -> Result<Account> {
+  pub async fn create_identity(setup: AccountSetup, input: IdentityCreate) -> Result<Account> {
     let command = CreateIdentity {
       network: input.network,
       method_secret: input.method_secret,
@@ -125,12 +136,12 @@ impl Account {
     let snapshot = IdentitySnapshot::new(IdentityState::new());
 
     let (did, events): (IotaDID, Vec<Event>) = command
-      .process(snapshot.identity().integration_generation(), config.storage())
+      .process(snapshot.identity().integration_generation(), setup.storage.as_ref())
       .await?;
 
-    let commits = Self::commit_events(&did, &config, &snapshot, &events).await?;
+    let commits = Self::commit_events(&did, &setup.config, setup.storage.as_ref(), &snapshot, &events).await?;
 
-    let account = Self::with_config(did, config).await?;
+    let account = Self::from_setup(did, setup).await?;
 
     account.publish_commits(snapshot, commits, false).await?;
 
@@ -191,7 +202,7 @@ impl Account {
     debug!("[Account::process] Events = {:#?}", events);
 
     if let Some(events) = events {
-      let commits: Vec<Commit> = Self::commit_events(self.did(), &self.config, &root, &events).await?;
+      let commits: Vec<Commit> = Self::commit_events(self.did(), &self.config, self.storage(), &root, &events).await?;
       self.publish_commits(root, commits, persist).await?;
     }
 
@@ -229,13 +240,17 @@ impl Account {
       let location: &KeyLocation = method.location();
 
       // Sign the DID Document with the current authentication method
-      new_state.sign_data(self.did(), self.storage(), location, document).await?;
+      new_state
+        .sign_data(self.did(), self.storage(), location, document)
+        .await?;
     } else {
       let method: &TinyMethod = old_state.authentication()?;
       let location: &KeyLocation = method.location();
 
       // Sign the DID Document with the previous authentication method
-      old_state.sign_data(self.did(), self.storage(), location, document).await?;
+      old_state
+        .sign_data(self.did(), self.storage(), location, document)
+        .await?;
     }
 
     Ok(())
@@ -251,7 +266,7 @@ impl Account {
 
     self.sign_document(old_state, new_state, &mut new_doc).await?;
 
-    let message: MessageId = if self.config.testmode() {
+    let message: MessageId = if self.config.testmode {
       MessageId::null()
     } else {
       self.state.clients.publish_document(&new_doc).await?.into()
@@ -259,7 +274,7 @@ impl Account {
 
     let events: [Event; 1] = [Event::new(EventData::IntegrationMessage(message))];
 
-    Self::commit_events(self.did(), &self.config, &new_root, &events).await?;
+    Self::commit_events(self.did(), &self.config, self.storage(), &new_root, &events).await?;
 
     Ok(())
   }
@@ -284,7 +299,7 @@ impl Account {
       .sign_data(self.did(), self.storage(), location, &mut diff)
       .await?;
 
-    let message: MessageId = if self.config.testmode() {
+    let message: MessageId = if self.config.testmode {
       MessageId::null()
     } else {
       self
@@ -297,7 +312,7 @@ impl Account {
 
     let events: [Event; 1] = [Event::new(EventData::DiffMessage(message))];
 
-    Self::commit_events(self.did(), &self.config, &new_root, &events).await?;
+    Self::commit_events(self.did(), &self.config, self.storage(), &new_root, &events).await?;
 
     Ok(())
   }
@@ -342,7 +357,8 @@ impl Account {
 
   async fn commit_events(
     did: &IotaDID,
-    config: &AccountConfig,
+    config: &Config,
+    storage: &dyn Storage,
     state: &IdentitySnapshot,
     events: &[Event],
   ) -> Result<Vec<Commit>> {
@@ -362,10 +378,10 @@ impl Account {
     }
 
     // Append the list of commits to the store
-    config.storage().append(did, &commits).await?;
+    storage.append(did, &commits).await?;
 
     // Store a snapshot every N events
-    if sequence.to_u32() % config.milestone() == 0 {
+    if sequence.to_u32() % config.milestone == 0 {
       let mut state: IdentitySnapshot = state.clone();
 
       // Fold the new commits into the snapshot
@@ -374,7 +390,7 @@ impl Account {
       }
 
       // Store the new snapshot
-      config.storage().set_snapshot(did, &state).await?;
+      storage.set_snapshot(did, &state).await?;
     }
 
     // Return the list of stored events
@@ -382,7 +398,7 @@ impl Account {
   }
 
   async fn save(&self, force: bool) -> Result<()> {
-    match self.config.autosave() {
+    match self.config.autosave {
       AutoSave::Every => {
         self.storage().flush_changes().await?;
       }
@@ -398,7 +414,11 @@ impl Account {
   /// Push all unpublished changes for the given identity to the tangle in a single message.
   pub async fn publish_updates(&self) -> Result<()> {
     // Get the last commit generation that was published to the tangle.
-    let last_published: Generation = self.storage().published_generation(self.did()).await?.unwrap_or_default();
+    let last_published: Generation = self
+      .storage()
+      .published_generation(self.did())
+      .await?
+      .unwrap_or_default();
 
     // Get the commits that need to be published.
     let commits: Vec<Commit> = self.storage().collect(self.did(), last_published).await?;
@@ -417,7 +437,7 @@ impl Account {
 
   /// Publishes according to the autopublish configuration.
   async fn publish(&self, snapshot: IdentitySnapshot, commits: Vec<Commit>, force: bool) -> Result<()> {
-    if !force && !self.config.autopublish() {
+    if !force && !self.config.autopublish {
       return Ok(());
     }
 
@@ -448,14 +468,12 @@ impl Account {
 
 impl Drop for Account {
   fn drop(&mut self) {
-    if self.config.dropsave() && self.actions() != 0 {
+    if self.config.dropsave && self.actions() != 0 {
       // TODO: Handle Result (?)
       let _ = executor::block_on(self.storage().flush_changes());
     }
   }
 }
-
-
 
 // =============================================================================
 // State

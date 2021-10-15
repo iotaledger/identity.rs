@@ -6,6 +6,7 @@
 use std::path::PathBuf;
 
 use identity::account::Account;
+use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::IdentityCreate;
 use identity::account::IdentityState;
@@ -23,23 +24,24 @@ async fn main() -> Result<()> {
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
 
-  // Create a new Account with the default configuration
-  let account: Account = Account::builder()
+  // Create a new `AccountBuilder` that can produce any number of accounts.
+  // Accounts share the storage and config that was set when they are built.
+  let builder: AccountBuilder = Account::builder()
     .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
-    .build()
     .await?;
 
   // Create a new Identity with default settings
   //
   // This step generates a keypair, creates an identity and publishes it to the IOTA mainnet.
-  let identity: IdentityState = account.create_identity(IdentityCreate::default()).await?;
-  let iota_did: &IotaDID = identity.try_did()?;
+  let account: Account = builder.create_identity(IdentityCreate::default()).await?;
+
+  let iota_did: &IotaDID = account.did();
 
   // Print the local state of the DID Document
   println!(
     "[Example] Local Document from {} = {:#?}",
     iota_did,
-    identity.to_document()
+    account.state().await?.to_document()
   );
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".

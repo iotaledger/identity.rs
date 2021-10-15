@@ -319,7 +319,13 @@ impl IdentityState {
     Ok(document)
   }
 
-  pub async fn sign_data<U>(&self, did: &IotaDID, store: &dyn Storage, location: &KeyLocation, target: &mut U) -> Result<()>
+  pub async fn sign_data<U>(
+    &self,
+    did: &IotaDID,
+    store: &dyn Storage,
+    location: &KeyLocation,
+    target: &mut U,
+  ) -> Result<()>
   where
     U: Serialize + SetSignature,
   {

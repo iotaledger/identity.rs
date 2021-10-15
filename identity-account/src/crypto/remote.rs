@@ -38,8 +38,7 @@ pub struct RemoteSign<'a> {
   marker: PhantomData<RemoteKey<'a>>,
 }
 
-impl<'a> Sign for RemoteSign<'a>
-{
+impl<'a> Sign for RemoteSign<'a> {
   type Private = RemoteKey<'a>;
   type Output = Vec<u8>;
 

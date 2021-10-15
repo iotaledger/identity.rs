@@ -3,7 +3,7 @@
 
 use std::pin::Pin;
 
-use crate::account::{Account, AccountConfig};
+use crate::account::{Account, AccountSetup};
 use crate::identity::{IdentityCreate, IdentityUpdater};
 use crate::storage::MemStore;
 use crate::{Error as AccountError, Result};
@@ -28,14 +28,11 @@ async fn test_lazy_updates() -> Result<()> {
         Network::Mainnet
       };
 
-      let mut account_config = AccountConfig::new(MemStore::new());
+      let mut account_config = AccountSetup::new(MemStore::new());
       account_config.set_autopublish(false);
 
-      let account = Account::create_identity(
-        account_config,
-        IdentityCreate::new().network(network.name()).unwrap(),
-      )
-      .await?;
+      let account =
+        Account::create_identity(account_config, IdentityCreate::new().network(network.name()).unwrap()).await?;
 
       let did: &IotaDID = account.did();
 
