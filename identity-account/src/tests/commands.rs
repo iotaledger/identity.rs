@@ -1,7 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::any::Any;
+use std::sync::Arc;
+
 use crate::account::Account;
+use crate::account::AccountSetup;
 use crate::account::Config;
 use crate::error::Error;
 use crate::error::Result;
@@ -13,6 +17,7 @@ use crate::identity::IdentitySnapshot;
 use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::storage::MemStore;
+use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::MethodSecret;
 use identity_core::common::UnixTimestamp;
@@ -23,37 +28,17 @@ use identity_core::crypto::PrivateKey;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 
-async fn new_account() -> Result<Account> {
-  let store: MemStore = MemStore::new();
-  let config: Config = Config::new().testmode(true);
-
-  Account::with_config(store, config).await
+fn account_setup() -> AccountSetup {
+  AccountSetup::new_with_options(Arc::new(MemStore::new()), Some(Config::new().testmode(true)), None)
 }
 
 #[tokio::test]
 async fn test_create_identity() -> Result<()> {
-  let account: Account = new_account().await?;
-  let identity: IdentityId = IdentityId::from_u32(1);
-  let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
+  let account = Account::create_identity(account_setup(), IdentityCreate::default()).await?;
 
-  assert_eq!(snapshot.sequence(), Generation::new());
-  assert_eq!(snapshot.id(), identity);
-  assert!(snapshot.identity().did().is_none());
-  assert_eq!(snapshot.identity().created(), UnixTimestamp::EPOCH);
-  assert_eq!(snapshot.identity().updated(), UnixTimestamp::EPOCH);
-
-  let command: Update = Update::CreateIdentity {
-    network: None,
-    method_secret: None,
-    authentication: MethodType::Ed25519VerificationKey2018,
-  };
-
-  account.process_update(identity, command, false).await?;
-
-  let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
+  let snapshot: IdentitySnapshot = account.load_snapshot().await?;
 
   assert_eq!(snapshot.sequence(), Generation::from_u32(4));
-  assert_eq!(snapshot.id(), identity);
   assert!(snapshot.identity().did().is_some());
   assert_ne!(snapshot.identity().created(), UnixTimestamp::EPOCH);
   assert_ne!(snapshot.identity().updated(), UnixTimestamp::EPOCH);
@@ -62,50 +47,13 @@ async fn test_create_identity() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_create_identity_invalid_method() -> Result<()> {
-  const TYPES: &[MethodType] = &[MethodType::MerkleKeyCollection2021];
-
-  let account: Account = new_account().await?;
-  let identity: IdentityId = IdentityId::from_u32(1);
-  let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-
-  // initial snapshot version = 0
-  assert_eq!(snapshot.sequence(), Generation::new());
-
-  for type_ in TYPES.iter().copied() {
-    let command: Update = Update::CreateIdentity {
-      network: None,
-      method_secret: None,
-      authentication: type_,
-    };
-
-    let output: Result<()> = account.process_update(identity, command, false).await;
-
-    assert!(matches!(
-      output.unwrap_err(),
-      Error::UpdateError(UpdateError::InvalidMethodType(_))
-    ));
-
-    let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-
-    // version is still 0, no events have been committed
-    assert_eq!(snapshot.sequence(), Generation::new());
-  }
-
-  Ok(())
-}
-
-#[tokio::test]
 async fn test_create_identity_network() -> Result<()> {
-  let account: Account = new_account().await?;
-
   // Create an identity with a valid network string
   let create_identity: IdentityCreate = IdentityCreate::new().network("dev")?.key_type(KeyType::Ed25519);
-  let identity: IdentityState = account.create_identity(create_identity).await?;
+  let account = Account::create_identity(account_setup(), create_identity).await?;
 
   // Ensure the identity creation was successful
-  assert!(identity.did().is_some());
-  assert!(identity.authentication().is_ok());
+  assert!(account.state().await?.authentication().is_ok());
 
   Ok(())
 }
@@ -126,37 +74,22 @@ async fn test_create_identity_invalid_network() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_identity_already_exists() -> Result<()> {
-  let account: Account = new_account().await?;
-  let identity: IdentityId = IdentityId::from_u32(1);
-  let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
+  let keypair = KeyPair::new_ed25519()?;
+  let identity_create = IdentityCreate::default().method_secret(MethodSecret::Ed25519(keypair.private().clone()));
 
-  // initial snapshot version = 0
-  assert_eq!(snapshot.sequence(), Generation::new());
+  let account = Account::create_identity(account_setup(), identity_create).await?;
 
-  let command: Update = Update::CreateIdentity {
-    network: None,
-    method_secret: None,
-    authentication: MethodType::Ed25519VerificationKey2018,
-  };
+  assert_eq!(account.load_snapshot().await?.sequence(), Generation::from(4));
 
-  account.process_update(identity, command.clone(), false).await?;
-
-  let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-
-  // version is now 4
-  assert_eq!(snapshot.sequence(), Generation::from(4));
-
-  let output: Result<()> = account.process_update(identity, command, false).await;
+  let output = Account::create_identity(account_setup(), identity_create).await;
 
   assert!(matches!(
     output.unwrap_err(),
     Error::UpdateError(UpdateError::DocumentAlreadyExists),
   ));
 
-  let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-
   // version is still 4, no events have been committed
-  assert_eq!(snapshot.sequence(), Generation::from(4));
+  assert_eq!(account.load_snapshot().await?.sequence(), Generation::from(4));
 
   Ok(())
 }
