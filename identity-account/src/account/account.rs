@@ -59,12 +59,12 @@ impl Account {
   }
 
   /// Loads an existing identity.
-  pub async fn load(did: IotaDID, setup: AccountSetup) -> Result<Self> {
-    Self::from_setup(did, setup).await
+  pub async fn load(setup: AccountSetup, did: IotaDID) -> Result<Self> {
+    Self::from_setup(setup, did).await
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  async fn from_setup(did: IotaDID, setup: AccountSetup) -> Result<Self> {
+  async fn from_setup(setup: AccountSetup, did: IotaDID) -> Result<Self> {
     Ok(Self {
       state: State::new(),
       config: setup.config,
@@ -141,7 +141,7 @@ impl Account {
 
     let commits = Self::commit_events(&did, &setup.config, setup.storage.as_ref(), &snapshot, &events).await?;
 
-    let account = Self::from_setup(did, setup).await?;
+    let account = Self::from_setup(setup, did).await?;
 
     account.publish_commits(snapshot, commits, false).await?;
 

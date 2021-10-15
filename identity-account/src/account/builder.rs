@@ -136,7 +136,7 @@ impl AccountBuilder {
       Some(Arc::clone(&self.client_map)),
     );
 
-    let account = Account::load(did, setup).await?;
+    let account = Account::load(setup, did).await?;
 
     Ok(account)
   }

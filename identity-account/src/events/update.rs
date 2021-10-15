@@ -76,6 +76,11 @@ impl CreateIdentity {
       IotaDID::new(keypair.public().as_ref())?
     };
 
+    ensure!(
+      !store.key_exists(&did, &location).await?,
+      UpdateError::DocumentAlreadyExists
+    );
+
     let private_key = keypair.private().to_owned();
     std::mem::drop(keypair);
 
