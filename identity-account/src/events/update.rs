@@ -165,7 +165,7 @@ impl Update {
         // The key location must be available
         // TODO: config: strict
         ensure!(
-          !store.key_exists(&did, &location).await?,
+          !store.key_exists(did, &location).await?,
           UpdateError::DuplicateKeyLocation(location)
         );
 

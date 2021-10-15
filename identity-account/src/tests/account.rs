@@ -31,7 +31,5 @@ async fn test_account_builder() -> Result<()> {
   assert!(account.autopublish());
   assert!(!account2.autopublish());
 
-  assert!(std::ptr::eq(account.storage(), account2.storage()));
-
   Ok(())
 }

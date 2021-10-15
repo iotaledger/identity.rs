@@ -21,7 +21,7 @@ impl<'a> Context<'a> {
   }
 
   pub fn did(&self) -> &IotaDID {
-    &self.did
+    self.did
   }
 
   /// Returns the context `state`.
