@@ -114,12 +114,12 @@ impl Account {
 
   /// Return a copy of the latest state of the identity
   pub async fn state(&self) -> Result<IdentityState> {
-    Ok(self.load_snapshot(self.did()).await?.into_identity())
+    Ok(self.load_snapshot().await?.into_identity())
   }
 
   /// Resolves the DID Document associated with the specified `key`.
   pub async fn resolve_identity(&self) -> Result<IotaDocument> {
-    let snapshot: IdentitySnapshot = self.load_snapshot(self.did()).await?;
+    let snapshot: IdentitySnapshot = self.load_snapshot().await?;
     let document: &IotaDID = snapshot.identity().try_did()?;
 
     // Fetch the DID Document from the Tangle
@@ -174,7 +174,7 @@ impl Account {
   where
     U: Serialize + SetSignature,
   {
-    let snapshot: IdentitySnapshot = self.load_snapshot(self.did()).await?;
+    let snapshot: IdentitySnapshot = self.load_snapshot().await?;
     let state: &IdentityState = snapshot.identity();
 
     let fragment: Fragment = Fragment::new(fragment);
@@ -191,7 +191,7 @@ impl Account {
   // ===========================================================================
   pub(crate) async fn process_update(&self, command: Update, persist: bool) -> Result<()> {
     // Load the latest state snapshot from storage
-    let root: IdentitySnapshot = self.load_snapshot(self.did()).await?;
+    let root: IdentitySnapshot = self.load_snapshot().await?;
 
     debug!("[Account::process] Root = {:#?}", root);
 
@@ -257,7 +257,7 @@ impl Account {
   }
 
   async fn process_integration_change(&self, old_root: IdentitySnapshot) -> Result<()> {
-    let new_root: IdentitySnapshot = self.load_snapshot(self.did()).await?;
+    let new_root: IdentitySnapshot = self.load_snapshot().await?;
 
     let old_state: &IdentityState = old_root.identity();
     let new_state: &IdentityState = new_root.identity();
@@ -280,7 +280,7 @@ impl Account {
   }
 
   async fn process_diff_change(&self, old_root: IdentitySnapshot) -> Result<()> {
-    let new_root: IdentitySnapshot = self.load_snapshot(self.did()).await?;
+    let new_root: IdentitySnapshot = self.load_snapshot().await?;
 
     let old_state: &IdentityState = old_root.identity();
     let new_state: &IdentityState = new_root.identity();
@@ -325,30 +325,30 @@ impl Account {
   }
 
   #[doc(hidden)]
-  pub async fn load_snapshot(&self, did: &IotaDID) -> Result<IdentitySnapshot> {
+  pub async fn load_snapshot(&self) -> Result<IdentitySnapshot> {
     // Retrieve the state snapshot from storage or create a new one.
     let initial: IdentitySnapshot = self
       .storage()
-      .snapshot(did)
+      .snapshot(self.did())
       .await?
       .unwrap_or_else(|| IdentitySnapshot::new(IdentityState::new()));
 
     // Apply all recent events to the state and create a new snapshot
     self
       .storage()
-      .stream(did, initial.sequence())
+      .stream(self.did(), initial.sequence())
       .await?
       .try_fold(initial, Self::fold_snapshot)
       .await
   }
 
-  async fn load_snapshot_at(&self, did: &IotaDID, generation: Generation) -> Result<IdentitySnapshot> {
+  async fn load_snapshot_at(&self, generation: Generation) -> Result<IdentitySnapshot> {
     let initial: IdentitySnapshot = IdentitySnapshot::new(IdentityState::new());
 
     // Apply all events up to `generation`
     self
       .storage()
-      .stream(did, Generation::new())
+      .stream(self.did(), Generation::new())
       .await?
       .take(generation.to_u32() as usize)
       .try_fold(initial, Self::fold_snapshot)
@@ -428,7 +428,7 @@ impl Account {
     }
 
     // Load the snapshot that represents the state on the tangle.
-    let snapshot: IdentitySnapshot = self.load_snapshot_at(self.did(), last_published).await?;
+    let snapshot: IdentitySnapshot = self.load_snapshot_at(last_published).await?;
 
     self.publish(snapshot, commits, true).await?;
 
