@@ -143,7 +143,7 @@ impl AccountBuilder {
       Some(Arc::clone(&self.client_map)),
     );
 
-    let account = Account::load(setup, did).await?;
+    let account = Account::load_identity(setup, did).await?;
 
     Ok(account)
   }

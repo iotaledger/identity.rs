@@ -60,7 +60,7 @@ impl Account {
   }
 
   /// Loads an existing identity.
-  pub async fn load(setup: AccountSetup, did: IotaDID) -> Result<Self> {
+  pub async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
     // Ensure the did exists in storage
     setup.storage.snapshot(&did).await?.ok_or(Error::IdentityNotFound)?;
 
