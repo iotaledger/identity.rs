@@ -33,15 +33,14 @@ use crate::types::MethodSecret;
 // Supported authentication method types.
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
-// TODO: Add constructor, documentation, usual derives
-pub struct CreateIdentity {
-  pub network: Option<NetworkName>,
-  pub method_secret: Option<MethodSecret>,
-  pub authentication: MethodType,
+pub(crate) struct CreateIdentity {
+  pub(crate) network: Option<NetworkName>,
+  pub(crate) method_secret: Option<MethodSecret>,
+  pub(crate) authentication: MethodType,
 }
 
 impl CreateIdentity {
-  pub async fn process(
+  pub(crate) async fn process(
     &self,
     integration_generation: Generation,
     store: &dyn Storage,
