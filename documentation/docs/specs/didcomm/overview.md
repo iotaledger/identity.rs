@@ -7,9 +7,15 @@ sidebar_label: Overview
 - Status: `IN-PROGRESS`
 - Last Updated: 2021-10-18
 
-## Introduction / IOTA DIDComm Specification
+## Introduction
 
-TODO
+The IOTA DIDComm Specification defines a number of [protocols](#protocols), that can be used for common Self Sovereign Identity (SSI) interactions like issuing and presenting credentials as well as supporting functions, such as connection management and authentication. Cross cutting concerns like error handling are discussed in the [resources](#resources) section.
+
+The IOTA DIDComm Specification builds on the [DIDComm Messaging Specification](https://identity.foundation/didcomm-messaging/spec/) developed by the [DIF](https://identity.foundation/) and utilises [external protocols](#external-protocols) from the messaging specification for well established interactions like feature discovery.
+
+This specification is meant to be complete  a solution for common use cases and therefore contains protocols for common SSI interactions. It is possible to extended the specification with custom protocols and custom methods in existing protocols to support application specific requirements. 
+
+The specification itself is technology agnostic. Much like the [DIDComm Messaging Specification](https://identity.foundation/didcomm-messaging/spec/) there are no restrictions on transport layers and a concrete implementation can be done in many different technologies.
 
 ## Conformance
 
