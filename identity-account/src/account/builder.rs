@@ -83,6 +83,13 @@ impl AccountBuilder {
     self
   }
 
+  #[allow(dead_code)]
+  #[doc(hidden)]
+  pub(crate) fn testmode(mut self, value: bool) -> Self {
+    self.config = self.config.testmode(value);
+    self
+  }
+
   /// Sets the account storage adapter.
   pub async fn storage(mut self, value: AccountStorage) -> Result<Self> {
     self.storage = match value {

@@ -36,6 +36,7 @@ use crate::identity::TinyMethod;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
+use crate::Error;
 
 use super::config::AccountSetup;
 use super::config::AutoSave;
@@ -60,6 +61,9 @@ impl Account {
 
   /// Loads an existing identity.
   pub async fn load(setup: AccountSetup, did: IotaDID) -> Result<Self> {
+    // Ensure the did exists in storage
+    setup.storage.snapshot(&did).await?.ok_or(Error::IdentityNotFound)?;
+
     Self::from_setup(setup, did).await
   }
 
