@@ -18,7 +18,9 @@ identity-core = { version = "=0.3.0", path = "../identity-core" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
-uriparse = { version = "0.6", default-features = false }
+
+[dev-dependencies]
+proptest = { version = "1.0" }
 
 [package.metadata.docs.rs]
 # To build locally:

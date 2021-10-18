@@ -204,8 +204,8 @@ impl IotaDID {
   /// Normalizes the DID `method_id` by removing the default network segment if present.
   ///
   /// E.g.
-  /// - "did:iota:main:123" -> "did:iota:123" is normalized
-  /// - "did:iota:dev:123" -> "did:iota:dev:123" is unchanged
+  /// - `"did:iota:main:123" -> "did:iota:123"` is normalized
+  /// - `"did:iota:dev:123" -> "did:iota:dev:123"` is unchanged
   fn normalize(mut did: CoreDID) -> CoreDID {
     let segments: Segments<'_> = Segments(did.method_id());
 

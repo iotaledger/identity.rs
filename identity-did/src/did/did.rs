@@ -96,7 +96,7 @@ impl CoreDID {
 
   /// Validates whether a string is a valid [`DID`] method name.
   pub fn valid_method_name(value: &str) -> Result<(), DIDError> {
-    if !value.chars().all(is_char_did_method_name) {
+    if !value.chars().all(is_char_method_name) {
       return Err(DIDError::InvalidMethodName);
     }
     Ok(())
@@ -111,7 +111,7 @@ impl CoreDID {
 
   /// Validates whether a string is a valid [`DID`] method-id.
   pub fn valid_method_id(value: &str) -> Result<(), DIDError> {
-    if !value.chars().all(is_char_did_method_id) {
+    if !value.chars().all(is_char_method_id) {
       return Err(DIDError::InvalidMethodId);
     }
     Ok(())
@@ -280,13 +280,55 @@ impl PartialEq<&CoreDID> for CoreDID {
 /// Checks whether a character satisfies DID method name constraints:
 /// { 0-9 | a-z }
 #[inline(always)]
-const fn is_char_did_method_name(ch: char) -> bool {
+pub(crate) const fn is_char_method_name(ch: char) -> bool {
   matches!(ch, '0'..='9' | 'a'..='z')
 }
 
 /// Checks whether a character satisfies DID method-id constraints:
 /// { 0-9 | a-z | A-Z | . | - | _ | : }
 #[inline(always)]
-const fn is_char_did_method_id(ch: char) -> bool {
+pub(crate) const fn is_char_method_id(ch: char) -> bool {
   matches!(ch, '0'..='9' | 'a'..='z' | 'A'..='Z' | '.' | '-' | '_' | ':')
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_core_did_valid() {
+    assert_eq!(CoreDID::parse("did:example:123456890").unwrap(), "did:example:123456890");
+    assert_eq!(CoreDID::parse("did:iota:main:123456890").unwrap(), "did:iota:main:123456890");
+  }
+
+  #[test]
+  fn test_core_did_invalid() {
+    assert!(CoreDID::parse("").is_err());
+    assert!(CoreDID::parse("did:").is_err());
+    assert!(CoreDID::parse("dad:example:123456890").is_err());
+  }
+
+  proptest::proptest! {
+    #[test]
+    fn test_fuzz_core_did_valid(s in r"did:[a-z0-9]{1,10}:[a-zA-Z0-9\.\-_:]{1,60}") {
+      assert_eq!(CoreDID::parse(&s).unwrap().as_str(), &s);
+    }
+
+    #[test]
+    fn test_fuzz_core_did_no_panic(s in "\\PC*") {
+      assert!(CoreDID::parse(&s).is_err());
+    }
+
+    #[test]
+    fn test_fuzz_set_method_name_no_panic(s in "\\PC*") {
+      let mut did = CoreDID::parse("did:example:1234567890").unwrap();
+      let _ = did.set_method_id(&s);
+    }
+
+    #[test]
+    fn test_fuzz_set_method_id_no_panic(s in "\\PC*") {
+      let mut did = CoreDID::parse("did:example:1234567890").unwrap();
+      let _ = did.set_method_name(&s);
+    }
+  }
 }
