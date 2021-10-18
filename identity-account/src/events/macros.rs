@@ -33,9 +33,9 @@ macro_rules! impl_command_builder {
   ($(#[$doc:meta])* $ident:ident { $(@ $requirement:ident $field:ident $ty:ty $(= $value:expr)?),* $(,)* }) => {
     paste::paste! {
       $(#[$doc])*
-      #[derive(Clone, Debug)]
+      #[derive(Debug)]
       pub struct [<$ident Builder>]<'account> {
-        account: &'account Account,
+        account: &'account mut Account,
         $(
           $field: Option<$ty>,
         )*
@@ -49,7 +49,7 @@ macro_rules! impl_command_builder {
           }
         )*
 
-        pub fn new(account: &'account Account) -> [<$ident Builder>]<'account> {
+        pub fn new(account: &'account mut Account) -> [<$ident Builder>]<'account> {
           [<$ident Builder>] {
             account,
             $(
@@ -71,7 +71,7 @@ macro_rules! impl_command_builder {
 
       impl<'account> $crate::identity::IdentityUpdater<'account> {
         /// Creates a new builder to modify the identity. See the documentation of the return type for details.
-        pub fn [<$ident:snake>](&self) -> [<$ident Builder>]<'account> {
+        pub fn [<$ident:snake>](&'account mut self) -> [<$ident Builder>]<'account> {
           [<$ident Builder>]::new(self.account)
         }
       }

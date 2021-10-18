@@ -26,14 +26,11 @@ async fn main() -> Result<()> {
   let password: String = "my-password".into();
 
   // Create a new Account with the default configuration
-  let account: Account = Account::builder()
+  let mut account: Account = Account::builder()
     .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
     .await?
     .create_identity(IdentityCreate::default())
     .await?;
-
-  // Retrieve the DID from the newly created identity.
-  let iota_did: &IotaDID = account.did();
 
   // ===========================================================================
   // Identity Manipulation
@@ -74,6 +71,9 @@ async fn main() -> Result<()> {
     .fragment("my-next-key")
     .apply()
     .await?;
+
+  // Retrieve the DID from the newly created identity.
+  let iota_did: &IotaDID = account.did();
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   println!(

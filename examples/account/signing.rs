@@ -31,14 +31,11 @@ async fn main() -> Result<()> {
   let password: String = "my-password".into();
 
   // Create a new Account with stronghold storage.
-  let account: Account = Account::builder()
+  let mut account: Account = Account::builder()
     .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
     .await?
     .create_identity(IdentityCreate::default())
     .await?;
-
-  // Retrieve the DID from the newly created identity.
-  let iota_did: &IotaDID = account.did();
 
   // ===========================================================================
   // Signing Example
@@ -67,7 +64,7 @@ async fn main() -> Result<()> {
 
   // Issue an unsigned Credential...
   let mut credential: Credential = Credential::builder(Default::default())
-    .issuer(Url::parse(&iota_did.as_str())?)
+    .issuer(Url::parse(account.did().as_str())?)
     .type_("UniversityDegreeCredential")
     .subject(subject)
     .build()?;
@@ -81,6 +78,9 @@ async fn main() -> Result<()> {
   //
   // This is an optional step to ensure DID Document consistency.
   let resolved: IotaDocument = account.resolve_identity().await?;
+
+  // Retrieve the DID from the newly created identity.
+  let iota_did: &IotaDID = account.did();
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   println!(

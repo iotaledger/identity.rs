@@ -156,7 +156,7 @@ impl Account {
   ///
   /// On this type, various operations can be executed
   /// that modify an identity, such as creating services or methods.
-  pub fn update_identity(&self) -> IdentityUpdater<'_> {
+  pub fn update_identity(&mut self) -> IdentityUpdater<'_> {
     IdentityUpdater::new(self)
   }
 

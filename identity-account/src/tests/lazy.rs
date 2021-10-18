@@ -5,13 +5,13 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use crate::account::{Account, AccountSetup, Config};
-use crate::identity::{IdentityCreate, IdentityUpdater};
+use crate::identity::IdentityCreate;
 use crate::storage::MemStore;
 use crate::{Error as AccountError, Result};
 use futures::Future;
 use identity_core::common::Url;
 use identity_iota::chain::DocumentHistory;
-use identity_iota::did::{IotaDID, IotaVerificationMethod};
+use identity_iota::did::IotaVerificationMethod;
 use identity_iota::tangle::{Client, Network};
 use identity_iota::Error as IotaError;
 
@@ -32,14 +32,11 @@ async fn test_lazy_updates() -> Result<()> {
       let config = Config::default().autopublish(false);
       let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
 
-      let account =
+      let mut account =
         Account::create_identity(account_config, IdentityCreate::new().network(network.name()).unwrap()).await?;
 
-      let did: &IotaDID = account.did();
-
-      let did_updater: IdentityUpdater<'_> = account.update_identity();
-
-      did_updater
+      account
+        .update_identity()
         .create_service()
         .fragment("my-service")
         .type_("LinkedDomains")
@@ -47,7 +44,8 @@ async fn test_lazy_updates() -> Result<()> {
         .apply()
         .await?;
 
-      did_updater
+      account
+        .update_identity()
         .create_service()
         .fragment("my-other-service")
         .type_("LinkedDomains")
@@ -79,15 +77,26 @@ async fn test_lazy_updates() -> Result<()> {
       // More updates to the identity
       // ===========================================================================
 
-      did_updater.delete_service().fragment("my-service").apply().await?;
+      account
+        .update_identity()
+        .delete_service()
+        .fragment("my-service")
+        .apply()
+        .await?;
 
-      did_updater
+      account
+        .update_identity()
         .delete_service()
         .fragment("my-other-service")
         .apply()
         .await?;
 
-      did_updater.create_method().fragment("new-method").apply().await?;
+      account
+        .update_identity()
+        .create_method()
+        .fragment("new-method")
+        .apply()
+        .await?;
 
       account.publish_updates().await?;
 
@@ -114,7 +123,7 @@ async fn test_lazy_updates() -> Result<()> {
 
       let client: Client = Client::from_network(network).await?;
 
-      let history: DocumentHistory = client.resolve_history(did).await?;
+      let history: DocumentHistory = client.resolve_history(account.did()).await?;
 
       assert_eq!(history.integration_chain_data.len(), 1);
       assert_eq!(history.diff_chain_data.len(), 1);

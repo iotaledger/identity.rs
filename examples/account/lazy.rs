@@ -22,15 +22,12 @@ async fn main() -> Result<()> {
   // Create a new Account with auto publishing set to false.
   // This means updates are not pushed to the tangle automatically.
   // Rather, when we publish, multiple updates are batched together.
-  let account: Account = Account::builder()
+  let mut account: Account = Account::builder()
     .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
     .await?
     .autopublish(false)
     .create_identity(IdentityCreate::default())
     .await?;
-
-  // Retrieve the DID from the newly created identity.
-  let iota_did: &IotaDID = account.did();
 
   account
     .update_identity()
@@ -65,6 +62,9 @@ async fn main() -> Result<()> {
 
   // Publish the updates as one message to the tangle.
   account.publish_updates().await?;
+
+  // Retrieve the DID from the newly created identity.
+  let iota_did: &IotaDID = account.did();
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   println!(
