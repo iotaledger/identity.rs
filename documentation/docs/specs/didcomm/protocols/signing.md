@@ -40,7 +40,7 @@ Allows a trusted-party to request the signing of an unsigned verifiable credenti
 
 ### 1. signing-request {#signing-request}
 
-- Type: `didcomm:iota/signing/0.1/signing-request`
+- Type: `iota/signing/0.1/signing-request`
 - Role: [trusted-party](#roles)
 
 Request by a [trusted-party](#roles) for an [issuer](#roles) to sign a credential.
@@ -88,7 +88,7 @@ To authenticate the [trusted-party](#roles), this SHOULD be sent using [sender a
 
 ### 2. signing-response {#signing-response}
 
-- Type: `didcomm:iota/signing/0.1/signing-response`
+- Type: `iota/signing/0.1/signing-response`
 - Role: [issuer](#roles)
 
 Response from the [issuer](#roles) returning the signed credential back to the [trusted-party](#roles).
@@ -137,7 +137,7 @@ The [issuer](#roles) may request in turn that the credential be signed by a diff
 
 ### 3. signing-acknowledgement {#signing-acknowledgement}
 
-- Type: `didcomm:iota/signing/0.1/signing-acknowledgement`
+- Type: `iota/signing/0.1/signing-acknowledgement`
 - Role: [trusted-party](#roles)
 
 Acknowledgement by the [trusted-party](#roles) that the credential was received and accepted. The [issuer](#roles) MAY revoke the credential if no acknowledgement is received. For auditing or non-repudiation the [issuer](#roles) MAY require that the [signing-acknowledgement](#signing-acknowledgement) be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message).
@@ -183,7 +183,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 This section is non-normative.
 
-- **Security**: implementors SHOULD transmit credentials over an encrypted channel to prevent leaking sensitive information on subjects. (TODO mention/link to DIDComm encryption?)
+- **Security**: implementors SHOULD transmit credentials over an encrypted channel to prevent leaking sensitive information on subjects. See [sender-authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption).
 - **Authentication**: it is RECOMMENDED to use sender-authenticated encryption for continuous authentication of both parties in the DIDComm thread. Anonymous encryption and/or once-off authentication may be insufficient.
 - **Authorisation**: establishing whether a trusted-party is allowed to request signing is an application-level concern.
 - **Validation**: apart from verifying the proof on the signed credential returned in the [signing-response](#signing-response), how the [issuer](#roles) validates the contents of a well-formed credential from a [trusted-party](#roles) and chooses whether or not to sign it is out-of-scope.

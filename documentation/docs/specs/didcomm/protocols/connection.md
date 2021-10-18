@@ -52,8 +52,6 @@ The general structure of the invitation message is described in the [Out Of Band
 
 The actual invitation is contained in the `attachments` field in the message, which is structured as follows:
 
-TODO: indicate supported handshake protocols for authentication?
-
 ```json
 {
   "serviceId": DIDUrl,                  // OPTIONAL
@@ -167,7 +165,7 @@ Refer to the [DIDComm specification](https://identity.foundation/didcomm-messagi
 
 ### 2. connection {#connection}
 
-- Type: `didcomm:iota/connection/0.1/connection`
+- Type: `iota/connection/0.1/connection`
 - Role: [invitee](#roles)
 
 Following a successful connection, the [invitee](#roles) sends its public keys necessary to establish [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption). This may be preceded by an [invitation](#invitation) message, or the [invitee](#roles) may connect directly to the [inviter](#roles) in the case of an implicit invitation.
@@ -215,9 +213,12 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 This section is non-normative.
 
-TBD
+- **Authentication**: implementors SHOULD NOT use any information transmitted in the connection protocol for direct authentication or proof of identity. See the [authentication](./authentication) protocol.
 
-- **Authentication**: implementors SHOULD NOT use any information transmitted in the connection protocol for authentication or proof of identity. 
+## Unresolved Questions
+
+- List supported handshake protocols for authentication post-connection?
+- How do parties know what to do post-connection, send protocol in invitation or does one party just try start a protocol immediately? For custom/corporate applications likely hard-coded, for general SSI wallets it is an open question.
 
 ## Related Work
 

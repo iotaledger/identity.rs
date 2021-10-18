@@ -38,7 +38,7 @@ Note that the exact method of revocation is unspecified. The typical procedure i
 ## Messages
 ### 1. revocation-request {#revocation-request}
 
-- Type: `didcomm:iota/revocation/0.1/revocation-request`
+- Type: `iota/revocation/0.1/revocation-request`
 - Role: [trusted-party](#roles)
 
 Sent by the [trusted-party](#roles) or holder to request revocation of an issued verifiable credential. This message conveys which credential should be revoked and which method should be used. The [revoker](#roles) MAY require this to be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) for auditing purposes and reject unsigned requests.
@@ -82,7 +82,7 @@ Sent by the [trusted-party](#roles) or holder to request revocation of an issued
 
 ### 2. revocation-response {#revocation-response}
 
-- Type: `didcomm:iota/revocation/0.1/revocation-response`
+- Type: `iota/revocation/0.1/revocation-response`
 - Role: [revoker](#roles)
 
 Sent by the [revoker](#roles) as soon as the revocation is performed to indicate the current status.

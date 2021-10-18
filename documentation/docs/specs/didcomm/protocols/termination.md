@@ -40,7 +40,7 @@ Indicates the graceful termination of a connection. It is expected that no recon
 
 ### 1. termination {#termination}
 
-- Type: `didcomm:iota/termination/0.1/termination`
+- Type: `iota/termination/0.1/termination`
 - Role: [sender](#roles)
 
 Used to inform the [receiver](#roles) that the [sender](#roles) wishes to terminate the established connection. 
@@ -52,7 +52,7 @@ Used to inform the [receiver](#roles) that the [sender](#roles) wishes to termin
 
 ### 2. termination-response {#termination-response}
 
-- Type: `didcomm:iota/termination/0.1/termination-response`
+- Type: `iota/termination/0.1/termination-response`
 - Role: [receiver](#roles)
 
 Response from the [receiver](#roles) that the request to terminate the connection was acknowledged. MUST be sent if the field [`please_ack`](https://identity.foundation/didcomm-messaging/spec/#acks) is present in the [termination](#termination) message. 

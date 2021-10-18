@@ -3,7 +3,13 @@ title: IOTA DIDComm Specification
 sidebar_label: Overview
 ---
 
-*version 0.1, last changed October 2021*
+- Version: 0.1
+- Status: `IN-PROGRESS`
+- Last Updated: 2021-10-18
+
+## Introduction / IOTA DIDComm Specification
+
+TODO
 
 ## Conformance
 
@@ -51,9 +57,9 @@ In addition to the protocols defined in this specification, we RECOMMEND impleme
 See [CHANGELOG](./CHANGELOG)
 
 ## TODO
-TODO: make clear that we only show message payloads in the protocol examples
+TODO: section/page on anonymous encryption/sender authenticated encryption/signed messages (table of comparisons with guarantees? E.g. authentication, eavesdropping protection, integrity etc.). Probably better as a section to avoid duplicating discussions from the DIDComm specification, but they are very light on details in the main document. --- After RFC
 
-TODO: come up with a new protocol prefix, `didcomm://` is VERBOTEN https://identity.foundation/didcomm-messaging/spec/#didcomm-message-uris 
+TODO: changelog --- After RFC
 
 ## Future Work
 

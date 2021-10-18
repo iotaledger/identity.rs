@@ -38,7 +38,7 @@ Allows the sending of a single message with arbitrary data. Multiple [post](#pos
 
 ### 1. post {#post-message}
 
-- Type: `didcomm:iota/post/0.1/post`
+- Type: `iota/post/0.1/post`
 - Role: [sender](#roles)
 
 The [sender](#roles) transmits a JSON `payload` to the [receiver](#roles). This MAY take advantage of [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) or be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) or both.

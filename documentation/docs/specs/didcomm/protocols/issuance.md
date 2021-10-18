@@ -40,7 +40,7 @@ Allows a [holder](#roles) to request a [verifiable credential](https://www.w3.or
 
 ### 1. issuance-request {#issuance-request}
 
-- Type: `didcomm:iota/issuance/0.1/issuance-request`
+- Type: `iota/issuance/0.1/issuance-request`
 - Role: [holder](#roles)
 
 The [holder](#roles) requests a single verifiable credential from the [issuer](#roles) of a particular type. Optionally, the [holder](#roles) MAY specify one or more [issuers](#roles) from which they would prefer to receive the credential if multiple are available. 
@@ -48,7 +48,7 @@ The [holder](#roles) requests a single verifiable credential from the [issuer](#
 #### Structure
 ```json
 {
-  "subject": DID,                   // REQUIRED, TODO: DID not always required for all VCs, not always a DID either...
+  "subject": DID,                   // REQUIRED
   "credentialInfo": CredentialInfo, // REQUIRED
 }
 ```
@@ -97,7 +97,7 @@ An [issuer](#roles) wanting to preserve privacy regarding which exact credential
 
 ### 2. issuance-offer {#issuance-offer}
 
-- Type: `didcomm:iota/issuance/0.1/issuance-offer`
+- Type: `iota/issuance/0.1/issuance-offer`
 - Role: [issuer](#roles)
 
 The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles), matching the preceding [`issuance-request`](#issuance-request) if present. The [issuer](#roles) may set an expiry date for the offer and require a non-repudiable proof by the [holder](#roles) that the offer was received.
@@ -106,25 +106,25 @@ The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles
 ```json
 {
   "unsignedCredential": Credential, // REQUIRED
-  "signatureChallenge": {
+  "offerChallenge": {
     "challenge": string,            // REQUIRED
     "credentialHash": string,       // REQUIRED
   }, // OPTIONAL
-  "expiry": DateTime                // OPTIONAL
+  "offerExpiry": DateTime                // OPTIONAL
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | [`unsignedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | Unsigned [credential](https://www.w3.org/TR/vc-data-model/#credentials) being offered to the [holder](#roles). This MUST NOT include a `proof` section. | ✔ |
-| `signatureChallenge` | If present, indicates the [issuer](#issuer) requires the acceptance of the credential to be signed by the [holder](#holder) in the following [issuance-response](#issuance-response) for non-repudiation.[^1] | ✖ |
+| `offerChallenge` | If present, indicates the [issuer](#issuer) requires the acceptance of the credential to be signed by the [holder](#holder) in the following [issuance-response](#issuance-response) for non-repudiation.[^1] | ✖ |
 | `challenge` |  A random string that should be unique per [issuance-offer](#issuance-offer). | ✔ |
 | `credentialHash` | The [Base58](https://tools.ietf.org/id/draft-msporny-base58-01.html)-encoded [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the `unsignedCredential` formatted according to the [JSON Canonicalization Scheme](https://tools.ietf.org/id/draft-rundgren-json-canonicalization-scheme-00.html). | ✔ |
-| `expiry` | A string formatted as an [XML DateTime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision. E.g: `"2021-12-30T19:17:47Z"`.[^2] | ✖ |
+| `offerExpiry` | A string formatted as an [XML DateTime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision. E.g: `"2021-12-30T19:17:47Z"`.[^2] | ✖ |
 
 [^1] Issuing challenges should be done with due consideration to security and privacy concerns: not all applications require non-repudiation to third-parties and a [holder](#roles) [may wish to deny that they ever requested or accepted a particular credential](https://github.com/hyperledger/aries-rfcs/blob/main/concepts/0049-repudiation/README.md#summary). The challenge SHOULD NOT be used for authentication of the [holder](#roles); see the [authentication](./authencation) protocol and [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption).
 
-[^2] If present, an `expiry` indicates that the [issuer](#roles) MAY rescind the offer and abandon the protocol if an affirmative [issuance-response](#issuance-response) is not received before the specified datetime. Note that the `expiry` should override any default message timeouts.
+[^2] If present, an `offerExpiry` indicates that the [issuer](#roles) MAY rescind the offer and abandon the protocol if an affirmative [issuance-response](#issuance-response) is not received before the specified datetime. Note that the `offerExpiry` should override any default message timeouts.
 
 #### Examples
 
@@ -173,17 +173,17 @@ The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles
       }
     }
   },
-  "signatureChallenge": {
+  "offerChallenge": {
     "challenge": "d7b7869e-fec3-4de9-84bb-c3a43bacff33",
     "credentialHash": "28Ae7AdqzyMyF9pmnwUNK1Q7VT3EzDDGEj1Huk7uYQT94KYAhQzEPyhoF5Ugs3totUugLPpghGmE9HaG8usJZcZv",
   },
-  "expiry": "2021-01-05T20:07:24Z"
+  "offerExpiry": "2021-01-05T20:07:24Z"
 }
 ```
 
 ### 3. issuance-response {#issuance-response}
 
-- Type: `didcomm:iota/issuance/0.1/issuance-response`
+- Type: `iota/issuance/0.1/issuance-response`
 - Role: [holder](#roles)
 
 The [holder](#roles) responds to a [`issuance-offer`](#issuance-offer) by accepting or disputing the offer and optionally signing the response for non-repudiation.
@@ -194,7 +194,7 @@ The [holder](#roles) responds to a [`issuance-offer`](#issuance-offer) by accept
   "accepted": bool,             // REQUIRED
   "disputes": [Dispute],        // OPTIONAL
   "signature": {
-    "signatureChallenge": {
+    "requestChallenge": {
       "challenge": string,      // REQUIRED
       "credentialHash": string, // REQUIRED
     }, // REQUIRED
@@ -203,18 +203,15 @@ The [holder](#roles) responds to a [`issuance-offer`](#issuance-offer) by accept
 }
 ```
 
-TODO: use signed DIDComm message instead of explicit proof in payload?
-TODO: disambiguate `signatureChallenge`? E.g. `requestChallenge`, `issuanceChallenge`.
-
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | `accepted` | Indicates if the [holder](#roles) accepts the offered credential from [`issuance-offer`](#issuance-offer). MUST be `false` if any `disputes` are present. | ✔ |
 | [`disputes`](https://www.w3.org/TR/vc-data-model/#disputes) | Allows the [holder](#roles) to [`dispute`](https://www.w3.org/TR/vc-data-model/#disputes) one or more claims in the credential. | ✖ |
-| `signature` | This SHOULD be present if a `signatureChallenge` was included in the preceding [`issuance-offer`](#issuance-offer).[^1] | ✖ |
-| `signatureChallenge` | This MUST match the `signatureChallenge` in the preceding [`issuance-offer`](#issuance-offer). | ✔ |
-| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the [holder](#roles) on the `signatureChallenge`. | ✔ |
+| `signature` | This SHOULD be present if a `offerChallenge` was included in the preceding [`issuance-offer`](#issuance-offer).[^1] | ✖ |
+| `offerChallenge` | This MUST match the `offerChallenge` in the preceding [`issuance-offer`](#issuance-offer). | ✔ |
+| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the [holder](#roles) on the `offerChallenge`. | ✔ |
 
-[^1] A valid `signature` allows the [issuer](#roles) to prove that the credential was accepted by the [holder](#roles). If present, the [issuer](#roles) MUST validate the `proof` is correct and signed with an unrevoked [verification method](https://www.w3.org/TR/did-core/#dfn-verification-method), and issue a problem-report if not. The [issuer](#roles) SHOULD terminate the protocol if no `signature` is present and a `signatureChallenge` was included in the preceding [issuance-offer](#issuance-offer) message. An explicit `signature` is used in lieu of a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) to avoid the need to store the entire credential for auditing purposes; the hash is sufficient to prove a particular credential was accepted.
+[^1] A valid `signature` allows the [issuer](#roles) to prove that the credential was accepted by the [holder](#roles). If present, the [issuer](#roles) MUST validate the `proof` is correct and signed with an unrevoked [verification method](https://www.w3.org/TR/did-core/#dfn-verification-method), and issue a problem-report if not. The [issuer](#roles) SHOULD terminate the protocol if no `signature` is present and a `offerChallenge` was included in the preceding [issuance-offer](#issuance-offer) message. An explicit `signature` is used instead of a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) to avoid the need to store the entire credential for auditing purposes; the hash is sufficient to prove a particular credential was accepted.
 
 #### Examples
 
@@ -234,7 +231,7 @@ TODO: disambiguate `signatureChallenge`? E.g. `requestChallenge`, `issuanceChall
   "accepted": true,
   "disputes": [],
   "signature": {
-    "signatureChallenge": {
+    "offerChallenge": {
       "challenge": "d7b7869e-fec3-4de9-84bb-c3a43bacff33",
       "credentialHash": "28Ae7AdqzyMyF9pmnwUNK1Q7VT3EzDDGEj1Huk7uYQT94KYAhQzEPyhoF5Ugs3totUugLPpghGmE9HaG8usJZcZv",
     },
@@ -271,7 +268,7 @@ TODO: disambiguate `signatureChallenge`? E.g. `requestChallenge`, `issuanceChall
 
 ### 4. issuance {#issuance-message}
 
-- Type: `didcomm:iota/issuance/0.1/issuance`
+- Type: `iota/issuance/0.1/issuance`
 - Role: [issuer](#roles)
 
 The [issuer](#roles) transmits the signed credential following a [`issuance-response`](#issuance-response) by the [holder](#roles). The [issuer](#roles) may set an expiry until when they expect an acknowledgment and request a cryptographic signature in the acknowledgment for non-repudiation. 
@@ -280,25 +277,25 @@ The [issuer](#roles) transmits the signed credential following a [`issuance-resp
 ```json
 {
   "signedCredential": Credential,   // REQUIRED
-  "signatureChallenge": {
+  "issuanceChallenge": {
     "challenge": string,            // REQUIRED
     "credentialHash": string,       // REQUIRED
   }, // OPTIONAL
-  "expiry": DateTime,               // OPTIONAL
+  "issuanceExpiry": DateTime,       // OPTIONAL
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | [`signedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | [Verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) signed by the [issuer](#roles).[^1] | ✔ |
-| `signatureChallenge` | If present, indicates the [issuer](#issuer) requires the [issuance-acknowledgement](#issuance-acknowledgement) of the credential to be signed for non-repudiation. | ✖ |
+| `issuanceChallenge` | If present, indicates the [issuer](#issuer) requires the [issuance-acknowledgement](#issuance-acknowledgement) of the credential to be signed for non-repudiation. | ✖ |
 | `challenge` |  A random string that should be unique per [issuance](#issuance). | ✔ |
 | `credentialHash` | The [Base58](https://tools.ietf.org/id/draft-msporny-base58-01.html)-encoded [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the `signedCredential`, including the `proof`, formatted according to the [JSON Canonicalization Scheme](https://tools.ietf.org/id/draft-rundgren-json-canonicalization-scheme-00.html). | ✔ |
-| `expiry` | A string formatted as an [XML Datetime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision indicating when the offer expires. E.g: `"2021-12-30T19:17:47Z"`.[^2] | ✖ |
+| `issuanceExpiry` | A string formatted as an [XML Datetime](https://www.w3.org/TR/xmlschema11-2/#dateTime) normalized to UTC 00:00:00 and without sub-second decimal precision indicating when the offer expires. E.g: `"2021-12-30T19:17:47Z"`.[^2] | ✖ |
 
 [^1] The [holder](#roles) SHOULD validate both that the `proof` on the `signedCredential` is correctly signed by a trusted issuer and that the contents match those of the `unsignedCredential` from the [issuance-offer](#issuance-offer) they accepted. If not, a relevant problem-report should be sent.
 
-[^2] The [issuer](#roles) SHOULD send a problem-report if the `expiry` datetime passes without receiving an [issuance-acknowledgement](#issuance-acknowledgement) message from the [holder](#roles). The [issuer](#roles) MAY revoke the credential in this case.
+[^2] The [issuer](#roles) SHOULD send a problem-report if the `issuanceExpiry` datetime passes without receiving an [issuance-acknowledgement](#issuance-acknowledgement) message from the [holder](#roles). The [issuer](#roles) MAY revoke the credential in this case.
 
 #### Examples
 
@@ -328,17 +325,17 @@ The [issuer](#roles) transmits the signed credential following a [`issuance-resp
       "signatureValue": "3KpeHSW4LybMy1smFEYriRmj5FsFfnxQiEsBnQdYzwkXMnjF3Jjn5RS1KGzheNpUgHW5yua8DoLbfYmZFAvaUVwv"
     }
   },
-  "signatureChallenge": {
+  "issuanceChallenge": {
     "challenge": "6ff5f616-2f9c-4e47-b9d2-5553deeac01d",
     "credentialHash": "21DtABsnYNb7oGEY8aybb9Bghq6NJJWvrQgtC2SBdhgQ8v6cZGjnT8RmEmBLZfHyfEYMAik3D1EoNQZCaT4RUKEX",
   },
-  "expiry": "2021-01-05T20:07:24Z"
+  "issuanceExpiry": "2021-01-05T20:07:24Z"
 }
 ```
 
 ### 5. issuance-acknowledgment {#issuance-acknowledgment}
 
-- Type: `didcomm:iota/issuance/0.1/issuance-acknowledgment`
+- Type: `iota/issuance/0.1/issuance-acknowledgment`
 - Role: [holder](#roles)
 
 The [holder](#roles) confirms receipt of a successful credential [`issuance`](#issuance-message), optionally including non-repudiable proof.
@@ -347,7 +344,7 @@ The [holder](#roles) confirms receipt of a successful credential [`issuance`](#i
 ```json
 {
   "signature": {
-    "signatureChallenge": {
+    "issuanceChallenge": {
       "challenge": string,      // REQUIRED
       "credentialHash": string, // REQUIRED
     }, // REQUIRED
@@ -356,16 +353,13 @@ The [holder](#roles) confirms receipt of a successful credential [`issuance`](#i
 }
 ```
 
-TODO: use signed DIDComm message instead of explicit proof in payload?
-TODO: disambiguate `signatureChallenge`? E.g. `requestChallenge`, `issuanceChallenge`.
-
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `signature` | This SHOULD be present if a `signatureChallenge` was included in the preceding [`issuance`](#issuance-message) message.[^1] | ✖ |
-| `signatureChallenge` | This MUST match the `signatureChallenge` in the preceding [`issuance`](#issuance-message) message. | ✔ |
-| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the [holder](#roles) on the `signatureChallenge`. | ✔ |
+| `signature` | This SHOULD be present if a `issuanceChallenge` was included in the preceding [`issuance`](#issuance-message) message.[^1] | ✖ |
+| `issuanceChallenge` | This MUST match the `issuanceChallenge` in the preceding [`issuance`](#issuance-message) message. | ✔ |
+| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the [holder](#roles) on the `issuanceChallenge`. | ✔ |
 
-[^1] The [issuer](#roles) MUST validate the `signature` and MAY revoke the issued credential if a `signature` was requested, e.g. for non-repudiation or auditing, and not received or an invalid `signature` is received. An explicit `signature` is used in lieu of a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) to avoid the need to store the entire credential for auditing purposes; the hash is sufficient to prove a particular credential was accepted.
+[^1] The [issuer](#roles) MUST validate the `signature` and MAY revoke the issued credential if a `signature` was requested, e.g. for non-repudiation or auditing, and not received or an invalid `signature` is received. An explicit `signature` is used instead of a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) to avoid the need to store the entire credential for auditing purposes as the hash is sufficient to prove a particular credential was accepted.
 
 #### Examples
 
@@ -380,7 +374,7 @@ TODO: disambiguate `signatureChallenge`? E.g. `requestChallenge`, `issuanceChall
 ```json
 {
   "signature": {
-    "signatureChallenge": {
+    "issuanceChallenge": {
       "challenge": "6ff5f616-2f9c-4e47-b9d2-5553deeac01d",
       "credentialHash": "21DtABsnYNb7oGEY8aybb9Bghq6NJJWvrQgtC2SBdhgQ8v6cZGjnT8RmEmBLZfHyfEYMAik3D1EoNQZCaT4RUKEX",
     },
@@ -402,16 +396,14 @@ For guidance on problem-reports and a list of general codes see [problem reports
 | `e.p.msg.iota.issuance.reject-request.invalid-type` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request due to the `type` or `@context` being unsupported or otherwise invalid. |
 | `e.p.msg.iota.issuance.reject-request.invalid-issuer` | [issuance-request](#issuance-request) | [Issuer](#roles) rejects a credential request due to `trustedIssuers` being unrecognised, unsupported or otherwise invalid. |
 | `e.p.msg.iota.issuance.presentation-failed` | [issuance-offer](#issuance-offer) | [Issuer](#roles) terminates the protocol due to a failed [presentation](./presentation) request for more information prior to a [issuance-offer](#issuance-offer). |
-| `e.p.msg.iota.issuance.reject-response.missing-signature` | [issuance-response](#issuance-response) | [Issuer](#roles) rejects an [issuance-response](#issuance-response) missing a `signature` when `signatureChallenge` was included in the preceding [issuance-offer](#issuance-offer) message. |
+| `e.p.msg.iota.issuance.reject-response.missing-signature` | [issuance-response](#issuance-response) | [Issuer](#roles) rejects an [issuance-response](#issuance-response) missing a `signature` when `offerChallenge` was included in the preceding [issuance-offer](#issuance-offer) message. |
 | `e.p.msg.iota.issuance.reject-issuance` | [issuance](#issuance-message) | [Holder](#roles) rejects a credential issuance for any reason, e.g. mismatch with the credential in the [issuance-offer](#issuance-offer). Note that disputes are handled in [issuance-response](#issuance-response) prior to [issuance](#issuance-message). |
 | `e.p.msg.iota.issuance.expired` | [issuance](#issuance-message) | [Issuer](#roles) notifies the [holder](#roles) that an [issuance](#issuance-message) message has expired without a valid [issuance-acknowledgement](#issuance-acknowledgement). |
-| `e.p.msg.iota.issuance.reject-acknowledgement.missing-signature` | [issuance-acknowledgement](#issuance-acknowledgement) | [Issuer](#roles) rejects an [issuance-acknowledgement](#issuance-acknowledgement) missing a `signature` when `signatureChallenge` was included in the preceding [issuance](#issuance-message) message. |
+| `e.p.msg.iota.issuance.reject-acknowledgement.missing-signature` | [issuance-acknowledgement](#issuance-acknowledgement) | [Issuer](#roles) rejects an [issuance-acknowledgement](#issuance-acknowledgement) missing a `signature` when `issuanceChallenge` was included in the preceding [issuance](#issuance-message) message. |
 
-## Considerations
+## Unresolved Questions
 
-This section is non-normative.
-
-TBD
+- The `credentialSubject::id` field of a verifiable credential is optional and not always a DID according to the [verifiable credential specification](https://www.w3.org/TR/vc-data-model). Should we enforce that it is always a DID? This affects presentations are noted in the [subject-holder relationships section of the specification](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships). We essentially enforce the [`nonTransferable` property](https://www.w3.org/TR/vc-data-model/#nontransferable-property) for all credentials in our presentations currently to prevent verifiers storing and re-presenting credentials as their own.
 
 ## Related Work
 

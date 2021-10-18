@@ -32,7 +32,7 @@ Allows discovery of available [`RevocationInfo`](./revocation#RevocationInfo) ty
 ## Messages
 ### 1. revocation-options-request {#revocation-options-request}
 
-- Type: `didcomm:iota/revocation-options/0.1/revocation-options-request`
+- Type: `iota/revocation-options/0.1/revocation-options-request`
 - Role: [trusted-party](#roles)
 
 Empty message requesting all available [`RevocationInfo`](./revocation#RevocationInfo) types.
@@ -44,7 +44,7 @@ Empty message requesting all available [`RevocationInfo`](./revocation#Revocatio
 
 ### 2. revocation-options {#revocation-options}
 
-- Type: `didcomm:iota/revocation-options/0.1/revocation-options`
+- Type: `iota/revocation-options/0.1/revocation-options`
 - Role: [revoker](#roles)
 
 Response including all available [RevocationInfo](./revocation#RevocationInfo) types supported by the [revoker](#roles).
@@ -94,9 +94,8 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 This section is non-normative.
 
-- Privacy: similar to [discover features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md), this protocol could be used to fingerprint a server partially or reveal its capabilities. If privacy is a concern, implementors should take care to accept requests only from parties authorized to perform [revocation](./revocation) or return a subset/superset of its actual supported options.
-- Authorisation: TODO
-- Authentication: TODO
+- **Privacy**: similar to [discover features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md), this protocol could be used to fingerprint a party partially or reveal its capabilities. If privacy is a concern, implementors should take care to accept requests only from parties authorized to perform [revocation](./revocation) or return a subset/superset of its actual supported options.
 
 ## Unresolved Questions
+
 - Should revocation-options include the credential status sub-types for `CredentialStatusRevocation2021`?

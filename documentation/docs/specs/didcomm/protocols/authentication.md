@@ -38,7 +38,7 @@ This protocol allows two parties to mutually authenticate by disclosing and veri
 
 ### 1. authentication-request {#authentication-request}
 
-- Type: `didcomm:iota/authentication/0.1/authentication-request`
+- Type: `iota/authentication/0.1/authentication-request`
 - Role: [requester](#roles)
 
 Sent to initiate the authentication process. This MUST be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) to provide some level of trust to the [responder](#roles). However, even when signed it is possible to replay an [authentication-request](#authentication-request), so this message alone is insufficient to prove the DID of the [requester](#roles). In addition to a unique `requesterChallenge`, the `created_time` and `expires_time` [DIDComm message headers](https://identity.foundation/didcomm-messaging/spec/#message-headers) SHOULD be used to mitigate such replay attacks. Note that even a successful replay would only reveal the DID of the responder, authentication of a malicious requester will still fail without access to the original requester's private keys due to the use of challenges.
@@ -99,7 +99,7 @@ Any other value for `upgradeEncryption` is invalid and should result in an inval
 
 ### 2. authentication-response {#authentication-response}
 
-- Type: `didcomm:iota/authentication/0.1/authentication-response`
+- Type: `iota/authentication/0.1/authentication-response`
 - Role: [responder](#roles)
 
 Sent in response to an [authentication-request](#authentication-request), proving the DID of the [responder](#roles). Optionally establishes [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) based on the value of `upgradeEncryption` in the preceding [authentication-request](#authentication-request). If `upgradeEncryption` was `"required"` and this message is not encrypted, or `"unsupported"` and this message is encrypted, the [requester](#roles) MUST issue a problem-report and abort the authentication.
@@ -154,7 +154,7 @@ This message MUST be a [signed DIDComm message](https://identity.foundation/didc
 
 ### 3. authentication-result {#authentication-result}
 
-- Type: `didcomm:iota/authentication/0.1/authentication-result`
+- Type: `iota/authentication/0.1/authentication-result`
 - Role: [requester](#roles)
 
 This message finalises the mutual authentication, proving control over the DID of the [requester](#roles) to the [responder](#roles). Similar to [authentication-response](#authentication-response), this message MUST be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message).
@@ -219,12 +219,12 @@ For guidance on problem-reports and a list of general codes see [problem reports
 This section is non-normative.
 
 - **Trust**: this [authentication](#authentication) protocol only verifies that both parties have access to the necessary private keys (which could become compromised) associated with their DID documents; establishing and verifying their real-world identities may require additional interactions. For instance, requesting a verifiable presentation of credentials issued by a trusted third-party (like a government) is one possible way to verify a real-world identity.
-- **Authorisation**: the permissions and capabalities of either party may still need to be established after [authentication](#authentication), either by verifiable presentation as above or other methods such as JWT tokens
-- **Privacy**: the [responder](#roles) may be subject to probing whereby their DID may be revealed even with the use of [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption), as the `skid` message header is linked to their DID. This is possible if the [responder](#roles) chooses to accept the [authentication-request](#authentication-request) of an unknown [requester](#roles), or the [requester](#roles) succesfully replays an [authentication-request](#authentication-request) from a DID the [requester](#roles) trusts.
+- **Authorisation**: the permissions and capabilities of either party may still need to be established after [authentication](#authentication), either by verifiable presentation as above or other methods such as JWT tokens
+- **Privacy**: the [responder](#roles) may be subject to probing whereby their DID may be revealed even with the use of [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption), as the `skid` message header is linked to their DID. This is possible if the [responder](#roles) chooses to accept the [authentication-request](#authentication-request) of an unknown [requester](#roles), or the [requester](#roles) successfully replays an [authentication-request](#authentication-request) from a DID the [requester](#roles) trusts.
 
 ## Unresolved Questions
 
-- Enforce signed DIDComm messages on top of sender-authenticated encryption? Usually unnecessary and DIDComm recommends against this since it's redundent and due to non-repudiation may decrease security and privacy by allowing participants to prove to third parties that authentication occurred.
+- Enforce signed DIDComm messages on top of sender-authenticated encryption? Usually unnecessary and DIDComm recommends against this since it's redundant and due to non-repudiation may decrease security and privacy by allowing participants to prove to third parties that authentication occurred.
   - https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message
   - https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0049-repudiation/README.md#summary
 
@@ -234,7 +234,11 @@ This section is non-normative.
 
 - Man-in-the-middle attacks?
    - note possible attack vectors for the requester and responder, including intercepting or modifying the invitation in the connection protocol.
-   - TODO: links to discussions
+   - use [Well Known DID Configuration](https://identity.foundation/.well-known/resources/did-configuration/) or DNS verification to mitigate?
+   - https://lilithwittmann.medium.com/mit-der-id-wallet-kannst-du-alles-und-jeder-sein-au%C3%9Fer-du-musst-dich-ausweisen-829293739fa0
+   - https://github.com/Fluepke/ssi-poc
+   - https://github.com/decentralized-identity/didcomm-messaging/issues/41
+   - https://github.com/hyperledger/aries-rfcs/issues/473
 
 ## Related Work
 
@@ -242,5 +246,3 @@ This section is non-normative.
   - DID Exchange protocol: https://github.com/hyperledger/aries-rfcs/tree/main/features/0023-did-exchange
   - DIDAuthZ: https://github.com/hyperledger/aries-rfcs/tree/main/features/0309-didauthz
 - Jolocom: https://jolocom.github.io/jolocom-sdk/1.0.0/guides/interaction_flows/#authentication
-
-## Further Reading

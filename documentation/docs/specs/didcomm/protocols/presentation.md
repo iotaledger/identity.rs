@@ -38,11 +38,10 @@ Allows presentation of [verifiable credentials](https://www.w3.org/TR/vc-data-mo
 
 ### 1. presentation-offer {#presentation-offer}
 
-- Type: `didcomm:iota/presentation/0.1/presentation-offer`
+- Type: `iota/presentation/0.1/presentation-offer`
 - Role: [holder](#roles)
 
-Sent by the holder to offer one or more credentials for a verifier to view. 
-The context and types are included to allow the verifier to choose whether they are interested in the offer, negotiate the type of credentials they want or accept and by which issuers they trust.
+Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#roles) to view. `CredentialInfo` objects are used by the [verifier](#roles) to determine if they want to view the particular kind of credential.
 
 #### Structure
 ```json
@@ -55,11 +54,9 @@ The context and types are included to allow the verifier to choose whether they 
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | `offers` | Array of one or more [CredentialInfo](../resources/credential-kinds#credentialinfo), each specifying a single credential possessed by the holder. | ✔ |
-| `requireSignature` | Request that the verifier sign its [`presentation-request`](#presentation-request) with a proof. It is RECOMMENDED that the holder issues a `problem-report` if the verifier does not sign the message when this is true. | ✖ | 
+| `requireSignature` | Request that the [verifier](#roles) use a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) for the [`presentation-request`](#presentation-request). The [holder](#roles) SHOULD issue a `problem-report` if the [verifier](#roles) does not sign the message when this is `true`. Default: `false`. | ✖ | 
 
 [^1] With ["CredentialType2021"](../resources/credential-kinds#credentialtype2021), the `type` MAY be under-specified to preserve privacy but SHOULD always include the most general types. For example, a credential with the types `["VerifiableCredential", "DriversLicence", "EUDriversLicence", "GermanDriversLicence"]` could be specified as `["VerifiableCredential", "DriversLicence"]`.
-
-TODO: selective disclosure / ZKP fields?
 
 #### Examples
 
@@ -94,11 +91,12 @@ TODO: selective disclosure / ZKP fields?
 
 ### 2. presentation-request {#presentation-request}
 
-- Type: `didcomm:iota/presentation/0.1/presentation-request`
+- Type: `iota/presentation/0.1/presentation-request`
 - Role: [verifier](#roles)
 
-Sent by the verifier to request one or more verifiable credentials from a holder. 
-The context and types are included, as well as trusted issuers, to allow the holder to determine if he possesses relevant credentials. This message allows a non-repudiable proof, that the verifier requested data. 
+Sent by the verifier to request one or more verifiable credentials from a holder. The `CredentialInfo` is used by the [holder](#roles) to determine if they possess relevant credentials.
+
+[Verifiers](#roles) are RECOMMENDED to use a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message). [Holders](#roles) may choose to blocklist verifiers that refuse to provide signed requests.
 
 #### Structure
 ```json
@@ -108,7 +106,6 @@ The context and types are included, as well as trusted issuers, to allow the hol
     "optional": bool                    // OPTIONAL
   }], // REQUIRED
   "challenge": string,                  // REQUIRED
-  "proof": Proof                        // OPTIONAL
 }
 ```
 
@@ -118,11 +115,8 @@ The context and types are included, as well as trusted issuers, to allow the hol
 | `credentialInfo` | A [CredentialInfo](../resources/credential-kinds#credentialinfo), specifying a credential requested by the verifier.[^1] | ✔ |
 | `optional` | Whether this credential is required (`false`) or optional (`true`) to present by the holder. A holder SHOULD send a problem report if unable to satisfy a non-optional credential request. Default: `false`. | ✖ |
 | [`challenge`](https://w3c-ccg.github.io/ld-proofs/#dfn-challenge) | A random string unique per [`presentation-request`](#presentation-request) by a verifier to help mitigate replay attacks. | ✔ |
-| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the verifier; RECOMMENDED to include if preceded by a [`presentation-offer`](#presentation-offer) with `requireSignature = true`.[^3] | ✖ |
 
 [^3] Verifiers are RECOMMENDED to include a proof whenever possible to avoid rejections from holders that enforce non-repudiation. Holders could use this to prove that a verifier is non-compliant with laws or regulations, e.g. over-requesting information protected by [GDPR](https://gdpr-info.eu/). Holders MAY still choose to accept unsigned [`presentation-requests`](#presentation-request) on a case-by-case basis, even if `requireSignature` was `true` in their [`presentation-offer`](#presentation-offer), as some verifiers may be unable to perform cryptographic signing operations. If the `proof` is invalid, the receiving holder MUST send a `problem-report`.
-
-Note that the `proof` SHOULD NOT be used for authentication of the verifier in general; it is RECOMMENDED to use [Sender Authenticated Encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) for authentication of parties in a DIDComm thread.
 
 #### Examples
 
@@ -140,7 +134,7 @@ Note that the `proof` SHOULD NOT be used for authentication of the verifier in g
 }
 ```
 
-2. Signed request of a required credential using ["CredentialType2021"](../resources/credential-kinds#credentialtype2021) from a particular trusted issuer and an optional credential. 
+2. Request a required credential using ["CredentialType2021"](../resources/credential-kinds#credentialtype2021) from a particular trusted issuer and an optional credential. 
 
 ```json
 {
@@ -158,7 +152,6 @@ Note that the `proof` SHOULD NOT be used for authentication of the verifier in g
     "optional": true
   }], 
   "challenge": "06da6f1c-26b0-4976-915d-670b8f407f2d",
-  "proof": { ... }
 }
 ```
 
@@ -180,7 +173,7 @@ Note that the `proof` SHOULD NOT be used for authentication of the verifier in g
 
 ### 3. presentation {#presentation}
 
-- Type: `didcomm:iota/presentation/0.1/presentation`
+- Type: `iota/presentation/0.1/presentation`
 - Role: [holder](#roles)
 
 Sent by the holder to present a [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) of one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) for a [verifier](#roles) to review.
@@ -194,11 +187,9 @@ Sent by the holder to present a [verifiable presentation](https://www.w3.org/TR/
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`presentation`](https://www.w3.org/TR/vc-data-model/#presentations-0) | Signed [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) containing one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) matching the [presentation-request](#presentation-request).[^4] | ✔ |
+| [`presentation`](https://www.w3.org/TR/vc-data-model/#presentations-0) | Signed [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) containing one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) matching the [presentation-request](#presentation-request).[^1] | ✔ |
 
-[^4] The [`proof`](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section in `presentation` MUST include the `challenge` sent by the verifier in the preceding [`presentation-request`](#presentation-request). The included credentials SHOULD match all `type` fields and one or more `trustedIssuer` if included in the [`presentation-request`](#presentation-request). Revoked, disputed, or otherwise invalid presentations or credentials MUST result in a rejected [`presentation-result`](#presentation-result) sent back to the holder, NOT a separate [`problem-report`]. Other such as the message lacking [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) SHOULD result in a separate [`problem-report`].
-
-TODO: we may want separate problem-reports instead, as mixing disputes with problem-reports if improperly implemented may reveal information to a fake holder trying to discover information about what content a verifier accepts.
+[^1] The [`proof`](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section in `presentation` MUST include the `challenge` sent by the verifier in the preceding [`presentation-request`](#presentation-request). The included credentials SHOULD match all `type` fields and one or more `trustedIssuer` if included in the [`presentation-request`](#presentation-request). Revoked, disputed, or otherwise invalid presentations or credentials MUST result in a rejected [`presentation-result`](#presentation-result) sent back to the holder, NOT a separate [`problem-report`]. Other such as the message lacking [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) SHOULD result in a separate [`problem-report`].
 
 #### Examples
 
@@ -240,10 +231,12 @@ TODO: we may want separate problem-reports instead, as mixing disputes with prob
 
 ### 4. presentation-result {#presentation-result}
 
-- Type: `didcomm:iota/presentation/0.1/presentation-result`
+- Type: `iota/presentation/0.1/presentation-result`
 - Role: [verifier](#roles)
 
-Sent by the verifier to communicate the result of the presentation. It allows the verifier raise problems and disputes encountered in the verification and to specify if the holder may retry a presentation. The message SHOULD be signed by the verifier for non-repudiation.  
+Sent by the verifier to communicate the result of the presentation. It allows the verifier raise problems and disputes encountered in the verification and to specify if the holder may retry a presentation. The message SHOULD be signed by the verifier for non-repudiation.
+
+Similar to [`presentation-request`](#presentation-request), [verifiers](#roles) are RECOMMENDED to use a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) whenever possible for non-repudiation of receipt of the presentation. [Holders](#roles) may choose to blocklist verifiers that refuse to provide signatures.
 
 #### Structure
 ```json
@@ -258,11 +251,8 @@ Sent by the verifier to communicate the result of the presentation. It allows th
     "problemReport": ProblemReport,   // REQUIRED
   }], // OPTIONAL
   "allowRetry": bool,                 // OPTIONAL
-  "proof": Proof                      // OPTIONAL
 }
 ```
-
-TODO: use DIDComm signed message instead of `proof`?
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
@@ -273,23 +263,19 @@ TODO: use DIDComm signed message instead of `proof`?
 | `problems` | Array of problem-reports. | ✖ |
 | [`credentialId`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a problem. If the credential lacks an `id` field, this should be a content-addressed identifier; we RECOMMEND the [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the credential. | ✔ |
 | `problemReport` | A [`problem-report`](https://identity.foundation/didcomm-messaging/spec/#problem-reports) indicating something wrong with the credential, e.g. signature validation failed or the credential is expired. | ✔ | 
-| `allowRetry` | Indicates if the holder may retry the [`presentation`](#presentation) with different credentials. Default: `false` | ✖ |
-| [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the verifier; RECOMMENDED to include.[^5] | ✖ |
-
-[^5] Similar to [`presentation-request`](#presentation-request), verifiers are RECOMMENDED to include a proof whenever possible for non-repudiation of receipt of the presentation. Holders may choose to blocklist verifiers that refuse to provide non-repudiable signatures.
+| `allowRetry` | Indicates if the holder may retry the [`presentation`](#presentation) with different credentials. Default: `false`. | ✖ |
 
 #### Examples
 
-1. Successful result, including a proof for non-repudiation.
+1. Successful result:
 
 ```json
 {
   "accepted": true,
-  "proof": { ... }
 }
 ```
 
-2. Unsucessful result disputing a credential, allowing the holder to retry. 
+2. Unsuccessful result disputing a credential, allowing the holder to retry: 
 
 ```json
 {
@@ -343,8 +329,6 @@ TODO: use DIDComm signed message instead of `proof`?
 }
 ```
 
-TODO: change problem-report here, or remove them from the result altogether? Example of a hacker trying to brute-force disputes with unsigned credentials, in which case the problem report (trust.crypto) should just end the flow and not return disputes.
-
 ### Problem Reports {#problem-reports}
 
 The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
@@ -370,19 +354,21 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 This section is non-normative.
 
-- **Security**: implementors SHOULD transmit the presentation over an encrypted channel etc. (TODO mention/link to DIDComm encryption?)
-- **Authentication**: it is RECOMMENDED to use either the authentication protocol (TODO link?) for once-off authentication, or sender-authenticated encryption (TODO link?) for continuous authentication of both parties in the DIDComm thread. Signatures (`proof` fields) SHOULD NOT be relied upon for this (TODO link?).
+- **Security**: implementors SHOULD transmit the presentation over an encrypted channel etc. [see authentication](./authentication.md).
+- **Authentication**: it is RECOMMENDED to use either the [authentication protocol](./authentication.md) for once-off mutual authentication or to establish [sender-authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) for continuous authentication of both parties in the DIDComm thread. Signatures (`proof` fields) and [signed DIDComm messages](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) SHOULD NOT be relied upon for this in general: https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message
 - **Authorisation**: establishing whether either party is allowed to request/offer presentations is an application-level concern.
 - **Validation**: apart from verifying the presentation and credentials are signed by a trusted issuer, how credential subject matter fields are checked for disputes is out-of-scope.
 
 ## Unresolved Questions
 
-- Is a `schema` field needed for the `presentation-offer` and `presentation-request` to identify the types of verifiable credentials and allow forward compatibility for different fields in the message? The E.g. a `SelectiveDisclosure` or ZKP message may only offer or request certain fields in the credential. Does this relate to the [`credentialSchema`](https://www.w3.org/TR/vc-data-model/#data-schemas) field in credentials?
+- Is a `schema` field needed for the `presentation-offer` and `presentation-request` to identify the types of verifiable credentials and allow forward compatibility for different fields in the message? E.g. a `SelectiveDisclosure` or ZKP message may only offer or request certain fields in the credential. Does this relate to the [`credentialSchema`](https://www.w3.org/TR/vc-data-model/#data-schemas) field in credentials?
 - Are embedded problem-reports the right way to communicate problems with a presentation in [`presentation-result`](#presentation-result)? Can we come up with a more concise form? Are there relevant specifications?
 - Identifiers (`id` field) are [optional in verifiable credentials](https://www.w3.org/TR/vc-data-model/#identifiers). The spec suggests content-addressed identifiers when the `id` is not available but their particulars are unclear as there is no spec referenced. This affects the `problems` reported in the [`presentation-result`](#presentation-result).
 - We should RECOMMENDED the `id` of a verifiable credential being a UUID (what version?) in issuance. Needs to be a URI https://www.w3.org/TR/vc-data-model/#identifiers, do UUIDs qualify?
 - Should we specifically list non-functional requirements e.g in a Goals / Non-Goals section.
 - Use `schemas` to negotiate generic form entries as a self-signed credential? E.g. could ask for username, preferred language, comments, any generic information not signed/verified by a third-party issuer from a generic wallet? Similar to Presentation Exchange? https://identity.foundation/presentation-exchange/spec/v1.0.0/
+
+- Use separate problem-reports, or a separate credential-problem object, instead of embedding them in the [`presentation-result`](#presentation-result), as mixing disputes with problem-reports if improperly implemented may reveal information to a fake holder trying to discover information about what content a verifier accepts. Incorrect implementations could allow someone to brute-force disputes with unsigned credentials, in which case the problem report (trust.crypto) should just end the flow and not return disputes.
 
 ## Related Work
 
