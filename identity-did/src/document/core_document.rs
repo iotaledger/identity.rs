@@ -456,8 +456,8 @@ mod tests {
       .verification_method(method(&controller, "#key-2"))
       .verification_method(method(&controller, "#key-3"))
       .authentication(method(&controller, "#auth-key"))
-      .authentication(controller.clone().join("#key-3").unwrap())
-      .key_agreement(controller.clone().join("#key-4").unwrap())
+      .authentication(controller.to_url().join("#key-3").unwrap())
+      .key_agreement(controller.to_url().join("#key-4").unwrap())
       .build()
       .unwrap()
   }

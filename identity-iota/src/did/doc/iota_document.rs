@@ -403,7 +403,6 @@ impl IotaDocument {
 
   /// Removes all references to the specified Verification Method.
   pub fn remove_method(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
-    // TODO: better conversions?
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url.clone());
 
     if self.authentication_id() == &core_did_url {

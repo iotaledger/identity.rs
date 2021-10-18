@@ -406,14 +406,14 @@ mod test {
     let did = did();
     assert!(matches!(
       service_endpoint_ctor(
-        did.clone().join("?query=this").unwrap(),
+        did.to_url().join("?query=this").unwrap(),
         &Url::parse("https://my-service.endpoint.net?query=this").unwrap()
       ),
       Err(Error::InvalidDIDQuery)
     ));
 
     assert!(service_endpoint_ctor(
-      did.clone().join("?query=this").unwrap(),
+      did.to_url().join("?query=this").unwrap(),
       &Url::parse("https://my-service.endpoint.net").unwrap(),
     )
     .is_ok());
@@ -425,14 +425,14 @@ mod test {
     let did = did();
     assert!(matches!(
       service_endpoint_ctor(
-        did.clone().join("#fragment").unwrap(),
+        did.to_url().join("#fragment").unwrap(),
         &Url::parse("https://my-service.endpoint.net#fragment").unwrap()
       ),
       Err(Error::InvalidDIDFragment)
     ));
 
     assert!(service_endpoint_ctor(
-      did.clone().join("#fragment").unwrap(),
+      did.to_url().join("#fragment").unwrap(),
       &Url::parse("https://my-service.endpoint.net").unwrap(),
     )
     .is_ok());

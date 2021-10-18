@@ -556,11 +556,11 @@ pub(crate) const fn is_char_fragment(ch: char) -> bool {
   is_char_path(ch) || ch == '?'
 }
 
-#[rustfmt::skip]
 #[cfg(test)]
 mod tests {
   use super::*;
 
+  #[rustfmt::skip]
   #[test]
   fn test_did_url_parse_valid() {
     let did_url = CoreDIDUrl::parse("did:example:1234567890").unwrap();
@@ -586,18 +586,19 @@ mod tests {
     assert_eq!(did_url.fragment().unwrap(), "fragment");
   }
 
+  #[rustfmt::skip]
   #[test]
   fn test_join_valid() {
     let did_url = CoreDIDUrl::parse("did:example:1234567890").unwrap();
-    assert_eq!(did_url.clone().join("/path").unwrap().to_string(), "did:example:1234567890/path");
-    assert_eq!(did_url.clone().join("?query").unwrap().to_string(), "did:example:1234567890?query");
-    assert_eq!(did_url.clone().join("#fragment").unwrap().to_string(), "did:example:1234567890#fragment");
+    assert_eq!(did_url.to_url().join("/path").unwrap().to_string(), "did:example:1234567890/path");
+    assert_eq!(did_url.to_url().join("?query").unwrap().to_string(), "did:example:1234567890?query");
+    assert_eq!(did_url.to_url().join("#fragment").unwrap().to_string(), "did:example:1234567890#fragment");
 
-    assert_eq!(did_url.clone().join("/path?query").unwrap().to_string(), "did:example:1234567890/path?query");
-    assert_eq!(did_url.clone().join("/path#fragment").unwrap().to_string(), "did:example:1234567890/path#fragment");
-    assert_eq!(did_url.clone().join("?query#fragment").unwrap().to_string(), "did:example:1234567890?query#fragment");
+    assert_eq!(did_url.to_url().join("/path?query").unwrap().to_string(), "did:example:1234567890/path?query");
+    assert_eq!(did_url.to_url().join("/path#fragment").unwrap().to_string(), "did:example:1234567890/path#fragment");
+    assert_eq!(did_url.to_url().join("?query#fragment").unwrap().to_string(), "did:example:1234567890?query#fragment");
 
-    let did_url = did_url.clone().join("/path?query#fragment").unwrap();
+    let did_url = did_url.to_url().join("/path?query#fragment").unwrap();
     assert_eq!(did_url.to_string(), "did:example:1234567890/path?query#fragment");
     assert_eq!(did_url.path().unwrap(), "/path");
     assert_eq!(did_url.query().unwrap(), "query");
@@ -611,17 +612,19 @@ mod tests {
     assert!(CoreDIDUrl::parse("did:example:1234567890#invalid{fragment}").is_err());
 
     let did_url = CoreDIDUrl::parse("did:example:1234567890").unwrap();
-    assert!(did_url.clone().join("noleadingdelimiter").is_err());
-    assert!(did_url.clone().join("/invalid{path}").is_err());
-    assert!(did_url.clone().join("?invalid{query}").is_err());
-    assert!(did_url.clone().join("#invalid{fragment}").is_err());
+    assert!(did_url.to_url().join("noleadingdelimiter").is_err());
+    assert!(did_url.to_url().join("/invalid{path}").is_err());
+    assert!(did_url.to_url().join("?invalid{query}").is_err());
+    assert!(did_url.to_url().join("#invalid{fragment}").is_err());
   }
 
   #[test]
   fn test_did_url_basic_comparisons() {
     let did_url1 = CoreDIDUrl::parse("did:example:1234567890").unwrap();
+    let did_url1_copy = CoreDIDUrl::parse("did:example:1234567890").unwrap();
+    assert_eq!(did_url1, did_url1_copy);
+
     let did_url2 = CoreDIDUrl::parse("did:example:0987654321").unwrap();
-    assert_eq!(did_url1, did_url1);
     assert_ne!(did_url1, did_url2);
     assert!(did_url1 > did_url2);
 
@@ -631,10 +634,14 @@ mod tests {
 
     let did_url4 = CoreDIDUrl::parse("did:example:1234567890/path").unwrap();
     assert_ne!(did_url1, did_url4);
+    assert_ne!(did_url1.url(), did_url4.url());
+    assert_eq!(did_url1.did(), did_url4.did());
     assert!(did_url1 < did_url4);
 
     let did_url5 = CoreDIDUrl::parse("did:example:1234567890/zero").unwrap();
     assert_ne!(did_url4, did_url5);
+    assert_ne!(did_url4.url(), did_url5.url());
+    assert_eq!(did_url4.did(), did_url5.did());
     assert!(did_url4 < did_url5);
   }
 
@@ -655,6 +662,7 @@ mod tests {
     assert!(relative_url.path().is_none());
   }
 
+  #[rustfmt::skip]
   #[test]
   fn test_path_invalid() {
     let mut relative_url = RelativeDIDUrl::new();
@@ -712,6 +720,7 @@ mod tests {
     assert_eq!(relative_url.query().unwrap(), "name=value&name2=value2&3=true");
   }
 
+  #[rustfmt::skip]
   #[test]
   fn test_query_invalid() {
     let mut relative_url = RelativeDIDUrl::new();
@@ -735,6 +744,7 @@ mod tests {
     assert!(matches!(relative_url.set_query(Some("?query=fragment#")), Err(DIDError::InvalidQuery)));
   }
 
+  #[rustfmt::skip]
   #[test]
   fn test_fragment_valid() {
     let mut relative_url = RelativeDIDUrl::new();
@@ -758,6 +768,7 @@ mod tests {
     assert!(relative_url.fragment().is_none());
   }
 
+  #[rustfmt::skip]
   #[test]
   fn test_fragment_invalid() {
     let mut relative_url = RelativeDIDUrl::new();

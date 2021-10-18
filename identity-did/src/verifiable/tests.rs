@@ -71,7 +71,7 @@ fn test_sign_verify_this_ed25519() {
     let public_key = key.public().as_ref().to_vec();
 
     let method: VerificationMethod = VerificationMethod::builder(Default::default())
-      .id(controller.clone().join("#key-1").unwrap())
+      .id(controller.to_url().join("#key-1").unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(method_data_base(public_key))
