@@ -17,10 +17,10 @@ use did_url::DID as BaseDIDUrl;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 
-use crate::did::CoreDID;
-use crate::did::DID;
 use crate::did::did::is_char_method_id;
+use crate::did::CoreDID;
 use crate::did::DIDError;
+use crate::did::DID;
 
 pub type CoreDIDUrl = DIDUrl<CoreDID>;
 
@@ -32,9 +32,9 @@ pub type CoreDIDUrl = DIDUrl<CoreDID>;
 #[derive(Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 #[serde(into = "String", try_from = "String")]
 pub struct DIDUrl<T>
-  where
-    Self: Sized,
-    T: DID + Sized,
+where
+  Self: Sized,
+  T: DID + Sized,
 {
   did: T,
   url: RelativeDIDUrl,
@@ -98,11 +98,14 @@ impl RelativeDIDUrl {
   pub fn set_path(&mut self, value: Option<&str>) -> Result<(), DIDError> {
     self.path = value
       .filter(|s| !s.is_empty())
-      .map(|s| if s.starts_with('/') && s.chars().all(is_char_path) {
-        Ok(s.to_owned())
-      } else {
-        Err(DIDError::InvalidPath)
-      }).transpose()?;
+      .map(|s| {
+        if s.starts_with('/') && s.chars().all(is_char_path) {
+          Ok(s.to_owned())
+        } else {
+          Err(DIDError::InvalidPath)
+        }
+      })
+      .transpose()?;
     Ok(())
   }
 
@@ -146,7 +149,8 @@ impl RelativeDIDUrl {
           return Err(DIDError::InvalidQuery);
         }
         Ok(format!("?{}", s))
-      }).transpose()?;
+      })
+      .transpose()?;
     Ok(())
   }
 
@@ -199,17 +203,20 @@ impl RelativeDIDUrl {
           return Err(DIDError::InvalidFragment);
         }
         Ok(format!("#{}", s))
-      }).transpose()?;
+      })
+      .transpose()?;
     Ok(())
   }
 }
 
 impl Display for RelativeDIDUrl {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_fmt(format_args!("{}{}{}",
-                             self.path.as_deref().unwrap_or_default(),
-                             self.query.as_deref().unwrap_or_default(),
-                             self.fragment.as_deref().unwrap_or_default()))
+    f.write_fmt(format_args!(
+      "{}{}{}",
+      self.path.as_deref().unwrap_or_default(),
+      self.query.as_deref().unwrap_or_default(),
+      self.fragment.as_deref().unwrap_or_default()
+    ))
   }
 }
 
@@ -240,8 +247,8 @@ impl Hash for RelativeDIDUrl {
 }
 
 impl<T> DIDUrl<T>
-  where
-    T: DID + Sized,
+where
+  T: DID + Sized,
 {
   pub fn new(did: T, url: Option<RelativeDIDUrl>) -> Self {
     Self {
@@ -340,15 +347,12 @@ impl<T> DIDUrl<T>
     let segment: &str = segment.as_ref();
 
     // Accept only a relative path, query, or fragment to reject altering the method id segment.
-    if !segment.starts_with('/')
-      && !segment.starts_with('?')
-      && !segment.starts_with('#') {
+    if !segment.starts_with('/') && !segment.starts_with('?') && !segment.starts_with('#') {
       return Err(DIDError::InvalidPath);
     }
 
     // Parse DID Url.
-    let base_did_url: BaseDIDUrl = BaseDIDUrl::parse(self.to_string())?
-      .join(segment)?;
+    let base_did_url: BaseDIDUrl = BaseDIDUrl::parse(self.to_string())?.join(segment)?;
     Self::from_base_did_url(base_did_url)
   }
 
@@ -360,8 +364,8 @@ impl<T> DIDUrl<T>
   ///
   /// Workaround for lack of specialisation preventing a generic `From` implementation.
   pub fn from<U>(other: DIDUrl<U>) -> Self
-    where
-      U: DID + Into<T>,
+  where
+    U: DID + Into<T>,
   {
     let did: T = other.did.into();
     Self { did, url: other.url }
@@ -371,9 +375,9 @@ impl<T> DIDUrl<T>
   ///
   /// Workaround for lack of specialisation preventing a generic `TryFrom` implementation.
   pub fn try_from<U>(other: DIDUrl<U>) -> Result<Self, DIDError>
-    where
-      U: DID + TryInto<T>,
-      U::Error: Into<DIDError>,
+  where
+    U: DID + TryInto<T>,
+    U::Error: Into<DIDError>,
   {
     let did: T = other.did.try_into().map_err(|err| err.into())?;
     Ok(Self { did, url: other.url })
@@ -381,8 +385,8 @@ impl<T> DIDUrl<T>
 }
 
 impl<T> From<T> for DIDUrl<T>
-  where
-    T: DID,
+where
+  T: DID,
 {
   fn from(did: T) -> Self {
     Self::new(did, None)
@@ -390,8 +394,8 @@ impl<T> From<T> for DIDUrl<T>
 }
 
 impl<T> FromStr for DIDUrl<T>
-  where
-    T: DID,
+where
+  T: DID,
 {
   type Err = DIDError;
 
@@ -401,8 +405,8 @@ impl<T> FromStr for DIDUrl<T>
 }
 
 impl<T> TryFrom<String> for DIDUrl<T>
-  where
-    T: DID,
+where
+  T: DID,
 {
   type Error = DIDError;
 
@@ -412,8 +416,8 @@ impl<T> TryFrom<String> for DIDUrl<T>
 }
 
 impl<T> From<DIDUrl<T>> for String
-  where
-    T: DID,
+where
+  T: DID,
 {
   fn from(did_url: DIDUrl<T>) -> Self {
     did_url.to_string()
@@ -421,8 +425,8 @@ impl<T> From<DIDUrl<T>> for String
 }
 
 impl<T> AsRef<T> for DIDUrl<T>
-  where
-    T: DID,
+where
+  T: DID,
 {
   fn as_ref(&self) -> &T {
     &self.did
@@ -430,8 +434,8 @@ impl<T> AsRef<T> for DIDUrl<T>
 }
 
 impl<T> PartialOrd for DIDUrl<T>
-  where
-    T: DID,
+where
+  T: DID,
 {
   #[inline]
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -444,8 +448,8 @@ impl<T> PartialOrd for DIDUrl<T>
 }
 
 impl<T> Ord for DIDUrl<T>
-  where
-    T: DID,
+where
+  T: DID,
 {
   #[inline]
   fn cmp(&self, other: &Self) -> Ordering {
@@ -457,8 +461,8 @@ impl<T> Ord for DIDUrl<T>
 }
 
 impl<T> Hash for DIDUrl<T>
-  where
-    T: DID,
+where
+  T: DID,
 {
   fn hash<H: Hasher>(&self, state: &mut H) {
     self.to_string().hash(state)
@@ -466,8 +470,8 @@ impl<T> Hash for DIDUrl<T>
 }
 
 impl<T> Debug for DIDUrl<T>
-  where
-    T: DID,
+where
+  T: DID,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     f.write_fmt(format_args!("{}", self.to_string()))
@@ -475,8 +479,8 @@ impl<T> Debug for DIDUrl<T>
 }
 
 impl<T> Display for DIDUrl<T>
-  where
-    T: DID,
+where
+  T: DID,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     f.write_fmt(format_args!("{}", self.to_string()))
@@ -484,8 +488,8 @@ impl<T> Display for DIDUrl<T>
 }
 
 impl<T> Diff for DIDUrl<T>
-  where
-    T: DID,
+where
+  T: DID,
 {
   type Type = DiffString;
 
@@ -541,13 +545,39 @@ mod tests {
     assert!(did_url.query().is_none());
     assert!(did_url.fragment().is_none());
 
-    assert_eq!(CoreDIDUrl::parse("did:example:1234567890/path").unwrap().to_string(), "did:example:1234567890/path");
-    assert_eq!(CoreDIDUrl::parse("did:example:1234567890?query").unwrap().to_string(), "did:example:1234567890?query");
-    assert_eq!(CoreDIDUrl::parse("did:example:1234567890#fragment").unwrap().to_string(), "did:example:1234567890#fragment");
+    assert_eq!(
+      CoreDIDUrl::parse("did:example:1234567890/path").unwrap().to_string(),
+      "did:example:1234567890/path"
+    );
+    assert_eq!(
+      CoreDIDUrl::parse("did:example:1234567890?query").unwrap().to_string(),
+      "did:example:1234567890?query"
+    );
+    assert_eq!(
+      CoreDIDUrl::parse("did:example:1234567890#fragment")
+        .unwrap()
+        .to_string(),
+      "did:example:1234567890#fragment"
+    );
 
-    assert_eq!(CoreDIDUrl::parse("did:example:1234567890/path?query").unwrap().to_string(), "did:example:1234567890/path?query");
-    assert_eq!(CoreDIDUrl::parse("did:example:1234567890/path#fragment").unwrap().to_string(), "did:example:1234567890/path#fragment");
-    assert_eq!(CoreDIDUrl::parse("did:example:1234567890?query#fragment").unwrap().to_string(), "did:example:1234567890?query#fragment");
+    assert_eq!(
+      CoreDIDUrl::parse("did:example:1234567890/path?query")
+        .unwrap()
+        .to_string(),
+      "did:example:1234567890/path?query"
+    );
+    assert_eq!(
+      CoreDIDUrl::parse("did:example:1234567890/path#fragment")
+        .unwrap()
+        .to_string(),
+      "did:example:1234567890/path#fragment"
+    );
+    assert_eq!(
+      CoreDIDUrl::parse("did:example:1234567890?query#fragment")
+        .unwrap()
+        .to_string(),
+      "did:example:1234567890?query#fragment"
+    );
 
     let did_url = CoreDIDUrl::parse("did:example:1234567890/path?query#fragment").unwrap();
     assert_eq!(did_url.to_string(), "did:example:1234567890/path?query#fragment");
@@ -559,13 +589,31 @@ mod tests {
   #[test]
   fn test_join_valid() {
     let did_url = CoreDIDUrl::parse("did:example:1234567890").unwrap();
-    assert_eq!(did_url.clone().join("/path").unwrap().to_string(), "did:example:1234567890/path");
-    assert_eq!(did_url.clone().join("?query").unwrap().to_string(), "did:example:1234567890?query");
-    assert_eq!(did_url.clone().join("#fragment").unwrap().to_string(), "did:example:1234567890#fragment");
+    assert_eq!(
+      did_url.clone().join("/path").unwrap().to_string(),
+      "did:example:1234567890/path"
+    );
+    assert_eq!(
+      did_url.clone().join("?query").unwrap().to_string(),
+      "did:example:1234567890?query"
+    );
+    assert_eq!(
+      did_url.clone().join("#fragment").unwrap().to_string(),
+      "did:example:1234567890#fragment"
+    );
 
-    assert_eq!(did_url.clone().join("/path?query").unwrap().to_string(), "did:example:1234567890/path?query");
-    assert_eq!(did_url.clone().join("/path#fragment").unwrap().to_string(), "did:example:1234567890/path#fragment");
-    assert_eq!(did_url.clone().join("?query#fragment").unwrap().to_string(), "did:example:1234567890?query#fragment");
+    assert_eq!(
+      did_url.clone().join("/path?query").unwrap().to_string(),
+      "did:example:1234567890/path?query"
+    );
+    assert_eq!(
+      did_url.clone().join("/path#fragment").unwrap().to_string(),
+      "did:example:1234567890/path#fragment"
+    );
+    assert_eq!(
+      did_url.clone().join("?query#fragment").unwrap().to_string(),
+      "did:example:1234567890?query#fragment"
+    );
 
     let did_url = did_url.clone().join("/path?query#fragment").unwrap();
     assert_eq!(did_url.to_string(), "did:example:1234567890/path?query#fragment");
@@ -609,31 +657,85 @@ mod tests {
     let mut relative_url = RelativeDIDUrl::new();
 
     // Invalid symbols.
-    assert!(matches!(relative_url.set_path(Some("/white space")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("/white\tspace")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("/white\nspace")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("/path{invalid_brackets}")), Err(DIDError::InvalidPath)));
+    assert!(matches!(
+      relative_url.set_path(Some("/white space")),
+      Err(DIDError::InvalidPath)
+    ));
+    assert!(matches!(
+      relative_url.set_path(Some("/white\tspace")),
+      Err(DIDError::InvalidPath)
+    ));
+    assert!(matches!(
+      relative_url.set_path(Some("/white\nspace")),
+      Err(DIDError::InvalidPath)
+    ));
+    assert!(matches!(
+      relative_url.set_path(Some("/path{invalid_brackets}")),
+      Err(DIDError::InvalidPath)
+    ));
 
     // Missing leading '/'.
-    assert!(matches!(relative_url.set_path(Some("path")), Err(DIDError::InvalidPath)));
+    assert!(matches!(
+      relative_url.set_path(Some("path")),
+      Err(DIDError::InvalidPath)
+    ));
     assert!(matches!(relative_url.set_path(Some("p/")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("p/ath")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("path/")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("path/sub-path/")), Err(DIDError::InvalidPath)));
+    assert!(matches!(
+      relative_url.set_path(Some("p/ath")),
+      Err(DIDError::InvalidPath)
+    ));
+    assert!(matches!(
+      relative_url.set_path(Some("path/")),
+      Err(DIDError::InvalidPath)
+    ));
+    assert!(matches!(
+      relative_url.set_path(Some("path/sub-path/")),
+      Err(DIDError::InvalidPath)
+    ));
 
     // Reject query delimiter '?'.
-    assert!(matches!(relative_url.set_path(Some("?query")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("some?query")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("/path?")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("/path?query")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("/path/query?")), Err(DIDError::InvalidPath)));
+    assert!(matches!(
+      relative_url.set_path(Some("?query")),
+      Err(DIDError::InvalidPath)
+    ));
+    assert!(matches!(
+      relative_url.set_path(Some("some?query")),
+      Err(DIDError::InvalidPath)
+    ));
+    assert!(matches!(
+      relative_url.set_path(Some("/path?")),
+      Err(DIDError::InvalidPath)
+    ));
+    assert!(matches!(
+      relative_url.set_path(Some("/path?query")),
+      Err(DIDError::InvalidPath)
+    ));
+    assert!(matches!(
+      relative_url.set_path(Some("/path/query?")),
+      Err(DIDError::InvalidPath)
+    ));
 
     // Reject fragment delimiter '#'.
-    assert!(matches!(relative_url.set_path(Some("#fragment")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("some#fragment")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("/path#")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("/path#fragment")), Err(DIDError::InvalidPath)));
-    assert!(matches!(relative_url.set_path(Some("/path/fragment#")), Err(DIDError::InvalidPath)));
+    assert!(matches!(
+      relative_url.set_path(Some("#fragment")),
+      Err(DIDError::InvalidPath)
+    ));
+    assert!(matches!(
+      relative_url.set_path(Some("some#fragment")),
+      Err(DIDError::InvalidPath)
+    ));
+    assert!(matches!(
+      relative_url.set_path(Some("/path#")),
+      Err(DIDError::InvalidPath)
+    ));
+    assert!(matches!(
+      relative_url.set_path(Some("/path#fragment")),
+      Err(DIDError::InvalidPath)
+    ));
+    assert!(matches!(
+      relative_url.set_path(Some("/path/fragment#")),
+      Err(DIDError::InvalidPath)
+    ));
   }
 
   #[test]
@@ -669,19 +771,52 @@ mod tests {
     assert!(matches!(relative_url.set_query(Some("?")), Err(DIDError::InvalidQuery)));
 
     // Invalid symbols.
-    assert!(matches!(relative_url.set_query(Some("?white space")), Err(DIDError::InvalidQuery)));
-    assert!(matches!(relative_url.set_query(Some("?white\tspace")), Err(DIDError::InvalidQuery)));
-    assert!(matches!(relative_url.set_query(Some("?white\nspace")), Err(DIDError::InvalidQuery)));
-    assert!(matches!(relative_url.set_query(Some("?query{invalid_brackets}")), Err(DIDError::InvalidQuery)));
+    assert!(matches!(
+      relative_url.set_query(Some("?white space")),
+      Err(DIDError::InvalidQuery)
+    ));
+    assert!(matches!(
+      relative_url.set_query(Some("?white\tspace")),
+      Err(DIDError::InvalidQuery)
+    ));
+    assert!(matches!(
+      relative_url.set_query(Some("?white\nspace")),
+      Err(DIDError::InvalidQuery)
+    ));
+    assert!(matches!(
+      relative_url.set_query(Some("?query{invalid_brackets}")),
+      Err(DIDError::InvalidQuery)
+    ));
 
     // Reject fragment delimiter '#'.
-    assert!(matches!(relative_url.set_query(Some("#fragment")), Err(DIDError::InvalidQuery)));
-    assert!(matches!(relative_url.set_query(Some("some#fragment")), Err(DIDError::InvalidQuery)));
-    assert!(matches!(relative_url.set_query(Some("?query#fragment")), Err(DIDError::InvalidQuery)));
-    assert!(matches!(relative_url.set_query(Some("?query=a#fragment")), Err(DIDError::InvalidQuery)));
-    assert!(matches!(relative_url.set_query(Some("?query=#fragment")), Err(DIDError::InvalidQuery)));
-    assert!(matches!(relative_url.set_query(Some("?query=frag#ment")), Err(DIDError::InvalidQuery)));
-    assert!(matches!(relative_url.set_query(Some("?query=fragment#")), Err(DIDError::InvalidQuery)));
+    assert!(matches!(
+      relative_url.set_query(Some("#fragment")),
+      Err(DIDError::InvalidQuery)
+    ));
+    assert!(matches!(
+      relative_url.set_query(Some("some#fragment")),
+      Err(DIDError::InvalidQuery)
+    ));
+    assert!(matches!(
+      relative_url.set_query(Some("?query#fragment")),
+      Err(DIDError::InvalidQuery)
+    ));
+    assert!(matches!(
+      relative_url.set_query(Some("?query=a#fragment")),
+      Err(DIDError::InvalidQuery)
+    ));
+    assert!(matches!(
+      relative_url.set_query(Some("?query=#fragment")),
+      Err(DIDError::InvalidQuery)
+    ));
+    assert!(matches!(
+      relative_url.set_query(Some("?query=frag#ment")),
+      Err(DIDError::InvalidQuery)
+    ));
+    assert!(matches!(
+      relative_url.set_query(Some("?query=fragment#")),
+      Err(DIDError::InvalidQuery)
+    ));
   }
 
   #[test]
@@ -691,14 +826,24 @@ mod tests {
     // With leading '#'.
     assert!(relative_url.set_fragment(Some("#fragment")).is_ok());
     assert_eq!(relative_url.fragment().unwrap(), "fragment");
-    assert!(relative_url.set_fragment(Some("#longer_fragment?and/other-delimiters:valid")).is_ok());
-    assert_eq!(relative_url.fragment().unwrap(), "longer_fragment?and/other-delimiters:valid");
+    assert!(relative_url
+      .set_fragment(Some("#longer_fragment?and/other-delimiters:valid"))
+      .is_ok());
+    assert_eq!(
+      relative_url.fragment().unwrap(),
+      "longer_fragment?and/other-delimiters:valid"
+    );
 
     // Without leading '#'.
     assert!(relative_url.set_fragment(Some("fragment")).is_ok());
     assert_eq!(relative_url.fragment().unwrap(), "fragment");
-    assert!(relative_url.set_fragment(Some("longer_fragment?and/other-delimiters:valid")).is_ok());
-    assert_eq!(relative_url.fragment().unwrap(), "longer_fragment?and/other-delimiters:valid");
+    assert!(relative_url
+      .set_fragment(Some("longer_fragment?and/other-delimiters:valid"))
+      .is_ok());
+    assert_eq!(
+      relative_url.fragment().unwrap(),
+      "longer_fragment?and/other-delimiters:valid"
+    );
 
     // Empty fragment.
     assert!(relative_url.set_fragment(Some("")).is_ok());
@@ -712,14 +857,32 @@ mod tests {
     let mut relative_url = RelativeDIDUrl::new();
 
     // Delimiter only.
-    assert!(matches!(relative_url.set_fragment(Some("#")), Err(DIDError::InvalidFragment)));
+    assert!(matches!(
+      relative_url.set_fragment(Some("#")),
+      Err(DIDError::InvalidFragment)
+    ));
 
     // Invalid symbols.
-    assert!(matches!(relative_url.set_fragment(Some("#white space")), Err(DIDError::InvalidFragment)));
-    assert!(matches!(relative_url.set_fragment(Some("#white\tspace")), Err(DIDError::InvalidFragment)));
-    assert!(matches!(relative_url.set_fragment(Some("#white\nspace")), Err(DIDError::InvalidFragment)));
-    assert!(matches!(relative_url.set_fragment(Some("#fragment{invalid_brackets}")), Err(DIDError::InvalidFragment)));
-    assert!(matches!(relative_url.set_fragment(Some("#fragment\"other\"")), Err(DIDError::InvalidFragment)));
+    assert!(matches!(
+      relative_url.set_fragment(Some("#white space")),
+      Err(DIDError::InvalidFragment)
+    ));
+    assert!(matches!(
+      relative_url.set_fragment(Some("#white\tspace")),
+      Err(DIDError::InvalidFragment)
+    ));
+    assert!(matches!(
+      relative_url.set_fragment(Some("#white\nspace")),
+      Err(DIDError::InvalidFragment)
+    ));
+    assert!(matches!(
+      relative_url.set_fragment(Some("#fragment{invalid_brackets}")),
+      Err(DIDError::InvalidFragment)
+    ));
+    assert!(matches!(
+      relative_url.set_fragment(Some("#fragment\"other\"")),
+      Err(DIDError::InvalidFragment)
+    ));
   }
 
   proptest::proptest! {

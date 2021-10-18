@@ -9,13 +9,15 @@
 //! cargo run --example resolution
 
 use identity::core::SerdeInto;
-use identity::did::{DID, resolution};
+use identity::did::resolution;
 use identity::did::resolution::Dereference;
 use identity::did::resolution::InputMetadata;
 use identity::did::resolution::Resolution;
 use identity::did::resolution::Resource;
 use identity::did::resolution::SecondaryResource;
-use identity::iota::{ClientMap, IotaDID};
+use identity::did::DID;
+use identity::iota::ClientMap;
+use identity::iota::IotaDID;
 use identity::iota::IotaDIDUrl;
 use identity::iota::Receipt;
 use identity::prelude::*;

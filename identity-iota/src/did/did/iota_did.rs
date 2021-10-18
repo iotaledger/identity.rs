@@ -15,9 +15,9 @@ use crypto::hashes::Digest;
 use identity_core::utils::decode_b58;
 use identity_core::utils::encode_b58;
 use identity_did::did::CoreDID;
-use identity_did::did::DID;
 use identity_did::did::DIDError;
 use identity_did::did::DIDUrl;
+use identity_did::did::DID;
 
 use crate::did::Segments;
 use crate::error::Error;
@@ -211,7 +211,9 @@ impl IotaDID {
 
     if segments.count() == 2 && segments.network() == Self::DEFAULT_NETWORK {
       let method_id: String = segments.tag().to_string();
-      let _ = did.set_method_id(method_id).expect("this method_id is from a valid did");
+      let _ = did
+        .set_method_id(method_id)
+        .expect("this method_id is from a valid did");
     }
 
     did
@@ -348,7 +350,8 @@ impl From<IotaDID> for String {
 #[cfg(test)]
 mod tests {
   use identity_core::crypto::KeyPair;
-  use identity_did::did::{CoreDID, DID};
+  use identity_did::did::CoreDID;
+  use identity_did::did::DID;
 
   use crate::did::IotaDID;
   use crate::did::IotaDIDUrl;

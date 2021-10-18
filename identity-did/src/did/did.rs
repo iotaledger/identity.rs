@@ -60,8 +60,8 @@ pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr {
   /// Constructs a [`DIDUrl`] by attempting to append a string representing a path, query, and/or
   /// fragment to this [`DID`].
   fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, DIDError>
-    where
-      Self: Sized;
+  where
+    Self: Sized;
 
   /// Clones the [`DID`] into a [`DIDUrl`] of the same method.
   fn to_url(&self) -> DIDUrl<Self>;
@@ -297,8 +297,14 @@ mod tests {
 
   #[test]
   fn test_core_did_valid() {
-    assert_eq!(CoreDID::parse("did:example:123456890").unwrap(), "did:example:123456890");
-    assert_eq!(CoreDID::parse("did:iota:main:123456890").unwrap(), "did:iota:main:123456890");
+    assert_eq!(
+      CoreDID::parse("did:example:123456890").unwrap(),
+      "did:example:123456890"
+    );
+    assert_eq!(
+      CoreDID::parse("did:iota:main:123456890").unwrap(),
+      "did:iota:main:123456890"
+    );
   }
 
   #[test]

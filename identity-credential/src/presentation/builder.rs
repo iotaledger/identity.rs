@@ -138,7 +138,8 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
   use identity_core::utils::encode_b58;
-  use identity_did::did::{CoreDID, DID};
+  use identity_did::did::CoreDID;
+  use identity_did::did::DID;
   use identity_did::document::CoreDocument;
   use identity_did::document::DocumentBuilder;
   use identity_did::verification::MethodBuilder;

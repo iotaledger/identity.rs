@@ -6,12 +6,12 @@
 //!
 //! cargo run --example update_did
 
-use identity::core::FromJson;
 use identity::core::json;
+use identity::core::FromJson;
 use identity::core::Timestamp;
-use identity::did::DID;
 use identity::did::MethodScope;
 use identity::did::Service;
+use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;

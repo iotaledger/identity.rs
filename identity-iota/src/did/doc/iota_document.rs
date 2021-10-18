@@ -691,9 +691,9 @@ mod tests {
   use identity_did::verification::MethodType;
   use identity_did::verification::VerificationMethod;
 
+  use crate::did::did::IotaDID;
   use crate::did::doc::IotaDocument;
   use crate::did::doc::IotaVerificationMethod;
-  use crate::did::did::IotaDID;
   use crate::did::IotaDIDUrl;
   use crate::tangle::MessageId;
   use crate::tangle::Network;

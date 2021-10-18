@@ -14,7 +14,8 @@
 
 use identity::core::Timestamp;
 use identity::credential::Credential;
-use identity::did::{DID, MethodScope};
+use identity::did::MethodScope;
+use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
 use identity::iota::IotaVerificationMethod;

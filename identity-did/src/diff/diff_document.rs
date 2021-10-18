@@ -23,10 +23,10 @@ use crate::verification::VerificationMethod;
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(bound(deserialize = ""))]
 pub struct DiffDocument<T = Object, U = Object, V = Object>
-  where
-    T: Diff + Serialize + for<'__de> Deserialize<'__de>,
-    U: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
-    V: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
+where
+  T: Diff + Serialize + for<'__de> Deserialize<'__de>,
+  U: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
+  V: Diff + Serialize + for<'__de> Deserialize<'__de> + Default,
 {
   #[serde(skip_serializing_if = "Option::is_none")]
   id: Option<DiffString>,
@@ -53,10 +53,10 @@ pub struct DiffDocument<T = Object, U = Object, V = Object>
 }
 
 impl<T, U, V> Diff for CoreDocument<T, U, V>
-  where
-    T: Diff + Serialize + for<'de> Deserialize<'de>,
-    U: Diff + Serialize + for<'de> Deserialize<'de> + Default,
-    V: Diff + Serialize + for<'de> Deserialize<'de> + Default,
+where
+  T: Diff + Serialize + for<'de> Deserialize<'de>,
+  U: Diff + Serialize + for<'de> Deserialize<'de> + Default,
+  V: Diff + Serialize + for<'de> Deserialize<'de> + Default,
 {
   type Type = DiffDocument<T, U, V>;
 
@@ -313,8 +313,9 @@ impl<T, U, V> Diff for CoreDocument<T, U, V>
 mod test {
   use std::collections::BTreeMap;
 
+  use crate::did::CoreDIDUrl;
+  use crate::did::DID;
   use identity_core::common::Value;
-  use crate::did::{CoreDIDUrl, DID};
 
   use crate::service::ServiceBuilder;
   use crate::verification::MethodBuilder;
