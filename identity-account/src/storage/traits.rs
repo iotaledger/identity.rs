@@ -10,7 +10,6 @@ use identity_iota::did::IotaDID;
 
 use crate::error::Result;
 use crate::events::Commit;
-use crate::identity::IdentityIndex;
 use crate::identity::IdentitySnapshot;
 use crate::types::Generation;
 use crate::types::KeyLocation;
@@ -46,17 +45,11 @@ pub trait Storage: Debug + Send + Sync + 'static {
   /// Returns `true` if a keypair exists at the specified `location`.
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool>;
 
-  /// Returns the account identity index.
-  async fn index(&self) -> Result<IdentityIndex>;
-
   /// Returns the last generation that has been published to the tangle for the given `id`.
   async fn published_generation(&self, did: &IotaDID) -> Result<Option<Generation>>;
 
   /// Sets the last generation that has been published to the tangle for the given `id`.
   async fn set_published_generation(&self, did: &IotaDID, index: Generation) -> Result<()>;
-
-  /// Sets a new account identity index.
-  async fn set_index(&self, index: &IdentityIndex) -> Result<()>;
 
   /// Returns the state snapshot of the identity specified by `id`.
   async fn snapshot(&self, did: &IotaDID) -> Result<Option<IdentitySnapshot>>;
@@ -115,14 +108,6 @@ impl Storage for Box<dyn Storage> {
 
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
     (**self).key_exists(did, location).await
-  }
-
-  async fn index(&self) -> Result<IdentityIndex> {
-    (**self).index().await
-  }
-
-  async fn set_index(&self, index: &IdentityIndex) -> Result<()> {
-    (**self).set_index(index).await
   }
 
   async fn snapshot(&self, did: &IotaDID) -> Result<Option<IdentitySnapshot>> {

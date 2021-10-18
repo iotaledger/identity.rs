@@ -27,7 +27,6 @@ use crate::error::Result;
 use crate::events::Commit;
 use crate::events::Event;
 use crate::events::EventData;
-use crate::identity::IdentityIndex;
 use crate::identity::IdentitySnapshot;
 use crate::storage::Storage;
 use crate::stronghold::default_hint;
@@ -39,9 +38,6 @@ use crate::types::KeyLocation;
 use crate::types::Signature;
 use crate::utils::derive_encryption_key;
 use crate::utils::EncryptionKey;
-
-// name of the metadata store
-const META: &str = "$meta";
 
 // event concurrency limit
 const ECL: usize = 8;
@@ -155,35 +151,6 @@ impl Storage for Stronghold {
       MethodType::Ed25519VerificationKey2018 => vault.exists(location_skey(location)).await,
       MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_exists] Handle MerkleKeyCollection2021"),
     }
-  }
-
-  async fn index(&self) -> Result<IdentityIndex> {
-    // Load the metadata actor
-    let store: Store<'_> = self.store(META);
-
-    // Read the index from the snapshot
-    let data: Vec<u8> = store.get(location_index()).await?;
-
-    // No index data (new snapshot)
-    if data.is_empty() {
-      return Ok(IdentityIndex::new());
-    }
-
-    // Deserialize and return
-    Ok(IdentityIndex::from_json_slice(&data)?)
-  }
-
-  async fn set_index(&self, index: &IdentityIndex) -> Result<()> {
-    // Load the metadata actor
-    let store: Store<'_> = self.store(META);
-
-    // Serialize the index
-    let json: Vec<u8> = index.to_json_vec()?;
-
-    // Write the index to the snapshot
-    store.set(location_index(), json, None).await?;
-
-    Ok(())
   }
 
   async fn snapshot(&self, did: &IotaDID) -> Result<Option<IdentitySnapshot>> {
@@ -403,10 +370,6 @@ async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocatio
   let signature: [u8; 64] = vault.ed25519_sign(payload, location_skey(location)).await?;
 
   Ok(Signature::new(public_key, signature.into()))
-}
-
-fn location_index() -> Location {
-  Location::generic("$index", Vec::new())
 }
 
 fn location_snapshot() -> Location {

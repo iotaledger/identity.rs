@@ -25,7 +25,6 @@ use zeroize::Zeroize;
 use crate::error::Error;
 use crate::error::Result;
 use crate::events::Commit;
-use crate::identity::IdentityIndex;
 use crate::identity::IdentitySnapshot;
 use crate::storage::Storage;
 use crate::types::Generation;
@@ -43,7 +42,6 @@ type PublishedGenerations = HashMap<IotaDID, Generation>;
 
 pub struct MemStore {
   expand: bool,
-  index: Shared<IdentityIndex>,
   published_generations: Shared<PublishedGenerations>,
   events: Shared<Events>,
   states: Shared<States>,
@@ -54,7 +52,6 @@ impl MemStore {
   pub fn new() -> Self {
     Self {
       expand: false,
-      index: Shared::new(IdentityIndex::new()),
       published_generations: Shared::new(HashMap::new()),
       events: Shared::new(HashMap::new()),
       states: Shared::new(HashMap::new()),
@@ -68,10 +65,6 @@ impl MemStore {
 
   pub fn set_expand(&mut self, value: bool) {
     self.expand = value;
-  }
-
-  pub fn index(&self) -> Result<IdentityIndex> {
-    self.index.read().map(|data| data.clone())
   }
 
   pub fn events(&self) -> Result<Events> {
@@ -192,16 +185,6 @@ impl Storage for MemStore {
     }
   }
 
-  async fn index(&self) -> Result<IdentityIndex> {
-    self.index.read().map(|index| index.clone())
-  }
-
-  async fn set_index(&self, index: &IdentityIndex) -> Result<()> {
-    *self.index.write()? = index.clone();
-
-    Ok(())
-  }
-
   async fn snapshot(&self, did: &IotaDID) -> Result<Option<IdentitySnapshot>> {
     self.states.read().map(|states| states.get(did).cloned())
   }
@@ -253,7 +236,6 @@ impl Debug for MemStore {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     if self.expand {
       f.debug_struct("MemStore")
-        .field("index", &self.index)
         .field("events", &self.events)
         .field("states", &self.states)
         .field("vaults", &self.vaults)
