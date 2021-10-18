@@ -5,6 +5,8 @@ use identity_iota::did::IotaDID;
 use identity_iota::tangle::ClientBuilder;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::Network;
+use identity_iota::tangle::NetworkName;
+use std::collections::HashMap;
 #[cfg(feature = "stronghold")]
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -44,7 +46,9 @@ pub enum AccountStorage {
 #[derive(Debug)]
 pub struct AccountBuilder {
   config: Config,
-  storage: Arc<dyn Storage>,
+  storage_template: Option<AccountStorage>,
+  storage: Option<Arc<dyn Storage>>,
+  client_builders: Option<HashMap<NetworkName, ClientBuilder>>,
   client_map: Arc<ClientMap>,
 }
 
@@ -53,7 +57,9 @@ impl AccountBuilder {
   pub fn new() -> Self {
     Self {
       config: Config::new(),
-      storage: Arc::new(MemStore::new()),
+      storage_template: Some(AccountStorage::Memory),
+      storage: Some(Arc::new(MemStore::new())),
+      client_builders: None,
       client_map: Arc::new(ClientMap::new()),
     }
   }
@@ -96,11 +102,19 @@ impl AccountBuilder {
   }
 
   /// Sets the account storage adapter.
-  pub async fn storage(mut self, value: AccountStorage) -> Result<Self> {
-    self.storage = match value {
-      AccountStorage::Memory => Arc::new(MemStore::new()),
+  pub fn storage(mut self, value: AccountStorage) -> Self {
+    self.storage_template = Some(value);
+    self
+  }
+
+  async fn get_storage(&mut self) -> Result<Arc<dyn Storage>> {
+    match self.storage_template.take() {
+      Some(AccountStorage::Memory) => {
+        let storage = Arc::new(MemStore::new());
+        self.storage = Some(storage);
+      }
       #[cfg(feature = "stronghold")]
-      AccountStorage::Stronghold(snapshot, password) => {
+      Some(AccountStorage::Stronghold(snapshot, password)) => {
         let passref: Option<&str> = password.as_deref();
         let adapter: Stronghold = Stronghold::new(&snapshot, passref).await?;
 
@@ -108,32 +122,52 @@ impl AccountBuilder {
           password.zeroize();
         }
 
-        Arc::new(adapter)
+        let storage = Arc::new(adapter);
+        self.storage = Some(storage);
       }
-      AccountStorage::Custom(adapter) => adapter,
+      Some(AccountStorage::Custom(storage)) => {
+        self.storage = Some(storage);
+      }
+      None => (),
     };
 
-    Ok(self)
+    // unwrap is fine, since by default, storage_template is `Some`,
+    // which results in storage being `Some`.
+    // Overwriting storage_template always produces `Some` storage.
+    Ok(Arc::clone(self.storage.as_ref().unwrap()))
   }
 
   /// Apply configuration to the IOTA Tangle client for the given `Network`.
-  pub async fn client<F>(self, network: Network, f: F) -> Result<Self>
+  pub fn client<F>(mut self, network: Network, f: F) -> Self
   where
     F: FnOnce(ClientBuilder) -> ClientBuilder,
   {
     self
-      .client_map
-      .insert(f(ClientBuilder::new().network(network)).build().await?);
-    Ok(self)
+      .client_builders
+      .get_or_insert_with(HashMap::new)
+      .insert(network.name(), f(ClientBuilder::new().network(network)));
+    self
+  }
+
+  async fn build_clients(&mut self) -> Result<()> {
+    if let Some(hmap) = self.client_builders.take() {
+      for builder in hmap.into_iter() {
+        self.client_map.insert(builder.1.build().await?)
+      }
+    }
+
+    Ok(())
   }
 
   /// Creates a new identity based on the builder configuration and returns
   /// the [`Account`] instance to manage it.
   /// The identity is locally stored in the [`Storage`].
   /// See [`IdentityCreate`] to customize the identity.
-  pub async fn create_identity(&self, input: IdentityCreate) -> Result<Account> {
+  pub async fn create_identity(&mut self, input: IdentityCreate) -> Result<Account> {
+    self.build_clients().await?;
+
     let setup = AccountSetup::new_with_options(
-      Arc::clone(&self.storage),
+      self.get_storage().await?,
       Some(self.config.clone()),
       Some(Arc::clone(&self.client_map)),
     );
@@ -145,9 +179,11 @@ impl AccountBuilder {
 
   /// Loads an existing identity from the `did` with the builder configuration.
   /// The identity must exist in the local [`Storage`].
-  pub async fn load_identity(&self, did: IotaDID) -> Result<Account> {
+  pub async fn load_identity(&mut self, did: IotaDID) -> Result<Account> {
+    self.build_clients().await?;
+
     let setup = AccountSetup::new_with_options(
-      Arc::clone(&self.storage),
+      self.get_storage().await?,
       Some(self.config.clone()),
       Some(Arc::clone(&self.client_map)),
     );

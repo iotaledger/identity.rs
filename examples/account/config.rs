@@ -28,7 +28,7 @@ async fn main() -> Result<()> {
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
   // Create a new Account with explicit configuration
-  let builder: AccountBuilder = Account::builder()
+  let mut builder: AccountBuilder = Account::builder()
     .autosave(AutoSave::Never) // never auto-save. rely on the drop save
     .autosave(AutoSave::Every) // save immediately after every action
     .autosave(AutoSave::Batch(10)) // save after every 10 actions
@@ -36,7 +36,6 @@ async fn main() -> Result<()> {
     .dropsave(true) // save the account state on drop
     .milestone(4) // save a snapshot every 4 actions
     .storage(AccountStorage::Memory) // use the default in-memory storage
-    .await?
     // configure a mainnet Tangle client with node and permanode
     .client(Network::Mainnet, |builder| {
       builder
@@ -47,14 +46,12 @@ async fn main() -> Result<()> {
         .permanode("https://chrysalis-chronicle.iota.org/api/mainnet/", None, None)
         .unwrap() // unwrap is safe, we provided a valid permanode URL
     })
-    .await?
     // Configure a client for the private network, here `dev`
     // Also set the URL that points to the REST API of the node
     .client(network, |builder| {
       // unwrap is safe, we provided a valid node URL
       builder.node(private_node_url).unwrap()
-    })
-    .await?;
+    });
 
   // Create an identity specifically on the devnet by passing `network_name`
   // The same applies if we wanted to create an identity on a private tangle

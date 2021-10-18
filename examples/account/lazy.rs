@@ -24,7 +24,6 @@ async fn main() -> Result<()> {
   // Rather, when we publish, multiple updates are batched together.
   let mut account: Account = Account::builder()
     .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
-    .await?
     .autopublish(false)
     .create_identity(IdentityCreate::default())
     .await?;
