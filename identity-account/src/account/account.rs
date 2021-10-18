@@ -49,7 +49,7 @@ pub struct Account {
   config: Config,
   storage: Arc<dyn Storage>,
   client_map: Arc<ClientMap>,
-  state: State,
+  actions: AtomicUsize,
   did: IotaDID,
 }
 
@@ -70,10 +70,10 @@ impl Account {
   /// Creates a new `Account` instance with the given `config`.
   async fn from_setup(setup: AccountSetup, did: IotaDID) -> Result<Self> {
     Ok(Self {
-      state: State::new(),
       config: setup.config,
       storage: setup.storage,
       client_map: setup.client_map,
+      actions: AtomicUsize::new(0),
       did,
     })
   }
@@ -100,12 +100,12 @@ impl Account {
 
   /// Returns the total number of actions executed by this instance.
   pub fn actions(&self) -> usize {
-    self.state.actions.load(OSC)
+    self.actions.load(OSC)
   }
 
   /// Adds a pre-configured `Client` for Tangle interactions.
   pub fn set_client(&self, client: Client) {
-    self.state.clients.insert(client);
+    self.client_map.insert(client);
   }
 
   pub fn did(&self) -> &IotaDID {
@@ -127,7 +127,7 @@ impl Account {
     let document: &IotaDID = snapshot.identity().try_did()?;
 
     // Fetch the DID Document from the Tangle
-    self.state.clients.resolve(document).await.map_err(Into::into)
+    self.client_map.resolve(document).await.map_err(Into::into)
   }
 
   pub async fn create_identity(setup: AccountSetup, input: IdentityCreate) -> Result<Account> {
@@ -224,7 +224,7 @@ impl Account {
     self.publish(root, commits, false).await?;
 
     // Update the total number of executions
-    self.state.actions.fetch_add(1, OSC);
+    self.actions.fetch_add(1, OSC);
 
     if persist {
       self.save(false).await?;
@@ -273,7 +273,7 @@ impl Account {
     let message: MessageId = if self.config.testmode {
       MessageId::null()
     } else {
-      self.state.clients.publish_document(&new_doc).await?.into()
+      self.client_map.publish_document(&new_doc).await?.into()
     };
 
     let events: [Event; 1] = [Event::new(EventData::IntegrationMessage(message))];
@@ -307,8 +307,7 @@ impl Account {
       MessageId::null()
     } else {
       self
-        .state
-        .clients
+        .client_map
         .publish_diff(old_state.this_message_id(), &diff)
         .await?
         .into()
@@ -475,27 +474,6 @@ impl Drop for Account {
     if self.config.dropsave && self.actions() != 0 {
       // TODO: Handle Result (?)
       let _ = executor::block_on(self.storage().flush_changes());
-    }
-  }
-}
-
-// =============================================================================
-// State
-// =============================================================================
-
-// Internal account state
-#[derive(Debug)]
-struct State {
-  actions: AtomicUsize,
-  clients: ClientMap,
-}
-
-impl State {
-  /// Creates a new `State` instance.
-  fn new() -> Self {
-    Self {
-      actions: AtomicUsize::new(0),
-      clients: ClientMap::new(),
     }
   }
 }
