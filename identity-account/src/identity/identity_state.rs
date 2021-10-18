@@ -95,11 +95,6 @@ impl IdentityState {
   // Internal State
   // ===========================================================================
 
-  /// Returns the identifier for this identity.
-  // pub fn id(&self) -> IdentityId {
-  //   self.id
-  // }
-
   /// Returns the current generation of the identity integration chain.
   pub fn integration_generation(&self) -> Generation {
     self.integration_generation
