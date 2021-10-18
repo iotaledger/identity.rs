@@ -21,6 +21,7 @@ use crate::tangle::Network;
 use crate::tangle::Receipt;
 use crate::tangle::TangleResolve;
 use crate::tangle::{ClientBuilder, TangleRef};
+use crate::tangle::compressor;
 
 /// Client for performing IOTA Identity operations on the Tangle.
 #[derive(Debug)]
@@ -83,11 +84,13 @@ impl Client {
 
   /// Publishes arbitrary JSON data to the specified index on the Tangle.
   pub async fn publish_json<T: ToJson>(&self, index: &str, data: &T) -> Result<Receipt> {
+    let compressed_data = compressor::compress(&data.to_json()?);
+    //todo handle compression error!
     self
       .client
       .message()
       .with_index(index)
-      .with_data(data.to_json_vec()?)
+      .with_data(compressed_data.unwrap())
       .finish()
       .await
       .map_err(Into::into)

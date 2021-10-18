@@ -23,6 +23,8 @@ log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
+bzip2 = "0.4"
+
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"

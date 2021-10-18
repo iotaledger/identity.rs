@@ -29,3 +29,4 @@ mod message_index;
 mod network;
 mod receipt;
 mod traits;
+mod compressor;
