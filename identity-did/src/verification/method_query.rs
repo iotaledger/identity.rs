@@ -31,9 +31,9 @@ impl<'query> MethodQuery<'query> {
     if query.starts_with(CoreDID::SCHEME) && !query.ends_with('#') {
       // Extract the fragment from a full DID-like string
       query.rfind('#').map(|index| &query[index + 1..])
-    } else if query.starts_with('#') {
+    } else if let Some(stripped) = query.strip_prefix('#') {
       // Remove the leading `#` if it was in the query
-      Some(&query[1..])
+      Some(stripped)
     } else {
       Some(query)
     }

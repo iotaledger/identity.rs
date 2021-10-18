@@ -4,6 +4,7 @@
 #[macro_use]
 mod macros;
 
+#[allow(clippy::module_inception)]
 mod did;
 mod doc;
 

@@ -1,3 +1,4 @@
+#[allow(clippy::module_inception)]
 mod did;
 mod did_url;
 mod error;

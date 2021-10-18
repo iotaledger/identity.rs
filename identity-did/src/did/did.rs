@@ -119,7 +119,7 @@ impl CoreDID {
 
   /// Checks if the given `did` is valid according to the base [`DID`] specification.
   pub fn check_validity(did: &BaseDIDUrl) -> Result<(), DIDError> {
-    // Validate basic DID constraints
+    // Validate basic DID constraints.
     Self::valid_method_name(did.method())?;
     Self::valid_method_id(did.method_id())?;
     if did.scheme() != Self::SCHEME {
@@ -127,7 +127,7 @@ impl CoreDID {
     }
 
     // Ensure no DID Url segments are present.
-    if !did.path().is_empty() || !did.fragment().is_none() || !did.query().is_none() {
+    if !did.path().is_empty() || did.fragment().is_some() || did.query().is_some() {
       return Err(DIDError::InvalidMethodId);
     }
 

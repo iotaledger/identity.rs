@@ -76,7 +76,7 @@ where
 {
   #[inline]
   fn cmp(&self, other: &Self) -> Ordering {
-    self.as_did().cmp(&other.as_did())
+    self.as_did().cmp(other.as_did())
   }
 }
 

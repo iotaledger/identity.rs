@@ -55,7 +55,7 @@ impl ResolverMethod for ClientMap {
       .client(network)
       .await
       .map_err(|_| Error::MissingResolutionDocument)?
-      .read(&did, input)
+      .read(did, input)
       .await
   }
 }
