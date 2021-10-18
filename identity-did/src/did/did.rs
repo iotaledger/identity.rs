@@ -22,15 +22,31 @@ pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr {
   const SCHEME: &'static str = BaseDIDUrl::SCHEME;
 
   /// Returns the [`DID`] scheme. See [`DID::SCHEME`].
+  ///
+  /// E.g.
+  /// - `"did:example:12345678" -> "did"`
+  /// - `"did:iota:main:12345678" -> "did"`
   fn scheme(&self) -> &'static str;
 
-  /// Returns the [`DID`] authority.
+  /// Returns the [`DID`] authority: the method name and method-id.
+  ///
+  /// E.g.
+  /// - `"did:example:12345678" -> "example:12345678"`
+  /// - `"did:iota:main:12345678" -> "iota:main:12345678"`
   fn authority(&self) -> &str;
 
   /// Returns the [`DID`] method name.
+  ///
+  /// E.g.
+  /// - `"did:example:12345678" -> "example"`
+  /// - `"did:iota:main:12345678" -> "iota"`
   fn method(&self) -> &str;
 
   /// Returns the [`DID`] method-specific ID.
+  ///
+  /// E.g.
+  /// - `"did:example:12345678" -> "12345678"`
+  /// - `"did:iota:main:12345678" -> "main:12345678"`
   fn method_id(&self) -> &str;
 
   /// Returns the serialized [`DID`].
@@ -41,11 +57,11 @@ pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr {
   /// Consumes the [`DID`] and returns its serialization.
   fn into_string(self) -> String;
 
-  /// Constructs a [`DIDUrl`] by attempting to append a string representing a path, query, or
+  /// Constructs a [`DIDUrl`] by attempting to append a string representing a path, query, and/or
   /// fragment to this [`DID`].
   fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, DIDError>
-  where
-    Self: Sized;
+    where
+      Self: Sized;
 
   /// Clones the [`DID`] into a [`DIDUrl`] of the same method.
   fn to_url(&self) -> DIDUrl<Self>;
@@ -55,6 +71,7 @@ pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr {
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Deserialize, serde::Serialize)]
+#[repr(transparent)]
 #[serde(into = "BaseDIDUrl", try_from = "BaseDIDUrl")]
 pub struct CoreDID(BaseDIDUrl);
 
@@ -66,24 +83,50 @@ impl CoreDID {
   /// Returns `Err` if the input is not a valid [`DID`].
   pub fn parse(input: impl AsRef<str>) -> Result<Self, DIDError> {
     let did_url = BaseDIDUrl::parse(input).map_err(DIDError::from)?;
-    let _ = Self::check_validity(&did_url)?;
+    Self::check_validity(&did_url)?;
     Ok(Self(did_url))
   }
 
-  /// Change the method-specific-id of the [`DID`].
-  pub fn set_method_id(&mut self, value: impl AsRef<str>) -> Result<(), DIDError> {
-    // TODO: validate method_id contents?
-    self.0.set_method_id(value);
-    todo!()
+  /// Set the method name of the [`DID`].
+  pub fn set_method_name(&mut self, value: impl AsRef<str>) -> Result<(), DIDError> {
+    Self::valid_method_name(value.as_ref())?;
+    self.0.set_method(value);
+    Ok(())
   }
 
-  /// Checks if the given `DID` is valid according to the [`DID`] method
-  /// specification.
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` if the input is not a valid [`IotaDID`].
+  /// Validates whether a string is a valid [`DID`] method name.
+  pub fn valid_method_name(value: &str) -> Result<(), DIDError> {
+    if !value.chars().all(is_char_did_method_name) {
+      return Err(DIDError::InvalidMethodName);
+    }
+    Ok(())
+  }
+
+  /// Set the method-specific-id of the [`DID`].
+  pub fn set_method_id(&mut self, value: impl AsRef<str>) -> Result<(), DIDError> {
+    Self::valid_method_id(value.as_ref())?;
+    self.0.set_method_id(value);
+    Ok(())
+  }
+
+  /// Validates whether a string is a valid [`DID`] method-id.
+  pub fn valid_method_id(value: &str) -> Result<(), DIDError> {
+    if !value.chars().all(is_char_did_method_id) {
+      return Err(DIDError::InvalidMethodId);
+    }
+    Ok(())
+  }
+
+  /// Checks if the given `did` is valid according to the base [`DID`] specification.
   pub fn check_validity(did: &BaseDIDUrl) -> Result<(), DIDError> {
+    // Validate basic DID constraints
+    Self::valid_method_name(did.method())?;
+    Self::valid_method_id(did.method_id())?;
+    if did.scheme() != Self::SCHEME {
+      return Err(DIDError::InvalidScheme);
+    }
+
+    // Ensure no DID Url segments are present.
     if !did.path().is_empty() || !did.fragment().is_none() || !did.query().is_none() {
       return Err(DIDError::InvalidMethodId);
     }
@@ -97,9 +140,6 @@ impl DID for CoreDID {
     self.0.scheme()
   }
 
-  /// TODO: examples
-  /// e.g. did:example:12345678 -> example:12345678
-  /// e.g. did:iota:main:12345678 -> iota:main:12345678
   fn authority(&self) -> &str {
     self.0.authority()
   }
@@ -133,16 +173,16 @@ impl DID for CoreDID {
   }
 }
 
-impl Into<BaseDIDUrl> for CoreDID {
-  fn into(self) -> BaseDIDUrl {
-    self.0
+impl From<CoreDID> for BaseDIDUrl {
+  fn from(did: CoreDID) -> Self {
+    did.0
   }
 }
 
 impl TryFrom<BaseDIDUrl> for CoreDID {
   type Error = Error;
 
-  fn try_from(value: BaseDIDUrl) -> std::prelude::rust_2015::Result<Self, Self::Error> {
+  fn try_from(value: BaseDIDUrl) -> Result<Self, Self::Error> {
     let _ = Self::check_validity(&value)?;
     Ok(Self(value))
   }
@@ -237,14 +277,16 @@ impl PartialEq<&CoreDID> for CoreDID {
   }
 }
 
-#[cfg(test)]
-mod test {
-  use super::*;
+/// Checks whether a character satisfies DID method name constraints:
+/// { 0-9 | a-z }
+#[inline(always)]
+const fn is_char_did_method_name(ch: char) -> bool {
+  matches!(ch, '0'..='9' | 'a'..='z')
+}
 
-  #[test]
-  fn test() {
-    let did = BaseDIDUrl::parse("did:iota:main:1234567").unwrap();
-    todo!("add more tests");
-    panic!("{:?}", did.join("did:asdf"));
-  }
+/// Checks whether a character satisfies DID method-id constraints:
+/// { 0-9 | a-z | A-Z | . | - | _ | : }
+#[inline(always)]
+const fn is_char_did_method_id(ch: char) -> bool {
+  matches!(ch, '0'..='9' | 'a'..='z' | 'A'..='Z' | '.' | '-' | '_' | ':')
 }

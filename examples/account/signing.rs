@@ -13,7 +13,8 @@ use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::Subject;
 use identity::crypto::KeyPair;
-use identity::iota::IotaDIDUrl;
+use identity::did::DID;
+use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 
 #[tokio::main]
@@ -27,7 +28,7 @@ async fn main() -> Result<()> {
   let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let did: &IotaDIDUrl = snapshot.identity().try_did()?;
+  let did: &IotaDID = snapshot.identity().try_did()?;
 
   println!("[Example] Local Snapshot = {:#?}", snapshot);
   println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);
@@ -42,7 +43,7 @@ async fn main() -> Result<()> {
 
   // Create a subject DID for the recipient of a `UniversityDegree` credential.
   let subject_key: KeyPair = KeyPair::new_ed25519()?;
-  let subject_did: IotaDIDUrl = IotaDIDUrl::new(subject_key.public().as_ref())?;
+  let subject_did: IotaDID = IotaDID::new(subject_key.public().as_ref())?;
 
   // Create the actual Verifiable Credential subject.
   let subject: Subject = Subject::from_json_value(json!({

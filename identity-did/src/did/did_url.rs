@@ -12,22 +12,22 @@ use std::convert::TryInto;
 use std::hash::Hash;
 use std::hash::Hasher;
 
+use did_url::DID as BaseDIDUrl;
+
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 
 use crate::did::CoreDID;
-use crate::did::DIDError;
 use crate::did::DID;
-
-// fn take_did(did: impl DID);
-// fn take_did(did: IotaDID);
-// fn take_did(did: CoreDID);
-// fn take_did(did: AsRef<IotaDID>);
-// fn take_did(did: AsRef<CoreDID>);
-// fn take_did(did: Into<CoreDID>);
+use crate::did::DIDError;
 
 pub type CoreDIDUrl = DIDUrl<CoreDID>;
 
+/// A [DID Url]: a [DID] with [RelativeDIDUrl] components.
+///
+/// E.g. "did:iota:H3C2AVvLMv6gmMNam3uVAjZar3cJCwDwnZn6z3wXmqPV/path?query1=a&query2=b#fragment"
+///
+/// [DID Url](https://www.w3.org/TR/did-core/#did-url-syntax)
 #[derive(Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 #[serde(into = "String", try_from = "String")]
 pub struct DIDUrl<T>
@@ -39,14 +39,32 @@ where
   url: RelativeDIDUrl,
 }
 
+/// A [relative DID Url] with the [path], [query], and [fragment] components defined according
+/// to [URI syntax](https://datatracker.ietf.org/doc/html/rfc5234).
+///
+/// E.g.
+/// - `"/path?query#fragment"`
+/// - `"/path"`
+/// - `"?query"`
+/// - `"#fragment"`
+///
+/// [relative DID Url](https://www.w3.org/TR/did-core/#relative-did-urls)
+/// [path](https://www.w3.org/TR/did-core/#path)
+/// [query](https://www.w3.org/TR/did-core/#query)
+/// [fragment](https://www.w3.org/TR/did-core/#fragment)
 #[derive(Clone, Default, PartialEq, Eq)]
 pub struct RelativeDIDUrl {
-  fragment: Option<String>,
+  // Path including the leading '/'
   path: Option<String>,
+  // Query including the leading '?'
   query: Option<String>,
+  // Fragment including the leading '#'
+  fragment: Option<String>,
 }
 
 impl RelativeDIDUrl {
+
+  /// Create an empty [RelativeDIDUrl].
   pub fn new() -> Self {
     Self {
       fragment: None,
@@ -55,58 +73,147 @@ impl RelativeDIDUrl {
     }
   }
 
-  pub fn fragment(&self) -> Option<&str> {
-    self.fragment.as_deref()
-  }
-
-  pub fn set_fragment(&mut self, value: Option<impl AsRef<str>>) -> Result<(), DIDError> {
-    // TODO: validation
-    self.fragment = value.map(|s| s.as_ref().to_owned());
-    Ok(())
-  }
-
+  /// Return the [path] component, including the leading '/'.
+  ///
+  /// E.g. `"/path/sub-path/resource"`
+  ///
+  /// [path](https://www.w3.org/TR/did-core/#path)
   pub fn path(&self) -> Option<&str> {
     self.path.as_deref()
   }
 
-  pub fn set_path(&mut self, value: Option<impl AsRef<str>>) -> Result<(), DIDError> {
-    // TODO: validation
-    self.path = value.map(|s| s.as_ref().to_owned());
+  /// Attempt to set the [path] component. The path must start with a '/'.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// # use identity_did::did::RelativeDIDUrl;
+  /// # let mut url = RelativeDIDUrl::new();
+  /// url.set_path(Some("/path/sub-path/resource")).unwrap();
+  /// assert_eq!(url.path().unwrap(), "/path/sub-path/resource");
+  /// assert_eq!(url.to_string(), "/path/sub-path/resource");
+  /// ```
+  ///
+  /// [path](https://www.w3.org/TR/did-core/#path)
+  pub fn set_path(&mut self, value: Option<&str>) -> Result<(), DIDError> {
+    self.path = value
+      .filter(|s| !s.is_empty())
+      .map(|s| if s.starts_with('/') {
+          uriparse::Path::try_from(s)
+            .map_err(|_| DIDError::InvalidPath)
+            .map(|_| s.to_string())
+        } else {
+          Err(DIDError::InvalidPath)
+        }).transpose()?;
     Ok(())
   }
 
+  /// Return the [path] component, excluding the leading '?' delimiter.
+  ///
+  /// E.g. `"?query1=a&query2=b" -> "query1=a&query2=b"`
+  ///
+  /// [query](https://www.w3.org/TR/did-core/#query)
   pub fn query(&self) -> Option<&str> {
-    self.query.as_deref()
+    self.query.as_deref().map(|query| &query[1..])
   }
 
-  pub fn set_query(&mut self, value: Option<impl AsRef<str>>) -> Result<(), DIDError> {
-    // TODO: validation
-    self.query = value.map(|s| s.as_ref().to_owned());
+  /// Attempt to set the [query] component. A leading '?' is ignored.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// # use identity_did::did::RelativeDIDUrl;
+  /// # let mut url = RelativeDIDUrl::new();
+  /// // Set the query with a leading '?'
+  /// url.set_query(Some("?query1=a")).unwrap();
+  /// assert_eq!(url.query().unwrap(), "query1=a");
+  /// assert_eq!(url.to_string(), "?query1=a");
+  ///
+  /// // Set the query without a leading '?'
+  /// url.set_query(Some("query1=a&query2=b")).unwrap();
+  /// assert_eq!(url.query().unwrap(), "query1=a&query2=b");
+  /// assert_eq!(url.to_string(), "?query1=a&query2=b");
+  /// ```
+  ///
+  /// [query](https://www.w3.org/TR/did-core/#query)
+  pub fn set_query(&mut self, value: Option<&str>) -> Result<(), DIDError> {
+    self.query = value
+      .filter(|s| !s.is_empty())
+      .map(|mut s| {
+           // Ignore leading '?' during validation.
+           if s.starts_with('?') {
+             s = &s[1..];
+           }
+          uriparse::Query::try_from(s)
+            .map_err(|_| DIDError::InvalidQuery)
+            .map(|_| format!("?{}", s))
+        }).transpose()?;
     Ok(())
   }
 
+  /// Return an iterator of (name, value) pairs in the query string.
+  ///
+  /// E.g. `"query1=a&query2=b" -> [("query1", "a"), ("query2", "b")]`
+  ///
+  /// See [form_urlencoded::parse].
   pub fn query_pairs(&self) -> form_urlencoded::Parse<'_> {
     form_urlencoded::parse(self.query().unwrap_or_default().as_bytes())
   }
 
-  pub fn to_string(&self) -> String {
-    // TODO: does this include the separator characters?
-    format!(
-      "{}{}{}",
-      self.path().unwrap_or_default(),
-      self.query().unwrap_or_default(),
-      self.fragment().unwrap_or_default()
-    )
+  /// Return the [fragment] component, excluding the leading '#' delimiter.
+  ///
+  /// E.g. `"#fragment" -> "fragment"`
+  ///
+  /// [fragment](https://www.w3.org/TR/did-core/#fragment)
+  pub fn fragment(&self) -> Option<&str> {
+    self.fragment.as_deref().map(|fragment| &fragment[1..])
   }
-}
 
-impl Debug for RelativeDIDUrl {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_fmt(format_args!("{}", self.to_string()))
+  /// Attempt to set the [fragment] component. A leading '#' is ignored.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// # use identity_did::did::RelativeDIDUrl;
+  /// # let mut url = RelativeDIDUrl::new();
+  /// // Set the fragment with a leading '#'
+  /// url.set_fragment(Some("#fragment1")).unwrap();
+  /// assert_eq!(url.fragment().unwrap(), "fragment1");
+  /// assert_eq!(url.to_string(), "#fragment1");
+  ///
+  /// // Set the fragment without a leading '#'
+  /// url.set_fragment(Some("fragment2")).unwrap();
+  /// assert_eq!(url.fragment().unwrap(), "fragment2");
+  /// assert_eq!(url.to_string(), "#fragment2");
+  /// ```
+  ///
+  /// [fragment](https://www.w3.org/TR/did-core/#fragment)
+  pub fn set_fragment(&mut self, value: Option<&str>) -> Result<(), DIDError> {
+    self.fragment = value
+      .filter(|s| !s.is_empty())
+      .map(|mut s| {
+        // Ignore leading '#' during validation.
+        if s.starts_with('#') {
+          s = &s[1..];
+        }
+        uriparse::Fragment::try_from(s)
+          .map_err(|_| DIDError::InvalidFragment)
+          .map(|_| format!("#{}", s))
+      }).transpose()?;
+    Ok(())
   }
 }
 
 impl Display for RelativeDIDUrl {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+    f.write_fmt(format_args!("{}{}{}",
+                             self.path.as_deref().unwrap_or_default(),
+                             self.query.as_deref().unwrap_or_default(),
+                             self.fragment.as_deref().unwrap_or_default()))
+  }
+}
+
+impl Debug for RelativeDIDUrl {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     f.write_fmt(format_args!("{}", self.to_string()))
   }
@@ -144,12 +251,15 @@ where
   }
 
   pub fn parse(input: impl AsRef<str>) -> Result<Self, DIDError> {
-    let did_url: did_url::DID = did_url::DID::parse(input)?;
+    let did_url: BaseDIDUrl = BaseDIDUrl::parse(input)?;
+    Self::from_base_did_url(did_url)
+  }
 
+  fn from_base_did_url(did_url: BaseDIDUrl) -> Result<Self, DIDError> {
     // Extract relative DID URL
     let url: RelativeDIDUrl = {
       let mut url: RelativeDIDUrl = RelativeDIDUrl::new();
-      url.set_path(Some(did_url.path()).filter(|path| !path.is_empty()))?;
+      url.set_path(Some(did_url.path()))?;
       url.set_query(did_url.query())?;
       url.set_fragment(did_url.fragment())?;
       url
@@ -157,7 +267,7 @@ where
 
     // Extract base DID
     let did: T = {
-      let mut base_did: did_url::DID = did_url;
+      let mut base_did: BaseDIDUrl = did_url;
       base_did.set_path("");
       base_did.set_query(None);
       base_did.set_fragment(None);
@@ -191,13 +301,14 @@ where
   }
 
   /// Returns the [`DIDUrl`] path.
-  /// TODO: check what this actually returns, only the path or also parts of the DID?
+  ///
+  /// See [`RelativeDIDUrl::path`].
   pub fn path(&self) -> Option<&str> {
     self.url.path()
   }
 
   /// Sets the `path` component of the [`DIDUrl`].
-  pub fn set_path(&mut self, value: Option<impl AsRef<str>>) -> Result<(), DIDError> {
+  pub fn set_path(&mut self, value: Option<&str>) -> Result<(), DIDError> {
     self.url.set_path(value)
   }
 
@@ -216,14 +327,21 @@ where
     self.url.query_pairs()
   }
 
-  /// Appends a string representing a path, query, and/or fragment to this [`DIDUrl`].
-  ///
-  /// The string may also be a full did???
-  /// TODO: figure this out...
-  pub fn join(mut self, segment: impl AsRef<str>) -> Result<Self, DIDError> {
-    // self.url = self.url.join(segment)?;
-    // Ok(self)
-    todo!()
+  /// Append a string representing a path, query, and/or fragment to this [`DIDUrl`].
+  pub fn join(self, segment: impl AsRef<str>) -> Result<Self, DIDError> {
+    let segment: &str = segment.as_ref();
+
+    // Accept only a relative path, query, or fragment to reject altering the method id segment.
+    if !segment.starts_with('/')
+      && !segment.starts_with('?')
+      && !segment.starts_with('#') {
+      return Err(DIDError::InvalidPath);
+    }
+
+    // Parse DID Url.
+    let base_did_url: BaseDIDUrl = BaseDIDUrl::parse(self.to_string())?
+      .join(segment)?;
+    Self::from_base_did_url(base_did_url)
   }
 
   pub fn to_string(&self) -> String {
@@ -234,8 +352,8 @@ where
   ///
   /// Workaround for lack of specialisation preventing a generic `From` implementation.
   pub fn from<U>(other: DIDUrl<U>) -> Self
-  where
-    U: DID + Into<T>,
+    where
+      U: DID + Into<T>,
   {
     let did: T = other.did.into();
     Self { did, url: other.url }
@@ -245,9 +363,9 @@ where
   ///
   /// Workaround for lack of specialisation preventing a generic `TryFrom` implementation.
   pub fn try_from<U>(other: DIDUrl<U>) -> Result<Self, DIDError>
-  where
-    U: DID + TryInto<T>,
-    U::Error: Into<DIDError>,
+    where
+      U: DID + TryInto<T>,
+      U::Error: Into<DIDError>,
   {
     let did: T = other.did.try_into().map_err(|err| err.into())?;
     Ok(Self { did, url: other.url })
@@ -255,8 +373,8 @@ where
 }
 
 impl<T> From<T> for DIDUrl<T>
-where
-  T: DID,
+  where
+    T: DID,
 {
   fn from(did: T) -> Self {
     Self::new(did, None)
@@ -264,8 +382,8 @@ where
 }
 
 impl<T> FromStr for DIDUrl<T>
-where
-  T: DID,
+  where
+    T: DID,
 {
   type Err = DIDError;
 
@@ -275,8 +393,8 @@ where
 }
 
 impl<T> TryFrom<String> for DIDUrl<T>
-where
-  T: DID,
+  where
+    T: DID,
 {
   type Error = DIDError;
 
@@ -286,8 +404,8 @@ where
 }
 
 impl<T> From<DIDUrl<T>> for String
-where
-  T: DID,
+  where
+    T: DID,
 {
   fn from(did_url: DIDUrl<T>) -> Self {
     did_url.to_string()
@@ -295,8 +413,8 @@ where
 }
 
 impl<T> AsRef<T> for DIDUrl<T>
-where
-  T: DID,
+  where
+    T: DID,
 {
   fn as_ref(&self) -> &T {
     &self.did
@@ -304,8 +422,8 @@ where
 }
 
 impl<T> PartialOrd for DIDUrl<T>
-where
-  T: DID,
+  where
+    T: DID,
 {
   #[inline]
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -318,8 +436,8 @@ where
 }
 
 impl<T> Ord for DIDUrl<T>
-where
-  T: DID,
+  where
+    T: DID,
 {
   #[inline]
   fn cmp(&self, other: &Self) -> Ordering {
@@ -331,8 +449,8 @@ where
 }
 
 impl<T> Hash for DIDUrl<T>
-where
-  T: DID,
+  where
+    T: DID,
 {
   fn hash<H: Hasher>(&self, state: &mut H) {
     self.to_string().hash(state)
@@ -340,8 +458,8 @@ where
 }
 
 impl<T> Debug for DIDUrl<T>
-where
-  T: DID,
+  where
+    T: DID,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     f.write_fmt(format_args!("{}", self.to_string()))
@@ -349,8 +467,8 @@ where
 }
 
 impl<T> Display for DIDUrl<T>
-where
-  T: DID,
+  where
+    T: DID,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     f.write_fmt(format_args!("{}", self.to_string()))
@@ -358,8 +476,8 @@ where
 }
 
 impl<T> Diff for DIDUrl<T>
-where
-  T: DID,
+  where
+    T: DID,
 {
   type Type = DiffString;
 

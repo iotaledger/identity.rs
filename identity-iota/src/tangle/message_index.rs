@@ -31,9 +31,9 @@ impl<T> MessageIndex<T> {
   }
 
   pub fn remove_where<U>(&mut self, key: &U, f: impl Fn(&T) -> bool) -> Option<T>
-  where
-    MessageId: Borrow<U>,
-    U: Hash + Eq + ?Sized,
+    where
+      MessageId: Borrow<U>,
+      U: Hash + Eq + ?Sized,
   {
     if let Some(list) = self.inner.get_mut(key) {
       list.iter().position(f).map(|index| list.remove(index))
@@ -42,14 +42,14 @@ impl<T> MessageIndex<T> {
     }
   }
 
-  pub fn drain_keys(&mut self) -> impl Iterator<Item = MessageId> + '_ {
+  pub fn drain_keys(&mut self) -> impl Iterator<Item=MessageId> + '_ {
     self.inner.drain().map(|(data, _)| data)
   }
 }
 
 impl<T> MessageIndex<T>
-where
-  T: TangleRef,
+  where
+    T: TangleRef,
 {
   pub fn insert(&mut self, element: T) {
     let key: &MessageId = element.previous_message_id();
@@ -69,8 +69,8 @@ where
   }
 
   pub fn extend<I>(&mut self, iter: I)
-  where
-    I: IntoIterator<Item = T>,
+    where
+      I: IntoIterator<Item=T>,
   {
     for element in iter.into_iter() {
       self.insert(element);
@@ -99,12 +99,12 @@ impl<T> DerefMut for MessageIndex<T> {
 }
 
 impl<T> FromIterator<T> for MessageIndex<T>
-where
-  T: TangleRef,
+  where
+    T: TangleRef,
 {
   fn from_iter<I>(iter: I) -> Self
-  where
-    I: IntoIterator<Item = T>,
+    where
+      I: IntoIterator<Item=T>,
   {
     let mut this: Self = Self::new();
     this.extend(iter);
@@ -114,13 +114,13 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::did::IotaDIDUrl;
+  use crate::did::IotaDID;
 
   use super::*;
 
   #[derive(Debug)]
   struct Case {
-    did: IotaDIDUrl,
+    did: IotaDID,
     message_id: MessageId,
     previous_message_id: MessageId,
     state: bool,
@@ -129,7 +129,7 @@ mod tests {
   impl Case {
     fn new(message_id: [u8; 32], previous_message_id: [u8; 32], state: bool) -> Self {
       Self {
-        did: IotaDIDUrl::new(&[]).unwrap(),
+        did: IotaDID::new(&[]).unwrap(),
         message_id: MessageId::new(message_id),
         previous_message_id: MessageId::new(previous_message_id),
         state,
@@ -138,7 +138,7 @@ mod tests {
   }
 
   impl TangleRef for Case {
-    fn did(&self) -> &IotaDIDUrl {
+    fn did(&self) -> &IotaDID {
       &self.did
     }
 

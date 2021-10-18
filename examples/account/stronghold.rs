@@ -10,7 +10,7 @@ use identity::account::AccountStorage;
 use identity::account::IdentityCreate;
 use identity::account::IdentitySnapshot;
 use identity::account::Result;
-use identity::iota::IotaDIDUrl;
+use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 
 #[tokio::main]
@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
   let snapshot1: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let did1: &IotaDIDUrl = snapshot1.identity().try_did()?;
+  let did1: &IotaDID = snapshot1.identity().try_did()?;
 
   println!("[Example] Local Snapshot = {:#?}", snapshot1);
   println!("[Example] Local Document = {:#?}", snapshot1.identity().to_document()?);
@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
 
   // Create another new Identity
   let snapshot2: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
-  let did2: &IotaDIDUrl = snapshot2.identity().try_did()?;
+  let did2: &IotaDID = snapshot2.identity().try_did()?;
 
   // Anndddd delete it
   account.delete_identity(did2).await?;

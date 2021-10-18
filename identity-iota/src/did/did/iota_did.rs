@@ -162,8 +162,7 @@ impl IotaDID {
     NetworkName::validate_network_name(network_name)
   }
 
-  /// Checks if the given `DID` is valid according to the [`IotaDID`] method
-  /// specification.
+  /// Checks if the given `DID` is valid according to the [`IotaDID`] method specification.
   ///
   /// # Errors
   ///
@@ -349,7 +348,7 @@ impl From<IotaDID> for String {
 #[cfg(test)]
 mod tests {
   use identity_core::crypto::KeyPair;
-  use identity_did::did::CoreDID;
+  use identity_did::did::{CoreDID, DID};
 
   use crate::did::IotaDID;
   use crate::did::IotaDIDUrl;
@@ -414,8 +413,6 @@ mod tests {
     let iota_did = IotaDID::try_from_owned(did).unwrap();
     assert_eq!(iota_did.network_str(), "main");
     assert_eq!(iota_did.tag(), key);
-    assert_eq!(iota_did.path(), "");
-    assert_eq!(iota_did.query(), None);
 
     let did: CoreDID = "did:iota:123".parse().unwrap();
     assert!(IotaDID::try_from_owned(did).is_err());
@@ -484,14 +481,15 @@ mod tests {
   #[test]
   fn test_setter() {
     let key: KeyPair = KeyPair::new_ed25519().unwrap();
-    let mut did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
+    let did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
+    let mut did_url: IotaDIDUrl = did.into_url();
 
-    did.set_path("#foo");
-    did.set_query(Some("diff=true"));
-    did.set_fragment(Some("foo"));
+    did_url.set_path(Some("/foo")).unwrap();
+    did_url.set_query(Some("diff=true")).unwrap();
+    did_url.set_fragment(Some("foo")).unwrap();
 
-    assert_eq!(did.path(), "#foo");
-    assert_eq!(did.query(), Some("diff=true"));
-    assert_eq!(did.fragment(), Some("foo"));
+    assert_eq!(did_url.path(), Some("/foo"));
+    assert_eq!(did_url.query(), Some("diff=true"));
+    assert_eq!(did_url.fragment(), Some("foo"));
   }
 }

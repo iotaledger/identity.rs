@@ -193,8 +193,8 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Maps `CoreDocument<T>` to `CoreDocument<U>` by applying a function to the custom
   /// properties.
   pub fn map<A, F>(self, f: F) -> CoreDocument<A, U, V>
-  where
-    F: FnOnce(T) -> A,
+    where
+      F: FnOnce(T) -> A,
   {
     CoreDocument {
       id: self.id,
@@ -217,8 +217,8 @@ impl<T, U, V> CoreDocument<T, U, V> {
   ///
   /// `try_map` can fail if the provided function fails.
   pub fn try_map<A, F, E>(self, f: F) -> Result<CoreDocument<A, U, V>, E>
-  where
-    F: FnOnce(T) -> Result<A, E>,
+    where
+      F: FnOnce(T) -> Result<A, E>,
   {
     Ok(CoreDocument {
       id: self.id,
@@ -260,7 +260,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Returns an iterator over all embedded verification methods in the DID Document.
   ///
   /// This excludes verification methods that are referenced by the DID Document.
-  pub fn methods(&self) -> impl Iterator<Item = &VerificationMethod<U>> {
+  pub fn methods(&self) -> impl Iterator<Item=&VerificationMethod<U>> {
     fn __filter_ref<T>(method: &DIDKey<MethodRef<T>>) -> Option<&VerificationMethod<T>> {
       match &**method {
         MethodRef::Embed(method) => Some(method),
@@ -282,7 +282,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Returns an iterator over all verification relationships.
   ///
   /// This includes embeded and referenced verification methods.
-  pub fn verification_relationships(&self) -> impl Iterator<Item = &MethodRef<U>> {
+  pub fn verification_relationships(&self) -> impl Iterator<Item=&MethodRef<U>> {
     fn __method_ref<T>(method: &DIDKey<MethodRef<T>>) -> &MethodRef<T> {
       &**method
     }
@@ -299,8 +299,8 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Returns the first verification [`method`][`Method`] with an `id` property
   /// matching the provided `query`.
   pub fn resolve<'query, Q>(&self, query: Q) -> Option<&VerificationMethod<U>>
-  where
-    Q: Into<MethodQuery<'query>>,
+    where
+      Q: Into<MethodQuery<'query>>,
   {
     self.resolve_method(query.into())
   }
@@ -312,8 +312,8 @@ impl<T, U, V> CoreDocument<T, U, V> {
   ///
   /// Fails if no matching verification `Method` is found.
   pub fn try_resolve<'query, Q>(&self, query: Q) -> Result<&VerificationMethod<U>>
-  where
-    Q: Into<MethodQuery<'query>>,
+    where
+      Q: Into<MethodQuery<'query>>,
   {
     self.resolve(query).ok_or(Error::QueryMethodNotFound)
   }
@@ -321,8 +321,8 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Returns a mutable reference to the first verification [`method`][`VerificationMethod`]
   /// with an `id` property matching the provided `query`.
   pub fn resolve_mut<'query, Q>(&mut self, query: Q) -> Option<&mut VerificationMethod<U>>
-  where
-    Q: Into<MethodQuery<'query>>,
+    where
+      Q: Into<MethodQuery<'query>>,
   {
     self.resolve_method_mut(query.into())
   }
@@ -334,8 +334,8 @@ impl<T, U, V> CoreDocument<T, U, V> {
   ///
   /// Fails if no matching `VerificationMethod` is found.
   pub fn try_resolve_mut<'query, Q>(&mut self, query: Q) -> Result<&mut VerificationMethod<U>>
-  where
-    Q: Into<MethodQuery<'query>>,
+    where
+      Q: Into<MethodQuery<'query>>,
   {
     self.resolve_mut(query).ok_or(Error::QueryMethodNotFound)
   }
@@ -410,10 +410,10 @@ impl<T, U, V> CoreDocument<T, U, V> {
 }
 
 impl<T, U, V> Display for CoreDocument<T, U, V>
-where
-  T: Serialize,
-  U: Serialize,
-  V: Serialize,
+  where
+    T: Serialize,
+    U: Serialize,
+    V: Serialize,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     if f.alternate() {
@@ -426,19 +426,19 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::did::CoreDIDUrl;
+  use crate::did::{CoreDID, DID};
   use crate::document::CoreDocument;
   use crate::verification::MethodData;
   use crate::verification::MethodType;
   use crate::verification::VerificationMethod;
 
-  fn controller() -> CoreDIDUrl {
+  fn controller() -> CoreDID {
     "did:example:1234".parse().unwrap()
   }
 
-  fn method(controller: &CoreDIDUrl, fragment: &str) -> VerificationMethod {
+  fn method(controller: &CoreDID, fragment: &str) -> VerificationMethod {
     VerificationMethod::builder(Default::default())
-      .id(controller.clone().join(fragment).unwrap())
+      .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::new_b58(fragment.as_bytes()))
@@ -447,7 +447,7 @@ mod tests {
   }
 
   fn document() -> CoreDocument {
-    let controller: CoreDIDUrl = controller();
+    let controller: CoreDID = controller();
 
     CoreDocument::builder(Default::default())
       .id(controller.clone())

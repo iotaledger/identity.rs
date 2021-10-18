@@ -9,13 +9,13 @@
 //! cargo run --example resolution
 
 use identity::core::SerdeInto;
-use identity::did::resolution;
+use identity::did::{DID, resolution};
 use identity::did::resolution::Dereference;
 use identity::did::resolution::InputMetadata;
 use identity::did::resolution::Resolution;
 use identity::did::resolution::Resource;
 use identity::did::resolution::SecondaryResource;
-use identity::iota::ClientMap;
+use identity::iota::{ClientMap, IotaDID};
 use identity::iota::IotaDIDUrl;
 use identity::iota::Receipt;
 use identity::prelude::*;
@@ -34,7 +34,7 @@ async fn main() -> Result<()> {
   // DID Resolution
   // ===========================================================================
 
-  let doc_did: &IotaDIDUrl = document.id();
+  let doc_did: &IotaDID = document.id();
   let did_url: &str = doc_did.as_str();
 
   // Retrieve the published DID Document from the Tangle.
@@ -50,12 +50,11 @@ async fn main() -> Result<()> {
   // DID Dereferencing
   // ===========================================================================
 
-  let resource_did: IotaDIDUrl = doc_did.join("#authentication")?;
-  let resource_url: &str = resource_did.as_str();
+  let resource_url: IotaDIDUrl = doc_did.to_url().join("#authentication")?;
 
   // Retrieve a subset of the published DID Document properties.
   let input: InputMetadata = Default::default();
-  let output: Dereference = resolution::dereference(resource_url, input, &client).await?;
+  let output: Dereference = resolution::dereference(resource_url.to_string(), input, &client).await?;
 
   println!("Dereference > {:#?}", output);
 

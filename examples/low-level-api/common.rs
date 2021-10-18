@@ -5,14 +5,15 @@
 
 #![allow(dead_code)]
 
-use identity::core::json;
 use identity::core::FromJson;
+use identity::core::json;
 use identity::core::Timestamp;
 use identity::core::ToJson;
 use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
+use identity::did::DID;
 use identity::did::MethodScope;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;

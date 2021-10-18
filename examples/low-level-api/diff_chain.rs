@@ -13,6 +13,7 @@ use identity::iota::ClientMap;
 use identity::iota::DocumentDiff;
 use identity::iota::Receipt;
 use identity::prelude::*;
+use identity::did::DID;
 
 mod create_did;
 
@@ -30,7 +31,7 @@ async fn main() -> Result<()> {
 
     // Add a Service
     let service: Service = Service::from_json_value(json!({
-      "id": doc.id().join("#linked-domain")?,
+      "id": doc.id().to_url().join("#linked-domain")?,
       "type": "LinkedDomains",
       "serviceEndpoint": "https://iota.org"
     }))?;

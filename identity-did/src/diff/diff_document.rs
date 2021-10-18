@@ -314,6 +314,7 @@ mod test {
   use std::collections::BTreeMap;
 
   use identity_core::common::Value;
+  use crate::did::{CoreDIDUrl, DID};
 
   use crate::service::ServiceBuilder;
   use crate::verification::MethodBuilder;
@@ -322,13 +323,13 @@ mod test {
 
   use super::*;
 
-  fn controller() -> CoreDIDUrl {
+  fn controller() -> CoreDID {
     "did:example:1234".parse().unwrap()
   }
 
-  fn method(controller: &CoreDIDUrl, fragment: &str) -> VerificationMethod {
+  fn method(controller: &CoreDID, fragment: &str) -> VerificationMethod {
     MethodBuilder::default()
-      .id(controller.clone().join(fragment).unwrap())
+      .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(MethodData::new_b58(fragment.as_bytes()))
@@ -336,9 +337,9 @@ mod test {
       .unwrap()
   }
 
-  fn service(controller: &CoreDIDUrl) -> Service {
+  fn service(did_url: CoreDIDUrl) -> Service {
     ServiceBuilder::default()
-      .id(controller.clone())
+      .id(did_url)
       .service_endpoint(Url::parse("did:service:1234").unwrap())
       .type_("test_service")
       .build()
@@ -357,12 +358,12 @@ mod test {
       .verification_method(method(&controller, "#key-2"))
       .verification_method(method(&controller, "#key-3"))
       .authentication(method(&controller, "#auth-key"))
-      .authentication(controller.clone().join("#key-3").unwrap())
-      .key_agreement(controller.clone().join("#key-4").unwrap())
+      .authentication(controller.to_url().join("#key-3").unwrap())
+      .key_agreement(controller.to_url().join("#key-4").unwrap())
       .assertion_method(method(&controller, "#key-5"))
       .capability_delegation(method(&controller, "#key-6"))
       .capability_invocation(method(&controller, "#key-7"))
-      .service(service(&controller))
+      .service(service(controller.to_url().join("#service").unwrap()))
       .build()
       .unwrap()
   }
@@ -674,8 +675,8 @@ mod test {
     let doc = document();
     let mut new = doc.clone();
 
-    // add new service
-    let service = service(&doc.clone().controller.unwrap().join("#key-diff").unwrap());
+    // Add new service
+    let service = service(doc.controller().cloned().unwrap().join("#key-diff").unwrap());
     assert!(new.service_mut().append(service.into()));
     assert_ne!(doc, new);
     let diff = doc.diff(&new).unwrap();
@@ -689,7 +690,7 @@ mod test {
     let mut new = doc.clone();
 
     // add new service
-    let service = service(&doc.clone().controller.unwrap().join("#key-diff").unwrap());
+    let service = service(doc.controller().cloned().unwrap().join("#key-diff").unwrap());
     let first = new.service().first().unwrap().clone();
     new.service_mut().replace(&first, service.into());
     assert_ne!(doc, new);

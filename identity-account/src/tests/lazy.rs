@@ -12,7 +12,7 @@ use crate::Result;
 use futures::Future;
 use identity_core::common::Url;
 use identity_iota::chain::DocumentHistory;
-use identity_iota::did::IotaDIDUrl;
+use identity_iota::did::IotaDID;
 use identity_iota::did::IotaVerificationMethod;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::Network;
@@ -37,7 +37,7 @@ async fn test_lazy_updates() -> Result<()> {
         .create_identity(IdentityCreate::new().network(network.name()).unwrap())
         .await?;
 
-      let did: &IotaDIDUrl = snapshot.identity().try_did()?;
+      let did: &IotaDID = snapshot.identity().try_did()?;
 
       let did_updater: IdentityUpdater<'_, '_, _> = account.update_identity(did);
 
