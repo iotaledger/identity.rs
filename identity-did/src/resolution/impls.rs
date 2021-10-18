@@ -7,7 +7,6 @@ use identity_core::common::Url;
 
 use crate::did::CoreDID;
 use crate::did::CoreDIDUrl;
-use crate::did::DID;
 use crate::document::CoreDocument;
 use crate::error::Error;
 use crate::error::Result;
@@ -253,52 +252,56 @@ fn dereference_primary(document: CoreDocument, mut did_url: CoreDIDUrl) -> Resul
 fn dereference_document(document: CoreDocument, fragment: &str) -> Result<Option<SecondaryResource>> {
   #[inline]
   fn dereference<T>(
-    base: &CoreDIDUrl,
-    query: &str,
+    base_did: &CoreDID,
+    target_fragment: &str,
     resources: &OrderedSet<DIDKey<T>>,
   ) -> Result<Option<SecondaryResource>>
   where
     T: Clone + AsRef<CoreDIDUrl> + Into<SecondaryResource>,
   {
-    // TODO: use CoreDID as base instead of CoreDIDUrl since fragment/query is overwritten?
-    for object in resources.iter() {
-      let did: CoreDIDUrl = base.clone().join(object.as_did().to_string())?;
+    for resource in resources.iter() {
+      let resource_url: &CoreDIDUrl = resource.as_did_url();
 
-      if matches!(did.fragment(), Some(fragment) if fragment == query) {
-        return Ok(Some(object.clone().into()));
+      // Skip objects with different base URLs
+      if resource_url.did() != base_did {
+        continue;
+      }
+
+      if matches!(resource_url.fragment(), Some(fragment) if fragment == target_fragment) {
+        return Ok(Some(resource.clone().into()));
       }
     }
 
     Ok(None)
   }
 
-  let base: CoreDIDUrl = document.id().to_url();
+  let base_did: CoreDID = document.id().clone();
 
-  if let Some(resource) = dereference(&base, fragment, document.verification_method())? {
+  if let Some(resource) = dereference(&base_did, fragment, document.verification_method())? {
     return Ok(Some(resource));
   }
 
-  if let Some(resource) = dereference(&base, fragment, document.authentication())? {
+  if let Some(resource) = dereference(&base_did, fragment, document.authentication())? {
     return Ok(Some(resource));
   }
 
-  if let Some(resource) = dereference(&base, fragment, document.assertion_method())? {
+  if let Some(resource) = dereference(&base_did, fragment, document.assertion_method())? {
     return Ok(Some(resource));
   }
 
-  if let Some(resource) = dereference(&base, fragment, document.key_agreement())? {
+  if let Some(resource) = dereference(&base_did, fragment, document.key_agreement())? {
     return Ok(Some(resource));
   }
 
-  if let Some(resource) = dereference(&base, fragment, document.capability_delegation())? {
+  if let Some(resource) = dereference(&base_did, fragment, document.capability_delegation())? {
     return Ok(Some(resource));
   }
 
-  if let Some(resource) = dereference(&base, fragment, document.capability_invocation())? {
+  if let Some(resource) = dereference(&base_did, fragment, document.capability_invocation())? {
     return Ok(Some(resource));
   }
 
-  if let Some(resource) = dereference(&base, fragment, document.service())? {
+  if let Some(resource) = dereference(&base_did, fragment, document.service())? {
     return Ok(Some(resource));
   }
 
@@ -380,6 +383,12 @@ fn service_endpoint_ctor(did: CoreDIDUrl, url: &Url) -> Result<Url> {
 
 #[cfg(test)]
 mod test {
+  use crate::did::DID;
+  use crate::service::Service;
+  use crate::verification::MethodData;
+  use crate::verification::MethodType;
+  use crate::verification::VerificationMethod;
+
   use super::*;
 
   fn did() -> CoreDIDUrl {
@@ -428,5 +437,90 @@ mod test {
     )
     .is_ok());
     assert!(service_endpoint_ctor(did, &Url::parse("https://my-service.endpoint.net#fragment").unwrap()).is_ok());
+  }
+
+  fn generate_method(did: &CoreDID, fragment: &str) -> VerificationMethod {
+    VerificationMethod::builder(Default::default())
+      .id(did.to_url().join(fragment).unwrap())
+      .controller(did.clone())
+      .key_type(MethodType::Ed25519VerificationKey2018)
+      .key_data(MethodData::new_b58(fragment.as_bytes()))
+      .build()
+      .unwrap()
+  }
+
+  fn generate_service(did: &CoreDID, fragment: &str, url: &str) -> Service {
+    Service::builder(Default::default())
+      .id(did.to_url().join(fragment).unwrap())
+      .service_endpoint(Url::parse(url).unwrap())
+      .type_("LinkedDomains")
+      .build()
+      .unwrap()
+  }
+
+  fn generate_document() -> CoreDocument {
+    let did = CoreDID::parse("did:example:1234").unwrap();
+    CoreDocument::builder(Default::default())
+      .id(did.clone())
+      .authentication(generate_method(&did, "#auth-key"))
+      .verification_method(generate_method(&did, "#key-1"))
+      .verification_method(generate_method(&did, "#key-2"))
+      .service(generate_service(&did, "#service-1", "https://127.0.0.1"))
+      .service(generate_service(&did, "#service-2", "https://example.com"))
+      .build()
+      .unwrap()
+  }
+
+  #[rustfmt::skip]
+  #[test]
+  fn test_dereference_primary() {
+    let document = generate_document();
+    let did = document.id();
+
+    // Dereference document
+    match dereference_primary(document.clone(), did.to_url()).unwrap().unwrap() {
+      PrimaryResource::Document(actual) => assert_eq!(actual, document),
+      actual => panic!("Expected document got {:?}", actual),
+    }
+
+    // TODO: test dereference services
+    // match dereference_primary(document.clone(), did.to_url().join("?service=service-1").unwrap()).unwrap().unwrap() {
+    //   PrimaryResource::Service(actual) => assert_eq!(actual, document.service().query("#service-1").unwrap().service_endpoint().clone()),
+    //   actual => panic!("Expected #service-1 got {:?}", actual),
+    // }
+    // match dereference_primary(document.clone(), did.to_url().join("?service=service-2").unwrap()).unwrap().unwrap() {
+    //   PrimaryResource::Service(actual) => assert_eq!(actual, document.service().query("#service-2").unwrap().service_endpoint().clone()),
+    //   actual => panic!("Expected #service-2 got {:?}", actual),
+    // }
+  }
+
+  #[rustfmt::skip]
+  #[test]
+  fn test_dereference_document() {
+    let document = generate_document();
+
+    // Dereference methods
+    match dereference_document(document.clone(), "auth-key").unwrap().unwrap() {
+      SecondaryResource::VerificationKey(actual) => assert_eq!(actual, document.methods().find(|method| method.id().fragment().unwrap() == "auth-key").unwrap().clone()),
+      actual => panic!("Expected #auth-key got {:?}", actual),
+    }
+    match dereference_document(document.clone(), "key-1").unwrap().unwrap() {
+      SecondaryResource::VerificationKey(actual) => assert_eq!(actual, document.verification_method().query("#key-1").unwrap().clone()),
+      actual => panic!("Expected #key-1 got {:?}", actual),
+    }
+    match dereference_document(document.clone(), "key-2").unwrap().unwrap() {
+      SecondaryResource::VerificationKey(actual) => assert_eq!(actual, document.verification_method().query("#key-2").unwrap().clone()),
+      actual => panic!("Expected #key-2 got {:?}", actual),
+    }
+
+    // Dereference services
+    match dereference_document(document.clone(), "service-1").unwrap().unwrap() {
+      SecondaryResource::Service(actual) => assert_eq!(actual, document.service().query("#service-1").unwrap().clone()),
+      actual => panic!("Expected #service-1 got {:?}", actual),
+    }
+    match dereference_document(document.clone(), "service-2").unwrap().unwrap() {
+      SecondaryResource::Service(actual) => assert_eq!(actual, document.service().query("#service-2").unwrap().clone()),
+      actual => panic!("Expected #service-2 got {:?}", actual),
+    }
   }
 }

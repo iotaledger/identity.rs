@@ -264,7 +264,7 @@ where
     self
       .0
       .iter()
-      .find(|method| query.matches(method.as_did()))
+      .find(|method| query.matches(method.as_did_url()))
       .map(|method| &**method)
   }
 
@@ -277,7 +277,7 @@ where
     self
       .0
       .iter_mut()
-      .find(|method| query.matches(method.as_did()))
+      .find(|method| query.matches(method.as_did_url()))
       .map(|method| &mut **method)
   }
 }

@@ -67,10 +67,17 @@ impl RelativeDIDUrl {
   /// Create an empty [RelativeDIDUrl].
   pub fn new() -> Self {
     Self {
-      fragment: None,
       path: None,
       query: None,
+      fragment: None,
     }
+  }
+
+  /// Returns whether all URL segments are empty.
+  pub fn is_empty(&self) -> bool {
+    self.path.as_deref().unwrap_or_default().is_empty()
+      && self.query.as_deref().unwrap_or_default().is_empty()
+      && self.fragment.as_deref().unwrap_or_default().is_empty()
   }
 
   /// Return the [path] component, including the leading '/'.
@@ -558,6 +565,7 @@ mod tests {
   fn test_did_url_parse_valid() {
     let did_url = CoreDIDUrl::parse("did:example:1234567890").unwrap();
     assert_eq!(did_url.to_string(), "did:example:1234567890");
+    assert!(did_url.url().is_empty());
     assert!(did_url.path().is_none());
     assert!(did_url.query().is_none());
     assert!(did_url.fragment().is_none());
@@ -571,6 +579,7 @@ mod tests {
     assert_eq!(CoreDIDUrl::parse("did:example:1234567890?query#fragment").unwrap().to_string(), "did:example:1234567890?query#fragment");
 
     let did_url = CoreDIDUrl::parse("did:example:1234567890/path?query#fragment").unwrap();
+    assert!(!did_url.url().is_empty());
     assert_eq!(did_url.to_string(), "did:example:1234567890/path?query#fragment");
     assert_eq!(did_url.path().unwrap(), "/path");
     assert_eq!(did_url.query().unwrap(), "query");

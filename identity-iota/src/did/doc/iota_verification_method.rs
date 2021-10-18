@@ -178,9 +178,9 @@ impl IotaVerificationMethod {
 
   /// Returns the method `id` property.
   pub fn id(&self) -> &IotaDIDUrl {
-    // TODO: check this!!!
     let did_url: &CoreDIDUrl = self.0.id();
-    // SAFETY: we don't create methods with invalid DID's and IotaDID and CoreDID are the same size.
+    // SAFETY: We don't create methods with invalid ids and IotaDID and CoreDID have the same
+    //         layout.
     unsafe { &*(did_url as *const CoreDIDUrl as *const IotaDIDUrl) }
   }
 

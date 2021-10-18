@@ -224,7 +224,7 @@ impl IotaDocument {
     for method_ref in document.verification_relationships() {
       match method_ref {
         MethodRef::Embed(method) => IotaVerificationMethod::check_validity(method)?,
-        MethodRef::Refer(did_url) => IotaDID::check_validity(did_url.did())?, // TODO: check this
+        MethodRef::Refer(did_url) => IotaDID::check_validity(did_url.did())?,
       }
     }
 
@@ -1135,8 +1135,12 @@ mod tests {
     let keypair: KeyPair = generate_testkey();
     let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
-    let verification_method = document.resolve("#authentication").unwrap();
-    let authentication_method = document.authentication();
+    let verification_method: &IotaVerificationMethod = document.resolve("#authentication").unwrap();
+    let authentication_method: &IotaVerificationMethod = document.authentication();
+
+    let expected_method_id: IotaDIDUrl = document.id().to_url().join("#authentication").unwrap();
+    assert_eq!(verification_method.id(), &expected_method_id);
+    assert_eq!(authentication_method.id(), &expected_method_id);
 
     // `methods` returns all embedded verification methods, so only one is expected.
     assert_eq!(document.methods().count(), 1);

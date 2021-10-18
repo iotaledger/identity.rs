@@ -40,7 +40,7 @@ impl<T> DIDKey<T> {
 
   /// Returns a reference to the `DID`.
   #[inline]
-  pub fn as_did(&self) -> &CoreDIDUrl
+  pub fn as_did_url(&self) -> &CoreDIDUrl
   where
     T: AsRef<CoreDIDUrl>,
   {
@@ -54,7 +54,7 @@ where
 {
   #[inline]
   fn eq(&self, other: &Self) -> bool {
-    self.as_did().eq(other.as_did())
+    self.as_did_url().eq(other.as_did_url())
   }
 }
 
@@ -66,7 +66,7 @@ where
 {
   #[inline]
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-    self.as_did().partial_cmp(other.as_did())
+    self.as_did_url().partial_cmp(other.as_did_url())
   }
 }
 
@@ -76,7 +76,7 @@ where
 {
   #[inline]
   fn cmp(&self, other: &Self) -> Ordering {
-    self.as_did().cmp(other.as_did())
+    self.as_did_url().cmp(other.as_did_url())
   }
 }
 
@@ -88,7 +88,7 @@ where
   where
     H: Hasher,
   {
-    self.as_did().hash(hasher)
+    self.as_did_url().hash(hasher)
   }
 }
 
@@ -128,7 +128,7 @@ where
 {
   #[inline]
   fn borrow(&self) -> &CoreDIDUrl {
-    self.as_did()
+    self.as_did_url()
   }
 }
 
