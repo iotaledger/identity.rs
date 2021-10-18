@@ -29,7 +29,7 @@ IOTA Identity is a [Rust](https://www.rust-lang.org/) implementation of decentra
 The individual libraries are developed to be agnostic about the utilized [Distributed Ledger Technology (DLT)](https://en.wikipedia.org/wiki/Distributed_ledger), with the exception of the [IOTA](https://www.iota.org) integration and higher level libraries. Written in stable Rust, it has strong guarantees of memory safety and process integrity while maintaining exceptional performance.
 
 > :warning: **WARNING** :warning:
-> 
+>
 > This library is currently in its **beta stage** and **under development** and might undergo large changes!
 > Until a formal third-party security audit has taken place, the [IOTA Foundation](https://www.iota.org/) makes no guarantees to the fitness of this library. As such, it is to be seen as **experimental** and not ready for real-world applications.
 > Nevertheless, we are very interested in feedback about user experience, design and implementation, and encourage you to reach out with any concerns or suggestions you may have.
@@ -81,7 +81,7 @@ version = "1.0.0"
 edition = "2018"
 
 [dependencies]
-identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
+identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main", features = ["account"]}
 pretty_env_logger = { version = "0.4" }
 tokio = { version = "1.5", features = ["full"] }
 ```
@@ -92,7 +92,7 @@ use std::path::PathBuf;
 use identity::account::Account;
 use identity::account::AccountStorage;
 use identity::account::IdentityCreate;
-use identity::account::IdentitySnapshot;
+use identity::account::IdentityState;
 use identity::account::Result;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
@@ -112,13 +112,12 @@ async fn main() -> Result<()> {
     .await?;
 
   // Create a new Identity with default settings.
-  let snapshot: IdentitySnapshot = account.create_identity(IdentityCreate::default()).await?;
+  let identity: IdentityState = account.create_identity(IdentityCreate::default()).await?;
 
   // Retrieve the DID from the newly created Identity state.
-  let did: &IotaDID = snapshot.identity().try_did()?;
+  let did: &IotaDID = identity.try_did()?;
 
-  println!("[Example] Local Snapshot = {:#?}", snapshot);
-  println!("[Example] Local Document = {:#?}", snapshot.identity().to_document()?);
+  println!("[Example] Local Document = {:#?}", identity.to_document()?);
   println!("[Example] Local Document List = {:#?}", account.list_identities().await);
 
   // Fetch the DID Document from the Tangle
@@ -165,7 +164,7 @@ IOTA Identity is in heavy development, and will naturally change as it matures a
 
 At the current state, the framework is in beta. As the framework matures we expect to support more and more types of applications. We recommend no use in real-world applications until the consumed libraries are audited, but experimentation and Proof-of-Concept projects are encouraged at the different stages.
 
-The next milestone is the release of version 1.0, which will stabilize the APIs, support backwards compatibility and versioned identities. This makes updating to future versions much easier. In addition it will provide full documentation coverage and the release will be audited. 
+The next milestone is the release of version 1.0, which will stabilize the APIs, support backwards compatibility and versioned identities. This makes updating to future versions much easier. In addition it will provide full documentation coverage and the release will be audited.
 
 Afterwards, we are already planning a future update containing privacy enhancing features such as Selective Disclosure and Zero Knowledge Proofs.
 

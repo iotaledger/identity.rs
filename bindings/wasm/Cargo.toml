@@ -18,6 +18,7 @@ crate-type = ["cdylib", "rlib"]
 console_error_panic_hook = { version = "0.1" }
 futures = { version = "0.3" }
 js-sys = { version = "0.3" }
+reqwest = { version = "=0.11.4" } # pin version to 0.11.4: https://github.com/iotaledger/identity.rs/issues/438
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 tokio = { version = "*", default-features = false, features = ["rt"] } # enable "rt" feature to fix build: https://github.com/iotaledger/identity.rs/issues/403
@@ -38,4 +39,8 @@ chrono = { version = "0.4", features = ["wasmbind"] }
 getrandom = { version = "0.2", features = ["js"] }
 
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = false
+wasm-opt = true
+
+[profile.release]
+opt-level = 's'
+lto = true

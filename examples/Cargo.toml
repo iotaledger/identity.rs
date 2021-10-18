@@ -15,36 +15,24 @@ name = "getting_started"
 path = "getting_started.rs"
 
 [[example]]
-name = "account_basic"
-path = "account/basic.rs"
+name = "account_create"
+path = "account/create_did.rs"
 
 [[example]]
 name = "account_config"
 path = "account/config.rs"
 
 [[example]]
-name = "account_methods"
-path = "account/methods.rs"
+name = "account_manipulate"
+path = "account/manipulate_did.rs"
 
 [[example]]
 name = "account_lazy"
 path = "account/lazy.rs"
 
 [[example]]
-name = "account_services"
-path = "account/services.rs"
-
-[[example]]
 name = "account_signing"
 path = "account/signing.rs"
-
-[[example]]
-name = "account_stronghold"
-path = "account/stronghold.rs"
-
-[[example]]
-name = "account_private_tangle"
-path = "account/private_tangle.rs"
 
 [[example]]
 name = "create_did"

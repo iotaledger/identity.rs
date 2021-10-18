@@ -17,8 +17,8 @@ const NETWORK_NAME_MAIN: &str = "main";
 const NETWORK_NAME_DEV: &str = "dev";
 
 lazy_static! {
-  static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/mainnet").unwrap();
-  static ref EXPLORER_DEV: Url = Url::parse("https://explorer.iota.org/devnet").unwrap();
+  static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/mainnet/identity-resolver").unwrap();
+  static ref EXPLORER_DEV: Url = Url::parse("https://explorer.iota.org/devnet/identity-resolver/").unwrap();
   static ref NODE_MAIN: Url = Url::parse("https://chrysalis-nodes.iota.org").unwrap();
   static ref NODE_DEV: Url = Url::parse("https://api.lb-0.h.chrysalis-devnet.iota.cafe").unwrap();
 }

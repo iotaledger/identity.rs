@@ -3,20 +3,22 @@
 
 use std::pin::Pin;
 
-use crate::account::Account;
-use crate::identity::IdentityCreate;
-use crate::identity::IdentitySnapshot;
-use crate::identity::IdentityUpdater;
-use crate::Error as AccountError;
-use crate::Result;
 use futures::Future;
+
 use identity_core::common::Url;
 use identity_iota::chain::DocumentHistory;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaVerificationMethod;
+use identity_iota::Error as IotaError;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::Network;
-use identity_iota::Error as IotaError;
+
+use crate::account::Account;
+use crate::Error as AccountError;
+use crate::identity::IdentityCreate;
+use crate::identity::IdentityState;
+use crate::identity::IdentityUpdater;
+use crate::Result;
 
 #[tokio::test]
 async fn test_lazy_updates() -> Result<()> {
@@ -33,11 +35,11 @@ async fn test_lazy_updates() -> Result<()> {
         Network::Mainnet
       };
 
-      let snapshot: IdentitySnapshot = account
+      let identity: IdentityState = account
         .create_identity(IdentityCreate::new().network(network.name()).unwrap())
         .await?;
 
-      let did: &IotaDID = snapshot.identity().try_did()?;
+      let did: &IotaDID = identity.try_did()?;
 
       let did_updater: IdentityUpdater<'_, '_, _> = account.update_identity(did);
 
@@ -63,7 +65,7 @@ async fn test_lazy_updates() -> Result<()> {
       // First round of assertions
       // ===========================================================================
 
-      let doc = account.resolve_identity(snapshot.identity().did().unwrap()).await?;
+      let doc = account.resolve_identity(identity.did().unwrap()).await?;
 
       let services = doc.service();
 
@@ -97,7 +99,7 @@ async fn test_lazy_updates() -> Result<()> {
       // Second round of assertions
       // ===========================================================================
 
-      let doc = account.resolve_identity(snapshot.identity().did().unwrap()).await?;
+      let doc = account.resolve_identity(identity.did().unwrap()).await?;
       let methods = doc.methods().collect::<Vec<&IotaVerificationMethod>>();
 
       assert_eq!(doc.service().len(), 0);
