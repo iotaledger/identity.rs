@@ -60,7 +60,7 @@ The [sender](#roles) transmits a JSON `payload` to the [receiver](#roles). This 
 
 ```json
 {
-  "post": "Hello, world"
+  "payload": "Hello, world"
 }
 ```
 
@@ -68,7 +68,7 @@ The [sender](#roles) transmits a JSON `payload` to the [receiver](#roles). This 
 
 ```json
 {
-  "post": 42
+  "payload": 42
 }
 ```
 
@@ -76,7 +76,7 @@ The [sender](#roles) transmits a JSON `payload` to the [receiver](#roles). This 
 
 ```json
 {
-  "post": {
+  "payload": {
     "status_code": 100,
     "status": "Okay",
   }
@@ -91,7 +91,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 | Code | Message | Description |
 | :--- | :--- | :--- |
-| `e.p.msg.iota.post.reject-post` | [post](#post) | [Receiver](#roles) rejects a post message for any reason. |
+| `e.p.msg.iota.post.reject-post` | [post](#post) | [Receiver](#roles) rejects a [post](#post-message) message for any reason. |
 
 ## Considerations
 

@@ -7,7 +7,7 @@ sidebar_label: Revocation
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-10-14
+- Last Updated: 2021-10-18
 
 ## Overview
 Allows to request revocation of an issued [verifiable credential](https://www.w3.org/TR/vc-data-model/), either by the holder or a trusted-party. If the revoker is unable to revoke the credential themselves, they may delegate the revocation to a different issuer, in which case they take on the role of trusted-party in their request.
@@ -41,28 +41,20 @@ Note that the exact method of revocation is unspecified. The typical procedure i
 - Type: `didcomm:iota/revocation/0.1/revocation-request`
 - Role: [trusted-party](#roles)
 
-Sent by the [trusted-party](#roles) or holder to request revocation of an issued verifiable credential. This message conveys which credential should be revoked and which method should be used. The message may also include a signature so the revoker has proof the request as issued. 
+Sent by the [trusted-party](#roles) or holder to request revocation of an issued verifiable credential. This message conveys which credential should be revoked and which method should be used. The [revoker](#roles) MAY require this to be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) for auditing purposes and reject unsigned requests.
 
 #### Structure
 ```json
 {
-  "revocationInfoType": string,     // REQUIRED
   "revocationInfo": RevocationInfo, // REQUIRED
-  "signature": Proof,               // OPTIONAL
 }
 ```
 
-// TODO: remove `signature` and use a signed DIDComm message instead?
-
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `revocationInfoType` | The type of [RevocationInfo](#RevocationInfo).[^1] | ✔ |
-| [`revocationInfo`](#RevocationInfo) | Contains information sufficient to identity which credential should be revoked. See [`revocationInfo`](#RevocationInfo). | ✔ |
-| `signature` | [Proof](https://w3c-ccg.github.io/ld-proofs/) with the signature of the [trusted-party](#roles) on the [revocation-request message](#revocation-request).[^2] | ✖ |
+| [`revocationInfo`](#RevocationInfo) | Contains information sufficient to specify which credential should be revoked. See [`revocationInfo`](#RevocationInfo).[^1] | ✔ |
 
-[^1] If an unsupported `revocationInfoType` is received, the [revoker](#roles) MUST issue a problem-report. The specific problem-report code is `unsupported-revocation-info-type` but if privacy is a concern, a [revoker](#roles) may send a more generic code such as `reject-request` to avoid disclosing its capabilities more than the [revocation-options](./revocation-options#Considerations) protocol would reveal.
-
-[^2] The `signature` allows for non-repudiation of the request to third-parties. A [revoker](#roles) MAY choose to reject [revocation-requests](#revocation-request) that do not include a `signature`.
+[^1] If an unsupported `revocationInfo` type is received, the [revoker](#roles) MUST issue a problem-report. The specific problem-report descriptor is `invalid-revocation-type` but if privacy is a concern, a [revoker](#roles) may send a more generic descriptor such as `reject-request` to avoid disclosing its capabilities more than the [revocation-options](./revocation-options#Considerations) protocol would reveal.
 
 #### Examples
 
@@ -70,22 +62,21 @@ Sent by the [trusted-party](#roles) or holder to request revocation of an issued
 
 ```json
 {
-  "revocationInfoType": "CredentialRevocation2021",
   "revocationInfo": {
+    "revocationInfoType": "CredentialRevocation2021",
     "credentialId": "0495e938-3cb7-4228-bb73-c642ec6390c8"
-  },
+  }
 }
 ```
 
-2. Request to revoke all credentials signed by a specific [verification method](https://w3c-ccg.github.io/lds-ed25519-2020/#verification-method) identified by `#keys2`, including a signature for non-repudiation:
+2. Request to revoke all credentials signed by a specific [verification method](https://w3c-ccg.github.io/lds-ed25519-2020/#verification-method) identified by `#keys2`:
 
 ```json
 {
-  "revocationInfoType": "KeyRevocation2021",
   "revocationInfo": {
+    "revocationInfoType": "KeyRevocation2021",
     "key": "did:example:76e12ec712ebc6f1c221ebfeb1f#keys-2"
-  },
-  "signature": {...},
+  }
 }
 ```
 
@@ -94,7 +85,7 @@ Sent by the [trusted-party](#roles) or holder to request revocation of an issued
 - Type: `didcomm:iota/revocation/0.1/revocation-response`
 - Role: [revoker](#roles)
 
-Sent by the [revoker](#roles) as soon as the revocation is performed. It indicates in what state the revocation is.
+Sent by the [revoker](#roles) as soon as the revocation is performed to indicate the current status.
 
 #### Structure
 ```json
@@ -129,22 +120,11 @@ The [trusted-party](#roles) SHOULD verify that the credential is actually revoke
 }
 ```
 
-
-### Problem Reports {#problem-reports}
-
-For general guidance see [problem reports](../resources/problem-reports).
-
-Custom error messages for problem-reports that are expected in the course of this protocol. Non-exhaustive, just a normative list of errors that are expected to be thrown.
-- e.p.prot.iota.revocation.reject-revocation
-- e.p.prot.iota.revocation.unsupported-revocation-info-type
-
-Also problem reports from embedded protocols can be thrown.
-
 ## RevocationInfo {#RevocationInfo}
 
 The `RevocationInfo` object contains the information necessary for a [revoker](#roles) to revoke a verifiable credential. For instance, this may include the `id` field of the credential, in which case a [revoker](#roles) must maintain a map to the signing key used for each credential to revoke them. It could also be the identifier for the signing key itself on the DID document of the issuer. Implementors are free to construct their own `RevocationInfo` types as different singing keys may require different information for revocation. For example, revoking a `MerkleKeyCollection2021` requires both the key identifier and its index in the collection.
 
-Implementors MUST adhere to at least one of the types below, either [KeyRevocation2021](#KeyRevocation2021) or [CredentialRevocation2021]. Implementors MAY define additional types as-needed.
+Implementors MUST adhere to at least one of the types below, either [KeyRevocation2021](#KeyRevocation2021) or [CredentialRevocation2021]. Implementors MAY define additional types as-needed. A valid `RevocationInfo` type MUST have a `revocationInfoType` field.
 
 ### KeyRevocation2021
 - Type: `KeyRevocation2021`
@@ -159,12 +139,14 @@ Note that revoking a verification method revokes all verifiable credentials sign
 
 ```json
 {
-  "key": DIDUrl, // REQUIRED
+  "revocationInfoType": string, // REQUIRED
+  "key": DIDUrl,                // REQUIRED
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
+| `revocationInfoType` | String indicating the `RevocationInfo` type, MUST be `"KeyRevocation2021"`. | ✔ |
 | `key` | String conforming to the [DIDUrl syntax](https://www.w3.org/TR/did-core/#did-url-syntax) identifying a [verification method](https://www.w3.org/TR/did-core/#verification-methods) to be revoked.[^1] | ✔ |
 
 [^1] the [fragment](https://www.w3.org/TR/did-core/#dfn-did-fragments) MUST reference a valid verification method. The DID document referenced need not belong to the revoker necessarily, as they could forward or delegate the request to the actual owner or controller. The [query](https://www.w3.org/TR/did-core/#dfn-did-queries) MAY include extra information needed to identify the particular signing key, for example the index in a [MerkleKeyCollection2021](../../did/merkle_key_collection).
@@ -175,6 +157,7 @@ Note that revoking a verification method revokes all verifiable credentials sign
 
 ```json
 {
+  "revocationInfoType": "KeyRevocation2021",
   "key": "did:example:76e12ec712ebc6f1c221ebfeb1f#keys-1"
 }
 ```
@@ -183,7 +166,8 @@ Note that revoking a verification method revokes all verifiable credentials sign
 
 ```json
 {
-  "key": "did:example:76e12ec712ebc6f1c221ebfeb1f#keys-2?index=7"
+  "revocationInfoType": "KeyRevocation2021",
+  "key": "did:example:76e12ec712ebc6f1c221ebfeb1f?index=7#keys-2"
 }
 ```
 
@@ -195,12 +179,14 @@ Allows to request the revocation of a verifiable credential by its identifier fi
 
 ```json
 {
-  "credentialId": string,  // REQUIRED
+  "revocationInfoType": string, // REQUIRED
+  "credentialId": string,       // REQUIRED
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
+| `revocationInfoType` | String indicating the `RevocationInfo` type, MUST be `"CredentialRevocation2021"`. | ✔ |
 | `credentialId` | A [URI](https://www.w3.org/TR/vc-data-model/#dfn-uri) corresponding to the [id property](https://www.w3.org/TR/vc-data-model/#identifiers) of a verifiable credential. | ✔ |
 #### Examples
 
@@ -208,6 +194,7 @@ Allows to request the revocation of a verifiable credential by its identifier fi
 
 ```json
 {
+  "revocationInfoType": "CredentialRevocation2021",
   "credentialId": "1dd5bbc6-b0bc-4f82-94a9-c723e11075b5",
 }
 ```
@@ -216,16 +203,18 @@ Allows to request the revocation of a verifiable credential by its identifier fi
 
 - Type: `CredentialStatusRevocation2021`
 
-Allows to request the revocation of a verifiable credential by sending its corresponding [credential status](https://www.w3.org/TR/vc-data-model/#status) information. The [revoker](#roles) should ensure that this information is correct and that the requester is authorized.
+Request the revocation of a verifiable credential by sending its corresponding [credential status](https://www.w3.org/TR/vc-data-model/#status) information. The [revoker](#roles) should ensure that this information is correct and that the requester is authorized.
 
 ```json
 {
+  "revocationInfoType": string,          // REQUIRED
   "credentialStatus": CredentialStatus,  // REQUIRED
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
+| `revocationInfoType` | String indicating the `RevocationInfo` type, MUST be `"CredentialStatusRevocation2021"`. | ✔ |
 | [`credentialStatus`](https://www.w3.org/TR/vc-data-model/#status) | A [credential status](https://www.w3.org/TR/vc-data-model/#status) object.[^1] | ✔ |
 
 [^1] This SHOULD correspond with one of the supported credential status methods in the [verifiable credentials extension registry](https://w3c-ccg.github.io/vc-extension-registry/#status-methods).
@@ -236,6 +225,7 @@ Allows to request the revocation of a verifiable credential by sending its corre
 
 ```json
 {
+  "revocationInfoType": "CredentialStatusRevocation2021",
   "credentialStatus": {
     "id": "https://example.edu/status/24",
     "type": "CredentialStatusList2017"
@@ -247,6 +237,7 @@ Allows to request the revocation of a verifiable credential by sending its corre
 
 ```json
 {
+  "revocationInfoType": "CredentialStatusRevocation2021",
   "credentialStatus": {
     "id": "https://dmv.example.gov/credentials/status/3#94567",
     "type": "RevocationList2020Status",
@@ -255,6 +246,7 @@ Allows to request the revocation of a verifiable credential by sending its corre
   },
 }
 ```
+
 ### Problem Reports {#problem-reports}
 
 The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.

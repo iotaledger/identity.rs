@@ -14,7 +14,7 @@ Allows discovery of available [`RevocationInfo`](./revocation#RevocationInfo) ty
 
 ### Relationships
 
-- [revocation](./revocation): this protocol is used to discover the `revocationType` options available to a [trusted-party](#roles) for use in a [revocation-request](./revocation#revocation-request).
+- [revocation](./revocation): this protocol is used to discover the `revocationInfoType` options available to a [trusted-party](#roles) for use in a [revocation-request](./revocation#revocation-request).
 
 ### Roles
 - Trusted-Party: requests supported methods of revocation.
