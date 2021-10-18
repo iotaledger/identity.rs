@@ -7,7 +7,7 @@ sidebar_label: Issuance
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-09-17
+- Last Updated: 2021-10-18
 
 ## Overview
 
@@ -48,46 +48,50 @@ The [holder](#roles) requests a single verifiable credential from the [issuer](#
 #### Structure
 ```json
 {
-  "subject": DID,             // REQUIRED, TODO: DID not always required for all VCs, not always a DID either...
-  "@context": [string],       // OPTIONAL
-  "type": [string],           // REQUIRED
-  "trustedIssuers": [string]  // OPTIONAL
+  "subject": DID,                   // REQUIRED, TODO: DID not always required for all VCs, not always a DID either...
+  "credentialInfo": CredentialInfo, // REQUIRED
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | [`subject`](https://www.w3.org/TR/vc-data-model/#credential-subject-0) | [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of the [credential subject](https://www.w3.org/TR/vc-data-model/#credential-subject-0)[^1]. | ✔ |
-| [`@context`](https://www.w3.org/TR/vc-data-model/#contexts) | Array of JSON-LD contexts referencing the credential types. | ✖ |
-| [`type`](https://www.w3.org/TR/vc-data-model/#types) | Array of credential types; an issued credential SHOULD match all types specified.[^2] | ✔ |
-| [`trustedIssuers`](https://www.w3.org/TR/vc-data-model/#issuer) | Array of credential issuer IDs or URIs, any of which the holder would accept.[^3] | ✖ |
+| `credentialInfo` | A [CredentialInfo](../resources/credential-kinds#credentialinfo), specifying a credential kind requested by the [holder](#roles).[^2] [^3] [^4] | ✔ |
 
 [^1] The [holder](#roles) is usually but not always the [subject]((https://www.w3.org/TR/vc-data-model/#credential-subject-0)) of the requested credential. There may be custodial, legal guardianship, or delegation situations where a third-party requests or is issued a credential on behalf of a subject. It is the responsibility of the [issuer](#roles) to ensure authorization in such cases.
 
-[^2] The credential `type` could be discovered out-of-band or be pre-sent by an [issuer](#roles). The types MAY be under-specified if the exact type is not known or if the resulting type depends on the identity or information of the subject or holder. The `type` could be as general as `["VerifiableCredential"]` for example, if the issuer issues only a singular type of credential or decides the credential based on other information related to the subject. The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support the requested `type`.
+[^2] The `credentialInfo` could be hard-coded, communicated in-band, discovered out-of-band or be pre-sent by an [issuer](#roles). The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support the requested `credentialInfo`.
 
-[^3] The [holder](#roles) MAY specify one or more `trustedIssuers` they would like to sign the resulting credential. The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support any of the requested `trustedIssuers`. However, there are circumstances where a `trustedIssuer` is no longer supported or was compromised, so this behavior should be decided based on the application.
+[^3] With ["CredentialType2021"](../resources/credential-kinds#credentialtype2021), the `type` MAY be under-specified if the exact type is unknown or if the resulting type depends on the identity or information of the subject or holder. E.g. the `type` could be as general as `["VerifiableCredential"]` if the issuer issues only a singular type of credential or decides the credential based on other information related to the subject. 
 
-An [issuer](#roles) wanting to preserve privacy regarding which exact credential types or issuers they support should be careful with the information they disclose in `problem-reports` when rejecting requests. E.g. a `problem-report` with an `reject-request` code discloses less information than the `reject-request.invalid-type` or `reject-request.invalid-trusted-issuer` codes, as the latter two could be used to determine supported types or issuers by process of elimination.
+[^4] With ["CredentialType2021"](../resources/credential-kinds#credentialtype2021), the [holder](#roles) MAY specify one or more trusted issuers they would like to sign the resulting credential. The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does supports none of the requested `issuer` entries. However, there are circumstances where an `issuer` is no longer supported or was compromised, so this behavior should be decided based on the application.
+
+An [issuer](#roles) wanting to preserve privacy regarding which exact credential kinds, types, or issuers they support should be careful with the information they disclose in `problem-reports` when rejecting requests. E.g. a `problem-report` with only a `reject-request` descriptor discloses less information than the `reject-request.invalid-type` or `reject-request.invalid-trusted-issuer` descriptors, as the latter two could be used to determine supported types or signing issuers by process of elimination.
 
 #### Examples
 
-1. Request a drivers licence credential:
+1. Request any drivers licence credential using ["CredentialType2021"](../resources/credential-kinds#credentialtype2021):
 
 ```json
 {
   "subject": "did:example:c6ef1fe11eb22cb711e6e227fbc",
-  "type": ["VerifiableCredential", "DriversLicence"],
+  "credentialInfo": {
+    "credentialInfoType": "CredentialType2021",
+    "type": ["VerifiableCredential", "DriversLicence"],
+  }
 }
 ```
 
-2. Request a university degree as a credential from either supported issuer:
+2. Request a university degree credential from either supported trusted issuer using ["CredentialType2021"](../resources/credential-kinds#credentialtype2021):
 
 ```json
 {
   "subject": "did:example:c6ef1fe11eb22cb711e6e227fbc",
-  "type": ["VerifiableCredential", "UniversityDegreeCredential", "BachelorOfArtsDegreeCredential"],
-  "trustedIssuers": ["did:example:76e12ec712ebc6f1c221ebfeb1f", "did:example:f1befbe122c1f6cbe217ce21e67"]
+  "credentialInfo": {
+    "credentialInfoType": "CredentialType2021",
+    "type": ["VerifiableCredential", "UniversityDegreeCredential", "BachelorOfArtsDegreeCredential"],
+    "issuer": ["did:example:76e12ec712ebc6f1c221ebfeb1f", "did:example:f1befbe122c1f6cbe217ce21e67"]
+  }
 }
 ```
 
@@ -210,7 +214,7 @@ TODO: disambiguate `signatureChallenge`? E.g. `requestChallenge`, `issuanceChall
 | `signatureChallenge` | This MUST match the `signatureChallenge` in the preceding [`issuance-offer`](#issuance-offer). | ✔ |
 | [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the [holder](#roles) on the `signatureChallenge`. | ✔ |
 
-[^1] A valid `signature` allows the [issuer](#roles) to prove that the credential was accepted by the [holder](#roles). If present, the [issuer](#roles) MUST validate the `proof` is correct and signed with an unrevoked [verification method](https://www.w3.org/TR/did-core/#dfn-verification-method), and issue a problem-report if not. The [issuer](#roles) SHOULD terminate the protocol if no `signature` is present and a `signatureChallenge` was included in the preceding [issuance-offer](#issuance-offer) message.
+[^1] A valid `signature` allows the [issuer](#roles) to prove that the credential was accepted by the [holder](#roles). If present, the [issuer](#roles) MUST validate the `proof` is correct and signed with an unrevoked [verification method](https://www.w3.org/TR/did-core/#dfn-verification-method), and issue a problem-report if not. The [issuer](#roles) SHOULD terminate the protocol if no `signature` is present and a `signatureChallenge` was included in the preceding [issuance-offer](#issuance-offer) message. An explicit `signature` is used in lieu of a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) to avoid the need to store the entire credential for auditing purposes; the hash is sufficient to prove a particular credential was accepted.
 
 #### Examples
 
@@ -361,7 +365,7 @@ TODO: disambiguate `signatureChallenge`? E.g. `requestChallenge`, `issuanceChall
 | `signatureChallenge` | This MUST match the `signatureChallenge` in the preceding [`issuance`](#issuance-message) message. | ✔ |
 | [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the [holder](#roles) on the `signatureChallenge`. | ✔ |
 
-[^1] The [issuer](#roles) MUST validate the `signature` and MAY revoke the issued credential if a `signature` was requested, e.g. for non-repudiation or auditing, and not received or an invalid `signature` is received.
+[^1] The [issuer](#roles) MUST validate the `signature` and MAY revoke the issued credential if a `signature` was requested, e.g. for non-repudiation or auditing, and not received or an invalid `signature` is received. An explicit `signature` is used in lieu of a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) to avoid the need to store the entire credential for auditing purposes; the hash is sufficient to prove a particular credential was accepted.
 
 #### Examples
 

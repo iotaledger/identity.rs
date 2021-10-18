@@ -5,10 +5,6 @@ sidebar_label: Overview
 
 *version 0.1, last changed October 2021*
 
-TODO: make clear that we only show message payloads in the protocol examples
-TODO: come up with a new protocol prefix, `didcomm://` is VERBOTEN https://identity.foundation/didcomm-messaging/spec/#didcomm-message-uris 
-
-
 ## Conformance
 
 The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
@@ -25,7 +21,7 @@ Protocols follow [Semantic Versioning 2.0](https://semver.org/) conventions.
 | Name | Description |
 | :--- | :--- |
 | [Problem Reports](./resources/problem-reports.md) | Definitions of expected problem reports and guidance on global handling |
-| [Credential Types](./resources/credential-types.md) | Guidance on how to identify a specific type of verifiable credential |
+| [Credential Kinds](./resources/credential-kinds.md) | Definition of methods to negotiate a specific kind of verifiable credential |
 
 ## Protocols
 
@@ -53,6 +49,11 @@ In addition to the protocols defined in this specification, we RECOMMEND impleme
 ## Changelog
 
 See [CHANGELOG](./CHANGELOG)
+
+## TODO
+TODO: make clear that we only show message payloads in the protocol examples
+
+TODO: come up with a new protocol prefix, `didcomm://` is VERBOTEN https://identity.foundation/didcomm-messaging/spec/#didcomm-message-uris 
 
 ## Future Work
 

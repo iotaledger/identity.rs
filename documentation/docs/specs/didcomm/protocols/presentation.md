@@ -7,7 +7,7 @@ sidebar_label: Presentation
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-09-17
+- Last Updated: 2021-10-18
 
 ## Overview
 
@@ -47,26 +47,17 @@ The context and types are included to allow the verifier to choose whether they 
 #### Structure
 ```json
 {
-  "offers": [{
-    "@context": [string],   // OPTIONAL
-    "type": [string],       // REQUIRED
-    "issuer": string,       // OPTIONAL
-  }], // REQUIRED
-  "requireSignature": bool, // OPTIONAL
+  "offers": [CredentialInfo], // REQUIRED
+  "requireSignature": bool,   // OPTIONAL
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `offers` | Array of one or more offers, each specifying a single credential possessed by the holder. | ✔ |
-| [`@context`](https://www.w3.org/TR/vc-data-model/#contexts) | Array of JSON-LD contexts referenced in the credential. | ✖ |
-| [`type`](https://www.w3.org/TR/vc-data-model/#types) | Array of credential types specifying the kind of credential offered.[^1] | ✔ | 
-| [`issuer`](https://www.w3.org/TR/vc-data-model/#issuer) | The ID or URI of the credential issuer.[^2] | ✖ |
-| `requireSignature` | Request that the verifier sign its [`presentation-request`](#presentation-request) with a proof. It is RECOMMENDED that the holder issues a `problem-report` if the verifier does not sign the message when this is true. | ✖ |
+| `offers` | Array of one or more [CredentialInfo](../resources/credential-kinds#credentialinfo), each specifying a single credential possessed by the holder. | ✔ |
+| `requireSignature` | Request that the verifier sign its [`presentation-request`](#presentation-request) with a proof. It is RECOMMENDED that the holder issues a `problem-report` if the verifier does not sign the message when this is true. | ✖ | 
 
-[^1] The types MAY be underspecified to preserve privacy but SHOULD always include the most general types. For example, a credential with the types `["VerifiableCredential", "DriversLicence", "EUDriversLicence", "GermanDriversLicence"]` could be specified as `["VerifiableCredential", "DriversLicence"]`.
-
-[^2] The issuer is OPTIONAL as the holder may not want to reveal too much information up-front on the exact credentials they possess; they may want a non-repudiable signed request from the verifier first? 
+[^1] With ["CredentialType2021"](../resources/credential-kinds#credentialtype2021), the `type` MAY be under-specified to preserve privacy but SHOULD always include the most general types. For example, a credential with the types `["VerifiableCredential", "DriversLicence", "EUDriversLicence", "GermanDriversLicence"]` could be specified as `["VerifiableCredential", "DriversLicence"]`.
 
 TODO: selective disclosure / ZKP fields?
 
@@ -77,6 +68,7 @@ TODO: selective disclosure / ZKP fields?
 ```json
 {
   "offers": [{
+    "credentialInfoType": "CredentialType2021",
     "type": ["VerifiableCredential", "UniversityDegreeCredential"],
     "issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f"
   }]
@@ -88,10 +80,12 @@ TODO: selective disclosure / ZKP fields?
 ```json
 {
   "offers": [{
+    "credentialInfoType": "CredentialType2021",
     "type": ["VerifiableCredential", "UniversityDegreeCredential"],
     "issuer": "did:example:76e12ec712ebc6f1c221ebfeb1f"
   }, 
   {
+    "credentialInfoType": "CredentialType2021",
     "type": ["VerifiableCredential", "UniversityDegreeCredential"],
     "issuer": "https://example.edu/issuers/565049"
   }]
@@ -110,22 +104,18 @@ The context and types are included, as well as trusted issuers, to allow the hol
 ```json
 {
   "requests": [{
-    "@context": [string],       // OPTIONAL
-    "type": [string],           // REQUIRED
-    "trustedIssuer": [string],  // OPTIONAL
-    "optional": bool            // OPTIONAL
+    "credentialInfo": CredentialInfo,   // REQUIRED
+    "optional": bool                    // OPTIONAL
   }], // REQUIRED
-  "challenge": string,          // REQUIRED
-  "proof": Proof                // OPTIONAL
+  "challenge": string,                  // REQUIRED
+  "proof": Proof                        // OPTIONAL
 }
 ```
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | `requests` | Array of one or more requests, each specifying a single credential possessed by the holder. | ✔ |
-| [`@context`](https://www.w3.org/TR/vc-data-model/#contexts) | Array of JSON-LD contexts referenced in a credential. | ✖ |
-| [`type`](https://www.w3.org/TR/vc-data-model/#types) | Array of credential types; a presented credential SHOULD match all types specified. | ✔ | 
-| [`trustedIssuer`](https://www.w3.org/TR/vc-data-model/#issuer) | Array of credential issuer IDs or URIs; any of which the verifier would accept. | ✖ |
+| `credentialInfo` | A [CredentialInfo](../resources/credential-kinds#credentialinfo), specifying a credential requested by the verifier.[^1] | ✔ |
 | `optional` | Whether this credential is required (`false`) or optional (`true`) to present by the holder. A holder SHOULD send a problem report if unable to satisfy a non-optional credential request. Default: `false`. | ✖ |
 | [`challenge`](https://w3c-ccg.github.io/ld-proofs/#dfn-challenge) | A random string unique per [`presentation-request`](#presentation-request) by a verifier to help mitigate replay attacks. | ✔ |
 | [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the verifier; RECOMMENDED to include if preceded by a [`presentation-offer`](#presentation-offer) with `requireSignature = true`.[^3] | ✖ |
@@ -136,26 +126,35 @@ Note that the `proof` SHOULD NOT be used for authentication of the verifier in g
 
 #### Examples
 
-1. Request a single credential matching both specified types.
+1. Request a single credential matching both specified types using ["CredentialType2021"](../resources/credential-kinds#credentialtype2021).
 
 ```json
 {
   "requests": [{
-    "type": ["VerifiableCredential", "UniversityDegreeCredential"]
+    "credentialInfo": {
+      "credentialInfoType": "CredentialType2021",
+      "type": ["VerifiableCredential", "UniversityDegreeCredential"]
+    }
   }],
   "challenge": "06da6f1c-26b0-4976-915d-670b8f407f2d"
 }
 ```
 
-2. Signed request of a required credential from a particular trusted issuer and an optional credential. 
+2. Signed request of a required credential using ["CredentialType2021"](../resources/credential-kinds#credentialtype2021) from a particular trusted issuer and an optional credential. 
 
 ```json
 {
   "requests": [{
-    "type": ["VerifiableCredential", "UniversityDegreeCredential"],
-    "trustedIssuer": ["did:example:76e12ec712ebc6f1c221ebfeb1f"]
+    "credentialInfo": {
+      "credentialInfoType": "CredentialType2021",
+      "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+      "trustedIssuer": ["did:example:76e12ec712ebc6f1c221ebfeb1f"]
+    }
   }, {
-    "type": ["VerifiableCredential", "DriversLicence"],
+    "credentialInfo": {
+      "credentialInfoType": "CredentialType2021",
+      "type": ["VerifiableCredential", "DriversLicence"]
+    },
     "optional": true
   }], 
   "challenge": "06da6f1c-26b0-4976-915d-670b8f407f2d",
@@ -163,13 +162,16 @@ Note that the `proof` SHOULD NOT be used for authentication of the verifier in g
 }
 ```
 
-3. Request a single credential signed by one of several trusted issuers.
+3. Request a single credential using ["CredentialType2021"](.../resources/credential-kinds#credentialtype2021) signed by one of several trusted issuers.
 
 ```json
 {
   "requests": [{
-    "type": ["VerifiableCredential", "UniversityDegreeCredential"],
-    "trustedIssuer": ["did:example:76e12ec712ebc6f1c221ebfeb1f", "did:example:f1befbe122c1f6cbe217ce21e67", "did:example:c6ef1fe11eb22cb711e6e227fbc"],
+    "credentialInfo": {
+      "credentialInfoType": "CredentialType2021",
+      "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+      "trustedIssuer": ["did:example:76e12ec712ebc6f1c221ebfeb1f", "did:example:f1befbe122c1f6cbe217ce21e67", "did:example:c6ef1fe11eb22cb711e6e227fbc"]
+    },
     "optional": false
   }], 
   "challenge": "06da6f1c-26b0-4976-915d-670b8f407f2d",
@@ -269,7 +271,7 @@ TODO: use DIDComm signed message instead of `proof`?
 | [`credentialId`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a dispute. If the credential lacks an `id` field, this should be a content-addressed identifier; we RECOMMEND the [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the credential.  | ✔ |
 | [`dispute`](https://www.w3.org/TR/vc-data-model/#disputes) | A [dispute](https://www.w3.org/TR/vc-data-model/#disputes) by the verifier of one or more claims in a presented credential. | ✔ |
 | `problems` | Array of problem-reports. | ✖ |
-| `credentialId`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a problem. If the credential lacks an `id` field, this should be a content-addressed identifier; we RECOMMEND the [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the credential. | ✔ |
+| [`credentialId`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a problem. If the credential lacks an `id` field, this should be a content-addressed identifier; we RECOMMEND the [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the credential. | ✔ |
 | `problemReport` | A [`problem-report`](https://identity.foundation/didcomm-messaging/spec/#problem-reports) indicating something wrong with the credential, e.g. signature validation failed or the credential is expired. | ✔ | 
 | `allowRetry` | Indicates if the holder may retry the [`presentation`](#presentation) with different credentials. Default: `false` | ✖ |
 | [`proof`](https://w3c-ccg.github.io/ld-proofs/) | Signature of the verifier; RECOMMENDED to include.[^5] | ✖ |
@@ -336,7 +338,7 @@ TODO: use DIDComm signed message instead of `proof`?
           "http://example.com/credentials/123",
         ],
       }
-  }],
+  }}],
   "allowRetry": false
 }
 ```
