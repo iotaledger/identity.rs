@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::convert::TryInto;
-
 use crypto::signatures::ed25519;
 
 use identity_core::common::Fragment;
@@ -63,7 +61,7 @@ impl CreateIdentity {
         ))
       );
 
-      KeyPair::from_ed25519_private_key(private_key.as_ref().try_into().unwrap())
+      KeyPair::try_from_ed25519_bytes(private_key.as_ref())?
     } else {
       KeyPair::new_ed25519()?
     };

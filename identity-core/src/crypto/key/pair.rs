@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::convert::TryInto;
+
+use crypto::signatures::ed25519;
 use zeroize::Zeroize;
 
 use crate::crypto::KeyRef;
@@ -35,14 +38,20 @@ impl KeyPair {
   }
 
   /// Reconstructs the [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`] from a private key.
-  pub fn from_ed25519_private_key(private_key: [u8; 32]) -> Self {
+  pub fn try_from_ed25519_bytes(private_key_bytes: &[u8]) -> Result<Self, crypto::Error> {
+    let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] = private_key_bytes
+      .try_into()
+      .map_err(|_| crypto::Error::PrivateKeyError)?;
+
+    let private_key = ed25519::SecretKey::from_bytes(private_key_bytes);
+
     let (public, private) = keypair_from_ed25519_private_key(private_key);
 
-    Self {
+    Ok(Self {
       type_: KeyType::Ed25519,
       public,
       private,
-    }
+    })
   }
 
   /// Returns the [`type`][`KeyType`] of the `KeyPair` object.
