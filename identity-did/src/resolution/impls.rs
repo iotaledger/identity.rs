@@ -403,40 +403,48 @@ mod test {
 
   #[test]
   fn test_service_endpoint_invalid_query() {
-    let did = did();
+    let did_url = did();
     assert!(matches!(
       service_endpoint_ctor(
-        did.to_url().join("?query=this").unwrap(),
+        did_url.clone().join("?query=this").unwrap(),
         &Url::parse("https://my-service.endpoint.net?query=this").unwrap()
       ),
       Err(Error::InvalidDIDQuery)
     ));
 
     assert!(service_endpoint_ctor(
-      did.to_url().join("?query=this").unwrap(),
+      did_url.clone().join("?query=this").unwrap(),
       &Url::parse("https://my-service.endpoint.net").unwrap(),
     )
     .is_ok());
-    assert!(service_endpoint_ctor(did, &Url::parse("https://my-service.endpoint.net?query=this").unwrap()).is_ok());
+    assert!(service_endpoint_ctor(
+      did_url,
+      &Url::parse("https://my-service.endpoint.net?query=this").unwrap()
+    )
+    .is_ok());
   }
 
   #[test]
   fn test_service_endpoint_invalid_fragment() {
-    let did = did();
+    let did_url = did();
     assert!(matches!(
       service_endpoint_ctor(
-        did.to_url().join("#fragment").unwrap(),
+        did_url.clone().join("#fragment").unwrap(),
         &Url::parse("https://my-service.endpoint.net#fragment").unwrap()
       ),
       Err(Error::InvalidDIDFragment)
     ));
 
     assert!(service_endpoint_ctor(
-      did.to_url().join("#fragment").unwrap(),
+      did_url.clone().join("#fragment").unwrap(),
       &Url::parse("https://my-service.endpoint.net").unwrap(),
     )
     .is_ok());
-    assert!(service_endpoint_ctor(did, &Url::parse("https://my-service.endpoint.net#fragment").unwrap()).is_ok());
+    assert!(service_endpoint_ctor(
+      did_url,
+      &Url::parse("https://my-service.endpoint.net#fragment").unwrap()
+    )
+    .is_ok());
   }
 
   fn generate_method(did: &CoreDID, fragment: &str) -> VerificationMethod {
