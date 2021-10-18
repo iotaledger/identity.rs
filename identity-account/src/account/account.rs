@@ -44,6 +44,9 @@ use super::Config;
 
 const OSC: Ordering = Ordering::SeqCst;
 
+/// An account manages one identity.
+/// It takes care of writing to storage and
+/// publishing to the tangle.
 #[derive(Debug)]
 pub struct Account {
   config: Config,
@@ -59,16 +62,16 @@ impl Account {
     AccountBuilder::new()
   }
 
-  /// Loads an existing identity.
+  /// Creates an [`Account`] for an existing identity, if it exists in the [`Storage`].
   pub async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
     // Ensure the did exists in storage
     setup.storage.snapshot(&did).await?.ok_or(Error::IdentityNotFound)?;
 
-    Self::from_setup(setup, did).await
+    Self::with_setup(setup, did).await
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  async fn from_setup(setup: AccountSetup, did: IotaDID) -> Result<Self> {
+  async fn with_setup(setup: AccountSetup, did: IotaDID) -> Result<Self> {
     Ok(Self {
       config: setup.config,
       storage: setup.storage,
@@ -108,6 +111,7 @@ impl Account {
     self.client_map.insert(client);
   }
 
+  /// Returns the did of the managed identity.
   pub fn did(&self) -> &IotaDID {
     &self.did
   }
@@ -130,7 +134,11 @@ impl Account {
     self.client_map.resolve(document).await.map_err(Into::into)
   }
 
-  pub async fn create_identity(setup: AccountSetup, input: IdentityCreate) -> Result<Account> {
+  /// Creates a new identity and returns the [`Account`] instance to manage it.
+  /// The identity is locally stored in the [`Storage`] given in [`AccountSetup`], and published
+  /// using the [`ClientMap`].
+  /// See [`IdentityCreate`] to customize the identity.
+  pub async fn create_identity(setup: AccountSetup, input: IdentityCreate) -> Result<Self> {
     let command = CreateIdentity {
       network: input.network,
       method_secret: input.method_secret,
@@ -145,14 +153,14 @@ impl Account {
 
     let commits = Self::commit_events(&did, &setup.config, setup.storage.as_ref(), &snapshot, &events).await?;
 
-    let account = Self::from_setup(setup, did).await?;
+    let account = Self::with_setup(setup, did).await?;
 
     account.publish_commits(snapshot, commits, false).await?;
 
     Ok(account)
   }
 
-  /// Returns the `IdentityUpdater` for the given `key`.
+  /// Returns the [`IdentityUpdater`] for the given `key`.
   ///
   /// On this type, various operations can be executed
   /// that modify an identity, such as creating services or methods.
@@ -213,6 +221,7 @@ impl Account {
     Ok(())
   }
 
+  /// Publishes the given commits to the tangle.
   pub(crate) async fn publish_commits(
     &self,
     root: IdentitySnapshot,
@@ -414,7 +423,7 @@ impl Account {
     Ok(())
   }
 
-  /// Push all unpublished changes for the given identity to the tangle in a single message.
+  /// Push all unpublished changes to the tangle in a single message.
   pub async fn publish_updates(&self) -> Result<()> {
     // Get the last commit generation that was published to the tangle.
     let last_published: Generation = self

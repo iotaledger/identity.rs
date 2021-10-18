@@ -7,7 +7,7 @@ use identity_iota::tangle::ClientMap;
 
 use crate::storage::{MemStore, Storage};
 
-/// Top-level configuration for Identity [Account]s
+/// Configuration for [`Account`][crate::account::Account]s
 #[derive(Clone, Debug)]
 pub struct Config {
   pub(crate) autosave: AutoSave,
@@ -20,7 +20,7 @@ pub struct Config {
 impl Config {
   const MILESTONE: u32 = 1;
 
-  /// Creates a new default `Config`.
+  /// Creates a new default [`Config`].
   pub fn new() -> Self {
     Self {
       autosave: AutoSave::Every,
@@ -32,6 +32,10 @@ impl Config {
   }
 }
 
+/// A wrapper that holds configuration for an account instantiation.
+/// The setup implements `Clone`, so that multiple [`Account`][crate::account::Account]s can be created
+/// from the same setup. [`Storage`] and [`ClientMap`] are shared among those accounts,
+/// while the [`Config`] is unique to every account.
 #[derive(Clone, Debug)]
 pub struct AccountSetup {
   pub(crate) config: Config,
@@ -46,6 +50,8 @@ impl Default for AccountSetup {
 }
 
 impl AccountSetup {
+  /// Create a new setup from the given [`Storage`] implementation
+  /// and with defaults for [`Config`] and [`ClientMap`].
   pub fn new(storage: Arc<dyn Storage>) -> Self {
     Self {
       config: Config::new(),
@@ -54,6 +60,9 @@ impl AccountSetup {
     }
   }
 
+  /// Create a new setup from the given [`Storage`] implementation,
+  /// as well as optional [`Config`] and [`ClientMap`].
+  /// If `None` is passed, the defaults will be used.
   pub fn new_with_options(
     storage: Arc<dyn Storage>,
     config: Option<Config>,
@@ -66,6 +75,7 @@ impl AccountSetup {
     }
   }
 
+  /// Set the [`Config`] for this setup.
   pub fn config(mut self, value: Config) -> Self {
     self.config = value;
     self

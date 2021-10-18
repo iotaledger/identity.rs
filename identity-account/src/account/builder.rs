@@ -36,6 +36,11 @@ pub enum AccountStorage {
 }
 
 /// An [Account] builder for easier account configuration.
+/// Accounts created from the same builder instance share the [`Storage`],
+/// used to store identities, and the [`ClientMap`], used to
+/// publish identities to the tangle.
+/// The [`Config`] on the other hand is owned by every account.
+/// This means a builder can be reconfigured in-between account creations.
 #[derive(Debug)]
 pub struct AccountBuilder {
   config: Config,
@@ -122,7 +127,10 @@ impl AccountBuilder {
     Ok(self)
   }
 
-  /// Creates a new [Account] based on the builder configuration.
+  /// Creates a new identity based on the builder configuration and returns
+  /// the [`Account`] instance to manage it.
+  /// The identity is locally stored in the [`Storage`].
+  /// See [`IdentityCreate`] to customize the identity.
   pub async fn create_identity(&self, input: IdentityCreate) -> Result<Account> {
     let setup = AccountSetup::new_with_options(
       Arc::clone(&self.storage),
@@ -135,7 +143,8 @@ impl AccountBuilder {
     Ok(account)
   }
 
-  /// Loads an existing identity from the given did with the builder configuration.
+  /// Loads an existing identity from the `did` with the builder configuration.
+  /// The identity must exist in the local [`Storage`].
   pub async fn load_identity(&self, did: IotaDID) -> Result<Account> {
     let setup = AccountSetup::new_with_options(
       Arc::clone(&self.storage),
