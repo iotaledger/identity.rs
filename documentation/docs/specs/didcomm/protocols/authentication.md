@@ -18,7 +18,7 @@ This protocol allows two parties to mutually authenticate by disclosing and veri
 
 ### Example Use-Cases
 - A connected sensor wants to make sure only valid well known parties connect to it, before allowing access.
-- A customer wants to make sure they are actually connecting to the bank, before presenting information.
+- A customer wants to make sure they are actually connecting to their bank, before presenting information.
 - An organisation wants to verify the DID of the employer before issuing access credentials. 
 
 ### Roles

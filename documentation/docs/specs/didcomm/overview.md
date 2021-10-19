@@ -13,7 +13,7 @@ The IOTA DIDComm Specification defines a number of [protocols](#protocols), that
 
 The IOTA DIDComm Specification builds on the [DIDComm Messaging Specification](https://identity.foundation/didcomm-messaging/spec/) developed by the [DIF](https://identity.foundation/) and utilises [external protocols](#external-protocols) from the messaging specification for well established interactions like feature discovery.
 
-This specification is meant to be complete  a solution for common use cases and therefore contains protocols for common SSI interactions. It is possible to extended the specification with custom protocols and custom methods in existing protocols to support application specific requirements. 
+This specification is meant to be a complete solution for common use cases and therefore contains protocols for common SSI interactions. It is possible to extended the specification with custom protocols and custom methods in existing protocols to support application specific requirements. 
 
 The specification itself is technology agnostic. Much like the [DIDComm Messaging Specification](https://identity.foundation/didcomm-messaging/spec/) there are no restrictions on transport layers and a concrete implementation can be done in many different technologies.
 
@@ -55,7 +55,7 @@ In addition to the protocols defined in this specification, we RECOMMEND impleme
 
 | Name | Version | Description |
 | :--- | :---: | :--- | 
-| [Discover Features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md) | 1.0 | Describes how agents can query one another to discover which features it supports, and to what extent. |
+| [Discover Features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md) | 1.0 | Describes how agents can query one another to discover which features they support, and to what extent. |
 | [Trust Ping](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/trustping.md) | 1.0 | A standard way for agents to test connectivity, responsiveness, and security of a DIDComm channel. | 
 
 ## Changelog

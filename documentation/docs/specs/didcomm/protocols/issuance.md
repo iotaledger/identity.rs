@@ -14,8 +14,8 @@ sidebar_label: Issuance
 Allows a [holder](#roles) to request a [verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) from an [issuer](#roles). The [issuer](#roles) may alternatively initiate the issuance without a request from the [holder](#roles). This protocol also allows the [issuer](#roles) to request additional information and to offload the actual signing to a different party.
 
 ### Relationships
-- [Presentation](./presentation.md): the [issuer](#roles) may request a [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) from the [holder](#roles) during the course of this protocol if more information is required.
-- [Signing](./signing.md): the [issuer](#roles) may delegate signing to another [issuer](#roles) if they lack the correct authority or private key, in which case the [issuer](#roles) takes on the role of [trusted-party](./signing.md#roles).
+- [Presentation](./presentation.md): the [issuer](#roles) may request a [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) from the [holder](#roles) during the course of this protocol if additional information is required.
+- [Signing](./signing.md): the [issuer](#roles) may delegate signing to another [issuer](#roles) if they lack the needed authority or private key, in which case the [issuer](#roles) takes on the role of [trusted-party](./signing.md#roles).
 
 ### Example Use-Cases
 
@@ -43,7 +43,7 @@ Allows a [holder](#roles) to request a [verifiable credential](https://www.w3.or
 - Type: `iota/issuance/0.1/issuance-request`
 - Role: [holder](#roles)
 
-The [holder](#roles) requests a single verifiable credential from the [issuer](#roles) of a particular type. Optionally, the [holder](#roles) MAY specify one or more [issuers](#roles) from which they would prefer to receive the credential if multiple are available. 
+The [holder](#roles) requests a single verifiable credential from the [issuer](#roles) of a particular kind.
 
 #### Structure
 ```json
@@ -110,7 +110,7 @@ The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles
     "challenge": string,            // REQUIRED
     "credentialHash": string,       // REQUIRED
   }, // OPTIONAL
-  "offerExpiry": DateTime                // OPTIONAL
+  "offerExpiry": DateTime           // OPTIONAL
 }
 ```
 
@@ -194,7 +194,7 @@ The [holder](#roles) responds to a [`issuance-offer`](#issuance-offer) by accept
   "accepted": bool,             // REQUIRED
   "disputes": [Dispute],        // OPTIONAL
   "signature": {
-    "requestChallenge": {
+    "offerChallenge": {
       "challenge": string,      // REQUIRED
       "credentialHash": string, // REQUIRED
     }, // REQUIRED
@@ -404,6 +404,8 @@ For guidance on problem-reports and a list of general codes see [problem reports
 ## Unresolved Questions
 
 - The `credentialSubject::id` field of a verifiable credential is optional and not always a DID according to the [verifiable credential specification](https://www.w3.org/TR/vc-data-model). Should we enforce that it is always a DID? This affects presentations are noted in the [subject-holder relationships section of the specification](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships). We essentially enforce the [`nonTransferable` property](https://www.w3.org/TR/vc-data-model/#nontransferable-property) for all credentials in our presentations currently to prevent verifiers storing and re-presenting credentials as their own.
+
+- `e.p.msg.iota.issuance.reject-request.invalid-type`, `e.p.msg.iota.issuance.reject-request.invalid-issuer` and `e.p.msg.iota.issuance.reject-request.invalid-issuer` are specific to ["CredentialType2021"](../resources/credential-kinds#credentialtype2021). Should they be listed here? If yes, should they be marked accordingly?
 
 ## Related Work
 

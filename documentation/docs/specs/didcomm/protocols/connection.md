@@ -20,7 +20,7 @@ Allows establishment of a [DIDComm connection](https://identity.foundation/didco
 
 ### Example Use-Cases
 
-- A corporation offers a QR code on the website for customers to connect to their services.
+- A corporation offers a QR code on their website for customers to connect to their services.
 - A person sends an invitation as an email to friend, to exchange information.
 - A device has a service embedded in their DID, that allows to connect to it, in order to read data.
 

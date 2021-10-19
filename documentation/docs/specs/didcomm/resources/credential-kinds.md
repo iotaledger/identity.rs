@@ -5,7 +5,7 @@ sidebar_label: Credential Kinds
 
 ## CredentialInfo
 
-`CredentialInfo` allow parties to negotiate which kinds of [`verifiable credentials`](https://www.w3.org/TR/vc-data-model) they want to issue or exchange. [`Verifiable credentials`](https://www.w3.org/TR/vc-data-model) kinds can be described by different attributes like the `type` and `@context` field or the structure of the data in the payload. `CredentialInfo` provides methods to specify the identifying characteristics of a [`verifiable credentials`](https://www.w3.org/TR/vc-data-model).
+`CredentialInfo` allow parties to negotiate which kinds of [`verifiable credentials`](https://www.w3.org/TR/vc-data-model) they want to issue or exchange. [`Verifiable credentials`](https://www.w3.org/TR/vc-data-model) kinds can be described by different attributes like the [`type`](https://www.w3.org/TR/vc-data-model/#types) and [`@context`](https://www.w3.org/TR/vc-data-model/#contexts) field or the structure of the data in the payload. `CredentialInfo` provides methods to specify the identifying characteristics of a [`verifiable credentials`](https://www.w3.org/TR/vc-data-model).
 
 Currently only `CredentialType2021` is prescribed but additional `CredentialInfo` methods may be introduced in the future, e.g. to account for selective disclosure of particular fields. If full schema negotiation of credentials is required, refer to the external [Presentation Exchange 1.0 specification](https://identity.foundation/presentation-exchange/spec/v1.0.0/).
 
