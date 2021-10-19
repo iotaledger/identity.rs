@@ -105,9 +105,8 @@ async fn main() -> Result<()> {
   let password: String = "my-password".into();
 
   // Create a new AccountBuilder with Stronghold as the storage adapter.
-  let builder: AccountBuilder = Account::builder()
-    .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
-    .await?;
+  let mut builder: AccountBuilder =
+    Account::builder().storage(AccountStorage::Stronghold(stronghold_path, Some(password)));
 
   // Create a new Identity with default settings.
   let account: Account = builder.create_identity(IdentityCreate::default()).await?;
