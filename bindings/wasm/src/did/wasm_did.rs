@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity::core::decode_b58;
+use identity::did::DID;
 use identity::iota::IotaDID;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::KeyPair;
-use crate::error::wasm_error;
+use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::error::Result;
+use crate::error::WasmResult;
 use crate::tangle::WasmNetwork;
 
 /// @typicalname did
@@ -27,7 +29,7 @@ impl WasmDID {
   /// Creates a new `DID` from a base58-encoded public key.
   #[wasm_bindgen(js_name = fromBase58)]
   pub fn from_base58(key: &str, network: Option<String>) -> Result<WasmDID> {
-    let public: Vec<u8> = decode_b58(key).map_err(wasm_error)?;
+    let public: Vec<u8> = decode_b58(key).wasm_result()?;
     Self::from_public_key(public.as_slice(), network)
   }
 
@@ -38,19 +40,19 @@ impl WasmDID {
     } else {
       IotaDID::new(public)
     };
-    did.map_err(wasm_error).map(Self)
+    did.wasm_result().map(Self)
   }
 
   /// Parses a `DID` from the input string.
   #[wasm_bindgen]
   pub fn parse(input: &str) -> Result<WasmDID> {
-    IotaDID::parse(input).map_err(wasm_error).map(Self)
+    IotaDID::parse(input).wasm_result().map(Self)
   }
 
   /// Returns the IOTA tangle network of the `DID`.
   #[wasm_bindgen(getter)]
   pub fn network(&self) -> Result<WasmNetwork> {
-    self.0.network().map(Into::into).map_err(wasm_error)
+    self.0.network().map(Into::into).wasm_result()
   }
 
   /// Returns the IOTA tangle network of the `DID`.
@@ -65,7 +67,25 @@ impl WasmDID {
     self.0.tag().into()
   }
 
-  /// Returns the `DID` object as a string.
+  /// Construct a new `DIDUrl` by joining with a relative DID Url string.
+  #[wasm_bindgen]
+  pub fn join(self, segment: &str) -> Result<WasmDIDUrl> {
+    self.0.join(segment).wasm_result().map(WasmDIDUrl)
+  }
+
+  /// Clones the `DID` into a `DIDUrl`.
+  #[wasm_bindgen(js_name = toUrl)]
+  pub fn to_url(&self) -> WasmDIDUrl {
+    WasmDIDUrl::from(self.0.to_url())
+  }
+
+  /// Converts the `DID` into a `DIDUrl`.
+  #[wasm_bindgen(js_name = intoUrl)]
+  pub fn into_url(self) -> WasmDIDUrl {
+    WasmDIDUrl::from(self.0.into_url())
+  }
+
+  /// Returns the `DID` as a string.
   #[allow(clippy::inherent_to_string)]
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {

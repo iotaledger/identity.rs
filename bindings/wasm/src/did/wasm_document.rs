@@ -23,6 +23,7 @@ use crate::common::WasmTimestamp;
 use crate::credential::VerifiableCredential;
 use crate::credential::VerifiablePresentation;
 use crate::crypto::KeyPair;
+use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmVerificationMethod;
 use crate::did::{WasmDID, WasmDocumentDiff};
 use crate::error::{Result, WasmResult};
@@ -157,7 +158,7 @@ impl WasmDocument {
   }
 
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: &WasmDID) -> Result<()> {
+  pub fn remove_method(&mut self, did: &WasmDIDUrl) -> Result<()> {
     self.0.remove_method(&did.0).wasm_result()
   }
 
@@ -167,7 +168,7 @@ impl WasmDocument {
   }
 
   #[wasm_bindgen(js_name = removeService)]
-  pub fn remove_service(&mut self, did: &WasmDID) -> Result<()> {
+  pub fn remove_service(&mut self, did: &WasmDIDUrl) -> Result<()> {
     self.0.remove_service(&did.0).wasm_result()
   }
 

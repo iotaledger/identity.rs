@@ -375,7 +375,7 @@ impl IotaDocument {
   }
 
   pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
-    // TODO: avoid
+    // TODO: any way to avoid cloning to get a CoreDIDUrl reference?
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url.clone());
     self.document.service_mut().remove(&core_did_url);
     Ok(())
