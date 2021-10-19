@@ -21,20 +21,19 @@ use super::requests::{Presentation, PresentationOffer, PresentationRequest, Pres
 /// a hook sends a problem report to the peer before returning this type.
 pub struct DidCommTermination;
 
+// Putting this field in the DidCommActor directly would leak memory,
+// since the DidCommActor contains an Actor, but the DidCommActor would
+// have to be added as state to the actor -> circular reference -> Arcs aren't deallocated.
 #[derive(Clone)]
-pub struct DidCommActor {
-  actor: Actor,
-  messages: Arc<RwLock<HashMap<PeerId, VecDeque<serde_json::Value>>>>,
+pub struct DidCommMessages {
+  pub(crate) messages: Arc<RwLock<HashMap<PeerId, VecDeque<serde_json::Value>>>>,
 }
 
-impl DidCommActor {
-  pub fn new(actor: Actor) -> Self {
-    let messages = Arc::new(RwLock::new(HashMap::new()));
-    Self { actor, messages }
-  }
-
-  pub fn actor(&mut self) -> &mut Actor {
-    &mut self.actor
+impl DidCommMessages {
+  fn new() -> Self {
+    Self {
+      messages: Arc::new(RwLock::new(HashMap::new())),
+    }
   }
 
   pub async fn catch_all_handler(self, _actor: Actor, request: RequestContext<serde_json::Value>) {
@@ -52,10 +51,29 @@ impl DidCommActor {
       }
     }
   }
+}
+
+#[derive(Clone)]
+pub struct DidCommActor {
+  actor: Actor,
+  pub(crate) messages: DidCommMessages,
+}
+
+impl DidCommActor {
+  pub fn new(actor: Actor) -> Self {
+    Self {
+      actor,
+      messages: DidCommMessages::new(),
+    }
+  }
+
+  pub fn actor(&mut self) -> &mut Actor {
+    &mut self.actor
+  }
 
   pub async fn await_message<T: DeserializeOwned>(&self, peer: PeerId) -> T {
     loop {
-      if let Some(messages) = self.messages.write().await.get_mut(&peer) {
+      if let Some(messages) = self.messages.messages.write().await.get_mut(&peer) {
         log::debug!(
           "number of {} messages from peer {}: {}",
           std::any::type_name::<T>(),
@@ -122,8 +140,8 @@ impl DidCommHandler {
     let did_comm_actor = DidCommActor::new(actor.clone());
 
     actor
-      .add_state(did_comm_actor.clone())
-      .add_handler("didcomm/*", DidCommActor::catch_all_handler)
+      .add_state(did_comm_actor.messages.clone())
+      .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
       .unwrap();
 
     presentation_holder_handler(DidCommActor::new(actor), request.peer, Some(request.input))
@@ -137,8 +155,8 @@ impl DidCommHandler {
     let did_comm_actor = DidCommActor::new(actor.clone());
 
     actor
-      .add_state(did_comm_actor.clone())
-      .add_handler("didcomm/*", DidCommActor::catch_all_handler)
+      .add_state(did_comm_actor.messages.clone())
+      .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
       .unwrap();
 
     presentation_verifier_handler(did_comm_actor, request.peer, Some(request.input))

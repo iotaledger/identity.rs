@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-  comm::handler::{presentation_holder_handler, presentation_verifier_handler, DidCommActor, DidCommHandler},
+  comm::handler::{
+    presentation_holder_handler, presentation_verifier_handler, DidCommActor, DidCommHandler, DidCommMessages,
+  },
   errors::Result,
 };
 
@@ -31,8 +33,9 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
   let holder_didcomm_actor = DidCommActor::new(holder_actor.clone());
 
   holder_actor
-    .add_state(holder_didcomm_actor.clone())
-    .add_handler("didcomm/*", DidCommActor::catch_all_handler)?;
+    .add_state(holder_didcomm_actor.messages.clone())
+    .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
+    .unwrap();
 
   presentation_holder_handler(holder_didcomm_actor, peer_id, None)
     .await
@@ -66,8 +69,9 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
   let verifier_didcomm_actor = DidCommActor::new(verifier_actor.clone());
 
   verifier_actor
-    .add_state(verifier_didcomm_actor.clone())
-    .add_handler("didcomm/*", DidCommActor::catch_all_handler)?;
+    .add_state(verifier_didcomm_actor.messages.clone())
+    .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
+    .unwrap();
 
   presentation_verifier_handler(verifier_didcomm_actor, peer_id, None)
     .await
