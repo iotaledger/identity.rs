@@ -10,6 +10,7 @@ use crate::{
   traits::{ActorRequest, RequestHandler},
   types::{RequestContext, RequestMessage, ResponseMessage},
 };
+
 use dashmap::DashMap;
 use futures::{
   channel::{
@@ -39,8 +40,8 @@ type HandlerObjectTuple<'a> = (
 );
 
 pub struct HandlerBuilder {
-  object_id: Uuid,
-  handlers: Arc<HandlerMap>,
+  pub(crate) object_id: Uuid,
+  pub(crate) handlers: Arc<HandlerMap>,
 }
 
 impl HandlerBuilder {
@@ -288,7 +289,14 @@ impl Actor {
           .invoke(self.clone(), request_context, state, type_erased_input)
           .await;
 
-        Ok(*result.downcast::<O>().unwrap())
+        if let Ok(result) = result.downcast::<O>() {
+          Ok(*result)
+        } else {
+          panic!(
+            "hook did not return the expected type: {:?}",
+            std::any::type_name::<O>()
+          );
+        }
       }
       Err(error) => Err(error),
     }

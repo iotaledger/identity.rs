@@ -95,6 +95,8 @@ impl DidCommActor {
     peer: PeerId,
     command: REQ,
   ) -> crate::errors::Result<REQ::Response> {
+    // TODO: Only call hook if it exists
+
     let hook_result: Result<Result<REQ, DidCommTermination>, RemoteSendError> = self
       .actor
       .call_hook(Endpoint::new_hook(command.request_name())?, peer, command)

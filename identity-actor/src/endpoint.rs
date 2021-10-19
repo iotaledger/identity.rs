@@ -43,7 +43,9 @@ impl Endpoint {
   }
 
   pub fn new_hook(string: impl AsRef<str>) -> Result<Self> {
-    Self::new(string)
+    let mut endpoint = Self::new(string)?;
+    endpoint.hook = true;
+    Ok(endpoint)
   }
 
   pub fn set_hook(&mut self, hook: bool) {
