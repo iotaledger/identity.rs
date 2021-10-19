@@ -57,7 +57,9 @@ new KeyPair(type_: number);
 ##### Returns
 <details>
 <summary>
+
 * [KeyPair](api_reference#KeyPair).
+
 </summary>
 
 ```js
@@ -87,9 +89,11 @@ new Document(type_:number, network:string | undefined, tag:string | undefined);
 
 <details>
 <summary>
-* Object consisting of:
+
+Object consisting of:
   * [KeyPair](api_reference#KeyPair).
   * [Document](api_reference#Document).
+  
 </summary>
 
 ```js
@@ -125,7 +129,9 @@ Document.fromKeyPair(key:keyPair, network:string|undefined);
 
 <details>
 <summary>
+
 * [Document](api_reference#Document).
+
 </summary>
 
 ```js
@@ -223,7 +229,9 @@ client.resolve(did:string);
 
 <details>
 <summary>
+
 * [Document](api_reference#Document).
+ 
 </summary>
 
 ```js
@@ -260,7 +268,9 @@ client.resolveHistory(did:string);
 
 <details>
 <summary>
+
 The message history of a given [Document](api_reference#Document).
+
 </summary>
 
 ```js
@@ -302,7 +312,9 @@ VerifiableCredential.extend(value:any);
 
 <details>
 <summary>
+
 * [VerifiableCredential](api_reference#VerifiableCredential)
+
 </summary>
 
 ```js
@@ -342,7 +354,9 @@ Document.sign(key:keyPair);
 
 <details>
 <summary>
+
 * [VerifiableCredential](api_reference#VerifiableCredential)
+
 </summary>
 
 ```js
@@ -369,6 +383,7 @@ Document.sign(key:keyPair);
 Use a [Document](api_reference#Document) to sign a [VerifiableCredential](api_reference#VerifiableCredential). 
 
 ##### Parameters
+
 * data: Any.
 * args: Any.
  
@@ -380,7 +395,9 @@ Document.signCredential(data: any, args: any);
 
 <details>
 <summary>
+
 * [VerifiableCredential](api_reference#VerifiableCredential)
+
 </summary>
 
 ```js
@@ -460,7 +477,9 @@ new VerifiablePresentation(holder_doc: Document, credential_data: any, presentat
 
 <details>
 <summary>
+
 * [Verifiable Presentation](api_reference#VerifiablePresentation) containing a [VerifiableCredential](api_reference#VerifiableCredential).
+ 
 </summary>
 
 ```js
@@ -511,7 +530,9 @@ Document.signPresentation(data: any, args: any);
 
 <details>
 <summary>
+
 * [Verifiable Presentation](api_reference#VerifiablePresentation) containing a [VerifiableCredential](api_reference#VerifiableCredential).
+ 
 </summary>
 
 ```js

@@ -11,6 +11,7 @@ keywords:
 - Rust
 - WASM
 ---
+
 ## Rust
 
 ### Requirements
@@ -20,13 +21,25 @@ keywords:
 
 ### Include the Library
 
-You can include the IOTA Identity Library in your project by adding it as a dependency in your `Cargo.toml`:
+You can include the IOTA Identity Library in your project by adding it as a dependency in your `Cargo.toml`.
+
+#### Latest Stable Release
+
+This version matches the `main` branch of this repository. It is **stable** and will have **changelogs**.
 
 ```rust
 [dependencies]
 identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
 ```
 
+#### Development Release
+
+This version matches the `dev` branch of this repository. It has all the **latest features**, but as such it **may also have undocumented breaking changes**.
+
+```rust
+[dependencies]
+identity = { git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
+```
 You can find detailed installation instructions in the [Getting Started With Rust](../libraries/rust/getting_started) section.
 
 ## WASM
@@ -39,10 +52,23 @@ You can find detailed installation instructions in the [Getting Started With Rus
 
 ### Install the Library
 
-You can install the WASM binding of the IOTA Identity Library using [npm](https://www.npmjs.com/). You can add the latest release stable release to your project by running:
+You can install the WASM binding of the IOTA Identity Library using [npm](https://www.npmjs.com/).
+
+
+#### Latest Stable Release
+
+This version matches the `main` branch of this repository. It is **stable** and will have **changelogs**.
 
 ```bash
 npm install @iota/identity-wasm
+```
+
+#### Development Release
+
+This version matches the `dev` branch of this repository. It has all the **latest features**, but as such it **may also have undocumented breaking changes**.
+
+```bash
+npm install @iota/identity-wasm@dev
 ```
 
 You can find detailed installation instructions in the [Getting Started With WASM](../libraries/wasm/getting_started) section.
