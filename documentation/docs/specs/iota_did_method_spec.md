@@ -78,7 +78,7 @@ The IOTA tag references an indexation which resolves to the initial DID Messages
 
 The following steps MUST be taken to generate a valid Tag:
 * Generate an asymmetric keypair using a supported verification method type.
-* Hash the public key using `BLAKE2b-256` and encode using base58.
+* Hash the public key using `BLAKE2b-256` then encode it using [Base58-BTC](https://tools.ietf.org/id/draft-msporny-base58-01.html).
 
 This public key MUST be embedded into the DID Document (See [CRUD: Create](#Create)).
 
@@ -122,7 +122,7 @@ Example of a DID Integration Message:
       "id": "did:iota:GzXeqBXGCbuebiFtKo4JDNo6CmYmGbqxyh2fDVKadiBG#key-2",
       "controller": "did:iota:GzXeqBXGCbuebiFtKo4JDNo6CmYmGbqxyh2fDVKadiBG",
       "type": "Ed25519VerificationKey2018",
-      "publicKeyBase58": "iNhcgDu34kt4fdpZ2826qA7g8g3aqG8uLZzvWwUd9AE"
+      "publicKeyMultibase": "ziNhcgDu34kt4fdpZ2826qA7g8g3aqG8uLZzvWwUd9AE"
     }
   ],
   "previousMessageId": "cd8bb7baca6bbfa1de7813bd1753a2de026b6ec75dba8a3cf32c0d4cf6038917",
@@ -150,7 +150,7 @@ Example of a Diff DID message:
 ```json
 {
   "did": "did:iota:7EhyBxAhFXojqzrKt8Zq7QBvxNZWJJ4xj1mm2QgLmcKj",
-  "diff": "{\"authentication\":[{\"index\":0,\"item\":{\"Embed\":{\"id\":\"did:iota:7EhyBxAhFXojqzrKt8Zq7QBvxNZWJJ4xj1mm2QgLmcKj#key-3\",\"key_data\":{\"PublicKeyBase58\":\"TJqJAnV387wTUfzq8BVE7iJ9LYs7xJYM4SEF86LkB8E\"}}}}],\"properties\":[{\"c:k\":\"updated\",\"c:v\":\"2021-04-15T10:31:21Z\"}]}",
+  "diff": "{\"authentication\":[{\"index\":0,\"item\":{\"Embed\":{\"id\":\"did:iota:7EhyBxAhFXojqzrKt8Zq7QBvxNZWJJ4xj1mm2QgLmcKj#key-3\",\"key_data\":{\"PublicKeyMultibase\":\"zTJqJAnV387wTUfzq8BVE7iJ9LYs7xJYM4SEF86LkB8E\"}}}}],\"properties\":[{\"c:k\":\"updated\",\"c:v\":\"2021-04-15T10:31:21Z\"}]}",
   "previousMessageId": "9cd2e34c049099246d247ffcf19ba0d54063add9cb7787662b5d51a2a36a8a3b",
   "proof": {
     "type": "JcsEd25519Signature2020",
@@ -197,7 +197,7 @@ The `diff` object MUST contain all the differences between the previous DID Docu
 Example `diff` of adding an `authentication` key and changing the `updated` field:
 ```json
 {
-  "diff": "{\"authentication\":[{\"index\":0,\"item\":{\"Embed\":{\"id\":\"did:iota:7EhyBxAhFXojqzrKt8Zq7QBvxNZWJJ4xj1mm2QgLmcKj#key-3\",\"key_data\":{\"PublicKeyBase58\":\"TJqJAnV387wTUfzq8BVE7iJ9LYs7xJYM4SEF86LkB8E\"}}}}],\"properties\":[{\"c:k\":\"updated\",\"c:v\":\"2021-04-15T10:31:21Z\"}]}"
+  "diff": "{\"authentication\":[{\"index\":0,\"item\":{\"Embed\":{\"id\":\"did:iota:7EhyBxAhFXojqzrKt8Zq7QBvxNZWJJ4xj1mm2QgLmcKj#key-3\",\"key_data\":{\"PublicKeyMultibase\":\"zTJqJAnV387wTUfzq8BVE7iJ9LYs7xJYM4SEF86LkB8E\"}}}}],\"properties\":[{\"c:k\":\"updated\",\"c:v\":\"2021-04-15T10:31:21Z\"}]}"
 } 
 ```
 
@@ -282,7 +282,7 @@ As mentioned above, revocation of Verifiable Credentials is done through revokin
 
 #### Key Collections
 
-Instead of storing individual public keys in a DID Document, IOTA Identity introduces the `MerkleKeyCollection2021` verification method. It supports a REQUIRED `publicKeyBase58` field that MUST contain the top hash of a Merkle Tree. In this Merkle Tree all the individual leaves are public keys using the signature algorithm of choice and digest algorithm of choice for the Merkle Tree process. This process allows the creation of millions of public keys within a single verification method and without bloating the DID Document. Specific info such as the maximum depth of the Merkle Tree, supported signature algorithms and digest algorithms can be found [in the specification document](./merkle_key_collection.md). 
+Instead of storing individual public keys in a DID Document, IOTA Identity introduces the `MerkleKeyCollection2021` verification method. It supports a REQUIRED `publicKeyMultibase` field that MUST contain the top hash of a Merkle Tree. In this Merkle Tree all the individual leaves are public keys using the signature algorithm of choice and digest algorithm of choice for the Merkle Tree process. This process allows the creation of millions of public keys within a single verification method and without bloating the DID Document. Specific info such as the maximum depth of the Merkle Tree, supported signature algorithms and digest algorithms can be found [in the specification document](./merkle_key_collection.md). 
 
 #### Verifiable Credential Proofs
 
