@@ -107,7 +107,7 @@ impl Command {
           store.key_new(state.id(), &location).await
         }?;
 
-        let data: MethodData = MethodData::new_b58(public.as_ref());
+        let data: MethodData = MethodData::new_multibase(public.as_ref());
         let method: TinyMethod = TinyMethod::new(location, data, None);
 
         // Generate a new DID URL from the public key
@@ -164,7 +164,7 @@ impl Command {
           store.key_new(state.id(), &location).await
         }?;
 
-        let data: MethodData = MethodData::new_b58(public.as_ref());
+        let data: MethodData = MethodData::new_multibase(public.as_ref());
         let method: TinyMethod = TinyMethod::new(location, data, None);
 
         Ok(Some(vec![Event::new(EventData::MethodCreated(scope, method))]))

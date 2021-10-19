@@ -166,7 +166,7 @@ mod test {
       .id("did:example:123".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::PublicKeyBase58("".into()))
+      .key_data(MethodData::PublicKeyMultibase("".into()))
       .build()
       .unwrap()
   }
@@ -363,7 +363,7 @@ mod test {
     assert!(diff_method.is_err());
 
     // add key_data
-    *new.key_data_mut() = MethodData::PublicKeyBase58("diff".into());
+    *new.key_data_mut() = MethodData::PublicKeyMultibase("diff".into());
     let diff = method.diff(&new).unwrap();
     let diff_method = VerificationMethod::from_diff(diff.clone());
     assert!(diff_method.is_ok());

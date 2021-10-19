@@ -59,7 +59,7 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
       .id(chain.id().join(&format!("#key-{}", i)).unwrap().into())
       .controller(chain.id().clone().into())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_b58(keypair.public()))
+      .key_data(MethodData::new_multibase(keypair.public()))
       .build()
       .map(Into::into)
       .unwrap();

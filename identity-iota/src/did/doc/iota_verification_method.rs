@@ -51,8 +51,7 @@ impl IotaVerificationMethod {
       .id(key.into())
       .controller(did.into())
       .key_type(MethodType::MerkleKeyCollection2021)
-      // TODO: replace publicKeyBase58 with publicKeyMultibase
-      .key_data(MethodData::new_b58(&keys.encode_merkle_key::<D>()))
+      .key_data(MethodData::new_multibase(&keys.encode_merkle_key::<D>()))
       .build()
       .map_err(Into::into)
       .map(Self)
@@ -101,7 +100,7 @@ impl IotaVerificationMethod {
     match keypair.type_() {
       KeyType::Ed25519 => {
         builder = builder.key_type(MethodType::Ed25519VerificationKey2018);
-        builder = builder.key_data(MethodData::new_b58(keypair.public()));
+        builder = builder.key_data(MethodData::new_multibase(keypair.public()));
       }
     }
 

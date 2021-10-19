@@ -137,7 +137,6 @@ mod tests {
   use identity_core::common::Url;
   use identity_core::convert::FromJson;
   use identity_core::crypto::KeyPair;
-  use identity_core::utils::encode_b58;
   use identity_did::did::DID;
   use identity_did::document::CoreDocument;
   use identity_did::document::DocumentBuilder;
@@ -179,7 +178,7 @@ mod tests {
       .id(controller.join("#key-1").unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::PublicKeyBase58(encode_b58(keypair.public())))
+      .key_data(MethodData::new_multibase(keypair.public()))
       .build()
       .unwrap();
 
