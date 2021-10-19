@@ -10,21 +10,18 @@ sidebar_label: Revocation
 - Last Updated: 2021-10-18
 
 ## Overview
-Allows to request revocation of an issued [verifiable credential](https://www.w3.org/TR/vc-data-model/), either by the holder or a trusted-party. If the revoker is unable to revoke the credential themselves, they may delegate the revocation to a different issuer, in which case they take on the role of trusted-party in their request.
-
-Note that the exact method of revocation is unspecified. The typical procedure is to revoke the verification method with the key used to sign the credential, causing subsequent verification attempts of the credential revocation to fail. However, implementors may instead choose to follow an alternative procedure such as [RevocationList2020](https://w3c-ccg.github.io/vc-status-rl-2020/).
-
+Allows to request revocation of an issued [verifiable credential](https://www.w3.org/TR/vc-data-model/), either by the holder or a trusted-party. If the revoker is unable to revoke the credential themselves, they may delegate the revocation to the issuer, in which case they take on the role of trusted-party in their request.
 ### Relationships
 - [revocation-options](./revocation-options): this may be preceded by the the [revocation-options](./revocation-options) protocol for the [trusted-party](#roles) to discover the available [`RevocationInfo` types](#RevocationInfo).
 - [presentation](./presentation): this may include a [presentation](./presentation) by the [revoker](#roles) to request additional information, such as the entire credential being revoked or authorization information.
 
 ### Example Use-Cases
-- A member of an organisation asks the organisation to revoke their membership
+- A member of an organisation asks the organisation to revoke their membership.
 - A subsidiary of a company asks central to revoke a credential concerning one of their customers. 
 
 ### Roles
 - Trusted-Party: has the authority to request the revocation of verifiable credentials. May also be the holder of the credential but not necessarily.
-- Revoker: able to revoke the key used to sign a verifiable credential. May also be the [issuer](https://www.w3.org/TR/vc-data-model/#dfn-issuers) of the credential but not necessarily.
+- Revoker: able to revoke the verifiable credential. May also be the [issuer](https://www.w3.org/TR/vc-data-model/#dfn-issuers) of the credential but not necessarily.
 
 ### Interaction
 
@@ -58,7 +55,7 @@ Sent by the [trusted-party](#roles) or holder to request revocation of an issued
 
 #### Examples
 
-1. Request to revoke a credential with the specified identifier:
+1. Request to revoke a credential by identifier using "CredentialRevocation2021":
 
 ```json
 {
@@ -69,7 +66,7 @@ Sent by the [trusted-party](#roles) or holder to request revocation of an issued
 }
 ```
 
-2. Request to revoke all credentials signed by a specific [verification method](https://w3c-ccg.github.io/lds-ed25519-2020/#verification-method) identified by `#keys2`:
+2. Request to revoke all credentials signed by a specific [verification method](https://w3c-ccg.github.io/lds-ed25519-2020/#verification-method) identified by `#keys2` using "KeyRevocation2021":
 
 ```json
 {
@@ -122,14 +119,14 @@ The [trusted-party](#roles) SHOULD verify that the credential is actually revoke
 
 ## RevocationInfo {#RevocationInfo}
 
-The `RevocationInfo` object contains the information necessary for a [revoker](#roles) to revoke a verifiable credential. For instance, this may include the `id` field of the credential, in which case a [revoker](#roles) must maintain a map to the signing key used for each credential to revoke them. It could also be the identifier for the signing key itself on the DID document of the issuer. Implementors are free to construct their own `RevocationInfo` types as different singing keys may require different information for revocation. For example, revoking a `MerkleKeyCollection2021` requires both the key identifier and its index in the collection.
+The `RevocationInfo` object contains the information necessary for a [revoker](#roles) to revoke a verifiable credential. For instance, this may include the `id` field of the credential, in which case a [revoker](#roles) must maintain a map to the signing key used for each credential to revoke them. It could also be the identifier for the signing key itself on the DID document of the issuer. Implementors are free to construct their own `RevocationInfo` types as different singing schemes may require different information for revocation. For example, revoking a `MerkleKeyCollection2021` requires both the key identifier and its index in the collection.
 
 Implementors MUST adhere to at least one of the types below, either [KeyRevocation2021](#KeyRevocation2021) or [CredentialRevocation2021]. Implementors MAY define additional types as-needed. A valid `RevocationInfo` type MUST have a `revocationInfoType` field.
 
 ### KeyRevocation2021
 - Type: `KeyRevocation2021`
 
-Allows a particular cryptographic public key linked as a verification method to be specified for revocation. This may reference any singular verification method such as [Ed25519VerificationKey2018](https://www.w3.org/TR/did-spec-registries/#ed25519verificationkey2018) or [RsaVerificationKey2018](https://www.w3.org/TR/did-spec-registries/#rsaverificationkey2018). Verificaiton methods that hold multiple keys as a collection, such as [MerkleKeyCollection2021](../../did/merkle_key_collection), may encode the index of the key to be revoked in the [query](https://www.w3.org/TR/did-core/#dfn-did-queries) of the [DIDUrl](https://www.w3.org/TR/did-core/#did-url-syntax).
+Allows a particular cryptographic public key linked as a verification method to be specified for revocation. This may reference any singular verification method such as [Ed25519VerificationKey2018](https://www.w3.org/TR/did-spec-registries/#ed25519verificationkey2018) or [RsaVerificationKey2018](https://www.w3.org/TR/did-spec-registries/#rsaverificationkey2018). Verificatison methods that hold multiple keys as a collection, such as [MerkleKeyCollection2021](../../did/merkle_key_collection), may encode the index of the key to be revoked in the [query](https://www.w3.org/TR/did-core/#dfn-did-queries) of the [DIDUrl](https://www.w3.org/TR/did-core/#did-url-syntax).
 
 See the [DID Spec Registry for more verification method types](https://www.w3.org/TR/did-spec-registries/#verification-method-types).
 

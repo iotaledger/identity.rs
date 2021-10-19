@@ -345,7 +345,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 | `e.p.msg.iota.presentation.reject-offer.reject-require-signature` | [presentation-offer](#presentation-offer) | [Verifier](#roles) rejects a presentation offer due to being unable or unwilling to provide a signature for the following [presentation-request](#presentation-request) |
 | `e.p.msg.iota.presentation.reject-request` | [presentation-request](#presentation-request) | [Holder](#roles) rejects a request for any reason. |
 | `e.p.msg.iota.presentation.reject-request.invalid-type` | [presentation-request](#presentation-request) | [Holder](#roles) rejects a request due to a `type` or `@context` being unsupported or otherwise invalid. |
-| `e.p.msg.iota.presentation.reject-request.invalid-issuer` | [presentation-request](#presentation-request) | [Holder](#roles) rejects a request due to a `trustedIssuer` being unsupported or otherwise invalid. |
+| `e.p.msg.iota.presentation.reject-request.invalid-issuer` | [presentation-request](#presentation-request) | [Holder](#roles) rejects a request due to a `issuer` being unsupported or otherwise invalid. |
 | `e.p.msg.iota.presentation.reject-request.missing-signature` | [presentation-request](#presentation-request) | [Holder](#roles) rejects a request due to a missing signature from the [verifier](#roles). The [holder](#roles) may choose to blocklist [verifiers](#roles) that fail to sign requests. |
 | `e.p.msg.iota.presentation.reject-presentation` | [presentation](#presentation) | [Verifier](#roles) rejects a presentation and abandons the protocol for any reason other than a disputed or otherwise invalid verifiable presentation, which should instead be communicated via [presentation-result](#presentation-result). |
 | `e.p.msg.iota.presentation.reject-result` | [presentation-result](#presentation-result) | [Holder](#roles) rejects a result for any reason. |
@@ -369,10 +369,8 @@ This section is non-normative.
 - We should RECOMMENDED the `id` of a verifiable credential being a UUID (what version?) in issuance. Needs to be a URI https://www.w3.org/TR/vc-data-model/#identifiers, do UUIDs qualify?
 - Should we specifically list non-functional requirements e.g in a Goals / Non-Goals section.
 - Use `schemas` to negotiate generic form entries as a self-signed credential? E.g. could ask for username, preferred language, comments, any generic information not signed/verified by a third-party issuer from a generic wallet? Similar to Presentation Exchange? https://identity.foundation/presentation-exchange/spec/v1.0.0/
-
 - Use separate problem-reports, or a separate credential-problem object, instead of embedding them in the [`presentation-result`](#presentation-result), as mixing disputes with problem-reports if improperly implemented may reveal information to a fake holder trying to discover information about what content a verifier accepts. Incorrect implementations could allow someone to brute-force disputes with unsigned credentials, in which case the problem report (trust.crypto) should just end the flow and not return disputes.
-
-- - `e.p.msg.iota.presentation.reject-request.invalid-type` and `e.p.msg.iota.presentation.reject-request.invalid-issuer` are specific to ["CredentialType2021"](../resources/credential-kinds#credentialtype2021). Should they be listed here? If yes, should they be marked accordingly?
+- `e.p.msg.iota.presentation.reject-request.invalid-type`, `e.p.msg.iota.presentation.reject-request.invalid-issuer`, `e.p.msg.iota.presentation.reject-request.invalid-issuer` and `e.p.msg.iota.presentation.reject-request.invalid-type` are specific to ["CredentialType2021"](../resources/credential-kinds#credentialtype2021). Should they be listed here? If yes, should they be marked accordingly?
 
 ## Related Work
 
