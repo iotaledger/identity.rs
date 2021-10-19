@@ -4,7 +4,8 @@
 use identity::core::Timestamp;
 use wasm_bindgen::prelude::*;
 
-use crate::error::{Result, WasmResult};
+use crate::error::Result;
+use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Timestamp, inspectable)]
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]

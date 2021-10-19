@@ -12,11 +12,12 @@ use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
 use identity::did::verifiable;
 use identity::did::MethodScope;
+use identity::iota::Error;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
+use identity::iota::NetworkName;
 use identity::iota::TangleRef;
-use identity::iota::{Error, NetworkName};
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
@@ -24,9 +25,11 @@ use crate::credential::VerifiableCredential;
 use crate::credential::VerifiablePresentation;
 use crate::crypto::KeyPair;
 use crate::did::wasm_did_url::WasmDIDUrl;
+use crate::did::WasmDID;
+use crate::did::WasmDocumentDiff;
 use crate::did::WasmVerificationMethod;
-use crate::did::{WasmDID, WasmDocumentDiff};
-use crate::error::{Result, WasmResult};
+use crate::error::Result;
+use crate::error::WasmResult;
 use crate::service::Service;
 
 // =============================================================================

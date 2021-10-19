@@ -7,8 +7,9 @@ use identity_wasm::crypto::Digest;
 use identity_wasm::crypto::KeyCollection;
 use identity_wasm::crypto::KeyPair;
 use identity_wasm::crypto::KeyType;
+use identity_wasm::did::WasmDID;
+use identity_wasm::did::WasmDIDUrl;
 use identity_wasm::did::WasmDocument;
-use identity_wasm::did::{WasmDID, WasmDIDUrl};
 use identity_wasm::error::WasmError;
 use std::borrow::Cow;
 
