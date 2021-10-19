@@ -17,10 +17,24 @@ keywords:
 
 To include IOTA Identity in your project add it as a dependency in your `Cargo.toml`:
 
+### Latest Stable Release
+
+This version matches the `main` branch of this repository. It is **stable** and will have **changelogs**.
+
 ```rust
 [dependencies]
 identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main"}
 ```
+
+### Development Release
+
+This version matches the `dev` branch of this repository. It has all the **latest features**, but as such it **may also have undocumented breaking changes**.
+
+```rust
+[dependencies]
+identity = { git = "https://github.com/iotaledger/identity.rs", branch = "dev"}
+```
+
 
 ## Examples
 

@@ -14,6 +14,8 @@ import TabItem from '@theme/TabItem';
 import CodeBlock from '@theme/CodeBlock';
 import create_vc_js from  '!!raw-loader!./../../../bindings/wasm/examples/src/create_vc.js';
 import create_vc_rs from  '!!raw-loader!./../../../examples/low-level-api/create_vc.rs';
+import account_sign_vp_rs from  '!!raw-loader!./../../../examples/account/signing.rs';
+
 
 TODO: Explain how a VC is created and verified.
 
@@ -23,6 +25,14 @@ This example shows how you can create a Verifiable Credential and validate it. I
 The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
 This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with anyone.
 
+
+### Account Module (Recommended)
+
+<CodeBlock className="language-rust">
+    {account_sign_vp_rs}
+</CodeBlock>
+
+### Low-level API
 
 <Tabs
     groupId="programming-languages"

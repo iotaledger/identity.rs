@@ -16,10 +16,24 @@ keywords:
 - remove
 ---
 
-## Import the Library
+## Install the Library
+
+You can install the main Identity package using [npm](https://www.npmjs.com/).
+
+### Latest Stable Release
+
+This version matches the `main` branch of this repository. It is **stable** and will have **changelogs**.
 
 ```bash
 npm install @iota/identity-wasm 
+```
+
+### Development Release
+
+This version matches the `dev` branch of this repository. It has all the **latest features**, but as such it **may also have undocumented breaking changes**.
+
+```bash
+npm install @iota/identity-wasm@dev
 ```
 
 ## Decentralized Identifiers (DID)
@@ -41,8 +55,10 @@ new KeyPair(type_: number);
 ```
 
 ##### Returns
-
+<details>
+<summary>
 * [KeyPair](api_reference#KeyPair).
+</summary>
 
 ```js
 {
@@ -51,6 +67,7 @@ new KeyPair(type_: number);
   secret: string(44),// example 'GeKQa6EhNXkbo74JLuvyxRFR3rouy2iPViwtk9JM9Dyn'
 }
 ```
+</details>
 
 #### [new Document(type_, network, tag)](api_reference#new_Document_new)
 
@@ -68,9 +85,12 @@ new Document(type_:number, network:string | undefined, tag:string | undefined);
 
 #### Returns
 
+<details>
+<summary>
 * Object consisting of:
   * [KeyPair](api_reference#KeyPair).
   * [Document](api_reference#Document).
+</summary>
 
 ```js
 {
@@ -87,6 +107,7 @@ new Document(type_:number, network:string | undefined, tag:string | undefined);
   }
 }
 ```
+</details>
 
 ####  [Document.fromKeyPair(key, network)](api_reference#Document.fromKeyPair)
 Creates a new DID Document from the given [KeyPair](api_reference#KeyPair) and optional network.
@@ -102,7 +123,11 @@ Document.fromKeyPair(key:keyPair, network:string|undefined);
 
 #### Returns
 
+<details>
+<summary>
 * [Document](api_reference#Document).
+</summary>
+
 ```js
 {
   id: string(53),// example 'did:iota:4sKRTsLb7xpRC2gBuVN3gpHvw4NtvZGFHXjcHGTnKBGn',
@@ -118,6 +143,7 @@ Document.fromKeyPair(key:keyPair, network:string|undefined);
   updated: Date, //example '2021-10-04T14:55:41Z'
 }
 ```
+</details>
 
 ### [Publish](../../decentralized_identifiers/create.mdx)
 
@@ -131,6 +157,12 @@ client.publishDocument(document: any);
 * document: Any. 
 
 #### Returns
+
+<details>
+<summary>
+Promise
+</summary>
+
 ```js
 {
   network: string, //example 'dev'
@@ -139,6 +171,8 @@ client.publishDocument(document: any);
   nonce: int, // example 865163
 }
 ```
+</details>
+
 ### [Update](../../decentralized_identifiers/update.mdx)
 
 #### [Document.insertMethod(verificationMethod, scope)](api_reference#documentinsertmethodmethod-scope-⇒-boolean)
@@ -187,7 +221,11 @@ client.resolve(did:string);
 ```
 ##### Returns
 
+<details>
+<summary>
 * [Document](api_reference#Document).
+</summary>
+
 ```js
 {
   id: string(53),// example 'did:iota:4sKRTsLb7xpRC2gBuVN3gpHvw4NtvZGFHXjcHGTnKBGn',
@@ -204,6 +242,8 @@ client.resolve(did:string);
 }
 ```
 
+</details>
+
 #### [resolveHistory(did)](api_reference#clientresolvehistorydid-⇒-promiseany)
 
 Use a [Client](api_reference#Client) to return the message history of a DID [Document](api_reference#Document).
@@ -217,7 +257,11 @@ client.resolveHistory(did:string);
 ```
 ##### Returns
 
+
+<details>
+<summary>
 The message history of a given [Document](api_reference#Document).
+</summary>
 
 ```js
 {
@@ -237,6 +281,8 @@ The message history of a given [Document](api_reference#Document).
 
 ```
 
+</details>
+
 ## Verifiable Credentials (VC)
 
 A [VerifiableCredential](api_reference#VerifiableCredential) can be verified by anyone, allowing you to take control of it and share it with anyone.
@@ -250,10 +296,15 @@ Create a [VerifiableCredential](api_reference#VerifiableCredential) from the giv
 ```js
 VerifiableCredential.extend(value:any);
 ```
+
 #### Returns
 
+
+<details>
+<summary>
 * [VerifiableCredential](api_reference#VerifiableCredential)
- 
+</summary>
+
 ```js
 {
   '@context': 'https://www.w3.org/2018/credentials/v1',
@@ -270,6 +321,8 @@ VerifiableCredential.extend(value:any);
   issuanceDate: Date, //'2021-10-05T08:58:33Z'
 }
 ```
+</details>
+
 ### [Sign](../../verifiable_credentials/create.mdx)
 
 #### [Document.sign(keyPair)](api_reference#Documentsignkey)
@@ -286,7 +339,11 @@ Document.sign(key:keyPair);
 
 ##### Returns
 
+
+<details>
+<summary>
 * [VerifiableCredential](api_reference#VerifiableCredential)
+</summary>
 
 ```js
 {
@@ -304,6 +361,8 @@ Document.sign(key:keyPair);
   issuanceDate: Date, //'2021-10-05T08:58:33Z'
 }
 ```
+
+</details>
 
 #### [Document.signCredential(data, args)](api_reference#documentsigncredentialdata-args-⇒-codeverifiablecredentialcode)
 
@@ -319,7 +378,10 @@ Document.signCredential(data: any, args: any);
 
 ##### Returns
 
+<details>
+<summary>
 * [VerifiableCredential](api_reference#VerifiableCredential)
+</summary>
 
 ```js
 {
@@ -338,6 +400,7 @@ Document.signCredential(data: any, args: any);
 }
 ```
 
+</details>
 
 ### [Revoke](../../verifiable_credentials/revoke.mdx)
 
@@ -395,7 +458,10 @@ new VerifiablePresentation(holder_doc: Document, credential_data: any, presentat
 
 ##### Returns
 
+<details>
+<summary>
 * [Verifiable Presentation](api_reference#VerifiablePresentation) containing a [VerifiableCredential](api_reference#VerifiableCredential).
+</summary>
 
 ```js
 {
@@ -423,6 +489,8 @@ new VerifiablePresentation(holder_doc: Document, credential_data: any, presentat
   holder:  string(53), // 'did:iota:4SgsnbN67cJDwGgpU4woVYNY37kfN4Dr8rSfyDPbVTsR'
 }
 ```
+
+</details>
 
 ### [Sign](../../verifiable_credentials/verifiable_presentations.mdx)
 
@@ -441,7 +509,10 @@ Document.signPresentation(data: any, args: any);
 
 ##### Returns
 
+<details>
+<summary>
 * [Verifiable Presentation](api_reference#VerifiablePresentation) containing a [VerifiableCredential](api_reference#VerifiableCredential).
+</summary>
 
 ```js
 {
@@ -469,3 +540,5 @@ Document.signPresentation(data: any, args: any);
   holder:  string(53), // 'did:iota:4SgsnbN67cJDwGgpU4woVYNY37kfN4Dr8rSfyDPbVTsR'
 }
 ```
+
+</details>
