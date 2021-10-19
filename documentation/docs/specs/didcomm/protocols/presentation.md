@@ -11,15 +11,15 @@ sidebar_label: Presentation
 
 ## Overview
 
-Allows presentation of [verifiable credentials](https://www.w3.org/TR/vc-data-model) that are issued to a [holder](#roles) and uniquely presented to a third-party [verifier](#roles).
+Allows presentation of [verifiable credentials](https://www.w3.org/TR/vc-data-model) that are issued to a [holder](#roles)  and uniquely presented to a third-party [verifier](#roles) through [verifiable presentations](https://www.w3.org/TR/vc-data-model/#presentations).
 
 ### Relationships
-- [Issuance](./issuance): a presentation may be used to provide request extra information from the [holder](#roles) during a credential issuance.
+- [Issuance](./issuance): a presentation may be used to provide extra information from the [holder](#roles) during a credential issuance.
 
 ### Example Use-Cases
 
 - A company founder wants to prove they have a bank account in order to apply for insurance.
-- A traveller proves to the border agency that he has a valid visa.
+- A traveller proves to the border agency that they have a valid visa.
 
 ### Roles
 - [Holder](https://www.w3.org/TR/vc-data-model/#dfn-holders): possesses one or more credentials that are combined in a verifiable presentation to show proof of ownership to the verifier.
@@ -41,7 +41,7 @@ Allows presentation of [verifiable credentials](https://www.w3.org/TR/vc-data-mo
 - Type: `iota/presentation/0.1/presentation-offer`
 - Role: [holder](#roles)
 
-Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#roles) to view. `CredentialInfo` objects are used by the [verifier](#roles) to determine if they want to view the particular kind of credential.
+Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#roles) to view. `CredentialInfo` objects are used by the [verifier](#roles) to determine if they are interested in the particular kind of credential.
 
 #### Structure
 ```json
@@ -187,9 +187,11 @@ Sent by the holder to present a [verifiable presentation](https://www.w3.org/TR/
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`presentation`](https://www.w3.org/TR/vc-data-model/#presentations-0) | Signed [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) containing one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) matching the [presentation-request](#presentation-request).[^1] | ✔ |
+| [`presentation`](https://www.w3.org/TR/vc-data-model/#presentations-0) | Signed [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) containing one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) matching the [presentation-request](#presentation-request).[^1][^2] | ✔ |
 
-[^1] The [`proof`](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section in `presentation` MUST include the `challenge` sent by the verifier in the preceding [`presentation-request`](#presentation-request). The included credentials SHOULD match all `type` fields and one or more `trustedIssuer` if included in the [`presentation-request`](#presentation-request). Revoked, disputed, or otherwise invalid presentations or credentials MUST result in a rejected [`presentation-result`](#presentation-result) sent back to the holder, NOT a separate [`problem-report`]. Other such as the message lacking [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) SHOULD result in a separate [`problem-report`].
+[^1] The [`proof`](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section in `presentation` MUST include the `challenge` sent by the verifier in the preceding [`presentation-request`](#presentation-request). Revoked, disputed, or otherwise invalid presentations or credentials MUST result in a rejected [`presentation-result`](#presentation-result) sent back to the holder, NOT a separate [`problem-report`]. Other such as the message lacking [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) SHOULD result in a separate [`problem-report`].
+
+[^2] With ["CredentialType2021"](../resources/credential-kinds#credentialtype2021), the included credentials SHOULD match all `type` fields and one or more `issuer` if included in the [`presentation-request`](#presentation-request). 
 
 #### Examples
 
@@ -369,6 +371,8 @@ This section is non-normative.
 - Use `schemas` to negotiate generic form entries as a self-signed credential? E.g. could ask for username, preferred language, comments, any generic information not signed/verified by a third-party issuer from a generic wallet? Similar to Presentation Exchange? https://identity.foundation/presentation-exchange/spec/v1.0.0/
 
 - Use separate problem-reports, or a separate credential-problem object, instead of embedding them in the [`presentation-result`](#presentation-result), as mixing disputes with problem-reports if improperly implemented may reveal information to a fake holder trying to discover information about what content a verifier accepts. Incorrect implementations could allow someone to brute-force disputes with unsigned credentials, in which case the problem report (trust.crypto) should just end the flow and not return disputes.
+
+- - `e.p.msg.iota.presentation.reject-request.invalid-type` and `e.p.msg.iota.presentation.reject-request.invalid-issuer` are specific to ["CredentialType2021"](../resources/credential-kinds#credentialtype2021). Should they be listed here? If yes, should they be marked accordingly?
 
 ## Related Work
 

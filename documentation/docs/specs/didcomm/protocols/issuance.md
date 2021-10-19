@@ -405,7 +405,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 - The `credentialSubject::id` field of a verifiable credential is optional and not always a DID according to the [verifiable credential specification](https://www.w3.org/TR/vc-data-model). Should we enforce that it is always a DID? This affects presentations are noted in the [subject-holder relationships section of the specification](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships). We essentially enforce the [`nonTransferable` property](https://www.w3.org/TR/vc-data-model/#nontransferable-property) for all credentials in our presentations currently to prevent verifiers storing and re-presenting credentials as their own.
 
-- `e.p.msg.iota.issuance.reject-request.invalid-type`, `e.p.msg.iota.issuance.reject-request.invalid-issuer` and `e.p.msg.iota.issuance.reject-request.invalid-issuer` are specific to ["CredentialType2021"](../resources/credential-kinds#credentialtype2021). Should they be listed here? If yes, should they be marked accordingly?
+- `e.p.msg.iota.issuance.reject-request.invalid-type` and `e.p.msg.iota.issuance.reject-request.invalid-issuer` are specific to ["CredentialType2021"](../resources/credential-kinds#credentialtype2021). Should they be listed here? If yes, should they be marked accordingly?
 
 ## Related Work
 
