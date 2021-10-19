@@ -33,7 +33,7 @@ impl StorageHandler {
   ) -> Result<IotaDocument, StorageError> {
     let acc = Account::builder().build().await.unwrap();
     let snapshot = acc.create_identity(request.input).await?;
-    let doc = snapshot.identity().to_document()?;
+    let doc = snapshot.to_document()?;
     Ok(doc)
   }
 
