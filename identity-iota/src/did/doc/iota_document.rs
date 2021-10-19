@@ -153,7 +153,7 @@ impl IotaDocument {
   ///
   /// This must be guaranteed safe by the caller.
   pub unsafe fn from_authentication_unchecked(method: IotaVerificationMethod) -> Self {
-    let verification_method_did_url: CoreDIDUrl = CoreDIDUrl::from(method.id().clone());
+    let verification_method_did_url: CoreDIDUrl = method.id_core().clone();
 
     CoreDocument::builder(Default::default())
       .id(method.controller().clone().into())
@@ -1138,8 +1138,8 @@ mod tests {
     let authentication_method: &IotaVerificationMethod = document.authentication();
 
     let expected_method_id: IotaDIDUrl = document.id().to_url().join("#authentication").unwrap();
-    assert_eq!(verification_method.id(), &expected_method_id);
-    assert_eq!(authentication_method.id(), &expected_method_id);
+    assert_eq!(verification_method.id(), expected_method_id);
+    assert_eq!(authentication_method.id(), expected_method_id);
 
     // `methods` returns all embedded verification methods, so only one is expected.
     assert_eq!(document.methods().count(), 1);

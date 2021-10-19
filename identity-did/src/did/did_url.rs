@@ -386,12 +386,11 @@ where
   /// Attempt to convert a [`DIDUrl`] from a [`DIDUrl`] of a different DID method.
   ///
   /// Workaround for lack of specialisation preventing a generic `TryFrom` implementation.
-  pub fn try_from<U>(other: DIDUrl<U>) -> Result<Self, DIDError>
+  pub fn try_from<U>(other: DIDUrl<U>) -> Result<Self, U::Error>
   where
     U: DID + TryInto<T>,
-    U::Error: Into<DIDError>,
   {
-    let did: T = other.did.try_into().map_err(|err| err.into())?;
+    let did: T = other.did.try_into()?;
     Ok(Self { did, url: other.url })
   }
 }

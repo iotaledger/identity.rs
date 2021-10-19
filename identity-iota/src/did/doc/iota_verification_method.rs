@@ -129,7 +129,8 @@ impl IotaVerificationMethod {
   pub fn try_from_mut(method: &mut VerificationMethod) -> Result<&mut Self> {
     Self::check_validity(method)?;
 
-    // SAFETY: We just checked the validity of the verification method.
+    // SAFETY: We just checked the validity of the verification method and the layout of
+    //         IotaVerificationMethod is transparent.
     Ok(unsafe { &mut *(method as *mut VerificationMethod as *mut IotaVerificationMethod) })
   }
 
@@ -177,16 +178,27 @@ impl IotaVerificationMethod {
   }
 
   /// Returns the method `id` property.
-  pub fn id(&self) -> &IotaDIDUrl {
+  ///
+  /// NOTE: clones the [`DIDUrl`].
+  pub fn id(&self) -> IotaDIDUrl {
+    // We ensure the validity of the id on creation.
     let did_url: &CoreDIDUrl = self.0.id();
-    // SAFETY: We don't create methods with invalid ids and IotaDID and CoreDID have the same
-    //         layout.
-    unsafe { &*(did_url as *const CoreDIDUrl as *const IotaDIDUrl) }
+    IotaDIDUrl::try_from(did_url.clone()).expect("invalid IotaDIDUrl")
+
+    // TODO: unable to guarantee the safety of this cast due to layout of generic DIDUrl<T>
+    //       possibly differing from DIDUrl<U> even if U is a transparent wrapper of T
+    //      (even though it _seems_ fine)
+    // unsafe { &*(did_url as *const CoreDIDUrl as *const IotaDIDUrl) }
+  }
+
+  /// Returns a reference to the underlying method `id` property.
+  pub fn id_core(&self) -> &CoreDIDUrl {
+    self.0.id()
   }
 
   /// Returns the method `controller` property.
   pub fn controller(&self) -> &IotaDID {
-    // SAFETY: We don't create methods with invalid DID's
+    // SAFETY: We don't create methods with invalid DIDs and the layout of IotaDID is transparent.
     unsafe { IotaDID::new_unchecked_ref(self.0.controller()) }
   }
 
