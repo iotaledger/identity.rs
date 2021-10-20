@@ -8,13 +8,13 @@
 pub enum ErrorKind {
   /// The DID supplied to the DID resolution function does not conform to
   /// valid syntax.
-  #[serde(rename = "invalid-did")]
+  #[serde(rename = "invalidDid")]
   InvalidDID,
   /// The DID resolver does not support the specified method.
-  #[serde(rename = "not-supported")]
+  #[serde(rename = "representationNotSupported")]
   NotSupported,
   /// The DID resolver was unable to return the DID document resulting from
   /// this resolution request.
-  #[serde(rename = "not-found")]
+  #[serde(rename = "notFound")]
   NotFound,
 }

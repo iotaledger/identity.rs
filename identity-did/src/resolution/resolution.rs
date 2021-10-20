@@ -11,13 +11,13 @@ use crate::resolution::ResolutionMetadata;
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Resolution {
   /// Resolution-specific metadata.
-  #[serde(rename = "did-resolution-metadata")]
+  #[serde(rename = "didResolutionMetadata")]
   pub metadata: ResolutionMetadata,
   /// The DID Document of a successful resolution.
-  #[serde(rename = "did-document", skip_serializing_if = "Option::is_none")]
+  #[serde(rename = "didDocument", skip_serializing_if = "Option::is_none")]
   pub document: Option<CoreDocument>,
   /// Document-specific metadata.
-  #[serde(rename = "did-document-metadata", skip_serializing_if = "Option::is_none")]
+  #[serde(rename = "didDocumentMetadata", skip_serializing_if = "Option::is_none")]
   pub document_metadata: Option<DocumentMetadata>,
 }
 
