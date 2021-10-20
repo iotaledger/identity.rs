@@ -362,10 +362,12 @@ impl IotaDocument {
   // Services
   // ===========================================================================
 
+  /// Return a set of all [`Service`]s in the document.
   pub fn service(&self) -> &OrderedSet<DIDKey<Service>> {
     self.document.service()
   }
 
+  /// Add a new [`Service`] to the document.
   pub fn insert_service(&mut self, service: Service) -> bool {
     if service.id().fragment().is_none() {
       false
@@ -374,9 +376,9 @@ impl IotaDocument {
     }
   }
 
-  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
-    // TODO: any way to avoid cloning to get a CoreDIDUrl reference?
-    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url.clone());
+  /// Remove a [`Service`] identified by the given [`IotaDIDUrl`] fragment from the document.
+  pub fn remove_service(&mut self, did_url: IotaDIDUrl) -> Result<()> {
+    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
     self.document.service_mut().remove(&core_did_url);
     Ok(())
   }
@@ -402,8 +404,8 @@ impl IotaDocument {
   }
 
   /// Removes all references to the specified Verification Method.
-  pub fn remove_method(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
-    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url.clone());
+  pub fn remove_method(&mut self, did_url: IotaDIDUrl) -> Result<()> {
+    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
 
     if self.authentication_id() == &core_did_url {
       return Err(Error::CannotRemoveAuthMethod);
@@ -1095,7 +1097,7 @@ mod tests {
 
     document
       .remove_service(
-        &IotaDIDUrl::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain".to_string()).unwrap(),
+        IotaDIDUrl::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain".to_string()).unwrap(),
       )
       .ok();
     assert_eq!(0, document.service().len());
