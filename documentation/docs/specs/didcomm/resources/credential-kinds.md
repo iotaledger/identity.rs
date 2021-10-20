@@ -46,3 +46,9 @@ Negotiates credentials by allowing to specify the [`type`](https://www.w3.org/TR
   "issuer": ["did:example:76e12ec712ebc6f1c221ebfeb1f"]
 }
 ```
+
+## Unresolved Questions
+
+- Should we implement https://w3c-ccg.github.io/vp-request-spec/ as a `CredentialInfo`?
+- Should we implement https://identity.foundation/presentation-exchange/spec/v1.0.0/ as a `CredentialInfo`?
+
