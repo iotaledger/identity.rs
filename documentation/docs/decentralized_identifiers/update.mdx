@@ -15,7 +15,6 @@ import TabItem from '@theme/TabItem';
 import CodeBlock from '@theme/CodeBlock';
 import manipulate_did_js from '!!raw-loader!../../../bindings/wasm/examples/src/manipulate_did.js';
 import manipulate_did_rs from '!!raw-loader!../../../examples/low-level-api/manipulate_did.rs';
-import account_manipulate_did_rs from '!!raw-loader!../../../examples/account/methods.rs';
 
 
 TODO: Explain how DID Documents can be manipulated and how updates should be published.
@@ -23,12 +22,6 @@ TODO: Explain how DID Documents can be manipulated and how updates should be pub
 ## Example
 
 This example shows how you can add more to an existing DID Document. The two main things you can add are Verification Methods and Services. A verification method adds public keys, which can be used to digitally sign things like an identity. The services provide metadata around the identity via URIs. These can be URLs, but also emails or IOTA indices.
-
-### Account Module (Recommended)
-
-<CodeBlock className="language-rust">
-    {account_manipulate_did_rs}
-</CodeBlock>
 
 ### Low-level API
 <Tabs
