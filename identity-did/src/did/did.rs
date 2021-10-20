@@ -16,9 +16,8 @@ use identity_core::diff::DiffString;
 
 use crate::did::DIDError;
 use crate::did::DIDUrl;
-use crate::error::Error;
 
-pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr {
+pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr + TryFrom<BaseDIDUrl> {
   const SCHEME: &'static str = BaseDIDUrl::SCHEME;
 
   /// Returns the [`DID`] scheme. See [`DID::SCHEME`].
@@ -76,15 +75,20 @@ pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr {
 pub struct CoreDID(BaseDIDUrl);
 
 impl CoreDID {
-  /// Parses a [`DID`] from the given `input`.
+  /// Parses a [`CoreDID`] from the given `input`.
   ///
   /// # Errors
   ///
   /// Returns `Err` if the input is not a valid [`DID`].
   pub fn parse(input: impl AsRef<str>) -> Result<Self, DIDError> {
-    let did_url = BaseDIDUrl::parse(input).map_err(DIDError::from)?;
-    Self::check_validity(&did_url)?;
-    Ok(Self(did_url))
+    let base_did_url: BaseDIDUrl = BaseDIDUrl::parse(input).map_err(DIDError::from)?;
+    Self::try_from_base_did(base_did_url)
+  }
+
+  /// Try convert a [`BaseDIDUrl`] into a [`CoreDID`].
+  fn try_from_base_did(base_did_url: BaseDIDUrl) -> Result<Self, DIDError> {
+    Self::check_validity(&base_did_url)?;
+    Ok(Self(base_did_url))
   }
 
   /// Set the method name of the [`DID`].
@@ -180,11 +184,10 @@ impl From<CoreDID> for BaseDIDUrl {
 }
 
 impl TryFrom<BaseDIDUrl> for CoreDID {
-  type Error = Error;
+  type Error = DIDError;
 
-  fn try_from(value: BaseDIDUrl) -> Result<Self, Self::Error> {
-    let _ = Self::check_validity(&value)?;
-    Ok(Self(value))
+  fn try_from(base_did_url: BaseDIDUrl) -> Result<Self, Self::Error> {
+    Self::try_from_base_did(base_did_url)
   }
 }
 

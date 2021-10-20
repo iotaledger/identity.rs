@@ -322,8 +322,7 @@ where
       base_did.set_path("");
       base_did.set_query(None);
       base_did.set_fragment(None);
-      // TODO: convert directly?
-      T::from_str(base_did.as_str()).map_err(|_| DIDError::Other("invalid DID"))?
+      T::try_from(base_did).map_err(|_| DIDError::Other("invalid DID"))?
     };
 
     Ok(Self { did, url })
@@ -414,7 +413,7 @@ where
   /// Attempt to convert a [`DIDUrl`] from a [`DIDUrl`] of a different DID method.
   ///
   /// Workaround for lack of specialisation preventing a generic `TryFrom` implementation.
-  pub fn try_from<U>(other: DIDUrl<U>) -> Result<Self, U::Error>
+  pub fn try_from<U>(other: DIDUrl<U>) -> Result<Self, <U as TryInto<T>>::Error>
   where
     U: DID + TryInto<T>,
   {

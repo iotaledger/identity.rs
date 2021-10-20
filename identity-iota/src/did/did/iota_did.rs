@@ -14,6 +14,7 @@ use crypto::hashes::Digest;
 
 use identity_core::utils::decode_b58;
 use identity_core::utils::encode_b58;
+use identity_did::did::BaseDIDUrl;
 use identity_did::did::CoreDID;
 use identity_did::did::DIDError;
 use identity_did::did::DIDUrl;
@@ -298,6 +299,15 @@ impl AsRef<CoreDID> for IotaDID {
 impl From<IotaDID> for CoreDID {
   fn from(other: IotaDID) -> Self {
     other.0
+  }
+}
+
+impl TryFrom<BaseDIDUrl> for IotaDID {
+  type Error = Error;
+
+  fn try_from(other: BaseDIDUrl) -> Result<Self, Self::Error> {
+    let core_did: CoreDID = CoreDID::try_from(other)?;
+    Self::try_from(core_did)
   }
 }
 

@@ -12,3 +12,4 @@ pub use self::did_url::CoreDIDUrl;
 pub use self::did_url::DIDUrl;
 pub use self::did_url::RelativeDIDUrl;
 pub use self::error::DIDError;
+pub use ::did_url::DID as BaseDIDUrl;
