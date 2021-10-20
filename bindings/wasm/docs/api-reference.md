@@ -1044,6 +1044,8 @@ Returns the default Verification Method of the DID Document.
 <a name="Document+insertMethod"></a>
 
 ### document.insertMethod(method, scope) ⇒ <code>boolean</code>
+Adds a new Verification Method to the DID Document.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -1054,6 +1056,8 @@ Returns the default Verification Method of the DID Document.
 <a name="Document+removeMethod"></a>
 
 ### document.removeMethod(did)
+Removes all references to the specified Verification Method.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -1063,6 +1067,8 @@ Returns the default Verification Method of the DID Document.
 <a name="Document+insertService"></a>
 
 ### document.insertService(service) ⇒ <code>boolean</code>
+Add a new `Service` to the document.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -1072,6 +1078,8 @@ Returns the default Verification Method of the DID Document.
 <a name="Document+removeService"></a>
 
 ### document.removeService(did)
+Remove a `Service` identified by the given `DIDUrl` from the document.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |

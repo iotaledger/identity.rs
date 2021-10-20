@@ -153,6 +153,7 @@ impl WasmDocument {
   // Verification Methods
   // ===========================================================================
 
+  /// Adds a new Verification Method to the DID Document.
   #[wasm_bindgen(js_name = insertMethod)]
   pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: Option<String>) -> Result<bool> {
     let scope: MethodScope = scope.unwrap_or_default().parse().wasm_result()?;
@@ -160,16 +161,19 @@ impl WasmDocument {
     Ok(self.0.insert_method(scope, method.0.clone()))
   }
 
+  /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
   pub fn remove_method(&mut self, did: &WasmDIDUrl) -> Result<()> {
     self.0.remove_method(&did.0).wasm_result()
   }
 
+  /// Add a new `Service` to the document.
   #[wasm_bindgen(js_name = insertService)]
   pub fn insert_service(&mut self, service: &Service) -> Result<bool> {
     Ok(self.0.insert_service(service.0.clone()))
   }
 
+  /// Remove a `Service` identified by the given `DIDUrl` from the document.
   #[wasm_bindgen(js_name = removeService)]
   pub fn remove_service(&mut self, did: &WasmDIDUrl) -> Result<()> {
     self.0.remove_service(&did.0).wasm_result()
