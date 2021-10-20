@@ -29,7 +29,7 @@ jobs:
         run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
       - name: Cache cargo
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v2.1.6
         with:
           # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
           path: |
@@ -79,7 +79,7 @@ jobs:
         run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
       - name: Cache cargo
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v2.1.6
         with:
           # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
           path: |
