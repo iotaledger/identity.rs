@@ -235,8 +235,9 @@ impl Debug for RelativeDIDUrl {
 
 impl PartialEq for RelativeDIDUrl {
   fn eq(&self, other: &Self) -> bool {
-    // TODO: improve performance of comparisons
-    self.to_string() == other.to_string()
+    self.path.as_deref().unwrap_or_default() == other.path.as_deref().unwrap_or_default()
+      && self.query.as_deref().unwrap_or_default() == other.query.as_deref().unwrap_or_default()
+      && self.fragment.as_deref().unwrap_or_default() == other.fragment.as_deref().unwrap_or_default()
   }
 }
 
@@ -244,15 +245,42 @@ impl Eq for RelativeDIDUrl {}
 
 impl PartialOrd for RelativeDIDUrl {
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-    // TODO: improve performance of comparisons
-    self.to_string().partial_cmp(&other.to_string())
+    // Compare path, query, then fragment in that order
+    let path_cmp = self
+      .path
+      .as_deref()
+      .unwrap_or_default()
+      .cmp(other.path.as_deref().unwrap_or_default());
+
+    if path_cmp == Ordering::Equal {
+      let query_cmp = self
+        .query
+        .as_deref()
+        .unwrap_or_default()
+        .cmp(other.query.as_deref().unwrap_or_default());
+
+      if query_cmp == Ordering::Equal {
+        return Some(
+          self
+            .fragment
+            .as_deref()
+            .unwrap_or_default()
+            .cmp(other.fragment.as_deref().unwrap_or_default()),
+        );
+      }
+
+      return Some(query_cmp);
+    }
+
+    Some(path_cmp)
   }
 }
 
 impl Ord for RelativeDIDUrl {
   fn cmp(&self, other: &Self) -> Ordering {
-    // TODO: improve performance of comparisons
-    self.to_string().cmp(&other.to_string())
+    self
+      .partial_cmp(other)
+      .expect("RelativeDIDUrl partial_cmp should always be Some")
   }
 }
 
