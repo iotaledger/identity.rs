@@ -19,7 +19,7 @@ pub struct MetaDocument {
 }
 
 /// A trait for generic DID Resolvers.
-#[async_trait(? Send)]
+#[async_trait(?Send)]
 pub trait ResolverMethod {
   /// Returns `true` if the given `did` is supported by this DID Resolver.
   fn is_supported(&self, did: &CoreDID) -> bool;
@@ -28,7 +28,7 @@ pub trait ResolverMethod {
   async fn read(&self, did: &CoreDID, input: InputMetadata) -> Result<Option<MetaDocument>>;
 }
 
-#[async_trait(? Send)]
+#[async_trait(?Send)]
 impl<T> ResolverMethod for &'_ T
 where
   T: ResolverMethod + Send + Sync,

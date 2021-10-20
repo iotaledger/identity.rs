@@ -106,11 +106,7 @@ where
 
   // Extract the parsed DID from the resolution output - It MUST exist as we
   // checked for resolution errors above.
-  let resolved_did: CoreDID = resolution.metadata.resolved.ok_or(Error::MissingResolutionDID)?;
-  if resolved_did != did_url.did() {
-    // TODO dedicated error? Is the above check still necessary at all?
-    return Err(Error::MissingResolutionDID);
-  }
+  let _ = resolution.metadata.resolved.ok_or(Error::MissingResolutionDID)?;
 
   // Add the resolution document metadata to the response.
   context.set_metadata(metadata);
