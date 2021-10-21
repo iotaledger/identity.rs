@@ -4,8 +4,8 @@
 use std::sync::Arc;
 
 use crate::account::Account;
+use crate::account::AccountConfig;
 use crate::account::AccountSetup;
-use crate::account::Config;
 use crate::error::Error;
 use crate::error::Result;
 use crate::events::Update;
@@ -25,7 +25,11 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 
 fn account_setup() -> AccountSetup {
-  AccountSetup::new_with_options(Arc::new(MemStore::new()), Some(Config::new().testmode(true)), None)
+  AccountSetup::new_with_options(
+    Arc::new(MemStore::new()),
+    Some(AccountConfig::new().testmode(true)),
+    None,
+  )
 }
 
 #[tokio::test]

@@ -16,7 +16,7 @@ use crate::storage::{MemStore, Storage};
 /// [`Account`]([crate::account::Account])
 #[derive(Clone, Debug)]
 pub(crate) struct AccountSetup {
-  pub(crate) config: Config,
+  pub(crate) config: AccountConfig,
   pub(crate) storage: Arc<dyn Storage>,
   pub(crate) client_map: Arc<ClientMap>,
 }
@@ -32,7 +32,7 @@ impl AccountSetup {
   /// and with defaults for [`Config`] and [`ClientMap`].
   pub(crate) fn new(storage: Arc<dyn Storage>) -> Self {
     Self {
-      config: Config::new(),
+      config: AccountConfig::new(),
       storage,
       client_map: Arc::new(ClientMap::new()),
     }
@@ -43,7 +43,7 @@ impl AccountSetup {
   /// If `None` is passed, the defaults will be used.
   pub(crate) fn new_with_options(
     storage: Arc<dyn Storage>,
-    config: Option<Config>,
+    config: Option<AccountConfig>,
     client_map: Option<Arc<ClientMap>>,
   ) -> Self {
     Self {
@@ -55,15 +55,15 @@ impl AccountSetup {
 
   #[cfg(test)]
   /// Set the [`Config`] for this setup.
-  pub(crate) fn config(mut self, value: Config) -> Self {
+  pub(crate) fn config(mut self, value: AccountConfig) -> Self {
     self.config = value;
     self
   }
 }
 
-/// Configuration for [`Account`][crate::account::Account]s
+/// Configuration for [`Account`][crate::account::Account]s.
 #[derive(Clone, Debug)]
-pub(crate) struct Config {
+pub(crate) struct AccountConfig {
   pub(crate) autosave: AutoSave,
   pub(crate) autopublish: bool,
   pub(crate) dropsave: bool,
@@ -71,7 +71,7 @@ pub(crate) struct Config {
   pub(crate) milestone: u32,
 }
 
-impl Config {
+impl AccountConfig {
   const MILESTONE: u32 = 1;
 
   /// Creates a new default [`Config`].
@@ -134,7 +134,7 @@ impl Config {
   }
 }
 
-impl Default for Config {
+impl Default for AccountConfig {
   fn default() -> Self {
     Self::new()
   }

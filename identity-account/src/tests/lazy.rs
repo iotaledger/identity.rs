@@ -4,7 +4,7 @@
 use std::pin::Pin;
 use std::sync::Arc;
 
-use crate::account::{Account, AccountSetup, Config};
+use crate::account::{Account, AccountConfig, AccountSetup};
 use crate::identity::IdentityCreate;
 use crate::storage::MemStore;
 use crate::{Error as AccountError, Result};
@@ -29,7 +29,7 @@ async fn test_lazy_updates() -> Result<()> {
         Network::Mainnet
       };
 
-      let config = Config::default().autopublish(false);
+      let config = AccountConfig::default().autopublish(false);
       let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
 
       let mut account =

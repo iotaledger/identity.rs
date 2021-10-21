@@ -40,7 +40,7 @@ use crate::Error;
 
 use super::config::AccountSetup;
 use super::config::AutoSave;
-use super::Config;
+use super::AccountConfig;
 
 const OSC: Ordering = Ordering::SeqCst;
 
@@ -50,7 +50,7 @@ const OSC: Ordering = Ordering::SeqCst;
 /// publishing to the Tangle.
 #[derive(Debug)]
 pub struct Account {
-  config: Config,
+  config: AccountConfig,
   storage: Arc<dyn Storage>,
   client_map: Arc<ClientMap>,
   actions: AtomicUsize,
@@ -371,7 +371,7 @@ impl Account {
 
   async fn commit_events(
     did: &IotaDID,
-    config: &Config,
+    config: &AccountConfig,
     storage: &dyn Storage,
     state: &IdentitySnapshot,
     events: &[Event],

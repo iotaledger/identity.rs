@@ -21,9 +21,9 @@ use crate::storage::Storage;
 #[cfg(feature = "stronghold")]
 use crate::storage::Stronghold;
 
+use super::config::AccountConfig;
 use super::config::AccountSetup;
 use super::config::AutoSave;
-use super::config::Config;
 
 /// The storage adapter used by an [Account].
 ///
@@ -47,7 +47,7 @@ pub enum AccountStorage {
 /// This means a builder can be reconfigured in-between account creations.
 #[derive(Debug)]
 pub struct AccountBuilder {
-  config: Config,
+  config: AccountConfig,
   storage_template: Option<AccountStorage>,
   storage: Option<Arc<dyn Storage>>,
   client_builders: Option<HashMap<NetworkName, ClientBuilder>>,
@@ -58,7 +58,7 @@ impl AccountBuilder {
   /// Creates a new `AccountBuilder`.
   pub fn new() -> Self {
     Self {
-      config: Config::new(),
+      config: AccountConfig::new(),
       storage_template: Some(AccountStorage::Memory),
       storage: Some(Arc::new(MemStore::new())),
       client_builders: None,
