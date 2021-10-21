@@ -8,6 +8,8 @@ use futures::stream;
 use futures::stream::BoxStream;
 use futures::StreamExt;
 use futures::TryStreamExt;
+use hashbrown::hash_map::Entry;
+use hashbrown::HashMap;
 use hashbrown::HashSet;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
@@ -20,7 +22,10 @@ use iota_stronghold::SLIP10DeriveInput;
 use std::convert::TryFrom;
 use std::io;
 use std::path::Path;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -47,6 +52,7 @@ const ECL: usize = 8;
 
 #[derive(Debug)]
 pub struct Stronghold {
+  did_leases: Mutex<HashMap<IotaDID, Arc<AtomicBool>>>,
   snapshot: Arc<Snapshot>,
 }
 
@@ -63,6 +69,7 @@ impl Stronghold {
     }
 
     Ok(Self {
+      did_leases: Mutex::new(HashMap::new()),
       snapshot: Arc::new(snapshot),
     })
   }
@@ -84,6 +91,26 @@ impl Storage for Stronghold {
 
   async fn flush_changes(&self) -> Result<()> {
     self.snapshot.save().await
+  }
+
+  async fn lease_did(&self, did: &IotaDID) -> Result<Arc<AtomicBool>> {
+    let mut hmap = self.did_leases.lock().await;
+
+    match hmap.entry(did.clone()) {
+      Entry::Occupied(entry) => {
+        if entry.get().load(Ordering::SeqCst) {
+          Err(Error::IdentityInUse)
+        } else {
+          entry.get().store(true, Ordering::SeqCst);
+          Ok(Arc::clone(entry.get()))
+        }
+      }
+      Entry::Vacant(entry) => {
+        let did_lease = Arc::new(AtomicBool::new(true));
+        entry.insert(Arc::clone(&did_lease));
+        Ok(did_lease)
+      }
+    }
   }
 
   async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {

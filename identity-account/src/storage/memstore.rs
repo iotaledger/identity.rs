@@ -8,6 +8,7 @@ use crypto::signatures::ed25519;
 use futures::stream;
 use futures::stream::BoxStream;
 use futures::StreamExt;
+use hashbrown::hash_map::Entry;
 use hashbrown::HashMap;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyPair;
@@ -18,8 +19,12 @@ use identity_core::crypto::Sign;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 use std::convert::TryFrom;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
+use tokio::sync::Mutex;
 use zeroize::Zeroize;
 
 use crate::error::Error;
@@ -43,6 +48,7 @@ type PublishedGenerations = HashMap<IotaDID, Generation>;
 pub struct MemStore {
   expand: bool,
   published_generations: Shared<PublishedGenerations>,
+  did_leases: Mutex<HashMap<IotaDID, Arc<AtomicBool>>>,
   events: Shared<Events>,
   states: Shared<States>,
   vaults: Shared<Vaults>,
@@ -53,6 +59,7 @@ impl MemStore {
     Self {
       expand: false,
       published_generations: Shared::new(HashMap::new()),
+      did_leases: Mutex::new(HashMap::new()),
       events: Shared::new(HashMap::new()),
       states: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
@@ -88,6 +95,26 @@ impl Storage for MemStore {
 
   async fn flush_changes(&self) -> Result<()> {
     Ok(())
+  }
+
+  async fn lease_did(&self, did: &IotaDID) -> Result<Arc<AtomicBool>> {
+    let mut hmap = self.did_leases.lock().await;
+
+    match hmap.entry(did.clone()) {
+      Entry::Occupied(entry) => {
+        if entry.get().load(Ordering::SeqCst) {
+          Err(Error::IdentityInUse)
+        } else {
+          entry.get().store(true, Ordering::SeqCst);
+          Ok(Arc::clone(entry.get()))
+        }
+      }
+      Entry::Vacant(entry) => {
+        let did_lease = Arc::new(AtomicBool::new(true));
+        entry.insert(Arc::clone(&did_lease));
+        Ok(did_lease)
+      }
+    }
   }
 
   async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {

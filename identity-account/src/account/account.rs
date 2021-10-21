@@ -16,6 +16,7 @@ use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
+use std::sync::atomic::AtomicBool;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -55,6 +56,7 @@ pub struct Account {
   client_map: Arc<ClientMap>,
   actions: AtomicUsize,
   did: IotaDID,
+  did_lease: Arc<AtomicBool>,
 }
 
 impl Account {
@@ -68,17 +70,20 @@ impl Account {
     // Ensure the did exists in storage
     setup.storage.snapshot(&did).await?.ok_or(Error::IdentityNotFound)?;
 
-    Self::with_setup(setup, did).await
+    let did_lease = setup.storage.lease_did(&did).await?;
+
+    Self::with_setup(setup, did, did_lease).await
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  async fn with_setup(setup: AccountSetup, did: IotaDID) -> Result<Self> {
+  async fn with_setup(setup: AccountSetup, did: IotaDID, did_lease: Arc<AtomicBool>) -> Result<Self> {
     Ok(Self {
       config: setup.config,
       storage: setup.storage,
       client_map: setup.client_map,
       actions: AtomicUsize::new(0),
       did,
+      did_lease,
     })
   }
 
@@ -155,7 +160,9 @@ impl Account {
 
     let commits = Self::commit_events(&did, &setup.config, setup.storage.as_ref(), &snapshot, &events).await?;
 
-    let account = Self::with_setup(setup, did).await?;
+    let did_lease = setup.storage.lease_did(&did).await?;
+
+    let account = Self::with_setup(setup, did, did_lease).await?;
 
     account.publish_commits(snapshot, commits, true).await?;
 
@@ -482,6 +489,9 @@ impl Account {
 
 impl Drop for Account {
   fn drop(&mut self) {
+    // Relase the lease on the did.
+    self.did_lease.store(false, std::sync::atomic::Ordering::SeqCst);
+
     if self.config.dropsave && self.actions() != 0 {
       // TODO: Handle Result (?)
       let _ = executor::block_on(self.storage().flush_changes());
