@@ -110,8 +110,8 @@ impl Command {
         let data: MethodData = MethodData::new_multibase(public.as_ref());
         let method: TinyMethod = TinyMethod::new(location, data, None);
 
-        // Generate a new DID URL from the public key
-        let document: IotaDID = if let Some(network) = network {
+        // Generate a new DID from the public key
+        let did: IotaDID = if let Some(network) = network {
           IotaDID::new_with_network(public.as_ref(), network)?
         } else {
           IotaDID::new(public.as_ref())?
@@ -120,7 +120,7 @@ impl Command {
         let method_fragment = Fragment::new(method.location().fragment());
 
         Ok(Some(vec![
-          Event::new(EventData::IdentityCreated(document)),
+          Event::new(EventData::IdentityCreated(did)),
           Event::new(EventData::MethodCreated(MethodScope::VerificationMethod, method)),
           Event::new(EventData::MethodAttached(
             method_fragment,

@@ -5,8 +5,10 @@ use std::sync::Arc;
 
 use hashbrown::hash_map::Entry;
 use hashbrown::HashMap;
-use identity_iota::did::IotaDID;
 use tokio::sync::RwLock;
+
+use identity_did::did::DID;
+use identity_iota::did::IotaDID;
 
 use crate::error::Error;
 use crate::error::Result;

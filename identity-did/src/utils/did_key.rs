@@ -14,11 +14,11 @@ use core::hash::Hasher;
 use core::ops::Deref;
 use core::ops::DerefMut;
 
-use crate::did::DID;
+use crate::did::CoreDIDUrl;
 
 /// A helper struct for comparing types only by `DID`.
 ///
-/// Types are expected to implement `AsRef<DID>` which allows access to traits
+/// Types are expected to implement `AsRef<CoreDIDUrl>` which allows access to traits
 /// for ordering and comparison.
 #[derive(Clone, Copy, Deserialize, Serialize)]
 #[repr(transparent)]
@@ -40,9 +40,9 @@ impl<T> DIDKey<T> {
 
   /// Returns a reference to the `DID`.
   #[inline]
-  pub fn as_did(&self) -> &DID
+  pub fn as_did_url(&self) -> &CoreDIDUrl
   where
-    T: AsRef<DID>,
+    T: AsRef<CoreDIDUrl>,
   {
     self.0.as_ref()
   }
@@ -50,45 +50,45 @@ impl<T> DIDKey<T> {
 
 impl<T> PartialEq for DIDKey<T>
 where
-  T: AsRef<DID>,
+  T: AsRef<CoreDIDUrl>,
 {
   #[inline]
   fn eq(&self, other: &Self) -> bool {
-    self.as_did().eq(other.as_did())
+    self.as_did_url().eq(other.as_did_url())
   }
 }
 
-impl<T> Eq for DIDKey<T> where T: AsRef<DID> {}
+impl<T> Eq for DIDKey<T> where T: AsRef<CoreDIDUrl> {}
 
 impl<T> PartialOrd for DIDKey<T>
 where
-  T: AsRef<DID>,
+  T: AsRef<CoreDIDUrl>,
 {
   #[inline]
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-    self.as_did().partial_cmp(other.as_did())
+    self.as_did_url().partial_cmp(other.as_did_url())
   }
 }
 
 impl<T> Ord for DIDKey<T>
 where
-  T: AsRef<DID>,
+  T: AsRef<CoreDIDUrl>,
 {
   #[inline]
   fn cmp(&self, other: &Self) -> Ordering {
-    self.as_did().cmp(other.as_did())
+    self.as_did_url().cmp(other.as_did_url())
   }
 }
 
 impl<T> Hash for DIDKey<T>
 where
-  T: AsRef<DID>,
+  T: AsRef<CoreDIDUrl>,
 {
   fn hash<H>(&self, hasher: &mut H)
   where
     H: Hasher,
   {
-    self.as_did().hash(hasher)
+    self.as_did_url().hash(hasher)
   }
 }
 
@@ -122,13 +122,13 @@ impl<T> AsMut<T> for DIDKey<T> {
   }
 }
 
-impl<T> Borrow<DID> for DIDKey<T>
+impl<T> Borrow<CoreDIDUrl> for DIDKey<T>
 where
-  T: AsRef<DID>,
+  T: AsRef<CoreDIDUrl>,
 {
   #[inline]
-  fn borrow(&self) -> &DID {
-    self.as_did()
+  fn borrow(&self) -> &CoreDIDUrl {
+    self.as_did_url()
   }
 }
 

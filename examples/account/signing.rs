@@ -16,6 +16,7 @@ use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::Subject;
 use identity::crypto::KeyPair;
+use identity::did::DID;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 

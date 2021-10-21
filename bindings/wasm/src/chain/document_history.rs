@@ -1,11 +1,16 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota::{ChainHistory, DocumentDiff, DocumentHistory, IotaDocument};
+use identity::iota::ChainHistory;
+use identity::iota::DocumentDiff;
+use identity::iota::DocumentHistory;
+use identity::iota::IotaDocument;
 use wasm_bindgen::prelude::*;
 
-use crate::did::{WasmDocument, WasmDocumentDiff};
-use crate::error::{Result, WasmResult};
+use crate::did::WasmDocument;
+use crate::did::WasmDocumentDiff;
+use crate::error::Result;
+use crate::error::WasmResult;
 
 /// A DID Document's history and current state.
 #[wasm_bindgen(js_name = DocumentHistory, inspectable)]

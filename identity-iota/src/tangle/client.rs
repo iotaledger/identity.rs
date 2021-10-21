@@ -7,20 +7,23 @@ use iota_client::Client as IotaClient;
 
 use identity_core::convert::ToJson;
 
+use crate::chain::ChainHistory;
+use crate::chain::DiffChain;
 use crate::chain::DocumentChain;
+use crate::chain::DocumentHistory;
 use crate::chain::IntegrationChain;
-use crate::chain::{ChainHistory, DiffChain, DocumentHistory};
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::ClientBuilder;
 use crate::tangle::Message;
 use crate::tangle::MessageId;
 use crate::tangle::Network;
 use crate::tangle::Receipt;
+use crate::tangle::TangleRef;
 use crate::tangle::TangleResolve;
-use crate::tangle::{ClientBuilder, TangleRef};
 
 /// Client for performing IOTA Identity operations on the Tangle.
 #[derive(Debug)]
@@ -108,13 +111,24 @@ impl Client {
     let messages: Vec<Message> = self.read_messages(did.tag()).await?;
     let integration_chain: IntegrationChain = IntegrationChain::try_from_messages(did, &messages)?;
 
-    // Check if there is any query given and return
-    let skip_diff: bool = did.query_pairs().any(|(key, value)| key == "diff" && value == "false");
+    // TODO: do we still want to support this, replace with ResolutionOptions?
+    // // Check if there is any query given and return
+    // let skip_diff: bool = did_url.query_pairs().any(|(key, value)| key == "diff" && value == "false");
+    //
+    // let diff: DiffChain = if skip_diff {
+    //   DiffChain::new()
+    // } else {
+    //   // Fetch all messages for the diff chain.
+    //   let index: String = IotaDocument::diff_index(integration_chain.current_message_id())?;
+    //   let messages: Vec<Message> = self.read_messages(&index).await?;
+    //
+    //   trace!("Diff Messages: {:#?}", messages);
+    //
+    //   DiffChain::try_from_messages(&integration_chain, &messages)?
+    // };
 
-    let diff: DiffChain = if skip_diff {
-      DiffChain::new()
-    } else {
-      // Fetch all messages for the diff chain.
+    // Fetch the latest diff chain.
+    let diff_chain: DiffChain = {
       let index: String = IotaDocument::diff_index(integration_chain.current_message_id())?;
       let messages: Vec<Message> = self.read_messages(&index).await?;
 
@@ -123,7 +137,7 @@ impl Client {
       DiffChain::try_from_messages(&integration_chain, &messages)?
     };
 
-    DocumentChain::new_with_diff_chain(integration_chain, diff)
+    DocumentChain::new_with_diff_chain(integration_chain, diff_chain)
   }
 
   /// Returns the [`MessageHistory`] of the given [`IotaDID`].
@@ -171,7 +185,7 @@ impl Client {
   }
 }
 
-#[async_trait::async_trait(? Send)]
+#[async_trait::async_trait(?Send)]
 impl TangleResolve for Client {
   async fn resolve(&self, did: &IotaDID) -> Result<IotaDocument> {
     self.read_document(did).await

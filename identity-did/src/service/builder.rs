@@ -4,14 +4,14 @@
 use identity_core::common::Object;
 use identity_core::common::Url;
 
-use crate::did::DID;
+use crate::did::CoreDIDUrl;
 use crate::error::Result;
 use crate::service::Service;
 
 /// A `ServiceBuilder` is used to generate a customized `Service`.
 #[derive(Clone, Debug, Default)]
 pub struct ServiceBuilder<T = Object> {
-  pub(crate) id: Option<DID>,
+  pub(crate) id: Option<CoreDIDUrl>,
   pub(crate) type_: Option<String>,
   pub(crate) service_endpoint: Option<Url>,
   pub(crate) properties: T,
@@ -30,7 +30,7 @@ impl<T> ServiceBuilder<T> {
 
   /// Sets the `id` value of the generated `Service`.
   #[must_use]
-  pub fn id(mut self, value: DID) -> Self {
+  pub fn id(mut self, value: CoreDIDUrl) -> Self {
     self.id = Some(value);
     self
   }

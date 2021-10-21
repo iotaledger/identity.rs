@@ -6,11 +6,14 @@ use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::iter::once;
-use identity_core::common::Object;
-use identity_core::convert::ToJson;
+
 use serde::Serialize;
 
-use crate::did::DID;
+use identity_core::common::Object;
+use identity_core::convert::ToJson;
+
+use crate::did::CoreDID;
+use crate::did::CoreDIDUrl;
 use crate::error::Error;
 use crate::error::Result;
 use crate::verification::MethodBuilder;
@@ -23,8 +26,8 @@ use crate::verification::MethodType;
 /// [Specification](https://www.w3.org/TR/did-core/#verification-method-properties)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct VerificationMethod<T = Object> {
-  pub(crate) id: DID,
-  pub(crate) controller: DID,
+  pub(crate) id: CoreDIDUrl,
+  pub(crate) controller: CoreDID,
   #[serde(rename = "type")]
   pub(crate) key_type: MethodType,
   #[serde(flatten)]
@@ -53,22 +56,22 @@ impl<T> VerificationMethod<T> {
   }
 
   /// Returns a reference to the verification `Method` id.
-  pub fn id(&self) -> &DID {
+  pub fn id(&self) -> &CoreDIDUrl {
     &self.id
   }
 
   /// Returns a mutable reference to the verification `Method` id.
-  pub fn id_mut(&mut self) -> &mut DID {
+  pub fn id_mut(&mut self) -> &mut CoreDIDUrl {
     &mut self.id
   }
 
   /// Returns a reference to the verification `Method` controller.
-  pub fn controller(&self) -> &DID {
+  pub fn controller(&self) -> &CoreDID {
     &self.controller
   }
 
   /// Returns a mutable reference to the verification `Method` controller.
-  pub fn controller_mut(&mut self) -> &mut DID {
+  pub fn controller_mut(&mut self) -> &mut CoreDID {
     &mut self.controller
   }
 
@@ -129,8 +132,8 @@ where
   }
 }
 
-impl<T> AsRef<DID> for VerificationMethod<T> {
-  fn as_ref(&self) -> &DID {
+impl<T> AsRef<CoreDIDUrl> for VerificationMethod<T> {
+  fn as_ref(&self) -> &CoreDIDUrl {
     self.id()
   }
 }

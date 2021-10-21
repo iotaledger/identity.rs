@@ -14,8 +14,11 @@ use crypto::hashes::Digest;
 
 use identity_core::utils::decode_b58;
 use identity_core::utils::encode_b58;
-use identity_did::did::Error as DIDError;
-use identity_did::did::DID as CoreDID;
+use identity_did::did::BaseDIDUrl;
+use identity_did::did::CoreDID;
+use identity_did::did::DIDError;
+use identity_did::did::DIDUrl;
+use identity_did::did::DID;
 
 use crate::did::Segments;
 use crate::error::Error;
@@ -26,7 +29,12 @@ use crate::tangle::NetworkName;
 // The hash size of BLAKE2b-256 (32-bytes)
 const BLAKE2B_256_LEN: usize = 32;
 
-/// A DID URL adhering to the IOTA DID method specification.
+/// A DID URL conforming to the IOTA DID method specification.
+///
+/// See [`DIDUrl`].
+pub type IotaDIDUrl = DIDUrl<IotaDID>;
+
+/// A DID conforming to the IOTA DID method specification.
 ///
 /// This is a thin wrapper around the [`DID`][`CoreDID`] type from the
 /// [`identity_did`][`identity_did`] crate.
@@ -45,7 +53,7 @@ impl IotaDID {
   /// The default Tangle network (`"main"`).
   pub const DEFAULT_NETWORK: &'static str = "main";
 
-  /// Converts a borrowed `DID` to an [`IotaDID`].
+  /// Converts a borrowed [`CoreDID`] to a borrowed [`IotaDID`].
   ///
   /// # Errors
   ///
@@ -94,7 +102,7 @@ impl IotaDID {
   ///
   /// Returns `Err` if the input does not form a valid [`IotaDID`].
   pub fn new(public: &[u8]) -> Result<Self> {
-    try_construct_did!(public)
+    try_construct_did!(public).map_err(Into::into)
   }
 
   /// Creates a new [`IotaDID`] from the given `public` key and `network`.
@@ -105,36 +113,7 @@ impl IotaDID {
   /// See [`NetworkName`] for validation requirements.
   pub fn new_with_network(public: &[u8], network: impl TryInto<NetworkName>) -> Result<Self> {
     let network_name = network.try_into().map_err(|_| Error::InvalidNetworkName)?;
-    try_construct_did!(public, network_name.as_ref())
-  }
-
-  /// Creates a new `DID` by joining `self` with the relative DID `other`.
-  ///
-  /// # Errors
-  ///
-  /// Returns `Err` if any base or relative DID segments are invalid.
-  pub fn join(&self, other: impl AsRef<str>) -> Result<Self> {
-    self.0.join(other).map_err(Into::into).and_then(Self::try_from_owned)
-  }
-
-  /// Change the method-specific-id of the [`IotaDID`].
-  pub fn set_method_id(&mut self, value: impl AsRef<str>) {
-    self.0.set_method_id(value);
-  }
-
-  /// Sets the `path` component of the DID Url.
-  pub fn set_path(&mut self, value: impl AsRef<str>) {
-    self.0.set_path(value);
-  }
-
-  /// Sets the `query` component of the DID Url.
-  pub fn set_query(&mut self, value: Option<&str>) {
-    self.0.set_query(value);
-  }
-
-  /// Sets the `fragment` component of the DID Url.
-  pub fn set_fragment(&mut self, value: Option<&str>) {
-    self.0.set_fragment(value);
+    try_construct_did!(public, network_name.as_ref()).map_err(Into::into)
   }
 
   /// Checks if the given `DID` has a valid IOTA DID `method` (i.e. `"iota"`).
@@ -184,8 +163,7 @@ impl IotaDID {
     NetworkName::validate_network_name(network_name)
   }
 
-  /// Checks if the given `DID` is valid according to the [`IotaDID`] method
-  /// specification.
+  /// Checks if the given `DID` is valid according to the [`IotaDID`] method specification.
   ///
   /// # Errors
   ///
@@ -202,58 +180,6 @@ impl IotaDID {
   /// [`IotaDID`] method specification.
   pub fn is_valid(did: &CoreDID) -> bool {
     Self::check_validity(did).is_ok()
-  }
-
-  /// Returns the serialized [`IotaDID`].
-  ///
-  /// This is fast since the serialized value is stored in the [`DID`].
-  pub fn as_str(&self) -> &str {
-    self.0.as_str()
-  }
-
-  /// Consumes the [`IotaDID`] and returns the serialization.
-  pub fn into_string(self) -> String {
-    self.0.into_string()
-  }
-
-  /// Returns the [`IotaDID`] scheme. See [`DID::SCHEME`].
-  pub fn scheme(&self) -> &'static str {
-    self.0.scheme()
-  }
-
-  /// Returns the [`IotaDID`] authority.
-  pub fn authority(&self) -> &str {
-    self.0.authority()
-  }
-
-  /// Returns the [`IotaDID`] method name.
-  pub fn method(&self) -> &str {
-    self.0.method()
-  }
-
-  /// Returns the [`IotaDID`] method-specific ID.
-  pub fn method_id(&self) -> &str {
-    self.0.method_id()
-  }
-
-  /// Returns the [`IotaDID`] path.
-  pub fn path(&self) -> &str {
-    self.0.path()
-  }
-
-  /// Returns the [`IotaDID`] method query, if any.
-  pub fn query(&self) -> Option<&str> {
-    self.0.query()
-  }
-
-  /// Returns the [`IotaDID`] method fragment, if any.
-  pub fn fragment(&self) -> Option<&str> {
-    self.0.fragment()
-  }
-
-  /// Parses the [`IotaDID`] query and returns an iterator of (key, value) pairs.
-  pub fn query_pairs(&self) -> form_urlencoded::Parse<'_> {
-    self.0.query_pairs()
   }
 
   /// Returns the Tangle `network` of the `DID`, if it is valid.
@@ -276,12 +202,19 @@ impl IotaDID {
     Segments(self.method_id())
   }
 
-  pub(crate) fn normalize(mut did: CoreDID) -> CoreDID {
+  /// Normalizes the DID `method_id` by removing the default network segment if present.
+  ///
+  /// E.g.
+  /// - `"did:iota:main:123" -> "did:iota:123"` is normalized
+  /// - `"did:iota:dev:123" -> "did:iota:dev:123"` is unchanged
+  fn normalize(mut did: CoreDID) -> CoreDID {
     let segments: Segments<'_> = Segments(did.method_id());
 
     if segments.count() == 2 && segments.network() == Self::DEFAULT_NETWORK {
       let method_id: String = segments.tag().to_string();
-      did.set_method_id(method_id);
+      let _ = did
+        .set_method_id(method_id)
+        .expect("this method_id is from a valid did");
     }
 
     did
@@ -291,6 +224,57 @@ impl IotaDID {
   #[doc(hidden)]
   pub fn encode_key(key: &[u8]) -> String {
     encode_b58(&Blake2b256::digest(key))
+  }
+}
+
+impl DID for IotaDID {
+  /// Returns the [`IotaDID`] scheme. See [`DID::SCHEME`].
+  fn scheme(&self) -> &'static str {
+    self.0.scheme()
+  }
+
+  /// Returns the [`IotaDID`] authority.
+  fn authority(&self) -> &str {
+    self.0.authority()
+  }
+
+  /// Returns the [`IotaDID`] method name.
+  fn method(&self) -> &str {
+    self.0.method()
+  }
+
+  /// Returns the [`IotaDID`] method-specific ID.
+  fn method_id(&self) -> &str {
+    self.0.method_id()
+  }
+
+  /// Returns the serialized [`IotaDID`].
+  ///
+  /// This is fast since the serialized value is stored in the [`DID`].
+  fn as_str(&self) -> &str {
+    self.0.as_str()
+  }
+
+  /// Consumes the [`IotaDID`] and returns the serialization.
+  fn into_string(self) -> String {
+    self.0.into_string()
+  }
+
+  /// Creates a new [`IotaDIDUrl`] by joining with a relative DID Url string.
+  ///
+  /// # Errors
+  ///
+  /// Returns `Err` if any base or relative DID segments are invalid.
+  fn join(self, segment: impl AsRef<str>) -> std::result::Result<DIDUrl<Self>, DIDError> {
+    self.into_url().join(segment)
+  }
+
+  fn to_url(&self) -> DIDUrl<Self> {
+    DIDUrl::new(self.clone(), None)
+  }
+
+  fn into_url(self) -> DIDUrl<Self> {
+    DIDUrl::new(self, None)
   }
 }
 
@@ -318,6 +302,15 @@ impl From<IotaDID> for CoreDID {
   }
 }
 
+impl TryFrom<BaseDIDUrl> for IotaDID {
+  type Error = Error;
+
+  fn try_from(other: BaseDIDUrl) -> Result<Self, Self::Error> {
+    let core_did: CoreDID = CoreDID::try_from(other)?;
+    Self::try_from(core_did)
+  }
+}
+
 impl TryFrom<CoreDID> for IotaDID {
   type Error = Error;
 
@@ -342,40 +335,72 @@ impl FromStr for IotaDID {
   }
 }
 
+impl TryFrom<&str> for IotaDID {
+  type Error = Error;
+
+  fn try_from(other: &str) -> Result<Self, Self::Error> {
+    Self::parse(other)
+  }
+}
+
+impl TryFrom<String> for IotaDID {
+  type Error = Error;
+
+  fn try_from(other: String) -> Result<Self, Self::Error> {
+    Self::parse(other)
+  }
+}
+
+impl From<IotaDID> for String {
+  fn from(did: IotaDID) -> Self {
+    did.into_string()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use identity_core::crypto::KeyPair;
-  use identity_did::did::DID as CoreDID;
+  use identity_did::did::CoreDID;
+  use identity_did::did::DID;
 
   use crate::did::IotaDID;
+  use crate::did::IotaDIDUrl;
 
   const TAG: &str = "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV";
 
   #[test]
-  fn test_parse_valid() {
+  fn test_parse_did_valid() {
     assert!(IotaDID::parse(format!("did:iota:{}", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:{}#fragment", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:{}?somequery=somevalue", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:{}?somequery=somevalue#fragment", TAG)).is_ok());
-
     assert!(IotaDID::parse(format!("did:iota:main:{}", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:main:{}#fragment", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:main:{}?somequery=somevalue", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:main:{}?somequery=somevalue#fragment", TAG)).is_ok());
-
     assert!(IotaDID::parse(format!("did:iota:dev:{}", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:dev:{}#fragment", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:dev:{}?somequery=somevalue", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:dev:{}?somequery=somevalue#fragment", TAG)).is_ok());
-
     assert!(IotaDID::parse(format!("did:iota:custom:{}", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:custom:{}#fragment", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:custom:{}?somequery=somevalue", TAG)).is_ok());
-    assert!(IotaDID::parse(format!("did:iota:custom:{}?somequery=somevalue#fragment", TAG)).is_ok());
   }
 
   #[test]
-  fn test_parse_invalid() {
+  fn test_parse_did_url_valid() {
+    assert!(IotaDIDUrl::parse(format!("did:iota:{}", TAG)).is_ok());
+    assert!(IotaDIDUrl::parse(format!("did:iota:{}#fragment", TAG)).is_ok());
+    assert!(IotaDIDUrl::parse(format!("did:iota:{}?somequery=somevalue", TAG)).is_ok());
+    assert!(IotaDIDUrl::parse(format!("did:iota:{}?somequery=somevalue#fragment", TAG)).is_ok());
+
+    assert!(IotaDIDUrl::parse(format!("did:iota:main:{}", TAG)).is_ok());
+    assert!(IotaDIDUrl::parse(format!("did:iota:main:{}#fragment", TAG)).is_ok());
+    assert!(IotaDIDUrl::parse(format!("did:iota:main:{}?somequery=somevalue", TAG)).is_ok());
+    assert!(IotaDIDUrl::parse(format!("did:iota:main:{}?somequery=somevalue#fragment", TAG)).is_ok());
+
+    assert!(IotaDIDUrl::parse(format!("did:iota:dev:{}", TAG)).is_ok());
+    assert!(IotaDIDUrl::parse(format!("did:iota:dev:{}#fragment", TAG)).is_ok());
+    assert!(IotaDIDUrl::parse(format!("did:iota:dev:{}?somequery=somevalue", TAG)).is_ok());
+    assert!(IotaDIDUrl::parse(format!("did:iota:dev:{}?somequery=somevalue#fragment", TAG)).is_ok());
+
+    assert!(IotaDIDUrl::parse(format!("did:iota:custom:{}", TAG)).is_ok());
+    assert!(IotaDIDUrl::parse(format!("did:iota:custom:{}#fragment", TAG)).is_ok());
+    assert!(IotaDIDUrl::parse(format!("did:iota:custom:{}?somequery=somevalue", TAG)).is_ok());
+    assert!(IotaDIDUrl::parse(format!("did:iota:custom:{}?somequery=somevalue#fragment", TAG)).is_ok());
+  }
+
+  #[test]
+  fn test_parse_did_invalid() {
     // A non-"iota" DID method is invalid.
     assert!(IotaDID::parse("did:foo::").is_err());
     // An empty DID method is invalid.
@@ -401,8 +426,6 @@ mod tests {
     let iota_did = IotaDID::try_from_owned(did).unwrap();
     assert_eq!(iota_did.network_str(), "main");
     assert_eq!(iota_did.tag(), key);
-    assert_eq!(iota_did.path(), "");
-    assert_eq!(iota_did.query(), None);
 
     let did: CoreDID = "did:iota:123".parse().unwrap();
     assert!(IotaDID::try_from_owned(did).is_err());
@@ -471,14 +494,15 @@ mod tests {
   #[test]
   fn test_setter() {
     let key: KeyPair = KeyPair::new_ed25519().unwrap();
-    let mut did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
+    let did: IotaDID = IotaDID::new(key.public().as_ref()).unwrap();
+    let mut did_url: IotaDIDUrl = did.into_url();
 
-    did.set_path("#foo");
-    did.set_query(Some("diff=true"));
-    did.set_fragment(Some("foo"));
+    did_url.set_path(Some("/foo")).unwrap();
+    did_url.set_query(Some("diff=true")).unwrap();
+    did_url.set_fragment(Some("foo")).unwrap();
 
-    assert_eq!(did.path(), "#foo");
-    assert_eq!(did.query(), Some("diff=true"));
-    assert_eq!(did.fragment(), Some("foo"));
+    assert_eq!(did_url.path(), Some("/foo"));
+    assert_eq!(did_url.query(), Some("diff=true"));
+    assert_eq!(did_url.fragment(), Some("foo"));
   }
 }

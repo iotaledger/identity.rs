@@ -4,12 +4,12 @@
 use identity_core::diff::Diff;
 use identity_core::diff::Result;
 
-use crate::did::DID;
+use crate::did::CoreDIDUrl;
 use crate::utils::DIDKey;
 
 impl<T> Diff for DIDKey<T>
 where
-  T: AsRef<DID> + Diff,
+  T: AsRef<CoreDIDUrl> + Diff,
 {
   type Type = <T as Diff>::Type;
 

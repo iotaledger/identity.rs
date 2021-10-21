@@ -8,16 +8,9 @@ use serde_json::Value;
 use crate::Diff;
 
 /// The Diff Type for `serde_json::Value`.
-#[derive(Clone, Eq, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Default, Eq, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(transparent)]
 pub struct DiffValue(#[serde(skip_serializing_if = "Option::is_none")] pub Option<Value>);
-
-/// A default implementation for `DiffValue`.
-impl Default for DiffValue {
-  fn default() -> Self {
-    DiffValue(None)
-  }
-}
 
 /// The Diff implementation for `serde_json::Value`.
 impl Diff for Value {
