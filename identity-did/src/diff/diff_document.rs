@@ -333,7 +333,7 @@ mod test {
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_b58(fragment.as_bytes()))
+      .key_data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
   }

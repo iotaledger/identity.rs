@@ -13,4 +13,10 @@ keywords:
 - webpack
 ---
 
-{@import ../../../../bindings/wasm/README.md}
+```mdx-code-block
+import GettingStarted, {toc as GettingStartedTOC} from "./@site/../../../../../bindings/wasm/README.md"
+
+<GettingStarted />
+
+export const toc = GettingStartedTOC;
+```

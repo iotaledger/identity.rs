@@ -721,7 +721,7 @@ mod tests {
       .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_b58(fragment.as_bytes()))
+      .key_data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
   }
@@ -777,7 +777,7 @@ mod tests {
     );
     assert_eq!(
       document.authentication().key_data(),
-      &MethodData::PublicKeyBase58(String::from("FJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT"))
+      &MethodData::PublicKeyMultibase("zFJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".to_owned())
     );
   }
 
@@ -791,7 +791,7 @@ mod tests {
     );
     assert_eq!(
       document.authentication().key_data(),
-      &MethodData::PublicKeyBase58(String::from("FJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT"))
+      &MethodData::PublicKeyMultibase("zFJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".to_owned())
     );
   }
 
@@ -1022,8 +1022,8 @@ mod tests {
         )
         .controller(valid_did())
         .key_type(MethodType::Ed25519VerificationKey2018)
-        .key_data(MethodData::PublicKeyBase58(
-          "FJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".into(),
+        .key_data(MethodData::PublicKeyMultibase(
+          "zFJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".into(),
         ))
         .build()
         .unwrap(),

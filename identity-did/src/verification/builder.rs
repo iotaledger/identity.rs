@@ -89,7 +89,7 @@ mod tests {
     let _: VerificationMethod = MethodBuilder::default()
       .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::PublicKeyBase58("".into()))
+      .key_data(MethodData::PublicKeyMultibase("".into()))
       .build()
       .unwrap();
   }
@@ -100,7 +100,7 @@ mod tests {
     let _: VerificationMethod = MethodBuilder::default()
       .id("did:example:123".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
-      .key_data(MethodData::PublicKeyBase58("".into()))
+      .key_data(MethodData::PublicKeyMultibase("".into()))
       .build()
       .unwrap();
   }
@@ -122,7 +122,7 @@ mod tests {
     let _: VerificationMethod = MethodBuilder::default()
       .id("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::PublicKeyBase58("".into()))
+      .key_data(MethodData::PublicKeyMultibase("".into()))
       .build()
       .unwrap();
   }
