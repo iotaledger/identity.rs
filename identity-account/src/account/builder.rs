@@ -37,11 +37,13 @@ pub enum AccountStorage {
   Custom(Arc<dyn Storage>),
 }
 
-/// An [Account] builder for easier account configuration.
-/// Accounts created from the same builder instance share the [`Storage`],
+/// An [`Account`] builder for easier account configuration.
+///
+/// Accounts created from the same builder share the [`Storage`],
 /// used to store identities, and the [`ClientMap`], used to
-/// publish identities to the tangle.
-/// The [`Config`] on the other hand is owned by every account.
+/// publish identities to the Tangle.
+///
+/// The [`Config`] on the other hand is cloned for each account.
 /// This means a builder can be reconfigured in-between account creations.
 #[derive(Debug)]
 pub struct AccountBuilder {
@@ -138,7 +140,7 @@ impl AccountBuilder {
     Ok(Arc::clone(self.storage.as_ref().unwrap()))
   }
 
-  /// Apply configuration to the IOTA Tangle client for the given `Network`.
+  /// Apply configuration to the IOTA Tangle client for the given [`Network`].
   pub fn client<F>(mut self, network: Network, f: F) -> Self
   where
     F: FnOnce(ClientBuilder) -> ClientBuilder,
@@ -161,9 +163,10 @@ impl AccountBuilder {
   }
 
   /// Creates a new identity based on the builder configuration and returns
-  /// the [`Account`] instance to manage it.
-  /// The identity is locally stored in the [`Storage`].
-  /// See [`IdentityCreate`] to customize the identity.
+  /// an [`Account`] instance to manage it.
+  /// The identity is stored locally in the [`Storage`].
+  ///
+  /// See [`IdentityCreate`] to customize the identity creation.
   pub async fn create_identity(&mut self, input: IdentityCreate) -> Result<Account> {
     self.build_clients().await?;
 
@@ -178,8 +181,8 @@ impl AccountBuilder {
     Ok(account)
   }
 
-  /// Loads an existing identity from the `did` with the builder configuration.
-  /// The identity must exist in the local [`Storage`].
+  /// Loads an existing identity with the specified `did` using the current builder configuration.
+  /// The identity must exist in the configured [`Storage`].
   pub async fn load_identity(&mut self, did: IotaDID) -> Result<Account> {
     self.build_clients().await?;
 

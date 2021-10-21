@@ -28,6 +28,7 @@ async fn main() -> Result<()> {
     .create_identity(IdentityCreate::default())
     .await?;
 
+  // Add a new service to the local DID document.
   account
     .update_identity()
     .create_service()
@@ -65,7 +66,8 @@ async fn main() -> Result<()> {
   // Retrieve the DID from the newly created identity.
   let iota_did: &IotaDID = account.did();
 
-  // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
+  // Prints the Identity Resolver Explorer URL.
+  // The entire history can be observed on this page by clicking "Loading History".
   println!(
     "[Example] Explore the DID Document = {}/{}",
     iota_did.network()?.explorer_url().unwrap().to_string(),

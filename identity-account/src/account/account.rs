@@ -45,8 +45,9 @@ use super::Config;
 const OSC: Ordering = Ordering::SeqCst;
 
 /// An account manages one identity.
-/// It takes care of writing to storage and
-/// publishing to the tangle.
+///
+/// It handles private keys, writing to storage and
+/// publishing to the Tangle.
 #[derive(Debug)]
 pub struct Account {
   config: Config,
@@ -128,16 +129,17 @@ impl Account {
   /// Resolves the DID Document associated with the specified `key`.
   pub async fn resolve_identity(&self) -> Result<IotaDocument> {
     let snapshot: IdentitySnapshot = self.load_snapshot().await?;
-    let document: &IotaDID = snapshot.identity().try_did()?;
+    let did: &IotaDID = snapshot.identity().try_did()?;
 
     // Fetch the DID Document from the Tangle
-    self.client_map.resolve(document).await.map_err(Into::into)
+    self.client_map.resolve(did).await.map_err(Into::into)
   }
 
-  /// Creates a new identity and returns the [`Account`] instance to manage it.
-  /// The identity is locally stored in the [`Storage`] given in [`AccountSetup`], and published
+  /// Creates a new identity and returns an [`Account`] instance to manage it.
+  /// The identity is stored locally in the [`Storage`] given in [`AccountSetup`], and published
   /// using the [`ClientMap`].
-  /// See [`IdentityCreate`] to customize the identity.
+  ///
+  /// See [`IdentityCreate`] to customize the identity creation.
   pub(crate) async fn create_identity(setup: AccountSetup, input: IdentityCreate) -> Result<Self> {
     let command = CreateIdentity {
       network: input.network,
@@ -155,12 +157,12 @@ impl Account {
 
     let account = Self::with_setup(setup, did).await?;
 
-    account.publish_commits(snapshot, commits, false).await?;
+    account.publish_commits(snapshot, commits, true).await?;
 
     Ok(account)
   }
 
-  /// Returns the [`IdentityUpdater`] for the given `key`.
+  /// Returns the [`IdentityUpdater`] for this identity.
   ///
   /// On this type, various operations can be executed
   /// that modify an identity, such as creating services or methods.
@@ -168,9 +170,9 @@ impl Account {
     IdentityUpdater::new(self)
   }
 
-  /// Removes the identity specified by the given `key`.
+  /// Removes the identity from the local storage entirely.
   ///
-  /// Note: This will remove all associated events and key material - recovery is NOT POSSIBLE!
+  /// Note: This will remove all associated document updates and key material - recovery is NOT POSSIBLE!
   pub async fn delete_identity(self) -> Result<()> {
     // Remove all associated keys and events
     self.storage().purge(self.did()).await?;

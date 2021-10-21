@@ -6,10 +6,10 @@
 use std::path::PathBuf;
 
 use identity::account::Account;
-use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::IdentityCreate;
 use identity::account::Result;
+use identity::iota::IotaDID;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -31,11 +31,14 @@ async fn main() -> Result<()> {
     .create_identity(IdentityCreate::default())
     .await?;
 
+  // Retrieve the did of the newly created identity.
+  let iota_did: &IotaDID = account.did();
+
   // Print the local state of the DID Document
   println!(
     "[Example] Local Document from {} = {:#?}",
     iota_did,
-    identity.to_document()
+    account.state().await?.to_document()
   );
 
   // Prints the Identity Resolver Explorer URL.

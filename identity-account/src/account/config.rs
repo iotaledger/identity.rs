@@ -7,10 +7,13 @@ use identity_iota::tangle::ClientMap;
 
 use crate::storage::{MemStore, Storage};
 
-/// A wrapper that holds configuration for an account instantiation.
-/// The setup implements `Clone`, so that multiple [`Account`][crate::account::Account]s can be created
-/// from the same setup. [`Storage`] and [`ClientMap`] are shared among those accounts,
-/// while the [`Config`] is unique to every account.
+/// A wrapper that holds configuration for an [`Account`] instantiation.
+///
+/// The setup implements `Clone` so multiple [`Account`]s can be created
+/// from the same setup. [`Storage`] and [`ClientMap`] are shared among
+/// those accounts, while the [`Config`] is unique to each account.
+///
+/// [`Account`]([crate::account::Account])
 #[derive(Clone, Debug)]
 pub(crate) struct AccountSetup {
   pub(crate) config: Config,
