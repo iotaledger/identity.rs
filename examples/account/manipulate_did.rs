@@ -7,7 +7,6 @@ use std::path::PathBuf;
 
 use identity::account::Account;
 use identity::account::AccountStorage;
-use identity::account::IdentityCreate;
 use identity::account::Result;
 use identity::core::Url;
 use identity::did::MethodScope;
@@ -28,7 +27,8 @@ async fn main() -> Result<()> {
   // Create a new Account with the default configuration
   let mut account: Account = Account::builder()
     .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
-    .create_identity(IdentityCreate::default())
+    .create_identity()
+    .build()
     .await?;
 
   // ===========================================================================
