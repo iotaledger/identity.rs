@@ -7,37 +7,12 @@ use identity_iota::tangle::ClientMap;
 
 use crate::storage::{MemStore, Storage};
 
-/// Configuration for [`Account`][crate::account::Account]s
-#[derive(Clone, Debug)]
-pub struct Config {
-  pub(crate) autosave: AutoSave,
-  pub(crate) autopublish: bool,
-  pub(crate) dropsave: bool,
-  pub(crate) testmode: bool,
-  pub(crate) milestone: u32,
-}
-
-impl Config {
-  const MILESTONE: u32 = 1;
-
-  /// Creates a new default [`Config`].
-  pub fn new() -> Self {
-    Self {
-      autosave: AutoSave::Every,
-      autopublish: true,
-      dropsave: true,
-      testmode: false,
-      milestone: Self::MILESTONE,
-    }
-  }
-}
-
 /// A wrapper that holds configuration for an account instantiation.
 /// The setup implements `Clone`, so that multiple [`Account`][crate::account::Account]s can be created
 /// from the same setup. [`Storage`] and [`ClientMap`] are shared among those accounts,
 /// while the [`Config`] is unique to every account.
 #[derive(Clone, Debug)]
-pub struct AccountSetup {
+pub(crate) struct AccountSetup {
   pub(crate) config: Config,
   pub(crate) storage: Arc<dyn Storage>,
   pub(crate) client_map: Arc<ClientMap>,
@@ -52,7 +27,7 @@ impl Default for AccountSetup {
 impl AccountSetup {
   /// Create a new setup from the given [`Storage`] implementation
   /// and with defaults for [`Config`] and [`ClientMap`].
-  pub fn new(storage: Arc<dyn Storage>) -> Self {
+  pub(crate) fn new(storage: Arc<dyn Storage>) -> Self {
     Self {
       config: Config::new(),
       storage,
@@ -63,7 +38,7 @@ impl AccountSetup {
   /// Create a new setup from the given [`Storage`] implementation,
   /// as well as optional [`Config`] and [`ClientMap`].
   /// If `None` is passed, the defaults will be used.
-  pub fn new_with_options(
+  pub(crate) fn new_with_options(
     storage: Arc<dyn Storage>,
     config: Option<Config>,
     client_map: Option<Arc<ClientMap>>,
@@ -75,14 +50,38 @@ impl AccountSetup {
     }
   }
 
+  #[cfg(test)]
   /// Set the [`Config`] for this setup.
-  pub fn config(mut self, value: Config) -> Self {
+  pub(crate) fn config(mut self, value: Config) -> Self {
     self.config = value;
     self
   }
 }
 
+/// Configuration for [`Account`][crate::account::Account]s
+#[derive(Clone, Debug)]
+pub(crate) struct Config {
+  pub(crate) autosave: AutoSave,
+  pub(crate) autopublish: bool,
+  pub(crate) dropsave: bool,
+  pub(crate) testmode: bool,
+  pub(crate) milestone: u32,
+}
+
 impl Config {
+  const MILESTONE: u32 = 1;
+
+  /// Creates a new default [`Config`].
+  pub(crate) fn new() -> Self {
+    Self {
+      autosave: AutoSave::Every,
+      autopublish: true,
+      dropsave: true,
+      testmode: false,
+      milestone: Self::MILESTONE,
+    }
+  }
+
   /// Sets the account auto-save behaviour.
   /// - [`Every`][AutoSave::Every] => Save to storage on every update
   /// - [`Never`][AutoSave::Never] => Never save to storage when updating
@@ -92,7 +91,7 @@ impl Config {
   /// likely want to set [`dropsave`][Self::dropsave] to `true`.
   ///
   /// Default: [`Every`][AutoSave::Every]
-  pub fn autosave(mut self, value: AutoSave) -> Self {
+  pub(crate) fn autosave(mut self, value: AutoSave) -> Self {
     self.autosave = value;
     self
   }
@@ -102,7 +101,7 @@ impl Config {
   /// - `false` => never publish automatically
   ///
   /// Default: `true`
-  pub fn autopublish(mut self, value: bool) -> Self {
+  pub(crate) fn autopublish(mut self, value: bool) -> Self {
     self.autopublish = value;
     self
   }
@@ -112,19 +111,21 @@ impl Config {
   /// either [`Every`][AutoSave::Every] or [`Batch(n)`][AutoSave::Batch].
   ///
   /// Default: `true`
-  pub fn dropsave(mut self, value: bool) -> Self {
+  pub(crate) fn dropsave(mut self, value: bool) -> Self {
     self.dropsave = value;
     self
   }
 
   /// Save a state snapshot every N actions.
-  pub fn milestone(mut self, value: u32) -> Self {
+  pub(crate) fn milestone(mut self, value: u32) -> Self {
     self.milestone = value;
     self
   }
 
-  #[doc(hidden)]
-  pub fn testmode(mut self, value: bool) -> Self {
+  #[cfg(test)]
+  /// Set whether the account is in testmode or not.
+  /// In testmode, the account skips publishing to the tangle.
+  pub(crate) fn testmode(mut self, value: bool) -> Self {
     self.testmode = value;
     self
   }

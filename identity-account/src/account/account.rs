@@ -63,7 +63,7 @@ impl Account {
   }
 
   /// Creates an [`Account`] for an existing identity, if it exists in the [`Storage`].
-  pub async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
+  pub(crate) async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
     // Ensure the did exists in storage
     setup.storage.snapshot(&did).await?.ok_or(Error::IdentityNotFound)?;
 
@@ -138,7 +138,7 @@ impl Account {
   /// The identity is locally stored in the [`Storage`] given in [`AccountSetup`], and published
   /// using the [`ClientMap`].
   /// See [`IdentityCreate`] to customize the identity.
-  pub async fn create_identity(setup: AccountSetup, input: IdentityCreate) -> Result<Self> {
+  pub(crate) async fn create_identity(setup: AccountSetup, input: IdentityCreate) -> Result<Self> {
     let command = CreateIdentity {
       network: input.network,
       method_secret: input.method_secret,
