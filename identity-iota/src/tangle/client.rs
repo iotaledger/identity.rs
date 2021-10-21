@@ -15,13 +15,13 @@ use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::compressor_bzip2;
 use crate::tangle::Message;
 use crate::tangle::MessageId;
 use crate::tangle::Network;
 use crate::tangle::Receipt;
 use crate::tangle::TangleResolve;
 use crate::tangle::{ClientBuilder, TangleRef};
-use crate::tangle::compressor;
 
 /// Client for performing IOTA Identity operations on the Tangle.
 #[derive(Debug)]
@@ -84,13 +84,13 @@ impl Client {
 
   /// Publishes arbitrary JSON data to the specified index on the Tangle.
   pub async fn publish_json<T: ToJson>(&self, index: &str, data: &T) -> Result<Receipt> {
-    let compressed_data = compressor::compress_bzip2(&data.to_json()?);
+    let compressed_data = compressor_bzip2::compress_bzip2(&data.to_json()?);
     //todo handle compression error!
     self
       .client
       .message()
       .with_index(index)
-      .with_data(compressed_data.unwrap())
+      .with_data(compressed_data)
       .finish()
       .await
       .map_err(Into::into)

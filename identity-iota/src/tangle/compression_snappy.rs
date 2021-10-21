@@ -3,8 +3,7 @@ use std::io;
 use std::io::{Cursor, Read};
 
 pub fn compress_snappy(input: &str) -> Vec<u8> {
-  let mut bytes: Vec<u8> = Vec::new();
-  let reference = &bytes;
+  let bytes: Vec<u8> = Vec::new();
   let mut cursor = Cursor::new(input);
   let mut cursoroutput = Cursor::new(bytes);
 
