@@ -13,7 +13,6 @@ use crate::types::MethodSecret;
 #[derive(Debug, Clone)]
 pub(crate) struct IdentityCreate {
   pub(crate) key_type: KeyType,
-  pub(crate) name: Option<String>,
   pub(crate) network: Option<NetworkName>,
   pub(crate) method_secret: Option<MethodSecret>,
 }
@@ -22,7 +21,6 @@ impl IdentityCreate {
   pub(crate) fn new() -> Self {
     Self {
       key_type: KeyType::Ed25519,
-      name: None,
       network: None,
       method_secret: None,
     }

@@ -14,10 +14,9 @@ use super::AccountBuilder;
 
 pub struct IdentityBuilder<'account_builder> {
   builder: &'account_builder mut AccountBuilder,
-  pub(crate) key_type: KeyType,
-  pub(crate) name: Option<String>,
-  pub(crate) network: Option<NetworkName>,
-  pub(crate) method_secret: Option<MethodSecret>,
+  key_type: KeyType,
+  network: Option<NetworkName>,
+  method_secret: Option<MethodSecret>,
 }
 
 impl<'account_builder> IdentityBuilder<'account_builder> {
@@ -28,7 +27,6 @@ impl<'account_builder> IdentityBuilder<'account_builder> {
     Self {
       builder,
       key_type: KeyType::Ed25519,
-      name: None,
       network: None,
       method_secret: None,
     }
@@ -38,16 +36,6 @@ impl<'account_builder> IdentityBuilder<'account_builder> {
   #[must_use]
   pub fn key_type(mut self, value: KeyType) -> Self {
     self.key_type = value;
-    self
-  }
-
-  /// Sets the name of the Identity.
-  #[must_use]
-  pub fn name<T>(mut self, value: T) -> Self
-  where
-    T: Into<String>,
-  {
-    self.name = Some(value.into());
     self
   }
 
@@ -76,7 +64,6 @@ impl<'account_builder> IdentityBuilder<'account_builder> {
 
     let id_create = IdentityCreate {
       key_type: self.key_type,
-      name: self.name,
       network: self.network,
       method_secret: self.method_secret,
     };
