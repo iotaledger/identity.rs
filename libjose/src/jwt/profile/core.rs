@@ -238,8 +238,8 @@ impl TimeCop {
     }
   }
 
-  pub fn set_current(&mut self, value: impl Into<SystemTime>) {
-    self.current = Some(value.into());
+  pub fn set_current(&mut self, value: SystemTime) {
+    self.current = Some(value);
   }
 
   pub fn set_max_iat(&mut self, value: impl Into<Duration>) {
