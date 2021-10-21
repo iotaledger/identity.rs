@@ -377,8 +377,8 @@ impl IotaDocument {
   }
 
   /// Remove a [`Service`] identified by the given [`IotaDIDUrl`] from the document.
-  pub fn remove_service(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
-    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url.clone());
+  pub fn remove_service(&mut self, did_url: IotaDIDUrl) -> Result<()> {
+    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
     self.document.service_mut().remove(&core_did_url);
     Ok(())
   }
@@ -404,8 +404,8 @@ impl IotaDocument {
   }
 
   /// Removes all references to the specified Verification Method.
-  pub fn remove_method(&mut self, did_url: &IotaDIDUrl) -> Result<()> {
-    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url.clone());
+  pub fn remove_method(&mut self, did_url: IotaDIDUrl) -> Result<()> {
+    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
 
     if self.authentication_id() == &core_did_url {
       return Err(Error::CannotRemoveAuthMethod);
@@ -1096,9 +1096,7 @@ mod tests {
     assert_eq!(1, document.service().len());
 
     document
-      .remove_service(
-        &IotaDIDUrl::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain".to_string()).unwrap(),
-      )
+      .remove_service(IotaDIDUrl::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain").unwrap())
       .ok();
     assert_eq!(0, document.service().len());
   }

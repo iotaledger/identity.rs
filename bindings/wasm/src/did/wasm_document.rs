@@ -163,8 +163,8 @@ impl WasmDocument {
 
   /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: &WasmDIDUrl) -> Result<()> {
-    self.0.remove_method(&did.0).wasm_result()
+  pub fn remove_method(&mut self, did: WasmDIDUrl) -> Result<()> {
+    self.0.remove_method(did.0).wasm_result()
   }
 
   /// Add a new `Service` to the document.
@@ -175,8 +175,8 @@ impl WasmDocument {
 
   /// Remove a `Service` identified by the given `DIDUrl` from the document.
   #[wasm_bindgen(js_name = removeService)]
-  pub fn remove_service(&mut self, did: &WasmDIDUrl) -> Result<()> {
-    self.0.remove_service(&did.0).wasm_result()
+  pub fn remove_service(&mut self, did: WasmDIDUrl) -> Result<()> {
+    self.0.remove_service(did.0).wasm_result()
   }
 
   // ===========================================================================
