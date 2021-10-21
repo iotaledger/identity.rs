@@ -404,5 +404,5 @@ fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {
 }
 
 fn fmt_did(did: &IotaDID) -> String {
-  format!("$identity:{}", did.tag())
+  format!("$identity:{}", did.authority())
 }
