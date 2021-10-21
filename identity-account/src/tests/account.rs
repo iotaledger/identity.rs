@@ -29,6 +29,9 @@ async fn test_account_high_level() -> Result<()> {
     crate::Error::IdentityNotFound
   ));
 
+  // Relase the lease on did1.
+  std::mem::drop(account1);
+
   assert!(builder.load_identity(did1).await.is_ok());
 
   Ok(())
