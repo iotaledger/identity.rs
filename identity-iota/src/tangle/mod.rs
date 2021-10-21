@@ -30,3 +30,7 @@ mod network;
 mod receipt;
 mod traits;
 mod compressor;
+mod compression_snappy;
+mod compression_test;
+mod compression_deflate;
+mod compression_brotli2;

@@ -24,6 +24,9 @@ serde = { version = "1.0", default-features = false, features = ["std", "derive"
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 bzip2 = "0.4"
+snap = "1"
+flate2 = "1.0"
+brotli2 = "0.3"
 
 
 [dependencies.iota-client]
