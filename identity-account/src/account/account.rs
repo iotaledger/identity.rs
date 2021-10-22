@@ -29,7 +29,7 @@ use crate::events::CreateIdentity;
 use crate::events::Event;
 use crate::events::EventData;
 use crate::events::Update;
-use crate::identity::IdentityCreate;
+use crate::identity::IdentitySetup;
 use crate::identity::IdentitySnapshot;
 use crate::identity::IdentityState;
 use crate::identity::IdentityUpdater;
@@ -145,7 +145,7 @@ impl Account {
   /// using the [`ClientMap`].
   ///
   /// See [`IdentityCreate`] to customize the identity creation.
-  pub(crate) async fn create_identity(setup: AccountSetup, input: IdentityCreate) -> Result<Self> {
+  pub(crate) async fn create_identity(setup: AccountSetup, input: IdentitySetup) -> Result<Self> {
     let command = CreateIdentity {
       network: input.network,
       method_secret: input.method_secret,

@@ -15,7 +15,7 @@ use zeroize::Zeroize;
 
 use crate::account::Account;
 use crate::error::Result;
-use crate::identity::IdentityCreate;
+use crate::identity::IdentitySetup;
 use crate::storage::MemStore;
 use crate::storage::Storage;
 #[cfg(feature = "stronghold")]
@@ -167,7 +167,7 @@ impl AccountBuilder {
   /// The identity is stored locally in the [`Storage`].
   ///
   /// See [`IdentityCreate`] to customize the identity creation.
-  pub async fn create_identity(&mut self, input: IdentityCreate) -> Result<Account> {
+  pub async fn create_identity(&mut self, input: IdentitySetup) -> Result<Account> {
     self.build_clients().await?;
 
     let setup = AccountSetup::new_with_options(

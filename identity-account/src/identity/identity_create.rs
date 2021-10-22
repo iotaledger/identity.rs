@@ -11,18 +11,17 @@ use crate::Result;
 
 /// Configuration used to create a new Identity.
 #[derive(Clone, Debug)]
-pub struct IdentityCreate {
+pub struct IdentitySetup {
   pub(crate) key_type: KeyType,
   pub(crate) network: Option<NetworkName>,
   pub(crate) method_secret: Option<MethodSecret>,
 }
 
-impl IdentityCreate {
+impl IdentitySetup {
   /// Creates a new `IdentityCreate` instance.
   pub const fn new() -> Self {
     Self {
       key_type: KeyType::Ed25519,
-      name: None,
       network: None,
       method_secret: None,
     }
@@ -32,16 +31,6 @@ impl IdentityCreate {
   #[must_use]
   pub fn key_type(mut self, value: KeyType) -> Self {
     self.key_type = value;
-    self
-  }
-
-  /// Sets the name of the Identity.
-  #[must_use]
-  pub fn name<T>(mut self, value: T) -> Self
-  where
-    T: Into<String>,
-  {
-    self.name = Some(value.into());
     self
   }
 
@@ -66,7 +55,7 @@ impl IdentityCreate {
   }
 }
 
-impl Default for IdentityCreate {
+impl Default for IdentitySetup {
   fn default() -> Self {
     Self::new()
   }

@@ -7,7 +7,7 @@ use identity::account::Account;
 use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::AutoSave;
-use identity::account::IdentityCreate;
+use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::iota::IotaDID;
 use identity::iota::Network;
@@ -55,7 +55,7 @@ async fn main() -> Result<()> {
 
   // Create an identity specifically on the devnet by passing `network_name`
   // The same applies if we wanted to create an identity on a private tangle
-  let id_create = IdentityCreate::new().network(network_name)?;
+  let id_create = IdentitySetup::new().network(network_name)?;
 
   // Create a new Identity with the network name set.
   let identity: Account = match builder.create_identity(id_create).await {

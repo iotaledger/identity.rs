@@ -10,7 +10,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::events::Update;
 use crate::events::UpdateError;
-use crate::identity::IdentityCreate;
+use crate::identity::IdentitySetup;
 use crate::identity::IdentitySnapshot;
 use crate::identity::TinyMethod;
 use crate::storage::MemStore;
@@ -34,7 +34,7 @@ fn account_setup() -> AccountSetup {
 
 #[tokio::test]
 async fn test_create_identity() -> Result<()> {
-  let account = Account::create_identity(account_setup(), IdentityCreate::default()).await?;
+  let account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot().await?;
 
@@ -49,7 +49,7 @@ async fn test_create_identity() -> Result<()> {
 #[tokio::test]
 async fn test_create_identity_network() -> Result<()> {
   // Create an identity with a valid network string
-  let create_identity: IdentityCreate = IdentityCreate::new().network("dev")?.key_type(KeyType::Ed25519);
+  let create_identity: IdentitySetup = IdentitySetup::new().network("dev")?.key_type(KeyType::Ed25519);
   let account = Account::create_identity(account_setup(), create_identity).await?;
 
   // Ensure the identity creation was successful
@@ -61,7 +61,7 @@ async fn test_create_identity_network() -> Result<()> {
 #[tokio::test]
 async fn test_create_identity_invalid_network() -> Result<()> {
   // Attempt to create an identity with an invalid network string
-  let result: Result<IdentityCreate> = IdentityCreate::new().network("Invalid=Network!");
+  let result: Result<IdentitySetup> = IdentitySetup::new().network("Invalid=Network!");
 
   // Ensure an `InvalidNetworkName` error is thrown
   assert!(matches!(
@@ -75,7 +75,7 @@ async fn test_create_identity_invalid_network() -> Result<()> {
 #[tokio::test]
 async fn test_create_identity_already_exists() -> Result<()> {
   let keypair = KeyPair::new_ed25519()?;
-  let identity_create = IdentityCreate::default()
+  let identity_create = IdentitySetup::default()
     .key_type(KeyType::Ed25519)
     .method_secret(MethodSecret::Ed25519(keypair.private().clone()));
   let account_setup = account_setup();
@@ -102,7 +102,7 @@ async fn test_create_identity_from_invalid_private_key() -> Result<()> {
   let private_bytes: Box<[u8]> = Box::new([0; 33]);
   let private_key: PrivateKey = PrivateKey::from(private_bytes);
 
-  let id_create = IdentityCreate::new()
+  let id_create = IdentitySetup::new()
     .key_type(KeyType::Ed25519)
     .method_secret(MethodSecret::Ed25519(private_key));
 
@@ -115,7 +115,7 @@ async fn test_create_identity_from_invalid_private_key() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_method() -> Result<()> {
-  let account = Account::create_identity(account_setup(), IdentityCreate::default()).await?;
+  let account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
@@ -144,7 +144,7 @@ async fn test_create_method() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_method_reserved_fragment() -> Result<()> {
-  let account = Account::create_identity(account_setup(), IdentityCreate::default()).await?;
+  let account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
@@ -175,7 +175,7 @@ async fn test_create_method_reserved_fragment() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_method_duplicate_fragment() -> Result<()> {
-  let account = Account::create_identity(account_setup(), IdentityCreate::default()).await?;
+  let account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
@@ -207,7 +207,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_method_from_private_key() -> Result<()> {
-  let account = Account::create_identity(account_setup(), IdentityCreate::default()).await?;
+  let account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
   let keypair = KeyPair::new_ed25519()?;
 
@@ -233,7 +233,7 @@ async fn test_create_method_from_private_key() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_method_from_invalid_private_key() -> Result<()> {
-  let account = Account::create_identity(account_setup(), IdentityCreate::default()).await?;
+  let account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
   let private_bytes: Box<[u8]> = Box::new([0; 33]);
   let private_key = PrivateKey::from(private_bytes);
@@ -254,7 +254,7 @@ async fn test_create_method_from_invalid_private_key() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
-  let account = Account::create_identity(account_setup(), IdentityCreate::default()).await?;
+  let account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
   let private_bytes: Box<[u8]> = Box::new([0; 32]);
   let private_key = PrivateKey::from(private_bytes);
@@ -288,7 +288,7 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
 
 #[tokio::test]
 async fn test_delete_method() -> Result<()> {
-  let account = Account::create_identity(account_setup(), IdentityCreate::default()).await?;
+  let account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
