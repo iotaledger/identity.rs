@@ -57,7 +57,6 @@ async fn main() -> Result<()> {
   // The same applies if we wanted to create an identity on a private tangle
   let id_create = IdentitySetup::new().network(network_name)?;
 
-  // Create a new Identity with the network name set.
   let identity: Account = match builder.create_identity(id_create).await {
     Ok(identity) => identity,
     Err(err) => {

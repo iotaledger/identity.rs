@@ -16,7 +16,6 @@ use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
-use std::sync::atomic::AtomicBool;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -29,6 +28,7 @@ use crate::events::CreateIdentity;
 use crate::events::Event;
 use crate::events::EventData;
 use crate::events::Update;
+use crate::identity::IdentityLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentitySnapshot;
 use crate::identity::IdentityState;
@@ -56,7 +56,7 @@ pub struct Account {
   client_map: Arc<ClientMap>,
   actions: AtomicUsize,
   did: IotaDID,
-  did_lease: Arc<AtomicBool>,
+  did_lease: IdentityLease,
 }
 
 impl Account {
@@ -76,7 +76,7 @@ impl Account {
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  async fn with_setup(setup: AccountSetup, did: IotaDID, did_lease: Arc<AtomicBool>) -> Result<Self> {
+  async fn with_setup(setup: AccountSetup, did: IotaDID, did_lease: IdentityLease) -> Result<Self> {
     Ok(Self {
       config: setup.config,
       storage: setup.storage,
@@ -154,13 +154,11 @@ impl Account {
 
     let snapshot = IdentitySnapshot::new(IdentityState::new());
 
-    let (did, events): (IotaDID, Vec<Event>) = command
+    let (did, did_lease, events): (IotaDID, IdentityLease, Vec<Event>) = command
       .process(snapshot.identity().integration_generation(), setup.storage.as_ref())
       .await?;
 
     let commits = Self::commit_events(&did, &setup.config, setup.storage.as_ref(), &snapshot, &events).await?;
-
-    let did_lease = setup.storage.lease_did(&did).await?;
 
     let account = Self::with_setup(setup, did, did_lease).await?;
 
@@ -433,7 +431,7 @@ impl Account {
   }
 
   /// Push all unpublished changes to the tangle in a single message.
-  pub async fn publish_updates(&self) -> Result<()> {
+  pub async fn publish_updates(&mut self) -> Result<()> {
     // Get the last commit generation that was published to the tangle.
     let last_published: Generation = self
       .storage()
@@ -489,9 +487,6 @@ impl Account {
 
 impl Drop for Account {
   fn drop(&mut self) {
-    // Relase the lease on the did.
-    self.did_lease.store(false, std::sync::atomic::Ordering::SeqCst);
-
     if self.config.dropsave && self.actions() != 0 {
       // TODO: Handle Result (?)
       let _ = executor::block_on(self.storage().flush_changes());

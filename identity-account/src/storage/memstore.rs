@@ -19,9 +19,6 @@ use identity_core::crypto::Sign;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 use std::convert::TryFrom;
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering;
-use std::sync::Arc;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 use tokio::sync::Mutex;
@@ -30,6 +27,7 @@ use zeroize::Zeroize;
 use crate::error::Error;
 use crate::error::Result;
 use crate::events::Commit;
+use crate::identity::IdentityLease;
 use crate::identity::IdentitySnapshot;
 use crate::storage::Storage;
 use crate::types::Generation;
@@ -48,7 +46,7 @@ type PublishedGenerations = HashMap<IotaDID, Generation>;
 pub struct MemStore {
   expand: bool,
   published_generations: Shared<PublishedGenerations>,
-  did_leases: Mutex<HashMap<IotaDID, Arc<AtomicBool>>>,
+  did_leases: Mutex<HashMap<IotaDID, IdentityLease>>,
   events: Shared<Events>,
   states: Shared<States>,
   vaults: Shared<Vaults>,
@@ -97,21 +95,21 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn lease_did(&self, did: &IotaDID) -> Result<Arc<AtomicBool>> {
+  async fn lease_did(&self, did: &IotaDID) -> Result<IdentityLease> {
     let mut hmap = self.did_leases.lock().await;
 
     match hmap.entry(did.clone()) {
       Entry::Occupied(entry) => {
-        if entry.get().load(Ordering::SeqCst) {
+        if entry.get().load() {
           Err(Error::IdentityInUse)
         } else {
-          entry.get().store(true, Ordering::SeqCst);
-          Ok(Arc::clone(entry.get()))
+          entry.get().store(true);
+          Ok(entry.get().clone())
         }
       }
       Entry::Vacant(entry) => {
-        let did_lease = Arc::new(AtomicBool::new(true));
-        entry.insert(Arc::clone(&did_lease));
+        let did_lease = IdentityLease::new();
+        entry.insert(did_lease.clone());
         Ok(did_lease)
       }
     }

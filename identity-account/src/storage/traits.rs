@@ -7,11 +7,10 @@ use futures::TryStreamExt;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_iota::did::IotaDID;
-use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
 
 use crate::error::Result;
 use crate::events::Commit;
+use crate::identity::IdentityLease;
 use crate::identity::IdentitySnapshot;
 use crate::types::Generation;
 use crate::types::KeyLocation;
@@ -29,11 +28,10 @@ pub trait Storage: Debug + Send + Sync + 'static {
   /// Write any unsaved changes to disk.
   async fn flush_changes(&self) -> Result<()>;
 
-  /// Attempt to mark the given did to be in-use.
-  /// Returns an `AtomicBool` that the caller is expected to set to
-  /// `false` once the did is no longer considered in-use.
+  /// Attempt to obtain the exclusive permission to modify the given did.
+  /// The caller is expected to make no more modifications after the lease has been dropped.
   /// Returns an [`IdentityInUse`][crate::Error::IdentityInUse] error if already leased.
-  async fn lease_did(&self, did: &IotaDID) -> Result<Arc<AtomicBool>>;
+  async fn lease_did(&self, did: &IotaDID) -> Result<IdentityLease>;
 
   /// Creates a new keypair at the specified `location`
   async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey>;
@@ -94,7 +92,7 @@ impl Storage for Box<dyn Storage> {
     (**self).flush_changes().await
   }
 
-  async fn lease_did(&self, did: &IotaDID) -> Result<Arc<AtomicBool>> {
+  async fn lease_did(&self, did: &IotaDID) -> Result<IdentityLease> {
     (**self).lease_did(did).await
   }
 

@@ -20,6 +20,7 @@ use crate::events::Context;
 use crate::events::Event;
 use crate::events::EventData;
 use crate::events::UpdateError;
+use crate::identity::IdentityLease;
 use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::identity::TinyService;
@@ -42,7 +43,7 @@ impl CreateIdentity {
     &self,
     integration_generation: Generation,
     store: &dyn Storage,
-  ) -> Result<(IotaDID, Vec<Event>)> {
+  ) -> Result<(IotaDID, IdentityLease, Vec<Event>)> {
     // The authentication method type must be valid
     ensure!(
       AUTH_TYPES.contains(&self.authentication),
@@ -78,6 +79,8 @@ impl CreateIdentity {
       UpdateError::DocumentAlreadyExists
     );
 
+    let did_lease = store.lease_did(&did).await?;
+
     let private_key = keypair.private().to_owned();
     std::mem::drop(keypair);
 
@@ -97,6 +100,7 @@ impl CreateIdentity {
 
     Ok((
       did.clone(),
+      did_lease,
       vec![
         Event::new(EventData::IdentityCreated(did)),
         Event::new(EventData::MethodCreated(MethodScope::VerificationMethod, method)),

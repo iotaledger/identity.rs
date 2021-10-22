@@ -22,8 +22,6 @@ use iota_stronghold::SLIP10DeriveInput;
 use std::convert::TryFrom;
 use std::io;
 use std::path::Path;
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -32,6 +30,7 @@ use crate::error::Result;
 use crate::events::Commit;
 use crate::events::Event;
 use crate::events::EventData;
+use crate::identity::IdentityLease;
 use crate::identity::IdentitySnapshot;
 use crate::storage::Storage;
 use crate::stronghold::default_hint;
@@ -52,7 +51,7 @@ const ECL: usize = 8;
 
 #[derive(Debug)]
 pub struct Stronghold {
-  did_leases: Mutex<HashMap<IotaDID, Arc<AtomicBool>>>,
+  did_leases: Mutex<HashMap<IotaDID, IdentityLease>>,
   snapshot: Arc<Snapshot>,
 }
 
@@ -93,21 +92,21 @@ impl Storage for Stronghold {
     self.snapshot.save().await
   }
 
-  async fn lease_did(&self, did: &IotaDID) -> Result<Arc<AtomicBool>> {
+  async fn lease_did(&self, did: &IotaDID) -> Result<IdentityLease> {
     let mut hmap = self.did_leases.lock().await;
 
     match hmap.entry(did.clone()) {
       Entry::Occupied(entry) => {
-        if entry.get().load(Ordering::SeqCst) {
+        if entry.get().load() {
           Err(Error::IdentityInUse)
         } else {
-          entry.get().store(true, Ordering::SeqCst);
-          Ok(Arc::clone(entry.get()))
+          entry.get().store(true);
+          Ok(entry.get().clone())
         }
       }
       Entry::Vacant(entry) => {
-        let did_lease = Arc::new(AtomicBool::new(true));
-        entry.insert(Arc::clone(&did_lease));
+        let did_lease = IdentityLease::new();
+        entry.insert(did_lease.clone());
         Ok(did_lease)
       }
     }
