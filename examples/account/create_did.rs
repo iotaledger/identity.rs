@@ -7,6 +7,7 @@ use std::path::PathBuf;
 
 use identity::account::Account;
 use identity::account::AccountStorage;
+use identity::account::IdentityCreate;
 use identity::account::Result;
 use identity::iota::IotaDID;
 
@@ -27,8 +28,7 @@ async fn main() -> Result<()> {
   // and publishes it to the IOTA mainnet.
   let account: Account = Account::builder()
     .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
-    .create_identity()
-    .build()
+    .create_identity(IdentityCreate::default())
     .await?;
 
   // Retrieve the did of the newly created identity.

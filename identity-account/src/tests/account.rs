@@ -6,16 +6,17 @@ use identity_iota::did::IotaDID;
 use crate::account::Account;
 use crate::account::AccountBuilder;
 use crate::error::Result;
+use crate::identity::IdentityCreate;
 
 #[tokio::test]
 async fn test_account_high_level() -> Result<()> {
   let mut builder: AccountBuilder = AccountBuilder::default().testmode(true);
 
-  let account1: Account = builder.create_identity().build().await?;
+  let account1: Account = builder.create_identity(IdentityCreate::default()).await?;
 
   builder = builder.autopublish(false);
 
-  let account2: Account = builder.create_identity().build().await?;
+  let account2: Account = builder.create_identity(IdentityCreate::default()).await?;
 
   assert!(account1.autopublish());
   assert!(!account2.autopublish());
@@ -42,7 +43,7 @@ async fn test_account_did_lease() -> Result<()> {
   let mut builder: AccountBuilder = AccountBuilder::default().testmode(true);
 
   let did: IotaDID = {
-    let account: Account = builder.create_identity().build().await?;
+    let account: Account = builder.create_identity(IdentityCreate::default()).await?;
     account.did().to_owned()
   }; // <-- Lease released here.
 

@@ -6,6 +6,7 @@ use std::path::PathBuf;
 
 use identity::account::Account;
 use identity::account::AccountStorage;
+use identity::account::IdentityCreate;
 use identity::account::Result;
 use identity::core::Url;
 use identity::iota::IotaDID;
@@ -23,8 +24,8 @@ async fn main() -> Result<()> {
   // Rather, when we publish, multiple updates are batched together.
   let mut account: Account = Account::builder()
     .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
-    .create_identity()
-    .build()
+    .autopublish(false)
+    .create_identity(IdentityCreate::default())
     .await?;
 
   // Add a new service to the local DID document.
