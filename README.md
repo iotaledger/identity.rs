@@ -90,9 +90,8 @@ tokio = { version = "1.5", features = ["full"] }
 use std::path::PathBuf;
 
 use identity::account::Account;
-use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
-use identity::account::IdentityCreate;
+use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::iota::IotaDocument;
 
@@ -104,12 +103,12 @@ async fn main() -> Result<()> {
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
 
-  // Create a new AccountBuilder with Stronghold as the storage adapter.
-  let mut builder: AccountBuilder =
-    Account::builder().storage(AccountStorage::Stronghold(stronghold_path, Some(password)));
-
-  // Create a new Identity with default settings.
-  let account: Account = builder.create_identity(IdentityCreate::default()).await?;
+  // Create a new identity with default settings and
+  // Stronghold as the storage.
+  let account: Account = Account::builder()
+    .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
+    .create_identity(IdentitySetup::default())
+    .await?;
 
   println!(
     "[Example] Local Document = {:#?}",
