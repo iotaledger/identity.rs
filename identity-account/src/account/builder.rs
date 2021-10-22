@@ -24,7 +24,6 @@ use crate::storage::Stronghold;
 use super::config::AccountConfig;
 use super::config::AccountSetup;
 use super::config::AutoSave;
-use super::IdentityBuilder;
 
 /// The storage adapter used by an [Account].
 ///
@@ -163,13 +162,12 @@ impl AccountBuilder {
     Ok(())
   }
 
-  /// Returns a new [`IdentityBuilder`] to customize the creation of an identity.
-  #[must_use]
-  pub fn create_identity(&mut self) -> IdentityBuilder<'_> {
-    IdentityBuilder::new(self)
-  }
-
-  pub(crate) async fn build_identity(&mut self, input: IdentityCreate) -> Result<Account> {
+  /// Creates a new identity based on the builder configuration and returns
+  /// an [`Account`] instance to manage it.
+  /// The identity is stored locally in the [`Storage`].
+  ///
+  /// See [`IdentityCreate`] to customize the identity creation.
+  pub async fn create_identity(&mut self, input: IdentityCreate) -> Result<Account> {
     self.build_clients().await?;
 
     let setup = AccountSetup::new_with_options(
