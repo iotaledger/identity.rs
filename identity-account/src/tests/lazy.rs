@@ -4,7 +4,8 @@
 use std::pin::Pin;
 use std::sync::Arc;
 
-use crate::account::{AccountConfig, AccountSetup};
+use crate::account::AccountConfig;
+use crate::account::AccountSetup;
 use crate::storage::MemStore;
 use futures::Future;
 

@@ -5,7 +5,8 @@ use std::sync::Arc;
 
 use identity_iota::tangle::ClientMap;
 
-use crate::storage::{MemStore, Storage};
+use crate::storage::MemStore;
+use crate::storage::Storage;
 
 /// A wrapper that holds configuration for an [`Account`] instantiation.
 ///

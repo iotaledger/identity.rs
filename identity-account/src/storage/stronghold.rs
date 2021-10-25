@@ -15,6 +15,7 @@ use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
+use identity_did::did::DID;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 use iota_stronghold::Location;
