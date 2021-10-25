@@ -1,13 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
+//! Provides a type for DIDComm problem reports.  
 use uuid::Uuid;
 
 use crate::message::Timing;
 
-/// A DIDComm `report` Message
-///
-/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/Standalone_Messages.md#report)
+/// A loose analogue of [DIDComm problem reports](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/problems.md#problem-reports)
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Report {
   context: String,

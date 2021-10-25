@@ -1,5 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+//! Provides a type used in a `ping message` from the [Trust-Ping Protocol](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/trustping.md)
 
 use identity_core::common::Url;
 use identity_iota::did::IotaDIDUrl;
@@ -9,7 +10,7 @@ use crate::message::Timing;
 
 /// A DIDComm `trust-ping` Message.
 ///
-/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/i_trust-ping.md#ping)
+/// [Reference](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/trustping.md)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct TrustPing {
   context: String,
