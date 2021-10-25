@@ -21,16 +21,3 @@ pub fn decompress_snappy(input: &Vec<u8>) -> String {
   let result = cursor_output.into_inner();
   return String::from_utf8(result).unwrap();
 }
-
-#[cfg(test)]
-mod test {
-  use super::*;
-
-  #[test]
-  fn test_compress() {
-    let compressed = compress_snappy(String::from("hello from here").as_str());
-    let decompressed = decompress_snappy(&compressed);
-
-    println!("{}", decompressed);
-  }
-}
