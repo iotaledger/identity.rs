@@ -27,7 +27,7 @@ use zeroize::Zeroize;
 use crate::error::Error;
 use crate::error::Result;
 use crate::events::Commit;
-use crate::identity::IdentityLease;
+use crate::identity::DIDLease;
 use crate::identity::IdentitySnapshot;
 use crate::storage::Storage;
 use crate::types::Generation;
@@ -46,7 +46,7 @@ type PublishedGenerations = HashMap<IotaDID, Generation>;
 pub struct MemStore {
   expand: bool,
   published_generations: Shared<PublishedGenerations>,
-  did_leases: Mutex<HashMap<IotaDID, IdentityLease>>,
+  did_leases: Mutex<HashMap<IotaDID, DIDLease>>,
   events: Shared<Events>,
   states: Shared<States>,
   vaults: Shared<Vaults>,
@@ -95,7 +95,7 @@ impl Storage for MemStore {
     Ok(())
   }
 
-  async fn lease_did(&self, did: &IotaDID) -> Result<IdentityLease> {
+  async fn lease_did(&self, did: &IotaDID) -> Result<DIDLease> {
     let mut hmap = self.did_leases.lock().await;
 
     match hmap.entry(did.clone()) {
@@ -108,7 +108,7 @@ impl Storage for MemStore {
         }
       }
       Entry::Vacant(entry) => {
-        let did_lease = IdentityLease::new();
+        let did_lease = DIDLease::new();
         entry.insert(did_lease.clone());
         Ok(did_lease)
       }

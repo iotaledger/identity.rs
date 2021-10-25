@@ -20,7 +20,7 @@ use crate::events::Context;
 use crate::events::Event;
 use crate::events::EventData;
 use crate::events::UpdateError;
-use crate::identity::IdentityLease;
+use crate::identity::DIDLease;
 use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::identity::TinyService;
@@ -43,7 +43,7 @@ impl CreateIdentity {
     &self,
     integration_generation: Generation,
     store: &dyn Storage,
-  ) -> Result<(IotaDID, IdentityLease, Vec<Event>)> {
+  ) -> Result<(IotaDID, DIDLease, Vec<Event>)> {
     // The authentication method type must be valid
     ensure!(
       AUTH_TYPES.contains(&self.authentication),

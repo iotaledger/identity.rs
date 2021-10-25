@@ -28,7 +28,7 @@ use crate::events::CreateIdentity;
 use crate::events::Event;
 use crate::events::EventData;
 use crate::events::Update;
-use crate::identity::IdentityLease;
+use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentitySnapshot;
 use crate::identity::IdentityState;
@@ -56,7 +56,7 @@ pub struct Account {
   client_map: Arc<ClientMap>,
   actions: AtomicUsize,
   did: IotaDID,
-  did_lease: IdentityLease,
+  did_lease: DIDLease,
 }
 
 impl Account {
@@ -76,7 +76,7 @@ impl Account {
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  async fn with_setup(setup: AccountSetup, did: IotaDID, did_lease: IdentityLease) -> Result<Self> {
+  async fn with_setup(setup: AccountSetup, did: IotaDID, did_lease: DIDLease) -> Result<Self> {
     Ok(Self {
       config: setup.config,
       storage: setup.storage,
@@ -154,7 +154,7 @@ impl Account {
 
     let snapshot = IdentitySnapshot::new(IdentityState::new());
 
-    let (did, did_lease, events): (IotaDID, IdentityLease, Vec<Event>) = command
+    let (did, did_lease, events): (IotaDID, DIDLease, Vec<Event>) = command
       .process(snapshot.identity().integration_generation(), setup.storage.as_ref())
       .await?;
 

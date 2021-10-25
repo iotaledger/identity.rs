@@ -30,7 +30,7 @@ use crate::error::Result;
 use crate::events::Commit;
 use crate::events::Event;
 use crate::events::EventData;
-use crate::identity::IdentityLease;
+use crate::identity::DIDLease;
 use crate::identity::IdentitySnapshot;
 use crate::storage::Storage;
 use crate::stronghold::default_hint;
@@ -51,7 +51,7 @@ const ECL: usize = 8;
 
 #[derive(Debug)]
 pub struct Stronghold {
-  did_leases: Mutex<HashMap<IotaDID, IdentityLease>>,
+  did_leases: Mutex<HashMap<IotaDID, DIDLease>>,
   snapshot: Arc<Snapshot>,
 }
 
@@ -92,7 +92,7 @@ impl Storage for Stronghold {
     self.snapshot.save().await
   }
 
-  async fn lease_did(&self, did: &IotaDID) -> Result<IdentityLease> {
+  async fn lease_did(&self, did: &IotaDID) -> Result<DIDLease> {
     let mut hmap = self.did_leases.lock().await;
 
     match hmap.entry(did.clone()) {
@@ -105,7 +105,7 @@ impl Storage for Stronghold {
         }
       }
       Entry::Vacant(entry) => {
-        let did_lease = IdentityLease::new();
+        let did_lease = DIDLease::new();
         entry.insert(did_lease.clone());
         Ok(did_lease)
       }

@@ -11,9 +11,9 @@ use std::sync::{
 /// Holds an `AtomicBool` that is set to `false` on drop, signifying
 /// the release of the lease.
 #[derive(Debug, Clone)]
-pub struct IdentityLease(Arc<AtomicBool>);
+pub struct DIDLease(Arc<AtomicBool>);
 
-impl IdentityLease {
+impl DIDLease {
   pub fn new() -> Self {
     Self(Arc::new(AtomicBool::new(true)))
   }
@@ -27,13 +27,13 @@ impl IdentityLease {
   }
 }
 
-impl Drop for IdentityLease {
+impl Drop for DIDLease {
   fn drop(&mut self) {
     self.store(false);
   }
 }
 
-impl Default for IdentityLease {
+impl Default for DIDLease {
   fn default() -> Self {
     Self::new()
   }
