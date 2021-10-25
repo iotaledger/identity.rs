@@ -31,7 +31,6 @@ use crate::crypto::RemoteKey;
 use crate::crypto::RemoteSign;
 use crate::error::Error;
 use crate::error::Result;
-use crate::identity::IdentityId;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
@@ -39,14 +38,13 @@ use crate::types::KeyLocation;
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, Object>;
 
-pub type RemoteEd25519<'a, T> = JcsEd25519<RemoteSign<'a, T>>;
+pub type RemoteEd25519<'a> = JcsEd25519<RemoteSign<'a>>;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct IdentityState {
   // =========== //
   // Chain State //
   // =========== //
-  id: IdentityId,
   integration_generation: Generation,
   diff_generation: Generation,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
@@ -76,9 +74,8 @@ pub struct IdentityState {
 }
 
 impl IdentityState {
-  pub fn new(id: IdentityId) -> Self {
+  pub fn new() -> Self {
     Self {
-      id,
       integration_generation: Generation::new(),
       diff_generation: Generation::new(),
       this_message_id: MessageId::null(),
@@ -97,11 +94,6 @@ impl IdentityState {
   // ===========================================================================
   // Internal State
   // ===========================================================================
-
-  /// Returns the identifier for this identity.
-  pub fn id(&self) -> IdentityId {
-    self.id
-  }
 
   /// Returns the current generation of the identity integration chain.
   pub fn integration_generation(&self) -> Generation {
@@ -322,13 +314,18 @@ impl IdentityState {
     Ok(document)
   }
 
-  pub async fn sign_data<T, U>(&self, store: &T, location: &KeyLocation, target: &mut U) -> Result<()>
+  pub async fn sign_data<U>(
+    &self,
+    did: &IotaDID,
+    store: &dyn Storage,
+    location: &KeyLocation,
+    target: &mut U,
+  ) -> Result<()>
   where
-    T: Storage,
     U: Serialize + SetSignature,
   {
     // Create a private key suitable for identity_core::crypto
-    let private: RemoteKey<'_, T> = RemoteKey::new(self.id, location, store);
+    let private: RemoteKey<'_> = RemoteKey::new(did, location, store);
 
     // Create the Verification Method identifier
     let fragment: &str = location.fragment.identifier();
@@ -344,6 +341,12 @@ impl IdentityState {
     }
 
     Ok(())
+  }
+}
+
+impl Default for IdentityState {
+  fn default() -> Self {
+    Self::new()
   }
 }
 

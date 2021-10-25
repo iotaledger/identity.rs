@@ -8,26 +8,29 @@ use futures::stream;
 use futures::stream::BoxStream;
 use futures::StreamExt;
 use futures::TryStreamExt;
+use hashbrown::hash_map::Entry;
+use hashbrown::HashMap;
 use hashbrown::HashSet;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_did::verification::MethodType;
+use identity_iota::did::IotaDID;
 use iota_stronghold::Location;
 use iota_stronghold::SLIP10DeriveInput;
 use std::convert::TryFrom;
 use std::io;
 use std::path::Path;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 use crate::error::Error;
 use crate::error::Result;
 use crate::events::Commit;
 use crate::events::Event;
 use crate::events::EventData;
-use crate::identity::IdentityId;
-use crate::identity::IdentityIndex;
+use crate::identity::DIDLease;
 use crate::identity::IdentitySnapshot;
 use crate::storage::Storage;
 use crate::stronghold::default_hint;
@@ -40,9 +43,6 @@ use crate::types::Signature;
 use crate::utils::derive_encryption_key;
 use crate::utils::EncryptionKey;
 
-// name of the metadata store
-const META: &str = "$meta";
-
 // event concurrency limit
 const ECL: usize = 8;
 
@@ -51,6 +51,7 @@ const ECL: usize = 8;
 
 #[derive(Debug)]
 pub struct Stronghold {
+  did_leases: Mutex<HashMap<IotaDID, DIDLease>>,
   snapshot: Arc<Snapshot>,
 }
 
@@ -67,6 +68,7 @@ impl Stronghold {
     }
 
     Ok(Self {
+      did_leases: Mutex::new(HashMap::new()),
       snapshot: Arc::new(snapshot),
     })
   }
@@ -75,8 +77,8 @@ impl Stronghold {
     self.snapshot.store(name, &[])
   }
 
-  fn vault(&self, id: IdentityId) -> Vault<'_> {
-    self.snapshot.vault(&fmt_id(id), &[])
+  fn vault(&self, id: &IotaDID) -> Vault<'_> {
+    self.snapshot.vault(&fmt_did(id), &[])
   }
 }
 
@@ -90,8 +92,28 @@ impl Storage for Stronghold {
     self.snapshot.save().await
   }
 
-  async fn key_new(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey> {
-    let vault: Vault<'_> = self.vault(id);
+  async fn lease_did(&self, did: &IotaDID) -> Result<DIDLease> {
+    let mut hmap = self.did_leases.lock().await;
+
+    match hmap.entry(did.clone()) {
+      Entry::Occupied(entry) => {
+        if entry.get().load() {
+          Err(Error::IdentityInUse)
+        } else {
+          entry.get().store(true);
+          Ok(entry.get().clone())
+        }
+      }
+      Entry::Vacant(entry) => {
+        let did_lease = DIDLease::new();
+        entry.insert(did_lease.clone());
+        Ok(did_lease)
+      }
+    }
+  }
+
+  async fn key_new(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
+    let vault: Vault<'_> = self.vault(did);
 
     let public: PublicKey = match location.method() {
       MethodType::Ed25519VerificationKey2018 => generate_ed25519(&vault, location).await?,
@@ -101,8 +123,8 @@ impl Storage for Stronghold {
     Ok(public)
   }
 
-  async fn key_insert(&self, id: IdentityId, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey> {
-    let vault = self.vault(id);
+  async fn key_insert(&self, did: &IotaDID, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey> {
+    let vault = self.vault(did);
 
     vault
       .insert(location_skey(location), private_key.as_ref(), default_hint(), &[])
@@ -114,8 +136,8 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn key_get(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey> {
-    let vault: Vault<'_> = self.vault(id);
+  async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
+    let vault: Vault<'_> = self.vault(did);
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => retrieve_ed25519(&vault, location).await,
@@ -123,8 +145,8 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn key_del(&self, id: IdentityId, location: &KeyLocation) -> Result<()> {
-    let vault: Vault<'_> = self.vault(id);
+  async fn key_del(&self, did: &IotaDID, location: &KeyLocation) -> Result<()> {
+    let vault: Vault<'_> = self.vault(did);
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
@@ -139,8 +161,8 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn key_sign(&self, id: IdentityId, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
-    let vault: Vault<'_> = self.vault(id);
+  async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
+    let vault: Vault<'_> = self.vault(did);
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => sign_ed25519(&vault, data, location).await,
@@ -148,8 +170,8 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn key_exists(&self, id: IdentityId, location: &KeyLocation) -> Result<bool> {
-    let vault: Vault<'_> = self.vault(id);
+  async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
+    let vault: Vault<'_> = self.vault(did);
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => vault.exists(location_skey(location)).await,
@@ -157,38 +179,9 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn index(&self) -> Result<IdentityIndex> {
-    // Load the metadata actor
-    let store: Store<'_> = self.store(META);
-
-    // Read the index from the snapshot
-    let data: Vec<u8> = store.get(location_index()).await?;
-
-    // No index data (new snapshot)
-    if data.is_empty() {
-      return Ok(IdentityIndex::new());
-    }
-
-    // Deserialize and return
-    Ok(IdentityIndex::from_json_slice(&data)?)
-  }
-
-  async fn set_index(&self, index: &IdentityIndex) -> Result<()> {
-    // Load the metadata actor
-    let store: Store<'_> = self.store(META);
-
-    // Serialize the index
-    let json: Vec<u8> = index.to_json_vec()?;
-
-    // Write the index to the snapshot
-    store.set(location_index(), json, None).await?;
-
-    Ok(())
-  }
-
-  async fn snapshot(&self, id: IdentityId) -> Result<Option<IdentitySnapshot>> {
+  async fn snapshot(&self, did: &IotaDID) -> Result<Option<IdentitySnapshot>> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_id(id));
+    let store: Store<'_> = self.store(&fmt_did(did));
 
     // Read the event snapshot from the stronghold snapshot
     let data: Vec<u8> = store.get(location_snapshot()).await?;
@@ -202,9 +195,9 @@ impl Storage for Stronghold {
     Ok(Some(IdentitySnapshot::from_json_slice(&data)?))
   }
 
-  async fn set_snapshot(&self, id: IdentityId, snapshot: &IdentitySnapshot) -> Result<()> {
+  async fn set_snapshot(&self, did: &IotaDID, snapshot: &IdentitySnapshot) -> Result<()> {
     // Load the chain-specific store
-    let store: Store<'_> = self.store(&fmt_id(id));
+    let store: Store<'_> = self.store(&fmt_did(did));
 
     // Serialize the state snapshot
     let json: Vec<u8> = snapshot.to_json_vec()?;
@@ -215,12 +208,12 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn append(&self, id: IdentityId, commits: &[Commit]) -> Result<()> {
+  async fn append(&self, did: &IotaDID, commits: &[Commit]) -> Result<()> {
     fn encode(commit: &Commit) -> Result<(Generation, Vec<u8>)> {
       Ok((commit.sequence(), commit.event().to_json_vec()?))
     }
 
-    let store: Store<'_> = self.store(&fmt_id(id));
+    let store: Store<'_> = self.store(&fmt_did(did));
 
     let future: _ = stream::iter(commits.iter().map(encode))
       .into_stream()
@@ -233,9 +226,11 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn stream(&self, id: IdentityId, index: Generation) -> Result<BoxStream<'_, Result<Commit>>> {
-    let name: String = fmt_id(id);
+  async fn stream(&self, did: &IotaDID, index: Generation) -> Result<BoxStream<'_, Result<Commit>>> {
+    let name: String = fmt_did(did);
     let range: RangeFrom<u32> = (index.to_u32() + 1)..;
+
+    let did = did.clone();
 
     let stream: BoxStream<'_, Result<Commit>> = stream::iter(range)
       .map(Generation::from)
@@ -258,14 +253,17 @@ impl Storage for Stronghold {
       // ================================
       // Parse the event
       // ================================
-      .try_filter_map(move |(index, json)| async move {
-        if json.is_empty() {
-          Err(Error::EventNotFound)
-        } else {
-          let event: Event = Event::from_json_slice(&json)?;
-          let commit: Commit = Commit::new(id, index, event);
+      .try_filter_map(move |(index, json)| {
+        let did = did.clone();
+        async move {
+          if json.is_empty() {
+            Err(Error::EventNotFound)
+          } else {
+            let event: Event = Event::from_json_slice(&json)?;
+            let commit: Commit = Commit::new(did, index, event);
 
-          Ok(Some(commit))
+            Ok(Some(commit))
+          }
         }
       })
       // ================================
@@ -284,7 +282,7 @@ impl Storage for Stronghold {
     Ok(stream)
   }
 
-  async fn purge(&self, id: IdentityId) -> Result<()> {
+  async fn purge(&self, did: &IotaDID) -> Result<()> {
     type PurgeSet = (Generation, HashSet<KeyLocation>);
 
     async fn fold(mut output: PurgeSet, commit: Commit) -> Result<PurgeSet> {
@@ -299,12 +297,12 @@ impl Storage for Stronghold {
     }
 
     // Load the chain-specific store/vault
-    let store: Store<'_> = self.store(&fmt_id(id));
-    let vault: Vault<'_> = self.vault(id);
+    let store: Store<'_> = self.store(&fmt_did(did));
+    let vault: Vault<'_> = self.vault(did);
 
     // Scan the event stream and collect a set of all key locations
     let output: (Generation, HashSet<KeyLocation>) = self
-      .stream(id, Generation::new())
+      .stream(did, Generation::new())
       .await?
       .try_fold((Generation::new(), HashSet::new()), fold)
       .await?;
@@ -333,8 +331,8 @@ impl Storage for Stronghold {
     Ok(())
   }
 
-  async fn published_generation(&self, id: IdentityId) -> Result<Option<Generation>> {
-    let store: Store<'_> = self.store(&fmt_id(id));
+  async fn published_generation(&self, did: &IotaDID) -> Result<Option<Generation>> {
+    let store: Store<'_> = self.store(&fmt_did(did));
 
     let bytes = store.get(location_published_generation()).await?;
 
@@ -357,8 +355,8 @@ impl Storage for Stronghold {
     Ok(Some(gen))
   }
 
-  async fn set_published_generation(&self, id: IdentityId, index: Generation) -> Result<()> {
-    let store: Store<'_> = self.store(&fmt_id(id));
+  async fn set_published_generation(&self, did: &IotaDID, index: Generation) -> Result<()> {
+    let store: Store<'_> = self.store(&fmt_did(did));
 
     store
       .set(location_published_generation(), index.to_u32().to_le_bytes(), None)
@@ -400,10 +398,6 @@ async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocatio
   Ok(Signature::new(public_key, signature.into()))
 }
 
-fn location_index() -> Location {
-  Location::generic("$index", Vec::new())
-}
-
 fn location_snapshot() -> Location {
   Location::generic("$snapshot", Vec::new())
 }
@@ -435,6 +429,6 @@ fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {
   .into_bytes()
 }
 
-fn fmt_id(id: IdentityId) -> String {
-  format!("$identity:{}", id)
+fn fmt_did(did: &IotaDID) -> String {
+  format!("$identity:{}", did.authority())
 }

@@ -91,8 +91,13 @@ pub enum Error {
   /// Caused by attempting to perform an upate in an invalid context.
   #[error("Update Error: {0}")]
   UpdateError(#[from] crate::events::UpdateError),
+  /// Caused by providing bytes that cannot be used as a private key of the
+  /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Private Key: {0}")]
   InvalidPrivateKey(String),
+  /// Caused by attempting to create an account for an identity that is already managed by another account.
+  #[error("Identity Is In-use")]
+  IdentityInUse,
 }
 
 #[doc(hidden)]

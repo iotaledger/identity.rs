@@ -28,6 +28,7 @@ The following examples are available for using the basic account (A high-level A
 | 4 | [account_manipulate](./account/manipulate_did.rs) | How to manipulate a DID Document by adding/removing Verification Methods and Services. |
 | 5 | [account_lazy](./account/lazy.rs) | How to take control over publishing DID updates manually, instead of the default automated behavior. |
 | 6 | [account_signing](./account/signing.rs) | Using a DID to sign arbitrary statements and validating them. |
+| 7 | [account_multiple](./account/multiple_identities.rs) | How to create multiple identities from a builder and how to load existing identities into an account. |
 
 
 The following examples are available for using the low-level APIs, which provides more flexibility at the cost of complexity:

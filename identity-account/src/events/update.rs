@@ -6,6 +6,7 @@ use crypto::signatures::ed25519;
 use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::Url;
+use identity_core::crypto::KeyPair;
 use identity_core::crypto::PublicKey;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
@@ -19,8 +20,7 @@ use crate::events::Context;
 use crate::events::Event;
 use crate::events::EventData;
 use crate::events::UpdateError;
-use crate::identity::IdentityId;
-use crate::identity::IdentityKey;
+use crate::identity::DIDLease;
 use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::identity::TinyService;
@@ -32,13 +32,89 @@ use crate::types::MethodSecret;
 // Supported authentication method types.
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
+pub(crate) struct CreateIdentity {
+  pub(crate) network: Option<NetworkName>,
+  pub(crate) method_secret: Option<MethodSecret>,
+  pub(crate) authentication: MethodType,
+}
+
+impl CreateIdentity {
+  pub(crate) async fn process(
+    &self,
+    integration_generation: Generation,
+    store: &dyn Storage,
+  ) -> Result<(IotaDID, DIDLease, Vec<Event>)> {
+    // The authentication method type must be valid
+    ensure!(
+      AUTH_TYPES.contains(&self.authentication),
+      UpdateError::InvalidMethodType(self.authentication)
+    );
+
+    let location: KeyLocation = KeyLocation::new_authentication(self.authentication, integration_generation);
+
+    let keypair: KeyPair = if let Some(MethodSecret::Ed25519(private_key)) = &self.method_secret {
+      ensure!(
+        private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+        UpdateError::InvalidMethodSecret(format!(
+          "an ed25519 private key requires {} bytes, found {}",
+          ed25519::SECRET_KEY_LENGTH,
+          private_key.as_ref().len()
+        ))
+      );
+
+      KeyPair::try_from_ed25519_bytes(private_key.as_ref())?
+    } else {
+      KeyPair::new_ed25519()?
+    };
+
+    // Generate a new DID URL from the public key
+    let did: IotaDID = if let Some(network) = &self.network {
+      IotaDID::new_with_network(keypair.public().as_ref(), network.clone())?
+    } else {
+      IotaDID::new(keypair.public().as_ref())?
+    };
+
+    ensure!(
+      !store.key_exists(&did, &location).await?,
+      UpdateError::DocumentAlreadyExists
+    );
+
+    let did_lease = store.lease_did(&did).await?;
+
+    let private_key = keypair.private().to_owned();
+    std::mem::drop(keypair);
+
+    let public: PublicKey = insert_method_secret(
+      store,
+      &did,
+      &location,
+      self.authentication,
+      MethodSecret::Ed25519(private_key),
+    )
+    .await?;
+
+    let data: MethodData = MethodData::new_b58(public.as_ref());
+    let method: TinyMethod = TinyMethod::new(location, data, None);
+
+    let method_fragment = Fragment::new(method.location().fragment());
+
+    Ok((
+      did.clone(),
+      did_lease,
+      vec![
+        Event::new(EventData::IdentityCreated(did)),
+        Event::new(EventData::MethodCreated(MethodScope::VerificationMethod, method)),
+        Event::new(EventData::MethodAttached(
+          method_fragment,
+          vec![MethodScope::Authentication],
+        )),
+      ],
+    ))
+  }
+}
+
 #[derive(Clone, Debug)]
-pub(crate) enum Command {
-  CreateIdentity {
-    network: Option<NetworkName>,
-    method_secret: Option<MethodSecret>,
-    authentication: MethodType,
-  },
+pub(crate) enum Update {
   CreateMethod {
     scope: MethodScope,
     type_: MethodType,
@@ -67,8 +143,9 @@ pub(crate) enum Command {
   },
 }
 
-impl Command {
+impl Update {
   pub(crate) async fn process(self, context: Context<'_>) -> Result<Option<Vec<Event>>> {
+    let did: &IotaDID = context.did();
     let state: &IdentityState = context.state();
     let store: &dyn Storage = context.store();
 
@@ -77,66 +154,12 @@ impl Command {
     trace!("[Command::process] Store = {:?}", store);
 
     match self {
-      Self::CreateIdentity {
-        network,
-        method_secret,
-        authentication,
-      } => {
-        // The state must not be initialized
-        ensure!(state.did().is_none(), UpdateError::DocumentAlreadyExists);
-
-        // The authentication method type must be valid
-        ensure!(
-          AUTH_TYPES.contains(&authentication),
-          UpdateError::InvalidMethodType(authentication)
-        );
-
-        let generation: Generation = state.integration_generation();
-        let location: KeyLocation = KeyLocation::new_authentication(authentication, generation);
-
-        // The key location must be available
-        // TODO: config: strict
-        ensure!(
-          !store.key_exists(state.id(), &location).await?,
-          UpdateError::DuplicateKeyLocation(location)
-        );
-
-        let public: PublicKey = if let Some(method_private_key) = method_secret {
-          insert_method_secret(store, state.id(), &location, authentication, method_private_key).await
-        } else {
-          store.key_new(state.id(), &location).await
-        }?;
-
-        let data: MethodData = MethodData::new_b58(public.as_ref());
-        let method: TinyMethod = TinyMethod::new(location, data, None);
-
-        // Generate a new DID URL from the public key
-        let document: IotaDID = if let Some(network) = network {
-          IotaDID::new_with_network(public.as_ref(), network)?
-        } else {
-          IotaDID::new(public.as_ref())?
-        };
-
-        let method_fragment = Fragment::new(method.location().fragment());
-
-        Ok(Some(vec![
-          Event::new(EventData::IdentityCreated(document)),
-          Event::new(EventData::MethodCreated(MethodScope::VerificationMethod, method)),
-          Event::new(EventData::MethodAttached(
-            method_fragment,
-            vec![MethodScope::Authentication],
-          )),
-        ]))
-      }
       Self::CreateMethod {
         type_,
         scope,
         fragment,
         method_secret,
       } => {
-        // The state must be initialized
-        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
-
         let location: KeyLocation = state.key_location(type_, fragment)?;
 
         // The key location must not be an authentication location
@@ -148,7 +171,7 @@ impl Command {
         // The key location must be available
         // TODO: config: strict
         ensure!(
-          !store.key_exists(state.id(), &location).await?,
+          !store.key_exists(did, &location).await?,
           UpdateError::DuplicateKeyLocation(location)
         );
 
@@ -159,9 +182,9 @@ impl Command {
         );
 
         let public: PublicKey = if let Some(method_private_key) = method_secret {
-          insert_method_secret(store, state.id(), &location, type_, method_private_key).await
+          insert_method_secret(store, did, &location, type_, method_private_key).await
         } else {
-          store.key_new(state.id(), &location).await
+          store.key_new(did, &location).await
         }?;
 
         let data: MethodData = MethodData::new_b58(public.as_ref());
@@ -170,9 +193,6 @@ impl Command {
         Ok(Some(vec![Event::new(EventData::MethodCreated(scope, method))]))
       }
       Self::DeleteMethod { fragment } => {
-        // The state must be initialized
-        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
-
         let fragment: Fragment = Fragment::new(fragment);
 
         // The fragment must not be an authentication location
@@ -187,9 +207,6 @@ impl Command {
         Ok(Some(vec![Event::new(EventData::MethodDeleted(fragment))]))
       }
       Self::AttachMethod { fragment, scopes } => {
-        // The state must be initialized
-        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
-
         let fragment: Fragment = Fragment::new(fragment);
 
         // The fragment must not be an authentication location
@@ -204,9 +221,6 @@ impl Command {
         Ok(Some(vec![Event::new(EventData::MethodAttached(fragment, scopes))]))
       }
       Self::DetachMethod { fragment, scopes } => {
-        // The state must be initialized
-        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
-
         let fragment: Fragment = Fragment::new(fragment);
 
         // The fragment must not be an authentication location
@@ -226,9 +240,6 @@ impl Command {
         endpoint,
         properties,
       } => {
-        // The state must be initialized
-        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
-
         // The service must not exist
         ensure!(
           !state.services().contains(&fragment),
@@ -240,9 +251,6 @@ impl Command {
         Ok(Some(vec![Event::new(EventData::ServiceCreated(service))]))
       }
       Self::DeleteService { fragment } => {
-        // The state must be initialized
-        ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
-
         let fragment: Fragment = Fragment::new(fragment);
 
         // The service must exist
@@ -256,7 +264,7 @@ impl Command {
 
 async fn insert_method_secret(
   store: &dyn Storage,
-  identity_id: IdentityId,
+  did: &IotaDID,
   location: &KeyLocation,
   method_type: MethodType,
   method_secret: MethodSecret,
@@ -279,7 +287,7 @@ async fn insert_method_secret(
         )
       );
 
-      store.key_insert(identity_id, location, private_key).await
+      store.key_insert(did, location, private_key).await
     }
     MethodSecret::MerkleKeyCollection(_) => {
       ensure!(
@@ -333,7 +341,7 @@ AttachMethod {
   @default scopes Vec<MethodScope>,
 });
 
-impl<'account, 'key, K: IdentityKey> AttachMethodBuilder<'account, 'key, K> {
+impl<'account> AttachMethodBuilder<'account> {
   pub fn scope(mut self, value: MethodScope) -> Self {
     self.scopes.get_or_insert_with(Default::default).push(value);
     self
@@ -351,7 +359,7 @@ DetachMethod {
   @default scopes Vec<MethodScope>,
 });
 
-impl<'account, 'key, K: IdentityKey> DetachMethodBuilder<'account, 'key, K> {
+impl<'account> DetachMethodBuilder<'account> {
   pub fn scope(mut self, value: MethodScope) -> Self {
     self.scopes.get_or_insert_with(Default::default).push(value);
     self
