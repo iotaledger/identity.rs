@@ -97,6 +97,38 @@ impl Client {
       .map(|message| Receipt::new(self.network.clone(), message))
   }
 
+  /// Retries (promotes or reattaches) a message for provided message id until it’s included (referenced by a milestone).
+  /// Default interval is 5 seconds and max attempts is 20. Returns reattached messages
+  pub async fn retry_until_included(
+    &self,
+    message_id: &MessageId,
+    interval: Option<u64>,
+    max_attempts: Option<u64>,
+  ) -> Result<Vec<(MessageId, Message)>> {
+    self
+      .client
+      .retry_until_included(message_id, interval, max_attempts)
+      .await
+      .map_err(Into::into)
+  }
+
+  /// Publishes arbitrary JSON data to the specified index on the Tangle.
+  /// Retries (promotes or reattaches) the message until it’s included (referenced by a milestone).
+  /// Default interval is 5 seconds and max attempts is 20.
+  pub async fn publish_json_with_retry<T: ToJson>(
+    &self,
+    index: &str,
+    data: &T,
+    interval: Option<u64>,
+    max_attempts: Option<u64>,
+  ) -> Result<Receipt> {
+    let receipt = self.publish_json(index, data).await?;
+    let _reattached_messages = self
+      .retry_until_included(receipt.message_id(), interval, max_attempts)
+      .await?;
+    Ok(receipt)
+  }
+
   /// Fetch the [`IotaDocument`] specified by the given [`IotaDID`].
   pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
     self.read_document_chain(did).await.and_then(DocumentChain::fold)
