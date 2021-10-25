@@ -187,7 +187,7 @@ impl Update {
           store.key_new(did, &location).await
         }?;
 
-        let data: MethodData = MethodData::new_b58(public.as_ref());
+        let data: MethodData = MethodData::new_multibase(public.as_ref());
         let method: TinyMethod = TinyMethod::new(location, data, None);
 
         Ok(Some(vec![Event::new(EventData::MethodCreated(scope, method))]))

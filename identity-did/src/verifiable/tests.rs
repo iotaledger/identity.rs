@@ -15,6 +15,7 @@ use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 
+use crate::did::CoreDID;
 use crate::did::DID;
 use crate::document::CoreDocument;
 use crate::verifiable::Properties;
@@ -66,11 +67,11 @@ impl TryMethod for That {
 fn test_sign_verify_this_ed25519() {
   for method_data_base in [MethodData::new_b58, MethodData::new_multibase] {
     let key: KeyPair = KeyPair::new_ed25519().unwrap();
-    let controller: DID = "did:example:1234".parse().unwrap();
+    let controller: CoreDID = "did:example:1234".parse().unwrap();
     let public_key = key.public().as_ref().to_vec();
 
     let method: VerificationMethod = VerificationMethod::builder(Default::default())
-      .id(controller.join("#key-1").unwrap())
+      .id(controller.to_url().join("#key-1").unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
       .key_data(method_data_base(public_key))
@@ -98,14 +99,14 @@ fn test_sign_verify_that_merkle_key_ed25519_sha256() {
     let index: usize = 1 << 9;
 
     let keys: KeyCollection = KeyCollection::new_ed25519(total).unwrap();
-    let controller: DID = "did:example:1234".parse().unwrap();
+    let controller: CoreDID = "did:example:1234".parse().unwrap();
 
     let root: Hash<Sha256> = keys.merkle_root();
     let proof: Proof<Sha256> = keys.merkle_proof(index).unwrap();
     let mkey: Vec<u8> = MerkleKey::encode_key::<Sha256, Ed25519>(&root);
 
     let method: VerificationMethod = VerificationMethod::builder(Default::default())
-      .id(controller.join("#key-collection").unwrap())
+      .id(controller.to_url().join("#key-collection").unwrap())
       .controller(controller.clone())
       .key_type(MethodType::MerkleKeyCollection2021)
       .key_data(method_data_base(mkey))

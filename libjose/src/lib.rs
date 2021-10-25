@@ -79,8 +79,10 @@ mod lib {
   #[cfg(feature = "std")]
   pub(crate) use std::borrow::Cow;
 
+  #[rustfmt::skip]
   #[cfg(all(feature = "alloc", not(feature = "std")))]
   pub(crate) use alloc::string::{String, ToString};
+  #[rustfmt::skip]
   #[cfg(feature = "std")]
   pub(crate) use std::string::{String, ToString};
 

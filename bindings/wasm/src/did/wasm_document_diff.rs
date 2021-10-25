@@ -4,11 +4,15 @@
 use std::ops::Deref;
 use std::str::FromStr;
 
-use identity::iota::{DocumentDiff, MessageId, TangleRef};
+use identity::iota::DocumentDiff;
+use identity::iota::MessageId;
+use identity::iota::TangleRef;
 use wasm_bindgen::prelude::*;
 
-use crate::did::{WasmDID, WasmDocument};
-use crate::error::{Result, WasmResult};
+use crate::did::WasmDID;
+use crate::did::WasmDocument;
+use crate::error::Result;
+use crate::error::WasmResult;
 
 /// Defines the difference between two DID [`Document`]s' JSON representations.
 #[wasm_bindgen(js_name = DocumentDiff, inspectable)]

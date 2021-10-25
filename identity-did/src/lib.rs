@@ -20,8 +20,7 @@
 #[macro_use]
 extern crate serde;
 
-#[doc(inline)]
-pub use did_url as did;
+pub mod did;
 
 pub mod diff;
 pub mod document;

@@ -6,12 +6,15 @@ use core::fmt::Display;
 use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
+
+use serde::Serialize;
+
 use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::convert::ToJson;
-use serde::Serialize;
 
-use crate::did::DID;
+use crate::did::CoreDID;
+use crate::did::CoreDIDUrl;
 use crate::document::DocumentBuilder;
 use crate::error::Error;
 use crate::error::Result;
@@ -29,9 +32,9 @@ use crate::verification::VerificationMethod;
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 #[rustfmt::skip]
 pub struct CoreDocument<T = Object, U = Object, V = Object> {
-  pub(crate) id: DID,
+  pub(crate) id: CoreDID,
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub(crate) controller: Option<DID>,
+  pub(crate) controller: Option<CoreDID>,
   #[serde(default = "Default::default", rename = "alsoKnownAs", skip_serializing_if = "Vec::is_empty")]
   pub(crate) also_known_as: Vec<Url>,
   #[serde(default = "Default::default", rename = "verificationMethod", skip_serializing_if = "OrderedSet::is_empty")]
@@ -78,22 +81,22 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 
   /// Returns a reference to the `CoreDocument` id.
-  pub fn id(&self) -> &DID {
+  pub fn id(&self) -> &CoreDID {
     &self.id
   }
 
   /// Returns a mutable reference to the `CoreDocument` id.
-  pub fn id_mut(&mut self) -> &mut DID {
+  pub fn id_mut(&mut self) -> &mut CoreDID {
     &mut self.id
   }
 
   /// Returns a reference to the `CoreDocument` controller.
-  pub fn controller(&self) -> Option<&DID> {
+  pub fn controller(&self) -> Option<&CoreDID> {
     self.controller.as_ref()
   }
 
   /// Returns a mutable reference to the `CoreDocument` controller.
-  pub fn controller_mut(&mut self) -> Option<&mut DID> {
+  pub fn controller_mut(&mut self) -> Option<&mut CoreDID> {
     self.controller.as_mut()
   }
 
@@ -245,7 +248,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 
   /// Removes all references to the specified [`Method<U>`][`Method`].
-  pub fn remove_method(&mut self, did: &DID) {
+  pub fn remove_method(&mut self, did: &CoreDIDUrl) {
     self.authentication.remove(did);
     self.assertion_method.remove(did);
     self.key_agreement.remove(did);
@@ -341,7 +344,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   pub fn resolve_ref<'a>(&'a self, method: &'a MethodRef<U>) -> Option<&'a VerificationMethod<U>> {
     match method {
       MethodRef::Embed(method) => Some(method),
-      MethodRef::Refer(did) => self.verification_method.query(did.as_str()),
+      MethodRef::Refer(did) => self.verification_method.query(&did.to_string()),
     }
   }
 
@@ -349,28 +352,28 @@ impl<T, U, V> CoreDocument<T, U, V> {
     let mut method: Option<&MethodRef<U>> = None;
 
     if method.is_none() {
-      method = self.authentication.query(query);
+      method = self.authentication.query(query.clone());
     }
 
     if method.is_none() {
-      method = self.assertion_method.query(query);
+      method = self.assertion_method.query(query.clone());
     }
 
     if method.is_none() {
-      method = self.key_agreement.query(query);
+      method = self.key_agreement.query(query.clone());
     }
 
     if method.is_none() {
-      method = self.capability_delegation.query(query);
+      method = self.capability_delegation.query(query.clone());
     }
 
     if method.is_none() {
-      method = self.capability_invocation.query(query);
+      method = self.capability_invocation.query(query.clone());
     }
 
     match method {
       Some(MethodRef::Embed(method)) => Some(method),
-      Some(MethodRef::Refer(did)) => self.verification_method.query(did.as_str()),
+      Some(MethodRef::Refer(did)) => self.verification_method.query(&did.to_string()),
       None => self.verification_method.query(query),
     }
   }
@@ -379,28 +382,28 @@ impl<T, U, V> CoreDocument<T, U, V> {
     let mut method: Option<&mut MethodRef<U>> = None;
 
     if method.is_none() {
-      method = self.authentication.query_mut(query);
+      method = self.authentication.query_mut(query.clone());
     }
 
     if method.is_none() {
-      method = self.assertion_method.query_mut(query);
+      method = self.assertion_method.query_mut(query.clone());
     }
 
     if method.is_none() {
-      method = self.key_agreement.query_mut(query);
+      method = self.key_agreement.query_mut(query.clone());
     }
 
     if method.is_none() {
-      method = self.capability_delegation.query_mut(query);
+      method = self.capability_delegation.query_mut(query.clone());
     }
 
     if method.is_none() {
-      method = self.capability_invocation.query_mut(query);
+      method = self.capability_invocation.query_mut(query.clone());
     }
 
     match method {
       Some(MethodRef::Embed(method)) => Some(method),
-      Some(MethodRef::Refer(did)) => self.verification_method.query_mut(did.as_str()),
+      Some(MethodRef::Refer(did)) => self.verification_method.query_mut(&did.to_string()),
       None => self.verification_method.query_mut(query),
     }
   }
@@ -423,28 +426,29 @@ where
 
 #[cfg(test)]
 mod tests {
+  use crate::did::CoreDID;
   use crate::did::DID;
   use crate::document::CoreDocument;
   use crate::verification::MethodData;
   use crate::verification::MethodType;
   use crate::verification::VerificationMethod;
 
-  fn controller() -> DID {
+  fn controller() -> CoreDID {
     "did:example:1234".parse().unwrap()
   }
 
-  fn method(controller: &DID, fragment: &str) -> VerificationMethod {
+  fn method(controller: &CoreDID, fragment: &str) -> VerificationMethod {
     VerificationMethod::builder(Default::default())
-      .id(controller.join(fragment).unwrap())
+      .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_b58(fragment.as_bytes()))
+      .key_data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
   }
 
   fn document() -> CoreDocument {
-    let controller: DID = controller();
+    let controller: CoreDID = controller();
 
     CoreDocument::builder(Default::default())
       .id(controller.clone())
@@ -452,8 +456,8 @@ mod tests {
       .verification_method(method(&controller, "#key-2"))
       .verification_method(method(&controller, "#key-3"))
       .authentication(method(&controller, "#auth-key"))
-      .authentication(controller.join("#key-3").unwrap())
-      .key_agreement(controller.join("#key-4").unwrap())
+      .authentication(controller.to_url().join("#key-3").unwrap())
+      .key_agreement(controller.to_url().join("#key-4").unwrap())
       .build()
       .unwrap()
   }
@@ -463,14 +467,32 @@ mod tests {
     let document: CoreDocument = document();
 
     // Resolve methods by fragment
-    assert_eq!(document.resolve("#key-1").unwrap().id(), "did:example:1234#key-1");
-    assert_eq!(document.resolve("#key-2").unwrap().id(), "did:example:1234#key-2");
-    assert_eq!(document.resolve("#key-3").unwrap().id(), "did:example:1234#key-3");
+    assert_eq!(
+      document.resolve("#key-1").unwrap().id().to_string(),
+      "did:example:1234#key-1"
+    );
+    assert_eq!(
+      document.resolve("#key-2").unwrap().id().to_string(),
+      "did:example:1234#key-2"
+    );
+    assert_eq!(
+      document.resolve("#key-3").unwrap().id().to_string(),
+      "did:example:1234#key-3"
+    );
 
     // Perfect fine to omit the octothorpe
-    assert_eq!(document.resolve("key-1").unwrap().id(), "did:example:1234#key-1");
-    assert_eq!(document.resolve("key-2").unwrap().id(), "did:example:1234#key-2");
-    assert_eq!(document.resolve("key-3").unwrap().id(), "did:example:1234#key-3");
+    assert_eq!(
+      document.resolve("key-1").unwrap().id().to_string(),
+      "did:example:1234#key-1"
+    );
+    assert_eq!(
+      document.resolve("key-2").unwrap().id().to_string(),
+      "did:example:1234#key-2"
+    );
+    assert_eq!(
+      document.resolve("key-3").unwrap().id().to_string(),
+      "did:example:1234#key-3"
+    );
   }
 
   #[test]
@@ -478,8 +500,14 @@ mod tests {
     let document: CoreDocument = document();
 
     // Resolve methods by index
-    assert_eq!(document.methods().next().unwrap().id(), "did:example:1234#key-1");
-    assert_eq!(document.methods().nth(2).unwrap().id(), "did:example:1234#key-3");
+    assert_eq!(
+      document.methods().next().unwrap().id().to_string(),
+      "did:example:1234#key-1"
+    );
+    assert_eq!(
+      document.methods().nth(2).unwrap().id().to_string(),
+      "did:example:1234#key-3"
+    );
   }
 
   #[test]

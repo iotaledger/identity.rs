@@ -4,16 +4,21 @@
 use std::pin::Pin;
 use std::sync::Arc;
 
-use crate::account::{Account, AccountConfig, AccountSetup};
-use crate::identity::IdentitySetup;
+use crate::account::{AccountConfig, AccountSetup};
 use crate::storage::MemStore;
-use crate::{Error as AccountError, Result};
 use futures::Future;
+
 use identity_core::common::Url;
 use identity_iota::chain::DocumentHistory;
 use identity_iota::did::IotaVerificationMethod;
-use identity_iota::tangle::{Client, Network};
+use identity_iota::tangle::Client;
+use identity_iota::tangle::Network;
 use identity_iota::Error as IotaError;
+
+use crate::account::Account;
+use crate::identity::IdentitySetup;
+use crate::Error as AccountError;
+use crate::Result;
 
 #[tokio::test]
 async fn test_lazy_updates() -> Result<()> {
@@ -111,7 +116,7 @@ async fn test_lazy_updates() -> Result<()> {
       assert_eq!(methods.len(), 2);
 
       for method in methods {
-        let method_fragment = method.id().fragment().unwrap();
+        let method_fragment = method.id_core().fragment().unwrap_or_default();
         assert!(["_sign-0", "new-method"]
           .iter()
           .any(|fragment| *fragment == method_fragment));

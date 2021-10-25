@@ -21,6 +21,8 @@
 <dd></dd>
 <dt><a href="#DID">DID</a></dt>
 <dd></dd>
+<dt><a href="#DIDUrl">DIDUrl</a></dt>
+<dd></dd>
 <dt><a href="#DidRequest">DidRequest</a></dt>
 <dd></dd>
 <dt><a href="#DidResponse">DidResponse</a></dt>
@@ -587,6 +589,9 @@ Creates a new `Client` with default settings for the given `Network`.
         * [.network](#DID+network) ⇒ [<code>Network</code>](#Network)
         * [.networkName](#DID+networkName) ⇒ <code>string</code>
         * [.tag](#DID+tag) ⇒ <code>string</code>
+        * [.join(segment)](#DID+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.toUrl()](#DID+toUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.intoUrl()](#DID+intoUrl) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.toString()](#DID+toString) ⇒ <code>string</code>
     * _static_
         * [.fromBase58(key, network)](#DID.fromBase58) ⇒ [<code>DID</code>](#DID)
@@ -621,10 +626,33 @@ Returns the IOTA tangle network of the `DID`.
 Returns the unique tag of the `DID`.
 
 **Kind**: instance property of [<code>DID</code>](#DID)  
+<a name="DID+join"></a>
+
+### did.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Construct a new `DIDUrl` by joining with a relative DID Url string.
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
+
+| Param | Type |
+| --- | --- |
+| segment | <code>string</code> | 
+
+<a name="DID+toUrl"></a>
+
+### did.toUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Clones the `DID` into a `DIDUrl`.
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
+<a name="DID+intoUrl"></a>
+
+### did.intoUrl() ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Converts the `DID` into a `DIDUrl`.
+
+**Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID+toString"></a>
 
 ### did.toString() ⇒ <code>string</code>
-Returns the `DID` object as a string.
+Returns the `DID` as a string.
 
 **Kind**: instance method of [<code>DID</code>](#DID)  
 <a name="DID.fromBase58"></a>
@@ -645,6 +673,127 @@ Creates a new `DID` from a base58-encoded public key.
 Parses a `DID` from the input string.
 
 **Kind**: static method of [<code>DID</code>](#DID)  
+
+| Param | Type |
+| --- | --- |
+| input | <code>string</code> | 
+
+<a name="DIDUrl"></a>
+
+## DIDUrl
+**Kind**: global class  
+
+* [DIDUrl](#DIDUrl)
+    * _instance_
+        * [.did](#DIDUrl+did) ⇒ [<code>DID</code>](#DID)
+        * [.url_str](#DIDUrl+url_str) ⇒ <code>string</code>
+        * [.fragment](#DIDUrl+fragment) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.fragment](#DIDUrl+fragment)
+        * [.path](#DIDUrl+path) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.path](#DIDUrl+path)
+        * [.query](#DIDUrl+query) ⇒ <code>string</code> \| <code>undefined</code>
+        * [.query](#DIDUrl+query)
+        * [.join(segment)](#DIDUrl+join) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+        * [.toString()](#DIDUrl+toString) ⇒ <code>string</code>
+    * _static_
+        * [.parse(input)](#DIDUrl.parse) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+
+<a name="DIDUrl+did"></a>
+
+### didUrl.did ⇒ [<code>DID</code>](#DID)
+Return the `DID` section of the `DIDUrl`.
+
+Note: clones the data
+
+**Kind**: instance property of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+url_str"></a>
+
+### didUrl.url\_str ⇒ <code>string</code>
+Return the relative DID Url as a string, including only the path, query, and fragment.
+
+**Kind**: instance property of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+fragment"></a>
+
+### didUrl.fragment ⇒ <code>string</code> \| <code>undefined</code>
+Returns the `DIDUrl` method fragment, if any. Excludes the leading '#'.
+
+**Kind**: instance property of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+fragment"></a>
+
+### didUrl.fragment
+Sets the `fragment` component of the `DIDUrl`.
+
+**Kind**: instance property of [<code>DIDUrl</code>](#DIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> \| <code>undefined</code> | 
+
+<a name="DIDUrl+path"></a>
+
+### didUrl.path ⇒ <code>string</code> \| <code>undefined</code>
+Returns the `DIDUrl` path.
+
+**Kind**: instance property of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+path"></a>
+
+### didUrl.path
+Sets the `path` component of the `DIDUrl`.
+
+**Kind**: instance property of [<code>DIDUrl</code>](#DIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> \| <code>undefined</code> | 
+
+<a name="DIDUrl+query"></a>
+
+### didUrl.query ⇒ <code>string</code> \| <code>undefined</code>
+Returns the `DIDUrl` method query, if any. Excludes the leading '?'.
+
+**Kind**: instance property of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl+query"></a>
+
+### didUrl.query
+Sets the `query` component of the `DIDUrl`.
+
+**Kind**: instance property of [<code>DIDUrl</code>](#DIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>string</code> \| <code>undefined</code> | 
+
+<a name="DIDUrl+join"></a>
+
+### didUrl.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Append a string representing a path, query, and/or fragment to this [`DIDUrl`].
+
+Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
+segment and any following segments in order of path, query, then fragment.
+
+I.e.
+- joining a path will clear the query and fragment.
+- joining a query will clear the fragment.
+- joining a fragment will only overwrite the fragment.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+
+| Param | Type |
+| --- | --- |
+| segment | <code>string</code> | 
+
+<a name="DIDUrl+toString"></a>
+
+### didUrl.toString() ⇒ <code>string</code>
+Returns the `DIDUrl` as a string.
+
+**Kind**: instance method of [<code>DIDUrl</code>](#DIDUrl)  
+<a name="DIDUrl.parse"></a>
+
+### DIDUrl.parse(input) ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Parses a `DIDUrl` from the input string.
+
+**Kind**: static method of [<code>DIDUrl</code>](#DIDUrl)  
 
 | Param | Type |
 | --- | --- |
@@ -895,6 +1044,8 @@ Returns the default Verification Method of the DID Document.
 <a name="Document+insertMethod"></a>
 
 ### document.insertMethod(method, scope) ⇒ <code>boolean</code>
+Adds a new Verification Method to the DID Document.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -905,15 +1056,19 @@ Returns the default Verification Method of the DID Document.
 <a name="Document+removeMethod"></a>
 
 ### document.removeMethod(did)
+Removes all references to the specified Verification Method.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DID</code>](#DID) | 
+| did | [<code>DIDUrl</code>](#DIDUrl) | 
 
 <a name="Document+insertService"></a>
 
 ### document.insertService(service) ⇒ <code>boolean</code>
+Add a new `Service` to the document.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -923,11 +1078,13 @@ Returns the default Verification Method of the DID Document.
 <a name="Document+removeService"></a>
 
 ### document.removeService(did)
+Remove a `Service` identified by the given `DIDUrl` from the document.
+
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| did | [<code>DID</code>](#DID) | 
+| did | [<code>DIDUrl</code>](#DIDUrl) | 
 
 <a name="Document+sign"></a>
 
@@ -2077,7 +2234,7 @@ Deserializes a `VerifiablePresentation` object from a JSON object.
 * [VerificationMethod](#VerificationMethod)
     * [new VerificationMethod(key, tag)](#new_VerificationMethod_new)
     * _instance_
-        * [.id](#VerificationMethod+id) ⇒ [<code>DID</code>](#DID)
+        * [.id](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.controller](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
         * [.type](#VerificationMethod+type) ⇒ <code>string</code>
         * [.data](#VerificationMethod+data) ⇒ <code>any</code>
@@ -2100,14 +2257,14 @@ Creates a new `VerificationMethod` object from the given `key`.
 
 <a name="VerificationMethod+id"></a>
 
-### verificationMethod.id ⇒ [<code>DID</code>](#DID)
-Returns the `id` DID of the `VerificationMethod` object.
+### verificationMethod.id ⇒ [<code>DIDUrl</code>](#DIDUrl)
+Returns the `id` `DIDUrl` of the `VerificationMethod` object.
 
 **Kind**: instance property of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod+controller"></a>
 
 ### verificationMethod.controller ⇒ [<code>DID</code>](#DID)
-Returns the `controller` DID of the `VerificationMethod` object.
+Returns the `controller` `DID` of the `VerificationMethod` object.
 
 **Kind**: instance property of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod+type"></a>

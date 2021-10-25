@@ -3,7 +3,7 @@
 
 use async_trait::async_trait;
 
-use crate::did::DID;
+use crate::did::CoreDID;
 use crate::document::CoreDocument;
 use crate::error::Result;
 use crate::resolution::DocumentMetadata;
@@ -22,10 +22,10 @@ pub struct MetaDocument {
 #[async_trait(?Send)]
 pub trait ResolverMethod {
   /// Returns `true` if the given `did` is supported by this DID Resolver.
-  fn is_supported(&self, did: &DID) -> bool;
+  fn is_supported(&self, did: &CoreDID) -> bool;
 
   /// Performs the "Read" operation of the DID method.
-  async fn read(&self, did: &DID, input: InputMetadata) -> Result<Option<MetaDocument>>;
+  async fn read(&self, did: &CoreDID, input: InputMetadata) -> Result<Option<MetaDocument>>;
 }
 
 #[async_trait(?Send)]
@@ -33,11 +33,11 @@ impl<T> ResolverMethod for &'_ T
 where
   T: ResolverMethod + Send + Sync,
 {
-  fn is_supported(&self, did: &DID) -> bool {
+  fn is_supported(&self, did: &CoreDID) -> bool {
     (**self).is_supported(did)
   }
 
-  async fn read(&self, did: &DID, input: InputMetadata) -> Result<Option<MetaDocument>> {
+  async fn read(&self, did: &CoreDID, input: InputMetadata) -> Result<Option<MetaDocument>> {
     (**self).read(did, input).await
   }
 }

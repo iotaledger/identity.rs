@@ -15,6 +15,8 @@ use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_did::did::CoreDIDUrl;
+use identity_did::did::DID;
 use identity_did::error::Result as DIDResult;
 use identity_did::verifiable::Revocation;
 use identity_did::verification::MethodBuilder;
@@ -24,6 +26,7 @@ use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
 use crate::did::IotaDID;
+use crate::did::IotaDIDUrl;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::NetworkName;
@@ -45,14 +48,13 @@ impl IotaVerificationMethod {
     D: MerkleDigest,
   {
     let tag: String = format!("#{}", fragment.into().unwrap_or(Self::DEFAULT_TAG));
-    let key: IotaDID = did.join(tag)?;
+    let key: IotaDIDUrl = did.to_url().join(tag)?;
 
     MethodBuilder::default()
-      .id(key.into())
+      .id(CoreDIDUrl::from(key))
       .controller(did.into())
       .key_type(MethodType::MerkleKeyCollection2021)
-      // TODO: replace publicKeyBase58 with publicKeyMultibase
-      .key_data(MethodData::new_b58(&keys.encode_merkle_key::<D>()))
+      .key_data(MethodData::new_multibase(&keys.encode_merkle_key::<D>()))
       .build()
       .map_err(Into::into)
       .map(Self)
@@ -94,14 +96,16 @@ impl IotaVerificationMethod {
   {
     // TODO: validate fragment contents properly
     let tag: String = format!("#{}", fragment.into().unwrap_or(Self::DEFAULT_TAG));
-    let key: IotaDID = did.join(tag)?;
+    let key: IotaDIDUrl = did.to_url().join(tag)?;
 
-    let mut builder: MethodBuilder = MethodBuilder::default().id(key.into()).controller(did.into());
+    let mut builder: MethodBuilder = MethodBuilder::default()
+      .id(CoreDIDUrl::from(key))
+      .controller(did.into());
 
     match keypair.type_() {
       KeyType::Ed25519 => {
         builder = builder.key_type(MethodType::Ed25519VerificationKey2018);
-        builder = builder.key_data(MethodData::new_b58(keypair.public()));
+        builder = builder.key_data(MethodData::new_multibase(keypair.public()));
       }
     }
 
@@ -124,7 +128,8 @@ impl IotaVerificationMethod {
   pub fn try_from_mut(method: &mut VerificationMethod) -> Result<&mut Self> {
     Self::check_validity(method)?;
 
-    // SAFETY: We just checked the validity of the verification method.
+    // SAFETY: We just checked the validity of the verification method and the layout of
+    //         IotaVerificationMethod is transparent.
     Ok(unsafe { &mut *(method as *mut VerificationMethod as *mut IotaVerificationMethod) })
   }
 
@@ -147,7 +152,7 @@ impl IotaVerificationMethod {
   /// Returns `Err` if the input is not a valid IOTA verification method.
   pub fn check_validity<T>(method: &VerificationMethod<T>) -> Result<()> {
     // Ensure all associated DIDs are IOTA Identity DIDs
-    IotaDID::check_validity(method.id())?;
+    IotaDID::check_validity(method.id().did())?;
     IotaDID::check_validity(method.controller())?;
 
     // Ensure the authentication method has an identifying fragment
@@ -158,7 +163,7 @@ impl IotaVerificationMethod {
 
     // Ensure the id and controller are the same - we don't support DIDs
     // controlled by 3rd parties - yet.
-    if method.id().authority() != method.controller().authority() {
+    if method.id().did().authority() != method.controller().authority() {
       return Err(Error::InvalidDocumentAuthAuthority);
     }
 
@@ -172,14 +177,27 @@ impl IotaVerificationMethod {
   }
 
   /// Returns the method `id` property.
-  pub fn id(&self) -> &IotaDID {
-    // SAFETY: We don't create methods with invalid DID's
-    unsafe { IotaDID::new_unchecked_ref(self.0.id()) }
+  ///
+  /// NOTE: clones the [`DIDUrl`].
+  pub fn id(&self) -> IotaDIDUrl {
+    // We ensure the validity of the id on creation.
+    let did_url: &CoreDIDUrl = self.0.id();
+    IotaDIDUrl::try_from(did_url.clone()).expect("invalid IotaDIDUrl")
+
+    // TODO: unable to guarantee the safety of this cast due to layout of generic DIDUrl<T>
+    //       possibly differing from DIDUrl<U> even if U is a transparent wrapper of T
+    //      (even though it _seems_ fine)
+    // unsafe { &*(did_url as *const CoreDIDUrl as *const IotaDIDUrl) }
+  }
+
+  /// Returns a reference to the underlying method `id` property.
+  pub fn id_core(&self) -> &CoreDIDUrl {
+    self.0.id()
   }
 
   /// Returns the method `controller` property.
   pub fn controller(&self) -> &IotaDID {
-    // SAFETY: We don't create methods with invalid DID's
+    // SAFETY: We don't create methods with invalid DIDs and the layout of IotaDID is transparent.
     unsafe { IotaDID::new_unchecked_ref(self.0.controller()) }
   }
 

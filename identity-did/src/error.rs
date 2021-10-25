@@ -12,9 +12,9 @@ pub enum Error {
   /// Caused by errors from the [identity_core] crate.
   #[error("{0}")]
   CoreError(#[from] ::identity_core::Error),
-  /// Caused by errors from the [`did_url`][::did_url::Error] crate.
+
   #[error("{0}")]
-  DIDError(#[from] ::did_url::Error),
+  InvalidDID(#[from] crate::did::DIDError),
 
   #[error("Duplicate Item in Ordered Set")]
   OrderedSetDuplicate,

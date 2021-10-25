@@ -10,7 +10,7 @@ use identity_core::diff::Result;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::did::DID;
+use crate::did::CoreDIDUrl;
 use crate::service::Service;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -60,7 +60,7 @@ where
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    let id: DID = diff
+    let id: CoreDIDUrl = diff
       .id
       .map(|value| self.id().merge(value))
       .transpose()?
@@ -93,9 +93,9 @@ where
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    let id: DID = diff
+    let id: CoreDIDUrl = diff
       .id
-      .map(DID::from_diff)
+      .map(CoreDIDUrl::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `service.id`"))?;
 
@@ -136,7 +136,7 @@ mod test {
   use super::*;
   use identity_core::common::Object;
 
-  fn controller() -> DID {
+  fn controller() -> CoreDIDUrl {
     "did:example:1234".parse().unwrap()
   }
 

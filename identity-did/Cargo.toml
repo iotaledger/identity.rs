@@ -13,10 +13,14 @@ description = "An implementation of the Decentralized Identifiers standard."
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
+form_urlencoded = { version = "1.0.1", default-features = false }
 identity-core = { version = "=0.3.0", path = "../identity-core" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
+
+[dev-dependencies]
+proptest = { version = "1.0" }
 
 [package.metadata.docs.rs]
 # To build locally:

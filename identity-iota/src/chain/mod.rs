@@ -3,7 +3,8 @@
 
 pub use self::diff_chain::DiffChain;
 pub use self::document_chain::DocumentChain;
-pub use self::document_history::{ChainHistory, DocumentHistory};
+pub use self::document_history::ChainHistory;
+pub use self::document_history::DocumentHistory;
 pub use self::integration_chain::IntegrationChain;
 
 mod diff_chain;

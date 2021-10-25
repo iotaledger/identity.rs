@@ -3,10 +3,12 @@
 
 use identity::core::Timestamp;
 use identity::crypto::KeyPair;
+use identity::did::CoreDIDUrl;
 use identity::did::MethodBuilder;
 use identity::did::MethodData;
 use identity::did::MethodRef;
 use identity::did::MethodType;
+use identity::did::DID;
 use identity::iota::DocumentChain;
 use identity::iota::DocumentDiff;
 use identity::iota::IntegrationChain;
@@ -56,10 +58,12 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
     let mut new: IotaDocument = chain.current().clone();
 
     let authentication: MethodRef = MethodBuilder::default()
-      .id(chain.id().join(&format!("#key-{}", i)).unwrap().into())
+      .id(CoreDIDUrl::from(
+        chain.id().to_url().join(&format!("#key-{}", i)).unwrap(),
+      ))
       .controller(chain.id().clone().into())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_b58(keypair.public()))
+      .key_data(MethodData::new_multibase(keypair.public()))
       .build()
       .map(Into::into)
       .unwrap();
