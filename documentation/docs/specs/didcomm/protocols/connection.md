@@ -21,8 +21,8 @@ Allows establishment of a [DIDComm connection](https://identity.foundation/didco
 ### Example Use-Cases
 
 - A corporation offers a QR code on their website for customers to connect to their services.
-- A person sends an invitation as an email to friend, to exchange information.
-- A device has a service embedded in their DID, that allows to connect to it, in order to read data.
+- A person sends an invitation as an email to a friend, to exchange information.
+- A device has a service embedded in their DID, that allows others to connect to it, in order to read data.
 
 ### Roles
 - Inviter: offers methods to establish connections.
@@ -201,7 +201,7 @@ The `id` of the preceding [invitation](#invitation) message MUST be used as the 
 
 ### Problem Reports {#problem-reports}
 
-The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
+The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their custom application-specific problem-reports.
 
 For guidance on problem-reports and a list of general codes see [problem reports](../resources/problem-reports).
 
@@ -218,7 +218,7 @@ This section is non-normative.
 ## Unresolved Questions
 
 - List supported handshake protocols for authentication post-connection?
-- How do parties know what to do post-connection, send protocol in invitation or does one party just try start a protocol immediately? For custom/corporate applications likely hard-coded, for general SSI wallets it is an open question.
+- How do parties know what to do post-connection, send protocol in the invitation, or does one party just try to start a protocol immediately? For custom/corporate applications likely hard-coded, for general SSI wallets, it is an open question.
 
 ## Related Work
 
