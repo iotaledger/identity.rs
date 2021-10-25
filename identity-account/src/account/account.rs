@@ -131,7 +131,7 @@ impl Account {
     Ok(self.load_snapshot().await?.into_identity())
   }
 
-  /// Resolves the DID Document associated with the specified `key`.
+  /// Resolves the DID Document associated with this `Account` from the Tangle.
   pub async fn resolve_identity(&self) -> Result<IotaDocument> {
     let snapshot: IdentitySnapshot = self.load_snapshot().await?;
     let did: &IotaDID = snapshot.identity().try_did()?;
