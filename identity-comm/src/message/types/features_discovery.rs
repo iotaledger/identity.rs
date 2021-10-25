@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 //! Provides types loosely representing the request and response roles from the [Discover Features Protocol](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/feature_discovery.md#discover-features-protocol-10)
- 
+
 use identity_core::common::Url;
 use identity_iota::did::IotaDIDUrl;
 use uuid::Uuid;
