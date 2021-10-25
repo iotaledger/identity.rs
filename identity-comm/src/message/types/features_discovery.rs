@@ -1,15 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
+//! Provides types loosely representing the request and response roles from the [Discover Features Protocol](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/feature_discovery.md#discover-features-protocol-10)
+ 
 use identity_core::common::Url;
 use identity_iota::did::IotaDIDUrl;
 use uuid::Uuid;
 
 use crate::message::Timing;
 
-/// A DIDComm `features-discovery` Request.
-///
-/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/i_features-discovery.md#featuresrequest)
+/// Analogue of a [DIDComm `features-discovery` Request](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/feature_discovery.md#discover-features-protocol-10)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct FeaturesRequest {
   context: String,
@@ -45,9 +44,7 @@ impl FeaturesRequest {
   impl_message_accessor!(timing => Option<Timing>);
 }
 
-/// A DIDComm `features-discovery` Response.
-///
-/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/i_features-discovery.md#featuresresponse)
+/// Analogue of a [DIDComm `features-discovery` Response](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/feature_discovery.md#discover-features-protocol-10)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct FeaturesResponse {
   context: String,
