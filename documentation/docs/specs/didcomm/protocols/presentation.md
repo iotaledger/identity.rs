@@ -11,15 +11,17 @@ sidebar_label: Presentation
 
 ## Overview
 
-Allows presentation of [verifiable credentials](https://www.w3.org/TR/vc-data-model) that are issued to a [holder](#roles)  and uniquely presented to a third-party [verifier](#roles) through [verifiable presentations](https://www.w3.org/TR/vc-data-model/#presentations).
+Allows presentation of one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model) that are issued to a [holder](#roles) and are uniquely presented to a third-party [verifier](#roles) through [verifiable presentations](https://www.w3.org/TR/vc-data-model/#presentations).
 
 ### Relationships
 - [Issuance](./issuance): a presentation may be used to provide extra information from the [holder](#roles) during a credential issuance.
+- [Authentication](./authentication): a presentation may be used after authentication to bind the authenticated DID to a physical identity.
 
 ### Example Use-Cases
 
 - A company founder wants to prove they have a bank account in order to apply for insurance.
-- A traveller proves to the border agency that they have a valid visa.
+- A traveler proves to the border agency that they have a valid visa.
+- An IoT device wants to prove who manufactured, installed, and benchmarked the device.
 
 ### Roles
 - [Holder](https://www.w3.org/TR/vc-data-model/#dfn-holders): possesses one or more credentials that are combined in a verifiable presentation to show proof of ownership to the verifier.
@@ -236,7 +238,7 @@ Sent by the holder to present a [verifiable presentation](https://www.w3.org/TR/
 - Type: `iota/presentation/0.1/presentation-result`
 - Role: [verifier](#roles)
 
-Sent by the verifier to communicate the result of the presentation. It allows the verifier raise problems and disputes encountered in the verification and to specify if the holder may retry a presentation. The message SHOULD be signed by the verifier for non-repudiation.
+Sent by the verifier to communicate the result of the presentation. It allows the verifier to raise problems and disputes encountered in the verification and to specify if the holder may retry a presentation. The message SHOULD be signed by the verifier for non-repudiation.
 
 Similar to [`presentation-request`](#presentation-request), [verifiers](#roles) are RECOMMENDED to use a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) whenever possible for non-repudiation of receipt of the presentation. [Holders](#roles) may choose to blocklist verifiers that refuse to provide signatures.
 
