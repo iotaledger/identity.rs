@@ -16,7 +16,7 @@ Allows establishment of a [DIDComm connection](https://identity.foundation/didco
 ### Relationships
 - [Termination](./termination): the DIDComm connection may be gracefully concluded using the [termination protocol](./termination).
 - [Authentication](./authentication): the authentication protocol can be used to authenticate parties participating in the established [connection](./connection).
-- [Feature Discovery](./feature-discovery): feature discovery can be used to learn about the capabilities of the other party.
+- [Feature Discovery](./feature-discovery): feature discovery can be used to learn about the capabilities of the other party after connection.
 
 ### Example Use-Cases
 
