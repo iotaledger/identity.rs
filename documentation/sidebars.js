@@ -120,16 +120,6 @@ module.exports = {
               collapsed: true,
               items: [
                 'specs/didcomm/overview',
-                'specs/didcomm/CHANGELOG',
-                {
-                  type: 'category',
-                  label: 'Resources',
-                  collapsed: true,
-                  items: [
-                    'specs/didcomm/resources/credential-kinds',
-                    'specs/didcomm/resources/problem-reports',
-                  ]
-                },
                 {
                   type: 'category',
                   label: 'Protocols',
@@ -146,6 +136,16 @@ module.exports = {
                     'specs/didcomm/protocols/termination',
                   ]
                 },
+                {
+                  type: 'category',
+                  label: 'Resources',
+                  collapsed: true,
+                  items: [
+                    'specs/didcomm/resources/credential-kinds',
+                    'specs/didcomm/resources/problem-reports',
+                  ]
+                },
+                'specs/didcomm/CHANGELOG',
               ]
             },
           ],
