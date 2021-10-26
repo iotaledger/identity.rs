@@ -17,7 +17,7 @@ This protocol allows two parties to mutually authenticate by disclosing and veri
 - [Connection](./connection): it is RECOMMENDED to establish [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) on [connection](./connection) to prevent revealing the DID of either party to eavesdroppers.
 
 ### Example Use-Cases
-- A connected sensor wants to make sure only valid well known parties connect to it, before allowing access.
+- A connected sensor wants to make sure only valid well-known parties connect to it, before allowing access.
 - A customer wants to make sure they are actually connecting to their bank, before presenting information.
 - An organisation wants to verify the DID of the employer before issuing access credentials. 
 
@@ -63,7 +63,7 @@ Sent to initiate the authentication process. This MUST be a [signed DIDComm mess
 [^2] The `upgradeEncryption` field allows negotiation of whether or not to use [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) for the [authentication](#authentication) protocol and for all messages that follow it. It is RECOMMENDED to specify `"required"` as it offers various guarantees of continuous authentication and payload integrity for every message. The available options are:
 - `"required"`: the [responder](#roles) MUST initiate [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption), from the following [authentication-response](#authentication-response) message onwards, or send a problem-report.
 - `"optional"`: the [responder](#roles) chooses whether or not to use [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption).
-- `"unsupported"`: the [responder](#roles) MUST NOT use [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption). A [responder] MAY reject [authentication-requests](#authentication-request) that do not support encryption.
+- `"unsupported"`: the [responder](#roles) MUST NOT use [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption). A [responder](#roles) MAY reject [authentication-requests](#authentication-request) that do not support encryption.
 Any other value for `upgradeEncryption` is invalid and should result in an invalid-request problem-report.
 
 #### Examples
@@ -126,7 +126,7 @@ This message MUST be a [signed DIDComm message](https://identity.foundation/didc
 
 #### Examples
 
-1. Responder presenting their DID and offering a challenge to the the Requester:
+1. Responder presenting their DID and offering a challenge to the Requester:
 
 ```json
 {
@@ -176,7 +176,7 @@ This MUST or MUST NOT use [sender authenticated encryption](https://identity.fou
 
 #### Examples
 
-1. Requester responding with the responders challenge from the previous message:
+1. Requester responding with the responder's challenge from the previous message:
 
 ```json
 {
@@ -218,7 +218,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 This section is non-normative.
 
-- **Trust**: this [authentication](#authentication) protocol only verifies that both parties have access to the necessary private keys (which could become compromised) associated with their DID documents; establishing and verifying their real-world identities may require additional interactions. For instance, requesting a verifiable presentation of credentials issued by a trusted third-party (like a government) is one possible way to verify a real-world identity.
+- **Trust**: this [authentication](#authentication) protocol only verifies that both parties have access to the necessary private keys (which could become compromised) associated with their DID documents; establishing and verifying their real-world identities may require additional interactions. For instance, requesting a verifiable presentation of credentials issued by a trusted third party (like a government) is one possible way to verify a real-world identity.
 - **Authorisation**: the permissions and capabilities of either party may still need to be established after [authentication](#authentication), either by verifiable presentation as above or other methods such as JWT tokens
 - **Privacy**: the [responder](#roles) may be subject to probing whereby their DID may be revealed even with the use of [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption), as the `skid` message header is linked to their DID. This is possible if the [responder](#roles) chooses to accept the [authentication-request](#authentication-request) of an unknown [requester](#roles), or the [requester](#roles) successfully replays an [authentication-request](#authentication-request) from a DID the [requester](#roles) trusts.
 

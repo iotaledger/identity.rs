@@ -9,13 +9,13 @@ sidebar_label: Overview
 
 ## Introduction
 
-The IOTA DIDComm Specification defines a number of [protocols](#protocols), that can be used for common Self Sovereign Identity (SSI) interactions like issuing and presenting credentials as well as supporting functions, such as connection management and authentication. Cross cutting concerns like error handling are discussed in the [resources](#resources) section.
+The IOTA DIDComm Specification standardizes how Self-Sovereign Identities (SSIs) can interact with each other and exchange information. Any applications that implement this standard will naturally be interoperable with each other. This reduces fragmentation in the ecosystem and therefore it is highly recommended to use this specification for any application built on top of the IOTA Identity framework. The specification defines several [protocols](#protocols), that can be used for common interactions like issuing and presenting credentials as well as supporting functions, such as connection management and authentication. Cross-cutting concerns like error handling are discussed in the [resources](#resources) section.
 
-The IOTA DIDComm Specification builds on the [DIDComm Messaging Specification](https://identity.foundation/didcomm-messaging/spec/) developed by the [DIF](https://identity.foundation/) and utilises [external protocols](#external-protocols) from the messaging specification for well established interactions like feature discovery.
+The IOTA DIDComm Specification builds on the [DIDComm Messaging Specification](https://identity.foundation/didcomm-messaging/spec/) developed by the [Decentralized Identity Foundation (DIF)](https://identity.foundation/) and utilises [external protocols](#external-protocols) from the messaging specification for well-established interactions like feature discovery.
 
-This specification is meant to be a complete solution for common use cases and therefore contains protocols for common SSI interactions. It is possible to extended the specification with custom protocols and custom methods in existing protocols to support application specific requirements. 
+This specification is meant to be a complete solution for common use cases and therefore contains protocols for common SSI interactions. It is possible to extend the specification with custom protocols and custom methods in existing protocols to support application-specific requirements. 
 
-The specification itself is technology agnostic. Much like the [DIDComm Messaging Specification](https://identity.foundation/didcomm-messaging/spec/) there are no restrictions on transport layers and a concrete implementation can be done in many different technologies.
+The specification itself is technology agnostic. Much like the [DIDComm Messaging Specification](https://identity.foundation/didcomm-messaging/spec/) there are no restrictions on transport layers and a concrete implementation can be done with many different technologies.
 
 ## Conformance
 
