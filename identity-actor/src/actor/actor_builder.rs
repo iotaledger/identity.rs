@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::errors::Result;
-use crate::types::RequestMessage;
-use crate::types::ResponseMessage;
 use crate::Actor;
+use crate::RequestMessage;
+use crate::ResponseMessage;
+use crate::Result;
 use dashmap::DashMap;
 use futures::channel::mpsc;
 use futures::AsyncRead;

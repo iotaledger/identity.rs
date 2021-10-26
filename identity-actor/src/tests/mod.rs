@@ -11,8 +11,8 @@ use libp2p::PeerId;
 use p2p::InitKeypair;
 use p2p::Keypair;
 
-use crate::actor_builder::ActorBuilder;
 use crate::Actor;
+use crate::ActorBuilder;
 
 async fn default_listening_actor() -> (Actor, Multiaddr, PeerId) {
   let id_keys = Keypair::generate_ed25519();

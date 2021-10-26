@@ -5,15 +5,15 @@ use std::any::Any;
 use std::ops::Deref;
 use std::sync::Arc;
 
-use crate::asyncfn::AsyncFn;
-use crate::endpoint::Endpoint;
-use crate::errors::RemoteSendError;
-use crate::errors::Result;
-use crate::traits::ActorRequest;
-use crate::traits::RequestHandler;
-use crate::types::RequestContext;
-use crate::types::RequestMessage;
-use crate::types::ResponseMessage;
+use crate::ActorRequest;
+use crate::AsyncFn;
+use crate::Endpoint;
+use crate::RemoteSendError;
+use crate::RequestContext;
+use crate::RequestHandler;
+use crate::RequestMessage;
+use crate::ResponseMessage;
+use crate::Result;
 
 use dashmap::DashMap;
 use futures::channel::mpsc::{self};
@@ -267,7 +267,7 @@ impl Actor {
 
     match request_response {
       Ok(res) => Ok(res),
-      Err(err) => Err(crate::errors::Error::DeserializationFailure(err.to_string())),
+      Err(err) => Err(crate::Error::DeserializationFailure(err.to_string())),
     }
   }
 

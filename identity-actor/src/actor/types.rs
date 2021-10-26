@@ -1,13 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::errors::Result;
+use crate::Endpoint;
+use crate::Result;
+
 use libp2p::PeerId;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fmt::Debug;
-
-use crate::endpoint::Endpoint;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RequestMessage {

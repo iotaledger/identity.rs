@@ -4,10 +4,10 @@
 use libp2p::Multiaddr;
 use libp2p::PeerId;
 
-use crate::errors::Result;
 use crate::storage::requests::IdentityList;
 use crate::Actor;
 use crate::IdentityResolve;
+use crate::Result;
 use crate::StorageHandler;
 
 use super::default_listening_actor;

@@ -8,11 +8,11 @@ use std::pin::Pin;
 
 use futures::Future;
 
-use crate::errors::RemoteSendError;
-use crate::traits::ActorRequest;
-use crate::traits::RequestHandler;
-use crate::types::RequestContext;
 use crate::Actor;
+use crate::ActorRequest;
+use crate::RemoteSendError;
+use crate::RequestContext;
+use crate::RequestHandler;
 
 #[derive(Clone)]
 pub struct AsyncFn<OBJ, REQ, FUT, FUN>

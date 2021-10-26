@@ -13,11 +13,11 @@ use libp2p::PeerId;
 use serde::de::DeserializeOwned;
 use tokio::sync::RwLock;
 
-use crate::endpoint::Endpoint;
-use crate::errors::RemoteSendError;
-use crate::traits::ActorRequest;
-use crate::types::RequestContext;
 use crate::Actor;
+use crate::ActorRequest;
+use crate::Endpoint;
+use crate::RemoteSendError;
+use crate::RequestContext;
 
 use super::requests::Presentation;
 use super::requests::PresentationOffer;
@@ -98,11 +98,7 @@ impl DidCommActor {
     }
   }
 
-  pub async fn send_request<REQ: ActorRequest>(
-    &mut self,
-    peer: PeerId,
-    input: REQ,
-  ) -> crate::errors::Result<REQ::Response> {
+  pub async fn send_request<REQ: ActorRequest>(&mut self, peer: PeerId, input: REQ) -> crate::Result<REQ::Response> {
     let endpoint = Endpoint::new_hook(input.request_name())?;
 
     if self.actor.handlers().contains_key(&endpoint) {
@@ -178,7 +174,7 @@ pub async fn presentation_holder_handler(
   mut actor: DidCommActor,
   peer: PeerId,
   request: Option<PresentationRequest>,
-) -> crate::errors::Result<()> {
+) -> crate::Result<()> {
   let _request: PresentationRequest = match request {
     Some(request) => request,
     None => {
@@ -209,7 +205,7 @@ pub async fn presentation_verifier_handler(
   mut actor: DidCommActor,
   peer: PeerId,
   _offer: Option<PresentationOffer>,
-) -> crate::errors::Result<()> {
+) -> crate::Result<()> {
   log::debug!("verifier: sending request");
   actor.send_request(peer, PresentationRequest::default()).await?;
 

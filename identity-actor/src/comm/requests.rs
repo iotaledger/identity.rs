@@ -3,7 +3,7 @@
 
 use std::borrow::Cow;
 
-use crate::traits::ActorRequest;
+use crate::ActorRequest;
 
 use serde::Deserialize;
 use serde::Serialize;

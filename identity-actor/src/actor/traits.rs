@@ -11,9 +11,9 @@ use futures::Future;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-use crate::errors::RemoteSendError;
-use crate::types::RequestContext;
 use crate::Actor;
+use crate::RemoteSendError;
+use crate::RequestContext;
 
 pub trait RequestHandler: Send + Sync {
   fn invoke<'this>(

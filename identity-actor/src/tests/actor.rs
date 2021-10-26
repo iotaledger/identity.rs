@@ -3,12 +3,12 @@
 
 use libp2p::tcp::TcpConfig;
 
-use crate::actor_builder::ActorBuilder;
-use crate::errors::Error;
-use crate::traits::ActorRequest;
-use crate::types::RequestContext;
 use crate::Actor;
+use crate::ActorBuilder;
+use crate::ActorRequest;
+use crate::Error;
 use crate::IdentityResolve;
+use crate::RequestContext;
 
 use super::default_listening_actor;
 use super::default_sending_actor;
@@ -40,7 +40,7 @@ async fn test_unknown_request() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn test_actors_can_communicate_bidirectionally() -> crate::errors::Result<()> {
+async fn test_actors_can_communicate_bidirectionally() -> crate::Result<()> {
   let transport1 = TcpConfig::new().nodelay(true);
   let transport2 = TcpConfig::new().nodelay(true);
 

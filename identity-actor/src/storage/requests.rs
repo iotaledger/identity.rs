@@ -9,7 +9,7 @@ use identity_iota::did::IotaDocument;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::traits::ActorRequest;
+use crate::ActorRequest;
 
 use super::StorageError;
 

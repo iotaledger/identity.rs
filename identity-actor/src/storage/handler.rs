@@ -3,9 +3,9 @@
 
 use std::sync::Arc;
 
-use crate::types::RequestContext;
 use crate::Actor;
 use crate::IdentityList;
+use crate::RequestContext;
 use identity_account::account::Account;
 use identity_account::identity::IdentityCreate;
 use identity_iota::did::IotaDID;

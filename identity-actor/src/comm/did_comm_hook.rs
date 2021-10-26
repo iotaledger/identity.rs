@@ -10,12 +10,12 @@ use futures::Future;
 
 use crate::actor::HandlerBuilder;
 use crate::comm::handler::DidCommTermination;
-use crate::endpoint::Endpoint;
-use crate::errors::RemoteSendError;
-use crate::traits::ActorRequest;
-use crate::traits::RequestHandler;
-use crate::types::RequestContext;
 use crate::Actor;
+use crate::ActorRequest;
+use crate::Endpoint;
+use crate::RemoteSendError;
+use crate::RequestContext;
+use crate::RequestHandler;
 use crate::Result as ActorResult;
 
 impl HandlerBuilder {
