@@ -35,8 +35,6 @@ impl TestFunctionState {
 
 #[tokio::test]
 async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
-  pretty_env_logger::init();
-
   let mut holder_actor = default_sending_actor().await;
 
   let (mut verifier_actor, addr, peer_id) = default_listening_actor().await;
@@ -71,8 +69,6 @@ async fn test_didcomm_presentation_holder_initiates() -> Result<()> {
 
 #[tokio::test]
 async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
-  pretty_env_logger::init();
-
   let (mut holder_actor, addr, peer_id) = default_listening_actor().await;
 
   let mut verifier_actor = default_sending_actor().await;
@@ -101,14 +97,13 @@ async fn test_didcomm_presentation_verifier_initiates() -> Result<()> {
     .unwrap();
 
   holder_actor.stop_handling_requests().await.unwrap();
+  verifier_actor.stop_handling_requests().await.unwrap();
 
   Ok(())
 }
 
 #[tokio::test]
 async fn test_didcomm_presentation_verifier_initiates_with_implicit_hooks() -> Result<()> {
-  pretty_env_logger::init();
-
   let (mut holder_actor, addr, peer_id) = default_listening_actor().await;
 
   let mut verifier_actor = default_sending_actor().await;
@@ -161,8 +156,6 @@ async fn test_didcomm_presentation_verifier_initiates_with_implicit_hooks() -> R
 
 #[tokio::test]
 async fn test_didcomm_hook_invocation_with_incorrect_type_fails() -> Result<()> {
-  pretty_env_logger::init();
-
   let mut verifier_actor = default_sending_actor().await;
 
   // a hook that has the wrong type: offer instead of request

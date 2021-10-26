@@ -3,7 +3,6 @@
 
 mod actor;
 mod didcomm;
-mod storage;
 
 use libp2p::tcp::TcpConfig;
 use libp2p::Multiaddr;

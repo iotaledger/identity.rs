@@ -15,8 +15,6 @@ use super::default_sending_actor;
 
 #[tokio::test]
 async fn test_unknown_request() -> anyhow::Result<()> {
-  pretty_env_logger::init();
-
   let (listening_actor, addr, peer_id) = default_listening_actor().await;
 
   let mut sending_actor = default_sending_actor().await;

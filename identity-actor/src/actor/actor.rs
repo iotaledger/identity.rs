@@ -3,6 +3,7 @@
 
 use std::any::Any;
 use std::ops::Deref;
+use std::result::Result as StdResult;
 use std::sync::Arc;
 
 use crate::ActorRequest;
@@ -190,7 +191,10 @@ impl Actor {
             }
           }
           Err(_) => {
-            let response = serde_json::to_vec(&error).unwrap();
+            // TODO: This might be a problem if we still want a request-response actor,
+            // one that doesn't just acknowledge - depends on serde_json's serialization.
+            let err_response: StdResult<(), RemoteSendError> = Err(error);
+            let response = serde_json::to_vec(&err_response).unwrap();
             if response_tx.send(response).is_err() {
               log::error!("could not respond to `{}` request", endpoint);
             }
@@ -227,12 +231,12 @@ impl Actor {
     // - when handler takes too long to respond (configurable via SwarmBuilder.with_timeout)
     // - error on the transport layer
     // - potentially others...
-    let response = serde_json::to_vec(&serde_json::Value::Null).unwrap();
+    let ack: StdResult<(), RemoteSendError> = Ok(());
+    let response = serde_json::to_vec(&ack).unwrap();
     let response_result = response_tx.send(response);
 
     if response_result.is_err() {
       log::error!("could not respond to request");
-      // log::error!("could not respond to `{}` request", request_name);
     }
   }
 
@@ -270,10 +274,12 @@ impl Actor {
 
     let response = self.comm.send_request(peer, request).await?;
 
-    let request_response: serde_json::Result<Request::Response> = serde_json::from_slice(&response);
+    let request_response: serde_json::Result<StdResult<Request::Response, RemoteSendError>> =
+      serde_json::from_slice(&response);
 
     match request_response {
-      Ok(res) => Ok(res),
+      Ok(Ok(res)) => Ok(res),
+      Ok(Err(err)) => Err(err.into()),
       Err(err) => Err(crate::Error::DeserializationFailure(err.to_string())),
     }
   }
@@ -312,7 +318,6 @@ impl Actor {
           }
         }
       }
-      // TODO: Re-wrap HandlerInvocationError as HookInvocationError?
       Err(error) => Err(error),
     }
   }
