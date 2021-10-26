@@ -15,11 +15,14 @@ pub mod traits;
 pub mod types;
 
 pub use actor::Actor;
-pub use errors::{Error, Result};
-pub use libp2p::{Multiaddr, PeerId};
+pub use errors::Error;
+pub use errors::Result;
+pub use libp2p::Multiaddr;
+pub use libp2p::PeerId;
 #[cfg(feature = "account")]
 pub use storage::handler::StorageHandler;
-pub use storage::requests::{IdentityList, IdentityResolve};
+pub use storage::requests::IdentityList;
+pub use storage::requests::IdentityResolve;
 pub use types::RequestMessage;
 
 pub use p2p::InitKeypair;

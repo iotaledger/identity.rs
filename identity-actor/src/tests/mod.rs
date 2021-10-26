@@ -5,10 +5,14 @@ mod actor;
 mod comm;
 mod storage;
 
-use libp2p::{tcp::TcpConfig, Multiaddr, PeerId};
-use p2p::{InitKeypair, Keypair};
+use libp2p::tcp::TcpConfig;
+use libp2p::Multiaddr;
+use libp2p::PeerId;
+use p2p::InitKeypair;
+use p2p::Keypair;
 
-use crate::{actor_builder::ActorBuilder, Actor};
+use crate::actor_builder::ActorBuilder;
+use crate::Actor;
 
 async fn default_listening_actor() -> (Actor, Multiaddr, PeerId) {
   let id_keys = Keypair::generate_ed25519();

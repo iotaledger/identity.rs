@@ -3,7 +3,8 @@
 
 use crate::errors::Result;
 use libp2p::PeerId;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 use std::fmt::Debug;
 
 use crate::endpoint::Endpoint;

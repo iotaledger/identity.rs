@@ -1,11 +1,17 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use libp2p::{Multiaddr, PeerId};
+use libp2p::Multiaddr;
+use libp2p::PeerId;
 
-use crate::{errors::Result, storage::requests::IdentityList, Actor, IdentityResolve, StorageHandler};
+use crate::errors::Result;
+use crate::storage::requests::IdentityList;
+use crate::Actor;
+use crate::IdentityResolve;
+use crate::StorageHandler;
 
-use super::{default_listening_actor, default_sending_actor};
+use super::default_listening_actor;
+use super::default_sending_actor;
 
 async fn default_storage_listening_actor() -> Result<(Actor, Multiaddr, PeerId)> {
   let (mut listening_actor, addr, peer_id) = default_listening_actor().await;

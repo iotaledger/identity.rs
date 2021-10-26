@@ -1,23 +1,22 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{
-  any::{Any, TypeId},
-  marker::PhantomData,
-  pin::Pin,
-};
+use std::any::Any;
+use std::any::TypeId;
+use std::marker::PhantomData;
+use std::pin::Pin;
 
 use futures::Future;
 
-use crate::{
-  actor::HandlerBuilder,
-  comm::handler::DidCommTermination,
-  endpoint::Endpoint,
-  errors::RemoteSendError,
-  traits::{ActorRequest, RequestHandler},
-  types::RequestContext,
-  Actor, Result as ActorResult,
-};
+use crate::actor::HandlerBuilder;
+use crate::comm::handler::DidCommTermination;
+use crate::endpoint::Endpoint;
+use crate::errors::RemoteSendError;
+use crate::traits::ActorRequest;
+use crate::traits::RequestHandler;
+use crate::types::RequestContext;
+use crate::Actor;
+use crate::Result as ActorResult;
 
 impl HandlerBuilder {
   pub fn add_hook<OBJ, REQ, FUT, FUN>(self, cmd: &'static str, handler: FUN) -> ActorResult<Self>

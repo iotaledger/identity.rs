@@ -2,13 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::errors::Result;
+use crate::types::RequestMessage;
 use crate::types::ResponseMessage;
-use crate::{types::RequestMessage, Actor};
+use crate::Actor;
 use dashmap::DashMap;
-use futures::{channel::mpsc, AsyncRead, AsyncWrite};
-use libp2p::{core::Transport, Multiaddr};
+use futures::channel::mpsc;
+use futures::AsyncRead;
+use futures::AsyncWrite;
+use libp2p::core::Transport;
+use libp2p::Multiaddr;
 use p2p::firewall::FirewallConfiguration;
-use p2p::{EventChannel, Executor, InitKeypair, ReceiveRequest, StrongholdP2pBuilder};
+use p2p::EventChannel;
+use p2p::Executor;
+use p2p::InitKeypair;
+use p2p::ReceiveRequest;
+use p2p::StrongholdP2pBuilder;
 
 pub struct ActorBuilder {
   receiver: mpsc::Receiver<ReceiveRequest<RequestMessage, ResponseMessage>>,

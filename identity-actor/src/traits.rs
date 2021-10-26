@@ -1,17 +1,19 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{
-  any::{Any, TypeId},
-  borrow::Cow,
-  fmt::Debug,
-  pin::Pin,
-};
+use std::any::Any;
+use std::any::TypeId;
+use std::borrow::Cow;
+use std::fmt::Debug;
+use std::pin::Pin;
 
 use futures::Future;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 
-use crate::{errors::RemoteSendError, types::RequestContext, Actor};
+use crate::errors::RemoteSendError;
+use crate::types::RequestContext;
+use crate::Actor;
 
 pub trait RequestHandler: Send + Sync {
   fn invoke<'this>(

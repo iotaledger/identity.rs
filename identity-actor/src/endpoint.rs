@@ -1,10 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::errors::{Error, Result};
+use crate::errors::Error;
+use crate::errors::Result;
 use std::fmt::Display;
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Endpoint {
@@ -74,7 +76,8 @@ impl Display for Endpoint {
 
 #[cfg(test)]
 mod tests {
-  use crate::{endpoint::Endpoint, errors::Error};
+  use crate::endpoint::Endpoint;
+  use crate::errors::Error;
 
   #[test]
   fn invalid_endpoints() {

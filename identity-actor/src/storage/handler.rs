@@ -3,14 +3,20 @@
 
 use std::sync::Arc;
 
-use crate::{types::RequestContext, Actor, IdentityList};
-use identity_account::{account::Account, identity::IdentityCreate};
-use identity_iota::{
-  did::{IotaDID, IotaDocument},
-  tangle::{ClientBuilder, ClientMap, Network, TangleResolve},
-};
+use crate::types::RequestContext;
+use crate::Actor;
+use crate::IdentityList;
+use identity_account::account::Account;
+use identity_account::identity::IdentityCreate;
+use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDocument;
+use identity_iota::tangle::ClientBuilder;
+use identity_iota::tangle::ClientMap;
+use identity_iota::tangle::Network;
+use identity_iota::tangle::TangleResolve;
 
-use super::{requests::IdentityResolve, StorageError};
+use super::requests::IdentityResolve;
+use super::StorageError;
 
 #[derive(Clone)]
 pub struct StorageHandler {

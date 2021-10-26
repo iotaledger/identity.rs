@@ -5,7 +5,8 @@ use std::borrow::Cow;
 
 use crate::traits::ActorRequest;
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct PresentationRequest(u32);

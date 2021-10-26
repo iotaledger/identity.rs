@@ -1,20 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{
-  any::{Any, TypeId},
-  marker::PhantomData,
-  pin::Pin,
-};
+use std::any::Any;
+use std::any::TypeId;
+use std::marker::PhantomData;
+use std::pin::Pin;
 
 use futures::Future;
 
-use crate::{
-  errors::RemoteSendError,
-  traits::{ActorRequest, RequestHandler},
-  types::RequestContext,
-  Actor,
-};
+use crate::errors::RemoteSendError;
+use crate::traits::ActorRequest;
+use crate::traits::RequestHandler;
+use crate::types::RequestContext;
+use crate::Actor;
 
 #[derive(Clone)]
 pub struct AsyncFn<OBJ, REQ, FUT, FUN>

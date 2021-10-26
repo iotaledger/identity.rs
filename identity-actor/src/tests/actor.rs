@@ -3,11 +3,15 @@
 
 use libp2p::tcp::TcpConfig;
 
-use crate::{
-  actor_builder::ActorBuilder, errors::Error, traits::ActorRequest, types::RequestContext, Actor, IdentityResolve,
-};
+use crate::actor_builder::ActorBuilder;
+use crate::errors::Error;
+use crate::traits::ActorRequest;
+use crate::types::RequestContext;
+use crate::Actor;
+use crate::IdentityResolve;
 
-use super::{default_listening_actor, default_sending_actor};
+use super::default_listening_actor;
+use super::default_sending_actor;
 
 #[tokio::test]
 async fn test_unknown_request() -> anyhow::Result<()> {

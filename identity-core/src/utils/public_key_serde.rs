@@ -3,12 +3,13 @@
 
 //! Provides (de)serialization functions for [`PublicKey`]
 
-use serde::{
-  de::{self, Visitor},
-  Deserializer, Serializer,
-};
+use serde::de::Visitor;
+use serde::de::{self};
+use serde::Deserializer;
+use serde::Serializer;
 
-use crate::{crypto::PublicKey, utils::decode_b58};
+use crate::crypto::PublicKey;
+use crate::utils::decode_b58;
 
 use super::encode_b58;
 

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use libp2p::Multiaddr;
-use p2p::{ListenErr, TransportErr};
+use p2p::ListenErr;
+use p2p::TransportErr;
 
 pub type Result<T> = std::result::Result<T, Error>;
 

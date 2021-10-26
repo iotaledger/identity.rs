@@ -1,30 +1,33 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{any::Any, ops::Deref, sync::Arc};
+use std::any::Any;
+use std::ops::Deref;
+use std::sync::Arc;
 
-use crate::{
-  asyncfn::AsyncFn,
-  endpoint::Endpoint,
-  errors::{RemoteSendError, Result},
-  traits::{ActorRequest, RequestHandler},
-  types::{RequestContext, RequestMessage, ResponseMessage},
-};
+use crate::asyncfn::AsyncFn;
+use crate::endpoint::Endpoint;
+use crate::errors::RemoteSendError;
+use crate::errors::Result;
+use crate::traits::ActorRequest;
+use crate::traits::RequestHandler;
+use crate::types::RequestContext;
+use crate::types::RequestMessage;
+use crate::types::ResponseMessage;
 
 use dashmap::DashMap;
-use futures::{
-  channel::{
-    mpsc::{self},
-    oneshot::Sender,
-  },
-  Future, StreamExt,
-};
-use libp2p::{Multiaddr, PeerId};
-use p2p::{ListenErr, ReceiveRequest, StrongholdP2p};
-use tokio::{
-  sync::Mutex,
-  task::{self, JoinHandle},
-};
+use futures::channel::mpsc::{self};
+use futures::channel::oneshot::Sender;
+use futures::Future;
+use futures::StreamExt;
+use libp2p::Multiaddr;
+use libp2p::PeerId;
+use p2p::ListenErr;
+use p2p::ReceiveRequest;
+use p2p::StrongholdP2p;
+use tokio::sync::Mutex;
+use tokio::task::JoinHandle;
+use tokio::task::{self};
 use uuid::Uuid;
 
 /// A map from an identifier to an object that contains the

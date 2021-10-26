@@ -1,20 +1,28 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{
-  borrow::Cow,
-  collections::{hash_map::Entry, HashMap, VecDeque},
-  sync::Arc,
-  time::Duration,
-};
+use std::borrow::Cow;
+use std::collections::hash_map::Entry;
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::sync::Arc;
+use std::time::Duration;
 
-use libp2p::{Multiaddr, PeerId};
+use libp2p::Multiaddr;
+use libp2p::PeerId;
 use serde::de::DeserializeOwned;
 use tokio::sync::RwLock;
 
-use crate::{endpoint::Endpoint, errors::RemoteSendError, traits::ActorRequest, types::RequestContext, Actor};
+use crate::endpoint::Endpoint;
+use crate::errors::RemoteSendError;
+use crate::traits::ActorRequest;
+use crate::types::RequestContext;
+use crate::Actor;
 
-use super::requests::{Presentation, PresentationOffer, PresentationRequest, PresentationResult};
+use super::requests::Presentation;
+use super::requests::PresentationOffer;
+use super::requests::PresentationRequest;
+use super::requests::PresentationResult;
 
 /// Can be returned from a hook to indicate that the protocol should immediately terminate.
 /// This doesn't include any way to set a cause for the termination, as it is expected that

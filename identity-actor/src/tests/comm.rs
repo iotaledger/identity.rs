@@ -1,25 +1,23 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-  comm::{
-    handler::{
-      presentation_holder_handler, presentation_verifier_handler, DidCommActor, DidCommHandler, DidCommMessages,
-      DidCommTermination,
-    },
-    requests::PresentationRequest,
-  },
-  errors::Result,
-  types::RequestContext,
-  Actor,
-};
+use crate::comm::handler::presentation_holder_handler;
+use crate::comm::handler::presentation_verifier_handler;
+use crate::comm::handler::DidCommActor;
+use crate::comm::handler::DidCommHandler;
+use crate::comm::handler::DidCommMessages;
+use crate::comm::handler::DidCommTermination;
+use crate::comm::requests::PresentationRequest;
+use crate::errors::Result;
+use crate::types::RequestContext;
+use crate::Actor;
 use std::result::Result as StdResult;
-use std::sync::{
-  atomic::{AtomicBool, Ordering},
-  Arc,
-};
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
 
-use super::{default_listening_actor, default_sending_actor};
+use super::default_listening_actor;
+use super::default_sending_actor;
 
 #[derive(Clone)]
 struct TestFunctionState {

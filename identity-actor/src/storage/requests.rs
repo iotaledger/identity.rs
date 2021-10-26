@@ -4,8 +4,10 @@
 use std::borrow::Cow;
 
 use identity_account::identity::IdentityCreate;
-use identity_iota::did::{IotaDID, IotaDocument};
-use serde::{Deserialize, Serialize};
+use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDocument;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::traits::ActorRequest;
 
