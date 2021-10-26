@@ -78,17 +78,7 @@ Any other value for `upgradeEncryption` is invalid and should result in an inval
 }
 ```
 
-2. Request payload with optional encryption:
-
-```json
-{
-  "did": "did:iota:9rK6DPF46MCEzgfLD8AHFsaTuMqvmRo6kbXfjqQJPJmC",                   
-  "requesterChallenge": "fd9965cc-bc3f-42e7-8fdf-933b9a3a6138",                   
-  "upgradeEncryption": "optional",
-}
-```
-
-3. Full DIDComm message with header fields and signature:
+2. Full DIDComm message with header fields and signature:
 
 ```json
 {
@@ -218,7 +208,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 This section is non-normative.
 
-- **Trust**: this [authentication](#authentication) protocol only verifies that both parties have access to the necessary private keys (which could become compromised) associated with their DID documents; establishing and verifying their real-world identities may require additional interactions. For instance, requesting a verifiable presentation of credentials issued by a trusted third party (like a government) is one possible way to verify a real-world identity.
+- **Trust**: this [authentication](#authentication) protocol only verifies that both parties have access to the necessary private keys (which could become compromised) associated with their DID documents. Verifying whether a DID document is [bound to a physical identity](https://www.w3.org/TR/did-core/#binding-to-physical-identity) may require additional interactions. For instance, requesting a verifiable presentation of credentials issued by a trusted third party, such as a government, is one possible way to verify a physical identity.
 - **Authorisation**: the permissions and capabilities of either party may still need to be established after [authentication](#authentication), either by verifiable presentation as above or other methods such as JWT tokens
 - **Privacy**: the [responder](#roles) may be subject to probing whereby their DID may be revealed even with the use of [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption), as the `skid` message header is linked to their DID. This is possible if the [responder](#roles) chooses to accept the [authentication-request](#authentication-request) of an unknown [requester](#roles), or the [requester](#roles) successfully replays an [authentication-request](#authentication-request) from a DID the [requester](#roles) trusts.
 
@@ -233,6 +223,7 @@ This section is non-normative.
   - https://github.com/decentralized-identity/didcomm-messaging/issues/219
 
 - Man-in-the-middle attacks?
+   - not a problem with DIDComm in itself but rather establishing trust that a DID is bound to a physical identity. 
    - note possible attack vectors for the requester and responder, including intercepting or modifying the invitation in the connection protocol.
    - use [Well Known DID Configuration](https://identity.foundation/.well-known/resources/did-configuration/) or DNS verification to mitigate?
    - https://lilithwittmann.medium.com/mit-der-id-wallet-kannst-du-alles-und-jeder-sein-au%C3%9Fer-du-musst-dich-ausweisen-829293739fa0
