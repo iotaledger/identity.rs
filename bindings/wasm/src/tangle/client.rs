@@ -166,7 +166,7 @@ impl Client {
     Ok(promise)
   }
 
-  /// Returns the [`DiffChainHistory`] of a diff chain starting from a document on the
+  /// Returns the `DiffChainHistory` of a diff chain starting from a document on the
   /// integration chain.
   ///
   /// NOTE: the document must have been published to the tangle and have a valid message id and

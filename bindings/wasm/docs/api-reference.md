@@ -32,7 +32,7 @@
 <dt><a href="#Document">Document</a></dt>
 <dd></dd>
 <dt><a href="#DocumentDiff">DocumentDiff</a></dt>
-<dd><p>Defines the difference between two DID [<code>Document</code>]s&#39; JSON representations.</p>
+<dd><p>Defines the difference between two DID <code>Document</code>s&#39; JSON representations.</p>
 </dd>
 <dt><a href="#DocumentHistory">DocumentHistory</a></dt>
 <dd><p>A DID Document&#39;s history and current state.</p>
@@ -236,7 +236,7 @@ Returns the message history of the given DID.
 <a name="Client+resolveDiffHistory"></a>
 
 ### client.resolveDiffHistory(document) ⇒ <code>Promise.&lt;any&gt;</code>
-Returns the [`DiffChainHistory`] of a diff chain starting from a document on the
+Returns the `DiffChainHistory` of a diff chain starting from a document on the
 integration chain.
 
 NOTE: the document must have been published to the tangle and have a valid message id and
@@ -766,7 +766,7 @@ Sets the `query` component of the `DIDUrl`.
 <a name="DIDUrl+join"></a>
 
 ### didUrl.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Append a string representing a path, query, and/or fragment to this [`DIDUrl`].
+Append a string representing a path, query, and/or fragment to this `DIDUrl`.
 
 Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
 segment and any following segments in order of path, query, then fragment.
@@ -863,7 +863,7 @@ Parses a `DIDUrl` from the input string.
 <a name="DiffChainHistory+chainData"></a>
 
 ### diffChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
+Returns a `js_sys::Array` of the chain objects.
 
 NOTE: this clones the field.
 
@@ -871,7 +871,7 @@ NOTE: this clones the field.
 <a name="DiffChainHistory+spam"></a>
 
 ### diffChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
+Returns a `js_sys::Array` of `MessageIds` as strings.
 
 NOTE: this clones the field.
 
@@ -879,13 +879,13 @@ NOTE: this clones the field.
 <a name="DiffChainHistory+toJSON"></a>
 
 ### diffChainHistory.toJSON() ⇒ <code>any</code>
-Serializes a `$ident` object as a JSON object.
+Serializes as a JSON object.
 
 **Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
 <a name="DiffChainHistory.fromJSON"></a>
 
 ### DiffChainHistory.fromJSON(json) ⇒ [<code>DiffChainHistory</code>](#DiffChainHistory)
-Deserializes a `$ident` object from a JSON object.
+Deserializes from a JSON object.
 
 **Kind**: static method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
 
@@ -1204,9 +1204,9 @@ Verifies a `DocumentDiff` signature and merges the changes into `self`.
 ### document.integrationIndex() ⇒ <code>string</code>
 Returns the Tangle index of the integration chain for this DID.
 
-This is simply the tag segment of the [`IotaDID`].
+This is simply the tag segment of the `DID`.
 E.g.
-For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
+For a document with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
 `doc.integration_index()` == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1257,7 +1257,7 @@ Deserializes a `Document` object from a JSON object.
 <a name="DocumentDiff"></a>
 
 ## DocumentDiff
-Defines the difference between two DID [`Document`]s' JSON representations.
+Defines the difference between two DID `Document`s' JSON representations.
 
 **Kind**: global class  
 
@@ -1366,7 +1366,7 @@ A DID Document's history and current state.
 <a name="DocumentHistory+integrationChainData"></a>
 
 ### documentHistory.integrationChainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of integration chain [`WasmDocuments`](WasmDocument).
+Returns a `js_sys::Array` of integration chain `Documents`.
 
 NOTE: clones the data.
 
@@ -1374,7 +1374,7 @@ NOTE: clones the data.
 <a name="DocumentHistory+integrationChainSpam"></a>
 
 ### documentHistory.integrationChainSpam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of message id strings for "spam" messages on the same index
+Returns a `js_sys::Array` of message id strings for "spam" messages on the same index
 as the integration chain.
 
 NOTE: clones the data.
@@ -1383,7 +1383,7 @@ NOTE: clones the data.
 <a name="DocumentHistory+diffChainData"></a>
 
 ### documentHistory.diffChainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of diff chain [`WasmDocumentDiffs`](WasmDocumentDiff).
+Returns a `js_sys::Array` of diff chain `DocumentDiffs`.
 
 NOTE: clones the data.
 
@@ -1391,7 +1391,7 @@ NOTE: clones the data.
 <a name="DocumentHistory+diffChainSpam"></a>
 
 ### documentHistory.diffChainSpam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of message id strings for "spam" messages on the same index
+Returns a `js_sys::Array` of message id strings for "spam" messages on the same index
 as the diff chain.
 
 NOTE: clones the data.
@@ -1400,13 +1400,13 @@ NOTE: clones the data.
 <a name="DocumentHistory+toJSON"></a>
 
 ### documentHistory.toJSON() ⇒ <code>any</code>
-Serializes a [`WasmDocumentHistory`] object as a JSON object.
+Serializes `DocumentHistory` as a JSON object.
 
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory.fromJSON"></a>
 
 ### DocumentHistory.fromJSON(json) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
-Deserializes a [`WasmDocumentHistory`] object from a JSON object.
+Deserializes `DocumentHistory` from a JSON object.
 
 **Kind**: static method of [<code>DocumentHistory</code>](#DocumentHistory)  
 
@@ -1478,7 +1478,7 @@ Deserializes a [`WasmDocumentHistory`] object from a JSON object.
 <a name="IntegrationChainHistory+chainData"></a>
 
 ### integrationChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
+Returns a `js_sys::Array` of the chain objects.
 
 NOTE: this clones the field.
 
@@ -1486,7 +1486,7 @@ NOTE: this clones the field.
 <a name="IntegrationChainHistory+spam"></a>
 
 ### integrationChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
+Returns a `js_sys::Array` of `MessageIds` as strings.
 
 NOTE: this clones the field.
 
@@ -1494,13 +1494,13 @@ NOTE: this clones the field.
 <a name="IntegrationChainHistory+toJSON"></a>
 
 ### integrationChainHistory.toJSON() ⇒ <code>any</code>
-Serializes a `$ident` object as a JSON object.
+Serializes as a JSON object.
 
 **Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
 <a name="IntegrationChainHistory.fromJSON"></a>
 
 ### IntegrationChainHistory.fromJSON(json) ⇒ [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)
-Deserializes a `$ident` object from a JSON object.
+Deserializes from a JSON object.
 
 **Kind**: static method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
 
@@ -1804,7 +1804,7 @@ Returns the web explorer URL of the given `message`.
 <a name="Network.try_from_name"></a>
 
 ### Network.try\_from\_name(name) ⇒ [<code>Network</code>](#Network)
-Parses the provided string to a [`WasmNetwork`].
+Parses the provided string to a `Network`.
 
 **Kind**: static method of [<code>Network</code>](#Network)  
 

@@ -331,9 +331,9 @@ impl WasmDocument {
 
   /// Returns the Tangle index of the integration chain for this DID.
   ///
-  /// This is simply the tag segment of the [`IotaDID`].
+  /// This is simply the tag segment of the `DID`.
   /// E.g.
-  /// For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
+  /// For a document with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
   /// `doc.integration_index()` == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"
   #[wasm_bindgen(js_name = integrationIndex)]
   pub fn integration_index(&self) -> String {
