@@ -22,7 +22,11 @@ async fn main() -> Result<()> {
   // As an example we are treating the devnet as a `private-tangle`, so we use `dev`.
   // Replace this with `tangle` if you run this against a one-click private tangle.
   let network_name = "dev";
-  let network = Network::try_from_name(network_name)?;
+  let mut network = Network::try_from_name(network_name)?;
+
+  // If you deployed an explorer locally this would usually be `http://127.0.0.1:8082/identity-resolver`
+  network.set_explorer_url("https://explorer.iota.org/devnet/identity-resolver".parse()?)?;
+
   // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265/`
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
@@ -46,7 +50,7 @@ async fn main() -> Result<()> {
     })
     // Configure a client for the private network, here `dev`
     // Also set the URL that points to the REST API of the node
-    .client(network, |builder| {
+    .client(network.clone(), |builder| {
       // unwrap is safe, we provided a valid node URL
       builder.node(private_node_url).unwrap()
     })
@@ -70,8 +74,8 @@ async fn main() -> Result<()> {
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   println!(
-    "[Example] Explore the DID Document = {}/{}",
-    iota_did.network()?.explorer_url().unwrap().to_string(),
+    "[Example] Explore the DID Document = {}{}",
+    network.explorer_url().expect("no explorer url was set").to_string(),
     iota_did.to_string()
   );
 
