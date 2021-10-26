@@ -5,7 +5,7 @@
 mod tests;
 
 pub mod actor;
-pub mod comm;
+pub mod didcomm;
 pub mod storage;
 
 pub use actor::*;

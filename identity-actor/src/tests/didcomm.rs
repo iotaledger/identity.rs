@@ -1,13 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::comm::handler::presentation_holder_handler;
-use crate::comm::handler::presentation_verifier_handler;
-use crate::comm::handler::DidCommActor;
-use crate::comm::handler::DidCommHandler;
-use crate::comm::handler::DidCommMessages;
-use crate::comm::handler::DidCommTermination;
-use crate::comm::requests::PresentationRequest;
+use crate::didcomm::presentation::presentation_holder_handler;
+use crate::didcomm::presentation::presentation_verifier_handler;
+use crate::didcomm::actor::DidCommActor;
+use crate::didcomm::presentation::DidCommHandler;
+use crate::didcomm::actor::DidCommMessages;
+use crate::didcomm::actor::DidCommTermination;
+use crate::didcomm::presentation::PresentationRequest;
 use crate::Actor;
 use crate::RequestContext;
 use crate::Result;

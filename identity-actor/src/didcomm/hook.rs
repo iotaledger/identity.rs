@@ -9,7 +9,7 @@ use std::pin::Pin;
 use futures::Future;
 
 use crate::actor::HandlerBuilder;
-use crate::comm::handler::DidCommTermination;
+use crate::didcomm::actor::DidCommTermination;
 use crate::Actor;
 use crate::ActorRequest;
 use crate::Endpoint;

@@ -19,11 +19,6 @@ use crate::Endpoint;
 use crate::RemoteSendError;
 use crate::RequestContext;
 
-use super::requests::Presentation;
-use super::requests::PresentationOffer;
-use super::requests::PresentationRequest;
-use super::requests::PresentationResult;
-
 /// Can be returned from a hook to indicate that the protocol should immediately terminate.
 /// This doesn't include any way to set a cause for the termination, as it is expected that
 /// a hook sends a problem report to the peer before returning this type.
@@ -129,90 +124,4 @@ impl ActorRequest for serde_json::Value {
   fn request_name<'cow>(&self) -> std::borrow::Cow<'cow, str> {
     Cow::Borrowed("n/a")
   }
-}
-
-#[derive(Clone)]
-pub struct DidCommHandler;
-
-impl DidCommHandler {
-  pub async fn new() -> Self {
-    Self
-  }
-
-  pub async fn presentation_holder_actor_handler(self, mut actor: Actor, request: RequestContext<PresentationRequest>) {
-    log::debug!("holder: received presentation request");
-
-    let did_comm_actor = DidCommActor::new(actor.clone());
-
-    actor
-      .add_state(did_comm_actor.messages.clone())
-      .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
-      .unwrap();
-
-    presentation_holder_handler(DidCommActor::new(actor), request.peer, Some(request.input))
-      .await
-      .unwrap();
-  }
-
-  pub async fn presentation_verifier_actor_handler(self, mut actor: Actor, request: RequestContext<PresentationOffer>) {
-    log::debug!("verifier: received offer from {}", request.peer);
-
-    let did_comm_actor = DidCommActor::new(actor.clone());
-
-    actor
-      .add_state(did_comm_actor.messages.clone())
-      .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
-      .unwrap();
-
-    presentation_verifier_handler(did_comm_actor, request.peer, Some(request.input))
-      .await
-      .unwrap();
-  }
-}
-
-pub async fn presentation_holder_handler(
-  mut actor: DidCommActor,
-  peer: PeerId,
-  request: Option<PresentationRequest>,
-) -> crate::Result<()> {
-  let _request: PresentationRequest = match request {
-    Some(request) => request,
-    None => {
-      log::debug!("holder: sending presentation offer");
-      actor.send_request(peer, PresentationOffer::default()).await?;
-
-      let req = actor.await_message(peer).await;
-      log::debug!("holder: received presentation request");
-
-      req
-    }
-  };
-
-  // let _result = actor.call_hook("didcomm/presentation/user_consent", request).await?;
-
-  log::debug!("holder: sending presentation");
-  actor.send_request(peer, Presentation::default()).await?;
-
-  let _result: PresentationResult = actor.await_message(peer).await;
-  log::debug!("holder: received presentation result");
-
-  // let _result = actor.call_hook("didcomm/presentation/result", result).await?;
-
-  Ok(())
-}
-
-pub async fn presentation_verifier_handler(
-  mut actor: DidCommActor,
-  peer: PeerId,
-  _offer: Option<PresentationOffer>,
-) -> crate::Result<()> {
-  log::debug!("verifier: sending request");
-  actor.send_request(peer, PresentationRequest::default()).await?;
-
-  let presentation: Presentation = actor.await_message(peer).await;
-  log::debug!("verifier: received presentation: {:?}", presentation);
-
-  log::debug!("verifier: sending presentation result");
-  actor.send_request(peer, PresentationResult::default()).await?;
-  Ok(())
 }

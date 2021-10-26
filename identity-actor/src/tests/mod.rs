@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod actor;
-mod comm;
+mod didcomm;
 mod storage;
 
 use libp2p::tcp::TcpConfig;
