@@ -46,12 +46,16 @@ impl From<ListenErr> for Error {
 }
 
 /// Errors that can occur on the remote actor during [Actor::send_request] calls.
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, thiserror::Error, serde::Serialize, serde::Deserialize)]
 pub enum RemoteSendError {
   /// No handler was set on the receiver and thus this request is not processable.
+  #[error("unkown request: `{0}`")]
   UnknownRequest(String),
+  #[error("could not invoke the handler: {0}")]
   HandlerInvocationError(String),
+  #[error("hook invocation error: {0}")]
   HookInvocationError(String),
+  #[error("failed to deserialize: {0}")]
   DeserializationFailure(String),
 }
 

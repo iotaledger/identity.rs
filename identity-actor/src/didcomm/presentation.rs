@@ -3,7 +3,9 @@
 
 use libp2p::PeerId;
 
-use crate::{didcomm::actor::DidCommMessages, Actor, RequestContext};
+use crate::didcomm::actor::DidCommMessages;
+use crate::Actor;
+use crate::RequestContext;
 
 use super::actor::DidCommActor;
 

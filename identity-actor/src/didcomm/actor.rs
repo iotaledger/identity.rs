@@ -98,6 +98,7 @@ impl DidCommActor {
 
     if self.actor.handlers().contains_key(&endpoint) {
       log::debug!("Calling hook: {}", endpoint);
+
       let hook_result: Result<Result<REQ, DidCommTermination>, RemoteSendError> =
         self.actor.call_hook(endpoint, peer, input).await;
 

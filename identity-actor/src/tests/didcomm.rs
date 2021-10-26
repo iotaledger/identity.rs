@@ -1,12 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::didcomm::presentation::presentation_holder_handler;
-use crate::didcomm::presentation::presentation_verifier_handler;
 use crate::didcomm::actor::DidCommActor;
-use crate::didcomm::presentation::DidCommHandler;
 use crate::didcomm::actor::DidCommMessages;
 use crate::didcomm::actor::DidCommTermination;
+use crate::didcomm::presentation::presentation_holder_handler;
+use crate::didcomm::presentation::presentation_verifier_handler;
+use crate::didcomm::presentation::DidCommHandler;
+use crate::didcomm::presentation::PresentationOffer;
 use crate::didcomm::presentation::PresentationRequest;
 use crate::Actor;
 use crate::RequestContext;
@@ -154,6 +155,38 @@ async fn test_didcomm_presentation_verifier_initiates_with_implicit_hooks() -> R
   holder_actor.stop_handling_requests().await.unwrap();
 
   assert!(function_state.was_called.load(Ordering::SeqCst));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_didcomm_hook_invocation_with_incorrect_type_fails() -> Result<()> {
+  pretty_env_logger::init();
+
+  let mut verifier_actor = default_sending_actor().await;
+
+  // a hook that has the wrong type: offer instead of request
+  async fn presentation_request_hook(
+    _: (),
+    _: Actor,
+    req: RequestContext<PresentationOffer>,
+  ) -> StdResult<PresentationOffer, DidCommTermination> {
+    Ok(req.input)
+  }
+
+  verifier_actor
+    .add_state(())
+    .add_hook("didcomm/presentation_request/hook", presentation_request_hook)
+    .unwrap();
+
+  let peer_id = verifier_actor.peer_id();
+  let mut verifier_didcomm_actor = DidCommActor::new(verifier_actor);
+
+  let result = verifier_didcomm_actor
+    .send_request(peer_id, PresentationRequest::default())
+    .await;
+
+  assert!(matches!(result.unwrap_err(), crate::Error::HookInvocationError(_)));
 
   Ok(())
 }

@@ -15,14 +15,17 @@ use crate::Actor;
 use crate::RemoteSendError;
 use crate::RequestContext;
 
+/// A future whose output is an `Any` trait object.
+pub type AnyFuture<'me> = Pin<Box<dyn Future<Output = Box<dyn Any>> + Send + 'me>>;
+
 pub trait RequestHandler: Send + Sync {
-  fn invoke<'this>(
-    &'this self,
+  fn invoke(
+    &self,
     actor: Actor,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     request: Box<dyn Any + Send>,
-  ) -> Pin<Box<dyn Future<Output = Box<dyn Any>> + Send + 'this>>;
+  ) -> Result<AnyFuture<'_>, RemoteSendError>;
 
   fn object_type_id(&self) -> TypeId;
 

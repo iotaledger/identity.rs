@@ -165,22 +165,29 @@ impl Actor {
           Self::send_ack(response_tx);
           let request_context: RequestContext<()> = RequestContext::new((), receive_request.peer, endpoint);
           let input = handler.value().1.deserialize_request(request.data).unwrap();
-          handler
-            .value()
-            .1
-            .invoke(self.clone(), request_context, object, input)
-            .await;
+          match handler.value().1.invoke(self.clone(), request_context, object, input) {
+            Ok(invocation) => {
+              invocation.await;
+            }
+            Err(err) => {
+              log::error!("{}", err);
+            }
+          }
         }
         Err(error) => match self.get_handler(&endpoint.clone().to_catch_all()) {
           Ok((handler, object)) => {
             Self::send_ack(response_tx);
             let request_context: RequestContext<()> = RequestContext::new((), receive_request.peer, endpoint);
             let input = handler.value().1.deserialize_request(request.data).unwrap();
-            handler
-              .value()
-              .1
-              .invoke(self.clone(), request_context, object, input)
-              .await;
+
+            match handler.value().1.invoke(self.clone(), request_context, object, input) {
+              Ok(invocation) => {
+                invocation.await;
+              }
+              Err(err) => {
+                log::error!("{}", err);
+              }
+            }
           }
           Err(_) => {
             let response = serde_json::to_vec(&error).unwrap();
@@ -290,7 +297,7 @@ impl Actor {
         let request_context = RequestContext::new((), peer, endpoint);
 
         let result = handler
-          .invoke(self.clone(), request_context, state, type_erased_input)
+          .invoke(self.clone(), request_context, state, type_erased_input)?
           .await;
 
         match result.downcast::<O>() {

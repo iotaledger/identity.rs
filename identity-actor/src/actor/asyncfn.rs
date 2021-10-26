@@ -4,12 +4,12 @@
 use std::any::Any;
 use std::any::TypeId;
 use std::marker::PhantomData;
-use std::pin::Pin;
 
 use futures::Future;
 
 use crate::Actor;
 use crate::ActorRequest;
+use crate::AnyFuture;
 use crate::RemoteSendError;
 use crate::RequestContext;
 use crate::RequestHandler;
@@ -54,22 +54,36 @@ where
   FUT: Future<Output = REQ::Response> + Send,
   FUN: Send + Sync + Fn(OBJ, Actor, RequestContext<REQ>) -> FUT,
 {
-  fn invoke<'this>(
-    &'this self,
+  fn invoke(
+    &self,
     actor: Actor,
     context: RequestContext<()>,
     object: Box<dyn Any + Send + Sync>,
     request: Box<dyn Any + Send>,
-  ) -> Pin<Box<dyn Future<Output = Box<dyn Any>> + Send + 'this>> {
-    let input: Box<REQ> = request.downcast().unwrap();
+  ) -> Result<AnyFuture<'_>, RemoteSendError> {
+    let input: Box<REQ> = request.downcast().map_err(|_| {
+      RemoteSendError::HandlerInvocationError(format!(
+        "{}: could not downcast request to: {}",
+        context.endpoint,
+        std::any::type_name::<REQ>()
+      ))
+    })?;
+
     let request: RequestContext<REQ> = context.convert(*input);
-    let boxed_object: Box<OBJ> = object.downcast().unwrap();
+
+    let boxed_object: Box<OBJ> = object.downcast().map_err(|_| {
+      RemoteSendError::HandlerInvocationError(format!(
+        "{}: could not downcast state object to: {}",
+        request.endpoint,
+        std::any::type_name::<OBJ>()
+      ))
+    })?;
     let future = async move {
       let response: REQ::Response = (self.func)(*boxed_object, actor, request).await;
       let type_erased: Box<dyn Any> = Box::new(response);
       type_erased
     };
-    Box::pin(future)
+    Ok(Box::pin(future))
   }
 
   fn deserialize_request(&self, input: Vec<u8>) -> Result<Box<dyn Any + Send>, RemoteSendError> {
