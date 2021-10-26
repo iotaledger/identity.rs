@@ -93,25 +93,24 @@ impl DidCommActor {
   pub async fn send_request<REQ: ActorRequest>(
     &mut self,
     peer: PeerId,
-    command: REQ,
+    input: REQ,
   ) -> crate::errors::Result<REQ::Response> {
-    // TODO: Only call hook if it exists
+    let endpoint = Endpoint::new_hook(input.request_name())?;
 
-    let hook_result: Result<Result<REQ, DidCommTermination>, RemoteSendError> = self
-      .actor
-      .call_hook(Endpoint::new_hook(command.request_name())?, peer, command)
-      .await;
+    if self.actor.handlers().contains_key(&endpoint) {
+      log::debug!("Calling hook: {}", endpoint);
+      let hook_result: Result<Result<REQ, DidCommTermination>, RemoteSendError> =
+        self.actor.call_hook(endpoint, peer, input).await;
 
-    // TODO: Since the hook `RemoteSendError` is somewhat different from `send_request`
-    // we should wrap it in a HookInvocationError or something, to make it clearer for
-    // the caller that the hook caused the error.
-    let hook_result = hook_result?;
-
-    match hook_result {
-      Ok(request) => self.actor.send_request(peer, request).await,
-      Err(_) => {
-        panic!("did comm termination")
+      match hook_result {
+        Ok(Ok(request)) => self.actor.send_request(peer, request).await,
+        Ok(Err(_)) => {
+          unimplemented!("didcomm termination");
+        }
+        Err(err) => Err(err.into()),
       }
+    } else {
+      self.actor.send_request(peer, input).await
     }
   }
 

@@ -28,6 +28,8 @@ pub enum Error {
   UnknownRequest(String),
   #[error("could not invoke the handler: {0}")]
   HandlerInvocationError(String),
+  #[error("hook invocation error: {0}")]
+  HookInvocationError(String),
   #[error("failed to deserialize: {0}")]
   DeserializationFailure(String),
 }
@@ -48,6 +50,7 @@ pub enum RemoteSendError {
   /// No handler was set on the receiver and thus this request is not processable.
   UnknownRequest(String),
   HandlerInvocationError(String),
+  HookInvocationError(String),
   DeserializationFailure(String),
 }
 
@@ -56,6 +59,7 @@ impl From<RemoteSendError> for Error {
     match err {
       RemoteSendError::UnknownRequest(req) => Error::UnknownRequest(req),
       RemoteSendError::HandlerInvocationError(err) => Error::HandlerInvocationError(err),
+      RemoteSendError::HookInvocationError(err) => Error::HookInvocationError(err),
       RemoteSendError::DeserializationFailure(err) => Error::DeserializationFailure(err),
     }
   }

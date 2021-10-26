@@ -10,11 +10,12 @@ use serde::{Deserialize, Serialize};
 pub struct Endpoint {
   name: String,
   handler: String,
-  hook: bool,
+  is_hook: bool,
 }
 
 impl Endpoint {
   pub fn new(string: impl AsRef<str>) -> Result<Self> {
+    let mut is_hook = false;
     let mut split = string.as_ref().split('/');
 
     let name = split.next().unwrap().to_owned();
@@ -29,31 +30,28 @@ impl Endpoint {
       if hook != "hook" {
         return Err(Error::InvalidEndpoint);
       }
+      is_hook = true;
     }
 
     if split.next().is_some() {
       return Err(Error::InvalidEndpoint);
     }
 
-    Ok(Self {
-      name,
-      handler,
-      hook: false,
-    })
+    Ok(Self { name, handler, is_hook })
   }
 
   pub fn new_hook(string: impl AsRef<str>) -> Result<Self> {
     let mut endpoint = Self::new(string)?;
-    endpoint.hook = true;
+    endpoint.is_hook = true;
     Ok(endpoint)
   }
 
-  pub fn set_hook(&mut self, hook: bool) {
-    self.hook = hook;
+  pub fn set_is_hook(&mut self, is_hook: bool) {
+    self.is_hook = is_hook;
   }
 
-  pub fn hook(&self) -> bool {
-    self.hook
+  pub fn is_hook(&self) -> bool {
+    self.is_hook
   }
 
   pub fn to_catch_all(self) -> Self {
@@ -67,7 +65,7 @@ impl Endpoint {
 impl Display for Endpoint {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "{}/{}", self.name, self.handler)?;
-    if self.hook {
+    if self.is_hook {
       write!(f, "/hook")?;
     }
     Ok(())
@@ -91,8 +89,8 @@ mod tests {
 
   #[test]
   fn valid_endpoints() {
-    assert!(Endpoint::new("a/b").is_ok());
-    assert!(Endpoint::new("a/b/hook").is_ok());
-    assert!(Endpoint::new("a/*").is_ok());
+    assert!(!Endpoint::new("a/b").unwrap().is_hook());
+    assert!(Endpoint::new("a/b/hook").unwrap().is_hook());
+    assert!(!Endpoint::new("a/*").unwrap().is_hook());
   }
 }

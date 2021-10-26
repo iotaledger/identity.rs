@@ -112,6 +112,10 @@ impl Actor {
     }
   }
 
+  pub fn handlers(&self) -> &HandlerMap {
+    self.handlers.as_ref()
+  }
+
   pub async fn start_listening(&mut self, address: Multiaddr) -> std::result::Result<Multiaddr, ListenErr> {
     self.comm.start_listening(address).await
   }
@@ -252,11 +256,7 @@ impl Actor {
   ) -> Result<Request::Response> {
     let request = RequestMessage::new(name, serde_json::to_vec(&command).unwrap())?;
 
-    log::info!(
-      "Sending `{}` request with payload: {}",
-      request.endpoint,
-      serde_json::to_string_pretty(&command).unwrap()
-    );
+    log::debug!("Sending `{}` request", request.endpoint);
 
     let response = self.comm.send_request(peer, request).await?;
 
@@ -268,6 +268,7 @@ impl Actor {
     }
   }
 
+  /// Call the hook identified by the given `endpoint`.
   pub async fn call_hook<I, O>(
     &self,
     endpoint: Endpoint,
@@ -289,15 +290,19 @@ impl Actor {
           .invoke(self.clone(), request_context, state, type_erased_input)
           .await;
 
-        if let Ok(result) = result.downcast::<O>() {
-          Ok(*result)
-        } else {
-          panic!(
-            "hook did not return the expected type: {:?}",
-            std::any::type_name::<O>()
-          );
+        match result.downcast::<O>() {
+          Ok(result) => Ok(*result),
+          Err(_) => {
+            let err = RemoteSendError::HookInvocationError(format!(
+              "hook did not return the expected type: {:?}",
+              std::any::type_name::<O>(),
+            ));
+
+            Err(err)
+          }
         }
       }
+      // TODO: Re-wrap HandlerInvocationError as HookInvocationError?
       Err(error) => Err(error),
     }
   }
