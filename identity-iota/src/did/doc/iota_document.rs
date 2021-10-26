@@ -685,18 +685,20 @@ mod tests {
   use identity_core::convert::FromJson;
   use identity_core::convert::SerdeInto;
   use identity_core::crypto::merkle_key::Sha256;
+  use identity_core::crypto::KeyCollection;
+  use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
   use identity_core::crypto::PrivateKey;
   use identity_core::crypto::PublicKey;
-  use identity_core::crypto::{KeyCollection, KeyPair};
   use identity_did::did::CoreDID;
   use identity_did::did::DID;
   use identity_did::document::CoreDocument;
   use identity_did::service::Service;
+  use identity_did::verification::MethodData;
   use identity_did::verification::MethodRef;
+  use identity_did::verification::MethodScope;
   use identity_did::verification::MethodType;
   use identity_did::verification::VerificationMethod;
-  use identity_did::verification::{MethodData, MethodScope};
 
   use crate::did::did::IotaDID;
   use crate::did::doc::IotaDocument;
