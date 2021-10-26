@@ -916,7 +916,7 @@ Deserializes a `$ident` object from a JSON object.
         * [.removeMethod(did)](#Document+removeMethod)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#Document+removeService)
-        * [.sign(key)](#Document+sign)
+        * [.sign(key, method_query)](#Document+sign)
         * [.verify()](#Document+verify) ⇒ <code>boolean</code>
         * [.signCredential(data, args)](#Document+signCredential) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
         * [.signPresentation(data, args)](#Document+signPresentation) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
@@ -1088,14 +1088,20 @@ Remove a `Service` identified by the given `DIDUrl` from the document.
 
 <a name="Document+sign"></a>
 
-### document.sign(key)
-Signs the DID Document with the default authentication method.
+### document.sign(key, method_query)
+Signs the DID document with the verification method specified by `method_query`.
+The `method_query` may be the full `DIDUrl` of the method or just its fragment,
+e.g. "#authentication".
+
+NOTE: does not validate whether `private_key` corresponds to the verification method.
+See `Document::verify`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | key | [<code>KeyPair</code>](#KeyPair) | 
+| method_query | <code>string</code> | 
 
 <a name="Document+verify"></a>
 

@@ -67,7 +67,7 @@ async function resolveHistory(clientConfig) {
     intDoc1.updated = Timestamp.nowUTC();
 
     // Sign the DID Document with the original private key.
-    intDoc1.sign(key);
+    intDoc1.sign(key, intDoc1.authentication().id.toString());
 
     // Publish the updated DID Document to the Tangle, updating the integration chain.
     // This may take a few seconds to complete proof-of-work.
@@ -172,7 +172,7 @@ async function resolveHistory(clientConfig) {
     //       update, NOT the last diff chain message.
     intDoc2.previousMessageId = intReceipt1.messageId;
     intDoc2.updated = Timestamp.nowUTC();
-    intDoc2.sign(key);
+    intDoc2.sign(key, intDoc2.authentication().id.toString());
     const intReceipt2 = await client.publishDocument(intDoc2.toJSON());
 
     // Log the results.

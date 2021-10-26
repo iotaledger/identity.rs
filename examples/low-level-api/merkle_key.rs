@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
   // Add to the DID Document as a general-purpose verification method
   issuer_doc.insert_method(MethodScope::VerificationMethod, method);
   issuer_doc.set_previous_message_id(*issuer_receipt.message_id());
-  issuer_doc.sign(issuer_key.private())?;
+  issuer_doc.sign(issuer_key.private(), &issuer_doc.authentication().id())?;
 
   // Publish the Identity to the IOTA Network and log the results.
   // This may take a few seconds to complete proof-of-work.
@@ -89,7 +89,7 @@ async fn main() -> Result<()> {
     .and_then(IotaVerificationMethod::try_from_mut)?
     .revoke_merkle_key(index)?;
   issuer_doc.set_previous_message_id(*receipt.message_id());
-  issuer_doc.sign(issuer_key.private())?;
+  issuer_doc.sign(issuer_key.private(), &issuer_doc.authentication().id())?;
 
   let receipt: Receipt = client.publish_document(&issuer_doc).await?;
 

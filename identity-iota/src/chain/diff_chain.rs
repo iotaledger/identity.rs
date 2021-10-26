@@ -236,7 +236,9 @@ mod test {
     {
       let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
       let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
-      document.sign(keypair.private()).unwrap();
+      document
+        .sign(keypair.private(), &document.authentication().id())
+        .unwrap();
       document.set_message_id(MessageId::new([8; 32]));
       chain = DocumentChain::new(IntegrationChain::new(document).unwrap());
       keys.push(keypair);

@@ -71,7 +71,7 @@ async fn main() -> Result<()> {
     int_doc_1.set_updated(Timestamp::now_utc());
 
     // Sign the DID Document with the original private key.
-    int_doc_1.sign(keypair.private())?;
+    int_doc_1.sign(keypair.private(), &int_doc_1.authentication().id())?;
 
     int_doc_1
   };
@@ -181,7 +181,7 @@ async fn main() -> Result<()> {
     //       update, NOT the last diff chain message.
     int_doc_2.set_previous_message_id(*int_receipt_1.message_id());
     int_doc_2.set_updated(Timestamp::now_utc());
-    int_doc_2.sign(keypair.private())?;
+    int_doc_2.sign(keypair.private(), &int_doc_2.authentication().id())?;
 
     int_doc_2
   };
