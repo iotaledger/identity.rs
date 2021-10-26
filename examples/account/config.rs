@@ -24,8 +24,8 @@ async fn main() -> Result<()> {
   let network_name = "dev";
   let mut network = Network::try_from_name(network_name)?;
 
-  // If you deployed an explorer, set its url here.
-  network.set_explorer_url("http://127.0.0.1:8082/".parse()?)?;
+  // If you deployed an explorer locally this would usually be `http://127.0.0.1:8082/identity-resolver`
+  network.set_explorer_url("https://explorer.iota.org/devnet/identity-resolver".parse()?)?;
 
   // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265/`
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
@@ -75,7 +75,7 @@ async fn main() -> Result<()> {
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   println!(
     "[Example] Explore the DID Document = {}/{}",
-    network.explorer_url().expect("explorer url was set").to_string(),
+    network.explorer_url().expect("no explorer url was set").to_string(),
     iota_did.to_string()
   );
 
