@@ -7,6 +7,7 @@ use crate::didcomm::actor::DidCommTermination;
 use crate::didcomm::presentation::presentation_holder_handler;
 use crate::didcomm::presentation::presentation_verifier_handler;
 use crate::didcomm::presentation::DidCommHandler;
+use crate::didcomm::presentation::Presentation;
 use crate::didcomm::presentation::PresentationOffer;
 use crate::didcomm::presentation::PresentationRequest;
 use crate::Actor;
@@ -155,7 +156,62 @@ async fn test_didcomm_presentation_verifier_initiates_with_implicit_hooks() -> R
 }
 
 #[tokio::test]
-async fn test_didcomm_hook_invocation_with_incorrect_type_fails() -> Result<()> {
+async fn test_didcomm_presentation_holder_initiates_with_implicit_hooks() -> Result<()> {
+  pretty_env_logger::init();
+
+  let mut holder_actor = default_sending_actor().await;
+
+  let (mut verifier_actor, addr, peer_id) = default_listening_actor().await;
+
+  let handler = DidCommHandler::new().await;
+
+  verifier_actor.add_state(handler).add_handler(
+    "didcomm/presentation_offer",
+    DidCommHandler::presentation_verifier_actor_handler,
+  )?;
+
+  log::debug!("verifier peer id: {}", verifier_actor.peer_id());
+  log::debug!("holder peer id: {}", holder_actor.peer_id());
+
+  let function_state = TestFunctionState::new();
+
+  async fn receive_presentation_hook(
+    state: TestFunctionState,
+    _: Actor,
+    req: RequestContext<Presentation>,
+  ) -> StdResult<Presentation, DidCommTermination> {
+    state.was_called.store(true, Ordering::SeqCst);
+    Ok(req.input)
+  }
+
+  verifier_actor
+    .add_state(function_state.clone())
+    .add_hook("didcomm/presentation/hook", receive_presentation_hook)
+    .unwrap();
+
+  holder_actor.add_peer(peer_id, addr.clone()).await;
+
+  let holder_didcomm_actor = DidCommActor::new(holder_actor.clone());
+
+  holder_actor
+    .add_state(holder_didcomm_actor.messages.clone())
+    .add_handler("didcomm/*", DidCommMessages::catch_all_handler)
+    .unwrap();
+
+  presentation_holder_handler(holder_didcomm_actor, peer_id, None)
+    .await
+    .unwrap();
+
+  verifier_actor.stop_handling_requests().await.unwrap();
+  holder_actor.stop_handling_requests().await.unwrap();
+
+  assert!(function_state.was_called.load(Ordering::SeqCst));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_didcomm_send_hook_invocation_with_incorrect_type_fails() -> Result<()> {
   let mut verifier_actor = default_sending_actor().await;
 
   // a hook that has the wrong type: offer instead of request

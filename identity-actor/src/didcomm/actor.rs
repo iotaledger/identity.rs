@@ -10,7 +10,6 @@ use std::time::Duration;
 
 use libp2p::Multiaddr;
 use libp2p::PeerId;
-use serde::de::DeserializeOwned;
 use tokio::sync::RwLock;
 
 use crate::Actor;
@@ -74,18 +73,38 @@ impl DidCommActor {
     &mut self.actor
   }
 
-  pub async fn await_message<T: DeserializeOwned>(&self, peer: PeerId) -> T {
+  pub async fn await_message<REQ: ActorRequest>(&self, peer: PeerId) -> crate::Result<REQ> {
     loop {
       if let Some(messages) = self.messages.messages.write().await.get_mut(&peer) {
         log::debug!(
           "number of {} messages from peer {}: {}",
-          std::any::type_name::<T>(),
+          std::any::type_name::<REQ>(),
           peer,
           messages.len()
         );
 
         if let Some(msg) = messages.pop_front() {
-          return serde_json::from_value(msg).unwrap();
+          let message: REQ =
+            serde_json::from_value(msg).map_err(|err| crate::Error::DeserializationFailure(err.to_string()))?;
+
+          let hook_endpoint: Endpoint = Endpoint::new_hook(message.request_name())?;
+
+          if self.actor.handlers().contains_key(&hook_endpoint) {
+            log::debug!("Calling hook: {}", hook_endpoint);
+
+            let hook_result: Result<Result<REQ, DidCommTermination>, RemoteSendError> =
+              self.actor.call_hook(hook_endpoint, peer, message).await;
+
+            match hook_result {
+              Ok(Ok(request)) => return Ok(request),
+              Ok(Err(_)) => {
+                unimplemented!("didcomm termination");
+              }
+              Err(err) => return Err(err.into()),
+            }
+          } else {
+            return Ok(message);
+          }
         }
       }
 

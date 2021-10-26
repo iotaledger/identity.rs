@@ -62,7 +62,7 @@ pub async fn presentation_holder_handler(
       let req = actor.await_message(peer).await;
       log::debug!("holder: received presentation request");
 
-      req
+      req?
     }
   };
 
@@ -71,7 +71,7 @@ pub async fn presentation_holder_handler(
   log::debug!("holder: sending presentation");
   actor.send_request(peer, Presentation::default()).await?;
 
-  let _result: PresentationResult = actor.await_message(peer).await;
+  let _result: PresentationResult = actor.await_message(peer).await?;
   log::debug!("holder: received presentation result");
 
   // let _result = actor.call_hook("didcomm/presentation/result", result).await?;
@@ -87,7 +87,7 @@ pub async fn presentation_verifier_handler(
   log::debug!("verifier: sending request");
   actor.send_request(peer, PresentationRequest::default()).await?;
 
-  let presentation: Presentation = actor.await_message(peer).await;
+  let presentation: Presentation = actor.await_message(peer).await?;
   log::debug!("verifier: received presentation: {:?}", presentation);
 
   log::debug!("verifier: sending presentation result");
