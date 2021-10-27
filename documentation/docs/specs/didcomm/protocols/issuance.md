@@ -20,7 +20,7 @@ Allows a [holder](#roles) to request a [verifiable credential](https://www.w3.or
 ### Example Use-Cases
 
 - A university issues a degree to a graduate that can be verified by potential employers.
-- A resident requests proof-of-address from their city council.
+- A resident requests proof of address from their city council.
 - An insurer issues proof that a company has liability insurance.
 
 ### Roles
@@ -58,9 +58,9 @@ The [holder](#roles) requests a single verifiable credential from the [issuer](#
 | [`subject`](https://www.w3.org/TR/vc-data-model/#credential-subject-0) | [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of the [credential subject](https://www.w3.org/TR/vc-data-model/#credential-subject-0)[^1]. | ✔ |
 | `credentialInfo` | A [CredentialInfo](../resources/credential-kinds#credentialinfo), specifying a credential kind requested by the [holder](#roles).[^2] [^3] [^4] | ✔ |
 
-[^1] The [holder](#roles) is usually but not always the [subject]((https://www.w3.org/TR/vc-data-model/#credential-subject-0)) of the requested credential. There may be custodial, legal guardianship, or delegation situations where a third-party requests or is issued a credential on behalf of a subject. It is the responsibility of the [issuer](#roles) to ensure authorization in such cases.
+[^1] The [holder](#roles) is usually but not always the [subject]((https://www.w3.org/TR/vc-data-model/#credential-subject-0)) of the requested credential. There may be custodial, legal guardianship, or delegation situations where a third-party requests, or is issued a credential on behalf of a subject. It is the responsibility of the [issuer](#roles) to ensure authorization in such cases.
 
-[^2] The `credentialInfo` could be hard-coded, communicated in-band, discovered out-of-band or be pre-sent by an [issuer](#roles). The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support the requested `credentialInfo`.
+[^2] The `credentialInfo` could be hard-coded, communicated in-band, discovered out-of-band, or be pre-sent by an [issuer](#roles). The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support the requested `credentialInfo`.
 
 [^3] With ["CredentialType2021"](../resources/credential-kinds#credentialtype2021), the `type` MAY be under-specified if the exact type is unknown or if the resulting type depends on the identity or information of the subject or holder. E.g. the `type` could be as general as `["VerifiableCredential"]` if the issuer issues only a singular type of credential or decides the credential based on other information related to the subject. 
 
@@ -100,7 +100,7 @@ An [issuer](#roles) wanting to preserve privacy regarding which exact credential
 - Type: `iota/issuance/0.1/issuance-offer`
 - Role: [issuer](#roles)
 
-The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles), matching the preceding [`issuance-request`](#issuance-request) if present. The [issuer](#roles) may set an expiry date for the offer and require a non-repudiable proof by the [holder](#roles) that the offer was received.
+The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles), matching the preceding [`issuance-request`](#issuance-request) if present. The [issuer](#roles) may set an expiry date for the offer and require non-repudiable proof by the [holder](#roles) that the offer was received.
 
 #### Structure
 ```json
@@ -299,7 +299,7 @@ The [issuer](#roles) transmits the signed credential following a [`issuance-resp
 
 #### Examples
 
-1. Issuing a credential including an expiry and requesting proof:
+1. Issuing a credential including expiry and requesting proof:
 
 ```json
 {

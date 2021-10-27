@@ -19,7 +19,7 @@ Allows the sending of a single message with arbitrary data. Multiple [post](#pos
 
 ### Example Use-Cases
 - Instant messaging between two parties, where the text payload is displayed in a chat.
-- IOT devices transmitting sensor data to be aggregated in a central hub for processing.
+- IoT devices transmit sensor data to be aggregated in a central hub for processing.
 
 ### Roles
 - Sender: sends the message.

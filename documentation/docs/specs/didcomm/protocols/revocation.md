@@ -95,7 +95,7 @@ Sent by the [revoker](#roles) as soon as the revocation is performed to indicate
 | :--- | :--- | :--- |
 | `status` | Current status of the revocation, either `revoked` or `pending`.[^1] | ✔ |
 
-[^1] The status should be `revoked` if the credential or signing key is confirmed to be revoked, and `pending` if the revocation has been accepted but not yet performed or committed. For instance, a revocation that updates a DID document may require waiting for the update transaction to be confirmed, or it could be queued for a batch update. If the [revoker](#roles) is unable to perform the revocation or rejects the request for any reason, they MUST instead respond with a [`problem-report`](#problem-reports). Care should be taken not to reveal which credentials are under control of the revoker to prevent privacy-revealing brute-force attacks.
+[^1] The status should be `revoked` if the credential or signing key is confirmed to be revoked, and `pending` if the revocation has been accepted but not yet performed or committed. For instance, a revocation that updates a DID document may require waiting for the update transaction to be confirmed, or it could be queued for a batch update. If the [revoker](#roles) is unable to perform the revocation or rejects the request for any reason, they MUST instead respond with a [`problem-report`](#problem-reports). Care should be taken not to reveal which credentials are under the control of the revoker to prevent privacy-revealing brute-force attacks.
 
 The [trusted-party](#roles) SHOULD verify that the credential is actually revoked after this message is received. The [revocation protocol](#Revocation) MAY be polled by a [trusted-party](#roles) by re-sending the same request to confirm revocation if the status of `pending` is received. In the case of a public ledger, however, the [trusted-party](#roles) can query the public state of the verification method themselves to confirm revocation.
 
@@ -121,12 +121,12 @@ The [trusted-party](#roles) SHOULD verify that the credential is actually revoke
 
 The `RevocationInfo` object contains the information necessary for a [revoker](#roles) to revoke a verifiable credential. For instance, this may include the `id` field of the credential, in which case a [revoker](#roles) must maintain a map to the signing key used for each credential to revoke them. It could also be the identifier for the signing key itself on the DID document of the issuer. Implementors are free to construct their own `RevocationInfo` types as different singing schemes may require different information for revocation. For example, revoking a `MerkleKeyCollection2021` requires both the key identifier and its index in the collection.
 
-Implementors MUST adhere to at least one of the types below, either [KeyRevocation2021](#KeyRevocation2021) or [CredentialRevocation2021]. Implementors MAY define additional types as-needed. A valid `RevocationInfo` type MUST have a `revocationInfoType` field.
+Implementors MUST adhere to at least one of the types below, either [KeyRevocation2021](#keyrevocation2021) or [CredentialRevocation2021](#credentialrevocation2021). Implementors MAY define additional types as-needed. A valid `RevocationInfo` type MUST have a `revocationInfoType` field.
 
 ### KeyRevocation2021
 - Type: `KeyRevocation2021`
 
-Allows a particular cryptographic public key linked as a verification method to be specified for revocation. This may reference any singular verification method such as [Ed25519VerificationKey2018](https://www.w3.org/TR/did-spec-registries/#ed25519verificationkey2018) or [RsaVerificationKey2018](https://www.w3.org/TR/did-spec-registries/#rsaverificationkey2018). Verificatison methods that hold multiple keys as a collection, such as [MerkleKeyCollection2021](../../did/merkle_key_collection), may encode the index of the key to be revoked in the [query](https://www.w3.org/TR/did-core/#dfn-did-queries) of the [DIDUrl](https://www.w3.org/TR/did-core/#did-url-syntax).
+Allows a particular cryptographic public key linked as a verification method to be specified for revocation. This may reference any singular verification method such as [Ed25519VerificationKey2018](https://www.w3.org/TR/did-spec-registries/#ed25519verificationkey2018) or [RsaVerificationKey2018](https://www.w3.org/TR/did-spec-registries/#rsaverificationkey2018). Verification methods that hold multiple keys as a collection, such as [MerkleKeyCollection2021](../../did/merkle_key_collection), may encode the index of the key to be revoked in the [query](https://www.w3.org/TR/did-core/#dfn-did-queries) of the [DIDUrl](https://www.w3.org/TR/did-core/#did-url-syntax).
 
 See the [DID Spec Registry for more verification method types](https://www.w3.org/TR/did-spec-registries/#verification-method-types).
 
@@ -172,7 +172,7 @@ Note that revoking a verification method revokes all verifiable credentials sign
 
 - Type: `CredentialRevocation2021`
 
-Allows to request the revocation of a verifiable credential by its identifier field. This implies that the revoker needs to keep track of the relevant method of revocation and additional information such as the verification method used to sign it to be able to revoke the credential. 
+Allows requesting the revocation of a verifiable credential by its identifier field. This implies that the revoker needs to keep track of the relevant method of revocation and additional information such as the verification method used to sign it to be able to revoke the credential. 
 
 ```json
 {
@@ -267,7 +267,7 @@ The revoker needs to check if the credential may actually be revoked and if the 
 
 - Should the trusted party be able to prove that the revoker claimed to have revoked the credential by making him include a signature in the `revocation-response`, or is it sufficient that they can query the signing key or revocation material in the case of a public ledger?
 - Should revocation-options include the credential status sub-types for `CredentialStatusRevocation2021`?
-- Separate revocation-notification (https://github.com/hyperledger/aries-rfcs/blob/main/features/0183-revocation-notification/README.md) flow for notifying the holder that their credential was revoked, optionally including the reason? Dual-entry for a holder to request the revocation reason?
+- Separate revocation-notification (https://github.com/hyperledger/aries-rfcs/blob/main/features/0183-revocation-notification/README.md) flow for notifying the holder that their credential was revoked, optionally including the reason? Dual entry for a holder to request the revocation reason?
 - Include reason-code/reason-comment in the request? Could be used by the revoker for auditing/validating the request but overall seems not useful - trusted-party would store those reasons internally, holder comments aren't very useful. Can be achieved via embedded presentation and self-signed credentials?
 
 ## Related Work

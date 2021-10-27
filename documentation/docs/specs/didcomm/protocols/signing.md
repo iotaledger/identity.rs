@@ -19,7 +19,7 @@ Allows a trusted-party to request the signing of an unsigned verifiable credenti
 
 ### Example Use-Cases
 
-- A separate department requests a signature by the the legal department of a company.
+- A separate department requests a signature by the legal department of a company.
 - A subsidiary requests the parent company to sign a credential.
 - An IOT device generates an unsigned credential and requests a secure server to sign it.
 
