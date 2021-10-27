@@ -187,11 +187,11 @@ impl WasmDocument {
   /// The `method_query` may be the full `DIDUrl` of the method or just its fragment,
   /// e.g. "#authentication".
   ///
-  /// NOTE: does not validate whether `private_key` corresponds to the verification method.
+  /// NOTE: does not validate whether the private key of the given `key_pair` corresponds to the verification method.
   /// See `Document::verify`.
   #[wasm_bindgen]
-  pub fn sign(&mut self, key: &KeyPair, method_query: String) -> Result<()> {
-    self.0.sign(key.0.private(), &method_query).wasm_result()
+  pub fn sign(&mut self, key_pair: &KeyPair, method_query: String) -> Result<()> {
+    self.0.sign(key_pair.0.private(), &method_query).wasm_result()
   }
 
   /// Verify the signature with the authentication_key
