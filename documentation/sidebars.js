@@ -112,9 +112,9 @@ module.exports = {
               label: 'IOTA DID',
               collapsed: true,
               items: [
-                'specs/overview',
-                'specs/iota_did_method_spec',
-                'specs/merkle_key_collection',
+                'specs/did/overview',
+                'specs/did/iota_did_method_spec',
+                'specs/did/merkle_key_collection',
               ]
             },
             {
