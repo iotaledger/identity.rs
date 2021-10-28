@@ -102,9 +102,9 @@ Response from the [issuer](#roles) returning the signed credential back to the [
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`signedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | Signed [verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) matching the [signing-request](#signing-request).[^2] | ✔ |
+| [`signedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | Signed [verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) matching the [signing-request](#signing-request).[^1] | ✔ |
 
-[^2] The [trusted-party](#roles) MUST validate the signature in the `proof` section and issue a problem-report if invalid. The [trusted-party](#roles) SHOULD also verify that the contents of the `signedCredential` sent back by the [issuer](#roles) are complete and unaltered from the [signing-request](#signing-request).
+[^1] The [trusted-party](#roles) MUST validate the signature in the `proof` section and issue a problem-report if invalid. The [trusted-party](#roles) SHOULD also verify that the contents of the `signedCredential` sent back by the [issuer](#roles) are complete and unaltered from the [signing-request](#signing-request).
 
 The [issuer](#roles) may request in turn that the credential be signed by a different issuer unknown to the [trusted-party](#roles), by repeating this protocol or through alternative means. In such a case, it is up to the initial [trusted-party](#roles) whether or not to accept the final signature if not signed by the initial [issuer](#roles) they requested.
 
@@ -151,9 +151,9 @@ Acknowledgement by the [trusted-party](#roles) that the credential was received 
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `accepted` | Indicates that the `signedCredential` was received and validated by the [trusted-party](#roles).[^3] | ✔ |
+| `accepted` | Indicates that the `signedCredential` was received and validated by the [trusted-party](#roles).[^1] | ✔ |
 
-[^3] `accepted` MUST be `true`. Invalid signatures or credentials SHOULD result in problem-reports by the [trusted-party](#roles).
+[^1] `accepted` MUST be `true`. Invalid signatures or credentials SHOULD result in problem-reports by the [trusted-party](#roles).
 
 #### Examples
 
