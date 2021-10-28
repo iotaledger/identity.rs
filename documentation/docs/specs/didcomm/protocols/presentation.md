@@ -58,7 +58,7 @@ Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | `offers` | Array of one or more [`CredentialInfo`](../resources/credential-kinds#credentialinfo), each specifying a single credential possessed by the holder.[^1] | ✔ |
-| `requireSignature` | Request that the [verifier](#roles) use a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) for non-repudiation of the [`presentation-request`](#presentation-request). The [holder](#roles) SHOULD issue a `problem-report` if the [verifier](#roles) does not sign the message when this is `true`. Default: `false`. | ✖ | 
+| `requireSignature` | Request that the [verifier](#roles) use a [signed DIDComm message][SDM] for non-repudiation of the [`presentation-request`](#presentation-request). The [holder](#roles) SHOULD issue a `problem-report` if the [verifier](#roles) does not sign the message when this is `true`. Default: `false`. | ✖ | 
 
 [^1] With [CredentialType2021], the `type` MAY be under-specified to preserve privacy but SHOULD always include the most general types. For example, a credential with the types `["VerifiableCredential", "DriversLicence", "EUDriversLicence", "GermanDriversLicence"]` could be specified as `["VerifiableCredential", "DriversLicence"]`.
 
@@ -100,7 +100,7 @@ Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#
 
 Sent by the verifier to request one or more verifiable credentials from a holder. The `CredentialInfo` is used by the [holder](#roles) to determine if they possess relevant credentials.
 
-[Verifiers](#roles) are RECOMMENDED to use a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message). [Holders](#roles) may choose to blocklist verifiers that refuse to provide signed requests.
+[Verifiers](#roles) are RECOMMENDED to use a [signed DIDComm message][SDM]. [Holders](#roles) may choose to blocklist verifiers that refuse to provide signed requests.
 
 #### Structure
 ```json
@@ -159,7 +159,7 @@ Sent by the verifier to request one or more verifiable credentials from a holder
 }
 ```
 
-3. Request a single credential using ["CredentialType2021"](.../resources/credential-kinds#credentialtype2021) signed by one of several trusted issuers.
+3. Request a single credential using [CredentialType2021] signed by one of several trusted issuers.
 
 ```json
 {
@@ -180,7 +180,7 @@ Sent by the verifier to request one or more verifiable credentials from a holder
 - Type: `iota/presentation/0.1/presentation`
 - Role: [holder](#roles)
 
-Sent by the holder to present a [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) of one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) for a [verifier](#roles) to review.
+Sent by the holder to present a [verifiable presentation][VP] of one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) for a [verifier](#roles) to review.
 
 #### Structure
 ```json
@@ -191,7 +191,7 @@ Sent by the holder to present a [verifiable presentation](https://www.w3.org/TR/
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`presentation`](https://www.w3.org/TR/vc-data-model/#presentations-0) | Signed [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) containing one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) matching the [presentation-request](#presentation-request).[^1][^2] | ✔ |
+| [`presentation`][VP] | Signed [verifiable presentation][VP] containing one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) matching the [presentation-request](#presentation-request).[^1][^2] | ✔ |
 
 [^1] The [`proof`](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section in `presentation` MUST include the `challenge` sent by the verifier in the preceding [`presentation-request`](#presentation-request). Revoked, disputed, or otherwise invalid presentations or credentials MUST result in a rejected [`presentation-result`](#presentation-result) sent back to the holder, NOT a separate [`problem-report`]. Other such as the message lacking [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) SHOULD result in a separate [`problem-report`].
 
@@ -242,7 +242,7 @@ Sent by the holder to present a [verifiable presentation](https://www.w3.org/TR/
 
 Sent by the verifier to communicate the result of the presentation. It allows the verifier to raise problems and disputes encountered in the verification and to specify if the holder may retry a presentation. The message SHOULD be signed by the verifier for non-repudiation.
 
-Similar to [`presentation-request`](#presentation-request), [verifiers](#roles) are RECOMMENDED to use a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) whenever possible for non-repudiation of receipt of the presentation. [Holders](#roles) may choose to blocklist verifiers that refuse to provide signatures or do not send a [presentation-result](#presentation-result) at all.
+Similar to [`presentation-request`](#presentation-request), [verifiers](#roles) are RECOMMENDED to use a [signed DIDComm message][SDM] whenever possible for non-repudiation of receipt of the presentation. [Holders](#roles) may choose to blocklist verifiers that refuse to provide signatures or do not send a [presentation-result](#presentation-result) at all.
 
 #### Structure
 ```json
@@ -361,7 +361,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 This section is non-normative.
 
 - **Security**: implementors SHOULD transmit the presentation over an encrypted channel etc. [see authentication](./authentication.md).
-- **Authentication**: it is RECOMMENDED to use either the [authentication protocol](./authentication.md) for once-off mutual authentication or to establish [sender-authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) for continuous authentication of both parties in the DIDComm thread. Signatures (`proof` fields) and [signed DIDComm messages](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) SHOULD NOT be relied upon for this in general: https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message
+- **Authentication**: it is RECOMMENDED to use either the [authentication protocol](./authentication.md) for once-off mutual authentication or to establish [sender-authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) for continuous authentication of both parties in the DIDComm thread. Signatures (`proof` fields) and [signed DIDComm messages][SDM] SHOULD NOT be relied upon for this in general: https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message
 - **Authorisation**: establishing whether either party is allowed to request/offer presentations is an application-level concern.
 - **Validation**: apart from verifying the presentation and credentials are signed by a trusted issuer, how credential subject matter fields are checked for disputes is out-of-scope.
 
@@ -388,4 +388,7 @@ This section is non-normative.
 - [Verifiable Credentials Data Model 1.0](https://www.w3.org/TR/vc-data-model)
 - [Verifiable Credentials Implementation Guidelines 1.0](https://w3c.github.io/vc-imp-guide/)
 
+<!--- LINKS --->
+[VP]: https://www.w3.org/TR/vc-data-model/#presentations-0
+[SDM]: https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message
 [CredentialType2021]: ../resources/credential-kinds#credentialtype2021
