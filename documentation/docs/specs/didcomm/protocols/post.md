@@ -31,6 +31,8 @@ Allows the sending of a single message with arbitrary data. Multiple [post](#pos
 
 ![PostDiagram](/img/didcomm/post.drawio.svg)
 
+<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+
 </div>
 
 

@@ -34,6 +34,8 @@ Allows establishment of a [DIDComm connection](https://identity.foundation/didco
 
 ![ConnectionDiagram](/img/didcomm/connection.drawio.svg)
 
+<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+
 </div>
 
 

@@ -62,6 +62,9 @@ Besides the protocols cross-cutting concerns and general guidance on related top
 | [Problem Reports](./resources/problem-reports.md) | Definitions of expected problem reports and guidance on global handling |
 | [Credential Kinds](./resources/credential-kinds.md) | Definition of methods to negotiate a specific kind of verifiable credential |
 
+## Diagrams
+
+The diagrams in this specification follow the [BPMN 2.0](https://www.omg.org/spec/BPMN/2.0/) notation. The diagrams are created with https://www.diagrams.net, the source is embedded in the `.svg` files. 
 ## Changelog
 
 See [CHANGELOG](./CHANGELOG)

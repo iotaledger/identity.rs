@@ -31,6 +31,8 @@ This protocol allows two parties to mutually authenticate by disclosing and veri
 
 ![AuthenticationDiagram](/img/didcomm/authentication.drawio.svg)
 
+<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+
 </div>
 
 

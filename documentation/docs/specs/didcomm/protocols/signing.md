@@ -33,6 +33,8 @@ Allows a trusted-party to request the signing of an unsigned verifiable credenti
 
 ![SigningDiagram](/img/didcomm/signing.drawio.svg)
 
+<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+
 </div>
 
 

@@ -33,6 +33,8 @@ Indicates the graceful termination of a connection. It is expected that no recon
 
 ![TerminationDiagram](/img/didcomm/termination.drawio.svg)
 
+<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+
 </div>
 
 

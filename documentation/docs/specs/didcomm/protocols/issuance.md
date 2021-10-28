@@ -33,6 +33,8 @@ Allows a [holder](#roles) to request a [verifiable credential](https://www.w3.or
 
 ![IssuanceDiagram](/img/didcomm/issuance.drawio.svg)
 
+<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+
 </div>
 
 

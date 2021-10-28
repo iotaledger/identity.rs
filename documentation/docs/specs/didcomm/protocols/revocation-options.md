@@ -26,6 +26,8 @@ Allows discovery of available [`RevocationInfo`](./revocation#RevocationInfo) ty
 
 ![RevocationOptionsDiagram](/img/didcomm/revocation-options.drawio.svg)
 
+<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+
 </div>
 
 

@@ -29,6 +29,8 @@ Allows to request revocation of an issued [verifiable credential](https://www.w3
 
 ![RevocationDiagram](/img/didcomm/revocation.drawio.svg)
 
+<sub>For guidance on diagrams see the <a href="../overview#diagrams">corresponding section in the overview</a>.</sub>
+
 </div>
 
 
