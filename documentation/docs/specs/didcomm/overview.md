@@ -30,6 +30,8 @@ Protocols follow [Semantic Versioning 2.0](https://semver.org/) conventions.
 
 ## Protocols
 
+The specification defines several protocols, that can be used for common SSI interactions:
+
 | Name | Version | Description | 
 | :--- | :---: | :--- |
 | [Connection](./protocols/connection.md) | 0.1 | Establishes a [DIDComm connection](https://identity.foundation/didcomm-messaging/spec/#connections) between two parties. |
@@ -52,6 +54,8 @@ In addition to the protocols defined in this specification, we RECOMMEND impleme
 | [Trust Ping](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/trustping.md) | 1.0 | A standard way for agents to test connectivity, responsiveness, and security of a DIDComm channel. | 
 
 ## Resources
+
+Besides the protocols cross-cutting concerns and general guidance on related topics are provided:
 
 | Name | Description |
 | :--- | :--- |
