@@ -185,7 +185,7 @@ This section is non-normative.
 
 - **Security**: implementors SHOULD transmit credentials over an encrypted channel to prevent leaking sensitive information on subjects. See [sender-authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption).
 - **Authentication**: it is RECOMMENDED to use sender-authenticated encryption for continuous authentication of both parties in the DIDComm thread. Anonymous encryption and/or once-off authentication may be insufficient.
-- **Authorisation**: establishing whether a trusted-party is allowed to request signing is an application-level concern.
+- **Authorisation**: the [issuer](#roles) should establish whether a trusted-party is allowed to request signing of a particular credential or at all.
 - **Validation**: apart from verifying the proof on the signed credential returned in the [signing-response](#signing-response), how the [issuer](#roles) validates the contents of a well-formed credential from a [trusted-party](#roles) and chooses whether or not to sign it is out-of-scope.
 
 ## Related Work
