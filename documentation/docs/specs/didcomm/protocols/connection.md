@@ -11,7 +11,7 @@ sidebar_label: Connection
 
 ## Overview
 
-Allows establishment of a [DIDComm connection](https://identity.foundation/didcomm-messaging/spec/#connections) between two parties. The connection may be established by an explicit invitation delivered [out-of-band](https://github.com/decentralized-identity/didcomm-messaging/blob/49935b7b119591a009ce61d044ba9ad6fa40c7b7/docs/spec-files/out_of_band.md)&mdash;such as a QR code, URL, or email&mdash;or by following an implicit invitation in the form of a [service endpoint](https://identity.foundation/didcomm-messaging/spec/#did-document-service-endpoint) attached to a public DID document.
+Allows establishment of a [DIDComm connection](https://identity.foundation/didcomm-messaging/spec/#connections) between two parties. The connection may be established by an explicit invitation delivered [out-of-band][OUT_OF_BAND]&mdash;such as a QR code, URL, or email&mdash;or by following an implicit invitation in the form of a [service endpoint][DIDCOMM_SERVICE_ENDPOINT] attached to a public DID document.
 
 ### Relationships
 - [Termination](./termination): the DIDComm connection may be gracefully concluded using the [termination protocol](./termination).
@@ -50,7 +50,7 @@ A message containing information on how to connect to the inviter. This message 
 
 #### Structure
 
-The general structure of the invitation message is described in the [Out Of Band Messages of the DIDComm specification](https://github.com/decentralized-identity/didcomm-messaging/blob/49935b7b119591a009ce61d044ba9ad6fa40c7b7/docs/spec-files/out_of_band.md). Note that the invitation message may be [signed](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) to provide [tamper resistance](https://identity.foundation/didcomm-messaging/spec/#tamper-resistant-oob-messages).
+The general structure of the invitation message is described in the [Out Of Band Messages of the DIDComm specification][OUT_OF_BAND]. Note that the invitation message may be [signed](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) to provide [tamper resistance](https://identity.foundation/didcomm-messaging/spec/#tamper-resistant-oob-messages).
 
 The actual invitation is contained in the `attachments` field in the message, which is structured as follows:
 
@@ -67,18 +67,18 @@ The actual invitation is contained in the `attachments` field in the message, wh
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `serviceId` | A string representing a [DIDUrl](https://www.w3.org/TR/did-core/#did-url-syntax) referencing a resolvable [service](https://www.w3.org/TR/did-core/#services).[^1] [^2] | ✖ |
-| [`service`](https://www.w3.org/TR/did-core/#services) | A structure analogous to the [DID service specification](https://www.w3.org/TR/did-core/#services), including all information necessary to establish a connection with the [inviter](#roles).[^1] | ✖ |
+| `serviceId` | A string representing a [DIDUrl][DIDURL] referencing a resolvable [service][SERVICE].[^1] [^2] | ✖ |
+| [`service`][SERVICE] | A structure analogous to the [DID service specification][SERVICE], including all information necessary to establish a connection with the [inviter](#roles).[^1] | ✖ |
 | [`serviceEndpoint`](https://www.w3.org/TR/did-core/#dfn-serviceendpoint) | A [URI](https://www.rfc-editor.org/rfc/rfc3986) including all details needed to connect to the [inviter](#roles). | ✔ |
-| [`accept`](https://identity.foundation/didcomm-messaging/spec/#did-document-service-endpoint) | An optional array of [DIDComm profiles](https://identity.foundation/didcomm-messaging/spec/#defined-profiles) in the order of preference for sending a message to the endpoint. If omitted, defer to the `accept` field of the invitation body. | ✖ |
-| `recipientKeys` | An ordered array of [DIDUrls](https://www.w3.org/TR/did-core/#did-url-syntax) or [`did:key`](https://w3c-ccg.github.io/did-method-key/) strings referencing public keys, any of which may be used for [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption).[^3] [^4] | ✖ |
-| [`routingKeys`](https://identity.foundation/didcomm-messaging/spec/#did-document-service-endpoint) | An ordered array of [DIDUrls](https://www.w3.org/TR/did-core/#did-url-syntax) or [`did:key`](https://w3c-ccg.github.io/did-method-key/) strings referencing keys to be used when preparing the message for transmission; see [DIDComm Routing](https://identity.foundation/didcomm-messaging/spec/#routing).[^4] | ✖ |
+| [`accept`][DIDCOMM_SERVICE_ENDPOINT] | An optional array of [DIDComm profiles](https://identity.foundation/didcomm-messaging/spec/#defined-profiles) in the order of preference for sending a message to the endpoint. If omitted, defer to the `accept` field of the invitation body. | ✖ |
+| `recipientKeys` | An ordered array of [DIDUrls][DIDURL] or [`did:key`][DID_KEY] strings referencing public keys, any of which may be used for [anonymous encryption][ANONCRYPT].[^3] [^4] | ✖ |
+| [`routingKeys`][DIDCOMM_SERVICE_ENDPOINT] | An ordered array of [DIDUrls][DIDURL] or [`did:key`][DID_KEY] strings referencing keys to be used when preparing the message for transmission; see [DIDComm Routing](https://identity.foundation/didcomm-messaging/spec/#routing).[^4] | ✖ |
 
 [^1] One of `serviceId` or `service` MUST be present for the [invitee](#roles) to be able to connect. If both fields are present, the [invitee](#roles) SHOULD default to the `serviceId`.
 
-[^2] It is RECOMMENDED that the service referenced by `serviceId` conforms to the ["DIDCommMessaging" service type from the DIDComm specification](https://identity.foundation/didcomm-messaging/spec/#did-document-service-endpoint) as it allows `routingKeys` to be included if necessary. The DID document referenced by `serviceId` SHOULD include one or more [`keyAgreement`](https://www.w3.org/TR/did-core/#key-agreement) sections to use for [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption); the absence of any [`keyAgreement`](https://www.w3.org/TR/did-core/#key-agreement) section implies no [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) will be used for the connection and an [invitee](#roles) may choose to reject such an invitation. A public `serviceId` may reveal the identity of the [inviter](#roles) to anyone able to view the invitation; if privacy is a concern using an inline `service` should be preferred. For a public organisation whose DID is already public knowledge, using `serviceId` has a few benefits: it establishes some level of trust that the [invitee](#roles) may be connecting to the correct party since a service from their public DID document is used, and the invitation may be re-used indefinitely even if the service referenced is updated with different endpoints. When using `service` instead of `serviceId`, a signed invitation may provide a similar level of trust. However, neither should be used as a complete replacement for interactive authentication due to the risk of man-in-the-middle attacks.
+[^2] It is RECOMMENDED that the service referenced by `serviceId` conforms to the ["DIDCommMessaging" service type from the DIDComm specification][DIDCOMM_SERVICE_ENDPOINT] as it allows `routingKeys` to be included if necessary. The DID document referenced by `serviceId` SHOULD include one or more [`keyAgreement`](https://www.w3.org/TR/did-core/#key-agreement) sections to use for [anonymous encryption][ANONCRYPT]; the absence of any [`keyAgreement`](https://www.w3.org/TR/did-core/#key-agreement) section implies no [anonymous encryption][ANONCRYPT] will be used for the connection and an [invitee](#roles) may choose to reject such an invitation. A public `serviceId` may reveal the identity of the [inviter](#roles) to anyone able to view the invitation; if privacy is a concern using an inline `service` should be preferred. For a public organisation whose DID is already public knowledge, using `serviceId` has a few benefits: it establishes some level of trust that the [invitee](#roles) may be connecting to the correct party since a service from their public DID document is used, and the invitation may be re-used indefinitely even if the service referenced is updated with different endpoints. When using `service` instead of `serviceId`, a signed invitation may provide a similar level of trust. However, neither should be used as a complete replacement for interactive authentication due to the risk of man-in-the-middle attacks.
 
-[^3] Note that `recipientKeys` may have multiple entries in order of preference of the [inviter](#roles); this is to offer multiple key types (e.g. Ed25519, X25519) and an [invitee](#roles) may choose any key with which they are compatible. These keys may be static or generated once per invitation. Omitting `recipientKeys` implies that [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) will not be used in the ensuing DIDComm connection. It is RECOMMENDED to include as [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) ensures message integrity and protects communications from eavesdroppers over insecure channels. [Invitees](#roles) may choose to reject invitations that do not include `recipientKeys` if they want to enforce [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption).
+[^3] Note that `recipientKeys` may have multiple entries in order of preference of the [inviter](#roles); this is to offer multiple key types (e.g. Ed25519, X25519) and an [invitee](#roles) may choose any key with which they are compatible. These keys may be static or generated once per invitation. Omitting `recipientKeys` implies that [anonymous encryption][ANONCRYPT] will not be used in the ensuing DIDComm connection. It is RECOMMENDED to include as [anonymous encryption][ANONCRYPT] ensures message integrity and protects communications from eavesdroppers over insecure channels. [Invitees](#roles) may choose to reject invitations that do not include `recipientKeys` if they want to enforce [anonymous encryption][ANONCRYPT].
 
 [^4] Implementors should avoid using a `DIDUrl` for the `recipientKeys` or `routingKeys` if privacy is a concern, as may reveal the identity of the [inviter](#roles) to any party other than the [invitee](#roles) that intercepts the invitation. However, using a `DIDUrl` may be useful as it allows for key-rotation without needing to update the invitation.
 
@@ -170,7 +170,7 @@ Refer to the [DIDComm specification](https://identity.foundation/didcomm-messagi
 - Type: `iota/connection/0.1/connection`
 - Role: [invitee](#roles)
 
-Following a successful connection, the [invitee](#roles) sends its public keys necessary to establish [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption). This may be preceded by an [invitation](#invitation) message, or the [invitee](#roles) may connect directly to the [inviter](#roles) in the case of an implicit invitation.
+Following a successful connection, the [invitee](#roles) sends its public keys necessary to establish [anonymous encryption][ANONCRYPT]. This may be preceded by an [invitation](#invitation) message, or the [invitee](#roles) may connect directly to the [inviter](#roles) in the case of an implicit invitation.
 
 #### Structure
 ```json
@@ -182,12 +182,12 @@ Following a successful connection, the [invitee](#roles) sends its public keys n
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `recipientKey` | A [DIDUrl](https://www.w3.org/TR/did-core/#did-url-syntax) or [`did:key`](https://w3c-ccg.github.io/did-method-key/) strings referencing a public key of the [invitee](#roles) to be used for [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption).[^1] [^2] | ✖ |
-| [`routingKeys`](https://identity.foundation/didcomm-messaging/spec/#did-document-service-endpoint) | An ordered array of [DIDUrls](https://www.w3.org/TR/did-core/#did-url-syntax) or [`did:key`](https://w3c-ccg.github.io/did-method-key/) strings referencing keys to be used by the [inviter](#roles) when preparing the message for transmission; see [DIDComm Routing](https://identity.foundation/didcomm-messaging/spec/#routing).[^2] | ✖ |
+| `recipientKey` | A [DIDUrl][DIDURL] or [`did:key`][DID_KEY] strings referencing a public key of the [invitee](#roles) to be used for [anonymous encryption][ANONCRYPT].[^1] [^2] | ✖ |
+| [`routingKeys`][DIDCOMM_SERVICE_ENDPOINT] | An ordered array of [DIDUrls][DIDURL] or [`did:key`][DID_KEY] strings referencing keys to be used by the [inviter](#roles) when preparing the message for transmission; see [DIDComm Routing](https://identity.foundation/didcomm-messaging/spec/#routing).[^2] | ✖ |
 
 The `id` of the preceding [invitation](#invitation) message MUST be used as the `pthid` header property on this message. Both the `thid` and `pthid` properties MUST be omitted in the case of an implicit invitation when connecting to a public service endpoint of an [inviter](#roles). See [DIDComm Message Headers](https://identity.foundation/didcomm-messaging/spec/#message-headers) for more information.
 
-[^1] If present, the `recipientKey` sent by the [`invitee`](#roles) MUST match the key type (e.g. Ed25519, X25519) of one of the `recipientKeys` in the [invitation](#invitation) message, or of a `keyAgreement` public key attached to the [inviter`s](#roles) DID document in the case of an implicit invitation. The `recipientKey` should be omitted if no `recipientKeys` or `keyAgreement` sections are present, or if the [invitee](#roles) does not wish to use [anonymous encryption](https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption) for the connection. An [inviter](#roles) may choose to reject connection messages that omit a `recipientKey`, terminating the connection.
+[^1] If present, the `recipientKey` sent by the [`invitee`](#roles) MUST match the key type (e.g. Ed25519, X25519) of one of the `recipientKeys` in the [invitation](#invitation) message, or of a `keyAgreement` public key attached to the [inviter`s](#roles) DID document in the case of an implicit invitation. The `recipientKey` should be omitted if no `recipientKeys` or `keyAgreement` sections are present, or if the [invitee](#roles) does not wish to use [anonymous encryption][ANONCRYPT] for the connection. An [inviter](#roles) may choose to reject connection messages that omit a `recipientKey`, terminating the connection.
 
 [^2] Similar to the considerations for the [invitation](#invitation) message, implementors should avoid using a `DIDUrl` for the `recipientKey` or `routingKeys` as it may reveal the identity of the [invitee](#roles) to eavesdroppers prior to encryption being established. Using a `DIDUrl` for key rotation is less of a concern for a [connection](#connection) message as, unlike an [invitation](#invitation), the message is intended to be transient and should not persist beyond a single connection attempt.
 
@@ -232,7 +232,15 @@ This section is non-normative.
 ## Further Reading
 
 - [DIDComm Connections](https://identity.foundation/didcomm-messaging/spec/#connections)
-- [DIDComm Out Of Band Messages](https://github.com/decentralized-identity/didcomm-messaging/blob/49935b7b119591a009ce61d044ba9ad6fa40c7b7/docs/spec-files/out_of_band.md)
-- [DIDComm Service Endpoint](https://github.com/decentralized-identity/didcomm-messaging/blob/49935b7b119591a009ce61d044ba9ad6fa40c7b7/docs/spec-files/routing.md#did-document-service-endpoint)
-- [DID Services](https://www.w3.org/TR/did-core/#services)
+- [DIDComm Out Of Band Messages][OUT_OF_BAND]
+- [DIDComm Service Endpoint][DIDCOMM_SERVICE_ENDPOINT]
+- [DID Services][SERVICE]
 - [Aries Hyperledger Goal Codes](https://github.com/hyperledger/aries-rfcs/tree/main/concepts/0519-goal-codes)
+
+<!--- LINKS --->
+[ANONCRYPT]: https://identity.foundation/didcomm-messaging/spec/#anonymous-encryption
+[DIDURL]: https://www.w3.org/TR/did-core/#did-url-syntax
+[DID_KEY]: https://w3c-ccg.github.io/did-method-key/
+[SERVICE]: https://www.w3.org/TR/did-core/#services
+[OUT_OF_BAND]: https://github.com/decentralized-identity/didcomm-messaging/blob/49935b7b119591a009ce61d044ba9ad6fa40c7b7/docs/spec-files/out_of_band.md
+[DIDCOMM_SERVICE_ENDPOINT]: https://identity.foundation/didcomm-messaging/spec/#did-document-service-endpoint

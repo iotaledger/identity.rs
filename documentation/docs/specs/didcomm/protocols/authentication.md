@@ -240,6 +240,8 @@ This section is non-normative.
   - DIDAuthZ: https://github.com/hyperledger/aries-rfcs/tree/main/features/0309-didauthz
 - Jolocom: https://jolocom.github.io/jolocom-sdk/1.0.0/guides/interaction_flows/#authentication
 
+
+<!--- LINKS --->
 [DID]: https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers
 [AUTH_METHOD]: https://www.w3.org/TR/did-core/#authentication
 [DIDCOMM_KEYS]: https://identity.foundation/didcomm-messaging/spec/#did-document-keys
