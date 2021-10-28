@@ -245,8 +245,8 @@ mod tests {
 
   #[test]
   fn test_key_collection_size() {
-    // Key Collection can not exceed 2_147_483_647 keys
-    let keys: Result<KeyCollection, Error> = KeyCollection::new_ed25519(2_147_483_648);
+    // Key Collection can not exceed 4_096 keys
+    let keys: Result<KeyCollection, Error> = KeyCollection::new_ed25519(4_097);
     assert!(keys.is_err());
     // The number of keys created rounds up to the next power of two
     let keys: KeyCollection = KeyCollection::new_ed25519(0).unwrap();
@@ -254,5 +254,11 @@ mod tests {
     // The number of keys created rounds up to the next power of two
     let keys: KeyCollection = KeyCollection::new_ed25519(2_049).unwrap();
     assert_eq!(keys.len(), 4_096);
+    // The number of keys created rounds up to the next power of two
+    let keys: KeyCollection = KeyCollection::new_ed25519(4_096).unwrap();
+    assert_eq!(keys.len(), 4_096);
+    // In case of overflow an error is returned
+    let keys: Result<KeyCollection, Error> = KeyCollection::new_ed25519(usize::MAX);
+    assert!(keys.is_err());
   }
 }
