@@ -4,14 +4,16 @@
 #[macro_use]
 mod macros;
 
+#[allow(clippy::module_inception)]
+mod did;
 mod doc;
-mod url;
 
+pub use self::did::IotaDID;
+pub use self::did::IotaDIDUrl;
+pub use self::did::Segments;
 pub use self::doc::DocumentDiff;
 pub use self::doc::IotaDocument;
 pub use self::doc::IotaVerificationMethod;
 pub use self::doc::Properties;
 pub use self::doc::Signer;
 pub use self::doc::Verifier;
-pub use self::url::IotaDID;
-pub use self::url::Segments;

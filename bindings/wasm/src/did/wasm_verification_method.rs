@@ -10,6 +10,7 @@ use wasm_bindgen::prelude::*;
 use crate::crypto::Digest;
 use crate::crypto::KeyCollection;
 use crate::crypto::KeyPair;
+use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmDID;
 use crate::error::wasm_error;
 
@@ -56,16 +57,16 @@ impl WasmVerificationMethod {
     }
   }
 
-  /// Returns the `id` DID of the `VerificationMethod` object.
+  /// Returns the `id` `DIDUrl` of the `VerificationMethod` object.
   #[wasm_bindgen(getter)]
-  pub fn id(&self) -> WasmDID {
-    WasmDID(self.0.id().clone())
+  pub fn id(&self) -> WasmDIDUrl {
+    WasmDIDUrl::from(self.0.id())
   }
 
-  /// Returns the `controller` DID of the `VerificationMethod` object.
+  /// Returns the `controller` `DID` of the `VerificationMethod` object.
   #[wasm_bindgen(getter)]
   pub fn controller(&self) -> WasmDID {
-    WasmDID(self.0.controller().clone())
+    WasmDID::from(self.0.controller().clone())
   }
 
   /// Returns the `VerificationMethod` type.

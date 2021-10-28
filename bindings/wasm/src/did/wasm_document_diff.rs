@@ -4,11 +4,15 @@
 use std::ops::Deref;
 use std::str::FromStr;
 
-use identity::iota::{DocumentDiff, MessageId, TangleRef};
+use identity::iota::DocumentDiff;
+use identity::iota::MessageId;
+use identity::iota::TangleRef;
 use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDID;
-use crate::error::{Result, WasmResult};
+use crate::did::WasmDocument;
+use crate::error::Result;
+use crate::error::WasmResult;
 
 /// Defines the difference between two DID [`Document`]s' JSON representations.
 #[wasm_bindgen(js_name = DocumentDiff, inspectable)]
@@ -65,6 +69,21 @@ impl WasmDocumentDiff {
     let previous_message_id: MessageId = MessageId::from_str(message_id).wasm_result()?;
     self.0.set_previous_message_id(previous_message_id);
     Ok(())
+  }
+
+  /// Returns the `proof` object.
+  #[wasm_bindgen(getter)]
+  pub fn proof(&self) -> Result<JsValue> {
+    match self.0.proof() {
+      Some(proof) => JsValue::from_serde(proof).wasm_result(),
+      None => Ok(JsValue::NULL),
+    }
+  }
+
+  /// Returns a new DID Document which is the result of merging `self`
+  /// with the given Document.
+  pub fn merge(&self, document: &WasmDocument) -> Result<WasmDocument> {
+    self.0.merge(&document.0).map(WasmDocument).wasm_result()
   }
 }
 

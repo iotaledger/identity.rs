@@ -6,22 +6,23 @@
 //!
 //! cargo run --example create_did
 
+use identity::iota::ClientMap;
 use identity::iota::Receipt;
-use identity::iota::{ClientMap, TangleRef};
+use identity::iota::TangleRef;
 use identity::prelude::*;
 
 pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
   // Create a client instance to send messages to the Tangle.
   let client: ClientMap = ClientMap::new();
 
-  // Generate a new ed25519 public/private key pair.
+  // Generate a new Ed25519 public/private key pair.
   let keypair: KeyPair = KeyPair::new_ed25519()?;
 
   // Create a DID Document (an identity) from the generated key pair.
-  let mut document: IotaDocument = IotaDocument::from_keypair(&keypair)?;
+  let mut document: IotaDocument = IotaDocument::new(&keypair)?;
 
   // Sign the DID Document with the default authentication key.
-  document.sign(keypair.secret())?;
+  document.sign(keypair.private())?;
 
   println!("DID Document JSON > {:#}", document);
 

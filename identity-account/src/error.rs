@@ -91,12 +91,18 @@ pub enum Error {
   /// Caused by attempting to perform an upate in an invalid context.
   #[error("Update Error: {0}")]
   UpdateError(#[from] crate::events::UpdateError),
-  #[error("Invalid Secret Key: {0}")]
-  InvalidSecretKey(String),
+  #[error("Invalid Private Key: {0}")]
+  InvalidPrivateKey(String),
 }
 
 #[doc(hidden)]
 pub trait PleaseDontMakeYourOwnResult<T> {
   #[allow(clippy::wrong_self_convention)]
   fn to_result(self) -> Result<T>;
+}
+
+impl From<identity_did::did::DIDError> for Error {
+  fn from(error: identity_did::did::DIDError) -> Self {
+    identity_did::Error::from(error).into()
+  }
 }

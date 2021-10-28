@@ -11,8 +11,9 @@ use identity_core::convert::ToJson;
 
 use crate::chain::DocumentChain;
 use crate::chain::IntegrationChain;
+use crate::did::DocumentDiff;
 use crate::did::IotaDID;
-use crate::did::{DocumentDiff, IotaDocument};
+use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Message;
@@ -209,6 +210,8 @@ impl From<DiffChain> for Vec<DocumentDiff> {
 mod test {
   use identity_core::common::Timestamp;
   use identity_core::crypto::KeyPair;
+  use identity_did::did::CoreDIDUrl;
+  use identity_did::did::DID;
   use identity_did::verification::MethodBuilder;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodRef;
@@ -232,8 +235,8 @@ mod test {
 
     {
       let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
-      let mut document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
-      document.sign(keypair.secret()).unwrap();
+      let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+      document.sign(keypair.private()).unwrap();
       document.set_message_id(MessageId::new([8; 32]));
       chain = DocumentChain::new(IntegrationChain::new(document).unwrap());
       keys.push(keypair);
@@ -252,10 +255,10 @@ mod test {
       let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
 
       let authentication: MethodRef = MethodBuilder::default()
-        .id(chain.id().join("#key-2").unwrap().into())
+        .id(CoreDIDUrl::from(chain.id().to_url().join("#key-2").unwrap()))
         .controller(chain.id().clone().into())
         .key_type(MethodType::Ed25519VerificationKey2018)
-        .key_data(MethodData::new_b58(keypair.public()))
+        .key_data(MethodData::new_multibase(keypair.public()))
         .build()
         .map(Into::into)
         .unwrap();
@@ -268,7 +271,7 @@ mod test {
       new.set_updated(Timestamp::now_utc());
       new.set_previous_message_id(*chain.integration_message_id());
 
-      assert!(chain.current().sign_data(&mut new, keys[0].secret()).is_ok());
+      assert!(chain.current().sign_data(&mut new, keys[0].private()).is_ok());
       assert_eq!(
         chain.current().proof().unwrap().verification_method(),
         "#authentication"
@@ -291,7 +294,7 @@ mod test {
       };
 
       let message_id = *chain.diff_message_id();
-      let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].secret()).unwrap();
+      let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].private()).unwrap();
       diff.set_message_id(message_id);
       assert!(chain.try_push_diff(diff).is_ok());
     }

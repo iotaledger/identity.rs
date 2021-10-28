@@ -6,6 +6,7 @@ use identity::core::Url;
 use identity::credential::Credential;
 use identity::credential::Presentation;
 use identity::credential::PresentationBuilder;
+use identity::did::DID;
 use wasm_bindgen::prelude::*;
 
 use crate::did::WasmDocument;

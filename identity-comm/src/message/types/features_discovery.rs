@@ -1,15 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+//! Provides types loosely representing the request and response roles from the [Discover Features Protocol](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/feature_discovery.md#discover-features-protocol-10)
 
 use identity_core::common::Url;
-use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDIDUrl;
 use uuid::Uuid;
 
 use crate::message::Timing;
 
-/// A DIDComm `features-discovery` Request.
-///
-/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/i_features-discovery.md#featuresrequest)
+/// Analogue of a [DIDComm `features-discovery` Request](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/feature_discovery.md#discover-features-protocol-10)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct FeaturesRequest {
   context: String,
@@ -19,7 +18,7 @@ pub struct FeaturesRequest {
   #[serde(rename = "responseRequested", skip_serializing_if = "Option::is_none")]
   response_requested: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<IotaDID>,
+  id: Option<IotaDIDUrl>,
   #[serde(skip_serializing_if = "Option::is_none")]
   timing: Option<Timing>,
 }
@@ -41,13 +40,11 @@ impl FeaturesRequest {
   impl_message_accessor!(thread => Uuid);
   impl_message_accessor!(callback_url => Url);
   impl_message_accessor!(response_requested => Option<bool>);
-  impl_message_accessor!(id => Option<IotaDID>);
+  impl_message_accessor!(id => Option<IotaDIDUrl>);
   impl_message_accessor!(timing => Option<Timing>);
 }
 
-/// A DIDComm `features-discovery` Response.
-///
-/// [Reference](https://github.com/iotaledger/identity.rs/blob/dev/docs/DID%20Communications%20Research%20and%20Specification/i_features-discovery.md#featuresresponse)
+/// Analogue of a [DIDComm `features-discovery` Response](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/feature_discovery.md#discover-features-protocol-10)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct FeaturesResponse {
   context: String,

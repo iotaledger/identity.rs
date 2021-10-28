@@ -33,17 +33,17 @@ impl<T> Named for JcsEd25519<T> {
   const NAME: &'static str = "JcsEd25519Signature2020";
 }
 
-impl<T> Signer<T::Secret> for JcsEd25519<T>
+impl<T> Signer<T::Private> for JcsEd25519<T>
 where
   T: Sign,
   T::Output: AsRef<[u8]>,
 {
-  fn sign<X>(data: &X, secret: &T::Secret) -> Result<SignatureValue>
+  fn sign<X>(data: &X, private: &T::Private) -> Result<SignatureValue>
   where
     X: Serialize,
   {
     let message: Vec<u8> = data.to_jcs()?;
-    let signature: T::Output = T::sign(&message, secret)?;
+    let signature: T::Output = T::sign(&message, private)?;
     let signature: String = encode_b58(signature.as_ref());
 
     Ok(SignatureValue::Signature(signature))
@@ -79,21 +79,21 @@ mod tests {
   use crate::crypto::Ed25519;
   use crate::crypto::JcsEd25519;
   use crate::crypto::KeyPair;
+  use crate::crypto::PrivateKey;
   use crate::crypto::PublicKey;
-  use crate::crypto::SecretKey;
   use crate::crypto::SignatureValue;
   use crate::crypto::Signer as _;
   use crate::crypto::Verifier as _;
   use crate::json;
   use crate::utils::decode_b58;
 
-  type Signer = JcsEd25519<Ed25519<SecretKey>>;
+  type Signer = JcsEd25519<Ed25519<PrivateKey>>;
 
   type Verifier = JcsEd25519<Ed25519<PublicKey>>;
 
   struct TestVector {
     public: &'static str,
-    secret: &'static str,
+    private: &'static str,
     input: &'static str,
     output: &'static str,
   }
@@ -104,13 +104,13 @@ mod tests {
   fn test_tvs() {
     for tv in TVS {
       let public: PublicKey = decode_b58(tv.public).unwrap().into();
-      let secret: SecretKey = decode_b58(tv.secret).unwrap().into();
+      let private: PrivateKey = decode_b58(tv.private).unwrap().into();
       let badkey: PublicKey = b"IOTA".to_vec().into();
 
       let input: Object = Object::from_json(tv.input).unwrap();
       let output: Object = Object::from_json(tv.output).unwrap();
 
-      let signature: SignatureValue = Signer::sign(&input, &secret).unwrap();
+      let signature: SignatureValue = Signer::sign(&input, &private).unwrap();
 
       assert_eq!(output["proof"]["signatureValue"], signature.as_str());
 
@@ -134,9 +134,9 @@ mod tests {
     const MSG: &[u8] = b"hello";
 
     let public: PublicKey = decode_b58(PUBLIC).unwrap().into();
-    let secret: SecretKey = decode_b58(SECRET).unwrap().into();
+    let private: PrivateKey = decode_b58(SECRET).unwrap().into();
 
-    let signature: SignatureValue = Signer::sign(&MSG, &secret).unwrap();
+    let signature: SignatureValue = Signer::sign(&MSG, &private).unwrap();
 
     assert_eq!(signature.as_str().as_bytes(), SIG);
     assert!(Verifier::verify(&MSG, &signature, &public).is_ok());
@@ -150,7 +150,7 @@ mod tests {
     let data1: Value = json!({ "msg": "IOTA Identity" });
     let data2: Value = json!({ "msg": "IOTA Identity 2" });
 
-    let signature: _ = Signer::sign(&data1, key1.secret()).unwrap();
+    let signature: _ = Signer::sign(&data1, key1.private()).unwrap();
 
     // The signature should be valid
     assert!(Verifier::verify(&data1, &signature, key1.public()).is_ok());

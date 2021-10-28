@@ -10,9 +10,12 @@ use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Result;
+use crate::tangle::Client;
 use crate::tangle::Message;
+use crate::tangle::MessageExt;
 use crate::tangle::MessageId;
-use crate::tangle::{Client, MessageExt, MessageIndex, TangleRef};
+use crate::tangle::MessageIndex;
+use crate::tangle::TangleRef;
 
 /// A DID Document's history and current state.
 // ChainHistory<T> is not stored directly due to limitations on exporting generics in Wasm bindings.
@@ -94,7 +97,7 @@ impl ChainHistory<DocumentDiff> {
   /// This is useful for constructing histories of old diff chains no longer at the end of an
   /// integration chain.
   pub fn try_from_raw_messages(document: &IotaDocument, messages: &[Message]) -> Result<Self> {
-    let did = document.did();
+    let did: &IotaDID = document.did();
     let index: MessageIndex<DocumentDiff> = messages
       .iter()
       .flat_map(|message| message.try_extract_diff(did))

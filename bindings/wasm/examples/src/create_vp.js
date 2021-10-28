@@ -26,8 +26,8 @@ async function createVP(clientConfig) {
     const unsignedVp = new VerifiablePresentation(alice.doc, signedVc.toJSON())
 
     const signedVp = alice.doc.signPresentation(unsignedVp, {
-        method: "#key",
-        secret: alice.key.secret,
+        method: "#authentication",
+        private: alice.key.private,
     })
 
     // Check the validation status of the Verifiable Presentation

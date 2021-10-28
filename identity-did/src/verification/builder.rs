@@ -1,18 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::did::DID;
+use identity_core::common::Object;
+
+use crate::did::CoreDID;
+use crate::did::CoreDIDUrl;
 use crate::error::Result;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
 use crate::verification::VerificationMethod;
-use identity_core::common::Object;
 
 /// A `MethodBuilder` is used to generate a customized `Method`.
 #[derive(Clone, Debug, Default)]
 pub struct MethodBuilder<T = Object> {
-  pub(crate) id: Option<DID>,
-  pub(crate) controller: Option<DID>,
+  pub(crate) id: Option<CoreDIDUrl>,
+  pub(crate) controller: Option<CoreDID>,
   pub(crate) key_type: Option<MethodType>,
   pub(crate) key_data: Option<MethodData>,
   pub(crate) properties: T,
@@ -32,14 +34,14 @@ impl<T> MethodBuilder<T> {
 
   /// Sets the `id` value of the generated `VerificationMethod`.
   #[must_use]
-  pub fn id(mut self, value: DID) -> Self {
+  pub fn id(mut self, value: CoreDIDUrl) -> Self {
     self.id = Some(value);
     self
   }
 
   /// Sets the `controller` value of the generated `VerificationMethod`.
   #[must_use]
-  pub fn controller(mut self, value: DID) -> Self {
+  pub fn controller(mut self, value: CoreDID) -> Self {
     self.controller = Some(value);
     self
   }
@@ -87,7 +89,7 @@ mod tests {
     let _: VerificationMethod = MethodBuilder::default()
       .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::PublicKeyBase58("".into()))
+      .key_data(MethodData::PublicKeyMultibase("".into()))
       .build()
       .unwrap();
   }
@@ -98,7 +100,7 @@ mod tests {
     let _: VerificationMethod = MethodBuilder::default()
       .id("did:example:123".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
-      .key_data(MethodData::PublicKeyBase58("".into()))
+      .key_data(MethodData::PublicKeyMultibase("".into()))
       .build()
       .unwrap();
   }
@@ -120,7 +122,7 @@ mod tests {
     let _: VerificationMethod = MethodBuilder::default()
       .id("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::PublicKeyBase58("".into()))
+      .key_data(MethodData::PublicKeyMultibase("".into()))
       .build()
       .unwrap();
   }

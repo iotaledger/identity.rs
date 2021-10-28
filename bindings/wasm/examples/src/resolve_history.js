@@ -158,14 +158,14 @@ async function resolveHistory(clientConfig) {
     let intDoc2 = Document.fromJSON(diffDoc2.toJSON());
 
     // Remove the #keys-1 VerificationMethod
-    intDoc2.removeMethod(DID.parse(intDoc2.id.toString() + "#keys-1"));
+    intDoc2.removeMethod(intDoc2.id.toUrl().join("#keys-1"));
 
     // Remove the #linked-domain-1 Service
-    intDoc2.removeService(DID.parse(intDoc2.id.toString() + "#linked-domain-1"));
+    intDoc2.removeService(intDoc2.id.toUrl().join("#linked-domain-1"));
 
     // Add a VerificationMethod with a new KeyPair, called "keys-2"
     const keys2 = new KeyPair(KeyType.Ed25519);
-    const method2 = VerificationMethod.fromDID(intDoc1.id, keys2, "keys-2");
+    const method2 = VerificationMethod.fromDID(intDoc2.id, keys2, "keys-2");
     intDoc2.insertMethod(method2, "VerificationMethod");
 
     // Note: the `previous_message_id` points to the `message_id` of the last integration chain

@@ -4,7 +4,8 @@
 use identity::iota::Network as IotaNetwork;
 use wasm_bindgen::prelude::*;
 
-use crate::error::{Result, WasmResult};
+use crate::error::Result;
+use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Network)]
 #[derive(Clone, Debug)]
@@ -24,8 +25,8 @@ impl WasmNetwork {
   }
 
   #[wasm_bindgen]
-  pub fn testnet() -> WasmNetwork {
-    Self(IotaNetwork::Testnet)
+  pub fn devnet() -> WasmNetwork {
+    Self(IotaNetwork::Devnet)
   }
 
   /// Returns the node URL of the Tangle network.

@@ -3,7 +3,7 @@
 
 use identity_core::common::Url;
 
-use crate::did::DID;
+use crate::did::CoreDIDUrl;
 use crate::document::CoreDocument;
 use crate::service::Service;
 use crate::utils::DIDKey;
@@ -65,15 +65,15 @@ impl From<Url> for PrimaryResource {
 #[serde(untagged)]
 pub enum SecondaryResource {
   /// A DID Document Method Id.
-  VerificationDID(DID),
+  VerificationDID(CoreDIDUrl),
   /// A DID Document Verification Method.
   VerificationKey(VerificationMethod),
   /// A DID Document Service.
   Service(Service),
 }
 
-impl From<DID> for SecondaryResource {
-  fn from(other: DID) -> Self {
+impl From<CoreDIDUrl> for SecondaryResource {
+  fn from(other: CoreDIDUrl) -> Self {
     Self::VerificationDID(other)
   }
 }

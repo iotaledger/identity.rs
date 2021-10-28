@@ -30,7 +30,7 @@ DID Documents **MAY** include Verifications Methods as defined in the [DID Core 
 
 - The Verification Method `type` **MUST** be `MerkleKeyCollection2021`.
 
-- The Verification Method **MUST** contain a `publicKeyBase58` property. The value is encoded as a [Base58-BTC][BASE58-BTC] string, see [Public Key](#Public-Key) for the format of the encoded data.
+- The Verification Method **MUST** contain a `publicKeyMultibase` property. The value is encoded as a [Multibase][MULTIBASE] string, typically using [Base58-BTC][BASE58-BTC]. See [Public Key](#Public-Key) for the format of the encoded data.
 
 ### Merkle Tree
 
@@ -151,11 +151,11 @@ The following algorithm species how to check the authenticity of a DID Document 
 
   4. Ensure the `type` property of `method` is `MerkleKeyCollection2021`.
 
-  5. Extract and verify the signature algorithm from `method.publicKeyBase58`, return the result as `signature-algorithm` (See [Key Format](#Key-Format) for more info).
+  5. Extract and verify the signature algorithm from `method.publicKeyMultibase`, return the result as `signature-algorithm` (See [Key Format](#Key-Format) for more info).
 
-  6. Extract and verify the digest algorithm from `method.publicKeyBase58`, return the result as `digest-algorithm` (See [Key Format](#Key-Format) for more info).
+  6. Extract and verify the digest algorithm from `method.publicKeyMultibase`, return the result as `digest-algorithm` (See [Key Format](#Key-Format) for more info).
 
-  7. Extract the Merkle Tree Root from `method.publicKeyBase58`, return the result as `merkle-root` (See [Key Format](#Key-Format) for more info).
+  7. Extract the Merkle Tree Root from `method.publicKeyMultibase`, return the result as `merkle-root` (See [Key Format](#Key-Format) for more info).
 
   8. Hash `public-key` with `digest-algorithm`, return the result as `target-hash`.
 
@@ -215,7 +215,7 @@ fn encode_public_key(signature: u8, digest: u8, root: &[u8]) -> Vec<u8> {
   "id": "did:example:123#key-collection",
   "controller": "did:example:123",
   "type": "MerkleKeyCollection2021",
-  "publicKeyBase58": "11HxitpBaDhvJn8nwddKB1v7Csx1GeAnn4824QQPvD4oYY"
+  "publicKeyMultibase": "z11HxitpBaDhvJn8nwddKB1v7Csx1GeAnn4824QQPvD4oYY"
 }
 ```
 
@@ -229,7 +229,7 @@ fn encode_public_key(signature: u8, digest: u8, root: &[u8]) -> Vec<u8> {
       "id": "did:example:123#key-collection",
       "controller": "did:example:123",
       "type": "MerkleKeyCollection2021",
-      "publicKeyBase58": "11HxitpBaDhvJn8nwddKB1v7Csx1GeAnn4824QQPvD4oYY"
+      "publicKeyMultibase": "z11HxitpBaDhvJn8nwddKB1v7Csx1GeAnn4824QQPvD4oYY"
     }
   ],
   "authentication": [
@@ -249,6 +249,7 @@ TODO
 [DID-METHODS]: https://w3c.github.io/did-core/#dfn-did-methods
 [DID-VMETHODS]: https://www.w3.org/TR/did-core/#verification-methods
 [BASE58-BTC]: https://tools.ietf.org/id/draft-msporny-base58-01.html
+[MULTIBASE]: https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-03
 [SHA-256]: https://en.wikipedia.org/wiki/SHA-2
 [JCS-RFC]: https://tools.ietf.org/html/rfc8785
 [Roaring-Bitmaps]: https://roaringbitmap.org/

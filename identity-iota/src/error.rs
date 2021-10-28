@@ -12,7 +12,7 @@ pub enum Error {
   #[error("{0}")]
   CredError(#[from] identity_credential::Error),
   #[error("{0}")]
-  InvalidDID(#[from] identity_did::did::Error),
+  InvalidDID(#[from] identity_did::did::DIDError),
   #[error("{0}")]
   InvalidDoc(#[from] identity_did::Error),
   #[error("{0}")]
@@ -27,8 +27,8 @@ pub enum Error {
   InvalidDocumentAuthFragment,
   #[error("Invalid Document - Authentication Type Not Supported")]
   InvalidDocumentAuthType,
-  #[error("Invalid Network Name: {0}")]
-  InvalidNetworkName(&'static str),
+  #[error("Invalid Network Name")]
+  InvalidNetworkName,
   #[error("Invalid Tryte Conversion")]
   InvalidTryteConversion,
   #[error("Invalid Transaction Bundle")]

@@ -156,8 +156,8 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     })
   }
 
-  async fn validate_document(&self, did: &str) -> Result<DocumentValidation> {
-    let did: IotaDID = did.parse()?;
+  async fn validate_document(&self, did: impl AsRef<str>) -> Result<DocumentValidation> {
+    let did: IotaDID = did.as_ref().parse()?;
     let document: IotaDocument = self.client.resolve(&did).await?;
     let verified: bool = document.verify().is_ok();
 

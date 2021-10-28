@@ -9,8 +9,10 @@
 use identity::core::json;
 use identity::core::FromJson;
 use identity::did::Service;
+use identity::did::DID;
+use identity::iota::ClientMap;
+use identity::iota::DocumentDiff;
 use identity::iota::Receipt;
-use identity::iota::{ClientMap, DocumentDiff};
 use identity::prelude::*;
 
 mod create_did;
@@ -29,7 +31,7 @@ async fn main() -> Result<()> {
 
     // Add a Service
     let service: Service = Service::from_json_value(json!({
-      "id": doc.id().join("#linked-domain")?,
+      "id": doc.id().to_url().join("#linked-domain")?,
       "type": "LinkedDomains",
       "serviceEndpoint": "https://iota.org"
     }))?;
@@ -38,7 +40,7 @@ async fn main() -> Result<()> {
   };
 
   // Generate a signed diff object.
-  let diff: DocumentDiff = document.diff(&updated_document, *receipt.message_id(), keypair.secret())?;
+  let diff: DocumentDiff = document.diff(&updated_document, *receipt.message_id(), keypair.private())?;
 
   println!("Diff > {:#?}", diff);
 

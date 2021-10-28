@@ -10,7 +10,7 @@ use identity_core::common::Url;
 use identity_core::convert::ToJson;
 use serde::Serialize;
 
-use crate::did::DID;
+use crate::did::CoreDIDUrl;
 use crate::error::Error;
 use crate::error::Result;
 use crate::service::ServiceBuilder;
@@ -20,7 +20,7 @@ use crate::service::ServiceBuilder;
 /// [Specification](https://www.w3.org/TR/did-core/#services)
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Service<T = Object> {
-  pub(crate) id: DID,
+  pub(crate) id: CoreDIDUrl,
   #[serde(rename = "type")]
   pub(crate) type_: String,
   #[serde(rename = "serviceEndpoint")]
@@ -48,12 +48,12 @@ impl<T> Service<T> {
   }
 
   /// Returns a reference to the `Service` id.
-  pub fn id(&self) -> &DID {
+  pub fn id(&self) -> &CoreDIDUrl {
     &self.id
   }
 
   /// Returns a mutable reference to the `Service` id.
-  pub fn id_mut(&mut self) -> &mut DID {
+  pub fn id_mut(&mut self) -> &mut CoreDIDUrl {
     &mut self.id
   }
 
@@ -101,8 +101,8 @@ where
   }
 }
 
-impl<T> AsRef<DID> for Service<T> {
-  fn as_ref(&self) -> &DID {
+impl<T> AsRef<CoreDIDUrl> for Service<T> {
+  fn as_ref(&self) -> &CoreDIDUrl {
     self.id()
   }
 }

@@ -21,10 +21,10 @@ impl<T> Sign for Ed25519<T>
 where
   T: AsRef<[u8]> + ?Sized,
 {
-  type Secret = T;
+  type Private = T;
   type Output = [u8; SIGNATURE_LENGTH];
 
-  fn sign(message: &[u8], key: &Self::Secret) -> Result<Self::Output> {
+  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output> {
     parse_secret(key.as_ref()).map(|key| key.sign(message).to_bytes())
   }
 }
@@ -93,9 +93,9 @@ mod tests {
   #[test]
   fn test_ed25519_can_sign_and_verify() {
     let public: Vec<u8> = decode_b58(PUBLIC_B58).unwrap();
-    let secret: Vec<u8> = decode_b58(SECRET_B58).unwrap();
+    let private: Vec<u8> = decode_b58(SECRET_B58).unwrap();
 
-    let signature: _ = Ed25519::sign(b"hello", &secret).unwrap();
+    let signature: _ = Ed25519::sign(b"hello", &private).unwrap();
     let combined: _ = [&signature[..], b"hello"].concat();
 
     assert_eq!(&combined, SIGNATURE_HELLO);

@@ -4,51 +4,33 @@
 use std::str::FromStr;
 
 use identity::core::decode_b58;
-use identity::core::FromJson;
 use identity::crypto::merkle_key::MerkleDigestTag;
 use identity::crypto::merkle_key::MerkleKey;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
+use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
-use identity::crypto::SecretKey;
 use identity::did::verifiable;
 use identity::did::MethodScope;
 use identity::iota::Error;
-use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::MessageId;
-use identity::iota::{DocumentDiff, TangleRef};
+use identity::iota::NetworkName;
+use identity::iota::TangleRef;
 use wasm_bindgen::prelude::*;
 
 use crate::common::WasmTimestamp;
 use crate::credential::VerifiableCredential;
 use crate::credential::VerifiablePresentation;
 use crate::crypto::KeyPair;
-use crate::crypto::KeyType;
+use crate::did::wasm_did_url::WasmDIDUrl;
+use crate::did::WasmDID;
+use crate::did::WasmDocumentDiff;
 use crate::did::WasmVerificationMethod;
-use crate::did::{WasmDID, WasmDocumentDiff};
-use crate::error::{Result, WasmResult};
+use crate::error::Result;
+use crate::error::WasmResult;
 use crate::service::Service;
-
-#[wasm_bindgen(inspectable)]
-pub struct NewDocument {
-  key: KeyPair,
-  doc: WasmDocument,
-}
-
-#[wasm_bindgen]
-impl NewDocument {
-  #[wasm_bindgen(getter)]
-  pub fn key(&self) -> KeyPair {
-    self.key.clone()
-  }
-
-  #[wasm_bindgen(getter)]
-  pub fn doc(&self) -> WasmDocument {
-    self.doc.clone()
-  }
-}
 
 // =============================================================================
 // =============================================================================
@@ -59,42 +41,32 @@ pub struct WasmDocument(pub(crate) IotaDocument);
 
 #[wasm_bindgen(js_class = Document)]
 impl WasmDocument {
-  /// Creates a new DID Document from the given KeyPair.
-  #[wasm_bindgen(constructor)]
-  #[allow(clippy::new_ret_no_self)]
-  pub fn new(type_: KeyType, network: Option<String>, tag: Option<String>) -> Result<NewDocument> {
-    let keypair: KeyPair = KeyPair::new(type_)?;
-    let public: &PublicKey = keypair.0.public();
-
-    let did: IotaDID = if let Some(network) = network.as_deref() {
-      IotaDID::new_with_network(public.as_ref(), network).wasm_result()?
-    } else {
-      IotaDID::new(public.as_ref()).wasm_result()?
-    };
-
-    let method: IotaVerificationMethod =
-      IotaVerificationMethod::from_did(did, &keypair.0, tag.as_deref()).wasm_result()?;
-    let document: IotaDocument = IotaDocument::from_authentication(method).wasm_result()?;
-
-    Ok(NewDocument {
-      key: keypair,
-      doc: Self(document),
-    })
-  }
-
-  /// Creates a new DID Document from the given KeyPair and optional network.
+  /// Creates a new DID Document from the given `KeyPair`, network, and verification method
+  /// fragment name.
   ///
-  /// If unspecified, network defaults to the mainnet.
-  #[wasm_bindgen(js_name = fromKeyPair)]
-  pub fn from_keypair(key: &KeyPair, network: Option<String>) -> Result<WasmDocument> {
-    let doc = match network {
-      Some(net) => IotaDocument::from_keypair_with_network(&key.0, &net),
-      None => IotaDocument::from_keypair(&key.0),
-    };
-    doc.map(Self).wasm_result()
+  /// The DID Document will be pre-populated with a single verification method
+  /// derived from the provided `KeyPair`, with an attached authentication relationship.
+  /// This method will have the DID URL fragment `#authentication` by default and can be easily
+  /// retrieved with `Document::authentication`.
+  ///
+  /// NOTE: the generated document is unsigned, see `Document::sign`.
+  ///
+  /// Arguments:
+  ///
+  /// * keypair: the initial verification method is derived from the public key with this keypair.
+  /// * network: Tangle network to use for the DID, default `Network::mainnet`.
+  /// * fragment: name of the initial verification method, default "authentication".
+  #[wasm_bindgen(constructor)]
+  pub fn new(keypair: &KeyPair, network: Option<String>, fragment: Option<String>) -> Result<WasmDocument> {
+    let network_name = network.map(NetworkName::try_from).transpose().wasm_result()?;
+    IotaDocument::new_with_options(&keypair.0, network_name, fragment.as_deref())
+      .map(Self)
+      .wasm_result()
   }
 
-  /// Creates a new DID Document from the given verification [`method`][`Method`].
+  /// Creates a new DID Document from the given `VerificationMethod`.
+  ///
+  /// NOTE: the generated document is unsigned, see Document::sign.
   #[wasm_bindgen(js_name = fromAuthentication)]
   pub fn from_authentication(method: &WasmVerificationMethod) -> Result<WasmDocument> {
     IotaDocument::from_authentication(method.0.clone())
@@ -181,6 +153,7 @@ impl WasmDocument {
   // Verification Methods
   // ===========================================================================
 
+  /// Adds a new Verification Method to the DID Document.
   #[wasm_bindgen(js_name = insertMethod)]
   pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: Option<String>) -> Result<bool> {
     let scope: MethodScope = scope.unwrap_or_default().parse().wasm_result()?;
@@ -188,19 +161,22 @@ impl WasmDocument {
     Ok(self.0.insert_method(scope, method.0.clone()))
   }
 
+  /// Removes all references to the specified Verification Method.
   #[wasm_bindgen(js_name = removeMethod)]
-  pub fn remove_method(&mut self, did: &WasmDID) -> Result<()> {
-    self.0.remove_method(&did.0).wasm_result()
+  pub fn remove_method(&mut self, did: WasmDIDUrl) -> Result<()> {
+    self.0.remove_method(did.0).wasm_result()
   }
 
+  /// Add a new `Service` to the document.
   #[wasm_bindgen(js_name = insertService)]
   pub fn insert_service(&mut self, service: &Service) -> Result<bool> {
     Ok(self.0.insert_service(service.0.clone()))
   }
 
+  /// Remove a `Service` identified by the given `DIDUrl` from the document.
   #[wasm_bindgen(js_name = removeService)]
-  pub fn remove_service(&mut self, did: &WasmDID) -> Result<()> {
-    self.0.remove_service(&did.0).wasm_result()
+  pub fn remove_service(&mut self, did: WasmDIDUrl) -> Result<()> {
+    self.0.remove_service(did.0).wasm_result()
   }
 
   // ===========================================================================
@@ -210,7 +186,7 @@ impl WasmDocument {
   /// Signs the DID Document with the default authentication method.
   #[wasm_bindgen]
   pub fn sign(&mut self, key: &KeyPair) -> Result<()> {
-    self.0.sign(key.0.secret()).wasm_result()
+    self.0.sign(key.0.private()).wasm_result()
   }
 
   /// Verify the signature with the authentication_key
@@ -248,12 +224,12 @@ impl WasmDocument {
       MerkleKey {
         method: String,
         public: String,
-        secret: String,
+        private: String,
         proof: String,
       },
       Default {
         method: String,
-        secret: String,
+        private: String,
       },
     }
 
@@ -264,7 +240,7 @@ impl WasmDocument {
       Args::MerkleKey {
         method,
         public,
-        secret,
+        private,
         proof,
       } => {
         let merkle_key: Vec<u8> = self
@@ -274,12 +250,12 @@ impl WasmDocument {
           .wasm_result()?;
 
         let public: PublicKey = decode_b58(&public).map(Into::into).wasm_result()?;
-        let secret: SecretKey = decode_b58(&secret).map(Into::into).wasm_result()?;
+        let private: PrivateKey = decode_b58(&private).map(Into::into).wasm_result()?;
 
         let digest: MerkleDigestTag = MerkleKey::extract_tags(&merkle_key).wasm_result()?.1;
         let proof: Vec<u8> = decode_b58(&proof).wasm_result()?;
 
-        let signer: _ = self.0.signer(&secret).method(&method);
+        let signer: _ = self.0.signer(&private).method(&method);
 
         match digest {
           MerkleDigestTag::SHA256 => match Proof::<Sha256>::decode(&proof) {
@@ -289,10 +265,10 @@ impl WasmDocument {
           _ => return Err("Invalid Merkle Key Digest".into()),
         }
       }
-      Args::Default { method, secret } => {
-        let secret: SecretKey = decode_b58(&secret).wasm_result().map(Into::into)?;
+      Args::Default { method, private } => {
+        let private: PrivateKey = decode_b58(&private).wasm_result().map(Into::into)?;
 
-        self.0.signer(&secret).method(&method).sign(&mut data).wasm_result()?;
+        self.0.signer(&private).method(&method).sign(&mut data).wasm_result()?;
       }
     }
 
@@ -333,17 +309,15 @@ impl WasmDocument {
   pub fn diff(&self, other: &WasmDocument, message: &str, key: &KeyPair) -> Result<WasmDocumentDiff> {
     self
       .0
-      .diff(&other.0, MessageId::from_str(message).wasm_result()?, key.0.secret())
+      .diff(&other.0, MessageId::from_str(message).wasm_result()?, key.0.private())
       .map(WasmDocumentDiff::from)
       .wasm_result()
   }
 
-  /// Verifies the `diff` signature and merges the changes into `self`.
+  /// Verifies a `DocumentDiff` signature and merges the changes into `self`.
   #[wasm_bindgen]
-  pub fn merge(&mut self, diff: &str) -> Result<()> {
-    let diff: DocumentDiff = DocumentDiff::from_json(diff).wasm_result()?;
-    self.0.merge(&diff).wasm_result()?;
-    Ok(())
+  pub fn merge(&mut self, diff: &WasmDocumentDiff) -> Result<()> {
+    self.0.merge(&diff.0).wasm_result()
   }
 
   // ===========================================================================

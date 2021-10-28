@@ -6,15 +6,21 @@
 #![allow(dead_code)]
 
 use identity::core::json;
+use identity::core::FromJson;
+use identity::core::Timestamp;
+use identity::core::ToJson;
 use identity::core::Url;
-use identity::core::{FromJson, Timestamp, ToJson};
 use identity::credential::Credential;
 use identity::credential::CredentialBuilder;
 use identity::credential::Subject;
 use identity::did::MethodScope;
-use identity::iota::{
-  ClientMap, CredentialValidation, CredentialValidator, IotaVerificationMethod, Receipt, TangleRef,
-};
+use identity::did::DID;
+use identity::iota::ClientMap;
+use identity::iota::CredentialValidation;
+use identity::iota::CredentialValidator;
+use identity::iota::IotaVerificationMethod;
+use identity::iota::Receipt;
+use identity::iota::TangleRef;
 use identity::prelude::*;
 
 /// Helper that takes two DID Documents (identities) for issuer and subject, and
@@ -76,7 +82,7 @@ pub async fn add_new_key(
   // Prepare the update
   updated_doc.set_previous_message_id(*receipt.message_id());
   updated_doc.set_updated(Timestamp::now_utc());
-  updated_doc.sign(key.secret())?;
+  updated_doc.sign(key.private())?;
 
   // Publish the update to the Tangle
   let update_receipt: Receipt = client.publish_document(&updated_doc).await?;

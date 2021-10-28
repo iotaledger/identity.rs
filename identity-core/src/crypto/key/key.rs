@@ -11,8 +11,8 @@ use zeroize::Zeroize;
 /// A cryptographic key with `Public` components.
 pub type PublicKey = Key<Public>;
 
-/// A cryptographic key with `Secret` components.
-pub type SecretKey = Key<Secret>;
+/// A cryptographic key with `Private` components.
+pub type PrivateKey = Key<Private>;
 
 // =============================================================================
 // =============================================================================
@@ -21,17 +21,17 @@ mod private {
   pub trait Sealed {}
 }
 
-// A marker type for the `Public` components of a cryptographic key.
+// A marker type for the `Public` components of an asymmetric cryptographic key.
 #[derive(Clone, Copy, Debug)]
 pub enum Public {}
 
-// A marker type for the `Secret` components of a cryptographic key.
+// A marker type for the `Private` components of an asymmetric cryptographic key.
 #[derive(Clone, Copy, Debug)]
-pub enum Secret {}
+pub enum Private {}
 
 impl private::Sealed for Public {}
 
-impl private::Sealed for Secret {}
+impl private::Sealed for Private {}
 
 // =============================================================================
 // =============================================================================

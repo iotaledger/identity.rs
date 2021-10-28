@@ -29,8 +29,8 @@ pub async fn create_vc() -> Result<()> {
   // Create an unsigned Credential with claims about `subject` specified by `issuer`.
   let mut credential: Credential = common::issue_degree(&issuer_doc, &subject_doc)?;
 
-  // Sign the Credential with the issuer's secret key
-  issuer_doc.sign_data(&mut credential, issuer_key.secret())?;
+  // Sign the Credential with the issuer's private key.
+  issuer_doc.sign_data(&mut credential, issuer_key.private())?;
 
   println!("Credential JSON > {:#}", credential);
 

@@ -15,11 +15,14 @@ use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::SerdeInto;
 use identity_core::crypto::KeyPair;
-use identity_core::crypto::SecretKey;
+use identity_core::crypto::PrivateKey;
+use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
+use identity_did::did::CoreDIDUrl;
+use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::service::Service;
 use identity_did::utils::DIDKey;
@@ -37,12 +40,14 @@ use identity_did::verification::VerificationMethod;
 
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
+use crate::did::IotaDIDUrl;
 use crate::did::IotaVerificationMethod;
 use crate::did::Properties as BaseProperties;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
+use crate::tangle::NetworkName;
 use crate::tangle::TangleRef;
 
 type Properties = VerifiableProperties<BaseProperties>;
@@ -67,38 +72,73 @@ impl TryMethod for IotaDocument {
 }
 
 impl IotaDocument {
-  /// Creates a new DID Document from the given KeyPair.
-  ///
-  /// The DID Document will be pre-populated with a single authentication
-  /// method based on the provided [KeyPair].
-  ///
-  /// The authentication method will have the DID URL fragment `#authentication`
-  /// and can be easily retrieved with [Document::authentication].
-  pub fn from_keypair(keypair: &KeyPair) -> Result<Self> {
-    let method: IotaVerificationMethod = IotaVerificationMethod::from_keypair(keypair, "authentication")?;
+  const DEFAULT_METHOD_FRAGMENT: &'static str = "authentication";
 
-    // SAFETY: We don't create invalid Methods.  Method::from_keypair() uses the MethodBuilder
-    // internally which verifies correctness on construction.
-    Ok(unsafe { Self::from_authentication_unchecked(method) })
+  /// Creates a new DID Document from the given [`KeyPair`].
+  ///
+  /// The DID Document will be pre-populated with a single verification method
+  /// derived from the provided [`KeyPair`], with an attached authentication relationship.
+  /// This method will have the DID URL fragment `#authentication` and can be easily
+  /// retrieved with [`Document::authentication`].
+  ///
+  /// NOTE: the generated document is unsigned, see [`Document::sign`].
+  ///
+  /// Example:
+  ///
+  /// ```
+  /// # use identity_core::crypto::KeyPair;
+  /// # use identity_iota::did::IotaDocument;
+  /// #
+  /// // Create a DID Document from a new Ed25519 keypair.
+  /// let keypair = KeyPair::new_ed25519().unwrap();
+  /// let document = IotaDocument::new(&keypair).unwrap();
+  /// ```
+  pub fn new(keypair: &KeyPair) -> Result<Self> {
+    Self::new_with_options(keypair, None, None)
   }
 
-  /// Creates a new DID Document from the given KeyPair and network.
+  /// Creates a new DID Document from the given [`KeyPair`], network, and verification method
+  /// fragment name.
   ///
-  /// The DID Document will be pre-populated with a single authentication
-  /// method based on the provided [KeyPair].
+  /// See [`Document::new`].
   ///
-  /// The authentication method will have the DID URL fragment `#authentication`
-  /// and can be easily retrieved with [Document::authentication].
-  pub fn from_keypair_with_network(keypair: &KeyPair, network: &str) -> Result<Self> {
-    let method: IotaVerificationMethod =
-      IotaVerificationMethod::from_keypair_with_network(keypair, "authentication", network)?;
+  /// Arguments:
+  ///
+  /// * keypair: the initial verification method is derived from the public key of this [`KeyPair`].
+  /// * network: Tangle network to use for the DID; default [`Network::Mainnet`](crate::tangle::Network::Mainnet).
+  /// * fragment: name of the initial verification method; default "authentication".
+  ///
+  /// Example:
+  ///
+  /// ```
+  /// # use identity_core::crypto::KeyPair;
+  /// # use identity_iota::did::IotaDocument;
+  /// # use identity_iota::tangle::Network;
+  /// #
+  /// // Create a new DID Document for the devnet from a new Ed25519 keypair.
+  /// let keypair = KeyPair::new_ed25519().unwrap();
+  /// let document = IotaDocument::new_with_options(&keypair, Some(Network::Devnet.name()), Some("auth-key")).unwrap();
+  /// assert_eq!(document.id().network_str(), "dev");
+  /// assert_eq!(document.authentication().try_into_fragment().unwrap(), "#auth-key");
+  /// ```
+  pub fn new_with_options(keypair: &KeyPair, network: Option<NetworkName>, fragment: Option<&str>) -> Result<Self> {
+    let public_key: &PublicKey = keypair.public();
 
-    // SAFETY: We don't create invalid Methods.  Method::from_keypair() uses the MethodBuilder
-    // internally which verifies correctness on construction.
-    Ok(unsafe { Self::from_authentication_unchecked(method) })
+    let did: IotaDID = if let Some(network_name) = network {
+      IotaDID::new_with_network(public_key.as_ref(), network_name)?
+    } else {
+      IotaDID::new(public_key.as_ref())?
+    };
+
+    let method: IotaVerificationMethod =
+      IotaVerificationMethod::from_did(did, keypair, fragment.unwrap_or(Self::DEFAULT_METHOD_FRAGMENT))?;
+
+    Self::from_authentication(method)
   }
 
   /// Creates a new DID Document from the given verification [`method`][VerificationMethod].
+  ///
+  /// NOTE: the generated document is unsigned, see [`Document::sign`].
   pub fn from_authentication(method: IotaVerificationMethod) -> Result<Self> {
     Self::check_authentication(&method)?;
 
@@ -113,9 +153,12 @@ impl IotaDocument {
   ///
   /// This must be guaranteed safe by the caller.
   pub unsafe fn from_authentication_unchecked(method: IotaVerificationMethod) -> Self {
+    let verification_method_did_url: CoreDIDUrl = method.id_core().clone();
+
     CoreDocument::builder(Default::default())
       .id(method.controller().clone().into())
-      .authentication(method)
+      .verification_method(method.into())
+      .authentication(MethodRef::Refer(verification_method_did_url))
       .build()
       .map(CoreDocument::into_verifiable)
       .map(TryInto::try_into)
@@ -181,7 +224,7 @@ impl IotaDocument {
     for method_ref in document.verification_relationships() {
       match method_ref {
         MethodRef::Embed(method) => IotaVerificationMethod::check_validity(method)?,
-        MethodRef::Refer(did) => IotaDID::check_validity(did)?,
+        MethodRef::Refer(did_url) => IotaDID::check_validity(did_url.did())?,
       }
     }
 
@@ -194,7 +237,7 @@ impl IotaDocument {
     Self::check_authentication(method)?;
 
     // Ensure the authentication method DID matches the document DID
-    if method.id().authority() != did.authority() {
+    if method.id().did().authority() != did.authority() {
       return Err(Error::InvalidDocumentAuthAuthority);
     }
     Ok(())
@@ -245,7 +288,7 @@ impl IotaDocument {
   /// Returns a reference to the `IotaDocument` controller.
   pub fn controller(&self) -> Option<&IotaDID> {
     // SAFETY: Validity of controller checked in DID Document constructors.
-    unsafe { self.document.controller().map(|d| IotaDID::new_unchecked_ref(d)) }
+    unsafe { self.document.controller().map(|did| IotaDID::new_unchecked_ref(did)) }
   }
 
   /// Returns a reference to the `CoreDocument` alsoKnownAs set.
@@ -264,10 +307,10 @@ impl IotaDocument {
     unsafe { IotaVerificationMethod::new_unchecked_ref(method) }
   }
 
-  fn authentication_id(&self) -> &str {
+  fn authentication_id(&self) -> &CoreDIDUrl {
     // This `unwrap` is "fine" - a valid document will
     // always have a resolvable authentication method.
-    self.document.authentication().head().unwrap().id().as_str()
+    self.document.authentication().head().unwrap().id()
   }
 
   /// Returns the timestamp of when the DID document was created.
@@ -319,10 +362,12 @@ impl IotaDocument {
   // Services
   // ===========================================================================
 
+  /// Return a set of all [`Service`]s in the document.
   pub fn service(&self) -> &OrderedSet<DIDKey<Service>> {
     self.document.service()
   }
 
+  /// Add a new [`Service`] to the document.
   pub fn insert_service(&mut self, service: Service) -> bool {
     if service.id().fragment().is_none() {
       false
@@ -331,8 +376,10 @@ impl IotaDocument {
     }
   }
 
-  pub fn remove_service(&mut self, did: &IotaDID) -> Result<()> {
-    self.document.service_mut().remove(did.as_ref());
+  /// Remove a [`Service`] identified by the given [`IotaDIDUrl`] from the document.
+  pub fn remove_service(&mut self, did_url: IotaDIDUrl) -> Result<()> {
+    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
+    self.document.service_mut().remove(&core_did_url);
     Ok(())
   }
 
@@ -357,17 +404,19 @@ impl IotaDocument {
   }
 
   /// Removes all references to the specified Verification Method.
-  pub fn remove_method(&mut self, did: &IotaDID) -> Result<()> {
-    if self.authentication_id() == did.as_str() {
+  pub fn remove_method(&mut self, did_url: IotaDIDUrl) -> Result<()> {
+    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
+
+    if self.authentication_id() == &core_did_url {
       return Err(Error::CannotRemoveAuthMethod);
     }
 
-    self.document.remove_method(did.as_ref());
+    self.document.remove_method(&core_did_url);
 
     Ok(())
   }
 
-  /// Returns the first verification [`method`][`IotaverificationMethod`] with an `id` property
+  /// Returns the first verification [`method`][`IotaVerificationMethod`] with an `id` property
   /// matching the provided `query`.
   pub fn resolve<'query, Q>(&self, query: Q) -> Option<&IotaVerificationMethod>
   where
@@ -420,16 +469,16 @@ impl IotaDocument {
   ///
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the signature operation fails.
-  pub fn sign(&mut self, secret: &SecretKey) -> Result<()> {
+  pub fn sign(&mut self, private_key: &PrivateKey) -> Result<()> {
     let key: String = self.authentication_id().to_string();
 
-    self.document.sign_this(&key, secret).map_err(Into::into)
+    self.document.sign_this(&key, private_key).map_err(Into::into)
   }
 
   /// Creates a new [`DocumentSigner`] that can be used to create digital
   /// signatures from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, secret: &'base SecretKey) -> Signer<'base, 'base, 'base> {
-    self.document.signer(secret)
+  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> Signer<'base, 'base, 'base> {
+    self.document.signer(private_key)
   }
 
   /// Verifies the signature of the DID document.
@@ -454,13 +503,13 @@ impl IotaDocument {
   ///
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the signature operation fails.
-  pub fn sign_data<X>(&self, data: &mut X, secret: &SecretKey) -> Result<()>
+  pub fn sign_data<X>(&self, data: &mut X, private_key: &PrivateKey) -> Result<()>
   where
     X: Serialize + SetSignature + TryMethod,
   {
     self
       .document
-      .signer(secret)
+      .signer(private_key)
       .method(self.authentication_id())
       .sign(data)
       .map_err(Into::into)
@@ -489,15 +538,15 @@ impl IotaDocument {
   /// Creates a `DocumentDiff` representing the changes between `self` and `other`.
   ///
   /// The returned `DocumentDiff` will have a digital signature created using the
-  /// default authentication method and `secret`.
+  /// default authentication method and `private_key`.
   ///
   /// # Errors
   ///
   /// Fails if the diff operation or signature operation fails.
-  pub fn diff(&self, other: &Self, message_id: MessageId, secret: &SecretKey) -> Result<DocumentDiff> {
+  pub fn diff(&self, other: &Self, message_id: MessageId, private_key: &PrivateKey) -> Result<DocumentDiff> {
     let mut diff: DocumentDiff = DocumentDiff::new(self, other, message_id)?;
 
-    self.sign_data(&mut diff, secret)?;
+    self.sign_data(&mut diff, private_key)?;
 
     Ok(diff)
   }
@@ -524,10 +573,11 @@ impl IotaDocument {
 
   /// Returns the Tangle index of the integration chain for this DID.
   ///
-  /// This is simply the tag segment of the [`IotaDID`].
+  /// This is equivalent to the tag segment of the [`IotaDID`].
+  ///
   /// E.g.
-  /// For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
-  /// `doc.integration_index()` == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"
+  /// For an [`IotaDocument`] `doc` with `"did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"`,
+  /// `doc.integration_index() == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"`
   pub fn integration_index(&self) -> &str {
     self.did().tag()
   }
@@ -631,8 +681,9 @@ mod tests {
   use identity_core::convert::SerdeInto;
   use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
+  use identity_core::crypto::PrivateKey;
   use identity_core::crypto::PublicKey;
-  use identity_core::crypto::SecretKey;
+  use identity_did::did::CoreDID;
   use identity_did::did::DID;
   use identity_did::document::CoreDocument;
   use identity_did::service::Service;
@@ -641,17 +692,20 @@ mod tests {
   use identity_did::verification::MethodType;
   use identity_did::verification::VerificationMethod;
 
+  use crate::did::did::IotaDID;
   use crate::did::doc::IotaDocument;
   use crate::did::doc::IotaVerificationMethod;
-  use crate::did::url::IotaDID;
+  use crate::did::IotaDIDUrl;
   use crate::tangle::MessageId;
+  use crate::tangle::Network;
+  use crate::Error;
 
   const DID_ID: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
   const DID_AUTH: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
-  const DID_TESTNET_ID: &str = "did:iota:test:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
-  const DID_TESTNET_AUTH: &str = "did:iota:test:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
+  const DID_DEVNET_ID: &str = "did:iota:dev:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
+  const DID_DEVNET_AUTH: &str = "did:iota:dev:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#authentication";
 
-  fn valid_did() -> DID {
+  fn valid_did() -> CoreDID {
     DID_ID.parse().unwrap()
   }
 
@@ -662,30 +716,22 @@ mod tests {
     properties
   }
 
-  fn core_verification_method(controller: &DID, fragment: &str) -> VerificationMethod {
+  fn core_verification_method(controller: &CoreDID, fragment: &str) -> VerificationMethod {
     VerificationMethod::builder(Default::default())
-      .id(controller.join(fragment).unwrap())
+      .id(controller.to_url().join(fragment).unwrap())
       .controller(controller.clone())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::new_b58(fragment.as_bytes()))
+      .key_data(MethodData::new_multibase(fragment.as_bytes()))
       .build()
       .unwrap()
   }
 
-  fn iota_verification_method(controller: &DID, fragment: &str) -> IotaVerificationMethod {
-    IotaVerificationMethod::try_from_core(
-      VerificationMethod::builder(Default::default())
-        .id(controller.join(fragment).unwrap())
-        .controller(controller.clone())
-        .key_type(MethodType::Ed25519VerificationKey2018)
-        .key_data(MethodData::new_b58(fragment.as_bytes()))
-        .build()
-        .unwrap(),
-    )
-    .unwrap()
+  fn iota_verification_method(controller: &CoreDID, fragment: &str) -> IotaVerificationMethod {
+    let core_method = core_verification_method(controller, fragment);
+    IotaVerificationMethod::try_from_core(core_method).unwrap()
   }
 
-  fn iota_document_from_core(controller: &DID) -> IotaDocument {
+  fn iota_document_from_core(controller: &CoreDID) -> IotaDocument {
     let mut properties: BTreeMap<String, Value> = BTreeMap::default();
     properties.insert("created".to_string(), "2020-01-01T00:00:00Z".into());
     properties.insert("updated".to_string(), "2020-01-02T00:00:00Z".into());
@@ -697,8 +743,8 @@ mod tests {
         .verification_method(core_verification_method(controller, "#key-2"))
         .verification_method(core_verification_method(controller, "#key-3"))
         .authentication(core_verification_method(controller, "#auth-key"))
-        .authentication(controller.join("#key-3").unwrap())
-        .key_agreement(controller.join("#key-4").unwrap())
+        .authentication(controller.to_url().join("#key-3").unwrap())
+        .key_agreement(controller.to_url().join("#key-4").unwrap())
         .controller(controller.clone())
         .build()
         .unwrap(),
@@ -707,7 +753,7 @@ mod tests {
   }
 
   fn generate_testkey() -> KeyPair {
-    let secret_key: Vec<u8> = vec![
+    let private_key: Vec<u8> = vec![
       40, 185, 109, 70, 134, 119, 123, 37, 190, 254, 232, 186, 106, 48, 213, 63, 133, 223, 167, 126, 159, 43, 178, 4,
       190, 217, 52, 66, 92, 63, 69, 84,
     ];
@@ -718,39 +764,40 @@ mod tests {
     KeyPair::from((
       KeyType::Ed25519,
       PublicKey::from(public_key),
-      SecretKey::from(secret_key),
+      PrivateKey::from(private_key),
     ))
   }
 
   fn compare_document(document: &IotaDocument) {
     assert_eq!(document.id().to_string(), DID_ID);
-    assert_eq!(document.authentication_id(), DID_AUTH);
+    assert_eq!(document.authentication_id().to_string(), DID_AUTH);
     assert_eq!(
       document.authentication().key_type(),
       MethodType::Ed25519VerificationKey2018
     );
     assert_eq!(
       document.authentication().key_data(),
-      &MethodData::PublicKeyBase58(String::from("FJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT"))
+      &MethodData::PublicKeyMultibase("zFJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".to_owned())
     );
   }
 
-  fn compare_document_testnet(document: &IotaDocument) {
-    assert_eq!(document.id().to_string(), DID_TESTNET_ID);
-    assert_eq!(document.authentication_id(), DID_TESTNET_AUTH);
+  fn compare_document_devnet(document: &IotaDocument) {
+    assert_eq!(document.id().to_string(), DID_DEVNET_ID);
+    assert_eq!(document.id().network_str(), Network::Devnet.name_str());
+    assert_eq!(document.authentication_id().to_string(), DID_DEVNET_AUTH);
     assert_eq!(
       document.authentication().key_type(),
       MethodType::Ed25519VerificationKey2018
     );
     assert_eq!(
       document.authentication().key_data(),
-      &MethodData::PublicKeyBase58(String::from("FJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT"))
+      &MethodData::PublicKeyMultibase("zFJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".to_owned())
     );
   }
 
   #[test]
   fn test_invalid_try_from_core_invalid_id() {
-    let invalid_did: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_did: CoreDID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
@@ -801,13 +848,13 @@ mod tests {
 
   #[test]
   fn test_invalid_try_from_core_invalid_controller() {
-    let invalid_controller: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_controller: CoreDID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
       CoreDocument::builder(valid_properties())
         .id(valid_did())
-        // INVALID
+        // INVALID - does not match document ID
         .authentication(core_verification_method(&invalid_controller, "#auth-key"))
         .build()
         .unwrap(),
@@ -818,15 +865,15 @@ mod tests {
 
   #[test]
   fn test_invalid_try_from_core_invalid_authentication_method_ref() {
-    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_ref: CoreDID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
       CoreDocument::builder(valid_properties())
         .id(valid_did())
         .authentication(core_verification_method(&valid_did(), "#auth-key"))
-        // INVALID
-        .authentication(MethodRef::Refer(invalid_ref))
+        // INVALID - does not reference a verification method in the document
+        .authentication(MethodRef::Refer(invalid_ref.into_url()))
         .build()
         .unwrap(),
     );
@@ -836,15 +883,15 @@ mod tests {
 
   #[test]
   fn test_invalid_try_from_core_invalid_assertion_method_ref() {
-    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_ref: CoreDID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
       CoreDocument::builder(valid_properties())
         .id(valid_did())
         .authentication(core_verification_method(&valid_did(), "#auth-key"))
-        // INVALID
-        .assertion_method(MethodRef::Refer(invalid_ref))
+        // INVALID - does not reference a verification method in the document
+        .assertion_method(MethodRef::Refer(invalid_ref.into_url()))
         .build()
         .unwrap(),
     );
@@ -854,15 +901,15 @@ mod tests {
 
   #[test]
   fn test_invalid_try_from_core_invalid_key_agreement_ref() {
-    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_ref: CoreDID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
       CoreDocument::builder(valid_properties())
         .id(valid_did())
         .authentication(core_verification_method(&valid_did(), "#auth-key"))
-        // INVALID
-        .key_agreement(MethodRef::Refer(invalid_ref))
+        // INVALID - does not reference a verification method in the document
+        .key_agreement(MethodRef::Refer(invalid_ref.into_url()))
         .build()
         .unwrap(),
     );
@@ -872,15 +919,15 @@ mod tests {
 
   #[test]
   fn test_invalid_try_from_core_invalid_capability_delegation_ref() {
-    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_ref: CoreDID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
       CoreDocument::builder(valid_properties())
         .id(valid_did())
         .authentication(core_verification_method(&valid_did(), "#auth-key"))
-        // INVALID
-        .capability_delegation(MethodRef::Refer(invalid_ref))
+        // INVALID - does not reference a verification method in the document
+        .capability_delegation(MethodRef::Refer(invalid_ref.into_url()))
         .build()
         .unwrap(),
     );
@@ -890,15 +937,15 @@ mod tests {
 
   #[test]
   fn test_invalid_try_from_core_invalid_capability_invocation_ref() {
-    let invalid_ref: DID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
+    let invalid_ref: CoreDID = "did:invalid:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M"
       .parse()
       .unwrap();
     let doc = IotaDocument::try_from_core(
       CoreDocument::builder(valid_properties())
         .id(valid_did())
         .authentication(core_verification_method(&valid_did(), "#auth-key"))
-        // INVALID
-        .capability_invocation(MethodRef::Refer(invalid_ref))
+        // INVALID - does not reference a verification method in the document
+        .capability_invocation(MethodRef::Refer(invalid_ref.into_url()))
         .build()
         .unwrap(),
     );
@@ -910,7 +957,7 @@ mod tests {
   fn test_new() {
     //from keypair
     let keypair: KeyPair = generate_testkey();
-    let document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+    let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     compare_document(&document);
 
     //from authentication
@@ -924,32 +971,45 @@ mod tests {
   }
 
   #[test]
-  fn test_from_keypair_with_network() {
-    //from keypair
+  fn test_new_with_options_network() {
     let keypair: KeyPair = generate_testkey();
-    let document: IotaDocument = IotaDocument::from_keypair_with_network(&keypair, "test").unwrap();
-    compare_document_testnet(&document);
+    let document: IotaDocument = IotaDocument::new_with_options(&keypair, Some(Network::Devnet.name()), None).unwrap();
+    compare_document_devnet(&document);
   }
 
   #[test]
-  fn test_no_controler() {
+  fn test_new_with_options_fragment() {
     let keypair: KeyPair = generate_testkey();
-    let document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+    let document: IotaDocument = IotaDocument::new_with_options(&keypair, None, Some("test-key")).unwrap();
+    assert_eq!(document.authentication().try_into_fragment().unwrap(), "#test-key");
+  }
+
+  #[test]
+  fn test_new_with_options_empty_fragment() {
+    let keypair: KeyPair = generate_testkey();
+    let result: Result<IotaDocument, Error> = IotaDocument::new_with_options(&keypair, None, Some(""));
+    assert!(matches!(result, Err(Error::InvalidDocumentAuthFragment)));
+  }
+
+  #[test]
+  fn test_no_controller() {
+    let keypair: KeyPair = generate_testkey();
+    let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     assert_eq!(document.controller(), None);
   }
 
   #[test]
   fn test_controller_from_core() {
-    let controller: DID = valid_did();
+    let controller: CoreDID = valid_did();
     let document: IotaDocument = iota_document_from_core(&controller);
     let expected_controller: Option<IotaDID> = Some(IotaDID::try_from_owned(controller).unwrap());
     assert_eq!(document.controller(), expected_controller.as_ref());
   }
 
   #[test]
-  fn test_methods_from_keypair() {
+  fn test_methods_new() {
     let keypair: KeyPair = generate_testkey();
-    let document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+    let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
     // An IotaDocument created from a keypair has a single verification method, namely an
     // Ed25519 signature.
@@ -962,8 +1022,8 @@ mod tests {
         )
         .controller(valid_did())
         .key_type(MethodType::Ed25519VerificationKey2018)
-        .key_data(MethodData::PublicKeyBase58(
-          "FJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".into(),
+        .key_data(MethodData::PublicKeyMultibase(
+          "zFJsXMk9UqpJf3ZTKnfEQAhvBrVLKMSx9ZeYwQME6c6tT".into(),
         ))
         .build()
         .unwrap(),
@@ -978,7 +1038,7 @@ mod tests {
 
   #[test]
   fn test_methods_from_core() {
-    let controller: DID = valid_did();
+    let controller: CoreDID = valid_did();
     let document: IotaDocument = iota_document_from_core(&controller);
     let expected: Vec<IotaVerificationMethod> = vec![
       iota_verification_method(&controller, "#key-1"),
@@ -998,13 +1058,13 @@ mod tests {
   #[test]
   fn test_json() {
     let keypair: KeyPair = generate_testkey();
-    let mut document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
     let json_doc: String = document.to_string();
     let document2: IotaDocument = IotaDocument::from_json(&json_doc).unwrap();
     assert_eq!(document, document2);
 
-    assert!(document.sign(keypair.secret()).is_ok());
+    assert!(document.sign(keypair.private()).is_ok());
 
     let json_doc: String = document.to_string();
     let document2: IotaDocument = IotaDocument::from_json(&json_doc).unwrap();
@@ -1014,7 +1074,7 @@ mod tests {
   #[test]
   fn test_authentication() {
     let keypair: KeyPair = generate_testkey();
-    let document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+    let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
     assert!(IotaDocument::check_authentication(document.authentication()).is_ok());
   }
@@ -1022,7 +1082,7 @@ mod tests {
   #[test]
   fn test_document_services() {
     let keypair: KeyPair = generate_testkey();
-    let mut document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     let service: Service = Service::from_json(
       r#"{
       "id":"did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain",
@@ -1036,9 +1096,7 @@ mod tests {
     assert_eq!(1, document.service().len());
 
     document
-      .remove_service(
-        &IotaDID::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain".to_string()).unwrap(),
-      )
+      .remove_service(IotaDIDUrl::parse("did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain").unwrap())
       .ok();
     assert_eq!(0, document.service().len());
   }
@@ -1046,10 +1104,10 @@ mod tests {
   #[test]
   fn test_relative_method_uri() {
     let keypair: KeyPair = generate_testkey();
-    let mut document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
     assert!(document.proof().is_none());
-    assert!(document.sign(keypair.secret()).is_ok());
+    assert!(document.sign(keypair.private()).is_ok());
 
     assert_eq!(document.proof().unwrap().verification_method(), "#authentication");
   }
@@ -1057,7 +1115,7 @@ mod tests {
   #[test]
   fn test_integration_index() {
     let keypair: KeyPair = generate_testkey();
-    let document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+    let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
     // The integration chain index should just be the tag of the DID
     let tag = document.id().tag();
@@ -1069,5 +1127,30 @@ mod tests {
     let message_id = MessageId::from_str("c38d6c541f98f780ddca6ad648ff0e073cd86c4dee248149c2de789d84d42132").unwrap();
     let diff_index = IotaDocument::diff_index(&message_id).expect("failed to generate diff_index");
     assert_eq!(diff_index, "2g45GsCAmkvQfcrHGUgqwQJLbYY3Gic8f23wf71sGGGP");
+  }
+
+  #[test]
+  fn test_new_document_has_verification_method_with_authentication_relationship() {
+    let keypair: KeyPair = generate_testkey();
+    let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+
+    let verification_method: &IotaVerificationMethod = document.resolve("#authentication").unwrap();
+    let authentication_method: &IotaVerificationMethod = document.authentication();
+
+    let expected_method_id: IotaDIDUrl = document.id().to_url().join("#authentication").unwrap();
+    assert_eq!(verification_method.id(), expected_method_id);
+    assert_eq!(authentication_method.id(), expected_method_id);
+
+    // `methods` returns all embedded verification methods, so only one is expected.
+    assert_eq!(document.methods().count(), 1);
+
+    // Assert that the verification method and the authentication method are the same
+    assert_eq!(verification_method, authentication_method);
+
+    // Assert that the fragment of the authentication method reference is `authentication`
+    match document.document.authentication().first().unwrap().clone().into_inner() {
+      MethodRef::Refer(did) => assert_eq!(did.fragment().unwrap_or_default(), "authentication"),
+      MethodRef::Embed(_) => panic!("authentication method should be a reference"),
+    }
   }
 }

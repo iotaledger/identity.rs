@@ -3,7 +3,7 @@
 
 use async_trait::async_trait;
 use identity_core::convert::SerdeInto;
-use identity_did::did::DID as CoreDID;
+use identity_did::did::CoreDID;
 use identity_did::error::Error;
 use identity_did::error::Result;
 use identity_did::resolution::DocumentMetadata;
@@ -20,7 +20,7 @@ use crate::tangle::TangleResolve;
 #[async_trait(?Send)]
 impl ResolverMethod for Client {
   fn is_supported(&self, did: &CoreDID) -> bool {
-    IotaDID::try_from_borrowed(did).is_ok()
+    IotaDID::check_validity(did).is_ok()
   }
 
   async fn read(&self, did: &CoreDID, _input: InputMetadata) -> Result<Option<MetaDocument>> {
@@ -44,18 +44,18 @@ impl ResolverMethod for Client {
 #[async_trait(?Send)]
 impl ResolverMethod for ClientMap {
   fn is_supported(&self, did: &CoreDID) -> bool {
-    IotaDID::try_from_borrowed(did).is_ok()
+    IotaDID::check_validity(did).is_ok()
   }
 
   async fn read(&self, did: &CoreDID, input: InputMetadata) -> Result<Option<MetaDocument>> {
-    let did: &IotaDID = IotaDID::try_from_borrowed(did).map_err(|_| Error::MissingResolutionDID)?;
-    let network = did.network().map_err(|_| Error::MissingResolutionDID)?;
+    let iota_did: &IotaDID = IotaDID::try_from_borrowed(did).map_err(|_| Error::MissingResolutionDID)?;
+    let network = iota_did.network().map_err(|_| Error::MissingResolutionDID)?;
 
     self
       .client(network)
       .await
       .map_err(|_| Error::MissingResolutionDocument)?
-      .read(did.as_ref(), input)
+      .read(did, input)
       .await
   }
 }
