@@ -11,7 +11,7 @@ sidebar_label: Issuance
 
 ## Overview
 
-Allows a [holder](#roles) to request a [verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) from an [issuer](#roles). The [issuer](#roles) may alternatively initiate the issuance without a request from the [holder](#roles). This protocol also allows the [issuer](#roles) to request additional information and to offload the actual signing to a different party.
+Allows a [holder](#roles) to request a [verifiable credential][VC] from an [issuer](#roles). The [issuer](#roles) may alternatively initiate the issuance without a request from the [holder](#roles). This protocol also allows the [issuer](#roles) to request additional information and to offload the actual signing to a different party.
 
 ### Relationships
 - [Presentation](./presentation.md): the [issuer](#roles) may request a [verifiable presentation](https://www.w3.org/TR/vc-data-model/#presentations-0) from the [holder](#roles) during the course of this protocol if additional information is required.
@@ -24,8 +24,8 @@ Allows a [holder](#roles) to request a [verifiable credential](https://www.w3.or
 - An insurer issues proof that a company has liability insurance.
 
 ### Roles
-- [Holder](https://www.w3.org/TR/vc-data-model/#dfn-holders): stores one or more verifiable credentials. A holder is usually but not always the [subject](https://www.w3.org/TR/vc-data-model/#credential-subject-0) of those credentials.
-- [Issuer](https://www.w3.org/TR/vc-data-model/#dfn-issuers): creates verifiable credentials asserting claims about one or more [subjects](https://www.w3.org/TR/vc-data-model/#credential-subject-0), transmitted to a holder.
+- [Holder](https://www.w3.org/TR/vc-data-model/#dfn-holders): stores one or more verifiable credentials. A holder is usually but not always the [subject][SUBJECT] of those credentials.
+- [Issuer](https://www.w3.org/TR/vc-data-model/#dfn-issuers): creates verifiable credentials asserting claims about one or more [subjects][SUBJECT], transmitted to a holder.
 
 ### Interaction
 
@@ -57,22 +57,22 @@ The [holder](#roles) requests a single verifiable credential from the [issuer](#
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`subject`](https://www.w3.org/TR/vc-data-model/#credential-subject-0) | [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of the [credential subject](https://www.w3.org/TR/vc-data-model/#credential-subject-0)[^1]. | ✔ |
-| `credentialInfo` | A [CredentialInfo](../resources/credential-kinds#credentialinfo), specifying a credential kind requested by the [holder](#roles).[^2] [^3] [^4] | ✔ |
+| [`subject`][SUBJECT] | [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of the [credential subject][SUBJECT][^1]. | ✔ |
+| `credentialInfo` | A [CredentialInfo](../resources/credential-kinds#credentialinfo) object, specifying a credential kind requested by the [holder](#roles).[^2] [^3] [^4] | ✔ |
 
-[^1] The [holder](#roles) is usually but not always the [subject]((https://www.w3.org/TR/vc-data-model/#credential-subject-0)) of the requested credential. There may be custodial, legal guardianship, or delegation situations where a third-party requests, or is issued a credential on behalf of a subject. It is the responsibility of the [issuer](#roles) to ensure authorization in such cases.
+[^1] The [holder](#roles) is usually but not always the [subject][SUBJECT] of the requested credential. There may be custodial, legal guardianship, or delegation situations where a third-party requests, or is issued a credential on behalf of a subject. It is the responsibility of the [issuer](#roles) to ensure authorization in such cases.
 
 [^2] The `credentialInfo` could be hard-coded, communicated in-band, discovered out-of-band, or be pre-sent by an [issuer](#roles). The [issuer](#roles) SHOULD reject the request with a `problem-report` if it does not support the requested `credentialInfo`.
 
-[^3] With ["CredentialType2021"](../resources/credential-kinds#credentialtype2021), the `type` MAY be under-specified if the exact type is unknown or if the resulting type depends on the identity or information of the subject or holder. E.g. the `type` could be as general as `["VerifiableCredential"]` if the issuer issues only a singular type of credential or decides the credential based on other information related to the subject. 
+[^3] With [CredentialType2021], the `type` MAY be under-specified if the exact type is unknown or if the resulting type depends on the identity or information of the subject or holder. E.g. the `type` could be as general as `["VerifiableCredential"]` if the issuer issues only a singular type of credential or decides the credential based on other information related to the subject. 
 
-[^4] With ["CredentialType2021"](../resources/credential-kinds#credentialtype2021), the [holder](#roles) MAY specify one or more trusted issuers they would like to sign the resulting credential. The [issuer](#roles) SHOULD reject the request with a `problem-report` if it supports none of the requested `issuer` entries. However, there are circumstances where an `issuer` is no longer supported or was compromised, so this behavior should be decided based on the application.
+[^4] With [CredentialType2021], the [holder](#roles) MAY specify one or more trusted issuers they would like to sign the resulting credential. The [issuer](#roles) SHOULD reject the request with a `problem-report` if it supports none of the requested `issuer` entries. However, there are circumstances where an `issuer` is no longer supported or was compromised, so this behavior should be decided based on the application.
 
 An [issuer](#roles) wanting to preserve privacy regarding which exact credential kinds, types, or issuers they support should be careful with the information they disclose in `problem-reports` when rejecting requests. E.g. a `problem-report` with only a `reject-request` descriptor discloses less information than the `reject-request.invalid-type` or `reject-request.invalid-trusted-issuer` descriptors, as the latter two could be used to determine supported types or signing issuers by process of elimination.
 
 #### Examples
 
-1. Request any drivers licence credential using ["CredentialType2021"](../resources/credential-kinds#credentialtype2021):
+1. Request any drivers licence credential using [CredentialType2021]:
 
 ```json
 {
@@ -84,7 +84,7 @@ An [issuer](#roles) wanting to preserve privacy regarding which exact credential
 }
 ```
 
-2. Request a university degree credential from either supported trusted issuer using ["CredentialType2021"](../resources/credential-kinds#credentialtype2021):
+2. Request a university degree credential from either supported trusted issuer using [CredentialType2021]:
 
 ```json
 {
@@ -118,7 +118,7 @@ The [issuer](#roles) offers a single, unsigned credential to the [holder](#roles
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`unsignedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | Unsigned [credential](https://www.w3.org/TR/vc-data-model/#credentials) being offered to the [holder](#roles). This MUST NOT include a `proof` section. | ✔ |
+| [`unsignedCredential`][VC] | Unsigned [credential][VC] being offered to the [holder](#roles). This MUST NOT include a `proof` section. | ✔ |
 | `offerChallenge` | If present, indicates the [issuer](#issuer) requires the acceptance of the credential to be signed by the [holder](#holder) in the following [issuance-response](#issuance-response) for non-repudiation.[^1] | ✖ |
 | `challenge` |  A random string that should be unique per [issuance-offer](#issuance-offer). | ✔ |
 | `credentialHash` | The [Base58](https://tools.ietf.org/id/draft-msporny-base58-01.html)-encoded [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the `unsignedCredential` formatted according to the [JSON Canonicalization Scheme](https://tools.ietf.org/id/draft-rundgren-json-canonicalization-scheme-00.html). | ✔ |
@@ -289,7 +289,7 @@ The [issuer](#roles) transmits the signed credential following a [`issuance-resp
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`signedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | [Verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) signed by the [issuer](#roles).[^1] | ✔ |
+| [`signedCredential`][VC] | [Verifiable credential][VC] signed by the [issuer](#roles).[^1] | ✔ |
 | `issuanceChallenge` | If present, indicates the [issuer](#issuer) requires the [issuance-acknowledgement](#issuance-acknowledgement) of the credential to be signed for non-repudiation. | ✖ |
 | `challenge` |  A random string that should be unique per [issuance](#issuance). | ✔ |
 | `credentialHash` | The [Base58](https://tools.ietf.org/id/draft-msporny-base58-01.html)-encoded [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the `signedCredential`, including the `proof`, formatted according to the [JSON Canonicalization Scheme](https://tools.ietf.org/id/draft-rundgren-json-canonicalization-scheme-00.html). | ✔ |
@@ -407,7 +407,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 - The `credentialSubject::id` field of a verifiable credential is optional and not always a DID according to the [verifiable credential specification](https://www.w3.org/TR/vc-data-model). Should we enforce that it is always a DID? This affects presentations are noted in the [subject-holder relationships section of the specification](https://www.w3.org/TR/vc-data-model/#subject-holder-relationships). We essentially enforce the [`nonTransferable` property](https://www.w3.org/TR/vc-data-model/#nontransferable-property) for all credentials in our presentations currently to prevent verifiers storing and re-presenting credentials as their own.
 
-- `e.p.msg.iota.issuance.reject-request.invalid-type` and `e.p.msg.iota.issuance.reject-request.invalid-issuer` are specific to ["CredentialType2021"](../resources/credential-kinds#credentialtype2021). Should they be listed here? If yes, should they be marked accordingly?
+- `e.p.msg.iota.issuance.reject-request.invalid-type` and `e.p.msg.iota.issuance.reject-request.invalid-issuer` are specific to [CredentialType2021]. Should they be listed here? If yes, should they be marked accordingly?
 
 ## Related Work
 
@@ -420,3 +420,8 @@ For guidance on problem-reports and a list of general codes see [problem reports
 - [Decentralized Identifiers (DIDs) 1.0](https://www.w3.org/TR/did-core/)
 - [Verifiable Credentials Data Model 1.0](https://www.w3.org/TR/vc-data-model)
 - [Verifiable Credentials Implementation Guidelines 1.0](https://w3c.github.io/vc-imp-guide/)
+
+<!--- LINKS --->
+[VC]: https://www.w3.org/TR/vc-data-model/#credentials
+[SUBJECT]: https://www.w3.org/TR/vc-data-model/#credential-subject-0
+[CredentialType2021]: ../resources/credential-kinds#credentialtype2021
