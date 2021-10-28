@@ -68,7 +68,7 @@ impl KeyCollection {
     Self::new(KeyType::Ed25519, count)
   }
 
-  /// Creates a new [`KeyCollection`] with [`Ed25519`][`KeyType::Ed25519`] keys.
+  /// Creates a new [`KeyCollection`] with the given [`key type`][`KeyType`].
   /// If `count` is not a power of two, with the exception of 0, which will result in an error, 
   /// it will be rounded up to the next one.
   /// E.g. 230 -> 256 
