@@ -41,7 +41,7 @@ Allows presentation of [verifiable credentials](https://www.w3.org/TR/vc-data-mo
 - Type: `iota/presentation/0.1/presentation-offer`
 - Role: [holder](#roles)
 
-Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#roles) to view. `CredentialInfo` objects are used by the [verifier](#roles) to determine if they are interested in the particular kind of credential.
+Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#roles) to view. [`CredentialInfo`](../resources/credential-kinds#credentialinfo) objects are used by the [verifier](#roles) to determine if they are interested in the particular kind of credential.
 
 #### Structure
 ```json
@@ -53,10 +53,10 @@ Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| `offers` | Array of one or more [CredentialInfo](../resources/credential-kinds#credentialinfo), each specifying a single credential possessed by the holder. | ✔ |
-| `requireSignature` | Request that the [verifier](#roles) use a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) for the [`presentation-request`](#presentation-request). The [holder](#roles) SHOULD issue a `problem-report` if the [verifier](#roles) does not sign the message when this is `true`. Default: `false`. | ✖ | 
+| `offers` | Array of one or more [`CredentialInfo`](../resources/credential-kinds#credentialinfo), each specifying a single credential possessed by the holder.[^1] | ✔ |
+| `requireSignature` | Request that the [verifier](#roles) use a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) for non-repudiation of the [`presentation-request`](#presentation-request). The [holder](#roles) SHOULD issue a `problem-report` if the [verifier](#roles) does not sign the message when this is `true`. Default: `false`. | ✖ | 
 
-[^1] With ["CredentialType2021"](../resources/credential-kinds#credentialtype2021), the `type` MAY be under-specified to preserve privacy but SHOULD always include the most general types. For example, a credential with the types `["VerifiableCredential", "DriversLicence", "EUDriversLicence", "GermanDriversLicence"]` could be specified as `["VerifiableCredential", "DriversLicence"]`.
+[^1] With [CredentialType2021], the `type` MAY be under-specified to preserve privacy but SHOULD always include the most general types. For example, a credential with the types `["VerifiableCredential", "DriversLicence", "EUDriversLicence", "GermanDriversLicence"]` could be specified as `["VerifiableCredential", "DriversLicence"]`.
 
 #### Examples
 
@@ -120,7 +120,7 @@ Sent by the verifier to request one or more verifiable credentials from a holder
 
 #### Examples
 
-1. Request a single credential matching both specified types using ["CredentialType2021"](../resources/credential-kinds#credentialtype2021).
+1. Request a single credential matching both specified types using [CredentialType2021].
 
 ```json
 {
@@ -134,7 +134,7 @@ Sent by the verifier to request one or more verifiable credentials from a holder
 }
 ```
 
-2. Request a required credential using ["CredentialType2021"](../resources/credential-kinds#credentialtype2021) from a particular trusted issuer and an optional credential. 
+2. Request a required credential using [CredentialType2021] from a particular trusted issuer and an optional credential. 
 
 ```json
 {
@@ -191,7 +191,7 @@ Sent by the holder to present a [verifiable presentation](https://www.w3.org/TR/
 
 [^1] The [`proof`](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section in `presentation` MUST include the `challenge` sent by the verifier in the preceding [`presentation-request`](#presentation-request). Revoked, disputed, or otherwise invalid presentations or credentials MUST result in a rejected [`presentation-result`](#presentation-result) sent back to the holder, NOT a separate [`problem-report`]. Other such as the message lacking [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) SHOULD result in a separate [`problem-report`].
 
-[^2] With ["CredentialType2021"](../resources/credential-kinds#credentialtype2021), the included credentials SHOULD match all `type` fields and one or more `issuer` if included in the [`presentation-request`](#presentation-request). 
+[^2] With [CredentialType2021], the included credentials SHOULD match all `type` fields and one or more `issuer` if included in the [`presentation-request`](#presentation-request). 
 
 #### Examples
 
@@ -238,7 +238,7 @@ Sent by the holder to present a [verifiable presentation](https://www.w3.org/TR/
 
 Sent by the verifier to communicate the result of the presentation. It allows the verifier raise problems and disputes encountered in the verification and to specify if the holder may retry a presentation. The message SHOULD be signed by the verifier for non-repudiation.
 
-Similar to [`presentation-request`](#presentation-request), [verifiers](#roles) are RECOMMENDED to use a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) whenever possible for non-repudiation of receipt of the presentation. [Holders](#roles) may choose to blocklist verifiers that refuse to provide signatures.
+Similar to [`presentation-request`](#presentation-request), [verifiers](#roles) are RECOMMENDED to use a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message) whenever possible for non-repudiation of receipt of the presentation. [Holders](#roles) may choose to blocklist verifiers that refuse to provide signatures or do not send a [presentation-result](#presentation-result) at all.
 
 #### Structure
 ```json
@@ -370,7 +370,7 @@ This section is non-normative.
 - Should we specifically list non-functional requirements e.g in a Goals / Non-Goals section.
 - Use `schemas` to negotiate generic form entries as a self-signed credential? E.g. could ask for username, preferred language, comments, any generic information not signed/verified by a third-party issuer from a generic wallet? Similar to Presentation Exchange? https://identity.foundation/presentation-exchange/spec/v1.0.0/
 - Use separate problem-reports, or a separate credential-problem object, instead of embedding them in the [`presentation-result`](#presentation-result), as mixing disputes with problem-reports if improperly implemented may reveal information to a fake holder trying to discover information about what content a verifier accepts. Incorrect implementations could allow someone to brute-force disputes with unsigned credentials, in which case the problem report (trust.crypto) should just end the flow and not return disputes.
-- `e.p.msg.iota.presentation.reject-request.invalid-type`, `e.p.msg.iota.presentation.reject-request.invalid-issuer`, `e.p.msg.iota.presentation.reject-request.invalid-issuer` and `e.p.msg.iota.presentation.reject-request.invalid-type` are specific to ["CredentialType2021"](../resources/credential-kinds#credentialtype2021). Should they be listed here? If yes, should they be marked accordingly?
+- `e.p.msg.iota.presentation.reject-request.invalid-type`, `e.p.msg.iota.presentation.reject-request.invalid-issuer`, `e.p.msg.iota.presentation.reject-request.invalid-issuer` and `e.p.msg.iota.presentation.reject-request.invalid-type` are specific to [CredentialType2021]. Should they be listed here? If yes, should they be marked accordingly?
 
 ## Related Work
 
@@ -383,3 +383,5 @@ This section is non-normative.
 - [Decentralized Identifiers (DIDs) 1.0](https://www.w3.org/TR/did-core/)
 - [Verifiable Credentials Data Model 1.0](https://www.w3.org/TR/vc-data-model)
 - [Verifiable Credentials Implementation Guidelines 1.0](https://w3c.github.io/vc-imp-guide/)
+
+[CredentialType2021]: ../resources/credential-kinds#credentialtype2021
