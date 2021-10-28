@@ -66,7 +66,7 @@ Response from the [receiver](#roles) that the request to terminate the connectio
 
 This section is non-normative.
 
-- Which party terminates a connection depends on the application, but is usually the same as the one that initiated it following a successful interaction to achieve.
+- Which party terminates a connection depends on the application but is usually the same as the one that initiated it following a successful interaction to achieve.
 - Any party may terminate a connection at any time, even during a protocol.
 - A termination message indicates a graceful end to a connection but the underlying transport layer connection could terminate without this message. Implementors should implement reasonable timeouts and reconnection capabilities.
 
