@@ -61,20 +61,20 @@ impl KeyCollection {
   }
 
   /// Creates a new [`KeyCollection`] with [`Ed25519`][`KeyType::Ed25519`] keys.
-  /// If `count` is not a power of two, with the exception of 0, which will result in an error, 
+  /// If `count` is not a power of two, with the exception of 0, which will result in an error,
   /// it will be rounded up to the next one.
-  /// E.g. 230 -> 256 
+  /// E.g. 230 -> 256
   pub fn new_ed25519(count: usize) -> Result<Self> {
     Self::new(KeyType::Ed25519, count)
   }
 
   /// Creates a new [`KeyCollection`] with the given [`key type`][`KeyType`].
-  /// If `count` is not a power of two, with the exception of 0, which will result in an error, 
+  /// If `count` is not a power of two, with the exception of 0, which will result in an error,
   /// it will be rounded up to the next one.
-  /// E.g. 230 -> 256 
+  /// E.g. 230 -> 256
   pub fn new(type_: KeyType, count: usize) -> Result<Self> {
     if count == 0 {
-      return Err(Error::InvalidKeyCollectionSize(0))
+      return Err(Error::InvalidKeyCollectionSize(0));
     }
     let count_next_power = count.checked_next_power_of_two().unwrap_or(0);
     if count_next_power == 0 || count_next_power > MAX_KEYS_ALLOWED {
