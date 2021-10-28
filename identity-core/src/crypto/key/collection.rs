@@ -25,6 +25,7 @@ use crate::error::Result;
 use crate::utils::generate_ed25519_keypairs;
 
 /// Defines an upper limit to the amount of keys that can be created (2^12)
+/// This value respects a current stronghold limitation
 const MAX_KEYS_ALLOWED: usize = 4_096;
 
 /// A collection of cryptographic keys.
@@ -60,14 +61,21 @@ impl KeyCollection {
   }
 
   /// Creates a new [`KeyCollection`] with [`Ed25519`][`KeyType::Ed25519`] keys.
-  /// If count is not a power of two, it will be round up to the next one
+  /// If `count` is not a power of two, with the exception of 0, which will result in an error, 
+  /// it will be rounded up to the next one.
+  /// E.g. 230 -> 256 
   pub fn new_ed25519(count: usize) -> Result<Self> {
     Self::new(KeyType::Ed25519, count)
   }
 
-  /// Creates a new [`KeyCollection`] with the given [`key type`][`KeyType`].
-  /// If count is not a power of two, it will be round up to the next one
+  /// Creates a new [`KeyCollection`] with [`Ed25519`][`KeyType::Ed25519`] keys.
+  /// If `count` is not a power of two, with the exception of 0, which will result in an error, 
+  /// it will be rounded up to the next one.
+  /// E.g. 230 -> 256 
   pub fn new(type_: KeyType, count: usize) -> Result<Self> {
+    if count == 0 {
+      return Err(Error::InvalidKeyCollectionSize(0))
+    }
     let count_next_power = count.checked_next_power_of_two().unwrap_or(0);
     if count_next_power == 0 || count_next_power > MAX_KEYS_ALLOWED {
       return Err(Error::InvalidKeyCollectionSize(count_next_power));
@@ -248,9 +256,9 @@ mod tests {
     // Key Collection can not exceed 4_096 keys
     let keys: Result<KeyCollection, Error> = KeyCollection::new_ed25519(4_097);
     assert!(keys.is_err());
-    // The number of keys created rounds up to the next power of two
-    let keys: KeyCollection = KeyCollection::new_ed25519(0).unwrap();
-    assert_eq!(keys.len(), 1);
+    // Key Collection should not hold 0 keys
+    let keys: Result<KeyCollection, Error> = KeyCollection::new_ed25519(0);
+    assert!(keys.is_err());
     // The number of keys created rounds up to the next power of two
     let keys: KeyCollection = KeyCollection::new_ed25519(2_049).unwrap();
     assert_eq!(keys.len(), 4_096);
