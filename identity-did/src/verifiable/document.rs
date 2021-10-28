@@ -101,11 +101,11 @@ where
   U: Serialize,
   V: Serialize,
 {
-  pub fn sign_this<'query, Q>(&mut self, query: Q, private: &PrivateKey) -> Result<()>
+  pub fn sign_document<'query, Q>(&mut self, query: Q, private: &PrivateKey) -> Result<()>
   where
     Q: Into<MethodQuery<'query>>,
   {
-    let method: &VerificationMethod<U> = self.try_resolve(query)?;
+    let method: &VerificationMethod<U> = self.try_resolve_method(query)?;
     let fragment: String = method.try_into_fragment()?;
 
     match method.key_type() {
@@ -121,9 +121,9 @@ where
     Ok(())
   }
 
-  pub fn verify_this(&self) -> Result<()> {
+  pub fn verify_document(&self) -> Result<()> {
     let signature: &Signature = self.try_signature()?;
-    let method: &VerificationMethod<U> = self.try_resolve(signature)?;
+    let method: &VerificationMethod<U> = self.try_resolve_method(signature)?;
     let public: PublicKey = method.key_data().try_decode()?.into();
 
     match method.key_type() {
@@ -208,7 +208,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
     X: Serialize + SetSignature + TryMethod,
   {
     let query: MethodQuery<'_> = self.method.clone().ok_or(Error::QueryMethodNotFound)?;
-    let method: &VerificationMethod<U> = self.document.try_resolve(query)?;
+    let method: &VerificationMethod<U> = self.document.try_resolve_method(query)?;
     let method_uri: String = X::try_method(method)?;
 
     match method.key_type() {
@@ -288,7 +288,7 @@ where
     X: Serialize + TrySignature,
   {
     let signature: &Signature = that.try_signature()?;
-    let method: &VerificationMethod<U> = self.document.try_resolve(signature)?;
+    let method: &VerificationMethod<U> = self.document.try_resolve_method(signature)?;
 
     Self::do_verify(method, that)
   }

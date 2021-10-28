@@ -231,7 +231,7 @@ impl IotaDocument {
     let method = document
       .authentication()
       .head()
-      .and_then(|method| document.resolve_ref(method))
+      .and_then(|method| document.resolve_method_ref(method))
       .ok_or(Error::MissingAuthenticationMethod)?;
 
     Self::check_authentication(method)?;
@@ -301,7 +301,7 @@ impl IotaDocument {
     // This `unwrap` is "fine" - a valid document will
     // always have a resolvable authentication method.
     let method: &MethodRef = self.document.authentication().head().unwrap();
-    let method: &VerificationMethod = self.document.resolve_ref(method).unwrap();
+    let method: &VerificationMethod = self.document.resolve_method_ref(method).unwrap();
 
     // SAFETY: We don't allow invalid authentication methods.
     unsafe { IotaVerificationMethod::new_unchecked_ref(method) }
@@ -426,7 +426,7 @@ impl IotaDocument {
     unsafe {
       self
         .document
-        .resolve(query)
+        .resolve_method(query)
         .map(|m| IotaVerificationMethod::new_unchecked_ref(m))
     }
   }
@@ -445,7 +445,7 @@ impl IotaDocument {
     unsafe {
       self
         .document
-        .try_resolve(query)
+        .try_resolve_method(query)
         .map(|m| IotaVerificationMethod::new_unchecked_ref(m))
         .map_err(Error::InvalidDoc)
     }
@@ -477,7 +477,10 @@ impl IotaDocument {
   where
     Q: Into<MethodQuery<'query>>,
   {
-    self.document.sign_this(method_query, private_key).map_err(Into::into)
+    self
+      .document
+      .sign_document(method_query, private_key)
+      .map_err(Into::into)
   }
 
   /// Creates a new [`DocumentSigner`] that can be used to create digital
@@ -493,7 +496,7 @@ impl IotaDocument {
   /// Fails if an unsupported verification method is used, document
   /// serialization fails, or the verification operation fails.
   pub fn verify(&self) -> Result<()> {
-    self.document.verify_this().map_err(Into::into)
+    self.document.verify_document().map_err(Into::into)
   }
 
   /// Creates a new [`DocumentVerifier`] that can be used to verify signatures
