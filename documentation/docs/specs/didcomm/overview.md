@@ -28,13 +28,6 @@ NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
 
 Protocols follow [Semantic Versioning 2.0](https://semver.org/) conventions.
 
-## Resources
-
-| Name | Description |
-| :--- | :--- |
-| [Problem Reports](./resources/problem-reports.md) | Definitions of expected problem reports and guidance on global handling |
-| [Credential Kinds](./resources/credential-kinds.md) | Definition of methods to negotiate a specific kind of verifiable credential |
-
 ## Protocols
 
 | Name | Version | Description | 
@@ -57,6 +50,13 @@ In addition to the protocols defined in this specification, we RECOMMEND impleme
 | :--- | :---: | :--- | 
 | [Discover Features](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/feature_discovery.md) | 1.0 | Describes how agents can query one another to discover which features they support, and to what extent. |
 | [Trust Ping](https://github.com/decentralized-identity/didcomm-messaging/blob/9039564e143380a0085a788b6dfd20e63873b9ca/docs/spec-files/trustping.md) | 1.0 | A standard way for agents to test connectivity, responsiveness, and security of a DIDComm channel. | 
+
+## Resources
+
+| Name | Description |
+| :--- | :--- |
+| [Problem Reports](./resources/problem-reports.md) | Definitions of expected problem reports and guidance on global handling |
+| [Credential Kinds](./resources/credential-kinds.md) | Definition of methods to negotiate a specific kind of verifiable credential |
 
 ## Changelog
 
