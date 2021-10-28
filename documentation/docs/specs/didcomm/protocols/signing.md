@@ -47,7 +47,7 @@ Allows a trusted-party to request the signing of an unsigned verifiable credenti
 
 Request by a [trusted-party](#roles) for an [issuer](#roles) to sign a credential.
 
-To authenticate the [trusted-party](#roles), this SHOULD be sent using [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) established in a preceding [authentication](./authentication) protocol. For non-repudiation or auditing, the [issuer](#role) MAY enforce that the [signing-request](#signing-request) be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message).
+To authenticate the [trusted-party](#roles), this SHOULD be sent using [sender authenticated encryption][SAE] established in a preceding [authentication](./authentication) protocol. For non-repudiation or auditing, the [issuer](#role) MAY enforce that the [signing-request](#signing-request) be a [signed DIDComm message][SDM].
 
 #### Structure
 ```json
@@ -58,7 +58,7 @@ To authenticate the [trusted-party](#roles), this SHOULD be sent using [sender a
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`unsignedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | Unsigned [verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) requested to be signed by the [issuer](#roles).[^1] | ✔ |
+| [`unsignedCredential`][VC] | Unsigned [verifiable credential][VC] requested to be signed by the [issuer](#roles).[^1] | ✔ |
 
 [^1] The initial credential MUST NOT have a `proof` section.
 
@@ -104,7 +104,7 @@ Response from the [issuer](#roles) returning the signed credential back to the [
 
 | Field | Description | Required |
 | :--- | :--- | :--- |
-| [`signedCredential`](https://www.w3.org/TR/vc-data-model/#credentials) | Signed [verifiable credential](https://www.w3.org/TR/vc-data-model/#credentials) matching the [signing-request](#signing-request).[^1] | ✔ |
+| [`signedCredential`][VC] | Signed [verifiable credential][VC] matching the [signing-request](#signing-request).[^1] | ✔ |
 
 [^1] The [trusted-party](#roles) MUST validate the signature in the `proof` section and issue a problem-report if invalid. The [trusted-party](#roles) SHOULD also verify that the contents of the `signedCredential` sent back by the [issuer](#roles) are complete and unaltered from the [signing-request](#signing-request).
 
@@ -142,7 +142,7 @@ The [issuer](#roles) may request in turn that the credential be signed by a diff
 - Type: `iota/signing/0.1/signing-acknowledgement`
 - Role: [trusted-party](#roles)
 
-Acknowledgement by the [trusted-party](#roles) that the credential was received and accepted. The [issuer](#roles) MAY revoke the credential if no acknowledgement is received. For auditing or non-repudiation the [issuer](#roles) MAY require that the [signing-acknowledgement](#signing-acknowledgement) be a [signed DIDComm message](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message).
+Acknowledgement by the [trusted-party](#roles) that the credential was received and accepted. The [issuer](#roles) MAY revoke the credential if no acknowledgement is received. For auditing or non-repudiation the [issuer](#roles) MAY require that the [signing-acknowledgement](#signing-acknowledgement) be a [signed DIDComm message][SDM].
 
 #### Structure
 ```json
@@ -185,7 +185,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 This section is non-normative.
 
-- **Security**: implementors SHOULD transmit credentials over an encrypted channel to prevent leaking sensitive information on subjects. See [sender-authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption).
+- **Security**: implementors SHOULD transmit credentials over an encrypted channel to prevent leaking sensitive information on subjects. See [sender-authenticated encryption][SAE].
 - **Authentication**: it is RECOMMENDED to use sender-authenticated encryption for continuous authentication of both parties in the DIDComm thread. Anonymous encryption and/or once-off authentication may be insufficient.
 - **Authorisation**: the [issuer](#roles) should establish whether a trusted-party is allowed to request signing of a particular credential or at all.
 - **Validation**: apart from verifying the proof on the signed credential returned in the [signing-response](#signing-response), how the [issuer](#roles) validates the contents of a well-formed credential from a [trusted-party](#roles) and chooses whether or not to sign it is out-of-scope.
@@ -197,3 +197,8 @@ This section is non-normative.
 ## Further Reading
 
 - [Verifiable Credentials Data Model 1.0](https://www.w3.org/TR/vc-data-model)
+
+<!--- LINKS --->
+[VC]: https://www.w3.org/TR/vc-data-model/#credentials
+[SAE]: https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption
+[SDM]: https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message

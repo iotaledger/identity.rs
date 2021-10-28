@@ -193,7 +193,7 @@ Sent by the holder to present a [verifiable presentation][VP] of one or more [ve
 | :--- | :--- | :--- |
 | [`presentation`][VP] | Signed [verifiable presentation][VP] containing one or more [verifiable credentials](https://www.w3.org/TR/vc-data-model/#credentials) matching the [presentation-request](#presentation-request).[^1][^2] | ✔ |
 
-[^1] The [`proof`](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section in `presentation` MUST include the `challenge` sent by the verifier in the preceding [`presentation-request`](#presentation-request). Revoked, disputed, or otherwise invalid presentations or credentials MUST result in a rejected [`presentation-result`](#presentation-result) sent back to the holder, NOT a separate [`problem-report`]. Other such as the message lacking [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) SHOULD result in a separate [`problem-report`].
+[^1] The [`proof`](https://www.w3.org/TR/vc-data-model/#proofs-signatures) section in `presentation` MUST include the `challenge` sent by the verifier in the preceding [`presentation-request`](#presentation-request). Revoked, disputed, or otherwise invalid presentations or credentials MUST result in a rejected [`presentation-result`](#presentation-result) sent back to the holder, NOT a separate [`problem-report`]. Other such as the message lacking [sender authenticated encryption][SAE] SHOULD result in a separate [`problem-report`].
 
 [^2] With [CredentialType2021], the included credentials SHOULD match all `type` fields and one or more `issuer` if included in the [`presentation-request`](#presentation-request). 
 
@@ -361,7 +361,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 This section is non-normative.
 
 - **Security**: implementors SHOULD transmit the presentation over an encrypted channel etc. [see authentication](./authentication.md).
-- **Authentication**: it is RECOMMENDED to use either the [authentication protocol](./authentication.md) for once-off mutual authentication or to establish [sender-authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) for continuous authentication of both parties in the DIDComm thread. Signatures (`proof` fields) and [signed DIDComm messages][SDM] SHOULD NOT be relied upon for this in general: https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message
+- **Authentication**: it is RECOMMENDED to use either the [authentication protocol](./authentication.md) for once-off mutual authentication or to establish [sender-authenticated encryption][SAE] for continuous authentication of both parties in the DIDComm thread. Signatures (`proof` fields) and [signed DIDComm messages][SDM] SHOULD NOT be relied upon for this in general: https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message
 - **Authorisation**: establishing whether either party is allowed to request/offer presentations is an application-level concern.
 - **Validation**: apart from verifying the presentation and credentials are signed by a trusted issuer, how credential subject matter fields are checked for disputes is out-of-scope.
 
@@ -390,5 +390,6 @@ This section is non-normative.
 
 <!--- LINKS --->
 [VP]: https://www.w3.org/TR/vc-data-model/#presentations-0
+[SAE]: https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption
 [SDM]: https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message
 [CredentialType2021]: ../resources/credential-kinds#credentialtype2021
