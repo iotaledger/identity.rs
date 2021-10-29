@@ -59,21 +59,22 @@ Additionally, general guidelines on concerns across protocols are provided:
 
 | Name | Description |
 | :--- | :--- |
-| [Problem Reports](./resources/problem-reports.md) | Definitions of expected problem reports and guidance on global handling |
-| [Credential Kinds](./resources/credential-kinds.md) | Definition of methods to negotiate a specific kind of verifiable credential |
+| [Problem Reports](./resources/problem-reports.md) | Definitions of expected problem reports and guidance on global handling. |
+| [Credential Kinds](./resources/credential-kinds.md) | Definition of methods to negotiate a specific kind of verifiable credential. |
 
 ## Diagrams
 
-The diagrams in this specification follow the [BPMN 2.0](https://www.omg.org/spec/BPMN/2.0/) notation. The diagrams are created with https://www.diagrams.net, the source is embedded in the `.svg` files. 
+The diagrams in this specification follow the [BPMN 2.0](https://www.omg.org/spec/BPMN/2.0/) notation. The diagrams are created with https://www.diagrams.net, the source is embedded in the `.svg` files.
+
 ## Changelog
 
-See [CHANGELOG](./CHANGELOG)
+See [CHANGELOG](./CHANGELOG).
 
 ## TODO
-TODO: section/page on anonymous encryption/sender authenticated encryption/signed messages (table of comparisons with guarantees? E.g. authentication, eavesdropping protection, integrity etc.). Probably better as a section to avoid duplicating discussions from the DIDComm specification, but they are very light on details in the main document. --- After RFC
 
-TODO: changelog --- After RFC
+- CHANGELOG
 
 ## Future Work
 
 ◈ If necessary, discuss ways for some agent to request the start of an interaction. This has narrow use cases, but might be interesting in the long run.
+◈ Add section or article on anonymous encryption, sender authenticated encryption, signed messages. Include a table of comparisons with guarantees? E.g. authentication, eavesdropping protection, integrity etc.
