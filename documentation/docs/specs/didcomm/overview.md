@@ -9,7 +9,7 @@ sidebar_label: Overview
 
 ## Introduction
 
-The IOTA DIDComm Specification standardizes how Self-Sovereign Identities (SSIs) can interact with each other and exchange information. Any applications that implement this standard will naturally be interoperable with each other. This reduces fragmentation in the ecosystem and therefore it is highly recommended to use this for any application built on top of the IOTA Identity framework. The specification defines several [protocols](#protocols), that can be used for common interactions like [issuing](./protocols/issuance) and [presenting](./protocols/presentation) verifiable credentials as well as supporting functions, such as [connection](./protocols/connection) establishment and [authentication](./protocols/authentication.md). Cross-cutting concerns like [error handling](./resources/problem-reports.md) and [credential negotiation](./resources/credential-kinds.md) are discussed in the [resources](#resources) section.
+The IOTA DIDComm Specification standardizes how Self-Sovereign Identities (SSIs) can interact with each other and exchange information. Any applications that implement this standard will naturally be interoperable with each other. This reduces fragmentation in the ecosystem and therefore it is highly recommended to use this for any application built on top of the IOTA Identity framework. The specification defines several [protocols](#protocols), that can be used for common interactions like [issuing](./protocols/issuance) and [presenting](./protocols/presentation) verifiable credentials as well as supporting functions, such as [connection](./protocols/connection) establishment and [authentication](./protocols/authentication.md). Cross-cutting concerns like [error handling](./resources/problem-reports.md) and [credential negotiation](./resources/credential-info.md) are discussed in the [resources](#resources) section.
 
 The IOTA DIDComm Specification builds on the [DIDComm Messaging Specification](https://identity.foundation/didcomm-messaging/spec/) developed by the [Decentralized Identity Foundation (DIF)](https://identity.foundation/) and utilises [external protocols](#external-protocols) from the messaging specification for well-established interactions like feature discovery.
 
@@ -60,7 +60,7 @@ Additionally, general guidelines on concerns across protocols are provided:
 | Name | Description |
 | :--- | :--- |
 | [Problem Reports](./resources/problem-reports.md) | Definitions of expected problem reports and guidance on global handling. |
-| [Credential Kinds](./resources/credential-kinds.md) | Definition of methods to negotiate a specific kind of verifiable credential. |
+| [Credential Info](./resources/credential-info.md) | Definition of methods to negotiate a specific kind of verifiable credential. |
 
 ## Diagrams
 

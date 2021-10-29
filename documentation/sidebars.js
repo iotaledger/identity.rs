@@ -144,7 +144,7 @@ module.exports = {
                   label: 'Resources',
                   collapsed: true,
                   items: [
-                    'specs/didcomm/resources/credential-kinds',
+                    'specs/didcomm/resources/credential-info',
                     'specs/didcomm/resources/problem-reports',
                   ]
                 },

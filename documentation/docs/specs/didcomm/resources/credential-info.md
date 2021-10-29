@@ -1,9 +1,7 @@
 ---
-title: Credential Kinds
-sidebar_label: Credential Kinds
+title: CredentialInfo
+sidebar_label: CredentialInfo
 ---
-
-## CredentialInfo
 
 `CredentialInfo` objects allow parties to negotiate which kinds of [verifiable credentials][VC] they want to issue or exchange. [Verifiable credential][VC] kinds can be described by different attributes such as the [`type`](https://www.w3.org/TR/vc-data-model/#types) and [`@context`](https://www.w3.org/TR/vc-data-model/#contexts) fields or the structure of the data in the payload. `CredentialInfo` provides methods to specify the identifying characteristics of a credential.
 

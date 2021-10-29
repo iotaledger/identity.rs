@@ -58,7 +58,7 @@ The [holder](#roles) requests a single verifiable credential from the [issuer](#
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | [`subject`][SUBJECT] | [DID](https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers) of the [credential subject][SUBJECT][^1]. | ✔ |
-| `credentialInfo` | A [CredentialInfo](../resources/credential-kinds#credentialinfo) object, specifying a credential kind requested by the [holder](#roles).[^2] [^3] [^4] | ✔ |
+| `credentialInfo` | A [CredentialInfo](../resources/credential-info) object, specifying a credential kind requested by the [holder](#roles).[^2] [^3] [^4] | ✔ |
 
 [^1] The [holder](#roles) is usually but not always the [subject][SUBJECT] of the requested credential. There may be custodial, legal guardianship, or delegation situations where a third-party requests, or is issued a credential on behalf of a subject. It is the responsibility of the [issuer](#roles) to ensure authorization in such cases.
 
@@ -424,4 +424,4 @@ For guidance on problem-reports and a list of general codes see [problem reports
 <!--- LINKS --->
 [VC]: https://www.w3.org/TR/vc-data-model/#credentials
 [SUBJECT]: https://www.w3.org/TR/vc-data-model/#credential-subject-0
-[CredentialType2021]: ../resources/credential-kinds#credentialtype2021
+[CredentialType2021]: ../resources/credential-info#credentialtype2021
