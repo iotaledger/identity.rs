@@ -3,6 +3,12 @@ title: CredentialInfo
 sidebar_label: CredentialInfo
 ---
 
+:::info
+
+The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Suggestions are welcome at [GitHub #464](https://github.com/iotaledger/identity.rs/discussions/464).
+
+:::
+
 `CredentialInfo` objects allow parties to negotiate which kinds of [verifiable credentials][VC] they want to issue or exchange. [Verifiable credential][VC] kinds can be described by different attributes such as the [`type`](https://www.w3.org/TR/vc-data-model/#types) and [`@context`](https://www.w3.org/TR/vc-data-model/#contexts) fields or the structure of the data in the payload. `CredentialInfo` provides methods to specify the identifying characteristics of a credential.
 
 Currently, only `CredentialType2021` is prescribed but additional `CredentialInfo` methods may be introduced in the future, e.g. to account for selective disclosure of particular fields. If full schema negotiation of credentials is required, refer to the external [Presentation Exchange 1.0 specification](https://identity.foundation/presentation-exchange/spec/v1.0.0/).

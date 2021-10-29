@@ -3,6 +3,12 @@ title: Problem Reports
 sidebar_label: Problem Reports
 ---
 
+:::info
+
+The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Suggestions are welcome at [GitHub #464](https://github.com/iotaledger/identity.rs/discussions/464).
+
+:::
+
 [Problem reports](https://identity.foundation/didcomm-messaging/spec/#problem-reports) are a standard [DIDComm](https://identity.foundation/didcomm-messaging/spec/) feature for reporting errors or warnings between parties. Using this mechanism is not a general requirement but it is a best practice for relaying informative errors and may improve human experience.
 
 ## Example

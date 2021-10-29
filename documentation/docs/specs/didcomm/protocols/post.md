@@ -3,7 +3,11 @@ title: Post
 sidebar_label: Post
 ---
 
-# Post {#post}
+:::info
+
+The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Suggestions are welcome at [GitHub #464](https://github.com/iotaledger/identity.rs/discussions/464).
+
+:::
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
@@ -93,7 +97,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 
 | Code | Message | Description |
 | :--- | :--- | :--- |
-| `e.p.msg.iota.post.reject-post` | [post](#post) | [Receiver](#roles) rejects a [post](#post-message) message for any reason. |
+| `e.p.msg.iota.post.reject-post` | [post](#post-message) | [Receiver](#roles) rejects a [post](#post-message) message for any reason. |
 
 ## Considerations
 

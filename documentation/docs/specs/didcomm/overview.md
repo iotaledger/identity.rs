@@ -3,6 +3,12 @@ title: IOTA DIDComm Specification
 sidebar_label: Overview
 ---
 
+:::info
+
+The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Suggestions are welcome at [GitHub #464](https://github.com/iotaledger/identity.rs/discussions/464).
+
+:::
+
 - Version: 0.1
 - Status: `IN-PROGRESS`
 - Last Updated: 2021-10-29
