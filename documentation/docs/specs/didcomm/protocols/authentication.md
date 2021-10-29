@@ -169,22 +169,25 @@ For guidance on problem-reports and a list of general codes see [problem reports
 This section is non-normative.
 
 - **Trust**: this [authentication](#authentication) protocol only verifies that both parties have access to the necessary private keys (which could become compromised) associated with their DID documents. Verifying whether a DID document is [bound to a physical identity](https://www.w3.org/TR/did-core/#binding-to-physical-identity) may require additional interactions. For instance, requesting a verifiable presentation of credentials issued by a trusted third party, such as a government, is one possible way to verify a physical identity.
-- **Authorisation**: the permissions and capabilities of either party may still need to be established after [authentication](#authentication), either by verifiable presentation as above or other methods such as JWT tokens
+- **Authorisation**: the permissions and capabilities of either party may still need to be established after [authentication](#authentication), either by [verifiable presentation](./presentation) as mentioned above or other methods such as JWT tokens
 - **Privacy**: the [responder](#roles) may be subject to probing whereby their DID may be revealed even with the use of [sender authenticated encryption][SAE], as the `skid` message header is linked to their DID. This is possible if the [responder](#roles) chooses to accept the [authentication-request](#authentication-request) of an unknown [requester](#roles), or the [requester](#roles) successfully replays an [authentication-request](#authentication-request) from a DID the [requester](#roles) trusts.
 
 ## Unresolved Questions
+
+TODO: move some points to considerations with better discussions and phrasing.
 
 - Enforce signed DIDComm messages on top of sender-authenticated encryption or keep them optional? Usually unnecessary and DIDComm recommends against this since it's redundant and due to non-repudiation may decrease security and privacy by allowing participants to prove to third parties that authentication occurred.
   - https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message
   - https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0049-repudiation/README.md#summary
 
-- How to protect the DID of the responder (`skid` field)?
+- How to protect the DID of the responder (`skid` field in sender-authenticated message) to prevent probing identities even with anonymous encryption?
   - https://github.com/decentralized-identity/didcomm-messaging/issues/197
   - https://github.com/decentralized-identity/didcomm-messaging/issues/219
 
 - Man-in-the-middle attacks?
    - not a problem with DIDComm in itself but rather establishing trust that a DID is bound to a physical identity. 
    - note possible attack vectors for the requester and responder, including intercepting or modifying the invitation in the connection protocol.
+   - use verifiable credential tied to a physical identity to authenticate parties.
    - use [Well Known DID Configuration](https://identity.foundation/.well-known/resources/did-configuration/) or DNS verification to mitigate?
    - https://lilithwittmann.medium.com/mit-der-id-wallet-kannst-du-alles-und-jeder-sein-au%C3%9Fer-du-musst-dich-ausweisen-829293739fa0
    - https://github.com/Fluepke/ssi-poc
