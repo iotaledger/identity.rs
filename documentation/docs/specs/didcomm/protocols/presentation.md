@@ -15,7 +15,7 @@ Allows presentation of one or more [verifiable credentials](https://www.w3.org/T
 
 ### Relationships
 - [Issuance](./issuance): a presentation may be used to provide extra information from the [holder](#roles) during a credential issuance.
-- [Authentication](./authentication): a presentation may be used after authentication to bind the authenticated DID to a physical identity.
+- [Authentication](./authentication): a presentation may be used after authentication to prove the authenticated DID is bound to a physical identity.
 
 ### Example Use-Cases
 
@@ -116,7 +116,7 @@ Sent by the [verifier](#roles) to request one or more verifiable credentials fro
 | Field | Description | Required |
 | :--- | :--- | :--- |
 | `requests` | Array of one or more requests, each specifying a single credential possessed by the holder. | ✔ |
-| `credentialInfo` | A [CredentialInfo](../resources/credential-info), specifying a credential requested by the verifier.[^1] | ✔ |
+| `credentialInfo` | A [`CredentialInfo`](../resources/credential-info), specifying a credential requested by the verifier.[^1] | ✔ |
 | `optional` | Whether this credential is required (`false`) or optional (`true`) to present by the holder. A holder SHOULD send a problem report if unable to satisfy a non-optional credential request. Default: `false`. | ✖ |
 | [`challenge`](https://w3c-ccg.github.io/ld-proofs/#dfn-challenge) | A random string unique per [`presentation-request`](#presentation-request) by a verifier to help mitigate replay attacks. | ✔ |
 
@@ -240,9 +240,11 @@ Sent by the holder to present a [verifiable presentation][VP] of one or more [ve
 - Type: `iota/presentation/0.1/presentation-result`
 - Role: [verifier](#roles)
 
-Sent by the verifier to communicate the result of the presentation. It allows the verifier to raise problems and disputes encountered in the verification and to specify if the holder may retry a presentation. The message SHOULD be signed by the verifier for non-repudiation.
+Sent by the verifier to communicate the result of the presentation. It allows the verifier to raise disputes encountered in the verification. The message SHOULD be signed by the verifier for non-repudiation.
 
 Similar to [`presentation-request`](#presentation-request), [verifiers](#roles) are RECOMMENDED to use a [signed DIDComm message][SDM] whenever possible for non-repudiation of receipt of the presentation. [Holders](#roles) may choose to blocklist verifiers that refuse to provide signatures or do not send a [presentation-result](#presentation-result) at all.
+
+If the [presentation-result](#presentation-result) contains `disputes` or a problem report was issued, the protocol may be restarted to retry the presentation. [Verifiers](#roles) may choose to only request the failed credential kinds in the retry, retaining the accepted credentials from the failed presentation.
 
 #### Structure
 ```json
@@ -252,11 +254,6 @@ Similar to [`presentation-request`](#presentation-request), [verifiers](#roles) 
     "credentialId": string,           // REQUIRED
     "dispute": Dispute,               // REQUIRED
   }], // OPTIONAL
-  "problems": [{
-    "credentialId": string,           // REQUIRED
-    "problemReport": ProblemReport,   // REQUIRED
-  }], // OPTIONAL
-  "allowRetry": bool,                 // OPTIONAL
 }
 ```
 
@@ -265,11 +262,6 @@ Similar to [`presentation-request`](#presentation-request), [verifiers](#roles) 
 | `accepted` | Indicates if the verifier accepted the [`presentation`](#presentation) and credentials. | ✔ |
 | `disputes` | Array of disputes | ✖ |
 | [`credentialId`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a dispute. If the credential lacks an `id` field, this should be a content-addressed identifier; we RECOMMEND the [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the credential.  | ✔ |
-| [`dispute`](https://www.w3.org/TR/vc-data-model/#disputes) | A [dispute](https://www.w3.org/TR/vc-data-model/#disputes) by the verifier of one or more claims in a presented credential. | ✔ |
-| `problems` | Array of problem-reports. | ✖ |
-| [`credentialId`](https://www.w3.org/TR/vc-data-model/#identifiers) | Identifier of the credential for which there is a problem. If the credential lacks an `id` field, this should be a content-addressed identifier; we RECOMMEND the [SHA-256 digest](https://www.rfc-editor.org/rfc/rfc4634) of the credential. | ✔ |
-| `problemReport` | A [`problem-report`](https://identity.foundation/didcomm-messaging/spec/#problem-reports) indicating something wrong with the credential, e.g. signature validation failed or the credential is expired. | ✔ | 
-| `allowRetry` | Indicates if the holder may retry the [`presentation`](#presentation) with different credentials. Default: `false`. | ✖ |
 
 #### Examples
 
@@ -281,7 +273,7 @@ Similar to [`presentation-request`](#presentation-request), [verifiers](#roles) 
 }
 ```
 
-2. Unsuccessful result disputing a credential, allowing the holder to retry: 
+2. Unsuccessful result disputing a credential's content: 
 
 ```json
 {
@@ -308,30 +300,6 @@ Similar to [`presentation-request`](#presentation-request), [verifiers](#roles) 
       "proof": { ... }
     }
   }],
-  "allowRetry": true
-}
-```
-
-3. Unsuccessful result with a `problem-report`, disallowing retries. 
-
-```json
-{
-  "accepted": false,
-  "problems": [{
-    "id": "6c1a1477-e452-4da7-b2db-65ad0b369d1a",
-    "problemReport": {
-      "type": "https://didcomm.org/notify/1.0/problem-report",
-      "id": "7c9de639-c51c-4d60-ab95-103fa613c805",
-      "pthid": "1e513ad4-48c9-444e-9e7e-5b8b45c5e325",
-      "body": {
-        "code": "e.p.trust.crypto.credential-proof-invalid",
-        "comment": "Signature failed validation for credential {1}.",
-        "args": [
-          "http://example.com/credentials/123",
-        ],
-      }
-  }}],
-  "allowRetry": false
 }
 ```
 
@@ -351,7 +319,7 @@ For guidance on problem-reports and a list of general codes see [problem reports
 | `e.p.msg.iota.presentation.reject-request.invalid-type` | [presentation-request](#presentation-request) | [Holder](#roles) rejects a request due to a `type` or `@context` being unsupported or otherwise invalid. |
 | `e.p.msg.iota.presentation.reject-request.invalid-issuer` | [presentation-request](#presentation-request) | [Holder](#roles) rejects a request due to a `issuer` being unsupported or otherwise invalid. |
 | `e.p.msg.iota.presentation.reject-request.missing-signature` | [presentation-request](#presentation-request) | [Holder](#roles) rejects a request due to a missing signature from the [verifier](#roles). The [holder](#roles) may choose to blocklist [verifiers](#roles) that fail to sign requests. |
-| `e.p.msg.iota.presentation.reject-presentation` | [presentation](#presentation) | [Verifier](#roles) rejects a presentation and abandons the protocol for any reason other than a disputed or otherwise invalid verifiable presentation, which should instead be communicated via [presentation-result](#presentation-result). |
+| `e.p.msg.iota.presentation.reject-presentation` | [presentation](#presentation) | [Verifier](#roles) rejects a presentation and abandons the protocol for any reason other than disputed verifiable credential content, which should instead be communicated via [presentation-result](#presentation-result). |
 | `e.p.msg.iota.presentation.reject-result` | [presentation-result](#presentation-result) | [Holder](#roles) rejects a result for any reason. |
 | `e.p.msg.iota.presentation.reject-result.missing-signature` | [presentation-result](#presentation-result) | [Holder](#roles) rejects a result due to a missing signature requested from the [verifier](#roles). The [holder](#roles) may blocklist the [verifier](#roles) from future requests. |
 | `e.p.msg.iota.presentation.reject-retry` | [presentation-result](#presentation-result) | [Holder](#roles) chooses not to retry the presentation flow and terminates the protocol. |
@@ -368,11 +336,9 @@ This section is non-normative.
 ## Unresolved Questions
 
 - Is a `schema` field needed for the `presentation-offer` and `presentation-request` to identify the types of verifiable credentials and allow forward compatibility for different fields in the message? E.g. a `SelectiveDisclosure` or ZKP message may only offer or request certain fields in the credential. Does this relate to the [`credentialSchema`](https://www.w3.org/TR/vc-data-model/#data-schemas) field in credentials?
-- Identifiers (`id` field) are [optional in verifiable credentials](https://www.w3.org/TR/vc-data-model/#identifiers). The spec suggests content-addressed identifiers when the `id` is not available but their particulars are unclear as there is no spec referenced. This affects the `problems` reported in the [`presentation-result`](#presentation-result).
-- We should RECOMMENDED the `id` of a verifiable credential being a UUID (what version?) in issuance. Needs to be a URI https://www.w3.org/TR/vc-data-model/#identifiers, do UUIDs qualify?
-- Should we specifically list non-functional requirements e.g in a Goals / Non-Goals section.
 - Use `schemas` to negotiate generic form entries as a self-signed credential? E.g. could ask for username, preferred language, comments, any generic information not signed/verified by a third-party issuer from a generic wallet? Similar to Presentation Exchange? https://identity.foundation/presentation-exchange/spec/v1.0.0/
-- Are embedded problem-reports the right way to communicate problems with a presentation in [`presentation-result`](#presentation-result)? Can we come up with a more concise form? Are there relevant specifications? Use separate problem-reports, or a separate credential-problem object, instead of embedding them in the [`presentation-result`](#presentation-result), as mixing disputes with problem-reports if improperly implemented may reveal information to a fake holder trying to discover information about what content a verifier accepts. Incorrect implementations could allow someone to brute-force disputes with unsigned credentials, in which case the problem report (trust.crypto) should just end the flow and not return disputes.
+- Identifiers (`id` field) are [optional in verifiable credentials](https://www.w3.org/TR/vc-data-model/#identifiers). The spec suggests content-addressed identifiers when the `id` is not available but their particulars are unclear as there is no spec referenced. This affects the `disputes` reported in the [`presentation-result`](#presentation-result).
+- We should RECOMMENDED the `id` of a verifiable credential being a UUID (what version?) in issuance. Needs to be a URI https://www.w3.org/TR/vc-data-model/#identifiers, do UUIDs qualify?
 - `e.p.msg.iota.presentation.reject-request.invalid-type`, `e.p.msg.iota.presentation.reject-request.invalid-issuer`, `e.p.msg.iota.presentation.reject-request.invalid-issuer` and `e.p.msg.iota.presentation.reject-request.invalid-type` are specific to [CredentialType2021]. Should they be listed here? If yes, should they be marked accordingly?
 
 ## Related Work

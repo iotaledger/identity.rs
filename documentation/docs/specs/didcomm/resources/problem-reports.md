@@ -26,6 +26,8 @@ A problem report is a standard DIDComm message:
 }
 ```
 
+Note that problem reports may still use [sender authenticated encryption](https://identity.foundation/didcomm-messaging/spec/#sender-authenticated-encryption) or even be [signed DIDComm messages](https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message).
+
 ## IOTA Problem Codes
 
 We follow the notation for [problem codes defined by the DIDComm specification](https://github.com/decentralized-identity/didcomm-messaging/blob/84e5a7c66c87440d39e93df81e4440855273f987/docs/spec-files/problems.md#problem-codes). In general, we use the error sorter `e` and protocol scope `p` to indicate that problem reports result in the abandonment of a protocol. 
