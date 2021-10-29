@@ -45,7 +45,7 @@ Allows presentation of one or more [verifiable credentials](https://www.w3.org/T
 - Type: `iota/presentation/0.1/presentation-offer`
 - Role: [holder](#roles)
 
-Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#roles) to view. [`CredentialInfo`](../resources/credential-kinds#credentialinfo) objects are used by the [verifier](#roles) to determine if they are interested in the particular kind of credential.
+Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#roles) to view. [`CredentialInfo`](../resources/credential-kinds#credentialinfo) is used to indicate which kinds of credentials the [holder](#roles) wants to present.
 
 #### Structure
 ```json
@@ -98,7 +98,7 @@ Sent by the [holder](#roles) to offer one or more credentials for a [verifier](#
 - Type: `iota/presentation/0.1/presentation-request`
 - Role: [verifier](#roles)
 
-Sent by the verifier to request one or more verifiable credentials from a holder. The `CredentialInfo` is used by the [holder](#roles) to determine if they possess relevant credentials.
+Sent by the [verifier](#roles) to request one or more verifiable credentials from a [holder](#roles). [`CredentialInfo`](../resources/credential-kinds#credentialinfo) indicates which kinds of credentials the [verifier](#roles) wants presented by the [holder](#roles).
 
 [Verifiers](#roles) are RECOMMENDED to use a [signed DIDComm message][SDM]. [Holders](#roles) may choose to blocklist verifiers that refuse to provide signed requests.
 
@@ -368,12 +368,11 @@ This section is non-normative.
 ## Unresolved Questions
 
 - Is a `schema` field needed for the `presentation-offer` and `presentation-request` to identify the types of verifiable credentials and allow forward compatibility for different fields in the message? E.g. a `SelectiveDisclosure` or ZKP message may only offer or request certain fields in the credential. Does this relate to the [`credentialSchema`](https://www.w3.org/TR/vc-data-model/#data-schemas) field in credentials?
-- Are embedded problem-reports the right way to communicate problems with a presentation in [`presentation-result`](#presentation-result)? Can we come up with a more concise form? Are there relevant specifications?
 - Identifiers (`id` field) are [optional in verifiable credentials](https://www.w3.org/TR/vc-data-model/#identifiers). The spec suggests content-addressed identifiers when the `id` is not available but their particulars are unclear as there is no spec referenced. This affects the `problems` reported in the [`presentation-result`](#presentation-result).
 - We should RECOMMENDED the `id` of a verifiable credential being a UUID (what version?) in issuance. Needs to be a URI https://www.w3.org/TR/vc-data-model/#identifiers, do UUIDs qualify?
 - Should we specifically list non-functional requirements e.g in a Goals / Non-Goals section.
 - Use `schemas` to negotiate generic form entries as a self-signed credential? E.g. could ask for username, preferred language, comments, any generic information not signed/verified by a third-party issuer from a generic wallet? Similar to Presentation Exchange? https://identity.foundation/presentation-exchange/spec/v1.0.0/
-- Use separate problem-reports, or a separate credential-problem object, instead of embedding them in the [`presentation-result`](#presentation-result), as mixing disputes with problem-reports if improperly implemented may reveal information to a fake holder trying to discover information about what content a verifier accepts. Incorrect implementations could allow someone to brute-force disputes with unsigned credentials, in which case the problem report (trust.crypto) should just end the flow and not return disputes.
+- Are embedded problem-reports the right way to communicate problems with a presentation in [`presentation-result`](#presentation-result)? Can we come up with a more concise form? Are there relevant specifications? Use separate problem-reports, or a separate credential-problem object, instead of embedding them in the [`presentation-result`](#presentation-result), as mixing disputes with problem-reports if improperly implemented may reveal information to a fake holder trying to discover information about what content a verifier accepts. Incorrect implementations could allow someone to brute-force disputes with unsigned credentials, in which case the problem report (trust.crypto) should just end the flow and not return disputes.
 - `e.p.msg.iota.presentation.reject-request.invalid-type`, `e.p.msg.iota.presentation.reject-request.invalid-issuer`, `e.p.msg.iota.presentation.reject-request.invalid-issuer` and `e.p.msg.iota.presentation.reject-request.invalid-type` are specific to [CredentialType2021]. Should they be listed here? If yes, should they be marked accordingly?
 
 ## Related Work
