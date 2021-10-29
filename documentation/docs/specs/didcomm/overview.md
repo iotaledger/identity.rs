@@ -30,7 +30,7 @@ Protocols follow [Semantic Versioning 2.0](https://semver.org/) conventions.
 
 ## Protocols
 
-The specification defines several protocols, that can be used for common SSI interactions:
+The specification defines several [DIDComm protocols](https://identity.foundation/didcomm-messaging/spec/#protocols) that can be used for common SSI interactions:
 
 | Name | Version | Description | 
 | :--- | :---: | :--- |
@@ -55,7 +55,7 @@ In addition to the protocols defined in this specification, we RECOMMEND impleme
 
 ## Resources
 
-Besides the protocols cross-cutting concerns and general guidance on related topics are provided:
+Additionally, general guidelines on concerns across protocols are provided:
 
 | Name | Description |
 | :--- | :--- |
