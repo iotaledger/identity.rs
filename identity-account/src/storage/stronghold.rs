@@ -32,7 +32,7 @@ use crate::events::Commit;
 use crate::events::Event;
 use crate::events::EventData;
 use crate::identity::DIDLease;
-use crate::identity::IdentitySnapshot;
+use crate::identity::IdentityState;
 use crate::storage::Storage;
 use crate::stronghold::default_hint;
 use crate::stronghold::Snapshot;
@@ -180,7 +180,7 @@ impl Storage for Stronghold {
     }
   }
 
-  async fn snapshot(&self, did: &IotaDID) -> Result<Option<IdentitySnapshot>> {
+  async fn state(&self, did: &IotaDID) -> Result<Option<IdentityState>> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_did(did));
 
@@ -193,15 +193,15 @@ impl Storage for Stronghold {
     }
 
     // Deserialize and return
-    Ok(Some(IdentitySnapshot::from_json_slice(&data)?))
+    Ok(Some(IdentityState::from_json_slice(&data)?))
   }
 
-  async fn set_snapshot(&self, did: &IotaDID, snapshot: &IdentitySnapshot) -> Result<()> {
+  async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> Result<()> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_did(did));
 
     // Serialize the state snapshot
-    let json: Vec<u8> = snapshot.to_json_vec()?;
+    let json: Vec<u8> = state.to_json_vec()?;
 
     // Write the state snapshot to the stronghold snapshot
     store.set(location_snapshot(), json, None).await?;

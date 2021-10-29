@@ -28,7 +28,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::events::Commit;
 use crate::identity::DIDLease;
-use crate::identity::IdentitySnapshot;
+use crate::identity::IdentityState;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
@@ -39,7 +39,7 @@ use crate::utils::Shared;
 type MemVault = HashMap<KeyLocation, KeyPair>;
 
 type Events = HashMap<IotaDID, Vec<Commit>>;
-type States = HashMap<IotaDID, IdentitySnapshot>;
+type States = HashMap<IotaDID, IdentityState>;
 type Vaults = HashMap<IotaDID, MemVault>;
 type PublishedGenerations = HashMap<IotaDID, Generation>;
 
@@ -210,12 +210,12 @@ impl Storage for MemStore {
     }
   }
 
-  async fn snapshot(&self, did: &IotaDID) -> Result<Option<IdentitySnapshot>> {
+  async fn state(&self, did: &IotaDID) -> Result<Option<IdentityState>> {
     self.states.read().map(|states| states.get(did).cloned())
   }
 
-  async fn set_snapshot(&self, did: &IotaDID, snapshot: &IdentitySnapshot) -> Result<()> {
-    self.states.write()?.insert(did.clone(), snapshot.clone());
+  async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> Result<()> {
+    self.states.write()?.insert(did.clone(), state.clone());
 
     Ok(())
   }

@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use futures::executor;
-use futures::StreamExt;
-use futures::TryStreamExt;
 use identity_core::common::Fragment;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::SetSignature;
@@ -30,7 +28,6 @@ use crate::events::EventData;
 use crate::events::Update;
 use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
-use crate::identity::IdentitySnapshot;
 use crate::identity::IdentityState;
 use crate::identity::IdentityUpdater;
 use crate::identity::TinyMethod;
@@ -55,7 +52,8 @@ pub struct Account {
   storage: Arc<dyn Storage>,
   client_map: Arc<ClientMap>,
   actions: AtomicUsize,
-  did: IotaDID,
+  did: IotaDID, // TODO: Get from state field
+  state: IdentityState,
   did_lease: DIDLease,
 }
 
@@ -68,20 +66,21 @@ impl Account {
   /// Creates an [`Account`] for an existing identity, if it exists in the [`Storage`].
   pub(crate) async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
     // Ensure the did exists in storage
-    setup.storage.snapshot(&did).await?.ok_or(Error::IdentityNotFound)?;
+    let state = setup.storage.state(&did).await?.ok_or(Error::IdentityNotFound)?;
 
     let did_lease = setup.storage.lease_did(&did).await?;
 
-    Self::with_setup(setup, did, did_lease).await
+    Self::with_setup(setup, did, state, did_lease).await
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  async fn with_setup(setup: AccountSetup, did: IotaDID, did_lease: DIDLease) -> Result<Self> {
+  async fn with_setup(setup: AccountSetup, did: IotaDID, state: IdentityState, did_lease: DIDLease) -> Result<Self> {
     Ok(Self {
       config: setup.config,
       storage: setup.storage,
       client_map: setup.client_map,
       actions: AtomicUsize::new(0),
+      state,
       did,
       did_lease,
     })
@@ -127,17 +126,14 @@ impl Account {
   // ===========================================================================
 
   /// Return a copy of the latest state of the identity
-  pub async fn state(&self) -> Result<IdentityState> {
-    Ok(self.load_snapshot().await?.into_identity())
+  pub fn state(&self) -> &IdentityState {
+    &self.state
   }
 
   /// Resolves the DID Document associated with this `Account` from the Tangle.
   pub async fn resolve_identity(&self) -> Result<IotaDocument> {
-    let snapshot: IdentitySnapshot = self.load_snapshot().await?;
-    let did: &IotaDID = snapshot.identity().try_did()?;
-
     // Fetch the DID Document from the Tangle
-    self.client_map.resolve(did).await.map_err(Into::into)
+    self.client_map.resolve(self.did()).await.map_err(Into::into)
   }
 
   /// Creates a new identity and returns an [`Account`] instance to manage it.
@@ -152,17 +148,17 @@ impl Account {
       authentication: Self::key_to_method(input.key_type),
     };
 
-    let snapshot = IdentitySnapshot::new(IdentityState::new());
+    let state = IdentityState::new();
 
+    // TODO: Pass state mutably and let process work on it
     let (did, did_lease, events): (IotaDID, DIDLease, Vec<Event>) = command
-      .process(snapshot.identity().integration_generation(), setup.storage.as_ref())
+      .process(state.integration_generation(), setup.storage.as_ref())
       .await?;
 
-    let commits = Self::commit_events(&did, &setup.config, setup.storage.as_ref(), &snapshot, &events).await?;
+    let account = Self::with_setup(setup, did, state, did_lease).await?;
 
-    let account = Self::with_setup(setup, did, did_lease).await?;
-
-    account.publish_commits(snapshot, commits, true).await?;
+    // TODO: This should also write state to storage (remove me)
+    account.publish(true).await?;
 
     Ok(account)
   }
@@ -193,8 +189,7 @@ impl Account {
   where
     U: Serialize + SetSignature,
   {
-    let snapshot: IdentitySnapshot = self.load_snapshot().await?;
-    let state: &IdentityState = snapshot.identity();
+    let state: &IdentityState = self.state();
 
     let fragment: Fragment = Fragment::new(fragment);
     let method: &TinyMethod = state.methods().fetch(fragment.name())?;
@@ -210,41 +205,17 @@ impl Account {
   // ===========================================================================
   pub(crate) async fn process_update(&self, command: Update, persist: bool) -> Result<()> {
     // Load the latest state snapshot from storage
-    let root: IdentitySnapshot = self.load_snapshot().await?;
+    let state: &IdentityState = self.state();
 
-    debug!("[Account::process] Root = {:#?}", root);
+    debug!("[Account::process] Root = {:#?}", state);
 
     // Process the command with a read-only view of the state
-    let context: Context<'_> = Context::new(self.did(), root.identity(), self.storage());
+    let context: Context<'_> = Context::new(self.did(), state, self.storage());
     let events: Option<Vec<Event>> = command.process(context).await?;
 
     debug!("[Account::process] Events = {:#?}", events);
 
-    if let Some(events) = events {
-      let commits: Vec<Commit> = Self::commit_events(self.did(), &self.config, self.storage(), &root, &events).await?;
-      self.publish_commits(root, commits, persist).await?;
-    }
-
-    Ok(())
-  }
-
-  /// Publishes the given commits to the tangle.
-  pub(crate) async fn publish_commits(
-    &self,
-    root: IdentitySnapshot,
-    commits: Vec<Commit>,
-    persist: bool,
-  ) -> Result<()> {
-    debug!("[Account::process] Commits = {:#?}", commits);
-
-    self.publish(root, commits, false).await?;
-
-    // Update the total number of executions
-    self.actions.fetch_add(1, OSC);
-
-    if persist {
-      self.save(false).await?;
-    }
+    // TODO: publish
 
     Ok(())
   }
@@ -276,15 +247,13 @@ impl Account {
     Ok(())
   }
 
-  async fn process_integration_change(&self, old_root: IdentitySnapshot) -> Result<()> {
-    let new_root: IdentitySnapshot = self.load_snapshot().await?;
-
-    let old_state: &IdentityState = old_root.identity();
-    let new_state: &IdentityState = new_root.identity();
+  async fn process_integration_change(&self) -> Result<()> {
+    let old_state: IdentityState = self.load_state().await?;
+    let new_state: &IdentityState = self.state();
 
     let mut new_doc: IotaDocument = new_state.to_document()?;
 
-    self.sign_document(old_state, new_state, &mut new_doc).await?;
+    self.sign_document(&old_state, new_state, &mut new_doc).await?;
 
     let message: MessageId = if self.config.testmode {
       MessageId::null()
@@ -292,18 +261,12 @@ impl Account {
       self.client_map.publish_document(&new_doc).await?.into()
     };
 
-    let events: [Event; 1] = [Event::new(EventData::IntegrationMessage(message))];
-
-    Self::commit_events(self.did(), &self.config, self.storage(), &new_root, &events).await?;
-
     Ok(())
   }
 
-  async fn process_diff_change(&self, old_root: IdentitySnapshot) -> Result<()> {
-    let new_root: IdentitySnapshot = self.load_snapshot().await?;
-
-    let old_state: &IdentityState = old_root.identity();
-    let new_state: &IdentityState = new_root.identity();
+  async fn process_diff_change(&self) -> Result<()> {
+    let old_state: IdentityState = self.load_state().await?;
+    let new_state: &IdentityState = self.state();
 
     let old_doc: IotaDocument = old_state.to_document()?;
     let new_doc: IotaDocument = new_state.to_document()?;
@@ -329,91 +292,19 @@ impl Account {
         .into()
     };
 
-    let events: [Event; 1] = [Event::new(EventData::DiffMessage(message))];
-
-    Self::commit_events(self.did(), &self.config, self.storage(), &new_root, &events).await?;
-
     Ok(())
   }
 
-  async fn fold_snapshot(snapshot: IdentitySnapshot, commit: Commit) -> Result<IdentitySnapshot> {
-    Ok(IdentitySnapshot {
-      sequence: commit.sequence().max(snapshot.sequence),
-      identity: commit.into_event().apply(snapshot.identity).await?,
-    })
-  }
-
   #[doc(hidden)]
-  pub async fn load_snapshot(&self) -> Result<IdentitySnapshot> {
-    // Retrieve the state snapshot from storage or create a new one.
-    let initial: IdentitySnapshot = self
-      .storage()
-      .snapshot(self.did())
-      .await?
-      .unwrap_or_else(|| IdentitySnapshot::new(IdentityState::new()));
-
-    // Apply all recent events to the state and create a new snapshot
-    self
-      .storage()
-      .stream(self.did(), initial.sequence())
-      .await?
-      .try_fold(initial, Self::fold_snapshot)
-      .await
-  }
-
-  async fn load_snapshot_at(&self, generation: Generation) -> Result<IdentitySnapshot> {
-    let initial: IdentitySnapshot = IdentitySnapshot::new(IdentityState::new());
-
-    // Apply all events up to `generation`
-    self
-      .storage()
-      .stream(self.did(), Generation::new())
-      .await?
-      .take(generation.to_u32() as usize)
-      .try_fold(initial, Self::fold_snapshot)
-      .await
-  }
-
-  async fn commit_events(
-    did: &IotaDID,
-    config: &AccountConfig,
-    storage: &dyn Storage,
-    state: &IdentitySnapshot,
-    events: &[Event],
-  ) -> Result<Vec<Commit>> {
-    // Bail early if there are no new events
-    if events.is_empty() {
-      return Ok(Vec::new());
-    }
-
-    // Get the current sequence index of the snapshot
-    let mut sequence: Generation = state.sequence();
-    let mut commits: Vec<Commit> = Vec::with_capacity(events.len());
-
-    // Iterate over the events and create a new commit with the correct sequence
-    for event in events {
-      sequence = sequence.try_increment()?;
-      commits.push(Commit::new(did.clone(), sequence, event.clone()));
-    }
-
-    // Append the list of commits to the store
-    storage.append(did, &commits).await?;
-
-    // Store a snapshot every N events
-    if sequence.to_u32() % config.milestone == 0 {
-      let mut state: IdentitySnapshot = state.clone();
-
-      // Fold the new commits into the snapshot
-      for commit in commits.iter().cloned() {
-        state = Self::fold_snapshot(state, commit).await?;
-      }
-
-      // Store the new snapshot
-      storage.set_snapshot(did, &state).await?;
-    }
-
-    // Return the list of stored events
-    Ok(commits)
+  pub async fn load_state(&self) -> Result<IdentityState> {
+    // Retrieve the state from storage or create a new one.
+    Ok(
+      self
+        .storage()
+        .state(self.did())
+        .await?
+        .unwrap_or_else(|| IdentityState::new()),
+    )
   }
 
   async fn save(&self, force: bool) -> Result<()> {
@@ -432,48 +323,28 @@ impl Account {
 
   /// Push all unpublished changes to the tangle in a single message.
   pub async fn publish_updates(&mut self) -> Result<()> {
-    // Get the last commit generation that was published to the tangle.
-    let last_published: Generation = self
-      .storage()
-      .published_generation(self.did())
-      .await?
-      .unwrap_or_default();
-
-    // Get the commits that need to be published.
-    let commits: Vec<Commit> = self.storage().collect(self.did(), last_published).await?;
-
-    if commits.is_empty() {
-      return Ok(());
-    }
-
-    // Load the snapshot that represents the state on the tangle.
-    let snapshot: IdentitySnapshot = self.load_snapshot_at(last_published).await?;
-
-    self.publish(snapshot, commits, true).await?;
+    self.publish(true).await?;
 
     Ok(())
   }
 
   /// Publishes according to the autopublish configuration.
-  async fn publish(&self, snapshot: IdentitySnapshot, commits: Vec<Commit>, force: bool) -> Result<()> {
+  async fn publish(&self, force: bool) -> Result<()> {
     if !force && !self.config.autopublish {
       return Ok(());
     }
 
-    match Publish::new(&commits) {
-      Publish::Integration => self.process_integration_change(snapshot).await?,
-      Publish::Diff => self.process_diff_change(snapshot).await?,
-      Publish::None => {}
-    }
+    // TODO: Figure out if int or diff without commits
+    // match Publish::new(&commits) {
+    //   Publish::Integration => self.process_integration_change().await?,
+    //   Publish::Diff => self.process_diff_change().await?,
+    //   Publish::None => {}
+    // }
 
-    if !commits.is_empty() {
-      let last_commit_generation: Generation = commits.last().unwrap().sequence();
-      // Publishing adds an AuthMessage or DiffMessage event, that contains the message id
-      // which is required to be set for subsequent updates.
-      // The next snapshot that loads the tangle state will require this message id to be set.
-      let generation: Generation = Generation::from_u32(last_commit_generation.to_u32() + 1);
-      self.storage().set_published_generation(self.did(), generation).await?;
-    }
+    self.storage.set_state(self.did(), self.state()).await?;
+
+    // TODO: true?
+    self.save(false).await?;
 
     Ok(())
   }

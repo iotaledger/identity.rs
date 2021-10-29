@@ -11,7 +11,7 @@ use identity_iota::did::IotaDID;
 use crate::error::Result;
 use crate::events::Commit;
 use crate::identity::DIDLease;
-use crate::identity::IdentitySnapshot;
+use crate::identity::IdentityState;
 use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::types::Signature;
@@ -58,10 +58,10 @@ pub trait Storage: Debug + Send + Sync + 'static {
   async fn set_published_generation(&self, did: &IotaDID, index: Generation) -> Result<()>;
 
   /// Returns the state snapshot of the identity specified by `id`.
-  async fn snapshot(&self, did: &IotaDID) -> Result<Option<IdentitySnapshot>>;
+  async fn state(&self, did: &IotaDID) -> Result<Option<IdentityState>>;
 
   /// Sets a new state snapshot for the identity specified by `id`.
-  async fn set_snapshot(&self, did: &IotaDID, snapshot: &IdentitySnapshot) -> Result<()>;
+  async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> Result<()>;
 
   /// Appends a set of commits to the event stream for the identity specified by `id`.
   async fn append(&self, did: &IotaDID, commits: &[Commit]) -> Result<()>;
@@ -120,12 +120,12 @@ impl Storage for Box<dyn Storage> {
     (**self).key_exists(did, location).await
   }
 
-  async fn snapshot(&self, did: &IotaDID) -> Result<Option<IdentitySnapshot>> {
-    (**self).snapshot(did).await
+  async fn state(&self, did: &IotaDID) -> Result<Option<IdentityState>> {
+    (**self).state(did).await
   }
 
-  async fn set_snapshot(&self, did: &IotaDID, snapshot: &IdentitySnapshot) -> Result<()> {
-    (**self).set_snapshot(did, snapshot).await
+  async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> Result<()> {
+    (**self).set_state(did, state).await
   }
 
   async fn append(&self, did: &IotaDID, commits: &[Commit]) -> Result<()> {
