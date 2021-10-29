@@ -5,7 +5,7 @@ sidebar_label: Overview
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-10-18
+- Last Updated: 2021-10-29
 
 ## Introduction
 
@@ -69,10 +69,6 @@ The diagrams in this specification follow the [BPMN 2.0](https://www.omg.org/spe
 ## Changelog
 
 See [CHANGELOG](./CHANGELOG).
-
-## TODO
-
-- CHANGELOG
 
 ## Future Work
 
