@@ -18,19 +18,22 @@ use identity::prelude::*;
 
 #[tokio::main]
 pub async fn main() -> Result<()> {
-  // This name needs to match the id of the network or part of it.
-  // Since the id of the one-click private tangle is `private-tangle`
-  // but we can only use 6 characters, we use just `tangle`.
-  // As an example we are treating the devnet as a `private-tangle`,
-  // there are easier ways to change to devnet via `Network::Devnet`
-  let network = Network::try_from_name("dev")?;
+  // Set-up for private Tangle
+  // You can use https://github.com/iotaledger/one-click-tangle for a local setup.
+  // The `network_name` needs to match the id of the network or a part of it.
+  // As an example we are treating the devnet as a `private-tangle`, so we use `dev`.
+  // Replace this with `tangle` if you run this against a one-click private tangle.
+  let network_name = "dev";
+  let mut network = Network::try_from_name(network_name)?;
 
-  // Set the network and the URL that points to
-  // the REST API of the node.
-  // In a locally running private tangle, this would often be `http://127.0.0.1:14265/`
+  // If you deployed an explorer locally this would usually be `http://127.0.0.1:8082/identity-resolver`
+  network.set_explorer_url("https://explorer.iota.org/devnet/identity-resolver".parse()?)?;
+
+  // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265/`
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
+
   let client = ClientBuilder::new()
-    .network(network)
+    .network(network.clone())
     .node(private_node_url)?
     .build()
     .await?;
@@ -39,7 +42,6 @@ pub async fn main() -> Result<()> {
   let keypair: KeyPair = KeyPair::new_ed25519()?;
 
   // Create a DID with the network set explicitly.
-  // This will result in a DID prefixed by `did:iota:tangle`.
   let mut document: IotaDocument = IotaDocument::new_with_options(&keypair, Some(client.network().name()), None)?;
 
   // Sign the DID Document with the default authentication key.
@@ -59,13 +61,11 @@ pub async fn main() -> Result<()> {
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   let iota_did: &IotaDID = document.did();
+
   println!(
-    "[Example] Explore the DID Document = {}",
-    format!(
-      "{}/{}",
-      iota_did.network()?.explorer_url().unwrap().to_string(),
-      iota_did.to_string()
-    )
+    "[Example] Explore the DID Document = {}{}",
+    network.explorer_url().expect("no explorer url was set").to_string(),
+    iota_did.to_string()
   );
 
   Ok(())
