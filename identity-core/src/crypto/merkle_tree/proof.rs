@@ -10,7 +10,8 @@ use crate::crypto::merkle_tree::AsLeaf;
 use crate::crypto::merkle_tree::DigestExt;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Node;
-use crate::error::{Error, Result};
+use crate::error::Error;
+use crate::error::Result;
 
 /// Maximum number of nodes in the proof.
 /// This value is equal to log₂MAX_KEYS_ALLOWED, respecting the constraint for the maximum number of keys allowed in a
