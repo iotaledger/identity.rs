@@ -178,8 +178,6 @@ This section is non-normative.
 
 ## Unresolved Questions
 
-TODO: move some points to considerations with better discussions and phrasing.
-
 - Enforce signed DIDComm messages on top of sender-authenticated encryption or keep them optional? Usually unnecessary and DIDComm recommends against this since it's redundant and due to non-repudiation may decrease security and privacy by allowing participants to prove to third parties that authentication occurred.
   - https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message
   - https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0049-repudiation/README.md#summary
