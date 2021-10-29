@@ -3,13 +3,19 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use core::fmt::Result;
+use core::fmt::Result as FmtResult;
 use subtle::ConstantTimeEq;
 
 use crate::crypto::merkle_tree::AsLeaf;
 use crate::crypto::merkle_tree::DigestExt;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Node;
+use crate::error::{Error, Result};
+
+/// Maximum number of nodes in the proof.
+/// This value is equal to log₂MAX_KEYS_ALLOWED, respecting the constraint for the maximum number of keys allowed in a
+/// `KeyCollection`
+pub const MAX_PROOF_NODES: usize = 12;
 
 /// An Merkle tree inclusion proof that allows proving the existence of a
 /// particular leaf in a Merkle tree.
@@ -19,8 +25,11 @@ pub struct Proof<D: DigestExt> {
 
 impl<D: DigestExt> Proof<D> {
   /// Creates a new [`Proof`] from a boxed slice of nodes.
-  pub fn new(nodes: Box<[Node<D>]>) -> Self {
-    Self { nodes }
+  pub fn new(nodes: Box<[Node<D>]>) -> Result<Self> {
+    if nodes.len() > MAX_PROOF_NODES {
+      return Err(Error::InvalidProofSize(nodes.len()));
+    }
+    Ok(Self { nodes })
   }
 
   /// Returns the nodes as a slice.
@@ -73,7 +82,7 @@ where
 }
 
 impl<D: DigestExt> Debug for Proof<D> {
-  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     f.debug_struct("Proof").field("nodes", &self.nodes).finish()
   }
 }
