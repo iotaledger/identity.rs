@@ -2,7 +2,7 @@
 name = "identity"
 version = "0.3.0"
 authors = ["IOTA Stiftung"]
-documentation = "https://identity.docs.iota.org"
+documentation = "https://wiki.iota.org/identity.rs/introduction"
 edition = "2018"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity", "did"]
