@@ -79,16 +79,6 @@ Any other value for `upgradeEncryption` is invalid and should result in an inval
   "upgradeEncryption": "required",
 }
 ```
-
-2. Full DIDComm message with header fields and signature:
-
-```json
-{
-  TBD
-}
-```
-
-
 ### 2. authentication-response {#authentication-response}
 
 - Type: `iota/authentication/0.1/authentication-response`
@@ -118,29 +108,13 @@ This message MUST be a [signed DIDComm message][SDM], even if [sender authentica
 
 #### Examples
 
-1. Responder presenting their DID and offering a challenge to the Requester:
+1. Responder presenting their [DID] and offering a challenge to the requester:
 
 ```json
 {
   "did": "did:iota:8cU6DPF56MDEugfLF8AHFaaTuMQvmRo6kbxfjqQJpJmC",
   "requesterChallenge": "81285532-b72a-4a99-a9bd-b470475bc24f",
   "responderChallenge": "b1f0dc02-85a3-4438-8786-b625f11f1be4",
-}
-```
-
-2. Full signed DIDComm message:
-
-```json
-{
-  TBD
-}
-```
-
-3. Full encrypted DIDComm message:
-
-```json
-{
-  TBD
 }
 ```
 
@@ -176,22 +150,6 @@ This MUST or MUST NOT use [sender authenticated encryption][SAE] depending on th
 }
 ```
 
-2. Full signed DIDComm message:
-
-```json
-{
-  TBD
-}
-```
-
-3. Full encrypted DIDComm message:
-
-```json
-{
-  TBD
-}
-```
-
 ### Problem Reports {#problem-reports}
 
 The following problem-report codes may be raised in the course of this protocol and are expected to be recognised and handled in addition to any general problem-reports. Implementers may also introduce their own application-specific problem-reports.
@@ -216,7 +174,7 @@ This section is non-normative.
 
 ## Unresolved Questions
 
-- Enforce signed DIDComm messages on top of sender-authenticated encryption? Usually unnecessary and DIDComm recommends against this since it's redundant and due to non-repudiation may decrease security and privacy by allowing participants to prove to third parties that authentication occurred.
+- Enforce signed DIDComm messages on top of sender-authenticated encryption or keep them optional? Usually unnecessary and DIDComm recommends against this since it's redundant and due to non-repudiation may decrease security and privacy by allowing participants to prove to third parties that authentication occurred.
   - https://identity.foundation/didcomm-messaging/spec/#didcomm-signed-message
   - https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0049-repudiation/README.md#summary
 
@@ -232,6 +190,7 @@ This section is non-normative.
    - https://github.com/Fluepke/ssi-poc
    - https://github.com/decentralized-identity/didcomm-messaging/issues/41
    - https://github.com/hyperledger/aries-rfcs/issues/473
+- Add examples of full signed and sender-authenticated messages with headers for better illustration?
 
 ## Related Work
 
