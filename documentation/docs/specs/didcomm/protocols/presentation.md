@@ -11,7 +11,7 @@ The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Sugg
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-10-18
+- Last Updated: 2021-10-29
 
 ## Overview
 

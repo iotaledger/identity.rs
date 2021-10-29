@@ -11,7 +11,7 @@ The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Sugg
 
 - Version: 0.1
 - Status: `IN-PROGRESS`
-- Last Updated: 2021-10-08
+- Last Updated: 2021-10-29
 
 ## Overview
 This protocol allows two parties to mutually authenticate by disclosing and verifying the [DID] of each other. On successful completion of this protocol, it is expected that [sender authenticated encryption][SAE] may be used between the parties for continuous authentication.

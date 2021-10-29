@@ -9,6 +9,9 @@ The IOTA DIDComm Specification is in the RFC phase and may undergo changes. Sugg
 
 :::
 
+- Status: `IN-PROGRESS`
+- Last Updated: 2021-10-29
+
 [Problem reports](https://identity.foundation/didcomm-messaging/spec/#problem-reports) are a standard [DIDComm](https://identity.foundation/didcomm-messaging/spec/) feature for reporting errors or warnings between parties. Using this mechanism is not a general requirement but it is a best practice for relaying informative errors and may improve human experience.
 
 ## Example
