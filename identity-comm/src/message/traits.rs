@@ -1,6 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
+//! Defines how to pack messages into envelopes.
 use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::PublicKey;

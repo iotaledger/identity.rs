@@ -77,7 +77,7 @@ async fn main() -> Result<()> {
   // Prints the Identity Resolver Explorer URL.
   // The entire history can be observed on this page by clicking "Loading History".
   println!(
-    "[Example] Explore the DID Document = {}/{}",
+    "[Example] Explore the DID Document = {}{}",
     iota_did.network()?.explorer_url().unwrap().to_string(),
     iota_did.to_string()
   );
