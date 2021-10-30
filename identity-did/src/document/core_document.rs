@@ -56,14 +56,14 @@ pub struct CoreDocument<T = Object, U = Object, V = Object> {
 }
 
 impl<T, U, V> CoreDocument<T, U, V> {
-  /// Creates a [`DocumentBuilder`](DocumentBuilder) to configure a new `CoreDocument`.
+  /// Creates a [`DocumentBuilder`] to configure a new `CoreDocument`.
   ///
-  /// This is the same as [`DocumentBuilder::new`](DocumentBuilder::new).
+  /// This is the same as [`DocumentBuilder::new`].
   pub fn builder(properties: T) -> DocumentBuilder<T, U, V> {
     DocumentBuilder::new(properties)
   }
 
-  /// Returns a new `CoreDocument` based on the [`DocumentBuilder`](DocumentBuilder) configuration.
+  /// Returns a new `CoreDocument` based on the [`DocumentBuilder`] configuration.
   pub fn from_builder(builder: DocumentBuilder<T, U, V>) -> Result<Self> {
     Ok(Self {
       id: builder.id.ok_or(Error::BuilderInvalidDocumentId)?,
@@ -211,7 +211,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     }
   }
 
-  /// Fallible version of [`CoreDocument::map(..)`](CoreDocument::map).
+  /// Fallible version of [`CoreDocument::map`].
   ///
   /// # Errors
   ///
@@ -235,7 +235,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     })
   }
 
-  /// Adds a new [`VerificationMethod`][VerificationMethod] to the Document.
+  /// Adds a new [`VerificationMethod`] to the Document.
   pub fn insert_method(&mut self, scope: MethodScope, method: VerificationMethod<U>) -> bool {
     match scope {
       MethodScope::VerificationMethod => self.verification_method.append(method.into()),
@@ -247,7 +247,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     }
   }
 
-  /// Removes all references to the specified [`VerificationMethod`][VerificationMethod].
+  /// Removes all references to the specified [`VerificationMethod`].
   pub fn remove_method(&mut self, did: &CoreDIDUrl) {
     self.authentication.remove(did);
     self.assertion_method.remove(did);
@@ -281,7 +281,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
 
   /// Returns an iterator over all verification relationships.
   ///
-  /// This includes embedded and referenced [`VerificationMethods`][VerificationMethod].
+  /// This includes embedded and referenced [`VerificationMethods`].
   pub fn verification_relationships(&self) -> impl Iterator<Item = &MethodRef<U>> {
     fn __method_ref<T>(method: &DIDKey<MethodRef<T>>) -> &MethodRef<T> {
       &**method
@@ -297,8 +297,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
       .chain(self.capability_invocation.iter().map(__method_ref))
   }
 
-  /// Returns the first [`VerificationMethod`][VerificationMethod] with an `id` property
-  /// matching the provided `query`.
+  /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`.
   pub fn resolve_method<'query, Q>(&self, query: Q) -> Option<&VerificationMethod<U>>
   where
     Q: Into<MethodQuery<'query>>,
@@ -306,8 +305,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     self.resolve_method_inner(query.into())
   }
 
-  /// Returns the first [`VerificationMethod`][VerificationMethod] with an `id`
-  /// property matching the provided `query`.
+  /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`.
   ///
   /// # Errors
   ///
@@ -321,8 +319,8 @@ impl<T, U, V> CoreDocument<T, U, V> {
       .ok_or(Error::QueryMethodNotFound)
   }
 
-  /// Returns a mutable reference to the first [`VerificationMethod`][VerificationMethod]
-  /// with an `id` property matching the provided `query`.
+  /// Returns a mutable reference to the first [`VerificationMethod`] with an `id` property
+  /// matching the provided `query`.
   pub fn resolve_method_mut<'query, Q>(&mut self, query: Q) -> Option<&mut VerificationMethod<U>>
   where
     Q: Into<MethodQuery<'query>>,
@@ -330,12 +328,12 @@ impl<T, U, V> CoreDocument<T, U, V> {
     self.resolve_method_mut_inner(query.into())
   }
 
-  /// Returns a mutable reference to the first [`VerificationMethod`][VerificationMethod]
-  /// with an `id` property matching the provided `query`.
+  /// Returns a mutable reference to the first [`VerificationMethod`] with an `id` property
+  /// matching the provided `query`.
   ///
   /// # Errors
   ///
-  /// Fails if no matching [`VerificationMethod`][VerificationMethod] is found.
+  /// Fails if no matching [`VerificationMethod`] is found.
   pub fn try_resolve_method_mut<'query, Q>(&mut self, query: Q) -> Result<&mut VerificationMethod<U>>
   where
     Q: Into<MethodQuery<'query>>,
