@@ -85,7 +85,7 @@ async fn main() -> Result<()> {
 
   // The Issuer would like to revoke the credential (and therefore revokes key at `index`)
   issuer_doc
-    .try_resolve_mut("merkle-key")
+    .try_resolve_method_mut("merkle-key")
     .and_then(IotaVerificationMethod::try_from_mut)?
     .revoke_merkle_key(index)?;
   issuer_doc.set_previous_message_id(*receipt.message_id());

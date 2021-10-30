@@ -916,13 +916,13 @@ Deserializes from a JSON object.
         * [.removeMethod(did)](#Document+removeMethod)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#Document+removeService)
-        * [.sign(key, method_query)](#Document+sign)
-        * [.verify()](#Document+verify) ⇒ <code>boolean</code>
+        * [.signDocument(key_pair, method_query)](#Document+signDocument)
+        * [.verifySelfSigned()](#Document+verifySelfSigned) ⇒ <code>boolean</code>
         * [.signCredential(data, args)](#Document+signCredential) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
         * [.signPresentation(data, args)](#Document+signPresentation) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
         * [.signData(data, args)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data)](#Document+verifyData) ⇒ <code>boolean</code>
-        * [.resolveKey(query)](#Document+resolveKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
         * [.diff(other, message, key)](#Document+diff) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
         * [.merge(diff)](#Document+merge)
@@ -930,6 +930,7 @@ Deserializes from a JSON object.
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromAuthentication(method)](#Document.fromAuthentication) ⇒ [<code>Document</code>](#Document)
+        * [.verifyRootDocument(document)](#Document.verifyRootDocument)
         * [.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
 
@@ -944,7 +945,7 @@ derived from the provided `KeyPair`, with an attached authentication relationshi
 This method will have the DID URL fragment `#authentication` by default and can be easily
 retrieved with `Document::authentication`.
 
-NOTE: the generated document is unsigned, see `Document::sign`.
+NOTE: the generated document is unsigned, see `Document::signDocument`.
 
 Arguments:
 
@@ -1086,27 +1087,27 @@ Remove a `Service` identified by the given `DIDUrl` from the document.
 | --- | --- |
 | did | [<code>DIDUrl</code>](#DIDUrl) | 
 
-<a name="Document+sign"></a>
+<a name="Document+signDocument"></a>
 
-### document.sign(key, method_query)
+### document.signDocument(key_pair, method_query)
 Signs the DID document with the verification method specified by `method_query`.
 The `method_query` may be the full `DIDUrl` of the method or just its fragment,
 e.g. "#authentication".
 
-NOTE: does not validate whether `private_key` corresponds to the verification method.
-See `Document::verify`.
+NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
+verification method. See `Document::verifySelfSigned`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| key | [<code>KeyPair</code>](#KeyPair) | 
+| key_pair | [<code>KeyPair</code>](#KeyPair) | 
 | method_query | <code>string</code> | 
 
-<a name="Document+verify"></a>
+<a name="Document+verifySelfSigned"></a>
 
-### document.verify() ⇒ <code>boolean</code>
-Verify the signature with the authentication_key
+### document.verifySelfSigned() ⇒ <code>boolean</code>
+Verifies a self-signed signature on this DID document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+signCredential"></a>
@@ -1156,9 +1157,9 @@ Verifies the authenticity of `data` using the target verification method.
 | --- | --- |
 | data | <code>any</code> | 
 
-<a name="Document+resolveKey"></a>
+<a name="Document+resolveMethod"></a>
 
-### document.resolveKey(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+### document.resolveMethod(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -1228,6 +1229,21 @@ NOTE: the generated document is unsigned, see Document::sign.
 | Param | Type |
 | --- | --- |
 | method | [<code>VerificationMethod</code>](#VerificationMethod) | 
+
+<a name="Document.verifyRootDocument"></a>
+
+### Document.verifyRootDocument(document)
+Verifies whether `document` is a valid root DID document according to the IOTA DID method
+specification.
+
+It must be signed using a verification method with a public key whose BLAKE2b-256 hash matches
+the DID tag.
+
+**Kind**: static method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>Document</code>](#Document) | 
 
 <a name="Document.diffIndex"></a>
 

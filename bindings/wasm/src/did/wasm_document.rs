@@ -49,7 +49,7 @@ impl WasmDocument {
   /// This method will have the DID URL fragment `#authentication` by default and can be easily
   /// retrieved with `Document::authentication`.
   ///
-  /// NOTE: the generated document is unsigned, see `Document::sign`.
+  /// NOTE: the generated document is unsigned, see `Document::signDocument`.
   ///
   /// Arguments:
   ///
@@ -187,17 +187,27 @@ impl WasmDocument {
   /// The `method_query` may be the full `DIDUrl` of the method or just its fragment,
   /// e.g. "#authentication".
   ///
-  /// NOTE: does not validate whether the private key of the given `key_pair` corresponds to the verification method.
-  /// See `Document::verify`.
-  #[wasm_bindgen]
-  pub fn sign(&mut self, key_pair: &KeyPair, method_query: String) -> Result<()> {
-    self.0.sign(key_pair.0.private(), &method_query).wasm_result()
+  /// NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
+  /// verification method. See `Document::verifySelfSigned`.
+  #[wasm_bindgen(js_name = signDocument)]
+  pub fn sign_document(&mut self, key_pair: &KeyPair, method_query: String) -> Result<()> {
+    self.0.sign_document(key_pair.0.private(), &method_query).wasm_result()
   }
 
-  /// Verify the signature with the authentication_key
-  #[wasm_bindgen]
-  pub fn verify(&self) -> bool {
-    self.0.verify().is_ok()
+  /// Verifies a self-signed signature on this DID document.
+  #[wasm_bindgen(js_name = verifySelfSigned)]
+  pub fn verify_self_signed(&self) -> bool {
+    self.0.verify_self_signed().is_ok()
+  }
+
+  /// Verifies whether `document` is a valid root DID document according to the IOTA DID method
+  /// specification.
+  ///
+  /// It must be signed using a verification method with a public key whose BLAKE2b-256 hash matches
+  /// the DID tag.
+  #[wasm_bindgen(js_name = verifyRootDocument)]
+  pub fn verify_root_document(document: &WasmDocument) -> Result<()> {
+    IotaDocument::verify_root_document(&document.0).wasm_result()
   }
 
   #[wasm_bindgen(js_name = signCredential)]
@@ -250,7 +260,7 @@ impl WasmDocument {
       } => {
         let merkle_key: Vec<u8> = self
           .0
-          .try_resolve(&*method)
+          .try_resolve_method(&*method)
           .and_then(|method| method.key_data().try_decode().map_err(Error::InvalidDoc))
           .wasm_result()?;
 
@@ -289,16 +299,18 @@ impl WasmDocument {
     Ok(result)
   }
 
-  #[wasm_bindgen(js_name = resolveKey)]
-  pub fn resolve_key(&mut self, query: &str) -> Result<WasmVerificationMethod> {
-    Ok(WasmVerificationMethod(self.0.try_resolve(query).wasm_result()?.clone()))
+  #[wasm_bindgen(js_name = resolveMethod)]
+  pub fn resolve_method(&mut self, query: &str) -> Result<WasmVerificationMethod> {
+    Ok(WasmVerificationMethod(
+      self.0.try_resolve_method(query).wasm_result()?.clone(),
+    ))
   }
 
   #[wasm_bindgen(js_name = revokeMerkleKey)]
   pub fn revoke_merkle_key(&mut self, query: &str, index: usize) -> Result<bool> {
     let method: &mut IotaVerificationMethod = self
       .0
-      .try_resolve_mut(query)
+      .try_resolve_method_mut(query)
       .and_then(IotaVerificationMethod::try_from_mut)
       .wasm_result()?;
 

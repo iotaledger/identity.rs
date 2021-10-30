@@ -120,10 +120,10 @@ fn test_document_new() {
   let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
 
   document
-    .sign(&keypair, document.authentication().id().to_string())
+    .sign_document(&keypair, document.authentication().id().to_string())
     .unwrap();
 
-  assert!(document.verify());
+  assert!(document.verify_self_signed());
 }
 
 #[test]

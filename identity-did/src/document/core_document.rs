@@ -336,7 +336,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// # Errors
   ///
   /// Fails if no matching [`VerificationMethod`][VerificationMethod] is found.
-  pub fn try_resolve_mut<'query, Q>(&mut self, query: Q) -> Result<&mut VerificationMethod<U>>
+  pub fn try_resolve_method_mut<'query, Q>(&mut self, query: Q) -> Result<&mut VerificationMethod<U>>
   where
     Q: Into<MethodQuery<'query>>,
   {

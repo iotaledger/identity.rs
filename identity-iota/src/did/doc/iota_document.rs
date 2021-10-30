@@ -205,17 +205,20 @@ impl IotaDocument {
     let did: &IotaDID = IotaDID::try_from_borrowed(document.id())?;
 
     // Validate that the document controller (if any) conforms to the IotaDID specification.
-    // This check is required to ensure the correctness of the `IotaDocument::controller()` method which
-    // creates an `IotaDID::new_unchecked_ref()` from the underlying controller.
+    // This check is required to ensure the correctness of the `IotaDocument::controller()` method
+    // which creates an `IotaDID::new_unchecked_ref()` from the underlying controller.
     document.controller().map_or(Ok(()), |c| IotaDID::check_validity(c))?;
 
     // Validate that the verification methods conform to the IotaDID specification.
-    // This check is required to ensure the correctness of the `IotaDocument::methods()`,
-    // `IotaDocument::resolve()`, `IotaDocument::try_resolve()`, IotaDocument::resolve_mut()`,
-    // and IotaDocument::try_resolve_mut()` methods which creates an `IotaDID::new_unchecked_ref()`
-    // from the underlying controller.
+    // This check is required to ensure the correctness of the
+    // - `IotaDocument::methods()`,
+    // - `IotaDocument::resolve_method()`,
+    // - `IotaDocument::try_resolve_method()`,
+    // - `IotaDocument::resolve_method_mut()`,
+    // - `IotaDocument::try_resolve_method_mut()`,
+    // methods which create an `IotaDID::new_unchecked_ref()` from the underlying controller.
     //
-    // We check these `document.verification_method()` and `document.verification_relationships()`
+    // We check `document.verification_method()` and `document.verification_relationships()`
     // separately because they have separate types.
     for verification_method in document.verification_method().iter() {
       IotaVerificationMethod::check_validity(&*verification_method)?;
@@ -419,7 +422,7 @@ impl IotaDocument {
 
   /// Returns the first [`IotaVerificationMethod`] with an `id` property
   /// matching the provided `query`.
-  pub fn resolve<'query, Q>(&self, query: Q) -> Option<&IotaVerificationMethod>
+  pub fn resolve_method<'query, Q>(&self, query: Q) -> Option<&IotaVerificationMethod>
   where
     Q: Into<MethodQuery<'query>>,
   {
@@ -438,7 +441,7 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if no matching verification [`IotaVerificationMethod`] is found.
-  pub fn try_resolve<'query, Q>(&self, query: Q) -> Result<&IotaVerificationMethod>
+  pub fn try_resolve_method<'query, Q>(&self, query: Q) -> Result<&IotaVerificationMethod>
   where
     Q: Into<MethodQuery<'query>>,
   {
@@ -453,11 +456,11 @@ impl IotaDocument {
   }
 
   #[doc(hidden)]
-  pub fn try_resolve_mut<'query, Q>(&mut self, query: Q) -> Result<&mut VerificationMethod>
+  pub fn try_resolve_method_mut<'query, Q>(&mut self, query: Q) -> Result<&mut VerificationMethod>
   where
     Q: Into<MethodQuery<'query>>,
   {
-    self.document.try_resolve_mut(query).map_err(Into::into)
+    self.document.try_resolve_method_mut(query).map_err(Into::into)
   }
 
   // ===========================================================================
@@ -1328,7 +1331,7 @@ mod tests {
     let keypair: KeyPair = generate_testkey();
     let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
-    let verification_method: &IotaVerificationMethod = document.resolve("#authentication").unwrap();
+    let verification_method: &IotaVerificationMethod = document.resolve_method("#authentication").unwrap();
     let authentication_method: &IotaVerificationMethod = document.authentication();
 
     let expected_method_id: IotaDIDUrl = document.id().to_url().join("#authentication").unwrap();
