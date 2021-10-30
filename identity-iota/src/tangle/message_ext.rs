@@ -12,6 +12,8 @@ use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Result;
+use crate::tangle::compression_brotli2::decompress_brotli2;
+use crate::tangle::encoding::get_decompressed_message_data;
 use crate::tangle::TangleRef;
 
 // TODO: Use MessageId when it has a const ctor
@@ -43,12 +45,17 @@ fn parse_payload<T: FromJson + TangleRef>(message_id: MessageId, payload: Option
 }
 
 fn parse_data<T: FromJson + TangleRef>(message_id: MessageId, data: &[u8]) -> Option<T> {
-  let mut resource: T = T::from_json_slice(data).ok()?;
+  // let data = decompress_brotli2(&data.to_vec()).unwrap();
+  let data2 = get_decompressed_message_data(1, &data[2..].to_vec()).unwrap();
+  let data3 = data2.as_bytes();
+  let mut resource: T = T::from_json_slice(data3).ok()?;
 
   resource.set_message_id(message_id);
 
   Some(resource)
 }
+
+
 
 pub trait MessageIdExt: Sized {
   fn is_null(&self) -> bool;

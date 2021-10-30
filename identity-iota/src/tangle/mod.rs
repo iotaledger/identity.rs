@@ -36,3 +36,5 @@ mod message_index;
 mod network;
 mod receipt;
 mod traits;
+mod encoding;
+mod message_version;

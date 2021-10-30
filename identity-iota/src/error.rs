@@ -59,4 +59,7 @@ pub enum Error {
   InvalidExplorerURL,
   #[error("compression Error")]
   CompressionError,
+  #[error("Invalid Message Flags")]
+  InvalidMessageFlags,
 }
+
