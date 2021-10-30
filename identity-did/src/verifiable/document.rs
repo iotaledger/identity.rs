@@ -109,6 +109,8 @@ where
     let method: &VerificationMethod<U> = self.try_resolve_method(query)?;
     let fragment: String = method.try_into_fragment()?;
 
+    // TODO: move out of CoreDocument to IotaDocument and restrict to Capability Invocation methods?
+
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
         JcsEd25519::<Ed25519>::create_signature(self, fragment, private_key.as_ref())?;
@@ -127,9 +129,10 @@ where
   pub fn verify_document(signed: &Self, signer: &Self) -> Result<()> {
     let signature: &Signature = signed.try_signature()?;
 
-    // TODO: restrict to Capability Invocation methods
     let method: &VerificationMethod<U> = signer.try_resolve_method(signature)?;
     let public: PublicKey = method.key_data().try_decode()?.into();
+
+    // TODO: move out of CoreDocument to IotaDocument and restrict to Capability Invocation methods?
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {

@@ -513,6 +513,29 @@ impl IotaDocument {
     Self::verify_document(self, self)
   }
 
+  /// Verifies whether `document` is a valid root DID document according to the IOTA DID method
+  /// specification.
+  ///
+  /// It must be signed using a verification method with a public key whose BLAKE2b-256 hash matches
+  /// the DID tag.
+  pub fn verify_root_document(document: &IotaDocument) -> Result<()> {
+    // The previous message id must be null.
+    if !document.previous_message_id().is_null() {
+      return Err(Error::InvalidRootDocument);
+    }
+
+    // Validate the hash of the public key matches the DID tag.
+    let signature: &Signature = document.try_signature()?;
+    let method: &VerificationMethod<_> = document.as_document().try_resolve_method(signature)?;
+    let public: PublicKey = method.key_data().try_decode()?.into();
+    if document.id().tag() != IotaDID::encode_key(public.as_ref()) {
+      return Err(Error::InvalidRootDocument);
+    }
+
+    // Validate the document is signed correctly.
+    document.verify_self_signed()
+  }
+
   /// Creates a new [`DocumentVerifier`] that can be used to verify signatures
   /// created with this DID Document.
   pub fn verifier(&self) -> Verifier<'_> {
@@ -712,6 +735,7 @@ impl TangleRef for IotaDocument {
 
 #[cfg(test)]
 mod tests {
+  use iota_client::bee_message::MESSAGE_ID_LENGTH;
   use std::collections::BTreeMap;
   use std::str::FromStr;
 
@@ -724,6 +748,7 @@ mod tests {
   use identity_core::crypto::KeyType;
   use identity_core::crypto::PrivateKey;
   use identity_core::crypto::PublicKey;
+  use identity_core::utils::encode_b58;
   use identity_did::did::CoreDID;
   use identity_did::did::DID;
   use identity_did::document::CoreDocument;
@@ -1098,7 +1123,7 @@ mod tests {
   }
 
   #[test]
-  fn test_sign() {
+  fn test_sign_document() {
     let keypair: KeyPair = generate_testkey();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     assert!(document.verify_self_signed().is_err());
@@ -1111,7 +1136,7 @@ mod tests {
   }
 
   #[test]
-  fn test_sign_new_method() {
+  fn test_sign_document_new_method() {
     let keypair: KeyPair = generate_testkey();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     assert!(document.verify_self_signed().is_err());
@@ -1131,7 +1156,7 @@ mod tests {
   }
 
   #[test]
-  fn test_sign_fails() {
+  fn test_sign_document_fails() {
     let keypair: KeyPair = generate_testkey();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     assert!(document.verify_self_signed().is_err());
@@ -1157,6 +1182,67 @@ mod tests {
       .sign_document(key_collection.private(0).unwrap(), "merkle-key")
       .is_err());
     assert!(document.verify_self_signed().is_err());
+  }
+
+  #[test]
+  fn test_root_document() {
+    let keypair: KeyPair = generate_testkey();
+    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+    assert!(IotaDocument::verify_root_document(&document).is_err());
+
+    // VALID - root document signed using the default method.
+    document
+      .sign_document(keypair.private(), &document.authentication().id())
+      .unwrap();
+    assert!(document.verify_self_signed().is_ok());
+    assert!(IotaDocument::verify_root_document(&document).is_ok());
+  }
+
+  #[test]
+  fn test_root_document_invalid() {
+    fn generate_root_document() -> (IotaDocument, KeyPair) {
+      let keypair: KeyPair = generate_testkey();
+      (IotaDocument::new(&keypair).unwrap(), keypair)
+    }
+
+    // INVALID - root document not signed.
+    let (document, _) = generate_root_document();
+    assert!(IotaDocument::verify_root_document(&document).is_err());
+
+    // INVALID - root document previousMessageId not null.
+    let (mut document, keypair) = generate_root_document();
+    document.set_previous_message_id(MessageId::new([3u8; MESSAGE_ID_LENGTH]));
+    document
+      .sign_document(keypair.private(), &document.authentication().id())
+      .unwrap();
+    assert!(document.verify_self_signed().is_ok());
+    assert!(IotaDocument::verify_root_document(&document).is_err());
+
+    // INVALID - root document signed with a key not matching the DID tag.
+    let (document, keypair) = generate_root_document();
+    // Replace the base58 encoded public key with that of a different key.
+    let new_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let b58_old = encode_b58(keypair.public());
+    let b58_new = encode_b58(new_keypair.public());
+    let doc_json_modified = document.to_string().replace(&b58_old, &b58_new);
+    // Sign the document using the new key.
+    let mut new_document: IotaDocument = IotaDocument::from_json(&doc_json_modified).unwrap();
+    new_document
+      .sign_document(new_keypair.private(), &new_document.authentication().id())
+      .unwrap();
+    assert!(new_document.verify_self_signed().is_ok());
+    assert!(IotaDocument::verify_root_document(&new_document).is_err());
+
+    // INVALID - root document signed using a different method that does not match the DID tag.
+    let (mut document, _) = generate_root_document();
+    // Add a new method able to sign the document.
+    let keypair_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+    let method_new: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&keypair_new, "new_auth").unwrap();
+    document.insert_method(MethodScope::Authentication, method_new);
+    // Sign the document using the new key.
+    document.sign_document(keypair_new.private(), "new_auth").unwrap();
+    assert!(document.verify_self_signed().is_ok());
+    assert!(IotaDocument::verify_root_document(&document).is_err());
   }
 
   #[test]

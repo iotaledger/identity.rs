@@ -27,6 +27,8 @@ pub enum Error {
   InvalidDocumentAuthFragment,
   #[error("Invalid Document - Authentication Type Not Supported")]
   InvalidDocumentAuthType,
+  #[error("Invalid Root Document")]
+  InvalidRootDocument,
   #[error("Invalid Network Name")]
   InvalidNetworkName,
   #[error("Invalid Tryte Conversion")]
@@ -39,7 +41,7 @@ pub enum Error {
   InvalidTransactionTrytes,
   #[error("Invalid Bundle Tail")]
   InvalidBundleTail,
-  #[error("Invalid PResentation Holder")]
+  #[error("Invalid Presentation Holder")]
   InvalidPresentationHolder,
   #[error("Chain Error: {error}")]
   ChainError { error: &'static str },

@@ -48,14 +48,17 @@ impl IntegrationChain {
   pub fn try_from_index(mut index: MessageIndex<IotaDocument>) -> Result<Self> {
     trace!("[Int] Message Index = {:#?}", index);
 
+    // Extract root document.
     let current: IotaDocument = index
-      .remove_where(&MessageId::null(), |doc| doc.verify_self_signed().is_ok())
+      .remove_where(&MessageId::null(), |doc| {
+        IotaDocument::verify_root_document(doc).is_ok()
+      })
       .ok_or(Error::ChainError {
         error: "Invalid Root Document",
       })?;
 
+    // Construct the document chain.
     let mut this: Self = Self::new(current)?;
-
     while let Some(mut list) = index.remove(this.current_message_id()) {
       'inner: while let Some(document) = list.pop() {
         if this.try_push(document).is_ok() {
@@ -67,12 +70,11 @@ impl IntegrationChain {
     Ok(this)
   }
 
-  /// Creates a new [`IntegrationChain`] with the given [`IotaDocument`] as the latest and no
-  /// history.
+  /// Creates a new [`IntegrationChain`] with `current` as the root [`IotaDocument`] and no history.
   pub fn new(current: IotaDocument) -> Result<Self> {
-    if current.verify_self_signed().is_err() {
+    if IotaDocument::verify_root_document(&current).is_err() {
       return Err(Error::ChainError {
-        error: "Invalid Signature",
+        error: "Invalid Root Document",
       });
     }
 
@@ -140,7 +142,8 @@ impl IntegrationChain {
   /// Fails if the document signature is invalid or the Tangle message
   /// references within the [`IotaDocument`] are invalid.
   pub fn check_valid_addition(&self, document: &IotaDocument) -> Result<()> {
-    if self.current.verify_data(document).is_err() {
+    // Verify the next document was signed by a valid method from the previous document.
+    if IotaDocument::verify_document(document, &self.current).is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
       });
