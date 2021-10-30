@@ -49,10 +49,10 @@ where
 /// - `"?query"`
 /// - `"#fragment"`
 ///
-/// [relative DID Url](https://www.w3.org/TR/did-core/#relative-did-urls)
-/// [path](https://www.w3.org/TR/did-core/#path)
-/// [query](https://www.w3.org/TR/did-core/#query)
-/// [fragment](https://www.w3.org/TR/did-core/#fragment)
+/// [relative DID Url]: https://www.w3.org/TR/did-core/#relative-did-urls
+/// [path]: https://www.w3.org/TR/did-core/#path
+/// [query]: https://www.w3.org/TR/did-core/#query
+/// [fragment]: https://www.w3.org/TR/did-core/#fragment
 #[derive(Clone, Default)]
 pub struct RelativeDIDUrl {
   // Path including the leading '/'

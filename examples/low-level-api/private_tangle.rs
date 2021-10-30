@@ -43,7 +43,7 @@ pub async fn main() -> Result<()> {
   let mut document: IotaDocument = IotaDocument::new_with_options(&keypair, Some(client.network().name()), None)?;
 
   // Sign the DID Document with the default authentication key.
-  document.sign(keypair.private(), &document.authentication().id())?;
+  document.sign_document(keypair.private(), &document.authentication().id())?;
 
   // Publish the DID Document to the Tangle.
   let receipt: Receipt = match client.publish_document(&document).await {

@@ -23,7 +23,7 @@ fn generate_signed_document(keypair: &KeyPair) {
   let mut document: IotaDocument = IotaDocument::new(keypair).unwrap();
 
   document
-    .sign(keypair.private(), &document.authentication().id())
+    .sign_document(keypair.private(), &document.authentication().id())
     .unwrap();
 }
 

@@ -49,7 +49,7 @@ impl IntegrationChain {
     trace!("[Int] Message Index = {:#?}", index);
 
     let current: IotaDocument = index
-      .remove_where(&MessageId::null(), |doc| doc.verify().is_ok())
+      .remove_where(&MessageId::null(), |doc| doc.verify_self_signed().is_ok())
       .ok_or(Error::ChainError {
         error: "Invalid Root Document",
       })?;
@@ -70,7 +70,7 @@ impl IntegrationChain {
   /// Creates a new [`IntegrationChain`] with the given [`IotaDocument`] as the latest and no
   /// history.
   pub fn new(current: IotaDocument) -> Result<Self> {
-    if current.verify().is_err() {
+    if current.verify_self_signed().is_err() {
       return Err(Error::ChainError {
         error: "Invalid Signature",
       });
