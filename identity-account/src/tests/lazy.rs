@@ -3,15 +3,22 @@
 
 use std::pin::Pin;
 
-use crate::account::Account;
-use crate::identity::{IdentityCreate, IdentityState, IdentityUpdater};
-use crate::{Error as AccountError, Result};
 use futures::Future;
+
 use identity_core::common::Url;
 use identity_iota::chain::DocumentHistory;
-use identity_iota::did::{IotaDID, IotaVerificationMethod};
-use identity_iota::tangle::{Client, Network};
+use identity_iota::did::IotaDID;
+use identity_iota::did::IotaVerificationMethod;
+use identity_iota::tangle::Client;
+use identity_iota::tangle::Network;
 use identity_iota::Error as IotaError;
+
+use crate::account::Account;
+use crate::identity::IdentityCreate;
+use crate::identity::IdentityState;
+use crate::identity::IdentityUpdater;
+use crate::Error as AccountError;
+use crate::Result;
 
 #[tokio::test]
 async fn test_lazy_updates() -> Result<()> {
@@ -99,7 +106,7 @@ async fn test_lazy_updates() -> Result<()> {
       assert_eq!(methods.len(), 2);
 
       for method in methods {
-        let method_fragment = method.id().fragment().unwrap();
+        let method_fragment = method.id_core().fragment().unwrap_or_default();
         assert!(["_sign-0", "new-method"]
           .iter()
           .any(|fragment| *fragment == method_fragment));

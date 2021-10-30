@@ -89,6 +89,7 @@ impl_wasm_error_from!(
   identity::core::Error,
   identity::credential::Error,
   identity::did::Error,
+  identity::did::DIDError,
   identity::iota::Error
 );
 

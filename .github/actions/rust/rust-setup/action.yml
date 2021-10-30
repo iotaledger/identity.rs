@@ -27,7 +27,7 @@ runs:
         override: true
 
     - name: Cache cargo
-      uses: actions/cache@v2.1.4
+      uses: actions/cache@v2.1.6
       with:
         # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
         path: |
@@ -52,7 +52,7 @@ runs:
         command: update
 
     - name: Cache build target
-      uses: actions/cache@v2.1.4
+      uses: actions/cache@v2.1.6
       with:
         path: ${{ inputs.target-cache-path }}
         # Add date to the cache to keep it up to date

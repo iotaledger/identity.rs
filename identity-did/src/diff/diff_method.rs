@@ -9,7 +9,8 @@ use identity_core::diff::Result;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::did::DID;
+use crate::did::CoreDID;
+use crate::did::CoreDIDUrl;
 use crate::diff::DiffMethodData;
 use crate::verification::MethodData;
 use crate::verification::MethodType;
@@ -69,13 +70,13 @@ where
   }
 
   fn merge(&self, diff: Self::Type) -> Result<Self> {
-    let id: DID = diff
+    let id: CoreDIDUrl = diff
       .id
       .map(|value| self.id().merge(value))
       .transpose()?
       .unwrap_or_else(|| self.id().clone());
 
-    let controller: DID = diff
+    let controller: CoreDID = diff
       .controller
       .map(|value| self.controller().merge(value))
       .transpose()?
@@ -109,15 +110,15 @@ where
   }
 
   fn from_diff(diff: Self::Type) -> Result<Self> {
-    let id: DID = diff
+    let id: CoreDIDUrl = diff
       .id
-      .map(DID::from_diff)
+      .map(CoreDIDUrl::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `method.id`"))?;
 
-    let controller: DID = diff
+    let controller: CoreDID = diff
       .controller
-      .map(DID::from_diff)
+      .map(CoreDID::from_diff)
       .transpose()?
       .ok_or_else(|| Error::convert("Missing field `method.controller`"))?;
 
@@ -166,7 +167,7 @@ mod test {
       .id("did:example:123".parse().unwrap())
       .controller("did:example:123".parse().unwrap())
       .key_type(MethodType::Ed25519VerificationKey2018)
-      .key_data(MethodData::PublicKeyBase58("".into()))
+      .key_data(MethodData::PublicKeyMultibase("".into()))
       .build()
       .unwrap()
   }
@@ -363,7 +364,7 @@ mod test {
     assert!(diff_method.is_err());
 
     // add key_data
-    *new.key_data_mut() = MethodData::PublicKeyBase58("diff".into());
+    *new.key_data_mut() = MethodData::PublicKeyMultibase("diff".into());
     let diff = method.diff(&new).unwrap();
     let diff_method = VerificationMethod::from_diff(diff.clone());
     assert!(diff_method.is_ok());

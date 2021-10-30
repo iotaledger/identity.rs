@@ -11,13 +11,13 @@ use crate::resolution::Resource;
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Dereference {
   /// Metadata regarding the base resolution process.
-  #[serde(rename = "did-url-dereferencing-metadata")]
+  #[serde(rename = "dereferencingMetadata")]
   pub metadata: ResolutionMetadata,
   /// The output resource of a successful dereference.
-  #[serde(rename = "content-stream", skip_serializing_if = "Option::is_none")]
+  #[serde(rename = "contentStream", skip_serializing_if = "Option::is_none")]
   pub content: Option<Resource>,
   /// Content-specific metadata.
-  #[serde(rename = "content-metadata", skip_serializing_if = "Option::is_none")]
+  #[serde(rename = "contentMetadata", skip_serializing_if = "Option::is_none")]
   pub content_metadata: Option<DocumentMetadata>,
 }
 

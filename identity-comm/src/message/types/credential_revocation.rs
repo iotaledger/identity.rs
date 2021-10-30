@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Url;
-use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDIDUrl;
 use uuid::Uuid;
 
 use crate::message::Timing;
@@ -21,7 +21,7 @@ pub struct CredentialRevocation {
   #[serde(rename = "responseRequested", skip_serializing_if = "Option::is_none")]
   response_requested: Option<bool>,
   #[serde(skip_serializing_if = "Option::is_none")]
-  id: Option<IotaDID>,
+  id: Option<IotaDIDUrl>,
   #[serde(skip_serializing_if = "Option::is_none")]
   comment: Option<String>,
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -48,7 +48,7 @@ impl CredentialRevocation {
   impl_message_accessor!(credential_id => String);
   impl_message_accessor!(callback_url => Option<Url>);
   impl_message_accessor!(response_requested => Option<bool>);
-  impl_message_accessor!(id => Option<IotaDID>);
+  impl_message_accessor!(id => Option<IotaDIDUrl>);
   impl_message_accessor!(comment => Option<String>);
   impl_message_accessor!(timing => Option<Timing>);
 }

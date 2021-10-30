@@ -19,9 +19,12 @@ use js_sys::Promise;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use crate::chain::{DiffChainHistory, WasmDocumentHistory};
-use crate::did::{WasmDocument, WasmDocumentDiff};
-use crate::error::{Result, WasmResult};
+use crate::chain::DiffChainHistory;
+use crate::chain::WasmDocumentHistory;
+use crate::did::WasmDocument;
+use crate::did::WasmDocumentDiff;
+use crate::error::Result;
+use crate::error::WasmResult;
 use crate::tangle::Config;
 use crate::tangle::WasmNetwork;
 

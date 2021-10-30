@@ -142,13 +142,13 @@ impl Account {
 
     // Read the latest snapshot
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
-    let document: &IotaDID = snapshot.identity().try_did()?;
+    let did: &IotaDID = snapshot.identity().try_did()?;
 
     // Add the identity to the index
     if let Some(name) = input.name {
-      index.set_named(identity, document, name)?;
+      index.set_named(identity, did, name)?;
     } else {
-      index.set(identity, document)?;
+      index.set(identity, did)?;
     }
 
     // Store the updated identity index
@@ -198,10 +198,10 @@ impl Account {
   pub async fn resolve_identity<K: IdentityKey>(&self, key: K) -> Result<IotaDocument> {
     let identity: IdentityId = self.try_resolve_id(&key).await?;
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
-    let document: &IotaDID = snapshot.identity().try_did()?;
+    let did: &IotaDID = snapshot.identity().try_did()?;
 
     // Fetch the DID Document from the Tangle
-    self.state.clients.resolve(document).await.map_err(Into::into)
+    self.state.clients.resolve(did).await.map_err(Into::into)
   }
 
   /// Signs `data` with the key specified by `fragment`.

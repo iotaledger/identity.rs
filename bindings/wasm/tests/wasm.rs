@@ -8,6 +8,7 @@ use identity_wasm::crypto::KeyCollection;
 use identity_wasm::crypto::KeyPair;
 use identity_wasm::crypto::KeyType;
 use identity_wasm::did::WasmDID;
+use identity_wasm::did::WasmDIDUrl;
 use identity_wasm::did::WasmDocument;
 use identity_wasm::error::WasmError;
 use std::borrow::Cow;
@@ -85,6 +86,32 @@ fn test_did() {
 
   assert_eq!(base58.tag(), did.tag());
   assert_eq!(base58.network_name(), "dev");
+}
+
+#[test]
+fn test_did_url() {
+  // Base DID Url
+  let key = KeyPair::new(KeyType::Ed25519).unwrap();
+  let did = WasmDID::new(&key, None).unwrap();
+  let did_url = did.to_url();
+
+  assert_eq!(did.to_string(), did_url.to_string());
+
+  let parsed_from_did = WasmDIDUrl::parse(&did.to_string()).unwrap();
+  let parsed_from_did_url = WasmDIDUrl::parse(&did_url.to_string()).unwrap();
+
+  assert_eq!(did_url.to_string(), parsed_from_did.to_string());
+  assert_eq!(did_url.to_string(), parsed_from_did_url.to_string());
+
+  // DID Url segments
+  let joined_did_url = did_url.join("/path?query#fragment").unwrap();
+  assert_eq!(joined_did_url.path().unwrap(), "/path");
+  assert_eq!(joined_did_url.query().unwrap(), "query");
+  assert_eq!(joined_did_url.fragment().unwrap(), "fragment");
+  assert_eq!(
+    joined_did_url.to_string(),
+    format!("{}{}", did.to_string(), "/path?query#fragment")
+  );
 }
 
 #[test]

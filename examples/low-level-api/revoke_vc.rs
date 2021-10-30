@@ -15,8 +15,13 @@
 use identity::core::Timestamp;
 use identity::credential::Credential;
 use identity::did::MethodScope;
+use identity::did::DID;
+use identity::iota::ClientMap;
+use identity::iota::CredentialValidation;
+use identity::iota::IotaVerificationMethod;
+use identity::iota::Receipt;
 use identity::iota::Result;
-use identity::iota::{ClientMap, CredentialValidation, IotaVerificationMethod, Receipt, TangleRef};
+use identity::iota::TangleRef;
 use identity::prelude::*;
 
 mod common;
@@ -33,7 +38,7 @@ async fn main() -> Result<()> {
   // Remove the public key that signed the VC from the issuer's DID document
   // - effectively revoking the VC as it will no longer be able to verified.
   let (mut issuer_doc, issuer_key, issuer_receipt) = issuer;
-  issuer_doc.remove_method(&issuer_doc.id().join("#newKey")?)?;
+  issuer_doc.remove_method(issuer_doc.id().to_url().join("#newKey")?)?;
   issuer_doc.set_previous_message_id(*issuer_receipt.message_id());
   issuer_doc.set_updated(Timestamp::now_utc());
   issuer_doc.sign(issuer_key.private())?;

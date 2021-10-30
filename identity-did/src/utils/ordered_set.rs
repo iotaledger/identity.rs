@@ -11,7 +11,7 @@ use core::ops::Deref;
 use core::slice::Iter;
 use serde::Deserialize;
 
-use crate::did::DID;
+use crate::did::CoreDIDUrl;
 use crate::error::Error;
 use crate::error::Result;
 use crate::utils::DIDKey;
@@ -253,7 +253,7 @@ where
 
 impl<T> OrderedSet<DIDKey<T>>
 where
-  T: AsRef<DID>,
+  T: AsRef<CoreDIDUrl>,
 {
   pub(crate) fn query<'query, Q>(&self, query: Q) -> Option<&T>
   where
@@ -264,7 +264,7 @@ where
     self
       .0
       .iter()
-      .find(|method| query.matches(method.as_did()))
+      .find(|method| query.matches(method.as_did_url()))
       .map(|method| &**method)
   }
 
@@ -277,7 +277,7 @@ where
     self
       .0
       .iter_mut()
-      .find(|method| query.matches(method.as_did()))
+      .find(|method| query.matches(method.as_did_url()))
       .map(|method| &mut **method)
   }
 }
@@ -286,7 +286,7 @@ where
 mod tests {
   use super::*;
 
-  use crate::did::DID;
+  use crate::did::CoreDIDUrl;
   use crate::utils::DIDKey;
   use crate::verification::MethodRef;
 
@@ -346,8 +346,8 @@ mod tests {
 
   #[test]
   fn test_contains() {
-    let did1: DID = DID::parse("did:example:123").unwrap();
-    let did2: DID = DID::parse("did:example:456").unwrap();
+    let did1: CoreDIDUrl = CoreDIDUrl::parse("did:example:123").unwrap();
+    let did2: CoreDIDUrl = CoreDIDUrl::parse("did:example:456").unwrap();
 
     let source: Vec<DIDKey<MethodRef>> = vec![
       DIDKey::new(MethodRef::Refer(did1.clone())),

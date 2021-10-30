@@ -1,5 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+//! Functionality for creating [DIDComm encrypted messages](https://identity.foundation/didcomm-messaging/spec/#didcomm-encrypted-message)
 
 #![allow(non_camel_case_types)]
 

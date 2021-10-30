@@ -54,7 +54,7 @@ pub trait Signer<Secret: ?Sized>: Named {
     T: Serialize;
 
   /// Creates and applies a [signature][`Signature`] to the given `data`.
-  fn create_signature<T>(data: &mut T, method: &str, secret: &Secret) -> Result<()>
+  fn create_signature<T>(data: &mut T, method: String, secret: &Secret) -> Result<()>
   where
     T: Serialize + SetSignature,
   {

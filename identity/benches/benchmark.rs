@@ -5,18 +5,19 @@ use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
+
 use identity::crypto::KeyPair;
 use identity::iota::DocumentChain;
 use identity::iota::IntegrationChain;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 
-mod diff_chain;
-
 use self::diff_chain::create_diff_chain;
 use self::diff_chain::setup_diff_chain_bench;
 use self::diff_chain::update_diff_chain;
 use self::diff_chain::update_integration_chain;
+
+mod diff_chain;
 
 fn generate_signed_document(keypair: &KeyPair) {
   let mut document: IotaDocument = IotaDocument::new(keypair).unwrap();

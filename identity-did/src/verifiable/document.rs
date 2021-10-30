@@ -110,7 +110,7 @@ where
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(self, &fragment, private.as_ref())?;
+        JcsEd25519::<Ed25519>::create_signature(self, fragment, private.as_ref())?;
       }
       MethodType::MerkleKeyCollection2021 => {
         // CoreDocuments can't be signed with Merkle Key Collections
@@ -207,13 +207,13 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
   where
     X: Serialize + SetSignature + TryMethod,
   {
-    let query: MethodQuery<'_> = self.method.ok_or(Error::QueryMethodNotFound)?;
+    let query: MethodQuery<'_> = self.method.clone().ok_or(Error::QueryMethodNotFound)?;
     let method: &VerificationMethod<U> = self.document.try_resolve(query)?;
     let method_uri: String = X::try_method(method)?;
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(that, &method_uri, self.private.as_ref())?;
+        JcsEd25519::<Ed25519>::create_signature(that, method_uri, self.private.as_ref())?;
       }
       MethodType::MerkleKeyCollection2021 => {
         let data: Vec<u8> = method.key_data().try_decode()?;
@@ -250,7 +250,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 
         let skey: SigningKey<'_, D> = SigningKey::from_borrowed(public, self.private, proof);
 
-        MerkleSigner::<D, S>::create_signature(that, &method, &skey)?;
+        MerkleSigner::<D, S>::create_signature(that, method, &skey)?;
 
         Ok(())
       }

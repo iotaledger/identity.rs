@@ -8,7 +8,8 @@ use serde::__private::ser::FlatMapSerializer;
 use serde::ser::SerializeMap;
 use serde::ser::Serializer;
 use serde::Serialize;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 
 use crate::crypto::SignatureValue;
 use crate::error::Result;

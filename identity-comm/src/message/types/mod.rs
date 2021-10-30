@@ -1,5 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+//! Provides types for various DIDComm protocols.
 
 mod authentication;
 mod credential_issuance;

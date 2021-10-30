@@ -6,13 +6,16 @@
 //!
 //! cargo run --example update_did
 
+use identity::core::json;
 use identity::core::FromJson;
-use identity::core::{json, Timestamp};
+use identity::core::Timestamp;
 use identity::did::MethodScope;
 use identity::did::Service;
+use identity::did::DID;
+use identity::iota::ClientMap;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
-use identity::iota::{ClientMap, TangleRef};
+use identity::iota::TangleRef;
 use identity::prelude::*;
 
 mod create_did;
@@ -31,7 +34,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
 
   // Add a new Service
   let service: Service = Service::from_json_value(json!({
-    "id": document.id().join("#linked-domain")?,
+    "id": document.id().to_url().join("#linked-domain")?,
     "type": "LinkedDomains",
     "serviceEndpoint": "https://iota.org"
   }))?;

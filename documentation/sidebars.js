@@ -22,50 +22,50 @@ module.exports = {
             label: 'Introduction'
         },
         {
-            type:'doc',
-            id:'decentralized_identity',
-            label:'Decentralized Identity'
+            type: 'doc',
+            id: 'decentralized_identity',
+            label: 'Decentralized Identity'
         },
         {
             type: 'category',
             label: 'Getting Started',
             collapsed: false,
             items: [
-                'getting-started/overview',
-                {
-                    'Decentralized Identifiers (DID)': [
-                        'getting-started/decentralized_identifiers/overview',
-                        'getting-started/decentralized_identifiers/create',
-                        'getting-started/decentralized_identifiers/resolve',
-                        'getting-started/decentralized_identifiers/update',
-                        'getting-started/decentralized_identifiers/manage',
-                        'getting-started/decentralized_identifiers/merkle_key_collection',
-                    ],
-                },
-                {
-                    'Verifiable Credentials': [
-                        'getting-started/verifiable_credentials/overview',
-                        'getting-started/verifiable_credentials/create',
-                        'getting-started/verifiable_credentials/revoke',
-                        'getting-started/verifiable_credentials/verifiable_presentations',
-                    ]
-                },
-                {
-                    'DID Communication': [
-                        'getting-started/did_communications/overview',
-                        'getting-started/did_communications/did_comm_messages',
-                        'getting-started/did_communications/protocols',
-                    ],
-                    'Advanced Concepts': [
-                        'getting-started/advanced/overview',
-                        'getting-started/advanced/client',
-                        'getting-started/advanced/did_messages',
-                        'getting-started/advanced/storage_adapter',
-                        'getting-started/advanced/signature_schemes',
-
-                    ]
-                },
+                'getting_started/overview',
+                'getting_started/install',
+                'getting_started/create_and_publish',
             ],
+        },
+        {
+            'Decentralized Identifiers (DID)': [
+                'decentralized_identifiers/overview',
+                'decentralized_identifiers/create',
+                'decentralized_identifiers/update',
+                'decentralized_identifiers/secure',
+                'decentralized_identifiers/resolve',
+                'decentralized_identifiers/resolve_history',
+                'decentralized_identifiers/private_tangle',
+            ],
+            'Verifiable Credentials': [
+                'verifiable_credentials/overview',
+                'verifiable_credentials/create',
+                'verifiable_credentials/revoke',
+                'verifiable_credentials/merkle_key_collection',
+                'verifiable_credentials/verifiable_presentations',
+            ],
+            'DID Communication': [
+                'did_communications/overview',
+                'did_communications/did_comm_messages',
+                'did_communications/protocols',
+            ],
+            'Advanced Concepts': [
+                'advanced/overview',
+                'advanced/client',
+                'advanced/did_messages',
+                'advanced/storage_adapter',
+                'advanced/signature_schemes',
+
+            ]
         },
         {
             type: 'category',
@@ -77,9 +77,8 @@ module.exports = {
                     label: 'Rust',
                     collapsed: true,
                     items: [
-                        'libraries/rust/overview',
                         'libraries/rust/getting_started',
-                        'libraries/rust/examples',
+                        'libraries/rust/cheat_sheet',
                         'libraries/rust/api_reference',
                         'libraries/rust/troubleshooting',
                     ],
@@ -90,9 +89,8 @@ module.exports = {
                     label: 'WASM',
                     collapsed: true,
                     items: [
-                        'libraries/wasm/overview',
                         'libraries/wasm/getting_started',
-                        'libraries/wasm/examples',
+                        'libraries/wasm/cheat_sheet',
                         'libraries/wasm/api_reference',
                         'libraries/wasm/troubleshooting',
                     ],
@@ -100,8 +98,13 @@ module.exports = {
             ],
         },
         {
+          type: 'category',
+          label: 'Tutorials',
+          items:['tutorials/validate_university_degree']
+        },
+        {
             type: 'category',
-            label: 'Specificatons',
+            label: 'Specifications',
             collapsed: true,
             items: [
                 'specs/overview',

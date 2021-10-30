@@ -4,7 +4,7 @@
 use core::time::Duration;
 use identity_core::common::Object;
 
-use crate::did::DID;
+use crate::did::CoreDID;
 use crate::resolution::ErrorKind;
 
 /// Metadata associated with a [DID resolution][SPEC] process.
@@ -28,7 +28,7 @@ pub struct ResolutionMetadata {
   pub duration: Duration,
   /// The parsed DID that was used for resolution.
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub resolved: Option<DID>,
+  pub resolved: Option<CoreDID>,
   /// Additional resolution metadata properties.
   #[serde(flatten)]
   pub properties: Object,

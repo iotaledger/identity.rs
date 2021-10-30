@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryInto;
+
 use hashbrown::HashMap;
+use serde::Serialize;
+
 use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::UnixTimestamp;
@@ -10,6 +13,8 @@ use identity_core::common::Url;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
+use identity_did::did::CoreDIDUrl;
+use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::document::DocumentBuilder;
 use identity_did::service::Service as CoreService;
@@ -20,12 +25,12 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDIDUrl;
 use identity_iota::did::IotaDocument;
 use identity_iota::did::Properties as BaseProperties;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::TangleRef;
-use serde::Serialize;
 
 use crate::crypto::RemoteKey;
 use crate::crypto::RemoteSign;
@@ -332,11 +337,11 @@ impl IdentityState {
 
     // Create the Verification Method identifier
     let fragment: &str = location.fragment.identifier();
-    let method: IotaDID = self.try_did()?.join(fragment)?;
+    let method_url: IotaDIDUrl = self.try_did()?.to_url().join(fragment)?;
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        RemoteEd25519::create_signature(target, method.as_str(), &private)?;
+        RemoteEd25519::create_signature(target, method_url.to_string(), &private)?;
       }
       MethodType::MerkleKeyCollection2021 => {
         todo!("Handle MerkleKeyCollection2021")
@@ -381,8 +386,9 @@ impl TinyMethodRef {
     match self {
       Self::Embed(inner) => inner.to_core(did).map(CoreMethodRef::Embed),
       Self::Refer(inner) => did
+        .to_url()
         .join(inner.identifier())
-        .map(Into::into)
+        .map(CoreDIDUrl::from)
         .map(CoreMethodRef::Refer)
         .map_err(Into::into),
     }
@@ -444,10 +450,10 @@ impl TinyMethod {
   /// Creates a new [VerificationMethod].
   pub fn to_core(&self, did: &IotaDID) -> Result<VerificationMethod> {
     let properties: Object = self.properties.clone().unwrap_or_default();
-    let id: IotaDID = did.join(self.location.fragment.identifier())?;
+    let id: IotaDIDUrl = did.to_url().join(self.location.fragment.identifier())?;
 
     VerificationMethod::builder(properties)
-      .id(id.into())
+      .id(CoreDIDUrl::from(id))
       .controller(did.clone().into())
       .key_type(self.location.method())
       .key_data(self.key_data.clone())
@@ -588,10 +594,10 @@ impl TinyService {
   /// Creates a new `CoreService` from the service state.
   pub fn to_core(&self, did: &IotaDID) -> Result<CoreService<Object>> {
     let properties: Object = self.properties.clone().unwrap_or_default();
-    let id: IotaDID = did.join(self.fragment().identifier())?;
+    let id: IotaDIDUrl = did.to_url().join(self.fragment().identifier())?;
 
     CoreService::builder(properties)
-      .id(id.into())
+      .id(CoreDIDUrl::from(id))
       .type_(&self.type_)
       .service_endpoint(self.endpoint.clone())
       .build()

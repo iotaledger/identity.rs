@@ -32,7 +32,7 @@ async function revokeVC(clientConfig) {
     const {alice, issuer, signedVc} = await createVC(clientConfig);
 
     // Remove the public key that signed the VC - effectively revoking the VC as it will no longer be able to verify
-    issuer.doc.removeMethod(DID.parse(issuer.doc.id.toString() + "#newKey"));
+    issuer.doc.removeMethod(issuer.doc.id.toUrl().join("#newKey"));
     issuer.doc.previousMessageId = issuer.updatedMessageId;
     issuer.doc.updated = Timestamp.nowUTC();
     issuer.doc.sign(issuer.key);
