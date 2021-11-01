@@ -1,12 +1,10 @@
-use std::convert::TryInto;
-
 #[derive(Copy, Clone)]
-pub enum MessageVersion {
+pub(crate) enum MessageVersion {
   V1 = 1
 }
 static CURRENT_VERSION: MessageVersion = MessageVersion::V1;
 
-pub fn add_version_flag(mut compressed_data: Vec<u8>) -> Vec<u8> {
+pub(crate) fn add_version_flag(mut compressed_data: Vec<u8>) -> Vec<u8> {
   let version_flag = CURRENT_VERSION as u8;
   compressed_data.splice(0..0, [version_flag].iter().cloned());
   compressed_data

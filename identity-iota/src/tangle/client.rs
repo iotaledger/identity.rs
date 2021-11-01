@@ -24,7 +24,6 @@ use crate::tangle::Network;
 use crate::tangle::Receipt;
 use crate::tangle::TangleRef;
 use crate::tangle::TangleResolve;
-use crate::tangle::compression_brotli2::compress_brotli2;
 use crate::tangle::encoding;
 use crate::tangle::message_version;
 
@@ -87,7 +86,7 @@ impl Client {
     self.publish_json(&IotaDocument::diff_index(message_id)?, diff).await
   }
 
-  /// Publishes arbitrary JSON data to the specified index on the Tangle.
+  /// Compresses and Publishes arbitrary JSON data to the specified index on the Tangle.
   pub async fn publish_json<T: ToJson>(&self, index: &str, data: &T) -> Result<Receipt> {
     let mut compressed_data = encoding::compress_message(&data.to_json()?)?;
     compressed_data = encoding::add_encoding_version_flag(compressed_data);
