@@ -34,6 +34,20 @@ impl KeyLocation {
     }
   }
 
+  pub fn new(
+    method: MethodType,
+    fragment: Fragment,
+    integration_generation: Generation,
+    diff_generation: Generation,
+  ) -> Self {
+    KeyLocation {
+      method,
+      fragment,
+      integration_generation,
+      diff_generation,
+    }
+  }
+
   /// Returns the method type of the key location.
   pub fn method(&self) -> MethodType {
     self.method

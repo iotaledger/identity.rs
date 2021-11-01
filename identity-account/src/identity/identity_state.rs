@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryInto;
+use std::ops::Deref;
+use std::ops::DerefMut;
 
 use hashbrown::HashMap;
 use serde::Serialize;
@@ -58,41 +60,46 @@ pub struct IdentityState {
   last_integration_message_id: MessageId,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
   last_diff_message_id: MessageId,
+  #[serde(skip_serializing_if = "HashMap::is_empty")]
+  method_generations: HashMap<Fragment, (Generation, Generation)>,
 
-  // ============== //
-  // Document State //
-  // ============== //
-  #[serde(skip_serializing_if = "Option::is_none")]
-  did: Option<IotaDID>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  controller: Option<IotaDID>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  also_known_as: Option<Vec<Url>>,
-  #[serde(skip_serializing_if = "Methods::is_empty")]
-  methods: Methods,
-  #[serde(default, skip_serializing_if = "Services::is_empty")]
-  services: Services,
-  #[serde(default, skip_serializing_if = "UnixTimestamp::is_epoch")]
-  created: UnixTimestamp,
-  #[serde(default, skip_serializing_if = "UnixTimestamp::is_epoch")]
-  updated: UnixTimestamp,
+  document: IotaDocument,
+  /* ============== //
+   * Document State //
+   * ============== //
+   * #[serde(skip_serializing_if = "Option::is_none")]
+   * did: Option<IotaDID>,
+   * #[serde(skip_serializing_if = "Option::is_none")]
+   * controller: Option<IotaDID>,
+   * #[serde(skip_serializing_if = "Option::is_none")]
+   * also_known_as: Option<Vec<Url>>,
+   * #[serde(skip_serializing_if = "Methods::is_empty")]
+   * methods: Methods,
+   * #[serde(default, skip_serializing_if = "Services::is_empty")]
+   * services: Services,
+   * #[serde(default, skip_serializing_if = "UnixTimestamp::is_epoch")]
+   * created: UnixTimestamp,
+   * #[serde(default, skip_serializing_if = "UnixTimestamp::is_epoch")]
+   * updated: UnixTimestamp, */
 }
 
 impl IdentityState {
-  pub fn new() -> Self {
+  pub fn new(document: IotaDocument) -> Self {
     Self {
       integration_generation: Generation::new(),
       diff_generation: Generation::new(),
       this_message_id: MessageId::null(),
       last_integration_message_id: MessageId::null(),
       last_diff_message_id: MessageId::null(),
-      did: None,
-      controller: None,
-      also_known_as: None,
-      methods: Methods::new(),
-      services: Services::new(),
-      created: UnixTimestamp::EPOCH,
-      updated: UnixTimestamp::EPOCH,
+      method_generations: HashMap::new(),
+      document,
+      /* did: None,
+       * controller: None,
+       * also_known_as: None,
+       * methods: Methods::new(),
+       * services: Services::new(),
+       * created: UnixTimestamp::EPOCH,
+       * updated: UnixTimestamp::EPOCH, */
     }
   }
 
@@ -123,6 +130,14 @@ impl IdentityState {
     self.diff_generation = self.diff_generation.try_increment()?;
 
     Ok(())
+  }
+
+  /// Return the `KeyLocation` of the given method.
+  pub fn method_location(&self, method_type: MethodType, fragment: String) -> Result<KeyLocation> {
+    let fragment = Fragment::new(fragment);
+    let (int_gen, diff_gen) = self.method_generations.get(&fragment).ok_or(Error::MethodNotFound)?;
+
+    Ok(KeyLocation::new(method_type, fragment, *int_gen, *diff_gen))
   }
 
   // ===========================================================================
@@ -170,73 +185,73 @@ impl IdentityState {
   // ===========================================================================
 
   /// Returns the DID identifying the DID Document for the state.
-  pub fn did(&self) -> Option<&IotaDID> {
-    self.did.as_ref()
-  }
+  // pub fn did(&self) -> Option<&IotaDID> {
+  //   self.did.as_ref()
+  // }
 
-  /// Returns the DID identifying the DID Document for the state.
-  ///
-  /// # Errors
-  ///
-  /// Fails if the DID is not set.
-  pub fn try_did(&self) -> Result<&IotaDID> {
-    self.did().ok_or(Error::MissingDocumentId)
-  }
+  // /// Returns the DID identifying the DID Document for the state.
+  // ///
+  // /// # Errors
+  // ///
+  // /// Fails if the DID is not set.
+  // pub fn try_did(&self) -> Result<&IotaDID> {
+  //   self.did().ok_or(Error::MissingDocumentId)
+  // }
 
-  /// Sets the DID identifying the DID Document for the state.
-  pub fn set_did(&mut self, did: IotaDID) {
-    self.did = Some(did);
-  }
+  // /// Sets the DID identifying the DID Document for the state.
+  // pub fn set_did(&mut self, did: IotaDID) {
+  //   self.did = Some(did);
+  // }
 
-  /// Returns the timestamp of when the state was created.
-  pub fn created(&self) -> UnixTimestamp {
-    self.created
-  }
+  // /// Returns the timestamp of when the state was created.
+  // pub fn created(&self) -> UnixTimestamp {
+  //   self.created
+  // }
 
-  /// Returns the timestamp of when the state was last updated.
-  pub fn updated(&self) -> UnixTimestamp {
-    self.updated
-  }
+  // /// Returns the timestamp of when the state was last updated.
+  // pub fn updated(&self) -> UnixTimestamp {
+  //   self.updated
+  // }
 
-  /// Sets the timestamp of when the state was created.
-  pub fn set_created(&mut self, timestamp: UnixTimestamp) {
-    self.created = timestamp;
-  }
+  // /// Sets the timestamp of when the state was created.
+  // pub fn set_created(&mut self, timestamp: UnixTimestamp) {
+  //   self.created = timestamp;
+  // }
 
-  /// Sets the timestamp of when the state was last updated.
-  pub fn set_updated(&mut self, timestamp: UnixTimestamp) {
-    self.updated = timestamp;
-  }
+  // /// Sets the timestamp of when the state was last updated.
+  // pub fn set_updated(&mut self, timestamp: UnixTimestamp) {
+  //   self.updated = timestamp;
+  // }
 
-  /// Returns a reference to the state methods.
-  pub fn methods(&self) -> &Methods {
-    &self.methods
-  }
+  // /// Returns a reference to the state methods.
+  // pub fn methods(&self) -> &Methods {
+  //   &self.methods
+  // }
 
-  /// Returns a mutable reference to the state methods.
-  pub fn methods_mut(&mut self) -> &mut Methods {
-    &mut self.methods
-  }
+  // /// Returns a mutable reference to the state methods.
+  // pub fn methods_mut(&mut self) -> &mut Methods {
+  //   &mut self.methods
+  // }
 
-  /// Returns a reference to the state services.
-  pub fn services(&self) -> &Services {
-    &self.services
-  }
+  // /// Returns a reference to the state services.
+  // pub fn services(&self) -> &Services {
+  //   &self.services
+  // }
 
-  /// Returns a mutable reference to the state services.
-  pub fn services_mut(&mut self) -> &mut Services {
-    &mut self.services
-  }
+  // /// Returns a mutable reference to the state services.
+  // pub fn services_mut(&mut self) -> &mut Services {
+  //   &mut self.services
+  // }
 
   /// Returns the latest authentication method in the state.
-  pub fn authentication(&self) -> Result<&TinyMethod> {
-    self
-      .methods()
-      .iter()
-      .filter(|method| method.is_authentication())
-      .max_by_key(|method| method.location().integration_generation())
-      .ok_or(Error::MethodNotFound)
-  }
+  // pub fn authentication(&self) -> Result<&TinyMethod> {
+  //   self
+  //     .methods()
+  //     .iter()
+  //     .filter(|method| method.is_authentication())
+  //     .max_by_key(|method| method.location().integration_generation())
+  //     .ok_or(Error::MethodNotFound)
+  // }
 
   /// Returns a key location suitable for the specified `fragment`.
   pub fn key_location(&self, method: MethodType, fragment: String) -> Result<KeyLocation> {
@@ -253,71 +268,71 @@ impl IdentityState {
   // ===========================================================================
 
   /// Creates a new DID Document based on the identity state.
-  pub fn to_document(&self) -> Result<IotaDocument> {
-    let properties: BaseProperties = BaseProperties::new();
-    let properties: Properties = VerifiableProperties::new(properties);
-    let mut builder: DocumentBuilder<_, _, _> = BaseDocument::builder(properties);
+  // pub fn to_document(&self) -> Result<IotaDocument> {
+  //   let properties: BaseProperties = BaseProperties::new();
+  //   let properties: Properties = VerifiableProperties::new(properties);
+  //   let mut builder: DocumentBuilder<_, _, _> = BaseDocument::builder(properties);
 
-    let document_id: &IotaDID = self.try_did()?;
+  //   let document_id: &IotaDID = self.try_did()?;
 
-    builder = builder.id(document_id.clone().into());
+  //   builder = builder.id(document_id.clone().into());
 
-    if let Some(value) = self.controller.as_ref() {
-      builder = builder.controller(value.clone().into());
-    }
+  //   if let Some(value) = self.controller.as_ref() {
+  //     builder = builder.controller(value.clone().into());
+  //   }
 
-    if let Some(values) = self.also_known_as.as_deref() {
-      for value in values {
-        builder = builder.also_known_as(value.clone());
-      }
-    }
+  //   if let Some(values) = self.also_known_as.as_deref() {
+  //     for value in values {
+  //       builder = builder.also_known_as(value.clone());
+  //     }
+  //   }
 
-    for method in self.methods.slice(MethodScope::VerificationMethod) {
-      builder = match method.to_core(document_id)? {
-        CoreMethodRef::Embed(inner) => builder.verification_method(inner),
-        CoreMethodRef::Refer(_) => unreachable!(),
-      };
-    }
+  //   for method in self.methods.slice(MethodScope::VerificationMethod) {
+  //     builder = match method.to_core(document_id)? {
+  //       CoreMethodRef::Embed(inner) => builder.verification_method(inner),
+  //       CoreMethodRef::Refer(_) => unreachable!(),
+  //     };
+  //   }
 
-    for method in self.methods.slice(MethodScope::Authentication) {
-      builder = builder.authentication(method.to_core(document_id)?);
-    }
+  //   for method in self.methods.slice(MethodScope::Authentication) {
+  //     builder = builder.authentication(method.to_core(document_id)?);
+  //   }
 
-    for method in self.methods.slice(MethodScope::AssertionMethod) {
-      builder = builder.assertion_method(method.to_core(document_id)?);
-    }
+  //   for method in self.methods.slice(MethodScope::AssertionMethod) {
+  //     builder = builder.assertion_method(method.to_core(document_id)?);
+  //   }
 
-    for method in self.methods.slice(MethodScope::KeyAgreement) {
-      builder = builder.key_agreement(method.to_core(document_id)?);
-    }
+  //   for method in self.methods.slice(MethodScope::KeyAgreement) {
+  //     builder = builder.key_agreement(method.to_core(document_id)?);
+  //   }
 
-    for method in self.methods.slice(MethodScope::CapabilityDelegation) {
-      builder = builder.capability_delegation(method.to_core(document_id)?);
-    }
+  //   for method in self.methods.slice(MethodScope::CapabilityDelegation) {
+  //     builder = builder.capability_delegation(method.to_core(document_id)?);
+  //   }
 
-    for method in self.methods.slice(MethodScope::CapabilityInvocation) {
-      builder = builder.capability_invocation(method.to_core(document_id)?);
-    }
+  //   for method in self.methods.slice(MethodScope::CapabilityInvocation) {
+  //     builder = builder.capability_invocation(method.to_core(document_id)?);
+  //   }
 
-    for service in self.services.iter() {
-      builder = builder.service(service.to_core(document_id)?);
-    }
+  //   for service in self.services.iter() {
+  //     builder = builder.service(service.to_core(document_id)?);
+  //   }
 
-    let mut document: IotaDocument = builder.build()?.try_into()?;
+  //   let mut document: IotaDocument = builder.build()?.try_into()?;
 
-    if !self.this_message_id.is_null() {
-      document.set_message_id(self.this_message_id);
-    }
+  //   if !self.this_message_id.is_null() {
+  //     document.set_message_id(self.this_message_id);
+  //   }
 
-    if !self.last_integration_message_id.is_null() {
-      document.set_previous_message_id(self.last_integration_message_id);
-    }
+  //   if !self.last_integration_message_id.is_null() {
+  //     document.set_previous_message_id(self.last_integration_message_id);
+  //   }
 
-    document.set_created(self.created.into());
-    document.set_updated(self.updated.into());
+  //   document.set_created(self.created.into());
+  //   document.set_updated(self.updated.into());
 
-    Ok(document)
-  }
+  //   Ok(document)
+  // }
 
   pub async fn sign_data<U>(
     &self,
@@ -334,7 +349,7 @@ impl IdentityState {
 
     // Create the Verification Method identifier
     let fragment: &str = location.fragment.identifier();
-    let method_url: IotaDIDUrl = self.try_did()?.to_url().join(fragment)?;
+    let method_url: IotaDIDUrl = self.document.did().to_url().join(fragment)?;
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
@@ -349,9 +364,17 @@ impl IdentityState {
   }
 }
 
-impl Default for IdentityState {
-  fn default() -> Self {
-    Self::new()
+impl Deref for IdentityState {
+  type Target = IotaDocument;
+
+  fn deref(&self) -> &Self::Target {
+    &self.document
+  }
+}
+
+impl DerefMut for IdentityState {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.document
   }
 }
 

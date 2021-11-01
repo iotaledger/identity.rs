@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::convert::TryInto;
+
 use crypto::signatures::ed25519;
 
 use identity_core::common::Fragment;
@@ -8,10 +10,15 @@ use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::PublicKey;
+use identity_did::document::CoreDocument;
+use identity_did::document::DocumentBuilder;
+use identity_did::verifiable::Properties as VerifiableProperties;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDocument;
+use identity_iota::did::Properties as BaseProperties;
 use identity_iota::tangle::NetworkName;
 
 use crate::account::Account;
@@ -29,6 +36,9 @@ use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::types::MethodSecret;
 
+type Properties = VerifiableProperties<BaseProperties>;
+type BaseDocument = CoreDocument<Properties, Object, Object>;
+
 // Supported authentication method types.
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
@@ -39,18 +49,15 @@ pub(crate) struct CreateIdentity {
 }
 
 impl CreateIdentity {
-  pub(crate) async fn process(
-    &self,
-    integration_generation: Generation,
-    store: &dyn Storage,
-  ) -> Result<(IotaDID, DIDLease, Vec<Event>)> {
+  pub(crate) async fn process(&self, store: &dyn Storage) -> Result<(IotaDID, DIDLease, IdentityState)> {
     // The authentication method type must be valid
     ensure!(
       AUTH_TYPES.contains(&self.authentication),
       UpdateError::InvalidMethodType(self.authentication)
     );
 
-    let location: KeyLocation = KeyLocation::new_authentication(self.authentication, integration_generation);
+    // TODO: Consider passing in integration_generation and use it to construct state, to assert they are equal.
+    let location: KeyLocation = KeyLocation::new_authentication(self.authentication, Generation::new());
 
     let keypair: KeyPair = if let Some(MethodSecret::Ed25519(private_key)) = &self.method_secret {
       ensure!(
@@ -98,18 +105,26 @@ impl CreateIdentity {
 
     let method_fragment = Fragment::new(method.location().fragment());
 
-    Ok((
-      did.clone(),
-      did_lease,
-      vec![
-        Event::new(EventData::IdentityCreated(did)),
-        Event::new(EventData::MethodCreated(MethodScope::VerificationMethod, method)),
-        Event::new(EventData::MethodAttached(
-          method_fragment,
-          vec![MethodScope::Authentication],
-        )),
-      ],
-    ))
+    let properties: BaseProperties = BaseProperties::new();
+    let properties: Properties = VerifiableProperties::new(properties);
+
+    let mut builder: DocumentBuilder<_, _, _> = BaseDocument::builder(properties);
+
+    builder = builder.id(did.clone().into());
+
+    let document: IotaDocument = builder.build()?.try_into()?;
+
+    // TODO: Apply events
+    //   Event::new(EventData::MethodCreated(MethodScope::VerificationMethod, method)),
+    //   Event::new(EventData::MethodAttached(
+    //     method_fragment,
+    //     vec![MethodScope::Authentication],
+    //   )),
+
+    // TODO: Add method location to state
+    let state = IdentityState::new(document);
+
+    Ok((did.clone(), did_lease, state))
   }
 }
 

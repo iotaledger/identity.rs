@@ -9,11 +9,14 @@ use identity_did::verification::MethodType;
 use identity_iota::did::DocumentDiff;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDocument;
+use identity_iota::did::IotaVerificationMethod;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
+use std::ops::Deref;
+use std::ops::DerefMut;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -130,6 +133,10 @@ impl Account {
     &self.state
   }
 
+  pub fn state_mut(&mut self) -> &mut IdentityState {
+    &mut self.state
+  }
+
   /// Resolves the DID Document associated with this `Account` from the Tangle.
   pub async fn resolve_identity(&self) -> Result<IotaDocument> {
     // Fetch the DID Document from the Tangle
@@ -148,12 +155,9 @@ impl Account {
       authentication: Self::key_to_method(input.key_type),
     };
 
-    let state = IdentityState::new();
-
     // TODO: Pass state mutably and let process work on it
-    let (did, did_lease, events): (IotaDID, DIDLease, Vec<Event>) = command
-      .process(state.integration_generation(), setup.storage.as_ref())
-      .await?;
+    let (did, did_lease, state): (IotaDID, DIDLease, IdentityState) =
+      command.process(Generation::new(), setup.storage.as_ref()).await?;
 
     let account = Self::with_setup(setup, did, state, did_lease).await?;
 
@@ -191,11 +195,13 @@ impl Account {
   {
     let state: &IdentityState = self.state();
 
-    let fragment: Fragment = Fragment::new(fragment);
-    let method: &TinyMethod = state.methods().fetch(fragment.name())?;
-    let location: &KeyLocation = method.location();
+    let method: &IotaVerificationMethod = state.resolve(fragment).ok_or(Error::MethodNotFound)?;
 
-    state.sign_data(self.did(), self.storage(), location, target).await?;
+    let location: KeyLocation = state
+      .method_location(method.key_type(), fragment.to_owned())
+      .expect("TODO: fatal error");
+
+    state.sign_data(self.did(), self.storage(), &location, target).await?;
 
     Ok(())
   }
@@ -227,31 +233,51 @@ impl Account {
     document: &mut IotaDocument,
   ) -> Result<()> {
     if new_state.integration_generation() == Generation::new() {
-      let method: &TinyMethod = new_state.authentication()?;
-      let location: &KeyLocation = method.location();
+      // TODO: Verify correctness of using `authentication`
+      let method: &IotaVerificationMethod = new_state.authentication();
+      let location: KeyLocation = new_state
+        .method_location(
+          method.key_type(),
+          method
+            .id()
+            .fragment()
+            .expect("verification method did not have a fragment")
+            .to_owned(),
+        )
+        .expect("TODO: fatal error");
 
       // Sign the DID Document with the current authentication method
       new_state
-        .sign_data(self.did(), self.storage(), location, document)
+        .sign_data(self.did(), self.storage(), &location, document)
         .await?;
     } else {
-      let method: &TinyMethod = old_state.authentication()?;
-      let location: &KeyLocation = method.location();
+      // TODO: Verify correctness of using `authentication`
+      let method: &IotaVerificationMethod = old_state.authentication();
+      // TODO: Fatal error if not found
+      let location: KeyLocation = new_state.method_location(
+        method.key_type(),
+        method
+          .id()
+          .fragment()
+          .expect("verification method did not have a fragment")
+          .to_owned(),
+      )?;
 
       // Sign the DID Document with the previous authentication method
       old_state
-        .sign_data(self.did(), self.storage(), location, document)
+        .sign_data(self.did(), self.storage(), &location, document)
         .await?;
     }
 
     Ok(())
   }
 
-  async fn process_integration_change(&self) -> Result<()> {
+  async fn process_integration_change(&mut self) -> Result<()> {
     let old_state: IdentityState = self.load_state().await?;
     let new_state: &IdentityState = self.state();
 
-    let mut new_doc: IotaDocument = new_state.to_document()?;
+    // TODO: Optimize
+    let mut new_doc: IotaDocument = new_state.deref().to_owned();
 
     self.sign_document(&old_state, new_state, &mut new_doc).await?;
 
@@ -268,18 +294,28 @@ impl Account {
     let old_state: IdentityState = self.load_state().await?;
     let new_state: &IdentityState = self.state();
 
-    let old_doc: IotaDocument = old_state.to_document()?;
-    let new_doc: IotaDocument = new_state.to_document()?;
+    let old_doc: IotaDocument = old_state.deref().to_owned();
+    let new_doc: IotaDocument = new_state.deref().to_owned();
 
     let diff_id: &MessageId = old_state.diff_message_id();
 
     let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
 
-    let method: &TinyMethod = old_state.authentication()?;
-    let location: &KeyLocation = method.location();
+    // TODO: Verify correctness of using `authentication`
+    let method: &IotaVerificationMethod = old_state.authentication();
+    // let location: &KeyLocation = method.location();
+
+    let location: KeyLocation = old_state.method_location(
+      method.key_type(),
+      method
+        .id()
+        .fragment()
+        .expect("verification method did not have a fragment")
+        .to_owned(),
+    )?;
 
     old_state
-      .sign_data(self.did(), self.storage(), location, &mut diff)
+      .sign_data(self.did(), self.storage(), &location, &mut diff)
       .await?;
 
     let message: MessageId = if self.config.testmode {
@@ -297,14 +333,9 @@ impl Account {
 
   #[doc(hidden)]
   pub async fn load_state(&self) -> Result<IdentityState> {
-    // Retrieve the state from storage or create a new one.
-    Ok(
-      self
-        .storage()
-        .state(self.did())
-        .await?
-        .unwrap_or_else(|| IdentityState::new()),
-    )
+    // TODO: An account always holds a valid identity, so if None is
+    // returned, that's a broken invariant -> should be a fatal error.
+    self.storage().state(self.did()).await?.ok_or(Error::IdentityNotFound)
   }
 
   async fn save(&self, force: bool) -> Result<()> {
