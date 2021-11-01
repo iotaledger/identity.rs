@@ -456,7 +456,8 @@ impl IotaDocument {
 
   /// Signs this DID document with the verification method specified by `method_query`.
   /// The `method_query` may be the full [`IotaDIDUrl`] of the method or just its fragment,
-  /// e.g. "#authentication".
+  /// e.g. "#authentication". The signing method must have a capability invocation verification
+  /// relationship.
   ///
   /// NOTE: does not validate whether `private_key` corresponds to the verification method.
   /// See [`IotaDocument::verify_document`].
@@ -469,15 +470,9 @@ impl IotaDocument {
     Q: Into<MethodQuery<'query>>,
   {
     // Ensure signing key has a capability invocation verification relationship.
-    let method: &VerificationMethod<_> = self.try_resolve_method(method_query)?;
-    if !self
+    let method: &VerificationMethod<_> = self
       .as_document()
-      .capability_invocation()
-      .iter()
-      .any(|ci_method| ci_method.id() == method.id())
-    {
-      return Err(identity_did::error::Error::InvalidMethodType.into());
-    }
+      .try_resolve_method_with_scope(method_query.into(), MethodScope::CapabilityInvocation)?;
 
     // Sign document.
     let method_fragment: String = method.try_into_fragment()?;
@@ -513,15 +508,9 @@ impl IotaDocument {
   pub fn verify_document(signed: &IotaDocument, signer: &IotaDocument) -> Result<()> {
     // Ensure signing key has a capability invocation verification relationship.
     let signature: &Signature = signed.try_signature()?;
-    let method: &VerificationMethod<_> = signer.try_resolve_method(signature)?;
-    if !signer
+    let method: &VerificationMethod<_> = signer
       .as_document()
-      .capability_invocation()
-      .iter()
-      .any(|ci_method| ci_method.id() == method.id())
-    {
-      return Err(identity_did::error::Error::InvalidMethodType.into());
-    }
+      .try_resolve_method_with_scope(signature, MethodScope::CapabilityInvocation)?;
 
     // Verify signature.
     let public: PublicKey = method.key_data().try_decode()?.into();
@@ -605,6 +594,9 @@ impl IotaDocument {
   /// Verifies the signature of the provided `data` was created using a verification method
   /// in this DID Document.
   ///
+  /// NOTE: does not restrict which verification relationship signed the data.
+  /// See [`IotaDocument::verify_data_with_scope`].
+  ///
   /// # Errors
   ///
   /// Fails if an unsupported verification method is used, document
@@ -616,6 +608,20 @@ impl IotaDocument {
     self.verifier().verify(data).map_err(Into::into)
   }
 
+  /// Verifies the signature of the provided `data` was created using a verification method
+  /// in this DID Document with the verification relationship specified by `scope`.
+  ///
+  /// # Errors
+  ///
+  /// Fails if an unsupported verification method is used, document
+  /// serialization fails, or the verification operation fails.
+  pub fn verify_data_with_scope<X>(&self, data: &X, scope: MethodScope) -> Result<()>
+  where
+    X: Serialize + TrySignature,
+  {
+    self.verifier().verify_with_scope(data, scope).map_err(Into::into)
+  }
+
   // ===========================================================================
   // Diffs
   // ===========================================================================
@@ -624,6 +630,8 @@ impl IotaDocument {
   ///
   /// The returned `DocumentDiff` will have a digital signature created using the
   /// specified `private_key` and `method_query`.
+  ///
+  /// NOTE: the method must be a capability invocation method.
   ///
   /// # Errors
   ///
@@ -640,9 +648,25 @@ impl IotaDocument {
   {
     let mut diff: DocumentDiff = DocumentDiff::new(self, other, message_id)?;
 
+    // Ensure the signing method has a capability invocation verification relationship.
+    let method_query = method_query.into();
+    let _ = self
+      .as_document()
+      .try_resolve_method_with_scope(method_query.clone(), MethodScope::CapabilityInvocation)?;
+
     self.sign_data(&mut diff, private_key, method_query)?;
 
     Ok(diff)
+  }
+
+  /// Verifies the signature of the `diff` was created using a capability invocation method
+  /// in this DID Document.
+  ///
+  /// # Errors
+  ///
+  /// Fails if an unsupported verification method is used or the verification operation fails.
+  pub fn verify_diff(&self, diff: &DocumentDiff) -> Result<()> {
+    self.verify_data_with_scope(diff, MethodScope::CapabilityInvocation)
   }
 
   /// Verifies a `DocumentDiff` signature and merges the changes into `self`.
@@ -650,11 +674,13 @@ impl IotaDocument {
   /// If merging fails `self` remains unmodified, otherwise `self` represents
   /// the merged document state.
   ///
+  /// See [`IotaDocument::verify_diff`].
+  ///
   /// # Errors
   ///
   /// Fails if the merge operation or signature operation fails.
   pub fn merge(&mut self, diff: &DocumentDiff) -> Result<()> {
-    self.verify_data(diff)?;
+    self.verify_diff(diff)?;
 
     *self = diff.merge(self)?;
 
@@ -794,11 +820,13 @@ mod tests {
   use identity_did::verification::VerificationMethod;
 
   use crate::did::did::IotaDID;
+  use crate::did::doc::iota_document::Properties;
   use crate::did::doc::IotaDocument;
   use crate::did::doc::IotaVerificationMethod;
   use crate::did::IotaDIDUrl;
   use crate::tangle::MessageId;
   use crate::tangle::Network;
+  use crate::tangle::TangleRef;
   use crate::Error;
 
   const DID_ID: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
@@ -1247,6 +1275,115 @@ mod tests {
         .sign_self(key_collection.private(0).unwrap(), "merkle-key")
         .is_err());
       assert!(document.verify_self_signed().is_err());
+    }
+  }
+
+  #[test]
+  fn test_diff() {
+    // Ensure only capability invocation methods are allowed to sign a diff.
+    for scope in [
+      MethodScope::AssertionMethod,
+      MethodScope::Authentication,
+      MethodScope::CapabilityDelegation,
+      MethodScope::CapabilityInvocation,
+      MethodScope::KeyAgreement,
+      MethodScope::VerificationMethod,
+    ] {
+      let key1: KeyPair = generate_testkey();
+      let mut doc1: IotaDocument = IotaDocument::new(&key1).unwrap();
+      // Add a new verification relationship.
+      let key2: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let method_fragment = format!("{}-1", scope.as_str().to_ascii_lowercase());
+      let method_new: IotaVerificationMethod =
+        IotaVerificationMethod::from_keypair(&key2, method_fragment.as_str()).unwrap();
+      assert!(doc1.insert_method(scope, method_new));
+      assert!(doc1
+        .as_document()
+        .try_resolve_method_with_scope(method_fragment.as_str(), scope)
+        .is_ok());
+      doc1.set_message_id(MessageId::new([3_u8; 32]));
+
+      // Add a service to an updated document.
+      let mut doc2: IotaDocument = doc1.clone();
+      let service: Service = Service::from_json(
+        r#"{
+        "id":"did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1N#linked-domain",
+        "type": "LinkedDomains",
+        "serviceEndpoint": "https://bar.example.com"
+      }"#,
+      )
+      .unwrap();
+      doc2.insert_service(service);
+
+      // Try generate and sign a diff using the specified method.
+      let diff_result = doc1.diff(&doc2, *doc1.message_id(), key2.private(), method_fragment.as_str());
+      if scope == MethodScope::CapabilityInvocation {
+        let diff = diff_result.unwrap();
+        assert!(doc1.verify_data(&diff).is_ok());
+        assert!(doc1.verify_diff(&diff).is_ok());
+      } else {
+        assert!(diff_result.is_err());
+      }
+    }
+  }
+
+  #[test]
+  fn test_verify_data_with_scope() {
+    fn generate_data() -> Properties {
+      use identity_core::json;
+      let mut properties: Properties = Properties::default();
+      properties.properties.insert("int_key".to_owned(), json!(1));
+      properties.properties.insert("str".to_owned(), json!("some value"));
+      properties
+        .properties
+        .insert("object".to_owned(), json!({ "inner": 42 }));
+      properties
+    }
+
+    let key: KeyPair = generate_testkey();
+    let mut document: IotaDocument = IotaDocument::new(&key).unwrap();
+
+    // Try sign using each type of verification relationship.
+    for scope in [
+      MethodScope::AssertionMethod,
+      MethodScope::Authentication,
+      MethodScope::CapabilityDelegation,
+      MethodScope::CapabilityInvocation,
+      MethodScope::KeyAgreement,
+      MethodScope::VerificationMethod,
+    ] {
+      // Add a new method.
+      let key_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let method_fragment = format!("{}-1", scope.as_str().to_ascii_lowercase());
+      let method_new: IotaVerificationMethod =
+        IotaVerificationMethod::from_keypair(&key_new, method_fragment.as_str()).unwrap();
+      document.insert_method(scope, method_new);
+
+      // Sign and verify data.
+      let mut data = generate_data();
+      document
+        .sign_data(&mut data, key_new.private(), method_fragment.as_str())
+        .unwrap();
+      // Signature should still be valid for every scope.
+      assert!(document.verify_data(&data).is_ok());
+
+      // Ensure only the correct scope is valid.
+      for scope_check in [
+        MethodScope::AssertionMethod,
+        MethodScope::Authentication,
+        MethodScope::CapabilityDelegation,
+        MethodScope::CapabilityInvocation,
+        MethodScope::KeyAgreement,
+        MethodScope::VerificationMethod,
+      ] {
+        let result = document.verify_data_with_scope(&data, scope_check);
+        // Any other scope should fail validation.
+        if scope_check == scope {
+          assert!(result.is_ok());
+        } else {
+          assert!(result.is_err());
+        }
+      }
     }
   }
 

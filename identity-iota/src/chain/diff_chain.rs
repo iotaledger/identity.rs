@@ -9,7 +9,6 @@ use core::slice::Iter;
 
 use identity_core::convert::ToJson;
 
-use crate::chain::DocumentChain;
 use crate::chain::IntegrationChain;
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
@@ -66,9 +65,8 @@ impl DiffChain {
         .current_message_id()
         .unwrap_or_else(|| integration_document.message_id()),
     ) {
-      'inner: while let Some(next) = list.pop() {
-        if integration_document.verify_data(&next).is_ok() {
-          this.inner.push(next);
+      'inner: while let Some(next_diff) = list.pop() {
+        if this.try_push_inner(next_diff, integration_document).is_ok() {
           break 'inner;
         }
       }
@@ -113,8 +111,20 @@ impl DiffChain {
   ///
   /// Fails if the diff signature is invalid or the Tangle message
   /// references within the diff are invalid.
-  pub fn try_push(&mut self, integration_chain: &IntegrationChain, diff: DocumentDiff) -> Result<()> {
-    self.check_valid_addition(integration_chain, &diff)?;
+  pub fn try_push(&mut self, diff: DocumentDiff, integration_chain: &IntegrationChain) -> Result<()> {
+    let document: &IotaDocument = integration_chain.current();
+    self.try_push_inner(diff, document)
+  }
+
+  /// Adds a new diff to the [`DiffChain`].
+  ///
+  /// # Errors
+  ///
+  /// Fails if the diff signature is invalid or the Tangle message
+  /// references within the diff are invalid.
+  fn try_push_inner(&mut self, diff: DocumentDiff, document: &IotaDocument) -> Result<()> {
+    let expected_prev_message_id: &MessageId = self.current_message_id().unwrap_or_else(|| document.message_id());
+    Self::check_valid_addition(&diff, document, expected_prev_message_id)?;
 
     // SAFETY: we performed the necessary validation in `check_validity`.
     unsafe {
@@ -134,32 +144,18 @@ impl DiffChain {
     self.inner.push(diff);
   }
 
-  /// Returns `true` if the [`DocumentDiff`] can be added to the [`DiffChain`].
-  pub fn is_valid_addition(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> bool {
-    self.check_valid_addition(integration_chain, diff).is_ok()
-  }
-
   /// Checks if the [`DocumentDiff`] can be added to the [`DiffChain`].
   ///
   /// # Errors
   ///
   /// Fails if the [`DocumentDiff`] is not a valid addition.
-  pub fn check_valid_addition(&self, integration_chain: &IntegrationChain, diff: &DocumentDiff) -> Result<()> {
-    let current_document: &IotaDocument = integration_chain.current();
-    let expected_prev_message_id: &MessageId = DocumentChain::__diff_message_id(integration_chain, self);
-    Self::__check_valid_addition(diff, current_document, expected_prev_message_id)
-  }
-
-  /// Validates the [`DocumentDiff`] is signed by the document and may form part of its diff chain.
-  pub(in crate::chain) fn __check_valid_addition(
+  pub fn check_valid_addition(
     diff: &DocumentDiff,
     document: &IotaDocument,
     expected_prev_message_id: &MessageId,
   ) -> Result<()> {
-    if document.verify_data(diff).is_err() {
-      return Err(Error::ChainError {
-        error: "Invalid Signature",
-      });
+    if document.id() != &diff.did {
+      return Err(Error::ChainError { error: "Invalid DID" });
     }
 
     if diff.message_id().is_null() {
@@ -177,6 +173,12 @@ impl DiffChain {
     if diff.previous_message_id() != expected_prev_message_id {
       return Err(Error::ChainError {
         error: "Invalid Previous Message Id",
+      });
+    }
+
+    if document.verify_diff(diff).is_err() {
+      return Err(Error::ChainError {
+        error: "Invalid Signature",
       });
     }
 
@@ -232,7 +234,6 @@ mod test {
     // =========================================================================
     // Create Initial Document
     // =========================================================================
-
     {
       let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
       let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
@@ -256,7 +257,8 @@ mod test {
       let mut new: IotaDocument = chain.current().clone();
       let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
 
-      let authentication: MethodRef = MethodBuilder::default()
+      // Replace the capability invocation signing key (one step key rotation).
+      let signing_method: MethodRef = MethodBuilder::default()
         .id(CoreDIDUrl::from(chain.id().to_url().join("#key-2").unwrap()))
         .controller(chain.id().clone().into())
         .key_type(MethodType::Ed25519VerificationKey2018)
@@ -266,13 +268,17 @@ mod test {
         .unwrap();
 
       unsafe {
-        new.as_document_mut().authentication_mut().clear();
-        new.as_document_mut().authentication_mut().append(authentication.into());
+        new.as_document_mut().capability_invocation_mut().clear();
+        new
+          .as_document_mut()
+          .capability_invocation_mut()
+          .append(signing_method.into());
       }
 
       new.set_updated(Timestamp::now_utc());
       new.set_previous_message_id(*chain.integration_message_id());
 
+      // Sign the update using the old document.
       assert!(chain
         .current()
         .sign_data(&mut new, keys[0].private(), chain.current().authentication().id())
@@ -298,15 +304,23 @@ mod test {
         this
       };
 
+      // INVALID - try sign using the old key without a capability invocation relationship.
       let message_id = *chain.diff_message_id();
-      let mut diff: DocumentDiff = chain
+      assert!(chain
         .current()
         .diff(
           &new,
           message_id,
           keys[1].private(),
-          chain.current().authentication().id(),
+          chain.current().authentication().id()
         )
+        .is_err());
+
+      // VALID - sign using the new key added in the previous integration chain update.
+      let message_id = *chain.diff_message_id();
+      let mut diff: DocumentDiff = chain
+        .current()
+        .diff(&new, message_id, keys[1].private(), "#key-2")
         .unwrap();
       diff.set_message_id(message_id);
       assert!(chain.try_push_diff(diff).is_ok());

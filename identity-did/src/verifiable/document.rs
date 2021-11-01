@@ -36,6 +36,7 @@ use crate::error::Result;
 use crate::verifiable::Properties;
 use crate::verifiable::Revocation;
 use crate::verification::MethodQuery;
+use crate::verification::MethodScope;
 use crate::verification::MethodType;
 use crate::verification::MethodUriType;
 use crate::verification::TryMethod;
@@ -244,6 +245,23 @@ where
   {
     let signature: &Signature = that.try_signature()?;
     let method: &VerificationMethod<U> = self.document.try_resolve_method(signature)?;
+
+    Self::do_verify(method, that)
+  }
+
+  /// Verifies the signature of the provided data and that it was signed with a verification method
+  /// with a verification relationship specified by `scope`.
+  ///
+  /// # Errors
+  ///
+  /// Fails if an unsupported verification method is used, document
+  /// serialization fails, or the verification operation fails.
+  pub fn verify_with_scope<X>(&self, that: &X, scope: MethodScope) -> Result<()>
+  where
+    X: Serialize + TrySignature,
+  {
+    let signature: &Signature = that.try_signature()?;
+    let method: &VerificationMethod<U> = self.document.try_resolve_method_with_scope(signature, scope)?;
 
     Self::do_verify(method, that)
   }

@@ -319,6 +319,53 @@ impl<T, U, V> CoreDocument<T, U, V> {
       .ok_or(Error::QueryMethodNotFound)
   }
 
+  /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`
+  /// and the verification relationship specified by `scope`.
+  pub fn resolve_method_with_scope<'query, 's: 'query, Q>(
+    &'s self,
+    query: Q,
+    scope: MethodScope,
+  ) -> Option<&VerificationMethod<U>>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    let resolve_ref_helper = |method_ref: &'s MethodRef<U>| self.resolve_method_ref(method_ref);
+
+    match scope {
+      MethodScope::VerificationMethod => self.verification_method.query(query.into()),
+      MethodScope::Authentication => self.authentication.query(query.into()).and_then(resolve_ref_helper),
+      MethodScope::AssertionMethod => self.assertion_method.query(query.into()).and_then(resolve_ref_helper),
+      MethodScope::KeyAgreement => self.key_agreement.query(query.into()).and_then(resolve_ref_helper),
+      MethodScope::CapabilityDelegation => self
+        .capability_delegation
+        .query(query.into())
+        .and_then(resolve_ref_helper),
+      MethodScope::CapabilityInvocation => self
+        .capability_invocation
+        .query(query.into())
+        .and_then(resolve_ref_helper),
+    }
+  }
+
+  /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`
+  /// and the verification relationship specified by `scope`.
+  ///
+  /// # Errors
+  ///
+  /// Fails if no matching [`VerificationMethod`] is found.
+  pub fn try_resolve_method_with_scope<'query, 's: 'query, Q>(
+    &'s self,
+    query: Q,
+    scope: MethodScope,
+  ) -> Result<&VerificationMethod<U>>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    self
+      .resolve_method_with_scope(query, scope)
+      .ok_or(Error::QueryMethodNotFound)
+  }
+
   /// Returns a mutable reference to the first [`VerificationMethod`] with an `id` property
   /// matching the provided `query`.
   pub fn resolve_method_mut<'query, Q>(&mut self, query: Q) -> Option<&mut VerificationMethod<U>>

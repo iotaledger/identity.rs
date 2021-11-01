@@ -142,11 +142,8 @@ impl IntegrationChain {
   /// Fails if the document signature is invalid or the Tangle message
   /// references within the [`IotaDocument`] are invalid.
   pub fn check_valid_addition(&self, document: &IotaDocument) -> Result<()> {
-    // Verify the next document was signed by a valid method from the previous document.
-    if IotaDocument::verify_document(document, &self.current).is_err() {
-      return Err(Error::ChainError {
-        error: "Invalid Signature",
-      });
+    if document.id() != self.current.id() {
+      return Err(Error::ChainError { error: "Invalid DID" });
     }
 
     if document.message_id().is_null() {
@@ -164,6 +161,13 @@ impl IntegrationChain {
     if self.current_message_id() != document.previous_message_id() {
       return Err(Error::ChainError {
         error: "Invalid Previous Message Id",
+      });
+    }
+
+    // Verify the next document was signed by a valid method from the previous document.
+    if IotaDocument::verify_document(document, &self.current).is_err() {
+      return Err(Error::ChainError {
+        error: "Invalid Signature",
       });
     }
 
