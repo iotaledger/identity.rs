@@ -482,7 +482,7 @@ impl IotaDocument {
       .iter()
       .any(|ci_method| ci_method.id() == method.id())
     {
-      return Err(identity_did::error::Error::InvalidMethodType)?;
+      return Err(identity_did::error::Error::InvalidMethodType.into());
     }
 
     // Sign document.
@@ -493,7 +493,7 @@ impl IotaDocument {
       }
       MethodType::MerkleKeyCollection2021 => {
         // Merkle Key Collections cannot be used to sign documents.
-        return Err(identity_did::error::Error::InvalidMethodType)?;
+        return Err(identity_did::error::Error::InvalidMethodType.into());
       }
     }
 
@@ -526,7 +526,7 @@ impl IotaDocument {
       .iter()
       .any(|ci_method| ci_method.id() == method.id())
     {
-      return Err(identity_did::error::Error::InvalidMethodType)?;
+      return Err(identity_did::error::Error::InvalidMethodType.into());
     }
 
     // Verify signature.
@@ -537,7 +537,7 @@ impl IotaDocument {
       }
       MethodType::MerkleKeyCollection2021 => {
         // Merkle Key Collections cannot be used to sign documents.
-        return Err(identity_did::error::Error::InvalidMethodType)?;
+        return Err(identity_did::error::Error::InvalidMethodType.into());
       }
     }
 

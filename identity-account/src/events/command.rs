@@ -31,7 +31,7 @@ use crate::types::MethodSecret;
 
 // Method types allowed to sign a DID document update.
 pub const UPDATE_METHOD_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
-pub const DEFAULT_UPDATE_METHOD_PREFIX: &'static str = "_sign-";
+pub const DEFAULT_UPDATE_METHOD_PREFIX: &str = "_sign-";
 
 #[derive(Clone, Debug)]
 pub(crate) enum Command {

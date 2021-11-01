@@ -380,7 +380,7 @@ impl TinyMethodRef {
   /// Returns the fragment identifying the Verification Method reference.
   pub fn fragment(&self) -> &Fragment {
     match self {
-      Self::Embed(inner) => &inner.location.fragment(),
+      Self::Embed(inner) => inner.location.fragment(),
       Self::Refer(inner) => inner,
     }
   }
