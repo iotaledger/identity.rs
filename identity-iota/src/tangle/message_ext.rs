@@ -52,12 +52,10 @@ fn parse_data<T: FromJson + TangleRef>(message_id: MessageId, data: &[u8]) -> Op
       let mut resource: T = T::from_json_slice(decompressed_message.as_bytes()).ok()?;
       resource.set_message_id(message_id);
       Some(resource)
-    },
-    _ => None
+    }
+    _ => None,
   }
 }
-
-
 
 pub trait MessageIdExt: Sized {
   fn is_null(&self) -> bool;

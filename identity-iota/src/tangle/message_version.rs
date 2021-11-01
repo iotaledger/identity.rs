@@ -1,6 +1,6 @@
 #[derive(Copy, Clone)]
 pub(crate) enum MessageVersion {
-  V1 = 1
+  V1 = 1,
 }
 static CURRENT_VERSION: MessageVersion = MessageVersion::V1;
 

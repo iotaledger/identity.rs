@@ -62,4 +62,3 @@ pub enum Error {
   #[error("Invalid Message Flags")]
   InvalidMessageFlags,
 }
-

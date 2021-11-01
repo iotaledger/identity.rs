@@ -17,6 +17,8 @@ use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::encoding;
+use crate::tangle::message_version;
 use crate::tangle::ClientBuilder;
 use crate::tangle::Message;
 use crate::tangle::MessageId;
@@ -24,8 +26,6 @@ use crate::tangle::Network;
 use crate::tangle::Receipt;
 use crate::tangle::TangleRef;
 use crate::tangle::TangleResolve;
-use crate::tangle::encoding;
-use crate::tangle::message_version;
 
 /// Client for performing IOTA Identity operations on the Tangle.
 #[derive(Debug)]

@@ -1,10 +1,10 @@
-use crate::Error;
 use crate::error::Error::InvalidMessageFlags;
 use crate::tangle::compression_brotli2::{compress_brotli2, decompress_brotli2};
+use crate::Error;
 
 #[derive(Copy, Clone)]
 pub(crate) enum MessageEncodingVersion {
-  JsonBrotli = 1
+  JsonBrotli = 1,
 }
 
 static CURRENT_ENCODING_VERSION: MessageEncodingVersion = MessageEncodingVersion::JsonBrotli;
@@ -21,12 +21,11 @@ pub(crate) fn get_decompressed_message_data<T: AsRef<[u8]>>(encoding_flag: u8, d
     decompress_brotli2(data.as_ref())
   } else {
     Err(InvalidMessageFlags)
-  }
+  };
 }
 
-pub(crate) fn compress_message<T: AsRef<[u8]>> (message: T) -> Result<Vec<u8>, Error> {
+pub(crate) fn compress_message<T: AsRef<[u8]>>(message: T) -> Result<Vec<u8>, Error> {
   match CURRENT_ENCODING_VERSION {
-    MessageEncodingVersion::JsonBrotli => compress_brotli2(message)
+    MessageEncodingVersion::JsonBrotli => compress_brotli2(message),
   }
 }
-
