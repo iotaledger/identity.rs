@@ -45,14 +45,14 @@ async fn test_create_identity() -> Result<()> {
   let command: Command = Command::CreateIdentity {
     network: None,
     method_secret: None,
-    authentication: MethodType::Ed25519VerificationKey2018,
+    method_type: MethodType::Ed25519VerificationKey2018,
   };
 
   account.process(identity, command, false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  assert_eq!(snapshot.sequence(), Generation::from_u32(4));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(5));
   assert_eq!(snapshot.id(), identity);
   assert!(snapshot.identity().did().is_some());
   assert_ne!(snapshot.identity().created(), UnixTimestamp::EPOCH);
@@ -76,7 +76,7 @@ async fn test_create_identity_invalid_method() -> Result<()> {
     let command: Command = Command::CreateIdentity {
       network: None,
       method_secret: None,
-      authentication: type_,
+      method_type: type_,
     };
 
     let output: Result<()> = account.process(identity, command, false).await;
@@ -99,13 +99,14 @@ async fn test_create_identity_invalid_method() -> Result<()> {
 async fn test_create_identity_network() -> Result<()> {
   let account: Account = new_account().await?;
 
-  // Create an identity with a valid network string
+  // Create an identity with a valid network string.
   let create_identity: IdentityCreate = IdentityCreate::new().network("dev")?.key_type(KeyType::Ed25519);
   let identity: IdentityState = account.create_identity(create_identity).await?;
 
-  // Ensure the identity creation was successful
+  // Ensure the identity creation was successful.
   assert!(identity.did().is_some());
   assert!(identity.authentication().is_ok());
+  assert!(identity.capability_invocation().is_ok());
 
   Ok(())
 }
@@ -136,15 +137,15 @@ async fn test_create_identity_already_exists() -> Result<()> {
   let command: Command = Command::CreateIdentity {
     network: None,
     method_secret: None,
-    authentication: MethodType::Ed25519VerificationKey2018,
+    method_type: MethodType::Ed25519VerificationKey2018,
   };
 
   account.process(identity, command.clone(), false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  // version is now 4
-  assert_eq!(snapshot.sequence(), Generation::from(4));
+  // Version is now 5.
+  assert_eq!(snapshot.sequence(), Generation::from(5));
 
   let output: Result<()> = account.process(identity, command, false).await;
 
@@ -155,8 +156,8 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  // version is still 4, no events have been committed
-  assert_eq!(snapshot.sequence(), Generation::from(4));
+  // Version is still 5, no events have been committed.
+  assert_eq!(snapshot.sequence(), Generation::from(5));
 
   Ok(())
 }
@@ -183,6 +184,7 @@ async fn test_create_identity_from_private_key() -> Result<()> {
   // The same private key should result in the same did
   assert_eq!(ident.did(), ident2.did());
   assert_eq!(ident.authentication()?, ident2.authentication()?);
+  assert_eq!(ident.capability_invocation()?, ident2.capability_invocation()?);
 
   Ok(())
 }
@@ -213,7 +215,7 @@ async fn test_create_method() -> Result<()> {
   let command: Command = Command::CreateIdentity {
     network: None,
     method_secret: None,
-    authentication: MethodType::Ed25519VerificationKey2018,
+    method_type: MethodType::Ed25519VerificationKey2018,
   };
 
   account.process(identity, command, false).await?;
@@ -229,7 +231,7 @@ async fn test_create_method() -> Result<()> {
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  assert_eq!(snapshot.sequence(), Generation::from_u32(6));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(7));
   assert_eq!(snapshot.id(), identity);
   assert!(snapshot.identity().did().is_some());
   assert_ne!(snapshot.identity().created(), UnixTimestamp::EPOCH);
@@ -238,48 +240,8 @@ async fn test_create_method() -> Result<()> {
 
   let method: &TinyMethod = snapshot.identity().methods().fetch("key-1")?;
 
-  assert_eq!(method.location().fragment(), "key-1");
+  assert_eq!(method.location().fragment_name(), "key-1");
   assert_eq!(method.location().method(), MethodType::Ed25519VerificationKey2018);
-
-  Ok(())
-}
-
-#[tokio::test]
-async fn test_create_method_reserved_fragment() -> Result<()> {
-  let account: Account = new_account().await?;
-  let identity: IdentityId = IdentityId::from_u32(1);
-
-  let command: Command = Command::CreateIdentity {
-    network: None,
-    method_secret: None,
-    authentication: MethodType::Ed25519VerificationKey2018,
-  };
-
-  account.process(identity, command, false).await?;
-
-  let command: Command = Command::CreateMethod {
-    scope: MethodScope::default(),
-    method_secret: None,
-    type_: MethodType::Ed25519VerificationKey2018,
-    fragment: "_sign-123".to_owned(),
-  };
-
-  let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-
-  // version is now 4
-  assert_eq!(snapshot.sequence(), Generation::from_u32(4));
-
-  let output: _ = account.process(identity, command, false).await;
-
-  assert!(matches!(
-    output.unwrap_err(),
-    Error::UpdateError(UpdateError::InvalidMethodFragment(_)),
-  ));
-
-  let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-
-  // version is still 4, no new events have been committed
-  assert_eq!(snapshot.sequence(), Generation::from_u32(4));
 
   Ok(())
 }
@@ -292,7 +254,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   let command: Command = Command::CreateIdentity {
     network: None,
     method_secret: None,
-    authentication: MethodType::Ed25519VerificationKey2018,
+    method_type: MethodType::Ed25519VerificationKey2018,
   };
 
   account.process(identity, command, false).await?;
@@ -305,12 +267,12 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   };
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-  assert_eq!(snapshot.sequence(), Generation::from_u32(4));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(5));
 
   account.process(identity, command.clone(), false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-  assert_eq!(snapshot.sequence(), Generation::from_u32(6));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(7));
 
   let output: _ = account.process(identity, command, false).await;
 
@@ -320,7 +282,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   ));
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-  assert_eq!(snapshot.sequence(), Generation::from_u32(6));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(7));
 
   Ok(())
 }
@@ -333,7 +295,7 @@ async fn test_create_method_from_private_key() -> Result<()> {
   let command: Command = Command::CreateIdentity {
     network: None,
     method_secret: None,
-    authentication: MethodType::Ed25519VerificationKey2018,
+    method_type: MethodType::Ed25519VerificationKey2018,
   };
 
   account.process(identity, command, false).await?;
@@ -368,7 +330,7 @@ async fn test_create_method_from_invalid_private_key() -> Result<()> {
   let command: Command = Command::CreateIdentity {
     network: None,
     method_secret: None,
-    authentication: MethodType::Ed25519VerificationKey2018,
+    method_type: MethodType::Ed25519VerificationKey2018,
   };
 
   account.process(identity, command, false).await?;
@@ -398,7 +360,7 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
   let command: Command = Command::CreateIdentity {
     network: None,
     method_secret: None,
-    authentication: MethodType::Ed25519VerificationKey2018,
+    method_type: MethodType::Ed25519VerificationKey2018,
   };
 
   account.process(identity, command, false).await?;
@@ -441,7 +403,7 @@ async fn test_delete_method() -> Result<()> {
   let command: Command = Command::CreateIdentity {
     network: None,
     method_secret: None,
-    authentication: MethodType::Ed25519VerificationKey2018,
+    method_type: MethodType::Ed25519VerificationKey2018,
   };
 
   account.process(identity, command, false).await?;
@@ -454,13 +416,13 @@ async fn test_delete_method() -> Result<()> {
   };
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-  assert_eq!(snapshot.sequence(), Generation::from_u32(4));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(5));
 
   account.process(identity, command, false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  assert_eq!(snapshot.sequence(), Generation::from_u32(6));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(7));
   assert_eq!(snapshot.identity().methods().len(), 2);
   assert!(snapshot.identity().methods().contains("key-1"));
   assert!(snapshot.identity().methods().get("key-1").is_some());
@@ -474,7 +436,7 @@ async fn test_delete_method() -> Result<()> {
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  assert_eq!(snapshot.sequence(), Generation::from_u32(8));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(9));
   assert_eq!(snapshot.identity().methods().len(), 1);
   assert!(!snapshot.identity().methods().contains("key-1"));
   assert!(snapshot.identity().methods().get("key-1").is_none());
