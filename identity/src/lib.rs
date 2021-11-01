@@ -104,7 +104,6 @@ pub mod comm {
   pub use identity_comm::envelope::*;
   pub use identity_comm::error::*;
   pub use identity_comm::message::*;
-  pub use identity_comm::types::*;
 }
 
 pub mod prelude {
