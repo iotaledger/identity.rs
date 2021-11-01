@@ -10,8 +10,9 @@ jobs:
       - name: Run box version	    
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
-          args: --user eike-hass --project identity.rs --output /github/workspace/CHANGELOG.md --verbose
+          args: --user eike-hass --project identity.rs --verbose
       - run: ls -al
+      - run: cat CHANGELOG.md
 
       # - name: Commit files
       #   env:
