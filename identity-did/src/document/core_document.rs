@@ -236,7 +236,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 
   /// Adds a new [`VerificationMethod`] to the Document.
-  pub fn insert_method(&mut self, scope: MethodScope, method: VerificationMethod<U>) -> bool {
+  pub fn insert_method(&mut self, method: VerificationMethod<U>, scope: MethodScope) -> bool {
     match scope {
       MethodScope::VerificationMethod => self.verification_method.append(method.into()),
       MethodScope::Authentication => self.authentication.append(MethodRef::Embed(method).into()),

@@ -62,7 +62,7 @@ async fn main() -> Result<()> {
     // Add a new VerificationMethod with a new KeyPair, with the tag "keys-1"
     let keys_1: KeyPair = KeyPair::new_ed25519()?;
     let method_1: IotaVerificationMethod = IotaVerificationMethod::from_did(int_doc_1.id().clone(), &keys_1, "keys-1")?;
-    assert!(int_doc_1.insert_method(MethodScope::VerificationMethod, method_1));
+    assert!(int_doc_1.insert_method(method_1, MethodScope::VerificationMethod));
 
     // Add the `message_id` of the previous message in the chain.
     // This is REQUIRED in order for the messages to form a chain.
@@ -175,7 +175,7 @@ async fn main() -> Result<()> {
     // Add a VerificationMethod with a new KeyPair, called "keys-2"
     let keys_2: KeyPair = KeyPair::new_ed25519()?;
     let method_2: IotaVerificationMethod = IotaVerificationMethod::from_did(int_doc_2.id().clone(), &keys_2, "keys-2")?;
-    assert!(int_doc_2.insert_method(MethodScope::VerificationMethod, method_2));
+    assert!(int_doc_2.insert_method(method_2, MethodScope::VerificationMethod));
 
     // Note: the `previous_message_id` points to the `message_id` of the last integration chain
     //       update, NOT the last diff chain message.

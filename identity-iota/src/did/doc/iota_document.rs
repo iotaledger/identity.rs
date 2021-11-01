@@ -390,8 +390,8 @@ impl IotaDocument {
   }
 
   /// Adds a new [`IotaVerificationMethod`] to the DID Document.
-  pub fn insert_method(&mut self, scope: MethodScope, method: IotaVerificationMethod) -> bool {
-    self.document.insert_method(scope, method.into())
+  pub fn insert_method(&mut self, method: IotaVerificationMethod, scope: MethodScope) -> bool {
+    self.document.insert_method(method.into(), scope)
   }
 
   /// Removes all references to the specified [`VerificationMethod`].
@@ -1205,7 +1205,7 @@ mod tests {
     // Add a new capability invocation method directly
     let new_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let new_method: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&new_keypair, "new_signer").unwrap();
-    document.insert_method(MethodScope::CapabilityInvocation, new_method);
+    document.insert_method(new_method, MethodScope::CapabilityInvocation);
 
     // INVALID - try sign using the wrong private key
     document.sign_self(keypair.private(), "#new_signer").unwrap();
@@ -1255,7 +1255,7 @@ mod tests {
       let keypair_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       let method_new: IotaVerificationMethod =
         IotaVerificationMethod::from_keypair(&keypair_new, "new_signer").unwrap();
-      document.insert_method(method_scope, method_new);
+      document.insert_method(method_new, method_scope);
       // Try sign the document using the new key.
       assert!(document.sign_self(keypair_new.private(), "#new_signer").is_err());
       assert!(document.verify_self_signed().is_err());
@@ -1269,7 +1269,7 @@ mod tests {
       let merkle_key_method =
         IotaVerificationMethod::create_merkle_key::<Sha256, _>(document.id().clone(), &key_collection, "merkle-key")
           .unwrap();
-      document.insert_method(MethodScope::Authentication, merkle_key_method);
+      document.insert_method(merkle_key_method, MethodScope::CapabilityInvocation);
       assert!(document
         .sign_self(key_collection.private(0).unwrap(), "merkle-key")
         .is_err());
@@ -1295,7 +1295,7 @@ mod tests {
       let method_fragment = format!("{}-1", scope.as_str().to_ascii_lowercase());
       let method_new: IotaVerificationMethod =
         IotaVerificationMethod::from_keypair(&key2, method_fragment.as_str()).unwrap();
-      assert!(doc1.insert_method(scope, method_new));
+      assert!(doc1.insert_method(method_new, scope));
       assert!(doc1
         .as_document()
         .try_resolve_method_with_scope(method_fragment.as_str(), scope)
@@ -1356,7 +1356,7 @@ mod tests {
       let method_fragment = format!("{}-1", scope.as_str().to_ascii_lowercase());
       let method_new: IotaVerificationMethod =
         IotaVerificationMethod::from_keypair(&key_new, method_fragment.as_str()).unwrap();
-      document.insert_method(scope, method_new);
+      document.insert_method(method_new, scope);
 
       // Sign and verify data.
       let mut data = generate_data();
@@ -1448,7 +1448,7 @@ mod tests {
       let keypair_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       let method_new: IotaVerificationMethod =
         IotaVerificationMethod::from_keypair(&keypair_new, "new_signer").unwrap();
-      document.insert_method(MethodScope::CapabilityInvocation, method_new);
+      document.insert_method(method_new, MethodScope::CapabilityInvocation);
       // Sign the document using the new key.
       document.sign_self(keypair_new.private(), "#new_signer").unwrap();
       assert!(document.verify_self_signed().is_ok());

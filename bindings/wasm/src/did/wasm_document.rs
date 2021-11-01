@@ -158,7 +158,7 @@ impl WasmDocument {
   pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: Option<String>) -> Result<bool> {
     let scope: MethodScope = scope.unwrap_or_default().parse().wasm_result()?;
 
-    Ok(self.0.insert_method(scope, method.0.clone()))
+    Ok(self.0.insert_method(method.0.clone(), scope))
   }
 
   /// Removes all references to the specified Verification Method.
