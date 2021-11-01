@@ -75,13 +75,17 @@ impl Client {
 
   /// Publishes an [`IotaDocument`] to the Tangle.
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
-    self.publish_json(document.integration_index(), document).await
+    self
+      .publish_json_with_retry(document.integration_index(), document, None, None)
+      .await
   }
 
   /// Publishes a [`DocumentDiff`] to the Tangle to form part of the diff chain for the integration
   /// chain message specified by the given [`MessageId`].
   pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
-    self.publish_json(&IotaDocument::diff_index(message_id)?, diff).await
+    self
+      .publish_json_with_retry(&IotaDocument::diff_index(message_id)?, diff, None, None)
+      .await
   }
 
   /// Publishes arbitrary JSON data to the specified index on the Tangle.
@@ -97,8 +101,8 @@ impl Client {
       .map(|message| Receipt::new(self.network.clone(), message))
   }
 
-  /// Retries (promotes or reattaches) a message for provided message id until it’s included (referenced by a milestone).
-  /// Default interval is 5 seconds and max attempts is 20. Returns reattached messages
+  /// Retries (promotes or reattaches) a message for provided message id until it’s included (referenced by a
+  /// milestone). Default interval is 5 seconds and max attempts is 20. Returns reattached messages
   pub async fn retry_until_included(
     &self,
     message_id: &MessageId,
@@ -123,10 +127,13 @@ impl Client {
     max_attempts: Option<u64>,
   ) -> Result<Receipt> {
     let receipt = self.publish_json(index, data).await?;
-    let _reattached_messages = self
+    let reattached_messages = self
       .retry_until_included(receipt.message_id(), interval, max_attempts)
       .await?;
-    Ok(receipt)
+    match reattached_messages.last() {
+      Some(reattached_message) => Ok(Receipt::new(self.network.clone(), reattached_message.1.clone())),
+      None => Ok(receipt),
+    }
   }
 
   /// Fetch the [`IotaDocument`] specified by the given [`IotaDID`].
