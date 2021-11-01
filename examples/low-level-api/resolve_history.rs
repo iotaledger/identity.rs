@@ -103,7 +103,7 @@ async fn main() -> Result<()> {
   //
   // This is the first diff therefore the `previous_message_id` property is
   // set to the last DID document published.
-  let diff_1: DocumentDiff = int_doc_1.diff(&diff_doc_1, *int_receipt_1.message_id(), keypair.private())?;
+  let diff_1: DocumentDiff = int_doc_1.diff(&diff_doc_1, *int_receipt_1.message_id(), keypair.private(), int_doc_1.authentication().id())?;
 
   // Publish the diff to the Tangle, starting a diff chain.
   let diff_receipt_1: Receipt = client.publish_diff(int_receipt_1.message_id(), &diff_1).await?;
@@ -129,7 +129,7 @@ async fn main() -> Result<()> {
 
   // This is the second diff therefore its `previous_message_id` property is
   // set to the first published diff to extend the diff chain.
-  let diff_2: DocumentDiff = diff_doc_1.diff(&diff_doc_2, *diff_receipt_1.message_id(), keypair.private())?;
+  let diff_2: DocumentDiff = diff_doc_1.diff(&diff_doc_2, *diff_receipt_1.message_id(), keypair.private(), diff_doc_1.authentication().id())?;
 
   // Publish the diff to the Tangle.
   // Note that we still use the `message_id` from the last integration chain message here to link

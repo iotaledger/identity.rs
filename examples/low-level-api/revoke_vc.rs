@@ -80,7 +80,11 @@ async fn create_vc_helper(
   let mut credential: Credential = common::issue_degree(&issuer_doc, &subject_doc)?;
 
   // Sign the Credential with the issuer's #newKey private key, so we can later revoke it
-  issuer_doc.sign_data(&mut credential, issuer_new_key.private())?;
+  issuer_doc.sign_data(
+    &mut credential,
+    issuer_new_key.private(),
+    issuer_doc.authentication().id(),
+  )?;
 
   let issuer = (issuer_doc, issuer_key, issuer_updated_receipt);
   Ok((issuer, credential))

@@ -302,12 +302,6 @@ impl IotaDocument {
     unsafe { IotaVerificationMethod::new_unchecked_ref(method) }
   }
 
-  fn authentication_id(&self) -> &CoreDIDUrl {
-    // This `unwrap` is "fine" - a valid document will
-    // always have a resolvable authentication method.
-    self.document.authentication().head().unwrap().id()
-  }
-
   /// Returns the [`Timestamp`] of when the DID document was created.
   pub fn created(&self) -> Timestamp {
     self.document.properties().created
@@ -404,7 +398,7 @@ impl IotaDocument {
   pub fn remove_method(&mut self, did_url: IotaDIDUrl) -> Result<()> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
 
-    if self.authentication_id() == &core_did_url {
+    if self.authentication().as_ref() == &core_did_url {
       return Err(Error::CannotRemoveAuthMethod);
     }
 
@@ -582,16 +576,6 @@ impl IotaDocument {
     self.document.verifier()
   }
 
-  /// Signs the provided data with the default authentication method.
-  ///
-  /// See [`IotaDocument::sign_data_with`].
-  pub fn sign_data<X>(&self, data: &mut X, private_key: &PrivateKey) -> Result<()>
-  where
-    X: Serialize + SetSignature + TryMethod,
-  {
-    self.sign_data_with(data, private_key, self.authentication_id())
-  }
-
   /// Signs the provided `data` with the verification method specified by `method_query`.
   ///
   /// NOTE: does not validate whether `private_key` corresponds to the verification method.
@@ -601,7 +585,7 @@ impl IotaDocument {
   ///
   /// Fails if an unsupported verification method is used, data
   /// serialization fails, or the signature operation fails.
-  pub fn sign_data_with<'query, 's: 'query, X, Q>(
+  pub fn sign_data<'query, 's: 'query, X, Q>(
     &'s self,
     data: &mut X,
     private_key: &'query PrivateKey,
@@ -639,15 +623,24 @@ impl IotaDocument {
   /// Creates a `DocumentDiff` representing the changes between `self` and `other`.
   ///
   /// The returned `DocumentDiff` will have a digital signature created using the
-  /// default authentication method and `private_key`.
+  /// specified `private_key` and `method_query`.
   ///
   /// # Errors
   ///
   /// Fails if the diff operation or signature operation fails.
-  pub fn diff(&self, other: &Self, message_id: MessageId, private_key: &PrivateKey) -> Result<DocumentDiff> {
+  pub fn diff<'query, 's: 'query, Q>(
+    &'query self,
+    other: &Self,
+    message_id: MessageId,
+    private_key: &'query PrivateKey,
+    method_query: Q,
+  ) -> Result<DocumentDiff>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
     let mut diff: DocumentDiff = DocumentDiff::new(self, other, message_id)?;
 
-    self.sign_data(&mut diff, private_key)?;
+    self.sign_data(&mut diff, private_key, method_query)?;
 
     Ok(diff)
   }
@@ -878,7 +871,7 @@ mod tests {
 
   fn compare_document(document: &IotaDocument) {
     assert_eq!(document.id().to_string(), DID_ID);
-    assert_eq!(document.authentication_id().to_string(), DID_AUTH);
+    assert_eq!(document.authentication().id().to_string(), DID_AUTH);
     assert_eq!(
       document.authentication().key_type(),
       MethodType::Ed25519VerificationKey2018
@@ -892,7 +885,7 @@ mod tests {
   fn compare_document_devnet(document: &IotaDocument) {
     assert_eq!(document.id().to_string(), DID_DEVNET_ID);
     assert_eq!(document.id().network_str(), Network::Devnet.name_str());
-    assert_eq!(document.authentication_id().to_string(), DID_DEVNET_AUTH);
+    assert_eq!(document.authentication().id().to_string(), DID_DEVNET_AUTH);
     assert_eq!(
       document.authentication().key_type(),
       MethodType::Ed25519VerificationKey2018

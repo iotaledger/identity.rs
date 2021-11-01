@@ -45,7 +45,15 @@ pub fn update_diff_chain(n: usize, chain: &mut DocumentChain, keypair: &KeyPair)
     };
 
     let message_id = *chain.diff_message_id();
-    let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keypair.private()).unwrap();
+    let mut diff: DocumentDiff = chain
+      .current()
+      .diff(
+        &new,
+        message_id,
+        keypair.private(),
+        chain.current().authentication().id(),
+      )
+      .unwrap();
 
     diff.set_message_id(message_id);
     assert!(chain.try_push_diff(diff).is_ok());
@@ -78,7 +86,10 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
     new.set_updated(Timestamp::now_utc());
     new.set_previous_message_id(*chain.integration_message_id());
 
-    chain.current().sign_data(&mut new, keypair.private()).unwrap();
+    chain
+      .current()
+      .sign_data(&mut new, keypair.private(), chain.current().authentication().id())
+      .unwrap();
     chain.try_push_integration(new).unwrap();
   }
 }

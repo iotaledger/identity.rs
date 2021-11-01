@@ -273,7 +273,10 @@ mod test {
       new.set_updated(Timestamp::now_utc());
       new.set_previous_message_id(*chain.integration_message_id());
 
-      assert!(chain.current().sign_data(&mut new, keys[0].private()).is_ok());
+      assert!(chain
+        .current()
+        .sign_data(&mut new, keys[0].private(), chain.current().authentication().id())
+        .is_ok());
       assert_eq!(
         chain.current().proof().unwrap().verification_method(),
         "#authentication"
@@ -296,7 +299,15 @@ mod test {
       };
 
       let message_id = *chain.diff_message_id();
-      let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keys[1].private()).unwrap();
+      let mut diff: DocumentDiff = chain
+        .current()
+        .diff(
+          &new,
+          message_id,
+          keys[1].private(),
+          chain.current().authentication().id(),
+        )
+        .unwrap();
       diff.set_message_id(message_id);
       assert!(chain.try_push_diff(diff).is_ok());
     }
