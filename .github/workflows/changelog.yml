@@ -8,11 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: docker info
       - name: Run box version	    
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
-          CMD: --help
+          args: --user eike-hass --project identity.rs --output /github/workspace/CHANGELOG.md --verbose
+      - run: ls -al
 
       # - name: Commit files
       #   env:
