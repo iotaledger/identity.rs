@@ -23,7 +23,6 @@ log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
-brotli2 = "0.3"
 brotli = "3.3.2"
 
 
