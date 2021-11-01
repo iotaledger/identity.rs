@@ -24,6 +24,10 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::utils::generate_ed25519_keypairs;
 
+/// Defines an upper limit to the amount of keys that can be created (2^12)
+/// This value respects a current stronghold limitation
+const MAX_KEYS_ALLOWED: usize = 4_096;
+
 /// A collection of cryptographic keys.
 #[derive(Clone, Debug)]
 pub struct KeyCollection {
@@ -57,14 +61,28 @@ impl KeyCollection {
   }
 
   /// Creates a new [`KeyCollection`] with [`Ed25519`][`KeyType::Ed25519`] keys.
+  /// If `count` is not a power of two, with the exception of 0, which will result in an error,
+  /// it will be rounded up to the next one.
+  /// E.g. 230 -> 256
   pub fn new_ed25519(count: usize) -> Result<Self> {
     Self::new(KeyType::Ed25519, count)
   }
 
   /// Creates a new [`KeyCollection`] with the given [`key type`][`KeyType`].
+  /// If `count` is not a power of two, with the exception of 0, which will result in an error,
+  /// it will be rounded up to the next one.
+  /// E.g. 230 -> 256
   pub fn new(type_: KeyType, count: usize) -> Result<Self> {
+    if count == 0 {
+      return Err(Error::InvalidKeyCollectionSize(0));
+    }
+    let count_next_power = count.checked_next_power_of_two().unwrap_or(0);
+    if count_next_power == 0 || count_next_power > MAX_KEYS_ALLOWED {
+      return Err(Error::InvalidKeyCollectionSize(count_next_power));
+    }
+
     let keys: Vec<(PublicKey, PrivateKey)> = match type_ {
-      KeyType::Ed25519 => generate_ed25519_keypairs(count)?,
+      KeyType::Ed25519 => generate_ed25519_keypairs(count_next_power)?,
     };
 
     Self::from_iterator(type_, keys.into_iter())
@@ -205,7 +223,7 @@ mod tests {
   fn test_ed25519() {
     let keys: KeyCollection = KeyCollection::new_ed25519(100).unwrap();
 
-    assert_eq!(keys.len(), 100);
+    assert_eq!(keys.len(), 128);
     assert!(!keys.is_empty());
 
     let public: Vec<_> = keys.iter_public().cloned().collect();
@@ -231,5 +249,24 @@ mod tests {
       assert_eq!(public.as_ref(), keys.public(index).unwrap().as_ref());
       assert_eq!(private.as_ref(), keys.private(index).unwrap().as_ref());
     }
+  }
+
+  #[test]
+  fn test_key_collection_size() {
+    // Key Collection can not exceed 4_096 keys
+    let keys: Result<KeyCollection, Error> = KeyCollection::new_ed25519(4_097);
+    assert!(keys.is_err());
+    // Key Collection should not hold 0 keys
+    let keys: Result<KeyCollection, Error> = KeyCollection::new_ed25519(0);
+    assert!(keys.is_err());
+    // The number of keys created rounds up to the next power of two
+    let keys: KeyCollection = KeyCollection::new_ed25519(2_049).unwrap();
+    assert_eq!(keys.len(), 4_096);
+    // The number of keys created rounds up to the next power of two
+    let keys: KeyCollection = KeyCollection::new_ed25519(4_096).unwrap();
+    assert_eq!(keys.len(), 4_096);
+    // In case of overflow an error is returned
+    let keys: Result<KeyCollection, Error> = KeyCollection::new_ed25519(usize::MAX);
+    assert!(keys.is_err());
   }
 }
