@@ -613,8 +613,7 @@ impl IotaDocument {
   ///
   /// # Errors
   ///
-  /// Fails if an unsupported verification method is used, document
-  /// serialization fails, or the verification operation fails.
+  /// Fails if an unsupported verification method is used or the verification operation fails.
   pub fn verify_data_with_scope<X>(&self, data: &X, scope: MethodScope) -> Result<()>
   where
     X: Serialize + TrySignature,

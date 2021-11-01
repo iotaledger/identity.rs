@@ -916,15 +916,17 @@ Deserializes from a JSON object.
         * [.removeMethod(did)](#Document+removeMethod)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#Document+removeService)
-        * [.signDocument(key_pair, method_query)](#Document+signDocument)
+        * [.signSelf(key_pair, method_query)](#Document+signSelf)
         * [.verifySelfSigned()](#Document+verifySelfSigned) ⇒ <code>boolean</code>
         * [.signCredential(data, args)](#Document+signCredential) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
         * [.signPresentation(data, args)](#Document+signPresentation) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
         * [.signData(data, args)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data)](#Document+verifyData) ⇒ <code>boolean</code>
+        * [.verifyDataWithScope(data, scope)](#Document+verifyDataWithScope) ⇒ <code>boolean</code>
         * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
-        * [.diff(other, message, key)](#Document+diff) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
+        * [.diff(other, message, key, method)](#Document+diff) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
+        * [.verifyDiff(diff)](#Document+verifyDiff)
         * [.merge(diff)](#Document+merge)
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
@@ -1087,9 +1089,9 @@ Remove a `Service` identified by the given `DIDUrl` from the document.
 | --- | --- |
 | did | [<code>DIDUrl</code>](#DIDUrl) | 
 
-<a name="Document+signDocument"></a>
+<a name="Document+signSelf"></a>
 
-### document.signDocument(key_pair, method_query)
+### document.signSelf(key_pair, method_query)
 Signs the DID document with the verification method specified by `method_query`.
 The `method_query` may be the full `DIDUrl` of the method or just its fragment,
 e.g. "#authentication".
@@ -1157,6 +1159,19 @@ Verifies the authenticity of `data` using the target verification method.
 | --- | --- |
 | data | <code>any</code> | 
 
+<a name="Document+verifyDataWithScope"></a>
+
+### document.verifyDataWithScope(data, scope) ⇒ <code>boolean</code>
+Verifies the signature of the provided `data` was created using a verification method
+in this DID Document with the verification relationship specified by `scope`.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>any</code> | 
+| scope | <code>string</code> | 
+
 <a name="Document+resolveMethod"></a>
 
 ### document.resolveMethod(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
@@ -1178,8 +1193,9 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="Document+diff"></a>
 
-### document.diff(other, message, key) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
-Generate the difference between two DID Documents and sign it
+### document.diff(other, message, key, method) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
+Generate a `DocumentDiff` between two DID Documents and sign it using the specified
+`key` and `method`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -1188,6 +1204,23 @@ Generate the difference between two DID Documents and sign it
 | other | [<code>Document</code>](#Document) | 
 | message | <code>string</code> | 
 | key | [<code>KeyPair</code>](#KeyPair) | 
+| method | <code>string</code> | 
+
+<a name="Document+verifyDiff"></a>
+
+### document.verifyDiff(diff)
+Verifies the signature of the `diff` was created using a capability invocation method
+in this DID Document.
+
+# Errors
+
+Fails if an unsupported verification method is used or the verification operation fails.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| diff | [<code>DocumentDiff</code>](#DocumentDiff) | 
 
 <a name="Document+merge"></a>
 

@@ -48,7 +48,7 @@ async function manipulateIdentity(clientConfig) {
     doc.updated = Timestamp.nowUTC();
 
     // Sign the DID Document with the appropriate key.
-    doc.signDocument(key, doc.authentication().id.toString());
+    doc.signSelf(key, doc.authentication().id.toString());
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const updateReceipt = await client.publishDocument(doc.toJSON());

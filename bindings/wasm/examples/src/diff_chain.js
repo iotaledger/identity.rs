@@ -37,7 +37,7 @@ async function createDiff(clientConfig) {
     console.log(updatedDoc);
 
     // Create diff
-    const diff = doc.diff(updatedDoc, receipt.messageId, key);
+    const diff = doc.diff(updatedDoc, receipt.messageId, key, doc.authentication().id.toString());
     console.log(diff);
 
     // Publish diff to the Tangle

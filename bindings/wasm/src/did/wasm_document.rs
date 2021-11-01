@@ -189,7 +189,7 @@ impl WasmDocument {
   ///
   /// NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
   /// verification method. See `Document::verifySelfSigned`.
-  #[wasm_bindgen(js_name = signDocument)]
+  #[wasm_bindgen(js_name = signSelf)]
   pub fn sign_self(&mut self, key_pair: &KeyPair, method_query: String) -> Result<()> {
     self.0.sign_self(key_pair.0.private(), &method_query).wasm_result()
   }
@@ -294,9 +294,18 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = verifyData)]
   pub fn verify_data(&self, data: &JsValue) -> Result<bool> {
     let data: verifiable::Properties = data.into_serde().wasm_result()?;
-    let result: bool = self.0.verifier().verify(&data).is_ok();
 
-    Ok(result)
+    Ok(self.0.verify_data(&data).is_ok())
+  }
+
+  /// Verifies the signature of the provided `data` was created using a verification method
+  /// in this DID Document with the verification relationship specified by `scope`.
+  #[wasm_bindgen(js_name = verifyDataWithScope)]
+  pub fn verify_data_with_scope(&self, data: &JsValue, scope: String) -> Result<bool> {
+    let scope: MethodScope = scope.parse().wasm_result()?;
+    let data: verifiable::Properties = data.into_serde().wasm_result()?;
+
+    Ok(self.0.verify_data_with_scope(&data, scope).is_ok())
   }
 
   #[wasm_bindgen(js_name = resolveMethod)]
@@ -321,14 +330,31 @@ impl WasmDocument {
   // Diffs
   // ===========================================================================
 
-  /// Generate the difference between two DID Documents and sign it
+  /// Generate a `DocumentDiff` between two DID Documents and sign it using the specified
+  /// `key` and `method`.
   #[wasm_bindgen]
-  pub fn diff(&self, other: &WasmDocument, message: &str, key: &KeyPair) -> Result<WasmDocumentDiff> {
+  pub fn diff(&self, other: &WasmDocument, message: &str, key: &KeyPair, method: &str) -> Result<WasmDocumentDiff> {
     self
       .0
-      .diff(&other.0, MessageId::from_str(message).wasm_result()?, key.0.private())
+      .diff(
+        &other.0,
+        MessageId::from_str(message).wasm_result()?,
+        key.0.private(),
+        method,
+      )
       .map(WasmDocumentDiff::from)
       .wasm_result()
+  }
+
+  /// Verifies the signature of the `diff` was created using a capability invocation method
+  /// in this DID Document.
+  ///
+  /// # Errors
+  ///
+  /// Fails if an unsupported verification method is used or the verification operation fails.
+  #[wasm_bindgen(js_name = verifyDiff)]
+  pub fn verify_diff(&self, diff: &WasmDocumentDiff) -> Result<()> {
+    self.0.verify_diff(&diff.0).wasm_result()
   }
 
   /// Verifies a `DocumentDiff` signature and merges the changes into `self`.
