@@ -14,7 +14,6 @@ use identity::iota::CredentialValidator;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
-use identity::iota::Receipt;
 use identity::iota::TangleResolve;
 use js_sys::Promise;
 use wasm_bindgen::prelude::*;
@@ -25,7 +24,6 @@ use crate::chain::WasmDocumentHistory;
 use crate::did::WasmDocument;
 use crate::did::WasmDocumentDiff;
 use crate::error::Result;
-use crate::error::WasmError;
 use crate::error::WasmResult;
 use crate::tangle::Config;
 use crate::tangle::WasmNetwork;
@@ -129,7 +127,12 @@ impl Client {
   /// Retries (promotes or reattaches) a message for provided message id until it’s included (referenced by a
   /// milestone). Default interval is 5 seconds and max attempts is 20. Returns reattached messages
   #[wasm_bindgen(js_name = retryUntilIncluded)]
-  pub fn retry_until_included(&self, message_id: &str, interval: Option<u64>, max_attempts: Option<u64>) -> Result<Promise> {
+  pub fn retry_until_included(
+    &self,
+    message_id: &str,
+    interval: Option<u64>,
+    max_attempts: Option<u64>,
+  ) -> Result<Promise> {
     let message_id: MessageId = MessageId::from_str(message_id).wasm_result()?;
     let client: Rc<IotaClient> = self.client.clone();
 
@@ -148,18 +151,23 @@ impl Client {
   /// Retries (promotes or reattaches) the message until it’s included (referenced by a milestone).
   /// Default interval is 5 seconds and max attempts is 20.
   #[wasm_bindgen(js_name = publishJsonWithRetry)]
-  pub fn publish_json_with_retry(&self, index: &str, data: &JsValue, interval: Option<u64>, max_attempts: Option<u64>) -> Result<Promise> {
+  pub fn publish_json_with_retry(
+    &self,
+    index: &str,
+    data: &JsValue,
+    interval: Option<u64>,
+    max_attempts: Option<u64>,
+  ) -> Result<Promise> {
     let client: Rc<IotaClient> = self.client.clone();
 
     let index = index.to_owned();
     let value: serde_json::Value = data.into_serde().wasm_result()?;
     let promise: Promise = future_to_promise(async move {
-      let receipt = client.publish_json(&index, &value).await.map_err(|e| WasmError::from(e))?;
-      let reattached_messages = client.retry_until_included(receipt.message_id(), interval, max_attempts).await.map_err(|e| WasmError::from(e))?;
-      match reattached_messages.last() {
-        Some(reattached_message) => JsValue::from_serde(&Receipt::new(receipt.network(), reattached_message.1.clone())).wasm_result(),
-        None => JsValue::from_serde(&receipt).wasm_result(),
-      }
+      client
+        .publish_json_with_retry(&index, &value, interval, max_attempts)
+        .await
+        .wasm_result()
+        .and_then(|receipt| JsValue::from_serde(&receipt).wasm_result())
     });
 
     Ok(promise)

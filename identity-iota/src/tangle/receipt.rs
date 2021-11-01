@@ -19,7 +19,7 @@ pub struct Receipt {
 }
 
 impl Receipt {
-  pub fn new(network: Network, message: Message) -> Self {
+  pub(crate) fn new(network: Network, message: Message) -> Self {
     Self {
       network,
       message_id: message.id().0,
