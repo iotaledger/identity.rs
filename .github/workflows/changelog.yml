@@ -9,6 +9,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: docker info
+      - name: Run box version	    
+        uses: docker://githubchangeloggenerator/github-changelog-generator
+        with:
+          CMD: --help
 
       # - name: Commit files
       #   env:
