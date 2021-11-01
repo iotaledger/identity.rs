@@ -22,16 +22,10 @@ pub use self::receipt::Receipt;
 pub use self::traits::TangleRef;
 pub use self::traits::TangleResolve;
 
-mod cbor_test;
 mod client;
 mod client_builder;
 mod client_map;
-mod compress_zstd;
 mod compression_brotli2;
-mod compression_deflate;
-mod compression_snappy;
-mod compression_test;
-mod compressor_bzip2;
 mod message_ext;
 mod message_index;
 mod network;
