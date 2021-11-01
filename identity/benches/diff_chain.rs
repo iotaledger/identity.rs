@@ -21,7 +21,7 @@ pub fn setup_diff_chain_bench() -> (IotaDocument, KeyPair) {
   let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
   document
-    .sign_document(keypair.private(), &document.authentication().id())
+    .sign_self(keypair.private(), &document.authentication().id())
     .unwrap();
   document.set_message_id(MessageId::new([8; 32]));
 

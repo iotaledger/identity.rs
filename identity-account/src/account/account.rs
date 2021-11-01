@@ -281,7 +281,7 @@ impl Account {
     Ok(())
   }
 
-  async fn sign_document(
+  async fn sign_self(
     &self,
     old_state: &IdentityState,
     new_state: &IdentityState,
@@ -312,7 +312,7 @@ impl Account {
 
     let mut new_doc: IotaDocument = new_state.to_document()?;
 
-    self.sign_document(old_state, new_state, &mut new_doc).await?;
+    self.sign_self(old_state, new_state, &mut new_doc).await?;
 
     let message: MessageId = if self.config.testmode {
       MessageId::null()

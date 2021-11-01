@@ -14,13 +14,17 @@ use identity_core::common::Object;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::convert::SerdeInto;
+use identity_core::crypto::Ed25519;
+use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
+use identity_core::crypto::Signer as _;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
+use identity_core::crypto::Verifier as _;
 use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
@@ -53,8 +57,8 @@ use crate::tangle::TangleRef;
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, Object>;
 
-pub type Signer<'a, 'b, 'c> = DocumentSigner<'a, 'b, 'c, Properties, Object, Object>;
-pub type Verifier<'a> = DocumentVerifier<'a, Properties, Object, Object>;
+pub type IotaDocumentSigner<'a, 'b, 'c> = DocumentSigner<'a, 'b, 'c, Properties, Object, Object>;
+pub type IotaDocumentVerifier<'a> = DocumentVerifier<'a, Properties, Object, Object>;
 
 /// A DID Document adhering to the IOTA DID method specification.
 ///
@@ -80,7 +84,7 @@ impl IotaDocument {
   /// This method will have the DID URL fragment `#authentication` and can be easily
   /// retrieved with [`IotaDocument::authentication`].
   ///
-  /// NOTE: the generated document is unsigned, see [`IotaDocument::sign_document`].
+  /// NOTE: the generated document is unsigned, see [`IotaDocument::sign_self`].
   ///
   /// Example:
   ///
@@ -137,32 +141,21 @@ impl IotaDocument {
 
   /// Creates a new DID Document from the given [`IotaVerificationMethod`].
   ///
-  /// NOTE: the generated document is unsigned, see [`IotaDocument::sign_document`].
+  /// Adds authentication and capability invocation verification relationships to the given method.
+  ///
+  /// NOTE: the generated document is unsigned, see [`IotaDocument::sign_self`].
   pub fn from_authentication(method: IotaVerificationMethod) -> Result<Self> {
     Self::check_authentication(&method)?;
-
-    // SAFETY: We just checked the validity of the verification method.
-    Ok(unsafe { Self::from_authentication_unchecked(method) })
-  }
-
-  /// Creates a new DID Document from the given [`IotaVerificationMethod`] without performing
-  /// validation checks.
-  ///
-  /// # Safety
-  ///
-  /// This must be guaranteed safe by the caller.
-  pub unsafe fn from_authentication_unchecked(method: IotaVerificationMethod) -> Self {
     let verification_method_did_url: CoreDIDUrl = method.id_core().clone();
 
     CoreDocument::builder(Default::default())
       .id(method.controller().clone().into())
       .verification_method(method.into())
-      .authentication(MethodRef::Refer(verification_method_did_url))
+      .authentication(MethodRef::Refer(verification_method_did_url.clone()))
+      .capability_invocation(MethodRef::Refer(verification_method_did_url))
       .build()
       .map(CoreDocument::into_verifiable)
-      .map(TryInto::try_into)
-      .map(Result::unwrap)
-      .unwrap() // `unwrap` is fine - we provided all the necessary properties
+      .map(TryInto::try_into)?
   }
 
   /// Converts a generic DID [`CoreDocument`] to an IOTA DID Document.
@@ -467,7 +460,7 @@ impl IotaDocument {
   // Signatures
   // ===========================================================================
 
-  /// Signs the DID document with the verification method specified by `method_query`.
+  /// Signs this DID document with the verification method specified by `method_query`.
   /// The `method_query` may be the full [`IotaDIDUrl`] of the method or just its fragment,
   /// e.g. "#authentication".
   ///
@@ -477,19 +470,39 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if an unsupported verification method is used or the signature operation fails.
-  pub fn sign_document<'query, Q>(&mut self, private_key: &PrivateKey, method_query: Q) -> Result<()>
+  pub fn sign_self<'query, Q>(&mut self, private_key: &PrivateKey, method_query: Q) -> Result<()>
   where
     Q: Into<MethodQuery<'query>>,
   {
-    self
-      .document
-      .sign_document(private_key, method_query)
-      .map_err(Into::into)
+    // Ensure signing key has a capability invocation verification relationship.
+    let method: &VerificationMethod<_> = self.try_resolve_method(method_query)?;
+    if !self
+      .as_document()
+      .capability_invocation()
+      .iter()
+      .any(|ci_method| ci_method.id() == method.id())
+    {
+      return Err(identity_did::error::Error::InvalidMethodType)?;
+    }
+
+    // Sign document.
+    let method_fragment: String = method.try_into_fragment()?;
+    match method.key_type() {
+      MethodType::Ed25519VerificationKey2018 => {
+        JcsEd25519::<Ed25519>::create_signature(self, method_fragment, private_key.as_ref())?;
+      }
+      MethodType::MerkleKeyCollection2021 => {
+        // Merkle Key Collections cannot be used to sign documents.
+        return Err(identity_did::error::Error::InvalidMethodType)?;
+      }
+    }
+
+    Ok(())
   }
 
-  /// Creates a new [`DocumentSigner`] that can be used to create digital
+  /// Creates a new [`IotaDocumentSigner`] that can be used to create digital
   /// signatures from verification methods in this DID Document.
-  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> Signer<'base, 'base, 'base> {
+  pub fn signer<'base>(&'base self, private_key: &'base PrivateKey) -> IotaDocumentSigner<'base, 'base, 'base> {
     self.document.signer(private_key)
   }
 
@@ -504,7 +517,31 @@ impl IotaDocument {
   /// - An unsupported verification method is used.
   /// - The signature verification operation fails.
   pub fn verify_document(signed: &IotaDocument, signer: &IotaDocument) -> Result<()> {
-    CoreDocument::verify_document(&signed.document, &signer.document).map_err(Into::into)
+    // Ensure signing key has a capability invocation verification relationship.
+    let signature: &Signature = signed.try_signature()?;
+    let method: &VerificationMethod<_> = signer.try_resolve_method(signature)?;
+    if !signer
+      .as_document()
+      .capability_invocation()
+      .iter()
+      .any(|ci_method| ci_method.id() == method.id())
+    {
+      return Err(identity_did::error::Error::InvalidMethodType)?;
+    }
+
+    // Verify signature.
+    let public: PublicKey = method.key_data().try_decode()?.into();
+    match method.key_type() {
+      MethodType::Ed25519VerificationKey2018 => {
+        JcsEd25519::<Ed25519>::verify_signature(signed, public.as_ref())?;
+      }
+      MethodType::MerkleKeyCollection2021 => {
+        // Merkle Key Collections cannot be used to sign documents.
+        return Err(identity_did::error::Error::InvalidMethodType)?;
+      }
+    }
+
+    Ok(())
   }
 
   /// Verifies a self-signed signature on this DID document.
@@ -539,9 +576,9 @@ impl IotaDocument {
     document.verify_self_signed()
   }
 
-  /// Creates a new [`DocumentVerifier`] that can be used to verify signatures
+  /// Creates a new [`IotaDocumentVerifier`] that can be used to verify signatures
   /// created with this DID Document.
-  pub fn verifier(&self) -> Verifier<'_> {
+  pub fn verifier(&self) -> IotaDocumentVerifier<'_> {
     self.document.verifier()
   }
 
@@ -575,7 +612,6 @@ impl IotaDocument {
     Q: Into<MethodQuery<'query>>,
   {
     self
-      .document
       .signer(private_key)
       .method(method_query)
       .sign(data)
@@ -593,7 +629,7 @@ impl IotaDocument {
   where
     X: Serialize + TrySignature,
   {
-    self.document.verifier().verify(data).map_err(Into::into)
+    self.verifier().verify(data).map_err(Into::into)
   }
 
   // ===========================================================================
@@ -738,9 +774,10 @@ impl TangleRef for IotaDocument {
 
 #[cfg(test)]
 mod tests {
-  use iota_client::bee_message::MESSAGE_ID_LENGTH;
   use std::collections::BTreeMap;
   use std::str::FromStr;
+
+  use iota_client::bee_message::MESSAGE_ID_LENGTH;
 
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
@@ -753,6 +790,7 @@ mod tests {
   use identity_core::crypto::PublicKey;
   use identity_core::utils::encode_b58;
   use identity_did::did::CoreDID;
+  use identity_did::did::CoreDIDUrl;
   use identity_did::did::DID;
   use identity_did::document::CoreDocument;
   use identity_did::service::Service;
@@ -1126,65 +1164,97 @@ mod tests {
   }
 
   #[test]
-  fn test_sign_document() {
+  fn test_sign_self() {
     let keypair: KeyPair = generate_testkey();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     assert!(document.verify_self_signed().is_err());
 
-    // Sign with the default authentication method
+    // Sign with the default capability invocation method.
     document
-      .sign_document(keypair.private(), &document.authentication().id())
+      .sign_self(keypair.private(), &document.authentication().id())
       .unwrap();
     assert!(document.verify_self_signed().is_ok());
   }
 
   #[test]
-  fn test_sign_document_new_method() {
+  fn test_sign_self_new_method() {
     let keypair: KeyPair = generate_testkey();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     assert!(document.verify_self_signed().is_err());
 
-    // Add a new authentication method directly
+    // Add a new capability invocation method directly
     let new_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let new_method: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&new_keypair, "new_auth").unwrap();
-    document.insert_method(MethodScope::Authentication, new_method);
+    let new_method: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&new_keypair, "new_signer").unwrap();
+    document.insert_method(MethodScope::CapabilityInvocation, new_method);
 
-    // INVALID - try sign using the wrong authentication keypair
-    document.sign_document(keypair.private(), "#new_auth").unwrap();
+    // INVALID - try sign using the wrong private key
+    document.sign_self(keypair.private(), "#new_signer").unwrap();
     assert!(document.verify_self_signed().is_err());
 
-    // VALID - Sign with the new authentication method
-    document.sign_document(new_keypair.private(), "#new_auth").unwrap();
+    // VALID - Sign with the new capability invocation method private key
+    document.sign_self(new_keypair.private(), "#new_signer").unwrap();
     assert!(document.verify_self_signed().is_ok());
   }
 
   #[test]
-  fn test_sign_document_fails() {
-    let keypair: KeyPair = generate_testkey();
-    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
-    assert!(document.verify_self_signed().is_err());
+  fn test_sign_self_fails() {
+    fn generate_document() -> (IotaDocument, KeyPair) {
+      let keypair: KeyPair = generate_testkey();
+      let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+      (document, keypair)
+    }
 
-    // INVALID - try sign referencing a non-existent verification method
-    assert!(document.sign_document(keypair.private(), "#doesnotexist").is_err());
-    assert!(document.verify_self_signed().is_err());
+    // INVALID - try sign referencing a non-existent verification method.
+    {
+      let (mut document, keypair) = generate_document();
+      assert!(document.verify_self_signed().is_err());
+      assert!(document.sign_self(keypair.private(), "#doesnotexist").is_err());
+      assert!(document.verify_self_signed().is_err());
+    }
 
-    // INVALID - try sign using a random keypair
-    let random_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    document
-      .sign_document(random_keypair.private(), &document.authentication().id())
-      .unwrap();
-    assert!(document.verify_self_signed().is_err());
+    // INVALID - try sign using a random private key.
+    {
+      let (mut document, _) = generate_document();
+      let random_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      document
+        .sign_self(random_keypair.private(), &document.authentication().id())
+        .unwrap();
+      assert!(document.verify_self_signed().is_err());
+    }
+
+    // INVALID - try sign using any verification relationship other than capability invocation.
+    for method_scope in [
+      MethodScope::VerificationMethod,
+      MethodScope::AssertionMethod,
+      MethodScope::CapabilityDelegation,
+      MethodScope::Authentication,
+      MethodScope::KeyAgreement,
+    ] {
+      let (mut document, _) = generate_document();
+      // Add a new method unable to sign the document.
+      let keypair_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let method_new: IotaVerificationMethod =
+        IotaVerificationMethod::from_keypair(&keypair_new, "new_signer").unwrap();
+      document.insert_method(method_scope, method_new);
+      // Try sign the document using the new key.
+      assert!(document.sign_self(keypair_new.private(), "#new_signer").is_err());
+      assert!(document.verify_self_signed().is_err());
+      assert!(IotaDocument::verify_root_document(&document).is_err());
+    }
 
     // INVALID - try sign using a Merkle Key Collection
-    let key_collection: KeyCollection = KeyCollection::new_ed25519(8).unwrap();
-    let merkle_key_method =
-      IotaVerificationMethod::create_merkle_key::<Sha256, _>(document.id().clone(), &key_collection, "merkle-key")
-        .unwrap();
-    document.insert_method(MethodScope::Authentication, merkle_key_method);
-    assert!(document
-      .sign_document(key_collection.private(0).unwrap(), "merkle-key")
-      .is_err());
-    assert!(document.verify_self_signed().is_err());
+    {
+      let (mut document, _) = generate_document();
+      let key_collection: KeyCollection = KeyCollection::new_ed25519(8).unwrap();
+      let merkle_key_method =
+        IotaVerificationMethod::create_merkle_key::<Sha256, _>(document.id().clone(), &key_collection, "merkle-key")
+          .unwrap();
+      document.insert_method(MethodScope::Authentication, merkle_key_method);
+      assert!(document
+        .sign_self(key_collection.private(0).unwrap(), "merkle-key")
+        .is_err());
+      assert!(document.verify_self_signed().is_err());
+    }
   }
 
   #[test]
@@ -1195,7 +1265,7 @@ mod tests {
 
     // VALID - root document signed using the default method.
     document
-      .sign_document(keypair.private(), &document.authentication().id())
+      .sign_self(keypair.private(), &document.authentication().id())
       .unwrap();
     assert!(document.verify_self_signed().is_ok());
     assert!(IotaDocument::verify_root_document(&document).is_ok());
@@ -1209,43 +1279,52 @@ mod tests {
     }
 
     // INVALID - root document not signed.
-    let (document, _) = generate_root_document();
-    assert!(IotaDocument::verify_root_document(&document).is_err());
+    {
+      let (document, _) = generate_root_document();
+      assert!(IotaDocument::verify_root_document(&document).is_err());
+    }
 
     // INVALID - root document previousMessageId not null.
-    let (mut document, keypair) = generate_root_document();
-    document.set_previous_message_id(MessageId::new([3u8; MESSAGE_ID_LENGTH]));
-    document
-      .sign_document(keypair.private(), &document.authentication().id())
-      .unwrap();
-    assert!(document.verify_self_signed().is_ok());
-    assert!(IotaDocument::verify_root_document(&document).is_err());
+    {
+      let (mut document, keypair) = generate_root_document();
+      document.set_previous_message_id(MessageId::new([3u8; MESSAGE_ID_LENGTH]));
+      document
+        .sign_self(keypair.private(), &document.authentication().id())
+        .unwrap();
+      assert!(document.verify_self_signed().is_ok());
+      assert!(IotaDocument::verify_root_document(&document).is_err());
+    }
 
     // INVALID - root document signed with a key not matching the DID tag.
-    let (document, keypair) = generate_root_document();
-    // Replace the base58 encoded public key with that of a different key.
-    let new_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let b58_old = encode_b58(keypair.public());
-    let b58_new = encode_b58(new_keypair.public());
-    let doc_json_modified = document.to_string().replace(&b58_old, &b58_new);
-    // Sign the document using the new key.
-    let mut new_document: IotaDocument = IotaDocument::from_json(&doc_json_modified).unwrap();
-    new_document
-      .sign_document(new_keypair.private(), &new_document.authentication().id())
-      .unwrap();
-    assert!(new_document.verify_self_signed().is_ok());
-    assert!(IotaDocument::verify_root_document(&new_document).is_err());
+    {
+      let (document, keypair) = generate_root_document();
+      // Replace the base58 encoded public key with that of a different key.
+      let new_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let b58_old = encode_b58(keypair.public());
+      let b58_new = encode_b58(new_keypair.public());
+      let doc_json_modified = document.to_string().replace(&b58_old, &b58_new);
+      // Sign the document using the new key.
+      let mut new_document: IotaDocument = IotaDocument::from_json(&doc_json_modified).unwrap();
+      new_document
+        .sign_self(new_keypair.private(), &new_document.authentication().id())
+        .unwrap();
+      assert!(new_document.verify_self_signed().is_ok());
+      assert!(IotaDocument::verify_root_document(&new_document).is_err());
+    }
 
     // INVALID - root document signed using a different method that does not match the DID tag.
-    let (mut document, _) = generate_root_document();
-    // Add a new method able to sign the document.
-    let keypair_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
-    let method_new: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&keypair_new, "new_auth").unwrap();
-    document.insert_method(MethodScope::Authentication, method_new);
-    // Sign the document using the new key.
-    document.sign_document(keypair_new.private(), "new_auth").unwrap();
-    assert!(document.verify_self_signed().is_ok());
-    assert!(IotaDocument::verify_root_document(&document).is_err());
+    {
+      let (mut document, _) = generate_root_document();
+      // Add a new method able to sign the document.
+      let keypair_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
+      let method_new: IotaVerificationMethod =
+        IotaVerificationMethod::from_keypair(&keypair_new, "new_signer").unwrap();
+      document.insert_method(MethodScope::CapabilityInvocation, method_new);
+      // Sign the document using the new key.
+      document.sign_self(keypair_new.private(), "#new_signer").unwrap();
+      assert!(document.verify_self_signed().is_ok());
+      assert!(IotaDocument::verify_root_document(&document).is_err());
+    }
   }
 
   #[test]
@@ -1258,7 +1337,7 @@ mod tests {
     assert_eq!(document, document2);
 
     assert!(document
-      .sign_document(keypair.private(), &document.authentication().id())
+      .sign_self(keypair.private(), &document.authentication().id())
       .is_ok());
 
     let json_doc: String = document.to_string();
@@ -1303,7 +1382,7 @@ mod tests {
 
     assert!(document.proof().is_none());
     assert!(document
-      .sign_document(keypair.private(), &document.authentication().id())
+      .sign_self(keypair.private(), &document.authentication().id())
       .is_ok());
 
     assert_eq!(document.proof().unwrap().verification_method(), "#authentication");
@@ -1327,27 +1406,54 @@ mod tests {
   }
 
   #[test]
-  fn test_new_document_has_verification_method_with_authentication_relationship() {
+  fn test_new_document_verification_relationships() {
     let keypair: KeyPair = generate_testkey();
     let document: IotaDocument = IotaDocument::new(&keypair).unwrap();
-
     let verification_method: &IotaVerificationMethod = document.resolve_method("#authentication").unwrap();
+    let expected_did_url: IotaDIDUrl = document.id().to_url().join("#authentication").unwrap();
+
+    // Ensure authentication relationship.
     let authentication_method: &IotaVerificationMethod = document.authentication();
-
-    let expected_method_id: IotaDIDUrl = document.id().to_url().join("#authentication").unwrap();
-    assert_eq!(verification_method.id(), expected_method_id);
-    assert_eq!(authentication_method.id(), expected_method_id);
-
-    // `methods` returns all embedded verification methods, so only one is expected.
-    assert_eq!(document.methods().count(), 1);
-
-    // Assert that the verification method and the authentication method are the same
     assert_eq!(verification_method, authentication_method);
+    assert_eq!(verification_method.id(), expected_did_url);
+    assert_eq!(authentication_method.id(), expected_did_url);
 
-    // Assert that the fragment of the authentication method reference is `authentication`
-    match document.document.authentication().first().unwrap().clone().into_inner() {
+    // Ensure fragment of the authentication method reference is `authentication`
+    match document
+      .as_document()
+      .authentication()
+      .first()
+      .unwrap()
+      .clone()
+      .into_inner()
+    {
       MethodRef::Refer(did) => assert_eq!(did.fragment().unwrap_or_default(), "authentication"),
       MethodRef::Embed(_) => panic!("authentication method should be a reference"),
     }
+
+    // Ensure capability invocation relationship.
+    let capability_invocation_method_id: &CoreDIDUrl =
+      document.as_document().capability_invocation().first().unwrap().id();
+    assert_eq!(verification_method.id(), expected_did_url);
+    assert_eq!(
+      capability_invocation_method_id.to_string(),
+      expected_did_url.to_string()
+    );
+
+    // Ensure fragment of the capability invocation method reference is `authentication`
+    match document
+      .as_document()
+      .capability_invocation()
+      .first()
+      .unwrap()
+      .clone()
+      .into_inner()
+    {
+      MethodRef::Refer(did) => assert_eq!(did.fragment().unwrap_or_default(), "authentication"),
+      MethodRef::Embed(_) => panic!("capability invocation method should be a reference"),
+    }
+
+    // `methods` returns all embedded verification methods, so only one is expected.
+    assert_eq!(document.methods().count(), 1);
   }
 }

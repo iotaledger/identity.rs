@@ -190,8 +190,8 @@ impl WasmDocument {
   /// NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
   /// verification method. See `Document::verifySelfSigned`.
   #[wasm_bindgen(js_name = signDocument)]
-  pub fn sign_document(&mut self, key_pair: &KeyPair, method_query: String) -> Result<()> {
-    self.0.sign_document(key_pair.0.private(), &method_query).wasm_result()
+  pub fn sign_self(&mut self, key_pair: &KeyPair, method_query: String) -> Result<()> {
+    self.0.sign_self(key_pair.0.private(), &method_query).wasm_result()
   }
 
   /// Verifies a self-signed signature on this DID document.
