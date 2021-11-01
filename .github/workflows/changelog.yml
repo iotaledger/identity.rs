@@ -2,7 +2,6 @@ name: Changelog
 
 on:
   workflow_dispatch:
-
 jobs:
   changelog:
     runs-on: ubuntu-latest
