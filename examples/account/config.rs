@@ -19,8 +19,10 @@ async fn main() -> Result<()> {
   // Set-up for private Tangle
   // You can use https://github.com/iotaledger/one-click-tangle for a local setup.
   // The `network_name` needs to match the id of the network or a part of it.
-  // As an example we are treating the devnet as a `private-tangle`, so we use `dev`.
-  // Replace this with `tangle` if you run this against a one-click private tangle.
+  // As an example we are treating the devnet as a private tangle, so we use `dev`.
+  // When running the local setup, we can use `tangle` since the id of the one-click
+  // private tangle is `private-tangle`, but we can only use 6 characters.
+  // Keep in mind, there are easier ways to change to devnet via `Network::Devnet`
   let network_name = "dev";
   let mut network = Network::try_from_name(network_name)?;
 
