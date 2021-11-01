@@ -138,7 +138,11 @@ impl Client {
 
     let promise: Promise = future_to_promise(async move {
       client
-        .retry_until_included(&message_id, interval.map(|interval| interval as u64), max_attempts.map(|max_attempts| max_attempts as u64))
+        .retry_until_included(
+          &message_id,
+          interval.map(|interval| interval as u64),
+          max_attempts.map(|max_attempts| max_attempts as u64),
+        )
         .await
         .wasm_result()
         .and_then(|reattached_messages| JsValue::from_serde(&reattached_messages).wasm_result())
@@ -164,7 +168,12 @@ impl Client {
     let value: serde_json::Value = data.into_serde().wasm_result()?;
     let promise: Promise = future_to_promise(async move {
       client
-        .publish_json_with_retry(&index, &value, interval.map(|interval| interval as u64), max_attempts.map(|max_attempts| max_attempts as u64))
+        .publish_json_with_retry(
+          &index,
+          &value,
+          interval.map(|interval| interval as u64),
+          max_attempts.map(|max_attempts| max_attempts as u64),
+        )
         .await
         .wasm_result()
         .and_then(|receipt| JsValue::from_serde(&receipt).wasm_result())
