@@ -15,7 +15,7 @@ pub(crate) fn add_version_flag(mut compressed_data: Vec<u8>) -> Vec<u8> {
 
 #[test]
 fn test_add_version_flag() {
-  let mut message: Vec<u8> = vec![10, 4, 5, 5];
+  let message: Vec<u8> = vec![10, 4, 5, 5];
   let message = add_version_flag(message);
   assert_eq!(message, [1, 10, 4, 5, 5])
 }

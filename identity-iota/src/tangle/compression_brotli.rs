@@ -18,5 +18,5 @@ pub(crate) fn decompress_brotli<T: AsRef<[u8]> + ?Sized>(input: &T) -> Result<St
   let mut decompressor = brotli::Decompressor::new(input.as_ref(), 4096 /* buffer size */);
   let mut s = String::new();
   decompressor.read_to_string(&mut s).map_err(|_| CompressionError)?;
-  return Ok(s);
+  Ok(s)
 }
