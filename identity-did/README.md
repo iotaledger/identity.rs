@@ -14,4 +14,4 @@ It has been implemented in the following DID Methods:
 - [IOTA Identity](https://github.com/iotaledger/identity.rs/tree/dev/identity-iota): Developed and maintained by the
   IOTA Foundation, utilizing the IOTA Tangle.
 
-See [our documentation portal](https://identity.docs.iota.org/overview/did.html) for additional documentations, conceptual explainations and usage examples.
+See [our documentation portal](https://wiki.iota.org/identity.rs/introduction) for additional documentations, conceptual explainations and usage examples.

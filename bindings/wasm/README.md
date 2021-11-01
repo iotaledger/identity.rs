@@ -2,7 +2,7 @@
 
 > This is the beta version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
 
-## [API Reference](https://identity.docs.iota.org/docs/libraries/wasm/api_reference)
+## [API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference)
 ## [Examples](./examples/README.md)
 
 ## Install the library:
