@@ -8,13 +8,14 @@ use identity_core::crypto::merkle_tree::Proof;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
+use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_core::crypto::SecretKey;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 
+use crate::did::CoreDID;
 use crate::did::DID;
 use crate::document::CoreDocument;
 use crate::verifiable::Properties;
@@ -64,69 +65,74 @@ impl TryMethod for That {
 
 #[test]
 fn test_sign_verify_this_ed25519() {
-  let key: KeyPair = KeyPair::new_ed25519().unwrap();
-  let controller: DID = "did:example:1234".parse().unwrap();
+  for method_data_base in [MethodData::new_b58, MethodData::new_multibase] {
+    let key: KeyPair = KeyPair::new_ed25519().unwrap();
+    let controller: CoreDID = "did:example:1234".parse().unwrap();
+    let public_key = key.public().as_ref().to_vec();
 
-  let method: VerificationMethod = VerificationMethod::builder(Default::default())
-    .id(controller.join("#key-1").unwrap())
-    .controller(controller.clone())
-    .key_type(MethodType::Ed25519VerificationKey2018)
-    .key_data(MethodData::new_b58(key.public()))
-    .build()
-    .unwrap();
+    let method: VerificationMethod = VerificationMethod::builder(Default::default())
+      .id(controller.to_url().join("#key-1").unwrap())
+      .controller(controller.clone())
+      .key_type(MethodType::Ed25519VerificationKey2018)
+      .key_data(method_data_base(public_key))
+      .build()
+      .unwrap();
 
-  let mut document: CoreDocument<Properties> = CoreDocument::builder(Default::default())
-    .id(controller)
-    .verification_method(method)
-    .build()
-    .unwrap();
+    let mut document: CoreDocument<Properties> = CoreDocument::builder(Default::default())
+      .id(controller)
+      .verification_method(method)
+      .build()
+      .unwrap();
 
-  assert!(document.verify_this().is_err());
+    assert!(document.verify_this().is_err());
 
-  document.sign_this("#key-1", key.secret()).unwrap();
+    document.sign_this("#key-1", key.private()).unwrap();
 
-  assert!(document.verify_this().is_ok());
+    assert!(document.verify_this().is_ok());
+  }
 }
 
 #[test]
 fn test_sign_verify_that_merkle_key_ed25519_sha256() {
-  let total: usize = 1 << 11;
-  let index: usize = 1 << 9;
+  for method_data_base in [MethodData::new_b58, MethodData::new_multibase] {
+    let total: usize = 1 << 11;
+    let index: usize = 1 << 9;
 
-  let keys: KeyCollection = KeyCollection::new_ed25519(total).unwrap();
-  let controller: DID = "did:example:1234".parse().unwrap();
+    let keys: KeyCollection = KeyCollection::new_ed25519(total).unwrap();
+    let controller: CoreDID = "did:example:1234".parse().unwrap();
 
-  let root: Hash<Sha256> = keys.merkle_root();
-  let proof: Proof<Sha256> = keys.merkle_proof(index).unwrap();
-  let mkey: Vec<u8> = MerkleKey::encode_key::<Sha256, Ed25519>(&root);
+    let root: Hash<Sha256> = keys.merkle_root();
+    let proof: Proof<Sha256> = keys.merkle_proof(index).unwrap();
+    let mkey: Vec<u8> = MerkleKey::encode_key::<Sha256, Ed25519>(&root);
 
-  let method: VerificationMethod = VerificationMethod::builder(Default::default())
-    .id(controller.join("#key-collection").unwrap())
-    .controller(controller.clone())
-    .key_type(MethodType::MerkleKeyCollection2021)
-    .key_data(MethodData::new_b58(mkey))
-    .build()
-    .unwrap();
+    let method: VerificationMethod = VerificationMethod::builder(Default::default())
+      .id(controller.to_url().join("#key-collection").unwrap())
+      .controller(controller.clone())
+      .key_type(MethodType::MerkleKeyCollection2021)
+      .key_data(method_data_base(mkey))
+      .build()
+      .unwrap();
 
-  let document: CoreDocument<Properties> = CoreDocument::builder(Default::default())
-    .id(controller)
-    .verification_method(method)
-    .build()
-    .unwrap();
+    let document: CoreDocument<Properties> = CoreDocument::builder(Default::default())
+      .id(controller)
+      .verification_method(method)
+      .build()
+      .unwrap();
 
-  let public: &PublicKey = keys.public(index).unwrap();
-  let secret: &SecretKey = keys.secret(index).unwrap();
+    let public: &PublicKey = keys.public(index).unwrap();
+    let private: &PrivateKey = keys.private(index).unwrap();
 
-  let mut that: That = That::new(123);
+    let mut that: That = That::new(123);
 
-  assert!(document.verifier().verify(&that).is_err());
+    assert!(document.verifier().verify(&that).is_err());
 
-  document
-    .signer(secret)
-    .method("#key-collection")
-    .merkle_key((public, &proof))
-    .sign(&mut that)
-    .unwrap();
+    document
+      .signer(private)
+      .method("#key-collection")
+      .merkle_key((public, &proof))
+      .sign(&mut that)
+      .unwrap();
 
-  assert!(document.verifier().verify(&that).is_ok());
+    assert!(document.verifier().verify(&that).is_ok());
+  }
 }

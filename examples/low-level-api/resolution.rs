@@ -10,59 +10,65 @@
 
 use identity::core::SerdeInto;
 use identity::did::resolution;
+use identity::did::resolution::Dereference;
+use identity::did::resolution::InputMetadata;
+use identity::did::resolution::Resolution;
 use identity::did::resolution::Resource;
 use identity::did::resolution::SecondaryResource;
+use identity::did::DID;
+use identity::iota::ClientMap;
 use identity::iota::IotaDID;
+use identity::iota::IotaDIDUrl;
+use identity::iota::Receipt;
 use identity::prelude::*;
+
+mod create_did;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-  // Create a Client to interact with the IOTA Tangle.
-  let client: Client = Client::new().await?;
+  // Create a client instance to send messages to the Tangle.
+  let client: ClientMap = ClientMap::new();
 
-  // Create a pair of Ed25519 public/secret keys.
-  let key: KeyPair = KeyPair::new_ed25519()?;
-
-  // Create a DID Document using the Ed25519 public key as the authentication
-  // method. The DID URL is also derived from the public key value.
-  let mut doc: IotaDocument = IotaDocument::from_keypair(&key)?;
-
-  // Sign the document with our Ed25519 secret key.
-  doc.sign(key.secret())?;
-
-  // Publish the DID Document to the Tangle - Use a custom Client instance.
-  doc.publish(&client).await?;
+  // Create a signed DID Document and KeyPair (see create_did.rs).
+  let (document, _, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
   // ===========================================================================
   // DID Resolution
   // ===========================================================================
 
-  // Retrieve the published DID Document from the Tangle.
-  let future: _ = resolution::resolve(doc.id().as_str(), Default::default(), &client);
-  let data: _ = future.await?;
+  let doc_did: &IotaDID = document.id();
+  let did_url: &str = doc_did.as_str();
 
-  println!("Resolution: {:#?}", data);
+  // Retrieve the published DID Document from the Tangle.
+  let input: InputMetadata = Default::default();
+  let output: Resolution = resolution::resolve(did_url, input, &client).await?;
+
+  println!("Resolution > {:#?}", output);
 
   // The resolved Document should be the same as what we published.
-  assert_eq!(data.document.unwrap(), doc.serde_into().unwrap());
+  assert_eq!(output.document.unwrap(), document.serde_into().unwrap());
 
   // ===========================================================================
   // DID Dereferencing
   // ===========================================================================
 
-  let url: IotaDID = doc.id().join("#authentication")?;
+  let resource_url: IotaDIDUrl = doc_did.to_url().join("#authentication")?;
 
   // Retrieve a subset of the published DID Document properties.
-  let future: _ = resolution::dereference(url.as_str(), Default::default(), &client);
-  let data: _ = future.await?;
+  let input: InputMetadata = Default::default();
+  let output: Dereference = resolution::dereference(resource_url.to_string(), input, &client).await?;
 
-  println!("Dereference: {:#?}", data);
+  println!("Dereference > {:#?}", output);
 
   // The resolved resource should be the DID Document authentication method.
-  assert!(matches!(
-    data.content.unwrap(),
-    Resource::Secondary(SecondaryResource::VerificationKey(method)) if method == **doc.authentication()
-  ));
+  match output.content.unwrap() {
+    Resource::Secondary(SecondaryResource::VerificationKey(method)) => {
+      assert_eq!(method, **document.authentication());
+    }
+    resource => {
+      panic!("Invalid Resource Dereference > {:#?}", resource);
+    }
+  }
 
   Ok(())
 }

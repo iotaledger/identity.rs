@@ -11,10 +11,13 @@ use futures::TryStreamExt;
 use hashbrown::HashSet;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
+use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_did::verification::MethodType;
 use iota_stronghold::Location;
 use iota_stronghold::SLIP10DeriveInput;
+use std::convert::TryFrom;
+use std::io;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -80,7 +83,7 @@ impl Stronghold {
 #[async_trait::async_trait]
 impl Storage for Stronghold {
   async fn set_password(&self, password: EncryptionKey) -> Result<()> {
-    self.snapshot.set_password(password)
+    self.snapshot.set_password(password).await
   }
 
   async fn flush_changes(&self) -> Result<()> {
@@ -96,6 +99,19 @@ impl Storage for Stronghold {
     };
 
     Ok(public)
+  }
+
+  async fn key_insert(&self, id: IdentityId, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey> {
+    let vault = self.vault(id);
+
+    vault
+      .insert(location_skey(location), private_key.as_ref(), default_hint(), &[])
+      .await?;
+
+    match location.method() {
+      MethodType::Ed25519VerificationKey2018 => retrieve_ed25519(&vault, location).await,
+      MethodType::MerkleKeyCollection2021 => todo!("[Stronghold::key_insert] Handle MerkleKeyCollection2021"),
+    }
   }
 
   async fn key_get(&self, id: IdentityId, location: &KeyLocation) -> Result<PublicKey> {
@@ -316,6 +332,40 @@ impl Storage for Stronghold {
 
     Ok(())
   }
+
+  async fn published_generation(&self, id: IdentityId) -> Result<Option<Generation>> {
+    let store: Store<'_> = self.store(&fmt_id(id));
+
+    let bytes = store.get(location_published_generation()).await?;
+
+    if bytes.is_empty() {
+      return Ok(None);
+    }
+
+    let le_bytes: [u8; 4] = <[u8; 4]>::try_from(bytes.as_ref()).map_err(|_| {
+      io::Error::new(
+        io::ErrorKind::InvalidData,
+        format!(
+          "expected to read 4 bytes as the published generation, found {} instead",
+          bytes.len()
+        ),
+      )
+    })?;
+
+    let gen = Generation::from_u32(u32::from_le_bytes(le_bytes));
+
+    Ok(Some(gen))
+  }
+
+  async fn set_published_generation(&self, id: IdentityId, index: Generation) -> Result<()> {
+    let store: Store<'_> = self.store(&fmt_id(id));
+
+    store
+      .set(location_published_generation(), index.to_u32().to_le_bytes(), None)
+      .await?;
+
+    Ok(())
+  }
 }
 
 async fn generate_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<PublicKey> {
@@ -344,7 +394,7 @@ async fn retrieve_ed25519(vault: &Vault<'_>, location: &KeyLocation) -> Result<P
 }
 
 async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocation) -> Result<Signature> {
-  let public_key: PublicKey = retrieve_ed25519(&vault, location).await?;
+  let public_key: PublicKey = retrieve_ed25519(vault, location).await?;
   let signature: [u8; 64] = vault.ed25519_sign(payload, location_skey(location)).await?;
 
   Ok(Signature::new(public_key, signature.into()))
@@ -370,11 +420,15 @@ fn location_skey(location: &KeyLocation) -> Location {
   Location::generic(fmt_key("$skey", location), Vec::new())
 }
 
+fn location_published_generation() -> Location {
+  Location::generic("$published_generation", Vec::new())
+}
+
 fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {
   format!(
     "{}:{}:{}:{}",
     prefix,
-    location.auth_generation(),
+    location.integration_generation(),
     location.diff_generation(),
     location.fragment(),
   )

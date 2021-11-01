@@ -31,7 +31,7 @@ where
   /// `DiffOption<T>` type.
   fn diff(&self, other: &Self) -> crate::Result<Self::Type> {
     match (self, other) {
-      (Some(x), Some(y)) => Ok(Self::Type::Some(x.diff(&y)?)),
+      (Some(x), Some(y)) => Ok(Self::Type::Some(x.diff(y)?)),
       (None, Some(y)) => Ok(Self::Type::Some(y.clone().into_diff()?)),
       _ => Ok(Self::Type::None),
     }

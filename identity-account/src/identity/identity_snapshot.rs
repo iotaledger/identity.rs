@@ -35,4 +35,9 @@ impl IdentitySnapshot {
   pub fn identity(&self) -> &IdentityState {
     &self.identity
   }
+
+  /// Returns the identity state of the snapshot (consuming self).
+  pub fn into_identity(self) -> IdentityState {
+    self.identity
+  }
 }

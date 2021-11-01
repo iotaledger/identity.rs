@@ -1,29 +1,35 @@
 [package]
 name = "identity-wasm"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = "Web Assembly bindings for the identity-rs crate."
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "identity", "wasm"]
+license = "Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-license = "Apache-2.0"
-keywords = ["iota", "tangle", "identity", "wasm"]
-homepage = "https://www.iota.org"
+resolver = "2"
+description = "Web Assembly bindings for the identity-rs crate."
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 console_error_panic_hook = { version = "0.1" }
-identity = { version = "=0.3.0", path = "../../identity", features = ["wasm"] }
+futures = { version = "0.3" }
+js-sys = { version = "0.3" }
+reqwest = { version = "=0.11.4" } # pin version to 0.11.4: https://github.com/iotaledger/identity.rs/issues/438
 serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", default-features = false }
+tokio = { version = "*", default-features = false, features = ["rt"] } # enable "rt" feature to fix build: https://github.com/iotaledger/identity.rs/issues/403
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 wasm-bindgen-futures = { version = "0.4", default-features = false }
 
-[dependencies.web-sys]
-version = "0.3"
+[dependencies.identity]
+version = "=0.4.0"
+path = "../../identity"
 default-features = false
-features = ["console"]
+features = ["comm", "wasm"]
 
 [dev-dependencies]
 wasm-bindgen-test = { version = "0.3" }
@@ -33,4 +39,8 @@ chrono = { version = "0.4", features = ["wasmbind"] }
 getrandom = { version = "0.2", features = ["js"] }
 
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = false
+wasm-opt = true
+
+[profile.release]
+opt-level = 's'
+lto = true

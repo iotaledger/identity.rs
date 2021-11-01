@@ -1,21 +1,26 @@
 [package]
 name = "identity-did"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = "An implementation of the Decentralized Identifiers standard."
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "identity"]
+license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-license = "Apache-2.0"
-keywords = ["iota", "tangle", "identity"]
-homepage = "https://www.iota.org"
+description = "An implementation of the Decentralized Identifiers standard."
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
 did_url = { version = "0.1", default-features = false, features = ["std", "serde"] }
-identity-core = { version = "=0.3.0", path = "../identity-core" }
+form_urlencoded = { version = "1.0.1", default-features = false }
+identity-core = { version = "=0.4.0", path = "../identity-core" }
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
+
+[dev-dependencies]
+proptest = { version = "1.0" }
 
 [package.metadata.docs.rs]
 # To build locally:

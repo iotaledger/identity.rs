@@ -5,7 +5,7 @@ use core::fmt::Display;
 
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   #[error("Diff Error: {0}")]
   DiffError(String),

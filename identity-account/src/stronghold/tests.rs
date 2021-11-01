@@ -16,14 +16,16 @@ use std::time::Duration;
 use std::time::Instant;
 
 use crate::error::Error;
+use crate::stronghold::default_hint;
 use crate::stronghold::Snapshot;
 use crate::stronghold::SnapshotStatus;
 use crate::stronghold::Store;
 use crate::utils::derive_encryption_key;
 use crate::utils::EncryptionKey;
+use identity_core::crypto::KeyPair;
 
-const ROOT: &str = "./test-storage";
-const SIZE: usize = 10;
+const TEST_DIR: &str = "./test-storage";
+const RANDOM_FILENAME_SIZE: usize = 10;
 
 fn location(name: &str) -> Location {
   Location::generic(name, name)
@@ -38,7 +40,7 @@ fn rand_string(chars: usize) -> String {
 }
 
 fn generate_filename() -> PathBuf {
-  AsRef::<Path>::as_ref(ROOT).join(format!("{}.stronghold", rand_string(SIZE)))
+  AsRef::<Path>::as_ref(TEST_DIR).join(format!("{}.stronghold", rand_string(RANDOM_FILENAME_SIZE)))
 }
 
 async fn open_snapshot(path: &Path, password: EncryptionKey) -> Snapshot {
@@ -59,15 +61,16 @@ rusty_fork_test! {
   #[test]
   fn test_password_expiration() {
     block_on(async {
-      let interval: Duration = Duration::from_millis(500);
+      let interval: Duration = Duration::from_millis(100);
 
-      Snapshot::set_password_clear(interval).unwrap();
+      Snapshot::set_password_clear(interval).await.unwrap();
 
       let filename: PathBuf = generate_filename();
       let snapshot: Snapshot = Snapshot::new(&filename);
 
       snapshot.load(Default::default()).await.unwrap();
 
+      // Wait for password to be cleared
       thread::sleep(interval * 3);
 
       let store: Store<'_> = snapshot.store("", &[]);
@@ -80,7 +83,7 @@ rusty_fork_test! {
       );
 
       assert!(
-        matches!(snapshot.status().unwrap(), SnapshotStatus::Locked),
+        matches!(snapshot.status().await.unwrap(), SnapshotStatus::Locked),
         "unexpected snapshot status",
       );
     })
@@ -89,55 +92,63 @@ rusty_fork_test! {
   #[test]
   fn test_password_persistence() {
     block_on(async {
-      let interval: Duration = Duration::from_millis(900);
+      let interval: Duration = Duration::from_millis(300);
 
-      Snapshot::set_password_clear(interval).unwrap();
+      Snapshot::set_password_clear(interval).await.unwrap();
 
       let filename: PathBuf = generate_filename();
       let snapshot: Snapshot = Snapshot::new(&filename);
 
       snapshot.load(Default::default()).await.unwrap();
+      let mut instant: Instant = Instant::now();
 
       let store: Store<'_> = snapshot.store("", &[]);
-
-      for index in 1..6 {
-        let instant: Instant = Instant::now();
+      for index in 1..=5u8 {
         let location: Location = location(&format!("persists{}", index));
 
-        store.set(location, "STRONGHOLD".to_string(), None).await.unwrap();
-
-        let status: SnapshotStatus = snapshot.status().unwrap();
-
-        assert!(
-          matches!(status, SnapshotStatus::Unlocked(_)),
-          "unexpected snapshot status",
-        );
+        let set_result = store.set(location, format!("STRONGHOLD{}", index), None).await;
+        let status: SnapshotStatus = snapshot.status().await.unwrap();
 
         if let Some(timeout) = interval.checked_sub(instant.elapsed()) {
+          // Prior to the expiration time, the password should not be cleared yet
+          assert!(
+            set_result.is_ok(),
+            "set failed"
+          );
+          assert!(
+            matches!(status, SnapshotStatus::Unlocked(_)),
+            "unexpected snapshot status",
+          );
+
           thread::sleep(timeout / 2);
         } else {
-          // if elapsed > interval, set the password again.
-          // this might happen if the test is stopped by another thread
-          snapshot.set_password(Default::default()).unwrap();
+          // If elapsed > interval, set the password again.
+          // This might happen if the test is stopped by another thread.
+          snapshot.set_password(Default::default()).await.unwrap();
+          instant = Instant::now();
         }
       }
 
-      let result: Vec<u8> = store.get(location("persists1")).await.unwrap();
+      let mut result: Result<Vec<u8>, Error> = store.get(location("persists1")).await;
 
-      assert_eq!(result, b"STRONGHOLD");
+      // Test may have taken too long / been interrupted and cleared the password already, retry
+      if matches!(result, Err(Error::StrongholdPasswordNotSet)) && interval.checked_sub(instant.elapsed()).is_none() {
+        snapshot.set_password(Default::default()).await.unwrap();
+        result = store.get(location("persists1")).await;
+      }
+      assert_eq!(result.unwrap(), b"STRONGHOLD1");
 
+      // Wait for password to be cleared
       thread::sleep(interval * 2);
 
       let error: Error = store.get(location("persists1")).await.unwrap_err();
-
       assert!(
         matches!(error, Error::StrongholdPasswordNotSet),
         "unexpected error: {:?}",
         error
       );
-
       assert!(
-        matches!(snapshot.status().unwrap(), SnapshotStatus::Locked),
+        matches!(snapshot.status().await.unwrap(), SnapshotStatus::Locked),
         "unexpected snapshot status",
       );
     })
@@ -258,6 +269,39 @@ rusty_fork_test! {
         assert_eq!(store.get(location("C")).await.unwrap(), b"baz".to_vec());
 
         fs::remove_file(store.path()).unwrap();
+      }
+    })
+  }
+
+
+  #[test]
+  fn test_store_private_key() {
+    block_on(async {
+      let password: EncryptionKey = derive_encryption_key("my-password:test_vault_persistence");
+      let filename: PathBuf = generate_filename();
+
+      let keypair = KeyPair::new_ed25519().unwrap();
+
+      {
+        let snapshot: Snapshot = open_snapshot(&filename, password).await;
+        let vault = snapshot.vault(b"persistence", &[]);
+
+        vault.insert(location("A"), keypair.private().as_ref(), default_hint(), &[]).await.unwrap();
+
+        snapshot.unload(true).await.unwrap();
+      }
+
+      {
+        let snapshot: Snapshot = load_snapshot(&filename, password).await;
+
+        let vault = snapshot.vault(b"persistence", &[]);
+        assert!(vault.exists(location("A")).await.unwrap());
+
+        let pubkey = vault.ed25519_public_key(location("A")).await.unwrap();
+
+        assert_eq!(pubkey, keypair.public().as_ref());
+
+        fs::remove_file(filename).unwrap();
       }
     })
   }

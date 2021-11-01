@@ -10,16 +10,17 @@ use wasm_bindgen::prelude::*;
 
 #[macro_use]
 mod macros;
-mod utils;
 
+#[macro_use]
+pub mod error;
+
+pub mod chain;
+pub mod common;
 pub mod credential;
 pub mod crypto;
-pub mod iota;
-pub mod message;
+pub mod did;
 pub mod service;
-pub mod wasm_did;
-pub mod wasm_document;
-pub mod wasm_verification_method;
+pub mod tangle;
 
 /// Initializes the console error panic hook for better error messages
 #[wasm_bindgen(start)]

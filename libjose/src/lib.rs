@@ -28,10 +28,10 @@
   rust_2018_idioms,
   // unreachable_pub,
   // missing_docs,
-  missing_crate_level_docs,
-  broken_intra_doc_links,
-  private_intra_doc_links,
-  private_doc_tests,
+  rustdoc::missing_crate_level_docs,
+  rustdoc::broken_intra_doc_links,
+  rustdoc::private_intra_doc_links,
+  rustdoc::private_doc_tests,
   clippy::missing_safety_doc,
   // clippy::missing_errors_doc,
 )]
@@ -79,8 +79,10 @@ mod lib {
   #[cfg(feature = "std")]
   pub(crate) use std::borrow::Cow;
 
+  #[rustfmt::skip]
   #[cfg(all(feature = "alloc", not(feature = "std")))]
   pub(crate) use alloc::string::{String, ToString};
+  #[rustfmt::skip]
   #[cfg(feature = "std")]
   pub(crate) use std::string::{String, ToString};
 

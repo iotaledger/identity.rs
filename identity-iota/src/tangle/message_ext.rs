@@ -1,11 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::convert::FromJson;
+use iota_client::bee_message::payload::transaction::Essence;
 use iota_client::bee_message::payload::Payload;
 use iota_client::bee_message::Message;
 use iota_client::bee_message::MessageId;
 use iota_client::bee_message::MESSAGE_ID_LENGTH;
+
+use identity_core::convert::FromJson;
+use identity_did::did::DID;
 
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
@@ -16,22 +19,37 @@ use crate::tangle::TangleRef;
 // TODO: Use MessageId when it has a const ctor
 static NULL: &[u8; MESSAGE_ID_LENGTH] = &[0; MESSAGE_ID_LENGTH];
 
-macro_rules! try_extract {
-  ($ty:ty, $this:expr, $did:expr) => {{
-    if let Some(Payload::Indexation(payload)) = $this.payload() {
-      let mut resource: $ty = <$ty>::from_json_slice(payload.data()).ok()?;
+fn parse_message<T: FromJson + TangleRef>(message: &Message, did: &IotaDID) -> Option<T> {
+  let message_id: MessageId = message.id().0;
+  let payload: Option<&Payload> = message.payload().as_ref();
+  let resource: T = parse_payload(message_id, payload)?;
 
-      if $did.authority() != resource.id().authority() {
-        return None;
-      }
+  if did.authority() != resource.did().authority() {
+    return None;
+  }
 
-      TangleRef::set_message_id(&mut resource, $this.id().0);
+  Some(resource)
+}
 
-      Some(resource)
-    } else {
-      None
-    }
-  }};
+fn parse_payload<T: FromJson + TangleRef>(message_id: MessageId, payload: Option<&Payload>) -> Option<T> {
+  match payload {
+    Some(Payload::Indexation(indexation)) => parse_data(message_id, indexation.data()),
+    Some(Payload::Transaction(transaction)) => match transaction.essence() {
+      Essence::Regular(essence) => match essence.payload() {
+        Some(Payload::Indexation(payload)) => parse_data(message_id, payload.data()),
+        _ => None,
+      },
+    },
+    _ => None,
+  }
+}
+
+fn parse_data<T: FromJson + TangleRef>(message_id: MessageId, data: &[u8]) -> Option<T> {
+  let mut resource: T = T::from_json_slice(data).ok()?;
+
+  resource.set_message_id(message_id);
+
+  Some(resource)
 }
 
 pub trait MessageIdExt: Sized {
@@ -64,10 +82,26 @@ pub trait MessageExt {
 
 impl MessageExt for Message {
   fn try_extract_document(&self, did: &IotaDID) -> Option<IotaDocument> {
-    try_extract!(IotaDocument, self, did)
+    IotaDocument::try_from_message(self, did)
   }
 
   fn try_extract_diff(&self, did: &IotaDID) -> Option<DocumentDiff> {
-    try_extract!(DocumentDiff, self, did)
+    DocumentDiff::try_from_message(self, did)
+  }
+}
+
+pub trait TryFromMessage: Sized {
+  fn try_from_message(message: &Message, did: &IotaDID) -> Option<Self>;
+}
+
+impl TryFromMessage for IotaDocument {
+  fn try_from_message(message: &Message, did: &IotaDID) -> Option<Self> {
+    parse_message(message, did)
+  }
+}
+
+impl TryFromMessage for DocumentDiff {
+  fn try_from_message(message: &Message, did: &IotaDID) -> Option<Self> {
+    parse_message(message, did)
   }
 }

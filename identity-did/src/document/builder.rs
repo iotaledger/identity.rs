@@ -4,7 +4,7 @@
 use identity_core::common::Object;
 use identity_core::common::Url;
 
-use crate::did::DID;
+use crate::did::CoreDID;
 use crate::document::CoreDocument;
 use crate::error::Result;
 use crate::service::Service;
@@ -15,8 +15,8 @@ use crate::verification::VerificationMethod;
 /// A `DocumentBuilder` is used to generate a customized [Document].
 #[derive(Clone, Debug)]
 pub struct DocumentBuilder<T = Object, U = Object, V = Object> {
-  pub(crate) id: Option<DID>,
-  pub(crate) controller: Option<DID>,
+  pub(crate) id: Option<CoreDID>,
+  pub(crate) controller: Option<CoreDID>,
   pub(crate) also_known_as: Vec<Url>,
   pub(crate) verification_method: Vec<DIDKey<VerificationMethod<U>>>,
   pub(crate) authentication: Vec<DIDKey<MethodRef<U>>>,
@@ -48,14 +48,14 @@ impl<T, U, V> DocumentBuilder<T, U, V> {
 
   /// Sets the `id` value.
   #[must_use]
-  pub fn id(mut self, value: DID) -> Self {
+  pub fn id(mut self, value: CoreDID) -> Self {
     self.id = Some(value);
     self
   }
 
   /// Sets the `controller` value.
   #[must_use]
-  pub fn controller(mut self, value: DID) -> Self {
+  pub fn controller(mut self, value: CoreDID) -> Self {
     self.controller = Some(value);
     self
   }

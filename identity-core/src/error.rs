@@ -10,7 +10,7 @@ use crate::crypto::merkle_key::MerkleDigestTag;
 use crate::crypto::merkle_key::MerkleSignatureTag;
 
 /// This type represents all possible errors that can occur in the library.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   /// Caused when a cryptographic operation fails.
   #[error("Crypto Error: {0}")]
@@ -30,6 +30,9 @@ pub enum Error {
   /// Caused by a failure to decode base64-encoded data.
   #[error("Failed to decode base64 data: {0}")]
   DecodeBase64(#[from] base64::DecodeError),
+  /// Caused by a failure to decode multibase-encoded data.
+  #[error("Failed to decode multibase data: {0}")]
+  DecodeMultibase(#[from] multibase::Error),
   /// Cause by a failure to encode a Roaring Bitmap.
   #[error("Failed to encode roaring bitmap: {0}")]
   EncodeBitmap(std::io::Error),
@@ -72,6 +75,9 @@ pub enum Error {
   /// Caused by attempting to create a KeyCollection of invalid size.
   #[error("Invalid Key Collection Size: {0}")]
   InvalidKeyCollectionSize(usize),
+  /// Caused by attempting to create a Proof with more nodes than allowed.
+  #[error("Invalid number of nodes in the Proof: {0}")]
+  InvalidProofSize(usize),
 }
 
 impl From<crypto::Error> for Error {

@@ -1,13 +1,19 @@
 const path = require('path')
 const fs = require('fs')
+const { lintBigInt } = require('./lints')
 
 const entryFilePath = path.join(__dirname, '../web/identity_wasm.js')
 const entryFile = fs.readFileSync(entryFilePath).toString()
-// comment out this code so it works for Webpack
-let changedFile = entryFile.replace(
-    "input = import.meta.url.replace(",
-    "// input = import.meta.url.replace("
-)
+
+lintBigInt(entryFile);
+
+let changedFile = entryFile
+    // Comment out generated code as a workaround for webpack (does not recognise import.meta)
+    // Regex to avoid hard-coding 'identity_wasm_bg.wasm'
+    .replace(
+        /input = new URL\((.*), import\.meta\.url\);/i,
+        "// input = new URL($1, import.meta.url);"
+    )
     // Rename original init function, because we want to use the name for our own function
     .replace(
         "async function init(input) {",

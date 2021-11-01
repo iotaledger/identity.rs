@@ -60,17 +60,17 @@ where
 
       if index < k {
         __generate::<D, L>(digest, path, this, index);
-        path.push(Node::R(compute_merkle_root::<D, L>(&that)));
+        path.push(Node::R(compute_merkle_root::<D, L>(that)));
       } else {
         __generate::<D, L>(digest, path, that, index - k);
-        path.push(Node::L(compute_merkle_root::<D, L>(&this)));
+        path.push(Node::L(compute_merkle_root::<D, L>(this)));
       }
     }
   }
 
   match (index, leaves.len()) {
     (_, 0) => None,
-    (0, 1) => Some(Proof::new(Box::new([]))),
+    (0, 1) => Proof::new(Box::new([])).ok(),
     (_, 1) => None,
     (index, length) => {
       if index >= length {
@@ -87,7 +87,7 @@ where
 
       __generate(&mut D::new(), &mut path, leaves, index);
 
-      Some(Proof::new(path.into_boxed_slice()))
+      Proof::new(path.into_boxed_slice()).ok()
     }
   }
 }

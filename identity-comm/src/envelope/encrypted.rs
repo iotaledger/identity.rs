@@ -1,13 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+//! Functionality for creating [DIDComm encrypted messages](https://identity.foundation/didcomm-messaging/spec/#didcomm-encrypted-message)
 
 #![allow(non_camel_case_types)]
 
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_core::crypto::KeyPair;
+use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
-use identity_core::crypto::SecretKey;
 use libjose::jwe::Decoder;
 use libjose::jwe::Encoder;
 use libjose::jwe::JweAlgorithm;
@@ -70,7 +71,7 @@ impl Encrypted {
     let encoder: Encoder<'_> = Encoder::new()
       .format(JweFormat::General)
       .protected(&header)
-      .secret(sender.secret());
+      .secret(sender.private());
 
     recipients
       .iter()
@@ -83,7 +84,7 @@ impl Encrypted {
   pub fn unpack<T: FromJson>(
     &self,
     algorithm: EncryptionAlgorithm,
-    recipient: &SecretKey,
+    recipient: &PrivateKey,
     sender: &PublicKey,
   ) -> Result<T> {
     let token: Token = Decoder::new(recipient)

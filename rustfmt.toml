@@ -6,3 +6,4 @@ normalize_comments = false
 normalize_doc_attributes = false
 tab_spaces = 2
 wrap_comments = true
+imports_granularity = "Item"

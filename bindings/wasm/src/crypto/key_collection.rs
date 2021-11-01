@@ -3,17 +3,18 @@
 
 use identity::core::decode_b58;
 use identity::core::encode_b58;
+use identity::crypto::merkle_key::Blake2b256;
 use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::KeyCollection as KeyCollection_;
+use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
-use identity::crypto::SecretKey;
 use wasm_bindgen::prelude::*;
 
 use crate::crypto::Digest;
 use crate::crypto::KeyPair;
 use crate::crypto::KeyType;
-use crate::utils::err;
+use crate::error::wasm_error;
 
 #[derive(Deserialize, Serialize)]
 struct JsonData {
@@ -25,7 +26,7 @@ struct JsonData {
 #[derive(Deserialize, Serialize)]
 struct KeyData {
   public: String,
-  secret: String,
+  private: String,
 }
 
 // =============================================================================
@@ -40,7 +41,7 @@ impl KeyCollection {
   /// Creates a new `KeyCollection` with the specified key type.
   #[wasm_bindgen(constructor)]
   pub fn new(type_: KeyType, count: usize) -> Result<KeyCollection, JsValue> {
-    KeyCollection_::new(type_.into(), count).map_err(err).map(Self)
+    KeyCollection_::new(type_.into(), count).map_err(wasm_error).map(Self)
   }
 
   /// Returns the number of keys in the collection.
@@ -67,16 +68,17 @@ impl KeyCollection {
     self.0.public(index).map(encode_b58)
   }
 
-  /// Returns the secret key at the specified `index` as a base58-encoded string.
+  /// Returns the private key at the specified `index` as a base58-encoded string.
   #[wasm_bindgen]
-  pub fn secret(&self, index: usize) -> Option<String> {
-    self.0.secret(index).map(encode_b58)
+  pub fn private(&self, index: usize) -> Option<String> {
+    self.0.private(index).map(encode_b58)
   }
 
   #[wasm_bindgen(js_name = merkleRoot)]
   pub fn merkle_root(&self, digest: Digest) -> String {
     match digest {
       Digest::Sha256 => encode_b58(self.0.merkle_root::<Sha256>().as_slice()),
+      Digest::Blake2b256 => encode_b58(self.0.merkle_root::<Blake2b256>().as_slice()),
     }
   }
 
@@ -91,6 +93,14 @@ impl KeyCollection {
 
         Some(encode_b58(&proof.encode()))
       }
+      Digest::Blake2b256 => {
+        let proof: Proof<Blake2b256> = match self.0.merkle_proof(index) {
+          Some(proof) => proof,
+          None => return None,
+        };
+
+        Some(encode_b58(&proof.encode()))
+      }
     }
   }
 
@@ -98,13 +108,13 @@ impl KeyCollection {
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {
     let public: _ = self.0.iter_public();
-    let secret: _ = self.0.iter_secret();
+    let private: _ = self.0.iter_private();
 
     let keys: Vec<KeyData> = public
-      .zip(secret)
-      .map(|(public, secret)| KeyData {
+      .zip(private)
+      .map(|(public, private)| KeyData {
         public: encode_b58(public),
-        secret: encode_b58(secret),
+        private: encode_b58(private),
       })
       .collect();
 
@@ -113,23 +123,23 @@ impl KeyCollection {
       type_: self.0.type_().into(),
     };
 
-    JsValue::from_serde(&data).map_err(err)
+    JsValue::from_serde(&data).map_err(wasm_error)
   }
 
   /// Deserializes a `KeyCollection` object from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<KeyCollection, JsValue> {
-    let data: JsonData = json.into_serde().map_err(err)?;
+    let data: JsonData = json.into_serde().map_err(wasm_error)?;
 
     let iter: _ = data.keys.iter().flat_map(|data| {
-      let pk: PublicKey = decode_b58(&data.public).ok()?.into();
-      let sk: SecretKey = decode_b58(&data.secret).ok()?.into();
+      let public_key: PublicKey = decode_b58(&data.public).ok()?.into();
+      let private_key: PrivateKey = decode_b58(&data.private).ok()?.into();
 
-      Some((pk, sk))
+      Some((public_key, private_key))
     });
 
     KeyCollection_::from_iterator(data.type_.into(), iter)
-      .map_err(err)
+      .map_err(wasm_error)
       .map(Self)
   }
 }

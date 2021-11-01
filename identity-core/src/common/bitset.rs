@@ -18,7 +18,7 @@ use crate::utils::decode_b64;
 use crate::utils::encode_b64;
 
 /// A general-purpose compressed bitset.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BitSet(RoaringBitmap);
 
 impl BitSet {
@@ -178,5 +178,33 @@ mod tests {
     set.clear();
 
     assert_eq!(set.len(), 0);
+  }
+
+  // Validate that a `deserialize_b64` ∘ `serialize_b64` round-trip results in the original bitset.
+  #[test]
+  fn test_serialize_b64_round_trip() {
+    let mut set = BitSet::new();
+    for index in 0..10 {
+      assert!(set.insert(index));
+    }
+
+    assert_eq!(
+      BitSet::deserialize_b64(set.serialize_b64().unwrap().as_str()).unwrap(),
+      set
+    );
+  }
+
+  // Validate that a `deserialize_slice` ∘ `serialize_vec` round-trip results in the original bitset.
+  #[test]
+  fn test_serialize_slice_round_trip() {
+    let mut set = BitSet::new();
+    for index in 0..10 {
+      assert!(set.insert(index));
+    }
+
+    assert_eq!(
+      BitSet::deserialize_slice(set.serialize_vec().unwrap().as_slice()).unwrap(),
+      set
+    );
   }
 }

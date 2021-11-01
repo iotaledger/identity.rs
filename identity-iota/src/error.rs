@@ -3,7 +3,7 @@
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   #[error("{0}")]
   CoreError(#[from] identity_core::Error),
@@ -12,7 +12,7 @@ pub enum Error {
   #[error("{0}")]
   CredError(#[from] identity_credential::Error),
   #[error("{0}")]
-  InvalidDID(#[from] identity_did::did::Error),
+  InvalidDID(#[from] identity_did::did::DIDError),
   #[error("{0}")]
   InvalidDoc(#[from] identity_did::Error),
   #[error("{0}")]
@@ -27,8 +27,8 @@ pub enum Error {
   InvalidDocumentAuthFragment,
   #[error("Invalid Document - Authentication Type Not Supported")]
   InvalidDocumentAuthType,
-  #[error("Invalid DID Network")]
-  InvalidDIDNetwork,
+  #[error("Invalid Network Name")]
+  InvalidNetworkName,
   #[error("Invalid Tryte Conversion")]
   InvalidTryteConversion,
   #[error("Invalid Transaction Bundle")]
@@ -51,4 +51,10 @@ pub enum Error {
   CannotRemoveAuthMethod,
   #[error("Cannot Revoke Verification Method")]
   CannotRevokeMethod,
+  #[error("No Client Nodes Provided")]
+  NoClientNodesProvided,
+  #[error("No Explorer URL Set")]
+  NoExplorerURLSet,
+  #[error("Invalid Explorer Url")]
+  InvalidExplorerURL,
 }

@@ -1,17 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use chrono::DateTime;
-use chrono::NaiveDateTime;
-use chrono::SecondsFormat;
-use chrono::Timelike;
-use chrono::Utc;
 use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::str::FromStr;
+
+use chrono::DateTime;
+use chrono::NaiveDateTime;
+use chrono::SecondsFormat;
+use chrono::Timelike;
+use chrono::Utc;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -25,14 +26,14 @@ pub struct Timestamp(DateTime<Utc>);
 impl Timestamp {
   /// Parses a `Timestamp` from the provided input string.
   pub fn parse(input: &str) -> Result<Self> {
-    let this: DateTime<Utc> = DateTime::parse_from_rfc3339(input)?.into();
-    let this: DateTime<Utc> = Self::truncate(this);
+    let datetime: DateTime<Utc> = DateTime::parse_from_rfc3339(input)?.into();
+    let datetime: DateTime<Utc> = Self::truncate(datetime);
 
-    Ok(Self(this))
+    Ok(Self(datetime))
   }
 
   /// Creates a new `Timestamp` with the current date and time.
-  pub fn now() -> Self {
+  pub fn now_utc() -> Self {
     Self(Self::truncate(Utc::now()))
   }
 
@@ -48,20 +49,22 @@ impl Timestamp {
   }
 
   /// Returns the `Timestamp` as an RFC 3339 `String`.
+  ///
+  /// See: https://tools.ietf.org/html/rfc3339
   #[allow(clippy::wrong_self_convention)]
   pub fn to_rfc3339(&self) -> String {
     self.0.to_rfc3339_opts(SecondsFormat::Secs, true)
   }
 
   fn truncate(value: DateTime<Utc>) -> DateTime<Utc> {
-    // safe to unwrap because 0 is a valid nanosecond
+    // Safe to unwrap because 0 is a valid nanosecond
     value.with_nanosecond(0).unwrap()
   }
 }
 
 impl Default for Timestamp {
   fn default() -> Self {
-    Self::now()
+    Self::now_utc()
   }
 }
 
@@ -78,8 +81,8 @@ impl Display for Timestamp {
 }
 
 impl From<Timestamp> for String {
-  fn from(other: Timestamp) -> Self {
-    other.to_rfc3339()
+  fn from(timestamp: Timestamp) -> Self {
+    timestamp.to_rfc3339()
   }
 }
 
@@ -155,7 +158,7 @@ mod tests {
 
   #[test]
   fn test_json_roundtrip() {
-    let time1: Timestamp = Timestamp::now();
+    let time1: Timestamp = Timestamp::now_utc();
     let json: Vec<u8> = time1.to_json_vec().unwrap();
     let time2: Timestamp = Timestamp::from_json_slice(&json).unwrap();
 

@@ -1,20 +1,21 @@
 [package]
 name = "identity-diff"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["IOTA Stiftung"]
 edition = "2018"
-description = "The `Diff` trait for the identity-rs library."
+homepage = "https://www.iota.org"
+keywords = ["iota", "tangle", "identity"]
+license = "Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/iotaledger/identity.rs"
-license = "Apache-2.0"
-keywords = ["iota", "tangle", "identity"]
-homepage = "https://www.iota.org"
+description = "The `Diff` trait for the identity-rs library."
 
 [dependencies]
 did_url = { version = "0.1", default-features = false, features = ["alloc"] }
-identity-derive = { version = "=0.3.0", path = "derive" }
-serde = { version = "1.0", features = [ "derive" ] }
+identity-derive = { version = "=0.4.0", path = "derive" }
+serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0" }
+strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0" }
 
 [dev-dependencies]

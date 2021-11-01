@@ -7,7 +7,7 @@
 pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 
 /// This type represents all possible errors that can occur in the library.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   /// Caused by errors from the [crypto] crate.
   #[error(transparent)]
@@ -27,10 +27,8 @@ pub enum Error {
   /// Caused by attempting to perform an invalid IO operation.
   #[error(transparent)]
   IoError(#[from] std::io::Error),
-  /// Caused by an internal failure of the riker actor system.
-  #[error(transparent)]
-  ActorSystemError(#[from] riker::system::SystemError),
   /// Caused by errors from the [iota_stronghold] crate.
+  #[cfg(feature = "stronghold")]
   #[error(transparent)]
   StrongholdError(#[from] iota_stronghold::Error),
   /// Caused by errors from an invalid Stronghold procedure.
@@ -90,13 +88,21 @@ pub enum Error {
   /// Caused by attempting to find a service that does not exist.
   #[error("Service not found")]
   ServiceNotFound,
-  /// Caused by attempting to perform a command in an invalid context.
-  #[error("Command Error: {0}")]
-  CommandError(#[from] crate::events::CommandError),
+  /// Caused by attempting to perform an upate in an invalid context.
+  #[error("Update Error: {0}")]
+  UpdateError(#[from] crate::events::UpdateError),
+  #[error("Invalid Private Key: {0}")]
+  InvalidPrivateKey(String),
 }
 
 #[doc(hidden)]
 pub trait PleaseDontMakeYourOwnResult<T> {
   #[allow(clippy::wrong_self_convention)]
   fn to_result(self) -> Result<T>;
+}
+
+impl From<identity_did::did::DIDError> for Error {
+  fn from(error: identity_did::did::DIDError) -> Self {
+    identity_did::Error::from(error).into()
+  }
 }

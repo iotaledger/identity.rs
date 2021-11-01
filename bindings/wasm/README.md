@@ -2,46 +2,80 @@
 
 > This is the beta version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
 
-## [API Reference](docs/api-reference.md)
+## [API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference)
+## [Examples](./examples/README.md)
 
 ## Install the library:
 
-Latest Release: This version matches the main branch of this repository, is stable and will have changelogs.
+Latest Release: this version matches the main branch of this repository, is stable and will have changelogs.
 ```bash
-$ npm install @iota/identity-wasm
-// or using yarn
-$ yarn add @iota/identity-wasm
+npm install @iota/identity-wasm
 ```
 
-Development Release: This version matches the dev branch of this repository, may see frequent breaking changes and has the latest code changes.
+Development Release: this version matches the dev branch of this repository, may see frequent breaking changes and has the latest code changes.
 ```bash
-$ npm install @iota/identity-wasm@dev
-// or using yarn
-$ yarn add @iota/identity-wasm@dev
+npm install @iota/identity-wasm@dev
 ```
 
-## NodeJS Setup
+## Build
 
-```js
+Alternatively, you can build the bindings if you have Rust installed. If not, refer to [rustup.rs](https://rustup.rs) for the installation. Then install the necessary dependencies using:
+```bash
+npm install
+```
+
+and then build the bindings for `node.js` with
+
+```bash
+npm run build:nodejs
+```
+
+or for the `web` with
+
+```bash
+npm run build:web
+```
+
+## NodeJS Usage
+<!-- 
+Test this example using https://github.com/anko/txm: `txm README.md`
+
+Replace imports with local paths for txm:
+!test program
+cat \
+| sed -e "s#require('@iota/identity-wasm/node')#require('./node/identity_wasm.js')#" \
+| node
+-->
+<!-- !test check Nodejs Example -->
+```javascript
 const identity = require('@iota/identity-wasm/node')
 
 // Generate a new KeyPair
 const key = new identity.KeyPair(identity.KeyType.Ed25519)
 
 // Create a new DID Document with the KeyPair as the default authentication method
-const doc = identity.Document.fromKeyPair(key)
+const doc = new identity.Document(key)
+// const doc = new identity.Document(key, "dev") // if using the devnet
 
-// Sign the DID Document with the sceret key
+// Sign the DID Document with the private key
 doc.sign(key)
 
+// Create a default client instance for the mainnet
+const config = identity.Config.fromNetwork(identity.Network.mainnet())
+// const config = identity.Config.fromNetwork(identity.Network.devnet()); // if using the devnet
+const client = identity.Client.fromConfig(config)
+
 // Publish the DID Document to the IOTA Tangle
-identity.publish(doc.toJSON(), { node: "https://nodes.thetangle.org:443" })
-  .then((message) => {
-    console.log("Tangle Message Id: ", message)
-    console.log("Tangle Message Url", `https://explorer.iota.org/mainnet/transaction/${message}`)
-  }).catch((error) => {
-    console.error("Error: ", error)
-  })
+// The message can be viewed at https://explorer.iota.org/<mainnet|devnet>/transaction/<messageId>
+client.publishDocument(doc.toJSON())
+    .then((receipt) => {
+        console.log("Tangle Message Receipt: ", receipt)
+        console.log("Tangle Message Url:", doc.id.network.messageURL(receipt.messageId))
+    })
+    .catch((error) => {
+        console.error("Error: ", error)
+        throw error
+    })
 ```
 
 ## Web Setup
@@ -54,8 +88,6 @@ The library loads the WASM file with an HTTP GET request, so the .wasm file must
 
 ```bash
 $ npm install rollup-plugin-copy --save-dev
-// or using yarn
-$ yarn add rollup-plugin-copy --dev
 ```
 
 - Add the copy plugin usage to the `plugins` array under `rollup.config.js`:
@@ -80,8 +112,6 @@ copy({
 
 ```bash
 $ npm install copy-webpack-plugin --save-dev
-// or using yarn
-$ yarn add copy-webpack-plugin --dev
 ```
 
 ```js
@@ -100,14 +130,15 @@ new CopyWebPlugin({
 }),
 ```
 
-### Usage
+### Web Usage
 
 ```js
 import * as identity from "@iota/identity-wasm/web";
 
 identity.init().then(() => {
   const key = new identity.KeyPair(identity.KeyType.Ed25519)
-  const doc = identity.Document.fromKeyPair(key)
+  const doc = new identity.Document(key)
+  // const doc = new identity.Document(key, "dev") // if using the devnet
   console.log("Key Pair", key)
   console.log("DID Document: ", doc)
 });
@@ -117,7 +148,8 @@ identity.init().then(() => {
 (async () => {
   await identity.init()
   const key = new identity.KeyPair(identity.KeyType.Ed25519)
-  const doc = identity.Document.fromKeyPair(key)
+  const doc = new identity.Document(key)
+  // const doc = new identity.Document(key, "dev") // if using the devnet
   console.log("Key Pair", key)
   console.log("DID Document: ", doc)
 })()

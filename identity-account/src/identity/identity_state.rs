@@ -2,12 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryInto;
+
 use hashbrown::HashMap;
+use serde::Serialize;
+
+use identity_core::common::Fragment;
 use identity_core::common::Object;
+use identity_core::common::UnixTimestamp;
 use identity_core::common::Url;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
+use identity_did::did::CoreDIDUrl;
+use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::document::DocumentBuilder;
 use identity_did::service::Service as CoreService;
@@ -18,12 +25,12 @@ use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDIDUrl;
 use identity_iota::did::IotaDocument;
 use identity_iota::did::Properties as BaseProperties;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::TangleRef;
-use serde::Serialize;
 
 use crate::crypto::RemoteKey;
 use crate::crypto::RemoteSign;
@@ -31,10 +38,8 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::identity::IdentityId;
 use crate::storage::Storage;
-use crate::types::Fragment;
 use crate::types::Generation;
 use crate::types::KeyLocation;
-use crate::types::UnixTimestamp;
 
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, Object>;
@@ -47,12 +52,12 @@ pub struct IdentityState {
   // Chain State //
   // =========== //
   id: IdentityId,
-  auth_generation: Generation,
+  integration_generation: Generation,
   diff_generation: Generation,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
   this_message_id: MessageId,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
-  last_auth_message_id: MessageId,
+  last_integration_message_id: MessageId,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
   last_diff_message_id: MessageId,
 
@@ -79,10 +84,10 @@ impl IdentityState {
   pub fn new(id: IdentityId) -> Self {
     Self {
       id,
-      auth_generation: Generation::new(),
+      integration_generation: Generation::new(),
       diff_generation: Generation::new(),
       this_message_id: MessageId::null(),
-      last_auth_message_id: MessageId::null(),
+      last_integration_message_id: MessageId::null(),
       last_diff_message_id: MessageId::null(),
       did: None,
       controller: None,
@@ -103,9 +108,9 @@ impl IdentityState {
     self.id
   }
 
-  /// Returns the current generation of the identity auth chain.
-  pub fn auth_generation(&self) -> Generation {
-    self.auth_generation
+  /// Returns the current generation of the identity integration chain.
+  pub fn integration_generation(&self) -> Generation {
+    self.integration_generation
   }
 
   /// Returns the current generation of the identity diff chain.
@@ -113,9 +118,9 @@ impl IdentityState {
     self.diff_generation
   }
 
-  /// Increments the generation of the identity auth chain.
-  pub fn increment_auth_generation(&mut self) -> Result<()> {
-    self.auth_generation = self.auth_generation.try_increment()?;
+  /// Increments the generation of the identity integration chain.
+  pub fn increment_integration_generation(&mut self) -> Result<()> {
+    self.integration_generation = self.integration_generation.try_increment()?;
     self.diff_generation = Generation::new();
 
     Ok(())
@@ -132,17 +137,17 @@ impl IdentityState {
   // Tangle State
   // ===========================================================================
 
-  /// Returns the current auth Tangle message id of the identity.
+  /// Returns the current integration Tangle message id of the identity.
   pub fn this_message_id(&self) -> &MessageId {
     &self.this_message_id
   }
 
-  /// Returns the previous auth Tangle message id of the identity.
+  /// Returns the previous integration Tangle message id of the identity.
   pub fn last_message_id(&self) -> &MessageId {
-    &self.last_auth_message_id
+    &self.last_integration_message_id
   }
 
-  /// Returns the previous diff Tangle message id, or the current auth message id.
+  /// Returns the previous diff Tangle message id, or the current integration message id.
   pub fn diff_message_id(&self) -> &MessageId {
     if self.last_diff_message_id.is_null() {
       &self.this_message_id
@@ -151,15 +156,15 @@ impl IdentityState {
     }
   }
 
-  /// Sets the current Tangle auth message id of the identity.
-  pub fn set_auth_message_id(&mut self, message: MessageId) {
-    // Set the current auth message id as the previous auth message.
-    self.last_auth_message_id = self.this_message_id;
+  /// Sets the current Tangle integration message id of the identity.
+  pub fn set_integration_message_id(&mut self, message: MessageId) {
+    // Set the current integration message id as the previous integration message.
+    self.last_integration_message_id = self.this_message_id;
 
     // Clear the diff message id
     self.last_diff_message_id = MessageId::null();
 
-    // Set the new auth message id
+    // Set the new integration message id
     self.this_message_id = message;
   }
 
@@ -237,7 +242,7 @@ impl IdentityState {
       .methods()
       .iter()
       .filter(|method| method.is_authentication())
-      .max_by_key(|method| method.location().auth_generation())
+      .max_by_key(|method| method.location().integration_generation())
       .ok_or(Error::MethodNotFound)
   }
 
@@ -246,7 +251,7 @@ impl IdentityState {
     Ok(KeyLocation {
       method,
       fragment: Fragment::new(fragment),
-      auth_generation: self.auth_generation(),
+      integration_generation: self.integration_generation(),
       diff_generation: self.diff_generation(),
     })
   }
@@ -312,8 +317,8 @@ impl IdentityState {
       document.set_message_id(self.this_message_id);
     }
 
-    if !self.last_auth_message_id.is_null() {
-      document.set_previous_message_id(self.last_auth_message_id);
+    if !self.last_integration_message_id.is_null() {
+      document.set_previous_message_id(self.last_integration_message_id);
     }
 
     document.set_created(self.created.into());
@@ -327,16 +332,16 @@ impl IdentityState {
     T: Storage,
     U: Serialize + SetSignature,
   {
-    // Create a secret key suitable for identity_core::crypto
-    let secret: RemoteKey<'_, T> = RemoteKey::new(self.id, location, store);
+    // Create a private key suitable for identity_core::crypto
+    let private: RemoteKey<'_, T> = RemoteKey::new(self.id, location, store);
 
     // Create the Verification Method identifier
     let fragment: &str = location.fragment.identifier();
-    let method: IotaDID = self.try_did()?.join(fragment)?;
+    let method_url: IotaDIDUrl = self.try_did()?.to_url().join(fragment)?;
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        RemoteEd25519::create_signature(target, method.as_str(), &secret)?;
+        RemoteEd25519::create_signature(target, method_url.to_string(), &private)?;
       }
       MethodType::MerkleKeyCollection2021 => {
         todo!("Handle MerkleKeyCollection2021")
@@ -372,7 +377,7 @@ impl TinyMethodRef {
   pub fn fragment(&self) -> &Fragment {
     match self {
       Self::Embed(inner) => &inner.location.fragment,
-      Self::Refer(inner) => &inner,
+      Self::Refer(inner) => inner,
     }
   }
 
@@ -381,8 +386,9 @@ impl TinyMethodRef {
     match self {
       Self::Embed(inner) => inner.to_core(did).map(CoreMethodRef::Embed),
       Self::Refer(inner) => did
+        .to_url()
         .join(inner.identifier())
-        .map(Into::into)
+        .map(CoreDIDUrl::from)
         .map(CoreMethodRef::Refer)
         .map_err(Into::into),
     }
@@ -444,10 +450,10 @@ impl TinyMethod {
   /// Creates a new [VerificationMethod].
   pub fn to_core(&self, did: &IotaDID) -> Result<VerificationMethod> {
     let properties: Object = self.properties.clone().unwrap_or_default();
-    let id: IotaDID = did.join(self.location.fragment.identifier())?;
+    let id: IotaDIDUrl = did.to_url().join(self.location.fragment.identifier())?;
 
     VerificationMethod::builder(properties)
-      .id(id.into())
+      .id(CoreDIDUrl::from(id))
       .controller(did.clone().into())
       .key_type(self.location.method())
       .key_data(self.key_data.clone())
@@ -588,10 +594,10 @@ impl TinyService {
   /// Creates a new `CoreService` from the service state.
   pub fn to_core(&self, did: &IotaDID) -> Result<CoreService<Object>> {
     let properties: Object = self.properties.clone().unwrap_or_default();
-    let id: IotaDID = did.join(self.fragment().identifier())?;
+    let id: IotaDIDUrl = did.to_url().join(self.fragment().identifier())?;
 
     CoreService::builder(properties)
-      .id(id.into())
+      .id(CoreDIDUrl::from(id))
       .type_(&self.type_)
       .service_endpoint(self.endpoint.clone())
       .build()

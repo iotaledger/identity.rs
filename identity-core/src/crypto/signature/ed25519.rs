@@ -4,7 +4,7 @@
 use core::convert::TryInto;
 use core::marker::PhantomData;
 use crypto::signatures::ed25519;
-use crypto::signatures::ed25519::COMPRESSED_PUBLIC_KEY_LENGTH as PUBLIC_KEY_LENGTH;
+use crypto::signatures::ed25519::PUBLIC_KEY_LENGTH;
 use crypto::signatures::ed25519::SECRET_KEY_LENGTH;
 use crypto::signatures::ed25519::SIGNATURE_LENGTH;
 
@@ -21,10 +21,10 @@ impl<T> Sign for Ed25519<T>
 where
   T: AsRef<[u8]> + ?Sized,
 {
-  type Secret = T;
+  type Private = T;
   type Output = [u8; SIGNATURE_LENGTH];
 
-  fn sign(message: &[u8], key: &Self::Secret) -> Result<Self::Output> {
+  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output> {
     parse_secret(key.as_ref()).map(|key| key.sign(message).to_bytes())
   }
 }
@@ -53,7 +53,7 @@ fn parse_public(slice: &[u8]) -> Result<ed25519::PublicKey> {
     .and_then(|bytes| bytes.try_into().ok())
     .ok_or_else(|| Error::InvalidKeyLength(slice.len(), PUBLIC_KEY_LENGTH))?;
 
-  ed25519::PublicKey::from_compressed_bytes(bytes).map_err(Into::into)
+  ed25519::PublicKey::try_from_bytes(bytes).map_err(Into::into)
 }
 
 fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey> {
@@ -62,7 +62,7 @@ fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey> {
     .and_then(|bytes| bytes.try_into().ok())
     .ok_or_else(|| Error::InvalidKeyLength(slice.len(), SECRET_KEY_LENGTH))?;
 
-  ed25519::SecretKey::from_le_bytes(bytes).map_err(Into::into)
+  Ok(ed25519::SecretKey::from_bytes(bytes))
 }
 
 fn parse_signature(slice: &[u8]) -> Result<ed25519::Signature> {
@@ -93,9 +93,9 @@ mod tests {
   #[test]
   fn test_ed25519_can_sign_and_verify() {
     let public: Vec<u8> = decode_b58(PUBLIC_B58).unwrap();
-    let secret: Vec<u8> = decode_b58(SECRET_B58).unwrap();
+    let private: Vec<u8> = decode_b58(SECRET_B58).unwrap();
 
-    let signature: _ = Ed25519::sign(b"hello", &secret).unwrap();
+    let signature: _ = Ed25519::sign(b"hello", &private).unwrap();
     let combined: _ = [&signature[..], b"hello"].concat();
 
     assert_eq!(&combined, SIGNATURE_HELLO);

@@ -12,14 +12,14 @@ use crate::error::Result;
 
 /// A common interface for digital signature creation.
 pub trait Sign {
-  /// The secret key type of this signature implementation.
-  type Secret: ?Sized;
+  /// The private key type of this signature implementation.
+  type Private: ?Sized;
 
   /// The output type of this signature implementation.
   type Output;
 
   /// Signs the given `message` with `key` and returns a digital signature.
-  fn sign(message: &[u8], key: &Self::Secret) -> Result<Self::Output>;
+  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output>;
 }
 
 // =============================================================================
@@ -54,7 +54,7 @@ pub trait Signer<Secret: ?Sized>: Named {
     T: Serialize;
 
   /// Creates and applies a [signature][`Signature`] to the given `data`.
-  fn create_signature<T>(data: &mut T, method: &str, secret: &Secret) -> Result<()>
+  fn create_signature<T>(data: &mut T, method: String, secret: &Secret) -> Result<()>
   where
     T: Serialize + SetSignature,
   {

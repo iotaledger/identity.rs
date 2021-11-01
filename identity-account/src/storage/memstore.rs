@@ -4,6 +4,7 @@
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
+use crypto::signatures::ed25519;
 use futures::stream;
 use futures::stream::BoxStream;
 use futures::StreamExt;
@@ -11,11 +12,14 @@ use hashbrown::HashMap;
 use identity_core::crypto::Ed25519;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_core::crypto::Sign;
 use identity_did::verification::MethodType;
+use std::convert::TryFrom;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
+use zeroize::Zeroize;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -35,10 +39,12 @@ type MemVault = HashMap<KeyLocation, KeyPair>;
 type Events = HashMap<IdentityId, Vec<Commit>>;
 type States = HashMap<IdentityId, IdentitySnapshot>;
 type Vaults = HashMap<IdentityId, MemVault>;
+type PublishedGenerations = HashMap<IdentityId, Generation>;
 
 pub struct MemStore {
   expand: bool,
   index: Shared<IdentityIndex>,
+  published_generations: Shared<PublishedGenerations>,
   events: Shared<Events>,
   states: Shared<States>,
   vaults: Shared<Vaults>,
@@ -49,6 +55,7 @@ impl MemStore {
     Self {
       expand: false,
       index: Shared::new(IdentityIndex::new()),
+      published_generations: Shared::new(HashMap::new()),
       events: Shared::new(HashMap::new()),
       states: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
@@ -109,6 +116,34 @@ impl Storage for MemStore {
     }
   }
 
+  async fn key_insert(&self, id: IdentityId, location: &KeyLocation, private_key: PrivateKey) -> Result<PublicKey> {
+    let mut vaults: RwLockWriteGuard<'_, _> = self.vaults.write()?;
+    let vault: &mut MemVault = vaults.entry(id).or_default();
+
+    match location.method() {
+      MethodType::Ed25519VerificationKey2018 => {
+        let mut private_key_bytes: [u8; 32] = <[u8; 32]>::try_from(private_key.as_ref())
+          .map_err(|err| Error::InvalidPrivateKey(format!("expected a slice of 32 bytes - {}", err)))?;
+
+        let secret: ed25519::SecretKey = ed25519::SecretKey::from_bytes(private_key_bytes);
+        private_key_bytes.zeroize();
+
+        let public: ed25519::PublicKey = secret.public_key();
+
+        let public_key: PublicKey = public.to_bytes().to_vec().into();
+
+        let keypair: KeyPair = KeyPair::from((KeyType::Ed25519, public_key.clone(), private_key));
+
+        vault.insert(location.clone(), keypair);
+
+        Ok(public_key)
+      }
+      MethodType::MerkleKeyCollection2021 => {
+        todo!("[MemStore::key_insert] Handle MerkleKeyCollection2021")
+      }
+    }
+  }
+
   async fn key_exists(&self, id: IdentityId, location: &KeyLocation) -> Result<bool> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
 
@@ -146,7 +181,7 @@ impl Storage for MemStore {
         assert_eq!(keypair.type_(), KeyType::Ed25519);
 
         let public: PublicKey = keypair.public().clone();
-        let signature: [u8; 64] = Ed25519::sign(&data, keypair.secret())?;
+        let signature: [u8; 64] = Ed25519::sign(&data, keypair.private())?;
         let signature: Signature = Signature::new(public, signature.to_vec());
 
         Ok(signature)
@@ -201,6 +236,15 @@ impl Storage for MemStore {
     let _ = self.states.write()?.remove(&id);
     let _ = self.vaults.write()?.remove(&id);
 
+    Ok(())
+  }
+
+  async fn published_generation(&self, id: IdentityId) -> Result<Option<Generation>> {
+    Ok(self.published_generations.read()?.get(&id).copied())
+  }
+
+  async fn set_published_generation(&self, id: IdentityId, index: Generation) -> Result<()> {
+    self.published_generations.write()?.insert(id, index);
     Ok(())
   }
 }

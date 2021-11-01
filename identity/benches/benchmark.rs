@@ -5,23 +5,24 @@ use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
+
 use identity::crypto::KeyPair;
 use identity::iota::DocumentChain;
 use identity::iota::IntegrationChain;
 use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 
-mod diff_chain;
-
 use self::diff_chain::create_diff_chain;
 use self::diff_chain::setup_diff_chain_bench;
 use self::diff_chain::update_diff_chain;
 use self::diff_chain::update_integration_chain;
 
-fn generate_signed_document(keypair: &KeyPair) {
-  let mut document: IotaDocument = IotaDocument::from_keypair(&keypair).unwrap();
+mod diff_chain;
 
-  document.sign(keypair.secret()).unwrap();
+fn generate_signed_document(keypair: &KeyPair) {
+  let mut document: IotaDocument = IotaDocument::new(keypair).unwrap();
+
+  document.sign(keypair.private()).unwrap();
 }
 
 fn generate_did(keypair: &KeyPair) {
@@ -64,12 +65,12 @@ fn bench_diff_chain_updates(c: &mut Criterion) {
   group.finish();
 }
 
-fn bench_auth_chain_updates(c: &mut Criterion) {
+fn bench_integration_chain_updates(c: &mut Criterion) {
   static ITERATIONS: &[usize] = &[1, 10, 100, 1000];
 
   let (doc, keys) = setup_diff_chain_bench();
 
-  let mut group = c.benchmark_group("update auth chain");
+  let mut group = c.benchmark_group("update integration chain");
 
   for size in ITERATIONS.iter() {
     let mut chain: DocumentChain = DocumentChain::new(IntegrationChain::new(doc.clone()).unwrap());
@@ -89,6 +90,6 @@ criterion_group!(
   bench_generate_did,
   bench_generate_doc_chain,
   bench_diff_chain_updates,
-  bench_auth_chain_updates,
+  bench_integration_chain_updates,
 );
 criterion_main!(benches);

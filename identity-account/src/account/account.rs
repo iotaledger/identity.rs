@@ -1,21 +1,20 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::fmt::Debug;
-use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 use futures::executor;
+use futures::StreamExt;
 use futures::TryStreamExt;
-use hashbrown::HashMap;
+use identity_core::common::Fragment;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::SetSignature;
 use identity_did::verification::MethodType;
-use identity_iota::client::Client;
-use identity_iota::client::Network;
 use identity_iota::did::DocumentDiff;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDocument;
+use identity_iota::tangle::Client;
+use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
+use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
@@ -35,15 +34,15 @@ use crate::identity::IdentityCreate;
 use crate::identity::IdentityId;
 use crate::identity::IdentityIndex;
 use crate::identity::IdentityKey;
+use crate::identity::IdentityLock;
 use crate::identity::IdentitySnapshot;
 use crate::identity::IdentityState;
 use crate::identity::IdentityTag;
+use crate::identity::IdentityUpdater;
 use crate::identity::TinyMethod;
 use crate::storage::Storage;
-use crate::types::Fragment;
 use crate::types::Generation;
 use crate::types::KeyLocation;
-use crate::utils::Shared;
 
 const OSC: Ordering = Ordering::SeqCst;
 
@@ -98,6 +97,11 @@ impl Account {
     self.state.actions.load(OSC)
   }
 
+  /// Adds a pre-configured `Client` for Tangle interactions.
+  pub fn set_client(&self, client: Client) {
+    self.state.clients.insert(client);
+  }
+
   // ===========================================================================
   // Identity
   // ===========================================================================
@@ -107,15 +111,20 @@ impl Account {
     self.index.read().await.tags()
   }
 
-  /// Finds and returns the state snapshot for the identity specified by given `key`.
-  pub async fn find_identity<K: IdentityKey>(&self, key: K) -> Result<Option<IdentitySnapshot>> {
-    match self.resolve_id(key).await {
-      Some(identity) => self.load_snapshot(identity).await.map(Some),
+  /// Finds and returns the identity state for the identity specified by given `key`.
+  pub async fn find_identity<K: IdentityKey>(&self, key: K) -> Result<Option<IdentityState>> {
+    match self.resolve_id(&key).await {
+      Some(identity) => self
+        .load_snapshot(identity)
+        .await
+        .map(IdentitySnapshot::into_identity)
+        .map(Some),
       None => Ok(None),
     }
   }
 
-  pub async fn create_identity(&self, input: IdentityCreate) -> Result<IdentitySnapshot> {
+  /// Create an identity from the specified configuration options.
+  pub async fn create_identity(&self, input: IdentityCreate) -> Result<IdentityState> {
     // Acquire write access to the index.
     let mut index: RwLockWriteGuard<'_, _> = self.index.write().await;
 
@@ -124,7 +133,7 @@ impl Account {
     // Create the initialization command
     let command: Command = Command::CreateIdentity {
       network: input.network,
-      shard: input.shard,
+      method_secret: input.method_secret,
       authentication: Self::key_to_method(input.key_type),
     };
 
@@ -133,13 +142,13 @@ impl Account {
 
     // Read the latest snapshot
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
-    let document: &IotaDID = snapshot.identity().try_did()?;
+    let did: &IotaDID = snapshot.identity().try_did()?;
 
     // Add the identity to the index
     if let Some(name) = input.name {
-      index.set_named(identity, document, name)?;
+      index.set_named(identity, did, name)?;
     } else {
-      index.set(identity, document)?;
+      index.set(identity, did)?;
     }
 
     // Store the updated identity index
@@ -148,17 +157,19 @@ impl Account {
     // Write the changes to disk
     self.save(false).await?;
 
-    // Return the state snapshot
-    Ok(snapshot)
+    // Return the identity state
+    Ok(snapshot.into_identity())
   }
 
-  /// Updates the identity specified by the given `key` with the given `command`.
-  pub async fn update_identity<K: IdentityKey>(&self, key: K, command: Command) -> Result<()> {
-    let identity: IdentityId = self.try_resolve_id(key).await?;
-
-    self.process(identity, command, true).await?;
-
-    Ok(())
+  /// Returns the `IdentityUpdater` for the given `key`.
+  ///
+  /// On this type, various operations can be executed
+  /// that modify an identity, such as creating services or methods.
+  pub fn update_identity<'account, 'key, K: IdentityKey>(
+    &'account self,
+    key: &'key K,
+  ) -> IdentityUpdater<'account, 'key, K> {
+    IdentityUpdater::new(self, key)
   }
 
   /// Removes the identity specified by the given `key`.
@@ -185,20 +196,12 @@ impl Account {
 
   /// Resolves the DID Document associated with the specified `key`.
   pub async fn resolve_identity<K: IdentityKey>(&self, key: K) -> Result<IotaDocument> {
-    let identity: IdentityId = self.try_resolve_id(key).await?;
+    let identity: IdentityId = self.try_resolve_id(&key).await?;
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
-    let document: &IotaDID = snapshot.identity().try_did()?;
-    let network: Network = Network::from_did(document);
+    let did: &IotaDID = snapshot.identity().try_did()?;
 
     // Fetch the DID Document from the Tangle
-    self
-      .state
-      .clients
-      .load(network)
-      .await?
-      .read_document(document)
-      .await
-      .map_err(Into::into)
+    self.state.clients.resolve(did).await.map_err(Into::into)
   }
 
   /// Signs `data` with the key specified by `fragment`.
@@ -207,11 +210,11 @@ impl Account {
     K: IdentityKey,
     U: Serialize + SetSignature,
   {
-    let identity: IdentityId = self.try_resolve_id(key).await?;
+    let identity: IdentityId = self.try_resolve_id(&key).await?;
     let snapshot: IdentitySnapshot = self.load_snapshot(identity).await?;
     let state: &IdentityState = snapshot.identity();
 
-    let fragment: Fragment = Fragment::new(fragment.into());
+    let fragment: Fragment = Fragment::new(fragment);
     let method: &TinyMethod = state.methods().fetch(fragment.name())?;
     let location: &KeyLocation = method.location();
 
@@ -220,20 +223,34 @@ impl Account {
     Ok(())
   }
 
-  async fn resolve_id<K: IdentityKey>(&self, key: K) -> Option<IdentityId> {
+  async fn resolve_id<K: IdentityKey>(&self, key: &K) -> Option<IdentityId> {
     self.index.read().await.get(key)
   }
 
-  async fn try_resolve_id<K: IdentityKey>(&self, key: K) -> Result<IdentityId> {
+  async fn try_resolve_id<K: IdentityKey>(&self, key: &K) -> Result<IdentityId> {
     self.resolve_id(key).await.ok_or(Error::IdentityNotFound)
+  }
+
+  async fn try_resolve_id_lock<K: IdentityKey>(&self, key: &K) -> Result<IdentityLock> {
+    self.index.write().await.get_lock(key).ok_or(Error::IdentityNotFound)
   }
 
   // ===========================================================================
   // Misc. Private
   // ===========================================================================
 
-  #[doc(hidden)]
-  pub async fn process(&self, id: IdentityId, command: Command, persist: bool) -> Result<()> {
+  /// Updates the identity specified by the given `key` with the given `command`.
+  pub(crate) async fn apply_command<K: IdentityKey>(&self, key: &K, command: Command) -> Result<()> {
+    // Hold on to an `IdentityId`s individual lock until we've finished processing the update.
+    let identity_lock = self.try_resolve_id_lock(key).await?;
+    let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
+
+    self.process(*identity, command, true).await?;
+
+    Ok(())
+  }
+
+  pub(crate) async fn process(&self, id: IdentityId, command: Command, persist: bool) -> Result<()> {
     // Load the latest state snapshot from storage
     let root: IdentitySnapshot = self.load_snapshot(id).await?;
 
@@ -251,11 +268,7 @@ impl Account {
 
       debug!("[Account::process] Commits = {:#?}", commits);
 
-      match Publish::new(&commits) {
-        Publish::Auth => self.process_auth_change(root).await?,
-        Publish::Diff => self.process_diff_change(root).await?,
-        Publish::None => {}
-      }
+      self.publish(root, commits, false).await?;
     }
 
     // Update the total number of executions
@@ -274,7 +287,7 @@ impl Account {
     new_state: &IdentityState,
     document: &mut IotaDocument,
   ) -> Result<()> {
-    if new_state.auth_generation() == Generation::new() {
+    if new_state.integration_generation() == Generation::new() {
       let method: &TinyMethod = new_state.authentication()?;
       let location: &KeyLocation = method.location();
 
@@ -291,7 +304,7 @@ impl Account {
     Ok(())
   }
 
-  async fn process_auth_change(&self, old_root: IdentitySnapshot) -> Result<()> {
+  async fn process_integration_change(&self, old_root: IdentitySnapshot) -> Result<()> {
     let new_root: IdentitySnapshot = self.load_snapshot(old_root.id()).await?;
 
     let old_state: &IdentityState = old_root.identity();
@@ -301,18 +314,13 @@ impl Account {
 
     self.sign_document(old_state, new_state, &mut new_doc).await?;
 
-    #[cfg(test)]
-    let message: MessageId = MessageId::null();
-
-    #[cfg(not(test))]
-    let message: MessageId = {
-      let network: Network = Network::from_did(new_doc.id());
-      let client: Arc<Client> = self.state.clients.load(network).await?;
-
-      client.publish_document(&new_doc).await?
+    let message: MessageId = if self.config.testmode {
+      MessageId::null()
+    } else {
+      self.state.clients.publish_document(&new_doc).await?.into()
     };
 
-    let events: [Event; 1] = [Event::new(EventData::AuthMessage(message))];
+    let events: [Event; 1] = [Event::new(EventData::IntegrationMessage(message))];
 
     self.commit_events(&new_root, &events).await?;
 
@@ -337,16 +345,15 @@ impl Account {
 
     old_state.sign_data(&self.store, location, &mut diff).await?;
 
-    #[cfg(test)]
-    let message: MessageId = MessageId::null();
-
-    #[cfg(not(test))]
-    let message: MessageId = {
-      let auth_id: &MessageId = old_state.this_message_id();
-      let network: Network = Network::from_did(old_doc.id());
-      let client: Arc<Client> = self.state.clients.load(network).await?;
-
-      client.publish_diff(auth_id, &diff).await?
+    let message: MessageId = if self.config.testmode {
+      MessageId::null()
+    } else {
+      self
+        .state
+        .clients
+        .publish_diff(old_state.this_message_id(), &diff)
+        .await?
+        .into()
     };
 
     let events: [Event; 1] = [Event::new(EventData::DiffMessage(message))];
@@ -377,6 +384,19 @@ impl Account {
       .store
       .stream(id, initial.sequence())
       .await?
+      .try_fold(initial, Self::fold_snapshot)
+      .await
+  }
+
+  async fn load_snapshot_at(&self, id: IdentityId, generation: Generation) -> Result<IdentitySnapshot> {
+    let initial: IdentitySnapshot = IdentitySnapshot::new(IdentityState::new(id));
+
+    // Apply all events up to `generation`
+    self
+      .store
+      .stream(id, Generation::new())
+      .await?
+      .take(generation.to_u32() as usize)
       .try_fold(initial, Self::fold_snapshot)
       .await
   }
@@ -431,6 +451,55 @@ impl Account {
     Ok(())
   }
 
+  /// Push all unpublished changes for the given identity to the tangle in a single message.
+  pub async fn publish_updates<K: IdentityKey>(&self, key: K) -> Result<()> {
+    let identity_lock: IdentityLock = self.try_resolve_id_lock(&key).await?;
+    let identity: RwLockWriteGuard<'_, IdentityId> = identity_lock.write().await;
+
+    // Get the last commit generation that was published to the tangle.
+    let last_published: Generation = self.store.published_generation(*identity).await?.unwrap_or_default();
+
+    // Get the commits that need to be published.
+    let commits: Vec<Commit> = self.store.collect(*identity, last_published).await?;
+
+    if commits.is_empty() {
+      return Ok(());
+    }
+
+    // Load the snapshot that represents the state on the tangle.
+    let snapshot: IdentitySnapshot = self.load_snapshot_at(*identity, last_published).await?;
+
+    self.publish(snapshot, commits, true).await?;
+
+    Ok(())
+  }
+
+  /// Publishes according to the autopublish configuration.
+  async fn publish(&self, snapshot: IdentitySnapshot, commits: Vec<Commit>, force: bool) -> Result<()> {
+    if !force && !self.config.autopublish {
+      return Ok(());
+    }
+
+    let id: IdentityId = snapshot.id();
+
+    match Publish::new(&commits) {
+      Publish::Integration => self.process_integration_change(snapshot).await?,
+      Publish::Diff => self.process_diff_change(snapshot).await?,
+      Publish::None => {}
+    }
+
+    if !commits.is_empty() {
+      let last_commit_generation: Generation = commits.last().unwrap().sequence();
+      // Publishing adds an AuthMessage or DiffMessage event, that contains the message id
+      // which is required to be set for subsequent updates.
+      // The next snapshot that loads the tangle state will require this message id to be set.
+      let generation: Generation = Generation::from_u32(last_commit_generation.to_u32() + 1);
+      self.store.set_published_generation(id, generation).await?;
+    }
+
+    Ok(())
+  }
+
   fn key_to_method(type_: KeyType) -> MethodType {
     match type_ {
       KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
@@ -455,32 +524,55 @@ impl Drop for Account {
 #[derive(Clone, Debug)]
 pub struct Config {
   autosave: AutoSave,
+  autopublish: bool,
   dropsave: bool,
+  testmode: bool,
   milestone: u32,
 }
 
 impl Config {
-  #[cfg(test)]
   const MILESTONE: u32 = 1;
-  #[cfg(not(test))]
-  const MILESTONE: u32 = 1; // 10
 
   /// Creates a new default `Config`.
   pub fn new() -> Self {
     Self {
       autosave: AutoSave::Every,
+      autopublish: true,
       dropsave: true,
+      testmode: false,
       milestone: Self::MILESTONE,
     }
   }
 
   /// Sets the account auto-save behaviour.
+  /// - [`Every`][AutoSave::Every] => Save to storage on every update
+  /// - [`Never`][AutoSave::Never] => Never save to storage when updating
+  /// - [`Batch(n)`][AutoSave::Batch] => Save to storage after every `n` updates.
+  ///
+  /// Note that when [`Never`][AutoSave::Never] is selected, you will most
+  /// likely want to set [`dropsave`][Self::dropsave] to `true`.
+  ///
+  /// Default: [`Every`][AutoSave::Every]
   pub fn autosave(mut self, value: AutoSave) -> Self {
     self.autosave = value;
     self
   }
 
+  /// Sets the account auto-publish behaviour.
+  /// - `true` => publish to the Tangle on every DID document change
+  /// - `false` => never publish automatically
+  ///
+  /// Default: `true`
+  pub fn autopublish(mut self, value: bool) -> Self {
+    self.autopublish = value;
+    self
+  }
+
   /// Save the account state on drop.
+  /// If set to `false`, set [`autosave`][Self::autosave] to
+  /// either [`Every`][AutoSave::Every] or [`Batch(n)`][AutoSave::Batch].
+  ///
+  /// Default: `true`
   pub fn dropsave(mut self, value: bool) -> Self {
     self.dropsave = value;
     self
@@ -489,6 +581,12 @@ impl Config {
   /// Save a state snapshot every N actions.
   pub fn milestone(mut self, value: u32) -> Self {
     self.milestone = value;
+    self
+  }
+
+  #[doc(hidden)]
+  pub fn testmode(mut self, value: bool) -> Self {
+    self.testmode = value;
     self
   }
 }
@@ -512,46 +610,6 @@ pub enum AutoSave {
   Every,
   /// Save after every N actions
   Batch(usize),
-}
-
-// =============================================================================
-// ClientMap
-// =============================================================================
-
-// A cache of clients to be used for publishing/resolving multiple identities
-struct ClientMap {
-  data: Shared<HashMap<Network, Arc<Client>>>,
-}
-
-impl ClientMap {
-  /// Creates a new `ClientMap`.
-  fn new() -> Self {
-    Self {
-      data: Shared::new(HashMap::new()),
-    }
-  }
-
-  async fn load(&self, network: Network) -> Result<Arc<Client>> {
-    // If we have a client for the given network, return it
-    if let Some(client) = self.data.read()?.get(&network).map(Arc::clone) {
-      return Ok(client);
-    }
-
-    // Initialize a new client for the given network
-    let client: Arc<Client> = Client::from_network(network).await.map(Arc::new)?;
-
-    // Store the newly created client
-    self.data.write()?.insert(network, Arc::clone(&client));
-
-    // Return the newly created client
-    Ok(client)
-  }
-}
-
-impl Debug for ClientMap {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_str("ClientMap")
-  }
 }
 
 // =============================================================================
@@ -582,7 +640,7 @@ impl State {
 #[derive(Clone, Copy, Debug)]
 enum Publish {
   None,
-  Auth,
+  Integration,
   Diff,
 }
 
@@ -593,9 +651,9 @@ impl Publish {
 
   const fn apply(self, commit: &Commit) -> Self {
     match (self, commit.event().data()) {
-      (Self::Auth, _) => Self::Auth,
-      (_, EventData::IdentityCreated(..)) => Self::Auth,
-      (_, EventData::AuthMessage(_)) => self,
+      (Self::Integration, _) => Self::Integration,
+      (_, EventData::IdentityCreated(..)) => Self::Integration,
+      (_, EventData::IntegrationMessage(_)) => self,
       (_, EventData::DiffMessage(_)) => self,
       (_, _) => Self::Diff,
     }

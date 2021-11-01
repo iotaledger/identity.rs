@@ -10,13 +10,13 @@ use core::mem::replace;
 use core::ops::Deref;
 use core::slice::from_ref;
 
-/// A generic container that stores one or many values of a given type.
+/// A generic container that stores exactly one or many (0+) values of a given type.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum OneOrMany<T> {
   /// A single instance of `T`.
   One(T),
-  /// Multiple instances of `T`.
+  /// Multiple (zero or more) instances of `T`.
   Many(Vec<T>),
 }
 
