@@ -20,3 +20,24 @@ pub(crate) fn decompress_brotli<T: AsRef<[u8]> + ?Sized>(input: &T) -> Result<St
   decompressor.read_to_string(&mut s).map_err(|_| CompressionError)?;
   Ok(s)
 }
+
+#[cfg(test)]
+mod test {
+  use identity_core::convert::ToJson;
+  use identity_core::crypto::KeyPair;
+  use crate::did::IotaDocument;
+  use crate::tangle::compression_brotli::{compress_brotli, decompress_brotli};
+
+  #[test]
+  fn test_compression_algorithm() {
+    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+    document.sign(keypair.private()).unwrap();
+
+    let data = document.to_json().unwrap();
+    let compressed = compress_brotli(data.as_str()).unwrap();
+    let decompressed = decompress_brotli(&compressed).unwrap();
+
+    assert_eq!(decompressed, data);
+  }
+}
