@@ -10,7 +10,7 @@ pub(crate) enum MessageEncodingVersion {
   JsonBrotli = 1,
 }
 
-static CURRENT_ENCODING_VERSION: MessageEncodingVersion = MessageEncodingVersion::JsonBrotli;
+const CURRENT_ENCODING_VERSION: MessageEncodingVersion = MessageEncodingVersion::JsonBrotli;
 
 /// Adds the current encoding flag at the beginning of arbitrary data.
 pub(crate) fn add_encoding_version_flag(mut data: Vec<u8>) -> Vec<u8> {

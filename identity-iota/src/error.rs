@@ -57,8 +57,8 @@ pub enum Error {
   NoExplorerURLSet,
   #[error("Invalid Explorer Url")]
   InvalidExplorerURL,
-  #[error("compression Error")]
+  #[error("compression error")]
   CompressionError,
-  #[error("Invalid Message Flags")]
+  #[error("invalid message flags")]
   InvalidMessageFlags,
 }
