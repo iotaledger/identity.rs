@@ -15,7 +15,8 @@ use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Result;
 use crate::tangle::encoding::get_decompressed_message_data;
-use crate::tangle::message_version::{check_version_flag, MessageVersion};
+use crate::tangle::message_version::check_version_flag;
+use crate::tangle::message_version::MessageVersion;
 use crate::tangle::TangleRef;
 
 // TODO: Use MessageId when it has a const ctor
@@ -48,8 +49,8 @@ fn parse_payload<T: FromJson + TangleRef>(message_id: MessageId, payload: Option
 
 fn parse_data<T: FromJson + TangleRef>(message_id: MessageId, data: &[u8]) -> Option<T> {
   let version_check = check_version_flag(&data[0], MessageVersion::V1);
-  if let Err(_) = version_check {
-    return None
+  if version_check.is_err() {
+    return None;
   }
 
   let compression_result = get_decompressed_message_data(&data[1], &data[2..]);

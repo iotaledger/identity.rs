@@ -42,4 +42,3 @@ fn test_add_version_flag() {
   let message_with_flag = add_encoding_version_flag(message);
   assert_eq!(message_with_flag, [CURRENT_ENCODING_VERSION as u8, 10, 4, 5, 5])
 }
-

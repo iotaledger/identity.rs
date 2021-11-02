@@ -23,10 +23,11 @@ pub(crate) fn decompress_brotli<T: AsRef<[u8]> + ?Sized>(input: &T) -> Result<St
 
 #[cfg(test)]
 mod test {
+  use crate::did::IotaDocument;
+  use crate::tangle::compression_brotli::compress_brotli;
+  use crate::tangle::compression_brotli::decompress_brotli;
   use identity_core::convert::ToJson;
   use identity_core::crypto::KeyPair;
-  use crate::did::IotaDocument;
-  use crate::tangle::compression_brotli::{compress_brotli, decompress_brotli};
 
   #[test]
   fn test_compression_algorithm() {
