@@ -119,19 +119,9 @@ impl Command {
           IotaDID::new(public.as_ref())?
         };
 
-        let method_fragment = Fragment::new(method.location().fragment_name());
-
         Ok(Some(vec![
           Event::new(EventData::IdentityCreated(did)),
-          Event::new(EventData::MethodCreated(MethodScope::VerificationMethod, method)),
-          Event::new(EventData::MethodAttached(
-            method_fragment.clone(),
-            vec![MethodScope::Authentication],
-          )),
-          Event::new(EventData::MethodAttached(
-            method_fragment,
-            vec![MethodScope::CapabilityInvocation],
-          )),
+          Event::new(EventData::MethodCreated(MethodScope::CapabilityInvocation, method)),
         ]))
       }
       Self::CreateMethod {

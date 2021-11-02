@@ -52,7 +52,7 @@ async fn test_create_identity() -> Result<()> {
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  assert_eq!(snapshot.sequence(), Generation::from_u32(5));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(3));
   assert_eq!(snapshot.id(), identity);
   assert!(snapshot.identity().did().is_some());
   assert_ne!(snapshot.identity().created(), UnixTimestamp::EPOCH);
@@ -105,7 +105,6 @@ async fn test_create_identity_network() -> Result<()> {
 
   // Ensure the identity creation was successful.
   assert!(identity.did().is_some());
-  assert!(identity.authentication().is_ok());
   assert!(identity.capability_invocation().is_ok());
 
   Ok(())
@@ -144,8 +143,8 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  // Version is now 5.
-  assert_eq!(snapshot.sequence(), Generation::from(5));
+  // Version is now 3.
+  assert_eq!(snapshot.sequence(), Generation::from(3));
 
   let output: Result<()> = account.process(identity, command, false).await;
 
@@ -156,8 +155,8 @@ async fn test_create_identity_already_exists() -> Result<()> {
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  // Version is still 5, no events have been committed.
-  assert_eq!(snapshot.sequence(), Generation::from(5));
+  // Version is still 3, no events have been committed.
+  assert_eq!(snapshot.sequence(), Generation::from(3));
 
   Ok(())
 }
@@ -183,7 +182,6 @@ async fn test_create_identity_from_private_key() -> Result<()> {
 
   // The same private key should result in the same did
   assert_eq!(ident.did(), ident2.did());
-  assert_eq!(ident.authentication()?, ident2.authentication()?);
   assert_eq!(ident.capability_invocation()?, ident2.capability_invocation()?);
 
   Ok(())
@@ -231,7 +229,7 @@ async fn test_create_method() -> Result<()> {
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  assert_eq!(snapshot.sequence(), Generation::from_u32(7));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(5));
   assert_eq!(snapshot.id(), identity);
   assert!(snapshot.identity().did().is_some());
   assert_ne!(snapshot.identity().created(), UnixTimestamp::EPOCH);
@@ -267,12 +265,12 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   };
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-  assert_eq!(snapshot.sequence(), Generation::from_u32(5));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(3));
 
   account.process(identity, command.clone(), false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-  assert_eq!(snapshot.sequence(), Generation::from_u32(7));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(5));
 
   let output: _ = account.process(identity, command, false).await;
 
@@ -282,7 +280,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   ));
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-  assert_eq!(snapshot.sequence(), Generation::from_u32(7));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(5));
 
   Ok(())
 }
@@ -416,13 +414,13 @@ async fn test_delete_method() -> Result<()> {
   };
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
-  assert_eq!(snapshot.sequence(), Generation::from_u32(5));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(3));
 
   account.process(identity, command, false).await?;
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  assert_eq!(snapshot.sequence(), Generation::from_u32(7));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(5));
   assert_eq!(snapshot.identity().methods().len(), 2);
   assert!(snapshot.identity().methods().contains("key-1"));
   assert!(snapshot.identity().methods().get("key-1").is_some());
@@ -436,7 +434,7 @@ async fn test_delete_method() -> Result<()> {
 
   let snapshot: IdentitySnapshot = account.load_snapshot(identity).await?;
 
-  assert_eq!(snapshot.sequence(), Generation::from_u32(9));
+  assert_eq!(snapshot.sequence(), Generation::from_u32(7));
   assert_eq!(snapshot.identity().methods().len(), 1);
   assert!(!snapshot.identity().methods().contains("key-1"));
   assert!(snapshot.identity().methods().get("key-1").is_none());
