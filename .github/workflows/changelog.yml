@@ -2,6 +2,9 @@ name: Changelog
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - dev
 jobs:
   changelog:
     runs-on: ubuntu-latest
