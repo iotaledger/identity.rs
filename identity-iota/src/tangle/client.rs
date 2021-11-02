@@ -74,14 +74,17 @@ impl Client {
   }
 
   /// Publishes an [`IotaDocument`] to the Tangle.
+  /// This method calls `publish_json_with_retry` with its default `interval` and `max_attempts` values for increasing
+  /// the probability that the message will be referenced by a milestone.
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
     self
       .publish_json_with_retry(document.integration_index(), document, None, None)
       .await
   }
 
-  /// Publishes a [`DocumentDiff`] to the Tangle to form part of the diff chain for the integration
-  /// chain message specified by the given [`MessageId`].
+  /// Publishes a [`DocumentDiff`] to the Tangle to form part of the diff chain for the integration.
+  /// This method calls `publish_json_with_retry` with its default `interval` and `max_attempts` values for increasing
+  /// the probability that the message will be referenced by a milestone.
   pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
     self
       .publish_json_with_retry(&IotaDocument::diff_index(message_id)?, diff, None, None)
@@ -101,21 +104,6 @@ impl Client {
       .map(|message| Receipt::new(self.network.clone(), message))
   }
 
-  /// Retries (promotes or reattaches) a message for provided message id until it’s included (referenced by a
-  /// milestone). Default interval is 5 seconds and max attempts is 20. Returns reattached messages
-  pub async fn retry_until_included(
-    &self,
-    message_id: &MessageId,
-    interval: Option<u64>,
-    max_attempts: Option<u64>,
-  ) -> Result<Vec<(MessageId, Message)>> {
-    self
-      .client
-      .retry_until_included(message_id, interval, max_attempts)
-      .await
-      .map_err(Into::into)
-  }
-
   /// Publishes arbitrary JSON data to the specified index on the Tangle.
   /// Retries (promotes or reattaches) the message until it’s included (referenced by a milestone).
   /// Default interval is 5 seconds and max attempts is 20.
@@ -128,10 +116,11 @@ impl Client {
   ) -> Result<Receipt> {
     let receipt = self.publish_json(index, data).await?;
     let reattached_messages = self
+      .client
       .retry_until_included(receipt.message_id(), interval, max_attempts)
       .await?;
     match reattached_messages.last() {
-      Some(reattached_message) => Ok(Receipt::new(self.network.clone(), reattached_message.1.clone())),
+      Some((_, message)) => Ok(Receipt::new(self.network.clone(), message.clone())),
       None => Ok(receipt),
     }
   }
