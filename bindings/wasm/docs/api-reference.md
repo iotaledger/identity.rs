@@ -1658,6 +1658,7 @@ Deserializes a `VerifiablePresentation` object from a JSON object.
     * _instance_
         * [.id](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.controller](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
+        * [.controller](#VerificationMethod+controller)
         * [.type](#VerificationMethod+type) ⇒ <code>string</code>
         * [.data](#VerificationMethod+data) ⇒ <code>any</code>
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
@@ -1689,6 +1690,17 @@ Returns the `id` `DIDUrl` of the `VerificationMethod` object.
 Returns the `controller` `DID` of the `VerificationMethod` object.
 
 **Kind**: instance property of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+controller"></a>
+
+### verificationMethod.controller
+Returns the `controller` `DID` of the `VerificationMethod` object.
+
+**Kind**: instance property of [<code>VerificationMethod</code>](#VerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>DID</code>](#DID) | 
+
 <a name="VerificationMethod+type"></a>
 
 ### verificationMethod.type ⇒ <code>string</code>

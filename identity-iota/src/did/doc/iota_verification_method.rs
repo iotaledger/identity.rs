@@ -181,6 +181,11 @@ impl IotaVerificationMethod {
     unsafe { IotaDID::new_unchecked_ref(self.0.controller()) }
   }
 
+  /// Sets the method `controller` property.
+  pub fn set_controller(&mut self, did: IotaDID) {
+    *self.0.controller_mut() = CoreDID::from(did);
+  }
+
   /// Revokes the public key of a Merkle Key Collection at the specified `index`.
   pub fn revoke_merkle_key(&mut self, index: usize) -> Result<bool> {
     if !matches!(self.key_type(), MethodType::MerkleKeyCollection2021) {

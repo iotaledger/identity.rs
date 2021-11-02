@@ -67,6 +67,12 @@ impl WasmVerificationMethod {
     WasmDID::from(self.0.controller().clone())
   }
 
+  /// Returns the `controller` `DID` of the `VerificationMethod` object.
+  #[wasm_bindgen(setter = controller)]
+  pub fn set_controller(&mut self, did: &WasmDID) {
+    self.0.set_controller(did.0.clone());
+  }
+
   /// Returns the `VerificationMethod` type.
   #[wasm_bindgen(getter = type)]
   pub fn type_(&self) -> String {
