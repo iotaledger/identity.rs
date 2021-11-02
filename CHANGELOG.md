@@ -4,6 +4,10 @@
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/v.0.4.0...HEAD)
 
+**Implemented enhancements:**
+
+- removed test string [\#4](https://github.com/eike-hass/identity.rs/pull/4) ([eike-hass](https://github.com/eike-hass))
+
 **Merged pull requests:**
 
 - added test string [\#3](https://github.com/eike-hass/identity.rs/pull/3) ([eike-hass](https://github.com/eike-hass))
