@@ -13,7 +13,7 @@ jobs:
       - name: Run box version	    
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
-          args: --user eike-hass --project identity.rs --verbose
+          args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --verbose
       - run: ls -al
       - run: cat CHANGELOG.md
       - run: |
