@@ -1,0 +1,27 @@
+name: Changelog
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+      - main
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run box version	    
+        uses: docker://githubchangeloggenerator/github-changelog-generator
+        with:
+          args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --verbose
+      - run: ls -al
+      - run: cat CHANGELOG.md
+      - run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add CHANGELOG.md
+          git commit -m "generate Changelog"
+          git push
+
+      
