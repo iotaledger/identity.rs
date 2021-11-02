@@ -9,14 +9,20 @@ use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::Url;
 use identity_core::crypto::KeyPair;
+use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
+use identity_did::did::CoreDIDUrl;
+use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::document::DocumentBuilder;
 use identity_did::verifiable::Properties as VerifiableProperties;
 use identity_did::verification::MethodData;
+use identity_did::verification::MethodRef as CoreMethodRef;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
+use identity_did::verification::VerificationMethod;
 use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDIDUrl;
 use identity_iota::did::IotaDocument;
 use identity_iota::did::Properties as BaseProperties;
 use identity_iota::tangle::NetworkName;
@@ -28,6 +34,7 @@ use crate::events::Event;
 use crate::events::EventData;
 use crate::events::UpdateError;
 use crate::identity::DIDLease;
+use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::identity::TinyService;
@@ -42,90 +49,92 @@ type BaseDocument = CoreDocument<Properties, Object, Object>;
 // Supported authentication method types.
 const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
-pub(crate) struct CreateIdentity {
-  pub(crate) network: Option<NetworkName>,
-  pub(crate) method_secret: Option<MethodSecret>,
-  pub(crate) authentication: MethodType,
+fn key_to_method(type_: KeyType) -> MethodType {
+  match type_ {
+    KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
+  }
 }
 
-impl CreateIdentity {
-  pub(crate) async fn process(&self, store: &dyn Storage) -> Result<(IotaDID, DIDLease, IdentityState)> {
-    // The authentication method type must be valid
+pub(crate) async fn create_identity(
+  setup: IdentitySetup,
+  store: &dyn Storage,
+) -> Result<(IotaDID, DIDLease, IdentityState)> {
+  let authentication = key_to_method(setup.key_type);
+
+  // The authentication method type must be valid
+  ensure!(
+    AUTH_TYPES.contains(&authentication),
+    UpdateError::InvalidMethodType(authentication)
+  );
+
+  // TODO: Consider passing in integration_generation and use it to construct state, to assert they are equal.
+  let location: KeyLocation = KeyLocation::new_authentication(authentication, Generation::new());
+
+  let keypair: KeyPair = if let Some(MethodSecret::Ed25519(private_key)) = &setup.method_secret {
     ensure!(
-      AUTH_TYPES.contains(&self.authentication),
-      UpdateError::InvalidMethodType(self.authentication)
+      private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
+      UpdateError::InvalidMethodSecret(format!(
+        "an ed25519 private key requires {} bytes, found {}",
+        ed25519::SECRET_KEY_LENGTH,
+        private_key.as_ref().len()
+      ))
     );
 
-    // TODO: Consider passing in integration_generation and use it to construct state, to assert they are equal.
-    let location: KeyLocation = KeyLocation::new_authentication(self.authentication, Generation::new());
+    KeyPair::try_from_ed25519_bytes(private_key.as_ref())?
+  } else {
+    KeyPair::new_ed25519()?
+  };
 
-    let keypair: KeyPair = if let Some(MethodSecret::Ed25519(private_key)) = &self.method_secret {
-      ensure!(
-        private_key.as_ref().len() == ed25519::SECRET_KEY_LENGTH,
-        UpdateError::InvalidMethodSecret(format!(
-          "an ed25519 private key requires {} bytes, found {}",
-          ed25519::SECRET_KEY_LENGTH,
-          private_key.as_ref().len()
-        ))
-      );
+  // Generate a new DID URL from the public key
+  let did: IotaDID = if let Some(network) = &setup.network {
+    IotaDID::new_with_network(keypair.public().as_ref(), network.clone())?
+  } else {
+    IotaDID::new(keypair.public().as_ref())?
+  };
 
-      KeyPair::try_from_ed25519_bytes(private_key.as_ref())?
-    } else {
-      KeyPair::new_ed25519()?
-    };
+  ensure!(
+    !store.key_exists(&did, &location).await?,
+    UpdateError::DocumentAlreadyExists
+  );
 
-    // Generate a new DID URL from the public key
-    let did: IotaDID = if let Some(network) = &self.network {
-      IotaDID::new_with_network(keypair.public().as_ref(), network.clone())?
-    } else {
-      IotaDID::new(keypair.public().as_ref())?
-    };
+  let did_lease = store.lease_did(&did).await?;
 
-    ensure!(
-      !store.key_exists(&did, &location).await?,
-      UpdateError::DocumentAlreadyExists
-    );
+  let private_key = keypair.private().to_owned();
+  std::mem::drop(keypair);
 
-    let did_lease = store.lease_did(&did).await?;
+  let public: PublicKey = insert_method_secret(
+    store,
+    &did,
+    &location,
+    authentication,
+    MethodSecret::Ed25519(private_key),
+  )
+  .await?;
 
-    let private_key = keypair.private().to_owned();
-    std::mem::drop(keypair);
+  let data: MethodData = MethodData::new_b58(public.as_ref());
 
-    let public: PublicKey = insert_method_secret(
-      store,
-      &did,
-      &location,
-      self.authentication,
-      MethodSecret::Ed25519(private_key),
-    )
-    .await?;
+  let method_fragment = location.fragment().to_owned();
+  let method: VerificationMethod = core_method(location.method(), data, &did, location.fragment.clone())?;
+  let method_ref: CoreMethodRef = core_method_ref(&did, location.fragment)?;
 
-    let data: MethodData = MethodData::new_b58(public.as_ref());
-    let method: TinyMethod = TinyMethod::new(location, data, None);
+  let properties: BaseProperties = BaseProperties::new();
+  let properties: Properties = VerifiableProperties::new(properties);
 
-    let method_fragment = Fragment::new(method.location().fragment());
+  let mut builder: DocumentBuilder<_, _, _> = BaseDocument::builder(properties);
 
-    let properties: BaseProperties = BaseProperties::new();
-    let properties: Properties = VerifiableProperties::new(properties);
+  builder = builder
+    .id(did.clone().into())
+    .verification_method(method)
+    .capability_invocation(method_ref);
 
-    let mut builder: DocumentBuilder<_, _, _> = BaseDocument::builder(properties);
+  let document: IotaDocument = builder.build()?.try_into()?;
 
-    builder = builder.id(did.clone().into());
+  let mut state = IdentityState::new(document);
 
-    let document: IotaDocument = builder.build()?.try_into()?;
+  // Store the generations at which the method was added
+  state.insert_method_location(method_fragment);
 
-    // TODO: Apply events
-    //   Event::new(EventData::MethodCreated(MethodScope::VerificationMethod, method)),
-    //   Event::new(EventData::MethodAttached(
-    //     method_fragment,
-    //     vec![MethodScope::Authentication],
-    //   )),
-
-    // TODO: Add method location to state
-    let state = IdentityState::new(document);
-
-    Ok((did.clone(), did_lease, state))
-  }
+  Ok((did.clone(), did_lease, state))
 }
 
 #[derive(Clone, Debug)]
@@ -192,7 +201,7 @@ impl Update {
 
         // The verification method must not exist
         ensure!(
-          !state.methods().contains(location.fragment()),
+          !state.has_method(&location.fragment),
           UpdateError::DuplicateKeyFragment(location.fragment.clone()),
         );
 
@@ -217,7 +226,7 @@ impl Update {
         );
 
         // The verification method must exist
-        ensure!(state.methods().contains(fragment.name()), UpdateError::MethodNotFound);
+        ensure!(state.has_method(&fragment), UpdateError::MethodNotFound);
 
         Ok(Some(vec![Event::new(EventData::MethodDeleted(fragment))]))
       }
@@ -231,7 +240,7 @@ impl Update {
         );
 
         // The verification method must exist
-        ensure!(state.methods().contains(fragment.name()), UpdateError::MethodNotFound);
+        ensure!(state.has_method(&fragment), UpdateError::MethodNotFound);
 
         Ok(Some(vec![Event::new(EventData::MethodAttached(fragment, scopes))]))
       }
@@ -245,7 +254,7 @@ impl Update {
         );
 
         // The verification method must exist
-        ensure!(state.methods().contains(fragment.name()), UpdateError::MethodNotFound);
+        ensure!(state.has_method(&fragment), UpdateError::MethodNotFound);
 
         Ok(Some(vec![Event::new(EventData::MethodDetached(fragment, scopes))]))
       }
@@ -255,9 +264,10 @@ impl Update {
         endpoint,
         properties,
       } => {
+        let did_url = did.to_url().join(fragment.clone())?;
         // The service must not exist
         ensure!(
-          !state.services().contains(&fragment),
+          state.service().query(&did_url).is_none(),
           UpdateError::DuplicateServiceFragment(fragment),
         );
 
@@ -267,9 +277,13 @@ impl Update {
       }
       Self::DeleteService { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
+        let service_url = did.to_url().join(fragment.name())?;
 
         // The service must exist
-        ensure!(state.services().contains(fragment.name()), UpdateError::ServiceNotFound);
+        ensure!(
+          state.service().query(&service_url).is_some(),
+          UpdateError::ServiceNotFound
+        );
 
         Ok(Some(vec![Event::new(EventData::ServiceDeleted(fragment))]))
       }
@@ -315,6 +329,34 @@ async fn insert_method_secret(
       todo!("[Command::CreateMethod] Handle MerkleKeyCollection")
     }
   }
+}
+
+fn core_method(
+  method_type: MethodType,
+  method_data: MethodData,
+  did: &IotaDID,
+  fragment: Fragment,
+) -> Result<VerificationMethod> {
+  let id: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
+
+  VerificationMethod::builder(Object::default())
+    .id(CoreDIDUrl::from(id))
+    .controller(did.clone().into())
+    .key_type(method_type)
+    .key_data(method_data)
+    .build()
+    .map_err(Into::into)
+}
+
+fn core_method_ref(did: &IotaDID, fragment: Fragment) -> Result<CoreMethodRef> {
+  // TODO: Can return a fatal error here, since the fragment we pass in
+  // is always valid, as is the url.
+  did
+    .to_url()
+    .join(fragment.identifier())
+    .map(CoreDIDUrl::from)
+    .map(CoreMethodRef::Refer)
+    .map_err(Into::into)
 }
 
 // =============================================================================

@@ -255,7 +255,7 @@ impl<T> OrderedSet<DIDKey<T>>
 where
   T: AsRef<CoreDIDUrl>,
 {
-  pub(crate) fn query<'query, Q>(&self, query: Q) -> Option<&T>
+  pub fn query<'query, Q>(&self, query: Q) -> Option<&T>
   where
     Q: Into<MethodQuery<'query>>,
   {

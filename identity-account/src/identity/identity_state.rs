@@ -132,6 +132,13 @@ impl IdentityState {
     Ok(())
   }
 
+  pub fn insert_method_location(&mut self, fragment: String) {
+    self.method_generations.insert(
+      Fragment::new(fragment),
+      (self.integration_generation(), self.diff_generation()),
+    );
+  }
+
   /// Return the `KeyLocation` of the given method.
   pub fn method_location(&self, method_type: MethodType, fragment: String) -> Result<KeyLocation> {
     let fragment = Fragment::new(fragment);
@@ -261,6 +268,10 @@ impl IdentityState {
       integration_generation: self.integration_generation(),
       diff_generation: self.diff_generation(),
     })
+  }
+
+  pub fn has_method(&self, fragment: &Fragment) -> bool {
+    self.method_generations.contains_key(fragment)
   }
 
   // ===========================================================================

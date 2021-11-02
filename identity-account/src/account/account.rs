@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use futures::executor;
-use identity_core::common::Fragment;
-use identity_core::crypto::KeyType;
+
 use identity_core::crypto::SetSignature;
-use identity_did::verification::MethodType;
 use identity_iota::did::DocumentDiff;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDocument;
@@ -16,16 +14,15 @@ use identity_iota::tangle::MessageId;
 use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
 use std::ops::Deref;
-use std::ops::DerefMut;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
 use crate::account::AccountBuilder;
 use crate::error::Result;
+use crate::events::create_identity;
 use crate::events::Commit;
 use crate::events::Context;
-use crate::events::CreateIdentity;
 use crate::events::Event;
 use crate::events::EventData;
 use crate::events::Update;
@@ -33,7 +30,6 @@ use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
 use crate::identity::IdentityUpdater;
-use crate::identity::TinyMethod;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
@@ -42,8 +38,6 @@ use crate::Error;
 use super::config::AccountSetup;
 use super::config::AutoSave;
 use super::AccountConfig;
-
-const OSC: Ordering = Ordering::SeqCst;
 
 /// An account manages one identity.
 ///
@@ -111,7 +105,7 @@ impl Account {
 
   /// Returns the total number of actions executed by this instance.
   pub fn actions(&self) -> usize {
-    self.actions.load(OSC)
+    self.actions.load(Ordering::SeqCst)
   }
 
   /// Adds a pre-configured `Client` for Tangle interactions.
@@ -149,15 +143,8 @@ impl Account {
   ///
   /// See [`IdentityCreate`] to customize the identity creation.
   pub(crate) async fn create_identity(setup: AccountSetup, input: IdentitySetup) -> Result<Self> {
-    let command = CreateIdentity {
-      network: input.network,
-      method_secret: input.method_secret,
-      authentication: Self::key_to_method(input.key_type),
-    };
-
-    // TODO: Pass state mutably and let process work on it
     let (did, did_lease, state): (IotaDID, DIDLease, IdentityState) =
-      command.process(Generation::new(), setup.storage.as_ref()).await?;
+      create_identity(input, setup.storage.as_ref()).await?;
 
     let account = Self::with_setup(setup, did, state, did_lease).await?;
 
@@ -378,12 +365,6 @@ impl Account {
     self.save(false).await?;
 
     Ok(())
-  }
-
-  fn key_to_method(type_: KeyType) -> MethodType {
-    match type_ {
-      KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
-    }
   }
 }
 
