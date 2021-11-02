@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased](https://github.com/eike-hass/identity.rs/tree/HEAD)
+
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v.0.4.0...HEAD)
+
+**Merged pull requests:**
+
+- added test string [\#3](https://github.com/eike-hass/identity.rs/pull/3) ([eike-hass](https://github.com/eike-hass))
+- added workflow [\#1](https://github.com/eike-hass/identity.rs/pull/1) ([eike-hass](https://github.com/eike-hass))
+
 ## [v.0.4.0](https://github.com/eike-hass/identity.rs/tree/v.0.4.0) (2021-11-01)
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.3.0...v.0.4.0)
