@@ -107,7 +107,7 @@ async fn test_lazy_updates() -> Result<()> {
 
       for method in methods {
         let method_fragment = method.id_core().fragment().unwrap_or_default();
-        assert!(["_sign-0", "new-method"]
+        assert!(["sign-0", "new-method"]
           .iter()
           .any(|fragment| *fragment == method_fragment));
       }
