@@ -15,6 +15,7 @@ use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_did::did::CoreDID;
 use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
 use identity_did::error::Result as DIDResult;

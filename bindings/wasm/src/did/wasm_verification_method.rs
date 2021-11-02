@@ -22,16 +22,16 @@ pub struct WasmVerificationMethod(pub(crate) IotaVerificationMethod);
 impl WasmVerificationMethod {
   /// Creates a new `VerificationMethod` object from the given `key`.
   #[wasm_bindgen(constructor)]
-  pub fn new(key: &KeyPair, tag: Option<String>) -> Result<WasmVerificationMethod, JsValue> {
-    IotaVerificationMethod::from_keypair(&key.0, tag.as_deref())
+  pub fn new(key: &KeyPair, fragment: String) -> Result<WasmVerificationMethod, JsValue> {
+    IotaVerificationMethod::from_keypair(&key.0, &fragment)
       .map_err(wasm_error)
       .map(Self)
   }
 
   /// Creates a new `VerificationMethod` object from the given `did` and `key`.
   #[wasm_bindgen(js_name = fromDID)]
-  pub fn from_did(did: &WasmDID, key: &KeyPair, tag: Option<String>) -> Result<WasmVerificationMethod, JsValue> {
-    IotaVerificationMethod::from_did(did.0.clone(), &key.0, tag.as_deref())
+  pub fn from_did(did: &WasmDID, key: &KeyPair, fragment: String) -> Result<WasmVerificationMethod, JsValue> {
+    IotaVerificationMethod::from_did(did.0.clone(), &key.0, &fragment)
       .map_err(wasm_error)
       .map(Self)
   }
@@ -42,16 +42,14 @@ impl WasmVerificationMethod {
     digest: Digest,
     did: &WasmDID,
     keys: &KeyCollection,
-    tag: Option<String>,
+    fragment: &str,
   ) -> Result<WasmVerificationMethod, JsValue> {
     let did: IotaDID = did.0.clone();
-    let tag: Option<&str> = tag.as_deref();
-
     match digest {
-      Digest::Sha256 => IotaVerificationMethod::create_merkle_key::<Sha256, _>(did, &keys.0, tag)
+      Digest::Sha256 => IotaVerificationMethod::create_merkle_key::<Sha256>(did, &keys.0, fragment)
         .map_err(wasm_error)
         .map(Self),
-      Digest::Blake2b256 => IotaVerificationMethod::create_merkle_key::<Blake2b256, _>(did, &keys.0, tag)
+      Digest::Blake2b256 => IotaVerificationMethod::create_merkle_key::<Blake2b256>(did, &keys.0, fragment)
         .map_err(wasm_error)
         .map(Self),
     }
@@ -91,5 +89,11 @@ impl WasmVerificationMethod {
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(value: &JsValue) -> Result<WasmVerificationMethod, JsValue> {
     value.into_serde().map_err(wasm_error).map(Self)
+  }
+}
+
+impl From<IotaVerificationMethod> for WasmVerificationMethod {
+  fn from(method: IotaVerificationMethod) -> Self {
+    Self(method)
   }
 }

@@ -45,17 +45,17 @@ impl WasmDocument {
   /// fragment name.
   ///
   /// The DID Document will be pre-populated with a single verification method
-  /// derived from the provided `KeyPair`, with an attached authentication relationship.
-  /// This method will have the DID URL fragment `#authentication` by default and can be easily
-  /// retrieved with `Document::authentication`.
+  /// derived from the provided `KeyPair` embedded as a capability invocation
+  /// verification relationship. This method will have the DID URL fragment
+  /// `#sign-0` by default and can be easily retrieved with `Document::defaultSigningMethod`.
   ///
-  /// NOTE: the generated document is unsigned, see `Document::signDocument`.
+  /// NOTE: the generated document is unsigned, see `Document::signSelf`.
   ///
   /// Arguments:
   ///
   /// * keypair: the initial verification method is derived from the public key with this keypair.
   /// * network: Tangle network to use for the DID, default `Network::mainnet`.
-  /// * fragment: name of the initial verification method, default "authentication".
+  /// * fragment: name of the initial verification method, default "sign-0".
   #[wasm_bindgen(constructor)]
   pub fn new(keypair: &KeyPair, network: Option<String>, fragment: Option<String>) -> Result<WasmDocument> {
     let network_name = network.map(NetworkName::try_from).transpose().wasm_result()?;
@@ -66,10 +66,10 @@ impl WasmDocument {
 
   /// Creates a new DID Document from the given `VerificationMethod`.
   ///
-  /// NOTE: the generated document is unsigned, see Document::sign.
-  #[wasm_bindgen(js_name = fromAuthentication)]
-  pub fn from_authentication(method: &WasmVerificationMethod) -> Result<WasmDocument> {
-    IotaDocument::from_authentication(method.0.clone())
+  /// NOTE: the generated document is unsigned, see `Document::signSelf`.
+  #[wasm_bindgen(js_name = fromVerificationMethod)]
+  pub fn from_verification_method(method: &WasmVerificationMethod) -> Result<WasmDocument> {
+    IotaDocument::from_verification_method(method.0.clone())
       .map(Self)
       .wasm_result()
   }
@@ -117,10 +117,18 @@ impl WasmDocument {
     }
   }
 
-  /// Returns the default Verification Method of the DID Document.
-  #[wasm_bindgen]
-  pub fn authentication(&self) -> WasmVerificationMethod {
-    WasmVerificationMethod(self.0.authentication().clone())
+  /// Returns the first [`IotaVerificationMethod`] with a capability invocation relationship
+  /// capable of signing this DID document.
+  ///
+  /// Throws an error if no signing method is present.
+  #[wasm_bindgen(js_name = defaultSigningMethod)]
+  pub fn default_signing_method(&self) -> Result<WasmVerificationMethod> {
+    self
+      .0
+      .default_signing_method()
+      .map(Clone::clone)
+      .map(WasmVerificationMethod::from)
+      .wasm_result()
   }
 
   /// Get the message_id of the DID Document.
@@ -185,7 +193,7 @@ impl WasmDocument {
 
   /// Signs the DID document with the verification method specified by `method_query`.
   /// The `method_query` may be the full `DIDUrl` of the method or just its fragment,
-  /// e.g. "#authentication".
+  /// e.g. "#sign-0".
   ///
   /// NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
   /// verification method. See `Document::verifySelfSigned`.

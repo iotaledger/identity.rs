@@ -150,7 +150,7 @@ Returns the `DiffChainHistory` of a diff chain starting from a document on the
 integration chain.
 
 NOTE: the document must have been published to the tangle and have a valid message id and
-authentication method.
+capability invocation method.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
@@ -653,7 +653,7 @@ Deserializes from a JSON object.
         * [.messageId](#Document+messageId)
         * [.previousMessageId](#Document+previousMessageId) ⇒ <code>string</code>
         * [.previousMessageId](#Document+previousMessageId)
-        * [.authentication()](#Document+authentication) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.defaultSigningMethod()](#Document+defaultSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.insertMethod(method, scope)](#Document+insertMethod) ⇒ <code>boolean</code>
         * [.removeMethod(did)](#Document+removeMethod)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
@@ -673,7 +673,7 @@ Deserializes from a JSON object.
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromAuthentication(method)](#Document.fromAuthentication) ⇒ [<code>Document</code>](#Document)
+        * [.fromVerificationMethod(method)](#Document.fromVerificationMethod) ⇒ [<code>Document</code>](#Document)
         * [.verifyRootDocument(document)](#Document.verifyRootDocument)
         * [.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
@@ -685,17 +685,17 @@ Creates a new DID Document from the given `KeyPair`, network, and verification m
 fragment name.
 
 The DID Document will be pre-populated with a single verification method
-derived from the provided `KeyPair`, with an attached authentication relationship.
-This method will have the DID URL fragment `#authentication` by default and can be easily
-retrieved with `Document::authentication`.
+derived from the provided `KeyPair` embedded as a capability invocation
+verification relationship. This method will have the DID URL fragment
+`#sign-0` by default and can be easily retrieved with `Document::defaultSigningMethod`.
 
-NOTE: the generated document is unsigned, see `Document::signDocument`.
+NOTE: the generated document is unsigned, see `Document::signSelf`.
 
 Arguments:
 
 * keypair: the initial verification method is derived from the public key with this keypair.
 * network: Tangle network to use for the DID, default `Network::mainnet`.
-* fragment: name of the initial verification method, default "authentication".
+* fragment: name of the initial verification method, default "sign-0".
 
 
 | Param | Type |
@@ -780,10 +780,13 @@ Set the message_id of the DID Document.
 | --- | --- |
 | value | <code>string</code> | 
 
-<a name="Document+authentication"></a>
+<a name="Document+defaultSigningMethod"></a>
 
-### document.authentication() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Returns the default Verification Method of the DID Document.
+### document.defaultSigningMethod() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Returns the first [`IotaVerificationMethod`] with a capability invocation relationship
+capable of signing this DID document.
+
+Throws an error if no signing method is present.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+insertMethod"></a>
@@ -836,7 +839,7 @@ Remove a `Service` identified by the given `DIDUrl` from the document.
 ### document.signSelf(key_pair, method_query)
 Signs the DID document with the verification method specified by `method_query`.
 The `method_query` may be the full `DIDUrl` of the method or just its fragment,
-e.g. "#authentication".
+e.g. "#sign-0".
 
 NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
 verification method. See `Document::verifySelfSigned`.
@@ -992,12 +995,12 @@ For a document with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
 Serializes a `Document` object as a JSON object.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document.fromAuthentication"></a>
+<a name="Document.fromVerificationMethod"></a>
 
-### Document.fromAuthentication(method) ⇒ [<code>Document</code>](#Document)
+### Document.fromVerificationMethod(method) ⇒ [<code>Document</code>](#Document)
 Creates a new DID Document from the given `VerificationMethod`.
 
-NOTE: the generated document is unsigned, see Document::sign.
+NOTE: the generated document is unsigned, see `Document::signSelf`.
 
 **Kind**: static method of [<code>Document</code>](#Document)  
 
@@ -1651,7 +1654,7 @@ Deserializes a `VerifiablePresentation` object from a JSON object.
 **Kind**: global class  
 
 * [VerificationMethod](#VerificationMethod)
-    * [new VerificationMethod(key, tag)](#new_VerificationMethod_new)
+    * [new VerificationMethod(key, fragment)](#new_VerificationMethod_new)
     * _instance_
         * [.id](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.controller](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
@@ -1659,20 +1662,20 @@ Deserializes a `VerifiablePresentation` object from a JSON object.
         * [.data](#VerificationMethod+data) ⇒ <code>any</code>
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromDID(did, key, tag)](#VerificationMethod.fromDID) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.createMerkleKey(digest, did, keys, tag)](#VerificationMethod.createMerkleKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.fromDID(did, key, fragment)](#VerificationMethod.fromDID) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.createMerkleKey(digest, did, keys, fragment)](#VerificationMethod.createMerkleKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.fromJSON(value)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 
 <a name="new_VerificationMethod_new"></a>
 
-### new VerificationMethod(key, tag)
+### new VerificationMethod(key, fragment)
 Creates a new `VerificationMethod` object from the given `key`.
 
 
 | Param | Type |
 | --- | --- |
 | key | [<code>KeyPair</code>](#KeyPair) | 
-| tag | <code>string</code> \| <code>undefined</code> | 
+| fragment | <code>string</code> | 
 
 <a name="VerificationMethod+id"></a>
 
@@ -1706,7 +1709,7 @@ Serializes a `VerificationMethod` object as a JSON object.
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod.fromDID"></a>
 
-### VerificationMethod.fromDID(did, key, tag) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+### VerificationMethod.fromDID(did, key, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 Creates a new `VerificationMethod` object from the given `did` and `key`.
 
 **Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
@@ -1715,11 +1718,11 @@ Creates a new `VerificationMethod` object from the given `did` and `key`.
 | --- | --- |
 | did | [<code>DID</code>](#DID) | 
 | key | [<code>KeyPair</code>](#KeyPair) | 
-| tag | <code>string</code> \| <code>undefined</code> | 
+| fragment | <code>string</code> | 
 
 <a name="VerificationMethod.createMerkleKey"></a>
 
-### VerificationMethod.createMerkleKey(digest, did, keys, tag) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+### VerificationMethod.createMerkleKey(digest, did, keys, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 Creates a new Merkle Key Collection Method from the given key collection.
 
 **Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
@@ -1729,7 +1732,7 @@ Creates a new Merkle Key Collection Method from the given key collection.
 | digest | <code>number</code> | 
 | did | [<code>DID</code>](#DID) | 
 | keys | [<code>KeyCollection</code>](#KeyCollection) | 
-| tag | <code>string</code> \| <code>undefined</code> | 
+| fragment | <code>string</code> | 
 
 <a name="VerificationMethod.fromJSON"></a>
 

@@ -20,7 +20,7 @@ async function createIdentity(clientConfig) {
     const doc = new Document(key, clientConfig.network.toString());
 
     // Sign the DID Document with the generated key.
-    doc.signSelf(key, doc.authentication().id.toString());
+    doc.signSelf(key, doc.defaultSigningMethod().id.toString());
 
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);
