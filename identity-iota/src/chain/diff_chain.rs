@@ -238,7 +238,7 @@ mod test {
       let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
       let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
       document
-        .sign_self(keypair.private(), &document.authentication().id())
+        .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
         .unwrap();
       document.set_message_id(MessageId::new([8; 32]));
       chain = DocumentChain::new(IntegrationChain::new(document).unwrap());
@@ -247,7 +247,7 @@ mod test {
 
     assert_eq!(
       chain.current().proof().unwrap().verification_method(),
-      "#authentication"
+      format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
     );
 
     // =========================================================================
@@ -281,11 +281,15 @@ mod test {
       // Sign the update using the old document.
       assert!(chain
         .current()
-        .sign_data(&mut new, keys[0].private(), chain.current().authentication().id())
+        .sign_data(
+          &mut new,
+          keys[0].private(),
+          chain.current().default_signing_method().unwrap().id()
+        )
         .is_ok());
       assert_eq!(
         chain.current().proof().unwrap().verification_method(),
-        "#authentication"
+        format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT)
       );
 
       keys.push(keypair);
@@ -304,19 +308,7 @@ mod test {
         this
       };
 
-      // INVALID - try sign using the old key without a capability invocation relationship.
-      let message_id = *chain.diff_message_id();
-      assert!(chain
-        .current()
-        .diff(
-          &new,
-          message_id,
-          keys[1].private(),
-          chain.current().authentication().id()
-        )
-        .is_err());
-
-      // VALID - sign using the new key added in the previous integration chain update.
+      // Sign using the new key added in the previous integration chain update.
       let message_id = *chain.diff_message_id();
       let mut diff: DocumentDiff = chain
         .current()

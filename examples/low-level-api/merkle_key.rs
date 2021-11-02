@@ -41,12 +41,12 @@ async fn main() -> Result<()> {
   // Generate a Merkle Key Collection Verification Method with 8 keys (Must be a power of 2)
   let keys: KeyCollection = KeyCollection::new_ed25519(8)?;
   let method_did: IotaDID = issuer_doc.id().clone();
-  let method = IotaVerificationMethod::create_merkle_key::<Sha256, _>(method_did, &keys, "merkle-key")?;
+  let method = IotaVerificationMethod::create_merkle_key::<Sha256>(method_did, &keys, "merkle-key")?;
 
   // Add to the DID Document as a general-purpose verification method
   issuer_doc.insert_method(method, MethodScope::VerificationMethod);
   issuer_doc.set_previous_message_id(*issuer_receipt.message_id());
-  issuer_doc.sign_self(issuer_key.private(), &issuer_doc.authentication().id())?;
+  issuer_doc.sign_self(issuer_key.private(), &issuer_doc.default_signing_method()?.id())?;
 
   // Publish the Identity to the IOTA Network and log the results.
   // This may take a few seconds to complete proof-of-work.
@@ -89,7 +89,7 @@ async fn main() -> Result<()> {
     .and_then(IotaVerificationMethod::try_from_mut)?
     .revoke_merkle_key(index)?;
   issuer_doc.set_previous_message_id(*receipt.message_id());
-  issuer_doc.sign_self(issuer_key.private(), &issuer_doc.authentication().id())?;
+  issuer_doc.sign_self(issuer_key.private(), &issuer_doc.default_signing_method()?.id())?;
 
   let receipt: Receipt = client.publish_document(&issuer_doc).await?;
 

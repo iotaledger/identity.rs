@@ -391,8 +391,8 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 
   #[doc(hidden)]
-  pub fn resolve_method_ref<'a>(&'a self, method: &'a MethodRef<U>) -> Option<&'a VerificationMethod<U>> {
-    match method {
+  pub fn resolve_method_ref<'a>(&'a self, method_ref: &'a MethodRef<U>) -> Option<&'a VerificationMethod<U>> {
+    match method_ref {
       MethodRef::Embed(method) => Some(method),
       MethodRef::Refer(did) => self.verification_method.query(did),
     }

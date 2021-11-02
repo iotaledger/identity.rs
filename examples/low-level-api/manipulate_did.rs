@@ -47,7 +47,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   document.set_updated(Timestamp::now_utc());
 
   // Sign the DID Document with the original private key.
-  document.sign_self(keypair.private(), &document.authentication().id())?;
+  document.sign_self(keypair.private(), &document.default_signing_method()?.id())?;
 
   // Publish the updated DID Document to the Tangle.
   let update_receipt: Receipt = client.publish_document(&document).await?;

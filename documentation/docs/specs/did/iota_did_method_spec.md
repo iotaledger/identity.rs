@@ -120,22 +120,22 @@ An Integration (Int) DID message MUST contain a valid DID Document according to 
 Example of an Integration DID Message:
 ```json
 {
-  "id": "did:iota:2oGQVNnhfvSSqVFUSX51RVLZfYTT7i5ErakayGG7aTgn",
+  "id": "did:iota:3mSoeNagPpxkX573xxdxse7qnUSFcQdgU2BkdoqGqznV",
   "capabilityInvocation": [
     {
-      "id": "did:iota:2oGQVNnhfvSSqVFUSX51RVLZfYTT7i5ErakayGG7aTgn#key-1",
-      "controller": "did:iota:2oGQVNnhfvSSqVFUSX51RVLZfYTT7i5ErakayGG7aTgn",
+      "id": "did:iota:3mSoeNagPpxkX573xxdxse7qnUSFcQdgU2BkdoqGqznV#sign-0",
+      "controller": "did:iota:3mSoeNagPpxkX573xxdxse7qnUSFcQdgU2BkdoqGqznV",
       "type": "Ed25519VerificationKey2018",
-      "publicKeyMultibase": "z7FhpbtQGLEtaA25ft9Y65BGn88upezrqbwDg3kgzGsFf"
+      "publicKeyMultibase": "z5GVUy4njFKpECfEe8Q5CWj1LdmZbMcXJJUipq5sfdkvt"
     }
   ],
-  "created": "2021-11-02T11:06:01Z",
-  "updated": "2021-11-02T11:06:08Z",
-  "previousMessageId": "baf42382c06766af3e8eeb2a691c1eda41cbb0577ad8e7cd07be6414d4623cb1",
+  "created": "2021-11-02T21:53:00Z",
+  "updated": "2021-11-02T21:53:10Z",
+  "previousMessageId": "7f5f281b8aafe0468a21f2c357e0ad7f5fb62a3556de71c22e96f973cedb945b",
   "proof": {
     "type": "JcsEd25519Signature2020",
-    "verificationMethod": "#key-1",
-    "signatureValue": "4rH6eupPdKhFNjSs37XxABctWwQkLUodzPeSjZrZ3hbhngBbbjExxAUwRE5BPUojDNZnp9ddtVV1UnDUV897e53Q"
+    "verificationMethod": "#sign-0",
+    "signatureValue": "59HqAiMf2pcLRHoMDnN66Boff9CCkMGDosSmsgS7eDoBqsyV4qoSLcyUwyVTbU6Fa5DcGjXoV45e8eye7rVkvYqR"
   }
 }
 ```

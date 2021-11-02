@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
   issuer_doc.remove_method(issuer_doc.id().to_url().join("#newKey")?)?;
   issuer_doc.set_previous_message_id(*issuer_receipt.message_id());
   issuer_doc.set_updated(Timestamp::now_utc());
-  issuer_doc.sign_self(issuer_key.private(), &issuer_doc.authentication().id())?;
+  issuer_doc.sign_self(issuer_key.private(), &issuer_doc.default_signing_method()?.id())?;
   // This is an integration chain update, so we publish the full document.
   let update_receipt = client.publish_document(&issuer_doc).await?;
 
@@ -83,7 +83,7 @@ async fn create_vc_helper(
   issuer_doc.sign_data(
     &mut credential,
     issuer_new_key.private(),
-    issuer_doc.authentication().id(),
+    issuer_doc.default_signing_method()?.id(),
   )?;
 
   let issuer = (issuer_doc, issuer_key, issuer_updated_receipt);
@@ -110,7 +110,7 @@ pub async fn add_new_key(
   // Prepare the update
   updated_doc.set_previous_message_id(*receipt.message_id());
   updated_doc.set_updated(Timestamp::now_utc());
-  updated_doc.sign_self(key.private(), &updated_doc.authentication().id())?;
+  updated_doc.sign_self(key.private(), &updated_doc.default_signing_method()?.id())?;
 
   // Publish the update to the Tangle
   let update_receipt: Receipt = client.publish_document(&updated_doc).await?;

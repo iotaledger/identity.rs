@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
     &updated_document,
     *receipt.message_id(),
     keypair.private(),
-    document.authentication().id(),
+    document.default_signing_method()?.id(),
   )?;
 
   println!("Diff > {:#?}", diff);

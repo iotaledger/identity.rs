@@ -21,7 +21,7 @@ pub fn setup_diff_chain_bench() -> (IotaDocument, KeyPair) {
   let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
   document
-    .sign_self(keypair.private(), &document.authentication().id())
+    .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
     .unwrap();
   document.set_message_id(MessageId::new([8; 32]));
 
@@ -51,7 +51,7 @@ pub fn update_diff_chain(n: usize, chain: &mut DocumentChain, keypair: &KeyPair)
         &new,
         message_id,
         keypair.private(),
-        chain.current().authentication().id(),
+        chain.current().default_signing_method().unwrap().id(),
       )
       .unwrap();
 
@@ -88,7 +88,11 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
 
     chain
       .current()
-      .sign_data(&mut new, keypair.private(), chain.current().authentication().id())
+      .sign_data(
+        &mut new,
+        keypair.private(),
+        chain.current().default_signing_method().unwrap().id(),
+      )
       .unwrap();
     chain.try_push_integration(new).unwrap();
   }

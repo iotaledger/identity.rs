@@ -21,12 +21,10 @@ pub enum Error {
   InvalidMessage(#[from] iota_client::bee_message::Error),
   #[error("Invalid Document - Missing Message Id")]
   InvalidDocumentMessageId,
-  #[error("Invalid Document - Authentication Authority Mismatch")]
-  InvalidDocumentAuthAuthority,
-  #[error("Invalid Document - Authentication Missing Fragment")]
-  InvalidDocumentAuthFragment,
-  #[error("Invalid Document - Authentication Type Not Supported")]
-  InvalidDocumentAuthType,
+  #[error("Invalid Document - Signing Verification Method Type Not Supported")]
+  InvalidDocumentSigningMethodType,
+  #[error("Invalid Verification Method - Missing Fragment")]
+  InvalidMethodMissingFragment,
   #[error("Invalid Root Document")]
   InvalidRootDocument,
   #[error("Invalid Network Name")]
@@ -45,12 +43,8 @@ pub enum Error {
   InvalidPresentationHolder,
   #[error("Chain Error: {error}")]
   ChainError { error: &'static str },
-  #[error("Missing Verification Method Fragment")]
-  MissingMethodFragment,
-  #[error("Authentication Method Not Found")]
-  MissingAuthenticationMethod,
-  #[error("Cannot Remove Authentication Method")]
-  CannotRemoveAuthMethod,
+  #[error("Missing Signing Key")]
+  MissingSigningKey,
   #[error("Cannot Revoke Verification Method")]
   CannotRevokeMethod,
   #[error("No Client Nodes Provided")]

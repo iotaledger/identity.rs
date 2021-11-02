@@ -38,16 +38,12 @@ use crate::tangle::NetworkName;
 pub struct IotaVerificationMethod(VerificationMethod);
 
 impl IotaVerificationMethod {
-  /// The default verification method tag.
-  pub const DEFAULT_TAG: &'static str = "key";
-
   /// Creates a new Merkle Key Collection Method from the given key collection.
-  pub fn create_merkle_key<'a, D, F>(did: IotaDID, keys: &KeyCollection, fragment: F) -> Result<Self>
+  pub fn create_merkle_key<D>(did: IotaDID, keys: &KeyCollection, fragment: &str) -> Result<Self>
   where
-    F: Into<Option<&'a str>>,
     D: MerkleDigest,
   {
-    let tag: String = format!("#{}", fragment.into().unwrap_or(Self::DEFAULT_TAG));
+    let tag: String = format!("#{}", fragment);
     let key: IotaDIDUrl = did.to_url().join(tag)?;
 
     MethodBuilder::default()
@@ -64,10 +60,7 @@ impl IotaVerificationMethod {
   ///
   /// WARNING: this derives a new DID from the keypair, which will not match the DID of a document
   /// created with a different keypair. Use [`IotaVerificationMethod::from_did`] instead.
-  pub fn from_keypair<'a, F>(keypair: &KeyPair, fragment: F) -> Result<Self>
-  where
-    F: Into<Option<&'a str>>,
-  {
+  pub fn from_keypair(keypair: &KeyPair, fragment: &str) -> Result<Self> {
     let key: &[u8] = keypair.public().as_ref();
     let did: IotaDID = IotaDID::new(key)?;
 
@@ -76,10 +69,7 @@ impl IotaVerificationMethod {
 
   /// Creates a new [`IotaVerificationMethod`] object from the given [`KeyPair`] on the specified
   /// `network`.
-  pub fn from_keypair_with_network<'a, F>(keypair: &KeyPair, fragment: F, network: NetworkName) -> Result<Self>
-  where
-    F: Into<Option<&'a str>>,
-  {
+  pub fn from_keypair_with_network(keypair: &KeyPair, fragment: &str, network: NetworkName) -> Result<Self> {
     let key: &[u8] = keypair.public().as_ref();
     let did: IotaDID = IotaDID::new_with_network(key, network)?;
 
@@ -90,12 +80,8 @@ impl IotaVerificationMethod {
   ///
   /// If the `fragment` resolves to `Option::None` then the default verification method tag will be
   /// used ("key").
-  pub fn from_did<'a, F>(did: IotaDID, keypair: &KeyPair, fragment: F) -> Result<Self>
-  where
-    F: Into<Option<&'a str>>,
-  {
-    // TODO: validate fragment contents properly
-    let tag: String = format!("#{}", fragment.into().unwrap_or(Self::DEFAULT_TAG));
+  pub fn from_did(did: IotaDID, keypair: &KeyPair, fragment: &str) -> Result<Self> {
+    let tag: String = format!("#{}", fragment);
     let key: IotaDIDUrl = did.to_url().join(tag)?;
 
     let mut builder: MethodBuilder = MethodBuilder::default()
@@ -156,15 +142,8 @@ impl IotaVerificationMethod {
     IotaDID::check_validity(method.controller())?;
 
     // Ensure the authentication method has an identifying fragment
-    // TODO: validate fragment properly
     if method.id().fragment().is_none() || method.id().fragment().unwrap_or_default().is_empty() {
-      return Err(Error::InvalidDocumentAuthFragment);
-    }
-
-    // Ensure the id and controller are the same - we don't support DIDs
-    // controlled by 3rd parties - yet.
-    if method.id().did().authority() != method.controller().authority() {
-      return Err(Error::InvalidDocumentAuthAuthority);
+      return Err(Error::InvalidMethodMissingFragment);
     }
 
     Ok(())
