@@ -58,7 +58,7 @@ const doc = new identity.Document(key)
 // const doc = new identity.Document(key, "dev") // if using the devnet
 
 // Sign the DID Document with the private key
-doc.sign(key, doc.authentication().id.toString());
+doc.signSelf(key, doc.authentication().id.toString());
 
 // Create a default client instance for the mainnet
 const config = identity.Config.fromNetwork(identity.Network.mainnet())
