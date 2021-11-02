@@ -14,10 +14,13 @@ jobs:
       - name: Run box version	    
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
-          args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --verbose
-      - run: ls -al
+          args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --no-author --version  --verbose
       - run: cat CHANGELOG.md
       - run: |
+          if [[ $(git diff --stat) != '' ]]; then
+            echo 'CHANGELOG.md unmodified'
+            exit 0
+          fi
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add CHANGELOG.md
