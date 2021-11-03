@@ -19,7 +19,7 @@ jobs:
       - name: Run box version	    
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
-          args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --no-author --verbose
+          args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --no-author --future-release $NEXTVERSION --verbose
       - run: cat CHANGELOG.md
       - run: |
           if [[ $(git diff --stat) == '' ]]; then
