@@ -148,8 +148,11 @@ impl Account {
 
     let account = Self::with_setup(setup, did, state, did_lease).await?;
 
-    // TODO: This should also write state to storage (remove me)
-    account.publish(true).await?;
+    account.publish_integration_change(account.state()).await?;
+
+    account.storage.set_state(account.did(), account.state()).await?;
+
+    account.save(true).await?;
 
     Ok(account)
   }
@@ -259,11 +262,9 @@ impl Account {
     Ok(())
   }
 
-  async fn process_integration_change(&mut self) -> Result<()> {
-    let old_state: IdentityState = self.load_state().await?;
+  async fn publish_integration_change(&self, old_state: &IdentityState) -> Result<()> {
     let new_state: &IdentityState = self.state();
 
-    // TODO: Optimize
     let mut new_doc: IotaDocument = new_state.deref().to_owned();
 
     self.sign_document(&old_state, new_state, &mut new_doc).await?;
@@ -277,8 +278,7 @@ impl Account {
     Ok(())
   }
 
-  async fn process_diff_change(&self) -> Result<()> {
-    let old_state: IdentityState = self.load_state().await?;
+  async fn publish_diff_change(&self, old_state: &IdentityState) -> Result<()> {
     let new_state: &IdentityState = self.state();
 
     let old_doc: IotaDocument = old_state.deref().to_owned();
@@ -320,8 +320,8 @@ impl Account {
 
   #[doc(hidden)]
   pub async fn load_state(&self) -> Result<IdentityState> {
-    // TODO: An account always holds a valid identity, so if None is
-    // returned, that's a broken invariant -> should be a fatal error.
+    // TODO: An account always holds a valid identity (after creation!),
+    // so if None is returned, that's a broken invariant -> should be a fatal error.
     self.storage().state(self.did()).await?.ok_or(Error::IdentityNotFound)
   }
 
@@ -347,17 +347,19 @@ impl Account {
   }
 
   /// Publishes according to the autopublish configuration.
-  async fn publish(&self, force: bool) -> Result<()> {
+  async fn publish(&mut self, force: bool) -> Result<()> {
     if !force && !self.config.autopublish {
       return Ok(());
     }
 
-    // TODO: Figure out if int or diff without commits
-    // match Publish::new(&commits) {
-    //   Publish::Integration => self.process_integration_change().await?,
-    //   Publish::Diff => self.process_diff_change().await?,
-    //   Publish::None => {}
-    // }
+    let old_state = self.load_state().await?;
+    let new_state = self.state();
+
+    match Publish::new(&old_state, &new_state) {
+      Publish::Integration => self.publish_integration_change(&old_state).await?,
+      Publish::Diff => self.publish_diff_change(&old_state).await?,
+      Publish::None => {}
+    }
 
     self.storage.set_state(self.did(), self.state()).await?;
 
@@ -382,24 +384,21 @@ impl Drop for Account {
 // =============================================================================
 
 #[derive(Clone, Copy, Debug)]
-enum Publish {
+pub(crate) enum Publish {
   None,
   Integration,
   Diff,
 }
 
 impl Publish {
-  fn new(commits: &[Commit]) -> Self {
-    commits.iter().fold(Self::None, Self::apply)
-  }
-
-  const fn apply(self, commit: &Commit) -> Self {
-    match (self, commit.event().data()) {
-      (Self::Integration, _) => Self::Integration,
-      (_, EventData::IdentityCreated(..)) => Self::Integration,
-      (_, EventData::IntegrationMessage(_)) => self,
-      (_, EventData::DiffMessage(_)) => self,
-      (_, _) => Self::Diff,
+  /// Determines whether an updated document needs to be published as an integration or diff message.
+  pub(crate) fn new(old_doc: &IotaDocument, new_doc: &IotaDocument) -> Publish {
+    if old_doc == new_doc {
+      Publish::None
+    } else if old_doc.as_document().capability_invocation() != new_doc.as_document().capability_invocation() {
+      Publish::Integration
+    } else {
+      Publish::Diff
     }
   }
 }
