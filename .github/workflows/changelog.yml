@@ -5,12 +5,17 @@ on:
   push:
     branches:
       - dev
-      - main
+      - release/*
 jobs:
   changelog:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - run: BRANCHNAME=$(git rev-parse --abbrev-ref HEAD)
+      - run: |
+          if [[ $BRANCHNAME == release/* ]]; then
+            NEXTVERSION=${BRANCHNAME##*/}
+          fi
       - name: Run box version	    
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
