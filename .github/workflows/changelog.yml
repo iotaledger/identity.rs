@@ -11,14 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: BRANCHNAME=$(git rev-parse --abbrev-ref HEAD)
       - run: |
-          export NEXTVERSION=
+          BRANCHNAME=$(git rev-parse --abbrev-ref HEAD)
+          echo BRANCHNAME=$BRANCHNAME
+      - run: |
+          export NEXTVERSION=Unreleased
           if [[ $BRANCHNAME == release/* ]]; then
             export NEXTVERSION=${BRANCHNAME##*/}
           fi
-          echo 'NEXTVERSION=$NEXTVERSION'
-      - name: Run box version	    
+          echo NEXTVERSION=$NEXTVERSION
+      - name: Run github-changelog-generator
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
           args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --no-author --future-release ${{ NEXTVERSION }} --verbose
