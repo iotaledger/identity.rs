@@ -15,7 +15,7 @@ jobs:
           BRANCHNAME=$(git rev-parse --abbrev-ref HEAD)
           echo BRANCHNAME=$BRANCHNAME
       - run: |
-          export NEXTVERSION=Unreleased
+          NEXTVERSION=Unreleased
           if [[ $BRANCHNAME == release/* ]]; then
             export NEXTVERSION=${BRANCHNAME##*/}
           fi
