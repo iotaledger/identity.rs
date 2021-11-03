@@ -19,6 +19,7 @@ use identity_did::document::DocumentBuilder;
 use identity_did::verifiable::Properties as VerifiableProperties;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodRef as CoreMethodRef;
+use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
@@ -130,7 +131,7 @@ pub(crate) async fn create_identity(
   let mut state = IdentityState::new(document);
 
   // Store the generations at which the method was added
-  state.insert_method_location(method_fragment);
+  state.set_method_generations(method_fragment);
 
   Ok((did.clone(), did_lease, state))
 }
@@ -148,11 +149,11 @@ pub(crate) enum Update {
   },
   AttachMethod {
     fragment: String,
-    scopes: Vec<MethodScope>,
+    relationships: Vec<MethodRelationship>,
   },
   DetachMethod {
     fragment: String,
-    scopes: Vec<MethodScope>,
+    relationships: Vec<MethodRelationship>,
   },
   CreateService {
     fragment: String,
@@ -212,9 +213,12 @@ impl Update {
         }?;
 
         // TODO: Fix after merge
-        let fragment: Option<&str> = Some(&fragment);
+        // let opt_fragment: String = fragment.clone();
+        let opt_fragment_str: Option<&str> = Some(&fragment);
         let method: IotaVerificationMethod =
-          IotaVerificationMethod::from_did(did.to_owned(), KeyType::Ed25519, &public, fragment)?;
+          IotaVerificationMethod::from_did(did.to_owned(), KeyType::Ed25519, &public, opt_fragment_str)?;
+
+        state.set_method_generations(fragment);
 
         // We can ignore the result: we just checked that the method does not exist.
         state.as_document_mut().insert_method(scope, method);
@@ -234,9 +238,16 @@ impl Update {
           UpdateError::MethodNotFound
         );
 
-        // Ok(Some(vec![Event::new(EventData::MethodDeleted(fragment))]))
+        // TODO: Do we have to ? here?
+        let method_url = did.to_url().join(fragment.identifier())?;
+
+        // TODO: Still fallible after merge?
+        state.as_document_mut().remove_method(method_url);
       }
-      Self::AttachMethod { fragment, scopes } => {
+      Self::AttachMethod {
+        fragment,
+        relationships,
+      } => {
         let fragment: Fragment = Fragment::new(fragment);
 
         // The fragment must not be an authentication location
@@ -245,15 +256,21 @@ impl Update {
           UpdateError::InvalidMethodFragment("reserved")
         );
 
-        // The verification method must exist
-        ensure!(
-          state.as_document().resolve(fragment.identifier()).is_some(),
-          UpdateError::MethodNotFound
-        );
+        // TODO: Do we have to ? here?
+        let method_url = did.to_url().join(fragment.identifier())?;
 
-        // Ok(Some(vec![Event::new(EventData::MethodAttached(fragment, scopes))]))
+        for relationship in relationships {
+          // We ignore the boolean result: if the relationship already existed, that's fine.
+          state
+            .as_document_mut()
+            .attach_method_relationship(method_url.clone(), relationship)
+            .map_err(|_| UpdateError::MethodNotFound)?;
+        }
       }
-      Self::DetachMethod { fragment, scopes } => {
+      Self::DetachMethod {
+        fragment,
+        relationships,
+      } => {
         let fragment: Fragment = Fragment::new(fragment);
 
         // The fragment must not be an authentication location
@@ -262,11 +279,16 @@ impl Update {
           UpdateError::InvalidMethodFragment("reserved")
         );
 
-        // The verification method must exist
-        ensure!(
-          state.as_document().resolve(fragment.identifier()).is_some(),
-          UpdateError::MethodNotFound
-        );
+        // TODO: Do we have to ? here?
+        let method_url = did.to_url().join(fragment.identifier())?;
+
+        for relationship in relationships {
+          state
+            .as_document_mut()
+            .detach_method_relationship(method_url.clone(), relationship)
+            .map_err(|_| UpdateError::MethodNotFound)?;
+        }
+
         // Ok(Some(vec![Event::new(EventData::MethodDetached(fragment, scopes))]))
       }
       Self::CreateService {
@@ -406,16 +428,16 @@ impl_command_builder!(
 /// Attach one or more verification relationships to a method on an identity.
 ///
 /// # Parameters
-/// - `scopes`: the scopes to add, defaults to an empty [`Vec`].
+/// - `relationships`: the relationships to add, defaults to an empty [`Vec`].
 /// - `fragment`: the identifier of the method in the document, required.
 AttachMethod {
   @required fragment String,
-  @default scopes Vec<MethodScope>,
+  @default relationships Vec<MethodRelationship>,
 });
 
 impl<'account> AttachMethodBuilder<'account> {
-  pub fn scope(mut self, value: MethodScope) -> Self {
-    self.scopes.get_or_insert_with(Default::default).push(value);
+  pub fn relationship(mut self, value: MethodRelationship) -> Self {
+    self.relationships.get_or_insert_with(Default::default).push(value);
     self
   }
 }
@@ -424,16 +446,16 @@ impl_command_builder!(
 /// Detaches one or more verification relationships from a method on an identity.
 ///
 /// # Parameters
-/// - `scopes`: the scopes to remove, defaults to an empty [`Vec`].
+/// - `relationships`: the relationships to remove, defaults to an empty [`Vec`].
 /// - `fragment`: the identifier of the method in the document, required.
 DetachMethod {
   @required fragment String,
-  @default scopes Vec<MethodScope>,
+  @default relationships Vec<MethodRelationship>,
 });
 
 impl<'account> DetachMethodBuilder<'account> {
-  pub fn scope(mut self, value: MethodScope) -> Self {
-    self.scopes.get_or_insert_with(Default::default).push(value);
+  pub fn relationship(mut self, value: MethodRelationship) -> Self {
+    self.relationships.get_or_insert_with(Default::default).push(value);
     self
   }
 }

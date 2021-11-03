@@ -6,6 +6,8 @@ use core::str::FromStr;
 use crate::error::Error;
 use crate::error::Result;
 
+use super::MethodRelationship;
+
 /// Verification method group used to refine the scope of a method query.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum MethodScope {
@@ -48,6 +50,18 @@ impl FromStr for MethodScope {
       "CapabilityDelegation" => Ok(Self::CapabilityDelegation),
       "CapabilityInvocation" => Ok(Self::CapabilityInvocation),
       _ => Err(Error::UnknownMethodScope),
+    }
+  }
+}
+
+impl From<MethodRelationship> for MethodScope {
+  fn from(relationship: MethodRelationship) -> Self {
+    match relationship {
+      MethodRelationship::Authentication => Self::Authentication,
+      MethodRelationship::AssertionMethod => Self::AssertionMethod,
+      MethodRelationship::KeyAgreement => Self::KeyAgreement,
+      MethodRelationship::CapabilityDelegation => Self::CapabilityDelegation,
+      MethodRelationship::CapabilityInvocation => Self::CapabilityInvocation,
     }
   }
 }

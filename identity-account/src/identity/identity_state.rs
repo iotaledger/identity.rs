@@ -132,7 +132,8 @@ impl IdentityState {
     Ok(())
   }
 
-  pub fn insert_method_location(&mut self, fragment: String) {
+  /// Stores the generations at which the method was inserted.
+  pub fn set_method_generations(&mut self, fragment: String) {
     self.method_generations.insert(
       Fragment::new(fragment),
       (self.integration_generation(), self.diff_generation()),

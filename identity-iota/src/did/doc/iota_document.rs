@@ -8,6 +8,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 
+use identity_did::verification::MethodRelationship;
 use serde::Serialize;
 
 use identity_core::common::Object;
@@ -407,6 +408,49 @@ impl IotaDocument {
     self.document.insert_method(scope, method.into())
   }
 
+  // Attaches the given relationship to the given method, if the method exists.
+  pub fn attach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
+    // Ensure the method exists
+    self
+      .document
+      .resolve(did_url.url())
+      .ok_or(identity_did::Error::QueryMethodNotFound)?;
+
+    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
+    let method_ref = MethodRef::Refer(core_did_url);
+
+    let result = match relationship {
+      MethodRelationship::Authentication => self.document.authentication_mut().append(method_ref.into()),
+      MethodRelationship::AssertionMethod => self.document.assertion_method_mut().append(method_ref.into()),
+      MethodRelationship::KeyAgreement => self.document.key_agreement_mut().append(method_ref.into()),
+      MethodRelationship::CapabilityDelegation => self.document.capability_delegation_mut().append(method_ref.into()),
+      MethodRelationship::CapabilityInvocation => self.document.capability_invocation_mut().append(method_ref.into()),
+    };
+
+    Ok(result)
+  }
+
+  // Detaches the given relationship from the given method, if the method exists.
+  pub fn detach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<()> {
+    // Ensure the method exists
+    self
+      .document
+      .resolve(did_url.url())
+      .ok_or(identity_did::Error::QueryMethodNotFound)?;
+
+    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
+
+    match relationship {
+      MethodRelationship::Authentication => self.document.authentication_mut().remove(&core_did_url),
+      MethodRelationship::AssertionMethod => self.document.assertion_method_mut().remove(&core_did_url),
+      MethodRelationship::KeyAgreement => self.document.key_agreement_mut().remove(&core_did_url),
+      MethodRelationship::CapabilityDelegation => self.document.capability_delegation_mut().remove(&core_did_url),
+      MethodRelationship::CapabilityInvocation => self.document.capability_invocation_mut().remove(&core_did_url),
+    }
+
+    Ok(())
+  }
+
   /// Removes all references to the specified Verification Method.
   pub fn remove_method(&mut self, did_url: IotaDIDUrl) -> Result<()> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
@@ -702,6 +746,7 @@ mod tests {
   use crate::did::IotaDIDUrl;
   use crate::tangle::MessageId;
   use crate::tangle::Network;
+  use crate::tangle::TangleRef;
   use crate::Error;
 
   const DID_ID: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
@@ -1156,5 +1201,81 @@ mod tests {
       MethodRef::Refer(did) => assert_eq!(did.fragment().unwrap_or_default(), "authentication"),
       MethodRef::Embed(_) => panic!("authentication method should be a reference"),
     }
+  }
+
+  #[test]
+  fn test_attach_verification_relationships() {
+    let keypair: KeyPair = generate_testkey();
+    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+
+    assert!(document
+      .attach_method_relationship(
+        document.did().to_url().join("#authentication").unwrap(),
+        identity_did::verification::MethodRelationship::CapabilityDelegation,
+      )
+      .is_ok());
+
+    assert_eq!(document.as_document().verification_relationships().count(), 2);
+
+    // Adding it a second time does nothing.
+    assert!(document
+      .attach_method_relationship(
+        document.did().to_url().join("#authentication").unwrap(),
+        identity_did::verification::MethodRelationship::CapabilityDelegation,
+      )
+      .is_ok());
+
+    // len is still 2.
+    assert_eq!(document.as_document().verification_relationships().count(), 2);
+
+    // Attempting to attach a relationship to a non-existing method fails.
+    assert!(document
+      .attach_method_relationship(
+        document.did().to_url().join("#doesNotExist").unwrap(),
+        identity_did::verification::MethodRelationship::CapabilityDelegation,
+      )
+      .is_err());
+  }
+
+  #[test]
+  fn test_detach_verification_relationships() {
+    let keypair: KeyPair = generate_testkey();
+    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
+
+    assert!(document
+      .attach_method_relationship(
+        document.did().to_url().join("#authentication").unwrap(),
+        identity_did::verification::MethodRelationship::AssertionMethod,
+      )
+      .is_ok());
+
+    assert!(document
+      .detach_method_relationship(
+        document.did().to_url().join("#authentication").unwrap(),
+        identity_did::verification::MethodRelationship::AssertionMethod,
+      )
+      .is_ok());
+
+    // len is 1; the relationship was removed.
+    assert_eq!(document.as_document().verification_relationships().count(), 1);
+
+    // Removing it a second time does nothing
+    assert!(document
+      .detach_method_relationship(
+        document.did().to_url().join("#authentication").unwrap(),
+        identity_did::verification::MethodRelationship::AssertionMethod,
+      )
+      .is_ok());
+
+    // len is still 1.
+    assert_eq!(document.as_document().verification_relationships().count(), 1);
+
+    // Attempting to detach a relationship from a non-existing method fails.
+    assert!(document
+      .detach_method_relationship(
+        document.did().to_url().join("#doesNotExist").unwrap(),
+        identity_did::verification::MethodRelationship::AssertionMethod,
+      )
+      .is_err());
   }
 }
