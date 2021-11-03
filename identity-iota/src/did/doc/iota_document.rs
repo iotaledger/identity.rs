@@ -130,8 +130,12 @@ impl IotaDocument {
       IotaDID::new(public_key.as_ref())?
     };
 
-    let method: IotaVerificationMethod =
-      IotaVerificationMethod::from_did(did, keypair, fragment.unwrap_or(Self::DEFAULT_METHOD_FRAGMENT))?;
+    let method: IotaVerificationMethod = IotaVerificationMethod::from_did(
+      did,
+      keypair.type_(),
+      keypair.public(),
+      fragment.unwrap_or(Self::DEFAULT_METHOD_FRAGMENT),
+    )?;
 
     Self::from_authentication(method)
   }

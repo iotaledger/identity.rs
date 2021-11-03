@@ -7,6 +7,7 @@ use crypto::signatures::ed25519;
 
 use identity_core::common::Fragment;
 use identity_core::common::Object;
+use identity_core::common::Timestamp;
 use identity_core::common::Url;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
@@ -24,19 +25,16 @@ use identity_did::verification::VerificationMethod;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDIDUrl;
 use identity_iota::did::IotaDocument;
+use identity_iota::did::IotaVerificationMethod;
 use identity_iota::did::Properties as BaseProperties;
-use identity_iota::tangle::NetworkName;
 
 use crate::account::Account;
 use crate::error::Result;
-use crate::events::Context;
 use crate::events::Event;
-use crate::events::EventData;
 use crate::events::UpdateError;
 use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
-use crate::identity::TinyMethod;
 use crate::identity::TinyService;
 use crate::storage::Storage;
 use crate::types::Generation;
@@ -168,14 +166,15 @@ pub(crate) enum Update {
 }
 
 impl Update {
-  pub(crate) async fn process(self, context: Context<'_>) -> Result<Option<Vec<Event>>> {
-    let did: &IotaDID = context.did();
-    let state: &IdentityState = context.state();
-    let store: &dyn Storage = context.store();
-
+  pub(crate) async fn process(
+    self,
+    did: &IotaDID,
+    state: &mut IdentityState,
+    storage: &dyn Storage,
+  ) -> Result<Option<Vec<Event>>> {
     debug!("[Command::process] Command = {:?}", self);
     trace!("[Command::process] State = {:?}", state);
-    trace!("[Command::process] Store = {:?}", store);
+    trace!("[Command::process] Store = {:?}", storage);
 
     match self {
       Self::CreateMethod {
@@ -184,7 +183,8 @@ impl Update {
         fragment,
         method_secret,
       } => {
-        let location: KeyLocation = state.key_location(type_, fragment)?;
+        // TODO: Remove clone after merge
+        let location: KeyLocation = state.key_location(type_, fragment.clone())?;
 
         // The key location must not be an authentication location
         ensure!(
@@ -195,26 +195,29 @@ impl Update {
         // The key location must be available
         // TODO: config: strict
         ensure!(
-          !store.key_exists(did, &location).await?,
+          !storage.key_exists(did, &location).await?,
           UpdateError::DuplicateKeyLocation(location)
         );
 
         // The verification method must not exist
         ensure!(
-          !state.has_method(&location.fragment),
+          state.as_document().resolve(location.fragment.identifier()).is_none(),
           UpdateError::DuplicateKeyFragment(location.fragment.clone()),
         );
 
         let public: PublicKey = if let Some(method_private_key) = method_secret {
-          insert_method_secret(store, did, &location, type_, method_private_key).await
+          insert_method_secret(storage, did, &location, type_, method_private_key).await
         } else {
-          store.key_new(did, &location).await
+          storage.key_new(did, &location).await
         }?;
 
-        let data: MethodData = MethodData::new_multibase(public.as_ref());
-        let method: TinyMethod = TinyMethod::new(location, data, None);
+        // TODO: Fix after merge
+        let fragment: Option<&str> = Some(&fragment);
+        let method: IotaVerificationMethod =
+          IotaVerificationMethod::from_did(did.to_owned(), KeyType::Ed25519, &public, fragment)?;
 
-        Ok(Some(vec![Event::new(EventData::MethodCreated(scope, method))]))
+        // We can ignore the result: we just checked that the method does not exist.
+        state.as_document_mut().insert_method(scope, method);
       }
       Self::DeleteMethod { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
@@ -226,9 +229,12 @@ impl Update {
         );
 
         // The verification method must exist
-        ensure!(state.has_method(&fragment), UpdateError::MethodNotFound);
+        ensure!(
+          state.as_document().resolve(fragment.identifier()).is_some(),
+          UpdateError::MethodNotFound
+        );
 
-        Ok(Some(vec![Event::new(EventData::MethodDeleted(fragment))]))
+        // Ok(Some(vec![Event::new(EventData::MethodDeleted(fragment))]))
       }
       Self::AttachMethod { fragment, scopes } => {
         let fragment: Fragment = Fragment::new(fragment);
@@ -240,9 +246,12 @@ impl Update {
         );
 
         // The verification method must exist
-        ensure!(state.has_method(&fragment), UpdateError::MethodNotFound);
+        ensure!(
+          state.as_document().resolve(fragment.identifier()).is_some(),
+          UpdateError::MethodNotFound
+        );
 
-        Ok(Some(vec![Event::new(EventData::MethodAttached(fragment, scopes))]))
+        // Ok(Some(vec![Event::new(EventData::MethodAttached(fragment, scopes))]))
       }
       Self::DetachMethod { fragment, scopes } => {
         let fragment: Fragment = Fragment::new(fragment);
@@ -254,9 +263,11 @@ impl Update {
         );
 
         // The verification method must exist
-        ensure!(state.has_method(&fragment), UpdateError::MethodNotFound);
-
-        Ok(Some(vec![Event::new(EventData::MethodDetached(fragment, scopes))]))
+        ensure!(
+          state.as_document().resolve(fragment.identifier()).is_some(),
+          UpdateError::MethodNotFound
+        );
+        // Ok(Some(vec![Event::new(EventData::MethodDetached(fragment, scopes))]))
       }
       Self::CreateService {
         fragment,
@@ -273,7 +284,7 @@ impl Update {
 
         let service: TinyService = TinyService::new(fragment, type_, endpoint, properties);
 
-        Ok(Some(vec![Event::new(EventData::ServiceCreated(service))]))
+        // Ok(Some(vec![Event::new(EventData::ServiceCreated(service))]))
       }
       Self::DeleteService { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
@@ -285,9 +296,13 @@ impl Update {
           UpdateError::ServiceNotFound
         );
 
-        Ok(Some(vec![Event::new(EventData::ServiceDeleted(fragment))]))
+        // Ok(Some(vec![Event::new(EventData::ServiceDeleted(fragment))]))
       }
     }
+
+    state.as_document_mut().set_updated(Timestamp::now_utc());
+
+    Ok(None)
   }
 }
 

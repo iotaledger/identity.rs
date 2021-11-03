@@ -199,17 +199,11 @@ impl Account {
   // ===========================================================================
   // Misc. Private
   // ===========================================================================
-  pub(crate) async fn process_update(&self, command: Update, persist: bool) -> Result<()> {
-    // Load the latest state snapshot from storage
-    let state: &IdentityState = self.state();
+  pub(crate) async fn process_update(&mut self, update: Update, persist: bool) -> Result<()> {
+    let did = self.did().to_owned();
+    let storage = Arc::clone(&self.storage);
 
-    debug!("[Account::process] Root = {:#?}", state);
-
-    // Process the command with a read-only view of the state
-    let context: Context<'_> = Context::new(self.did(), state, self.storage());
-    let events: Option<Vec<Event>> = command.process(context).await?;
-
-    debug!("[Account::process] Events = {:#?}", events);
+    update.process(&did, self.state_mut(), storage.as_ref()).await?;
 
     // TODO: publish
 

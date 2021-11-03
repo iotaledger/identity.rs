@@ -84,7 +84,7 @@ fn test_publish_type() -> Result<()> {
 
   let keypair: KeyPair = KeyPair::new_ed25519()?;
   let verif_method2: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(old_doc.did().to_owned(), &keypair, "test-1")?;
+    IotaVerificationMethod::from_did(old_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-1")?;
 
   new_doc.insert_method(MethodScope::CapabilityInvocation, verif_method2);
 
@@ -94,7 +94,7 @@ fn test_publish_type() -> Result<()> {
   let mut new_doc = old_doc.clone();
 
   let verif_method2: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(new_doc.did().to_owned(), &keypair, "test-0")?;
+    IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-0")?;
 
   new_doc
     .remove_method(new_doc.did().to_url().join("test-0").unwrap())
@@ -108,7 +108,7 @@ fn test_publish_type() -> Result<()> {
   let mut new_doc = old_doc.clone();
 
   let verif_method2: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(new_doc.did().to_owned(), &keypair, "test-1")?;
+    IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-1")?;
 
   new_doc.insert_method(MethodScope::Authentication, verif_method2);
 

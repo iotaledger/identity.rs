@@ -278,10 +278,6 @@ impl IdentityState {
     })
   }
 
-  pub fn has_method(&self, fragment: &Fragment) -> bool {
-    self.method_generations.contains_key(fragment)
-  }
-
   // ===========================================================================
   // DID Document Helpers
   // ===========================================================================
