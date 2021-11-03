@@ -185,7 +185,7 @@ impl Account {
   {
     let state: &IdentityState = self.state();
 
-    let method: &IotaVerificationMethod = state.resolve(fragment).ok_or(Error::MethodNotFound)?;
+    let method: &IotaVerificationMethod = state.as_document().resolve(fragment).ok_or(Error::MethodNotFound)?;
 
     let location: KeyLocation = state
       .method_location(method.key_type(), fragment.to_owned())
@@ -224,7 +224,7 @@ impl Account {
   ) -> Result<()> {
     if new_state.integration_generation() == Generation::new() {
       // TODO: Verify correctness of using `authentication`
-      let method: &IotaVerificationMethod = new_state.authentication();
+      let method: &IotaVerificationMethod = new_state.as_document().authentication();
       let location: KeyLocation = new_state
         .method_location(
           method.key_type(),
@@ -242,7 +242,7 @@ impl Account {
         .await?;
     } else {
       // TODO: Verify correctness of using `authentication`
-      let method: &IotaVerificationMethod = old_state.authentication();
+      let method: &IotaVerificationMethod = old_state.as_document().authentication();
       // TODO: Fatal error if not found
       let location: KeyLocation = new_state.method_location(
         method.key_type(),
@@ -265,7 +265,7 @@ impl Account {
   async fn publish_integration_change(&self, old_state: &IdentityState) -> Result<()> {
     let new_state: &IdentityState = self.state();
 
-    let mut new_doc: IotaDocument = new_state.deref().to_owned();
+    let mut new_doc: IotaDocument = new_state.as_document().to_owned();
 
     self.sign_document(&old_state, new_state, &mut new_doc).await?;
 
@@ -281,15 +281,15 @@ impl Account {
   async fn publish_diff_change(&self, old_state: &IdentityState) -> Result<()> {
     let new_state: &IdentityState = self.state();
 
-    let old_doc: IotaDocument = old_state.deref().to_owned();
-    let new_doc: IotaDocument = new_state.deref().to_owned();
+    let old_doc: IotaDocument = old_state.as_document().to_owned();
+    let new_doc: IotaDocument = new_state.as_document().to_owned();
 
     let diff_id: &MessageId = old_state.diff_message_id();
 
     let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
 
     // TODO: Verify correctness of using `authentication`
-    let method: &IotaVerificationMethod = old_state.authentication();
+    let method: &IotaVerificationMethod = old_state.as_document().authentication();
     // let location: &KeyLocation = method.location();
 
     let location: KeyLocation = old_state.method_location(
@@ -355,7 +355,7 @@ impl Account {
     let old_state = self.load_state().await?;
     let new_state = self.state();
 
-    match Publish::new(&old_state, &new_state) {
+    match Publish::new(old_state.as_document(), new_state.as_document()) {
       Publish::Integration => self.publish_integration_change(&old_state).await?,
       Publish::Diff => self.publish_diff_change(&old_state).await?,
       Publish::None => {}

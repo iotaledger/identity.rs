@@ -191,6 +191,14 @@ impl IdentityState {
   // Document State
   // ===========================================================================
 
+  pub fn as_document(&self) -> &IotaDocument {
+    &self.document
+  }
+
+  pub fn as_document_mut(&mut self) -> &mut IotaDocument {
+    &mut self.document
+  }
+
   /// Returns the DID identifying the DID Document for the state.
   // pub fn did(&self) -> Option<&IotaDID> {
   //   self.did.as_ref()
@@ -372,20 +380,6 @@ impl IdentityState {
     }
 
     Ok(())
-  }
-}
-
-impl Deref for IdentityState {
-  type Target = IotaDocument;
-
-  fn deref(&self) -> &Self::Target {
-    &self.document
-  }
-}
-
-impl DerefMut for IdentityState {
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.document
   }
 }
 

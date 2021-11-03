@@ -267,7 +267,7 @@ impl Update {
         let did_url = did.to_url().join(fragment.clone())?;
         // The service must not exist
         ensure!(
-          state.service().query(&did_url).is_none(),
+          state.as_document().service().query(&did_url).is_none(),
           UpdateError::DuplicateServiceFragment(fragment),
         );
 
@@ -281,7 +281,7 @@ impl Update {
 
         // The service must exist
         ensure!(
-          state.service().query(&service_url).is_some(),
+          state.as_document().service().query(&service_url).is_some(),
           UpdateError::ServiceNotFound
         );
 
