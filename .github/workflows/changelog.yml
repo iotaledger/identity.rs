@@ -13,9 +13,11 @@ jobs:
       - uses: actions/checkout@v2
       - run: BRANCHNAME=$(git rev-parse --abbrev-ref HEAD)
       - run: |
+          NEXTVERSION=
           if [[ $BRANCHNAME == release/* ]]; then
             NEXTVERSION=${BRANCHNAME##*/}
           fi
+          echo 'NEXTVERSION=${NEXTVERSION}'
       - name: Run box version	    
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
