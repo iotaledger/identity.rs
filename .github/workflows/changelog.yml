@@ -17,9 +17,10 @@ jobs:
       - run: |
           NEXTVERSION=Unreleased
           if [[ $BRANCHNAME == release/* ]]; then
-            export NEXTVERSION=${BRANCHNAME##*/}
+            NEXTVERSION=${BRANCHNAME##*/}
           fi
           echo NEXTVERSION=$NEXTVERSION
+          echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
       - name: Run github-changelog-generator
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
