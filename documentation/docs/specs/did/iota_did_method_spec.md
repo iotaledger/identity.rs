@@ -14,7 +14,7 @@ keywords:
 
 # IOTA DID Method Specification
 
-Version 0.2-draft by Jelle Millenaar, IOTA Foundation
+Version 0.3-draft by Jelle Millenaar, IOTA Foundation
 
 ## Abstract
 
