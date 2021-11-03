@@ -1,8 +1,8 @@
 # Changelog
 
-## [$($NEXTVERSION)](https://github.com/eike-hass/identity.rs/tree/$($NEXTVERSION)) (2021-11-03)
+## [$NEXTVERSION](https://github.com/eike-hass/identity.rs/tree/$NEXTVERSION) (2021-11-03)
 
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/0.6.0-dev...$($NEXTVERSION))
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/0.6.0-dev...$NEXTVERSION)
 
 **Merged pull requests:**
 
