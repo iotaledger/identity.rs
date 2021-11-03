@@ -7,21 +7,24 @@ use crate::Error;
 pub(crate) enum MessageVersion {
   V1 = 1,
 }
+
 const CURRENT_MESSAGE_VERSION: MessageVersion = MessageVersion::V1;
 
-/// Adds the current message version flag at the beginning of arbitrary data.
-pub(crate) fn add_version_flag(mut data: Vec<u8>) -> Vec<u8> {
-  let version_flag = CURRENT_MESSAGE_VERSION as u8;
-  data.splice(0..0, [version_flag].iter().cloned());
-  data
-}
+impl MessageVersion {
+  /// Adds the current message version flag at the beginning of arbitrary data.
+  pub(crate) fn add_version_flag(mut data: Vec<u8>) -> Vec<u8> {
+    let version_flag = CURRENT_MESSAGE_VERSION as u8;
+    data.splice(0..0, [version_flag].iter().cloned());
+    data
+  }
 
-/// Checks if flag matches message_version.
-pub(crate) fn check_version_flag(flag: &u8, message_version: MessageVersion) -> Result<(), Error> {
-  if message_version as u8 == *flag {
-    Ok(())
-  } else {
-    Err(Error::InvalidMessageFlags)
+  /// Checks if flag matches message_version.
+  pub(crate) fn check_version_flag(flag: &u8, message_version: MessageVersion) -> Result<(), Error> {
+    if message_version as u8 == *flag {
+      Ok(())
+    } else {
+      Err(Error::InvalidMessageFlags)
+    }
   }
 }
 

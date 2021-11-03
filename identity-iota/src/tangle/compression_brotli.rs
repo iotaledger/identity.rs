@@ -5,19 +5,23 @@ use crate::error::Error;
 use crate::error::Error::CompressionError;
 use std::io::prelude::*;
 
+const BUFFER_SIZE: usize = 4096;
+const QUALITY: u32 = 5; // compression level
+const WINDOWS_SIZE: u32 = 22;
+
 pub(crate) fn compress_brotli<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, Error> {
   let mut result = Vec::new();
-  let mut compressor = brotli::CompressorReader::new(input.as_ref(), 4096, 5, 22);
+  let mut compressor = brotli::CompressorReader::new(input.as_ref(), BUFFER_SIZE, QUALITY, WINDOWS_SIZE);
   compressor
     .read_to_end(&mut result)
     .map_err(|_| Error::CompressionError)?;
   Ok(result)
 }
 
-pub(crate) fn decompress_brotli<T: AsRef<[u8]> + ?Sized>(input: &T) -> Result<String, Error> {
-  let mut decompressor = brotli::Decompressor::new(input.as_ref(), 4096 /* buffer size */);
-  let mut s = String::new();
-  decompressor.read_to_string(&mut s).map_err(|_| CompressionError)?;
+pub(crate) fn decompress_brotli<T: AsRef<[u8]> + ?Sized>(input: &T) -> Result<Vec<u8>, Error> {
+  let mut decompressor = brotli::Decompressor::new(input.as_ref(), BUFFER_SIZE);
+  let mut s = Vec::new();
+  decompressor.read_to_end(&mut s).map_err(|_| CompressionError)?;
   Ok(s)
 }
 
@@ -30,7 +34,7 @@ mod test {
   use identity_core::crypto::KeyPair;
 
   #[test]
-  fn test_compression_algorithm() {
+  fn test_brotli() {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
     document.sign(keypair.private()).unwrap();

@@ -23,11 +23,12 @@ type State = DashMap<NetworkName, Arc<Client>>;
 #[derive(Debug)]
 pub struct ClientMap {
   data: State,
+  compression: bool,
 }
 
 impl ClientMap {
   pub fn new() -> Self {
-    Self { data: State::new() }
+    Self { data: State::new(), compression: true }
   }
 
   pub fn from_client(client: Client) -> Self {
@@ -35,7 +36,7 @@ impl ClientMap {
 
     data.insert(client.network.name(), Arc::new(client));
 
-    Self { data }
+    Self { data, compression: true }
   }
 
   pub fn builder() -> ClientBuilder {
@@ -58,14 +59,14 @@ impl ClientMap {
     let network: Network = document.id().network()?;
     let client: Arc<Client> = self.client(network).await?;
 
-    client.publish_document(document).await
+    client.publish_document(document, self.compression).await
   }
 
   pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
     let network: Network = diff.id().network()?;
     let client: Arc<Client> = self.client(network).await?;
 
-    client.publish_diff(message_id, diff).await
+    client.publish_diff(message_id, diff, self.compression).await
   }
 
   pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
@@ -88,11 +89,15 @@ impl ClientMap {
       return Ok(Arc::clone(&client));
     }
 
-    let client: Arc<Client> = Client::from_network(network.clone()).await.map(Arc::new)?;
+    let mut client: Arc<Client> = Client::from_network(network.clone()).await.map(Arc::new)?;
 
     self.data.insert(network_name, Arc::clone(&client));
 
     Ok(client)
+  }
+
+  pub fn disable_compression(&mut self) {
+    self.compression = false;
   }
 }
 
@@ -102,7 +107,7 @@ impl Default for ClientMap {
   }
 }
 
-#[async_trait::async_trait(?Send)]
+#[async_trait::async_trait(? Send)]
 impl TangleResolve for ClientMap {
   async fn resolve(&self, did: &IotaDID) -> Result<IotaDocument> {
     self.read_document(did).await

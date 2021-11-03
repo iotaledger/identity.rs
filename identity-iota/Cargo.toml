@@ -12,7 +12,7 @@ description = "An IOTA Tangle intergration for the identity-rs library."
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
-brotli = "3.3.2"
+brotli = { version = "3.3", default-features = false, features = ["std"] }
 dashmap = { version = "4.0" }
 form_urlencoded = { version = "1.0" }
 futures = { version = "0.3" }
