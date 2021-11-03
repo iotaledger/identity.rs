@@ -23,7 +23,7 @@ jobs:
       - name: Run github-changelog-generator
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
-          args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --no-author --future-release ${{ NEXTVERSION }} --verbose
+          args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --no-author --future-release ${{ env.NEXTVERSION }} --verbose
       - run: cat CHANGELOG.md
       - run: |
           if [[ $(git diff --stat) == '' ]]; then
