@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.6.0-dev](https://github.com/eike-hass/identity.rs/tree/0.6.0-dev) (2021-11-02)
+
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/0.5.0...0.6.0-dev)
+
 ## [0.5.0](https://github.com/eike-hass/identity.rs/tree/0.5.0) (2021-11-02)
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/v.0.4.0...0.5.0)
