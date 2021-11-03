@@ -72,7 +72,7 @@ async fn create_vc_helper(
   let (subject_doc, ..) = create_did::run().await?;
 
   // Add a new VerificationMethod to the issuer with tag #newKey
-  // NOTE: this allows us to revoke it without removing the default authentication key.
+  // NOTE: this allows us to revoke it without removing the default signing key.
   let (issuer_doc, issuer_new_key, issuer_updated_receipt) =
     common::add_new_key(client, &issuer_doc, &issuer_key, &issuer_receipt).await?;
 

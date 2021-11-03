@@ -29,7 +29,7 @@ impl IdentityCreate {
     }
   }
 
-  /// Sets the key type of the initial authentication method.
+  /// Sets the key type of the initial verification method.
   #[must_use]
   pub fn key_type(mut self, value: KeyType) -> Self {
     self.key_type = value;

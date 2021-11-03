@@ -281,7 +281,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
 
   /// Returns an iterator over all verification relationships.
   ///
-  /// This includes embedded and referenced [`VerificationMethods`].
+  /// This includes embedded and referenced [`VerificationMethods`](VerificationMethod).
   pub fn verification_relationships(&self) -> impl Iterator<Item = &MethodRef<U>> {
     fn __method_ref<T>(method: &DIDKey<MethodRef<T>>) -> &MethodRef<T> {
       &**method

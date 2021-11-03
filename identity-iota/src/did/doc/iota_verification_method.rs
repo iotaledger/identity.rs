@@ -57,7 +57,7 @@ impl IotaVerificationMethod {
       .map(Self)
   }
 
-  /// Creates a new [`IotaVerificationMethod`] object from the given `keypair`.
+  /// Creates a new [`IotaVerificationMethod`] from the given `keypair`.
   ///
   /// WARNING: this derives a new DID from the keypair, which will not match the DID of a document
   /// created with a different keypair. Use [`IotaVerificationMethod::from_did`] instead.
@@ -68,7 +68,7 @@ impl IotaVerificationMethod {
     Self::from_did(did, keypair, fragment)
   }
 
-  /// Creates a new [`IotaVerificationMethod`] object from the given [`KeyPair`] on the specified
+  /// Creates a new [`IotaVerificationMethod`] from the given `keypair` on the specified
   /// `network`.
   pub fn from_keypair_with_network(keypair: &KeyPair, fragment: &str, network: NetworkName) -> Result<Self> {
     let key: &[u8] = keypair.public().as_ref();
@@ -77,10 +77,7 @@ impl IotaVerificationMethod {
     Self::from_did(did, keypair, fragment)
   }
 
-  /// Creates a new [`Method`] object from the given `did` and `keypair`.
-  ///
-  /// If the `fragment` resolves to `Option::None` then the default verification method tag will be
-  /// used ("key").
+  /// Creates a new [`IotaVerificationMethod`] from the given `did` and `keypair`.
   pub fn from_did(did: IotaDID, keypair: &KeyPair, fragment: &str) -> Result<Self> {
     let tag: String = format!("#{}", fragment);
     let key: IotaDIDUrl = did.to_url().join(tag)?;
@@ -138,11 +135,11 @@ impl IotaVerificationMethod {
   ///
   /// Returns `Err` if the input is not a valid IOTA verification method.
   pub fn check_validity<T>(method: &VerificationMethod<T>) -> Result<()> {
-    // Ensure all associated DIDs are IOTA Identity DIDs
+    // Ensure all associated DIDs are valid IotaDIDs.
     IotaDID::check_validity(method.id().did())?;
     IotaDID::check_validity(method.controller())?;
 
-    // Ensure the authentication method has an identifying fragment
+    // Ensure the verification method has an identifying fragment.
     if method.id().fragment().is_none() || method.id().fragment().unwrap_or_default().is_empty() {
       return Err(Error::InvalidMethodMissingFragment);
     }
