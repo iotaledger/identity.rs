@@ -14,7 +14,7 @@
 <dt><a href="#Document">Document</a></dt>
 <dd></dd>
 <dt><a href="#DocumentDiff">DocumentDiff</a></dt>
-<dd><p>Defines the difference between two DID [<code>Document</code>]s&#39; JSON representations.</p>
+<dd><p>Defines the difference between two DID <code>Document</code>s&#39; JSON representations.</p>
 </dd>
 <dt><a href="#DocumentHistory">DocumentHistory</a></dt>
 <dd><p>A DID Document&#39;s history and current state.</p>
@@ -146,11 +146,11 @@ Returns the message history of the given DID.
 <a name="Client+resolveDiffHistory"></a>
 
 ### client.resolveDiffHistory(document) ⇒ <code>Promise.&lt;any&gt;</code>
-Returns the [`DiffChainHistory`] of a diff chain starting from a document on the
+Returns the `DiffChainHistory` of a diff chain starting from a document on the
 integration chain.
 
 NOTE: the document must have been published to the tangle and have a valid message id and
-authentication method.
+capability invocation method.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
@@ -556,7 +556,7 @@ Sets the `query` component of the `DIDUrl`.
 <a name="DIDUrl+join"></a>
 
 ### didUrl.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Append a string representing a path, query, and/or fragment to this [`DIDUrl`].
+Append a string representing a path, query, and/or fragment to this `DIDUrl`.
 
 Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
 segment and any following segments in order of path, query, then fragment.
@@ -605,7 +605,7 @@ Parses a `DIDUrl` from the input string.
 <a name="DiffChainHistory+chainData"></a>
 
 ### diffChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
+Returns a `js_sys::Array` of the chain objects.
 
 NOTE: this clones the field.
 
@@ -613,7 +613,7 @@ NOTE: this clones the field.
 <a name="DiffChainHistory+spam"></a>
 
 ### diffChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
+Returns a `js_sys::Array` of `MessageIds` as strings.
 
 NOTE: this clones the field.
 
@@ -621,13 +621,13 @@ NOTE: this clones the field.
 <a name="DiffChainHistory+toJSON"></a>
 
 ### diffChainHistory.toJSON() ⇒ <code>any</code>
-Serializes a `$ident` object as a JSON object.
+Serializes as a JSON object.
 
 **Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
 <a name="DiffChainHistory.fromJSON"></a>
 
 ### DiffChainHistory.fromJSON(json) ⇒ [<code>DiffChainHistory</code>](#DiffChainHistory)
-Deserializes a `$ident` object from a JSON object.
+Deserializes from a JSON object.
 
 **Kind**: static method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
 
@@ -653,25 +653,28 @@ Deserializes a `$ident` object from a JSON object.
         * [.messageId](#Document+messageId)
         * [.previousMessageId](#Document+previousMessageId) ⇒ <code>string</code>
         * [.previousMessageId](#Document+previousMessageId)
-        * [.authentication()](#Document+authentication) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.defaultSigningMethod()](#Document+defaultSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.insertMethod(method, scope)](#Document+insertMethod) ⇒ <code>boolean</code>
         * [.removeMethod(did)](#Document+removeMethod)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#Document+removeService)
-        * [.sign(key)](#Document+sign)
-        * [.verify()](#Document+verify) ⇒ <code>boolean</code>
+        * [.signSelf(key_pair, method_query)](#Document+signSelf)
+        * [.verifySelfSigned()](#Document+verifySelfSigned) ⇒ <code>boolean</code>
         * [.signCredential(data, args)](#Document+signCredential) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
         * [.signPresentation(data, args)](#Document+signPresentation) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
         * [.signData(data, args)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data)](#Document+verifyData) ⇒ <code>boolean</code>
-        * [.resolveKey(query)](#Document+resolveKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.verifyDataWithScope(data, scope)](#Document+verifyDataWithScope) ⇒ <code>boolean</code>
+        * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
-        * [.diff(other, message, key)](#Document+diff) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
+        * [.diff(other, message, key, method)](#Document+diff) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
+        * [.verifyDiff(diff)](#Document+verifyDiff)
         * [.merge(diff)](#Document+merge)
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromAuthentication(method)](#Document.fromAuthentication) ⇒ [<code>Document</code>](#Document)
+        * [.fromVerificationMethod(method)](#Document.fromVerificationMethod) ⇒ [<code>Document</code>](#Document)
+        * [.verifyRootDocument(document)](#Document.verifyRootDocument)
         * [.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
 
@@ -682,17 +685,17 @@ Creates a new DID Document from the given `KeyPair`, network, and verification m
 fragment name.
 
 The DID Document will be pre-populated with a single verification method
-derived from the provided `KeyPair`, with an attached authentication relationship.
-This method will have the DID URL fragment `#authentication` by default and can be easily
-retrieved with `Document::authentication`.
+derived from the provided `KeyPair` embedded as a capability invocation
+verification relationship. This method will have the DID URL fragment
+`#sign-0` by default and can be easily retrieved with `Document::defaultSigningMethod`.
 
-NOTE: the generated document is unsigned, see `Document::sign`.
+NOTE: the generated document is unsigned, see `Document::signSelf`.
 
 Arguments:
 
 * keypair: the initial verification method is derived from the public key with this keypair.
 * network: Tangle network to use for the DID, default `Network::mainnet`.
-* fragment: name of the initial verification method, default "authentication".
+* fragment: name of the initial verification method, default "sign-0".
 
 
 | Param | Type |
@@ -777,10 +780,13 @@ Set the message_id of the DID Document.
 | --- | --- |
 | value | <code>string</code> | 
 
-<a name="Document+authentication"></a>
+<a name="Document+defaultSigningMethod"></a>
 
-### document.authentication() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Returns the default Verification Method of the DID Document.
+### document.defaultSigningMethod() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Returns the first [`IotaVerificationMethod`] with a capability invocation relationship
+capable of signing this DID document.
+
+Throws an error if no signing method is present.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+insertMethod"></a>
@@ -828,21 +834,27 @@ Remove a `Service` identified by the given `DIDUrl` from the document.
 | --- | --- |
 | did | [<code>DIDUrl</code>](#DIDUrl) | 
 
-<a name="Document+sign"></a>
+<a name="Document+signSelf"></a>
 
-### document.sign(key)
-Signs the DID Document with the default authentication method.
+### document.signSelf(key_pair, method_query)
+Signs the DID document with the verification method specified by `method_query`.
+The `method_query` may be the full `DIDUrl` of the method or just its fragment,
+e.g. "#sign-0".
+
+NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
+verification method. See `Document::verifySelfSigned`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| key | [<code>KeyPair</code>](#KeyPair) | 
+| key_pair | [<code>KeyPair</code>](#KeyPair) | 
+| method_query | <code>string</code> | 
 
-<a name="Document+verify"></a>
+<a name="Document+verifySelfSigned"></a>
 
-### document.verify() ⇒ <code>boolean</code>
-Verify the signature with the authentication_key
+### document.verifySelfSigned() ⇒ <code>boolean</code>
+Verifies a self-signed signature on this DID document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+signCredential"></a>
@@ -892,9 +904,22 @@ Verifies the authenticity of `data` using the target verification method.
 | --- | --- |
 | data | <code>any</code> | 
 
-<a name="Document+resolveKey"></a>
+<a name="Document+verifyDataWithScope"></a>
 
-### document.resolveKey(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+### document.verifyDataWithScope(data, scope) ⇒ <code>boolean</code>
+Verifies the signature of the provided `data` was created using a verification method
+in this DID Document with the verification relationship specified by `scope`.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>any</code> | 
+| scope | <code>string</code> | 
+
+<a name="Document+resolveMethod"></a>
+
+### document.resolveMethod(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -913,8 +938,9 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="Document+diff"></a>
 
-### document.diff(other, message, key) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
-Generate the difference between two DID Documents and sign it
+### document.diff(other, message, key, method) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
+Generate a `DocumentDiff` between two DID Documents and sign it using the specified
+`key` and `method`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -923,6 +949,23 @@ Generate the difference between two DID Documents and sign it
 | other | [<code>Document</code>](#Document) | 
 | message | <code>string</code> | 
 | key | [<code>KeyPair</code>](#KeyPair) | 
+| method | <code>string</code> | 
+
+<a name="Document+verifyDiff"></a>
+
+### document.verifyDiff(diff)
+Verifies the signature of the `diff` was created using a capability invocation method
+in this DID Document.
+
+# Errors
+
+Fails if an unsupported verification method is used or the verification operation fails.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| diff | [<code>DocumentDiff</code>](#DocumentDiff) | 
 
 <a name="Document+merge"></a>
 
@@ -940,9 +983,9 @@ Verifies a `DocumentDiff` signature and merges the changes into `self`.
 ### document.integrationIndex() ⇒ <code>string</code>
 Returns the Tangle index of the integration chain for this DID.
 
-This is simply the tag segment of the [`IotaDID`].
+This is simply the tag segment of the `DID`.
 E.g.
-For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
+For a document with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
 `doc.integration_index()` == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -952,18 +995,33 @@ For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstu
 Serializes a `Document` object as a JSON object.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document.fromAuthentication"></a>
+<a name="Document.fromVerificationMethod"></a>
 
-### Document.fromAuthentication(method) ⇒ [<code>Document</code>](#Document)
+### Document.fromVerificationMethod(method) ⇒ [<code>Document</code>](#Document)
 Creates a new DID Document from the given `VerificationMethod`.
 
-NOTE: the generated document is unsigned, see Document::sign.
+NOTE: the generated document is unsigned, see `Document::signSelf`.
 
 **Kind**: static method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | method | [<code>VerificationMethod</code>](#VerificationMethod) | 
+
+<a name="Document.verifyRootDocument"></a>
+
+### Document.verifyRootDocument(document)
+Verifies whether `document` is a valid root DID document according to the IOTA DID method
+specification.
+
+It must be signed using a verification method with a public key whose BLAKE2b-256 hash matches
+the DID tag.
+
+**Kind**: static method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>Document</code>](#Document) | 
 
 <a name="Document.diffIndex"></a>
 
@@ -993,7 +1051,7 @@ Deserializes a `Document` object from a JSON object.
 <a name="DocumentDiff"></a>
 
 ## DocumentDiff
-Defines the difference between two DID [`Document`]s' JSON representations.
+Defines the difference between two DID `Document`s' JSON representations.
 
 **Kind**: global class  
 
@@ -1102,7 +1160,7 @@ A DID Document's history and current state.
 <a name="DocumentHistory+integrationChainData"></a>
 
 ### documentHistory.integrationChainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of integration chain [`WasmDocuments`](WasmDocument).
+Returns a `js_sys::Array` of integration chain `Documents`.
 
 NOTE: clones the data.
 
@@ -1110,7 +1168,7 @@ NOTE: clones the data.
 <a name="DocumentHistory+integrationChainSpam"></a>
 
 ### documentHistory.integrationChainSpam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of message id strings for "spam" messages on the same index
+Returns a `js_sys::Array` of message id strings for "spam" messages on the same index
 as the integration chain.
 
 NOTE: clones the data.
@@ -1119,7 +1177,7 @@ NOTE: clones the data.
 <a name="DocumentHistory+diffChainData"></a>
 
 ### documentHistory.diffChainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of diff chain [`WasmDocumentDiffs`](WasmDocumentDiff).
+Returns a `js_sys::Array` of diff chain `DocumentDiffs`.
 
 NOTE: clones the data.
 
@@ -1127,7 +1185,7 @@ NOTE: clones the data.
 <a name="DocumentHistory+diffChainSpam"></a>
 
 ### documentHistory.diffChainSpam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of message id strings for "spam" messages on the same index
+Returns a `js_sys::Array` of message id strings for "spam" messages on the same index
 as the diff chain.
 
 NOTE: clones the data.
@@ -1136,13 +1194,13 @@ NOTE: clones the data.
 <a name="DocumentHistory+toJSON"></a>
 
 ### documentHistory.toJSON() ⇒ <code>any</code>
-Serializes a [`WasmDocumentHistory`] object as a JSON object.
+Serializes `DocumentHistory` as a JSON object.
 
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory.fromJSON"></a>
 
 ### DocumentHistory.fromJSON(json) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
-Deserializes a [`WasmDocumentHistory`] object from a JSON object.
+Deserializes `DocumentHistory` from a JSON object.
 
 **Kind**: static method of [<code>DocumentHistory</code>](#DocumentHistory)  
 
@@ -1166,7 +1224,7 @@ Deserializes a [`WasmDocumentHistory`] object from a JSON object.
 <a name="IntegrationChainHistory+chainData"></a>
 
 ### integrationChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
+Returns a `js_sys::Array` of the chain objects.
 
 NOTE: this clones the field.
 
@@ -1174,7 +1232,7 @@ NOTE: this clones the field.
 <a name="IntegrationChainHistory+spam"></a>
 
 ### integrationChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
+Returns a `js_sys::Array` of `MessageIds` as strings.
 
 NOTE: this clones the field.
 
@@ -1182,13 +1240,13 @@ NOTE: this clones the field.
 <a name="IntegrationChainHistory+toJSON"></a>
 
 ### integrationChainHistory.toJSON() ⇒ <code>any</code>
-Serializes a `$ident` object as a JSON object.
+Serializes as a JSON object.
 
 **Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
 <a name="IntegrationChainHistory.fromJSON"></a>
 
 ### IntegrationChainHistory.fromJSON(json) ⇒ [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)
-Deserializes a `$ident` object from a JSON object.
+Deserializes from a JSON object.
 
 **Kind**: static method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
 
@@ -1420,7 +1478,7 @@ Returns the web explorer URL of the given `message`.
 <a name="Network.try_from_name"></a>
 
 ### Network.try\_from\_name(name) ⇒ [<code>Network</code>](#Network)
-Parses the provided string to a [`WasmNetwork`].
+Parses the provided string to a `Network`.
 
 **Kind**: static method of [<code>Network</code>](#Network)  
 
@@ -1596,28 +1654,29 @@ Deserializes a `VerifiablePresentation` object from a JSON object.
 **Kind**: global class  
 
 * [VerificationMethod](#VerificationMethod)
-    * [new VerificationMethod(key, tag)](#new_VerificationMethod_new)
+    * [new VerificationMethod(key, fragment)](#new_VerificationMethod_new)
     * _instance_
         * [.id](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.controller](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
+        * [.controller](#VerificationMethod+controller)
         * [.type](#VerificationMethod+type) ⇒ <code>string</code>
         * [.data](#VerificationMethod+data) ⇒ <code>any</code>
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromDID(did, key, tag)](#VerificationMethod.fromDID) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.createMerkleKey(digest, did, keys, tag)](#VerificationMethod.createMerkleKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.fromDID(did, key, fragment)](#VerificationMethod.fromDID) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.createMerkleKey(digest, did, keys, fragment)](#VerificationMethod.createMerkleKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.fromJSON(value)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 
 <a name="new_VerificationMethod_new"></a>
 
-### new VerificationMethod(key, tag)
+### new VerificationMethod(key, fragment)
 Creates a new `VerificationMethod` object from the given `key`.
 
 
 | Param | Type |
 | --- | --- |
 | key | [<code>KeyPair</code>](#KeyPair) | 
-| tag | <code>string</code> \| <code>undefined</code> | 
+| fragment | <code>string</code> | 
 
 <a name="VerificationMethod+id"></a>
 
@@ -1631,6 +1690,17 @@ Returns the `id` `DIDUrl` of the `VerificationMethod` object.
 Returns the `controller` `DID` of the `VerificationMethod` object.
 
 **Kind**: instance property of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+controller"></a>
+
+### verificationMethod.controller
+Returns the `controller` `DID` of the `VerificationMethod` object.
+
+**Kind**: instance property of [<code>VerificationMethod</code>](#VerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>DID</code>](#DID) | 
+
 <a name="VerificationMethod+type"></a>
 
 ### verificationMethod.type ⇒ <code>string</code>
@@ -1651,7 +1721,7 @@ Serializes a `VerificationMethod` object as a JSON object.
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod.fromDID"></a>
 
-### VerificationMethod.fromDID(did, key, tag) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+### VerificationMethod.fromDID(did, key, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 Creates a new `VerificationMethod` object from the given `did` and `key`.
 
 **Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
@@ -1660,11 +1730,11 @@ Creates a new `VerificationMethod` object from the given `did` and `key`.
 | --- | --- |
 | did | [<code>DID</code>](#DID) | 
 | key | [<code>KeyPair</code>](#KeyPair) | 
-| tag | <code>string</code> \| <code>undefined</code> | 
+| fragment | <code>string</code> | 
 
 <a name="VerificationMethod.createMerkleKey"></a>
 
-### VerificationMethod.createMerkleKey(digest, did, keys, tag) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+### VerificationMethod.createMerkleKey(digest, did, keys, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 Creates a new Merkle Key Collection Method from the given key collection.
 
 **Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
@@ -1674,7 +1744,7 @@ Creates a new Merkle Key Collection Method from the given key collection.
 | digest | <code>number</code> | 
 | did | [<code>DID</code>](#DID) | 
 | keys | [<code>KeyCollection</code>](#KeyCollection) | 
-| tag | <code>string</code> \| <code>undefined</code> | 
+| fragment | <code>string</code> | 
 
 <a name="VerificationMethod.fromJSON"></a>
 

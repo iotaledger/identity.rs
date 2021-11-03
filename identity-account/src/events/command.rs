@@ -29,15 +29,16 @@ use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::types::MethodSecret;
 
-// Supported authentication method types.
-const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
+// Method types allowed to sign a DID document update.
+pub const UPDATE_METHOD_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
+pub const DEFAULT_UPDATE_METHOD_PREFIX: &str = "sign-";
 
 #[derive(Clone, Debug)]
 pub(crate) enum Command {
   CreateIdentity {
     network: Option<NetworkName>,
     method_secret: Option<MethodSecret>,
-    authentication: MethodType,
+    method_type: MethodType,
   },
   CreateMethod {
     scope: MethodScope,
@@ -80,21 +81,22 @@ impl Command {
       Self::CreateIdentity {
         network,
         method_secret,
-        authentication,
+        method_type,
       } => {
-        // The state must not be initialized
+        // The state must not be initialized.
         ensure!(state.did().is_none(), UpdateError::DocumentAlreadyExists);
 
-        // The authentication method type must be valid
+        // The method type must be able to sign document updates.
         ensure!(
-          AUTH_TYPES.contains(&authentication),
-          UpdateError::InvalidMethodType(authentication)
+          UPDATE_METHOD_TYPES.contains(&method_type),
+          UpdateError::InvalidMethodType(method_type)
         );
 
         let generation: Generation = state.integration_generation();
-        let location: KeyLocation = KeyLocation::new_authentication(authentication, generation);
+        let fragment: String = format!("{}{}", DEFAULT_UPDATE_METHOD_PREFIX, generation.to_u32());
+        let location: KeyLocation = KeyLocation::new(method_type, fragment, generation, Generation::new());
 
-        // The key location must be available
+        // The key location must be available.
         // TODO: config: strict
         ensure!(
           !store.key_exists(state.id(), &location).await?,
@@ -102,7 +104,7 @@ impl Command {
         );
 
         let public: PublicKey = if let Some(method_private_key) = method_secret {
-          insert_method_secret(store, state.id(), &location, authentication, method_private_key).await
+          insert_method_secret(store, state.id(), &location, method_type, method_private_key).await
         } else {
           store.key_new(state.id(), &location).await
         }?;
@@ -110,22 +112,16 @@ impl Command {
         let data: MethodData = MethodData::new_multibase(public.as_ref());
         let method: TinyMethod = TinyMethod::new(location, data, None);
 
-        // Generate a new DID from the public key
+        // Generate a new DID from the public key.
         let did: IotaDID = if let Some(network) = network {
           IotaDID::new_with_network(public.as_ref(), network)?
         } else {
           IotaDID::new(public.as_ref())?
         };
 
-        let method_fragment = Fragment::new(method.location().fragment());
-
         Ok(Some(vec![
           Event::new(EventData::IdentityCreated(did)),
-          Event::new(EventData::MethodCreated(MethodScope::VerificationMethod, method)),
-          Event::new(EventData::MethodAttached(
-            method_fragment,
-            vec![MethodScope::Authentication],
-          )),
+          Event::new(EventData::MethodCreated(MethodScope::CapabilityInvocation, method)),
         ]))
       }
       Self::CreateMethod {
@@ -134,28 +130,22 @@ impl Command {
         fragment,
         method_secret,
       } => {
-        // The state must be initialized
+        // The state must be initialized.
         ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let location: KeyLocation = state.key_location(type_, fragment)?;
 
-        // The key location must not be an authentication location
-        ensure!(
-          !location.is_authentication(),
-          UpdateError::InvalidMethodFragment("reserved")
-        );
-
-        // The key location must be available
+        // The key location must be available.
         // TODO: config: strict
         ensure!(
           !store.key_exists(state.id(), &location).await?,
           UpdateError::DuplicateKeyLocation(location)
         );
 
-        // The verification method must not exist
+        // The verification method must not exist.
         ensure!(
-          !state.methods().contains(location.fragment()),
-          UpdateError::DuplicateKeyFragment(location.fragment.clone()),
+          !state.methods().contains(location.fragment_name()),
+          UpdateError::DuplicateKeyFragment(location.fragment().clone()),
         );
 
         let public: PublicKey = if let Some(method_private_key) = method_secret {
@@ -170,53 +160,57 @@ impl Command {
         Ok(Some(vec![Event::new(EventData::MethodCreated(scope, method))]))
       }
       Self::DeleteMethod { fragment } => {
-        // The state must be initialized
+        // The state must be initialized.
         ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
-        // The fragment must not be an authentication location
-        ensure!(
-          !KeyLocation::is_authentication_fragment(&fragment),
-          UpdateError::InvalidMethodFragment("reserved")
-        );
-
-        // The verification method must exist
+        // The verification method must exist.
         ensure!(state.methods().contains(fragment.name()), UpdateError::MethodNotFound);
+
+        // Prevent deleting the last method capable of signing the DID document.
+        let is_capability_invocation = state
+          .methods()
+          .slice(MethodScope::CapabilityInvocation)
+          .iter()
+          .any(|method_ref| method_ref.fragment() == &fragment);
+        ensure!(
+          !(is_capability_invocation && state.methods().slice(MethodScope::CapabilityInvocation).len() == 1),
+          UpdateError::InvalidMethodFragment("cannot remove last signing method")
+        );
 
         Ok(Some(vec![Event::new(EventData::MethodDeleted(fragment))]))
       }
       Self::AttachMethod { fragment, scopes } => {
-        // The state must be initialized
+        // The state must be initialized.
         ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
-        // The fragment must not be an authentication location
-        ensure!(
-          !KeyLocation::is_authentication_fragment(&fragment),
-          UpdateError::InvalidMethodFragment("reserved")
-        );
-
-        // The verification method must exist
+        // The verification method must exist.
         ensure!(state.methods().contains(fragment.name()), UpdateError::MethodNotFound);
 
         Ok(Some(vec![Event::new(EventData::MethodAttached(fragment, scopes))]))
       }
       Self::DetachMethod { fragment, scopes } => {
-        // The state must be initialized
+        // The state must be initialized.
         ensure!(state.did().is_some(), UpdateError::DocumentNotFound);
 
         let fragment: Fragment = Fragment::new(fragment);
 
-        // The fragment must not be an authentication location
-        ensure!(
-          !KeyLocation::is_authentication_fragment(&fragment),
-          UpdateError::InvalidMethodFragment("reserved")
-        );
-
-        // The verification method must exist
+        // The verification method must exist.
         ensure!(state.methods().contains(fragment.name()), UpdateError::MethodNotFound);
+
+        // Prevent detaching the last method capable of signing the DID document.
+        let is_capability_invocation = state
+          .methods()
+          .slice(MethodScope::CapabilityInvocation)
+          .iter()
+          .any(|method_ref| method_ref.fragment() == &fragment);
+        ensure!(
+          !(is_capability_invocation && state.methods().slice(MethodScope::CapabilityInvocation).len() == 1),
+          UpdateError::InvalidMethodFragment("cannot remove last signing method")
+        );
 
         Ok(Some(vec![Event::new(EventData::MethodDetached(fragment, scopes))]))
       }

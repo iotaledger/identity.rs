@@ -84,11 +84,16 @@ fn test_sign_verify_this_ed25519() {
       .build()
       .unwrap();
 
-    assert!(document.verify_this().is_err());
+    assert!(document.verifier().verify(&document).is_err());
 
-    document.sign_this("#key-1", key.private()).unwrap();
+    document
+      .clone()
+      .signer(key.private())
+      .method("#key-1")
+      .sign(&mut document)
+      .unwrap();
 
-    assert!(document.verify_this().is_ok());
+    assert!(document.verifier().verify(&document).is_ok());
   }
 }
 
