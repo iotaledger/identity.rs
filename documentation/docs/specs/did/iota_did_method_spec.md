@@ -99,7 +99,7 @@ Example of an IOTA MessageId:
 
 ### Signing Keys
 
-DID Documents published to the Tangle must be cryptographically signed. As such, the DID Document MUST include at least one verification method with a public key. Only verification methods with the [capability invocation verification relationship](https://www.w3.org/TR/did-core/#capability-invocation) are allowed to sign IOTA DID Document updates. It is recommended, for security reasons, not to use signing keys for other purposes as control over them is vital for controlling the identity. It is RECOMMENDED to name the initial verification method `#sign-x`, where `x` is the index of the signing key, which is incremented every time the signing key is updated, starting at index 1.
+DID Documents published to the Tangle must be cryptographically signed. As such, the DID Document MUST include at least one public key with a [capability invocation relationship](https://www.w3.org/TR/did-core/#capability-invocation). Only verification methods with a [capability invocation relationship](https://www.w3.org/TR/did-core/#capability-invocation) are allowed to sign IOTA DID Document updates. It is recommended, for security reasons, not to use signing keys for other purposes as control over them is vital for controlling the identity. It is RECOMMENDED to name the initial verification method `#sign-x`, where `x` is the index of the signing key, which is incremented every time the signing key is updated, starting at index 1.
 
 The initial DID message containing a newly-generated DID Document MUST be signed with the same keypair used to derive its [IOTA-Tag](#iota-tag) (see [CRUD: Create](#create)).
 
