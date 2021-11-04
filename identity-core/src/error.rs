@@ -33,13 +33,6 @@ pub enum Error {
   /// Caused by a failure to decode multibase-encoded data.
   #[error("Failed to decode multibase data: {0}")]
   DecodeMultibase(#[from] multibase::Error),
-  /// Cause by a failure to encode a Roaring Bitmap.
-  #[error("Failed to encode roaring bitmap: {0}")]
-  EncodeBitmap(std::io::Error),
-  /// Cause by a failure to decode a Roaring Bitmap.
-  #[error("Failed to decode roaring bitmap: {0}")]
-  DecodeBitmap(std::io::Error),
-  /// Caused by attempting to perform an invalid `Diff` operation.
   #[error("Invalid Document Diff: {0}")]
   InvalidDiff(#[from] identity_diff::Error),
   /// Caused by attempting to parse an invalid `Url`.

@@ -12,11 +12,63 @@ use serde::ser::Serializer;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::error::Error;
-use crate::error::Result;
+//use crate::error::Error;
+//use crate::error::Result;
 use crate::utils::decode_b64;
 use crate::utils::encode_b64;
+pub use errors::BitSetDecodingError;
+pub use errors::BitSetEncodingError;
 
+pub(self) mod errors {
+
+  /// Cause by a failure to encode a Roaring Bitmap.
+  #[derive(Debug)]
+  pub struct BitSetEncodingError {
+    inner: std::io::Error,
+  }
+
+  impl std::fmt::Display for BitSetEncodingError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+      write!(f, "failed to encode roaring bitmap {}", self.inner)
+    }
+  }
+
+  impl std::error::Error for BitSetEncodingError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+      self.inner.source()
+    }
+  }
+
+  impl From<std::io::Error> for BitSetEncodingError {
+    fn from(error: std::io::Error) -> Self {
+      Self { inner: error }
+    }
+  }
+
+  /// Cause by a failure to decode a Roaring Bitmap.
+  #[derive(Debug)]
+  pub struct BitSetDecodingError {
+    inner: std::io::Error,
+  }
+
+  impl std::fmt::Display for BitSetDecodingError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+      write!(f, "failed to decode roaring bitmap {}", self.inner)
+    }
+  }
+
+  impl std::error::Error for BitSetDecodingError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+      self.inner.source()
+    }
+  }
+
+  impl From<std::io::Error> for BitSetDecodingError {
+    fn from(error: std::io::Error) -> Self {
+      Self { inner: error }
+    }
+  }
+}
 /// A general-purpose compressed bitset.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BitSet(RoaringBitmap);
@@ -68,29 +120,29 @@ impl BitSet {
   }
 
   /// Serializes the [`BitSet`] as a base64-encoded `String`.
-  fn serialize_b64(&self) -> Result<String> {
+  fn serialize_b64(&self) -> Result<String, BitSetEncodingError> {
     self.serialize_vec().map(|data| encode_b64(&data))
   }
 
   /// Serializes the [`BitSet`] as a vector of bytes.
-  fn serialize_vec(&self) -> Result<Vec<u8>> {
+  fn serialize_vec(&self) -> Result<Vec<u8>, BitSetEncodingError> {
     let mut output: Vec<u8> = Vec::with_capacity(self.0.serialized_size());
 
-    self.0.serialize_into(&mut output).map_err(Error::EncodeBitmap)?;
+    self.0.serialize_into(&mut output)?;
 
     Ok(output)
   }
 
   /// Deserializes a [`BitSet`] from base64-encoded `data`.
-  fn deserialize_b64(data: &str) -> Result<Self> {
-    Self::deserialize_slice(&decode_b64(data)?)
+  fn deserialize_b64(data: &str) -> Result<Self, BitSetDecodingError> {
+    Self::deserialize_slice(
+      &decode_b64(data).map_err(|_decode_error| std::io::Error::new(std::io::ErrorKind::InvalidData, _decode_error))?,
+    )
   }
 
   /// Deserializes a [`BitSet`] from a slice of bytes.
-  fn deserialize_slice(data: &[u8]) -> Result<Self> {
-    RoaringBitmap::deserialize_from(data)
-      .map_err(Error::DecodeBitmap)
-      .map(Self)
+  fn deserialize_slice(data: &[u8]) -> Result<Self, BitSetDecodingError> {
+    Ok(Self(RoaringBitmap::deserialize_from(data)?))
   }
 }
 
