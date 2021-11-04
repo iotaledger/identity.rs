@@ -122,7 +122,8 @@ impl Account {
     &self.state
   }
 
-  pub fn state_mut(&mut self) -> &mut IdentityState {
+  // TODO: Make pub?
+  pub(crate) fn state_mut_unchecked(&mut self) -> &mut IdentityState {
     &mut self.state
   }
 
@@ -201,7 +202,7 @@ impl Account {
     let did = self.did().to_owned();
     let storage = Arc::clone(&self.storage);
 
-    update.process(&did, self.state_mut(), storage.as_ref()).await?;
+    update.process(&did, self.state_mut_unchecked(), storage.as_ref()).await?;
 
     // TODO: publish
 
