@@ -35,6 +35,9 @@ async function createIdentityPrivateTangle(restURL, networkName) {
     // Create a client instance from the configuration to publish messages to the Tangle.
     const client = Client.fromConfig(config);
 
+    // For debugging, message compression can be disabled with the next line.
+    // client.disableCompression();
+
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const receipt = await client.publishDocument(doc.toJSON());
 
