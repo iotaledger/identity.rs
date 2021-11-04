@@ -18,7 +18,10 @@ mod create_did;
 
 pub async fn create_vc() -> Result<()> {
   // Create a client instance to send messages to the Tangle.
-  let client: ClientMap = ClientMap::new();
+  let mut client: ClientMap = ClientMap::new();
+
+  // For debugging, message compression can be disabled.
+  client.disable_compression();
 
   // Create a signed DID Document/KeyPair for the credential issuer (see create_did.rs).
   let (issuer_doc, issuer_key, _): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;

@@ -28,7 +28,10 @@ mod create_did;
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a client instance to send messages to the Tangle.
-  let client: Client = Client::new().await?;
+  let mut client: Client = Client::new().await?;
+
+  // For debugging, message compression can be disabled.
+  client.disable_compression();
 
   // ===========================================================================
   // DID Creation

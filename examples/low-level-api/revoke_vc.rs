@@ -30,7 +30,10 @@ mod create_did;
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a client instance to send messages to the Tangle.
-  let client: ClientMap = ClientMap::new();
+  let mut client: ClientMap = ClientMap::new();
+
+  // For debugging, message compression can be disabled.
+  client.disable_compression();
 
   // Create a signed VC
   let (issuer, signed_vc) = create_vc_helper(&client).await?;

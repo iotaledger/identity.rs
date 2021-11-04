@@ -20,7 +20,10 @@ mod create_did;
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a client instance to send messages to the Tangle.
-  let client: ClientMap = ClientMap::new();
+  let mut client: ClientMap = ClientMap::new();
+
+  // For debugging, message compression can be disabled.
+  client.disable_compression();
 
   // Create a signed DID Document and KeyPair (see create_did.rs).
   let (document, keypair, receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;

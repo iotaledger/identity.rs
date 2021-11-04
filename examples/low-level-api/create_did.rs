@@ -13,7 +13,10 @@ use identity::prelude::*;
 
 pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
   // Create a client instance to send messages to the Tangle.
-  let client: ClientMap = ClientMap::new();
+  let mut client: ClientMap = ClientMap::new();
+
+  // For debugging, message compression can be disabled.
+  client.disable_compression();
 
   // Generate a new Ed25519 public/private key pair.
   let keypair: KeyPair = KeyPair::new_ed25519()?;
