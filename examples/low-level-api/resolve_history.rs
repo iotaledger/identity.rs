@@ -45,11 +45,11 @@ async fn main() -> Result<()> {
   // These are not valid DID messages and are simply to demonstrate that invalid messages
   // can be included in the history for debugging invalid DID documents.
   let int_index: &str = document.integration_index();
-  client.publish_json(int_index, &json!({ "intSpam:1": true })).await?;
-  client.publish_json(int_index, &json!({ "intSpam:2": true })).await?;
-  client.publish_json(int_index, &json!({ "intSpam:3": true })).await?;
-  client.publish_json(int_index, &json!({ "intSpam:4": true })).await?;
-  client.publish_json(int_index, &json!({ "intSpam:5": true })).await?;
+  client.publish_json(int_index, &json!({ "intSpam:1": true }), true).await?;
+  client.publish_json(int_index, &json!({ "intSpam:2": true }), true).await?;
+  client.publish_json(int_index, &json!({ "intSpam:3": true }), true).await?;
+  client.publish_json(int_index, &json!({ "intSpam:4": true }), true).await?;
+  client.publish_json(int_index, &json!({ "intSpam:5": true }), true).await?;
 
   // ===========================================================================
   // Integration Chain Update 1
@@ -78,7 +78,7 @@ async fn main() -> Result<()> {
 
   // Publish the updated DID Document to the Tangle, updating the integration chain.
   // This may take a few seconds to complete proof-of-work.
-  let int_receipt_1: Receipt = client.publish_document(&int_doc_1).await?;
+  let int_receipt_1: Receipt = client.publish_document(&int_doc_1, true).await?;
 
   // ===========================================================================
   // Diff Chain Update 1
@@ -106,7 +106,7 @@ async fn main() -> Result<()> {
   let diff_1: DocumentDiff = int_doc_1.diff(&diff_doc_1, *int_receipt_1.message_id(), keypair.private())?;
 
   // Publish the diff to the Tangle, starting a diff chain.
-  let diff_receipt_1: Receipt = client.publish_diff(int_receipt_1.message_id(), &diff_1).await?;
+  let diff_receipt_1: Receipt = client.publish_diff(int_receipt_1.message_id(), &diff_1, true).await?;
 
   // ===========================================================================
   // Diff Chain Update 2
@@ -134,7 +134,7 @@ async fn main() -> Result<()> {
   // Publish the diff to the Tangle.
   // Note that we still use the `message_id` from the last integration chain message here to link
   // the current diff chain to that point on the integration chain.
-  let _diff_receipt_2: Receipt = client.publish_diff(int_receipt_1.message_id(), &diff_2).await?;
+  let _diff_receipt_2: Receipt = client.publish_diff(int_receipt_1.message_id(), &diff_2, true).await?;
 
   // ===========================================================================
   // Diff Chain Spam
@@ -144,9 +144,9 @@ async fn main() -> Result<()> {
   // These are not valid DID diffs and are simply to demonstrate that invalid messages
   // can be included in the history for debugging invalid DID diffs.
   let diff_index: &str = &IotaDocument::diff_index(int_receipt_1.message_id())?;
-  client.publish_json(diff_index, &json!({ "diffSpam:1": true })).await?;
-  client.publish_json(diff_index, &json!({ "diffSpam:2": true })).await?;
-  client.publish_json(diff_index, &json!({ "diffSpam:3": true })).await?;
+  client.publish_json(diff_index, &json!({ "diffSpam:1": true }), false).await?;
+  client.publish_json(diff_index, &json!({ "diffSpam:2": true }), false).await?;
+  client.publish_json(diff_index, &json!({ "diffSpam:3": true }), false).await?;
 
   // ===========================================================================
   // DID History 1
@@ -185,7 +185,7 @@ async fn main() -> Result<()> {
 
     int_doc_2
   };
-  let _int_receipt_2: Receipt = client.publish_document(&int_doc_2).await?;
+  let _int_receipt_2: Receipt = client.publish_document(&int_doc_2, true).await?;
 
   // ===========================================================================
   // DID History 2

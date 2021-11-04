@@ -28,7 +28,10 @@ pub struct ClientMap {
 
 impl ClientMap {
   pub fn new() -> Self {
-    Self { data: State::new(), compression: true }
+    Self {
+      data: State::new(),
+      compression: true,
+    }
   }
 
   pub fn from_client(client: Client) -> Self {
@@ -36,7 +39,10 @@ impl ClientMap {
 
     data.insert(client.network.name(), Arc::new(client));
 
-    Self { data, compression: true }
+    Self {
+      data,
+      compression: true,
+    }
   }
 
   pub fn builder() -> ClientBuilder {
@@ -89,7 +95,7 @@ impl ClientMap {
       return Ok(Arc::clone(&client));
     }
 
-    let mut client: Arc<Client> = Client::from_network(network.clone()).await.map(Arc::new)?;
+    let client: Arc<Client> = Client::from_network(network.clone()).await.map(Arc::new)?;
 
     self.data.insert(network_name, Arc::clone(&client));
 

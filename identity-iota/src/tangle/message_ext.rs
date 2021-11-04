@@ -14,7 +14,7 @@ use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Result;
-use crate::tangle::encoding::{get_decompressed_message_data, MessageEncodingVersion};
+use crate::tangle::encoding::MessageEncoding;
 use crate::tangle::message_version::MessageVersion;
 use crate::tangle::TangleRef;
 
@@ -52,7 +52,7 @@ fn parse_data<T: FromJson + TangleRef>(message_id: MessageId, data: &[u8]) -> Op
     return None;
   }
 
-  let compression_result = get_decompressed_message_data(&data[1], &data[2..]);
+  let compression_result = MessageEncoding::decompress_message(&data[1], &data[2..]);
   match compression_result {
     Ok(decompressed_message) => {
       let mut resource: T = T::from_json_slice(decompressed_message.as_slice()).ok()?;

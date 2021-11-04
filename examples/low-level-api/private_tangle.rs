@@ -34,14 +34,11 @@ pub async fn main() -> Result<()> {
   // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265/`
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
-  let mut client = ClientBuilder::new()
+  let client = ClientBuilder::new()
     .network(network.clone())
     .node(private_node_url)?
     .build()
     .await?;
-
-  // For debugging, message compression can be disabled with the next line.
-  // client.disable_compression();
 
   // Generate a new Ed25519 public/private key pair.
   let keypair: KeyPair = KeyPair::new_ed25519()?;
@@ -53,7 +50,7 @@ pub async fn main() -> Result<()> {
   document.sign(keypair.private())?;
 
   // Publish the DID Document to the Tangle.
-  let receipt: Receipt = match client.publish_document(&document).await {
+  let receipt: Receipt = match client.publish_document(&document, true).await {
     Ok(receipt) => receipt,
     Err(err) => {
       eprintln!("Error > {:?} {}", err, err.to_string());

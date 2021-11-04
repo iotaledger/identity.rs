@@ -17,11 +17,10 @@ use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::encoding;
-use crate::tangle::ClientBuilder;
-use crate::tangle::encoding::MessageEncodingVersion;
-use crate::tangle::Message;
+use crate::tangle::encoding::MessageEncoding;
 use crate::tangle::message_version::MessageVersion;
+use crate::tangle::ClientBuilder;
+use crate::tangle::Message;
 use crate::tangle::MessageId;
 use crate::tangle::Network;
 use crate::tangle::Receipt;
@@ -33,7 +32,6 @@ use crate::tangle::TangleResolve;
 pub struct Client {
   pub(crate) client: IotaClient,
   pub(crate) network: Network,
-  pub(crate) compression: bool,
 }
 
 impl Client {
@@ -69,7 +67,6 @@ impl Client {
     Ok(Self {
       client: client.finish().await?,
       network: builder.network,
-      compression: true,
     })
   }
 
@@ -80,26 +77,30 @@ impl Client {
 
   /// Publishes an [`IotaDocument`] to the Tangle.
   pub async fn publish_document(&self, document: &IotaDocument, compression: bool) -> Result<Receipt> {
-    self.publish_json(document.integration_index(), document, compression).await
+    self
+      .publish_json(document.integration_index(), document, compression)
+      .await
   }
 
   /// Publishes a [`DocumentDiff`] to the Tangle to form part of the diff chain for the integration
   /// chain message specified by the given [`MessageId`].
   pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff, compression: bool) -> Result<Receipt> {
-    self.publish_json(&IotaDocument::diff_index(message_id)?, diff, compression).await
+    self
+      .publish_json(&IotaDocument::diff_index(message_id)?, diff, compression)
+      .await
   }
 
   /// Compresses and Publishes arbitrary JSON data to the specified index on the Tangle.
   pub async fn publish_json<T: ToJson>(&self, index: &str, data: &T, compression: bool) -> Result<Receipt> {
     let mut compressed_data: Vec<u8>;
     if compression {
-      compressed_data = encoding::compress_message(&data.to_json()?, MessageEncodingVersion::JsonBrotli)?;
-      compressed_data = encoding::add_encoding_version_flag(compressed_data, MessageEncodingVersion::JsonBrotli);
+      compressed_data = MessageEncoding::compress_message(&data.to_json()?, MessageEncoding::JsonBrotli)?;
+      compressed_data = MessageEncoding::add_encoding_version_flag(compressed_data, MessageEncoding::JsonBrotli);
     } else {
       compressed_data = data.to_json_vec()?;
-      compressed_data = encoding::add_encoding_version_flag(compressed_data, MessageEncodingVersion::Json);
+      compressed_data = MessageEncoding::add_encoding_version_flag(compressed_data, MessageEncoding::Json);
     }
-    compressed_data = MessageVersion::add_version_flag(compressed_data);
+    compressed_data = MessageVersion::add_version_flag(compressed_data, MessageVersion::CURRENT);
 
     self
       .client
@@ -197,10 +198,6 @@ impl Client {
       .try_collect()
       .await
       .map_err(Into::into)
-  }
-
-  pub fn disable_compression(&mut self) {
-    self.compression = false;
   }
 }
 

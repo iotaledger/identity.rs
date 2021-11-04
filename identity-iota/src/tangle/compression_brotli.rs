@@ -20,9 +20,9 @@ pub(crate) fn compress_brotli<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, Error
 
 pub(crate) fn decompress_brotli<T: AsRef<[u8]> + ?Sized>(input: &T) -> Result<Vec<u8>, Error> {
   let mut decompressor = brotli::Decompressor::new(input.as_ref(), BUFFER_SIZE);
-  let mut s = Vec::new();
-  decompressor.read_to_end(&mut s).map_err(|_| CompressionError)?;
-  Ok(s)
+  let mut buf = Vec::new();
+  decompressor.read_to_end(&mut buf).map_err(|_| CompressionError)?;
+  Ok(buf)
 }
 
 #[cfg(test)]
@@ -43,6 +43,6 @@ mod test {
     let compressed = compress_brotli(data.as_str()).unwrap();
     let decompressed = decompress_brotli(&compressed).unwrap();
 
-    assert_eq!(decompressed, data);
+    assert_eq!(decompressed, data.as_bytes());
   }
 }

@@ -8,12 +8,12 @@ pub(crate) enum MessageVersion {
   V1 = 1,
 }
 
-const CURRENT_MESSAGE_VERSION: MessageVersion = MessageVersion::V1;
-
 impl MessageVersion {
+  pub(crate) const CURRENT: Self = MessageVersion::V1;
+
   /// Adds the current message version flag at the beginning of arbitrary data.
-  pub(crate) fn add_version_flag(mut data: Vec<u8>) -> Vec<u8> {
-    let version_flag = CURRENT_MESSAGE_VERSION as u8;
+  pub(crate) fn add_version_flag(mut data: Vec<u8>, message_version: MessageVersion) -> Vec<u8> {
+    let version_flag = message_version as u8;
     data.splice(0..0, [version_flag].iter().cloned());
     data
   }
@@ -28,9 +28,14 @@ impl MessageVersion {
   }
 }
 
-#[test]
-fn test_add_version_flag() {
-  let message: Vec<u8> = vec![10, 4, 5, 5];
-  let message_with_flag = add_version_flag(message);
-  assert_eq!(message_with_flag, [CURRENT_MESSAGE_VERSION as u8, 10, 4, 5, 5])
+#[cfg(test)]
+mod test {
+  use crate::tangle::message_version::MessageVersion;
+
+  #[test]
+  fn test_add_version_flag() {
+    let message: Vec<u8> = vec![10, 4, 5, 5];
+    let message_with_flag = MessageVersion::add_version_flag(message, MessageVersion::CURRENT);
+    assert_eq!(message_with_flag, [MessageVersion::CURRENT as u8, 10, 4, 5, 5])
+  }
 }
