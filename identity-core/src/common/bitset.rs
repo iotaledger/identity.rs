@@ -68,12 +68,12 @@ impl BitSet {
   }
 
   /// Serializes the [`BitSet`] as a base64-encoded `String`.
-  pub fn serialize_b64(&self) -> Result<String> {
+  fn serialize_b64(&self) -> Result<String> {
     self.serialize_vec().map(|data| encode_b64(&data))
   }
 
   /// Serializes the [`BitSet`] as a vector of bytes.
-  pub fn serialize_vec(&self) -> Result<Vec<u8>> {
+  fn serialize_vec(&self) -> Result<Vec<u8>> {
     let mut output: Vec<u8> = Vec::with_capacity(self.0.serialized_size());
 
     self.0.serialize_into(&mut output).map_err(Error::EncodeBitmap)?;
@@ -82,12 +82,12 @@ impl BitSet {
   }
 
   /// Deserializes a [`BitSet`] from base64-encoded `data`.
-  pub fn deserialize_b64(data: &str) -> Result<Self> {
+  fn deserialize_b64(data: &str) -> Result<Self> {
     Self::deserialize_slice(&decode_b64(data)?)
   }
 
   /// Deserializes a [`BitSet`] from a slice of bytes.
-  pub fn deserialize_slice(data: &[u8]) -> Result<Self> {
+  fn deserialize_slice(data: &[u8]) -> Result<Self> {
     RoaringBitmap::deserialize_from(data)
       .map_err(Error::DecodeBitmap)
       .map(Self)
