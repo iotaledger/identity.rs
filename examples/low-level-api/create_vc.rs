@@ -30,7 +30,11 @@ pub async fn create_vc() -> Result<()> {
   let mut credential: Credential = common::issue_degree(&issuer_doc, &subject_doc)?;
 
   // Sign the Credential with the issuer's private key.
-  issuer_doc.sign_data(&mut credential, issuer_key.private())?;
+  issuer_doc.sign_data(
+    &mut credential,
+    issuer_key.private(),
+    issuer_doc.default_signing_method()?.id(),
+  )?;
 
   println!("Credential JSON > {:#}", credential);
 

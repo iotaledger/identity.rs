@@ -13,7 +13,7 @@ pub struct WasmNetwork(IotaNetwork);
 
 #[wasm_bindgen(js_class = Network)]
 impl WasmNetwork {
-  /// Parses the provided string to a [`WasmNetwork`].
+  /// Parses the provided string to a `Network`.
   #[wasm_bindgen]
   pub fn try_from_name(name: String) -> Result<WasmNetwork> {
     IotaNetwork::try_from_name(name).map(Self).wasm_result()

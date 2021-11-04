@@ -75,6 +75,9 @@ pub enum Error {
   /// Caused by attempting to create a KeyCollection of invalid size.
   #[error("Invalid Key Collection Size: {0}")]
   InvalidKeyCollectionSize(usize),
+  /// Caused by attempting to create a Proof with more nodes than allowed.
+  #[error("Invalid number of nodes in the Proof: {0}")]
+  InvalidProofSize(usize),
 }
 
 impl From<crypto::Error> for Error {

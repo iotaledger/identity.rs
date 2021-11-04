@@ -19,7 +19,7 @@ pub struct WasmDocumentHistory(DocumentHistory);
 
 #[wasm_bindgen(js_class = DocumentHistory)]
 impl WasmDocumentHistory {
-  /// Returns a [`js_sys::Array`] of integration chain [`WasmDocuments`](WasmDocument).
+  /// Returns a `js_sys::Array` of integration chain `Documents`.
   ///
   /// NOTE: clones the data.
   #[wasm_bindgen(js_name = integrationChainData)]
@@ -34,7 +34,7 @@ impl WasmDocumentHistory {
       .collect()
   }
 
-  /// Returns a [`js_sys::Array`] of message id strings for "spam" messages on the same index
+  /// Returns a `js_sys::Array` of message id strings for "spam" messages on the same index
   /// as the integration chain.
   ///
   /// NOTE: clones the data.
@@ -50,7 +50,7 @@ impl WasmDocumentHistory {
       .collect()
   }
 
-  /// Returns a [`js_sys::Array`] of diff chain [`WasmDocumentDiffs`](WasmDocumentDiff).
+  /// Returns a `js_sys::Array` of diff chain `DocumentDiffs`.
   ///
   /// NOTE: clones the data.
   #[wasm_bindgen(js_name = diffChainData)]
@@ -65,7 +65,7 @@ impl WasmDocumentHistory {
       .collect()
   }
 
-  /// Returns a [`js_sys::Array`] of message id strings for "spam" messages on the same index
+  /// Returns a `js_sys::Array` of message id strings for "spam" messages on the same index
   /// as the diff chain.
   ///
   /// NOTE: clones the data.
@@ -81,13 +81,13 @@ impl WasmDocumentHistory {
       .collect()
   }
 
-  /// Serializes a [`WasmDocumentHistory`] object as a JSON object.
+  /// Serializes `DocumentHistory` as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue> {
     JsValue::from_serde(&self.0).wasm_result()
   }
 
-  /// Deserializes a [`WasmDocumentHistory`] object from a JSON object.
+  /// Deserializes `DocumentHistory` from a JSON object.
   #[wasm_bindgen(js_name = fromJSON)]
   pub fn from_json(json: &JsValue) -> Result<WasmDocumentHistory> {
     json.into_serde().map(Self).wasm_result()
@@ -112,7 +112,7 @@ macro_rules! impl_wasm_chain_history {
   ($ident:ident, $ty:ty, $wasm_ty:ty) => {
     #[wasm_bindgen]
     impl $ident {
-      /// Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
+      /// Returns a `js_sys::Array` of the chain objects.
       ///
       /// NOTE: this clones the field.
       #[wasm_bindgen(js_name = chainData)]
@@ -127,7 +127,7 @@ macro_rules! impl_wasm_chain_history {
           .collect()
       }
 
-      /// Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
+      /// Returns a `js_sys::Array` of `MessageIds` as strings.
       ///
       /// NOTE: this clones the field.
       #[wasm_bindgen]
@@ -142,13 +142,13 @@ macro_rules! impl_wasm_chain_history {
           .collect()
       }
 
-      /// Serializes a `$ident` object as a JSON object.
+      /// Serializes as a JSON object.
       #[wasm_bindgen(js_name = toJSON)]
       pub fn to_json(&self) -> Result<JsValue> {
         JsValue::from_serde(&self.0).wasm_result()
       }
 
-      /// Deserializes a `$ident` object from a JSON object.
+      /// Deserializes from a JSON object.
       #[wasm_bindgen(js_name = fromJSON)]
       pub fn from_json(json: &JsValue) -> Result<$ident> {
         json.into_serde().map(Self).wasm_result()

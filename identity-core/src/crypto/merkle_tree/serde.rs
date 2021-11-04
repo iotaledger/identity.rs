@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryInto;
+use std::mem;
 
 use crate::crypto::merkle_tree::DigestExt;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Node;
 use crate::crypto::merkle_tree::Proof;
+use crate::crypto::merkle_tree::MAX_PROOF_NODES;
 
 const TAG_L: u8 = 0b11110000;
 const TAG_R: u8 = 0b00001111;
@@ -102,6 +104,9 @@ where
     let size: [u8; 4] = slice.get(0..4)?.try_into().ok()?;
     let size: usize = u32::from_be_bytes(size).try_into().ok()?;
 
+    if size > MAX_PROOF_NODES || mem::size_of::<Node<D>>().checked_mul(size)? > isize::max as usize {
+      return None;
+    }
     let mut nodes: Vec<Node<D>> = Vec::with_capacity(size);
     let mut slice: &[u8] = slice.get(4..)?;
 
@@ -110,7 +115,7 @@ where
       slice = slice.get(1 + D::OUTPUT_SIZE..)?;
     }
 
-    Some(Self::new(nodes.into_boxed_slice()))
+    Self::new(nodes.into_boxed_slice()).ok()
   }
 }
 

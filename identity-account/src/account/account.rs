@@ -13,7 +13,6 @@ use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
-use std::ops::Deref;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -21,10 +20,6 @@ use std::sync::Arc;
 use crate::account::AccountBuilder;
 use crate::error::Result;
 use crate::events::create_identity;
-use crate::events::Commit;
-use crate::events::Context;
-use crate::events::Event;
-use crate::events::EventData;
 use crate::events::Update;
 use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
@@ -210,14 +205,14 @@ impl Account {
     Ok(())
   }
 
-  async fn sign_document(
+  async fn sign_self(
     &self,
     old_state: &IdentityState,
     new_state: &IdentityState,
     document: &mut IotaDocument,
   ) -> Result<()> {
     if new_state.integration_generation() == Generation::new() {
-      // TODO: Verify correctness of using `authentication`
+      // TODO: Use this: let method: &TinyMethod = new_state.capability_invocation()?;
       let method: &IotaVerificationMethod = new_state.as_document().authentication();
       let location: KeyLocation = new_state
         .method_location(
@@ -230,12 +225,12 @@ impl Account {
         )
         .expect("TODO: fatal error");
 
-      // Sign the DID Document with the current authentication method
+      // Sign the DID Document with the current capability invocation method
       new_state
         .sign_data(self.did(), self.storage(), &location, document)
         .await?;
     } else {
-      // TODO: Verify correctness of using `authentication`
+      // TODO: Use this: let method: &TinyMethod = new_state.capability_invocation()?;
       let method: &IotaVerificationMethod = old_state.as_document().authentication();
       // TODO: Fatal error if not found
       let location: KeyLocation = new_state.method_location(
@@ -247,7 +242,7 @@ impl Account {
           .to_owned(),
       )?;
 
-      // Sign the DID Document with the previous authentication method
+      // Sign the DID Document with the previous capability invocation method
       old_state
         .sign_data(self.did(), self.storage(), &location, document)
         .await?;
@@ -261,7 +256,7 @@ impl Account {
 
     let mut new_doc: IotaDocument = new_state.as_document().to_owned();
 
-    self.sign_document(&old_state, new_state, &mut new_doc).await?;
+    self.sign_self(old_state, new_state, &mut new_doc).await?;
 
     let message: MessageId = if self.config.testmode {
       MessageId::null()
@@ -282,9 +277,8 @@ impl Account {
 
     let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
 
-    // TODO: Verify correctness of using `authentication`
+    // TODO: Use this: let method: &TinyMethod = new_state.capability_invocation()?;
     let method: &IotaVerificationMethod = old_state.as_document().authentication();
-    // let location: &KeyLocation = method.location();
 
     let location: KeyLocation = old_state.method_location(
       method.key_type(),
