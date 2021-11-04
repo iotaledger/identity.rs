@@ -1552,19 +1552,17 @@ mod tests {
     assert_eq!(document.default_signing_method().unwrap().id(), signing_method.id());
 
     // Removing the original signing method returns the next one.
-    document
-      .remove_method(
-        document
-          .id()
-          .to_url()
-          .join(format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT))
-          .unwrap(),
-      )
-      .unwrap();
+    document.remove_method(
+      document
+        .id()
+        .to_url()
+        .join(format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT))
+        .unwrap(),
+    );
     assert_eq!(document.default_signing_method().unwrap().id(), new_method_id);
 
     // Removing the last signing method causes an error.
-    document.remove_method(new_method_id).unwrap();
+    document.remove_method(new_method_id);
     assert!(matches!(
       document.default_signing_method(),
       Err(Error::MissingSigningKey)

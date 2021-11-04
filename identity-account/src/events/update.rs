@@ -111,25 +111,17 @@ pub(crate) async fn create_identity(
   let public: PublicKey =
     insert_method_secret(store, &did, &location, method_type, MethodSecret::Ed25519(private_key)).await?;
 
-  let data: MethodData = MethodData::new_b58(public.as_ref());
-
   let method_fragment = location.fragment().to_owned();
-  let method: VerificationMethod = core_method(location.method(), data, &did, location.fragment().clone())?;
-  let method_ref: CoreMethodRef = core_method_ref(&did, location.fragment().clone())?;
 
-  let properties: BaseProperties = BaseProperties::new();
-  let properties: Properties = VerifiableProperties::new(properties);
+  // TODO: Can we unwrap/expect?
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::from_did(did.to_owned(), setup.key_type, &public, method_fragment.name())?;
 
-  let mut builder: DocumentBuilder<_, _, _> = BaseDocument::builder(properties);
+  // TODO: Can we unwrap/expect?
+  let document = IotaDocument::from_verification_method(method)?;
 
-  // TODO: Embed capability invocation
-  builder = builder
-    .id(did.clone().into())
-    .verification_method(method)
-    .capability_invocation(method_ref);
-
-  let document: IotaDocument = builder.build()?.try_into()?;
-
+  // TODO: integration_generation should be taken from this state, but we cannot construct it until later.
+  // Try rectification.
   let mut state = IdentityState::new(document);
 
   // Store the generations at which the method was added

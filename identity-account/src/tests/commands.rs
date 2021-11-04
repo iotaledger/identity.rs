@@ -11,11 +11,14 @@ use crate::error::Result;
 use crate::events::Update;
 use crate::events::UpdateError;
 use crate::identity::IdentitySetup;
-use crate::identity::IdentitySnapshot;
+
+use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::storage::MemStore;
 use crate::types::Generation;
+use crate::types::KeyLocation;
 use crate::types::MethodSecret;
+use identity_core::common::Timestamp;
 use identity_core::common::UnixTimestamp;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
@@ -36,12 +39,35 @@ fn account_setup() -> AccountSetup {
 async fn test_create_identity() -> Result<()> {
   let account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
-  let snapshot: IdentitySnapshot = account.load_snapshot().await?;
+  let expected_fragment = format!("{}{}", crate::events::DEFAULT_UPDATE_METHOD_PREFIX, Generation::new());
 
-  assert_eq!(snapshot.sequence(), Generation::from_u32(3));
-  assert!(snapshot.identity().did().is_some());
-  assert_ne!(snapshot.identity().created(), UnixTimestamp::EPOCH);
-  assert_ne!(snapshot.identity().updated(), UnixTimestamp::EPOCH);
+  let state: &IdentityState = account.state();
+
+  assert!(state.as_document().resolve_method(&expected_fragment).is_some());
+  assert_eq!(
+    state.as_document().as_document().verification_relationships().count(),
+    1
+  );
+  assert_eq!(state.as_document().as_document().methods().count(), 1);
+
+  let location = state
+    .method_location(MethodType::Ed25519VerificationKey2018, expected_fragment.clone())
+    .unwrap();
+
+  // Ensure we can retrieve the correct location for the key.
+  assert_eq!(
+    location,
+    KeyLocation::new(
+      MethodType::Ed25519VerificationKey2018,
+      expected_fragment,
+      Generation::new(),
+      Generation::new()
+    )
+  );
+
+  // Ensure timestamps were recently set.
+  assert!(state.as_document().created() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
+  assert!(state.as_document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
 
   Ok(())
 }
