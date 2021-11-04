@@ -23,6 +23,9 @@ async function manipulateIdentity(clientConfig) {
     // Create a client instance to publish messages to the Tangle.
     const client = Client.fromConfig(config);
 
+    // Disable message compression for debugging.
+    if(clientConfig.debug) client.disableCompression();
+
     // Creates a new identity (see "create_did" example)
     let {key, doc, receipt} = await createIdentity(clientConfig);
 
@@ -52,6 +55,8 @@ async function manipulateIdentity(clientConfig) {
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const updateReceipt = await client.publishDocument(doc.toJSON());
+
+
 
     // Log the results.
     logExplorerUrl("Identity Update:", clientConfig.network.toString(), updateReceipt.messageId);

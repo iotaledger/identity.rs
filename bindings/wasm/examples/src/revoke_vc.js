@@ -28,6 +28,9 @@ async function revokeVC(clientConfig) {
     // Create a client instance to publish messages to the Tangle.
     const client = Client.fromConfig(config);
 
+    // Disable message compression for debugging.
+    if(clientConfig.debug) client.disableCompression();
+
     // Creates new identities and a VC (see "create_vc" example)
     const {alice, issuer, signedVc} = await createVC(clientConfig);
 

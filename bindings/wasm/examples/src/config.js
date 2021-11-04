@@ -10,6 +10,7 @@ const CLIENT_CONFIG = {
     network: MAINNET,
     defaultNodeURL: MAINNET.defaultNodeURL,
     explorerURL: MAINNET.explorerURL,
+    debug: true
 }
 
 export {CLIENT_CONFIG};
