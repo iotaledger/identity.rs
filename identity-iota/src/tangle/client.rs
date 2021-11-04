@@ -83,6 +83,7 @@ impl Client {
   }
 
   /// Publishes a [`DocumentDiff`] to the Tangle to form part of the diff chain for the integration.
+  /// chain message specified by the given [`MessageId`].
   /// This method calls `publish_json_with_retry` with its default `interval` and `max_attempts` values for increasing
   /// the probability that the message will be referenced by a milestone.
   pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
@@ -106,7 +107,7 @@ impl Client {
 
   /// Publishes arbitrary JSON data to the specified index on the Tangle.
   /// Retries (promotes or reattaches) the message until it’s included (referenced by a milestone).
-  /// Default interval is 5 seconds and max attempts is 20.
+  /// Default interval is 5 seconds and max attempts is 40.
   pub async fn publish_json_with_retry<T: ToJson>(
     &self,
     index: &str,
@@ -119,7 +120,7 @@ impl Client {
       .client
       .retry_until_included(receipt.message_id(), interval, max_attempts)
       .await?;
-    match reattached_messages.last() {
+    match reattached_messages.first() {
       Some((_, message)) => Ok(Receipt::new(self.network.clone(), message.clone())),
       None => Ok(receipt),
     }

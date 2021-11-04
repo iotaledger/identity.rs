@@ -126,7 +126,7 @@ impl Client {
 
   /// Publishes arbitrary JSON data to the specified index on the Tangle.
   /// Retries (promotes or reattaches) the message until it’s included (referenced by a milestone).
-  /// Default interval is 5 seconds and max attempts is 20.
+  /// Default interval is 5 seconds and max attempts is 40.
   #[wasm_bindgen(js_name = publishJsonWithRetry)]
   pub fn publish_json_with_retry(
     &self,
