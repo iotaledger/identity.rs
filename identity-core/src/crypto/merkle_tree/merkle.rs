@@ -70,7 +70,7 @@ where
 
   match (index, leaves.len()) {
     (_, 0) => None,
-    (0, 1) => Some(Proof::new(Box::new([]))),
+    (0, 1) => Proof::new(Box::new([])).ok(),
     (_, 1) => None,
     (index, length) => {
       if index >= length {
@@ -87,7 +87,7 @@ where
 
       __generate(&mut D::new(), &mut path, leaves, index);
 
-      Some(Proof::new(path.into_boxed_slice()))
+      Proof::new(path.into_boxed_slice()).ok()
     }
   }
 }

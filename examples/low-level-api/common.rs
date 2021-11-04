@@ -77,12 +77,12 @@ pub async fn add_new_key(
   // Add #newKey to the document
   let new_key: KeyPair = KeyPair::new_ed25519()?;
   let method: IotaVerificationMethod = IotaVerificationMethod::from_did(updated_doc.did().clone(), &new_key, "newKey")?;
-  assert!(updated_doc.insert_method(MethodScope::VerificationMethod, method));
+  assert!(updated_doc.insert_method(method, MethodScope::VerificationMethod));
 
   // Prepare the update
   updated_doc.set_previous_message_id(*receipt.message_id());
   updated_doc.set_updated(Timestamp::now_utc());
-  updated_doc.sign(key.private())?;
+  updated_doc.sign_self(key.private(), &updated_doc.default_signing_method()?.id())?;
 
   // Publish the update to the Tangle
   let update_receipt: Receipt = client.publish_document(&updated_doc).await?;

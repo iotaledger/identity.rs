@@ -36,6 +36,7 @@ use crate::error::Result;
 use crate::verifiable::Properties;
 use crate::verifiable::Revocation;
 use crate::verification::MethodQuery;
+use crate::verification::MethodScope;
 use crate::verification::MethodType;
 use crate::verification::MethodUriType;
 use crate::verification::TryMethod;
@@ -94,51 +95,6 @@ impl<T, U, V> TryMethod for CoreDocument<Properties<T>, U, V> {
 // =============================================================================
 // Signature Extensions
 // =============================================================================
-
-impl<T, U, V> CoreDocument<Properties<T>, U, V>
-where
-  T: Serialize,
-  U: Serialize,
-  V: Serialize,
-{
-  pub fn sign_this<'query, Q>(&mut self, query: Q, private: &PrivateKey) -> Result<()>
-  where
-    Q: Into<MethodQuery<'query>>,
-  {
-    let method: &VerificationMethod<U> = self.try_resolve(query)?;
-    let fragment: String = method.try_into_fragment()?;
-
-    match method.key_type() {
-      MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(self, fragment, private.as_ref())?;
-      }
-      MethodType::MerkleKeyCollection2021 => {
-        // CoreDocuments can't be signed with Merkle Key Collections
-        return Err(Error::InvalidMethodType);
-      }
-    }
-
-    Ok(())
-  }
-
-  pub fn verify_this(&self) -> Result<()> {
-    let signature: &Signature = self.try_signature()?;
-    let method: &VerificationMethod<U> = self.try_resolve(signature)?;
-    let public: PublicKey = method.key_data().try_decode()?.into();
-
-    match method.key_type() {
-      MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::verify_signature(self, public.as_ref())?;
-      }
-      MethodType::MerkleKeyCollection2021 => {
-        // CoreDocuments can't be signed with Merkle Key Collections
-        return Err(Error::InvalidMethodType);
-      }
-    }
-
-    Ok(())
-  }
-}
 
 impl<T, U, V> CoreDocument<T, U, V> {
   /// Creates a new [`DocumentSigner`] that can be used to create digital
@@ -208,7 +164,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
     X: Serialize + SetSignature + TryMethod,
   {
     let query: MethodQuery<'_> = self.method.clone().ok_or(Error::QueryMethodNotFound)?;
-    let method: &VerificationMethod<U> = self.document.try_resolve(query)?;
+    let method: &VerificationMethod<U> = self.document.try_resolve_method(query)?;
     let method_uri: String = X::try_method(method)?;
 
     match method.key_type() {
@@ -288,7 +244,24 @@ where
     X: Serialize + TrySignature,
   {
     let signature: &Signature = that.try_signature()?;
-    let method: &VerificationMethod<U> = self.document.try_resolve(signature)?;
+    let method: &VerificationMethod<U> = self.document.try_resolve_method(signature)?;
+
+    Self::do_verify(method, that)
+  }
+
+  /// Verifies the signature of the provided data and that it was signed with a verification method
+  /// with a verification relationship specified by `scope`.
+  ///
+  /// # Errors
+  ///
+  /// Fails if an unsupported verification method is used, document
+  /// serialization fails, or the verification operation fails.
+  pub fn verify_with_scope<X>(&self, that: &X, scope: MethodScope) -> Result<()>
+  where
+    X: Serialize + TrySignature,
+  {
+    let signature: &Signature = that.try_signature()?;
+    let method: &VerificationMethod<U> = self.document.try_resolve_method_with_scope(signature, scope)?;
 
     Self::do_verify(method, that)
   }

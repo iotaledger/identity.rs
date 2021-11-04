@@ -45,17 +45,17 @@ impl WasmDocument {
   /// fragment name.
   ///
   /// The DID Document will be pre-populated with a single verification method
-  /// derived from the provided `KeyPair`, with an attached authentication relationship.
-  /// This method will have the DID URL fragment `#authentication` by default and can be easily
-  /// retrieved with `Document::authentication`.
+  /// derived from the provided `KeyPair` embedded as a capability invocation
+  /// verification relationship. This method will have the DID URL fragment
+  /// `#sign-0` by default and can be easily retrieved with `Document::defaultSigningMethod`.
   ///
-  /// NOTE: the generated document is unsigned, see `Document::sign`.
+  /// NOTE: the generated document is unsigned, see `Document::signSelf`.
   ///
   /// Arguments:
   ///
   /// * keypair: the initial verification method is derived from the public key with this keypair.
   /// * network: Tangle network to use for the DID, default `Network::mainnet`.
-  /// * fragment: name of the initial verification method, default "authentication".
+  /// * fragment: name of the initial verification method, default "sign-0".
   #[wasm_bindgen(constructor)]
   pub fn new(keypair: &KeyPair, network: Option<String>, fragment: Option<String>) -> Result<WasmDocument> {
     let network_name = network.map(NetworkName::try_from).transpose().wasm_result()?;
@@ -66,10 +66,10 @@ impl WasmDocument {
 
   /// Creates a new DID Document from the given `VerificationMethod`.
   ///
-  /// NOTE: the generated document is unsigned, see Document::sign.
-  #[wasm_bindgen(js_name = fromAuthentication)]
-  pub fn from_authentication(method: &WasmVerificationMethod) -> Result<WasmDocument> {
-    IotaDocument::from_authentication(method.0.clone())
+  /// NOTE: the generated document is unsigned, see `Document::signSelf`.
+  #[wasm_bindgen(js_name = fromVerificationMethod)]
+  pub fn from_verification_method(method: &WasmVerificationMethod) -> Result<WasmDocument> {
+    IotaDocument::from_verification_method(method.0.clone())
       .map(Self)
       .wasm_result()
   }
@@ -117,10 +117,18 @@ impl WasmDocument {
     }
   }
 
-  /// Returns the default Verification Method of the DID Document.
-  #[wasm_bindgen]
-  pub fn authentication(&self) -> WasmVerificationMethod {
-    WasmVerificationMethod(self.0.authentication().clone())
+  /// Returns the first [`IotaVerificationMethod`] with a capability invocation relationship
+  /// capable of signing this DID document.
+  ///
+  /// Throws an error if no signing method is present.
+  #[wasm_bindgen(js_name = defaultSigningMethod)]
+  pub fn default_signing_method(&self) -> Result<WasmVerificationMethod> {
+    self
+      .0
+      .default_signing_method()
+      .map(Clone::clone)
+      .map(WasmVerificationMethod::from)
+      .wasm_result()
   }
 
   /// Get the message_id of the DID Document.
@@ -158,7 +166,7 @@ impl WasmDocument {
   pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: Option<String>) -> Result<bool> {
     let scope: MethodScope = scope.unwrap_or_default().parse().wasm_result()?;
 
-    Ok(self.0.insert_method(scope, method.0.clone()))
+    Ok(self.0.insert_method(method.0.clone(), scope))
   }
 
   /// Removes all references to the specified Verification Method.
@@ -183,16 +191,31 @@ impl WasmDocument {
   // Signatures
   // ===========================================================================
 
-  /// Signs the DID Document with the default authentication method.
-  #[wasm_bindgen]
-  pub fn sign(&mut self, key: &KeyPair) -> Result<()> {
-    self.0.sign(key.0.private()).wasm_result()
+  /// Signs the DID document with the verification method specified by `method_query`.
+  /// The `method_query` may be the full `DIDUrl` of the method or just its fragment,
+  /// e.g. "#sign-0".
+  ///
+  /// NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
+  /// verification method. See `Document::verifySelfSigned`.
+  #[wasm_bindgen(js_name = signSelf)]
+  pub fn sign_self(&mut self, key_pair: &KeyPair, method_query: String) -> Result<()> {
+    self.0.sign_self(key_pair.0.private(), &method_query).wasm_result()
   }
 
-  /// Verify the signature with the authentication_key
-  #[wasm_bindgen]
-  pub fn verify(&self) -> bool {
-    self.0.verify().is_ok()
+  /// Verifies a self-signed signature on this DID document.
+  #[wasm_bindgen(js_name = verifySelfSigned)]
+  pub fn verify_self_signed(&self) -> bool {
+    self.0.verify_self_signed().is_ok()
+  }
+
+  /// Verifies whether `document` is a valid root DID document according to the IOTA DID method
+  /// specification.
+  ///
+  /// It must be signed using a verification method with a public key whose BLAKE2b-256 hash matches
+  /// the DID tag.
+  #[wasm_bindgen(js_name = verifyRootDocument)]
+  pub fn verify_root_document(document: &WasmDocument) -> Result<()> {
+    IotaDocument::verify_root_document(&document.0).wasm_result()
   }
 
   #[wasm_bindgen(js_name = signCredential)]
@@ -245,7 +268,7 @@ impl WasmDocument {
       } => {
         let merkle_key: Vec<u8> = self
           .0
-          .try_resolve(&*method)
+          .try_resolve_method(&*method)
           .and_then(|method| method.key_data().try_decode().map_err(Error::InvalidDoc))
           .wasm_result()?;
 
@@ -279,21 +302,32 @@ impl WasmDocument {
   #[wasm_bindgen(js_name = verifyData)]
   pub fn verify_data(&self, data: &JsValue) -> Result<bool> {
     let data: verifiable::Properties = data.into_serde().wasm_result()?;
-    let result: bool = self.0.verifier().verify(&data).is_ok();
 
-    Ok(result)
+    Ok(self.0.verify_data(&data).is_ok())
   }
 
-  #[wasm_bindgen(js_name = resolveKey)]
-  pub fn resolve_key(&mut self, query: &str) -> Result<WasmVerificationMethod> {
-    Ok(WasmVerificationMethod(self.0.try_resolve(query).wasm_result()?.clone()))
+  /// Verifies the signature of the provided `data` was created using a verification method
+  /// in this DID Document with the verification relationship specified by `scope`.
+  #[wasm_bindgen(js_name = verifyDataWithScope)]
+  pub fn verify_data_with_scope(&self, data: &JsValue, scope: String) -> Result<bool> {
+    let scope: MethodScope = scope.parse().wasm_result()?;
+    let data: verifiable::Properties = data.into_serde().wasm_result()?;
+
+    Ok(self.0.verify_data_with_scope(&data, scope).is_ok())
+  }
+
+  #[wasm_bindgen(js_name = resolveMethod)]
+  pub fn resolve_method(&mut self, query: &str) -> Result<WasmVerificationMethod> {
+    Ok(WasmVerificationMethod(
+      self.0.try_resolve_method(query).wasm_result()?.clone(),
+    ))
   }
 
   #[wasm_bindgen(js_name = revokeMerkleKey)]
   pub fn revoke_merkle_key(&mut self, query: &str, index: usize) -> Result<bool> {
     let method: &mut IotaVerificationMethod = self
       .0
-      .try_resolve_mut(query)
+      .try_resolve_method_mut(query)
       .and_then(IotaVerificationMethod::try_from_mut)
       .wasm_result()?;
 
@@ -304,14 +338,31 @@ impl WasmDocument {
   // Diffs
   // ===========================================================================
 
-  /// Generate the difference between two DID Documents and sign it
+  /// Generate a `DocumentDiff` between two DID Documents and sign it using the specified
+  /// `key` and `method`.
   #[wasm_bindgen]
-  pub fn diff(&self, other: &WasmDocument, message: &str, key: &KeyPair) -> Result<WasmDocumentDiff> {
+  pub fn diff(&self, other: &WasmDocument, message: &str, key: &KeyPair, method: &str) -> Result<WasmDocumentDiff> {
     self
       .0
-      .diff(&other.0, MessageId::from_str(message).wasm_result()?, key.0.private())
+      .diff(
+        &other.0,
+        MessageId::from_str(message).wasm_result()?,
+        key.0.private(),
+        method,
+      )
       .map(WasmDocumentDiff::from)
       .wasm_result()
+  }
+
+  /// Verifies the signature of the `diff` was created using a capability invocation method
+  /// in this DID Document.
+  ///
+  /// # Errors
+  ///
+  /// Fails if an unsupported verification method is used or the verification operation fails.
+  #[wasm_bindgen(js_name = verifyDiff)]
+  pub fn verify_diff(&self, diff: &WasmDocumentDiff) -> Result<()> {
+    self.0.verify_diff(&diff.0).wasm_result()
   }
 
   /// Verifies a `DocumentDiff` signature and merges the changes into `self`.
@@ -326,9 +377,9 @@ impl WasmDocument {
 
   /// Returns the Tangle index of the integration chain for this DID.
   ///
-  /// This is simply the tag segment of the [`IotaDID`].
+  /// This is simply the tag segment of the `DID`.
   /// E.g.
-  /// For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
+  /// For a document with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
   /// `doc.integration_index()` == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"
   #[wasm_bindgen(js_name = integrationIndex)]
   pub fn integration_index(&self) -> String {

@@ -166,11 +166,11 @@ impl Client {
     Ok(promise)
   }
 
-  /// Returns the [`DiffChainHistory`] of a diff chain starting from a document on the
+  /// Returns the `DiffChainHistory` of a diff chain starting from a document on the
   /// integration chain.
   ///
   /// NOTE: the document must have been published to the tangle and have a valid message id and
-  /// authentication method.
+  /// capability invocation method.
   #[wasm_bindgen(js_name = resolveDiffHistory)]
   pub fn resolve_diff_history(&self, document: &WasmDocument) -> Result<Promise> {
     let client: Rc<IotaClient> = self.client.clone();
