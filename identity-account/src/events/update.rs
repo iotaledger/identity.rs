@@ -62,19 +62,19 @@ pub(crate) async fn create_identity(
   setup: IdentitySetup,
   store: &dyn Storage,
 ) -> Result<(IotaDID, DIDLease, IdentityState)> {
-  let authentication = key_to_method(setup.key_type);
+  let method_type = key_to_method(setup.key_type);
 
   // The method type must be able to sign document updates.
   ensure!(
-    UPDATE_METHOD_TYPES.contains(&setup.method_type),
-    UpdateError::InvalidMethodType(setup.method_type)
+    UPDATE_METHOD_TYPES.contains(&method_type),
+    UpdateError::InvalidMethodType(method_type)
   );
 
   let integration_generation = Generation::new();
   let fragment: String = format!("{}{}", DEFAULT_UPDATE_METHOD_PREFIX, integration_generation.to_u32());
   // TODO: Consider passing in integration_generation and use it to construct state, to assert they are equal.
 
-  let location: KeyLocation = KeyLocation::new(setup.method_type, fragment, integration_generation, Generation::new());
+  let location: KeyLocation = KeyLocation::new(method_type, fragment, integration_generation, Generation::new());
 
   let keypair: KeyPair = if let Some(MethodSecret::Ed25519(private_key)) = &setup.method_secret {
     ensure!(
@@ -108,20 +108,14 @@ pub(crate) async fn create_identity(
   let private_key = keypair.private().to_owned();
   std::mem::drop(keypair);
 
-  let public: PublicKey = insert_method_secret(
-    store,
-    &did,
-    &location,
-    authentication,
-    MethodSecret::Ed25519(private_key),
-  )
-  .await?;
+  let public: PublicKey =
+    insert_method_secret(store, &did, &location, method_type, MethodSecret::Ed25519(private_key)).await?;
 
   let data: MethodData = MethodData::new_b58(public.as_ref());
 
   let method_fragment = location.fragment().to_owned();
-  let method: VerificationMethod = core_method(location.method(), data, &did, location.fragment.clone())?;
-  let method_ref: CoreMethodRef = core_method_ref(&did, location.fragment)?;
+  let method: VerificationMethod = core_method(location.method(), data, &did, location.fragment().clone())?;
+  let method_ref: CoreMethodRef = core_method_ref(&did, location.fragment().clone())?;
 
   let properties: BaseProperties = BaseProperties::new();
   let properties: Properties = VerifiableProperties::new(properties);
@@ -204,7 +198,10 @@ impl Update {
 
         // The verification method must not exist.
         ensure!(
-          state.as_document().resolve(location.fragment().identifier()).is_none(),
+          state
+            .as_document()
+            .resolve_method(location.fragment().identifier())
+            .is_none(),
           UpdateError::DuplicateKeyFragment(location.fragment().clone()),
         );
 
@@ -214,41 +211,38 @@ impl Update {
           storage.key_new(did, &location).await
         }?;
 
-        // TODO: Fix after merge
-        // let opt_fragment: String = fragment.clone();
-        let opt_fragment_str: Option<&str> = Some(&fragment);
         let method: IotaVerificationMethod =
-          IotaVerificationMethod::from_did(did.to_owned(), KeyType::Ed25519, &public, opt_fragment_str)?;
+          IotaVerificationMethod::from_did(did.to_owned(), KeyType::Ed25519, &public, &fragment)?;
 
-        state.set_method_generations(fragment);
+        state.set_method_generations(Fragment::new(fragment));
 
         // We can ignore the result: we just checked that the method does not exist.
-        state.as_document_mut().insert_method(scope, method);
+        state.as_document_mut().insert_method(method, scope);
       }
       Self::DeleteMethod { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
 
         // The verification method must exist
         ensure!(
-          state.as_document().resolve(fragment.identifier()).is_some(),
+          state.as_document().resolve_method(fragment.identifier()).is_some(),
           UpdateError::MethodNotFound
-        );
-
-        // Prevent deleting the last method capable of signing the DID document.
-        let is_capability_invocation = state
-          .methods()
-          .slice(MethodScope::CapabilityInvocation)
-          .iter()
-          .any(|method_ref| method_ref.fragment() == &fragment);
-        ensure!(
-          !(is_capability_invocation && state.methods().slice(MethodScope::CapabilityInvocation).len() == 1),
-          UpdateError::InvalidMethodFragment("cannot remove last signing method")
         );
 
         // TODO: Do we have to ? here?
         let method_url = did.to_url().join(fragment.identifier())?;
 
-        // TODO: Still fallible after merge?
+        // Prevent deleting the last method capable of signing the DID document.
+        let capability_invocation_set = state.as_document().as_document().capability_invocation();
+        let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
+        let is_capability_invocation = capability_invocation_set
+          .iter()
+          .any(|did_key| did_key.as_did_url() == &core_method_url);
+
+        ensure!(
+          !(is_capability_invocation && capability_invocation_set.len() == 1),
+          UpdateError::InvalidMethodFragment("cannot remove last signing method")
+        );
+
         state.as_document_mut().remove_method(method_url);
       }
       Self::AttachMethod {
@@ -262,7 +256,7 @@ impl Update {
 
         // The verification method must exist
         ensure!(
-          state.as_document().resolve(fragment.identifier()).is_some(),
+          state.as_document().resolve_method(fragment.identifier()).is_some(),
           UpdateError::MethodNotFound
         );
 
@@ -280,22 +274,26 @@ impl Update {
       } => {
         let fragment: Fragment = Fragment::new(fragment);
 
-        // The verification method must exist.
-        ensure!(state.methods().contains(fragment.name()), UpdateError::MethodNotFound);
-
-        // Prevent detaching the last method capable of signing the DID document.
-        let is_capability_invocation = state
-          .methods()
-          .slice(MethodScope::CapabilityInvocation)
-          .iter()
-          .any(|method_ref| method_ref.fragment() == &fragment);
+        // The verification method must exist
         ensure!(
-          !(is_capability_invocation && state.methods().slice(MethodScope::CapabilityInvocation).len() == 1),
-          UpdateError::InvalidMethodFragment("cannot remove last signing method")
+          state.as_document().resolve_method(fragment.identifier()).is_some(),
+          UpdateError::MethodNotFound
         );
 
         // TODO: Do we have to ? here?
         let method_url = did.to_url().join(fragment.identifier())?;
+
+        // Prevent detaching the last method capable of signing the DID document.
+        let capability_invocation_set = state.as_document().as_document().capability_invocation();
+        let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
+        let is_capability_invocation = capability_invocation_set
+          .iter()
+          .any(|did_key| did_key.as_did_url() == &core_method_url);
+
+        ensure!(
+          !(is_capability_invocation && capability_invocation_set.len() == 1),
+          UpdateError::InvalidMethodFragment("cannot remove last signing method")
+        );
 
         for relationship in relationships {
           state

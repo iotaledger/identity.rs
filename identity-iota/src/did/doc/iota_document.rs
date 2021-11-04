@@ -391,7 +391,7 @@ impl IotaDocument {
     // Ensure the method exists
     self
       .document
-      .resolve(did_url.url())
+      .resolve_method(did_url.url())
       .ok_or(identity_did::Error::QueryMethodNotFound)?;
 
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
@@ -413,7 +413,7 @@ impl IotaDocument {
     // Ensure the method exists
     self
       .document
-      .resolve(did_url.url())
+      .resolve_method(did_url.url())
       .ok_or(identity_did::Error::QueryMethodNotFound)?;
 
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
@@ -431,10 +431,9 @@ impl IotaDocument {
 
   /// Removes all occurrences of and references to the specified [`VerificationMethod`]
   /// from this document.
-  pub fn remove_method(&mut self, did_url: IotaDIDUrl) -> Result<()> {
+  pub fn remove_method(&mut self, did_url: IotaDIDUrl) {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
     self.document.remove_method(&core_did_url);
-    Ok(())
   }
 
   /// Returns the first [`IotaVerificationMethod`] with an `id` property

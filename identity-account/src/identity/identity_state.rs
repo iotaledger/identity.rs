@@ -133,11 +133,10 @@ impl IdentityState {
   }
 
   /// Stores the generations at which the method was inserted.
-  pub fn set_method_generations(&mut self, fragment: String) {
-    self.method_generations.insert(
-      Fragment::new(fragment),
-      (self.integration_generation(), self.diff_generation()),
-    );
+  pub fn set_method_generations(&mut self, fragment: Fragment) {
+    self
+      .method_generations
+      .insert(fragment, (self.integration_generation(), self.diff_generation()));
   }
 
   /// Return the `KeyLocation` of the given method.
@@ -145,7 +144,7 @@ impl IdentityState {
     let fragment = Fragment::new(fragment);
     let (int_gen, diff_gen) = self.method_generations.get(&fragment).ok_or(Error::MethodNotFound)?;
 
-    Ok(KeyLocation::new(method_type, fragment, *int_gen, *diff_gen))
+    Ok(KeyLocation::new(method_type, fragment.into(), *int_gen, *diff_gen))
   }
 
   // ===========================================================================

@@ -180,7 +180,10 @@ impl Account {
   {
     let state: &IdentityState = self.state();
 
-    let method: &IotaVerificationMethod = state.as_document().resolve(fragment).ok_or(Error::MethodNotFound)?;
+    let method: &IotaVerificationMethod = state
+      .as_document()
+      .resolve_method(fragment)
+      .ok_or(Error::MethodNotFound)?;
 
     let location: KeyLocation = state
       .method_location(method.key_type(), fragment.to_owned())
@@ -212,8 +215,8 @@ impl Account {
     document: &mut IotaDocument,
   ) -> Result<()> {
     if new_state.integration_generation() == Generation::new() {
-      // TODO: Use this: let method: &TinyMethod = new_state.capability_invocation()?;
-      let method: &IotaVerificationMethod = new_state.as_document().authentication();
+      // TODO: Replace with: let method: &TinyMethod = new_state.capability_invocation()?;
+      let method: &IotaVerificationMethod = new_state.as_document().default_signing_method()?;
       let location: KeyLocation = new_state
         .method_location(
           method.key_type(),
@@ -230,8 +233,8 @@ impl Account {
         .sign_data(self.did(), self.storage(), &location, document)
         .await?;
     } else {
-      // TODO: Use this: let method: &TinyMethod = new_state.capability_invocation()?;
-      let method: &IotaVerificationMethod = old_state.as_document().authentication();
+      // TODO: Replace with: let method: &TinyMethod = new_state.capability_invocation()?;
+      let method: &IotaVerificationMethod = old_state.as_document().default_signing_method()?;
       // TODO: Fatal error if not found
       let location: KeyLocation = new_state.method_location(
         method.key_type(),
@@ -277,8 +280,8 @@ impl Account {
 
     let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
 
-    // TODO: Use this: let method: &TinyMethod = new_state.capability_invocation()?;
-    let method: &IotaVerificationMethod = old_state.as_document().authentication();
+    // TODO: Replace with: let method: &TinyMethod = new_state.capability_invocation()?;
+    let method: &IotaVerificationMethod = old_state.as_document().default_signing_method()?;
 
     let location: KeyLocation = old_state.method_location(
       method.key_type(),

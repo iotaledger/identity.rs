@@ -70,7 +70,7 @@ fn create_document() -> IotaDocument {
   let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
   let verif_method1: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&keypair, "test-0").unwrap();
 
-  IotaDocument::from_authentication(verif_method1).unwrap()
+  IotaDocument::from_verification_method(verif_method1).unwrap()
 }
 
 #[test]
@@ -86,7 +86,7 @@ fn test_publish_type() -> Result<()> {
   let verif_method2: IotaVerificationMethod =
     IotaVerificationMethod::from_did(old_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-1")?;
 
-  new_doc.insert_method(MethodScope::CapabilityInvocation, verif_method2);
+  new_doc.insert_method(verif_method2, MethodScope::CapabilityInvocation);
 
   assert!(matches!(Publish::new(&old_doc, &new_doc), Publish::Integration));
 
@@ -96,10 +96,8 @@ fn test_publish_type() -> Result<()> {
   let verif_method2: IotaVerificationMethod =
     IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-0")?;
 
-  new_doc
-    .remove_method(new_doc.did().to_url().join("test-0").unwrap())
-    .unwrap();
-  new_doc.insert_method(MethodScope::CapabilityInvocation, verif_method2);
+  new_doc.remove_method(new_doc.did().to_url().join("test-0").unwrap());
+  new_doc.insert_method(verif_method2, MethodScope::CapabilityInvocation);
 
   assert!(matches!(Publish::new(&old_doc, &new_doc), Publish::Integration));
 
@@ -110,7 +108,7 @@ fn test_publish_type() -> Result<()> {
   let verif_method2: IotaVerificationMethod =
     IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-1")?;
 
-  new_doc.insert_method(MethodScope::Authentication, verif_method2);
+  new_doc.insert_method(verif_method2, MethodScope::Authentication);
 
   assert!(matches!(Publish::new(&old_doc, &new_doc), Publish::Diff));
 
