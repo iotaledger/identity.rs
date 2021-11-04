@@ -49,10 +49,7 @@ pub async fn create_vp() -> Result<Presentation> {
 #[tokio::main]
 async fn main() -> Result<()> {
   // Create a client instance to send messages to the Tangle.
-  let mut client: ClientMap = ClientMap::new();
-
-  // For debugging, message compression can be disabled.
-  client.disable_compression();
+  let client: ClientMap = ClientMap::new();
 
   // Issue a Verifiable Presentation with a newly created DID Document.
   let presentation: Presentation = create_vp().await?;

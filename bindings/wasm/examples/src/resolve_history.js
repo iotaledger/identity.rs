@@ -27,9 +27,6 @@ async function resolveHistory(clientConfig) {
     // Create a client instance to publish messages to the Tangle.
     const client = Client.fromConfig(config);
 
-    // Disable message compression for debugging.
-    if(clientConfig.debug) client.disableCompression();
-
     // ===========================================================================
     // DID Creation
     // ===========================================================================

@@ -20,9 +20,6 @@ async function createVC(clientConfig) {
     // Create a client instance to publish messages to the Tangle.
     const client = Client.fromConfig(config);
 
-    // Disable message compression for debugging.
-    if(clientConfig.debug) client.disableCompression();
-
     // Creates new identities (See "create_did" and "manipulate_did" examples)
     const alice = await createIdentity(clientConfig);
     const issuer = await manipulateIdentity(clientConfig);
