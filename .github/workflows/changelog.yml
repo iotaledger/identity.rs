@@ -18,17 +18,23 @@ jobs:
           echo BRANCHNAME=$BRANCHNAME
       - name: Determine next version
         run: |
+
+          updateVersion()
+          {
+              [[ $1 =~ ([^0-9]*)([0-9]+) ]] || { echo 'invalid input'; exit 1; }     
+              echo "${BASH_REMATCH[1]}$(( ${BASH_REMATCH[2]} + 1 ))"
+          }
+
+
           if [[ $BRANCHNAME == release/* ]] || [[ $BRANCHNAME == hotfix/* ]]; then
             NEXTVERSION=${BRANCHNAME##*/}
           elif [[ $BRANCHNAME == dev ]]; then
-            DEV_TAGS=$(git tag --sort=committerdate -l dev-*)
-            echo DEV_TAGS=$DEV_TAGS
-            LATEST_DEV_TAG=
+            LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "dev-*" | head -n 1)
             echo LATEST_DEV_TAG=$LATEST_DEV_TAG
             if [[  LATEST_DEV_TAG == '' ]]; then
               NEW_DEV_TAG=dev-1
             else
-              NEW_DEV_TAG=
+              NEW_DEV_TAG=updateVersion $LATEST_DEV_TAG
             fi
             echo NEW_DEV_TAG=$NEW_DEV_TAG
             NEXTVERSION=$NEW_DEV_TAG
