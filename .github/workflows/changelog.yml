@@ -30,16 +30,16 @@ jobs:
           if [[ $BRANCHNAME == release/* ]] || [[ $BRANCHNAME == hotfix/* ]]; then
             NEXTVERSION=${BRANCHNAME##*/}
           elif [[ $BRANCHNAME == dev ]]; then
-            export NEXTVERSION=test
-            LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "dev-*" | head -n 1)
-            echo LATEST_DEV_TAG=$LATEST_DEV_TAG
-            if [[  LATEST_DEV_TAG == '' ]]; then
-              NEW_DEV_TAG=dev-1
-            else
-              NEW_DEV_TAG=$(updateVersion $LATEST_DEV_TAG)
-            fi
-            echo NEW_DEV_TAG=$NEW_DEV_TAG
-            NEXTVERSION=$NEW_DEV_TAG
+            NEXTVERSION=test
+            # LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "dev-*" | head -n 1)
+            # echo LATEST_DEV_TAG=$LATEST_DEV_TAG
+            # if [[  LATEST_DEV_TAG == '' ]]; then
+            #   NEW_DEV_TAG=dev-1
+            # else
+            #   NEW_DEV_TAG=$(updateVersion $LATEST_DEV_TAG)
+            # fi
+            # echo NEW_DEV_TAG=$NEW_DEV_TAG
+            # NEXTVERSION=$NEW_DEV_TAG
           fi
           echo NEXTVERSION=$NEXTVERSION
           echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
