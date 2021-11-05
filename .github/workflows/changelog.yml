@@ -15,7 +15,7 @@ jobs:
       - name: Get current branch name
         run: |
           BRANCHNAME=$(git rev-parse --abbrev-ref HEAD)
-          echo BRANCHNAME=$BRANCHNAME
+          export BRANCHNAME=$BRANCHNAME
       - name: Determine next version
         run: |
           echo BRANCHNAME=$BRANCHNAME
