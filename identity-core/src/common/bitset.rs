@@ -22,7 +22,7 @@ pub(crate) use errors::BitSetEncodingError;
 pub(self) mod errors {
 
   use thiserror::Error as DeriveError;
-  /// Cause by a failure to encode a Roaring Bitmap.
+  /// Caused by a failure to encode a Roaring Bitmap.
   #[derive(Debug, DeriveError)]
   #[error("failed to encode roaring bitmap {inner}")]
   pub(crate) struct BitSetEncodingError {
@@ -30,7 +30,7 @@ pub(self) mod errors {
     inner: std::io::Error,
   }
 
-  /// Cause by a failure to decode a Roaring Bitmap.
+  /// Caused by a failure to decode a Roaring Bitmap.
   #[derive(Debug, DeriveError)]
   #[error("failed to decode roaring bitmap {inner}")]
   pub(crate) struct BitSetDecodingError {

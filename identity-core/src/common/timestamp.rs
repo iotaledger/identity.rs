@@ -23,6 +23,19 @@ use crate::error::Result;
 #[serde(try_from = "String", into = "String")]
 pub struct Timestamp(DateTime<Utc>);
 
+pub use errors::TimeStampParsingError; 
+pub(self) mod errors {
+  use thiserror::Error as DeriveError; // following the stronghold team's convention :) 
+
+  /// Caused by attempting to parse an invalid `Timestamp`.
+  #[derive(Debug, DeriveError)]
+  #[error("invalid timestamp: {inner}")]
+  pub struct TimeStampParsingError {
+    #[source]
+    inner: chrono::ParseError,
+  }
+}
+
 impl Timestamp {
   /// Parses a `Timestamp` from the provided input string.
   pub fn parse(input: &str) -> Result<Self> {
