@@ -30,7 +30,7 @@ jobs:
           if [[ $BRANCHNAME == release/* ]] || [[ $BRANCHNAME == hotfix/* ]]; then
             NEXTVERSION=${BRANCHNAME##*/}
           elif [[ $BRANCHNAME == dev ]]; then
-            NEXTVERSION=test
+            export NEXTVERSION=test
             LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "dev-*" | head -n 1)
             echo LATEST_DEV_TAG=$LATEST_DEV_TAG
             if [[  LATEST_DEV_TAG == '' ]]; then
