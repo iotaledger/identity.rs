@@ -1,17 +1,25 @@
 # Changelog
 
+## [v0.6.0](https://github.com/eike-hass/identity.rs/tree/v0.6.0) (2021-11-05)
+
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/0.5.0...v0.6.0)
+
+**Merged pull requests:**
+
+- Removed test string [\#5](https://github.com/eike-hass/identity.rs/pull/5)
+
 ## [0.5.0](https://github.com/eike-hass/identity.rs/tree/0.5.0) (2021-11-02)
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/v.0.4.0...0.5.0)
 
 **Implemented enhancements:**
 
-- removed test string [\#4](https://github.com/eike-hass/identity.rs/pull/4) ([eike-hass](https://github.com/eike-hass))
+- removed test string [\#4](https://github.com/eike-hass/identity.rs/pull/4)
 
 **Merged pull requests:**
 
-- added test string [\#3](https://github.com/eike-hass/identity.rs/pull/3) ([eike-hass](https://github.com/eike-hass))
-- added workflow [\#1](https://github.com/eike-hass/identity.rs/pull/1) ([eike-hass](https://github.com/eike-hass))
+- added test string [\#3](https://github.com/eike-hass/identity.rs/pull/3)
+- added workflow [\#1](https://github.com/eike-hass/identity.rs/pull/1)
 
 ## [v.0.4.0](https://github.com/eike-hass/identity.rs/tree/v.0.4.0) (2021-11-01)
 

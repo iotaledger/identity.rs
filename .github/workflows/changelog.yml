@@ -5,23 +5,86 @@ on:
   push:
     branches:
       - dev
-      - main
+      - release/*
+      - hotfix/*
 jobs:
   changelog:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Run box version	    
+        with:
+          # Number of commits to fetch. 0 indicates all history for all branches and tags.
+          fetch-depth: 0
+      - name: Get current branch name
+        run: |
+          BRANCHNAME=$(git rev-parse --abbrev-ref HEAD)
+          echo BRANCHNAME=$BRANCHNAME
+          echo BRANCHNAME=$BRANCHNAME >> $GITHUB_ENV
+      - name: Determine next version
+        run: |
+          BRANCHNAME=${{ env.BRANCHNAME }}
+          updateVersion()
+          {
+            [[ ${1} =~ ^(.*[^0-9])?([0-9]+)$ ]]  && \
+              [[ ${#BASH_REMATCH[1]} -gt 0 ]] && \
+                printf "%s%0${#BASH_REMATCH[2]}d" "${BASH_REMATCH[1]}" "$((10#${BASH_REMATCH[2]} + 1 ))" || \
+                printf "%0${#BASH_REMATCH[2]}d" "$((10#${BASH_REMATCH[2]} + 1))" || \
+              printf "${1}"
+          }
+
+          if [[ $BRANCHNAME == release/* || $BRANCHNAME == hotfix/* ]]; then
+            NEXTVERSION=${BRANCHNAME##*/}
+          elif [[ $BRANCHNAME == dev ]]; then
+            LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "dev-*" | head -n 1)
+            echo LATEST_DEV_TAG=$LATEST_DEV_TAG
+            if [[ $LATEST_DEV_TAG == '' ]]; then
+              NEW_DEV_TAG=dev-1
+            else
+              NEW_DEV_TAG=$(updateVersion $LATEST_DEV_TAG)
+            fi
+            echo NEW_DEV_TAG=$NEW_DEV_TAG
+            NEXTVERSION=$NEW_DEV_TAG
+          fi
+
+          echo NEXTVERSION=$NEXTVERSION
+          echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
+      - name: Prepare repository
+        run: |
+          GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
+          GITHUB_REPOSITORY_PROJECT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
+
+          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER
+          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT
+
+          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER >> $GITHUB_ENV
+          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT >> $GITHUB_ENV
+      - name: Run github-changelog-generator
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
-          args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --verbose
-      - run: ls -al
-      - run: cat CHANGELOG.md
-      - run: |
+          args: >
+            --user ${{ env.GITHUB_REPOSITORY_USER }}
+            --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
+            --token ${{ secrets.GITHUB_TOKEN }} 
+            --no-author 
+            --future-release ${{ env.NEXTVERSION }} 
+            --exclude-tags-regex "dev-\d{1,}" 
+            --verbose
+      - name: Log CHANGELOG.md
+        run: cat CHANGELOG.md
+      - name: Commit changes
+        run: |
+          BRANCHNAME=${{ env.BRANCHNAME }}
+          if [[ $(git diff --stat) == '' ]]; then
+            echo 'CHANGELOG.md unmodified'
+            exit 0
+          fi
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add CHANGELOG.md
           git commit -m "generate Changelog"
-          git push
+          if [[ $BRANCHNAME == dev ]]; then
+            git tag -a -m $NEXTVERSION $NEXTVERSION
+          fi
+          git push --follow-tags
 
       
