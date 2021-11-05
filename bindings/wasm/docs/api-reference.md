@@ -42,9 +42,9 @@
 ## Members
 
 <dl>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
 </dl>
 
@@ -68,6 +68,7 @@
         * [.publishDocument(document)](#Client+publishDocument) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.publishJSON(index, data)](#Client+publishJSON) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.publishJsonWithRetry(index, data, interval, max_attempts)](#Client+publishJsonWithRetry) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolve(did)](#Client+resolve) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -122,6 +123,22 @@ Publishes arbitrary JSON data to the specified index on the Tangle.
 | --- | --- |
 | index | <code>string</code> | 
 | data | <code>any</code> | 
+
+<a name="Client+publishJsonWithRetry"></a>
+
+### client.publishJsonWithRetry(index, data, interval, max_attempts) ⇒ <code>Promise.&lt;any&gt;</code>
+Publishes arbitrary JSON data to the specified index on the Tangle.
+Retries (promotes or reattaches) the message until it’s included (referenced by a milestone).
+Default interval is 5 seconds and max attempts is 40.
+
+**Kind**: instance method of [<code>Client</code>](#Client)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>string</code> | 
+| data | <code>any</code> | 
+| interval | <code>number</code> \| <code>undefined</code> | 
+| max_attempts | <code>number</code> \| <code>undefined</code> | 
 
 <a name="Client+resolve"></a>
 
@@ -1687,13 +1704,13 @@ Deserializes a `VerificationMethod` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
-<a name="Digest"></a>
-
-## Digest
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
 **Kind**: global variable  
 <a name="start"></a>
 
