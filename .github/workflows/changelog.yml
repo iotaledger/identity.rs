@@ -62,8 +62,8 @@ jobs:
           git add CHANGELOG.md
           git commit -m "generate Changelog"
           if [[ $BRANCHNAME == dev ]]; then
-            git tag $NEXTVERSION
+            git tag -a -m $NEXTVERSION $NEXTVERSION
           fi
-          git push
+          git push --follow-tags
 
       
