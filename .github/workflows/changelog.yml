@@ -6,18 +6,32 @@ on:
     branches:
       - dev
       - release/*
+      - hotfix/*
 jobs:
   changelog:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: |
+      - name: Get current branch name
+        run: |
           BRANCHNAME=$(git rev-parse --abbrev-ref HEAD)
           echo BRANCHNAME=$BRANCHNAME
-      - run: |
-          NEXTVERSION=Unreleased
-          if [[ $BRANCHNAME == release/* ]]; then
+      - name: Determine next version
+        run: |
+          if [[ $BRANCHNAME == release/* || $BRANCHNAME == hotfix/* ]]; then
             NEXTVERSION=${BRANCHNAME##*/}
+          elif [[ $BRANCHNAME == dev ]]; then
+            DEV_TAGS=git tag --sort=committerdate -l dev-*
+            echo DEV_TAGS=$DEV_TAGS
+            LATEST_DEV_TAG=
+            echo LATEST_DEV_TAG=$LATEST_DEV_TAG
+            if [[  LATEST_DEV_TAG == '' ]]; then
+              NEW_DEV_TAG=dev-1
+            else
+              NEW_DEV_TAG=
+            fi
+            echo NEW_DEV_TAG=$NEW_DEV_TAG
+            NEXTVERSION=$NEW_DEV_TAG
           fi
           echo NEXTVERSION=$NEXTVERSION
           echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
@@ -25,8 +39,10 @@ jobs:
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
           args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --no-author --future-release ${{ env.NEXTVERSION }} --verbose
-      - run: cat CHANGELOG.md
-      - run: |
+      - name: Log CHANGELOG.md
+        run: cat CHANGELOG.md
+      - name: Commit changes
+        run: |
           if [[ $(git diff --stat) == '' ]]; then
             echo 'CHANGELOG.md unmodified'
             exit 0
@@ -35,6 +51,9 @@ jobs:
           git config user.email github-actions@github.com
           git add CHANGELOG.md
           git commit -m "generate Changelog"
+          if [[ $BRANCHNAME == dev ]]; then
+            git tag $NEXTVERSION
+          fi
           git push
 
       
