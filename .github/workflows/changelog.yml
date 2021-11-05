@@ -15,9 +15,11 @@ jobs:
       - name: Get current branch name
         run: |
           BRANCHNAME=$(git rev-parse --abbrev-ref HEAD)
-          export BRANCHNAME=$BRANCHNAME
+          echo BRANCHNAME=$BRANCHNAME
+          echo BRANCHNAME=$BRANCHNAME >> $GITHUB_ENV
       - name: Determine next version
         run: |
+          BRANCHNAME=${{ env.BRANCHNAME }}
           echo BRANCHNAME=$BRANCHNAME
           # updateVersion()
           # {
@@ -52,6 +54,7 @@ jobs:
         run: cat CHANGELOG.md
       - name: Commit changes
         run: |
+          BRANCHNAME=${{ env.BRANCHNAME }}
           if [[ $(git diff --stat) == '' ]]; then
             echo 'CHANGELOG.md unmodified'
             exit 0
