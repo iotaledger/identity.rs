@@ -47,10 +47,14 @@ jobs:
           fi
           echo NEXTVERSION=$NEXTVERSION
           echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
+      - name: Prepare repository
+        run: |
+          PROJECT_ARR=(${env.GITHUB_REPOSITORY//;/ }
+          echo PROJECT_ARR=$PROJECT_ARR
       - name: Run github-changelog-generator
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
-          args: --user ${{ ${env.GITHUB_REPOSITORY//// }[0] }} --project ${{ ${env.GITHUB_REPOSITORY//// }[1] }} --token ${{ secrets.GITHUB_TOKEN }} --no-author --future-release ${{ env.NEXTVERSION }} --verbose
+          args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --no-author --future-release ${{ env.NEXTVERSION }} --verbose
       - name: Log CHANGELOG.md
         run: cat CHANGELOG.md
       - name: Commit changes
