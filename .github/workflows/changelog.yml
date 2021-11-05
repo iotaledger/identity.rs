@@ -34,7 +34,7 @@ jobs:
           elif [[ $BRANCHNAME == dev ]]; then
             LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "dev-*" | head -n 1)
             echo LATEST_DEV_TAG=$LATEST_DEV_TAG
-            if [[  LATEST_DEV_TAG == '' ]]; then
+            if [[ $LATEST_DEV_TAG == '' ]]; then
               NEW_DEV_TAG=dev-1
             else
               NEW_DEV_TAG=$(updateVersion $LATEST_DEV_TAG)
