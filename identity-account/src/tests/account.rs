@@ -4,11 +4,9 @@
 use identity_core::crypto::KeyPair;
 use identity_did::did::DID;
 use identity_did::verification::MethodScope;
-use identity_iota::did::DocumentDiff;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDocument;
 use identity_iota::did::IotaVerificationMethod;
-use identity_iota::tangle::MessageId;
 use identity_iota::tangle::TangleRef;
 
 use crate::account::Account;

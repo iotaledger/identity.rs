@@ -38,7 +38,7 @@ async fn main() -> Result<()> {
   println!(
     "[Example] Local Document from {} = {:#?}",
     iota_did,
-    account.state().await?.to_document()
+    account.state().as_document()
   );
 
   // Prints the Identity Resolver Explorer URL.

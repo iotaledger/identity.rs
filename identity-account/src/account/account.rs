@@ -13,7 +13,6 @@ use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
-use std::ops::Deref;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -51,33 +50,9 @@ pub struct Account {
 }
 
 impl Account {
-  /// Creates a new [AccountBuilder].
-  pub fn builder() -> AccountBuilder {
-    AccountBuilder::new()
-  }
-
-  /// Creates an [`Account`] for an existing identity, if it exists in the [`Storage`].
-  pub(crate) async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
-    // Ensure the did exists in storage
-    let state = setup.storage.state(&did).await?.ok_or(Error::IdentityNotFound)?;
-
-    let did_lease = setup.storage.lease_did(&did).await?;
-
-    Self::with_setup(setup, did, state, did_lease).await
-  }
-
-  /// Creates a new `Account` instance with the given `config`.
-  async fn with_setup(setup: AccountSetup, did: IotaDID, state: IdentityState, did_lease: DIDLease) -> Result<Self> {
-    Ok(Self {
-      config: setup.config,
-      storage: setup.storage,
-      client_map: setup.client_map,
-      actions: AtomicUsize::new(0),
-      state,
-      did,
-      did_lease,
-    })
-  }
+  // ===========================================================================
+  // Getters & Setters
+  // ===========================================================================
 
   /// Returns a reference to the [Storage] implementation.
   pub fn storage(&self) -> &dyn Storage {
@@ -114,10 +89,6 @@ impl Account {
     &self.did
   }
 
-  // ===========================================================================
-  // Identity
-  // ===========================================================================
-
   /// Return a copy of the latest state of the identity
   pub fn state(&self) -> &IdentityState {
     &self.state
@@ -128,10 +99,26 @@ impl Account {
     &mut self.state
   }
 
-  /// Resolves the DID Document associated with this `Account` from the Tangle.
-  pub async fn resolve_identity(&self) -> Result<IotaDocument> {
-    // Fetch the DID Document from the Tangle
-    self.client_map.resolve(self.did()).await.map_err(Into::into)
+  // ===========================================================================
+  // Constructors
+  // ===========================================================================
+
+  /// Creates a new [AccountBuilder].
+  pub fn builder() -> AccountBuilder {
+    AccountBuilder::new()
+  }
+
+  /// Creates a new `Account` instance with the given `config`.
+  async fn with_setup(setup: AccountSetup, did: IotaDID, state: IdentityState, did_lease: DIDLease) -> Result<Self> {
+    Ok(Self {
+      config: setup.config,
+      storage: setup.storage,
+      client_map: setup.client_map,
+      actions: AtomicUsize::new(0),
+      state,
+      did,
+      did_lease,
+    })
   }
 
   /// Creates a new identity and returns an [`Account`] instance to manage it.
@@ -143,15 +130,37 @@ impl Account {
     let (did, did_lease, state): (IotaDID, DIDLease, IdentityState) =
       create_identity(input, setup.storage.as_ref()).await?;
 
-    let account = Self::with_setup(setup, did, state, did_lease).await?;
+    let mut account = Self::with_setup(setup, did, state, did_lease).await?;
 
-    account.publish_integration_change(account.state()).await?;
+    account.publish(false).await?;
 
-    account.storage.set_state(account.did(), account.state()).await?;
+    // account.publish_integration_change(account.state()).await?;
 
-    account.save(true).await?;
+    // account.storage.set_state(account.did(), account.state()).await?;
+
+    // account.save(true).await?;
 
     Ok(account)
+  }
+
+  /// Creates an [`Account`] for an existing identity, if it exists in the [`Storage`].
+  pub(crate) async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
+    // Ensure the did exists in storage
+    let state = setup.storage.state(&did).await?.ok_or(Error::IdentityNotFound)?;
+
+    let did_lease = setup.storage.lease_did(&did).await?;
+
+    Self::with_setup(setup, did, state, did_lease).await
+  }
+
+  // ===========================================================================
+  // Identity
+  // ===========================================================================
+
+  /// Resolves the DID Document associated with this `Account` from the Tangle.
+  pub async fn resolve_identity(&self) -> Result<IotaDocument> {
+    // Fetch the DID Document from the Tangle
+    self.client_map.resolve(self.did()).await.map_err(Into::into)
   }
 
   /// Returns the [`IdentityUpdater`] for this identity.
@@ -196,9 +205,24 @@ impl Account {
     Ok(())
   }
 
+  /// Push all unpublished changes to the tangle in a single message.
+  pub async fn publish_updates(&mut self) -> Result<()> {
+    self.publish(true).await?;
+
+    Ok(())
+  }
+
   // ===========================================================================
   // Misc. Private
   // ===========================================================================
+
+  #[doc(hidden)]
+  pub async fn load_state(&self) -> Result<Option<IdentityState>> {
+    // TODO: An account always holds a valid identity (after creation!),
+    // so if None is returned, that's a broken invariant -> should be a fatal error.
+    self.storage().state(self.did()).await
+  }
+
   pub(crate) async fn process_update(&mut self, update: Update, _persist: bool) -> Result<()> {
     let did = self.did().to_owned();
     let storage = Arc::clone(&self.storage);
@@ -207,7 +231,9 @@ impl Account {
       .process(&did, self.state_mut_unchecked(), storage.as_ref())
       .await?;
 
-    // TODO: publish
+    // TODO: Store updated document.
+
+    self.publish(false).await?;
 
     Ok(())
   }
@@ -254,6 +280,39 @@ impl Account {
         .sign_data(self.did(), self.storage(), &location, document)
         .await?;
     }
+
+    Ok(())
+  }
+
+  /// Publishes according to the autopublish configuration.
+  async fn publish(&mut self, force: bool) -> Result<()> {
+    if !force && !self.config.autopublish {
+      return Ok(());
+    }
+
+    let old_state: Option<IdentityState> = self.load_state().await?;
+    let new_state: &IdentityState = self.state();
+
+    let publish = old_state.map(|old_state| {
+      (
+        Publish::new(old_state.as_document(), new_state.as_document()),
+        old_state,
+      )
+    });
+
+    match publish {
+      // Existing identity
+      Some((Publish::Integration, old_state)) => self.publish_integration_change(&old_state).await?,
+      Some((Publish::Diff, old_state)) => self.publish_diff_change(&old_state).await?,
+      Some((Publish::None, _)) => {}
+      // New identity
+      None => self.publish_integration_change(new_state).await?,
+    }
+
+    self.storage.set_state(self.did(), self.state()).await?;
+
+    // TODO: true?
+    self.save(false).await?;
 
     Ok(())
   }
@@ -313,13 +372,6 @@ impl Account {
     Ok(())
   }
 
-  #[doc(hidden)]
-  pub async fn load_state(&self) -> Result<IdentityState> {
-    // TODO: An account always holds a valid identity (after creation!),
-    // so if None is returned, that's a broken invariant -> should be a fatal error.
-    self.storage().state(self.did()).await?.ok_or(Error::IdentityNotFound)
-  }
-
   async fn save(&self, force: bool) -> Result<()> {
     match self.config.autosave {
       AutoSave::Every => {
@@ -330,36 +382,6 @@ impl Account {
       }
       AutoSave::Batch(_) | AutoSave::Never => {}
     }
-
-    Ok(())
-  }
-
-  /// Push all unpublished changes to the tangle in a single message.
-  pub async fn publish_updates(&mut self) -> Result<()> {
-    self.publish(true).await?;
-
-    Ok(())
-  }
-
-  /// Publishes according to the autopublish configuration.
-  async fn publish(&mut self, force: bool) -> Result<()> {
-    if !force && !self.config.autopublish {
-      return Ok(());
-    }
-
-    let old_state = self.load_state().await?;
-    let new_state = self.state();
-
-    match Publish::new(old_state.as_document(), new_state.as_document()) {
-      Publish::Integration => self.publish_integration_change(&old_state).await?,
-      Publish::Diff => self.publish_diff_change(&old_state).await?,
-      Publish::None => {}
-    }
-
-    self.storage.set_state(self.did(), self.state()).await?;
-
-    // TODO: true?
-    self.save(false).await?;
 
     Ok(())
   }
