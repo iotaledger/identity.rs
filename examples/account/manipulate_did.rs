@@ -10,7 +10,7 @@ use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::core::Url;
-use identity::did::MethodScope;
+use identity::did::MethodRelationship;
 use identity::iota::IotaDID;
 
 #[tokio::main]
@@ -48,8 +48,8 @@ async fn main() -> Result<()> {
     .update_identity()
     .attach_method()
     .fragment("my-next-key")
-    .scope(MethodScope::CapabilityDelegation)
-    .scope(MethodScope::CapabilityInvocation)
+    .relationship(MethodRelationship::CapabilityDelegation)
+    .relationship(MethodRelationship::CapabilityInvocation)
     .apply()
     .await?;
 

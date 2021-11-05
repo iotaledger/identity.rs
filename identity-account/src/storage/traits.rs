@@ -2,14 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Debug;
-use futures::stream::BoxStream;
-use futures::TryStreamExt;
 use identity_core::crypto::PrivateKey;
 use identity_core::crypto::PublicKey;
 use identity_iota::did::IotaDID;
 
 use crate::error::Result;
-use crate::events::Commit;
 use crate::identity::DIDLease;
 use crate::identity::IdentityState;
 use crate::types::Generation;
@@ -63,21 +60,6 @@ pub trait Storage: Debug + Send + Sync + 'static {
   /// Sets a new state snapshot for the identity specified by `id`.
   async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> Result<()>;
 
-  /// Appends a set of commits to the event stream for the identity specified by `id`.
-  async fn append(&self, did: &IotaDID, commits: &[Commit]) -> Result<()>;
-
-  /// Returns a stream of commits for the identity specified by `id`.
-  ///
-  /// The stream may be offset by `index`.
-  async fn stream(&self, did: &IotaDID, index: Generation) -> Result<BoxStream<'_, Result<Commit>>>;
-
-  /// Returns a list of all commits for the identity specified by `id`.
-  ///
-  /// The list may be offset by `index`.
-  async fn collect(&self, did: &IotaDID, index: Generation) -> Result<Vec<Commit>> {
-    self.stream(did, index).await?.try_collect().await
-  }
-
   /// Removes the event stream and state snapshot for the identity specified by `id`.
   async fn purge(&self, did: &IotaDID) -> Result<()>;
 }
@@ -126,14 +108,6 @@ impl Storage for Box<dyn Storage> {
 
   async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> Result<()> {
     (**self).set_state(did, state).await
-  }
-
-  async fn append(&self, did: &IotaDID, commits: &[Commit]) -> Result<()> {
-    (**self).append(did, commits).await
-  }
-
-  async fn stream(&self, did: &IotaDID, index: Generation) -> Result<BoxStream<'_, Result<Commit>>> {
-    (**self).stream(did, index).await
   }
 
   async fn purge(&self, did: &IotaDID) -> Result<()> {

@@ -85,8 +85,6 @@ async fn test_create_identity_network() -> Result<()> {
   let create_identity: IdentitySetup = IdentitySetup::new().network("dev")?.key_type(KeyType::Ed25519);
   let account = Account::create_identity(account_setup(), create_identity).await?;
 
-  let state: &IdentityState = account.state();
-
   assert_eq!(
     account.did().network().unwrap().name(),
     Network::try_from_name("dev").unwrap().name()
@@ -218,8 +216,6 @@ async fn test_create_scoped_method() -> Result<()> {
   ] {
     let mut account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
-    let initial_state: IdentityState = account.state().to_owned();
-
     let fragment = "key-1".to_owned();
 
     let update: Update = Update::CreateMethod {
@@ -297,7 +293,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   ));
 
   // Fake publishing by incrementing any generation.
-  account.state_mut_unchecked().increment_diff_generation();
+  account.state_mut_unchecked().increment_diff_generation().unwrap();
 
   let output = account.process_update(update, false).await;
 

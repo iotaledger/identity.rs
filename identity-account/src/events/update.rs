@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::convert::TryInto;
-
 use crypto::signatures::ed25519;
 
 use identity_core::common::Fragment;
@@ -14,24 +12,15 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
 use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
-use identity_did::document::CoreDocument;
-use identity_did::document::DocumentBuilder;
-use identity_did::verifiable::Properties as VerifiableProperties;
-use identity_did::verification::MethodData;
-use identity_did::verification::MethodRef as CoreMethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_did::verification::VerificationMethod;
 use identity_iota::did::IotaDID;
-use identity_iota::did::IotaDIDUrl;
 use identity_iota::did::IotaDocument;
 use identity_iota::did::IotaVerificationMethod;
-use identity_iota::did::Properties as BaseProperties;
 
 use crate::account::Account;
 use crate::error::Result;
-use crate::events::Event;
 use crate::events::UpdateError;
 use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
@@ -45,12 +34,6 @@ use crate::types::MethodSecret;
 // Method types allowed to sign a DID document update.
 pub const UPDATE_METHOD_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 pub const DEFAULT_UPDATE_METHOD_PREFIX: &str = "sign-";
-
-type Properties = VerifiableProperties<BaseProperties>;
-type BaseDocument = CoreDocument<Properties, Object, Object>;
-
-// Supported authentication method types.
-const AUTH_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
 fn key_to_method(type_: KeyType) -> MethodType {
   match type_ {
@@ -161,12 +144,7 @@ pub(crate) enum Update {
 }
 
 impl Update {
-  pub(crate) async fn process(
-    self,
-    did: &IotaDID,
-    state: &mut IdentityState,
-    storage: &dyn Storage,
-  ) -> Result<Option<Vec<Event>>> {
+  pub(crate) async fn process(self, did: &IotaDID, state: &mut IdentityState, storage: &dyn Storage) -> Result<()> {
     debug!("[Command::process] Command = {:?}", self);
     trace!("[Command::process] State = {:?}", state);
     trace!("[Command::process] Store = {:?}", storage);
@@ -309,7 +287,7 @@ impl Update {
           UpdateError::DuplicateServiceFragment(fragment),
         );
 
-        let service: TinyService = TinyService::new(fragment, type_, endpoint, properties);
+        let _service: TinyService = TinyService::new(fragment, type_, endpoint, properties);
 
         // Ok(Some(vec![Event::new(EventData::ServiceCreated(service))]))
       }
@@ -329,7 +307,7 @@ impl Update {
 
     state.as_document_mut().set_updated(Timestamp::now_utc());
 
-    Ok(None)
+    Ok(())
   }
 }
 
@@ -371,34 +349,6 @@ async fn insert_method_secret(
       todo!("[Command::CreateMethod] Handle MerkleKeyCollection")
     }
   }
-}
-
-fn core_method(
-  method_type: MethodType,
-  method_data: MethodData,
-  did: &IotaDID,
-  fragment: Fragment,
-) -> Result<VerificationMethod> {
-  let id: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
-
-  VerificationMethod::builder(Object::default())
-    .id(CoreDIDUrl::from(id))
-    .controller(did.clone().into())
-    .key_type(method_type)
-    .key_data(method_data)
-    .build()
-    .map_err(Into::into)
-}
-
-fn core_method_ref(did: &IotaDID, fragment: Fragment) -> Result<CoreMethodRef> {
-  // TODO: Can return a fatal error here, since the fragment we pass in
-  // is always valid, as is the url.
-  did
-    .to_url()
-    .join(fragment.identifier())
-    .map(CoreDIDUrl::from)
-    .map(CoreMethodRef::Refer)
-    .map_err(Into::into)
 }
 
 // =============================================================================

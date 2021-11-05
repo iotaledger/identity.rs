@@ -13,6 +13,7 @@ use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
+use std::ops::Deref;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -198,11 +199,13 @@ impl Account {
   // ===========================================================================
   // Misc. Private
   // ===========================================================================
-  pub(crate) async fn process_update(&mut self, update: Update, persist: bool) -> Result<()> {
+  pub(crate) async fn process_update(&mut self, update: Update, _persist: bool) -> Result<()> {
     let did = self.did().to_owned();
     let storage = Arc::clone(&self.storage);
 
-    update.process(&did, self.state_mut_unchecked(), storage.as_ref()).await?;
+    update
+      .process(&did, self.state_mut_unchecked(), storage.as_ref())
+      .await?;
 
     // TODO: publish
 
@@ -262,7 +265,7 @@ impl Account {
 
     self.sign_self(old_state, new_state, &mut new_doc).await?;
 
-    let message: MessageId = if self.config.testmode {
+    let _message: MessageId = if self.config.testmode {
       MessageId::null()
     } else {
       self.client_map.publish_document(&new_doc).await?.into()
@@ -297,7 +300,7 @@ impl Account {
       .sign_data(self.did(), self.storage(), &location, &mut diff)
       .await?;
 
-    let message: MessageId = if self.config.testmode {
+    let _message: MessageId = if self.config.testmode {
       MessageId::null()
     } else {
       self
