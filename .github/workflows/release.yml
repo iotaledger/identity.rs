@@ -3,7 +3,6 @@ name: Release
 on:
   workflow_dispatch:
   create:
-    branches:
 jobs:
   release:
     runs-on: ubuntu-latest
