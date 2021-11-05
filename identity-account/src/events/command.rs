@@ -5,8 +5,8 @@ use crypto::signatures::ed25519;
 
 use identity_core::common::Fragment;
 use identity_core::common::Object;
-use identity_core::common::Url;
 use identity_core::crypto::PublicKey;
+use identity_did::service::ServiceEndpoint;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
@@ -60,7 +60,7 @@ pub(crate) enum Command {
   CreateService {
     fragment: String,
     type_: String,
-    endpoint: Url,
+    endpoint: ServiceEndpoint,
     properties: Option<Object>,
   },
   DeleteService {
@@ -358,12 +358,12 @@ impl_command_builder!(
 /// # Parameters
 /// - `type_`: the type of the service, e.g. `"LinkedDomains"`, required.
 /// - `fragment`: the identifier of the service in the document, required.
-/// - `endpoint`: the url of the service, required.
+/// - `endpoint`: the `ServiceEndpoint` of the service, required.
 /// - `properties`: additional properties of the service, optional.
 CreateService {
   @required fragment String,
   @required type_ String,
-  @required endpoint Url,
+  @required endpoint ServiceEndpoint,
   @optional properties Object,
 });
 

@@ -20,6 +20,7 @@ use crate::resolution::Resolution;
 use crate::resolution::ResolverMethod;
 use crate::resolution::Resource;
 use crate::resolution::SecondaryResource;
+use crate::service::ServiceEndpoint;
 use crate::utils::DIDKey;
 use crate::utils::OrderedSet;
 
@@ -230,7 +231,10 @@ fn dereference_primary(document: CoreDocument, mut did_url: CoreDIDUrl) -> Resul
       .find(|service| matches!(service.id().fragment(), Some(fragment) if fragment == target))
       .map(|service| service.service_endpoint())
       // 1.2. Execute the Service Endpoint Construction algorithm.
-      .map(|url| service_endpoint_ctor(did_url, url))
+      .map(|endpoint| match endpoint {
+        ServiceEndpoint::One(url) => service_endpoint_ctor(did_url, url),
+        ServiceEndpoint::Set(_) => Err(Error::InvalidServiceProtocol), // TODO: support dereferencing service endpoint sets? Dereferencing spec does not define it.
+      })
       .transpose()?
       // 1.3. Return the output service endpoint URL.
       .map(Into::into)
@@ -456,7 +460,7 @@ mod test {
   fn generate_service(did: &CoreDID, fragment: &str, url: &str) -> Service {
     Service::builder(Default::default())
       .id(did.to_url().join(fragment).unwrap())
-      .service_endpoint(Url::parse(url).unwrap())
+      .service_endpoint(Url::parse(url).unwrap().into())
       .type_("LinkedDomains")
       .build()
       .unwrap()

@@ -9,14 +9,13 @@ use core::fmt::Result as FmtResult;
 use serde::Serialize;
 
 use identity_core::common::Object;
-use identity_core::common::Url;
 use identity_core::convert::ToJson;
 
 use crate::did::CoreDIDUrl;
 use crate::error::Error;
 use crate::error::Result;
 use crate::service::ServiceBuilder;
-use crate::utils::OrderedSet;
+use crate::service::ServiceEndpoint;
 
 /// A DID Document Service used to enable trusted interactions associated with a DID subject.
 ///
@@ -27,21 +26,9 @@ pub struct Service<T = Object> {
   #[serde(rename = "type")]
   pub(crate) type_: String,
   #[serde(rename = "serviceEndpoint")]
-  pub(crate) service_endpoint: Url,
+  pub(crate) service_endpoint: ServiceEndpoint,
   #[serde(flatten)]
   pub(crate) properties: T,
-}
-
-/// An endpoint or set of endpoints specified in a [`Service`].
-///
-/// [Specification](https://www.w3.org/TR/did-core/#dfn-serviceendpoint)
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(untagged)]
-pub enum ServiceEndpoint {
-  One(Url),
-  Set(OrderedSet<Url>),
-  // TODO: Enforce set is non-empty?
-  // TODO: Should this support an ordered map and nested maps which the specification allows?
 }
 
 impl<T> Service<T> {
@@ -83,12 +70,12 @@ impl<T> Service<T> {
   }
 
   /// Returns a reference to the `Service` endpoint.
-  pub fn service_endpoint(&self) -> &Url {
+  pub fn service_endpoint(&self) -> &ServiceEndpoint {
     &self.service_endpoint
   }
 
   /// Returns a mutable reference to the `Service` endpoint.
-  pub fn service_endpoint_mut(&mut self) -> &mut Url {
+  pub fn service_endpoint_mut(&mut self) -> &mut ServiceEndpoint {
     &mut self.service_endpoint
   }
 
@@ -122,116 +109,47 @@ where
   }
 }
 
-impl Display for ServiceEndpoint {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    if f.alternate() {
-      f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
-    } else {
-      f.write_str(&self.to_json().map_err(|_| FmtError)?)
-    }
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use identity_core::common::{Object, Url};
-  use identity_core::convert::{FromJson, ToJson};
   use crate::did::CoreDIDUrl;
   use crate::service::Service;
 
   use crate::service::service::ServiceEndpoint;
   use crate::utils::OrderedSet;
-
-  // #[test]
-  // fn test_service_serde() {
-  //   let url1 = Url::parse("https://iota.org/").unwrap();
-  //   let url2 = Url::parse("wss://www.example.com/socketserver/").unwrap();
-  //   let url3 = Url::parse("did:abc:123#service").unwrap();
-  //
-  //   // VALID
-  //   let mut set: OrderedSet<Url> = OrderedSet::try_from(vec![url1, url2, url3]).unwrap();
-  //   let endpoint: ServiceEndpoint = ServiceEndpoint::Set(set);
-  //   let service: Service = Service::builder(Object::new())
-  //     .id(CoreDIDUrl::parse("did:example:123#service").unwrap())
-  //     .service_endpoint(endpoint)
-  //     .type_("LinkedDomains")
-  //     .build();
-  // }
+  use identity_core::convert::{FromJson, ToJson};
 
   #[test]
-  fn test_service_endpoint_serde() {
-    let url1 = Url::parse("https://iota.org/").unwrap();
-    let url2 = Url::parse("wss://www.example.com/socketserver/").unwrap();
-    let url3 = Url::parse("did:abc:123#service").unwrap();
+  fn test_service_serde() {
+    // Single endpoint
+    {
+      let service: Service = Service::builder(Object::new())
+        .id(CoreDIDUrl::parse("did:example:123#service").unwrap())
+        .type_("LinkedDomains".to_owned())
+        .service_endpoint(Url::parse("https://iota.org/").unwrap().into())
+        .build()
+        .unwrap();
+      let expected = r#"{"id":"did:example:123#service","type":"LinkedDomains","serviceEndpoint":"https://iota.org/"}"#;
+      assert_eq!(service.to_json().unwrap(), expected);
+      assert_eq!(Service::from_json(expected).unwrap(), service);
+    }
 
-    // VALID: One.
-    let endpoint1: ServiceEndpoint = ServiceEndpoint::One(url1.clone());
-    let ser_endpoint1: String = endpoint1.to_json().unwrap();
-    assert_eq!(ser_endpoint1, "\"https://iota.org/\"");
-    assert_eq!(endpoint1, ServiceEndpoint::from_json(&ser_endpoint1).unwrap());
-
-    let endpoint2: ServiceEndpoint = ServiceEndpoint::One(url2.clone());
-    let ser_endpoint2: String = endpoint2.to_json().unwrap();
-    assert_eq!(ser_endpoint2, "\"wss://www.example.com/socketserver/\"");
-    assert_eq!(endpoint2, ServiceEndpoint::from_json(&ser_endpoint2).unwrap());
-
-    let endpoint3: ServiceEndpoint = ServiceEndpoint::One(url3.clone());
-    let ser_endpoint3: String = endpoint3.to_json().unwrap();
-    assert_eq!(ser_endpoint3, "\"did:abc:123#service\"");
-    assert_eq!(endpoint3, ServiceEndpoint::from_json(&ser_endpoint3).unwrap());
-
-    // VALID: Set.
-    let mut set: OrderedSet<Url> = OrderedSet::new();
-    // One element.
-    assert!(set.append(url1.clone()));
-    let endpoint_set: ServiceEndpoint = ServiceEndpoint::Set(set.clone());
-    let ser_endpoint_set: String = endpoint_set.to_json().unwrap();
-    assert_eq!(ser_endpoint_set, "[\"https://iota.org/\"]");
-    assert_eq!(endpoint_set, ServiceEndpoint::from_json(&ser_endpoint_set).unwrap());
-    // Two elements.
-    assert!(set.append(url2.clone()));
-    let endpoint_set: ServiceEndpoint = ServiceEndpoint::Set(set.clone());
-    let ser_endpoint_set: String = endpoint_set.to_json().unwrap();
-    assert_eq!(ser_endpoint_set, "[\"https://iota.org/\",\"wss://www.example.com/socketserver/\"]");
-    assert_eq!(endpoint_set, ServiceEndpoint::from_json(&ser_endpoint_set).unwrap());
-    // Three elements.
-    assert!(set.append(url3.clone()));
-    let endpoint_set: ServiceEndpoint = ServiceEndpoint::Set(set.clone());
-    let ser_endpoint_set: String = endpoint_set.to_json().unwrap();
-    assert_eq!(ser_endpoint_set, "[\"https://iota.org/\",\"wss://www.example.com/socketserver/\",\"did:abc:123#service\"]");
-    assert_eq!(endpoint_set, ServiceEndpoint::from_json(&ser_endpoint_set).unwrap());
-
-    // VALID: Set ignore duplicates.
-    let mut duplicates_set: OrderedSet<Url> = OrderedSet::new();
-    duplicates_set.append(url1.clone());
-    duplicates_set.append(url1.clone());
-    assert_eq!(ServiceEndpoint::Set(duplicates_set.clone()).to_json().unwrap(), "[\"https://iota.org/\"]");
-    duplicates_set.append(url2.clone());
-    duplicates_set.append(url2.clone());
-    duplicates_set.append(url1.clone());
-    assert_eq!(ServiceEndpoint::Set(duplicates_set.clone()).to_json().unwrap(), "[\"https://iota.org/\",\"wss://www.example.com/socketserver/\"]");
-    assert!(duplicates_set.append(url3.clone()));
-    duplicates_set.append(url3.clone());
-    duplicates_set.append(url1.clone());
-    duplicates_set.append(url2.clone());
-    assert_eq!(ser_endpoint_set, "[\"https://iota.org/\",\"wss://www.example.com/socketserver/\",\"did:abc:123#service\"]");
-  }
-
-  #[test]
-  fn test_service_endpoint_serde_fails() {
-    // INVALID: empty
-    assert!(ServiceEndpoint::from_json("\"\"").is_err());
-    assert!(ServiceEndpoint::from_json("").is_err());
-
-    // INVALID: spaces
-    assert!(ServiceEndpoint::from_json("\" \"").is_err());
-    assert!(ServiceEndpoint::from_json("\"\t\"").is_err());
-    assert!(ServiceEndpoint::from_json("\"https:// iota.org/\"").is_err());
-    assert!(ServiceEndpoint::from_json("\"https://\tiota.org/\"").is_err());
-    assert!(ServiceEndpoint::from_json("[\"https:// iota.org/\",\"wss://www.example.com/socketserver/\"]").is_err());
-    assert!(ServiceEndpoint::from_json("[\"https:// iota.org/\",\"wss://www.example.com/socketserver/\"]").is_err());
-
-    // INVALID: wrong map syntax (no keys)
-    assert!(ServiceEndpoint::from_json("{\"https:// iota.org/\",\"wss://www.example.com/socketserver/\"}").is_err());
+    // Set of endpoints
+    {
+      let endpoint: ServiceEndpoint = ServiceEndpoint::Set(OrderedSet::try_from(vec![
+        Url::parse("https://iota.org/").unwrap(),
+        Url::parse("wss://www.example.com/socketserver/").unwrap(),
+        Url::parse("did:abc:123#service").unwrap()
+      ]).unwrap());
+      let service: Service = Service::builder(Object::new())
+        .id(CoreDIDUrl::parse("did:example:123#service").unwrap())
+        .type_("LinkedDomains".to_owned())
+        .service_endpoint(endpoint)
+        .build()
+        .unwrap();
+      let expected = r#"{"id":"did:example:123#service","type":"LinkedDomains","serviceEndpoint":["https://iota.org/","wss://www.example.com/socketserver/","did:abc:123#service"]}"#;
+      assert_eq!(service.to_json().unwrap(), expected);
+      assert_eq!(Service::from_json(expected).unwrap(), service)
+    }
   }
 }
