@@ -21,52 +21,21 @@ pub(crate) use errors::BitSetEncodingError;
 
 pub(self) mod errors {
 
+  use thiserror::Error as DeriveError;
   /// Cause by a failure to encode a Roaring Bitmap.
-  #[derive(Debug)]
+  #[derive(Debug, DeriveError)]
+  #[error("failed to encode roaring bitmap {inner}")]
   pub(crate) struct BitSetEncodingError {
+    #[from]
     inner: std::io::Error,
-  }
-
-  impl std::fmt::Display for BitSetEncodingError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-      write!(f, "failed to encode roaring bitmap {}", self.inner)
-    }
-  }
-
-  impl std::error::Error for BitSetEncodingError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-      self.inner.source()
-    }
-  }
-
-  impl From<std::io::Error> for BitSetEncodingError {
-    fn from(error: std::io::Error) -> Self {
-      Self { inner: error }
-    }
   }
 
   /// Cause by a failure to decode a Roaring Bitmap.
-  #[derive(Debug)]
+  #[derive(Debug, DeriveError)]
+  #[error("failed to decode roaring bitmap {inner}")]
   pub(crate) struct BitSetDecodingError {
+    #[from]
     inner: std::io::Error,
-  }
-
-  impl std::fmt::Display for BitSetDecodingError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-      write!(f, "failed to decode roaring bitmap {}", self.inner)
-    }
-  }
-
-  impl std::error::Error for BitSetDecodingError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-      self.inner.source()
-    }
-  }
-
-  impl From<std::io::Error> for BitSetDecodingError {
-    fn from(error: std::io::Error) -> Self {
-      Self { inner: error }
-    }
   }
 }
 /// A general-purpose compressed bitset.

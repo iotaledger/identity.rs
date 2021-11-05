@@ -6,7 +6,7 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
   #[error("base decoding error")]
-  BaseDecoding, // This is a temporary solution to make this crate work with the new errors from iota-core. 
+  BaseDecoding, // This is a temporary solution to make this crate work with the new errors from iota-core.
   #[error("{0}")]
   CoreError(#[from] identity_core::Error),
   #[error("{0}")]
