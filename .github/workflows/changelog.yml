@@ -18,13 +18,14 @@ jobs:
           echo BRANCHNAME=$BRANCHNAME
       - name: Determine next version
         run: |
-
           updateVersion()
           {
-              [[ $1 =~ ([^0-9]*)([0-9]+) ]] || { echo 'invalid input'; exit 1; }     
-              echo "${BASH_REMATCH[1]}$(( ${BASH_REMATCH[2]} + 1 ))"
+            [[ ${1} =~ ^(.*[^0-9])?([0-9]+)$ ]]  && \
+              [[ ${#BASH_REMATCH[1]} -gt 0 ]] && \
+                printf "%s%0${#BASH_REMATCH[2]}d" "${BASH_REMATCH[1]}" "$((10#${BASH_REMATCH[2]} + 1 ))" || \
+                printf "%0${#BASH_REMATCH[2]}d" "$((10#${BASH_REMATCH[2]} + 1))" || \
+              printf "${1}"
           }
-
 
           if [[ $BRANCHNAME == release/* ]] || [[ $BRANCHNAME == hotfix/* ]]; then
             NEXTVERSION=${BRANCHNAME##*/}
