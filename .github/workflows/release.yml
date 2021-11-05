@@ -16,5 +16,7 @@ jobs:
           BRANCHNAME=$(git rev-parse --abbrev-ref HEAD)
           echo BRANCHNAME=$BRANCHNAME
           echo BRANCHNAME=$BRANCHNAME >> $GITHUB_ENV
+          CURRENT_TAG=$(git describe --exact-match HEAD)
+          echo CURRENT_TAG=$CURRENT_TAG
 
       
