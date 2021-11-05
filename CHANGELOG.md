@@ -1,8 +1,8 @@
 # Changelog
 
-## [--verbose](https://github.com/eike-hass/identity.rs/tree/--verbose) (2021-11-05)
+## [test](https://github.com/eike-hass/identity.rs/tree/test) (2021-11-05)
 
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/0.6.0-dev...--verbose)
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/0.6.0-dev...test)
 
 **Merged pull requests:**
 
