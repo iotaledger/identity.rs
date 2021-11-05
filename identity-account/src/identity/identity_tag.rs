@@ -16,7 +16,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::borrow::Cow;
 
-use crate::error::Result;
+use crate::error::{Error,Result};
 use crate::identity::IdentityId;
 use crate::identity::IdentityName;
 
@@ -74,7 +74,7 @@ impl IdentityTag {
 
   // Decodes an identity tag from a base64-encoded JSON string.
   fn decode(string: &str) -> Result<Self> {
-    let json: Vec<u8> = decode_b64(string)?;
+    let json: Vec<u8> = decode_b64(string).map_err(|_|Error::BaseDecoding)?; //todo: change this once error refactoring in this crate takes place
     let data: ProxyDeserialize = ProxyDeserialize::from_json_slice(&json)?;
 
     Ok(Self {

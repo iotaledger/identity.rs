@@ -16,14 +16,14 @@ use serde::Serialize;
 //use crate::error::Result;
 use crate::utils::decode_b64;
 use crate::utils::encode_b64;
-pub use errors::BitSetDecodingError;
-pub use errors::BitSetEncodingError;
+pub(crate) use errors::BitSetDecodingError;
+pub(crate) use errors::BitSetEncodingError;
 
 pub(self) mod errors {
 
   /// Cause by a failure to encode a Roaring Bitmap.
   #[derive(Debug)]
-  pub struct BitSetEncodingError {
+  pub(crate) struct BitSetEncodingError {
     inner: std::io::Error,
   }
 
@@ -47,7 +47,7 @@ pub(self) mod errors {
 
   /// Cause by a failure to decode a Roaring Bitmap.
   #[derive(Debug)]
-  pub struct BitSetDecodingError {
+  pub(crate) struct BitSetDecodingError {
     inner: std::io::Error,
   }
 
