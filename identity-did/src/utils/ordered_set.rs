@@ -142,10 +142,12 @@ impl<T> OrderedSet<T> {
   #[inline]
   pub fn replace<U>(&mut self, current: &U, update: T) -> bool
   where
-    T: PartialEq + Borrow<U>,
-    U: PartialEq + ?Sized,
+    T: KeyComparable,
+    U: KeyComparable<Key = T::Key>,
   {
-    self.change(update, |item, update| item.borrow() == current || item == update)
+    self.change(update, |item, update| {
+      item.as_key() == current.as_key() || item.as_key() == update.as_key()
+    })
   }
 
   /// Updates an existing value in the `OrderedSet`; returns `true` if the value
@@ -153,9 +155,9 @@ impl<T> OrderedSet<T> {
   #[inline]
   pub fn update(&mut self, update: T) -> bool
   where
-    T: PartialEq,
+    T: KeyComparable,
   {
-    self.change(update, |item, update| item == update)
+    self.change(update, |item, update| item.as_key() == update.as_key())
   }
 
   /// Removes all matching items from the set.
@@ -362,5 +364,78 @@ mod tests {
 
     assert!(oset.contains(&MethodRef::<()>::Refer(did1)));
     assert!(oset.contains(&MethodRef::<()>::Refer(did2)));
+  }
+
+  #[derive(Clone, Copy, PartialEq, Eq)]
+  struct ComparableStruct {
+    key: u8,
+    value: i32,
+  }
+
+  impl KeyComparable for ComparableStruct {
+    type Key = u8;
+
+    fn as_key(&self) -> &Self::Key {
+      &self.key
+    }
+  }
+
+  #[test]
+  fn test_ordered_set_replace() {
+    let mut set = OrderedSet::new();
+
+    // Create two structs with the same key.
+    let cs1 = ComparableStruct { key: 0, value: 10 };
+    let cs2 = ComparableStruct { key: 0, value: 20 };
+
+    // Try replace it with the second.
+    // This should succeed because the keys are equivalent.
+    assert!(set.append(cs1));
+    assert_eq!(set.len(), 1);
+
+    assert!(set.replace(&cs1, cs2));
+    assert_eq!(set.len(), 1);
+    assert_eq!(set.head().unwrap().key, cs2.key);
+    assert_eq!(set.head().unwrap().value, cs2.value);
+  }
+
+  #[test]
+  fn test_ordered_set_replace_all() {
+    let mut set = OrderedSet::new();
+    let cs1 = ComparableStruct { key: 0, value: 10 };
+    let cs2 = ComparableStruct { key: 1, value: 20 };
+    assert!(set.append(cs1));
+    assert!(set.append(cs2));
+    assert_eq!(set.len(), 2);
+
+    // Now replace cs1 with something that has the same key as cs2.
+    // This should replace BOTH cs1 AND cs2.
+    let cs3 = ComparableStruct { key: 1, value: 30 };
+    assert!(set.replace(&cs1, cs3));
+    assert_eq!(set.len(), 1);
+    assert_eq!(set.head().unwrap().key, cs3.key);
+    assert_eq!(set.head().unwrap().value, cs3.value);
+  }
+
+  #[test]
+  fn test_ordered_set_update() {
+    let mut set = OrderedSet::new();
+    let cs1 = ComparableStruct { key: 0, value: 10 };
+    assert!(set.append(cs1));
+    assert_eq!(set.len(), 1);
+
+    // This should update the value of cs1 since the keys are the same.
+    let cs2 = ComparableStruct { key: 0, value: 20 };
+    assert!(set.update(cs2));
+    assert_eq!(set.len(), 1);
+    assert_eq!(set.head().unwrap().key, cs2.key);
+    assert_eq!(set.head().unwrap().value, cs2.value);
+
+    // This should NOT update anything since the key does not match.
+    let cs3 = ComparableStruct { key: 1, value: 20 };
+    assert!(!set.update(cs3));
+    assert_eq!(set.len(), 1);
+    assert_eq!(set.head().unwrap().key, cs2.key);
+    assert_eq!(set.head().unwrap().value, cs2.value);
   }
 }
