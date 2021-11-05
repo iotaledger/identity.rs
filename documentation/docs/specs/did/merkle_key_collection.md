@@ -12,7 +12,7 @@ keywords:
 - Specs
 ---
 
-Version 0.1-draft by Devin Turner, IOTA Foundation
+Version 0.2 by the IOTA Foundation
 
 ## Abstract
 
@@ -20,7 +20,17 @@ This specification describes a protocol for representing large quantities of cry
 
 ## Introduction
 
-The Merkle Key Collection Specification provides authentication and integrity protection to DID Documents without a dependency on any particular Distributed Ledger Technology (DLT).
+Revocation is an unresolved issue in the Self-Sovereign Identity (SSI) space. It is the process of deactivating a Verifiable Credential (VC) as an Issuer, such that any Verifier would recognize it as inactive. While there are clearly defined Decentralized Identifiers (DID) and VC specifications written by W3C, these specifications leave out a standardized revocation mechanism. All SSI projects agree that revocation is an important feature, as such, all of these projects have implemented custom solutions. The most common is credential revocation list, where VCs are stored identifiably on the verifiable data registry (commonly a Distributed Ledger Technology(DLT) such as IOTA) and the status can be determined: active or revoked. An important note here is the "right-to-be-forgotten" rule from the General Data Protection Regulation (GDPR), which prevents Personal Identifiable Information (PII) from being uploaded to an immutable database (such as a DLT), as this can never be completely forgotten. As such, VCs should not be uploaded to an immutable database in any form considered PII, which unfortunately is the case for hashes.
+
+The most elegant approach from other SSI frameworks comes from Hyperledger, using a [Cryptographic Accumulator](https://hyperledger-indy.readthedocs.io/projects/hipe/en/latest/text/0011-cred-revocation/README.html). Explaining the full mechanism is out-of-scope of this document but in short, the Issuer uploads a value to the verifiable data registry which is an accumulation of values that represent VCs. A Holder can prove their VC is part of this accumulation, and therefore not revoked. This is GDPR-compliant and has zero-linkage, meaning that during the verification of the VC no information is leaked that may track the Holder to other verification events. However, the solution has flaws in their tails file, a mapping of random values used for the accumulation to VC indices, which must be downloaded for every verification or cached, which can lead to significant storage or network traffic requirements. In addition, the Issuer has to host this tails file and make it publicly available. 
+
+The easiest and cleanest form of revocation is simply removing the signing key from the Issuer's DID Document. This makes sure the verification procedure of a VC fails as the signing key is no longer found in the Issuer's DID Document. While effective and GDPR-compliant, it does not scale very well as every VC needs to be signed by a different key in order to prevent unintended revocations. With this approach, a single identity would need to generate and publish hundreds or thousands of public keys inside their DID Documents.
+
+To make this approach scalable the framework combines multiple public keys into a single hash which we call the Key Collection. It currently uses a Merkle tree to hash public keys together into one root hash that is published in the DID Document. VCs now have to also include the signing public key and the Proof-of-Inclusion of the public key into the Key Collection in their proof. This Proof-of-Inclusion is a series of hashes that provide the minimum amount of information necessary to recreate the root hash, proving the public key is part of the root hash. This proof can only be constructed in one order, which makes the Proof-of-Inclusion process reveal the index of the public key in the Key Collection. Revocation is now as simple as a single bit flip, indicating that the index inside the Key Collection is revoked. 
+
+## Motivation
+
+Revocation is an unresolved problem within SSI, but is very important to tackle. Currently applied solution are either not GDPR compliant or add resource intense processes. The Merkle Key Collection is our answer for a scalable, GDPR-compliant and cheap solution. 
 
 ## Data Structures
 
@@ -240,7 +250,13 @@ fn encode_public_key(signature: u8, digest: u8, root: &[u8]) -> Vec<u8> {
 
 ## Security Considerations
 
-TODO
+### Linkage
+
+During verification of a VC, the Holders shares the Proof-of-Inclusion with the Verifier, which will be able to deterministicly find the index of the public key inside the Merkle Key Collection. As the public keys are RECOMMENDED to be used only once, it creates a unique identifier that will be linkable between multiple verifications.
+
+### Revocation List Size
+
+As the revocation list is used, the indices might be flipped at more and more random position, reducing the effectiveness of Roaring Bitmaps' compression, resulting in possible large DID Documents.
 
 [//]: # (sources)
 
