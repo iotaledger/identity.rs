@@ -34,7 +34,7 @@ jobs:
             if [[  LATEST_DEV_TAG == '' ]]; then
               NEW_DEV_TAG=dev-1
             else
-              NEW_DEV_TAG=updateVersion $LATEST_DEV_TAG
+              NEW_DEV_TAG=$(updateVersion $LATEST_DEV_TAG)
             fi
             echo NEW_DEV_TAG=$NEW_DEV_TAG
             NEXTVERSION=$NEW_DEV_TAG
