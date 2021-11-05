@@ -18,10 +18,10 @@ jobs:
           echo BRANCHNAME=$BRANCHNAME
       - name: Determine next version
         run: |
-          if [[ $BRANCHNAME == release/* || $BRANCHNAME == hotfix/* ]]; then
+          if [[ $BRANCHNAME == release/* ]] || [[ $BRANCHNAME == hotfix/* ]]; then
             NEXTVERSION=${BRANCHNAME##*/}
           elif [[ $BRANCHNAME == dev ]]; then
-            DEV_TAGS=git tag --sort=committerdate -l dev-*
+            DEV_TAGS=$(git tag --sort=committerdate -l dev-*)
             echo DEV_TAGS=$DEV_TAGS
             LATEST_DEV_TAG=
             echo LATEST_DEV_TAG=$LATEST_DEV_TAG
