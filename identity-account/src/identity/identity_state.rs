@@ -240,20 +240,32 @@ impl IdentityState {
   pub fn authentication(&self) -> Result<&TinyMethod> {
     self
       .methods()
+      .slice(MethodScope::Authentication)
       .iter()
-      .filter(|method| method.is_authentication())
+      .filter_map(|method_ref| self.methods.get(&method_ref.fragment().to_string()))
+      .max_by_key(|method| method.location().integration_generation())
+      .ok_or(Error::MethodNotFound)
+  }
+
+  /// Returns the latest capability invocation method in the state.
+  pub fn capability_invocation(&self) -> Result<&TinyMethod> {
+    self
+      .methods()
+      .slice(MethodScope::CapabilityInvocation)
+      .iter()
+      .filter_map(|method_ref| self.methods.get(&method_ref.fragment().to_string()))
       .max_by_key(|method| method.location().integration_generation())
       .ok_or(Error::MethodNotFound)
   }
 
   /// Returns a key location suitable for the specified `fragment`.
   pub fn key_location(&self, method: MethodType, fragment: String) -> Result<KeyLocation> {
-    Ok(KeyLocation {
+    Ok(KeyLocation::new(
       method,
-      fragment: Fragment::new(fragment),
-      integration_generation: self.integration_generation(),
-      diff_generation: self.diff_generation(),
-    })
+      fragment,
+      self.integration_generation(),
+      self.diff_generation(),
+    ))
   }
 
   // ===========================================================================
@@ -336,7 +348,7 @@ impl IdentityState {
     let private: RemoteKey<'_, T> = RemoteKey::new(self.id, location, store);
 
     // Create the Verification Method identifier
-    let fragment: &str = location.fragment.identifier();
+    let fragment: &str = location.fragment().identifier();
     let method_url: IotaDIDUrl = self.try_did()?.to_url().join(fragment)?;
 
     match location.method() {
@@ -365,18 +377,10 @@ pub enum TinyMethodRef {
 }
 
 impl TinyMethodRef {
-  /// Returns true if the method reference is an authentication method.
-  pub fn is_authentication(&self) -> bool {
-    match self {
-      Self::Embed(inner) => inner.is_authentication(),
-      Self::Refer(_) => false,
-    }
-  }
-
   /// Returns the fragment identifying the Verification Method reference.
   pub fn fragment(&self) -> &Fragment {
     match self {
-      Self::Embed(inner) => &inner.location.fragment,
+      Self::Embed(inner) => inner.location.fragment(),
       Self::Refer(inner) => inner,
     }
   }
@@ -442,15 +446,10 @@ impl TinyMethod {
     self.properties.as_ref()
   }
 
-  /// Returns true if the Verification Method is an internal authentication method.
-  pub fn is_authentication(&self) -> bool {
-    self.location.is_authentication()
-  }
-
   /// Creates a new [VerificationMethod].
   pub fn to_core(&self, did: &IotaDID) -> Result<VerificationMethod> {
     let properties: Object = self.properties.clone().unwrap_or_default();
-    let id: IotaDIDUrl = did.to_url().join(self.location.fragment.identifier())?;
+    let id: IotaDIDUrl = did.to_url().join(self.location.fragment().identifier())?;
 
     VerificationMethod::builder(properties)
       .id(CoreDIDUrl::from(id))
@@ -518,7 +517,7 @@ impl Methods {
   /// Returns a reference to the Verification Method identified by the given
   /// `fragment`.
   pub fn get(&self, fragment: &str) -> Option<&TinyMethod> {
-    self.iter().find(|method| method.location().fragment() == fragment)
+    self.iter().find(|method| method.location().fragment_name() == fragment)
   }
 
   /// Returns a reference to the Verification Method identified by the given
@@ -533,7 +532,7 @@ impl Methods {
 
   /// Returns true if the map contains a method with the given `fragment`.
   pub fn contains(&self, fragment: &str) -> bool {
-    self.iter().any(|method| method.location().fragment() == fragment)
+    self.iter().any(|method| method.location().fragment_name() == fragment)
   }
 
   /// Adds a new method to the map - no validation is performed.

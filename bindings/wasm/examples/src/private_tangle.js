@@ -23,7 +23,7 @@ async function createIdentityPrivateTangle(restURL, networkName) {
     const doc = new Document(key, network.toString());
 
     // Sign the DID Document with the generated key.
-    doc.sign(key);
+    doc.signSelf(key, doc.defaultSigningMethod().id.toString());
 
     // Create a client configuration and set the custom network.
     const config = new Config();

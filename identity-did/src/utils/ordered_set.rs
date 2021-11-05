@@ -75,7 +75,7 @@ impl<T> OrderedSet<T> {
     self.0.last()
   }
 
-  /// Returns a mutable referece the last element in the set, or `None` if the
+  /// Returns a mutable reference the last element in the set, or `None` if the
   /// set is empty.
   #[inline]
   pub fn tail_mut(&mut self) -> Option<&mut T> {

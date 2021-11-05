@@ -58,6 +58,8 @@ pub trait DID: Clone + PartialEq + Eq + PartialOrd + Ord + Hash + FromStr + TryF
 
   /// Constructs a [`DIDUrl`] by attempting to append a string representing a path, query, and/or
   /// fragment to this [`DID`].
+  ///
+  /// See [`DIDUrl::join`].
   fn join(self, value: impl AsRef<str>) -> Result<DIDUrl<Self>, DIDError>
   where
     Self: Sized;

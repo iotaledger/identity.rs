@@ -103,14 +103,55 @@ module.exports = {
           items:['tutorials/validate_university_degree']
         },
         {
-            type: 'category',
-            label: 'Specifications',
-            collapsed: true,
-            items: [
-                'specs/overview',
-                'specs/iota_did_method_spec',
-                'specs/merkle_key_collection',
-            ],
+          type: 'category',
+          label: 'Specifications',
+          collapsed: true,
+          items: [
+            {
+              type: 'category',
+              label: 'IOTA DID',
+              collapsed: true,
+              items: [
+                'specs/did/overview',
+                'specs/did/iota_did_method_spec',
+                'specs/did/merkle_key_collection',
+              ]
+            },
+            {
+              type: 'category',
+              label: 'IOTA DIDComm',
+              collapsed: true,
+              items: [
+                'specs/didcomm/overview',
+                {
+                  type: 'category',
+                  label: 'Protocols',
+                  collapsed: true,
+                  items: [
+                    'specs/didcomm/protocols/connection',
+                    'specs/didcomm/protocols/authentication',
+                    'specs/didcomm/protocols/presentation',
+                    'specs/didcomm/protocols/issuance',
+                    'specs/didcomm/protocols/signing',
+                    'specs/didcomm/protocols/revocation',
+                    'specs/didcomm/protocols/revocation-options',
+                    'specs/didcomm/protocols/post',
+                    'specs/didcomm/protocols/termination',
+                  ]
+                },
+                {
+                  type: 'category',
+                  label: 'Resources',
+                  collapsed: true,
+                  items: [
+                    'specs/didcomm/resources/credential-info',
+                    'specs/didcomm/resources/problem-reports',
+                  ]
+                },
+                'specs/didcomm/CHANGELOG',
+              ]
+            },
+          ],
         },
         'glossary',
         'contribute',

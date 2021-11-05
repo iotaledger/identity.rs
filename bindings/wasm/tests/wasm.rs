@@ -119,9 +119,11 @@ fn test_document_new() {
   let keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
   let mut document: WasmDocument = WasmDocument::new(&keypair, None, None).unwrap();
 
-  document.sign(&keypair).unwrap();
+  document
+    .sign_self(&keypair, document.default_signing_method().unwrap().id().to_string())
+    .unwrap();
 
-  assert!(document.verify());
+  assert!(document.verify_self_signed());
 }
 
 #[test]

@@ -17,9 +17,6 @@
   // clippy::missing_errors_doc,
 )]
 
-#[macro_use]
-extern crate serde;
-
 pub mod envelope;
 pub mod error;
 pub mod message;

@@ -2,8 +2,8 @@
 
 > This is the beta version of the official WASM bindings for [IOTA Identity](https://github.com/iotaledger/identity.rs).
 
-## [API Reference](https://identity.docs.iota.org/docs/libraries/wasm/api_reference)
-## [Examples](./examples/README.md)
+## [API Reference](https://wiki.iota.org/identity.rs/libraries/wasm/api_reference)
+## [Examples](https://github.com/iotaledger/identity.rs/blob/main/bindings/wasm/examples/README.md)
 
 ## Install the library:
 
@@ -53,12 +53,12 @@ const identity = require('@iota/identity-wasm/node')
 // Generate a new KeyPair
 const key = new identity.KeyPair(identity.KeyType.Ed25519)
 
-// Create a new DID Document with the KeyPair as the default authentication method
+// Create a new DID Document with the KeyPair as the default verification method
 const doc = new identity.Document(key)
 // const doc = new identity.Document(key, "dev") // if using the devnet
 
 // Sign the DID Document with the private key
-doc.sign(key)
+doc.signSelf(key, doc.defaultSigningMethod().id.toString());
 
 // Create a default client instance for the mainnet
 const config = identity.Config.fromNetwork(identity.Network.mainnet())
@@ -139,7 +139,7 @@ identity.init().then(() => {
   const key = new identity.KeyPair(identity.KeyType.Ed25519)
   const doc = new identity.Document(key)
   // const doc = new identity.Document(key, "dev") // if using the devnet
-  console.log("Key Pair", key)
+  console.log("Key Pair: ", key)
   console.log("DID Document: ", doc)
 });
 
@@ -150,7 +150,7 @@ identity.init().then(() => {
   const key = new identity.KeyPair(identity.KeyType.Ed25519)
   const doc = new identity.Document(key)
   // const doc = new identity.Document(key, "dev") // if using the devnet
-  console.log("Key Pair", key)
+  console.log("Key Pair: ", key)
   console.log("DID Document: ", doc)
 })()
 
