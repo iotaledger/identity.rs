@@ -1,5 +1,9 @@
 # Changelog
 
+## [dev-3](https://github.com/eike-hass/identity.rs/tree/dev-3) (2021-11-05)
+
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/dev-2...dev-3)
+
 ## [dev-2](https://github.com/eike-hass/identity.rs/tree/dev-2) (2021-11-05)
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/dev-1...dev-2)
