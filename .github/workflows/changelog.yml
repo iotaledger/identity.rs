@@ -20,29 +20,27 @@ jobs:
       - name: Determine next version
         run: |
           BRANCHNAME=${{ env.BRANCHNAME }}
-          echo BRANCHNAME=$BRANCHNAME
-          # updateVersion()
-          # {
-          #   [[ ${1} =~ ^(.*[^0-9])?([0-9]+)$ ]]  && \
-          #     [[ ${#BASH_REMATCH[1]} -gt 0 ]] && \
-          #       printf "%s%0${#BASH_REMATCH[2]}d" "${BASH_REMATCH[1]}" "$((10#${BASH_REMATCH[2]} + 1 ))" || \
-          #       printf "%0${#BASH_REMATCH[2]}d" "$((10#${BASH_REMATCH[2]} + 1))" || \
-          #     printf "${1}"
-          # }
+          updateVersion()
+          {
+            [[ ${1} =~ ^(.*[^0-9])?([0-9]+)$ ]]  && \
+              [[ ${#BASH_REMATCH[1]} -gt 0 ]] && \
+                printf "%s%0${#BASH_REMATCH[2]}d" "${BASH_REMATCH[1]}" "$((10#${BASH_REMATCH[2]} + 1 ))" || \
+                printf "%0${#BASH_REMATCH[2]}d" "$((10#${BASH_REMATCH[2]} + 1))" || \
+              printf "${1}"
+          }
 
           if [[ $BRANCHNAME == release/* || $BRANCHNAME == hotfix/* ]]; then
             NEXTVERSION=${BRANCHNAME##*/}
           elif [[ $BRANCHNAME == dev ]]; then
-            NEXTVERSION=test
-            # LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "dev-*" | head -n 1)
-            # echo LATEST_DEV_TAG=$LATEST_DEV_TAG
-            # if [[  LATEST_DEV_TAG == '' ]]; then
-            #   NEW_DEV_TAG=dev-1
-            # else
-            #   NEW_DEV_TAG=$(updateVersion $LATEST_DEV_TAG)
-            # fi
-            # echo NEW_DEV_TAG=$NEW_DEV_TAG
-            # NEXTVERSION=$NEW_DEV_TAG
+            LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "dev-*" | head -n 1)
+            echo LATEST_DEV_TAG=$LATEST_DEV_TAG
+            if [[  LATEST_DEV_TAG == '' ]]; then
+              NEW_DEV_TAG=dev-1
+            else
+              NEW_DEV_TAG=$(updateVersion $LATEST_DEV_TAG)
+            fi
+            echo NEW_DEV_TAG=$NEW_DEV_TAG
+            NEXTVERSION=$NEW_DEV_TAG
           fi
           echo NEXTVERSION=$NEXTVERSION
           echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
