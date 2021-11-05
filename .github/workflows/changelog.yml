@@ -45,19 +45,23 @@ jobs:
             echo NEW_DEV_TAG=$NEW_DEV_TAG
             NEXTVERSION=$NEW_DEV_TAG
           fi
+
           echo NEXTVERSION=$NEXTVERSION
           echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
       - name: Prepare repository
         run: |
           GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
-          GITHUB_REPOSITORY_PROJEKT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
-          echo GITHUB_REPOSITORY=$GITHUB_REPOSITORY
+          GITHUB_REPOSITORY_PROJECT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
+
           echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER
-          echo GITHUB_REPOSITORY_PROJEKT=$GITHUB_REPOSITORY_PROJEKT
+          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT
+
+          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER >> $GITHUB_ENV
+          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT >> $GITHUB_ENV
       - name: Run github-changelog-generator
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
-          args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --no-author --future-release ${{ env.NEXTVERSION }} --verbose
+          args: --user ${{ env.GITHUB_REPOSITORY_USER }} --project ${{ env.GITHUB_REPOSITORY_PROJECT }} --token ${{ secrets.GITHUB_TOKEN }} --no-author --future-release ${{ env.NEXTVERSION }} --verbose
       - name: Log CHANGELOG.md
         run: cat CHANGELOG.md
       - name: Commit changes
