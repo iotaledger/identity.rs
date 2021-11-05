@@ -49,7 +49,6 @@ jobs:
           echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
       - name: Prepare repository
         run: |
-          GITHUB_REPOSITORY=${env.GITHUB_REPOSITORY}
           GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
           GITHUB_REPOSITORY_PROJEKT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
           echo GITHUB_REPOSITORY=$GITHUB_REPOSITORY
