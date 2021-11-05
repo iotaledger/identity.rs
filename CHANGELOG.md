@@ -1,32 +1,8 @@
 # Changelog
 
-## [dev-7](https://github.com/eike-hass/identity.rs/tree/dev-7) (2021-11-05)
+## [v0.6.0](https://github.com/eike-hass/identity.rs/tree/v0.6.0) (2021-11-05)
 
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/dev-6...dev-7)
-
-## [dev-6](https://github.com/eike-hass/identity.rs/tree/dev-6) (2021-11-05)
-
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/dev-5...dev-6)
-
-## [dev-5](https://github.com/eike-hass/identity.rs/tree/dev-5) (2021-11-05)
-
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/dev-4...dev-5)
-
-## [dev-4](https://github.com/eike-hass/identity.rs/tree/dev-4) (2021-11-05)
-
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/dev-3...dev-4)
-
-## [dev-3](https://github.com/eike-hass/identity.rs/tree/dev-3) (2021-11-05)
-
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/dev-2...dev-3)
-
-## [dev-2](https://github.com/eike-hass/identity.rs/tree/dev-2) (2021-11-05)
-
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/dev-1...dev-2)
-
-## [dev-1](https://github.com/eike-hass/identity.rs/tree/dev-1) (2021-11-05)
-
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/0.5.0...dev-1)
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/0.5.0...v0.6.0)
 
 **Merged pull requests:**
 
