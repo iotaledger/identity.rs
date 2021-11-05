@@ -50,8 +50,11 @@ jobs:
       - name: Prepare repository
         run: |
           GITHUB_REPOSITORY=${{env.GITHUB_REPOSITORY}}
-          PROJECT_ARR=${GITHUB_REPOSITORY//// }
-          echo PROJECT_ARR=$PROJECT_ARR
+          GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
+          GITHUB_REPOSITORY_PROJEKT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
+          echo GITHUB_REPOSITORY=$GITHUB_REPOSITORY
+          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER
+          echo GITHUB_REPOSITORY_PROJEKT=$GITHUB_REPOSITORY_PROJEKT
       - name: Run github-changelog-generator
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
