@@ -269,10 +269,7 @@ mod test {
 
       unsafe {
         new.as_document_mut().capability_invocation_mut().clear();
-        new
-          .as_document_mut()
-          .capability_invocation_mut()
-          .append(signing_method.into());
+        new.as_document_mut().capability_invocation_mut().append(signing_method);
       }
 
       new.set_updated(Timestamp::now_utc());

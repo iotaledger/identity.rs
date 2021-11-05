@@ -14,7 +14,7 @@ use serde::Deserialize;
 use crate::did::CoreDIDUrl;
 use crate::error::Error;
 use crate::error::Result;
-use crate::utils::DIDKey;
+use crate::utils::KeyComparable;
 use crate::verification::MethodQuery;
 
 /// An ordered set backed by a `Vec<T>`.
@@ -22,7 +22,7 @@ use crate::verification::MethodQuery;
 /// Note: Ordering is based on insert order and **not** [`Ord`].
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
-#[serde(bound(deserialize = "T: PartialEq + Deserialize<'de>"), try_from = "Vec<T>")]
+#[serde(bound(deserialize = "T: KeyComparable + Deserialize<'de>"), try_from = "Vec<T>")]
 pub struct OrderedSet<T>(Vec<T>);
 
 impl<T> OrderedSet<T> {
@@ -103,19 +103,19 @@ impl<T> OrderedSet<T> {
   /// Returns `true` if the `OrderedSet` contains the given value.
   pub fn contains<U>(&self, item: &U) -> bool
   where
-    T: AsRef<U>,
-    U: PartialEq + ?Sized,
+    T: KeyComparable,
+    U: KeyComparable<Key = T::Key>,
   {
-    self.0.iter().any(|other| other.as_ref() == item)
+    self.0.iter().any(|other| other.as_key() == item.as_key())
   }
 
   /// Adds a new value to the end of the `OrderedSet`; returns `true` if the
   /// value was successfully added.
   pub fn append(&mut self, item: T) -> bool
   where
-    T: PartialEq,
+    T: KeyComparable,
   {
-    if self.0.contains(&item) {
+    if self.contains(&item) {
       false
     } else {
       self.0.push(item);
@@ -127,9 +127,9 @@ impl<T> OrderedSet<T> {
   /// value was successfully added.
   pub fn prepend(&mut self, item: T) -> bool
   where
-    T: PartialEq,
+    T: KeyComparable,
   {
-    if self.0.contains(&item) {
+    if self.contains(&item) {
       false
     } else {
       self.0.insert(0, item);
@@ -162,10 +162,10 @@ impl<T> OrderedSet<T> {
   #[inline]
   pub fn remove<U>(&mut self, item: &U)
   where
-    T: PartialEq + Borrow<U>,
-    U: PartialEq + ?Sized,
+    T: KeyComparable,
+    U: KeyComparable<Key = T::Key>,
   {
-    self.0.retain(|this| this.borrow() != item);
+    self.0.retain(|this| this.borrow().as_key() != item.as_key());
   }
 
   fn change<F>(&mut self, data: T, f: F) -> bool
@@ -204,16 +204,16 @@ impl<T> Deref for OrderedSet<T> {
   }
 }
 
-impl<T> Default for OrderedSet<T> {
+impl<T: KeyComparable> Default for OrderedSet<T> {
   #[inline]
   fn default() -> Self {
     Self::new()
   }
 }
 
-impl<T> FromIterator<T> for OrderedSet<T>
+impl<T: KeyComparable> FromIterator<T> for OrderedSet<T>
 where
-  T: PartialEq,
+  T: KeyComparable,
 {
   fn from_iter<I>(iter: I) -> Self
   where
@@ -234,7 +234,7 @@ where
 
 impl<T> TryFrom<Vec<T>> for OrderedSet<T>
 where
-  T: PartialEq,
+  T: KeyComparable,
 {
   type Error = Error;
 
@@ -251,7 +251,7 @@ where
   }
 }
 
-impl<T> OrderedSet<DIDKey<T>>
+impl<T> OrderedSet<T>
 where
   T: AsRef<CoreDIDUrl>,
 {
@@ -261,11 +261,7 @@ where
   {
     let query: MethodQuery<'query> = query.into();
 
-    self
-      .0
-      .iter()
-      .find(|method| query.matches(method.as_did_url()))
-      .map(|method| &**method)
+    self.0.iter().find(|method| query.matches(method.as_ref()))
   }
 
   pub(crate) fn query_mut<'query, Q>(&mut self, query: Q) -> Option<&mut T>
@@ -274,11 +270,7 @@ where
   {
     let query: MethodQuery<'query> = query.into();
 
-    self
-      .0
-      .iter_mut()
-      .find(|method| query.matches(method.as_did_url()))
-      .map(|method| &mut **method)
+    self.0.iter_mut().find(|method| query.matches(method.as_ref()))
   }
 }
 
@@ -287,11 +279,26 @@ mod tests {
   use super::*;
 
   use crate::did::CoreDIDUrl;
-  use crate::utils::DIDKey;
   use crate::verification::MethodRef;
 
+  impl KeyComparable for &str {
+    type Key = str;
+
+    fn as_key(&self) -> &Self::Key {
+      self
+    }
+  }
+
+  impl KeyComparable for u8 {
+    type Key = u8;
+
+    fn as_key(&self) -> &Self::Key {
+      self
+    }
+  }
+
   #[test]
-  fn test_works() {
+  fn test_ordered_set_works() {
     let mut set = OrderedSet::new();
 
     set.append("a");
@@ -349,14 +356,11 @@ mod tests {
     let did1: CoreDIDUrl = CoreDIDUrl::parse("did:example:123").unwrap();
     let did2: CoreDIDUrl = CoreDIDUrl::parse("did:example:456").unwrap();
 
-    let source: Vec<DIDKey<MethodRef>> = vec![
-      DIDKey::new(MethodRef::Refer(did1.clone())),
-      DIDKey::new(MethodRef::Refer(did2.clone())),
-    ];
+    let source: Vec<MethodRef> = vec![MethodRef::Refer(did1.clone()), MethodRef::Refer(did2.clone())];
 
-    let oset: OrderedSet<DIDKey<MethodRef>> = source.into_iter().collect();
+    let oset: OrderedSet<MethodRef> = source.into_iter().collect();
 
-    assert!(oset.contains(&MethodRef::Refer(did1)));
-    assert!(oset.contains(&MethodRef::Refer(did2)));
+    assert!(oset.contains(&MethodRef::<()>::Refer(did1)));
+    assert!(oset.contains(&MethodRef::<()>::Refer(did2)));
   }
 }

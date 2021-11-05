@@ -80,7 +80,7 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
 
     unsafe {
       new.as_document_mut().authentication_mut().clear();
-      new.as_document_mut().authentication_mut().append(authentication.into());
+      new.as_document_mut().authentication_mut().append(authentication);
     }
 
     new.set_updated(Timestamp::now_utc());
