@@ -49,7 +49,7 @@ jobs:
           echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
       - name: Prepare repository
         run: |
-          GITHUB_REPOSITORY=${{env.GITHUB_REPOSITORY}}
+          GITHUB_REPOSITORY=$env.GITHUB_REPOSITORY
           GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
           GITHUB_REPOSITORY_PROJEKT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
           echo GITHUB_REPOSITORY=$GITHUB_REPOSITORY
@@ -58,7 +58,7 @@ jobs:
       - name: Run github-changelog-generator
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
-          args: --no-author --future-release ${{ env.NEXTVERSION }} --verbose
+          args: --user eike-hass --project identity.rs --token ${{ secrets.GITHUB_TOKEN }} --no-author --future-release ${{ env.NEXTVERSION }} --verbose
       - name: Log CHANGELOG.md
         run: cat CHANGELOG.md
       - name: Commit changes
