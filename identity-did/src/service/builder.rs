@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
-use identity_core::common::Url;
 
 use crate::did::CoreDIDUrl;
 use crate::error::Result;
-use crate::service::{Service, ServiceEndpoint};
+use crate::service::Service;
+use crate::service::ServiceEndpoint;
 
 /// A `ServiceBuilder` is used to generate a customized `Service`.
 #[derive(Clone, Debug, Default)]
@@ -57,6 +57,8 @@ impl<T> ServiceBuilder<T> {
 
 #[cfg(test)]
 mod tests {
+  use identity_core::common::Url;
+
   use super::*;
 
   #[test]

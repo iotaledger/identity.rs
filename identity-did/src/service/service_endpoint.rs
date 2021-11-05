@@ -21,8 +21,8 @@ use crate::utils::OrderedSet;
 pub enum ServiceEndpoint {
   One(Url),
   Set(OrderedSet<Url>),
-  // TODO: Enforce set is non-empty?
-  // TODO: Should this support an ordered map and nested maps which the specification allows?
+  /* TODO: Enforce set is non-empty?
+   * TODO: Should this support an ordered map and nested maps which the specification allows? */
 }
 
 impl From<Url> for ServiceEndpoint {
@@ -50,7 +50,8 @@ impl Display for ServiceEndpoint {
 #[cfg(test)]
 mod tests {
   use identity_core::common::Url;
-  use identity_core::convert::{FromJson, ToJson};
+  use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
 
   use crate::service::ServiceEndpoint;
   use crate::utils::OrderedSet;
@@ -89,49 +90,62 @@ mod tests {
     assert!(set.append(url2.clone()));
     let endpoint_set: ServiceEndpoint = ServiceEndpoint::Set(set.clone());
     let ser_endpoint_set: String = endpoint_set.to_json().unwrap();
-    assert_eq!(ser_endpoint_set, "[\"https://iota.org/\",\"wss://www.example.com/socketserver/\"]");
+    assert_eq!(
+      ser_endpoint_set,
+      "[\"https://iota.org/\",\"wss://www.example.com/socketserver/\"]"
+    );
     assert_eq!(endpoint_set, ServiceEndpoint::from_json(&ser_endpoint_set).unwrap());
     // Three elements.
     assert!(set.append(url3.clone()));
     let endpoint_set: ServiceEndpoint = ServiceEndpoint::Set(set.clone());
     let ser_endpoint_set: String = endpoint_set.to_json().unwrap();
-    assert_eq!(ser_endpoint_set, "[\"https://iota.org/\",\"wss://www.example.com/socketserver/\",\"did:abc:123#service\"]");
+    assert_eq!(
+      ser_endpoint_set,
+      "[\"https://iota.org/\",\"wss://www.example.com/socketserver/\",\"did:abc:123#service\"]"
+    );
     assert_eq!(endpoint_set, ServiceEndpoint::from_json(&ser_endpoint_set).unwrap());
 
-    // VALID: Set ignore duplicates.
+    // VALID: Set ignores duplicates.
     let mut duplicates_set: OrderedSet<Url> = OrderedSet::new();
     duplicates_set.append(url1.clone());
     duplicates_set.append(url1.clone());
-    assert_eq!(ServiceEndpoint::Set(duplicates_set.clone()).to_json().unwrap(), "[\"https://iota.org/\"]");
+    assert_eq!(
+      ServiceEndpoint::Set(duplicates_set.clone()).to_json().unwrap(),
+      "[\"https://iota.org/\"]"
+    );
     duplicates_set.append(url2.clone());
     duplicates_set.append(url2.clone());
     duplicates_set.append(url1.clone());
-    assert_eq!(ServiceEndpoint::Set(duplicates_set.clone()).to_json().unwrap(), "[\"https://iota.org/\",\"wss://www.example.com/socketserver/\"]");
+    assert_eq!(
+      ServiceEndpoint::Set(duplicates_set.clone()).to_json().unwrap(),
+      "[\"https://iota.org/\",\"wss://www.example.com/socketserver/\"]"
+    );
     assert!(duplicates_set.append(url3.clone()));
-    duplicates_set.append(url3.clone());
-    duplicates_set.append(url1.clone());
-    duplicates_set.append(url2.clone());
-    assert_eq!(ser_endpoint_set, "[\"https://iota.org/\",\"wss://www.example.com/socketserver/\",\"did:abc:123#service\"]");
+    duplicates_set.append(url3);
+    duplicates_set.append(url1);
+    duplicates_set.append(url2);
+    assert_eq!(
+      ser_endpoint_set,
+      "[\"https://iota.org/\",\"wss://www.example.com/socketserver/\",\"did:abc:123#service\"]"
+    );
   }
 
   #[test]
   fn test_service_endpoint_serde_fails() {
     // INVALID: empty
-    assert!(ServiceEndpoint::from_json("\"\"").is_err());
     assert!(ServiceEndpoint::from_json("").is_err());
+    assert!(ServiceEndpoint::from_json("\"\"").is_err());
 
     // INVALID: spaces
     assert!(ServiceEndpoint::from_json("\" \"").is_err());
     assert!(ServiceEndpoint::from_json("\"\t\"").is_err());
     assert!(ServiceEndpoint::from_json("\"https:// iota.org/\"").is_err());
-    assert!(ServiceEndpoint::from_json("\"https://\tiota.org/\"").is_err());
-    assert!(ServiceEndpoint::from_json("[\"https:// iota.org/\",\"wss://www.example.com/socketserver/\"]").is_err());
-    assert!(ServiceEndpoint::from_json("[\"https:// iota.org/\",\"wss://www.example.com/socketserver/\"]").is_err());
+    assert!(ServiceEndpoint::from_json("[\"https://iota.org/\",\"wss://www.example.com /socketserver/\"]").is_err());
 
     // INVALID: duplicate keys
     assert!(ServiceEndpoint::from_json("[\"https://iota.org/\",\"https://iota.org/\"]").is_err());
     // INVALID: duplicate keys when normalised
-    assert!(ServiceEndpoint::from_json("[\"https://iota.org/a/b/b/b\",\"https://iota.org/a/b/\"]").is_err());
+    assert!(ServiceEndpoint::from_json("[\"https://iota.org/a/./b/../b/.\",\"https://iota.org/a/b/\"]").is_err());
 
     // INVALID: wrong map syntax (no keys)
     assert!(ServiceEndpoint::from_json("{\"https:// iota.org/\",\"wss://www.example.com/socketserver/\"}").is_err());

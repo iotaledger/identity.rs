@@ -317,7 +317,8 @@ mod test {
   use crate::did::DID;
   use identity_core::common::Value;
 
-  use crate::service::{ServiceBuilder, ServiceEndpoint};
+  use crate::service::ServiceBuilder;
+  use crate::service::ServiceEndpoint;
   use crate::verification::MethodBuilder;
   use crate::verification::MethodData;
   use crate::verification::MethodType;

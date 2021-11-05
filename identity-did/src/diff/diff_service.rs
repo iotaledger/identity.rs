@@ -2,17 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::common::Object;
-use identity_core::common::Url;
+use identity_core::convert::FromJson;
+use identity_core::convert::ToJson;
 use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
 use serde::Deserialize;
 use serde::Serialize;
-use identity_core::convert::{FromJson, ToJson};
 
 use crate::did::CoreDIDUrl;
-use crate::service::{Service, ServiceEndpoint};
+use crate::service::Service;
+use crate::service::ServiceEndpoint;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct DiffService<T = Object>
@@ -136,7 +137,8 @@ impl Diff for ServiceEndpoint {
   type Type = DiffString;
 
   fn diff(&self, other: &Self) -> identity_core::diff::Result<Self::Type> {
-    self.to_json()
+    self
+      .to_json()
       .map_err(identity_core::diff::Error::diff)?
       .diff(&other.to_string())
   }
@@ -154,9 +156,7 @@ impl Diff for ServiceEndpoint {
   }
 
   fn into_diff(self) -> identity_core::diff::Result<Self::Type> {
-    self.to_json()
-      .map_err(identity_core::diff::Error::diff)?
-      .into_diff()
+    self.to_json().map_err(identity_core::diff::Error::diff)?.into_diff()
   }
 }
 
@@ -164,6 +164,7 @@ impl Diff for ServiceEndpoint {
 mod test {
   use super::*;
   use identity_core::common::Object;
+  use identity_core::common::Url;
 
   fn controller() -> CoreDIDUrl {
     "did:example:1234".parse().unwrap()
@@ -212,17 +213,45 @@ mod test {
   }
 
   #[test]
-  fn test_service_endpoint() {
+  fn test_service_endpoint_one() {
     let service = service();
     let mut new = service.clone();
     let new_url = "did:test:1234".to_string();
-    *new.service_endpoint_mut() = Url::parse(new_url.clone()).unwrap().into();
+    *new.service_endpoint_mut() = Url::parse(new_url).unwrap().into();
 
     let diff = service.diff(&new).unwrap();
     assert!(diff.id.is_none());
     assert!(diff.properties.is_none());
     assert!(diff.type_.is_none());
-    assert_eq!(diff.service_endpoint, Some(DiffString(Some(new_url))));
+    assert_eq!(
+      diff.service_endpoint,
+      Some(DiffString(Some("\"did:test:1234\"".to_owned())))
+    );
+    let merge = service.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_service_endpoint_set() {
+    let service = service();
+
+    let mut new = service.clone();
+    let new_url_set = vec![
+      Url::parse("https://example.com/").unwrap(),
+      Url::parse("did:test:1234").unwrap(),
+    ];
+    *new.service_endpoint_mut() = ServiceEndpoint::Set(new_url_set.try_into().unwrap());
+
+    let diff = service.diff(&new).unwrap();
+    assert!(diff.id.is_none());
+    assert!(diff.properties.is_none());
+    assert!(diff.type_.is_none());
+    assert_eq!(
+      diff.service_endpoint,
+      Some(DiffString(Some(
+        r#"["https://example.com/","did:test:1234"]"#.to_owned()
+      )))
+    );
     let merge = service.merge(diff).unwrap();
     assert_eq!(merge, new);
   }

@@ -111,13 +111,15 @@ where
 
 #[cfg(test)]
 mod tests {
-  use identity_core::common::{Object, Url};
   use crate::did::CoreDIDUrl;
   use crate::service::Service;
+  use identity_core::common::Object;
+  use identity_core::common::Url;
 
   use crate::service::service::ServiceEndpoint;
   use crate::utils::OrderedSet;
-  use identity_core::convert::{FromJson, ToJson};
+  use identity_core::convert::FromJson;
+  use identity_core::convert::ToJson;
 
   #[test]
   fn test_service_serde() {
@@ -136,11 +138,14 @@ mod tests {
 
     // Set of endpoints
     {
-      let endpoint: ServiceEndpoint = ServiceEndpoint::Set(OrderedSet::try_from(vec![
-        Url::parse("https://iota.org/").unwrap(),
-        Url::parse("wss://www.example.com/socketserver/").unwrap(),
-        Url::parse("did:abc:123#service").unwrap()
-      ]).unwrap());
+      let endpoint: ServiceEndpoint = ServiceEndpoint::Set(
+        OrderedSet::try_from(vec![
+          Url::parse("https://iota.org/").unwrap(),
+          Url::parse("wss://www.example.com/socketserver/").unwrap(),
+          Url::parse("did:abc:123#service").unwrap(),
+        ])
+        .unwrap(),
+      );
       let service: Service = Service::builder(Object::new())
         .id(CoreDIDUrl::parse("did:example:123#service").unwrap())
         .type_("LinkedDomains".to_owned())

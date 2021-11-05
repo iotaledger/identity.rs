@@ -233,7 +233,8 @@ fn dereference_primary(document: CoreDocument, mut did_url: CoreDIDUrl) -> Resul
       // 1.2. Execute the Service Endpoint Construction algorithm.
       .map(|endpoint| match endpoint {
         ServiceEndpoint::One(url) => service_endpoint_ctor(did_url, url),
-        ServiceEndpoint::Set(_) => Err(Error::InvalidServiceProtocol), // TODO: support dereferencing service endpoint sets? Dereferencing spec does not define it.
+        // TODO: support dereferencing service endpoint sets? Dereferencing spec does not define it.
+        ServiceEndpoint::Set(_) => Err(Error::InvalidResolutionService),
       })
       .transpose()?
       // 1.3. Return the output service endpoint URL.
@@ -326,7 +327,7 @@ fn service_endpoint_ctor(did: CoreDIDUrl, url: &Url) -> Result<Url> {
 
   // The input service endpoint URL MUST be an HTTP(S) URL.
   if url.scheme() != "https" {
-    return Err(Error::InvalidServiceProtocol);
+    return Err(Error::InvalidResolutionService);
   }
 
   // 1. Initialize a string output service endpoint URL to the value of
