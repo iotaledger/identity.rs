@@ -61,7 +61,14 @@ jobs:
       - name: Run github-changelog-generator
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
-          args: --user ${{ env.GITHUB_REPOSITORY_USER }} --project ${{ env.GITHUB_REPOSITORY_PROJECT }} --token ${{ secrets.GITHUB_TOKEN }} --no-author --future-release ${{ env.NEXTVERSION }} --exclude-tags-regex "dev-\d{1,}" --verbose
+          args: >
+            --user ${{ env.GITHUB_REPOSITORY_USER }}
+            --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
+            --token ${{ secrets.GITHUB_TOKEN }} 
+            --no-author 
+            --future-release ${{ env.NEXTVERSION }} 
+            --exclude-tags-regex "dev-\d{1,}" 
+            --verbose
       - name: Log CHANGELOG.md
         run: cat CHANGELOG.md
       - name: Commit changes
