@@ -33,14 +33,12 @@ pub enum Error {
   /// Caused by a failure to decode multibase-encoded data.
   #[error("Failed to decode multibase data: {0}")]
   DecodeMultibase(#[from] multibase::Error),
+  /// Caused by attempting to perform an invalid diff operation.
   #[error("Invalid Document Diff: {0}")]
   InvalidDiff(#[from] identity_diff::Error),
   /// Caused by attempting to parse an invalid `Url`.
   #[error("Invalid Url: {0}")]
   InvalidUrl(#[from] url::ParseError),
-  /// Caused by attempting to parse an invalid `Timestamp`.
-  #[error("Invalid Timestamp: {0}")]
-  InvalidTimestamp(#[from] chrono::ParseError),
   /// Raised by a validation attempt against an invalid DID proof.
   #[error("Invalid Proof Value: {0}")]
   InvalidProofValue(&'static str),
