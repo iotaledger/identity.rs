@@ -50,7 +50,7 @@ jobs:
       - name: Run github-changelog-generator
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
-          args: --user ${${{ env.GITHUB_REPOSITORY }}//// }[0] --project ${${{ env.GITHUB_REPOSITORY }}//// }[1] --token ${{ secrets.GITHUB_TOKEN }} --no-author --future-release ${{ env.NEXTVERSION }} --verbose
+          args: --user ${{ ${env.GITHUB_REPOSITORY//// }[0] }} --project ${{ ${env.GITHUB_REPOSITORY//// }[1] }} --token ${{ secrets.GITHUB_TOKEN }} --no-author --future-release ${{ env.NEXTVERSION }} --verbose
       - name: Log CHANGELOG.md
         run: cat CHANGELOG.md
       - name: Commit changes
