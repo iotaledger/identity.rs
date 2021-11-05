@@ -37,7 +37,9 @@ mod test {
   fn test_brotli() {
     let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
-    document.sign_self(keypair.private(), &document.default_signing_method().unwrap().id()).unwrap();
+    document
+      .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
+      .unwrap();
 
     let data = document.to_json().unwrap();
     let compressed = compress_brotli(data.as_str()).unwrap();

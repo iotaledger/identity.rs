@@ -79,7 +79,7 @@ impl Client {
   pub fn publish_document(&self, document: &JsValue) -> Result<Promise> {
     let document: IotaDocument = document.into_serde().wasm_result()?;
     let client: Rc<IotaClient> = self.client.clone();
-    let compression = self.compression.clone();
+    let compression = self.compression;
 
     let promise: Promise = future_to_promise(async move {
       client
@@ -97,7 +97,7 @@ impl Client {
   pub fn publish_diff(&self, message_id: &str, diff: WasmDocumentDiff) -> Result<Promise> {
     let message: MessageId = MessageId::from_str(message_id).wasm_result()?;
     let client: Rc<IotaClient> = self.client.clone();
-    let compression = self.compression.clone();
+    let compression = self.compression;
 
     let promise: Promise = future_to_promise(async move {
       client
@@ -114,7 +114,7 @@ impl Client {
   #[wasm_bindgen(js_name = publishJSON)]
   pub fn publish_json(&self, index: &str, data: &JsValue) -> Result<Promise> {
     let client: Rc<IotaClient> = self.client.clone();
-    let compression = self.compression.clone();
+    let compression = self.compression;
 
     let index = index.to_owned();
     let value: serde_json::Value = data.into_serde().wasm_result()?;
