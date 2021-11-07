@@ -7,14 +7,14 @@ use crate::tangle::compression_brotli::decompress_brotli;
 use crate::Error;
 
 #[derive(Copy, Clone)]
-pub(crate) enum MessageEncoding {
+pub(crate) enum DIDMessageEncoding {
   Json = 0,
   JsonBrotli = 1,
 }
 
-impl MessageEncoding {
+impl DIDMessageEncoding {
   /// Adds the current encoding flag at the beginning of arbitrary data.
-  pub(crate) fn add_encoding_version_flag(mut data: Vec<u8>, encoding: MessageEncoding) -> Vec<u8> {
+  pub(crate) fn add_encoding_version_flag(mut data: Vec<u8>, encoding: DIDMessageEncoding) -> Vec<u8> {
     let encoding_version = encoding as u8;
 
     data.splice(0..0, [encoding_version].iter().cloned());
@@ -23,9 +23,9 @@ impl MessageEncoding {
 
   /// Decompresses a message depending on the encoding flag.
   pub(crate) fn decompress_message(encoding_flag: &u8, data: &[u8]) -> Result<Vec<u8>, Error> {
-    if *encoding_flag == MessageEncoding::JsonBrotli as u8 {
+    if *encoding_flag == DIDMessageEncoding::JsonBrotli as u8 {
       decompress_brotli(data)
-    } else if *encoding_flag == MessageEncoding::Json as u8 {
+    } else if *encoding_flag == DIDMessageEncoding::Json as u8 {
       Ok(data.to_vec()) //todo prevent copying the slice.
     } else {
       Err(Error::InvalidMessageFlags)
@@ -33,22 +33,22 @@ impl MessageEncoding {
   }
 
   /// Compresses a message depending on current encoding version.
-  pub(crate) fn compress_message<T: AsRef<[u8]>>(message: T, encoding: MessageEncoding) -> Result<Vec<u8>, Error> {
+  pub(crate) fn compress_message<T: AsRef<[u8]>>(message: T, encoding: DIDMessageEncoding) -> Result<Vec<u8>, Error> {
     match encoding {
-      MessageEncoding::JsonBrotli => compress_brotli(message),
-      MessageEncoding::Json => Err(CompressionError),
+      DIDMessageEncoding::JsonBrotli => compress_brotli(message),
+      DIDMessageEncoding::Json => Err(CompressionError),
     }
   }
 }
 
 #[cfg(test)]
 mod test {
-  use crate::tangle::encoding::MessageEncoding;
+  use crate::tangle::did_encoding::DIDMessageEncoding;
 
   #[test]
   fn test_add_version_flag() {
     let message: Vec<u8> = vec![10, 4, 5, 5];
-    let message_with_flag = MessageEncoding::add_encoding_version_flag(message, MessageEncoding::JsonBrotli);
-    assert_eq!(message_with_flag, [MessageEncoding::JsonBrotli as u8, 10, 4, 5, 5])
+    let message_with_flag = DIDMessageEncoding::add_encoding_version_flag(message, DIDMessageEncoding::JsonBrotli);
+    assert_eq!(message_with_flag, [DIDMessageEncoding::JsonBrotli as u8, 10, 4, 5, 5])
   }
 }

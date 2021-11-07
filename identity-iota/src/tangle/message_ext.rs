@@ -14,8 +14,8 @@ use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Result;
-use crate::tangle::encoding::MessageEncoding;
-use crate::tangle::message_version::MessageVersion;
+use crate::tangle::did_encoding::DIDMessageEncoding;
+use crate::tangle::did_message_version::DIDMessageVersion;
 use crate::tangle::TangleRef;
 
 // TODO: Use MessageId when it has a const ctor
@@ -47,12 +47,12 @@ fn parse_payload<T: FromJson + TangleRef>(message_id: MessageId, payload: Option
 }
 
 fn parse_data<T: FromJson + TangleRef>(message_id: MessageId, data: &[u8]) -> Option<T> {
-  let version_check = MessageVersion::check_version_flag(&data[0], MessageVersion::V1);
+  let version_check = DIDMessageVersion::check_version_flag(&data[0], DIDMessageVersion::V1);
   if version_check.is_err() {
     return None;
   }
 
-  let compression_result = MessageEncoding::decompress_message(&data[1], &data[2..]);
+  let compression_result = DIDMessageEncoding::decompress_message(&data[1], &data[2..]);
   match compression_result {
     Ok(decompressed_message) => {
       let mut resource: T = T::from_json_slice(decompressed_message.as_slice()).ok()?;
