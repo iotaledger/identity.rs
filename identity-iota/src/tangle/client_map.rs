@@ -23,15 +23,11 @@ type State = DashMap<NetworkName, Arc<Client>>;
 #[derive(Debug)]
 pub struct ClientMap {
   data: State,
-  compression: bool,
 }
 
 impl ClientMap {
   pub fn new() -> Self {
-    Self {
-      data: State::new(),
-      compression: true,
-    }
+    Self { data: State::new() }
   }
 
   pub fn from_client(client: Client) -> Self {
@@ -39,10 +35,7 @@ impl ClientMap {
 
     data.insert(client.network.name(), Arc::new(client));
 
-    Self {
-      data,
-      compression: true,
-    }
+    Self { data }
   }
 
   pub fn builder() -> ClientBuilder {
@@ -65,14 +58,14 @@ impl ClientMap {
     let network: Network = document.id().network()?;
     let client: Arc<Client> = self.client(network).await?;
 
-    client.publish_document(document, self.compression).await
+    client.publish_document(document).await
   }
 
   pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
     let network: Network = diff.id().network()?;
     let client: Arc<Client> = self.client(network).await?;
 
-    client.publish_diff(message_id, diff, self.compression).await
+    client.publish_diff(message_id, diff).await
   }
 
   pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
@@ -100,10 +93,6 @@ impl ClientMap {
     self.data.insert(network_name, Arc::clone(&client));
 
     Ok(client)
-  }
-
-  pub fn disable_compression(&mut self) {
-    self.compression = false;
   }
 }
 

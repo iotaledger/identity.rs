@@ -50,7 +50,7 @@ pub async fn main() -> Result<()> {
   document.sign_self(keypair.private(), &document.default_signing_method()?.id())?;
 
   // Publish the DID Document to the Tangle.
-  let receipt: Receipt = match client.publish_document(&document, true).await {
+  let receipt: Receipt = match client.publish_document(&document).await {
     Ok(receipt) => receipt,
     Err(err) => {
       eprintln!("Error > {:?} {}", err, err.to_string());

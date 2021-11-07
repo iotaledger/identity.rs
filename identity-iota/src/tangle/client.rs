@@ -32,6 +32,7 @@ use crate::tangle::TangleResolve;
 pub struct Client {
   pub(crate) client: IotaClient,
   pub(crate) network: Network,
+  pub(crate) compression: bool,
 }
 
 impl Client {
@@ -67,6 +68,7 @@ impl Client {
     Ok(Self {
       client: client.finish().await?,
       network: builder.network,
+      compression: builder.compression,
     })
   }
 
@@ -76,37 +78,34 @@ impl Client {
   }
 
   /// Publishes an [`IotaDocument`] to the Tangle.
-  pub async fn publish_document(&self, document: &IotaDocument, compression: bool) -> Result<Receipt> {
-    self
-      .publish_json(document.integration_index(), document, compression)
-      .await
+  pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
+    self.publish_json(document.integration_index(), document).await
   }
 
   /// Publishes a [`DocumentDiff`] to the Tangle to form part of the diff chain for the integration
   /// chain message specified by the given [`MessageId`].
-  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff, compression: bool) -> Result<Receipt> {
-    self
-      .publish_json(&IotaDocument::diff_index(message_id)?, diff, compression)
-      .await
+  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
+    self.publish_json(&IotaDocument::diff_index(message_id)?, diff).await
   }
 
   /// Compresses and Publishes arbitrary JSON data to the specified index on the Tangle.
-  pub async fn publish_json<T: ToJson>(&self, index: &str, data: &T, compression: bool) -> Result<Receipt> {
-    let mut compressed_data: Vec<u8>;
-    if compression {
-      compressed_data = MessageEncoding::compress_message(&data.to_json()?, MessageEncoding::JsonBrotli)?;
-      compressed_data = MessageEncoding::add_encoding_version_flag(compressed_data, MessageEncoding::JsonBrotli);
+  pub async fn publish_json<T: ToJson>(&self, index: &str, data: &T) -> Result<Receipt> {
+    let encoded_message_data = if self.compression {
+      MessageEncoding::compress_message(&data.to_json()?, MessageEncoding::JsonBrotli).map(|compressed_data| {
+        MessageEncoding::add_encoding_version_flag(compressed_data, MessageEncoding::JsonBrotli)
+      })?
     } else {
-      compressed_data = data.to_json_vec()?;
-      compressed_data = MessageEncoding::add_encoding_version_flag(compressed_data, MessageEncoding::Json);
-    }
-    compressed_data = MessageVersion::add_version_flag(compressed_data, MessageVersion::CURRENT);
+      data
+        .to_json_vec()
+        .map(|uncompressed_data| MessageEncoding::add_encoding_version_flag(uncompressed_data, MessageEncoding::Json))?
+    };
 
+    let message_data = MessageVersion::add_version_flag(encoded_message_data, MessageVersion::CURRENT);
     self
       .client
       .message()
       .with_index(index)
-      .with_data(compressed_data)
+      .with_data(message_data)
       .finish()
       .await
       .map_err(Into::into)

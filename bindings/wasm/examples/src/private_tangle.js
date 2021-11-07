@@ -29,6 +29,9 @@ async function createIdentityPrivateTangle(restURL, networkName) {
     const config = new Config();
     config.setNetwork(network);
 
+    // Uncomment the following line to disable compression.
+    // config.disableCompression();
+
     // This URL points to the REST API of the locally running hornet node.
     config.setNode(restURL || "http://127.0.0.1:14265/");
 

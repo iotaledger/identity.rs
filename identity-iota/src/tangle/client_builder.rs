@@ -17,6 +17,7 @@ pub struct ClientBuilder {
   pub(super) nodeset: bool,
   pub(super) network: Network,
   pub(super) builder: iota_client::ClientBuilder,
+  pub(super) compression: bool,
 }
 
 impl ClientBuilder {
@@ -26,6 +27,7 @@ impl ClientBuilder {
       nodeset: false,
       network: Default::default(),
       builder: iota_client::ClientBuilder::new().with_local_pow(DEFAULT_LOCAL_POW),
+      compression: true,
     }
   }
 
@@ -33,6 +35,12 @@ impl ClientBuilder {
   pub fn network(mut self, network: Network) -> Self {
     self.builder = self.builder.with_network(network.name_str());
     self.network = network;
+    self
+  }
+
+  /// Disables message compression.
+  pub fn disable_compression(mut self) -> Self {
+    self.compression = false;
     self
   }
 

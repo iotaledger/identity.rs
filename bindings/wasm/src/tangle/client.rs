@@ -32,7 +32,6 @@ use crate::tangle::WasmNetwork;
 #[derive(Debug)]
 pub struct Client {
   pub(crate) client: Rc<IotaClient>,
-  compression: bool,
 }
 
 #[wasm_bindgen]
@@ -40,7 +39,6 @@ impl Client {
   fn from_client(client: IotaClient) -> Client {
     Self {
       client: Rc::new(client),
-      compression: true,
     }
   }
 
@@ -79,11 +77,10 @@ impl Client {
   pub fn publish_document(&self, document: &JsValue) -> Result<Promise> {
     let document: IotaDocument = document.into_serde().wasm_result()?;
     let client: Rc<IotaClient> = self.client.clone();
-    let compression = self.compression;
 
     let promise: Promise = future_to_promise(async move {
       client
-        .publish_document(&document, compression)
+        .publish_document(&document)
         .await
         .wasm_result()
         .and_then(|receipt| JsValue::from_serde(&receipt).wasm_result())
@@ -97,11 +94,10 @@ impl Client {
   pub fn publish_diff(&self, message_id: &str, diff: WasmDocumentDiff) -> Result<Promise> {
     let message: MessageId = MessageId::from_str(message_id).wasm_result()?;
     let client: Rc<IotaClient> = self.client.clone();
-    let compression = self.compression;
 
     let promise: Promise = future_to_promise(async move {
       client
-        .publish_diff(&message, diff.deref(), compression)
+        .publish_diff(&message, diff.deref())
         .await
         .wasm_result()
         .and_then(|receipt| JsValue::from_serde(&receipt).wasm_result())
@@ -114,13 +110,12 @@ impl Client {
   #[wasm_bindgen(js_name = publishJSON)]
   pub fn publish_json(&self, index: &str, data: &JsValue) -> Result<Promise> {
     let client: Rc<IotaClient> = self.client.clone();
-    let compression = self.compression;
 
     let index = index.to_owned();
     let value: serde_json::Value = data.into_serde().wasm_result()?;
     let promise: Promise = future_to_promise(async move {
       client
-        .publish_json(&index, &value, compression)
+        .publish_json(&index, &value)
         .await
         .wasm_result()
         .and_then(|receipt| JsValue::from_serde(&receipt).wasm_result())
@@ -225,11 +220,5 @@ impl Client {
     });
 
     Ok(promise)
-  }
-
-  /// Disable message compression before publishing messages to the Tangle.
-  #[wasm_bindgen(js_name = disableCompression)]
-  pub fn disable_compression(&mut self) {
-    self.compression = false;
   }
 }
