@@ -115,12 +115,12 @@ impl Client {
     interval: Option<u64>,
     max_attempts: Option<u64>,
   ) -> Result<Receipt> {
-    let receipt = self.publish_json(index, data).await?;
-    let reattached_messages = self
+    let receipt: Receipt = self.publish_json(index, data).await?;
+    let reattached_messages: Vec<(MessageId, Message)> = self
       .client
       .retry_until_included(receipt.message_id(), interval, max_attempts)
       .await?;
-    match reattached_messages.first() {
+    match reattached_messages.into_iter().next() {
       Some((_, message)) => Ok(Receipt::new(self.network.clone(), message.clone())),
       None => Ok(receipt),
     }
