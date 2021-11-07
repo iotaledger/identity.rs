@@ -102,7 +102,7 @@ impl Default for ClientMap {
   }
 }
 
-#[async_trait::async_trait(? Send)]
+#[async_trait::async_trait(?Send)]
 impl TangleResolve for ClientMap {
   async fn resolve(&self, did: &IotaDID) -> Result<IotaDocument> {
     self.read_document(did).await

@@ -200,7 +200,7 @@ impl Client {
   }
 }
 
-#[async_trait::async_trait(? Send)]
+#[async_trait::async_trait(?Send)]
 impl TangleResolve for Client {
   async fn resolve(&self, did: &IotaDID) -> Result<IotaDocument> {
     self.read_document(did).await
