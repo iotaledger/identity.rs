@@ -121,7 +121,7 @@ impl Client {
       .retry_until_included(receipt.message_id(), interval, max_attempts)
       .await?;
     match reattached_messages.into_iter().next() {
-      Some((_, message)) => Ok(Receipt::new(self.network.clone(), message.clone())),
+      Some((_, message)) => Ok(Receipt::new(self.network.clone(), message)),
       None => Ok(receipt),
     }
   }
