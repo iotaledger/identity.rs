@@ -10,12 +10,12 @@ const QUALITY: u32 = 5; // compression level
 const WINDOWS_SIZE: u32 = 22;
 
 pub(crate) fn compress_brotli<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, Error> {
-  let mut result = Vec::new();
+  let mut buf = Vec::new();
   let mut compressor = brotli::CompressorReader::new(input.as_ref(), BUFFER_SIZE, QUALITY, WINDOWS_SIZE);
   compressor
-    .read_to_end(&mut result)
+    .read_to_end(&mut buf)
     .map_err(|_| Error::CompressionError)?;
-  Ok(result)
+  Ok(buf)
 }
 
 pub(crate) fn decompress_brotli<T: AsRef<[u8]> + ?Sized>(input: &T) -> Result<Vec<u8>, Error> {
