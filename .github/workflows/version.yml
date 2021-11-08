@@ -74,6 +74,7 @@ jobs:
       - name: Commit changes
         run: |
           BRANCHNAME=${{ env.BRANCHNAME }}
+          NEXTVERSION=${{ env.NEXTVERSION }}
           if [[ $(git diff --stat) == '' ]]; then
             echo 'CHANGELOG.md unmodified'
             exit 0
@@ -83,7 +84,7 @@ jobs:
           git add -f CHANGELOG.md
           git commit -m "generate Changelog"
           if [[ $BRANCHNAME == dev ]]; then
-            git tag -a -m $env.NEXTVERSION $env.NEXTVERSION
+            git tag -a -m $NEXTVERSION $NEXTVERSION
           fi
           git push --follow-tags
       - name: Create dev release
