@@ -6,7 +6,7 @@ use crate::tangle::compression_brotli::compress_brotli;
 use crate::tangle::compression_brotli::decompress_brotli;
 use crate::Error;
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub(crate) enum DIDMessageEncoding {
   Json = 0,
   JsonBrotli = 1,
@@ -41,12 +41,13 @@ pub(crate) fn compress_message<T: AsRef<[u8]>>(message: T, encoding: DIDMessageE
 
 #[cfg(test)]
 mod test {
+  use crate::tangle::did_encoding::add_encoding_version_flag;
   use crate::tangle::did_encoding::DIDMessageEncoding;
 
   #[test]
   fn test_add_version_flag() {
     let message: Vec<u8> = vec![10, 4, 5, 5];
-    let message_with_flag = DIDMessageEncoding::add_encoding_version_flag(message, DIDMessageEncoding::JsonBrotli);
+    let message_with_flag = add_encoding_version_flag(message, DIDMessageEncoding::JsonBrotli);
     assert_eq!(message_with_flag, [DIDMessageEncoding::JsonBrotli as u8, 10, 4, 5, 5])
   }
 }

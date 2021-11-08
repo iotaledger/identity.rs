@@ -33,7 +33,7 @@ use crate::tangle::TangleResolve;
 pub struct Client {
   pub(crate) client: IotaClient,
   pub(crate) network: Network,
-  pub(crate) compression: bool,
+  pub(crate) encoding: DIDMessageEncoding,
 }
 
 impl Client {
@@ -69,7 +69,7 @@ impl Client {
     Ok(Self {
       client: client.finish().await?,
       network: builder.network,
-      compression: builder.compression,
+      encoding: DIDMessageEncoding::JsonBrotli,
     })
   }
 
@@ -91,16 +91,16 @@ impl Client {
 
   /// Compresses and Publishes arbitrary JSON data to the specified index on the Tangle.
   pub async fn publish_json<T: ToJson>(&self, index: &str, data: &T) -> Result<Receipt> {
-    let encoded_message_data = if self.compression {
-      did_encoding::compress_message(&data.to_json()?, DIDMessageEncoding::JsonBrotli).map(|compressed_data| {
-        did_encoding::add_encoding_version_flag(compressed_data, DIDMessageEncoding::JsonBrotli)
-      })?
-    } else {
-      data
-        .to_json_vec()
-        .map(|uncompressed_data| did_encoding::add_encoding_version_flag(uncompressed_data, DIDMessageEncoding::Json))?
+    let encoded_message_data = match self.encoding {
+      DIDMessageEncoding::JsonBrotli => {
+        did_encoding::compress_message(&data.to_json()?, DIDMessageEncoding::JsonBrotli).map(|compressed_data| {
+          did_encoding::add_encoding_version_flag(compressed_data, DIDMessageEncoding::JsonBrotli)
+        })?
+      }
+      DIDMessageEncoding::Json => data.to_json_vec().map(|uncompressed_data| {
+        did_encoding::add_encoding_version_flag(uncompressed_data, DIDMessageEncoding::Json)
+      })?,
     };
-
     let message_data =
       did_message_versioning::add_version_flag(encoded_message_data, did_message_versioning::CURRENT_MESSAGE_VERSION);
     self
