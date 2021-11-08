@@ -6,7 +6,6 @@ use identity_core::common::Url;
 use crate::did::CoreDIDUrl;
 use crate::document::CoreDocument;
 use crate::service::Service;
-use crate::utils::DIDKey;
 use crate::verification::MethodRef;
 use crate::verification::VerificationMethod;
 
@@ -96,14 +95,5 @@ impl From<MethodRef> for SecondaryResource {
 impl From<Service> for SecondaryResource {
   fn from(other: Service) -> Self {
     Self::Service(other)
-  }
-}
-
-impl<T> From<DIDKey<T>> for SecondaryResource
-where
-  T: Into<SecondaryResource>,
-{
-  fn from(other: DIDKey<T>) -> Self {
-    other.into_inner().into()
   }
 }

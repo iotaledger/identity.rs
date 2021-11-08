@@ -483,6 +483,12 @@ where
   }
 }
 
+impl<T: DID> AsRef<DIDUrl<T>> for DIDUrl<T> {
+  fn as_ref(&self) -> &DIDUrl<T> {
+    self
+  }
+}
+
 impl<T> PartialEq for DIDUrl<T>
 where
   T: DID,

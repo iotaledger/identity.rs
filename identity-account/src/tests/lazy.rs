@@ -73,7 +73,7 @@ async fn test_lazy_updates() -> Result<()> {
       assert_eq!(services.len(), 2);
 
       for service in services.iter() {
-        let service_fragment = service.as_ref().id().fragment().unwrap();
+        let service_fragment = service.id().fragment().unwrap();
         assert!(["my-service", "my-other-service"]
           .iter()
           .any(|fragment| *fragment == service_fragment));
