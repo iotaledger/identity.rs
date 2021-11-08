@@ -53,6 +53,7 @@ jobs:
             --no-author 
             --future-release ${{ env.NEXTVERSION }} 
             --no-issues
+            --exclude-tags-regex "dev-\d{1,}"
             --verbose
       - name: Run github-changelog-generator for release
         uses: docker://githubchangeloggenerator/github-changelog-generator
@@ -66,6 +67,7 @@ jobs:
             --since-tag ${{ env.LATEST_DEV_TAG }}
             --output RELEASE_CHANGELOG.md
             --no-issues
+            --exclude-tags-regex "dev-\d{1,}"
             --verbose
       - name: Log CHANGELOG.md
         run: cat CHANGELOG.md
