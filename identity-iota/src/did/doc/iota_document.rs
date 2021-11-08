@@ -397,11 +397,11 @@ impl IotaDocument {
     let method_ref = MethodRef::Refer(core_did_url);
 
     let result = match relationship {
-      MethodRelationship::Authentication => self.document.authentication_mut().append(method_ref.into()),
-      MethodRelationship::AssertionMethod => self.document.assertion_method_mut().append(method_ref.into()),
-      MethodRelationship::KeyAgreement => self.document.key_agreement_mut().append(method_ref.into()),
-      MethodRelationship::CapabilityDelegation => self.document.capability_delegation_mut().append(method_ref.into()),
-      MethodRelationship::CapabilityInvocation => self.document.capability_invocation_mut().append(method_ref.into()),
+      MethodRelationship::Authentication => self.document.authentication_mut().append(method_ref),
+      MethodRelationship::AssertionMethod => self.document.assertion_method_mut().append(method_ref),
+      MethodRelationship::KeyAgreement => self.document.key_agreement_mut().append(method_ref),
+      MethodRelationship::CapabilityDelegation => self.document.capability_delegation_mut().append(method_ref),
+      MethodRelationship::CapabilityInvocation => self.document.capability_invocation_mut().append(method_ref),
     };
 
     Ok(result)
@@ -850,6 +850,7 @@ mod tests {
   use identity_did::service::Service;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodRef;
+  use identity_did::verification::MethodRelationship;
   use identity_did::verification::MethodScope;
   use identity_did::verification::MethodType;
   use identity_did::verification::VerificationMethod;
@@ -1651,10 +1652,14 @@ mod tests {
     let keypair: KeyPair = generate_testkey();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
+    let fragment = "#attach-test";
+    let method = iota_verification_method(document.did().as_ref(), fragment);
+    document.insert_method(method, MethodScope::VerificationMethod);
+
     assert!(document
       .attach_method_relationship(
-        document.did().to_url().join("#authentication").unwrap(),
-        identity_did::verification::MethodRelationship::CapabilityDelegation,
+        document.did().to_url().join(fragment).unwrap(),
+        MethodRelationship::CapabilityDelegation,
       )
       .is_ok());
 
@@ -1663,8 +1668,8 @@ mod tests {
     // Adding it a second time does nothing.
     assert!(document
       .attach_method_relationship(
-        document.did().to_url().join("#authentication").unwrap(),
-        identity_did::verification::MethodRelationship::CapabilityDelegation,
+        document.did().to_url().join(fragment).unwrap(),
+        MethodRelationship::CapabilityDelegation,
       )
       .is_ok());
 
@@ -1675,7 +1680,7 @@ mod tests {
     assert!(document
       .attach_method_relationship(
         document.did().to_url().join("#doesNotExist").unwrap(),
-        identity_did::verification::MethodRelationship::CapabilityDelegation,
+        MethodRelationship::CapabilityDelegation,
       )
       .is_err());
   }
@@ -1685,17 +1690,21 @@ mod tests {
     let keypair: KeyPair = generate_testkey();
     let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
+    let fragment = "#detach-test";
+    let method = iota_verification_method(document.did().as_ref(), fragment);
+    document.insert_method(method, MethodScope::VerificationMethod);
+
     assert!(document
       .attach_method_relationship(
-        document.did().to_url().join("#authentication").unwrap(),
-        identity_did::verification::MethodRelationship::AssertionMethod,
+        document.did().to_url().join(fragment).unwrap(),
+        MethodRelationship::AssertionMethod,
       )
       .is_ok());
 
     assert!(document
       .detach_method_relationship(
-        document.did().to_url().join("#authentication").unwrap(),
-        identity_did::verification::MethodRelationship::AssertionMethod,
+        document.did().to_url().join(fragment).unwrap(),
+        MethodRelationship::AssertionMethod,
       )
       .is_ok());
 
@@ -1705,8 +1714,8 @@ mod tests {
     // Removing it a second time does nothing
     assert!(document
       .detach_method_relationship(
-        document.did().to_url().join("#authentication").unwrap(),
-        identity_did::verification::MethodRelationship::AssertionMethod,
+        document.did().to_url().join(fragment).unwrap(),
+        MethodRelationship::AssertionMethod,
       )
       .is_ok());
 
@@ -1717,7 +1726,7 @@ mod tests {
     assert!(document
       .detach_method_relationship(
         document.did().to_url().join("#doesNotExist").unwrap(),
-        identity_did::verification::MethodRelationship::AssertionMethod,
+        MethodRelationship::AssertionMethod,
       )
       .is_err());
   }
