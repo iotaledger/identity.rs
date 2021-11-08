@@ -16,8 +16,6 @@ jobs:
           fetch-depth: 0
       - name: Prepare repository
         run: |
-          GITHUB_REF=${{ env.GITHUB_REF }}
-
           if [[ $GITHUB_REF != v* ]]; then
             echo unrecognized version '$GITHUB_REF'
             exit 1
