@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased](https://github.com/eike-hass/identity.rs/tree/HEAD)
+
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.12.0...HEAD)
+
+**Implemented enhancements:**
+
+- adddiontal changelog for release [\#9](https://github.com/eike-hass/identity.rs/pull/9)
+
 ## [v0.12.0](https://github.com/eike-hass/identity.rs/tree/v0.12.0) (2021-11-08)
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.11.0...v0.12.0)
