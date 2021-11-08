@@ -17,8 +17,9 @@ use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::did_encoding;
 use crate::tangle::did_encoding::DIDMessageEncoding;
-use crate::tangle::did_message_version::DIDMessageVersion;
+use crate::tangle::did_message_versioning;
 use crate::tangle::ClientBuilder;
 use crate::tangle::Message;
 use crate::tangle::MessageId;
@@ -91,16 +92,17 @@ impl Client {
   /// Compresses and Publishes arbitrary JSON data to the specified index on the Tangle.
   pub async fn publish_json<T: ToJson>(&self, index: &str, data: &T) -> Result<Receipt> {
     let encoded_message_data = if self.compression {
-      DIDMessageEncoding::compress_message(&data.to_json()?, DIDMessageEncoding::JsonBrotli).map(|compressed_data| {
-        DIDMessageEncoding::add_encoding_version_flag(compressed_data, DIDMessageEncoding::JsonBrotli)
+      did_encoding::compress_message(&data.to_json()?, DIDMessageEncoding::JsonBrotli).map(|compressed_data| {
+        did_encoding::add_encoding_version_flag(compressed_data, DIDMessageEncoding::JsonBrotli)
       })?
     } else {
       data
         .to_json_vec()
-        .map(|uncompressed_data| DIDMessageEncoding::add_encoding_version_flag(uncompressed_data, DIDMessageEncoding::Json))?
+        .map(|uncompressed_data| did_encoding::add_encoding_version_flag(uncompressed_data, DIDMessageEncoding::Json))?
     };
 
-    let message_data = DIDMessageVersion::add_version_flag(encoded_message_data, DIDMessageVersion::CURRENT);
+    let message_data =
+      did_message_versioning::add_version_flag(encoded_message_data, did_message_versioning::CURRENT_MESSAGE_VERSION);
     self
       .client
       .message()
