@@ -12,6 +12,7 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
 use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
+use identity_did::service::Service;
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
@@ -26,7 +27,6 @@ use crate::events::UpdateError;
 use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
-use crate::identity::TinyService;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
@@ -305,20 +305,26 @@ impl Update {
         endpoint,
         properties,
       } => {
-        let did_url = did.to_url().join(fragment.clone())?;
+        let fragment = Fragment::new(fragment);
+        let did_url: CoreDIDUrl = did.as_ref().to_owned().join(fragment.identifier())?;
+
         // The service must not exist
         ensure!(
           state.as_document().service().query(&did_url).is_none(),
-          UpdateError::DuplicateServiceFragment(fragment),
+          UpdateError::DuplicateServiceFragment(fragment.name().to_owned()),
         );
 
-        let _service: TinyService = TinyService::new(fragment, type_, endpoint, properties);
+        let service: Service = Service::builder(properties.unwrap_or_default())
+          .id(did_url)
+          .service_endpoint(endpoint)
+          .type_(type_)
+          .build()?;
 
-        // Ok(Some(vec![Event::new(EventData::ServiceCreated(service))]))
+        state.as_document_mut().insert_service(service);
       }
       Self::DeleteService { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
-        let service_url = did.to_url().join(fragment.name())?;
+        let service_url = did.to_url().join(fragment.identifier())?;
 
         // The service must exist
         ensure!(
@@ -326,7 +332,7 @@ impl Update {
           UpdateError::ServiceNotFound
         );
 
-        // Ok(Some(vec![Event::new(EventData::ServiceDeleted(fragment))]))
+        state.as_document_mut().remove_service(service_url)?;
       }
     }
 

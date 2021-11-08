@@ -18,11 +18,13 @@ use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::types::MethodSecret;
 use identity_core::common::Timestamp;
+use identity_core::common::Url;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_did::did::RelativeDIDUrl;
+use identity_did::did::DID;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
@@ -592,6 +594,72 @@ async fn test_delete_method() -> Result<()> {
   assert_eq!(initial_state.as_document().created(), state.as_document().created());
   // Ensure `updated` was recently set.
   assert!(state.as_document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_insert_service() -> Result<()> {
+  let mut account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
+
+  assert_eq!(account.document().service().len(), 0);
+
+  let fragment = "#service-42".to_owned();
+
+  let update: Update = Update::CreateService {
+    fragment: fragment.clone(),
+    type_: "LinkedDomains".to_owned(),
+    endpoint: Url::parse("https://iota.org").unwrap(),
+    properties: None,
+  };
+
+  account.process_update(update.clone(), false).await?;
+
+  assert_eq!(account.document().service().len(), 1);
+
+  // Ensure the service can be queried.
+  let service_url = account.did().to_url().join(fragment).unwrap();
+  assert!(account.document().service().query(service_url).is_some());
+
+  let err = account.process_update(update.clone(), false).await.unwrap_err();
+
+  assert!(matches!(
+    err,
+    Error::UpdateError(UpdateError::DuplicateServiceFragment(_))
+  ));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_remove_service() -> Result<()> {
+  let mut account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
+
+  let fragment = "#service-42".to_owned();
+
+  let update: Update = Update::CreateService {
+    fragment: fragment.clone(),
+    type_: "LinkedDomains".to_owned(),
+    endpoint: Url::parse("https://iota.org").unwrap(),
+    properties: None,
+  };
+
+  account.process_update(update, false).await.unwrap();
+
+  assert_eq!(account.document().service().len(), 1);
+
+  let update: Update = Update::DeleteService {
+    fragment: fragment.clone(),
+  };
+
+  account.process_update(update.clone(), false).await.unwrap();
+
+  assert_eq!(account.document().service().len(), 0);
+
+  // Attempting to remove a non-existing service returns an error.
+  let err = account.process_update(update, false).await.unwrap_err();
+
+  assert!(matches!(err, Error::UpdateError(UpdateError::ServiceNotFound)));
 
   Ok(())
 }
