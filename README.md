@@ -49,8 +49,8 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 
 ## Prerequisites
 
-- [Rust](https://www.rust-lang.org/) (>= 1.51)
-- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.51)
+- [Rust](https://www.rust-lang.org/) (>= 1.56.1)
+- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.56.0)
 
 ## Getting Started
 
@@ -78,7 +78,7 @@ cargo doc --document-private-items --no-deps --open
 [package]
 name = "iota_identity_example"
 version = "1.0.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main", features = ["account"]}

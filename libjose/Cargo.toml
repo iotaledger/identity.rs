@@ -2,7 +2,7 @@
 name = "libjose"
 version = "0.1.0"
 authors = ["IOTA Stiftung"]
-edition = "2018"
+edition = "2021"
 homepage = "https://www.iota.org"
 keywords = ["iota", "tangle", "identity", "jose", "jwa", "jwe", "jwk", "jwm", "jws", "jwt"]
 license = "Apache-2.0"

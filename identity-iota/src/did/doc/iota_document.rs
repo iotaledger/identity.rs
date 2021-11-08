@@ -29,7 +29,6 @@ use identity_core::crypto::Verifier;
 use identity_did::did::CoreDIDUrl;
 use identity_did::document::CoreDocument;
 use identity_did::service::Service;
-use identity_did::utils::DIDKey;
 use identity_did::utils::OrderedSet;
 use identity_did::verifiable::DocumentSigner;
 use identity_did::verifiable::DocumentVerifier;
@@ -350,7 +349,7 @@ impl IotaDocument {
   // ===========================================================================
 
   /// Return a set of all [`Service`]s in the document.
-  pub fn service(&self) -> &OrderedSet<DIDKey<Service>> {
+  pub fn service(&self) -> &OrderedSet<Service> {
     self.document.service()
   }
 
@@ -359,7 +358,7 @@ impl IotaDocument {
     if service.id().fragment().is_none() {
       false
     } else {
-      self.document.service_mut().append(service.into())
+      self.document.service_mut().append(service)
     }
   }
 
@@ -1638,14 +1637,7 @@ mod tests {
     );
 
     // Ensure fragment of the capability invocation method reference is `authentication`
-    match document
-      .as_document()
-      .capability_invocation()
-      .first()
-      .unwrap()
-      .clone()
-      .into_inner()
-    {
+    match document.as_document().capability_invocation().first().unwrap().clone() {
       MethodRef::Refer(_) => panic!("capability invocation method should be embedded"),
       MethodRef::Embed(method) => assert_eq!(method.id(), capability_invocation_method_id),
     }
@@ -1728,5 +1720,37 @@ mod tests {
         identity_did::verification::MethodRelationship::AssertionMethod,
       )
       .is_err());
+  }
+
+  fn test_document_equality() {
+    let keypair1: KeyPair = KeyPair::new_ed25519().unwrap();
+    let method1: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&keypair1, "test-0").unwrap();
+
+    let original_doc = IotaDocument::from_verification_method(method1).unwrap();
+
+    let mut doc1 = original_doc.clone();
+
+    // Update the key material of the existing verification method test-0.
+    let keypair2: KeyPair = KeyPair::new_ed25519().unwrap();
+    let method2: IotaVerificationMethod =
+      IotaVerificationMethod::from_did(doc1.id().to_owned(), &keypair2, "test-0").unwrap();
+
+    doc1.remove_method(doc1.id().to_url().join("#test-0").unwrap()).unwrap();
+    doc1.insert_method(method2, MethodScope::CapabilityInvocation);
+
+    // Even though the method fragment is the same, the key material has been updated
+    // so the two documents are expected to not be equal.
+    assert_ne!(original_doc, doc1);
+
+    let mut doc2 = doc1.clone();
+    let keypair3: KeyPair = KeyPair::new_ed25519().unwrap();
+    let method3: IotaVerificationMethod =
+      IotaVerificationMethod::from_did(doc1.id().to_owned(), &keypair3, "test-0").unwrap();
+
+    let was_inserted = doc2.insert_method(method3, MethodScope::CapabilityInvocation);
+
+    // Nothing was inserted, because a method with the same fragment already existed.
+    assert!(!was_inserted);
+    assert_eq!(doc1, doc2);
   }
 }
