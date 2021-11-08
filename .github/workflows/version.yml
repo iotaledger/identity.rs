@@ -94,6 +94,10 @@ jobs:
           tag_name: ${{ env.NEXTVERSION }}
           body_path: CHANGELOG.md
           prerelease: true
+      - name: Release to npm
+        uses: './.github/actions/release/release-npm'
+        with:
+          tag: dev
 
 
       
