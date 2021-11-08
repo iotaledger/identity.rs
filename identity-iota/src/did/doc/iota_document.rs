@@ -1722,6 +1722,7 @@ mod tests {
       .is_err());
   }
 
+  #[test]
   fn test_document_equality() {
     let keypair1: KeyPair = KeyPair::new_ed25519().unwrap();
     let method1: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&keypair1, "test-0").unwrap();
@@ -1733,9 +1734,9 @@ mod tests {
     // Update the key material of the existing verification method test-0.
     let keypair2: KeyPair = KeyPair::new_ed25519().unwrap();
     let method2: IotaVerificationMethod =
-      IotaVerificationMethod::from_did(doc1.id().to_owned(), &keypair2, "test-0").unwrap();
+      IotaVerificationMethod::from_did(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
 
-    doc1.remove_method(doc1.id().to_url().join("#test-0").unwrap()).unwrap();
+    doc1.remove_method(doc1.id().to_url().join("#test-0").unwrap());
     doc1.insert_method(method2, MethodScope::CapabilityInvocation);
 
     // Even though the method fragment is the same, the key material has been updated
@@ -1745,7 +1746,7 @@ mod tests {
     let mut doc2 = doc1.clone();
     let keypair3: KeyPair = KeyPair::new_ed25519().unwrap();
     let method3: IotaVerificationMethod =
-      IotaVerificationMethod::from_did(doc1.id().to_owned(), &keypair3, "test-0").unwrap();
+      IotaVerificationMethod::from_did(doc1.id().to_owned(), keypair3.type_(), keypair3.public(), "test-0").unwrap();
 
     let was_inserted = doc2.insert_method(method3, MethodScope::CapabilityInvocation);
 

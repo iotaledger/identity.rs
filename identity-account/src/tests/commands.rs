@@ -23,6 +23,8 @@ use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_did::did::RelativeDIDUrl;
+use identity_did::verification::MethodRef;
+use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
@@ -245,23 +247,23 @@ async fn test_create_scoped_method() -> Result<()> {
       MethodScope::Authentication => core_doc
         .authentication()
         .iter()
-        .any(|did_key| did_key.as_did_url().url() == &relative_url),
+        .any(|method_ref| method_ref.id().url() == &relative_url),
       MethodScope::AssertionMethod => core_doc
         .assertion_method()
         .iter()
-        .any(|did_key| did_key.as_did_url().url() == &relative_url),
+        .any(|method_ref| method_ref.id().url() == &relative_url),
       MethodScope::KeyAgreement => core_doc
         .key_agreement()
         .iter()
-        .any(|did_key| did_key.as_did_url().url() == &relative_url),
+        .any(|method_ref| method_ref.id().url() == &relative_url),
       MethodScope::CapabilityDelegation => core_doc
         .capability_delegation()
         .iter()
-        .any(|did_key| did_key.as_did_url().url() == &relative_url),
+        .any(|method_ref| method_ref.id().url() == &relative_url),
       MethodScope::CapabilityInvocation => core_doc
         .capability_invocation()
         .iter()
-        .any(|did_key| did_key.as_did_url().url() == &relative_url),
+        .any(|method_ref| method_ref.id().url() == &relative_url),
       _ => unreachable!(),
     };
 
@@ -352,6 +354,97 @@ async fn test_create_method_from_invalid_private_key() -> Result<()> {
   let err = account.process_update(update, false).await.unwrap_err();
 
   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_attach_method_relationship() -> Result<()> {
+  let mut account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
+
+  let fragment = "key-1".to_owned();
+
+  let update: Update = Update::CreateMethod {
+    scope: MethodScope::default(),
+    method_secret: None,
+    type_: MethodType::Ed25519VerificationKey2018,
+    fragment: fragment.clone(),
+  };
+
+  account.process_update(update, false).await?;
+
+  // One relationship by default.
+  assert_eq!(
+    account
+      .state()
+      .as_document()
+      .as_document()
+      .verification_relationships()
+      .count(),
+    1
+  );
+
+  let default_method_fragment = account
+    .document()
+    .default_signing_method()
+    .unwrap()
+    .id()
+    .fragment()
+    .unwrap()
+    .to_owned();
+
+  // Attempt attaching a relationship to an embedded method.
+  let update: Update = Update::AttachMethod {
+    relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
+    fragment: default_method_fragment,
+  };
+
+  let err = account.process_update(update, false).await.unwrap_err();
+
+  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodTarget)));
+
+  // No relationships were created.
+  assert_eq!(account.document().as_document().verification_relationships().count(), 1);
+
+  assert_eq!(account.document().as_document().assertion_method().iter().count(), 0);
+  assert_eq!(account.document().as_document().key_agreement().iter().count(), 0);
+
+  let update: Update = Update::AttachMethod {
+    relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
+    fragment: fragment.clone(),
+  };
+
+  account.process_update(update, false).await?;
+
+  // Relationships were created.
+  assert_eq!(account.document().as_document().verification_relationships().count(), 3);
+
+  assert_eq!(account.document().as_document().assertion_method().len(), 1);
+  assert_eq!(
+    account
+      .document()
+      .as_document()
+      .assertion_method()
+      .first()
+      .unwrap()
+      .id()
+      .fragment()
+      .unwrap(),
+    fragment
+  );
+  assert_eq!(account.document().as_document().key_agreement().len(), 1);
+  assert_eq!(
+    account
+      .document()
+      .as_document()
+      .key_agreement()
+      .first()
+      .unwrap()
+      .id()
+      .fragment()
+      .unwrap(),
+    fragment
+  );
 
   Ok(())
 }

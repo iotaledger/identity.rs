@@ -89,7 +89,7 @@ impl Account {
     &self.did
   }
 
-  /// Return a copy of the latest state of the identity
+  /// Return the latest state of the identity.
   pub fn state(&self) -> &IdentityState {
     &self.state
   }
@@ -97,6 +97,12 @@ impl Account {
   // TODO: Make pub?
   pub(crate) fn state_mut_unchecked(&mut self) -> &mut IdentityState {
     &mut self.state
+  }
+
+  /// Returns the DID document of the identity, which this account manages,
+  /// with all updates applied.
+  pub fn document(&self) -> &IotaDocument {
+    self.state.as_document()
   }
 
   // ===========================================================================

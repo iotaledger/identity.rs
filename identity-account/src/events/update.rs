@@ -12,6 +12,7 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PublicKey;
 use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
+use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
@@ -206,7 +207,7 @@ impl Update {
         let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
         let is_capability_invocation = capability_invocation_set
           .iter()
-          .any(|did_key| did_key.as_did_url() == &core_method_url);
+          .any(|method_ref| method_ref.id() == &core_method_url);
 
         ensure!(
           !(is_capability_invocation && capability_invocation_set.len() == 1),
@@ -228,6 +229,19 @@ impl Update {
         ensure!(
           state.as_document().resolve_method(fragment.identifier()).is_some(),
           UpdateError::MethodNotFound
+        );
+
+        // The verification method must not be embedded.
+        ensure!(
+          !state
+            .as_document()
+            .as_document()
+            .verification_relationships()
+            .any(|method_ref| match method_ref {
+              MethodRef::Embed(method) => method.id().fragment() == method_url.fragment(),
+              MethodRef::Refer(_) => false,
+            }),
+          UpdateError::InvalidMethodTarget
         );
 
         for relationship in relationships {
@@ -258,7 +272,7 @@ impl Update {
         let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
         let is_capability_invocation = capability_invocation_set
           .iter()
-          .any(|did_key| did_key.as_did_url() == &core_method_url);
+          .any(|method_ref| method_ref.id() == &core_method_url);
 
         ensure!(
           !(is_capability_invocation && capability_invocation_set.len() == 1),
