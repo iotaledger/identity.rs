@@ -1,4 +1,4 @@
-name: Changelog
+name: Version
 
 on:
   workflow_dispatch:
@@ -83,9 +83,17 @@ jobs:
           git add CHANGELOG.md
           git commit -m "generate Changelog"
           if [[ $BRANCHNAME == dev ]]; then
-            git tag -a -m $NEXTVERSION $NEXTVERSION
+            git tag -a -m $env.NEXTVERSION $env.NEXTVERSION
           fi
           git push --follow-tags
+      - name: Create dev release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(env.NEXTVERSION, 'dev-')
+        with:
+          name: ${{ env.NEXTVERSION }}
+          tag_name: ${{ env.NEXTVERSION }}
+          body_path: CHANGELOG.md
+          prerelease: true
 
 
       

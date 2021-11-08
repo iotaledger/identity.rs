@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - "v*.*.*"
-      - "dev-*"
 
 jobs:
   build:
@@ -12,25 +11,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          # Number of commits to fetch. 0 indicates all history for all branches and tags.
+          fetch-depth: 0
       - name: Prepare repository
         run: |
           GITHUB_REF=${{ env.GITHUB_REF }}
 
-          if [[ $GITHUB_REF == dev-* ]]; then
-            IS_DEV_VERSION=true
-          elif [[ $GITHUB_REF == v* ]]; then
-            IS_DEV_VERSION=false
-          else
+          if [[ $GITHUB_REF != v* ]]; then
             echo unrecognized version '$GITHUB_REF'
             exit 1
           fi
 
-          echo IS_DEV_VERSION=$IS_DEV_VERSION
-          echo IS_DEV_VERSION=$IS_DEV_VERSION >> $GITHUB_ENV
-
-      - name: Release
+      - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           body_path: CHANGELOG.md
-          prerelease: ${{ env.IS_DEV_VERSION }}
+          prerelease: false
       
