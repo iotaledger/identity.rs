@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.12.0](https://github.com/eike-hass/identity.rs/tree/v0.12.0) (2021-11-08)
+
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.11.0...v0.12.0)
+
+**Implemented enhancements:**
+
+- added test string [\#8](https://github.com/eike-hass/identity.rs/pull/8)
+
+## [v0.11.0](https://github.com/eike-hass/identity.rs/tree/v0.11.0) (2021-11-08)
+
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.10.0...v0.11.0)
+
 ## [v0.10.0](https://github.com/eike-hass/identity.rs/tree/v0.10.0) (2021-11-08)
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.9.0...v0.10.0)
