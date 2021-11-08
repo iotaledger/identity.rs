@@ -17,7 +17,7 @@ jobs:
       - name: Prepare repository
         run: |
           echo GITHUB_REF=$GITHUB_REF
-          if [[ $GITHUB_REF != v* ]]; then
+          if [[ $GITHUB_REF != refs/tags/v* ]]; then
             echo unrecognized version '$GITHUB_REF'
             exit 1
           fi
