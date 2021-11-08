@@ -21,7 +21,6 @@ use crate::resolution::ResolverMethod;
 use crate::resolution::Resource;
 use crate::resolution::SecondaryResource;
 use crate::service::ServiceEndpoint;
-use crate::utils::DIDKey;
 use crate::utils::OrderedSet;
 
 /// Resolves a DID into a DID Document by using the "Read" operation of the DID method.
@@ -233,7 +232,7 @@ fn dereference_primary(document: CoreDocument, mut did_url: CoreDIDUrl) -> Resul
       // 1.2. Execute the Service Endpoint Construction algorithm.
       .map(|endpoint| match endpoint {
         ServiceEndpoint::One(url) => service_endpoint_ctor(did_url, url),
-        // TODO: support dereferencing service endpoint sets? Dereferencing spec does not define it.
+        // TODO: support service endpoint sets and map? Dereferencing spec does not address them.
         ServiceEndpoint::Set(_) => Err(Error::InvalidResolutionService),
         ServiceEndpoint::Map(_) => Err(Error::InvalidResolutionService),
       })
@@ -256,13 +255,13 @@ fn dereference_document(document: CoreDocument, fragment: &str) -> Result<Option
   fn dereference<T>(
     base_did: &CoreDID,
     target_fragment: &str,
-    resources: &OrderedSet<DIDKey<T>>,
+    resources: &OrderedSet<T>,
   ) -> Result<Option<SecondaryResource>>
   where
     T: Clone + AsRef<CoreDIDUrl> + Into<SecondaryResource>,
   {
     for resource in resources.iter() {
-      let resource_url: &CoreDIDUrl = resource.as_did_url();
+      let resource_url: &CoreDIDUrl = resource.as_ref();
 
       // Skip objects with different base URLs
       if resource_url.did() != base_did {
