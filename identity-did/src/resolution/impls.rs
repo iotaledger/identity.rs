@@ -235,6 +235,7 @@ fn dereference_primary(document: CoreDocument, mut did_url: CoreDIDUrl) -> Resul
         ServiceEndpoint::One(url) => service_endpoint_ctor(did_url, url),
         // TODO: support dereferencing service endpoint sets? Dereferencing spec does not define it.
         ServiceEndpoint::Set(_) => Err(Error::InvalidResolutionService),
+        ServiceEndpoint::Map(_) => Err(Error::InvalidResolutionService),
       })
       .transpose()?
       // 1.3. Return the output service endpoint URL.

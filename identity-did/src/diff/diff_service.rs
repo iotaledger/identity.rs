@@ -1,6 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
@@ -8,8 +11,6 @@ use identity_core::diff::Diff;
 use identity_core::diff::DiffString;
 use identity_core::diff::Error;
 use identity_core::diff::Result;
-use serde::Deserialize;
-use serde::Serialize;
 
 use crate::did::CoreDIDUrl;
 use crate::service::Service;
@@ -162,9 +163,12 @@ impl Diff for ServiceEndpoint {
 
 #[cfg(test)]
 mod test {
-  use super::*;
+  use indexmap::IndexMap;
+
   use identity_core::common::Object;
   use identity_core::common::Url;
+
+  use super::*;
 
   fn controller() -> CoreDIDUrl {
     "did:example:1234".parse().unwrap()
@@ -216,7 +220,7 @@ mod test {
   fn test_service_endpoint_one() {
     let service = service();
     let mut new = service.clone();
-    let new_url = "did:test:1234".to_string();
+    let new_url = "did:test:1234#service".to_string();
     *new.service_endpoint_mut() = Url::parse(new_url).unwrap().into();
 
     let diff = service.diff(&new).unwrap();
@@ -225,7 +229,7 @@ mod test {
     assert!(diff.type_.is_none());
     assert_eq!(
       diff.service_endpoint,
-      Some(DiffString(Some("\"did:test:1234\"".to_owned())))
+      Some(DiffString(Some("\"did:test:1234#service\"".to_owned())))
     );
     let merge = service.merge(diff).unwrap();
     assert_eq!(merge, new);
@@ -238,7 +242,7 @@ mod test {
     let mut new = service.clone();
     let new_url_set = vec![
       Url::parse("https://example.com/").unwrap(),
-      Url::parse("did:test:1234").unwrap(),
+      Url::parse("did:test:1234#service").unwrap(),
     ];
     *new.service_endpoint_mut() = ServiceEndpoint::Set(new_url_set.try_into().unwrap());
 
@@ -249,7 +253,38 @@ mod test {
     assert_eq!(
       diff.service_endpoint,
       Some(DiffString(Some(
-        r#"["https://example.com/","did:test:1234"]"#.to_owned()
+        r#"["https://example.com/","did:test:1234#service"]"#.to_owned()
+      )))
+    );
+    let merge = service.merge(diff).unwrap();
+    assert_eq!(merge, new);
+  }
+
+  #[test]
+  fn test_service_endpoint_map() {
+    let service = service();
+
+    let mut new = service.clone();
+    let mut new_url_map = IndexMap::new();
+    new_url_map.insert(
+      "origins".to_owned(),
+      vec![
+        Url::parse("https://example.com/").unwrap(),
+        Url::parse("did:test:1234#service").unwrap(),
+      ]
+      .try_into()
+      .unwrap(),
+    );
+    *new.service_endpoint_mut() = ServiceEndpoint::Map(new_url_map);
+
+    let diff = service.diff(&new).unwrap();
+    assert!(diff.id.is_none());
+    assert!(diff.properties.is_none());
+    assert!(diff.type_.is_none());
+    assert_eq!(
+      diff.service_endpoint,
+      Some(DiffString(Some(
+        r#"{"origins":["https://example.com/","did:test:1234#service"]}"#.to_owned()
       )))
     );
     let merge = service.merge(diff).unwrap();
