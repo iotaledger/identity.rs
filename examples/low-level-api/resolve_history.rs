@@ -92,7 +92,7 @@ async fn main() -> Result<()> {
     let service: Service = Service::from_json_value(json!({
       "id": diff_doc_1.id().to_url().join("#linked-domain-1")?,
       "type": "LinkedDomains",
-      "serviceEndpoint": "https://iota.org"
+      "serviceEndpoint": "https://iota.org/"
     }))?;
     assert!(diff_doc_1.insert_service(service));
     diff_doc_1.set_updated(Timestamp::now_utc());
@@ -120,7 +120,9 @@ async fn main() -> Result<()> {
     let service: Service = Service::from_json_value(json!({
       "id": diff_doc_2.id().to_url().join("#linked-domain-2")?,
       "type": "LinkedDomains",
-      "serviceEndpoint": "https://example.com"
+      "serviceEndpoint": {
+        "origins": ["https://iota.org/", "https://example.com/"]
+      }
     }))?;
     diff_doc_2.insert_service(service);
     diff_doc_2.set_updated(Timestamp::now_utc());

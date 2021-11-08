@@ -113,7 +113,9 @@ async function resolveHistory(clientConfig) {
     let serviceJSON2 = {
         id: diffDoc2.id + "#linked-domain-2",
         type: "LinkedDomains",
-        serviceEndpoint: "https://example.com",
+        serviceEndpoint: {
+            "origins": ["https://iota.org/", "https://example.com/"]
+        },
     };
     diffDoc2.insertService(Service.fromJSON(serviceJSON2));
     diffDoc2.updated = Timestamp.nowUTC();
