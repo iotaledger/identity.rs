@@ -279,14 +279,25 @@ impl Update {
           UpdateError::InvalidMethodFragment("cannot remove last signing method")
         );
 
+        // The verification method must not be embedded.
+        ensure!(
+          !state
+            .as_document()
+            .as_document()
+            .verification_relationships()
+            .any(|method_ref| match method_ref {
+              MethodRef::Embed(method) => method.id().fragment() == method_url.fragment(),
+              MethodRef::Refer(_) => false,
+            }),
+          UpdateError::InvalidMethodTarget
+        );
+
         for relationship in relationships {
           state
             .as_document_mut()
             .detach_method_relationship(method_url.clone(), relationship)
             .map_err(|_| UpdateError::MethodNotFound)?;
         }
-
-        // Ok(Some(vec![Event::new(EventData::MethodDetached(fragment, scopes))]))
       }
       Self::CreateService {
         fragment,

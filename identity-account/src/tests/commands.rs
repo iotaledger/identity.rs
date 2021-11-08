@@ -449,6 +449,68 @@ async fn test_attach_method_relationship() -> Result<()> {
 }
 
 #[tokio::test]
+async fn test_detach_method_relationship() -> Result<()> {
+  let mut account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
+
+  let generic_fragment = "key-1".to_owned();
+  let embedded_fragment = "embedded-1".to_owned();
+
+  // Add an embedded method.
+  let update: Update = Update::CreateMethod {
+    scope: MethodScope::Authentication,
+    method_secret: None,
+    type_: MethodType::Ed25519VerificationKey2018,
+    fragment: embedded_fragment.clone(),
+  };
+
+  account.process_update(update, false).await?;
+
+  // Attempt detaching a relationship from an embedded method.
+  let update: Update = Update::DetachMethod {
+    relationships: vec![MethodRelationship::Authentication],
+    fragment: embedded_fragment,
+  };
+
+  let err = account.process_update(update, false).await.unwrap_err();
+
+  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodTarget)));
+
+  // No relationships were removed.
+  assert_eq!(account.document().as_document().verification_relationships().count(), 2);
+
+  let update: Update = Update::CreateMethod {
+    scope: MethodScope::default(),
+    method_secret: None,
+    type_: MethodType::Ed25519VerificationKey2018,
+    fragment: generic_fragment.clone(),
+  };
+
+  account.process_update(update, false).await?;
+
+  let update: Update = Update::AttachMethod {
+    relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
+    fragment: generic_fragment.clone(),
+  };
+
+  account.process_update(update, false).await?;
+
+  assert_eq!(account.document().as_document().assertion_method().len(), 1);
+  assert_eq!(account.document().as_document().key_agreement().len(), 1);
+
+  let update: Update = Update::DetachMethod {
+    relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
+    fragment: generic_fragment.clone(),
+  };
+
+  account.process_update(update, false).await?;
+
+  assert_eq!(account.document().as_document().assertion_method().len(), 0);
+  assert_eq!(account.document().as_document().key_agreement().len(), 0);
+
+  Ok(())
+}
+
+#[tokio::test]
 async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
   let mut account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
