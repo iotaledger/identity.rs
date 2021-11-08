@@ -29,17 +29,14 @@ async function createIdentityPrivateTangle(restURL, networkName) {
     const config = new Config();
     config.setNetwork(network);
 
-    // Uncomment the following line to disable compression.
-    // config.disableCompression();
-
     // This URL points to the REST API of the locally running hornet node.
     config.setNode(restURL || "http://127.0.0.1:14265/");
 
+    // Uncomment the following line to disable compression.
+    // config.setCompression(false);
+
     // Create a client instance from the configuration to publish messages to the Tangle.
     const client = Client.fromConfig(config);
-
-    // For debugging, message compression can be disabled with the next line.
-    // client.disableCompression();
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const receipt = await client.publishDocument(doc.toJSON());

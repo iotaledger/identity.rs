@@ -48,9 +48,9 @@ impl Config {
     self.try_with_mut(|builder| builder.node(url).map_err(wasm_error))
   }
 
-  #[wasm_bindgen(js_name = disableCompression)]
-  pub fn disable_compression(&mut self) -> Result<(), JsValue> {
-    self.with_mut(|builder| builder.disable_compression())
+  #[wasm_bindgen(js_name = setCompression)]
+  pub fn set_compression(&mut self, enabled: bool) -> Result<(), JsValue> {
+    self.with_mut(|builder| builder.set_compression(enabled))
   }
 
   #[wasm_bindgen(js_name = setPrimaryNode)]

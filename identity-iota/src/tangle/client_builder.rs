@@ -40,7 +40,11 @@ impl ClientBuilder {
   }
 
   /// Disables message compression.
-  pub fn disable_compression(mut self) -> Self {
+  pub fn set_compression(mut self, enabled: bool) -> Self {
+    if enabled {
+      self.encoding = DIDMessageEncoding::JsonBrotli;
+      return self;
+    }
     self.encoding = DIDMessageEncoding::Json;
     self
   }
