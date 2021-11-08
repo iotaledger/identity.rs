@@ -80,7 +80,7 @@ jobs:
           fi
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add CHANGELOG.md
+          git add -f CHANGELOG.md
           git commit -m "generate Changelog"
           if [[ $BRANCHNAME == dev ]]; then
             git tag -a -m $env.NEXTVERSION $env.NEXTVERSION
@@ -96,6 +96,7 @@ jobs:
           prerelease: true
       - name: Release to npm
         uses: './.github/actions/release/release-npm'
+        if: startsWith(env.NEXTVERSION, 'dev-')
         with:
           tag: dev
 
