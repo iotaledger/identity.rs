@@ -32,6 +32,7 @@ jobs:
 
           echo NEXTVERSION=$NEXTVERSION
           echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
+          echo LATEST_DEV_TAG=$LATEST_DEV_TAG >> $GITHUB_ENV
       - name: Prepare repository
         run: |
           GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
@@ -53,6 +54,19 @@ jobs:
             --future-release ${{ env.NEXTVERSION }} 
             --exclude-tags-regex "dev-\d{1,}" 
             --verbose
+      - name: Run github-changelog-generator for release
+        uses: docker://githubchangeloggenerator/github-changelog-generator
+        with:
+          args: >
+            --user ${{ env.GITHUB_REPOSITORY_USER }}
+            --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
+            --token ${{ secrets.GITHUB_TOKEN }} 
+            --no-author 
+            --future-release ${{ env.NEXTVERSION }}
+            --since-tag ${{ env.LATEST_DEV_TAG }}
+            --exclude-tags-regex "dev-\d{1,}"
+            --output RELEASE_CHANGELOG.md
+            --verbose
       - name: Log CHANGELOG.md
         run: cat CHANGELOG.md
       - name: Commit changes
@@ -73,7 +87,7 @@ jobs:
         with:
           name: ${{ env.NEXTVERSION }}
           tag_name: ${{ env.NEXTVERSION }}
-          body_path: CHANGELOG.md
+          body_path: RELEASE_CHANGELOG.md
           prerelease: true
       - name: Release to npm
         uses: './.github/actions/release/release-npm'
