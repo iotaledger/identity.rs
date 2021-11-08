@@ -1,5 +1,13 @@
 # Changelog
 
+## [dev-19](https://github.com/eike-hass/identity.rs/tree/dev-19) (2021-11-08)
+
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.7.0...dev-19)
+
+**Implemented enhancements:**
+
+- remove test string [\#7](https://github.com/eike-hass/identity.rs/pull/7)
+
 ## [v0.7.0](https://github.com/eike-hass/identity.rs/tree/v0.7.0) (2021-11-08)
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.6.0...v0.7.0)
