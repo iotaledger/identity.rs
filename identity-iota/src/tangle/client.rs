@@ -69,7 +69,7 @@ impl Client {
     Ok(Self {
       client: client.finish().await?,
       network: builder.network,
-      encoding: DIDMessageEncoding::JsonBrotli,
+      encoding: builder.encoding,
     })
   }
 
