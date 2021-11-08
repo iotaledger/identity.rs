@@ -33,10 +33,8 @@ jobs:
           }
 
           if [[ $BRANCHNAME == release/* || $BRANCHNAME == hotfix/* ]]; then
-            IS_DEV_VERSION=false
             NEXTVERSION=${BRANCHNAME##*/}
           elif [[ $BRANCHNAME == dev ]]; then
-            IS_DEV_VERSION=true
             LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "dev-*" | head -n 1)
             echo LATEST_DEV_TAG=$LATEST_DEV_TAG
             if [[ $LATEST_DEV_TAG == '' ]]; then
@@ -50,8 +48,6 @@ jobs:
 
           echo NEXTVERSION=$NEXTVERSION
           echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
-          echo IS_DEV_VERSION=$IS_DEV_VERSION
-          echo IS_DEV_VERSION=$IS_DEV_VERSION >> $GITHUB_ENV
       - name: Prepare repository
         run: |
           GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
@@ -90,13 +86,6 @@ jobs:
             git tag -a -m $NEXTVERSION $NEXTVERSION
           fi
           git push --follow-tags
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: ${{ env.NEXTVERSION }}
-          tag_name: ${{ env.NEXTVERSION }}
-          body_path: CHANGELOG.md
-          prerelease: ${{ env.IS_DEV_VERSION }}
 
 
       
