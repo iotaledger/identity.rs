@@ -29,3 +29,6 @@ jobs:
           body_path: CHANGELOG.md
           prerelease: false
       
+      - name: Release to npm
+        uses: './.github/actions/release/release-npm'
+      
