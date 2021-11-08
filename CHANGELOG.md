@@ -1,8 +1,8 @@
 # Changelog
 
-## [dev-27](https://github.com/eike-hass/identity.rs/tree/dev-27) (2021-11-08)
+## [v0.12.0](https://github.com/eike-hass/identity.rs/tree/v0.12.0) (2021-11-08)
 
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.11.0...dev-27)
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.11.0...v0.12.0)
 
 **Implemented enhancements:**
 
