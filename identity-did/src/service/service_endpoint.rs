@@ -14,7 +14,7 @@ use identity_core::convert::ToJson;
 
 use crate::utils::OrderedSet;
 
-/// An endpoint or set of endpoints specified in a [`Service`].
+/// A single URL, set, or map of endpoints specified in a [`Service`].
 ///
 /// [Specification](https://www.w3.org/TR/did-core/#dfn-serviceendpoint)
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
