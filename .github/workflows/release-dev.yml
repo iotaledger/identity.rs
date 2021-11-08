@@ -27,12 +27,24 @@ jobs:
           else
             NEW_DEV_TAG=$(updateVersion $LATEST_DEV_TAG)
           fi
+
+          ALL_DEV_TAGS=$(git tag -l "dev-*")
+          new_array=()
+          for value in "${ALL_DEV_TAGS[@]}"
+          do
+              [[ $value != $LATEST_DEV_TAG ]] && new_array+=($value)
+          done
+          FILTERED_TAGS=("${new_array[@]}")
+          unset new_array
+          echo FILTERED_TAGS=$FILTERED_TAGS
+
           echo NEW_DEV_TAG=$NEW_DEV_TAG
           NEXTVERSION=$NEW_DEV_TAG
 
           echo NEXTVERSION=$NEXTVERSION
           echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
           echo LATEST_DEV_TAG=$LATEST_DEV_TAG >> $GITHUB_ENV
+          echo FILTERED_TAGS=$FILTERED_TAGS >> $GITHUB_ENV
       - name: Prepare repository
         run: |
           GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
@@ -67,7 +79,7 @@ jobs:
             --since-tag ${{ env.LATEST_DEV_TAG }}
             --output RELEASE_CHANGELOG.md
             --no-issues
-            --exclude-tags-regex "dev-\d{1,}"
+            --exclude-tags ${{ env.FILTERED_TAGS }}
             --verbose
       - name: Log CHANGELOG.md
         run: cat CHANGELOG.md
