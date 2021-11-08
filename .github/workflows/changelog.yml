@@ -94,6 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           name: ${{ env.NEXTVERSION }}
+          tag: ${{ env.NEXTVERSION }}
           body_path: CHANGELOG.md
           prerelease: ${{ env.IS_DEV_VERSION }}
 
