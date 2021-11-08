@@ -52,7 +52,7 @@ jobs:
             --token ${{ secrets.GITHUB_TOKEN }} 
             --no-author 
             --future-release ${{ env.NEXTVERSION }} 
-            --exclude-tags-regex "dev-\d{1,}" 
+            --no-issues
             --verbose
       - name: Run github-changelog-generator for release
         uses: docker://githubchangeloggenerator/github-changelog-generator
@@ -64,8 +64,8 @@ jobs:
             --no-author 
             --future-release ${{ env.NEXTVERSION }}
             --since-tag ${{ env.LATEST_DEV_TAG }}
-            --exclude-tags-regex "dev-\d{1,}"
             --output RELEASE_CHANGELOG.md
+            --no-issues
             --verbose
       - name: Log CHANGELOG.md
         run: cat CHANGELOG.md

@@ -25,11 +25,13 @@ jobs:
           BRANCHNAME=${{ env.BRANCHNAME }}
           if [[ $BRANCHNAME == release/* || $BRANCHNAME == hotfix/* ]]; then
             NEXTVERSION=${BRANCHNAME##*/}
+            EXCLUDE_TAGS_ARG="dev-\d{1,}"
           fi
 
           echo NEXTVERSION=$NEXTVERSION
           NEXTVERSION_ARG=$(if [ $NEXTVERSION != '' ]; then echo --future-release $NEXTVERSION; fi)
           echo NEXTVERSION_ARG=$NEXTVERSION_ARG >> $GITHUB_ENV
+          echo EXCLUDE_TAGS_ARG=$EXCLUDE_TAGS_ARG >> $GITHUB_ENV
       - name: Prepare repository
         run: |
           GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
@@ -49,7 +51,8 @@ jobs:
             --token ${{ secrets.GITHUB_TOKEN }} 
             --no-author 
             ${{ env.NEXTVERSION_ARG }} 
-            --exclude-tags-regex "dev-\d{1,}" 
+            ${{ env.EXCLUDE_TAGS_ARG }} 
+            --no-issues
             --verbose
       - name: Log CHANGELOG.md
         run: cat CHANGELOG.md
