@@ -1,35 +1,37 @@
-name: Version
+name: Release Dev
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - dev
-      - release/*
-      - hotfix/*
 jobs:
-  version:
+  release-dev:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           # Number of commits to fetch. 0 indicates all history for all branches and tags.
           fetch-depth: 0
-      - name: Get current branch name
-        run: |
-          BRANCHNAME=$(git rev-parse --abbrev-ref HEAD)
-          echo BRANCHNAME=$BRANCHNAME
-          echo BRANCHNAME=$BRANCHNAME >> $GITHUB_ENV
       - name: Determine next version
         run: |
-          BRANCHNAME=${{ env.BRANCHNAME }}
-          if [[ $BRANCHNAME == release/* || $BRANCHNAME == hotfix/* ]]; then
-            NEXTVERSION=${BRANCHNAME##*/}
+          updateVersion()
+          {
+            [[ ${1} =~ ^(.*[^0-9])?([0-9]+)$ ]]  && \
+              [[ ${#BASH_REMATCH[1]} -gt 0 ]] && \
+                printf "%s%0${#BASH_REMATCH[2]}d" "${BASH_REMATCH[1]}" "$((10#${BASH_REMATCH[2]} + 1 ))" || \
+                printf "%0${#BASH_REMATCH[2]}d" "$((10#${BASH_REMATCH[2]} + 1))" || \
+              printf "${1}"
+          }
+          LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "dev-*" | head -n 1)
+          echo LATEST_DEV_TAG=$LATEST_DEV_TAG
+          if [[ $LATEST_DEV_TAG == '' ]]; then
+            NEW_DEV_TAG=dev-1
+          else
+            NEW_DEV_TAG=$(updateVersion $LATEST_DEV_TAG)
           fi
+          echo NEW_DEV_TAG=$NEW_DEV_TAG
+          NEXTVERSION=$NEW_DEV_TAG
 
           echo NEXTVERSION=$NEXTVERSION
-          NEXTVERSION_ARG=$(if [ $NEXTVERSION != '' ]; then echo --future-release $NEXTVERSION; fi)
-          echo NEXTVERSION_ARG=$NEXTVERSION_ARG >> $GITHUB_ENV
+          echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
       - name: Prepare repository
         run: |
           GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
@@ -48,13 +50,14 @@ jobs:
             --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
             --token ${{ secrets.GITHUB_TOKEN }} 
             --no-author 
-            ${{ env.NEXTVERSION_ARG }} 
+            --future-release ${{ env.NEXTVERSION }} 
             --exclude-tags-regex "dev-\d{1,}" 
             --verbose
       - name: Log CHANGELOG.md
         run: cat CHANGELOG.md
       - name: Commit changes
         run: |
+          NEXTVERSION=${{ env.NEXTVERSION }}
           if [[ $(git diff --stat) == '' ]]; then
             echo 'CHANGELOG.md unmodified'
             exit 0
@@ -63,7 +66,19 @@ jobs:
           git config user.email github-actions@github.com
           git add -f CHANGELOG.md
           git commit -m "generate Changelog"
-          git push
+          git tag -a -m $NEXTVERSION $NEXTVERSION
+          git push --follow-tags
+      - name: Create dev release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ env.NEXTVERSION }}
+          tag_name: ${{ env.NEXTVERSION }}
+          body_path: CHANGELOG.md
+          prerelease: true
+      - name: Release to npm
+        uses: './.github/actions/release/release-npm'
+        with:
+          tag: dev
 
 
       
