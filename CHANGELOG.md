@@ -1,8 +1,8 @@
 # Changelog
 
-## [dev-9](https://github.com/eike-hass/identity.rs/tree/dev-9) (2021-11-08)
+## [dev-10](https://github.com/eike-hass/identity.rs/tree/dev-10) (2021-11-08)
 
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.6.0...dev-9)
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.6.0...dev-10)
 
 **Merged pull requests:**
 
