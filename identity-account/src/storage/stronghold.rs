@@ -283,14 +283,7 @@ fn location_published_generation() -> Location {
 }
 
 fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {
-  format!(
-    "{}:{}:{}:{}",
-    prefix,
-    location.integration_generation(),
-    location.diff_generation(),
-    location.fragment_name(),
-  )
-  .into_bytes()
+  format!("{}:{}:{}", prefix, location.generation(), location.fragment_name(),).into_bytes()
 }
 
 fn fmt_did(did: &IotaDID) -> String {

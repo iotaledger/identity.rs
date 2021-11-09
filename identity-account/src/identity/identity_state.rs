@@ -40,8 +40,7 @@ pub struct IdentityState {
   // =========== //
   // Chain State //
   // =========== //
-  integration_generation: Generation,
-  diff_generation: Generation,
+  generation: Generation,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
   this_message_id: MessageId,
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
@@ -49,7 +48,7 @@ pub struct IdentityState {
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
   last_diff_message_id: MessageId,
   #[serde(skip_serializing_if = "HashMap::is_empty")]
-  method_generations: HashMap<Fragment, (Generation, Generation)>,
+  method_generations: HashMap<Fragment, Generation>,
 
   document: IotaDocument,
 }
@@ -57,8 +56,7 @@ pub struct IdentityState {
 impl IdentityState {
   pub fn new(document: IotaDocument) -> Self {
     Self {
-      integration_generation: Generation::new(),
-      diff_generation: Generation::new(),
+      generation: Generation::new(),
       this_message_id: MessageId::null(),
       last_integration_message_id: MessageId::null(),
       last_diff_message_id: MessageId::null(),
@@ -72,43 +70,28 @@ impl IdentityState {
   // ===========================================================================
 
   /// Returns the current generation of the identity integration chain.
-  pub fn integration_generation(&self) -> Generation {
-    self.integration_generation
-  }
-
-  /// Returns the current generation of the identity diff chain.
-  pub fn diff_generation(&self) -> Generation {
-    self.diff_generation
-  }
-
-  /// Increments the generation of the identity integration chain.
-  pub fn increment_integration_generation(&mut self) -> Result<()> {
-    self.integration_generation = self.integration_generation.try_increment()?;
-    self.diff_generation = Generation::new();
-
-    Ok(())
+  pub fn generation(&self) -> Generation {
+    self.generation
   }
 
   /// Increments the generation of the identity diff chain.
-  pub fn increment_diff_generation(&mut self) -> Result<()> {
-    self.diff_generation = self.diff_generation.try_increment()?;
+  pub fn increment_generation(&mut self) -> Result<()> {
+    self.generation = self.generation.try_increment()?;
 
     Ok(())
   }
 
   /// Stores the generations at which the method was inserted.
   pub fn set_method_generations(&mut self, fragment: Fragment) {
-    self
-      .method_generations
-      .insert(fragment, (self.integration_generation(), self.diff_generation()));
+    self.method_generations.insert(fragment, self.generation());
   }
 
   /// Return the `KeyLocation` of the given method.
   pub fn method_location(&self, method_type: MethodType, fragment: String) -> Result<KeyLocation> {
     let fragment = Fragment::new(fragment);
-    let (int_gen, diff_gen) = self.method_generations.get(&fragment).ok_or(Error::MethodNotFound)?;
+    let generation = self.method_generations.get(&fragment).ok_or(Error::MethodNotFound)?;
 
-    Ok(KeyLocation::new(method_type, fragment.into(), *int_gen, *diff_gen))
+    Ok(KeyLocation::new(method_type, fragment.into(), *generation))
   }
 
   // ===========================================================================
@@ -165,12 +148,7 @@ impl IdentityState {
 
   /// Returns a key location suitable for the specified `fragment`.
   pub fn key_location(&self, method: MethodType, fragment: String) -> Result<KeyLocation> {
-    Ok(KeyLocation::new(
-      method,
-      fragment,
-      self.integration_generation(),
-      self.diff_generation(),
-    ))
+    Ok(KeyLocation::new(method, fragment, self.generation()))
   }
 
   pub async fn sign_data<U>(

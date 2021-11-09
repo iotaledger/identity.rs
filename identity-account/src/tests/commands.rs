@@ -64,7 +64,6 @@ async fn test_create_identity() -> Result<()> {
     KeyLocation::new(
       MethodType::Ed25519VerificationKey2018,
       expected_fragment,
-      Generation::new(),
       Generation::new()
     )
   );
@@ -192,8 +191,8 @@ async fn test_create_method() -> Result<()> {
     KeyLocation::new(
       method_type,
       fragment,
-      state.integration_generation(),
-      state.diff_generation()
+      // `create_identity` calls publish, which increments the generation.
+      Generation::new().try_increment().unwrap(),
     )
   );
 
@@ -276,7 +275,10 @@ async fn test_create_scoped_method() -> Result<()> {
 
 #[tokio::test]
 async fn test_create_method_duplicate_fragment() -> Result<()> {
-  let mut account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
+  let mut account_setup = account_setup();
+  account_setup.config = account_setup.config.autopublish(false);
+
+  let mut account = Account::create_identity(account_setup, IdentitySetup::default()).await?;
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
@@ -295,8 +297,8 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
     Error::UpdateError(UpdateError::DuplicateKeyLocation(_)),
   ));
 
-  // Fake publishing by incrementing any generation.
-  account.state_mut_unchecked().increment_diff_generation().unwrap();
+  // Fake publishing by incrementing the generation.
+  account.state_mut_unchecked().increment_generation().unwrap();
 
   let output = account.process_update(update, false).await;
 

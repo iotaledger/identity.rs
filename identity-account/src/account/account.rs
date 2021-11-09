@@ -3,16 +3,11 @@
 
 use futures::executor;
 
-use identity_core::common::Object;
 use identity_core::crypto::SetSignature;
-use identity_core::diff::Diff;
-use identity_did::diff::DiffDocument;
-use identity_did::document::CoreDocument;
 use identity_iota::did::DocumentDiff;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDocument;
 use identity_iota::did::IotaVerificationMethod;
-use identity_iota::did::Properties;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
@@ -250,7 +245,7 @@ impl Account {
     new_state: &IdentityState,
     document: &mut IotaDocument,
   ) -> Result<()> {
-    if new_state.integration_generation() == Generation::new() {
+    if new_state.generation() == Generation::new() {
       // TODO: Replace with: let method: &TinyMethod = new_state.capability_invocation()?;
       let method: &IotaVerificationMethod = new_state.as_document().default_signing_method()?;
       let location: KeyLocation = new_state
@@ -314,6 +309,8 @@ impl Account {
       // New identity
       None => self.publish_integration_change(new_state).await?,
     }
+
+    self.state_mut_unchecked().increment_generation()?;
 
     Ok(())
   }

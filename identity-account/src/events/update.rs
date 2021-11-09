@@ -51,11 +51,11 @@ pub(crate) async fn create_identity(setup: IdentitySetup, store: &dyn Storage) -
     UpdateError::InvalidMethodType(method_type)
   );
 
-  let integration_generation = Generation::new();
-  let fragment: String = format!("{}{}", DEFAULT_UPDATE_METHOD_PREFIX, integration_generation.to_u32());
+  let generation = Generation::new();
+  let fragment: String = format!("{}{}", DEFAULT_UPDATE_METHOD_PREFIX, generation.to_u32());
   // TODO: Consider passing in integration_generation and use it to construct state, to assert they are equal.
 
-  let location: KeyLocation = KeyLocation::new(method_type, fragment, integration_generation, Generation::new());
+  let location: KeyLocation = KeyLocation::new(method_type, fragment, generation);
 
   let keypair: KeyPair = if let Some(MethodSecret::Ed25519(private_key)) = &setup.method_secret {
     ensure!(
