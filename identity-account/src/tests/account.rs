@@ -1,17 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::crypto::KeyPair;
-use identity_did::did::DID;
-use identity_did::verification::MethodScope;
 use identity_iota::did::IotaDID;
-use identity_iota::did::IotaDocument;
-use identity_iota::did::IotaVerificationMethod;
-use identity_iota::tangle::TangleRef;
 
 use crate::account::Account;
 use crate::account::AccountBuilder;
-use crate::account::Publish;
 use crate::error::Result;
 use crate::identity::IdentitySetup;
 
@@ -62,55 +55,6 @@ async fn test_account_did_lease() -> Result<()> {
     builder.load_identity(did).await.unwrap_err(),
     crate::Error::IdentityInUse
   ));
-
-  Ok(())
-}
-
-fn create_document() -> IotaDocument {
-  let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
-  let verif_method1: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&keypair, "test-0").unwrap();
-
-  IotaDocument::from_verification_method(verif_method1).unwrap()
-}
-
-#[test]
-fn test_publish_type() -> Result<()> {
-  let old_doc = create_document();
-
-  assert!(matches!(Publish::new(&old_doc, &old_doc), Publish::None));
-
-  // Inserting a new capability invocation method results in an integration update.
-  let mut new_doc = old_doc.clone();
-
-  let keypair: KeyPair = KeyPair::new_ed25519()?;
-  let verif_method2: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(old_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-1")?;
-
-  new_doc.insert_method(verif_method2, MethodScope::CapabilityInvocation);
-
-  assert!(matches!(Publish::new(&old_doc, &new_doc), Publish::Integration));
-
-  // Updating the key material of the existing verification method results in an integration update.
-  let mut new_doc = old_doc.clone();
-
-  let verif_method2: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-0")?;
-
-  new_doc.remove_method(new_doc.did().to_url().join("test-0").unwrap());
-  new_doc.insert_method(verif_method2, MethodScope::CapabilityInvocation);
-
-  assert!(matches!(Publish::new(&old_doc, &new_doc), Publish::Integration));
-
-  // Adding methods with relationships other than capability invocation
-  // results in a diff update.
-  let mut new_doc = old_doc.clone();
-
-  let verif_method2: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-1")?;
-
-  new_doc.insert_method(verif_method2, MethodScope::Authentication);
-
-  assert!(matches!(Publish::new(&old_doc, &new_doc), Publish::Diff));
 
   Ok(())
 }

@@ -11,6 +11,7 @@ use identity_iota::did::IotaVerificationMethod;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
+use identity_iota::tangle::Publish;
 use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
@@ -398,30 +399,6 @@ impl Drop for Account {
     if self.config.dropsave && self.actions() != 0 {
       // TODO: Handle Result (?)
       let _ = executor::block_on(self.storage().flush_changes());
-    }
-  }
-}
-
-// =============================================================================
-// Publish
-// =============================================================================
-
-#[derive(Clone, Copy, Debug)]
-pub(crate) enum Publish {
-  None,
-  Integration,
-  Diff,
-}
-
-impl Publish {
-  /// Determines whether an updated document needs to be published as an integration or diff message.
-  pub(crate) fn new(old_doc: &IotaDocument, new_doc: &IotaDocument) -> Publish {
-    if old_doc == new_doc {
-      Publish::None
-    } else if old_doc.as_document().capability_invocation() != new_doc.as_document().capability_invocation() {
-      Publish::Integration
-    } else {
-      Publish::Diff
     }
   }
 }
