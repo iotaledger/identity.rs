@@ -28,16 +28,18 @@ mod errors {
   #[derive(Debug, DeriveError, PartialEq, Eq)]
   #[error("invalid timestamp: {inner}")]
   pub struct TimeStampParsingError {
-    #[from]
-    inner: chrono::ParseError, /* it is debatable whether we even should be using chrono, but we do it like this for
-                                * now. */
+    #[source]
+    pub(super) inner: chrono::ParseError, /* it is debatable whether we even should be using chrono, but we do it
+                                           * like this for now. */
   }
 }
 
 impl Timestamp {
   /// Parses a `Timestamp` from the provided input string.
   pub fn parse(input: &str) -> Result<Self, TimeStampParsingError> {
-    let datetime: DateTime<Utc> = DateTime::parse_from_rfc3339(input)?.into();
+    let datetime: DateTime<Utc> = DateTime::parse_from_rfc3339(input)
+      .map_err(|inner| TimeStampParsingError { inner })?
+      .into();
     let datetime: DateTime<Utc> = Self::truncate(datetime);
 
     Ok(Self(datetime))
