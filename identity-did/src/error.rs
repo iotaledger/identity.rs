@@ -13,6 +13,11 @@ pub enum Error {
   #[error("{0}")]
   CoreError(#[from] ::identity_core::Error),
 
+  /// caused by attempting to parse invalid urls
+  #[error("{0}")]
+  InvalidUrl(::identity_core::common::UrlParsingError), /* temporary fix until this crate has its error handling
+                                                         * refactored */
+
   #[error("{0}")]
   InvalidDID(#[from] crate::did::DIDError),
 

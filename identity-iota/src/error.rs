@@ -5,8 +5,11 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
+  /// caused by attempting to parse an invalid url 
+  #[error("url parsing error {0}")]
+  InvalidUrl(#[from] identity_core::common::UrlParsingError),  //TODO: temporary solution to make this crate work with new errors from iota-core
   #[error("base decoding error")]
-  BaseDecoding, // This is a temporary solution to make this crate work with the new errors from iota-core.
+  BaseDecoding, // TODO: This is a temporary solution to make this crate work with the new errors from iota-core.
   #[error("{0}")]
   CoreError(#[from] identity_core::Error),
   #[error("{0}")]

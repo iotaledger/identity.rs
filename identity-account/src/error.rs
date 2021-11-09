@@ -9,8 +9,12 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
+
+  /// caused by attempting to parse an invalid url 
+  #[error("url parsing error {0}")]
+  InvalidUrl(#[from] identity_core::common::UrlParsingError),  //TODO: temporary solution to make this crate work with new errors from iota-core
   #[error("base decoding error")]
-  BaseDecoding, // Temporary solution to make this crate work with the new errors from iota-core
+  BaseDecoding, // TODO: temporary solution to make this crate work with the new errors from iota-core
   /// Caused by errors from the [identity_did] crate.
   /// Caused by errors from the [crypto] crate.
   #[error(transparent)]

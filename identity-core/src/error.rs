@@ -36,9 +36,6 @@ pub enum Error {
   /// Caused by attempting to perform an invalid diff operation.
   #[error("Invalid Document Diff: {0}")]
   InvalidDiff(#[from] identity_diff::Error),
-  /// Caused by attempting to parse an invalid `Url`.
-  #[error("Invalid Url: {0}")]
-  InvalidUrl(#[from] url::ParseError),
   /// Raised by a validation attempt against an invalid DID proof.
   #[error("Invalid Proof Value: {0}")]
   InvalidProofValue(&'static str),
