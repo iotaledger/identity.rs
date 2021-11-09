@@ -17,9 +17,8 @@ use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::message_encoding::DIDMessageEncoding;
-use crate::tangle::message_ext;
 use crate::tangle::ClientBuilder;
+use crate::tangle::DIDMessageEncoding;
 use crate::tangle::Message;
 use crate::tangle::MessageId;
 use crate::tangle::Network;
@@ -90,7 +89,7 @@ impl Client {
 
   /// Compresses and publishes arbitrary JSON data to the specified index on the Tangle.
   pub async fn publish_json<T: ToJson>(&self, index: &str, data: &T) -> Result<Receipt> {
-    let message_data: Vec<u8> = message_ext::pack_did_message(data, self.encoding)?;
+    let message_data: Vec<u8> = crate::tangle::pack_did_message(data, self.encoding)?;
     self
       .client
       .message()

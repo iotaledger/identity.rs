@@ -15,10 +15,10 @@ use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Result;
-use crate::tangle::compression_brotli;
-use crate::tangle::message_encoding::DIDMessageEncoding;
-use crate::tangle::message_version::DIDMessageVersion;
-use crate::tangle::message_version::CURRENT_MESSAGE_VERSION;
+use crate::tangle::message::compression_brotli;
+use crate::tangle::message::message_version::CURRENT_MESSAGE_VERSION;
+use crate::tangle::DIDMessageEncoding;
+use crate::tangle::DIDMessageVersion;
 use crate::tangle::TangleRef;
 
 // TODO: Use MessageId when it has a const ctor
@@ -153,8 +153,8 @@ mod test {
   use identity_core::crypto::KeyPair;
 
   use crate::did::IotaDocument;
-  use crate::tangle::message_encoding::DIDMessageEncoding;
-  use crate::tangle::message_version::CURRENT_MESSAGE_VERSION;
+  use crate::tangle::message::message_encoding::DIDMessageEncoding;
+  use crate::tangle::message::message_version::CURRENT_MESSAGE_VERSION;
   use crate::tangle::MessageId;
 
   use super::*;

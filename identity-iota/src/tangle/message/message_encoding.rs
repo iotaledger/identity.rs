@@ -5,15 +5,14 @@ use num_traits::FromPrimitive;
 
 use crate::Error;
 
-/// Indicates the version of a DID Message.
+/// Indicates the encoding and compression of a DID Message.
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, num_derive::FromPrimitive)]
-pub(crate) enum DIDMessageVersion {
-  V1 = 1,
+pub enum DIDMessageEncoding {
+  Json = 0,
+  JsonBrotli = 1,
 }
 
-pub(crate) const CURRENT_MESSAGE_VERSION: DIDMessageVersion = DIDMessageVersion::V1;
-
-impl TryFrom<u8> for DIDMessageVersion {
+impl TryFrom<u8> for DIDMessageEncoding {
   type Error = Error;
 
   fn try_from(value: u8) -> Result<Self, Self::Error> {

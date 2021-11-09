@@ -32,8 +32,8 @@ mod test {
   use identity_core::crypto::KeyPair;
 
   use crate::did::IotaDocument;
-  use crate::tangle::compression_brotli::compress_brotli;
-  use crate::tangle::compression_brotli::decompress_brotli;
+
+  use super::*;
 
   #[test]
   fn test_brotli() {

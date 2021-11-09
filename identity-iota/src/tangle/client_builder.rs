@@ -7,8 +7,8 @@ use core::fmt::Result as FmtResult;
 use std::time::Duration;
 
 use crate::error::Result;
-use crate::tangle::message_encoding::DIDMessageEncoding;
 use crate::tangle::Client;
+use crate::tangle::DIDMessageEncoding;
 use crate::tangle::Network;
 
 const DEFAULT_LOCAL_POW: bool = false;
