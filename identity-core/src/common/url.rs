@@ -12,18 +12,38 @@ use core::str::FromStr;
 use crate::diff;
 use crate::diff::Diff;
 use crate::diff::DiffString;
-use crate::error::Error;
-use crate::error::Result;
 
 /// A parsed URL.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(transparent)]
 pub struct Url(::url::Url);
+pub use self::errors::UrlParsingError; 
+mod errors {
+  // TODO: Due to the stability and vast usage of the url crate it is debatable whether we should
+  // even have our own url parsing error at all. On the other hand having our own error type 
+  // lets us add/change some functionality in the future if we wish to do so.   
+  use thiserror::Error as DeriveError;
+  /// Caused by attempting to parse an invalid URL
+  #[derive(Debug,DeriveError, PartialEq, Eq)]
+  #[error("invalid URL {inner}")]
+  pub struct UrlParsingError {
+    #[from]
+    pub(super) inner: ::url::ParseError // TODO: Maybe this field could be public? 
+  }
+  // The url crate is stable and has millions of downloads hence it makes sense to provide 
+  // interoperability guarantees between our UrlParsingError and ::url::ParseError 
+  impl From<UrlParsingError> for ::url::ParseError {
+    fn from(url_parsing_error: UrlParsingError) -> Self {
+        url_parsing_error.inner
+    }
+  }
+}
+
 
 impl Url {
   /// Parses an absolute [`Url`] from the given input string.
-  pub fn parse(input: impl AsRef<str>) -> Result<Self> {
+  pub fn parse(input: impl AsRef<str>) -> Result<Self, UrlParsingError> {
     ::url::Url::parse(input.as_ref()).map_err(Into::into).map(Self)
   }
 
@@ -33,7 +53,7 @@ impl Url {
   }
 
   /// Parses the given input string as a [`Url`], with `self` as the base Url.
-  pub fn join(&self, input: impl AsRef<str>) -> Result<Self> {
+  pub fn join(&self, input: impl AsRef<str>) -> Result<Self, UrlParsingError> {
     self.0.join(input.as_ref()).map_err(Into::into).map(Self)
   }
 }
@@ -71,7 +91,7 @@ impl From<::url::Url> for Url {
 }
 
 impl FromStr for Url {
-  type Err = Error;
+  type Err = UrlParsingError;
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
     Self::parse(string)

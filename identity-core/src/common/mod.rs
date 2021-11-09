@@ -22,3 +22,4 @@ pub use self::timestamp::TimeStampParsingError; /* needs its own line see: https
 pub use self::timestamp::Timestamp;
 pub use self::unix_timestamp::UnixTimestamp;
 pub use self::url::Url;
+pub use self::url::UrlParsingError; 
