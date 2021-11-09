@@ -3,11 +3,16 @@
 
 use futures::executor;
 
+use identity_core::common::Object;
 use identity_core::crypto::SetSignature;
+use identity_core::diff::Diff;
+use identity_did::diff::DiffDocument;
+use identity_did::document::CoreDocument;
 use identity_iota::did::DocumentDiff;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDocument;
 use identity_iota::did::IotaVerificationMethod;
+use identity_iota::did::Properties;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
@@ -139,6 +144,8 @@ impl Account {
 
     account.publish(false).await?;
 
+    account.store_state().await?;
+
     Ok(account)
   }
 
@@ -230,9 +237,9 @@ impl Account {
       .process(&did, self.state_mut_unchecked(), storage.as_ref())
       .await?;
 
-    // TODO: Store updated document.
-
     self.publish(false).await?;
+
+    self.store_state().await?;
 
     Ok(())
   }
@@ -308,9 +315,12 @@ impl Account {
       None => self.publish_integration_change(new_state).await?,
     }
 
+    Ok(())
+  }
+
+  async fn store_state(&self) -> Result<()> {
     self.storage.set_state(self.did(), self.state()).await?;
 
-    // TODO: true?
     self.save(false).await?;
 
     Ok(())
