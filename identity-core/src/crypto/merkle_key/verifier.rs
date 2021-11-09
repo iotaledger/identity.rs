@@ -114,7 +114,7 @@ where
     }
 
     // Verify the signature with underlying signature algorithm
-    S::verify(&data.to_jcs()?, &signature, target.as_ref())?;
+    S::verify(&data.to_jcs().map_err(Error::EncodeJSON)?, &signature, target.as_ref())?;
 
     Ok(())
   }

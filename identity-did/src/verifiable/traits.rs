@@ -5,7 +5,7 @@ use identity_core::common::BitSet;
 use identity_core::common::Object;
 use identity_core::convert::FromJson;
 
-use crate::error::Result;
+use crate::error::{Error,Result};
 use crate::verification::VerificationMethod;
 
 pub trait Revocation {
@@ -22,7 +22,7 @@ impl Revocation for Object {
     self
       .get("revocation")
       .cloned()
-      .map(BitSet::from_json_value)
+      .map(|value| BitSet::from_json_value(value).map_err(|_|Error::InvalidDeserialization))
       .transpose()
       .map_err(Into::into)
   }

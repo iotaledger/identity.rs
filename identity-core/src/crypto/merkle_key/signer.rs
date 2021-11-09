@@ -16,7 +16,7 @@ use crate::crypto::PublicKey;
 use crate::crypto::Sign;
 use crate::crypto::SignatureValue;
 use crate::crypto::Signer;
-use crate::error::Result;
+use crate::error::{Error,Result};
 use crate::utils::encode_b58;
 
 /// Key components used to create a Merkle Key Collection signature.
@@ -125,7 +125,7 @@ where
   where
     X: Serialize,
   {
-    let message: Vec<u8> = data.to_jcs()?;
+    let message: Vec<u8> = data.to_jcs().map_err(Error::EncodeJSON)?;
     let signature: S::Output = S::sign(&message, private.private())?;
     let signature: String = encode_b58(signature.as_ref());
     let formatted: String = format!("{}.{}.{}", private.public(), private.proof(), signature);

@@ -9,6 +9,14 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
+  /// Caused by a failure to deserialize a value
+  #[error("could not deserialize")]
+  InvalidDeserialization, // TODO: Remove this upon refactoring the errors in this crate
+
+    /// Caused by a failure to serialize a value
+  #[error("could not serialize")]
+  InvalidSerialization, // TODO: Remove this upon refactoring the errors in this crate
+  
   /// Caused by errors from the [identity_core] crate.
   #[error("{0}")]
   CoreError(#[from] ::identity_core::Error),

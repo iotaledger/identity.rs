@@ -90,7 +90,7 @@ impl Client {
       .client
       .message()
       .with_index(index)
-      .with_data(data.to_json_vec()?)
+      .with_data(data.to_json_vec().map_err(|_| Error::InvalidSerialization)?)
       .finish()
       .await
       .map_err(Into::into)

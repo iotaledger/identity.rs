@@ -42,7 +42,7 @@ where
   where
     X: Serialize,
   {
-    let message: Vec<u8> = data.to_jcs()?;
+    let message: Vec<u8> = data.to_jcs().map_err(Error::EncodeJSON)?;
     let signature: T::Output = T::sign(&message, private)?;
     let signature: String = encode_b58(signature.as_ref());
 
@@ -63,7 +63,7 @@ where
       .ok_or(Error::InvalidProofValue("jcs ed25519"))?;
 
     let signature: Vec<u8> = decode_b58(signature)?;
-    let message: Vec<u8> = data.to_jcs()?;
+    let message: Vec<u8> = data.to_jcs().map_err(Error::EncodeJSON)?;
 
     T::verify(&message, &signature, public)?;
 

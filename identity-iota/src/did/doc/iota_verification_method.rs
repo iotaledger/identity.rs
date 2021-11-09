@@ -196,7 +196,7 @@ impl IotaVerificationMethod {
     self
       .0
       .properties_mut()
-      .insert("revocation".into(), revocation.to_json_value()?);
+      .insert("revocation".into(), revocation.to_json_value().map_err(|_| Error::InvalidSerialization)?);
 
     Ok(revoked)
   }

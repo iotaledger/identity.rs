@@ -5,6 +5,12 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
+  /// caused by a failure to deserialize a value
+  #[error("deserialization error")]
+  InvalidDeserialization, // TODO: temporary solution to make this crate work with new errors from iota-core
+  /// caused by a failure to serialize a value 
+  #[error("serialization error")]
+  InvalidSerialization, //TODO: temporary solution to make this crate work with new errors from iota-core
   /// caused by attempting to parse an invalid url 
   #[error("url parsing error {0}")]
   InvalidUrl(#[from] identity_core::common::UrlParsingError),  //TODO: temporary solution to make this crate work with new errors from iota-core

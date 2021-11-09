@@ -163,7 +163,7 @@ impl IotaDocument {
     IotaDocument::validate_core_document(&document)?;
 
     Ok(Self {
-      document: document.serde_into()?,
+      document: document.serde_into().map_err(|_| Error::InvalidSerialization)?,
       message_id: MessageId::null(),
     })
   }
@@ -177,7 +177,7 @@ impl IotaDocument {
     IotaDocument::validate_core_document(&document)?;
 
     Ok(Self {
-      document: document.serde_into()?,
+      document: document.serde_into().map_err(|_| Error::InvalidSerialization)?,
       message_id: MessageId::null(),
     })
   }
