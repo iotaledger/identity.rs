@@ -13,6 +13,7 @@ use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::DocumentDiff;
 use identity::iota::Receipt;
+use identity::iota::Error; 
 use identity::prelude::*;
 
 mod create_did;
@@ -34,7 +35,7 @@ async fn main() -> Result<()> {
       "id": doc.id().to_url().join("#linked-domain")?,
       "type": "LinkedDomains",
       "serviceEndpoint": "https://iota.org"
-    }))?;
+    })).map_err(|_|Error::InvalidDeserialization)?;
     assert!(doc.insert_service(service));
     doc
   };

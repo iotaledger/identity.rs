@@ -22,6 +22,7 @@ use identity::iota::CredentialValidator;
 use identity::iota::IotaDID;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
+use identity::iota::Error; 
 use identity::prelude::*;
 
 mod common;
@@ -74,7 +75,7 @@ async fn main() -> Result<()> {
 
   println!("Credential JSON > {:#}", credential);
 
-  let credential_json: String = credential.to_json()?;
+  let credential_json: String = credential.to_json().map_err(|_|Error::InvalidSerialization)?;
 
   // Check the verifiable credential is valid
   let validator: CredentialValidator<ClientMap> = CredentialValidator::new(&client);

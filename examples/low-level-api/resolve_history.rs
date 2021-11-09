@@ -20,6 +20,7 @@ use identity::iota::DocumentHistory;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
+use identity::iota::Error; 
 use identity::iota::Result;
 
 mod create_did;
@@ -93,7 +94,7 @@ async fn main() -> Result<()> {
       "id": diff_doc_1.id().to_url().join("#linked-domain-1")?,
       "type": "LinkedDomains",
       "serviceEndpoint": "https://iota.org/"
-    }))?;
+    })).map_err(|_|Error::InvalidDeserialization)?;
     assert!(diff_doc_1.insert_service(service));
     diff_doc_1.set_updated(Timestamp::now_utc());
     diff_doc_1
@@ -123,7 +124,7 @@ async fn main() -> Result<()> {
       "serviceEndpoint": {
         "origins": ["https://iota.org/", "https://example.com/"]
       }
-    }))?;
+    })).map_err(|_|Error::InvalidDeserialization)?;
     diff_doc_2.insert_service(service);
     diff_doc_2.set_updated(Timestamp::now_utc());
     diff_doc_2

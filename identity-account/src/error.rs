@@ -9,7 +9,10 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
-
+  #[error("invalid serialization")]
+  InvalidSerialization, // TODO: Remove this when this crate has its error types refactored
+  #[error("invalid deserialization")]
+  InvalidDeserialization, //TODO: Remove this when this crate has its error types refactored 
   /// caused by attempting to parse an invalid url 
   #[error("url parsing error {0}")]
   InvalidUrl(#[from] identity_core::common::UrlParsingError),  //TODO: temporary solution to make this crate work with new errors from iota-core

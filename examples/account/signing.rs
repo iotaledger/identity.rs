@@ -9,7 +9,7 @@ use identity::account::Account;
 use identity::account::AccountStorage;
 use identity::account::IdentityCreate;
 use identity::account::IdentityState;
-use identity::account::Result;
+use identity::account::{Result,Error};
 use identity::core::json;
 use identity::core::FromJson;
 use identity::core::Url;
@@ -67,7 +67,7 @@ async fn main() -> Result<()> {
       "type": "BachelorDegree",
       "name": "Bachelor of Science and Arts"
     }
-  }))?;
+  })).map_err(|_|Error::InvalidDeserialization)?;
 
   // Issue an unsigned Credential...
   let mut credential: Credential = Credential::builder(Default::default())

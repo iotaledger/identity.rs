@@ -67,7 +67,7 @@ impl IdentityTag {
       name: &self.name,
     };
 
-    let json: Vec<u8> = data.to_json_vec()?;
+    let json: Vec<u8> = data.to_json_vec().map_err(|_|Error::InvalidSerialization)?;
     let base: String = encode_b64(&json);
 
     Ok(base)
@@ -76,7 +76,7 @@ impl IdentityTag {
   // Decodes an identity tag from a base64-encoded JSON string.
   fn decode(string: &str) -> Result<Self> {
     let json: Vec<u8> = decode_b64(string).map_err(|_| Error::BaseDecoding)?; //todo: change this once error refactoring in this crate takes place
-    let data: ProxyDeserialize = ProxyDeserialize::from_json_slice(&json)?;
+    let data: ProxyDeserialize = ProxyDeserialize::from_json_slice(&json).map_err(|_| Error::InvalidDeserialization)?;
 
     Ok(Self {
       method_id: data.method_id,

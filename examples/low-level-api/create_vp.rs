@@ -15,6 +15,7 @@ use identity::iota::ClientMap;
 use identity::iota::CredentialValidator;
 use identity::iota::PresentationValidation;
 use identity::iota::Receipt;
+use identity::iota::Error;
 use identity::prelude::*;
 
 mod common;
@@ -63,7 +64,7 @@ async fn main() -> Result<()> {
   let presentation: Presentation = create_vp().await?;
 
   // Convert the Verifiable Presentation to JSON and "exchange" with a verifier
-  let presentation_json: String = presentation.to_json()?;
+  let presentation_json: String = presentation.to_json().map_err(|_|Error::InvalidSerialization)?;
 
   // Create a `CredentialValidator` instance to fetch and validate all
   // associated DID Documents from the Tangle.

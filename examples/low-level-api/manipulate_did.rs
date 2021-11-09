@@ -16,6 +16,7 @@ use identity::iota::ClientMap;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::TangleRef;
+use identity::iota::Error; 
 use identity::prelude::*;
 
 mod create_did;
@@ -37,7 +38,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
     "id": document.id().to_url().join("#linked-domain")?,
     "type": "LinkedDomains",
     "serviceEndpoint": "https://iota.org"
-  }))?;
+  })).map_err(|_|Error::InvalidDeserialization)?;
   assert!(document.insert_service(service));
 
   // Add the messageId of the previous message in the chain.
