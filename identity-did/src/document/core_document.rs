@@ -19,7 +19,6 @@ use crate::document::DocumentBuilder;
 use crate::error::Error;
 use crate::error::Result;
 use crate::service::Service;
-use crate::utils::DIDKey;
 use crate::utils::OrderedSet;
 use crate::verification::MethodQuery;
 use crate::verification::MethodRef;
@@ -38,19 +37,19 @@ pub struct CoreDocument<T = Object, U = Object, V = Object> {
   #[serde(default = "Default::default", rename = "alsoKnownAs", skip_serializing_if = "Vec::is_empty")]
   pub(crate) also_known_as: Vec<Url>,
   #[serde(default = "Default::default", rename = "verificationMethod", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) verification_method: OrderedSet<DIDKey<VerificationMethod<U>>>,
+  pub(crate) verification_method: OrderedSet<VerificationMethod<U>>,
   #[serde(default = "Default::default", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) authentication: OrderedSet<DIDKey<MethodRef<U>>>,
+  pub(crate) authentication: OrderedSet<MethodRef<U>>,
   #[serde(default = "Default::default", rename = "assertionMethod", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) assertion_method: OrderedSet<DIDKey<MethodRef<U>>>,
+  pub(crate) assertion_method: OrderedSet<MethodRef<U>>,
   #[serde(default = "Default::default", rename = "keyAgreement", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) key_agreement: OrderedSet<DIDKey<MethodRef<U>>>,
+  pub(crate) key_agreement: OrderedSet<MethodRef<U>>,
   #[serde(default = "Default::default", rename = "capabilityDelegation", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) capability_delegation: OrderedSet<DIDKey<MethodRef<U>>>,
+  pub(crate) capability_delegation: OrderedSet<MethodRef<U>>,
   #[serde(default = "Default::default", rename = "capabilityInvocation", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) capability_invocation: OrderedSet<DIDKey<MethodRef<U>>>,
+  pub(crate) capability_invocation: OrderedSet<MethodRef<U>>,
   #[serde(default = "Default::default", skip_serializing_if = "OrderedSet::is_empty")]
-  pub(crate) service: OrderedSet<DIDKey<Service<V>>>,
+  pub(crate) service: OrderedSet<Service<V>>,
   #[serde(flatten)]
   pub(crate) properties: T,
 }
@@ -111,72 +110,72 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 
   /// Returns a reference to the `CoreDocument` verificationMethod set.
-  pub fn verification_method(&self) -> &OrderedSet<DIDKey<VerificationMethod<U>>> {
+  pub fn verification_method(&self) -> &OrderedSet<VerificationMethod<U>> {
     &self.verification_method
   }
 
   /// Returns a mutable reference to the `CoreDocument` verificationMethod set.
-  pub fn verification_method_mut(&mut self) -> &mut OrderedSet<DIDKey<VerificationMethod<U>>> {
+  pub fn verification_method_mut(&mut self) -> &mut OrderedSet<VerificationMethod<U>> {
     &mut self.verification_method
   }
 
   /// Returns a reference to the `CoreDocument` authentication set.
-  pub fn authentication(&self) -> &OrderedSet<DIDKey<MethodRef<U>>> {
+  pub fn authentication(&self) -> &OrderedSet<MethodRef<U>> {
     &self.authentication
   }
 
   /// Returns a mutable reference to the `CoreDocument` authentication set.
-  pub fn authentication_mut(&mut self) -> &mut OrderedSet<DIDKey<MethodRef<U>>> {
+  pub fn authentication_mut(&mut self) -> &mut OrderedSet<MethodRef<U>> {
     &mut self.authentication
   }
 
   /// Returns a reference to the `CoreDocument` assertionMethod set.
-  pub fn assertion_method(&self) -> &OrderedSet<DIDKey<MethodRef<U>>> {
+  pub fn assertion_method(&self) -> &OrderedSet<MethodRef<U>> {
     &self.assertion_method
   }
 
   /// Returns a mutable reference to the `CoreDocument` assertionMethod set.
-  pub fn assertion_method_mut(&mut self) -> &mut OrderedSet<DIDKey<MethodRef<U>>> {
+  pub fn assertion_method_mut(&mut self) -> &mut OrderedSet<MethodRef<U>> {
     &mut self.assertion_method
   }
 
   /// Returns a reference to the `CoreDocument` keyAgreement set.
-  pub fn key_agreement(&self) -> &OrderedSet<DIDKey<MethodRef<U>>> {
+  pub fn key_agreement(&self) -> &OrderedSet<MethodRef<U>> {
     &self.key_agreement
   }
 
   /// Returns a mutable reference to the `CoreDocument` keyAgreement set.
-  pub fn key_agreement_mut(&mut self) -> &mut OrderedSet<DIDKey<MethodRef<U>>> {
+  pub fn key_agreement_mut(&mut self) -> &mut OrderedSet<MethodRef<U>> {
     &mut self.key_agreement
   }
 
   /// Returns a reference to the `CoreDocument` capabilityDelegation set.
-  pub fn capability_delegation(&self) -> &OrderedSet<DIDKey<MethodRef<U>>> {
+  pub fn capability_delegation(&self) -> &OrderedSet<MethodRef<U>> {
     &self.capability_delegation
   }
 
   /// Returns a mutable reference to the `CoreDocument` capabilityDelegation set.
-  pub fn capability_delegation_mut(&mut self) -> &mut OrderedSet<DIDKey<MethodRef<U>>> {
+  pub fn capability_delegation_mut(&mut self) -> &mut OrderedSet<MethodRef<U>> {
     &mut self.capability_delegation
   }
 
   /// Returns a reference to the `CoreDocument` capabilityInvocation set.
-  pub fn capability_invocation(&self) -> &OrderedSet<DIDKey<MethodRef<U>>> {
+  pub fn capability_invocation(&self) -> &OrderedSet<MethodRef<U>> {
     &self.capability_invocation
   }
 
   /// Returns a mutable reference to the `CoreDocument` capabilityInvocation set.
-  pub fn capability_invocation_mut(&mut self) -> &mut OrderedSet<DIDKey<MethodRef<U>>> {
+  pub fn capability_invocation_mut(&mut self) -> &mut OrderedSet<MethodRef<U>> {
     &mut self.capability_invocation
   }
 
   /// Returns a reference to the `CoreDocument` service set.
-  pub fn service(&self) -> &OrderedSet<DIDKey<Service<V>>> {
+  pub fn service(&self) -> &OrderedSet<Service<V>> {
     &self.service
   }
 
   /// Returns a mutable reference to the `CoreDocument` service set.
-  pub fn service_mut(&mut self) -> &mut OrderedSet<DIDKey<Service<V>>> {
+  pub fn service_mut(&mut self) -> &mut OrderedSet<Service<V>> {
     &mut self.service
   }
 
@@ -238,12 +237,12 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Adds a new [`VerificationMethod`] to the Document.
   pub fn insert_method(&mut self, method: VerificationMethod<U>, scope: MethodScope) -> bool {
     match scope {
-      MethodScope::VerificationMethod => self.verification_method.append(method.into()),
-      MethodScope::Authentication => self.authentication.append(MethodRef::Embed(method).into()),
-      MethodScope::AssertionMethod => self.assertion_method.append(MethodRef::Embed(method).into()),
-      MethodScope::KeyAgreement => self.key_agreement.append(MethodRef::Embed(method).into()),
-      MethodScope::CapabilityDelegation => self.capability_delegation.append(MethodRef::Embed(method).into()),
-      MethodScope::CapabilityInvocation => self.capability_invocation.append(MethodRef::Embed(method).into()),
+      MethodScope::VerificationMethod => self.verification_method.append(method),
+      MethodScope::Authentication => self.authentication.append(MethodRef::Embed(method)),
+      MethodScope::AssertionMethod => self.assertion_method.append(MethodRef::Embed(method)),
+      MethodScope::KeyAgreement => self.key_agreement.append(MethodRef::Embed(method)),
+      MethodScope::CapabilityDelegation => self.capability_delegation.append(MethodRef::Embed(method)),
+      MethodScope::CapabilityInvocation => self.capability_invocation.append(MethodRef::Embed(method)),
     }
   }
 
@@ -261,8 +260,8 @@ impl<T, U, V> CoreDocument<T, U, V> {
   ///
   /// This excludes verification methods that are referenced by the DID Document.
   pub fn methods(&self) -> impl Iterator<Item = &VerificationMethod<U>> {
-    fn __filter_ref<T>(method: &DIDKey<MethodRef<T>>) -> Option<&VerificationMethod<T>> {
-      match &**method {
+    fn __filter_ref<T>(method: &MethodRef<T>) -> Option<&VerificationMethod<T>> {
+      match method {
         MethodRef::Embed(method) => Some(method),
         MethodRef::Refer(_) => None,
       }
@@ -271,7 +270,6 @@ impl<T, U, V> CoreDocument<T, U, V> {
     self
       .verification_method
       .iter()
-      .map(|method| &**method)
       .chain(self.authentication.iter().filter_map(__filter_ref))
       .chain(self.assertion_method.iter().filter_map(__filter_ref))
       .chain(self.key_agreement.iter().filter_map(__filter_ref))
@@ -283,18 +281,13 @@ impl<T, U, V> CoreDocument<T, U, V> {
   ///
   /// This includes embedded and referenced [`VerificationMethods`](VerificationMethod).
   pub fn verification_relationships(&self) -> impl Iterator<Item = &MethodRef<U>> {
-    fn __method_ref<T>(method: &DIDKey<MethodRef<T>>) -> &MethodRef<T> {
-      &**method
-    }
-
     self
       .authentication
       .iter()
-      .map(__method_ref)
-      .chain(self.assertion_method.iter().map(__method_ref))
-      .chain(self.key_agreement.iter().map(__method_ref))
-      .chain(self.capability_delegation.iter().map(__method_ref))
-      .chain(self.capability_invocation.iter().map(__method_ref))
+      .chain(self.assertion_method.iter())
+      .chain(self.key_agreement.iter())
+      .chain(self.capability_delegation.iter())
+      .chain(self.capability_invocation.iter())
   }
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`.

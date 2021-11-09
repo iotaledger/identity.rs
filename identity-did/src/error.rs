@@ -76,5 +76,5 @@ pub enum Error {
   #[error("Invalid DID Resolution Fragment")]
   InvalidDIDFragment,
   #[error("Invalid DID Resolution Service")]
-  InvalidServiceProtocol,
+  InvalidResolutionService,
 }
