@@ -18,6 +18,7 @@ use identity_did::did::DID;
 use identity_did::document::CoreDocument;
 use identity_did::document::DocumentBuilder;
 use identity_did::service::Service as CoreService;
+use identity_did::service::ServiceEndpoint;
 use identity_did::verifiable::Properties as VerifiableProperties;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodRef as CoreMethodRef;
@@ -569,14 +570,14 @@ pub struct TinyService {
   #[serde(rename = "2")]
   type_: String,
   #[serde(rename = "3")]
-  endpoint: Url,
+  endpoint: ServiceEndpoint,
   #[serde(rename = "4")]
   properties: Option<Object>,
 }
 
 impl TinyService {
   /// Creates a new `TinyService`.
-  pub fn new(fragment: String, type_: String, endpoint: Url, properties: Option<Object>) -> Self {
+  pub fn new(fragment: String, type_: String, endpoint: ServiceEndpoint, properties: Option<Object>) -> Self {
     Self {
       fragment: Fragment::new(fragment),
       type_,
