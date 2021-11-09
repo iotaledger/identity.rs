@@ -26,7 +26,7 @@ mod errors {
    */
   use thiserror::Error as DeriveError;
   /// Caused by attempting to parse an invalid URL.
-  #[derive(Debug, DeriveError, PartialEq, Eq)]
+  #[derive(Debug, DeriveError, PartialEq, Eq, Clone)]
   #[error("invalid URL {inner}")]
   pub struct UrlParsingError {
     #[from]

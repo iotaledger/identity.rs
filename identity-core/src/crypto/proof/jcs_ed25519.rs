@@ -62,7 +62,7 @@ where
       .as_signature()
       .ok_or(Error::InvalidProofValue("jcs ed25519"))?;
 
-    let signature: Vec<u8> = decode_b58(signature)?;
+    let signature: Vec<u8> = decode_b58(signature).map_err(|_|Error::InvalidProofFormat)?; //TODO: TEMPORARY FIX. DO NOT USE THIS MAPPING. 
     let message: Vec<u8> = data.to_jcs().map_err(Error::EncodeJSON)?;
 
     T::verify(&message, &signature, public)?;

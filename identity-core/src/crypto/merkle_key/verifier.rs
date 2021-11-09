@@ -166,7 +166,7 @@ fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<
   let proof: Vec<u8> = decode_b58(proof).map_err(|_| Error::InvalidProofFormat)?;
 
   // Decode the signature value for the underlying signature implementation
-  let signature: Vec<u8> = decode_b58(signature)?;
+  let signature: Vec<u8> = decode_b58(signature).map_err(|_| Error::InvalidProofFormat)?; //TODO: THIS WAS ADDED AS A TEMPORARY FIX. SHOULD MAYBE NOT BE INVALIDPROOFFORMAT
 
   Ok((public, proof, signature))
 }

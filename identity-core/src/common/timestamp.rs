@@ -25,7 +25,7 @@ mod errors {
   use thiserror::Error as DeriveError; // following the stronghold team's convention :)
 
   /// Caused by attempting to parse an invalid `Timestamp`.
-  #[derive(Debug, DeriveError, PartialEq, Eq)]
+  #[derive(Debug, DeriveError, PartialEq, Eq, Clone)]
   #[error("invalid timestamp: {inner}")]
   pub struct TimeStampParsingError {
     #[source]

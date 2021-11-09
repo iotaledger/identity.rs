@@ -67,18 +67,46 @@ impl From<Base> for multibase::Base {
   }
 }
 
+pub use self::errors::{Base58DecodingError,MultiBaseDecodingError, Base64DecodingError}; 
+mod errors {
+  use thiserror::Error as DeriveError;
+
+  #[derive(Debug, DeriveError,PartialEq, Eq, Clone)]
+  #[error("failed to decode base58 data: {inner}")]
+  ///Caused by a failure to decode base58-encoded data
+  pub struct Base58DecodingError {
+    #[source]
+    pub(super) inner: bs58::decode::Error
+  }
+
+  #[derive(Debug, DeriveError,PartialEq, Eq, Clone)]
+  #[error("failed to decode multibase data: {inner}")]
+  ///Caused by a failure to decode multibase-encoded data 
+  pub struct MultiBaseDecodingError {
+    #[source]
+    pub(super) inner: multibase::Error
+  }
+
+  #[derive(Debug, DeriveError, PartialEq, Eq, Clone)]
+  #[error("failed to decode base64 data: {inner}")]
+  ///Caused by a failure to decode base64-encoded data 
+  pub struct Base64DecodingError {
+    #[source]
+    pub(super) inner: base64::DecodeError
+  }
+}
+
 /// Decodes the given `data` as [Multibase] with an inferred [`base`](Base).
 ///
 /// [Multibase]: https://datatracker.ietf.org/doc/html/draft-multiformats-multibase-03
-pub fn decode_multibase<T>(data: &T) -> Result<Vec<u8>, multibase::Error>
-//todo: Consider creating our own error for this
+pub fn decode_multibase<T>(data: &T) -> Result<Vec<u8>, MultiBaseDecodingError>
 where
   T: AsRef<str> + ?Sized,
 {
   if data.as_ref().is_empty() {
     return Ok(Vec::new());
   }
-  multibase::decode(&data).map(|(_base, output)| output)
+  multibase::decode(&data).map_err(|inner|MultiBaseDecodingError {inner}).map(|(_base, output)| output)
 }
 
 /// Encodes the given `data` as [Multibase] with the given [`base`](Base), defaults to
@@ -96,12 +124,12 @@ where
 }
 
 /// Decodes the given `data` as base58-btc.
-pub fn decode_b58<T>(data: &T) -> Result<Vec<u8>, bs58::decode::Error>
+pub fn decode_b58<T>(data: &T) -> Result<Vec<u8>, Base58DecodingError>
 //todo: Consider creating our own error for this
 where
   T: AsRef<[u8]> + ?Sized,
 {
-  bs58::decode(data).with_alphabet(bs58::Alphabet::BITCOIN).into_vec()
+  bs58::decode(data).with_alphabet(bs58::Alphabet::BITCOIN).into_vec().map_err(|inner| Base58DecodingError{inner} )
 }
 
 /// Encodes the given `data` as base58-btc.
@@ -113,11 +141,11 @@ where
 }
 
 /// Decodes the given `data` as base64.
-pub fn decode_b64<T>(data: &T) -> Result<Vec<u8>, base64::DecodeError>
+pub fn decode_b64<T>(data: &T) -> Result<Vec<u8>, Base64DecodingError>
 where
   T: AsRef<[u8]> + ?Sized,
 {
-  base64::decode_config(data.as_ref(), base64::URL_SAFE)
+  base64::decode_config(data.as_ref(), base64::URL_SAFE).map_err(|inner| Base64DecodingError {inner})
 }
 
 /// Encodes the given `data` as base64.
