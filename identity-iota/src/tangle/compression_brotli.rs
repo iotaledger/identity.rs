@@ -1,35 +1,39 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::io::Read;
+
 use crate::error::Error;
-use crate::error::Error::CompressionError;
-use std::io::prelude::*;
+use crate::error::Result;
 
 const BUFFER_SIZE: usize = 4096;
 const QUALITY: u32 = 5; // compression level
 const WINDOWS_SIZE: u32 = 22;
 
-pub(crate) fn compress_brotli<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, Error> {
+pub(crate) fn compress_brotli<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>> {
   let mut buf = Vec::new();
   let mut compressor = brotli::CompressorReader::new(input.as_ref(), BUFFER_SIZE, QUALITY, WINDOWS_SIZE);
   compressor.read_to_end(&mut buf).map_err(|_| Error::CompressionError)?;
   Ok(buf)
 }
 
-pub(crate) fn decompress_brotli<T: AsRef<[u8]> + ?Sized>(input: &T) -> Result<Vec<u8>, Error> {
+pub(crate) fn decompress_brotli<T: AsRef<[u8]> + ?Sized>(input: &T) -> Result<Vec<u8>> {
   let mut decompressor = brotli::Decompressor::new(input.as_ref(), BUFFER_SIZE);
   let mut buf = Vec::new();
-  decompressor.read_to_end(&mut buf).map_err(|_| CompressionError)?;
+  decompressor
+    .read_to_end(&mut buf)
+    .map_err(|_| Error::CompressionError)?;
   Ok(buf)
 }
 
 #[cfg(test)]
 mod test {
+  use identity_core::convert::ToJson;
+  use identity_core::crypto::KeyPair;
+
   use crate::did::IotaDocument;
   use crate::tangle::compression_brotli::compress_brotli;
   use crate::tangle::compression_brotli::decompress_brotli;
-  use identity_core::convert::ToJson;
-  use identity_core::crypto::KeyPair;
 
   #[test]
   fn test_brotli() {

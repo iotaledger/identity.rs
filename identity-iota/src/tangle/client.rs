@@ -17,10 +17,8 @@ use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
-use crate::tangle::did_encoding;
-use crate::tangle::did_encoding::DIDMessageEncoding;
-use crate::tangle::did_message_versioning;
-use crate::tangle::did_message_versioning::DIDMessageVersion;
+use crate::tangle::message_encoding::DIDMessageEncoding;
+use crate::tangle::message_ext;
 use crate::tangle::ClientBuilder;
 use crate::tangle::Message;
 use crate::tangle::MessageId;
@@ -90,22 +88,14 @@ impl Client {
     self.publish_json(&IotaDocument::diff_index(message_id)?, diff).await
   }
 
-  /// Compresses and Publishes arbitrary JSON data to the specified index on the Tangle.
+  /// Compresses and publishes arbitrary JSON data to the specified index on the Tangle.
   pub async fn publish_json<T: ToJson>(&self, index: &str, data: &T) -> Result<Receipt> {
-    let encoded_message_data = match self.encoding {
-      DIDMessageEncoding::JsonBrotli => did_encoding::compress_message(&data.to_json()?, self.encoding)?,
-      DIDMessageEncoding::Json => data.to_json_vec()?,
-    };
-    let encoded_message_data_with_flags = Self::add_flags_to_message(
-      encoded_message_data,
-      did_message_versioning::CURRENT_MESSAGE_VERSION,
-      self.encoding,
-    );
+    let message_data: Vec<u8> = message_ext::pack_did_message(data, self.encoding)?;
     self
       .client
       .message()
       .with_index(index)
-      .with_data(encoded_message_data_with_flags)
+      .with_data(message_data)
       .finish()
       .await
       .map_err(Into::into)
@@ -197,19 +187,6 @@ impl Client {
       .try_collect()
       .await
       .map_err(Into::into)
-  }
-
-  /// Adds message version flag and encoding flag at the beginning of arbitrary message data.
-  fn add_flags_to_message(
-    mut message_data: Vec<u8>,
-    message_version: DIDMessageVersion,
-    encoding: DIDMessageEncoding,
-  ) -> Vec<u8> {
-    let message_version_flag = message_version as u8;
-    let encoding_flag = encoding as u8;
-
-    message_data.splice(0..0, [message_version_flag, encoding_flag].iter().cloned());
-    message_data
   }
 }
 
