@@ -39,13 +39,9 @@ impl ClientBuilder {
     self
   }
 
-  /// Disables message compression.
-  pub fn set_compression(mut self, enabled: bool) -> Self {
-    if enabled {
-      self.encoding = DIDMessageEncoding::JsonBrotli;
-      return self;
-    }
-    self.encoding = DIDMessageEncoding::Json;
+  /// Sets the DID message encoding used when publishing to the Tangle.
+  pub fn encoding(mut self, encoding: DIDMessageEncoding) -> Self {
+    self.encoding = encoding;
     self
   }
 
