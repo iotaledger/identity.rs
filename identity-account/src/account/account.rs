@@ -12,6 +12,7 @@ use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::Publish;
+use identity_iota::tangle::TangleRef;
 use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
 use std::sync::atomic::AtomicUsize;
@@ -45,7 +46,6 @@ pub struct Account {
   storage: Arc<dyn Storage>,
   client_map: Arc<ClientMap>,
   actions: AtomicUsize,
-  did: IotaDID, // TODO: Get from state field
   state: IdentityState,
   did_lease: DIDLease,
 }
@@ -87,7 +87,7 @@ impl Account {
 
   /// Returns the did of the managed identity.
   pub fn did(&self) -> &IotaDID {
-    &self.did
+    self.document().did()
   }
 
   /// Return the latest state of the identity.
@@ -116,14 +116,13 @@ impl Account {
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  async fn with_setup(setup: AccountSetup, did: IotaDID, state: IdentityState, did_lease: DIDLease) -> Result<Self> {
+  async fn with_setup(setup: AccountSetup, state: IdentityState, did_lease: DIDLease) -> Result<Self> {
     Ok(Self {
       config: setup.config,
       storage: setup.storage,
       client_map: setup.client_map,
       actions: AtomicUsize::new(0),
       state,
-      did,
       did_lease,
     })
   }
@@ -134,18 +133,11 @@ impl Account {
   ///
   /// See [`IdentityCreate`] to customize the identity creation.
   pub(crate) async fn create_identity(setup: AccountSetup, input: IdentitySetup) -> Result<Self> {
-    let (did, did_lease, state): (IotaDID, DIDLease, IdentityState) =
-      create_identity(input, setup.storage.as_ref()).await?;
+    let (did_lease, state): (DIDLease, IdentityState) = create_identity(input, setup.storage.as_ref()).await?;
 
-    let mut account = Self::with_setup(setup, did, state, did_lease).await?;
+    let mut account = Self::with_setup(setup, state, did_lease).await?;
 
     account.publish(false).await?;
-
-    // account.publish_integration_change(account.state()).await?;
-
-    // account.storage.set_state(account.did(), account.state()).await?;
-
-    // account.save(true).await?;
 
     Ok(account)
   }
@@ -157,7 +149,7 @@ impl Account {
 
     let did_lease = setup.storage.lease_did(&did).await?;
 
-    Self::with_setup(setup, did, state, did_lease).await
+    Self::with_setup(setup, state, did_lease).await
   }
 
   // ===========================================================================

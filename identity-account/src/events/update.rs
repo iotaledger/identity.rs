@@ -42,10 +42,7 @@ fn key_to_method(type_: KeyType) -> MethodType {
   }
 }
 
-pub(crate) async fn create_identity(
-  setup: IdentitySetup,
-  store: &dyn Storage,
-) -> Result<(IotaDID, DIDLease, IdentityState)> {
+pub(crate) async fn create_identity(setup: IdentitySetup, store: &dyn Storage) -> Result<(DIDLease, IdentityState)> {
   let method_type = key_to_method(setup.key_type);
 
   // The method type must be able to sign document updates.
@@ -99,7 +96,7 @@ pub(crate) async fn create_identity(
 
   // TODO: Can we unwrap/expect?
   let method: IotaVerificationMethod =
-    IotaVerificationMethod::from_did(did.to_owned(), setup.key_type, &public, method_fragment.name())?;
+    IotaVerificationMethod::from_did(did, setup.key_type, &public, method_fragment.name())?;
 
   // TODO: Can we unwrap/expect?
   let document = IotaDocument::from_verification_method(method)?;
@@ -111,7 +108,7 @@ pub(crate) async fn create_identity(
   // Store the generations at which the method was added
   state.set_method_generations(method_fragment);
 
-  Ok((did.clone(), did_lease, state))
+  Ok((did_lease, state))
 }
 
 #[derive(Clone, Debug)]
