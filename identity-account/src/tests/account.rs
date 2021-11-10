@@ -1,7 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_core::common::Url;
+use identity_did::verification::MethodScope;
 use identity_iota::did::IotaDID;
+use identity_iota::tangle::MessageId;
 
 use crate::account::Account;
 use crate::account::AccountBuilder;
@@ -55,6 +58,53 @@ async fn test_account_did_lease() -> Result<()> {
     builder.load_identity(did).await.unwrap_err(),
     crate::Error::IdentityInUse
   ));
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_account_chain_state() -> Result<()> {
+  let mut builder: AccountBuilder = AccountBuilder::default().testmode(true);
+
+  let mut account: Account = builder.create_identity(IdentitySetup::default()).await?;
+
+  let previous_int_id = *account.chain_state().previous_integration_message_id();
+
+  assert_ne!(previous_int_id, MessageId::null());
+  // Assert that the previous_diff_message_id is null, and thus the int message id is returned.
+  assert_eq!(&previous_int_id, account.chain_state().diff_message_id());
+
+  // A diff update.
+  account
+    .update_identity()
+    .create_service()
+    .fragment("my-service-1")
+    .type_("MyCustomService")
+    .endpoint(Url::parse("https://example.com")?)
+    .apply()
+    .await?;
+
+  // A diff update does not overwrite the int message id.
+  assert_eq!(
+    &previous_int_id,
+    account.chain_state().previous_integration_message_id()
+  );
+  // Now the diff message id was overwritten.
+  assert_ne!(&previous_int_id, account.chain_state().diff_message_id());
+
+  account
+    .update_identity()
+    .create_method()
+    .fragment("my-new-key")
+    .scope(MethodScope::CapabilityInvocation)
+    .apply()
+    .await?;
+
+  // Int message id was overwritten.
+  assert_ne!(
+    &previous_int_id,
+    account.chain_state().previous_integration_message_id()
+  );
 
   Ok(())
 }

@@ -341,12 +341,15 @@ impl Account {
 
     let mut new_doc: IotaDocument = new_state.as_document().to_owned();
 
+    new_doc.set_previous_message_id(*self.chain_state().previous_integration_message_id());
+
     self
       .sign_self(old_state.unwrap_or(new_state), new_state, &mut new_doc)
       .await?;
 
     let message_id: MessageId = if self.config.testmode {
-      MessageId::null()
+      // Fake publishing by returning a random message id.
+      MessageId::new(unsafe { crypto::utils::rand::gen::<[u8; 32]>().unwrap() })
     } else {
       self.client_map.publish_document(&new_doc).await?.into()
     };
@@ -383,7 +386,8 @@ impl Account {
       .await?;
 
     let message_id: MessageId = if self.config.testmode {
-      MessageId::null()
+      // Fake publishing by returning a random message id.
+      MessageId::new(unsafe { crypto::utils::rand::gen::<[u8; 32]>().unwrap() })
     } else {
       self
         .client_map
