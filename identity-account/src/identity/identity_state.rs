@@ -75,7 +75,9 @@ impl IdentityState {
   /// Return the `KeyLocation` of the given method.
   pub fn method_location(&self, method_type: MethodType, fragment: String) -> Result<KeyLocation> {
     let fragment = Fragment::new(fragment);
-    let generation = self.method_generations.get(&fragment).ok_or(Error::MethodNotFound)?;
+    // We don't return `MethodNotFound`, as this error might occur when a method exists
+    // in the document, but is not present locally (e.g. in a distributed setup).
+    let generation = self.method_generations.get(&fragment).ok_or(Error::KeyNotFound)?;
 
     Ok(KeyLocation::new(method_type, fragment.into(), *generation))
   }

@@ -70,9 +70,9 @@ pub enum Error {
   /// Caused by attempting to find an identity key vault that does not exist.
   #[error("Key vault not found")]
   KeyVaultNotFound,
-  /// Caused by attempting to find an identity key pair that does not exist.
-  #[error("Key pair not found")]
-  KeyPairNotFound,
+  /// Caused by attempting to find a key in storage that does not exist.
+  #[error("key not found")]
+  KeyNotFound,
   /// Caused by attempting to find an identity that does not exist.
   #[error("Identity not found")]
   IdentityNotFound,

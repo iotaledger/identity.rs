@@ -168,7 +168,7 @@ impl Storage for MemStore {
   async fn key_get(&self, did: &IotaDID, location: &KeyLocation) -> Result<PublicKey> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
     let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
-    let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyPairNotFound)?;
+    let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
 
     Ok(keypair.public().clone())
   }
@@ -185,7 +185,7 @@ impl Storage for MemStore {
   async fn key_sign(&self, did: &IotaDID, location: &KeyLocation, data: Vec<u8>) -> Result<Signature> {
     let vaults: RwLockReadGuard<'_, _> = self.vaults.read()?;
     let vault: &MemVault = vaults.get(did).ok_or(Error::KeyVaultNotFound)?;
-    let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyPairNotFound)?;
+    let keypair: &KeyPair = vault.get(location).ok_or(Error::KeyNotFound)?;
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {

@@ -213,9 +213,7 @@ impl Account {
       .resolve_method(fragment)
       .ok_or(Error::MethodNotFound)?;
 
-    let location: KeyLocation = state
-      .method_location(method.key_type(), fragment.to_owned())
-      .expect("TODO: fatal error");
+    let location: KeyLocation = state.method_location(method.key_type(), fragment.to_owned())?;
 
     state.sign_data(self.did(), self.storage(), &location, target).await?;
 
@@ -235,8 +233,9 @@ impl Account {
 
   #[doc(hidden)]
   pub async fn load_state(&self) -> Result<IdentityState> {
-    // TODO: An account always holds a valid identity (after creation!),
-    // so if None is returned, that's a broken invariant -> should be a fatal error.
+    // TODO: An account always holds a valid identity,
+    // so if None is returned, that's a broken invariant.
+    // This should be mapped to a fatal error in the future.
     self.storage().state(self.did()).await?.ok_or(Error::IdentityNotFound)
   }
 
@@ -260,27 +259,22 @@ impl Account {
     document: &mut IotaDocument,
   ) -> Result<()> {
     if self.chain_state().is_new_identity() {
-      // TODO: Replace with: let method: &TinyMethod = new_state.capability_invocation()?;
       let method: &IotaVerificationMethod = new_state.as_document().default_signing_method()?;
-      let location: KeyLocation = new_state
-        .method_location(
-          method.key_type(),
-          method
-            .id()
-            .fragment()
-            .expect("verification method did not have a fragment")
-            .to_owned(),
-        )
-        .expect("TODO: fatal error");
+      let location: KeyLocation = new_state.method_location(
+        method.key_type(),
+        method
+          .id()
+          .fragment()
+          .expect("verification method did not have a fragment")
+          .to_owned(),
+      )?;
 
       // Sign the DID Document with the current capability invocation method
       new_state
         .sign_data(self.did(), self.storage(), &location, document)
         .await?;
     } else {
-      // TODO: Replace with: let method: &TinyMethod = new_state.capability_invocation()?;
       let method: &IotaVerificationMethod = old_state.as_document().default_signing_method()?;
-      // TODO: Fatal error if not found
       let location: KeyLocation = new_state.method_location(
         method.key_type(),
         method
@@ -369,7 +363,6 @@ impl Account {
 
     let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
 
-    // TODO: Replace with: let method: &TinyMethod = new_state.capability_invocation()?;
     let method: &IotaVerificationMethod = old_state.as_document().default_signing_method()?;
 
     let location: KeyLocation = old_state.method_location(
