@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::marker::PhantomData;
-use futures::executor;
+
+use crossbeam_utils::thread;
 use identity_core::crypto::Sign;
 use identity_core::error::Error;
 use identity_core::error::Result;
+use tokio::runtime::Runtime;
 
 use crate::identity::IdentityId;
 use crate::storage::Storage;
@@ -48,8 +50,16 @@ where
   fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output> {
     let future: _ = key.store.key_sign(key.id, key.location, message.to_vec());
 
-    executor::block_on(future)
-      .map_err(|_| Error::InvalidProofValue("remote sign"))
-      .map(|signature| signature.data)
+    thread::scope(|s| {
+      s.spawn(move |_| {
+        let rt = Runtime::new().unwrap();
+        rt.block_on(future)
+          .map_err(|_| Error::InvalidProofValue("remote sign"))
+          .map(|signature| signature.data)
+      })
+      .join()
+      .unwrap()
+    })
+    .unwrap()
   }
 }

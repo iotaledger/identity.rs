@@ -1,5 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+use std::path::PathBuf;
+use std::sync::Arc;
 
 use crate::account::Account;
 use crate::account::Config;
@@ -13,6 +15,7 @@ use crate::identity::IdentitySnapshot;
 use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::storage::MemStore;
+use crate::storage::Stronghold;
 use crate::types::Generation;
 use crate::types::MethodSecret;
 use identity_core::common::UnixTimestamp;
@@ -22,6 +25,7 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
+use identity_iota::did::IotaDID;
 
 async fn new_account() -> Result<Account> {
   let store: MemStore = MemStore::new();
@@ -441,4 +445,41 @@ async fn test_delete_method() -> Result<()> {
   assert!(snapshot.identity().methods().fetch("key-1").is_err());
 
   Ok(())
+}
+#[tokio::test]
+async fn test_account_shared_ref() -> Result<()> {
+  let stronghold_path: PathBuf = "./example-strong.hodl".into();
+
+  let storage = Stronghold::new(&stronghold_path, Some("my-password")).await?;
+  let account: Arc<Account> = Arc::new(Account::with_config(storage, Config::new().testmode(true)).await?);
+
+  let identity1 = account.create_identity(IdentityCreate::default()).await?;
+  let iota_did1: IotaDID = identity1.try_did()?.to_owned();
+
+  let identity2 = account.create_identity(IdentityCreate::default()).await?;
+  let iota_did2: IotaDID = identity2.try_did()?.to_owned();
+
+  let account_clone = Arc::clone(&account);
+
+  let task = tokio::task::spawn(async move {
+    update(account_clone.as_ref(), iota_did1).await;
+  });
+
+  update(account.as_ref(), iota_did2).await;
+
+  task.await.unwrap();
+
+  Ok(())
+}
+
+async fn update(account: &Account, did: IotaDID) {
+  for i in 0..2 {
+    account
+      .update_identity(&did)
+      .create_method()
+      .fragment(format!("key-{}", i))
+      .apply()
+      .await
+      .unwrap();
+  }
 }
