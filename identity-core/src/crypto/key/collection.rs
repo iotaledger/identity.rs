@@ -8,6 +8,7 @@ use core::slice::Iter;
 use core::slice::SliceIndex;
 use std::vec::IntoIter;
 
+use crate::FatalError;
 use crate::{Result,Error};
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::SigningKey;
@@ -37,8 +38,12 @@ mod errors {
     /// The maximum number of keys allowed may increase in the future. 
     // TODO: once rustdoc gets support for including constants we should use KeyCollection::MAX_KEYS_ALLOWED directly. 
     // Alternatively we could make KeyCollection::MAX_KEYS_ALLOWED public and link to that.
-    #[error("The maximum number of keys allowed is {}, but {0} were provided",KeyCollection::MAX_KEYS_ALLOWED)]
-    MaximumExceeded(usize)
+    #[error("the maximum number of keys allowed is {}, but {0} were provided",KeyCollection::MAX_KEYS_ALLOWED)]
+    MaximumExceeded(usize), 
+
+    /// The number of keys is not a non-zero power of two. 
+    #[error("the number of keys must be a power of two, but {0} were provided")]
+    NotAPowerOfTwo(usize)
   }
 
 }
@@ -48,6 +53,11 @@ type KeyCouple = (PublicKey, PrivateKey);
 #[derive(Clone, Debug)]
 pub struct KeyCollection {
   type_: KeyType,
+  /* constructors must ensure that the number of public keys corresponds to the number of private keys 
+  and that this number is a non-zero power of two.
+
+  We were not able to combine the two as some of the Merkle functions require &[L].
+  */
   public: Box<[PublicKey]>,
   private: Box<[PrivateKey]>,
 }
@@ -61,35 +71,42 @@ impl KeyCollection {
   /// [`PublicKey`]/[`PrivateKey`] pairs.
   /// 
   /// # Errors 
-  /// An error will be returned if the number of items provided by the iterator is not in the interval [1,4096]. 
+  /// An inner error is returned if the number of items provided by the iterator is not in the interval [1,4096]. This upper limit may be increased in the future. 
+  /// If this function fails to create a [`KeyCollection`] with a matching private key for every public key then a [`FatalError`] will be returned. 
+  /// This is not something we expect to happen in practice and most direct callers may choose to propagate this outer error. 
   /// 
-  /// In the future we may allow for more items.  
-  pub fn from_iterator<I>(type_: KeyType, iter: I) -> Result<Self, Error>
+  pub fn from_iterator<I>(type_: KeyType, iter: I) -> Result<Result<Self, KeyCollectionSizeError>,FatalError>
   where
     I: IntoIterator<Item = (PublicKey, PrivateKey)>,
   {
     let (public, private): (Vec<_>, Vec<_>) = iter.into_iter().unzip();
-
-    if public.is_empty() {
-      return Err(Error::InvalidKeyCollectionSize(public.len()));
+    let num_public_keys = public.len(); 
+   
+    if num_public_keys != private.len() {
+      // TODO: Did we choose the correct return type? It is probably impossible for public and private to have different lengths 
+      return Err(FatalError::from(crate::fatal_error::ErrorKind::KeyPairImbalance));
     }
-
-    if private.is_empty() {
-      return Err(Error::InvalidKeyCollectionSize(private.len()));
-    }
-
-    Ok(Self {
+    if num_public_keys == 0 {
+      Ok(Err(KeyCollectionSizeError::Empty))
+    } else if !num_public_keys.is_power_of_two() {
+      Ok(Err(KeyCollectionSizeError::NotAPowerOfTwo(num_public_keys)))
+    } else if num_public_keys > Self::MAX_KEYS_ALLOWED {
+      Ok(Err(KeyCollectionSizeError::MaximumExceeded(num_public_keys)))
+    } else {
+    Ok(Ok(Self {
       type_,
       public: public.into_boxed_slice(),
       private: private.into_boxed_slice(),
     })
+  )
+  }
   }
 
   /// Creates a new [`KeyCollection`] with [`Ed25519`][`KeyType::Ed25519`] keys.
   /// If `count` is not a power of two, with the exception of 0, which will result in an error,
   /// it will be rounded up to the next one.
   /// E.g. 230 -> 256
-  pub fn new_ed25519(count: usize) -> Result<Self> {
+  pub fn new_ed25519(count: usize) -> Result<Result<Self, KeyCollectionSizeError>,FatalError> {
     Self::new(KeyType::Ed25519, count)
   }
 
@@ -97,13 +114,13 @@ impl KeyCollection {
   /// If `count` is not a power of two, with the exception of 0, which will result in an error,
   /// it will be rounded up to the next one.
   /// E.g. 230 -> 256
-  pub fn new(type_: KeyType, count: usize) -> Result<Self> {
+  pub fn new(type_: KeyType, count: usize) -> Result<Result<Self, KeyCollectionSizeError>,FatalError> {
     if count == 0 {
-      return Err(Error::InvalidKeyCollectionSize(0));
+      return Ok(Err(Error::InvalidKeyCollectionSize(0)));
     }
     let count_next_power = count.checked_next_power_of_two().unwrap_or(0);
     if count_next_power == 0 || count_next_power > Self::MAX_KEYS_ALLOWED {
-      return Err(Error::InvalidKeyCollectionSize(count_next_power));
+      return Ok(Err(Error::InvalidKeyCollectionSize(count_next_power)));
     }
 
     let keys: Vec<(PublicKey, PrivateKey)> = match type_ {
@@ -263,7 +280,7 @@ mod tests {
     }
 
     let iter: _ = public.into_iter().zip(private.into_iter());
-    let next: KeyCollection = KeyCollection::from_iterator(keys.type_(), iter).unwrap();
+    let next: KeyCollection = KeyCollection::from_iterator(keys.type_(), iter).unwrap().unwrap();
 
     assert_eq!(next.len(), keys.len());
 
