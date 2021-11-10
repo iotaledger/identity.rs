@@ -211,7 +211,7 @@ impl Update {
           UpdateError::InvalidMethodFragment("cannot remove last signing method")
         );
 
-        state.as_document_mut().remove_method(method_url);
+        state.as_document_mut().remove_method(method_url).unwrap();
       }
       Self::AttachMethod {
         fragment,

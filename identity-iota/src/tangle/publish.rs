@@ -66,7 +66,9 @@ mod test {
     let verif_method2: IotaVerificationMethod =
       IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-0")?;
 
-    new_doc.remove_method(new_doc.did().to_url().join("#test-0").unwrap());
+    new_doc
+      .remove_method(new_doc.did().to_url().join("#test-0").unwrap())
+      .unwrap();
     new_doc.insert_method(verif_method2, MethodScope::CapabilityInvocation);
 
     assert!(matches!(Publish::new(&old_doc, &new_doc), Publish::Integration));

@@ -430,9 +430,10 @@ impl IotaDocument {
 
   /// Removes all occurrences of and references to the specified [`VerificationMethod`]
   /// from this document.
-  pub fn remove_method(&mut self, did_url: IotaDIDUrl) {
+  pub fn remove_method(&mut self, did_url: IotaDIDUrl) -> Result<()> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
     self.document.remove_method(&core_did_url);
+    Ok(())
   }
 
   /// Returns the first [`IotaVerificationMethod`] with an `id` property
@@ -1552,17 +1553,19 @@ mod tests {
     assert_eq!(document.default_signing_method().unwrap().id(), signing_method.id());
 
     // Removing the original signing method returns the next one.
-    document.remove_method(
-      document
-        .id()
-        .to_url()
-        .join(format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT))
-        .unwrap(),
-    );
+    document
+      .remove_method(
+        document
+          .id()
+          .to_url()
+          .join(format!("#{}", IotaDocument::DEFAULT_METHOD_FRAGMENT))
+          .unwrap(),
+      )
+      .unwrap();
     assert_eq!(document.default_signing_method().unwrap().id(), new_method_id);
 
     // Removing the last signing method causes an error.
-    document.remove_method(new_method_id);
+    document.remove_method(new_method_id).unwrap();
     assert!(matches!(
       document.default_signing_method(),
       Err(Error::MissingSigningKey)
@@ -1745,7 +1748,7 @@ mod tests {
     let method2: IotaVerificationMethod =
       IotaVerificationMethod::from_did(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
 
-    doc1.remove_method(doc1.id().to_url().join("#test-0").unwrap());
+    doc1.remove_method(doc1.id().to_url().join("#test-0").unwrap()).unwrap();
     doc1.insert_method(method2, MethodScope::CapabilityInvocation);
 
     // Even though the method fragment is the same, the key material has been updated
