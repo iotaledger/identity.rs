@@ -44,14 +44,12 @@ jobs:
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
           args: >
+            --config-file .github/.github_changelog_generator
             --user ${{ env.GITHUB_REPOSITORY_USER }}
             --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
             --token ${{ secrets.GITHUB_TOKEN }} 
-            --no-author 
             ${{ env.NEXTVERSION_ARG }} 
             --exclude-tags-regex "dev-\d{1,}"
-            --no-issues
-            --verbose
       - name: Log CHANGELOG.md
         run: cat CHANGELOG.md
       - name: Commit changes
