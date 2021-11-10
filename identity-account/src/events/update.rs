@@ -53,7 +53,6 @@ pub(crate) async fn create_identity(setup: IdentitySetup, store: &dyn Storage) -
 
   let generation = Generation::new();
   let fragment: String = format!("{}{}", DEFAULT_UPDATE_METHOD_PREFIX, generation.to_u32());
-  // TODO: Consider passing in integration_generation and use it to construct state, to assert they are equal.
 
   let location: KeyLocation = KeyLocation::new(method_type, fragment, generation);
 
@@ -101,8 +100,6 @@ pub(crate) async fn create_identity(setup: IdentitySetup, store: &dyn Storage) -
   // TODO: Can we unwrap/expect?
   let document = IotaDocument::from_verification_method(method)?;
 
-  // TODO: integration_generation should be taken from this state, but we cannot construct it until later.
-  // Try rectification.
   let mut state = IdentityState::new(document);
 
   // Store the generations at which the method was added
@@ -154,8 +151,7 @@ impl Update {
         fragment,
         method_secret,
       } => {
-        // TODO: Remove clone after merge
-        let location: KeyLocation = state.key_location(type_, fragment.clone())?;
+        let location: KeyLocation = state.key_location(type_, fragment)?;
 
         // The key location must be available.
         // TODO: config: strict
@@ -179,10 +175,14 @@ impl Update {
           storage.key_new(did, &location).await
         }?;
 
-        let method: IotaVerificationMethod =
-          IotaVerificationMethod::from_did(did.to_owned(), KeyType::Ed25519, &public, &fragment)?;
+        let method: IotaVerificationMethod = IotaVerificationMethod::from_did(
+          did.to_owned(),
+          KeyType::Ed25519,
+          &public,
+          location.fragment().identifier(),
+        )?;
 
-        state.set_method_generations(Fragment::new(fragment));
+        state.set_method_generations(location.fragment().clone());
 
         // We can ignore the result: we just checked that the method does not exist.
         state.as_document_mut().insert_method(method, scope);
