@@ -8,6 +8,7 @@ use core::slice::Iter;
 use core::slice::SliceIndex;
 use std::vec::IntoIter;
 
+use crate::{Result,Error};
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::SigningKey;
 use crate::crypto::merkle_tree::compute_merkle_proof;
@@ -20,14 +21,29 @@ use crate::crypto::KeyRef;
 use crate::crypto::KeyType;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
-use crate::error::Error;
-use crate::error::Result;
 use crate::utils::generate_ed25519_keypairs;
+pub use self::errors::KeyCollectionSizeError; 
+mod errors {
+  use super::KeyCollection; 
+  use thiserror::Error as DeriveError;
+  /// Caused by attempting to create a key collection with an invalid number of keys
+  #[derive(Debug, PartialEq, DeriveError, Eq, Clone)]
+  pub enum KeyCollectionSizeError {
+    /// A [`KeyCollection`] cannot be empty 
+    #[error("key collections cannot be empty")]
+    Empty, 
+    /// The number of keys in a [`KeyCollection`] cannot exceed 4096. 
+    /// 
+    /// The maximum number of keys allowed may increase in the future. 
+    // TODO: once rustdoc gets support for including constants we should use KeyCollection::MAX_KEYS_ALLOWED directly. 
+    // Alternatively we could make KeyCollection::MAX_KEYS_ALLOWED public and link to that.
+    #[error("The maximum number of keys allowed is {}, but {0} were provided",KeyCollection::MAX_KEYS_ALLOWED)]
+    MaximumExceeded(usize)
+  }
 
-/// Defines an upper limit to the amount of keys that can be created (2^12)
-/// This value respects a current stronghold limitation
-const MAX_KEYS_ALLOWED: usize = 4_096;
+}
 
+type KeyCouple = (PublicKey, PrivateKey); 
 /// A collection of cryptographic keys.
 #[derive(Clone, Debug)]
 pub struct KeyCollection {
@@ -37,9 +53,18 @@ pub struct KeyCollection {
 }
 
 impl KeyCollection {
+  /// Defines an upper limit to the amount of keys that can be created (2^12)
+  /// This value respects a current stronghold limitation
+  const MAX_KEYS_ALLOWED: usize = 4_096; 
+
   /// Creates a new [`KeyCollection`] from an iterator of
   /// [`PublicKey`]/[`PrivateKey`] pairs.
-  pub fn from_iterator<I>(type_: KeyType, iter: I) -> Result<Self>
+  /// 
+  /// # Errors 
+  /// An error will be returned if the number of items provided by the iterator is not in the interval [1,4096]. 
+  /// 
+  /// In the future we may allow for more items.  
+  pub fn from_iterator<I>(type_: KeyType, iter: I) -> Result<Self, Error>
   where
     I: IntoIterator<Item = (PublicKey, PrivateKey)>,
   {
@@ -77,7 +102,7 @@ impl KeyCollection {
       return Err(Error::InvalidKeyCollectionSize(0));
     }
     let count_next_power = count.checked_next_power_of_two().unwrap_or(0);
-    if count_next_power == 0 || count_next_power > MAX_KEYS_ALLOWED {
+    if count_next_power == 0 || count_next_power > Self::MAX_KEYS_ALLOWED {
       return Err(Error::InvalidKeyCollectionSize(count_next_power));
     }
 
