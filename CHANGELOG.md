@@ -1,10 +1,10 @@
 # Changelog
 
-## [dev-30](https://github.com/eike-hass/identity.rs/tree/dev-30) (2021-11-08)
+## [dev-31](https://github.com/eike-hass/identity.rs/tree/dev-31) (2021-11-10)
 
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.12.0...dev-30)
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.12.0...dev-31)
 
-**Implemented enhancements:**
+Added
 
 - adddiontal changelog for release [\#9](https://github.com/eike-hass/identity.rs/pull/9)
 
@@ -12,7 +12,7 @@
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.11.0...v0.12.0)
 
-**Implemented enhancements:**
+Added
 
 - added test string [\#8](https://github.com/eike-hass/identity.rs/pull/8)
 
@@ -32,7 +32,7 @@
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.7.0...v0.8.0)
 
-**Implemented enhancements:**
+Added
 
 - remove test string [\#7](https://github.com/eike-hass/identity.rs/pull/7)
 
@@ -56,7 +56,7 @@
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/v.0.4.0...0.5.0)
 
-**Implemented enhancements:**
+Added
 
 - removed test string [\#4](https://github.com/eike-hass/identity.rs/pull/4)
 
