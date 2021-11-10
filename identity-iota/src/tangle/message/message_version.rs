@@ -11,7 +11,9 @@ pub enum DIDMessageVersion {
   V1 = 1,
 }
 
-pub(crate) const CURRENT_MESSAGE_VERSION: DIDMessageVersion = DIDMessageVersion::V1;
+impl DIDMessageVersion {
+  pub const CURRENT: Self = Self::V1;
+}
 
 impl TryFrom<u8> for DIDMessageVersion {
   type Error = Error;

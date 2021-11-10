@@ -16,7 +16,6 @@ use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Result;
 use crate::tangle::message::compression_brotli;
-use crate::tangle::message::message_version::CURRENT_MESSAGE_VERSION;
 use crate::tangle::DIDMessageEncoding;
 use crate::tangle::DIDMessageVersion;
 use crate::tangle::TangleRef;
@@ -76,8 +75,8 @@ pub(crate) fn pack_did_message<T: ToJson>(data: &T, encoding: DIDMessageEncoding
   };
 
   // Prepend flags.
-  let encoded_message_data_with_flags = add_flags_to_message(encoded_message_data, CURRENT_MESSAGE_VERSION, encoding);
-
+  let encoded_message_data_with_flags =
+    add_flags_to_message(encoded_message_data, DIDMessageVersion::CURRENT, encoding);
   Ok(encoded_message_data_with_flags)
 }
 
@@ -154,7 +153,6 @@ mod test {
 
   use crate::did::IotaDocument;
   use crate::tangle::message::message_encoding::DIDMessageEncoding;
-  use crate::tangle::message::message_version::CURRENT_MESSAGE_VERSION;
   use crate::tangle::MessageId;
 
   use super::*;
@@ -169,7 +167,7 @@ mod test {
 
     for encoding in [DIDMessageEncoding::Json, DIDMessageEncoding::JsonBrotli] {
       let encoded: Vec<u8> = pack_did_message(&document, encoding).unwrap();
-      assert_eq!(encoded[0], CURRENT_MESSAGE_VERSION as u8);
+      assert_eq!(encoded[0], DIDMessageVersion::CURRENT as u8);
       assert_eq!(encoded[1], encoding as u8);
 
       let decoded: IotaDocument = parse_data(MessageId::null(), &encoded).unwrap();
