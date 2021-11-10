@@ -10,5 +10,3 @@ jobs:
     - uses: yogevbd/enforce-label-action@2.2.2
       with:
         REQUIRED_LABELS_ANY: "changed,added,patch,bug,deprecated,removed,documentation,no-changelog"
-        REQUIRED_LABELS_ANY_DESCRIPTION: "Select at least one label ['changed','added','patch','bug','deprecated','removed','documentation','no-changelog']"
-        BANNED_LABELS: "question,wontfix"
