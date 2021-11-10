@@ -1,10 +1,10 @@
 # Changelog
 
-## [Unreleased](https://github.com/eike-hass/identity.rs/tree/HEAD)
+## [dev-31](https://github.com/eike-hass/identity.rs/tree/dev-31) (2021-11-10)
 
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.12.0...HEAD)
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.12.0...dev-31)
 
-**Merged pull requests:**
+Added
 
 - adddiontal changelog for release [\#9](https://github.com/eike-hass/identity.rs/pull/9)
 
@@ -12,7 +12,7 @@
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.11.0...v0.12.0)
 
-**Merged pull requests:**
+Added
 
 - added test string [\#8](https://github.com/eike-hass/identity.rs/pull/8)
 
@@ -32,7 +32,7 @@
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.7.0...v0.8.0)
 
-**Merged pull requests:**
+Added
 
 - remove test string [\#7](https://github.com/eike-hass/identity.rs/pull/7)
 
@@ -56,9 +56,12 @@
 
 [Full Changelog](https://github.com/eike-hass/identity.rs/compare/v.0.4.0...0.5.0)
 
-**Merged pull requests:**
+Added
 
 - removed test string [\#4](https://github.com/eike-hass/identity.rs/pull/4)
+
+**Merged pull requests:**
+
 - added test string [\#3](https://github.com/eike-hass/identity.rs/pull/3)
 - added workflow [\#1](https://github.com/eike-hass/identity.rs/pull/1)
 
