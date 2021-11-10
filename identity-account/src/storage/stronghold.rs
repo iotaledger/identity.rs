@@ -170,15 +170,12 @@ impl Storage for Stronghold {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_did(did));
 
-    // Read the event snapshot from the stronghold snapshot
     let data: Vec<u8> = store.get(location_chain_state()).await?;
 
-    // No snapshot data found
     if data.is_empty() {
       return Ok(None);
     }
 
-    // Deserialize and return
     Ok(Some(ChainState::from_json_slice(&data)?))
   }
 
@@ -186,10 +183,8 @@ impl Storage for Stronghold {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_did(did));
 
-    // Serialize the state snapshot
     let json: Vec<u8> = chain_state.to_json_vec()?;
 
-    // Write the state snapshot to the stronghold snapshot
     store.set(location_chain_state(), json, None).await?;
 
     Ok(())
@@ -199,10 +194,10 @@ impl Storage for Stronghold {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_did(did));
 
-    // Read the event snapshot from the stronghold snapshot
+    // Read the state from the stronghold snapshot
     let data: Vec<u8> = store.get(location_state()).await?;
 
-    // No snapshot data found
+    // No state data found
     if data.is_empty() {
       return Ok(None);
     }
@@ -215,17 +210,17 @@ impl Storage for Stronghold {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_did(did));
 
-    // Serialize the state snapshot
+    // Serialize the state
     let json: Vec<u8> = state.to_json_vec()?;
 
-    // Write the state snapshot to the stronghold snapshot
+    // Write the state to the stronghold snapshot
     store.set(location_state(), json, None).await?;
 
     Ok(())
   }
 
   async fn purge(&self, _did: &IotaDID) -> Result<()> {
-    // TODO: this
+    // TODO: Will be re-implemented later with the key location refactor.
     Ok(())
   }
 
@@ -317,7 +312,7 @@ fn location_published_generation() -> Location {
 }
 
 fn fmt_key(prefix: &str, location: &KeyLocation) -> Vec<u8> {
-  format!("{}:{}:{}", prefix, location.generation(), location.fragment_name(),).into_bytes()
+  format!("{}:{}:{}", prefix, location.generation(), location.fragment_name()).into_bytes()
 }
 
 fn fmt_did(did: &IotaDID) -> String {

@@ -69,10 +69,6 @@ impl MemStore {
     self.expand = value;
   }
 
-  pub fn states(&self) -> Result<States> {
-    self.states.read().map(|data| data.clone())
-  }
-
   pub fn vaults(&self) -> Result<Vaults> {
     self.vaults.read().map(|data| data.clone())
   }
@@ -226,6 +222,7 @@ impl Storage for MemStore {
   async fn purge(&self, did: &IotaDID) -> Result<()> {
     let _ = self.states.write()?.remove(did);
     let _ = self.vaults.write()?.remove(did);
+    let _ = self.chain_states.write()?.remove(did);
 
     Ok(())
   }
@@ -244,6 +241,7 @@ impl Debug for MemStore {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     if self.expand {
       f.debug_struct("MemStore")
+        .field("chain_states", &self.chain_states)
         .field("states", &self.states)
         .field("vaults", &self.vaults)
         .finish()

@@ -26,7 +26,7 @@ pub trait Storage: Debug + Send + Sync + 'static {
   /// Write any unsaved changes to disk.
   async fn flush_changes(&self) -> Result<()>;
 
-  /// Attempt to obtain the exclusive permission to modify the given did.
+  /// Attempt to obtain the exclusive permission to modify the given `did`.
   /// The caller is expected to make no more modifications after the lease has been dropped.
   /// Returns an [`IdentityInUse`][crate::Error::IdentityInUse] error if already leased.
   async fn lease_did(&self, did: &IotaDID) -> Result<DIDLease>;
@@ -49,25 +49,25 @@ pub trait Storage: Debug + Send + Sync + 'static {
   /// Returns `true` if a keypair exists at the specified `location`.
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool>;
 
-  /// Returns the last generation that has been published to the tangle for the given `id`.
+  /// Returns the last generation that has been published to the tangle for the given `did`.
   async fn published_generation(&self, did: &IotaDID) -> Result<Option<Generation>>;
 
-  /// Sets the last generation that has been published to the tangle for the given `id`.
+  /// Sets the last generation that has been published to the tangle for the given `did`.
   async fn set_published_generation(&self, did: &IotaDID, index: Generation) -> Result<()>;
 
-  /// Returns the state snapshot of the identity specified by `id`.
+  /// Returns the chain state of the identity specified by `did`.
   async fn chain_state(&self, did: &IotaDID) -> Result<Option<ChainState>>;
 
-  /// Returns the state snapshot of the identity specified by `id`.
+  /// Set the chain state of the identity specified by `did`.
   async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()>;
 
-  /// Returns the state snapshot of the identity specified by `id`.
+  /// Returns the state of the identity specified by `did`.
   async fn state(&self, did: &IotaDID) -> Result<Option<IdentityState>>;
 
-  /// Sets a new state snapshot for the identity specified by `id`.
+  /// Sets a new state for the identity specified by `did`.
   async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> Result<()>;
 
-  /// Removes the event stream and state snapshot for the identity specified by `id`.
+  /// Removes the keys and any state for the identity specified by `did`.
   async fn purge(&self, did: &IotaDID) -> Result<()>;
 }
 
