@@ -387,7 +387,7 @@ impl Account {
     } else {
       self
         .client_map
-        .publish_diff(self.chain_state().this_message_id(), &diff)
+        .publish_diff(self.chain_state().previous_integration_message_id(), &diff)
         .await?
         .into()
     };
