@@ -28,7 +28,6 @@ use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
 use crate::identity::IdentityUpdater;
 use crate::storage::Storage;
-use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::Error;
 
@@ -137,9 +136,9 @@ impl Account {
 
     let mut account = Self::with_setup(setup, state, did_lease).await?;
 
-    account.publish(false).await?;
-
     account.store_state().await?;
+
+    account.publish(false).await?;
 
     Ok(account)
   }
@@ -218,10 +217,10 @@ impl Account {
   // ===========================================================================
 
   #[doc(hidden)]
-  pub async fn load_state(&self) -> Result<Option<IdentityState>> {
+  pub async fn load_state(&self) -> Result<IdentityState> {
     // TODO: An account always holds a valid identity (after creation!),
     // so if None is returned, that's a broken invariant -> should be a fatal error.
-    self.storage().state(self.did()).await
+    self.storage().state(self.did()).await?.ok_or(Error::IdentityNotFound)
   }
 
   pub(crate) async fn process_update(&mut self, update: Update, _persist: bool) -> Result<()> {
@@ -234,8 +233,6 @@ impl Account {
 
     self.publish(false).await?;
 
-    self.store_state().await?;
-
     Ok(())
   }
 
@@ -245,7 +242,7 @@ impl Account {
     new_state: &IdentityState,
     document: &mut IotaDocument,
   ) -> Result<()> {
-    if new_state.generation() == Generation::new() {
+    if new_state.is_new_identity() {
       // TODO: Replace with: let method: &TinyMethod = new_state.capability_invocation()?;
       let method: &IotaVerificationMethod = new_state.as_document().default_signing_method()?;
       let location: KeyLocation = new_state
@@ -291,26 +288,24 @@ impl Account {
       return Ok(());
     }
 
-    let old_state: Option<IdentityState> = self.load_state().await?;
+    let old_state: IdentityState = self.load_state().await?;
     let new_state: &IdentityState = self.state();
 
-    let publish = old_state.map(|old_state| {
-      (
-        Publish::new(old_state.as_document(), new_state.as_document()),
-        old_state,
-      )
-    });
-
-    match publish {
-      // Existing identity
-      Some((Publish::Integration, old_state)) => self.publish_integration_change(&old_state).await?,
-      Some((Publish::Diff, old_state)) => self.publish_diff_change(&old_state).await?,
-      Some((Publish::None, _)) => {}
+    if new_state.is_new_identity() {
       // New identity
-      None => self.publish_integration_change(new_state).await?,
+      self.publish_integration_change(None).await?;
+    } else {
+      // Existing identity
+      match Publish::new(old_state.as_document(), new_state.as_document()) {
+        Publish::Integration => self.publish_integration_change(Some(&old_state)).await?,
+        Publish::Diff => self.publish_diff_change(&old_state).await?,
+        Publish::None => {}
+      }
     }
 
     self.state_mut_unchecked().increment_generation()?;
+
+    self.store_state().await?;
 
     Ok(())
   }
@@ -323,23 +318,27 @@ impl Account {
     Ok(())
   }
 
-  async fn publish_integration_change(&self, old_state: &IdentityState) -> Result<()> {
+  async fn publish_integration_change(&mut self, old_state: Option<&IdentityState>) -> Result<()> {
     let new_state: &IdentityState = self.state();
 
     let mut new_doc: IotaDocument = new_state.as_document().to_owned();
 
-    self.sign_self(old_state, new_state, &mut new_doc).await?;
+    self
+      .sign_self(old_state.unwrap_or(new_state), new_state, &mut new_doc)
+      .await?;
 
-    let _message: MessageId = if self.config.testmode {
+    let message_id: MessageId = if self.config.testmode {
       MessageId::null()
     } else {
       self.client_map.publish_document(&new_doc).await?.into()
     };
 
+    self.state_mut_unchecked().set_integration_message_id(message_id);
+
     Ok(())
   }
 
-  async fn publish_diff_change(&self, old_state: &IdentityState) -> Result<()> {
+  async fn publish_diff_change(&mut self, old_state: &IdentityState) -> Result<()> {
     let new_state: &IdentityState = self.state();
 
     let old_doc: IotaDocument = old_state.as_document().to_owned();
@@ -365,7 +364,7 @@ impl Account {
       .sign_data(self.did(), self.storage(), &location, &mut diff)
       .await?;
 
-    let _message: MessageId = if self.config.testmode {
+    let message_id: MessageId = if self.config.testmode {
       MessageId::null()
     } else {
       self
@@ -374,6 +373,8 @@ impl Account {
         .await?
         .into()
     };
+
+    self.state_mut_unchecked().set_diff_message_id(message_id);
 
     Ok(())
   }

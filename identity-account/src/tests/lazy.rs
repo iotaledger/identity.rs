@@ -11,7 +11,6 @@ use futures::Future;
 
 use identity_core::common::Url;
 use identity_iota::chain::DocumentHistory;
-use identity_iota::did::IotaVerificationMethod;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::Network;
 use identity_iota::Error as IotaError;
@@ -67,16 +66,11 @@ async fn test_lazy_updates() -> Result<()> {
 
       let doc = account.resolve_identity().await?;
 
-      let services = doc.service();
-
       assert_eq!(doc.methods().count(), 1);
-      assert_eq!(services.len(), 2);
+      assert_eq!(doc.service().len(), 2);
 
-      for service in services.iter() {
-        let service_fragment = service.id().fragment().unwrap();
-        assert!(["my-service", "my-other-service"]
-          .iter()
-          .any(|fragment| *fragment == service_fragment));
+      for service in ["my-service", "my-other-service"] {
+        assert!(doc.service().query(service).is_some());
       }
 
       // ===========================================================================
@@ -111,16 +105,12 @@ async fn test_lazy_updates() -> Result<()> {
       // ===========================================================================
 
       let doc = account.resolve_identity().await?;
-      let methods = doc.methods().collect::<Vec<&IotaVerificationMethod>>();
 
       assert_eq!(doc.service().len(), 0);
-      assert_eq!(methods.len(), 2);
+      assert_eq!(doc.methods().count(), 2);
 
-      for method in methods {
-        let method_fragment = method.id_core().fragment().unwrap_or_default();
-        assert!(["sign-0", "new-method"]
-          .iter()
-          .any(|fragment| *fragment == method_fragment));
+      for method in ["sign-0", "new-method"] {
+        assert!(doc.resolve_method(method).is_some());
       }
 
       // ===========================================================================

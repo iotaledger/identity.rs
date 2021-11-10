@@ -134,6 +134,11 @@ impl IdentityState {
     self.last_diff_message_id = message;
   }
 
+  /// Returns whether the identity has been published before.
+  pub fn is_new_identity(&self) -> bool {
+    self.this_message_id() == &MessageId::null()
+  }
+
   // ===========================================================================
   // Document State
   // ===========================================================================
