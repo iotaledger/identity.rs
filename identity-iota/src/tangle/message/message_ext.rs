@@ -20,6 +20,9 @@ use crate::tangle::DIDMessageEncoding;
 use crate::tangle::DIDMessageVersion;
 use crate::tangle::TangleRef;
 
+/// Magic bytes used to mark DID messages.
+const DID_MESSAGE_MARKER: &[u8] = b"DID";
+
 // TODO: Use MessageId when it has a const ctor
 static NULL: &[u8; MESSAGE_ID_LENGTH] = &[0; MESSAGE_ID_LENGTH];
 
@@ -50,13 +53,21 @@ fn parse_payload<T: FromJson + TangleRef>(message_id: MessageId, payload: Option
 
 // TODO: allow this to return errors?
 fn parse_data<T: FromJson + TangleRef>(message_id: MessageId, data: &[u8]) -> Option<T> {
+  // Check version.
   let version: DIDMessageVersion = DIDMessageVersion::try_from(*data.get(0)?).ok()?;
   if version != DIDMessageVersion::V1 {
     return None;
   }
 
-  let encoding: DIDMessageEncoding = DIDMessageEncoding::try_from(*data.get(1)?).ok()?;
-  let inner: &[u8] = data.get(2..)?;
+  // Check marker.
+  let marker: &[u8] = data.get(1..4)?;
+  if marker != DID_MESSAGE_MARKER {
+    return None;
+  }
+
+  // Decode data.
+  let encoding: DIDMessageEncoding = DIDMessageEncoding::try_from(*data.get(4)?).ok()?;
+  let inner: &[u8] = data.get(5..)?;
   let mut resource: T = match encoding {
     DIDMessageEncoding::Json => T::from_json_slice(inner),
     DIDMessageEncoding::JsonBrotli => T::from_json_slice(&compression_brotli::decompress_brotli(inner).ok()?),
@@ -80,17 +91,19 @@ pub(crate) fn pack_did_message<T: ToJson>(data: &T, encoding: DIDMessageEncoding
   Ok(encoded_message_data_with_flags)
 }
 
-/// Prepends the message version and encoding flags to message data.
+/// Prepends the message flags and marker magic bytes to the data in the following order:
+/// `[version, marker, encoding, data]`.
 fn add_flags_to_message(
   mut data: Vec<u8>,
   message_version: DIDMessageVersion,
   encoding: DIDMessageEncoding,
 ) -> Vec<u8> {
-  let message_version_flag = message_version as u8;
-  let encoding_flag = encoding as u8;
-
-  data.splice(0..0, [message_version_flag, encoding_flag]);
-  data
+  let mut buffer: Vec<u8> = Vec::with_capacity(1 + DID_MESSAGE_MARKER.len() + 1 + data.len());
+  buffer.push(message_version as u8);
+  buffer.extend_from_slice(DID_MESSAGE_MARKER);
+  buffer.push(encoding as u8);
+  buffer.append(&mut data);
+  buffer
 }
 
 pub trait MessageIdExt: Sized {
@@ -168,7 +181,8 @@ mod test {
     for encoding in [DIDMessageEncoding::Json, DIDMessageEncoding::JsonBrotli] {
       let encoded: Vec<u8> = pack_did_message(&document, encoding).unwrap();
       assert_eq!(encoded[0], DIDMessageVersion::CURRENT as u8);
-      assert_eq!(encoded[1], encoding as u8);
+      assert_eq!(&encoded[1..4], DID_MESSAGE_MARKER);
+      assert_eq!(encoded[4], encoding as u8);
 
       let decoded: IotaDocument = parse_data(MessageId::null(), &encoded).unwrap();
       assert_eq!(decoded, document);
