@@ -1,8 +1,8 @@
 # Changelog
 
-## [dev-31](https://github.com/eike-hass/identity.rs/tree/dev-31) (2021-11-10)
+## [Unreleased](https://github.com/eike-hass/identity.rs/tree/HEAD)
 
-[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.12.0...dev-31)
+[Full Changelog](https://github.com/eike-hass/identity.rs/compare/v0.12.0...HEAD)
 
 Added
 
