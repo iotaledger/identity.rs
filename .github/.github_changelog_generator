@@ -1,5 +1,5 @@
-no-issues=true
-no-author=true
+issues=false
+author=false
 breaking-label=Changed
 breaking-labels=changed
 enhancement-label=Added
