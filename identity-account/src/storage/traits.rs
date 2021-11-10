@@ -7,6 +7,7 @@ use identity_core::crypto::PublicKey;
 use identity_iota::did::IotaDID;
 
 use crate::error::Result;
+use crate::identity::ChainState;
 use crate::identity::DIDLease;
 use crate::identity::IdentityState;
 use crate::types::Generation;
@@ -55,6 +56,12 @@ pub trait Storage: Debug + Send + Sync + 'static {
   async fn set_published_generation(&self, did: &IotaDID, index: Generation) -> Result<()>;
 
   /// Returns the state snapshot of the identity specified by `id`.
+  async fn chain_state(&self, did: &IotaDID) -> Result<Option<ChainState>>;
+
+  /// Returns the state snapshot of the identity specified by `id`.
+  async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()>;
+
+  /// Returns the state snapshot of the identity specified by `id`.
   async fn state(&self, did: &IotaDID) -> Result<Option<IdentityState>>;
 
   /// Sets a new state snapshot for the identity specified by `id`.
@@ -100,6 +107,14 @@ impl Storage for Box<dyn Storage> {
 
   async fn key_exists(&self, did: &IotaDID, location: &KeyLocation) -> Result<bool> {
     (**self).key_exists(did, location).await
+  }
+
+  async fn chain_state(&self, did: &IotaDID) -> Result<Option<ChainState>> {
+    (**self).chain_state(did).await
+  }
+
+  async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
+    (**self).set_chain_state(did, chain_state).await
   }
 
   async fn state(&self, did: &IotaDID) -> Result<Option<IdentityState>> {

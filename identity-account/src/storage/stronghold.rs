@@ -22,6 +22,7 @@ use tokio::sync::Mutex;
 
 use crate::error::Error;
 use crate::error::Result;
+use crate::identity::ChainState;
 use crate::identity::DIDLease;
 use crate::identity::IdentityState;
 use crate::storage::Storage;
@@ -165,12 +166,41 @@ impl Storage for Stronghold {
     }
   }
 
+  async fn chain_state(&self, did: &IotaDID) -> Result<Option<ChainState>> {
+    // Load the chain-specific store
+    let store: Store<'_> = self.store(&fmt_did(did));
+
+    // Read the event snapshot from the stronghold snapshot
+    let data: Vec<u8> = store.get(location_chain_state()).await?;
+
+    // No snapshot data found
+    if data.is_empty() {
+      return Ok(None);
+    }
+
+    // Deserialize and return
+    Ok(Some(ChainState::from_json_slice(&data)?))
+  }
+
+  async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
+    // Load the chain-specific store
+    let store: Store<'_> = self.store(&fmt_did(did));
+
+    // Serialize the state snapshot
+    let json: Vec<u8> = chain_state.to_json_vec()?;
+
+    // Write the state snapshot to the stronghold snapshot
+    store.set(location_chain_state(), json, None).await?;
+
+    Ok(())
+  }
+
   async fn state(&self, did: &IotaDID) -> Result<Option<IdentityState>> {
     // Load the chain-specific store
     let store: Store<'_> = self.store(&fmt_did(did));
 
     // Read the event snapshot from the stronghold snapshot
-    let data: Vec<u8> = store.get(location_snapshot()).await?;
+    let data: Vec<u8> = store.get(location_state()).await?;
 
     // No snapshot data found
     if data.is_empty() {
@@ -189,7 +219,7 @@ impl Storage for Stronghold {
     let json: Vec<u8> = state.to_json_vec()?;
 
     // Write the state snapshot to the stronghold snapshot
-    store.set(location_snapshot(), json, None).await?;
+    store.set(location_state(), json, None).await?;
 
     Ok(())
   }
@@ -266,8 +296,12 @@ async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocatio
   Ok(Signature::new(public_key, signature.into()))
 }
 
-fn location_snapshot() -> Location {
-  Location::generic("$snapshot", Vec::new())
+fn location_chain_state() -> Location {
+  Location::generic("$chain_state", Vec::new())
+}
+
+fn location_state() -> Location {
+  Location::generic("$state", Vec::new())
 }
 
 fn location_seed(location: &KeyLocation) -> Location {

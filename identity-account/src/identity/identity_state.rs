@@ -21,8 +21,6 @@ use identity_did::verification::VerificationMethod;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDIDUrl;
 use identity_iota::did::IotaDocument;
-use identity_iota::tangle::MessageId;
-use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::TangleRef;
 
 use crate::crypto::RemoteKey;
@@ -37,16 +35,7 @@ pub type RemoteEd25519<'a> = JcsEd25519<RemoteSign<'a>>;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct IdentityState {
-  // =========== //
-  // Chain State //
-  // =========== //
   generation: Generation,
-  #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
-  this_message_id: MessageId,
-  #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
-  last_integration_message_id: MessageId,
-  #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
-  last_diff_message_id: MessageId,
   #[serde(skip_serializing_if = "HashMap::is_empty")]
   method_generations: HashMap<Fragment, Generation>,
 
@@ -57,9 +46,6 @@ impl IdentityState {
   pub fn new(document: IotaDocument) -> Self {
     Self {
       generation: Generation::new(),
-      this_message_id: MessageId::null(),
-      last_integration_message_id: MessageId::null(),
-      last_diff_message_id: MessageId::null(),
       method_generations: HashMap::new(),
       document,
     }
@@ -92,51 +78,6 @@ impl IdentityState {
     let generation = self.method_generations.get(&fragment).ok_or(Error::MethodNotFound)?;
 
     Ok(KeyLocation::new(method_type, fragment.into(), *generation))
-  }
-
-  // ===========================================================================
-  // Tangle State
-  // ===========================================================================
-
-  /// Returns the current integration Tangle message id of the identity.
-  pub fn this_message_id(&self) -> &MessageId {
-    &self.this_message_id
-  }
-
-  /// Returns the previous integration Tangle message id of the identity.
-  pub fn last_message_id(&self) -> &MessageId {
-    &self.last_integration_message_id
-  }
-
-  /// Returns the previous diff Tangle message id, or the current integration message id.
-  pub fn diff_message_id(&self) -> &MessageId {
-    if self.last_diff_message_id.is_null() {
-      &self.this_message_id
-    } else {
-      &self.last_diff_message_id
-    }
-  }
-
-  /// Sets the current Tangle integration message id of the identity.
-  pub fn set_integration_message_id(&mut self, message: MessageId) {
-    // Set the current integration message id as the previous integration message.
-    self.last_integration_message_id = self.this_message_id;
-
-    // Clear the diff message id
-    self.last_diff_message_id = MessageId::null();
-
-    // Set the new integration message id
-    self.this_message_id = message;
-  }
-
-  /// Sets the current Tangle diff message id of the identity.
-  pub fn set_diff_message_id(&mut self, message: MessageId) {
-    self.last_diff_message_id = message;
-  }
-
-  /// Returns whether the identity has been published before.
-  pub fn is_new_identity(&self) -> bool {
-    self.this_message_id() == &MessageId::null()
   }
 
   // ===========================================================================

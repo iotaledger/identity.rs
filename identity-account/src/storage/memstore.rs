@@ -23,6 +23,7 @@ use zeroize::Zeroize;
 
 use crate::error::Error;
 use crate::error::Result;
+use crate::identity::ChainState;
 use crate::identity::DIDLease;
 use crate::identity::IdentityState;
 use crate::storage::Storage;
@@ -34,6 +35,7 @@ use crate::utils::Shared;
 
 type MemVault = HashMap<KeyLocation, KeyPair>;
 
+type ChainStates = HashMap<IotaDID, ChainState>;
 type States = HashMap<IotaDID, IdentityState>;
 type Vaults = HashMap<IotaDID, MemVault>;
 type PublishedGenerations = HashMap<IotaDID, Generation>;
@@ -42,6 +44,7 @@ pub struct MemStore {
   expand: bool,
   published_generations: Shared<PublishedGenerations>,
   did_leases: Mutex<HashMap<IotaDID, DIDLease>>,
+  chain_states: Shared<ChainStates>,
   states: Shared<States>,
   vaults: Shared<Vaults>,
 }
@@ -52,6 +55,7 @@ impl MemStore {
       expand: false,
       published_generations: Shared::new(HashMap::new()),
       did_leases: Mutex::new(HashMap::new()),
+      chain_states: Shared::new(HashMap::new()),
       states: Shared::new(HashMap::new()),
       vaults: Shared::new(HashMap::new()),
     }
@@ -197,6 +201,16 @@ impl Storage for MemStore {
         todo!("[MemStore::key_sign] Handle MerkleKeyCollection2021")
       }
     }
+  }
+
+  async fn chain_state(&self, did: &IotaDID) -> Result<Option<ChainState>> {
+    self.chain_states.read().map(|states| states.get(did).cloned())
+  }
+
+  async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
+    self.chain_states.write()?.insert(did.clone(), chain_state.clone());
+
+    Ok(())
   }
 
   async fn state(&self, did: &IotaDID) -> Result<Option<IdentityState>> {

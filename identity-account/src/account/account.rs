@@ -23,6 +23,7 @@ use crate::account::AccountBuilder;
 use crate::error::Result;
 use crate::events::create_identity;
 use crate::events::Update;
+use crate::identity::ChainState;
 use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
@@ -45,6 +46,7 @@ pub struct Account {
   storage: Arc<dyn Storage>,
   client_map: Arc<ClientMap>,
   actions: AtomicUsize,
+  chain_state: ChainState,
   state: IdentityState,
   did_lease: DIDLease,
 }
@@ -94,9 +96,17 @@ impl Account {
     &self.state
   }
 
-  // TODO: Make pub?
   pub(crate) fn state_mut_unchecked(&mut self) -> &mut IdentityState {
     &mut self.state
+  }
+
+  /// Return the chain state of the identity.
+  pub fn chain_state(&self) -> &ChainState {
+    &self.chain_state
+  }
+
+  pub(crate) fn chain_state_mut(&mut self) -> &mut ChainState {
+    &mut self.chain_state
   }
 
   /// Returns the DID document of the identity, which this account manages,
@@ -115,12 +125,18 @@ impl Account {
   }
 
   /// Creates a new `Account` instance with the given `config`.
-  async fn with_setup(setup: AccountSetup, state: IdentityState, did_lease: DIDLease) -> Result<Self> {
+  async fn with_setup(
+    setup: AccountSetup,
+    chain_state: ChainState,
+    state: IdentityState,
+    did_lease: DIDLease,
+  ) -> Result<Self> {
     Ok(Self {
       config: setup.config,
       storage: setup.storage,
       client_map: setup.client_map,
       actions: AtomicUsize::new(0),
+      chain_state,
       state,
       did_lease,
     })
@@ -134,7 +150,7 @@ impl Account {
   pub(crate) async fn create_identity(setup: AccountSetup, input: IdentitySetup) -> Result<Self> {
     let (did_lease, state): (DIDLease, IdentityState) = create_identity(input, setup.storage.as_ref()).await?;
 
-    let mut account = Self::with_setup(setup, state, did_lease).await?;
+    let mut account = Self::with_setup(setup, ChainState::new(), state, did_lease).await?;
 
     account.store_state().await?;
 
@@ -147,10 +163,11 @@ impl Account {
   pub(crate) async fn load_identity(setup: AccountSetup, did: IotaDID) -> Result<Self> {
     // Ensure the did exists in storage
     let state = setup.storage.state(&did).await?.ok_or(Error::IdentityNotFound)?;
+    let chain_state = setup.storage.chain_state(&did).await?.ok_or(Error::IdentityNotFound)?;
 
     let did_lease = setup.storage.lease_did(&did).await?;
 
-    Self::with_setup(setup, state, did_lease).await
+    Self::with_setup(setup, chain_state, state, did_lease).await
   }
 
   // ===========================================================================
@@ -242,7 +259,7 @@ impl Account {
     new_state: &IdentityState,
     document: &mut IotaDocument,
   ) -> Result<()> {
-    if new_state.is_new_identity() {
+    if self.chain_state().is_new_identity() {
       // TODO: Replace with: let method: &TinyMethod = new_state.capability_invocation()?;
       let method: &IotaVerificationMethod = new_state.as_document().default_signing_method()?;
       let location: KeyLocation = new_state
@@ -291,7 +308,7 @@ impl Account {
     let old_state: IdentityState = self.load_state().await?;
     let new_state: &IdentityState = self.state();
 
-    if new_state.is_new_identity() {
+    if self.chain_state().is_new_identity() {
       // New identity
       self.publish_integration_change(None).await?;
     } else {
@@ -312,6 +329,7 @@ impl Account {
 
   async fn store_state(&self) -> Result<()> {
     self.storage.set_state(self.did(), self.state()).await?;
+    self.storage.set_chain_state(self.did(), self.chain_state()).await?;
 
     self.save(false).await?;
 
@@ -333,7 +351,7 @@ impl Account {
       self.client_map.publish_document(&new_doc).await?.into()
     };
 
-    self.state_mut_unchecked().set_integration_message_id(message_id);
+    self.chain_state_mut().set_integration_message_id(message_id);
 
     Ok(())
   }
@@ -344,7 +362,7 @@ impl Account {
     let old_doc: IotaDocument = old_state.as_document().to_owned();
     let new_doc: IotaDocument = new_state.as_document().to_owned();
 
-    let diff_id: &MessageId = old_state.diff_message_id();
+    let diff_id: &MessageId = self.chain_state().diff_message_id();
 
     let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
 
@@ -369,12 +387,12 @@ impl Account {
     } else {
       self
         .client_map
-        .publish_diff(old_state.this_message_id(), &diff)
+        .publish_diff(self.chain_state().this_message_id(), &diff)
         .await?
         .into()
     };
 
-    self.state_mut_unchecked().set_diff_message_id(message_id);
+    self.chain_state_mut().set_diff_message_id(message_id);
 
     Ok(())
   }
