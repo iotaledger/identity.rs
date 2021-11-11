@@ -380,7 +380,7 @@ async fn insert_method_secret(
 // Update Builders
 // =============================================================================
 
-impl_command_builder!(
+impl_update_builder!(
 /// Create a new method on an identity.
 ///
 /// # Parameters
@@ -395,7 +395,7 @@ CreateMethod {
   @optional method_secret MethodSecret
 });
 
-impl_command_builder!(
+impl_update_builder!(
 /// Delete a method on an identity.
 ///
 /// # Parameters
@@ -404,7 +404,7 @@ DeleteMethod {
   @required fragment String,
 });
 
-impl_command_builder!(
+impl_update_builder!(
 /// Attach one or more verification relationships to a method on an identity.
 ///
 /// # Parameters
@@ -422,7 +422,7 @@ impl<'account> AttachMethodBuilder<'account> {
   }
 }
 
-impl_command_builder!(
+impl_update_builder!(
 /// Detaches one or more verification relationships from a method on an identity.
 ///
 /// # Parameters
@@ -440,7 +440,7 @@ impl<'account> DetachMethodBuilder<'account> {
   }
 }
 
-impl_command_builder!(
+impl_update_builder!(
 /// Create a new service on an identity.
 ///
 /// # Parameters
@@ -455,7 +455,7 @@ CreateService {
   @optional properties Object,
 });
 
-impl_command_builder!(
+impl_update_builder!(
 /// Delete a service on an identity.
 ///
 /// # Parameters

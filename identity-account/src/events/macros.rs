@@ -9,7 +9,7 @@ macro_rules! ensure {
   };
 }
 
-macro_rules! impl_command_builder {
+macro_rules! impl_update_builder {
   (@finish $this:ident optional $field:ident $ty:ty) => {
     $this.$field
   };
@@ -61,7 +61,7 @@ macro_rules! impl_command_builder {
         pub async fn apply(self) -> $crate::Result<()> {
           let update = $crate::events::Update::$ident {
             $(
-              $field: impl_command_builder!(@finish self $requirement $field $ty $(= $value)?),
+              $field: impl_update_builder!(@finish self $requirement $field $ty $(= $value)?),
             )*
           };
 
