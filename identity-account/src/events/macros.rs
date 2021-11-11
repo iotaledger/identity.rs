@@ -65,7 +65,7 @@ macro_rules! impl_command_builder {
             )*
           };
 
-          self.account.process_update(update, false).await
+          self.account.process_update(update).await
         }
       }
 

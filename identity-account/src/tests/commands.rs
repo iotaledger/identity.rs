@@ -166,7 +166,7 @@ async fn test_create_method() -> Result<()> {
     fragment: fragment.clone(),
   };
 
-  account.process_update(update, false).await?;
+  account.process_update(update).await?;
 
   let state: &IdentityState = account.state();
 
@@ -227,7 +227,7 @@ async fn test_create_scoped_method() -> Result<()> {
       fragment: fragment.clone(),
     };
 
-    account.process_update(update, false).await?;
+    account.process_update(update).await?;
 
     let state: &IdentityState = account.state();
 
@@ -287,9 +287,9 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
     fragment: "key-1".to_owned(),
   };
 
-  account.process_update(update.clone(), false).await?;
+  account.process_update(update.clone()).await?;
 
-  let output = account.process_update(update.clone(), false).await;
+  let output = account.process_update(update.clone()).await;
 
   // Attempting to add a method with the same fragment in the same int and diff generation.
   assert!(matches!(
@@ -300,7 +300,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   // Fake publishing by incrementing the generation.
   account.state_mut_unchecked().increment_generation().unwrap();
 
-  let output = account.process_update(update, false).await;
+  let output = account.process_update(update).await;
 
   // Now the location is different, but the fragment is the same.
   assert!(matches!(
@@ -326,7 +326,7 @@ async fn test_create_method_from_private_key() -> Result<()> {
     fragment: fragment.clone(),
   };
 
-  account.process_update(update, false).await?;
+  account.process_update(update).await?;
 
   let state: &IdentityState = account.state();
 
@@ -354,7 +354,7 @@ async fn test_create_method_from_invalid_private_key() -> Result<()> {
     fragment: "key-1".to_owned(),
   };
 
-  let err = account.process_update(update, false).await.unwrap_err();
+  let err = account.process_update(update).await.unwrap_err();
 
   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
 
@@ -374,7 +374,7 @@ async fn test_attach_method_relationship() -> Result<()> {
     fragment: fragment.clone(),
   };
 
-  account.process_update(update, false).await?;
+  account.process_update(update).await?;
 
   // One relationship by default.
   assert_eq!(
@@ -402,7 +402,7 @@ async fn test_attach_method_relationship() -> Result<()> {
     fragment: default_method_fragment,
   };
 
-  let err = account.process_update(update, false).await.unwrap_err();
+  let err = account.process_update(update).await.unwrap_err();
 
   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodTarget)));
 
@@ -417,7 +417,7 @@ async fn test_attach_method_relationship() -> Result<()> {
     fragment: fragment.clone(),
   };
 
-  account.process_update(update, false).await?;
+  account.process_update(update).await?;
 
   // Relationships were created.
   assert_eq!(account.document().as_document().verification_relationships().count(), 3);
@@ -467,7 +467,7 @@ async fn test_detach_method_relationship() -> Result<()> {
     fragment: embedded_fragment.clone(),
   };
 
-  account.process_update(update, false).await?;
+  account.process_update(update).await?;
 
   // Attempt detaching a relationship from an embedded method.
   let update: Update = Update::DetachMethod {
@@ -475,7 +475,7 @@ async fn test_detach_method_relationship() -> Result<()> {
     fragment: embedded_fragment,
   };
 
-  let err = account.process_update(update, false).await.unwrap_err();
+  let err = account.process_update(update).await.unwrap_err();
 
   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodTarget)));
 
@@ -489,14 +489,14 @@ async fn test_detach_method_relationship() -> Result<()> {
     fragment: generic_fragment.clone(),
   };
 
-  account.process_update(update, false).await?;
+  account.process_update(update).await?;
 
   let update: Update = Update::AttachMethod {
     relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
     fragment: generic_fragment.clone(),
   };
 
-  account.process_update(update, false).await?;
+  account.process_update(update).await?;
 
   assert_eq!(account.document().as_document().assertion_method().len(), 1);
   assert_eq!(account.document().as_document().key_agreement().len(), 1);
@@ -506,7 +506,7 @@ async fn test_detach_method_relationship() -> Result<()> {
     fragment: generic_fragment.clone(),
   };
 
-  account.process_update(update, false).await?;
+  account.process_update(update).await?;
 
   assert_eq!(account.document().as_document().assertion_method().len(), 0);
   assert_eq!(account.document().as_document().key_agreement().len(), 0);
@@ -528,7 +528,7 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
     fragment: "key-1".to_owned(),
   };
 
-  let err = account.process_update(update, false).await.unwrap_err();
+  let err = account.process_update(update).await.unwrap_err();
 
   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
 
@@ -541,7 +541,7 @@ async fn test_create_method_with_type_secret_mismatch() -> Result<()> {
     fragment: "key-2".to_owned(),
   };
 
-  let err = account.process_update(update, false).await.unwrap_err();
+  let err = account.process_update(update).await.unwrap_err();
 
   assert!(matches!(err, Error::UpdateError(UpdateError::InvalidMethodSecret(_))));
 
@@ -563,7 +563,7 @@ async fn test_delete_method() -> Result<()> {
     fragment: fragment.clone(),
   };
 
-  account.process_update(update, false).await?;
+  account.process_update(update).await?;
 
   // Ensure it was added.
   assert!(account.state().as_document().resolve_method(&fragment).is_some());
@@ -572,7 +572,7 @@ async fn test_delete_method() -> Result<()> {
     fragment: "key-1".to_owned(),
   };
 
-  account.process_update(update, false).await?;
+  account.process_update(update).await?;
 
   let state: &IdentityState = account.state();
 
@@ -615,7 +615,7 @@ async fn test_insert_service() -> Result<()> {
     properties: None,
   };
 
-  account.process_update(update.clone(), false).await?;
+  account.process_update(update.clone()).await?;
 
   assert_eq!(account.document().service().len(), 1);
 
@@ -623,7 +623,7 @@ async fn test_insert_service() -> Result<()> {
   let service_url = account.did().to_url().join(fragment).unwrap();
   assert!(account.document().service().query(service_url).is_some());
 
-  let err = account.process_update(update.clone(), false).await.unwrap_err();
+  let err = account.process_update(update.clone()).await.unwrap_err();
 
   assert!(matches!(
     err,
@@ -646,7 +646,7 @@ async fn test_remove_service() -> Result<()> {
     properties: None,
   };
 
-  account.process_update(update, false).await.unwrap();
+  account.process_update(update).await.unwrap();
 
   assert_eq!(account.document().service().len(), 1);
 
@@ -654,12 +654,12 @@ async fn test_remove_service() -> Result<()> {
     fragment: fragment.clone(),
   };
 
-  account.process_update(update.clone(), false).await.unwrap();
+  account.process_update(update.clone()).await.unwrap();
 
   assert_eq!(account.document().service().len(), 0);
 
   // Attempting to remove a non-existing service returns an error.
-  let err = account.process_update(update, false).await.unwrap_err();
+  let err = account.process_update(update).await.unwrap_err();
 
   assert!(matches!(err, Error::UpdateError(UpdateError::ServiceNotFound)));
 
