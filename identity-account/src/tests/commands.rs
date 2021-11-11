@@ -8,8 +8,8 @@ use crate::account::AccountConfig;
 use crate::account::AccountSetup;
 use crate::error::Error;
 use crate::error::Result;
-use crate::events::Update;
-use crate::events::UpdateError;
+use crate::updates::Update;
+use crate::updates::UpdateError;
 use crate::identity::IdentitySetup;
 
 use crate::identity::IdentityState;
@@ -44,7 +44,7 @@ fn account_setup() -> AccountSetup {
 async fn test_create_identity() -> Result<()> {
   let account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
-  let expected_fragment = format!("{}{}", crate::events::DEFAULT_UPDATE_METHOD_PREFIX, Generation::new());
+  let expected_fragment = format!("{}{}", crate::updates::DEFAULT_UPDATE_METHOD_PREFIX, Generation::new());
 
   let state: &IdentityState = account.state();
 

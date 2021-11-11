@@ -90,7 +90,7 @@ pub enum Error {
   ServiceNotFound,
   /// Caused by attempting to perform an upate in an invalid context.
   #[error("Update Error: {0}")]
-  UpdateError(#[from] crate::events::UpdateError),
+  UpdateError(#[from] crate::updates::UpdateError),
   /// Caused by providing bytes that cannot be used as a private key of the
   /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Private Key: {0}")]

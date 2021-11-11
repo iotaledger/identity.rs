@@ -23,7 +23,7 @@ extern crate serde;
 pub mod account;
 pub mod crypto;
 pub mod error;
-pub mod events;
+pub mod updates;
 pub mod identity;
 pub mod storage;
 #[cfg(feature = "stronghold")]

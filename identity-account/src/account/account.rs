@@ -21,8 +21,8 @@ use std::sync::Arc;
 
 use crate::account::AccountBuilder;
 use crate::error::Result;
-use crate::events::create_identity;
-use crate::events::Update;
+use crate::updates::create_identity;
+use crate::updates::Update;
 use crate::identity::ChainState;
 use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;

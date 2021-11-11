@@ -26,7 +26,7 @@ macro_rules! impl_update_builder {
     match $this.$field {
       Some(value) => value,
       None => return Err($crate::Error::UpdateError(
-        $crate::events::UpdateError::MissingRequiredField(stringify!($field)),
+        $crate::updates::UpdateError::MissingRequiredField(stringify!($field)),
       )),
     }
   };
@@ -59,7 +59,7 @@ macro_rules! impl_update_builder {
         }
 
         pub async fn apply(self) -> $crate::Result<()> {
-          let update = $crate::events::Update::$ident {
+          let update = $crate::updates::Update::$ident {
             $(
               $field: impl_update_builder!(@finish self $requirement $field $ty $(= $value)?),
             )*

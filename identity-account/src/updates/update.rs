@@ -24,7 +24,7 @@ use identity_iota::did::IotaVerificationMethod;
 
 use crate::account::Account;
 use crate::error::Result;
-use crate::events::UpdateError;
+use crate::updates::UpdateError;
 use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
