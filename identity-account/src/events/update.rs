@@ -234,7 +234,7 @@ impl Update {
               MethodRef::Embed(method) => method.id().fragment() == method_url.fragment(),
               MethodRef::Refer(_) => false,
             }),
-          UpdateError::InvalidMethodTarget
+          UpdateError::InvalidTargetMethod
         );
 
         for relationship in relationships {
@@ -282,7 +282,7 @@ impl Update {
               MethodRef::Embed(method) => method.id().fragment() == method_url.fragment(),
               MethodRef::Refer(_) => false,
             }),
-          UpdateError::InvalidMethodTarget
+          UpdateError::InvalidTargetMethod
         );
 
         for relationship in relationships {
