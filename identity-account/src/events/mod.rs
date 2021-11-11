@@ -4,10 +4,8 @@
 #[macro_use]
 mod macros;
 
-mod context;
 mod error;
 mod update;
 
-pub use self::context::*;
 pub use self::error::*;
 pub use self::update::*;
