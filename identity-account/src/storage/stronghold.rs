@@ -170,7 +170,7 @@ impl Storage for Stronghold {
     }
 
     // Deserialize and return
-    Ok(IdentityIndex::from_json_slice(&data).map_err(|_|Error::InvalidDeserialization)?)
+    Ok(IdentityIndex::from_json_slice(&data).map_err(|_| Error::InvalidDeserialization)?)
   }
 
   async fn set_index(&self, index: &IdentityIndex) -> Result<()> {
@@ -178,7 +178,7 @@ impl Storage for Stronghold {
     let store: Store<'_> = self.store(META);
 
     // Serialize the index
-    let json: Vec<u8> = index.to_json_vec().map_err(|_|Error::InvalidSerialization)?;
+    let json: Vec<u8> = index.to_json_vec().map_err(|_| Error::InvalidSerialization)?;
 
     // Write the index to the snapshot
     store.set(location_index(), json, None).await?;
@@ -199,7 +199,9 @@ impl Storage for Stronghold {
     }
 
     // Deserialize and return
-    Ok(Some(IdentitySnapshot::from_json_slice(&data).map_err(|_|Error::InvalidDeserialization)?))
+    Ok(Some(
+      IdentitySnapshot::from_json_slice(&data).map_err(|_| Error::InvalidDeserialization)?,
+    ))
   }
 
   async fn set_snapshot(&self, id: IdentityId, snapshot: &IdentitySnapshot) -> Result<()> {
@@ -207,7 +209,7 @@ impl Storage for Stronghold {
     let store: Store<'_> = self.store(&fmt_id(id));
 
     // Serialize the state snapshot
-    let json: Vec<u8> = snapshot.to_json_vec().map_err(|_|Error::InvalidSerialization)?;
+    let json: Vec<u8> = snapshot.to_json_vec().map_err(|_| Error::InvalidSerialization)?;
 
     // Write the state snapshot to the stronghold snapshot
     store.set(location_snapshot(), json, None).await?;
@@ -217,7 +219,10 @@ impl Storage for Stronghold {
 
   async fn append(&self, id: IdentityId, commits: &[Commit]) -> Result<()> {
     fn encode(commit: &Commit) -> Result<(Generation, Vec<u8>)> {
-      Ok((commit.sequence(), commit.event().to_json_vec().map_err(|_|Error::InvalidSerialization)?))
+      Ok((
+        commit.sequence(),
+        commit.event().to_json_vec().map_err(|_| Error::InvalidSerialization)?,
+      ))
     }
 
     let store: Store<'_> = self.store(&fmt_id(id));
@@ -262,7 +267,7 @@ impl Storage for Stronghold {
         if json.is_empty() {
           Err(Error::EventNotFound)
         } else {
-          let event: Event = Event::from_json_slice(&json).map_err(|_|Error::InvalidDeserialization)?;
+          let event: Event = Event::from_json_slice(&json).map_err(|_| Error::InvalidDeserialization)?;
           let commit: Commit = Commit::new(id, index, event);
 
           Ok(Some(commit))

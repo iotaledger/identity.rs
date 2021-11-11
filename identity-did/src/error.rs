@@ -13,10 +13,10 @@ pub enum Error {
   #[error("could not deserialize")]
   InvalidDeserialization, // TODO: Remove this upon refactoring the errors in this crate
 
-    /// Caused by a failure to serialize a value
+  /// Caused by a failure to serialize a value
   #[error("could not serialize")]
   InvalidSerialization, // TODO: Remove this upon refactoring the errors in this crate
-  
+
   /// Caused by errors from the [identity_core] crate.
   #[error("{0}")]
   CoreError(#[from] ::identity_core::Error),

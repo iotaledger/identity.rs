@@ -10,6 +10,7 @@ mod reference;
 mod type_;
 
 pub use self::collection::KeyCollection;
+pub use self::collection::KeyCollectionError;
 pub use self::collection::KeyCollectionSizeError;
 pub use self::key::PrivateKey;
 pub use self::key::PublicKey;

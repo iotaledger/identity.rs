@@ -7,15 +7,15 @@ use crypto::hashes::Output;
 use serde::Deserialize;
 use serde::Serialize;
 
-/* 
-We use serde_json::Error for errors in this module because we want these traits to be easy 
-to implement downstream and serde_json is both stable and has millions of downloads hence 
-it is relatively safe with regards to stability to include this error type in our public apis. 
-*/ 
+/*
+We use serde_json::Error for errors in this module because we want these traits to be easy
+to implement downstream and serde_json is both stable and has millions of downloads hence
+it is relatively safe with regards to stability to include this error type in our public apis.
+*/
 /// A convenience-trait for types that can be serialized as JSON.
 pub trait ToJson: Serialize + Sized {
   /// Serialize `self` as a string of JSON.
-  fn to_json(&self) -> Result<String,serde_json::Error> {
+  fn to_json(&self) -> Result<String, serde_json::Error> {
     serde_json::to_string(self)
   }
 

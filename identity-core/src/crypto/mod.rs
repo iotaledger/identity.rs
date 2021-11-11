@@ -11,7 +11,8 @@ pub mod merkle_key;
 pub mod merkle_tree;
 
 pub use self::key::KeyCollection;
-pub use self::key::KeyCollectionSizeError; 
+pub use self::key::KeyCollectionError;
+pub use self::key::KeyCollectionSizeError;
 pub use self::key::KeyPair;
 pub use self::key::KeyRef;
 pub use self::key::KeyType;

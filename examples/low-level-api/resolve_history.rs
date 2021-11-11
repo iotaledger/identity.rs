@@ -17,10 +17,10 @@ use identity::iota::ChainHistory;
 use identity::iota::Client;
 use identity::iota::DocumentDiff;
 use identity::iota::DocumentHistory;
+use identity::iota::Error;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
-use identity::iota::Error; 
 use identity::iota::Result;
 
 mod create_did;

@@ -16,7 +16,8 @@ use crate::crypto::PublicKey;
 use crate::crypto::Sign;
 use crate::crypto::SignatureValue;
 use crate::crypto::Signer;
-use crate::error::{Error,Result};
+use crate::error::Error;
+use crate::error::Result;
 use crate::utils::encode_b58;
 
 /// Key components used to create a Merkle Key Collection signature.

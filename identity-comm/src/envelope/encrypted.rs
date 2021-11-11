@@ -20,7 +20,8 @@ use libjose::jwe::Token;
 use crate::envelope::EnvelopeExt;
 use crate::envelope::Plaintext;
 use crate::envelope::Signed;
-use crate::error::{Result,Error};
+use crate::error::Error;
+use crate::error::Result;
 
 /// A DIDComm Encrypted Message
 ///
@@ -94,7 +95,7 @@ impl Encrypted {
       .encryption(algorithm.into())
       .decode(self.as_bytes())?;
 
-    T::from_json_slice(&token.1).map_err(|_|Error::InvalidDeserialization)
+    T::from_json_slice(&token.1).map_err(|_| Error::InvalidDeserialization)
   }
 }
 

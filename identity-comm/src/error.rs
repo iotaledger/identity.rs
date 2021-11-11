@@ -8,7 +8,7 @@ pub enum Error {
   #[error("invalid serialization")]
   InvalidSerialization, // TODO: Remove this when this crate has its error types refactored
   #[error("invalid deserialization")]
-  InvalidDeserialization, //TODO: Remove this when this crate has its error types refactored 
+  InvalidDeserialization, //TODO: Remove this when this crate has its error types refactored
   #[error(transparent)]
   IotaError(#[from] identity_iota::Error),
   #[error(transparent)]

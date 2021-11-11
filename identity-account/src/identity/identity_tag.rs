@@ -67,7 +67,7 @@ impl IdentityTag {
       name: &self.name,
     };
 
-    let json: Vec<u8> = data.to_json_vec().map_err(|_|Error::InvalidSerialization)?;
+    let json: Vec<u8> = data.to_json_vec().map_err(|_| Error::InvalidSerialization)?;
     let base: String = encode_b64(&json);
 
     Ok(base)

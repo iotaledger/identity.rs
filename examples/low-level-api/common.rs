@@ -18,9 +18,9 @@ use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
 use identity::iota::CredentialValidator;
+use identity::iota::Error;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
-use identity::iota::Error;
 use identity::iota::TangleRef;
 use identity::prelude::*;
 
@@ -36,7 +36,8 @@ pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Cre
       "name": "Bachelor of Science and Arts",
     },
     "GPA": "4.0",
-  })).map_err(|_|Error::InvalidDeserialization)?;
+  }))
+  .map_err(|_| Error::InvalidDeserialization)?;
 
   // Build credential using subject above and issuer.
   let credential: Credential = CredentialBuilder::default()
@@ -52,7 +53,7 @@ pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Cre
 /// Convenience function for checking that a verifiable credential is valid and not revoked.
 pub async fn check_credential(client: &ClientMap, credential: &Credential) -> Result<CredentialValidation, Error> {
   // Convert the Verifiable Credential to JSON to potentially "exchange" with a verifier
-  let credential_json = credential.to_json().map_err(|_|Error::InvalidSerialization)?;
+  let credential_json = credential.to_json().map_err(|_| Error::InvalidSerialization)?;
 
   // Create a `CredentialValidator` instance to fetch and validate all
   // associated DID Documents from the Tangle.

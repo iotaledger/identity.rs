@@ -35,7 +35,7 @@ impl ResolverMethod for Client {
     meta.updated = Some(document.updated());
 
     Ok(Some(MetaDocument {
-      data: document.serde_into().map_err(|_|Error::InvalidSerialization)?,
+      data: document.serde_into().map_err(|_| Error::InvalidSerialization)?,
       meta,
     }))
   }

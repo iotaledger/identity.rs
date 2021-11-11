@@ -34,5 +34,5 @@ pub mod fatal_error;
 pub mod utils;
 
 pub use self::error::Error;
-pub use self::fatal_error::FatalError;  
 pub use self::error::Result;
+pub use self::fatal_error::FatalError;

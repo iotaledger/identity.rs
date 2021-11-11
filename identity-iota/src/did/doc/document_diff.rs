@@ -16,7 +16,8 @@ use identity_did::verification::TryMethod;
 
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
-use crate::error::{Error,Result};
+use crate::error::Error;
+use crate::error::Result;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::TangleRef;
@@ -83,8 +84,7 @@ impl DocumentDiff {
     let data: DiffDocument = DiffDocument::from_json(&self.diff).map_err(|_| Error::InvalidDeserialization)?;
     let core: CoreDocument = document.serde_into().map_err(|_| Error::InvalidSerialization)?;
     let this: CoreDocument = Diff::merge(&core, data)?;
-
-    Ok(this.serde_into().map_err(|_| Error::InvalidSerialization)?)
+    this.serde_into().map_err(|_| Error::InvalidSerialization)
   }
 }
 

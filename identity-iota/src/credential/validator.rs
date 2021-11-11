@@ -57,7 +57,9 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
   where
     T: DeserializeOwned + Serialize,
   {
-    self.validate_credential(Credential::from_json(data).map_err(|_| Error::InvalidDeserialization)?).await
+    self
+      .validate_credential(Credential::from_json(data).map_err(|_| Error::InvalidDeserialization)?)
+      .await
   }
 
   /// Deserializes the given JSON-encoded `Presentation` and
@@ -67,7 +69,9 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     T: Clone + DeserializeOwned + Serialize,
     U: Clone + DeserializeOwned + Serialize,
   {
-    self.validate_presentation(Presentation::from_json(data).map_err(|_| Error::InvalidDeserialization)?).await
+    self
+      .validate_presentation(Presentation::from_json(data).map_err(|_| Error::InvalidDeserialization)?)
+      .await
   }
 
   /// Validates the `Credential` proof and all relevant DID documents.
