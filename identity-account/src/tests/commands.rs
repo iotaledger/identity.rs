@@ -218,7 +218,7 @@ async fn test_create_scoped_method() -> Result<()> {
   ] {
     let mut account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
-    let fragment = "key-1".to_owned();
+    let fragment = "#key-1".to_owned();
 
     let update: Update = Update::CreateMethod {
       scope: *scope,

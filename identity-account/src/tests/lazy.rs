@@ -37,8 +37,9 @@ async fn test_lazy_updates() -> Result<()> {
       let config = AccountConfig::default().autopublish(false);
       let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
 
-      let mut account =
-        Account::create_identity(account_config, IdentitySetup::new().network(network.name()).unwrap()).await?;
+      let mut account = Account::create_identity(account_config, IdentitySetup::new().network(network.name()).unwrap())
+        .await
+        .unwrap();
 
       account
         .update_identity()
@@ -47,7 +48,8 @@ async fn test_lazy_updates() -> Result<()> {
         .type_("LinkedDomains")
         .endpoint(Url::parse("https://example.org").unwrap())
         .apply()
-        .await?;
+        .await
+        .unwrap();
 
       account
         .update_identity()
@@ -56,15 +58,16 @@ async fn test_lazy_updates() -> Result<()> {
         .type_("LinkedDomains")
         .endpoint(Url::parse("https://example.org").unwrap())
         .apply()
-        .await?;
+        .await
+        .unwrap();
 
-      account.publish_updates().await?;
+      account.publish_updates().await.unwrap();
 
       // ===========================================================================
       // First round of assertions
       // ===========================================================================
 
-      let doc = account.resolve_identity().await?;
+      let doc = account.resolve_identity().await.unwrap();
 
       assert_eq!(doc.methods().count(), 1);
       assert_eq!(doc.service().len(), 2);
@@ -82,29 +85,32 @@ async fn test_lazy_updates() -> Result<()> {
         .delete_service()
         .fragment("my-service")
         .apply()
-        .await?;
+        .await
+        .unwrap();
 
       account
         .update_identity()
         .delete_service()
         .fragment("my-other-service")
         .apply()
-        .await?;
+        .await
+        .unwrap();
 
       account
         .update_identity()
         .create_method()
         .fragment("new-method")
         .apply()
-        .await?;
+        .await
+        .unwrap();
 
-      account.publish_updates().await?;
+      account.publish_updates().await.unwrap();
 
       // ===========================================================================
       // Second round of assertions
       // ===========================================================================
 
-      let doc = account.resolve_identity().await?;
+      let doc = account.resolve_identity().await.unwrap();
 
       assert_eq!(doc.service().len(), 0);
       assert_eq!(doc.methods().count(), 2);
@@ -117,9 +123,9 @@ async fn test_lazy_updates() -> Result<()> {
       // History assertions
       // ===========================================================================
 
-      let client: Client = Client::from_network(network).await?;
+      let client: Client = Client::from_network(network).await.unwrap();
 
-      let history: DocumentHistory = client.resolve_history(account.did()).await?;
+      let history: DocumentHistory = client.resolve_history(account.did()).await.unwrap();
 
       assert_eq!(history.integration_chain_data.len(), 1);
       assert_eq!(history.diff_chain_data.len(), 1);
@@ -127,7 +133,8 @@ async fn test_lazy_updates() -> Result<()> {
       Ok(())
     })
   })
-  .await?;
+  .await
+  .unwrap();
 
   Ok(())
 }

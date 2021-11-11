@@ -175,12 +175,8 @@ impl Update {
           storage.key_new(did, &location).await
         }?;
 
-        let method: IotaVerificationMethod = IotaVerificationMethod::from_did(
-          did.to_owned(),
-          KeyType::Ed25519,
-          &public,
-          location.fragment().identifier(),
-        )?;
+        let method: IotaVerificationMethod =
+          IotaVerificationMethod::from_did(did.to_owned(), KeyType::Ed25519, &public, location.fragment().name())?;
 
         state.set_method_generations(location.fragment().clone());
 
