@@ -356,7 +356,7 @@ impl Account {
 
     let diff_id: &MessageId = self.chain_state().diff_message_id();
 
-    let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
+    let mut diff: DocumentDiff = DocumentDiff::new(old_doc, new_doc, *diff_id)?;
 
     let method: &IotaVerificationMethod = old_state.document().default_signing_method()?;
 

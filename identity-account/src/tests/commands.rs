@@ -25,6 +25,7 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_did::did::RelativeDIDUrl;
 use identity_did::did::DID;
+use identity_did::service::ServiceEndpoint;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
@@ -599,7 +600,7 @@ async fn test_insert_service() -> Result<()> {
   let update: Update = Update::CreateService {
     fragment: fragment.clone(),
     type_: "LinkedDomains".to_owned(),
-    endpoint: Url::parse("https://iota.org").unwrap(),
+    endpoint: ServiceEndpoint::One(Url::parse("https://iota.org").unwrap()),
     properties: None,
   };
 
@@ -630,7 +631,7 @@ async fn test_remove_service() -> Result<()> {
   let update: Update = Update::CreateService {
     fragment: fragment.clone(),
     type_: "LinkedDomains".to_owned(),
-    endpoint: Url::parse("https://iota.org").unwrap(),
+    endpoint: ServiceEndpoint::One(Url::parse("https://iota.org").unwrap()),
     properties: None,
   };
 
