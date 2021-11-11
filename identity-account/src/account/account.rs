@@ -299,14 +299,14 @@ impl Account {
       return Ok(());
     }
 
-    let old_state: IdentityState = self.load_state().await?;
-    let new_state: &IdentityState = self.state();
-
     if self.chain_state().is_new_identity() {
       // New identity
       self.publish_integration_change(None).await?;
     } else {
       // Existing identity
+      let old_state: IdentityState = self.load_state().await?;
+      let new_state: &IdentityState = self.state();
+
       match Publish::new(old_state.as_document(), new_state.as_document()) {
         Publish::Integration => self.publish_integration_change(Some(&old_state)).await?,
         Publish::Diff => self.publish_diff_change(&old_state).await?,
