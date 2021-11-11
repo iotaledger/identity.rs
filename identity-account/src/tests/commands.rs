@@ -47,12 +47,9 @@ async fn test_create_identity() -> Result<()> {
 
   let state: &IdentityState = account.state();
 
-  assert!(state.as_document().resolve_method(&expected_fragment).is_some());
-  assert_eq!(
-    state.as_document().as_document().verification_relationships().count(),
-    1
-  );
-  assert_eq!(state.as_document().as_document().methods().count(), 1);
+  assert!(state.document().resolve_method(&expected_fragment).is_some());
+  assert_eq!(state.document().as_document().verification_relationships().count(), 1);
+  assert_eq!(state.document().as_document().methods().count(), 1);
 
   let location = state
     .method_location(MethodType::Ed25519VerificationKey2018, expected_fragment.clone())
@@ -75,8 +72,8 @@ async fn test_create_identity() -> Result<()> {
   assert!(account.load_state().await.is_ok());
 
   // Ensure timestamps were recently set.
-  assert!(state.as_document().created() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
-  assert!(state.as_document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
+  assert!(state.document().created() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
+  assert!(state.document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
 
   Ok(())
 }
@@ -172,16 +169,13 @@ async fn test_create_method() -> Result<()> {
 
   // Ensure existence and key type
   assert_eq!(
-    state.as_document().resolve_method(&fragment).unwrap().key_type(),
+    state.document().resolve_method(&fragment).unwrap().key_type(),
     method_type
   );
 
   // Still only the default relationship.
-  assert_eq!(
-    state.as_document().as_document().verification_relationships().count(),
-    1
-  );
-  assert_eq!(state.as_document().as_document().methods().count(), 2);
+  assert_eq!(state.document().as_document().verification_relationships().count(), 1);
+  assert_eq!(state.document().as_document().methods().count(), 2);
 
   let location = state.method_location(method_type, fragment.clone()).unwrap();
 
@@ -200,9 +194,9 @@ async fn test_create_method() -> Result<()> {
   assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
 
   // Ensure `created` wasn't updated.
-  assert_eq!(initial_state.as_document().created(), state.as_document().created());
+  assert_eq!(initial_state.document().created(), state.document().created());
   // Ensure `updated` was recently set.
-  assert!(state.as_document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
+  assert!(state.document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
 
   Ok(())
 }
@@ -231,17 +225,14 @@ async fn test_create_scoped_method() -> Result<()> {
 
     let state: &IdentityState = account.state();
 
-    assert_eq!(
-      state.as_document().as_document().verification_relationships().count(),
-      2
-    );
+    assert_eq!(state.document().as_document().verification_relationships().count(), 2);
 
-    assert_eq!(state.as_document().as_document().methods().count(), 2);
+    assert_eq!(state.document().as_document().methods().count(), 2);
 
     let mut relative_url = RelativeDIDUrl::new();
     relative_url.set_fragment(Some(&fragment)).unwrap();
 
-    let core_doc = state.as_document().as_document();
+    let core_doc = state.document().as_document();
 
     let contains = match scope {
       MethodScope::Authentication => core_doc
@@ -330,7 +321,7 @@ async fn test_create_method_from_private_key() -> Result<()> {
 
   let state: &IdentityState = account.state();
 
-  assert!(state.as_document().resolve_method(&fragment).is_some());
+  assert!(state.document().resolve_method(&fragment).is_some());
 
   let location = state.method_location(method_type, fragment).unwrap();
   let public_key = account.storage().key_get(account.did(), &location).await?;
@@ -380,7 +371,7 @@ async fn test_attach_method_relationship() -> Result<()> {
   assert_eq!(
     account
       .state()
-      .as_document()
+      .document()
       .as_document()
       .verification_relationships()
       .count(),
@@ -566,7 +557,7 @@ async fn test_delete_method() -> Result<()> {
   account.process_update(update).await?;
 
   // Ensure it was added.
-  assert!(account.state().as_document().resolve_method(&fragment).is_some());
+  assert!(account.state().document().resolve_method(&fragment).is_some());
 
   let update: Update = Update::DeleteMethod {
     fragment: "key-1".to_owned(),
@@ -577,15 +568,12 @@ async fn test_delete_method() -> Result<()> {
   let state: &IdentityState = account.state();
 
   // Ensure it no longer exists.
-  assert!(state.as_document().resolve_method(&fragment).is_none());
+  assert!(state.document().resolve_method(&fragment).is_none());
 
   // Still only the default relationship.
-  assert_eq!(
-    state.as_document().as_document().verification_relationships().count(),
-    1
-  );
+  assert_eq!(state.document().as_document().verification_relationships().count(), 1);
 
-  assert_eq!(state.as_document().as_document().methods().count(), 1);
+  assert_eq!(state.document().as_document().methods().count(), 1);
 
   let location = state.method_location(method_type, fragment.clone()).unwrap();
 
@@ -593,9 +581,9 @@ async fn test_delete_method() -> Result<()> {
   assert!(account.storage().key_exists(account.did(), &location).await.unwrap());
 
   // Ensure `created` wasn't updated.
-  assert_eq!(initial_state.as_document().created(), state.as_document().created());
+  assert_eq!(initial_state.document().created(), state.document().created());
   // Ensure `updated` was recently set.
-  assert!(state.as_document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
+  assert!(state.document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
 
   Ok(())
 }

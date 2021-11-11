@@ -112,7 +112,7 @@ impl Account {
   /// Returns the DID document of the identity, which this account manages,
   /// with all updates applied.
   pub fn document(&self) -> &IotaDocument {
-    self.state.as_document()
+    self.state.document()
   }
 
   // ===========================================================================
@@ -208,10 +208,7 @@ impl Account {
   {
     let state: &IdentityState = self.state();
 
-    let method: &IotaVerificationMethod = state
-      .as_document()
-      .resolve_method(fragment)
-      .ok_or(Error::MethodNotFound)?;
+    let method: &IotaVerificationMethod = state.document().resolve_method(fragment).ok_or(Error::MethodNotFound)?;
 
     let location: KeyLocation = state.method_location(method.key_type(), fragment.to_owned())?;
 
@@ -259,7 +256,7 @@ impl Account {
     document: &mut IotaDocument,
   ) -> Result<()> {
     if self.chain_state().is_new_identity() {
-      let method: &IotaVerificationMethod = new_state.as_document().default_signing_method()?;
+      let method: &IotaVerificationMethod = new_state.document().default_signing_method()?;
       let location: KeyLocation = new_state.method_location(
         method.key_type(),
         method
@@ -274,7 +271,7 @@ impl Account {
         .sign_data(self.did(), self.storage(), &location, document)
         .await?;
     } else {
-      let method: &IotaVerificationMethod = old_state.as_document().default_signing_method()?;
+      let method: &IotaVerificationMethod = old_state.document().default_signing_method()?;
       let location: KeyLocation = new_state.method_location(
         method.key_type(),
         method
@@ -307,7 +304,7 @@ impl Account {
       let old_state: IdentityState = self.load_state().await?;
       let new_state: &IdentityState = self.state();
 
-      match Publish::new(old_state.as_document(), new_state.as_document()) {
+      match Publish::new(old_state.document(), new_state.document()) {
         Publish::Integration => self.publish_integration_change(Some(&old_state)).await?,
         Publish::Diff => self.publish_diff_change(&old_state).await?,
         Publish::None => {}
@@ -333,7 +330,7 @@ impl Account {
   async fn publish_integration_change(&mut self, old_state: Option<&IdentityState>) -> Result<()> {
     let new_state: &IdentityState = self.state();
 
-    let mut new_doc: IotaDocument = new_state.as_document().to_owned();
+    let mut new_doc: IotaDocument = new_state.document().to_owned();
 
     new_doc.set_previous_message_id(*self.chain_state().previous_integration_message_id());
 
@@ -354,14 +351,14 @@ impl Account {
   }
 
   async fn publish_diff_change(&mut self, old_state: &IdentityState) -> Result<()> {
-    let old_doc: &IotaDocument = old_state.as_document();
-    let new_doc: &IotaDocument = self.state().as_document();
+    let old_doc: &IotaDocument = old_state.document();
+    let new_doc: &IotaDocument = self.state().document();
 
     let diff_id: &MessageId = self.chain_state().diff_message_id();
 
     let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
 
-    let method: &IotaVerificationMethod = old_state.as_document().default_signing_method()?;
+    let method: &IotaVerificationMethod = old_state.document().default_signing_method()?;
 
     let location: KeyLocation = old_state.method_location(
       method.key_type(),

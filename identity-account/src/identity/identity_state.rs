@@ -86,7 +86,7 @@ impl IdentityState {
   // Document State
   // ===========================================================================
 
-  pub fn as_document(&self) -> &IotaDocument {
+  pub fn document(&self) -> &IotaDocument {
     &self.document
   }
 

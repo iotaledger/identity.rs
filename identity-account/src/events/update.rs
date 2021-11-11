@@ -163,7 +163,7 @@ impl Update {
         // The verification method must not exist.
         ensure!(
           state
-            .as_document()
+            .document()
             .resolve_method(location.fragment().identifier())
             .is_none(),
           UpdateError::DuplicateKeyFragment(location.fragment().clone()),
@@ -188,7 +188,7 @@ impl Update {
 
         // The verification method must exist
         ensure!(
-          state.as_document().resolve_method(fragment.identifier()).is_some(),
+          state.document().resolve_method(fragment.identifier()).is_some(),
           UpdateError::MethodNotFound
         );
 
@@ -196,7 +196,7 @@ impl Update {
         let method_url = did.to_url().join(fragment.identifier())?;
 
         // Prevent deleting the last method capable of signing the DID document.
-        let capability_invocation_set = state.as_document().as_document().capability_invocation();
+        let capability_invocation_set = state.document().as_document().capability_invocation();
         let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
         let is_capability_invocation = capability_invocation_set
           .iter()
@@ -220,14 +220,14 @@ impl Update {
 
         // The verification method must exist
         ensure!(
-          state.as_document().resolve_method(fragment.identifier()).is_some(),
+          state.document().resolve_method(fragment.identifier()).is_some(),
           UpdateError::MethodNotFound
         );
 
         // The verification method must not be embedded.
         ensure!(
           !state
-            .as_document()
+            .document()
             .as_document()
             .verification_relationships()
             .any(|method_ref| match method_ref {
@@ -253,7 +253,7 @@ impl Update {
 
         // The verification method must exist
         ensure!(
-          state.as_document().resolve_method(fragment.identifier()).is_some(),
+          state.document().resolve_method(fragment.identifier()).is_some(),
           UpdateError::MethodNotFound
         );
 
@@ -261,7 +261,7 @@ impl Update {
         let method_url = did.to_url().join(fragment.identifier())?;
 
         // Prevent detaching the last method capable of signing the DID document.
-        let capability_invocation_set = state.as_document().as_document().capability_invocation();
+        let capability_invocation_set = state.document().as_document().capability_invocation();
         let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
         let is_capability_invocation = capability_invocation_set
           .iter()
@@ -275,7 +275,7 @@ impl Update {
         // The verification method must not be embedded.
         ensure!(
           !state
-            .as_document()
+            .document()
             .as_document()
             .verification_relationships()
             .any(|method_ref| match method_ref {
@@ -303,7 +303,7 @@ impl Update {
 
         // The service must not exist
         ensure!(
-          state.as_document().service().query(&did_url).is_none(),
+          state.document().service().query(&did_url).is_none(),
           UpdateError::DuplicateServiceFragment(fragment.name().to_owned()),
         );
 
@@ -321,7 +321,7 @@ impl Update {
 
         // The service must exist
         ensure!(
-          state.as_document().service().query(&service_url).is_some(),
+          state.document().service().query(&service_url).is_some(),
           UpdateError::ServiceNotFound
         );
 
