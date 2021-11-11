@@ -1,0 +1,44 @@
+name: 'release-npm'
+description: 'Releases binding to npm'
+inputs:
+  tag:
+    description: 'Which tag to publish under'
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - name: Install stable toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+
+    - name: Install WASM toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: wasm32-unknown-unknown
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 15.x
+        registry-url: 'https://registry.npmjs.org'
+
+    - name: Install JS dependencies
+      shell: sh
+      run: npm install
+      working-directory: bindings/wasm
+
+    - name: Build WASM bindings
+      shell: sh
+      run: npm run build
+      working-directory: bindings/wasm
+
+    - name: Publish WASM bindings to NPM
+      shell: sh
+      run: npm publish $(if [ ${{ inputs.tag }} != '' ]; then echo --tag ${{ inputs.tag }}; fi) --access public
+      #env:
+      #  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      working-directory: bindings/wasm
