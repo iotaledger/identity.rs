@@ -354,10 +354,8 @@ impl Account {
   }
 
   async fn publish_diff_change(&mut self, old_state: &IdentityState) -> Result<()> {
-    let new_state: &IdentityState = self.state();
-
-    let old_doc: IotaDocument = old_state.as_document().to_owned();
-    let new_doc: IotaDocument = new_state.as_document().to_owned();
+    let old_doc: &IotaDocument = old_state.as_document();
+    let new_doc: &IotaDocument = self.state().as_document();
 
     let diff_id: &MessageId = self.chain_state().diff_message_id();
 
