@@ -6,13 +6,13 @@ use serde::Serialize;
 
 use identity_core::common::Fragment;
 use identity_core::common::Object;
-use identity_core::common::Url;
 use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signer;
 use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
 use identity_did::service::Service as CoreService;
+use identity_did::service::ServiceEndpoint;
 use identity_did::verification::MethodData;
 use identity_did::verification::MethodRef as CoreMethodRef;
 use identity_did::verification::MethodScope;
@@ -334,14 +334,14 @@ pub struct TinyService {
   #[serde(rename = "2")]
   type_: String,
   #[serde(rename = "3")]
-  endpoint: Url,
+  endpoint: ServiceEndpoint,
   #[serde(rename = "4")]
   properties: Option<Object>,
 }
 
 impl TinyService {
   /// Creates a new `TinyService`.
-  pub fn new(fragment: String, type_: String, endpoint: Url, properties: Option<Object>) -> Self {
+  pub fn new(fragment: String, type_: String, endpoint: ServiceEndpoint, properties: Option<Object>) -> Self {
     Self {
       fragment: Fragment::new(fragment),
       type_,

@@ -20,6 +20,7 @@ use crate::resolution::Resolution;
 use crate::resolution::ResolverMethod;
 use crate::resolution::Resource;
 use crate::resolution::SecondaryResource;
+use crate::service::ServiceEndpoint;
 use crate::utils::OrderedSet;
 
 /// Resolves a DID into a DID Document by using the "Read" operation of the DID method.
@@ -229,7 +230,12 @@ fn dereference_primary(document: CoreDocument, mut did_url: CoreDIDUrl) -> Resul
       .find(|service| matches!(service.id().fragment(), Some(fragment) if fragment == target))
       .map(|service| service.service_endpoint())
       // 1.2. Execute the Service Endpoint Construction algorithm.
-      .map(|url| service_endpoint_ctor(did_url, url))
+      .map(|endpoint| match endpoint {
+        ServiceEndpoint::One(url) => service_endpoint_ctor(did_url, url),
+        // TODO: support service endpoint sets and map? Dereferencing spec does not address them.
+        ServiceEndpoint::Set(_) => Err(Error::InvalidResolutionService),
+        ServiceEndpoint::Map(_) => Err(Error::InvalidResolutionService),
+      })
       .transpose()?
       // 1.3. Return the output service endpoint URL.
       .map(Into::into)
@@ -321,7 +327,7 @@ fn service_endpoint_ctor(did: CoreDIDUrl, url: &Url) -> Result<Url> {
 
   // The input service endpoint URL MUST be an HTTP(S) URL.
   if url.scheme() != "https" {
-    return Err(Error::InvalidServiceProtocol);
+    return Err(Error::InvalidResolutionService);
   }
 
   // 1. Initialize a string output service endpoint URL to the value of
@@ -455,7 +461,7 @@ mod test {
   fn generate_service(did: &CoreDID, fragment: &str, url: &str) -> Service {
     Service::builder(Default::default())
       .id(did.to_url().join(fragment).unwrap())
-      .service_endpoint(Url::parse(url).unwrap())
+      .service_endpoint(Url::parse(url).unwrap().into())
       .type_("LinkedDomains")
       .build()
       .unwrap()

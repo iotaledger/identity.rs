@@ -317,6 +317,7 @@ mod test {
   use identity_core::common::Value;
 
   use crate::service::ServiceBuilder;
+  use crate::service::ServiceEndpoint;
   use crate::verification::MethodBuilder;
   use crate::verification::MethodData;
   use crate::verification::MethodType;
@@ -340,7 +341,7 @@ mod test {
   fn service(did_url: CoreDIDUrl) -> Service {
     ServiceBuilder::default()
       .id(did_url)
-      .service_endpoint(Url::parse("did:service:1234").unwrap())
+      .service_endpoint(ServiceEndpoint::One(Url::parse("did:service:1234").unwrap()))
       .type_("test_service")
       .build()
       .unwrap()

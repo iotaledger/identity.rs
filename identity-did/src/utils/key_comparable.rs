@@ -3,6 +3,7 @@
 
 use crate::did::CoreDIDUrl;
 use core::convert::AsRef;
+use identity_core::common::Url;
 
 /// A trait for comparing types only by a certain key.
 pub trait KeyComparable {
@@ -16,5 +17,13 @@ impl<T: AsRef<CoreDIDUrl>> KeyComparable for T {
 
   fn as_key(&self) -> &Self::Key {
     self.as_ref()
+  }
+}
+
+impl KeyComparable for Url {
+  type Key = Url;
+
+  fn as_key(&self) -> &Self::Key {
+    self
   }
 }
