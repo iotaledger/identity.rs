@@ -168,7 +168,10 @@ async fn test_create_identity_from_private_key() -> Result<()> {
 
   let identity: IdentityId = IdentityId::from_u32(1);
 
-  let private_key = KeyPair::new_ed25519().map_err(|_|Error::FailedKeyPairGeneration)?.private().clone();
+  let private_key = KeyPair::new_ed25519()
+    .map_err(|_| Error::FailedKeyPairGeneration)?
+    .private()
+    .clone();
 
   let id_create = IdentityCreate::new()
     .key_type(KeyType::Ed25519)
@@ -298,7 +301,7 @@ async fn test_create_method_from_private_key() -> Result<()> {
 
   account.process(identity, command, false).await?;
 
-  let keypair = KeyPair::new_ed25519().map_err(|_|Error::FailedKeyPairGeneration)?;
+  let keypair = KeyPair::new_ed25519().map_err(|_| Error::FailedKeyPairGeneration)?;
 
   let command: Command = Command::CreateMethod {
     scope: MethodScope::default(),

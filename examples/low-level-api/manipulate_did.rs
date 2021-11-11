@@ -29,7 +29,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   let (mut document, keypair, receipt): (IotaDocument, KeyPair, Receipt) = create_did::run().await?;
 
   // Add a new VerificationMethod with a new keypair
-  let new_key: KeyPair = KeyPair::new_ed25519().map_err(|_|Error::FailedKeyPairGeneration)?;
+  let new_key: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::FailedKeyPairGeneration)?;
   let method: IotaVerificationMethod = IotaVerificationMethod::from_did(document.did().clone(), &new_key, "newKey")?;
   assert!(document.insert_method(method, MethodScope::VerificationMethod));
 
