@@ -13,6 +13,7 @@ use identity::iota::ClientBuilder;
 use identity::iota::IotaDID;
 use identity::iota::Network;
 use identity::iota::Receipt;
+use identity::iota::Error; 
 use identity::iota::TangleRef;
 use identity::prelude::*;
 
@@ -41,7 +42,7 @@ pub async fn main() -> Result<()> {
     .await?;
 
   // Generate a new Ed25519 public/private key pair.
-  let keypair: KeyPair = KeyPair::new_ed25519()?;
+  let keypair: KeyPair = KeyPair::new_ed25519().map_err(|_|Error::FailedKeyPairGeneration)?;
 
   // Create a DID with the network set explicitly.
   let mut document: IotaDocument = IotaDocument::new_with_options(&keypair, Some(client.network().name()), None)?;

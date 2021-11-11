@@ -9,6 +9,8 @@ pub type Result<T, E = Error> = ::core::result::Result<T, E>;
 /// This type represents all possible errors that can occur in the library.
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
+  #[error("failed to generate key-pair")]
+  FailedKeyPairGeneration, //TODO: Remove this when this crate has its error types refactored 
   #[error("invalid serialization")]
   InvalidSerialization, // TODO: Remove this when this crate has its error types refactored
   #[error("invalid deserialization")]

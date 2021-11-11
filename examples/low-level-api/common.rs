@@ -77,7 +77,7 @@ pub async fn add_new_key(
   let mut updated_doc = doc.clone();
 
   // Add #newKey to the document
-  let new_key: KeyPair = KeyPair::new_ed25519()?;
+  let new_key: KeyPair = KeyPair::new_ed25519().map_err(|_|Error::FailedKeyPairGeneration)?;
   let method: IotaVerificationMethod = IotaVerificationMethod::from_did(updated_doc.did().clone(), &new_key, "newKey")?;
   assert!(updated_doc.insert_method(method, MethodScope::VerificationMethod));
 

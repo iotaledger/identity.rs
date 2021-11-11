@@ -5,6 +5,8 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]
 pub enum Error {
+  #[error("failed to generate key-pair")]
+  FailedKeyPairGeneration, //TODO: Remove this when this crate has its error types refactored
   /// Caused by a failure to produce a KeyCollection
   #[error("key collection error")]
   KeyCollectionError, // TODO: temporary solution to make this crate work with new errors from identity-core

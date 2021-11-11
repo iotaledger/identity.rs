@@ -10,4 +10,6 @@ pub use self::base_encoding::Base58DecodingError;
 pub use self::base_encoding::Base64DecodingError;
 pub use self::base_encoding::MultiBaseDecodingError;
 pub use self::base_encoding::*;
-pub use self::ed25519::*;
+pub use self::ed25519::generate_ed25519_keypair;
+pub use self::ed25519::generate_ed25519_keypairs;
+pub use self::ed25519::Ed25519KeyPairGenerationError;
