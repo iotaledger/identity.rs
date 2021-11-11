@@ -58,15 +58,6 @@ pub enum Error {
   /// Caused by attempting to decrement a generation below the minimum value.
   #[error("Generation underflow")]
   GenerationUnderflow,
-  /// Caused by attempting to add a new identity when an account is at capacity.
-  #[error("Too many identities")]
-  IdentityIdOverflow,
-  /// Caused by attempting to parse an invalid identity id.
-  #[error("Invalid identity id")]
-  IdentityIdInvalid,
-  /// Caused by attempting to read a DID from an unintialized identity state.
-  #[error("Document id not found")]
-  MissingDocumentId,
   /// Caused by attempting to find an identity key vault that does not exist.
   #[error("Key vault not found")]
   KeyVaultNotFound,
@@ -76,18 +67,9 @@ pub enum Error {
   /// Caused by attempting to find an identity that does not exist.
   #[error("Identity not found")]
   IdentityNotFound,
-  /// Caused by attempting to find an identity event that does not exist.
-  #[error("Event not found")]
-  EventNotFound,
-  /// Caused by attempting to re-initialize an existing identity.
-  #[error("Identity already exists")]
-  IdentityAlreadyExists,
   /// Caused by attempting to find a verification method that does not exist.
   #[error("Verification Method not found")]
   MethodNotFound,
-  /// Caused by attempting to find a service that does not exist.
-  #[error("Service not found")]
-  ServiceNotFound,
   /// Caused by attempting to perform an upate in an invalid context.
   #[error("Update Error: {0}")]
   UpdateError(#[from] crate::updates::UpdateError),
