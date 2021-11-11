@@ -8,9 +8,9 @@ use crate::account::AccountConfig;
 use crate::account::AccountSetup;
 use crate::error::Error;
 use crate::error::Result;
+use crate::identity::IdentitySetup;
 use crate::updates::Update;
 use crate::updates::UpdateError;
-use crate::identity::IdentitySetup;
 
 use crate::identity::IdentityState;
 use crate::storage::MemStore;

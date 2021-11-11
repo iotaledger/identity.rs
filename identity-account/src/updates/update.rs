@@ -24,7 +24,6 @@ use identity_iota::did::IotaVerificationMethod;
 
 use crate::account::Account;
 use crate::error::Result;
-use crate::updates::UpdateError;
 use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
@@ -32,6 +31,7 @@ use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
 use crate::types::MethodSecret;
+use crate::updates::UpdateError;
 
 // Method types allowed to sign a DID document update.
 pub const UPDATE_METHOD_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];

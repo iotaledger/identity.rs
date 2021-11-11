@@ -21,8 +21,6 @@ use std::sync::Arc;
 
 use crate::account::AccountBuilder;
 use crate::error::Result;
-use crate::updates::create_identity;
-use crate::updates::Update;
 use crate::identity::ChainState;
 use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
@@ -30,6 +28,8 @@ use crate::identity::IdentityState;
 use crate::identity::IdentityUpdater;
 use crate::storage::Storage;
 use crate::types::KeyLocation;
+use crate::updates::create_identity;
+use crate::updates::Update;
 use crate::Error;
 
 use super::config::AccountSetup;
