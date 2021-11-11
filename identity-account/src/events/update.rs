@@ -18,6 +18,7 @@ use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
+use identity_iota::did::IotaDIDUrl;
 use identity_iota::did::IotaDocument;
 use identity_iota::did::IotaVerificationMethod;
 
@@ -71,7 +72,7 @@ pub(crate) async fn create_identity(setup: IdentitySetup, store: &dyn Storage) -
     KeyPair::new_ed25519()?
   };
 
-  // Generate a new DID URL from the public key
+  // Generate a new DID from the public key
   let did: IotaDID = if let Some(network) = &setup.network {
     IotaDID::new_with_network(keypair.public().as_ref(), network.clone())?
   } else {
@@ -103,7 +104,7 @@ pub(crate) async fn create_identity(setup: IdentitySetup, store: &dyn Storage) -
   let mut state = IdentityState::new(document);
 
   // Store the generations at which the method was added
-  state.set_method_generations(method_fragment);
+  state.store_method_generations(method_fragment);
 
   Ok((did_lease, state))
 }
@@ -178,10 +179,10 @@ impl Update {
         let method: IotaVerificationMethod =
           IotaVerificationMethod::from_did(did.to_owned(), KeyType::Ed25519, &public, location.fragment().name())?;
 
-        state.set_method_generations(location.fragment().clone());
+        state.store_method_generations(location.fragment().clone());
 
         // We can ignore the result: we just checked that the method does not exist.
-        state.as_document_mut().insert_method(method, scope);
+        state.document_mut().insert_method(method, scope);
       }
       Self::DeleteMethod { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
@@ -193,11 +194,11 @@ impl Update {
         );
 
         // TODO: Do we have to ? here?
-        let method_url = did.to_url().join(fragment.identifier())?;
+        let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
+        let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
 
         // Prevent deleting the last method capable of signing the DID document.
         let capability_invocation_set = state.document().as_document().capability_invocation();
-        let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
         let is_capability_invocation = capability_invocation_set
           .iter()
           .any(|method_ref| method_ref.id() == &core_method_url);
@@ -207,7 +208,7 @@ impl Update {
           UpdateError::InvalidMethodFragment("cannot remove last signing method")
         );
 
-        state.as_document_mut().remove_method(method_url).unwrap();
+        state.document_mut().remove_method(method_url).unwrap();
       }
       Self::AttachMethod {
         fragment,
@@ -216,7 +217,7 @@ impl Update {
         let fragment: Fragment = Fragment::new(fragment);
 
         // TODO: Do we have to ? here?
-        let method_url = did.to_url().join(fragment.identifier())?;
+        let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
 
         // The verification method must exist
         ensure!(
@@ -240,7 +241,7 @@ impl Update {
         for relationship in relationships {
           // We ignore the boolean result: if the relationship already existed, that's fine.
           state
-            .as_document_mut()
+            .document_mut()
             .attach_method_relationship(method_url.clone(), relationship)
             .map_err(|_| UpdateError::MethodNotFound)?;
         }
@@ -258,11 +259,11 @@ impl Update {
         );
 
         // TODO: Do we have to ? here?
-        let method_url = did.to_url().join(fragment.identifier())?;
+        let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
+        let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
 
         // Prevent detaching the last method capable of signing the DID document.
         let capability_invocation_set = state.document().as_document().capability_invocation();
-        let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
         let is_capability_invocation = capability_invocation_set
           .iter()
           .any(|method_ref| method_ref.id() == &core_method_url);
@@ -287,7 +288,7 @@ impl Update {
 
         for relationship in relationships {
           state
-            .as_document_mut()
+            .document_mut()
             .detach_method_relationship(method_url.clone(), relationship)
             .map_err(|_| UpdateError::MethodNotFound)?;
         }
@@ -313,7 +314,7 @@ impl Update {
           .type_(type_)
           .build()?;
 
-        state.as_document_mut().insert_service(service);
+        state.document_mut().insert_service(service);
       }
       Self::DeleteService { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
@@ -325,11 +326,11 @@ impl Update {
           UpdateError::ServiceNotFound
         );
 
-        state.as_document_mut().remove_service(service_url)?;
+        state.document_mut().remove_service(service_url)?;
       }
     }
 
-    state.as_document_mut().set_updated(Timestamp::now_utc());
+    state.document_mut().set_updated(Timestamp::now_utc());
 
     Ok(())
   }

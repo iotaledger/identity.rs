@@ -30,7 +30,6 @@ pub struct IdentityState {
   generation: Generation,
   #[serde(skip_serializing_if = "HashMap::is_empty")]
   method_generations: HashMap<Fragment, Generation>,
-
   document: IotaDocument,
 }
 
@@ -60,7 +59,7 @@ impl IdentityState {
   }
 
   /// Stores the generations at which the method was inserted.
-  pub fn set_method_generations(&mut self, fragment: Fragment) {
+  pub fn store_method_generations(&mut self, fragment: Fragment) {
     self.method_generations.insert(fragment, self.generation());
   }
 
@@ -82,7 +81,7 @@ impl IdentityState {
     &self.document
   }
 
-  pub fn as_document_mut(&mut self) -> &mut IotaDocument {
+  pub fn document_mut(&mut self) -> &mut IotaDocument {
     &mut self.document
   }
 
