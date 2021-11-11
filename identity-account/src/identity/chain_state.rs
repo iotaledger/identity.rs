@@ -6,7 +6,7 @@ use serde::Serialize;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 
-/// The state of the integration and diff chain.
+/// Holds the last published message ids of the integration and diff chains.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct ChainState {
   #[serde(default = "MessageId::null", skip_serializing_if = "MessageId::is_null")]
@@ -23,12 +23,12 @@ impl ChainState {
     }
   }
 
-  /// Returns the previous integration Tangle message id of the identity.
+  /// Returns the previous integration message id of the identity.
   pub fn previous_integration_message_id(&self) -> &MessageId {
     &self.previous_integration_message_id
   }
 
-  /// Returns the previous diff Tangle message id, or the current integration message id.
+  /// Returns the previous diff message id, or the previous integration message id.
   pub fn diff_message_id(&self) -> &MessageId {
     if self.previous_diff_message_id.is_null() {
       &self.previous_integration_message_id
@@ -37,9 +37,8 @@ impl ChainState {
     }
   }
 
-  /// Sets the current Tangle integration message id of the identity.
+  /// Sets the current integration message id of the identity.
   pub fn set_integration_message_id(&mut self, message: MessageId) {
-    // Set the current integration message id as the previous integration message.
     self.previous_integration_message_id = message;
 
     // Clear the diff message id
