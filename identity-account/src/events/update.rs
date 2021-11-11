@@ -141,9 +141,9 @@ pub(crate) enum Update {
 
 impl Update {
   pub(crate) async fn process(self, did: &IotaDID, state: &mut IdentityState, storage: &dyn Storage) -> Result<()> {
-    debug!("[Command::process] Command = {:?}", self);
-    trace!("[Command::process] State = {:?}", state);
-    trace!("[Command::process] Store = {:?}", storage);
+    debug!("[Update::process] Update = {:?}", self);
+    trace!("[Update::process] State = {:?}", state);
+    trace!("[Update::process] Store = {:?}", storage);
 
     match self {
       Self::CreateMethod {
@@ -371,13 +371,13 @@ async fn insert_method_secret(
         )
       );
 
-      todo!("[Command::CreateMethod] Handle MerkleKeyCollection")
+      todo!("[Update::CreateMethod] Handle MerkleKeyCollection")
     }
   }
 }
 
 // =============================================================================
-// Command Builders
+// Update Builders
 // =============================================================================
 
 impl_command_builder!(

@@ -10,6 +10,7 @@ use crate::storage::MemStore;
 use futures::Future;
 
 use identity_core::common::Url;
+use identity_did::verification::MethodScope;
 use identity_iota::chain::DocumentHistory;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::Network;
@@ -37,9 +38,7 @@ async fn test_lazy_updates() -> Result<()> {
       let config = AccountConfig::default().autopublish(false);
       let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
 
-      let mut account = Account::create_identity(account_config, IdentitySetup::new().network(network.name()).unwrap())
-        .await
-        .unwrap();
+      let mut account = Account::create_identity(account_config, IdentitySetup::new().network(network.name())?).await?;
 
       account
         .update_identity()
@@ -48,8 +47,7 @@ async fn test_lazy_updates() -> Result<()> {
         .type_("LinkedDomains")
         .endpoint(Url::parse("https://example.org").unwrap())
         .apply()
-        .await
-        .unwrap();
+        .await?;
 
       account
         .update_identity()
@@ -58,16 +56,15 @@ async fn test_lazy_updates() -> Result<()> {
         .type_("LinkedDomains")
         .endpoint(Url::parse("https://example.org").unwrap())
         .apply()
-        .await
-        .unwrap();
+        .await?;
 
-      account.publish_updates().await.unwrap();
+      account.publish_updates().await?;
 
       // ===========================================================================
       // First round of assertions
       // ===========================================================================
 
-      let doc = account.resolve_identity().await.unwrap();
+      let doc = account.resolve_identity().await?;
 
       assert_eq!(doc.methods().count(), 1);
       assert_eq!(doc.service().len(), 2);
@@ -85,32 +82,29 @@ async fn test_lazy_updates() -> Result<()> {
         .delete_service()
         .fragment("my-service")
         .apply()
-        .await
-        .unwrap();
+        .await?;
 
       account
         .update_identity()
         .delete_service()
         .fragment("my-other-service")
         .apply()
-        .await
-        .unwrap();
+        .await?;
 
       account
         .update_identity()
         .create_method()
         .fragment("new-method")
         .apply()
-        .await
-        .unwrap();
+        .await?;
 
-      account.publish_updates().await.unwrap();
+      account.publish_updates().await?;
 
       // ===========================================================================
       // Second round of assertions
       // ===========================================================================
 
-      let doc = account.resolve_identity().await.unwrap();
+      let doc = account.resolve_identity().await?;
 
       assert_eq!(doc.service().len(), 0);
       assert_eq!(doc.methods().count(), 2);
@@ -120,21 +114,44 @@ async fn test_lazy_updates() -> Result<()> {
       }
 
       // ===========================================================================
-      // History assertions
+      // History assertions 1
       // ===========================================================================
 
-      let client: Client = Client::from_network(network).await.unwrap();
+      let client: Client = Client::from_network(network).await?;
 
-      let history: DocumentHistory = client.resolve_history(account.did()).await.unwrap();
+      let history: DocumentHistory = client.resolve_history(account.did()).await?;
 
       assert_eq!(history.integration_chain_data.len(), 1);
       assert_eq!(history.diff_chain_data.len(), 1);
 
+      // ===========================================================================
+      // More updates to the identity
+      // ===========================================================================
+
+      account
+        .update_identity()
+        .create_method()
+        .fragment("signing-key")
+        // Forces an integration update.
+        .scope(MethodScope::CapabilityInvocation)
+        .apply()
+        .await?;
+
+      account.publish_updates().await?;
+
+      // ===========================================================================
+      // History assertions 2
+      // ===========================================================================
+
+      let history: DocumentHistory = client.resolve_history(account.did()).await?;
+
+      assert_eq!(history.integration_chain_data.len(), 2);
+      assert_eq!(history.diff_chain_data.len(), 0);
+
       Ok(())
     })
   })
-  .await
-  .unwrap();
+  .await?;
 
   Ok(())
 }

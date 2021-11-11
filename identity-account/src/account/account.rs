@@ -328,6 +328,8 @@ impl Account {
   }
 
   async fn publish_integration_change(&mut self, old_state: Option<&IdentityState>) -> Result<()> {
+    log::debug!("[publish_integration_change] publishing {:?}", self.document().did());
+
     let new_state: &IdentityState = self.state();
 
     let mut new_doc: IotaDocument = new_state.document().to_owned();
@@ -337,6 +339,11 @@ impl Account {
     self
       .sign_self(old_state.unwrap_or(new_state), new_state, &mut new_doc)
       .await?;
+
+    log::debug!(
+      "[publish_integration_change] publishing on index {}",
+      new_doc.integration_index()
+    );
 
     let message_id: MessageId = if self.config.testmode {
       // Fake publishing by returning a random message id.
@@ -351,6 +358,8 @@ impl Account {
   }
 
   async fn publish_diff_change(&mut self, old_state: &IdentityState) -> Result<()> {
+    log::debug!("[publish_diff_change] publishing {:?}", self.document().did());
+
     let old_doc: &IotaDocument = old_state.document();
     let new_doc: &IotaDocument = self.state().document();
 
@@ -372,6 +381,11 @@ impl Account {
     old_state
       .sign_data(self.did(), self.storage(), &location, &mut diff)
       .await?;
+
+    log::debug!(
+      "[publish_diff_change] publishing on index {}",
+      IotaDocument::diff_index(self.chain_state().previous_integration_message_id())?
+    );
 
     let message_id: MessageId = if self.config.testmode {
       // Fake publishing by returning a random message id.
