@@ -4,6 +4,7 @@
 use futures::stream::FuturesUnordered;
 use futures::stream::TryStreamExt;
 use iota_client::Client as IotaClient;
+use iota_client::Error as IotaClientError;
 
 use identity_core::convert::ToJson;
 
@@ -116,13 +117,25 @@ impl Client {
     max_attempts: Option<u64>,
   ) -> Result<Receipt> {
     let receipt: Receipt = self.publish_json(index, data).await?;
-    let reattached_messages: Vec<(MessageId, Message)> = self
+    let reattached_messages: Vec<(MessageId, Message)> = match self
       .client
       .retry_until_included(receipt.message_id(), interval, max_attempts)
-      .await?;
+      .await
+    {
+      Ok(reattached_messages) => reattached_messages,
+      Err(e) => match e {
+        IotaClientError::TangleInclusionError(_) => {
+          if self.is_message_included(receipt.message_id()).await? {
+            return Ok(receipt);
+          }
+          return Err(Error::from(e));
+        }
+        _ => return Err(Error::from(e)),
+      },
+    };
     match reattached_messages.into_iter().next() {
       Some((_, message)) => Ok(Receipt::new(self.network.clone(), message)),
-      None => Ok(receipt),
+      None => Err(Error::MessageInclusionNotChecked),
     }
   }
 
@@ -211,6 +224,22 @@ impl Client {
       .try_collect()
       .await
       .map_err(Into::into)
+  }
+
+  async fn is_message_included(&self, message_id: &MessageId) -> Result<bool> {
+    match self
+      .client
+      .get_message()
+      .metadata(message_id)
+      .await?
+      .ledger_inclusion_state
+    {
+      Some(ledger_inclusion_state) => match ledger_inclusion_state {
+        LedgerInclusionStateDto::Included | LedgerInclusionStateDto::NoTransaction => Ok(true),
+        LedgerInclusionStateDto::Conflicting => Ok(false),
+      },
+      None => Ok(false),
+    }
   }
 }
 

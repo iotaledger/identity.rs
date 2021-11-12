@@ -57,4 +57,6 @@ pub enum Error {
   NoExplorerURLSet,
   #[error("Invalid Explorer Url")]
   InvalidExplorerURL,
+  #[error("Unable to Check Message Inclusion in the Tangle")]
+  MessageInclusionNotChecked,
 }
