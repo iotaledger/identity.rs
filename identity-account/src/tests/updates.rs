@@ -23,7 +23,6 @@ use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
-use identity_did::did::RelativeDIDUrl;
 use identity_did::did::DID;
 use identity_did::service::ServiceEndpoint;
 use identity_did::verification::MethodRelationship;
@@ -230,32 +229,24 @@ async fn test_create_scoped_method() -> Result<()> {
 
     assert_eq!(state.document().as_document().methods().count(), 2);
 
-    let mut relative_url = RelativeDIDUrl::new();
-    relative_url.set_fragment(Some(&fragment)).unwrap();
-
     let core_doc = state.document().as_document();
 
     let contains = match scope {
       MethodScope::VerificationRelationship(MethodRelationship::Authentication) => core_doc
-        .authentication()
-        .iter()
-        .any(|method_ref| method_ref.id().url() == &relative_url),
+        .try_resolve_method_with_scope(&fragment, MethodScope::authentication())
+        .is_ok(),
       MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => core_doc
-        .assertion_method()
-        .iter()
-        .any(|method_ref| method_ref.id().url() == &relative_url),
+        .try_resolve_method_with_scope(&fragment, MethodScope::assertion_method())
+        .is_ok(),
       MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => core_doc
-        .key_agreement()
-        .iter()
-        .any(|method_ref| method_ref.id().url() == &relative_url),
+        .try_resolve_method_with_scope(&fragment, MethodScope::key_agreement())
+        .is_ok(),
       MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => core_doc
-        .capability_delegation()
-        .iter()
-        .any(|method_ref| method_ref.id().url() == &relative_url),
+        .try_resolve_method_with_scope(&fragment, MethodScope::capability_delegation())
+        .is_ok(),
       MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => core_doc
-        .capability_invocation()
-        .iter()
-        .any(|method_ref| method_ref.id().url() == &relative_url),
+        .try_resolve_method_with_scope(&fragment, MethodScope::capability_invocation())
+        .is_ok(),
       _ => unreachable!(),
     };
 
