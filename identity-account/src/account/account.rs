@@ -260,11 +260,7 @@ impl Account {
       let method: &IotaVerificationMethod = new_state.document().default_signing_method()?;
       let location: KeyLocation = new_state.method_location(
         method.key_type(),
-        method
-          .id()
-          .fragment()
-          .expect("verification method did not have a fragment")
-          .to_owned(),
+        method.id().fragment().ok_or(Error::MethodMissingFragment)?.to_owned(),
       )?;
 
       // Sign the DID Document with the current capability invocation method
@@ -275,11 +271,7 @@ impl Account {
       let method: &IotaVerificationMethod = old_state.document().default_signing_method()?;
       let location: KeyLocation = new_state.method_location(
         method.key_type(),
-        method
-          .id()
-          .fragment()
-          .expect("verification method did not have a fragment")
-          .to_owned(),
+        method.id().fragment().ok_or(Error::MethodMissingFragment)?.to_owned(),
       )?;
 
       // Sign the DID Document with the previous capability invocation method
@@ -377,11 +369,7 @@ impl Account {
 
     let location: KeyLocation = old_state.method_location(
       method.key_type(),
-      method
-        .id()
-        .fragment()
-        .expect("verification method did not have a fragment")
-        .to_owned(),
+      method.id().fragment().ok_or(Error::MethodMissingFragment)?.to_owned(),
     )?;
 
     old_state

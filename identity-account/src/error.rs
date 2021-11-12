@@ -80,6 +80,8 @@ pub enum Error {
   /// Caused by attempting to create an account for an identity that is already managed by another account.
   #[error("Identity Is In-use")]
   IdentityInUse,
+  #[error("method missing fragment")]
+  MethodMissingFragment,
 }
 
 #[doc(hidden)]
