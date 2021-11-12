@@ -132,7 +132,7 @@ async fn test_lazy_updates() -> Result<()> {
         .update_identity()
         .create_method()
         .fragment("signing-key")
-        // Forces an integration update.
+        // Forces an integration update by adding a method able to update the document.
         .scope(MethodScope::CapabilityInvocation)
         .apply()
         .await?;

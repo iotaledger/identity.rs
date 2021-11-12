@@ -220,8 +220,8 @@ impl Storage for Stronghold {
   }
 
   async fn purge(&self, _did: &IotaDID) -> Result<()> {
-    // TODO: Will be re-implemented later with the key location refactor.
-    Ok(())
+    // TODO: Will be re-implemented later with the key location refactor
+    todo!("stronghold purge not implemented");
   }
 
   async fn published_generation(&self, did: &IotaDID) -> Result<Option<Generation>> {

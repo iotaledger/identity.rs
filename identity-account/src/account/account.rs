@@ -11,7 +11,7 @@ use identity_iota::did::IotaVerificationMethod;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
-use identity_iota::tangle::Publish;
+use identity_iota::tangle::PublishType;
 use identity_iota::tangle::TangleRef;
 use identity_iota::tangle::TangleResolve;
 use serde::Serialize;
@@ -304,9 +304,9 @@ impl Account {
       let old_state: IdentityState = self.load_state().await?;
       let new_state: &IdentityState = self.state();
 
-      match Publish::new(old_state.document(), new_state.document()) {
-        Some(Publish::Integration) => self.publish_integration_change(Some(&old_state)).await?,
-        Some(Publish::Diff) => self.publish_diff_change(&old_state).await?,
+      match PublishType::new(old_state.document(), new_state.document()) {
+        Some(PublishType::Integration) => self.publish_integration_change(Some(&old_state)).await?,
+        Some(PublishType::Diff) => self.publish_diff_change(&old_state).await?,
         None => {}
       }
     }

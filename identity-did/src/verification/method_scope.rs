@@ -6,7 +6,7 @@ use core::str::FromStr;
 use crate::error::Error;
 use crate::error::Result;
 
-use super::MethodRelationship;
+use crate::verification::MethodRelationship;
 
 /// Verification method group used to refine the scope of a method query.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
