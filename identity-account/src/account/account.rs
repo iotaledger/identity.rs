@@ -300,7 +300,10 @@ impl Account {
       match PublishType::new(old_state.document(), new_state.document()) {
         Some(PublishType::Integration) => self.publish_integration_change(Some(&old_state)).await?,
         Some(PublishType::Diff) => self.publish_diff_change(&old_state).await?,
-        None => {}
+        None => {
+          // Can return early, as there is nothing new to publish or store.
+          return Ok(());
+        }
       }
     }
 
