@@ -22,8 +22,8 @@ pub enum UpdateError {
   #[error("invalid method secret: {0}")]
   InvalidMethodSecret(String),
   /// Caused by attempting to attach or detach a relationship on an embedded method.
-  #[error("invalid target method")]
-  InvalidTargetMethod,
+  #[error("invalid target method - method is embedded")]
+  InvalidTargetEmbeddedMethod,
   #[error("missing required field - {0}")]
   MissingRequiredField(&'static str),
   #[error("duplicate key location - {0}")]

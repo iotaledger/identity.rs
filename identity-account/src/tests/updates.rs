@@ -387,7 +387,10 @@ async fn test_attach_method_relationship() -> Result<()> {
 
   let err = account.process_update(update).await.unwrap_err();
 
-  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidTargetMethod)));
+  assert!(matches!(
+    err,
+    Error::UpdateError(UpdateError::InvalidTargetEmbeddedMethod)
+  ));
 
   // No relationships were created.
   assert_eq!(account.document().as_document().verification_relationships().count(), 1);
@@ -460,7 +463,10 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   let err = account.process_update(update).await.unwrap_err();
 
-  assert!(matches!(err, Error::UpdateError(UpdateError::InvalidTargetMethod)));
+  assert!(matches!(
+    err,
+    Error::UpdateError(UpdateError::InvalidTargetEmbeddedMethod)
+  ));
 
   // No relationships were removed.
   assert_eq!(account.document().as_document().verification_relationships().count(), 2);
