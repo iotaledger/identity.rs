@@ -137,6 +137,11 @@ impl Account {
     self.actions.load(Ordering::SeqCst)
   }
 
+  /// Increments the total number of actions executed by this instance.
+  fn increment_actions(&self) {
+    self.actions.fetch_add(1, Ordering::SeqCst);
+  }
+
   /// Adds a pre-configured `Client` for Tangle interactions.
   pub fn set_client(&self, client: Client) {
     self.client_map.insert(client);
@@ -233,6 +238,8 @@ impl Account {
     let storage = Arc::clone(&self.storage);
 
     update.process(&did, &mut self.state, storage.as_ref()).await?;
+
+    self.increment_actions();
 
     self.publish(false).await?;
 
