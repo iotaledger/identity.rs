@@ -22,6 +22,7 @@ use crate::service::Service;
 use crate::utils::OrderedSet;
 use crate::verification::MethodQuery;
 use crate::verification::MethodRef;
+use crate::verification::MethodRelationship;
 use crate::verification::MethodScope;
 use crate::verification::VerificationMethod;
 
@@ -256,6 +257,40 @@ impl<T, U, V> CoreDocument<T, U, V> {
     self.verification_method.remove(did);
   }
 
+  // Attaches the relationship to the given method, if the method exists.
+  pub fn attach_method_relationship(&mut self, did_url: CoreDIDUrl, relationship: MethodRelationship) -> Result<bool> {
+    // Ensure the method exists
+    self.resolve_method(did_url.url()).ok_or(Error::QueryMethodNotFound)?;
+
+    let method_ref = MethodRef::Refer(did_url);
+
+    let result = match relationship {
+      MethodRelationship::Authentication => self.authentication_mut().append(method_ref),
+      MethodRelationship::AssertionMethod => self.assertion_method_mut().append(method_ref),
+      MethodRelationship::KeyAgreement => self.key_agreement_mut().append(method_ref),
+      MethodRelationship::CapabilityDelegation => self.capability_delegation_mut().append(method_ref),
+      MethodRelationship::CapabilityInvocation => self.capability_invocation_mut().append(method_ref),
+    };
+
+    Ok(result)
+  }
+
+  // Detaches the given relationship from the given method, if the method exists.
+  pub fn detach_method_relationship(&mut self, did_url: CoreDIDUrl, relationship: MethodRelationship) -> Result<()> {
+    // Ensure the method exists
+    self.resolve_method(did_url.url()).ok_or(Error::QueryMethodNotFound)?;
+
+    match relationship {
+      MethodRelationship::Authentication => self.authentication_mut().remove(&did_url),
+      MethodRelationship::AssertionMethod => self.assertion_method_mut().remove(&did_url),
+      MethodRelationship::KeyAgreement => self.key_agreement_mut().remove(&did_url),
+      MethodRelationship::CapabilityDelegation => self.capability_delegation_mut().remove(&did_url),
+      MethodRelationship::CapabilityInvocation => self.capability_invocation_mut().remove(&did_url),
+    }
+
+    Ok(())
+  }
+
   /// Returns an iterator over all embedded verification methods in the DID Document.
   ///
   /// This excludes verification methods that are referenced by the DID Document.
@@ -473,6 +508,8 @@ mod tests {
   use crate::did::DID;
   use crate::document::CoreDocument;
   use crate::verification::MethodData;
+  use crate::verification::MethodRelationship;
+  use crate::verification::MethodScope;
   use crate::verification::MethodType;
   use crate::verification::VerificationMethod;
 
@@ -548,5 +585,87 @@ mod tests {
     // Access methods by index.
     assert_eq!(document.methods().next().unwrap().id().to_string(), "did:example:1234#key-1");
     assert_eq!(document.methods().nth(2).unwrap().id().to_string(), "did:example:1234#key-3");
+  }
+
+  #[test]
+  fn test_attach_verification_relationships() {
+    let mut document: CoreDocument = document();
+
+    let fragment = "#attach-test";
+    let method = method(document.id(), fragment);
+    document.insert_method(method, MethodScope::VerificationMethod);
+
+    assert!(document
+      .attach_method_relationship(
+        document.id().to_url().join(fragment).unwrap(),
+        MethodRelationship::CapabilityDelegation,
+      )
+      .is_ok());
+
+    assert_eq!(document.verification_relationships().count(), 4);
+
+    // Adding it a second time does nothing.
+    assert!(document
+      .attach_method_relationship(
+        document.id().to_url().join(fragment).unwrap(),
+        MethodRelationship::CapabilityDelegation,
+      )
+      .is_ok());
+
+    // len is still 2.
+    assert_eq!(document.verification_relationships().count(), 4);
+
+    // Attempting to attach a relationship to a non-existing method fails.
+    assert!(document
+      .attach_method_relationship(
+        document.id().to_url().join("#doesNotExist").unwrap(),
+        MethodRelationship::CapabilityDelegation,
+      )
+      .is_err());
+  }
+
+  #[test]
+  fn test_detach_verification_relationships() {
+    let mut document: CoreDocument = document();
+
+    let fragment = "#detach-test";
+    let method = method(document.id(), fragment);
+    document.insert_method(method, MethodScope::VerificationMethod);
+
+    assert!(document
+      .attach_method_relationship(
+        document.id().to_url().join(fragment).unwrap(),
+        MethodRelationship::AssertionMethod,
+      )
+      .is_ok());
+
+    assert!(document
+      .detach_method_relationship(
+        document.id().to_url().join(fragment).unwrap(),
+        MethodRelationship::AssertionMethod,
+      )
+      .is_ok());
+
+    // len is 1; the relationship was removed.
+    assert_eq!(document.verification_relationships().count(), 3);
+
+    // Removing it a second time does nothing
+    assert!(document
+      .detach_method_relationship(
+        document.id().to_url().join(fragment).unwrap(),
+        MethodRelationship::AssertionMethod,
+      )
+      .is_ok());
+
+    // len is still 1.
+    assert_eq!(document.verification_relationships().count(), 3);
+
+    // Attempting to detach a relationship from a non-existing method fails.
+    assert!(document
+      .detach_method_relationship(
+        document.id().to_url().join("#doesNotExist").unwrap(),
+        MethodRelationship::AssertionMethod,
+      )
+      .is_err());
   }
 }

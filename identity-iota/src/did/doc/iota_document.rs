@@ -385,54 +385,23 @@ impl IotaDocument {
     self.document.insert_method(method.into(), scope)
   }
 
-  // Attaches the given relationship to the given method, if the method exists.
-  pub fn attach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
-    // Ensure the method exists
-    self
-      .document
-      .resolve_method(did_url.url())
-      .ok_or(identity_did::Error::QueryMethodNotFound)?;
-
-    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
-    let method_ref = MethodRef::Refer(core_did_url);
-
-    let result = match relationship {
-      MethodRelationship::Authentication => self.document.authentication_mut().append(method_ref),
-      MethodRelationship::AssertionMethod => self.document.assertion_method_mut().append(method_ref),
-      MethodRelationship::KeyAgreement => self.document.key_agreement_mut().append(method_ref),
-      MethodRelationship::CapabilityDelegation => self.document.capability_delegation_mut().append(method_ref),
-      MethodRelationship::CapabilityInvocation => self.document.capability_invocation_mut().append(method_ref),
-    };
-
-    Ok(result)
-  }
-
-  // Detaches the given relationship from the given method, if the method exists.
-  pub fn detach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<()> {
-    // Ensure the method exists
-    self
-      .document
-      .resolve_method(did_url.url())
-      .ok_or(identity_did::Error::QueryMethodNotFound)?;
-
-    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
-
-    match relationship {
-      MethodRelationship::Authentication => self.document.authentication_mut().remove(&core_did_url),
-      MethodRelationship::AssertionMethod => self.document.assertion_method_mut().remove(&core_did_url),
-      MethodRelationship::KeyAgreement => self.document.key_agreement_mut().remove(&core_did_url),
-      MethodRelationship::CapabilityDelegation => self.document.capability_delegation_mut().remove(&core_did_url),
-      MethodRelationship::CapabilityInvocation => self.document.capability_invocation_mut().remove(&core_did_url),
-    }
-
-    Ok(())
-  }
-
   /// Removes all occurrences of and references to the specified [`VerificationMethod`]
   /// from this document.
   pub fn remove_method(&mut self, did_url: IotaDIDUrl) -> Result<()> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
     self.document.remove_method(&core_did_url);
+    Ok(())
+  }
+
+  pub fn attach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
+    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
+    let was_attached = self.document.attach_method_relationship(core_did_url, relationship)?;
+    Ok(was_attached)
+  }
+
+  pub fn detach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<()> {
+    let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
+    self.document.detach_method_relationship(core_did_url, relationship)?;
     Ok(())
   }
 
@@ -851,7 +820,6 @@ mod tests {
   use identity_did::service::Service;
   use identity_did::verification::MethodData;
   use identity_did::verification::MethodRef;
-  use identity_did::verification::MethodRelationship;
   use identity_did::verification::MethodScope;
   use identity_did::verification::MethodType;
   use identity_did::verification::VerificationMethod;
@@ -1648,90 +1616,6 @@ mod tests {
 
     // `methods` returns all embedded verification methods, so only one is expected.
     assert_eq!(document.methods().count(), 1);
-  }
-
-  #[test]
-  fn test_attach_verification_relationships() {
-    let keypair: KeyPair = generate_testkey();
-    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
-
-    let fragment = "#attach-test";
-    let method = iota_verification_method(document.did().as_ref(), fragment);
-    document.insert_method(method, MethodScope::VerificationMethod);
-
-    assert!(document
-      .attach_method_relationship(
-        document.did().to_url().join(fragment).unwrap(),
-        MethodRelationship::CapabilityDelegation,
-      )
-      .is_ok());
-
-    assert_eq!(document.as_document().verification_relationships().count(), 2);
-
-    // Adding it a second time does nothing.
-    assert!(document
-      .attach_method_relationship(
-        document.did().to_url().join(fragment).unwrap(),
-        MethodRelationship::CapabilityDelegation,
-      )
-      .is_ok());
-
-    // len is still 2.
-    assert_eq!(document.as_document().verification_relationships().count(), 2);
-
-    // Attempting to attach a relationship to a non-existing method fails.
-    assert!(document
-      .attach_method_relationship(
-        document.did().to_url().join("#doesNotExist").unwrap(),
-        MethodRelationship::CapabilityDelegation,
-      )
-      .is_err());
-  }
-
-  #[test]
-  fn test_detach_verification_relationships() {
-    let keypair: KeyPair = generate_testkey();
-    let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
-
-    let fragment = "#detach-test";
-    let method = iota_verification_method(document.did().as_ref(), fragment);
-    document.insert_method(method, MethodScope::VerificationMethod);
-
-    assert!(document
-      .attach_method_relationship(
-        document.did().to_url().join(fragment).unwrap(),
-        MethodRelationship::AssertionMethod,
-      )
-      .is_ok());
-
-    assert!(document
-      .detach_method_relationship(
-        document.did().to_url().join(fragment).unwrap(),
-        MethodRelationship::AssertionMethod,
-      )
-      .is_ok());
-
-    // len is 1; the relationship was removed.
-    assert_eq!(document.as_document().verification_relationships().count(), 1);
-
-    // Removing it a second time does nothing
-    assert!(document
-      .detach_method_relationship(
-        document.did().to_url().join(fragment).unwrap(),
-        MethodRelationship::AssertionMethod,
-      )
-      .is_ok());
-
-    // len is still 1.
-    assert_eq!(document.as_document().verification_relationships().count(), 1);
-
-    // Attempting to detach a relationship from a non-existing method fails.
-    assert!(document
-      .detach_method_relationship(
-        document.did().to_url().join("#doesNotExist").unwrap(),
-        MethodRelationship::AssertionMethod,
-      )
-      .is_err());
   }
 
   #[test]
