@@ -258,11 +258,17 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 
   // Attaches the relationship to the given method, if the method exists.
-  pub fn attach_method_relationship(&mut self, did_url: CoreDIDUrl, relationship: MethodRelationship) -> Result<bool> {
-    // Ensure the method exists
-    self.resolve_method(did_url.url()).ok_or(Error::QueryMethodNotFound)?;
+  pub fn attach_method_relationship<'query, Q>(
+    &mut self,
+    method_query: Q,
+    relationship: MethodRelationship,
+  ) -> Result<bool>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    let method: &VerificationMethod<_> = self.resolve_method(method_query).ok_or(Error::QueryMethodNotFound)?;
 
-    let method_ref = MethodRef::Refer(did_url);
+    let method_ref = MethodRef::Refer(method.id().clone());
 
     let was_attached = match relationship {
       MethodRelationship::Authentication => self.authentication_mut().append(method_ref),
@@ -276,9 +282,17 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 
   // Detaches the given relationship from the given method, if the method exists.
-  pub fn detach_method_relationship(&mut self, did_url: CoreDIDUrl, relationship: MethodRelationship) -> Result<bool> {
-    // Ensure the method exists
-    self.resolve_method(did_url.url()).ok_or(Error::QueryMethodNotFound)?;
+  pub fn detach_method_relationship<'query, Q>(
+    &mut self,
+    method_query: Q,
+    relationship: MethodRelationship,
+  ) -> Result<bool>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    let method: &VerificationMethod<_> = self.resolve_method(method_query).ok_or(Error::QueryMethodNotFound)?;
+
+    let did_url: CoreDIDUrl = method.id().clone();
 
     let was_detached = match relationship {
       MethodRelationship::Authentication => self.authentication_mut().remove(&did_url),
