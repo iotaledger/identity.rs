@@ -55,7 +55,7 @@ mod test {
     let verif_method2: IotaVerificationMethod =
       IotaVerificationMethod::from_did(old_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-1")?;
 
-    new_doc.insert_method(verif_method2, MethodScope::CapabilityInvocation);
+    new_doc.insert_method(verif_method2, MethodScope::capability_invocation());
 
     assert!(matches!(
       PublishType::new(&old_doc, &new_doc),
@@ -71,7 +71,7 @@ mod test {
     new_doc
       .remove_method(new_doc.did().to_url().join("#test-0").unwrap())
       .unwrap();
-    new_doc.insert_method(verif_method2, MethodScope::CapabilityInvocation);
+    new_doc.insert_method(verif_method2, MethodScope::capability_invocation());
 
     assert!(matches!(
       PublishType::new(&old_doc, &new_doc),
@@ -85,7 +85,7 @@ mod test {
     let verif_method2: IotaVerificationMethod =
       IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-1")?;
 
-    new_doc.insert_method(verif_method2, MethodScope::Authentication);
+    new_doc.insert_method(verif_method2, MethodScope::authentication());
 
     assert!(matches!(PublishType::new(&old_doc, &new_doc), Some(PublishType::Diff)));
 

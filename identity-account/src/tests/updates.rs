@@ -205,11 +205,11 @@ async fn test_create_method() -> Result<()> {
 #[tokio::test]
 async fn test_create_scoped_method() -> Result<()> {
   for scope in &[
-    MethodScope::Authentication,
-    MethodScope::AssertionMethod,
-    MethodScope::KeyAgreement,
-    MethodScope::CapabilityInvocation,
-    MethodScope::CapabilityDelegation,
+    MethodScope::assertion_method(),
+    MethodScope::authentication(),
+    MethodScope::capability_delegation(),
+    MethodScope::capability_invocation(),
+    MethodScope::key_agreement(),
   ] {
     let mut account = Account::create_identity(account_setup(), IdentitySetup::default()).await?;
 
@@ -236,23 +236,23 @@ async fn test_create_scoped_method() -> Result<()> {
     let core_doc = state.document().as_document();
 
     let contains = match scope {
-      MethodScope::Authentication => core_doc
+      MethodScope::VerificationRelationship(MethodRelationship::Authentication) => core_doc
         .authentication()
         .iter()
         .any(|method_ref| method_ref.id().url() == &relative_url),
-      MethodScope::AssertionMethod => core_doc
+      MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => core_doc
         .assertion_method()
         .iter()
         .any(|method_ref| method_ref.id().url() == &relative_url),
-      MethodScope::KeyAgreement => core_doc
+      MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => core_doc
         .key_agreement()
         .iter()
         .any(|method_ref| method_ref.id().url() == &relative_url),
-      MethodScope::CapabilityDelegation => core_doc
+      MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => core_doc
         .capability_delegation()
         .iter()
         .any(|method_ref| method_ref.id().url() == &relative_url),
-      MethodScope::CapabilityInvocation => core_doc
+      MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => core_doc
         .capability_invocation()
         .iter()
         .any(|method_ref| method_ref.id().url() == &relative_url),
@@ -453,7 +453,7 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   // Add an embedded method.
   let update: Update = Update::CreateMethod {
-    scope: MethodScope::Authentication,
+    scope: MethodScope::authentication(),
     method_secret: None,
     type_: MethodType::Ed25519VerificationKey2018,
     fragment: embedded_fragment.clone(),

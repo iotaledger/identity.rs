@@ -239,11 +239,21 @@ impl<T, U, V> CoreDocument<T, U, V> {
   pub fn insert_method(&mut self, method: VerificationMethod<U>, scope: MethodScope) -> bool {
     match scope {
       MethodScope::VerificationMethod => self.verification_method.append(method),
-      MethodScope::Authentication => self.authentication.append(MethodRef::Embed(method)),
-      MethodScope::AssertionMethod => self.assertion_method.append(MethodRef::Embed(method)),
-      MethodScope::KeyAgreement => self.key_agreement.append(MethodRef::Embed(method)),
-      MethodScope::CapabilityDelegation => self.capability_delegation.append(MethodRef::Embed(method)),
-      MethodScope::CapabilityInvocation => self.capability_invocation.append(MethodRef::Embed(method)),
+      MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
+        self.authentication.append(MethodRef::Embed(method))
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => {
+        self.assertion_method.append(MethodRef::Embed(method))
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => {
+        self.key_agreement.append(MethodRef::Embed(method))
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => {
+        self.capability_delegation.append(MethodRef::Embed(method))
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => {
+        self.capability_invocation.append(MethodRef::Embed(method))
+      }
     }
   }
 
@@ -375,14 +385,20 @@ impl<T, U, V> CoreDocument<T, U, V> {
 
     match scope {
       MethodScope::VerificationMethod => self.verification_method.query(query.into()),
-      MethodScope::Authentication => self.authentication.query(query.into()).and_then(resolve_ref_helper),
-      MethodScope::AssertionMethod => self.assertion_method.query(query.into()).and_then(resolve_ref_helper),
-      MethodScope::KeyAgreement => self.key_agreement.query(query.into()).and_then(resolve_ref_helper),
-      MethodScope::CapabilityDelegation => self
+      MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
+        self.authentication.query(query.into()).and_then(resolve_ref_helper)
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => {
+        self.assertion_method.query(query.into()).and_then(resolve_ref_helper)
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => {
+        self.key_agreement.query(query.into()).and_then(resolve_ref_helper)
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => self
         .capability_delegation
         .query(query.into())
         .and_then(resolve_ref_helper),
-      MethodScope::CapabilityInvocation => self
+      MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => self
         .capability_invocation
         .query(query.into())
         .and_then(resolve_ref_helper),

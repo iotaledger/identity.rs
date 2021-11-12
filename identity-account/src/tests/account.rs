@@ -96,7 +96,7 @@ async fn test_account_chain_state() -> Result<()> {
     .update_identity()
     .create_method()
     .fragment("my-new-key")
-    .scope(MethodScope::CapabilityInvocation)
+    .scope(MethodScope::capability_invocation())
     .apply()
     .await?;
 
