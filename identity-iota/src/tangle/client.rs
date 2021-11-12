@@ -1,6 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_rest_api::types::dtos::LedgerInclusionStateDto;
 use futures::stream::FuturesUnordered;
 use futures::stream::TryStreamExt;
 use iota_client::Client as IotaClient;
