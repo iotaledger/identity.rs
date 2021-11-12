@@ -260,6 +260,7 @@ impl Account {
       let method: &IotaVerificationMethod = new_state.document().default_signing_method()?;
       let location: KeyLocation = new_state.method_location(
         method.key_type(),
+        // TODO: Should be a fatal error.
         method.id().fragment().ok_or(Error::MethodMissingFragment)?.to_owned(),
       )?;
 
@@ -271,6 +272,7 @@ impl Account {
       let method: &IotaVerificationMethod = old_state.document().default_signing_method()?;
       let location: KeyLocation = new_state.method_location(
         method.key_type(),
+        // TODO: Should be a fatal error.
         method.id().fragment().ok_or(Error::MethodMissingFragment)?.to_owned(),
       )?;
 
@@ -372,6 +374,7 @@ impl Account {
 
     let location: KeyLocation = old_state.method_location(
       method.key_type(),
+      // TODO: Should be a fatal error.
       method.id().fragment().ok_or(Error::MethodMissingFragment)?.to_owned(),
     )?;
 
