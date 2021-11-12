@@ -11,6 +11,7 @@ use identity_iota::did::IotaVerificationMethod;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
+use identity_iota::tangle::MessageIdExt;
 use identity_iota::tangle::PublishType;
 use identity_iota::tangle::TangleRef;
 use identity_iota::tangle::TangleResolve;
@@ -352,7 +353,7 @@ impl Account {
       self.client_map.publish_document(&new_doc).await?.into()
     };
 
-    self.chain_state_mut().set_integration_message_id(message_id);
+    self.chain_state_mut().set_previous_integration_message_id(message_id);
 
     Ok(())
   }
@@ -363,7 +364,12 @@ impl Account {
     let old_doc: &IotaDocument = old_state.document();
     let new_doc: &IotaDocument = self.state().document();
 
-    let diff_id: &MessageId = self.chain_state().diff_message_id();
+    let mut diff_id: &MessageId = self.chain_state().previous_diff_message_id();
+
+    // If there was no previous diff message, use the previous int message.
+    if diff_id.is_null() {
+      diff_id = self.chain_state.previous_integration_message_id();
+    }
 
     let mut diff: DocumentDiff = DocumentDiff::new(old_doc, new_doc, *diff_id)?;
 
@@ -398,7 +404,7 @@ impl Account {
         .into()
     };
 
-    self.chain_state_mut().set_diff_message_id(message_id);
+    self.chain_state_mut().set_previous_diff_message_id(message_id);
 
     Ok(())
   }
