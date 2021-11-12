@@ -1788,8 +1788,6 @@ Deserializes a `VerificationMethod` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
-<<<<<<< HEAD
-=======
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
@@ -1798,7 +1796,6 @@ Deserializes a `VerificationMethod` object from a JSON object.
 
 ## Digest
 **Kind**: global variable  
->>>>>>> dev
 <a name="KeyType"></a>
 
 ## KeyType
