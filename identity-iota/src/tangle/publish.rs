@@ -6,24 +6,23 @@ use crate::did::IotaDocument;
 /// Determines whether an updated document needs to be published as an integration or diff message.
 #[derive(Clone, Copy, Debug)]
 pub enum Publish {
-  None,
   Integration,
   Diff,
 }
 
 impl Publish {
   /// Compares two versions of a document and returns whether it needs to be published
-  /// as an integration or diff message.
+  /// as an integration or diff message. If `None` is returned, no update is required.
   ///
   /// Note: A newly created document must always be published as an integration message, and
-  /// this function does not handle this case.
-  pub fn new(old_doc: &IotaDocument, new_doc: &IotaDocument) -> Publish {
+  /// this method does not handle this case.
+  pub fn new(old_doc: &IotaDocument, new_doc: &IotaDocument) -> Option<Publish> {
     if old_doc == new_doc {
-      Publish::None
+      None
     } else if old_doc.as_document().capability_invocation() != new_doc.as_document().capability_invocation() {
-      Publish::Integration
+      Some(Publish::Integration)
     } else {
-      Publish::Diff
+      Some(Publish::Diff)
     }
   }
 }
@@ -47,7 +46,7 @@ mod test {
 
     let old_doc: IotaDocument = IotaDocument::from_verification_method(method)?;
 
-    assert!(matches!(Publish::new(&old_doc, &old_doc), Publish::None));
+    assert!(matches!(Publish::new(&old_doc, &old_doc), None));
 
     // Inserting a new capability invocation method results in an integration update.
     let mut new_doc = old_doc.clone();
@@ -58,7 +57,7 @@ mod test {
 
     new_doc.insert_method(verif_method2, MethodScope::CapabilityInvocation);
 
-    assert!(matches!(Publish::new(&old_doc, &new_doc), Publish::Integration));
+    assert!(matches!(Publish::new(&old_doc, &new_doc), Some(Publish::Integration)));
 
     // Updating the key material of the existing verification method results in an integration update.
     let mut new_doc = old_doc.clone();
@@ -71,7 +70,7 @@ mod test {
       .unwrap();
     new_doc.insert_method(verif_method2, MethodScope::CapabilityInvocation);
 
-    assert!(matches!(Publish::new(&old_doc, &new_doc), Publish::Integration));
+    assert!(matches!(Publish::new(&old_doc, &new_doc), Some(Publish::Integration)));
 
     // Adding methods with relationships other than capability invocation
     // results in a diff update.
@@ -82,7 +81,7 @@ mod test {
 
     new_doc.insert_method(verif_method2, MethodScope::Authentication);
 
-    assert!(matches!(Publish::new(&old_doc, &new_doc), Publish::Diff));
+    assert!(matches!(Publish::new(&old_doc, &new_doc), Some(Publish::Diff)));
 
     Ok(())
   }

@@ -305,9 +305,9 @@ impl Account {
       let new_state: &IdentityState = self.state();
 
       match Publish::new(old_state.document(), new_state.document()) {
-        Publish::Integration => self.publish_integration_change(Some(&old_state)).await?,
-        Publish::Diff => self.publish_diff_change(&old_state).await?,
-        Publish::None => {}
+        Some(Publish::Integration) => self.publish_integration_change(Some(&old_state)).await?,
+        Some(Publish::Diff) => self.publish_diff_change(&old_state).await?,
+        None => {}
       }
     }
 
