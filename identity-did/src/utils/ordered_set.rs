@@ -162,12 +162,17 @@ impl<T> OrderedSet<T> {
 
   /// Removes all matching items from the set.
   #[inline]
-  pub fn remove<U>(&mut self, item: &U)
+  pub fn remove<U>(&mut self, item: &U) -> bool
   where
     T: KeyComparable,
     U: KeyComparable<Key = T::Key>,
   {
-    self.0.retain(|this| this.borrow().as_key() != item.as_key());
+    if self.contains(item) {
+      self.0.retain(|this| this.borrow().as_key() != item.as_key());
+      true
+    } else {
+      false
+    }
   }
 
   fn change<F>(&mut self, data: T, f: F) -> bool

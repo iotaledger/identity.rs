@@ -264,7 +264,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
 
     let method_ref = MethodRef::Refer(did_url);
 
-    let result = match relationship {
+    let was_attached = match relationship {
       MethodRelationship::Authentication => self.authentication_mut().append(method_ref),
       MethodRelationship::AssertionMethod => self.assertion_method_mut().append(method_ref),
       MethodRelationship::KeyAgreement => self.key_agreement_mut().append(method_ref),
@@ -272,23 +272,23 @@ impl<T, U, V> CoreDocument<T, U, V> {
       MethodRelationship::CapabilityInvocation => self.capability_invocation_mut().append(method_ref),
     };
 
-    Ok(result)
+    Ok(was_attached)
   }
 
   // Detaches the given relationship from the given method, if the method exists.
-  pub fn detach_method_relationship(&mut self, did_url: CoreDIDUrl, relationship: MethodRelationship) -> Result<()> {
+  pub fn detach_method_relationship(&mut self, did_url: CoreDIDUrl, relationship: MethodRelationship) -> Result<bool> {
     // Ensure the method exists
     self.resolve_method(did_url.url()).ok_or(Error::QueryMethodNotFound)?;
 
-    match relationship {
+    let was_detached = match relationship {
       MethodRelationship::Authentication => self.authentication_mut().remove(&did_url),
       MethodRelationship::AssertionMethod => self.assertion_method_mut().remove(&did_url),
       MethodRelationship::KeyAgreement => self.key_agreement_mut().remove(&did_url),
       MethodRelationship::CapabilityDelegation => self.capability_delegation_mut().remove(&did_url),
       MethodRelationship::CapabilityInvocation => self.capability_invocation_mut().remove(&did_url),
-    }
+    };
 
-    Ok(())
+    Ok(was_detached)
   }
 
   /// Returns an iterator over all embedded verification methods in the DID Document.
@@ -600,17 +600,17 @@ mod tests {
         document.id().to_url().join(fragment).unwrap(),
         MethodRelationship::CapabilityDelegation,
       )
-      .is_ok());
+      .unwrap());
 
     assert_eq!(document.verification_relationships().count(), 4);
 
-    // Adding it a second time does nothing.
-    assert!(document
+    // Adding it a second time returns Ok(false).
+    assert!(!document
       .attach_method_relationship(
         document.id().to_url().join(fragment).unwrap(),
         MethodRelationship::CapabilityDelegation,
       )
-      .is_ok());
+      .unwrap());
 
     // len is still 2.
     assert_eq!(document.verification_relationships().count(), 4);
@@ -637,25 +637,25 @@ mod tests {
         document.id().to_url().join(fragment).unwrap(),
         MethodRelationship::AssertionMethod,
       )
-      .is_ok());
+      .unwrap());
 
     assert!(document
       .detach_method_relationship(
         document.id().to_url().join(fragment).unwrap(),
         MethodRelationship::AssertionMethod,
       )
-      .is_ok());
+      .unwrap());
 
     // len is 1; the relationship was removed.
     assert_eq!(document.verification_relationships().count(), 3);
 
-    // Removing it a second time does nothing
-    assert!(document
+    // Removing it a second time returns Ok(false).
+    assert!(!document
       .detach_method_relationship(
         document.id().to_url().join(fragment).unwrap(),
         MethodRelationship::AssertionMethod,
       )
-      .is_ok());
+      .unwrap());
 
     // len is still 1.
     assert_eq!(document.verification_relationships().count(), 3);

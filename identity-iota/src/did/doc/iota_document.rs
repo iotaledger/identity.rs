@@ -399,10 +399,10 @@ impl IotaDocument {
     Ok(was_attached)
   }
 
-  pub fn detach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<()> {
+  pub fn detach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
-    self.document.detach_method_relationship(core_did_url, relationship)?;
-    Ok(())
+    let was_detached = self.document.detach_method_relationship(core_did_url, relationship)?;
+    Ok(was_detached)
   }
 
   /// Returns the first [`IotaVerificationMethod`] with an `id` property
