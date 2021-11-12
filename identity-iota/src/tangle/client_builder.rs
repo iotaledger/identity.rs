@@ -8,6 +8,7 @@ use std::time::Duration;
 
 use crate::error::Result;
 use crate::tangle::Client;
+use crate::tangle::DIDMessageEncoding;
 use crate::tangle::Network;
 
 const DEFAULT_LOCAL_POW: bool = false;
@@ -17,6 +18,7 @@ pub struct ClientBuilder {
   pub(super) nodeset: bool,
   pub(super) network: Network,
   pub(super) builder: iota_client::ClientBuilder,
+  pub(super) encoding: DIDMessageEncoding,
 }
 
 impl ClientBuilder {
@@ -26,6 +28,7 @@ impl ClientBuilder {
       nodeset: false,
       network: Default::default(),
       builder: iota_client::ClientBuilder::new().with_local_pow(DEFAULT_LOCAL_POW),
+      encoding: DIDMessageEncoding::JsonBrotli,
     }
   }
 
@@ -33,6 +36,12 @@ impl ClientBuilder {
   pub fn network(mut self, network: Network) -> Self {
     self.builder = self.builder.with_network(network.name_str());
     self.network = network;
+    self
+  }
+
+  /// Sets the DID message encoding used when publishing to the Tangle.
+  pub fn encoding(mut self, encoding: DIDMessageEncoding) -> Self {
+    self.encoding = encoding;
     self
   }
 

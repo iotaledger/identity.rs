@@ -42,7 +42,7 @@ async function merkleKey(clientConfig) {
     issuer.doc.insertMethod(method, "VerificationMethod");
     issuer.doc.previousMessageId = issuer.receipt.messageId;
     issuer.doc.updated = Timestamp.nowUTC();
-    issuer.doc.sign(issuer.key);
+    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
 
     // Publish the Identity to the IOTA Network and log the results.
     // This may take a few seconds to complete proof-of-work.
@@ -83,7 +83,7 @@ async function merkleKey(clientConfig) {
     issuer.doc.revokeMerkleKey(method.id.toString(), 0);
     issuer.doc.previousMessageId = receipt.messageId;
     issuer.doc.updated = Timestamp.nowUTC();
-    issuer.doc.sign(issuer.key);
+    issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
     const nextReceipt = await client.publishDocument(issuer.doc.toJSON());
     logExplorerUrl("Identity Update:", clientConfig.network.toString(), nextReceipt.messageId);
 

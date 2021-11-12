@@ -20,7 +20,9 @@ pub fn setup_diff_chain_bench() -> (IotaDocument, KeyPair) {
   let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
   let mut document: IotaDocument = IotaDocument::new(&keypair).unwrap();
 
-  document.sign(keypair.private()).unwrap();
+  document
+    .sign_self(keypair.private(), &document.default_signing_method().unwrap().id())
+    .unwrap();
   document.set_message_id(MessageId::new([8; 32]));
 
   (document, keypair)
@@ -43,7 +45,15 @@ pub fn update_diff_chain(n: usize, chain: &mut DocumentChain, keypair: &KeyPair)
     };
 
     let message_id = *chain.diff_message_id();
-    let mut diff: DocumentDiff = chain.current().diff(&new, message_id, keypair.private()).unwrap();
+    let mut diff: DocumentDiff = chain
+      .current()
+      .diff(
+        &new,
+        message_id,
+        keypair.private(),
+        chain.current().default_signing_method().unwrap().id(),
+      )
+      .unwrap();
 
     diff.set_message_id(message_id);
     assert!(chain.try_push_diff(diff).is_ok());
@@ -70,13 +80,20 @@ pub fn update_integration_chain(n: usize, chain: &mut DocumentChain, keypair: &K
 
     unsafe {
       new.as_document_mut().authentication_mut().clear();
-      new.as_document_mut().authentication_mut().append(authentication.into());
+      new.as_document_mut().authentication_mut().append(authentication);
     }
 
     new.set_updated(Timestamp::now_utc());
     new.set_previous_message_id(*chain.integration_message_id());
 
-    chain.current().sign_data(&mut new, keypair.private()).unwrap();
+    chain
+      .current()
+      .sign_data(
+        &mut new,
+        keypair.private(),
+        chain.current().default_signing_method().unwrap().id(),
+      )
+      .unwrap();
     chain.try_push_integration(new).unwrap();
   }
 }

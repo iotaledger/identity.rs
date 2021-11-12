@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
   issuer_doc.remove_method(issuer_doc.id().to_url().join("#newKey")?)?;
   issuer_doc.set_previous_message_id(*issuer_receipt.message_id());
   issuer_doc.set_updated(Timestamp::now_utc());
-  issuer_doc.sign(issuer_key.private())?;
+  issuer_doc.sign_self(issuer_key.private(), &issuer_doc.default_signing_method()?.id())?;
   // This is an integration chain update, so we publish the full document.
   let update_receipt = client.publish_document(&issuer_doc).await?;
 
@@ -72,7 +72,7 @@ async fn create_vc_helper(
   let (subject_doc, ..) = create_did::run().await?;
 
   // Add a new VerificationMethod to the issuer with tag #newKey
-  // NOTE: this allows us to revoke it without removing the default authentication key.
+  // NOTE: this allows us to revoke it without removing the default signing key.
   let (issuer_doc, issuer_new_key, issuer_updated_receipt) =
     common::add_new_key(client, &issuer_doc, &issuer_key, &issuer_receipt).await?;
 
@@ -80,7 +80,11 @@ async fn create_vc_helper(
   let mut credential: Credential = common::issue_degree(&issuer_doc, &subject_doc)?;
 
   // Sign the Credential with the issuer's #newKey private key, so we can later revoke it
-  issuer_doc.sign_data(&mut credential, issuer_new_key.private())?;
+  issuer_doc.sign_data(
+    &mut credential,
+    issuer_new_key.private(),
+    issuer_doc.default_signing_method()?.id(),
+  )?;
 
   let issuer = (issuer_doc, issuer_key, issuer_updated_receipt);
   Ok((issuer, credential))
@@ -101,12 +105,12 @@ pub async fn add_new_key(
   // Add #newKey to the document
   let new_key: KeyPair = KeyPair::new_ed25519()?;
   let method: IotaVerificationMethod = IotaVerificationMethod::from_did(updated_doc.did().clone(), &new_key, "newKey")?;
-  assert!(updated_doc.insert_method(MethodScope::VerificationMethod, method));
+  assert!(updated_doc.insert_method(method, MethodScope::VerificationMethod));
 
   // Prepare the update
   updated_doc.set_previous_message_id(*receipt.message_id());
   updated_doc.set_updated(Timestamp::now_utc());
-  updated_doc.sign(key.private())?;
+  updated_doc.sign_self(key.private(), &updated_doc.default_signing_method()?.id())?;
 
   // Publish the update to the Tangle
   let update_receipt: Receipt = client.publish_document(&updated_doc).await?;

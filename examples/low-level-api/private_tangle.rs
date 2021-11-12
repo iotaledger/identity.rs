@@ -10,6 +10,7 @@
 //! cargo run --example private_tangle
 
 use identity::iota::ClientBuilder;
+use identity::iota::DIDMessageEncoding;
 use identity::iota::IotaDID;
 use identity::iota::Network;
 use identity::iota::Receipt;
@@ -34,8 +35,12 @@ pub async fn main() -> Result<()> {
   // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265/`
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
+  // Use DIDMessageEncoding::Json instead to publish plaintext messages to the Tangle for debugging.
+  let encoding = DIDMessageEncoding::JsonBrotli;
+
   let client = ClientBuilder::new()
     .network(network.clone())
+    .encoding(encoding)
     .node(private_node_url)?
     .build()
     .await?;
@@ -46,8 +51,8 @@ pub async fn main() -> Result<()> {
   // Create a DID with the network set explicitly.
   let mut document: IotaDocument = IotaDocument::new_with_options(&keypair, Some(client.network().name()), None)?;
 
-  // Sign the DID Document with the default authentication key.
-  document.sign(keypair.private())?;
+  // Sign the DID Document with the default signing method.
+  document.sign_self(keypair.private(), &document.default_signing_method()?.id())?;
 
   // Publish the DID Document to the Tangle.
   let receipt: Receipt = match client.publish_document(&document).await {

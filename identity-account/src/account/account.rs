@@ -134,7 +134,7 @@ impl Account {
     let command: Command = Command::CreateIdentity {
       network: input.network,
       method_secret: input.method_secret,
-      authentication: Self::key_to_method(input.key_type),
+      method_type: Self::key_to_method(input.key_type),
     };
 
     // Process the command
@@ -281,23 +281,23 @@ impl Account {
     Ok(())
   }
 
-  async fn sign_document(
+  async fn sign_self(
     &self,
     old_state: &IdentityState,
     new_state: &IdentityState,
     document: &mut IotaDocument,
   ) -> Result<()> {
     if new_state.integration_generation() == Generation::new() {
-      let method: &TinyMethod = new_state.authentication()?;
+      let method: &TinyMethod = new_state.capability_invocation()?;
       let location: &KeyLocation = method.location();
 
-      // Sign the DID Document with the current authentication method
+      // Sign the DID Document with the current capability invocation method
       new_state.sign_data(&self.store, location, document).await?;
     } else {
-      let method: &TinyMethod = old_state.authentication()?;
+      let method: &TinyMethod = old_state.capability_invocation()?;
       let location: &KeyLocation = method.location();
 
-      // Sign the DID Document with the previous authentication method
+      // Sign the DID Document with the previous capability invocation method
       old_state.sign_data(&self.store, location, document).await?;
     }
 
@@ -312,7 +312,7 @@ impl Account {
 
     let mut new_doc: IotaDocument = new_state.to_document()?;
 
-    self.sign_document(old_state, new_state, &mut new_doc).await?;
+    self.sign_self(old_state, new_state, &mut new_doc).await?;
 
     let message: MessageId = if self.config.testmode {
       MessageId::null()
@@ -340,7 +340,8 @@ impl Account {
 
     let mut diff: DocumentDiff = DocumentDiff::new(&old_doc, &new_doc, *diff_id)?;
 
-    let method: &TinyMethod = old_state.authentication()?;
+    // Sign the update using a capability invocation method.
+    let method: &TinyMethod = old_state.capability_invocation()?;
     let location: &KeyLocation = method.location();
 
     old_state.sign_data(&self.store, location, &mut diff).await?;
