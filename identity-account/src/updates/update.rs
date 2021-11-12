@@ -37,14 +37,10 @@ use crate::updates::UpdateError;
 pub const UPDATE_METHOD_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 pub const DEFAULT_UPDATE_METHOD_PREFIX: &str = "sign-";
 
-fn key_to_method(type_: KeyType) -> MethodType {
-  match type_ {
-    KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
-  }
-}
-
 pub(crate) async fn create_identity(setup: IdentitySetup, store: &dyn Storage) -> Result<(DIDLease, IdentityState)> {
-  let method_type = key_to_method(setup.key_type);
+  let method_type = match setup.key_type {
+    KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
+  };
 
   // The method type must be able to sign document updates.
   ensure!(
@@ -182,7 +178,7 @@ impl Update {
         state.store_method_generations(location.fragment().clone());
 
         // We can ignore the result: we just checked that the method does not exist.
-        state.document_mut().insert_method(method, scope);
+        let _ = state.document_mut().insert_method(method, scope);
       }
       Self::DeleteMethod { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
@@ -193,7 +189,6 @@ impl Update {
           UpdateError::MethodNotFound
         );
 
-        // TODO: Do we have to ? here?
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
         let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
 
@@ -216,7 +211,6 @@ impl Update {
       } => {
         let fragment: Fragment = Fragment::new(fragment);
 
-        // TODO: Do we have to ? here?
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
 
         // The verification method must exist
@@ -240,7 +234,7 @@ impl Update {
 
         for relationship in relationships {
           // We ignore the boolean result: if the relationship already existed, that's fine.
-          state
+          let _ = state
             .document_mut()
             .attach_method_relationship(method_url.clone(), relationship)
             .map_err(|_| UpdateError::MethodNotFound)?;
@@ -258,7 +252,6 @@ impl Update {
           UpdateError::MethodNotFound
         );
 
-        // TODO: Do we have to ? here?
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
         let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
 
