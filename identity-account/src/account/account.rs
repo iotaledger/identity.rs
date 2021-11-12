@@ -97,17 +97,9 @@ impl Account {
     &self.state
   }
 
-  pub(crate) fn state_mut_unchecked(&mut self) -> &mut IdentityState {
-    &mut self.state
-  }
-
   /// Return the chain state of the identity.
   pub fn chain_state(&self) -> &ChainState {
     &self.chain_state
-  }
-
-  pub(crate) fn chain_state_mut(&mut self) -> &mut ChainState {
-    &mut self.chain_state
   }
 
   /// Returns the DID document of the identity, which this account manages,
@@ -241,9 +233,7 @@ impl Account {
     let did = self.did().to_owned();
     let storage = Arc::clone(&self.storage);
 
-    update
-      .process(&did, self.state_mut_unchecked(), storage.as_ref())
-      .await?;
+    update.process(&did, &mut self.state, storage.as_ref()).await?;
 
     self.publish(false).await?;
 
@@ -309,7 +299,7 @@ impl Account {
       }
     }
 
-    self.state_mut_unchecked().increment_generation()?;
+    self.state.increment_generation()?;
 
     self.store_state().await?;
 
@@ -350,7 +340,7 @@ impl Account {
       self.client_map.publish_document(&new_doc).await?.into()
     };
 
-    self.chain_state_mut().set_previous_integration_message_id(message_id);
+    self.chain_state.set_previous_integration_message_id(message_id);
 
     Ok(())
   }
@@ -398,7 +388,7 @@ impl Account {
         .into()
     };
 
-    self.chain_state_mut().set_previous_diff_message_id(message_id);
+    self.chain_state.set_previous_diff_message_id(message_id);
 
     Ok(())
   }

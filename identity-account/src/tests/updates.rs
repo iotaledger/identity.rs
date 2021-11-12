@@ -268,7 +268,7 @@ async fn test_create_scoped_method() -> Result<()> {
 #[tokio::test]
 async fn test_create_method_duplicate_fragment() -> Result<()> {
   let mut account_setup = account_setup();
-  account_setup.config = account_setup.config.autopublish(false);
+  account_setup.config = account_setup.config.testmode(true).autopublish(false);
 
   let mut account = Account::create_identity(account_setup, IdentitySetup::default()).await?;
 
@@ -289,12 +289,12 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
     Error::UpdateError(UpdateError::DuplicateKeyLocation(_)),
   ));
 
-  // Fake publishing by incrementing the generation.
-  account.state_mut_unchecked().increment_generation().unwrap();
+  // This increments the generation internally.
+  account.publish_updates().await?;
 
   let output = account.process_update(update).await;
 
-  // Now the location is different, but the fragment is the same.
+  // Now the location is different due to the incremented generation, but the fragment is the same.
   assert!(matches!(
     output.unwrap_err(),
     Error::UpdateError(UpdateError::DuplicateKeyFragment(_)),
