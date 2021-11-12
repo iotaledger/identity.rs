@@ -10,9 +10,13 @@ use identity_core::common::Fragment;
 use identity_core::common::Object;
 use identity_core::common::UnixTimestamp;
 use identity_core::common::Url;
-use identity_core::crypto::JcsEd25519;
+use identity_core::convert::ToJson;
+use identity_core::crypto::Named;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::Signer;
+use identity_core::crypto::Signature;
+use identity_core::crypto::SignatureValue;
+use identity_core::utils::encode_b58;
+
 use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
 use identity_did::document::CoreDocument;
@@ -45,7 +49,39 @@ use crate::types::KeyLocation;
 type Properties = VerifiableProperties<BaseProperties>;
 type BaseDocument = CoreDocument<Properties, Object, Object>;
 
-pub type RemoteEd25519<'a, T> = JcsEd25519<RemoteSign<'a, T>>;
+pub struct RemoteEd25519;
+
+impl Named for RemoteEd25519 {
+  const NAME: &'static str = "JcsEd25519Signature2020";
+}
+
+impl RemoteEd25519 {
+  pub async fn create_signature<U, T>(data: &mut U, method: impl Into<String>, secret: &RemoteKey<'_, T>) -> Result<()>
+  where
+    U: Serialize + SetSignature,
+    T: Storage,
+  {
+    data.set_signature(Signature::new(Self::NAME, method));
+
+    let value: SignatureValue = Self::sign(&data, secret).await?;
+    let write: &mut Signature = data.try_signature_mut()?;
+
+    write.set_value(value);
+
+    Ok(())
+  }
+
+  pub async fn sign<T, X>(data: &X, remote_key: &RemoteKey<'_, T>) -> Result<SignatureValue>
+  where
+    X: Serialize,
+    T: Storage,
+  {
+    let message: Vec<u8> = data.to_jcs()?;
+    let signature: Vec<u8> = RemoteSign::sign(&message, remote_key).await?;
+    let signature: String = encode_b58(&signature);
+    Ok(SignatureValue::Signature(signature))
+  }
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct IdentityState {
@@ -354,7 +390,7 @@ impl IdentityState {
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        RemoteEd25519::create_signature(target, method_url.to_string(), &private)?;
+        RemoteEd25519::create_signature(target, method_url.to_string(), &private).await?;
       }
       MethodType::MerkleKeyCollection2021 => {
         todo!("Handle MerkleKeyCollection2021")

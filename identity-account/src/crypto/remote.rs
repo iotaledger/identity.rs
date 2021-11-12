@@ -3,11 +3,8 @@
 
 use core::marker::PhantomData;
 
-use crossbeam_utils::thread;
-use identity_core::crypto::Sign;
 use identity_core::error::Error;
 use identity_core::error::Result;
-use tokio::runtime::Runtime;
 
 use crate::identity::IdentityId;
 use crate::storage::Storage;
@@ -40,26 +37,16 @@ pub struct RemoteSign<'a, T> {
   marker: PhantomData<RemoteKey<'a, T>>,
 }
 
-impl<'a, T> Sign for RemoteSign<'a, T>
+impl<'a, T> RemoteSign<'a, T>
 where
   T: Storage,
 {
-  type Private = RemoteKey<'a, T>;
-  type Output = Vec<u8>;
-
-  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output> {
-    let future: _ = key.store.key_sign(key.id, key.location, message.to_vec());
-
-    thread::scope(|s| {
-      s.spawn(move |_| {
-        let rt = Runtime::new().unwrap();
-        rt.block_on(future)
-          .map_err(|_| Error::InvalidProofValue("remote sign"))
-          .map(|signature| signature.data)
-      })
-      .join()
-      .unwrap()
-    })
-    .unwrap()
+  pub async fn sign(message: &[u8], key: &RemoteKey<'a, T>) -> Result<Vec<u8>> {
+    key
+      .store
+      .key_sign(key.id, key.location, message.to_vec())
+      .await
+      .map_err(|_| Error::InvalidProofValue("remote sign"))
+      .map(|signature| signature.data)
   }
 }
