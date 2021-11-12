@@ -68,12 +68,12 @@ async fn test_account_chain_state() -> Result<()> {
 
   let mut account: Account = builder.create_identity(IdentitySetup::default()).await?;
 
-  let previous_int_id = *account.chain_state().previous_integration_message_id();
+  let last_int_id = *account.chain_state().last_integration_message_id();
 
-  assert_ne!(previous_int_id, MessageId::null());
+  assert_ne!(last_int_id, MessageId::null());
 
-  // Assert that the previous_diff_message_id is still null.
-  assert_eq!(account.chain_state().previous_diff_message_id(), &MessageId::null());
+  // Assert that the last_diff_message_id is still null.
+  assert_eq!(account.chain_state().last_diff_message_id(), &MessageId::null());
 
   // A diff update.
   account
@@ -86,13 +86,10 @@ async fn test_account_chain_state() -> Result<()> {
     .await?;
 
   // A diff update does not overwrite the int message id.
-  assert_eq!(
-    &previous_int_id,
-    account.chain_state().previous_integration_message_id()
-  );
+  assert_eq!(&last_int_id, account.chain_state().last_integration_message_id());
 
-  // Assert that the previous_diff_message_id was set.
-  assert_ne!(account.chain_state().previous_diff_message_id(), &MessageId::null());
+  // Assert that the last_diff_message_id was set.
+  assert_ne!(account.chain_state().last_diff_message_id(), &MessageId::null());
 
   account
     .update_identity()
@@ -103,10 +100,7 @@ async fn test_account_chain_state() -> Result<()> {
     .await?;
 
   // Int message id was overwritten.
-  assert_ne!(
-    &previous_int_id,
-    account.chain_state().previous_integration_message_id()
-  );
+  assert_ne!(&last_int_id, account.chain_state().last_integration_message_id());
 
   Ok(())
 }

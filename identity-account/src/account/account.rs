@@ -321,7 +321,7 @@ impl Account {
 
     let mut new_doc: IotaDocument = new_state.document().to_owned();
 
-    new_doc.set_previous_message_id(*self.chain_state().previous_integration_message_id());
+    new_doc.set_previous_message_id(*self.chain_state().last_integration_message_id());
 
     self
       .sign_self(old_state.unwrap_or(new_state), new_state, &mut new_doc)
@@ -339,7 +339,7 @@ impl Account {
       self.client_map.publish_document(&new_doc).await?.into()
     };
 
-    self.chain_state.set_previous_integration_message_id(message_id);
+    self.chain_state.set_last_integration_message_id(message_id);
 
     Ok(())
   }
@@ -350,11 +350,11 @@ impl Account {
     let old_doc: &IotaDocument = old_state.document();
     let new_doc: &IotaDocument = self.state().document();
 
-    let mut diff_id: &MessageId = self.chain_state().previous_diff_message_id();
+    let mut diff_id: &MessageId = self.chain_state().last_diff_message_id();
 
     // If there was no previous diff message, use the previous int message.
     if diff_id.is_null() {
-      diff_id = self.chain_state.previous_integration_message_id();
+      diff_id = self.chain_state.last_integration_message_id();
     }
 
     let mut diff: DocumentDiff = DocumentDiff::new(old_doc, new_doc, *diff_id)?;
@@ -373,7 +373,7 @@ impl Account {
 
     log::debug!(
       "[publish_diff_change] publishing on index {}",
-      IotaDocument::diff_index(self.chain_state().previous_integration_message_id())?
+      IotaDocument::diff_index(self.chain_state().last_integration_message_id())?
     );
 
     let message_id: MessageId = if self.config.testmode {
@@ -382,12 +382,12 @@ impl Account {
     } else {
       self
         .client_map
-        .publish_diff(self.chain_state().previous_integration_message_id(), &diff)
+        .publish_diff(self.chain_state().last_integration_message_id(), &diff)
         .await?
         .into()
     };
 
-    self.chain_state.set_previous_diff_message_id(message_id);
+    self.chain_state.set_last_diff_message_id(message_id);
 
     Ok(())
   }
