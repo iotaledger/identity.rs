@@ -54,61 +54,6 @@ pub struct Account {
 
 impl Account {
   // ===========================================================================
-  // Getters & Setters
-  // ===========================================================================
-
-  /// Returns a reference to the [Storage] implementation.
-  pub fn storage(&self) -> &dyn Storage {
-    self.storage.as_ref()
-  }
-
-  /// Returns whether auto-publish is enabled.
-  pub fn autopublish(&self) -> bool {
-    self.config.autopublish
-  }
-
-  /// Returns the auto-save configuration value.
-  pub fn autosave(&self) -> AutoSave {
-    self.config.autosave
-  }
-
-  /// Returns whether save-on-drop is enabled.
-  pub fn dropsave(&self) -> bool {
-    self.config.dropsave
-  }
-
-  /// Returns the total number of actions executed by this instance.
-  pub fn actions(&self) -> usize {
-    self.actions.load(Ordering::SeqCst)
-  }
-
-  /// Adds a pre-configured `Client` for Tangle interactions.
-  pub fn set_client(&self, client: Client) {
-    self.client_map.insert(client);
-  }
-
-  /// Returns the did of the managed identity.
-  pub fn did(&self) -> &IotaDID {
-    self.document().did()
-  }
-
-  /// Return the latest state of the identity.
-  pub fn state(&self) -> &IdentityState {
-    &self.state
-  }
-
-  /// Return the chain state of the identity.
-  pub fn chain_state(&self) -> &ChainState {
-    &self.chain_state
-  }
-
-  /// Returns the DID document of the identity, which this account manages,
-  /// with all updates applied.
-  pub fn document(&self) -> &IotaDocument {
-    self.state.document()
-  }
-
-  // ===========================================================================
   // Constructors
   // ===========================================================================
 
@@ -161,6 +106,61 @@ impl Account {
     let did_lease = setup.storage.lease_did(&did).await?;
 
     Self::with_setup(setup, chain_state, state, did_lease).await
+  }
+
+  // ===========================================================================
+  // Getters & Setters
+  // ===========================================================================
+
+  /// Returns a reference to the [Storage] implementation.
+  pub fn storage(&self) -> &dyn Storage {
+    self.storage.as_ref()
+  }
+
+  /// Returns whether auto-publish is enabled.
+  pub fn autopublish(&self) -> bool {
+    self.config.autopublish
+  }
+
+  /// Returns the auto-save configuration value.
+  pub fn autosave(&self) -> AutoSave {
+    self.config.autosave
+  }
+
+  /// Returns whether save-on-drop is enabled.
+  pub fn dropsave(&self) -> bool {
+    self.config.dropsave
+  }
+
+  /// Returns the total number of actions executed by this instance.
+  pub fn actions(&self) -> usize {
+    self.actions.load(Ordering::SeqCst)
+  }
+
+  /// Adds a pre-configured `Client` for Tangle interactions.
+  pub fn set_client(&self, client: Client) {
+    self.client_map.insert(client);
+  }
+
+  /// Returns the did of the managed identity.
+  pub fn did(&self) -> &IotaDID {
+    self.document().did()
+  }
+
+  /// Return the latest state of the identity.
+  pub fn state(&self) -> &IdentityState {
+    &self.state
+  }
+
+  /// Return the chain state of the identity.
+  pub fn chain_state(&self) -> &ChainState {
+    &self.chain_state
+  }
+
+  /// Returns the DID document of the identity, which this account manages,
+  /// with all updates applied.
+  pub fn document(&self) -> &IotaDocument {
+    self.state.document()
   }
 
   // ===========================================================================
