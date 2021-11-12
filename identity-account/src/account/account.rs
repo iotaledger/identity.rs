@@ -169,7 +169,6 @@ impl Account {
 
   /// Resolves the DID Document associated with this `Account` from the Tangle.
   pub async fn resolve_identity(&self) -> Result<IotaDocument> {
-    // Fetch the DID Document from the Tangle
     self.client_map.resolve(self.did()).await.map_err(Into::into)
   }
 

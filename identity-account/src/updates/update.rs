@@ -90,11 +90,9 @@ pub(crate) async fn create_identity(setup: IdentitySetup, store: &dyn Storage) -
 
   let method_fragment = location.fragment().to_owned();
 
-  // TODO: Can we unwrap/expect?
   let method: IotaVerificationMethod =
     IotaVerificationMethod::from_did(did, setup.key_type, &public, method_fragment.name())?;
 
-  // TODO: Can we unwrap/expect?
   let document = IotaDocument::from_verification_method(method)?;
 
   let mut state = IdentityState::new(document);
@@ -203,7 +201,7 @@ impl Update {
           UpdateError::InvalidMethodFragment("cannot remove last signing method")
         );
 
-        state.document_mut().remove_method(method_url).unwrap();
+        state.document_mut().remove_method(method_url)?;
       }
       Self::AttachMethod {
         fragment,
