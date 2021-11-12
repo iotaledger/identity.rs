@@ -18,6 +18,7 @@ use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::ClientBuilder;
+use crate::tangle::DIDMessageEncoding;
 use crate::tangle::Message;
 use crate::tangle::MessageId;
 use crate::tangle::Network;
@@ -30,6 +31,7 @@ use crate::tangle::TangleResolve;
 pub struct Client {
   pub(crate) client: IotaClient,
   pub(crate) network: Network,
+  pub(crate) encoding: DIDMessageEncoding,
 }
 
 impl Client {
@@ -65,6 +67,7 @@ impl Client {
     Ok(Self {
       client: client.finish().await?,
       network: builder.network,
+      encoding: builder.encoding,
     })
   }
 
@@ -84,13 +87,14 @@ impl Client {
     self.publish_json(&IotaDocument::diff_index(message_id)?, diff).await
   }
 
-  /// Publishes arbitrary JSON data to the specified index on the Tangle.
+  /// Compresses and publishes arbitrary JSON data to the specified index on the Tangle.
   pub async fn publish_json<T: ToJson>(&self, index: &str, data: &T) -> Result<Receipt> {
+    let message_data: Vec<u8> = crate::tangle::pack_did_message(data, self.encoding)?;
     self
       .client
       .message()
       .with_index(index)
-      .with_data(data.to_json_vec()?)
+      .with_data(message_data)
       .finish()
       .await
       .map_err(Into::into)

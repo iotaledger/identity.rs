@@ -3,8 +3,10 @@
 
 pub use self::client::*;
 pub use self::config::*;
+pub use self::message::*;
 pub use self::network::*;
 
 mod client;
 mod config;
+mod message;
 mod network;
