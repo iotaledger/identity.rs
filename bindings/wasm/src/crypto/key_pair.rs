@@ -55,6 +55,12 @@ impl KeyPair {
     encode_b58(self.0.private())
   }
 
+  /// Returns the type of the keypair.
+  #[wasm_bindgen(getter, js_name = keyType)]
+  pub fn key_type(&self) -> KeyType {
+    self.0.type_().into()
+  }
+
   /// Serializes a `KeyPair` object as a JSON object.
   #[wasm_bindgen(js_name = toJSON)]
   pub fn to_json(&self) -> Result<JsValue, JsValue> {

@@ -1,8 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity::core::decode_b58;
 use identity::crypto::merkle_key::Blake2b256;
 use identity::crypto::merkle_key::Sha256;
+use identity::crypto::PublicKey;
 use identity::iota::IotaDID;
 use identity::iota::IotaVerificationMethod;
 use wasm_bindgen::prelude::*;
@@ -10,6 +12,7 @@ use wasm_bindgen::prelude::*;
 use crate::crypto::Digest;
 use crate::crypto::KeyCollection;
 use crate::crypto::KeyPair;
+use crate::crypto::KeyType;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmDID;
 use crate::error::wasm_error;
@@ -29,9 +32,18 @@ impl WasmVerificationMethod {
   }
 
   /// Creates a new `VerificationMethod` object from the given `did` and `key`.
+  ///
+  /// Note: The caller is responsible for making sure `key_type` and `public_key` bytes are compatible.
   #[wasm_bindgen(js_name = fromDID)]
-  pub fn from_did(did: &WasmDID, key: &KeyPair, fragment: String) -> Result<WasmVerificationMethod, JsValue> {
-    IotaVerificationMethod::from_did(did.0.clone(), key.0.type_(), key.0.public(), &fragment)
+  pub fn from_did(
+    did: &WasmDID,
+    key_type: KeyType,
+    public_key: String,
+    fragment: String,
+  ) -> Result<WasmVerificationMethod, JsValue> {
+    let public_key: PublicKey = decode_b58(&public_key).map_err(wasm_error)?.into();
+
+    IotaVerificationMethod::from_did(did.0.clone(), key_type.into(), &public_key, &fragment)
       .map_err(wasm_error)
       .map(Self)
   }

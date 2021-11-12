@@ -28,7 +28,7 @@ async function manipulateIdentity(clientConfig) {
 
     // Add a new VerificationMethod with a new KeyPair
     const newKey = new KeyPair(KeyType.Ed25519);
-    const method = VerificationMethod.fromDID(doc.id, newKey, "newKey");
+    const method = VerificationMethod.fromDID(doc.id, newKey.keyType(), newKey.public(), "newKey");
     doc.insertMethod(method, "VerificationMethod");
 
     // Add a new ServiceEndpoint

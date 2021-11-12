@@ -78,7 +78,9 @@ impl IotaVerificationMethod {
     Self::from_did(did, keypair.type_(), keypair.public(), fragment)
   }
 
-  /// Creates a new [`IotaVerificationMethod`] from the given `did` and `keypair`.
+  /// Creates a new [`IotaVerificationMethod`] from the given `did` and `public_key`.
+  ///
+  /// Note: The caller is responsible for making sure `key_type` and `public_key` bytes are compatible.
   pub fn from_did(did: IotaDID, key_type: KeyType, public_key: &PublicKey, fragment: &str) -> Result<Self> {
     let tag: String = format!("#{}", fragment);
     let key: IotaDIDUrl = did.to_url().join(tag)?;
