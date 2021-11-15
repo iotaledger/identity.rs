@@ -21,5 +21,4 @@ pub use self::merkle::compute_merkle_proof;
 pub use self::merkle::compute_merkle_root;
 pub use self::node::Node;
 pub use self::proof::Proof;
-pub use self::proof::MAX_PROOF_NODES;
 pub use self::traits::AsLeaf;

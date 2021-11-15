@@ -96,8 +96,8 @@ impl KeyCollection {
   ///
   /// # Errors
   /// The number of items provided by `iter` must be a power of two contained in the interval [1,4096], otherwise an
-  /// error is returned. This upper limit may be increased in the future. If this function (internally) fails to create a
-  /// [`KeyCollection`] with a matching private key for every public key as provided by the iterator then
+  /// error is returned. This upper limit may be increased in the future. If this function (internally) fails to create
+  /// a [`KeyCollection`] with a matching private key for every public key as provided by the iterator then
   /// [`Err(KeyCollectionSizeError::KeyPairImbalance)`] will be returned. This is not something we expect to happen in
   /// practice.
   pub fn from_iterator<I>(type_: KeyType, iter: I) -> Result<Self, KeyCollectionSizeError>
