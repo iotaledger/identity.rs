@@ -21,6 +21,7 @@ use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDIDUrl;
 use identity_iota::did::IotaDocument;
 use identity_iota::did::IotaVerificationMethod;
+use identity_iota::tangle::UPDATE_METHOD_TYPES;
 
 use crate::account::Account;
 use crate::error::Result;
@@ -33,8 +34,6 @@ use crate::types::KeyLocation;
 use crate::types::MethodSecret;
 use crate::updates::UpdateError;
 
-// Method types allowed to sign a DID document update.
-pub const UPDATE_METHOD_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 pub const DEFAULT_UPDATE_METHOD_PREFIX: &str = "sign-";
 
 pub(crate) async fn create_identity(setup: IdentitySetup, store: &dyn Storage) -> Result<(DIDLease, IdentityState)> {

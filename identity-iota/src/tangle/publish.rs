@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_did::verification::MethodRef;
+use identity_did::verification::MethodType;
 
 use crate::did::IotaDocument;
+
+// Method types allowed to sign a DID document update.
+pub const UPDATE_METHOD_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
 /// Determines whether an updated document needs to be published as an integration or diff message.
 #[derive(Clone, Copy, Debug)]
@@ -23,27 +27,41 @@ impl PublishType {
       return None;
     }
 
-    let old_capability_invocation_set =
-      old_doc
-        .as_document()
-        .capability_invocation()
-        .iter()
-        .map(|method_ref| match method_ref {
-          MethodRef::Embed(method) => Some(method),
-          MethodRef::Refer(did_url) => old_doc.as_document().resolve_method(did_url),
-        });
+    let old_capability_invocation_set = old_doc
+      .as_document()
+      .capability_invocation()
+      .iter()
+      .map(|method_ref| match method_ref {
+        MethodRef::Embed(method) => Some(method),
+        MethodRef::Refer(did_url) => old_doc.as_document().resolve_method(did_url),
+      })
+      .filter(|method| {
+        if let Some(method) = method {
+          UPDATE_METHOD_TYPES.contains(&method.key_type())
+        } else {
+          true
+        }
+      })
+      .collect::<Vec<_>>();
 
-    let new_capability_invocation_set =
-      new_doc
-        .as_document()
-        .capability_invocation()
-        .iter()
-        .map(|method_ref| match method_ref {
-          MethodRef::Embed(method) => Some(method),
-          MethodRef::Refer(did_url) => new_doc.as_document().resolve_method(did_url),
-        });
+    let new_capability_invocation_set = new_doc
+      .as_document()
+      .capability_invocation()
+      .iter()
+      .map(|method_ref| match method_ref {
+        MethodRef::Embed(method) => Some(method),
+        MethodRef::Refer(did_url) => new_doc.as_document().resolve_method(did_url),
+      })
+      .filter(|method| {
+        if let Some(method) = method {
+          UPDATE_METHOD_TYPES.contains(&method.key_type())
+        } else {
+          true
+        }
+      })
+      .collect::<Vec<_>>();
 
-    if old_capability_invocation_set.collect::<Vec<_>>() != new_capability_invocation_set.collect::<Vec<_>>() {
+    if old_capability_invocation_set != new_capability_invocation_set {
       Some(PublishType::Integration)
     } else {
       Some(PublishType::Diff)
@@ -53,6 +71,8 @@ impl PublishType {
 
 #[cfg(test)]
 mod test {
+  use identity_core::crypto::merkle_key::Sha256;
+  use identity_core::crypto::KeyCollection;
   use identity_core::crypto::KeyPair;
   use identity_did::did::DID;
   use identity_did::verification::MethodScope;
@@ -143,12 +163,12 @@ mod test {
     let method_updated: IotaVerificationMethod =
       IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "generic")?;
 
-    unsafe {
+    assert!(unsafe {
       new_doc
         .as_document_mut()
         .verification_method_mut()
         .update(method_updated.into())
-    };
+    });
 
     assert!(matches!(
       PublishType::new(&old_doc, &new_doc),
@@ -189,6 +209,53 @@ mod test {
         identity_did::verification::MethodRelationship::AssertionMethod,
       )
       .unwrap();
+
+    assert!(matches!(PublishType::new(&old_doc, &new_doc), Some(PublishType::Diff)));
+
+    Ok(())
+  }
+
+  #[test]
+  fn test_publish_type_update_method_with_non_update_method_type() -> Result<()> {
+    let old_doc = document();
+
+    let mut new_doc = old_doc.clone();
+
+    let collection = KeyCollection::new_ed25519(8)?;
+    let method: IotaVerificationMethod =
+      IotaVerificationMethod::create_merkle_key::<Sha256>(new_doc.did().to_owned(), &collection, "merkle")?;
+
+    new_doc.insert_method(method, MethodScope::authentication());
+
+    assert!(matches!(PublishType::new(&old_doc, &new_doc), Some(PublishType::Diff)));
+
+    Ok(())
+  }
+
+  #[test]
+  fn test_publish_type_update_method_with_non_update_method_type2() -> Result<()> {
+    let mut old_doc = document();
+
+    let collection = KeyCollection::new_ed25519(8)?;
+    let method: IotaVerificationMethod =
+      IotaVerificationMethod::create_merkle_key::<Sha256>(old_doc.did().to_owned(), &collection, "merkle")?;
+
+    old_doc.insert_method(method, MethodScope::capability_invocation());
+
+    let mut new_doc = old_doc.clone();
+
+    // Replace the key collection.
+    let new_collection = KeyCollection::new_ed25519(8)?;
+
+    let method_new: IotaVerificationMethod =
+      IotaVerificationMethod::create_merkle_key::<Sha256>(new_doc.did().to_owned(), &new_collection, "merkle")?;
+
+    assert!(unsafe {
+      new_doc
+        .as_document_mut()
+        .capability_invocation_mut()
+        .update(method_new.into())
+    });
 
     assert!(matches!(PublishType::new(&old_doc, &new_doc), Some(PublishType::Diff)));
 
