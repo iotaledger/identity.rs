@@ -3,6 +3,7 @@
 
 use core::ops::RangeFrom;
 use crypto::keys::slip10::Chain;
+use futures::executor;
 use futures::future;
 use futures::stream;
 use futures::stream::BoxStream;
@@ -397,6 +398,12 @@ async fn sign_ed25519(vault: &Vault<'_>, payload: Vec<u8>, location: &KeyLocatio
   let signature: [u8; 64] = vault.ed25519_sign(payload, location_skey(location)).await?;
 
   Ok(Signature::new(public_key, signature.into()))
+}
+
+impl Drop for Stronghold {
+  fn drop(&mut self) {
+    let _ = executor::block_on(self.flush_changes());
+  }
 }
 
 fn location_snapshot() -> Location {

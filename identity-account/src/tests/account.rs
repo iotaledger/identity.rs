@@ -1,10 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+use std::path::PathBuf;
+use std::sync::Arc;
 
 use identity_iota::did::IotaDID;
 
 use crate::account::Account;
 use crate::account::AccountBuilder;
+use crate::account::AccountConfig;
+use crate::account::AccountSetup;
+use crate::storage::Stronghold;
 use crate::error::Result;
 use crate::identity::IdentitySetup;
 
@@ -57,4 +62,45 @@ async fn test_account_did_lease() -> Result<()> {
   ));
 
   Ok(())
+}
+
+#[tokio::test]
+async fn test_account_dropsave_deadlock() -> Result<()> {
+  let stronghold_path: PathBuf = "./example-strong.hodl".into();
+
+  let storage = Stronghold::new(&stronghold_path, Some("my-password")).await?;
+
+  let setup = AccountSetup::new(Arc::new(storage)).config(AccountConfig::new().testmode(true));
+
+  let account: Account = Account::create_identity(setup.clone(), IdentitySetup::default()).await?;
+  let mut account2: Account = Account::create_identity(setup.clone(), IdentitySetup::default()).await?;
+
+  let task = tokio::task::spawn(async move {
+    for i in 0..10 {
+      add_method(&mut account2, i).await;
+    }
+  });
+
+  let did = account.did().to_owned();
+  std::mem::drop(account);
+
+  for i in 0..10 {
+    let mut account = Account::load_identity(setup.clone(), did.clone()).await?;
+    // Force the account to run the dropsave
+    // add_method(&mut account, i).await;
+  }
+
+  task.await.unwrap();
+
+  Ok(())
+}
+
+async fn add_method(account: &mut Account, iteration: usize) {
+  account
+    .update_identity()
+    .create_method()
+    .fragment(format!("key-{}", iteration))
+    .apply()
+    .await
+    .unwrap();
 }

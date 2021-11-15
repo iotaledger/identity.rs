@@ -1,7 +1,5 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
-use futures::executor;
 use futures::StreamExt;
 use futures::TryStreamExt;
 use identity_core::common::Fragment;
@@ -100,11 +98,6 @@ impl Account {
   /// Returns the auto-save configuration value.
   pub fn autosave(&self) -> AutoSave {
     self.config.autosave
-  }
-
-  /// Returns whether save-on-drop is enabled.
-  pub fn dropsave(&self) -> bool {
-    self.config.dropsave
   }
 
   /// Returns the total number of actions executed by this instance.
@@ -482,15 +475,6 @@ impl Account {
   fn key_to_method(type_: KeyType) -> MethodType {
     match type_ {
       KeyType::Ed25519 => MethodType::Ed25519VerificationKey2018,
-    }
-  }
-}
-
-impl Drop for Account {
-  fn drop(&mut self) {
-    if self.config.dropsave && self.actions() != 0 {
-      // TODO: Handle Result (?)
-      let _ = executor::block_on(self.storage().flush_changes());
     }
   }
 }

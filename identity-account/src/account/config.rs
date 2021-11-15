@@ -67,7 +67,6 @@ impl AccountSetup {
 pub(crate) struct AccountConfig {
   pub(crate) autosave: AutoSave,
   pub(crate) autopublish: bool,
-  pub(crate) dropsave: bool,
   pub(crate) testmode: bool,
   pub(crate) milestone: u32,
 }
@@ -80,7 +79,6 @@ impl AccountConfig {
     Self {
       autosave: AutoSave::Every,
       autopublish: true,
-      dropsave: true,
       testmode: false,
       milestone: Self::MILESTONE,
     }
@@ -90,9 +88,6 @@ impl AccountConfig {
   /// - [`Every`][AutoSave::Every] => Save to storage on every update
   /// - [`Never`][AutoSave::Never] => Never save to storage when updating
   /// - [`Batch(n)`][AutoSave::Batch] => Save to storage after every `n` updates.
-  ///
-  /// Note that when [`Never`][AutoSave::Never] is selected, you will most
-  /// likely want to set [`dropsave`][Self::dropsave] to `true`.
   ///
   /// Default: [`Every`][AutoSave::Every]
   pub(crate) fn autosave(mut self, value: AutoSave) -> Self {
@@ -107,16 +102,6 @@ impl AccountConfig {
   /// Default: `true`
   pub(crate) fn autopublish(mut self, value: bool) -> Self {
     self.autopublish = value;
-    self
-  }
-
-  /// Save the account state on drop.
-  /// If set to `false`, set [`autosave`][Self::autosave] to
-  /// either [`Every`][AutoSave::Every] or [`Batch(n)`][AutoSave::Batch].
-  ///
-  /// Default: `true`
-  pub(crate) fn dropsave(mut self, value: bool) -> Self {
-    self.dropsave = value;
     self
   }
 
