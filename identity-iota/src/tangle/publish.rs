@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use identity_did::verification::MethodRef;
+
 use crate::did::IotaDocument;
 
 /// Determines whether an updated document needs to be published as an integration or diff message.
@@ -18,8 +20,30 @@ impl PublishType {
   /// this method does not handle this case.
   pub fn new(old_doc: &IotaDocument, new_doc: &IotaDocument) -> Option<PublishType> {
     if old_doc == new_doc {
-      None
-    } else if old_doc.as_document().capability_invocation() != new_doc.as_document().capability_invocation() {
+      return None;
+    }
+
+    let old_capability_invocation_set =
+      old_doc
+        .as_document()
+        .capability_invocation()
+        .iter()
+        .map(|method_ref| match method_ref {
+          MethodRef::Embed(method) => Some(method),
+          MethodRef::Refer(did_url) => old_doc.as_document().resolve_method(did_url),
+        });
+
+    let new_capability_invocation_set =
+      new_doc
+        .as_document()
+        .capability_invocation()
+        .iter()
+        .map(|method_ref| match method_ref {
+          MethodRef::Embed(method) => Some(method),
+          MethodRef::Refer(did_url) => new_doc.as_document().resolve_method(did_url),
+        });
+
+    if old_capability_invocation_set.collect::<Vec<_>>() != new_capability_invocation_set.collect::<Vec<_>>() {
       Some(PublishType::Integration)
     } else {
       Some(PublishType::Diff)
@@ -39,37 +63,65 @@ mod test {
 
   use super::*;
 
-  #[test]
-  fn test_publish_type() -> Result<()> {
-    let initial_keypair: KeyPair = KeyPair::new_ed25519()?;
-    let method: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&initial_keypair, "test-0")?;
+  // Returns a document with an embedded capability invocation method, and a generic verification method,
+  // that also has as an attached capability invocation verification relationship.
+  fn document() -> IotaDocument {
+    let initial_keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let method: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&initial_keypair, "embedded").unwrap();
 
-    let old_doc: IotaDocument = IotaDocument::from_verification_method(method)?;
+    let mut old_doc: IotaDocument = IotaDocument::from_verification_method(method).unwrap();
+
+    let keypair: KeyPair = KeyPair::new_ed25519().unwrap();
+    let method2: IotaVerificationMethod =
+      IotaVerificationMethod::from_did(old_doc.did().to_owned(), keypair.type_(), keypair.public(), "generic").unwrap();
+
+    let method3_url = method2.id();
+
+    old_doc.insert_method(method2, MethodScope::VerificationMethod);
+    old_doc
+      .attach_method_relationship(
+        method3_url,
+        identity_did::verification::MethodRelationship::CapabilityInvocation,
+      )
+      .unwrap();
+
+    old_doc
+  }
+
+  #[test]
+  fn test_publish_type_insert_new_embedded_capability_invocation_method() -> Result<()> {
+    let old_doc = document();
 
     assert!(matches!(PublishType::new(&old_doc, &old_doc), None));
 
-    // Inserting a new capability invocation method results in an integration update.
     let mut new_doc = old_doc.clone();
 
     let keypair: KeyPair = KeyPair::new_ed25519()?;
-    let verif_method2: IotaVerificationMethod =
-      IotaVerificationMethod::from_did(old_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-1")?;
+    let method2: IotaVerificationMethod =
+      IotaVerificationMethod::from_did(old_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-2")?;
 
-    new_doc.insert_method(verif_method2, MethodScope::capability_invocation());
+    new_doc.insert_method(method2, MethodScope::capability_invocation());
 
     assert!(matches!(
       PublishType::new(&old_doc, &new_doc),
       Some(PublishType::Integration)
     ));
 
-    // Updating the key material of the existing verification method results in an integration update.
+    Ok(())
+  }
+
+  #[test]
+  fn test_publish_type_update_key_material_of_existing_embedded_method() -> Result<()> {
+    let old_doc = document();
+
     let mut new_doc = old_doc.clone();
 
+    let keypair: KeyPair = KeyPair::new_ed25519()?;
     let verif_method2: IotaVerificationMethod =
-      IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-0")?;
+      IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "embedded")?;
 
     new_doc
-      .remove_method(new_doc.did().to_url().join("#test-0").unwrap())
+      .remove_method(new_doc.did().to_url().join("#embedded").unwrap())
       .unwrap();
     new_doc.insert_method(verif_method2, MethodScope::capability_invocation());
 
@@ -78,14 +130,65 @@ mod test {
       Some(PublishType::Integration)
     ));
 
-    // Adding methods with relationships other than capability invocation
-    // results in a diff update.
+    Ok(())
+  }
+
+  #[test]
+  fn test_publish_type_update_key_material_of_existing_generic_method() -> Result<()> {
+    let old_doc = document();
+
     let mut new_doc = old_doc.clone();
 
+    let keypair: KeyPair = KeyPair::new_ed25519()?;
+    let method_updated: IotaVerificationMethod =
+      IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "generic")?;
+
+    unsafe {
+      new_doc
+        .as_document_mut()
+        .verification_method_mut()
+        .update(method_updated.into())
+    };
+
+    assert!(matches!(
+      PublishType::new(&old_doc, &new_doc),
+      Some(PublishType::Integration)
+    ));
+
+    Ok(())
+  }
+
+  #[test]
+  fn test_publish_type_add_non_capability_invocation_method() -> Result<()> {
+    let old_doc = document();
+
+    let mut new_doc = old_doc.clone();
+
+    let keypair: KeyPair = KeyPair::new_ed25519()?;
     let verif_method2: IotaVerificationMethod =
-      IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-1")?;
+      IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-2")?;
 
     new_doc.insert_method(verif_method2, MethodScope::authentication());
+
+    assert!(matches!(PublishType::new(&old_doc, &new_doc), Some(PublishType::Diff)));
+
+    Ok(())
+  }
+
+  #[test]
+  fn test_publish_type_add_non_capability_invocation_relationship() -> Result<()> {
+    let old_doc = document();
+
+    let mut new_doc = old_doc.clone();
+
+    let method_url = new_doc.resolve_method("generic").unwrap().id();
+
+    new_doc
+      .attach_method_relationship(
+        method_url,
+        identity_did::verification::MethodRelationship::AssertionMethod,
+      )
+      .unwrap();
 
     assert!(matches!(PublishType::new(&old_doc, &new_doc), Some(PublishType::Diff)));
 
