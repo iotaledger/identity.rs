@@ -267,7 +267,10 @@ impl<T, U, V> CoreDocument<T, U, V> {
     self.verification_method.remove(did);
   }
 
-  // Attaches the relationship to the given method, if the method exists.
+  /// Attaches the relationship to the given method, if the method exists.
+  ///
+  /// Note: The method needs to be in the set of verification methods,
+  /// so it cannot be an embedded one.
   pub fn attach_method_relationship<'query, Q>(
     &mut self,
     method_query: Q,
@@ -276,7 +279,9 @@ impl<T, U, V> CoreDocument<T, U, V> {
   where
     Q: Into<MethodQuery<'query>>,
   {
-    let method: &VerificationMethod<_> = self.resolve_method(method_query).ok_or(Error::QueryMethodNotFound)?;
+    let method: &VerificationMethod<_> = self
+      .resolve_method_with_scope(method_query, MethodScope::VerificationMethod)
+      .ok_or(Error::QueryMethodNotFound)?;
 
     let method_ref = MethodRef::Refer(method.id().clone());
 
@@ -373,15 +378,15 @@ impl<T, U, V> CoreDocument<T, U, V> {
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`
   /// and the verification relationship specified by `scope`.
-  pub fn resolve_method_with_scope<'query, 's: 'query, Q>(
-    &'s self,
+  pub fn resolve_method_with_scope<'query, 'me, Q>(
+    &'me self,
     query: Q,
     scope: MethodScope,
   ) -> Option<&VerificationMethod<U>>
   where
     Q: Into<MethodQuery<'query>>,
   {
-    let resolve_ref_helper = |method_ref: &'s MethodRef<U>| self.resolve_method_ref(method_ref);
+    let resolve_ref_helper = |method_ref: &'me MethodRef<U>| self.resolve_method_ref(method_ref);
 
     match scope {
       MethodScope::VerificationMethod => self.verification_method.query(query.into()),
@@ -649,6 +654,14 @@ mod tests {
     assert!(document
       .attach_method_relationship(
         document.id().to_url().join("#doesNotExist").unwrap(),
+        MethodRelationship::CapabilityDelegation,
+      )
+      .is_err());
+
+    // Attempt to attach to an embedded method.
+    assert!(document
+      .attach_method_relationship(
+        document.id().to_url().join("#auth-key").unwrap(),
         MethodRelationship::CapabilityDelegation,
       )
       .is_err());
