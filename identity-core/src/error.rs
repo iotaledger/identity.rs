@@ -39,12 +39,12 @@ pub enum Error {
   /// Raised by a validation attempt against an invalid DID proof.
   #[error("Invalid Proof Value: {0}")]
   InvalidProofValue(&'static str),
-  /// Caused by attempting to parse an invalid DID proof.
-  #[error("Invalid Proof Format")]
-  InvalidProofFormat,
   /// Caused by attempting to parse an invalid cryptographic key.
   #[error("Invalid Key Format")]
   InvalidKeyFormat,
+  /// Caused by attempting to parse an invalid DID proof.
+  #[error("Invalid Proof Format")]
+  InvalidProofFormat,
   /// Caused byt attempting to parse as invalid cryptographic key.
   #[error("Invalid Key Length. Received {0}, Expected {1}")]
   InvalidKeyLength(usize, usize),

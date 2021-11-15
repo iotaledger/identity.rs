@@ -17,6 +17,15 @@ pub type PrivateKey = Key<Private>;
 // =============================================================================
 // =============================================================================
 
+pub use errors::KeyFormatError; 
+mod errors {
+  use thiserror::Error as DeriveError;
+  
+  /// Caused by attempting to parse an invalid cryptographic key.
+  #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, DeriveError)]
+  #[error("failed to parse cryptographic key(s): the provided key format is invalid")]
+  pub struct KeyFormatError; 
+}
 mod private {
   pub trait Sealed {}
 }
