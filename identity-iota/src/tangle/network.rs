@@ -172,6 +172,8 @@ impl Default for Network {
 pub struct NetworkName(Cow<'static, str>);
 
 impl NetworkName {
+  const MAX_LENGTH: usize = 6;
+
   /// Creates a new [`NetworkName`] if the name passes validation.
   pub fn try_from<T>(name: T) -> Result<Self>
   where
@@ -188,7 +190,7 @@ impl NetworkName {
       return Err(Error::InvalidNetworkName);
     }
 
-    if name.len() > 6 {
+    if name.len() > Self::MAX_LENGTH {
       return Err(Error::InvalidNetworkName);
     };
 
@@ -330,7 +332,7 @@ mod tests {
     assert!(devnet.explorer_url().is_some());
     assert_eq!(devnet.explorer_url().unwrap().as_str(), EXPLORER_DEV.as_str());
 
-    let mut other = Network::try_from_name("atoi").unwrap();
+    let mut other = Network::try_from_name("custom").unwrap();
     assert!(other.explorer_url().is_none());
 
     // Try setting a `cannot_be_a_base` url.
@@ -344,5 +346,45 @@ mod tests {
     let url = Url::parse("https://explorer.iota.org/devnet").unwrap();
     assert!(other.set_explorer_url(url.clone()).is_ok());
     assert_eq!(other.explorer_url().unwrap().clone(), url);
+  }
+
+  #[test]
+  fn test_message_url() {
+    let message_id = "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffff1234";
+
+    let mainnet = Network::Mainnet;
+    assert_eq!(
+      mainnet.message_url(message_id).unwrap(),
+      format!("{}/{}/{}", EXPLORER_MAIN.as_str(), "message", message_id)
+    );
+
+    let devnet = Network::Devnet;
+    assert_eq!(
+      devnet.message_url(message_id).unwrap(),
+      format!("{}/{}/{}", EXPLORER_DEV.as_str(), "message", message_id)
+    );
+
+    let other = Network::try_from_name("custom").unwrap();
+    assert!(other.message_url(message_id).is_err());
+  }
+
+  #[test]
+  fn test_resolver_url() {
+    let did_str = "did:iota:aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd1234";
+
+    let mainnet = Network::Mainnet;
+    assert_eq!(
+      mainnet.resolver_url(did_str).unwrap(),
+      format!("{}/{}/{}", EXPLORER_MAIN.as_str(), "identity-resolver", did_str)
+    );
+
+    let devnet = Network::Devnet;
+    assert_eq!(
+      devnet.resolver_url(did_str).unwrap(),
+      format!("{}/{}/{}", EXPLORER_DEV.as_str(), "identity-resolver", did_str)
+    );
+
+    let other = Network::try_from_name("custom").unwrap();
+    assert!(other.resolver_url(did_str).is_err());
   }
 }
