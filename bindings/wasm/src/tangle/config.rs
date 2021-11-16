@@ -6,6 +6,7 @@ use std::time::Duration;
 use wasm_bindgen::prelude::*;
 
 use crate::error::wasm_error;
+use crate::tangle::WasmDIDMessageEncoding;
 use crate::tangle::WasmNetwork;
 
 fn to_duration(seconds: u32) -> Duration {
@@ -46,6 +47,11 @@ impl Config {
   #[wasm_bindgen(js_name = setNode)]
   pub fn set_node(&mut self, url: &str) -> Result<(), JsValue> {
     self.try_with_mut(|builder| builder.node(url).map_err(wasm_error))
+  }
+
+  #[wasm_bindgen(js_name = setEncoding)]
+  pub fn set_encoding(&mut self, encoding: WasmDIDMessageEncoding) -> Result<(), JsValue> {
+    self.with_mut(|builder| builder.encoding(encoding.into()))
   }
 
   #[wasm_bindgen(js_name = setPrimaryNode)]
