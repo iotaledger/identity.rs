@@ -3,6 +3,7 @@
 
 use identity_did::verification::MethodRef;
 use identity_did::verification::MethodType;
+use identity_did::verification::VerificationMethod;
 
 use crate::did::IotaDocument;
 
@@ -27,7 +28,7 @@ impl PublishType {
       return None;
     }
 
-    let old_capability_invocation_set = old_doc
+    let old_capability_invocation_set: Vec<Option<&VerificationMethod>> = old_doc
       .as_document()
       .capability_invocation()
       .iter()
@@ -42,9 +43,9 @@ impl PublishType {
           true
         }
       })
-      .collect::<Vec<_>>();
+      .collect();
 
-    let new_capability_invocation_set = new_doc
+    let new_capability_invocation_set: Vec<Option<&VerificationMethod>> = new_doc
       .as_document()
       .capability_invocation()
       .iter()
@@ -59,7 +60,7 @@ impl PublishType {
           true
         }
       })
-      .collect::<Vec<_>>();
+      .collect();
 
     if old_capability_invocation_set != new_capability_invocation_set {
       Some(PublishType::Integration)
