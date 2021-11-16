@@ -3,7 +3,7 @@
 
 import {Client, Config, DID, Timestamp} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
-import {logExplorerUrl} from './utils';
+import {logExplorerUrl, logResolverUrl} from './utils';
 
 /**
  This example shows how to revoke a verifiable credential.
@@ -40,7 +40,8 @@ async function revokeVC(clientConfig) {
     const {messageId} = await client.publishDocument(issuer.doc.toJSON());
 
     // Log the resulting Identity update
-    logExplorerUrl("Issuer Identity Update:", clientConfig.network.toString(), messageId);
+    logExplorerUrl("Issuer Update Transaction:", clientConfig.network, messageId);
+    logResolverUrl("Explore the Issuer DID Document:", clientConfig.network, issuer.doc.id.toString());
 
     // Check the verifiable credential
     const result = await client.checkCredential(signedVc.toString());

@@ -9,6 +9,7 @@ use identity::account::AutoSave;
 use identity::account::IdentityCreate;
 use identity::account::IdentityState;
 use identity::account::Result;
+use identity::did::DID;
 use identity::iota::IotaDID;
 use identity::iota::Network;
 
@@ -76,9 +77,10 @@ async fn main() -> Result<()> {
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   println!(
-    "[Example] Explore the DID Document = {}{}",
-    network.explorer_url().expect("no explorer url was set").to_string(),
-    iota_did.to_string()
+    "[Example] Explore the DID Document = {}",
+    network
+      .resolver_url(iota_did.as_str())
+      .expect("no explorer url was set")
   );
 
   Ok(())

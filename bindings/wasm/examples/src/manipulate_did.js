@@ -3,7 +3,7 @@
 
 import {Client, Config, KeyPair, KeyType, VerificationMethod, Service, Timestamp} from '@iota/identity-wasm';
 import {createIdentity} from "./create_did";
-import {logExplorerUrl} from "./utils";
+import {logExplorerUrl, logResolverUrl} from "./utils";
 
 /**
  This example shows how to add more to an existing DID Document.
@@ -54,7 +54,8 @@ async function manipulateIdentity(clientConfig) {
     const updateReceipt = await client.publishDocument(doc.toJSON());
 
     // Log the results.
-    logExplorerUrl("Identity Update:", clientConfig.network.toString(), updateReceipt.messageId);
+    logExplorerUrl("DID Document Update Transaction:", clientConfig.network, updateReceipt.messageId);
+    logResolverUrl("Explore the DID Document:", clientConfig.network, doc.id.toString());
     return {
         key,
         newKey,

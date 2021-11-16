@@ -88,9 +88,8 @@ async fn main() -> Result<()> {
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   println!(
-    "[Example] Explore the DID Document = {}{}",
-    iota_did.network()?.explorer_url().unwrap().to_string(),
-    iota_did.to_string()
+    "[Example] Explore the DID Document = {}",
+    iota_did.network()?.resolver_url(iota_did.as_str())?
   );
 
   // Ensure the resolved DID Document can verify the credential signature

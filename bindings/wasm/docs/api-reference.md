@@ -1454,6 +1454,7 @@ Deserializes a `KeyPair` object from a JSON object.
         * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
         * [.explorerURL](#Network+explorerURL) ⇒ <code>string</code> \| <code>undefined</code>
         * [.messageURL(message_id)](#Network+messageURL) ⇒ <code>string</code>
+        * [.resolverURL(did)](#Network+resolverURL) ⇒ <code>string</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
     * _static_
         * [.try_from_name(name)](#Network.try_from_name) ⇒ [<code>Network</code>](#Network)
@@ -1482,6 +1483,17 @@ Returns the web explorer URL of the given `message`.
 | Param | Type |
 | --- | --- |
 | message_id | <code>string</code> | 
+
+<a name="Network+resolverURL"></a>
+
+### network.resolverURL(did) ⇒ <code>string</code>
+Returns the web identity resolver URL for the given DID.
+
+**Kind**: instance method of [<code>Network</code>](#Network)  
+
+| Param | Type |
+| --- | --- |
+| did | <code>string</code> | 
 
 <a name="Network+toString"></a>
 

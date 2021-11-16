@@ -9,6 +9,7 @@
 //!
 //! cargo run --example private_tangle
 
+use identity::did::DID;
 use identity::iota::ClientBuilder;
 use identity::iota::DIDMessageEncoding;
 use identity::iota::IotaDID;
@@ -70,9 +71,10 @@ pub async fn main() -> Result<()> {
   let iota_did: &IotaDID = document.did();
 
   println!(
-    "[Example] Explore the DID Document = {}{}",
-    network.explorer_url().expect("no explorer url was set").to_string(),
-    iota_did.to_string()
+    "[Example] Explore the DID Document = {}",
+    network
+      .resolver_url(iota_did.as_str())
+      .expect("no explorer url was set")
   );
 
   Ok(())

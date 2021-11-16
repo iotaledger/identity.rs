@@ -74,7 +74,7 @@ async function resolveHistory(clientConfig) {
     const intReceipt1 = await client.publishDocument(intDoc1.toJSON());
 
     // Log the results.
-    logExplorerUrl("Int. Chain Update (1):", clientConfig.network.toString(), intReceipt1.messageId);
+    logExplorerUrl("Int. Chain Update (1):", clientConfig.network, intReceipt1.messageId);
 
     // ===========================================================================
     // Diff Chain Update 1
@@ -100,7 +100,7 @@ async function resolveHistory(clientConfig) {
 
     // Publish the diff to the Tangle, starting a diff chain.
     const diffReceipt1 = await client.publishDiff(intReceipt1.messageId, diff1);
-    logExplorerUrl("Diff Chain Transaction (1):", clientConfig.network.toString(), diffReceipt1.messageId);
+    logExplorerUrl("Diff Chain Transaction (1):", clientConfig.network, diffReceipt1.messageId);
 
     // ===========================================================================
     // Diff Chain Update 2
@@ -128,7 +128,7 @@ async function resolveHistory(clientConfig) {
     // Note that we still use the `messageId` from the last integration chain message here to link
     // the current diff chain to that point on the integration chain.
     const diffReceipt2 = await client.publishDiff(intReceipt1.messageId, diff2);
-    logExplorerUrl("Diff Chain Transaction (2):", clientConfig.network.toString(), diffReceipt2.messageId);
+    logExplorerUrl("Diff Chain Transaction (2):", clientConfig.network, diffReceipt2.messageId);
 
     // ===========================================================================
     // Diff Chain Spam
@@ -178,7 +178,7 @@ async function resolveHistory(clientConfig) {
     const intReceipt2 = await client.publishDocument(intDoc2.toJSON());
 
     // Log the results.
-    logExplorerUrl("Int. Chain Update (2):", clientConfig.network.toString(), intReceipt2.messageId);
+    logExplorerUrl("Int. Chain Update (2):", clientConfig.network, intReceipt2.messageId);
 
     // ===========================================================================
     // DID History 2

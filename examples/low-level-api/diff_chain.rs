@@ -13,6 +13,7 @@ use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::DocumentDiff;
 use identity::iota::Receipt;
+use identity::iota::TangleRef;
 use identity::prelude::*;
 
 mod create_did;
@@ -55,7 +56,11 @@ async fn main() -> Result<()> {
   println!("Diff Update Receipt > {:#?}", update_receipt);
 
   // Display the web explorer url that shows the published diff message.
-  println!("Diff Transaction > {}", update_receipt.message_url()?);
+  println!("Diff Update Transaction > {}", update_receipt.message_url()?);
+  println!(
+    "Explore the DID Document > {}",
+    update_receipt.network().resolver_url(document.did().as_str())?
+  );
 
   Ok(())
 }

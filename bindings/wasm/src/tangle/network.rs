@@ -47,6 +47,12 @@ impl WasmNetwork {
     self.0.message_url(message_id).map(|url| url.to_string()).wasm_result()
   }
 
+  /// Returns the web identity resolver URL for the given DID.
+  #[wasm_bindgen(js_name = resolverURL)]
+  pub fn resolver_url(&self, did: &str) -> Result<String> {
+    self.0.resolver_url(did).map(|url| url.to_string()).wasm_result()
+  }
+
   #[allow(clippy::inherent_to_string, clippy::wrong_self_convention)]
   #[wasm_bindgen(js_name = toString)]
   pub fn to_string(&self) -> String {

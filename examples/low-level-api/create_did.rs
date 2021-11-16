@@ -6,6 +6,7 @@
 //!
 //! cargo run --example create_did
 
+use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::Receipt;
 use identity::iota::TangleRef;
@@ -34,6 +35,10 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, Receipt)> {
 
   // Display the web explorer url that shows the published message.
   println!("DID Document Transaction > {}", receipt.message_url()?);
+  println!(
+    "Explore the DID Document > {}",
+    receipt.network().resolver_url(document.did().as_str())?
+  );
 
   Ok((document, keypair, receipt))
 }

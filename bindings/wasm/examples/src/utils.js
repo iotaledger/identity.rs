@@ -2,14 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- Write out the Targle Explorer URL given the network and message ID, with the given preamble.
+ Write out the Tangle Explorer URL given the network and message ID, with the given preamble.
 
  @param {!string} preamble
- @param {!string} network
+ @param {Network} network
  @param {!string} messageId
  **/
 function logExplorerUrl(preamble, network, messageId) {
-    console.log(`${preamble} https://explorer.iota.org/${network}net/transaction/${messageId}`);
+    console.log(`${preamble} ${network.messageURL(messageId)}`);
+}
+
+/**
+ Write out the Tangle Identity Resolver URL given the network and DID, with the given preamble.
+
+ @param {!string} preamble
+ @param {Network} network
+ @param {!string} did
+ **/
+function logResolverUrl(preamble, network, did) {
+    console.log(`${preamble} ${network.resolverURL(did)}`);
 }
 
 /**
@@ -26,4 +37,4 @@ function prettyPrintJSON(data, title=null) {
     console.log(JSON.stringify(JSON.parse(data.toString()), null, 2));
 }
 
-export {logExplorerUrl, prettyPrintJSON}
+export {logExplorerUrl, logResolverUrl, prettyPrintJSON}

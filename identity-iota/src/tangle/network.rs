@@ -17,8 +17,8 @@ const NETWORK_NAME_MAIN: &str = "main";
 const NETWORK_NAME_DEV: &str = "dev";
 
 lazy_static! {
-  static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/mainnet/identity-resolver").unwrap();
-  static ref EXPLORER_DEV: Url = Url::parse("https://explorer.iota.org/devnet/identity-resolver/").unwrap();
+  static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/mainnet").unwrap();
+  static ref EXPLORER_DEV: Url = Url::parse("https://explorer.iota.org/devnet").unwrap();
   static ref NODE_MAIN: Url = Url::parse("https://chrysalis-nodes.iota.org").unwrap();
   static ref NODE_DEV: Url = Url::parse("https://api.lb-0.h.chrysalis-devnet.iota.cafe").unwrap();
 }
@@ -114,6 +114,8 @@ impl Network {
   }
 
   /// Returns the web explorer URL of the given `message_id`.
+  ///
+  /// E.g. https://explorer.iota.org/mainnet/message/<message_id>
   pub fn message_url(&self, message_id: &str) -> Result<Url> {
     let mut url = self.explorer_url().ok_or(Error::NoExplorerURLSet)?.clone();
     url
@@ -121,6 +123,19 @@ impl Network {
       .map_err(|_| Error::InvalidExplorerURL)?
       .push("message")
       .push(message_id);
+    Ok(url)
+  }
+
+  /// Returns the web identity resolver URL for the given DID.
+  ///
+  /// E.g. https://explorer.iota.org/mainnet/identity-resolver/<did>
+  pub fn resolver_url(&self, did: &str) -> Result<Url> {
+    let mut url = self.explorer_url().ok_or(Error::NoExplorerURLSet)?.clone();
+    url
+      .path_segments_mut()
+      .map_err(|_| Error::InvalidExplorerURL)?
+      .push("identity-resolver")
+      .push(did);
     Ok(url)
   }
 
