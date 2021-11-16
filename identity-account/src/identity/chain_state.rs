@@ -37,8 +37,8 @@ impl ChainState {
     &self.last_diff_message_id
   }
 
-  /// Sets the previous integration message id and sets the
-  /// `previous_diff_message_id` to [`MessageId::null()`].
+  /// Sets the last integration message id and resets the
+  /// last diff message id to [`MessageId::null()`].
   pub fn set_last_integration_message_id(&mut self, message: MessageId) {
     self.last_integration_message_id = message;
 
@@ -46,7 +46,7 @@ impl ChainState {
     self.last_diff_message_id = MessageId::null();
   }
 
-  /// Sets the previous diff message id.
+  /// Sets the last diff message id.
   pub fn set_last_diff_message_id(&mut self, message: MessageId) {
     self.last_diff_message_id = message;
   }

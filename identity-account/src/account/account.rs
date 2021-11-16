@@ -357,14 +357,18 @@ impl Account {
     let old_doc: &IotaDocument = old_state.document();
     let new_doc: &IotaDocument = self.state().document();
 
-    let mut diff_id: &MessageId = self.chain_state().last_diff_message_id();
+    let mut previous_message_id: &MessageId = self.chain_state().last_diff_message_id();
 
     // If there was no previous diff message, use the previous int message.
-    if diff_id.is_null() {
-      diff_id = self.chain_state.last_integration_message_id();
+    if previous_message_id.is_null() {
+      if !self.chain_state.last_integration_message_id().is_null() {
+        previous_message_id = self.chain_state.last_integration_message_id();
+      } else {
+        // TODO: Return a fatal error about the invalid chain state.
+      }
     }
 
-    let mut diff: DocumentDiff = DocumentDiff::new(old_doc, new_doc, *diff_id)?;
+    let mut diff: DocumentDiff = DocumentDiff::new(old_doc, new_doc, *previous_message_id)?;
 
     let method: &IotaVerificationMethod = old_state.document().default_signing_method()?;
 
