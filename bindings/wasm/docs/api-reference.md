@@ -42,6 +42,8 @@
 ## Members
 
 <dl>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
@@ -211,6 +213,7 @@ Creates a new `Client` with default settings for the given `Network`.
     * _instance_
         * [.setNetwork(network)](#Config+setNetwork)
         * [.setNode(url)](#Config+setNode)
+        * [.setEncoding(encoding)](#Config+setEncoding)
         * [.setPrimaryNode(url, jwt, username, password)](#Config+setPrimaryNode)
         * [.setPrimaryPoWNode(url, jwt, username, password)](#Config+setPrimaryPoWNode)
         * [.setPermanode(url, jwt, username, password)](#Config+setPermanode)
@@ -243,6 +246,15 @@ Creates a new `Client` with default settings for the given `Network`.
 | Param | Type |
 | --- | --- |
 | url | <code>string</code> | 
+
+<a name="Config+setEncoding"></a>
+
+### config.setEncoding(encoding)
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| encoding | <code>number</code> | 
 
 <a name="Config+setPrimaryNode"></a>
 
@@ -1757,6 +1769,10 @@ Deserializes a `VerificationMethod` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
+**Kind**: global variable  
 <a name="Digest"></a>
 
 ## Digest

@@ -1,13 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::collections::BTreeMap;
+
+use serde::de::DeserializeOwned;
+use serde::Serialize;
+
 use identity_core::common::Object;
 use identity_core::convert::FromJson;
 use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
-use serde::de::DeserializeOwned;
-use serde::Serialize;
-use std::collections::BTreeMap;
 
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
@@ -156,16 +158,17 @@ impl<'a, R: TangleResolve> CredentialValidator<'a, R> {
     })
   }
 
+  /// Resolves the document from the Tangle, which performs checks on all signatures etc.
   async fn validate_document(&self, did: impl AsRef<str>) -> Result<DocumentValidation> {
     let did: IotaDID = did.as_ref().parse()?;
     let document: IotaDocument = self.client.resolve(&did).await?;
-    let verified: bool = document.verify_self_signed().is_ok();
+    // TODO: check if document is deactivated, does that matter?
 
     Ok(DocumentValidation {
       did,
       document,
       metadata: Object::new(),
-      verified,
+      verified: true,
     })
   }
 }
