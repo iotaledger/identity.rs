@@ -18,13 +18,43 @@ pub type PrivateKey = Key<Private>;
 // =============================================================================
 
 pub use errors::KeyFormatError;
+pub use errors::KeyLengthError; 
+pub use errors::KeyParsingError; 
 mod errors {
   use thiserror::Error as DeriveError;
 
   /// Caused by attempting to parse an invalid cryptographic key.
-  #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, DeriveError)]
+  #[derive(Debug, DeriveError)]
   #[error("failed to parse cryptographic key(s): the provided key format is invalid")]
   pub struct KeyFormatError;
+
+  /// Caused by an attempt to create a key of an invalid length 
+  #[derive(Debug, DeriveError)]
+  #[error("invalid key length: expected {EXPECTED}, but found {actual}")]
+  pub struct KeyLengthError<const EXPECTED: usize> { 
+    /// The actual key length 
+    pub actual: usize,
+  }
+  
+  #[derive(Debug, DeriveError)]
+  /// Aggregate of errors related to parsing cryptographic keys. 
+  pub enum KeyParsingError<const PUBLIC_KEY_LENGTH: usize, const PRIVATE_KEY_LENGTH: usize>  {
+    /// Caused by attempting to parse a public key of incorrect length 
+    #[error("{0}")]
+    InvalidPublicKeyLength(KeyLengthError::<PUBLIC_KEY_LENGTH>),
+    /// Caused by attempting to parse a private key of incorrect length 
+    #[error("{0}")]
+    InvalidPrivateKeyLength(KeyLengthError::<PRIVATE_KEY_LENGTH>), 
+    /// Caused by failing to parse a cryptographic key for any reason
+    #[error("failed to parse cryptographic key(s): the provided key format is invalid")]
+    FormatError, 
+  }
+
+  impl<const PUBLIC_KEY_LENGTH: usize, const PRIVATE_KEY_LENGTH: usize> From<KeyFormatError> for KeyParsingError<PUBLIC_KEY_LENGTH, PRIVATE_KEY_LENGTH> {
+    fn from(_: KeyFormatError) -> Self {
+        Self::FormatError
+    }
+  }  
 }
 mod private {
   pub trait Sealed {}

@@ -10,8 +10,14 @@ use crypto::signatures::ed25519::SIGNATURE_LENGTH;
 
 use crate::crypto::Sign;
 use crate::crypto::Verify;
+use crate::crypto::key::KeyLengthError;
+use crate::crypto::key::KeyParsingError;
 use crate::error::Error;
 use crate::error::Result;
+
+type SecretKeyLengthError = KeyLengthError::<SECRET_KEY_LENGTH>;
+type PublicKeyLengthError = KeyLengthError::<PUBLIC_KEY_LENGTH>;
+pub type Ed22519KeyParsingError = KeyParsingError::<SECRET_KEY_LENGTH, PUBLIC_KEY_LENGTH>;
 
 /// An implementation of `Ed25519` signatures.
 #[derive(Clone, Copy, Debug)]
@@ -22,9 +28,10 @@ where
   T: AsRef<[u8]> + ?Sized,
 {
   type Private = T;
+  type Error = Ed22519KeyParsingError;  
   type Output = [u8; SIGNATURE_LENGTH];
 
-  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output> {
+  fn sign(message: &[u8], key: &Self::Private) -> std::result::Result<Self::Output, Self::Error> {
     parse_secret(key.as_ref()).map(|key| key.sign(message).to_bytes())
   }
 }
@@ -36,7 +43,7 @@ where
   type Public = T;
 
   fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<()> {
-    let key: ed25519::PublicKey = parse_public(key.as_ref())?;
+    let key: ed25519::PublicKey = parse_public(key.as_ref()).map_err(|_|Error::Crypto(crypto::Error::PrivateKeyError))?; //TODO: WRONG ERROR FIX THIS
     let sig: ed25519::Signature = parse_signature(signature)?;
 
     if key.verify(&sig, message) {
@@ -47,20 +54,20 @@ where
   }
 }
 
-fn parse_public(slice: &[u8]) -> Result<ed25519::PublicKey> {
+fn parse_public(slice: &[u8]) -> std::result::Result<ed25519::PublicKey, Ed22519KeyParsingError> {
   let bytes: [u8; PUBLIC_KEY_LENGTH] = slice
     .get(..PUBLIC_KEY_LENGTH)
     .and_then(|bytes| bytes.try_into().ok())
-    .ok_or_else(|| Error::InvalidKeyLength(slice.len(), PUBLIC_KEY_LENGTH))?;
+    .ok_or_else(|| Ed22519KeyParsingError::InvalidPublicKeyLength(PublicKeyLengthError {actual: slice.len()}))?;
 
-  ed25519::PublicKey::try_from_bytes(bytes).map_err(Into::into)
+  ed25519::PublicKey::try_from_bytes(bytes).map_err(|_|Ed22519KeyParsingError::FormatError)
 }
 
-fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey> {
+fn parse_secret(slice: &[u8]) -> std::result::Result<ed25519::SecretKey, Ed22519KeyParsingError> {
   let bytes: [u8; SECRET_KEY_LENGTH] = slice
     .get(..SECRET_KEY_LENGTH)
     .and_then(|bytes| bytes.try_into().ok())
-    .ok_or_else(|| Error::InvalidKeyLength(slice.len(), SECRET_KEY_LENGTH))?;
+    .ok_or_else(|| Ed22519KeyParsingError::InvalidPrivateKeyLength(SecretKeyLengthError{ actual: slice.len() }))?;
 
   Ok(ed25519::SecretKey::from_bytes(bytes))
 }

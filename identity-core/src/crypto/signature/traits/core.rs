@@ -18,8 +18,11 @@ pub trait Sign {
   /// The output type of this signature implementation.
   type Output;
 
+  /// Error describing how `sign` may fail 
+  type Error;
+
   /// Signs the given `message` with `key` and returns a digital signature.
-  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output>;
+  fn sign(message: &[u8], key: &Self::Private) -> std::result::Result<Self::Output, Self::Error>;
 }
 
 // =============================================================================
