@@ -1,8 +1,5 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-use std::path::PathBuf;
-use std::sync::Arc;
-
 use crate::account::Account;
 use crate::account::Config;
 use crate::error::Error;
@@ -15,7 +12,7 @@ use crate::identity::IdentitySnapshot;
 use crate::identity::IdentityState;
 use crate::identity::TinyMethod;
 use crate::storage::MemStore;
-use crate::storage::Stronghold;
+
 use crate::types::Generation;
 use crate::types::MethodSecret;
 use identity_core::common::UnixTimestamp;
@@ -25,7 +22,6 @@ use identity_core::crypto::KeyType;
 use identity_core::crypto::PrivateKey;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
-use identity_iota::did::IotaDID;
 
 async fn new_account() -> Result<Account> {
   let store: MemStore = MemStore::new();
