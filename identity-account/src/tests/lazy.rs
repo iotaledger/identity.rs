@@ -10,8 +10,8 @@ use crate::storage::MemStore;
 use futures::Future;
 
 use identity_core::common::Url;
+use identity_did::verification::MethodScope;
 use identity_iota::chain::DocumentHistory;
-use identity_iota::did::IotaVerificationMethod;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::Network;
 use identity_iota::Error as IotaError;
@@ -38,8 +38,7 @@ async fn test_lazy_updates() -> Result<()> {
       let config = AccountConfig::default().autopublish(false);
       let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
 
-      let mut account =
-        Account::create_identity(account_config, IdentitySetup::new().network(network.name()).unwrap()).await?;
+      let mut account = Account::create_identity(account_config, IdentitySetup::new().network(network.name())?).await?;
 
       account
         .update_identity()
@@ -67,16 +66,11 @@ async fn test_lazy_updates() -> Result<()> {
 
       let doc = account.resolve_identity().await?;
 
-      let services = doc.service();
-
       assert_eq!(doc.methods().count(), 1);
-      assert_eq!(services.len(), 2);
+      assert_eq!(doc.service().len(), 2);
 
-      for service in services.iter() {
-        let service_fragment = service.id().fragment().unwrap();
-        assert!(["my-service", "my-other-service"]
-          .iter()
-          .any(|fragment| *fragment == service_fragment));
+      for service in ["my-service", "my-other-service"] {
+        assert!(doc.service().query(service).is_some());
       }
 
       // ===========================================================================
@@ -111,20 +105,16 @@ async fn test_lazy_updates() -> Result<()> {
       // ===========================================================================
 
       let doc = account.resolve_identity().await?;
-      let methods = doc.methods().collect::<Vec<&IotaVerificationMethod>>();
 
       assert_eq!(doc.service().len(), 0);
-      assert_eq!(methods.len(), 2);
+      assert_eq!(doc.methods().count(), 2);
 
-      for method in methods {
-        let method_fragment = method.id_core().fragment().unwrap_or_default();
-        assert!(["sign-0", "new-method"]
-          .iter()
-          .any(|fragment| *fragment == method_fragment));
+      for method in ["sign-0", "new-method"] {
+        assert!(doc.resolve_method(method).is_some());
       }
 
       // ===========================================================================
-      // History assertions
+      // History assertions 1
       // ===========================================================================
 
       let client: Client = Client::from_network(network).await?;
@@ -133,6 +123,30 @@ async fn test_lazy_updates() -> Result<()> {
 
       assert_eq!(history.integration_chain_data.len(), 1);
       assert_eq!(history.diff_chain_data.len(), 1);
+
+      // ===========================================================================
+      // More updates to the identity
+      // ===========================================================================
+
+      account
+        .update_identity()
+        .create_method()
+        .fragment("signing-key")
+        // Forces an integration update by adding a method able to update the document.
+        .scope(MethodScope::capability_invocation())
+        .apply()
+        .await?;
+
+      account.publish_updates().await?;
+
+      // ===========================================================================
+      // History assertions 2
+      // ===========================================================================
+
+      let history: DocumentHistory = client.resolve_history(account.did()).await?;
+
+      assert_eq!(history.integration_chain_data.len(), 2);
+      assert_eq!(history.diff_chain_data.len(), 0);
 
       Ok(())
     })

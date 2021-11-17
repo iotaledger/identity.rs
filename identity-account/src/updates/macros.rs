@@ -9,7 +9,7 @@ macro_rules! ensure {
   };
 }
 
-macro_rules! impl_command_builder {
+macro_rules! impl_update_builder {
   (@finish $this:ident optional $field:ident $ty:ty) => {
     $this.$field
   };
@@ -26,7 +26,7 @@ macro_rules! impl_command_builder {
     match $this.$field {
       Some(value) => value,
       None => return Err($crate::Error::UpdateError(
-        $crate::events::UpdateError::MissingRequiredField(stringify!($field)),
+        $crate::updates::UpdateError::MissingRequiredField(stringify!($field)),
       )),
     }
   };
@@ -59,13 +59,13 @@ macro_rules! impl_command_builder {
         }
 
         pub async fn apply(self) -> $crate::Result<()> {
-          let update = $crate::events::Update::$ident {
+          let update = $crate::updates::Update::$ident {
             $(
-              $field: impl_command_builder!(@finish self $requirement $field $ty $(= $value)?),
+              $field: impl_update_builder!(@finish self $requirement $field $ty $(= $value)?),
             )*
           };
 
-          self.account.process_update(update, false).await
+          self.account.process_update(update).await
         }
       }
 

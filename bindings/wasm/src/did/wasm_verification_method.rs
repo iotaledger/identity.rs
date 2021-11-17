@@ -31,7 +31,7 @@ impl WasmVerificationMethod {
   /// Creates a new `VerificationMethod` object from the given `did` and `key`.
   #[wasm_bindgen(js_name = fromDID)]
   pub fn from_did(did: &WasmDID, key: &KeyPair, fragment: String) -> Result<WasmVerificationMethod, JsValue> {
-    IotaVerificationMethod::from_did(did.0.clone(), &key.0, &fragment)
+    IotaVerificationMethod::from_did(did.0.clone(), key.0.type_(), key.0.public(), &fragment)
       .map_err(wasm_error)
       .map(Self)
   }
