@@ -57,6 +57,4 @@ pub enum Error {
   CompressionError,
   #[error("invalid message flags")]
   InvalidMessageFlags,
-  #[error("Unable to Check Message Inclusion in the Tangle")]
-  MessageInclusionNotChecked,
 }

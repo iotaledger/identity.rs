@@ -122,25 +122,28 @@ impl Client {
     max_attempts: Option<u64>,
   ) -> Result<Receipt> {
     let receipt: Receipt = self.publish_json(index, data).await?;
-    let reattached_messages: Vec<(MessageId, Message)> = match self
+    let retry_result: Result<Vec<(MessageId, Message)>, IotaClientError> = self
       .client
       .retry_until_included(receipt.message_id(), interval, max_attempts)
-      .await
-    {
+      .await;
+    let reattached_messages: Vec<(MessageId, Message)> = match retry_result {
       Ok(reattached_messages) => reattached_messages,
-      Err(e) => match e {
-        IotaClientError::TangleInclusionError(_) => {
-          if self.is_message_included(receipt.message_id()).await? {
-            return Ok(receipt);
-          }
-          return Err(Error::from(e));
+      Err(inclusion_error @ IotaClientError::TangleInclusionError(_)) => {
+        if self.is_message_included(receipt.message_id()).await? {
+          return Ok(receipt);
+        } else {
+          return Err(Error::from(inclusion_error));
         }
-        _ => return Err(Error::from(e)),
-      },
+      }
+      Err(error) => {
+        return Err(Error::from(error));
+      }
     };
     match reattached_messages.into_iter().next() {
       Some((_, message)) => Ok(Receipt::new(self.network.clone(), message)),
-      None => Err(Error::MessageInclusionNotChecked),
+      None => Err(Error::from(IotaClientError::TangleInclusionError(
+        receipt.message_id().to_string(),
+      ))),
     }
   }
 
