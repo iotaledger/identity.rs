@@ -162,39 +162,31 @@ impl AccountBuilder {
     Ok(())
   }
 
+  async fn build_setup(&mut self) -> Result<AccountSetup> {
+    self.build_clients().await?;
+
+    Ok(AccountSetup::new_with_options(
+      self.get_storage().await?,
+      Some(self.config.clone()),
+      Some(Arc::clone(&self.client_map)),
+    ))
+  }
+
   /// Creates a new identity based on the builder configuration and returns
   /// an [`Account`] instance to manage it.
   /// The identity is stored locally in the [`Storage`].
   ///
   /// See [`IdentityCreate`] to customize the identity creation.
   pub async fn create_identity(&mut self, input: IdentitySetup) -> Result<Account> {
-    self.build_clients().await?;
-
-    let setup = AccountSetup::new_with_options(
-      self.get_storage().await?,
-      Some(self.config.clone()),
-      Some(Arc::clone(&self.client_map)),
-    );
-
-    let account = Account::create_identity(setup, input).await?;
-
-    Ok(account)
+    let setup: AccountSetup = self.build_setup().await?;
+    Account::create_identity(setup, input).await
   }
 
   /// Loads an existing identity with the specified `did` using the current builder configuration.
   /// The identity must exist in the configured [`Storage`].
   pub async fn load_identity(&mut self, did: IotaDID) -> Result<Account> {
-    self.build_clients().await?;
-
-    let setup = AccountSetup::new_with_options(
-      self.get_storage().await?,
-      Some(self.config.clone()),
-      Some(Arc::clone(&self.client_map)),
-    );
-
-    let account = Account::load_identity(setup, did).await?;
-
-    Ok(account)
+    let setup: AccountSetup = self.build_setup().await?;
+    Account::load_identity(setup, did).await
   }
 }
 
