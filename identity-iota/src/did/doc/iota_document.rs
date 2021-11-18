@@ -381,16 +381,15 @@ impl IotaDocument {
   }
 
   /// Adds a new [`IotaVerificationMethod`] to the DID Document.
-  pub fn insert_method(&mut self, method: IotaVerificationMethod, scope: MethodScope) -> bool {
-    self.document.insert_method(method.into(), scope)
+  pub fn insert_method(&mut self, method: IotaVerificationMethod, scope: MethodScope) -> Result<()> {
+    Ok(self.document.insert_method(method.into(), scope)?)
   }
 
   /// Removes all occurrences of and references to the specified [`VerificationMethod`]
   /// from this document.
   pub fn remove_method(&mut self, did_url: IotaDIDUrl) -> Result<()> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
-    self.document.remove_method(&core_did_url);
-    Ok(())
+    Ok(self.document.remove_method(&core_did_url)?)
   }
 
   /// Attaches the relationship to the given method, if the method exists.
@@ -399,15 +398,13 @@ impl IotaDocument {
   /// so it cannot be an embedded one.
   pub fn attach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
-    let was_attached = self.document.attach_method_relationship(core_did_url, relationship)?;
-    Ok(was_attached)
+    Ok(self.document.attach_method_relationship(core_did_url, relationship)?)
   }
 
   /// Detaches the given relationship from the given method, if the method exists.
   pub fn detach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
-    let was_detached = self.document.detach_method_relationship(core_did_url, relationship)?;
-    Ok(was_detached)
+    Ok(self.document.detach_method_relationship(core_did_url, relationship)?)
   }
 
   /// Returns the first [`IotaVerificationMethod`] with an `id` property
@@ -1224,7 +1221,9 @@ mod tests {
     // Add a new capability invocation method directly
     let new_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let new_method: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&new_keypair, "new_signer").unwrap();
-    document.insert_method(new_method, MethodScope::capability_invocation());
+    document
+      .insert_method(new_method, MethodScope::capability_invocation())
+      .unwrap();
 
     // INVALID - try sign using the wrong private key
     document.sign_self(keypair.private(), "#new_signer").unwrap();
@@ -1277,7 +1276,7 @@ mod tests {
       let keypair_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       let method_new: IotaVerificationMethod =
         IotaVerificationMethod::from_keypair(&keypair_new, "new_signer").unwrap();
-      document.insert_method(method_new, method_scope);
+      document.insert_method(method_new, method_scope).unwrap();
       // Try sign the document using the new key.
       assert!(document.sign_self(keypair_new.private(), "#new_signer").is_err());
       assert!(document.verify_self_signed().is_err());
@@ -1291,7 +1290,9 @@ mod tests {
       let merkle_key_method =
         IotaVerificationMethod::create_merkle_key::<Sha256>(document.id().clone(), &key_collection, "merkle-key")
           .unwrap();
-      document.insert_method(merkle_key_method, MethodScope::capability_invocation());
+      document
+        .insert_method(merkle_key_method, MethodScope::capability_invocation())
+        .unwrap();
       assert!(document
         .sign_self(key_collection.private(0).unwrap(), "merkle-key")
         .is_err());
@@ -1317,7 +1318,7 @@ mod tests {
       let method_fragment = format!("{}-1", scope.as_str().to_ascii_lowercase());
       let method_new: IotaVerificationMethod =
         IotaVerificationMethod::from_keypair(&key2, method_fragment.as_str()).unwrap();
-      assert!(doc1.insert_method(method_new, scope));
+      assert!(doc1.insert_method(method_new, scope).is_ok());
       assert!(doc1
         .as_document()
         .try_resolve_method_with_scope(method_fragment.as_str(), scope)
@@ -1378,7 +1379,7 @@ mod tests {
       let method_fragment = format!("{}-1", scope.as_str().to_ascii_lowercase());
       let method_new: IotaVerificationMethod =
         IotaVerificationMethod::from_keypair(&key_new, method_fragment.as_str()).unwrap();
-      document.insert_method(method_new, scope);
+      document.insert_method(method_new, scope).unwrap();
 
       // Sign and verify data.
       let mut data = generate_data();
@@ -1473,7 +1474,9 @@ mod tests {
       let keypair_new: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
       let method_new: IotaVerificationMethod =
         IotaVerificationMethod::from_keypair(&keypair_new, "new_signer").unwrap();
-      document.insert_method(method_new, MethodScope::capability_invocation());
+      document
+        .insert_method(method_new, MethodScope::capability_invocation())
+        .unwrap();
       // Sign the document using the new key.
       document.sign_self(keypair_new.private(), "#new_signer").unwrap();
       assert!(document.verify_self_signed().is_ok());
@@ -1522,7 +1525,9 @@ mod tests {
     let new_keypair: KeyPair = KeyPair::new(KeyType::Ed25519).unwrap();
     let new_method: IotaVerificationMethod = IotaVerificationMethod::from_keypair(&new_keypair, "new_signer").unwrap();
     let new_method_id: IotaDIDUrl = new_method.id();
-    document.insert_method(new_method, MethodScope::capability_invocation());
+    document
+      .insert_method(new_method, MethodScope::capability_invocation())
+      .unwrap();
     assert_eq!(document.default_signing_method().unwrap().id(), signing_method.id());
 
     // Removing the original signing method returns the next one.
@@ -1638,7 +1643,9 @@ mod tests {
       IotaVerificationMethod::from_did(doc1.id().to_owned(), keypair2.type_(), keypair2.public(), "test-0").unwrap();
 
     doc1.remove_method(doc1.id().to_url().join("#test-0").unwrap()).unwrap();
-    doc1.insert_method(method2, MethodScope::capability_invocation());
+    doc1
+      .insert_method(method2, MethodScope::capability_invocation())
+      .unwrap();
 
     // Even though the method fragment is the same, the key material has been updated
     // so the two documents are expected to not be equal.
@@ -1649,10 +1656,10 @@ mod tests {
     let method3: IotaVerificationMethod =
       IotaVerificationMethod::from_did(doc1.id().to_owned(), keypair3.type_(), keypair3.public(), "test-0").unwrap();
 
-    let was_inserted = doc2.insert_method(method3, MethodScope::capability_invocation());
+    let insertion_result = doc2.insert_method(method3, MethodScope::capability_invocation());
 
     // Nothing was inserted, because a method with the same fragment already existed.
-    assert!(!was_inserted);
+    assert!(insertion_result.is_err());
     assert_eq!(doc1, doc2);
   }
 }

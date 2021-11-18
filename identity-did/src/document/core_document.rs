@@ -236,35 +236,50 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 
   /// Adds a new [`VerificationMethod`] to the Document.
-  pub fn insert_method(&mut self, method: VerificationMethod<U>, scope: MethodScope) -> bool {
+  pub fn insert_method(&mut self, method: VerificationMethod<U>, scope: MethodScope) -> Result<()> {
+    if self.resolve_method(method.id()).is_some() {
+      return Err(Error::InvalidMethodDuplicate);
+    }
+
     match scope {
-      MethodScope::VerificationMethod => self.verification_method.append(method),
+      MethodScope::VerificationMethod => {
+        self.verification_method.append(method);
+      }
       MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
-        self.authentication.append(MethodRef::Embed(method))
+        self.authentication.append(MethodRef::Embed(method));
       }
       MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => {
-        self.assertion_method.append(MethodRef::Embed(method))
+        self.assertion_method.append(MethodRef::Embed(method));
       }
       MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => {
-        self.key_agreement.append(MethodRef::Embed(method))
+        self.key_agreement.append(MethodRef::Embed(method));
       }
       MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => {
-        self.capability_delegation.append(MethodRef::Embed(method))
+        self.capability_delegation.append(MethodRef::Embed(method));
       }
       MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => {
-        self.capability_invocation.append(MethodRef::Embed(method))
+        self.capability_invocation.append(MethodRef::Embed(method));
       }
-    }
+    };
+
+    Ok(())
   }
 
   /// Removes all references to the specified [`VerificationMethod`].
-  pub fn remove_method(&mut self, did: &CoreDIDUrl) {
-    self.authentication.remove(did);
-    self.assertion_method.remove(did);
-    self.key_agreement.remove(did);
-    self.capability_delegation.remove(did);
-    self.capability_invocation.remove(did);
-    self.verification_method.remove(did);
+  pub fn remove_method(&mut self, did: &CoreDIDUrl) -> Result<()> {
+    let mut was_removed = false;
+    was_removed = was_removed || self.authentication.remove(did);
+    was_removed = was_removed || self.assertion_method.remove(did);
+    was_removed = was_removed || self.key_agreement.remove(did);
+    was_removed = was_removed || self.capability_delegation.remove(did);
+    was_removed = was_removed || self.capability_invocation.remove(did);
+    was_removed = was_removed || self.verification_method.remove(did);
+
+    if was_removed {
+      Ok(())
+    } else {
+      Err(Error::QueryMethodNotFound)
+    }
   }
 
   /// Attaches the relationship to the given method, if the method exists.
@@ -628,7 +643,7 @@ mod tests {
 
     let fragment = "#attach-test";
     let method = method(document.id(), fragment);
-    document.insert_method(method, MethodScope::VerificationMethod);
+    document.insert_method(method, MethodScope::VerificationMethod).unwrap();
 
     assert!(document
       .attach_method_relationship(
@@ -673,7 +688,7 @@ mod tests {
 
     let fragment = "#detach-test";
     let method = method(document.id(), fragment);
-    document.insert_method(method, MethodScope::VerificationMethod);
+    document.insert_method(method, MethodScope::VerificationMethod).unwrap();
 
     assert!(document
       .attach_method_relationship(
@@ -710,5 +725,51 @@ mod tests {
         MethodRelationship::AssertionMethod,
       )
       .is_err());
+  }
+
+  #[test]
+  fn test_method_insert_duplication() {
+    let mut document: CoreDocument = document();
+
+    let fragment = "#duplication-test";
+    let method1 = method(document.id(), fragment);
+    assert!(document
+      .insert_method(method1.clone(), MethodScope::VerificationMethod)
+      .is_ok());
+    assert!(document
+      .insert_method(method1.clone(), MethodScope::VerificationMethod)
+      .is_err());
+    assert!(document
+      .insert_method(method1.clone(), MethodScope::authentication())
+      .is_err());
+
+    let fragment = "#duplication-test-2";
+    let method2 = method(document.id(), fragment);
+    assert!(document.insert_method(method2, MethodScope::assertion_method()).is_ok());
+    assert!(document
+      .insert_method(method1.clone(), MethodScope::VerificationMethod)
+      .is_err());
+    assert!(document
+      .insert_method(method1, MethodScope::capability_delegation())
+      .is_err());
+  }
+
+  #[test]
+  fn test_method_remove_existence() {
+    let mut document: CoreDocument = document();
+
+    let fragment = "#existence-test";
+    let method1 = method(document.id(), fragment);
+    assert!(document
+      .insert_method(method1.clone(), MethodScope::VerificationMethod)
+      .is_ok());
+    assert!(document.remove_method(method1.id()).is_ok());
+    assert!(document.remove_method(method1.id()).is_err());
+
+    let fragment = "#existence-test-2";
+    let method2 = method(document.id(), fragment);
+    assert!(document.insert_method(method2, MethodScope::assertion_method()).is_ok());
+    assert!(document.remove_method(method1.id()).is_err());
+    assert!(document.remove_method(method1.id()).is_err());
   }
 }
