@@ -2,5 +2,4 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod account;
-mod lazy;
 mod updates;
