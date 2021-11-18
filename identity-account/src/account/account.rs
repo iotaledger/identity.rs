@@ -84,7 +84,7 @@ impl Account {
   /// The identity is stored locally in the [`Storage`] given in [`AccountSetup`], and published
   /// using the [`ClientMap`].
   ///
-  /// See [`IdentityCreate`] to customize the identity creation.
+  /// See [`IdentitySetup`] to customize the identity creation.
   pub(crate) async fn create_identity(setup: AccountSetup, input: IdentitySetup) -> Result<Self> {
     let (did_lease, state): (DIDLease, IdentityState) = create_identity(input, setup.storage.as_ref()).await?;
 

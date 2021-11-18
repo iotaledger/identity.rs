@@ -43,7 +43,7 @@ async fn main() -> Result<()> {
 
   // Now we want to modify the iota_did1 identity - how do we do that?
   // We can load the identity from storage into an account using the builder.
-  let mut account1 = builder.load_identity(iota_did1).await?;
+  let mut account1: Account = builder.load_identity(iota_did1).await?;
 
   // Now we can modify the identity.
   account1

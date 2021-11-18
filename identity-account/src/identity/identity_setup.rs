@@ -18,7 +18,7 @@ pub struct IdentitySetup {
 }
 
 impl IdentitySetup {
-  /// Creates a new `IdentityCreate` instance.
+  /// Creates a new `IdentitySetup` instance.
   pub const fn new() -> Self {
     Self {
       key_type: KeyType::Ed25519,

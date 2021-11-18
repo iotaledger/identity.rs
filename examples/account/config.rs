@@ -60,9 +60,9 @@ async fn main() -> Result<()> {
 
   // Create an identity specifically on the devnet by passing `network_name`
   // The same applies if we wanted to create an identity on a private tangle
-  let id_create = IdentitySetup::new().network(network_name)?;
+  let identity_setup: IdentitySetup = IdentitySetup::new().network(network_name)?;
 
-  let identity: Account = match builder.create_identity(id_create).await {
+  let identity: Account = match builder.create_identity(identity_setup).await {
     Ok(identity) => identity,
     Err(err) => {
       eprintln!("[Example] Error: {:?} {}", err, err.to_string());

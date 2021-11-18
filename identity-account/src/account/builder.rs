@@ -37,14 +37,17 @@ pub enum AccountStorage {
   Custom(Arc<dyn Storage>),
 }
 
-/// An [`Account`] builder for easier account configuration.
+/// An [`Account`] builder for easy account configuration.
 ///
-/// Accounts created from the same builder share the [`Storage`],
-/// used to store identities, and the [`ClientMap`], used to
-/// publish identities to the Tangle.
+/// To reduce memory usage, accounts created from the same builder share the same [`Storage`],
+/// used to store identities, and [`ClientMap`], used to
+/// publish identities to the Tangle. This means using [`AccountBuilder::client`]
+/// to customize a client, will modify the existing client map in previously
+/// built accounts, when the next account is built.
 ///
-/// The [`Config`] on the other hand is cloned for each account.
-/// This means a builder can be reconfigured in-between account creations.
+/// The configuration on the other hand is cloned, and therefore unique for each built account.
+/// This means a builder can be reconfigured in-between account creations, without affecting
+/// the configuration of previously built accounts.
 #[derive(Debug)]
 pub struct AccountBuilder {
   config: AccountConfig,
@@ -68,7 +71,7 @@ impl AccountBuilder {
 
   /// Sets the account auto-save behaviour.
   ///
-  /// See the config's [`autosave`][Config::autosave] documentation for details.
+  /// See the config's [`autosave`][AccountConfig::autosave] documentation for details.
   pub fn autosave(mut self, value: AutoSave) -> Self {
     self.config = self.config.autosave(value);
     self
@@ -76,7 +79,7 @@ impl AccountBuilder {
 
   /// Sets the account auto-publish behaviour.
   ///
-  /// See the config's [`autopublish`][Config::autopublish] documentation for details.
+  /// See the config's [`autopublish`][AccountConfig::autopublish] documentation for details.
   pub fn autopublish(mut self, value: bool) -> Self {
     self.config = self.config.autopublish(value);
     self
@@ -84,7 +87,7 @@ impl AccountBuilder {
 
   /// Save the account state on drop.
   ///
-  /// See the config's [`dropsave`][Config::dropsave] documentation for details.
+  /// See the config's [`dropsave`][AccountConfig::dropsave] documentation for details.
   pub fn dropsave(mut self, value: bool) -> Self {
     self.config = self.config.dropsave(value);
     self
@@ -176,7 +179,7 @@ impl AccountBuilder {
   /// an [`Account`] instance to manage it.
   /// The identity is stored locally in the [`Storage`].
   ///
-  /// See [`IdentityCreate`] to customize the identity creation.
+  /// See [`IdentitySetup`] to customize the identity creation.
   pub async fn create_identity(&mut self, input: IdentitySetup) -> Result<Account> {
     let setup: AccountSetup = self.build_setup().await?;
     Account::create_identity(setup, input).await
