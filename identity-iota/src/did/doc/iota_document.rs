@@ -393,12 +393,17 @@ impl IotaDocument {
     Ok(())
   }
 
+  /// Attaches the relationship to the given method, if the method exists.
+  ///
+  /// Note: The method needs to be in the set of verification methods,
+  /// so it cannot be an embedded one.
   pub fn attach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
     let was_attached = self.document.attach_method_relationship(core_did_url, relationship)?;
     Ok(was_attached)
   }
 
+  /// Detaches the given relationship from the given method, if the method exists.
   pub fn detach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
     let was_detached = self.document.detach_method_relationship(core_did_url, relationship)?;

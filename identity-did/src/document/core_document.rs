@@ -296,7 +296,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     Ok(was_attached)
   }
 
-  // Detaches the given relationship from the given method, if the method exists.
+  /// Detaches the given relationship from the given method, if the method exists.
   pub fn detach_method_relationship<'query, Q>(
     &mut self,
     method_query: Q,
