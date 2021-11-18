@@ -22,6 +22,7 @@ use crate::service::Service;
 use crate::utils::OrderedSet;
 use crate::verification::MethodQuery;
 use crate::verification::MethodRef;
+use crate::verification::MethodRelationship;
 use crate::verification::MethodScope;
 use crate::verification::VerificationMethod;
 
@@ -238,11 +239,21 @@ impl<T, U, V> CoreDocument<T, U, V> {
   pub fn insert_method(&mut self, method: VerificationMethod<U>, scope: MethodScope) -> bool {
     match scope {
       MethodScope::VerificationMethod => self.verification_method.append(method),
-      MethodScope::Authentication => self.authentication.append(MethodRef::Embed(method)),
-      MethodScope::AssertionMethod => self.assertion_method.append(MethodRef::Embed(method)),
-      MethodScope::KeyAgreement => self.key_agreement.append(MethodRef::Embed(method)),
-      MethodScope::CapabilityDelegation => self.capability_delegation.append(MethodRef::Embed(method)),
-      MethodScope::CapabilityInvocation => self.capability_invocation.append(MethodRef::Embed(method)),
+      MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
+        self.authentication.append(MethodRef::Embed(method))
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => {
+        self.assertion_method.append(MethodRef::Embed(method))
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => {
+        self.key_agreement.append(MethodRef::Embed(method))
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => {
+        self.capability_delegation.append(MethodRef::Embed(method))
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => {
+        self.capability_invocation.append(MethodRef::Embed(method))
+      }
     }
   }
 
@@ -254,6 +265,59 @@ impl<T, U, V> CoreDocument<T, U, V> {
     self.capability_delegation.remove(did);
     self.capability_invocation.remove(did);
     self.verification_method.remove(did);
+  }
+
+  /// Attaches the relationship to the given method, if the method exists.
+  ///
+  /// Note: The method needs to be in the set of verification methods,
+  /// so it cannot be an embedded one.
+  pub fn attach_method_relationship<'query, Q>(
+    &mut self,
+    method_query: Q,
+    relationship: MethodRelationship,
+  ) -> Result<bool>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    let method: &VerificationMethod<_> = self
+      .resolve_method_with_scope(method_query, MethodScope::VerificationMethod)
+      .ok_or(Error::QueryMethodNotFound)?;
+
+    let method_ref = MethodRef::Refer(method.id().clone());
+
+    let was_attached = match relationship {
+      MethodRelationship::Authentication => self.authentication_mut().append(method_ref),
+      MethodRelationship::AssertionMethod => self.assertion_method_mut().append(method_ref),
+      MethodRelationship::KeyAgreement => self.key_agreement_mut().append(method_ref),
+      MethodRelationship::CapabilityDelegation => self.capability_delegation_mut().append(method_ref),
+      MethodRelationship::CapabilityInvocation => self.capability_invocation_mut().append(method_ref),
+    };
+
+    Ok(was_attached)
+  }
+
+  /// Detaches the given relationship from the given method, if the method exists.
+  pub fn detach_method_relationship<'query, Q>(
+    &mut self,
+    method_query: Q,
+    relationship: MethodRelationship,
+  ) -> Result<bool>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    let method: &VerificationMethod<_> = self.resolve_method(method_query).ok_or(Error::QueryMethodNotFound)?;
+
+    let did_url: CoreDIDUrl = method.id().clone();
+
+    let was_detached = match relationship {
+      MethodRelationship::Authentication => self.authentication_mut().remove(&did_url),
+      MethodRelationship::AssertionMethod => self.assertion_method_mut().remove(&did_url),
+      MethodRelationship::KeyAgreement => self.key_agreement_mut().remove(&did_url),
+      MethodRelationship::CapabilityDelegation => self.capability_delegation_mut().remove(&did_url),
+      MethodRelationship::CapabilityInvocation => self.capability_invocation_mut().remove(&did_url),
+    };
+
+    Ok(was_detached)
   }
 
   /// Returns an iterator over all embedded verification methods in the DID Document.
@@ -314,26 +378,32 @@ impl<T, U, V> CoreDocument<T, U, V> {
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`
   /// and the verification relationship specified by `scope`.
-  pub fn resolve_method_with_scope<'query, 's: 'query, Q>(
-    &'s self,
+  pub fn resolve_method_with_scope<'query, 'me, Q>(
+    &'me self,
     query: Q,
     scope: MethodScope,
   ) -> Option<&VerificationMethod<U>>
   where
     Q: Into<MethodQuery<'query>>,
   {
-    let resolve_ref_helper = |method_ref: &'s MethodRef<U>| self.resolve_method_ref(method_ref);
+    let resolve_ref_helper = |method_ref: &'me MethodRef<U>| self.resolve_method_ref(method_ref);
 
     match scope {
       MethodScope::VerificationMethod => self.verification_method.query(query.into()),
-      MethodScope::Authentication => self.authentication.query(query.into()).and_then(resolve_ref_helper),
-      MethodScope::AssertionMethod => self.assertion_method.query(query.into()).and_then(resolve_ref_helper),
-      MethodScope::KeyAgreement => self.key_agreement.query(query.into()).and_then(resolve_ref_helper),
-      MethodScope::CapabilityDelegation => self
+      MethodScope::VerificationRelationship(MethodRelationship::Authentication) => {
+        self.authentication.query(query.into()).and_then(resolve_ref_helper)
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::AssertionMethod) => {
+        self.assertion_method.query(query.into()).and_then(resolve_ref_helper)
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::KeyAgreement) => {
+        self.key_agreement.query(query.into()).and_then(resolve_ref_helper)
+      }
+      MethodScope::VerificationRelationship(MethodRelationship::CapabilityDelegation) => self
         .capability_delegation
         .query(query.into())
         .and_then(resolve_ref_helper),
-      MethodScope::CapabilityInvocation => self
+      MethodScope::VerificationRelationship(MethodRelationship::CapabilityInvocation) => self
         .capability_invocation
         .query(query.into())
         .and_then(resolve_ref_helper),
@@ -473,6 +543,8 @@ mod tests {
   use crate::did::DID;
   use crate::document::CoreDocument;
   use crate::verification::MethodData;
+  use crate::verification::MethodRelationship;
+  use crate::verification::MethodScope;
   use crate::verification::MethodType;
   use crate::verification::VerificationMethod;
 
@@ -548,5 +620,95 @@ mod tests {
     // Access methods by index.
     assert_eq!(document.methods().next().unwrap().id().to_string(), "did:example:1234#key-1");
     assert_eq!(document.methods().nth(2).unwrap().id().to_string(), "did:example:1234#key-3");
+  }
+
+  #[test]
+  fn test_attach_verification_relationships() {
+    let mut document: CoreDocument = document();
+
+    let fragment = "#attach-test";
+    let method = method(document.id(), fragment);
+    document.insert_method(method, MethodScope::VerificationMethod);
+
+    assert!(document
+      .attach_method_relationship(
+        document.id().to_url().join(fragment).unwrap(),
+        MethodRelationship::CapabilityDelegation,
+      )
+      .unwrap());
+
+    assert_eq!(document.verification_relationships().count(), 4);
+
+    // Adding it a second time returns Ok(false).
+    assert!(!document
+      .attach_method_relationship(
+        document.id().to_url().join(fragment).unwrap(),
+        MethodRelationship::CapabilityDelegation,
+      )
+      .unwrap());
+
+    // len is still 2.
+    assert_eq!(document.verification_relationships().count(), 4);
+
+    // Attempting to attach a relationship to a non-existing method fails.
+    assert!(document
+      .attach_method_relationship(
+        document.id().to_url().join("#doesNotExist").unwrap(),
+        MethodRelationship::CapabilityDelegation,
+      )
+      .is_err());
+
+    // Attempt to attach to an embedded method.
+    assert!(document
+      .attach_method_relationship(
+        document.id().to_url().join("#auth-key").unwrap(),
+        MethodRelationship::CapabilityDelegation,
+      )
+      .is_err());
+  }
+
+  #[test]
+  fn test_detach_verification_relationships() {
+    let mut document: CoreDocument = document();
+
+    let fragment = "#detach-test";
+    let method = method(document.id(), fragment);
+    document.insert_method(method, MethodScope::VerificationMethod);
+
+    assert!(document
+      .attach_method_relationship(
+        document.id().to_url().join(fragment).unwrap(),
+        MethodRelationship::AssertionMethod,
+      )
+      .unwrap());
+
+    assert!(document
+      .detach_method_relationship(
+        document.id().to_url().join(fragment).unwrap(),
+        MethodRelationship::AssertionMethod,
+      )
+      .unwrap());
+
+    // len is 1; the relationship was removed.
+    assert_eq!(document.verification_relationships().count(), 3);
+
+    // Removing it a second time returns Ok(false).
+    assert!(!document
+      .detach_method_relationship(
+        document.id().to_url().join(fragment).unwrap(),
+        MethodRelationship::AssertionMethod,
+      )
+      .unwrap());
+
+    // len is still 1.
+    assert_eq!(document.verification_relationships().count(), 3);
+
+    // Attempting to detach a relationship from a non-existing method fails.
+    assert!(document
+      .detach_method_relationship(
+        document.id().to_url().join("#doesNotExist").unwrap(),
+        MethodRelationship::AssertionMethod,
+      )
+      .is_err());
   }
 }

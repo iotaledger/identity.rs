@@ -4,10 +4,10 @@
 //! cargo run --example account_config
 
 use identity::account::Account;
+use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::AutoSave;
-use identity::account::IdentityCreate;
-use identity::account::IdentityState;
+use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::iota::IotaDID;
 use identity::iota::Network;
@@ -16,7 +16,7 @@ use identity::iota::Network;
 async fn main() -> Result<()> {
   pretty_env_logger::init();
 
-  // Set-up for private Tangle
+  // Set-up for a private Tangle
   // You can use https://github.com/iotaledger/one-click-tangle for a local setup.
   // The `network_name` needs to match the id of the network or a part of it.
   // As an example we are treating the devnet as a private tangle, so we use `dev`.
@@ -33,13 +33,14 @@ async fn main() -> Result<()> {
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
   // Create a new Account with explicit configuration
-  let account: Account = Account::builder()
+  let mut builder: AccountBuilder = Account::builder()
     .autosave(AutoSave::Never) // never auto-save. rely on the drop save
     .autosave(AutoSave::Every) // save immediately after every action
     .autosave(AutoSave::Batch(10)) // save after every 10 actions
-    .dropsave(false) // save the account state on drop
+    .autopublish(true) // publish to the tangle automatically on every update
+    .dropsave(true) // save the account state on drop
     .milestone(4) // save a snapshot every 4 actions
-    .storage(AccountStorage::Memory) // use the default in-memory storage adapter
+    .storage(AccountStorage::Memory) // use the default in-memory storage
     // configure a mainnet Tangle client with node and permanode
     .client(Network::Mainnet, |builder| {
       builder
@@ -55,16 +56,13 @@ async fn main() -> Result<()> {
     .client(network.clone(), |builder| {
       // unwrap is safe, we provided a valid node URL
       builder.node(private_node_url).unwrap()
-    })
-    .build()
-    .await?;
+    });
 
-  // Create an Identity specifically on the devnet by passing `network_name`
+  // Create an identity specifically on the devnet by passing `network_name`
   // The same applies if we wanted to create an identity on a private tangle
-  let id_create = IdentityCreate::new().network(network_name)?;
+  let identity_setup: IdentitySetup = IdentitySetup::new().network(network_name)?;
 
-  // Create a new Identity with the network name set.
-  let identity: IdentityState = match account.create_identity(id_create).await {
+  let identity: Account = match builder.create_identity(identity_setup).await {
     Ok(identity) => identity,
     Err(err) => {
       eprintln!("[Example] Error: {:?} {}", err, err.to_string());
@@ -72,9 +70,11 @@ async fn main() -> Result<()> {
       return Ok(());
     }
   };
-  let iota_did: &IotaDID = identity.try_did()?;
 
-  // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
+  let iota_did: &IotaDID = identity.did();
+
+  // Prints the Identity Resolver Explorer URL.
+  // The entire history can be observed on this page by clicking "Loading History".
   println!(
     "[Example] Explore the DID Document = {}{}",
     network.explorer_url().expect("no explorer url was set").to_string(),

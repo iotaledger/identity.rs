@@ -5,6 +5,8 @@
 
 mod account;
 mod builder;
+mod config;
 
 pub use self::account::*;
 pub use self::builder::*;
+pub use self::config::*;
