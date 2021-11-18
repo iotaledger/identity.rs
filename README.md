@@ -110,10 +110,7 @@ async fn main() -> Result<()> {
     .create_identity(IdentitySetup::default())
     .await?;
 
-  println!(
-    "[Example] Local Document = {:#?}",
-    account.state().await?.to_document()?
-  );
+  println!("[Example] Local Document = {:#?}", account.document());
 
   // Fetch the DID Document from the Tangle
   //
