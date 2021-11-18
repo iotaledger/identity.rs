@@ -28,45 +28,33 @@ impl PublishType {
       return None;
     }
 
-    let old_capability_invocation_set: Vec<Option<&VerificationMethod>> = old_doc
-      .as_document()
-      .capability_invocation()
-      .iter()
-      .map(|method_ref| match method_ref {
-        MethodRef::Embed(method) => Some(method),
-        MethodRef::Refer(did_url) => old_doc.as_document().resolve_method(did_url),
-      })
-      .filter(|method| {
-        if let Some(method) = method {
-          UPDATE_METHOD_TYPES.contains(&method.key_type())
-        } else {
-          true
-        }
-      })
-      .collect();
-
-    let new_capability_invocation_set: Vec<Option<&VerificationMethod>> = new_doc
-      .as_document()
-      .capability_invocation()
-      .iter()
-      .map(|method_ref| match method_ref {
-        MethodRef::Embed(method) => Some(method),
-        MethodRef::Refer(did_url) => new_doc.as_document().resolve_method(did_url),
-      })
-      .filter(|method| {
-        if let Some(method) = method {
-          UPDATE_METHOD_TYPES.contains(&method.key_type())
-        } else {
-          true
-        }
-      })
-      .collect();
+    let old_capability_invocation_set: Vec<Option<&VerificationMethod>> = Self::extract_signing_keys(old_doc);
+    let new_capability_invocation_set: Vec<Option<&VerificationMethod>> = Self::extract_signing_keys(new_doc);
 
     if old_capability_invocation_set != new_capability_invocation_set {
       Some(PublishType::Integration)
     } else {
       Some(PublishType::Diff)
     }
+  }
+
+  fn extract_signing_keys(document: &IotaDocument) -> Vec<Option<&VerificationMethod>> {
+    document
+      .as_document()
+      .capability_invocation()
+      .iter()
+      .map(|method_ref| match method_ref {
+        MethodRef::Embed(method) => Some(method),
+        MethodRef::Refer(did_url) => document.as_document().resolve_method(did_url),
+      })
+      .filter(|method| {
+        if let Some(method) = method {
+          UPDATE_METHOD_TYPES.contains(&method.key_type())
+        } else {
+          true
+        }
+      })
+      .collect()
   }
 }
 
