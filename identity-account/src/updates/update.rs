@@ -177,12 +177,6 @@ impl Update {
       Self::DeleteMethod { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
 
-        // The verification method must exist
-        ensure!(
-          state.document().resolve_method(fragment.identifier()).is_some(),
-          UpdateError::MethodNotFound
-        );
-
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
         let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
 

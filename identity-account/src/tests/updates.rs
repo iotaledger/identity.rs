@@ -563,7 +563,7 @@ async fn test_delete_method() -> Result<()> {
     fragment: "key-1".to_owned(),
   };
 
-  account.process_update(update).await?;
+  account.process_update(update.clone()).await?;
 
   let state: &IdentityState = account.state();
 
@@ -584,6 +584,16 @@ async fn test_delete_method() -> Result<()> {
   assert_eq!(initial_state.document().created(), state.document().created());
   // Ensure `updated` was recently set.
   assert!(state.document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
+
+  // Deleting a non-existing methods fails.
+  let output = account.process_update(update).await;
+
+  assert!(matches!(
+    output.unwrap_err(),
+    Error::IotaError(identity_iota::Error::InvalidDoc(
+      identity_did::Error::QueryMethodNotFound
+    ))
+  ));
 
   Ok(())
 }
