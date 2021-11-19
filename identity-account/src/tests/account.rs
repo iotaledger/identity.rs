@@ -16,9 +16,6 @@ use identity_iota::did::IotaDID;
 use identity_iota::tangle::MessageId;
 use identity_iota::tangle::MessageIdExt;
 
-use crate::storage::Stronghold;
-use std::path::PathBuf;
-
 #[tokio::test]
 async fn test_account_builder() -> Result<()> {
   let mut builder: AccountBuilder = AccountBuilder::default().testmode(true);
