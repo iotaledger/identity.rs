@@ -6,24 +6,20 @@ use identity_did::did::DID;
 use serde::Serialize;
 
 use identity_core::common::Fragment;
-use identity_core::crypto::JcsEd25519;
 use identity_core::crypto::SetSignature;
-use identity_core::crypto::Signer;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDIDUrl;
 use identity_iota::did::IotaDocument;
 use identity_iota::tangle::TangleRef;
 
+use crate::crypto::RemoteEd25519;
 use crate::crypto::RemoteKey;
-use crate::crypto::RemoteSign;
 use crate::error::Error;
 use crate::error::Result;
 use crate::storage::Storage;
 use crate::types::Generation;
 use crate::types::KeyLocation;
-
-pub type RemoteEd25519<'a> = JcsEd25519<RemoteSign<'a>>;
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct IdentityState {
@@ -109,7 +105,7 @@ impl IdentityState {
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        RemoteEd25519::create_signature(target, method_url.to_string(), &private)?;
+        RemoteEd25519::create_signature(target, method_url.to_string(), &private).await?;
       }
       MethodType::MerkleKeyCollection2021 => {
         todo!("Handle MerkleKeyCollection2021")
