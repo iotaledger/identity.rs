@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crypto::keys::slip10::Chain;
+use futures::executor;
 
 use hashbrown::hash_map::Entry;
 use hashbrown::HashMap;
@@ -256,6 +257,12 @@ impl Storage for Stronghold {
       .await?;
 
     Ok(())
+  }
+}
+
+impl Drop for Stronghold {
+  fn drop(&mut self) {
+    let _ = executor::block_on(self.flush_changes());
   }
 }
 

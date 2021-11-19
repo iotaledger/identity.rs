@@ -85,14 +85,6 @@ impl AccountBuilder {
     self
   }
 
-  /// Save the account state on drop.
-  ///
-  /// See the config's [`dropsave`][AccountConfig::dropsave] documentation for details.
-  pub fn dropsave(mut self, value: bool) -> Self {
-    self.config = self.config.dropsave(value);
-    self
-  }
-
   /// Save a state snapshot every N actions.
   pub fn milestone(mut self, value: u32) -> Self {
     self.config = self.config.milestone(value);
