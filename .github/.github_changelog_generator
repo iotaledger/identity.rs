@@ -1,4 +1,6 @@
-issues=false
+issues=true
+issues-wo-labels=true
+pr-wo-labels=false
 author=false
 breaking-label=Changed
 breaking-labels=changed
