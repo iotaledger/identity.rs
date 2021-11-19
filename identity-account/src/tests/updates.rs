@@ -391,7 +391,9 @@ async fn test_attach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::UpdateError(UpdateError::InvalidTargetEmbeddedMethod)
+    Error::IotaError(identity_iota::Error::InvalidDoc(
+      identity_did::Error::InvalidMethodEmbedded
+    ))
   ));
 
   // No relationships were created.
@@ -467,7 +469,9 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::UpdateError(UpdateError::InvalidTargetEmbeddedMethod)
+    Error::IotaError(identity_iota::Error::InvalidDoc(
+      identity_did::Error::InvalidMethodEmbedded
+    ))
   ));
 
   // No relationships were removed.

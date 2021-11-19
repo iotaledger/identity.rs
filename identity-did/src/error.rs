@@ -46,6 +46,9 @@ pub enum Error {
   InvalidMethodType,
   #[error("Invalid Verification Method - Duplicate")]
   InvalidMethodDuplicate,
+  /// Caused by attempting to attach or detach a relationship on an embedded method.
+  #[error("unable to modify relationships on embedded methods, use insert or remove instead")]
+  InvalidMethodEmbedded,
 
   #[error("Unknown Method Scope")]
   UnknownMethodScope,

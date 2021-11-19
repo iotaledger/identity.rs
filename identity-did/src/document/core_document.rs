@@ -294,21 +294,27 @@ impl<T, U, V> CoreDocument<T, U, V> {
   where
     Q: Into<MethodQuery<'query>>,
   {
-    let method: &VerificationMethod<_> = self
-      .resolve_method_with_scope(method_query, MethodScope::VerificationMethod)
-      .ok_or(Error::QueryMethodNotFound)?;
+    let method_query: MethodQuery<'query> = method_query.into();
 
-    let method_ref = MethodRef::Refer(method.id().clone());
+    match self.resolve_method_with_scope(method_query.clone(), MethodScope::VerificationMethod) {
+      None => match self.resolve_method(method_query) {
+        Some(_) => return Err(Error::InvalidMethodEmbedded),
+        None => return Err(Error::QueryMethodNotFound),
+      },
+      Some(method) => {
+        let method_ref = MethodRef::Refer(method.id().clone());
 
-    let was_attached = match relationship {
-      MethodRelationship::Authentication => self.authentication_mut().append(method_ref),
-      MethodRelationship::AssertionMethod => self.assertion_method_mut().append(method_ref),
-      MethodRelationship::KeyAgreement => self.key_agreement_mut().append(method_ref),
-      MethodRelationship::CapabilityDelegation => self.capability_delegation_mut().append(method_ref),
-      MethodRelationship::CapabilityInvocation => self.capability_invocation_mut().append(method_ref),
-    };
+        let was_attached = match relationship {
+          MethodRelationship::Authentication => self.authentication_mut().append(method_ref),
+          MethodRelationship::AssertionMethod => self.assertion_method_mut().append(method_ref),
+          MethodRelationship::KeyAgreement => self.key_agreement_mut().append(method_ref),
+          MethodRelationship::CapabilityDelegation => self.capability_delegation_mut().append(method_ref),
+          MethodRelationship::CapabilityInvocation => self.capability_invocation_mut().append(method_ref),
+        };
 
-    Ok(was_attached)
+        Ok(was_attached)
+      }
+    }
   }
 
   /// Detaches the given relationship from the given method, if the method exists.

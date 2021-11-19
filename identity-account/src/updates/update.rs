@@ -208,17 +208,17 @@ impl Update {
         );
 
         // The verification method must not be embedded.
-        ensure!(
-          !state
-            .document()
-            .as_document()
-            .verification_relationships()
-            .any(|method_ref| match method_ref {
-              MethodRef::Embed(method) => method.id().fragment() == method_url.fragment(),
-              MethodRef::Refer(_) => false,
-            }),
-          UpdateError::InvalidTargetEmbeddedMethod
-        );
+        // ensure!(
+        //   !state
+        //     .document()
+        //     .as_document()
+        //     .verification_relationships()
+        //     .any(|method_ref| match method_ref {
+        //       MethodRef::Embed(method) => method.id().fragment() == method_url.fragment(),
+        //       MethodRef::Refer(_) => false,
+        //     }),
+        //   UpdateError::InvalidTargetEmbeddedMethod
+        // );
 
         for relationship in relationships {
           // We ignore the boolean result: if the relationship already existed, that's fine.
@@ -255,17 +255,17 @@ impl Update {
         );
 
         // The verification method must not be embedded.
-        ensure!(
-          !state
-            .document()
-            .as_document()
-            .verification_relationships()
-            .any(|method_ref| match method_ref {
-              MethodRef::Embed(method) => method.id().fragment() == method_url.fragment(),
-              MethodRef::Refer(_) => false,
-            }),
-          UpdateError::InvalidTargetEmbeddedMethod
-        );
+        // ensure!(
+        //   !state
+        //     .document()
+        //     .as_document()
+        //     .verification_relationships()
+        //     .any(|method_ref| match method_ref {
+        //       MethodRef::Embed(method) => method.id().fragment() == method_url.fragment(),
+        //       MethodRef::Refer(_) => false,
+        //     }),
+        //   UpdateError::InvalidTargetEmbeddedMethod
+        // );
 
         for relationship in relationships {
           state
