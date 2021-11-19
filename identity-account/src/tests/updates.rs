@@ -261,7 +261,9 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   let mut account_setup = account_setup();
   account_setup.config = account_setup.config.testmode(true).autopublish(false);
 
-  let mut account = Account::create_identity(account_setup, IdentitySetup::default()).await?;
+  let mut account = Account::create_identity(account_setup, IdentitySetup::default())
+    .await
+    .unwrap();
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
@@ -270,7 +272,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
     fragment: "key-1".to_owned(),
   };
 
-  account.process_update(update.clone()).await?;
+  account.process_update(update.clone()).await.unwrap();
 
   let output = account.process_update(update.clone()).await;
 
@@ -288,7 +290,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   // Now the location is different due to the incremented generation, but the fragment is the same.
   assert!(matches!(
     output.unwrap_err(),
-    Error::UpdateError(UpdateError::DuplicateKeyFragment(_)),
+    Error::DIDError(identity_did::Error::InvalidMethodDuplicate)
   ));
 
   Ok(())

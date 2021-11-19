@@ -145,7 +145,7 @@ impl Update {
         fragment,
         method_secret,
       } => {
-        let location: KeyLocation = state.key_location(type_, fragment)?;
+        let location: KeyLocation = state.key_location(type_, fragment.clone())?;
 
         // The key location must be available.
         // TODO: config: strict
@@ -154,14 +154,12 @@ impl Update {
           UpdateError::DuplicateKeyLocation(location)
         );
 
-        // The verification method must not exist.
-        ensure!(
-          state
-            .document()
-            .resolve_method(location.fragment().identifier())
-            .is_none(),
-          UpdateError::DuplicateKeyFragment(location.fragment().clone()),
-        );
+        let fragment: Fragment = Fragment::new(fragment);
+        let method_url: CoreDIDUrl = did.as_ref().to_url().join(fragment.identifier())?;
+
+        if state.document().resolve_method(method_url).is_some() {
+          return Err(crate::Error::DIDError(identity_did::Error::InvalidMethodDuplicate));
+        }
 
         let public: PublicKey = if let Some(method_private_key) = method_secret {
           insert_method_secret(storage, did, &location, type_, method_private_key).await
@@ -174,8 +172,7 @@ impl Update {
 
         state.store_method_generations(location.fragment().clone());
 
-        // We can ignore the result: we just checked that the method does not exist.
-        let _ = state.document_mut().insert_method(method, scope);
+        state.document_mut().insert_method(method, scope)?;
       }
       Self::DeleteMethod { fragment } => {
         let fragment: Fragment = Fragment::new(fragment);
