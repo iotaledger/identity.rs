@@ -13,8 +13,8 @@ use identity_core::crypto::SignatureValue;
 use identity_core::error::Error;
 use identity_core::error::Result;
 use identity_core::utils::encode_b58;
+use identity_iota::did::IotaDID;
 
-use crate::identity::IdentityId;
 use crate::storage::Storage;
 use crate::types::KeyLocation;
 
@@ -25,10 +25,9 @@ impl Named for RemoteEd25519 {
 }
 
 impl RemoteEd25519 {
-  pub async fn create_signature<U, T>(data: &mut U, method: impl Into<String>, secret: &RemoteKey<'_, T>) -> Result<()>
+  pub async fn create_signature<U>(data: &mut U, method: impl Into<String>, secret: &RemoteKey<'_>) -> Result<()>
   where
     U: Serialize + SetSignature,
-    T: Storage,
   {
     data.set_signature(Signature::new(Self::NAME, method));
 
@@ -40,10 +39,9 @@ impl RemoteEd25519 {
     Ok(())
   }
 
-  pub async fn sign<T, X>(data: &X, remote_key: &RemoteKey<'_, T>) -> Result<SignatureValue>
+  pub async fn sign<X>(data: &X, remote_key: &RemoteKey<'_>) -> Result<SignatureValue>
   where
     X: Serialize,
-    T: Storage,
   {
     let message: Vec<u8> = data.to_jcs()?;
     let signature: Vec<u8> = RemoteSign::sign(&message, remote_key).await?;
@@ -54,16 +52,16 @@ impl RemoteEd25519 {
 
 /// A reference to a storage instance and identity key location.
 #[derive(Debug)]
-pub struct RemoteKey<'a, T> {
-  id: IdentityId,
+pub struct RemoteKey<'a> {
+  did: &'a IotaDID,
   location: &'a KeyLocation,
-  store: &'a T,
+  store: &'a dyn Storage,
 }
 
-impl<'a, T> RemoteKey<'a, T> {
+impl<'a> RemoteKey<'a> {
   /// Creates a new `RemoteKey` instance.
-  pub fn new(id: IdentityId, location: &'a KeyLocation, store: &'a T) -> Self {
-    Self { id, location, store }
+  pub fn new(did: &'a IotaDID, location: &'a KeyLocation, store: &'a dyn Storage) -> Self {
+    Self { did, location, store }
   }
 }
 
@@ -75,18 +73,15 @@ impl<'a, T> RemoteKey<'a, T> {
 ///
 /// Note: The signature implementation is specified by the associated `RemoteKey`.
 #[derive(Clone, Copy, Debug)]
-pub struct RemoteSign<'a, T> {
-  marker: PhantomData<RemoteKey<'a, T>>,
+pub struct RemoteSign<'a> {
+  marker: PhantomData<RemoteKey<'a>>,
 }
 
-impl<'a, T> RemoteSign<'a, T>
-where
-  T: Storage,
-{
-  pub async fn sign(message: &[u8], key: &RemoteKey<'a, T>) -> Result<Vec<u8>> {
+impl<'a> RemoteSign<'a> {
+  pub async fn sign(message: &[u8], key: &RemoteKey<'a>) -> Result<Vec<u8>> {
     key
       .store
-      .key_sign(key.id, key.location, message.to_vec())
+      .key_sign(key.did, key.location, message.to_vec())
       .await
       .map_err(|_| Error::InvalidProofValue("remote sign"))
       .map(|signature| signature.data)

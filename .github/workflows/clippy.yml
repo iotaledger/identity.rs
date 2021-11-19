@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - dev
+      - epic/*
     paths:
       - '.github/workflows/clippy.yml'
       - '**.rs'
