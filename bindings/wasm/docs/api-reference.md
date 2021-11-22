@@ -72,7 +72,7 @@
         * [.publishDocument(document)](#Client+publishDocument) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
         * [.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
         * [.publishJSON(index, data)](#Client+publishJSON) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
-        * [.resolve(did)](#Client+resolve) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.checkCredential(data)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -129,7 +129,7 @@ Publishes arbitrary JSON data to the specified index on the Tangle.
 
 <a name="Client+resolve"></a>
 
-### client.resolve(did) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.resolve(did) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |

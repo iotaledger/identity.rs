@@ -22,7 +22,7 @@ use wasm_bindgen_futures::future_to_promise;
 
 use crate::chain::DiffChainHistory;
 use crate::chain::WasmDocumentHistory;
-use crate::did::WasmDocument;
+use crate::did::{PromiseDocument, WasmDocument};
 use crate::did::WasmDocumentDiff;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -132,14 +132,7 @@ impl Client {
   }
 
   #[wasm_bindgen]
-  pub fn resolve(&self, did: &str) -> Result<Promise> {
-    #[derive(Serialize)]
-    pub struct DocWrapper<'a> {
-      document: &'a IotaDocument,
-      #[serde(rename = "messageId")]
-      message_id: &'a MessageId,
-    }
-
+  pub fn resolve(&self, did: &str) -> Result<PromiseDocument> {
     let client: Rc<IotaClient> = self.client.clone();
     let did: IotaDID = did.parse().wasm_result()?;
 
@@ -148,11 +141,12 @@ impl Client {
         .resolve(&did)
         .await
         .map(WasmDocument::from)
-        .map(JsValue::from)
+        .map(Into::into)
         .wasm_result()
     });
 
-    Ok(promise)
+    // WARNING: this does not validate the return type. Check carefully.
+    Ok(promise.unchecked_into::<PromiseDocument>())
   }
 
   /// Returns the message history of the given DID.
