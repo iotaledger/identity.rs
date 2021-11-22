@@ -71,7 +71,7 @@ async function resolveHistory(clientConfig) {
 
     // Publish the updated DID Document to the Tangle, updating the integration chain.
     // This may take a few seconds to complete proof-of-work.
-    const intReceipt1 = await client.publishDocument(intDoc1.toJSON());
+    const intReceipt1 = await client.publishDocument(intDoc1);
 
     // Log the results.
     logExplorerUrl("Int. Chain Update (1):", clientConfig.network.toString(), intReceipt1.messageId);
@@ -175,7 +175,7 @@ async function resolveHistory(clientConfig) {
     intDoc2.previousMessageId = intReceipt1.messageId;
     intDoc2.updated = Timestamp.nowUTC();
     intDoc2.signSelf(key, intDoc2.defaultSigningMethod().id.toString());
-    const intReceipt2 = await client.publishDocument(intDoc2.toJSON());
+    const intReceipt2 = await client.publishDocument(intDoc2);
 
     // Log the results.
     logExplorerUrl("Int. Chain Update (2):", clientConfig.network.toString(), intReceipt2.messageId);

@@ -101,7 +101,7 @@ Publishes an `IotaDocument` to the Tangle.
 
 | Param | Type |
 | --- | --- |
-| document | <code>any</code> | 
+| document | [<code>Document</code>](#Document) | 
 
 <a name="Client+publishDiff"></a>
 

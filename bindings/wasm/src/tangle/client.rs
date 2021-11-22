@@ -75,8 +75,8 @@ impl Client {
 
   /// Publishes an `IotaDocument` to the Tangle.
   #[wasm_bindgen(js_name = publishDocument)]
-  pub fn publish_document(&self, document: &JsValue) -> Result<PromiseReceipt> {
-    let document: IotaDocument = document.into_serde().wasm_result()?;
+  pub fn publish_document(&self, document: &WasmDocument) -> Result<PromiseReceipt> {
+    let document: IotaDocument = document.0.clone();
     let client: Rc<IotaClient> = self.client.clone();
 
     let promise: Promise = future_to_promise(async move {
