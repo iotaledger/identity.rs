@@ -16,6 +16,7 @@ use identity::iota::IotaDocument;
 use identity::iota::MessageId;
 use identity::iota::TangleResolve;
 use js_sys::Promise;
+use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
@@ -25,7 +26,7 @@ use crate::did::WasmDocument;
 use crate::did::WasmDocumentDiff;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::Config;
+use crate::tangle::{Config, PromiseReceipt, WasmReceipt};
 use crate::tangle::WasmNetwork;
 
 #[wasm_bindgen]
@@ -74,7 +75,7 @@ impl Client {
 
   /// Publishes an `IotaDocument` to the Tangle.
   #[wasm_bindgen(js_name = publishDocument)]
-  pub fn publish_document(&self, document: &JsValue) -> Result<Promise> {
+  pub fn publish_document(&self, document: &JsValue) -> Result<PromiseReceipt> {
     let document: IotaDocument = document.into_serde().wasm_result()?;
     let client: Rc<IotaClient> = self.client.clone();
 
@@ -82,16 +83,18 @@ impl Client {
       client
         .publish_document(&document)
         .await
+        .map(WasmReceipt)
+        .map(Into::into)
         .wasm_result()
-        .and_then(|receipt| JsValue::from_serde(&receipt).wasm_result())
     });
 
-    Ok(promise)
+    // WARNING: this does not validate the return type. Check carefully.
+    Ok(promise.unchecked_into::<PromiseReceipt>())
   }
 
   /// Publishes a `DocumentDiff` to the Tangle.
   #[wasm_bindgen(js_name = publishDiff)]
-  pub fn publish_diff(&self, message_id: &str, diff: WasmDocumentDiff) -> Result<Promise> {
+  pub fn publish_diff(&self, message_id: &str, diff: WasmDocumentDiff) -> Result<PromiseReceipt> {
     let message: MessageId = MessageId::from_str(message_id).wasm_result()?;
     let client: Rc<IotaClient> = self.client.clone();
 
@@ -99,16 +102,18 @@ impl Client {
       client
         .publish_diff(&message, diff.deref())
         .await
+        .map(WasmReceipt)
+        .map(Into::into)
         .wasm_result()
-        .and_then(|receipt| JsValue::from_serde(&receipt).wasm_result())
     });
 
-    Ok(promise)
+    // WARNING: this does not validate the return type. Check carefully.
+    Ok(promise.unchecked_into::<PromiseReceipt>())
   }
 
   /// Publishes arbitrary JSON data to the specified index on the Tangle.
   #[wasm_bindgen(js_name = publishJSON)]
-  pub fn publish_json(&self, index: &str, data: &JsValue) -> Result<Promise> {
+  pub fn publish_json(&self, index: &str, data: &JsValue) -> Result<PromiseReceipt> {
     let client: Rc<IotaClient> = self.client.clone();
 
     let index = index.to_owned();
@@ -117,11 +122,13 @@ impl Client {
       client
         .publish_json(&index, &value)
         .await
+        .map(WasmReceipt)
+        .map(Into::into)
         .wasm_result()
-        .and_then(|receipt| JsValue::from_serde(&receipt).wasm_result())
     });
 
-    Ok(promise)
+    // WARNING: this does not validate the return type. Check carefully.
+    Ok(promise.unchecked_into::<PromiseReceipt>())
   }
 
   #[wasm_bindgen]

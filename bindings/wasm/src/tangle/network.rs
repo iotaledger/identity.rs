@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity::iota::Network as IotaNetwork;
+use identity::iota::Network;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
@@ -9,24 +9,24 @@ use crate::error::WasmResult;
 
 #[wasm_bindgen(js_name = Network)]
 #[derive(Clone, Debug)]
-pub struct WasmNetwork(IotaNetwork);
+pub struct WasmNetwork(Network);
 
 #[wasm_bindgen(js_class = Network)]
 impl WasmNetwork {
   /// Parses the provided string to a `Network`.
   #[wasm_bindgen]
   pub fn try_from_name(name: String) -> Result<WasmNetwork> {
-    IotaNetwork::try_from_name(name).map(Self).wasm_result()
+    Network::try_from_name(name).map(Self).wasm_result()
   }
 
   #[wasm_bindgen]
   pub fn mainnet() -> WasmNetwork {
-    Self(IotaNetwork::Mainnet)
+    Self(Network::Mainnet)
   }
 
   #[wasm_bindgen]
   pub fn devnet() -> WasmNetwork {
-    Self(IotaNetwork::Devnet)
+    Self(Network::Devnet)
   }
 
   /// Returns the node URL of the Tangle network.
@@ -56,18 +56,18 @@ impl WasmNetwork {
 
 impl Default for WasmNetwork {
   fn default() -> Self {
-    IotaNetwork::default().into()
+    Network::default().into()
   }
 }
 
-impl From<WasmNetwork> for IotaNetwork {
+impl From<WasmNetwork> for Network {
   fn from(other: WasmNetwork) -> Self {
     other.0
   }
 }
 
-impl From<IotaNetwork> for WasmNetwork {
-  fn from(other: IotaNetwork) -> Self {
+impl From<Network> for WasmNetwork {
+  fn from(other: Network) -> Self {
     Self(other)
   }
 }

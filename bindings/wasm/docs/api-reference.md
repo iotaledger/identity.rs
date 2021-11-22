@@ -27,6 +27,8 @@
 <dd></dd>
 <dt><a href="#Network">Network</a></dt>
 <dd></dd>
+<dt><a href="#Receipt">Receipt</a></dt>
+<dd></dd>
 <dt><a href="#Service">Service</a></dt>
 <dd></dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
@@ -67,9 +69,9 @@
     * [new Client()](#new_Client_new)
     * _instance_
         * [.network()](#Client+network) ⇒ [<code>Network</code>](#Network)
-        * [.publishDocument(document)](#Client+publishDocument) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.publishJSON(index, data)](#Client+publishJSON) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.publishDocument(document)](#Client+publishDocument) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
+        * [.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
+        * [.publishJSON(index, data)](#Client+publishJSON) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
         * [.resolve(did)](#Client+resolve) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolveHistory(did)](#Client+resolveHistory) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ <code>Promise.&lt;any&gt;</code>
@@ -92,7 +94,7 @@ Returns the `Client` Tangle network.
 **Kind**: instance method of [<code>Client</code>](#Client)  
 <a name="Client+publishDocument"></a>
 
-### client.publishDocument(document) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.publishDocument(document) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
 Publishes an `IotaDocument` to the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -103,7 +105,7 @@ Publishes an `IotaDocument` to the Tangle.
 
 <a name="Client+publishDiff"></a>
 
-### client.publishDiff(message_id, diff) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.publishDiff(message_id, diff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
 Publishes a `DocumentDiff` to the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -115,7 +117,7 @@ Publishes a `DocumentDiff` to the Tangle.
 
 <a name="Client+publishJSON"></a>
 
-### client.publishJSON(index, data) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.publishJSON(index, data) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
 Publishes arbitrary JSON data to the specified index on the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -1506,6 +1508,62 @@ Parses the provided string to a `Network`.
 
 ### Network.devnet() ⇒ [<code>Network</code>](#Network)
 **Kind**: static method of [<code>Network</code>](#Network)  
+<a name="Receipt"></a>
+
+## Receipt
+**Kind**: global class  
+
+* [Receipt](#Receipt)
+    * _instance_
+        * [.network](#Receipt+network) ⇒ [<code>Network</code>](#Network)
+        * [.messageId](#Receipt+messageId) ⇒ <code>string</code>
+        * [.networkId](#Receipt+networkId) ⇒ <code>string</code>
+        * [.nonce](#Receipt+nonce) ⇒ <code>string</code>
+        * [.toJSON()](#Receipt+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#Receipt.fromJSON) ⇒ [<code>Receipt</code>](#Receipt)
+
+<a name="Receipt+network"></a>
+
+### receipt.network ⇒ [<code>Network</code>](#Network)
+Returns the associated IOTA Tangle `Network`.
+
+**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+messageId"></a>
+
+### receipt.messageId ⇒ <code>string</code>
+Returns the message `id`.
+
+**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+networkId"></a>
+
+### receipt.networkId ⇒ <code>string</code>
+Returns the message `network_id`.
+
+**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+nonce"></a>
+
+### receipt.nonce ⇒ <code>string</code>
+Returns the message `nonce`.
+
+**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+toJSON"></a>
+
+### receipt.toJSON() ⇒ <code>any</code>
+Serializes a `Receipt` as a JSON object.
+
+**Kind**: instance method of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt.fromJSON"></a>
+
+### Receipt.fromJSON(json) ⇒ [<code>Receipt</code>](#Receipt)
+Deserializes a `Receipt` from a JSON object.
+
+**Kind**: static method of [<code>Receipt</code>](#Receipt)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Service"></a>
 
 ## Service
