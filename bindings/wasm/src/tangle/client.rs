@@ -16,18 +16,23 @@ use identity::iota::IotaDocument;
 use identity::iota::MessageId;
 use identity::iota::TangleResolve;
 use js_sys::Promise;
-use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
-use crate::chain::{DiffChainHistory, PromiseDiffChainHistory, PromiseDocumentHistory};
+use crate::chain::DiffChainHistory;
+use crate::chain::PromiseDiffChainHistory;
+use crate::chain::PromiseDocumentHistory;
 use crate::chain::WasmDocumentHistory;
-use crate::did::{PromiseDocument, WasmDocument};
+use crate::did::PromiseDocument;
+use crate::did::WasmDocument;
 use crate::did::WasmDocumentDiff;
 use crate::error::Result;
 use crate::error::WasmResult;
-use crate::tangle::{Config, PromiseReceipt, WasmReceipt};
+use crate::tangle::Config;
+use crate::tangle::PromiseReceipt;
 use crate::tangle::WasmNetwork;
+use crate::tangle::WasmReceipt;
 
 #[wasm_bindgen]
 #[derive(Debug)]
