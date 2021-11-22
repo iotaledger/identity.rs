@@ -1,9 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::crypto::Signature;
-use crate::error::Error;
-use crate::error::Result;
+use crate::crypto::{Signature, signature::errors::MissingSignatureError};
 
 /// A trait for types that can provide a reference to a [`Signature`].
 pub trait TrySignature {
@@ -15,8 +13,8 @@ pub trait TrySignature {
   /// Errors
   ///
   /// Fails if the signature is not found.
-  fn try_signature(&self) -> Result<&Signature> {
-    self.signature().ok_or(Error::MissingSignature)
+  fn try_signature(&self) -> Result<&Signature, MissingSignatureError> {
+    self.signature().ok_or(MissingSignatureError)
   }
 }
 
@@ -51,8 +49,8 @@ pub trait TrySignatureMut: TrySignature {
   /// Errors
   ///
   /// Fails if the signature is not found.
-  fn try_signature_mut(&mut self) -> Result<&mut Signature> {
-    self.signature_mut().ok_or(Error::MissingSignature)
+  fn try_signature_mut(&mut self) -> Result<&mut Signature, MissingSignatureError> {
+    self.signature_mut().ok_or(MissingSignatureError)
   }
 }
 

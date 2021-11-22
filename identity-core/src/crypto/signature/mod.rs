@@ -4,6 +4,7 @@
 #![allow(clippy::module_inception)]
 
 mod ed25519;
+pub mod errors;
 mod signature;
 mod signature_value;
 mod traits;

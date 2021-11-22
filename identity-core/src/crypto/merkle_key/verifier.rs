@@ -14,7 +14,6 @@ use crate::crypto::merkle_key::MerkleSignature;
 use crate::crypto::merkle_key::MerkleSignatureTag;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Proof;
-use crate::crypto::KeyFormatError;
 use crate::crypto::Named;
 use crate::crypto::PublicKey;
 use crate::crypto::SignatureValue;
@@ -22,7 +21,7 @@ use crate::crypto::Verifier;
 use crate::crypto::Verify;
 use crate::error::Error;
 use crate::error::Result;
-use crate::utils::decode_b58;
+use crate::utils;
 
 /// Key components used to verify a Merkle Key Collection signature.
 #[derive(Clone)]
@@ -159,15 +158,23 @@ fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<
   let signature: &str = parts.next().ok_or(Error::InvalidProofFormat)?;
 
   // Extract bytes of the base58-encoded public key
-  let public: PublicKey = decode_b58(public)
+  let public: PublicKey = utils::decode_b58(public)
     .map_err(|_| Error::InvalidProofFormat)
     .map(Into::into)?;
 
   // Extract bytes of the base58-encoded proof
-  let proof: Vec<u8> = decode_b58(proof).map_err(|_| Error::InvalidProofFormat)?;
+  let proof: Vec<u8> = utils::decode_b58(proof).map_err(|_| Error::InvalidProofFormat)?;
 
   // Decode the signature value for the underlying signature implementation
-  let signature: Vec<u8> = decode_b58(signature).map_err(|_| Error::InvalidProofFormat)?; //TODO: THIS WAS ADDED AS A TEMPORARY FIX. SHOULD MAYBE NOT BE INVALIDPROOFFORMAT
+  let signature: Vec<u8> = utils::decode_b58(signature).map_err(|_| Error::InvalidProofFormat)?; //TODO: THIS WAS ADDED AS A TEMPORARY FIX. SHOULD MAYBE NOT BE INVALIDPROOFFORMAT
 
   Ok((public, proof, signature))
+}
+
+mod errors {
+  use thiserror::Error as DeriveError; 
+  
+  pub enum MerkleVerificationError {
+
+  }
 }

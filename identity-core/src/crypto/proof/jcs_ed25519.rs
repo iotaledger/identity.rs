@@ -12,8 +12,11 @@ use crate::crypto::SignatureValue;
 use crate::crypto::Signer;
 use crate::crypto::Verifier;
 use crate::crypto::Verify;
-use crate::error::Error;
-use crate::error::Result;
+use crate::crypto::signature::errors::SigningError;
+use crate::crypto::signature::errors::SigningErrorCause;
+use crate::crypto::signature::errors::VerificationError;
+use crate::crypto::signature::errors::InvalidProofValue; 
+use crate::crypto::signature::errors::VerificationProcessingError;
 use crate::utils::decode_b58;
 use crate::utils::encode_b58;
 
@@ -38,12 +41,14 @@ where
   T: Sign,
   T::Output: AsRef<[u8]>,
 {
-  fn sign<X>(data: &X, private: &T::Private) -> Result<SignatureValue>
+  type SignError = SigningError;
+  type SignatureCreationError = SigningError; 
+  fn sign<X>(data: &X, private: &T::Private) -> Result<SignatureValue, Self::SignError>
   where
     X: Serialize,
   {
-    let message: Vec<u8> = data.to_jcs().map_err(Error::EncodeJSON)?;
-    let signature: T::Output = T::sign(&message, private)?;
+    let message: Vec<u8> = data.to_jcs().map_err(|_|SigningErrorCause::Input("could not serialize data"))?;
+    let signature: T::Output = T::sign(&message, private).map_err(|_| SigningErrorCause::Other("the `sign` operation failed internally"))?;
     let signature: String = encode_b58(signature.as_ref());
 
     Ok(SignatureValue::Signature(signature))
@@ -54,18 +59,26 @@ impl<T> Verifier<T::Public> for JcsEd25519<T>
 where
   T: Verify,
 {
-  fn verify<X>(data: &X, signature: &SignatureValue, public: &T::Public) -> Result<()>
+  type AuthenticityError = VerificationError;
+  type SignatureVerificationError = VerificationError; 
+
+  fn verify<X>(data: &X, signature: &SignatureValue, public: &T::Public) -> Result<(), VerificationError>
   where
     X: Serialize,
   {
     let signature: &str = signature
       .as_signature()
-      .ok_or(Error::InvalidProofValue("jcs ed25519"))?;
+      .ok_or(InvalidProofValue("jcs ed25519"))?;
 
-    let signature: Vec<u8> = decode_b58(signature).map_err(|_| Error::InvalidProofFormat)?; //TODO: TEMPORARY FIX. DO NOT USE THIS MAPPING.
-    let message: Vec<u8> = data.to_jcs().map_err(Error::EncodeJSON)?;
+    let signature: Vec<u8> = decode_b58(signature).map_err(|_|VerificationProcessingError::InvalidInputFormat("unable to decode the signature"))?;
+    let message: Vec<u8> = data.to_jcs().map_err(|_|VerificationProcessingError::InvalidInputFormat("unable to serialize input data"))?;
 
-    T::verify(&message, &signature, public)?;
+    T::verify(&message, &signature, public).map_err(|err| {
+      match err.try_into() {
+        Ok(invalid_proof_value) => VerificationError::from(invalid_proof_value), 
+        Err(other_error_kind) => VerificationProcessingError::Other("unable to verify the authenticity of the given data and signature").into(),
+      }
+    })?;
 
     Ok(())
   }

@@ -129,7 +129,6 @@ where
 
 /// Decodes the given `data` as base58-btc.
 pub fn decode_b58<T>(data: &T) -> Result<Vec<u8>, Base58DecodingError>
-//todo: Consider creating our own error for this
 where
   T: AsRef<[u8]> + ?Sized,
 {

@@ -10,14 +10,12 @@ use crypto::signatures::ed25519::SIGNATURE_LENGTH;
 
 use crate::crypto::Sign;
 use crate::crypto::Verify;
-use crate::crypto::key::KeyLengthError;
-use crate::crypto::key::KeyParsingError;
-use crate::error::Error;
-use crate::error::Result;
+use crate::crypto::key::KeyError;
 
-type SecretKeyLengthError = KeyLengthError::<SECRET_KEY_LENGTH>;
-type PublicKeyLengthError = KeyLengthError::<PUBLIC_KEY_LENGTH>;
-pub type Ed22519KeyParsingError = KeyParsingError::<SECRET_KEY_LENGTH, PUBLIC_KEY_LENGTH>;
+use self::errors::SignatureParsingError;
+use super::errors::InvalidProofValue;
+use super::errors::VerificationError;
+use super::errors::SigningError;
 
 /// An implementation of `Ed25519` signatures.
 #[derive(Clone, Copy, Debug)]
@@ -28,11 +26,11 @@ where
   T: AsRef<[u8]> + ?Sized,
 {
   type Private = T;
-  type Error = Ed22519KeyParsingError;  
+  type Error = SigningError;  
   type Output = [u8; SIGNATURE_LENGTH];
 
   fn sign(message: &[u8], key: &Self::Private) -> std::result::Result<Self::Output, Self::Error> {
-    parse_secret(key.as_ref()).map(|key| key.sign(message).to_bytes())
+    parse_secret(key.as_ref()).map(|key| key.sign(message).to_bytes()).map_err(Into::into)
   }
 }
 
@@ -42,45 +40,51 @@ where
 {
   type Public = T;
 
-  fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<()> {
-    let key: ed25519::PublicKey = parse_public(key.as_ref()).map_err(|_|Error::Crypto(crypto::Error::PrivateKeyError))?; //TODO: WRONG ERROR FIX THIS
-    let sig: ed25519::Signature = parse_signature(signature)?;
+  type Error = VerificationError; 
+
+  fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> std::result::Result<(), Self::Error> {
+    let key: ed25519::PublicKey = parse_public(key.as_ref()).map_err(Self::Error::from)?;
+    let sig: ed25519::Signature = parse_signature(signature).map_err(Self::Error::from)?; 
 
     if key.verify(&sig, message) {
       Ok(())
     } else {
-      Err(Error::InvalidProofValue("ed25519"))
+      Err(InvalidProofValue("ed25519").into())
     }
   }
 }
 
-fn parse_public(slice: &[u8]) -> std::result::Result<ed25519::PublicKey, Ed22519KeyParsingError> {
-  let bytes: [u8; PUBLIC_KEY_LENGTH] = slice
-    .get(..PUBLIC_KEY_LENGTH)
-    .and_then(|bytes| bytes.try_into().ok())
-    .ok_or_else(|| Ed22519KeyParsingError::InvalidPublicKeyLength(PublicKeyLengthError {actual: slice.len()}))?;
-
-  ed25519::PublicKey::try_from_bytes(bytes).map_err(|_|Ed22519KeyParsingError::FormatError)
+fn parse_public(slice: &[u8]) -> std::result::Result<ed25519::PublicKey, KeyError> {
+  let bytes: [u8; PUBLIC_KEY_LENGTH] = slice.try_into().map_err(|_| KeyError("could not create a public key from the supplied bytes: incorrect length"))?;
+  ed25519::PublicKey::try_from_bytes(bytes).map_err(|_|KeyError("could not parse public key from the supplied bytes"))
 }
 
-fn parse_secret(slice: &[u8]) -> std::result::Result<ed25519::SecretKey, Ed22519KeyParsingError> {
-  let bytes: [u8; SECRET_KEY_LENGTH] = slice
-    .get(..SECRET_KEY_LENGTH)
-    .and_then(|bytes| bytes.try_into().ok())
-    .ok_or_else(|| Ed22519KeyParsingError::InvalidPrivateKeyLength(SecretKeyLengthError{ actual: slice.len() }))?;
+fn parse_secret(slice: &[u8]) -> std::result::Result<ed25519::SecretKey, KeyError> {
+  let bytes: [u8; SECRET_KEY_LENGTH] = slice.try_into().map_err(|_|KeyError("could not create a secret key from the supplied bytes: incorrect length"))?;
 
   Ok(ed25519::SecretKey::from_bytes(bytes))
 }
 
-fn parse_signature(slice: &[u8]) -> Result<ed25519::Signature> {
-  let bytes: [u8; SIGNATURE_LENGTH] = slice
-    .get(..SIGNATURE_LENGTH)
-    .and_then(|bytes| bytes.try_into().ok())
-    .ok_or_else(|| Error::InvalidSigLength(slice.len(), SIGNATURE_LENGTH))?;
-
+fn parse_signature(slice: &[u8]) -> std::result::Result<ed25519::Signature, SignatureParsingError> {
+  let bytes: [u8; SIGNATURE_LENGTH] = slice.try_into().map_err(|_| SignatureParsingError("could not parse a signature from the supplied bytes"))?;
   Ok(ed25519::Signature::from_bytes(bytes))
 }
 
+mod errors {
+use thiserror::Error as DeriveError;
+
+use crate::crypto::signature::errors::{VerificationError, VerificationProcessingError};
+  #[derive(Debug,DeriveError)]
+  /// Caused by a failure to parse a signature
+  #[error("{0}")]
+  pub(super) struct SignatureParsingError(pub &'static str); 
+  
+  impl From<SignatureParsingError> for VerificationError {
+    fn from(err: SignatureParsingError) -> Self {
+       Self::ProcessingFailed(VerificationProcessingError::InvalidInputFormat(err.0))
+    }
+  }
+}
 #[cfg(test)]
 mod tests {
   use crate::crypto::Ed25519;
