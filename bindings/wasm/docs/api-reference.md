@@ -73,8 +73,8 @@
         * [.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
         * [.publishJSON(index, data)](#Client+publishJSON) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
         * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
-        * [.resolveHistory(did)](#Client+resolveHistory) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
+        * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
         * [.checkCredential(data)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.checkPresentation(data)](#Client+checkPresentation) ⇒ <code>Promise.&lt;any&gt;</code>
     * _static_
@@ -138,7 +138,7 @@ Publishes arbitrary JSON data to the specified index on the Tangle.
 
 <a name="Client+resolveHistory"></a>
 
-### client.resolveHistory(did) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.resolveHistory(did) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
 Returns the message history of the given DID.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -149,7 +149,7 @@ Returns the message history of the given DID.
 
 <a name="Client+resolveDiffHistory"></a>
 
-### client.resolveDiffHistory(document) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.resolveDiffHistory(document) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
 Returns the `DiffChainHistory` of a diff chain starting from a document on the
 integration chain.
 

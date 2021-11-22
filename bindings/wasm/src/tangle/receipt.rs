@@ -12,9 +12,9 @@ use crate::tangle::WasmNetwork;
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct WasmReceipt(pub(crate) Receipt);
 
+// Workaround for Typescript type annotations on async function returns.
 #[wasm_bindgen]
 extern "C" {
-  // Workaround for Typescript type annotations on async function returns.
   #[wasm_bindgen(typescript_type = "Promise<Receipt>")]
   pub type PromiseReceipt;
 }

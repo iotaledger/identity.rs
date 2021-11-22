@@ -20,7 +20,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
-use crate::chain::DiffChainHistory;
+use crate::chain::{DiffChainHistory, PromiseDiffChainHistory, PromiseDocumentHistory};
 use crate::chain::WasmDocumentHistory;
 use crate::did::{PromiseDocument, WasmDocument};
 use crate::did::WasmDocumentDiff;
@@ -151,7 +151,7 @@ impl Client {
 
   /// Returns the message history of the given DID.
   #[wasm_bindgen(js_name = resolveHistory)]
-  pub fn resolve_history(&self, did: &str) -> Result<Promise> {
+  pub fn resolve_history(&self, did: &str) -> Result<PromiseDocumentHistory> {
     let did: IotaDID = did.parse().wasm_result()?;
     let client: Rc<IotaClient> = self.client.clone();
 
@@ -160,11 +160,12 @@ impl Client {
         .resolve_history(&did)
         .await
         .map(WasmDocumentHistory::from)
-        .map(JsValue::from)
+        .map(Into::into)
         .wasm_result()
     });
 
-    Ok(promise)
+    // WARNING: this does not validate the return type. Check carefully.
+    Ok(promise.unchecked_into::<PromiseDocumentHistory>())
   }
 
   /// Returns the `DiffChainHistory` of a diff chain starting from a document on the
@@ -173,7 +174,7 @@ impl Client {
   /// NOTE: the document must have been published to the tangle and have a valid message id and
   /// capability invocation method.
   #[wasm_bindgen(js_name = resolveDiffHistory)]
-  pub fn resolve_diff_history(&self, document: &WasmDocument) -> Result<Promise> {
+  pub fn resolve_diff_history(&self, document: &WasmDocument) -> Result<PromiseDiffChainHistory> {
     let client: Rc<IotaClient> = self.client.clone();
     let iota_document: IotaDocument = document.0.clone();
 
@@ -182,11 +183,12 @@ impl Client {
         .resolve_diff_history(&iota_document)
         .await
         .map(DiffChainHistory::from)
-        .map(JsValue::from)
+        .map(Into::into)
         .wasm_result()
     });
 
-    Ok(promise)
+    // WARNING: this does not validate the return type. Check carefully.
+    Ok(promise.unchecked_into::<PromiseDiffChainHistory>())
   }
 
   /// Validates a credential with the DID Document from the Tangle.

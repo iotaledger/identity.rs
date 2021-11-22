@@ -10,8 +10,8 @@ use identity::crypto::merkle_key::Sha256;
 use identity::crypto::merkle_tree::Proof;
 use identity::crypto::PrivateKey;
 use identity::crypto::PublicKey;
-use identity::did::verifiable;
 use identity::did::MethodScope;
+use identity::did::verifiable;
 use identity::iota::Error;
 use identity::iota::IotaDocument;
 use identity::iota::IotaVerificationMethod;
@@ -39,9 +39,9 @@ use crate::service::Service;
 #[derive(Clone, Debug, PartialEq)]
 pub struct WasmDocument(pub(crate) IotaDocument);
 
+// Workaround for Typescript type annotations on async function returns.
 #[wasm_bindgen]
 extern "C" {
-  // Workaround for Typescript type annotations on async function returns.
   #[wasm_bindgen(typescript_type = "Promise<Document>")]
   pub type PromiseDocument;
 }

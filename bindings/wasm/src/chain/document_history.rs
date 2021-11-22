@@ -17,6 +17,19 @@ use crate::error::WasmResult;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WasmDocumentHistory(DocumentHistory);
 
+// Workaround for Typescript type annotations on async function returns.
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<DocumentHistory>")]
+  pub type PromiseDocumentHistory;
+
+  #[wasm_bindgen(typescript_type = "Promise<IntegrationChainHistory>")]
+  pub type PromiseIntegrationChainHistory;
+
+  #[wasm_bindgen(typescript_type = "Promise<DiffChainHistory>")]
+  pub type PromiseDiffChainHistory;
+}
+
 #[wasm_bindgen(js_class = DocumentHistory)]
 impl WasmDocumentHistory {
   /// Returns a `js_sys::Array` of integration chain `Documents`.
