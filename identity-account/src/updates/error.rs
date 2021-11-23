@@ -11,8 +11,6 @@ use crate::types::KeyLocation;
 pub enum UpdateError {
   #[error("document already exists")]
   DocumentAlreadyExists,
-  #[error("document not found")]
-  DocumentNotFound,
   #[error("verification method not found")]
   MethodNotFound,
   #[error("service not found")]
@@ -23,6 +21,9 @@ pub enum UpdateError {
   InvalidMethodFragment(&'static str),
   #[error("invalid method secret: {0}")]
   InvalidMethodSecret(String),
+  /// Caused by attempting to attach or detach a relationship on an embedded method.
+  #[error("invalid target method - method is embedded")]
+  InvalidTargetEmbeddedMethod,
   #[error("missing required field - {0}")]
   MissingRequiredField(&'static str),
   #[error("duplicate key location - {0}")]

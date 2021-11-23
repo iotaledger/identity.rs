@@ -29,7 +29,8 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
 
   // Add a new VerificationMethod with a new keypair
   let new_key: KeyPair = KeyPair::new_ed25519()?;
-  let method: IotaVerificationMethod = IotaVerificationMethod::from_did(document.did().clone(), &new_key, "newKey")?;
+  let method: IotaVerificationMethod =
+    IotaVerificationMethod::from_did(document.did().clone(), new_key.type_(), new_key.public(), "newKey")?;
   assert!(document.insert_method(method, MethodScope::VerificationMethod));
 
   // Add a new Service

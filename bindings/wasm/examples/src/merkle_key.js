@@ -46,7 +46,7 @@ async function merkleKey(clientConfig) {
 
     // Publish the Identity to the IOTA Network and log the results.
     // This may take a few seconds to complete proof-of-work.
-    const receipt = await client.publishDocument(issuer.doc.toJSON());
+    const receipt = await client.publishDocument(issuer.doc);
     logExplorerUrl("Identity Update:", clientConfig.network.toString(), receipt.messageId);
 
     // Prepare a credential subject indicating the degree earned by Alice
@@ -84,7 +84,7 @@ async function merkleKey(clientConfig) {
     issuer.doc.previousMessageId = receipt.messageId;
     issuer.doc.updated = Timestamp.nowUTC();
     issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
-    const nextReceipt = await client.publishDocument(issuer.doc.toJSON());
+    const nextReceipt = await client.publishDocument(issuer.doc);
     logExplorerUrl("Identity Update:", clientConfig.network.toString(), nextReceipt.messageId);
 
     // Check the verifiable credential is revoked

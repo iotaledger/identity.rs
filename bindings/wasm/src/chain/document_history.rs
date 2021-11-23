@@ -6,6 +6,7 @@ use identity::iota::DocumentDiff;
 use identity::iota::DocumentHistory;
 use identity::iota::IotaDocument;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
 use crate::did::WasmDocument;
 use crate::did::WasmDocumentDiff;
@@ -17,13 +18,35 @@ use crate::error::WasmResult;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WasmDocumentHistory(DocumentHistory);
 
+// Workaround for Typescript type annotations on async function returns and arrays.
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<DocumentHistory>")]
+  pub type PromiseDocumentHistory;
+
+  #[wasm_bindgen(typescript_type = "Promise<IntegrationChainHistory>")]
+  pub type PromiseIntegrationChainHistory;
+
+  #[wasm_bindgen(typescript_type = "Promise<DiffChainHistory>")]
+  pub type PromiseDiffChainHistory;
+
+  #[wasm_bindgen(typescript_type = "Array<string>")]
+  pub type ArrayString;
+
+  #[wasm_bindgen(typescript_type = "Array<Document>")]
+  pub type ArrayDocument;
+
+  #[wasm_bindgen(typescript_type = "Array<DocumentDiff>")]
+  pub type ArrayDocumentDiff;
+}
+
 #[wasm_bindgen(js_class = DocumentHistory)]
 impl WasmDocumentHistory {
-  /// Returns a `js_sys::Array` of integration chain `Documents`.
+  /// Returns an `Array` of integration chain `Documents`.
   ///
   /// NOTE: clones the data.
   #[wasm_bindgen(js_name = integrationChainData)]
-  pub fn integration_chain_data(&self) -> js_sys::Array {
+  pub fn integration_chain_data(&self) -> ArrayDocument {
     self
       .0
       .integration_chain_data
@@ -31,15 +54,16 @@ impl WasmDocumentHistory {
       .cloned()
       .map(WasmDocument::from)
       .map(JsValue::from)
-      .collect()
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayDocument>()
   }
 
-  /// Returns a `js_sys::Array` of message id strings for "spam" messages on the same index
+  /// Returns an `Array` of message id strings for "spam" messages on the same index
   /// as the integration chain.
   ///
   /// NOTE: clones the data.
   #[wasm_bindgen(js_name = integrationChainSpam)]
-  pub fn integration_chain_spam(&self) -> js_sys::Array {
+  pub fn integration_chain_spam(&self) -> ArrayString {
     self
       .0
       .integration_chain_spam
@@ -47,14 +71,15 @@ impl WasmDocumentHistory {
       .cloned()
       .map(|message_id| message_id.to_string())
       .map(JsValue::from)
-      .collect()
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayString>()
   }
 
-  /// Returns a `js_sys::Array` of diff chain `DocumentDiffs`.
+  /// Returns an `Array` of diff chain `DocumentDiffs`.
   ///
   /// NOTE: clones the data.
   #[wasm_bindgen(js_name = diffChainData)]
-  pub fn diff_chain_data(&self) -> js_sys::Array {
+  pub fn diff_chain_data(&self) -> ArrayDocumentDiff {
     self
       .0
       .diff_chain_data
@@ -62,15 +87,16 @@ impl WasmDocumentHistory {
       .cloned()
       .map(WasmDocumentDiff::from)
       .map(JsValue::from)
-      .collect()
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayDocumentDiff>()
   }
 
-  /// Returns a `js_sys::Array` of message id strings for "spam" messages on the same index
+  /// Returns an `Array` of message id strings for "spam" messages on the same index
   /// as the diff chain.
   ///
   /// NOTE: clones the data.
   #[wasm_bindgen(js_name = diffChainSpam)]
-  pub fn diff_chain_spam(&self) -> js_sys::Array {
+  pub fn diff_chain_spam(&self) -> ArrayString {
     self
       .0
       .diff_chain_spam
@@ -78,7 +104,8 @@ impl WasmDocumentHistory {
       .cloned()
       .map(|message_id| message_id.to_string())
       .map(JsValue::from)
-      .collect()
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayString>()
   }
 
   /// Serializes `DocumentHistory` as a JSON object.
@@ -108,30 +135,53 @@ pub struct IntegrationChainHistory(ChainHistory<IotaDocument>);
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DiffChainHistory(ChainHistory<DocumentDiff>);
 
+#[wasm_bindgen]
+impl IntegrationChainHistory {
+  /// Returns an `Array` of the integration chain `Documents`.
+  ///
+  /// NOTE: this clones the field.
+  #[wasm_bindgen(js_name = chainData)]
+  pub fn chain_data(&self) -> ArrayDocument {
+    self
+      .0
+      .chain_data
+      .iter()
+      .cloned()
+      .map(WasmDocument::from)
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayDocument>()
+  }
+}
+
+#[wasm_bindgen]
+impl DiffChainHistory {
+  /// Returns an `Array` of the diff chain `DocumentDiffs`.
+  ///
+  /// NOTE: this clones the field.
+  #[wasm_bindgen(js_name = chainData)]
+  pub fn chain_data(&self) -> ArrayDocumentDiff {
+    self
+      .0
+      .chain_data
+      .iter()
+      .cloned()
+      .map(WasmDocumentDiff::from)
+      .map(JsValue::from)
+      .collect::<js_sys::Array>()
+      .unchecked_into::<ArrayDocumentDiff>()
+  }
+}
+
 macro_rules! impl_wasm_chain_history {
   ($ident:ident, $ty:ty, $wasm_ty:ty) => {
     #[wasm_bindgen]
     impl $ident {
-      /// Returns a `js_sys::Array` of the chain objects.
-      ///
-      /// NOTE: this clones the field.
-      #[wasm_bindgen(js_name = chainData)]
-      pub fn chain_data(&self) -> js_sys::Array {
-        self
-          .0
-          .chain_data
-          .iter()
-          .cloned()
-          .map(<$wasm_ty>::from)
-          .map(JsValue::from)
-          .collect()
-      }
-
-      /// Returns a `js_sys::Array` of `MessageIds` as strings.
+      /// Returns an `Array` of `MessageIds` as strings.
       ///
       /// NOTE: this clones the field.
       #[wasm_bindgen]
-      pub fn spam(&self) -> js_sys::Array {
+      pub fn spam(&self) -> ArrayString {
         self
           .0
           .spam
@@ -139,7 +189,8 @@ macro_rules! impl_wasm_chain_history {
           .cloned()
           .map(|message_id| message_id.to_string())
           .map(JsValue::from)
-          .collect()
+          .collect::<js_sys::Array>()
+          .unchecked_into::<ArrayString>()
       }
 
       /// Serializes as a JSON object.
