@@ -1,53 +1,25 @@
 ## Classes
 
 <dl>
-<dt><a href="#AuthenticationRequest">AuthenticationRequest</a></dt>
-<dd></dd>
-<dt><a href="#AuthenticationResponse">AuthenticationResponse</a></dt>
-<dd></dd>
 <dt><a href="#Client">Client</a></dt>
 <dd></dd>
 <dt><a href="#Config">Config</a></dt>
 <dd></dd>
-<dt><a href="#CredentialIssuance">CredentialIssuance</a></dt>
-<dd></dd>
-<dt><a href="#CredentialOptionRequest">CredentialOptionRequest</a></dt>
-<dd></dd>
-<dt><a href="#CredentialOptionResponse">CredentialOptionResponse</a></dt>
-<dd></dd>
-<dt><a href="#CredentialRevocation">CredentialRevocation</a></dt>
-<dd></dd>
-<dt><a href="#CredentialSelection">CredentialSelection</a></dt>
-<dd></dd>
 <dt><a href="#DID">DID</a></dt>
 <dd></dd>
 <dt><a href="#DIDUrl">DIDUrl</a></dt>
-<dd></dd>
-<dt><a href="#DidRequest">DidRequest</a></dt>
-<dd></dd>
-<dt><a href="#DidResponse">DidResponse</a></dt>
 <dd></dd>
 <dt><a href="#DiffChainHistory">DiffChainHistory</a></dt>
 <dd></dd>
 <dt><a href="#Document">Document</a></dt>
 <dd></dd>
 <dt><a href="#DocumentDiff">DocumentDiff</a></dt>
-<dd><p>Defines the difference between two DID [<code>Document</code>]s&#39; JSON representations.</p>
+<dd><p>Defines the difference between two DID <code>Document</code>s&#39; JSON representations.</p>
 </dd>
 <dt><a href="#DocumentHistory">DocumentHistory</a></dt>
 <dd><p>A DID Document&#39;s history and current state.</p>
 </dd>
-<dt><a href="#FeaturesRequest">FeaturesRequest</a></dt>
-<dd></dd>
-<dt><a href="#FeaturesResponse">FeaturesResponse</a></dt>
-<dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
-<dd></dd>
-<dt><a href="#Introduction">Introduction</a></dt>
-<dd></dd>
-<dt><a href="#IntroductionProposal">IntroductionProposal</a></dt>
-<dd></dd>
-<dt><a href="#IntroductionResponse">IntroductionResponse</a></dt>
 <dd></dd>
 <dt><a href="#KeyCollection">KeyCollection</a></dt>
 <dd></dd>
@@ -55,23 +27,11 @@
 <dd></dd>
 <dt><a href="#Network">Network</a></dt>
 <dd></dd>
-<dt><a href="#PresentationRequest">PresentationRequest</a></dt>
-<dd></dd>
-<dt><a href="#PresentationResponse">PresentationResponse</a></dt>
-<dd></dd>
-<dt><a href="#ResolutionRequest">ResolutionRequest</a></dt>
-<dd></dd>
-<dt><a href="#ResolutionResponse">ResolutionResponse</a></dt>
+<dt><a href="#Receipt">Receipt</a></dt>
 <dd></dd>
 <dt><a href="#Service">Service</a></dt>
 <dd></dd>
 <dt><a href="#Timestamp">Timestamp</a></dt>
-<dd></dd>
-<dt><a href="#Timing">Timing</a></dt>
-<dd></dd>
-<dt><a href="#TrustPing">TrustPing</a></dt>
-<dd></dd>
-<dt><a href="#TrustedIssuer">TrustedIssuer</a></dt>
 <dd></dd>
 <dt><a href="#VerifiableCredential">VerifiableCredential</a></dt>
 <dd></dd>
@@ -84,6 +44,8 @@
 ## Members
 
 <dl>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
@@ -98,54 +60,6 @@
 </dd>
 </dl>
 
-<a name="AuthenticationRequest"></a>
-
-## AuthenticationRequest
-**Kind**: global class  
-
-* [AuthenticationRequest](#AuthenticationRequest)
-    * _instance_
-        * [.toJSON()](#AuthenticationRequest+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#AuthenticationRequest.fromJSON) ⇒ [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-
-<a name="AuthenticationRequest+toJSON"></a>
-
-### authenticationRequest.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>AuthenticationRequest</code>](#AuthenticationRequest)  
-<a name="AuthenticationRequest.fromJSON"></a>
-
-### AuthenticationRequest.fromJSON(value) ⇒ [<code>AuthenticationRequest</code>](#AuthenticationRequest)
-**Kind**: static method of [<code>AuthenticationRequest</code>](#AuthenticationRequest)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="AuthenticationResponse"></a>
-
-## AuthenticationResponse
-**Kind**: global class  
-
-* [AuthenticationResponse](#AuthenticationResponse)
-    * _instance_
-        * [.toJSON()](#AuthenticationResponse+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#AuthenticationResponse.fromJSON) ⇒ [<code>AuthenticationResponse</code>](#AuthenticationResponse)
-
-<a name="AuthenticationResponse+toJSON"></a>
-
-### authenticationResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>AuthenticationResponse</code>](#AuthenticationResponse)  
-<a name="AuthenticationResponse.fromJSON"></a>
-
-### AuthenticationResponse.fromJSON(value) ⇒ [<code>AuthenticationResponse</code>](#AuthenticationResponse)
-**Kind**: static method of [<code>AuthenticationResponse</code>](#AuthenticationResponse)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
 <a name="Client"></a>
 
 ## Client
@@ -155,12 +69,12 @@
     * [new Client()](#new_Client_new)
     * _instance_
         * [.network()](#Client+network) ⇒ [<code>Network</code>](#Network)
-        * [.publishDocument(document)](#Client+publishDocument) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.publishJSON(index, data)](#Client+publishJSON) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.resolve(did)](#Client+resolve) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.resolveHistory(did)](#Client+resolveHistory) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.publishDocument(document)](#Client+publishDocument) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
+        * [.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
+        * [.publishJSON(index, data)](#Client+publishJSON) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
+        * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
+        * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
+        * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
         * [.checkCredential(data)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.checkPresentation(data)](#Client+checkPresentation) ⇒ <code>Promise.&lt;any&gt;</code>
     * _static_
@@ -180,18 +94,18 @@ Returns the `Client` Tangle network.
 **Kind**: instance method of [<code>Client</code>](#Client)  
 <a name="Client+publishDocument"></a>
 
-### client.publishDocument(document) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.publishDocument(document) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
 Publishes an `IotaDocument` to the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| document | <code>any</code> | 
+| document | [<code>Document</code>](#Document) | 
 
 <a name="Client+publishDiff"></a>
 
-### client.publishDiff(message_id, diff) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.publishDiff(message_id, diff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
 Publishes a `DocumentDiff` to the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -203,7 +117,7 @@ Publishes a `DocumentDiff` to the Tangle.
 
 <a name="Client+publishJSON"></a>
 
-### client.publishJSON(index, data) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.publishJSON(index, data) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
 Publishes arbitrary JSON data to the specified index on the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -215,7 +129,7 @@ Publishes arbitrary JSON data to the specified index on the Tangle.
 
 <a name="Client+resolve"></a>
 
-### client.resolve(did) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.resolve(did) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
@@ -224,7 +138,7 @@ Publishes arbitrary JSON data to the specified index on the Tangle.
 
 <a name="Client+resolveHistory"></a>
 
-### client.resolveHistory(did) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.resolveHistory(did) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
 Returns the message history of the given DID.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -235,12 +149,12 @@ Returns the message history of the given DID.
 
 <a name="Client+resolveDiffHistory"></a>
 
-### client.resolveDiffHistory(document) ⇒ <code>Promise.&lt;any&gt;</code>
-Returns the [`DiffChainHistory`] of a diff chain starting from a document on the
+### client.resolveDiffHistory(document) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
+Returns the `DiffChainHistory` of a diff chain starting from a document on the
 integration chain.
 
 NOTE: the document must have been published to the tangle and have a valid message id and
-authentication method.
+capability invocation method.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
@@ -301,6 +215,7 @@ Creates a new `Client` with default settings for the given `Network`.
     * _instance_
         * [.setNetwork(network)](#Config+setNetwork)
         * [.setNode(url)](#Config+setNode)
+        * [.setEncoding(encoding)](#Config+setEncoding)
         * [.setPrimaryNode(url, jwt, username, password)](#Config+setPrimaryNode)
         * [.setPrimaryPoWNode(url, jwt, username, password)](#Config+setPrimaryPoWNode)
         * [.setPermanode(url, jwt, username, password)](#Config+setPermanode)
@@ -333,6 +248,15 @@ Creates a new `Client` with default settings for the given `Network`.
 | Param | Type |
 | --- | --- |
 | url | <code>string</code> | 
+
+<a name="Config+setEncoding"></a>
+
+### config.setEncoding(encoding)
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| encoding | <code>number</code> | 
 
 <a name="Config+setPrimaryNode"></a>
 
@@ -457,126 +381,6 @@ Creates a new `Client` with default settings for the given `Network`.
 | Param | Type |
 | --- | --- |
 | network | [<code>Network</code>](#Network) | 
-
-<a name="CredentialIssuance"></a>
-
-## CredentialIssuance
-**Kind**: global class  
-
-* [CredentialIssuance](#CredentialIssuance)
-    * _instance_
-        * [.toJSON()](#CredentialIssuance+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#CredentialIssuance.fromJSON) ⇒ [<code>CredentialIssuance</code>](#CredentialIssuance)
-
-<a name="CredentialIssuance+toJSON"></a>
-
-### credentialIssuance.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>CredentialIssuance</code>](#CredentialIssuance)  
-<a name="CredentialIssuance.fromJSON"></a>
-
-### CredentialIssuance.fromJSON(value) ⇒ [<code>CredentialIssuance</code>](#CredentialIssuance)
-**Kind**: static method of [<code>CredentialIssuance</code>](#CredentialIssuance)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="CredentialOptionRequest"></a>
-
-## CredentialOptionRequest
-**Kind**: global class  
-
-* [CredentialOptionRequest](#CredentialOptionRequest)
-    * _instance_
-        * [.toJSON()](#CredentialOptionRequest+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#CredentialOptionRequest.fromJSON) ⇒ [<code>CredentialOptionRequest</code>](#CredentialOptionRequest)
-
-<a name="CredentialOptionRequest+toJSON"></a>
-
-### credentialOptionRequest.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>CredentialOptionRequest</code>](#CredentialOptionRequest)  
-<a name="CredentialOptionRequest.fromJSON"></a>
-
-### CredentialOptionRequest.fromJSON(value) ⇒ [<code>CredentialOptionRequest</code>](#CredentialOptionRequest)
-**Kind**: static method of [<code>CredentialOptionRequest</code>](#CredentialOptionRequest)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="CredentialOptionResponse"></a>
-
-## CredentialOptionResponse
-**Kind**: global class  
-
-* [CredentialOptionResponse](#CredentialOptionResponse)
-    * _instance_
-        * [.toJSON()](#CredentialOptionResponse+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#CredentialOptionResponse.fromJSON) ⇒ [<code>CredentialOptionResponse</code>](#CredentialOptionResponse)
-
-<a name="CredentialOptionResponse+toJSON"></a>
-
-### credentialOptionResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>CredentialOptionResponse</code>](#CredentialOptionResponse)  
-<a name="CredentialOptionResponse.fromJSON"></a>
-
-### CredentialOptionResponse.fromJSON(value) ⇒ [<code>CredentialOptionResponse</code>](#CredentialOptionResponse)
-**Kind**: static method of [<code>CredentialOptionResponse</code>](#CredentialOptionResponse)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="CredentialRevocation"></a>
-
-## CredentialRevocation
-**Kind**: global class  
-
-* [CredentialRevocation](#CredentialRevocation)
-    * _instance_
-        * [.toJSON()](#CredentialRevocation+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#CredentialRevocation.fromJSON) ⇒ [<code>CredentialRevocation</code>](#CredentialRevocation)
-
-<a name="CredentialRevocation+toJSON"></a>
-
-### credentialRevocation.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>CredentialRevocation</code>](#CredentialRevocation)  
-<a name="CredentialRevocation.fromJSON"></a>
-
-### CredentialRevocation.fromJSON(value) ⇒ [<code>CredentialRevocation</code>](#CredentialRevocation)
-**Kind**: static method of [<code>CredentialRevocation</code>](#CredentialRevocation)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="CredentialSelection"></a>
-
-## CredentialSelection
-**Kind**: global class  
-
-* [CredentialSelection](#CredentialSelection)
-    * _instance_
-        * [.toJSON()](#CredentialSelection+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#CredentialSelection.fromJSON) ⇒ [<code>CredentialSelection</code>](#CredentialSelection)
-
-<a name="CredentialSelection+toJSON"></a>
-
-### credentialSelection.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>CredentialSelection</code>](#CredentialSelection)  
-<a name="CredentialSelection.fromJSON"></a>
-
-### CredentialSelection.fromJSON(value) ⇒ [<code>CredentialSelection</code>](#CredentialSelection)
-**Kind**: static method of [<code>CredentialSelection</code>](#CredentialSelection)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
 
 <a name="DID"></a>
 
@@ -766,7 +570,7 @@ Sets the `query` component of the `DIDUrl`.
 <a name="DIDUrl+join"></a>
 
 ### didUrl.join(segment) ⇒ [<code>DIDUrl</code>](#DIDUrl)
-Append a string representing a path, query, and/or fragment to this [`DIDUrl`].
+Append a string representing a path, query, and/or fragment to this `DIDUrl`.
 
 Must begin with a valid delimiter character: '/', '?', '#'. Overwrites the existing URL
 segment and any following segments in order of path, query, then fragment.
@@ -799,54 +603,6 @@ Parses a `DIDUrl` from the input string.
 | --- | --- |
 | input | <code>string</code> | 
 
-<a name="DidRequest"></a>
-
-## DidRequest
-**Kind**: global class  
-
-* [DidRequest](#DidRequest)
-    * _instance_
-        * [.toJSON()](#DidRequest+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#DidRequest.fromJSON) ⇒ [<code>DidRequest</code>](#DidRequest)
-
-<a name="DidRequest+toJSON"></a>
-
-### didRequest.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>DidRequest</code>](#DidRequest)  
-<a name="DidRequest.fromJSON"></a>
-
-### DidRequest.fromJSON(value) ⇒ [<code>DidRequest</code>](#DidRequest)
-**Kind**: static method of [<code>DidRequest</code>](#DidRequest)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="DidResponse"></a>
-
-## DidResponse
-**Kind**: global class  
-
-* [DidResponse](#DidResponse)
-    * _instance_
-        * [.toJSON()](#DidResponse+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#DidResponse.fromJSON) ⇒ [<code>DidResponse</code>](#DidResponse)
-
-<a name="DidResponse+toJSON"></a>
-
-### didResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>DidResponse</code>](#DidResponse)  
-<a name="DidResponse.fromJSON"></a>
-
-### DidResponse.fromJSON(value) ⇒ [<code>DidResponse</code>](#DidResponse)
-**Kind**: static method of [<code>DidResponse</code>](#DidResponse)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
 <a name="DiffChainHistory"></a>
 
 ## DiffChainHistory
@@ -854,24 +610,24 @@ Parses a `DIDUrl` from the input string.
 
 * [DiffChainHistory](#DiffChainHistory)
     * _instance_
-        * [.chainData()](#DiffChainHistory+chainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.spam()](#DiffChainHistory+spam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.chainData()](#DiffChainHistory+chainData) ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+        * [.spam()](#DiffChainHistory+spam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#DiffChainHistory+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#DiffChainHistory.fromJSON) ⇒ [<code>DiffChainHistory</code>](#DiffChainHistory)
 
 <a name="DiffChainHistory+chainData"></a>
 
-### diffChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
+### diffChainHistory.chainData() ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+Returns an `Array` of the diff chain `DocumentDiffs`.
 
 NOTE: this clones the field.
 
 **Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
 <a name="DiffChainHistory+spam"></a>
 
-### diffChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
+### diffChainHistory.spam() ⇒ <code>Array.&lt;string&gt;</code>
+Returns an `Array` of `MessageIds` as strings.
 
 NOTE: this clones the field.
 
@@ -879,13 +635,13 @@ NOTE: this clones the field.
 <a name="DiffChainHistory+toJSON"></a>
 
 ### diffChainHistory.toJSON() ⇒ <code>any</code>
-Serializes a `$ident` object as a JSON object.
+Serializes as a JSON object.
 
 **Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
 <a name="DiffChainHistory.fromJSON"></a>
 
 ### DiffChainHistory.fromJSON(json) ⇒ [<code>DiffChainHistory</code>](#DiffChainHistory)
-Deserializes a `$ident` object from a JSON object.
+Deserializes from a JSON object.
 
 **Kind**: static method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
 
@@ -911,25 +667,28 @@ Deserializes a `$ident` object from a JSON object.
         * [.messageId](#Document+messageId)
         * [.previousMessageId](#Document+previousMessageId) ⇒ <code>string</code>
         * [.previousMessageId](#Document+previousMessageId)
-        * [.authentication()](#Document+authentication) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.defaultSigningMethod()](#Document+defaultSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.insertMethod(method, scope)](#Document+insertMethod) ⇒ <code>boolean</code>
         * [.removeMethod(did)](#Document+removeMethod)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#Document+removeService)
-        * [.sign(key)](#Document+sign)
-        * [.verify()](#Document+verify) ⇒ <code>boolean</code>
+        * [.signSelf(key_pair, method_query)](#Document+signSelf)
+        * [.verifySelfSigned()](#Document+verifySelfSigned) ⇒ <code>boolean</code>
         * [.signCredential(data, args)](#Document+signCredential) ⇒ [<code>VerifiableCredential</code>](#VerifiableCredential)
         * [.signPresentation(data, args)](#Document+signPresentation) ⇒ [<code>VerifiablePresentation</code>](#VerifiablePresentation)
         * [.signData(data, args)](#Document+signData) ⇒ <code>any</code>
         * [.verifyData(data)](#Document+verifyData) ⇒ <code>boolean</code>
-        * [.resolveKey(query)](#Document+resolveKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.verifyDataWithScope(data, scope)](#Document+verifyDataWithScope) ⇒ <code>boolean</code>
+        * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
-        * [.diff(other, message, key)](#Document+diff) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
+        * [.diff(other, message, key, method)](#Document+diff) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
+        * [.verifyDiff(diff)](#Document+verifyDiff)
         * [.merge(diff)](#Document+merge)
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
         * [.toJSON()](#Document+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromAuthentication(method)](#Document.fromAuthentication) ⇒ [<code>Document</code>](#Document)
+        * [.fromVerificationMethod(method)](#Document.fromVerificationMethod) ⇒ [<code>Document</code>](#Document)
+        * [.verifyRootDocument(document)](#Document.verifyRootDocument)
         * [.diffIndex(message_id)](#Document.diffIndex) ⇒ <code>string</code>
         * [.fromJSON(json)](#Document.fromJSON) ⇒ [<code>Document</code>](#Document)
 
@@ -940,17 +699,17 @@ Creates a new DID Document from the given `KeyPair`, network, and verification m
 fragment name.
 
 The DID Document will be pre-populated with a single verification method
-derived from the provided `KeyPair`, with an attached authentication relationship.
-This method will have the DID URL fragment `#authentication` by default and can be easily
-retrieved with `Document::authentication`.
+derived from the provided `KeyPair` embedded as a capability invocation
+verification relationship. This method will have the DID URL fragment
+`#sign-0` by default and can be easily retrieved with `Document::defaultSigningMethod`.
 
-NOTE: the generated document is unsigned, see `Document::sign`.
+NOTE: the generated document is unsigned, see `Document::signSelf`.
 
 Arguments:
 
 * keypair: the initial verification method is derived from the public key with this keypair.
 * network: Tangle network to use for the DID, default `Network::mainnet`.
-* fragment: name of the initial verification method, default "authentication".
+* fragment: name of the initial verification method, default "sign-0".
 
 
 | Param | Type |
@@ -1035,10 +794,13 @@ Set the message_id of the DID Document.
 | --- | --- |
 | value | <code>string</code> | 
 
-<a name="Document+authentication"></a>
+<a name="Document+defaultSigningMethod"></a>
 
-### document.authentication() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-Returns the default Verification Method of the DID Document.
+### document.defaultSigningMethod() ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+Returns the first [`IotaVerificationMethod`] with a capability invocation relationship
+capable of signing this DID document.
+
+Throws an error if no signing method is present.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+insertMethod"></a>
@@ -1086,21 +848,27 @@ Remove a `Service` identified by the given `DIDUrl` from the document.
 | --- | --- |
 | did | [<code>DIDUrl</code>](#DIDUrl) | 
 
-<a name="Document+sign"></a>
+<a name="Document+signSelf"></a>
 
-### document.sign(key)
-Signs the DID Document with the default authentication method.
+### document.signSelf(key_pair, method_query)
+Signs the DID document with the verification method specified by `method_query`.
+The `method_query` may be the full `DIDUrl` of the method or just its fragment,
+e.g. "#sign-0".
+
+NOTE: does not validate whether the private key of the given `key_pair` corresponds to the
+verification method. See `Document::verifySelfSigned`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| key | [<code>KeyPair</code>](#KeyPair) | 
+| key_pair | [<code>KeyPair</code>](#KeyPair) | 
+| method_query | <code>string</code> | 
 
-<a name="Document+verify"></a>
+<a name="Document+verifySelfSigned"></a>
 
-### document.verify() ⇒ <code>boolean</code>
-Verify the signature with the authentication_key
+### document.verifySelfSigned() ⇒ <code>boolean</code>
+Verifies a self-signed signature on this DID document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+signCredential"></a>
@@ -1150,9 +918,22 @@ Verifies the authenticity of `data` using the target verification method.
 | --- | --- |
 | data | <code>any</code> | 
 
-<a name="Document+resolveKey"></a>
+<a name="Document+verifyDataWithScope"></a>
 
-### document.resolveKey(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+### document.verifyDataWithScope(data, scope) ⇒ <code>boolean</code>
+Verifies the signature of the provided `data` was created using a verification method
+in this DID Document with the verification relationship specified by `scope`.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| data | <code>any</code> | 
+| scope | <code>string</code> | 
+
+<a name="Document+resolveMethod"></a>
+
+### document.resolveMethod(query) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
@@ -1171,8 +952,9 @@ Verifies the authenticity of `data` using the target verification method.
 
 <a name="Document+diff"></a>
 
-### document.diff(other, message, key) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
-Generate the difference between two DID Documents and sign it
+### document.diff(other, message, key, method) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
+Generate a `DocumentDiff` between two DID Documents and sign it using the specified
+`key` and `method`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
@@ -1181,6 +963,23 @@ Generate the difference between two DID Documents and sign it
 | other | [<code>Document</code>](#Document) | 
 | message | <code>string</code> | 
 | key | [<code>KeyPair</code>](#KeyPair) | 
+| method | <code>string</code> | 
+
+<a name="Document+verifyDiff"></a>
+
+### document.verifyDiff(diff)
+Verifies the signature of the `diff` was created using a capability invocation method
+in this DID Document.
+
+# Errors
+
+Fails if an unsupported verification method is used or the verification operation fails.
+
+**Kind**: instance method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| diff | [<code>DocumentDiff</code>](#DocumentDiff) | 
 
 <a name="Document+merge"></a>
 
@@ -1198,9 +997,9 @@ Verifies a `DocumentDiff` signature and merges the changes into `self`.
 ### document.integrationIndex() ⇒ <code>string</code>
 Returns the Tangle index of the integration chain for this DID.
 
-This is simply the tag segment of the [`IotaDID`].
+This is simply the tag segment of the `DID`.
 E.g.
-For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
+For a document with DID: did:iota:1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI,
 `doc.integration_index()` == "1234567890abcdefghijklmnopqrstuvxyzABCDEFGHI"
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1210,18 +1009,33 @@ For an [`IotaDocument`] `doc` with DID: did:iota:1234567890abcdefghijklmnopqrstu
 Serializes a `Document` object as a JSON object.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
-<a name="Document.fromAuthentication"></a>
+<a name="Document.fromVerificationMethod"></a>
 
-### Document.fromAuthentication(method) ⇒ [<code>Document</code>](#Document)
+### Document.fromVerificationMethod(method) ⇒ [<code>Document</code>](#Document)
 Creates a new DID Document from the given `VerificationMethod`.
 
-NOTE: the generated document is unsigned, see Document::sign.
+NOTE: the generated document is unsigned, see `Document::signSelf`.
 
 **Kind**: static method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
 | method | [<code>VerificationMethod</code>](#VerificationMethod) | 
+
+<a name="Document.verifyRootDocument"></a>
+
+### Document.verifyRootDocument(document)
+Verifies whether `document` is a valid root DID document according to the IOTA DID method
+specification.
+
+It must be signed using a verification method with a public key whose BLAKE2b-256 hash matches
+the DID tag.
+
+**Kind**: static method of [<code>Document</code>](#Document)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>Document</code>](#Document) | 
 
 <a name="Document.diffIndex"></a>
 
@@ -1251,7 +1065,7 @@ Deserializes a `Document` object from a JSON object.
 <a name="DocumentDiff"></a>
 
 ## DocumentDiff
-Defines the difference between two DID [`Document`]s' JSON representations.
+Defines the difference between two DID `Document`s' JSON representations.
 
 **Kind**: global class  
 
@@ -1349,26 +1163,26 @@ A DID Document's history and current state.
 
 * [DocumentHistory](#DocumentHistory)
     * _instance_
-        * [.integrationChainData()](#DocumentHistory+integrationChainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.integrationChainSpam()](#DocumentHistory+integrationChainSpam) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.diffChainData()](#DocumentHistory+diffChainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.diffChainSpam()](#DocumentHistory+diffChainSpam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.integrationChainData()](#DocumentHistory+integrationChainData) ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+        * [.integrationChainSpam()](#DocumentHistory+integrationChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.diffChainData()](#DocumentHistory+diffChainData) ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+        * [.diffChainSpam()](#DocumentHistory+diffChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#DocumentHistory+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#DocumentHistory.fromJSON) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
 
 <a name="DocumentHistory+integrationChainData"></a>
 
-### documentHistory.integrationChainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of integration chain [`WasmDocuments`](WasmDocument).
+### documentHistory.integrationChainData() ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+Returns an `Array` of integration chain `Documents`.
 
 NOTE: clones the data.
 
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory+integrationChainSpam"></a>
 
-### documentHistory.integrationChainSpam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of message id strings for "spam" messages on the same index
+### documentHistory.integrationChainSpam() ⇒ <code>Array.&lt;string&gt;</code>
+Returns an `Array` of message id strings for "spam" messages on the same index
 as the integration chain.
 
 NOTE: clones the data.
@@ -1376,16 +1190,16 @@ NOTE: clones the data.
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory+diffChainData"></a>
 
-### documentHistory.diffChainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of diff chain [`WasmDocumentDiffs`](WasmDocumentDiff).
+### documentHistory.diffChainData() ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+Returns an `Array` of diff chain `DocumentDiffs`.
 
 NOTE: clones the data.
 
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory+diffChainSpam"></a>
 
-### documentHistory.diffChainSpam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of message id strings for "spam" messages on the same index
+### documentHistory.diffChainSpam() ⇒ <code>Array.&lt;string&gt;</code>
+Returns an `Array` of message id strings for "spam" messages on the same index
 as the diff chain.
 
 NOTE: clones the data.
@@ -1394,67 +1208,19 @@ NOTE: clones the data.
 <a name="DocumentHistory+toJSON"></a>
 
 ### documentHistory.toJSON() ⇒ <code>any</code>
-Serializes a [`WasmDocumentHistory`] object as a JSON object.
+Serializes `DocumentHistory` as a JSON object.
 
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory.fromJSON"></a>
 
 ### DocumentHistory.fromJSON(json) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
-Deserializes a [`WasmDocumentHistory`] object from a JSON object.
+Deserializes `DocumentHistory` from a JSON object.
 
 **Kind**: static method of [<code>DocumentHistory</code>](#DocumentHistory)  
 
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
-
-<a name="FeaturesRequest"></a>
-
-## FeaturesRequest
-**Kind**: global class  
-
-* [FeaturesRequest](#FeaturesRequest)
-    * _instance_
-        * [.toJSON()](#FeaturesRequest+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#FeaturesRequest.fromJSON) ⇒ [<code>FeaturesRequest</code>](#FeaturesRequest)
-
-<a name="FeaturesRequest+toJSON"></a>
-
-### featuresRequest.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>FeaturesRequest</code>](#FeaturesRequest)  
-<a name="FeaturesRequest.fromJSON"></a>
-
-### FeaturesRequest.fromJSON(value) ⇒ [<code>FeaturesRequest</code>](#FeaturesRequest)
-**Kind**: static method of [<code>FeaturesRequest</code>](#FeaturesRequest)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="FeaturesResponse"></a>
-
-## FeaturesResponse
-**Kind**: global class  
-
-* [FeaturesResponse](#FeaturesResponse)
-    * _instance_
-        * [.toJSON()](#FeaturesResponse+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#FeaturesResponse.fromJSON) ⇒ [<code>FeaturesResponse</code>](#FeaturesResponse)
-
-<a name="FeaturesResponse+toJSON"></a>
-
-### featuresResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>FeaturesResponse</code>](#FeaturesResponse)  
-<a name="FeaturesResponse.fromJSON"></a>
-
-### FeaturesResponse.fromJSON(value) ⇒ [<code>FeaturesResponse</code>](#FeaturesResponse)
-**Kind**: static method of [<code>FeaturesResponse</code>](#FeaturesResponse)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
 
 <a name="IntegrationChainHistory"></a>
 
@@ -1463,24 +1229,24 @@ Deserializes a [`WasmDocumentHistory`] object from a JSON object.
 
 * [IntegrationChainHistory](#IntegrationChainHistory)
     * _instance_
-        * [.chainData()](#IntegrationChainHistory+chainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.spam()](#IntegrationChainHistory+spam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.chainData()](#IntegrationChainHistory+chainData) ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+        * [.spam()](#IntegrationChainHistory+spam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#IntegrationChainHistory+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#IntegrationChainHistory.fromJSON) ⇒ [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)
 
 <a name="IntegrationChainHistory+chainData"></a>
 
-### integrationChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of `$wasm_ty` as strings.
+### integrationChainHistory.chainData() ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+Returns an `Array` of the integration chain `Documents`.
 
 NOTE: this clones the field.
 
 **Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
 <a name="IntegrationChainHistory+spam"></a>
 
-### integrationChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a [`js_sys::Array`] of [`MessageIds`][MessageId] as strings.
+### integrationChainHistory.spam() ⇒ <code>Array.&lt;string&gt;</code>
+Returns an `Array` of `MessageIds` as strings.
 
 NOTE: this clones the field.
 
@@ -1488,91 +1254,19 @@ NOTE: this clones the field.
 <a name="IntegrationChainHistory+toJSON"></a>
 
 ### integrationChainHistory.toJSON() ⇒ <code>any</code>
-Serializes a `$ident` object as a JSON object.
+Serializes as a JSON object.
 
 **Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
 <a name="IntegrationChainHistory.fromJSON"></a>
 
 ### IntegrationChainHistory.fromJSON(json) ⇒ [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)
-Deserializes a `$ident` object from a JSON object.
+Deserializes from a JSON object.
 
 **Kind**: static method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
 
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
-
-<a name="Introduction"></a>
-
-## Introduction
-**Kind**: global class  
-
-* [Introduction](#Introduction)
-    * _instance_
-        * [.toJSON()](#Introduction+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#Introduction.fromJSON) ⇒ [<code>Introduction</code>](#Introduction)
-
-<a name="Introduction+toJSON"></a>
-
-### introduction.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>Introduction</code>](#Introduction)  
-<a name="Introduction.fromJSON"></a>
-
-### Introduction.fromJSON(value) ⇒ [<code>Introduction</code>](#Introduction)
-**Kind**: static method of [<code>Introduction</code>](#Introduction)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="IntroductionProposal"></a>
-
-## IntroductionProposal
-**Kind**: global class  
-
-* [IntroductionProposal](#IntroductionProposal)
-    * _instance_
-        * [.toJSON()](#IntroductionProposal+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#IntroductionProposal.fromJSON) ⇒ [<code>IntroductionProposal</code>](#IntroductionProposal)
-
-<a name="IntroductionProposal+toJSON"></a>
-
-### introductionProposal.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>IntroductionProposal</code>](#IntroductionProposal)  
-<a name="IntroductionProposal.fromJSON"></a>
-
-### IntroductionProposal.fromJSON(value) ⇒ [<code>IntroductionProposal</code>](#IntroductionProposal)
-**Kind**: static method of [<code>IntroductionProposal</code>](#IntroductionProposal)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="IntroductionResponse"></a>
-
-## IntroductionResponse
-**Kind**: global class  
-
-* [IntroductionResponse](#IntroductionResponse)
-    * _instance_
-        * [.toJSON()](#IntroductionResponse+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#IntroductionResponse.fromJSON) ⇒ [<code>IntroductionResponse</code>](#IntroductionResponse)
-
-<a name="IntroductionResponse+toJSON"></a>
-
-### introductionResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>IntroductionResponse</code>](#IntroductionResponse)  
-<a name="IntroductionResponse.fromJSON"></a>
-
-### IntroductionResponse.fromJSON(value) ⇒ [<code>IntroductionResponse</code>](#IntroductionResponse)
-**Kind**: static method of [<code>IntroductionResponse</code>](#IntroductionResponse)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
 
 <a name="KeyCollection"></a>
 
@@ -1798,7 +1492,7 @@ Returns the web explorer URL of the given `message`.
 <a name="Network.try_from_name"></a>
 
 ### Network.try\_from\_name(name) ⇒ [<code>Network</code>](#Network)
-Parses the provided string to a [`WasmNetwork`].
+Parses the provided string to a `Network`.
 
 **Kind**: static method of [<code>Network</code>](#Network)  
 
@@ -1814,101 +1508,61 @@ Parses the provided string to a [`WasmNetwork`].
 
 ### Network.devnet() ⇒ [<code>Network</code>](#Network)
 **Kind**: static method of [<code>Network</code>](#Network)  
-<a name="PresentationRequest"></a>
+<a name="Receipt"></a>
 
-## PresentationRequest
+## Receipt
 **Kind**: global class  
 
-* [PresentationRequest](#PresentationRequest)
+* [Receipt](#Receipt)
     * _instance_
-        * [.toJSON()](#PresentationRequest+toJSON) ⇒ <code>any</code>
+        * [.network](#Receipt+network) ⇒ [<code>Network</code>](#Network)
+        * [.messageId](#Receipt+messageId) ⇒ <code>string</code>
+        * [.networkId](#Receipt+networkId) ⇒ <code>string</code>
+        * [.nonce](#Receipt+nonce) ⇒ <code>string</code>
+        * [.toJSON()](#Receipt+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromJSON(value)](#PresentationRequest.fromJSON) ⇒ [<code>PresentationRequest</code>](#PresentationRequest)
+        * [.fromJSON(json)](#Receipt.fromJSON) ⇒ [<code>Receipt</code>](#Receipt)
 
-<a name="PresentationRequest+toJSON"></a>
+<a name="Receipt+network"></a>
 
-### presentationRequest.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>PresentationRequest</code>](#PresentationRequest)  
-<a name="PresentationRequest.fromJSON"></a>
+### receipt.network ⇒ [<code>Network</code>](#Network)
+Returns the associated IOTA Tangle `Network`.
 
-### PresentationRequest.fromJSON(value) ⇒ [<code>PresentationRequest</code>](#PresentationRequest)
-**Kind**: static method of [<code>PresentationRequest</code>](#PresentationRequest)  
+**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+messageId"></a>
+
+### receipt.messageId ⇒ <code>string</code>
+Returns the message `id`.
+
+**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+networkId"></a>
+
+### receipt.networkId ⇒ <code>string</code>
+Returns the message `network_id`.
+
+**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+nonce"></a>
+
+### receipt.nonce ⇒ <code>string</code>
+Returns the message `nonce`.
+
+**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+toJSON"></a>
+
+### receipt.toJSON() ⇒ <code>any</code>
+Serializes a `Receipt` as a JSON object.
+
+**Kind**: instance method of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt.fromJSON"></a>
+
+### Receipt.fromJSON(json) ⇒ [<code>Receipt</code>](#Receipt)
+Deserializes a `Receipt` from a JSON object.
+
+**Kind**: static method of [<code>Receipt</code>](#Receipt)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>any</code> | 
-
-<a name="PresentationResponse"></a>
-
-## PresentationResponse
-**Kind**: global class  
-
-* [PresentationResponse](#PresentationResponse)
-    * _instance_
-        * [.toJSON()](#PresentationResponse+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#PresentationResponse.fromJSON) ⇒ [<code>PresentationResponse</code>](#PresentationResponse)
-
-<a name="PresentationResponse+toJSON"></a>
-
-### presentationResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>PresentationResponse</code>](#PresentationResponse)  
-<a name="PresentationResponse.fromJSON"></a>
-
-### PresentationResponse.fromJSON(value) ⇒ [<code>PresentationResponse</code>](#PresentationResponse)
-**Kind**: static method of [<code>PresentationResponse</code>](#PresentationResponse)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="ResolutionRequest"></a>
-
-## ResolutionRequest
-**Kind**: global class  
-
-* [ResolutionRequest](#ResolutionRequest)
-    * _instance_
-        * [.toJSON()](#ResolutionRequest+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#ResolutionRequest.fromJSON) ⇒ [<code>ResolutionRequest</code>](#ResolutionRequest)
-
-<a name="ResolutionRequest+toJSON"></a>
-
-### resolutionRequest.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>ResolutionRequest</code>](#ResolutionRequest)  
-<a name="ResolutionRequest.fromJSON"></a>
-
-### ResolutionRequest.fromJSON(value) ⇒ [<code>ResolutionRequest</code>](#ResolutionRequest)
-**Kind**: static method of [<code>ResolutionRequest</code>](#ResolutionRequest)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="ResolutionResponse"></a>
-
-## ResolutionResponse
-**Kind**: global class  
-
-* [ResolutionResponse](#ResolutionResponse)
-    * _instance_
-        * [.toJSON()](#ResolutionResponse+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#ResolutionResponse.fromJSON) ⇒ [<code>ResolutionResponse</code>](#ResolutionResponse)
-
-<a name="ResolutionResponse+toJSON"></a>
-
-### resolutionResponse.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>ResolutionResponse</code>](#ResolutionResponse)  
-<a name="ResolutionResponse.fromJSON"></a>
-
-### ResolutionResponse.fromJSON(value) ⇒ [<code>ResolutionResponse</code>](#ResolutionResponse)
-**Kind**: static method of [<code>ResolutionResponse</code>](#ResolutionResponse)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
+| json | <code>any</code> | 
 
 <a name="Service"></a>
 
@@ -1973,168 +1627,6 @@ Parses a `Timestamp` from the provided input string.
 Creates a new `Timestamp` with the current date and time.
 
 **Kind**: static method of [<code>Timestamp</code>](#Timestamp)  
-<a name="Timing"></a>
-
-## Timing
-**Kind**: global class  
-
-* [Timing](#Timing)
-    * _instance_
-        * [.outTime](#Timing+outTime) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.outTime](#Timing+outTime)
-        * [.inTime](#Timing+inTime) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.inTime](#Timing+inTime)
-        * [.staleTime](#Timing+staleTime) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.staleTime](#Timing+staleTime)
-        * [.expiresTime](#Timing+expiresTime) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.expiresTime](#Timing+expiresTime)
-        * [.waitUntilTime](#Timing+waitUntilTime) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.waitUntilTime](#Timing+waitUntilTime)
-        * [.delayMilli](#Timing+delayMilli) ⇒ <code>number</code> \| <code>undefined</code>
-        * [.delayMilli](#Timing+delayMilli)
-        * [.toJSON()](#Timing+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#Timing.fromJSON) ⇒ [<code>Timing</code>](#Timing)
-
-<a name="Timing+outTime"></a>
-
-### timing.outTime ⇒ <code>string</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>Timing</code>](#Timing)  
-<a name="Timing+outTime"></a>
-
-### timing.outTime
-**Kind**: instance property of [<code>Timing</code>](#Timing)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> | 
-
-<a name="Timing+inTime"></a>
-
-### timing.inTime ⇒ <code>string</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>Timing</code>](#Timing)  
-<a name="Timing+inTime"></a>
-
-### timing.inTime
-**Kind**: instance property of [<code>Timing</code>](#Timing)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> | 
-
-<a name="Timing+staleTime"></a>
-
-### timing.staleTime ⇒ <code>string</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>Timing</code>](#Timing)  
-<a name="Timing+staleTime"></a>
-
-### timing.staleTime
-**Kind**: instance property of [<code>Timing</code>](#Timing)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> | 
-
-<a name="Timing+expiresTime"></a>
-
-### timing.expiresTime ⇒ <code>string</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>Timing</code>](#Timing)  
-<a name="Timing+expiresTime"></a>
-
-### timing.expiresTime
-**Kind**: instance property of [<code>Timing</code>](#Timing)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> | 
-
-<a name="Timing+waitUntilTime"></a>
-
-### timing.waitUntilTime ⇒ <code>string</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>Timing</code>](#Timing)  
-<a name="Timing+waitUntilTime"></a>
-
-### timing.waitUntilTime
-**Kind**: instance property of [<code>Timing</code>](#Timing)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> | 
-
-<a name="Timing+delayMilli"></a>
-
-### timing.delayMilli ⇒ <code>number</code> \| <code>undefined</code>
-**Kind**: instance property of [<code>Timing</code>](#Timing)  
-<a name="Timing+delayMilli"></a>
-
-### timing.delayMilli
-**Kind**: instance property of [<code>Timing</code>](#Timing)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>number</code> | 
-
-<a name="Timing+toJSON"></a>
-
-### timing.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>Timing</code>](#Timing)  
-<a name="Timing.fromJSON"></a>
-
-### Timing.fromJSON(value) ⇒ [<code>Timing</code>](#Timing)
-**Kind**: static method of [<code>Timing</code>](#Timing)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="TrustPing"></a>
-
-## TrustPing
-**Kind**: global class  
-
-* [TrustPing](#TrustPing)
-    * _instance_
-        * [.toJSON()](#TrustPing+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#TrustPing.fromJSON) ⇒ [<code>TrustPing</code>](#TrustPing)
-
-<a name="TrustPing+toJSON"></a>
-
-### trustPing.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>TrustPing</code>](#TrustPing)  
-<a name="TrustPing.fromJSON"></a>
-
-### TrustPing.fromJSON(value) ⇒ [<code>TrustPing</code>](#TrustPing)
-**Kind**: static method of [<code>TrustPing</code>](#TrustPing)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
-<a name="TrustedIssuer"></a>
-
-## TrustedIssuer
-**Kind**: global class  
-
-* [TrustedIssuer](#TrustedIssuer)
-    * _instance_
-        * [.toJSON()](#TrustedIssuer+toJSON) ⇒ <code>any</code>
-    * _static_
-        * [.fromJSON(value)](#TrustedIssuer.fromJSON) ⇒ [<code>TrustedIssuer</code>](#TrustedIssuer)
-
-<a name="TrustedIssuer+toJSON"></a>
-
-### trustedIssuer.toJSON() ⇒ <code>any</code>
-**Kind**: instance method of [<code>TrustedIssuer</code>](#TrustedIssuer)  
-<a name="TrustedIssuer.fromJSON"></a>
-
-### TrustedIssuer.fromJSON(value) ⇒ [<code>TrustedIssuer</code>](#TrustedIssuer)
-**Kind**: static method of [<code>TrustedIssuer</code>](#TrustedIssuer)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>any</code> | 
-
 <a name="VerifiableCredential"></a>
 
 ## VerifiableCredential
@@ -2232,28 +1724,29 @@ Deserializes a `VerifiablePresentation` object from a JSON object.
 **Kind**: global class  
 
 * [VerificationMethod](#VerificationMethod)
-    * [new VerificationMethod(key, tag)](#new_VerificationMethod_new)
+    * [new VerificationMethod(key, fragment)](#new_VerificationMethod_new)
     * _instance_
         * [.id](#VerificationMethod+id) ⇒ [<code>DIDUrl</code>](#DIDUrl)
         * [.controller](#VerificationMethod+controller) ⇒ [<code>DID</code>](#DID)
+        * [.controller](#VerificationMethod+controller)
         * [.type](#VerificationMethod+type) ⇒ <code>string</code>
         * [.data](#VerificationMethod+data) ⇒ <code>any</code>
         * [.toJSON()](#VerificationMethod+toJSON) ⇒ <code>any</code>
     * _static_
-        * [.fromDID(did, key, tag)](#VerificationMethod.fromDID) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.createMerkleKey(digest, did, keys, tag)](#VerificationMethod.createMerkleKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.fromDID(did, key, fragment)](#VerificationMethod.fromDID) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+        * [.createMerkleKey(digest, did, keys, fragment)](#VerificationMethod.createMerkleKey) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.fromJSON(value)](#VerificationMethod.fromJSON) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 
 <a name="new_VerificationMethod_new"></a>
 
-### new VerificationMethod(key, tag)
+### new VerificationMethod(key, fragment)
 Creates a new `VerificationMethod` object from the given `key`.
 
 
 | Param | Type |
 | --- | --- |
 | key | [<code>KeyPair</code>](#KeyPair) | 
-| tag | <code>string</code> \| <code>undefined</code> | 
+| fragment | <code>string</code> | 
 
 <a name="VerificationMethod+id"></a>
 
@@ -2267,6 +1760,17 @@ Returns the `id` `DIDUrl` of the `VerificationMethod` object.
 Returns the `controller` `DID` of the `VerificationMethod` object.
 
 **Kind**: instance property of [<code>VerificationMethod</code>](#VerificationMethod)  
+<a name="VerificationMethod+controller"></a>
+
+### verificationMethod.controller
+Returns the `controller` `DID` of the `VerificationMethod` object.
+
+**Kind**: instance property of [<code>VerificationMethod</code>](#VerificationMethod)  
+
+| Param | Type |
+| --- | --- |
+| did | [<code>DID</code>](#DID) | 
+
 <a name="VerificationMethod+type"></a>
 
 ### verificationMethod.type ⇒ <code>string</code>
@@ -2287,7 +1791,7 @@ Serializes a `VerificationMethod` object as a JSON object.
 **Kind**: instance method of [<code>VerificationMethod</code>](#VerificationMethod)  
 <a name="VerificationMethod.fromDID"></a>
 
-### VerificationMethod.fromDID(did, key, tag) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+### VerificationMethod.fromDID(did, key, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 Creates a new `VerificationMethod` object from the given `did` and `key`.
 
 **Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
@@ -2296,11 +1800,11 @@ Creates a new `VerificationMethod` object from the given `did` and `key`.
 | --- | --- |
 | did | [<code>DID</code>](#DID) | 
 | key | [<code>KeyPair</code>](#KeyPair) | 
-| tag | <code>string</code> \| <code>undefined</code> | 
+| fragment | <code>string</code> | 
 
 <a name="VerificationMethod.createMerkleKey"></a>
 
-### VerificationMethod.createMerkleKey(digest, did, keys, tag) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
+### VerificationMethod.createMerkleKey(digest, did, keys, fragment) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
 Creates a new Merkle Key Collection Method from the given key collection.
 
 **Kind**: static method of [<code>VerificationMethod</code>](#VerificationMethod)  
@@ -2310,7 +1814,7 @@ Creates a new Merkle Key Collection Method from the given key collection.
 | digest | <code>number</code> | 
 | did | [<code>DID</code>](#DID) | 
 | keys | [<code>KeyCollection</code>](#KeyCollection) | 
-| tag | <code>string</code> \| <code>undefined</code> | 
+| fragment | <code>string</code> | 
 
 <a name="VerificationMethod.fromJSON"></a>
 
@@ -2323,6 +1827,10 @@ Deserializes a `VerificationMethod` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
+**Kind**: global variable  
 <a name="Digest"></a>
 
 ## Digest

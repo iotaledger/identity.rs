@@ -67,11 +67,11 @@ async function resolveHistory(clientConfig) {
     intDoc1.updated = Timestamp.nowUTC();
 
     // Sign the DID Document with the original private key.
-    intDoc1.sign(key);
+    intDoc1.signSelf(key, intDoc1.defaultSigningMethod().id.toString());
 
     // Publish the updated DID Document to the Tangle, updating the integration chain.
     // This may take a few seconds to complete proof-of-work.
-    const intReceipt1 = await client.publishDocument(intDoc1.toJSON());
+    const intReceipt1 = await client.publishDocument(intDoc1);
 
     // Log the results.
     logExplorerUrl("Int. Chain Update (1):", clientConfig.network.toString(), intReceipt1.messageId);
@@ -96,7 +96,7 @@ async function resolveHistory(clientConfig) {
     //
     // This is the first diff so the `previousMessageId` property is
     // set to the last DID document published on the integration chain.
-    const diff1 = intDoc1.diff(diffDoc1, intReceipt1.messageId, key);
+    const diff1 = intDoc1.diff(diffDoc1, intReceipt1.messageId, key, intDoc1.defaultSigningMethod().id.toString());
 
     // Publish the diff to the Tangle, starting a diff chain.
     const diffReceipt1 = await client.publishDiff(intReceipt1.messageId, diff1);
@@ -113,14 +113,16 @@ async function resolveHistory(clientConfig) {
     let serviceJSON2 = {
         id: diffDoc2.id + "#linked-domain-2",
         type: "LinkedDomains",
-        serviceEndpoint: "https://example.com",
+        serviceEndpoint: {
+            "origins": ["https://iota.org/", "https://example.com/"]
+        },
     };
     diffDoc2.insertService(Service.fromJSON(serviceJSON2));
     diffDoc2.updated = Timestamp.nowUTC();
 
     // This is the second diff therefore its `previousMessageId` property is
     // set to the first published diff to extend the diff chain.
-    const diff2 = diffDoc1.diff(diffDoc2, diffReceipt1.messageId, key);
+    const diff2 = diffDoc1.diff(diffDoc2, diffReceipt1.messageId, key, diffDoc1.defaultSigningMethod().id.toString());
 
     // Publish the diff to the Tangle.
     // Note that we still use the `messageId` from the last integration chain message here to link
@@ -172,8 +174,8 @@ async function resolveHistory(clientConfig) {
     //       update, NOT the last diff chain message.
     intDoc2.previousMessageId = intReceipt1.messageId;
     intDoc2.updated = Timestamp.nowUTC();
-    intDoc2.sign(key);
-    const intReceipt2 = await client.publishDocument(intDoc2.toJSON());
+    intDoc2.signSelf(key, intDoc2.defaultSigningMethod().id.toString());
+    const intReceipt2 = await client.publishDocument(intDoc2);
 
     // Log the results.
     logExplorerUrl("Int. Chain Update (2):", clientConfig.network.toString(), intReceipt2.messageId);

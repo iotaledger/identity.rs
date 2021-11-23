@@ -14,7 +14,7 @@ use crate::did::WasmDocument;
 use crate::error::Result;
 use crate::error::WasmResult;
 
-/// Defines the difference between two DID [`Document`]s' JSON representations.
+/// Defines the difference between two DID `Document`s' JSON representations.
 #[wasm_bindgen(js_name = DocumentDiff, inspectable)]
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct WasmDocumentDiff(pub(crate) DocumentDiff);

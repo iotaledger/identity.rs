@@ -86,11 +86,11 @@ pub mod account {
   pub use identity_account::account::*;
   pub use identity_account::crypto::*;
   pub use identity_account::error::*;
-  pub use identity_account::events::*;
   pub use identity_account::identity::*;
   pub use identity_account::storage::*;
   pub use identity_account::stronghold::*;
   pub use identity_account::types::*;
+  pub use identity_account::updates::*;
   pub use identity_account::utils::*;
 }
 
@@ -104,7 +104,6 @@ pub mod comm {
   pub use identity_comm::envelope::*;
   pub use identity_comm::error::*;
   pub use identity_comm::message::*;
-  pub use identity_comm::types::*;
 }
 
 pub mod prelude {

@@ -61,6 +61,15 @@ where
   }
 }
 
+impl<'query, T> From<DIDUrl<T>> for MethodQuery<'query>
+where
+  T: DID,
+{
+  fn from(other: DIDUrl<T>) -> Self {
+    Self(Cow::Owned(other.to_string()))
+  }
+}
+
 impl<'query> From<&'query RelativeDIDUrl> for MethodQuery<'query> {
   fn from(other: &'query RelativeDIDUrl) -> Self {
     // TODO: improve RelativeDIDUrl performance - internal string segments representation

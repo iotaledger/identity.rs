@@ -20,7 +20,7 @@ async function createIdentity(clientConfig) {
     const doc = new Document(key, clientConfig.network.toString());
 
     // Sign the DID Document with the generated key.
-    doc.sign(key);
+    doc.signSelf(key, doc.defaultSigningMethod().id.toString());
 
     // Create a default client configuration from the parent config network.
     const config = Config.fromNetwork(clientConfig.network);
@@ -29,7 +29,7 @@ async function createIdentity(clientConfig) {
     const client = Client.fromConfig(config);
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
-    const receipt = await client.publishDocument(doc.toJSON());
+    const receipt = await client.publishDocument(doc);
     doc.messageId = receipt.messageId;
 
     // Log the results.

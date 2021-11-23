@@ -1,6 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-
+//! Provides a composite of errors from identity.rs
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error, strum::IntoStaticStr)]

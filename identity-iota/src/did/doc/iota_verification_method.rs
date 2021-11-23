@@ -15,6 +15,8 @@ use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_core::crypto::PublicKey;
+use identity_did::did::CoreDID;
 use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
 use identity_did::error::Result as DIDResult;
@@ -38,16 +40,12 @@ use crate::tangle::NetworkName;
 pub struct IotaVerificationMethod(VerificationMethod);
 
 impl IotaVerificationMethod {
-  /// The default verification method tag.
-  pub const DEFAULT_TAG: &'static str = "key";
-
   /// Creates a new Merkle Key Collection Method from the given key collection.
-  pub fn create_merkle_key<'a, D, F>(did: IotaDID, keys: &KeyCollection, fragment: F) -> Result<Self>
+  pub fn create_merkle_key<D>(did: IotaDID, keys: &KeyCollection, fragment: &str) -> Result<Self>
   where
-    F: Into<Option<&'a str>>,
     D: MerkleDigest,
   {
-    let tag: String = format!("#{}", fragment.into().unwrap_or(Self::DEFAULT_TAG));
+    let tag: String = format!("#{}", fragment);
     let key: IotaDIDUrl = did.to_url().join(tag)?;
 
     MethodBuilder::default()
@@ -60,52 +58,39 @@ impl IotaVerificationMethod {
       .map(Self)
   }
 
-  /// Creates a new [`IotaVerificationMethod`] object from the given `keypair`.
+  /// Creates a new [`IotaVerificationMethod`] from the given `keypair`.
   ///
   /// WARNING: this derives a new DID from the keypair, which will not match the DID of a document
   /// created with a different keypair. Use [`IotaVerificationMethod::from_did`] instead.
-  pub fn from_keypair<'a, F>(keypair: &KeyPair, fragment: F) -> Result<Self>
-  where
-    F: Into<Option<&'a str>>,
-  {
+  pub fn from_keypair(keypair: &KeyPair, fragment: &str) -> Result<Self> {
     let key: &[u8] = keypair.public().as_ref();
     let did: IotaDID = IotaDID::new(key)?;
 
-    Self::from_did(did, keypair, fragment)
+    Self::from_did(did, keypair.type_(), keypair.public(), fragment)
   }
 
-  /// Creates a new [`IotaVerificationMethod`] object from the given [`KeyPair`] on the specified
+  /// Creates a new [`IotaVerificationMethod`] from the given `keypair` on the specified
   /// `network`.
-  pub fn from_keypair_with_network<'a, F>(keypair: &KeyPair, fragment: F, network: NetworkName) -> Result<Self>
-  where
-    F: Into<Option<&'a str>>,
-  {
+  pub fn from_keypair_with_network(keypair: &KeyPair, fragment: &str, network: NetworkName) -> Result<Self> {
     let key: &[u8] = keypair.public().as_ref();
     let did: IotaDID = IotaDID::new_with_network(key, network)?;
 
-    Self::from_did(did, keypair, fragment)
+    Self::from_did(did, keypair.type_(), keypair.public(), fragment)
   }
 
-  /// Creates a new [`Method`] object from the given `did` and `keypair`.
-  ///
-  /// If the `fragment` resolves to `Option::None` then the default verification method tag will be
-  /// used ("key").
-  pub fn from_did<'a, F>(did: IotaDID, keypair: &KeyPair, fragment: F) -> Result<Self>
-  where
-    F: Into<Option<&'a str>>,
-  {
-    // TODO: validate fragment contents properly
-    let tag: String = format!("#{}", fragment.into().unwrap_or(Self::DEFAULT_TAG));
+  /// Creates a new [`IotaVerificationMethod`] from the given `did` and `keypair`.
+  pub fn from_did(did: IotaDID, key_type: KeyType, public_key: &PublicKey, fragment: &str) -> Result<Self> {
+    let tag: String = format!("#{}", fragment);
     let key: IotaDIDUrl = did.to_url().join(tag)?;
 
     let mut builder: MethodBuilder = MethodBuilder::default()
       .id(CoreDIDUrl::from(key))
       .controller(did.into());
 
-    match keypair.type_() {
+    match key_type {
       KeyType::Ed25519 => {
         builder = builder.key_type(MethodType::Ed25519VerificationKey2018);
-        builder = builder.key_data(MethodData::new_multibase(keypair.public()));
+        builder = builder.key_data(MethodData::new_multibase(public_key));
       }
     }
 
@@ -151,20 +136,13 @@ impl IotaVerificationMethod {
   ///
   /// Returns `Err` if the input is not a valid IOTA verification method.
   pub fn check_validity<T>(method: &VerificationMethod<T>) -> Result<()> {
-    // Ensure all associated DIDs are IOTA Identity DIDs
+    // Ensure all associated DIDs are valid IotaDIDs.
     IotaDID::check_validity(method.id().did())?;
     IotaDID::check_validity(method.controller())?;
 
-    // Ensure the authentication method has an identifying fragment
-    // TODO: validate fragment properly
+    // Ensure the verification method has an identifying fragment.
     if method.id().fragment().is_none() || method.id().fragment().unwrap_or_default().is_empty() {
-      return Err(Error::InvalidDocumentAuthFragment);
-    }
-
-    // Ensure the id and controller are the same - we don't support DIDs
-    // controlled by 3rd parties - yet.
-    if method.id().did().authority() != method.controller().authority() {
-      return Err(Error::InvalidDocumentAuthAuthority);
+      return Err(Error::InvalidMethodMissingFragment);
     }
 
     Ok(())
@@ -199,6 +177,11 @@ impl IotaVerificationMethod {
   pub fn controller(&self) -> &IotaDID {
     // SAFETY: We don't create methods with invalid DIDs and the layout of IotaDID is transparent.
     unsafe { IotaDID::new_unchecked_ref(self.0.controller()) }
+  }
+
+  /// Sets the method `controller` property.
+  pub fn set_controller(&mut self, did: IotaDID) {
+    *self.0.controller_mut() = CoreDID::from(did);
   }
 
   /// Revokes the public key of a Merkle Key Collection at the specified `index`.

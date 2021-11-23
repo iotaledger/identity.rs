@@ -49,8 +49,8 @@ The individual libraries are developed to be agnostic about the utilized [Distri
 
 ## Prerequisites
 
-- [Rust](https://www.rust-lang.org/) (>= 1.51)
-- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.51)
+- [Rust](https://www.rust-lang.org/) (>= 1.56.1)
+- [Cargo](https://doc.rust-lang.org/cargo/) (>= 1.56.0)
 
 ## Getting Started
 
@@ -78,7 +78,7 @@ cargo doc --document-private-items --no-deps --open
 [package]
 name = "iota_identity_example"
 version = "1.0.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 identity = { git = "https://github.com/iotaledger/identity.rs", branch = "main", features = ["account"]}
@@ -91,10 +91,8 @@ use std::path::PathBuf;
 
 use identity::account::Account;
 use identity::account::AccountStorage;
-use identity::account::IdentityCreate;
-use identity::account::IdentityState;
+use identity::account::IdentitySetup;
 use identity::account::Result;
-use identity::iota::IotaDID;
 use identity::iota::IotaDocument;
 
 #[tokio::main]
@@ -102,28 +100,22 @@ async fn main() -> Result<()> {
   pretty_env_logger::init();
 
   // The Stronghold settings for the storage.
-  let snapshot: PathBuf = "./example-strong.hodl".into();
+  let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
 
-  // Create a new Account with Stronghold as the storage adapter.
+  // Create a new identity with default settings and
+  // Stronghold as the storage.
   let account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(snapshot, Some(password)))
-    .build()
+    .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
+    .create_identity(IdentitySetup::default())
     .await?;
 
-  // Create a new Identity with default settings.
-  let identity: IdentityState = account.create_identity(IdentityCreate::default()).await?;
-
-  // Retrieve the DID from the newly created Identity state.
-  let did: &IotaDID = identity.try_did()?;
-
-  println!("[Example] Local Document = {:#?}", identity.to_document()?);
-  println!("[Example] Local Document List = {:#?}", account.list_identities().await);
+  println!("[Example] Local Document = {:#?}", account.document());
 
   // Fetch the DID Document from the Tangle
   //
   // This is an optional step to ensure DID Document consistency.
-  let resolved: IotaDocument = account.resolve_identity(did).await?;
+  let resolved: IotaDocument = account.resolve_identity().await?;
 
   println!("[Example] Tangle Document = {:#?}", resolved);
 

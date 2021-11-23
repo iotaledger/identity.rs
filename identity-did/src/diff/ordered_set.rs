@@ -9,11 +9,12 @@ use identity_core::diff::Result;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::utils::KeyComparable;
 use crate::utils::OrderedSet;
 
 impl<T> Diff for OrderedSet<T>
 where
-  T: Diff + Serialize + for<'de> Deserialize<'de>,
+  T: Diff + KeyComparable + Serialize + for<'de> Deserialize<'de>,
 {
   type Type = DiffVec<T>;
 

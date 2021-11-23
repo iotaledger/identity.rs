@@ -142,18 +142,18 @@ impl DocumentChain {
   ///
   /// Fails if the diff is invalid.
   pub fn try_push_diff(&mut self, diff: DocumentDiff) -> Result<()> {
-    self.chain_d.check_valid_addition(&self.chain_i, &diff)?;
+    // Use the last integration chain document to validate the signature on the diff.
+    let integration_document: &IotaDocument = self.chain_i.current();
+    let expected_prev_message_id: &MessageId = self.diff_message_id();
+    DiffChain::check_valid_addition(&diff, integration_document, expected_prev_message_id)?;
 
+    // Merge the diff into the latest state
     let mut document: IotaDocument = self.document.take().unwrap_or_else(|| self.chain_i.current().clone());
-
     document.merge(&diff)?;
 
+    // Extend the diff chain and store the merged result.
+    self.chain_d.try_push(diff, &self.chain_i)?;
     self.document = Some(document);
-
-    // SAFETY: we performed the necessary validation in `DiffChain::check_validity`.
-    unsafe {
-      self.chain_d.push_unchecked(diff);
-    }
 
     Ok(())
   }
