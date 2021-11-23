@@ -157,7 +157,7 @@ impl Update {
         let method_url: CoreDIDUrl = did.as_ref().to_url().join(fragment.identifier())?;
 
         if state.document().resolve_method(method_url).is_some() {
-          return Err(crate::Error::DIDError(identity_did::Error::InvalidMethodDuplicate));
+          return Err(crate::Error::DIDError(identity_did::Error::MethodAlreadyExists));
         }
 
         let public: PublicKey = if let Some(method_private_key) = method_secret {

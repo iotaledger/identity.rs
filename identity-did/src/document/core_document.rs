@@ -238,7 +238,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   /// Adds a new [`VerificationMethod`] to the Document.
   pub fn insert_method(&mut self, method: VerificationMethod<U>, scope: MethodScope) -> Result<()> {
     if self.resolve_method(method.id()).is_some() {
-      return Err(Error::InvalidMethodDuplicate);
+      return Err(Error::MethodAlreadyExists);
     }
 
     match scope {

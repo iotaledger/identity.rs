@@ -290,7 +290,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   // Now the location is different due to the incremented generation, but the fragment is the same.
   assert!(matches!(
     output.unwrap_err(),
-    Error::DIDError(identity_did::Error::InvalidMethodDuplicate)
+    Error::DIDError(identity_did::Error::MethodAlreadyExists)
   ));
 
   Ok(())
