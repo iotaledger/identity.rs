@@ -36,6 +36,10 @@ or for the `web` with
 npm run build:web
 ```
 
+## Minimum Requirements
+
+The minimum supported version for node is: `v16.0.0`
+
 ## NodeJS Usage
 <!-- 
 Test this example using https://github.com/anko/txm: `txm README.md`

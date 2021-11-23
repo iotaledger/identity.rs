@@ -6,7 +6,7 @@ import {
 describe(
     "Test browser examples",
     {
-        defaultCommandTimeout: 180000, // 3 minutes to account for spurious network delays
+        defaultCommandTimeout: 300000, // 5 minutes to account for spurious network delays
     },
     () => {
         beforeEach(async () => {

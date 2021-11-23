@@ -136,6 +136,37 @@ impl Client {
     Ok(promise.unchecked_into::<PromiseReceipt>())
   }
 
+  /// Publishes arbitrary JSON data to the specified index on the Tangle.
+  /// Retries (promotes or reattaches) the message until it’s included (referenced by a milestone).
+  /// Default interval is 5 seconds and max attempts is 40.
+  #[wasm_bindgen(js_name = publishJsonWithRetry)]
+  pub fn publish_json_with_retry(
+    &self,
+    index: &str,
+    data: &JsValue,
+    interval: Option<u32>,
+    max_attempts: Option<u32>,
+  ) -> Result<Promise> {
+    let client: Rc<IotaClient> = self.client.clone();
+
+    let index = index.to_owned();
+    let value: serde_json::Value = data.into_serde().wasm_result()?;
+    let promise: Promise = future_to_promise(async move {
+      client
+        .publish_json_with_retry(
+          &index,
+          &value,
+          interval.map(|interval| interval as u64),
+          max_attempts.map(|max_attempts| max_attempts as u64),
+        )
+        .await
+        .wasm_result()
+        .and_then(|receipt| JsValue::from_serde(&receipt).wasm_result())
+    });
+
+    Ok(promise)
+  }
+
   #[wasm_bindgen]
   pub fn resolve(&self, did: &str) -> Result<PromiseDocument> {
     let client: Rc<IotaClient> = self.client.clone();

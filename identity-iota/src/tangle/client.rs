@@ -1,9 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_rest_api::types::dtos::LedgerInclusionStateDto;
 use futures::stream::FuturesUnordered;
 use futures::stream::TryStreamExt;
 use iota_client::Client as IotaClient;
+use iota_client::Error as IotaClientError;
 
 use identity_core::convert::ToJson;
 
@@ -77,14 +79,22 @@ impl Client {
   }
 
   /// Publishes an [`IotaDocument`] to the Tangle.
+  /// This method calls `publish_json_with_retry` with its default `interval` and `max_attempts` values for increasing
+  /// the probability that the message will be referenced by a milestone.
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
-    self.publish_json(document.integration_index(), document).await
+    self
+      .publish_json_with_retry(document.integration_index(), document, None, None)
+      .await
   }
 
-  /// Publishes a [`DocumentDiff`] to the Tangle to form part of the diff chain for the integration
+  /// Publishes a [`DocumentDiff`] to the Tangle to form part of the diff chain for the integration.
   /// chain message specified by the given [`MessageId`].
+  /// This method calls `publish_json_with_retry` with its default `interval` and `max_attempts` values for increasing
+  /// the probability that the message will be referenced by a milestone.
   pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
-    self.publish_json(&IotaDocument::diff_index(message_id)?, diff).await
+    self
+      .publish_json_with_retry(&IotaDocument::diff_index(message_id)?, diff, None, None)
+      .await
   }
 
   /// Compresses and publishes arbitrary JSON data to the specified index on the Tangle.
@@ -99,6 +109,42 @@ impl Client {
       .await
       .map_err(Into::into)
       .map(|message| Receipt::new(self.network.clone(), message))
+  }
+
+  /// Publishes arbitrary JSON data to the specified index on the Tangle.
+  /// Retries (promotes or reattaches) the message until it’s included (referenced by a milestone).
+  /// Default interval is 5 seconds and max attempts is 40.
+  pub async fn publish_json_with_retry<T: ToJson>(
+    &self,
+    index: &str,
+    data: &T,
+    interval: Option<u64>,
+    max_attempts: Option<u64>,
+  ) -> Result<Receipt> {
+    let receipt: Receipt = self.publish_json(index, data).await?;
+    let retry_result: Result<Vec<(MessageId, Message)>, IotaClientError> = self
+      .client
+      .retry_until_included(receipt.message_id(), interval, max_attempts)
+      .await;
+    let reattached_messages: Vec<(MessageId, Message)> = match retry_result {
+      Ok(reattached_messages) => reattached_messages,
+      Err(inclusion_error @ IotaClientError::TangleInclusionError(_)) => {
+        if self.is_message_included(receipt.message_id()).await? {
+          return Ok(receipt);
+        } else {
+          return Err(Error::from(inclusion_error));
+        }
+      }
+      Err(error) => {
+        return Err(Error::from(error));
+      }
+    };
+    match reattached_messages.into_iter().next() {
+      Some((_, message)) => Ok(Receipt::new(self.network.clone(), message)),
+      None => Err(Error::from(IotaClientError::TangleInclusionError(
+        receipt.message_id().to_string(),
+      ))),
+    }
   }
 
   /// Fetch the [`IotaDocument`] specified by the given [`IotaDID`].
@@ -186,6 +232,22 @@ impl Client {
       .try_collect()
       .await
       .map_err(Into::into)
+  }
+
+  async fn is_message_included(&self, message_id: &MessageId) -> Result<bool> {
+    match self
+      .client
+      .get_message()
+      .metadata(message_id)
+      .await?
+      .ledger_inclusion_state
+    {
+      Some(ledger_inclusion_state) => match ledger_inclusion_state {
+        LedgerInclusionStateDto::Included | LedgerInclusionStateDto::NoTransaction => Ok(true),
+        LedgerInclusionStateDto::Conflicting => Ok(false),
+      },
+      None => Ok(false),
+    }
   }
 }
 
