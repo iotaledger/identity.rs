@@ -36,7 +36,7 @@ pub enum Error {
   /// Caused by attempting to perform an invalid diff operation.
   #[error("Invalid Document Diff: {0}")]
   InvalidDiff(#[from] identity_diff::Error),
-  /// Raised by a validation attempt against an invalid DID proof.
+  /// Raised by a validation attempt against a  n invalid DID proof.
   #[error("Invalid Proof Value: {0}")]
   InvalidProofValue(&'static str),
   /// Caused by attempting to parse an invalid cryptographic key.

@@ -19,9 +19,14 @@ use crate::crypto::PublicKey;
 use crate::crypto::SignatureValue;
 use crate::crypto::Verifier;
 use crate::crypto::Verify;
-use crate::error::Error;
-use crate::error::Result;
+use crate::crypto::signature::errors::InvalidProofValue;
 use crate::utils;
+
+use self::errors::MerkleVerificationError;
+use self::errors::MerkleVerificationProcessingError;
+
+use super::base::InvalidMerkleDigestKeyTag;
+use super::base::InvalidMerkleSignatureKeyTag;
 
 /// Key components used to verify a Merkle Key Collection signature.
 #[derive(Clone)]
@@ -87,7 +92,9 @@ where
   D: MerkleDigest,
   S: MerkleSignature + Verify<Public = [u8]>,
 {
-  fn verify<X>(data: &X, signature: &SignatureValue, public: &VerificationKey<'key>) -> Result<()>
+  type AuthenticityError = MerkleVerificationError;
+  type SignatureVerificationError = MerkleVerificationError; 
+  fn verify<X>(data: &X, signature: &SignatureValue, public: &VerificationKey<'key>) -> Result<(), Self::AuthenticityError>
   where
     X: Serialize,
   {
@@ -96,25 +103,31 @@ where
     let (target, proof, signature): _ = expand_signature_value(signature)?;
 
     let merkle_root: Hash<D> = decompose_public_key::<D, S>(public)?;
-    let merkle_proof: Proof<D> = Proof::decode(&proof).ok_or(Error::InvalidProofFormat)?;
+    let merkle_proof: Proof<D> = Proof::decode(&proof).ok_or(errors::InvalidProofFormat)?;
     let target_hash: Hash<D> = digest.hash_leaf(target.as_ref());
 
     // Ensure the target hash of the user-provided public key is part
     // of the Merkle tree
     if !merkle_proof.verify(&merkle_root, target_hash) {
-      return Err(Error::InvalidProofValue("merkle key - bad proof"));
+      return Err(InvalidProofValue("merkle key - bad proof").into());
     }
 
     // If a set of revocation flags was provided, ensure the public key
     // was not revoked
     if let Some(revocation) = public.revocation {
       if revocation.contains(merkle_proof.index() as u32) {
-        return Err(Error::InvalidProofValue("merkle key - revoked"));
+        return Err(InvalidProofValue("merkle key - revoked").into());
       }
     }
 
     // Verify the signature with underlying signature algorithm
-    S::verify(&data.to_jcs().map_err(Error::EncodeJSON)?, &signature, target.as_ref())?;
+    S::verify(&data.to_jcs().map_err(|_| errors::MerkleVerificationProcessingError::SerializationFailure)?, &signature, target.as_ref()).map_err(|err| {
+    match err.try_into() {
+      Ok(invalid_proof_value_err) => {errors::MerkleVerificationError::from(invalid_proof_value_err)}, 
+      _ => {errors::MerkleVerificationError::ProcessingFailed(errors::MerkleVerificationProcessingError::Other("unable to verify the authenticity of the given data and signature"))},
+      }
+    }
+  )?;
 
     Ok(())
   }
@@ -123,7 +136,7 @@ where
 // =============================================================================
 // =============================================================================
 
-fn decompose_public_key<D, S>(key: &VerificationKey<'_>) -> Result<Hash<D>>
+fn decompose_public_key<D, S>(key: &VerificationKey<'_>) -> Result<Hash<D>,errors::MerkleVerificationProcessingError>
 where
   D: MerkleDigest,
   S: MerkleSignature,
@@ -132,12 +145,12 @@ where
 
   // Validate the signature algorithm tag
   if tag_s != S::TAG {
-    return Err(Error::InvalidMerkleSignatureKeyTag(Some(tag_s)));
+    return Err(InvalidMerkleSignatureKeyTag(Some(tag_s)).into());
   }
 
   // Validate the digest algorithm tag
   if tag_d != D::TAG {
-    return Err(Error::InvalidMerkleDigestKeyTag(Some(tag_d)));
+    return Err(InvalidMerkleDigestKeyTag(Some(tag_d)).into());
   }
 
   // Extract and return the Merkle root hash
@@ -145,36 +158,126 @@ where
     .merkle_key
     .get(2..)
     .and_then(Hash::from_slice)
-    .ok_or(Error::InvalidKeyFormat)
+    .ok_or(errors::MerkleVerificationProcessingError::InvalidKeyFormat.into())
 }
 
-fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<u8>, Vec<u8>)> {
+fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<u8>, Vec<u8>), errors::MerkleVerificationProcessingError> {
   let data: &str = signature.as_str();
   let mut parts: _ = data.split('.');
 
   // Split the signature data into `public-key/proof/signature`
-  let public: &str = parts.next().ok_or(Error::InvalidProofFormat)?;
-  let proof: &str = parts.next().ok_or(Error::InvalidProofFormat)?;
-  let signature: &str = parts.next().ok_or(Error::InvalidProofFormat)?;
+  let public: &str = parts.next().ok_or(errors::InvalidProofFormat)?;
+  let proof: &str = parts.next().ok_or(errors::InvalidProofFormat)?;
+  let signature: &str = parts.next().ok_or(errors::InvalidProofFormat)?;
 
   // Extract bytes of the base58-encoded public key
   let public: PublicKey = utils::decode_b58(public)
-    .map_err(|_| Error::InvalidProofFormat)
+    .map_err(|_| errors::InvalidProofFormat)
     .map(Into::into)?;
 
   // Extract bytes of the base58-encoded proof
-  let proof: Vec<u8> = utils::decode_b58(proof).map_err(|_| Error::InvalidProofFormat)?;
+  let proof: Vec<u8> = utils::decode_b58(proof).map_err(|_| errors::InvalidProofFormat)?;
 
   // Decode the signature value for the underlying signature implementation
-  let signature: Vec<u8> = utils::decode_b58(signature).map_err(|_| Error::InvalidProofFormat)?; //TODO: THIS WAS ADDED AS A TEMPORARY FIX. SHOULD MAYBE NOT BE INVALIDPROOFFORMAT
+  let signature: Vec<u8> = utils::decode_b58(signature).map_err(|_| errors::MerkleVerificationProcessingError::SignatureParsingFailure)?; 
 
   Ok((public, proof, signature))
 }
 
 mod errors {
-  use thiserror::Error as DeriveError; 
+use thiserror::Error as DeriveError;
+use crate::crypto::{merkle_key::{MerkleDigestTag, MerkleSignatureTag, base::{InvalidMerkleDigestKeyTag, InvalidMerkleSignatureKeyTag, MerkleTagExtractionError}}, signature::errors::{InvalidProofValue, MissingSignatureError}}; 
+// Verification can typically fail by either actually verifying that the proof value is incorrect, or it can fail before it gets to checking the proof value
+// by for instance failing to (de)serialize some data etc. Hence the verification error has two variants, where the latter wraps a private type. 
+#[derive(Debug, DeriveError)]
+/// Caused by a failure to verify a cryptographic signature
+pub enum MerkleVerificationError {
+  /// The provided signature does not match the expected value
+  #[error("verification failed - invalid proof value: {0}")]
+  InvalidProofValue(#[from] InvalidProofValue), 
   
-  pub enum MerkleVerificationError {
+  /// Processing of the proof material failed before the proof value could be checked 
+  #[error("verification failed - processing failed before the proof value could be checked: {0}")]
+  ProcessingFailed(#[from] MerkleVerificationProcessingError), 
+}
 
+impl TryFrom<MerkleVerificationError> for InvalidProofValue {
+  type Error = &'static str; 
+  fn try_from(value: MerkleVerificationError) -> Result<Self, Self::Error> {
+      match value {
+          MerkleVerificationError::InvalidProofValue(err) => Ok(err), 
+          _ => Err("processing failed before the proof value could be checked")
+      }
   }
+}
+
+impl From<MissingSignatureError> for MerkleVerificationError {
+  fn from(_: MissingSignatureError) -> Self {
+      Self::ProcessingFailed(MerkleVerificationProcessingError::MissingSignature(""))
+  }
+}
+
+impl From<InvalidProofFormat> for MerkleVerificationError {
+  fn from(err: InvalidProofFormat) -> Self {
+      MerkleVerificationError::ProcessingFailed(MerkleVerificationProcessingError::from(err))
+  }
+}
+
+impl From<InvalidMerkleDigestKeyTag> for MerkleVerificationError {
+  fn from(err: InvalidMerkleDigestKeyTag) -> Self {
+      MerkleVerificationError::ProcessingFailed(MerkleVerificationProcessingError::from(err))
+  }
+}
+
+impl From<InvalidMerkleSignatureKeyTag> for MerkleVerificationError {
+  fn from(err: InvalidMerkleSignatureKeyTag) -> Self {
+      MerkleVerificationError::ProcessingFailed(MerkleVerificationProcessingError::from(err))
+  }
+}
+
+impl From<MerkleTagExtractionError> for MerkleVerificationError {
+  fn from(err: MerkleTagExtractionError) -> Self {
+    Self::ProcessingFailed(MerkleVerificationProcessingError::from(err))
+  }
+}
+
+impl From<MerkleTagExtractionError> for MerkleVerificationProcessingError {
+  fn from(err: MerkleTagExtractionError) -> Self {
+      match err {
+        MerkleTagExtractionError::InvalidMerkleDigestKeyTag(invalid_merkle_digest_tag) => {
+          Self::from(invalid_merkle_digest_tag)
+        },
+        MerkleTagExtractionError::InvalidMerkleSignatureKeyTag(invalid_merkle_signature_key_tag) => {
+          Self::from(invalid_merkle_signature_key_tag)
+        },
+      }
+  }
+}
+
+  #[derive(Debug, DeriveError)]
+  pub(super) enum MerkleVerificationProcessingError {
+    #[error("could not serialize data")]
+    SerializationFailure, 
+    #[error("could not parse signature")]
+    SignatureParsingFailure, 
+    #[error("invalid key format")]
+    InvalidKeyFormat, 
+    #[error("{0}")]
+    InvalidProofFormat(#[from]InvalidProofFormat), 
+    #[error("{0}")]
+    InvalidMerkleDigestKeyTag(#[from] InvalidMerkleDigestKeyTag),
+    #[error("{0}")]
+    InvalidMerkleSignatureKeyTag(#[from] InvalidMerkleSignatureKeyTag),
+     // Unable to find the required signature 
+    #[error("missing signature:: {0}")]
+    MissingSignature(&'static str), 
+    #[error("{0}")]
+    Other(&'static str), 
+  }
+
+    // Caused by attempting to parse an invalid DID proof.
+  #[derive(Debug, DeriveError)]
+  #[error("invalid proof format")]
+  pub(super) struct InvalidProofFormat;
+
 }

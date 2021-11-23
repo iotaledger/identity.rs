@@ -6,9 +6,7 @@ use crate::crypto::merkle_key::MerkleDigestTag;
 use crate::crypto::merkle_key::MerkleSignature;
 use crate::crypto::merkle_key::MerkleSignatureTag;
 use crate::crypto::merkle_tree::Hash;
-use crate::error::Error;
-use crate::error::Result;
-
+pub use self::errors::{InvalidMerkleDigestKeyTag, InvalidMerkleSignatureKeyTag, MerkleTagExtractionError}; 
 /// Common utilities for working with Merkle Key Collection Signatures.
 #[derive(Clone, Copy, Debug)]
 pub struct MerkleKey;
@@ -21,7 +19,7 @@ impl MerkleKey {
   pub const TYPE_SIG: &'static str = "MerkleKeySignature2021";
 
   /// Extracts the signature and digest algorithm tags from the public key value.
-  pub fn extract_tags(data: &[u8]) -> Result<(MerkleSignatureTag, MerkleDigestTag)> {
+  pub fn extract_tags(data: &[u8]) -> Result<(MerkleSignatureTag, MerkleDigestTag),MerkleTagExtractionError> {
     let tag_s: MerkleSignatureTag = Self::signature_tag(data, 0)?;
     let tag_d: MerkleDigestTag = Self::digest_tag(data, 1)?;
 
@@ -41,23 +39,46 @@ impl MerkleKey {
     output
   }
 
-  fn digest_tag(data: &[u8], index: usize) -> Result<MerkleDigestTag> {
+  fn digest_tag(data: &[u8], index: usize) -> Result<MerkleDigestTag, InvalidMerkleDigestKeyTag> {
     data
       .get(index)
       .copied()
       .map(MerkleDigestTag::new)
-      .ok_or(Error::InvalidMerkleDigestKeyTag(None))
+      .ok_or(InvalidMerkleDigestKeyTag(None))
   }
 
-  fn signature_tag(data: &[u8], index: usize) -> Result<MerkleSignatureTag> {
+  fn signature_tag(data: &[u8], index: usize) -> Result<MerkleSignatureTag, InvalidMerkleSignatureKeyTag> {
     data
       .get(index)
       .copied()
       .map(MerkleSignatureTag::new)
-      .ok_or(Error::InvalidMerkleSignatureKeyTag(None))
+      .ok_or(InvalidMerkleSignatureKeyTag(None))
   }
 }
 
+
+mod errors {
+    use thiserror::Error as DeriveError;
+
+    use crate::crypto::merkle_key::{MerkleDigestTag, MerkleSignatureTag}; 
+    // Caused by attempting to parse an invalid Merkle Digest Key Collection tag.
+    #[derive(Debug, DeriveError)]
+    #[error("invalid Merkle digest key tag: {0:?}")]
+    pub struct InvalidMerkleDigestKeyTag(pub Option<MerkleDigestTag>); 
+  
+  // Caused by attempting to parse an invalid Merkle Signature Key Collection tag.  #[error("Invalid Merkle Signature Key Tag: {0:?}")]
+  #[derive(Debug, DeriveError)]
+  #[error("Invalid Merkle Signature Key Tag: {0:?}")]
+    pub struct InvalidMerkleSignatureKeyTag(pub Option<MerkleSignatureTag>);
+
+    #[derive(Debug, DeriveError)]
+    pub enum MerkleTagExtractionError{
+      #[error("{0}")]
+      InvalidMerkleDigestKeyTag(#[from] InvalidMerkleDigestKeyTag),
+      #[error("{0}")]
+      InvalidMerkleSignatureKeyTag(#[from] InvalidMerkleSignatureKeyTag),
+    }
+}
 #[cfg(test)]
 mod tests {
   use crate::crypto::merkle_key::Blake2b256;
