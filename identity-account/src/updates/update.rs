@@ -144,7 +144,7 @@ impl Update {
         fragment,
         method_secret,
       } => {
-        let location: KeyLocation = state.key_location(type_, fragment.clone())?;
+        let location: KeyLocation = state.key_location(type_, fragment)?;
 
         // The key location must be available.
         // TODO: config: strict
@@ -153,8 +153,7 @@ impl Update {
           UpdateError::DuplicateKeyLocation(location)
         );
 
-        let fragment: Fragment = Fragment::new(fragment);
-        let method_url: CoreDIDUrl = did.as_ref().to_url().join(fragment.identifier())?;
+        let method_url: CoreDIDUrl = did.as_ref().to_url().join(location.fragment().identifier())?;
 
         if state.document().resolve_method(method_url).is_some() {
           return Err(crate::Error::DIDError(identity_did::Error::MethodAlreadyExists));
