@@ -112,11 +112,11 @@ pub(crate) enum Update {
   DeleteMethod {
     fragment: String,
   },
-  AttachMethod {
+  AttachMethodRelationship {
     fragment: String,
     relationships: Vec<MethodRelationship>,
   },
-  DetachMethod {
+  DetachMethodRelationship {
     fragment: String,
     relationships: Vec<MethodRelationship>,
   },
@@ -191,7 +191,7 @@ impl Update {
 
         state.document_mut().remove_method(method_url)?;
       }
-      Self::AttachMethod {
+      Self::AttachMethodRelationship {
         fragment,
         relationships,
       } => {
@@ -206,7 +206,7 @@ impl Update {
             .attach_method_relationship(method_url.clone(), relationship)?;
         }
       }
-      Self::DetachMethod {
+      Self::DetachMethodRelationship {
         fragment,
         relationships,
       } => {
@@ -350,12 +350,12 @@ impl_update_builder!(
 /// # Parameters
 /// - `relationships`: the relationships to add, defaults to an empty [`Vec`].
 /// - `fragment`: the identifier of the method in the document, required.
-AttachMethod {
+AttachMethodRelationship {
   @required fragment String,
   @default relationships Vec<MethodRelationship>,
 });
 
-impl<'account> AttachMethodBuilder<'account> {
+impl<'account> AttachMethodRelationshipBuilder<'account> {
   pub fn relationship(mut self, value: MethodRelationship) -> Self {
     self.relationships.get_or_insert_with(Default::default).push(value);
     self
@@ -368,12 +368,12 @@ impl_update_builder!(
 /// # Parameters
 /// - `relationships`: the relationships to remove, defaults to an empty [`Vec`].
 /// - `fragment`: the identifier of the method in the document, required.
-DetachMethod {
+DetachMethodRelationship {
   @required fragment String,
   @default relationships Vec<MethodRelationship>,
 });
 
-impl<'account> DetachMethodBuilder<'account> {
+impl<'account> DetachMethodRelationshipBuilder<'account> {
   pub fn relationship(mut self, value: MethodRelationship) -> Self {
     self.relationships.get_or_insert_with(Default::default).push(value);
     self

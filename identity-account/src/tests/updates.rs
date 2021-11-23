@@ -382,7 +382,7 @@ async fn test_attach_method_relationship() -> Result<()> {
     .to_owned();
 
   // Attempt attaching a relationship to an embedded method.
-  let update: Update = Update::AttachMethod {
+  let update: Update = Update::AttachMethodRelationship {
     relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
     fragment: default_method_fragment,
   };
@@ -402,7 +402,7 @@ async fn test_attach_method_relationship() -> Result<()> {
   assert_eq!(account.document().as_document().assertion_method().iter().count(), 0);
   assert_eq!(account.document().as_document().key_agreement().iter().count(), 0);
 
-  let update: Update = Update::AttachMethod {
+  let update: Update = Update::AttachMethodRelationship {
     relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
     fragment: fragment.clone(),
   };
@@ -460,7 +460,7 @@ async fn test_detach_method_relationship() -> Result<()> {
   account.process_update(update).await?;
 
   // Attempt detaching a relationship from an embedded method.
-  let update: Update = Update::DetachMethod {
+  let update: Update = Update::DetachMethodRelationship {
     relationships: vec![MethodRelationship::Authentication],
     fragment: embedded_fragment,
   };
@@ -486,7 +486,7 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   account.process_update(update).await?;
 
-  let update: Update = Update::AttachMethod {
+  let update: Update = Update::AttachMethodRelationship {
     relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
     fragment: generic_fragment.clone(),
   };
@@ -496,7 +496,7 @@ async fn test_detach_method_relationship() -> Result<()> {
   assert_eq!(account.document().as_document().assertion_method().len(), 1);
   assert_eq!(account.document().as_document().key_agreement().len(), 1);
 
-  let update: Update = Update::DetachMethod {
+  let update: Update = Update::DetachMethodRelationship {
     relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
     fragment: generic_fragment.clone(),
   };
