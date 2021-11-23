@@ -205,13 +205,10 @@ impl Account {
   {
     let state: &IdentityState = self.state();
 
-    let method: &IotaVerificationMethod =
-      state
-        .document()
-        .resolve_method(fragment)
-        .ok_or(Error::IotaError(identity_iota::Error::InvalidDoc(
-          identity_did::Error::MethodNotFound,
-        )))?;
+    let method: &IotaVerificationMethod = state
+      .document()
+      .resolve_method(fragment)
+      .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
 
     let location: KeyLocation = state.method_location(method.key_type(), fragment.to_owned())?;
 
