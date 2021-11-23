@@ -5,8 +5,8 @@ use identity::iota::ChainHistory;
 use identity::iota::DocumentDiff;
 use identity::iota::DocumentHistory;
 use identity::iota::IotaDocument;
-use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
 use crate::did::WasmDocument;
 use crate::did::WasmDocumentDiff;
