@@ -610,24 +610,24 @@ Parses a `DIDUrl` from the input string.
 
 * [DiffChainHistory](#DiffChainHistory)
     * _instance_
-        * [.chainData()](#DiffChainHistory+chainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.spam()](#DiffChainHistory+spam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.chainData()](#DiffChainHistory+chainData) ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+        * [.spam()](#DiffChainHistory+spam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#DiffChainHistory+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#DiffChainHistory.fromJSON) ⇒ [<code>DiffChainHistory</code>](#DiffChainHistory)
 
 <a name="DiffChainHistory+chainData"></a>
 
-### diffChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of the chain objects.
+### diffChainHistory.chainData() ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+Returns an `Array` of the diff chain `DocumentDiffs`.
 
 NOTE: this clones the field.
 
 **Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
 <a name="DiffChainHistory+spam"></a>
 
-### diffChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of `MessageIds` as strings.
+### diffChainHistory.spam() ⇒ <code>Array.&lt;string&gt;</code>
+Returns an `Array` of `MessageIds` as strings.
 
 NOTE: this clones the field.
 
@@ -1163,26 +1163,26 @@ A DID Document's history and current state.
 
 * [DocumentHistory](#DocumentHistory)
     * _instance_
-        * [.integrationChainData()](#DocumentHistory+integrationChainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.integrationChainSpam()](#DocumentHistory+integrationChainSpam) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.diffChainData()](#DocumentHistory+diffChainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.diffChainSpam()](#DocumentHistory+diffChainSpam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.integrationChainData()](#DocumentHistory+integrationChainData) ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+        * [.integrationChainSpam()](#DocumentHistory+integrationChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.diffChainData()](#DocumentHistory+diffChainData) ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+        * [.diffChainSpam()](#DocumentHistory+diffChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#DocumentHistory+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#DocumentHistory.fromJSON) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
 
 <a name="DocumentHistory+integrationChainData"></a>
 
-### documentHistory.integrationChainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of integration chain `Documents`.
+### documentHistory.integrationChainData() ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+Returns an `Array` of integration chain `Documents`.
 
 NOTE: clones the data.
 
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory+integrationChainSpam"></a>
 
-### documentHistory.integrationChainSpam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of message id strings for "spam" messages on the same index
+### documentHistory.integrationChainSpam() ⇒ <code>Array.&lt;string&gt;</code>
+Returns an `Array` of message id strings for "spam" messages on the same index
 as the integration chain.
 
 NOTE: clones the data.
@@ -1190,16 +1190,16 @@ NOTE: clones the data.
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory+diffChainData"></a>
 
-### documentHistory.diffChainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of diff chain `DocumentDiffs`.
+### documentHistory.diffChainData() ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+Returns an `Array` of diff chain `DocumentDiffs`.
 
 NOTE: clones the data.
 
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory+diffChainSpam"></a>
 
-### documentHistory.diffChainSpam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of message id strings for "spam" messages on the same index
+### documentHistory.diffChainSpam() ⇒ <code>Array.&lt;string&gt;</code>
+Returns an `Array` of message id strings for "spam" messages on the same index
 as the diff chain.
 
 NOTE: clones the data.
@@ -1229,24 +1229,24 @@ Deserializes `DocumentHistory` from a JSON object.
 
 * [IntegrationChainHistory](#IntegrationChainHistory)
     * _instance_
-        * [.chainData()](#IntegrationChainHistory+chainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.spam()](#IntegrationChainHistory+spam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.chainData()](#IntegrationChainHistory+chainData) ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+        * [.spam()](#IntegrationChainHistory+spam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#IntegrationChainHistory+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#IntegrationChainHistory.fromJSON) ⇒ [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)
 
 <a name="IntegrationChainHistory+chainData"></a>
 
-### integrationChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of the chain objects.
+### integrationChainHistory.chainData() ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+Returns an `Array` of the integration chain `Documents`.
 
 NOTE: this clones the field.
 
 **Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
 <a name="IntegrationChainHistory+spam"></a>
 
-### integrationChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of `MessageIds` as strings.
+### integrationChainHistory.spam() ⇒ <code>Array.&lt;string&gt;</code>
+Returns an `Array` of `MessageIds` as strings.
 
 NOTE: this clones the field.
 
