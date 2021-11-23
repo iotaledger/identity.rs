@@ -57,4 +57,6 @@ pub enum Error {
   CompressionError,
   #[error("invalid message flags")]
   InvalidMessageFlags,
+  #[error("milestone error")]
+  MilestoneError,
 }

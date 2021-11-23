@@ -113,7 +113,7 @@ impl Client {
 
     // Fetch all messages for the integration chain.
     let messages: Vec<Message> = self.read_messages(did.tag()).await?;
-    let integration_chain: IntegrationChain = IntegrationChain::try_from_messages(did, &messages)?;
+    let integration_chain: IntegrationChain = IntegrationChain::try_from_messages(&self.client, did, &messages).await?;
 
     // TODO: do we still want to support this, replace with ResolutionOptions?
     // // Check if there is any query given and return
@@ -138,7 +138,7 @@ impl Client {
 
       trace!("Diff Messages: {:#?}", messages);
 
-      DiffChain::try_from_messages(&integration_chain, &messages)?
+      DiffChain::try_from_messages(&self.client, &integration_chain, &messages).await?
     };
 
     DocumentChain::new_with_diff_chain(integration_chain, diff_chain)
@@ -154,10 +154,14 @@ impl Client {
   ///
   /// NOTE: the document must have been published to the Tangle and have a valid message id and
   /// authentication method.
-  pub async fn resolve_diff_history(&self, document: &IotaDocument) -> Result<ChainHistory<DocumentDiff>> {
+  pub async fn resolve_diff_history(
+    &self,
+    client: &IotaClient,
+    document: &IotaDocument,
+  ) -> Result<ChainHistory<DocumentDiff>> {
     let diff_index: String = IotaDocument::diff_index(document.message_id())?;
     let diff_messages: Vec<Message> = self.read_messages(&diff_index).await?;
-    ChainHistory::try_from_raw_messages(document, &diff_messages)
+    Ok(ChainHistory::try_from_raw_messages(client, document, &diff_messages).await?)
   }
 
   /// Fetch all [`Messages`][Message] from the given index on the IOTA Tangle.

@@ -16,6 +16,7 @@ use crate::tangle::MessageExt;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
+use iota_client::Client as IotaClient;
 
 /// A DID Document's history and current state.
 // ChainHistory<T> is not stored directly due to limitations on exporting generics in Wasm bindings.
@@ -41,12 +42,13 @@ impl DocumentHistory {
   pub async fn read(client: &Client, did: &IotaDID) -> Result<Self> {
     // Fetch and parse the integration chain
     let integration_messages: Vec<Message> = client.read_messages(did.tag()).await?;
-    let integration_chain = IntegrationChain::try_from_messages(did, &integration_messages)?;
+    let integration_chain = IntegrationChain::try_from_messages(&client.client, did, &integration_messages).await?;
 
     // Fetch and parse the diff chain for the last integration message
     let diff_index: String = IotaDocument::diff_index(integration_chain.current_message_id())?;
     let diff_messages: Vec<Message> = client.read_messages(&diff_index).await?;
-    let diff_chain: DiffChain = DiffChain::try_from_messages(&integration_chain, &diff_messages)?;
+    let diff_chain: DiffChain =
+      DiffChain::try_from_messages(&client.client, &integration_chain, &diff_messages).await?;
 
     let integration_chain_history: ChainHistory<IotaDocument> =
       ChainHistory::from((integration_chain, integration_messages.deref()));
@@ -96,14 +98,18 @@ impl ChainHistory<DocumentDiff> {
   ///
   /// This is useful for constructing histories of old diff chains no longer at the end of an
   /// integration chain.
-  pub fn try_from_raw_messages(document: &IotaDocument, messages: &[Message]) -> Result<Self> {
+  pub async fn try_from_raw_messages(
+    client: &IotaClient,
+    document: &IotaDocument,
+    messages: &[Message],
+  ) -> Result<Self> {
     let did: &IotaDID = document.did();
     let index: MessageIndex<DocumentDiff> = messages
       .iter()
       .flat_map(|message| message.try_extract_diff(did))
       .collect();
 
-    let diff_chain = DiffChain::try_from_index_with_document(document, index)?;
+    let diff_chain = DiffChain::try_from_index_with_document(client, document, index).await?;
     Ok(Self::from((diff_chain, messages)))
   }
 }

@@ -9,6 +9,7 @@ use core::mem;
 
 use identity_core::convert::ToJson;
 
+use crate::chain::milestone_sort::sort_by_milestone;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Error;
@@ -19,6 +20,8 @@ use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
+use identity_did::verifiable::Revocation;
+use iota_client::Client as IotaClient;
 
 /// Primary chain of full [`IotaDocuments`](IotaDocument) holding the latest document and its
 /// history.
@@ -33,7 +36,7 @@ pub struct IntegrationChain {
 
 impl IntegrationChain {
   /// Constructs a new [`IntegrationChain`] from a slice of [`Message`]s.
-  pub fn try_from_messages(did: &IotaDID, messages: &[Message]) -> Result<Self> {
+  pub async fn try_from_messages(client: &IotaClient, did: &IotaDID, messages: &[Message]) -> Result<Self> {
     let index: MessageIndex<IotaDocument> = messages
       .iter()
       .flat_map(|message| message.try_extract_document(did))
@@ -41,32 +44,48 @@ impl IntegrationChain {
 
     debug!("[Int] Valid Messages = {}/{}", messages.len(), index.len());
 
-    Self::try_from_index(index)
+    Self::try_from_index(client, index).await
   }
 
   /// Constructs a new [`IntegrationChain`] from the given [`MessageIndex`].
-  pub fn try_from_index(mut index: MessageIndex<IotaDocument>) -> Result<Self> {
+  pub async fn try_from_index(client: &IotaClient, mut index: MessageIndex<IotaDocument>) -> Result<Self> {
     trace!("[Int] Message Index = {:#?}", index);
 
-    // Extract root document.
-    let current: IotaDocument = index
-      .remove_where(&MessageId::null(), |doc| {
-        IotaDocument::verify_root_document(doc).is_ok()
-      })
-      .ok_or(Error::ChainError {
+    let valid_root_documents =
+        index
+            .remove(&MessageId::null())
+            .unwrap()
+            .iter()
+            .filter(|doc| IotaDocument::verify_root_document(doc).is_ok())
+            .cloned()
+            .collect();
+
+    let mut sorted_root_document = sort_by_milestone(client, valid_root_documents).await?;
+    if sorted_root_document.len() == 0 {
+      return Err(Error::ChainError {
         error: "Invalid Root Document",
-      })?;
+      });
+    }
+    let current = sorted_root_document.remove(0);
 
     // Construct the document chain.
     let mut this: Self = Self::new(current)?;
     while let Some(mut list) = index.remove(this.current_message_id()) {
-      'inner: while let Some(document) = list.pop() {
-        if this.try_push(document).is_ok() {
-          break 'inner;
+      // Extract valid documents.
+      let mut valid_docs = Vec::new();
+      while let Some(document) = list.pop() {
+        if let Ok(_) = this.check_valid_addition(&document) {
+          valid_docs.push(document);
         }
       }
-    }
 
+      // Sort valid documents and push the oldest.
+      let mut sorted_valid_docs = sort_by_milestone(client, valid_docs).await?;
+      if sorted_valid_docs.len() > 0 {
+        let oldest_doc = sorted_valid_docs.remove(0);
+        this.push(oldest_doc);
+      }
+    }
     Ok(this)
   }
 
@@ -123,6 +142,14 @@ impl IntegrationChain {
       .push(mem::replace(&mut self.current, document));
 
     Ok(())
+  }
+
+  /// Adds a new [`IotaDocument`] to this [`IntegrationChain`].
+  pub fn push(&mut self, document: IotaDocument) {
+    self
+        .history
+        .get_or_insert_with(Vec::new)
+        .push(mem::replace(&mut self.current, document));
   }
 
   /// Returns `true` if the [`IotaDocument`] can be added to this [`IntegrationChain`].
