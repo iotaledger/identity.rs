@@ -154,14 +154,10 @@ impl Client {
   ///
   /// NOTE: the document must have been published to the Tangle and have a valid message id and
   /// authentication method.
-  pub async fn resolve_diff_history(
-    &self,
-    client: &IotaClient,
-    document: &IotaDocument,
-  ) -> Result<ChainHistory<DocumentDiff>> {
+  pub async fn resolve_diff_history(&self, document: &IotaDocument) -> Result<ChainHistory<DocumentDiff>> {
     let diff_index: String = IotaDocument::diff_index(document.message_id())?;
     let diff_messages: Vec<Message> = self.read_messages(&diff_index).await?;
-    Ok(ChainHistory::try_from_raw_messages(client, document, &diff_messages).await?)
+    Ok(ChainHistory::try_from_raw_messages(&self.client, document, &diff_messages).await?)
   }
 
   /// Fetch all [`Messages`][Message] from the given index on the IOTA Tangle.

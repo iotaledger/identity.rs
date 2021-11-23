@@ -82,16 +82,16 @@ impl DiffChain {
         let expected_prev_message_id: &MessageId = this
           .current_message_id()
           .unwrap_or_else(|| integration_document.message_id());
-        if let Ok(_) = Self::check_valid_addition(&diff, integration_document, expected_prev_message_id) {
+        if Self::check_valid_addition(&diff, integration_document, expected_prev_message_id).is_ok() {
           valid_diffs.push(diff);
         }
       }
 
       //Sort valid diffs and push the oldest.
       let mut sorted_valid_diffs = sort_by_milestone(client, valid_diffs).await?;
-      if sorted_valid_diffs.len() > 0 {
+      if !sorted_valid_diffs.is_empty() {
         let oldest_diff = sorted_valid_diffs.remove(0);
-        this.try_push_inner(oldest_diff, integration_document);
+        this.try_push_inner(oldest_diff, integration_document)?;
       }
     }
 

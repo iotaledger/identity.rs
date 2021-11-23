@@ -15,14 +15,14 @@ use std::collections::HashMap;
 /// #Errors
 ///
 /// [`MilestoneError`] if fetching a milestone fails.
-pub async fn sort_by_milestone<T: TangleRef>(client: &IotaClient, documents: Vec<T>) -> Result<Vec<T>> {
-  if documents.len() == 1 || documents.len() == 0 {
+pub(crate) async fn sort_by_milestone<T: TangleRef>(client: &IotaClient, documents: Vec<T>) -> Result<Vec<T>> {
+  if documents.len() == 1 || documents.is_empty() {
     return Ok(documents);
   }
 
   let mut milestone_index = fetch_milestones(client, documents).await?;
   let mut milestones: Vec<u32> = milestone_index.get_milestones();
-  milestones.sort();
+  milestones.sort_unstable();
 
   let mut sorted_documents = Vec::with_capacity(milestone_index.total_docs);
   for milestone in milestones {
@@ -40,7 +40,7 @@ async fn fetch_milestones<T: TangleRef>(client: &IotaClient, documents: Vec<T>) 
 
   let all_metadata: Vec<MessageMetadataResponse> = documents
     .iter()
-    .map(|doc| client.get_message().metadata(&doc.message_id()))
+    .map(|doc| client.get_message().metadata(doc.message_id()))
     .collect::<FuturesUnordered<_>>()
     .try_collect()
     .await

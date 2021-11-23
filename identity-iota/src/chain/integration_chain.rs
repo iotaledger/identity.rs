@@ -20,7 +20,6 @@ use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
-use identity_did::verifiable::Revocation;
 use iota_client::Client as IotaClient;
 
 /// Primary chain of full [`IotaDocuments`](IotaDocument) holding the latest document and its
@@ -51,17 +50,16 @@ impl IntegrationChain {
   pub async fn try_from_index(client: &IotaClient, mut index: MessageIndex<IotaDocument>) -> Result<Self> {
     trace!("[Int] Message Index = {:#?}", index);
 
-    let valid_root_documents =
-        index
-            .remove(&MessageId::null())
-            .unwrap()
-            .iter()
-            .filter(|doc| IotaDocument::verify_root_document(doc).is_ok())
-            .cloned()
-            .collect();
+    let valid_root_documents = index
+      .remove(&MessageId::null())
+      .unwrap()
+      .iter()
+      .filter(|doc| IotaDocument::verify_root_document(doc).is_ok())
+      .cloned()
+      .collect();
 
     let mut sorted_root_document = sort_by_milestone(client, valid_root_documents).await?;
-    if sorted_root_document.len() == 0 {
+    if sorted_root_document.is_empty() {
       return Err(Error::ChainError {
         error: "Invalid Root Document",
       });
@@ -74,14 +72,14 @@ impl IntegrationChain {
       // Extract valid documents.
       let mut valid_docs = Vec::new();
       while let Some(document) = list.pop() {
-        if let Ok(_) = this.check_valid_addition(&document) {
+        if this.check_valid_addition(&document).is_ok() {
           valid_docs.push(document);
         }
       }
 
       // Sort valid documents and push the oldest.
       let mut sorted_valid_docs = sort_by_milestone(client, valid_docs).await?;
-      if sorted_valid_docs.len() > 0 {
+      if !sorted_valid_docs.is_empty() {
         let oldest_doc = sorted_valid_docs.remove(0);
         this.push(oldest_doc);
       }
@@ -147,9 +145,9 @@ impl IntegrationChain {
   /// Adds a new [`IotaDocument`] to this [`IntegrationChain`].
   pub fn push(&mut self, document: IotaDocument) {
     self
-        .history
-        .get_or_insert_with(Vec::new)
-        .push(mem::replace(&mut self.current, document));
+      .history
+      .get_or_insert_with(Vec::new)
+      .push(mem::replace(&mut self.current, document));
   }
 
   /// Returns `true` if the [`IotaDocument`] can be added to this [`IntegrationChain`].
