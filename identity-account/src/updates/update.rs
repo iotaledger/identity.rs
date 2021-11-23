@@ -200,7 +200,8 @@ impl Update {
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
 
         for relationship in relationships {
-          state
+          // Ignore result: attaching is idempotent.
+          let _ = state
             .document_mut()
             .attach_method_relationship(method_url.clone(), relationship)?;
         }
@@ -226,7 +227,8 @@ impl Update {
         );
 
         for relationship in relationships {
-          state
+          // Ignore result: detaching is idempotent.
+          let _ = state
             .document_mut()
             .detach_method_relationship(method_url.clone(), relationship)?;
         }
