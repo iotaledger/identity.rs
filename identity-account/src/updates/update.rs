@@ -13,7 +13,6 @@ use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
 use identity_did::service::Service;
 use identity_did::service::ServiceEndpoint;
-use identity_did::verification::MethodRef;
 use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
@@ -201,31 +200,10 @@ impl Update {
 
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
 
-        // The verification method must exist
-        ensure!(
-          state.document().resolve_method(fragment.identifier()).is_some(),
-          UpdateError::MethodNotFound
-        );
-
-        // The verification method must not be embedded.
-        // ensure!(
-        //   !state
-        //     .document()
-        //     .as_document()
-        //     .verification_relationships()
-        //     .any(|method_ref| match method_ref {
-        //       MethodRef::Embed(method) => method.id().fragment() == method_url.fragment(),
-        //       MethodRef::Refer(_) => false,
-        //     }),
-        //   UpdateError::InvalidTargetEmbeddedMethod
-        // );
-
         for relationship in relationships {
-          // We ignore the boolean result: if the relationship already existed, that's fine.
-          let _ = state
+          state
             .document_mut()
-            .attach_method_relationship(method_url.clone(), relationship)
-            .map_err(|_| UpdateError::MethodNotFound)?;
+            .attach_method_relationship(method_url.clone(), relationship)?;
         }
       }
       Self::DetachMethod {
@@ -233,12 +211,6 @@ impl Update {
         relationships,
       } => {
         let fragment: Fragment = Fragment::new(fragment);
-
-        // The verification method must exist
-        ensure!(
-          state.document().resolve_method(fragment.identifier()).is_some(),
-          UpdateError::MethodNotFound
-        );
 
         let method_url: IotaDIDUrl = did.to_url().join(fragment.identifier())?;
         let core_method_url: CoreDIDUrl = CoreDIDUrl::from(method_url.clone());
@@ -254,24 +226,10 @@ impl Update {
           UpdateError::InvalidMethodFragment("cannot remove last signing method")
         );
 
-        // The verification method must not be embedded.
-        // ensure!(
-        //   !state
-        //     .document()
-        //     .as_document()
-        //     .verification_relationships()
-        //     .any(|method_ref| match method_ref {
-        //       MethodRef::Embed(method) => method.id().fragment() == method_url.fragment(),
-        //       MethodRef::Refer(_) => false,
-        //     }),
-        //   UpdateError::InvalidTargetEmbeddedMethod
-        // );
-
         for relationship in relationships {
           state
             .document_mut()
-            .detach_method_relationship(method_url.clone(), relationship)
-            .map_err(|_| UpdateError::MethodNotFound)?;
+            .detach_method_relationship(method_url.clone(), relationship)?;
         }
       }
       Self::CreateService {

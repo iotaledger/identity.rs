@@ -396,13 +396,13 @@ impl IotaDocument {
   ///
   /// Note: The method needs to be in the set of verification methods,
   /// so it cannot be an embedded one.
-  pub fn attach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
+  pub fn attach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<()> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
     Ok(self.document.attach_method_relationship(core_did_url, relationship)?)
   }
 
   /// Detaches the given relationship from the given method, if the method exists.
-  pub fn detach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<bool> {
+  pub fn detach_method_relationship(&mut self, did_url: IotaDIDUrl, relationship: MethodRelationship) -> Result<()> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
     Ok(self.document.detach_method_relationship(core_did_url, relationship)?)
   }
