@@ -10,8 +10,6 @@ use crate::types::KeyLocation;
 pub enum UpdateError {
   #[error("document already exists")]
   DocumentAlreadyExists,
-  #[error("verification method not found")]
-  MethodNotFound,
   #[error("service not found")]
   ServiceNotFound,
   #[error("invalid method type - {}", .0.as_str())]
