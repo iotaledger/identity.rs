@@ -28,8 +28,7 @@ strum = { version = "0.21", features = ["derive"] }
 thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
-git = "https://github.com/iotaledger/iota.rs"
-rev = "e8c050a749a2e7c13633e97b3372b38388f48c37"
+version = "1.1.0"
 default-features = false
 
 [dependencies.iota-crypto]
