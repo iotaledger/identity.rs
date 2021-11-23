@@ -44,7 +44,8 @@ pub enum Error {
   InvalidMethodFragment,
   #[error("Invalid Verification Method Type")]
   InvalidMethodType,
-  /// Caused by attempting to add a verification method to a document, where a method with the same fragment already exists.
+  /// Caused by attempting to add a verification method to a document, where a method with the same fragment already
+  /// exists.
   #[error("verification method already exists")]
   MethodAlreadyExists,
   /// Caused by attempting to attach or detach a relationship on an embedded method.
