@@ -37,7 +37,7 @@ async function revokeVC(clientConfig) {
     issuer.doc.updated = Timestamp.nowUTC();
     issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
     // This is an integration chain update, so we publish the full document.
-    const {messageId} = await client.publishDocument(issuer.doc.toJSON());
+    const {messageId} = await client.publishDocument(issuer.doc);
 
     // Log the resulting Identity update
     logExplorerUrl("Issuer Identity Update:", clientConfig.network.toString(), messageId);
