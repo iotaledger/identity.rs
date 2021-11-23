@@ -54,14 +54,13 @@ pub trait Named {
 
 /// A common interface for digital signature creation.
 pub trait Signer<Secret: ?Sized>: Named {
-  /// Signs the given `data` and returns a digital signature.
-  
   /// Error describing how `sign` may fail. 
   type SignError: std::error::Error;  
 
   /// Error describing how `create_signature` may fail 
   type SignatureCreationError: From<Self::SignError> + From<MissingSignatureError> + std::error::Error; 
 
+   /// Signs the given `data` and returns a digital signature.
   fn sign<T>(data: &T, secret: &Secret) -> Result<SignatureValue, Self::SignError>
   where
     T: Serialize;
@@ -90,6 +89,7 @@ pub trait Verifier<Public: ?Sized>: Named {
   /// Error describing how `verify` can fail 
   type AuthenticityError: std::error::Error + TryInto<InvalidProofValue>; 
 
+  /// Error describing how `verify_signature` can fail 
   type SignatureVerificationError: std::error::Error + From<MissingSignatureError> + From<Self::AuthenticityError> + From<InvalidProofValue>;  
 
 

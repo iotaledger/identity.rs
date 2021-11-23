@@ -6,10 +6,10 @@ use thiserror::Error as DeriveError;
 
 use crate::crypto::key::KeyError; 
 
-pub use signing::{MissingSignatureError, SigningError};
+pub(crate) use signing::{MissingSignatureError, SigningError};
 pub(crate) use signing::SigningErrorCause;
-pub use verifying::{InvalidProofValue, VerificationError}; 
-pub(crate) use verifying::VerificationProcessingError;
+pub(crate) use verifying::{InvalidProofValue, VerificationError}; 
+pub(crate) use verifying::VerificationProcessingErrorCause;
 
 
 mod signing{
@@ -97,9 +97,23 @@ pub enum VerificationError {
   ProcessingFailed(#[from] VerificationProcessingError), 
 }
 
+impl From<VerificationProcessingErrorCause> for VerificationError {
+  fn from(err: VerificationProcessingErrorCause) -> Self {
+      Self::ProcessingFailed(VerificationProcessingError::from(err))
+  }
+}
+
+/// Indicates that something went wrong during a signature verification process before one could check the validity of the signature. 
+#[derive(Debug, DeriveError)]
+#[error("{cause}")]
+pub struct VerificationProcessingError {
+  #[from]
+  cause: VerificationProcessingErrorCause,
+}
+
 // This type gets wrapped in the public VerificationError type, hence we implement the Error trait in order to help users with debugging and error logging. 
 #[derive(Debug,DeriveError)]
-pub (crate) enum VerificationProcessingError {
+pub (crate) enum VerificationProcessingErrorCause {
   // The format of the input to the verifier is not provided in the required format
   #[error("invalid input format:: {0}")]
   InvalidInputFormat(&'static str),
@@ -113,12 +127,12 @@ pub (crate) enum VerificationProcessingError {
 
 impl From<MissingSignatureError> for VerificationError {
   fn from(_: MissingSignatureError) -> Self {
-      Self::ProcessingFailed(VerificationProcessingError::MissingSignature(""))
+      Self::ProcessingFailed(VerificationProcessingErrorCause::MissingSignature("").into())
   }
 }
 impl From<KeyError> for VerificationError {
   fn from(err: KeyError) -> Self {
-      Self::ProcessingFailed(VerificationProcessingError::InvalidInputFormat(err.0))
+      Self::ProcessingFailed(VerificationProcessingErrorCause::InvalidInputFormat(err.0).into())
   }
 }
 

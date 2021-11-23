@@ -6,7 +6,7 @@ use crate::crypto::merkle_key::MerkleDigestTag;
 use crate::crypto::merkle_key::MerkleSignature;
 use crate::crypto::merkle_key::MerkleSignatureTag;
 use crate::crypto::merkle_tree::Hash;
-pub use self::errors::{InvalidMerkleDigestKeyTag, InvalidMerkleSignatureKeyTag, MerkleTagExtractionError}; 
+pub(crate) use self::errors::{InvalidMerkleDigestKeyTag, InvalidMerkleSignatureKeyTag, MerkleTagExtractionError}; 
 /// Common utilities for working with Merkle Key Collection Signatures.
 #[derive(Clone, Copy, Debug)]
 pub struct MerkleKey;

@@ -73,15 +73,15 @@ fn parse_signature(slice: &[u8]) -> std::result::Result<ed25519::Signature, Sign
 mod errors {
 use thiserror::Error as DeriveError;
 
-use crate::crypto::signature::errors::{VerificationError, VerificationProcessingError};
+use crate::crypto::signature::errors::{VerificationError, VerificationProcessingErrorCause};
   #[derive(Debug,DeriveError)]
   /// Caused by a failure to parse a signature
   #[error("{0}")]
-  pub(super) struct SignatureParsingError(pub &'static str); 
+  pub(super) struct SignatureParsingError(pub(super) &'static str); 
   
   impl From<SignatureParsingError> for VerificationError {
     fn from(err: SignatureParsingError) -> Self {
-       Self::ProcessingFailed(VerificationProcessingError::InvalidInputFormat(err.0))
+       Self::ProcessingFailed(VerificationProcessingErrorCause::InvalidInputFormat(err.0).into())
     }
   }
 }

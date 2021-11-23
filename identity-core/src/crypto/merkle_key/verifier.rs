@@ -23,7 +23,6 @@ use crate::crypto::signature::errors::InvalidProofValue;
 use crate::utils;
 
 use self::errors::MerkleVerificationError;
-use self::errors::MerkleVerificationProcessingError;
 
 use super::base::InvalidMerkleDigestKeyTag;
 use super::base::InvalidMerkleSignatureKeyTag;
@@ -121,10 +120,10 @@ where
     }
 
     // Verify the signature with underlying signature algorithm
-    S::verify(&data.to_jcs().map_err(|_| errors::MerkleVerificationProcessingError::SerializationFailure)?, &signature, target.as_ref()).map_err(|err| {
+    S::verify(&data.to_jcs().map_err(|_| MerkleVerificationError::from(errors::MerkleVerificationProcessingErrorCause::SerializationFailure))?, &signature, target.as_ref()).map_err(|err| {
     match err.try_into() {
       Ok(invalid_proof_value_err) => {errors::MerkleVerificationError::from(invalid_proof_value_err)}, 
-      _ => {errors::MerkleVerificationError::ProcessingFailed(errors::MerkleVerificationProcessingError::Other("unable to verify the authenticity of the given data and signature"))},
+      _ => {errors::MerkleVerificationError::ProcessingFailed(errors::MerkleVerificationProcessingErrorCause::Other("unable to verify the authenticity of the given data and signature").into())},
       }
     }
   )?;
@@ -136,7 +135,7 @@ where
 // =============================================================================
 // =============================================================================
 
-fn decompose_public_key<D, S>(key: &VerificationKey<'_>) -> Result<Hash<D>,errors::MerkleVerificationProcessingError>
+fn decompose_public_key<D, S>(key: &VerificationKey<'_>) -> Result<Hash<D>,errors::MerkleVerificationProcessingErrorCause>
 where
   D: MerkleDigest,
   S: MerkleSignature,
@@ -158,10 +157,10 @@ where
     .merkle_key
     .get(2..)
     .and_then(Hash::from_slice)
-    .ok_or(errors::MerkleVerificationProcessingError::InvalidKeyFormat.into())
+    .ok_or(errors::MerkleVerificationProcessingErrorCause::InvalidKeyFormat.into())
 }
 
-fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<u8>, Vec<u8>), errors::MerkleVerificationProcessingError> {
+fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<u8>, Vec<u8>), errors::MerkleVerificationProcessingErrorCause> {
   let data: &str = signature.as_str();
   let mut parts: _ = data.split('.');
 
@@ -179,14 +178,14 @@ fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<
   let proof: Vec<u8> = utils::decode_b58(proof).map_err(|_| errors::InvalidProofFormat)?;
 
   // Decode the signature value for the underlying signature implementation
-  let signature: Vec<u8> = utils::decode_b58(signature).map_err(|_| errors::MerkleVerificationProcessingError::SignatureParsingFailure)?; 
+  let signature: Vec<u8> = utils::decode_b58(signature).map_err(|_| errors::MerkleVerificationProcessingErrorCause::SignatureParsingFailure)?; 
 
   Ok((public, proof, signature))
 }
 
 mod errors {
 use thiserror::Error as DeriveError;
-use crate::crypto::{merkle_key::{MerkleDigestTag, MerkleSignatureTag, base::{InvalidMerkleDigestKeyTag, InvalidMerkleSignatureKeyTag, MerkleTagExtractionError}}, signature::errors::{InvalidProofValue, MissingSignatureError}}; 
+use crate::crypto::{merkle_key::{base::{InvalidMerkleDigestKeyTag, InvalidMerkleSignatureKeyTag, MerkleTagExtractionError}}, signature::errors::{InvalidProofValue, MissingSignatureError}}; 
 // Verification can typically fail by either actually verifying that the proof value is incorrect, or it can fail before it gets to checking the proof value
 // by for instance failing to (de)serialize some data etc. Hence the verification error has two variants, where the latter wraps a private type. 
 #[derive(Debug, DeriveError)]
@@ -211,37 +210,43 @@ impl TryFrom<MerkleVerificationError> for InvalidProofValue {
   }
 }
 
+impl From<MerkleVerificationProcessingErrorCause> for MerkleVerificationError {
+  fn from(err: MerkleVerificationProcessingErrorCause) -> Self {
+      Self::ProcessingFailed(MerkleVerificationProcessingError::from(err))
+  }
+}
+
 impl From<MissingSignatureError> for MerkleVerificationError {
   fn from(_: MissingSignatureError) -> Self {
-      Self::ProcessingFailed(MerkleVerificationProcessingError::MissingSignature(""))
+      Self::ProcessingFailed(MerkleVerificationProcessingErrorCause::MissingSignature("").into())
   }
 }
 
 impl From<InvalidProofFormat> for MerkleVerificationError {
   fn from(err: InvalidProofFormat) -> Self {
-      MerkleVerificationError::ProcessingFailed(MerkleVerificationProcessingError::from(err))
+      MerkleVerificationError::ProcessingFailed(MerkleVerificationProcessingErrorCause::from(err).into())
   }
 }
 
 impl From<InvalidMerkleDigestKeyTag> for MerkleVerificationError {
   fn from(err: InvalidMerkleDigestKeyTag) -> Self {
-      MerkleVerificationError::ProcessingFailed(MerkleVerificationProcessingError::from(err))
+      MerkleVerificationError::ProcessingFailed(MerkleVerificationProcessingErrorCause::from(err).into())
   }
 }
 
 impl From<InvalidMerkleSignatureKeyTag> for MerkleVerificationError {
   fn from(err: InvalidMerkleSignatureKeyTag) -> Self {
-      MerkleVerificationError::ProcessingFailed(MerkleVerificationProcessingError::from(err))
+      MerkleVerificationError::ProcessingFailed(MerkleVerificationProcessingErrorCause::from(err).into())
   }
 }
 
 impl From<MerkleTagExtractionError> for MerkleVerificationError {
   fn from(err: MerkleTagExtractionError) -> Self {
-    Self::ProcessingFailed(MerkleVerificationProcessingError::from(err))
+    Self::ProcessingFailed(MerkleVerificationProcessingErrorCause::from(err).into())
   }
 }
 
-impl From<MerkleTagExtractionError> for MerkleVerificationProcessingError {
+impl From<MerkleTagExtractionError> for MerkleVerificationProcessingErrorCause {
   fn from(err: MerkleTagExtractionError) -> Self {
       match err {
         MerkleTagExtractionError::InvalidMerkleDigestKeyTag(invalid_merkle_digest_tag) => {
@@ -254,8 +259,16 @@ impl From<MerkleTagExtractionError> for MerkleVerificationProcessingError {
   }
 }
 
+#[derive(Debug, DeriveError)]
+/// Indicates that something went wrong during a signature verification process before one could check the validity of the signature. 
+#[error("{cause}")]
+pub struct MerkleVerificationProcessingError{
+  #[from]
+  cause: MerkleVerificationProcessingErrorCause
+}
+
   #[derive(Debug, DeriveError)]
-  pub(super) enum MerkleVerificationProcessingError {
+  pub(super) enum MerkleVerificationProcessingErrorCause {
     #[error("could not serialize data")]
     SerializationFailure, 
     #[error("could not parse signature")]
