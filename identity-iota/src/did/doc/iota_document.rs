@@ -380,13 +380,20 @@ impl IotaDocument {
         unsafe { IotaVerificationMethod::new_unchecked_ref(m) })
   }
 
-  /// Adds a new [`IotaVerificationMethod`] to the DID Document.
+  /// Adds a new [`IotaVerificationMethod`] to the document in the given [`MethodScope`].
+  ///
+  /// # Errors
+  ///
+  /// Returns an error if a method with the same fragment already exists.
   pub fn insert_method(&mut self, method: IotaVerificationMethod, scope: MethodScope) -> Result<()> {
     Ok(self.document.insert_method(method.into(), scope)?)
   }
 
-  /// Removes all occurrences of and references to the specified [`VerificationMethod`]
-  /// from this document.
+  /// Removes all references to the specified [`VerificationMethod`].
+  ///
+  /// # Errors
+  ///
+  /// Returns an error if the method does not exist.
   pub fn remove_method(&mut self, did_url: IotaDIDUrl) -> Result<()> {
     let core_did_url: CoreDIDUrl = CoreDIDUrl::from(did_url);
     Ok(self.document.remove_method(&core_did_url)?)

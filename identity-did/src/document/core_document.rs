@@ -235,7 +235,11 @@ impl<T, U, V> CoreDocument<T, U, V> {
     })
   }
 
-  /// Adds a new [`VerificationMethod`] to the Document.
+  /// Adds a new [`VerificationMethod`] to the document in the given [`MethodScope`].
+  ///
+  /// # Errors
+  ///
+  /// Returns an error if a method with the same fragment already exists.
   pub fn insert_method(&mut self, method: VerificationMethod<U>, scope: MethodScope) -> Result<()> {
     if self.resolve_method(method.id()).is_some() {
       return Err(Error::MethodAlreadyExists);
@@ -264,6 +268,10 @@ impl<T, U, V> CoreDocument<T, U, V> {
   }
 
   /// Removes all references to the specified [`VerificationMethod`].
+  ///
+  /// # Errors
+  ///
+  /// Returns an error if the method does not exist.
   pub fn remove_method(&mut self, did: &CoreDIDUrl) -> Result<()> {
     let mut was_removed = false;
     was_removed = was_removed || self.authentication.remove(did);
@@ -280,10 +288,13 @@ impl<T, U, V> CoreDocument<T, U, V> {
     }
   }
 
-  /// Attaches the relationship to the given method, if the method exists.
+  /// Attaches the relationship to the method resolved by `method_query`.
   ///
-  /// Note: The method needs to be in the set of verification methods,
-  /// so it cannot be an embedded one.
+  /// # Errors
+  ///
+  /// Returns an error if the method does not exist or if it is embedded.
+  /// To convert an embedded method into a generic verification method, remove it first
+  /// and insert it with [`MethodScope::VerificationMethod`].
   pub fn attach_method_relationship<'query, Q>(
     &mut self,
     method_query: Q,
@@ -315,7 +326,12 @@ impl<T, U, V> CoreDocument<T, U, V> {
     }
   }
 
-  /// Detaches the given relationship from the given method, if the method exists.
+  /// Detaches the relationship from the method resolved by `method_query`.
+  ///
+  /// # Errors
+  ///
+  /// Returns an error if the method does not exist or is embedded.
+  /// To remove an embedded method, use [`Self::remove_method`].
   pub fn detach_method_relationship<'query, Q>(
     &mut self,
     method_query: Q,
