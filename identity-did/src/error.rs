@@ -19,7 +19,7 @@ pub enum Error {
   #[error("Duplicate Item in Ordered Set")]
   OrderedSetDuplicate,
   #[error("Verification Method Not Found")]
-  QueryMethodNotFound,
+  MethodNotFound,
 
   #[error("Invalid Document Property: `id`")]
   BuilderInvalidDocumentId,

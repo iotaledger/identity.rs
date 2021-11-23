@@ -594,9 +594,7 @@ async fn test_delete_method() -> Result<()> {
 
   assert!(matches!(
     output.unwrap_err(),
-    Error::IotaError(identity_iota::Error::InvalidDoc(
-      identity_did::Error::QueryMethodNotFound
-    ))
+    Error::IotaError(identity_iota::Error::InvalidDoc(identity_did::Error::MethodNotFound))
   ));
 
   Ok(())

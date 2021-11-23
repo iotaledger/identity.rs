@@ -278,7 +278,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     if was_removed {
       Ok(())
     } else {
-      Err(Error::QueryMethodNotFound)
+      Err(Error::MethodNotFound)
     }
   }
 
@@ -299,7 +299,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     match self.resolve_method_with_scope(method_query.clone(), MethodScope::VerificationMethod) {
       None => match self.resolve_method(method_query) {
         Some(_) => Err(Error::InvalidMethodEmbedded),
-        None => Err(Error::QueryMethodNotFound),
+        None => Err(Error::MethodNotFound),
       },
       Some(method) => {
         let method_ref = MethodRef::Refer(method.id().clone());
@@ -330,7 +330,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
     match self.resolve_method_with_scope(method_query.clone(), MethodScope::VerificationMethod) {
       None => match self.resolve_method(method_query) {
         Some(_) => Err(Error::InvalidMethodEmbedded),
-        None => Err(Error::QueryMethodNotFound),
+        None => Err(Error::MethodNotFound),
       },
       Some(method) => {
         let did_url: CoreDIDUrl = method.id().clone();
@@ -399,9 +399,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   where
     Q: Into<MethodQuery<'query>>,
   {
-    self
-      .resolve_method_inner(query.into())
-      .ok_or(Error::QueryMethodNotFound)
+    self.resolve_method_inner(query.into()).ok_or(Error::MethodNotFound)
   }
 
   /// Returns the first [`VerificationMethod`] with an `id` property matching the provided `query`
@@ -454,7 +452,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   {
     self
       .resolve_method_with_scope(query, scope)
-      .ok_or(Error::QueryMethodNotFound)
+      .ok_or(Error::MethodNotFound)
   }
 
   /// Returns a mutable reference to the first [`VerificationMethod`] with an `id` property
@@ -476,9 +474,7 @@ impl<T, U, V> CoreDocument<T, U, V> {
   where
     Q: Into<MethodQuery<'query>>,
   {
-    self
-      .resolve_method_mut_inner(query.into())
-      .ok_or(Error::QueryMethodNotFound)
+    self.resolve_method_mut_inner(query.into()).ok_or(Error::MethodNotFound)
   }
 
   #[doc(hidden)]
