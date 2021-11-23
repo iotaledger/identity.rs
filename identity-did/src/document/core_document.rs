@@ -273,13 +273,15 @@ impl<T, U, V> CoreDocument<T, U, V> {
   ///
   /// Returns an error if the method does not exist.
   pub fn remove_method(&mut self, did: &CoreDIDUrl) -> Result<()> {
-    let mut was_removed = false;
-    was_removed = was_removed || self.authentication.remove(did);
-    was_removed = was_removed || self.assertion_method.remove(did);
-    was_removed = was_removed || self.key_agreement.remove(did);
-    was_removed = was_removed || self.capability_delegation.remove(did);
-    was_removed = was_removed || self.capability_invocation.remove(did);
-    was_removed = was_removed || self.verification_method.remove(did);
+    let was_removed: bool = [
+      self.authentication.remove(did),
+      self.assertion_method.remove(did),
+      self.key_agreement.remove(did),
+      self.capability_delegation.remove(did),
+      self.capability_invocation.remove(did),
+      self.verification_method.remove(did),
+    ]
+    .contains(&true);
 
     if was_removed {
       Ok(())
@@ -794,5 +796,20 @@ mod tests {
     assert!(document.insert_method(method2, MethodScope::assertion_method()).is_ok());
     assert!(document.remove_method(method1.id()).is_err());
     assert!(document.remove_method(method1.id()).is_err());
+
+    let fragment = "#removal-test-3";
+    let method3 = method(document.id(), fragment);
+    assert!(document
+      .insert_method(method3.clone(), MethodScope::VerificationMethod)
+      .is_ok());
+    assert!(document
+      .attach_method_relationship(fragment, MethodRelationship::CapabilityDelegation)
+      .is_ok());
+
+    assert!(document.remove_method(method3.id()).is_ok());
+
+    // Ensure *all* references were removed.
+    assert!(document.capability_delegation().query(method3.id()).is_none());
+    assert!(document.verification_method().query(method3.id()).is_none());
   }
 }
