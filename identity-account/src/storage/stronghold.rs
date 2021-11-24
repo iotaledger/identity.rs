@@ -59,7 +59,7 @@ impl Stronghold {
     Ok(Self {
       did_leases: Mutex::new(HashMap::new()),
       snapshot: Arc::new(snapshot),
-      dropsave: dropsave.unwrap_or(false),
+      dropsave: dropsave.unwrap_or(true),
     })
   }
 
