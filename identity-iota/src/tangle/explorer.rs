@@ -35,10 +35,10 @@ pub struct ExplorerUrl(Url);
 /// ```
 /// # use identity_iota::did::IotaDID;
 /// # use identity_iota::tangle::ExplorerUrl;
-/// let explorer_url = ExplorerUrl::mainnet();
+/// let explorer = ExplorerUrl::mainnet();
 /// let did = IotaDID::parse("did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV").unwrap();
 /// assert_eq!(
-///   explorer_url.resolver_url(&did).unwrap(),
+///   explorer.resolver_url(&did).unwrap(),
 ///   "https://explorer.iota.org/mainnet/identity-resolver/did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
 /// );
 /// ```
@@ -65,7 +65,7 @@ impl ExplorerUrl {
   /// Point to a Tangle explorer deployed locally.
   /// ```
   /// # use identity_iota::tangle::ExplorerUrl;
-  /// let explorer_url = ExplorerUrl::parse("http://127.0.0.1:8082/").unwrap();
+  /// let explorer = ExplorerUrl::parse("http://127.0.0.1:8082/").unwrap();
   /// ```
   pub fn parse(url: &str) -> Result<Self> {
     let url: Url = Url::parse(url).map_err(|_| Error::InvalidExplorerURL)?;
@@ -137,7 +137,7 @@ impl FromStr for ExplorerUrl {
   type Err = Error;
 
   fn from_str(url: &str) -> Result<Self, Self::Err> {
-    Self::parse(url)
+    Self::try_from(url)
   }
 }
 
@@ -146,14 +146,6 @@ impl TryFrom<&str> for ExplorerUrl {
 
   fn try_from(url: &str) -> Result<Self, Self::Error> {
     Self::parse(url)
-  }
-}
-
-impl TryFrom<String> for ExplorerUrl {
-  type Error = Error;
-
-  fn try_from(url: String) -> Result<Self, Self::Error> {
-    Self::parse(&url)
   }
 }
 

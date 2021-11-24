@@ -3,7 +3,9 @@
 
 use std::str::FromStr;
 
-use identity::iota::{ExplorerUrl, IotaDID, MessageId};
+use identity::iota::ExplorerUrl;
+use identity::iota::IotaDID;
+use identity::iota::MessageId;
 use wasm_bindgen::prelude::*;
 
 use crate::error::Result;
