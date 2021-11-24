@@ -9,7 +9,7 @@ use core::slice::Iter;
 
 use identity_core::convert::ToJson;
 
-use crate::chain::milestone_sort::sort_by_milestone;
+use crate::chain::milestone::sort_by_milestone;
 use crate::chain::IntegrationChain;
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;

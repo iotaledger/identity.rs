@@ -9,7 +9,7 @@ use core::mem;
 
 use identity_core::convert::ToJson;
 
-use crate::chain::milestone_sort::sort_by_milestone;
+use crate::chain::milestone::sort_by_milestone;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Error;
@@ -50,18 +50,19 @@ impl IntegrationChain {
   pub async fn try_from_index(client: &IotaClient, mut index: MessageIndex<IotaDocument>) -> Result<Self> {
     trace!("[Int] Message Index = {:#?}", index);
 
-    let valid_root_documents = index
+    let valid_root_documents: Vec<IotaDocument> = index
       .remove(&MessageId::null())
-      .unwrap()
-      .iter()
+      .ok_or(Error::ChainError {
+        error: "DID not found or pruned",
+      })?
+      .into_iter()
       .filter(|doc| IotaDocument::verify_root_document(doc).is_ok())
-      .cloned()
       .collect();
 
-    let mut sorted_root_document = sort_by_milestone(client, valid_root_documents).await?;
+    let mut sorted_root_document: Vec<IotaDocument> = sort_by_milestone(client, valid_root_documents).await?;
     if sorted_root_document.is_empty() {
       return Err(Error::ChainError {
-        error: "Invalid Root Document",
+        error: "no valid root documents",
       });
     }
     let current = sorted_root_document.remove(0);
