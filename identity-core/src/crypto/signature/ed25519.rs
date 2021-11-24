@@ -90,7 +90,7 @@ mod tests {
   use crate::crypto::Ed25519;
   use crate::crypto::Sign;
   use crate::crypto::Verify;
-  use crate::utils::decode_b58;
+  use crate::utils;
 
   const SIGNATURE_HELLO: &[u8] = &[
     12, 203, 235, 144, 80, 6, 163, 39, 181, 17, 44, 123, 250, 162, 165, 145, 135, 132, 32, 152, 24, 168, 55, 80, 84,
@@ -103,8 +103,8 @@ mod tests {
 
   #[test]
   fn test_ed25519_can_sign_and_verify() {
-    let public: Vec<u8> = decode_b58(PUBLIC_B58).unwrap();
-    let private: Vec<u8> = decode_b58(SECRET_B58).unwrap();
+    let public: Vec<u8> = utils::decode_b58(PUBLIC_B58).unwrap();
+    let private: Vec<u8> = utils::decode_b58(SECRET_B58).unwrap();
 
     let signature: _ = Ed25519::sign(b"hello", &private).unwrap();
     let combined: _ = [&signature[..], b"hello"].concat();
