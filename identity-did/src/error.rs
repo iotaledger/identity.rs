@@ -18,8 +18,8 @@ pub enum Error {
   InvalidSerialization, // TODO: Remove this upon refactoring the errors in this crate
 
   /// Caused by errors from the [identity_core] crate.
-  #[error("{0}")]
-  CoreError(#[from] ::identity_core::Error),
+  #[error("remove this when refactoring the errors in this crate")]
+  CoreError, // todo: remove this upon refactoring the errors in this crate
 
   /// caused by attempting to parse invalid urls
   #[error("{0}")]

@@ -26,8 +26,8 @@ pub enum Error {
   #[error(transparent)]
   CryptoError(#[from] crypto::Error),
   /// Caused by errors from the [identity_core] crate.
-  #[error(transparent)]
-  CoreError(#[from] identity_core::Error),
+  #[error("remove this variant")]
+  CoreError, // TODO: Remove this error upon refactoring the errors in this crate
   /// Caused by errors from the [identity_did] crate.
   #[error(transparent)]
   DIDError(#[from] identity_did::Error),

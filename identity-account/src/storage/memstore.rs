@@ -188,7 +188,7 @@ impl Storage for MemStore {
         assert_eq!(keypair.type_(), KeyType::Ed25519);
 
         let public: PublicKey = keypair.public().clone();
-        let signature: [u8; 64] = Ed25519::sign(&data, keypair.private())?;
+        let signature: [u8; 64] = Ed25519::sign(&data, keypair.private()).map_err(|_| Error::CoreError)?;
         let signature: Signature = Signature::new(public, signature.to_vec());
 
         Ok(signature)

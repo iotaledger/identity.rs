@@ -6,7 +6,7 @@ use thiserror::Error as DeriveError;
 
 use crate::crypto::key::KeyError; 
 
-pub(crate) use signing::{MissingSignatureError, SigningError};
+pub use signing::{MissingSignatureError, SigningError};
 pub(crate) use signing::SigningErrorCause;
 pub(crate) use verifying::{InvalidProofValue, VerificationError}; 
 pub(crate) use verifying::VerificationProcessingErrorCause;
@@ -28,18 +28,29 @@ pub(crate) enum SigningErrorCause{
   // Signing failed because the signing method received invalid input 
   #[error("signing failed - invalid input:  {0}")]
   Input(&'static str),
-  // Any reason why signing failed that is not listed here 
+  // Any reason why signing failed that is not necessarily listed here 
   #[error("signing failed: {0}")]
-  Other( &'static str),
+  Other(&'static str),
 }
 
 #[derive(Debug, DeriveError)]
 #[error("{cause}")]
-/// Caused by a failure to sign data 
+/// Caused by a failure to sign data
 pub struct SigningError {
   cause: SigningErrorCause, 
 }
 
+// Signing can typically fail due to a failure to serialize or deserialize input data. 
+// Unfortunately serde_json does not have separate error types for serializing and deserializing so 
+// this is in some sense a workaround. 
+// Question: Would it better to have two constructors `pub fn serializing_failed() -> Self, pub fn deserializing_failed() -> Self`? 
+impl From<(serde_json::Error, &'static str)> for SigningError {
+  fn from(t: (serde_json::Error, &'static str)) -> Self {
+      Self {
+        cause: SigningErrorCause::Input(t.1)
+      }
+  }
+}
 impl From<SigningErrorCause> for SigningError {
   fn from(cause: SigningErrorCause) -> Self {
       Self{cause}

@@ -25,6 +25,7 @@ use identity_iota::tangle::UPDATE_METHOD_TYPES;
 
 use crate::account::Account;
 use crate::error::Result;
+use crate::error::Error;
 use crate::identity::DIDLease;
 use crate::identity::IdentitySetup;
 use crate::identity::IdentityState;
@@ -62,9 +63,9 @@ pub(crate) async fn create_identity(setup: IdentitySetup, store: &dyn Storage) -
       ))
     );
 
-    KeyPair::try_from_ed25519_bytes(private_key.as_ref())?
+    KeyPair::try_from_ed25519_bytes(private_key.as_ref()).map_err(|_|Error::CoreError)?
   } else {
-    KeyPair::new_ed25519()?
+    KeyPair::new_ed25519().map_err(|_|Error::CoreError)?
   };
 
   // Generate a new DID from the public key

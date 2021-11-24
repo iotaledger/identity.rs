@@ -30,3 +30,5 @@ pub use self::signature::TrySignature;
 pub use self::signature::TrySignatureMut;
 pub use self::signature::Verifier;
 pub use self::signature::Verify;
+pub use self::signature::errors::SigningError;
+pub use self::signature::errors::MissingSignatureError;

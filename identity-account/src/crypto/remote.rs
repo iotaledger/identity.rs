@@ -10,8 +10,7 @@ use identity_core::crypto::Named;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::SignatureValue;
-use identity_core::error::Error;
-use identity_core::error::Result;
+use identity_core::crypto::SigningError; 
 use identity_core::utils::encode_b58;
 use identity_iota::did::IotaDID;
 
@@ -25,7 +24,7 @@ impl Named for RemoteEd25519 {
 }
 
 impl RemoteEd25519 {
-  pub async fn create_signature<U>(data: &mut U, method: impl Into<String>, secret: &RemoteKey<'_>) -> Result<()>
+  pub async fn create_signature<U>(data: &mut U, method: impl Into<String>, secret: &RemoteKey<'_>) -> Result<(),SigningError>
   where
     U: Serialize + SetSignature,
   {
@@ -39,11 +38,11 @@ impl RemoteEd25519 {
     Ok(())
   }
 
-  pub async fn sign<X>(data: &X, remote_key: &RemoteKey<'_>) -> Result<SignatureValue>
+  pub async fn sign<X>(data: &X, remote_key: &RemoteKey<'_>) -> Result<SignatureValue, SigningError>
   where
     X: Serialize,
   {
-    let message: Vec<u8> = data.to_jcs()?;
+    let message: Vec<u8> = data.to_jcs().map_err(|err|(err,"failed to serialize input data"))?;
     let signature: Vec<u8> = RemoteSign::sign(&message, remote_key).await?;
     let signature: String = encode_b58(&signature);
     Ok(SignatureValue::Signature(signature))
@@ -78,12 +77,12 @@ pub struct RemoteSign<'a> {
 }
 
 impl<'a> RemoteSign<'a> {
-  pub async fn sign(message: &[u8], key: &RemoteKey<'a>) -> Result<Vec<u8>> {
+  pub async fn sign(message: &[u8], key: &RemoteKey<'a>) -> Result<Vec<u8>, SigningError> {
     key
       .store
       .key_sign(key.did, key.location, message.to_vec())
       .await
-      .map_err(|_| Error::InvalidProofValue("remote sign"))
+      .map_err(|_| "remote sign failed".into())
       .map(|signature| signature.data)
   }
 }

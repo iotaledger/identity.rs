@@ -27,7 +27,6 @@ use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_core::crypto::Verifier;
 use identity_core::crypto::Verify;
-use identity_core::error::Error as CoreError;
 use serde::Serialize;
 
 use crate::document::CoreDocument;
@@ -169,12 +168,12 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(that, method_uri, self.private.as_ref())?;
+        JcsEd25519::<Ed25519>::create_signature(that, method_uri, self.private.as_ref()).map_err(|_|Error::CoreError)?;
       }
       MethodType::MerkleKeyCollection2021 => {
         let data: Vec<u8> = method.key_data().try_decode()?;
 
-        match MerkleKey::extract_tags(&data)? {
+        match MerkleKey::extract_tags(&data).map_err(|_| Error::CoreError)? {
           (MerkleSignatureTag::ED25519, MerkleDigestTag::SHA256) => {
             self.merkle_key_sign::<X, Sha256, Ed25519>(that, method_uri)?;
           }
@@ -202,15 +201,15 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
       Some((public, proof)) => {
         let proof: &Proof<D> = proof
           .downcast_ref()
-          .ok_or(Error::CoreError(CoreError::InvalidKeyFormat))?;
+          .ok_or(Error::CoreError)?; //Invalid key format
 
         let skey: SigningKey<'_, D> = SigningKey::from_borrowed(public, self.private, proof);
 
-        MerkleSigner::<D, S>::create_signature(that, method, &skey)?;
+        MerkleSigner::<D, S>::create_signature(that, method, &skey).map_err(|_|Error::CoreError)?;
 
         Ok(())
       }
-      None => Err(Error::CoreError(CoreError::InvalidKeyFormat)),
+      None => Err(Error::CoreError), // Invalid key format
     }
   }
 }
@@ -243,7 +242,7 @@ where
   where
     X: Serialize + TrySignature,
   {
-    let signature: &Signature = that.try_signature()?;
+    let signature: &Signature = that.try_signature().map_err(|_|Error::CoreError)?;
     let method: &VerificationMethod<U> = self.document.try_resolve_method(signature)?;
 
     Self::do_verify(method, that)
@@ -260,7 +259,7 @@ where
   where
     X: Serialize + TrySignature,
   {
-    let signature: &Signature = that.try_signature()?;
+    let signature: &Signature = that.try_signature().map_err(|_|Error::CoreError)?;
     let method: &VerificationMethod<U> = self.document.try_resolve_method_with_scope(signature, scope)?;
 
     Self::do_verify(method, that)
@@ -280,9 +279,9 @@ where
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::verify_signature(that, &data)?;
+        JcsEd25519::<Ed25519>::verify_signature(that, &data).map_err(|_|Error::CoreError)?;
       }
-      MethodType::MerkleKeyCollection2021 => match MerkleKey::extract_tags(&data)? {
+      MethodType::MerkleKeyCollection2021 => match MerkleKey::extract_tags(&data).map_err(|_|Error::CoreError)? {
         (MerkleSignatureTag::ED25519, MerkleDigestTag::SHA256) => {
           merkle_key_verify::<X, Sha256, Ed25519, U>(that, method, &data)?;
         }
@@ -313,7 +312,7 @@ where
     vkey.set_revocation(revocation);
   }
 
-  MerkleVerifier::<D, S>::verify_signature(that, &vkey)?;
+  MerkleVerifier::<D, S>::verify_signature(that, &vkey).map_err(|_|Error::CoreError)?;
 
   Ok(())
 }

@@ -22,8 +22,8 @@ pub enum Error {
                                                                * with new errors from iota-core */
   #[error("base decoding error")]
   BaseDecoding, // TODO: This is a temporary solution to make this crate work with the new errors from iota-core.
-  #[error("{0}")]
-  CoreError(#[from] identity_core::Error),
+  #[error("error from the core crate. Remove this upon refactoring")]
+  CoreError, // TODO: Remove this when refactoring the errors in this crate
   #[error("{0}")]
   DiffError(#[from] identity_core::diff::Error),
   #[error("{0}")]

@@ -14,7 +14,7 @@ mod errors {
   #[error("failed to generate a ed25519 key-pair: {inner}")]
   pub struct Ed25519KeyPairGenerationError {
     #[source]
-    pub(super) inner: crypto::Error,
+    pub(crate) inner: crypto::Error,
   }
 }
 

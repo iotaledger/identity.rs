@@ -105,7 +105,7 @@ impl IdentityState {
 
     match location.method() {
       MethodType::Ed25519VerificationKey2018 => {
-        RemoteEd25519::create_signature(target, method_url.to_string(), &private).await?;
+        RemoteEd25519::create_signature(target, method_url.to_string(), &private).await.map_err(|_|Error::CoreError)?;
       }
       MethodType::MerkleKeyCollection2021 => {
         todo!("Handle MerkleKeyCollection2021")

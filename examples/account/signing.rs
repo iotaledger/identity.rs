@@ -8,6 +8,7 @@ use std::path::PathBuf;
 use identity::account::Account;
 use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
+use identity::account::Error;
 use identity::account::Result;
 use identity::core::json;
 use identity::core::FromJson;
@@ -50,7 +51,7 @@ async fn main() -> Result<()> {
     .await?;
 
   // Create a subject DID for the recipient of a `UniversityDegree` credential.
-  let subject_key: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::FailedKeyPairGeneration)?;
+  let subject_key: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::CoreError)?;
   let subject_did: IotaDID = IotaDID::new(subject_key.public().as_ref())?;
 
   // Create the actual Verifiable Credential subject.
