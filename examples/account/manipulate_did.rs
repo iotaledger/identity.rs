@@ -27,11 +27,7 @@ async fn main() -> Result<()> {
 
   // Create a new Account with the default configuration
   let mut account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(
-      stronghold_path,
-      Some(password),
-      None,
-    ))
+    .storage(AccountStorage::Stronghold(stronghold_path, Some(password), None))
     .create_identity(IdentitySetup::default())
     .await?;
 
