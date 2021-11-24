@@ -14,6 +14,8 @@ use std::cmp::Ordering;
 /// that references them. If multiple messages are referenced by the same milestone, they will
 /// be sorted by [`MessageId`](crate::tangle::MessageId).
 ///
+/// NOTE: this will NOT fetch milestones if only one message is present.
+///
 /// # Errors
 ///
 /// [`MilestoneError`] if fetching a milestone fails.

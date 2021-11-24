@@ -50,40 +50,37 @@ impl IntegrationChain {
   pub async fn try_from_index(client: &IotaClient, mut index: MessageIndex<IotaDocument>) -> Result<Self> {
     trace!("[Int] Message Index = {:#?}", index);
 
-    let valid_root_documents: Vec<IotaDocument> = index
-      .remove(&MessageId::null())
-      .ok_or(Error::ChainError {
-        error: "DID not found or pruned",
-      })?
-      .into_iter()
-      .filter(|doc| IotaDocument::verify_root_document(doc).is_ok())
-      .collect();
+    // Extract root document.
+    let root_document: IotaDocument = {
+      let valid_root_documents: Vec<IotaDocument> = index
+        .remove(&MessageId::null())
+        .ok_or(Error::ChainError {
+          error: "DID not found or pruned",
+        })?
+        .into_iter()
+        .filter(|doc| IotaDocument::verify_root_document(doc).is_ok())
+        .collect();
 
-    let mut sorted_root_document: Vec<IotaDocument> = sort_by_milestone(client, valid_root_documents).await?;
-    if sorted_root_document.is_empty() {
-      return Err(Error::ChainError {
+      let sorted_root_documents: Vec<IotaDocument> = sort_by_milestone(client, valid_root_documents).await?;
+      sorted_root_documents.into_iter().next().ok_or(Error::ChainError {
         error: "no valid root documents",
-      });
-    }
-    let current = sorted_root_document.remove(0);
+      })?
+    };
 
-    // Construct the document chain.
-    let mut this: Self = Self::new(current)?;
-    while let Some(mut list) = index.remove(this.current_message_id()) {
+    // Construct the rest of the integration chain.
+    let mut this: Self = Self::new(root_document)?;
+    while let Some(documents) = index.remove(this.current_message_id()) {
       // Extract valid documents.
-      let mut valid_docs = Vec::new();
-      while let Some(document) = list.pop() {
-        if this.check_valid_addition(&document).is_ok() {
-          valid_docs.push(document);
-        }
-      }
+      let valid_documents: Vec<IotaDocument> = documents
+        .into_iter()
+        .filter(|document| this.check_valid_addition(&document).is_ok())
+        .collect();
 
-      // Sort valid documents and push the oldest.
-      let mut sorted_valid_docs = sort_by_milestone(client, valid_docs).await?;
-      if !sorted_valid_docs.is_empty() {
-        let oldest_doc = sorted_valid_docs.remove(0);
-        this.push(oldest_doc);
+      // Sort and push the one referenced by the oldest milestone.
+      if let Some(next) = sort_by_milestone(client, valid_documents).await?.into_iter().next() {
+        this.push_unchecked(next); // checked above
       }
+      // If no document is appended, the chain ends.
     }
     Ok(this)
   }
@@ -134,17 +131,13 @@ impl IntegrationChain {
   /// See [`IntegrationChain::check_valid_addition`].
   pub fn try_push(&mut self, document: IotaDocument) -> Result<()> {
     self.check_valid_addition(&document)?;
-
-    self
-      .history
-      .get_or_insert_with(Vec::new)
-      .push(mem::replace(&mut self.current, document));
+    self.push_unchecked(document);
 
     Ok(())
   }
 
-  /// Adds a new [`IotaDocument`] to this [`IntegrationChain`].
-  pub fn push(&mut self, document: IotaDocument) {
+  /// Adds a new [`IotaDocument`] to this [`IntegrationChain`] without validating it.
+  fn push_unchecked(&mut self, document: IotaDocument) {
     self
       .history
       .get_or_insert_with(Vec::new)
