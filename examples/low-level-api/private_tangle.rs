@@ -9,9 +9,9 @@
 //!
 //! cargo run --example private_tangle
 
-use identity::did::DID;
 use identity::iota::ClientBuilder;
 use identity::iota::DIDMessageEncoding;
+use identity::iota::ExplorerUrl;
 use identity::iota::IotaDID;
 use identity::iota::Network;
 use identity::iota::Receipt;
@@ -28,10 +28,10 @@ pub async fn main() -> Result<()> {
   // private tangle is `private-tangle`, but we can only use 6 characters.
   // Keep in mind, there are easier ways to change to devnet via `Network::Devnet`
   let network_name = "dev";
-  let mut network = Network::try_from_name(network_name)?;
+  let network = Network::try_from_name(network_name)?;
 
-  // If you deployed an explorer locally this would usually be `http://127.0.0.1:8082/identity-resolver`
-  network.set_explorer_url("https://explorer.iota.org/devnet/identity-resolver".parse()?)?;
+  // If you deployed an explorer locally this would usually be `http://127.0.0.1:8082/`
+  let explorer = ExplorerUrl::parse("https://explorer.iota.org/devnet/")?;
 
   // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265/`
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
@@ -69,12 +69,9 @@ pub async fn main() -> Result<()> {
 
   // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
   let iota_did: &IotaDID = document.did();
-
   println!(
     "[Example] Explore the DID Document = {}",
-    network
-      .resolver_url(iota_did.as_str())
-      .expect("no explorer url was set")
+    explorer.resolver_url(iota_did)?
   );
 
   Ok(())
