@@ -41,10 +41,11 @@ use crate::utils::EncryptionKey;
 pub struct Stronghold {
   did_leases: Mutex<HashMap<IotaDID, DIDLease>>,
   snapshot: Arc<Snapshot>,
+  dropsave: bool,
 }
 
 impl Stronghold {
-  pub async fn new<'a, T, U>(snapshot: &T, password: U) -> Result<Self>
+  pub async fn new<'a, T, U>(snapshot: &T, password: U, dropsave: bool) -> Result<Self>
   where
     T: AsRef<Path> + ?Sized,
     U: Into<Option<&'a str>>,
@@ -58,6 +59,7 @@ impl Stronghold {
     Ok(Self {
       did_leases: Mutex::new(HashMap::new()),
       snapshot: Arc::new(snapshot),
+      dropsave,
     })
   }
 
@@ -67,6 +69,16 @@ impl Stronghold {
 
   fn vault(&self, id: &IotaDID) -> Vault<'_> {
     self.snapshot.vault(&fmt_did(id), &[])
+  }
+
+  /// Returns whether save-on-drop is enabled.
+  pub fn dropsave(&self) -> bool {
+    self.dropsave
+  }
+
+  /// Save the storage changes on drop.
+  pub fn set_dropsave(&mut self, value: bool) {
+    self.dropsave = value;
   }
 }
 
@@ -262,7 +274,9 @@ impl Storage for Stronghold {
 
 impl Drop for Stronghold {
   fn drop(&mut self) {
-    let _ = executor::block_on(self.flush_changes());
+    if self.dropsave {
+      let _ = executor::block_on(self.flush_changes());
+    }
   }
 }
 
