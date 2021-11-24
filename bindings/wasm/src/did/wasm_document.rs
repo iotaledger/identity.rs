@@ -170,10 +170,10 @@ impl WasmDocument {
 
   /// Adds a new Verification Method to the DID Document.
   #[wasm_bindgen(js_name = insertMethod)]
-  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: Option<String>) -> Result<bool> {
+  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: Option<String>) -> Result<()> {
     let scope: MethodScope = scope.unwrap_or_default().parse().wasm_result()?;
-
-    Ok(self.0.insert_method(method.0.clone(), scope))
+    self.0.insert_method(method.0.clone(), scope).wasm_result()?;
+    Ok(())
   }
 
   /// Removes all references to the specified Verification Method.

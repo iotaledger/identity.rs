@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
   // Associate the newly created method with additional verification relationships
   account
     .update_identity()
-    .attach_method()
+    .attach_method_relationship()
     .fragment("my-next-key")
     .relationship(MethodRelationship::CapabilityDelegation)
     .relationship(MethodRelationship::CapabilityInvocation)

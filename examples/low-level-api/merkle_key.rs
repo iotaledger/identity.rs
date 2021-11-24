@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
   let method = IotaVerificationMethod::create_merkle_key::<Sha256>(method_did, &keys, "merkle-key")?;
 
   // Add to the DID Document as a general-purpose verification method
-  issuer_doc.insert_method(method, MethodScope::VerificationMethod);
+  issuer_doc.insert_method(method, MethodScope::VerificationMethod)?;
   issuer_doc.set_previous_message_id(*issuer_receipt.message_id());
   issuer_doc.sign_self(issuer_key.private(), &issuer_doc.default_signing_method()?.id())?;
 

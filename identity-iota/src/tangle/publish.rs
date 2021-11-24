@@ -86,7 +86,7 @@ mod test {
 
     let method3_url = method2.id();
 
-    old_doc.insert_method(method2, MethodScope::VerificationMethod);
+    old_doc.insert_method(method2, MethodScope::VerificationMethod).unwrap();
     old_doc
       .attach_method_relationship(
         method3_url,
@@ -109,7 +109,9 @@ mod test {
     let method2: IotaVerificationMethod =
       IotaVerificationMethod::from_did(old_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-2")?;
 
-    new_doc.insert_method(method2, MethodScope::capability_invocation());
+    new_doc
+      .insert_method(method2, MethodScope::capability_invocation())
+      .unwrap();
 
     assert!(matches!(
       PublishType::new(&old_doc, &new_doc),
@@ -132,7 +134,9 @@ mod test {
     new_doc
       .remove_method(new_doc.did().to_url().join("#embedded").unwrap())
       .unwrap();
-    new_doc.insert_method(verif_method2, MethodScope::capability_invocation());
+    new_doc
+      .insert_method(verif_method2, MethodScope::capability_invocation())
+      .unwrap();
 
     assert!(matches!(
       PublishType::new(&old_doc, &new_doc),
@@ -177,7 +181,9 @@ mod test {
     let verif_method2: IotaVerificationMethod =
       IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-2")?;
 
-    new_doc.insert_method(verif_method2, MethodScope::authentication());
+    new_doc
+      .insert_method(verif_method2, MethodScope::authentication())
+      .unwrap();
 
     assert!(matches!(PublishType::new(&old_doc, &new_doc), Some(PublishType::Diff)));
 
@@ -214,7 +220,7 @@ mod test {
     let method: IotaVerificationMethod =
       IotaVerificationMethod::create_merkle_key::<Sha256>(new_doc.did().to_owned(), &collection, "merkle")?;
 
-    new_doc.insert_method(method, MethodScope::authentication());
+    new_doc.insert_method(method, MethodScope::authentication()).unwrap();
 
     assert!(matches!(PublishType::new(&old_doc, &new_doc), Some(PublishType::Diff)));
 
@@ -229,7 +235,9 @@ mod test {
     let method: IotaVerificationMethod =
       IotaVerificationMethod::create_merkle_key::<Sha256>(old_doc.did().to_owned(), &collection, "merkle")?;
 
-    old_doc.insert_method(method, MethodScope::capability_invocation());
+    old_doc
+      .insert_method(method, MethodScope::capability_invocation())
+      .unwrap();
 
     let mut new_doc = old_doc.clone();
 
