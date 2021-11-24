@@ -22,14 +22,13 @@ async fn main() -> Result<()> {
   // It implements best practices for security and is the recommended way of handling private keys.
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
-  let dropsave: bool = false;
 
   // Create an AccountBuilder to make it easier to create multiple identities.
   // Every account created from the builder will use the same storage - stronghold in this case.
   let mut builder: AccountBuilder = Account::builder().storage(AccountStorage::Stronghold(
     stronghold_path,
     Some(password),
-    Some(dropsave),
+    None,
   ));
 
   // The creation step generates a keypair, builds an identity

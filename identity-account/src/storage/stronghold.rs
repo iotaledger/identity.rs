@@ -76,7 +76,8 @@ impl Stronghold {
     self.dropsave
   }
 
-  /// Save the storage changes on drop.
+  /// Set whether to save the storage changes on drop.
+  /// Default: true
   pub fn set_dropsave(&mut self, value: bool) {
     self.dropsave = value;
   }

@@ -18,7 +18,6 @@ async fn main() -> Result<()> {
   // Stronghold settings
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
-  let dropsave: bool = false;
 
   // Create a new Account with auto publishing set to false.
   // This means updates are not pushed to the tangle automatically.
@@ -27,7 +26,7 @@ async fn main() -> Result<()> {
     .storage(AccountStorage::Stronghold(
       stronghold_path,
       Some(password),
-      Some(dropsave),
+      None,
     ))
     .autopublish(false)
     .create_identity(IdentitySetup::default())
