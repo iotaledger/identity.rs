@@ -11,7 +11,7 @@ import {manipulateIdentity} from './manipulate_did';
  The issuer signs a UniversityDegreeCredential type verifiable credential with Alice's name and DID.
  This Verifiable Credential can be verified by anyone, allowing Alice to take control of it and share it with whoever they please.
 
- @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+ @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function createVC(clientConfig) {
     // Create a default client configuration from the parent config network.

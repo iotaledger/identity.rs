@@ -12,7 +12,7 @@ import {logExplorerUrl, logResolverUrl} from "./utils";
  3. The difference between the two documents is created and published as a diff message.
  4. The final DID will contain both services.
 
- @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+ @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function createDiff(clientConfig) {
     // Create a default client configuration from the parent config network.
@@ -43,8 +43,8 @@ async function createDiff(clientConfig) {
     // Publish diff to the Tangle
     const diffReceipt = await client.publishDiff(receipt.messageId, diff);
     console.log(diffReceipt);
-    logExplorerUrl("Diff Chain Transaction:", clientConfig.network, diffReceipt.messageId);
-    logResolverUrl("Explore the DID Document:", clientConfig.network, doc.id.toString());
+    logExplorerUrl("Diff Chain Transaction:", clientConfig.explorer, diffReceipt.messageId);
+    logResolverUrl("Explore the DID Document:", clientConfig.explorer, doc.id.toString());
 
     return {updatedDoc, key, diffMessageId: diffReceipt.messageId};
 }

@@ -47,7 +47,7 @@ async fn main() -> Result<()> {
   let update_receipt = client.publish_document(&issuer_doc).await?;
 
   // Log the resulting Identity update
-  let explorer: &ExplorerUrl = ExplorerUrl::main();
+  let explorer: &ExplorerUrl = ExplorerUrl::mainnet();
   println!(
     "Issuer Update Transaction > {}",
     explorer.message_url(update_receipt.message_id())?

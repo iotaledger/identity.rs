@@ -9,7 +9,7 @@ import { createVC } from './create_vc';
     A Verifiable Presentation is the format in which a (collection of) Verifiable Credential(s) gets shared.
     It is signed by the subject, to prove control over the Verifiable Credential with a nonce or timestamp.
 
-    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+    @param {{network: Network, explorer: ExplorerUrl}} clientConfig
 **/
 async function createVP(clientConfig) {
     // Create a default client configuration from the parent config network.

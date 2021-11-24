@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, DID, Timestamp} from '@iota/identity-wasm';
+import {Client, Config, Timestamp} from '@iota/identity-wasm';
 import {createVC} from './create_vc';
 import {logExplorerUrl, logResolverUrl} from './utils';
 
@@ -19,7 +19,7 @@ import {logExplorerUrl, logResolverUrl} from './utils';
  We recommend that you ALWAYS using a CLIENT_CONFIG parameter that you define when calling any functions that take a
  ClientConfig object. This will ensure that all the API calls use a consistent node and network.
 
- @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+ @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function revokeVC(clientConfig) {
     // Create a default client configuration from the parent config network.
@@ -40,8 +40,8 @@ async function revokeVC(clientConfig) {
     const {messageId} = await client.publishDocument(issuer.doc);
 
     // Log the resulting Identity update
-    logExplorerUrl("Issuer Update Transaction:", clientConfig.network, messageId);
-    logResolverUrl("Explore the Issuer DID Document:", clientConfig.network, issuer.doc.id.toString());
+    logExplorerUrl("Issuer Update Transaction:", clientConfig.explorer, messageId);
+    logResolverUrl("Explore the Issuer DID Document:", clientConfig.explorer, issuer.doc.id.toString());
 
     // Check the verifiable credential
     const result = await client.checkCredential(signedVc.toString());

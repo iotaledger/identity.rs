@@ -35,7 +35,7 @@ pub struct ExplorerUrl(Url);
 /// ```
 /// # use identity_iota::did::IotaDID;
 /// # use identity_iota::tangle::ExplorerUrl;
-/// let explorer_url = ExplorerUrl::main();
+/// let explorer_url = ExplorerUrl::mainnet();
 /// let did = IotaDID::parse("did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV").unwrap();
 /// assert_eq!(
 ///   explorer_url.resolver_url(&did).unwrap(),
@@ -45,7 +45,7 @@ pub struct ExplorerUrl(Url);
 impl ExplorerUrl {
   /// Constructs a new Tangle explorer URL.
   ///
-  /// Use [`ExplorerUrl::main`] or [`ExplorerUrl::dev`] unless using a private Tangle
+  /// Use [`ExplorerUrl::mainnet`] or [`ExplorerUrl::devnet`] unless using a private Tangle
   /// or local explorer.
   ///
   /// NOTE: does not validate whether this corresponds to an actual Tangle explorer.
@@ -74,13 +74,13 @@ impl ExplorerUrl {
 
   /// Returns the Tangle explorer URL for the mainnet.
   #[inline]
-  pub fn main() -> &'static ExplorerUrl {
+  pub fn mainnet() -> &'static ExplorerUrl {
     &EXPLORER_MAIN
   }
 
   /// Returns the Tangle explorer URL for the devnet.
   #[inline]
-  pub fn dev() -> &'static ExplorerUrl {
+  pub fn devnet() -> &'static ExplorerUrl {
     &EXPLORER_DEV
   }
 
@@ -202,13 +202,13 @@ mod tests {
   fn test_message_url() {
     let message_id: MessageId = MessageId::new([0u8; 32]);
 
-    let explorer_main: &ExplorerUrl = ExplorerUrl::main();
+    let explorer_main: &ExplorerUrl = ExplorerUrl::mainnet();
     assert_eq!(
       explorer_main.message_url(&message_id).unwrap(),
       format!("{}/{}/{}", explorer_main.as_str(), "message", message_id)
     );
 
-    let explorer_dev: &ExplorerUrl = ExplorerUrl::dev();
+    let explorer_dev: &ExplorerUrl = ExplorerUrl::devnet();
     assert_eq!(
       explorer_dev.message_url(&message_id).unwrap(),
       format!("{}/{}/{}", explorer_dev.as_str(), "message", message_id)
@@ -226,13 +226,13 @@ mod tests {
   fn test_resolver_url() {
     let did: IotaDID = IotaDID::parse("did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV").unwrap();
 
-    let explorer_main: &ExplorerUrl = ExplorerUrl::main();
+    let explorer_main: &ExplorerUrl = ExplorerUrl::mainnet();
     assert_eq!(
       explorer_main.resolver_url(&did).unwrap(),
       format!("{}/{}/{}", explorer_main.as_str(), "identity-resolver", did)
     );
 
-    let explorer_dev: &ExplorerUrl = ExplorerUrl::dev();
+    let explorer_dev: &ExplorerUrl = ExplorerUrl::devnet();
     assert_eq!(
       explorer_dev.resolver_url(&did).unwrap(),
       format!("{}/{}/{}", explorer_dev.as_str(), "identity-resolver", did)

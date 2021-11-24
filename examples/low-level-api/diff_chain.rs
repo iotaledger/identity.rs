@@ -57,7 +57,7 @@ async fn main() -> Result<()> {
   println!("Diff Update Receipt > {:#?}", update_receipt);
 
   // Display the web explorer url that shows the published diff message.
-  let explorer: &ExplorerUrl = ExplorerUrl::main();
+  let explorer: &ExplorerUrl = ExplorerUrl::mainnet();
   println!(
     "Diff Update Transaction > {}",
     explorer.message_url(update_receipt.message_id())?

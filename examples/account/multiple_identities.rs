@@ -63,7 +63,7 @@ async fn main() -> Result<()> {
 
   // Prints the Identity Resolver Explorer URL.
   // The entire history can be observed on this page by clicking "Loading History".
-  let explorer: &ExplorerUrl = ExplorerUrl::main();
+  let explorer: &ExplorerUrl = ExplorerUrl::mainnet();
   println!(
     "[Example] Explore the DID Document = {}",
     explorer.resolver_url(account1.did())?

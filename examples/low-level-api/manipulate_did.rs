@@ -57,7 +57,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   println!("Publish Receipt > {:#?}", update_receipt);
 
   // Display the web explorer url that shows the published message.
-  let explorer: &ExplorerUrl = ExplorerUrl::main();
+  let explorer: &ExplorerUrl = ExplorerUrl::mainnet();
   println!(
     "DID Document Transaction > {}",
     explorer.message_url(update_receipt.message_id())?

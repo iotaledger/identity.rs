@@ -14,7 +14,7 @@ import {logExplorerUrl, logResolverUrl} from "./utils";
  This is an important field as it links the new DID Document to the old DID Document, creating a chain.
  Without setting this value, the new DID Document won't get used during resolution of the DID!
 
- @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+ @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function manipulateIdentity(clientConfig) {
     // Create a default client configuration from the parent config network.
@@ -54,8 +54,8 @@ async function manipulateIdentity(clientConfig) {
     const updateReceipt = await client.publishDocument(doc);
 
     // Log the results.
-    logExplorerUrl("DID Document Update Transaction:", clientConfig.network, updateReceipt.messageId);
-    logResolverUrl("Explore the DID Document:", clientConfig.network, doc.id.toString());
+    logExplorerUrl("DID Document Update Transaction:", clientConfig.explorer, updateReceipt.messageId);
+    logResolverUrl("Explore the DID Document:", clientConfig.explorer, doc.id.toString());
     return {
         key,
         newKey,

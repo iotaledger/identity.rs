@@ -5,22 +5,22 @@
  Write out the Tangle Explorer URL given the network and message ID, with the given preamble.
 
  @param {!string} preamble
- @param {Network} network
+ @param {ExplorerUrl} explorer
  @param {!string} messageId
  **/
-function logExplorerUrl(preamble, network, messageId) {
-    console.log(`${preamble} ${network.messageURL(messageId)}`);
+function logExplorerUrl(preamble, explorer, messageId) {
+    console.log(`${preamble} ${explorer.messageUrl(messageId)}`);
 }
 
 /**
  Write out the Tangle Identity Resolver URL given the network and DID, with the given preamble.
 
  @param {!string} preamble
- @param {Network} network
+ @param {ExplorerUrl} explorer
  @param {!string} did
  **/
-function logResolverUrl(preamble, network, did) {
-    console.log(`${preamble} ${network.resolverURL(did)}`);
+function logResolverUrl(preamble, explorer, did) {
+    console.log(`${preamble} ${explorer.resolverUrl(did)}`);
 }
 
 /**

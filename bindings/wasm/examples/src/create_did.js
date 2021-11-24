@@ -10,7 +10,7 @@ import { logExplorerUrl, logResolverUrl } from './utils';
     The keypair becomes part of the DID Document in order to prove a link between the DID and the published DID Document.
     That same keypair should be used to sign the original DID Document.
 
-    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+    @param {{network: Network, explorer: ExplorerUrl}} clientConfig
 **/
 async function createIdentity(clientConfig) {
     // Generate a new ed25519 public/private key pair.
@@ -33,8 +33,8 @@ async function createIdentity(clientConfig) {
     doc.messageId = receipt.messageId;
 
     // Log the results.
-    logExplorerUrl("DID Document Transaction:", clientConfig.network, receipt.messageId);
-    logResolverUrl("Explore the DID Document:", clientConfig.network, doc.id.toString());
+    logExplorerUrl("DID Document Transaction:", clientConfig.explorer, receipt.messageId);
+    logResolverUrl("Explore the DID Document:", clientConfig.explorer, doc.id.toString());
 
     // Return the results.
     return {key, doc, receipt};
