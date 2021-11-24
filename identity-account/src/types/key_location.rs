@@ -15,23 +15,17 @@ use crate::types::Generation;
 pub struct KeyLocation {
   method: MethodType,
   fragment: Fragment,
-  integration_generation: Generation,
-  diff_generation: Generation,
+  generation: Generation,
 }
 
 impl KeyLocation {
   /// Creates a new `KeyLocation`.
-  pub fn new(
-    method: MethodType,
-    fragment: String,
-    integration_generation: Generation,
-    diff_generation: Generation,
-  ) -> Self {
+  pub fn new(method: MethodType, fragment: String, generation: Generation) -> Self {
     Self {
       method,
       fragment: Fragment::new(fragment),
-      integration_generation,
-      diff_generation,
+
+      generation,
     }
   }
 
@@ -51,22 +45,16 @@ impl KeyLocation {
   }
 
   /// Returns the integration generation when this key was created.
-  pub fn integration_generation(&self) -> Generation {
-    self.integration_generation
-  }
-
-  /// Returns the diff generation when this key was created.
-  pub fn diff_generation(&self) -> Generation {
-    self.diff_generation
+  pub fn generation(&self) -> Generation {
+    self.generation
   }
 }
 
 impl Display for KeyLocation {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     f.write_fmt(format_args!(
-      "({}:{}:{}:{})",
-      self.integration_generation,
-      self.diff_generation,
+      "({}:{}:{})",
+      self.generation,
       self.fragment,
       self.method.as_u32()
     ))

@@ -58,41 +58,27 @@ pub enum Error {
   /// Caused by attempting to decrement a generation below the minimum value.
   #[error("Generation underflow")]
   GenerationUnderflow,
-  /// Caused by attempting to add a new identity when an account is at capacity.
-  #[error("Too many identities")]
-  IdentityIdOverflow,
-  /// Caused by attempting to parse an invalid identity id.
-  #[error("Invalid identity id")]
-  IdentityIdInvalid,
-  /// Caused by attempting to read a DID from an unintialized identity state.
-  #[error("Document id not found")]
-  MissingDocumentId,
   /// Caused by attempting to find an identity key vault that does not exist.
   #[error("Key vault not found")]
   KeyVaultNotFound,
-  /// Caused by attempting to find an identity key pair that does not exist.
-  #[error("Key pair not found")]
-  KeyPairNotFound,
+  /// Caused by attempting to find a key in storage that does not exist.
+  #[error("key not found")]
+  KeyNotFound,
   /// Caused by attempting to find an identity that does not exist.
   #[error("Identity not found")]
   IdentityNotFound,
-  /// Caused by attempting to find an identity event that does not exist.
-  #[error("Event not found")]
-  EventNotFound,
-  /// Caused by attempting to re-initialize an existing identity.
-  #[error("Identity already exists")]
-  IdentityAlreadyExists,
-  /// Caused by attempting to find a verification method that does not exist.
-  #[error("Verification Method not found")]
-  MethodNotFound,
-  /// Caused by attempting to find a service that does not exist.
-  #[error("Service not found")]
-  ServiceNotFound,
   /// Caused by attempting to perform an upate in an invalid context.
   #[error("Update Error: {0}")]
-  UpdateError(#[from] crate::events::UpdateError),
+  UpdateError(#[from] crate::updates::UpdateError),
+  /// Caused by providing bytes that cannot be used as a private key of the
+  /// [`KeyType`][identity_core::crypto::KeyType].
   #[error("Invalid Private Key: {0}")]
   InvalidPrivateKey(String),
+  /// Caused by attempting to create an account for an identity that is already managed by another account.
+  #[error("Identity Is In-use")]
+  IdentityInUse,
+  #[error("method missing fragment")]
+  MethodMissingFragment,
 }
 
 #[doc(hidden)]

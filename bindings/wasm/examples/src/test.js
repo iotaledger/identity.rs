@@ -10,7 +10,7 @@ import { resolveHistory } from "./resolve_history";
 import { CLIENT_CONFIG } from "./config";
 import { createIdentityPrivateTangle } from "./private_tangle";
 
-jest.setTimeout(180000); // 3 minutes to account for spurious network delays, most tests pass in a few seconds
+jest.setTimeout(300000); // 5 minutes to account for spurious network delays, most tests pass in a few seconds
 
 // Run all Node.js examples as jest tests in parallel.
 // If a function throws an exception, it will run again to make the tests more consistent (less prone to network issues). 

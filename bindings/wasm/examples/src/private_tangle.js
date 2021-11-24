@@ -39,7 +39,7 @@ async function createIdentityPrivateTangle(restURL, networkName) {
     const client = Client.fromConfig(config);
 
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
-    const receipt = await client.publishDocument(doc.toJSON());
+    const receipt = await client.publishDocument(doc);
 
     // Make sure the DID can be resolved on the private tangle
     const resolved = await client.resolve(doc.id.toString());

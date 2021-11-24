@@ -36,6 +36,10 @@ or for the `web` with
 npm run build:web
 ```
 
+## Minimum Requirements
+
+The minimum supported version for node is: `v16.0.0`
+
 ## NodeJS Usage
 <!-- 
 Test this example using https://github.com/anko/txm: `txm README.md`
@@ -67,7 +71,7 @@ const client = identity.Client.fromConfig(config)
 
 // Publish the DID Document to the IOTA Tangle
 // The message can be viewed at https://explorer.iota.org/<mainnet|devnet>/transaction/<messageId>
-client.publishDocument(doc.toJSON())
+client.publishDocument(doc)
     .then((receipt) => {
         console.log("Tangle Message Receipt: ", receipt)
         console.log("Tangle Message Url:", doc.id.network.messageURL(receipt.messageId))

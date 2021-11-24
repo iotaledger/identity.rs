@@ -7,11 +7,10 @@ use std::path::PathBuf;
 
 use identity::account::Account;
 use identity::account::AccountStorage;
-use identity::account::IdentityCreate;
-use identity::account::IdentityState;
+use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::core::Url;
-use identity::did::MethodScope;
+use identity::did::MethodRelationship;
 use identity::did::DID;
 use identity::iota::IotaDID;
 
@@ -28,16 +27,10 @@ async fn main() -> Result<()> {
   let password: String = "my-password".into();
 
   // Create a new Account with the default configuration
-  let account: Account = Account::builder()
+  let mut account: Account = Account::builder()
     .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
-    .build()
+    .create_identity(IdentitySetup::default())
     .await?;
-
-  // Create a new Identity with default settings
-  //
-  // This step generates a keypair, creates an identity and publishes it to the IOTA mainnet.
-  let identity: IdentityState = account.create_identity(IdentityCreate::default()).await?;
-  let iota_did: &IotaDID = identity.try_did()?;
 
   // ===========================================================================
   // Identity Manipulation
@@ -45,7 +38,7 @@ async fn main() -> Result<()> {
 
   // Add another Ed25519 verification method to the identity
   account
-    .update_identity(&iota_did)
+    .update_identity()
     .create_method()
     .fragment("my-next-key")
     .apply()
@@ -53,17 +46,17 @@ async fn main() -> Result<()> {
 
   // Associate the newly created method with additional verification relationships
   account
-    .update_identity(&iota_did)
-    .attach_method()
+    .update_identity()
+    .attach_method_relationship()
     .fragment("my-next-key")
-    .scope(MethodScope::CapabilityDelegation)
-    .scope(MethodScope::CapabilityInvocation)
+    .relationship(MethodRelationship::CapabilityDelegation)
+    .relationship(MethodRelationship::CapabilityInvocation)
     .apply()
     .await?;
 
   // Add a new service to the identity.
   account
-    .update_identity(&iota_did)
+    .update_identity()
     .create_service()
     .fragment("my-service-1")
     .type_("MyCustomService")
@@ -73,13 +66,17 @@ async fn main() -> Result<()> {
 
   // Remove the Ed25519 verification method
   account
-    .update_identity(&iota_did)
+    .update_identity()
     .delete_method()
     .fragment("my-next-key")
     .apply()
     .await?;
 
-  // Prints the Identity Resolver Explorer URL, the entire history can be observed on this page by "Loading History".
+  // Retrieve the DID from the newly created identity.
+  let iota_did: &IotaDID = account.did();
+
+  // Prints the Identity Resolver Explorer URL.
+  // The entire history can be observed on this page by clicking "Loading History".
   println!(
     "[Example] Explore the DID Document = {}",
     iota_did.network()?.resolver_url(iota_did.as_str())?
