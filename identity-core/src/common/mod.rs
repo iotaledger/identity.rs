@@ -9,7 +9,6 @@ mod fragment;
 mod object;
 mod one_or_many;
 mod timestamp;
-mod unix_timestamp;
 mod url;
 
 pub use self::bitset::BitSet;
@@ -20,6 +19,5 @@ pub use self::object::Value;
 pub use self::one_or_many::OneOrMany;
 pub use self::timestamp::TimeStampParsingError; /* needs its own line see: https://github.com/rust-lang/rust/issues/64762 */
 pub use self::timestamp::Timestamp;
-pub use self::unix_timestamp::UnixTimestamp;
 pub use self::url::Url;
 pub use self::url::UrlParsingError;

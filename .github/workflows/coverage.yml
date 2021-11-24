@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - dev
+      - epic/*
     paths:
       - '.github/workflows/coverage.yml'
       - '.github/workflows/scripts/coverage.sh'

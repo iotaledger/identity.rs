@@ -15,6 +15,7 @@ use identity_core::crypto::merkle_key::MerkleDigest;
 use identity_core::crypto::KeyCollection;
 use identity_core::crypto::KeyPair;
 use identity_core::crypto::KeyType;
+use identity_core::crypto::PublicKey;
 use identity_did::did::CoreDID;
 use identity_did::did::CoreDIDUrl;
 use identity_did::did::DID;
@@ -65,7 +66,7 @@ impl IotaVerificationMethod {
     let key: &[u8] = keypair.public().as_ref();
     let did: IotaDID = IotaDID::new(key)?;
 
-    Self::from_did(did, keypair, fragment)
+    Self::from_did(did, keypair.type_(), keypair.public(), fragment)
   }
 
   /// Creates a new [`IotaVerificationMethod`] from the given `keypair` on the specified
@@ -74,11 +75,11 @@ impl IotaVerificationMethod {
     let key: &[u8] = keypair.public().as_ref();
     let did: IotaDID = IotaDID::new_with_network(key, network)?;
 
-    Self::from_did(did, keypair, fragment)
+    Self::from_did(did, keypair.type_(), keypair.public(), fragment)
   }
 
   /// Creates a new [`IotaVerificationMethod`] from the given `did` and `keypair`.
-  pub fn from_did(did: IotaDID, keypair: &KeyPair, fragment: &str) -> Result<Self> {
+  pub fn from_did(did: IotaDID, key_type: KeyType, public_key: &PublicKey, fragment: &str) -> Result<Self> {
     let tag: String = format!("#{}", fragment);
     let key: IotaDIDUrl = did.to_url().join(tag)?;
 
@@ -86,10 +87,10 @@ impl IotaVerificationMethod {
       .id(CoreDIDUrl::from(key))
       .controller(did.into());
 
-    match keypair.type_() {
+    match key_type {
       KeyType::Ed25519 => {
         builder = builder.key_type(MethodType::Ed25519VerificationKey2018);
-        builder = builder.key_data(MethodData::new_multibase(keypair.public()));
+        builder = builder.key_data(MethodData::new_multibase(public_key));
       }
     }
 

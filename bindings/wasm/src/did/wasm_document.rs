@@ -39,6 +39,13 @@ use crate::service::Service;
 #[derive(Clone, Debug, PartialEq)]
 pub struct WasmDocument(pub(crate) IotaDocument);
 
+// Workaround for Typescript type annotations on async function returns.
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<Document>")]
+  pub type PromiseDocument;
+}
+
 #[wasm_bindgen(js_class = Document)]
 impl WasmDocument {
   /// Creates a new DID Document from the given `KeyPair`, network, and verification method
