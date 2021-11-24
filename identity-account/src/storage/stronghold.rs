@@ -45,7 +45,7 @@ pub struct Stronghold {
 }
 
 impl Stronghold {
-  pub async fn new<'a, T, U>(snapshot: &T, password: U, dropsave: bool) -> Result<Self>
+  pub async fn new<'a, T, U>(snapshot: &T, password: U, dropsave: Option<bool>) -> Result<Self>
   where
     T: AsRef<Path> + ?Sized,
     U: Into<Option<&'a str>>,
@@ -59,7 +59,7 @@ impl Stronghold {
     Ok(Self {
       did_leases: Mutex::new(HashMap::new()),
       snapshot: Arc::new(snapshot),
-      dropsave,
+      dropsave: dropsave.unwrap_or(false),
     })
   }
 

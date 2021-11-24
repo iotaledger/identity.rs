@@ -33,7 +33,7 @@ use super::config::AutoSave;
 pub enum AccountStorage {
   Memory,
   #[cfg(feature = "stronghold")]
-  Stronghold(PathBuf, Option<String>),
+  Stronghold(PathBuf, Option<String>, Option<bool>),
   Custom(Arc<dyn Storage>),
 }
 
@@ -112,9 +112,9 @@ impl AccountBuilder {
         self.storage = Some(storage);
       }
       #[cfg(feature = "stronghold")]
-      Some(AccountStorage::Stronghold(snapshot, password)) => {
+      Some(AccountStorage::Stronghold(snapshot, password, dropsave)) => {
         let passref: Option<&str> = password.as_deref();
-        let adapter: Stronghold = Stronghold::new(&snapshot, passref).await?;
+        let adapter: Stronghold = Stronghold::new(&snapshot, passref, dropsave).await?;
 
         if let Some(mut password) = password {
           password.zeroize();

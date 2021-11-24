@@ -21,13 +21,18 @@ async fn main() -> Result<()> {
   // It implements best practices for security and is the recommended way of handling private keys.
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
+  let dropsave: bool = false;
 
   // Create a new identity using Stronghold as local storage.
   //
   // The creation step generates a keypair, builds an identity
   // and publishes it to the IOTA mainnet.
   let account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
+    .storage(AccountStorage::Stronghold(
+      stronghold_path,
+      Some(password),
+      Some(dropsave),
+    ))
     .create_identity(IdentitySetup::default())
     .await?;
 

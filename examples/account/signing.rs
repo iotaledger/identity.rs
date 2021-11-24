@@ -30,10 +30,15 @@ async fn main() -> Result<()> {
   // Stronghold settings
   let stronghold_path: PathBuf = "./example-strong.hodl".into();
   let password: String = "my-password".into();
+  let dropsave: bool = false;
 
   // Create a new Account with stronghold storage.
   let mut account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
+    .storage(AccountStorage::Stronghold(
+      stronghold_path,
+      Some(password),
+      Some(dropsave),
+    ))
     .create_identity(IdentitySetup::default())
     .await?;
 
