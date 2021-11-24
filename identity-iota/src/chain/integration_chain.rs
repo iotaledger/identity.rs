@@ -14,13 +14,13 @@ use crate::did::IotaDID;
 use crate::did::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::Client;
 use crate::tangle::Message;
 use crate::tangle::MessageExt;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
 use crate::tangle::MessageIndex;
 use crate::tangle::TangleRef;
-use iota_client::Client as IotaClient;
 
 /// Primary chain of full [`IotaDocuments`](IotaDocument) holding the latest document and its
 /// history.
@@ -35,7 +35,7 @@ pub struct IntegrationChain {
 
 impl IntegrationChain {
   /// Constructs a new [`IntegrationChain`] from a slice of [`Message`]s.
-  pub async fn try_from_messages(client: &IotaClient, did: &IotaDID, messages: &[Message]) -> Result<Self> {
+  pub async fn try_from_messages(did: &IotaDID, messages: &[Message], client: &Client) -> Result<Self> {
     let index: MessageIndex<IotaDocument> = messages
       .iter()
       .flat_map(|message| message.try_extract_document(did))
@@ -43,11 +43,11 @@ impl IntegrationChain {
 
     debug!("[Int] Valid Messages = {}/{}", messages.len(), index.len());
 
-    Self::try_from_index(client, index).await
+    Self::try_from_index(index, client).await
   }
 
   /// Constructs a new [`IntegrationChain`] from the given [`MessageIndex`].
-  pub async fn try_from_index(client: &IotaClient, mut index: MessageIndex<IotaDocument>) -> Result<Self> {
+  pub async fn try_from_index(mut index: MessageIndex<IotaDocument>, client: &Client) -> Result<Self> {
     trace!("[Int] Message Index = {:#?}", index);
 
     // Extract root document.
@@ -61,7 +61,7 @@ impl IntegrationChain {
         .filter(|doc| IotaDocument::verify_root_document(doc).is_ok())
         .collect();
 
-      let sorted_root_documents: Vec<IotaDocument> = sort_by_milestone(client, valid_root_documents).await?;
+      let sorted_root_documents: Vec<IotaDocument> = sort_by_milestone(valid_root_documents, client).await?;
       sorted_root_documents.into_iter().next().ok_or(Error::ChainError {
         error: "no valid root documents",
       })?
@@ -73,11 +73,11 @@ impl IntegrationChain {
       // Extract valid documents.
       let valid_documents: Vec<IotaDocument> = documents
         .into_iter()
-        .filter(|document| this.check_valid_addition(&document).is_ok())
+        .filter(|document| this.check_valid_addition(document).is_ok())
         .collect();
 
       // Sort and push the one referenced by the oldest milestone.
-      if let Some(next) = sort_by_milestone(client, valid_documents).await?.into_iter().next() {
+      if let Some(next) = sort_by_milestone(valid_documents, client).await?.into_iter().next() {
         this.push_unchecked(next); // checked above
       }
       // If no document is appended, the chain ends.
