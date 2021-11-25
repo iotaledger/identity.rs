@@ -11,11 +11,11 @@
 
 use identity::iota::ClientBuilder;
 use identity::iota::DIDMessageEncoding;
+use identity::iota::Error;
 use identity::iota::IotaDID;
 use identity::iota::Network;
 use identity::iota::Receipt;
 use identity::iota::TangleRef;
-use identity::iota::Error; 
 use identity::prelude::*;
 
 #[tokio::main]

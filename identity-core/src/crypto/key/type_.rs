@@ -4,10 +4,10 @@
 use core::str::FromStr;
 
 use super::key::KeyError;
-use crate::crypto::Ed25519;
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleKey;
 use crate::crypto::merkle_tree::Hash;
+use crate::crypto::Ed25519;
 
 /// Supported cryptographic key types.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]

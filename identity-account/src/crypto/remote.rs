@@ -10,7 +10,7 @@ use identity_core::crypto::Named;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::SignatureValue;
-use identity_core::crypto::SigningError; 
+use identity_core::crypto::SigningError;
 use identity_core::utils::encode_b58;
 use identity_iota::did::IotaDID;
 
@@ -24,7 +24,11 @@ impl Named for RemoteEd25519 {
 }
 
 impl RemoteEd25519 {
-  pub async fn create_signature<U>(data: &mut U, method: impl Into<String>, secret: &RemoteKey<'_>) -> Result<(),SigningError>
+  pub async fn create_signature<U>(
+    data: &mut U,
+    method: impl Into<String>,
+    secret: &RemoteKey<'_>,
+  ) -> Result<(), SigningError>
   where
     U: Serialize + SetSignature,
   {
@@ -42,7 +46,7 @@ impl RemoteEd25519 {
   where
     X: Serialize,
   {
-    let message: Vec<u8> = data.to_jcs().map_err(|err|(err,"failed to serialize input data"))?;
+    let message: Vec<u8> = data.to_jcs().map_err(|err| (err, "failed to serialize input data"))?;
     let signature: Vec<u8> = RemoteSign::sign(&message, remote_key).await?;
     let signature: String = encode_b58(&signature);
     Ok(SignatureValue::Signature(signature))

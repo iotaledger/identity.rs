@@ -10,9 +10,9 @@ use crate::crypto::KeyRef;
 use crate::crypto::KeyType;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
+use crate::error::Result;
 use crate::utils;
 use crate::utils::Ed25519KeyPairGenerationError;
-use crate::error::Result;
 
 /// A convenient type for representing a pair of cryptographic keys.
 #[derive(Clone, Debug)]
@@ -39,9 +39,12 @@ impl KeyPair {
 
   /// Reconstructs the [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`] from a private key.
   pub fn try_from_ed25519_bytes(private_key_bytes: &[u8]) -> Result<Self, Ed25519KeyPairGenerationError> {
-    let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] = private_key_bytes
-      .try_into()
-      .map_err(|_| Ed25519KeyPairGenerationError{inner: crypto::Error::PrivateKeyError})?;
+    let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] =
+      private_key_bytes
+        .try_into()
+        .map_err(|_| Ed25519KeyPairGenerationError {
+          inner: crypto::Error::PrivateKeyError,
+        })?;
 
     let private_key = ed25519::SecretKey::from_bytes(private_key_bytes);
 

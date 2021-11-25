@@ -489,7 +489,7 @@ impl IotaDocument {
     // Sign document.
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref()).map_err(|_|Error::CoreError)?;
+        JcsEd25519::<Ed25519>::create_signature(self, method_id, private_key.as_ref()).map_err(|_| Error::CoreError)?;
       }
       MethodType::MerkleKeyCollection2021 => {
         // Merkle Key Collections cannot be used to sign documents.
@@ -518,7 +518,7 @@ impl IotaDocument {
   /// - The signature verification operation fails.
   pub fn verify_document(signed: &IotaDocument, signer: &IotaDocument) -> Result<()> {
     // Ensure signing key has a capability invocation verification relationship.
-    let signature: &Signature = signed.try_signature().map_err(|_|Error::CoreError)?;
+    let signature: &Signature = signed.try_signature().map_err(|_| Error::CoreError)?;
     let method: &VerificationMethod<_> = signer
       .as_document()
       .try_resolve_method_with_scope(signature, MethodScope::capability_invocation())?;
@@ -527,7 +527,7 @@ impl IotaDocument {
     let public: PublicKey = method.key_data().try_decode()?.into();
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::verify_signature(signed, public.as_ref()).map_err(|_|Error::CoreError)?;
+        JcsEd25519::<Ed25519>::verify_signature(signed, public.as_ref()).map_err(|_| Error::CoreError)?;
       }
       MethodType::MerkleKeyCollection2021 => {
         // Merkle Key Collections cannot be used to sign documents.
@@ -559,7 +559,7 @@ impl IotaDocument {
     }
 
     // Validate the hash of the public key matches the DID tag.
-    let signature: &Signature = document.try_signature().map_err(|_|Error::CoreError)?;
+    let signature: &Signature = document.try_signature().map_err(|_| Error::CoreError)?;
     let method: &VerificationMethod<_> = document.as_document().try_resolve_method(signature)?;
     let public: PublicKey = method.key_data().try_decode()?.into();
     if document.id().tag() != IotaDID::encode_key(public.as_ref()) {

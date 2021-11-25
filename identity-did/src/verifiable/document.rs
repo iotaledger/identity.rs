@@ -168,7 +168,8 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::create_signature(that, method_uri, self.private.as_ref()).map_err(|_|Error::CoreError)?;
+        JcsEd25519::<Ed25519>::create_signature(that, method_uri, self.private.as_ref())
+          .map_err(|_| Error::CoreError)?;
       }
       MethodType::MerkleKeyCollection2021 => {
         let data: Vec<u8> = method.key_data().try_decode()?;
@@ -199,13 +200,11 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
   {
     match self.merkle_key {
       Some((public, proof)) => {
-        let proof: &Proof<D> = proof
-          .downcast_ref()
-          .ok_or(Error::CoreError)?; //Invalid key format
+        let proof: &Proof<D> = proof.downcast_ref().ok_or(Error::CoreError)?; //Invalid key format
 
         let skey: SigningKey<'_, D> = SigningKey::from_borrowed(public, self.private, proof);
 
-        MerkleSigner::<D, S>::create_signature(that, method, &skey).map_err(|_|Error::CoreError)?;
+        MerkleSigner::<D, S>::create_signature(that, method, &skey).map_err(|_| Error::CoreError)?;
 
         Ok(())
       }
@@ -242,7 +241,7 @@ where
   where
     X: Serialize + TrySignature,
   {
-    let signature: &Signature = that.try_signature().map_err(|_|Error::CoreError)?;
+    let signature: &Signature = that.try_signature().map_err(|_| Error::CoreError)?;
     let method: &VerificationMethod<U> = self.document.try_resolve_method(signature)?;
 
     Self::do_verify(method, that)
@@ -259,7 +258,7 @@ where
   where
     X: Serialize + TrySignature,
   {
-    let signature: &Signature = that.try_signature().map_err(|_|Error::CoreError)?;
+    let signature: &Signature = that.try_signature().map_err(|_| Error::CoreError)?;
     let method: &VerificationMethod<U> = self.document.try_resolve_method_with_scope(signature, scope)?;
 
     Self::do_verify(method, that)
@@ -279,9 +278,9 @@ where
 
     match method.key_type() {
       MethodType::Ed25519VerificationKey2018 => {
-        JcsEd25519::<Ed25519>::verify_signature(that, &data).map_err(|_|Error::CoreError)?;
+        JcsEd25519::<Ed25519>::verify_signature(that, &data).map_err(|_| Error::CoreError)?;
       }
-      MethodType::MerkleKeyCollection2021 => match MerkleKey::extract_tags(&data).map_err(|_|Error::CoreError)? {
+      MethodType::MerkleKeyCollection2021 => match MerkleKey::extract_tags(&data).map_err(|_| Error::CoreError)? {
         (MerkleSignatureTag::ED25519, MerkleDigestTag::SHA256) => {
           merkle_key_verify::<X, Sha256, Ed25519, U>(that, method, &data)?;
         }
@@ -312,7 +311,7 @@ where
     vkey.set_revocation(revocation);
   }
 
-  MerkleVerifier::<D, S>::verify_signature(that, &vkey).map_err(|_|Error::CoreError)?;
+  MerkleVerifier::<D, S>::verify_signature(that, &vkey).map_err(|_| Error::CoreError)?;
 
   Ok(())
 }

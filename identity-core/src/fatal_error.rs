@@ -7,7 +7,7 @@ use std::fmt::Display;
 #[derive(Debug)]
 /// Error indicating that a fundamental assumption or invariant has been broken.  
 pub struct FatalError {
-  source: Option<Box<dyn std::error::Error + 'static +  Send + Sync>>,
+  source: Option<Box<dyn std::error::Error + 'static + Send + Sync>>,
   description: String,
 }
 

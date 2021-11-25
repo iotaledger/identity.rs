@@ -7,8 +7,8 @@ use std::path::PathBuf;
 
 use identity::account::Account;
 use identity::account::AccountStorage;
-use identity::account::IdentitySetup;
 use identity::account::Error;
+use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::core::json;
 use identity::core::FromJson;

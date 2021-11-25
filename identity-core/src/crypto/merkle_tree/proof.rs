@@ -21,9 +21,9 @@ pub struct Proof<D: DigestExt> {
 
 impl<D: DigestExt> Proof<D> {
   /// Maximum number of nodes in the proof.
-  /// This value is equal to log₂[`crate::crypto::KeyCollection::MAX_NODES`], respecting the constraint for the maximum number of keys allowed in a
-  /// `KeyCollection`
-  pub const MAX_NODES: usize = 12; 
+  /// This value is equal to log₂[`crate::crypto::KeyCollection::MAX_NODES`], respecting the constraint for the maximum
+  /// number of keys allowed in a `KeyCollection`
+  pub const MAX_NODES: usize = 12;
   /// Creates a new [`Proof`] from a boxed slice of nodes.
   pub fn new(nodes: Box<[Node<D>]>) -> Result<Self> {
     if nodes.len() > Self::MAX_NODES {

@@ -14,8 +14,8 @@ use identity_did::did::DID;
 use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDocument;
-use crate::error::Result;
 use crate::error::Error;
+use crate::error::Result;
 use crate::tangle::message::compression_brotli;
 use crate::tangle::DIDMessageEncoding;
 use crate::tangle::DIDMessageVersion;
@@ -82,8 +82,10 @@ fn parse_data<T: FromJson + TangleRef>(message_id: MessageId, data: &[u8]) -> Op
 pub(crate) fn pack_did_message<T: ToJson>(data: &T, encoding: DIDMessageEncoding) -> Result<Vec<u8>> {
   // Encode data.
   let encoded_message_data: Vec<u8> = match encoding {
-    DIDMessageEncoding::Json => data.to_json_vec().map_err(|_|Error::CoreError)?,
-    DIDMessageEncoding::JsonBrotli => compression_brotli::compress_brotli(&data.to_json().map_err(|_|Error::CoreError)?)?,
+    DIDMessageEncoding::Json => data.to_json_vec().map_err(|_| Error::CoreError)?,
+    DIDMessageEncoding::JsonBrotli => {
+      compression_brotli::compress_brotli(&data.to_json().map_err(|_| Error::CoreError)?)?
+    }
   };
 
   // Prepend flags.

@@ -10,14 +10,14 @@ use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleKey;
 use crate::crypto::merkle_key::MerkleSignature;
 use crate::crypto::merkle_tree::Proof;
+use crate::crypto::signature::errors::SigningError;
+use crate::crypto::signature::errors::SigningErrorCause;
 use crate::crypto::Named;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
 use crate::crypto::Sign;
 use crate::crypto::SignatureValue;
 use crate::crypto::Signer;
-use crate::crypto::signature::errors::SigningError;
-use crate::crypto::signature::errors::SigningErrorCause;
 use crate::utils;
 
 /// Key components used to create a Merkle Key Collection signature.
@@ -123,14 +123,17 @@ where
   S::Output: AsRef<[u8]>,
 {
   type SignError = SigningError;
-  type SignatureCreationError = SigningError; 
+  type SignatureCreationError = SigningError;
 
   fn sign<X>(data: &X, private: &K) -> Result<SignatureValue, SigningError>
   where
     X: Serialize,
   {
-    let message: Vec<u8> = data.to_jcs().map_err(|_|SigningErrorCause::Input("failed to serialize the input data"))?;
-    let signature: S::Output = S::sign(&message, private.private()).map_err(|_| SigningErrorCause::Other("the `sign` operation failed internally"))?;
+    let message: Vec<u8> = data
+      .to_jcs()
+      .map_err(|_| SigningErrorCause::Input("failed to serialize the input data"))?;
+    let signature: S::Output = S::sign(&message, private.private())
+      .map_err(|_| SigningErrorCause::Other("the `sign` operation failed internally"))?;
     let signature: String = utils::encode_b58(signature.as_ref());
     let formatted: String = format!("{}.{}.{}", private.public(), private.proof(), signature);
 

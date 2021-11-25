@@ -3,12 +3,12 @@
 
 use serde::Serialize;
 
+use crate::crypto::signature::errors::InvalidProofValue;
+use crate::crypto::signature::errors::MissingSignatureError;
 use crate::crypto::SetSignature;
 use crate::crypto::Signature;
 use crate::crypto::SignatureValue;
 use crate::crypto::TrySignature;
-use crate::crypto::signature::errors::InvalidProofValue;
-use crate::crypto::signature::errors::MissingSignatureError;
 
 /// A common interface for digital signature creation.
 pub trait Sign {
@@ -18,8 +18,8 @@ pub trait Sign {
   /// The output type of this signature implementation.
   type Output;
 
-  /// Error describing how `sign` may fail 
-  type Error: std::error::Error; 
+  /// Error describing how `sign` may fail
+  type Error: std::error::Error;
 
   /// Signs the given `message` with `key` and returns a digital signature.
   fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output, Self::Error>;
@@ -33,8 +33,8 @@ pub trait Verify {
   /// The public key type of this signature implementation.
   type Public: ?Sized;
 
-  /// Error describing how `verify` may fail 
-  type Error: std::error::Error + TryInto<InvalidProofValue>; 
+  /// Error describing how `verify` may fail
+  type Error: std::error::Error + TryInto<InvalidProofValue>;
 
   /// Verifies the authenticity of `data` and `signature` with `key`.
   fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<(), Self::Error>;
@@ -54,19 +54,23 @@ pub trait Named {
 
 /// A common interface for digital signature creation.
 pub trait Signer<Secret: ?Sized>: Named {
-  /// Error describing how `sign` may fail. 
-  type SignError: std::error::Error;  
+  /// Error describing how `sign` may fail.
+  type SignError: std::error::Error;
 
-  /// Error describing how `create_signature` may fail 
-  type SignatureCreationError: From<Self::SignError> + From<MissingSignatureError> + std::error::Error; 
+  /// Error describing how `create_signature` may fail
+  type SignatureCreationError: From<Self::SignError> + From<MissingSignatureError> + std::error::Error;
 
-   /// Signs the given `data` and returns a digital signature.
+  /// Signs the given `data` and returns a digital signature.
   fn sign<T>(data: &T, secret: &Secret) -> Result<SignatureValue, Self::SignError>
   where
     T: Serialize;
 
   /// Creates and applies a [signature][`Signature`] to the given `data`.
-  fn create_signature<T>(data: &mut T, method: impl Into<String>, secret: &Secret) -> Result<(), Self::SignatureCreationError>
+  fn create_signature<T>(
+    data: &mut T,
+    method: impl Into<String>,
+    secret: &Secret,
+  ) -> Result<(), Self::SignatureCreationError>
   where
     T: Serialize + SetSignature,
   {
@@ -86,12 +90,14 @@ pub trait Signer<Secret: ?Sized>: Named {
 
 /// A common interface for digital signature verification
 pub trait Verifier<Public: ?Sized>: Named {
-  /// Error describing how `verify` can fail 
-  type AuthenticityError: std::error::Error + TryInto<InvalidProofValue>; 
+  /// Error describing how `verify` can fail
+  type AuthenticityError: std::error::Error + TryInto<InvalidProofValue>;
 
-  /// Error describing how `verify_signature` can fail 
-  type SignatureVerificationError: std::error::Error + From<MissingSignatureError> + From<Self::AuthenticityError> + From<InvalidProofValue>;  
-
+  /// Error describing how `verify_signature` can fail
+  type SignatureVerificationError: std::error::Error
+    + From<MissingSignatureError>
+    + From<Self::AuthenticityError>
+    + From<InvalidProofValue>;
 
   /// Verifies the authenticity of `data` and `signature`.
   fn verify<T>(data: &T, signature: &SignatureValue, public: &Public) -> Result<(), Self::AuthenticityError>

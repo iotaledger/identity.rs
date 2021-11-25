@@ -176,7 +176,7 @@ impl Storage for Stronghold {
       return Ok(None);
     }
 
-    Ok(Some(ChainState::from_json_slice(&data).map_err(|_|Error::CoreError)?))
+    Ok(Some(ChainState::from_json_slice(&data).map_err(|_| Error::CoreError)?))
   }
 
   async fn set_chain_state(&self, did: &IotaDID, chain_state: &ChainState) -> Result<()> {
@@ -203,7 +203,9 @@ impl Storage for Stronghold {
     }
 
     // Deserialize and return
-    Ok(Some(IdentityState::from_json_slice(&data).map_err(|_|Error::CoreError)?))
+    Ok(Some(
+      IdentityState::from_json_slice(&data).map_err(|_| Error::CoreError)?,
+    ))
   }
 
   async fn set_state(&self, did: &IotaDID, state: &IdentityState) -> Result<()> {
@@ -211,7 +213,7 @@ impl Storage for Stronghold {
     let store: Store<'_> = self.store(&fmt_did(did));
 
     // Serialize the state
-    let json: Vec<u8> = state.to_json_vec().map_err(|_|Error::CoreError)?;
+    let json: Vec<u8> = state.to_json_vec().map_err(|_| Error::CoreError)?;
 
     // Write the state to the stronghold snapshot
     store.set(location_state(), json, None).await?;

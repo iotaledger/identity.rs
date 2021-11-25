@@ -7,7 +7,6 @@ use identity_did::verification::VerificationMethod;
 
 use crate::did::IotaDocument;
 
-
 // Method types allowed to sign a DID document update.
 pub const UPDATE_METHOD_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
 
@@ -61,8 +60,8 @@ impl PublishType {
 
 #[cfg(test)]
 mod test {
-  use crate::Result;
   use crate::Error;
+  use crate::Result;
   use identity_core::crypto::merkle_key::Sha256;
   use identity_core::crypto::KeyCollection;
   use identity_core::crypto::KeyPair;
@@ -107,7 +106,7 @@ mod test {
 
     let mut new_doc = old_doc.clone();
 
-    let keypair: KeyPair = KeyPair::new_ed25519().map_err(|_|Error::CoreError)?;
+    let keypair: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::CoreError)?;
     let method2: IotaVerificationMethod =
       IotaVerificationMethod::from_did(old_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-2")?;
 
@@ -127,7 +126,7 @@ mod test {
 
     let mut new_doc = old_doc.clone();
 
-    let keypair: KeyPair = KeyPair::new_ed25519().map_err(|_|Error::CoreError)?;
+    let keypair: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::CoreError)?;
     let verif_method2: IotaVerificationMethod =
       IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "embedded")?;
 
@@ -150,7 +149,7 @@ mod test {
 
     let mut new_doc = old_doc.clone();
 
-    let keypair: KeyPair = KeyPair::new_ed25519().map_err(|_|Error::CoreError)?;
+    let keypair: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::CoreError)?;
     let method_updated: IotaVerificationMethod =
       IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "generic")?;
 
@@ -175,7 +174,7 @@ mod test {
 
     let mut new_doc = old_doc.clone();
 
-    let keypair: KeyPair = KeyPair::new_ed25519().map_err(|_|Error::CoreError)?;
+    let keypair: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::CoreError)?;
     let verif_method2: IotaVerificationMethod =
       IotaVerificationMethod::from_did(new_doc.did().to_owned(), keypair.type_(), keypair.public(), "test-2")?;
 
@@ -212,7 +211,7 @@ mod test {
 
     let mut new_doc = old_doc.clone();
 
-    let collection = KeyCollection::new_ed25519(8).map_err(|_|Error::CoreError)?;
+    let collection = KeyCollection::new_ed25519(8).map_err(|_| Error::CoreError)?;
     let method: IotaVerificationMethod =
       IotaVerificationMethod::create_merkle_key::<Sha256>(new_doc.did().to_owned(), &collection, "merkle")?;
 
@@ -227,7 +226,7 @@ mod test {
   fn test_publish_type_update_method_with_non_update_method_type2() -> Result<()> {
     let mut old_doc = document();
 
-    let collection = KeyCollection::new_ed25519(8).map_err(|_|Error::CoreError)?;
+    let collection = KeyCollection::new_ed25519(8).map_err(|_| Error::CoreError)?;
     let method: IotaVerificationMethod =
       IotaVerificationMethod::create_merkle_key::<Sha256>(old_doc.did().to_owned(), &collection, "merkle")?;
 
@@ -236,7 +235,7 @@ mod test {
     let mut new_doc = old_doc.clone();
 
     // Replace the key collection.
-    let new_collection = KeyCollection::new_ed25519(8).map_err(|_|Error::CoreError)?;
+    let new_collection = KeyCollection::new_ed25519(8).map_err(|_| Error::CoreError)?;
 
     let method_new: IotaVerificationMethod =
       IotaVerificationMethod::create_merkle_key::<Sha256>(new_doc.did().to_owned(), &new_collection, "merkle")?;

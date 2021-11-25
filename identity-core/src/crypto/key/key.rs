@@ -17,9 +17,9 @@ pub type PrivateKey = Key<Private>;
 // =============================================================================
 // =============================================================================
 #[derive(Debug, thiserror::Error)]
-/// A key related error 
+/// A key related error
 #[error("{0}")]
-pub struct KeyError(pub &'static str); 
+pub struct KeyError(pub &'static str);
 
 mod private {
   pub trait Sealed {}
