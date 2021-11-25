@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
   // The creation step generates a keypair, builds an identity
   // and publishes it to the IOTA mainnet.
   let account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
+    .storage(AccountStorage::Stronghold(stronghold_path, Some(password), None))
     .create_identity(IdentitySetup::default())
     .await?;
 
