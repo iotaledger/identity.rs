@@ -8,6 +8,9 @@ use crate::crypto::PublicKey;
 use crate::error::Result;
 
 /// Generates a new pair of public/private ed25519 keys.
+///
+/// Note that the ed25519 private keys used in this crate comply with the definition given in [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+/// Other implementations often have another format for ed25519 private keys. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanations.
 pub fn generate_ed25519_keypair() -> Result<(PublicKey, PrivateKey)> {
   let secret: ed25519::SecretKey = ed25519::SecretKey::generate()?;
   let public: ed25519::PublicKey = secret.public_key();
@@ -18,8 +21,8 @@ pub fn generate_ed25519_keypair() -> Result<(PublicKey, PrivateKey)> {
   Ok((public, private))
 }
 
-/// Reconstructs the ed25519 public key given the private key.
-pub fn keypair_from_ed25519_private_key(private_key: ed25519::SecretKey) -> (PublicKey, PrivateKey) {
+// Reconstructs a pair of public/private ed25519 keys from an ed25519::SecretKey.
+pub(crate) fn keypair_from_ed25519_private_key(private_key: ed25519::SecretKey) -> (PublicKey, PrivateKey) {
   let public: ed25519::PublicKey = private_key.public_key();
 
   let private: PrivateKey = private_key.to_bytes().to_vec().into();
@@ -29,6 +32,9 @@ pub fn keypair_from_ed25519_private_key(private_key: ed25519::SecretKey) -> (Pub
 }
 
 /// Generates a list of public/private ed25519 keys.
+///
+/// Note that the ed25519 private keys used in this crate comply with the definition given in [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+/// Other implementations often have another format for ed25519 private keys. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanations.
 pub fn generate_ed25519_keypairs(count: usize) -> Result<Vec<(PublicKey, PrivateKey)>> {
   (0..count).map(|_| generate_ed25519_keypair()).collect()
 }

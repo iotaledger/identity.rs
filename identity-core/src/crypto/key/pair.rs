@@ -38,6 +38,10 @@ impl KeyPair {
   }
 
   /// Reconstructs the [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`] from a private key.
+  ///
+  /// The private key must be exactly 32 bytes. Other implementations have different conventions for private keys, but
+  /// we follow RFC 8032. What we and the aforementioned RFC call a private key, is called a *secret key* in the paper [High-speed high-security signatures](http://ed25519.cr.yp.to/ed25519-20110926.pdf).
+  /// The following [blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) renames the aforementioned private key/secret key to be called a *seed*.
   pub fn try_from_ed25519_bytes(private_key_bytes: &[u8]) -> Result<Self, crypto::Error> {
     let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] = private_key_bytes
       .try_into()
