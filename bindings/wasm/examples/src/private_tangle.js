@@ -9,7 +9,7 @@ import {Client, Config, Document, KeyPair, KeyType, Network, DIDMessageEncoding}
     Refer to https://github.com/iotaledger/one-click-tangle/tree/chrysalis/hornet-private-net
     for setup instructions.
 **/
-async function createIdentityPrivateTangle(restURL, networkName) {
+async function privateTangle(restURL, networkName) {
     // This name needs to match the id of the network or part of it.
     // Since the id of the one-click private tangle is `private-tangle`
     // but we can only use 6 characters, we use just `tangle`.
@@ -51,4 +51,4 @@ async function createIdentityPrivateTangle(restURL, networkName) {
     return { key, resolved, receipt };
 }
 
-export {createIdentityPrivateTangle};
+export {privateTangle};
