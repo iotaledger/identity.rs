@@ -31,10 +31,9 @@ pub(crate) fn keypair_from_ed25519_private_key(private_key: ed25519::SecretKey) 
   (public, private)
 }
 
-/// Generates a list of public/private ed25519 keys.
+/// Generates a list of public/private Ed25519 keys.
 ///
-/// Note that the ed25519 private keys used in this crate comply with the definition given in [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
-/// Other implementations often have another format for ed25519 private keys. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanations.
+/// See [`generate_ed25519_keypair`].
 pub fn generate_ed25519_keypairs(count: usize) -> Result<Vec<(PublicKey, PrivateKey)>> {
   (0..count).map(|_| generate_ed25519_keypair()).collect()
 }
