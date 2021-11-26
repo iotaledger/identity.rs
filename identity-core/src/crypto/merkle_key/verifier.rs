@@ -161,7 +161,7 @@ where
     .merkle_key
     .get(2..)
     .and_then(Hash::from_slice)
-    .ok_or(VerificationProcessingError::from("invalid key format"))
+    .ok_or_else(|| VerificationProcessingError::from("invalid key format"))
 }
 
 fn expand_signature_value(
@@ -173,7 +173,7 @@ fn expand_signature_value(
   // Split the signature data into `public-key/proof/signature`
   let public: &str = parts
     .next()
-    .ok_or(VerificationProcessingError::from("invalid proof format"))?;
+    .ok_or_else(|| VerificationProcessingError::from("invalid proof format"))?;
   let proof: &str = parts.next().ok_or(errors::InvalidProofFormat)?;
   let signature: &str = parts.next().ok_or(errors::InvalidProofFormat)?;
 
