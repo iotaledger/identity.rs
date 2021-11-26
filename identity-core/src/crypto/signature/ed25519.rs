@@ -81,7 +81,7 @@ mod tests {
   use crate::crypto::Sign;
   use crate::crypto::Verify;
 
-  /// The following test vector is taken from [Test 3 of RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-7)
+  // The following test vector is taken from [Test 3 of RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-7)
   const PUBLIC_KEY_HEX: &str = "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";
   const SECRET_KEY_HEX: &str = "c5aa8df43f9f837bedb7442f31dcb7b166d38535076f094b85ce3a2e0b4458f7";
   const MESSAGE_HEX: &str = "af82";
