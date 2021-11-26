@@ -26,7 +26,7 @@ where
   /// Computes an EdDSA/Ed25519 signature.
   ///
   ///  The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
-/// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
+  /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
   fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output> {
     parse_secret(key.as_ref()).map(|key| key.sign(message).to_bytes())
   }
