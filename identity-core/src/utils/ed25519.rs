@@ -38,3 +38,18 @@ pub(crate) fn keypair_from_ed25519_private_key(private_key: ed25519::SecretKey) 
 pub fn generate_ed25519_keypairs(count: usize) -> Result<Vec<(PublicKey, PrivateKey)>> {
   (0..count).map(|_| generate_ed25519_keypair()).collect()
 }
+
+#[cfg(test)]
+mod tests {
+  use super::generate_ed25519_keypair;
+
+  #[test]
+  fn generate_private_key_has_expected_length() {
+    let (public_key, private_key) = generate_ed25519_keypair().unwrap();
+    assert_eq!(
+      private_key.as_ref().len(),
+      crypto::signatures::ed25519::SECRET_KEY_LENGTH
+    );
+    assert_eq!(public_key.as_ref().len(), private_key.as_ref().len());
+  }
+}
