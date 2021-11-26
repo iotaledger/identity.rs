@@ -10,8 +10,13 @@ use crate::crypto::merkle_tree::AsLeaf;
 use crate::crypto::merkle_tree::DigestExt;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Node;
-use crate::error::Error;
-use crate::error::Result;
+
+use self::errors::ProofSizeError;
+
+// Maximum number of nodes in the proof.
+// This value is equal to log₂[`crate::crypto::KeyCollection::MAX_NODES`], respecting the constraint for the maximum
+// number of keys allowed in a `KeyCollection`
+const MAX_PROOF_NODES: usize = 12;
 
 /// A Merkle tree inclusion proof that allows proving the existence of a
 /// particular leaf in a Merkle tree.
@@ -23,11 +28,16 @@ impl<D: DigestExt> Proof<D> {
   /// Maximum number of nodes in the proof.
   /// This value is equal to log₂[`crate::crypto::KeyCollection::MAX_NODES`], respecting the constraint for the maximum
   /// number of keys allowed in a `KeyCollection`
-  pub const MAX_NODES: usize = 12;
+  pub const MAX_NODES: usize = MAX_PROOF_NODES;
+
   /// Creates a new [`Proof`] from a boxed slice of nodes.
-  pub fn new(nodes: Box<[Node<D>]>) -> Result<Self> {
-    if nodes.len() > Self::MAX_NODES {
-      return Err(Error::InvalidProofSize(nodes.len()));
+  ///
+  /// # Errors
+  /// Fails if the length of `nodes` is greater than [`Self::MAX_NODES`]
+  pub fn new(nodes: Box<[Node<D>]>) -> Result<Self, impl std::error::Error> {
+    let num_nodes = nodes.len();
+    if num_nodes > Self::MAX_NODES {
+      return Err(ProofSizeError(num_nodes));
     }
     Ok(Self { nodes })
   }
@@ -85,4 +95,15 @@ impl<D: DigestExt> Debug for Proof<D> {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
     f.debug_struct("Proof").field("nodes", &self.nodes).finish()
   }
+}
+
+mod errors {
+  use super::MAX_PROOF_NODES;
+  use thiserror::Error as DeriveError;
+  #[derive(Debug, DeriveError)]
+  #[error(
+    "too many nodes in the Proof: {0} were provided, but the maximum is {}",
+    MAX_PROOF_NODES
+  )]
+  pub(super) struct ProofSizeError(pub(super) usize);
 }
