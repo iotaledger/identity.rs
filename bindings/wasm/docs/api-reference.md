@@ -19,6 +19,8 @@
 <dt><a href="#DocumentHistory">DocumentHistory</a></dt>
 <dd><p>A DID Document&#39;s history and current state.</p>
 </dd>
+<dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
+<dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
 <dd></dd>
 <dt><a href="#KeyCollection">KeyCollection</a></dt>
@@ -26,6 +28,8 @@
 <dt><a href="#KeyPair">KeyPair</a></dt>
 <dd></dd>
 <dt><a href="#Network">Network</a></dt>
+<dd></dd>
+<dt><a href="#Receipt">Receipt</a></dt>
 <dd></dd>
 <dt><a href="#Service">Service</a></dt>
 <dd></dd>
@@ -42,6 +46,8 @@
 ## Members
 
 <dl>
+<dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
+<dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
@@ -65,12 +71,13 @@
     * [new Client()](#new_Client_new)
     * _instance_
         * [.network()](#Client+network) ⇒ [<code>Network</code>](#Network)
-        * [.publishDocument(document)](#Client+publishDocument) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.publishJSON(index, data)](#Client+publishJSON) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.resolve(did)](#Client+resolve) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.resolveHistory(did)](#Client+resolveHistory) ⇒ <code>Promise.&lt;any&gt;</code>
-        * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.publishDocument(document)](#Client+publishDocument) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
+        * [.publishDiff(message_id, diff)](#Client+publishDiff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
+        * [.publishJSON(index, data)](#Client+publishJSON) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
+        * [.publishJsonWithRetry(index, data, interval, max_attempts)](#Client+publishJsonWithRetry) ⇒ <code>Promise.&lt;any&gt;</code>
+        * [.resolve(did)](#Client+resolve) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
+        * [.resolveHistory(did)](#Client+resolveHistory) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
+        * [.resolveDiffHistory(document)](#Client+resolveDiffHistory) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
         * [.checkCredential(data)](#Client+checkCredential) ⇒ <code>Promise.&lt;any&gt;</code>
         * [.checkPresentation(data)](#Client+checkPresentation) ⇒ <code>Promise.&lt;any&gt;</code>
     * _static_
@@ -90,18 +97,18 @@ Returns the `Client` Tangle network.
 **Kind**: instance method of [<code>Client</code>](#Client)  
 <a name="Client+publishDocument"></a>
 
-### client.publishDocument(document) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.publishDocument(document) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
 Publishes an `IotaDocument` to the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
-| document | <code>any</code> | 
+| document | [<code>Document</code>](#Document) | 
 
 <a name="Client+publishDiff"></a>
 
-### client.publishDiff(message_id, diff) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.publishDiff(message_id, diff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
 Publishes a `DocumentDiff` to the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -113,7 +120,7 @@ Publishes a `DocumentDiff` to the Tangle.
 
 <a name="Client+publishJSON"></a>
 
-### client.publishJSON(index, data) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.publishJSON(index, data) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
 Publishes arbitrary JSON data to the specified index on the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -123,9 +130,25 @@ Publishes arbitrary JSON data to the specified index on the Tangle.
 | index | <code>string</code> | 
 | data | <code>any</code> | 
 
+<a name="Client+publishJsonWithRetry"></a>
+
+### client.publishJsonWithRetry(index, data, interval, max_attempts) ⇒ <code>Promise.&lt;any&gt;</code>
+Publishes arbitrary JSON data to the specified index on the Tangle.
+Retries (promotes or reattaches) the message until it’s included (referenced by a milestone).
+Default interval is 5 seconds and max attempts is 40.
+
+**Kind**: instance method of [<code>Client</code>](#Client)  
+
+| Param | Type |
+| --- | --- |
+| index | <code>string</code> | 
+| data | <code>any</code> | 
+| interval | <code>number</code> \| <code>undefined</code> | 
+| max_attempts | <code>number</code> \| <code>undefined</code> | 
+
 <a name="Client+resolve"></a>
 
-### client.resolve(did) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.resolve(did) ⇒ [<code>Promise.&lt;Document&gt;</code>](#Document)
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
@@ -134,7 +157,7 @@ Publishes arbitrary JSON data to the specified index on the Tangle.
 
 <a name="Client+resolveHistory"></a>
 
-### client.resolveHistory(did) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.resolveHistory(did) ⇒ [<code>Promise.&lt;DocumentHistory&gt;</code>](#DocumentHistory)
 Returns the message history of the given DID.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
@@ -145,7 +168,7 @@ Returns the message history of the given DID.
 
 <a name="Client+resolveDiffHistory"></a>
 
-### client.resolveDiffHistory(document) ⇒ <code>Promise.&lt;any&gt;</code>
+### client.resolveDiffHistory(document) ⇒ [<code>Promise.&lt;DiffChainHistory&gt;</code>](#DiffChainHistory)
 Returns the `DiffChainHistory` of a diff chain starting from a document on the
 integration chain.
 
@@ -211,6 +234,7 @@ Creates a new `Client` with default settings for the given `Network`.
     * _instance_
         * [.setNetwork(network)](#Config+setNetwork)
         * [.setNode(url)](#Config+setNode)
+        * [.setEncoding(encoding)](#Config+setEncoding)
         * [.setPrimaryNode(url, jwt, username, password)](#Config+setPrimaryNode)
         * [.setPrimaryPoWNode(url, jwt, username, password)](#Config+setPrimaryPoWNode)
         * [.setPermanode(url, jwt, username, password)](#Config+setPermanode)
@@ -243,6 +267,15 @@ Creates a new `Client` with default settings for the given `Network`.
 | Param | Type |
 | --- | --- |
 | url | <code>string</code> | 
+
+<a name="Config+setEncoding"></a>
+
+### config.setEncoding(encoding)
+**Kind**: instance method of [<code>Config</code>](#Config)  
+
+| Param | Type |
+| --- | --- |
+| encoding | <code>number</code> | 
 
 <a name="Config+setPrimaryNode"></a>
 
@@ -596,24 +629,24 @@ Parses a `DIDUrl` from the input string.
 
 * [DiffChainHistory](#DiffChainHistory)
     * _instance_
-        * [.chainData()](#DiffChainHistory+chainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.spam()](#DiffChainHistory+spam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.chainData()](#DiffChainHistory+chainData) ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+        * [.spam()](#DiffChainHistory+spam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#DiffChainHistory+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#DiffChainHistory.fromJSON) ⇒ [<code>DiffChainHistory</code>](#DiffChainHistory)
 
 <a name="DiffChainHistory+chainData"></a>
 
-### diffChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of the chain objects.
+### diffChainHistory.chainData() ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+Returns an `Array` of the diff chain `DocumentDiffs`.
 
 NOTE: this clones the field.
 
 **Kind**: instance method of [<code>DiffChainHistory</code>](#DiffChainHistory)  
 <a name="DiffChainHistory+spam"></a>
 
-### diffChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of `MessageIds` as strings.
+### diffChainHistory.spam() ⇒ <code>Array.&lt;string&gt;</code>
+Returns an `Array` of `MessageIds` as strings.
 
 NOTE: this clones the field.
 
@@ -654,7 +687,7 @@ Deserializes from a JSON object.
         * [.previousMessageId](#Document+previousMessageId) ⇒ <code>string</code>
         * [.previousMessageId](#Document+previousMessageId)
         * [.defaultSigningMethod()](#Document+defaultSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.insertMethod(method, scope)](#Document+insertMethod) ⇒ <code>boolean</code>
+        * [.insertMethod(method, scope)](#Document+insertMethod)
         * [.removeMethod(did)](#Document+removeMethod)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#Document+removeService)
@@ -791,7 +824,7 @@ Throws an error if no signing method is present.
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+insertMethod"></a>
 
-### document.insertMethod(method, scope) ⇒ <code>boolean</code>
+### document.insertMethod(method, scope)
 Adds a new Verification Method to the DID Document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1149,26 +1182,26 @@ A DID Document's history and current state.
 
 * [DocumentHistory](#DocumentHistory)
     * _instance_
-        * [.integrationChainData()](#DocumentHistory+integrationChainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.integrationChainSpam()](#DocumentHistory+integrationChainSpam) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.diffChainData()](#DocumentHistory+diffChainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.diffChainSpam()](#DocumentHistory+diffChainSpam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.integrationChainData()](#DocumentHistory+integrationChainData) ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+        * [.integrationChainSpam()](#DocumentHistory+integrationChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
+        * [.diffChainData()](#DocumentHistory+diffChainData) ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+        * [.diffChainSpam()](#DocumentHistory+diffChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#DocumentHistory+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#DocumentHistory.fromJSON) ⇒ [<code>DocumentHistory</code>](#DocumentHistory)
 
 <a name="DocumentHistory+integrationChainData"></a>
 
-### documentHistory.integrationChainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of integration chain `Documents`.
+### documentHistory.integrationChainData() ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+Returns an `Array` of integration chain `Documents`.
 
 NOTE: clones the data.
 
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory+integrationChainSpam"></a>
 
-### documentHistory.integrationChainSpam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of message id strings for "spam" messages on the same index
+### documentHistory.integrationChainSpam() ⇒ <code>Array.&lt;string&gt;</code>
+Returns an `Array` of message id strings for "spam" messages on the same index
 as the integration chain.
 
 NOTE: clones the data.
@@ -1176,16 +1209,16 @@ NOTE: clones the data.
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory+diffChainData"></a>
 
-### documentHistory.diffChainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of diff chain `DocumentDiffs`.
+### documentHistory.diffChainData() ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+Returns an `Array` of diff chain `DocumentDiffs`.
 
 NOTE: clones the data.
 
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory+diffChainSpam"></a>
 
-### documentHistory.diffChainSpam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of message id strings for "spam" messages on the same index
+### documentHistory.diffChainSpam() ⇒ <code>Array.&lt;string&gt;</code>
+Returns an `Array` of message id strings for "spam" messages on the same index
 as the diff chain.
 
 NOTE: clones the data.
@@ -1208,6 +1241,77 @@ Deserializes `DocumentHistory` from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="ExplorerUrl"></a>
+
+## ExplorerUrl
+**Kind**: global class  
+
+* [ExplorerUrl](#ExplorerUrl)
+    * _instance_
+        * [.messageUrl(message_id)](#ExplorerUrl+messageUrl) ⇒ <code>string</code>
+        * [.resolverUrl(did)](#ExplorerUrl+resolverUrl) ⇒ <code>string</code>
+        * [.toString()](#ExplorerUrl+toString) ⇒ <code>string</code>
+    * _static_
+        * [.parse(url)](#ExplorerUrl.parse) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+        * [.mainnet()](#ExplorerUrl.mainnet) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+        * [.devnet()](#ExplorerUrl.devnet) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+
+<a name="ExplorerUrl+messageUrl"></a>
+
+### explorerUrl.messageUrl(message_id) ⇒ <code>string</code>
+Returns the web explorer URL of the given `message_id`.
+
+E.g. https://explorer.iota.org/mainnet/message/<message_id>
+
+**Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> | 
+
+<a name="ExplorerUrl+resolverUrl"></a>
+
+### explorerUrl.resolverUrl(did) ⇒ <code>string</code>
+Returns the web identity resolver URL for the given DID.
+
+E.g. https://explorer.iota.org/mainnet/identity-resolver/<did>
+
+**Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+
+| Param | Type |
+| --- | --- |
+| did | <code>string</code> | 
+
+<a name="ExplorerUrl+toString"></a>
+
+### explorerUrl.toString() ⇒ <code>string</code>
+**Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+<a name="ExplorerUrl.parse"></a>
+
+### ExplorerUrl.parse(url) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+Constructs a new Tangle explorer URL from a string.
+
+Use `ExplorerUrl::mainnet` or `ExplorerUrl::devnet` unless using a private Tangle
+or local explorer.
+
+**Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> | 
+
+<a name="ExplorerUrl.mainnet"></a>
+
+### ExplorerUrl.mainnet() ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+Returns the Tangle explorer URL for the mainnet.
+
+**Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+<a name="ExplorerUrl.devnet"></a>
+
+### ExplorerUrl.devnet() ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+Returns the Tangle explorer URL for the devnet.
+
+**Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
 <a name="IntegrationChainHistory"></a>
 
 ## IntegrationChainHistory
@@ -1215,24 +1319,24 @@ Deserializes `DocumentHistory` from a JSON object.
 
 * [IntegrationChainHistory](#IntegrationChainHistory)
     * _instance_
-        * [.chainData()](#IntegrationChainHistory+chainData) ⇒ <code>Array.&lt;any&gt;</code>
-        * [.spam()](#IntegrationChainHistory+spam) ⇒ <code>Array.&lt;any&gt;</code>
+        * [.chainData()](#IntegrationChainHistory+chainData) ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+        * [.spam()](#IntegrationChainHistory+spam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#IntegrationChainHistory+toJSON) ⇒ <code>any</code>
     * _static_
         * [.fromJSON(json)](#IntegrationChainHistory.fromJSON) ⇒ [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)
 
 <a name="IntegrationChainHistory+chainData"></a>
 
-### integrationChainHistory.chainData() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of the chain objects.
+### integrationChainHistory.chainData() ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
+Returns an `Array` of the integration chain `Documents`.
 
 NOTE: this clones the field.
 
 **Kind**: instance method of [<code>IntegrationChainHistory</code>](#IntegrationChainHistory)  
 <a name="IntegrationChainHistory+spam"></a>
 
-### integrationChainHistory.spam() ⇒ <code>Array.&lt;any&gt;</code>
-Returns a `js_sys::Array` of `MessageIds` as strings.
+### integrationChainHistory.spam() ⇒ <code>Array.&lt;string&gt;</code>
+Returns an `Array` of `MessageIds` as strings.
 
 NOTE: this clones the field.
 
@@ -1440,8 +1544,6 @@ Deserializes a `KeyPair` object from a JSON object.
 * [Network](#Network)
     * _instance_
         * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.explorerURL](#Network+explorerURL) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.messageURL(message_id)](#Network+messageURL) ⇒ <code>string</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
     * _static_
         * [.try_from_name(name)](#Network.try_from_name) ⇒ [<code>Network</code>](#Network)
@@ -1454,23 +1556,6 @@ Deserializes a `KeyPair` object from a JSON object.
 Returns the node URL of the Tangle network.
 
 **Kind**: instance property of [<code>Network</code>](#Network)  
-<a name="Network+explorerURL"></a>
-
-### network.explorerURL ⇒ <code>string</code> \| <code>undefined</code>
-Returns the web explorer URL of the Tangle network.
-
-**Kind**: instance property of [<code>Network</code>](#Network)  
-<a name="Network+messageURL"></a>
-
-### network.messageURL(message_id) ⇒ <code>string</code>
-Returns the web explorer URL of the given `message`.
-
-**Kind**: instance method of [<code>Network</code>](#Network)  
-
-| Param | Type |
-| --- | --- |
-| message_id | <code>string</code> | 
-
 <a name="Network+toString"></a>
 
 ### network.toString() ⇒ <code>string</code>
@@ -1494,6 +1579,62 @@ Parses the provided string to a `Network`.
 
 ### Network.devnet() ⇒ [<code>Network</code>](#Network)
 **Kind**: static method of [<code>Network</code>](#Network)  
+<a name="Receipt"></a>
+
+## Receipt
+**Kind**: global class  
+
+* [Receipt](#Receipt)
+    * _instance_
+        * [.network](#Receipt+network) ⇒ [<code>Network</code>](#Network)
+        * [.messageId](#Receipt+messageId) ⇒ <code>string</code>
+        * [.networkId](#Receipt+networkId) ⇒ <code>string</code>
+        * [.nonce](#Receipt+nonce) ⇒ <code>string</code>
+        * [.toJSON()](#Receipt+toJSON) ⇒ <code>any</code>
+    * _static_
+        * [.fromJSON(json)](#Receipt.fromJSON) ⇒ [<code>Receipt</code>](#Receipt)
+
+<a name="Receipt+network"></a>
+
+### receipt.network ⇒ [<code>Network</code>](#Network)
+Returns the associated IOTA Tangle `Network`.
+
+**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+messageId"></a>
+
+### receipt.messageId ⇒ <code>string</code>
+Returns the message `id`.
+
+**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+networkId"></a>
+
+### receipt.networkId ⇒ <code>string</code>
+Returns the message `network_id`.
+
+**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+nonce"></a>
+
+### receipt.nonce ⇒ <code>string</code>
+Returns the message `nonce`.
+
+**Kind**: instance property of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt+toJSON"></a>
+
+### receipt.toJSON() ⇒ <code>any</code>
+Serializes a `Receipt` as a JSON object.
+
+**Kind**: instance method of [<code>Receipt</code>](#Receipt)  
+<a name="Receipt.fromJSON"></a>
+
+### Receipt.fromJSON(json) ⇒ [<code>Receipt</code>](#Receipt)
+Deserializes a `Receipt` from a JSON object.
+
+**Kind**: static method of [<code>Receipt</code>](#Receipt)  
+
+| Param | Type |
+| --- | --- |
+| json | <code>any</code> | 
+
 <a name="Service"></a>
 
 ## Service
@@ -1757,6 +1898,10 @@ Deserializes a `VerificationMethod` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
+<a name="DIDMessageEncoding"></a>
+
+## DIDMessageEncoding
+**Kind**: global variable  
 <a name="Digest"></a>
 
 ## Digest

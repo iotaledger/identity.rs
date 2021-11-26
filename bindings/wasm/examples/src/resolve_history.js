@@ -18,7 +18,7 @@ import {createIdentity} from "./create_did";
  Advanced example that performs multiple diff chain and integration chain updates and
  demonstrates how to resolve the DID Document history to view these chains.
 
- @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+ @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function resolveHistory(clientConfig) {
     // Create a default client configuration from the parent config network.
@@ -71,10 +71,10 @@ async function resolveHistory(clientConfig) {
 
     // Publish the updated DID Document to the Tangle, updating the integration chain.
     // This may take a few seconds to complete proof-of-work.
-    const intReceipt1 = await client.publishDocument(intDoc1.toJSON());
+    const intReceipt1 = await client.publishDocument(intDoc1);
 
     // Log the results.
-    logExplorerUrl("Int. Chain Update (1):", clientConfig.network.toString(), intReceipt1.messageId);
+    logExplorerUrl("Int. Chain Update (1):", clientConfig.explorer, intReceipt1.messageId);
 
     // ===========================================================================
     // Diff Chain Update 1
@@ -100,7 +100,7 @@ async function resolveHistory(clientConfig) {
 
     // Publish the diff to the Tangle, starting a diff chain.
     const diffReceipt1 = await client.publishDiff(intReceipt1.messageId, diff1);
-    logExplorerUrl("Diff Chain Transaction (1):", clientConfig.network.toString(), diffReceipt1.messageId);
+    logExplorerUrl("Diff Chain Transaction (1):", clientConfig.explorer, diffReceipt1.messageId);
 
     // ===========================================================================
     // Diff Chain Update 2
@@ -128,7 +128,7 @@ async function resolveHistory(clientConfig) {
     // Note that we still use the `messageId` from the last integration chain message here to link
     // the current diff chain to that point on the integration chain.
     const diffReceipt2 = await client.publishDiff(intReceipt1.messageId, diff2);
-    logExplorerUrl("Diff Chain Transaction (2):", clientConfig.network.toString(), diffReceipt2.messageId);
+    logExplorerUrl("Diff Chain Transaction (2):", clientConfig.explorer, diffReceipt2.messageId);
 
     // ===========================================================================
     // Diff Chain Spam
@@ -175,10 +175,10 @@ async function resolveHistory(clientConfig) {
     intDoc2.previousMessageId = intReceipt1.messageId;
     intDoc2.updated = Timestamp.nowUTC();
     intDoc2.signSelf(key, intDoc2.defaultSigningMethod().id.toString());
-    const intReceipt2 = await client.publishDocument(intDoc2.toJSON());
+    const intReceipt2 = await client.publishDocument(intDoc2);
 
     // Log the results.
-    logExplorerUrl("Int. Chain Update (2):", clientConfig.network.toString(), intReceipt2.messageId);
+    logExplorerUrl("Int. Chain Update (2):", clientConfig.explorer, intReceipt2.messageId);
 
     // ===========================================================================
     // DID History 2

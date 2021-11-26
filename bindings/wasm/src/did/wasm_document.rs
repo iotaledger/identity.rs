@@ -39,6 +39,13 @@ use crate::service::Service;
 #[derive(Clone, Debug, PartialEq)]
 pub struct WasmDocument(pub(crate) IotaDocument);
 
+// Workaround for Typescript type annotations on async function returns.
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<Document>")]
+  pub type PromiseDocument;
+}
+
 #[wasm_bindgen(js_class = Document)]
 impl WasmDocument {
   /// Creates a new DID Document from the given `KeyPair`, network, and verification method
@@ -163,10 +170,10 @@ impl WasmDocument {
 
   /// Adds a new Verification Method to the DID Document.
   #[wasm_bindgen(js_name = insertMethod)]
-  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: Option<String>) -> Result<bool> {
+  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: Option<String>) -> Result<()> {
     let scope: MethodScope = scope.unwrap_or_default().parse().wasm_result()?;
-
-    Ok(self.0.insert_method(method.0.clone(), scope))
+    self.0.insert_method(method.0.clone(), scope).wasm_result()?;
+    Ok(())
   }
 
   /// Removes all references to the specified Verification Method.

@@ -35,6 +35,10 @@ name = "account_signing"
 path = "account/signing.rs"
 
 [[example]]
+name = "account_multiple"
+path = "account/multiple_identities.rs"
+
+[[example]]
 name = "create_did"
 path = "low-level-api/create_did.rs"
 
