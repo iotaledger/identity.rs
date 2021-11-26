@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
   // This means updates are not pushed to the tangle automatically.
   // Rather, when we publish, multiple updates are batched together.
   let mut account: Account = Account::builder()
-    .storage(AccountStorage::Stronghold(stronghold_path, Some(password)))
+    .storage(AccountStorage::Stronghold(stronghold_path, Some(password), None))
     .autopublish(false)
     .create_identity(IdentitySetup::default())
     .await?;

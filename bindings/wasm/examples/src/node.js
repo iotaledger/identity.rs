@@ -3,7 +3,7 @@
 
 import {createIdentity} from "./create_did";
 import {manipulateIdentity} from "./manipulate_did";
-import {createIdentityPrivateTangle} from "./private_tangle";
+import {privateTangle} from "./private_tangle";
 import {resolution} from "./resolution";
 import {createVC} from "./create_vc";
 import {createVP} from "./create_vp";
@@ -37,7 +37,7 @@ async function main() {
         case "merkle_key":
             return await merkleKey(CLIENT_CONFIG);
         case "private_tangle":
-            return await createIdentityPrivateTangle();
+            return await privateTangle();
         case "resolve_history":
             return await resolveHistory(CLIENT_CONFIG);
         case "diff_chain":

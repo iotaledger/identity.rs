@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crypto::keys::slip10::Chain;
+use futures::executor;
 
 use hashbrown::hash_map::Entry;
 use hashbrown::HashMap;
@@ -40,10 +41,11 @@ use crate::utils::EncryptionKey;
 pub struct Stronghold {
   did_leases: Mutex<HashMap<IotaDID, DIDLease>>,
   snapshot: Arc<Snapshot>,
+  dropsave: bool,
 }
 
 impl Stronghold {
-  pub async fn new<'a, T, U>(snapshot: &T, password: U) -> Result<Self>
+  pub async fn new<'a, T, U>(snapshot: &T, password: U, dropsave: Option<bool>) -> Result<Self>
   where
     T: AsRef<Path> + ?Sized,
     U: Into<Option<&'a str>>,
@@ -57,6 +59,7 @@ impl Stronghold {
     Ok(Self {
       did_leases: Mutex::new(HashMap::new()),
       snapshot: Arc::new(snapshot),
+      dropsave: dropsave.unwrap_or(true),
     })
   }
 
@@ -66,6 +69,17 @@ impl Stronghold {
 
   fn vault(&self, id: &IotaDID) -> Vault<'_> {
     self.snapshot.vault(&fmt_did(id), &[])
+  }
+
+  /// Returns whether save-on-drop is enabled.
+  pub fn dropsave(&self) -> bool {
+    self.dropsave
+  }
+
+  /// Set whether to save the storage changes on drop.
+  /// Default: true
+  pub fn set_dropsave(&mut self, value: bool) {
+    self.dropsave = value;
   }
 }
 
@@ -256,6 +270,14 @@ impl Storage for Stronghold {
       .await?;
 
     Ok(())
+  }
+}
+
+impl Drop for Stronghold {
+  fn drop(&mut self) {
+    if self.dropsave {
+      let _ = executor::block_on(self.flush_changes());
+    }
   }
 }
 
