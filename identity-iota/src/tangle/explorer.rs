@@ -4,7 +4,6 @@
 use core::convert::TryFrom;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::ops::Deref;
 use std::str::FromStr;
 
 use identity_core::common::Url;
@@ -117,14 +116,6 @@ impl AsRef<str> for ExplorerUrl {
   }
 }
 
-impl Deref for ExplorerUrl {
-  type Target = Url;
-
-  fn deref(&self) -> &Self::Target {
-    &self.0
-  }
-}
-
 impl TryFrom<Url> for ExplorerUrl {
   type Error = Error;
 
@@ -170,17 +161,17 @@ mod tests {
     // Valid new()
     assert_eq!(
       &ExplorerUrl::new(Url::parse(main_url_str).unwrap()).unwrap(),
-      EXPLORER_MAIN.deref()
+      ExplorerUrl::mainnet()
     );
     assert_eq!(
       &ExplorerUrl::new(Url::parse(dev_url_str).unwrap()).unwrap(),
-      EXPLORER_DEV.deref()
+      ExplorerUrl::devnet()
     );
     assert!(ExplorerUrl::new(Url::parse(localhost).unwrap()).is_ok());
 
     // Valid parse()
-    assert_eq!(&ExplorerUrl::parse(main_url_str).unwrap(), EXPLORER_MAIN.deref());
-    assert_eq!(&ExplorerUrl::parse(dev_url_str).unwrap(), EXPLORER_DEV.deref());
+    assert_eq!(&ExplorerUrl::parse(main_url_str).unwrap(), ExplorerUrl::mainnet());
+    assert_eq!(&ExplorerUrl::parse(dev_url_str).unwrap(), ExplorerUrl::devnet());
     assert!(ExplorerUrl::parse(localhost).is_ok());
 
     // Try setting a `cannot_be_a_base` url.
@@ -197,13 +188,13 @@ mod tests {
     let explorer_main: &ExplorerUrl = ExplorerUrl::mainnet();
     assert_eq!(
       explorer_main.message_url(&message_id).unwrap(),
-      format!("{}/{}/{}", explorer_main.as_str(), "message", message_id)
+      format!("{}/{}/{}", explorer_main, "message", message_id)
     );
 
     let explorer_dev: &ExplorerUrl = ExplorerUrl::devnet();
     assert_eq!(
       explorer_dev.message_url(&message_id).unwrap(),
-      format!("{}/{}/{}", explorer_dev.as_str(), "message", message_id)
+      format!("{}/{}/{}", explorer_dev, "message", message_id)
     );
 
     let localhost: &str = "http://127.0.0.1:8082";
@@ -221,13 +212,13 @@ mod tests {
     let explorer_main: &ExplorerUrl = ExplorerUrl::mainnet();
     assert_eq!(
       explorer_main.resolver_url(&did).unwrap(),
-      format!("{}/{}/{}", explorer_main.as_str(), "identity-resolver", did)
+      format!("{}/{}/{}", explorer_main, "identity-resolver", did)
     );
 
     let explorer_dev: &ExplorerUrl = ExplorerUrl::devnet();
     assert_eq!(
       explorer_dev.resolver_url(&did).unwrap(),
-      format!("{}/{}/{}", explorer_dev.as_str(), "identity-resolver", did)
+      format!("{}/{}/{}", explorer_dev, "identity-resolver", did)
     );
 
     let localhost: &str = "http://127.0.0.1:8082";
