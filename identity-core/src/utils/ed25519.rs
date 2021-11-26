@@ -43,7 +43,7 @@ mod tests {
   use super::generate_ed25519_keypair;
 
   #[test]
-  fn generate_private_key_has_expected_length() {
+  fn generate_ed25519_keypair_has_expected_length() {
     let (public_key, private_key) = generate_ed25519_keypair().unwrap();
     assert_eq!(
       private_key.as_ref().len(),
