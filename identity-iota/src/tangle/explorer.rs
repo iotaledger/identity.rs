@@ -35,11 +35,12 @@ pub struct ExplorerUrl(Url);
 /// # use identity_iota::did::IotaDID;
 /// # use identity_iota::tangle::ExplorerUrl;
 /// let explorer = ExplorerUrl::mainnet();
-/// let did = IotaDID::parse("did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV").unwrap();
+/// let did = IotaDID::parse("did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV")?;
 /// assert_eq!(
-///   explorer.resolver_url(&did).unwrap(),
+///   explorer.resolver_url(&did)?,
 ///   "https://explorer.iota.org/mainnet/identity-resolver/did:iota:H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV"
 /// );
+/// # Ok::<(), identity_iota::Error>(())
 /// ```
 impl ExplorerUrl {
   /// Constructs a new Tangle explorer URL.
@@ -64,7 +65,8 @@ impl ExplorerUrl {
   /// Point to a Tangle explorer deployed locally.
   /// ```
   /// # use identity_iota::tangle::ExplorerUrl;
-  /// let explorer = ExplorerUrl::parse("http://127.0.0.1:8082/").unwrap();
+  /// let explorer = ExplorerUrl::parse("http://127.0.0.1:8082/")?;
+  /// # Ok::<(), identity_iota::Error>(())
   /// ```
   pub fn parse(url: &str) -> Result<Self> {
     let url: Url = Url::parse(url).map_err(|_| Error::InvalidExplorerURL)?;
