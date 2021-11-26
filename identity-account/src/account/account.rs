@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::SetSignature;
-use identity_iota::did::DocumentDiff;
 use identity_iota::did::IotaDID;
-use identity_iota::did::IotaDocument;
-use identity_iota::did::IotaVerificationMethod;
+use identity_iota::document::DocumentDiff;
+use identity_iota::document::IotaDocument;
+use identity_iota::document::IotaVerificationMethod;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;

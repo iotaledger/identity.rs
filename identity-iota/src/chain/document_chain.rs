@@ -10,9 +10,9 @@ use identity_core::convert::ToJson;
 
 use crate::chain::DiffChain;
 use crate::chain::IntegrationChain;
-use crate::did::DocumentDiff;
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::DocumentDiff;
+use crate::document::IotaDocument;
 use crate::error::Result;
 use crate::tangle::MessageId;
 

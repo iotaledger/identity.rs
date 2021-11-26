@@ -6,9 +6,9 @@ use std::sync::Arc;
 use dashmap::DashMap;
 
 use crate::chain::DocumentChain;
-use crate::did::DocumentDiff;
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::DocumentDiff;
+use crate::document::IotaDocument;
 use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::ClientBuilder;

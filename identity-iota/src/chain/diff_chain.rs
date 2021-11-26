@@ -10,9 +10,9 @@ use core::slice::Iter;
 use identity_core::convert::ToJson;
 
 use crate::chain::IntegrationChain;
-use crate::did::DocumentDiff;
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::DocumentDiff;
+use crate::document::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Message;
@@ -221,8 +221,8 @@ mod test {
 
   use crate::chain::DocumentChain;
   use crate::chain::IntegrationChain;
-  use crate::did::DocumentDiff;
-  use crate::did::IotaDocument;
+  use crate::document::DocumentDiff;
+  use crate::document::IotaDocument;
   use crate::tangle::MessageId;
   use crate::tangle::TangleRef;
 

@@ -11,9 +11,9 @@ use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_did::did::DID;
 
-use crate::did::DocumentDiff;
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::DocumentDiff;
+use crate::document::IotaDocument;
 use crate::error::Result;
 use crate::tangle::message::compression_brotli;
 use crate::tangle::DIDMessageEncoding;
@@ -164,7 +164,7 @@ impl TryFromMessage for DocumentDiff {
 mod test {
   use identity_core::crypto::KeyPair;
 
-  use crate::did::IotaDocument;
+  use crate::document::IotaDocument;
   use crate::tangle::message::message_encoding::DIDMessageEncoding;
   use crate::tangle::MessageId;
 

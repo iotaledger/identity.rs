@@ -25,6 +25,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Network;
 use crate::tangle::NetworkName;
+use crate::try_construct_did;
 
 // The hash size of BLAKE2b-256 (32-bytes)
 const BLAKE2B_256_LEN: usize = 32;

@@ -10,7 +10,7 @@ use core::mem;
 use identity_core::convert::ToJson;
 
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Message;
