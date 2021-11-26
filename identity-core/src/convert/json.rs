@@ -7,8 +7,8 @@ use crypto::hashes::Output;
 use serde::Deserialize;
 use serde::Serialize;
 
-pub use self::errors::JsonEncodingError;
 pub use self::errors::JsonDecodingError;
+pub use self::errors::JsonEncodingError;
 
 /// A convenience-trait for types that can be serialized as JSON.
 pub trait ToJson: Serialize + Sized {
@@ -71,15 +71,15 @@ pub trait FromJson: for<'de> Deserialize<'de> + Sized {
 impl<T> FromJson for T where T: for<'de> Deserialize<'de> + Sized {}
 
 mod errors {
-  use thiserror::Error as DeriveError; 
+  use thiserror::Error as DeriveError;
   /*
-We implement From serde_json::Error for the errors in this module because we want the ToJson and FromJson traits to be easy
-to implement downstream and serde_json is both stable and has millions of downloads hence
-it is relatively safe with regards to stability to include this error type in our public API. 
-For more interoperability we also implement Into serde_json::Error 
-*/
+  We implement From serde_json::Error for the errors in this module because we want the ToJson and FromJson traits to be easy
+  to implement downstream and serde_json is both stable and has millions of downloads hence
+  it is relatively safe with regards to stability to include this error type in our public API.
+  For more interoperability we also implement Into serde_json::Error
+  */
 
-  /// Caused by a failure to encode Rust types as JSON 
+  /// Caused by a failure to encode Rust types as JSON
   #[derive(Debug, DeriveError)]
   #[error("failed to encode JSON: {cause}")]
   pub struct JsonEncodingError {
@@ -89,11 +89,11 @@ For more interoperability we also implement Into serde_json::Error
 
   impl From<JsonEncodingError> for serde_json::Error {
     fn from(err: JsonEncodingError) -> Self {
-        err.cause
+      err.cause
     }
   }
 
-  /// Caused by a failure to decode Rust types as JSON 
+  /// Caused by a failure to decode Rust types as JSON
   #[derive(Debug, DeriveError)]
   #[error("failed to decode JSON: {cause}")]
   pub struct JsonDecodingError {
@@ -103,8 +103,7 @@ For more interoperability we also implement Into serde_json::Error
 
   impl From<JsonDecodingError> for serde_json::Error {
     fn from(err: JsonDecodingError) -> Self {
-        err.cause
+      err.cause
     }
   }
-
 }

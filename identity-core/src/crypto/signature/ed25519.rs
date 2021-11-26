@@ -16,6 +16,7 @@ use self::errors::SignatureParsingError;
 use super::errors::InvalidProofValue;
 use super::errors::SigningError;
 use super::errors::VerificationError;
+use super::errors::VerificationProcessingError;
 
 /// An implementation of `Ed25519` signatures.
 #[derive(Clone, Copy, Debug)]
@@ -46,7 +47,7 @@ where
 
   fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> std::result::Result<(), Self::Error> {
     let key: ed25519::PublicKey = parse_public(key.as_ref()).map_err(Self::Error::from)?;
-    let sig: ed25519::Signature = parse_signature(signature).map_err(Self::Error::from)?;
+    let sig: ed25519::Signature = parse_signature(signature).map_err(|err| VerificationProcessingError::from(err.0))?;
 
     if key.verify(&sig, message) {
       Ok(())
@@ -80,19 +81,10 @@ fn parse_signature(slice: &[u8]) -> std::result::Result<ed25519::Signature, Sign
 
 mod errors {
   use thiserror::Error as DeriveError;
-
-  use crate::crypto::signature::errors::VerificationError;
-  use crate::crypto::signature::errors::ProcessingErrorCause;
   #[derive(Debug, DeriveError)]
   /// Caused by a failure to parse a signature
   #[error("{0}")]
   pub(super) struct SignatureParsingError(pub(super) &'static str);
-
-  impl From<SignatureParsingError> for VerificationError {
-    fn from(err: SignatureParsingError) -> Self {
-      Self::ProcessingFailed(ProcessingErrorCause::InvalidInputFormat(err.0).into())
-    }
-  }
 }
 #[cfg(test)]
 mod tests {

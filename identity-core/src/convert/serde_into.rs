@@ -12,7 +12,10 @@ pub trait SerdeInto: ToJson {
   where
     T: FromJson,
   {
-    <Self as ToJson>::to_json_value(self).map_err(From::from).and_then(<T as FromJson>::from_json_value).map_err(From::from)
+    <Self as ToJson>::to_json_value(self)
+      .map_err(From::from)
+      .and_then(<T as FromJson>::from_json_value)
+      .map_err(From::from)
   }
 }
 

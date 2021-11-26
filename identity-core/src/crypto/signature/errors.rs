@@ -11,13 +11,13 @@ pub use signing::SigningError;
 pub(crate) use signing::SigningErrorCause;
 pub(crate) use verifying::InvalidProofValue;
 pub(crate) use verifying::VerificationError;
-pub(crate) use verifying::ProcessingErrorCause;
+pub(crate) use verifying::VerificationProcessingError;
 
 mod signing {
   use crate::convert::JsonDecodingError;
-use crate::convert::JsonEncodingError;
+  use crate::convert::JsonEncodingError;
 
-use super::DeriveError;
+  use super::DeriveError;
   use super::KeyError;
   #[derive(Debug, DeriveError)]
   /// Caused by a failed attempt at retrieving a digital signature.
@@ -44,7 +44,6 @@ use super::DeriveError;
   pub struct SigningError {
     cause: SigningErrorCause,
   }
-
 
   impl From<JsonEncodingError> for SigningError {
     fn from(_: JsonEncodingError) -> Self {
@@ -107,8 +106,9 @@ mod verifying {
   use super::KeyError;
   use super::MissingSignatureError;
   use crate::convert::JsonDecodingError;
-use crate::convert::JsonEncodingError;
-use crate::crypto::merkle_key::MerkleVerificationProcessingErrorCause;
+  use crate::convert::JsonEncodingError;
+  use crate::crypto::merkle_key::base::MerkleDigestKeyTagError;
+  use crate::crypto::merkle_key::base::MerkleSignatureKeyTagError;
   /// The provided signature does not match the expected value
   #[derive(Debug, DeriveError)]
   #[error("{0}")]
@@ -154,20 +154,26 @@ use crate::crypto::merkle_key::MerkleVerificationProcessingErrorCause;
     // Unable to find the required signature
     #[error("missing signature:: {0}")]
     MissingSignature(&'static str),
+    // Caused by attempting to parse an invalid Merkle Digest Key Collection tag.
+    #[error(transparent)]
+    InvalidMerkleDigestKeyTag(#[from] MerkleDigestKeyTagError),
+    // Caused by attempting to parse an invalid Merkle Signature Key Collection tag.
+    #[error(transparent)]
+    InvalidMerkleSignatureKeyTag(#[from] MerkleSignatureKeyTagError),
     // Any other reason why the verification process failed
     #[error("{0}")]
     Other(&'static str),
   }
 
-  impl From<JsonEncodingError> for VerificationError{
+  impl From<JsonEncodingError> for VerificationError {
     fn from(_: JsonEncodingError) -> Self {
-        VerificationError::from(ProcessingErrorCause::InvalidInputFormat("serialization failed"))
+      VerificationError::from(ProcessingErrorCause::InvalidInputFormat("serialization failed"))
     }
   }
 
-  impl From<JsonDecodingError> for VerificationError{
+  impl From<JsonDecodingError> for VerificationError {
     fn from(_: JsonDecodingError) -> Self {
-        VerificationError::from(ProcessingErrorCause::InvalidInputFormat("deserialization failed"))
+      VerificationError::from(ProcessingErrorCause::InvalidInputFormat("deserialization failed"))
     }
   }
 
@@ -182,6 +188,25 @@ use crate::crypto::merkle_key::MerkleVerificationProcessingErrorCause;
     }
   }
 
+  impl From<MerkleDigestKeyTagError> for VerificationProcessingError {
+    fn from(err: MerkleDigestKeyTagError) -> Self {
+      Self { cause: err.into() }
+    }
+  }
+
+  impl From<MerkleSignatureKeyTagError> for VerificationProcessingError {
+    fn from(err: MerkleSignatureKeyTagError) -> Self {
+      Self { cause: err.into() }
+    }
+  }
+
+  impl From<&'static str> for VerificationProcessingError {
+    fn from(message: &'static str) -> Self {
+      Self {
+        cause: ProcessingErrorCause::Other(message),
+      }
+    }
+  }
   impl TryFrom<VerificationError> for InvalidProofValue {
     type Error = &'static str;
     fn try_from(value: VerificationError) -> Result<Self, Self::Error> {

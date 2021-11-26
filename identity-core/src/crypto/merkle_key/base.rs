@@ -1,8 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub(crate) use self::errors::InvalidMerkleDigestKeyTag;
-pub(crate) use self::errors::InvalidMerkleSignatureKeyTag;
+pub(crate) use self::errors::MerkleDigestKeyTagError;
+pub(crate) use self::errors::MerkleSignatureKeyTagError;
 pub(crate) use self::errors::MerkleTagExtractionError;
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleDigestTag;
@@ -41,20 +41,20 @@ impl MerkleKey {
     output
   }
 
-  fn digest_tag(data: &[u8], index: usize) -> Result<MerkleDigestTag, InvalidMerkleDigestKeyTag> {
+  fn digest_tag(data: &[u8], index: usize) -> Result<MerkleDigestTag, MerkleDigestKeyTagError> {
     data
       .get(index)
       .copied()
       .map(MerkleDigestTag::new)
-      .ok_or(InvalidMerkleDigestKeyTag(None))
+      .ok_or(MerkleDigestKeyTagError(None))
   }
 
-  fn signature_tag(data: &[u8], index: usize) -> Result<MerkleSignatureTag, InvalidMerkleSignatureKeyTag> {
+  fn signature_tag(data: &[u8], index: usize) -> Result<MerkleSignatureTag, MerkleSignatureKeyTagError> {
     data
       .get(index)
       .copied()
       .map(MerkleSignatureTag::new)
-      .ok_or(InvalidMerkleSignatureKeyTag(None))
+      .ok_or(MerkleSignatureKeyTagError(None))
   }
 }
 
@@ -66,20 +66,20 @@ mod errors {
   // Caused by attempting to parse an invalid Merkle Digest Key Collection tag.
   #[derive(Debug, DeriveError)]
   #[error("invalid Merkle digest key tag: {0:?}")]
-  pub struct InvalidMerkleDigestKeyTag(pub Option<MerkleDigestTag>);
+  pub struct MerkleDigestKeyTagError(pub Option<MerkleDigestTag>);
 
   // Caused by attempting to parse an invalid Merkle Signature Key Collection tag.  #[error("Invalid Merkle Signature
   // Key Tag: {0:?}")]
   #[derive(Debug, DeriveError)]
   #[error("Invalid Merkle Signature Key Tag: {0:?}")]
-  pub struct InvalidMerkleSignatureKeyTag(pub Option<MerkleSignatureTag>);
+  pub struct MerkleSignatureKeyTagError(pub Option<MerkleSignatureTag>);
 
   #[derive(Debug, DeriveError)]
   pub enum MerkleTagExtractionError {
     #[error("{0}")]
-    InvalidMerkleDigestKeyTag(#[from] InvalidMerkleDigestKeyTag),
+    InvalidMerkleDigestKeyTag(#[from] MerkleDigestKeyTagError),
     #[error("{0}")]
-    InvalidMerkleSignatureKeyTag(#[from] InvalidMerkleSignatureKeyTag),
+    InvalidMerkleSignatureKeyTag(#[from] MerkleSignatureKeyTagError),
   }
 }
 #[cfg(test)]

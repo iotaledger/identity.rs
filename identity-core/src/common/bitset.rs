@@ -19,7 +19,6 @@ use crate::utils::encode_b64;
 pub(crate) use errors::BitSetDecodingError;
 pub(crate) use errors::BitSetEncodingError;
 
-
 /// A general-purpose compressed bitset.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BitSet(RoaringBitmap);

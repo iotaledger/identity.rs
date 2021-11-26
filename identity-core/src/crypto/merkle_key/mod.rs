@@ -3,7 +3,7 @@
 
 //! An implementation of Merkle Key Collection Signatures.
 
-mod base;
+pub(in crate::crypto) mod base;
 mod impls;
 mod signer;
 mod tag;
@@ -22,7 +22,6 @@ pub use self::traits::MerkleDigest;
 pub use self::traits::MerkleSignature;
 pub use self::verifier::MerkleVerifier;
 pub use self::verifier::VerificationKey;
-pub(crate) use self::verifier::MerkleVerificationProcessingErrorCause; 
 
 #[cfg(test)]
 mod tests;

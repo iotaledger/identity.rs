@@ -9,7 +9,7 @@ use crate::crypto::signature::errors::InvalidProofValue;
 use crate::crypto::signature::errors::SigningError;
 use crate::crypto::signature::errors::SigningErrorCause;
 use crate::crypto::signature::errors::VerificationError;
-use crate::crypto::signature::errors::ProcessingErrorCause;
+use crate::crypto::signature::errors::VerificationProcessingError;
 use crate::crypto::Ed25519;
 use crate::crypto::Named;
 use crate::crypto::Sign;
@@ -47,8 +47,7 @@ where
   where
     X: Serialize,
   {
-    let message: Vec<u8> = data
-      .to_jcs()?;
+    let message: Vec<u8> = data.to_jcs()?;
     let signature: T::Output =
       T::sign(&message, private).map_err(|_| SigningErrorCause::Other("the `sign` operation failed internally"))?;
     let signature: String = encode_b58(signature.as_ref());
@@ -70,17 +69,16 @@ where
   {
     let signature: &str = signature.as_signature().ok_or(InvalidProofValue("jcs ed25519"))?;
 
-    let signature: Vec<u8> = decode_b58(signature)
-      .map_err(|_| ProcessingErrorCause::InvalidInputFormat("unable to decode the signature"))?;
+    let signature: Vec<u8> =
+      decode_b58(signature).map_err(|_| VerificationProcessingError::from("unable to decode the signature"))?;
     let message: Vec<u8> = data
       .to_jcs()
-      .map_err(|_| ProcessingErrorCause::InvalidInputFormat("unable to serialize input data"))?;
+      .map_err(|_| VerificationProcessingError::from("unable to serialize input data"))?;
 
     T::verify(&message, &signature, public).map_err(|err| match err.try_into() {
       Ok(invalid_proof_value) => VerificationError::from(invalid_proof_value),
       Err(_) => {
-        ProcessingErrorCause::Other("unable to verify the authenticity of the given data and signature")
-          .into()
+        VerificationProcessingError::from("unable to verify the authenticity of the given data and signature").into()
       }
     })?;
 

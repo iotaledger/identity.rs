@@ -1,21 +1,21 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::fmt::Debug;
-use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
-use std::error::Error; 
-use subtle::ConstantTimeEq;
 use crate::crypto::merkle_tree::AsLeaf;
 use crate::crypto::merkle_tree::DigestExt;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Node;
+use core::fmt::Debug;
+use core::fmt::Formatter;
+use core::fmt::Result as FmtResult;
+use std::error::Error;
+use subtle::ConstantTimeEq;
 
 use self::errors::ProofSizeError;
 
 // Maximum number of nodes in the proof.
-// This value is equal to log₂[`crate::crypto::KeyCollection::MAX_KEYS_ALLOWED`], respecting the constraint for the maximum
-// number of keys allowed in a `KeyCollection`
+// This value is equal to log₂[`crate::crypto::KeyCollection::MAX_KEYS_ALLOWED`], respecting the constraint for the
+// maximum number of keys allowed in a `KeyCollection`
 const MAX_PROOF_NODES: usize = 12;
 
 /// A Merkle tree inclusion proof that allows proving the existence of a
@@ -26,17 +26,17 @@ pub struct Proof<D: DigestExt> {
 
 impl<D: DigestExt> Proof<D> {
   /// Maximum number of nodes in the proof.
-  /// This value is equal to log₂[`crate::crypto::KeyCollection::MAX_KEYS_ALLOWED`], respecting the constraint for the maximum
-  /// number of keys allowed in a `KeyCollection`
+  /// This value is equal to log₂[`crate::crypto::KeyCollection::MAX_KEYS_ALLOWED`], respecting the constraint for the
+  /// maximum number of keys allowed in a `KeyCollection`
   pub const MAX_NODES: usize = MAX_PROOF_NODES;
 
   /// Creates a new [`Proof`] from a boxed slice of nodes.
   ///
   /// # Errors
   /// Fails if the length of `nodes` is greater than [`Self::MAX_NODES`]
-  // TODO: Is it OK to just return impl Error here? On the one hand the exact cause for error is documented in the function, but impl Error 
-  // can be hard (impossible ?) to bubble up. Would a caller want to wrap the returned error of their own? If yes it is probably better to make 
-  // ProofSizeError public and explicitly return that 
+  // TODO: Is it OK to just return impl Error here? On the one hand the exact cause for error is documented in the
+  // function, but impl Error can be hard (impossible ?) to bubble up. Would a caller want to wrap the returned error
+  // of their own? If yes it is probably better to make ProofSizeError public and explicitly return that
   pub fn new(nodes: Box<[Node<D>]>) -> Result<Self, impl Error> {
     let num_nodes = nodes.len();
     if num_nodes > Self::MAX_NODES {
