@@ -19,29 +19,6 @@ use crate::diff::DiffString;
 #[serde(transparent)]
 pub struct Url(::url::Url);
 pub use self::errors::UrlParsingError;
-mod errors {
-  /*  TODO: Due to the stability and vast usage of the url crate it is debatable whether we should
-  even have our own url parsing error at all. On the other hand having our own error type
-  lets us add/change some functionality in the future if we wish to do so.
-  */
-  use thiserror::Error as DeriveError;
-  /// Caused by attempting to parse an invalid URL.
-  #[derive(Debug, DeriveError, PartialEq, Eq, Clone)]
-  #[error("invalid URL {inner}")]
-  pub struct UrlParsingError {
-    #[from]
-    pub(super) inner: ::url::ParseError, // TODO: Maybe this field could be public?
-  }
-  /*
-  The url crate is stable and has millions of downloads hence it makes sense to provide
-  interoperability guarantees between our UrlParsingError and ::url::ParseError
-  */
-  impl From<UrlParsingError> for ::url::ParseError {
-    fn from(url_parsing_error: UrlParsingError) -> Self {
-      url_parsing_error.inner
-    }
-  }
-}
 
 impl Url {
   /// Parses an absolute [`Url`] from the given input string.
@@ -129,5 +106,29 @@ impl Diff for Url {
 
   fn into_diff(self) -> diff::Result<Self::Type> {
     self.to_string().into_diff()
+  }
+}
+
+mod errors {
+  /*  TODO: Due to the stability and vast usage of the url crate it is debatable whether we should
+  even have our own url parsing error at all. On the other hand having our own error type
+  lets us add/change some functionality in the future if we wish to do so.
+  */
+  use thiserror::Error as DeriveError;
+  /// Caused by attempting to parse an invalid URL.
+  #[derive(Debug, DeriveError, PartialEq, Eq, Clone)]
+  #[error("invalid URL {inner}")]
+  pub struct UrlParsingError {
+    #[from]
+    pub(super) inner: ::url::ParseError, // TODO: Maybe this field could be public?
+  }
+  /*
+  The url crate is stable and has millions of downloads hence it makes sense to provide
+  interoperability guarantees between our UrlParsingError and ::url::ParseError
+  */
+  impl From<UrlParsingError> for ::url::ParseError {
+    fn from(url_parsing_error: UrlParsingError) -> Self {
+      url_parsing_error.inner
+    }
   }
 }

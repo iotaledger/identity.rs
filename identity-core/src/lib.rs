@@ -29,10 +29,7 @@ pub use identity_diff as diff;
 pub mod common;
 pub mod convert;
 pub mod crypto;
-pub mod error;
 pub mod fatal_error;
 pub mod utils;
 
-pub use self::error::Error;
-pub use self::error::Result;
 pub use self::fatal_error::FatalError;

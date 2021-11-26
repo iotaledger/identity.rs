@@ -23,6 +23,7 @@ use crate::crypto::Verify;
 use crate::utils;
 
 use self::errors::MerkleVerificationError;
+pub(crate)use errors::MerkleVerificationProcessingErrorCause; 
 
 use super::base::InvalidMerkleDigestKeyTag;
 use super::base::InvalidMerkleSignatureKeyTag;
@@ -292,7 +293,7 @@ mod errors {
   }
 
   #[derive(Debug, DeriveError)]
-  pub(super) enum MerkleVerificationProcessingErrorCause {
+  pub(crate) enum MerkleVerificationProcessingErrorCause {
     #[error("could not serialize data")]
     SerializationFailure,
     #[error("could not parse signature")]

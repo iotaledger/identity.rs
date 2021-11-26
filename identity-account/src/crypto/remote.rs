@@ -46,7 +46,7 @@ impl RemoteEd25519 {
   where
     X: Serialize,
   {
-    let message: Vec<u8> = data.to_jcs().map_err(|err| (err, "failed to serialize input data"))?;
+    let message: Vec<u8> = data.to_jcs()?;
     let signature: Vec<u8> = RemoteSign::sign(&message, remote_key).await?;
     let signature: String = encode_b58(&signature);
     Ok(SignatureValue::Signature(signature))

@@ -23,54 +23,6 @@ use crate::crypto::KeyType;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
 use crate::utils::generate_ed25519_keypairs;
-use crate::Result;
-mod errors {
-  use super::KeyCollection;
-  use thiserror::Error as DeriveError;
-  /// Caused by attempting to create a key collection with an invalid number of keys
-  #[derive(Debug, PartialEq, DeriveError, Eq, Clone)]
-  pub enum KeyCollectionSizeError {
-    /// A [`KeyCollection`] cannot be empty
-    #[error("key collections cannot be empty")]
-    Empty,
-    /// The number of keys in a [`KeyCollection`] cannot exceed 4096.
-    ///
-    /// The maximum number of keys allowed may increase in the future.
-    // TODO: once rustdoc gets support for including constants we should use KeyCollection::MAX_KEYS_ALLOWED directly.
-    // Alternatively we could make KeyCollection::MAX_KEYS_ALLOWED public and link to that.
-    #[error(
-      "the maximum number of keys allowed is {}, but {0} were provided",
-      KeyCollection::MAX_KEYS_ALLOWED
-    )]
-    MaximumExceeded(usize),
-
-    /// The number of keys is not a non-zero power of two.
-    #[error("the number of keys must be a power of two, but {0} were provided")]
-    NotAPowerOfTwo(usize),
-
-    /// The number of public keys does not correspond to the number of private keys
-    #[error(
-      "the number of public keys: {num_public_keys} does not match the number of private keys: {num_private_keys}"
-    )]
-    KeyPairImbalance {
-      /// The number of public keys
-      num_public_keys: usize,
-      /// The number of private keys
-      num_private_keys: usize,
-    },
-  }
-
-  /// Caused by a failure to produce a valid [`keyCollection`]
-  #[derive(Debug, DeriveError, PartialEq, Eq, Clone)]
-  pub enum KeyCollectionError {
-    /// Size expectations were not met. See [`KeyCollectionSizeError`] for more information.
-    #[error("failed to produce KeyCollection: {0}")]
-    InvalidSize(#[from] KeyCollectionSizeError),
-    /// Key generation failed due to an underlying error.
-    #[error("failed to produce KeyCollection: {0}")]
-    GenerationFailed(String),
-  }
-}
 
 /// A collection of cryptographic keys.
 #[derive(Clone, Debug)]
@@ -294,6 +246,54 @@ impl IntoIterator for KeyCollection {
 
   fn into_iter(self) -> Self::IntoIter {
     self.public.to_vec().into_iter().zip(self.private.to_vec().into_iter())
+  }
+}
+
+mod errors {
+  use super::KeyCollection;
+  use thiserror::Error as DeriveError;
+  /// Caused by attempting to create a key collection with an invalid number of keys
+  #[derive(Debug, PartialEq, DeriveError, Eq, Clone)]
+  pub enum KeyCollectionSizeError {
+    /// A [`KeyCollection`] cannot be empty
+    #[error("key collections cannot be empty")]
+    Empty,
+    /// The number of keys in a [`KeyCollection`] cannot exceed 4096.
+    ///
+    /// The maximum number of keys allowed may increase in the future.
+    // TODO: once rustdoc gets support for including constants we should use KeyCollection::MAX_KEYS_ALLOWED directly.
+    // Alternatively we could make KeyCollection::MAX_KEYS_ALLOWED public and link to that.
+    #[error(
+      "the maximum number of keys allowed is {}, but {0} were provided",
+      KeyCollection::MAX_KEYS_ALLOWED
+    )]
+    MaximumExceeded(usize),
+
+    /// The number of keys is not a non-zero power of two.
+    #[error("the number of keys must be a power of two, but {0} were provided")]
+    NotAPowerOfTwo(usize),
+
+    /// The number of public keys does not correspond to the number of private keys
+    #[error(
+      "the number of public keys: {num_public_keys} does not match the number of private keys: {num_private_keys}"
+    )]
+    KeyPairImbalance {
+      /// The number of public keys
+      num_public_keys: usize,
+      /// The number of private keys
+      num_private_keys: usize,
+    },
+  }
+
+  /// Caused by a failure to produce a valid [`keyCollection`]
+  #[derive(Debug, DeriveError, PartialEq, Eq, Clone)]
+  pub enum KeyCollectionError {
+    /// Size expectations were not met. See [`KeyCollectionSizeError`] for more information.
+    #[error("failed to produce KeyCollection: {0}")]
+    InvalidSize(#[from] KeyCollectionSizeError),
+    /// Key generation failed due to an underlying error.
+    #[error("failed to produce KeyCollection: {0}")]
+    GenerationFailed(String),
   }
 }
 

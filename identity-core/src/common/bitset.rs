@@ -19,25 +19,7 @@ use crate::utils::encode_b64;
 pub(crate) use errors::BitSetDecodingError;
 pub(crate) use errors::BitSetEncodingError;
 
-pub(self) mod errors {
 
-  use thiserror::Error as DeriveError;
-  /// Caused by a failure to encode a Roaring Bitmap.
-  #[derive(Debug, DeriveError)]
-  #[error("failed to encode roaring bitmap {inner}")]
-  pub(crate) struct BitSetEncodingError {
-    #[from]
-    inner: std::io::Error,
-  }
-
-  /// Caused by a failure to decode a Roaring Bitmap.
-  #[derive(Debug, DeriveError)]
-  #[error("failed to decode roaring bitmap {inner}")]
-  pub(crate) struct BitSetDecodingError {
-    #[from]
-    inner: std::io::Error,
-  }
-}
 /// A general-purpose compressed bitset.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BitSet(RoaringBitmap);
@@ -156,6 +138,25 @@ impl<'de> Deserialize<'de> for BitSet {
     }
 
     deserializer.deserialize_str(__Visitor)
+  }
+}
+mod errors {
+
+  use thiserror::Error as DeriveError;
+  /// Caused by a failure to encode a Roaring Bitmap.
+  #[derive(Debug, DeriveError)]
+  #[error("failed to encode roaring bitmap {inner}")]
+  pub(crate) struct BitSetEncodingError {
+    #[from]
+    inner: std::io::Error,
+  }
+
+  /// Caused by a failure to decode a Roaring Bitmap.
+  #[derive(Debug, DeriveError)]
+  #[error("failed to decode roaring bitmap {inner}")]
+  pub(crate) struct BitSetDecodingError {
+    #[from]
+    inner: std::io::Error,
   }
 }
 

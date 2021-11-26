@@ -82,7 +82,7 @@ mod errors {
   use thiserror::Error as DeriveError;
 
   use crate::crypto::signature::errors::VerificationError;
-  use crate::crypto::signature::errors::VerificationProcessingErrorCause;
+  use crate::crypto::signature::errors::ProcessingErrorCause;
   #[derive(Debug, DeriveError)]
   /// Caused by a failure to parse a signature
   #[error("{0}")]
@@ -90,7 +90,7 @@ mod errors {
 
   impl From<SignatureParsingError> for VerificationError {
     fn from(err: SignatureParsingError) -> Self {
-      Self::ProcessingFailed(VerificationProcessingErrorCause::InvalidInputFormat(err.0).into())
+      Self::ProcessingFailed(ProcessingErrorCause::InvalidInputFormat(err.0).into())
     }
   }
 }

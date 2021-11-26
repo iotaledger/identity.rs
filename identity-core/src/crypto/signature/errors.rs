@@ -11,10 +11,13 @@ pub use signing::SigningError;
 pub(crate) use signing::SigningErrorCause;
 pub(crate) use verifying::InvalidProofValue;
 pub(crate) use verifying::VerificationError;
-pub(crate) use verifying::VerificationProcessingErrorCause;
+pub(crate) use verifying::ProcessingErrorCause;
 
 mod signing {
-  use super::DeriveError;
+  use crate::convert::JsonDecodingError;
+use crate::convert::JsonEncodingError;
+
+use super::DeriveError;
   use super::KeyError;
   #[derive(Debug, DeriveError)]
   /// Caused by a failed attempt at retrieving a digital signature.
@@ -42,18 +45,23 @@ mod signing {
     cause: SigningErrorCause,
   }
 
-  // Signing can typically fail due to a failure to serialize or deserialize input data.
-  // Unfortunately serde_json does not have separate error types for serializing and deserializing so
-  // this is in some sense a workaround.
-  // Question: Would it better to have two constructors `pub fn serializing_failed() -> Self, pub fn
-  // deserializing_failed() -> Self`?
-  impl From<(serde_json::Error, &'static str)> for SigningError {
-    fn from(t: (serde_json::Error, &'static str)) -> Self {
+
+  impl From<JsonEncodingError> for SigningError {
+    fn from(_: JsonEncodingError) -> Self {
       Self {
-        cause: SigningErrorCause::Input(t.1),
+        cause: SigningErrorCause::Input("serialization failed"),
       }
     }
   }
+
+  impl From<JsonDecodingError> for SigningError {
+    fn from(_: JsonDecodingError) -> Self {
+      Self {
+        cause: SigningErrorCause::Input("deserialization failed"),
+      }
+    }
+  }
+
   impl From<SigningErrorCause> for SigningError {
     fn from(cause: SigningErrorCause) -> Self {
       Self { cause }
@@ -98,6 +106,9 @@ mod verifying {
   use super::DeriveError;
   use super::KeyError;
   use super::MissingSignatureError;
+  use crate::convert::JsonDecodingError;
+use crate::convert::JsonEncodingError;
+use crate::crypto::merkle_key::MerkleVerificationProcessingErrorCause;
   /// The provided signature does not match the expected value
   #[derive(Debug, DeriveError)]
   #[error("{0}")]
@@ -118,8 +129,8 @@ mod verifying {
     ProcessingFailed(#[from] VerificationProcessingError),
   }
 
-  impl From<VerificationProcessingErrorCause> for VerificationError {
-    fn from(err: VerificationProcessingErrorCause) -> Self {
+  impl From<ProcessingErrorCause> for VerificationError {
+    fn from(err: ProcessingErrorCause) -> Self {
       Self::ProcessingFailed(VerificationProcessingError::from(err))
     }
   }
@@ -130,13 +141,13 @@ mod verifying {
   #[error("{cause}")]
   pub struct VerificationProcessingError {
     #[from]
-    cause: VerificationProcessingErrorCause,
+    cause: ProcessingErrorCause,
   }
 
   // This type gets wrapped in the public VerificationError type, hence we implement the Error trait in order to help
   // users with debugging and error logging.
   #[derive(Debug, DeriveError)]
-  pub(crate) enum VerificationProcessingErrorCause {
+  pub(crate) enum ProcessingErrorCause {
     // The format of the input to the verifier is not provided in the required format
     #[error("invalid input format:: {0}")]
     InvalidInputFormat(&'static str),
@@ -148,14 +159,26 @@ mod verifying {
     Other(&'static str),
   }
 
+  impl From<JsonEncodingError> for VerificationError{
+    fn from(_: JsonEncodingError) -> Self {
+        VerificationError::from(ProcessingErrorCause::InvalidInputFormat("serialization failed"))
+    }
+  }
+
+  impl From<JsonDecodingError> for VerificationError{
+    fn from(_: JsonDecodingError) -> Self {
+        VerificationError::from(ProcessingErrorCause::InvalidInputFormat("deserialization failed"))
+    }
+  }
+
   impl From<MissingSignatureError> for VerificationError {
     fn from(_: MissingSignatureError) -> Self {
-      Self::ProcessingFailed(VerificationProcessingErrorCause::MissingSignature("").into())
+      Self::ProcessingFailed(ProcessingErrorCause::MissingSignature("").into())
     }
   }
   impl From<KeyError> for VerificationError {
     fn from(err: KeyError) -> Self {
-      Self::ProcessingFailed(VerificationProcessingErrorCause::InvalidInputFormat(err.0).into())
+      Self::ProcessingFailed(ProcessingErrorCause::InvalidInputFormat(err.0).into())
     }
   }
 

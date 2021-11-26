@@ -11,8 +11,8 @@ pub enum Error {
   InvalidDeserialization, //TODO: Remove this when this crate has its error types refactored
   #[error(transparent)]
   IotaError(#[from] identity_iota::Error),
-  #[error(transparent)]
-  CoreError(#[from] identity_core::Error),
+  #[error("remove this error when the errors in this crate get refactored")]
+  CoreError, //TODO: Remove this when this crate has its error types refactored
   #[error(transparent)]
   DidError(#[from] identity_did::Error),
   #[error(transparent)]

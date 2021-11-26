@@ -3,20 +3,8 @@
 
 use crypto::signatures::ed25519;
 
-pub use self::errors::Ed25519KeyPairGenerationError;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
-mod errors {
-  use thiserror::Error as DeriveError;
-
-  /// Caused by a failure to generate an ED25519 Keypair
-  #[derive(Debug, DeriveError)]
-  #[error("failed to generate a ed25519 key-pair: {inner}")]
-  pub struct Ed25519KeyPairGenerationError {
-    #[source]
-    pub(crate) inner: crypto::Error,
-  }
-}
 
 /// Generates a new pair of public/private ed25519 keys.
 ///
@@ -52,4 +40,12 @@ pub(crate) fn keypair_from_ed25519_private_key(private_key: ed25519::SecretKey) 
 /// What the original paper calls an *EdDSA secret key* is called a *seed* in the aforementioned blog post.  
 pub fn generate_ed25519_keypairs(count: usize) -> Result<Vec<(PublicKey, PrivateKey)>, Ed25519KeyPairGenerationError> {
   (0..count).map(|_| generate_ed25519_keypair()).collect()
+}
+
+/// Caused by a failure to generate an ED25519 Keypair
+#[derive(Debug, thiserror::Error)]
+#[error("failed to generate a ed25519 key-pair: {inner}")]
+pub struct Ed25519KeyPairGenerationError {
+  #[source]
+  pub(crate) inner: crypto::Error,
 }
