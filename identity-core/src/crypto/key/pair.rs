@@ -10,7 +10,6 @@ use crate::crypto::KeyRef;
 use crate::crypto::KeyType;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
-use crate::error::Result;
 use crate::utils;
 use crate::utils::Ed25519KeyPairGenerationError;
 
