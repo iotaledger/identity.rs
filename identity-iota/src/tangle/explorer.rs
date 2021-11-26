@@ -20,12 +20,6 @@ lazy_static! {
     ExplorerUrl::new(Url::parse("https://explorer.iota.org/devnet").unwrap()).unwrap();
 }
 
-/// A Tangle explorer URL.
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[repr(transparent)]
-#[serde(transparent)]
-pub struct ExplorerUrl(Url);
-
 /// A Tangle explorer URL with convenience functions for constructing URLs for viewing
 /// published messages or IOTA DIDs.
 ///
@@ -42,6 +36,11 @@ pub struct ExplorerUrl(Url);
 /// );
 /// # Ok::<(), identity_iota::Error>(())
 /// ```
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[repr(transparent)]
+#[serde(transparent)]
+pub struct ExplorerUrl(Url);
+
 impl ExplorerUrl {
   /// Constructs a new Tangle explorer URL.
   ///
