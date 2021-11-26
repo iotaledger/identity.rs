@@ -23,11 +23,10 @@ where
 {
   type Private = T;
   type Output = [u8; SIGNATURE_LENGTH];
-  /// signs a message.
+  /// Computes an EdDSA/Ed25519 signature.
   ///
-  /// The private key is expected to be exactly 32 bytes. Other implementations have different conventions for private
-  /// keys, but we follow RFC 8032. What we and the aforementioned RFC call a private key, is called a *secret key* in the paper [High-speed high-security signatures](http://ed25519.cr.yp.to/ed25519-20110926.pdf).
-  /// The following [blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) renames the aforementioned private key/secret key to be called a *seed*.
+  ///  The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+/// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
   fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output> {
     parse_secret(key.as_ref()).map(|key| key.sign(message).to_bytes())
   }
