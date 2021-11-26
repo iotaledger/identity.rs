@@ -1,0 +1,102 @@
+name: Shared / Release
+
+on:
+  workflow_call:
+    inputs:
+      create-github-release:
+        required: true
+        type: boolean
+      changelog-config-path:
+        required: true
+        type: string
+      prod-tag-base:
+        required: true
+        type: string
+      dev-tag-base:
+        required: true
+        type: string
+    outputs:
+      is-release:
+        description: "is release"
+        value: ${{ jobs.build.outputs.is-release }}
+      is-dev-release:
+        description: "is dev release"
+        value: ${{ jobs.build.outputs.is-dev-release }}  
+jobs:
+  build:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      is-release: ${{ steps.determine-version.outputs.is-release }}
+      is-dev-release: ${{ steps.determine-version.outputs.is-dev-release }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # Number of commits to fetch. 0 indicates all history for all branches and tags.
+          fetch-depth: 0
+      - name: Determine Version
+        id: determine-version
+        run: |
+          BRANCHNAME=${{ github.head_ref }}
+          if ! [[ $BRANCHNAME == release/${{ inputs.dev-tag-base }}* || $BRANCHNAME == release/${{ inputs.prod-tag-base }}* ]]; then
+            exit 0
+          fi
+          RELEASE=${BRANCHNAME##*/}
+          IS_RELEASE=true
+          echo IS_RELEASE=$IS_RELEASE
+          echo IS_RELEASE=$IS_RELEASE >> $GITHUB_ENV
+          echo "::set-output name=is-release::=$IS_RELEASE"
+          if [[ $BRANCHNAME == release/${{ inputs.dev-tag-base }}* ]]; then
+            IS_DEV_RELEASE=true
+            LATEST_TAG=$(git tag --list --sort=-taggerdate "${{ inputs.dev-tag-base }}*" | head -n 1)
+          else
+            LATEST_TAG=$(git tag --list --sort=-taggerdate "${{ inputs.prod-tag-base }}*" | head -n 1)
+          fi
+          echo IS_DEV_RELEASE=$IS_DEV_RELEASE
+          echo IS_DEV_RELEASE=$IS_DEV_RELEASE >> $GITHUB_ENV
+          echo "::set-output name=is-dev-release::=$IS_DEV_RELEASE"
+          echo RELEASE=$RELEASE
+          echo RELEASE=$RELEASE >> $GITHUB_ENV
+          echo LATEST_TAG=$LATEST_TAG
+          echo LATEST_TAG=$LATEST_TAG >> $GITHUB_ENV
+
+      - name: Tag Release
+        if: ${{env.IS_RELEASE}}
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag -a -m ${{env.RELEASE}} ${{env.RELEASE}}
+          git push --follow-tags
+
+      - name: Prepare Repository
+        if: ${{env.IS_RELEASE && inputs.create-github-release}}
+        run: |
+          GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
+          GITHUB_REPOSITORY_PROJECT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
+          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER
+          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT
+          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER >> $GITHUB_ENV
+          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT >> $GITHUB_ENV
+
+      - name: Run github-changelog-generator for release
+        if: ${{env.IS_RELEASE && inputs.create-github-release}}
+        uses: docker://githubchangeloggenerator/github-changelog-generator
+        with:
+          args: >
+            --config-file ${{ inputs.changelog-config-path }}
+            --user ${{ env.GITHUB_REPOSITORY_USER }}
+            --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
+            --token ${{ secrets.GITHUB_TOKEN }} 
+            --future-release ${{env.RELEASE}}
+            --since-tag ${{ env.LATEST_TAG }}
+            --output RELEASE_CHANGELOG.md
+
+      - name: Create Release
+        if: ${{env.IS_RELEASE && inputs.create-github-release}}
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: RELEASE_CHANGELOG.md
+          prerelease: ${{env.IS_DEV_RELEASE}}
+          tag_name: ${{env.RELEASE}}
+      

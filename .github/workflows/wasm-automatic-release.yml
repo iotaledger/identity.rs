@@ -1,0 +1,29 @@
+name: WASM Automatic Release
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+    types: [closed]
+jobs:
+  call-create-release-workflow:
+    if: github.event.pull_request.merged == true
+    # owner/repository has to be static, see https://github.community/t/env-variables-in-uses/17466
+    uses: eike-hass/identity.rs/.github/workflows/shared-release.yml@dev
+    with:
+      changelog-config-path: ./bindings/wasm/.github_changelog_generator
+      dev-tag-base: wasm-dev-
+      prod-tag-base: wasm-v
+      create-github-release: false
+  release:
+    runs-on: ubuntu-latest
+    needs: call-create-release-workflow
+    if: ${{ needs.call-create-release-workflow.outputs.is-release }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Release to npm
+        uses: './.github/actions/release/release-npm'
+        with:
+          tag: ${{ needs.call-create-release-workflow.outputs.is-dev-release && 'dev' }}

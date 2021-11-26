@@ -38,7 +38,7 @@ runs:
 
     - name: Publish WASM bindings to NPM
       shell: sh
-      run: npm publish $(if [ ${{ inputs.tag }} != '' ]; then echo --tag ${{ inputs.tag }}; fi) --access public
+      run: echo npm publish $(if [ ${{ inputs.tag }} != '' ]; then echo --tag ${{ inputs.tag }}; fi) --access public
       #env:
       #  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       working-directory: bindings/wasm

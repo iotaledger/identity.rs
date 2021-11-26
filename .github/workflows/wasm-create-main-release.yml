@@ -1,0 +1,18 @@
+name: WASM Create Main Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release under (e.g. `wasm-v1.2.3`)'
+        required: true
+
+jobs:
+  call-create-release-workflow:
+    # owner/repository has to be static, see https://github.community/t/env-variables-in-uses/17466
+    uses: eike-hass/identity.rs/.github/workflows/shared-create-release.yml@dev
+    with:
+      tag: ${{ github.event.inputs.version }}
+      prod-tag-regex: ^wasm-v[0-9]+\.[0-9]+\.[0-9]+$
+      changelog-config-path: ./bindings/wasm/.github_changelog_generator
+      changelog-path: ./bindings/wasm/CHANGELOG.md
