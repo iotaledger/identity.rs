@@ -18,6 +18,7 @@ use identity::did::MethodScope;
 use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::CredentialValidation;
+use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::Result;
@@ -46,7 +47,15 @@ async fn main() -> Result<()> {
   let update_receipt = client.publish_document(&issuer_doc).await?;
 
   // Log the resulting Identity update
-  println!("Issuer Identity Update > {}", update_receipt.message_url()?);
+  let explorer: &ExplorerUrl = ExplorerUrl::mainnet();
+  println!(
+    "Issuer Update Transaction > {}",
+    explorer.message_url(update_receipt.message_id())?
+  );
+  println!(
+    "Explore the Issuer DID Document > {}",
+    explorer.resolver_url(issuer_doc.did())?
+  );
 
   // Check the verifiable credential
   let validation: CredentialValidation = common::check_credential(&client, &signed_vc).await?;

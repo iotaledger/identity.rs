@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Client, Config, Document, KeyPair, KeyType } from '@iota/identity-wasm';
-import { logExplorerUrl } from './utils';
+import { logExplorerUrl, logResolverUrl } from './utils';
 
 /**
     This example shows a basic introduction on how to create a basic DID Document and upload it to the Tangle.
@@ -10,7 +10,7 @@ import { logExplorerUrl } from './utils';
     The keypair becomes part of the DID Document in order to prove a link between the DID and the published DID Document.
     That same keypair should be used to sign the original DID Document.
 
-    @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+    @param {{network: Network, explorer: ExplorerUrl}} clientConfig
 **/
 async function createIdentity(clientConfig) {
     // Generate a new ed25519 public/private key pair.
@@ -33,7 +33,8 @@ async function createIdentity(clientConfig) {
     doc.messageId = receipt.messageId;
 
     // Log the results.
-    logExplorerUrl("Identity Creation:", clientConfig.network.toString(), receipt.messageId);
+    logExplorerUrl("DID Document Transaction:", clientConfig.explorer, receipt.messageId);
+    logResolverUrl("Explore the DID Document:", clientConfig.explorer, doc.id.toString());
 
     // Return the results.
     return {key, doc, receipt};

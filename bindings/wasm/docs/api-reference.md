@@ -19,6 +19,8 @@
 <dt><a href="#DocumentHistory">DocumentHistory</a></dt>
 <dd><p>A DID Document&#39;s history and current state.</p>
 </dd>
+<dt><a href="#ExplorerUrl">ExplorerUrl</a></dt>
+<dd></dd>
 <dt><a href="#IntegrationChainHistory">IntegrationChainHistory</a></dt>
 <dd></dd>
 <dt><a href="#KeyCollection">KeyCollection</a></dt>
@@ -44,11 +46,11 @@
 ## Members
 
 <dl>
-<dt><a href="#KeyType">KeyType</a></dt>
-<dd></dd>
 <dt><a href="#DIDMessageEncoding">DIDMessageEncoding</a></dt>
 <dd></dd>
 <dt><a href="#Digest">Digest</a></dt>
+<dd></dd>
+<dt><a href="#KeyType">KeyType</a></dt>
 <dd></dd>
 </dl>
 
@@ -685,7 +687,7 @@ Deserializes from a JSON object.
         * [.previousMessageId](#Document+previousMessageId) ⇒ <code>string</code>
         * [.previousMessageId](#Document+previousMessageId)
         * [.defaultSigningMethod()](#Document+defaultSigningMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
-        * [.insertMethod(method, scope)](#Document+insertMethod) ⇒ <code>boolean</code>
+        * [.insertMethod(method, scope)](#Document+insertMethod)
         * [.removeMethod(did)](#Document+removeMethod)
         * [.insertService(service)](#Document+insertService) ⇒ <code>boolean</code>
         * [.removeService(did)](#Document+removeService)
@@ -822,7 +824,7 @@ Throws an error if no signing method is present.
 **Kind**: instance method of [<code>Document</code>](#Document)  
 <a name="Document+insertMethod"></a>
 
-### document.insertMethod(method, scope) ⇒ <code>boolean</code>
+### document.insertMethod(method, scope)
 Adds a new Verification Method to the DID Document.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -1239,6 +1241,77 @@ Deserializes `DocumentHistory` from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
+<a name="ExplorerUrl"></a>
+
+## ExplorerUrl
+**Kind**: global class  
+
+* [ExplorerUrl](#ExplorerUrl)
+    * _instance_
+        * [.messageUrl(message_id)](#ExplorerUrl+messageUrl) ⇒ <code>string</code>
+        * [.resolverUrl(did)](#ExplorerUrl+resolverUrl) ⇒ <code>string</code>
+        * [.toString()](#ExplorerUrl+toString) ⇒ <code>string</code>
+    * _static_
+        * [.parse(url)](#ExplorerUrl.parse) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+        * [.mainnet()](#ExplorerUrl.mainnet) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+        * [.devnet()](#ExplorerUrl.devnet) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+
+<a name="ExplorerUrl+messageUrl"></a>
+
+### explorerUrl.messageUrl(message_id) ⇒ <code>string</code>
+Returns the web explorer URL of the given `message_id`.
+
+E.g. https://explorer.iota.org/mainnet/message/<message_id>
+
+**Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> | 
+
+<a name="ExplorerUrl+resolverUrl"></a>
+
+### explorerUrl.resolverUrl(did) ⇒ <code>string</code>
+Returns the web identity resolver URL for the given DID.
+
+E.g. https://explorer.iota.org/mainnet/identity-resolver/<did>
+
+**Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+
+| Param | Type |
+| --- | --- |
+| did | <code>string</code> | 
+
+<a name="ExplorerUrl+toString"></a>
+
+### explorerUrl.toString() ⇒ <code>string</code>
+**Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+<a name="ExplorerUrl.parse"></a>
+
+### ExplorerUrl.parse(url) ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+Constructs a new Tangle explorer URL from a string.
+
+Use `ExplorerUrl::mainnet` or `ExplorerUrl::devnet` unless using a private Tangle
+or local explorer.
+
+**Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> | 
+
+<a name="ExplorerUrl.mainnet"></a>
+
+### ExplorerUrl.mainnet() ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+Returns the Tangle explorer URL for the mainnet.
+
+**Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
+<a name="ExplorerUrl.devnet"></a>
+
+### ExplorerUrl.devnet() ⇒ [<code>ExplorerUrl</code>](#ExplorerUrl)
+Returns the Tangle explorer URL for the devnet.
+
+**Kind**: static method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
 <a name="IntegrationChainHistory"></a>
 
 ## IntegrationChainHistory
@@ -1471,8 +1544,6 @@ Deserializes a `KeyPair` object from a JSON object.
 * [Network](#Network)
     * _instance_
         * [.defaultNodeURL](#Network+defaultNodeURL) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.explorerURL](#Network+explorerURL) ⇒ <code>string</code> \| <code>undefined</code>
-        * [.messageURL(message_id)](#Network+messageURL) ⇒ <code>string</code>
         * [.toString()](#Network+toString) ⇒ <code>string</code>
     * _static_
         * [.try_from_name(name)](#Network.try_from_name) ⇒ [<code>Network</code>](#Network)
@@ -1485,23 +1556,6 @@ Deserializes a `KeyPair` object from a JSON object.
 Returns the node URL of the Tangle network.
 
 **Kind**: instance property of [<code>Network</code>](#Network)  
-<a name="Network+explorerURL"></a>
-
-### network.explorerURL ⇒ <code>string</code> \| <code>undefined</code>
-Returns the web explorer URL of the Tangle network.
-
-**Kind**: instance property of [<code>Network</code>](#Network)  
-<a name="Network+messageURL"></a>
-
-### network.messageURL(message_id) ⇒ <code>string</code>
-Returns the web explorer URL of the given `message`.
-
-**Kind**: instance method of [<code>Network</code>](#Network)  
-
-| Param | Type |
-| --- | --- |
-| message_id | <code>string</code> | 
-
 <a name="Network+toString"></a>
 
 ### network.toString() ⇒ <code>string</code>
@@ -1844,10 +1898,6 @@ Deserializes a `VerificationMethod` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
-<a name="KeyType"></a>
-
-## KeyType
-**Kind**: global variable  
 <a name="DIDMessageEncoding"></a>
 
 ## DIDMessageEncoding
@@ -1855,6 +1905,10 @@ Deserializes a `VerificationMethod` object from a JSON object.
 <a name="Digest"></a>
 
 ## Digest
+**Kind**: global variable  
+<a name="KeyType"></a>
+
+## KeyType
 **Kind**: global variable  
 <a name="start"></a>
 

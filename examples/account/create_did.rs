@@ -9,6 +9,7 @@ use identity::account::Account;
 use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use identity::account::Result;
+use identity::iota::ExplorerUrl;
 use identity::iota::IotaDID;
 
 #[tokio::main]
@@ -43,10 +44,10 @@ async fn main() -> Result<()> {
 
   // Prints the Identity Resolver Explorer URL.
   // The entire history can be observed on this page by clicking "Loading History".
+  let explorer: &ExplorerUrl = ExplorerUrl::mainnet();
   println!(
-    "[Example] Explore the DID Document = {}{}",
-    iota_did.network()?.explorer_url().unwrap().to_string(),
-    iota_did.to_string()
+    "[Example] Explore the DID Document = {}",
+    explorer.resolver_url(iota_did)?
   );
 
   Ok(())
