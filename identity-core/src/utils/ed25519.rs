@@ -7,10 +7,10 @@ use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
 use crate::error::Result;
 
-/// Generates a new pair of public/private ed25519 keys.
+/// Generates a new pair of public/private Ed25519 keys.
 ///
-/// Note that the ed25519 private keys used in this crate comply with the definition given in [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
-/// Other implementations often have another format for ed25519 private keys. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanations.
+/// Note that the private key is a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+/// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
 pub fn generate_ed25519_keypair() -> Result<(PublicKey, PrivateKey)> {
   let secret: ed25519::SecretKey = ed25519::SecretKey::generate()?;
   let public: ed25519::PublicKey = secret.public_key();
