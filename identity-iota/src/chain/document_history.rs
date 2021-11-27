@@ -4,6 +4,10 @@
 use std::collections::HashSet;
 use std::ops::Deref;
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 use crate::chain::DiffChain;
 use crate::chain::IntegrationChain;
 use crate::did::IotaDID;

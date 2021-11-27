@@ -11,6 +11,9 @@ use std::convert::TryInto;
 
 use crypto::hashes::blake2b::Blake2b256;
 use crypto::hashes::Digest;
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
 
 use identity_core::utils::decode_b58;
 use identity_core::utils::encode_b58;
