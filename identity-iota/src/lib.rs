@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![cfg_attr(docsrs, feature(doc_cfg, extended_key_value_attributes))]
-#![cfg_attr(docsrs, cfg_attr(docsrs, doc = include_str ! ("../README.md")))]
+#![cfg_attr(docsrs, cfg_attr(docsrs, doc = include_str!("../README.md")))]
 #![cfg_attr(not(docsrs), doc = "")]
 #![allow(clippy::upper_case_acronyms)]
 #![warn(
