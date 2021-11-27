@@ -30,10 +30,10 @@ pub async fn main() -> Result<()> {
   let network_name = "dev";
   let network = Network::try_from_name(network_name)?;
 
-  // If you deployed an explorer locally this would usually be `http://127.0.0.1:8082/`
-  let explorer = ExplorerUrl::parse("https://explorer.iota.org/devnet/")?;
+  // If you deployed an explorer locally this would usually be `http://127.0.0.1:8082`
+  let explorer = ExplorerUrl::parse("https://explorer.iota.org/devnet")?;
 
-  // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265/`
+  // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265`
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
   // Use DIDMessageEncoding::Json instead to publish plaintext messages to the Tangle for debugging.
@@ -59,7 +59,7 @@ pub async fn main() -> Result<()> {
   let receipt: Receipt = match client.publish_document(&document).await {
     Ok(receipt) => receipt,
     Err(err) => {
-      eprintln!("Error > {:?} {}", err, err.to_string());
+      eprintln!("Error > {:?}", err);
       eprintln!("Is your private Tangle node listening on {}?", private_node_url);
       return Ok(());
     }

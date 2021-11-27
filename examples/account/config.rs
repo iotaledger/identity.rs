@@ -27,10 +27,10 @@ async fn main() -> Result<()> {
   let network_name = "dev";
   let network = Network::try_from_name(network_name)?;
 
-  // If you deployed an explorer locally this would usually be `http://127.0.0.1:8082/`
-  let explorer = ExplorerUrl::parse("https://explorer.iota.org/devnet/")?;
+  // If you deployed an explorer locally this would usually be `http://127.0.0.1:8082`
+  let explorer = ExplorerUrl::parse("https://explorer.iota.org/devnet")?;
 
-  // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265/`
+  // In a locally running one-click tangle, this would often be `http://127.0.0.1:14265`
   let private_node_url = "https://api.lb-0.h.chrysalis-devnet.iota.cafe";
 
   // Create a new Account with explicit configuration
@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
   let identity: Account = match builder.create_identity(identity_setup).await {
     Ok(identity) => identity,
     Err(err) => {
-      eprintln!("[Example] Error: {:?} {}", err, err.to_string());
+      eprintln!("[Example] Error: {:?}", err);
       eprintln!("[Example] Is your Tangle node listening on {}?", private_node_url);
       return Ok(());
     }
