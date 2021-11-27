@@ -11,11 +11,11 @@
 <dd></dd>
 <dt><a href="#DiffChainHistory">DiffChainHistory</a></dt>
 <dd></dd>
-<dt><a href="#Document">Document</a></dt>
-<dd></dd>
-<dt><a href="#DocumentDiff">DocumentDiff</a></dt>
+<dt><a href="#DiffMessage">DiffMessage</a></dt>
 <dd><p>Defines the difference between two DID <code>Document</code>s&#39; JSON representations.</p>
 </dd>
+<dt><a href="#Document">Document</a></dt>
+<dd></dd>
 <dt><a href="#DocumentHistory">DocumentHistory</a></dt>
 <dd><p>A DID Document&#39;s history and current state.</p>
 </dd>
@@ -109,14 +109,14 @@ Publishes an `IotaDocument` to the Tangle.
 <a name="Client+publishDiff"></a>
 
 ### client.publishDiff(message_id, diff) ⇒ [<code>Promise.&lt;Receipt&gt;</code>](#Receipt)
-Publishes a `DocumentDiff` to the Tangle.
+Publishes a `DiffMessage` to the Tangle.
 
 **Kind**: instance method of [<code>Client</code>](#Client)  
 
 | Param | Type |
 | --- | --- |
 | message_id | <code>string</code> | 
-| diff | [<code>DocumentDiff</code>](#DocumentDiff) | 
+| diff | [<code>DiffMessage</code>](#DiffMessage) | 
 
 <a name="Client+publishJSON"></a>
 
@@ -629,7 +629,7 @@ Parses a `DIDUrl` from the input string.
 
 * [DiffChainHistory](#DiffChainHistory)
     * _instance_
-        * [.chainData()](#DiffChainHistory+chainData) ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+        * [.chainData()](#DiffChainHistory+chainData) ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)
         * [.spam()](#DiffChainHistory+spam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#DiffChainHistory+toJSON) ⇒ <code>any</code>
     * _static_
@@ -637,8 +637,8 @@ Parses a `DIDUrl` from the input string.
 
 <a name="DiffChainHistory+chainData"></a>
 
-### diffChainHistory.chainData() ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
-Returns an `Array` of the diff chain `DocumentDiffs`.
+### diffChainHistory.chainData() ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)
+Returns an `Array` of the diff chain `DiffMessages`.
 
 NOTE: this clones the field.
 
@@ -667,6 +667,98 @@ Deserializes from a JSON object.
 | Param | Type |
 | --- | --- |
 | json | <code>any</code> | 
+
+<a name="DiffMessage"></a>
+
+## DiffMessage
+Defines the difference between two DID `Document`s' JSON representations.
+
+**Kind**: global class  
+
+* [DiffMessage](#DiffMessage)
+    * [.did](#DiffMessage+did) ⇒ [<code>DID</code>](#DID)
+    * [.diff](#DiffMessage+diff) ⇒ <code>string</code>
+    * [.messageId](#DiffMessage+messageId) ⇒ <code>string</code>
+    * [.messageId](#DiffMessage+messageId)
+    * [.previousMessageId](#DiffMessage+previousMessageId) ⇒ <code>string</code>
+    * [.previousMessageId](#DiffMessage+previousMessageId)
+    * [.proof](#DiffMessage+proof) ⇒ <code>any</code>
+    * [.id()](#DiffMessage+id) ⇒ [<code>DID</code>](#DID)
+    * [.merge(document)](#DiffMessage+merge) ⇒ [<code>Document</code>](#Document)
+
+<a name="DiffMessage+did"></a>
+
+### diffMessage.did ⇒ [<code>DID</code>](#DID)
+Returns the DID of the associated DID Document.
+
+**Kind**: instance property of [<code>DiffMessage</code>](#DiffMessage)  
+<a name="DiffMessage+diff"></a>
+
+### diffMessage.diff ⇒ <code>string</code>
+Returns the raw contents of the DID Document diff.
+
+NOTE: clones the data.
+
+**Kind**: instance property of [<code>DiffMessage</code>](#DiffMessage)  
+<a name="DiffMessage+messageId"></a>
+
+### diffMessage.messageId ⇒ <code>string</code>
+Returns the message_id of the DID Document diff.
+
+**Kind**: instance property of [<code>DiffMessage</code>](#DiffMessage)  
+<a name="DiffMessage+messageId"></a>
+
+### diffMessage.messageId
+Sets the message_id of the DID Document diff.
+
+**Kind**: instance property of [<code>DiffMessage</code>](#DiffMessage)  
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> | 
+
+<a name="DiffMessage+previousMessageId"></a>
+
+### diffMessage.previousMessageId ⇒ <code>string</code>
+Returns the Tangle message id of the previous DID Document diff.
+
+**Kind**: instance property of [<code>DiffMessage</code>](#DiffMessage)  
+<a name="DiffMessage+previousMessageId"></a>
+
+### diffMessage.previousMessageId
+Sets the Tangle message id of the previous DID Document diff.
+
+**Kind**: instance property of [<code>DiffMessage</code>](#DiffMessage)  
+
+| Param | Type |
+| --- | --- |
+| message_id | <code>string</code> | 
+
+<a name="DiffMessage+proof"></a>
+
+### diffMessage.proof ⇒ <code>any</code>
+Returns the `proof` object.
+
+**Kind**: instance property of [<code>DiffMessage</code>](#DiffMessage)  
+<a name="DiffMessage+id"></a>
+
+### diffMessage.id() ⇒ [<code>DID</code>](#DID)
+Returns the DID of the associated DID Document.
+
+NOTE: clones the data.
+
+**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
+<a name="DiffMessage+merge"></a>
+
+### diffMessage.merge(document) ⇒ [<code>Document</code>](#Document)
+Returns a new DID Document which is the result of merging `self`
+with the given Document.
+
+**Kind**: instance method of [<code>DiffMessage</code>](#DiffMessage)  
+
+| Param | Type |
+| --- | --- |
+| document | [<code>Document</code>](#Document) | 
 
 <a name="Document"></a>
 
@@ -700,7 +792,7 @@ Deserializes from a JSON object.
         * [.verifyDataWithScope(data, scope)](#Document+verifyDataWithScope) ⇒ <code>boolean</code>
         * [.resolveMethod(query)](#Document+resolveMethod) ⇒ [<code>VerificationMethod</code>](#VerificationMethod)
         * [.revokeMerkleKey(query, index)](#Document+revokeMerkleKey) ⇒ <code>boolean</code>
-        * [.diff(other, message, key, method)](#Document+diff) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
+        * [.diff(other, message, key, method)](#Document+diff) ⇒ [<code>DiffMessage</code>](#DiffMessage)
         * [.verifyDiff(diff)](#Document+verifyDiff)
         * [.merge(diff)](#Document+merge)
         * [.integrationIndex()](#Document+integrationIndex) ⇒ <code>string</code>
@@ -971,8 +1063,8 @@ in this DID Document with the verification relationship specified by `scope`.
 
 <a name="Document+diff"></a>
 
-### document.diff(other, message, key, method) ⇒ [<code>DocumentDiff</code>](#DocumentDiff)
-Generate a `DocumentDiff` between two DID Documents and sign it using the specified
+### document.diff(other, message, key, method) ⇒ [<code>DiffMessage</code>](#DiffMessage)
+Generate a `DiffMessage` between two DID Documents and sign it using the specified
 `key` and `method`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
@@ -998,18 +1090,18 @@ Fails if an unsupported verification method is used or the verification operatio
 
 | Param | Type |
 | --- | --- |
-| diff | [<code>DocumentDiff</code>](#DocumentDiff) | 
+| diff | [<code>DiffMessage</code>](#DiffMessage) | 
 
 <a name="Document+merge"></a>
 
 ### document.merge(diff)
-Verifies a `DocumentDiff` signature and merges the changes into `self`.
+Verifies a `DiffMessage` signature and merges the changes into `self`.
 
 **Kind**: instance method of [<code>Document</code>](#Document)  
 
 | Param | Type |
 | --- | --- |
-| diff | [<code>DocumentDiff</code>](#DocumentDiff) | 
+| diff | [<code>DiffMessage</code>](#DiffMessage) | 
 
 <a name="Document+integrationIndex"></a>
 
@@ -1081,98 +1173,6 @@ Deserializes a `Document` object from a JSON object.
 | --- | --- |
 | json | <code>any</code> | 
 
-<a name="DocumentDiff"></a>
-
-## DocumentDiff
-Defines the difference between two DID `Document`s' JSON representations.
-
-**Kind**: global class  
-
-* [DocumentDiff](#DocumentDiff)
-    * [.did](#DocumentDiff+did) ⇒ [<code>DID</code>](#DID)
-    * [.diff](#DocumentDiff+diff) ⇒ <code>string</code>
-    * [.messageId](#DocumentDiff+messageId) ⇒ <code>string</code>
-    * [.messageId](#DocumentDiff+messageId)
-    * [.previousMessageId](#DocumentDiff+previousMessageId) ⇒ <code>string</code>
-    * [.previousMessageId](#DocumentDiff+previousMessageId)
-    * [.proof](#DocumentDiff+proof) ⇒ <code>any</code>
-    * [.id()](#DocumentDiff+id) ⇒ [<code>DID</code>](#DID)
-    * [.merge(document)](#DocumentDiff+merge) ⇒ [<code>Document</code>](#Document)
-
-<a name="DocumentDiff+did"></a>
-
-### documentDiff.did ⇒ [<code>DID</code>](#DID)
-Returns the DID of the associated DID Document.
-
-**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
-<a name="DocumentDiff+diff"></a>
-
-### documentDiff.diff ⇒ <code>string</code>
-Returns the raw contents of the DID Document diff.
-
-NOTE: clones the data.
-
-**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
-<a name="DocumentDiff+messageId"></a>
-
-### documentDiff.messageId ⇒ <code>string</code>
-Returns the message_id of the DID Document diff.
-
-**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
-<a name="DocumentDiff+messageId"></a>
-
-### documentDiff.messageId
-Sets the message_id of the DID Document diff.
-
-**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
-
-| Param | Type |
-| --- | --- |
-| message_id | <code>string</code> | 
-
-<a name="DocumentDiff+previousMessageId"></a>
-
-### documentDiff.previousMessageId ⇒ <code>string</code>
-Returns the Tangle message id of the previous DID Document diff.
-
-**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
-<a name="DocumentDiff+previousMessageId"></a>
-
-### documentDiff.previousMessageId
-Sets the Tangle message id of the previous DID Document diff.
-
-**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
-
-| Param | Type |
-| --- | --- |
-| message_id | <code>string</code> | 
-
-<a name="DocumentDiff+proof"></a>
-
-### documentDiff.proof ⇒ <code>any</code>
-Returns the `proof` object.
-
-**Kind**: instance property of [<code>DocumentDiff</code>](#DocumentDiff)  
-<a name="DocumentDiff+id"></a>
-
-### documentDiff.id() ⇒ [<code>DID</code>](#DID)
-Returns the DID of the associated DID Document.
-
-NOTE: clones the data.
-
-**Kind**: instance method of [<code>DocumentDiff</code>](#DocumentDiff)  
-<a name="DocumentDiff+merge"></a>
-
-### documentDiff.merge(document) ⇒ [<code>Document</code>](#Document)
-Returns a new DID Document which is the result of merging `self`
-with the given Document.
-
-**Kind**: instance method of [<code>DocumentDiff</code>](#DocumentDiff)  
-
-| Param | Type |
-| --- | --- |
-| document | [<code>Document</code>](#Document) | 
-
 <a name="DocumentHistory"></a>
 
 ## DocumentHistory
@@ -1184,7 +1184,7 @@ A DID Document's history and current state.
     * _instance_
         * [.integrationChainData()](#DocumentHistory+integrationChainData) ⇒ [<code>Array.&lt;Document&gt;</code>](#Document)
         * [.integrationChainSpam()](#DocumentHistory+integrationChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
-        * [.diffChainData()](#DocumentHistory+diffChainData) ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
+        * [.diffChainData()](#DocumentHistory+diffChainData) ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)
         * [.diffChainSpam()](#DocumentHistory+diffChainSpam) ⇒ <code>Array.&lt;string&gt;</code>
         * [.toJSON()](#DocumentHistory+toJSON) ⇒ <code>any</code>
     * _static_
@@ -1209,8 +1209,8 @@ NOTE: clones the data.
 **Kind**: instance method of [<code>DocumentHistory</code>](#DocumentHistory)  
 <a name="DocumentHistory+diffChainData"></a>
 
-### documentHistory.diffChainData() ⇒ [<code>Array.&lt;DocumentDiff&gt;</code>](#DocumentDiff)
-Returns an `Array` of diff chain `DocumentDiffs`.
+### documentHistory.diffChainData() ⇒ [<code>Array.&lt;DiffMessage&gt;</code>](#DiffMessage)
+Returns an `Array` of diff chain `DiffMessages`.
 
 NOTE: clones the data.
 

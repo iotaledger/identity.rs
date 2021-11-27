@@ -4,7 +4,7 @@
 use std::ops::Deref;
 use std::str::FromStr;
 
-use identity::iota::DocumentDiff;
+use identity::iota::DiffMessage;
 use identity::iota::MessageId;
 use identity::iota::TangleRef;
 use wasm_bindgen::prelude::*;
@@ -15,12 +15,12 @@ use crate::error::Result;
 use crate::error::WasmResult;
 
 /// Defines the difference between two DID `Document`s' JSON representations.
-#[wasm_bindgen(js_name = DocumentDiff, inspectable)]
+#[wasm_bindgen(js_name = DiffMessage, inspectable)]
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct WasmDocumentDiff(pub(crate) DocumentDiff);
+pub struct WasmDiffMessage(pub(crate) DiffMessage);
 
-#[wasm_bindgen(js_class = DocumentDiff)]
-impl WasmDocumentDiff {
+#[wasm_bindgen(js_class = DiffMessage)]
+impl WasmDiffMessage {
   /// Returns the DID of the associated DID Document.
   ///
   /// NOTE: clones the data.
@@ -87,14 +87,14 @@ impl WasmDocumentDiff {
   }
 }
 
-impl From<DocumentDiff> for WasmDocumentDiff {
-  fn from(document_diff: DocumentDiff) -> Self {
+impl From<DiffMessage> for WasmDiffMessage {
+  fn from(document_diff: DiffMessage) -> Self {
     Self(document_diff)
   }
 }
 
-impl Deref for WasmDocumentDiff {
-  type Target = DocumentDiff;
+impl Deref for WasmDiffMessage {
+  type Target = DiffMessage;
 
   fn deref(&self) -> &Self::Target {
     &self.0

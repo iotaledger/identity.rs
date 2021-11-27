@@ -7,7 +7,7 @@ use dashmap::DashMap;
 
 use crate::chain::DocumentChain;
 use crate::did::IotaDID;
-use crate::document::DocumentDiff;
+use crate::document::DiffMessage;
 use crate::document::IotaDocument;
 use crate::error::Result;
 use crate::tangle::Client;
@@ -61,7 +61,7 @@ impl ClientMap {
     client.publish_document(document).await
   }
 
-  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
+  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DiffMessage) -> Result<Receipt> {
     let network: Network = diff.id().network()?;
     let client: Arc<Client> = self.client(network).await?;
 

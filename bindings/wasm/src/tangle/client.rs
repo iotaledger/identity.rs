@@ -25,8 +25,8 @@ use crate::chain::PromiseDiffChainHistory;
 use crate::chain::PromiseDocumentHistory;
 use crate::chain::WasmDocumentHistory;
 use crate::did::PromiseDocument;
+use crate::did::WasmDiffMessage;
 use crate::did::WasmDocument;
-use crate::did::WasmDocumentDiff;
 use crate::error::Result;
 use crate::error::WasmResult;
 use crate::tangle::Config;
@@ -97,9 +97,9 @@ impl Client {
     Ok(promise.unchecked_into::<PromiseReceipt>())
   }
 
-  /// Publishes a `DocumentDiff` to the Tangle.
+  /// Publishes a `DiffMessage` to the Tangle.
   #[wasm_bindgen(js_name = publishDiff)]
-  pub fn publish_diff(&self, message_id: &str, diff: WasmDocumentDiff) -> Result<PromiseReceipt> {
+  pub fn publish_diff(&self, message_id: &str, diff: WasmDiffMessage) -> Result<PromiseReceipt> {
     let message: MessageId = MessageId::from_str(message_id).wasm_result()?;
     let client: Rc<IotaClient> = self.client.clone();
 

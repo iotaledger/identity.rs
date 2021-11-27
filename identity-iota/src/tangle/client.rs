@@ -15,7 +15,7 @@ use crate::chain::DocumentChain;
 use crate::chain::DocumentHistory;
 use crate::chain::IntegrationChain;
 use crate::did::IotaDID;
-use crate::document::DocumentDiff;
+use crate::document::DiffMessage;
 use crate::document::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
@@ -87,11 +87,11 @@ impl Client {
       .await
   }
 
-  /// Publishes a [`DocumentDiff`] to the Tangle to form part of the diff chain for the integration.
+  /// Publishes a [`DiffMessage`] to the Tangle to form part of the diff chain for the integration.
   /// chain message specified by the given [`MessageId`].
   /// This method calls `publish_json_with_retry` with its default `interval` and `max_attempts` values for increasing
   /// the probability that the message will be referenced by a milestone.
-  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
+  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DiffMessage) -> Result<Receipt> {
     self
       .publish_json_with_retry(&IotaDocument::diff_index(message_id)?, diff, None, None)
       .await
@@ -200,7 +200,7 @@ impl Client {
   ///
   /// NOTE: the document must have been published to the Tangle and have a valid message id and
   /// authentication method.
-  pub async fn resolve_diff_history(&self, document: &IotaDocument) -> Result<ChainHistory<DocumentDiff>> {
+  pub async fn resolve_diff_history(&self, document: &IotaDocument) -> Result<ChainHistory<DiffMessage>> {
     let diff_index: String = IotaDocument::diff_index(document.message_id())?;
     let diff_messages: Vec<Message> = self.read_messages(&diff_index).await?;
     ChainHistory::try_from_raw_messages(document, &diff_messages)

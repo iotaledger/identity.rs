@@ -43,7 +43,7 @@ use identity_did::verification::VerificationMethod;
 
 use crate::did::IotaDID;
 use crate::did::IotaDIDUrl;
-use crate::document::DocumentDiff;
+use crate::document::DiffMessage;
 use crate::document::IotaVerificationMethod;
 use crate::document::Properties as BaseProperties;
 use crate::error::Error;
@@ -640,9 +640,9 @@ impl IotaDocument {
   // Diffs
   // ===========================================================================
 
-  /// Creates a `DocumentDiff` representing the changes between `self` and `other`.
+  /// Creates a `DiffMessage` representing the changes between `self` and `other`.
   ///
-  /// The returned `DocumentDiff` will have a digital signature created using the
+  /// The returned `DiffMessage` will have a digital signature created using the
   /// specified `private_key` and `method_query`.
   ///
   /// NOTE: the method must be a capability invocation method.
@@ -656,11 +656,11 @@ impl IotaDocument {
     message_id: MessageId,
     private_key: &'query PrivateKey,
     method_query: Q,
-  ) -> Result<DocumentDiff>
+  ) -> Result<DiffMessage>
   where
     Q: Into<MethodQuery<'query>>,
   {
-    let mut diff: DocumentDiff = DocumentDiff::new(self, other, message_id)?;
+    let mut diff: DiffMessage = DiffMessage::new(self, other, message_id)?;
 
     // Ensure the signing method has a capability invocation verification relationship.
     let method_query = method_query.into();
@@ -679,11 +679,11 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if an unsupported verification method is used or the verification operation fails.
-  pub fn verify_diff(&self, diff: &DocumentDiff) -> Result<()> {
+  pub fn verify_diff(&self, diff: &DiffMessage) -> Result<()> {
     self.verify_data_with_scope(diff, MethodScope::capability_invocation())
   }
 
-  /// Verifies a `DocumentDiff` signature and merges the changes into `self`.
+  /// Verifies a `DiffMessage` signature and merges the changes into `self`.
   ///
   /// If merging fails `self` remains unmodified, otherwise `self` represents
   /// the merged document state.
@@ -693,7 +693,7 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if the merge operation or signature operation fails.
-  pub fn merge(&mut self, diff: &DocumentDiff) -> Result<()> {
+  pub fn merge(&mut self, diff: &DiffMessage) -> Result<()> {
     self.verify_diff(diff)?;
 
     *self = diff.merge(self)?;
