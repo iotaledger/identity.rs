@@ -1,6 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::convert::FromJson;
 use identity_core::convert::SerdeInto;
 use identity_core::convert::ToJson;

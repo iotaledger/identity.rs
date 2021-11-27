@@ -7,6 +7,10 @@ use core::fmt::Formatter;
 use core::ops::Deref;
 use std::borrow::Cow;
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::common::Url;
 
 use crate::did::IotaDID;
@@ -16,7 +20,7 @@ use crate::error::Result;
 const NETWORK_NAME_MAIN: &str = "main";
 const NETWORK_NAME_DEV: &str = "dev";
 
-lazy_static! {
+lazy_static::lazy_static! {
   static ref NODE_MAIN: Url = Url::parse("https://chrysalis-nodes.iota.org").unwrap();
   static ref NODE_DEV: Url = Url::parse("https://api.lb-0.h.chrysalis-devnet.iota.cafe").unwrap();
 }

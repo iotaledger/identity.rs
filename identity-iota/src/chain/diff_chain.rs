@@ -7,6 +7,10 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::slice::Iter;
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::convert::ToJson;
 
 use crate::chain::IntegrationChain;
@@ -38,14 +42,14 @@ impl DiffChain {
       .flat_map(|message| message.try_extract_diff(did))
       .collect();
 
-    debug!("[Diff] Valid Messages = {}/{}", messages.len(), index.len());
+    log::debug!("[Diff] Valid Messages = {}/{}", messages.len(), index.len());
 
     Self::try_from_index(integration_chain, index)
   }
 
   /// Constructs a new [`DiffChain`] for the given [`IntegrationChain`] from the given [`MessageIndex`].
   pub fn try_from_index(integration_chain: &IntegrationChain, index: MessageIndex<DocumentDiff>) -> Result<Self> {
-    trace!("[Diff] Message Index = {:#?}", index);
+    log::trace!("[Diff] Message Index = {:#?}", index);
     Self::try_from_index_with_document(integration_chain.current(), index)
   }
 

@@ -9,6 +9,10 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::ops::Deref;
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::common::BitSet;
 use identity_core::convert::ToJson;
 use identity_core::crypto::merkle_key::MerkleDigest;

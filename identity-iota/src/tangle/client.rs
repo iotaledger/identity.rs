@@ -154,8 +154,8 @@ impl Client {
 
   /// Fetches a [`DocumentChain`] given an [`IotaDID`].
   pub async fn read_document_chain(&self, did: &IotaDID) -> Result<DocumentChain> {
-    trace!("Read Document Chain: {}", did);
-    trace!("Integration Chain Address: {}", did.tag());
+    log::trace!("Read Document Chain: {}", did);
+    log::trace!("Integration Chain Address: {}", did.tag());
 
     // Fetch all messages for the integration chain.
     let messages: Vec<Message> = self.read_messages(did.tag()).await?;
@@ -172,7 +172,7 @@ impl Client {
     //   let index: String = IotaDocument::diff_index(integration_chain.current_message_id())?;
     //   let messages: Vec<Message> = self.read_messages(&index).await?;
     //
-    //   trace!("Diff Messages: {:#?}", messages);
+    //   log::trace!("Diff Messages: {:#?}", messages);
     //
     //   DiffChain::try_from_messages(&integration_chain, &messages)?
     // };
@@ -182,7 +182,7 @@ impl Client {
       let index: String = IotaDocument::diff_index(integration_chain.current_message_id())?;
       let messages: Vec<Message> = self.read_messages(&index).await?;
 
-      trace!("Diff Messages: {:#?}", messages);
+      log::trace!("Diff Messages: {:#?}", messages);
 
       DiffChain::try_from_messages(&integration_chain, &messages)?
     };

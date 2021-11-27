@@ -8,6 +8,8 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 
+use serde;
+use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Object;
