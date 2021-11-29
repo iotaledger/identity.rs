@@ -11,9 +11,6 @@ use serde::ser::Error as _;
 use serde::ser::Serializer;
 use serde::Deserialize;
 use serde::Serialize;
-
-//use crate::error::Error;
-//use crate::error::Result;
 use crate::utils::decode_b64;
 use crate::utils::encode_b64;
 pub(crate) use errors::BitSetDecodingError;

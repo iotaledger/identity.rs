@@ -1,6 +1,5 @@
 // Copyright 2020-2021 IOTA Stiftung
-// SPDX-License-Identifier: Apache-2.0
-//! Provides a [`FatalError`] that is intended for use in all crates in identity.rs  
+// SPDX-License-Identifier: Apache-2.0 
 use std::error::Error;
 use std::fmt::Display;
 
