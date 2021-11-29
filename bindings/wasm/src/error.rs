@@ -109,7 +109,7 @@ impl From<identity::iota::BeeMessageError> for WasmError<'_> {
   }
 }
 
-/// Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str 
+/// Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
 #[macro_export]
 macro_rules! impl_wasm_error_from_with_struct_name {
   ( $($t:ty),* ) => {
@@ -123,56 +123,55 @@ macro_rules! impl_wasm_error_from_with_struct_name {
   })*
   }
 }
-mod wasm_error_from_identity_core { 
-  use super::*; 
-  use identity::core::errors::{
-    TimeStampParsingError, 
-    UrlParsingError, 
-    Base64DecodingError, 
-    Base58DecodingError,
-    Ed25519KeyPairGenerationError,
-    JsonDecodingError, 
-    JsonEncodingError, 
-    MerkleDigestKeyTagError, 
-    MerkleKeyTagExtractionError, 
-    MerkleSignatureKeyTagError, 
-    KeyCollectionError, 
-    KeyCollectionSizeError, 
-    MissingSignatureError, 
-    ProofValueError, 
-    SigningError, 
-    VerificationError, 
-    VerificationProcessingError, 
-    FatalError};
+mod wasm_error_from_identity_core {
+  use super::*;
+  use identity::core::errors::Base58DecodingError;
+  use identity::core::errors::Base64DecodingError;
+  use identity::core::errors::Ed25519KeyPairGenerationError;
+  use identity::core::errors::FatalError;
+  use identity::core::errors::JsonDecodingError;
+  use identity::core::errors::JsonEncodingError;
+  use identity::core::errors::KeyCollectionError;
+  use identity::core::errors::KeyCollectionSizeError;
+  use identity::core::errors::MerkleDigestKeyTagError;
+  use identity::core::errors::MerkleKeyTagExtractionError;
+  use identity::core::errors::MerkleSignatureKeyTagError;
+  use identity::core::errors::MissingSignatureError;
+  use identity::core::errors::ProofValueError;
+  use identity::core::errors::SigningError;
+  use identity::core::errors::TimeStampParsingError;
+  use identity::core::errors::UrlParsingError;
+  use identity::core::errors::VerificationError;
+  use identity::core::errors::VerificationProcessingError;
 
   impl_wasm_error_from_with_struct_name!(
-    TimeStampParsingError, 
-    UrlParsingError, 
-    Base64DecodingError, 
+    TimeStampParsingError,
+    UrlParsingError,
+    Base64DecodingError,
     Base58DecodingError,
     Ed25519KeyPairGenerationError,
-    JsonDecodingError, 
-    JsonEncodingError, 
-    MerkleDigestKeyTagError, 
-    MerkleKeyTagExtractionError, 
-    MerkleSignatureKeyTagError, 
-    KeyCollectionError, 
+    JsonDecodingError,
+    JsonEncodingError,
+    MerkleDigestKeyTagError,
+    MerkleKeyTagExtractionError,
+    MerkleSignatureKeyTagError,
+    KeyCollectionError,
     KeyCollectionSizeError,
-    MissingSignatureError, 
-    ProofValueError, 
-    SigningError, 
-    VerificationError, 
-    VerificationProcessingError, 
+    MissingSignatureError,
+    ProofValueError,
+    SigningError,
+    VerificationError,
+    VerificationProcessingError,
     FatalError
   );
 
   #[cfg(test)]
   mod tests {
-    use super::*; 
+    use super::*;
     #[test]
     fn into_wasm_error() {
-      let wasm_error: WasmError = FatalError::from("fatal test error".to_string()).into(); 
-      // check that the above macro does what we expect it to do. 
+      let wasm_error: WasmError = FatalError::from("fatal test error".to_string()).into();
+      // check that the above macro does what we expect it to do.
       assert_eq!("FatalError", wasm_error.name)
     }
   }
