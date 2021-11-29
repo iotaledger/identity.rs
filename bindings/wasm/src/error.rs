@@ -171,7 +171,7 @@ mod wasm_error_from_identity_core {
     #[test]
     fn into_wasm_error() {
       let wasm_error: WasmError = FatalError::from("fatal test error".to_string()).into();
-      // check that the above macro does what we expect it to do.
+      // check that the name of the error type gets used in the name field of WasmError after conversion
       assert_eq!("FatalError", wasm_error.name)
     }
   }
