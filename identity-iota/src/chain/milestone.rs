@@ -1,14 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::Result;
-use crate::tangle::Client;
-use crate::tangle::TangleRef;
-use crate::Error::MilestoneError;
+use std::cmp::Ordering;
+
 use futures::stream::FuturesUnordered;
 use futures::TryStreamExt;
 use itertools::Itertools;
-use std::cmp::Ordering;
+
+use crate::error::Result;
+use crate::tangle::Client;
+use crate::tangle::TangleRef;
 
 /// Fetches the milestones of messages and sorts them in ascending order of the milestone index
 /// that references them. If multiple messages are referenced by the same milestone, they will
@@ -18,7 +19,7 @@ use std::cmp::Ordering;
 ///
 /// # Errors
 ///
-/// [`MilestoneError`] if fetching a milestone fails.
+/// [`ClientError`](crate::error::Error::ClientError) if fetching a milestone fails.
 pub(crate) async fn sort_by_milestone<T: TangleRef>(messages: Vec<T>, client: &Client) -> Result<Vec<T>> {
   if messages.len() == 1 || messages.is_empty() {
     return Ok(messages);
@@ -37,8 +38,7 @@ pub(crate) async fn sort_by_milestone<T: TangleRef>(messages: Vec<T>, client: &C
     })
     .collect::<FuturesUnordered<_>>()
     .try_collect()
-    .await
-    .map_err(|_| MilestoneError)?; // TODO: return actual error / error message too?
+    .await?;
 
   let sorted: Vec<T> = sort_by_milestone_index(milestones);
   Ok(sorted)
@@ -66,12 +66,14 @@ fn sort_by_milestone_index<T: TangleRef>(messages_milestones: Vec<(Option<u32>, 
 
 #[cfg(test)]
 mod tests {
-  use super::*;
   use crate::did::IotaDID;
   use crate::tangle::MessageId;
 
+  use super::*;
+
   #[derive(Clone, Copy, Debug, PartialEq, Eq)]
   struct FakeTangleRef(MessageId);
+
   impl TangleRef for FakeTangleRef {
     fn did(&self) -> &IotaDID {
       unimplemented!()
