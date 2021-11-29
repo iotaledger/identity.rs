@@ -13,10 +13,12 @@ use serde::Serialize;
 
 use identity_core::convert::ToJson;
 
+use crate::chain::milestone::sort_by_milestone;
 use crate::did::IotaDID;
 use crate::document::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::Client;
 use crate::tangle::Message;
 use crate::tangle::MessageExt;
 use crate::tangle::MessageId;
@@ -37,7 +39,7 @@ pub struct IntegrationChain {
 
 impl IntegrationChain {
   /// Constructs a new [`IntegrationChain`] from a slice of [`Message`]s.
-  pub fn try_from_messages(did: &IotaDID, messages: &[Message]) -> Result<Self> {
+  pub async fn try_from_messages(did: &IotaDID, messages: &[Message], client: &Client) -> Result<Self> {
     let index: MessageIndex<IotaDocument> = messages
       .iter()
       .flat_map(|message| message.try_extract_document(did))
@@ -45,32 +47,48 @@ impl IntegrationChain {
 
     log::debug!("[Int] Valid Messages = {}/{}", messages.len(), index.len());
 
-    Self::try_from_index(index)
+    Self::try_from_index(index, client).await
   }
 
   /// Constructs a new [`IntegrationChain`] from the given [`MessageIndex`].
-  pub fn try_from_index(mut index: MessageIndex<IotaDocument>) -> Result<Self> {
+  pub async fn try_from_index(mut index: MessageIndex<IotaDocument>, client: &Client) -> Result<Self> {
     log::trace!("[Int] Message Index = {:#?}", index);
 
     // Extract root document.
-    let current: IotaDocument = index
-      .remove_where(&MessageId::null(), |doc| {
-        IotaDocument::verify_root_document(doc).is_ok()
-      })
-      .ok_or(Error::ChainError {
-        error: "Invalid Root Document",
-      })?;
+    let root_document: IotaDocument = {
+      let valid_root_documents: Vec<IotaDocument> = index
+        .remove(&MessageId::null())
+        .ok_or(Error::DIDNotFound("DID not found or pruned"))?
+        .into_iter()
+        .filter(|doc| IotaDocument::verify_root_document(doc).is_ok())
+        .collect();
 
-    // Construct the document chain.
-    let mut this: Self = Self::new(current)?;
-    while let Some(mut list) = index.remove(this.current_message_id()) {
-      'inner: while let Some(document) = list.pop() {
-        if this.try_push(document).is_ok() {
-          break 'inner;
-        }
+      if valid_root_documents.is_empty() {
+        return Err(Error::DIDNotFound("no valid root document found"));
       }
-    }
 
+      let sorted_root_documents: Vec<IotaDocument> = sort_by_milestone(valid_root_documents, client).await?;
+      sorted_root_documents
+        .into_iter()
+        .next()
+        .ok_or(Error::DIDNotFound("no root document confirmed by a milestone found"))?
+    };
+
+    // Construct the rest of the integration chain.
+    let mut this: Self = Self::new(root_document)?;
+    while let Some(documents) = index.remove(this.current_message_id()) {
+      // Extract valid documents.
+      let valid_documents: Vec<IotaDocument> = documents
+        .into_iter()
+        .filter(|document| this.check_valid_addition(document).is_ok())
+        .collect();
+
+      // Sort and push the one referenced by the oldest milestone.
+      if let Some(next) = sort_by_milestone(valid_documents, client).await?.into_iter().next() {
+        this.push_unchecked(next); // checked above
+      }
+      // If no document is appended, the chain ends.
+    }
     Ok(this)
   }
 
@@ -120,13 +138,17 @@ impl IntegrationChain {
   /// See [`IntegrationChain::check_valid_addition`].
   pub fn try_push(&mut self, document: IotaDocument) -> Result<()> {
     self.check_valid_addition(&document)?;
+    self.push_unchecked(document);
 
+    Ok(())
+  }
+
+  /// Adds a new [`IotaDocument`] to this [`IntegrationChain`] without validating it.
+  fn push_unchecked(&mut self, document: IotaDocument) {
     self
       .history
       .get_or_insert_with(Vec::new)
       .push(mem::replace(&mut self.current, document));
-
-    Ok(())
   }
 
   /// Returns `true` if the [`IotaDocument`] can be added to this [`IntegrationChain`].

@@ -20,6 +20,7 @@ futures = { version = "0.3" }
 identity-core = { version = "=0.4.0", path = "../identity-core" }
 identity-credential = { version = "=0.4.0", path = "../identity-credential" }
 identity-did = { version = "=0.4.0", path = "../identity-did" }
+itertools = { version = "0.10" }
 lazy_static = { version = "1.4", default-features = false }
 log = { version = "0.4", default-features = false }
 num-derive = { version = "0.3", default-features = false }
