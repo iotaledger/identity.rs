@@ -11,6 +11,7 @@ pub use crate::crypto::MissingSignatureError;
 pub use crate::crypto::SigningError; 
 pub use crate::crypto::VerificationError;
 pub use crate::crypto::VerificationProcessingError;
+pub use crate::crypto::ProofValueError; 
 pub use crate::crypto::KeyCollectionSizeError;
 pub use crate::crypto::KeyCollectionError;
 pub use crate::crypto::merkle_key::MerkleSignatureKeyTagError;

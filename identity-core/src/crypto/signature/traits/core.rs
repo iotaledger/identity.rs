@@ -3,7 +3,7 @@
 
 use serde::Serialize;
 
-use crate::crypto::signature::errors::InvalidProofValue;
+use crate::crypto::signature::errors::ProofValueError;
 use crate::crypto::signature::errors::MissingSignatureError;
 use crate::crypto::SetSignature;
 use crate::crypto::Signature;
@@ -34,7 +34,7 @@ pub trait Verify {
   type Public: ?Sized;
 
   /// Error describing how `verify` may fail
-  type Error: std::error::Error + TryInto<InvalidProofValue>;
+  type Error: std::error::Error + TryInto<ProofValueError>;
 
   /// Verifies the authenticity of `data` and `signature` with `key`.
   fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<(), Self::Error>;
@@ -91,13 +91,13 @@ pub trait Signer<Secret: ?Sized>: Named {
 /// A common interface for digital signature verification
 pub trait Verifier<Public: ?Sized>: Named {
   /// Error describing how `verify` can fail
-  type AuthenticityError: std::error::Error + TryInto<InvalidProofValue>;
+  type AuthenticityError: std::error::Error + TryInto<ProofValueError>;
 
   /// Error describing how `verify_signature` can fail
   type SignatureVerificationError: std::error::Error
     + From<MissingSignatureError>
     + From<Self::AuthenticityError>
-    + From<InvalidProofValue>;
+    + From<ProofValueError>;
 
   /// Verifies the authenticity of `data` and `signature`.
   fn verify<T>(data: &T, signature: &SignatureValue, public: &Public) -> Result<(), Self::AuthenticityError>
@@ -112,7 +112,7 @@ pub trait Verifier<Public: ?Sized>: Named {
     let signature: &Signature = data.try_signature()?;
 
     if signature.type_() != Self::NAME {
-      return Err(InvalidProofValue("signature name").into());
+      return Err(ProofValueError("signature name").into());
     }
 
     signature.hide_value();

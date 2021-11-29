@@ -9,7 +9,7 @@ use crate::crypto::key::KeyError;
 pub use signing::MissingSignatureError;
 pub use signing::SigningError;
 pub(crate) use signing::SigningErrorCause;
-pub(crate) use verifying::InvalidProofValue;
+pub use verifying::ProofValueError;
 pub use verifying::VerificationError;
 pub use verifying::VerificationProcessingError;
 
@@ -112,7 +112,7 @@ mod verifying {
   /// The provided signature does not match the expected value
   #[derive(Debug, DeriveError)]
   #[error("{0}")]
-  pub struct InvalidProofValue(pub &'static str);
+  pub struct ProofValueError(pub &'static str);
 
   // Verification can typically fail by either actually verifying that the proof value is incorrect, or it can fail
   // before it gets to checking the proof value by for instance failing to (de)serialize some data etc. Hence the
@@ -122,7 +122,7 @@ mod verifying {
   pub enum VerificationError {
     /// The provided signature does not match the expected value
     #[error("verification failed - invalid proof value: {0}")]
-    InvalidProofValue(#[from] InvalidProofValue),
+    InvalidProofValue(#[from] ProofValueError),
 
     /// Processing of the proof material failed before the proof value could be checked
     #[error("verification failed - processing failed before the proof value could be checked: {0}")]
@@ -207,7 +207,7 @@ mod verifying {
       }
     }
   }
-  impl TryFrom<VerificationError> for InvalidProofValue {
+  impl TryFrom<VerificationError> for ProofValueError {
     type Error = &'static str;
     fn try_from(value: VerificationError) -> Result<Self, Self::Error> {
       match value {

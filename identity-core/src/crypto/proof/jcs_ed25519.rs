@@ -5,7 +5,7 @@ use core::marker::PhantomData;
 use serde::Serialize;
 
 use crate::convert::ToJson;
-use crate::crypto::signature::errors::InvalidProofValue;
+use crate::crypto::signature::errors::ProofValueError;
 use crate::crypto::signature::errors::SigningError;
 use crate::crypto::signature::errors::SigningErrorCause;
 use crate::crypto::signature::errors::VerificationError;
@@ -67,7 +67,7 @@ where
   where
     X: Serialize,
   {
-    let signature: &str = signature.as_signature().ok_or(InvalidProofValue("jcs ed25519"))?;
+    let signature: &str = signature.as_signature().ok_or(ProofValueError("jcs ed25519"))?;
 
     let signature: Vec<u8> =
       decode_b58(signature).map_err(|_| VerificationProcessingError::from("unable to decode the signature"))?;

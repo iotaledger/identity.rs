@@ -14,7 +14,7 @@ use crate::crypto::merkle_key::MerkleSignature;
 use crate::crypto::merkle_key::MerkleSignatureTag;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Proof;
-use crate::crypto::signature::errors::InvalidProofValue;
+use crate::crypto::signature::errors::ProofValueError;
 use crate::crypto::signature::errors::VerificationError;
 use crate::crypto::signature::errors::VerificationProcessingError;
 use crate::crypto::Named;
@@ -113,14 +113,14 @@ where
     // Ensure the target hash of the user-provided public key is part
     // of the Merkle tree
     if !merkle_proof.verify(&merkle_root, target_hash) {
-      return Err(InvalidProofValue("merkle key - bad proof").into());
+      return Err(ProofValueError("merkle key - bad proof").into());
     }
 
     // If a set of revocation flags was provided, ensure the public key
     // was not revoked
     if let Some(revocation) = public.revocation {
       if revocation.contains(merkle_proof.index() as u32) {
-        return Err(InvalidProofValue("merkle key - revoked").into());
+        return Err(ProofValueError("merkle key - revoked").into());
       }
     }
 

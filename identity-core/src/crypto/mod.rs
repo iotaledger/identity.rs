@@ -23,6 +23,7 @@ pub use self::signature::errors::MissingSignatureError;
 pub use self::signature::errors::SigningError;
 pub use self::signature::errors::VerificationError;
 pub use self::signature::errors::VerificationProcessingError; 
+pub use self::signature::errors::ProofValueError; 
 pub use self::signature::Ed25519;
 pub use self::signature::Named;
 pub use self::signature::SetSignature;

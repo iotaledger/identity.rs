@@ -13,7 +13,7 @@ use crate::crypto::Sign;
 use crate::crypto::Verify;
 
 use self::errors::SignatureParsingError;
-use super::errors::InvalidProofValue;
+use super::errors::ProofValueError;
 use super::errors::SigningError;
 use super::errors::VerificationError;
 use super::errors::VerificationProcessingError;
@@ -52,7 +52,7 @@ where
     if key.verify(&sig, message) {
       Ok(())
     } else {
-      Err(InvalidProofValue("ed25519").into())
+      Err(ProofValueError("ed25519").into())
     }
   }
 }
