@@ -6,13 +6,16 @@ use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::convert::ToJson;
 
 use crate::chain::DiffChain;
 use crate::chain::IntegrationChain;
-use crate::did::DocumentDiff;
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::DiffMessage;
+use crate::document::IotaDocument;
 use crate::error::Result;
 use crate::tangle::MessageId;
 
@@ -136,12 +139,12 @@ impl DocumentChain {
     Ok(())
   }
 
-  /// Adds a new [`DocumentDiff`] to the chain.
+  /// Adds a new [`DiffMessage`] to the chain.
   ///
   /// # Errors
   ///
   /// Fails if the diff is invalid.
-  pub fn try_push_diff(&mut self, diff: DocumentDiff) -> Result<()> {
+  pub fn try_push_diff(&mut self, diff: DiffMessage) -> Result<()> {
     // Use the last integration chain document to validate the signature on the diff.
     let integration_document: &IotaDocument = self.chain_i.current();
     let expected_prev_message_id: &MessageId = self.diff_message_id();

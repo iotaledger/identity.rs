@@ -223,7 +223,7 @@ impl Display for RelativeDIDUrl {
 
 impl Debug for RelativeDIDUrl {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_fmt(format_args!("{}", self.to_string()))
+    f.write_fmt(format_args!("{}", self))
   }
 }
 
@@ -541,7 +541,7 @@ where
   T: DID,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_fmt(format_args!("{}", self.to_string()))
+    f.write_fmt(format_args!("{}", self))
   }
 }
 
@@ -550,7 +550,7 @@ where
   T: DID,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_fmt(format_args!("{}{}", self.did.as_str(), self.url.to_string()))
+    f.write_fmt(format_args!("{}{}", self.did.as_str(), self.url))
   }
 }
 

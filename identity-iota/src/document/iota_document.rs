@@ -8,7 +8,8 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 
-use identity_did::verification::MethodRelationship;
+use serde;
+use serde::Deserialize;
 use serde::Serialize;
 
 use identity_core::common::Object;
@@ -35,17 +36,18 @@ use identity_did::verifiable::DocumentVerifier;
 use identity_did::verifiable::Properties as VerifiableProperties;
 use identity_did::verification::MethodQuery;
 use identity_did::verification::MethodRef;
+use identity_did::verification::MethodRelationship;
 use identity_did::verification::MethodScope;
 use identity_did::verification::MethodType;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 use identity_did::verification::VerificationMethod;
 
-use crate::did::DocumentDiff;
 use crate::did::IotaDID;
 use crate::did::IotaDIDUrl;
-use crate::did::IotaVerificationMethod;
-use crate::did::Properties as BaseProperties;
+use crate::document::DiffMessage;
+use crate::document::IotaVerificationMethod;
+use crate::document::Properties as BaseProperties;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::MessageId;
@@ -89,7 +91,7 @@ impl IotaDocument {
   ///
   /// ```
   /// # use identity_core::crypto::KeyPair;
-  /// # use identity_iota::did::IotaDocument;
+  /// # use identity_iota::document::IotaDocument;
   /// #
   /// // Create a DID Document from a new Ed25519 keypair.
   /// let keypair = KeyPair::new_ed25519().unwrap();
@@ -114,7 +116,7 @@ impl IotaDocument {
   ///
   /// ```
   /// # use identity_core::crypto::KeyPair;
-  /// # use identity_iota::did::IotaDocument;
+  /// # use identity_iota::document::IotaDocument;
   /// # use identity_iota::tangle::Network;
   /// #
   /// // Create a new DID Document for the devnet from a new Ed25519 keypair.
@@ -201,7 +203,7 @@ impl IotaDocument {
     // Validate that the document controller (if any) conforms to the IotaDID specification.
     // This check is required to ensure the correctness of the `IotaDocument::controller()` method
     // which creates an `IotaDID::new_unchecked_ref()` from the underlying controller.
-    document.controller().map_or(Ok(()), |c| IotaDID::check_validity(c))?;
+    document.controller().map_or(Ok(()), IotaDID::check_validity)?;
 
     // Validate that the verification methods conform to the IotaDID specification.
     // This check is required to ensure the correctness of the
@@ -376,8 +378,8 @@ impl IotaDocument {
   /// Returns an iterator over all [`IotaVerificationMethods`][IotaVerificationMethod] in the DID Document.
   pub fn methods(&self) -> impl Iterator<Item = &IotaVerificationMethod> {
     self.document.methods().map(|m|
-        // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
-        unsafe { IotaVerificationMethod::new_unchecked_ref(m) })
+      // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
+      unsafe { IotaVerificationMethod::new_unchecked_ref(m) })
   }
 
   /// Adds a new [`IotaVerificationMethod`] to the document in the given [`MethodScope`].
@@ -640,9 +642,9 @@ impl IotaDocument {
   // Diffs
   // ===========================================================================
 
-  /// Creates a `DocumentDiff` representing the changes between `self` and `other`.
+  /// Creates a `DiffMessage` representing the changes between `self` and `other`.
   ///
-  /// The returned `DocumentDiff` will have a digital signature created using the
+  /// The returned `DiffMessage` will have a digital signature created using the
   /// specified `private_key` and `method_query`.
   ///
   /// NOTE: the method must be a capability invocation method.
@@ -656,11 +658,11 @@ impl IotaDocument {
     message_id: MessageId,
     private_key: &'query PrivateKey,
     method_query: Q,
-  ) -> Result<DocumentDiff>
+  ) -> Result<DiffMessage>
   where
     Q: Into<MethodQuery<'query>>,
   {
-    let mut diff: DocumentDiff = DocumentDiff::new(self, other, message_id)?;
+    let mut diff: DiffMessage = DiffMessage::new(self, other, message_id)?;
 
     // Ensure the signing method has a capability invocation verification relationship.
     let method_query = method_query.into();
@@ -679,11 +681,11 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if an unsupported verification method is used or the verification operation fails.
-  pub fn verify_diff(&self, diff: &DocumentDiff) -> Result<()> {
+  pub fn verify_diff(&self, diff: &DiffMessage) -> Result<()> {
     self.verify_data_with_scope(diff, MethodScope::capability_invocation())
   }
 
-  /// Verifies a `DocumentDiff` signature and merges the changes into `self`.
+  /// Verifies a `DiffMessage` signature and merges the changes into `self`.
   ///
   /// If merging fails `self` remains unmodified, otherwise `self` represents
   /// the merged document state.
@@ -693,7 +695,7 @@ impl IotaDocument {
   /// # Errors
   ///
   /// Fails if the merge operation or signature operation fails.
-  pub fn merge(&mut self, diff: &DocumentDiff) -> Result<()> {
+  pub fn merge(&mut self, diff: &DiffMessage) -> Result<()> {
     self.verify_diff(diff)?;
 
     *self = diff.merge(self)?;
@@ -814,34 +816,17 @@ mod tests {
 
   use identity_core::common::Value;
   use identity_core::convert::FromJson;
-  use identity_core::convert::SerdeInto;
   use identity_core::crypto::merkle_key::Sha256;
   use identity_core::crypto::KeyCollection;
-  use identity_core::crypto::KeyPair;
   use identity_core::crypto::KeyType;
-  use identity_core::crypto::PrivateKey;
-  use identity_core::crypto::PublicKey;
   use identity_core::utils::encode_b58;
   use identity_did::did::CoreDID;
-  use identity_did::did::CoreDIDUrl;
   use identity_did::did::DID;
-  use identity_did::document::CoreDocument;
-  use identity_did::service::Service;
   use identity_did::verification::MethodData;
-  use identity_did::verification::MethodRef;
-  use identity_did::verification::MethodScope;
-  use identity_did::verification::MethodType;
-  use identity_did::verification::VerificationMethod;
 
-  use crate::did::did::IotaDID;
-  use crate::did::doc::iota_document::Properties;
-  use crate::did::doc::IotaDocument;
-  use crate::did::doc::IotaVerificationMethod;
-  use crate::did::IotaDIDUrl;
-  use crate::tangle::MessageId;
   use crate::tangle::Network;
-  use crate::tangle::TangleRef;
-  use crate::Error;
+
+  use super::*;
 
   const DID_ID: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M";
   const DID_METHOD_ID: &str = "did:iota:HGE4tecHWL2YiZv5qAGtH7gaeQcaz2Z1CR15GWmMjY1M#sign-0";

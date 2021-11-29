@@ -12,7 +12,7 @@ use identity_credential::credential::Credential;
 use identity_credential::presentation::Presentation;
 
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Client;

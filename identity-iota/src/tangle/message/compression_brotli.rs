@@ -31,7 +31,7 @@ mod test {
   use identity_core::convert::ToJson;
   use identity_core::crypto::KeyPair;
 
-  use crate::did::IotaDocument;
+  use crate::document::IotaDocument;
 
   use super::*;
 

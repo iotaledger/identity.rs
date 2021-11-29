@@ -11,7 +11,7 @@ use identity::core::FromJson;
 use identity::did::Service;
 use identity::did::DID;
 use identity::iota::ClientMap;
-use identity::iota::DocumentDiff;
+use identity::iota::DiffMessage;
 use identity::iota::ExplorerUrl;
 use identity::iota::Receipt;
 use identity::iota::TangleRef;
@@ -42,7 +42,7 @@ async fn main() -> Result<()> {
   };
 
   // Generate a signed diff object.
-  let diff: DocumentDiff = document.diff(
+  let diff: DiffMessage = document.diff(
     &updated_document,
     *receipt.message_id(),
     keypair.private(),

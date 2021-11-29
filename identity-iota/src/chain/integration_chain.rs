@@ -7,10 +7,14 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::mem;
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::convert::ToJson;
 
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Message;
@@ -39,14 +43,14 @@ impl IntegrationChain {
       .flat_map(|message| message.try_extract_document(did))
       .collect();
 
-    debug!("[Int] Valid Messages = {}/{}", messages.len(), index.len());
+    log::debug!("[Int] Valid Messages = {}/{}", messages.len(), index.len());
 
     Self::try_from_index(index)
   }
 
   /// Constructs a new [`IntegrationChain`] from the given [`MessageIndex`].
   pub fn try_from_index(mut index: MessageIndex<IotaDocument>) -> Result<Self> {
-    trace!("[Int] Message Index = {:#?}", index);
+    log::trace!("[Int] Message Index = {:#?}", index);
 
     // Extract root document.
     let current: IotaDocument = index

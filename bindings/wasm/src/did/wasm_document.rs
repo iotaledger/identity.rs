@@ -26,7 +26,7 @@ use crate::credential::VerifiablePresentation;
 use crate::crypto::KeyPair;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmDID;
-use crate::did::WasmDocumentDiff;
+use crate::did::WasmDiffMessage;
 use crate::did::WasmVerificationMethod;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -345,10 +345,10 @@ impl WasmDocument {
   // Diffs
   // ===========================================================================
 
-  /// Generate a `DocumentDiff` between two DID Documents and sign it using the specified
+  /// Generate a `DiffMessage` between two DID Documents and sign it using the specified
   /// `key` and `method`.
   #[wasm_bindgen]
-  pub fn diff(&self, other: &WasmDocument, message: &str, key: &KeyPair, method: &str) -> Result<WasmDocumentDiff> {
+  pub fn diff(&self, other: &WasmDocument, message: &str, key: &KeyPair, method: &str) -> Result<WasmDiffMessage> {
     self
       .0
       .diff(
@@ -357,7 +357,7 @@ impl WasmDocument {
         key.0.private(),
         method,
       )
-      .map(WasmDocumentDiff::from)
+      .map(WasmDiffMessage::from)
       .wasm_result()
   }
 
@@ -368,13 +368,13 @@ impl WasmDocument {
   ///
   /// Fails if an unsupported verification method is used or the verification operation fails.
   #[wasm_bindgen(js_name = verifyDiff)]
-  pub fn verify_diff(&self, diff: &WasmDocumentDiff) -> Result<()> {
+  pub fn verify_diff(&self, diff: &WasmDiffMessage) -> Result<()> {
     self.0.verify_diff(&diff.0).wasm_result()
   }
 
-  /// Verifies a `DocumentDiff` signature and merges the changes into `self`.
+  /// Verifies a `DiffMessage` signature and merges the changes into `self`.
   #[wasm_bindgen]
-  pub fn merge(&mut self, diff: &WasmDocumentDiff) -> Result<()> {
+  pub fn merge(&mut self, diff: &WasmDiffMessage) -> Result<()> {
     self.0.merge(&diff.0).wasm_result()
   }
 
