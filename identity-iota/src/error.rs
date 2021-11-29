@@ -32,16 +32,6 @@ pub enum Error {
   InvalidRootDocument,
   #[error("Invalid Network Name")]
   InvalidNetworkName,
-  #[error("Invalid Tryte Conversion")]
-  InvalidTryteConversion,
-  #[error("Invalid Transaction Bundle")]
-  InvalidTransactionBundle,
-  #[error("Invalid Transaction Hashes")]
-  InvalidTransactionHashes,
-  #[error("Invalid Transaction Trytes")]
-  InvalidTransactionTrytes,
-  #[error("Invalid Bundle Tail")]
-  InvalidBundleTail,
   #[error("Invalid Presentation Holder")]
   InvalidPresentationHolder,
   #[error("Chain Error: {error}")]
