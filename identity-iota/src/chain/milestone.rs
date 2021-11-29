@@ -11,9 +11,10 @@ use crate::error::Result;
 use crate::tangle::Client;
 use crate::tangle::TangleRef;
 
-/// Fetches the milestones of messages and sorts them in ascending order of the milestone index
-/// that references them. If multiple messages are referenced by the same milestone, they will
-/// be sorted by [`MessageId`](crate::tangle::MessageId).
+/// Fetches the milestones of messages and sorts them in ascending order of the milestone
+/// index that references them. Messages not referenced by a milestone are filtered out.
+/// If multiple messages are referenced by the same milestone, they will be sorted
+/// by [`MessageId`](crate::tangle::MessageId).
 ///
 /// NOTE: this will NOT fetch milestones if only one message is present.
 ///

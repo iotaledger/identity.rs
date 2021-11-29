@@ -58,17 +58,20 @@ impl IntegrationChain {
     let root_document: IotaDocument = {
       let valid_root_documents: Vec<IotaDocument> = index
         .remove(&MessageId::null())
-        .ok_or(Error::ChainError {
-          error: "DID not found or pruned",
-        })?
+        .ok_or(Error::DIDNotFound("DID not found or pruned"))?
         .into_iter()
         .filter(|doc| IotaDocument::verify_root_document(doc).is_ok())
         .collect();
 
+      if valid_root_documents.is_empty() {
+        return Err(Error::DIDNotFound("no valid root document found"));
+      }
+
       let sorted_root_documents: Vec<IotaDocument> = sort_by_milestone(valid_root_documents, client).await?;
-      sorted_root_documents.into_iter().next().ok_or(Error::ChainError {
-        error: "no valid root documents",
-      })?
+      sorted_root_documents
+        .into_iter()
+        .next()
+        .ok_or(Error::DIDNotFound("no root document confirmed by a milestone found"))?
     };
 
     // Construct the rest of the integration chain.
