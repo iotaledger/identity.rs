@@ -19,8 +19,9 @@ pub enum Error {
   ClientError(#[from] iota_client::error::Error),
   #[error("Invalid Message: {0}")]
   InvalidMessage(#[from] iota_client::bee_message::Error),
+
   #[error("{0}")]
-  DIDNotFound(&'static str),
+  DIDNotFound(String),
   #[error("Invalid Document - Missing Message Id")]
   InvalidDocumentMessageId,
   #[error("Invalid Document - Signing Verification Method Type Not Supported")]
