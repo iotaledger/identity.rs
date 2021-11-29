@@ -11,3 +11,4 @@ mod diff_chain;
 mod document_chain;
 mod document_history;
 mod integration_chain;
+mod milestone;

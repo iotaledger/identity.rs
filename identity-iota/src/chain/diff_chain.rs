@@ -13,12 +13,14 @@ use serde::Serialize;
 
 use identity_core::convert::ToJson;
 
+use crate::chain::milestone::sort_by_milestone;
 use crate::chain::IntegrationChain;
 use crate::did::IotaDID;
 use crate::document::DiffMessage;
 use crate::document::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
+use crate::tangle::Client;
 use crate::tangle::Message;
 use crate::tangle::MessageExt;
 use crate::tangle::MessageId;
@@ -34,7 +36,11 @@ pub struct DiffChain {
 
 impl DiffChain {
   /// Constructs a new [`DiffChain`] for the given [`IntegrationChain`] from a slice of [`Messages`][Message].
-  pub fn try_from_messages(integration_chain: &IntegrationChain, messages: &[Message]) -> Result<Self> {
+  pub async fn try_from_messages(
+    integration_chain: &IntegrationChain,
+    messages: &[Message],
+    client: &Client,
+  ) -> Result<Self> {
     let did: &IotaDID = integration_chain.current().id();
 
     let index: MessageIndex<DiffMessage> = messages
@@ -44,36 +50,50 @@ impl DiffChain {
 
     log::debug!("[Diff] Valid Messages = {}/{}", messages.len(), index.len());
 
-    Self::try_from_index(integration_chain, index)
+    Ok(Self::try_from_index(integration_chain, index, client).await?)
   }
 
   /// Constructs a new [`DiffChain`] for the given [`IntegrationChain`] from the given [`MessageIndex`].
-  pub fn try_from_index(integration_chain: &IntegrationChain, index: MessageIndex<DiffMessage>) -> Result<Self> {
+  pub async fn try_from_index(
+    integration_chain: &IntegrationChain,
+    index: MessageIndex<DiffMessage>,
+    client: &Client,
+  ) -> Result<Self> {
     log::trace!("[Diff] Message Index = {:#?}", index);
-    Self::try_from_index_with_document(integration_chain.current(), index)
+    Self::try_from_index_with_document(integration_chain.current(), index, client).await
   }
 
   /// Constructs a new [`DiffChain`] from the given [`MessageIndex`], using an integration document
   /// to validate.
-  pub(in crate::chain) fn try_from_index_with_document(
+  pub(in crate::chain) async fn try_from_index_with_document(
     integration_document: &IotaDocument,
     mut index: MessageIndex<DiffMessage>,
+    client: &Client,
   ) -> Result<Self> {
     if index.is_empty() {
       return Ok(Self::new());
     }
 
     let mut this: Self = Self::new();
-    while let Some(mut list) = index.remove(
+    while let Some(diffs) = index.remove(
       this
         .current_message_id()
         .unwrap_or_else(|| integration_document.message_id()),
     ) {
-      'inner: while let Some(next_diff) = list.pop() {
-        if this.try_push_inner(next_diff, integration_document).is_ok() {
-          break 'inner;
-        }
+      // Extract valid diffs.
+      let expected_prev_message_id: &MessageId = this
+        .current_message_id()
+        .unwrap_or_else(|| integration_document.message_id());
+      let valid_diffs: Vec<DiffMessage> = diffs
+        .into_iter()
+        .filter(|diff| Self::check_valid_addition(diff, integration_document, expected_prev_message_id).is_ok())
+        .collect();
+
+      // Sort and push the diff referenced by the oldest milestone.
+      if let Some(next) = sort_by_milestone(valid_diffs, client).await?.into_iter().next() {
+        this.push_unchecked(next); // checked by check_valid_addition above
       }
+      // If no diff is appended, the chain ends.
     }
 
     Ok(this)
@@ -117,34 +137,16 @@ impl DiffChain {
   /// references within the diff are invalid.
   pub fn try_push(&mut self, diff: DiffMessage, integration_chain: &IntegrationChain) -> Result<()> {
     let document: &IotaDocument = integration_chain.current();
-    self.try_push_inner(diff, document)
-  }
-
-  /// Adds a new diff to the [`DiffChain`].
-  ///
-  /// # Errors
-  ///
-  /// Fails if the diff signature is invalid or the Tangle message
-  /// references within the diff are invalid.
-  fn try_push_inner(&mut self, diff: DiffMessage, document: &IotaDocument) -> Result<()> {
     let expected_prev_message_id: &MessageId = self.current_message_id().unwrap_or_else(|| document.message_id());
     Self::check_valid_addition(&diff, document, expected_prev_message_id)?;
-
-    // SAFETY: we performed the necessary validation in `check_validity`.
-    unsafe {
-      self.push_unchecked(diff);
-    }
+    self.push_unchecked(diff);
 
     Ok(())
   }
 
-  /// Adds a new diff to the [`DiffChain`] with performing validation checks.
-  ///
-  /// # Safety
-  ///
-  /// This function is unsafe because it does not check the validity of
-  /// the signature or Tangle references of the [`DiffMessage`].
-  pub unsafe fn push_unchecked(&mut self, diff: DiffMessage) {
+  /// Adds a new diff to the [`DiffChain`] without performing validation checks on the signature or Tangle references
+  /// of the [`DiffMessage`].
+  fn push_unchecked(&mut self, diff: DiffMessage) {
     self.inner.push(diff);
   }
 
