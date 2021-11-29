@@ -40,7 +40,7 @@ pub enum Error {
   MissingSigningKey,
   #[error("Cannot Revoke Verification Method")]
   CannotRevokeMethod,
-  #[error("No Client Nodes Provided")]
+  #[error("no client nodes provided for network")]
   NoClientNodesProvided,
   #[error("No Explorer URL Set")]
   NoExplorerURLSet,
