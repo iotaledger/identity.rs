@@ -1,6 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
-//! Exports public errors from this crate
+//! Re-exports public errors from this crate
 mod fatal_error;
 pub use crate::common::TimeStampParsingError;
 pub use crate::common::UrlParsingError;

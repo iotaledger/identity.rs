@@ -85,8 +85,6 @@ macro_rules! impl_wasm_error_from {
 }
 
 impl_wasm_error_from!(
-  // identity::comm::Error,
-  identity::core::Error,
   identity::credential::Error,
   identity::did::Error,
   identity::did::DIDError,
@@ -109,4 +107,22 @@ impl From<identity::iota::BeeMessageError> for WasmError<'_> {
       message: Cow::Owned(error.to_string()),
     }
   }
+}
+
+/// Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into
+#[macro_export]
+macro_rules! impl_wasm_error_from_with_struct_name {
+  ( $($t:ty),* ) => {
+  $(impl From<$t> for WasmError<'_> {
+    fn from(error: $t) -> Self {
+      Self {
+        message: Cow::Owned(error.to_string()),
+        name: Cow::Borrowed(stringify!(ty)),
+      }
+    }
+  })*
+  }
+}
+mod wasm_error_from_identity_core {
+  
 }
