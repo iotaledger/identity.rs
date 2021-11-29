@@ -7,12 +7,16 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::slice::Iter;
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::convert::ToJson;
 
 use crate::chain::IntegrationChain;
-use crate::did::DocumentDiff;
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::DiffMessage;
+use crate::document::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Message;
@@ -25,7 +29,7 @@ use crate::tangle::TangleRef;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct DiffChain {
-  inner: Vec<DocumentDiff>,
+  inner: Vec<DiffMessage>,
 }
 
 impl DiffChain {
@@ -33,19 +37,19 @@ impl DiffChain {
   pub fn try_from_messages(integration_chain: &IntegrationChain, messages: &[Message]) -> Result<Self> {
     let did: &IotaDID = integration_chain.current().id();
 
-    let index: MessageIndex<DocumentDiff> = messages
+    let index: MessageIndex<DiffMessage> = messages
       .iter()
       .flat_map(|message| message.try_extract_diff(did))
       .collect();
 
-    debug!("[Diff] Valid Messages = {}/{}", messages.len(), index.len());
+    log::debug!("[Diff] Valid Messages = {}/{}", messages.len(), index.len());
 
     Self::try_from_index(integration_chain, index)
   }
 
   /// Constructs a new [`DiffChain`] for the given [`IntegrationChain`] from the given [`MessageIndex`].
-  pub fn try_from_index(integration_chain: &IntegrationChain, index: MessageIndex<DocumentDiff>) -> Result<Self> {
-    trace!("[Diff] Message Index = {:#?}", index);
+  pub fn try_from_index(integration_chain: &IntegrationChain, index: MessageIndex<DiffMessage>) -> Result<Self> {
+    log::trace!("[Diff] Message Index = {:#?}", index);
     Self::try_from_index_with_document(integration_chain.current(), index)
   }
 
@@ -53,7 +57,7 @@ impl DiffChain {
   /// to validate.
   pub(in crate::chain) fn try_from_index_with_document(
     integration_document: &IotaDocument,
-    mut index: MessageIndex<DocumentDiff>,
+    mut index: MessageIndex<DiffMessage>,
   ) -> Result<Self> {
     if index.is_empty() {
       return Ok(Self::new());
@@ -95,8 +99,8 @@ impl DiffChain {
     self.inner.clear();
   }
 
-  /// Returns an iterator yielding references to [`DocumentDiffs`][DocumentDiff].
-  pub fn iter(&self) -> Iter<'_, DocumentDiff> {
+  /// Returns an iterator yielding references to [`DiffMessages`][DiffMessage].
+  pub fn iter(&self) -> Iter<'_, DiffMessage> {
     self.inner.iter()
   }
 
@@ -111,7 +115,7 @@ impl DiffChain {
   ///
   /// Fails if the diff signature is invalid or the Tangle message
   /// references within the diff are invalid.
-  pub fn try_push(&mut self, diff: DocumentDiff, integration_chain: &IntegrationChain) -> Result<()> {
+  pub fn try_push(&mut self, diff: DiffMessage, integration_chain: &IntegrationChain) -> Result<()> {
     let document: &IotaDocument = integration_chain.current();
     self.try_push_inner(diff, document)
   }
@@ -122,7 +126,7 @@ impl DiffChain {
   ///
   /// Fails if the diff signature is invalid or the Tangle message
   /// references within the diff are invalid.
-  fn try_push_inner(&mut self, diff: DocumentDiff, document: &IotaDocument) -> Result<()> {
+  fn try_push_inner(&mut self, diff: DiffMessage, document: &IotaDocument) -> Result<()> {
     let expected_prev_message_id: &MessageId = self.current_message_id().unwrap_or_else(|| document.message_id());
     Self::check_valid_addition(&diff, document, expected_prev_message_id)?;
 
@@ -139,18 +143,18 @@ impl DiffChain {
   /// # Safety
   ///
   /// This function is unsafe because it does not check the validity of
-  /// the signature or Tangle references of the [`DocumentDiff`].
-  pub unsafe fn push_unchecked(&mut self, diff: DocumentDiff) {
+  /// the signature or Tangle references of the [`DiffMessage`].
+  pub unsafe fn push_unchecked(&mut self, diff: DiffMessage) {
     self.inner.push(diff);
   }
 
-  /// Checks if the [`DocumentDiff`] can be added to the [`DiffChain`].
+  /// Checks if the [`DiffMessage`] can be added to the [`DiffChain`].
   ///
   /// # Errors
   ///
-  /// Fails if the [`DocumentDiff`] is not a valid addition.
+  /// Fails if the [`DiffMessage`] is not a valid addition.
   pub fn check_valid_addition(
-    diff: &DocumentDiff,
+    diff: &DiffMessage,
     document: &IotaDocument,
     expected_prev_message_id: &MessageId,
   ) -> Result<()> {
@@ -202,7 +206,7 @@ impl Display for DiffChain {
   }
 }
 
-impl From<DiffChain> for Vec<DocumentDiff> {
+impl From<DiffChain> for Vec<DiffMessage> {
   fn from(diff_chain: DiffChain) -> Self {
     diff_chain.inner
   }
@@ -221,8 +225,8 @@ mod test {
 
   use crate::chain::DocumentChain;
   use crate::chain::IntegrationChain;
-  use crate::did::DocumentDiff;
-  use crate::did::IotaDocument;
+  use crate::document::DiffMessage;
+  use crate::document::IotaDocument;
   use crate::tangle::MessageId;
   use crate::tangle::TangleRef;
 
@@ -307,7 +311,7 @@ mod test {
 
       // Sign using the new key added in the previous integration chain update.
       let message_id = *chain.diff_message_id();
-      let mut diff: DocumentDiff = chain
+      let mut diff: DiffMessage = chain
         .current()
         .diff(&new, message_id, keys[1].private(), "#key-2")
         .unwrap();

@@ -29,7 +29,10 @@ where
   type Private = T;
   type Error = SigningError;
   type Output = [u8; SIGNATURE_LENGTH];
-
+  /// Computes an EdDSA/Ed25519 signature.
+  ///
+  ///  The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+  /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
   fn sign(message: &[u8], key: &Self::Private) -> std::result::Result<Self::Output, Self::Error> {
     parse_secret(key.as_ref())
       .map(|key| key.sign(message).to_bytes())
@@ -92,11 +95,11 @@ mod tests {
   use crate::crypto::Sign;
   use crate::crypto::Verify;
 
-  const SIGNATURE_HEX: &str = "6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a";
-
+  // The following test vector is taken from [Test 3 of RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-7)
   const PUBLIC_KEY_HEX: &str = "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";
   const SECRET_KEY_HEX: &str = "c5aa8df43f9f837bedb7442f31dcb7b166d38535076f094b85ce3a2e0b4458f7";
   const MESSAGE_HEX: &str = "af82";
+  const SIGNATURE_HEX: &str = "6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a";
 
   #[test]
   fn test_ed25519_can_sign_and_verify() {

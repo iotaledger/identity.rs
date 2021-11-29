@@ -11,10 +11,10 @@ use identity_core::convert::FromJson;
 use identity_core::convert::ToJson;
 use identity_did::did::DID;
 
-use crate::did::DocumentDiff;
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
 use crate::error::Error;
+use crate::document::DiffMessage;
+use crate::document::IotaDocument;
 use crate::error::Result;
 use crate::tangle::message::compression_brotli;
 use crate::tangle::DIDMessageEncoding;
@@ -134,7 +134,7 @@ impl MessageIdExt for MessageId {
 pub trait MessageExt {
   fn try_extract_document(&self, did: &IotaDID) -> Option<IotaDocument>;
 
-  fn try_extract_diff(&self, did: &IotaDID) -> Option<DocumentDiff>;
+  fn try_extract_diff(&self, did: &IotaDID) -> Option<DiffMessage>;
 }
 
 impl MessageExt for Message {
@@ -142,8 +142,8 @@ impl MessageExt for Message {
     IotaDocument::try_from_message(self, did)
   }
 
-  fn try_extract_diff(&self, did: &IotaDID) -> Option<DocumentDiff> {
-    DocumentDiff::try_from_message(self, did)
+  fn try_extract_diff(&self, did: &IotaDID) -> Option<DiffMessage> {
+    DiffMessage::try_from_message(self, did)
   }
 }
 
@@ -157,7 +157,7 @@ impl TryFromMessage for IotaDocument {
   }
 }
 
-impl TryFromMessage for DocumentDiff {
+impl TryFromMessage for DiffMessage {
   fn try_from_message(message: &Message, did: &IotaDID) -> Option<Self> {
     parse_message(message, did)
   }
@@ -167,7 +167,7 @@ impl TryFromMessage for DocumentDiff {
 mod test {
   use identity_core::crypto::KeyPair;
 
-  use crate::did::IotaDocument;
+  use crate::document::IotaDocument;
   use crate::tangle::message::message_encoding::DIDMessageEncoding;
   use crate::tangle::MessageId;
 

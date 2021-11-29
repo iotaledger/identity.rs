@@ -14,6 +14,7 @@ use identity::did::Service;
 use identity::did::DID;
 use identity::iota::ClientMap;
 use identity::iota::Error;
+use identity::iota::ExplorerUrl;
 use identity::iota::IotaVerificationMethod;
 use identity::iota::Receipt;
 use identity::iota::TangleRef;
@@ -32,7 +33,7 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   let new_key: KeyPair = KeyPair::new_ed25519().map_err(|_| Error::CoreError)?;
   let method: IotaVerificationMethod =
     IotaVerificationMethod::from_did(document.did().clone(), new_key.type_(), new_key.public(), "newKey")?;
-  assert!(document.insert_method(method, MethodScope::VerificationMethod));
+  assert!(document.insert_method(method, MethodScope::VerificationMethod).is_ok());
 
   // Add a new Service
   let service: Service = Service::from_json_value(json!({
@@ -58,7 +59,12 @@ pub async fn run() -> Result<(IotaDocument, KeyPair, KeyPair, Receipt, Receipt)>
   println!("Publish Receipt > {:#?}", update_receipt);
 
   // Display the web explorer url that shows the published message.
-  println!("DID Document Transaction > {}", update_receipt.message_url()?);
+  let explorer: &ExplorerUrl = ExplorerUrl::mainnet();
+  println!(
+    "DID Document Transaction > {}",
+    explorer.message_url(update_receipt.message_id())?
+  );
+  println!("Explore the DID Document > {}", explorer.resolver_url(document.did())?);
 
   Ok((document, keypair, new_key, receipt, update_receipt))
 }

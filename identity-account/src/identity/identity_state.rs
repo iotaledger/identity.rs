@@ -10,7 +10,7 @@ use identity_core::crypto::SetSignature;
 use identity_did::verification::MethodType;
 use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDIDUrl;
-use identity_iota::did::IotaDocument;
+use identity_iota::document::IotaDocument;
 use identity_iota::tangle::TangleRef;
 
 use crate::crypto::RemoteEd25519;

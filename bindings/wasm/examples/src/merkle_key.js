@@ -21,7 +21,7 @@ import {logExplorerUrl} from './utils';
  Every key should be used once by the issuer for signing a verifiable credential.
  When the verifiable credential must be revoked, the issuer revokes the index of the revoked key.
 
- @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+ @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  **/
 async function merkleKey(clientConfig) {
     // Create a default client configuration from the parent config network.
@@ -47,7 +47,7 @@ async function merkleKey(clientConfig) {
     // Publish the Identity to the IOTA Network and log the results.
     // This may take a few seconds to complete proof-of-work.
     const receipt = await client.publishDocument(issuer.doc);
-    logExplorerUrl("Identity Update:", clientConfig.network.toString(), receipt.messageId);
+    logExplorerUrl("Identity Update:", clientConfig.explorer, receipt.messageId);
 
     // Prepare a credential subject indicating the degree earned by Alice
     let credentialSubject = {
@@ -60,7 +60,7 @@ async function merkleKey(clientConfig) {
 
     // Create an unsigned `UniversityDegree` credential for Alice
     const unsignedVc = VerifiableCredential.extend({
-        id: "http://example.edu/credentials/3732",
+        id: "https://example.edu/credentials/3732",
         type: "UniversityDegreeCredential",
         issuer: issuer.doc.id.toString(),
         credentialSubject,
@@ -85,7 +85,7 @@ async function merkleKey(clientConfig) {
     issuer.doc.updated = Timestamp.nowUTC();
     issuer.doc.signSelf(issuer.key, issuer.doc.defaultSigningMethod().id.toString());
     const nextReceipt = await client.publishDocument(issuer.doc);
-    logExplorerUrl("Identity Update:", clientConfig.network.toString(), nextReceipt.messageId);
+    logExplorerUrl("Identity Update:", clientConfig.explorer, nextReceipt.messageId);
 
     // Check the verifiable credential is revoked
     const newResult = await client.checkCredential(signedVc.toString());

@@ -118,10 +118,10 @@ mod tests {
   #[test]
   fn test_tvs() {
     for tv in TVS {
+      // The test vectors are from [JcsEd25519Signature2020](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/test-vectors),
+      // and use [Go crypto/ed25519](https://pkg.go.dev/crypto/ed25519#pkg-types)'s convention of representing an Ed25519 private key as: 32-byte seed concatenated with the 32-byte public key (computed from the seed).
+      // We follow the convention from [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2) and extract the 32-byte seed as the private key.
       let public: PublicKey = utils::decode_b58(tv.public).unwrap().into();
-      // The test vectors have been taken from: [here](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/test-vectors),
-      // and use [GO crypto/ed25519](https://pkg.go.dev/crypto/ed25519#pkg-types)'s convention of representing an Ed25519 private key as: seed (secret key in the original paper) followed by public key (computed from the seed)
-      // We follow the convention from RFC [8032](https://datatracker.ietf.org/doc/html/rfc8032) and need the seed.
       let private: PrivateKey = (utils::decode_b58(tv.private).unwrap()[..32]).to_vec().into();
       let badkey: PublicKey = b"IOTA".to_vec().into();
 

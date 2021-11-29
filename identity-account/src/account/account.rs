@@ -1,13 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use futures::executor;
-
 use identity_core::crypto::SetSignature;
-use identity_iota::did::DocumentDiff;
 use identity_iota::did::IotaDID;
-use identity_iota::did::IotaDocument;
-use identity_iota::did::IotaVerificationMethod;
+use identity_iota::document::DiffMessage;
+use identity_iota::document::IotaDocument;
+use identity_iota::document::IotaVerificationMethod;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
@@ -127,11 +125,6 @@ impl Account {
     self.config.autosave
   }
 
-  /// Returns whether save-on-drop is enabled.
-  pub fn dropsave(&self) -> bool {
-    self.config.dropsave
-  }
-
   /// Returns the total number of actions executed by this instance.
   pub fn actions(&self) -> usize {
     self.actions.load(Ordering::SeqCst)
@@ -205,7 +198,10 @@ impl Account {
   {
     let state: &IdentityState = self.state();
 
-    let method: &IotaVerificationMethod = state.document().resolve_method(fragment).ok_or(Error::MethodNotFound)?;
+    let method: &IotaVerificationMethod = state
+      .document()
+      .resolve_method(fragment)
+      .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?;
 
     let location: KeyLocation = state.method_location(method.key_type(), fragment.to_owned())?;
 
@@ -368,7 +364,7 @@ impl Account {
       }
     }
 
-    let mut diff: DocumentDiff = DocumentDiff::new(old_doc, new_doc, *previous_message_id)?;
+    let mut diff: DiffMessage = DiffMessage::new(old_doc, new_doc, *previous_message_id)?;
 
     let method: &IotaVerificationMethod = old_state.document().default_signing_method()?;
 
@@ -415,14 +411,5 @@ impl Account {
     }
 
     Ok(())
-  }
-}
-
-impl Drop for Account {
-  fn drop(&mut self) {
-    if self.config.dropsave && self.actions() != 0 {
-      // TODO: Handle Result (?)
-      let _ = executor::block_on(self.storage().flush_changes());
-    }
   }
 }

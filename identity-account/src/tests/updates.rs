@@ -261,7 +261,9 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   let mut account_setup = account_setup();
   account_setup.config = account_setup.config.testmode(true).autopublish(false);
 
-  let mut account = Account::create_identity(account_setup, IdentitySetup::default()).await?;
+  let mut account = Account::create_identity(account_setup, IdentitySetup::default())
+    .await
+    .unwrap();
 
   let update: Update = Update::CreateMethod {
     scope: MethodScope::default(),
@@ -270,7 +272,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
     fragment: "key-1".to_owned(),
   };
 
-  account.process_update(update.clone()).await?;
+  account.process_update(update.clone()).await.unwrap();
 
   let output = account.process_update(update.clone()).await;
 
@@ -288,7 +290,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   // Now the location is different due to the incremented generation, but the fragment is the same.
   assert!(matches!(
     output.unwrap_err(),
-    Error::UpdateError(UpdateError::DuplicateKeyFragment(_)),
+    Error::DIDError(identity_did::Error::MethodAlreadyExists)
   ));
 
   Ok(())
@@ -380,7 +382,7 @@ async fn test_attach_method_relationship() -> Result<()> {
     .to_owned();
 
   // Attempt attaching a relationship to an embedded method.
-  let update: Update = Update::AttachMethod {
+  let update: Update = Update::AttachMethodRelationship {
     relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
     fragment: default_method_fragment,
   };
@@ -389,7 +391,9 @@ async fn test_attach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::UpdateError(UpdateError::InvalidTargetEmbeddedMethod)
+    Error::IotaError(identity_iota::Error::InvalidDoc(
+      identity_did::Error::InvalidMethodEmbedded
+    ))
   ));
 
   // No relationships were created.
@@ -398,7 +402,7 @@ async fn test_attach_method_relationship() -> Result<()> {
   assert_eq!(account.document().as_document().assertion_method().iter().count(), 0);
   assert_eq!(account.document().as_document().key_agreement().iter().count(), 0);
 
-  let update: Update = Update::AttachMethod {
+  let update: Update = Update::AttachMethodRelationship {
     relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
     fragment: fragment.clone(),
   };
@@ -456,7 +460,7 @@ async fn test_detach_method_relationship() -> Result<()> {
   account.process_update(update).await?;
 
   // Attempt detaching a relationship from an embedded method.
-  let update: Update = Update::DetachMethod {
+  let update: Update = Update::DetachMethodRelationship {
     relationships: vec![MethodRelationship::Authentication],
     fragment: embedded_fragment,
   };
@@ -465,7 +469,9 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   assert!(matches!(
     err,
-    Error::UpdateError(UpdateError::InvalidTargetEmbeddedMethod)
+    Error::IotaError(identity_iota::Error::InvalidDoc(
+      identity_did::Error::InvalidMethodEmbedded
+    ))
   ));
 
   // No relationships were removed.
@@ -480,7 +486,7 @@ async fn test_detach_method_relationship() -> Result<()> {
 
   account.process_update(update).await?;
 
-  let update: Update = Update::AttachMethod {
+  let update: Update = Update::AttachMethodRelationship {
     relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
     fragment: generic_fragment.clone(),
   };
@@ -490,7 +496,7 @@ async fn test_detach_method_relationship() -> Result<()> {
   assert_eq!(account.document().as_document().assertion_method().len(), 1);
   assert_eq!(account.document().as_document().key_agreement().len(), 1);
 
-  let update: Update = Update::DetachMethod {
+  let update: Update = Update::DetachMethodRelationship {
     relationships: vec![MethodRelationship::AssertionMethod, MethodRelationship::KeyAgreement],
     fragment: generic_fragment.clone(),
   };
@@ -561,7 +567,7 @@ async fn test_delete_method() -> Result<()> {
     fragment: "key-1".to_owned(),
   };
 
-  account.process_update(update).await?;
+  account.process_update(update.clone()).await?;
 
   let state: &IdentityState = account.state();
 
@@ -582,6 +588,14 @@ async fn test_delete_method() -> Result<()> {
   assert_eq!(initial_state.document().created(), state.document().created());
   // Ensure `updated` was recently set.
   assert!(state.document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
+
+  // Deleting a non-existing methods fails.
+  let output = account.process_update(update).await;
+
+  assert!(matches!(
+    output.unwrap_err(),
+    Error::IotaError(identity_iota::Error::InvalidDoc(identity_did::Error::MethodNotFound))
+  ));
 
   Ok(())
 }

@@ -37,6 +37,9 @@ impl KeyPair {
   }
 
   /// Reconstructs the [`Ed25519`][`KeyType::Ed25519`] [`KeyPair`] from a private key.
+  /// 
+  ///  The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+  /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
   pub fn try_from_ed25519_bytes(private_key_bytes: &[u8]) -> Result<Self, Ed25519KeyPairGenerationError> {
     let private_key_bytes: [u8; ed25519::SECRET_KEY_LENGTH] =
       private_key_bytes

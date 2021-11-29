@@ -15,7 +15,7 @@ use identity::did::Service;
 use identity::did::DID;
 use identity::iota::ChainHistory;
 use identity::iota::Client;
-use identity::iota::DocumentDiff;
+use identity::iota::DiffMessage;
 use identity::iota::DocumentHistory;
 use identity::iota::Error;
 use identity::iota::IotaDocument;
@@ -63,7 +63,7 @@ async fn main() -> Result<()> {
     // Add a new VerificationMethod with a new KeyPair, with the tag "keys-1"
     let keys_1: KeyPair = KeyPair::new_ed25519().map_err(|_|Error::CoreError)?;
     let method_1: IotaVerificationMethod = IotaVerificationMethod::from_did(int_doc_1.id().clone(), keys_1.type_(), keys_1.public(), "keys-1")?;
-    assert!(int_doc_1.insert_method(method_1, MethodScope::VerificationMethod));
+    assert!(int_doc_1.insert_method(method_1, MethodScope::VerificationMethod).is_ok());
 
     // Add the `message_id` of the previous message in the chain.
     // This is REQUIRED in order for the messages to form a chain.
@@ -104,7 +104,7 @@ async fn main() -> Result<()> {
   //
   // This is the first diff therefore the `previous_message_id` property is
   // set to the last DID document published.
-  let diff_1: DocumentDiff = int_doc_1.diff(&diff_doc_1, *int_receipt_1.message_id(), keypair.private(), int_doc_1.default_signing_method()?.id())?;
+  let diff_1: DiffMessage = int_doc_1.diff(&diff_doc_1, *int_receipt_1.message_id(), keypair.private(), int_doc_1.default_signing_method()?.id())?;
 
   // Publish the diff to the Tangle, starting a diff chain.
   let diff_receipt_1: Receipt = client.publish_diff(int_receipt_1.message_id(), &diff_1).await?;
@@ -133,7 +133,7 @@ async fn main() -> Result<()> {
   // This is the second diff therefore its `previous_message_id` property is
   // set to the first published diff to extend the diff chain.
 
-  let diff_2: DocumentDiff = diff_doc_1.diff(&diff_doc_2, *diff_receipt_1.message_id(), keypair.private(), diff_doc_1.default_signing_method()?.id())?;
+  let diff_2: DiffMessage = diff_doc_1.diff(&diff_doc_2, *diff_receipt_1.message_id(), keypair.private(), diff_doc_1.default_signing_method()?.id())?;
   // Publish the diff to the Tangle.
   // Note that we still use the `message_id` from the last integration chain message here to link
   // the current diff chain to that point on the integration chain.
@@ -178,7 +178,7 @@ async fn main() -> Result<()> {
     // Add a VerificationMethod with a new KeyPair, called "keys-2"
     let keys_2: KeyPair = KeyPair::new_ed25519().map_err(|_|Error::CoreError)?;
     let method_2: IotaVerificationMethod = IotaVerificationMethod::from_did(int_doc_2.id().clone(), keys_2.type_(), keys_2.public(), "keys-2")?;
-    assert!(int_doc_2.insert_method(method_2, MethodScope::VerificationMethod));
+    assert!(int_doc_2.insert_method(method_2, MethodScope::VerificationMethod).is_ok());
 
     // Note: the `previous_message_id` points to the `message_id` of the last integration chain
     //       update, NOT the last diff chain message.
@@ -209,7 +209,7 @@ async fn main() -> Result<()> {
   // Fetch the diff chain history of the previous integration chain document.
   // Old diff chains can be retrieved but they no longer affect DID resolution.
   let previous_integration_document = &history_2.integration_chain_data[1];
-  let previous_diff_history: ChainHistory<DocumentDiff> = client
+  let previous_diff_history: ChainHistory<DiffMessage> = client
     .resolve_diff_history(previous_integration_document)
     .await?;
 

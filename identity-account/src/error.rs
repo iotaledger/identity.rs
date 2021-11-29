@@ -80,9 +80,6 @@ pub enum Error {
   /// Caused by attempting to find an identity that does not exist.
   #[error("Identity not found")]
   IdentityNotFound,
-  /// Caused by attempting to find a verification method that does not exist.
-  #[error("Verification Method not found")]
-  MethodNotFound,
   /// Caused by attempting to perform an upate in an invalid context.
   #[error("Update Error: {0}")]
   UpdateError(#[from] crate::updates::UpdateError),

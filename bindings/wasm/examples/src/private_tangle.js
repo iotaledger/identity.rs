@@ -1,7 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-import {Client, Config, Document, KeyPair, KeyType, Network, DIDMessageEncoding} from '@iota/identity-wasm';
+import {Client, Config, Document, ExplorerUrl, KeyPair, KeyType, Network, DIDMessageEncoding} from '@iota/identity-wasm';
+import {logResolverUrl} from "./utils";
 
 /**
     This example shows how a DID document can be created on a private tangle.
@@ -9,21 +10,14 @@ import {Client, Config, Document, KeyPair, KeyType, Network, DIDMessageEncoding}
     Refer to https://github.com/iotaledger/one-click-tangle/tree/chrysalis/hornet-private-net
     for setup instructions.
 **/
-async function createIdentityPrivateTangle(restURL, networkName) {
+async function privateTangle(restURL, networkName) {
     // This name needs to match the id of the network or part of it.
     // Since the id of the one-click private tangle is `private-tangle`
     // but we can only use 6 characters, we use just `tangle`.
     const network = Network.try_from_name(networkName || "tangle");
 
-    // Generate a new ed25519 public/private key pair.
-    const key = new KeyPair(KeyType.Ed25519);
-
-    // Create a DID with the network set explicitly.
-    // This will result in a DID prefixed by `did:iota:tangle`.
-    const doc = new Document(key, network.toString());
-
-    // Sign the DID Document with the generated key.
-    doc.signSelf(key, doc.defaultSigningMethod().id.toString());
+    // Optionally point to a locally-deployed Tangle explorer.
+    const explorer = ExplorerUrl.parse("http://127.0.0.1:8082/");
 
     // Create a client configuration and set the custom network.
     const config = new Config();
@@ -38,6 +32,16 @@ async function createIdentityPrivateTangle(restURL, networkName) {
     // Create a client instance from the configuration to publish messages to the Tangle.
     const client = Client.fromConfig(config);
 
+    // Generate a new ed25519 public/private key pair.
+    const key = new KeyPair(KeyType.Ed25519);
+
+    // Create a DID with the network set explicitly.
+    // This will result in a DID prefixed by `did:iota:tangle`.
+    const doc = new Document(key, network.toString());
+
+    // Sign the DID Document with the generated key.
+    doc.signSelf(key, doc.defaultSigningMethod().id.toString());
+
     // Publish the Identity to the IOTA Network, this may take a few seconds to complete Proof-of-Work.
     const receipt = await client.publishDocument(doc);
 
@@ -46,9 +50,10 @@ async function createIdentityPrivateTangle(restURL, networkName) {
 
     console.log(`Published the DID document to the private tangle:`);
     console.log(resolved);
+    logResolverUrl("Explore the DID Document:", explorer, doc.id.toString());
 
     // Return the results.
     return { key, resolved, receipt };
 }
 
-export {createIdentityPrivateTangle};
+export {privateTangle};

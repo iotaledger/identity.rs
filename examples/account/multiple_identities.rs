@@ -10,6 +10,7 @@ use identity::account::AccountBuilder;
 use identity::account::AccountStorage;
 use identity::account::IdentitySetup;
 use identity::account::Result;
+use identity::iota::ExplorerUrl;
 use identity::iota::IotaDID;
 
 #[tokio::main]
@@ -26,7 +27,7 @@ async fn main() -> Result<()> {
   // Create an AccountBuilder to make it easier to create multiple identities.
   // Every account created from the builder will use the same storage - stronghold in this case.
   let mut builder: AccountBuilder =
-    Account::builder().storage(AccountStorage::Stronghold(stronghold_path, Some(password)));
+    Account::builder().storage(AccountStorage::Stronghold(stronghold_path, Some(password), None));
 
   // The creation step generates a keypair, builds an identity
   // and publishes it to the IOTA mainnet.
@@ -62,10 +63,10 @@ async fn main() -> Result<()> {
 
   // Prints the Identity Resolver Explorer URL.
   // The entire history can be observed on this page by clicking "Loading History".
+  let explorer: &ExplorerUrl = ExplorerUrl::mainnet();
   println!(
-    "[Example] Explore the DID Document = {}/{}",
-    account1.did().network()?.explorer_url().unwrap().to_string(),
-    account1.did().to_string()
+    "[Example] Explore the DID Document = {}",
+    explorer.resolver_url(account1.did())?
   );
 
   Ok(())

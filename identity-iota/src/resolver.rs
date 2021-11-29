@@ -12,7 +12,7 @@ use identity_did::resolution::MetaDocument;
 use identity_did::resolution::ResolverMethod;
 
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::IotaDocument;
 use crate::tangle::Client;
 use crate::tangle::ClientMap;
 use crate::tangle::TangleResolve;
