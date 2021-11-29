@@ -10,8 +10,8 @@ pub use signing::MissingSignatureError;
 pub use signing::SigningError;
 pub(crate) use signing::SigningErrorCause;
 pub(crate) use verifying::InvalidProofValue;
-pub(crate) use verifying::VerificationError;
-pub(crate) use verifying::VerificationProcessingError;
+pub use verifying::VerificationError;
+pub use verifying::VerificationProcessingError;
 
 mod signing {
   use crate::convert::JsonDecodingError;
@@ -107,8 +107,8 @@ mod verifying {
   use super::MissingSignatureError;
   use crate::convert::JsonDecodingError;
   use crate::convert::JsonEncodingError;
-  use crate::crypto::merkle_key::base::MerkleDigestKeyTagError;
-  use crate::crypto::merkle_key::base::MerkleSignatureKeyTagError;
+  use crate::crypto::merkle_key::MerkleDigestKeyTagError;
+  use crate::crypto::merkle_key::MerkleSignatureKeyTagError;
   /// The provided signature does not match the expected value
   #[derive(Debug, DeriveError)]
   #[error("{0}")]

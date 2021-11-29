@@ -1,9 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-pub(crate) use self::errors::MerkleDigestKeyTagError;
-pub(crate) use self::errors::MerkleSignatureKeyTagError;
-pub(crate) use self::errors::MerkleTagExtractionError;
+use crate::crypto::merkle_key::MerkleKeyTagExtractionError;
+use crate::crypto::merkle_key::MerkleDigestKeyTagError;
+use crate::crypto::merkle_key::MerkleSignatureKeyTagError; 
 use crate::crypto::merkle_key::MerkleDigest;
 use crate::crypto::merkle_key::MerkleDigestTag;
 use crate::crypto::merkle_key::MerkleSignature;
@@ -21,7 +21,7 @@ impl MerkleKey {
   pub const TYPE_SIG: &'static str = "MerkleKeySignature2021";
 
   /// Extracts the signature and digest algorithm tags from the public key value.
-  pub fn extract_tags(data: &[u8]) -> Result<(MerkleSignatureTag, MerkleDigestTag), MerkleTagExtractionError> {
+  pub fn extract_tags(data: &[u8]) -> Result<(MerkleSignatureTag, MerkleDigestTag), MerkleKeyTagExtractionError> {
     let tag_s: MerkleSignatureTag = Self::signature_tag(data, 0)?;
     let tag_d: MerkleDigestTag = Self::digest_tag(data, 1)?;
 
@@ -58,30 +58,6 @@ impl MerkleKey {
   }
 }
 
-mod errors {
-  use thiserror::Error as DeriveError;
-
-  use crate::crypto::merkle_key::MerkleDigestTag;
-  use crate::crypto::merkle_key::MerkleSignatureTag;
-  // Caused by attempting to parse an invalid Merkle Digest Key Collection tag.
-  #[derive(Debug, DeriveError)]
-  #[error("invalid Merkle digest key tag: {0:?}")]
-  pub struct MerkleDigestKeyTagError(pub Option<MerkleDigestTag>);
-
-  // Caused by attempting to parse an invalid Merkle Signature Key Collection tag.  #[error("Invalid Merkle Signature
-  // Key Tag: {0:?}")]
-  #[derive(Debug, DeriveError)]
-  #[error("Invalid Merkle Signature Key Tag: {0:?}")]
-  pub struct MerkleSignatureKeyTagError(pub Option<MerkleSignatureTag>);
-
-  #[derive(Debug, DeriveError)]
-  pub enum MerkleTagExtractionError {
-    #[error("{0}")]
-    InvalidMerkleDigestKeyTag(#[from] MerkleDigestKeyTagError),
-    #[error("{0}")]
-    InvalidMerkleSignatureKeyTag(#[from] MerkleSignatureKeyTagError),
-  }
-}
 #[cfg(test)]
 mod tests {
   use crate::crypto::merkle_key::Blake2b256;

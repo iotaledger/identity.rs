@@ -24,8 +24,8 @@ use crate::crypto::Verifier;
 use crate::crypto::Verify;
 use crate::utils;
 
-use super::base::MerkleDigestKeyTagError;
-use super::base::MerkleSignatureKeyTagError;
+use crate::crypto::merkle_key::MerkleDigestKeyTagError;
+use crate::crypto::merkle_key::MerkleSignatureKeyTagError; 
 use errors::InvalidProofFormat;
 
 /// Key components used to verify a Merkle Key Collection signature.
@@ -193,7 +193,7 @@ fn expand_signature_value(
 }
 
 mod errors {
-  use crate::crypto::merkle_key::base::MerkleTagExtractionError;
+  use crate::crypto::merkle_key::MerkleKeyTagExtractionError;
   use crate::crypto::signature::errors::VerificationError;
   use crate::crypto::signature::errors::VerificationProcessingError;
 
@@ -211,11 +211,11 @@ mod errors {
     }
   }
 
-  impl From<MerkleTagExtractionError> for VerificationProcessingError {
-    fn from(err: MerkleTagExtractionError) -> Self {
+  impl From<MerkleKeyTagExtractionError> for VerificationProcessingError {
+    fn from(err: MerkleKeyTagExtractionError) -> Self {
       match err {
-        MerkleTagExtractionError::InvalidMerkleDigestKeyTag(digest_key_tag_err) => digest_key_tag_err.into(),
-        MerkleTagExtractionError::InvalidMerkleSignatureKeyTag(signature_key_tag_err) => signature_key_tag_err.into(),
+        MerkleKeyTagExtractionError::InvalidMerkleDigestKeyTag(digest_key_tag_err) => digest_key_tag_err.into(),
+        MerkleKeyTagExtractionError::InvalidMerkleSignatureKeyTag(signature_key_tag_err) => signature_key_tag_err.into(),
       }
     }
   }
