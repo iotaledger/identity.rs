@@ -1,12 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::crypto::merkle_key::MerkleKeyTagExtractionError;
-use crate::crypto::merkle_key::MerkleDigestKeyTagError;
-use crate::crypto::merkle_key::MerkleSignatureKeyTagError; 
 use crate::crypto::merkle_key::MerkleDigest;
+use crate::crypto::merkle_key::MerkleDigestKeyTagError;
 use crate::crypto::merkle_key::MerkleDigestTag;
+use crate::crypto::merkle_key::MerkleKeyTagExtractionError;
 use crate::crypto::merkle_key::MerkleSignature;
+use crate::crypto::merkle_key::MerkleSignatureKeyTagError;
 use crate::crypto::merkle_key::MerkleSignatureTag;
 use crate::crypto::merkle_tree::Hash;
 /// Common utilities for working with Merkle Key Collection Signatures.

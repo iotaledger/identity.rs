@@ -25,7 +25,7 @@ use crate::crypto::Verify;
 use crate::utils;
 
 use crate::crypto::merkle_key::MerkleDigestKeyTagError;
-use crate::crypto::merkle_key::MerkleSignatureKeyTagError; 
+use crate::crypto::merkle_key::MerkleSignatureKeyTagError;
 use errors::InvalidProofFormat;
 
 /// Key components used to verify a Merkle Key Collection signature.
@@ -215,7 +215,9 @@ mod errors {
     fn from(err: MerkleKeyTagExtractionError) -> Self {
       match err {
         MerkleKeyTagExtractionError::InvalidMerkleDigestKeyTag(digest_key_tag_err) => digest_key_tag_err.into(),
-        MerkleKeyTagExtractionError::InvalidMerkleSignatureKeyTag(signature_key_tag_err) => signature_key_tag_err.into(),
+        MerkleKeyTagExtractionError::InvalidMerkleSignatureKeyTag(signature_key_tag_err) => {
+          signature_key_tag_err.into()
+        }
       }
     }
   }

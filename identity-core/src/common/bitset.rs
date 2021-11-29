@@ -1,8 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::utils;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
+pub(crate) use errors::BitSetDecodingError;
+pub(crate) use errors::BitSetEncodingError;
 use roaring::RoaringBitmap;
 use serde::de;
 use serde::de::Deserializer;
@@ -11,10 +14,6 @@ use serde::ser::Error as _;
 use serde::ser::Serializer;
 use serde::Deserialize;
 use serde::Serialize;
-use crate::utils::decode_b64;
-use crate::utils::encode_b64;
-pub(crate) use errors::BitSetDecodingError;
-pub(crate) use errors::BitSetEncodingError;
 
 /// A general-purpose compressed bitset.
 #[derive(Clone, Debug, PartialEq)]
@@ -68,7 +67,7 @@ impl BitSet {
 
   /// Serializes the [`BitSet`] as a base64-encoded `String`.
   fn serialize_b64(&self) -> Result<String, BitSetEncodingError> {
-    self.serialize_vec().map(|data| encode_b64(&data))
+    self.serialize_vec().map(|data| utils::encode_b64(&data))
   }
 
   /// Serializes the [`BitSet`] as a vector of bytes.
@@ -83,7 +82,8 @@ impl BitSet {
   /// Deserializes a [`BitSet`] from base64-encoded `data`.
   fn deserialize_b64(data: &str) -> Result<Self, BitSetDecodingError> {
     Self::deserialize_slice(
-      &decode_b64(data).map_err(|_decode_error| std::io::Error::new(std::io::ErrorKind::InvalidData, _decode_error))?,
+      &utils::decode_b64(data)
+        .map_err(|_decode_error| std::io::Error::new(std::io::ErrorKind::InvalidData, _decode_error))?,
     )
   }
 

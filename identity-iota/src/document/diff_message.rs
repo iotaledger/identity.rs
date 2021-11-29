@@ -19,8 +19,8 @@ use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 
 use crate::did::IotaDID;
-use crate::error::Error;
 use crate::document::IotaDocument;
+use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;

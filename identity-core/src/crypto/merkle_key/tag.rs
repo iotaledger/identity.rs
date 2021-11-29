@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub use errors::MerkleDigestKeyTagError;
+pub use errors::MerkleKeyTagExtractionError;
 pub use errors::MerkleSignatureKeyTagError;
-pub use errors::MerkleKeyTagExtractionError; 
 /// A tag identifying a Merkle Key Collection digest algorithm.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
@@ -77,7 +77,7 @@ mod errors {
   pub struct MerkleSignatureKeyTagError(pub Option<MerkleSignatureTag>);
 
   #[derive(Debug, DeriveError)]
-  /// Caused by an attempt to parse an invalid Merkle Digest or Signature key tag 
+  /// Caused by an attempt to parse an invalid Merkle Digest or Signature key tag
   pub enum MerkleKeyTagExtractionError {
     /// See [`MerkleDigestKeyTagError`]
     #[error("{0}")]

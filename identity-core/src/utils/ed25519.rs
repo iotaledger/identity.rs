@@ -33,7 +33,7 @@ pub(crate) fn keypair_from_ed25519_private_key(private_key: ed25519::SecretKey) 
 
 /// Generates a list of public/private Ed25519 keys.
 ///
-/// See [`generate_ed25519_keypair`]. 
+/// See [`generate_ed25519_keypair`].
 pub fn generate_ed25519_keypairs(count: usize) -> Result<Vec<(PublicKey, PrivateKey)>, Ed25519KeyPairGenerationError> {
   (0..count).map(|_| generate_ed25519_keypair()).collect()
 }

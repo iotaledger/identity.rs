@@ -3,8 +3,8 @@
 
 use serde::Serialize;
 
-use crate::crypto::signature::errors::ProofValueError;
 use crate::crypto::signature::errors::MissingSignatureError;
+use crate::crypto::signature::errors::ProofValueError;
 use crate::crypto::SetSignature;
 use crate::crypto::Signature;
 use crate::crypto::SignatureValue;

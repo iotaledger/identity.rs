@@ -12,9 +12,9 @@ use identity_core::convert::ToJson;
 use identity_did::did::DID;
 
 use crate::did::IotaDID;
-use crate::error::Error;
 use crate::document::DiffMessage;
 use crate::document::IotaDocument;
+use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::message::compression_brotli;
 use crate::tangle::DIDMessageEncoding;
