@@ -9,8 +9,8 @@ use identity::did::MethodData;
 use identity::did::MethodRef;
 use identity::did::MethodType;
 use identity::did::DID;
+use identity::iota::DiffMessage;
 use identity::iota::DocumentChain;
-use identity::iota::DocumentDiff;
 use identity::iota::IntegrationChain;
 use identity::iota::IotaDocument;
 use identity::iota::MessageId;
@@ -45,7 +45,7 @@ pub fn update_diff_chain(n: usize, chain: &mut DocumentChain, keypair: &KeyPair)
     };
 
     let message_id = *chain.diff_message_id();
-    let mut diff: DocumentDiff = chain
+    let mut diff: DiffMessage = chain
       .current()
       .diff(
         &new,

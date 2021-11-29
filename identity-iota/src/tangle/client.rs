@@ -1,9 +1,11 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use bee_rest_api::types::dtos::LedgerInclusionStateDto;
 use futures::stream::FuturesUnordered;
 use futures::stream::TryStreamExt;
 use iota_client::Client as IotaClient;
+use iota_client::Error as IotaClientError;
 
 use identity_core::convert::ToJson;
 
@@ -12,9 +14,9 @@ use crate::chain::DiffChain;
 use crate::chain::DocumentChain;
 use crate::chain::DocumentHistory;
 use crate::chain::IntegrationChain;
-use crate::did::DocumentDiff;
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::DiffMessage;
+use crate::document::IotaDocument;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::ClientBuilder;
@@ -77,14 +79,22 @@ impl Client {
   }
 
   /// Publishes an [`IotaDocument`] to the Tangle.
+  /// This method calls `publish_json_with_retry` with its default `interval` and `max_attempts` values for increasing
+  /// the probability that the message will be referenced by a milestone.
   pub async fn publish_document(&self, document: &IotaDocument) -> Result<Receipt> {
-    self.publish_json(document.integration_index(), document).await
+    self
+      .publish_json_with_retry(document.integration_index(), document, None, None)
+      .await
   }
 
-  /// Publishes a [`DocumentDiff`] to the Tangle to form part of the diff chain for the integration
+  /// Publishes a [`DiffMessage`] to the Tangle to form part of the diff chain for the integration.
   /// chain message specified by the given [`MessageId`].
-  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
-    self.publish_json(&IotaDocument::diff_index(message_id)?, diff).await
+  /// This method calls `publish_json_with_retry` with its default `interval` and `max_attempts` values for increasing
+  /// the probability that the message will be referenced by a milestone.
+  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DiffMessage) -> Result<Receipt> {
+    self
+      .publish_json_with_retry(&IotaDocument::diff_index(message_id)?, diff, None, None)
+      .await
   }
 
   /// Compresses and publishes arbitrary JSON data to the specified index on the Tangle.
@@ -101,6 +111,42 @@ impl Client {
       .map(|message| Receipt::new(self.network.clone(), message))
   }
 
+  /// Publishes arbitrary JSON data to the specified index on the Tangle.
+  /// Retries (promotes or reattaches) the message until it’s included (referenced by a milestone).
+  /// Default interval is 5 seconds and max attempts is 40.
+  pub async fn publish_json_with_retry<T: ToJson>(
+    &self,
+    index: &str,
+    data: &T,
+    interval: Option<u64>,
+    max_attempts: Option<u64>,
+  ) -> Result<Receipt> {
+    let receipt: Receipt = self.publish_json(index, data).await?;
+    let retry_result: Result<Vec<(MessageId, Message)>, IotaClientError> = self
+      .client
+      .retry_until_included(receipt.message_id(), interval, max_attempts)
+      .await;
+    let reattached_messages: Vec<(MessageId, Message)> = match retry_result {
+      Ok(reattached_messages) => reattached_messages,
+      Err(inclusion_error @ IotaClientError::TangleInclusionError(_)) => {
+        if self.is_message_included(receipt.message_id()).await? {
+          return Ok(receipt);
+        } else {
+          return Err(Error::from(inclusion_error));
+        }
+      }
+      Err(error) => {
+        return Err(Error::from(error));
+      }
+    };
+    match reattached_messages.into_iter().next() {
+      Some((_, message)) => Ok(Receipt::new(self.network.clone(), message)),
+      None => Err(Error::from(IotaClientError::TangleInclusionError(
+        receipt.message_id().to_string(),
+      ))),
+    }
+  }
+
   /// Fetch the [`IotaDocument`] specified by the given [`IotaDID`].
   pub async fn read_document(&self, did: &IotaDID) -> Result<IotaDocument> {
     self.read_document_chain(did).await.and_then(DocumentChain::fold)
@@ -108,8 +154,8 @@ impl Client {
 
   /// Fetches a [`DocumentChain`] given an [`IotaDID`].
   pub async fn read_document_chain(&self, did: &IotaDID) -> Result<DocumentChain> {
-    trace!("Read Document Chain: {}", did);
-    trace!("Integration Chain Address: {}", did.tag());
+    log::trace!("Read Document Chain: {}", did);
+    log::trace!("Integration Chain Address: {}", did.tag());
 
     // Fetch all messages for the integration chain.
     let messages: Vec<Message> = self.read_messages(did.tag()).await?;
@@ -126,7 +172,7 @@ impl Client {
     //   let index: String = IotaDocument::diff_index(integration_chain.current_message_id())?;
     //   let messages: Vec<Message> = self.read_messages(&index).await?;
     //
-    //   trace!("Diff Messages: {:#?}", messages);
+    //   log::trace!("Diff Messages: {:#?}", messages);
     //
     //   DiffChain::try_from_messages(&integration_chain, &messages)?
     // };
@@ -136,7 +182,7 @@ impl Client {
       let index: String = IotaDocument::diff_index(integration_chain.current_message_id())?;
       let messages: Vec<Message> = self.read_messages(&index).await?;
 
-      trace!("Diff Messages: {:#?}", messages);
+      log::trace!("Diff Messages: {:#?}", messages);
 
       DiffChain::try_from_messages(&integration_chain, &messages, self).await?
     };
@@ -154,7 +200,7 @@ impl Client {
   ///
   /// NOTE: the document must have been published to the Tangle and have a valid message id and
   /// authentication method.
-  pub async fn resolve_diff_history(&self, document: &IotaDocument) -> Result<ChainHistory<DocumentDiff>> {
+  pub async fn resolve_diff_history(&self, document: &IotaDocument) -> Result<ChainHistory<DiffMessage>> {
     let diff_index: String = IotaDocument::diff_index(document.message_id())?;
     let diff_messages: Vec<Message> = self.read_messages(&diff_index).await?;
     Ok(ChainHistory::try_from_raw_messages(document, &diff_messages, self).await?)
@@ -186,6 +232,22 @@ impl Client {
       .try_collect()
       .await
       .map_err(Into::into)
+  }
+
+  async fn is_message_included(&self, message_id: &MessageId) -> Result<bool> {
+    match self
+      .client
+      .get_message()
+      .metadata(message_id)
+      .await?
+      .ledger_inclusion_state
+    {
+      Some(ledger_inclusion_state) => match ledger_inclusion_state {
+        LedgerInclusionStateDto::Included | LedgerInclusionStateDto::NoTransaction => Ok(true),
+        LedgerInclusionStateDto::Conflicting => Ok(false),
+      },
+      None => Ok(false),
+    }
   }
 }
 

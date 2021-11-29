@@ -7,6 +7,10 @@ use core::fmt::Formatter;
 use core::ops::Deref;
 use std::borrow::Cow;
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::common::Url;
 
 use crate::did::IotaDID;
@@ -16,9 +20,7 @@ use crate::error::Result;
 const NETWORK_NAME_MAIN: &str = "main";
 const NETWORK_NAME_DEV: &str = "dev";
 
-lazy_static! {
-  static ref EXPLORER_MAIN: Url = Url::parse("https://explorer.iota.org/mainnet/identity-resolver").unwrap();
-  static ref EXPLORER_DEV: Url = Url::parse("https://explorer.iota.org/devnet/identity-resolver/").unwrap();
+lazy_static::lazy_static! {
   static ref NODE_MAIN: Url = Url::parse("https://chrysalis-nodes.iota.org").unwrap();
   static ref NODE_DEV: Url = Url::parse("https://api.lb-0.h.chrysalis-devnet.iota.cafe").unwrap();
 }
@@ -30,10 +32,7 @@ pub enum Network {
   Mainnet,
   #[serde(rename = "dev")]
   Devnet,
-  Other {
-    name: NetworkName,
-    explorer_url: Option<Url>,
-  },
+  Other(NetworkName),
 }
 
 impl Network {
@@ -61,28 +60,9 @@ impl Network {
       _ => {
         // Accept any other valid string - validation is performed by NetworkName
         let network_name: NetworkName = NetworkName::try_from(name)?;
-        Ok(Self::Other {
-          name: network_name,
-          explorer_url: None,
-        })
+        Ok(Self::Other(network_name))
       }
     }
-  }
-
-  /// Sets the explorer url if `self` is an `Other` variant.
-  ///
-  /// The `Url` needs to be a valid base url, i.e. `url.cannot_be_a_base()`
-  /// must be false. An [InvalidExplorerUrl][Error::InvalidExplorerURL] is returned otherwise.
-  pub fn set_explorer_url(&mut self, url: Url) -> Result<()> {
-    if url.cannot_be_a_base() {
-      return Err(Error::InvalidExplorerURL);
-    }
-
-    if let Self::Other { explorer_url, .. } = self {
-      explorer_url.replace(url);
-    }
-
-    Ok(())
   }
 
   /// Returns the [Network] the [IotaDID] is associated with, if it is a valid one.
@@ -104,32 +84,12 @@ impl Network {
     }
   }
 
-  /// Returns the web explorer [`Url`] of the Tangle network.
-  pub fn explorer_url(&self) -> Option<&Url> {
-    match self {
-      Self::Mainnet => Some(&EXPLORER_MAIN),
-      Self::Devnet => Some(&EXPLORER_DEV),
-      Self::Other { explorer_url, .. } => explorer_url.as_ref(),
-    }
-  }
-
-  /// Returns the web explorer URL of the given `message_id`.
-  pub fn message_url(&self, message_id: &str) -> Result<Url> {
-    let mut url = self.explorer_url().ok_or(Error::NoExplorerURLSet)?.clone();
-    url
-      .path_segments_mut()
-      .map_err(|_| Error::InvalidExplorerURL)?
-      .push("message")
-      .push(message_id);
-    Ok(url)
-  }
-
   /// Returns the [`NetworkName`] of the network.
   pub fn name(&self) -> NetworkName {
     match self {
       Self::Mainnet => NetworkName(Cow::from(NETWORK_NAME_MAIN)),
       Self::Devnet => NetworkName(Cow::from(NETWORK_NAME_DEV)),
-      Self::Other { name, .. } => name.clone(),
+      Self::Other(name) => name.clone(),
     }
   }
 
@@ -138,7 +98,7 @@ impl Network {
     match self {
       Self::Mainnet => NETWORK_NAME_MAIN,
       Self::Devnet => NETWORK_NAME_DEV,
-      Self::Other { name, .. } => name.as_ref(),
+      Self::Other(name) => name,
     }
   }
 }
@@ -157,6 +117,8 @@ impl Default for Network {
 pub struct NetworkName(Cow<'static, str>);
 
 impl NetworkName {
+  const MAX_LENGTH: usize = 6;
+
   /// Creates a new [`NetworkName`] if the name passes validation.
   pub fn try_from<T>(name: T) -> Result<Self>
   where
@@ -173,7 +135,7 @@ impl NetworkName {
       return Err(Error::InvalidNetworkName);
     }
 
-    if name.len() > 6 {
+    if name.len() > Self::MAX_LENGTH {
       return Err(Error::InvalidNetworkName);
     };
 
@@ -257,10 +219,7 @@ mod tests {
     // Valid
     assert_eq!(
       Network::try_from_name("6chars").unwrap(),
-      Network::Other {
-        name: NetworkName::try_from("6chars").unwrap(),
-        explorer_url: None,
-      }
+      Network::Other(NetworkName::try_from("6chars").unwrap())
     );
 
     // Must be non-empty
@@ -303,31 +262,5 @@ mod tests {
     let did: IotaDID = IotaDID::new_with_network(b"", "dev").unwrap();
     assert!(Network::matches_did(Network::Devnet, &did));
     assert!(!Network::matches_did(Network::Mainnet, &did));
-  }
-
-  #[test]
-  fn test_explorer_url() {
-    let mainnet = Network::Mainnet;
-    assert!(mainnet.explorer_url().is_some());
-    assert_eq!(mainnet.explorer_url().unwrap().as_str(), EXPLORER_MAIN.as_str());
-
-    let devnet = Network::Devnet;
-    assert!(devnet.explorer_url().is_some());
-    assert_eq!(devnet.explorer_url().unwrap().as_str(), EXPLORER_DEV.as_str());
-
-    let mut other = Network::try_from_name("atoi").unwrap();
-    assert!(other.explorer_url().is_none());
-
-    // Try setting a `cannot_be_a_base` url.
-    assert!(matches!(
-      other
-        .set_explorer_url(Url::parse("data:text/plain,stuff").unwrap())
-        .unwrap_err(),
-      Error::InvalidExplorerURL
-    ));
-
-    let url = Url::parse("https://explorer.iota.org/devnet").unwrap();
-    assert!(other.set_explorer_url(url.clone()).is_ok());
-    assert_eq!(other.explorer_url().unwrap().clone(), url);
   }
 }

@@ -26,7 +26,7 @@ use crate::credential::VerifiablePresentation;
 use crate::crypto::KeyPair;
 use crate::did::wasm_did_url::WasmDIDUrl;
 use crate::did::WasmDID;
-use crate::did::WasmDocumentDiff;
+use crate::did::WasmDiffMessage;
 use crate::did::WasmVerificationMethod;
 use crate::error::Result;
 use crate::error::WasmResult;
@@ -38,6 +38,13 @@ use crate::service::Service;
 #[wasm_bindgen(js_name = Document, inspectable)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct WasmDocument(pub(crate) IotaDocument);
+
+// Workaround for Typescript type annotations on async function returns.
+#[wasm_bindgen]
+extern "C" {
+  #[wasm_bindgen(typescript_type = "Promise<Document>")]
+  pub type PromiseDocument;
+}
 
 #[wasm_bindgen(js_class = Document)]
 impl WasmDocument {
@@ -163,10 +170,10 @@ impl WasmDocument {
 
   /// Adds a new Verification Method to the DID Document.
   #[wasm_bindgen(js_name = insertMethod)]
-  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: Option<String>) -> Result<bool> {
+  pub fn insert_method(&mut self, method: &WasmVerificationMethod, scope: Option<String>) -> Result<()> {
     let scope: MethodScope = scope.unwrap_or_default().parse().wasm_result()?;
-
-    Ok(self.0.insert_method(method.0.clone(), scope))
+    self.0.insert_method(method.0.clone(), scope).wasm_result()?;
+    Ok(())
   }
 
   /// Removes all references to the specified Verification Method.
@@ -338,10 +345,10 @@ impl WasmDocument {
   // Diffs
   // ===========================================================================
 
-  /// Generate a `DocumentDiff` between two DID Documents and sign it using the specified
+  /// Generate a `DiffMessage` between two DID Documents and sign it using the specified
   /// `key` and `method`.
   #[wasm_bindgen]
-  pub fn diff(&self, other: &WasmDocument, message: &str, key: &KeyPair, method: &str) -> Result<WasmDocumentDiff> {
+  pub fn diff(&self, other: &WasmDocument, message: &str, key: &KeyPair, method: &str) -> Result<WasmDiffMessage> {
     self
       .0
       .diff(
@@ -350,7 +357,7 @@ impl WasmDocument {
         key.0.private(),
         method,
       )
-      .map(WasmDocumentDiff::from)
+      .map(WasmDiffMessage::from)
       .wasm_result()
   }
 
@@ -361,13 +368,13 @@ impl WasmDocument {
   ///
   /// Fails if an unsupported verification method is used or the verification operation fails.
   #[wasm_bindgen(js_name = verifyDiff)]
-  pub fn verify_diff(&self, diff: &WasmDocumentDiff) -> Result<()> {
+  pub fn verify_diff(&self, diff: &WasmDiffMessage) -> Result<()> {
     self.0.verify_diff(&diff.0).wasm_result()
   }
 
-  /// Verifies a `DocumentDiff` signature and merges the changes into `self`.
+  /// Verifies a `DiffMessage` signature and merges the changes into `self`.
   #[wasm_bindgen]
-  pub fn merge(&mut self, diff: &WasmDocumentDiff) -> Result<()> {
+  pub fn merge(&mut self, diff: &WasmDiffMessage) -> Result<()> {
     self.0.merge(&diff.0).wasm_result()
   }
 

@@ -7,7 +7,7 @@ import {manipulateIdentity} from "./manipulate_did";
 /**
  A short example to show how to resolve a DID. This returns the latest DID Document.
 
- @param {{defaultNodeURL: string, explorerURL: string, network: Network}} clientConfig
+ @param {{network: Network, explorer: ExplorerUrl}} clientConfig
  @param {string} did
  **/
 async function resolution(clientConfig, did) {

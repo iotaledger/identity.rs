@@ -1,18 +1,33 @@
-import { initIdentity, defaultClientConfig, setupDOMLog } from "./utils_web.js";
-import { createIdentity } from "./create_did.js";
-import { createVC } from "./create_vc.js";
-import { manipulateIdentity } from "./manipulate_did.js";
-import { resolution } from "./resolution.js";
-import { createVP } from "./create_vp.js";
-import { revokeVC } from "./revoke_vc.js";
-import { merkleKey } from "./merkle_key.js";
-import { createIdentityPrivateTangle } from "./private_tangle.js";
-import { createDiff } from "./diff_chain.js";
-import { resolveHistory } from "./resolve_history.js";
+import {defaultClientConfig, initIdentity, setupDOMLog} from "./utils_web.js";
+import {createIdentity} from "./create_did.js";
+import {createVC} from "./create_vc.js";
+import {manipulateIdentity} from "./manipulate_did.js";
+import {resolution} from "./resolution.js";
+import {createVP} from "./create_vp.js";
+import {revokeVC} from "./revoke_vc.js";
+import {merkleKey} from "./merkle_key.js";
+import {privateTangle} from "./private_tangle.js";
+import {createDiff} from "./diff_chain.js";
+import {resolveHistory} from "./resolve_history.js";
+import {repeatAsyncTest} from "./utils.js";
 
-export { initIdentity, defaultClientConfig, createIdentity, createVC, manipulateIdentity, resolution, createVP, revokeVC, merkleKey, createIdentityPrivateTangle, createDiff, resolveHistory };
+export {
+    initIdentity,
+    defaultClientConfig,
+    createIdentity,
+    createVC,
+    manipulateIdentity,
+    resolution,
+    createVP,
+    revokeVC,
+    merkleKey,
+    privateTangle,
+    createDiff,
+    resolveHistory,
+    repeatAsyncTest
+};
 
-window.onload = async() => {
+window.onload = async () => {
 
     setupDOMLog();
 
@@ -64,7 +79,7 @@ window.onload = async() => {
         .addEventListener("click", () => {
             const restURL = document.querySelector("#create-private-rest-url").value;
             const networkName = document.querySelector("#create-private-network-name").value;
-            createIdentityPrivateTangle(restURL, networkName);
+            privateTangle(restURL, networkName);
         });
 
     //handle diff chain on click event

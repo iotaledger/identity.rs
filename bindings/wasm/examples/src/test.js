@@ -1,90 +1,60 @@
-import { createIdentity } from "./create_did";
-import { manipulateIdentity } from "./manipulate_did";
-import { resolution } from "./resolution";
-import { createVC } from "./create_vc";
-import { createVP } from "./create_vp";
-import { createDiff } from "./diff_chain";
-import { revokeVC } from "./revoke_vc";
-import { merkleKey } from "./merkle_key";
-import { resolveHistory } from "./resolve_history";
-import { CLIENT_CONFIG } from "./config";
-import { createIdentityPrivateTangle } from "./private_tangle";
+import * as assert from "assert";
+import * as parallel from "mocha.parallel"
 
-jest.setTimeout(180000); // 3 minutes to account for spurious network delays, most tests pass in a few seconds
+import {createIdentity} from "./create_did";
+import {manipulateIdentity} from "./manipulate_did";
+import {resolution} from "./resolution";
+import {createVC} from "./create_vc";
+import {createVP} from "./create_vp";
+import {createDiff} from "./diff_chain";
+import {revokeVC} from "./revoke_vc";
+import {merkleKey} from "./merkle_key";
+import {resolveHistory} from "./resolve_history";
+import {CLIENT_CONFIG} from "./config";
+import {privateTangle} from "./private_tangle";
+import {repeatAsyncTest} from "./utils";
 
-// Run all Node.js examples as jest tests in parallel.
-// If a function throws an exception, it will run again to make the tests more consistent (less prone to network issues). 
+const TIMEOUT = 300000; // 5 minutes to account for spurious network delays, most tests pass in a few seconds
+
+// Run all Node.js examples as mocha tests in parallel.
 // Only verifies that no uncaught exceptions are thrown, including syntax errors etc.
-test.concurrent("Create Identity", async () => {
-    try {
-        await createIdentity(CLIENT_CONFIG);
-    } catch (e) {
-        await createIdentity(CLIENT_CONFIG);
-    }
-});
-test.concurrent("Manipulate Identity", async () => {
-    try {
-        await manipulateIdentity(CLIENT_CONFIG);
-    } catch (e) {
-        await manipulateIdentity(CLIENT_CONFIG);
-    }
-});
-test.concurrent("Resolution", async () => {
-    try {
-        await resolution(CLIENT_CONFIG);
-    } catch (e) {
-        await resolution(CLIENT_CONFIG);
-    }
-});
-test.concurrent("Create Verifiable Credential", async () => {
-    try {
-        await createVC(CLIENT_CONFIG);
-    } catch (e) {
-        await createVC(CLIENT_CONFIG);
-    }
-});
-test.concurrent("Create Verifiable Presentation", async () => {
-    try {
-        await createVP(CLIENT_CONFIG);
-    } catch (e) {
-        await createVP(CLIENT_CONFIG);
-    }
-});
-test.concurrent("Revoke Verifiable Credential", async () => {
-    try {
-        await revokeVC(CLIENT_CONFIG);
-    } catch (e) {
-        await revokeVC(CLIENT_CONFIG);
-    }
-});
-test.concurrent("Merkle Key", async () => {
-    try {
-        await merkleKey(CLIENT_CONFIG);
-    } catch (e) {
-        await merkleKey(CLIENT_CONFIG);
-    }
-});
-test.concurrent("Private Tangle", async () => {
-    try {
-        await createIdentityPrivateTangle()
-        throw new Error("Did not throw.")
-    } catch (err) {
-        // Example is expected to throw an error because no private Tangle is running
-        expect(err.name).toEqual("ClientError")
-        expect(err.message).toContain("error sending request")
-    }
-});
-test.concurrent("Diff Chain", async () => {
-    try {
-        await createDiff(CLIENT_CONFIG);
-    } catch (e) {
-        await createDiff(CLIENT_CONFIG);
-    }
-});
-test.concurrent("Resolve History", async () => {
-    try {
-        await resolveHistory(CLIENT_CONFIG);
-    } catch (e) {
-        await resolveHistory(CLIENT_CONFIG);
-    }
-});
+parallel("Test node examples", function () {
+    this.timeout(TIMEOUT);
+    it("Create Identity", async () => {
+        await repeatAsyncTest(createIdentity, CLIENT_CONFIG);
+    });
+    it("Manipulate Identity", async () => {
+        await repeatAsyncTest(manipulateIdentity, CLIENT_CONFIG);
+    });
+    it("Resolution", async () => {
+        await repeatAsyncTest(resolution, CLIENT_CONFIG);
+    });
+    it("Create Verifiable Credential", async () => {
+        await repeatAsyncTest(createVC, CLIENT_CONFIG);
+    });
+    it("Create Verifiable Presentation", async () => {
+        await repeatAsyncTest(createVP, CLIENT_CONFIG);
+    });
+    it("Revoke Verifiable Credential", async () => {
+        await repeatAsyncTest(revokeVC, CLIENT_CONFIG);
+    });
+    it("Merkle Key", async () => {
+        await repeatAsyncTest(merkleKey, CLIENT_CONFIG);
+    });
+    it("Private Tangle", async () => {
+        try {
+            await privateTangle()
+            throw new Error("Did not throw.")
+        } catch (err) {
+            // Example is expected to throw an error because no private Tangle is running
+            assert.strictEqual(err.name, "ClientError")
+            assert.strictEqual(err.message.includes("error sending request"), true)
+        }
+    });
+    it("Diff Chain", async () => {
+        await repeatAsyncTest(createDiff, CLIENT_CONFIG);
+    });
+    it("Resolve History", async () => {
+        await repeatAsyncTest(resolveHistory, CLIENT_CONFIG);
+    });
+})

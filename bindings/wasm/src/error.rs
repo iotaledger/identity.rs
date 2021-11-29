@@ -85,7 +85,7 @@ macro_rules! impl_wasm_error_from {
 }
 
 impl_wasm_error_from!(
-  identity::comm::Error,
+  // identity::comm::Error,
   identity::core::Error,
   identity::credential::Error,
   identity::did::Error,

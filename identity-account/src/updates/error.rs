@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use identity_core::common::Fragment;
 use identity_did::verification::MethodType;
 
 use crate::types::KeyLocation;
@@ -11,10 +10,6 @@ use crate::types::KeyLocation;
 pub enum UpdateError {
   #[error("document already exists")]
   DocumentAlreadyExists,
-  #[error("document not found")]
-  DocumentNotFound,
-  #[error("verification method not found")]
-  MethodNotFound,
   #[error("service not found")]
   ServiceNotFound,
   #[error("invalid method type - {}", .0.as_str())]
@@ -27,8 +22,6 @@ pub enum UpdateError {
   MissingRequiredField(&'static str),
   #[error("duplicate key location - {0}")]
   DuplicateKeyLocation(KeyLocation),
-  #[error("duplicate key fragment - {0}")]
-  DuplicateKeyFragment(Fragment),
   #[error("duplicate service fragment - {0}")]
   DuplicateServiceFragment(String),
 }

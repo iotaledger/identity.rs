@@ -163,7 +163,7 @@ impl<T, U, V> DocumentSigner<'_, '_, '_, T, U, V> {
   where
     X: Serialize + SetSignature + TryMethod,
   {
-    let query: MethodQuery<'_> = self.method.clone().ok_or(Error::QueryMethodNotFound)?;
+    let query: MethodQuery<'_> = self.method.clone().ok_or(Error::MethodNotFound)?;
     let method: &VerificationMethod<U> = self.document.try_resolve_method(query)?;
     let method_uri: String = X::try_method(method)?;
 

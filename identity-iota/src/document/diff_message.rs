@@ -1,6 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
+
 use identity_core::convert::FromJson;
 use identity_core::convert::SerdeInto;
 use identity_core::convert::ToJson;
@@ -15,7 +19,7 @@ use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
 
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::IotaDocument;
 use crate::error::Result;
 use crate::tangle::MessageId;
 use crate::tangle::MessageIdExt;
@@ -23,7 +27,7 @@ use crate::tangle::TangleRef;
 
 /// Defines the difference between two DID [`Document`]s' JSON representations.
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub struct DocumentDiff {
+pub struct DiffMessage {
   pub(crate) did: IotaDID,
   pub(crate) diff: String,
   #[serde(
@@ -38,8 +42,8 @@ pub struct DocumentDiff {
   pub(crate) message_id: MessageId,
 }
 
-impl DocumentDiff {
-  /// Construct a new `DocumentDiff` by diffing the JSON representations of `current` and `updated`.
+impl DiffMessage {
+  /// Construct a new `DiffMessage` by diffing the JSON representations of `current` and `updated`.
   ///
   /// The `previous_message_id` is included verbatim in the output, and the `proof` is `None`. To
   /// set a proof, use the `set_signature()` method.
@@ -88,7 +92,7 @@ impl DocumentDiff {
   }
 }
 
-impl TangleRef for DocumentDiff {
+impl TangleRef for DiffMessage {
   fn did(&self) -> &IotaDID {
     self.id()
   }
@@ -110,24 +114,24 @@ impl TangleRef for DocumentDiff {
   }
 }
 
-impl TrySignature for DocumentDiff {
+impl TrySignature for DiffMessage {
   fn signature(&self) -> Option<&Signature> {
     self.proof.as_ref()
   }
 }
 
-impl TrySignatureMut for DocumentDiff {
+impl TrySignatureMut for DiffMessage {
   fn signature_mut(&mut self) -> Option<&mut Signature> {
     self.proof.as_mut()
   }
 }
 
-impl SetSignature for DocumentDiff {
+impl SetSignature for DiffMessage {
   fn set_signature(&mut self, value: Signature) {
     self.proof = Some(value);
   }
 }
 
-impl TryMethod for DocumentDiff {
+impl TryMethod for DiffMessage {
   const TYPE: MethodUriType = MethodUriType::Relative;
 }
