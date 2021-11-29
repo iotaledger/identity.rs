@@ -16,4 +16,8 @@ pub use crate::crypto::ProofValueError;
 pub use crate::crypto::SigningError;
 pub use crate::crypto::VerificationError;
 pub use crate::crypto::VerificationProcessingError;
+pub use crate::utils::Base58DecodingError;
+pub use crate::utils::Base64DecodingError;
+pub use crate::utils::MultiBaseDecodingError;
+pub use crate::utils::Ed25519KeyPairGenerationError; 
 pub use fatal_error::FatalError;

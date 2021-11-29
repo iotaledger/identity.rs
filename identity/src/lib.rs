@@ -29,6 +29,8 @@ pub mod core {
 
   #[doc(inline)]
   pub use identity_core::json;
+
+  pub use identity_core::errors;
 }
 
 pub mod crypto {

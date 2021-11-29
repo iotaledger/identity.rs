@@ -109,7 +109,7 @@ impl From<identity::iota::BeeMessageError> for WasmError<'_> {
   }
 }
 
-/// Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into
+/// Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str 
 #[macro_export]
 macro_rules! impl_wasm_error_from_with_struct_name {
   ( $($t:ty),* ) => {
@@ -117,12 +117,63 @@ macro_rules! impl_wasm_error_from_with_struct_name {
     fn from(error: $t) -> Self {
       Self {
         message: Cow::Owned(error.to_string()),
-        name: Cow::Borrowed(stringify!(ty)),
+        name: Cow::Borrowed(stringify!($t)),
       }
     }
   })*
   }
 }
-mod wasm_error_from_identity_core {
-  
+mod wasm_error_from_identity_core { 
+  use super::*; 
+  use identity::core::errors::{
+    TimeStampParsingError, 
+    UrlParsingError, 
+    Base64DecodingError, 
+    Base58DecodingError,
+    Ed25519KeyPairGenerationError,
+    JsonDecodingError, 
+    JsonEncodingError, 
+    MerkleDigestKeyTagError, 
+    MerkleKeyTagExtractionError, 
+    MerkleSignatureKeyTagError, 
+    KeyCollectionError, 
+    KeyCollectionSizeError, 
+    MissingSignatureError, 
+    ProofValueError, 
+    SigningError, 
+    VerificationError, 
+    VerificationProcessingError, 
+    FatalError};
+
+  impl_wasm_error_from_with_struct_name!(
+    TimeStampParsingError, 
+    UrlParsingError, 
+    Base64DecodingError, 
+    Base58DecodingError,
+    Ed25519KeyPairGenerationError,
+    JsonDecodingError, 
+    JsonEncodingError, 
+    MerkleDigestKeyTagError, 
+    MerkleKeyTagExtractionError, 
+    MerkleSignatureKeyTagError, 
+    KeyCollectionError, 
+    KeyCollectionSizeError,
+    MissingSignatureError, 
+    ProofValueError, 
+    SigningError, 
+    VerificationError, 
+    VerificationProcessingError, 
+    FatalError
+  );
+
+  #[cfg(test)]
+  mod tests {
+    use super::*; 
+    #[test]
+    fn into_wasm_error() {
+      let wasm_error: WasmError = FatalError::from("fatal test error".to_string()).into(); 
+      // check that the above macro does what we expect it to do. 
+      assert_eq!("FatalError", wasm_error.name)
+    }
+  }
 }
