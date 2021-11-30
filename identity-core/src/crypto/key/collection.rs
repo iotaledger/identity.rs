@@ -89,9 +89,10 @@ impl KeyCollection {
   ///
   /// # Errors
   /// `count` must be contained in the interval [1,4096] otherwise an error will be returned. This upper limit may be
-  /// increased in the future. If this function fails to create a [`KeyCollection`] with a matching private key for
-  /// every public key then [`Err(KeyCollectionSizeError::KeyPairImbalance)`] will be returned. This is not something we
-  /// expect to happen in practice.
+  /// increased in the future. 
+  /// 
+  /// If this function returns [`KeyCollectionError::InvalidSize`] then the `NotAPowerOfTwo` variant of [`KeyCollectionSizeError`] may 
+  /// be dismissed from consideration as it cannot be caused by this constructor. We also don't expect the `KeyPairImbalance` variant to occur in practice.  
   pub fn new_ed25519(count: usize) -> Result<Self, KeyCollectionError> {
     Self::new(KeyType::Ed25519, count)
   }
@@ -102,9 +103,10 @@ impl KeyCollection {
   ///
   /// # Errors
   /// `count` must be contained in the interval [1,4096] otherwise an error will be returned. This upper limit may be
-  /// increased in the future. If this function fails to create a [`KeyCollection`] with a matching private key for
-  /// every public key then [`Err(KeyCollectionSizeError::KeyPairImbalance)`] will be returned. This is not something we
-  /// expect to happen in practice.
+  /// increased in the future. 
+  /// 
+  /// If this function returns [`KeyCollectionError::InvalidSize`] then the `NotAPowerOfTwo` variant of [`KeyCollectionSizeError`] may 
+  /// be dismissed from consideration as it cannot be caused by this constructor. We also don't expect the `KeyPairImbalance` variant to occur in practice. 
   pub fn new(type_: KeyType, count: usize) -> Result<Self, KeyCollectionError> {
     if count == 0 {
       return Err(KeyCollectionSizeError::Empty.into());
