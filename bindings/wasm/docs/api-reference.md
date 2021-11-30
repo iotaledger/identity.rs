@@ -1274,7 +1274,7 @@ E.g. https://explorer.iota.org/mainnet/message/<message_id>
 ### explorerUrl.resolverUrl(did) ⇒ <code>string</code>
 Returns the web identity resolver URL for the given DID.
 
-E.g. https://explorer.iota.org/mainnet/identity-resolver/<did>
+E.g. https://explorer.iota.org/mainnet/identity-resolver/&lt;did>
 
 **Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
 
