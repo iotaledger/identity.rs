@@ -83,7 +83,7 @@ impl BitSet {
   fn deserialize_b64(data: &str) -> Result<Self, BitSetDecodingError> {
     Self::deserialize_slice(
       &utils::decode_b64(data)
-        .map_err(|_decode_error| std::io::Error::new(std::io::ErrorKind::InvalidData, _decode_error))?,
+        .map_err(|decode_error| std::io::Error::new(std::io::ErrorKind::InvalidData, decode_error))?,
     )
   }
 
