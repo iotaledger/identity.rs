@@ -144,6 +144,7 @@ mod wasm_error_from_identity_core {
   use identity::core::errors::VerificationError;
   use identity::core::errors::VerificationProcessingError;
 
+  // Simple conversions just using the name of the struct and their display implementation
   impl_wasm_error_from_with_struct_name!(
     TimeStampParsingError,
     UrlParsingError,
@@ -153,17 +154,73 @@ mod wasm_error_from_identity_core {
     JsonDecodingError,
     JsonEncodingError,
     MerkleDigestKeyTagError,
-    MerkleKeyTagExtractionError,
     MerkleSignatureKeyTagError,
-    KeyCollectionError,
-    KeyCollectionSizeError,
     MissingSignatureError,
     ProofValueError,
     SigningError,
-    VerificationError,
     VerificationProcessingError,
     FatalError
   );
+
+  // More involved conversions adding enum variant details to the name:
+  impl From<KeyCollectionSizeError> for WasmError<'_> {
+    fn from(error: KeyCollectionSizeError) -> Self {
+      let name = match error {
+        KeyCollectionSizeError::Empty => "KeyCollectionSizeError - Empty",
+        KeyCollectionSizeError::NotAPowerOfTwo(_) => "KeyCollectionSizeError - NotAPowerOfTwo",
+        KeyCollectionSizeError::MaximumExceeded(_) => "KeyCollectionSizeError - MaximumExceeded",
+        KeyCollectionSizeError::KeyPairImbalance { .. } => "KeyCollectionSizeError - KeyPairImbalance",
+      };
+
+      Self {
+        message: Cow::Owned(error.to_string()),
+        name: Cow::Borrowed(name),
+      }
+    }
+  }
+
+  impl From<KeyCollectionError> for WasmError<'_> {
+    fn from(error: KeyCollectionError) -> Self {
+      let name = match error {
+        KeyCollectionError::GenerationFailed(_) => "keyCollectionError - GenerationFailed",
+        KeyCollectionError::InvalidSize(_) => "KeyCollectionError - InvalidSize",
+      };
+      Self {
+        message: Cow::Owned(error.to_string()),
+        name: Cow::Borrowed(name),
+      }
+    }
+  }
+
+  impl From<MerkleKeyTagExtractionError> for WasmError<'_> {
+    fn from(error: MerkleKeyTagExtractionError) -> Self {
+      let name = match error {
+        MerkleKeyTagExtractionError::InvalidMerkleDigestKeyTag(_) => {
+          "MerkleKeyTagExtractionError - InvalidMerkleDigestKeyTag"
+        }
+        MerkleKeyTagExtractionError::InvalidMerkleSignatureKeyTag(_) => {
+          "MerkleKeyTagExtractionError - InvalidSignatureKeyTag"
+        }
+      };
+      Self {
+        message: Cow::Owned(error.to_string()),
+        name: Cow::Borrowed(name),
+      }
+    }
+  }
+
+  impl From<VerificationError> for WasmError<'_> {
+    fn from(error: VerificationError) -> Self {
+      let name = match error {
+        VerificationError::InvalidProofValue(_) => "VerificationError - InvalidProofValue",
+        VerificationError::ProcessingFailed(_) => "VerificationError - ProcessingFailed",
+      };
+      Self {
+        message: Cow::Owned(error.to_string()),
+        name: Cow::Borrowed(name),
+      }
+    }
+  }
 
   #[cfg(test)]
   mod tests {
