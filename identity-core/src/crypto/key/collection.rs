@@ -58,7 +58,7 @@ impl KeyCollection {
   {
     let (public, private): (Vec<_>, Vec<_>) = iter.into_iter().unzip();
     let num_public_keys = public.len();
-    let num_private_keys: usize = private.len();
+    let num_private_keys = private.len();
 
     if num_public_keys != num_private_keys {
       // TODO: Did we choose the correct return type? It is probably impossible for public and private to have different
