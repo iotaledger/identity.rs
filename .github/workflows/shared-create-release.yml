@@ -144,6 +144,16 @@ jobs:
         run: |
           cd bindings/wasm
           cargo add identity@=${{ inputs.tag }} --path=../../identity
+
+      - name: Commit changes
+        if: ${{inputs.replacement-target == 'rust'}}
+        run: |
+          git add .
+          if [[ $(git diff --stat --staged) == '' ]]; then
+            echo 'repository unmodified'
+            exit 1
+          fi
+          git commit -m "bump version"
       
       - name: Run cargo-release
         if: ${{inputs.replacement-target == 'rust'}}
