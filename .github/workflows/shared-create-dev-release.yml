@@ -3,10 +3,16 @@ name: Shared / Create Dev Release
 on:
   workflow_call:
     inputs:
+      tag-prefix:
+        required: false
+        type: string
       tag-base:
         required: true
         type: string
-      prod-tag-regex:
+      tag-postfix:
+        required: true
+        type: string
+      main-tag-regex:
         required: true
         type: string
       changelog-path:
@@ -16,7 +22,12 @@ on:
       changelog-config-path:
         required: true
         type: string
-
+      pr-body-text:
+        required: false
+        type: string
+      replacement-target:
+        required: true
+        type: string
 
 jobs:
   release:
@@ -28,13 +39,23 @@ jobs:
           # Number of commits to fetch. 0 indicates all history for all branches and tags.
           fetch-depth: 0
           ref: dev
+      - name: Validation
+        run: |
+          VERSION=${{ inputs.tag-prefix }}${{ inputs.tag-base }}
+          if ! [[ $VERSION =~ ${{ inputs.main-tag-regex }} ]]; then
+            echo unrecognized version $VERSION, must match ${{ inputs.main-tag-regex }}
+            exit 1
+          fi
+
       - name: Determine Next Version
         run: |
 
+          TAG_PREFIX=${{ inputs.tag-prefix }}
           TAG_BASE=${{ inputs.tag-base }}
+          TAG_POSTFIX=${{ inputs.tag-postfix }}
 
           function join_by { local IFS="$1"; shift; echo "$*"; }
-          
+
           updateVersion()
           {
             [[ ${1} =~ ^(.*[^0-9])?([0-9]+)$ ]]  && \
@@ -48,7 +69,7 @@ jobs:
           temp_array=()
           for value in ${ALL_TAGS[@]}
           do
-              if ! [[ $value == $TAG_BASE* || $value =~ ${{ inputs.prod-tag-regex }} ]]; then
+              if ! [[ $value == $TAG_PREFIX$TAG_BASE$TAG_POSTFIX* || $value =~ ${{ inputs.main-tag-regex }} ]]; then
                 temp_array+=($value)
               fi
           done
@@ -56,10 +77,10 @@ jobs:
           unset temp_array
           echo UNRELATED_TAGS=$UNRELATED_TAGS
           
-          LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "$TAG_BASE*" | head -n 1)
+          LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "$TAG_PREFIX$TAG_BASE$TAG_POSTFIX*" | head -n 1)
           echo LATEST_DEV_TAG=$LATEST_DEV_TAG
           if [[ $LATEST_DEV_TAG == '' ]]; then
-            NEW_DEV_TAG=$TAG_BASE
+            NEW_DEV_TAG=$TAG_PREFIX$TAG_BASE$TAG_POSTFIX
             NEW_DEV_TAG+="1"
             LATEST_DEV_TAG=$NEW_DEV_TAG
             FIRST="--exclude-tags "
@@ -67,7 +88,7 @@ jobs:
             EXCLUDE_ARG=$FIRST$SECOND
           else
             NEW_DEV_TAG=$(updateVersion $LATEST_DEV_TAG)
-            ALL_DEV_TAGS_IN_MAIN=$(git tag -l "$TAG_BASE*" --merged $(git log -n 1 refs/remotes/origin/main --pretty=format:"%H"))
+            ALL_DEV_TAGS_IN_MAIN=$(git tag -l "$TAG_PREFIX$TAG_BASE$TAG_POSTFIX*" --merged $(git log -n 1 refs/remotes/origin/main --pretty=format:"%H"))
             temp_array=()
             for value in "${ALL_DEV_TAGS_IN_MAIN[@]}"
             do
@@ -88,6 +109,10 @@ jobs:
 
           echo NEXTVERSION=$NEXTVERSION
           echo NEXTVERSION=$NEXTVERSION >> $GITHUB_ENV
+          
+          NEXTVERSION_WITHOUT_PREFIX=${NEXTVERSION//$TAG_PREFIX/}
+          echo NEXTVERSION_WITHOUT_PREFIX=$NEXTVERSION_WITHOUT_PREFIX
+          echo NEXTVERSION_WITHOUT_PREFIX=$NEXTVERSION_WITHOUT_PREFIX >> $GITHUB_ENV
 
           echo EXCLUDE_ARG=$EXCLUDE_ARG
           echo EXCLUDE_ARG=$EXCLUDE_ARG >> $GITHUB_ENV
@@ -114,16 +139,33 @@ jobs:
             ${{ env.EXCLUDE_ARG }}
       - name: Log ${{ inputs.changelog-path }}
         run: cat ${{ inputs.changelog-path }}
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - name: Replace Version
+        run: |
+          cd .github/workflows/scripts/change-version
+          npm ci
+          VERSION=${{ env.NEXTVERSION_WITHOUT_PREFIX }} 
+          node index.js $VERSION ${{ inputs.replacement-target }}
+      - name: Import GPG key
+        id: import-gpg
+        uses: crazy-max/ghaction-import-gpg@v4
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
       - name: Commit changes
         run: |
-          git add -f ${{ inputs.changelog-path }}
-          if [[ $(git diff --cached $(git diff --cached --name-only)) == '' ]]; then
-            echo '${{ inputs.changelog-path }} unmodified'
+          git add .
+          if [[ $(git diff --stat --staged) == '' ]]; then
+            echo 'repository unmodified'
             exit 1
           fi
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git commit -m "generate changelog"
+          git config user.email "${{ steps.import-gpg.outputs.email }}"
+          git config user.name "${{ steps.import-gpg.outputs.name }}"
+          git commit -S -m "generate changelog"
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
@@ -134,6 +176,7 @@ jobs:
           title: 'Release ${{ env.NEXTVERSION }}'
           body: |
             This automatically generated PR contains changes for the `${{ env.NEXTVERSION }}` version.
+            ${{inputs.pr-body-text}}
             If you discover any mistakes fix them with commits on this branch. If you want to abort the release simply close the PR. 
           labels: |
             automated-pr

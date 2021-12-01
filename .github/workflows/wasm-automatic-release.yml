@@ -13,8 +13,8 @@ jobs:
     uses: eike-hass/identity.rs/.github/workflows/shared-release.yml@dev
     with:
       changelog-config-path: ./bindings/wasm/.github_changelog_generator
-      dev-tag-base: wasm-dev-
-      prod-tag-base: wasm-v
+      dev-tag-regex: ^wasm-v[0-9]+\.[0-9]+\.[0-9]+-(dev)\.\d*$
+      main-tag-regex: ^wasm-v[0-9]+\.[0-9]+\.[0-9]+$
       create-github-release: false
   release:
     runs-on: ubuntu-latest

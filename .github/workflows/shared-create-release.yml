@@ -3,10 +3,13 @@ name: Shared / Create Release
 on:
   workflow_call:
     inputs:
+      tag-prefix:
+        required: false
+        type: string
       tag:
         required: true
         type: string
-      prod-tag-regex:
+      main-tag-regex:
         required: true
         type: string
       changelog-path:
@@ -16,6 +19,13 @@ on:
       changelog-config-path:
         required: true
         type: string
+      pr-body-text:
+        required: false
+        type: string
+      replacement-target:
+        required: true
+        type: string
+        
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,9 +38,13 @@ jobs:
           ref: main
       - name: Validation
         run: |
-          VERSION=${{ inputs.tag }}
-          if ! [[ $VERSION =~ ${{ inputs.prod-tag-regex }} ]]; then
-            echo unrecognized version '$VERSION', must match ${{ inputs.prod-tag-regex }}
+          VERSION=${{ inputs.tag-prefix }}${{ inputs.tag }}
+          if ! [[ $VERSION =~ ${{ inputs.main-tag-regex }} ]]; then
+            echo unrecognized version $VERSION, must match ${{ inputs.main-tag-regex }}
+            exit 1
+          fi
+          if [ $(git tag -l "$VERSION") ]; then
+             echo $VERSION already exists
             exit 1
           fi
 
@@ -43,7 +57,7 @@ jobs:
           temp_array=()
           for value in ${ALL_TAGS[@]}
           do
-              if ! [[ $value =~ ${{ inputs.prod-tag-regex }} ]]; then
+              if ! [[ $value =~ ${{ inputs.main-tag-regex }} ]]; then
                 temp_array+=($value)
               fi
           done
@@ -69,15 +83,13 @@ jobs:
       - name: Run github-changelog-generator
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
-          env:
-            CONSOLE_LEVEL=debug
           args: >
             --output ${{ inputs.changelog-path }}
             --config-file ${{ inputs.changelog-config-path }}
             --user ${{ env.GITHUB_REPOSITORY_USER }}
             --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
             --token ${{ secrets.GITHUB_TOKEN }} 
-            --future-release ${{ inputs.tag }} 
+            --future-release ${{ inputs.tag-prefix }}${{ inputs.tag }} 
             ${{ env.EXCLUDE_ARG }}
       - name: Log ${{ inputs.changelog-path }}
         run: cat ${{ inputs.changelog-path }}
@@ -86,31 +98,40 @@ jobs:
           node-version: '16'
       - name: Replace Version
         run: |
-          cd .github/scripts/change-version
+          cd .github/workflows/scripts/change-version
           npm ci
           VERSION=${{ inputs.tag }}
-          VERSION="${VERSION:1}"
-          node index.js $VERSION
+          node index.js $VERSION ${{ inputs.replacement-target }}
+          # TODO split cargo npm
+      - name: Import GPG key
+        id: import-gpg
+        uses: crazy-max/ghaction-import-gpg@v4
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
       - name: Commit Changes
         run: |
-          if [[ $(git diff --stat) == '' ]]; then
+          git add .
+          if [[ $(git diff --stat --staged) == '' ]]; then
             echo 'repository unmodified'
             exit 1
           fi
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add .
-          git commit -m "generate changelog and increment version"
+          git config user.email "${{ steps.import-gpg.outputs.email }}"
+          git config user.name "${{ steps.import-gpg.outputs.name }}"
+          git commit -S -m "generate changelog and increment version"
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
           committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-          branch: release/${{ inputs.tag }}
+          branch: release/${{ inputs.tag-prefix }}${{ inputs.tag }}
           delete-branch: true
-          title: 'Release ${{ inputs.tag }}'
+          title: 'Release ${{ inputs.tag-prefix }}${{ inputs.tag }}'
           body: |
-            This automatically generated PR contains changes for the `${{ inputs.tag }}` version.
+            This automatically generated PR contains changes for the `${{ inputs.tag-prefix }}${{ inputs.tag }}` version.
+            ${{inputs.pr-body-text}}
             If you discover any mistakes fix them with commits on this branch. If you want to abort the release simply close the PR.
           labels: |
             automated-pr

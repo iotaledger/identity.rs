@@ -13,8 +13,8 @@ jobs:
     uses: eike-hass/identity.rs/.github/workflows/shared-release.yml@dev
     with:
       changelog-config-path: ./.github/.github_changelog_generator
-      dev-tag-base: dev-
-      prod-tag-base: v
+      dev-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+-(dev)\.\d*$
+      main-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+$
       create-github-release: true
   release:
     runs-on: ubuntu-latest
