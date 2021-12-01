@@ -6,6 +6,7 @@ use std::path::PathBuf;
 
 use identity::account::Account;
 use identity::account::AccountStorage;
+use identity::account::Error;
 use identity::account::IdentitySetup;
 use identity::account::Result;
 use identity::core::Url;
@@ -35,7 +36,7 @@ async fn main() -> Result<()> {
     .create_service()
     .fragment("example-service")
     .type_("LinkedDomains")
-    .endpoint(Url::parse("https://example.org")?)
+    .endpoint(Url::parse("https://example.org").map_err(|_| Error::InvalidUrl)?)
     .apply()
     .await?;
 
@@ -49,7 +50,7 @@ async fn main() -> Result<()> {
     .create_service()
     .fragment("another-service")
     .type_("LinkedDomains")
-    .endpoint(Url::parse("https://example.org")?)
+    .endpoint(Url::parse("https://example.org").map_err(|_| Error::InvalidUrl)?)
     .apply()
     .await?;
 

@@ -22,9 +22,9 @@ pub enum Error {
   CoreError, // todo: remove this upon refactoring the errors in this crate
 
   /// caused by attempting to parse invalid urls
-  #[error("{0}")]
-  InvalidUrl(::identity_core::common::UrlParsingError), /* temporary fix until this crate has its error handling
-                                                         * refactored */
+  #[error("could not parse url")]
+  InvalidUrl, /* temporary fix until this crate has its error handling
+               * refactored */
 
   #[error("{0}")]
   InvalidDID(#[from] crate::did::DIDError),

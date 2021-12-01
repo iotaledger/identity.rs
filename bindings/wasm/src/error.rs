@@ -109,7 +109,7 @@ impl From<identity::iota::BeeMessageError> for WasmError<'_> {
   }
 }
 
-/// Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
+// Similar to `impl_wasm_error_from`, but uses the types name instead of requiring/calling Into &'static str
 #[macro_export]
 macro_rules! impl_wasm_error_from_with_struct_name {
   ( $($t:ty),* ) => {

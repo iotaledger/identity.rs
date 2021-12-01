@@ -40,8 +40,8 @@ pub async fn create_vp() -> Result<Presentation> {
 
   // Create an unsigned Presentation from the previously issued Verifiable Credential.
   let mut presentation: Presentation = PresentationBuilder::default()
-    .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs")?)
-    .holder(Url::parse(doc_sub.id().as_ref())?)
+    .id(Url::parse("asdf:foo:a87w3guasbdfuasbdfs").map_err(|_| Error::InvalidUrl)?)
+    .holder(Url::parse(doc_sub.id().as_ref()).map_err(|_| Error::InvalidUrl)?)
     .credential(credential)
     .build()?;
 

@@ -3,7 +3,6 @@
 //! Re-exports public errors from this crate
 mod fatal_error;
 pub use crate::common::TimeStampParsingError;
-pub use crate::common::UrlParsingError;
 pub use crate::convert::JsonDecodingError;
 pub use crate::convert::JsonEncodingError;
 pub use crate::crypto::merkle_key::MerkleDigestKeyTagError;
@@ -21,3 +20,7 @@ pub use crate::utils::Base64DecodingError;
 pub use crate::utils::Ed25519KeyPairGenerationError;
 pub use crate::utils::MultiBaseDecodingError;
 pub use fatal_error::FatalError;
+
+/// Re-export of `ParseError` from the `url` crate.
+// The `url` crate is stable with millions of downloads so we consider it fine to include this in our public API.
+pub type UrlParsingError = url::ParseError;

@@ -41,8 +41,8 @@ pub fn issue_degree(issuer: &IotaDocument, subject: &IotaDocument) -> Result<Cre
 
   // Build credential using subject above and issuer.
   let credential: Credential = CredentialBuilder::default()
-    .id(Url::parse("https://example.edu/credentials/3732")?)
-    .issuer(Url::parse(issuer.id().as_str())?)
+    .id(Url::parse("https://example.edu/credentials/3732").map_err(|_| Error::InvalidUrl)?)
+    .issuer(Url::parse(issuer.id().as_str()).map_err(|_| Error::InvalidUrl)?)
     .type_("UniversityDegreeCredential")
     .subject(subject)
     .build()?;

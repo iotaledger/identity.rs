@@ -16,9 +16,9 @@ pub enum Error {
   #[error("invalid deserialization")]
   InvalidDeserialization, //TODO: Remove this when this crate has its error types refactored
   /// caused by attempting to parse an invalid url
-  #[error("url parsing error {0}")]
-  InvalidUrl(#[from] identity_core::common::UrlParsingError), /* TODO: temporary solution to make this crate work
-                                                               * with new errors from iota-core */
+  #[error("url parsing error")]
+  InvalidUrl, /* TODO: temporary solution to make this crate work
+               * with new errors from iota-core */
   #[error("base decoding error")]
   BaseDecoding, // TODO: temporary solution to make this crate work with the new errors from iota-core
   /// Caused by errors from the [identity_did] crate.
