@@ -1,0 +1,136 @@
+name: Shared / Release
+
+on:
+  workflow_call:
+    inputs:
+      create-github-release:
+        required: true
+        type: boolean
+      changelog-config-path:
+        required: true
+        type: string
+      main-tag-regex:
+        required: true
+        type: string
+      dev-tag-regex:
+        required: true
+        type: string
+    outputs:
+      is-release:
+        description: "is release"
+        value: ${{ jobs.build.outputs.is-release }}
+      is-dev-release:
+        description: "is dev release"
+        value: ${{ jobs.build.outputs.is-dev-release }}
+      previous-version:
+        description: "tag of the previous version"
+        value: ${{ jobs.build.outputs.is-dev-release }}
+      current-version:
+        description: "tag of the current version"
+        value: ${{ jobs.build.outputs.is-dev-release }}
+    secrets:
+      GPG_PRIVATE_KEY:
+        required: true
+      GPG_PASSPHRASE:
+        required: true
+jobs:
+  build:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      is-release: ${{ steps.determine-version.outputs.is-release }}
+      is-dev-release: ${{ steps.determine-version.outputs.is-dev-release }}
+      previous-version: ${{ steps.determine-version.outputs.previous-version }}
+      current-version: ${{ steps.determine-version.outputs.current-version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # Number of commits to fetch. 0 indicates all history for all branches and tags.
+          fetch-depth: 0
+          
+      - name: Determine Version
+        id: determine-version
+        run: |
+          BRANCHNAME=${{ github.head_ref }}
+          CURRENT_VERSION=${BRANCHNAME##*/}
+          if ! [[  $(echo $CURRENT_VERSION | grep -o -P '${{ inputs.dev-tag-regex }}') ||  $(echo $CURRENT_VERSION | grep -o -P '${{ inputs.main-tag-regex }}') ]]; then
+            exit 0
+          fi
+          IS_RELEASE=true
+          echo IS_RELEASE=$IS_RELEASE
+          echo IS_RELEASE=$IS_RELEASE >> $GITHUB_ENV
+          echo "::set-output name=is-release::=$IS_RELEASE"
+          if [[ $(echo $CURRENT_VERSION | grep -w -P '${{ inputs.dev-tag-regex }}') ]]; then
+            IS_DEV_RELEASE=true
+            PREVIOUS_VERSION=$(git tag --sort=-committerdate | grep -w -P '${{ inputs.dev-tag-regex }}' | head -n 1)
+          else
+            PREVIOUS_VERSION=$(git tag --sort=-committerdate | grep -w -P '${{ inputs.main-tag-regex }}' | head -n 1)
+          fi
+
+          if [[ PREVIOUS_VERSION ]]; then
+            SINCE_ARG="--since-tag $PREVIOUS_VERSION"
+          fi
+
+          echo IS_DEV_RELEASE=$IS_DEV_RELEASE
+          echo IS_DEV_RELEASE=$IS_DEV_RELEASE >> $GITHUB_ENV
+          echo "::set-output name=is-dev-release::=$IS_DEV_RELEASE"
+          echo CURRENT_VERSION=$CURRENT_VERSION
+          echo CURRENT_VERSION=$CURRENT_VERSION >> $GITHUB_ENV
+          echo "::set-output name=current-version::=$CURRENT_VERSION"
+          echo PREVIOUS_VERSION=$PREVIOUS_VERSION
+          echo PREVIOUS_VERSION=$PREVIOUS_VERSION >> $GITHUB_ENV
+          echo "::set-output name=previous-version::=$PREVIOUS_VERSION"
+          echo SINCE_ARG=$SINCE_ARG
+          echo SINCE_ARG=$SINCE_ARG >> $GITHUB_ENV
+
+      - name: Import GPG key
+        if: ${{env.IS_RELEASE}}
+        id: import-gpg
+        uses: crazy-max/ghaction-import-gpg@v4
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          git_tag_gpgsign: true
+
+      - name: Tag Release
+        if: ${{env.IS_RELEASE}}
+        run: |
+          git config user.email "${{ steps.import-gpg.outputs.email }}"
+          git config user.name "${{ steps.import-gpg.outputs.name }}"
+          git tag -a -m ${{env.CURRENT_VERSION}} ${{env.CURRENT_VERSION}}
+          git push --follow-tags
+
+      - name: Prepare Repository
+        if: ${{env.IS_RELEASE && inputs.create-github-release}}
+        run: |
+          GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
+          GITHUB_REPOSITORY_PROJECT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
+          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER
+          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT
+          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER >> $GITHUB_ENV
+          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT >> $GITHUB_ENV
+
+      - name: Run github-changelog-generator for release
+        if: ${{env.IS_RELEASE && inputs.create-github-release}}
+        uses: docker://githubchangeloggenerator/github-changelog-generator
+        with:
+          args: >
+            --config-file ${{ inputs.changelog-config-path }}
+            --user ${{ env.GITHUB_REPOSITORY_USER }}
+            --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
+            --token ${{ secrets.GITHUB_TOKEN }} 
+            --future-release ${{env.CURRENT_VERSION}}
+            ${{ env.SINCE_ARG }}
+            --output RELEASE_CHANGELOG.md
+
+      - name: Create Release
+        if: ${{env.IS_RELEASE && inputs.create-github-release}}
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: RELEASE_CHANGELOG.md
+          prerelease: ${{env.IS_DEV_RELEASE}}
+          tag_name: ${{env.CURRENT_VERSION}}
+      

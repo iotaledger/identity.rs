@@ -1,0 +1,194 @@
+name: Shared / Create Release
+
+on:
+  workflow_call:
+    inputs:
+      tag-prefix:
+        required: false
+        type: string
+      tag:
+        required: true
+        type: string
+      main-tag-regex:
+        required: true
+        type: string
+      changelog-path:
+        required: false
+        default: ./CHANGELOG.md
+        type: string
+      changelog-config-path:
+        required: true
+        type: string
+      pr-body-text:
+        required: false
+        type: string
+      replacement-target:
+        required: true
+        type: string
+    secrets:
+      GPG_PRIVATE_KEY:
+        required: true
+      GPG_PASSPHRASE:
+        required: true
+        
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # Number of commits to fetch. 0 indicates all history for all branches and tags.
+          fetch-depth: 0
+          ref: main
+
+      - name: Validation
+        run: |
+          VERSION=${{ inputs.tag-prefix }}${{ inputs.tag }}
+          if ! [[ $VERSION =~ ${{ inputs.main-tag-regex }} ]]; then
+            echo unrecognized version $VERSION, must match ${{ inputs.main-tag-regex }}
+            exit 1
+          fi
+          if [ $(git tag -l "$VERSION") ]; then
+             echo $VERSION already exists
+            exit 1
+          fi
+
+      - name: Determine Next Version
+        run: |
+
+          function join_by { local IFS="$1"; shift; echo "$*"; }
+
+          ALL_TAGS=$(git tag -l)
+          temp_array=()
+          for value in ${ALL_TAGS[@]}
+          do
+              if ! [[ $value =~ ${{ inputs.main-tag-regex }} ]]; then
+                temp_array+=($value)
+              fi
+          done
+          UNRELATED_TAGS=$(join_by , "${temp_array[@]}")
+          unset temp_array
+          echo UNRELATED_TAGS=$UNRELATED_TAGS
+
+          FIRST="--exclude-tags "
+          SECOND=$UNRELATED_TAGS
+          EXCLUDE_ARG=$FIRST$SECOND
+          echo EXCLUDE_ARG=$EXCLUDE_ARG
+          echo EXCLUDE_ARG=$EXCLUDE_ARG >> $GITHUB_ENV
+
+      - name: Prepare repository
+        run: |
+          GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
+          GITHUB_REPOSITORY_PROJECT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
+
+          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER
+          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT
+
+          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER >> $GITHUB_ENV
+          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT >> $GITHUB_ENV
+
+      - name: Run github-changelog-generator
+        uses: docker://githubchangeloggenerator/github-changelog-generator
+        with:
+          args: >
+            --output ${{ inputs.changelog-path }}
+            --config-file ${{ inputs.changelog-config-path }}
+            --user ${{ env.GITHUB_REPOSITORY_USER }}
+            --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
+            --token ${{ secrets.GITHUB_TOKEN }} 
+            --future-release ${{ inputs.tag-prefix }}${{ inputs.tag }} 
+            ${{ env.EXCLUDE_ARG }}
+
+      - name: Log ${{ inputs.changelog-path }}
+        run: cat ${{ inputs.changelog-path }}
+
+      - name: Import GPG key
+        id: import-gpg
+        uses: crazy-max/ghaction-import-gpg@v4
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          git_tag_gpgsign: true
+
+      - name: Commit changes
+        run: |
+          git add .
+          if [[ $(git diff --stat --staged) == '' ]]; then
+            echo 'repository unmodified'
+            exit 1
+          fi
+          git commit -m "generate changelog"
+
+      - uses: actions-rs/toolchain@v1
+        if: ${{inputs.replacement-target == 'rust'}}
+        with:
+          toolchain: stable
+
+      - uses: actions-rs/cargo@v1
+        if: ${{inputs.replacement-target == 'rust' || inputs.replacement-target == 'wasm'}}
+        with:
+          command: install
+          args: cargo-release
+
+      - uses: actions-rs/cargo@v1
+        if: ${{inputs.replacement-target == 'rust'}}
+        with:
+          command: install
+          args: cargo-edit
+
+      - name: Replace Version In Bindings
+        if: ${{inputs.replacement-target == 'rust'}}
+        run: |
+          cd bindings/wasm
+          cargo add identity@=${{ inputs.tag }} --path=../../identity
+      
+      - name: Run cargo-release
+        if: ${{inputs.replacement-target == 'rust'}}
+        run: |
+          cargo release --workspace --config ./release.toml --no-tag --no-publish --no-push --no-confirm ${{ inputs.tag }} --execute
+
+      - name: Run cargo-release
+        if: ${{inputs.replacement-target == 'wasm'}}
+        run: |
+          cd bindings/wasm
+          cargo release --no-tag --no-publish --no-push --no-confirm ${{ inputs.tag }} --execute
+
+      - uses: actions/setup-node@v2
+        if: ${{inputs.replacement-target == 'wasm'}}
+        with:
+          node-version: '16'
+
+      - name: Replace Version
+        if: ${{inputs.replacement-target == 'wasm'}}
+        run: |
+          cd binding/wasm
+          npm version ${{ inputs.tag }}
+
+      - name: Commit changes
+        if: ${{inputs.replacement-target == 'wasm'}}
+        run: |
+          git add .
+          if [[ $(git diff --stat --staged) == '' ]]; then
+            echo 'repository unmodified'
+            exit 1
+          fi
+          git commit -m "bump version"
+          
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          branch: release/${{ inputs.tag-prefix }}${{ inputs.tag }}
+          delete-branch: true
+          title: 'Release ${{ inputs.tag-prefix }}${{ inputs.tag }}'
+          body: |
+            This automatically generated PR contains changes for the `${{ inputs.tag-prefix }}${{ inputs.tag }}` version.
+            ${{inputs.pr-body-text}}
+            If you discover any mistakes fix them with commits on this branch. If you want to abort the release simply close the PR.
+          labels: |
+            automated-pr
+      

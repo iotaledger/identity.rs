@@ -1,0 +1,15 @@
+issues=true
+issues-wo-labels=true
+pr-wo-labels=false
+author=false
+breaking-label=Changed
+breaking-labels=changed
+enhancement-label=Added
+enhancement-labels=added
+bugs-label=Patch
+bug-labels=patch,bug
+deprecated-labels=deprecated
+removed-labels=removed
+exclude-labels=documentation,no-changelog
+include-labels=rust
+verbose=true
