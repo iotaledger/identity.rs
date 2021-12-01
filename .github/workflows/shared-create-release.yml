@@ -125,6 +125,7 @@ jobs:
           args: cargo-release
 
       - name: Run cargo-release
+        if: ${{inputs.replacement-target == 'rust'}}
         run: |
           cargo release --workspace --no-tag --no-publish --no-push --no-confirm ${{ inputs.tag }} --execute
 
