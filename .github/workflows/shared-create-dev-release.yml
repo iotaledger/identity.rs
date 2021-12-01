@@ -188,7 +188,7 @@ jobs:
       - name: Replace Version In Bindings
         if: ${{inputs.replacement-target == 'rust'}}
         run: |
-          cd binding/wasm
+          cd bindings/wasm
           cargo add identity@=${{ env.NEXTVERSION_WITHOUT_PREFIX }} --path=../../identity
       
       - name: Run cargo-release
@@ -199,7 +199,7 @@ jobs:
       - name: Run cargo-release
         if: ${{inputs.replacement-target == 'wasm'}}
         run: |
-          cd binding/wasm
+          cd bindings/wasm
           cargo release --no-tag --no-publish --no-push --no-confirm ${{ env.NEXTVERSION_WITHOUT_PREFIX }} --execute
 
       - uses: actions/setup-node@v2
