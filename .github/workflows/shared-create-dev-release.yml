@@ -44,6 +44,7 @@ jobs:
           # Number of commits to fetch. 0 indicates all history for all branches and tags.
           fetch-depth: 0
           ref: dev
+
       - name: Validation
         run: |
           VERSION=${{ inputs.tag-prefix }}${{ inputs.tag-base }}
@@ -121,6 +122,7 @@ jobs:
 
           echo EXCLUDE_ARG=$EXCLUDE_ARG
           echo EXCLUDE_ARG=$EXCLUDE_ARG >> $GITHUB_ENV
+
       - name: Prepare Repository
         run: |
           GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
@@ -131,6 +133,7 @@ jobs:
 
           echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER >> $GITHUB_ENV
           echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT >> $GITHUB_ENV
+
       - name: Run github-changelog-generator
         uses: docker://githubchangeloggenerator/github-changelog-generator
         with:
@@ -142,17 +145,10 @@ jobs:
             --token ${{ secrets.GITHUB_TOKEN }} 
             --future-release ${{ env.NEXTVERSION }} 
             ${{ env.EXCLUDE_ARG }}
+
       - name: Log ${{ inputs.changelog-path }}
         run: cat ${{ inputs.changelog-path }}
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-      - name: Replace Version
-        run: |
-          cd .github/workflows/scripts/change-version
-          npm ci
-          VERSION=${{ env.NEXTVERSION_WITHOUT_PREFIX }} 
-          node index.js $VERSION ${{ inputs.replacement-target }}
+
       - name: Import GPG key
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@v4
@@ -161,6 +157,36 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           git_user_signingkey: true
           git_commit_gpgsign: true
+          git_tag_gpgsign: true
+
+      - uses: actions-rs/toolchain@v1
+        if: ${{inputs.replacement-target == 'rust'}}
+        with:
+          toolchain: stable
+
+      - uses: actions-rs/cargo@v1
+        if: ${{inputs.replacement-target == 'rust'}}
+        with:
+          command: install
+          args: cargo-release
+
+      - name: Run cargo-release
+        run: |
+          cargo release --workspace --no-tag --no-publish --no-push --no-confirm ${{ env.NEXTVERSION_WITHOUT_PREFIX }} --execute
+
+      - uses: actions/setup-node@v2
+        if: ${{inputs.replacement-target == 'wasm'}}
+        with:
+          node-version: '16'
+
+      - name: Replace Version
+        if: ${{inputs.replacement-target == 'wasm'}}
+        run: |
+          cd .github/workflows/scripts/change-version
+          npm ci
+          VERSION=${{ env.NEXTVERSION_WITHOUT_PREFIX }} 
+          node index.js $VERSION ${{ inputs.replacement-target }}
+
       - name: Commit changes
         run: |
           git add .
@@ -168,9 +194,8 @@ jobs:
             echo 'repository unmodified'
             exit 1
           fi
-          git config user.email "${{ steps.import-gpg.outputs.email }}"
-          git config user.name "${{ steps.import-gpg.outputs.name }}"
-          git commit -S -m "generate changelog"
+          git commit -m "generate changelog"
+          
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:

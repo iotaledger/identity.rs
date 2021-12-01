@@ -48,6 +48,7 @@ jobs:
         with:
           # Number of commits to fetch. 0 indicates all history for all branches and tags.
           fetch-depth: 0
+          
       - name: Determine Version
         id: determine-version
         run: |
@@ -85,13 +86,14 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           git_user_signingkey: true
           git_commit_gpgsign: true
+          git_tag_gpgsign: true
 
       - name: Tag Release
         if: ${{env.IS_RELEASE}}
         run: |
           git config user.email "${{ steps.import-gpg.outputs.email }}"
           git config user.name "${{ steps.import-gpg.outputs.name }}"
-          git tag -s -a -m ${{env.CURRENT_VERSION}} ${{env.CURRENT_VERSION}}
+          git tag -a -m ${{env.CURRENT_VERSION}} ${{env.CURRENT_VERSION}}
           git push --follow-tags
 
       - name: Prepare Repository
