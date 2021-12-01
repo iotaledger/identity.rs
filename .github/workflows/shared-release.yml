@@ -68,7 +68,7 @@ jobs:
             PREVIOUS_VERSION=$(git tag --sort=-committerdate | grep -w -P '${{ inputs.main-tag-regex }}' | head -n 1)
           fi
 
-          if [[ PREVIOUS_VERSION ]]; then
+          if [[ $PREVIOUS_VERSION ]]; then
             SINCE_ARG="--since-tag $PREVIOUS_VERSION"
           fi
 
