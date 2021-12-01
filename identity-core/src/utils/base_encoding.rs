@@ -1,9 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//use crate::error::Error;
-//use crate::error::Result;
-
 /// A [Multibase]-supported base. See [multibase::Base] for more information.
 ///
 /// Excludes the identity (0x00) base as arbitrary bytes cannot be encoded to a valid UTF-8 string
