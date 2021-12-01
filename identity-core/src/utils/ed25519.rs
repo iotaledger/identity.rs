@@ -40,7 +40,7 @@ pub fn generate_ed25519_keypairs(count: usize) -> Result<Vec<(PublicKey, Private
 
 /// Caused by a failure to generate an ED25519 Keypair
 #[derive(Debug, thiserror::Error)]
-#[error("failed to generate a ed25519 key-pair: {inner}")]
+#[error("failed to generate an ed25519 key-pair: {inner}")]
 pub struct Ed25519KeyPairGenerationError {
   #[source]
   pub(crate) inner: crypto::Error,
