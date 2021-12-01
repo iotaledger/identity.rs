@@ -32,7 +32,7 @@ where
   ///
   /// The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
   /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
-  fn sign(message: &[u8], key: &Self::Private) -> std::result::Result<Self::Output, SigningError> {
+  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output, SigningError> {
     parse_secret(key.as_ref())
       .map(|key| key.sign(message).to_bytes())
       .map_err(Into::into)
@@ -47,7 +47,7 @@ where
 
   type Error = VerificationError;
 
-  fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> std::result::Result<(), Self::Error> {
+  fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<(), Self::Error> {
     let key: ed25519::PublicKey = parse_public(key.as_ref()).map_err(Self::Error::from)?;
     let sig: ed25519::Signature = parse_signature(signature).map_err(|err| VerificationProcessingError::from(err.0))?;
 
@@ -59,14 +59,14 @@ where
   }
 }
 
-fn parse_public(slice: &[u8]) -> std::result::Result<ed25519::PublicKey, KeyError> {
+fn parse_public(slice: &[u8]) -> Result<ed25519::PublicKey, KeyError> {
   let bytes: [u8; PUBLIC_KEY_LENGTH] = slice
     .try_into()
     .map_err(|_| KeyError("could not create a public key from the supplied bytes: incorrect length"))?;
   ed25519::PublicKey::try_from_bytes(bytes).map_err(|_| KeyError("could not parse public key from the supplied bytes"))
 }
 
-fn parse_secret(slice: &[u8]) -> std::result::Result<ed25519::SecretKey, KeyError> {
+fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey, KeyError> {
   let bytes: [u8; SECRET_KEY_LENGTH] = slice
     .try_into()
     .map_err(|_| KeyError("could not create a secret key from the supplied bytes: incorrect length"))?;
@@ -74,7 +74,7 @@ fn parse_secret(slice: &[u8]) -> std::result::Result<ed25519::SecretKey, KeyErro
   Ok(ed25519::SecretKey::from_bytes(bytes))
 }
 
-fn parse_signature(slice: &[u8]) -> std::result::Result<ed25519::Signature, SignatureParsingError> {
+fn parse_signature(slice: &[u8]) -> Result<ed25519::Signature, SignatureParsingError> {
   let bytes: [u8; SIGNATURE_LENGTH] = slice
     .try_into()
     .map_err(|_| SignatureParsingError("could not parse a signature from the supplied bytes"))?;
