@@ -75,7 +75,7 @@ mod errors {
 
   #[derive(Debug, DeriveError, PartialEq, Eq, Clone)]
   #[error("failed to decode base58 data: {inner}")]
-  ///Caused by a failure to decode base58-encoded data
+  /// Caused by a failure to decode base58-encoded data.
   pub struct Base58DecodingError {
     #[source]
     pub(super) inner: bs58::decode::Error,
@@ -83,7 +83,7 @@ mod errors {
 
   #[derive(Debug, DeriveError, PartialEq, Eq, Clone)]
   #[error("failed to decode multibase data: {inner}")]
-  ///Caused by a failure to decode multibase-encoded data
+  /// Caused by a failure to decode multibase-encoded data.
   pub struct MultiBaseDecodingError {
     #[source]
     pub(super) inner: multibase::Error,
@@ -91,7 +91,7 @@ mod errors {
 
   #[derive(Debug, DeriveError, PartialEq, Eq, Clone)]
   #[error("failed to decode base64 data: {inner}")]
-  ///Caused by a failure to decode base64-encoded data
+  /// Caused by a failure to decode base64-encoded data.
   pub struct Base64DecodingError {
     #[source]
     pub(super) inner: base64::DecodeError,

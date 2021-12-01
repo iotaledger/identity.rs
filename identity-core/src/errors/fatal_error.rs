@@ -17,10 +17,20 @@ impl FatalError {
   }
 
   /// Constructs a new FatalError from any boxed `Error` trait object and description `String`
-  pub fn new(error: Box<dyn std::error::Error + Send + Sync>, description: String) -> Self {
+  /// Constructs a new fatal error from a description.
+  pub fn new(description: impl Into<String>) -> Self {
     Self {
-      source: Some(error),
-      description,
+      inner: None,
+      description: description.into(),
+    }
+  }
+
+  /// Constructs a new fatal error from any boxed `Error` trait object, which is the cause of this error,
+  /// and an error description.
+  pub fn new_with_cause(cause: Box<dyn std::error::Error + Send + Sync>, description: impl Into<String>) -> Self {
+    Self {
+      inner: Some(error),
+      description: description.into(),
     }
   }
 }

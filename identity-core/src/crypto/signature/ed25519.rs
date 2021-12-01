@@ -31,7 +31,7 @@ where
   type Output = [u8; SIGNATURE_LENGTH];
   /// Computes an EdDSA/Ed25519 signature.
   ///
-  ///  The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
+  /// The private key must be a 32-byte seed in compliance with [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2).
   /// Other implementations often use another format. See [this blog post](https://blog.mozilla.org/warner/2011/11/29/ed25519-keys/) for further explanation.
   fn sign(message: &[u8], key: &Self::Private) -> std::result::Result<Self::Output, Self::Error> {
     parse_secret(key.as_ref())
