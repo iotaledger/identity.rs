@@ -77,6 +77,7 @@ jobs:
           echo "::set-output name=previous-version::=$PREVIOUS_VERSION"
 
       - name: Import GPG key
+        if: ${{env.IS_RELEASE}}
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@v4
         with:
@@ -90,7 +91,7 @@ jobs:
         run: |
           git config user.email "${{ steps.import-gpg.outputs.email }}"
           git config user.name "${{ steps.import-gpg.outputs.name }}"
-          git tag -S -a -m ${{env.CURRENT_VERSION}} ${{env.CURRENT_VERSION}}
+          git tag -s -a -m ${{env.CURRENT_VERSION}} ${{env.CURRENT_VERSION}}
           git push --follow-tags
 
       - name: Prepare Repository
