@@ -113,21 +113,48 @@ jobs:
           git_commit_gpgsign: true
           git_tag_gpgsign: true
 
+      - name: Commit changes
+        run: |
+          git add .
+          if [[ $(git diff --stat --staged) == '' ]]; then
+            echo 'repository unmodified'
+            exit 1
+          fi
+          git commit -m "generate changelog"
+
       - uses: actions-rs/toolchain@v1
         if: ${{inputs.replacement-target == 'rust'}}
         with:
           toolchain: stable
 
       - uses: actions-rs/cargo@v1
-        if: ${{inputs.replacement-target == 'rust'}}
+        if: ${{inputs.replacement-target == 'rust' || inputs.replacement-target == 'wasm'}}
         with:
           command: install
           args: cargo-release
 
+      - uses: actions-rs/cargo@v1
+        if: ${{inputs.replacement-target == 'rust'}}
+        with:
+          command: install
+          args: cargo-edit
+
+      - name: Replace Version In Bindings
+        if: ${{inputs.replacement-target == 'rust'}}
+        run: |
+          cd binding/wasm
+          cargo add identity@=${{ inputs.tag }} --path=../../identity
+      
       - name: Run cargo-release
         if: ${{inputs.replacement-target == 'rust'}}
         run: |
-          cargo release --workspace --no-tag --no-publish --no-push --no-confirm ${{ inputs.tag }} --execute
+          cargo release --workspace --config ./release.toml --no-tag --no-publish --no-push --no-confirm ${{ inputs.tag }} --execute
+
+      - name: Run cargo-release
+        if: ${{inputs.replacement-target == 'wasm'}}
+        run: |
+          cd binding/wasm
+          cargo release --no-tag --no-publish --no-push --no-confirm ${{ inputs.tag }} --execute
 
       - uses: actions/setup-node@v2
         if: ${{inputs.replacement-target == 'wasm'}}
@@ -137,19 +164,18 @@ jobs:
       - name: Replace Version
         if: ${{inputs.replacement-target == 'wasm'}}
         run: |
-          cd .github/workflows/scripts/change-version
-          npm ci
-          VERSION=${{ inputs.tag }}
-          node index.js $VERSION ${{ inputs.replacement-target }}
+          cd binding/wasm
+          npm version ${{ inputs.tag }}
 
       - name: Commit changes
+        if: ${{inputs.replacement-target == 'wasm'}}
         run: |
           git add .
           if [[ $(git diff --stat --staged) == '' ]]; then
             echo 'repository unmodified'
             exit 1
           fi
-          git commit -m "generate changelog"
+          git commit -m "bump version"
           
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
