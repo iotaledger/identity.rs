@@ -1,2 +1,2 @@
-consolidate-commits=true
-pre-release-commit-message="Bump core crates version"
+consolidate-commits = true
+pre-release-commit-message = "Bump core crates version"
