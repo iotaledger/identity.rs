@@ -10,7 +10,7 @@ on:
 jobs:
   call-create-dev-release-workflow:
     # owner/repository has to be static, see https://github.community/t/env-variables-in-uses/17466
-    uses: eike-hass/identity.rs/.github/workflows/shared-create-dev-release.yml@dev
+    uses: iotaledger/identity.rs/.github/workflows/shared-create-dev-release.yml@dev
     with:
       tag-prefix: v
       tag-postfix: -dev.
