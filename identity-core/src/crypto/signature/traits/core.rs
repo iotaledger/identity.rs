@@ -5,6 +5,7 @@ use serde::Serialize;
 
 use crate::crypto::signature::errors::MissingSignatureError;
 use crate::crypto::signature::errors::ProofValueError;
+use crate::crypto::signature::errors::SigningError;
 use crate::crypto::SetSignature;
 use crate::crypto::Signature;
 use crate::crypto::SignatureValue;
@@ -18,11 +19,8 @@ pub trait Sign {
   /// The output type of this signature implementation.
   type Output;
 
-  /// Error describing how `sign` may fail
-  type Error: std::error::Error;
-
   /// Signs the given `message` with `key` and returns a digital signature.
-  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output, Self::Error>;
+  fn sign(message: &[u8], key: &Self::Private) -> Result<Self::Output, SigningError>;
 }
 
 // =============================================================================
