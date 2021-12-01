@@ -26,7 +26,5 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Release to npm
-        uses: './.github/actions/release/release-npm'
-        with:
-          tag: ${{ needs.call-create-release-workflow.outputs.is-dev-release && 'dev' }}
+      - name: Dummy Release to crates.io
+        run: echo beep boop, pretenting to release
