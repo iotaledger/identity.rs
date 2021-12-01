@@ -3,7 +3,7 @@
 
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::iter::once;
 
 use serde::Serialize;
@@ -122,7 +122,7 @@ impl<T> Display for VerificationMethod<T>
 where
   T: Serialize,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
 }

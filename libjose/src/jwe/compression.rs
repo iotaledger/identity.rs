@@ -3,7 +3,7 @@
 
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use miniz_oxide::deflate::compress_to_vec;
 use miniz_oxide::deflate::CompressionLevel;
 use miniz_oxide::inflate::decompress_to_vec;
@@ -51,7 +51,7 @@ impl Default for JweCompression {
 }
 
 impl Display for JweCompression {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_str(self.name())
   }
 }

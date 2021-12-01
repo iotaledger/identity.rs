@@ -3,7 +3,6 @@
 
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 
 use serde::Deserialize;
 use serde::Serialize;
@@ -162,7 +161,7 @@ impl DocumentChain {
 }
 
 impl Display for DocumentChain {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
 }

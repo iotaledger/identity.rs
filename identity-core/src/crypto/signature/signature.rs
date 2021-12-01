@@ -3,7 +3,7 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use serde::__private::ser::FlatMapSerializer;
 use serde::ser::SerializeMap;
 use serde::ser::Serializer;
@@ -84,7 +84,7 @@ impl Signature {
 }
 
 impl Debug for Signature {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.debug_struct("Signature")
       .field("type_", &self.type_)
       .field("value", &self.value)

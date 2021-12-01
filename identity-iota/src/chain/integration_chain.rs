@@ -3,7 +3,7 @@
 
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::mem;
 
 use serde;
@@ -201,7 +201,7 @@ impl IntegrationChain {
 }
 
 impl Display for IntegrationChain {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
 }

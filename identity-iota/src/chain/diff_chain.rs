@@ -3,7 +3,7 @@
 
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::slice::Iter;
 
 use serde;
@@ -198,7 +198,7 @@ impl Default for DiffChain {
 }
 
 impl Display for DiffChain {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
 }

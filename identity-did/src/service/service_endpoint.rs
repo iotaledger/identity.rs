@@ -3,7 +3,6 @@
 
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 
 use indexmap::map::IndexMap;
 use serde::Serialize;
@@ -44,7 +43,7 @@ impl From<IndexMap<String, OrderedSet<Url>>> for ServiceEndpoint {
 }
 
 impl Display for ServiceEndpoint {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
 }

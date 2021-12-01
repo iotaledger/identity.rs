@@ -4,7 +4,6 @@
 use core::convert::TryInto as _;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 
 use serde::Serialize;
 
@@ -567,7 +566,7 @@ where
   U: Serialize,
   V: Serialize,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     self.fmt_json(f)
   }
 }

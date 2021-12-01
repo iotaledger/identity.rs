@@ -3,7 +3,6 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 
 use identity_core::common::Object;
 
@@ -83,7 +82,7 @@ impl<T> Debug for MethodRef<T>
 where
   T: Debug,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match self {
       Self::Embed(inner) => Debug::fmt(inner, f),
       Self::Refer(inner) => Debug::fmt(inner, f),
