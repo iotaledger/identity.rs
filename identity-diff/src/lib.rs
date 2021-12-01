@@ -17,8 +17,9 @@
   // clippy::missing_errors_doc,
 )]
 
+#[cfg(feature = "derive")]
 #[doc(hidden)]
-pub use identity_derive::*;
+pub use identity_diff_derive::Diff;
 
 mod error;
 mod hashmap;
