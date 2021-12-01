@@ -164,7 +164,7 @@ jobs:
       - name: Replace Version
         if: ${{inputs.replacement-target == 'wasm'}}
         run: |
-          cd binding/wasm
+          cd bindings/wasm
           npm version ${{ inputs.tag }}
 
       - name: Commit changes

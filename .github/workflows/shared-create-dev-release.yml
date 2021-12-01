@@ -210,7 +210,7 @@ jobs:
       - name: Replace Version
         if: ${{inputs.replacement-target == 'wasm'}}
         run: |
-          cd binding/wasm
+          cd bindings/wasm
           npm version ${{ env.NEXTVERSION_WITHOUT_PREFIX }}
 
       - name: Commit changes
