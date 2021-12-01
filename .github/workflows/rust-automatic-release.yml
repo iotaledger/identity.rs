@@ -16,6 +16,9 @@ jobs:
       dev-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+-(dev)\.\d*$
       main-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+$
       create-github-release: true
+    secrets:
+      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
   release:
     runs-on: ubuntu-latest
     needs: call-create-release-workflow

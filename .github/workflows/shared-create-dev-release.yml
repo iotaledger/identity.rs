@@ -28,6 +28,11 @@ on:
       replacement-target:
         required: true
         type: string
+    secrets:
+      GPG_PRIVATE_KEY:
+        required: true
+      GPG_PASSPHRASE:
+        required: true
 
 jobs:
   release:

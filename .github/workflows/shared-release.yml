@@ -28,6 +28,11 @@ on:
       current-version:
         description: "tag of the current version"
         value: ${{ jobs.build.outputs.is-dev-release }}
+    secrets:
+      GPG_PRIVATE_KEY:
+        required: true
+      GPG_PASSPHRASE:
+        required: true
 jobs:
   build:
     if: github.event.pull_request.merged == true
