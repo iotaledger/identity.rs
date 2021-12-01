@@ -13,4 +13,3 @@ pub use self::base_encoding::*;
 pub use self::ed25519::generate_ed25519_keypair;
 pub use self::ed25519::generate_ed25519_keypairs;
 pub(crate) use self::ed25519::keypair_from_ed25519_private_key;
-pub use self::ed25519::Ed25519KeyPairGenerationError;

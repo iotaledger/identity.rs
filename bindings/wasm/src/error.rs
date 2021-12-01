@@ -127,12 +127,12 @@ mod wasm_error_from_identity_core {
   use super::*;
   use identity::core::errors::Base58DecodingError;
   use identity::core::errors::Base64DecodingError;
-  use identity::core::errors::Ed25519KeyPairGenerationError;
   use identity::core::errors::FatalError;
   use identity::core::errors::JsonDecodingError;
   use identity::core::errors::JsonEncodingError;
   use identity::core::errors::KeyCollectionError;
   use identity::core::errors::KeyCollectionSizeError;
+  use identity::core::errors::KeyPairGenerationError;
   use identity::core::errors::MerkleDigestKeyTagError;
   use identity::core::errors::MerkleKeyTagExtractionError;
   use identity::core::errors::MerkleSignatureKeyTagError;
@@ -150,7 +150,7 @@ mod wasm_error_from_identity_core {
     UrlParsingError,
     Base64DecodingError,
     Base58DecodingError,
-    Ed25519KeyPairGenerationError,
+    KeyPairGenerationError,
     JsonDecodingError,
     JsonEncodingError,
     MerkleDigestKeyTagError,
