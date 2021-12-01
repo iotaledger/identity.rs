@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
-use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::slice::Iter;
@@ -11,7 +10,7 @@ use serde;
 use serde::Deserialize;
 use serde::Serialize;
 
-use identity_core::convert::ToJson;
+use identity_core::convert::FmtJson;
 
 use crate::chain::milestone::sort_by_milestone;
 use crate::chain::IntegrationChain;
@@ -200,11 +199,7 @@ impl Default for DiffChain {
 
 impl Display for DiffChain {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    if f.alternate() {
-      f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
-    } else {
-      f.write_str(&self.to_json().map_err(|_| FmtError)?)
-    }
+    self.fmt_json(f)
   }
 }
 
@@ -287,7 +282,7 @@ mod test {
         .sign_data(
           &mut new,
           keys[0].private(),
-          chain.current().default_signing_method().unwrap().id()
+          chain.current().default_signing_method().unwrap().id(),
         )
         .is_ok());
       assert_eq!(

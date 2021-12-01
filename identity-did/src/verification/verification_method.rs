@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
-use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 use core::iter::once;
@@ -10,7 +9,7 @@ use core::iter::once;
 use serde::Serialize;
 
 use identity_core::common::Object;
-use identity_core::convert::ToJson;
+use identity_core::convert::FmtJson;
 
 use crate::did::CoreDID;
 use crate::did::CoreDIDUrl;
@@ -124,11 +123,7 @@ where
   T: Serialize,
 {
   fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    if f.alternate() {
-      f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
-    } else {
-      f.write_str(&self.to_json().map_err(|_| FmtError)?)
-    }
+    self.fmt_json(f)
   }
 }
 
