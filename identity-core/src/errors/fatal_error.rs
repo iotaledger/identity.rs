@@ -20,7 +20,7 @@ impl FatalError {
   /// Constructs a new fatal error from a description.
   pub fn new(description: impl Into<String>) -> Self {
     Self {
-      inner: None,
+      source: None,
       description: description.into(),
     }
   }
@@ -29,7 +29,7 @@ impl FatalError {
   /// and an error description.
   pub fn new_with_cause(cause: Box<dyn std::error::Error + Send + Sync>, description: impl Into<String>) -> Self {
     Self {
-      inner: Some(error),
+      source: Some(cause),
       description: description.into(),
     }
   }
