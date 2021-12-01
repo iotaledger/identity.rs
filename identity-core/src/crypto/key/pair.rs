@@ -108,7 +108,7 @@ impl From<(KeyType, PublicKey, PrivateKey)> for KeyPair {
 
 /// Caused by a failure to generate a Keypair
 #[derive(Debug, thiserror::Error)]
-#[error("failed to generate an ed25519 key-pair: {inner}")]
+#[error("key-pair generation failed: {inner}")]
 pub struct KeyPairGenerationError {
   #[source]
   pub(crate) inner: crypto::Error,
