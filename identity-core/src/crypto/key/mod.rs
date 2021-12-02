@@ -12,7 +12,7 @@ mod type_;
 pub use self::collection::KeyCollection;
 pub use self::collection::KeyCollectionError;
 pub use self::collection::KeyCollectionSizeError;
-pub(crate) use self::key::KeyError;
+pub use self::key::KeyParsingError;
 pub use self::key::PrivateKey;
 pub use self::key::PublicKey;
 pub use self::pair::KeyPair;

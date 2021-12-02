@@ -5,10 +5,8 @@ use core::marker::PhantomData;
 use serde::Serialize;
 
 use crate::convert::ToJson;
-use crate::crypto::signature::errors::ProofValueError;
 use crate::crypto::signature::errors::SigningError;
 use crate::crypto::signature::errors::VerificationError;
-use crate::crypto::signature::errors::VerificationProcessingError;
 use crate::crypto::Ed25519;
 use crate::crypto::Named;
 use crate::crypto::Sign;
@@ -56,20 +54,21 @@ impl<T> Verifier<T::Public> for JcsEd25519<T>
 where
   T: Verify,
 {
-  type AuthenticityError = VerificationError;
-  type SignatureVerificationError = VerificationError;
-
+  /// Proof verification algorithm implementation based on the JCS Ed25519 Signature 2020 signature suite.
+  ///
+  /// If a `VerificationError` is returned one may disregard the `Revoked` variant as it is not utilized by this
+  /// implementation.
   fn verify<X>(data: &X, signature: &SignatureValue, public: &T::Public) -> Result<(), VerificationError>
   where
     X: Serialize,
   {
-    let signature: &str = signature.as_signature().ok_or(ProofValueError("jcs ed25519"))?;
+    let signature: &str = signature
+      .as_signature()
+      .ok_or_else(|| VerificationError::InvalidProofValue("jcs ed25519".into()))?;
 
-    let signature: Vec<u8> =
-      decode_b58(signature).map_err(|_| VerificationProcessingError::from("unable to decode the signature"))?;
-    let message: Vec<u8> = data
-      .to_jcs()
-      .map_err(|_| VerificationProcessingError::from("unable to serialize input data"))?;
+    let signature: Vec<u8> = decode_b58(signature)
+      .map_err(|_| VerificationError::ProcessingFailed("unable to decode the signature".into()))?;
+    let message: Vec<u8> = data.to_jcs()?;
 
     T::verify(&message, &signature, public)?;
 

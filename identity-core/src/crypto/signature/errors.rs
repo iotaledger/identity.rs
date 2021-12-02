@@ -4,13 +4,11 @@
 
 use thiserror::Error as DeriveError;
 
-use crate::crypto::key::KeyError;
+use crate::crypto::key::KeyParsingError;
 
 pub use signing::MissingSignatureError;
 pub use signing::SigningError;
-pub use verifying::ProofValueError;
 pub use verifying::VerificationError;
-pub use verifying::VerificationProcessingError;
 
 mod signing {
   use std::borrow::Cow;
@@ -20,7 +18,7 @@ mod signing {
   use crate::convert::JsonEncodingError;
 
   use super::DeriveError;
-  use super::KeyError;
+  use super::KeyParsingError;
   #[derive(Debug, DeriveError)]
   /// Caused by a failed attempt at retrieving a digital signature.
   #[error("signature not found")]
@@ -35,7 +33,7 @@ mod signing {
   impl From<JsonEncodingError> for SigningError {
     fn from(error: JsonEncodingError) -> Self {
       Self {
-        description: format!("invalid input: serialization failed:: {}", error.to_string()).into(),
+        description: format!("invalid input: serialization failed: {}", error.to_string()).into(),
       }
     }
   }
@@ -43,16 +41,16 @@ mod signing {
   impl From<JsonDecodingError> for SigningError {
     fn from(error: JsonDecodingError) -> Self {
       Self {
-        description: format!("invalid input: serialization failed:: {}", error.to_string()).into(),
+        description: format!("invalid input: serialization failed: {}", error.to_string()).into(),
       }
     }
   }
 
-  impl From<KeyError> for SigningError {
-    fn from(error: KeyError) -> Self {
+  impl From<KeyParsingError> for SigningError {
+    fn from(error: KeyParsingError) -> Self {
       Self {
-        description: format!("invalid input:: {}", error.0).into(), /* We will make this more efficient once const
-                                                                     * evaluation has matured */
+        description: format!("invalid input: {}", error.0).into(), /* might be possible to avoid allocating here in
+                                                                    * the future */
       }
     }
   }
@@ -60,7 +58,7 @@ mod signing {
   impl From<MissingSignatureError> for SigningError {
     fn from(_: MissingSignatureError) -> Self {
       Self {
-        description: "unable to access the required signature:: signature not found".into(),
+        description: "unable to access the required signature: signature not found".into(),
       }
     }
   }
@@ -95,17 +93,15 @@ mod signing {
 }
 
 mod verifying {
+  use std::borrow::Cow;
+
   use super::DeriveError;
-  use super::KeyError;
+  use super::KeyParsingError;
   use super::MissingSignatureError;
   use crate::convert::JsonDecodingError;
   use crate::convert::JsonEncodingError;
   use crate::crypto::merkle_key::MerkleDigestKeyTagError;
   use crate::crypto::merkle_key::MerkleSignatureKeyTagError;
-  /// The provided signature does not match the expected value
-  #[derive(Debug, DeriveError)]
-  #[error("{0}")]
-  pub struct ProofValueError(pub &'static str);
 
   // Verification can typically fail by either actually verifying that the proof value is incorrect, or it can fail
   // before it gets to checking the proof value by for instance failing to (de)serialize some data etc. Hence the
@@ -113,100 +109,52 @@ mod verifying {
   #[derive(Debug, DeriveError)]
   /// Caused by a failure to verify a cryptographic signature
   pub enum VerificationError {
-    /// The provided signature does not match the expected value
+    /// The provided signature does not match the expected value.
     #[error("verification failed - invalid proof value: {0}")]
-    InvalidProofValue(#[from] ProofValueError),
+    InvalidProofValue(Cow<'static, str>),
 
-    /// Processing of the proof material failed before the proof value could be checked
+    /// Caused by trying to verify a signature with a revoked key.
+    #[error("verification failed - revoked: {0}")]
+    Revoked(Cow<'static, str>),
+
+    /// Processing of the proof material failed before the proof value could be checked.
     #[error("verification failed - processing failed before the proof value could be checked: {0}")]
-    ProcessingFailed(#[from] VerificationProcessingError),
-  }
-
-  impl From<ProcessingErrorCause> for VerificationError {
-    fn from(err: ProcessingErrorCause) -> Self {
-      Self::ProcessingFailed(VerificationProcessingError::from(err))
-    }
-  }
-
-  /// Indicates that something went wrong during a signature verification process before one could check the validity of
-  /// the signature.
-  #[derive(Debug, DeriveError)]
-  #[error("{cause}")]
-  pub struct VerificationProcessingError {
-    #[from]
-    cause: ProcessingErrorCause,
-  }
-
-  // This type gets wrapped in the public VerificationError type, hence we implement the Error trait in order to help
-  // users with debugging and error logging.
-  #[derive(Debug, DeriveError)]
-  pub(crate) enum ProcessingErrorCause {
-    // The format of the input to the verifier is not provided in the required format
-    #[error("invalid input format:: {0}")]
-    InvalidInputFormat(&'static str),
-    // Unable to find the required signature
-    #[error("missing signature:: {0}")]
-    MissingSignature(&'static str),
-    // Caused by attempting to parse an invalid Merkle Digest Key Collection tag.
-    #[error(transparent)]
-    InvalidMerkleDigestKeyTag(#[from] MerkleDigestKeyTagError),
-    // Caused by attempting to parse an invalid Merkle Signature Key Collection tag.
-    #[error(transparent)]
-    InvalidMerkleSignatureKeyTag(#[from] MerkleSignatureKeyTagError),
-    // Any other reason why the verification process failed
-    #[error("{0}")]
-    Other(&'static str),
+    ProcessingFailed(Cow<'static, str>),
   }
 
   impl From<JsonEncodingError> for VerificationError {
-    fn from(_: JsonEncodingError) -> Self {
-      VerificationError::from(ProcessingErrorCause::InvalidInputFormat("serialization failed"))
+    fn from(error: JsonEncodingError) -> Self {
+      Self::ProcessingFailed(format!("invalid input format: serialization failed: {}", error.to_string()).into())
     }
   }
 
   impl From<JsonDecodingError> for VerificationError {
-    fn from(_: JsonDecodingError) -> Self {
-      VerificationError::from(ProcessingErrorCause::InvalidInputFormat("deserialization failed"))
+    fn from(error: JsonDecodingError) -> Self {
+      Self::ProcessingFailed(format!("invalid input format: deserialization failed: {}", error).into())
     }
   }
 
   impl From<MissingSignatureError> for VerificationError {
     fn from(_: MissingSignatureError) -> Self {
-      Self::ProcessingFailed(ProcessingErrorCause::MissingSignature("").into())
+      Self::ProcessingFailed("unable to access the required signature: signature not found".into())
     }
   }
-  impl From<KeyError> for VerificationError {
-    fn from(err: KeyError) -> Self {
-      Self::ProcessingFailed(ProcessingErrorCause::InvalidInputFormat(err.0).into())
-    }
-  }
-
-  impl From<MerkleDigestKeyTagError> for VerificationProcessingError {
-    fn from(err: MerkleDigestKeyTagError) -> Self {
-      Self { cause: err.into() }
+  impl From<KeyParsingError> for VerificationError {
+    fn from(error: KeyParsingError) -> Self {
+      Self::ProcessingFailed(format!("invalid input format: {}", error.0).into()) // might be possible to avoid
+                                                                                  // allocating here in the future
     }
   }
 
-  impl From<MerkleSignatureKeyTagError> for VerificationProcessingError {
-    fn from(err: MerkleSignatureKeyTagError) -> Self {
-      Self { cause: err.into() }
+  impl From<MerkleDigestKeyTagError> for VerificationError {
+    fn from(error: MerkleDigestKeyTagError) -> Self {
+      Self::ProcessingFailed(error.to_string().into())
     }
   }
 
-  impl From<&'static str> for VerificationProcessingError {
-    fn from(message: &'static str) -> Self {
-      Self {
-        cause: ProcessingErrorCause::Other(message),
-      }
-    }
-  }
-  impl TryFrom<VerificationError> for ProofValueError {
-    type Error = &'static str;
-    fn try_from(value: VerificationError) -> Result<Self, Self::Error> {
-      match value {
-        VerificationError::InvalidProofValue(err) => Ok(err),
-        _ => Err("processing failed before the proof value could be checked"),
-      }
+  impl From<MerkleSignatureKeyTagError> for VerificationError {
+    fn from(error: MerkleSignatureKeyTagError) -> Self {
+      Self::ProcessingFailed(error.to_string().into())
     }
   }
 }

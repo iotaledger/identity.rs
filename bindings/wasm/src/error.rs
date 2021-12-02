@@ -133,16 +133,15 @@ mod wasm_error_from_identity_core {
   use identity::core::errors::KeyCollectionError;
   use identity::core::errors::KeyCollectionSizeError;
   use identity::core::errors::KeyPairGenerationError;
+  use identity::core::errors::KeyParsingError;
   use identity::core::errors::MerkleDigestKeyTagError;
   use identity::core::errors::MerkleKeyTagExtractionError;
   use identity::core::errors::MerkleSignatureKeyTagError;
   use identity::core::errors::MissingSignatureError;
-  use identity::core::errors::ProofValueError;
   use identity::core::errors::SigningError;
   use identity::core::errors::TimeStampParsingError;
   use identity::core::errors::UrlParsingError;
   use identity::core::errors::VerificationError;
-  use identity::core::errors::VerificationProcessingError;
 
   // Simple conversions just using the name of the struct and their display implementation
   impl_wasm_error_from_with_struct_name!(
@@ -151,14 +150,13 @@ mod wasm_error_from_identity_core {
     Base64DecodingError,
     Base58DecodingError,
     KeyPairGenerationError,
+    KeyParsingError,
     JsonDecodingError,
     JsonEncodingError,
     MerkleDigestKeyTagError,
     MerkleSignatureKeyTagError,
     MissingSignatureError,
-    ProofValueError,
     SigningError,
-    VerificationProcessingError,
     FatalError
   );
 
@@ -214,6 +212,7 @@ mod wasm_error_from_identity_core {
       let name = match error {
         VerificationError::InvalidProofValue(_) => "VerificationError - InvalidProofValue",
         VerificationError::ProcessingFailed(_) => "VerificationError - ProcessingFailed",
+        VerificationError::Revoked(_) => "VerificationError - Revoked",
       };
       Self {
         message: Cow::Owned(error.to_string()),

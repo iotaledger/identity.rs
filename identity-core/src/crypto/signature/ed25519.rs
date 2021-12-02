@@ -8,15 +8,13 @@ use crypto::signatures::ed25519::PUBLIC_KEY_LENGTH;
 use crypto::signatures::ed25519::SECRET_KEY_LENGTH;
 use crypto::signatures::ed25519::SIGNATURE_LENGTH;
 
-use crate::crypto::key::KeyError;
+use crate::crypto::key::KeyParsingError;
 use crate::crypto::Sign;
 use crate::crypto::Verify;
 
 use self::errors::SignatureParsingError;
-use super::errors::ProofValueError;
 use super::errors::SigningError;
 use super::errors::VerificationError;
-use super::errors::VerificationProcessingError;
 
 /// An implementation of `Ed25519` signatures.
 #[derive(Clone, Copy, Debug)]
@@ -45,29 +43,34 @@ where
 {
   type Public = T;
 
+  /// Verify a message signed with the Ed25519 signature scheme.
+  ///
+  /// If a [`VerificationError`] is returned one may disregard the `Revoked` variant as it is not utilized by this
+  /// implementation.
   fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<(), VerificationError> {
     let key: ed25519::PublicKey = parse_public(key.as_ref())?;
-    let sig: ed25519::Signature = parse_signature(signature).map_err(|err| VerificationProcessingError::from(err.0))?;
+    let sig: ed25519::Signature = parse_signature(signature)?;
 
     if key.verify(&sig, message) {
       Ok(())
     } else {
-      Err(ProofValueError("ed25519").into())
+      Err(VerificationError::InvalidProofValue("ed25519".into()))
     }
   }
 }
 
-fn parse_public(slice: &[u8]) -> Result<ed25519::PublicKey, KeyError> {
+fn parse_public(slice: &[u8]) -> Result<ed25519::PublicKey, KeyParsingError> {
   let bytes: [u8; PUBLIC_KEY_LENGTH] = slice
     .try_into()
-    .map_err(|_| KeyError("could not create a public key from the supplied bytes: incorrect length"))?;
-  ed25519::PublicKey::try_from_bytes(bytes).map_err(|_| KeyError("could not parse public key from the supplied bytes"))
+    .map_err(|_| KeyParsingError("could not create a public key from the supplied bytes: incorrect length".into()))?;
+  ed25519::PublicKey::try_from_bytes(bytes)
+    .map_err(|_| KeyParsingError("could not parse public key from the supplied bytes".into()))
 }
 
-fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey, KeyError> {
+fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey, KeyParsingError> {
   let bytes: [u8; SECRET_KEY_LENGTH] = slice
     .try_into()
-    .map_err(|_| KeyError("could not create a secret key from the supplied bytes: incorrect length"))?;
+    .map_err(|_| KeyParsingError("could not create a secret key from the supplied bytes: incorrect length".into()))?;
 
   Ok(ed25519::SecretKey::from_bytes(bytes))
 }
@@ -81,10 +84,18 @@ fn parse_signature(slice: &[u8]) -> Result<ed25519::Signature, SignatureParsingE
 
 mod errors {
   use thiserror::Error as DeriveError;
+
+  use crate::crypto::VerificationError;
   #[derive(Debug, DeriveError)]
   /// Caused by a failure to parse a signature
   #[error("{0}")]
   pub(super) struct SignatureParsingError(pub(super) &'static str);
+
+  impl From<SignatureParsingError> for VerificationError {
+    fn from(error: SignatureParsingError) -> Self {
+      Self::ProcessingFailed(error.0.into())
+    }
+  }
 }
 #[cfg(test)]
 mod tests {

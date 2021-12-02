@@ -14,9 +14,7 @@ use crate::crypto::merkle_key::MerkleSignature;
 use crate::crypto::merkle_key::MerkleSignatureTag;
 use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Proof;
-use crate::crypto::signature::errors::ProofValueError;
 use crate::crypto::signature::errors::VerificationError;
-use crate::crypto::signature::errors::VerificationProcessingError;
 use crate::crypto::Named;
 use crate::crypto::PublicKey;
 use crate::crypto::SignatureValue;
@@ -92,13 +90,7 @@ where
   D: MerkleDigest,
   S: MerkleSignature + Verify<Public = [u8]>,
 {
-  type AuthenticityError = VerificationError;
-  type SignatureVerificationError = VerificationError;
-  fn verify<X>(
-    data: &X,
-    signature: &SignatureValue,
-    public: &VerificationKey<'key>,
-  ) -> Result<(), Self::AuthenticityError>
+  fn verify<X>(data: &X, signature: &SignatureValue, public: &VerificationKey<'key>) -> Result<(), VerificationError>
   where
     X: Serialize,
   {
@@ -113,14 +105,18 @@ where
     // Ensure the target hash of the user-provided public key is part
     // of the Merkle tree
     if !merkle_proof.verify(&merkle_root, target_hash) {
-      return Err(ProofValueError("merkle key - bad proof").into());
+      return Err(VerificationError::InvalidProofValue(
+        "did not retrieve the expected Merkle tree root".into(),
+      ));
     }
 
     // If a set of revocation flags was provided, ensure the public key
     // was not revoked
     if let Some(revocation) = public.revocation {
       if revocation.contains(merkle_proof.index() as u32) {
-        return Err(ProofValueError("merkle key - revoked").into());
+        return Err(VerificationError::Revoked(
+          "encountered a revoked key during Merkle signature verification".into(),
+        ));
       }
     }
 
@@ -134,7 +130,11 @@ where
 // =============================================================================
 // =============================================================================
 
-fn decompose_public_key<D, S>(key: &VerificationKey<'_>) -> Result<Hash<D>, VerificationProcessingError>
+/* If this function gets used outside of verification as well, we might have to come up with a better error type.
+Since this function is private this is not a problem in terms of stability.
+*/
+
+fn decompose_public_key<D, S>(key: &VerificationKey<'_>) -> Result<Hash<D>, VerificationError>
 where
   D: MerkleDigest,
   S: MerkleSignature,
@@ -156,19 +156,18 @@ where
     .merkle_key
     .get(2..)
     .and_then(Hash::from_slice)
-    .ok_or_else(|| VerificationProcessingError::from("invalid key format"))
+    .ok_or_else(|| VerificationError::ProcessingFailed("invalid key format".into()))
 }
 
-fn expand_signature_value(
-  signature: &SignatureValue,
-) -> Result<(PublicKey, Vec<u8>, Vec<u8>), VerificationProcessingError> {
+/* If this function gets used outside of verification as well, we might have to come up with a better error type.
+Since this function is private this is not a problem in terms of stability.
+*/
+fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<u8>, Vec<u8>), VerificationError> {
   let data: &str = signature.as_str();
   let mut parts: _ = data.split('.');
 
   // Split the signature data into `public-key/proof/signature`
-  let public: &str = parts
-    .next()
-    .ok_or_else(|| VerificationProcessingError::from("invalid proof format"))?;
+  let public: &str = parts.next().ok_or(InvalidProofFormat)?;
   let proof: &str = parts.next().ok_or(errors::InvalidProofFormat)?;
   let signature: &str = parts.next().ok_or(errors::InvalidProofFormat)?;
 
@@ -178,11 +177,11 @@ fn expand_signature_value(
     .map(Into::into)?;
 
   // Extract bytes of the base58-encoded proof
-  let proof: Vec<u8> = utils::decode_b58(proof).map_err(|_| errors::InvalidProofFormat)?;
+  let proof: Vec<u8> = utils::decode_b58(proof).map_err(|_| InvalidProofFormat)?;
 
   // Decode the signature value for the underlying signature implementation
-  let signature: Vec<u8> =
-    utils::decode_b58(signature).map_err(|_| VerificationProcessingError::from("failed to parse signature"))?;
+  let signature: Vec<u8> = utils::decode_b58(signature)
+    .map_err(|_| VerificationError::ProcessingFailed("failed to parse signature".into()))?;
 
   Ok((public, proof, signature))
 }
@@ -190,23 +189,16 @@ fn expand_signature_value(
 mod errors {
   use crate::crypto::merkle_key::MerkleKeyTagExtractionError;
   use crate::crypto::signature::errors::VerificationError;
-  use crate::crypto::signature::errors::VerificationProcessingError;
 
   pub(super) struct InvalidProofFormat;
 
-  impl From<InvalidProofFormat> for VerificationProcessingError {
-    fn from(_: InvalidProofFormat) -> Self {
-      Self::from("invalid proof format")
-    }
-  }
-
   impl From<InvalidProofFormat> for VerificationError {
-    fn from(err: InvalidProofFormat) -> Self {
-      Self::ProcessingFailed(err.into())
+    fn from(_: InvalidProofFormat) -> Self {
+      Self::ProcessingFailed("invalid proof format".into())
     }
   }
 
-  impl From<MerkleKeyTagExtractionError> for VerificationProcessingError {
+  impl From<MerkleKeyTagExtractionError> for VerificationError {
     fn from(err: MerkleKeyTagExtractionError) -> Self {
       match err {
         MerkleKeyTagExtractionError::InvalidMerkleDigestKeyTag(digest_key_tag_err) => digest_key_tag_err.into(),
