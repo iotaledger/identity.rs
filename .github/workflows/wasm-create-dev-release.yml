@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag-base:
-        description: 'Version to (dev) release WASM under (e.g. `1.2.3`), a `dev` postfix and auto-incrementing number will be added automatically.'
+        description: 'Version to (dev) release Wasm under, a `dev` postfix and auto-incrementing number will be added automatically (e.g. input `1.2.3` for `1.2.3-dev.x')'
         required: true
 
 jobs:
