@@ -263,7 +263,7 @@ jobs:
             ${{inputs.pr-body-text}}
             If you discover any mistakes fix them with commits on this branch. If you want to abort the release simply close the PR. 
           labels: |
-            automated-pr
+            No changelog
 
 
       
