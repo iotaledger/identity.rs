@@ -1,4 +1,4 @@
-name: Shared / Create Dev Release
+name: Shared / Create Dev Release PR
 
 on:
   workflow_call:
