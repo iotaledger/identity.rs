@@ -6,7 +6,6 @@ use core::convert::TryInto;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 
 use serde;
 use serde::Deserialize;
@@ -734,13 +733,13 @@ impl IotaDocument {
 impl<'a, 'b, 'c> IotaDocument {}
 
 impl Display for IotaDocument {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     Display::fmt(&self.document, f)
   }
 }
 
 impl Debug for IotaDocument {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     Debug::fmt(&self.document, f)
   }
 }

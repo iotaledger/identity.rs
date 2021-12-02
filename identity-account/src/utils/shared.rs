@@ -3,7 +3,7 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use std::sync::RwLock;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
@@ -29,7 +29,7 @@ impl<T> Shared<T> {
 }
 
 impl<T: Debug> Debug for Shared<T> {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     Debug::fmt(&self.0, f)
   }
 }

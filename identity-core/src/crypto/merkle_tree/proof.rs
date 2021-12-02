@@ -3,7 +3,7 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use subtle::ConstantTimeEq;
 
 use crate::crypto::merkle_tree::AsLeaf;
@@ -83,7 +83,7 @@ where
 }
 
 impl<D: DigestExt> Debug for Proof<D> {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.debug_struct("Proof").field("nodes", &self.nodes).finish()
   }
 }

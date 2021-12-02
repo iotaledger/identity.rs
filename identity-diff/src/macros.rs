@@ -5,7 +5,6 @@ use crate::traits::Diff;
 
 use std::fmt::Debug;
 use std::fmt::Formatter;
-use std::fmt::Result as FmtResult;
 
 /// A macro to implement the `Diff` traits on primitive values and the `Debug` trait on the resulting `Diff*` types.
 /// Follows this syntax, impl_diff_on_primitives { type | DiffTypeName + TraitBounds}`
@@ -48,7 +47,7 @@ macro_rules! impl_diff_on_primitives {
 
 
             impl Debug for $diff {
-                fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+                fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
                     match self.0 {
                         None => write!(f, "{} None", stringify!($diff)),
                         Some(val) => write!(f, "{} => {:#?}", stringify!($diff), val),

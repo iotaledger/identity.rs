@@ -2,22 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
-use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
+use serde::Serialize;
+
 use identity_core::common::Context;
 use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Timestamp;
 use identity_core::common::Url;
-use identity_core::convert::ToJson;
+use identity_core::convert::FmtJson;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
-use serde::Serialize;
 
 use crate::credential::CredentialBuilder;
 use crate::credential::Evidence;
@@ -170,12 +170,8 @@ impl<T> Display for Credential<T>
 where
   T: Serialize,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    if f.alternate() {
-      f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
-    } else {
-      f.write_str(&self.to_json().map_err(|_| FmtError)?)
-    }
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    self.fmt_json(f)
   }
 }
 

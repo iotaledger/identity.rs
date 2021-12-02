@@ -3,7 +3,7 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use std::time::Duration;
 
 use crate::error::Result;
@@ -147,7 +147,7 @@ impl ClientBuilder {
 }
 
 impl Debug for ClientBuilder {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.debug_struct("ClientBuilder").field("network", &self.network).finish()
   }
 }

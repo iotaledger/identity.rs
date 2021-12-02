@@ -7,7 +7,7 @@ use serde::Serialize;
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::fmt::Formatter;
-use std::fmt::Result as FmtResult;
+
 use std::hash::Hash;
 use std::iter::empty;
 
@@ -101,7 +101,7 @@ impl<T> Debug for DiffHashSet<T>
 where
   T: Debug + Diff,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     write!(f, "DiffHashSet")?;
     let mut buf = f.debug_list();
     if let Some(d) = &self.0 {
@@ -117,7 +117,7 @@ impl<T> Debug for InnerValue<T>
 where
   T: Debug + Diff,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match &self {
       Self::Add(val) => f.debug_tuple("Add").field(val).finish(),
       Self::Remove { remove } => f.debug_tuple("Remove").field(remove).finish(),
