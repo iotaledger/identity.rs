@@ -4,31 +4,40 @@ on:
   workflow_call:
     inputs:
       tag-prefix:
+        description: "will be prepended to tag-base"
         required: false
         type: string
       tag:
+        description: "the base version of the release"
         required: true
         type: string
       main-tag-regex:
+        description: "the regex to find all related main releases"
         required: true
         type: string
       changelog-path:
+        description: "path to the changelog file"
         required: false
         default: ./CHANGELOG.md
         type: string
       changelog-config-path:
+        description: "path to the changelog config"
         required: true
         type: string
       pr-body-text:
+        description: "text to be included in the PR"
         required: false
         type: string
-      replacement-target:
+      release-target:
+        description: "target of the release (rust|wasm)"
         required: true
         type: string
     secrets:
       GPG_PRIVATE_KEY:
+        description: "GPG private key for signing commits and tags"
         required: true
       GPG_PASSPHRASE:
+        description: "GPG private passphrase for signing commits and tags"
         required: true
         
 jobs:
@@ -123,30 +132,30 @@ jobs:
           git commit -m "generate changelog"
 
       - uses: actions-rs/toolchain@v1
-        if: ${{inputs.replacement-target == 'rust'}}
+        if: ${{inputs.release-target == 'rust'}}
         with:
           toolchain: stable
 
       - uses: actions-rs/cargo@v1
-        if: ${{inputs.replacement-target == 'rust' || inputs.replacement-target == 'wasm'}}
+        if: ${{inputs.release-target == 'rust' || inputs.release-target == 'wasm'}}
         with:
           command: install
           args: cargo-release
 
       - uses: actions-rs/cargo@v1
-        if: ${{inputs.replacement-target == 'rust'}}
+        if: ${{inputs.release-target == 'rust'}}
         with:
           command: install
           args: cargo-edit
 
       - name: Replace Version In Bindings
-        if: ${{inputs.replacement-target == 'rust'}}
+        if: ${{inputs.release-target == 'rust'}}
         run: |
           cd bindings/wasm
           cargo add identity@=${{ inputs.tag }} --path=../../identity
 
       - name: Commit changes
-        if: ${{inputs.replacement-target == 'rust'}}
+        if: ${{inputs.release-target == 'rust'}}
         run: |
           git add .
           if [[ $(git diff --stat --staged) == '' ]]; then
@@ -156,29 +165,29 @@ jobs:
           git commit -m "bump version"
       
       - name: Run cargo-release
-        if: ${{inputs.replacement-target == 'rust'}}
+        if: ${{inputs.release-target == 'rust'}}
         run: |
           cargo release --workspace --config ./release.toml --no-tag --no-publish --no-push --no-confirm ${{ inputs.tag }} --execute
 
       - name: Run cargo-release
-        if: ${{inputs.replacement-target == 'wasm'}}
+        if: ${{inputs.release-target == 'wasm'}}
         run: |
           cd bindings/wasm
           cargo release --no-tag --no-publish --no-push --no-confirm ${{ inputs.tag }} --execute
 
       - uses: actions/setup-node@v2
-        if: ${{inputs.replacement-target == 'wasm'}}
+        if: ${{inputs.release-target == 'wasm'}}
         with:
           node-version: '16'
 
       - name: Replace Version
-        if: ${{inputs.replacement-target == 'wasm'}}
+        if: ${{inputs.release-target == 'wasm'}}
         run: |
           cd bindings/wasm
           npm version ${{ inputs.tag }}
 
       - name: Commit changes
-        if: ${{inputs.replacement-target == 'wasm'}}
+        if: ${{inputs.release-target == 'wasm'}}
         run: |
           git add .
           if [[ $(git diff --stat --staged) == '' ]]; then
