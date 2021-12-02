@@ -1,4 +1,4 @@
-name: WASM Create Dev Release
+name: Wasm Create Dev Release PR
 
 on:
   workflow_dispatch:

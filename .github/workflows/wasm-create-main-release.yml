@@ -1,4 +1,4 @@
-name: WASM Create Main Release
+name: Wasm Create Main Release PR
 
 on:
   workflow_dispatch:

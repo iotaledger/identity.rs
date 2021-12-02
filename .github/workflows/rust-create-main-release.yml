@@ -1,4 +1,4 @@
-name: Rust Create Main Release
+name: Rust Create Main Release PR
 
 on:
   workflow_dispatch:

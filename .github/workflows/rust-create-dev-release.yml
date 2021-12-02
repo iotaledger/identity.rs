@@ -1,4 +1,4 @@
-name: Rust Create Dev Release
+name: Rust Create Dev Release PR
 
 on:
   workflow_dispatch:
