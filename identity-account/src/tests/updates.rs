@@ -283,7 +283,7 @@ async fn test_create_method_duplicate_fragment() -> Result<()> {
   ));
 
   // This increments the generation internally.
-  account.publish_updates().await?;
+  account.publish().await?;
 
   let output = account.process_update(update).await;
 

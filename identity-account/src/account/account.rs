@@ -90,7 +90,7 @@ impl Account {
 
     account.store_state().await?;
 
-    account.publish(false).await?;
+    account.publish_internal(false, PublishOptions::default()).await?;
 
     Ok(account)
   }
@@ -161,6 +161,28 @@ impl Account {
     self.state.document()
   }
 
+  /// Sets the [`IotaDocument`] this account manages, **without doing any validation**.
+  ///
+  /// # Warning
+  ///
+  /// This method is dangerous and can easily mess up the internal state,
+  /// making the identity potentially unusable. Only use it if you have
+  /// a good grasp of what the implications are.
+  pub fn set_document_unchecked(&mut self, document: IotaDocument) {
+    *self.state.document_mut() = document;
+  }
+
+  /// Sets the [`ChainState`] for the identity this account manages, **without doing any validation**.
+  ///
+  /// # Warning
+  ///
+  /// This method is dangerous and can easily mess up the internal state,
+  /// making the identity potentially unusable. Only use it if you have
+  /// a good grasp of what the implications are.
+  pub fn set_chain_state_unchecked(&mut self, chain_state: ChainState) {
+    self.chain_state = chain_state
+  }
+
   // ===========================================================================
   // Identity
   // ===========================================================================
@@ -211,8 +233,14 @@ impl Account {
   }
 
   /// Push all unpublished changes to the tangle in a single message.
-  pub async fn publish_updates(&mut self) -> Result<()> {
-    self.publish(true).await?;
+  pub async fn publish(&mut self) -> Result<()> {
+    self.publish_internal(true, PublishOptions::default()).await?;
+
+    Ok(())
+  }
+
+  pub async fn publish_with_options(&mut self, options: PublishOptions) -> Result<()> {
+    self.publish_internal(true, options).await?;
 
     Ok(())
   }
@@ -237,7 +265,7 @@ impl Account {
 
     self.increment_actions();
 
-    self.publish(false).await?;
+    self.publish_internal(false, PublishOptions::default()).await?;
 
     Ok(())
   }
@@ -278,7 +306,7 @@ impl Account {
   }
 
   /// Publishes according to the autopublish configuration.
-  async fn publish(&mut self, force: bool) -> Result<()> {
+  async fn publish_internal(&mut self, force: bool, options: PublishOptions) -> Result<()> {
     if !force && !self.config.autopublish {
       return Ok(());
     }
@@ -291,9 +319,19 @@ impl Account {
       let old_state: IdentityState = self.load_state().await?;
       let new_state: &IdentityState = self.state();
 
-      match PublishType::new(old_state.document(), new_state.document()) {
-        Some(PublishType::Integration) => self.publish_integration_change(Some(&old_state)).await?,
-        Some(PublishType::Diff) => self.publish_diff_change(&old_state).await?,
+      let publish_type: Option<PublishType> = if options.force_integration_update {
+        Some(PublishType::Integration)
+      } else {
+        PublishType::new(old_state.document(), new_state.document())
+      };
+
+      match publish_type {
+        Some(PublishType::Integration) => {
+          self.publish_integration_change(Some(&old_state)).await?;
+        }
+        Some(PublishType::Diff) => {
+          self.publish_diff_change(&old_state).await?;
+        }
         None => {
           // Can return early, as there is nothing new to publish or store.
           return Ok(());
@@ -411,5 +449,28 @@ impl Account {
     }
 
     Ok(())
+  }
+}
+
+pub struct PublishOptions {
+  pub(crate) force_integration_update: bool,
+}
+
+impl PublishOptions {
+  pub fn new() -> Self {
+    Self {
+      force_integration_update: false,
+    }
+  }
+
+  pub fn force_integration_update(mut self, force: bool) -> Self {
+    self.force_integration_update = force;
+    self
+  }
+}
+
+impl Default for PublishOptions {
+  fn default() -> Self {
+    Self::new()
   }
 }

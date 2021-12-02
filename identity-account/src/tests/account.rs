@@ -142,7 +142,7 @@ async fn test_account_autopublish() -> Result<()> {
   assert!(account.chain_state().last_integration_message_id().is_null());
   assert!(account.chain_state().last_diff_message_id().is_null());
 
-  account.publish_updates().await?;
+  account.publish().await?;
 
   let last_int_message_id = *account.chain_state().last_integration_message_id();
 
@@ -187,7 +187,7 @@ async fn test_account_autopublish() -> Result<()> {
     .apply()
     .await?;
 
-  account.publish_updates().await?;
+  account.publish().await?;
 
   // No integration message was published
   assert_eq!(
@@ -224,7 +224,7 @@ async fn test_account_autopublish() -> Result<()> {
     .apply()
     .await?;
 
-  account.publish_updates().await?;
+  account.publish().await?;
 
   // Another int update was published.
   assert_ne!(
