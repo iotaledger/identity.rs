@@ -1,5 +1,5 @@
-name: 'release-npm'
-description: 'Releases binding to npm'
+name: 'publish-wasm'
+description: 'Publishes Wasm bindings to npm'
 inputs:
   tag:
     description: 'Which tag to publish under'

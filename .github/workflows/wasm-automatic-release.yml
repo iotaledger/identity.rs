@@ -27,6 +27,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Release to npm
-        uses: './.github/actions/release/release-npm'
+        uses: './.github/actions/publish/publish-wasm'
         with:
           tag: ${{ needs.call-create-release-workflow.outputs.is-dev-release && 'dev' }}
