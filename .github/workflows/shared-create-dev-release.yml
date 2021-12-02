@@ -70,8 +70,10 @@ jobs:
           TAG_BASE=${{ inputs.tag-base }}
           TAG_POSTFIX=${{ inputs.tag-postfix }}
 
+          # joins an array with a delimiter
           function join_by { local IFS="$1"; shift; echo "$*"; }
 
+          # takes a string and increments the last number
           updateVersion()
           {
             [[ ${1} =~ ^(.*[^0-9])?([0-9]+)$ ]]  && \
@@ -81,6 +83,7 @@ jobs:
               printf "${1}"
           }
 
+          # create a list of tags that are unrelated to the current release
           ALL_TAGS=$(git tag --sort=creatordate -l)
           temp_array=()
           for value in ${ALL_TAGS[@]}
@@ -93,6 +96,7 @@ jobs:
           unset temp_array
           echo UNRELATED_TAGS=$UNRELATED_TAGS
           
+          # determine if there is a previous dev version or this is the first dev release
           LATEST_DEV_TAG=$(git tag --list --sort=-version:refname "$TAG_PREFIX$TAG_BASE$TAG_POSTFIX*" | head -n 1)
           echo LATEST_DEV_TAG=$LATEST_DEV_TAG
           if [[ $LATEST_DEV_TAG == '' ]]; then
@@ -104,6 +108,8 @@ jobs:
             EXCLUDE_ARG=$FIRST$SECOND
           else
             NEW_DEV_TAG=$(updateVersion $LATEST_DEV_TAG)
+
+            # exclude dev version already merged in main
             ALL_DEV_TAGS_IN_MAIN=$(git tag -l "$TAG_PREFIX$TAG_BASE$TAG_POSTFIX*" --merged $(git log -n 1 refs/remotes/origin/main --pretty=format:"%H"))
             temp_array=()
             for value in "${ALL_DEV_TAGS_IN_MAIN[@]}"
@@ -119,7 +125,8 @@ jobs:
             unset temp_array
             EXCLUDE_ARG=$FIRST$SECOND$THIRD
           fi
-
+          
+          # set variables
           echo NEW_DEV_TAG=$NEW_DEV_TAG
           NEXTVERSION=$NEW_DEV_TAG
 
@@ -169,7 +176,7 @@ jobs:
           git_commit_gpgsign: true
           git_tag_gpgsign: true
 
-      - name: Commit changes
+      - name: Commit changelog
         run: |
           git add .
           if [[ $(git diff --stat --staged) == '' ]]; then
@@ -179,7 +186,7 @@ jobs:
           git commit -m "generate changelog"
 
       - uses: actions-rs/toolchain@v1
-        if: ${{inputs.release-target == 'rust'}}
+        if: ${{inputs.release-target == 'rust' || inputs.release-target == 'wasm'}}
         with:
           toolchain: stable
 
@@ -233,7 +240,7 @@ jobs:
           cd bindings/wasm
           npm version ${{ env.NEXTVERSION_WITHOUT_PREFIX }}
 
-      - name: Commit changes
+      - name: Commit npm version bump
         if: ${{inputs.release-target == 'wasm'}}
         run: |
           git add .

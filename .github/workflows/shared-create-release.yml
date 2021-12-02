@@ -66,8 +66,10 @@ jobs:
       - name: Determine Next Version
         run: |
 
+          # joins an array with a delimiter
           function join_by { local IFS="$1"; shift; echo "$*"; }
 
+          # create a list of tags that are unrelated to the current release
           ALL_TAGS=$(git tag -l)
           temp_array=()
           for value in ${ALL_TAGS[@]}
@@ -80,6 +82,7 @@ jobs:
           unset temp_array
           echo UNRELATED_TAGS=$UNRELATED_TAGS
 
+          # set variables
           FIRST="--exclude-tags "
           SECOND=$UNRELATED_TAGS
           EXCLUDE_ARG=$FIRST$SECOND
@@ -122,7 +125,7 @@ jobs:
           git_commit_gpgsign: true
           git_tag_gpgsign: true
 
-      - name: Commit changes
+      - name: Commit changelog
         run: |
           git add .
           if [[ $(git diff --stat --staged) == '' ]]; then
@@ -132,7 +135,7 @@ jobs:
           git commit -m "generate changelog"
 
       - uses: actions-rs/toolchain@v1
-        if: ${{inputs.release-target == 'rust'}}
+        if: ${{inputs.release-target == 'rust' || inputs.release-target == 'wasm'}}
         with:
           toolchain: stable
 
@@ -186,7 +189,7 @@ jobs:
           cd bindings/wasm
           npm version ${{ inputs.tag }}
 
-      - name: Commit changes
+      - name: Commit npm version bump
         if: ${{inputs.release-target == 'wasm'}}
         run: |
           git add .
