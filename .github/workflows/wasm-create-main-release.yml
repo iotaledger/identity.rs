@@ -13,7 +13,7 @@ jobs:
     uses: iotaledger/identity.rs/.github/workflows/shared-create-release.yml@dev
     with:
       tag-prefix: wasm-v
-      tag: ${{ github.event.inputs.version }}
+      tag-base: ${{ github.event.inputs.version }}
       main-tag-regex: ^wasm-v[0-9]+\.[0-9]+\.[0-9]+$
       changelog-config-path: ./bindings/wasm/.github_changelog_generator
       changelog-path: ./bindings/wasm/CHANGELOG.md

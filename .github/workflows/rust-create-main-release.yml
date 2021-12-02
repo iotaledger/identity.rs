@@ -13,7 +13,7 @@ jobs:
     uses: iotaledger/identity.rs/.github/workflows/shared-create-release.yml@dev
     with:
       tag-prefix: v
-      tag: ${{ github.event.inputs.version }}
+      tag-base: ${{ github.event.inputs.version }}
       main-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+$
       changelog-config-path: ./.github/.github_changelog_generator
       release-target: rust

@@ -7,7 +7,7 @@ on:
         description: "will be prepended to tag-base"
         required: false
         type: string
-      tag:
+      tag-base:
         description: "the base version of the release"
         required: true
         type: string
@@ -53,7 +53,7 @@ jobs:
 
       - name: Validation
         run: |
-          VERSION=${{ inputs.tag-prefix }}${{ inputs.tag }}
+          VERSION=${{ inputs.tag-prefix }}${{ inputs.tag-base }}
           if ! [[ $VERSION =~ ${{ inputs.main-tag-regex }} ]]; then
             echo unrecognized version $VERSION, must match ${{ inputs.main-tag-regex }}
             exit 1
@@ -109,7 +109,7 @@ jobs:
             --user ${{ env.GITHUB_REPOSITORY_USER }}
             --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
             --token ${{ secrets.GITHUB_TOKEN }} 
-            --future-release ${{ inputs.tag-prefix }}${{ inputs.tag }} 
+            --future-release ${{ inputs.tag-prefix }}${{ inputs.tag-base }} 
             ${{ env.EXCLUDE_ARG }}
 
       - name: Log ${{ inputs.changelog-path }}
@@ -155,7 +155,7 @@ jobs:
         if: ${{inputs.release-target == 'rust'}}
         run: |
           cd bindings/wasm
-          cargo add identity@=${{ inputs.tag }} --path=../../identity
+          cargo add identity@=${{ inputs.tag-base }} --path=../../identity
 
       - name: Commit changes
         if: ${{inputs.release-target == 'rust'}}
@@ -170,13 +170,13 @@ jobs:
       - name: Run cargo-release
         if: ${{inputs.release-target == 'rust'}}
         run: |
-          cargo release --workspace --config ./release.toml --no-tag --no-publish --no-push --no-confirm ${{ inputs.tag }} --execute
+          cargo release --workspace --config ./release.toml --no-tag --no-publish --no-push --no-confirm ${{ inputs.tag-base }} --execute
 
       - name: Run cargo-release
         if: ${{inputs.release-target == 'wasm'}}
         run: |
           cd bindings/wasm
-          cargo release --no-tag --no-publish --no-push --no-confirm ${{ inputs.tag }} --execute
+          cargo release --no-tag --no-publish --no-push --no-confirm ${{ inputs.tag-base }} --execute
 
       - uses: actions/setup-node@v2
         if: ${{inputs.release-target == 'wasm'}}
@@ -187,7 +187,7 @@ jobs:
         if: ${{inputs.release-target == 'wasm'}}
         run: |
           cd bindings/wasm
-          npm version ${{ inputs.tag }}
+          npm version ${{ inputs.tag-base }}
 
       - name: Commit npm version bump
         if: ${{inputs.release-target == 'wasm'}}
@@ -204,11 +204,11 @@ jobs:
         with:
           committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-          branch: release/${{ inputs.tag-prefix }}${{ inputs.tag }}
+          branch: release/${{ inputs.tag-prefix }}${{ inputs.tag-base }}
           delete-branch: true
-          title: 'Release ${{ inputs.tag-prefix }}${{ inputs.tag }}'
+          title: 'Release ${{ inputs.tag-prefix }}${{ inputs.tag-base }}'
           body: |
-            This automatically generated PR contains changes for the `${{ inputs.tag-prefix }}${{ inputs.tag }}` version.
+            This automatically generated PR contains changes for the `${{ inputs.tag-prefix }}${{ inputs.tag-base }}` version.
             ${{inputs.pr-body-text}}
             If you discover any mistakes fix them with commits on this branch. If you want to abort the release simply close the PR.
           labels: |
