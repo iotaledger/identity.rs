@@ -23,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: call-create-release-workflow
     if: ${{ needs.call-create-release-workflow.outputs.is-release }}
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
