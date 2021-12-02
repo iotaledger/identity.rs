@@ -20,7 +20,6 @@ use crate::errors::UrlParsingError;
 #[repr(transparent)]
 #[serde(transparent)]
 pub struct Url(::url::Url);
-//pub use self::errors::UrlParsingError;
 
 impl Url {
   /// Parses an absolute [`Url`] from the given input string.
