@@ -19,7 +19,7 @@ jobs:
       changelog-config-path: ./bindings/wasm/.github_changelog_generator
       changelog-path: ./bindings/wasm/CHANGELOG.md
       pr-body-text: On merge a `dev` release will be published to npm.
-      replacement-target: wasm
+      release-target: wasm
     secrets:
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

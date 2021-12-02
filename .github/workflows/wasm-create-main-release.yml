@@ -17,7 +17,7 @@ jobs:
       main-tag-regex: ^wasm-v[0-9]+\.[0-9]+\.[0-9]+$
       changelog-config-path: ./bindings/wasm/.github_changelog_generator
       changelog-path: ./bindings/wasm/CHANGELOG.md
-      replacement-target: wasm
+      release-target: wasm
     secrets:
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

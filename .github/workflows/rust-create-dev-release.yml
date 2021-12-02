@@ -17,7 +17,7 @@ jobs:
       tag-base: ${{ github.event.inputs.tag-base }}
       main-tag-regex: ^v[0-9]+\.[0-9]+\.[0-9]+$
       changelog-config-path: ./.github/.github_changelog_generator
-      replacement-target: rust
+      release-target: rust
     secrets:
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
