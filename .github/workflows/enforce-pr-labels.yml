@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: yogevbd/enforce-label-action@2.2.2
       with:
-        REQUIRED_LABELS_ANY: "core,wasm,documentation,no-changelog"
+        REQUIRED_LABELS_ANY: "rust,wasm,documentation,no-changelog"
     - uses: yogevbd/enforce-label-action@2.2.2
       with:
-        REQUIRED_LABELS_ANY: "changed,added,patch,bug,deprecated,removed"
+        REQUIRED_LABELS_ANY: "changed,added,patch,bug,deprecated,removed,no-changelog"
