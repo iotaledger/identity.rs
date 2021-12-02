@@ -4,15 +4,19 @@ on:
   workflow_call:
     inputs:
       create-github-release:
+        description: "controls if a GitHub release should be created"
         required: true
         type: boolean
       changelog-config-path:
+        description: "path to the changelog config"
         required: true
         type: string
       main-tag-regex:
+        description: "the regex to find all related main releases"
         required: true
         type: string
       dev-tag-regex:
+        description: "the regex to find all related dev releases"
         required: true
         type: string
     outputs:
@@ -30,8 +34,10 @@ on:
         value: ${{ jobs.build.outputs.is-dev-release }}
     secrets:
       GPG_PRIVATE_KEY:
+        description: "GPG private key for signing commits and tags"
         required: true
       GPG_PASSPHRASE:
+        description: "GPG private passphrase for signing commits and tags"
         required: true
 jobs:
   build:
@@ -49,7 +55,7 @@ jobs:
           # Number of commits to fetch. 0 indicates all history for all branches and tags.
           fetch-depth: 0
           
-      - name: Determine Version
+      - name: Determine Release Version
         id: determine-version
         run: |
           BRANCHNAME=${{ github.head_ref }}

@@ -27,4 +27,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Dummy Release to crates.io
-        run: echo beep boop, pretenting to release
+        run: echo beep boop, pretending to release
