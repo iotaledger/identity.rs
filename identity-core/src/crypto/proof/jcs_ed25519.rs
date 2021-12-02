@@ -45,7 +45,7 @@ where
     X: Serialize,
   {
     let message: Vec<u8> = data.to_jcs()?;
-    let signature: T::Output = T::sign(&message, private).map_err(|err| err.to_string())?;
+    let signature: T::Output = T::sign(&message, private)?;
     let signature: String = encode_b58(signature.as_ref());
 
     Ok(SignatureValue::Signature(signature))
@@ -71,12 +71,7 @@ where
       .to_jcs()
       .map_err(|_| VerificationProcessingError::from("unable to serialize input data"))?;
 
-    T::verify(&message, &signature, public).map_err(|err| match err.try_into() {
-      Ok(invalid_proof_value) => VerificationError::from(invalid_proof_value),
-      Err(_) => {
-        VerificationProcessingError::from("unable to verify the authenticity of the given data and signature").into()
-      }
-    })?;
+    T::verify(&message, &signature, public)?;
 
     Ok(())
   }

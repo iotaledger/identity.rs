@@ -45,10 +45,8 @@ where
 {
   type Public = T;
 
-  type Error = VerificationError;
-
-  fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<(), Self::Error> {
-    let key: ed25519::PublicKey = parse_public(key.as_ref()).map_err(Self::Error::from)?;
+  fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<(), VerificationError> {
+    let key: ed25519::PublicKey = parse_public(key.as_ref())?;
     let sig: ed25519::Signature = parse_signature(signature).map_err(|err| VerificationProcessingError::from(err.0))?;
 
     if key.verify(&sig, message) {

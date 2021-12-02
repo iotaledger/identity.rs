@@ -125,12 +125,7 @@ where
     }
 
     // Verify the signature with underlying signature algorithm
-    S::verify(&data.to_jcs()?, &signature, target.as_ref()).map_err(|err| match err.try_into() {
-      Ok(invalid_proof_value_err) => VerificationError::from(invalid_proof_value_err),
-      _ => {
-        VerificationProcessingError::from("unable to verify the authenticity of the given data and signature").into()
-      }
-    })?;
+    S::verify(&data.to_jcs()?, &signature, target.as_ref())?;
 
     Ok(())
   }

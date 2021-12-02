@@ -10,6 +10,7 @@ use crate::crypto::SetSignature;
 use crate::crypto::Signature;
 use crate::crypto::SignatureValue;
 use crate::crypto::TrySignature;
+use crate::crypto::VerificationError;
 
 /// A common interface for digital signature creation.
 pub trait Sign {
@@ -31,11 +32,8 @@ pub trait Verify {
   /// The public key type of this signature implementation.
   type Public: ?Sized;
 
-  /// Error describing how `verify` may fail
-  type Error: std::error::Error + TryInto<ProofValueError>;
-
   /// Verifies the authenticity of `data` and `signature` with `key`.
-  fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<(), Self::Error>;
+  fn verify(message: &[u8], signature: &[u8], key: &Self::Public) -> Result<(), VerificationError>;
 }
 
 // =============================================================================
