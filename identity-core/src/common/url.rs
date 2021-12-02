@@ -71,7 +71,7 @@ impl From<::url::Url> for Url {
 }
 
 impl FromStr for Url {
-  type Err = ::url::ParseError;
+  type Err = UrlParsingError;
 
   fn from_str(string: &str) -> Result<Self, Self::Err> {
     Self::parse(string)
