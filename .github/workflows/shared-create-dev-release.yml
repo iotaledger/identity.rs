@@ -55,7 +55,7 @@ jobs:
           fetch-depth: 0
           ref: dev
 
-      - name: Validation
+      - name: Validate version
         run: |
           VERSION=${{ inputs.tag-prefix }}${{ inputs.tag-base }}
           if ! [[ $VERSION =~ ${{ inputs.main-tag-regex }} ]]; then
