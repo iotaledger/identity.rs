@@ -41,9 +41,7 @@ where
   T: Sign,
   T::Output: AsRef<[u8]>,
 {
-  type SignError = SigningError;
-  type SignatureCreationError = SigningError;
-  fn sign<X>(data: &X, private: &T::Private) -> Result<SignatureValue, Self::SignError>
+  fn sign<X>(data: &X, private: &T::Private) -> Result<SignatureValue, SigningError>
   where
     X: Serialize,
   {

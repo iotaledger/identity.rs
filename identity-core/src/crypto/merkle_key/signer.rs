@@ -122,9 +122,6 @@ where
   K: MerkleSigningKey<D, S>,
   S::Output: AsRef<[u8]>,
 {
-  type SignError = SigningError;
-  type SignatureCreationError = SigningError;
-
   fn sign<X>(data: &X, private: &K) -> Result<SignatureValue, SigningError>
   where
     X: Serialize,
