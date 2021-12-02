@@ -8,12 +8,14 @@ use crate::crypto::key::KeyError;
 
 pub use signing::MissingSignatureError;
 pub use signing::SigningError;
-pub(crate) use signing::SigningErrorCause;
 pub use verifying::ProofValueError;
 pub use verifying::VerificationError;
 pub use verifying::VerificationProcessingError;
 
 mod signing {
+  use std::borrow::Cow;
+  use std::fmt::Display;
+
   use crate::convert::JsonDecodingError;
   use crate::convert::JsonEncodingError;
 
@@ -24,52 +26,33 @@ mod signing {
   #[error("signature not found")]
   pub struct MissingSignatureError;
 
-  #[derive(Debug, DeriveError)]
-  // The reason why a signing operation failed.
-  pub(crate) enum SigningErrorCause {
-    // A signing operation failed because the signature could not be set
-    #[error("signing failed - unable to access the required signature: {0}")]
-    MissingAccess(&'static str),
-    // Signing failed because the signing method received invalid input
-    #[error("signing failed - invalid input:  {0}")]
-    Input(&'static str),
-    // Any reason why signing failed that is not necessarily listed here
-    #[error("signing failed: {0}")]
-    Other(&'static str),
-  }
-
-  #[derive(Debug, DeriveError)]
-  #[error("{cause}")]
+  #[derive(Debug)]
   /// Caused by a failure to sign data
   pub struct SigningError {
-    cause: SigningErrorCause,
+    description: Cow<'static, str>,
   }
 
   impl From<JsonEncodingError> for SigningError {
-    fn from(_: JsonEncodingError) -> Self {
+    fn from(error: JsonEncodingError) -> Self {
       Self {
-        cause: SigningErrorCause::Input("serialization failed"),
+        description: format!("invalid input: serialization failed:: {}", error.to_string()).into(),
       }
     }
   }
 
   impl From<JsonDecodingError> for SigningError {
-    fn from(_: JsonDecodingError) -> Self {
+    fn from(error: JsonDecodingError) -> Self {
       Self {
-        cause: SigningErrorCause::Input("deserialization failed"),
+        description: format!("invalid input: serialization failed:: {}", error.to_string()).into(),
       }
     }
   }
 
-  impl From<SigningErrorCause> for SigningError {
-    fn from(cause: SigningErrorCause) -> Self {
-      Self { cause }
-    }
-  }
   impl From<KeyError> for SigningError {
     fn from(error: KeyError) -> Self {
       Self {
-        cause: SigningErrorCause::Input(error.0),
+        description: format!("invalid input:: {}", error.0).into(), /* We will make this more efficient once const
+                                                                     * evaluation has matured */
       }
     }
   }
@@ -77,7 +60,7 @@ mod signing {
   impl From<MissingSignatureError> for SigningError {
     fn from(_: MissingSignatureError) -> Self {
       Self {
-        cause: SigningErrorCause::MissingAccess("signature missing"),
+        description: "unable to access the required signature:: signature not found".into(),
       }
     }
   }
@@ -85,18 +68,28 @@ mod signing {
   impl From<&'static str> for SigningError {
     fn from(err_str: &'static str) -> Self {
       Self {
-        cause: SigningErrorCause::Other(err_str),
+        description: err_str.into(),
       }
     }
   }
 
-  impl<'a> AsRef<str> for SigningError {
-    fn as_ref(&self) -> &str {
-      match self.cause {
-        SigningErrorCause::MissingAccess(err_str) => err_str,
-        SigningErrorCause::Input(err_str) => err_str,
-        SigningErrorCause::Other(err_str) => err_str,
+  impl From<String> for SigningError {
+    fn from(message: String) -> Self {
+      Self {
+        description: message.into(),
       }
+    }
+  }
+
+  impl From<Cow<'static, str>> for SigningError {
+    fn from(description: Cow<'static, str>) -> Self {
+      Self { description }
+    }
+  }
+
+  impl Display for SigningError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+      write!(f, "signing failed - {}", self.description)
     }
   }
 }

@@ -11,7 +11,6 @@ use crate::crypto::merkle_key::MerkleKey;
 use crate::crypto::merkle_key::MerkleSignature;
 use crate::crypto::merkle_tree::Proof;
 use crate::crypto::signature::errors::SigningError;
-use crate::crypto::signature::errors::SigningErrorCause;
 use crate::crypto::Named;
 use crate::crypto::PrivateKey;
 use crate::crypto::PublicKey;
@@ -126,11 +125,8 @@ where
   where
     X: Serialize,
   {
-    let message: Vec<u8> = data
-      .to_jcs()
-      .map_err(|_| SigningErrorCause::Input("failed to serialize the input data"))?;
-    let signature: S::Output = S::sign(&message, private.private())
-      .map_err(|_| SigningErrorCause::Other("the `sign` operation failed internally"))?;
+    let message: Vec<u8> = data.to_jcs()?;
+    let signature: S::Output = S::sign(&message, private.private())?;
     let signature: String = utils::encode_b58(signature.as_ref());
     let formatted: String = format!("{}.{}.{}", private.public(), private.proof(), signature);
 

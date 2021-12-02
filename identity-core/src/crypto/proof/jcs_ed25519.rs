@@ -7,7 +7,6 @@ use serde::Serialize;
 use crate::convert::ToJson;
 use crate::crypto::signature::errors::ProofValueError;
 use crate::crypto::signature::errors::SigningError;
-use crate::crypto::signature::errors::SigningErrorCause;
 use crate::crypto::signature::errors::VerificationError;
 use crate::crypto::signature::errors::VerificationProcessingError;
 use crate::crypto::Ed25519;
@@ -46,8 +45,7 @@ where
     X: Serialize,
   {
     let message: Vec<u8> = data.to_jcs()?;
-    let signature: T::Output =
-      T::sign(&message, private).map_err(|_| SigningErrorCause::Other("the `sign` operation failed internally"))?;
+    let signature: T::Output = T::sign(&message, private).map_err(|err| err.to_string())?;
     let signature: String = encode_b58(signature.as_ref());
 
     Ok(SignatureValue::Signature(signature))
