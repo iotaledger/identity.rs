@@ -103,9 +103,6 @@ mod verifying {
   use crate::crypto::merkle_key::MerkleDigestKeyTagError;
   use crate::crypto::merkle_key::MerkleSignatureKeyTagError;
 
-  // Verification can typically fail by either actually verifying that the proof value is incorrect, or it can fail
-  // before it gets to checking the proof value by for instance failing to (de)serialize some data etc. Hence the
-  // verification error has two variants, where the latter wraps a private type.
   #[derive(Debug, DeriveError)]
   /// Caused by a failure to verify a cryptographic signature
   pub enum VerificationError {
