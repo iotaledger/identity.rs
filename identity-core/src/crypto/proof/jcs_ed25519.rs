@@ -3,6 +3,7 @@
 
 use core::marker::PhantomData;
 use serde::Serialize;
+use std::borrow::Cow;
 
 use crate::convert::ToJson;
 use crate::crypto::signature::errors::SigningError;
@@ -14,8 +15,7 @@ use crate::crypto::SignatureValue;
 use crate::crypto::Signer;
 use crate::crypto::Verifier;
 use crate::crypto::Verify;
-use crate::utils::decode_b58;
-use crate::utils::encode_b58;
+use crate::utils;
 
 // TODO: Marker trait for Ed25519 implementations (?)
 
@@ -44,7 +44,7 @@ where
   {
     let message: Vec<u8> = data.to_jcs()?;
     let signature: T::Output = T::sign(&message, private)?;
-    let signature: String = encode_b58(signature.as_ref());
+    let signature: String = utils::encode_b58(signature.as_ref());
 
     Ok(SignatureValue::Signature(signature))
   }
@@ -64,10 +64,10 @@ where
   {
     let signature: &str = signature
       .as_signature()
-      .ok_or_else(|| VerificationError::InvalidProofValue("jcs ed25519".into()))?;
+      .ok_or_else(|| VerificationError::InvalidProofValue(Cow::Borrowed("jcs ed25519")))?;
 
-    let signature: Vec<u8> = decode_b58(signature)
-      .map_err(|_| VerificationError::ProcessingFailed("unable to decode the signature".into()))?;
+    let signature: Vec<u8> = utils::decode_b58(signature)
+      .map_err(|_| VerificationError::ProcessingFailed(Cow::Borrowed("unable to decode the signature")))?;
     let message: Vec<u8> = data.to_jcs()?;
 
     T::verify(&message, &signature, public)?;

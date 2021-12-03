@@ -58,7 +58,7 @@ mod signing {
   impl From<MissingSignatureError> for SigningError {
     fn from(_: MissingSignatureError) -> Self {
       Self {
-        description: "unable to access the required signature: signature not found".into(),
+        description: Cow::Borrowed("unable to access the required signature: signature not found"),
       }
     }
   }
@@ -133,7 +133,9 @@ mod verifying {
 
   impl From<MissingSignatureError> for VerificationError {
     fn from(_: MissingSignatureError) -> Self {
-      Self::ProcessingFailed("unable to access the required signature: signature not found".into())
+      Self::ProcessingFailed(Cow::Borrowed(
+        "unable to access the required signature: signature not found",
+      ))
     }
   }
   impl From<KeyParsingError> for VerificationError {

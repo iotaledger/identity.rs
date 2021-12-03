@@ -7,6 +7,7 @@ use crypto::signatures::ed25519;
 use crypto::signatures::ed25519::PUBLIC_KEY_LENGTH;
 use crypto::signatures::ed25519::SECRET_KEY_LENGTH;
 use crypto::signatures::ed25519::SIGNATURE_LENGTH;
+use std::borrow::Cow;
 
 use crate::crypto::key::KeyParsingError;
 use crate::crypto::Sign;
@@ -54,23 +55,27 @@ where
     if key.verify(&sig, message) {
       Ok(())
     } else {
-      Err(VerificationError::InvalidProofValue("ed25519".into()))
+      Err(VerificationError::InvalidProofValue(Cow::Borrowed("ed25519")))
     }
   }
 }
 
 fn parse_public(slice: &[u8]) -> Result<ed25519::PublicKey, KeyParsingError> {
-  let bytes: [u8; PUBLIC_KEY_LENGTH] = slice
-    .try_into()
-    .map_err(|_| KeyParsingError("could not create a public key from the supplied bytes: incorrect length".into()))?;
+  let bytes: [u8; PUBLIC_KEY_LENGTH] = slice.try_into().map_err(|_| {
+    KeyParsingError(Cow::Borrowed(
+      "could not create a public key from the supplied bytes: incorrect length",
+    ))
+  })?;
   ed25519::PublicKey::try_from_bytes(bytes)
-    .map_err(|_| KeyParsingError("could not parse public key from the supplied bytes".into()))
+    .map_err(|_| KeyParsingError(Cow::Borrowed("could not parse public key from the supplied bytes")))
 }
 
 fn parse_secret(slice: &[u8]) -> Result<ed25519::SecretKey, KeyParsingError> {
-  let bytes: [u8; SECRET_KEY_LENGTH] = slice
-    .try_into()
-    .map_err(|_| KeyParsingError("could not create a secret key from the supplied bytes: incorrect length".into()))?;
+  let bytes: [u8; SECRET_KEY_LENGTH] = slice.try_into().map_err(|_| {
+    KeyParsingError(Cow::Borrowed(
+      "could not create a secret key from the supplied bytes: incorrect length",
+    ))
+  })?;
 
   Ok(ed25519::SecretKey::from_bytes(bytes))
 }
@@ -83,6 +88,8 @@ fn parse_signature(slice: &[u8]) -> Result<ed25519::Signature, SignatureParsingE
 }
 
 mod errors {
+  use std::borrow::Cow;
+
   use thiserror::Error as DeriveError;
 
   use crate::crypto::VerificationError;
@@ -93,7 +100,7 @@ mod errors {
 
   impl From<SignatureParsingError> for VerificationError {
     fn from(error: SignatureParsingError) -> Self {
-      Self::ProcessingFailed(error.0.into())
+      Self::ProcessingFailed(Cow::Borrowed(error.0))
     }
   }
 }

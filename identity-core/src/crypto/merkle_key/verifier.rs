@@ -105,18 +105,18 @@ where
     // Ensure the target hash of the user-provided public key is part
     // of the Merkle tree
     if !merkle_proof.verify(&merkle_root, target_hash) {
-      return Err(VerificationError::InvalidProofValue(
-        "did not retrieve the expected Merkle tree root".into(),
-      ));
+      return Err(VerificationError::InvalidProofValue(Cow::Borrowed(
+        "did not retrieve the expected Merkle tree root",
+      )));
     }
 
     // If a set of revocation flags was provided, ensure the public key
     // was not revoked
     if let Some(revocation) = public.revocation {
       if revocation.contains(merkle_proof.index() as u32) {
-        return Err(VerificationError::Revoked(
-          "encountered a revoked key during Merkle signature verification".into(),
-        ));
+        return Err(VerificationError::Revoked(Cow::Borrowed(
+          "encountered a revoked key during Merkle signature verification",
+        )));
       }
     }
 
@@ -156,7 +156,7 @@ where
     .merkle_key
     .get(2..)
     .and_then(Hash::from_slice)
-    .ok_or_else(|| VerificationError::ProcessingFailed("invalid key format".into()))
+    .ok_or_else(|| VerificationError::ProcessingFailed(Cow::Borrowed("invalid key format")))
 }
 
 /* If this function gets used outside of verification as well, we might have to come up with a better error type.
@@ -168,12 +168,12 @@ fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<
 
   // Split the signature data into `public-key/proof/signature`
   let public: &str = parts.next().ok_or(InvalidProofFormat)?;
-  let proof: &str = parts.next().ok_or(errors::InvalidProofFormat)?;
-  let signature: &str = parts.next().ok_or(errors::InvalidProofFormat)?;
+  let proof: &str = parts.next().ok_or(InvalidProofFormat)?;
+  let signature: &str = parts.next().ok_or(InvalidProofFormat)?;
 
   // Extract bytes of the base58-encoded public key
   let public: PublicKey = utils::decode_b58(public)
-    .map_err(|_| errors::InvalidProofFormat)
+    .map_err(|_| InvalidProofFormat)
     .map(Into::into)?;
 
   // Extract bytes of the base58-encoded proof
@@ -181,7 +181,7 @@ fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<
 
   // Decode the signature value for the underlying signature implementation
   let signature: Vec<u8> = utils::decode_b58(signature)
-    .map_err(|_| VerificationError::ProcessingFailed("failed to parse signature".into()))?;
+    .map_err(|_| VerificationError::ProcessingFailed(Cow::Borrowed("failed to parse signature")))?;
 
   Ok((public, proof, signature))
 }
@@ -189,12 +189,13 @@ fn expand_signature_value(signature: &SignatureValue) -> Result<(PublicKey, Vec<
 mod errors {
   use crate::crypto::merkle_key::MerkleKeyTagExtractionError;
   use crate::crypto::signature::errors::VerificationError;
+  use std::borrow::Cow;
 
   pub(super) struct InvalidProofFormat;
 
   impl From<InvalidProofFormat> for VerificationError {
     fn from(_: InvalidProofFormat) -> Self {
-      Self::ProcessingFailed("invalid proof format".into())
+      Self::ProcessingFailed(Cow::Borrowed("invalid proof format"))
     }
   }
 
