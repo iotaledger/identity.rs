@@ -233,10 +233,12 @@ jobs:
           cd bindings/wasm
           cargo release --no-tag --no-publish --no-push --no-confirm ${{ env.NEXTVERSION_WITHOUT_PREFIX }} --execute
 
-      - uses: actions/setup-node@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         if: ${{inputs.release-target == 'wasm'}}
         with:
-          node-version: '16'
+          node-version: '16.x'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Replace Version
         if: ${{inputs.release-target == 'wasm'}}
