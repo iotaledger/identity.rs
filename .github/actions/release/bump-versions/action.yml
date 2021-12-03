@@ -5,7 +5,7 @@ inputs:
     description: "target of the release (rust|wasm)"
     required: true
   version:
-    description: "release name"
+    description: "version to set (e.g. `1.2.3` or `1.2.3-dev.1`)"
     required: true
 
 
