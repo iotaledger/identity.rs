@@ -3,7 +3,6 @@
 
 use crate::utils;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 pub(crate) use errors::BitSetDecodingError;
 pub(crate) use errors::BitSetEncodingError;
 use roaring::RoaringBitmap;
@@ -121,7 +120,7 @@ impl<'de> Deserialize<'de> for BitSet {
     impl<'de> Visitor<'de> for __Visitor {
       type Value = BitSet;
 
-      fn expecting(&self, f: &mut Formatter<'_>) -> FmtResult {
+      fn expecting(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.write_str("a base64-encoded string")
       }
 

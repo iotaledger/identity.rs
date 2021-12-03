@@ -3,11 +3,12 @@
 
 //! Traits for JSON conversions between types.
 
-mod json;
-mod serde_into;
-
+pub use self::json::FmtJson;
 pub use self::json::FromJson;
 pub use self::json::JsonDecodingError;
 pub use self::json::JsonEncodingError;
 pub use self::json::ToJson;
 pub use self::serde_into::SerdeInto;
+
+mod json;
+mod serde_into;

@@ -4,7 +4,7 @@
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::hash::Hash;
 use core::mem::replace;
 use core::ops::Deref;
@@ -102,7 +102,7 @@ impl<T> Debug for OneOrMany<T>
 where
   T: Debug,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match self {
       Self::One(inner) => Debug::fmt(inner, f),
       Self::Many(inner) => Debug::fmt(inner, f),
@@ -115,7 +115,7 @@ where
   T: Display,
   Vec<T>: Display,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match self {
       Self::One(inner) => Display::fmt(inner, f),
       Self::Many(inner) => Display::fmt(inner, f),

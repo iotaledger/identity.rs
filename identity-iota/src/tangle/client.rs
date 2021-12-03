@@ -18,6 +18,7 @@ use crate::did::IotaDID;
 use crate::document::DiffMessage;
 use crate::document::IotaDocument;
 use crate::error::Error;
+use crate::error::Error::DIDNotFound;
 use crate::error::Result;
 use crate::tangle::ClientBuilder;
 use crate::tangle::DIDMessageEncoding;
@@ -155,9 +156,16 @@ impl Client {
   /// Fetches a [`DocumentChain`] given an [`IotaDID`].
   pub async fn read_document_chain(&self, did: &IotaDID) -> Result<DocumentChain> {
     log::trace!("Read Document Chain: {}", did);
-    log::trace!("Integration Chain Address: {}", did.tag());
+    if self.network != did.network()? {
+      return Err(DIDNotFound(format!(
+        "DID network '{}' does not match client network '{}'",
+        did.network_str(),
+        self.network.name_str()
+      )));
+    }
 
     // Fetch all messages for the integration chain.
+    log::trace!("Integration Chain Address: {}", did.tag());
     let messages: Vec<Message> = self.read_messages(did.tag()).await?;
     let integration_chain: IntegrationChain = IntegrationChain::try_from_messages(did, &messages, self).await?;
 

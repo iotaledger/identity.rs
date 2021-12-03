@@ -7,8 +7,8 @@ use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Node;
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 use std::error::Error;
+
 use subtle::ConstantTimeEq;
 
 use self::errors::ProofSizeError;
@@ -95,7 +95,7 @@ where
 }
 
 impl<D: DigestExt> Debug for Proof<D> {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.debug_struct("Proof").field("nodes", &self.nodes).finish()
   }
 }

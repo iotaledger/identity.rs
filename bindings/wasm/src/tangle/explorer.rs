@@ -40,7 +40,7 @@ impl WasmExplorerUrl {
 
   /// Returns the web explorer URL of the given `message_id`.
   ///
-  /// E.g. https://explorer.iota.org/mainnet/message/<message_id>
+  /// E.g. https://explorer.iota.org/mainnet/message/{message_id}
   #[wasm_bindgen(js_name = messageUrl)]
   pub fn message_url(&self, message_id: &str) -> Result<String> {
     let message_id = MessageId::from_str(message_id).wasm_result()?;
@@ -49,7 +49,7 @@ impl WasmExplorerUrl {
 
   /// Returns the web identity resolver URL for the given DID.
   ///
-  /// E.g. https://explorer.iota.org/mainnet/identity-resolver/<did>
+  /// E.g. https://explorer.iota.org/mainnet/identity-resolver/{did}
   #[wasm_bindgen(js_name = resolverUrl)]
   pub fn resolver_url(&self, did: &str) -> Result<String> {
     let did: IotaDID = IotaDID::parse(did).wasm_result()?;

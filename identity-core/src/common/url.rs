@@ -4,7 +4,7 @@
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::ops::Deref;
 use core::ops::DerefMut;
 use core::str::FromStr;
@@ -39,13 +39,13 @@ impl Url {
 }
 
 impl Debug for Url {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("Url({})", self.0.as_str()))
   }
 }
 
 impl Display for Url {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_str(self.0.as_str())
   }
 }

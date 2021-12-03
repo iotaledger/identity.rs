@@ -3,7 +3,7 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use crypto::signatures::ed25519;
 use hashbrown::hash_map::Entry;
 use hashbrown::HashMap;
@@ -238,7 +238,7 @@ impl Storage for MemStore {
 }
 
 impl Debug for MemStore {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     if self.expand {
       f.debug_struct("MemStore")
         .field("chain_states", &self.chain_states)

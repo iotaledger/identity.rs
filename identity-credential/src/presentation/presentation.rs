@@ -2,21 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Display;
-use core::fmt::Error as FmtError;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
+use serde::Serialize;
+
 use identity_core::common::Context;
 use identity_core::common::Object;
 use identity_core::common::OneOrMany;
 use identity_core::common::Url;
-use identity_core::convert::ToJson;
+use identity_core::convert::FmtJson;
 use identity_core::crypto::SetSignature;
 use identity_core::crypto::Signature;
 use identity_core::crypto::TrySignature;
 use identity_core::crypto::TrySignatureMut;
 use identity_did::verification::MethodUriType;
 use identity_did::verification::TryMethod;
-use serde::Serialize;
 
 use crate::credential::Credential;
 use crate::credential::Policy;
@@ -131,12 +131,8 @@ where
   T: Serialize,
   U: Serialize,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    if f.alternate() {
-      f.write_str(&self.to_json_pretty().map_err(|_| FmtError)?)
-    } else {
-      f.write_str(&self.to_json().map_err(|_| FmtError)?)
-    }
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    self.fmt_json(f)
   }
 }
 
@@ -164,10 +160,12 @@ impl<T> TryMethod for Presentation<T> {
 
 #[cfg(test)]
 mod tests {
-  use super::Presentation;
+  use identity_core::convert::FromJson;
+
   use crate::credential::Credential;
   use crate::credential::Subject;
-  use identity_core::convert::FromJson;
+
+  use super::Presentation;
 
   const JSON: &str = include_str!("../../tests/fixtures/presentation-1.json");
 
