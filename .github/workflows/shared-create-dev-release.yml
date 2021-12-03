@@ -226,7 +226,8 @@ jobs:
         run: |
           cargo release --workspace --config ./release.toml --no-tag --no-publish --no-push --no-confirm ${{ env.NEXTVERSION_WITHOUT_PREFIX }} --execute
 
-      - name: Run cargo-release
+      - name: Bump Wasm bindings (dev) version
+        # cargo-release creates a signed commit automatically
         if: ${{inputs.release-target == 'wasm'}}
         run: |
           cd bindings/wasm
