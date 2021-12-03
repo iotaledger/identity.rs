@@ -1,5 +1,7 @@
 name: Wasm Automatic Release and Publish
 
+# Automatically publishes the latest Wasm bindings version to npm when a release PR is merged.
+# Does NOT create a GitHub release.
 on:
   pull_request:
     branches:
