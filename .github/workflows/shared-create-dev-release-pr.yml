@@ -1,9 +1,9 @@
 name: Shared / Create Dev Release PR
 
-# TODO add description
-#
-#
-#
+# This workflow creates a Pull Request meant for creating `dev` releases. 
+# In this workflow the version of the `dev` release is determined automatically from a passed in base.
+# A changelog, including the new `dev` version, is generated and version strings in relevant files are replaced. 
+# All these changes are committed and submitted as a Pull Request.
 
 on:
   workflow_call:
@@ -79,6 +79,7 @@ jobs:
           function join_by { local IFS="$1"; shift; echo "$*"; }
 
           # takes a string and increments the last number
+          # e.g. $(updateVersion 1.1.0-dev.1) -> 1.1.0-dev.2 
           updateVersion()
           {
             [[ ${1} =~ ^(.*[^0-9])?([0-9]+)$ ]]  && \
@@ -145,31 +146,14 @@ jobs:
           echo EXCLUDE_ARG=$EXCLUDE_ARG
           echo EXCLUDE_ARG=$EXCLUDE_ARG >> $GITHUB_ENV
 
-      - name: Prepare Repository For Changelog Generator
-        run: |
-          GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
-          GITHUB_REPOSITORY_PROJECT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
-
-          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER
-          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT
-
-          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER >> $GITHUB_ENV
-          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT >> $GITHUB_ENV
-
-      - name: Run github-changelog-generator
-        uses: docker://githubchangeloggenerator/github-changelog-generator # TODO pin version/hash?
+      - name: Run Changelog Generator
+        uses: './.github/actions/release/changelog-generator'
         with:
-          args: >
-            --output ${{ inputs.changelog-path }}
-            --config-file ${{ inputs.changelog-config-path }}
-            --user ${{ env.GITHUB_REPOSITORY_USER }}
-            --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
-            --token ${{ secrets.GITHUB_TOKEN }} 
-            --future-release ${{ env.NEXTVERSION }} 
-            ${{ env.EXCLUDE_ARG }}
-
-      - name: Log ${{ inputs.changelog-path }}
-        run: cat ${{ inputs.changelog-path }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          changelog-path: ${{ inputs.changelog-path }}
+          changelog-config-path: ${{ inputs.changelog-config-path }}
+          future-release: ${{ env.NEXTVERSION }} 
+          optional-arg: ${{env.EXCLUDE_ARG}}
 
       - name: Check Changelog For Modification
         run: |
@@ -181,7 +165,7 @@ jobs:
 
       - name: Import GPG key
         id: import-gpg
-        uses: crazy-max/ghaction-import-gpg@v4 # TODO pin commit
+        uses: crazy-max/ghaction-import-gpg@cb4264d3319acaa2bea23d51ef67f80b4f775013
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
@@ -194,79 +178,14 @@ jobs:
           git add .
           git commit -m "generate changelog"
 
-      - uses: actions-rs/toolchain@v1
+      - name: Bump Versions
+        uses: './.github/actions/release/bump-versions'
         with:
-          toolchain: stable
-          profile: minimal
-          override: true
-
-      - name: Install cargo-release
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: cargo-release
-
-      - name: Install cargo-edit # to use cargo add
-        uses: actions-rs/cargo@v1
-        if: ${{inputs.release-target == 'rust'}}
-        with:
-          command: install
-          args: cargo-edit
-
-      - name: Replace identity (dev) version in Wasm bindings
-        if: ${{inputs.release-target == 'rust'}}
-        working-directory: bindings/wasm
-        run: |
-          cargo add identity@=${{ env.NEXTVERSION_WITHOUT_PREFIX }} --path=../../identity
-
-      - name: Commit changes
-        if: ${{inputs.release-target == 'rust'}}
-        run: |
-          git add .
-          if [[ $(git diff --stat --staged) == '' ]]; then
-            echo 'repository unmodified'
-            exit 1
-          fi
-          git commit -m "Bump Wasm Identity dependency version"
-      
-      - name: Bump Rust (dev) version
-        # cargo-release creates a signed commit automatically
-        if: ${{inputs.release-target == 'rust'}}
-        run: |
-          cargo release --workspace --config ./release.toml --no-tag --no-publish --no-push --no-confirm ${{ env.NEXTVERSION_WITHOUT_PREFIX }} --execute
-
-      - name: Bump Wasm bindings (dev) version
-        # cargo-release creates a signed commit automatically
-        if: ${{inputs.release-target == 'wasm'}}
-        working-directory: bindings/wasm
-        run: |
-          cargo release --no-tag --no-publish --no-push --no-confirm ${{ env.NEXTVERSION_WITHOUT_PREFIX }} --execute
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        if: ${{inputs.release-target == 'wasm'}}
-        with:
-          node-version: '16.x'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Bump Wasm npm package (dev) version
-        if: ${{inputs.release-target == 'wasm'}}
-        working-directory: bindings/wasm
-        run: |
-          npm version ${{ env.NEXTVERSION_WITHOUT_PREFIX }}
-
-      - name: Commit npm package version
-        if: ${{inputs.release-target == 'wasm'}}
-        run: |
-          git add .
-          if [[ $(git diff --stat --staged) == '' ]]; then
-            echo 'repository unmodified'
-            exit 1
-          fi
-          git commit -m "Bump npm package version"
+          release-target: ${{inputs.release-target}}
+          version: ${{ env.NEXTVERSION_WITHOUT_PREFIX }}
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3 # TODO pin commit
+        uses: peter-evans/create-pull-request@67df31e08a133c6a77008b89689677067fef169e
         with:
           committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>

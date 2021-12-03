@@ -1,9 +1,12 @@
 name: Shared / Release
 
-# TODO add description
-#
-# if: ${{ needs.call-create-release-workflow.outputs.is-release }}
-#
+# This workflow creates a GitHub Release. 
+# It is meant to run after a branch with the pattern `release/VERSION` is merged.
+# A changelog, only including the changes in the new version, is generated and used for the GitHub Release.
+# The merge commit is tagged with the version from the release branch name.
+# This job outputs helpful variables that can be used in the adjacent jobs.
+# e.g with ${{ needs.call-create-release-workflow.outputs.is-release }}
+
 
 on:
   workflow_call:
@@ -98,7 +101,7 @@ jobs:
       - name: Import GPG key
         if: ${{env.IS_RELEASE}}
         id: import-gpg
-        uses: crazy-max/ghaction-import-gpg@v4 # TODO pin commit
+        uses: crazy-max/ghaction-import-gpg@cb4264d3319acaa2bea23d51ef67f80b4f775013
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
@@ -114,32 +117,18 @@ jobs:
           git tag -a -m ${{env.CURRENT_VERSION}} ${{env.CURRENT_VERSION}}
           git push --follow-tags
 
-      - name: Prepare Repository
-        if: ${{env.IS_RELEASE && inputs.create-github-release}}
-        run: |
-          GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
-          GITHUB_REPOSITORY_PROJECT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
-          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER
-          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT
-          echo GITHUB_REPOSITORY_USER=$GITHUB_REPOSITORY_USER >> $GITHUB_ENV
-          echo GITHUB_REPOSITORY_PROJECT=$GITHUB_REPOSITORY_PROJECT >> $GITHUB_ENV
-
-      - name: Run github-changelog-generator for release
-        if: ${{env.IS_RELEASE && inputs.create-github-release}}
-        uses: docker://githubchangeloggenerator/github-changelog-generator # TODO pin version/hash
+      - name: Run Changelog Generator
+        uses: './.github/actions/release/changelog-generator'
         with:
-          args: >
-            --config-file ${{ inputs.changelog-config-path }}
-            --user ${{ env.GITHUB_REPOSITORY_USER }}
-            --project ${{ env.GITHUB_REPOSITORY_PROJECT }} 
-            --token ${{ secrets.GITHUB_TOKEN }} 
-            --future-release ${{env.CURRENT_VERSION}}
-            ${{ env.SINCE_ARG }}
-            --output RELEASE_CHANGELOG.md
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          changelog-path: RELEASE_CHANGELOG.md
+          changelog-config-path: ${{ inputs.changelog-config-path }}
+          future-release: ${{ env.NEXTVERSION }} 
+          optional-arg: ${{ env.SINCE_ARG }}
 
       - name: Create GitHub release
         if: ${{env.IS_RELEASE && inputs.create-github-release}}
-        uses: softprops/action-gh-release@v1 # TODO pin commit
+        uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
         with:
           body_path: RELEASE_CHANGELOG.md
           prerelease: ${{env.IS_DEV_RELEASE}}
