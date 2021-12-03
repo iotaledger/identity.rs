@@ -2,7 +2,7 @@ name: Shared / Release
 
 # TODO add description
 #
-#
+# if: ${{ needs.call-create-release-workflow.outputs.is-release }}
 #
 
 on:

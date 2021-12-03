@@ -1,4 +1,4 @@
-name: Shared / Create Release PR
+name: Shared / Create Main Release PR
 
 on:
   workflow_call:
@@ -63,7 +63,7 @@ jobs:
             exit 1
           fi
 
-      - name: Determine Next Version
+      - name: Determine Excluded Tags
         run: |
 
           # joins an array with a delimiter
@@ -89,7 +89,7 @@ jobs:
           echo EXCLUDE_ARG=$EXCLUDE_ARG
           echo EXCLUDE_ARG=$EXCLUDE_ARG >> $GITHUB_ENV
 
-      - name: Prepare repository
+      - name: Prepare Repository For Changelog Generator
         run: |
           GITHUB_REPOSITORY_USER=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $1}') 
           GITHUB_REPOSITORY_PROJECT=$( echo $GITHUB_REPOSITORY | awk -F'/' '{print $2}') 
@@ -115,6 +115,14 @@ jobs:
       - name: Log ${{ inputs.changelog-path }}
         run: cat ${{ inputs.changelog-path }}
 
+      - name: Check Changelog For Modification
+        run: |
+          git add .
+          if [[ $(git diff --stat --staged) == '' ]]; then
+            echo 'repository unmodified'
+            exit 1
+          fi
+
       - name: Import GPG key
         id: import-gpg
         uses: crazy-max/ghaction-import-gpg@v4 # TODO pin commit
@@ -128,20 +136,16 @@ jobs:
       - name: Commit changelog
         run: |
           git add .
-          if [[ $(git diff --stat --staged) == '' ]]; then
-            echo 'repository unmodified'
-            exit 1
-          fi
           git commit -m "generate changelog"
 
       - uses: actions-rs/toolchain@v1
-        if: ${{inputs.release-target == 'rust' || inputs.release-target == 'wasm'}}
         with:
           toolchain: stable
+          profile: minimal
+          override: true
 
       - name: Install cargo-release
         uses: actions-rs/cargo@v1
-        if: ${{inputs.release-target == 'rust' || inputs.release-target == 'wasm'}}
         with:
           command: install
           args: cargo-release
@@ -155,8 +159,8 @@ jobs:
 
       - name: Replace identity version in Wasm bindings
         if: ${{inputs.release-target == 'rust'}}
+        working-directory: bindings/wasm
         run: |
-          cd bindings/wasm
           cargo add identity@=${{ inputs.tag-base }} --path=../../identity
 
       - name: Commit changes
@@ -167,7 +171,7 @@ jobs:
             echo 'repository unmodified'
             exit 1
           fi
-          git commit -m "bump version"
+          git commit -m "Bump Wasm Identity dependency version"
       
       - name: Bump Rust version
         # cargo-release creates a signed commit automatically
@@ -178,8 +182,8 @@ jobs:
       - name: Bump Wasm bindings version
         # cargo-release creates a signed commit automatically
         if: ${{inputs.release-target == 'wasm'}}
+        working-directory: bindings/wasm
         run: |
-          cd bindings/wasm
           cargo release --no-tag --no-publish --no-push --no-confirm ${{ inputs.tag-base }} --execute
 
       - name: Set up Node.js
@@ -191,8 +195,8 @@ jobs:
 
       - name: Bump Wasm npm package version
         if: ${{inputs.release-target == 'wasm'}}
+        working-directory: bindings/wasm
         run: |
-          cd bindings/wasm
           npm version ${{ inputs.tag-base }}
 
       - name: Commit npm package version

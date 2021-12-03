@@ -1,4 +1,4 @@
-name: Rust Automatic Release
+name: Rust Automatic Release and Publish
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
 jobs:
   call-create-release-workflow:
     if: github.event.pull_request.merged == true
-    # owner/repository has to be static, see https://github.community/t/env-variables-in-uses/17466
+    # owner/repository of workflow has to be static, see https://github.community/t/env-variables-in-uses/17466
     uses: iotaledger/identity.rs/.github/workflows/shared-release.yml@dev
     with:
       changelog-config-path: ./.github/.github_changelog_generator
@@ -26,5 +26,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Dummy Release to crates.io
-        run: echo beep boop, pretending to release
+      - name: Dummy Publish to crates.io
+        # TODO: implement proper publish
+        run: echo beep boop, pretending to publish

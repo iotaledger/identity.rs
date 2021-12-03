@@ -2,8 +2,11 @@ name: 'publish-wasm'
 description: 'Publishes Wasm bindings to npm'
 inputs:
   tag:
-    description: 'Which tag to publish under'
+    description: 'Which npm tag to publish under e.g. `dev`, will default to `latest`'
     required: false
+  npm-token:
+    description: 'used for authenticating towards npm'
+    required: true
 runs:
   using: "composite"
   steps:
@@ -13,11 +16,6 @@ runs:
         toolchain: stable
         profile: minimal
         override: true
-
-    - name: Install WASM toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
         target: wasm32-unknown-unknown
 
     - name: Set up Node.js
@@ -38,7 +36,8 @@ runs:
 
     - name: Publish WASM bindings to NPM
       shell: sh
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.npm-token }}
+      # will publish 'latest' tag if no tag is passed
       run: echo npm publish $(if [ ${{ inputs.tag }} != '' ]; then echo --tag ${{ inputs.tag }}; fi) --access public
-      #env:
-      #  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       working-directory: bindings/wasm

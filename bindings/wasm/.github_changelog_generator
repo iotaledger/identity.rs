@@ -11,5 +11,5 @@ bug-labels=Patch
 deprecated-labels=Deprecated
 removed-labels=Removed
 exclude-labels=Documentation,No changelog
-include-labels=WASM
+include-labels=Wasm
 verbose=true
