@@ -32,7 +32,7 @@ runs:
         command: install
         args: cargo-edit
 
-    - name: Replace identity (dev) version in Wasm bindings
+    - name: Replace identity version in Wasm bindings
       shell: bash
       if: ${{inputs.release-target == 'rust'}}
       working-directory: bindings/wasm
