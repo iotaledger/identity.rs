@@ -163,14 +163,14 @@ impl Account {
     self.state.document()
   }
 
-  /// Sets the [`IotaDocument`] this account manages, **without doing any validation**.
+  /// Overwrites the [`IotaDocument`] this account manages, **without doing any validation**.
   ///
   /// # Warning
   ///
   /// This method is dangerous and can easily mess up the internal state,
   /// making the identity potentially unusable. Only use it if you have
   /// a good grasp of what the implications are.
-  pub fn set_document_unchecked(&mut self, document: IotaDocument) {
+  pub fn update_document_unchecked(&mut self, document: IotaDocument) {
     *self.state.document_mut() = document;
   }
 
