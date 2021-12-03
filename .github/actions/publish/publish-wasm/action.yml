@@ -21,7 +21,7 @@ runs:
         target: wasm32-unknown-unknown
 
     - name: Set up Node.js
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v2
       with:
         node-version: 16.x
         registry-url: 'https://registry.npmjs.org'

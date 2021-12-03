@@ -1,5 +1,10 @@
 name: Shared / Release
 
+# TODO add description
+#
+#
+#
+
 on:
   workflow_call:
     inputs:
@@ -93,7 +98,7 @@ jobs:
       - name: Import GPG key
         if: ${{env.IS_RELEASE}}
         id: import-gpg
-        uses: crazy-max/ghaction-import-gpg@v4
+        uses: crazy-max/ghaction-import-gpg@v4 # TODO pin commit
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
@@ -121,7 +126,7 @@ jobs:
 
       - name: Run github-changelog-generator for release
         if: ${{env.IS_RELEASE && inputs.create-github-release}}
-        uses: docker://githubchangeloggenerator/github-changelog-generator
+        uses: docker://githubchangeloggenerator/github-changelog-generator # TODO pin version/hash
         with:
           args: >
             --config-file ${{ inputs.changelog-config-path }}
@@ -134,7 +139,7 @@ jobs:
 
       - name: Create Release
         if: ${{env.IS_RELEASE && inputs.create-github-release}}
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v1 # TODO pin commit
         with:
           body_path: RELEASE_CHANGELOG.md
           prerelease: ${{env.IS_DEV_RELEASE}}
