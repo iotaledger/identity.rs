@@ -6,8 +6,10 @@ use crate::account::Account;
 use crate::account::AccountBuilder;
 use crate::account::AccountConfig;
 use crate::account::AccountSetup;
+use crate::account::PublishOptions;
 use crate::identity::IdentitySetup;
 use crate::storage::MemStore;
+use crate::Error;
 use crate::Result;
 
 use identity_core::common::Url;
@@ -234,6 +236,56 @@ async fn test_account_autopublish() -> Result<()> {
 
   // Diff message id was reset.
   assert!(account.chain_state().last_diff_message_id().is_null());
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_account_publish_with_options() -> Result<()> {
+  let config = AccountConfig::default().autopublish(false).testmode(true);
+  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
+
+  let auth_method = "auth-method";
+  let signing_method = "singing-method-2";
+
+  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+
+  account
+    .update_identity()
+    .create_method()
+    .fragment(auth_method)
+    .scope(MethodScope::authentication())
+    .apply()
+    .await?;
+
+  account
+    .update_identity()
+    .create_method()
+    .fragment(signing_method)
+    .scope(MethodScope::capability_invocation())
+    .apply()
+    .await?;
+
+  assert!(matches!(
+    account
+      .publish_with_options(PublishOptions::default().sign_with("non-existent-method"))
+      .await
+      .unwrap_err(),
+    Error::DIDError(identity_did::Error::MethodNotFound)
+  ));
+
+  assert!(matches!(
+    account
+      .publish_with_options(PublishOptions::default().sign_with(auth_method))
+      .await
+      .unwrap_err(),
+    Error::DIDError(identity_did::Error::MethodNotFound)
+  ));
+
+  assert!(account
+    .publish_with_options(PublishOptions::default().sign_with(signing_method))
+    .await
+    .is_ok());
 
   Ok(())
 }

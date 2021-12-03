@@ -506,8 +506,8 @@ impl PublishOptions {
   ///
   /// If this option is not set, the method to sign with is determined through
   /// [`IotaDocument::default_signing_method`].
-  pub fn sign_with(mut self, fragment: String) -> Self {
-    self.sign_with = Some(fragment);
+  pub fn sign_with(mut self, fragment: impl Into<String>) -> Self {
+    self.sign_with = Some(fragment.into());
     self
   }
 }
