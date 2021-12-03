@@ -47,7 +47,7 @@ pub struct Account {
   actions: AtomicUsize,
   chain_state: ChainState,
   state: IdentityState,
-  did_lease: DIDLease,
+  _did_lease: DIDLease,
 }
 
 impl Account {
@@ -74,7 +74,7 @@ impl Account {
       actions: AtomicUsize::new(0),
       chain_state,
       state,
-      did_lease,
+      _did_lease: did_lease,
     })
   }
 
