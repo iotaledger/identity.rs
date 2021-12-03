@@ -9,7 +9,7 @@ inputs:
     description: "path to the changelog config"
     required: true
   future-release:
-    description: "release name"
+    description: "release name (e.g. `v1.2.3-dev.1`)"
     required: true
   optional-arg:
     description: "optional argument for the generator command"
