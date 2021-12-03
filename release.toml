@@ -1,3 +1,0 @@
-# https://github.com/crate-ci/cargo-release
-consolidate-commits = true
-pre-release-commit-message = "Bump core crates version"

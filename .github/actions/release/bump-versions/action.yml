@@ -23,7 +23,7 @@ runs:
       uses: actions-rs/cargo@v1
       with:
         command: install
-        args: cargo-workspaces
+        args: --version ^0.2 cargo-workspaces
 
     - name: Install cargo-edit # to use cargo add
       uses: actions-rs/cargo@v1
@@ -39,14 +39,14 @@ runs:
       run: |
         cargo add identity@=${{ inputs.version }} --path=../../identity
     
-    - name: Bump Rust (dev) version
+    - name: Bump Rust crate version
       shell: bash
       # cargo-release creates a signed commit automatically
       if: ${{inputs.release-target == 'rust'}}
       run: |
         cargo workspaces version --no-git-commit --exact custom ${{ inputs.version }} -y
 
-    - name: Bump Wasm bindings (dev) version
+    - name: Bump Wasm bindings crate version
       shell: bash
       # cargo-release creates a signed commit automatically
       if: ${{inputs.release-target == 'wasm'}}
@@ -61,7 +61,7 @@ runs:
         node-version: '16.x'
         registry-url: 'https://registry.npmjs.org'
 
-    - name: Bump Wasm npm package (dev) version
+    - name: Bump Wasm npm package version
       shell: bash
       if: ${{inputs.release-target == 'wasm'}}
       working-directory: bindings/wasm
