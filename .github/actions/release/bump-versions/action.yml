@@ -30,7 +30,7 @@ runs:
       if: ${{inputs.release-target == 'rust'}}
       with:
         command: install
-        args: cargo-edit
+        args: -f --no-default-features --features "add" --version ^0.8 cargo-edit
 
     - name: Replace identity version in Wasm bindings
       shell: bash
