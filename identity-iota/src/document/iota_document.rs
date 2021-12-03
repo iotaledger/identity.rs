@@ -458,6 +458,21 @@ impl IotaDocument {
     self.document.try_resolve_method_mut(query).map_err(Into::into)
   }
 
+  /// Returns the first [`IotaVerificationMethod`] with an `id` property matching the provided `query`
+  /// and the verification relationship specified by `scope`.
+  pub fn resolve_method_with_scope<'query, Q>(&self, query: Q, scope: MethodScope) -> Option<&IotaVerificationMethod>
+  where
+    Q: Into<MethodQuery<'query>>,
+  {
+    // SAFETY: Validity of verification methods checked in `IotaVerificationMethod::check_validity`.
+    unsafe {
+      self
+        .document
+        .resolve_method_with_scope(query, scope)
+        .map(|m| IotaVerificationMethod::new_unchecked_ref(m))
+    }
+  }
+
   // ===========================================================================
   // Signatures
   // ===========================================================================

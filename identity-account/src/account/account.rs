@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::SetSignature;
+use identity_did::verification::MethodScope;
 use identity_iota::did::IotaDID;
 use identity_iota::document::DiffMessage;
 use identity_iota::document::IotaDocument;
@@ -275,33 +276,35 @@ impl Account {
     &self,
     old_state: &IdentityState,
     new_state: &IdentityState,
+    fragment: &Option<String>,
     document: &mut IotaDocument,
   ) -> Result<()> {
-    if self.chain_state().is_new_identity() {
-      let method: &IotaVerificationMethod = new_state.document().default_signing_method()?;
-      let location: KeyLocation = new_state.method_location(
-        method.key_type(),
-        // TODO: Should be a fatal error.
-        method.id().fragment().ok_or(Error::MethodMissingFragment)?.to_owned(),
-      )?;
-
-      // Sign the DID Document with the current capability invocation method
-      new_state
-        .sign_data(self.did(), self.storage(), &location, document)
-        .await?;
+    let signing_document: &IotaDocument = if self.chain_state().is_new_identity() {
+      new_state.document()
     } else {
-      let method: &IotaVerificationMethod = old_state.document().default_signing_method()?;
-      let location: KeyLocation = new_state.method_location(
-        method.key_type(),
-        // TODO: Should be a fatal error.
-        method.id().fragment().ok_or(Error::MethodMissingFragment)?.to_owned(),
-      )?;
+      old_state.document()
+    };
 
-      // Sign the DID Document with the previous capability invocation method
-      old_state
-        .sign_data(self.did(), self.storage(), &location, document)
-        .await?;
-    }
+    let signing_method: &IotaVerificationMethod = match fragment {
+      Some(fragment) => signing_document
+        .resolve_method_with_scope(fragment, MethodScope::capability_invocation())
+        .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?,
+      None => signing_document.default_signing_method()?,
+    };
+
+    let signing_key_location: KeyLocation = new_state.method_location(
+      signing_method.key_type(),
+      // TODO: Should be a fatal error.
+      signing_method
+        .id()
+        .fragment()
+        .ok_or(Error::MethodMissingFragment)?
+        .to_owned(),
+    )?;
+
+    new_state
+      .sign_data(self.did(), self.storage(), &signing_key_location, document)
+      .await?;
 
     Ok(())
   }
@@ -314,7 +317,7 @@ impl Account {
 
     if self.chain_state().is_new_identity() {
       // New identity
-      self.publish_integration_change(None).await?;
+      self.publish_integration_change(None, &options).await?;
     } else {
       // Existing identity
       let old_state: IdentityState = self.load_state().await?;
@@ -328,10 +331,10 @@ impl Account {
 
       match publish_type {
         Some(PublishType::Integration) => {
-          self.publish_integration_change(Some(&old_state)).await?;
+          self.publish_integration_change(Some(&old_state), &options).await?;
         }
         Some(PublishType::Diff) => {
-          self.publish_diff_change(&old_state).await?;
+          self.publish_diff_change(&old_state, &options).await?;
         }
         None => {
           // Can return early, as there is nothing new to publish or store.
@@ -356,7 +359,11 @@ impl Account {
     Ok(())
   }
 
-  async fn publish_integration_change(&mut self, old_state: Option<&IdentityState>) -> Result<()> {
+  async fn publish_integration_change(
+    &mut self,
+    old_state: Option<&IdentityState>,
+    options: &PublishOptions,
+  ) -> Result<()> {
     log::debug!("[publish_integration_change] publishing {:?}", self.document().did());
 
     let new_state: &IdentityState = self.state();
@@ -366,7 +373,12 @@ impl Account {
     new_doc.set_previous_message_id(*self.chain_state().last_integration_message_id());
 
     self
-      .sign_self(old_state.unwrap_or(new_state), new_state, &mut new_doc)
+      .sign_self(
+        old_state.unwrap_or(new_state),
+        new_state,
+        &options.sign_with,
+        &mut new_doc,
+      )
       .await?;
 
     log::debug!(
@@ -386,7 +398,7 @@ impl Account {
     Ok(())
   }
 
-  async fn publish_diff_change(&mut self, old_state: &IdentityState) -> Result<()> {
+  async fn publish_diff_change(&mut self, old_state: &IdentityState, options: &PublishOptions) -> Result<()> {
     log::debug!("[publish_diff_change] publishing {:?}", self.document().did());
 
     let old_doc: &IotaDocument = old_state.document();
@@ -405,16 +417,26 @@ impl Account {
 
     let mut diff: DiffMessage = DiffMessage::new(old_doc, new_doc, *previous_message_id)?;
 
-    let method: &IotaVerificationMethod = old_state.document().default_signing_method()?;
+    let signing_method: &IotaVerificationMethod = match &options.sign_with {
+      Some(fragment) => old_state
+        .document()
+        .resolve_method_with_scope(fragment, MethodScope::capability_invocation())
+        .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?,
+      None => old_state.document().default_signing_method()?,
+    };
 
-    let location: KeyLocation = old_state.method_location(
-      method.key_type(),
+    let signing_key_location: KeyLocation = old_state.method_location(
+      signing_method.key_type(),
       // TODO: Should be a fatal error.
-      method.id().fragment().ok_or(Error::MethodMissingFragment)?.to_owned(),
+      signing_method
+        .id()
+        .fragment()
+        .ok_or(Error::MethodMissingFragment)?
+        .to_owned(),
     )?;
 
     old_state
-      .sign_data(self.did(), self.storage(), &location, &mut diff)
+      .sign_data(self.did(), self.storage(), &signing_key_location, &mut diff)
       .await?;
 
     log::debug!(
@@ -453,27 +475,39 @@ impl Account {
   }
 }
 
-/// Options to customize the publication of an identity.
+/// Options to customize how identities are published to the Tangle.
 pub struct PublishOptions {
   pub(crate) force_integration_update: bool,
+  pub(crate) sign_with: Option<String>,
 }
 
 impl PublishOptions {
-  /// Creates a new set of default options.
+  /// Creates a new set of default publish options.
   pub fn new() -> Self {
     Self {
       force_integration_update: false,
+      sign_with: None,
     }
   }
 
   /// Whether to force the publication to be an integration update.
   ///
-  /// The account can determine whether an update needs to
-  /// be published as an integration or diff update, to be valid.
-  /// However, in some cases, it is desireable to publish all updates as
-  /// integration updates.
+  /// If this option is not set, the account automatically determines whether
+  /// an update needs to be published as an integration or a diff update.
+  /// Publishing as an integration update is always valid, but not recommended
+  /// for identities with many updates. See the IOTA DID method spec for more details.
   pub fn force_integration_update(mut self, force: bool) -> Self {
     self.force_integration_update = force;
+    self
+  }
+
+  /// Set the fragment of a verification method, with which to sign
+  /// the update. This method must have a capability invocation verification relationship.
+  ///
+  /// If this option is not set, the method to sign with is determined through
+  /// [`IotaDocument::default_signing_method`].
+  pub fn sign_with(mut self, fragment: String) -> Self {
+    self.sign_with = Some(fragment);
     self
   }
 }
