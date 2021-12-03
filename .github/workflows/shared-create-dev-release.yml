@@ -204,7 +204,7 @@ jobs:
           command: install
           args: cargo-edit
 
-      - name: Replace Version In Bindings
+      - name: Replace identity (dev) version in Wasm bindings
         if: ${{inputs.release-target == 'rust'}}
         run: |
           cd bindings/wasm
