@@ -1,5 +1,6 @@
 name: Rust Automatic Release and Publish
 
+# Automatically creates a GitHub release and publishes the latest Rust crate versions to crates.io when a release PR is merged.
 on:
   pull_request:
     branches:
