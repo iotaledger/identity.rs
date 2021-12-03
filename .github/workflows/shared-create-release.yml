@@ -146,7 +146,8 @@ jobs:
           command: install
           args: cargo-release
 
-      - uses: actions-rs/cargo@v1
+      - name: Install cargo-edit # to use cargo add 
+        uses: actions-rs/cargo@v1
         if: ${{inputs.release-target == 'rust'}}
         with:
           command: install
