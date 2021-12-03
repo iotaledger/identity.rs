@@ -6,7 +6,7 @@ use core::convert::TryInto;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::ops::Deref;
 
 use serde;
@@ -208,13 +208,13 @@ impl IotaVerificationMethod {
 }
 
 impl Display for IotaVerificationMethod {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     Display::fmt(&self.0, f)
   }
 }
 
 impl Debug for IotaVerificationMethod {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     Debug::fmt(&self.0, f)
   }
 }

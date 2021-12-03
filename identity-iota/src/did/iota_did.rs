@@ -5,7 +5,7 @@ use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::str::FromStr;
 use std::convert::TryInto;
 
@@ -283,13 +283,13 @@ impl DID for IotaDID {
 }
 
 impl Display for IotaDID {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     write!(f, "{}", self.0)
   }
 }
 
 impl Debug for IotaDID {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     write!(f, "{}", self.0)
   }
 }

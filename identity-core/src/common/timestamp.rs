@@ -5,7 +5,7 @@ use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::str::FromStr;
 
 use chrono::DateTime;
@@ -69,13 +69,13 @@ impl Default for Timestamp {
 }
 
 impl Debug for Timestamp {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     write!(f, "{:?}", self.to_rfc3339())
   }
 }
 
 impl Display for Timestamp {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     write!(f, "{}", self.to_rfc3339())
   }
 }

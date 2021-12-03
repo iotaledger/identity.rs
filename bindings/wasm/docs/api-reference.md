@@ -1261,7 +1261,7 @@ Deserializes `DocumentHistory` from a JSON object.
 ### explorerUrl.messageUrl(message_id) ⇒ <code>string</code>
 Returns the web explorer URL of the given `message_id`.
 
-E.g. https://explorer.iota.org/mainnet/message/<message_id>
+E.g. https://explorer.iota.org/mainnet/message/{message_id}
 
 **Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
 
@@ -1274,7 +1274,7 @@ E.g. https://explorer.iota.org/mainnet/message/<message_id>
 ### explorerUrl.resolverUrl(did) ⇒ <code>string</code>
 Returns the web identity resolver URL for the given DID.
 
-E.g. https://explorer.iota.org/mainnet/identity-resolver/&lt;did>
+E.g. https://explorer.iota.org/mainnet/identity-resolver/{did}
 
 **Kind**: instance method of [<code>ExplorerUrl</code>](#ExplorerUrl)  
 

@@ -4,7 +4,6 @@
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -53,13 +52,13 @@ impl Generation {
 }
 
 impl Debug for Generation {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("Generation({})", self.to_u32()))
   }
 }
 
 impl Display for Generation {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("{}", self.to_u32()))
   }
 }

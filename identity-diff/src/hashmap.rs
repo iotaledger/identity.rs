@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::fmt::Formatter;
-use std::fmt::Result as FmtResult;
+
 use std::hash::Hash;
 use std::iter::empty;
 
@@ -149,7 +149,7 @@ where
   K: Debug + Diff,
   V: Debug + Diff,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     write!(f, "DiffHashMap")?;
 
     let mut buf = f.debug_list();
@@ -180,7 +180,7 @@ where
   K: Debug + Diff,
   V: Debug + Diff,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     match &self {
       Self::Change { key, value } => f
         .debug_struct("Change")

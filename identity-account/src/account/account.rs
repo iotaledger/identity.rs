@@ -47,7 +47,8 @@ pub struct Account {
   actions: AtomicUsize,
   chain_state: ChainState,
   state: IdentityState,
-  did_lease: DIDLease,
+  _did_lease: DIDLease, /* This field is not read, but has special behaviour on drop which is why it is needed in
+                         * the Account. */
 }
 
 impl Account {
@@ -74,7 +75,7 @@ impl Account {
       actions: AtomicUsize::new(0),
       chain_state,
       state,
-      did_lease,
+      _did_lease: did_lease,
     })
   }
 
