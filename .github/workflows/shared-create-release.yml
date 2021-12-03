@@ -139,7 +139,8 @@ jobs:
         with:
           toolchain: stable
 
-      - uses: actions-rs/cargo@v1
+      - name: Install cargo-release
+        uses: actions-rs/cargo@v1
         if: ${{inputs.release-target == 'rust' || inputs.release-target == 'wasm'}}
         with:
           command: install
