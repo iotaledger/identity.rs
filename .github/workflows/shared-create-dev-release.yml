@@ -246,7 +246,7 @@ jobs:
           cd bindings/wasm
           npm version ${{ env.NEXTVERSION_WITHOUT_PREFIX }}
 
-      - name: Commit npm version bump
+      - name: Commit npm package version
         if: ${{inputs.release-target == 'wasm'}}
         run: |
           git add .
@@ -254,7 +254,7 @@ jobs:
             echo 'repository unmodified'
             exit 1
           fi
-          git commit -m "bump version"
+          git commit -m "Bump npm package version"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
