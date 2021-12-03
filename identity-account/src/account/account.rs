@@ -452,17 +452,25 @@ impl Account {
   }
 }
 
+/// Options to customize the publication of an identity.
 pub struct PublishOptions {
   pub(crate) force_integration_update: bool,
 }
 
 impl PublishOptions {
+  /// Creates a new set of default options.
   pub fn new() -> Self {
     Self {
       force_integration_update: false,
     }
   }
 
+  /// Whether to force the publication to be an integration update.
+  ///
+  /// The account can determine whether an update needs to
+  /// be published as an integration or diff update, to be valid.
+  /// However, in some cases, it is desireable to publish all updates as
+  /// integration updates.
   pub fn force_integration_update(mut self, force: bool) -> Self {
     self.force_integration_update = force;
     self
