@@ -156,7 +156,7 @@ where
     .merkle_key
     .get(2..)
     .and_then(Hash::from_slice)
-    .ok_or_else(|| VerificationError::ProcessingFailed(Cow::Borrowed("invalid key format")))
+    .ok_or(VerificationError::ProcessingFailed(Cow::Borrowed("invalid key format")))
 }
 
 /* If this function gets used outside of verification as well, we might have to come up with a better error type.

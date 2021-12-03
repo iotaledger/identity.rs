@@ -64,7 +64,7 @@ where
   {
     let signature: &str = signature
       .as_signature()
-      .ok_or_else(|| VerificationError::InvalidProofValue(Cow::Borrowed("jcs ed25519")))?;
+      .ok_or(VerificationError::InvalidProofValue(Cow::Borrowed("jcs ed25519")))?;
 
     let signature: Vec<u8> = utils::decode_b58(signature)
       .map_err(|_| VerificationError::ProcessingFailed(Cow::Borrowed("unable to decode the signature")))?;
