@@ -1,10 +1,15 @@
 name: Shared / Create Main Release PR
 
+# TODO add description
+#
+#
+#
+
 on:
   workflow_call:
     inputs:
       tag-prefix:
-        description: "will be prepended to tag-base"
+        description: "will be pre-pended to tag-base"
         required: false
         type: string
       tag-base:
@@ -49,7 +54,7 @@ jobs:
         with:
           # Number of commits to fetch. 0 indicates all history for all branches and tags.
           fetch-depth: 0
-          ref: main
+          ref: dev
 
       - name: Validate version
         run: |
