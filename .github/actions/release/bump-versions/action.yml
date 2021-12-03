@@ -1,5 +1,5 @@
 name: 'bump-versions'
-description: 'Bump versions in files for release target'
+description: 'Bump project versions for the release target'
 inputs:
   release-target:
     description: "target of the release (rust|wasm)"
