@@ -12,7 +12,8 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions-rs/toolchain@v1
+    - name: Install Rust stable toolchain
+      uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
         profile: minimal
