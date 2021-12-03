@@ -3,7 +3,7 @@
 
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use crypto::hashes::blake2b::Blake2b256;
 use crypto::hashes::Digest;
 use crypto::hashes::Output;
@@ -186,7 +186,7 @@ impl RecordIndex {
 }
 
 impl Debug for RecordIndex {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.debug_set().entries(self.iter().map(encode_b58)).finish()
   }
 }

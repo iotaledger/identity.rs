@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use roaring::RoaringBitmap;
 use serde::de;
 use serde::de::Deserializer;
@@ -122,7 +122,7 @@ impl<'de> Deserialize<'de> for BitSet {
     impl<'de> Visitor<'de> for __Visitor {
       type Value = BitSet;
 
-      fn expecting(&self, f: &mut Formatter<'_>) -> FmtResult {
+      fn expecting(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.write_str("a base64-encoded string")
       }
 

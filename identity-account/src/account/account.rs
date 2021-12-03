@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::SetSignature;
-use identity_iota::did::DocumentDiff;
 use identity_iota::did::IotaDID;
-use identity_iota::did::IotaDocument;
-use identity_iota::did::IotaVerificationMethod;
+use identity_iota::document::DiffMessage;
+use identity_iota::document::IotaDocument;
+use identity_iota::document::IotaVerificationMethod;
 use identity_iota::tangle::Client;
 use identity_iota::tangle::ClientMap;
 use identity_iota::tangle::MessageId;
@@ -47,7 +47,8 @@ pub struct Account {
   actions: AtomicUsize,
   chain_state: ChainState,
   state: IdentityState,
-  did_lease: DIDLease,
+  _did_lease: DIDLease, /* This field is not read, but has special behaviour on drop which is why it is needed in
+                         * the Account. */
 }
 
 impl Account {
@@ -74,7 +75,7 @@ impl Account {
       actions: AtomicUsize::new(0),
       chain_state,
       state,
-      did_lease,
+      _did_lease: did_lease,
     })
   }
 
@@ -364,7 +365,7 @@ impl Account {
       }
     }
 
-    let mut diff: DocumentDiff = DocumentDiff::new(old_doc, new_doc, *previous_message_id)?;
+    let mut diff: DiffMessage = DiffMessage::new(old_doc, new_doc, *previous_message_id)?;
 
     let method: &IotaVerificationMethod = old_state.document().default_signing_method()?;
 

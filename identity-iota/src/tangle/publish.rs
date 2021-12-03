@@ -5,7 +5,7 @@ use identity_did::verification::MethodRef;
 use identity_did::verification::MethodType;
 use identity_did::verification::VerificationMethod;
 
-use crate::did::IotaDocument;
+use crate::document::IotaDocument;
 
 // Method types allowed to sign a DID document update.
 pub const UPDATE_METHOD_TYPES: &[MethodType] = &[MethodType::Ed25519VerificationKey2018];
@@ -66,7 +66,7 @@ mod test {
   use identity_did::did::DID;
   use identity_did::verification::MethodScope;
 
-  use crate::did::IotaVerificationMethod;
+  use crate::document::IotaVerificationMethod;
   use crate::tangle::TangleRef;
   use crate::Result;
 

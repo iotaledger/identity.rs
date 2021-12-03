@@ -5,7 +5,7 @@ use core::borrow::Borrow;
 use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::iter::FromIterator;
 use core::ops::Deref;
 use core::slice::Iter;
@@ -197,7 +197,7 @@ where
   T: Debug,
 {
   #[inline]
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.debug_set().entries(self.iter()).finish()
   }
 }

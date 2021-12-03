@@ -5,12 +5,15 @@ use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::str::FromStr;
 use std::convert::TryInto;
 
 use crypto::hashes::blake2b::Blake2b256;
 use crypto::hashes::Digest;
+use serde;
+use serde::Deserialize;
+use serde::Serialize;
 
 use identity_core::utils::decode_b58;
 use identity_core::utils::encode_b58;
@@ -25,6 +28,7 @@ use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::Network;
 use crate::tangle::NetworkName;
+use crate::try_construct_did;
 
 // The hash size of BLAKE2b-256 (32-bytes)
 const BLAKE2B_256_LEN: usize = 32;
@@ -279,13 +283,13 @@ impl DID for IotaDID {
 }
 
 impl Display for IotaDID {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     write!(f, "{}", self.0)
   }
 }
 
 impl Debug for IotaDID {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     write!(f, "{}", self.0)
   }
 }

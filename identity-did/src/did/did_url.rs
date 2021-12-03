@@ -5,7 +5,7 @@ use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::str::FromStr;
 use std::cmp::Ordering;
 use std::convert::TryInto;
@@ -211,7 +211,7 @@ impl RelativeDIDUrl {
 }
 
 impl Display for RelativeDIDUrl {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!(
       "{}{}{}",
       self.path.as_deref().unwrap_or_default(),
@@ -222,8 +222,8 @@ impl Display for RelativeDIDUrl {
 }
 
 impl Debug for RelativeDIDUrl {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_fmt(format_args!("{}", self.to_string()))
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    f.write_fmt(format_args!("{}", self))
   }
 }
 
@@ -540,8 +540,8 @@ impl<T> Debug for DIDUrl<T>
 where
   T: DID,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_fmt(format_args!("{}", self.to_string()))
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    f.write_fmt(format_args!("{}", self))
   }
 }
 
@@ -549,8 +549,8 @@ impl<T> Display for DIDUrl<T>
 where
   T: DID,
 {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-    f.write_fmt(format_args!("{}{}", self.did.as_str(), self.url.to_string()))
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+    f.write_fmt(format_args!("{}{}", self.did.as_str(), self.url))
   }
 }
 

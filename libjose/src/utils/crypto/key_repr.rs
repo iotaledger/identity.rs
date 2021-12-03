@@ -15,9 +15,13 @@ use crate::jwk::JwkParamsOkp;
 use crate::jwk::JwkParamsRsa;
 use crate::lib::*;
 use crate::utils::decode_b64;
+use rsa::pkcs1::FromRsaPrivateKey;
+use rsa::pkcs1::FromRsaPublicKey;
+use rsa::pkcs8::FromPrivateKey;
+use rsa::pkcs8::FromPublicKey;
 
-pub type RsaPublicKey = rsa::RSAPublicKey;
-pub type RsaSecretKey = rsa::RSAPrivateKey;
+pub type RsaPublicKey = rsa::RsaPublicKey;
+pub type RsaSecretKey = rsa::RsaPrivateKey;
 pub type RsaUint = rsa::BigUint;
 pub type RsaPadding = rsa::PaddingScheme;
 
@@ -104,9 +108,9 @@ impl<'a> Secret<'a> {
 
   pub fn to_rsa_public(self) -> Result<RsaPublicKey> {
     match self {
-      Secret::Arr(arr) => RsaPublicKey::from_pkcs1(arr)
-        .or_else(|_| RsaPublicKey::from_pkcs8(arr))
-        .map_err(Into::into),
+      Secret::Arr(arr) => RsaPublicKey::from_pkcs1_der(arr)
+        .or_else(|_| RsaPublicKey::from_public_key_der(arr))
+        .map_err(|err| rsa::errors::Error::from(err).into()),
       Secret::Jwk(jwk) => {
         let params: &JwkParamsRsa = jwk.try_rsa_params()?;
         let n: RsaUint = decode_rsa_uint(&params.n)?;
@@ -120,9 +124,9 @@ impl<'a> Secret<'a> {
   #[allow(clippy::many_single_char_names)]
   pub fn to_rsa_secret(self) -> Result<RsaSecretKey> {
     match self {
-      Secret::Arr(arr) => RsaSecretKey::from_pkcs1(arr)
-        .or_else(|_| RsaSecretKey::from_pkcs8(arr))
-        .map_err(Into::into),
+      Secret::Arr(arr) => RsaSecretKey::from_pkcs1_der(arr)
+        .or_else(|_| RsaSecretKey::from_pkcs8_der(arr))
+        .map_err(|err| rsa::errors::Error::from(err).into()),
       Secret::Jwk(jwk) => {
         let params: &JwkParamsRsa = jwk.try_rsa_params()?;
 

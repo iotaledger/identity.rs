@@ -85,7 +85,7 @@ mod tests {
   use crate::crypto::Signer as _;
   use crate::crypto::Verifier as _;
   use crate::json;
-  use crate::utils::decode_b58;
+  use crate::utils;
 
   type Signer = JcsEd25519<Ed25519<PrivateKey>>;
 
@@ -103,8 +103,11 @@ mod tests {
   #[test]
   fn test_tvs() {
     for tv in TVS {
-      let public: PublicKey = decode_b58(tv.public).unwrap().into();
-      let private: PrivateKey = decode_b58(tv.private).unwrap().into();
+      // The test vectors are from [JcsEd25519Signature2020](https://github.com/decentralized-identity/JcsEd25519Signature2020/tree/master/signature-suite-impls/test-vectors),
+      // and use [Go crypto/ed25519](https://pkg.go.dev/crypto/ed25519#pkg-types)'s convention of representing an Ed25519 private key as: 32-byte seed concatenated with the 32-byte public key (computed from the seed).
+      // We follow the convention from [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032#section-3.2) and extract the 32-byte seed as the private key.
+      let public: PublicKey = utils::decode_b58(tv.public).unwrap().into();
+      let private: PrivateKey = (utils::decode_b58(tv.private).unwrap()[..32]).to_vec().into();
       let badkey: PublicKey = b"IOTA".to_vec().into();
 
       let input: Object = Object::from_json(tv.input).unwrap();
@@ -133,8 +136,8 @@ mod tests {
     const SIG: &[u8] = b"4VjbV3672WRhKqUVn4Cdp6e7AaXYYv2f71dM8ZDHqWexfku4oLUeDVFuxGRXxpkVUwZ924zFHu527Z2ZNiPKZVeF";
     const MSG: &[u8] = b"hello";
 
-    let public: PublicKey = decode_b58(PUBLIC).unwrap().into();
-    let private: PrivateKey = decode_b58(SECRET).unwrap().into();
+    let public: PublicKey = utils::decode_b58(PUBLIC).unwrap().into();
+    let private: PrivateKey = utils::decode_b58(SECRET).unwrap().into();
 
     let signature: SignatureValue = Signer::sign(&MSG, &private).unwrap();
 

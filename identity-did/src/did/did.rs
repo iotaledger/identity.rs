@@ -5,7 +5,7 @@ use core::convert::TryFrom;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::fmt::Formatter;
-use core::fmt::Result as FmtResult;
+
 use core::str::FromStr;
 use std::hash::Hash;
 
@@ -194,13 +194,13 @@ impl TryFrom<BaseDIDUrl> for CoreDID {
 }
 
 impl Debug for CoreDID {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("{}", self.as_str()))
   }
 }
 
 impl Display for CoreDID {
-  fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+  fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
     f.write_fmt(format_args!("{}", self.as_str()))
   }
 }

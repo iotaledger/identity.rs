@@ -14,10 +14,11 @@ use crate::chain::DiffChain;
 use crate::chain::DocumentChain;
 use crate::chain::DocumentHistory;
 use crate::chain::IntegrationChain;
-use crate::did::DocumentDiff;
 use crate::did::IotaDID;
-use crate::did::IotaDocument;
+use crate::document::DiffMessage;
+use crate::document::IotaDocument;
 use crate::error::Error;
+use crate::error::Error::DIDNotFound;
 use crate::error::Result;
 use crate::tangle::ClientBuilder;
 use crate::tangle::DIDMessageEncoding;
@@ -87,11 +88,11 @@ impl Client {
       .await
   }
 
-  /// Publishes a [`DocumentDiff`] to the Tangle to form part of the diff chain for the integration.
+  /// Publishes a [`DiffMessage`] to the Tangle to form part of the diff chain for the integration.
   /// chain message specified by the given [`MessageId`].
   /// This method calls `publish_json_with_retry` with its default `interval` and `max_attempts` values for increasing
   /// the probability that the message will be referenced by a milestone.
-  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DocumentDiff) -> Result<Receipt> {
+  pub async fn publish_diff(&self, message_id: &MessageId, diff: &DiffMessage) -> Result<Receipt> {
     self
       .publish_json_with_retry(&IotaDocument::diff_index(message_id)?, diff, None, None)
       .await
@@ -154,12 +155,19 @@ impl Client {
 
   /// Fetches a [`DocumentChain`] given an [`IotaDID`].
   pub async fn read_document_chain(&self, did: &IotaDID) -> Result<DocumentChain> {
-    trace!("Read Document Chain: {}", did);
-    trace!("Integration Chain Address: {}", did.tag());
+    log::trace!("Read Document Chain: {}", did);
+    if self.network != did.network()? {
+      return Err(DIDNotFound(format!(
+        "DID network '{}' does not match client network '{}'",
+        did.network_str(),
+        self.network.name_str()
+      )));
+    }
 
     // Fetch all messages for the integration chain.
+    log::trace!("Integration Chain Address: {}", did.tag());
     let messages: Vec<Message> = self.read_messages(did.tag()).await?;
-    let integration_chain: IntegrationChain = IntegrationChain::try_from_messages(did, &messages)?;
+    let integration_chain: IntegrationChain = IntegrationChain::try_from_messages(did, &messages, self).await?;
 
     // TODO: do we still want to support this, replace with ResolutionOptions?
     // // Check if there is any query given and return
@@ -172,7 +180,7 @@ impl Client {
     //   let index: String = IotaDocument::diff_index(integration_chain.current_message_id())?;
     //   let messages: Vec<Message> = self.read_messages(&index).await?;
     //
-    //   trace!("Diff Messages: {:#?}", messages);
+    //   log::trace!("Diff Messages: {:#?}", messages);
     //
     //   DiffChain::try_from_messages(&integration_chain, &messages)?
     // };
@@ -182,9 +190,9 @@ impl Client {
       let index: String = IotaDocument::diff_index(integration_chain.current_message_id())?;
       let messages: Vec<Message> = self.read_messages(&index).await?;
 
-      trace!("Diff Messages: {:#?}", messages);
+      log::trace!("Diff Messages: {:#?}", messages);
 
-      DiffChain::try_from_messages(&integration_chain, &messages)?
+      DiffChain::try_from_messages(&integration_chain, &messages, self).await?
     };
 
     DocumentChain::new_with_diff_chain(integration_chain, diff_chain)
@@ -200,10 +208,10 @@ impl Client {
   ///
   /// NOTE: the document must have been published to the Tangle and have a valid message id and
   /// authentication method.
-  pub async fn resolve_diff_history(&self, document: &IotaDocument) -> Result<ChainHistory<DocumentDiff>> {
+  pub async fn resolve_diff_history(&self, document: &IotaDocument) -> Result<ChainHistory<DiffMessage>> {
     let diff_index: String = IotaDocument::diff_index(document.message_id())?;
     let diff_messages: Vec<Message> = self.read_messages(&diff_index).await?;
-    ChainHistory::try_from_raw_messages(document, &diff_messages)
+    Ok(ChainHistory::try_from_raw_messages(document, &diff_messages, self).await?)
   }
 
   /// Fetch all [`Messages`][Message] from the given index on the IOTA Tangle.
