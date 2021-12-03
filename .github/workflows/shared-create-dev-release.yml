@@ -240,7 +240,7 @@ jobs:
           node-version: '16.x'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Replace Version
+      - name: Bump Wasm npm package (dev) version
         if: ${{inputs.release-target == 'wasm'}}
         run: |
           cd bindings/wasm
