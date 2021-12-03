@@ -220,7 +220,8 @@ jobs:
           fi
           git commit -m "bump version"
       
-      - name: Run cargo-release
+      - name: Bump Rust (dev) version
+        # cargo-release creates a signed commit automatically
         if: ${{inputs.release-target == 'rust'}}
         run: |
           cargo release --workspace --config ./release.toml --no-tag --no-publish --no-push --no-confirm ${{ env.NEXTVERSION_WITHOUT_PREFIX }} --execute
