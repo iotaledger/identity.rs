@@ -18,11 +18,11 @@ runs:
         profile: minimal
         override: true
 
-    - name: Install cargo-release
+    - name: Install cargo-workspaces
       uses: actions-rs/cargo@v1
       with:
         command: install
-        args: cargo-release
+        args: cargo-workspaces
 
     - name: Install cargo-edit # to use cargo add
       uses: actions-rs/cargo@v1
@@ -37,24 +37,13 @@ runs:
       working-directory: bindings/wasm
       run: |
         cargo add identity@=${{ inputs.version }} --path=../../identity
-
-    - name: Commit changes
-      shell: bash
-      if: ${{inputs.release-target == 'rust'}}
-      run: |
-        git add .
-        if [[ $(git diff --stat --staged) == '' ]]; then
-          echo 'repository unmodified'
-          exit 1
-        fi
-        git commit -m "Bump Wasm Identity dependency version"
     
     - name: Bump Rust (dev) version
       shell: bash
       # cargo-release creates a signed commit automatically
       if: ${{inputs.release-target == 'rust'}}
       run: |
-        cargo release --workspace --config ./release.toml --no-tag --no-publish --no-push --no-confirm ${{ inputs.version }} --execute
+        cargo workspaces version --no-git-commit --exact custom ${{ inputs.version }} -y
 
     - name: Bump Wasm bindings (dev) version
       shell: bash
@@ -62,7 +51,7 @@ runs:
       if: ${{inputs.release-target == 'wasm'}}
       working-directory: bindings/wasm
       run: |
-        cargo release --no-tag --no-publish --no-push --no-confirm ${{ inputs.version }} --execute
+        cargo workspaces version --no-git-commit --exact custom ${{ inputs.version }} -y
 
     - name: Set up Node.js
       uses: actions/setup-node@v2
@@ -77,14 +66,3 @@ runs:
       working-directory: bindings/wasm
       run: |
         npm version ${{ inputs.version }}
-
-    - name: Commit npm package version
-      shell: bash
-      if: ${{inputs.release-target == 'wasm'}}
-      run: |
-        git add .
-        if [[ $(git diff --stat --staged) == '' ]]; then
-          echo 'repository unmodified'
-          exit 1
-        fi
-        git commit -m "Bump npm package version"
