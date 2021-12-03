@@ -137,7 +137,7 @@ jobs:
             ${{ env.SINCE_ARG }}
             --output RELEASE_CHANGELOG.md
 
-      - name: Create Release
+      - name: Create GitHub release
         if: ${{env.IS_RELEASE && inputs.create-github-release}}
         uses: softprops/action-gh-release@v1 # TODO pin commit
         with:

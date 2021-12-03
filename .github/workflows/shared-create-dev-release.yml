@@ -195,19 +195,21 @@ jobs:
         with:
           toolchain: stable
 
-      - uses: actions-rs/cargo@v1
+      - name: Install cargo-release
+        uses: actions-rs/cargo@v1
         if: ${{inputs.release-target == 'rust' || inputs.release-target == 'wasm'}}
         with:
           command: install
           args: cargo-release
 
-      - uses: actions-rs/cargo@v1
+      - name: Install cargo-edit # to use cargo add
+        uses: actions-rs/cargo@v1
         if: ${{inputs.release-target == 'rust'}}
         with:
           command: install
           args: cargo-edit
 
-      - name: Replace Version In Bindings
+      - name: Replace identity (dev) version in Wasm bindings
         if: ${{inputs.release-target == 'rust'}}
         run: |
           cd bindings/wasm
@@ -223,29 +225,33 @@ jobs:
           fi
           git commit -m "bump version"
       
-      - name: Run cargo-release
+      - name: Bump Rust (dev) version
+        # cargo-release creates a signed commit automatically
         if: ${{inputs.release-target == 'rust'}}
         run: |
           cargo release --workspace --config ./release.toml --no-tag --no-publish --no-push --no-confirm ${{ env.NEXTVERSION_WITHOUT_PREFIX }} --execute
 
-      - name: Run cargo-release
+      - name: Bump Wasm bindings (dev) version
+        # cargo-release creates a signed commit automatically
         if: ${{inputs.release-target == 'wasm'}}
         run: |
           cd bindings/wasm
           cargo release --no-tag --no-publish --no-push --no-confirm ${{ env.NEXTVERSION_WITHOUT_PREFIX }} --execute
 
-      - uses: actions/setup-node@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         if: ${{inputs.release-target == 'wasm'}}
         with:
-          node-version: '16'
+          node-version: '16.x'
+          registry-url: 'https://registry.npmjs.org'
 
-      - name: Replace Version
+      - name: Bump Wasm npm package (dev) version
         if: ${{inputs.release-target == 'wasm'}}
         run: |
           cd bindings/wasm
           npm version ${{ env.NEXTVERSION_WITHOUT_PREFIX }}
 
-      - name: Commit npm version bump
+      - name: Commit npm package version
         if: ${{inputs.release-target == 'wasm'}}
         run: |
           git add .
@@ -253,7 +259,7 @@ jobs:
             echo 'repository unmodified'
             exit 1
           fi
-          git commit -m "bump version"
+          git commit -m "Bump npm package version"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3 # TODO pin commit
