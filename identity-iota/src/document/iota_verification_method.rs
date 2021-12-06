@@ -36,6 +36,7 @@ use crate::did::IotaDIDUrl;
 use crate::error::Error;
 use crate::error::Result;
 use crate::tangle::NetworkName;
+use crate::tangle::UPDATE_METHOD_TYPES;
 
 /// A DID Document verification method
 #[derive(Clone, PartialEq, Deserialize, Serialize)]
@@ -208,7 +209,7 @@ impl IotaVerificationMethod {
 
   /// Returns whether this method can be used to sign document updates.
   pub fn is_signing_method(&self) -> bool {
-    self.key_type() == MethodType::Ed25519VerificationKey2018
+    UPDATE_METHOD_TYPES.contains(&self.key_type())
   }
 }
 
