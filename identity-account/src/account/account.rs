@@ -163,17 +163,6 @@ impl Account {
     self.state.document()
   }
 
-  /// Overwrites the [`IotaDocument`] this account manages, **without doing any validation**.
-  ///
-  /// # WARNING
-  ///
-  /// This method is dangerous and can easily corrupt the internal state,
-  /// potentially making the identity unusable. Only call this if you fully
-  /// understand the implications!
-  pub fn update_document_unchecked(&mut self, document: IotaDocument) {
-    *self.state.document_mut() = document;
-  }
-
   /// Sets the [`ChainState`] for the identity this account manages, **without doing any validation**.
   ///
   /// # WARNING
@@ -200,6 +189,23 @@ impl Account {
   /// that modify an identity, such as creating services or methods.
   pub fn update_identity(&mut self) -> IdentityUpdater<'_> {
     IdentityUpdater::new(self)
+  }
+
+  /// Overwrites the [`IotaDocument`] this account manages, **without doing any validation**.
+  ///
+  /// # WARNING
+  ///
+  /// This method is dangerous and can easily corrupt the internal state,
+  /// potentially making the identity unusable. Only call this if you fully
+  /// understand the implications!
+  pub async fn update_document_unchecked(&mut self, document: IotaDocument) -> Result<()> {
+    *self.state.document_mut() = document;
+
+    self.increment_actions();
+
+    self.publish_internal(false, PublishOptions::default()).await?;
+
+    Ok(())
   }
 
   /// Removes the identity from the local storage entirely.
