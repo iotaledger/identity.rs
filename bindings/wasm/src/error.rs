@@ -138,6 +138,7 @@ mod wasm_error_from_identity_core {
   use identity::core::errors::MerkleKeyTagExtractionError;
   use identity::core::errors::MerkleSignatureKeyTagError;
   use identity::core::errors::MissingSignatureError;
+  use identity::core::errors::ProofSizeError;
   use identity::core::errors::SigningError;
   use identity::core::errors::TimeStampParsingError;
   use identity::core::errors::UrlParsingError;
@@ -151,6 +152,7 @@ mod wasm_error_from_identity_core {
     Base58DecodingError,
     KeyPairGenerationError,
     KeyParsingError,
+    ProofSizeError,
     JsonDecodingError,
     JsonEncodingError,
     MerkleDigestKeyTagError,

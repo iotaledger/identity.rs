@@ -41,15 +41,15 @@ pub struct KeyCollection {
 impl KeyCollection {
   /// Defines an upper limit to the amount of keys that can be created (2^12)
   /// This value respects a current stronghold limitation
-  const MAX_KEYS_ALLOWED: usize = 4_096;
+  pub const MAX_KEYS_ALLOWED: usize = 4_096;
 
   /// Creates a new [`KeyCollection`] from an iterator of
   /// [`PublicKey`]/[`PrivateKey`] pairs.
   ///
   /// # Errors
-  /// The number of items provided by `iter` must be a power of two contained in the interval [1,4096], otherwise an
-  /// error is returned. This upper limit may be increased in the future. If this function (internally) fails to create
-  /// a [`KeyCollection`] with a matching private key for every public key as provided by the iterator then
+  /// The number of items provided by `iter` must be a power of two contained in the interval
+  /// [1,[`KeyCollection::MAX_KEYS_ALLOWED`]], otherwise an error is returned. If this function (internally) fails to
+  /// create a [`KeyCollection`] with a matching private key for every public key as provided by the iterator then
   /// [`Err(KeyCollectionSizeError::KeyPairImbalance)`] will be returned. This is not something we expect to happen in
   /// practice.
   pub fn from_iterator<I>(type_: KeyType, iter: I) -> Result<Self, KeyCollectionSizeError>
@@ -88,8 +88,8 @@ impl KeyCollection {
   /// E.g. 230 -> 256.
   ///
   /// # Errors
-  /// `count` must be contained in the interval [1,4096] otherwise an error will be returned. This upper limit may be
-  /// increased in the future.
+  /// `count` must be contained in the interval [1,[`KeyCollection::MAX_KEYS_ALLOWED`]] otherwise an error will be
+  /// returned.
   ///
   /// If this function returns [`KeyCollectionError::InvalidSize`] then the `NotAPowerOfTwo` variant of
   /// [`KeyCollectionSizeError`] may be dismissed from consideration as it cannot be caused by this constructor. We

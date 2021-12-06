@@ -8,6 +8,7 @@ pub use crate::convert::JsonEncodingError;
 pub use crate::crypto::merkle_key::MerkleDigestKeyTagError;
 pub use crate::crypto::merkle_key::MerkleKeyTagExtractionError;
 pub use crate::crypto::merkle_key::MerkleSignatureKeyTagError;
+pub use crate::crypto::merkle_tree::ProofSizeError;
 pub use crate::crypto::KeyCollectionError;
 pub use crate::crypto::KeyCollectionSizeError;
 pub use crate::crypto::KeyPairGenerationError;

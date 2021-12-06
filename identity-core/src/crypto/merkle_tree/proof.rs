@@ -7,15 +7,10 @@ use crate::crypto::merkle_tree::Hash;
 use crate::crypto::merkle_tree::Node;
 use core::fmt::Debug;
 use core::fmt::Formatter;
-use std::error::Error;
+use thiserror::Error as DeriveError;
 
 use subtle::ConstantTimeEq;
 
-use self::errors::ProofSizeError;
-
-// Maximum number of nodes in the proof.
-// This value is equal to log₂[`crate::crypto::KeyCollection::MAX_KEYS_ALLOWED`], respecting the constraint for the
-// maximum number of keys allowed in a `KeyCollection`
 const MAX_PROOF_NODES: usize = 12;
 
 /// A Merkle tree inclusion proof that allows proving the existence of a
@@ -34,13 +29,9 @@ impl<D: DigestExt> Proof<D> {
   ///
   /// # Errors
   /// Fails if the length of `nodes` is greater than [`Self::MAX_NODES`]
-  // TODO: Is it OK to just return impl Error here? On the one hand the exact cause for error is documented in the
-  // function, but impl Error can be hard (impossible ?) to bubble up. Would a caller want to wrap the returned error
-  // of their own? If yes it is probably better to make ProofSizeError public and explicitly return that
-  pub fn new(nodes: Box<[Node<D>]>) -> Result<Self, impl Error> {
-    let num_nodes = nodes.len();
-    if num_nodes > Self::MAX_NODES {
-      return Err(ProofSizeError(num_nodes));
+  pub fn new(nodes: Box<[Node<D>]>) -> Result<Self, ProofSizeError> {
+    if nodes.len() > Self::MAX_NODES {
+      return Err(ProofSizeError);
     }
     Ok(Self { nodes })
   }
@@ -100,13 +91,18 @@ impl<D: DigestExt> Debug for Proof<D> {
   }
 }
 
-mod errors {
-  use super::MAX_PROOF_NODES;
-  use thiserror::Error as DeriveError;
-  #[derive(Debug, DeriveError)]
-  #[error(
-    "too many nodes in the Proof: {0} were provided, but the maximum is {}",
-    MAX_PROOF_NODES
-  )]
-  pub(super) struct ProofSizeError(pub(super) usize);
+#[derive(Debug, DeriveError)]
+#[error("too many nodes in the Proof. The maximum number allowed is {}", MAX_PROOF_NODES)]
+/// Caused by attempting to create a [`Proof`] with too many nodes.
+pub struct ProofSizeError;
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::crypto::KeyCollection;
+
+  #[test]
+  fn max_proof_nodes_characterisation() {
+    assert_eq!(2_usize.pow(MAX_PROOF_NODES as u32), KeyCollection::MAX_KEYS_ALLOWED);
+  }
 }
