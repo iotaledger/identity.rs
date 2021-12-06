@@ -12,7 +12,7 @@ description = "An IOTA Tangle intergration for the identity-rs library."
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
-bee-rest-api = { version = "0.1.3", default-features = false }
+bee-rest-api = { version = "=0.1.3", default-features = false } # pin version due to breaking change in 0.1.6, update when iota-client is fixed
 brotli = { version = "3.3", default-features = false, features = ["std"] }
 dashmap = { version = "4.0" }
 form_urlencoded = { version = "1.0" }
