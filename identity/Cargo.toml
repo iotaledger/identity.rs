@@ -1,6 +1,6 @@
 [package]
 name = "identity"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["IOTA Stiftung"]
 documentation = "https://wiki.iota.org/identity.rs/introduction"
 edition = "2018"
@@ -12,12 +12,12 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "Tools for working with Self-sovereign Identity."
 
 [dependencies]
-identity-account = { version = "=0.4.0", path = "../identity-account", optional = true }
-identity-comm = { version = "=0.4.0", path = "../identity-comm", optional = true }
-identity-core = { version = "=0.4.0", path = "../identity-core" }
-identity-credential = { version = "=0.4.0", path = "../identity-credential" }
-identity-did = { version = "=0.4.0", path = "../identity-did" }
-identity-iota = { version = "=0.4.0", path = "../identity-iota", default-features = false }
+identity-account = { version = "=0.4.1", path = "../identity-account", optional = true }
+identity-comm = { version = "=0.4.1", path = "../identity-comm", optional = true }
+identity-core = { version = "=0.4.1", path = "../identity-core" }
+identity-credential = { version = "=0.4.1", path = "../identity-credential" }
+identity-did = { version = "=0.4.1", path = "../identity-did" }
+identity-iota = { version = "=0.4.1", path = "../identity-iota", default-features = false }
 
 [dev-dependencies]
 criterion = { version = "0.3" }
