@@ -118,6 +118,7 @@ jobs:
           git push --follow-tags
 
       - name: Run Changelog Generator
+        if: ${{env.IS_RELEASE}}
         uses: './.github/actions/release/changelog-generator'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
