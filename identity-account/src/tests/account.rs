@@ -241,7 +241,7 @@ async fn test_account_autopublish() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_account_publish_with_options() -> Result<()> {
+async fn test_account_publish_options_sign_with() -> Result<()> {
   let config = AccountConfig::default().autopublish(false).testmode(true);
   let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
 
@@ -286,6 +286,36 @@ async fn test_account_publish_with_options() -> Result<()> {
     .publish_with_options(PublishOptions::default().sign_with(signing_method))
     .await
     .is_ok());
+
+  Ok(())
+}
+
+#[tokio::test]
+async fn test_account_publish_options_force_integration() -> Result<()> {
+  let config = AccountConfig::default().autopublish(false).testmode(true);
+  let account_config = AccountSetup::new(Arc::new(MemStore::new())).config(config);
+  let mut account = Account::create_identity(account_config, IdentitySetup::new()).await?;
+
+  account.publish().await.unwrap();
+
+  let last_int_id = *account.chain_state().last_integration_message_id();
+
+  account
+    .update_identity()
+    .create_method()
+    .fragment("test-auth")
+    .scope(MethodScope::authentication())
+    .apply()
+    .await?;
+
+  account
+    .publish_with_options(PublishOptions::default().force_integration_update(true))
+    .await
+    .unwrap();
+
+  // Ensure update was published on integration chain.
+  assert_ne!(account.chain_state().last_integration_message_id(), &last_int_id);
+  assert_eq!(account.chain_state().last_diff_message_id(), &MessageId::null());
 
   Ok(())
 }

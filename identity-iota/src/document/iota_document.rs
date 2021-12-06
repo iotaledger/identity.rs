@@ -242,6 +242,11 @@ impl IotaDocument {
     Ok(())
   }
 
+  /// Returns whether the given method can be used to sign document updates.
+  pub fn is_signing_method(method: &IotaVerificationMethod) -> bool {
+    method.key_type() == MethodType::Ed25519VerificationKey2018
+  }
+
   /// Returns a reference to the underlying [`CoreDocument`].
   pub fn as_document(&self) -> &BaseDocument {
     &self.document

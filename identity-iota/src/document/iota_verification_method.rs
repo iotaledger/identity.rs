@@ -205,6 +205,11 @@ impl IotaVerificationMethod {
 
     Ok(revoked)
   }
+
+  /// Returns whether this method can be used to sign document updates.
+  pub fn is_signing_method(&self) -> bool {
+    self.key_type() == MethodType::Ed25519VerificationKey2018
+  }
 }
 
 impl Display for IotaVerificationMethod {
