@@ -208,7 +208,7 @@ impl IotaDocument {
     // Validate that the document controller (if any) conforms to the IotaDID specification.
     // This check is required to ensure the correctness of the `IotaDocument::controller()` method which
     // creates an `IotaDID::new_unchecked_ref()` from the underlying controller.
-    document.controller().map_or(Ok(()), |c| IotaDID::check_validity(c))?;
+    document.controller().map_or(Ok(()), IotaDID::check_validity)?;
 
     // Validate that the verification methods conform to the IotaDID specification.
     // This check is required to ensure the correctness of the `IotaDocument::methods()`,
