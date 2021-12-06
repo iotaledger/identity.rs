@@ -72,8 +72,8 @@ async fn test_create_identity() -> Result<()> {
   assert!(account.load_state().await.is_ok());
 
   // Ensure timestamps were recently set.
-  assert!(state.document().created() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
-  assert!(state.document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
+  assert!(state.document().created() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
+  assert!(state.document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
 
   Ok(())
 }
@@ -196,7 +196,7 @@ async fn test_create_method() -> Result<()> {
   // Ensure `created` wasn't updated.
   assert_eq!(initial_state.document().created(), state.document().created());
   // Ensure `updated` was recently set.
-  assert!(state.document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
+  assert!(state.document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
 
   Ok(())
 }
@@ -587,7 +587,7 @@ async fn test_delete_method() -> Result<()> {
   // Ensure `created` wasn't updated.
   assert_eq!(initial_state.document().created(), state.document().created());
   // Ensure `updated` was recently set.
-  assert!(state.document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15));
+  assert!(state.document().updated() > Timestamp::from_unix(Timestamp::now_utc().to_unix() - 15).unwrap());
 
   // Deleting a non-existing methods fails.
   let output = account.process_update(update).await;

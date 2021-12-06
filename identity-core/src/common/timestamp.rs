@@ -7,12 +7,9 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 
 use core::str::FromStr;
-
-use chrono::DateTime;
-use chrono::NaiveDateTime;
-use chrono::SecondsFormat;
-use chrono::Timelike;
-use chrono::Utc;
+use time::format_description::well_known::Rfc3339;
+use time::Duration;
+use time::OffsetDateTime;
 
 use crate::error::Error;
 use crate::error::Result;
@@ -21,44 +18,45 @@ use crate::error::Result;
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[repr(transparent)]
 #[serde(try_from = "String", into = "String")]
-pub struct Timestamp(DateTime<Utc>);
+pub struct Timestamp(OffsetDateTime);
 
 impl Timestamp {
   /// Parses a `Timestamp` from the provided input string.
   pub fn parse(input: &str) -> Result<Self> {
-    let datetime: DateTime<Utc> = DateTime::parse_from_rfc3339(input)?.into();
-    let datetime: DateTime<Utc> = Self::truncate(datetime);
-
-    Ok(Self(datetime))
+    let offset_date_time = OffsetDateTime::parse(input, &Rfc3339).map_err(time::Error::from)?;
+    Ok(Timestamp(truncate(offset_date_time)))
   }
 
   /// Creates a new `Timestamp` with the current date and time.
   pub fn now_utc() -> Self {
-    Self(Self::truncate(Utc::now()))
-  }
-
-  /// Returns the `Timestamp` as a Unix timestamp.
-  #[allow(clippy::wrong_self_convention)]
-  pub fn to_unix(&self) -> i64 {
-    self.0.timestamp()
-  }
-
-  /// Creates a new `Timestamp` from the given Unix timestamp.
-  pub fn from_unix(seconds: i64) -> Self {
-    Self(DateTime::from_utc(NaiveDateTime::from_timestamp(seconds, 0), Utc))
+    Self(truncate(OffsetDateTime::now_utc()))
   }
 
   /// Returns the `Timestamp` as an RFC 3339 `String`.
   ///
   /// See: https://tools.ietf.org/html/rfc3339
-  #[allow(clippy::wrong_self_convention)]
   pub fn to_rfc3339(&self) -> String {
-    self.0.to_rfc3339_opts(SecondsFormat::Secs, true)
+    // expect is OK, because all constructors provide well defined RFC 3339 compatible OffSetDateTime
+    // if this is to be made fallible instead then we need to change some things in our interface such as the
+    // From<Timestamp> for String implementation.
+    self
+      .0
+      .format(&Rfc3339)
+      .expect("unexpected Timestamp incompatibility with RFC 3339")
   }
 
-  fn truncate(value: DateTime<Utc>) -> DateTime<Utc> {
-    // Safe to unwrap because 0 is a valid nanosecond
-    value.with_nanosecond(0).unwrap()
+  /// Returns the `Timestamp` as a Unix timestamp.
+  pub fn to_unix(&self) -> i64 {
+    self.0.unix_timestamp()
+  }
+
+  /// Creates a new `Timestamp` from the given Unix timestamp.
+  pub fn from_unix(seconds: i64) -> Result<Self> {
+    let offset_date_time = OffsetDateTime::from_unix_timestamp(seconds).map_err(time::error::Error::from)?;
+    if !(0..10_000).contains(&offset_date_time.year()) {
+      return Err(time::error::Error::Format(time::error::Format::InvalidComponent("invalid year")).into());
+    }
+    Ok(Self(offset_date_time))
   }
 }
 
@@ -110,6 +108,10 @@ impl FromStr for Timestamp {
   }
 }
 
+// truncate the nanoseconds within the second in the stored offset
+fn truncate(offset_date_time: OffsetDateTime) -> OffsetDateTime {
+  offset_date_time - Duration::nanoseconds(offset_date_time.nanosecond() as i64)
+}
 #[cfg(test)]
 mod tests {
   use crate::common::Timestamp;
