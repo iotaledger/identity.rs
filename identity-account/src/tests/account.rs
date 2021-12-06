@@ -271,7 +271,7 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
       .publish_with_options(PublishOptions::default().sign_with("non-existent-method"))
       .await
       .unwrap_err(),
-    Error::DIDError(identity_did::Error::MethodNotFound)
+    Error::IotaError(identity_iota::Error::InvalidDoc(identity_did::Error::MethodNotFound))
   ));
 
   assert!(matches!(
@@ -279,8 +279,11 @@ async fn test_account_publish_options_sign_with() -> Result<()> {
       .publish_with_options(PublishOptions::default().sign_with(auth_method))
       .await
       .unwrap_err(),
-    Error::DIDError(identity_did::Error::MethodNotFound)
+    Error::IotaError(identity_iota::Error::InvalidDoc(identity_did::Error::MethodNotFound))
   ));
+
+  // TODO: Once implemented, add a merkle key collection method with capability invocation relationship and test for
+  // Error::IotaError(identity_iota::Error::InvalidDocumentSigningMethodType).
 
   assert!(account
     .publish_with_options(PublishOptions::default().sign_with(signing_method))

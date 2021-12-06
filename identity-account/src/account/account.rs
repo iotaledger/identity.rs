@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use identity_core::crypto::SetSignature;
-use identity_did::verification::MethodScope;
 use identity_iota::did::IotaDID;
 use identity_iota::document::DiffMessage;
 use identity_iota::document::IotaDocument;
@@ -287,15 +286,9 @@ impl Account {
     };
 
     let signing_method: &IotaVerificationMethod = match fragment {
-      Some(fragment) => signing_document
-        .resolve_method_with_scope(fragment, MethodScope::capability_invocation())
-        .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?,
+      Some(fragment) => signing_document.resolve_signing_method(fragment)?,
       None => signing_document.default_signing_method()?,
     };
-
-    if !signing_method.is_signing_method() {
-      return Err(Error::IotaError(identity_iota::Error::InvalidDocumentSigningMethodType));
-    }
 
     let signing_key_location: KeyLocation = new_state.method_location(
       signing_method.key_type(),
@@ -429,10 +422,7 @@ impl Account {
     let mut diff: DiffMessage = DiffMessage::new(old_doc, new_doc, *previous_message_id)?;
 
     let signing_method: &IotaVerificationMethod = match signing_method_query {
-      Some(fragment) => old_state
-        .document()
-        .resolve_method_with_scope(fragment, MethodScope::capability_invocation())
-        .ok_or(Error::DIDError(identity_did::Error::MethodNotFound))?,
+      Some(fragment) => old_state.document().resolve_signing_method(fragment)?,
       None => old_state.document().default_signing_method()?,
     };
 
