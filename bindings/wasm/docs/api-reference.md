@@ -42,9 +42,9 @@
 ## Members
 
 <dl>
-<dt><a href="#Digest">Digest</a></dt>
-<dd></dd>
 <dt><a href="#KeyType">KeyType</a></dt>
+<dd></dd>
+<dt><a href="#Digest">Digest</a></dt>
 <dd></dd>
 </dl>
 
@@ -1687,13 +1687,13 @@ Deserializes a `VerificationMethod` object from a JSON object.
 | --- | --- |
 | value | <code>any</code> | 
 
-<a name="Digest"></a>
-
-## Digest
-**Kind**: global variable  
 <a name="KeyType"></a>
 
 ## KeyType
+**Kind**: global variable  
+<a name="Digest"></a>
+
+## Digest
 **Kind**: global variable  
 <a name="start"></a>
 
