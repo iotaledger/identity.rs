@@ -165,22 +165,22 @@ impl Account {
 
   /// Overwrites the [`IotaDocument`] this account manages, **without doing any validation**.
   ///
-  /// # Warning
+  /// # WARNING
   ///
-  /// This method is dangerous and can easily mess up the internal state,
-  /// making the identity potentially unusable. Only use it if you have
-  /// a good grasp of what the implications are.
+  /// This method is dangerous and can easily corrupt the internal state,
+  /// potentially making the identity unusable. Only call this if you fully
+  /// understand the implications!
   pub fn update_document_unchecked(&mut self, document: IotaDocument) {
     *self.state.document_mut() = document;
   }
 
   /// Sets the [`ChainState`] for the identity this account manages, **without doing any validation**.
   ///
-  /// # Warning
+  /// # WARNING
   ///
-  /// This method is dangerous and can easily mess up the internal state,
-  /// making the identity potentially unusable. Only use it if you have
-  /// a good grasp of what the implications are.
+  /// This method is dangerous and can easily corrupt the internal state,
+  /// potentially making the identity unusable. Only call this if you fully
+  /// understand the implications!
   pub fn set_chain_state_unchecked(&mut self, chain_state: ChainState) {
     self.chain_state = chain_state
   }
