@@ -12,7 +12,7 @@ description = "An IOTA Tangle intergration for the identity-rs library."
 
 [dependencies]
 async-trait = { version = "0.1", default-features = false }
-bee-rest-api = { version = "0.1.3", default-features = false }
+bee-rest-api = { version = "0.1.6", default-features = false }
 brotli = { version = "3.3", default-features = false, features = ["std"] }
 dashmap = { version = "4.0" }
 form_urlencoded = { version = "1.0" }
@@ -31,7 +31,7 @@ thiserror = { version = "1.0", default-features = false }
 
 [dependencies.iota-client]
 git = "https://github.com/iotaledger/iota.rs"
-rev = "c48db779d2162b9a3037ee63c4d1e267d04633eb"
+rev = "734418946243ace3b5babb8d2ec8586a4f1f2b41"
 default-features = false
 
 [dependencies.iota-crypto]
