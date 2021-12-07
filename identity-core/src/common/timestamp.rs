@@ -108,10 +108,11 @@ impl FromStr for Timestamp {
   }
 }
 
-// truncate the nanoseconds within the second in the stored offset
-fn truncate(offset_date_time: OffsetDateTime) -> OffsetDateTime {
+/// Truncates an `OffsetDateTime` to the second.
+fn truncate_fractional_seconds(offset_date_time: OffsetDateTime) -> OffsetDateTime {
   offset_date_time - Duration::nanoseconds(offset_date_time.nanosecond() as i64)
 }
+
 #[cfg(test)]
 mod tests {
   use crate::common::Timestamp;
