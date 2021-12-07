@@ -12,7 +12,7 @@ repository = "https://github.com/iotaledger/identity.rs"
 description = "Tools for working with Self-sovereign Identity."
 
 [dependencies]
-identity-account = { version = "=0.4.0", path = "../identity-account", optional = true }
+identity-account = { version = "=0.4.0", path = "../identity-account", optional = true,  default-features = false}
 identity-comm = { version = "=0.4.0", path = "../identity-comm", optional = true }
 identity-core = { version = "=0.4.0", path = "../identity-core" }
 identity-credential = { version = "=0.4.0", path = "../identity-credential" }
@@ -21,14 +21,16 @@ identity-iota = { version = "=0.4.0", path = "../identity-iota", default-feature
 
 [dev-dependencies]
 criterion = { version = "0.3" }
-tokio = { version = "1.5", features = ["full"] }
+tokio = { version = "1.14", features = ["full"] }
 
 [[bench]]
 name = "benchmark"
 harness = false
 
 [features]
-default = ["async"]
+default = ["async", "stronghold"]
+
+stronghold = ["identity-account/stronghold"]
 
 # Enables async runtime support (Tokio)
 async = ["identity-iota/async"]
@@ -37,7 +39,7 @@ async = ["identity-iota/async"]
 wasm = ["identity-iota/wasm", "identity-comm/wasm"]
 
 # Enables support for secure storage of DID Documents
-account = ["identity-account"]
+account = ["identity-account", "wasm"]
 
 # Enables support for DID Communication
 comm = ["identity-comm"]

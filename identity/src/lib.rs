@@ -89,7 +89,6 @@ pub mod account {
   pub use identity_account::error::*;
   pub use identity_account::identity::*;
   pub use identity_account::storage::*;
-  pub use identity_account::stronghold::*;
   pub use identity_account::types::*;
   pub use identity_account::updates::*;
   pub use identity_account::utils::*;
