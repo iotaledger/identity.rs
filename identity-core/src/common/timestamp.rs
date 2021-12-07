@@ -53,6 +53,9 @@ impl Timestamp {
   /// Creates a new `Timestamp` from the given Unix timestamp.
   pub fn from_unix(seconds: i64) -> Result<Self> {
     let offset_date_time = OffsetDateTime::from_unix_timestamp(seconds).map_err(time::error::Error::from)?;
+    // Reject years outside of the range 0000AD - 9999AD per Rfc3339
+    // upfront to prevent conversion errors in to_rfc3339().
+    // https://datatracker.ietf.org/doc/html/rfc3339#section-1
     if !(0..10_000).contains(&offset_date_time.year()) {
       return Err(time::error::Error::Format(time::error::Format::InvalidComponent("invalid year")).into());
     }
