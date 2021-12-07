@@ -20,7 +20,6 @@ use identity_iota::did::IotaDID;
 use identity_iota::did::IotaDIDUrl;
 use identity_iota::document::IotaDocument;
 use identity_iota::document::IotaVerificationMethod;
-use identity_iota::tangle::UPDATE_METHOD_TYPES;
 
 use crate::account::Account;
 use crate::error::Result;
@@ -42,7 +41,7 @@ pub(crate) async fn create_identity(setup: IdentitySetup, store: &dyn Storage) -
 
   // The method type must be able to sign document updates.
   ensure!(
-    UPDATE_METHOD_TYPES.contains(&method_type),
+    IotaDocument::is_signing_method_type(method_type),
     UpdateError::InvalidMethodType(method_type)
   );
 

@@ -49,7 +49,7 @@ impl PublishType {
       })
       .filter(|method| {
         if let Some(method) = method {
-          UPDATE_METHOD_TYPES.contains(&method.key_type())
+          IotaDocument::is_signing_method_type(method.key_type())
         } else {
           true
         }

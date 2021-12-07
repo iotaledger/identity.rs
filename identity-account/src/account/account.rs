@@ -247,6 +247,10 @@ impl Account {
     Ok(())
   }
 
+  /// Push all unpublished changes to the Tangle in a single message, optionally choosing
+  /// the signing key used or forcing an integration chain update.
+  ///
+  /// See [`PublishOptions`].
   pub async fn publish_with_options(&mut self, options: PublishOptions) -> Result<()> {
     self.publish_internal(true, options).await?;
 
@@ -282,18 +286,18 @@ impl Account {
     &self,
     old_state: &IdentityState,
     new_state: &IdentityState,
-    fragment: &Option<String>,
+    signing_method_query: &Option<String>,
     document: &mut IotaDocument,
   ) -> Result<()> {
-    let (signing_state, signing_document): (&IdentityState, &IotaDocument) = if self.chain_state().is_new_identity() {
-      (new_state, new_state.document())
+    let signing_state: &IdentityState = if self.chain_state().is_new_identity() {
+      new_state
     } else {
-      (old_state, old_state.document())
+      old_state
     };
 
-    let signing_method: &IotaVerificationMethod = match fragment {
-      Some(fragment) => signing_document.resolve_signing_method(fragment)?,
-      None => signing_document.default_signing_method()?,
+    let signing_method: &IotaVerificationMethod = match signing_method_query {
+      Some(fragment) => signing_state.document().resolve_signing_method(fragment)?,
+      None => signing_state.document().default_signing_method()?,
     };
 
     let signing_key_location: KeyLocation = new_state.method_location(

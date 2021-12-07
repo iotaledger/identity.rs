@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-//! cargo run --example account_advanced
+//! cargo run --example account_unchecked
 
 use std::path::PathBuf;
 
@@ -38,18 +38,20 @@ async fn main() -> Result<()> {
   // We will apply updates to the document, and overwrite the account's current document.
   let mut document: IotaDocument = account.document().clone();
 
-  // Create a timestamp that points to 24 hours (= 86400 seconds) in the future.
-  let timestamp: Timestamp = Timestamp::from_unix(Timestamp::now_utc().to_unix() + 86400);
+  // Add a custom property to the document.
+  document
+    .properties_mut()
+    .insert("myCustomPropertyKey".into(), "value".into());
 
-  // Set a custom timestamp.
+  // Override the updated field timestamp to 24 hours (= 86400 seconds) in the future,
+  // because we can. This is usually set automatically by Account::update_identity.
+  let timestamp: Timestamp = Timestamp::from_unix(Timestamp::now_utc().to_unix() + 86400);
   document.set_updated(timestamp);
 
-  // Set a custom property.
-  document.properties_mut().insert("key".into(), "value".into());
-
-  // Update the identity without validation by the account, and publish the result (depending on autopublish).
-  // The responsibility is on us to provide a valid document, which the account can continue to use.
-  // Failing to do so can corrupt the identity; use with caution!
+  // Update the identity without validation and publish the result to the Tangle
+  // (depending on the account's autopublish setting).
+  // The responsibility is on the caller to provide a valid document which the account
+  // can continue to use. Failing to do so can corrupt the identity; use with caution!
   account.update_document_unchecked(document).await?;
 
   // Retrieve the did of the newly created identity.
