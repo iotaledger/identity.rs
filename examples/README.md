@@ -36,10 +36,12 @@ The following examples are available for using the low-level APIs, which provide
 | # | Name | Information |
 | :--: | :----------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
 | 1 | [create_did](./low-level-api/create_did.rs) | A basic example that generates and publishes a DID Document, the fundamental building block for decentralized identity. |
-| 2 | [resolve_history](low-level-api/resolve_history.rs) | Advanced example that performs multiple diff chain and integration chain updates and demonstrates how to resolve the DID Document history to view these chains. |
-| 3 | [create_vc](./low-level-api/create_vc.rs) | Generates and publishes subject and issuer DID Documents, then creates a Verifiable Credential (VC) specifying claims about the subject, and retrieves information through the CredentialValidator API. |
-| 4 | [create_vp](./low-level-api/create_vp.rs) | This example explains how to create a Verifiable Presentation from a set of credentials and sign it. |
-| 5 | [resolution](./low-level-api/resolution.rs) | A basic example that shows how to retrieve information through DID Document resolution/dereferencing. |
-| 6 | [revoke_vc](./low-level-api/revoke_vc.rs) | Removes a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC. |
-| 7 | [merkle_key](./low-level-api/merkle_key.rs) | Adds a MerkleKeyCollection verification method to an issuer's DID Document and signs a Verifiable Credential with one of its keys. Afterwards the key is deactivated, revoking the VC. |
-| 8 | [private_tangle](./low-level-api/private_tangle.rs) | Showcases the same procedure as `create_did`, but on a private tangle - a locally running hornet node.                                                                                                                                     |
+| 2 | [manipulate_did](low-level-api/manipulate_did.rs) | This example demonstrates how to perform a basic update to the integration chain of a DID Document. |
+| 3 | [diff_chain](low-level-api/diff_chain.rs) | This example demonstrates how to perform a basic update to the diff chain of a DID Document. |
+| 4 | [resolve_history](low-level-api/resolve_history.rs) | Advanced example that performs multiple diff chain and integration chain updates and demonstrates how to resolve the DID Document history to view these chains. |
+| 5 | [create_vc](./low-level-api/create_vc.rs) | Generates and publishes subject and issuer DID Documents, then creates a Verifiable Credential (VC) specifying claims about the subject, and retrieves information through the CredentialValidator API. |
+| 6 | [create_vp](./low-level-api/create_vp.rs) | This example explains how to create a Verifiable Presentation from a set of credentials and sign it. |
+| 7 | [resolution](./low-level-api/resolution.rs) | A basic example that shows how to retrieve information through DID Document resolution/dereferencing. |
+| 8 | [revoke_vc](./low-level-api/revoke_vc.rs) | Removes a verification method from the Issuers DID Document, making the Verifiable Credential it signed unable to verify, effectively revoking the VC. |
+| 9 | [merkle_key](./low-level-api/merkle_key.rs) | Adds a MerkleKeyCollection verification method to an issuer's DID Document and signs a Verifiable Credential with one of its keys. Afterwards the key is deactivated, revoking the VC. |
+| 10| [private_tangle](./low-level-api/private_tangle.rs) | Showcases the same procedure as `create_did`, but on a private tangle - a locally running hornet node.                                                                                                                                     |
